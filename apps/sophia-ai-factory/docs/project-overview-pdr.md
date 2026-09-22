@@ -79,7 +79,7 @@ See `.claude/rules/sophia-no-tech-doctrine.md` for full positioning.
 - **Frontend**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4.
 - **Auth**: Better Auth (customer self-managed via Setup Wizard).
 - **Database**: Cloudflare D1 (primary, encrypted BYOK keys) + Supabase (OAuth callbacks only).
-- **Infrastructure**: Cloudflare Workers (CF-direct deploy via wrangler CLI).
+- **Infrastructure**: Cloudflare Workers (Automated CI/CD deploy via GitHub Actions `.github/workflows/deploy.yml`).
 - **Job Queue**: Inngest (async video render, cron jobs, webhooks).
 - **Storage**: Cloudflare R2 (video cache, backups with 30d lifecycle).
 - **AI Services**: OpenRouter (LLM — customer-provided key via Setup Wizard).

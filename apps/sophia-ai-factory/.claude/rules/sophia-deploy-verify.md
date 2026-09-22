@@ -1,126 +1,108 @@
-# Sophia AI Factory — Deploy Verification (CF-direct doctrine)
+# Sophia AI Factory — Deploy Verification (GitHub Actions CI/CD Doctrine)
 
 > **AUTHORITATIVE for Sophia AI Factory deploy verification.**
-> **OVERRIDE:** This rule supersedes task.md:12 (root must return 200). Root `/` currently returns 307 redirect due to P0 locale routing issue. Step 4 verifies `/api/health` and `/login` instead.
-
-> Override bất kỳ generic rule nào khác. Subagents (đặc biệt git-manager) PHẢI đọc file này trước khi báo cáo GREEN.
+> **OVERRIDE:** This rule governs all deployment operations and verifications across Sophia AI Factory.
+> Subagents and operators MUST follow this rule before reporting GREEN on any deployment.
 
 ### Pre-Deploy Gate (MANDATORY)
-Before ANY deploy (`npm run deploy:full`), the following MUST pass on the working tree:
-1. `npm run build` — 0 TypeScript errors
-2. `npm test` — all tests passing
+Before pushing commits to `main` (which triggers automated deployment via `.github/workflows/deploy.yml`), the following quality gates MUST pass locally on the working tree:
+1. `npm run type-check` — 0 TypeScript compilation errors
+2. `npm run lint` — 0 ESLint errors
+3. `bash scripts/check-layer-boundaries.sh` — 0 Clean Architecture layer violations
+4. `npm run i18n:validate` — 0 missing translation keys
+5. `npm run test` — all Vitest unit and integration tests passing
 
-If deploying on a known-broken base (tracked issue), the deploy commit message must carry: `WARNING: deploying on known-broken base: <issue-reference>`
-
-> Why: Deploying on a broken base propagates failures to production and makes rollback harder to diagnose. OmniRoute adopted this after stacking 34 commits on a broken base caused a full re-reconciliation.
+If deploying on a known-broken base (tracked issue), the commit message must carry: `WARNING: deploying on known-broken base: <issue-reference>`
 
 ## Stack Reality
 
 - **Deploy target:** Cloudflare Workers (OpenNext build)
-- **Deploy command:** `npm run deploy:full` (local wrangler CLI — NOT via GitHub Actions)
+- **Canonical Deploy Pipeline:** GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` or manual `workflow_dispatch`
+- **Local deploy:** DISABLED by default to prevent environment drift and uncommitted drift.
+- **Break-Glass Emergency:** Permitted only in critical CI outages via `EMERGENCY_CF_DIRECT=1 npm run deploy:full`.
 - **Build artifact:** `.open-next/worker.js`
 - **D1 Database:** `sophia-raas-db` (binding `DB`)
 - **R2 Cache:** `sophia-ai-factory-opennext-cache` (binding `NEXT_INC_CACHE_R2_BUCKET`)
-- **GitHub Actions:** DISABLED by design (`.github/workflows/test.yml.disabled`). Do NOT poll `gh run list`.
+- **GitHub Actions Status:** ACTIVE & CANONICAL (`.github/workflows/deploy.yml`).
 
 ## Production URLs
 
-```
+```bash
 PROD_URL="https://sophia.agencyos.network"
 HEALTH_URL="https://sophia.agencyos.network/api/health"
 VERSION_URL="https://sophia.agencyos.network/api/version"
 ```
 
-## ✅ MANDATORY Verify Sequence (sau npm run deploy:full)
+## ✅ MANDATORY Verify Sequence (Post-Deploy)
 
 ```bash
-# Step 1: Confirm deploy:full script exited 0
-# (wrangler output should end with "Deployed ... (X ms)")
-# If deploy script printed an error → STOP, do not report GREEN
+# Step 1: Monitor GitHub Actions pipeline run
+gh run watch || gh run list --workflow=deploy.yml
 
-# Step 2: Apply any new D1 migrations (if migrations/ changed in this commit)
-git diff --name-only HEAD~1 HEAD apps/sophia-ai-factory/migrations/ 2>/dev/null | grep -E "\.sql$"
-# If output is non-empty → run:
-cd apps/sophia-ai-factory && bash scripts/apply-migrations.sh
-
-# Step 3: Verify SHA match (CRITICAL — proves new code is live, not stale)
+# Step 2: Verify bit-for-bit SHA match (CRITICAL — proves new code is live, not stale)
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
-echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
-[ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE — wrangler may not have deployed latest; re-run deploy:full"; exit 1; }
-# Step 4: HTTP health check (root returns 307 redirect — expected with locale-prefix routing)
-# Verify actual service endpoints instead of root:
-curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/api/health  # must be 200
-curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/login        # must be 200
-curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/vi/login     # must be 200
+LIVE_SHA=$(curl -s "https://sophia.agencyos.network/api/version?deployVerify=$(date +%s)" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+echo "Local commit SHA: $LOCAL_SHA  Live edge SHA: $LIVE_SHA"
+[ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE — live edge does not match commit SHA"; exit 1; }
+
+# Step 3: Production HTTP health checks
+curl -s -o /dev/null -w "%{http_code}\n" https://sophia.agencyos.network/api/health  # must be 200
+curl -s -o /dev/null -w "%{http_code}\n" https://sophia.agencyos.network/login        # must be 307 or 200
+curl -s -o /dev/null -w "%{http_code}\n" https://sophia.agencyos.network/vi/login     # must be 200
+
+# Step 4: Run automated post-deploy smoke suite
+node scripts/post-deploy-smoke.mjs "https://sophia.agencyos.network" "$LOCAL_SHA"
 ```
 
 **Endpoint reference:**
 - `GET /api/version` — public: `{shortSha, deployedAt, opennextVersion}`. Primary deploy verify signal.
 - `GET /api/health` — service health (auth required for full detail).
+- `GET /login` — root auth router (redirects HTTP 307 to `/vi/login`).
+- `GET /vi/login` — localized customer login portal (HTTP 200).
 
 ## ✅ Required Report Format
 
-```
-## Verification Report — Phase XX
-- Build: ✅ exit code 0
-- Tests: ✅ 1398/1398 passed
-- Deploy: ✅ npm run deploy:full → wrangler deployed (CF-direct)
-- Migrations: ✅ none new | ✅ <N> applied via apply-migrations.sh
-- Production HTTP: ✅ 200 (root `sophia.agencyos.network` → 307 redirect, `/api/health` → 200, `/login` → 200, `/vi/login` → 200)
-- Deploy SHA Match: ✅ /api/version shortSha == <local_short_sha>
+```markdown
+## Verification Report — CI/CD Production Deploy
+- Quality Gate: ✅ Stage 1 passed (type-check, lint, layer boundaries, i18n, vitest)
+- CI/CD Run: ✅ GitHub Actions deploy.yml completed successfully
+- Migrations: ✅ D1 delta migrations applied (sophia-raas-db)
+- Edge Deploy: ✅ Cloudflare Workers deployed via opennextjs-cloudflare
+- Live SHA Match: ✅ /api/version shortSha == <commit_short_sha> bit-for-bit
+- Production Health: ✅ /api/health → 200, /login → 307, /vi/login → 200
 - Deploy verified: <ISO timestamp>
 ```
 
-**Sai dòng "Deploy SHA Match" = chưa verify deploy thực sự.**
+**Sai dòng "Live SHA Match" = chưa verify deploy thực sự.**
 
-## Migration Application
+## D1 Migration Application
 
+D1 migrations are automatically calculated and applied in Stage 2 of the GitHub Actions pipeline:
 ```bash
-# Apply migrations changed since last commit (default: HEAD~1 vs HEAD)
+# Automated in CI/CD:
+bash scripts/apply-migrations.sh "$PREVIOUS_LIVE_SHA"
+
+# Manual execution (if in break-glass emergency):
 cd apps/sophia-ai-factory
 bash scripts/apply-migrations.sh
-
-# Apply since specific ref
-bash scripts/apply-migrations.sh HEAD~3
-
-# Manual single migration
-npx wrangler d1 execute sophia-raas-db --file=migrations/<NNNN_name>.sql --remote
 ```
 
-## Rollback
+## Rollback Procedure
 
 ```bash
-# Rollback to previous Cloudflare Workers version
+# Rollback to previous Cloudflare Workers deployment
 cd apps/sophia-ai-factory
-npx wrangler rollback --name sophia-ai-factory --message "<reason>" --yes
+npx wrangler rollback --name sophia-ai-factory --message "Emergency rollback" --yes
 
-# Or redeploy a specific git commit:
-git checkout <sha>
-npm run deploy:full
-git checkout main
+# Or revert commit on main and push to trigger automated redeployment:
+git revert HEAD -m 1
+git push origin main
 ```
 
 ## ❌ Anti-Patterns
 
-- ❌ Polling `gh run list` — GitHub Actions is disabled; will always return 0 results
-- ❌ Curl HTTP 200 without SHA check — may be stale deploy from prior wrangler invocation
-- ❌ Reporting "Done" before step 3 (SHA match) passes
-- ❌ Reporting "CI/CD GREEN" — there is no CI; use "Deploy: ✅ CF-direct" instead
+- ❌ Deploying directly from local workstation without `EMERGENCY_CF_DIRECT=1` break-glass flag
+- ❌ Curl HTTP 200 without bit-for-bit SHA check against `/api/version`
+- ❌ Reporting "Done" before live SHA match passes
+- ❌ Pushing code to main that breaks pre-deploy quality gates (tsc, lint, layer boundaries, i18n, vitest)
 - ❌ "Vercel auto-deployed" — project is Cloudflare Workers
-
-## ❌ KNOWN-RED Exceptions
-
-When production has pre-existing issues that are tracked separately:
-- Mark them as KNOWN-RED in deploy reports
-- Do NOT block deploy for issues that existed BEFORE this deploy
-- Document the known issue with evidence (route, status, timestamp)
-
-## Historical Note
-
-GitHub Actions `Tests & Deploy` workflow was operational until 2026-05-03 when the
-`longtho638-jpg` account had Actions disabled (free-tier exhaustion). Five manual wrangler
-deploys were made before the team adopted CF-direct as the permanent canonical doctrine:
-`d84f3a6e`, `e53c7dd2`, `aafd1ba4`, `0520585b`, `f418f3df`.
-
-Workflow file archived at `.github/workflows/test.yml.disabled`. Re-enable by renaming back to `.yml`.

@@ -52,21 +52,20 @@ import { TIER_CONFIGS, TIER_CONFIG } from '@/config/tiers'
 
 ---
 
-## 3. Deploy doctrine (CF-direct, since 2026-05-03)
+## 3. Deploy doctrine (GitHub Actions CI/CD canonical, converted 2026-09-22)
 
-GitHub Actions is **disabled by design**. The `longtho638-jpg` free-tier minutes were exhausted on 2026-05-03; the team adopted wrangler CLI as the canonical deploy path rather than restore CI.
+GitHub Actions is **canonical and active** (`.github/workflows/deploy.yml`). Pushing commits to `main` triggers automated 4-stage pipeline deployment (quality gate → build/migration → edge deploy → post-verify).
 
 ```bash
-cd apps/sophia-ai-factory
-npm run deploy:full           # build + inject SHA + wrangler deploy
-bash scripts/apply-migrations.sh   # only if migrations/ changed
+git push origin main
+gh run watch || gh run list --workflow=deploy.yml
 curl -s https://sophia.agencyos.network/api/version | jq .shortSha
-# Must match: git rev-parse HEAD | cut -c1-8
+# Must match bit-for-bit: git rev-parse HEAD | cut -c1-8
 ```
 
 **SHA match is MANDATORY.** HTTP 200 alone is not sufficient — may be a stale deploy from a prior invocation. See `.claude/rules/sophia-deploy-verify.md` for the full verify sequence (authoritative).
 
-Workflow archived as `.github/workflows/test.yml.disabled`. Re-enable by renaming to `.yml` if Actions ever returns.
+Local deploy (`npm run deploy:full`) is blocked by default and requires `EMERGENCY_CF_DIRECT=1` (break-glass protocol for emergency disaster recovery only).
 
 ---
 
@@ -74,7 +73,7 @@ Workflow archived as `.github/workflows/test.yml.disabled`. Re-enable by renamin
 
 | Decision | When | Why |
 |---|---|---|
-| **CF-direct deploy** | 2026-05-03 | GitHub Actions free-tier exhausted; wrangler CLI is faster, simpler, no CI dependency |
+| **GitHub Actions CI/CD** | 2026-09-22 | Automated 4-stage pipeline replaces manual local deploys; eliminates environment drift and uncommitted artifacts |
 | **4-layer rewrite** | 2026-04-25..05-04 | Replaces flat `src/lib/*` sprawl. Direction rule enforceable via grep |
 | **Polar.sh rejected** | 2026-04 | Product fit poor for Sophia; NOWPayments + PayOS cover crypto + VN. PayPal removed entirely |
 | **Stripe Connect added** | 2026-05-10 | Phase 03 — unblock fiat USD affiliate payouts (US 1099 threshold drives KYC) |

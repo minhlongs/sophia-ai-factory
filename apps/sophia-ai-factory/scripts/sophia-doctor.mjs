@@ -330,14 +330,37 @@ async function checkBetterStack() {
 // 9b. CI/CD doctrine check
 // ---------------------------------------------------------------------------
 function checkCIDoctrine() {
-  const disabledWorkflow = resolve(ROOT, '../..', '.github/workflows/test.yml.disabled');
-  const activeWorkflow = resolve(ROOT, '../..', '.github/workflows/test.yml');
-  if (existsSync(disabledWorkflow) && !existsSync(activeWorkflow)) {
-    ok('CI: bypassed by design (CF-direct)', 'test.yml archived as .disabled — wrangler deploy is canonical');
-  } else if (existsSync(activeWorkflow)) {
-    warn('CI: test.yml is active', 'doctrine says CF-direct; if GH Actions still blocked, archive test.yml → test.yml.disabled');
-  } else {
-    warn('CI: workflow file not found', 'expected .github/workflows/test.yml.disabled for CF-direct doctrine');
+  const deployWorkflow = resolve(ROOT, '../..', '.github/workflows/deploy.yml');
+  const disabledDeployWorkflow = resolve(ROOT, '../..', '.github/workflows/deploy.yml.disabled');
+
+  if (existsSync(disabledDeployWorkflow)) {
+    fail('CI/CD: deploy.yml is disabled', 'remove .disabled extension; automated GitHub Actions is canonical');
+    return;
+  }
+
+  if (!existsSync(deployWorkflow)) {
+    fail('CI/CD: workflow file not found', 'expected .github/workflows/deploy.yml for GitHub Actions CI/CD doctrine');
+    return;
+  }
+
+  try {
+    const content = readFileSync(deployWorkflow, 'utf8');
+    const hasPushMain = /branches:\s*\[.*main.*\]|branches:\s*\n\s*-\s*main/.test(content);
+    const hasWorkflowDispatch = content.includes('workflow_dispatch');
+
+    if (!hasPushMain) {
+      warn('CI/CD: trigger missing push to main', 'deploy.yml should trigger on push to branch main');
+      return;
+    }
+
+    if (!hasWorkflowDispatch) {
+      warn('CI/CD: trigger missing workflow_dispatch', 'deploy.yml should allow manual trigger via workflow_dispatch');
+      return;
+    }
+
+    ok('CI/CD: GitHub Actions active & canonical', '.github/workflows/deploy.yml is production pipeline');
+  } catch (err) {
+    fail('CI/CD: error reading deploy.yml', String(err));
   }
 }
 

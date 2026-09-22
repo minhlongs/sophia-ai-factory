@@ -1,100 +1,245 @@
-# Auto-Deploy CI/CD — Push main → quality gate → wrangler deploy → SHA verify
-# Restored and updated from .github/workflows/test.yml.disabled (archived 2026-05-03).
-# Replaces the old multi-step deploy (wrangler-action@v3) with a single
-# `npm run deploy:full` invocation that wraps deploy-with-sha.sh.
-#
-# Key differences from the archived workflow:
-#   - Uses `npm run deploy:full` instead of separate `deploy:build` + wrangler-action
-#   - Adds post-deploy SHA verification against /api/version
-#   - SKIP_SYMBOL_UPLOAD=1 set as default env (per no-tech doctrine)
-#   - Uses actions/checkout@v4 and actions/setup-node@v4
-#   - npm cache enabled for faster installs
-#
-# GitHub Secrets required:
-#   CLOUDFLARE_API_TOKEN   — Cloudflare API token with Workers permissions
-#   CLOUDFLARE_ACCOUNT_ID  — Cloudflare account ID
-
-name: Auto-Deploy
+name: Production CI/CD Deploy
 
 on:
   push:
     branches: [main]
-  pull_request:
-
-env:
-  SKIP_SYMBOL_UPLOAD: 1
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (run quality gate and build, skip edge deploy)'
+        required: false
+        type: boolean
+        default: false
+      force_verify:
+        description: 'Perform post-deploy verification smoke test'
+        required: false
+        type: boolean
+        default: true
+      skip_migrations:
+        description: 'Skip D1 database migrations (Emergency only)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
-  quality:
-    name: Quality Gate
+  # =========================================================================
+  # STAGE 1: Quality Gate & Code Health (Pre-deploy)
+  # =========================================================================
+  stage-1-quality-gate:
+    name: 'Stage 1: Quality Gate & Code Health'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/sophia-ai-factory
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Verify green pipeline (typecheck + lint + test + build)
-        run: npm run verify:green
-
-  deploy:
-    name: Deploy to Cloudflare Workers
-    needs: quality
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/sophia-ai-factory
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # Full history required by deploy-with-sha.sh for git range checks
-          # (previous-live-SHA diff, migration detection, push precondition).
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: apps/sophia-ai-factory/package-lock.json
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
 
-      - name: Build and deploy to Cloudflare Workers
+      - name: Gate 1a — TypeScript Compilation Check (0 errors required)
+        run: npm run type-check
+
+      - name: Gate 1b — ESLint Code Quality Verification
+        run: npm run lint
+
+      - name: Gate 1c — Clean Architecture Layer Boundaries (0 violations required)
+        run: bash scripts/check-layer-boundaries.sh
+
+      - name: Gate 1d — Bilingual i18n Translation Validation
+        run: npm run i18n:validate
+
+      - name: Gate 1e — Vitest Unit & Integration Test Suite
+        run: npm run test
+
+  # =========================================================================
+  # STAGE 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy
+  # =========================================================================
+  stage-2-3-build-and-deploy:
+    name: 'Stage 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy'
+    needs: stage-1-quality-gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/sophia-ai-factory
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+      SKIP_SENTRY_BUILD: '1'
+      SKIP_SYMBOL_UPLOAD: '1'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Preflight — Assert Cloudflare Credentials
         run: |
-          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            npm run deploy:full
-            LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-            LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
-            if [ "$LOCAL_SHA" != "$LIVE_SHA" ]; then
-              echo "SHA mismatch: local=$LOCAL_SHA live=$LIVE_SHA"
+          if [ "${{ inputs.dry_run }}" != "true" ]; then
+            if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+              echo "❌ CRITICAL: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets are required for edge deployment."
+              echo "👉 Please set them in GitHub Repository Settings -> Secrets and variables -> Actions."
+              echo "👉 Run 'node scripts/check-ci-readiness.mjs' locally for setup instructions."
               exit 1
             fi
-            echo "Deploy verified: $LOCAL_SHA"
-          else
-            echo "ℹ️ CLOUDFLARE_API_TOKEN not configured in GitHub repository secrets."
-            echo "Per CF-direct doctrine (AGENTS.md), deployment is performed via operator CF-direct."
-            LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-            LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
-            echo "Local commit SHA: $LOCAL_SHA | Current live SHA: $LIVE_SHA"
           fi
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # ── Stage 2: Cloudflare Build & D1 Migration ──
+      - name: 'Stage 2a: D1 Delta Migration (sophia-raas-db)'
+        if: ${{ inputs.skip_migrations != true && inputs.dry_run != true }}
+        run: |
+          echo "==> Fetching current live SHA to calculate migration delta..."
+          PREV_SHA=$(curl -s --connect-timeout 10 --max-time 15 https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "")
+          echo "Current live edge SHA: ${PREV_SHA:-none}"
+          if [ -n "$PREV_SHA" ] && git rev-parse --verify "$PREV_SHA^{commit}" >/dev/null 2>&1; then
+            echo "Applying D1 delta migrations since $PREV_SHA..."
+            bash scripts/apply-migrations.sh "$PREV_SHA"
+          else
+            echo "Applying D1 delta migrations from HEAD~1..."
+            bash scripts/apply-migrations.sh HEAD~1 || bash scripts/apply-migrations.sh
+          fi
+
+      - name: 'Stage 2b: Next.js Turbopack Compilation'
+        run: npm run build
+
+      - name: 'Stage 2c: OpenNext Packaging & SSR Bloat Stripping'
+        run: |
+          node scripts/fix-instrumentation-standalone.mjs
+          bash scripts/patch-opennext-d3-stubs.sh
+          npx @opennextjs/cloudflare build --skipNextBuild --noMinify
+          node scripts/inject-scheduled-handler.mjs
+          bash scripts/strip-ssr-bloat.sh --post-opennext
+
+      # ── Stage 3: Edge Deploy & Metadata Injection ──
+      - name: 'Stage 3a: Deploy Worker to Cloudflare Edge'
+        if: ${{ inputs.dry_run != true }}
+        run: npx opennextjs-cloudflare deploy --config wrangler.toml
+
+      - name: 'Stage 3b: Inject Secret Metadata (COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH)'
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          DEPLOYED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          DEPLOY_BRANCH="${{ github.ref_name }}"
+
+          echo "==> Setting Worker secrets: SHA=${COMMIT_SHA:0:8} Branch=${DEPLOY_BRANCH} At=${DEPLOYED_AT}"
+          echo "$COMMIT_SHA"    | npx wrangler secret put COMMIT_SHA    --name sophia-ai-factory
+          echo "$DEPLOYED_AT"   | npx wrangler secret put DEPLOYED_AT   --name sophia-ai-factory
+          echo "$DEPLOY_BRANCH" | npx wrangler secret put DEPLOY_BRANCH --name sophia-ai-factory
+
+          # Propagate to health environment
+          echo "$COMMIT_SHA"    | npx wrangler secret put COMMIT_SHA    --name sophia-ai-factory --env health || true
+          echo "$DEPLOYED_AT"   | npx wrangler secret put DEPLOYED_AT   --name sophia-ai-factory --env health || true
+
+  # =========================================================================
+  # STAGE 4: Post-Deploy Automated Verification & Health Smoke Test
+  # =========================================================================
+  stage-4-post-deploy-verify:
+    name: 'Stage 4: Post-Deploy Verification & Health Smoke Test'
+    needs: stage-2-3-build-and-deploy
+    if: ${{ inputs.dry_run != true && inputs.force_verify != false }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/sophia-ai-factory
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 'Stage 4a: Bit-for-bit Live Edge SHA Verification'
+        run: |
+          EXPECTED_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          echo "==> Verifying Cloudflare edge deployed SHA matches: $EXPECTED_SHA"
+
+          MAX_ATTEMPTS=15
+          DELAY=5
+          MATCHED=false
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            # Use cache-busting timestamp parameter to bypass CDN edge caching
+            NONCE=$(date +%s%N 2>/dev/null || date +%s)
+            LIVE_PAYLOAD=$(curl -s --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/api/version?deployVerify=${NONCE}" || echo "{}")
+            LIVE_SHA=$(echo "$LIVE_PAYLOAD" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+
+            if [ "$LIVE_SHA" = "$EXPECTED_SHA" ]; then
+              echo "✅ SUCCESS: Live edge shortSha ($LIVE_SHA) matches commit SHA ($EXPECTED_SHA) on attempt $i!"
+              MATCHED=true
+              break
+            fi
+
+            echo "Attempt $i/$MAX_ATTEMPTS: Live SHA is '$LIVE_SHA', waiting for '$EXPECTED_SHA'..."
+            sleep $DELAY
+          done
+
+          if [ "$MATCHED" != "true" ]; then
+            echo "❌ CRITICAL: Live edge SHA ($LIVE_SHA) did not match expected SHA ($EXPECTED_SHA) within 75 seconds."
+            echo "Payload: $LIVE_PAYLOAD"
+            exit 1
+          fi
+
+      - name: 'Stage 4b: Health & Critical Endpoints Probe'
+        run: |
+          echo "==> Probing /api/health (expected HTTP 200)..."
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/api/health")
+          if [ "$HEALTH_STATUS" != "200" ]; then
+            echo "❌ /api/health returned HTTP $HEALTH_STATUS (expected 200)"
+            exit 1
+          fi
+          echo "✅ /api/health returned HTTP 200"
+
+          echo "==> Probing /login (expected HTTP 200 or 307)..."
+          LOGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/login")
+          if [ "$LOGIN_STATUS" != "200" ] && [ "$LOGIN_STATUS" != "302" ] && [ "$LOGIN_STATUS" != "307" ] && [ "$LOGIN_STATUS" != "308" ]; then
+            echo "❌ /login returned HTTP $LOGIN_STATUS (expected 200, 302, 307, or 308)"
+            exit 1
+          fi
+          echo "✅ /login returned HTTP $LOGIN_STATUS"
+
+          echo "==> Probing /vi/login (expected HTTP 200)..."
+          VI_LOGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/vi/login")
+          if [ "$VI_LOGIN_STATUS" != "200" ]; then
+            echo "❌ /vi/login returned HTTP $VI_LOGIN_STATUS (expected 200)"
+            exit 1
+          fi
+          echo "✅ /vi/login returned HTTP 200"
+
+      - name: 'Stage 4c: Post-Deploy Smoke Runner'
+        run: |
+          EXPECTED_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          node scripts/post-deploy-smoke.mjs "https://sophia.agencyos.network" "$EXPECTED_SHA"

@@ -368,7 +368,7 @@ Sophia AI Factory is a **no-code RaaS platform** deployed on Cloudflare Workers 
 - **Async jobs:** Inngest + 30 cron handlers for background work
 - **Modular code:** 4-layer architecture (seed→tree→forest→land) with clear boundaries
 
-**Deployment:** CF-direct via `npm run deploy:full` (GitHub Actions disabled). Verification requires SHA match via `/api/version` endpoint.
+**Deployment:** Automated via GitHub Actions CI/CD (`.github/workflows/deploy.yml`, 4-stage pipeline on push to `main`). Local `npm run deploy:full` is emergency break-glass only (`EMERGENCY_CF_DIRECT=1`). Verification requires bit-for-bit SHA match via `/api/version` endpoint.
 
 **Open:** 3 flagged questions regarding TagCache scope, enriched-jwt purpose, and OpenNext version sync.
 

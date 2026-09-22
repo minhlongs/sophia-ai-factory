@@ -149,45 +149,42 @@ If issues arise post-deploy:
 
 ## 2. Production Deployment (Cloudflare Workers)
 
-Sophia AI Factory deploys to **Cloudflare Workers** via **CF-direct doctrine** — manual `wrangler` CLI from the app package. GitHub Actions is disabled by design.
+Sophia AI Factory deploys to **Cloudflare Workers** via **GitHub Actions CI/CD pipeline** (`.github/workflows/deploy.yml`). Pushing commits to `main` automatically executes the 4-stage deployment pipeline with strict quality gates. Local direct deployment is gated behind `EMERGENCY_CF_DIRECT=1` for emergency break-glass situations only.
 
 ### Prerequisites
 
-- `wrangler` authenticated (`npx wrangler whoami` succeeds)
-- `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in environment
-- Code pushed to `origin/main` (precondition enforced by deploy script)
+- Changes committed and pushed to `main` (or pull request opened against `main`)
+- GitHub repository secrets configured: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
+- Local pre-deploy gates passing before pushing to remote
 
-### Step 1: Push to Remote
+### Step 1: Push to Remote (Triggers Automated CI/CD)
 
 ```bash
 git push origin main
 ```
 
-The deploy script will reject if local HEAD is not equal to origin/main.
+Pushing to `main` triggers `.github/workflows/deploy.yml` which executes:
+1. **Stage 1 (Pre-deploy Quality Gate)**: TypeScript compilation, ESLint, Layer boundaries, i18n validation, Vitest test suite.
+2. **Stage 2 (Build & Migration)**: Delta D1 migrations calculation and execution, Next.js + OpenNext worker build.
+3. **Stage 3 (Edge Deployment)**: Deploy worker bundle to Cloudflare Workers and inject `COMMIT_SHA`/`DEPLOYED_AT` secrets.
+4. **Stage 4 (Post-deploy Verification)**: Poll `/api/version` for bit-for-bit shortSha match and run production smoke suite.
 
-### Step 2: Run Deploy Script
+### Step 2: Observe Automated Pipeline
+
+```bash
+gh run watch || gh run list --workflow=deploy.yml
+```
+
+### Step 3: Emergency Break-Glass Local Deploy (Disaster Recovery Only)
+
+If GitHub Actions is completely down, break-glass local direct deploy is permitted:
 
 ```bash
 cd apps/sophia-ai-factory
-npm run deploy:full
+EMERGENCY_CF_DIRECT=1 npm run deploy:full
 ```
 
-This script (`scripts/deploy-with-sha.sh`) performs:
-
-1. **Push preconditions** — verifies working tree clean and HEAD == origin/main
-2. **Pre-deploy gate** — runs `scripts/pre-deploy-gate.mjs`:
-   - Git status check
-   - `npm test` (skip with `SKIP_TESTS=1`)
-   - `npm run build`
-   - `npm run type-check` (skip with `SKIP_TSC=1`)
-   - D1 migration review (ensures unreviewed migrations have approval comments)
-   - Required secrets check (`OPENROUTER_API_KEY`, `NOWPAYMENTS_API_KEY`, `TELEGRAM_BOT_TOKEN`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`)
-3. **Build** — `npm run build` (Next.js → OpenNext worker)
-4. **Deploy** — `npx opennextjs-cloudflare deploy --config wrangler.toml`
-5. **Inject secrets** — `COMMIT_SHA`, `DEPLOYED_AT`, `DEPLOY_BRANCH` into Worker
-6. **Verify SHA match** — poll `/api/version` until `shortSha` matches local commit
-7. **HTTP health check** — verify `https://sophia.agencyos.network` returns 200
-8. **Post-deploy smoke** — run `scripts/post-deploy-smoke.mjs` (health + version checks)
+This script (`scripts/deploy-with-sha.sh`) performs local verification, build, deploy via OpenNext, and smoke verification. Notice: Normal local invocation without `EMERGENCY_CF_DIRECT=1` will intentionally be blocked.
 
 **Emergency bypasses** (use sparingly):
 
@@ -237,9 +234,9 @@ This verifies third-party integrations and generates a setup report.
 
 ## 3. Automated Deployment & Monitoring
 
-### CI/CD (Disabled by Design)
+### CI/CD (GitHub Actions — Canonical)
 
-The GitHub Actions workflow `.github/workflows/test.yml` is archived (disabled). All production deployments are manual via CF-direct. This ensures operator oversight and prevents accidental deploys.
+Production deployments run automatically via `.github/workflows/deploy.yml` (4-stage pipeline). Pull requests against `main` trigger `quality-gate.yml` (TypeScript, ESLint, Vitest, coverage). Local direct deploy (`npm run deploy:full`) is blocked by default and requires the `EMERGENCY_CF_DIRECT=1` break-glass flag — this prevents environment drift, uncommitted artifacts, and branch divergence between local and remote.
 
 ### Post-Deploy Smoke Tests
 

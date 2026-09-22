@@ -2,6 +2,8 @@
 
 **Date:** 2026-04-30 | **Last Sync:** 2026-08-14 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
 
+> **⚠️ Historical entries note (2026-09-22):** Entries below reference the retired **CF-direct doctrine** (manual local deploys via `npm run deploy:full`, in effect 2026-05-03 → 2026-09-21). These historical records are intentionally preserved for audit trail and are NOT rewritten. The **current canonical pipeline is GitHub Actions CI/CD** (`.github/workflows/deploy.yml`, 4-stage automated pipeline on push to `main`). Local direct deploy is blocked unless `EMERGENCY_CF_DIRECT=1` (emergency break-glass only).
+
 ---
 
 ## Key Takeaway

@@ -61,7 +61,7 @@ All integrations are configured via the **Setup Wizard** (single onboarding step
 
 | Responsibility | Description | Runbook / Reference |
 |---|---|---|
-| 🚀 **Platform deploy** | CF-direct doctrine (`npm run deploy:full`) | `CLAUDE.md`, `sophia-deploy-verify.md` |
+| 🚀 **Platform deploy** | Automated GitHub Actions CI/CD (`.github/workflows/deploy.yml`, push to `main` triggers deploy) | `CLAUDE.md`, `sophia-deploy-verify.md` |
 | 🗄️ **Database & DR** | Cloudflare D1 (synchronous, auto-migration) + R2 Snapshots | `docs/runbooks/DISASTER-RECOVERY.md` |
 | ☁️ **Storage** | R2 buckets (cache, backups, media) | `docs/runbooks/r2-storage-policy.md` |
 | 🔐 **Platform Authority** | Founder bootstrap (Zero-Touch via `FOUNDER_EMAIL` + Break-Glass fallback) | `docs/runbooks/OPERATOR-BOOTSTRAP.md` (RUN-BOOT-001) |

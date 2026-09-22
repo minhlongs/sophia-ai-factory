@@ -216,24 +216,22 @@ Revenue, refunds, payouts. Can import seed + tree + forest.
 
 ## 7. Deployment & Verification
 
-**Doctrine:** CF-direct via `npm run deploy:full` (GitHub Actions disabled 2026-05-03).
+**Doctrine:** GitHub Actions CI/CD via `.github/workflows/deploy.yml` (automated on push to `main` or manual `workflow_dispatch`). Local direct deploy via `npm run deploy:full` is emergency break-glass only (`EMERGENCY_CF_DIRECT=1`).
 
 ```bash
-# Step 0: Push to git
+# Step 1: Push to git (triggers automated GitHub Actions CI/CD pipeline)
 git push origin main
 
-# Step 1: Build + inject SHA + deploy
-npm run deploy:full
+# Step 2: Observe automated deployment pipeline
+gh run watch || gh run list --workflow=deploy.yml
 
-# Step 2: Apply migrations (if any changed)
-bash scripts/apply-migrations.sh
-
-# Step 3: Verify SHA match (MANDATORY)
-curl -s https://sophia.agencyos.network/api/version | jq .shortSha
-# Must match: git rev-parse HEAD | cut -c1-8
+# Step 3: Verify bit-for-bit SHA match (MANDATORY)
+LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
+LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
+[ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ MATCH" || echo "❌ DIVERGED"
 ```
 
-**Verification:** Must verify SHA match (not just HTTP 200).
+**Verification:** Must verify bit-for-bit SHA match (not just HTTP 200). Production smoke verifies `/api/health`, `/login`, and `/vi/login`.
 
 ---
 
@@ -310,7 +308,7 @@ curl -s https://sophia.agencyos.network/api/version | jq .shortSha
 
 ## Summary
 
-Sophia AI Factory is a **~45K LOC Next.js 16 + D1 monolith** organized as 4 architectural layers. Core strengths: zero tech debt in auth/db, 100% test pass rate, BYOK encryption at rest. Deployment is CF-direct with mandatory SHA verification. Product is positioned as no-code RaaS for non-technical CEOs; operator has zero third-party credential requirements.
+Sophia AI Factory is a **~45K LOC Next.js 16 + D1 monolith** organized as 4 architectural layers. Core strengths: zero tech debt in auth/db, 100% test pass rate, BYOK encryption at rest. Deployment is automated via GitHub Actions CI/CD (`.github/workflows/deploy.yml`) with mandatory bit-for-bit SHA verification. Product is positioned as no-code RaaS for non-technical CEOs; operator has zero third-party credential requirements.
 
 **See also:** 
 - `docs/ARCHITECTURE.md` — Request lifecycle, cron, auth, multi-tenancy

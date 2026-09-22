@@ -243,6 +243,6 @@ Are you the operator?
 ## Unresolved
 
 1. **No automated "green go-live gate" CLI** — current verification is multi-step manual (lint + test + typecheck + audit + SHA match + smoke). Consider scripting as `npm run verify:green` if friction observed in maintenance.
-2. **Mekong `/ship` not used by Sophia** — Sophia uses `npm run deploy:full` directly (CF-direct doctrine). Document why if mekong adoption considered later.
+2. **Mekong `/ship` not used by Sophia** — Sophia uses automated GitHub Actions CI/CD (`.github/workflows/deploy.yml`) as canonical deploy path. Local `npm run deploy:full` is emergency break-glass only (`EMERGENCY_CF_DIRECT=1`). Document why if mekong adoption considered later.
 3. **Project-level `.claude/commands/`** for Sophia is empty — no custom Sophia commands yet. Operator may want to scaffold project-specific shortcuts (e.g., `/sophia:smoke`, `/sophia:status`).
 4. **"What command did I just run?"** — no audit log. If operator wants traceability, consider `~/.claude/.history.log` or similar.

@@ -61,18 +61,19 @@
 
 ### Quick reference (3 commands)
 ```bash
-# 1. Push to origin (deploy script REJECTS unpushed commits)
+# 1. Push to origin (automated GitHub Actions CI/CD pipeline deploys on push to main)
 git push origin main
 
-# 2. Deploy via wrangler CLI (CF-direct, GitHub Actions disabled by design)
-cd apps/sophia-ai-factory
-npm run deploy:full
+# 2. Observe the automated deployment pipeline
+gh run watch || gh run list --workflow=deploy.yml
 
 # 3. Verify SHA match — HTTP 200 alone is NOT sufficient (may be stale)
 LOCAL=$(git rev-parse HEAD | cut -c1-8)
 LIVE=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
 [ "$LOCAL" = "$LIVE" ] && echo "✅ DEPLOY MATCHES" || echo "❌ STALE"
 ```
+
+> **Note (Ghi chú):** Deployment is fully automated (Tự động triển khai qua GitHub Actions). Manual local deploy via `npm run deploy:full` is reserved for emergencies only (`EMERGENCY_CF_DIRECT=1`).
 
 ### Apply D1 migrations (if any added in commit)
 ```bash
@@ -106,7 +107,7 @@ See [staging-environment.md](staging-environment.md). Staging at `https://sophia
 | 1 | Local dev environment setup |
 | 2 | Branch + commit conventions |
 | 3 | Pre-push hook gates (G1-G5) |
-| 4 | CF-direct deploy via wrangler |
+| 4 | Automated deploy via GitHub Actions |
 | 5 | D1 migrations apply |
 | 6 | Secrets rotation (see §8 for NOWPayments specifically) |
 | 7 | i18n key sync (Rule 8) |

@@ -2,7 +2,7 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-09-21 (M1-M4 Real Logic Certification Suite + Migration 0281 — SHA 287b2c28)
+**Last entry:** 2026-09-22 (CI/CD Pipeline Conversion: CF-direct → GitHub Actions canonical — doctrine verified & docs synchronized)
 **Current Production SHA:** 287b2c28
 
 ---

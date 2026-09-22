@@ -7,13 +7,14 @@
 
 ## 1. Deployment Method
 
-Sophia uses **CF-direct doctrine** — deployment is done locally via Cloudflare Wrangler CLI, NOT via GitHub Actions.
+Sophia uses **GitHub Actions CI/CD doctrine** — deployment is automated via `.github/workflows/deploy.yml` on push to `main`. Local direct deploy is blocked by default and reserved for emergency break-glass only (`EMERGENCY_CF_DIRECT=1`).
 
-- **Deploy command:** `npm run deploy:full` (runs `scripts/deploy-with-sha.sh`)
-- **Build engine:** Turbopack (NOT webpack — forced by M1 16GB OOM constraints)
-- **Deploy target:** Cloudflare Workers via OpenNext adapter
+- **Deploy command (canonical):** `git push origin main` (triggers automated 4-stage pipeline)
+- **Break-glass command (emergency only):** `EMERGENCY_CF_DIRECT=1 npm run deploy:full`
+- **Build engine:** Turbopack (Next.js 16 + OpenNext adapter)
+- **Deploy target:** Cloudflare Workers via OpenNext
 - **Production URL:** `https://sophia.agencyos.network`
-- **GitHub Actions:** DISABLED by design (`.github/workflows/test.yml.disabled`)
+- **GitHub Actions:** ACTIVE & CANONICAL (`.github/workflows/deploy.yml`)
 
 ---
 
@@ -129,7 +130,7 @@ curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/login    
 ## Verification Report
 - Build: ✅ exit code 0
 - Tests: ✅ N/N passed
-- Deploy: ✅ npm run deploy:full → wrangler deployed (CF-direct)
+- Deploy: ✅ GitHub Actions deploy.yml (or emergency CF-direct) → wrangler deployed
 - Migrations: ✅ none new | ✅ N applied via apply-migrations.sh
 - Production HTTP: ✅ 200 (/api/health, /login, /vi/login)
 - Deploy SHA Match: ✅ /api/version shortSha == <local_short_sha>
@@ -390,7 +391,7 @@ npx wrangler d1 execute sophia-raas-db --command="SELECT COUNT(*) FROM users"
 3. **D1 migrations are forward-only** — No automatic rollback for schema changes
 4. **Source maps optional** — Sentry errors have minified stack traces by default
 5. **M1 16GB OOM** — Build requires Turbopack (webpack OOMs on this hardware)
-6. **GitHub Actions disabled** — No CI/CD pipeline, all deploys are manual CF-direct
+6. **CI/CD by design** — GitHub Actions (`.github/workflows/deploy.yml`) is canonical; local `npm run deploy:full` requires `EMERGENCY_CF_DIRECT=1` break-glass
 
 ---
 

@@ -84,7 +84,7 @@ The pre-push hook enforces 5 gates (see `.husky/pre-push`):
 
 ## Key Gate: G0.5 — Typecheck
 
-Added since 2026-05-20 (Phase 01): GitHub Actions `.github/workflows/test.yml.disabled` was replaced by CF-direct doctrine + pre-push enforcement. Typecheck runs first; blocks if TS errors present.
+Quality gates are enforced locally and in the automated GitHub Actions CI/CD pipeline (`.github/workflows/deploy.yml`). Typecheck runs first; blocks if TS errors present.
 
 ```bash
 # Check your code before commit
@@ -114,7 +114,7 @@ npx wrangler d1 execute sophia-raas-db --file=migrations/NNNN_name.sql --remote
 
 ## Deployed Stack (Production)
 
-- **Workers**: CF-direct (Cloudflare Workers, OpenNext adapter)
+- **Workers**: Cloudflare Workers (OpenNext adapter, deployed via GitHub Actions CI/CD)
 - **Database**: D1 `sophia-raas-db`
 - **Cache**: R2 `sophia-ai-factory-opennext-cache`
 - **KV**: Supabase (auth sessions, feature flags)

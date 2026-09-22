@@ -1,6 +1,49 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-15 | **Current Version:** 1.42.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** f604c0b1
+**Last Updated:** 2026-09-22 | **Current Version:** 1.43.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 287b2c28
+
+---
+
+## 2026-09-22 (v1.43.0 — CI/CD DOCTRINE CONVERSION: CF-DIRECT → GITHUB ACTIONS CANONICAL)
+
+**Severity: P0 DEPLOYMENT RELIABILITY | Type: Doctrine Standardization + Documentation Sync | Status: SHIPPED & VERIFIED LIVE**
+
+Completed the formal conversion of Sophia AI Factory's deployment doctrine from **CF-direct** (manual local deploys via `npm run deploy:full` with `wrangler CLI`) to **GitHub Actions CI/CD as the sole canonical deploy trigger**. The technical pipeline was already active in code; this commit reconciles documentation and operator runbooks.
+
+**Changes:**
+- **Canonical Pipeline:** `.github/workflows/deploy.yml` (4-stage: Quality Gate → Build/Migration → Edge Deploy → Post-verify) triggered on `push: main` + `workflow_dispatch`.
+- **PR Gate:** `.github/workflows/quality-gate.yml` runs TypeScript, ESLint, Vitest, coverage on every pull request to `main`.
+- **Local Deploy Gate:** `scripts/deploy-with-sha.sh` blocks local direct deployment unless `EMERGENCY_CF_DIRECT=1` (emergency break-glass). When `GITHUB_ACTIONS=true`, deployment proceeds automatically.
+- **Rollback:** `npx wrangler rollback --name sophia-ai-factory` (sync) or `git revert HEAD -m 1 && git push origin main` (automated redeploy via CI).
+
+**Documentation Updated (13 files):**
+- `CLAUDE.md` — Deployment contract block (already correct, verified)
+- `docs/codebase-summary.md` — Deployment section rewritten to GitHub Actions canonical
+- `docs/deployment-guide.md` — Full guide rewritten; CI/CD section flipped from "disabled by design" to canonical
+- `docs/ARCHITECTURE.md` — Summary deployment line updated
+- `docs/system-architecture.md` — Deployment section fully converted
+- `docs/project-overview-pdr.md` — Infrastructure line updated
+- `docs/QUICKSTART.md` — Deploy stack description updated
+- `docs/CLIENT-HANDOVER-PACKAGE.md` — Quick reference commands + SOP table bilingual update
+- `docs/dev-sops.md` — SOP 5 (Deploy) + SOP 9 (CI Gates) rewritten for GitHub Actions doctrine
+- `docs/CLIENT-HANDOVER-PACKAGE-v2.md` — Executive summary + deploy procedure bilingual update
+- `docs/README.md` — Deploy doctrine reminder block converted
+- `docs/CEO_HANDOVER_AUDIT.md` — Deploy pipeline row + preservation list updated
+- `docs/project-roadmap.md` — Historical disclaimer added at top (no history rewrite)
+
+**Verification (R1–R4):**
+- R1: All 6 checks pass (deploy.yml active, recent success run, live SHA parity, quality-gate active, deploy-with-sha.sh gate exists, no unsafe wrangler deploy outside CI)
+- R2: GitHub secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) identified as missing — operator must set in GitHub repo settings before next deploy; concurrency guard present; migration delta logic correct; post-deploy smoke covers protected flows; rollback path documented; workflow_dispatch inputs safe
+- R3: `grep -rn "CF-direct" apps/sophia-ai-factory/docs/ apps/sophia-ai-factory/CLAUDE.md` returns 0 results (excluding roadmap historical entries with disclaimer)
+- R4: Production smoke endpoints verified — `/api/version` SHA match, `/api/health` 200, `/vi/login` 200, `/vi/setup` 200, Telegram webhook mounted (401 auth), NOWPayments IPN mounted
+
+**Breaking Change:** None — this is a documentation and operator-doctrine alignment commit only. The underlying workflows, scripts, and guards were already implemented and active.
+
+**Next:** Operator to configure GitHub repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in GitHub UI (Settings → Secrets and variables → Actions) for fully green automated pipeline.
+
+---
+
+## 2026-09-15 (v1.42.0 — PHASE 7 MONETIZATION OS: AD REVENUE OPTIMIZER)
 
 ---
 

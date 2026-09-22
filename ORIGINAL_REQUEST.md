@@ -843,3 +843,84 @@ Redesign dashboard content widgets according to the Obsidian Cyber-Glass design 
 - [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
 - [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
 - [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
+
+## 2026-09-22T04:05:48Z
+
+The user requested: The full multi-agent team (DevOps/SRE Lead, Cloudflare Architect, QA Engineer).
+Chuyển đổi hoàn toàn kiến trúc triển khai (deployment) của Sophia AI Factory từ triển khai thủ công từ máy local (CF-direct qua `deploy-with-sha.sh`) sang quy trình CI/CD tự động hóa chuẩn hóa trên GitHub Actions. Loại bỏ rủi ro sai lệch môi trường (environment drift), rủi ro push thiếu commit hoặc branch divergence giữa local và remote, đồng thời áp dụng nghiêm ngặt các cổng kiểm định chất lượng (Quality Gates) tự động trước khi code được đẩy lên Cloudflare Workers edge.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- .github/workflows/deploy.yml
+- .github/workflows/quality-gate.yml
+- apps/sophia-ai-factory/scripts/deploy-with-sha.sh
+- apps/sophia-ai-factory/scripts/sophia-doctor.mjs
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+
+## User Confirmed Decisions
+1. **Cơ chế kích hoạt CI/CD**: Tự động kích hoạt khi push/merge vào `main`, đồng thời hỗ trợ trigger thủ công qua `workflow_dispatch`.
+2. **Chính sách Local Deploy**: Chặn tuyệt đối triển khai thông thường từ máy local, yêu cầu cờ khẩn cấp tường minh `EMERGENCY_CF_DIRECT=1` kèm lý do giải trình.
+
+## Requirements
+
+### R1. Standardized GitHub Actions CI/CD Deployment Pipeline (`.github/workflows/deploy.yml`)
+Xây dựng pipeline CI/CD hoàn chỉnh và tự động hóa toàn diện trên GitHub Actions:
+- **Kích hoạt (Triggers)**: Tự động chạy khi có `push` vào nhánh `main` và cho phép chạy thủ công qua `workflow_dispatch` (với tùy chọn dry-run hoặc force-verify).
+- **Giai đoạn 1: Quality Gate & Code Health (Pre-deploy)**
+  - TypeScript compilation check (`npm run type-check` / `tsc --noEmit`).
+  - ESLint verification (`npm run lint`).
+  - Architecture layer boundary check (`bash scripts/check-layer-boundaries.sh`) đảm bảo 0 vi phạm Clean Architecture.
+  - Kiểm tra tính toàn vẹn i18n (`npm run i18n:validate`).
+  - Toàn bộ Vitest unit & integration tests (`npm run test`).
+- **Giai đoạn 2: Cloudflare Build & D1 Migration**
+  - Node.js v22 với npm cache.
+  - Next.js & OpenNext build với phân bổ heap memory (`NODE_OPTIONS=--max-old-space-size=4096`).
+  - Tự động áp dụng các delta migration D1 mới nhất (`npm run deploy:migrations`) tới remote database `sophia-raas-db`.
+- **Giai đoạn 3: Cloudflare Edge Deploy & Secret Metadata Injection**
+  - Thực thi deploy lên Cloudflare Workers edge qua `opennextjs-cloudflare deploy --config wrangler.toml`.
+  - Tự động inject metadata: `COMMIT_SHA` (SHA commit thực tế đang deploy), `DEPLOYED_AT` (thời gian deploy ISO 8601), `DEPLOY_BRANCH` (`main`).
+- **Giai đoạn 4: Post-Deploy Automated Verification & Health Smoke Test**
+  - Thăm dò endpoint `https://sophia.agencyos.network/api/version` và khẳng định `shortSha` trả về khớp chính xác bit-for-bit với commit SHA vừa được build trên GitHub Actions.
+  - Chạy post-deploy smoke test xác thực các endpoint sống còn: `/api/health`, `/login` (307 redirect), `/vi/login` (HTTP 200).
+
+### R2. Local Deployment Deprecation & Break-Glass Guard (`deploy-with-sha.sh`)
+- Sửa đổi `scripts/deploy-with-sha.sh` và `npm run deploy:full`: Khi chạy trên máy cục bộ (không phải môi trường CI `GITHUB_ACTIONS=true`), script lập tức chặn và in thông báo hướng dẫn rõ ràng:
+  `❌ Local direct deployment is disabled to prevent bugs and environment drift.`
+  `👉 Push your commits to 'main' for automated CI/CD deployment via GitHub Actions.`
+- Chỉ cho phép chạy từ local khi có cờ tường minh: `EMERGENCY_CF_DIRECT=1 npm run deploy:full` (cơ chế Break-Glass khi CI gặp sự cố nghiêm trọng).
+
+### R3. Sophia Doctor & Repository Governance Alignment
+- Cập nhật `scripts/sophia-doctor.mjs` (Check 9b): Chuyển từ kiểm tra "CI: bypassed by design (test.yml.disabled)" sang kiểm tra và xác nhận "CI/CD: GitHub Actions active & canonical pipeline (`.github/workflows/deploy.yml` tồn tại và hợp lệ)".
+- Đồng bộ hóa tài liệu dự án:
+  - `AGENTS.md`: Cập nhật Deployment Rules nêu rõ GitHub Actions CI/CD là quy trình triển khai chính thức.
+  - `apps/sophia-ai-factory/CLAUDE.md`: Cập nhật deploy doctrine sang CI/CD.
+  - `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`: Hướng dẫn kiểm tra trạng thái CI/CD sau khi push code.
+
+### R4. CI Secrets & Operations Verification Matrix
+- Tạo script tiền kiểm tra cấu hình CI (`scripts/check-ci-readiness.mjs`) kiểm tra tính sẵn sàng của các biến và token Cloudflare cần thiết cho GitHub Actions.
+- Hướng dẫn cấu hình repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
+
+## Acceptance Criteria
+
+### CI/CD Workflow Pipeline (R1)
+- [ ] File `.github/workflows/deploy.yml` được chuẩn hóa với đầy đủ 4 giai đoạn (Quality Gate, Build/Migration, Edge Deploy, Post-verify).
+- [ ] Workflow hỗ trợ `push: branches [main]` và `workflow_dispatch`.
+- [ ] Post-deploy step kiểm tra bit-for-bit giữa commit SHA và `https://sophia.agencyos.network/api/version`.
+
+### Local Guardrails & Break-Glass Mode (R2)
+- [ ] Chạy `npm run deploy:full` từ local mà không có cờ `EMERGENCY_CF_DIRECT=1` sẽ bị chặn với mã thoát lỗi `exit 1` và hiển thị thông báo hướng dẫn push lên CI/CD.
+- [ ] Chạy với `EMERGENCY_CF_DIRECT=1` cho phép triển khai khẩn cấp và in rõ cảnh báo BREAK-GLASS.
+
+### Doctor & Governance Synchronization (R3)
+- [ ] `node scripts/sophia-doctor.mjs` báo cáo 11/11 GREEN (100% pass score) với CI check ghi nhận pipeline chuẩn.
+- [ ] `AGENTS.md`, `CLAUDE.md`, và các tài liệu doctrine được cập nhật đồng nhất, không còn mâu thuẫn.
+
+### Code Integrity & Clean Architecture (R4)
+- [ ] `npm run type-check` đạt 0 lỗi.
+- [ ] `bash scripts/check-layer-boundaries.sh` đạt 0 vi phạm (100% clean architecture).
+- [ ] Toàn bộ test suite chạy đạt 100% pass rate.
+

@@ -62,7 +62,7 @@ Sophia's security model is built on several layers:
 
 | Control | Implementation | Status |
 |---|---|---|
-| Deployment | CF-direct (no CI/CD pipeline to compromise) | ✅ |
+| Deployment | GitHub Actions CI/CD (automated 4-stage pipeline) | ✅ |
 | Dependencies | `npm audit` + `Socket.dev` | ✅ |
 | ESLint security rules | Active | ✅ |
 | TypeScript strict mode | Active | ✅ |
@@ -101,7 +101,7 @@ Sophia's security model is built on several layers:
 
 ### MEDIUM: No Security Scanning in Deploy Pipeline
 
-**Evidence:** No SAST/DAST tools in the deploy process (CF-direct doctrine).
+**Evidence:** SAST/DAST tooling in the deploy process is partial (GitHub Actions pipeline runs lint/typecheck/tests; dedicated SAST scanning not yet wired).
 
 **Impact:** Vulnerabilities may ship to production undetected.
 

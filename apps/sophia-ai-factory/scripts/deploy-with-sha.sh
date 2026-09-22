@@ -60,6 +60,36 @@ trap 'log_error "Deploy failed unexpectedly at line $LINENO"' ERR
 # wrangler/opennext can reach api.cloudflare.com/workers directly.
 unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
 
+# ─── Step 0.0: CI/CD Guard — Block Local Direct Deploys ───────────────────────
+# Local direct deployment is disabled to prevent environment drift, uncommitted
+# artifacts, and branch divergence. Canonical deployment is automated via GitHub Actions.
+if [ "${GITHUB_ACTIONS:-false}" != "true" ]; then
+  if [ "${EMERGENCY_CF_DIRECT:-0}" != "1" ]; then
+    echo "================================================================================"
+    echo "❌ Local direct deployment is disabled to prevent bugs and environment drift."
+    echo "👉 Push your commits to 'main' for automated CI/CD deployment via GitHub Actions."
+    echo "================================================================================"
+    exit 1
+  else
+    echo ""
+    echo "⚠️ ============================================================================"
+    echo "⚠️ BREAK-GLASS PROTOCOL ACTIVE: EMERGENCY_CF_DIRECT=1"
+    echo "⚠️ Bypassing CI/CD requirement for local direct deployment to Cloudflare edge."
+    echo "⚠️ Operator: $(whoami) on $(hostname) at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    echo "⚠️ Ensure all quality gates have passed locally before proceeding!"
+    echo "⚠️ ============================================================================"
+    echo ""
+  fi
+fi
+
+# Handle --help flag if passed
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+  echo "Usage: ./scripts/deploy-with-sha.sh"
+  echo "Deploys Sophia AI Factory to Cloudflare Workers edge."
+  echo "Requires GitHub Actions CI/CD environment or EMERGENCY_CF_DIRECT=1."
+  exit 0
+fi
+
 # ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
 # Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
 # is the root cause of incident 2026-05-13/15 where prod ran code that existed

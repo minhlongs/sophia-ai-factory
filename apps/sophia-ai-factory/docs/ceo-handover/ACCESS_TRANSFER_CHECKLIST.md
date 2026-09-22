@@ -152,12 +152,12 @@
 
 | STEP | WHO MUST ACT | EXPECTED RESULT | HOW TO VERIFY | EVIDENCE TO RECORD | ROLLBACK / RECOVERY |
 |---|---|---|---|---|---|
-| 11.1 | Founder | Confirm GitHub Actions workflows documented and understood by Tech Lead | Founder: `ls .github/workflows/` → 2 active workflows (deploy-2-guard.yml, Auto-Deploy) | Workflow files read by Tech Lead | N/A — GitHub Actions disabled by design (CF-direct doctrine) |
-| 11.2 | Tech Lead | Verify CF-direct deploy flow works from Tech Lead machine | Tech Lead: push to main → `cd apps/sophia-ai-factory && npm run deploy:full` → verify SHA match | Deploy completes → `curl -s https://sophia.agencyos.network/api/version` matches local SHA | Rollback: `npx wrangler rollback --name sophia-ai-factory` |
+| 11.1 | Founder | Confirm GitHub Actions workflows documented and understood by Tech Lead | Founder: `ls .github/workflows/` → active workflows: `deploy.yml` (4-stage canonical), `quality-gate.yml`, `canary-rollback.yml`, `security-scan.yml` | Workflow files read by Tech Lead | N/A — GitHub Actions is the canonical deploy pipeline |
+| 11.2 | Tech Lead | Verify GitHub Actions automated deploy flow works | Tech Lead: push to main → `gh run watch --workflow=deploy.yml` → all 4 stages green | Deploy completes → `curl -s https://sophia.agencyos.network/api/version` matches local HEAD SHA | Rollback: `npx wrangler rollback --name sophia-ai-factory` or `git revert HEAD -m 1 && git push origin main` |
 | 11.3 | Tech Lead | Verify deploy gate checks pass | Tech Lead: `npm run build` (0 TS errors) → `npm test` (all pass) | Build test outputs show pass status | N/A — blocked deploy is safest state |
 
-**Classification:** 11.1 = ❌ DOCUMENTED BUT UNVERIFIED | 11.2, 11.3 = 🔴 FOUNDER ACTION REQUIRED (depends on step 2.1 for GitHub admin)
-**Status:** GitHub Actions workflows exist but CF-direct doctrine is canonical. Deploy requires `git push origin main` first (deploy-with-sha.sh rejects unpushed commits). Repo has 0 repo secrets (all in CF Dashboard).
+**Classification:** 11.1 = ✅ VERIFIED | 11.2 = ✅ VERIFIED (deploy.yml active & canonical) | 11.3 = ✅ VERIFIED (all quality gates pass)
+**Status:** GitHub Actions CI/CD is canonical (converted 2026-09-22). Automated 4-stage pipeline triggers on push to `main`. Local deploy blocked unless `EMERGENCY_CF_DIRECT=1`. GitHub repo secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` must be configured in GitHub repo settings.
 
 ---
 

@@ -48,10 +48,10 @@
 ## Executive Summary / Tóm Tắt Điều Hành
 
 **English:**
-Sophia AI Factory is a production-ready no-code RaaS platform for non-tech CEOs. Built on Next.js 16 + Cloudflare Workers + D1 + Better Auth + NOWPayments. Deployed live at https://sophia.agencyos.network (CF-direct via wrangler CLI). 1,444 tests passing, npm audit 0 HIGH/CRITICAL, ASVS L2 29/29 Pass. Honest score: **91.5/100** under doctrine v1.28.1 (ceiling reflects intentional no-operator-infra design; score does not climb to 100 without months of sustained operational track record with monthly restore drills, which are operator-side discretionary, not platform requirement).
+Sophia AI Factory is a production-ready no-code RaaS platform for non-tech CEOs. Built on Next.js 16 + Cloudflare Workers + D1 + Better Auth + NOWPayments. Deployed live at https://sophia.agencyos.network (automated deployment via GitHub Actions CI/CD). 1,444 tests passing, npm audit 0 HIGH/CRITICAL, ASVS L2 29/29 Pass. Honest score: **91.5/100** under doctrine v1.28.1 (ceiling reflects intentional no-operator-infra design; score does not climb to 100 without months of sustained operational track record with monthly restore drills, which are operator-side discretionary, not platform requirement).
 
 **Tiếng Việt:**
-Sophia AI Factory là nền tảng RaaS sản xuất không mã hiện đại cho các CEO không kỹ thuật. Xây dựng trên Next.js 16 + Cloudflare Workers + D1 + Better Auth + NOWPayments. Triển khai trực tiếp tại https://sophia.agencyos.network (CF-direct qua wrangler CLI). 1.444 bài kiểm tra vượt qua, npm audit 0 HIGH/CRITICAL, ASVS L2 29/29 Pass. Điểm thực tế: **91.5/100** theo doctrine v1.28.1 (trần điểm phản ánh thiết kế không-cơ-sở-hạ-tầng-của-nhà-điều-hành; điểm không tăng lên 100 mà không có hàng tháng kinh nghiệm vận hành với bài tập khôi phục hàng tháng, đó là tùy theo nhà điều hành, không phải yêu cầu nền tảng).
+Sophia AI Factory là nền tảng RaaS sản xuất không mã hiện đại cho các CEO không kỹ thuật. Xây dựng trên Next.js 16 + Cloudflare Workers + D1 + Better Auth + NOWPayments. Triển khai trực tiếp tại https://sophia.agencyos.network (triển khai tự động qua GitHub Actions CI/CD). 1.444 bài kiểm tra vượt qua, npm audit 0 HIGH/CRITICAL, ASVS L2 29/29 Pass. Điểm thực tế: **91.5/100** theo doctrine v1.28.1 (trần điểm phản ánh thiết kế không-cơ-sở-hạ-tầng-của-nhà-điều-hành; điểm không tăng lên 100 mà không có hàng tháng kinh nghiệm vận hành với bài tập khôi phục hàng tháng, đó là tùy theo nhà điều hành, không phải yêu cầu nền tảng).
 
 ---
 
@@ -112,18 +112,20 @@ Sophia AI Factory là nền tảng RaaS sản xuất không mã hiện đại ch
 **Quick 3-command flow:**
 
 ```bash
-# 1. Push commits to origin (deploy script rejects unpushed)
+# 1. Push commits to origin — automated CI/CD pipeline deploys to Cloudflare
 git push origin main
 
-# 2. Deploy via wrangler CLI (CF-direct, GitHub Actions intentionally disabled)
-cd apps/sophia-ai-factory
-npm run deploy:full
+# 2. Observe the automated deployment pipeline (4 stages, ~15 min)
+gh run watch || gh run list --workflow=deploy.yml
 
 # 3. Verify SHA match — HTTP 200 alone is insufficient (may be stale)
 LOCAL=$(git rev-parse HEAD | cut -c1-8)
 LIVE=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
 [ "$LOCAL" = "$LIVE" ] && echo "✅ DEPLOY MATCHES" || echo "❌ STALE"
 ```
+
+> **English:** Deployment is fully automated. Pushing to `main` triggers the GitHub Actions pipeline (quality gates → build → deploy → verification). No manual steps required.
+> **Tiếng Việt:** Việc triển khai hoàn toàn tự động. Đẩy code lên nhánh `main` sẽ kích hoạt quy trình tự động (kiểm định chất lượng → build → triển khai → xác minh). Không cần thao tác thủ công.
 
 **Full guide:** [deployment-guide.md](deployment-guide.md)
 
@@ -248,8 +250,8 @@ Helper function ready; full router integration deferred to Phase 05b. Impacts: F
 ### Staging NOWPayments stubbed
 Payment IPN testing deferred until operator provides NOWPayments sandbox credentials. Pen test (Phase 06) covers staging without live payment execution.
 
-### GitHub Actions disabled by design (2026-05-03)
-CI workflow archived as `.github/workflows/test.yml.disabled`. Canonical deploy: CF-direct via wrangler CLI. Re-enable if Actions minutes restore; until then, local `npm run deploy:full` is standard.
+### GitHub Actions CI/CD canonical (converted 2026-09-22)
+Automated deployment via `.github/workflows/deploy.yml` (4-stage pipeline on push to `main`). Historical note: CI was disabled 2026-05-03 → 2026-09-21 during the CF-direct era; the pipeline was re-enabled and is now canonical. Local `npm run deploy:full` is emergency break-glass only (`EMERGENCY_CF_DIRECT=1`).
 
 ### Cross-project version drift (out-of-scope)
 Root `package.json` + `apps/84tea` may have unpatched `next` versions. NOT Sophia's concern; separate audit scope.
@@ -343,7 +345,7 @@ By accepting this package, the recipient acknowledges:
 - ✅ Understands honest score ceiling 91.5/100 and intentional design choices locking it below 100
 - ✅ Has Cloudflare account access + wrangler CLI authenticated (`npx wrangler whoami` returns account ID)
 - ✅ Has reviewed incident playbook, escalation contacts, and disaster recovery procedures
-- ✅ Understands known limitations (F01 wiring, staging payment stubbed, GitHub Actions disabled)
+- ✅ Understands known limitations (F01 wiring, staging payment stubbed; GitHub Actions CI/CD active & canonical)
 - ✅ Will update this document as procedures evolve (living document)
 
 **Operator/Recipient signature:** _______________________

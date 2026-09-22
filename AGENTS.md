@@ -66,16 +66,16 @@ Owns cross-repo business/task bridge when Mekong CLI context is needed. Does not
 
 ## Deployment Rules
 
-Production deploy is Cloudflare Workers via CF-direct:
+Production deploy is automated via GitHub Actions CI/CD on Cloudflare Workers edge:
 
-```bash
-cd apps/sophia-ai-factory
-npm run deploy:full
-curl -s https://sophia.agencyos.network/api/version | jq .shortSha
-git rev-parse HEAD | cut -c1-8
-```
-
-HTTP 200 is not proof. The live SHA must match the local commit SHA.
+- **Canonical Pipeline**: Automated via `.github/workflows/deploy.yml` upon push/merge to `main`.
+- **Manual Trigger**: Executable via GitHub Actions `workflow_dispatch` (with `dry_run`, `force_verify`, and `skip_migrations` options).
+- **Local Deploy Deprecation**: Direct deployment from developer workstations (`npm run deploy:full`) is disabled by default to eliminate environment drift.
+- **Break-Glass Emergency**: In critical CI outages, local direct deploy is permitted only with an explicit override flag:
+  ```bash
+  EMERGENCY_CF_DIRECT=1 npm run deploy:full
+  ```
+- **Verification Mandate**: HTTP 200 is not proof. The live edge SHA from `https://sophia.agencyos.network/api/version` must match the commit SHA bit-for-bit.
 
 ## Payment Rules
 

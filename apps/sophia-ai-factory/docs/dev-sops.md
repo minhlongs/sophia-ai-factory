@@ -105,28 +105,27 @@ Add barrel `index.ts` exports for new public APIs (`<domain>/index.ts`).
 
 ---
 
-## SOP 5: Deploy to Cloudflare Workers (CF-direct doctrine)
+## SOP 5: Deploy to Cloudflare Workers (GitHub Actions CI/CD doctrine)
 
 Reference (**MUST READ**): `.claude/rules/sophia-deploy-verify.md`
 
 ```bash
-# Step 1: Build + inject SHA + wrangler deploy
-cd apps/sophia-ai-factory
-npm run deploy:full
+# Step 1: Push to main — triggers automated GitHub Actions CI/CD pipeline
+git push origin main
 
-# Step 2: Apply migrations if migrations/ changed
-git diff --name-only HEAD~1 HEAD apps/sophia-ai-factory/migrations/ 2>/dev/null | grep -E "\.sql$"
-# nếu non-empty:
-bash scripts/apply-migrations.sh
+# Step 2: Observe the automated 4-stage pipeline (Quality Gate → Build/Migration → Edge Deploy → Post-verify)
+gh run watch || gh run list --workflow=deploy.yml
 
 # Step 3: SHA match (MANDATORY — HTTP 200 alone không đủ)
 LOCAL=$(git rev-parse HEAD | cut -c1-8)
 LIVE=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
-[ "$LOCAL" = "$LIVE" ] && echo "✅ MATCH" || { echo "❌ STALE — re-run deploy:full"; exit 1; }
+[ "$LOCAL" = "$LIVE" ] && echo "✅ MATCH" || { echo "❌ STALE — check pipeline run"; exit 1; }
 
 # Step 4: HTTP health
 curl -sI https://sophia.agencyos.network | head -3   # HTTP/2 200
 ```
+
+**Emergency break-glass (CI outage only):** `EMERGENCY_CF_DIRECT=1 npm run deploy:full` from `apps/sophia-ai-factory/`. Normal local invocation is blocked by the CI/CD guard.
 
 **Optional helper scripts (salvaged 2026-05-17):**
 - `scripts/deploy-full-verified.sh` — wraps `npm run deploy:full` with browser gate (future phases)
@@ -134,7 +133,7 @@ curl -sI https://sophia.agencyos.network | head -3   # HTTP/2 200
 - `tests/e2e/go-live-user-gap.spec.ts` — Playwright E2E: Better Auth → dashboard → video form
 
 **Anti-patterns:**
-- ❌ `gh run list` — GitHub Actions disabled 2026-05-03 (workflow archived `.disabled`)
+- ❌ `wrangler deploy` / `npm run deploy:full` from local without `EMERGENCY_CF_DIRECT=1` — blocked by CI/CD guard (environment drift risk)
 - ❌ "Vercel auto-deployed" — project is CF Workers, no `vercel.json`
 - ❌ Report GREEN without SHA match
 
@@ -159,7 +158,7 @@ chore: bump next to 16.2
 **Pre-commit (husky, SOP 9):** blocks lint errors, type errors, secrets.
 **Pre-push (husky):** runs full test suite + audit.
 
-**Solo workflow:** PR not required (CF-direct). Use `gh pr create` for reviewed work.
+**Solo workflow:** Push to `main` triggers automated deploy (GitHub Actions CI/CD). Use `gh pr create` for reviewed work; PRs run `quality-gate.yml` before merge.
 
 **Never:**
 - `git add -A` (use specific paths)
@@ -210,9 +209,9 @@ apps/sophia-ai-factory/
 
 ---
 
-## SOP 9: CI Gates (Local Enforcement)
+## SOP 9: CI Gates (Local + GitHub Actions Enforcement)
 
-GitHub Actions disabled by design 2026-05-03 (CF-direct doctrine). Gates run **locally** via npm + husky.
+Gates run **locally** via npm + husky AND in the automated GitHub Actions pipeline (`deploy.yml` Stage 1, `quality-gate.yml` on PRs). Local gates must pass before push; CI re-runs them on every deploy.
 
 | Gate | Command | Trigger |
 |---|---|---|

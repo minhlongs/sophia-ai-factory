@@ -64,13 +64,12 @@ Root docs/                          App docs/
 
 ## Deploy Doctrine Reminder
 
-This app uses CF-direct deploy (wrangler CLI). GitHub Actions DISABLED since 2026-05-03.
+This app uses automated GitHub Actions CI/CD deployment (`.github/workflows/deploy.yml`). Pushing to `main` triggers the canonical 4-stage pipeline. Local direct deploy is blocked unless `EMERGENCY_CF_DIRECT=1`.
 
 ```bash
 git push origin main
-cd apps/sophia-ai-factory && npm run deploy:full
-bash scripts/apply-migrations.sh   # if migrations/ changed
-curl -s https://sophia.agencyos.network/api/version | jq .shortSha  # verify SHA
+gh run watch || gh run list --workflow=deploy.yml
+curl -s https://sophia.agencyos.network/api/version | jq .shortSha  # verify SHA bit-for-bit
 ```
 
 Full sequence: `.claude/rules/sophia-deploy-verify.md`

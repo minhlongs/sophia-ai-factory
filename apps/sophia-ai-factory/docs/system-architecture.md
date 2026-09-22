@@ -222,13 +222,13 @@ graph TD
   - **Type Check**: TypeScript strict mode (zero `:any` types in prod)
   - **Linting**: Biome code quality checks
   - **E2E Tests** (optional): Playwright against mock mode for deterministic testing
-- **Deployment** (CF-direct doctrine):
-  - **Deploy Command**: `npm run deploy:full` (local wrangler CLI, NOT CI/CD)
+- **Deployment** (GitHub Actions CI/CD doctrine):
+  - **Canonical Pipeline**: `.github/workflows/deploy.yml` — automated 4-stage pipeline triggered on push to `main` or manual `workflow_dispatch` (Stage 1 Quality Gate → Stage 2 Build/Migration → Stage 3 Edge Deploy → Stage 4 Post-verify)
   - **Artifact**: `.open-next/worker.js` deployed to Cloudflare Workers
-  - **Database**: D1 migrations applied via `bash scripts/apply-migrations.sh`
-  - **Verification**: SHA match required (`/api/version` endpoint), HTTP 200 confirmation, production health check
-  - **Rollback**: `npx wrangler rollback --name sophia-ai-factory` reverts to previous version
-  - **Note**: GitHub Actions intentionally disabled (`.github/workflows/test.yml.disabled`); see `CLAUDE.md` for CF-direct doctrine details
+  - **Database**: D1 delta migrations applied automatically in Stage 2 via `bash scripts/apply-migrations.sh`
+  - **Verification**: Bit-for-bit SHA match required (`/api/version` endpoint), HTTP 200 confirmation, production health check
+  - **Rollback**: `npx wrangler rollback --name sophia-ai-factory` reverts to previous version, or `git revert HEAD -m 1 && git push origin main` triggers automated redeployment
+  - **Note**: Local direct deploy (`npm run deploy:full`) is blocked by default (requires `EMERGENCY_CF_DIRECT=1` break-glass); see `CLAUDE.md` for GitHub Actions CI/CD doctrine details
 
 ## Data Flow: "New Project" Lifecycle
 

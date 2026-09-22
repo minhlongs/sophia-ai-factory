@@ -218,8 +218,8 @@ secrets. Proposed wiring:
 
 Held back from this slice to avoid adding ~60s + cookie persistence to every
 deploy without first migrating the existing 6 free100 skipped tests onto the
-fixture. The CF-direct doctrine `/api/version` SHA-match check remains the
-interim verify gate.
+fixture. The GitHub Actions CI/CD doctrine `/api/version` SHA-match check remains the
+verify gate (automated via `.github/workflows/deploy.yml` Stage 4).
 
 Tracked in `~/plans/260510-0603-sophia-gap-plan/phase-02-e2e-load.md`.
 

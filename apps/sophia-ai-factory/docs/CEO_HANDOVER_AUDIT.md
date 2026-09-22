@@ -61,7 +61,7 @@ Import direction: `seed ← tree ← forest ← land` (forest may CALL land for 
 | 14 | Auth | `src/seed/auth/better-auth-session.ts` | `getCurrentUser()` — Better Auth v1.6.2 |
 | 15 | Billing boundaries | `src/land/billing/**` + `src/app/api/webhooks/nowpayments/route.ts` | NOWPayments IPN → tier activation |
 | 16 | Env config | `.env` (gitignored) + `src/seed/config/**` | key names only — no values |
-| 17 | Deploy pipeline | `scripts/deploy-full-verified.sh` | CF-direct doctrine, wrangler |
+| 17 | Deploy pipeline | `.github/workflows/deploy.yml` | GitHub Actions CI/CD doctrine (4-stage pipeline) |
 | 18 | Pre-deploy gates | `pre-deploy-gate.mjs` | build + test gate |
 | 19 | Post-deploy verification | `post-deploy-smoke.mjs` | SHA match via `/api/version` |
 | 20 | Test architecture | `vitest.config.ts` | 818 test files (Vitest + Playwright) |
@@ -228,7 +228,7 @@ Does Sophia currently track these? Classify: PRESENT / PARTIAL / NOT FOUND.
 5. **All new provider calls go through** `provider-registry.ts` → `circuit-breaker.ts` → Inngest (async). Never in request path.
 6. **All new costs go through** existing `getProviderCost` + `jobCostCents` + `marginPercent` tracking. No new economics system needed.
 
-**What this preserves:** Sophia's 4-layer architecture, BYOK doctrine, CF-direct deploy, circuit breaker resilience, existing billing flows.
+**What this preserves:** Sophia's 4-layer architecture, BYOK doctrine, GitHub Actions CI/CD deploy, circuit breaker resilience, existing billing flows.
 
 ---
 

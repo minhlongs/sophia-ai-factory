@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Identity
 
-This is **Sophia AI Factory** — a Next.js 16 App Router SaaS platform for AI video generation, deployed to Cloudflare Workers via CF-direct doctrine. Work in `apps/sophia-ai-factory/`.
+This is **Sophia AI Factory** — a Next.js 16 App Router SaaS platform for AI video generation, deployed to Cloudflare Workers via GitHub Actions CI/CD (`.github/workflows/deploy.yml`). Work in `apps/sophia-ai-factory/`.
 
 ---
 
@@ -35,33 +35,31 @@ Any change touching these requires explicit validation.
 
 ---
 
-## Deployment Contract (CF-Direct Doctrine)
+## Deployment Contract (GitHub Actions CI/CD Doctrine)
 
-**Effective:** 2026-05-03. GitHub Actions is disabled by design.
-
-Production deploy flow:
+**Canonical Pipeline:** Automated GitHub Actions (`.github/workflows/deploy.yml`).
 
 ```bash
-# Step 0: Push first (deploy-with-sha.sh rejects unpushed commits)
+# Step 1: Commit and push changes to main
 git push origin main
 
-# Step 1: Build + deploy from app package
-cd apps/sophia-ai-factory
-npm run deploy:full
+# Step 2: Observe automated deployment pipeline
+gh run watch || gh run list --workflow=deploy.yml
 
-# Step 2: Verify SHA match (NOT just HTTP 200)
+# Step 3: Verify edge deployment SHA parity
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
 LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
-echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"  # must match
+echo "Local: $LOCAL_SHA Live: $LIVE_SHA"  # must match bit-for-bit
 ```
 
 **Green report requires:**
-- `npm run deploy:full` exit 0
-- `/api/version` `shortSha` matches local commit
-- HTTP 200 on production URL
-- Any new D1 migrations applied via `bash scripts/apply-migrations.sh`
+- GitHub Actions `deploy.yml` run complete with exit code 0.
+- Stage 1 Quality Gates pass (TypeScript, ESLint, Layer Boundaries, i18n, Vitest).
+- Live `/api/version` `shortSha` matches the deployed commit SHA bit-for-bit.
+- Production smoke verifies `/api/health` (200), `/login` (307), and `/vi/login` (200).
+- Local direct deployment (`npm run deploy:full`) is blocked without `EMERGENCY_CF_DIRECT=1`.
 
-Full verification spec: `.claude/rules/sophia-deploy-verify.md`.
+Full verification spec: `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`.
 
 ---
 

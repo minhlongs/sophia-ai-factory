@@ -1,9 +1,9 @@
 # Data Retention Policy — Sophia AI Factory
 
-**Version:** 1.0.0
-**Effective:** 2026-08-31
+**Version:** 1.1.0
+**Effective:** 2026-09-22
 **Scope:** Production at https://sophia.agencyos.network
-**Deploy:** CF-direct via wrangler CLI (GitHub Actions disabled by design)
+**Deploy:** GitHub Actions CI/CD (`.github/workflows/deploy.yml`, canonical). Local direct deploy blocked unless `EMERGENCY_CF_DIRECT=1` (emergency break-glass).
 
 ---
 

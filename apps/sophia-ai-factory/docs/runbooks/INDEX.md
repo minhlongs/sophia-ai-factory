@@ -21,7 +21,7 @@ Operational runbooks for Sophia AI Factory — standard procedures for common op
 | **Hotfix Deploy** | Emergency P0 fix | Operator + DevOps | 3 min | ❌ undocumented |
 | **Migration Execution** | After code change adds migrations/ | Git Manager | 1 min | ❌ undocumented |
 
-*Reference:* `docs/dev-sops.md` SOP 5 (CF-direct doctrine), `.claude/rules/sophia-deploy-verify.md` (verify sequence)
+*Reference:* `docs/dev-sops.md` SOP 5 (GitHub Actions CI/CD doctrine), `.claude/rules/sophia-deploy-verify.md` (verify sequence)
 
 ---
 
