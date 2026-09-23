@@ -7,6 +7,7 @@
  * 3. Double approval / duplicate decisions -> replay, idempotence, and state machine integrity
  * 4. Malformed feedback injection -> XSS/HTML scripts, SQL injection, extreme payloads, corrupted JSON
  *
+ * @vitest-environment node
  * @module __tests__/adversarial/m2-video-review-security.test
  */
 

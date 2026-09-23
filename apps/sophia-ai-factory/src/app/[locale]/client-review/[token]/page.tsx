@@ -14,7 +14,7 @@ import type { Metadata } from 'next';
 import { getD1 } from '@/seed/db/client';
 import { resolveReviewByToken } from '@/tree/organizations/review-service';
 import { ClientVideoReviewPortal } from '@/forest/agency/client-video-review-portal';
-import { AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import type { VideoReviewPayload } from '@/seed/types/agency-multitenancy';
 
 export const dynamic = 'force-dynamic';

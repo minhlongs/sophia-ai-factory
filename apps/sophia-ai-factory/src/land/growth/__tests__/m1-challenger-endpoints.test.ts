@@ -7,6 +7,8 @@
  * 2. Unauthorized access & role enforcement on /api/admin/customer-intervention (GET & POST)
  * 3. Payload validation, boundary enforcement, and XSS/HTML injection on POST /api/admin/customer-intervention
  * 4. High-concurrency race condition and atomic balance integrity tests on addCredits
+ *
+ * @vitest-environment node
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

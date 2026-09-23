@@ -9,6 +9,7 @@
  * - Automated social distribution trigger hook upon video approval
  *
  * Layer: tree/organizations/__tests__
+ * @vitest-environment node
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
