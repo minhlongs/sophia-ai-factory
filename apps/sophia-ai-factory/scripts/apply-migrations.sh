@@ -17,6 +17,7 @@ WRANGLER_SCOPE_ARGS=()
 if [ -n "$WRANGLER_REMOTE_FLAG" ]; then
   WRANGLER_SCOPE_ARGS+=("$WRANGLER_REMOTE_FLAG")
 fi
+WRANGLER_SCOPE_ARGS+=("--yes")
 
 # ─── Post-flight schema verification ─────────────────────────────────────────
 # Maps migration basename (no .sql) -> verification SQL (run after migration).
@@ -95,7 +96,7 @@ run_verify() {
 guard_add_column() {
   local migration_file="$1"
   local tmp_guard_sql
-  tmp_guard_sql=$(mktemp -t migration-guard-add)
+  tmp_guard_sql=$(mktemp -t migration-guard-add.XXXXXX)
 
   local add_col_lines=()
   while IFS= read -r line; do
@@ -142,6 +143,7 @@ EOSQL
   count=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
+    --json \
     --command "$(cat "$tmp_guard_sql")" 2>/dev/null \
     | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   rm -f "$tmp_guard_sql"
@@ -166,7 +168,7 @@ EOSQL
 guard_drop_rename() {
   local migration_file="$1"
   local tmp_guard_sql
-  tmp_guard_sql=$(mktemp -t migration-guard)
+  tmp_guard_sql=$(mktemp -t migration-guard.XXXXXX)
 
   local tables_to_check=()
   while IFS= read -r line; do
@@ -180,7 +182,7 @@ guard_drop_rename() {
       tables_to_check+=("$tbl")
     fi
     # Match: ALTER TABLE <old> RENAME TO <new>;
-    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
+    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+)[[:space:]]+RENAME[[:space:]]+TO.*/\1/p' | tr -d ';' | tr -d ' ' || true)
     if [ -n "$tbl" ]; then
       tables_to_check+=("$tbl")
     fi
@@ -207,6 +209,7 @@ EOSQL
   count=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
+    --json \
     --command "$(cat "$tmp_guard_sql")" 2>/dev/null \
     | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   rm -f "$tmp_guard_sql"
@@ -258,6 +261,7 @@ for m in $MIGRATIONS; do
   APPLIED_COUNT_DB=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
+    --json \
     --command "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}'" \
     2>/dev/null | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   if [ "${APPLIED_COUNT_DB:-0}" -gt 0 ]; then
