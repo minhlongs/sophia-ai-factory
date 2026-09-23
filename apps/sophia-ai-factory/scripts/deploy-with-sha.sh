@@ -523,7 +523,7 @@ fi
 echo "==> OpenNext Cloudflare deploy"
 # OpenNext 1.19+ deploys the generated worker from its adapter output.
 # Direct wrangler deploy still points at the legacy .open-next/worker.js path.
-retry_cf "opennext deploy" npx opennextjs-cloudflare deploy --config wrangler.toml
+retry_cf "opennext deploy" env OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml --env ""
 
 # ── Post-deploy: restore wrangler.toml to pre-inject state ────────────────────
 # OpenNext deploy may rewrite OPENNEXT_VERSION. Restore the snapshot we saved

@@ -143,7 +143,7 @@ jobs:
       # ── Stage 3: Edge Deploy & Metadata Injection ──
       - name: 'Stage 3a: Deploy Worker to Cloudflare Edge'
         if: ${{ inputs.dry_run != true }}
-        run: npx opennextjs-cloudflare deploy --config wrangler.toml
+        run: OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml --env ""
 
       - name: 'Stage 3b: Inject Secret Metadata (COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH)'
         if: ${{ inputs.dry_run != true }}

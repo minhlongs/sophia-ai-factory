@@ -240,8 +240,8 @@ step_deploy() {
   apply_migrations
 
   # Deploy
-  info "→ opennextjs-cloudflare deploy"
-  if run npx opennextjs-cloudflare deploy --config wrangler.toml; then
+  info "→ wrangler deploy (OpenNext mode)"
+  if run env OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml --env ""; then
     pass "Deploy: worker uploaded"
   else
     fail "Deploy: FAILED"
