@@ -46,6 +46,7 @@ export async function runPostActivationWorkflow(
   await safelyEnqueueWelcomeEmail(userId, tier, ipn, db, d1)
   await safelyCreditReferralReward(userId, tier, ipn, db, d1)
   await safelyNotifyFounderPayment(userId, tier, ipn, db, d1)
+  await safelyTagSubaccount(ipn, d1)
 }
 
 async function safelyRecordAudit(
@@ -177,4 +178,30 @@ async function safelyNotifyFounderPayment(
     })
   }
 }
+
+async function safelyTagSubaccount(ipn: NowPaymentsIpnPayload, d1: D1Database): Promise<void> {
+  if (!ipn.order_id) return
+  try {
+    const order = await d1
+      .prepare('SELECT subaccount_id FROM pending_orders WHERE order_id = ?1 LIMIT 1')
+      .bind(ipn.order_id)
+      .first<{ subaccount_id?: string | null }>()
+      .catch(() => null)
+
+    if (order?.subaccount_id) {
+      await d1
+        .prepare(`UPDATE client_subaccounts SET updated_at = datetime('now') WHERE id = ?1`)
+        .bind(order.subaccount_id)
+        .run()
+        .catch(() => {})
+      logger.info('[NOWPayments] Tagged client subaccount', {
+        subaccountId: order.subaccount_id,
+        orderId: ipn.order_id,
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Subaccount tagging failed (non-fatal)', { error: String(err) })
+  }
+}
+
 

@@ -29,7 +29,9 @@ function getResend(): Resend | null {
  * Idempotent: skips if receipt_sent=1 for this payment_id in payment_events.
  */
 export async function sendReceiptEmail(input: ReceiptInput): Promise<void> {
-  const eventId = `nowpayments_${input.paymentId}`
+  const eventId = input.paymentId.startsWith('nowpayments_') || input.paymentId.startsWith('payos_')
+    ? input.paymentId
+    : `${input.paymentMethod ?? 'nowpayments'}_${input.paymentId}`
   const db = createServerClient()
 
   // Check idempotency

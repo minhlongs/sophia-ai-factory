@@ -259,8 +259,8 @@ describe('Milestone 1 Custom Domains — Adversarial Stress Test Suite', () => {
       const normalized = normalizeHostname(withTrailingDot);
       expect(normalized).toBe('portal.myagency.com');
 
-      // Edge router also handles multiple trailing dots defensively
-      expect(normalizeHostname('portal.myagency.com...')).toBe('portal.myagency.com..');
+      // Edge router also handles multiple trailing dots defensively by stripping all of them
+      expect(normalizeHostname('portal.myagency.com...')).toBe('portal.myagency.com');
     });
 
     it('blocks SQL injection and command injection payloads defensively', async () => {

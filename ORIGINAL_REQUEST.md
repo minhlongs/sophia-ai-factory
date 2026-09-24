@@ -1151,3 +1151,92 @@ Tối ưu hóa lợi nhuận gộp (Unit Economics & Gross Margin) và loại b�
 - [ ] Deployed commit SHA khớp bit-for-bit với live edge `https://sophia.agencyos.network/api/version`.
 - [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) báo cáo 11/11 GREEN (100% pass score).
 
+## 2026-09-24T07:15:21Z
+
+Triển khai Cỗ máy Doanh nghiệp Nhãn trắng, SSO Đa Tổ chức & Mở rộng Nhà máy Video Tự động (Enterprise White-Label, Multi-Org SSO & Autonomous Video Factory Scale Engine) nhằm chinh phục cột mốc $25K–$50K+ MRR và mở rộng quy mô phục vụ 125–250+ khách hàng doanh nghiệp toàn cầu cho Sophia AI Factory: xây dựng Cỗ máy Cung cấp Tên miền Tùy chỉnh & Nhãn trắng Doanh nghiệp (Enterprise White-Label & Custom Domain SSL Provisioning Engine), triển khai Đăng nhập Một lần Doanh nghiệp SAML/OIDC & Kho Nhật ký Kiểm toán Mật mã Chống Thay đổi (Multi-Org SAML/OIDC SSO & Cryptographic Hash-Chain Audit Vault), thiết lập Cỗ máy Thanh toán Đa Tiền tệ & Hóa đơn Điện tử Xuyên Biên giới (Cross-Border Dual-Rail Billing, Dynamic Multi-Currency & Automated VAT/E-Invoicing), xây dựng Hàng đợi Lô Phân tán & Điều phối Lưới GPU Chia sẻ Công bằng (Distributed Batch Queue & Fair-Share GPU Mesh Scheduler), và xác thực triển khai sản xuất qua GitHub Actions CI/CD và Sophia Doctor 11/11 GREEN.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/mrr-roadmap.md
+- MONEY_GRAPH.md
+- BUSINESS_MODEL.md
+- PROJECT.md
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/seed/types/custom-domains.ts
+- apps/sophia-ai-factory/src/seed/types/audit-log.ts
+- apps/sophia-ai-factory/src/seed/types/billing.ts
+- apps/sophia-ai-factory/src/tree/organizations/
+
+## Requirements
+
+### R1. Enterprise White-Label & Custom Domain Hostname Provisioning Engine
+Xây dựng giải pháp White-Label toàn diện cho các khách hàng gói Enterprise ($799/tháng) và Master ($4,999 trọn gói):
+- Quản lý tên miền tùy chỉnh (Custom Domains) với quy trình tạo, xác thực CNAME / TXT record DNS và theo dõi trạng thái SSL Cloudflare for SaaS (pending_validation, active, error).
+- Tùy biến thương hiệu đầy đủ (Tenant Branding): Tải lên logo, favicon, cấu hình bảng màu thương hiệu (Primary, Accent, Background CSS variables), tùy biến tiêu đề trang và văn bản chân trang.
+- Trích xuất Tenant Context theo thời gian thực tại Edge dựa trên Host header hoặc subdomain/slug, tự động nạp cấu hình thương hiệu và cách ly tài nguyên giữa các khách thuê.
+- Bảng điều khiển Quản trị Nhãn trắng song ngữ VI/EN (/admin/white-label, /vi/admin/white-label & /settings/white-label) cho phép cấu hình trực quan, xem trước giao diện trực tiếp (live branding preview) và kiểm tra trạng thái kích hoạt DNS.
+
+### R2. Enterprise Multi-Org SAML/OIDC SSO & Cryptographic Hash-Chain Audit Vault
+Nâng cấp bảo mật cấp doanh nghiệp đáp ứng tiêu chuẩn SOC 2 và quản trị danh tính tập trung:
+- Hỗ trợ Enterprise SSO (SAML 2.0 & OIDC) tích hợp thông suốt với Better Auth cho các nhà cung cấp phổ biến (Google Workspace, Microsoft Entra ID / Azure AD, Okta) kèm tính năng tự động nhận diện tổ chức qua tên miền email công ty.
+- Phân quyền tổ chức nâng cao (Multi-Org RBAC): Quản trị viên Doanh nghiệp (Enterprise Admin), Giám đốc Sản xuất (Creative Director), Kỹ thuật viên Video (Video Editor), và Người xem Xét duyệt (Reviewer).
+- Kho Nhật ký Kiểm toán Mật mã Bất biến (enterprise_audit_events trong D1): Tự động ghi lại mọi hoạt động nhạy cảm (xuất bản video, cấp quota MCU, tạo API key, phê duyệt thanh toán đối tác, thay đổi phân quyền).
+- Chuỗi băm SHA-256 chống thay đổi (content_hash = sha256(prev_hash + timestamp + action + actor + payload)), phát hiện ngay lập tức bất kỳ hành vi sửa đổi dữ liệu quá khứ nào.
+- Trình khám phá Nhật ký Kiểm toán song ngữ (/admin/audit-vault, /vi/admin/audit-vault) hỗ trợ tìm kiếm, lọc theo ngày, actor, hành động và hiển thị huy hiệu xác thực tính toàn vẹn chuỗi băm (Chain Verified ✅).
+
+### R3. Cross-Border Dual-Rail Billing, Dynamic Multi-Currency & Automated E-Invoicing
+Mở rộng hạ tầng thanh toán đáp ứng khách hàng quốc tế và chuẩn hóa chứng từ kế toán:
+- Công cụ Định giá & Hiển thị Đa Tiền tệ Thời gian thực: Tự động phát hiện và chuyển đổi tỷ giá giữa USD, VND, EUR, JPY, SGD với cơ chế bộ đệm tỷ giá (FX rate caching) an toàn.
+- Cơ chế Khuyến mại Cam kết Năm (Annual Commitment Engine): Tự động áp dụng chiết khấu 20% (tặng 2 tháng miễn phí khi thanh toán theo năm), tính toán chi phí nâng cấp/hạ cấp linh hoạt (prorated upgrades/downgrades).
+- Cỗ máy Xuất Hóa đơn Điện tử & Chứng từ Thuế Doanh nghiệp Tự động: Tạo hóa đơn PDF chuẩn kế toán (hỗ trợ Mã số thuế doanh nghiệp Việt Nam, tên công ty, địa chỉ, thuế suất VAT, cùng với chứng từ tuân thủ quốc tế W-8BEN/W-9).
+- Hoàn thiện luồng Thanh toán Kênh Đôi: Tự động đối soát tức thì webhook NOWPayments USDT và PayOS VietQR theo mã định danh tài khoản phụ, gửi biên lai xác nhận ngay qua email Resend.
+
+### R4. Distributed Batch Queue & Fair-Share GPU Mesh Scheduler
+Tối ưu hóa năng lực kết xuất video đồng thời cho 125–250+ khách hàng doanh nghiệp:
+- Hệ thống Hàng đợi Lô Phân tán (video_render_jobs queue) quản lý thông lượng cao, ngăn chặn việc nghẽn tiến trình trên Cloudflare Workers edge.
+- Bộ điều phối Lưới GPU Chia sẻ Công bằng (Fair-Share GPU Scheduler): Phân làn ưu tiên (Priority Lane cho Enterprise với tốc độ xử lý tức thì vs Standard Lane cho Basic), giới hạn tần suất công bằng trên từng khách thuê để tránh tình trạng chiếm dụng hạ tầng độc quyền.
+- Cơ chế Giám sát Sức khỏe Điểm cuối GPU & Chuyển đổi Dự phòng (Worker Health Monitor & Mesh Failover): Tự động điều hướng job sang các nhà cung cấp GPU phụ (fal.ai, Replicate, RunPod, Mekong GPU) khi phát hiện độ trễ vượt ngưỡng hoặc lỗi dịch vụ.
+- Hàng đợi Thư chết (Dead-Letter Queue - DLQ) với cơ chế tự động thử lại theo cấp số nhân (exponential backoff) và gửi thông báo cảnh báo tức thì qua Telegram/Better Stack webhook khi job thất bại quá số lần quy định.
+
+### R5. Layer Architecture Discipline & Production CI/CD Verification
+- Tuân thủ nghiêm ngặt mô hình 4 tầng Clean Architecture (seed → tree → forest → land) với 0 vi phạm (kiểm tra bằng bash scripts/check-layer-boundaries.sh).
+- Đạt 0 lỗi biên dịch TypeScript (npm run type-check).
+- Toàn bộ unit/integration test suites mới và hiện có đạt tỷ lệ pass 100%.
+- Triển khai và xác thực thông qua GitHub Actions CI/CD (.github/workflows/deploy.yml), đảm bảo shortSha khớp bit-for-bit với live edge https://sophia.agencyos.network/api/version.
+- Đảm bảo công cụ chẩn đoán Sophia Doctor báo cáo 11/11 GREEN (node apps/sophia-ai-factory/scripts/sophia-doctor.mjs).
+
+## Acceptance Criteria
+
+### Enterprise White-Label & Custom Domains (R1)
+- [ ] D1 schema và repository hỗ trợ đăng ký, lưu trữ và tra cứu cấu hình tên miền tùy chỉnh cùng chứng chỉ SSL.
+- [ ] Tenant Branding Engine tự động áp dụng logo, favicon và bảng màu CSS động tương ứng theo request hostname.
+- [ ] Giao diện /admin/white-label cho phép xem trước trực quan (live preview) và kiểm tra trạng thái xác thực DNS CNAME/TXT.
+
+### Multi-Org SSO & Cryptographic Audit Vault (R2)
+- [ ] Cấu hình Better Auth tích hợp SAML 2.0 / OIDC với định tuyến tự động theo tên miền email tổ chức.
+- [ ] Bảng enterprise_audit_events lưu trữ nhật ký với chuỗi băm SHA-256 (content_hash, prev_hash) được bảo vệ toàn vẹn.
+- [ ] Giao diện /admin/audit-vault hiển thị nhật ký kiểm toán với bộ lọc ngày, tác vụ và xác thực chuỗi băm thành công.
+
+### Dynamic Multi-Currency & Automated E-Invoicing (R3)
+- [ ] Bộ chuyển đổi đa tiền tệ hỗ trợ USD, VND, EUR, JPY, SGD với dữ liệu tỷ giá cập nhật.
+- [ ] Luồng thanh toán năm áp dụng chiết khấu 20% và tính toán bù trừ prorated khi thay đổi gói dịch vụ.
+- [ ] Trình tạo hóa đơn tự động xuất biên lai/hóa đơn PDF có đầy đủ mã số thuế, thông tin công ty và phân bổ chi phí.
+
+### Distributed Video Queue & GPU Mesh Scheduler (R4)
+- [ ] Hàng đợi video_render_jobs xử lý job theo phân làn ưu tiên (Enterprise vs Basic) và giới hạn công bằng theo tenant.
+- [ ] Bộ điều phối tự động chuyển đổi sang GPU thay thế khi một nhà cung cấp gặp lỗi hoặc nghẽn mạng.
+- [ ] DLQ ghi nhận job lỗi và kích hoạt cơ chế retry backoff kèm cảnh báo qua webhook.
+
+### Quality Gates & Production Edge Verification (R5)
+- [ ] npm run type-check đạt 0 lỗi biên dịch.
+- [ ] bash scripts/check-layer-boundaries.sh đạt 0 vi phạm (100% clean architecture).
+- [ ] Toàn bộ unit/integration test suites chạy đạt 100% pass rate.
+- [ ] Deployed commit SHA khớp bit-for-bit với live edge https://sophia.agencyos.network/api/version.
+- [ ] Sophia Doctor (node apps/sophia-ai-factory/scripts/sophia-doctor.mjs) báo cáo 11/11 GREEN (100% pass score).
+
+

@@ -129,3 +129,31 @@ export interface CloudflareApiResponse<T> {
   messages: Array<{ code: number; message: string }>;
   result: T;
 }
+
+export interface WhiteLabelBrandingSettings {
+  orgId: string;
+  agencyName: string | null;
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  primaryColor: string;
+  accentColor: string;
+  pageTitle: string | null;
+  footerText: string | null;
+  welcomeMessage: string | null;
+}
+
+export interface SaveWhiteLabelBrandingInput {
+  agencyName?: string | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
+  primaryColor?: string | null;
+  accentColor?: string | null;
+  pageTitle?: string | null;
+  footerText?: string | null;
+  welcomeMessage?: string | null;
+}
+
+export interface WhiteLabelActionError {
+  code: string;
+  message: string;
+}

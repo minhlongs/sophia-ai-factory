@@ -123,8 +123,9 @@ describe('Branding & Theme Engine — Adversarial Stress Test Suite', () => {
         agencyName: multilinePayload,
       });
 
-      // Semicolons are stripped, but raw newlines are preserved in the string
-      expect(vars['--brand-agency-name']).toContain('\n');
+      // Raw newlines are replaced with spaces to prevent bad-string-token, semicolons stripped
+      expect(vars['--brand-agency-name']).not.toContain('\n');
+      expect(vars['--brand-agency-name']).toBe('"Acme Corp --evil-var: red body"');
       expect(vars['--brand-agency-name']).not.toContain(';');
     });
 

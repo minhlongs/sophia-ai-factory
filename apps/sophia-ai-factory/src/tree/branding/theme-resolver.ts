@@ -247,6 +247,7 @@ export function resolveThemeCssVariables(
 
   const sanitizeCssVarValue = (val: string): string => {
     return val
+      .replace(/[\r\n]/g, ' ')
       .replace(/<\/style/gi, '')
       .replace(/[<>";{}\\]/g, '');
   };
@@ -267,6 +268,7 @@ export function resolveThemeCssVariables(
 
 /**
  * Builds CSS style text suitable for direct SSR `<style>` injection.
+ * Strips `<` and `>` characters to guarantee stored XSS style tag breakout immunity.
  */
 export function buildThemeCssString(branding?: Partial<BrandingSettings> | null): string {
   const vars = resolveThemeCssVariables(branding);
@@ -274,5 +276,6 @@ export function buildThemeCssString(branding?: Partial<BrandingSettings> | null)
     .map(([key, val]) => `  ${key}: ${val};`)
     .join('\n');
 
-  return `:root, .dark {\n${declarations}\n}`;
+  const css = `:root, .dark {\n${declarations}\n}`;
+  return css.replace(/[<>]/g, '');
 }

@@ -8214,5 +8214,342 @@
     "languageEn": "English",
     "languageVi": "Tiếng Việt",
     "emptySearch": "Không tìm thấy cẩm nang nào khớp với từ khóa."
+  },
+  "whiteLabel": {
+    "title": "Nhãn Trắng Doanh Nghiệp & Tên Miền Tùy Chỉnh",
+    "subtitle": "Cung cấp tên miền mang thương hiệu riêng với chứng chỉ SSL Cloudflare tự động và bộ giao diện khách thuê thời gian thực.",
+    "tabs": {
+      "domains": "Tên Miền Tùy Chỉnh",
+      "branding": "Nhận Diện Thương Hiệu",
+      "preview": "Xem Trước Trực Tiếp"
+    },
+    "domains": {
+      "title": "Danh Sách Tên Miền Đã Đăng Ký",
+      "description": "Trỏ tên miền đại lý của bạn về Sophia AI Factory. Chúng tôi tự động cấp phát chứng chỉ SSL tại Edge qua Cloudflare for SaaS.",
+      "inputPlaceholder": "portal.dailycuaban.com",
+      "addButton": "Thêm Tên Miền Tùy Chỉnh",
+      "adding": "Đang đăng ký...",
+      "emptyTitle": "Chưa có tên miền tùy chỉnh nào được đăng ký",
+      "emptyDescription": "Thêm tên miền đầu tiên ở trên để cung cấp cổng tạo video AI nhãn trắng 100% cho khách hàng của bạn.",
+      "table": {
+        "hostname": "Tên Miền",
+        "sslStatus": "Trạng Thái SSL",
+        "verification": "Xác Minh DNS",
+        "actions": "Thao Tác"
+      },
+      "status": {
+        "active": "Đang Hoạt Động",
+        "pendingValidation": "Đang Xác Minh SSL",
+        "pendingDeployment": "Đang Triển Khai SSL Edge",
+        "error": "Lỗi SSL",
+        "revoked": "Đã Thu Hồi",
+        "verified": "Đã Xác Minh",
+        "pending": "Chờ DNS",
+        "failed": "Thất Bại"
+      },
+      "dnsInstructions": {
+        "title": "Hướng Dẫn Cấu Hình Bản Ghi DNS",
+        "subtitle": "Thêm các bản ghi DNS sau tại nhà quản lý tên miền của bạn (Cloudflare, Namecheap, GoDaddy, PA Vietnam, Mat Bao...):",
+        "cnameLabel": "Bản Ghi CNAME (Định Tuyến Máy Chủ)",
+        "cnameHost": "Host / Tên Miền Phụ",
+        "cnameTarget": "Giá Trị Đích (Points To)",
+        "txtLabel": "Bản Ghi TXT (Xác Minh Quyền Sở Hữu)",
+        "txtHost": "Tên Bản Ghi TXT",
+        "txtValue": "Giá Trị / Mã Xác Minh TXT",
+        "sslDcvLabel": "Bản Ghi Xác Minh Chứng Chỉ SSL DCV",
+        "copy": "Sao Chép",
+        "copied": "Đã Sao Chép!"
+      },
+      "actions": {
+        "verify": "Kiểm Tra Trạng Thái DNS",
+        "verifying": "Đang kiểm tra...",
+        "delete": "Xóa Tên Miền",
+        "deleting": "Đang xóa...",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa tên miền {hostname}?"
+      },
+      "alerts": {
+        "registeredSuccess": "Đăng ký tên miền '{hostname}' thành công. Vui lòng cấu hình các bản ghi DNS bên dưới.",
+        "verifiedSuccess": "Đã cập nhật trạng thái tên miền thành công.",
+        "deletedSuccess": "Đã xóa tên miền tùy chỉnh thành công."
+      }
+    },
+    "branding": {
+      "title": "Tùy Biến Thương Hiệu",
+      "description": "Tùy chỉnh nhận diện thị giác, bảng màu sắc và thông tin thương hiệu trên cổng khách hàng của bạn.",
+      "fields": {
+        "agencyName": "Tên Đại Lý / Thương Hiệu",
+        "agencyNamePlaceholder": "VD: Alpha Media Studio",
+        "logoUrl": "Đường Dẫn Ảnh Logo",
+        "logoUrlPlaceholder": "https://example.com/logo.png",
+        "faviconUrl": "Đường Dẫn Favicon",
+        "faviconUrlPlaceholder": "https://example.com/favicon.ico",
+        "primaryColor": "Màu Chủ Đạo (Primary Color)",
+        "primaryColorHelp": "Được áp dụng cho các nút bấm chính, viền tiêu điểm và điểm nhấn thương hiệu.",
+        "accentColor": "Màu Điểm Nhấn (Accent Color)",
+        "accentColorHelp": "Được áp dụng cho huy hiệu, thanh nổi bật và các thành phần gây chú ý phụ.",
+        "pageTitle": "Tiêu Đề Trang Trình Duyệt",
+        "pageTitlePlaceholder": "VD: Alpha Media — Nền Tảng Video AI",
+        "footerText": "Văn Bản Chân Trang / Bản Quyền",
+        "footerTextPlaceholder": "© 2026 Alpha Media Studio. Bản quyền thuộc về doanh nghiệp."
+      },
+      "swatches": {
+        "indigo": "Tím Indigo Điện Quang",
+        "violet": "Tím Hoàng Gia",
+        "emerald": "Xanh Ngọc Lục Bảo",
+        "rose": "Đỏ Hoa Hồng",
+        "amber": "Hổ Phách Cyber",
+        "cyan": "Xanh Neon Cyan"
+      },
+      "actions": {
+        "save": "Lưu Cấu Hình Thương Hiệu",
+        "saving": "Đang lưu...",
+        "saved": "Đã lưu cấu hình nhận diện thương hiệu thành công!",
+        "reset": "Đặt Lại Mặc Định"
+      }
+    },
+    "preview": {
+      "title": "Xem Trước Nhận Diện Trực Tiếp",
+      "subtitle": "Mô phỏng tức thì thanh điều hướng, phần giới thiệu chính, nút bấm hành động và bảng màu sắc đại lý.",
+      "badge": "Cổng Doanh Nghiệp",
+      "navHome": "Trang Chủ",
+      "navCampaigns": "Xưởng Video",
+      "navAnalytics": "Báo Cáo",
+      "heroHeading": "Cỗ Máy Sản Xuất Video AI Thế Hệ Mới",
+      "heroSubheading": "Tạo nội dung video chuẩn chuyên nghiệp, tăng tương tác đột phá trên YouTube và mạng xã hội.",
+      "primaryCta": "Bắt Đầu Chiến Dịch",
+      "secondaryCta": "Khám Phá Kịch Bản Mẫu",
+      "sampleCardTitle": "Quy Trình Tự Động Hóa 100%",
+      "sampleCardDesc": "Đồng bộ giọng đọc AI đa phân luồng và kết xuất khung hình tự động với hiệu năng tối ưu."
+    },
+    "errors": {
+      "domainRequired": "Vui lòng nhập tên miền hợp lệ.",
+      "saveFailed": "Không thể lưu cấu hình nhãn trắng.",
+      "verifyFailed": "Không thể kiểm tra trạng thái tên miền.",
+      "deleteFailed": "Không thể xóa tên miền."
+    }
+  },
+  "auditVault": {
+    "title": "Kho Nhật Ký Kiểm Toán Mật Mã",
+    "subtitle": "Sổ cái kiểm toán bảo mật bất biến theo chuẩn SOC 2 CC7.2 với cơ chế phát hiện giả mạo chuỗi băm.",
+    "verifyChain": "Xác Thực Chuỗi Băm",
+    "verifying": "Đang xác thực...",
+    "verifiedBadge": "Chuỗi Hợp Lệ ✅ (Đã kiểm tra {count} sự kiện)",
+    "tamperBadge": "Cảnh Báo Giả Mạo ⚠️ (Lỗi tại bản ghi số {index})",
+    "pendingBadge": "Chưa Kiểm Tra (Bấm để xác thực)",
+    "genesisHash": "Mã Băm Khởi Nguyên",
+    "latestHash": "Mã Băm Mới Nhất",
+    "totalEvents": "Tổng Sự Kiện",
+    "verifiedAt": "Thời Điểm Kiểm Tra",
+    "filters": {
+      "title": "Bộ Lọc",
+      "allActions": "Tất Cả Tác Vụ",
+      "searchActor": "Tìm theo email hoặc ID người thực hiện...",
+      "action": "Tác Vụ",
+      "resourceType": "Loại Tài Nguyên",
+      "from": "Từ Ngày",
+      "to": "Đến Ngày",
+      "apply": "Áp Dụng Bộ Lọc",
+      "reset": "Đặt Lại"
+    },
+    "table": {
+      "status": "Toàn Vẹn",
+      "timestamp": "Thời Gian",
+      "action": "Tác Vụ",
+      "actor": "Người Thực Hiện",
+      "resource": "Tài Nguyên",
+      "contentHash": "Mã Băm Nội Dung",
+      "actions": "Thao Tác",
+      "viewDetails": "Xem Chi Tiết",
+      "empty": "Không tìm thấy sự kiện kiểm toán nào phù hợp với bộ lọc.",
+      "copyHash": "Sao chép mã băm",
+      "copied": "Đã chép!"
+    },
+    "modal": {
+      "title": "Chi Tiết Sự Kiện Kiểm Toán",
+      "eventInfo": "Thông Tin Sự Kiện",
+      "eventId": "Mã Định Danh (ID)",
+      "timestamp": "Thời Điểm Ghi Nhận",
+      "actor": "Người Thực Hiện",
+      "action": "Tác Vụ",
+      "resourceType": "Loại Tài Nguyên",
+      "resourceId": "Mã Tài Nguyên",
+      "ipAddress": "Địa Chỉ IP",
+      "userAgent": "Trình Duyệt / Ứng Dụng",
+      "cryptographicLink": "Liên Kết Chuỗi Mật Mã",
+      "prevHash": "Mã Băm Bản Ghi Trước (prev_hash)",
+      "genesisEvent": "Bản ghi khởi nguyên (prev_hash là null)",
+      "contentHash": "Mã Băm Nội Dung (content_hash)",
+      "hashFormula": "sha256(prev_hash + timestamp + action + actor + payload)",
+      "payload": "Dữ Liệu Chi Tiết (JSON)",
+      "close": "Đóng"
+    },
+    "pagination": {
+      "showing": "Hiển thị từ {start} đến {end} trong tổng số {total} sự kiện",
+      "previous": "Trước",
+      "next": "Tiếp theo"
+    }
+  },
+  "enterpriseSso": {
+    "title": "Đăng Nhập Một Lần Doanh Nghiệp (SSO)",
+    "subtitle": "Đăng nhập một lần SAML 2.0 & OIDC tập trung với tính năng tự động nhận diện tên miền tổ chức.",
+    "addButton": "Cấu Hình Nhà Cung Cấp SSO",
+    "domain": "Tên Miền Công Ty",
+    "providerType": "Giao Thức Nhà Cung Cấp",
+    "issuer": "Đường Dẫn Issuer URL",
+    "clientId": "Client ID",
+    "clientSecret": "Client Secret",
+    "ssoUrl": "Đường Dẫn Đăng Nhập SSO",
+    "certificate": "Chứng Chỉ X.509",
+    "enabled": "Trạng Thái",
+    "statusActive": "Đang Hoạt Động",
+    "statusDisabled": "Tạm Tắt",
+    "save": "Lưu Cấu Hình",
+    "saving": "Đang lưu...",
+    "delete": "Xóa",
+    "emptyTitle": "Chưa Cấu Hình SSO Doanh Nghiệp",
+    "emptyDesc": "Kết nối Google Workspace, Microsoft Entra ID (Azure AD), hoặc Okta qua giao thức SAML 2.0 hoặc OIDC."
+  },
+  "enterpriseBilling": {
+    "title": "Cỗ Máy Thanh Toán Kênh Đôi & Hóa Đơn Điện Tử",
+    "subtitle": "Tỷ giá hối đoái đa tiền tệ theo thời gian thực, chiết khấu 20% cam kết năm và xuất hóa đơn GTGT tuân thủ pháp lý.",
+    "multiCurrency": {
+      "title": "Định Giá Đa Tiền Tệ Thời Gian Thực",
+      "subtitle": "Tự động chuyển đổi tỷ giá giữa USD, VND, EUR, JPY và SGD với cơ chế bộ đệm đa tầng bảo vệ.",
+      "baseCurrency": "Đồng Tiền Cơ Sở",
+      "targetCurrency": "Đồng Tiền Hiển Thị",
+      "exchangeRate": "Tỷ Giá Hối Đoái",
+      "lastUpdated": "Cập Nhật Lần Cuối",
+      "liveRate": "Tỷ Giá Trực Tiếp",
+      "fallbackRate": "Tỷ Giá Dự Phòng",
+      "usd": "Đô la Mỹ (USD)",
+      "vnd": "Việt Nam Đồng (VND)",
+      "eur": "Đồng Euro (EUR)",
+      "jpy": "Yên Nhật (JPY)",
+      "sgd": "Đô la Singapore (SGD)"
+    },
+    "annualCommitment": {
+      "title": "Cơ Chế Cam Kết Năm & Bù Trừ Linh Hoạt",
+      "subtitle": "Tiết kiệm 20% (tương đương tặng 2 tháng miễn phí) khi cam kết theo năm cùng thuật toán bù trừ prorated.",
+      "badge": "Tiết Kiệm 20%",
+      "twoMonthsFree": "Tặng 2 Tháng Miễn Phí",
+      "annualQuote": "Báo Giá Cam Kết Năm",
+      "monthlyEquivalent": "Giá Trị Trung Bình Tháng",
+      "billedAnnually": "Thanh toán hàng năm",
+      "totalSavings": "Tổng Tiết Kiệm Năm",
+      "upgradeProration": "Bù Trừ Nâng Cấp Linh Hoạt",
+      "daysRemaining": "Số Ngày Còn Lại Trong Chu Kỳ",
+      "unusedCredit": "Số Dư Chưa Dùng Được Bù Trừ",
+      "proratedCharge": "Chi Phí Gói Mới Tính Theo Ngày",
+      "netAmountDue": "Số Tiền Cần Thanh Toán",
+      "accountCredit": "Tín Dụng Tài Khoản Ghi Nhận"
+    },
+    "invoicing": {
+      "title": "Hóa Đơn Điện Tử & Chứng Từ Thuế Doanh Nghiệp",
+      "subtitle": "Tự động xuất hóa đơn GTGT kèm Mã số thuế Việt Nam (MST) và chứng từ tuân thủ quốc tế W-8BEN/W-9.",
+      "createInvoice": "Tạo Hóa Đơn Mới",
+      "invoiceNumber": "Số Hóa Đơn",
+      "legalName": "Tên Đơn Vị Mua Hàng",
+      "taxId": "Mã Số Thuế (MST / EIN)",
+      "taxFormType": "Mẫu Chứng Từ Thuế",
+      "billingAddress": "Địa Chỉ Đăng Ký Kinh Doanh",
+      "billingCycle": "Chu Kỳ Thanh Toán",
+      "amount": "Cộng Tiền Hàng",
+      "vatRate": "Thuế Suất GTGT",
+      "vatAmount": "Tiền Thuế GTGT",
+      "totalAmount": "Tổng Tiền Thanh Toán",
+      "currency": "Loại Tiền Tệ",
+      "status": "Trạng Thái",
+      "statusDraft": "Bản Nháp",
+      "statusIssued": "Đã Phát Hành",
+      "statusPaid": "Đã Thanh Toán",
+      "statusVoid": "Đã Hủy",
+      "issueDate": "Ngày Phát Hành",
+      "paymentDate": "Ngày Thanh Toán",
+      "actions": "Thao Tác",
+      "viewPrint": "Xem / In Hóa Đơn",
+      "markPaid": "Đánh Dấu Đã Thanh Toán",
+      "issue": "Phát Hành Hóa Đơn",
+      "emptyTitle": "Chưa Có Hóa Đơn Nào",
+      "emptyDesc": "Khởi tạo hóa đơn GTGT doanh nghiệp hoặc chứng từ thanh toán đầu tiên của bạn.",
+      "w8benNotice": "Chứng nhận W-8BEN (Miễn trừ hiệp định cho pháp nhân ngoài Hoa Kỳ)",
+      "w9Notice": "Chứng nhận W-9 (Mã số thuế doanh nghiệp Hoa Kỳ)",
+      "noneNotice": "Hóa đơn thương mại tiêu chuẩn (Không áp dụng miễn trừ)"
+    },
+    "dualRail": {
+      "title": "Đối Soát Tức Thì Webhook Kênh Đôi",
+      "subtitle": "Xử lý thanh toán tự động giữa PayOS VietQR và NOWPayments USDT kèm gửi biên lai Resend tức thì.",
+      "payosRail": "Kênh PayOS (VietQR / Chuyển Khoản Nội Địa VND)",
+      "nowpaymentsRail": "Kênh NOWPayments (USDT / Tiền Mã Hóa)",
+      "subaccountTagging": "Định Danh Tài Khoản Phụ",
+      "receiptDelivered": "Biên Lai Đã Gửi Qua Email",
+      "reconciliationStatus": "Trạng Thái Đối Soát",
+      "instant": "Thanh Toán Tức Thì"
+    }
+  },
+  "videoQueue": {
+    "title": "Hàng Đợi Lô Video & Bộ Điều Phối Lưới GPU Chia Sẻ Công Bằng",
+    "subtitle": "Hệ thống hàng đợi lô phân tán thông lượng cao với phân làn ưu tiên đa tầng, giới hạn tải khách thuê và chuyển đổi dự phòng lưới GPU đa nhà cung cấp.",
+    "lanes": {
+      "priority": "Làn Ưu Tiên (Doanh Nghiệp / Master)",
+      "standard": "Làn Tiêu Chuẩn (Cơ Bản / Pro)",
+      "priorityBadge": "Làn Ưu Tiên",
+      "standardBadge": "Làn Tiêu Chuẩn"
+    },
+    "statuses": {
+      "queued": "Đang Chờ",
+      "leased": "Đã Nhận Xử Lý",
+      "rendering": "Đang Kết Xuất",
+      "completed": "Hoàn Thành",
+      "failed": "Thất Bại",
+      "dlq": "Hàng Đợi Thư Chết (DLQ)"
+    },
+    "providers": {
+      "fal": "fal.ai",
+      "runpod": "RunPod GPU",
+      "replicate": "Replicate",
+      "mekong": "Mekong GPU (Node Cạnh)"
+    },
+    "metrics": {
+      "totalActive": "Render Đang Chạy",
+      "totalQueued": "Job Đang Chờ",
+      "totalDlq": "Hàng Đợi Thư Chết",
+      "throughput": "Thông Lượng",
+      "priorityQueued": "Chờ Ở Làn Ưu Tiên",
+      "standardQueued": "Chờ Ở Làn Tiêu Chuẩn",
+      "concurrencyLimit": "Hạn Mức Đồng Thời Của Tổ Chức",
+      "leasesActive": "Lệnh Đang Thuê"
+    },
+    "actions": {
+      "enqueue": "Đưa Job Vào Hàng Đợi",
+      "cancel": "Hủy Job",
+      "retry": "Thử Lại Job",
+      "leaseNext": "Nhận Job Tiếp Theo",
+      "renewLease": "Gia Hạn Hợp Đồng Xử Lý",
+      "viewDetails": "Xem Chi Tiết Job",
+      "refreshMetrics": "Làm Mới Trạng Thái Hàng Đợi"
+    },
+    "circuitBreaker": {
+      "title": "Bộ Ngắt Mạch Lưới GPU (Circuit Breaker)",
+      "stateClosed": "Mạch Đóng (Bình Thường)",
+      "stateOpen": "Mạch Mở (Tạm Dừng Thử Nghiệm)",
+      "stateHalfOpen": "Mạch Bán Mở (Đang Thăm Dò)",
+      "failoverTriggered": "Đã Kích Hoạt Dự Phòng"
+    },
+    "errors": {
+      "unauthorized": "Yêu cầu đăng nhập để truy cập hàng đợi video.",
+      "databaseUnavailable": "Cơ sở dữ liệu D1 hiện không khả dụng.",
+      "tenantLimitExceeded": "Đã vượt quá hạn ngạch kết xuất đồng thời của tổ chức. Vui lòng đợi các job hiện tại hoàn tất.",
+      "jobNotFound": "Không tìm thấy job kết xuất video hoặc job không thuộc tổ chức của bạn.",
+      "jobNotCancellable": "Job đã hoàn thành hoặc không thể hủy ở trạng thái hiện tại.",
+      "allProvidersFailed": "Tất cả nhà cung cấp GPU trong lưới đều gặp sự cố. Job đã được chuyển sang thử lại hoặc vào DLQ.",
+      "leaseFailed": "Không thể nhận job tiếp theo."
+    },
+    "alerts": {
+      "dlqSubject": "[CẢNH BÁO DLQ] Sự Cố Nghiêm Trọng Khi Kết Xuất Video",
+      "dlqNotification": "Job {id} đã vượt quá số lần thử lại tối đa và đã được đưa vào Hàng đợi Thư Chết (DLQ).",
+      "telegramSent": "Đã gửi thông báo cảnh báo qua Telegram thành công.",
+      "webhookSent": "Đã gửi thông báo tới webhook sự cố thành công."
+    }
   }
 }
+

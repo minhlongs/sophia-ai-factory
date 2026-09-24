@@ -54,7 +54,7 @@ function writeEvidenceFile(data: unknown) {
 }
 
 function runValidator(path: string, args: string[] = []) {
-  return spawnSync('node', [scriptPath, ...args, path], {
+  return spawnSync(process.execPath, [scriptPath, ...args, path], {
     cwd: resolve('.'),
     encoding: 'utf8',
   });

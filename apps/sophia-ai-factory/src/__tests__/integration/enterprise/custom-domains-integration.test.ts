@@ -372,7 +372,7 @@ describe('Enterprise Custom Domains & White-Label — Integration Tests', () => 
       }
     });
 
-    it('rejects registration when organization/user is sub-MASTER tier', async () => {
+    it('rejects registration when organization/user is sub-MASTER/ENTERPRISE tier', async () => {
       mocks.mockGetUserTier.mockResolvedValue('PRO' as unknown as 'MASTER');
       rawDb.exec(`UPDATE subscriptions SET tier = 'PRO', plan = 'pro' WHERE org_id = '${mockOrgId}'`);
 
@@ -380,8 +380,16 @@ describe('Enterprise Custom Domains & White-Label — Integration Tests', () => 
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error.code).toBe('FORBIDDEN');
-        expect(res.error.message).toContain('MASTER tier subscription');
+        expect(res.error.message).toContain('MASTER or ENTERPRISE tier subscription');
       }
+    });
+
+    it('allows registration when organization/user is ENTERPRISE tier', async () => {
+      mocks.mockGetUserTier.mockResolvedValue('ENTERPRISE' as unknown as 'MASTER');
+      rawDb.exec(`UPDATE subscriptions SET tier = 'ENTERPRISE', plan = 'enterprise' WHERE org_id = '${mockOrgId}'`);
+
+      const res = await registerCustomDomainAction(mockOrgId, 'enterprise-portal.domain.com');
+      expect(res.ok).toBe(true);
     });
 
     it('verifies and deletes domain via server actions', async () => {

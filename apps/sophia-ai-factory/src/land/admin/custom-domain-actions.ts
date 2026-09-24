@@ -35,7 +35,7 @@ import { invalidateTenantBrandingCache } from '@/tree/branding/org-branding-repo
 
 // ── Hostname Validation ───────────────────────────────────────────────────────
 
-const HOSTNAME_REGEX = /^(?!-)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$/i;
+const HOSTNAME_REGEX = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 const FORBIDDEN_DOMAINS = new Set([
   'sophia.agencyos.network',
   'agencyos.network',
@@ -71,10 +71,19 @@ export function validateHostname(hostname: string): Result<string, CustomDomainE
     });
   }
 
+  // Enforce TLD rules (at least 2 alphabetic characters, non-numeric)
+  const tld = normalized.slice(normalized.lastIndexOf('.') + 1);
+  if (tld.length < 2 || !/^[a-z]+$/i.test(tld)) {
+    return failure({
+      code: 'INVALID_HOSTNAME',
+      message: 'Invalid hostname format. Must be a valid Fully Qualified Domain Name (e.g., portal.myagency.com)',
+    });
+  }
+
   return success(normalized);
 }
 
-// ── Authorization & MASTER Tier Guard ─────────────────────────────────────────
+// ── Authorization & MASTER/ENTERPRISE Tier Guard ─────────────────────────────
 
 export async function assertMasterTierAndOrgAccess(
   db: D1Database,
@@ -92,35 +101,39 @@ export async function assertMasterTierAndOrgAccess(
     return success({ userId: user.id, isAdmin: true });
   }
 
-  // 1. Verify user is a member of the organization with owner or admin role
+  // 1. Verify user is a member of the organization with owner or admin role (or solo org)
+  const isSoloOrg = orgId === `org-${user.id}`;
   const member = await db
     .prepare('SELECT role FROM org_members WHERE org_id = ?1 AND user_id = ?2 LIMIT 1')
     .bind(orgId, user.id)
     .first<{ role: string }>();
 
-  if (!member || (member.role !== 'owner' && member.role !== 'admin')) {
+  if (!isSoloOrg && (!member || (member.role !== 'owner' && member.role !== 'admin'))) {
     return failure({
       code: 'FORBIDDEN',
       message: 'Only organization owners or admins can manage custom domains',
     });
   }
 
-  // 2. Enforce MASTER tier requirement
+  // 2. Enforce MASTER or ENTERPRISE tier requirement
   const tier = await getUserTier(user.id);
   const orgSub = await db
     .prepare("SELECT tier, plan FROM subscriptions WHERE org_id = ?1 AND status = 'active' LIMIT 1")
     .bind(orgId)
     .first<{ tier: string | null; plan: string | null }>();
 
-  const isMaster =
+  const isMasterOrEnterprise =
     tier === 'MASTER' ||
+    tier === 'ENTERPRISE' ||
     orgSub?.tier === 'MASTER' ||
-    orgSub?.plan?.toLowerCase() === 'master';
+    orgSub?.tier === 'ENTERPRISE' ||
+    orgSub?.plan?.toLowerCase() === 'master' ||
+    orgSub?.plan?.toLowerCase() === 'enterprise';
 
-  if (!isMaster) {
+  if (!isMasterOrEnterprise) {
     return failure({
       code: 'FORBIDDEN',
-      message: 'Custom domains require a MASTER tier subscription ($4,999 lifetime license)',
+      message: 'Custom domains require a MASTER or ENTERPRISE tier subscription',
     });
   }
 

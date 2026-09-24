@@ -237,3 +237,32 @@ export * from './telegram-sales';
 export * from './growth';
 export * from './affiliate-expansion-types';
 export * from './unit-economics-types';
+export type {
+  QueueLane,
+  JobStatus,
+  GpuProvider,
+  CircuitBreakerState,
+  VideoRenderRow,
+  VideoRenderJob,
+  EnqueueJobInput,
+  SchedulerConfig,
+  LeaseJobResult,
+  QueueMetrics,
+  DlqAlertPayload,
+} from './video-render-queue';
+export {
+  ALL_QUEUE_LANES,
+  isQueueLane,
+  ALL_JOB_STATUSES,
+  isJobStatus,
+  ALL_GPU_PROVIDERS,
+  isGpuProvider,
+  ALL_CIRCUIT_BREAKER_STATES,
+  isCircuitBreakerState,
+  PRIORITY_SCORES,
+  getPriorityScoreForTier,
+  getLaneForTier,
+  DEFAULT_SCHEDULER_CONFIG,
+  parseJobPayload,
+  mapRowToJob,
+} from './video-render-queue';

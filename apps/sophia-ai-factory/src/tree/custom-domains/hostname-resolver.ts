@@ -22,6 +22,8 @@ export interface TenantHostnameContext {
   tenantOrgId: string | null;
   /** Normalized custom domain string, or null */
   customDomain: string | null;
+  /** Optional raw or resolved hostname string */
+  hostname?: string;
   /** True only if active=1 AND ssl_status='active' */
   whitelabelActive: boolean;
   /** Current SSL certificate status */
@@ -80,10 +82,8 @@ export function normalizeHostname(rawHost: string | null | undefined): string {
     }
   }
 
-  // Strip trailing dot (DNS FQDN)
-  if (host.endsWith('.')) {
-    host = host.slice(0, -1);
-  }
+  // Strip trailing dots (DNS FQDN)
+  host = host.replace(/\.+$/, '');
 
   return host;
 }
@@ -91,7 +91,7 @@ export function normalizeHostname(rawHost: string | null | undefined): string {
 /**
  * Checks if a hostname belongs to platform infrastructure or local development.
  * Ignores:
- * - localhost, 127.0.0.1, ::1
+ * - localhost, 127.0.0.1 (IPv4 loopback block 127.0.0.0/8), ::1
  * - sophia.agencyos.network and *.agencyos.network
  * - *.pages.dev (Cloudflare Pages preview deployments)
  * - *.workers.dev (Cloudflare Workers preview deployments)
@@ -104,7 +104,7 @@ export function isInternalOrCanonicalHostname(hostname: string): boolean {
 
   // Localhost or IPv4 loopback
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) return true;
-  if (hostname.startsWith('127.') || hostname === '0.0.0.0') return true;
+  if (/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/.test(hostname) || hostname === '0.0.0.0') return true;
 
   // Cloudflare edge platform domains
   if (hostname.endsWith('.pages.dev') || hostname === 'pages.dev') return true;
@@ -279,20 +279,29 @@ export function clearHostnameCache(): void {
 
 /**
  * Injects resolved tenant headers into requestHeaders for downstream Next.js handlers.
+ * Deletes untrusted incoming client headers to prevent spoofing, and URI-encodes
+ * domain strings to guarantee WHATWG ByteString compliance.
  */
 export function injectTenantRoutingHeaders(
   requestHeaders: Headers,
   context: TenantHostnameContext,
 ): void {
+  // Delete untrusted client incoming headers
+  requestHeaders.delete('x-tenant-org-id');
+  requestHeaders.delete('x-custom-domain');
+  requestHeaders.delete('x-whitelabel-active');
+
+  const domainValue = context.customDomain || context.hostname || '';
+
   if (context.whitelabelActive && context.tenantOrgId) {
     requestHeaders.set('x-tenant-org-id', context.tenantOrgId);
-    requestHeaders.set('x-custom-domain', context.customDomain ?? '');
+    requestHeaders.set('x-custom-domain', encodeURI(domainValue));
     requestHeaders.set('x-whitelabel-active', 'true');
-  } else if (context.isCustomDomain && context.customDomain) {
+  } else if (context.isCustomDomain && domainValue) {
     if (context.tenantOrgId) {
       requestHeaders.set('x-tenant-org-id', context.tenantOrgId);
     }
-    requestHeaders.set('x-custom-domain', context.customDomain);
+    requestHeaders.set('x-custom-domain', encodeURI(domainValue));
     requestHeaders.set('x-whitelabel-active', 'false');
   } else {
     requestHeaders.set('x-whitelabel-active', 'false');

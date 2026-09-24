@@ -284,6 +284,48 @@ try {
   })
 } catch { /* non-fatal */ }
 
+// Dual-rail instant reconciliation: send receipt email via Resend
+try {
+  const { sendReceiptEmail } = await import('@/land/billing/email/receipt-email-sender')
+  const { data: userRow } = await db.from('user').select('name,email').eq('id', userId).maybeSingle()
+  const userEmail = (userRow as { name?: string; email?: string } | null)?.email
+  const userName = (userRow as { name?: string; email?: string } | null)?.name
+
+  if (userEmail) {
+    await sendReceiptEmail({
+      email: userEmail,
+      userName: userName ?? undefined,
+      tier,
+      period: billingPeriod,
+      amountUsd: Math.round(amount / 25000),
+      paymentId: `payos_${orderCode}`,
+      paymentMethod: 'payos',
+      orderId,
+      locale: 'vi',
+    })
+  }
+} catch (receiptErr) {
+  logger.warn('[PayOS IPN] Receipt email failed (non-fatal)', { error: String(receiptErr) })
+}
+
+// Tag client subaccount if payment originated from a subaccount
+const orderSubaccountId = (matchOrder as Record<string, unknown>)?.subaccount_id as string | undefined
+if (orderSubaccountId) {
+  try {
+    const d1 = await getD1()
+    if (d1) {
+      await d1
+        .prepare(`UPDATE client_subaccounts SET updated_at = datetime('now') WHERE id = ?1`)
+        .bind(orderSubaccountId)
+        .run()
+        .catch(() => {})
+    }
+    logger.info('[PayOS IPN] Tagged client subaccount', { subaccountId: orderSubaccountId, orderId })
+  } catch (subaccountErr) {
+    logger.warn('[PayOS IPN] Subaccount tagging failed (non-fatal)', { error: String(subaccountErr) })
+  }
+}
+
 // 3. Update the lock record to processed on success, save final amount
 await db.from('payos_events').update({ processed: 1, amount }).eq('event_id', eventId)
 

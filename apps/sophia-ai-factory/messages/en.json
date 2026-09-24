@@ -8207,5 +8207,342 @@
     "languageEn": "English",
     "languageVi": "Tiếng Việt",
     "emptySearch": "No runbooks match your search criteria."
+  },
+  "whiteLabel": {
+    "title": "Enterprise White-Label & Custom Domains",
+    "subtitle": "Provision custom branded hostnames with automated Cloudflare SSL certificates and real-time tenant styling.",
+    "tabs": {
+      "domains": "Custom Domains",
+      "branding": "Brand Styling",
+      "preview": "Live Preview"
+    },
+    "domains": {
+      "title": "Registered Custom Domains",
+      "description": "Map your agency domain to Sophia AI Factory. We automatically provision edge SSL certificates via Cloudflare for SaaS.",
+      "inputPlaceholder": "portal.youragency.com",
+      "addButton": "Add Custom Domain",
+      "adding": "Registering...",
+      "emptyTitle": "No custom domains registered yet",
+      "emptyDescription": "Add your first custom hostname above to deliver a 100% white-labeled AI video portal to your clients.",
+      "table": {
+        "hostname": "Hostname",
+        "sslStatus": "SSL Status",
+        "verification": "DNS Verification",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "pendingValidation": "Validating SSL",
+        "pendingDeployment": "Deploying Edge SSL",
+        "error": "SSL Error",
+        "revoked": "Revoked",
+        "verified": "Verified",
+        "pending": "Pending DNS",
+        "failed": "Failed"
+      },
+      "dnsInstructions": {
+        "title": "DNS Configuration Instructions",
+        "subtitle": "Add the following DNS records at your domain registrar (Cloudflare, Namecheap, GoDaddy, Route53, etc.):",
+        "cnameLabel": "CNAME Record (Routing)",
+        "cnameHost": "Host / Subdomain",
+        "cnameTarget": "Target / Points To",
+        "txtLabel": "TXT Record (Ownership Verification)",
+        "txtHost": "TXT Host Name",
+        "txtValue": "TXT Value / Token",
+        "sslDcvLabel": "SSL DCV Validation Record",
+        "copy": "Copy",
+        "copied": "Copied!"
+      },
+      "actions": {
+        "verify": "Verify DNS Status",
+        "verifying": "Checking...",
+        "delete": "Delete Domain",
+        "deleting": "Deleting...",
+        "confirmDelete": "Are you sure you want to remove domain {hostname}?"
+      },
+      "alerts": {
+        "registeredSuccess": "Custom domain '{hostname}' registered successfully. Please add the DNS records below.",
+        "verifiedSuccess": "Domain status refreshed successfully.",
+        "deletedSuccess": "Custom domain removed successfully."
+      }
+    },
+    "branding": {
+      "title": "Brand Customizer",
+      "description": "Customize your client portal's visual identity, palette, and typography tokens.",
+      "fields": {
+        "agencyName": "Agency / Brand Name",
+        "agencyNamePlaceholder": "e.g. Acme Video Studio",
+        "logoUrl": "Logo Image URL",
+        "logoUrlPlaceholder": "https://example.com/logo.png",
+        "faviconUrl": "Favicon URL",
+        "faviconUrlPlaceholder": "https://example.com/favicon.ico",
+        "primaryColor": "Primary Brand Color",
+        "primaryColorHelp": "Used for main buttons, focus rings, and primary visual accents.",
+        "accentColor": "Accent Color",
+        "accentColorHelp": "Used for badges, highlights, and secondary attention elements.",
+        "pageTitle": "Browser Page Title",
+        "pageTitlePlaceholder": "e.g. Acme Studio — AI Video Platform",
+        "footerText": "Custom Footer Copyright Text",
+        "footerTextPlaceholder": "© 2026 Acme Video Studio. All rights reserved."
+      },
+      "swatches": {
+        "indigo": "Electric Indigo",
+        "violet": "Purple Royalty",
+        "emerald": "Emerald Mint",
+        "rose": "Crimson Rose",
+        "amber": "Cyber Amber",
+        "cyan": "Neon Cyan"
+      },
+      "actions": {
+        "save": "Save Branding Settings",
+        "saving": "Saving...",
+        "saved": "Branding configuration saved successfully!",
+        "reset": "Reset to Defaults"
+      }
+    },
+    "preview": {
+      "title": "Live Interactive Brand Preview",
+      "subtitle": "Instant visual simulation of your portal header, hero section, CTA buttons, and brand palette.",
+      "badge": "Enterprise Portal",
+      "navHome": "Home",
+      "navCampaigns": "Video Studio",
+      "navAnalytics": "Analytics",
+      "heroHeading": "Next-Gen AI Video Engine",
+      "heroSubheading": "Produce sovereign, high-retention video content at scale for YouTube and social networks.",
+      "primaryCta": "Start Campaign",
+      "secondaryCta": "Explore Templates",
+      "sampleCardTitle": "Automated Content Production",
+      "sampleCardDesc": "Multi-track voiceover and B-roll alignment powered by autonomous AI agent meshes."
+    },
+    "errors": {
+      "domainRequired": "Please enter a valid hostname.",
+      "saveFailed": "Failed to save white-label branding.",
+      "verifyFailed": "Failed to verify domain status.",
+      "deleteFailed": "Failed to delete domain."
+    }
+  },
+  "auditVault": {
+    "title": "Cryptographic Hash-Chain Audit Vault",
+    "subtitle": "Immutable, tamper-evident security audit ledger conforming to SOC 2 CC7.2 standards.",
+    "verifyChain": "Verify Hash Chain",
+    "verifying": "Verifying...",
+    "verifiedBadge": "Chain Verified ✅ ({count} events validated)",
+    "tamperBadge": "Tamper Alert ⚠️ (Corrupted at index {index})",
+    "pendingBadge": "Unverified Chain (Run verification)",
+    "genesisHash": "Genesis Hash",
+    "latestHash": "Latest Hash",
+    "totalEvents": "Total Events",
+    "verifiedAt": "Verified At",
+    "filters": {
+      "title": "Filters",
+      "allActions": "All Actions",
+      "searchActor": "Search actor ID or email...",
+      "action": "Action",
+      "resourceType": "Resource Type",
+      "from": "From Date",
+      "to": "To Date",
+      "apply": "Apply Filters",
+      "reset": "Reset Filters"
+    },
+    "table": {
+      "status": "Integrity",
+      "timestamp": "Timestamp",
+      "action": "Action",
+      "actor": "Actor",
+      "resource": "Resource",
+      "contentHash": "Content Hash",
+      "actions": "Actions",
+      "viewDetails": "View Details",
+      "empty": "No audit events found matching the specified filters.",
+      "copyHash": "Copy Hash",
+      "copied": "Copied!"
+    },
+    "modal": {
+      "title": "Audit Event Details",
+      "eventInfo": "Event Information",
+      "eventId": "Event ID",
+      "timestamp": "Timestamp",
+      "actor": "Actor",
+      "action": "Action",
+      "resourceType": "Resource Type",
+      "resourceId": "Resource ID",
+      "ipAddress": "IP Address",
+      "userAgent": "User Agent",
+      "cryptographicLink": "Cryptographic Chain Link",
+      "prevHash": "Previous Hash (prev_hash)",
+      "genesisEvent": "Genesis Record (prev_hash is null)",
+      "contentHash": "Content Hash (content_hash)",
+      "hashFormula": "sha256(prev_hash + timestamp + action + actor + payload)",
+      "payload": "Payload (JSON)",
+      "close": "Close"
+    },
+    "pagination": {
+      "showing": "Showing {start} to {end} of {total} events",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "enterpriseSso": {
+    "title": "Enterprise SSO & Identity Governance",
+    "subtitle": "Centralized corporate SAML 2.0 & OIDC Single Sign-On with automatic domain routing.",
+    "addButton": "Configure SSO Provider",
+    "domain": "Corporate Domain",
+    "providerType": "Provider Type",
+    "issuer": "Issuer URL",
+    "clientId": "Client ID",
+    "clientSecret": "Client Secret",
+    "ssoUrl": "SSO Login URL",
+    "certificate": "X.509 Certificate",
+    "enabled": "Enabled",
+    "statusActive": "Active",
+    "statusDisabled": "Disabled",
+    "save": "Save Configuration",
+    "saving": "Saving...",
+    "delete": "Delete",
+    "emptyTitle": "No Enterprise SSO Providers Configured",
+    "emptyDesc": "Connect Google Workspace, Microsoft Entra ID (Azure AD), or Okta via SAML 2.0 or OIDC."
+  },
+  "enterpriseBilling": {
+    "title": "Cross-Border Dual-Rail Billing & E-Invoicing",
+    "subtitle": "Real-time multi-currency exchange rates, 20% annual commitment discounts, and compliant VAT e-invoicing.",
+    "multiCurrency": {
+      "title": "Dynamic Multi-Currency",
+      "subtitle": "Automated currency conversion across USD, VND, EUR, JPY, and SGD with multi-tier resilience.",
+      "baseCurrency": "Base Currency",
+      "targetCurrency": "Display Currency",
+      "exchangeRate": "Exchange Rate",
+      "lastUpdated": "Last Updated",
+      "liveRate": "Live Market Rate",
+      "fallbackRate": "Bedrock Fallback Rate",
+      "usd": "US Dollar (USD)",
+      "vnd": "Vietnamese Dong (VND)",
+      "eur": "Euro (EUR)",
+      "jpy": "Japanese Yen (JPY)",
+      "sgd": "Singapore Dollar (SGD)"
+    },
+    "annualCommitment": {
+      "title": "Annual Commitment Engine",
+      "subtitle": "Save 20% (equivalent to 2 months free) with annual commitments and dynamic proration.",
+      "badge": "Save 20%",
+      "twoMonthsFree": "2 Months Free",
+      "annualQuote": "Annual Commitment Quote",
+      "monthlyEquivalent": "Monthly Equivalent",
+      "billedAnnually": "Billed annually at",
+      "totalSavings": "Total Annual Savings",
+      "upgradeProration": "Dynamic Upgrade Proration",
+      "daysRemaining": "Days Remaining in Cycle",
+      "unusedCredit": "Unused Balance Credited",
+      "proratedCharge": "Prorated Charge",
+      "netAmountDue": "Net Amount Due",
+      "accountCredit": "Account Credit Scheduled"
+    },
+    "invoicing": {
+      "title": "Compliant E-Invoicing & VAT",
+      "subtitle": "Automated VAT invoices with Vietnamese Tax ID (MST) and international W-8BEN/W-9 certifications.",
+      "createInvoice": "Create New Invoice",
+      "invoiceNumber": "Invoice Number",
+      "legalName": "Customer Legal Name",
+      "taxId": "Tax Identification (MST / EIN)",
+      "taxFormType": "Tax Compliance Form",
+      "billingAddress": "Billing Address",
+      "billingCycle": "Billing Cycle",
+      "amount": "Subtotal",
+      "vatRate": "VAT Rate",
+      "vatAmount": "VAT Amount",
+      "totalAmount": "Total Amount",
+      "currency": "Currency",
+      "status": "Status",
+      "statusDraft": "Draft",
+      "statusIssued": "Issued",
+      "statusPaid": "Paid",
+      "statusVoid": "Void",
+      "issueDate": "Issue Date",
+      "paymentDate": "Payment Date",
+      "actions": "Actions",
+      "viewPrint": "View / Print Invoice",
+      "markPaid": "Mark as Paid",
+      "issue": "Issue Invoice",
+      "emptyTitle": "No Invoices Found",
+      "emptyDesc": "Generate your first enterprise VAT invoice or payment receipt.",
+      "w8benNotice": "W-8BEN Certified (Non-US entity treaty benefit)",
+      "w9Notice": "W-9 Certified (US taxpayer identification)",
+      "noneNotice": "Standard Commercial Invoice (No treaty cert)"
+    },
+    "dualRail": {
+      "title": "Dual-Rail Webhook Instant Reconciliation",
+      "subtitle": "Automated settlement across PayOS VietQR and NOWPayments USDT with Resend email receipt delivery.",
+      "payosRail": "PayOS (VietQR / Domestic VND)",
+      "nowpaymentsRail": "NOWPayments (USDT / Crypto)",
+      "subaccountTagging": "Client Subaccount Tagging",
+      "receiptDelivered": "Receipt Email Dispatched",
+      "reconciliationStatus": "Reconciliation Status",
+      "instant": "Instant Settlement"
+    }
+  },
+  "videoQueue": {
+    "title": "Video Render Jobs Queue & Fair-Share GPU Scheduler",
+    "subtitle": "High-throughput distributed batch queue with multi-lane priority arbitration, tenant throttling, and multi-provider GPU mesh failover.",
+    "lanes": {
+      "priority": "Priority Lane (Enterprise / Master)",
+      "standard": "Standard Lane (Basic / Pro)",
+      "priorityBadge": "Priority Lane",
+      "standardBadge": "Standard Lane"
+    },
+    "statuses": {
+      "queued": "Queued",
+      "leased": "Leased",
+      "rendering": "Rendering",
+      "completed": "Completed",
+      "failed": "Failed",
+      "dlq": "Dead-Letter Queue (DLQ)"
+    },
+    "providers": {
+      "fal": "fal.ai",
+      "runpod": "RunPod GPU",
+      "replicate": "Replicate",
+      "mekong": "Mekong GPU (Edge Node)"
+    },
+    "metrics": {
+      "totalActive": "Active Renders",
+      "totalQueued": "Queued Jobs",
+      "totalDlq": "Dead-Letter Queue",
+      "throughput": "Throughput",
+      "priorityQueued": "Priority Queued",
+      "standardQueued": "Standard Queued",
+      "concurrencyLimit": "Tenant Concurrency Limit",
+      "leasesActive": "Active Leases"
+    },
+    "actions": {
+      "enqueue": "Enqueue Video Job",
+      "cancel": "Cancel Job",
+      "retry": "Retry Job",
+      "leaseNext": "Lease Next Job",
+      "renewLease": "Renew Lease",
+      "viewDetails": "View Job Details",
+      "refreshMetrics": "Refresh Queue Status"
+    },
+    "circuitBreaker": {
+      "title": "GPU Mesh Circuit Breaker",
+      "stateClosed": "Circuit Closed (Healthy)",
+      "stateOpen": "Circuit Open (Cooling Down)",
+      "stateHalfOpen": "Circuit Half-Open (Probing)",
+      "failoverTriggered": "Failover Triggered"
+    },
+    "errors": {
+      "unauthorized": "Authentication required to access video queue.",
+      "databaseUnavailable": "D1 Database binding is currently unavailable.",
+      "tenantLimitExceeded": "Tenant active render concurrency limit exceeded. Please wait for current renders to finish.",
+      "jobNotFound": "Video render job not found or does not belong to your organization.",
+      "jobNotCancellable": "Job is already completed or cannot be cancelled in its current state.",
+      "allProvidersFailed": "All GPU providers in the mesh failed. Job routed to retry or DLQ.",
+      "leaseFailed": "Failed to lease next job."
+    },
+    "alerts": {
+      "dlqSubject": "[DLQ ALERT] Video Render Job Terminal Failure",
+      "dlqNotification": "Job {id} exceeded maximum retries and has been routed to the Dead-Letter Queue.",
+      "telegramSent": "Telegram alert dispatched successfully.",
+      "webhookSent": "Incident webhook dispatched successfully."
+    }
   }
 }
+

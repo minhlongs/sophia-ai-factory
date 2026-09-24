@@ -10,6 +10,13 @@ import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
 import { handlePublicPipeline } from './middleware/public-pipeline';
 import { checkAuthRateLimit, checkAdminRateLimit } from '@/forest/middleware/rate-limiter';
+import {
+  resolveTenantFromHostname,
+  injectTenantRoutingHeaders,
+  extractHostname,
+  isInternalOrCanonicalHostname,
+} from '@/tree/custom-domains/hostname-resolver';
+import { getD1 } from '@/seed/db/client';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 /** L2: apply security headers to error responses that bypass the normal pipeline */
@@ -140,6 +147,20 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const nonce = generateNonce();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(CSP_NONCE_HEADER, nonce);
+
+  // Enterprise White-Label: Edge Tenant Context Extraction
+  const host = extractHostname(request);
+  let db: D1Database | null = null;
+  if (!isInternalOrCanonicalHostname(host)) {
+    try {
+      db = await getD1();
+    } catch {
+      // Graceful fallback if DB binding unavailable at edge init
+    }
+  }
+  const tenantContext = await resolveTenantFromHostname(db, host);
+  injectTenantRoutingHeaders(requestHeaders, tenantContext);
+
   if (requiresCsrfCheck(pathname, request.method) && !verifyCsrfToken(request)) {
     return csrfForbiddenResponse();
   }
