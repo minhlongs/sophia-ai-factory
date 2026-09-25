@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 import React from 'react';
 import type { Metadata } from 'next';
 import { getD1 } from '@/seed/db/client';
-import { DealsAdminDashboard } from '@/forest/deals/deals-admin-dashboard';
+import { DealsAdminDashboard } from '@/app/components/deals/deals-admin-dashboard';
 import {
   queryEnterpriseDeals,
   getDealsPipelineMetrics,

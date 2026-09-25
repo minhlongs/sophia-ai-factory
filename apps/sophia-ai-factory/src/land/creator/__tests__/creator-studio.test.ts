@@ -336,7 +336,8 @@ describe('Creator Studio & Dual-Rail Withdrawal Service', () => {
         destinationAddress: '0x1111222233334444555566667777888899990000',
       });
 
-      const withdrawalId = created.request?.id!;
+      expect(created.request).toBeDefined();
+      const withdrawalId = created.request!.id;
       const processRes = await processWithdrawalRequest(
         mockD1,
         withdrawalId,

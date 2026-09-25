@@ -465,7 +465,7 @@ export function generateViralMetadata(input: ViralMetadataInput): ViralMetadataR
     HOOK_TEMPLATES_BY_LANGUAGE[targetLanguage] ?? HOOK_TEMPLATES_BY_LANGUAGE.en;
   const templateFn =
     languageTemplates[hookArchetype] ?? languageTemplates.curiosity_gap;
-  let rawTitle = templateFn(topic);
+  const rawTitle = templateFn(topic);
 
   // Platform title constraints
   let hookTitle = rawTitle;

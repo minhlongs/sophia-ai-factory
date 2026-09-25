@@ -453,7 +453,7 @@ describe('Empirical Challenger: M3 Failover Mesh & SLA Monitor Adversarial Suite
     it('2.5 Circuit breaker enforces 300s cooldown from OPEN to HALF_OPEN and requires 3 consecutive successes before CLOSED', async () => {
       // Step 1: Trip circuit to OPEN
       await tripCircuitBreaker(db, 'us', 'Adversarial probe trip', NOW);
-      let health = await getRegionHealth(db, 'us');
+      const health = await getRegionHealth(db, 'us');
       expect(health?.circuitBreakerState).toBe('OPEN');
 
       // Step 2: Probe before cooldown elapses (NOW + 100s < 300s)

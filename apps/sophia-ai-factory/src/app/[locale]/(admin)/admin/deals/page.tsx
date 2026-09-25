@@ -17,7 +17,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
 import { getD1 } from '@/seed/db/client';
-import { DealsAdminDashboard } from '@/forest/deals/deals-admin-dashboard';
+import { DealsAdminDashboard } from '@/app/components/deals/deals-admin-dashboard';
 import {
   queryEnterpriseDeals,
   getDealsPipelineMetrics,

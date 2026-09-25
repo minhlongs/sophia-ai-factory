@@ -39,12 +39,14 @@ import type {
   SandboxProvisionResult,
   ProposalLanguage,
 } from '@/seed/types/enterprise-deal';
-import { DealsKanbanBoard } from './deals-kanban-board';
-import { DealDetailDrawer } from './deal-detail-drawer';
-import { MeetingPrepModal } from './meeting-prep-modal';
-import { ProposalGeneratorModal } from './proposal-generator-modal';
-import { SandboxProvisionModal } from './sandbox-provision-modal';
-import { NewDealModal } from './new-deal-modal';
+import {
+  DealsKanbanBoard,
+  DealDetailDrawer,
+  MeetingPrepModal,
+  ProposalGeneratorModal,
+  SandboxProvisionModal,
+  NewDealModal,
+} from '@/forest/deals';
 import {
   createEnterpriseDealAction,
   updateEnterpriseDealAction,

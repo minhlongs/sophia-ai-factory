@@ -6,7 +6,6 @@
  * @module forest/deals
  */
 
-export * from './deals-admin-dashboard';
 export * from './deals-kanban-board';
 export * from './deal-detail-drawer';
 export * from './meeting-prep-modal';
