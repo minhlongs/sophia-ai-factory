@@ -11,8 +11,8 @@ describe('Auth & Locale Routing Middleware', () => {
     expect(location).toBe('http://localhost/');
   });
 
-  it('redirects unsupported locales (/ja/pricing) to /', async () => {
-    const req = new NextRequest('http://localhost/ja/pricing');
+  it('redirects unsupported locales (/de/pricing) to /', async () => {
+    const req = new NextRequest('http://localhost/de/pricing');
     const res = await proxy(req);
     expect(res.status).toBe(307);
     const location = res.headers.get('location');

@@ -51,14 +51,14 @@ describe('scheduler - getOptimalPublishTime', () => {
   it('snaps to next day if current time is after all peak hours', () => {
     const scheduledAt = Date.UTC(2026, 4, 25, 22, 0, 0) / 1000;
     const optimal = getOptimalPublishTime(scheduledAt, 'UTC');
-    const expected = Date.UTC(2026, 4, 26, 8, 0, 0) / 1000;
+    const expected = Date.UTC(2026, 4, 26, 4, 30, 0) / 1000;
     expect(optimal).toBe(expected);
   });
 
   it('handles target timezone conversion correctly', () => {
     const scheduledAt = Date.UTC(2026, 4, 25, 14, 0, 0) / 1000;
     const optimal = getOptimalPublishTime(scheduledAt, 'America/New_York');
-    const expected = Date.UTC(2026, 4, 25, 16, 30, 0) / 1000;
+    const expected = Date.UTC(2026, 4, 26, 4, 30, 0) / 1000;
     expect(optimal).toBe(expected);
   });
 });

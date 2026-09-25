@@ -103,12 +103,12 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 41 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(41);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(41);
+    it('expected key list holds exactly 42 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(42);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(42);
     });
 
-    it('Events record key set exactly matches the 41 expected keys', () => {
+    it('Events record key set exactly matches the 42 expected keys', () => {
       // Compile-time: keysAreExact is `true` only if keyof Events === expected.
       expect(keysAreExact).toBe(true);
     });
