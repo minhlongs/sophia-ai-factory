@@ -17,10 +17,12 @@ import {
   Tag,
   TrendingUp,
   Calculator,
+  Briefcase,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Enterprise Deals", href: "/admin/deals", icon: Briefcase },
   { name: "Growth Analytics", href: "/admin/growth-analytics", icon: TrendingUp },
   { name: "Unit Economics", href: "/admin/unit-economics", icon: Calculator },
   { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },

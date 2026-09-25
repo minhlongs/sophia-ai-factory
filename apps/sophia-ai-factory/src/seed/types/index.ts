@@ -240,6 +240,7 @@ export * from './affiliate-expansion-types';
 export * from './dubbing';
 export * from './apac-syndication';
 export * from './unit-economics-types';
+export * from './enterprise-deal';
 export type {
   QueueLane,
   JobStatus,
