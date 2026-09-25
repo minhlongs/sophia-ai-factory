@@ -16,6 +16,11 @@ import { checkCooldown } from '@/forest/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, ChannelProvider } from './publisher-interface';
 import { randomUUID } from 'crypto';
+import type { ApacMarket } from '@/seed/types/apac-syndication';
+import {
+  calculateNextPeakPublishTime,
+  detectMarketFromTimezone,
+} from '@/tree/publishing/apac-peak-optimizer';
 
 export interface SchedulePublishInput {
   videoJobId: string;
@@ -29,6 +34,7 @@ export interface SchedulePublishInput {
   audienceTimezone?: string;
   optimizeSchedule?: boolean;
   staggerMinutes?: number;
+  market?: ApacMarket;
 }
 
 export interface DeferredChannel {
@@ -45,130 +51,18 @@ export interface SchedulePublishResult {
   deferred: DeferredChannel[];
 }
 
-function getAbsoluteTimestamp(
-  year: number,
-  month: number,
-  day: number,
-  hour: number,
-  minute: number,
-  tz: string,
+/**
+ * Calculate the next optimal peak publishing time using the APAC Peak-Time Optimizer.
+ * Optimizes for top APAC markets (Hà Nội, Tokyo, Bangkok, Seoul, Singapore).
+ */
+export function getOptimalPublishTime(
+  scheduledAtSec: number,
+  tz: string = 'Asia/Ho_Chi_Minh',
+  market?: ApacMarket,
 ): number {
-  const utcEstimate = Date.UTC(year, month - 1, day, hour, minute);
-  let date = new Date(utcEstimate);
-  for (let iter = 0; iter < 3; iter++) {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: tz,
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false,
-    });
-    const p: { [key: string]: string } = {};
-    formatter.formatToParts(date).forEach((part) => {
-      p[part.type] = part.value;
-    });
-
-    const dateYear = parseInt(p.year, 10);
-    const dateMonth = parseInt(p.month, 10);
-    const dateDay = parseInt(p.day, 10);
-    const dateHour = parseInt(p.hour, 10);
-    const dateMinute = parseInt(p.minute, 10);
-
-    const diffMs =
-      Date.UTC(year, month - 1, day, hour, minute) -
-      Date.UTC(dateYear, dateMonth - 1, dateDay, dateHour, dateMinute);
-    if (diffMs === 0) break;
-    date = new Date(date.getTime() + diffMs);
-  }
-  return Math.floor(date.getTime() / 1000);
-}
-
-export function getOptimalPublishTime(scheduledAtSec: number, tz: string): number {
-  const date = new Date(scheduledAtSec * 1000);
-  const parts: { [key: string]: string } = {};
-  let targetTz = tz;
-
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: targetTz,
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false,
-    });
-    formatter.formatToParts(date).forEach((p) => {
-      parts[p.type] = p.value;
-    });
-  } catch {
-    targetTz = 'UTC';
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'UTC',
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false,
-    });
-    formatter.formatToParts(date).forEach((p) => {
-      parts[p.type] = p.value;
-    });
-  }
-
-  const year = parseInt(parts.year, 10);
-  const month = parseInt(parts.month, 10);
-  const day = parseInt(parts.day, 10);
-  const hour = parseInt(parts.hour, 10);
-  const minute = parseInt(parts.minute, 10);
-
-  const currentMinutes = hour * 60 + minute;
-  const PEAK_SLOTS = [
-    { hour: 8, minute: 0 },
-    { hour: 12, minute: 30 },
-    { hour: 18, minute: 30 },
-    { hour: 21, minute: 0 },
-  ];
-
-  let selectedSlot = PEAK_SLOTS[0];
-  let isNextDay = true;
-
-  for (const slot of PEAK_SLOTS) {
-    const slotMinutes = slot.hour * 60 + slot.minute;
-    if (slotMinutes >= currentMinutes) {
-      selectedSlot = slot;
-      isNextDay = false;
-      break;
-    }
-  }
-
-  if (isNextDay) {
-    const nextDayDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-    const partsNext: { [key: string]: string } = {};
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: targetTz,
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false,
-    });
-    formatter.formatToParts(nextDayDate).forEach((p) => {
-      partsNext[p.type] = p.value;
-    });
-
-    const nYear = parseInt(partsNext.year, 10);
-    const nMonth = parseInt(partsNext.month, 10);
-    const nDay = parseInt(partsNext.day, 10);
-
-    return getAbsoluteTimestamp(nYear, nMonth, nDay, selectedSlot.hour, selectedSlot.minute, targetTz);
-  }
-
-  return getAbsoluteTimestamp(year, month, day, selectedSlot.hour, selectedSlot.minute, targetTz);
+  const targetMarket: ApacMarket = market || detectMarketFromTimezone(tz);
+  const peak = calculateNextPeakPublishTime(scheduledAtSec * 1000, targetMarket);
+  return Math.floor(peak.scheduledAtMs / 1000);
 }
 
 /**
@@ -231,7 +125,11 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
 
     let effectiveScheduledAt = scheduledAt;
     if (optimizeSchedule) {
-      effectiveScheduledAt = getOptimalPublishTime(effectiveScheduledAt, audienceTimezone || 'UTC');
+      effectiveScheduledAt = getOptimalPublishTime(
+        effectiveScheduledAt,
+        audienceTimezone || 'Asia/Ho_Chi_Minh',
+        input.market,
+      );
     }
 
     // Stagger consecutive channels

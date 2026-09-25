@@ -27,6 +27,7 @@ import type {
   ProductionGraphFailedEvent,
   ProductionGraphCancelledEvent,
 } from "@/seed/types/production-factory";
+import type { DubbingJobInput } from "@/seed/types/dubbing";
 
 type CampaignCreatedEvent = {
   data: {
@@ -225,6 +226,7 @@ export type Events = {
   "video.composed": VideoJobPayload;
   "video.uploaded": VideoJobPayload;
   "video.published": VideoJobPayload;
+  "video.dubbing.requested": { data: DubbingJobInput };
   "publish.scheduled": VideoJobPayload;
   "publish.token.refresh": { data: Record<string, never> };
   "video/generate.requested": VideoGenerateRequestedEvent;

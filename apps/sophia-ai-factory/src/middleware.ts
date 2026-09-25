@@ -16,6 +16,8 @@ import {
   extractHostname,
   isInternalOrCanonicalHostname,
 } from '@/tree/custom-domains/hostname-resolver';
+import { resolveApacLocale } from '@/tree/localization/geo-router';
+import { SUPPORTED_LOCALES } from './middleware/middleware-shared-config';
 import { getD1 } from '@/seed/db/client';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
@@ -53,15 +55,13 @@ function initializeWAEBinding(): void {
   waeInitialized = true;
 }
 
-const SUPPORTED_LOCALES = ['en', 'vi'] as const;
-
 function isSupportedLocale(segment: string | undefined): boolean {
-  return segment !== undefined && SUPPORTED_LOCALES.includes(segment as 'en' | 'vi');
+  return segment !== undefined && (SUPPORTED_LOCALES as readonly string[]).includes(segment);
 }
 
 function isUnsupportedLocale(segment: string | undefined): boolean {
   if (!segment) return false;
-  // Detect ISO/BCP-47 language tags (e.g. /zh-CN, /ja, /fr, /de) that are not supported
+  // Detect ISO/BCP-47 language tags (e.g. /zh-CN, /fr, /de) that are not supported
   const isLocalePattern = /^[a-z]{2}(?:-[a-zA-Z]{2,4})?$/i.test(segment);
   return isLocalePattern && !isSupportedLocale(segment);
 }
@@ -97,11 +97,13 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
     };
     const barePath = pathLocale && isSupportedLocale(pathLocale) ? pathname.slice(`/${pathLocale}`.length) || '/' : pathname;
     if (REDIRECTS[barePath]) {
-      const locale = isSupportedLocale(pathLocale) ? pathLocale! : 'vi';
+      const locale = isSupportedLocale(pathLocale)
+        ? pathLocale!
+        : resolveApacLocale(request.headers.get('cf-ipcountry'), request.headers.get('accept-language'));
       return NextResponse.redirect(new URL(`/${locale}${REDIRECTS[barePath]}`, request.url), 307);
     }
 
-    // Reject unsupported locale segments (e.g. /zh-CN, /ja, /fr) and redirect to root (/)
+    // Reject unsupported locale segments (e.g. /zh-CN, /fr, /de) and redirect to root (/)
     if (isUnsupportedLocale(pathLocale)) {
       return redirectToDefault(request);
     }
@@ -124,7 +126,9 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   if (sp.get('tab') === 'signup') {
     const isHomepage = pathname === '/' || (isSupportedLocale(pathLocale) && pathname === `/${pathLocale}`);
     if (isHomepage) {
-      const locale = isSupportedLocale(pathLocale) ? pathLocale! : 'vi';
+      const locale = isSupportedLocale(pathLocale)
+        ? pathLocale!
+        : resolveApacLocale(request.headers.get('cf-ipcountry'), request.headers.get('accept-language'));
       const p = new URLSearchParams({ tab: 'signup' });
       for (const k of ['coupon', 'tier', 'redirect'] as const) {
         const v = sp.get(k);

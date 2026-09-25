@@ -102,38 +102,55 @@ export async function accrueCreatorLedgerEntryCAS(
   const status = entry.status ?? 'pending';
   const metadataJson = JSON.stringify(entry.metadata ?? {});
 
-  // 1. Deduplication probe (idempotent lookup)
-  try {
-    const existing = await db
-      .prepare(
-        `SELECT id, balance_after_cents, amount_cents, sequence_num 
-         FROM creator_earnings_ledger 
-         WHERE creator_id = ? AND reference_id = ? AND (event_type = ? OR source_type = ?) 
-         LIMIT 1`,
-      )
-      .bind(entry.creatorId, entry.referenceId, eventType, sourceType)
-      .first<{
-        id: string;
-        balance_after_cents?: number;
-        amount_cents?: number;
-        sequence_num?: number;
-      }>();
+  // Helper for idempotent deduplication probe
+  const probeExisting = async (): Promise<AccrueLedgerResult | null> => {
+    try {
+      const existing = await db
+        .prepare(
+          `SELECT id, balance_after_cents, amount_cents, sequence_num 
+           FROM creator_earnings_ledger 
+           WHERE creator_id = ? AND reference_id = ? AND (event_type = ? OR source_type = ?) 
+           LIMIT 1`,
+        )
+        .bind(entry.creatorId, entry.referenceId, eventType, sourceType)
+        .first<{
+          id: string;
+          balance_after_cents?: number;
+          amount_cents?: number;
+          sequence_num?: number;
+        }>();
 
-    if (existing) {
-      return {
-        success: true,
-        ledgerId: existing.id,
-        newBalanceCents: existing.balance_after_cents ?? existing.amount_cents ?? entry.amountCents,
-        sequenceNum: existing.sequence_num ?? 1,
-      };
+      if (existing) {
+        return {
+          success: true,
+          ledgerId: existing.id,
+          newBalanceCents: existing.balance_after_cents ?? existing.amount_cents ?? entry.amountCents,
+          sequenceNum: existing.sequence_num ?? 1,
+        };
+      }
+    } catch {
+      // If table doesn't support complex where clause, proceed to insert
     }
-  } catch {
-    // If table doesn't support complex where clause, proceed to insert
+    return null;
+  };
+
+  // 1. Initial deduplication probe (fast path for sequential idempotency)
+  const initialExisting = await probeExisting();
+  if (initialExisting) {
+    return initialExisting;
   }
 
   // 2. CAS optimistic insertion loop
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
+      // 2a. Re-probe deduplication before subsequent retry attempts
+      if (attempt > 0) {
+        const retryExisting = await probeExisting();
+        if (retryExisting) {
+          return retryExisting;
+        }
+      }
+
       let lastSeq = 0;
       let currentBalance = 0;
 
@@ -200,32 +217,60 @@ export async function accrueCreatorLedgerEntryCAS(
         const errStr = String(insertErr);
         if (errStr.includes('no column named') || errStr.includes('has no column named')) {
           // Backward-compatible fallback for minimal/test harness schema
-          await db
-            .prepare(
-              `INSERT INTO creator_earnings_ledger (
-                id, creator_id, source_type, reference_id, amount_cents, status, created_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            )
-            .bind(
-              ledgerId,
-              entry.creatorId,
-              sourceType,
-              entry.referenceId,
-              entry.amountCents,
-              status,
-              nowMs,
-            )
-            .run();
+          try {
+            await db
+              .prepare(
+                `INSERT INTO creator_earnings_ledger (
+                  id, creator_id, source_type, reference_id, amount_cents, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              )
+              .bind(
+                ledgerId,
+                entry.creatorId,
+                sourceType,
+                entry.referenceId,
+                entry.amountCents,
+                status,
+                nowMs,
+              )
+              .run();
 
-          return {
-            success: true,
-            ledgerId,
-            newBalanceCents: nextBalance,
-            sequenceNum: nextSeq,
-          };
+            return {
+              success: true,
+              ledgerId,
+              newBalanceCents: nextBalance,
+              sequenceNum: nextSeq,
+            };
+          } catch (fallbackErr: unknown) {
+            const fallbackErrStr = String(fallbackErr);
+            if (
+              fallbackErrStr.includes('UNIQUE') ||
+              fallbackErrStr.includes('PRIMARY KEY') ||
+              fallbackErrStr.includes('constraint')
+            ) {
+              const fallbackDedup = await probeExisting();
+              if (fallbackDedup) {
+                return fallbackDedup;
+              }
+            }
+            throw fallbackErr;
+          }
         }
 
-        // Unique constraint conflict on sequence_num or reference_id
+        // Immediate deduplication re-probe on UNIQUE constraint conflict
+        // If another concurrent worker inserted the identical reference_id, return immediately
+        if (
+          errStr.includes('UNIQUE') ||
+          errStr.includes('PRIMARY KEY') ||
+          errStr.includes('constraint')
+        ) {
+          const conflictExisting = await probeExisting();
+          if (conflictExisting) {
+            return conflictExisting;
+          }
+        }
+
+        // Unique constraint conflict on sequence_num (OCC CAS collision on distinct transactions)
         if (attempt < maxRetries - 1) {
           // Full jitter exponential backoff
           const maxDelay = 10 * Math.pow(2, attempt);
@@ -238,6 +283,11 @@ export async function accrueCreatorLedgerEntryCAS(
       }
     } catch (err: unknown) {
       if (attempt === maxRetries - 1) {
+        // Final safety net probe before returning error
+        const finalExisting = await probeExisting();
+        if (finalExisting) {
+          return finalExisting;
+        }
         return {
           success: false,
           ledgerId: '',
@@ -247,6 +297,12 @@ export async function accrueCreatorLedgerEntryCAS(
         };
       }
     }
+  }
+
+  // Final safety net probe before returning error
+  const finalExisting = await probeExisting();
+  if (finalExisting) {
+    return finalExisting;
   }
 
   return {

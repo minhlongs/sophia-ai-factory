@@ -2,8 +2,9 @@ import { getRequestConfig } from 'next-intl/server';
 
 import { logger } from '@/seed/utils/logger-utility';
 
-// Can be imported from a shared config
-const locales = ['en', 'vi'] as const;
+import { SUPPORTED_LOCALES } from './middleware/middleware-shared-config';
+
+const locales = SUPPORTED_LOCALES;
 const defaultLocale: (typeof locales)[number] = 'vi';
 
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {

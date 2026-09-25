@@ -24,6 +24,8 @@ import { classifyError } from '@/seed/types/failure-kind';
 import { NICHE_PROFILES } from '@/tree/viral/hook-prompts';
 import { tiktokAdapter } from './tiktok-adapter';
 import { youtubeAdapter } from './youtube-adapter';
+import { instagramAdapter } from './instagram-adapter';
+import { facebookAdapter } from '@/tree/publishing/facebook-adapter';
 
 const SERVICE_PREFIX = 'viral-distributor' as const;
 
@@ -90,7 +92,18 @@ export function buildTelegramDeepLink(options: TelegramDeepLinkOptions): string 
     return `https://t.me/${botUsername}?start=${encodeURIComponent(customStart.trim())}`;
   }
 
-  const cleanPlatform = platform === 'x' ? 'tw' : platform === 'youtube_shorts' ? 'yt' : 'tt';
+  const cleanPlatform =
+    platform === 'x' || platform === 'twitter'
+      ? 'tw'
+      : platform === 'youtube_shorts'
+        ? 'yt'
+        : platform === 'tiktok'
+          ? 'tt'
+          : platform === 'instagram_reels'
+            ? 'ig'
+            : platform === 'facebook_reels'
+              ? 'fb'
+              : 'so';
   const cleanVideoId = videoId.startsWith('vid_') ? videoId.slice(4) : videoId;
   const startPayload = referralCode
     ? `vid_${cleanVideoId}_${cleanPlatform}_ref_${referralCode}`
@@ -197,6 +210,30 @@ export function formatPlatformCaption(
       break;
     }
 
+    case 'instagram_reels': {
+      const leadIn = scriptText?.slice(0, 150) || videoTitle.slice(0, 150);
+      caption = `${leadIn}\n\n` +
+        `🚀 Deploy your autonomous AI video system:\n${trackedUrl}\n\n` +
+        `💬 Interactive Telegram Bot Demo (Instant Video Sample):\n${telegramDeepLink}\n\n` +
+        `${tags} #ReelsInstagram #ReelsViral #InstaReels #SophiaAI`;
+      if (caption.length > 2200) {
+        caption = caption.slice(0, 2200);
+      }
+      break;
+    }
+
+    case 'facebook_reels': {
+      const leadIn = scriptText?.slice(0, 150) || videoTitle.slice(0, 150);
+      caption = `${leadIn}\n\n` +
+        `🔥 Xem chi tiết hệ thống video AI tự động 24/7:\n${trackedUrl}\n\n` +
+        `📲 Trải nghiệm bot demo tức thì trên Telegram:\n${telegramDeepLink}\n\n` +
+        `${tags} #FBReels #ReelsFacebook #VideoTrending #SophiaAI`;
+      if (caption.length > 2200) {
+        caption = caption.slice(0, 2200);
+      }
+      break;
+    }
+
     default: {
       caption = `${videoTitle}\n\n${trackedUrl}\n${telegramDeepLink}\n${tags}`;
       break;
@@ -239,12 +276,17 @@ export async function publishSinglePlatform(
 
   try {
     // Determine if we have live provider keys to dispatch genuine external upload
+    const byokRecord = input.byokKeys as Record<string, string | undefined> | undefined;
     const byokKey =
       platform === 'tiktok'
-        ? input.byokKeys?.tiktokApiKey
+        ? byokRecord?.tiktokApiKey
         : platform === 'youtube_shorts'
-          ? input.byokKeys?.youtubeApiKey
-          : input.byokKeys?.twitterApiKey;
+          ? byokRecord?.youtubeApiKey
+          : platform === 'instagram_reels'
+            ? (byokRecord?.instagramApiKey || byokRecord?.metaApiKey)
+            : platform === 'facebook_reels'
+              ? (byokRecord?.facebookApiKey || byokRecord?.metaApiKey)
+              : byokRecord?.twitterApiKey;
 
     let postId = `post_${platform}_${input.videoId}_${Date.now()}`;
     let postUrl: string | undefined = undefined;
@@ -274,6 +316,28 @@ export async function publishSinglePlatform(
         postId = res.platformVideoId;
         status = input.scheduledAt ? 'scheduled' : 'published';
         postUrl = res.url || `https://www.youtube.com/shorts/${postId}`;
+      } else if (platform === 'instagram_reels') {
+        const res = await instagramAdapter.uploadVideo(byokKey, {
+          videoUrl: input.videoUrl,
+          title: input.videoTitle.slice(0, 150),
+          description: caption,
+          privacy: 'public',
+          tags: ['Reels', input.niche],
+        });
+        postId = res.platformVideoId;
+        status = 'published';
+        postUrl = res.url || `https://www.instagram.com/reel/${postId}`;
+      } else if (platform === 'facebook_reels') {
+        const res = await facebookAdapter.uploadVideo(byokKey, {
+          videoUrl: input.videoUrl,
+          title: input.videoTitle.slice(0, 150),
+          description: caption,
+          privacy: 'public',
+          tags: ['FBReels', input.niche],
+        });
+        postId = res.platformVideoId;
+        status = 'published';
+        postUrl = res.url || `https://www.facebook.com/reel/${postId}`;
       } else if (platform === 'twitter' || platform === 'x') {
         const tweetRes = await fetch('https://api.x.com/2/tweets', {
           method: 'POST',
@@ -299,6 +363,10 @@ export async function publishSinglePlatform(
         postUrl = `https://www.tiktok.com/@sophia_ai/video/${postId}`;
       } else if (platform === 'youtube_shorts') {
         postUrl = `https://www.youtube.com/shorts/${postId}`;
+      } else if (platform === 'instagram_reels') {
+        postUrl = `https://www.instagram.com/reel/${postId}`;
+      } else if (platform === 'facebook_reels') {
+        postUrl = `https://www.facebook.com/reel/${postId}`;
       } else {
         postUrl = `https://x.com/Sophia_AIFactory/status/${postId}`;
       }
@@ -351,7 +419,7 @@ export async function publishToViralPlatforms(
 ): Promise<ViralPublishResult> {
   const platforms = input.platforms && input.platforms.length > 0
     ? input.platforms
-    : (['tiktok', 'youtube_shorts', 'twitter'] as ViralPlatform[]);
+    : (['youtube_shorts', 'tiktok', 'instagram_reels', 'facebook_reels'] as ViralPlatform[]);
 
   const results: Partial<Record<ViralPlatform, PlatformPublishResult>> = {};
   let publishedCount = 0;

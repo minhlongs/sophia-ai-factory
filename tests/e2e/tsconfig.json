@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../../apps/sophia-ai-factory/src/*"],
+      "@/seed/*": ["../../apps/sophia-ai-factory/src/seed/*"],
+      "@/tree/*": ["../../apps/sophia-ai-factory/src/tree/*"],
+      "@/forest/*": ["../../apps/sophia-ai-factory/src/forest/*"],
+      "@/land/*": ["../../apps/sophia-ai-factory/src/land/*"]
+    }
+  },
+  "include": ["**/*.ts"]
+}

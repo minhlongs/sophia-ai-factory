@@ -235,3 +235,197 @@ export const PreflightCheckResultSchema = z.object({
   error: z.string().optional(),
 });
 export type PreflightCheckResult = z.infer<typeof PreflightCheckResultSchema>;
+
+// ─── Milestone 2: Creator Templates & 70/30 Royalty Protocol ─────────────────
+
+export const TemplateStatusSchema = z.enum([
+  'draft',
+  'pending',
+  'approved',
+  'rejected',
+  'archived',
+]);
+export type TemplateStatus = z.infer<typeof TemplateStatusSchema>;
+
+export const CreatorTemplatePlatformSchema = z.enum([
+  'tiktok',
+  'youtube_shorts',
+  'instagram_reels',
+  'facebook_reels',
+]);
+export type CreatorTemplatePlatform = z.infer<typeof CreatorTemplatePlatformSchema>;
+
+export const CreatorTemplateSchema = z.object({
+  id: z.string(),
+  creatorId: z.string(),
+  tenantId: z.string(),
+  title: z.string().min(1),
+  description: z.string().optional().nullable(),
+  niche: z.string().default('general'),
+  targetPlatform: CreatorTemplatePlatformSchema.default('tiktok'),
+  aspectRatio: z.enum(['9:16', '16:9', '1:1']).default('9:16'),
+  hookStyle: z.string().default('curiosity_gap'),
+  scriptTemplate: z.string().min(1),
+  storyboardJson: z.string().default('[]'),
+  visualStylePrompt: z.string().min(1),
+  musicPrompt: z.string().optional().nullable(),
+  voiceProfile: z.string().optional().nullable(),
+  priceCents: z.number().int().nonnegative().default(0),
+  royaltyPct: z.number().min(0).max(100).default(70.0),
+  status: TemplateStatusSchema.default('pending'),
+  qualityScore: z.number().optional().default(0),
+  reviewFeedback: z.string().optional().nullable(),
+  useCount: z.number().int().nonnegative().default(0),
+  rating: z.number().min(0).max(5).default(0.0),
+  reviewCount: z.number().int().nonnegative().default(0),
+  createdAt: z.number(),
+  updatedAt: z.number().optional(),
+});
+export type CreatorTemplate = z.infer<typeof CreatorTemplateSchema>;
+
+export const CreateTemplateInputSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  niche: z.string().default('general'),
+  targetPlatform: CreatorTemplatePlatformSchema.default('tiktok'),
+  aspectRatio: z.enum(['9:16', '16:9', '1:1']).default('9:16'),
+  hookStyle: z.string().default('curiosity_gap'),
+  scriptTemplate: z.string().min(1, 'Script template is required'),
+  storyboardJson: z.string().optional(),
+  visualStylePrompt: z.string().min(1, 'Visual style prompt is required'),
+  musicPrompt: z.string().optional(),
+  voiceProfile: z.string().optional(),
+  priceCents: z.number().int().nonnegative().default(0),
+});
+export type CreateTemplateInput = z.infer<typeof CreateTemplateInputSchema>;
+
+// ─── Dual-Rail Creator Payouts & VietQR ───────────────────────────────────────
+
+export const PayoutRailSchema = z.enum(['USDT', 'VIETQR']);
+export type PayoutRail = z.infer<typeof PayoutRailSchema>;
+
+export const WithdrawalStatusSchema = z.enum([
+  'pending',
+  'processing',
+  'completed',
+  'rejected',
+  'cancelled',
+]);
+export type WithdrawalStatus = z.infer<typeof WithdrawalStatusSchema>;
+
+export const VietQrBankingConfigSchema = z.object({
+  bankBin: z.string().regex(/^\d{6}$/, 'Bank BIN must be exactly 6 digits'),
+  bankAccountNumber: z.string().min(4, 'Account number must be at least 4 chars').max(30),
+  bankAccountName: z.string().min(2, 'Account holder name is required').max(100),
+});
+export type VietQrBankingConfig = z.infer<typeof VietQrBankingConfigSchema>;
+
+export const WithdrawalRequestSchema = z.object({
+  id: z.string(),
+  creatorId: z.string(),
+  amountCents: z.number().int().positive(),
+  currency: z.string().default('USD'),
+  rail: PayoutRailSchema,
+  destinationAddress: z.string().optional().nullable(),
+  bankBin: z.string().optional().nullable(),
+  bankAccountNumber: z.string().optional().nullable(),
+  bankAccountName: z.string().optional().nullable(),
+  status: WithdrawalStatusSchema.default('pending'),
+  txHash: z.string().optional().nullable(),
+  adminNotes: z.string().optional().nullable(),
+  createdAt: z.number(),
+  updatedAt: z.number().optional(),
+});
+export type WithdrawalRequest = z.infer<typeof WithdrawalRequestSchema>;
+
+export const CreateWithdrawalInputSchema = z
+  .object({
+    amountCents: z
+      .number()
+      .int()
+      .min(5000, 'Minimum withdrawal amount is $50.00 (5,000 cents)'),
+    rail: PayoutRailSchema,
+    destinationAddress: z.string().optional(),
+    bankBin: z.string().optional(),
+    bankAccountNumber: z.string().optional(),
+    bankAccountName: z.string().optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.rail === 'USDT') {
+      if (!val.destinationAddress || val.destinationAddress.trim().length < 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['destinationAddress'],
+          message: 'Valid USDT wallet address is required for USDT rail',
+        });
+      }
+    } else if (val.rail === 'VIETQR') {
+      if (!val.bankBin || !/^\d{6}$/.test(val.bankBin.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bankBin'],
+          message: 'Valid 6-digit NAPAS bank BIN is required for VietQR rail',
+        });
+      }
+      if (!val.bankAccountNumber || val.bankAccountNumber.trim().length < 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bankAccountNumber'],
+          message: 'Bank account number is required for VietQR rail',
+        });
+      }
+      if (!val.bankAccountName || val.bankAccountName.trim().length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bankAccountName'],
+          message: 'Account holder name is required for VietQR rail',
+        });
+      }
+    }
+  });
+export type CreateWithdrawalInput = z.infer<typeof CreateWithdrawalInputSchema>;
+
+// ─── Template Activation & Royalty Split ─────────────────────────────────────
+
+export const TemplateRoyaltySplitSchema = z.object({
+  creatorCents: z.number().int().nonnegative(),
+  platformCents: z.number().int().nonnegative(),
+});
+export type TemplateRoyaltySplit = z.infer<typeof TemplateRoyaltySplitSchema>;
+
+export const TemplateActivationInputSchema = z.object({
+  templateId: z.string().min(1),
+  creatorId: z.string().min(1),
+  activatingUserId: z.string().min(1),
+  tenantId: z.string().min(1),
+  videoJobId: z.string().min(1),
+  priceCents: z.number().int().nonnegative().optional(),
+});
+export type TemplateActivationInput = z.infer<typeof TemplateActivationInputSchema>;
+
+export const TemplateActivationResultSchema = z.object({
+  success: z.boolean(),
+  activationId: z.string(),
+  creatorCents: z.number().int().nonnegative(),
+  platformCents: z.number().int().nonnegative(),
+  ledgerId: z.string(),
+  sequenceNum: z.number().int().nonnegative(),
+  newBalanceCents: z.number().int().nonnegative(),
+  error: z.string().optional(),
+});
+export type TemplateActivationResult = z.infer<typeof TemplateActivationResultSchema>;
+
+// ─── Creator Studio Analytics ────────────────────────────────────────────────
+
+export const CreatorStudioStatsSchema = z.object({
+  totalTemplates: z.number().int().nonnegative(),
+  totalUses: z.number().int().nonnegative(),
+  grossEarningsCents: z.number().int().nonnegative(),
+  creatorRoyaltyCents: z.number().int().nonnegative(),
+  platformFeesCents: z.number().int().nonnegative(),
+  availableBalanceCents: z.number().int().nonnegative(),
+  pendingBalanceCents: z.number().int().nonnegative(),
+  averageRating: z.number().min(0).max(5),
+  totalReviews: z.number().int().nonnegative(),
+});
+export type CreatorStudioStats = z.infer<typeof CreatorStudioStatsSchema>;

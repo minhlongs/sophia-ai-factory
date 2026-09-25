@@ -1239,4 +1239,87 @@ Tối ưu hóa năng lực kết xuất video đồng thời cho 125–250+ khá
 - [ ] Deployed commit SHA khớp bit-for-bit với live edge https://sophia.agencyos.network/api/version.
 - [ ] Sophia Doctor (node apps/sophia-ai-factory/scripts/sophia-doctor.mjs) báo cáo 11/11 GREEN (100% pass score).
 
+## 2026-09-24T16:38:00Z
+
+Triển khai Cỗ máy Lồng tiếng Video AI Đa ngôn ngữ APAC, Chợ Nhà sáng tạo & Lưới Phát hành Đa nền tảng Tự động (APAC Multi-Language AI Video Dubbing, Creator Marketplace & Autonomous Syndication Mesh Engine) nhằm chinh phục cột mốc $100,000 MRR và phục vụ 500 khách hàng trả phí khu vực Châu Á - Thái Bình Dương cho Sophia AI Factory: xây dựng Cỗ máy Lồng tiếng Video & Bản địa hóa 5 Ngôn ngữ APAC (APAC 5-Language Video Voice Dubbing & AI Translation Engine: VI, EN, JA, KO, TH kèm phụ đề tự động SRT/VTT), triển khai Chợ Mẫu Video Nhà sáng tạo & Giao thức Chia sẻ Doanh thu 70/30 (Autonomous Creator Marketplace & 70/30 Royalty Revenue-Sharing Protocol với Cổng Quản trị /creator/studio), xây dựng Cỗ máy Lên lịch & Phát hành Đa nền tảng Tự động (Multi-Platform Automated Video Syndication cho YouTube Shorts, TikTok, Instagram Reels, Facebook Reels với bộ tối ưu múi giờ vàng APAC), thiết lập Hệ thống Phát Video Luồng Thích ứng & Mạng Phân phối Cạnh Toàn cầu (Global Edge CDN Video Caching & Adaptive HLS Streaming qua Cloudflare Stream & R2 với hình mờ bản quyền động), và xác thực triển khai sản xuất qua GitHub Actions CI/CD và Sophia Doctor 11/11 GREEN.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/mrr-roadmap.md
+- MONEY_GRAPH.md
+- BUSINESS_MODEL.md
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/land/video/publishing/
+- apps/sophia-ai-factory/src/forest/publishing/
+- apps/sophia-ai-factory/src/seed/types/creator-marketplace.ts
+- apps/sophia-ai-factory/src/tree/creator-royalties/
+
+## Requirements
+
+### R1. APAC Multi-Language Localization & Autonomous Video Voice Dubbing Engine
+Mở rộng tệp khách hàng sang các thị trường tăng trưởng cao tại khu vực APAC (Việt Nam, Nhật Bản, Hàn Quốc, Thái Lan, Singapore):
+- Hệ thống Lồng tiếng Video AI Tự động (Video Voice Dubbing Pipeline): Tự động trích xuất âm thanh, phiên âm lời thoại (Whisper/STT), dịch thuật ngữ cảnh sang 5 ngôn ngữ (Tiếng Việt, Tiếng Anh, Tiếng Nhật, Tiếng Hàn, Tiếng Thái) và sinh âm thanh lồng tiếng chuẩn bản xứ (ElevenLabs / Edge TTS) đồng bộ theo nhịp video.
+- Tạo tệp phụ đề đa ngôn ngữ đồng bộ (SRT / VTT subtitles) và xuất bản video hỗ trợ đa luồng âm thanh hoặc video hardcoded subtitle theo yêu cầu chiến dịch.
+- Bộ định tuyến bản địa hóa thông minh: Tự động nhận diện ngôn ngữ trình duyệt / vị trí địa lý của khách hàng để hiển thị giao diện, video mẫu và trang thanh toán tương ứng.
+
+### R2. Autonomous Creator Marketplace & 70/30 Royalty Revenue-Sharing Protocol
+Mở rộng kho ý tưởng và mẫu video bằng cách kết nối các chuyên gia sáng tạo nội dung hàng đầu:
+- Kho Lưu trữ Mẫu Video Nhà sáng tạo (creator_templates trong D1): Cho phép Top Creator và Agency đóng gói các kịch bản video viral, cấu trúc storyboard, prompt phong cách hình ảnh và âm nhạc bản quyền thành các Mẫu (Templates) có thể tái sử dụng.
+- Giao thức Phân bổ Doanh thu Tự động (70/30 Royalty Split): Tự động trích 70% phí mẫu cho tác giả và 30% cho nền tảng Sophia AI Factory mỗi khi mẫu được người dùng kích hoạt tạo video.
+- Cổng Quản trị Nhà sáng tạo song ngữ VI/EN (/creator/studio, /vi/creator/studio): Theo dõi lượt sử dụng mẫu, doanh thu lũy kế, tỷ lệ đánh giá và yêu cầu rút tiền hoa hồng về ví USDT hoặc tài khoản ngân hàng VietQR.
+
+### R3. Multi-Platform Automated Syndication & APAC Peak-Time Scheduling Engine
+Tự động hóa hoàn toàn quy trình phân phối video lên tất cả các mạng xã hội video ngắn:
+- Bộ phát hành tự động đa kênh (Omnichannel Video Publisher): Tích hợp trực tiếp API xuất bản của YouTube Shorts, TikTok, Instagram Reels, và Facebook Reels với cơ chế xác thực token OAuth2 và tự động làm mới (auto-refresh).
+- Bộ Tối ưu hóa Giờ Vàng Đăng bài APAC (Smart Time-Zone Optimizer): Thuật toán phân tích khung giờ vàng tương tác cao nhất cho từng thị trường (Hà Nội UTC+7: 11:30 & 19:30; Tokyo UTC+9: 12:00 & 20:00; Bangkok UTC+7: 12:00 & 20:30) và tự động xếp hàng phát hành video.
+- Bộ tạo Siêu dữ liệu Lan truyền (Viral Metadata Generator): Tự động tạo tiêu đề giật gân (hook title), mô tả video tối ưu SEO theo ngôn ngữ đích, danh sách hashtag thịnh hành và ảnh đại diện thumbnail tối ưu CTR.
+
+### R4. Global Edge CDN Video Caching & Adaptive HLS Streaming Engine
+Nâng cấp trải nghiệm xem video tức thì với độ trễ 0ms trên mạng di động toàn cầu:
+- Trình phát Video Luồng Thích ứng (Adaptive Bitrate HLS/m3u8 Streaming): Tự động chuyển mã video sang nhiều độ phân giải (1080p, 720p, 480p) qua Cloudflare Stream & R2, cho phép xem trước video mượt mà không bị giật lag.
+- Đóng dấu Bản quyền Pháp y Động (Dynamic Forensic Watermarking): Tự động nhúng watermark mờ bán trong suốt (Logo hoặc Tenant ID của khách hàng) vào bản xem trước để chống sao chép trái phép.
+- Cơ chế Bảo vệ Bản quyền Liên kết: Tạo liên kết tải video có chữ ký điện tử mã hóa (Signed Download URLs) tự động hết hạn sau 24 giờ để ngăn chặn rò rỉ băng thông và liên kết ngoài luồng.
+
+### R5. Layer Architecture Discipline & Production CI/CD Verification
+- Tuân thủ nghiêm ngặt mô hình 4 tầng Clean Architecture (seed → tree → forest → land) với 0 vi phạm (kiểm tra bằng bash scripts/check-layer-boundaries.sh).
+- Đạt 0 lỗi biên dịch TypeScript (npm run type-check).
+- Toàn bộ unit/integration test suites mới và hiện có đạt tỷ lệ pass 100%.
+- Triển khai và xác thực thông qua GitHub Actions CI/CD (.github/workflows/deploy.yml), đảm bảo shortSha khớp bit-for-bit với live edge https://sophia.agencyos.network/api/version.
+- Đảm bảo công cụ chẩn đoán Sophia Doctor báo cáo 11/11 GREEN (node apps/sophia-ai-factory/scripts/sophia-doctor.mjs).
+
+## Acceptance Criteria
+
+### APAC Video Dubbing & AI Translation (R1)
+- [ ] Pipeline lồng tiếng hỗ trợ chuyển ngữ âm thanh và phụ đề cho 5 ngôn ngữ: VI, EN, JA, KO, TH.
+- [ ] File phụ đề SRT/VTT được sinh tự động với mốc thời gian chính xác khớp với khung hình video.
+- [ ] Giao diện và video mẫu tự động thích ứng theo ngôn ngữ được chọn.
+
+### Creator Marketplace & Royalty Revenue-Sharing (R2)
+- [ ] D1 schema quản lý mẫu video của nhà sáng tạo với cơ chế phê duyệt và đánh giá chất lượng.
+- [ ] Tỷ lệ chia sẻ doanh thu 70/30 được tính toán chính xác và ghi nhận tự động vào số dư ví của Creator.
+- [ ] Cổng /creator/studio hiển thị bảng phân tích doanh thu và hỗ trợ yêu cầu rút tiền qua USDT/VietQR.
+
+### Multi-Platform Video Syndication & Peak-Time Scheduling (R3)
+- [ ] Hệ thống hỗ trợ lên lịch xuất bản tự động tới YouTube Shorts, TikTok, Instagram Reels và Facebook Reels.
+- [ ] Bộ định thời gian tối ưu tự động sắp xếp video vào khung giờ vàng theo múi giờ địa phương của từng khu vực.
+- [ ] Trình tạo siêu dữ liệu tự động gắn thẻ hashtag thịnh hành và mô tả bản địa hóa cho từng nền tảng.
+
+### Global Edge CDN & Adaptive HLS Streaming (R4)
+- [ ] HLS stream manifest (.m3u8) phát video mượt mà ở các độ phân giải thích ứng (1080p, 720p, 480p).
+- [ ] Watermark định danh khách hàng được đóng dấu chính xác lên video render.
+- [ ] URL tải video có chữ ký bảo mật và tự động hết hạn sau 24 giờ.
+
+### Quality Gates & Production CI/CD Parity (R5)
+- [ ] npm run type-check đạt 0 lỗi biên dịch.
+- [ ] bash scripts/check-layer-boundaries.sh đạt 0 vi phạm (100% clean architecture).
+- [ ] Toàn bộ unit/integration test suites chạy đạt 100% pass rate.
+- [ ] Deployed commit SHA khớp bit-for-bit với live edge https://sophia.agencyos.network/api/version.
+- [ ] Sophia Doctor (node apps/sophia-ai-factory/scripts/sophia-doctor.mjs) báo cáo 11/11 GREEN (100% pass score).
+
+
 

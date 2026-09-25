@@ -17,8 +17,8 @@
 
 export type Gender = 'male' | 'female' | 'neutral';
 
-/** ISO 639-1 codes Coqui XTTS-v2 supports. */
-export type VoiceLanguage = 'en' | 'vi' | 'es' | 'fr' | 'de' | 'pt' | 'ja' | 'zh';
+/** ISO 639-1 codes Coqui XTTS-v2 and Edge TTS support. */
+export type VoiceLanguage = 'en' | 'vi' | 'es' | 'fr' | 'de' | 'pt' | 'ja' | 'zh' | 'ko' | 'th';
 
 export type Tier = 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
 
@@ -162,6 +162,99 @@ export const VOICE_PRESETS: readonly VoicePreset[] = [
     gender: 'female',
     vibe: 'lively explainer',
     samplePath: '/voices/lucia-es-f.wav',
+    minTier: 'PREMIUM',
+  },
+  // ── Japanese ──────────────────────────────────────────────────────────────
+  {
+    id: 'kenji-ja-m',
+    displayName: 'Kenji',
+    coquiSpeaker: 'Kenji',
+    language: 'ja',
+    gender: 'male',
+    vibe: 'authoritative Tokyo host',
+    samplePath: '/voices/kenji-ja-m.wav',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'sakura-ja-f',
+    displayName: 'Sakura',
+    coquiSpeaker: 'Sakura',
+    language: 'ja',
+    gender: 'female',
+    vibe: 'cheerful presenter',
+    samplePath: '/voices/sakura-ja-f.wav',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'ren-ja-m',
+    displayName: 'Ren',
+    coquiSpeaker: 'Ren',
+    language: 'ja',
+    gender: 'male',
+    vibe: 'cinematic anime narrator',
+    samplePath: '/voices/ren-ja-m.wav',
+    minTier: 'PREMIUM',
+  },
+  // ── Korean ────────────────────────────────────────────────────────────────
+  {
+    id: 'minho-ko-m',
+    displayName: 'Minho',
+    coquiSpeaker: 'Minho',
+    language: 'ko',
+    gender: 'male',
+    vibe: 'confident Seoul tech explainer',
+    samplePath: '/voices/minho-ko-m.wav',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'jisoo-ko-f',
+    displayName: 'Jisoo',
+    coquiSpeaker: 'Jisoo',
+    language: 'ko',
+    gender: 'female',
+    vibe: 'gentle K-drama narrator',
+    samplePath: '/voices/jisoo-ko-f.wav',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'taehyung-ko-m',
+    displayName: 'Taehyung',
+    coquiSpeaker: 'Taehyung',
+    language: 'ko',
+    gender: 'male',
+    vibe: 'deep documentary voice',
+    samplePath: '/voices/taehyung-ko-m.wav',
+    minTier: 'PREMIUM',
+  },
+  // ── Thai ──────────────────────────────────────────────────────────────────
+  {
+    id: 'somchai-th-m',
+    displayName: 'Somchai',
+    coquiSpeaker: 'Somchai',
+    language: 'th',
+    gender: 'male',
+    vibe: 'energetic Bangkok marketer',
+    samplePath: '/voices/somchai-th-m.wav',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'kanda-th-f',
+    displayName: 'Kanda',
+    coquiSpeaker: 'Kanda',
+    language: 'th',
+    gender: 'female',
+    vibe: 'warm hospitality storyteller',
+    samplePath: '/voices/kanda-th-f.wav',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'arthit-th-m',
+    displayName: 'Arthit',
+    coquiSpeaker: 'Arthit',
+    language: 'th',
+    gender: 'male',
+    vibe: 'modern podcast host',
+    samplePath: '/voices/arthit-th-m.wav',
     minTier: 'PREMIUM',
   },
 ] as const;

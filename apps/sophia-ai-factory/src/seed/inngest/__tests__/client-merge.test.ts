@@ -39,6 +39,7 @@ const EXPECTED_EVENT_KEYS = [
   'video.composed',
   'video.uploaded',
   'video.published',
+  'video.dubbing.requested',
   'publish.scheduled',
   'publish.token.refresh',
   'video/generate.requested',

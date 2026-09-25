@@ -50,7 +50,7 @@ export async function handlePublicPipeline(
     const target = new URL('/vi/setup', request.url);
     return applyCorsHeaders(NextResponse.redirect(target), origin);
   }
-  const setupWizardMatch = path.match(/^\/(en|vi)\/setup-wizard\/?$/);
+  const setupWizardMatch = path.match(/^\/(en|vi|ja|ko|th)\/setup-wizard\/?$/);
   if (setupWizardMatch) {
     const locale = setupWizardMatch[1];
     const target = new URL(`/${locale}/setup`, request.url);

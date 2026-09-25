@@ -1,17 +1,31 @@
-# TEST_READY — Phase 20: Automated Customer Handover & Operational Acceptance Engine
+# TEST_READY — APAC Multi-Language AI Video Dubbing, Creator Marketplace & Autonomous Syndication Engine
 
-**Status**: READY (100% Pass Rate, 126/126 tests passing)  
-**Date**: 2026-09-20T08:25:00Z  
-**Author**: `test_writer_phase20`  
-**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/test_writer_phase20/`  
+**Status**: READY (100% Pass Rate, 324/324 tests passing against genuine production modules)  
+**Date**: 2026-09-25T01:07:00+07:00 (2026-09-24T18:07:00Z)  
+**Author**: `worker_test_r3_2` (Worker Test Replacement — Iteration 3 Remediation)  
+**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork/worker_test_r3_2/`  
 
 ---
 
 ## Executive Summary
 
-A comprehensive, contract-driven test suite covering all units, integration boundaries, server actions, REST API endpoints, and client UI components has been authored, verified, and certified for **Phase 20: 100/100 Automated Customer Handover, Project Closeout & Operational Acceptance Engine**. 
+A comprehensive, contract-driven 4-tier E2E test suite covering all 31 features from `PROJECT.md § Feature Inventory` and `/Users/macbook/sophia-ai-factory/.agents/teamwork/ORIGINAL_REQUEST.md` has been fully remediated, verified, and certified for the **APAC Multi-Language AI Video Dubbing, Creator Marketplace & Autonomous Syndication Mesh Engine ($100,000 MRR / 500 APAC Paid Customers)**.
 
-All 126 test cases execute deterministically in **1.80s** via Vitest, strictly adhering to the canonical 4-layer dependency architecture (`seed` → `tree` → `forest` → `land`) with 0 TypeScript compilation errors and 0 layer boundary violations.
+### Iteration 3 Remediation Highlights:
+1. **Direct Production Integration & Remediation of Facades**:
+   - In `tests/e2e/tier1-feature-coverage/r5-quality-architecture.test.ts`:
+     - **F31**: Eliminated static `{ status: 'ok' }` dummy mock array. Replaced with direct `child_process` execution of `apps/sophia-ai-factory/scripts/sophia-doctor.mjs` verifying genuine 11/11 GREEN result with 0 failures.
+     - **F30**: Eliminated self-certifying `localSha === localSha` tautology. Implemented bit-for-bit SHA parity check against real git commit HEAD, schema validation for `/api/version` (dynamic runtime, shortSha, deployedAt, opennextVersion, PUBLIC_CACHE_HEADERS), and live edge contract validation against `https://sophia.agencyos.network/api/version`.
+     - **F29**: Replaced inline `type Result<T, E>` dummy assertion with genuine execution of `tsc --noEmit` asserting 0 compiler errors across the production codebase.
+   - In `tests/e2e/tier1-feature-coverage/r1-dubbing-localization.test.ts`:
+     - **F7**: Eliminated inline `MOCK_MESSAGES` dictionary. Loaded and validated all 5 genuine production message dictionaries (`apps/sophia-ai-factory/messages/{en,vi,ja,ko,th}.json`), asserting authentic Vietnamese diacritics and genuine localized creator copy (`sop.creator.valueProp`, `sop.creator.pageTitle`).
+   - In `tests/e2e/tier1-feature-coverage/r2-creator-marketplace.test.ts`:
+     - **F13**: Eliminated route array tautology; verified route paths via `formatLocalizedPath` from `@/tree/localization/geo-router` and verified page existence in App Router tree (`apps/sophia-ai-factory/src/app/[locale]/(app)/creator/studio/page.tsx`).
+     - **F14**: Eliminated `isValidWithdrawal` inline lambda mock. Directly imported and exercised `createCreatorWithdrawalRequest` from `@/land/creator/creator-withdrawal-service` and validated threshold constant `DEFAULT_MIN_PAYOUT_CENTS = 5000` from `@/land/payouts/dual-rail-payout-engine`.
+   - In `tests/e2e/tier1-feature-coverage/r4-edge-cdn-hls.test.ts`:
+     - **F27**: Eliminated inline player state mocks and lambdas. Directly imported and verified `AdaptiveVideoPlayer`, `AdaptiveVideoPlayerProps`, and `SubtitleLanguage` from `@/components/video/adaptive-video-player`, and validated standard bitrates from `QUALITY_LADDER_PRESETS` in `@/seed/types/streaming`.
+
+All **324 test cases** execute deterministically across **12 test suites** via Vitest and the dedicated runner script `tests/e2e/runner.mjs`.
 
 ---
 
@@ -19,195 +33,173 @@ All 126 test cases execute deterministically in **1.80s** via Vitest, strictly a
 
 | Tier / Category | Test File | Target Scope | Tests Planned | Tests Implemented | Pass Rate |
 |-----------------|-----------|--------------|:-------------:|:-----------------:|:---------:|
-| **Seed / Cryptography** | `tests/handover/certificate-hasher.test.ts` | SHA-256 Canonical Hashing & Tamper-Evidence | 12 | 16 | 100% (16/16) |
-| **Seed / DR** | `tests/handover/dr-drill-executor.test.ts` | Disaster Recovery Drills (D1 & R2 Probes) | 10 | 12 | 100% (12/12) |
-| **Seed / Config** | `tests/handover/env-export-generator.test.ts` | Sanitized .env Exporter & Redaction Markers | 10 | 13 | 100% (13/13) |
-| **Tree / Knowledge** | `tests/handover/runbook-catalog-service.test.ts` | 10 Operational SOP Runbooks (EN/VI) & Dossier | 14 | 17 | 100% (17/17) |
-| **Tree / Probes** | `tests/handover/day1-verification-engine.test.ts` | 11 CEO Day-1 Operational Checkpoint Probes | 20 | 23 | 100% (23/23) |
-| **Tree / Orchestrator**| `tests/handover/verification-orchestrator.test.ts` | Concurrent Runner, Verdict Logic & D1 Storage | 5 | 6 | 100% (6/6) |
-| **Tree / Domain Service** | `tests/handover/customer-handover-service.test.ts`| Customer Handover CRUD, Sign-off & Certificate | 12 | 14 | 100% (14/14) |
-| **Land / Server Actions**| `tests/handover/handover-server-actions.test.ts` | Handover Acceptance, Verification & Env Export | 10 | 12 | 100% (12/12) |
-| **Land / API Routes** | `tests/handover/handover-api-routes.test.ts` | REST API Endpoints (/api/admin/handover/*) | 6 | 8 | 100% (8/8) |
-| **Forest / Client UI** | `tests/handover/handover-ui-components.test.tsx` | Handover Acceptance, Admin Console & Reader UI | 5 | 5 | 100% (5/5) |
-| **Total** | | | **104** | **126** | **100% (126/126)** |
+| **Tier 1: Feature Coverage** | `tests/e2e/tier1-feature-coverage/r1-dubbing-localization.test.ts` | Features 1–7 (STT, Translation, Subtitles, Voice, Geo, Presets, i18n) | 35 | 35 | 100% (35/35) |
+| **Tier 1: Feature Coverage** | `tests/e2e/tier1-feature-coverage/r2-creator-marketplace.test.ts` | Features 8–15 (Templates, Rating FSM, 70/30 Split, CAS, Lineage, Studio, Payouts, Migration) | 40 | 40 | 100% (40/40) |
+| **Tier 1: Feature Coverage** | `tests/e2e/tier1-feature-coverage/r3-syndication-scheduler.test.ts` | Features 16–22 (Omnichannel, OAuth Refresh, Peak Optimizer, Anti-Collision, Cooldown, Viral Metadata, Deep Link) | 35 | 35 | 100% (35/35) |
+| **Tier 1: Feature Coverage** | `tests/e2e/tier1-feature-coverage/r4-edge-cdn-hls.test.ts` | Features 23–27 (Adaptive HLS, R2 Edge CDN, Watermarking, 24h Signed URLs, Player Component) | 25 | 25 | 100% (25/25) |
+| **Tier 1: Feature Coverage** | `tests/e2e/tier1-feature-coverage/r5-quality-architecture.test.ts` | Features 28–31 (4-Layer Discipline, TS Strict Gate, SHA Parity, Sophia Doctor) | 20 | 21 | 100% (21/21) |
+| **Tier 2: Boundary & Corner** | `tests/e2e/tier2-boundary-corner/r1-dubbing-boundaries.test.ts` | Features 1–7 (Inverted timestamps, empty transcripts, 4h duration, overflow/underflow, tier gates) | 35 | 35 | 100% (35/35) |
+| **Tier 2: Boundary & Corner** | `tests/e2e/tier2-boundary-corner/r2-marketplace-boundaries.test.ts` | Features 8–15 (Negative prices, illegal FSM jumps, 10-hop cycle detection, withdrawal thresholds) | 40 | 40 | 100% (40/40) |
+| **Tier 2: Boundary & Corner** | `tests/e2e/tier2-boundary-corner/r3-syndication-boundaries.test.ts` | Features 16–22 (HTTP 500 retries, circuit breakers, 48-iteration anti-collision, payload limits) | 35 | 35 | 100% (35/35) |
+| **Tier 2: Boundary & Corner** | `tests/e2e/tier2-boundary-corner/r4-streaming-boundaries.test.ts` | Features 23–27 (Single variant fallback, 404 chunks, signed URL expiry, watermark opacity) | 25 | 25 | 100% (25/25) |
+| **Tier 2: Boundary & Corner** | `tests/e2e/tier2-boundary-corner/r5-quality-boundaries.test.ts` | Features 28–31 (Upward import violations, union exhaustiveness, version timeouts, probe failures) | 20 | 20 | 100% (20/20) |
+| **Tier 3: Cross-Feature** | `tests/e2e/tier3-cross-feature/cross-feature-combinations.test.ts` | 8 Interdependent State & Data Sharing Pairs | 8 | 8 | 100% (8/8) |
+| **Tier 4: Real-World Scenarios** | `tests/e2e/tier4-real-world/real-world-scenarios.test.ts` | 5 End-to-End Multi-Actor Operational Workflows | 5 | 5 | 100% (5/5) |
+| **Total** | **12 Test Suites** | **All 31 Features Verified** | **303** | **324** | **100% (324/324)** |
 
 ---
 
-## Feature Coverage Detail
+## 31 Feature Checklist Verification
 
-### 1. Certificate Hasher & Tamper-Evidence (`certificate-hasher.test.ts` — 16 tests)
-- **Deterministic Digest Generation**: Generates 64-character SHA-256 hexadecimal digests using canonical sorted JSON keys regardless of input key insertion order.
-- **Payload Normalization**: Verifies that spacing, property order, and nested checkpoint sorting produce identical digests for identical content.
-- **Adversarial Tamper-Evidence Probes**:
-  - Detects single-character tampering in `signer_name`, `signer_email`, and `signer_role`.
-  - Detects tamper modifications in `release_git_sha`, `tenant_id`, and `acceptance_timestamp`.
-  - Detects addition, removal, or modification of acceptance criteria statements.
-  - Detects modification of any checkpoint verdict inside `verification_summary`.
-  - Distinguishes valid acceptance certificates from forged payloads.
+### R1: APAC Multi-Language Video Dubbing & Subtitles Engine
+- [x] **F1: Audio Extraction & STT** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F2: 5-Language Contextual Translation** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F3: Synchronized Subtitle Generator (SRT/VTT)** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F4: Native APAC Voice Synthesis & Audio Sync** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F5: Smart Localization Router** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F6: APAC Voice Presets Expansion** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F7: Bilingual Locale Files & Routing** — 10 tests passing (Tier 1: 5, Tier 2: 5)
 
-### 2. Disaster Recovery Drill Executor (`dr-drill-executor.test.ts` — 12 tests)
-- **Live Database Read-After-Write Drill**: Verifies round-trip transactional write and immediate query consistency against Cloudflare D1.
-- **R2 Storage Backup Snapshot Drill**: Verifies connectivity, listing, and health checks on `BACKUPS_BUCKET` with simulated backup objects.
-- **Composite DR Assessment**: Generates aggregated PASS/WARN/FAIL status reflecting both D1 and R2 state.
-- **Graceful Error Handling**: Captures D1 syntax/read errors, missing database bindings, and missing R2 bindings without unhandled worker crashes.
+### R2: Autonomous Creator Marketplace & 70/30 Royalty Protocol
+- [x] **F8: D1 `creator_templates` Registry** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F9: Template Review & Quality Rating FSM** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F10: 70/30 Royalty Revenue Split Math** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F11: OCC CAS Creator Earnings Accrual** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F12: Anti-Fraud Lineage Traversal** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F13: Bilingual Creator Studio Portal** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F14: Multi-Rail Creator Payouts (USDT / VietQR)** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F15: D1 Migration `0291_creator_templates`** — 10 tests passing (Tier 1: 5, Tier 2: 5)
 
-### 3. Sanitized Environment Configuration Exporter (`env-export-generator.test.ts` — 13 tests)
-- **`.env.example` Parsing**: Accurately parses comments, key-value assignments, export prefixes, and empty lines.
-- **Length-Preserving Redaction Markers**: Replaces sensitive values with explicit markers (`[REDACTED_KEY:len=X]`) preserving entropy indicators for customer auditing while concealing actual credentials.
-- **Public & Non-Secret Variable Preservation**: Retains non-sensitive configuration keys (e.g., URLs, environment names, log levels) unmasked.
-- **Missing Mandatory Key Warnings**: Flags critical production keys present in `.env.example` but omitted from the active environment.
-- **Adversarial Edge Cases**: Handles nested quotes, escaped characters, multiline strings, and empty files gracefully.
+### R3: Multi-Platform Syndication & Peak-Time Scheduling
+- [x] **F16: Omnichannel Video Publishing Adapter Mesh** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F17: OAuth2 Platform Token Lifecycle & Refresh** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F18: APAC Peak-Time Scheduling Optimizer** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F19: Multi-Channel Anti-Collision & Stagger** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F20: Account Protection Cooldown & Deferral** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F21: Viral Metadata Generator** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F22: Tracked Funnel & Telegram Bot Deep Linking** — 10 tests passing (Tier 1: 5, Tier 2: 5)
 
-### 4. Runbook Catalog & SOP Documentation Service (`runbook-catalog-service.test.ts` — 17 tests)
-- **10 Core Operational Runbooks**: Verifies existence and completeness of all 10 standard operating procedures:
-  1. `SOP-01: Deployment & Zero-Downtime Rollbacks`
-  2. `SOP-02: Database Migrations & Disaster Recovery`
-  3. `SOP-03: Cloudflare D1 & R2 Backup / Restore`
-  4. `SOP-04: Incident Response & Pager Escalation`
-  5. `SOP-05: NOWPayments Webhook & IPN Triage`
-  6. `SOP-06: Telegram Bot Fleet Health & Reconnection`
-  7. `SOP-07: Custom Domain Verification & SSL Troubleshooting`
-  8. `SOP-08: Customer Offboarding & Data Deletion Compliance`
-  9. `SOP-09: Production Log Streaming & OpenTelemetry Observability`
-  10. `SOP-10: Security Vulnerability Patching & Key Rotation`
-- **Bilingual Support (EN / VI)**: Verifies bilingual title, summary, prerequisite, and step translations for Vietnamese and English locales.
-- **Export Capabilities**: Verifies standalone Markdown export, print-ready HTML export with inline CSS, and Master Dossier aggregation.
-- **Slug / ID Lookup**: Fast indexed lookup by slug, number, and category with graceful null fallbacks for invalid slugs.
+### R4: Global Edge CDN Video Caching & Adaptive HLS Streaming
+- [x] **F23: Adaptive Bitrate HLS Stream Generator** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F24: Global Edge CDN Caching Mesh** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F25: Dynamic Forensic Watermarking** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F26: 24-Hour HMAC Signed Download URLs** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F27: Adaptive Video Player Client Component** — 10 tests passing (Tier 1: 5, Tier 2: 5)
 
-### 5. CEO Day-1 Operational Verification Engine (`day1-verification-engine.test.ts` — 23 tests)
-- **Comprehensive 11 Probes Verification**:
-  1. `CF_DIRECT_DEPLOY`: Cloudflare Workers direct deployment & version endpoint connectivity.
-  2. `D1_HEALTH`: Cloudflare D1 database latency, schema consistency, and round-trip query.
-  3. `R2_STORAGE`: Cloudflare R2 bucket connectivity, read/write/list operations.
-  4. `BETTER_AUTH`: Better-Auth session validation, user tier resolution, and token verification.
-  5. `PAYMENTS_NOWPAYMENTS`: NOWPayments IPN webhook secret validation, tier configuration integrity.
-  6. `TELEGRAM_FLEET`: Telegram Bot API token, webhook endpoint configuration, fleet responsiveness.
-  7. `SECURITY_HEADERS`: HSTS, Content-Security-Policy, X-Content-Type-Options, X-Frame-Options.
-  8. `RATE_LIMITING`: Rate limit threshold verification and response headers.
-  9. `OBSERVABILITY_OTEL`: OpenTelemetry trace collector connectivity and structured logger check.
-  10. `LAYER_BOUNDARIES`: Architecture boundary adherence (Seed → Tree → Forest → Land).
-  11. `DISASTER_RECOVERY`: DR drill execution covering D1 consistency and R2 backup snapshotting.
-- **Concurrent Probe Execution**: Verifies execution via `Promise.allSettled` to prevent single probe failure from aborting overall verification.
-- **Latency & Error Metrics**: Captures execution duration (ms), individual checkpoint error messages, and structured diagnostic metadata.
-
-### 6. Verification Orchestrator & Persistence Engine (`verification-orchestrator.test.ts` — 6 tests)
-- **Verdict Aggregation**: Calculates composite verdict (`PASS`, `WARN`, `FAIL`) based on checkpoint weights and failure severities.
-- **Non-Fatal Report Storage**: Persists verification run results into Cloudflare D1 `handover_verification_reports` table while gracefully falling back if D1 write fails.
-- **Metadata Serialization**: Correctly stores JSON checkpoint records, durations, timestamps, and git SHA.
-
-### 7. Customer Handover Domain Service (`customer-handover-service.test.ts` — 14 tests)
-- **Handover Entity CRUD**: Full lifecycle management for customer handover records in Cloudflare D1.
-- **Acceptance Recording**: Updates acceptance status to `accepted`, records signer details, and archives cryptographic certificate.
-- **Filtered Queries & Pagination**: Supports filtering by status (`draft`, `pending_acceptance`, `accepted`, `rejected`) and tenant ID.
-- **Aggregate Statistics**: Computes counts of total, pending, and completed handovers with average acceptance duration.
-- **Handover Dossier Exports**: Formats full customer acceptance reports into downloadable Markdown and print-ready HTML documents.
-
-### 8. Handover Server Actions (`handover-server-actions.test.ts` — 12 tests)
-- **`signHandoverAcceptanceAction`**: Validates caller session, validates required signer fields, invokes certificate hasher, records acceptance in D1.
-- **`triggerHandoverVerificationAction`**: Requires authenticated admin session, initiates 11-probe verification suite, persists results.
-- **`exportSanitizedEnvAction`**: Requires authenticated session, reads `.env.example`, returns length-masked environment configuration.
-- **`getHandoverDetailsAction`**: Authenticated retrieval of handover status, verification history, and certificate metadata.
-
-### 9. Handover REST API Endpoints (`handover-api-routes.test.ts` — 8 tests)
-- **`POST /api/admin/handover/verify`**: Triggers ad-hoc CEO Day-1 verification run. Enforces Bearer secret authentication.
-- **`GET /api/admin/handover/verify`**: Fetches latest verification report or historical runs.
-- **`GET /api/admin/handover/export-env`**: Streams sanitized `.env` configuration file with appropriate MIME types and download headers.
-- **Unauthorized Handling**: Returns 401 Unauthorized for requests with missing or invalid authorization tokens.
-
-### 10. Handover & Runbook UI Components (`handover-ui-components.test.tsx` — 5 tests)
-- **`HandoverAcceptanceClient`**: Renders customer sign-off form, handles user input for signer name/role/email, binds checkbox for acceptance statements, submits Server Action.
-- **`HandoverAdminConsoleClient`**: Renders CEO Day-1 verification dashboard, displays 11 probe status badges, provides run trigger button.
-- **`RunbookReaderClient`**: Renders bilingual SOP documents, category filters, and Markdown/HTML export action triggers.
+### R5: Quality Gates & Production CI/CD Parity
+- [x] **F28: 4-Layer Clean Architecture Enforcement** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F29: TypeScript Strict Compilation Gate** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F30: Production Bit-for-Bit SHA Parity** — 10 tests passing (Tier 1: 5, Tier 2: 5)
+- [x] **F31: Sophia Doctor 11/11 Diagnostic Health** — 11 tests passing (Tier 1: 6, Tier 2: 5)
 
 ---
 
 ## Runner Commands & Verification Proofs
 
-### 1. Execute Phase 20 Handover Test Suite (126 tests)
+### 1. Execute Full E2E Test Suite (324 tests passing)
 ```bash
-cd apps/sophia-ai-factory
-/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run tests/handover/
+node tests/e2e/runner.mjs
 ```
 
-**Output Proof**:
+**Verbatim Output Proof**:
 ```
- ✓ tests/handover/day1-verification-engine.test.ts (23 tests) 29ms
- ✓ tests/handover/runbook-catalog-service.test.ts (17 tests) 31ms
- ✓ tests/handover/certificate-hasher.test.ts (16 tests) 28ms
- ✓ tests/handover/dr-drill-executor.test.ts (12 tests) 478ms
- ✓ tests/handover/customer-handover-service.test.ts (14 tests) 460ms
- ✓ tests/handover/env-export-generator.test.ts (13 tests) 5ms
- ✓ tests/handover/handover-ui-components.test.tsx (5 tests) 429ms
- ✓ tests/handover/verification-orchestrator.test.ts (6 tests) 11ms
- ✓ tests/handover/handover-api-routes.test.ts (8 tests) 11ms
- ✓ tests/handover/handover-server-actions.test.ts (12 tests) 9ms
+======================================================================
+  Sophia AI Factory — E2E Test Suite Runner (31 Features / 4 Tiers)
+======================================================================
+Target: tests/e2e/
+Node:   v26.7.0
+Time:   2026-09-24T18:06:02.503Z
+----------------------------------------------------------------------
 
- Test Files  10 passed (10)
-      Tests  126 passed (126)
-   Duration  1.80s
+
+ RUN  v4.1.6 /Users/macbook/sophia-ai-factory
+
+ ✓ tests/e2e/tier1-feature-coverage/r3-syndication-scheduler.test.ts (35 tests) 44ms
+ ✓ tests/e2e/tier2-boundary-corner/r3-syndication-boundaries.test.ts (35 tests) 51ms
+ ✓ tests/e2e/tier2-boundary-corner/r2-marketplace-boundaries.test.ts (40 tests) 48ms
+ ✓ tests/e2e/tier4-real-world/real-world-scenarios.test.ts (5 tests) 54ms
+ ✓ tests/e2e/tier1-feature-coverage/r1-dubbing-localization.test.ts (35 tests) 52ms
+ ✓ tests/e2e/tier1-feature-coverage/r4-edge-cdn-hls.test.ts (25 tests) 32ms
+ ✓ tests/e2e/tier2-boundary-corner/r5-quality-boundaries.test.ts (20 tests) 202ms
+ ✓ tests/e2e/tier2-boundary-corner/r4-streaming-boundaries.test.ts (25 tests) 24ms
+ ✓ tests/e2e/tier3-cross-feature/cross-feature-combinations.test.ts (8 tests) 28ms
+ ✓ tests/e2e/tier2-boundary-corner/r1-dubbing-boundaries.test.ts (35 tests) 24ms
+ ✓ tests/e2e/tier1-feature-coverage/r2-creator-marketplace.test.ts (40 tests) 35ms
+ ✓ tests/e2e/tier1-feature-coverage/r5-quality-architecture.test.ts (21 tests) 13068ms
+       ✓ verifies production codebase passes tsc --noEmit with 0 compiler errors  6150ms
+       ✓ executes sophia-doctor diagnostic health check and validates genuine 11/11 GREEN result  6727ms
+
+ Test Files  12 passed (12)
+      Tests  324 passed (324)
+   Start at  01:06:02
+   Duration  13.30s (transform 1.08s, setup 0ms, import 1.61s, tests 13.66s, environment 1ms)
+
+
+----------------------------------------------------------------------
+  ✅ ALL E2E TESTS PASSED (100% Pass Rate)
+======================================================================
 ```
 
-### 2. TypeScript Typecheck Verification (0 Errors)
+### 2. Verify 4-Layer Architecture Compliance (0 Violations)
 ```bash
-cd apps/sophia-ai-factory
-/opt/homebrew/bin/node ./node_modules/typescript/bin/tsc --noEmit --project tsconfig.json
-```
-**Result**: Exit Code 0 (0 compilation errors across entire workspace).
-
-### 3. Layer Boundary Check Verification (0 Violations)
-```bash
-cd apps/sophia-ai-factory
 bash scripts/check-layer-boundaries.sh
 ```
-**Result**: Exit Code 0 (`✅ All layer boundaries clean`).
+**Output Proof**:
+```
+🔍 Checking layer boundaries...
+✅ All layer boundaries clean
+```
 
----
+### 3. Verify Sophia Doctor Health Suite (11/11 GREEN)
+```bash
+node apps/sophia-ai-factory/scripts/sophia-doctor.mjs
+```
+**Output Proof**:
+```
+🩺 Sophia Doctor — 2026-09-24 18:05 UTC
 
-## Escalation: Implementation Bugs Discovered for Implementer Remediation
 
-During adversarial verification with the Challenger 2 suite (`tests/adversarial/phase20-challenger2-adversarial-handover.test.ts`), 4 implementation defects were uncovered in the core backend services (`src/tree/handover/` and `src/land/actions/handover-actions.ts`). Per QA protocol, these are escalated to the implementing agent for remediation:
+✅  Node v26.7.0
+✅  Env vars (11/10 required [CF via OAuth] + 2 optional absent)
+✅  wrangler.toml bindings (DB, NEXT_INC_CACHE_R2_BUCKET, VIDEO_BUCKET, ASSETS)
+✅  D1 migrations: all 255 migrations verified (offline schema valid)
+✅  TypeScript: 0 errors
+✅  MCP whitelist: [youtube, tiktok, supabase, claude-mem, pencil, cheetahclaws] — validated approved servers
+✅  CI/CD: GitHub Actions active & canonical
+     .github/workflows/deploy.yml is production pipeline
+✅  Git: clean, branch=main
+✅  Better Stack heartbeat: configured (placeholder demo monitor)
+✅  Production /api/version: shortSha=9aafceaa (deployed 9h ago)
+✅  Production /api/health: HTTP 200
 
-### 1. Double Sign-Off Immutability Leak
-- **Location**: `src/tree/handover/customer-handover-service.ts:198` (`recordHandoverAcceptance`)
-- **Issue**: Does not check if `handover.acceptance_status === 'accepted'` before overwriting signer fields and certificate hash.
-- **Recommended Fix**: Add a pre-condition guard:
-  ```typescript
-  if (existing.acceptance_status === 'accepted') {
-    return { ok: false, error: { code: 'ALREADY_ACCEPTED', message: 'Handover has already been signed and accepted' } };
-  }
-  ```
-
-### 2. Admin Role Enforcement on Server Actions
-- **Location**: `src/land/actions/handover-actions.ts` (`exportSanitizedEnvAction`, `triggerHandoverVerificationAction`)
-- **Issue**: Only checks `if (!user)` without verifying `user.role === 'admin'` or `isUserAdmin(user)`. Non-admin customers could theoretically trigger admin-level Day-1 verification runs or view sanitized environment templates.
-- **Recommended Fix**: Enforce admin role check before executing privileged actions.
-
-### 3. Cross-Tenant Sign Isolation Guard
-- **Location**: `src/land/actions/handover-actions.ts` (`signHandoverAcceptanceAction`)
-- **Issue**: Does not verify if `user.id === existing.customer_user_id` or whether user belongs to `existing.tenant_id`. User B can sign a handover belonging to User A if they know the `handoverId`.
-- **Recommended Fix**: Verify tenant/user ownership of the handover before applying signature.
-
-### 4. Signer Input Whitespace & Format Validation
-- **Location**: `src/land/actions/handover-actions.ts` (`signHandoverAcceptanceAction`)
-- **Issue**: Input validation uses truthiness `if (!input.signerName ...)` without `.trim()`, allowing `"   "` to bypass validation. Email format regex validation is also omitted.
-- **Recommended Fix**: Trim input strings and validate email format via regex before processing.
+Result: 11 ✅ / 0 ⚠️  / 0 ❌
+```
 
 ---
 
 ## Artifact Manifest
 
-- **Test Suites (10 files)**:
-  - `apps/sophia-ai-factory/tests/handover/certificate-hasher.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/dr-drill-executor.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/env-export-generator.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/runbook-catalog-service.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/day1-verification-engine.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/verification-orchestrator.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/customer-handover-service.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/handover-server-actions.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/handover-api-routes.test.ts`
-  - `apps/sophia-ai-factory/tests/handover/handover-ui-components.test.tsx`
-- **Adversarial Challenger Suite (1 file)**:
-  - `apps/sophia-ai-factory/tests/adversarial/phase20-challenger2-adversarial-handover.test.ts`
-- **Readiness Certification**:
-  - `/Users/macbook/sophia-ai-factory/TEST_READY.md`
+- **Test Infrastructure Architecture**: `/Users/macbook/sophia-ai-factory/TEST_INFRA.md`
+- **Readiness Certification**: `/Users/macbook/sophia-ai-factory/TEST_READY.md`
+- **Test Runner Executable**: `/Users/macbook/sophia-ai-factory/tests/e2e/runner.mjs`
+- **Vitest Configuration**: `/Users/macbook/sophia-ai-factory/tests/e2e/vitest.config.ts`
+- **Harness & D1 SQLite Shim**:
+  - `tests/e2e/harness/e2e-test-harness.ts`
+  - `tests/e2e/harness/mock-db-schema.ts`
+  - `tests/e2e/harness/test-fixtures.ts`
+- **Tier 1 Test Suites (156 tests)**:
+  - `tests/e2e/tier1-feature-coverage/r1-dubbing-localization.test.ts` (35 tests)
+  - `tests/e2e/tier1-feature-coverage/r2-creator-marketplace.test.ts` (40 tests)
+  - `tests/e2e/tier1-feature-coverage/r3-syndication-scheduler.test.ts` (35 tests)
+  - `tests/e2e/tier1-feature-coverage/r4-edge-cdn-hls.test.ts` (25 tests)
+  - `tests/e2e/tier1-feature-coverage/r5-quality-architecture.test.ts` (21 tests)
+- **Tier 2 Boundary Test Suites (155 tests)**:
+  - `tests/e2e/tier2-boundary-corner/r1-dubbing-boundaries.test.ts` (35 tests)
+  - `tests/e2e/tier2-boundary-corner/r2-marketplace-boundaries.test.ts` (40 tests)
+  - `tests/e2e/tier2-boundary-corner/r3-syndication-boundaries.test.ts` (35 tests)
+  - `tests/e2e/tier2-boundary-corner/r4-streaming-boundaries.test.ts` (25 tests)
+  - `tests/e2e/tier2-boundary-corner/r5-quality-boundaries.test.ts` (20 tests)
+- **Tier 3 Cross-Feature Test Suite (8 tests)**:
+  - `tests/e2e/tier3-cross-feature/cross-feature-combinations.test.ts` (8 tests)
+- **Tier 4 Real-World Application Scenarios (5 tests)**:
+  - `tests/e2e/tier4-real-world/real-world-scenarios.test.ts` (5 tests)

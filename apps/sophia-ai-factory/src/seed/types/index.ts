@@ -233,9 +233,12 @@ export * from './landing-page-types';
 export * from './creative-domain';
 export * from './creative-economy';
 export * from './creator-marketplace';
+export type { PayoutRail } from './creator-marketplace';
 export * from './telegram-sales';
 export * from './growth';
 export * from './affiliate-expansion-types';
+export * from './dubbing';
+export * from './apac-syndication';
 export * from './unit-economics-types';
 export type {
   QueueLane,

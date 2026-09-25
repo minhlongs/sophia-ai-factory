@@ -1,187 +1,123 @@
-# Project: Sophia AI Factory — Autonomous Scale & Agency Multi-Tenancy Engine ($10K–$25K MRR, 50–125 Clients)
+# Project: APAC Multi-Language AI Video Dubbing, Creator Marketplace & Autonomous Syndication Mesh Engine
 
 ## Architecture
-- Layer discipline: Canonical 4-layer hierarchy (`seed` → `tree` → `forest` → `land`).
-  - `seed`: Data contracts, domain types, crypto helpers, design tokens, error models.
-    - `src/seed/types/retention-types.ts` (Customer Health Score models & intervention types)
-    - `src/seed/types/agency-multitenancy.ts` (Subaccount, branding, MCU allocation & review token models)
-    - `src/seed/types/affiliate-expansion-types.ts` (Tier progression, leaderboard & dual-rail payout models)
-    - `src/seed/types/unit-economics-types.ts` (Unit economics, provider arbitrage & margin models)
-    - `src/seed/security/review-token.ts` (CSPRNG 256-bit token & SHA-256 hash generator)
-  - `tree`: Pure domain services, repositories, algorithms, circuit breakers, notification engines.
-    - `src/tree/organizations/subaccount-repo.ts` (Subaccount CRUD, domain resolution, custom branding)
-    - `src/tree/organizations/mcu-allocation-engine.ts` (Subaccount quota budgeting & deduction guards)
-    - `src/tree/organizations/review-service.ts` (Video review token generation, verification & state management)
-    - `src/tree/ai/multimodal-cost-router.ts` (Per-second cost comparison across OpenRouter, fal.ai, ElevenLabs, Mekong GPU)
-    - `src/tree/ai/cost-arbitrage-fallback.ts` (Circuit breaker integration & automated failover)
-  - `forest`: Interactive UI presentation components, review portals, dashboards.
-    - `src/forest/growth/customer-health-monitor.tsx` (Health score cards & 1-click founder action modal)
-    - `src/forest/agency/client-video-review-portal.tsx` (Bilingual tokenized review player, feedback & approval)
-    - `src/forest/affiliates/affiliate-leaderboard-view.tsx` (Top 10 leaderboard, badges, prize pool)
-    - `src/forest/economics/unit-economics-dashboard.tsx` (Gross Margin %, COGS per video, LTV:CAC dashboard)
-  - `land`: Business aggregation services, cron orchestrators, payment & payout engines.
-    - `src/land/growth/customer-retention-service.ts` (4-factor health score 0-100 algorithm, win-back dispatcher)
-    - `src/land/affiliates/tier-progression-engine.ts` (Silver 20%, Gold 25%, Platinum 30% MRR engine)
-    - `src/land/affiliates/leaderboard-service.ts` (Leaderboard aggregation & prize allocation)
-    - `src/land/payouts/dual-rail-payout-engine.ts` (NOWPayments USDT mass payout + VietQR banking export)
-    - `src/land/economics/unit-economics-service.ts` (Gross Margin, COGS per video, LTV:CAC aggregator)
-  - `app`: Next.js 16 localized App Router pages and API routes:
-    - `src/app/[locale]/client-review/[token]/page.tsx` (Interactive Client Review Portal)
-    - `src/app/[locale]/affiliate/leaderboard/page.tsx` (Public bilingual Affiliate Leaderboard)
-    - `src/app/(app)/admin/unit-economics/page.tsx` & `src/app/[locale]/(admin)/admin/unit-economics/page.tsx`
-    - `src/app/api/cron/anti-churn-guardian/route.ts` (Automated win-back cron check)
-    - `src/app/api/admin/customer-intervention/route.ts` (1-click credit grant / direct outreach)
+Clean 4-Layer Architecture (`seed` -> `tree` -> `forest` -> `land`) for Sophia AI Factory on Cloudflare Workers edge:
+- **Seed Layer (`src/seed/`)**: Pure types, constants, Zod schemas, voice presets (VI, EN, JA, KO, TH), and Web Crypto HMAC-SHA256 signature utilities. No dependencies on upper layers.
+- **Tree Layer (`src/tree/`)**: Pure domain logic and reusable algorithms without side effects. Contains subtitle formatters (SRT/VTT), APAC geo-router, dynamic forensic watermark generators, 70/30 integer royalty calculations & OCC CAS ledger engine, APAC golden hour peak optimizer, and viral metadata generators.
+- **Forest Layer (`src/forest/`)**: Infrastructure orchestrators, background workers, Inngest workflows, and cron tasks. Contains video voice dubbing workflow, Edge TTS gateway, Cloudflare Stream client, HLS manifest generator, social token refreshers, and publishing scheduler.
+- **Land Layer (`src/land/`) & App Routes (`src/app/`)**: User-facing business operations, Server Actions, D1 database mutations, API routes, and UI components. Includes Creator Studio (`/creator/studio`, `/vi/creator/studio`), dual-rail payouts (USDT & VietQR), social publisher adapters, 24h signed video download endpoint, and adaptive HLS video player.
 
 ## Feature Inventory
+Every feature from the Survey phase is enumerated below with its assigned milestone. No feature is left unassigned.
+
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Customer Health Score Algorithm (0-100) | 4-factor scoring (recency, velocity, capacity, reliability) from D1 | M1 | Survey R1 |
-| 2 | Automated Win-Back Triggers (Resend & Telegram) | Auto-trigger email and Telegram notification when Health Score < 40 | M1 | Survey R1 |
-| 3 | Growth Analytics Health Monitor & 1-Click Founder Action | Client health table & 1-click bonus credit / support action in `/admin/growth-analytics` | M1 | Survey R1 |
-| 4 | Client Sub-Accounts D1 Schema & Migration | Migration `0286_agency_multitenancy_subaccounts.sql` for subaccounts, branding, MCU pools, reviews | M2 | Survey R2 |
-| 5 | Agency Sub-Account Repository & Brand Customization | Subaccount CRUD, custom logo, color palette, custom domain mapping | M2 | Survey R2 |
-| 6 | Sub-Account MCU Quota Allocation & Enforcement | Independent MCU quota allocation per client subaccount with guard checks | M2 | Survey R2 |
-| 7 | Agency Multi-Tenancy RBAC Hierarchy | Subaccount-scoped RBAC: Agency Owner, Video Editor, Client Reviewer | M2 | Survey R2 |
-| 8 | Interactive Client Video Review Portal | Bilingual `/client-review/[token]` portal for preview, feedback, approval & auto-publish hook | M2 | Survey R2 |
-| 9 | Affiliate Tier Progression Engine | Auto-upgrade partner tiers: Silver (20%), Gold (25%), Platinum (30%) by activated MRR | M3 | Survey R3 |
-| 10 | Public Bilingual Affiliate Leaderboard | `/affiliate/leaderboard` & `/vi/affiliate/leaderboard` with Top 10 rankings and bonus incentives | M3 | Survey R3 |
-| 11 | VietQR Bank Format Export Engine | D1 migration `0285_affiliate_vietqr_payout_rail.sql` + NAPAS 247 banking batch CSV generator | M3 | Survey R3 |
-| 12 | NOWPayments Automated Mass-Payout Bridge | Automated TRC-20 USDT payout verification and execution without duplicate disbursement | M3 | Survey R3 |
-| 13 | Multimodal Cost-Arbitrage Router | Per-second cost optimizer across OpenRouter, fal.ai, ElevenLabs, Mekong GPU | M4 | Survey R4 |
-| 14 | Automatic Fallback & Circuit Breaker Engine | Circuit breaker failover to secondary provider on error or latency threshold | M4 | Survey R4 |
-| 15 | Real-Time Unit Economics Dashboard | `/admin/unit-economics` & `/vi/admin/unit-economics` for Gross Margin %, COGS/video, LTV:CAC | M4 | Survey R4 |
-| 16 | Clean 4-Layer Architecture Enforcement | 0 violations verified via `bash scripts/check-layer-boundaries.sh` | M5 | Survey R5 |
-| 17 | TypeScript 0 Compile Errors | `npm run type-check` with 0 errors across entire workspace | M5 | Survey R5 |
-| 18 | Unit & Integration Test Suites | Comprehensive Vitest suites covering R1, R2, R3, R4 with 100% pass rate | M5 | Survey R5 |
-| 19 | Production Deployment Parity & Sophia Doctor 11/11 | Bit-for-bit SHA parity and Sophia Doctor `node scripts/sophia-doctor.mjs` 11/11 GREEN | M5 | Survey R5 |
+| 1 | Audio Extraction & STT | Extracts audio track from video and transcribes to timestamped segments via Whisper/STT | M1 | Survey (R1) |
+| 2 | 5-Language Contextual Translation | Translates transcript segments into 5 APAC languages (VI, EN, JA, KO, TH) preserving regional tone | M1 | Survey (R1) |
+| 3 | Synchronized Subtitle Generator | Formats and serializes translated segments into standard `.srt` and `.vtt` subtitle files | M1 | Survey (R1) |
+| 4 | Native APAC Voice Synthesis & Audio Sync | Synthesizes native speech via ElevenLabs / Edge TTS matched to scene duration and tempo | M1 | Survey (R1) |
+| 5 | Smart Localization Router | Detects user browser `Accept-Language` and `cf-ipcountry` to route to localized UI, videos, checkout | M1 | Survey (R1) |
+| 6 | APAC Voice Presets Expansion | Expands `VoiceLanguage` and registers native voice presets for JA, KO, TH in `presets.ts` | M1 | Survey (R1) |
+| 7 | Bilingual Locale Files & Routing | Expands supported locales to `['en', 'vi', 'ja', 'ko', 'th']` with baseline JSON dictionaries | M1 | Survey (R1) |
+| 8 | D1 `creator_templates` Registry | Manages reusable viral video templates, storyboards, prompt styles, and music in Cloudflare D1 | M2 | Survey (R2) |
+| 9 | Template Review & Quality Rating FSM | FSM governing template lifecycle (`draft`, `pending`, `approved`, `rejected`, `archived`) with ratings | M2 | Survey (R2) |
+| 10 | 70/30 Royalty Revenue Split Math | Pure integer calculation allocating 70% of template fee to creator and 30% to platform with zero leakage | M2 | Survey (R2) |
+| 11 | OCC CAS Creator Earnings Accrual | Idempotent Compare-And-Swap ledger insertion with monotonic sequence tracking on template activation | M2 | Survey (R2) |
+| 12 | Anti-Fraud Lineage Traversal | Traverses parent lineage graph up to depth 10 to block self-remix and circular exploitation | M2 | Survey (R2) |
+| 13 | Bilingual Creator Studio Portal | Administrative UI (`/creator/studio`, `/vi/creator/studio`) for template analytics and earnings | M2 | Survey (R2) |
+| 14 | Multi-Rail Creator Payouts (USDT / VietQR) | Supports payout withdrawal requests via USDT TRC20/ERC20 and Vietnamese bank accounts via VietQR | M2 | Survey (R2) |
+| 15 | D1 Migration `0291_creator_templates` | Schema migration for `creator_templates`, `creator_withdrawal_requests`, and VietQR banking columns | M2 | Survey (R2) |
+| 16 | Omnichannel Video Publishing Adapter Mesh | Dispatches video uploads to YouTube Shorts, TikTok, Instagram Reels, and Facebook Reels | M3 | Survey (R3) |
+| 17 | OAuth2 Platform Token Lifecycle & Refresh | Manages long-lived and short-lived platform tokens with automated background refresh | M3 | Survey (R3) |
+| 18 | APAC Peak-Time Scheduling Optimizer | Golden-hour scheduler for Hà Nội (11:30 & 19:30), Tokyo (12:00 & 20:00), Bangkok (12:00 & 20:30) | M3 | Survey (R3) |
+| 19 | Multi-Channel Anti-Collision & Stagger | Staggers consecutive channel dispatches by 5 min and resolves database slot collisions | M3 | Survey (R3) |
+| 20 | Account Protection Cooldown & Deferral | Checks provider rate limits/cooldowns before job creation; defers jobs safely instead of dropping | M3 | Survey (R3) |
+| 21 | Viral Metadata Generator | Generates localized click-worthy hook titles, SEO descriptions, trending hashtags, and CTR thumbnail specs | M3 | Survey (R3) |
+| 22 | Tracked Funnel & Telegram Bot Deep Linking | Injects UTM attribution tracking parameters and Telegram bot `/start` payloads into syndicated captions | M3 | Survey (R3) |
+| 23 | Adaptive Bitrate HLS Stream Generator | Generates multi-variant HLS master manifest (`.m3u8`) for 1080p, 720p, and 480p streams | M4 | Survey (R4) |
+| 24 | Global Edge CDN Caching Mesh | Caches video chunks and manifests across Cloudflare edge network via `VIDEO_BUCKET` R2 binding | M4 | Survey (R4) |
+| 25 | Dynamic Forensic Watermarking | Injects semi-transparent forensic watermark (Client Tenant ID / User hash / Timestamp) into previews | M4 | Survey (R4) |
+| 26 | 24-Hour HMAC Signed Download URLs | Generates HMAC-SHA256 signed download links with 24-hour timestamp expiry to block hotlinking | M4 | Survey (R4) |
+| 27 | Adaptive Video Player Client Component | Next.js client component supporting HLS playback, quality switcher, and forensic watermark overlay | M4 | Survey (R4) |
+| 28 | 4-Layer Clean Architecture Enforcement | Strict separation of concerns (seed -> tree -> forest -> land) with 0 violations | M5 | Survey (R5) |
+| 29 | TypeScript Strict Compilation Gate | Full TypeScript type check with 0 errors and zero `:any` types allowed in production code | M5 | Survey (R5) |
+| 30 | Production Bit-for-Bit SHA Parity | Verifies commit SHA matches live edge endpoint `https://sophia.agencyos.network/api/version` | M5 | Survey (R5) |
+| 31 | Sophia Doctor 11/11 Diagnostic Health | Comprehensive automated health check reporting 11/11 GREEN pass score | M5 | Survey (R5) |
 
 ## Milestones
+
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Client Retention & Anti-Churn AI Guardian (R1) | Health score algorithm, Resend/Telegram win-back triggers, admin health monitor & 1-click founder action | none | DONE |
-| 2 | Self-Service Agency Workspace & Client Sub-Accounts (R2) | D1 schema, subaccounts, branding, MCU quota allocation, RBAC, interactive review portal | none | DONE |
-| 3 | 2-Tier Master Affiliate Expansion & Dual-Rail Payouts (R3) | Tier progression (Silver/Gold/Platinum), bilingual leaderboard, NOWPayments USDT + VietQR bank export | none | DONE |
-| 4 | Multi-Model Cost Arbitrage & Unit Economics Dashboard (R4) | Multimodal cost router, circuit breaker fallback, `/admin/unit-economics` dashboard | none | DONE |
-| 5 | Layer Discipline, Comprehensive Testing & Doctor 11/11 (R5) | 4-layer check (0 violations), type-check (0 errors), 100% test pass rate, Sophia Doctor 11/11 GREEN | M1, M2, M3, M4 | DONE |
+| M1 | APAC Video Dubbing & Subtitles Engine | Voice presets (VI, EN, JA, KO, TH), SRT/VTT formatters, smart geo-router, dubbing workflow & i18n routing | none | DONE |
+| M2 | Autonomous Creator Marketplace & 70/30 Protocol | D1 migration 0291, template registry & ratings, 70/30 royalty split, OCC CAS ledger, bilingual `/creator/studio`, USDT & VietQR payouts | none | DONE |
+| M3 | Multi-Platform Syndication & Peak-Time Scheduling | Omnichannel publishing (YouTube Shorts, TikTok, IG Reels, FB Reels), APAC peak optimizer (Hà Nội, Tokyo, Bangkok), viral metadata generator | M1 | DONE |
+| M4 | Global Edge CDN & Adaptive HLS Streaming | Adaptive HLS m3u8 generator, Cloudflare Stream & R2 bridge, dynamic forensic watermark, 24h HMAC signed download URLs | none | DONE |
+| M5 | Final Integration, E2E Test Suite & Quality Gates | Pass 100% of E2E tests (Tiers 1-4), adversarial test hardening (Tier 5), 0 layer boundary violations, 0 TS errors, 11/11 Sophia Doctor | M1, M2, M3, M4, E2E-Track | DONE |
+| E2E | E2E Testing Track | Requirement-driven test harness and test suites across Tiers 1-4 for all 31 features, publishes `TEST_READY.md` | none | DONE |
 
 ## Interface Contracts
 
-### 1. Retention & Anti-Churn (R1)
-```typescript
-export interface CustomerHealthMetrics {
-  userId: string;
-  userEmail: string;
-  userName?: string;
-  recencyScore: number;    // 0 - 25 based on login days ago
-  velocityScore: number;   // 0 - 25 based on video output rate
-  capacityScore: number;   // 0 - 25 based on MCU balance & consumption
-  reliabilityScore: number;// 0 - 25 based on render success rate
-  totalHealthScore: number;// 0 - 100
-  status: 'HEALTHY' | 'WARNING' | 'CRITICAL_CHURN_RISK';
-  lastActiveAt: string;
-}
+### M1 (Dubbing & Localization) ↔ M3 (Syndication) & M4 (HLS)
+- `ApacLocale`: `'vi' | 'en' | 'ja' | 'ko' | 'th'`
+- `SubtitleFormat`: `'srt' | 'vtt'`
+- `DubbingResult`: `{ jobId: string; videoUrl: string; audioTrackUrls: Record<ApacLocale, string>; subtitleUrls: Record<ApacLocale, { srt: string; vtt: string }> }`
 
-export interface WinBackTriggerResult {
-  userId: string;
-  emailSent: boolean;
-  telegramNotified: boolean;
-  timestamp: string;
-}
-```
+### M2 (Creator Marketplace) ↔ Core Billing & Studio
+- `CreatorTemplate`: `{ id: string; creatorId: string; title: string; niche: string; scriptTemplate: string; storyboardJson: string; visualStylePrompt: string; priceCents: number; royaltyPct: number; status: 'draft'|'pending'|'approved'|'rejected'|'archived' }`
+- `RoyaltySplit`: `{ creatorCents: number; platformCents: number; sequenceNum: number; newBalanceCents: number }`
+- `WithdrawalRequest`: `{ id: string; creatorId: string; amountCents: number; rail: 'USDT' | 'VIETQR'; destination: string; status: 'pending'|'processing'|'completed' }`
 
-### 2. Agency Multi-Tenancy & Review Portal (R2)
-```typescript
-export interface ClientSubaccount {
-  id: string;
-  agencyOrgId: string;
-  name: string;
-  slug: string;
-  customDomain?: string;
-  branding: {
-    logoUrl?: string;
-    primaryColor?: string;
-    accentColor?: string;
-  };
-  mcuQuota: {
-    allocated: number;
-    used: number;
-    remaining: number;
-  };
-  status: 'ACTIVE' | 'SUSPENDED';
-}
+### M3 (Syndication) ↔ Scheduler & Publishers
+- `ApacMarket`: `'hanoi' | 'tokyo' | 'bangkok' | 'seoul' | 'singapore'`
+- `ViralMetadata`: `{ hookTitle: string; seoDescription: string; hashtags: string[]; thumbnailPrompt: string; trackedFunnelUrl: string }`
+- `PublishingScheduleInput`: `{ videoId: string; channels: string[]; market: ApacMarket; userRequestedTime?: number }`
 
-export interface VideoReviewPayload {
-  token: string;
-  subaccountId: string;
-  videoId: string;
-  videoTitle: string;
-  videoUrl: string;
-  status: 'PENDING' | 'APPROVED' | 'CHANGES_REQUESTED';
-  feedbackComments?: Array<{
-    timestampSec?: number;
-    author: string;
-    comment: string;
-    createdAt: string;
-  }>;
-}
-```
-
-### 3. Affiliate Network & Dual-Rail Payouts (R3)
-```typescript
-export type AffiliateTier = 'SILVER' | 'GOLD' | 'PLATINUM';
-
-export interface AffiliateTierConfig {
-  tier: AffiliateTier;
-  commissionRatePct: number; // 20%, 25%, 30%
-  tier2RatePct: number;      // 5%
-  minMrrUsd: number;         // 0, 1000, 5000
-}
-
-export interface PayoutBatchItem {
-  affiliateId: string;
-  partnerCode: string;
-  amountUsd: number;
-  rail: 'USDT' | 'VIETQR';
-  usdtAddress?: string;
-  bankDetails?: {
-    bin: string;
-    accountNumber: string;
-    accountName: string;
-    amountVnd: number;
-  };
-}
-```
-
-### 4. Cost Arbitrage & Unit Economics (R4)
-```typescript
-export interface UnitEconomicsMetrics {
-  grossMarginPct: number;
-  totalRevenueUsd: number;
-  totalCogsUsd: number;
-  cogsPerVideoUsd: number;
-  ltvUsd: number;
-  cacUsd: number;
-  ltvCacRatio: number;
-  breakdownByProvider: Array<{
-    provider: 'openrouter' | 'fal' | 'elevenlabs' | 'mekong';
-    totalCostUsd: number;
-    percentageOfTotal: number;
-  }>;
-}
-```
+### M4 (Edge CDN & HLS) ↔ Storage & Client Player
+- `HlsMasterManifest`: `{ masterPlaylistUrl: string; variants: Array<{ quality: '1080p'|'720p'|'480p'; bandwidth: number; url: string }> }`
+- `SignedDownloadToken`: `createSignedDownloadToken(videoId: string, userId: string, ttlSec: number, secret: string) -> string`
+- `DynamicWatermark`: `generateForensicWatermarkText(tenantId: string, userId: string) -> string`
 
 ## Code Layout
-- `apps/sophia-ai-factory/src/seed/types/`: Domain models for retention, agency, affiliate, economics
-- `apps/sophia-ai-factory/src/tree/organizations/`: Subaccount repo, MCU allocation, review service
-- `apps/sophia-ai-factory/src/tree/ai/`: Multimodal cost-arbitrage router & fallback
-- `apps/sophia-ai-factory/src/forest/growth/`: Customer health monitor component
-- `apps/sophia-ai-factory/src/forest/agency/`: Client video review portal component
-- `apps/sophia-ai-factory/src/forest/affiliates/`: Affiliate leaderboard view component
-- `apps/sophia-ai-factory/src/forest/economics/`: Unit economics dashboard component
-- `apps/sophia-ai-factory/src/land/growth/`: Customer retention service & win-back dispatcher
-- `apps/sophia-ai-factory/src/land/affiliates/`: Tier progression engine & leaderboard service
-- `apps/sophia-ai-factory/src/land/payouts/`: Dual-rail payout engine (USDT + VietQR)
-- `apps/sophia-ai-factory/src/land/economics/`: Unit economics aggregation service
-- `apps/sophia-ai-factory/src/app/[locale]/client-review/[token]/`: Review portal route
-- `apps/sophia-ai-factory/src/app/[locale]/affiliate/leaderboard/`: Leaderboard route
-- `apps/sophia-ai-factory/src/app/(app)/admin/unit-economics/`: Unit economics admin route
+```
+apps/sophia-ai-factory/src/
+├── seed/
+│   ├── types/
+│   │   ├── dubbing.ts                  # M1: Dubbing & Subtitle types
+│   │   ├── creator-marketplace.ts      # M2: Creator Marketplace types
+│   │   ├── apac-syndication.ts         # M3: Syndication & Viral types
+│   │   └── streaming.ts                # M4: HLS & Streaming types
+│   ├── voices/
+│   │   └── presets.ts                  # M1: APAC voice presets (JA, KO, TH)
+│   └── security/
+│       └── signed-url.ts               # M4: HMAC-SHA256 24h URL signing
+├── tree/
+│   ├── subtitles/
+│   │   └── subtitle-formatter.ts       # M1: SRT and VTT formatters
+│   ├── localization/
+│   │   └── geo-router.ts               # M1: Smart geo & accept-language router
+│   ├── creator-royalties/
+│   │   ├── attribution.ts              # M2: OCC CAS ledger engine
+│   │   └── template-activation.ts      # M2: 70/30 royalty split logic
+│   ├── publishing/
+│   │   ├── apac-peak-optimizer.ts      # M3: Hanoi, Tokyo, Bangkok golden hours
+│   │   └── viral-metadata-generator.ts # M3: Multi-language hook & metadata generator
+│   └── watermark/
+│       └── forensic-watermark.ts       # M4: Dynamic forensic watermark generator
+├── forest/
+│   ├── inngest/functions/
+│   │   └── video-voice-dubbing.ts      # M1: Dubbing pipeline workflow
+│   ├── publishing/
+│   │   ├── scheduler.ts                # M3: APAC peak-time scheduler integration
+│   │   └── viral-distributor.ts        # M3: Omnichannel publisher dispatcher
+│   └── streaming/
+│       └── hls-manifest-generator.ts   # M4: Adaptive HLS manifest builder
+├── land/
+│   ├── video/dubbing/                  # M1: Dubbing service & Server Actions
+│   ├── creator/                        # M2: Studio analytics & withdrawal service
+│   └── video/publishing/providers/     # M3: YouTube, TikTok, IG Reels, FB Reels
+└── app/
+    ├── [locale]/(app)/creator/studio/  # M2: Bilingual Creator Studio UI
+    ├── api/creator/                    # M2: Creator API endpoints
+    ├── api/videos/[id]/download/       # M4: 24h signed URL verification route
+    └── api/videos/[id]/hls/            # M4: Adaptive HLS streaming manifest route
+```
