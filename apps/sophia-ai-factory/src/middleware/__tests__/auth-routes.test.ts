@@ -11,16 +11,16 @@ describe('Auth & Locale Routing Middleware', () => {
     expect(location).toBe('http://localhost/');
   });
 
-  it('redirects unsupported locales (/de/pricing) to /', async () => {
-    const req = new NextRequest('http://localhost/de/pricing');
+  it('redirects unsupported locales (/ru/pricing) to /', async () => {
+    const req = new NextRequest('http://localhost/ru/pricing');
     const res = await proxy(req);
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
     expect(location).toBe('http://localhost/');
   });
 
-  it('redirects unsupported locales (/fr/login) to /', async () => {
-    const req = new NextRequest('http://localhost/fr/login');
+  it('redirects unsupported locales (/it/login) to /', async () => {
+    const req = new NextRequest('http://localhost/it/login');
     const res = await proxy(req);
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
