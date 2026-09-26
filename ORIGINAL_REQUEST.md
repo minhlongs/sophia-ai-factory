@@ -1378,8 +1378,50 @@ Bắt đầu thực hiện ngay toàn bộ 5 trụ cột (R1 - R5):
    - Áp dụng migration D1 lên Cloudflare remote (`npm run deploy:migrations` hoặc wrangler).
    - Triển khai và xác thực live edge SHA bit-for-bit.
    - Sophia Doctor đạt 11/11 GREEN.
-
 Vui lòng triển khai toàn diện và báo cáo chi tiết từng bước.
+
+## 2026-09-26T03:06:58Z
+
+Triển khai Mạng lưới Phân phối Đại lý Toàn cầu, Liên minh Reseller Doanh nghiệp, Động cơ White-Label Đa Tenant & Quỹ Co-Op Marketing Tự động (Global Partner Channels, Enterprise Reseller Federation & White-Label Multi-Tenant Co-Op Engine) nhằm chinh phục cột mốc $600,000 MRR và 3,000 khách hàng trả phí cho Sophia AI Factory:
+
+1. **Liên minh Reseller Doanh nghiệp & Phân tầng Đại lý Đa cấp (Enterprise Reseller Federation & Multi-Tier Agency Hierarchy)**:
+   - Cấu trúc phân cấp Master Agency → Sub-Agency → Client với cơ chế hoa hồng cascade (Master Agency nhận 5% override từ doanh thu của Sub-Agency).
+   - D1 Migration cho `partner_organizations`, `partner_sub_resellers`, `partner_license_pools`.
+   - Cơ chế cấp phát tài nguyên hàng loạt (Bulk License & MCU Quota Pooling) cho phép đại lý tự phân bổ gói tài nguyên cho khách hàng phụ thuộc.
+
+2. **Động cơ Quỹ Co-Op Marketing & Quyết toán Doanh thu Tự động (Co-Op Marketing Funds & Automated Revenue-Share Settlement)**:
+   - Cơ chế trích lập tự động 5% doanh thu hàng tháng vào quỹ Co-Op Marketing dành riêng cho đối tác đạt cấp Gold và Platinum.
+   - D1 Migration cho `partner_co_op_claims`, `co_op_budget_allocations`, `partner_payout_batches`.
+   - Quy trình tự động thẩm định hóa đơn chiến dịch tiếp thị và giải ngân tự động qua USDT NOWPayments hoặc VietQR PayOS.
+
+3. **Cổng White-Label Doanh nghiệp & Tùy biến Tên miền Toàn diện (Advanced White-Label & Custom Domain Federation)**:
+   - Hỗ trợ đa tên miền tùy biến với Cloudflare SSL for SaaS / CNAME routing cho từng đại lý.
+   - Cấu hình gửi email thương hiệu riêng qua Resend Domain Verification (`marketing@agencybrand.com`).
+   - Cổng giao diện khách hàng tùy biến hoàn toàn `/portal/[agencySlug]` với màn hình đăng nhập, logo, theme CSS tùy biến và ẩn nhãn Sophia AI Factory 100%.
+
+4. **Lưới Giám sát & Báo cáo Doanh thu Đối tác Thời gian thực (Partner Analytics, Cohort Attribution & White-Label Reporting)**:
+   - Bảng phân tích chỉ số kinh doanh dành cho đại lý: MRR theo cohort khách hàng, LTV, tỷ lệ churn, tốc độ tiêu thụ MCU của từng sub-client.
+   - Tính năng xuất báo cáo định kỳ dạng PDF/Excel mang thương hiệu đại lý để bàn giao cho khách hàng cuối.
+   - Webhook thông báo tự động cho đại lý khi khách hàng đạt mốc sản lượng hoặc nạp thêm hạn ngạch.
+
+5. **Kỷ luật Kiến trúc 4 Tầng, Hệ thống Kiểm thử Đa tầng & Xác thực Triển khai Cạnh (Clean Architecture & Production CI/CD Parity)**:
+   - 100% tuân thủ mô hình 4 tầng Clean Architecture (`seed` → `tree` → `forest` → `land`) với 0 vi phạm (`bash scripts/check-layer-boundaries.sh`).
+   - 0 lỗi TypeScript compiler (`npm run type-check`) và 0 lỗi linter (`npm run lint -- --quiet`).
+   - 100% pass rate toàn bộ test suite (Unit, E2E, và Adversarial integration tests).
+   - Live Edge Verification: SHA phiên bản trên live edge `https://sophia.agencyos.network/api/version` phải khớp bit-for-bit với git commit SHA.
+   - Sophia Doctor duy trì tuyệt đối 11/11 GREEN (`node apps/sophia-ai-factory/scripts/sophia-doctor.mjs`).
+
+Working directory: `/Users/macbook/sophia-ai-factory`
+Integrity mode: `development`
+
+References:
+- docs/mrr-roadmap.md
+- MONEY_GRAPH.md
+- BUSINESS_MODEL.md
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
 
 
 
