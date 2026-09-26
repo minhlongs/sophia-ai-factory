@@ -24,15 +24,22 @@ import {
  * Static bedrock fallback rates (Base: USD).
  * Guaranteed to exist even during complete network/KV outage.
  */
-export const BEDROCK_FX_RATES: FxRateMap = {
+export const BEDROCK_RATES_TABLE: Record<SupportedCurrency, number> = {
+  USD: 1.0,
+  EUR: 0.92,
+  GBP: 0.78,
+  JPY: 155.0,
+  SGD: 1.35,
+  AUD: 1.52,
+  CAD: 1.36,
+  VND: 25450.0,
+  THB: 36.50,
+  IDR: 16250.0,
+};
+
+export const BEDROCK_FX_RATES: FxRateMap & { rates: Record<SupportedCurrency, number> } = {
   base: 'USD',
-  rates: {
-    USD: 1.0,
-    VND: 25450.0,
-    EUR: 0.92,
-    JPY: 155.0,
-    SGD: 1.35,
-  },
+  rates: BEDROCK_RATES_TABLE,
   fetchedAt: 1717000000000,
   ttlSeconds: 86400,
 };
@@ -121,10 +128,15 @@ export async function getLiveOrCachedFxRates(env?: Record<string, unknown>): Pro
         const rawRates = payload.rates;
         const liveRates: Record<SupportedCurrency, number> = {
           USD: 1.0,
-          VND: typeof rawRates.VND === 'number' && rawRates.VND > 0 ? rawRates.VND : BEDROCK_FX_RATES.rates.VND,
           EUR: typeof rawRates.EUR === 'number' && rawRates.EUR > 0 ? rawRates.EUR : BEDROCK_FX_RATES.rates.EUR,
+          GBP: typeof rawRates.GBP === 'number' && rawRates.GBP > 0 ? rawRates.GBP : BEDROCK_FX_RATES.rates.GBP,
           JPY: typeof rawRates.JPY === 'number' && rawRates.JPY > 0 ? rawRates.JPY : BEDROCK_FX_RATES.rates.JPY,
           SGD: typeof rawRates.SGD === 'number' && rawRates.SGD > 0 ? rawRates.SGD : BEDROCK_FX_RATES.rates.SGD,
+          AUD: typeof rawRates.AUD === 'number' && rawRates.AUD > 0 ? rawRates.AUD : BEDROCK_FX_RATES.rates.AUD,
+          CAD: typeof rawRates.CAD === 'number' && rawRates.CAD > 0 ? rawRates.CAD : BEDROCK_FX_RATES.rates.CAD,
+          VND: typeof rawRates.VND === 'number' && rawRates.VND > 0 ? rawRates.VND : BEDROCK_FX_RATES.rates.VND,
+          THB: typeof rawRates.THB === 'number' && rawRates.THB > 0 ? rawRates.THB : BEDROCK_FX_RATES.rates.THB,
+          IDR: typeof rawRates.IDR === 'number' && rawRates.IDR > 0 ? rawRates.IDR : BEDROCK_FX_RATES.rates.IDR,
         };
 
         const freshRates: FxRateMap = {
@@ -218,15 +230,27 @@ export function formatCurrency(
     throw new Error(`Invalid currency for formatting: "${String(currency)}"`);
   }
 
-  const isZeroDecimal = currency === 'VND' || currency === 'JPY';
+  const isZeroDecimal = currency === 'VND' || currency === 'JPY' || currency === 'IDR';
   const defaultLocale =
     currency === 'VND'
       ? 'vi-VN'
       : currency === 'JPY'
         ? 'ja-JP'
-        : currency === 'EUR'
-          ? 'de-DE'
-          : 'en-US';
+        : currency === 'IDR'
+          ? 'id-ID'
+          : currency === 'THB'
+            ? 'th-TH'
+            : currency === 'EUR'
+              ? 'de-DE'
+              : currency === 'GBP'
+                ? 'en-GB'
+                : currency === 'SGD'
+                  ? 'en-SG'
+                  : currency === 'AUD'
+                    ? 'en-AU'
+                    : currency === 'CAD'
+                      ? 'en-CA'
+                      : 'en-US';
 
   const effectiveLocale = locale ?? defaultLocale;
   const majorAmount = amountCents / 100;

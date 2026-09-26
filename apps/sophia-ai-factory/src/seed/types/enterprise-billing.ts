@@ -6,23 +6,44 @@
  * @module seed/types/enterprise-billing
  */
 
-export type SupportedCurrency = 'USD' | 'VND' | 'EUR' | 'JPY' | 'SGD';
+export type SupportedCurrency =
+  | 'USD'
+  | 'EUR'
+  | 'GBP'
+  | 'JPY'
+  | 'SGD'
+  | 'AUD'
+  | 'CAD'
+  | 'VND'
+  | 'THB'
+  | 'IDR';
 
 export const ALL_SUPPORTED_CURRENCIES: readonly SupportedCurrency[] = [
   'USD',
-  'VND',
   'EUR',
+  'GBP',
   'JPY',
   'SGD',
+  'AUD',
+  'CAD',
+  'VND',
+  'THB',
+  'IDR',
 ] as const;
 
 export function isSupportedCurrency(value: unknown): value is SupportedCurrency {
-  return typeof value === 'string' && ALL_SUPPORTED_CURRENCIES.includes(value as SupportedCurrency);
+  return typeof value === 'string' && (ALL_SUPPORTED_CURRENCIES as readonly string[]).includes(value);
 }
+
+export function isZeroDecimalCurrency(currency: SupportedCurrency): boolean {
+  return currency === 'JPY' || currency === 'VND' || currency === 'IDR';
+}
+
+export type { TaxJurisdiction } from './tax-compliance';
 
 export interface FxRateMap {
   base: 'USD';
-  rates: Record<SupportedCurrency, number>;
+  rates: Partial<Record<SupportedCurrency, number>>;
   fetchedAt: number;
   ttlSeconds: number;
 }

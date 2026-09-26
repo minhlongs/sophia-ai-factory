@@ -11,7 +11,20 @@ import { buildCSPHeader } from '@/seed/security/content-security-policy-configur
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { generateCsrfToken, setCsrfCookie } from '@/seed/security/csrf';
 
-export const SUPPORTED_LOCALES = ['en', 'vi', 'ja', 'ko', 'th'] as const;
+export const SUPPORTED_LOCALES = [
+  'en',
+  'vi',
+  'ja',
+  'ko',
+  'zh',
+  'es',
+  'fr',
+  'de',
+  'th',
+  'id',
+  'hi',
+  'ar',
+] as const;
 
 export const intlMiddleware = createMiddleware({
   locales: SUPPORTED_LOCALES,

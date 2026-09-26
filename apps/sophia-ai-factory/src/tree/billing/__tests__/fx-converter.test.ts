@@ -89,11 +89,11 @@ describe('tree/billing/fx-converter', () => {
 
     it('throws descriptive error on unsupported source or target currency', () => {
       expect(() =>
-        convertCurrency(100, 'GBP' as SupportedCurrency, 'USD'),
+        convertCurrency(100, 'CHF' as SupportedCurrency, 'USD'),
       ).toThrowError(/Invalid source currency/);
 
       expect(() =>
-        convertCurrency(100, 'USD', 'AUD' as SupportedCurrency),
+        convertCurrency(100, 'USD', 'XYZ' as SupportedCurrency),
       ).toThrowError(/Invalid target currency/);
     });
 
@@ -102,10 +102,15 @@ describe('tree/billing/fx-converter', () => {
         base: 'USD',
         rates: {
           USD: 0,
-          VND: 25000,
           EUR: 0.9,
+          GBP: 0.78,
           JPY: 150,
           SGD: 1.3,
+          AUD: 1.5,
+          CAD: 1.35,
+          VND: 25000,
+          THB: 36,
+          IDR: 16000,
         },
         fetchedAt: Date.now(),
         ttlSeconds: 3600,

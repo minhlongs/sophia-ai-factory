@@ -1,9 +1,10 @@
 /**
  * Microsoft Edge TTS Gateway Client
  *
- * Provides native high-fidelity neural voice synthesis for APAC markets
- * (Vietnamese, Japanese, Korean, Thai, English) without vendor lock-in.
- * Supports SSML prosody adjustments (tempo, pitch, rate) for video scene synchronization.
+ * Provides native high-fidelity neural voice synthesis for APAC & global markets
+ * (Vietnamese, Japanese, Korean, Thai, English US/UK) without vendor lock-in.
+ * Supports SSML prosody adjustments (tempo, pitch, rate) for video scene synchronization,
+ * regional dialect prosody bindings, and mandatory legal compliance audio disclaimers.
  *
  * Layer: forest (infrastructure orchestrators & external API adapters)
  *
@@ -12,17 +13,32 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import type { ApacLocale } from '@/seed/types/dubbing';
+import type {
+  RegionalDialect,
+  ComplianceJurisdiction,
+} from '@/seed/types/cultural-adaptation';
+import {
+  resolveDialectVoice,
+} from '@/seed/voices/localized-profiles';
+import {
+  normalizeDialect,
+  tuneProsodyForDialect,
+} from '@/tree/cultural-adaptation/dialect-normalizer';
+import {
+  generateAiDisclosure,
+} from '@/tree/cultural-adaptation/compliance-engine';
 
 export interface EdgeTtsVoice {
   name: string;
   shortName: string;
-  locale: ApacLocale;
+  locale: ApacLocale | string;
   gender: 'male' | 'female';
   description: string;
+  dialect?: RegionalDialect;
 }
 
 /**
- * Standard Microsoft Edge neural voices for APAC locales.
+ * Standard Microsoft Edge neural voices for APAC and international dialect locales.
  */
 export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
   // Vietnamese
@@ -32,6 +48,7 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     locale: 'vi',
     gender: 'female',
     description: 'Natural southern Vietnamese female voice, clear and warm',
+    dialect: 'vi-VN-nam',
   },
   {
     name: 'vi-VN-NamMinhNeural',
@@ -39,6 +56,7 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     locale: 'vi',
     gender: 'male',
     description: 'Northern Vietnamese male voice, deep and professional',
+    dialect: 'vi-VN-bac',
   },
   // Japanese
   {
@@ -47,6 +65,7 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     locale: 'ja',
     gender: 'female',
     description: 'Polite and expressive Tokyo female voice',
+    dialect: 'ja-JP-tokyo',
   },
   {
     name: 'ja-JP-KeitaNeural',
@@ -54,6 +73,7 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     locale: 'ja',
     gender: 'male',
     description: 'Authoritative and dynamic Tokyo male voice',
+    dialect: 'ja-JP-tokyo',
   },
   // Korean
   {
@@ -85,13 +105,14 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     gender: 'male',
     description: 'Crisp and energetic Bangkok male voice',
   },
-  // English (APAC international baseline)
+  // English (US)
   {
     name: 'en-US-JennyNeural',
     shortName: 'Jenny',
     locale: 'en',
     gender: 'female',
     description: 'Versatile and articulate English female narrator',
+    dialect: 'en-US',
   },
   {
     name: 'en-US-GuyNeural',
@@ -99,6 +120,24 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     locale: 'en',
     gender: 'male',
     description: 'Approachable and authoritative English male voice',
+    dialect: 'en-US',
+  },
+  // English (UK)
+  {
+    name: 'en-GB-SoniaNeural',
+    shortName: 'Sonia',
+    locale: 'en',
+    gender: 'female',
+    description: 'Refined and articulate British English female voice',
+    dialect: 'en-GB',
+  },
+  {
+    name: 'en-GB-RyanNeural',
+    shortName: 'Ryan',
+    locale: 'en',
+    gender: 'male',
+    description: 'Warm and polished British English male voice',
+    dialect: 'en-GB',
   },
 ] as const;
 
@@ -112,12 +151,28 @@ export function resolveEdgeVoice(locale: ApacLocale, gender: 'male' | 'female' =
   return fallback ? fallback.name : 'vi-VN-HoaiMyNeural';
 }
 
+/**
+ * Resolve Microsoft Edge neural voice name for a specific regional dialect.
+ */
+export function resolveEdgeVoiceForDialect(
+  dialect: RegionalDialect,
+  gender: 'male' | 'female' = 'female',
+): string {
+  const profile = resolveDialectVoice(dialect, gender);
+  return profile.edgeVoiceName;
+}
+
 export interface EdgeTtsSynthesisOptions {
   voice?: string;
   rate?: string; // e.g. "+0%", "+15%", "-10%"
   pitch?: string; // e.g. "+0Hz", "+5Hz"
   volume?: string; // e.g. "+0%", "+20%"
   targetDurationSec?: number;
+  gender?: 'male' | 'female';
+  dialect?: RegionalDialect;
+  sourceDialect?: RegionalDialect;
+  complianceJurisdiction?: ComplianceJurisdiction;
+  injectAudioDisclaimer?: boolean;
 }
 
 export interface EdgeTtsSynthesisResult {
@@ -127,6 +182,9 @@ export interface EdgeTtsSynthesisResult {
   voice: string;
   rate: string;
   wordCount: number;
+  disclaimerInjected?: boolean;
+  disclaimerText?: string;
+  normalizedScript?: string;
 }
 
 /**
@@ -188,29 +246,76 @@ export function calculateTempoAdjustment(
 }
 
 /**
- * Synthesize speech via Edge TTS service.
- * In production edge worker / server environment, calls Edge TTS API.
- * In test or sandboxed environments, reliably synthesizes valid audio payload.
+ * Synthesize speech via Edge TTS service with dialect normalization and compliance injection.
  */
 export async function synthesizeEdgeTts(
   text: string,
   locale: ApacLocale,
   options?: EdgeTtsSynthesisOptions,
 ): Promise<EdgeTtsSynthesisResult> {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  const wordCount = words.length;
+  let processedText = text;
+  let normalizedScript: string | undefined;
 
-  const voice = options?.voice || resolveEdgeVoice(locale);
-
-  // If a target scene duration is requested, dynamically adjust tempo
-  let rate = options?.rate || '+0%';
-  if (options?.targetDurationSec && options.targetDurationSec > 0 && !options.rate) {
-    rate = calculateTempoAdjustment(options.targetDurationSec, wordCount, locale);
+  // 1. Dialect lexical normalization if requested
+  if (options?.dialect && options.sourceDialect) {
+    const dialectResult = normalizeDialect(processedText, options.sourceDialect, options.dialect);
+    processedText = dialectResult.normalizedText;
+    normalizedScript = processedText;
   }
 
-  const pitch = options?.pitch || '+0Hz';
+  // 2. Compliance audio disclaimer injection if requested
+  let disclaimerInjected = false;
+  let disclaimerText: string | undefined;
+
+  if (options?.complianceJurisdiction) {
+    const disclosure = generateAiDisclosure(options.complianceJurisdiction, 'audio');
+    if (disclosure.audioDisclaimer && (options.injectAudioDisclaimer || options.complianceJurisdiction === 'EU' || options.complianceJurisdiction === 'VN' || options.complianceJurisdiction === 'JP')) {
+      disclaimerText = disclosure.audioDisclaimer.textLocal;
+      processedText = `${processedText}. ${disclaimerText}`;
+      disclaimerInjected = true;
+    }
+  }
+
+  const words = processedText.trim().split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+
+  // 3. Resolve Voice
+  let voice: string;
+  if (options?.voice) {
+    voice = options.voice;
+  } else if (options?.dialect) {
+    voice = resolveEdgeVoiceForDialect(options.dialect, options.gender || 'female');
+  } else {
+    voice = resolveEdgeVoice(locale, options?.gender || 'female');
+  }
+
+  // 4. Resolve Prosody (Rate, Pitch, Volume)
+  let rate = options?.rate;
+  let pitch = options?.pitch;
+
+  if (options?.dialect && (!rate || !pitch)) {
+    const prosody = tuneProsodyForDialect(options.dialect, {
+      rate: options.rate,
+      pitch: options.pitch,
+    });
+    if (!rate) rate = prosody.rate;
+    if (!pitch) pitch = prosody.pitch;
+  }
+
+  if (!rate) {
+    if (options?.targetDurationSec && options.targetDurationSec > 0) {
+      rate = calculateTempoAdjustment(options.targetDurationSec, wordCount, locale);
+    } else {
+      rate = '+0%';
+    }
+  }
+
+  if (!pitch) {
+    pitch = '+0Hz';
+  }
+
   const volume = options?.volume || '+0%';
-  const ssml = buildSsml(text, voice, rate, pitch, volume);
+  const ssml = buildSsml(processedText, voice, rate, pitch, volume);
 
   // Natural duration estimation
   const rateModifier = 1 + (parseFloat(rate.replace('%', '')) || 0) / 100;
@@ -241,6 +346,9 @@ export async function synthesizeEdgeTts(
           voice,
           rate,
           wordCount,
+          disclaimerInjected,
+          disclaimerText,
+          normalizedScript,
         };
       }
     }
@@ -253,7 +361,7 @@ export async function synthesizeEdgeTts(
   }
 
   // Edge-resilient fallback audio generation (valid MP3/WAV synthetic payload)
-  const syntheticPayload = createSyntheticAudioBuffer(text, estimatedDuration);
+  const syntheticPayload = createSyntheticAudioBuffer(processedText, estimatedDuration);
 
   return {
     audioBuffer: syntheticPayload,
@@ -262,6 +370,9 @@ export async function synthesizeEdgeTts(
     voice,
     rate,
     wordCount,
+    disclaimerInjected,
+    disclaimerText,
+    normalizedScript,
   };
 }
 
