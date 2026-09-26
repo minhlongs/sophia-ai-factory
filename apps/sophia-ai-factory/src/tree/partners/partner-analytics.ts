@@ -59,6 +59,7 @@ export interface CohortRow {
   totalRealizedRevenueCents: number;
   realizedLtvCents: number;
   periods: CohortPeriodMetric[];
+  currentActiveSize?: number;
 }
 
 export interface CohortSummary {
@@ -71,6 +72,7 @@ export interface CohortSummary {
   avgM1RetentionPct: number;
   avgM3RetentionPct: number;
   overallNrrPct: number;
+  totalCohortsTracked?: number;
 }
 
 export interface CohortMatrixResult {
@@ -213,6 +215,7 @@ export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]):
         avgM1RetentionPct: 0,
         avgM3RetentionPct: 0,
         overallNrrPct: 100,
+        totalCohortsTracked: 0,
       },
     };
   }
@@ -416,6 +419,8 @@ export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]):
       ? Math.floor(cohortTotalRevenueCents / initialSize)
       : 0;
 
+    const currentActiveSize = latestPeriod ? latestPeriod.activeClients : initialSize;
+
     cohortRows.push({
       cohortMonth: cMonth,
       initialSize,
@@ -423,6 +428,7 @@ export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]):
       totalRealizedRevenueCents: cohortTotalRevenueCents,
       realizedLtvCents,
       periods,
+      currentActiveSize,
     });
   }
 
@@ -490,6 +496,7 @@ export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]):
       avgM1RetentionPct,
       avgM3RetentionPct,
       overallNrrPct,
+      totalCohortsTracked: cohortRows.length,
     },
   };
 }

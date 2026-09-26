@@ -172,6 +172,17 @@ function normalizeAnalyticsArgs(
     };
     const partnerInfo = brandingIfThreeArgs;
     const totalMrrCents = getNum('totalEndingMrrCents') ?? getNum('totalMrrCents') ?? 0;
+    const activeSubClients =
+      getNum('activeClients') ??
+      cohorts.reduce(
+        (acc, c) =>
+          acc +
+          (c.currentActiveSize ??
+            c.periods?.[c.periods.length - 1]?.activeClients ??
+            c.initialSize ??
+            0),
+        0,
+      );
     const analyticsData: PartnerAnalyticsSummary = {
       partnerId: 'partner',
       partnerName: partnerInfo?.brandName ?? partnerInfo?.agencyName ?? 'Enterprise Partner Agency',
@@ -179,7 +190,7 @@ function normalizeAnalyticsArgs(
       period: partnerInfo?.reportPeriod ?? 'Executive Review',
       generatedAt: Date.now(),
       totalSubClients: getNum('totalClients') ?? cohorts.reduce((acc, c) => acc + (c.initialSize || 0), 0),
-      activeSubClients: getNum('activeClients') ?? cohorts.reduce((acc, c) => acc + (c.periods?.[c.periods.length - 1]?.activeClients ?? c.initialSize ?? 0), 0),
+      activeSubClients,
       totalMrrCents,
       monthlyCommissionCents: Math.round(totalMrrCents * 0.35),
       lifetimeEarningsCents: getNum('totalRealizedRevenueCents') ?? 0,
@@ -194,7 +205,7 @@ function normalizeAnalyticsArgs(
         cohorts: cohorts || [],
         summary: {
           totalClients: getNum('totalClients') ?? cohorts.reduce((acc, c) => acc + (c.initialSize || 0), 0),
-          activeClients: getNum('activeClients') ?? cohorts.reduce((acc, c) => acc + (c.periods?.[c.periods.length - 1]?.activeClients ?? c.initialSize ?? 0), 0),
+          activeClients: activeSubClients,
           totalMrrCents,
           avgLtvCents: getNum('avgLtvCents') ?? 0,
           projectedLtvCents: getNum('projectedLtvCents') ?? 0,
@@ -202,6 +213,7 @@ function normalizeAnalyticsArgs(
           avgM1RetentionPct: getNum('avgM1RetentionPct') ?? 100,
           avgM3RetentionPct: getNum('avgM3RetentionPct') ?? 100,
           overallNrrPct: getNum('overallNrrPct') ?? 100,
+          totalCohortsTracked: getNum('totalCohortsTracked') ?? cohorts.length,
         },
       },
     };

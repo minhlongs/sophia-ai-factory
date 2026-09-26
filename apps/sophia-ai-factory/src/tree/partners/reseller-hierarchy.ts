@@ -162,17 +162,71 @@ export async function bindSubReseller(
     };
   }
 
-  // 5. Anti-circularity: Check if subPartnerId is already an upstream master of masterPartnerId
-  const reverseBinding = await db
-    .prepare('SELECT id FROM partner_sub_resellers WHERE master_partner_id = ? AND sub_partner_id = ? AND status != ?')
-    .bind(subPartnerId, masterPartnerId, 'terminated')
-    .first<{ id: string }>();
+  // 5. Anti-circularity: Multi-hop cycle prevention
+  // Walk up the parent hierarchy from masterPartnerId to ensure subPartnerId is not an ancestor
+  let currentAncestorId: string | null = masterPartnerId;
+  const visitedAncestors = new Set<string>();
+  const MAX_HIERARCHY_DEPTH = 50;
+  let depth = 0;
 
-  if (reverseBinding) {
-    return {
-      success: false,
-      error: 'CIRCULAR_HIERARCHY_PROHIBITED',
-    };
+  while (currentAncestorId && depth < MAX_HIERARCHY_DEPTH) {
+    if (currentAncestorId === subPartnerId) {
+      return {
+        success: false,
+        error: 'CIRCULAR_HIERARCHY_PROHIBITED',
+      };
+    }
+    if (visitedAncestors.has(currentAncestorId)) {
+      break;
+    }
+    visitedAncestors.add(currentAncestorId);
+
+    const parentRow: { master_partner_id: string } | null = await db
+      .prepare('SELECT master_partner_id FROM partner_sub_resellers WHERE sub_partner_id = ? AND status != ?')
+      .bind(currentAncestorId, 'terminated')
+      .first<{ master_partner_id: string }>();
+
+    if (!parentRow) {
+      break;
+    }
+
+    if (parentRow.master_partner_id === subPartnerId) {
+      return {
+        success: false,
+        error: 'CIRCULAR_HIERARCHY_PROHIBITED',
+      };
+    }
+
+    currentAncestorId = parentRow.master_partner_id;
+    depth++;
+  }
+
+  // Also verify downstream descendants from subPartnerId do not contain masterPartnerId
+  const queue: string[] = [subPartnerId];
+  const seenDescendants = new Set<string>([subPartnerId]);
+  let descIterations = 0;
+
+  while (queue.length > 0 && descIterations < 500) {
+    const current = queue.shift()!;
+    descIterations++;
+
+    const children = await db
+      .prepare('SELECT sub_partner_id FROM partner_sub_resellers WHERE master_partner_id = ? AND status != ?')
+      .bind(current, 'terminated')
+      .all<{ sub_partner_id: string }>();
+
+    for (const child of children.results ?? []) {
+      if (child.sub_partner_id === masterPartnerId) {
+        return {
+          success: false,
+          error: 'CIRCULAR_HIERARCHY_PROHIBITED',
+        };
+      }
+      if (!seenDescendants.has(child.sub_partner_id)) {
+        seenDescendants.add(child.sub_partner_id);
+        queue.push(child.sub_partner_id);
+      }
+    }
   }
 
   // 6. Clean up any terminated binding for this sub-agency to satisfy UNIQUE constraint

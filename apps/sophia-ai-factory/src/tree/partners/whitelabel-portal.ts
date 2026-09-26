@@ -248,7 +248,9 @@ export function sanitizeBrandCss(customCss: string | null | undefined): string {
     return '';
   }
 
-  let sanitized = customCss;
+  // 0. Pre-sanitization: Strip null bytes and control characters FIRST before any regex checks
+  // Prevents bypass attacks like @\x00import or java\x00script:
+  let sanitized = customCss.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   // 1. Remove full <script>...</script> blocks including content
   sanitized = sanitized.replace(/<script[\s\S]*?(?:<\/script>|$)/gi, '');
@@ -262,25 +264,25 @@ export function sanitizeBrandCss(customCss: string | null | undefined): string {
   sanitized = sanitized.replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '');
   sanitized = sanitized.replace(/<[^>]*>/g, '');
 
-  // 2. Strip @import rules completely (remote stylesheet injection)
+  // 4. Strip @import rules completely (remote stylesheet injection)
   sanitized = sanitized.replace(/@import\s+(?:url\([^)]*\)|["'][^"']*["'])[^;]*;?/gi, '');
   sanitized = sanitized.replace(/@import[^;{}]+;?/gi, '');
 
-  // 3. Strip @charset, @namespace
+  // 5. Strip @charset, @namespace
   sanitized = sanitized.replace(/@(?:charset|namespace)[^;]+;?/gi, '');
 
-  // 4. Strip url(javascript:...), url(data:...), url(vbscript:...)
+  // 6. Strip url(javascript:...), url(data:...), url(vbscript:...)
   sanitized = sanitized.replace(/url\s*\(\s*["']?\s*(?:javascript|vbscript|livescript|mocha|data\s*:\s*text)[\s\S]*?\)/gi, 'none');
 
-  // 5. Strip inline javascript: or vbscript: anywhere in CSS declarations
+  // 7. Strip inline javascript: or vbscript: anywhere in CSS declarations
   sanitized = sanitized.replace(/(?:javascript|vbscript|livescript)\s*:/gi, '');
 
-  // 6. Strip IE expression(...) and behavior: properties
+  // 8. Strip IE expression(...) and behavior: properties
   sanitized = sanitized.replace(/expression\s*\([^)]*\)/gi, 'none');
   sanitized = sanitized.replace(/behavior\s*:[^;}]*/gi, '');
   sanitized = sanitized.replace(/-moz-binding\s*:[^;}]*/gi, '');
 
-  // 7. Strip null bytes and control characters (excluding standard whitespace \t, \r, \n)
+  // 9. Final defense-in-depth: Strip null bytes and control characters
   sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   return sanitized.trim();

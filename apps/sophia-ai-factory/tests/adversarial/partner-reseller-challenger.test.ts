@@ -36,6 +36,7 @@ import {
   calculateCascadeOverride,
   bindSubReseller,
   unbindSubReseller,
+  accrueCascadeOverride,
   MASTER_CASCADE_OVERRIDE_RATE_PCT,
 } from '@/tree/partners/reseller-hierarchy';
 import {
@@ -375,6 +376,39 @@ describe('Adversarial Challenger Suite: Partner Federation & Reseller Engine', (
       expect(finalPool!.allocated_seats).toBeLessThanOrEqual(15);
       expect(finalPool!.allocated_mcu_credits).toBeLessThanOrEqual(15_000);
     });
+
+    it('Oracle: 25 concurrent requests competing for 10 seats — exactly 10 succeed, 15 fail closed, zero over-allocation', async () => {
+      await seedPartner(db, 'agency_cas_25', 'Heavy Concurrency Agency');
+
+      const poolRes = await createLicensePool(
+        db,
+        'agency_cas_25',
+        'Heavy Contested Pool',
+        10,
+        5_000,
+        200,
+      );
+      const poolId = poolRes.pool!.id;
+
+      // 25 concurrent allocation requests, each asking for 1 seat and 500 MCU
+      const requests = Array.from({ length: 25 }, (_, i) =>
+        allocatePoolQuota(db, poolId, `client_25_${i}`, 1, 500),
+      );
+
+      const results = await Promise.all(requests);
+      const successes = results.filter((r) => r.success);
+      const failures = results.filter((r) => !r.success);
+
+      expect(successes.length).toBe(10);
+      expect(failures.length).toBe(15);
+
+      const finalPool = await getLicensePoolById(db, poolId);
+      expect(finalPool!.allocated_seats).toBe(10);
+      expect(finalPool!.allocated_mcu_credits).toBe(5_000);
+      expect(finalPool!.status).toBe('exhausted');
+      expect(finalPool!.allocated_seats).toBeLessThanOrEqual(finalPool!.total_seats);
+      expect(finalPool!.allocated_mcu_credits).toBeLessThanOrEqual(finalPool!.total_mcu_credits);
+    });
   });
 
   // ==========================================================================
@@ -602,13 +636,71 @@ describe('Adversarial Challenger Suite: Partner Federation & Reseller Engine', (
       expect(newBind.success).toBe(true);
       expect(newBind.binding!.master_partner_id).toBe('new_master');
     });
+
+    it('Oracle: Prevents multi-hop circular hierarchy loop (A -> B -> C -> A)', async () => {
+      await seedPartner(db, 'node_a', 'Node A');
+      await seedPartner(db, 'node_b', 'Node B');
+      await seedPartner(db, 'node_c', 'Node C');
+
+      // 1. A binds B as sub-agency
+      const bind1 = await bindSubReseller(db, 'node_a', 'node_b');
+      expect(bind1.success).toBe(true);
+
+      // 2. B binds C as sub-agency
+      const bind2 = await bindSubReseller(db, 'node_b', 'node_c');
+      expect(bind2.success).toBe(true);
+
+      // 3. C attempts to bind A (Multi-Hop 3-Node Cycle Attack: A -> B -> C -> A)
+      const bind3 = await bindSubReseller(db, 'node_c', 'node_a');
+      expect(bind3.success).toBe(false);
+      expect(bind3.error).toBe('CIRCULAR_HIERARCHY_PROHIBITED');
+    });
+
+    it('Oracle: Escrow and suspension integrity — suspended master cannot accrue pending payouts', async () => {
+      await seedPartner(db, 'master_susp', 'Suspended Master Agency', 'PLATINUM', 'active');
+      await seedPartner(db, 'sub_active', 'Active Sub Agency', 'GOLD', 'active');
+
+      // 1. Bind sub to master while active
+      const bindRes = await bindSubReseller(db, 'master_susp', 'sub_active');
+      expect(bindRes.success).toBe(true);
+
+      // 2. Suspend master agency
+      await db
+        .prepare("UPDATE partner_profiles SET status = 'suspended' WHERE id = ?")
+        .bind('master_susp')
+        .run();
+
+      // 3. Sub-agency completes customer transaction of $20,000 (2,000,000 cents)
+      const accrueRes = await accrueCascadeOverride(db, 'sub_active', 'order_tx_escrow_1', 2_000_000);
+      expect(accrueRes.success).toBe(true);
+      expect(accrueRes.escrowed).toBe(true);
+      expect(accrueRes.overrideCents).toBe(100_000); // 5% = $1,000
+      expect(accrueRes.reason).toBe('MASTER_AGENCY_SUSPENDED');
+
+      // 4. Verify Master pending payout is NOT accrued (must remain 0)
+      const masterProfile = await db
+        .prepare('SELECT pending_payout_cents, total_earnings_cents FROM partner_profiles WHERE id = ?')
+        .bind('master_susp')
+        .first<{ pending_payout_cents: number; total_earnings_cents: number }>();
+      expect(masterProfile?.pending_payout_cents).toBe(0);
+      expect(masterProfile?.total_earnings_cents).toBe(0);
+
+      // 5. Verify Sub reseller binding pending override is NOT accrued (must remain 0)
+      const binding = await db
+        .prepare('SELECT pending_override_cents, lifetime_override_cents FROM partner_sub_resellers WHERE master_partner_id = ? AND sub_partner_id = ?')
+        .bind('master_susp', 'sub_active')
+        .first<{ pending_override_cents: number; lifetime_override_cents: number }>();
+      expect(binding?.pending_override_cents).toBe(0);
+      // Lifetime audit trail records earned amount
+      expect(binding?.lifetime_override_cents).toBe(100_000);
+    });
   });
 
   // ==========================================================================
-  // Vector 4: Zero Penny Leakage Invariant Across 10,000 Random Transactions
+  // Vector 4: Zero Penny Leakage Invariant Across 20,000 Random Transactions
   // ==========================================================================
-  describe('Vector 4: Zero Penny Leakage Invariant Across 10,000 Random Cent Transactions', () => {
-    it('Oracle: C_master + C_sub + P_net === M exactly for 10,000 randomized cent amounts and tier rates', () => {
+  describe('Vector 4: Zero Penny Leakage Invariant Across 20,000 Random Cent Transactions', () => {
+    it('Oracle: C_master + C_sub + P_net === M exactly for 20,000 randomized cent amounts and tier rates', () => {
       const tiers = [
         { name: 'SILVER', rate: 20.0 },
         { name: 'GOLD', rate: 28.0 },
@@ -625,7 +717,7 @@ describe('Adversarial Challenger Suite: Partner Federation & Reseller Engine', (
         return Math.floor(normalized * (max - min + 1)) + min;
       }
 
-      const totalIterations = 10_000;
+      const totalIterations = 20_000;
       let verifiedCount = 0;
 
       for (let i = 0; i < totalIterations; i++) {
