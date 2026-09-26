@@ -1469,8 +1469,68 @@ References:
 - apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
 - apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
 
+## 2026-09-26T05:32:31Z
 
+Bạn là Principal Autonomous Systems & Financial Engineering Lead, chịu trách nhiệm chính trong việc triển khai và hoàn thành Cột mốc Tối thượng — GATE 8: $1,000,000 MRR (5,000 Khách hàng Trả phí) — Toàn bộ Hệ thống Mở rộng Toàn diện & Bầy Đàn Doanh nghiệp Tự trị Toàn cầu (All Systems Scaled: Global Autonomous Enterprise Swarm, ASC 606 IPO-Ready Financial Close, Cohort NRR >= 130% & 99.999% Edge SLA) cho Sophia AI Factory:
 
+CÁC NHIỆM VỤ CHI TIẾT CẦN HOÀN THÀNH (P1 - P5):
 
+1. **Pillar 1: Multi-Org Financial Close Automation & IPO-Ready Audit Governance (ASC 606 / IFRS 15 / VAS TT200 / SOX Vault)**:
+   - D1 Migration `apps/sophia-ai-factory/migrations/0303_enterprise_financial_close_and_ipo_audit_vault.sql`:
+     - `financial_close_periods`: Kì kế toán, trạng thái đóng sổ, closed_by, tổng doanh thu ghi nhận, doanh thu hoãn lại, Merkle root hash.
+     - `revenue_schedules`: Ghi nhận doanh thu dồn tích hàng ngày theo ASC 606 / IFRS 15 cho cả 4 gói (BASIC, PREMIUM, ENTERPRISE, MASTER).
+     - `intercompany_transfers`: Giao dịch nội bộ đa thực thể, khấu trừ thuế nhà thầu FCT/W-8, bảng đối soát thanh toán.
+     - `ipo_audit_ledger`: Sổ cái kiểm toán chống giả mạo bằng chuỗi băm Merkle Tree SHA-256 kèm chữ ký số phục vụ hồ sơ IPO Form S-1 và VAS TT200.
+   - Module nghiệp vụ tầng `tree`:
+     - `src/tree/finance/revenue-recognition-engine.ts`
+     - `src/tree/finance/financial-close-orchestrator.ts`
+     - `src/tree/finance/merkle-audit-vault.ts`
+     - `src/land/finance/financial-close-actions.ts`
 
+2. **Pillar 2: Global Autonomous Enterprise Swarm & Self-Healing Edge Daemons**:
+   - D1 Migration `apps/sophia-ai-factory/migrations/0304_autonomous_agent_swarm_and_retention_flywheel.sql`:
+     - `autonomous_swarm_nodes`: Đăng ký nút edge swarm, vai trò (sales_qualifier, retention_flywheel, edge_healer), nhịp tim heartbeat, chỉ số tải.
+     - `customer_health_metrics`: Đo lường sức khỏe khách hàng thời gian thực (agent hoạt động, số video tạo ra, tỉ lệ lỗi API, điểm rủi ro rời bỏ churn_risk_score).
+     - `swarm_intervention_events`: Hành động can thiệp tự động khi khách hàng có nguy cơ rời bỏ (tặng credit, hướng dẫn sử dụng, kết nối CS).
+     - `edge_healing_incidents`: Sự cố tự khắc phục trên edge (ngắt mạch circuit-breaker, đổi route, cô lập node suy giảm).
+   - Module nghiệp vụ tầng `tree`:
+     - `src/tree/swarm/swarm-coordinator.ts`
+     - `src/tree/swarm/retention-flywheel-engine.ts`
+     - `src/tree/swarm/sales-qualifier-bot.ts`
+     - `src/tree/swarm/self-healing-arbiter.ts`
+     - `src/land/swarm/swarm-management-actions.ts`
 
+3. **Pillar 3: Unified $1M MRR Revenue Engine Consolidation (All 4 Channels)**:
+   - D1 Migration `apps/sophia-ai-factory/migrations/0305_unified_revenue_consolidation_and_retention_matrix.sql`:
+     - `unified_revenue_snapshots`: Hợp nhất doanh thu thời gian thực từ 4 kênh (Direct Sales, Affiliate, Content SEO, Enterprise Deals), đạt mốc $1,000,000 MRR (5,000 khách hàng, ARPU $200).
+     - `cohort_retention_matrix`: Ma trận giữ chân khách hàng dạng tam giác (Triangular Cohort), tính toán Gross Revenue Retention (GRR) và Net Revenue Retention (NRR >= 130%).
+     - `enterprise_sla_ledger`: Cam kết 99.999% SLA, ngân sách lỗi (error budget), tính toán tín dụng bồi thường tự động.
+   - Module nghiệp vụ tầng `tree`:
+     - `src/tree/revenue/mrr-consolidation-engine.ts`
+     - `src/tree/revenue/cohort-retention-calculator.ts`
+     - `src/tree/revenue/sla-uptime-engine.ts`
+     - `src/land/revenue/mrr-dashboard-actions.ts`
+     - `src/land/sla/sla-management-actions.ts`
+
+4. **Pillar 4: Comprehensive Test Suite & Adversarial Invariance Verification**:
+   - Viết trọn vẹn Unit tests, Domain tests, Adversarial tests, và E2E tests:
+     - `src/tree/finance/__tests__/` (Revenue recognition, financial close, Merkle vault)
+     - `src/tree/swarm/__tests__/` (Swarm coordination, retention flywheel, sales qualifier, self-healing)
+     - `src/tree/revenue/__tests__/` (MRR consolidation, cohort matrix, SLA uptime)
+     - `tests/adversarial/gate8-stress.test.ts` (Merkle tamper injection, Byzantine swarm split-brain resolution, Monte Carlo churn intervention resilience)
+     - `tests/e2e/gate8-1m-mrr.test.ts` (Mô phỏng toàn diện kịch bản $1,000,000 MRR)
+   - Đảm bảo 100% tests PASS!
+
+5. **Pillar 5: Quality Gates, Remote D1 Migration, Edge Deployment & Parity Verification**:
+   - Tuân thủ 100% Clean 4-Layer Architecture (`seed` → `tree` → `forest` → `land`): `bash scripts/check-layer-boundaries.sh` → 0 violations.
+   - TypeScript compile sạch 100%: `npm run type-check` → 0 errors.
+   - ESLint sạch 100%: `npm run lint -- --quiet` → 0 errors.
+   - i18n key validation: `node scripts/validate-i18n-keys.mjs`.
+   - Chạy remote migrations D1: `npx wrangler d1 migrations apply sophia-raas-db --remote` (áp dụng các file `0303`, `0304`, `0305`).
+   - Commit git với commit message chuẩn mực, push lên `origin/main`.
+   - Triển khai lên Cloudflare Workers edge: `./scripts/deploy-with-sha.sh`.
+   - Xác thực live edge SHA: `curl -s https://sophia.agencyos.network/api/version` khớp bit-for-bit với git commit SHA.
+   - Chạy Sophia Doctor: `node apps/sophia-ai-factory/scripts/sophia-doctor.mjs` đạt chuẩn tuyệt đối 11 ✅ / 0 ⚠️ / 0 ❌ (11/11 GREEN).
+
+Working directory: `/Users/macbook/sophia-ai-factory`
+Integrity mode: `development`
