@@ -197,8 +197,10 @@ describe('C2PA Provenance Signer - 1-Byte Tamper Detection Verification', () => 
   it('detects 1-byte tamper in manifest hash', async () => {
     const { manifest, secret, assetSha } = await generateGoldenManifest();
 
-    // Flip 1 character in manifestHash
-    const tamperedHash = manifest.manifestHash.slice(0, 10) + 'f' + manifest.manifestHash.slice(11);
+    // Flip 1 character in manifestHash deterministically
+    const originalChar = manifest.manifestHash[10];
+    const flippedChar = originalChar === 'a' ? 'b' : 'a';
+    const tamperedHash = manifest.manifestHash.slice(0, 10) + flippedChar + manifest.manifestHash.slice(11);
     const tamperedManifest = { ...manifest, manifestHash: tamperedHash };
 
     const result = await verifyC2paManifestInMemory(tamperedManifest, assetSha, secret);
