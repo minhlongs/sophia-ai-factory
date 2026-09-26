@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { validateHostname } from '@/land/admin/custom-domain-actions';
+import { validateHostname } from '@/tree/custom-domains/verification-service';
 import {
   parseOwnershipVerification,
   parseSslDcvVerification,

@@ -52,9 +52,9 @@ import {
   fetchCloudflareCustomHostname,
   deleteCloudflareCustomHostname,
   DEFAULT_CNAME_TARGET,
+  validateHostname,
 } from '@/tree/custom-domains/verification-service';
 import {
-  validateHostname,
   registerCustomDomainAction,
   verifyCustomDomainStatusAction,
   deleteCustomDomainAction,

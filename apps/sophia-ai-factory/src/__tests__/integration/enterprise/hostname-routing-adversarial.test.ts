@@ -24,7 +24,7 @@ import {
   clearHostnameCache,
   type TenantHostnameContext,
 } from '@/tree/custom-domains/hostname-resolver';
-import { validateHostname } from '@/land/admin/custom-domain-actions';
+import { validateHostname } from '@/tree/custom-domains/verification-service';
 
 const D1_SCHEMA = `
 CREATE TABLE IF NOT EXISTS custom_domains (

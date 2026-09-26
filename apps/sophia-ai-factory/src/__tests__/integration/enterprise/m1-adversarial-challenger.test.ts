@@ -25,7 +25,7 @@ import {
   isValidHttpUrl,
   escapeHtml,
 } from '@/tree/branding/email-styler';
-import { validateHostname } from '@/land/admin/custom-domain-actions';
+import { validateHostname } from '@/tree/custom-domains/verification-service';
 
 describe('Empirical Challenger: Milestone 1 Remediations Adversarial Suite', () => {
   // ── 1. <style> Tag Breakout & CSS Injection Attacks ─────────────────────────
