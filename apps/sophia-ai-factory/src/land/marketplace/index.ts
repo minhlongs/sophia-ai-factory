@@ -13,3 +13,7 @@ export * from './marketplace-catalog';
 export * from './marketplace-empty-state';
 export * from './marketplace-skeleton';
 export * from './marketplace-pagination';
+export * from './creator-template-card';
+export * from './creator-royalty-widget';
+export * from './template-submit-modal';
+export * from './creator-templates-section';

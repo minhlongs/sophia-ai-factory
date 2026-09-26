@@ -10,13 +10,16 @@ import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getD1 } from '@/seed/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listMarketplaceBlueprints } from '@/forest/marketplace/blueprint-service';
+import { listMarketplaceTemplates } from '@/tree/marketplace/marketplace-service';
+import { getCreatorBalance } from '@/tree/marketplace/royalty-engine';
 import type { BlueprintSortOrder, MarketplacePlatform } from '@/seed/types/creator-marketplace';
 import {
   MarketplaceHeader,
   MarketplaceFilterBar,
-  MarketplaceCatalog,
   MarketplaceSkeleton,
+  CreatorTemplatesSection,
 } from '@/land/marketplace';
 
 interface PageProps {
@@ -68,18 +71,30 @@ export default async function MarketplacePage({ params, searchParams }: PageProp
   const sort = sp.sort as BlueprintSortOrder | undefined;
 
   const d1 = await getD1();
+  const currentUser = await getCurrentUser();
 
-  const data = await listMarketplaceBlueprints(d1, {
-    page,
-    pageSize,
-    niche,
-    platform,
-    minConversionRate,
-    royaltyRate,
-    search,
-    sort,
-    locale: locale as 'en' | 'vi',
-  });
+  const [blueprintsData, templatesData, royaltyBalance] = await Promise.all([
+    listMarketplaceBlueprints(d1, {
+      page,
+      pageSize,
+      niche,
+      platform,
+      minConversionRate,
+      royaltyRate,
+      search,
+      sort,
+      locale: locale as 'en' | 'vi',
+    }),
+    listMarketplaceTemplates(d1, {
+      page,
+      pageSize,
+      niche,
+      targetPlatform: platform,
+      search,
+      sortBy: 'trending',
+    }),
+    currentUser?.id ? getCreatorBalance(d1, currentUser.id) : null,
+  ]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -102,14 +117,18 @@ export default async function MarketplacePage({ params, searchParams }: PageProp
           }}
         />
 
-        {/* Catalog Grid with Loading Suspense */}
+        {/* Catalog Section with Loading Suspense */}
         <Suspense fallback={<MarketplaceSkeleton />}>
-          <MarketplaceCatalog
-            blueprints={data.items}
-            total={data.total}
-            page={data.page}
-            pageSize={data.pageSize}
-            totalPages={data.totalPages}
+          <CreatorTemplatesSection
+            blueprints={blueprintsData.items}
+            totalBlueprints={blueprintsData.total}
+            templates={templatesData.items}
+            totalTemplates={templatesData.total}
+            page={page}
+            pageSize={pageSize}
+            totalPages={Math.max(blueprintsData.totalPages, templatesData.totalPages)}
+            currentUserId={currentUser?.id}
+            royaltyBalance={royaltyBalance}
           />
         </Suspense>
       </div>

@@ -1345,6 +1345,43 @@ References:
 
 Please orchestrate your specialized multi-agent sub-team (Enterprise Sales Architect, B2B Enrichment Engineer, Contract Specialist, GPU Mesh Engineer, and Adversarial Quality Auditor) to implement, verify, test, and certify this entire milestone.
 
+## 2026-09-26T01:15:08Z
+
+Kế hoạch Cột mốc Q3 2027 ($400,000 MRR / 2,000 Khách hàng trả phí) đã được duyệt và lập chi tiết tại implementation_plan.md.
+
+Bắt đầu thực hiện ngay toàn bộ 5 trụ cột (R1 - R5):
+1. **R1: Creator Marketplace Scaling & 70/30 Royalty Smart Ledger**:
+   - D1 Migrations: Hoàn thiện bảng marketplace và royalties (`creator_templates`, `creator_reviews`, `creator_earnings_ledger`, `creator_withdrawal_requests`).
+   - Tree logic (`src/tree/marketplace/`): `types.ts`, `quality-scorer.ts` (AI virality & hook scorer, auto-approval threshold >= 75), `royalty-engine.ts` (70/30 revenue split ledger, VietQR & USDT payout reconciliation), `marketplace-service.ts` (trending rank, search, reviews).
+   - Land & UI: Server actions `src/land/marketplace/marketplace-actions.ts`, giao diện `/marketplace` và `/vi/marketplace` với template catalog, search, filter, preview, royalty balance.
+
+2. **R2: Enterprise CRM Bi-directional Sync & Webhook Bus (Salesforce, HubSpot, Zapier)**:
+   - D1 Migration `0295_enterprise_crm_and_webhook_bus.sql`: `enterprise_crm_configs`, `crm_sync_events`, `webhook_subscriptions`, `webhook_delivery_logs`.
+   - Tree logic (`src/tree/integrations/`): `types.ts`, `crm-sync-engine.ts` (Salesforce Opportunity & HubSpot Deal two-way adapter), `webhook-dispatcher.ts` (HMAC-SHA256 signature signing, retry with backoff).
+   - Land & UI: Server actions `src/land/integrations/integration-actions.ts`, Cổng quản trị tích hợp `/admin/integrations` & `/vi/admin/integrations`.
+
+3. **R3: Global Partner & Reseller Multi-Tier Portal (White-Label Agency Engine)**:
+   - D1 Migration `0296_partner_portal_and_whitelabel.sql`: `partner_profiles`, `partner_commissions`, `partner_whitelabel_configs`.
+   - Tree logic (`src/tree/partners/`): `types.ts` (Silver 20%, Gold 28%, Platinum 35%), `partner-service.ts` (attribution, tier promotion, commission ledger, whitelabel resolution).
+   - Land & UI: Server actions `src/land/partners/partner-actions.ts`, Cổng đối tác `/partner` & `/vi/partner`.
+
+4. **R4: Global Edge CDN Mesh & Asset Acceleration**:
+   - D1 Migration `0297_edge_cdn_and_asset_mesh.sql`: `cdn_edge_cache_tags`, `asset_thumbnail_variants`.
+   - Tree logic (`src/tree/cdn/`): `types.ts`, `cache-mesh-service.ts` (stale-while-revalidate, immutable headers, KV cache tag invalidator), `thumbnail-generator.ts` (WebP/AVIF multi-aspect-ratio).
+   - Land: Server actions & API endpoint `/api/cdn/discover` (sub-80ms p95 edge discovery).
+
+5. **R5: Clean 4-Layer Architecture, Comprehensive Quality Gates & Production CI/CD Parity**:
+   - `bash scripts/check-layer-boundaries.sh` (0 violations).
+   - `npm run type-check` (0 errors).
+   - `npm run lint -- --quiet` (0 errors).
+   - 100% test pass rate across new test suites (`src/tree/marketplace/__tests__/`, `src/tree/integrations/__tests__/`, `src/tree/partners/__tests__/`, `src/tree/cdn/__tests__/`).
+   - Áp dụng migration D1 lên Cloudflare remote (`npm run deploy:migrations` hoặc wrangler).
+   - Triển khai và xác thực live edge SHA bit-for-bit.
+   - Sophia Doctor đạt 11/11 GREEN.
+
+Vui lòng triển khai toàn diện và báo cáo chi tiết từng bước.
+
+
 
 
 
