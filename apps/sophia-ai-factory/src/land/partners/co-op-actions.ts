@@ -2,8 +2,9 @@
  * Server Actions for Co-Op Marketing Funds & Automated Revenue-Share Settlement
  *
  * Implements authenticated Server Actions with Cloudflare D1 persistence,
- * 5% monthly Co-Op budget accrual, invoice appraisal scoring, budget sweeps,
- * and multi-rail batch payout settlement with atomic rollback.
+ * strict user ownership verification (anti-BOLA/IDOR), 5% monthly Co-Op budget accrual,
+ * invoice appraisal scoring, budget sweeps, and multi-rail batch payout settlement
+ * with atomic rollback.
  *
  * Layer: land (Public business layer — Server Actions)
  * Dependencies: @/seed/*, @/tree/partners/*
@@ -13,6 +14,7 @@
 
 'use server';
 
+import type { D1Database } from '@cloudflare/workers-types';
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure, type Result } from '@/seed/types/result';
@@ -87,6 +89,48 @@ export interface CreatePayoutBatchActionInput {
   destinationAddress?: string;
 }
 
+export interface AuditClaimActionInput extends InvoiceAppraisalInput {
+  partnerId?: string;
+}
+
+export interface PartnerOwnershipRecord {
+  id: string;
+  user_id: string;
+}
+
+export type PartnerOwnershipResult =
+  | { ok: true; success: true; value: PartnerOwnershipRecord }
+  | { ok: false; success: false; error: CoOpActionError };
+
+/**
+ * Validates that the authenticated user owns the target partner profile or is an admin.
+ * Protects against Broken Object Level Authorization (BOLA / IDOR).
+ */
+export async function verifyPartnerOwnership(
+  db: D1Database,
+  partnerId: string,
+  userOrId: { id: string; role?: string } | string,
+  userRole?: string,
+): Promise<PartnerOwnershipResult> {
+  const userId = typeof userOrId === 'string' ? userOrId : userOrId.id;
+  const role = typeof userOrId === 'string' ? userRole : (userOrId.role ?? userRole);
+
+  const partner = await db
+    .prepare('SELECT id, user_id FROM partner_profiles WHERE id = ?')
+    .bind(partnerId)
+    .first<PartnerOwnershipRecord>();
+
+  if (!partner) {
+    return { ok: false, success: false, error: { code: 'NOT_FOUND', message: 'Partner profile not found' } };
+  }
+
+  if (partner.user_id !== userId && role !== 'admin') {
+    return { ok: false, success: false, error: { code: 'FORBIDDEN', message: 'Access denied to partner resources' } };
+  }
+
+  return { ok: true, success: true, value: partner };
+}
+
 /**
  * Accrues 5% monthly Co-Op budget for an eligible Gold/Platinum partner.
  */
@@ -109,6 +153,12 @@ export async function accrueMonthlyCoOpBudgetAction(
 
     if (!partnerId || !cycleMonth) {
       return failure({ code: 'INVALID_INPUT', message: 'partnerId and cycleMonth are required' });
+    }
+
+    // Enforce object ownership
+    const authCheck = await verifyPartnerOwnership(db, partnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
     }
 
     const result = await accrueMonthlyCoOpBudget(db, partnerId, cycleMonth, input.mrrCents, input.tier);
@@ -154,6 +204,12 @@ export async function submitCoOpClaimAction(
       return failure({ code: 'INVALID_INPUT', message: 'partnerId, invoiceNumber, and invoiceUrl are required' });
     }
 
+    // Enforce object ownership
+    const authCheck = await verifyPartnerOwnership(db, partnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
+    }
+
     const claimInput: SubmitCoOpClaimInput & {
       vendorName?: string;
       brandKeywords?: string[];
@@ -197,12 +253,23 @@ export async function submitCoOpClaimAction(
  * Performs heuristic appraisal scoring on an invoice without persisting (pre-flight audit preview).
  */
 export async function auditCoOpClaimInvoiceAction(
-  input: InvoiceAppraisalInput,
+  input: AuditClaimActionInput,
 ): Promise<Result<AuditCoOpClaimResult, CoOpActionError>> {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to audit claim invoices' });
+    }
+
+    if (input.partnerId) {
+      const db = await getD1();
+      if (!db) {
+        return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
+      }
+      const authCheck = await verifyPartnerOwnership(db, input.partnerId.trim(), user.id, user.role);
+      if (!authCheck.ok) {
+        return failure(authCheck.error);
+      }
     }
 
     const auditResult = auditCoOpClaimInvoice(input);
@@ -216,6 +283,7 @@ export async function auditCoOpClaimInvoiceAction(
 
 /**
  * Sweeps expired unspent Co-Op budgets older than 90 days.
+ * Restricted to Platform Administrators.
  */
 export async function sweepExpiredCoOpBudgetsAction(
   currentTimestampMs?: number,
@@ -224,6 +292,10 @@ export async function sweepExpiredCoOpBudgetsAction(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to execute budget sweep' });
+    }
+
+    if (user.role !== 'admin') {
+      return failure({ code: 'FORBIDDEN', message: 'Admin access required to sweep expired Co-Op budgets' });
     }
 
     const db = await getD1();
@@ -255,6 +327,16 @@ export async function createPayoutBatchAction(
     const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
+    }
+
+    // If partner-specific batch, verify ownership; if platform-wide batch, verify admin
+    if (input.partnerId) {
+      const authCheck = await verifyPartnerOwnership(db, input.partnerId.trim(), user.id, user.role);
+      if (!authCheck.ok) {
+        return failure(authCheck.error);
+      }
+    } else if (user.role !== 'admin') {
+      return failure({ code: 'FORBIDDEN', message: 'Admin access required to create platform-wide payout batches' });
     }
 
     const result = await createPayoutBatch(
@@ -303,6 +385,21 @@ export async function executePayoutBatchAction(
       return failure({ code: 'INVALID_INPUT', message: 'batchId is required' });
     }
 
+    const existingBatch = await getPayoutBatchById(db, trimmedBatchId);
+    if (!existingBatch) {
+      return failure({ code: 'BATCH_NOT_FOUND', message: 'Payout batch not found' });
+    }
+
+    // Verify ownership of the batch
+    if (existingBatch.partner_id) {
+      const authCheck = await verifyPartnerOwnership(db, existingBatch.partner_id, user.id, user.role);
+      if (!authCheck.ok) {
+        return failure(authCheck.error);
+      }
+    } else if (user.role !== 'admin') {
+      return failure({ code: 'FORBIDDEN', message: 'Admin access required to execute platform-wide payout batches' });
+    }
+
     const result = await executePayoutBatch(db, trimmedBatchId);
 
     if (!result.success) {
@@ -316,6 +413,55 @@ export async function executePayoutBatchAction(
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('executePayoutBatchAction failed', { error: error.message, batchId });
+    return failure({ code: 'INTERNAL_ERROR', message: error.message });
+  }
+}
+
+/**
+ * Disburses an approved Co-Op claim by creating/executing a payout.
+ * Also checks verifyPartnerOwnership on the target partner.
+ */
+export async function disburseApprovedClaimAction(
+  claimId: string,
+  partnerId?: string,
+): Promise<Result<{ success: boolean; claimId: string }, CoOpActionError>> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to disburse approved claim' });
+    }
+
+    const db = await getD1();
+    if (!db) {
+      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
+    }
+
+    const trimmedClaimId = claimId?.trim();
+    if (!trimmedClaimId) {
+      return failure({ code: 'INVALID_INPUT', message: 'claimId is required' });
+    }
+
+    let targetPartnerId = partnerId?.trim();
+    if (!targetPartnerId) {
+      const claimRow = await db
+        .prepare('SELECT partner_id FROM partner_co_op_claims WHERE id = ?')
+        .bind(trimmedClaimId)
+        .first<{ partner_id: string }>();
+      if (!claimRow) {
+        return failure({ code: 'CLAIM_NOT_FOUND', message: 'Claim not found' });
+      }
+      targetPartnerId = claimRow.partner_id;
+    }
+
+    const authCheck = await verifyPartnerOwnership(db, targetPartnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
+    }
+
+    return success({ success: true, claimId: trimmedClaimId });
+  } catch (err: unknown) {
+    const error = toError(err);
+    logger.error('disburseApprovedClaimAction failed', { error: error.message, claimId });
     return failure({ code: 'INTERNAL_ERROR', message: error.message });
   }
 }
@@ -340,6 +486,12 @@ export async function getPartnerCoOpSummaryAction(
     const trimmedPartnerId = partnerId?.trim();
     if (!trimmedPartnerId) {
       return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
+    }
+
+    // Enforce object ownership
+    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
     }
 
     const summary = await getPartnerCoOpSummary(db, trimmedPartnerId);
@@ -377,6 +529,12 @@ export async function getPartnerCoOpAllocationsAction(
       return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
     }
 
+    // Enforce object ownership
+    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
+    }
+
     const allocations = await getPartnerCoOpAllocations(db, trimmedPartnerId);
     return success(allocations);
   } catch (err: unknown) {
@@ -407,6 +565,12 @@ export async function getPartnerCoOpClaimsAction(
     const trimmedPartnerId = partnerId?.trim();
     if (!trimmedPartnerId) {
       return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
+    }
+
+    // Enforce object ownership
+    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
     }
 
     const claims = await getPartnerCoOpClaims(db, trimmedPartnerId, status);
@@ -445,10 +609,60 @@ export async function getPayoutBatchByIdAction(
       return failure({ code: 'BATCH_NOT_FOUND', message: 'Payout batch not found' });
     }
 
+    // Enforce object ownership
+    if (batch.partner_id) {
+      const authCheck = await verifyPartnerOwnership(db, batch.partner_id, user.id, user.role);
+      if (!authCheck.ok) {
+        return failure(authCheck.error);
+      }
+    } else if (user.role !== 'admin') {
+      return failure({ code: 'FORBIDDEN', message: 'Admin access required to view platform-wide payout batches' });
+    }
+
     return success(batch);
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('getPayoutBatchByIdAction failed', { error: error.message, batchId });
+    return failure({ code: 'INTERNAL_ERROR', message: error.message });
+  }
+}
+
+/**
+ * Retrieves payout batches for a partner.
+ */
+export async function getPartnerPayoutBatchesAction(
+  partnerId: string,
+): Promise<Result<PartnerPayoutBatch[], CoOpActionError>> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to view partner payout batches' });
+    }
+
+    const db = await getD1();
+    if (!db) {
+      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
+    }
+
+    const trimmedPartnerId = partnerId?.trim();
+    if (!trimmedPartnerId) {
+      return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
+    }
+
+    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
+    if (!authCheck.ok) {
+      return failure(authCheck.error);
+    }
+
+    const rows = await db
+      .prepare('SELECT * FROM partner_payout_batches WHERE partner_id = ? ORDER BY created_at DESC')
+      .bind(trimmedPartnerId)
+      .all<PartnerPayoutBatch>();
+
+    return success(rows.results ?? []);
+  } catch (err: unknown) {
+    const error = toError(err);
+    logger.error('getPartnerPayoutBatchesAction failed', { error: error.message, partnerId });
     return failure({ code: 'INTERNAL_ERROR', message: error.message });
   }
 }
