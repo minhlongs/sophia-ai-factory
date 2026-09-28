@@ -3,7 +3,7 @@
 /**
  * @file pan-dimensional-conclave-actions.ts
  * @layer land/governance
- * @description Land layer Server Actions for Pan-Dimensional Conclave arbitration, constitutional invariant checks, and Topological STARK compaction.
+ * @description Land layer Server Actions for Pan-Dimensional Conclave arbitration, constitutional invariant checks, and STARK compaction.
  */
 
 import { getD1 } from '@/seed/db/client';
@@ -13,15 +13,15 @@ import {
   type PanDimensionalDisputeInput,
   type PanDimensionalDisputeRuling,
   type PanDimensionalInvariantCheckOutput,
-} from '@/tree/governance/pan-dimensional-conclave-engine';
+} from '@/tree/governance/pan-dimensional-supreme-conclave-engine';
 import {
-  compactStateWithTopologicalStark,
-  type TopologicalStarkCompactionResult,
-} from '@/tree/crypto/topological-stark-engine';
+  compactStateWithPanDimensionalStark,
+  type PanDimensionalStarkCompactionResult,
+} from '@/tree/crypto/pan-dimensional-stark-engine';
 import type {
   PanDimensionalConstitutionalInvariant,
-  TopologicalTransaction,
-} from '@/seed/types/topological-stark-conclave';
+  PanDimensionalTransaction,
+} from '@/seed/types/pan-dimensional-stark-conclave';
 
 export interface PanDimensionalDisputeActionResult {
   success: boolean;
@@ -35,30 +35,30 @@ export interface PanDimensionalInvariantActionResult {
   error?: string;
 }
 
-export interface TopologicalStarkCompactionActionResult {
+export interface PanDimensionalStarkCompactionActionResult {
   success: boolean;
-  data?: TopologicalStarkCompactionResult;
+  data?: PanDimensionalStarkCompactionResult;
   error?: string;
 }
 
 const DEFAULT_CONSTITUTIONAL_INVARIANTS: PanDimensionalConstitutionalInvariant[] = [
   {
     articleCode: 'ART-001-IRREVOCABLE-FINALITY',
-    articleTitle: 'Sub-500ps Quantum Settlement Irrevocability',
+    articleTitle: 'Sub-50ps Quantum Settlement Irrevocability',
     isStrictlyImmutable: true,
     enforcementCircuitHash: 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0',
     lastTheoremVerifiedAt: new Date().toISOString(),
   },
   {
-    articleCode: 'ART-002-BASEL-XIII-SOLVENCY',
-    articleTitle: 'Basel XIII Capital Solvency Invariance (CET1 >= 38.00%)',
+    articleCode: 'ART-002-BASEL-XVI-SOLVENCY',
+    articleTitle: 'Basel XVI Capital Solvency Invariance (CET1 >= 45.00%)',
     isStrictlyImmutable: true,
     enforcementCircuitHash: 'b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01',
     lastTheoremVerifiedAt: new Date().toISOString(),
   },
   {
-    articleCode: 'ART-003-EIGHTEEN-NINES-SLA',
-    articleTitle: 'Eighteen-Nines (99.9999999999999999%) SLA Guarantee',
+    articleCode: 'ART-003-THIRTY-NINES-SLA',
+    articleTitle: 'Thirty-Nines (99.9999999999999999999999999999%) SLA Guarantee',
     isStrictlyImmutable: true,
     enforcementCircuitHash: 'c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef012',
     lastTheoremVerifiedAt: new Date().toISOString(),
@@ -66,7 +66,7 @@ const DEFAULT_CONSTITUTIONAL_INVARIANTS: PanDimensionalConstitutionalInvariant[]
 ];
 
 /**
- * Server Action to arbitrate dispute via Pan-Dimensional Supreme Conclave (99.9% supermajority threshold, 90% slash).
+ * Server Action to arbitrate dispute via Pan-Dimensional Supreme Conclave (99.999% supermajority threshold, 99.5% slash).
  */
 export async function arbitratePanDimensionalDisputeAction(
   params: PanDimensionalDisputeInput
@@ -93,7 +93,7 @@ export async function arbitratePanDimensionalDisputeAction(
           data.rulingHash,
           params.evidenceSha256,
           data.totalJurors,
-          params.supermajorityThresholdPct ?? 99.9,
+          params.supermajorityThresholdPct ?? 99.999,
           data.verdict,
           data.jurorsSlashedCount,
           data.executedRemedyCents,
@@ -106,45 +106,50 @@ export async function arbitratePanDimensionalDisputeAction(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to arbitrate pan-dimensional dispute',
+      error: error instanceof Error ? error.message : 'Failed to arbitrate Pan-Dimensional dispute',
     };
   }
 }
 
 /**
- * Server Action to verify proposed action against immutable Pan-Dimensional constitutional invariants.
+ * Server Action to test if proposed target article code violates immutable Pan-Dimensional constitutional invariants.
  */
 export async function verifyPanDimensionalInvariantAction(
-  proposedArticleCode: string,
-  invariants: PanDimensionalConstitutionalInvariant[] = DEFAULT_CONSTITUTIONAL_INVARIANTS
+  targetArticleCode: string,
+  customInvariants?: PanDimensionalConstitutionalInvariant[]
 ): Promise<PanDimensionalInvariantActionResult> {
   try {
-    const data = verifyPanDimensionalConstitutionalInvariants(invariants, proposedArticleCode);
+    const invariants = customInvariants ?? DEFAULT_CONSTITUTIONAL_INVARIANTS;
+    const data = verifyPanDimensionalConstitutionalInvariants(invariants, targetArticleCode);
     return { success: data.allowed, data };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to verify pan-dimensional constitutional invariant',
+      error: error instanceof Error ? error.message : 'Failed to verify constitutional invariant',
     };
   }
 }
 
 /**
- * Server Action to compact transactions into 64-byte Topological STARK state root and persist proof.
+ * Server Action to execute 262,144-bit Non-Archimedean Pan-Dimensional STARK compaction (4B transactions) and persist proof.
  */
-export async function compactTopologicalStarkStateAction(
+export async function compactPanDimensionalStarkStateAction(
   previousStateRoot: string,
-  transactions: TopologicalTransaction[],
+  transactions: PanDimensionalTransaction[],
   circuitIdentifier?: string
-): Promise<TopologicalStarkCompactionActionResult> {
+): Promise<PanDimensionalStarkCompactionActionResult> {
   try {
-    const data = compactStateWithTopologicalStark(previousStateRoot, transactions, circuitIdentifier);
+    const data = compactStateWithPanDimensionalStark(
+      previousStateRoot,
+      transactions,
+      circuitIdentifier ?? 'PAN_DIMENSIONAL_STARK_262144_RECURSIVE_4B_V1'
+    );
     const db = await getD1();
 
     if (db) {
       await db
         .prepare(
-          `INSERT INTO topological_stark_compaction_proofs (
+          `INSERT INTO pan_dimensional_stark_compaction_proofs (
              id, proof_ref, batch_transaction_count, previous_state_root,
              new_state_root, stark_proof_bytes_length, verification_time_micros,
              verifier_circuit_identifier, is_mathematically_sound, verified_at
@@ -152,7 +157,7 @@ export async function compactTopologicalStarkStateAction(
         )
         .bind(
           crypto.randomUUID(),
-          `TOPO-STARK-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          `PD-STARK-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           data.batchTransactionCount,
           data.previousStateRoot,
           data.newStateRoot,
@@ -169,7 +174,7 @@ export async function compactTopologicalStarkStateAction(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to compact Topological STARK state',
+      error: error instanceof Error ? error.message : 'Failed to execute Pan-Dimensional STARK compaction',
     };
   }
 }
