@@ -6,6 +6,12 @@
 
 import { createHash } from 'node:crypto';
 import {
+  generateParameterizedStarkCommitment,
+  buildParameterizedTransactionMerkleRoot,
+  compactStateParameterizedWithStark,
+} from './braided-stark-domain-engine';
+
+import {
   CENTUMQUINTILLION_STARK_CONSTANTS,
   type CentumquintillionEmpireTransaction,
 } from '@/seed/types/centumquintillion-braided-stark-conclave';
@@ -53,29 +59,17 @@ export function generateCentumquintillionBraidedStarkCommitment(
 export function buildCentumquintillionEmpireTransactionMerkleRoot(
   transactions: CentumquintillionEmpireTransaction[]
 ): string {
-  if (transactions.length === 0) {
-    return '0'.repeat(128);
-  }
-
-  let hashes = transactions.map((tx) =>
-    createHash('sha256')
-      .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}`)
-      .digest('hex')
-  );
-
-  while (hashes.length > 1) {
-    const nextLevel: string[] = [];
-    for (let i = 0; i < hashes.length; i += 2) {
-      const left = hashes[i];
-      const right = i + 1 < hashes.length ? hashes[i + 1] : left;
-      nextLevel.push(createHash('sha256').update(left + right).digest('hex'));
-    }
-    hashes = nextLevel;
-  }
-
-  const baseHash = hashes[0];
-  const salt = createHash('sha256').update(`CENTUMQUINTILLION_MERKLE_SALT:${baseHash}`).digest('hex');
-  return (baseHash + salt).substring(0, 128);
+  return buildParameterizedTransactionMerkleRoot(transactions, {
+    hashAlgorithm: 'sha256',
+    emptyStateValue: '0'.repeat(128),
+    saltPrefix: 'CENTUMQUINTILLION_MERKLE_SALT',
+    outputLength: 128,
+    pairHashFn: (left: string, right: string) => createHash('sha256').update(left + right).digest('hex'),
+    leafHashFn: (tx) =>
+      createHash('sha256')
+        .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}`)
+        .digest('hex'),
+  });
 }
 
 /**

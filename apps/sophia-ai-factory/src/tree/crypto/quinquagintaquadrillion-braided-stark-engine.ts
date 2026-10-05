@@ -5,6 +5,12 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  generateParameterizedStarkCommitment,
+  buildParameterizedTransactionMerkleRoot,
+  compactStateParameterizedWithStark,
+} from './braided-stark-domain-engine';
+
 import type {
   QuinquagintaquadrillionEmpireTransaction,
   QuinquagintaquadrillionBraidedStarkProtocol,
@@ -36,21 +42,22 @@ export function generateQuinquagintaquadrillionBraidedStarkCommitment(
   protocol: QuinquagintaquadrillionBraidedStarkProtocol = 'QUINQUAGINTAQUADRILLION_NON_ARCHIMEDEAN_4294967296',
   braidingDepth: number = 8388608
 ): QuinquagintaquadrillionBraidedStarkCommitmentOutput {
-  if (braidingDepth <= 0) {
-    throw new Error(`Invalid braiding depth: ${braidingDepth}`);
-  }
-
-  const leafProofCount = 200_000_000_000_000;
-  const rootCommitment = createHash('sha512')
-    .update(`${protocol}:${seed}:BRAID_${braidingDepth}:LEAVES_${leafProofCount}`)
-    .digest('hex'); // 128 hex chars = 64 bytes
+  const result = generateParameterizedStarkCommitment(seed, {
+    protocol: protocol,
+    braidingDepth: braidingDepth,
+    leafProofCount: 200_000_000_000_000,
+    depthPrefix: 'BRAID',
+  });
 
   return {
     starkProtocol: protocol,
-    braidingDepth,
-    leafProofCount,
-    rootCommitment,
-  };
+    braidedStarkProtocol: protocol,
+    hyperStarkProtocol: protocol,
+    braidingDepth: braidingDepth,
+    recursionDepth: braidingDepth,
+    leafProofCount: result.leafProofCount,
+    rootCommitment: result.rootCommitment,
+  } as unknown as QuinquagintaquadrillionBraidedStarkCommitmentOutput;
 }
 
 /**
@@ -59,30 +66,14 @@ export function generateQuinquagintaquadrillionBraidedStarkCommitment(
 export function buildQuinquagintaquadrillionEmpireTransactionMerkleRoot(
   transactions: QuinquagintaquadrillionEmpireTransaction[]
 ): string {
-  if (transactions.length === 0) {
-    return createHash('sha512').update('EMPTY_QUINQUAGINTAQUADRILLION_BRAIDED_STARK_STATE').digest('hex');
-  }
-
-  let currentLevel = transactions.map((tx) =>
-    createHash('sha512')
-      .update(
-        `${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}:${tx.multiverseTag ?? 'QUINQUAGINTAQUADRILLION_EMPIRE_PRIME'}`
-      )
-      .digest('hex')
-  );
-
-  while (currentLevel.length > 1) {
-    const nextLevel: string[] = [];
-    for (let i = 0; i < currentLevel.length; i += 2) {
-      const left = currentLevel[i];
-      const right = i + 1 < currentLevel.length ? currentLevel[i + 1] : left;
-      const combined = createHash('sha512').update(`${left}:${right}`).digest('hex');
-      nextLevel.push(combined);
-    }
-    currentLevel = nextLevel;
-  }
-
-  return currentLevel[0];
+  return buildParameterizedTransactionMerkleRoot(transactions, {
+    hashAlgorithm: 'sha512',
+    emptyStateHashTag: 'EMPTY_QUINQUAGINTAQUADRILLION_BRAIDED_STARK_STATE',
+    leafHashFn: (tx) =>
+      createHash('sha512')
+        .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}:${tx.multiverseTag ?? 'QUINQUAGINTAQUADRILLION_EMPIRE_PRIME'}`)
+        .digest('hex'),
+  });
 }
 
 /**

@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   THIRTEEN_NINES_SLA_CONSTANTS,
   type QuantumSuperconductingMatrix,
@@ -65,43 +67,20 @@ export function planQuantumBatchDispatch(
   workloads: number = 10_000_000,
   measuredDriftFs: number = 42.0
 ): QuantumDispatchPlan {
-  const stableMatrices = matrices.filter((m) => m.superconductingStatus === 'CRITICAL_FLUX_STABLE');
+  const plan = planParameterizedBatchDispatch(matrices, workloads, measuredDriftFs, {
+    maxClockDriftFs: THIRTEEN_NINES_SLA_CONSTANTS.MAX_QUANTUM_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Quantum relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'CRITICAL_FLUX_STABLE',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).superconductingStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).matrixRef as string,
+    fitnessFn: (m) => calculateQuantumMatrixFitness(m as never),
+    bandwidthPerWorkloadPb: 0.002,
+    zeroStableMeshesErrorMessage: 'Zero stable superconducting Quantum matrices available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`QUANTUM_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (stableMatrices.length === 0) {
-    throw new Error('Zero stable superconducting Quantum matrices available for dispatch');
-  }
-
-  if (measuredDriftFs > THIRTEEN_NINES_SLA_CONSTANTS.MAX_QUANTUM_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Quantum relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${THIRTEEN_NINES_SLA_CONSTANTS.MAX_QUANTUM_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestMatrix = stableMatrices[0];
-  let highestScore = calculateQuantumMatrixFitness(bestMatrix);
-
-  for (let i = 1; i < stableMatrices.length; i++) {
-    const score = calculateQuantumMatrixFitness(stableMatrices[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMatrix = stableMatrices[i];
-    }
-  }
-
-  // 1 workload = ~0.002 Petabytes -> 10,000,000 * 0.002 = 20,000 Petabytes
-  const totalBandwidthPetabytes = Number(((workloads * 2) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `QUANTUM_DISPATCH:${bestMatrix.matrixRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetMatrixRef: bestMatrix.matrixRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    quantumDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as QuantumDispatchPlan;
 }

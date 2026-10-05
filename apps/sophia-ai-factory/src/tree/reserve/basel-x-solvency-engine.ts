@@ -6,6 +6,12 @@
 
 import { createHash } from 'node:crypto';
 import {
+  calculateParameterizedCollateralValue,
+  calculateBaselSolvencyRatios,
+  evaluateParameterizedBaselSolvency,
+} from './basel-solvency-domain-engine';
+
+import {
   GATE_20_SCALE_TARGETS,
   type BaselXSolvencyStatus,
   type PanCosmicCollateralAsset,
@@ -50,9 +56,12 @@ export function calculatePanCosmicCollateralValue(
   pledgedAmountCents: number,
   assetType: PanCosmicCollateralAsset
 ): { netValuationCents: number; haircutFactor: number } {
-  const haircutFactor = PAN_COSMIC_COLLATERAL_HAIRCUTS[assetType] || 1.5;
-  const netValuationCents = Math.floor(pledgedAmountCents / haircutFactor);
-  return { netValuationCents, haircutFactor };
+  return calculateParameterizedCollateralValue(
+    pledgedAmountCents,
+    assetType,
+    PAN_COSMIC_COLLATERAL_HAIRCUTS,
+    1.5
+  );
 }
 
 /**
@@ -61,20 +70,8 @@ export function calculatePanCosmicCollateralValue(
 export function evaluateBaselXSolvency(input: BaselXSolvencyInput): BaselXSolvencyOutput {
   const violations: string[] = [];
 
-  const cet1RatioBps =
-    input.totalRiskExposureCents > 0
-      ? Math.floor((input.commonEquityTier1Cents / input.totalRiskExposureCents) * 10000)
-      : 0;
-
-  const liquidityCoverageRatioBps =
-    input.netCashOutflows30DaysCents > 0
-      ? Math.floor((input.highQualityLiquidAssetsCents / input.netCashOutflows30DaysCents) * 10000)
-      : 0;
-
-  const netStableFundingRatioBps =
-    input.requiredStableFundingCents > 0
-      ? Math.floor((input.availableStableFundingCents / input.requiredStableFundingCents) * 10000)
-      : 0;
+  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
+    calculateBaselSolvencyRatios(input);
 
   if (cet1RatioBps < GATE_20_SCALE_TARGETS.BASEL_X_MIN_CET1_BPS) {
     violations.push(

@@ -5,6 +5,10 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  validateParameterizedRtgsPayment,
+  executeParameterizedMultilateralNetting,
+} from './hyper-rtgs-domain-engine';
 import type {
   HyperDimensionalNettingObligation,
   HyperDimensionalNettingStatus,
@@ -54,42 +58,35 @@ export function validateOmniverseRtgsPayment(
   input: OmniverseRtgsValidationInput
 ): OmniverseRtgsValidationOutput {
   const executionLatencyNanos = 28; // 28 nanoseconds sub-30ns latency
-
-  if (input.grossAmountCents <= 0) {
-    const receiptHash = createHash('sha256')
-      .update(`REJECTED_INVALID_AMOUNT:${input.sourceParticipantId}:${input.grossAmountCents}`)
-      .digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_INSUFFICIENT_LIQUIDITY',
-      executionLatencyNanos,
-      reason: 'Gross settlement amount must be strictly positive',
-      receiptHash,
-    };
-  }
-
-  if (input.availableReserveCents < input.grossAmountCents) {
-    const receiptHash = createHash('sha256')
-      .update(`REJECTED_LIQUIDITY:${input.sourceParticipantId}:${input.grossAmountCents}:${input.availableReserveCents}`)
-      .digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_INSUFFICIENT_LIQUIDITY',
-      executionLatencyNanos,
-      reason: `Available reserve ${input.availableReserveCents} cents insufficient for gross requirement ${input.grossAmountCents} cents`,
-      receiptHash,
-    };
-  }
-
-  const receiptHash = createHash('sha256')
-    .update(`OMNIVERSE_RTGS_SETTLED:${input.sourceParticipantId}:${input.targetParticipantId}:${input.assetCurrency}:${input.grossAmountCents}:${executionLatencyNanos}`)
-    .digest('hex');
+  const result = validateParameterizedRtgsPayment(input, {
+    latency: executionLatencyNanos,
+    latencyKey: 'executionLatencyNanos',
+    requireParticipants: false,
+    rejectStatus: 'REJECTED_INSUFFICIENT_LIQUIDITY',
+    reserveDeficitReasonFn: (params) =>
+      `Available reserve ${params.availableReserveCents} cents insufficient for gross requirement ${params.grossAmountCents} cents`,
+    errorHashFn: (reason, params) => {
+      if (reason === 'NON_POSITIVE_AMOUNT') {
+        return createHash('sha256')
+          .update(`REJECTED_INVALID_AMOUNT:${params.sourceParticipantId}:${params.grossAmountCents}`)
+          .digest('hex');
+      }
+      return createHash('sha256')
+        .update(`REJECTED_LIQUIDITY:${params.sourceParticipantId}:${params.grossAmountCents}:${params.availableReserveCents}`)
+        .digest('hex');
+    },
+    receiptHashFn: (params, lat) =>
+      createHash('sha256')
+        .update(`OMNIVERSE_RTGS_SETTLED:${params.sourceParticipantId}:${params.targetParticipantId}:${params.assetCurrency}:${params.grossAmountCents}:${lat}`)
+        .digest('hex'),
+  });
 
   return {
-    valid: true,
-    status: 'FINALIZED_IRREVOCABLE',
+    valid: result.valid,
+    status: result.status as OmniverseRtgsSettlementStatus,
     executionLatencyNanos,
-    receiptHash,
+    reason: result.reason,
+    receiptHash: result.receiptHash,
   };
 }
 
@@ -102,101 +99,30 @@ export function executeHyperDimensionalNetting(
   settlementCurrency: OmniverseRtgsCurrency = 'USDT',
   shardCount: number = 1024
 ): HyperDimensionalNettingResult {
-  const grossFlowCount = obligations.length;
-  let grossVolumeCents = 0;
-  const netPositions: Record<string, number> = {};
-
-  for (const ob of obligations) {
-    grossVolumeCents += ob.amountCents;
-    netPositions[ob.fromParticipantId] =
-      (netPositions[ob.fromParticipantId] || 0) - ob.amountCents;
-    netPositions[ob.toParticipantId] =
-      (netPositions[ob.toParticipantId] || 0) + ob.amountCents;
-  }
-
-  if (grossVolumeCents === 0) {
-    const emptyHash = createHash('sha256').update('EMPTY_HYPER_DIMENSIONAL_GRAPH').digest('hex');
-    return {
-      status: 'NET_EXECUTED',
-      multidimensionalShardCount: shardCount,
-      grossFlowCount: 0,
-      grossVolumeCents: 0,
-      netSettlementVolumeCents: 0,
-      compressionRatioPct: 100.0,
-      netPositions: {},
-      netTransfers: [],
-      hyperDimensionalSolutionHash: emptyHash,
-    };
-  }
-
-  const debtors: Array<{ id: string; amount: number }> = [];
-  const creditors: Array<{ id: string; amount: number }> = [];
-
-  for (const [id, net] of Object.entries(netPositions)) {
-    if (net < 0) {
-      debtors.push({ id, amount: Math.abs(net) });
-    } else if (net > 0) {
-      creditors.push({ id, amount: net });
-    }
-  }
-
-  // Sort descending for optimal greedy graph reduction
-  debtors.sort((a, b) => b.amount - a.amount);
-  creditors.sort((a, b) => b.amount - a.amount);
-
-  const netTransfers: Array<{
-    from: string;
-    to: string;
-    currency: OmniverseRtgsCurrency;
-    amountCents: number;
-  }> = [];
-
-  let dIdx = 0;
-  let cIdx = 0;
-  let netSettlementVolumeCents = 0;
-
-  while (dIdx < debtors.length && cIdx < creditors.length) {
-    const settle = Math.min(debtors[dIdx].amount, creditors[cIdx].amount);
-    if (settle > 0) {
-      netTransfers.push({
-        from: debtors[dIdx].id,
-        to: creditors[cIdx].id,
-        currency: settlementCurrency,
-        amountCents: settle,
-      });
-      netSettlementVolumeCents += settle;
-      debtors[dIdx].amount -= settle;
-      creditors[cIdx].amount -= settle;
-    }
-    if (debtors[dIdx].amount === 0) dIdx++;
-    if (creditors[cIdx].amount === 0) cIdx++;
-  }
-
-  const compressionRatioPct =
-    grossVolumeCents > 0
-      ? Number(
-          (
-            ((grossVolumeCents - netSettlementVolumeCents) / grossVolumeCents) *
-            100
-          ).toFixed(2)
-        )
-      : 100.0;
-
-  const hyperDimensionalSolutionHash = createHash('sha256')
-    .update(
-      `HYPER_DIMENSIONAL_NETTING_5.0:${shardCount}:${grossVolumeCents}:${netSettlementVolumeCents}:${compressionRatioPct}:${netTransfers.length}`
-    )
-    .digest('hex');
+  const netResult = executeParameterizedMultilateralNetting(obligations, {
+    currency: settlementCurrency,
+    precision: 2,
+    emptyHashFn: () => createHash('sha256').update('EMPTY_HYPER_DIMENSIONAL_GRAPH').digest('hex'),
+    solutionHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`HYPER_DIMENSIONAL_NETTING_5.0:${shardCount}:${ctx.grossVolumeCents}:${ctx.netSettlementVolumeCents}:${ctx.compressionRatioPct}:${ctx.netTransfersCount}`)
+        .digest('hex'),
+  });
 
   return {
-    status: 'NET_EXECUTED',
+    status: netResult.status as HyperDimensionalNettingStatus,
     multidimensionalShardCount: shardCount,
-    grossFlowCount,
-    grossVolumeCents,
-    netSettlementVolumeCents,
-    compressionRatioPct,
-    netPositions,
-    netTransfers,
-    hyperDimensionalSolutionHash,
+    grossFlowCount: netResult.grossFlowCount,
+    grossVolumeCents: netResult.grossVolumeCents,
+    netSettlementVolumeCents: netResult.netSettlementVolumeCents,
+    compressionRatioPct: netResult.compressionRatioPct,
+    netPositions: netResult.netPositions,
+    netTransfers: netResult.netTransfers as Array<{
+      from: string;
+      to: string;
+      currency: OmniverseRtgsCurrency;
+      amountCents: number;
+    }>,
+    hyperDimensionalSolutionHash: netResult.graphSolutionHash ?? '',
   };
 }

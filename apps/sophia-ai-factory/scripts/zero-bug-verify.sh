@@ -39,7 +39,7 @@ PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
 mkdir -p "$EVIDENCE_DIR" "$REPORT_DIR"
 cd "$APP_DIR"
 
-COMMIT_SHA=$(git -C "$REPO_ROOT" rev-parse HEAD)
+COMMIT_SHA="${COMMIT_SHA:-$(git -C "$REPO_ROOT" log -n 1 --format="%H" "$APP_DIR")}"
 COMMIT_SHORT=$(echo "$COMMIT_SHA" | cut -c1-8)
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 QUICK="${1:-}"

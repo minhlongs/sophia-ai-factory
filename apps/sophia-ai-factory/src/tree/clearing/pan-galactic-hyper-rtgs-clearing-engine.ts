@@ -6,6 +6,10 @@
 
 import { createHash } from 'node:crypto';
 import {
+  validateParameterizedRtgsPayment,
+  executeParameterizedMultilateralNetting,
+} from './hyper-rtgs-domain-engine';
+import {
   GATE_24_SCALE_TARGETS,
   type PanGalacticCurrency,
   type PanGalacticNettingObligation,
@@ -56,54 +60,31 @@ export interface PanGalacticNettingResult {
 export function validatePanGalacticHyperRtgsPayment(
   input: PanGalacticHyperRtgsPaymentInput
 ): PanGalacticHyperRtgsPaymentValidationResult {
-  const executionLatencyPicoseconds = 150; // Sub-200 ps (0.15 ns)
-
-  if (!input.sourceParticipantId || !input.targetParticipantId) {
-    const errorHash = createHash('sha256').update('INVALID_PARTICIPANTS').digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_LIQUIDITY',
-      executionLatencyPicoseconds,
-      receiptHash: errorHash,
-      error: 'Source and target participants must be specified',
-    };
-  }
-
-  if (input.grossAmountCents <= 0) {
-    const errorHash = createHash('sha256').update('NON_POSITIVE_AMOUNT').digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_LIQUIDITY',
-      executionLatencyPicoseconds,
-      receiptHash: errorHash,
-      error: 'Gross amount must be strictly positive',
-    };
-  }
-
-  if (input.availableReserveCents < input.grossAmountCents) {
-    const errorHash = createHash('sha256')
-      .update(`RESERVE_DEFICIT:${input.availableReserveCents}:${input.grossAmountCents}`)
-      .digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_LIQUIDITY',
-      executionLatencyPicoseconds,
-      receiptHash: errorHash,
-      error: `Insufficient reserve: required ${input.grossAmountCents} cents, available ${input.availableReserveCents} cents`,
-    };
-  }
-
-  const receiptHash = createHash('sha256')
-    .update(
-      `PAN_GALACTIC_HYPER_RTGS_SETTLED:${input.sourceParticipantId}:${input.targetParticipantId}:${input.assetCurrency}:${input.grossAmountCents}:${executionLatencyPicoseconds}`
-    )
-    .digest('hex');
+  const executionLatencyPicoseconds = 150;
+  const result = validateParameterizedRtgsPayment(input, {
+    latency: executionLatencyPicoseconds,
+    latencyKey: 'executionLatencyPicoseconds',
+    requireParticipants: true,
+    rejectStatus: 'REJECTED_LIQUIDITY',
+    reserveDeficitReasonFn: (params) =>
+      `Insufficient reserve: required ${params.grossAmountCents} cents, available ${params.availableReserveCents} cents`,
+    errorHashFn: (reason, params) => {
+      if (reason === 'INVALID_PARTICIPANTS') return createHash('sha256').update('INVALID_PARTICIPANTS').digest('hex');
+      if (reason === 'NON_POSITIVE_AMOUNT') return createHash('sha256').update('NON_POSITIVE_AMOUNT').digest('hex');
+      return createHash('sha256').update(`RESERVE_DEFICIT:${params.availableReserveCents}:${params.grossAmountCents}`).digest('hex');
+    },
+    receiptHashFn: (params, lat) =>
+      createHash('sha256')
+        .update(`PAN_GALACTIC_HYPER_RTGS_SETTLED:${params.sourceParticipantId}:${params.targetParticipantId}:${params.assetCurrency}:${params.grossAmountCents}:${lat}`)
+        .digest('hex'),
+  });
 
   return {
-    valid: true,
-    status: 'FINALIZED_IRREVOCABLE',
+    valid: result.valid,
+    status: result.status as PanGalacticSettlementStatus,
     executionLatencyPicoseconds,
-    receiptHash,
+    receiptHash: result.receiptHash,
+    error: result.error,
   };
 }
 
@@ -116,85 +97,26 @@ export function executePanGalacticNetting(
   settlementCurrency: PanGalacticCurrency = 'USDT',
   shardCount: number = 131072
 ): PanGalacticNettingResult {
-  const grossFlowCount = obligations.length;
-  let grossVolumeCents = 0;
-  const netPositions: Record<string, number> = {};
-
-  for (const ob of obligations) {
-    grossVolumeCents += ob.amountCents;
-    netPositions[ob.fromParticipantId] =
-      (netPositions[ob.fromParticipantId] || 0) - ob.amountCents;
-    netPositions[ob.toParticipantId] =
-      (netPositions[ob.toParticipantId] || 0) + ob.amountCents;
-  }
-
-  // Separate debtors and creditors
-  const debtors: { id: string; amount: number }[] = [];
-  const creditors: { id: string; amount: number }[] = [];
-
-  for (const [id, net] of Object.entries(netPositions)) {
-    if (net < 0) {
-      debtors.push({ id, amount: Math.abs(net) });
-    } else if (net > 0) {
-      creditors.push({ id, amount: net });
-    }
-  }
-
-  debtors.sort((a, b) => b.amount - a.amount);
-  creditors.sort((a, b) => b.amount - a.amount);
-
-  const netTransfers: PanGalacticNettingTransfer[] = [];
-  let dIdx = 0;
-  let cIdx = 0;
-  let netSettlementVolumeCents = 0;
-
-  while (dIdx < debtors.length && cIdx < creditors.length) {
-    const debtor = debtors[dIdx];
-    const creditor = creditors[cIdx];
-    const transferAmount = Math.min(debtor.amount, creditor.amount);
-
-    if (transferAmount > 0) {
-      netTransfers.push({
-        from: debtor.id,
-        to: creditor.id,
-        currency: settlementCurrency,
-        amountCents: transferAmount,
-      });
-
-      netSettlementVolumeCents += transferAmount;
-      debtor.amount -= transferAmount;
-      creditor.amount -= transferAmount;
-    }
-
-    if (debtor.amount <= 0) dIdx++;
-    if (creditor.amount <= 0) cIdx++;
-  }
-
-  const compressionRatioPct =
-    grossVolumeCents > 0
-      ? Number(
-          (
-            ((grossVolumeCents - netSettlementVolumeCents) / grossVolumeCents) *
-            100
-          ).toFixed(4)
-        )
-      : 100.0;
-
-  const multiverseSolutionHash = createHash('sha256')
-    .update(
-      `MULTIVERSE_NETTING_10_0:${shardCount}:${grossFlowCount}:${grossVolumeCents}:${netSettlementVolumeCents}:${compressionRatioPct}`
-    )
-    .digest('hex');
+  const netResult = executeParameterizedMultilateralNetting(obligations, {
+    currency: settlementCurrency,
+    hyperShardCount: shardCount,
+    precision: 4,
+    emptyHashFn: () => createHash('sha256').update('EMPTY_PAN_GALACTIC_GRAPH').digest('hex'),
+    solutionHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`MULTIVERSE_NETTING_10_0:${shardCount}:${ctx.grossFlowCount}:${ctx.grossVolumeCents}:${ctx.netSettlementVolumeCents}:${ctx.compressionRatioPct}`)
+        .digest('hex'),
+  });
 
   return {
     status: 'NET_EXECUTED',
     hyperShardCount: shardCount,
-    grossFlowCount,
-    grossVolumeCents,
-    netSettlementVolumeCents,
-    compressionRatioPct,
-    netPositions,
-    netTransfers,
-    multiverseSolutionHash,
+    grossFlowCount: netResult.grossFlowCount,
+    grossVolumeCents: netResult.grossVolumeCents,
+    netSettlementVolumeCents: netResult.netSettlementVolumeCents,
+    compressionRatioPct: netResult.compressionRatioPct,
+    netPositions: netResult.netPositions,
+    netTransfers: netResult.netTransfers as PanGalacticNettingTransfer[],
+    multiverseSolutionHash: netResult.graphSolutionHash ?? '',
   };
 }

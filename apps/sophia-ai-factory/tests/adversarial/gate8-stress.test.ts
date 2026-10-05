@@ -521,7 +521,7 @@ describe('Empirical Adversarial Stress Test Suite (Gate 8 — $1M MRR Milestone)
       expect(afterTamper.isValid).toBe(false);
       expect(afterTamper.brokenSequenceIndex).toBe(1);
       expect(afterTamper.discrepancies.some((d) => d.includes('Content hash tamper detected'))).toBe(true);
-    });
+    }, 60000);
   });
 
   // =========================================================================

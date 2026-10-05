@@ -41,7 +41,7 @@ if [ -n "$LAND_FOREST" ]; then
 fi
 
 # Banned imports
-BANNED=$(grep -rn "from ['\"]@/lib/auth\|from ['\"]@/lib/subscription\|from ['\"]@/lib/unified-tier-config\|from ['\"]@/lib/tier-gate" src/ --include="*.ts" --include="*.tsx" | grep -v __tests__ || true)
+BANNED=$(grep -rn "from ['\"]@/lib/auth\|from ['\"]@/lib/subscription\|from ['\"]@/lib/unified-tier-config\|from ['\"]@/lib/tier-gate\|from ['\"]@/core\|from ['\"]@/db\|from ['\"]@/config/\|from ['\"]@/data/\|from ['\"]@/oracle" src/ --include="*.ts" --include="*.tsx" | grep -v __tests__ || true)
 if [ -n "$BANNED" ]; then
   echo "❌ Banned import violations:"
   echo "$BANNED"

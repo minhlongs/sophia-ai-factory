@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   ELEVEN_NINES_SLA_CONSTANTS,
   type QueccaflopComputeGrid,
@@ -59,41 +61,20 @@ export function planQueccaBatchDispatch(
   workloads: number = 2_000_000,
   measuredDriftFs: number = 120.0
 ): QueccaDispatchPlan {
-  const onlineGrids = grids.filter((g) => g.status === 'ONLINE_SUPERCONDUCTING');
+  const plan = planParameterizedBatchDispatch(grids, workloads, measuredDriftFs, {
+    maxClockDriftFs: ELEVEN_NINES_SLA_CONSTANTS.MAX_FEMTOSECOND_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Femtosecond relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'ONLINE_SUPERCONDUCTING',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).status as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).gridNodeId as string,
+    fitnessFn: (m) => calculateQueccaGridFitness(m as never),
+    bandwidthPerWorkloadPb: 0.002,
+    zeroStableMeshesErrorMessage: 'Zero online superconducting QueccaFLOP grids available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`QUECCA_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (onlineGrids.length === 0) {
-    throw new Error('Zero online superconducting QueccaFLOP grids available for dispatch');
-  }
-
-  if (measuredDriftFs > ELEVEN_NINES_SLA_CONSTANTS.MAX_FEMTOSECOND_DRIFT_FS) {
-    throw new Error(
-      `Femtosecond relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${ELEVEN_NINES_SLA_CONSTANTS.MAX_FEMTOSECOND_DRIFT_FS} fs`
-    );
-  }
-
-  let bestGrid = onlineGrids[0];
-  let highestScore = calculateQueccaGridFitness(bestGrid);
-
-  for (let i = 1; i < onlineGrids.length; i++) {
-    const score = calculateQueccaGridFitness(onlineGrids[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestGrid = onlineGrids[i];
-    }
-  }
-
-  // 1 workload = ~0.002 Petabytes -> 2,000,000 * 0.002 = 4,000 Petabytes
-  const totalOpticalPetabytes = Number(((workloads * 2) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(`QUECCA_DISPATCH:${bestGrid.gridNodeId}:${workloads}:${totalOpticalPetabytes}:${measuredDriftFs}`)
-    .digest('hex');
-
-  return {
-    targetGridId: bestGrid.gridNodeId,
-    assignedWorkloads: workloads,
-    totalOpticalPetabytes,
-    femtosecondDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as QueccaDispatchPlan;
 }

@@ -5,6 +5,12 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  generateParameterizedStarkCommitment,
+  buildParameterizedTransactionMerkleRoot,
+  compactStateParameterizedWithStark,
+} from './braided-stark-domain-engine';
+
 import type {
   AnyonicStarkProtocol,
   AnyonicTransaction,
@@ -36,21 +42,22 @@ export function generateAnyonicStarkCommitment(
   protocol: AnyonicStarkProtocol = 'NON_ABELIAN_ANYONIC_2048',
   braidingDepth: number = 8
 ): AnyonicStarkCommitmentOutput {
-  if (braidingDepth <= 0) {
-    throw new Error(`Invalid braiding depth: ${braidingDepth}`);
-  }
-
-  const leafProofCount = 20_000_000;
-  const rootCommitment = createHash('sha512')
-    .update(`${protocol}:${seed}:BRAID_${braidingDepth}:LEAVES_${leafProofCount}`)
-    .digest('hex'); // 128 hex chars = 64 bytes
+  const result = generateParameterizedStarkCommitment(seed, {
+    protocol: protocol,
+    braidingDepth: braidingDepth,
+    leafProofCount: 20_000_000,
+    depthPrefix: 'BRAID',
+  });
 
   return {
+    starkProtocol: protocol,
+    braidedStarkProtocol: protocol,
     hyperStarkProtocol: protocol,
-    braidingDepth,
-    leafProofCount,
-    rootCommitment,
-  };
+    braidingDepth: braidingDepth,
+    recursionDepth: braidingDepth,
+    leafProofCount: result.leafProofCount,
+    rootCommitment: result.rootCommitment,
+  } as unknown as AnyonicStarkCommitmentOutput;
 }
 
 /**
@@ -59,28 +66,14 @@ export function generateAnyonicStarkCommitment(
 export function buildAnyonicTransactionMerkleRoot(
   transactions: AnyonicTransaction[]
 ): string {
-  if (transactions.length === 0) {
-    return createHash('sha512').update('EMPTY_ANYONIC_STARK_STATE').digest('hex');
-  }
-
-  let currentLevel = transactions.map((tx) =>
-    createHash('sha512')
-      .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}:${tx.dimensionTag ?? 'PRIME'}`)
-      .digest('hex')
-  );
-
-  while (currentLevel.length > 1) {
-    const nextLevel: string[] = [];
-    for (let i = 0; i < currentLevel.length; i += 2) {
-      const left = currentLevel[i];
-      const right = i + 1 < currentLevel.length ? currentLevel[i + 1] : left;
-      const combined = createHash('sha512').update(`${left}:${right}`).digest('hex');
-      nextLevel.push(combined);
-    }
-    currentLevel = nextLevel;
-  }
-
-  return currentLevel[0];
+  return buildParameterizedTransactionMerkleRoot(transactions, {
+    hashAlgorithm: 'sha512',
+    emptyStateHashTag: 'EMPTY_ANYONIC_STARK_STATE',
+    leafHashFn: (tx) =>
+      createHash('sha512')
+        .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}:${tx.dimensionTag ?? 'PRIME'}`)
+        .digest('hex'),
+  });
 }
 
 /**

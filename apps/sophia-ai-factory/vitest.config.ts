@@ -3,8 +3,15 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { config } from 'dotenv';
 
+// Ensure working directory is the application root
+if (process.cwd() !== __dirname) {
+  try {
+    process.chdir(__dirname);
+  } catch {}
+}
+
 // Load .env.test for test environment
-config({ path: '.env.test' });
+config({ path: path.resolve(__dirname, '.env.test') });
 
 export default defineConfig({
   root: __dirname,
@@ -27,6 +34,8 @@ export default defineConfig({
       '**/*.config.ts',
       '.next/**',
       '.open-next/**',
+      '**/.claude/**',
+      '**/.agents/**',
     ],
     coverage: {
       reporter: ['text', 'json-summary', 'html'],

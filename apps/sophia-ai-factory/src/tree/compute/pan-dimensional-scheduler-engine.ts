@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   THIRTY_NINES_SLA_CONSTANTS,
   type PanDimensionalQuantumSingularityMesh,
@@ -65,43 +67,20 @@ export function planPanDimensionalBatchDispatch(
   workloads: number = 4_000_000_000,
   measuredDriftFs: number = 0.03
 ): PanDimensionalDispatchPlan {
-  const optimalMeshes = meshes.filter((m) => m.meshStatus === 'PAN_DIMENSIONAL_QUANTUM_OPTIMAL');
+  const plan = planParameterizedBatchDispatch(meshes, workloads, measuredDriftFs, {
+    maxClockDriftFs: THIRTY_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Pan-dimensional quantum relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'PAN_DIMENSIONAL_QUANTUM_OPTIMAL',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).meshStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).meshRef as string,
+    fitnessFn: (m) => calculatePanDimensionalMeshFitness(m as never),
+    bandwidthPerWorkloadPb: 0.0025,
+    zeroStableMeshesErrorMessage: 'Zero optimal pan-dimensional quantum foam singularity meshes available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`PAN_DIMENSIONAL_QUANTUM_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (optimalMeshes.length === 0) {
-    throw new Error('Zero optimal pan-dimensional quantum foam singularity meshes available for dispatch');
-  }
-
-  if (measuredDriftFs > THIRTY_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Pan-dimensional quantum relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${THIRTY_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestMesh = optimalMeshes[0];
-  let highestScore = calculatePanDimensionalMeshFitness(bestMesh);
-
-  for (let i = 1; i < optimalMeshes.length; i++) {
-    const score = calculatePanDimensionalMeshFitness(optimalMeshes[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMesh = optimalMeshes[i];
-    }
-  }
-
-  // 1 workload = ~0.0025 Petabytes -> 4,000,000,000 * 0.0025 = 10,000,000 Petabytes
-  const totalBandwidthPetabytes = Number(((workloads * 2.5) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `PAN_DIMENSIONAL_QUANTUM_DISPATCH:${bestMesh.meshRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetMeshRef: bestMesh.meshRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    relativisticDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as PanDimensionalDispatchPlan;
 }

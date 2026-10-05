@@ -1,5 +1,5 @@
 import { AffiliateProgram, Tier } from "@/seed/types";
-import affiliateData from "@/data/affiliate-programs.json";
+import affiliateData from "@/seed/data/affiliate-programs.json";
 
 /**
  * Data access layer for affiliate programs

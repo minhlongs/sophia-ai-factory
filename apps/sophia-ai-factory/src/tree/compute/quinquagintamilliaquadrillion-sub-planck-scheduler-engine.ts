@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   NINETY_NINE_NINES_SLA_CONSTANTS,
   type QuinquagintamilliaquadrillionSubPlanckMesh,
@@ -55,34 +57,19 @@ export function planQuinquagintamilliaquadrillionSubPlanckBatchDispatch(
   workloads: number = NINETY_NINE_NINES_SLA_CONSTANTS.MAX_CONCURRENT_WORKLOADS,
   measuredDriftFs: number = NINETY_NINE_NINES_SLA_CONSTANTS.TARGET_RELATIVISTIC_CLOCK_DRIFT_FS
 ): QuinquagintamilliaquadrillionSubPlanckDispatchPlan {
-  if (meshes.length === 0) {
-    throw new Error('No Quinquaginta-Millia-Quadrillion singularity meshes provided for dispatch');
-  }
+  const plan = planParameterizedBatchDispatch(meshes, workloads, measuredDriftFs, {
+    skipDriftCheck: true,
+    allMeshesStable: true,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).meshRef as string,
+    fitnessFn: (m) => calculateQuinquagintamilliaquadrillionSubPlanckMeshFitness(m as never),
+    assignedWorkloads: Math.min(workloads, NINETY_NINE_NINES_SLA_CONSTANTS.MAX_CONCURRENT_WORKLOADS),
+    totalBandwidthPetabytes: NINETY_NINE_NINES_SLA_CONSTANTS.BANDWIDTH_PETABYTES_LIMIT,
+    zeroStableMeshesErrorMessage: 'No Quinquaginta-Millia-Quadrillion singularity meshes provided for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`QUINQUAGINTA_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}:${ctx.highestScore}`)
+        .digest('hex'),
+  });
 
-  let bestMesh = meshes[0];
-  let highestFitness = -1;
-
-  for (const m of meshes) {
-    const fitness = calculateQuinquagintamilliaquadrillionSubPlanckMeshFitness(m);
-    if (fitness > highestFitness) {
-      highestFitness = fitness;
-      bestMesh = m;
-    }
-  }
-
-  const assignedWorkloads = Math.min(workloads, NINETY_NINE_NINES_SLA_CONSTANTS.MAX_CONCURRENT_WORKLOADS);
-  const totalBandwidthPetabytes = NINETY_NINE_NINES_SLA_CONSTANTS.BANDWIDTH_PETABYTES_LIMIT;
-  const dispatchHash = createHash('sha256')
-    .update(
-      `QUINQUAGINTA_DISPATCH:${bestMesh.meshRef}:${assignedWorkloads}:${totalBandwidthPetabytes}:${measuredDriftFs}:${highestFitness}`
-    )
-    .digest('hex');
-
-  return {
-    targetMeshRef: bestMesh.meshRef,
-    assignedWorkloads,
-    totalBandwidthPetabytes,
-    relativisticDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as QuinquagintamilliaquadrillionSubPlanckDispatchPlan;
 }

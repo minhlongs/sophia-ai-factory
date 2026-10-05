@@ -6,6 +6,12 @@
 
 import { createHash } from 'node:crypto';
 import {
+  calculateParameterizedCollateralValue,
+  calculateBaselSolvencyRatios,
+  evaluateParameterizedBaselSolvency,
+} from './basel-solvency-domain-engine';
+
+import {
   BASEL_XL_CONSTRAINTS,
   type BaselXlSolvencyStatus,
   type CentumquintillionCollateralAssetType,
@@ -59,15 +65,12 @@ export function calculateCentumquintillionCollateralValue(
   nominalValueCents: number,
   assetType: CentumquintillionCollateralAssetType
 ): CentumquintillionCollateralValuationResult {
-  const haircutMultiplier = CENTUMQUINTILLION_COLLATERAL_HAIRCUTS[assetType] ?? 1.05;
-  const netValuationCents = Math.floor(nominalValueCents / haircutMultiplier);
-
-  return {
-    assetType,
+  return calculateParameterizedCollateralValue(
     nominalValueCents,
-    haircutMultiplier,
-    netValuationCents,
-  };
+    assetType,
+    CENTUMQUINTILLION_COLLATERAL_HAIRCUTS,
+    1.05
+  ) as unknown as CentumquintillionCollateralValuationResult;
 }
 
 /**

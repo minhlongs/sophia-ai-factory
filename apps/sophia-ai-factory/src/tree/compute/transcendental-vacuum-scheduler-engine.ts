@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   TWENTY_NINES_SLA_CONSTANTS,
   type TranscendentalVacuumSingularityMesh,
@@ -65,43 +67,20 @@ export function planTranscendentalVacuumBatchDispatch(
   workloads: number = 2_000_000_000,
   measuredDriftFs: number = 0.08
 ): TranscendentalVacuumDispatchPlan {
-  const optimalMeshes = meshes.filter((m) => m.meshStatus === 'TRANSCENDENTAL_VACUUM_OPTIMAL');
+  const plan = planParameterizedBatchDispatch(meshes, workloads, measuredDriftFs, {
+    maxClockDriftFs: TWENTY_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Transcendental vacuum relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'TRANSCENDENTAL_VACUUM_OPTIMAL',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).meshStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).meshRef as string,
+    fitnessFn: (m) => calculateTranscendentalVacuumMeshFitness(m as never),
+    bandwidthPerWorkloadPb: 0.0025,
+    zeroStableMeshesErrorMessage: 'Zero optimal transcendental vacuum singularity meshes available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`TRANSCENDENTAL_VACUUM_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (optimalMeshes.length === 0) {
-    throw new Error('Zero optimal transcendental vacuum singularity meshes available for dispatch');
-  }
-
-  if (measuredDriftFs > TWENTY_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Transcendental vacuum relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${TWENTY_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestMesh = optimalMeshes[0];
-  let highestScore = calculateTranscendentalVacuumMeshFitness(bestMesh);
-
-  for (let i = 1; i < optimalMeshes.length; i++) {
-    const score = calculateTranscendentalVacuumMeshFitness(optimalMeshes[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMesh = optimalMeshes[i];
-    }
-  }
-
-  // 1 workload = ~0.0025 Petabytes -> 2,000,000,000 * 0.0025 = 5,000,000 Petabytes
-  const totalBandwidthPetabytes = Number(((workloads * 2.5) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `TRANSCENDENTAL_VACUUM_DISPATCH:${bestMesh.meshRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetMeshRef: bestMesh.meshRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    relativisticDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as TranscendentalVacuumDispatchPlan;
 }

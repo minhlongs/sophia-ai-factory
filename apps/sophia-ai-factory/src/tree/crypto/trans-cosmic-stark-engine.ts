@@ -5,6 +5,12 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  generateParameterizedStarkCommitment,
+  buildParameterizedTransactionMerkleRoot,
+  compactStateParameterizedWithStark,
+} from './braided-stark-domain-engine';
+
 import type {
   TransCosmicStarkProtocol,
   TransCosmicTransaction,
@@ -36,21 +42,22 @@ export function generateTransCosmicStarkCommitment(
   protocol: TransCosmicStarkProtocol = 'TRANS_COSMIC_NON_ARCHIMEDEAN_131072',
   braidingDepth: number = 256
 ): TransCosmicStarkCommitmentOutput {
-  if (braidingDepth <= 0) {
-    throw new Error(`Invalid braiding depth: ${braidingDepth}`);
-  }
-
-  const leafProofCount = 2_000_000_000;
-  const rootCommitment = createHash('sha512')
-    .update(`${protocol}:${seed}:BRAID_${braidingDepth}:LEAVES_${leafProofCount}`)
-    .digest('hex'); // 128 hex chars = 64 bytes
+  const result = generateParameterizedStarkCommitment(seed, {
+    protocol: protocol,
+    braidingDepth: braidingDepth,
+    leafProofCount: 2_000_000_000,
+    depthPrefix: 'BRAID',
+  });
 
   return {
     starkProtocol: protocol,
-    braidingDepth,
-    leafProofCount,
-    rootCommitment,
-  };
+    braidedStarkProtocol: protocol,
+    hyperStarkProtocol: protocol,
+    braidingDepth: braidingDepth,
+    recursionDepth: braidingDepth,
+    leafProofCount: result.leafProofCount,
+    rootCommitment: result.rootCommitment,
+  } as unknown as TransCosmicStarkCommitmentOutput;
 }
 
 /**
@@ -59,30 +66,14 @@ export function generateTransCosmicStarkCommitment(
 export function buildTransCosmicTransactionMerkleRoot(
   transactions: TransCosmicTransaction[]
 ): string {
-  if (transactions.length === 0) {
-    return createHash('sha512').update('EMPTY_TRANS_COSMIC_STARK_STATE').digest('hex');
-  }
-
-  let currentLevel = transactions.map((tx) =>
-    createHash('sha512')
-      .update(
-        `${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}:${tx.multiverseTag ?? 'OMNIVERSE_PRIME'}`
-      )
-      .digest('hex')
-  );
-
-  while (currentLevel.length > 1) {
-    const nextLevel: string[] = [];
-    for (let i = 0; i < currentLevel.length; i += 2) {
-      const left = currentLevel[i];
-      const right = i + 1 < currentLevel.length ? currentLevel[i + 1] : left;
-      const combined = createHash('sha512').update(`${left}:${right}`).digest('hex');
-      nextLevel.push(combined);
-    }
-    currentLevel = nextLevel;
-  }
-
-  return currentLevel[0];
+  return buildParameterizedTransactionMerkleRoot(transactions, {
+    hashAlgorithm: 'sha512',
+    emptyStateHashTag: 'EMPTY_TRANS_COSMIC_STARK_STATE',
+    leafHashFn: (tx) =>
+      createHash('sha512')
+        .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}:${tx.multiverseTag ?? 'OMNIVERSE_PRIME'}`)
+        .digest('hex'),
+  });
 }
 
 /**

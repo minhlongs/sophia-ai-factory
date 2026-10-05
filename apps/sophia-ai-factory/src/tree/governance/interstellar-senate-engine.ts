@@ -5,6 +5,11 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  arbitrateParameterizedConclaveDispute,
+  verifyParameterizedConstitutionalInvariants,
+} from './sovereign-conclave-domain-engine';
+
 import type {
   InterstellarConstitutionalInvariant,
   InterstellarJurorVote,
@@ -46,94 +51,35 @@ export interface InterstellarInvariantCheckOutput {
 export function arbitrateInterstellarDispute(
   input: InterstellarDisputeInput
 ): InterstellarSenateVerdictOutput {
-  const thresholdPct = input.supermajorityThresholdPct ?? 85.0;
-  const totalSenators = input.votes.length;
-
-  if (totalSenators === 0) {
-    const rulingHash = createHash('sha256')
-      .update(`DISMISSED_NO_SENATORS:${input.disputeCaseRef}`)
-      .digest('hex');
-    return {
-      disputeCaseRef: input.disputeCaseRef,
-      verdict: 'DISMISSED_NO_JURISDICTION',
-      totalSenators: 0,
-      claimantVotes: 0,
-      respondentVotes: 0,
-      effectiveSupermajorityPct: 0,
-      senatorsSlashedCount: 0,
-      totalSlashedStakeCents: 0,
-      executedRemedyCents: 0,
-      rulingHash,
-    };
-  }
-
-  let claimantVotes = 0;
-  let respondentVotes = 0;
-
-  for (const v of input.votes) {
-    if (v.voteForClaimant) {
-      claimantVotes++;
-    } else {
-      respondentVotes++;
-    }
-  }
-
-  const claimantPct = (claimantVotes / totalSenators) * 100;
-  const respondentPct = (respondentVotes / totalSenators) * 100;
-
-  let verdict: InterstellarSenateVerdict = 'DELIBERATING';
-  let senatorsSlashedCount = 0;
-  let totalSlashedStakeCents = 0;
-  let executedRemedyCents = 0;
-  let effectiveSupermajorityPct = 0;
-
-  if (claimantPct >= thresholdPct) {
-    verdict = 'CLAIMANT_PREVAILS';
-    effectiveSupermajorityPct = Number(claimantPct.toFixed(2));
-    executedRemedyCents = input.disputeValueCents;
-
-    // Slash dissenting minority jurors (35% penalty)
-    for (const v of input.votes) {
-      if (!v.voteForClaimant) {
-        senatorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.35);
-      }
-    }
-  } else if (respondentPct >= thresholdPct) {
-    verdict = 'RESPONDENT_PREVAILS';
-    effectiveSupermajorityPct = Number(respondentPct.toFixed(2));
-    executedRemedyCents = 0;
-
-    // Slash dissenting minority jurors (35% penalty)
-    for (const v of input.votes) {
-      if (v.voteForClaimant) {
-        senatorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.35);
-      }
-    }
-  } else {
-    verdict = 'DELIBERATING';
-    effectiveSupermajorityPct = Math.max(claimantPct, respondentPct);
-  }
-
-  const rulingHash = createHash('sha256')
-    .update(
-      `INTERSTELLAR_RULING:${input.disputeCaseRef}:${verdict}:${executedRemedyCents}:${totalSlashedStakeCents}`
-    )
-    .digest('hex');
+  const result = arbitrateParameterizedConclaveDispute(input, {
+    defaultSupermajorityThresholdPct: 85.0,
+    slashingPenaltyPct: 35.0,
+    slashingMultiplier: 0.35,
+    emptyVerdict: 'DISMISSED_NO_JURISDICTION',
+    emptyRulingHashFn: (input) => createHash('sha256').update(`DISMISSED_NO_SENATORS:${input.disputeCaseRef}`).digest('hex'),
+    rulingHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`DISMISSED_NO_SENATORS:${ctx.disputeCaseRef}`)
+        .digest('hex'),
+  });
 
   return {
-    disputeCaseRef: input.disputeCaseRef,
-    verdict,
-    totalSenators,
-    claimantVotes,
-    respondentVotes,
-    effectiveSupermajorityPct,
-    senatorsSlashedCount,
-    totalSlashedStakeCents,
-    executedRemedyCents,
-    rulingHash,
-  };
+    disputeCaseRef: result.disputeCaseRef,
+    verdict: result.verdict as unknown as string,
+    totalJurors: result.totalJurors,
+    totalSenators: result.totalSenators,
+    totalDirectors: result.totalDirectors,
+    claimantVotes: result.claimantVotes,
+    respondentVotes: result.respondentVotes,
+    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
+    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
+    jurorsSlashedCount: result.jurorsSlashedCount,
+    senatorsSlashedCount: result.senatorsSlashedCount,
+    directorsSlashedCount: result.directorsSlashedCount,
+    totalSlashedStakeCents: result.totalSlashedStakeCents,
+    executedRemedyCents: result.executedRemedyCents,
+    rulingHash: result.rulingHash,
+  } as unknown as InterstellarSenateVerdictOutput;
 }
 
 /**

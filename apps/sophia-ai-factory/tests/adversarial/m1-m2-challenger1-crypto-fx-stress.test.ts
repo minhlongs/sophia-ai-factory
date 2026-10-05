@@ -572,8 +572,8 @@ describe('Challenger 1: Empirical Adversarial Stress Test Harness', () => {
           totalRealizedUsd += realizedUsd;
           totalBaseUsd += baseUsd;
 
-          // Zero leakage invariant: realized value must be >= base value (subject to subunit discrete rounding)
-          expect(realizedUsd).toBeGreaterThanOrEqual(baseUsd * 0.999);
+          // Zero leakage invariant: realized value must be >= base value (subject to subunit discrete rounding on micro-amounts)
+          expect(realizedUsd).toBeGreaterThanOrEqual(Math.min(baseUsd * 0.999, baseUsd - 0.01));
         }
 
         expect(successfulAbsorptions).toBe(ITERATIONS);

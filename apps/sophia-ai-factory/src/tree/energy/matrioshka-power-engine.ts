@@ -6,6 +6,10 @@
 
 import { createHash } from 'node:crypto';
 import {
+  validateParameterizedPower,
+  evaluateParameterizedMultiNinesSla,
+} from './net-zero-sla-domain-engine';
+import {
   TEN_NINES_SLA_CONSTANTS,
   type SlaVerdict,
 } from '@/seed/types/ronanflop-matrix';
@@ -43,38 +47,25 @@ export interface TenNinesSlaEvaluationOutput {
  * Validates Matrioshka Brain clean power allocation and cryo-photonic cooling metrics.
  */
 export function validateMatrioshkaPower(input: MatrioshkaPowerInput): MatrioshkaPowerValidationOutput {
-  const violations: string[] = [];
-
-  if (input.carbonIntensityGCo2PerKwh > 0.0) {
-    violations.push(
-      `Carbon intensity ${input.carbonIntensityGCo2PerKwh} g CO2/kWh violates absolute net-zero (0.0 required)`
-    );
-  }
-
-  if (input.coolingEfficiencyCop < TEN_NINES_SLA_CONSTANTS.MIN_CRYO_COP) {
-    violations.push(
-      `Cooling COP ${input.coolingEfficiencyCop} is below minimum requirement ${TEN_NINES_SLA_CONSTANTS.MIN_CRYO_COP}`
-    );
-  }
-
-  if (input.allocatedMegawatts <= 0) {
-    violations.push('Allocated power must be strictly positive');
-  }
-
-  if (input.cryoCoolingPowerMw <= 0) {
-    violations.push('Cryo cooling power allocation must be strictly positive');
-  }
-
-  const isCompliant = violations.length === 0;
-
-  const verificationHash = createHash('sha256')
-    .update(`MATRIOSHKA_POWER:${input.allocatedMegawatts}:${input.carbonIntensityGCo2PerKwh}:${input.coolingEfficiencyCop}:${isCompliant}`)
-    .digest('hex');
+  const result = validateParameterizedPower(
+    input,
+    {
+      minCop: TEN_NINES_SLA_CONSTANTS.MIN_CRYO_COP,
+      positivePowerMessage: 'Allocated power must be strictly positive',
+      positiveCryoPowerMessage: 'Cryo cooling power allocation must be strictly positive',
+    },
+    {
+      powerHashFn: (ctx) =>
+        createHash('sha256')
+          .update(`MATRIOSHKA_POWER:${ctx.allocatedMegawatts}:${ctx.carbonIntensity}:${ctx.cop}:${ctx.isCompliant}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    isCompliant,
-    violations,
-    verificationHash,
+    isCompliant: result.isCompliant,
+    violations: result.violations,
+    verificationHash: result.verificationHash,
   };
 }
 
@@ -82,48 +73,38 @@ export function validateMatrioshkaPower(input: MatrioshkaPowerInput): Matrioshka
  * Evaluates Ten-Nines (99.99999999%) SLA uptime at microsecond resolution.
  */
 export function evaluateTenNinesSla(input: TenNinesSlaInput): TenNinesSlaEvaluationOutput {
-  const totalWindow =
-    input.totalWindowMicroseconds ?? TEN_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_MICROSECONDS;
   const maxAllowed = TEN_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_MICROSECONDS;
-  const violations: string[] = [];
-
-  if (input.actualDowntimeMicroseconds > maxAllowed) {
-    violations.push(
-      `Actual downtime ${input.actualDowntimeMicroseconds} µs exceeds maximum allowable Ten-Nines downtime ${maxAllowed} µs (0.2592 ms)`
-    );
-  }
-
-  if (!input.quantumTeleportSyncActive) {
-    violations.push('Quantum teleportation state synchronization is inactive');
-  }
-
-  if (input.bftQuorumConsensusPct < 100.0) {
-    violations.push(
-      `Byzantine Fault Tolerant quorum consensus ${input.bftQuorumConsensusPct}% is below 100.0% requirement`
-    );
-  }
-
-  const effectiveAvailabilityPct =
-    totalWindow > 0
-      ? Number((((totalWindow - input.actualDowntimeMicroseconds) / totalWindow) * 100).toFixed(8))
-      : 0.0;
-
-  const isCertified = violations.length === 0;
-  const slaVerdict: SlaVerdict = isCertified
-    ? 'TEN_NINES_CERTIFIED'
-    : 'BREACH_LIQUIDITY_PENALIZED';
-
-  const auditSignature = createHash('sha256')
-    .update(`TEN_NINES_AUDIT:${slaVerdict}:${input.actualDowntimeMicroseconds}:${effectiveAvailabilityPct}:${auditTimestampIso()}`)
-    .digest('hex');
+  const result = evaluateParameterizedMultiNinesSla(
+    input,
+    {
+      maxAllowedDowntime: maxAllowed,
+      totalWindow: input.totalWindowMicroseconds ?? TEN_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_MICROSECONDS,
+      certifiedVerdict: 'TEN_NINES_CERTIFIED',
+      breachVerdict: 'BREACH_LIQUIDITY_PENALIZED',
+      precision: 8,
+      downtimeViolationFormatter: (actual, max) =>
+        `Actual downtime ${actual} µs exceeds maximum allowable Ten-Nines downtime ${max} µs (0.2592 ms)`,
+      entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.quantumTeleportSyncActive),
+      entanglementViolationMessage: 'Quantum teleportation state synchronization is inactive',
+      minBftQuorumPct: 100.0,
+      minBftViolationFormatter: (actual, min) =>
+        `Byzantine Fault Tolerant quorum consensus ${actual}% is below 100.0% requirement`,
+    },
+    {
+      auditSignatureFn: (ctx) =>
+        createHash('sha256')
+          .update(`TEN_NINES_AUDIT:${ctx.slaVerdict}:${ctx.actualDowntime}:${ctx.effectiveAvailabilityPct}:${auditTimestampIso()}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    slaVerdict,
-    effectiveAvailabilityPct,
+    slaVerdict: result.slaVerdict as SlaVerdict,
+    effectiveAvailabilityPct: result.effectiveAvailabilityPct,
     maxAllowedDowntimeMicroseconds: maxAllowed,
     actualDowntimeMicroseconds: input.actualDowntimeMicroseconds,
-    violations,
-    auditSignature,
+    violations: result.violations,
+    auditSignature: result.auditSignature,
   };
 }
 

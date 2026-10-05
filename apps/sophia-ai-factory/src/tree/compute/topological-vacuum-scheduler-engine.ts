@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   FOURTEEN_NINES_SLA_CONSTANTS,
   type TopologicalVacuumComputeLattice,
@@ -65,43 +67,20 @@ export function planVacuumBatchDispatch(
   workloads: number = 20_000_000,
   measuredDriftFs: number = 18.0
 ): VacuumDispatchPlan {
-  const stableLattices = lattices.filter((l) => l.topologicalStatus === 'ANYONIC_FLUX_STABLE');
+  const plan = planParameterizedBatchDispatch(lattices, workloads, measuredDriftFs, {
+    maxClockDriftFs: FOURTEEN_NINES_SLA_CONSTANTS.MAX_PLANCK_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Planck relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'ANYONIC_FLUX_STABLE',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).topologicalStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).latticeRef as string,
+    fitnessFn: (m) => calculateTopologicalLatticeFitness(m as never),
+    bandwidthPerWorkloadPb: 0.0025,
+    zeroStableMeshesErrorMessage: 'Zero stable topological vacuum lattices available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`VACUUM_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (stableLattices.length === 0) {
-    throw new Error('Zero stable topological vacuum lattices available for dispatch');
-  }
-
-  if (measuredDriftFs > FOURTEEN_NINES_SLA_CONSTANTS.MAX_PLANCK_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Planck relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${FOURTEEN_NINES_SLA_CONSTANTS.MAX_PLANCK_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestLattice = stableLattices[0];
-  let highestScore = calculateTopologicalLatticeFitness(bestLattice);
-
-  for (let i = 1; i < stableLattices.length; i++) {
-    const score = calculateTopologicalLatticeFitness(stableLattices[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestLattice = stableLattices[i];
-    }
-  }
-
-  // 1 workload = ~0.0025 Petabytes -> 20,000,000 * 0.0025 = 50,000 Petabytes
-  const totalBandwidthPetabytes = Number(((workloads * 2.5) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `VACUUM_DISPATCH:${bestLattice.latticeRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetLatticeRef: bestLattice.latticeRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    planckDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as VacuumDispatchPlan;
 }

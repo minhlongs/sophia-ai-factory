@@ -5,4 +5,4 @@
  * Centralizes knowledge about which routes require additional security checks.
  */
 
-export { SENSITIVE_API_PREFIXES, isSensitiveApiRoute } from '@/config/sensitive-routes';
+export { SENSITIVE_API_PREFIXES, isSensitiveApiRoute } from '@/seed/config/sensitive-routes';

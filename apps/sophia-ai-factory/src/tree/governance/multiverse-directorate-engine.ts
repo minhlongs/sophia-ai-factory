@@ -5,6 +5,11 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  arbitrateParameterizedConclaveDispute,
+  verifyParameterizedConstitutionalInvariants,
+} from './sovereign-conclave-domain-engine';
+
 import type {
   MultiverseConstitutionalInvariant,
   MultiverseDirectorateVerdict,
@@ -46,94 +51,35 @@ export interface MultiverseInvariantCheckOutput {
 export function arbitrateMultiverseDispute(
   input: MultiverseDisputeInput
 ): MultiverseDirectorateVerdictOutput {
-  const thresholdPct = input.supermajorityThresholdPct ?? 95.0;
-  const totalDirectors = input.votes.length;
-
-  if (totalDirectors === 0) {
-    const rulingHash = createHash('sha256')
-      .update(`DISMISSED_NO_DIRECTORS:${input.disputeCaseRef}`)
-      .digest('hex');
-    return {
-      disputeCaseRef: input.disputeCaseRef,
-      verdict: 'DISMISSED_NO_JURISDICTION',
-      totalDirectors: 0,
-      claimantVotes: 0,
-      respondentVotes: 0,
-      effectiveSupermajorityPct: 0,
-      directorsSlashedCount: 0,
-      totalSlashedStakeCents: 0,
-      executedRemedyCents: 0,
-      rulingHash,
-    };
-  }
-
-  let claimantVotes = 0;
-  let respondentVotes = 0;
-
-  for (const v of input.votes) {
-    if (v.voteForClaimant) {
-      claimantVotes++;
-    } else {
-      respondentVotes++;
-    }
-  }
-
-  const claimantPct = (claimantVotes / totalDirectors) * 100;
-  const respondentPct = (respondentVotes / totalDirectors) * 100;
-
-  let verdict: MultiverseDirectorateVerdict = 'DELIBERATING';
-  let directorsSlashedCount = 0;
-  let totalSlashedStakeCents = 0;
-  let executedRemedyCents = 0;
-  let effectiveSupermajorityPct = 0;
-
-  if (claimantPct >= thresholdPct) {
-    verdict = 'CLAIMANT_PREVAILS';
-    effectiveSupermajorityPct = Number(claimantPct.toFixed(2));
-    executedRemedyCents = input.disputeValueCents;
-
-    // Slash dissenting minority jurors (50% penalty)
-    for (const v of input.votes) {
-      if (!v.voteForClaimant) {
-        directorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.50);
-      }
-    }
-  } else if (respondentPct >= thresholdPct) {
-    verdict = 'RESPONDENT_PREVAILS';
-    effectiveSupermajorityPct = Number(respondentPct.toFixed(2));
-    executedRemedyCents = 0;
-
-    // Slash dissenting minority jurors (50% penalty)
-    for (const v of input.votes) {
-      if (v.voteForClaimant) {
-        directorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.50);
-      }
-    }
-  } else {
-    verdict = 'DELIBERATING';
-    effectiveSupermajorityPct = Math.max(claimantPct, respondentPct);
-  }
-
-  const rulingHash = createHash('sha256')
-    .update(
-      `MULTIVERSE_RULING:${input.disputeCaseRef}:${verdict}:${executedRemedyCents}:${totalSlashedStakeCents}`
-    )
-    .digest('hex');
+  const result = arbitrateParameterizedConclaveDispute(input, {
+    defaultSupermajorityThresholdPct: 95.0,
+    slashingPenaltyPct: 50.0,
+    slashingMultiplier: 0.50,
+    emptyVerdict: 'DISMISSED_NO_JURISDICTION',
+    emptyRulingHashFn: (input) => createHash('sha256').update(`DISMISSED_NO_DIRECTORS:${input.disputeCaseRef}`).digest('hex'),
+    rulingHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`DISMISSED_NO_DIRECTORS:${ctx.disputeCaseRef}`)
+        .digest('hex'),
+  });
 
   return {
-    disputeCaseRef: input.disputeCaseRef,
-    verdict,
-    totalDirectors,
-    claimantVotes,
-    respondentVotes,
-    effectiveSupermajorityPct,
-    directorsSlashedCount,
-    totalSlashedStakeCents,
-    executedRemedyCents,
-    rulingHash,
-  };
+    disputeCaseRef: result.disputeCaseRef,
+    verdict: result.verdict as unknown as string,
+    totalJurors: result.totalJurors,
+    totalSenators: result.totalSenators,
+    totalDirectors: result.totalDirectors,
+    claimantVotes: result.claimantVotes,
+    respondentVotes: result.respondentVotes,
+    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
+    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
+    jurorsSlashedCount: result.jurorsSlashedCount,
+    senatorsSlashedCount: result.senatorsSlashedCount,
+    directorsSlashedCount: result.directorsSlashedCount,
+    totalSlashedStakeCents: result.totalSlashedStakeCents,
+    executedRemedyCents: result.executedRemedyCents,
+    rulingHash: result.rulingHash,
+  } as unknown as MultiverseDirectorateVerdictOutput;
 }
 
 /**

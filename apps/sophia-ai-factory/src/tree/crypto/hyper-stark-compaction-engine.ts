@@ -5,6 +5,12 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  generateParameterizedStarkCommitment,
+  buildParameterizedTransactionMerkleRoot,
+  compactStateParameterizedWithStark,
+} from './braided-stark-domain-engine';
+
 import type {
   HyperStarkProtocol,
   HyperStarkTransaction,
@@ -36,21 +42,22 @@ export function generateHyperStarkCommitment(
   protocol: HyperStarkProtocol = 'POST_QUANTUM_FRI_512',
   recursionDepth: number = 5
 ): HyperStarkCommitmentOutput {
-  if (recursionDepth <= 0) {
-    throw new Error(`Invalid recursion depth: ${recursionDepth}`);
-  }
-
-  const leafProofCount = 4_000_000;
-  const rootCommitment = createHash('sha512')
-    .update(`${protocol}:${seed}:DEPTH_${recursionDepth}:LEAVES_${leafProofCount}`)
-    .digest('hex'); // 128 hex chars = 64 bytes
+  const result = generateParameterizedStarkCommitment(seed, {
+    protocol: protocol,
+    braidingDepth: recursionDepth,
+    leafProofCount: 4_000_000,
+    depthPrefix: 'DEPTH',
+  });
 
   return {
+    starkProtocol: protocol,
+    braidedStarkProtocol: protocol,
     hyperStarkProtocol: protocol,
-    recursionDepth,
-    leafProofCount,
-    rootCommitment,
-  };
+    braidingDepth: recursionDepth,
+    recursionDepth: recursionDepth,
+    leafProofCount: result.leafProofCount,
+    rootCommitment: result.rootCommitment,
+  } as unknown as HyperStarkCommitmentOutput;
 }
 
 /**
@@ -59,28 +66,14 @@ export function generateHyperStarkCommitment(
 export function buildHyperStarkTransactionMerkleRoot(
   transactions: HyperStarkTransaction[]
 ): string {
-  if (transactions.length === 0) {
-    return createHash('sha512').update('EMPTY_HYPER_STARK_STATE').digest('hex');
-  }
-
-  let currentLevel = transactions.map((tx) =>
-    createHash('sha512')
-      .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}`)
-      .digest('hex')
-  );
-
-  while (currentLevel.length > 1) {
-    const nextLevel: string[] = [];
-    for (let i = 0; i < currentLevel.length; i += 2) {
-      const left = currentLevel[i];
-      const right = i + 1 < currentLevel.length ? currentLevel[i + 1] : left;
-      const combined = createHash('sha512').update(`${left}:${right}`).digest('hex');
-      nextLevel.push(combined);
-    }
-    currentLevel = nextLevel;
-  }
-
-  return currentLevel[0];
+  return buildParameterizedTransactionMerkleRoot(transactions, {
+    hashAlgorithm: 'sha512',
+    emptyStateHashTag: 'EMPTY_HYPER_STARK_STATE',
+    leafHashFn: (tx) =>
+      createHash('sha512')
+        .update(`${tx.txId}:${tx.sender}:${tx.recipient}:${tx.amountCents}:${tx.nonce}`)
+        .digest('hex'),
+  });
 }
 
 /**

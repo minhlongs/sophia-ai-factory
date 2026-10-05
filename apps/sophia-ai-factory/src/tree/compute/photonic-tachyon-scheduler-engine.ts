@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   TWELVE_NINES_SLA_CONSTANTS,
   type PhotonicTachyonComputeMatrix,
@@ -61,43 +63,20 @@ export function planTachyonBatchDispatch(
   workloads: number = 4_000_000,
   measuredDriftFs: number = 140.0
 ): TachyonDispatchPlan {
-  const onlineMatrices = matrices.filter((m) => m.status === 'ONLINE_SUPERCONDUCTING');
+  const plan = planParameterizedBatchDispatch(matrices, workloads, measuredDriftFs, {
+    maxClockDriftFs: TWELVE_NINES_SLA_CONSTANTS.MAX_TACHYON_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Tachyon relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'ONLINE_SUPERCONDUCTING',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).status as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).matrixNodeId as string,
+    fitnessFn: (m) => calculatePhotonicMatrixFitness(m as never),
+    bandwidthPerWorkloadPb: 0.002,
+    zeroStableMeshesErrorMessage: 'Zero online superconducting Photonic-Tachyon matrices available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`TACHYON_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (onlineMatrices.length === 0) {
-    throw new Error('Zero online superconducting Photonic-Tachyon matrices available for dispatch');
-  }
-
-  if (measuredDriftFs > TWELVE_NINES_SLA_CONSTANTS.MAX_TACHYON_DRIFT_FS) {
-    throw new Error(
-      `Tachyon relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${TWELVE_NINES_SLA_CONSTANTS.MAX_TACHYON_DRIFT_FS} fs`
-    );
-  }
-
-  let bestMatrix = onlineMatrices[0];
-  let highestScore = calculatePhotonicMatrixFitness(bestMatrix);
-
-  for (let i = 1; i < onlineMatrices.length; i++) {
-    const score = calculatePhotonicMatrixFitness(onlineMatrices[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMatrix = onlineMatrices[i];
-    }
-  }
-
-  // 1 workload = ~0.002 Petabytes -> 4,000,000 * 0.002 = 8,000 Petabytes
-  const totalOpticalPetabytes = Number(((workloads * 2) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `TACHYON_DISPATCH:${bestMatrix.matrixNodeId}:${workloads}:${totalOpticalPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetMatrixId: bestMatrix.matrixNodeId,
-    assignedWorkloads: workloads,
-    totalOpticalPetabytes,
-    tachyonDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as TachyonDispatchPlan;
 }

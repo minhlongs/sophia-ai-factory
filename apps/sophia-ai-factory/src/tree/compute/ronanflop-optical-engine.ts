@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   TEN_NINES_SLA_CONSTANTS,
   type OpticalPipelineDispatch,
@@ -60,41 +62,20 @@ export function planOpticalBatchDispatch(
   workloads: number = 1_000_000,
   measuredDriftPs: number = 0.12
 ): OpticalDispatchPlan {
-  const onlineGrids = grids.filter((g) => g.status === 'ONLINE_SUPERCONDUCTING');
+  const plan = planParameterizedBatchDispatch(grids, workloads, measuredDriftPs, {
+    maxClockDriftFs: TEN_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_DOPPLER_PS,
+    clockDriftErrorMessageFn: (drift, max) => `Relativistic Doppler clock drift ${drift} ps exceeds allowable threshold ${max} ps`,
+    stableStatus: 'ONLINE_SUPERCONDUCTING',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).status as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).gridNodeId as string,
+    fitnessFn: (m) => calculateOpticalGridFitness(m as never),
+    bandwidthPerWorkloadPb: 0.002,
+    zeroStableMeshesErrorMessage: 'Zero online superconducting RonanFLOP grids available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`OPTICAL_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (onlineGrids.length === 0) {
-    throw new Error('Zero online superconducting RonanFLOP grids available for dispatch');
-  }
-
-  if (measuredDriftPs > TEN_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_DOPPLER_PS) {
-    throw new Error(
-      `Relativistic Doppler clock drift ${measuredDriftPs} ps exceeds allowable threshold ${TEN_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_DOPPLER_PS} ps`
-    );
-  }
-
-  let bestGrid = onlineGrids[0];
-  let highestScore = calculateOpticalGridFitness(bestGrid);
-
-  for (let i = 1; i < onlineGrids.length; i++) {
-    const score = calculateOpticalGridFitness(onlineGrids[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestGrid = onlineGrids[i];
-    }
-  }
-
-  // 1 workload = ~0.002 Petabytes of generative video render stream
-  const totalOpticalPetabytes = Number(((workloads * 2) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(`OPTICAL_DISPATCH:${bestGrid.gridNodeId}:${workloads}:${totalOpticalPetabytes}:${measuredDriftPs}`)
-    .digest('hex');
-
-  return {
-    targetGridId: bestGrid.gridNodeId,
-    assignedWorkloads: workloads,
-    totalOpticalPetabytes,
-    relativisticDriftPs: measuredDriftPs,
-    dispatchHash,
-  };
+  return plan as unknown as OpticalDispatchPlan;
 }

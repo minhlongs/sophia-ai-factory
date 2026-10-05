@@ -5,6 +5,11 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  validateParameterizedPower,
+  evaluateParameterizedMultiNinesSla,
+} from './net-zero-sla-domain-engine';
+
 import { THIRTY_SIX_NINES_SLA_CONSTANTS } from '@/seed/types/inter-galactic-quantum-mesh-nexus';
 
 export type ThirtySixNinesSlaVerdict =
@@ -46,35 +51,24 @@ export interface ThirtySixNinesSlaEvaluationOutput {
 export function validateInterGalacticPower(
   input: InterGalacticPowerInput
 ): InterGalacticPowerValidationOutput {
-  const violations: string[] = [];
-
-  if (input.carbonIntensityGPerKwh > 0.0) {
-    violations.push(
-      `Carbon intensity ${input.carbonIntensityGPerKwh} g CO2/kWh violates absolute net-zero (0.0 required)`
-    );
-  }
-
-  if (input.boseEinsteinCop < THIRTY_SIX_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP) {
-    violations.push(
-      `Cooling COP ${input.boseEinsteinCop} is below minimum requirement ${THIRTY_SIX_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP}`
-    );
-  }
-
-  if (input.allocatedMegawatts <= 0) {
-    violations.push('Allocated megawatts must be strictly positive');
-  }
-
-  const isCompliant = violations.length === 0;
-  const verificationHash = createHash('sha256')
-    .update(
-      `INTER_GALACTIC_POWER_AUDIT:${isCompliant}:${input.allocatedMegawatts}:${input.carbonIntensityGPerKwh}:${input.boseEinsteinCop}`
-    )
-    .digest('hex');
+  const result = validateParameterizedPower(
+    input,
+    {
+      minCop: THIRTY_SIX_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP,
+      positivePowerMessage: 'Allocated megawatts must be strictly positive',
+    },
+    {
+      powerHashFn: (ctx) =>
+        createHash('sha256')
+          .update(`INTER_GALACTIC_POWER_AUDIT:${ctx.isCompliant}:${ctx.allocatedMegawatts}:${ctx.carbonIntensity}:${ctx.cop}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    isCompliant,
-    violations,
-    verificationHash,
+    isCompliant: result.isCompliant,
+    violations: result.violations,
+    verificationHash: result.verificationHash,
   };
 }
 
@@ -84,56 +78,35 @@ export function validateInterGalacticPower(
 export function evaluateThirtySixNinesSla(
   input: ThirtySixNinesSlaInput
 ): ThirtySixNinesSlaEvaluationOutput {
-  const totalWindowNanoseconds =
-    input.totalWindowNanoseconds ?? THIRTY_SIX_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS;
-  const maxAllowedDowntimeNanoseconds =
-    THIRTY_SIX_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
-
-  const violations: string[] = [];
-
-  if (input.actualDowntimeNanoseconds > maxAllowedDowntimeNanoseconds) {
-    violations.push(
-      `Downtime ${input.actualDowntimeNanoseconds} ns exceeds allowable Thirty-Six-Nines budget of ${maxAllowedDowntimeNanoseconds} ns`
-    );
-  }
-
-  if (!input.interGalacticZeroPointEntanglementActive) {
-    violations.push(
-      'Inter-Galactic zero-point quantum entanglement mesh link is degraded or inactive'
-    );
-  }
-
-  if (input.bftQuorumConsensusPct < 99.99999) {
-    violations.push(
-      `BFT quorum consensus ${input.bftQuorumConsensusPct}% is below required 99.99999% threshold`
-    );
-  }
-
-  const slaVerdict: ThirtySixNinesSlaVerdict =
-    violations.length === 0 ? 'THIRTY_SIX_NINES_CERTIFIED' : 'BREACH_LIQUIDITY_PENALIZED';
-
-  const effectiveAvailabilityPct =
-    totalWindowNanoseconds > 0
-      ? Number(
-          (
-            ((totalWindowNanoseconds - input.actualDowntimeNanoseconds) / totalWindowNanoseconds) *
-            100
-          ).toFixed(18)
-        )
-      : 100.0;
-
-  const auditSignature = createHash('sha256')
-    .update(
-      `THIRTY_SIX_NINES_SLA:${slaVerdict}:${input.actualDowntimeNanoseconds}:${effectiveAvailabilityPct}:${input.bftQuorumConsensusPct}`
-    )
-    .digest('hex');
+  const maxAllowed = THIRTY_SIX_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
+  const result = evaluateParameterizedMultiNinesSla(
+    input,
+    {
+      maxAllowedDowntime: maxAllowed,
+      totalWindow: input.totalWindowNanoseconds ?? THIRTY_SIX_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS,
+      certifiedVerdict: 'THIRTY_SIX_NINES_CERTIFIED',
+      breachVerdict: 'BREACH_LIQUIDITY_PENALIZED',
+      precision: 18,
+      downtimeViolationFormatter: (actual, max) => `Downtime ${actual} ns exceeds allowable Thirty-Six-Nines budget of ${max} ns`,
+      entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.interGalacticZeroPointEntanglementActive),
+      entanglementViolationMessage: 'Inter-Galactic zero-point quantum entanglement mesh link is degraded or inactive',
+      minBftQuorumPct: 99.99999,
+      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.99999% threshold`,
+    },
+    {
+      auditSignatureFn: (ctx) =>
+        createHash('sha256')
+          .update(`THIRTY_SIX_NINES_SLA:${ctx.slaVerdict}:${ctx.actualDowntime}:${ctx.effectiveAvailabilityPct}:${ctx.bftQuorumPct}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    slaVerdict,
-    effectiveAvailabilityPct,
-    maxAllowedDowntimeNanoseconds,
+    slaVerdict: result.slaVerdict as unknown as ThirtySixNinesSlaVerdict,
+    effectiveAvailabilityPct: result.effectiveAvailabilityPct,
+    maxAllowedDowntimeNanoseconds: maxAllowed,
     actualDowntimeNanoseconds: input.actualDowntimeNanoseconds,
-    violations,
-    auditSignature,
+    violations: result.violations,
+    auditSignature: result.auditSignature,
   };
 }

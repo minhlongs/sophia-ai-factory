@@ -6,6 +6,11 @@
 
 import { createHash } from 'node:crypto';
 import {
+  arbitrateParameterizedConclaveDispute,
+  verifyParameterizedConstitutionalInvariants,
+} from './sovereign-conclave-domain-engine';
+
+import {
   SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS,
   type QuinquagintamilliaquadrillionDisputeVerdict,
   type QuinquagintamilliaquadrillionEmpireConstitutionalInvariant,
@@ -74,82 +79,33 @@ export const CANONICAL_QUINQUAGINTAMILLIAQUADRILLION_EMPIRE_CONSTITUTIONAL_INVAR
 export function arbitrateSovereignQuinquagintamilliaquadrillionConclaveDispute(
   input: QuinquagintamilliaquadrillionDisputeInput
 ): QuinquagintamilliaquadrillionDisputeRuling {
-  const supermajorityThreshold =
-    input.supermajorityThresholdPct ??
-    SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS.SUPERMAJORITY_THRESHOLD_PERCENT;
-
-  let claimantVotes = 0;
-  let respondentVotes = 0;
-
-  for (const v of input.votes) {
-    if (v.voteForClaimant) {
-      claimantVotes++;
-    } else {
-      respondentVotes++;
-    }
-  }
-
-  const totalJurors = input.votes.length;
-  const claimantPct = totalJurors > 0 ? (claimantVotes / totalJurors) * 100 : 0;
-  const respondentPct = totalJurors > 0 ? (respondentVotes / totalJurors) * 100 : 0;
-
-  let verdict: QuinquagintamilliaquadrillionDisputeVerdict = 'DELIBERATING';
-  let jurorsSlashedCount = 0;
-  let totalSlashedStakeCents = 0;
-  let executedRemedyCents = 0;
-  let effectiveSupermajorityPct = 0;
-
-  if (claimantPct >= supermajorityThreshold) {
-    verdict = 'CLAIMANT_PREVAILS';
-    effectiveSupermajorityPct = claimantPct;
-    executedRemedyCents = input.disputeValueCents;
-
-    for (const v of input.votes) {
-      if (!v.voteForClaimant) {
-        jurorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(
-          v.stakeCents *
-            (SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS.BYZANTINE_SLASHING_PENALTY_PERCENT / 100)
-        );
-      }
-    }
-  } else if (respondentPct >= supermajorityThreshold) {
-    verdict = 'RESPONDENT_PREVAILS';
-    effectiveSupermajorityPct = respondentPct;
-    executedRemedyCents = 0;
-
-    for (const v of input.votes) {
-      if (v.voteForClaimant) {
-        jurorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(
-          v.stakeCents *
-            (SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS.BYZANTINE_SLASHING_PENALTY_PERCENT / 100)
-        );
-      }
-    }
-  } else {
-    verdict = 'DELIBERATING';
-    effectiveSupermajorityPct = Math.max(claimantPct, respondentPct);
-  }
-
-  const rulingHash = createHash('sha256')
-    .update(
-      `QUINQUAGINTAMILLIAQUADRILLION_RULING:${input.disputeCaseRef}:${verdict}:${executedRemedyCents}:${jurorsSlashedCount}:${totalSlashedStakeCents}:${effectiveSupermajorityPct}`
-    )
-    .digest('hex');
+  const result = arbitrateParameterizedConclaveDispute(input, {
+    defaultSupermajorityThresholdPct: SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS.SUPERMAJORITY_THRESHOLD_PERCENT,
+    slashingPenaltyPct: SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS.BYZANTINE_SLASHING_PENALTY_PERCENT,
+    slashingMultiplier: SOVEREIGN_QUINQUAGINTAMILLIAQUADRILLION_CONCLAVE_CONSTANTS.BYZANTINE_SLASHING_PENALTY_PERCENT / 100,
+    rulingHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`QUINQUAGINTAMILLIAQUADRILLION_RULING:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.executedRemedyCents}:${ctx.jurorsSlashedCount}:${ctx.totalSlashedStakeCents}:${ctx.effectiveSupermajorityPct}`)
+        .digest('hex'),
+  });
 
   return {
-    disputeCaseRef: input.disputeCaseRef,
-    verdict,
-    totalJurors,
-    claimantVotes,
-    respondentVotes,
-    effectiveSupermajorityPct,
-    jurorsSlashedCount,
-    totalSlashedStakeCents,
-    executedRemedyCents,
-    rulingHash,
-  };
+    disputeCaseRef: result.disputeCaseRef,
+    verdict: result.verdict as unknown as string,
+    totalJurors: result.totalJurors,
+    totalSenators: result.totalSenators,
+    totalDirectors: result.totalDirectors,
+    claimantVotes: result.claimantVotes,
+    respondentVotes: result.respondentVotes,
+    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
+    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
+    jurorsSlashedCount: result.jurorsSlashedCount,
+    senatorsSlashedCount: result.senatorsSlashedCount,
+    directorsSlashedCount: result.directorsSlashedCount,
+    totalSlashedStakeCents: result.totalSlashedStakeCents,
+    executedRemedyCents: result.executedRemedyCents,
+    rulingHash: result.rulingHash,
+  } as unknown as QuinquagintamilliaquadrillionDisputeRuling;
 }
 
 /**

@@ -5,6 +5,11 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  validateParameterizedPower,
+  evaluateParameterizedMultiNinesSla,
+} from './net-zero-sla-domain-engine';
+
 import { SEVENTEEN_NINES_SLA_CONSTANTS } from '@/seed/types/sub-planck-vacuum-nexus';
 
 export type SeventeenNinesSlaVerdict =
@@ -46,40 +51,25 @@ export interface SeventeenNinesSlaEvaluationOutput {
 export function validateSubPlanckPower(
   input: SubPlanckPowerInput
 ): SubPlanckPowerValidationOutput {
-  const violations: string[] = [];
-
-  if (input.carbonIntensityGPerKwh > 0.0) {
-    violations.push(
-      `Carbon intensity ${input.carbonIntensityGPerKwh} g CO2/kWh violates absolute net-zero (0.0 required)`
-    );
-  }
-
-  if (input.boseEinsteinCop < SEVENTEEN_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP) {
-    violations.push(
-      `Cooling COP ${input.boseEinsteinCop} is below minimum requirement ${SEVENTEEN_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP}`
-    );
-  }
-
-  if (input.allocatedMegawatts <= 0) {
-    violations.push('Allocated power must be strictly positive');
-  }
-
-  if (input.cryoPowerMw <= 0) {
-    violations.push('Cryo cooling power allocation must be strictly positive');
-  }
-
-  const isCompliant = violations.length === 0;
-
-  const verificationHash = createHash('sha256')
-    .update(
-      `SUB_PLANCK_POWER:${input.allocatedMegawatts}:${input.carbonIntensityGPerKwh}:${input.boseEinsteinCop}:${isCompliant}`
-    )
-    .digest('hex');
+  const result = validateParameterizedPower(
+    input,
+    {
+      minCop: SEVENTEEN_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP,
+      positivePowerMessage: 'Allocated power must be strictly positive',
+      positiveCryoPowerMessage: 'Cryo cooling power allocation must be strictly positive',
+    },
+    {
+      powerHashFn: (ctx) =>
+        createHash('sha256')
+          .update(`SUB_PLANCK_POWER:${ctx.allocatedMegawatts}:${ctx.carbonIntensity}:${ctx.cop}:${ctx.isCompliant}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    isCompliant,
-    violations,
-    verificationHash,
+    isCompliant: result.isCompliant,
+    violations: result.violations,
+    verificationHash: result.verificationHash,
   };
 }
 
@@ -89,55 +79,35 @@ export function validateSubPlanckPower(
 export function evaluateSeventeenNinesSla(
   input: SeventeenNinesSlaInput
 ): SeventeenNinesSlaEvaluationOutput {
-  const totalWindow =
-    input.totalWindowNanoseconds ??
-    SEVENTEEN_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS;
   const maxAllowed = SEVENTEEN_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
-  const violations: string[] = [];
-
-  if (input.actualDowntimeNanoseconds > maxAllowed) {
-    violations.push(
-      `Actual downtime ${input.actualDowntimeNanoseconds} ns exceeds maximum allowable Seventeen-Nines downtime ${maxAllowed} ns (0.00002592 µs)`
-    );
-  }
-
-  if (!input.anyonicEntanglementActive) {
-    violations.push('Anyonic topological entangled state redundancy synchronization is inactive');
-  }
-
-  if (input.bftQuorumConsensusPct < 100.0) {
-    violations.push(
-      `Byzantine Fault Tolerant quorum consensus ${input.bftQuorumConsensusPct}% is below 100.0% requirement`
-    );
-  }
-
-  const effectiveAvailabilityPct =
-    totalWindow > 0
-      ? Number(
-          (
-            ((totalWindow - input.actualDowntimeNanoseconds) / totalWindow) *
-            100
-          ).toFixed(15)
-        )
-      : 0.0;
-
-  const isCertified = violations.length === 0;
-  const slaVerdict: SeventeenNinesSlaVerdict = isCertified
-    ? 'SEVENTEEN_NINES_CERTIFIED'
-    : 'BREACH_LIQUIDITY_PENALIZED';
-
-  const auditSignature = createHash('sha256')
-    .update(
-      `SEVENTEEN_NINES_AUDIT:${slaVerdict}:${input.actualDowntimeNanoseconds}:${effectiveAvailabilityPct}:2026-09-28T00:00:00Z`
-    )
-    .digest('hex');
+  const result = evaluateParameterizedMultiNinesSla(
+    input,
+    {
+      maxAllowedDowntime: maxAllowed,
+      totalWindow: input.totalWindowNanoseconds ?? SEVENTEEN_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS,
+      certifiedVerdict: 'SEVENTEEN_NINES_CERTIFIED',
+      breachVerdict: 'BREACH_LIQUIDITY_PENALIZED',
+      precision: 15,
+      downtimeViolationFormatter: (actual, max) => `Actual downtime ${actual} ns exceeds maximum allowable Seventeen-Nines downtime ${max} ns (0.00002592 µs)`,
+      entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.anyonicEntanglementActive),
+      entanglementViolationMessage: 'Anyonic topological entangled state redundancy synchronization is inactive',
+      minBftQuorumPct: 100.0,
+      minBftViolationFormatter: (actual, min) => `Byzantine Fault Tolerant quorum consensus ${actual}% is below 100.0% requirement`,
+    },
+    {
+      auditSignatureFn: (ctx) =>
+        createHash('sha256')
+          .update(`SEVENTEEN_NINES_AUDIT:${ctx.slaVerdict}:${ctx.actualDowntime}:${ctx.effectiveAvailabilityPct}:${ctx.timestampIso}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    slaVerdict,
-    effectiveAvailabilityPct,
+    slaVerdict: result.slaVerdict as unknown as SeventeenNinesSlaVerdict,
+    effectiveAvailabilityPct: result.effectiveAvailabilityPct,
     maxAllowedDowntimeNanoseconds: maxAllowed,
     actualDowntimeNanoseconds: input.actualDowntimeNanoseconds,
-    violations,
-    auditSignature,
+    violations: result.violations,
+    auditSignature: result.auditSignature,
   };
 }

@@ -5,6 +5,10 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  validateParameterizedRtgsPayment,
+  executeParameterizedMultilateralNetting,
+} from './hyper-rtgs-domain-engine';
 import type {
   NettingStatus,
   ParallelMultilateralNettingBatch,
@@ -53,55 +57,40 @@ export interface ParallelMultilateralNettingResult {
  */
 export function validateSuperRtgsPayment(input: SuperRtgsValidationInput): SuperRtgsValidationOutput {
   const executionLatencyNanos = 680; // 680 nanoseconds sub-microsecond latency
-
-  if (input.grossAmountCents <= 0) {
-    const receiptHash = createHash('sha256')
-      .update(`REJECTED_INVALID_AMOUNT:${input.sourceParticipantId}:${input.grossAmountCents}`)
-      .digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_INSUFFICIENT_LIQUIDITY',
-      executionLatencyNanos,
-      reason: 'Gross settlement amount must be strictly positive',
-      receiptHash,
-    };
-  }
-
-  if (input.sourceParticipantId === input.targetParticipantId) {
-    const receiptHash = createHash('sha256')
-      .update(`REJECTED_SELF_SETTLEMENT:${input.sourceParticipantId}`)
-      .digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_INSUFFICIENT_LIQUIDITY',
-      executionLatencyNanos,
-      reason: 'Self-clearing is invalid in Super-RTGS',
-      receiptHash,
-    };
-  }
-
-  if (input.availableReserveCents < input.grossAmountCents) {
-    const receiptHash = createHash('sha256')
-      .update(`REJECTED_INSUFFICIENT_RESERVE:${input.sourceParticipantId}:${input.availableReserveCents}:${input.grossAmountCents}`)
-      .digest('hex');
-    return {
-      valid: false,
-      status: 'REJECTED_INSUFFICIENT_LIQUIDITY',
-      executionLatencyNanos,
-      reason: `Insufficient sovereign reserve balance: available ${input.availableReserveCents} < required ${input.grossAmountCents}`,
-      receiptHash,
-    };
-  }
-
-  const receiptHash = createHash('sha256')
-    .update(`FINALIZED_SUPER_RTGS:${input.sourceParticipantId}:${input.targetParticipantId}:${input.assetCurrency}:${input.grossAmountCents}:${executionLatencyNanos}`)
-    .digest('hex');
+  const result = validateParameterizedRtgsPayment(input, {
+    latency: executionLatencyNanos,
+    latencyKey: 'executionLatencyNanos',
+    requireParticipants: false,
+    rejectStatus: 'REJECTED_INSUFFICIENT_LIQUIDITY',
+    reserveDeficitReasonFn: (params) =>
+      `Insufficient sovereign reserve balance: available ${params.availableReserveCents} < required ${params.grossAmountCents}`,
+    errorHashFn: (reason, params) => {
+      if (reason === 'NON_POSITIVE_AMOUNT') {
+        return createHash('sha256')
+          .update(`REJECTED_INVALID_AMOUNT:${params.sourceParticipantId}:${params.grossAmountCents}`)
+          .digest('hex');
+      }
+      if (reason === 'SELF_SETTLEMENT') {
+        return createHash('sha256')
+          .update(`REJECTED_SELF_SETTLEMENT:${params.sourceParticipantId}`)
+          .digest('hex');
+      }
+      return createHash('sha256')
+        .update(`REJECTED_INSUFFICIENT_RESERVE:${params.sourceParticipantId}:${params.availableReserveCents}:${params.grossAmountCents}`)
+        .digest('hex');
+    },
+    receiptHashFn: (params, lat) =>
+      createHash('sha256')
+        .update(`FINALIZED_SUPER_RTGS:${params.sourceParticipantId}:${params.targetParticipantId}:${params.assetCurrency}:${params.grossAmountCents}:${lat}`)
+        .digest('hex'),
+  });
 
   return {
-    valid: true,
-    status: 'FINALIZED_IRREVOCABLE',
+    valid: result.valid,
+    status: result.status as SuperRtgsSettlementStatus,
     executionLatencyNanos,
-    receiptHash,
+    reason: result.reason,
+    receiptHash: result.receiptHash,
   };
 }
 
@@ -113,110 +102,30 @@ export function executeParallelMultilateralNetting(
   defaultCurrency: SuperRtgsCurrency = 'SSDR',
   partitionCount: number = 16
 ): ParallelMultilateralNettingResult {
-  if (obligations.length === 0) {
-    return {
-      status: 'NET_EXECUTED',
-      parallelPartitionCount: partitionCount,
-      grossFlowCount: 0,
-      grossVolumeCents: 0,
-      netSettlementVolumeCents: 0,
-      compressionRatioPct: 100.0,
-      netPositions: {},
-      netTransfers: [],
-      graphSolutionHash: createHash('sha256').update('EMPTY_SUPER_NETTING').digest('hex'),
-    };
-  }
-
-  let grossVolumeCents = 0;
-  const netPositions: Record<string, number> = {};
-
-  for (const ob of obligations) {
-    grossVolumeCents += ob.amountCents;
-    netPositions[ob.fromParticipantId] = (netPositions[ob.fromParticipantId] || 0) - ob.amountCents;
-    netPositions[ob.toParticipantId] = (netPositions[ob.toParticipantId] || 0) + ob.amountCents;
-  }
-
-  // Value conservation invariant
-  const sumNet = Object.values(netPositions).reduce((acc, val) => acc + val, 0);
-  if (Math.abs(sumNet) > 0.0001) {
-    return {
-      status: 'NET_ABORTED',
-      parallelPartitionCount: partitionCount,
-      grossFlowCount: obligations.length,
-      grossVolumeCents,
-      netSettlementVolumeCents: grossVolumeCents,
-      compressionRatioPct: 0.0,
-      netPositions,
-      netTransfers: [],
-      graphSolutionHash: createHash('sha256').update(`ABORTED:${sumNet}`).digest('hex'),
-    };
-  }
-
-  const debtors: Array<{ id: string; balance: number }> = [];
-  const creditors: Array<{ id: string; balance: number }> = [];
-
-  for (const [id, balance] of Object.entries(netPositions)) {
-    if (balance < 0) {
-      debtors.push({ id, balance: -balance });
-    } else if (balance > 0) {
-      creditors.push({ id, balance });
-    }
-  }
-
-  debtors.sort((a, b) => b.balance - a.balance);
-  creditors.sort((a, b) => b.balance - a.balance);
-
-  const netTransfers: Array<{
-    from: string;
-    to: string;
-    currency: SuperRtgsCurrency;
-    amountCents: number;
-  }> = [];
-
-  let dIdx = 0;
-  let cIdx = 0;
-  let netSettlementVolumeCents = 0;
-
-  while (dIdx < debtors.length && cIdx < creditors.length) {
-    const debtor = debtors[dIdx];
-    const creditor = creditors[cIdx];
-    const settleAmount = Math.min(debtor.balance, creditor.balance);
-
-    if (settleAmount > 0) {
-      netTransfers.push({
-        from: debtor.id,
-        to: creditor.id,
-        currency: defaultCurrency,
-        amountCents: settleAmount,
-      });
-
-      netSettlementVolumeCents += settleAmount;
-      debtor.balance -= settleAmount;
-      creditor.balance -= settleAmount;
-    }
-
-    if (debtor.balance === 0) dIdx++;
-    if (creditor.balance === 0) cIdx++;
-  }
-
-  const compressionRatioPct =
-    grossVolumeCents > 0
-      ? Number((((grossVolumeCents - netSettlementVolumeCents) / grossVolumeCents) * 100).toFixed(2))
-      : 100.0;
-
-  const graphSolutionHash = createHash('sha256')
-    .update(`PARALLEL_NET_GRAPH:${partitionCount}:${grossVolumeCents}:${netSettlementVolumeCents}:${netTransfers.length}`)
-    .digest('hex');
+  const netResult = executeParameterizedMultilateralNetting(obligations, {
+    currency: defaultCurrency,
+    precision: 2,
+    emptyHashFn: () => createHash('sha256').update('EMPTY_SUPER_NETTING').digest('hex'),
+    solutionHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`PARALLEL_NET_GRAPH:${partitionCount}:${ctx.grossVolumeCents}:${ctx.netSettlementVolumeCents}:${ctx.netTransfersCount}`)
+        .digest('hex'),
+  });
 
   return {
-    status: 'NET_EXECUTED',
+    status: netResult.status as NettingStatus,
     parallelPartitionCount: partitionCount,
-    grossFlowCount: obligations.length,
-    grossVolumeCents,
-    netSettlementVolumeCents,
-    compressionRatioPct,
-    netPositions,
-    netTransfers,
-    graphSolutionHash,
+    grossFlowCount: netResult.grossFlowCount,
+    grossVolumeCents: netResult.grossVolumeCents,
+    netSettlementVolumeCents: netResult.netSettlementVolumeCents,
+    compressionRatioPct: netResult.compressionRatioPct,
+    netPositions: netResult.netPositions,
+    netTransfers: netResult.netTransfers as Array<{
+      from: string;
+      to: string;
+      currency: SuperRtgsCurrency;
+      amountCents: number;
+    }>,
+    graphSolutionHash: netResult.graphSolutionHash ?? '',
   };
 }

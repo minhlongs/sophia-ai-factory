@@ -6,6 +6,11 @@
 
 import { createHash } from 'node:crypto';
 import {
+  calculateParameterizedCollateralValue,
+  calculateBaselSolvencyRatios,
+} from './basel-solvency-domain-engine';
+
+import {
   BASEL_XXXIX_CONSTRAINTS,
   type BaselXxxixSolvencyStatus,
   type QuinquagintamilliaquadrillionCollateralAssetType,
@@ -40,6 +45,15 @@ export interface QuinquagintamilliaquadrillionCollateralValuationResult {
   netValuationCents: number;
 }
 
+const QUINQUAGINTAMILLIAQUADRILLION_HAIRCUTS: Record<string, number> = {
+  SOVEREIGN_BONDS: 1.000,
+  PHYSICAL_GOLD: 1.010,
+  SSDR_V29_BASKET: 1.015,
+  TIER_1_EQUITIES: 1.050,
+  QUINQUAGINTAMILLIAQUADRILLION_CREDITS: 1.025,
+  QUINQUAGINTAMILLIAQUADRILLION_SUB_PLANCK_FOAM: 1.035,
+};
+
 /**
  * Calculates net collateral value applying Basel XXXIX asset haircut tables.
  */
@@ -47,36 +61,18 @@ export function calculateQuinquagintamilliaquadrillionCollateralValue(
   nominalValueCents: number,
   assetType: QuinquagintamilliaquadrillionCollateralAssetType
 ): QuinquagintamilliaquadrillionCollateralValuationResult {
-  let haircutFactor = 1.035;
-
-  switch (assetType) {
-    case 'SOVEREIGN_BONDS':
-      haircutFactor = 1.000;
-      break;
-    case 'PHYSICAL_GOLD':
-      haircutFactor = 1.010;
-      break;
-    case 'SSDR_V29_BASKET':
-      haircutFactor = 1.015;
-      break;
-    case 'TIER_1_EQUITIES':
-      haircutFactor = 1.050;
-      break;
-    case 'QUINQUAGINTAMILLIAQUADRILLION_CREDITS':
-      haircutFactor = 1.025;
-      break;
-    case 'QUINQUAGINTAMILLIAQUADRILLION_SUB_PLANCK_FOAM':
-      haircutFactor = 1.035;
-      break;
-  }
-
-  const netValuationCents = Math.floor(nominalValueCents / haircutFactor);
+  const result = calculateParameterizedCollateralValue(
+    nominalValueCents,
+    assetType,
+    QUINQUAGINTAMILLIAQUADRILLION_HAIRCUTS,
+    1.035
+  );
 
   return {
     assetType,
-    nominalValueCents,
-    haircutFactor,
-    netValuationCents,
+    nominalValueCents: result.nominalValueCents,
+    haircutFactor: result.haircutFactor,
+    netValuationCents: result.netValuationCents,
   };
 }
 
@@ -88,20 +84,12 @@ export function evaluateBaselXxxixSolvency(
 ): BaselXxxixSolvencyOutput {
   const violations: string[] = [];
 
-  const cet1RatioBps =
-    input.totalRiskExposureCents > 0
-      ? Math.floor((input.commonEquityTier1Cents / input.totalRiskExposureCents) * 10000)
-      : 10000;
-
-  const liquidityCoverageRatioBps =
-    input.netCashOutflows30DaysCents > 0
-      ? Math.floor((input.highQualityLiquidAssetsCents / input.netCashOutflows30DaysCents) * 10000)
-      : 20000000;
-
-  const netStableFundingRatioBps =
-    input.requiredStableFundingCents > 0
-      ? Math.floor((input.availableStableFundingCents / input.requiredStableFundingCents) * 10000)
-      : 3000000;
+  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
+    calculateBaselSolvencyRatios(input, {
+      defaultCet1RatioBps: 10000,
+      defaultLcrBps: 20000000,
+      defaultNsfrBps: 3000000,
+    });
 
   if (cet1RatioBps < BASEL_XXXIX_CONSTRAINTS.MIN_CET1_RATIO_BPS) {
     violations.push(

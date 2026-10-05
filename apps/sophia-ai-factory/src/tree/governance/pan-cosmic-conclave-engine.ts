@@ -5,6 +5,10 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  arbitrateParameterizedConclaveDispute,
+  verifyParameterizedConstitutionalInvariants,
+} from './sovereign-conclave-domain-engine';
 import type {
   PanCosmicConclaveVerdict,
   PanCosmicConstitutionalInvariant,
@@ -47,91 +51,29 @@ export interface PanCosmicInvariantCheckOutput {
  * Requires 98.0% supermajority consensus; penalizes dissenting rogue jurors with 60% stake slashing.
  */
 export function arbitratePanCosmicDispute(input: PanCosmicDisputeInput): PanCosmicDisputeRuling {
-  const thresholdPct = input.supermajorityThresholdPct ?? 98.0;
-  const totalJurors = input.votes.length;
-
-  if (totalJurors === 0) {
-    const emptyHash = createHash('sha256').update('NO_VOTES').digest('hex');
-    return {
-      disputeCaseRef: input.disputeCaseRef,
-      verdict: 'PENDING_EVIDENCE',
-      totalJurors: 0,
-      claimantVotes: 0,
-      respondentVotes: 0,
-      effectiveSupermajorityPct: 0,
-      jurorsSlashedCount: 0,
-      totalSlashedStakeCents: 0,
-      executedRemedyCents: 0,
-      rulingHash: emptyHash,
-    };
-  }
-
-  let claimantVotes = 0;
-  let respondentVotes = 0;
-
-  for (const v of input.votes) {
-    if (v.voteForClaimant) {
-      claimantVotes++;
-    } else {
-      respondentVotes++;
-    }
-  }
-
-  const claimantPct = (claimantVotes / totalJurors) * 100;
-  const respondentPct = (respondentVotes / totalJurors) * 100;
-
-  let verdict: PanCosmicConclaveVerdict = 'DELIBERATING';
-  let jurorsSlashedCount = 0;
-  let totalSlashedStakeCents = 0;
-  let executedRemedyCents = 0;
-  let effectiveSupermajorityPct = 0;
-
-  if (claimantPct >= thresholdPct) {
-    verdict = 'CLAIMANT_PREVAILS';
-    effectiveSupermajorityPct = Number(claimantPct.toFixed(2));
-    executedRemedyCents = input.disputeValueCents;
-
-    // Slash dissenting minority jurors (60% penalty)
-    for (const v of input.votes) {
-      if (!v.voteForClaimant) {
-        jurorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.60);
-      }
-    }
-  } else if (respondentPct >= thresholdPct) {
-    verdict = 'RESPONDENT_PREVAILS';
-    effectiveSupermajorityPct = Number(respondentPct.toFixed(2));
-    executedRemedyCents = 0;
-
-    // Slash dissenting minority jurors (60% penalty)
-    for (const v of input.votes) {
-      if (v.voteForClaimant) {
-        jurorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.60);
-      }
-    }
-  } else {
-    verdict = 'DELIBERATING';
-    effectiveSupermajorityPct = Math.max(claimantPct, respondentPct);
-  }
-
-  const rulingHash = createHash('sha256')
-    .update(
-      `PAN_COSMIC_RULING:${input.disputeCaseRef}:${verdict}:${executedRemedyCents}:${totalSlashedStakeCents}`
-    )
-    .digest('hex');
+  const result = arbitrateParameterizedConclaveDispute(input, {
+    defaultSupermajorityThresholdPct: 98.0,
+    slashingPenaltyPct: 60.0,
+    slashingMultiplier: 0.60,
+    emptyVerdict: 'PENDING_EVIDENCE',
+    emptyRulingHashFn: () => createHash('sha256').update('NO_VOTES').digest('hex'),
+    rulingHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`PAN_COSMIC_RULING:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.executedRemedyCents}:${ctx.totalSlashedStakeCents}`)
+        .digest('hex'),
+  });
 
   return {
-    disputeCaseRef: input.disputeCaseRef,
-    verdict,
-    totalJurors,
-    claimantVotes,
-    respondentVotes,
-    effectiveSupermajorityPct,
-    jurorsSlashedCount,
-    totalSlashedStakeCents,
-    executedRemedyCents,
-    rulingHash,
+    disputeCaseRef: result.disputeCaseRef,
+    verdict: result.verdict as PanCosmicConclaveVerdict,
+    totalJurors: result.totalJurors,
+    claimantVotes: result.claimantVotes,
+    respondentVotes: result.respondentVotes,
+    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
+    jurorsSlashedCount: result.jurorsSlashedCount,
+    totalSlashedStakeCents: result.totalSlashedStakeCents,
+    executedRemedyCents: result.executedRemedyCents,
+    rulingHash: result.rulingHash,
   };
 }
 
@@ -142,37 +84,18 @@ export function verifyPanCosmicConstitutionalInvariants(
   invariants: PanCosmicConstitutionalInvariant[],
   proposedTargetArticleCode: string
 ): PanCosmicInvariantCheckOutput {
-  const match = invariants.find((inv) => inv.articleCode === proposedTargetArticleCode);
-
-  if (!match) {
-    const hash = createHash('sha256').update(`INVARIANT_NOT_FOUND:${proposedTargetArticleCode}`).digest('hex');
-    return {
-      allowed: true,
-      articleCode: proposedTargetArticleCode,
-      isStrictlyImmutable: false,
-      reason: 'Article not found in constitutional invariants charter; standard modification procedure applies',
-      verificationHash: hash,
-    };
-  }
-
-  const hash = createHash('sha256')
-    .update(`PAN_COSMIC_INVARIANT:${match.articleCode}:${match.isStrictlyImmutable}:${match.enforcementCircuitHash}`)
-    .digest('hex');
-
-  if (match.isStrictlyImmutable) {
-    return {
-      allowed: false,
-      articleCode: match.articleCode,
-      isStrictlyImmutable: true,
-      reason: `Violation of Pan-Cosmic Constitutional Invariant ${match.articleCode} ("${match.articleTitle}"): Strictly Immutable`,
-      verificationHash: hash,
-    };
-  }
+  const result = verifyParameterizedConstitutionalInvariants(
+    invariants,
+    proposedTargetArticleCode,
+    undefined,
+    { hashPrefix: 'PAN_COSMIC_INVARIANT' }
+  );
 
   return {
-    allowed: true,
-    articleCode: match.articleCode,
-    isStrictlyImmutable: false,
-    verificationHash: hash,
+    allowed: result.allowed,
+    articleCode: result.articleCode,
+    isStrictlyImmutable: result.isStrictlyImmutable,
+    reason: result.reason,
+    verificationHash: result.verificationHash ?? '',
   };
 }

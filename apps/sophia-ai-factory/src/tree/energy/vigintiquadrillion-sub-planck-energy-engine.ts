@@ -6,6 +6,11 @@
 
 import { createHash } from 'node:crypto';
 import {
+  validateParameterizedPower,
+  evaluateParameterizedMultiNinesSla,
+} from './net-zero-sla-domain-engine';
+
+import {
   SIXTY_NINES_SLA_CONSTANTS,
   type VigintiquadrillionEmpirePowerSource,
 } from '@/seed/types/vigintiquadrillion-sub-planck-mesh-nexus';
@@ -50,49 +55,30 @@ export interface SixtyNinesSlaEvaluationOutput {
 export function validateVigintiquadrillionSubPlanckPower(
   input: VigintiquadrillionSubPlanckPowerInput
 ): VigintiquadrillionSubPlanckPowerValidationOutput {
-  const violations: string[] = [];
-
-  const validSources: VigintiquadrillionEmpirePowerSource[] = [
-    'VIGINTIQUADRILLION_ZERO_POINT_HARVESTER',
+  const result = validateParameterizedPower(
+    input,
+    {
+      minCop: SIXTY_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP,
+      powerSourceWhitelist: ['VIGINTIQUADRILLION_ZERO_POINT_HARVESTER',
     'VIGINTIQUADRILLION_CONTINUUM_TAP',
-    'SUB_PLANCK_ZERO_WELL',
-  ];
-
-  if (!validSources.includes(input.powerSourceType)) {
-    violations.push(`Invalid vigintiquadrillion power source: ${input.powerSourceType}`);
-  }
-
-  if (input.carbonIntensityGPerKwh > 0.0) {
-    violations.push(
-      `Carbon intensity ${input.carbonIntensityGPerKwh} g CO2/kWh violates absolute net-zero (0.0 required)`
-    );
-  }
-
-  if (input.boseEinsteinCop < SIXTY_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP) {
-    violations.push(
-      `Cooling COP ${input.boseEinsteinCop} is below minimum requirement ${SIXTY_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP}`
-    );
-  }
-
-  if (input.allocatedMegawatts <= 0) {
-    violations.push('Allocated megawatts must be strictly positive');
-  }
-
-  if (!input.isNetZeroCertified) {
-    violations.push('Viginti-Quadrillion power allocation must be certified net-zero');
-  }
-
-  const isCompliant = violations.length === 0;
-  const verificationHash = createHash('sha256')
-    .update(
-      `VIGINTIQUADRILLION_SUB_PLANCK_POWER_AUDIT:${isCompliant}:${input.powerSourceType}:${input.allocatedMegawatts}:${input.carbonIntensityGPerKwh}:${input.boseEinsteinCop}:${input.isNetZeroCertified}`
-    )
-    .digest('hex');
+    'SUB_PLANCK_ZERO_WELL',],
+      invalidPowerSourceMessageFn: (src) => `Invalid vigintiquadrillion power source: ${src}`,
+      requireNetZeroCertification: true,
+      netZeroCertificationMessage: 'Viginti-Quadrillion power allocation must be certified net-zero',
+      positivePowerMessage: 'Allocated megawatts must be strictly positive',
+    },
+    {
+      powerHashFn: (ctx) =>
+        createHash('sha256')
+          .update(`VIGINTIQUADRILLION_SUB_PLANCK_POWER_AUDIT:${ctx.isCompliant}:${ctx.powerSourceType}:${ctx.allocatedMegawatts}:${ctx.carbonIntensity}:${ctx.cop}:${ctx.isNetZeroCertified}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    isCompliant,
-    violations,
-    verificationHash,
+    isCompliant: result.isCompliant,
+    violations: result.violations,
+    verificationHash: result.verificationHash,
   };
 }
 
@@ -102,56 +88,35 @@ export function validateVigintiquadrillionSubPlanckPower(
 export function evaluateSixtyNinesSla(
   input: SixtyNinesSlaInput
 ): SixtyNinesSlaEvaluationOutput {
-  const totalWindowNanoseconds =
-    input.totalWindowNanoseconds ?? SIXTY_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS;
-  const maxAllowedDowntimeNanoseconds =
-    SIXTY_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
-
-  const violations: string[] = [];
-
-  if (input.actualDowntimeNanoseconds > maxAllowedDowntimeNanoseconds) {
-    violations.push(
-      `Downtime ${input.actualDowntimeNanoseconds} ns exceeds allowable Sixty-Nines budget of ${maxAllowedDowntimeNanoseconds} ns`
-    );
-  }
-
-  if (!input.vigintiquadrillionFoamSingularityActive) {
-    violations.push(
-      'Viginti-Quadrillion sub-planck foam singularity mesh link is degraded or inactive'
-    );
-  }
-
-  if (input.bftQuorumConsensusPct < 99.9999999999999) {
-    violations.push(
-      `BFT quorum consensus ${input.bftQuorumConsensusPct}% is below required 99.9999999999999% threshold`
-    );
-  }
-
-  const slaVerdict: SixtyNinesSlaVerdict =
-    violations.length === 0 ? 'SIXTY_NINES_CERTIFIED' : 'BREACH_LIQUIDITY_PENALIZED';
-
-  const effectiveAvailabilityPct =
-    totalWindowNanoseconds > 0
-      ? Number(
-          (
-            ((totalWindowNanoseconds - input.actualDowntimeNanoseconds) / totalWindowNanoseconds) *
-            100
-          ).toFixed(18)
-        )
-      : 100.0;
-
-  const auditSignature = createHash('sha256')
-    .update(
-      `SIXTY_NINES_SLA:${slaVerdict}:${input.actualDowntimeNanoseconds}:${effectiveAvailabilityPct}:${input.bftQuorumConsensusPct}`
-    )
-    .digest('hex');
+  const maxAllowed = SIXTY_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
+  const result = evaluateParameterizedMultiNinesSla(
+    input,
+    {
+      maxAllowedDowntime: maxAllowed,
+      totalWindow: input.totalWindowNanoseconds ?? SIXTY_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS,
+      certifiedVerdict: 'SIXTY_NINES_CERTIFIED',
+      breachVerdict: 'BREACH_LIQUIDITY_PENALIZED',
+      precision: 18,
+      downtimeViolationFormatter: (actual, max) => `Downtime ${actual} ns exceeds allowable Sixty-Nines budget of ${max} ns`,
+      entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.vigintiquadrillionFoamSingularityActive),
+      entanglementViolationMessage: 'Viginti-Quadrillion sub-planck foam singularity mesh link is degraded or inactive',
+      minBftQuorumPct: 99.9999999999999,
+      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.9999999999999% threshold`,
+    },
+    {
+      auditSignatureFn: (ctx) =>
+        createHash('sha256')
+          .update(`SIXTY_NINES_SLA:${ctx.slaVerdict}:${ctx.actualDowntime}:${ctx.effectiveAvailabilityPct}:${ctx.bftQuorumPct}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    slaVerdict,
-    effectiveAvailabilityPct,
-    maxAllowedDowntimeNanoseconds,
+    slaVerdict: result.slaVerdict as unknown as SixtyNinesSlaVerdict,
+    effectiveAvailabilityPct: result.effectiveAvailabilityPct,
+    maxAllowedDowntimeNanoseconds: maxAllowed,
     actualDowntimeNanoseconds: input.actualDowntimeNanoseconds,
-    violations,
-    auditSignature,
+    violations: result.violations,
+    auditSignature: result.auditSignature,
   };
 }

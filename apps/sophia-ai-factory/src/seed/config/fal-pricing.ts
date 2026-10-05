@@ -21,6 +21,9 @@
  */
 
 import { z } from 'zod';
+import { createLogger } from '@/seed/utils/logger-utility';
+
+const logger = createLogger('seed/config/fal-pricing');
 
 // ── Static fallback (cents) ──────────────────────────────────────────────────
 
@@ -49,12 +52,10 @@ function resolvePricingTable(): Readonly<Record<string, number>> {
         return cachedPricing;
       }
       // Malformed env — fall back to static, warn once.
-      // eslint-disable-next-line no-console
-      console.warn('[fal-pricing] malformed FAL_PRICING_JSON — using static pricing table');
+      logger.warn('[fal-pricing] malformed FAL_PRICING_JSON — using static pricing table');
     } catch {
       // JSON.parse failure — fall back to static, warn once.
-      // eslint-disable-next-line no-console
-      console.warn('[fal-pricing] failed to parse FAL_PRICING_JSON — using static pricing table');
+      logger.warn('[fal-pricing] failed to parse FAL_PRICING_JSON — using static pricing table');
     }
   }
 

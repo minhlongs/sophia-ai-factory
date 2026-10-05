@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   EIGHTEEN_NINES_SLA_CONSTANTS,
   type ZeroPointSuperLattice,
@@ -65,43 +67,20 @@ export function planZeroPointBatchDispatch(
   workloads: number = 400_000_000,
   measuredDriftFs: number = 0.4
 ): ZeroPointDispatchPlan {
-  const stableLattices = lattices.filter((l) => l.superLatticeStatus === 'ZERO_POINT_FLUX_STABLE');
+  const plan = planParameterizedBatchDispatch(lattices, workloads, measuredDriftFs, {
+    maxClockDriftFs: EIGHTEEN_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Zero-Point relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'ZERO_POINT_FLUX_STABLE',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).superLatticeStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).latticeRef as string,
+    fitnessFn: (m) => calculateZeroPointSuperLatticeFitness(m as never),
+    bandwidthPerWorkloadPb: 0.0025,
+    zeroStableMeshesErrorMessage: 'Zero stable zero-point quantum vacuum super-lattices available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`ZERO_POINT_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (stableLattices.length === 0) {
-    throw new Error('Zero stable zero-point quantum vacuum super-lattices available for dispatch');
-  }
-
-  if (measuredDriftFs > EIGHTEEN_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Zero-Point relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${EIGHTEEN_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestLattice = stableLattices[0];
-  let highestScore = calculateZeroPointSuperLatticeFitness(bestLattice);
-
-  for (let i = 1; i < stableLattices.length; i++) {
-    const score = calculateZeroPointSuperLatticeFitness(stableLattices[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestLattice = stableLattices[i];
-    }
-  }
-
-  // 1 workload = ~0.0025 Petabytes -> 400,000,000 * 0.0025 = 1,000,000 Petabytes
-  const totalBandwidthPetabytes = Number(((workloads * 2.5) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `ZERO_POINT_DISPATCH:${bestLattice.latticeRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetLatticeRef: bestLattice.latticeRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    relativisticDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as ZeroPointDispatchPlan;
 }

@@ -66,12 +66,10 @@ while IFS= read -r sql_file; do
       orphans_found=$((orphans_found + 1))
     fi
   done <<< "$tables_in_file"
-# Scan src/**/*.sql but exclude historical seed/db/migrations/ (already applied)
-# and src/db/migrations/ (Supabase-target files, skipped via PG_MARKERS anyway).
+# Scan src/**/*.sql but exclude historical seed/db/migrations/ (already applied).
 # The canonical check is: every CREATE TABLE in src/ must also exist in migrations/.
 done < <(find src -name "*.sql" -type f \
   -not -path "src/seed/db/migrations/*" \
-  -not -path "src/db/migrations/*" \
   2>/dev/null | sort)
 
 echo

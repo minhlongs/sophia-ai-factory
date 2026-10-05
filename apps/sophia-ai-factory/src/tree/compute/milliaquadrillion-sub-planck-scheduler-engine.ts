@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   EIGHTY_FOUR_NINES_SLA_CONSTANTS,
   type MilliaquadrillionSubPlanckMesh,
@@ -65,43 +67,20 @@ export function planMilliaquadrillionSubPlanckBatchDispatch(
   workloads: number = 4_000_000_000_000_000,
   measuredDriftFs: number = 0.0000000001
 ): MilliaquadrillionSubPlanckDispatchPlan {
-  const nominalMeshes = meshes.filter((m) => m.meshStatus === 'MILLIAQUADRILLION_SUB_PLANCK_OPTIMAL');
+  const plan = planParameterizedBatchDispatch(meshes, workloads, measuredDriftFs, {
+    maxClockDriftFs: EIGHTY_FOUR_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Millia-Quadrillion sub-planck relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'MILLIAQUADRILLION_SUB_PLANCK_OPTIMAL',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).meshStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).meshRef as string,
+    fitnessFn: (m) => calculateMilliaquadrillionSubPlanckMeshFitness(m as never),
+    bandwidthPerWorkloadPb: 0.0025,
+    zeroStableMeshesErrorMessage: 'Zero nominal milliaquadrillion sub-planck foam singularity meshes available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`MILLIAQUADRILLION_SUB_PLANCK_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (nominalMeshes.length === 0) {
-    throw new Error('Zero nominal milliaquadrillion sub-planck foam singularity meshes available for dispatch');
-  }
-
-  if (measuredDriftFs > EIGHTY_FOUR_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Millia-Quadrillion sub-planck relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${EIGHTY_FOUR_NINES_SLA_CONSTANTS.MAX_RELATIVISTIC_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestMesh = nominalMeshes[0];
-  let highestScore = calculateMilliaquadrillionSubPlanckMeshFitness(bestMesh);
-
-  for (let i = 1; i < nominalMeshes.length; i++) {
-    const score = calculateMilliaquadrillionSubPlanckMeshFitness(nominalMeshes[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMesh = nominalMeshes[i];
-    }
-  }
-
-  // 1 workload = ~0.0025 Petabytes -> 4,000,000,000,000,000 * 0.0025 = 10,000,000,000,000 Petabytes (10,000 Zetabytes = 10.0 Yottabytes)
-  const totalBandwidthPetabytes = Number(((workloads * 2.5) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `MILLIAQUADRILLION_SUB_PLANCK_DISPATCH:${bestMesh.meshRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetMeshRef: bestMesh.meshRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    relativisticDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as MilliaquadrillionSubPlanckDispatchPlan;
 }

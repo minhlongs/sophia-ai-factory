@@ -5,6 +5,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
+
 import {
   FIFTEEN_NINES_SLA_CONSTANTS,
   type FemtosecondVacuumComputeMatrix,
@@ -65,43 +67,20 @@ export function planFemtosecondBatchDispatch(
   workloads: number = 40_000_000,
   measuredDriftFs: number = 8.0
 ): FemtosecondDispatchPlan {
-  const stableMatrices = matrices.filter((m) => m.vacuumMatrixStatus === 'ANYONIC_FLUX_STABLE');
+  const plan = planParameterizedBatchDispatch(matrices, workloads, measuredDriftFs, {
+    maxClockDriftFs: FIFTEEN_NINES_SLA_CONSTANTS.MAX_PLANCK_CLOCK_DRIFT_FS,
+    clockDriftErrorMessageFn: (drift, max) => `Planck relativistic clock drift ${drift} fs exceeds allowable threshold ${max} fs`,
+    stableStatus: 'ANYONIC_FLUX_STABLE',
+    statusGetter: (m) => (m as unknown as Record<string, unknown>).vacuumMatrixStatus as string,
+    refGetter: (m) => (m as unknown as Record<string, unknown>).matrixRef as string,
+    fitnessFn: (m) => calculateFemtosecondMatrixFitness(m as never),
+    bandwidthPerWorkloadPb: 0.0025,
+    zeroStableMeshesErrorMessage: 'Zero stable femtosecond vacuum matrices available for dispatch',
+    dispatchHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`FEMTOSECOND_DISPATCH:${ctx.targetMeshRef}:${ctx.assignedWorkloads}:${ctx.totalBandwidthPetabytes}:${ctx.measuredDriftFs}`)
+        .digest('hex'),
+  });
 
-  if (stableMatrices.length === 0) {
-    throw new Error('Zero stable femtosecond vacuum matrices available for dispatch');
-  }
-
-  if (measuredDriftFs > FIFTEEN_NINES_SLA_CONSTANTS.MAX_PLANCK_CLOCK_DRIFT_FS) {
-    throw new Error(
-      `Planck relativistic clock drift ${measuredDriftFs} fs exceeds allowable threshold ${FIFTEEN_NINES_SLA_CONSTANTS.MAX_PLANCK_CLOCK_DRIFT_FS} fs`
-    );
-  }
-
-  let bestMatrix = stableMatrices[0];
-  let highestScore = calculateFemtosecondMatrixFitness(bestMatrix);
-
-  for (let i = 1; i < stableMatrices.length; i++) {
-    const score = calculateFemtosecondMatrixFitness(stableMatrices[i]);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMatrix = stableMatrices[i];
-    }
-  }
-
-  // 1 workload = ~0.0025 Petabytes -> 40,000,000 * 0.0025 = 100,000 Petabytes
-  const totalBandwidthPetabytes = Number(((workloads * 2.5) / 1000).toFixed(2));
-
-  const dispatchHash = createHash('sha256')
-    .update(
-      `FEMTOSECOND_DISPATCH:${bestMatrix.matrixRef}:${workloads}:${totalBandwidthPetabytes}:${measuredDriftFs}`
-    )
-    .digest('hex');
-
-  return {
-    targetMatrixRef: bestMatrix.matrixRef,
-    assignedWorkloads: workloads,
-    totalBandwidthPetabytes,
-    planckDriftFs: measuredDriftFs,
-    dispatchHash,
-  };
+  return plan as unknown as FemtosecondDispatchPlan;
 }

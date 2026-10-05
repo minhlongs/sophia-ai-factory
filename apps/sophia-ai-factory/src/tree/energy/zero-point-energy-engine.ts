@@ -5,6 +5,11 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  validateParameterizedPower,
+  evaluateParameterizedMultiNinesSla,
+} from './net-zero-sla-domain-engine';
+
 import { EIGHTEEN_NINES_SLA_CONSTANTS } from '@/seed/types/zero-point-vacuum-nexus';
 
 export type EighteenNinesSlaVerdict =
@@ -46,35 +51,24 @@ export interface EighteenNinesSlaEvaluationOutput {
 export function validateZeroPointPower(
   input: ZeroPointPowerInput
 ): ZeroPointPowerValidationOutput {
-  const violations: string[] = [];
-
-  if (input.carbonIntensityGPerKwh > 0.0) {
-    violations.push(
-      `Carbon intensity ${input.carbonIntensityGPerKwh} g CO2/kWh violates absolute net-zero (0.0 required)`
-    );
-  }
-
-  if (input.boseEinsteinCop < EIGHTEEN_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP) {
-    violations.push(
-      `Cooling COP ${input.boseEinsteinCop} is below minimum requirement ${EIGHTEEN_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP}`
-    );
-  }
-
-  if (input.allocatedMegawatts <= 0) {
-    violations.push('Allocated megawatts must be strictly positive');
-  }
-
-  const isCompliant = violations.length === 0;
-  const verificationHash = createHash('sha256')
-    .update(
-      `ZERO_POINT_POWER_AUDIT:${isCompliant}:${input.allocatedMegawatts}:${input.carbonIntensityGPerKwh}:${input.boseEinsteinCop}`
-    )
-    .digest('hex');
+  const result = validateParameterizedPower(
+    input,
+    {
+      minCop: EIGHTEEN_NINES_SLA_CONSTANTS.MIN_BOSE_EINSTEIN_COP,
+      positivePowerMessage: 'Allocated megawatts must be strictly positive',
+    },
+    {
+      powerHashFn: (ctx) =>
+        createHash('sha256')
+          .update(`ZERO_POINT_POWER_AUDIT:${ctx.isCompliant}:${ctx.allocatedMegawatts}:${ctx.carbonIntensity}:${ctx.cop}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    isCompliant,
-    violations,
-    verificationHash,
+    isCompliant: result.isCompliant,
+    violations: result.violations,
+    verificationHash: result.verificationHash,
   };
 }
 
@@ -84,50 +78,35 @@ export function validateZeroPointPower(
 export function evaluateEighteenNinesSla(
   input: EighteenNinesSlaInput
 ): EighteenNinesSlaEvaluationOutput {
-  const totalWindowNanoseconds =
-    input.totalWindowNanoseconds ?? EIGHTEEN_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS;
-  const maxAllowedDowntimeNanoseconds =
-    EIGHTEEN_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
-
-  const violations: string[] = [];
-
-  if (input.actualDowntimeNanoseconds > maxAllowedDowntimeNanoseconds) {
-    violations.push(
-      `Downtime ${input.actualDowntimeNanoseconds} ns exceeds allowable Eighteen-Nines budget of ${maxAllowedDowntimeNanoseconds} ns`
-    );
-  }
-
-  if (!input.zeroPointEntanglementActive) {
-    violations.push('Zero-point entanglement bus is inactive or disconnected');
-  }
-
-  if (input.bftQuorumConsensusPct < 99.9) {
-    violations.push(
-      `BFT quorum consensus ${input.bftQuorumConsensusPct}% is below required 99.9% threshold`
-    );
-  }
-
-  const uptimeNanoseconds = Math.max(0, totalWindowNanoseconds - input.actualDowntimeNanoseconds);
-  const effectiveAvailabilityPct =
-    totalWindowNanoseconds > 0 ? (uptimeNanoseconds / totalWindowNanoseconds) * 100 : 0;
-
-  const isCompliant = violations.length === 0;
-  const slaVerdict: EighteenNinesSlaVerdict = isCompliant
-    ? 'EIGHTEEN_NINES_CERTIFIED'
-    : 'BREACH_LIQUIDITY_PENALIZED';
-
-  const auditSignature = createHash('sha256')
-    .update(
-      `EIGHTEEN_NINES_SLA_AUDIT:${slaVerdict}:${effectiveAvailabilityPct}:${input.actualDowntimeNanoseconds}:${input.bftQuorumConsensusPct}`
-    )
-    .digest('hex');
+  const maxAllowed = EIGHTEEN_NINES_SLA_CONSTANTS.MAX_ALLOWED_DOWNTIME_NANOSECONDS;
+  const result = evaluateParameterizedMultiNinesSla(
+    input,
+    {
+      maxAllowedDowntime: maxAllowed,
+      totalWindow: input.totalWindowNanoseconds ?? EIGHTEEN_NINES_SLA_CONSTANTS.TOTAL_MONTHLY_NANOSECONDS,
+      certifiedVerdict: 'EIGHTEEN_NINES_CERTIFIED',
+      breachVerdict: 'BREACH_LIQUIDITY_PENALIZED',
+      precision: 12,
+      downtimeViolationFormatter: (actual, max) => `Downtime ${actual} ns exceeds allowable Eighteen-Nines budget of ${max} ns`,
+      entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.zeroPointEntanglementActive),
+      entanglementViolationMessage: 'Zero-point entanglement bus is inactive or disconnected',
+      minBftQuorumPct: 99.9,
+      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.9% threshold`,
+    },
+    {
+      auditSignatureFn: (ctx) =>
+        createHash('sha256')
+          .update(`EIGHTEEN_NINES_SLA_AUDIT:${ctx.slaVerdict}:${ctx.effectiveAvailabilityPct}:${ctx.actualDowntime}:${ctx.bftQuorumPct}`)
+          .digest('hex'),
+    }
+  );
 
   return {
-    slaVerdict,
-    effectiveAvailabilityPct,
-    maxAllowedDowntimeNanoseconds,
+    slaVerdict: result.slaVerdict as unknown as EighteenNinesSlaVerdict,
+    effectiveAvailabilityPct: result.effectiveAvailabilityPct,
+    maxAllowedDowntimeNanoseconds: maxAllowed,
     actualDowntimeNanoseconds: input.actualDowntimeNanoseconds,
-    violations,
-    auditSignature,
+    violations: result.violations,
+    auditSignature: result.auditSignature,
   };
 }

@@ -5,6 +5,11 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  arbitrateParameterizedConclaveDispute,
+  verifyParameterizedConstitutionalInvariants,
+} from './sovereign-conclave-domain-engine';
+
 import type {
   InfiniteConclaveVerdict,
   InfiniteConstitutionalInvariant,
@@ -49,92 +54,35 @@ export interface InfiniteInvariantCheckOutput {
 export function arbitrateInfiniteConclaveDispute(
   input: InfiniteDisputeInput
 ): InfiniteDisputeRuling {
-  const thresholdPct = input.supermajorityThresholdPct ?? 99.5;
-  const totalJurors = input.votes.length;
-
-  if (totalJurors === 0) {
-    const emptyHash = createHash('sha256').update('NO_VOTES').digest('hex');
-    return {
-      disputeCaseRef: input.disputeCaseRef,
-      verdict: 'PENDING_EVIDENCE',
-      totalJurors: 0,
-      claimantVotes: 0,
-      respondentVotes: 0,
-      effectiveSupermajorityPct: 0,
-      jurorsSlashedCount: 0,
-      totalSlashedStakeCents: 0,
-      executedRemedyCents: 0,
-      rulingHash: emptyHash,
-    };
-  }
-
-  let claimantVotes = 0;
-  let respondentVotes = 0;
-
-  for (const v of input.votes) {
-    if (v.voteForClaimant) {
-      claimantVotes++;
-    } else {
-      respondentVotes++;
-    }
-  }
-
-  const claimantPct = (claimantVotes / totalJurors) * 100;
-  const respondentPct = (respondentVotes / totalJurors) * 100;
-
-  let verdict: InfiniteConclaveVerdict = 'DELIBERATING';
-  let jurorsSlashedCount = 0;
-  let totalSlashedStakeCents = 0;
-  let executedRemedyCents = 0;
-  let effectiveSupermajorityPct = 0;
-
-  if (claimantPct >= thresholdPct) {
-    verdict = 'CLAIMANT_PREVAILS';
-    effectiveSupermajorityPct = Number(claimantPct.toFixed(2));
-    executedRemedyCents = input.disputeValueCents;
-
-    // Slash dissenting minority jurors (80% penalty)
-    for (const v of input.votes) {
-      if (!v.voteForClaimant) {
-        jurorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.80);
-      }
-    }
-  } else if (respondentPct >= thresholdPct) {
-    verdict = 'RESPONDENT_PREVAILS';
-    effectiveSupermajorityPct = Number(respondentPct.toFixed(2));
-    executedRemedyCents = 0;
-
-    // Slash dissenting minority jurors (80% penalty)
-    for (const v of input.votes) {
-      if (v.voteForClaimant) {
-        jurorsSlashedCount++;
-        totalSlashedStakeCents += Math.floor(v.stakeCents * 0.80);
-      }
-    }
-  } else {
-    verdict = 'DELIBERATING';
-    effectiveSupermajorityPct = Math.max(claimantPct, respondentPct);
-  }
-
-  const rulingHash = createHash('sha256')
-    .update(
-      `INFINITE_CONCLAVE_RULING:${input.disputeCaseRef}:${verdict}:${executedRemedyCents}:${totalSlashedStakeCents}`
-    )
-    .digest('hex');
+  const result = arbitrateParameterizedConclaveDispute(input, {
+    defaultSupermajorityThresholdPct: 99.5,
+    slashingPenaltyPct: 80.0,
+    slashingMultiplier: 0.80,
+    emptyVerdict: 'PENDING_EVIDENCE',
+    emptyRulingHashFn: (input) => createHash('sha256').update('NO_VOTES').digest('hex'),
+    rulingHashFn: (ctx) =>
+      createHash('sha256')
+        .update(`INFINITE_CONCLAVE_RULING:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.executedRemedyCents}:${ctx.totalSlashedStakeCents}`)
+        .digest('hex'),
+  });
 
   return {
-    disputeCaseRef: input.disputeCaseRef,
-    verdict,
-    totalJurors,
-    claimantVotes,
-    respondentVotes,
-    effectiveSupermajorityPct,
-    jurorsSlashedCount,
-    totalSlashedStakeCents,
-    executedRemedyCents,
-    rulingHash,
-  };
+    disputeCaseRef: result.disputeCaseRef,
+    verdict: result.verdict as unknown as string,
+    totalJurors: result.totalJurors,
+    totalSenators: result.totalSenators,
+    totalDirectors: result.totalDirectors,
+    claimantVotes: result.claimantVotes,
+    respondentVotes: result.respondentVotes,
+    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
+    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
+    jurorsSlashedCount: result.jurorsSlashedCount,
+    senatorsSlashedCount: result.senatorsSlashedCount,
+    directorsSlashedCount: result.directorsSlashedCount,
+    totalSlashedStakeCents: result.totalSlashedStakeCents,
+    executedRemedyCents: result.executedRemedyCents,
+    rulingHash: result.rulingHash,
+  } as unknown as InfiniteDisputeRuling;
 }
 
 /**

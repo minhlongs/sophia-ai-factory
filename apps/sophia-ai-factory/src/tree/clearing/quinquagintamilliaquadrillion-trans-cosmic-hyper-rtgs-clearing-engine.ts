@@ -5,6 +5,10 @@
  */
 
 import { createHash } from 'node:crypto';
+import {
+  validateParameterizedRtgsPayment,
+  executeParameterizedMultilateralNetting,
+} from './hyper-rtgs-domain-engine';
 import type {
   QuinquagintamilliaquadrillionCurrency,
   QuinquagintamilliaquadrillionNettingObligation,
@@ -54,37 +58,27 @@ export interface QuinquagintamilliaquadrillionNettingExecutionResult {
 export function validateQuinquagintamilliaquadrillionHyperRtgsPayment(
   input: QuinquagintamilliaquadrillionRtgsValidationInput
 ): QuinquagintamilliaquadrillionRtgsValidationOutput {
-  if (input.grossAmountCents <= 0) {
-    return {
-      valid: false,
-      status: 'REJECTED_LIQUIDITY',
-      executionLatencyPicoseconds: 0.00000005,
-      receiptHash: '',
-      error: 'Gross amount must be strictly positive',
-    };
-  }
-
-  if (input.availableReserveCents < input.grossAmountCents) {
-    return {
-      valid: false,
-      status: 'REJECTED_LIQUIDITY',
-      executionLatencyPicoseconds: 0.00000005,
-      receiptHash: '',
-      error: `Insufficient reserve: available ${input.availableReserveCents} < required ${input.grossAmountCents}`,
-    };
-  }
-
-  const receiptHash = createHash('sha256')
-    .update(
-      `QUINQUAGINTAMILLIAQUADRILLION_HYPER_RTGS:${input.sourceParticipantId}:${input.targetParticipantId}:${input.assetCurrency}:${input.grossAmountCents}:${input.priorityTier ?? 'QUINQUAGINTAMILLIAQUADRILLION_SOVEREIGN_EXPEDITE'}`
-    )
-    .digest('hex');
+  const executionLatencyPicoseconds = 0.00000005;
+  const result = validateParameterizedRtgsPayment(input, {
+    latency: executionLatencyPicoseconds,
+    latencyKey: 'executionLatencyPicoseconds',
+    requireParticipants: false,
+    rejectStatus: 'REJECTED_LIQUIDITY',
+    reserveDeficitReasonFn: (params) => `Insufficient reserve: available ${params.availableReserveCents} < required ${params.grossAmountCents}`,
+    receiptHashFn: (params) =>
+      createHash('sha256')
+        .update(
+          `QUINQUAGINTAMILLIAQUADRILLION_HYPER_RTGS:${params.sourceParticipantId}:${params.targetParticipantId}:${params.assetCurrency}:${params.grossAmountCents}:${params.priorityTier ?? 'QUINQUAGINTAMILLIAQUADRILLION_SOVEREIGN_EXPEDITE'}`
+        )
+        .digest('hex'),
+  });
 
   return {
-    valid: true,
-    status: 'FINALIZED_IRREVOCABLE',
-    executionLatencyPicoseconds: 0.00000005,
-    receiptHash,
+    valid: result.valid,
+    status: result.status as QuinquagintamilliaquadrillionRtgsSettlementStatus,
+    executionLatencyPicoseconds,
+    receiptHash: result.valid ? result.receiptHash : '',
+    error: result.error,
   };
 }
 
@@ -97,67 +91,29 @@ export function executeQuinquagintamilliaquadrillionMultiverseNetting(
   hyperShardCount: number = GATE_49_SCALE_TARGETS.HYPER_SHARD_COUNT
 ): QuinquagintamilliaquadrillionNettingExecutionResult {
   const batchRef = `NET-BATCH-QUINQUAGINTA-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  const participantBalances = new Map<string, number>();
-  let grossVolumeCents = 0;
-
-  for (const ob of obligations) {
-    grossVolumeCents += ob.amountCents;
-    participantBalances.set(
-      ob.fromParticipantId,
-      (participantBalances.get(ob.fromParticipantId) ?? 0) - ob.amountCents
-    );
-    participantBalances.set(
-      ob.toParticipantId,
-      (participantBalances.get(ob.toParticipantId) ?? 0) + ob.amountCents
-    );
-  }
-
-  const netTransfers: QuinquagintamilliaquadrillionNetTransfer[] = [];
-  let netSettlementVolumeCents = 0;
-
-  for (const [participantId, balance] of participantBalances.entries()) {
-    if (balance > 0) {
-      netSettlementVolumeCents += balance;
-      netTransfers.push({
-        participantId,
-        netPositionCents: balance,
-        direction: 'RECEIVE',
-      });
-    } else if (balance < 0) {
-      netTransfers.push({
-        participantId,
-        netPositionCents: Math.abs(balance),
-        direction: 'PAY',
-      });
-    } else {
-      netTransfers.push({
-        participantId,
-        netPositionCents: 0,
-        direction: 'SETTLED_FLAT',
-      });
-    }
-  }
-
-  const compressionRatioPct =
-    grossVolumeCents > 0
-      ? Number((((grossVolumeCents - netSettlementVolumeCents) / grossVolumeCents) * 100).toFixed(25))
-      : 100.0;
-
-  const multiverseSolutionHash = createHash('sha256')
-    .update(
-      `QUINQUAGINTAMILLIAQUADRILLION_NETTING_35:${batchRef}:${grossVolumeCents}:${netSettlementVolumeCents}:${hyperShardCount}:${currency}`
-    )
-    .digest('hex');
+  const netResult = executeParameterizedMultilateralNetting(obligations, {
+    currency,
+    hyperShardCount,
+    precision: 25,
+    batchRef,
+    transferFormat: 'directional',
+    solutionHashFn: (ctx) =>
+      createHash('sha256')
+        .update(
+          `QUINQUAGINTAMILLIAQUADRILLION_NETTING_35:${ctx.batchRef}:${ctx.grossVolumeCents}:${ctx.netSettlementVolumeCents}:${hyperShardCount}:${currency}`
+        )
+        .digest('hex'),
+  });
 
   return {
-    batchRef,
-    hyperShardCount,
-    grossFlowCount: obligations.length,
-    grossVolumeCents,
-    netSettlementVolumeCents,
-    compressionRatioPct,
+    batchRef: netResult.batchRef ?? batchRef,
+    hyperShardCount: netResult.hyperShardCount ?? hyperShardCount,
+    grossFlowCount: netResult.grossFlowCount,
+    grossVolumeCents: netResult.grossVolumeCents,
+    netSettlementVolumeCents: netResult.netSettlementVolumeCents,
+    compressionRatioPct: netResult.compressionRatioPct,
     nettingStatus: 'NET_EXECUTED',
-    multiverseSolutionHash,
-    netTransfers: netTransfers.filter((t) => t.direction !== 'SETTLED_FLAT'),
+    multiverseSolutionHash: netResult.graphSolutionHash ?? '',
+    netTransfers: netResult.netTransfers as QuinquagintamilliaquadrillionNetTransfer[],
   };
 }

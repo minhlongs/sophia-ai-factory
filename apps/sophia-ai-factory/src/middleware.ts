@@ -19,7 +19,10 @@ import {
 import { resolveApacLocale } from '@/tree/localization/geo-router';
 import { SUPPORTED_LOCALES } from './middleware/middleware-shared-config';
 import { getD1 } from '@/seed/db/client';
+import { createLogger } from '@/seed/utils/logger-utility';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
+
+const logger = createLogger('middleware');
 
 /** L2: apply security headers to error responses that bypass the normal pipeline */
 function applySecurityHeaders(response: NextResponse): NextResponse {
@@ -196,8 +199,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     isError = true;
     // L2: return a safe error response with security headers instead of throwing
-    // TEMP-DIAG: surface the real cause so dev isn't a black box.
-    console.error('[middleware] proxyImpl threw:', err instanceof Error ? err.stack : String(err));
+    logger.error('proxyImpl threw', err instanceof Error ? err : new Error(String(err)));
     return applySecurityHeaders(
       NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );
