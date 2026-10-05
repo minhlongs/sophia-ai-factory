@@ -179,6 +179,145 @@ Return ONLY valid JSON matching this exact structure:
   }
 }
 
+interface HunterEnrichmentResult {
+  companyName: string;
+  country?: string;
+  rawPayload: Record<string, unknown>;
+}
+
+async function fetchHunterData(
+  cleanDomain: string,
+  apiKey: string,
+): Promise<HunterEnrichmentResult | null> {
+  try {
+    const res = await fetch(
+      `https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(cleanDomain)}&api_key=${apiKey}`
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { data?: { organization?: string; country?: string; state?: string } };
+    if (data.data?.organization) {
+      return {
+        companyName: data.data.organization,
+        country: data.data.country,
+        rawPayload: data,
+      };
+    }
+  } catch (err) {
+    logger.warn('[lead-enrichment] Hunter.io API fetch failed, proceeding to next tier', { error: String(err) });
+  }
+  return null;
+}
+
+async function updateDealEnrichmentData(
+  db: D1Database,
+  dealId: string,
+  enrichment: {
+    id: string;
+    companyName: string;
+    estimatedAnnualRevenue: string;
+    industry: string;
+    employeeCountRange: string;
+  },
+): Promise<void> {
+  try {
+    const deal = await getEnterpriseDealById(db, dealId);
+    if (!deal) return;
+
+    const recalculatedBant = calculateBantScore({
+      statedBudgetArr: deal.dealValueEstimateCents > 0 ? deal.dealValueEstimateCents / 100 : undefined,
+      statedMonthlyMcu: deal.requestedMcuMonthly > 0 ? deal.requestedMcuMonthly : undefined,
+      companyRevenueRange: enrichment.estimatedAnnualRevenue,
+      jobTitle: deal.leadTitle || undefined,
+      leadEmail: deal.leadEmail,
+      statedBottleneckOrPainPoint: deal.notes || undefined,
+    });
+
+    await updateEnterpriseDeal(db, dealId, {
+      companyName: deal.companyName === deal.companyDomain ? enrichment.companyName : deal.companyName,
+      pipelineTier: recalculatedBant.pipelineTier,
+      dealStage: deal.dealStage === 'enriching' ? 'qualified' : deal.dealStage,
+      metadata: {
+        ...deal.metadata,
+        enrichedAt: Date.now(),
+        enrichmentId: enrichment.id,
+        industry: enrichment.industry,
+        employeeCountRange: enrichment.employeeCountRange,
+        estimatedAnnualRevenue: enrichment.estimatedAnnualRevenue,
+      },
+    });
+  } catch (err) {
+    logger.warn('[lead-enrichment] Failed to update deal after enrichment', {
+      dealId,
+      error: String(err),
+    });
+  }
+}
+
+async function resolveEnrichmentPayload(
+  cleanDomain: string,
+  options: LeadEnrichmentOptions,
+): Promise<{
+  source: EnrichmentSource;
+  companyName: string;
+  industry: string;
+  employeeCountRange: string;
+  estimatedAnnualRevenue: string;
+  headquartersLocation: string;
+  country: string;
+  techStack: string[];
+  confidenceScore: number;
+  rawPayload: Record<string, unknown>;
+}> {
+  let source: EnrichmentSource = 'heuristic';
+  let companyName = extractBrandFromDomain(cleanDomain);
+  let industry = 'Technology & Software';
+  let employeeCountRange = '50-250';
+  let estimatedAnnualRevenue = '$10M-$50M';
+  let headquartersLocation = 'Singapore';
+  let country = 'SG';
+  let techStack = ['Next.js', 'Cloudflare', 'Tailwind CSS'];
+  let confidenceScore = 0.8;
+  let rawPayload: Record<string, unknown> = {};
+
+  if (options.hunterApiKey) {
+    const hunter = await fetchHunterData(cleanDomain, options.hunterApiKey);
+    if (hunter) {
+      companyName = hunter.companyName;
+      country = hunter.country || country;
+      source = 'hunter';
+      confidenceScore = 0.95;
+      rawPayload = hunter.rawPayload;
+    }
+  }
+
+  if (source !== 'hunter') {
+    const aiResult = await performAiEnrichment(cleanDomain, options.openRouterApiKey);
+    companyName = aiResult.companyName;
+    industry = aiResult.industry;
+    employeeCountRange = aiResult.employeeCountRange;
+    estimatedAnnualRevenue = aiResult.estimatedAnnualRevenue;
+    headquartersLocation = aiResult.headquartersLocation;
+    country = aiResult.country;
+    techStack = aiResult.techStack;
+    confidenceScore = aiResult.confidenceScore;
+    rawPayload = aiResult.rawPayload;
+    source = 'ai_web_search';
+  }
+
+  return {
+    source,
+    companyName,
+    industry,
+    employeeCountRange,
+    estimatedAnnualRevenue,
+    headquartersLocation,
+    country,
+    techStack,
+    confidenceScore,
+    rawPayload,
+  };
+}
+
 /**
  * Enriches a lead and its organization domain using the multi-tier hierarchy:
  * 1. D1 Cache
@@ -208,109 +347,38 @@ export async function enrichLead(
     }
   }
 
-  let source: EnrichmentSource = 'heuristic';
-  let companyName = extractBrandFromDomain(cleanDomain);
-  let industry = 'Technology & Software';
-  let employeeCountRange = '50-250';
-  let estimatedAnnualRevenue = '$10M-$50M';
-  let headquartersLocation = 'Singapore';
-  let country = 'SG';
-  let techStack = ['Next.js', 'Cloudflare', 'Tailwind CSS'];
-  let linkedinCompanyUrl: string | null = null;
-  let twitterHandle: string | null = null;
-  let confidenceScore = 0.8;
-  let rawPayload: Record<string, unknown> = {};
-
-  // 2. Check BYOK External APIs if provided
-  if (options.hunterApiKey) {
-    try {
-      const res = await fetch(`https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(cleanDomain)}&api_key=${options.hunterApiKey}`);
-      if (res.ok) {
-        const data = await res.json() as { data?: { organization?: string; country?: string; state?: string } };
-        if (data.data?.organization) {
-          companyName = data.data.organization;
-          country = data.data.country || country;
-          source = 'hunter';
-          confidenceScore = 0.95;
-          rawPayload = data;
-        }
-      }
-    } catch (err) {
-      logger.warn('[lead-enrichment] Hunter.io API fetch failed, proceeding to next tier', { error: String(err) });
-    }
-  }
-
-  // 3. Fallback to OpenRouter AI enrichment if external provider did not resolve
-  if (source !== 'hunter') {
-    const aiResult = await performAiEnrichment(cleanDomain, options.openRouterApiKey);
-    companyName = aiResult.companyName;
-    industry = aiResult.industry;
-    employeeCountRange = aiResult.employeeCountRange;
-    estimatedAnnualRevenue = aiResult.estimatedAnnualRevenue;
-    headquartersLocation = aiResult.headquartersLocation;
-    country = aiResult.country;
-    techStack = aiResult.techStack;
-    confidenceScore = aiResult.confidenceScore;
-    rawPayload = aiResult.rawPayload;
-    source = 'ai_web_search';
-  }
-
-  linkedinCompanyUrl = `https://www.linkedin.com/company/${cleanDomain.split('.')[0]}`;
-  twitterHandle = `@${cleanDomain.split('.')[0]}`;
+  const resolved = await resolveEnrichmentPayload(cleanDomain, options);
+  const linkedinCompanyUrl = `https://www.linkedin.com/company/${cleanDomain.split('.')[0]}`;
+  const twitterHandle = `@${cleanDomain.split('.')[0]}`;
 
   // Persist enrichment in D1
   const persisted = await upsertLeadEnrichment(db, {
     dealId: options.dealId || null,
     domain: cleanDomain,
-    companyName,
-    industry,
-    employeeCountRange,
-    estimatedAnnualRevenue,
-    headquartersLocation,
-    country,
-    techStack,
+    companyName: resolved.companyName,
+    industry: resolved.industry,
+    employeeCountRange: resolved.employeeCountRange,
+    estimatedAnnualRevenue: resolved.estimatedAnnualRevenue,
+    headquartersLocation: resolved.headquartersLocation,
+    country: resolved.country,
+    techStack: resolved.techStack,
     linkedinCompanyUrl,
     twitterHandle,
-    enrichmentSource: source,
-    confidenceScore,
-    rawPayload,
+    enrichmentSource: resolved.source,
+    confidenceScore: resolved.confidenceScore,
+    rawPayload: resolved.rawPayload,
     status: 'completed',
   });
 
   // If tied to a deal, update the deal record with newly enriched data and recalculate BANT score
   if (options.dealId) {
-    try {
-      const deal = await getEnterpriseDealById(db, options.dealId);
-      if (deal) {
-        const recalculatedBant = calculateBantScore({
-          statedBudgetArr: deal.dealValueEstimateCents > 0 ? deal.dealValueEstimateCents / 100 : undefined,
-          statedMonthlyMcu: deal.requestedMcuMonthly > 0 ? deal.requestedMcuMonthly : undefined,
-          companyRevenueRange: estimatedAnnualRevenue,
-          jobTitle: deal.leadTitle || undefined,
-          leadEmail: deal.leadEmail,
-          statedBottleneckOrPainPoint: deal.notes || undefined,
-        });
-
-        await updateEnterpriseDeal(db, options.dealId, {
-          companyName: deal.companyName === deal.companyDomain ? companyName : deal.companyName,
-          pipelineTier: recalculatedBant.pipelineTier,
-          dealStage: deal.dealStage === 'enriching' ? 'qualified' : deal.dealStage,
-          metadata: {
-            ...deal.metadata,
-            enrichedAt: Date.now(),
-            enrichmentId: persisted.id,
-            industry,
-            employeeCountRange,
-            estimatedAnnualRevenue,
-          },
-        });
-      }
-    } catch (err) {
-      logger.warn('[lead-enrichment] Failed to update deal after enrichment', {
-        dealId: options.dealId,
-        error: String(err),
-      });
-    }
+    await updateDealEnrichmentData(db, options.dealId, {
+      id: persisted.id,
+      companyName: resolved.companyName,
+      estimatedAnnualRevenue: resolved.estimatedAnnualRevenue,
+      industry: resolved.industry,
+      employeeCountRange: resolved.employeeCountRange,
+    });
   }
 
   return persisted;

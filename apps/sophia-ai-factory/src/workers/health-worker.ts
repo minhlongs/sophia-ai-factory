@@ -28,6 +28,76 @@ function checkRateLimit(key: string): boolean {
   return true;
 }
 
+async function probeD1(
+  db: D1Database | undefined,
+  isAuthorized: boolean,
+  services: Record<string, unknown>,
+): Promise<'healthy' | 'degraded'> {
+  if (!db) return 'healthy';
+  try {
+    const t0 = Date.now();
+    await db.prepare('SELECT 1').run();
+    const latency = Date.now() - t0;
+    if (isAuthorized) services.d1 = { status: 'up', latency };
+    return 'healthy';
+  } catch (e) {
+    if (isAuthorized) services.d1 = { status: 'down', error: String(e) };
+    return 'degraded';
+  }
+}
+
+async function probeR2(
+  bucket: R2Bucket | undefined,
+  isAuthorized: boolean,
+  services: Record<string, unknown>,
+): Promise<'healthy' | 'degraded'> {
+  if (!bucket) return 'healthy';
+  try {
+    const t0 = Date.now();
+    await bucket.head('health-check.txt');
+    const latency = Date.now() - t0;
+    if (isAuthorized) services.r2 = { status: 'up', latency };
+    return 'healthy';
+  } catch {
+    if (isAuthorized) services.r2 = { status: 'down' };
+    return 'degraded';
+  }
+}
+
+async function probeKV(
+  kv: KVNamespace | undefined,
+  isAuthorized: boolean,
+  services: Record<string, unknown>,
+): Promise<'healthy' | 'degraded'> {
+  if (!kv) return 'healthy';
+  try {
+    const t0 = Date.now();
+    await kv.get('health:ping');
+    const latency = Date.now() - t0;
+    if (isAuthorized) services.kv = { status: 'up', latency };
+    return 'healthy';
+  } catch {
+    if (isAuthorized) services.kv = { status: 'down' };
+    return 'degraded';
+  }
+}
+
+function checkEnvConfigs(env: Env, services: Record<string, unknown>): void {
+  const configs = [
+    { key: 'NEXT_PUBLIC_SUPABASE_URL', name: 'supabase' },
+    { key: 'UPSTASH_REDIS_REST_URL', name: 'redis' },
+    { key: 'OPENROUTER_API_KEY', name: 'openrouter' },
+    { key: 'ELEVENLABS_API_KEY', name: 'elevenlabs' },
+    { key: 'HEYGEN_API_KEY', name: 'heygen' },
+    { key: 'TELEGRAM_BOT_TOKEN', name: 'telegram' },
+    { key: 'NEXT_PUBLIC_SENTRY_DSN', name: 'sentry' },
+    { key: 'INNGEST_EVENT_KEY', name: 'inngest' },
+  ];
+  for (const { key, name } of configs) {
+    services[name] = { status: env[key] ? 'configured' : 'missing_config' };
+  }
+}
+
 const healthWorker = {
   async fetch(
     request: Request,
@@ -49,73 +119,30 @@ const healthWorker = {
     const secret = env.HEALTH_CHECK_SECRET;
     const isAuthorized = !!secret && (token === secret || authHeader === `Bearer ${secret}`);
 
+    const services: Record<string, unknown> = {};
+    const d1Status = await probeD1(env.DB, isAuthorized, services);
+    const r2Status = await probeR2(env.NEXT_INC_CACHE_R2_BUCKET, isAuthorized, services);
+    const kvStatus = await probeKV(env.EXPERIMENT_KV, isAuthorized, services);
+
+    const isDegraded = d1Status === 'degraded' || r2Status === 'degraded' || kvStatus === 'degraded';
+    const status = isDegraded ? 'degraded' : 'healthy';
+
+    if (isAuthorized) {
+      checkEnvConfigs(env, services);
+    }
+
     const healthStatus: Record<string, unknown> = {
-      status: 'healthy',
+      status,
       timestamp: new Date().toISOString(),
       sha: env.COMMIT_SHA ?? 'unknown',
       deployedAt: env.DEPLOYED_AT ?? 'unknown',
+      ...(isAuthorized ? { services } : {}),
     };
 
-    // D1 probe
-    if (env.DB) {
-      try {
-        const t0 = Date.now();
-        await env.DB.prepare('SELECT 1').run();
-        const latency = Date.now() - t0;
-        if (isAuthorized) (healthStatus.services as Record<string, unknown>).d1 = { status: 'up', latency };
-      } catch (e) {
-        if (isAuthorized) (healthStatus.services as Record<string, unknown>).d1 = { status: 'down', error: String(e) };
-        healthStatus.status = 'degraded';
-      }
-    }
-
-    // R2 probe
-    if (env.NEXT_INC_CACHE_R2_BUCKET) {
-      try {
-        const t0 = Date.now();
-        await env.NEXT_INC_CACHE_R2_BUCKET.head('health-check.txt');
-        const latency = Date.now() - t0;
-        if (isAuthorized) (healthStatus.services as Record<string, unknown>).r2 = { status: 'up', latency };
-      } catch {
-        if (isAuthorized) (healthStatus.services as Record<string, unknown>).r2 = { status: 'down' };
-        healthStatus.status = 'degraded';
-      }
-    }
-
-    // KV probe
-    if (env.EXPERIMENT_KV) {
-      try {
-        const t0 = Date.now();
-        await env.EXPERIMENT_KV.get('health:ping');
-        const latency = Date.now() - t0;
-        if (isAuthorized) (healthStatus.services as Record<string, unknown>).kv = { status: 'up', latency };
-      } catch {
-        if (isAuthorized) (healthStatus.services as Record<string, unknown>).kv = { status: 'down' };
-        healthStatus.status = 'degraded';
-      }
-    }
-
-    // Config checks (auth, APIs)
-    if (isAuthorized) {
-      const configs = [
-        { key: 'NEXT_PUBLIC_SUPABASE_URL', name: 'supabase' },
-        { key: 'UPSTASH_REDIS_REST_URL', name: 'redis' },
-        { key: 'OPENROUTER_API_KEY', name: 'openrouter' },
-        { key: 'ELEVENLABS_API_KEY', name: 'elevenlabs' },
-        { key: 'HEYGEN_API_KEY', name: 'heygen' },
-        { key: 'TELEGRAM_BOT_TOKEN', name: 'telegram' },
-        { key: 'NEXT_PUBLIC_SENTRY_DSN', name: 'sentry' },
-        { key: 'INNGEST_EVENT_KEY', name: 'inngest' },
-      ];
-      configs.forEach(({ key, name }) => {
-        (healthStatus.services as Record<string, unknown>)[name] = { status: env[key] ? 'configured' : 'missing_config' };
-      });
-    }
-
-    const responseStatus = healthStatus.status === 'healthy' ? 200 : 503;
+    const responseStatus = status === 'healthy' ? 200 : 503;
 
     if (!isAuthorized) {
-      const publicBody = { status: healthStatus.status, timestamp: healthStatus.timestamp, sha: healthStatus.sha };
+      const publicBody = { status, timestamp: healthStatus.timestamp, sha: healthStatus.sha };
       return new Response(JSON.stringify(publicBody), {
         status: responseStatus,
         headers: {
