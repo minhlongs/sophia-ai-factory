@@ -202,84 +202,73 @@ export async function getOptimizationsForSOP(sopId: string): Promise<PromptOptim
   }
 }
 
-/**
- * Run evaluation and optimization for all pending feedback cycles.
- * Typically invoked by scheduled jobs after analytics synchronization.
- */
-export async function runPerformanceFeedbackAndOptimization(): Promise<number> {
-  const pending = await getPendingEvaluations();
-  if (pending.length === 0) {
-    logger.info('feedback_engine.no_pending_evaluations');
-    return 0;
+interface StepWithPrompt {
+  index: number;
+  name: string;
+  tool: string;
+  prompt: string;
+}
+
+interface LlmOptimizationSuggestion {
+  step_index: number;
+  suggested_prompt: string;
+}
+
+async function fetchVideoMetrics(db: NonNullable<Awaited<ReturnType<typeof getD1>>>, executionId: string) {
+  const stats = await db
+    .prepare(
+      `SELECT SUM(views) as total_views, SUM(likes) as total_likes, SUM(comments) as total_comments, SUM(shares) as total_shares
+       FROM video_analytics
+       WHERE video_id = ?1`
+    )
+    .bind(executionId)
+    .first<{ total_views: number; total_likes: number; total_comments: number; total_shares: number }>();
+
+  const totalViews = stats?.total_views ?? 0;
+  const totalLikes = stats?.total_likes ?? 0;
+  const totalComments = stats?.total_comments ?? 0;
+  const totalShares = stats?.total_shares ?? 0;
+
+  return {
+    totalViews,
+    metrics: {
+      actual_views: totalViews,
+      expected_views: 100, // baseline
+      actual_engagement: totalLikes + totalComments + totalShares,
+      expected_engagement: 10, // baseline
+      actual_revenue: 0,
+      expected_revenue: 0,
+    },
+  };
+}
+
+function parseStepsFromTemplate(stepsJson: string): StepWithPrompt[] {
+  let steps: Array<{ name_en: string; tool: string; config?: Record<string, unknown> }> = [];
+  try {
+    steps = JSON.parse(stepsJson);
+  } catch {
+    return [];
   }
 
-  const _db = await getD1();
-  if (!_db) throw new Error('D1 binding not available');
-  const db = _db;;
-  let processedCount = 0;
+  return steps
+    .map((step, index) => ({
+      index,
+      name: step.name_en,
+      tool: step.tool,
+      prompt: (step.config?.prompt as string) || '',
+    }))
+    .filter((s) => s.prompt.length > 0);
+}
 
-  for (const cycle of pending) {
-    try {
-      // 1. Fetch consolidated video metrics from video_analytics
-      const stats = await db
-        .prepare(
-          `SELECT SUM(views) as total_views, SUM(likes) as total_likes, SUM(comments) as total_comments, SUM(shares) as total_shares
-           FROM video_analytics
-           WHERE video_id = ?1`
-        )
-        .bind(cycle.executionId)
-        .first<{ total_views: number; total_likes: number; total_comments: number; total_shares: number }>();
-
-      const totalViews = stats?.total_views ?? 0;
-      const totalLikes = stats?.total_likes ?? 0;
-      const totalComments = stats?.total_comments ?? 0;
-      const totalShares = stats?.total_shares ?? 0;
-
-      const metrics = {
-        actual_views: totalViews,
-        expected_views: 100, // baseline
-        actual_engagement: totalLikes + totalComments + totalShares,
-        expected_engagement: 10, // baseline
-        actual_revenue: 0,
-        expected_revenue: 0,
-      };
-
-      // 2. Perform evaluation and save to D1
-      const evaluation = await evaluatePerformance(cycle.id, metrics);
-
-      // 3. Perform LLM-driven prompt optimization
-      const template = await db
-        .prepare(`SELECT steps_json FROM sop_templates WHERE id = ?1 LIMIT 1`)
-        .bind(cycle.sopId)
-        .first<{ steps_json: string }>();
-
-      if (template) {
-        let steps: Array<{ name_en: string; tool: string; config?: Record<string, unknown> }> = [];
-        try {
-          steps = JSON.parse(template.steps_json);
-        } catch {
-          // ignore parsing error for robust execution
-        }
-
-        const openRouterKey = await resolveUserApiKey(
-          cycle.userId,
-          'openrouter',
-          process.env.OPENROUTER_API_KEY
-        );
-
-        if (openRouterKey && steps.length > 0) {
-          // Identify steps with prompts
-          const stepsWithPrompts = steps
-            .map((step, index) => ({
-              index,
-              name: step.name_en,
-              tool: step.tool,
-              prompt: (step.config?.prompt as string) || '',
-            }))
-            .filter(s => s.prompt.length > 0);
-
-          if (stepsWithPrompts.length > 0) {
-            const systemPrompt = `You are a Senior AI Prompt Engineer. Your task is to optimize the AI prompts used in an automated Video Video Generation SOP.
+async function requestLlmOptimizations(params: {
+  openRouterKey: string;
+  cycleId: string;
+  totalViews: number;
+  metrics: { actual_engagement: number };
+  evaluation: EvaluationResult;
+  stepsWithPrompts: StepWithPrompt[];
+}): Promise<LlmOptimizationSuggestion[]> {
+  const systemPrompt = `You are a Senior AI Prompt Engineer. Your task is to optimize the AI prompts used in an automated Video Video Generation SOP.
 Analyze the video performance metrics and optimize the existing prompts to achieve better viewer retention, higher views, and stronger engagement.
 Return your suggestions STRICTLY in a JSON object format:
 {
@@ -291,64 +280,118 @@ Return your suggestions STRICTLY in a JSON object format:
   ]
 }`;
 
-            const userPrompt = `Video Performance Metrics:
-- Views: ${totalViews} (Expected: 100)
-- Engagement: ${metrics.actual_engagement} (Expected: 10)
-- Overall Performance Score: ${evaluation.overallScore}
-- Recommendations: ${JSON.stringify(evaluation.recommendations)}
+  const userPrompt = `Video Performance Metrics:
+- Views: ${params.totalViews} (Expected: 100)
+- Engagement: ${params.metrics.actual_engagement} (Expected: 10)
+- Overall Performance Score: ${params.evaluation.overallScore}
+- Recommendations: ${JSON.stringify(params.evaluation.recommendations)}
 
 Existing Prompts in SOP:
-${JSON.stringify(stepsWithPrompts, null, 2)}
+${JSON.stringify(params.stepsWithPrompts, null, 2)}
 
 Optimize the prompts above to improve performance. Provide the optimized prompts in the JSON output. Keep other configurations unchanged.`;
 
-            try {
-              const responseText = await callOpenRouterAPI(openRouterKey, systemPrompt, userPrompt);
-              let parsed: { optimizations?: Array<{ step_index: number; suggested_prompt: string }> } = {};
-              try {
-                // Remove potential markdown code blocks
-                const jsonText = responseText.replace(/```json|```/g, '').trim();
-                parsed = JSON.parse(jsonText);
-              } catch (parseErr) {
-                logger.error('feedback_engine.llm_json_parse_failed', {
-                  cycleId: cycle.id,
-                  response: responseText,
-                  error: parseErr instanceof Error ? parseErr.message : String(parseErr),
-                });
-              }
+  try {
+    const responseText = await callOpenRouterAPI(params.openRouterKey, systemPrompt, userPrompt);
+    const jsonText = responseText.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(jsonText) as { optimizations?: LlmOptimizationSuggestion[] };
+    return parsed.optimizations ?? [];
+  } catch (err) {
+    logger.error('feedback_engine.llm_optimization_failed', {
+      cycleId: params.cycleId,
+      error: getErrorMessage(err),
+    });
+    return [];
+  }
+}
 
-              if (parsed.optimizations && parsed.optimizations.length > 0) {
-                for (const opt of parsed.optimizations) {
-                  const original = stepsWithPrompts.find(s => s.index === opt.step_index);
-                  if (original && opt.suggested_prompt) {
-                    const optId = await suggestOptimization({
-                      cycleId: cycle.id,
-                      sopId: cycle.sopId,
-                      stepIndex: opt.step_index,
-                      originalPrompt: original.prompt,
-                      suggestedPrompt: opt.suggested_prompt,
-                      improvementScore: 0.1, // mock estimated improvement
-                    });
-                    // Automatically apply optimization for autonomous platform behavior
-                    await applyOptimization(optId);
-                  }
-                }
-              }
-            } catch (llmErr) {
-              logger.error('feedback_engine.llm_call_failed', {
-                cycleId: cycle.id,
-                error: llmErr instanceof Error ? llmErr.message : String(llmErr),
-              });
-            }
-          }
-        }
-      }
+async function applyStepOptimizations(
+  cycle: FeedbackCycle,
+  stepsWithPrompts: StepWithPrompt[],
+  optimizations: LlmOptimizationSuggestion[],
+): Promise<void> {
+  for (const opt of optimizations) {
+    const original = stepsWithPrompts.find((s) => s.index === opt.step_index);
+    if (!original || !opt.suggested_prompt) continue;
 
+    const optId = await suggestOptimization({
+      cycleId: cycle.id,
+      sopId: cycle.sopId,
+      stepIndex: opt.step_index,
+      originalPrompt: original.prompt,
+      suggestedPrompt: opt.suggested_prompt,
+      improvementScore: 0.1, // mock estimated improvement
+    });
+    // Automatically apply optimization for autonomous platform behavior
+    await applyOptimization(optId);
+  }
+}
+
+async function processSingleFeedbackCycle(
+  cycle: FeedbackCycle,
+  db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
+): Promise<void> {
+  // 1. Fetch consolidated video metrics from video_analytics
+  const { totalViews, metrics } = await fetchVideoMetrics(db, cycle.executionId);
+
+  // 2. Perform evaluation and save to D1
+  const evaluation = await evaluatePerformance(cycle.id, metrics);
+
+  // 3. Perform LLM-driven prompt optimization
+  const template = await db
+    .prepare('SELECT steps_json FROM sop_templates WHERE id = ?1 LIMIT 1')
+    .bind(cycle.sopId)
+    .first<{ steps_json: string }>();
+
+  if (!template) return;
+
+  const stepsWithPrompts = parseStepsFromTemplate(template.steps_json);
+  if (stepsWithPrompts.length === 0) return;
+
+  const openRouterKey = await resolveUserApiKey(
+    cycle.userId,
+    'openrouter',
+    process.env.OPENROUTER_API_KEY,
+  );
+  if (!openRouterKey) return;
+
+  const optimizations = await requestLlmOptimizations({
+    openRouterKey,
+    cycleId: cycle.id,
+    totalViews,
+    metrics,
+    evaluation,
+    stepsWithPrompts,
+  });
+
+  if (optimizations.length > 0) {
+    await applyStepOptimizations(cycle, stepsWithPrompts, optimizations);
+  }
+}
+
+/**
+ * Run evaluation and optimization for all pending feedback cycles.
+ * Typically invoked by scheduled jobs after analytics synchronization.
+ */
+export async function runPerformanceFeedbackAndOptimization(): Promise<number> {
+  const pending = await getPendingEvaluations();
+  if (pending.length === 0) {
+    logger.info('feedback_engine.no_pending_evaluations');
+    return 0;
+  }
+
+  const db = await getD1();
+  if (!db) throw new Error('D1 binding not available');
+  let processedCount = 0;
+
+  for (const cycle of pending) {
+    try {
+      await processSingleFeedbackCycle(cycle, db);
       processedCount++;
     } catch (err) {
       logger.error('feedback_engine.cycle_processing_failed', {
         cycleId: cycle.id,
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
       });
     }
   }

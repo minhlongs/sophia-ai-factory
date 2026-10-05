@@ -104,6 +104,68 @@ interface TelegramSendVideoResponse {
   error_code?: number;
 }
 
+function buildTelegramMessageUrl(chat: { id: number; username?: string }, messageId: number): string {
+  if (chat.username) {
+    return `https://t.me/${chat.username}/${messageId}`;
+  }
+  if (String(chat.id).startsWith('-100')) {
+    const channelNumeric = String(chat.id).replace(/^-100/, '');
+    return `https://t.me/c/${channelNumeric}/${messageId}`;
+  }
+  return `https://t.me/message/${messageId}`;
+}
+
+async function handleTelegramRateLimit(res: Response): Promise<never> {
+  const headerRetry = Number(res.headers.get('Retry-After') ?? '');
+  let bodyRetry: number | null = null;
+  let bodyText = '';
+  try {
+    bodyText = await res.text();
+    const parsed = JSON.parse(bodyText) as { parameters?: { retry_after?: number } };
+    if (typeof parsed?.parameters?.retry_after === 'number') {
+      bodyRetry = parsed.parameters.retry_after;
+    }
+  } catch {
+    // ignore parse failure
+  }
+  const retryAfterSec = bodyRetry ?? (Number.isFinite(headerRetry) ? headerRetry : 60);
+  recordFailure('telegram', classifyError(new Error('rate_limited')));
+  throw new TelegramApiError(
+    `[telegram-publisher] Rate limited (429). Retry-After: ${retryAfterSec}s.`,
+    { status: 429, retryAfterSec, bodySnippet: bodyText.slice(0, 200) },
+  );
+}
+
+async function handleTelegramAuthError(res: Response): Promise<never> {
+  const body = await res.text().catch((err) => {
+    logger.warn('Failed to read Telegram 401/403 response', { error: String(err), context: 'publishToTelegram' });
+    return '';
+  });
+  recordFailure('telegram', classifyHttpStatus(res.status));
+  throw new TelegramApiError(
+    `[telegram-publisher] Telegram API error: ${res.status} ${body.slice(0, 200)}`,
+    { status: res.status, bodySnippet: body.slice(0, 200) },
+  );
+}
+
+async function parseTelegramResponseBody(res: Response): Promise<TelegramSendVideoResponse> {
+  try {
+    return (await res.json()) as TelegramSendVideoResponse;
+  } catch {
+    let body = '';
+    try {
+      body = await res.text();
+    } catch (err) {
+      logger.warn('[TelegramPublisher] Failed to read response body after parse failure', { error: String(err) });
+    }
+    recordFailure('telegram', classifyHttpStatus(res.status));
+    throw new TelegramApiError(
+      `[telegram-publisher] Failed to parse Telegram response: ${body.slice(0, 200) || 'empty body'}`,
+      { status: res.status, bodySnippet: body.slice(0, 200) },
+    );
+  }
+}
+
 /**
  * Post a video to a Telegram chat via Bot API sendVideo.
  *
@@ -129,10 +191,6 @@ export async function publishToTelegram(
 
   if (!chatId) {
     throw new Error('[telegram-publisher] chatId is empty — pairing may have been revoked');
-  }
-
-  if (!shouldAllowRequest('telegram')) {
-    throw new Error('[telegram-publisher] Circuit breaker open for telegram');
   }
 
   const safeCaption = caption ? sanitizeCaption(caption) : '';
@@ -164,55 +222,14 @@ export async function publishToTelegram(
   }
 
   if (res.status === 429) {
-    // Rate limited — prefer body `parameters.retry_after`, fall back to header.
-    const headerRetry = Number(res.headers.get('Retry-After') ?? '');
-    let bodyRetry: number | null = null;
-    let bodyText = '';
-    try {
-      bodyText = await res.text();
-      const parsed = JSON.parse(bodyText) as { parameters?: { retry_after?: number } };
-      if (typeof parsed?.parameters?.retry_after === 'number') {
-        bodyRetry = parsed.parameters.retry_after;
-      }
-    } catch {
-      // ignore parse failure
-    }
-    const retryAfterSec = bodyRetry ?? (Number.isFinite(headerRetry) ? headerRetry : 60);
-    recordFailure('telegram', classifyError(new Error('rate_limited')));
-    throw new TelegramApiError(
-      `[telegram-publisher] Rate limited (429). Retry-After: ${retryAfterSec}s.`,
-      { status: 429, retryAfterSec, bodySnippet: bodyText.slice(0, 200) },
-    );
+    await handleTelegramRateLimit(res);
   }
 
   if (res.status === 401 || res.status === 403) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Telegram 401/403 response', { error: String(err), context: 'publishToTelegram' });
-      return '';
-    });
-    recordFailure('telegram', classifyHttpStatus(res.status));
-    throw new TelegramApiError(
-      `[telegram-publisher] Telegram API error: ${res.status} ${body.slice(0, 200)}`,
-      { status: res.status, bodySnippet: body.slice(0, 200) },
-    );
+    await handleTelegramAuthError(res);
   }
 
-  let data: TelegramSendVideoResponse;
-  try {
-    data = (await res.json()) as TelegramSendVideoResponse;
-  } catch {
-    let body = '';
-    try {
-      body = await res.text();
-    } catch (err) {
-      logger.warn('[TelegramPublisher] Failed to read response body after parse failure', { error: String(err) });
-    }
-    recordFailure('telegram', classifyHttpStatus(res.status));
-    throw new TelegramApiError(
-      `[telegram-publisher] Failed to parse Telegram response: ${body.slice(0, 200) || 'empty body'}`,
-      { status: res.status, bodySnippet: body.slice(0, 200) },
-    );
-  }
+  const data = await parseTelegramResponseBody(res);
 
   if (!data.ok || !data.result) {
     recordFailure('telegram', classifyHttpStatus(res.status));
@@ -224,22 +241,7 @@ export async function publishToTelegram(
   }
 
   const messageId = data.result.message_id;
-  const chat = data.result.chat;
-
-  // Build public URL:
-  // - Public channel/group with username: https://t.me/<username>/<message_id>
-  // - Private channel (numeric id, starts with -100): https://t.me/c/<channel_id_without_-100>/<message_id>
-  // - DM / private chat: no public URL available, use placeholder
-  let externalUrl: string;
-  if (chat.username) {
-    externalUrl = `https://t.me/${chat.username}/${messageId}`;
-  } else if (String(chat.id).startsWith('-100')) {
-    const channelNumeric = String(chat.id).replace(/^-100/, '');
-    externalUrl = `https://t.me/c/${channelNumeric}/${messageId}`;
-  } else {
-    // DM or private group — no public URL
-    externalUrl = `https://t.me/message/${messageId}`;
-  }
+  const externalUrl = buildTelegramMessageUrl(data.result.chat, messageId);
 
   logger.info('[telegram-publisher] Video posted', { jobId, chatId, messageId, externalUrl });
   recordSuccess('telegram');

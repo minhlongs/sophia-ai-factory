@@ -22,6 +22,45 @@ export interface ValidationResult {
  * Build a validator from JSON Schema string.
  * Supports: required[], properties with type checks.
  */
+function validateRequiredFields(obj: Record<string, unknown>, required: string[]): string[] {
+  const errors: string[] = [];
+  for (const field of required) {
+    if (!(field in obj)) {
+      errors.push(`Missing required field: ${field}`);
+    }
+  }
+  return errors;
+}
+
+function validateFieldType(
+  field: string,
+  val: unknown,
+  propSchema: { type?: string; const?: unknown },
+): string | null {
+  if (!propSchema.type) return null;
+
+  const actualType = Array.isArray(val) ? 'array' : typeof val;
+
+  if (propSchema.type === 'array') {
+    if (!Array.isArray(val)) {
+      return `Field "${field}" must be array, got ${actualType}`;
+    }
+    return null;
+  }
+
+  if (actualType !== propSchema.type) {
+    const constVal = propSchema.const;
+    if (constVal !== undefined && val !== constVal) {
+      return `Field "${field}" must be ${String(constVal)}`;
+    }
+    if (constVal === undefined) {
+      return `Field "${field}" must be ${propSchema.type}, got ${actualType}`;
+    }
+  }
+
+  return null;
+}
+
 function buildValidator(schemaJson: string): (data: unknown) => ValidationResult {
   let schema: Record<string, unknown>;
   try {
@@ -34,43 +73,22 @@ function buildValidator(schemaJson: string): (data: unknown) => ValidationResult
   const required = (Array.isArray(schema.required) ? schema.required : []) as string[];
   const properties = (schema.properties && typeof schema.properties === 'object'
     ? schema.properties
-    : {}) as Record<string, { type?: string }>;
+    : {}) as Record<string, { type?: string; const?: unknown }>;
 
   return (data: unknown): ValidationResult => {
-    const errors: string[] = [];
-
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
-      errors.push('Output must be a JSON object');
-      return { valid: false, errors };
+      return { valid: false, errors: ['Output must be a JSON object'] };
     }
 
     const obj = data as Record<string, unknown>;
-
-    // Check required fields
-    for (const field of required) {
-      if (!(field in obj)) {
-        errors.push(`Missing required field: ${field}`);
-      }
-    }
+    const errors = validateRequiredFields(obj, required);
 
     // Check property types where defined
     for (const [field, propSchema] of Object.entries(properties)) {
       if (!(field in obj)) continue;
-      if (!propSchema.type) continue;
-
-      const val = obj[field];
-      const actualType = Array.isArray(val) ? 'array' : typeof val;
-
-      if (propSchema.type === 'array' && !Array.isArray(val)) {
-        errors.push(`Field "${field}" must be array, got ${actualType}`);
-      } else if (propSchema.type !== 'array' && actualType !== propSchema.type) {
-        // boolean const check (for requiresApproval: true)
-        const constVal = (propSchema as Record<string, unknown>).const;
-        if (constVal !== undefined && val !== constVal) {
-          errors.push(`Field "${field}" must be ${String(constVal)}`);
-        } else if (constVal === undefined) {
-          errors.push(`Field "${field}" must be ${propSchema.type}, got ${actualType}`);
-        }
+      const typeErr = validateFieldType(field, obj[field], propSchema);
+      if (typeErr) {
+        errors.push(typeErr);
       }
     }
 

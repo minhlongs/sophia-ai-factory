@@ -50,39 +50,64 @@ function parseStepIndexFromRef(ref: string): number | null {
  * @param steps - Ordered list of linear steps
  * @param version - Graph schema version (default 1)
  */
+function resolveStepDependencies(
+  step: LinearStep,
+  stepIndex: number,
+): { dependsOn: string[]; edges: DAGEdge[] } {
+  const nodeId = `step_${stepIndex}`;
+  const dependsOn: string[] = [];
+  const edges: DAGEdge[] = [];
+
+  if (step.dependsOnOutputs && step.dependsOnOutputs.length > 0) {
+    // Fine-grained: only depend on steps explicitly referenced
+    const seen = new Set<number>();
+    for (const ref of step.dependsOnOutputs) {
+      const refIdx = parseStepIndexFromRef(ref);
+      if (refIdx !== null && refIdx >= 0 && refIdx < stepIndex && !seen.has(refIdx)) {
+        seen.add(refIdx);
+        const fromId = `step_${refIdx}`;
+        dependsOn.push(fromId);
+        edges.push({ from: fromId, to: nodeId });
+      }
+    }
+  } else if (stepIndex > 0) {
+    // Conservative default: depend on ALL prior steps
+    for (let prev = 0; prev < stepIndex; prev++) {
+      const fromId = `step_${prev}`;
+      dependsOn.push(fromId);
+      edges.push({ from: fromId, to: nodeId });
+    }
+  }
+
+  return { dependsOn, edges };
+}
+
+/**
+ * Convert a linear list of SOP steps into a SOPGraph with detected parallelism.
+ *
+ * Dependency detection logic:
+ * - If a step declares `dependsOnOutputs`, edges are created only for the
+ *   referenced prior steps (fine-grained parallelism).
+ * - If a step has NO `dependsOnOutputs`, it conservatively depends on ALL
+ *   prior steps (safe default, equivalent to sequential execution).
+ *
+ * @param sopTemplateId - Identifies the SOP template this graph belongs to
+ * @param steps - Ordered list of linear steps
+ * @param version - Graph schema version (default 1)
+ */
 export function buildSOPGraph(
   sopTemplateId: string,
   steps: LinearStep[],
   version = 1,
 ): SOPGraph {
-  const nodes: DAGNode[] = []
-  const edges: DAGEdge[] = []
+  const nodes: DAGNode[] = [];
+  const edges: DAGEdge[] = [];
 
   for (let i = 0; i < steps.length; i++) {
-    const step = steps[i]
-    const nodeId = `step_${i}`
-    const dependsOn: string[] = []
-
-    if (step.dependsOnOutputs && step.dependsOnOutputs.length > 0) {
-      // Fine-grained: only depend on steps explicitly referenced
-      const seen = new Set<number>()
-      for (const ref of step.dependsOnOutputs) {
-        const refIdx = parseStepIndexFromRef(ref)
-        if (refIdx !== null && refIdx >= 0 && refIdx < i && !seen.has(refIdx)) {
-          seen.add(refIdx)
-          const fromId = `step_${refIdx}`
-          dependsOn.push(fromId)
-          edges.push({ from: fromId, to: nodeId })
-        }
-      }
-    } else if (i > 0) {
-      // Conservative default: depend on ALL prior steps
-      for (let prev = 0; prev < i; prev++) {
-        const fromId = `step_${prev}`
-        dependsOn.push(fromId)
-        edges.push({ from: fromId, to: nodeId })
-      }
-    }
+    const step = steps[i];
+    const nodeId = `step_${i}`;
+    const { dependsOn, edges: stepEdges } = resolveStepDependencies(step, i);
+    edges.push(...stepEdges);
 
     nodes.push({
       id: nodeId,
@@ -93,8 +118,8 @@ export function buildSOPGraph(
       dependsOn,
       estimatedDurationMs: step.estimatedDurationMs,
       estimatedCostCents: step.estimatedCostCents,
-    })
+    });
   }
 
-  return { sopTemplateId, version, nodes, edges }
+  return { sopTemplateId, version, nodes, edges };
 }

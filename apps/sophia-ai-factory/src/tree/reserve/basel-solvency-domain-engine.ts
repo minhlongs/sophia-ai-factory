@@ -121,6 +121,58 @@ export function calculateBaselSolvencyRatios(
   return { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps };
 }
 
+function checkStandardViolations(
+  ctx: BaselSolvencySignatureContext,
+  targets: BaselSolvencyTargets,
+  input: BaselSolvencyInput,
+): string[] {
+  const violations: string[] = [];
+  const minSurvivalDays = targets.minStressSurvivalDays ?? 90;
+
+  if (ctx.cet1RatioBps < targets.minCet1RatioBps) {
+    violations.push(
+      `CET1 ratio ${ctx.cet1RatioBps} bps breaches minimum threshold ${targets.minCet1RatioBps} bps`
+    );
+  }
+  if (ctx.liquidityCoverageRatioBps < targets.minLcrBps) {
+    violations.push(
+      `LCR ${ctx.liquidityCoverageRatioBps} bps breaches minimum threshold ${targets.minLcrBps} bps`
+    );
+  }
+  if (ctx.netStableFundingRatioBps < targets.minNsfrBps) {
+    violations.push(
+      `NSFR ${ctx.netStableFundingRatioBps} bps breaches minimum threshold ${targets.minNsfrBps} bps`
+    );
+  }
+  if (targets.minSovereignBufferCents !== undefined && ctx.bufferCents < targets.minSovereignBufferCents) {
+    violations.push(
+      `Sovereign buffer ${ctx.bufferCents} is below minimum requirement ${targets.minSovereignBufferCents} cents`
+    );
+  }
+  if (input.stressTestSurvivalDays < minSurvivalDays) {
+    violations.push(
+      `Stress test survival duration ${input.stressTestSurvivalDays} days is below ${minSurvivalDays}-day requirement`
+    );
+  }
+  return violations;
+}
+
+function resolveStandardSolvencyStatus(
+  isSolvent: boolean,
+  bufferCents: number,
+  minSovereignBufferCents: number | undefined,
+  lcrBps: number,
+  minLcrBps: number,
+): string {
+  if (minSovereignBufferCents && bufferCents < minSovereignBufferCents) {
+    return 'CAPITAL_BUFFER_BREACH';
+  }
+  if (lcrBps < minLcrBps) {
+    return 'LIQUIDITY_RESTRICTED';
+  }
+  return isSolvent ? 'SOLVENT_AND_CAPITALIZED' : 'INSOLVENT_HALT';
+}
+
 /**
  * Evaluates capital adequacy, liquidity coverage, and structural funding across Basel tiers.
  */
@@ -136,65 +188,33 @@ export function evaluateParameterizedBaselSolvency(
   });
   const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } = ratios;
   const bufferCents = input.sovereignCapitalBufferCents ?? input.totalLiquidityBufferCents ?? 0;
-  const minSurvivalDays = targets.minStressSurvivalDays ?? 90;
 
-  const violations: string[] = [];
-  if (config.violationsGenerator) {
-    const tempCtx: BaselSolvencySignatureContext = {
-      cet1RatioBps,
-      liquidityCoverageRatioBps,
-      netStableFundingRatioBps,
-      bufferCents,
-      stressTestSurvivalDays: input.stressTestSurvivalDays,
-      isSolvent: true,
-      solvencyStatus: 'SOLVENT_AND_CAPITALIZED',
-    };
-    violations.push(...config.violationsGenerator(tempCtx, targets, input));
-  } else {
-    if (cet1RatioBps < targets.minCet1RatioBps) {
-      violations.push(
-        `CET1 ratio ${cet1RatioBps} bps breaches minimum threshold ${targets.minCet1RatioBps} bps`
-      );
-    }
-    if (liquidityCoverageRatioBps < targets.minLcrBps) {
-      violations.push(
-        `LCR ${liquidityCoverageRatioBps} bps breaches minimum threshold ${targets.minLcrBps} bps`
-      );
-    }
-    if (netStableFundingRatioBps < targets.minNsfrBps) {
-      violations.push(
-        `NSFR ${netStableFundingRatioBps} bps breaches minimum threshold ${targets.minNsfrBps} bps`
-      );
-    }
-    if (targets.minSovereignBufferCents !== undefined && bufferCents < targets.minSovereignBufferCents) {
-      violations.push(
-        `Sovereign buffer ${bufferCents} is below minimum requirement ${targets.minSovereignBufferCents} cents`
-      );
-    }
-    if (input.stressTestSurvivalDays < minSurvivalDays) {
-      violations.push(
-        `Stress test survival duration ${input.stressTestSurvivalDays} days is below ${minSurvivalDays}-day requirement`
-      );
-    }
-  }
-
-  const isSolvent = violations.length === 0;
-
-  let solvencyStatus = isSolvent ? 'SOLVENT_AND_CAPITALIZED' : 'INSOLVENT_HALT';
-  if (targets.minSovereignBufferCents && bufferCents < targets.minSovereignBufferCents) {
-    solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-  } else if (liquidityCoverageRatioBps < targets.minLcrBps) {
-    solvencyStatus = 'LIQUIDITY_RESTRICTED';
-  } else if (!isSolvent) {
-    solvencyStatus = 'INSOLVENT_HALT';
-  }
-
-  const ctx: BaselSolvencySignatureContext = {
+  const tempCtx: BaselSolvencySignatureContext = {
     cet1RatioBps,
     liquidityCoverageRatioBps,
     netStableFundingRatioBps,
     bufferCents,
     stressTestSurvivalDays: input.stressTestSurvivalDays,
+    isSolvent: true,
+    solvencyStatus: 'SOLVENT_AND_CAPITALIZED',
+  };
+
+  const violations = config.violationsGenerator
+    ? config.violationsGenerator(tempCtx, targets, input)
+    : checkStandardViolations(tempCtx, targets, input);
+
+  const isSolvent = violations.length === 0;
+
+  let solvencyStatus = resolveStandardSolvencyStatus(
+    isSolvent,
+    bufferCents,
+    targets.minSovereignBufferCents,
+    liquidityCoverageRatioBps,
+    targets.minLcrBps,
+  );
+
+  const ctx: BaselSolvencySignatureContext = {
+    ...tempCtx,
     isSolvent,
     solvencyStatus,
   };
@@ -204,15 +224,13 @@ export function evaluateParameterizedBaselSolvency(
     ctx.solvencyStatus = solvencyStatus;
   }
 
-  let supervisorySignature: string;
-  if (config.signatureFn) {
-    supervisorySignature = config.signatureFn(ctx);
-  } else {
-    const prefix = config.hashPrefix ?? 'BASEL_SOLVENCY';
-    supervisorySignature = createHash('sha256')
-      .update(`${prefix}:${solvencyStatus}:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${bufferCents}:${isSolvent}`)
-      .digest('hex');
-  }
+  const supervisorySignature = config.signatureFn
+    ? config.signatureFn(ctx)
+    : createHash('sha256')
+        .update(
+          `${config.hashPrefix ?? 'BASEL_SOLVENCY'}:${solvencyStatus}:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${bufferCents}:${isSolvent}`
+        )
+        .digest('hex');
 
   return {
     isSolvent,

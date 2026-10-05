@@ -24,13 +24,9 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
-  PartnerProfile,
-  PartnerCommission,
-  PartnerCoOpClaim,
   PartnerPayoutBatch,
   PayoutBatchType,
   PayoutRail,
-  PayoutBatchStatus,
   PayoutBatchExecutionResult,
 } from '@/tree/partners/types';
 

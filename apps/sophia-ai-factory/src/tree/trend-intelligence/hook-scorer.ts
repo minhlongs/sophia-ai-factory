@@ -101,6 +101,15 @@ const CURIOSITY_GAP_PATTERNS = [
   /(^|\s)(cái kết|bất ngờ|điều bí mật|sự thật đằng sau|chờ đến cuối|xem đến hết|lý do thực sự|bí quyết không ai nói)/i,
 ];
 
+const HOOK_STYLE_MATCHERS: readonly { style: HookStyle; patterns: readonly RegExp[] }[] = [
+  { style: 'question', patterns: QUESTION_PATTERNS },
+  { style: 'story_lead', patterns: STORY_LEAD_PATTERNS },
+  { style: 'problem_agitation', patterns: PROBLEM_AGITATION_PATTERNS },
+  { style: 'bold_claim', patterns: BOLD_CLAIM_PATTERNS },
+  { style: 'statistic_reveal', patterns: STATISTIC_PATTERNS },
+  { style: 'curiosity_gap', patterns: CURIOSITY_GAP_PATTERNS },
+];
+
 /**
  * Classifies a hook text string into one of the 6 canonical hook styles
  * using bilingual heuristic pattern matching.
@@ -112,49 +121,12 @@ export function classifyHookStyle(hookText: string): HookStyle {
     return 'curiosity_gap';
   }
 
-  // 1. Direct questions and inquiries take strong precedence
-  for (const pattern of QUESTION_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return 'question';
+  for (const { style, patterns } of HOOK_STYLE_MATCHERS) {
+    if (patterns.some((pattern) => pattern.test(trimmed))) {
+      return style;
     }
   }
 
-  // 2. Personal story and narrative lead-ins (e.g. "Story time: ...", "Last year I ...")
-  for (const pattern of STORY_LEAD_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return 'story_lead';
-    }
-  }
-
-  // 3. Problem agitation, warnings, fatal mistakes
-  for (const pattern of PROBLEM_AGITATION_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return 'problem_agitation';
-    }
-  }
-
-  // 4. Bold claims and shocking counter-intuitive assertions
-  for (const pattern of BOLD_CLAIM_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return 'bold_claim';
-    }
-  }
-
-  // 5. Specific data, numbers, percentages or metrics
-  for (const pattern of STATISTIC_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return 'statistic_reveal';
-    }
-  }
-
-  // 6. Curiosity gap and withholding crucial info
-  for (const pattern of CURIOSITY_GAP_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return 'curiosity_gap';
-    }
-  }
-
-  // Default fallback style
   return 'curiosity_gap';
 }
 
