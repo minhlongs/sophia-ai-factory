@@ -18,7 +18,6 @@ import type {
   ApacMarket,
   MarketPeakConfig,
   PeakSlotResult,
-  PeakTimeSlot,
 } from '@/seed/types/apac-syndication';
 
 export const APAC_MARKET_PEAKS: Record<ApacMarket, MarketPeakConfig> = {

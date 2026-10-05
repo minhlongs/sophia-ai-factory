@@ -7,7 +7,6 @@
 import { createHash } from 'node:crypto';
 import {
   calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
 } from './basel-solvency-domain-engine';
 
 import {

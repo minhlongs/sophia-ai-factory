@@ -4,10 +4,8 @@
  * @description Pure domain engine for Basel IV Capital Adequacy (CET1, LCR, NSFR) and Collateral Rehypothecation.
  */
 
-import {
-  BaselIvCapitalAdequacySnapshot,
+import type {
   RehypothecatedCollateralAllocation,
-  GATE_14_SCALE_TARGETS,
 } from '@/seed/types/cls-liquidity';
 
 export interface CapitalAdequacyEvaluation {

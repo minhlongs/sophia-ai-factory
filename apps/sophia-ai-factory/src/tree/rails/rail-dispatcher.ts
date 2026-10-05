@@ -22,12 +22,11 @@
 import {
   type LocalizedPaymentIntentInput,
   type LocalizedPaymentIntentResult,
-  type LocalizedPaymentRail,
 } from '@/seed/types/localized-rails';
 import { type SupportedCurrency } from '@/seed/types/enterprise-billing';
 import { calculateHedgedQuote, normalizeCurrencyAmount } from '@/tree/fx/fx-hedging-engine';
 import { calculateTaxObligation } from '@/tree/tax/tax-compliance-engine';
-import { generateSepaMandate, validateIban } from './sepa-direct-debit';
+import { generateSepaMandate } from './sepa-direct-debit';
 import { generatePromptPayQrPayload } from './promptpay-thai-qr';
 import { generatePayNowQrPayload, createGrabPaySession } from './paynow-grabpay';
 

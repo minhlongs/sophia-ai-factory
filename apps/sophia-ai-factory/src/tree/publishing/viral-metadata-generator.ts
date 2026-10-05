@@ -14,7 +14,6 @@
 
 import type {
   ApacLanguage,
-  ApacMarket,
   PlatformType,
   ThumbnailPromptSpec,
   ViralHookArchetype,
@@ -200,7 +199,7 @@ export function generateThumbnailPromptSpec(params: {
   platform: PlatformType;
   hookHeadline: string;
 }): ThumbnailPromptSpec {
-  const { topic, language, hookHeadline } = params;
+  const { topic, hookHeadline } = params;
 
   // Short 3-5 word headline for visual thumbnail badge
   const words = hookHeadline.split(/\s+/);
