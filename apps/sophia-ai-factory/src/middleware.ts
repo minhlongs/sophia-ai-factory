@@ -4,7 +4,7 @@ import { generateNonce } from '@/seed/security/nonce-utils';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
 import { record as recordMetrics, setWAEBinding } from '@/seed/observability/telemetry/metrics';
-import { isInternalOrStatic } from './middleware-helpers';
+import { isInternalOrStatic } from './middleware/helpers';
 import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';

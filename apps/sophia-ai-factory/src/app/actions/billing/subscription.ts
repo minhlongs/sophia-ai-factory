@@ -8,8 +8,9 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient, getD1 } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { resolveOrgId } from '@/seed/auth/workspace-access';
+import { queryRefundablePurchases } from '@/land/billing';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -117,53 +118,7 @@ export async function cancelSubscriptionAction(
 export async function listRefundablePurchasesAction(): Promise<RefundablePurchase[]> {
   const user = await getCurrentUser();
   if (!user) return [];
-
-  try {
-    const db = await getD1();
-    if (!db) throw new Error('D1 database binding not available');
-
-    const nowSec = Math.floor(Date.now() / 1000);
-    const cutoff = nowSec - REFUND_WINDOW_DAYS * SECONDS_PER_DAY;
-
-    const result = await db
-      .prepare(
-        `SELECT p.id, p.sku, p.amount_cents, p.status, p.created_at, p.paid_at
-         FROM user_purchases p
-         WHERE p.user_id = ?1
-           AND p.kind = 'one_time'
-           AND p.status = 'paid'
-           AND COALESCE(p.paid_at, p.created_at) >= ?2
-           AND NOT EXISTS (
-             SELECT 1 FROM refund_requests r
-             WHERE r.purchase_id = p.id AND r.user_id = p.user_id
-           )
-         ORDER BY p.created_at DESC
-         LIMIT 50`,
-      )
-      .bind(user.id, cutoff)
-      .all<{
-        id: string;
-        sku: string;
-        amount_cents: number;
-        status: string;
-        created_at: number;
-        paid_at: number | null;
-      }>();
-
-    const purchases = (result.results ?? []).map((row) => {
-      const purchaseEpoch = row.paid_at ?? row.created_at;
-      const daysSince = (nowSec - purchaseEpoch) / SECONDS_PER_DAY;
-      return {
-        ...row,
-        days_remaining: Math.max(0, Math.ceil(REFUND_WINDOW_DAYS - daysSince)),
-      };
-    });
-
-    return purchases;
-  } catch (err) {
-    logger.error('[listRefundablePurchases] Failed', err instanceof Error ? err : undefined);
-    return [];
-  }
+  return queryRefundablePurchases(user.id);
 }
 
 // ---------------------------------------------------------------------------

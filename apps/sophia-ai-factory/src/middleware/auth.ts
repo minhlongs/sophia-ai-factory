@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from '@/seed/auth/better-auth-server';
+import { getCurrentUserFromHeaders, getSessionFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -35,33 +35,23 @@ export async function getSessionFromRequest(
   request: NextRequest
 ): Promise<{ authenticated: boolean; session?: BetterAuthSession }> {
   try {
-    const auth = await getAuth();
-    if (!auth) {
-      logger.warn('[Middleware Auth] Auth instance not available');
-      return { authenticated: false };
-    }
-
-    const result = await auth.api.getSession({ headers: request.headers });
-
+    const result = await getSessionFromHeaders(request.headers);
     if (!result?.session) {
       return { authenticated: false };
     }
 
-    // Normalize expiresAt to number (timestamp) if it's a Date
-    const rawSession = result.session;
-    const expiresAt = rawSession.expiresAt instanceof Date
-      ? rawSession.expiresAt.getTime()
-      : (rawSession.expiresAt as number | undefined);
-
     return {
       authenticated: true,
       session: {
-        ...result,
-        session: {
-          ...rawSession,
-          expiresAt,
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.full_name,
+          image: result.user.avatar_url,
+          role: result.user.role,
         },
-      } as BetterAuthSession,
+        session: result.session,
+      },
     };
   } catch (error) {
     logger.error('[Middleware Auth] Session check failed:', toError(error));

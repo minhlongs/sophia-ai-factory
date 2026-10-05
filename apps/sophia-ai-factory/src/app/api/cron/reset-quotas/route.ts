@@ -20,23 +20,13 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
+import { getD1 } from '@/seed/db/client';
 
 export const dynamic = 'force-dynamic';
 
 const CRON_NAME = 'reset-quotas';
 // Idempotency: skip if ran within the last 55 minutes (hourly cron safety window)
 const IDEMPOTENCY_WINDOW_MS = 55 * 60 * 1000;
-
-function getD1Binding(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch {
-    return null;
-  }
-}
 
 interface NonceRow {
   user_id: string;
@@ -48,7 +38,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (authError) return authError;
 
   const cronCtx = startCronCheckIn(CRON_NAME);
-  const d1 = getD1Binding();
+  const d1 = await getD1();
 
   // Idempotency guard: skip if recently run
   if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {

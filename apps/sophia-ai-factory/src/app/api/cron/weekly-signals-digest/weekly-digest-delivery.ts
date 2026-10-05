@@ -7,6 +7,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
+import { getD1Sync } from '@/seed/db/client'
 
 const SERVICE_NAME_RESEND = 'resend-email'
 const SERVICE_NAME_TELEGRAM = 'telegram-bot'
@@ -78,11 +79,8 @@ export async function sendTelegram(summary: string): Promise<void> {
 
 export function getD1(): D1Database | null {
   try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
-    if (env?.DB) return env.DB as D1Database
-    const ctxSymbol = Symbol.for('__cloudflare-context__')
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol]
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database
+    return getD1Sync()
+  } catch {
     return null
-  } catch { return null }
+  }
 }

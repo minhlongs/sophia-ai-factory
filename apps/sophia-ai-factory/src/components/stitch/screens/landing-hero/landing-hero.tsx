@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import { MarketingNav, MarketingFooter } from '@/components/stitch/layouts';
 import {
@@ -32,7 +32,6 @@ const AVATARS = [
 export default function LandingHero() {
   const t = useTranslations('stitch.landing');
   const tLanding = useTranslations('landing');
-  const locale = useLocale();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const toggleFaq = (idx: number) => {
@@ -287,7 +286,7 @@ export default function LandingHero() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-3">
-              {locale === 'vi' ? 'QUY TRÌNH VẬN HÀNH' : 'WORKFLOW ENGINE'}
+              {tLanding('workflow.badge')}
             </h2>
             <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-4">
               {tLanding('workflow.title')}
@@ -352,7 +351,7 @@ export default function LandingHero() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-3">
-              {locale === 'vi' ? 'TÍNH NĂNG ĐỘT PHÁ' : 'CORE CAPABILITIES'}
+              {tLanding('features.badge')}
             </h2>
             <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-4">
               {tLanding('features.title')}
@@ -403,7 +402,7 @@ export default function LandingHero() {
                   </div>
                   <div className="mt-8 pt-4 border-t border-white/[0.06] flex items-center gap-2 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>{locale === 'vi' ? 'Sẵn sàng triển khai ngay' : 'Production Ready'}</span>
+                    <span>{tLanding('features.production_ready')}</span>
                   </div>
                 </div>
               );
@@ -420,7 +419,7 @@ export default function LandingHero() {
               FAQ
             </h2>
             <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              {locale === 'vi' ? 'Câu Hỏi Thường Gặp' : 'Frequently Asked Questions'}
+              {tLanding('faq.title')}
             </h3>
           </div>
 
@@ -467,14 +466,10 @@ export default function LandingHero() {
               <Zap className="w-6 h-6" />
             </div>
             <h3 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-4">
-              {locale === 'vi'
-                ? 'Sẵn Sàng Xây Dựng Đế Chế Video AI?'
-                : 'Ready to Build Your AI Video Empire?'}
+              {t('cta.readyTitle')}
             </h3>
             <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
-              {locale === 'vi'
-                ? 'Khởi tạo tài khoản trong 30 giây. Kết nối chìa khóa BYOK và bắt đầu tạo video không giới hạn ngay hôm nay.'
-                : 'Create your account in 30 seconds. Connect your BYOK keys and start generating unlimited videos today.'}
+              {t('cta.readySubtitle')}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -488,7 +483,7 @@ export default function LandingHero() {
                 href="/pricing"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 transition-all"
               >
-                <span>{locale === 'vi' ? 'Xem Bảng Giá' : 'View Pricing'}</span>
+                <span>{t('cta.viewPricing')}</span>
               </Link>
             </div>
           </div>

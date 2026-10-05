@@ -14,22 +14,11 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
+import { getD1 } from '@/seed/db/client';
 
 const CRON_NAME = 'email-outbox-flush';
 
 export const dynamic = 'force-dynamic';
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);

@@ -67,36 +67,53 @@ export async function getCurrentUser(): Promise<User | null> {
   };
 }
 
+export interface RawSessionData {
+  user: User;
+  session: {
+    id: string;
+    expiresAt?: number;
+    [key: string]: unknown;
+  };
+}
+
 /**
- * Get current user from raw request headers (for API routes/middleware).
- * Does NOT use next/headers — pass headers explicitly.
- *
- * Throws AuthSystemError on DB/system failures so callers can distinguish
- * "no session" (return null → 401) from "system down" (503 + retry hint).
+ * Get raw session and user data from request headers for middleware.
  */
-export async function getCurrentUserFromHeaders(
+export async function getSessionFromHeaders(
   reqHeaders: Headers,
-): Promise<User | null> {
+): Promise<RawSessionData | null> {
   try {
     if (!hasAuthCredential(reqHeaders)) return null;
 
     const auth = await getAuth();
     if (!auth) return null;
     const session = await auth.api.getSession({ headers: reqHeaders });
-    if (!session) return null;
+    if (!session || !session.user) return null;
 
     const user = session.user as Record<string, unknown>;
+    const rawSession = (session.session ?? {}) as Record<string, unknown>;
+    const expiresAt = rawSession.expiresAt instanceof Date
+      ? rawSession.expiresAt.getTime()
+      : (rawSession.expiresAt as number | undefined);
+
     return {
-      id: session.user.id,
-      email: session.user.email,
-      full_name: (session.user.name ?? undefined) as string | undefined,
-      avatar_url: (session.user.image ?? undefined) as string | undefined,
-      role: (user.role as string) ?? 'user',
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        full_name: (session.user.name ?? undefined) as string | undefined,
+        avatar_url: (session.user.image ?? undefined) as string | undefined,
+        role: (user.role as string) ?? 'user',
+      },
+      session: {
+        ...rawSession,
+        id: (rawSession.id as string) ?? session.user.id,
+        expiresAt,
+      },
     };
   } catch (err) {
     unstable_rethrow(err);
     logger.error(
-      '[better-auth-session] getCurrentUserFromHeaders failed',
+      '[better-auth-session] getSessionFromHeaders failed',
       err instanceof Error ? err : new Error(String(err)),
       {
         errorName: err instanceof Error ? err.constructor.name : typeof err,
@@ -109,4 +126,18 @@ export async function getCurrentUserFromHeaders(
       err,
     );
   }
+}
+
+/**
+ * Get current user from raw request headers (for API routes/middleware).
+ * Does NOT use next/headers — pass headers explicitly.
+ *
+ * Throws AuthSystemError on DB/system failures so callers can distinguish
+ * "no session" (return null → 401) from "system down" (503 + retry hint).
+ */
+export async function getCurrentUserFromHeaders(
+  reqHeaders: Headers,
+): Promise<User | null> {
+  const result = await getSessionFromHeaders(reqHeaders);
+  return result ? result.user : null;
 }

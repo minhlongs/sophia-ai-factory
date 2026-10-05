@@ -414,11 +414,14 @@
           "description": "Theo dõi thu nhập từ các mạng affiliate (BYOK Apollo / PartnerStack / Impact)"
         }
       },
+      "badge": "QUY TRÌNH VẬN HÀNH",
       "cta": "Dành cho nhà sáng tạo sẵn sàng ship hôm nay — không phải một ngày nào đó"
     },
     "features": {
       "title": "Mọi Thứ Bạn Cần Để Thống Trị",
       "subtitle": "Tính năng mạnh mẽ dành cho nhà sáng tạo nội dung chuyên nghiệp",
+      "badge": "TÍNH NĂNG ĐỘT PHÁ",
+      "production_ready": "Sẵn sàng triển khai ngay",
       "items": {
         "ai_engine": {
           "title": "Công cụ AI",
@@ -748,8 +751,11 @@
     },
     "footer": {
       "brand": "Sophia AI Factory",
+      "brand_description": "Nền tảng tự động hóa sản xuất video AI, kết nối mạng lưới affiliate toàn cầu và vận hành đa kênh thông qua Telegram & Webhooks.",
       "description": "Biến nội dung thành đế chế. Nền tảng tạo video AI tự động, có thể mở rộng và sinh lời.",
       "product": "Sản Phẩm",
+      "engine": "Hạ Tầng",
+      "legal": "Pháp Lý",
       "company": "Công Ty",
       "links": {
         "pricing": "Bảng Giá",
@@ -7122,7 +7128,10 @@
       },
       "cta": {
         "startFree": "Dùng Thử Miễn Phí",
-        "watchDemo": "Xem Demo"
+        "watchDemo": "Xem Demo",
+        "viewPricing": "Xem Bảng Giá",
+        "readyTitle": "Sẵn Sàng Xây Dựng Đế Chế Video AI?",
+        "readySubtitle": "Khởi tạo tài khoản trong 30 giây. Kết nối chìa khóa BYOK và bắt đầu tạo video không giới hạn ngay hôm nay."
       },
       "trustBar": {
         "label": "Cộng đồng sáng tạo",
@@ -7539,6 +7548,19 @@
       "level3Description": "Agent tự động trong phạm vi bảo vệ, ghi log tất cả hành động",
       "level4": "Tự chủ hoàn toàn",
       "level4Description": "Agent hoàn toàn tự chủ, giám sát tối thiểu"
+    },
+    "policiesTitle": "Chính sách theo loại mission",
+    "policiesDescription": "Đặt cấp độ tự chủ riêng cho từng loại mission. Mặc định L2: agent chạy, cần duyệt trước khi đăng.",
+    "networkError": "Lỗi mạng, vui lòng thử lại",
+    "approveBeforePublish": "Duyệt trước khi đăng",
+    "save": "Lưu",
+    "newMissionPlaceholder": "Loại mission mới (vd: article)",
+    "addDefaultL2": "Thêm (L2 mặc định)",
+    "policyTiers": {
+      "tier0": "L0 Thủ công",
+      "tier1": "L1 Hỗ trợ",
+      "tier2": "L2 Giám sát",
+      "tier3": "L3 Tự động hoàn toàn"
     }
   },
   "rollback": {

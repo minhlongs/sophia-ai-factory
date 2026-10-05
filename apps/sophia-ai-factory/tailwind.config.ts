@@ -6,11 +6,18 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/land/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/forest/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/tree/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/seed/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       spacing: {
+        xs: '0.25rem',
+        sm: '0.5rem',
+        md: '1rem',
+        lg: '1.5rem',
+        xl: '2rem',
         '18': '4.5rem',
         '22': '5.5rem',
         // Stitch-specific spacing

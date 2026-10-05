@@ -59,6 +59,8 @@ export * from './storage/get-canonical-video-url';
 export * from './publishing/path-a-template';
 export * from './publishing/path-b-cinematic';
 export * from './publishing/video-access-control';
+export * from './publishing/video-publishing.service';
+export * from './dubbing/dubbing-service';
 
 // ============================================================================
 // Templates Subdomain

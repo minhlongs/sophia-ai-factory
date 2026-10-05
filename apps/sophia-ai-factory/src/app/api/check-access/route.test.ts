@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from './route';
 import { NextRequest } from 'next/server';
 import { tierGuard } from '@/land/tier-guard';
-import { checkTierAccess } from '@/land/features';
+import { checkTierAccess } from '@/land/feature-flags';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 
@@ -14,7 +14,7 @@ interface MockResponse {
 
 // Mock dependencies
 vi.mock('@/land/tier-guard');
-vi.mock('@/land/features');
+vi.mock('@/land/feature-flags');
 vi.mock('@/seed/auth/better-auth-session', () => ({
     getCurrentUserFromHeaders: vi.fn(),
 }));

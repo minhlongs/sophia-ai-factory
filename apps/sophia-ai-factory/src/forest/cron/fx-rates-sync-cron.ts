@@ -14,15 +14,12 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import {
-  type SupportedCurrency,
-  ALL_SUPPORTED_CURRENCIES,
-} from '@/seed/types/enterprise-billing';
+import { ALL_SUPPORTED_CURRENCIES } from '@/seed/types/enterprise-billing';
 import {
   fetchMultiTierRates,
   DEFAULT_HEDGING_BUFFER_PERCENT,
 } from '@/tree/fx/fx-hedging-engine';
-import { recordCronRun, wasRecentlyRun } from './run-tracker';
+import { recordCronRun, wasRecentlyRun } from '@/tree/cron/run-tracker';
 
 const CRON_JOB_NAME = 'fx_rates_sync';
 const MIN_INTERVAL_MS = 5 * 60 * 1000; // 5-minute debounce

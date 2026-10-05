@@ -1,4 +1,4 @@
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { type OrgRole } from '@/seed/auth/rbac';
 export type { OrgRole };
 
@@ -118,6 +118,48 @@ export async function getOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
     role: m.role as OrgRole,
     createdAt: m.created_at,
   }));
+}
+
+export interface OrgMemberWithDetails extends OrgMemberRow {
+  email: string;
+  name: string;
+}
+
+/**
+ * Get all members of an org enriched with user profile details via a single batch query (O(1)).
+ */
+export async function getOrgMembersWithDetails(orgId: string): Promise<OrgMemberWithDetails[]> {
+  const members = await getOrgMembers(orgId);
+  if (members.length === 0) return [];
+
+  const userIds = Array.from(new Set(members.map((m) => m.userId)));
+  const userMap = new Map<string, { email: string; name: string }>();
+
+  try {
+    const d1 = await getD1();
+    if (d1) {
+      const placeholders = userIds.map((_, i) => `?${i + 1}`).join(', ');
+      const result = await d1
+        .prepare(`SELECT id, email, name FROM user WHERE id IN (${placeholders})`)
+        .bind(...userIds)
+        .all<{ id: string; email: string; name: string }>();
+
+      for (const row of result.results ?? []) {
+        userMap.set(row.id, { email: row.email ?? '', name: row.name ?? '' });
+      }
+    }
+  } catch {
+    // Non-fatal — proceed with blank details
+  }
+
+  return members.map((member) => {
+    const details = userMap.get(member.userId) ?? { email: '', name: '' };
+    return {
+      ...member,
+      email: details.email,
+      name: details.name,
+    };
+  });
 }
 
 /**

@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError, getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
+import { getD1 } from '@/seed/db/client';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/land/status/status-store';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
@@ -43,17 +44,6 @@ const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const LATENCY_WARN_MS = 5000;
 const SERVICE_NAME = 'telegram-uptime-alert';
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch {
-    return null;
-  }
-}
 
 /** Send a Telegram message to the admin chat. Best-effort — never throws. */
 async function alertAdmin(message: string): Promise<void> {

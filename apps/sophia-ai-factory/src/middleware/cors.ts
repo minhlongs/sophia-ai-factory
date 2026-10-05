@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';;
+import { NextResponse } from 'next/server';
 /**
  * CORS middleware utilities
  *
@@ -30,7 +30,7 @@ function isOriginAllowed(origin: string | null): boolean {
  */
 export function handleCorsPrelight(origin: string | null): NextResponse {
   if (!origin || !isOriginAllowed(origin)) {
-    return NextResponse.json({}, { status: 204 });
+    return new NextResponse(null, { status: 204 });
   }
 
   const response = NextResponse.json({}, { status: 200 });

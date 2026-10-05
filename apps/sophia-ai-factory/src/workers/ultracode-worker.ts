@@ -62,8 +62,7 @@ export default {
 
 // ── handlers ────────────────────────────────────────────────────────────────
 
-import { isAllowed as isTreeAllowed, requestPairing as reqTreePairing } from '../tree/telegram/pairing'
-import { isAllowed as isForestAllowed, requestPairing as reqForestPairing } from '../forest/telegram/pairing'
+import { isAllowed, requestPairing } from '../tree/telegram/pairing'
 
 async function handleTelegram(request: Request, env: UltracodeEnv): Promise<Response> {
   try {
@@ -79,18 +78,16 @@ async function handleTelegram(request: Request, env: UltracodeEnv): Promise<Resp
     const firstName = message.from.first_name
     const text = (message.text || '').trim()
 
-    const pairedTree = await isTreeAllowed(env.DB, chatId)
-    const pairedForest = await isForestAllowed(env.DB, chatId)
+    const paired = await isAllowed(env.DB, chatId)
 
-    if (!pairedTree && !pairedForest) {
-      const treeCode = await reqTreePairing(env.DB, chatId, firstName)
-      await reqForestPairing(env.DB, chatId, firstName)
-      await sendTg(env, chatId, `Pairing code: <code>${treeCode.code}</code>\nAsk admin to /pair_approve ${treeCode.code}`)
-      return jsonResponse({ status: 'pairing-requested', code: treeCode.code })
+    if (!paired) {
+      const code = await requestPairing(env.DB, chatId, firstName)
+      await sendTg(env, chatId, `Pairing code: <code>${code.code}</code>\nAsk admin to /pair_approve ${code.code}`)
+      return jsonResponse({ status: 'pairing-requested', code: code.code })
     }
 
     if (text === '/pair') {
-      const code = await reqTreePairing(env.DB, chatId, firstName)
+      const code = await requestPairing(env.DB, chatId, firstName)
       await sendTg(env, chatId, `Pairing code: <code>${code.code}</code>\nAsk admin to /pair_approve ${code.code}`)
       return jsonResponse({ status: 'pairing-requested', code: code.code })
     }

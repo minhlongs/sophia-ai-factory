@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkTierAccess, hasTierAccess, getAccessibleFeatures } from './features';
+import { checkTierAccess, hasTierAccess, getAccessibleFeatures } from './feature-flags';
 
 vi.mock('@/seed/config/flags', () => ({
   getFeatureFlag: vi.fn((flag: string) => {

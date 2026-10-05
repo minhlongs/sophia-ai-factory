@@ -10,7 +10,7 @@
 
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
-import { buildClickBankEventId } from './commission-ledger-mutations'
+import { buildClickBankEventId } from './affiliate-ledger-mutations'
 
 /**
  * Check if a ClickBank postback is a replay (already processed).

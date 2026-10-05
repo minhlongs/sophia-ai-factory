@@ -414,11 +414,14 @@
           "description": "Track earnings from affiliate networks (BYOK Apollo / PartnerStack / Impact)"
         }
       },
+      "badge": "WORKFLOW ENGINE",
       "cta": "Built for creators ready to ship today, not someday"
     },
     "features": {
       "title": "Everything You Need to Dominate",
       "subtitle": "Powerful features designed for serious content creators",
+      "badge": "CORE CAPABILITIES",
+      "production_ready": "Production Ready",
       "items": {
         "ai_engine": {
           "title": "AI Engine",
@@ -748,8 +751,11 @@
     },
     "footer": {
       "brand": "Sophia AI Factory",
+      "brand_description": "Autonomous AI video production platform, global affiliate revenue aggregation, and multichannel distribution via Telegram & Webhooks.",
       "description": "Turn content into empire. Automated, scalable, and profitable AI video creation platform.",
       "product": "Product",
+      "engine": "Engine",
+      "legal": "Legal",
       "company": "Company",
       "links": {
         "pricing": "Pricing",
@@ -7115,7 +7121,10 @@
       },
       "cta": {
         "startFree": "Start Free",
-        "watchDemo": "Watch Demo"
+        "watchDemo": "Watch Demo",
+        "viewPricing": "View Pricing",
+        "readyTitle": "Ready to Build Your AI Video Empire?",
+        "readySubtitle": "Create your account in 30 seconds. Connect your BYOK keys and start generating unlimited videos today."
       },
       "trustBar": {
         "label": "Creator community",
@@ -7532,6 +7541,19 @@
       "level3Description": "Agent executes within guardrails, logs all actions",
       "level4": "Full autonomy",
       "level4Description": "Agent operates independently, minimal oversight"
+    },
+    "policiesTitle": "Per-mission-type policies",
+    "policiesDescription": "Set an autonomy tier per mission type. Default L2: agents run, publish requires approval.",
+    "networkError": "Network error, please retry",
+    "approveBeforePublish": "Approve before publish",
+    "save": "Save",
+    "newMissionPlaceholder": "New mission type (e.g. article)",
+    "addDefaultL2": "Add (default L2)",
+    "policyTiers": {
+      "tier0": "L0 Manual",
+      "tier1": "L1 Assisted",
+      "tier2": "L2 Supervised",
+      "tier3": "L3 Full auto"
     }
   },
   "rollback": {

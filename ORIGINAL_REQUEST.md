@@ -1709,3 +1709,45 @@ Integrity mode: `development`
 
 
 
+
+
+## 2026-10-05T13:56:17Z
+
+# Teamwork Project Prompt
+
+Comprehensive Full-Stack Architectural Refactoring of the Sophia AI Factory codebase (Phase 2): Consolidate Forest orchestrators and Land workflows, modernize App Router controllers and UI components, harden Edge middleware, and execute zero-regression Cloudflare Edge deployment with live SHA verification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. Forest Orchestrators & Land Workflows Consolidation
+Audit and consolidate repetitive orchestrators and business workflows in `src/forest/` (Inngest event workflows, RaaS gateways, usage metering, quota management) and `src/land/` (billing adapters, payout pipelines, affiliate networks, customer onboarding/handover). Unify fragmented workflow implementations into canonical domain managers, enforce canonical barrel exports (`index.ts`) for each domain, and eliminate redundant logic while strictly preserving existing external contracts and event schemas.
+
+### R2. Presentation & App Router Modernization (`src/app/` & `src/components/`)
+Modernize Next.js App Router route handlers, server actions, and UI components. Ensure all API route handlers and server actions function strictly as thin controllers delegating to `land` and `forest` workflows without embedded database queries or leaked domain logic. Prune obsolete or duplicate UI components in `src/components/`, standardize design tokens, and enforce bilingual (Vietnamese/English) UI accessibility standards.
+
+### R3. Edge Middleware, SDK & Runtime Hardening
+Refactor edge middleware (`src/middleware/`, `src/middleware.ts`) and client SDK (`src/sdk/`) to align with Next.js 16 and Cloudflare Workers runtime standards. Eliminate deprecated runtime calls, ensure bulletproof secret isolation, and optimize bundle chunking to minimize cold-start latency on Cloudflare Workers edge.
+
+### R4. Continuous Zero-Regression Quality Gates & Live Edge Deployment
+Maintain 100% test pass rate across all existing unit, adversarial stress, and E2E integration test suites. Enforce strict adherence to layer boundary imports (`seed` → `tree` → `forest` → `land`) with 0 violations reported by `scripts/check-layer-boundaries.sh`. Verify 0 TypeScript compiler errors (`npm run type-check`), 0 ESLint errors/warnings, and 9/9 zero-bug verification (`zero-bug-verify.sh --quick`). Deploy to Cloudflare Workers edge via `deploy-with-sha.sh` and verify bit-for-bit SHA parity against `https://sophia.agencyos.network/api/version`.
+
+## Acceptance Criteria
+
+### Architectural Integrity & Code Purity
+- [ ] Layer Boundaries: `bash scripts/check-layer-boundaries.sh` reports 0 violations across all layers
+- [ ] TypeScript Compilation: `npm run type-check` completes with exit code 0 and 0 errors
+- [ ] Linting & Standards: `npm run lint` completes with 0 errors and 0 warnings
+- [ ] Type Safety: Zero `:any` types introduced; strict type invariants preserved
+- [ ] Controller Purity: `src/app/` route handlers contain zero raw SQL/D1 calls or duplicated domain logic
+- [ ] Clean Bundle: Obsolete components and dead imports pruned with 0 broken references
+- [ ] Protected Flows: Setup Wizard, Telegram Commander Bot, and NOWPayments IPN remain 100% intact
+
+### Verification & Production Deployment
+- [ ] Test Suite Regression: 100% of all unit, adversarial stress, and E2E test suites pass (`npx vitest run`)
+- [ ] Zero-Bug Certification: `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS
+- [ ] Production Edge Deployment: Code builds cleanly and deploys to Cloudflare Edge via `deploy-with-sha.sh`
+- [ ] Edge Live SHA Verification: Live edge `https://sophia.agencyos.network/api/version` matches commit SHA bit-for-bit
+- [ ] Health Verification: `https://sophia.agencyos.network/api/health` returns HTTP 200

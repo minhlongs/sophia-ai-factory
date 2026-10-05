@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import { Sparkles, Shield, Cpu, Zap, ArrowUpRight } from 'lucide-react';
 
 export function MarketingFooter() {
   const t = useTranslations('stitch.landing');
   const tNav = useTranslations('landing.nav');
-  const locale = useLocale();
+  const tFooter = useTranslations('landing.footer');
 
   return (
     <footer className="bg-[#06070A] border-t border-white/[0.08] relative overflow-hidden">
@@ -28,9 +28,7 @@ export function MarketingFooter() {
               </span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              {locale === 'vi'
-                ? 'Nền tảng tự động hóa sản xuất video AI, kết nối mạng lưới affiliate toàn cầu và vận hành đa kênh thông qua Telegram & Webhooks.'
-                : 'Autonomous AI video production platform, global affiliate revenue aggregation, and multichannel distribution via Telegram & Webhooks.'}
+              {tFooter('brand_description')}
             </p>
             <div className="flex items-center gap-3 pt-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
@@ -47,7 +45,7 @@ export function MarketingFooter() {
           {/* Product Links */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              {locale === 'vi' ? 'Sản Phẩm' : 'Product'}
+              {tFooter('product')}
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -76,7 +74,7 @@ export function MarketingFooter() {
           {/* Enterprise & Infrastructure */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              {locale === 'vi' ? 'Hạ Tầng' : 'Engine'}
+              {tFooter('engine')}
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li className="flex items-center gap-1.5 text-slate-400">
@@ -103,7 +101,7 @@ export function MarketingFooter() {
           {/* Legal & Compliance */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              {locale === 'vi' ? 'Pháp Lý' : 'Legal'}
+              {tFooter('legal')}
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>

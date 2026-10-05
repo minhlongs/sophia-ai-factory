@@ -1,20 +1,24 @@
 /**
  * GET /api/sdk/typescript
  *
- * Returns a single-file TypeScript SDK as `text/typescript`. The customer
- * can curl + paste this into their project and have type-safe wrappers
- * for all 8 algorithm endpoints in one file — the literal "5 lines of
- * code" promise from the homepage:
+ * Returns a standalone single-file TypeScript SDK as `text/typescript`.
+ * Provides full type-safe wrappers for:
+ * - Missions lifecycle (create, get, streamEvents, list)
+ * - MCU Credits (balance, consume)
+ * - 7 Core algorithm endpoints
  *
+ * Usage:
  *   curl https://sophia.agencyos.network/api/sdk/typescript > sophia.ts
- *   import { SophiaClient } from "./sophia"
- *   const s = new SophiaClient(token)
- *   const { translated } = await s.translate({ text, fromLang, toLang })
+ *   import { SophiaClient } from "./sophia";
+ *   const sophia = new SophiaClient(token);
+ *   const balance = await sophia.credits.balance();
+ *   const { translated } = await sophia.translate({ text, fromLang, toLang });
  *
  * No auth required. Edge-cached 1 hour.
  *
  * @module app/api/sdk/typescript
  */
+
 import { NextResponse } from 'next/server';
 
 const SDK_SOURCE = `/**
@@ -22,21 +26,96 @@ const SDK_SOURCE = `/**
  * Source of truth: https://sophia.agencyos.network/api/sdk/typescript
  */
 
-export type SophiaToken = string;
-
-interface RequestOptions {
-  signal?: AbortSignal;
+export interface SophiaClientOptions {
+  apiKey?: string;
+  token?: string;
+  baseUrl?: string;
+  timeoutMs?: number;
 }
 
-const DEFAULT_BASE = "https://sophia.agencyos.network";
+export type SophiaToken = string;
 
-async function call<T>(base: string, path: string, init: RequestInit, opts: RequestOptions): Promise<T> {
-  const res = await fetch(base + path, { ...init, signal: opts.signal });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "<failed to read response body>");
-    throw new Error(\`sophia[\${res.status}] \${path}: \${body.slice(0, 200)}\`);
+export interface RequestOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export class SophiaApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly body?: unknown,
+  ) {
+    super(message);
+    this.name = 'SophiaApiError';
   }
-  return (await res.json()) as T;
+}
+
+export interface Mission {
+  id: string;
+  command: string;
+  params: Record<string, unknown> | null;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  result: Record<string, unknown> | null;
+  error: string | null;
+  credits_used: number;
+  credits_required?: number;
+  created_at: number;
+  updated_at: number;
+  completed_at: number | null;
+  webhook_url: string | null;
+  webhook_fired_at: number | null;
+  eta_seconds?: number;
+  stream_url?: string;
+}
+
+export interface CreateMissionOptions {
+  command: string;
+  params?: Record<string, unknown>;
+  webhook_url?: string;
+}
+
+export interface ListMissionsOptions {
+  status?: string;
+  command?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface PaginatedMissions {
+  missions: Mission[];
+  has_more: boolean;
+  next_cursor: string | null;
+}
+
+export interface MissionEvent {
+  event: string;
+  data: Record<string, unknown>;
+}
+
+export interface McuBalance {
+  credits_remaining: number;
+  credits_total_purchased: number;
+  credits_total_used: number;
+  recent_transactions?: unknown[];
+}
+
+export interface ConsumeCreditsOptions {
+  amount: number;
+  reason?: string;
+  missionId?: string;
+}
+
+export interface ConsumeCreditsResult {
+  success: boolean;
+  credits_remaining: number;
+  credits_consumed: number;
+  transaction_id?: string;
+}
+
+export interface AffiliateDescriptionOptions {
+  niche?: string;
+  max?: number;
 }
 
 export interface AffiliateDescription {
@@ -44,14 +123,33 @@ export interface AffiliateDescription {
   affiliateCount: number;
 }
 
+export interface TranslateInput {
+  text: string;
+  fromLang: string;
+  toLang: string;
+  tone?: 'literal' | 'natural';
+}
+
 export interface TranslateResult {
   translated: string;
   model: string;
 }
 
+export interface VoiceCloneInput {
+  name: string;
+  audioUrls: string[];
+  description?: string;
+}
+
 export interface VoiceCloneResult {
   voiceId: string;
   samplesUploaded: number;
+}
+
+export interface SeoScriptInput {
+  topic: string;
+  keywords?: string[];
+  language?: 'en' | 'vi';
 }
 
 export interface SeoScriptResult {
@@ -68,62 +166,326 @@ export interface LiveStats {
   generatedAt: number;
 }
 
+export interface PublishScheduleInput {
+  videoId: string;
+  channelId: string;
+  scheduledAt: number;
+  caption?: string;
+  hashtags?: string[];
+}
+
 export interface PublishScheduleResult {
   jobId: string;
   scheduledAt: number;
-  status: "scheduled";
+  status: 'scheduled';
+}
+
+export type PublishProvider =
+  | 'tiktok'
+  | 'youtube'
+  | 'instagram'
+  | 'facebook'
+  | 'twitter'
+  | 'linkedin'
+  | 'pinterest'
+  | 'threads'
+  | 'reddit'
+  | 'bluesky'
+  | 'mastodon'
+  | 'zalo'
+  | 'whatsapp';
+
+export interface RegisterChannelInput {
+  provider: PublishProvider;
+  externalAccountId: string;
+  accessToken: string;
+  refreshToken?: string;
 }
 
 export interface RegisterChannelResult {
   channelId: string;
   provider: string;
-  status: "active";
+  status: 'active';
+}
+
+function combineSignals(signals: AbortSignal[]): AbortSignal {
+  if (typeof AbortSignal.any === 'function') {
+    return AbortSignal.any(signals);
+  }
+  const controller = new AbortController();
+  for (const sig of signals) {
+    if (sig.aborted) {
+      controller.abort(sig.reason);
+      return controller.signal;
+    }
+    sig.addEventListener('abort', () => controller.abort(sig.reason), { once: true });
+  }
+  return controller.signal;
 }
 
 export class SophiaClient {
-  constructor(private token: SophiaToken, private base: string = DEFAULT_BASE) {}
+  private readonly apiKey: string;
+  private readonly baseUrl: string;
+  private readonly timeoutMs: number;
 
-  private h(): Record<string, string> {
-    return { Authorization: \`Bearer \${this.token}\`, "Content-Type": "application/json" };
+  constructor(optsOrToken: SophiaClientOptions | string, baseUrl?: string) {
+    if (typeof optsOrToken === 'string') {
+      this.apiKey = optsOrToken;
+      this.baseUrl = (baseUrl ?? 'https://sophia.agencyos.network').replace(/\\/$/, '');
+      this.timeoutMs = 30000;
+    } else {
+      this.apiKey = optsOrToken.apiKey ?? optsOrToken.token ?? '';
+      this.baseUrl = (optsOrToken.baseUrl ?? baseUrl ?? 'https://sophia.agencyos.network').replace(/\\/$/, '');
+      this.timeoutMs = optsOrToken.timeoutMs ?? 30000;
+    }
   }
 
-  /** Cycle 1: enrich a video's description with the user's affiliate links. */
-  affiliateDescription(videoId: string, opts: { niche?: string; max?: number } = {}, ro: RequestOptions = {}): Promise<AffiliateDescription> {
-    const qp = new URLSearchParams();
-    if (opts.niche) qp.set("niche", opts.niche);
-    if (opts.max) qp.set("max", String(opts.max));
-    const q = qp.toString();
-    return call(this.base, \`/api/videos/\${videoId}/description-enriched\${q ? "?" + q : ""}\`, { headers: this.h() }, ro);
+  private get authHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.apiKey) {
+      headers.Authorization = \`Bearer \${this.apiKey}\`;
+    }
+    return headers;
   }
 
-  /** Cycle 2: translate text via BYOK OpenRouter key. */
-  translate(input: { text: string; fromLang: string; toLang: string; tone?: "literal" | "natural" }, ro: RequestOptions = {}): Promise<TranslateResult> {
-    return call(this.base, "/api/translate", { method: "POST", headers: this.h(), body: JSON.stringify(input) }, ro);
+  private async request<T>(
+    path: string,
+    options?: RequestInit,
+    ro?: RequestOptions,
+  ): Promise<T> {
+    const url = \`\${this.baseUrl}\${path}\`;
+    const timeout = ro?.timeoutMs ?? this.timeoutMs;
+    const controller = new AbortController();
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    if (timeout > 0) {
+      timeoutId = setTimeout(() => {
+        controller.abort(new Error(\`Request timeout after \${timeout}ms\`));
+      }, timeout);
+    }
+
+    const signal = ro?.signal
+      ? combineSignals([ro.signal, controller.signal])
+      : controller.signal;
+
+    try {
+      const resp = await fetch(url, {
+        ...options,
+        signal,
+        headers: {
+          ...this.authHeaders,
+          ...(options?.headers as Record<string, string> | undefined),
+        },
+      });
+
+      if (!resp.ok) {
+        let errorBody: string;
+        try {
+          errorBody = await resp.text();
+        } catch {
+          errorBody = '<failed to read response body>';
+        }
+        throw new SophiaApiError(
+          \`Sophia API error \${resp.status}: \${errorBody.slice(0, 300)}\`,
+          resp.status,
+          errorBody,
+        );
+      }
+
+      return (await resp.json()) as T;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
-  /** Cycle 3: clone a voice via BYOK ElevenLabs key. */
-  cloneVoice(input: { name: string; audioUrls: string[]; description?: string }, ro: RequestOptions = {}): Promise<VoiceCloneResult> {
-    return call(this.base, "/api/voice/clone", { method: "POST", headers: this.h(), body: JSON.stringify(input) }, ro);
+  readonly missions = {
+    create: async (opts: CreateMissionOptions, ro?: RequestOptions): Promise<Mission> => {
+      return this.request<Mission>('/api/v1/missions', {
+        method: 'POST',
+        body: JSON.stringify(opts),
+      }, ro);
+    },
+
+    get: async (id: string, ro?: RequestOptions): Promise<Mission> => {
+      return this.request<Mission>(\`/api/v1/missions/\${id}\`, {}, ro);
+    },
+
+    stream: async function* (this: SophiaClient, id: string, ro?: RequestOptions): AsyncGenerator<MissionEvent> {
+      yield* this.missions.streamEvents.call(this, id, ro);
+    }.bind(this) as (id: string, ro?: RequestOptions) => AsyncGenerator<MissionEvent>,
+
+    streamEvents: async function* (this: SophiaClient, id: string, ro?: RequestOptions): AsyncGenerator<MissionEvent> {
+      const url = \`\${this.baseUrl}/api/v1/missions/\${id}/stream\`;
+      const timeout = ro?.timeoutMs ?? this.timeoutMs;
+      const controller = new AbortController();
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      if (timeout > 0) {
+        timeoutId = setTimeout(() => {
+          controller.abort(new Error(\`Stream timeout after \${timeout}ms\`));
+        }, timeout);
+      }
+
+      const signal = ro?.signal
+        ? combineSignals([ro.signal, controller.signal])
+        : controller.signal;
+
+      try {
+        const resp = await fetch(url, {
+          headers: this.apiKey ? { Authorization: \`Bearer \${this.apiKey}\` } : {},
+          signal,
+        });
+
+        if (!resp.ok || !resp.body) {
+          throw new SophiaApiError(\`Stream error \${resp.status}\`, resp.status);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\\n');
+            buffer = lines.pop() ?? '';
+
+            let currentEvent = '';
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('event:')) {
+                currentEvent = trimmed.slice(6).trim();
+              } else if (trimmed.startsWith('data:')) {
+                try {
+                  const data = JSON.parse(trimmed.slice(5).trim()) as Record<string, unknown>;
+                  yield { event: currentEvent || 'message', data };
+                  if (currentEvent === 'done' || currentEvent === 'timeout') return;
+                } catch {
+                  // Skip malformed data line
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      }
+    }.bind(this) as (id: string, ro?: RequestOptions) => AsyncGenerator<MissionEvent>,
+
+    list: async (opts?: ListMissionsOptions, ro?: RequestOptions): Promise<PaginatedMissions> => {
+      const params = new URLSearchParams();
+      if (opts?.status) params.set('status', opts.status);
+      if (opts?.command) params.set('command', opts.command);
+      if (opts?.limit) params.set('limit', String(opts.limit));
+      if (opts?.cursor) params.set('cursor', opts.cursor);
+      const qs = params.toString();
+      return this.request<PaginatedMissions>(\`/api/v1/missions\${qs ? \`?\${qs}\` : ''}\`, {}, ro);
+    },
+  };
+
+  readonly credits = {
+    balance: async (ro?: RequestOptions): Promise<McuBalance> => {
+      return this.request<McuBalance>('/api/v1/credits', {}, ro);
+    },
+
+    getBalance: async (ro?: RequestOptions): Promise<McuBalance> => {
+      return this.credits.balance(ro);
+    },
+
+    consume: async (opts: ConsumeCreditsOptions, ro?: RequestOptions): Promise<ConsumeCreditsResult> => {
+      return this.request<ConsumeCreditsResult>('/api/v1/credits/consume', {
+        method: 'POST',
+        body: JSON.stringify(opts),
+      }, ro);
+    },
+  };
+
+  readonly algorithms = {
+    affiliateDescription: (videoId: string, opts: AffiliateDescriptionOptions = {}, ro: RequestOptions = {}): Promise<AffiliateDescription> => {
+      const qp = new URLSearchParams();
+      if (opts.niche) qp.set('niche', opts.niche);
+      if (opts.max) qp.set('max', String(opts.max));
+      const q = qp.toString();
+      return this.request<AffiliateDescription>(\`/api/videos/\${videoId}/description-enriched\${q ? \`?\${q}\` : ''}\`, {}, ro);
+    },
+
+    translate: (input: TranslateInput, ro: RequestOptions = {}): Promise<TranslateResult> => {
+      return this.request<TranslateResult>('/api/translate', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }, ro);
+    },
+
+    cloneVoice: (input: VoiceCloneInput, ro: RequestOptions = {}): Promise<VoiceCloneResult> => {
+      return this.request<VoiceCloneResult>('/api/voice/clone', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }, ro);
+    },
+
+    seoScript: (input: SeoScriptInput, ro: RequestOptions = {}): Promise<SeoScriptResult> => {
+      return this.request<SeoScriptResult>('/api/scripts/seo', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }, ro);
+    },
+
+    liveStats: (ro: RequestOptions = {}): Promise<LiveStats> => {
+      return this.request<LiveStats>('/api/stats/live', {}, ro);
+    },
+
+    schedulePublish: (input: PublishScheduleInput, ro: RequestOptions = {}): Promise<PublishScheduleResult> => {
+      return this.request<PublishScheduleResult>('/api/publish/quick-schedule', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }, ro);
+    },
+
+    registerChannel: (input: RegisterChannelInput, ro: RequestOptions = {}): Promise<RegisterChannelResult> => {
+      return this.request<RegisterChannelResult>('/api/publish/channels', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }, ro);
+    },
+  };
+
+  affiliateDescription(videoId: string, opts?: AffiliateDescriptionOptions, ro?: RequestOptions): Promise<AffiliateDescription> {
+    return this.algorithms.affiliateDescription(videoId, opts, ro);
   }
 
-  /** Cycle 4: generate an SEO-scored script via BYOK OpenRouter key. */
-  seoScript(input: { topic: string; keywords?: string[]; language?: "en" | "vi" }, ro: RequestOptions = {}): Promise<SeoScriptResult> {
-    return call(this.base, "/api/scripts/seo", { method: "POST", headers: this.h(), body: JSON.stringify(input) }, ro);
+  translate(input: TranslateInput, ro?: RequestOptions): Promise<TranslateResult> {
+    return this.algorithms.translate(input, ro);
   }
 
-  /** Cycle 5: pull live homepage counters (public, no auth). */
-  liveStats(ro: RequestOptions = {}): Promise<LiveStats> {
-    return call(this.base, "/api/stats/live", {}, ro);
+  cloneVoice(input: VoiceCloneInput, ro?: RequestOptions): Promise<VoiceCloneResult> {
+    return this.algorithms.cloneVoice(input, ro);
   }
 
-  /** Cycle 6: schedule a video for auto-publish. */
-  schedulePublish(input: { videoId: string; channelId: string; scheduledAt: number; caption?: string; hashtags?: string[] }, ro: RequestOptions = {}): Promise<PublishScheduleResult> {
-    return call(this.base, "/api/publish/quick-schedule", { method: "POST", headers: this.h(), body: JSON.stringify(input) }, ro);
+  seoScript(input: SeoScriptInput, ro?: RequestOptions): Promise<SeoScriptResult> {
+    return this.algorithms.seoScript(input, ro);
   }
 
-  /** Cycle 7: register a publishing channel (BYOK OAuth). */
-  registerChannel(input: { provider: "tiktok" | "youtube" | "instagram" | "facebook" | "twitter" | "linkedin" | "pinterest" | "threads" | "reddit" | "bluesky" | "mastodon" | "zalo" | "whatsapp"; externalAccountId: string; accessToken: string; refreshToken?: string }, ro: RequestOptions = {}): Promise<RegisterChannelResult> {
-    return call(this.base, "/api/publish/channels", { method: "POST", headers: this.h(), body: JSON.stringify(input) }, ro);
+  liveStats(ro?: RequestOptions): Promise<LiveStats> {
+    return this.algorithms.liveStats(ro);
+  }
+
+  schedulePublish(input: PublishScheduleInput, ro?: RequestOptions): Promise<PublishScheduleResult> {
+    return this.algorithms.schedulePublish(input, ro);
+  }
+
+  registerChannel(input: RegisterChannelInput, ro?: RequestOptions): Promise<RegisterChannelResult> {
+    return this.algorithms.registerChannel(input, ro);
   }
 }
 

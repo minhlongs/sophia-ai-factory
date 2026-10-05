@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import { cn } from '@/seed/utils/cn';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix' | 'suffix'> {
@@ -18,7 +18,12 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
  * Material Design 3 filled text field style with Sophia theme.
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', prefix, suffix, error, errorMessage, ...props }, ref) => {
+  ({ id: explicitId, className = '', prefix, suffix, error, errorMessage, 'aria-describedby': ariaDescribedBy, ...props }, ref) => {
+    const generatedId = useId();
+    const id = explicitId || generatedId;
+    const errorId = `${id}-error`;
+    const describedBy = [ariaDescribedBy, error && errorMessage ? errorId : undefined].filter(Boolean).join(' ') || undefined;
+
     return (
       <div className="w-full">
         <div className="relative group">
@@ -31,6 +36,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
+            id={id}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
             className={cn(
               'block w-full py-md px-md',
               prefix && 'pl-[44px]',
@@ -53,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && errorMessage && (
-          <p className="mt-sm text-destructive text-body-sm">{errorMessage}</p>
+          <p id={errorId} role="alert" className="mt-sm text-destructive text-body-sm">{errorMessage}</p>
         )}
       </div>
     );
@@ -70,11 +78,19 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className = '', error, errorMessage, ...props }, ref) => {
+  ({ id: explicitId, className = '', error, errorMessage, 'aria-describedby': ariaDescribedBy, ...props }, ref) => {
+    const generatedId = useId();
+    const id = explicitId || generatedId;
+    const errorId = `${id}-error`;
+    const describedBy = [ariaDescribedBy, error && errorMessage ? errorId : undefined].filter(Boolean).join(' ') || undefined;
+
     return (
       <div className="w-full">
         <textarea
           ref={ref}
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
           className={cn(
             'block w-full py-md px-md',
             'bg-surface border border-outline-variant rounded-xl',
@@ -89,7 +105,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && errorMessage && (
-          <p className="mt-sm text-destructive text-body-sm">{errorMessage}</p>
+          <p id={errorId} role="alert" className="mt-sm text-destructive text-body-sm">{errorMessage}</p>
         )}
       </div>
     );

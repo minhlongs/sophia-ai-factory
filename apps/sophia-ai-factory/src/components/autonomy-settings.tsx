@@ -14,28 +14,18 @@ export interface MissionTypePolicyRow {
   maxAutoRetries: number;
 }
 
-const TIER_LABELS: Record<'vi' | 'en', string[]> = {
-  vi: ['L0 Thủ công', 'L1 Hỗ trợ', 'L2 Giám sát', 'L3 Tự động hoàn toàn'],
-  en: ['L0 Manual', 'L1 Assisted', 'L2 Supervised', 'L3 Full auto'],
-};
-
-function tierLabel(locale: 'vi' | 'en', idx: number): string {
-  return TIER_LABELS[locale][idx] ?? `L${idx}`;
-}
-
 /**
  * Per-mission-type autonomy policy table. Owns its own edit/save state and
  * persists through the setMissionTypePolicyAction server action.
  */
 function MissionTypePolicyTable({
   initialPolicies,
-  locale,
   savingLabel,
 }: {
   initialPolicies: MissionTypePolicyRow[];
-  locale: 'vi' | 'en';
   savingLabel: string;
 }) {
+  const t = useTranslations('autonomy');
   const [policies, setPolicies] = useState<MissionTypePolicyRow[]>(initialPolicies);
   const [newMissionType, setNewMissionType] = useState('');
   const [savingType, setSavingType] = useState<string | null>(null);
@@ -65,7 +55,7 @@ function MissionTypePolicyTable({
       });
       setNewMissionType('');
     } catch {
-      setPolicyError(locale === 'vi' ? 'Lỗi mạng, vui lòng thử lại' : 'Network error, please retry');
+      setPolicyError(t('networkError'));
     } finally {
       setSavingType(null);
     }
@@ -78,12 +68,10 @@ function MissionTypePolicyTable({
   return (
     <div className="space-y-3 border-t border-border pt-6">
       <h3 className="text-lg font-semibold text-foreground">
-        {locale === 'vi' ? 'Chính sách theo loại mission' : 'Per-mission-type policies'}
+        {t('policiesTitle')}
       </h3>
       <p className="text-sm text-muted-foreground">
-        {locale === 'vi'
-          ? 'Đặt cấp độ tự chủ riêng cho từng loại mission. Mặc định L2: agent chạy, cần duyệt trước khi đăng.'
-          : 'Set an autonomy tier per mission type. Default L2: agents run, publish requires approval.'}
+        {t('policiesDescription')}
       </p>
 
       {policyError && (
@@ -104,7 +92,7 @@ function MissionTypePolicyTable({
               className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
             >
               {[0, 1, 2, 3].map((tier) => (
-                <option key={tier} value={tier}>{tierLabel(locale, tier)}</option>
+                <option key={tier} value={tier}>{t(`policyTiers.tier${tier}` as 'policyTiers.tier0')}</option>
               ))}
             </select>
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -114,7 +102,7 @@ function MissionTypePolicyTable({
                 onChange={(e) => updatePolicy(policy.missionType, { requirePublishApproval: e.target.checked })}
                 disabled={savingType !== null}
               />
-              {locale === 'vi' ? 'Duyệt trước khi đăng' : 'Approve before publish'}
+              {t('approveBeforePublish')}
             </label>
             <button
               type="button"
@@ -124,7 +112,7 @@ function MissionTypePolicyTable({
             >
               {savingType === policy.missionType
                 ? savingLabel
-                : locale === 'vi' ? 'Lưu' : 'Save'}
+                : t('save')}
             </button>
           </div>
         ))}
@@ -134,7 +122,7 @@ function MissionTypePolicyTable({
             type="text"
             value={newMissionType}
             onChange={(e) => setNewMissionType(e.target.value)}
-            placeholder={locale === 'vi' ? 'Loại mission mới (vd: article)' : 'New mission type (e.g. article)'}
+            placeholder={t('newMissionPlaceholder')}
             disabled={savingType !== null}
             className="min-w-40 flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
           />
@@ -154,7 +142,7 @@ function MissionTypePolicyTable({
             disabled={savingType !== null || newMissionType.trim().length === 0}
             className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground disabled:opacity-50"
           >
-            {locale === 'vi' ? 'Thêm (L2 mặc định)' : 'Add (default L2)'}
+            {t('addDefaultL2')}
           </button>
         </div>
       </div>
@@ -172,7 +160,6 @@ export function AutonomySettings({
   initialPolicies?: MissionTypePolicyRow[];
 }) {
   const t = useTranslations('autonomy');
-  const locale = (t('levels.level0Description') as string).length > 20 ? 'vi' : 'en';
   const [level, setLevel] = useState<number>(initialLevel);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +180,7 @@ export function AutonomySettings({
         setError((body.error as string) ?? `HTTP ${res.status}`);
       }
     } catch {
-      setError(locale === 'vi' ? 'Lỗi mạng, vui lòng thử lại' : 'Network error, please retry');
+      setError(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -266,8 +253,7 @@ export function AutonomySettings({
       {initialPolicies !== undefined && (
         <MissionTypePolicyTable
           initialPolicies={initialPolicies}
-          locale={locale}
-          savingLabel={t('saving') as string}
+          savingLabel={t('saving')}
         />
       )}
     </div>

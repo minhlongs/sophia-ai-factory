@@ -21,7 +21,7 @@ import { notifyRefundRequired, notifyProviderError } from '@/land/video/generati
 import { pollVideoStatus } from '@/land/video/generation/generate-campaign-video-poller'
 import { emit } from '@/land/webhooks/emitter'
 import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-client'
-import { publishVideo, checkPublishStatus } from '@/forest/tiktok/tiktok-oauth-client'
+import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client'
 import { captureServer } from '@/forest/telemetry/posthog-capture'
 import { Events } from '@/forest/telemetry/event-types'
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types'

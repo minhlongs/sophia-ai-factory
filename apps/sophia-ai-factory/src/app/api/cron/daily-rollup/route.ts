@@ -17,21 +17,11 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
+import { getD1 } from '@/seed/db/client';
 
 const CRON_NAME = 'daily-rollup';
 /** Daily — skip if ran within last 12 hours */
 const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request);

@@ -84,7 +84,7 @@ export function Button({
   const content = (
     <>
       {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
+        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
       ) : (
         iconLeft
       )}
@@ -92,6 +92,8 @@ export function Button({
       {!loading && iconRight}
     </>
   );
+
+  const isDisabled = Boolean(disabled || loading);
 
   // Render as Link or <a> if href is provided
   if (href) {
@@ -101,16 +103,20 @@ export function Button({
       variants[variant],
       sizes[size],
       widthClass,
+      isDisabled && 'opacity-50 pointer-events-none cursor-not-allowed',
       className,
     ].filter(Boolean).join(' ');
 
     if (isExternal) {
       return (
         <a
-          href={href}
+          href={isDisabled ? undefined : href}
           className={classes}
           target="_blank"
           rel="noopener noreferrer"
+          aria-disabled={isDisabled ? 'true' : undefined}
+          aria-busy={loading ? 'true' : undefined}
+          tabIndex={isDisabled ? -1 : undefined}
         >
           {content}
         </a>
@@ -119,8 +125,11 @@ export function Button({
 
     return (
       <Link
-        href={href}
+        href={isDisabled ? '#' : href}
         className={classes}
+        aria-disabled={isDisabled ? 'true' : undefined}
+        aria-busy={loading ? 'true' : undefined}
+        tabIndex={isDisabled ? -1 : undefined}
       >
         {content}
       </Link>
@@ -136,7 +145,8 @@ export function Button({
         widthClass,
         className,
       ].filter(Boolean).join(' ')}
-      disabled={disabled || loading}
+      disabled={isDisabled}
+      aria-busy={loading ? 'true' : undefined}
       {...props}
     >
       {content}

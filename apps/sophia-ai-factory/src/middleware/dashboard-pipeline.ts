@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { pathnameWithoutLocale } from '../middleware-helpers';
+import { pathnameWithoutLocale } from './helpers';
 import { requireAuth } from './auth';
 import { enforceMfaGate } from './mfa';
 import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';

@@ -14,20 +14,10 @@ import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
 import { startCronCheckIn, finishCronCheckIn, failCronCheckIn } from '@/seed/observability/cron-check-in';
+import { getD1 } from '@/seed/db/client';
 
 const CRON_NAME = 'onboarding-check';
 const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
-
-function getD1(): D1Database | null {
-  try {
-    const env = globalThis as unknown as Record<string, Record<string, unknown>>;
-    if (env?.__env?.DB) return env.__env.DB as D1Database;
-    const globalDb = globalThis as Record<string, unknown>;
-    return (globalDb.__D1_DB as D1Database | undefined) ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
