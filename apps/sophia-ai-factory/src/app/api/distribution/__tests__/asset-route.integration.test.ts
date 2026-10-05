@@ -75,7 +75,7 @@ describe('POST /api/distribution/asset', () => {
   it('creates asset and returns 201', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     mockClient.prepare().first.mockResolvedValueOnce({});
 
@@ -125,7 +125,7 @@ describe('GET /api/distribution/asset', () => {
   it('returns filtered asset list', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     mockClient.prepare().first.mockResolvedValueOnce({});
 

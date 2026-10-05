@@ -58,7 +58,7 @@ function makeReq(method: string, url: string, body?: Record<string, unknown>): N
 
 async function grantAccess(): Promise<void> {
   const { createServerClient } = await import('@/seed/db/client');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const client = createServerClient() as any;
   client.prepare().bind().first.mockResolvedValueOnce({});
 }
@@ -193,7 +193,7 @@ describe('DELETE /api/creative-memory', () => {
   it('returns 403 when workspace access denied', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const client = createServerClient() as any;
     client.prepare().bind().first.mockResolvedValueOnce({ workspace_id: 'ws_1' });
     client.prepare().bind().first.mockResolvedValueOnce(null);
@@ -207,7 +207,7 @@ describe('DELETE /api/creative-memory', () => {
   it('soft-deletes memory and returns 200', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const client = createServerClient() as any;
     client.prepare().bind().first.mockResolvedValueOnce({ workspace_id: 'ws_1' });
     client.prepare().bind().first.mockResolvedValueOnce({});

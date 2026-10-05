@@ -33,7 +33,7 @@ vi.mock('@/seed/db/client', () => {
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const castMock = (m: any) => m;
 
 vi.mock('@/tree/provenance', () => ({
@@ -76,7 +76,7 @@ describe('GET /api/provenance', () => {
     // Access granted: mock org_members first() to return truthy
     // We need the mockPrepare to track bind calls and return truthy on first call
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     const mockFirst = castMock(mockClient.prepare().first);
     mockFirst.mockResolvedValueOnce({}); // org_members exists
@@ -105,7 +105,7 @@ describe('GET /api/provenance', () => {
   it('includes derivatives when includeDerivatives=true', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     const mockFirst = castMock(mockClient.prepare().first);
     mockFirst.mockResolvedValueOnce({});

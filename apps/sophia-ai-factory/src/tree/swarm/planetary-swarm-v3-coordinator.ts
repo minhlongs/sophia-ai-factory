@@ -13,7 +13,6 @@ import {
   SWARM_V3_CONSTANTS,
   type PlanetarySwarmNode,
   type SwarmContinent,
-  type SwarmNodeStatus,
   type AgenticSpotAuction,
   type SpotBidRequest,
   type SpotAuctionMatchResult,

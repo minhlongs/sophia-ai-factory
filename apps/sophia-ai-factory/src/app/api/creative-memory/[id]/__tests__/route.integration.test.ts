@@ -45,7 +45,7 @@ function makeReq(method: string, url: string): NextRequest {
 
 async function mockWorkspaceLookup(): Promise<void> {
   const { createServerClient } = await import('@/seed/db/client');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const client = createServerClient() as any;
   // First prepare().bind().first call: getMemoryWorkspaceId → returns workspace_id
   client.prepare().bind().first.mockResolvedValueOnce({ workspace_id: 'ws_1' });
@@ -69,7 +69,7 @@ describe('GET /api/creative-memory/[id]', () => {
   it('returns 404 when memory not found', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const client = createServerClient() as any;
     // getMemoryWorkspaceId returns null → 404
     client.prepare().bind().first.mockResolvedValueOnce(null);
@@ -81,7 +81,7 @@ describe('GET /api/creative-memory/[id]', () => {
   it('returns 403 when workspace access denied', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const client = createServerClient() as any;
     // getMemoryWorkspaceId → found, but access denied
     client.prepare().bind().first.mockResolvedValueOnce({ workspace_id: 'ws_1' });
@@ -95,7 +95,7 @@ describe('GET /api/creative-memory/[id]', () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     await mockWorkspaceLookup();
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const client = createServerClient() as any;
     // Third call: the actual memory row query
     client.prepare().bind().first.mockResolvedValueOnce({
@@ -129,7 +129,7 @@ describe('DELETE /api/creative-memory/[id]', () => {
   it('returns 404 when memory not found', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const client = createServerClient() as any;
     client.prepare().bind().first.mockResolvedValueOnce(null);
 

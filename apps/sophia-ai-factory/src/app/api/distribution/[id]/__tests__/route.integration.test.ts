@@ -45,7 +45,7 @@ const MOCK_PARAMS = { params: Promise.resolve({ id: 'dplt_1' }) };
 
 async function mockDbAccess() {
   const { createServerClient } = await import('@/seed/db/client');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const mockClient = createServerClient() as any;
   mockClient.prepare.mockReturnValue({
     bind: vi.fn().mockReturnThis(),
@@ -72,7 +72,7 @@ describe('GET /api/distribution/[id]', () => {
   it('returns 403 when workspace access denied', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     // Plan lookup succeeds but org_members returns null (no access)
     mockClient.prepare.mockReturnValue({

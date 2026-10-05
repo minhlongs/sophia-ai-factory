@@ -60,7 +60,7 @@ function makeReq(method: string, url: string, body?: Record<string, unknown>): N
 
 async function grantAccess(): Promise<void> {
   const { createServerClient } = await import('@/seed/db/client');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const client = createServerClient() as any;
   client.prepare().bind().first.mockResolvedValueOnce({});
 }

@@ -73,7 +73,7 @@ describe('POST /api/distribution', () => {
   it('creates plan and returns 201', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     mockClient.prepare().first.mockResolvedValueOnce({});
 
@@ -149,7 +149,7 @@ describe('GET /api/distribution', () => {
   it('returns list of plans', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     mockClient.prepare().first.mockResolvedValueOnce({});
 

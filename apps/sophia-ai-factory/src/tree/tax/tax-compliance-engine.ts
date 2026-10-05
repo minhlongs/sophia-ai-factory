@@ -21,7 +21,6 @@
 import {
   type TaxCalculationInput,
   type TaxCalculationResult,
-  type TaxJurisdiction,
   EU_MEMBER_STATES_VAT_RATES,
   SINGAPORE_GST_RATE,
   VIETNAM_STANDARD_VAT_RATE,

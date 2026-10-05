@@ -80,7 +80,7 @@ describe('POST /api/ip-graph', () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     // Grant access: override first() to return truthy
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     mockClient.prepare().first.mockResolvedValueOnce({}); // org_members exists
 
@@ -126,7 +126,7 @@ describe('GET /api/ip-graph', () => {
   it('returns list of IP entities', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     const { createServerClient } = await import('@/seed/db/client');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mockClient = createServerClient() as any;
     mockClient.prepare().first.mockResolvedValueOnce({});
     mockListIP.mockResolvedValueOnce([

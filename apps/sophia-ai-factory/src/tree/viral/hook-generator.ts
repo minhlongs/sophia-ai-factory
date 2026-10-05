@@ -177,7 +177,7 @@ export function buildFunnelCta(
   niche: ViralNiche,
   referralCode?: string,
   telegramStartParam?: string,
-  locale: 'en' | 'vi' = 'en',
+  _locale: 'en' | 'vi' = 'en',
 ): {
   ctaText: string;
   ctaTextVi: string;
@@ -266,7 +266,7 @@ export async function generateViralScript(options: GenerateScriptOptions): Promi
       {
         section: 'problem',
         narration: `Most creators and teams waste countless hours trying to crack ${topicLabel} manually.`,
-        narrationVi: `Hầu hết nhà sáng tạo và đội nhóm tốn hàng chục giờ cặm cụi xử lý ${topicLabel} theo cách thủ công.`,
+        narrationVi: `Hầu hết nhà sáng tạo và đội nhóm tốn hàng chục giờ cặm cụi xử lý ${topicLabelVi} theo cách thủ công.`,
         visualCue: 'Frustrated user staring at complex software timeline, red warning icons',
         onScreenText: `The Old Way is Broken ⚠️`,
         durationSec: 6,

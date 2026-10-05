@@ -12,7 +12,6 @@
  */
 
 import type {
-  DynamicForensicWatermarkConfig,
   DynamicForensicWatermarkResult,
 } from '@/seed/types/streaming';
 
