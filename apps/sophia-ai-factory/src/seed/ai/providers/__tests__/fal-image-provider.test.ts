@@ -25,6 +25,7 @@ import { logger } from '@/seed/utils/logger-utility';
 // Mock logger to avoid noise
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
 
 const VALID_RESPONSE = {
