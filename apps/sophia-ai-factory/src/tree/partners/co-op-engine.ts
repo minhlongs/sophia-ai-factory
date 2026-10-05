@@ -26,7 +26,6 @@ import type {
   PartnerTier,
   CoOpBudgetAllocation,
   PartnerCoOpClaim,
-  CoOpClaimType,
   CoOpClaimStatus,
   SubmitCoOpClaimInput,
   AuditCoOpClaimResult,

@@ -20,9 +20,7 @@
 import type {
   PartnerAnalyticsSummary,
   CohortRow,
-  SubClientMetric,
 } from '@/tree/partners/partner-analytics';
-import type { PartnerTier } from '@/tree/partners/types';
 
 // ============================================================================
 // Types & Contracts

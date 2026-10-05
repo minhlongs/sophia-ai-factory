@@ -16,11 +16,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type {
   PartnerProfile,
   PartnerLicensePool,
-  CreateLicensePoolInput,
   CreateLicensePoolResult,
-  AllocateLicensePoolInput,
   AllocateLicensePoolResult,
-  RecordMcuConsumptionInput,
   RecordMcuConsumptionResult,
 } from '@/tree/partners/types';
 

@@ -127,44 +127,43 @@ export interface ReconcileOptions {
  *
  * Uses the existing `usage_events` table — no schema changes.
  */
-export async function reconcileUsage(
-  options: ReconcileOptions = {},
-): Promise<ReconciliationResult[]> {
-  const { threshold = DEFAULT_DISCREPANCY_THRESHOLD, window = dailyWindowKey(Date.now() / 1000), tenantIds } = options;
-
-  const kv = getKvClient();
-  const results: ReconciliationResult[] = [];
-
-  // 1. Collect tenant IDs from KV keys if not provided
-  let tenants: string[];
+async function resolveTenantList(
+  tenantIds: string[] | undefined,
+  window: string,
+  kv: ReturnType<typeof getKvClient>,
+): Promise<string[] | null> {
   if (tenantIds && tenantIds.length > 0) {
-    tenants = tenantIds;
-  } else if (kv) {
-    tenants = await scanTenantIds(kv, window);
-  } else {
+    return tenantIds;
+  }
+  if (!kv) {
     logger.warn('[Usage Reconciliation] KV unavailable — cannot scan for tenants');
-    return results;
+    return null;
   }
+  return await scanTenantIds(kv, window);
+}
 
-  if (tenants.length === 0) {
-    logger.debug('[Usage Reconciliation] No tenants found with handler counters for window', { window });
-    return results;
-  }
-
-  // 2. Batch-read KV counters for all tenants
+async function fetchKvHandlerCounts(
+  kv: NonNullable<ReturnType<typeof getKvClient>>,
+  tenants: string[],
+  window: string,
+): Promise<{ tenantId: string; count: number }[]> {
   const kvReads: Promise<{ tenantId: string; count: number }>[] = [];
   for (const tenantId of tenants) {
     const key = handlerCounterKey(tenantId, window);
     kvReads.push(
-      kv!
+      kv
         .hget(key, 'handler_invocations')
         .then((val) => ({ tenantId, count: typeof val === 'number' ? val : parseInt(String(val ?? '0'), 10) }))
         .catch(() => ({ tenantId, count: 0 })),
     );
   }
-  const kvCounts = await Promise.all(kvReads);
+  return await Promise.all(kvReads);
+}
 
-  // 3. Batch-query usage_events count for the same window
+async function fetchDbEventCounts(
+  kvCounts: { tenantId: string }[],
+  window: string,
+): Promise<Map<string, number>> {
   const db = createServerClient();
   const eventCounts: Map<string, number> = new Map();
   if (db) {
@@ -176,6 +175,31 @@ export async function reconcileUsage(
       eventCounts.set(r.tenantId, r.count);
     }
   }
+  return eventCounts;
+}
+
+export async function reconcileUsage(
+  options: ReconcileOptions = {},
+): Promise<ReconciliationResult[]> {
+  const { threshold = DEFAULT_DISCREPANCY_THRESHOLD, window = dailyWindowKey(Date.now() / 1000), tenantIds } = options;
+
+  const kv = getKvClient();
+  const results: ReconciliationResult[] = [];
+
+  // 1. Collect tenant IDs from KV keys if not provided
+  const tenants = await resolveTenantList(tenantIds, window, kv);
+  if (!tenants || tenants.length === 0) {
+    if (tenants && tenants.length === 0) {
+      logger.debug('[Usage Reconciliation] No tenants found with handler counters for window', { window });
+    }
+    return results;
+  }
+
+  // 2. Batch-read KV counters for all tenants
+  const kvCounts = await fetchKvHandlerCounts(kv!, tenants, window);
+
+  // 3. Batch-query usage_events count for the same window
+  const eventCounts = await fetchDbEventCounts(kvCounts, window);
 
   // 4. Compare and build results
   for (const { tenantId, count: handlerCount } of kvCounts) {

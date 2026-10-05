@@ -22,6 +22,33 @@ export function startGatewayTimer(): () => number {
   return () => Date.now() - startMs
 }
 
+function resolveClientIdentity(
+  request: NextRequest,
+  context?: Partial<GatewayContext>,
+): {
+  userId: string;
+  licenseNonce: string;
+  tier: string;
+  licenseKeyHash: string;
+} | null {
+  const licenseInfo = context?.licenseNonce
+    ? { licenseKey: null, licenseNonce: context.licenseNonce, tier: context.tier || 'BASIC' }
+    : extractLicenseInfo(request);
+
+  if (!licenseInfo.licenseNonce && !request.nextUrl.pathname.startsWith('/api')) {
+    return null;
+  }
+
+  const userId =
+    licenseInfo.licenseNonce ||
+    `anon_${request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'}`;
+  const licenseNonce = licenseInfo.licenseNonce || 'none';
+  const tier = context?.tier || licenseInfo.tier || 'BASIC';
+  const licenseKeyHash = licenseInfo.licenseKey ? hashLicenseKey(licenseInfo.licenseKey) : 'none';
+
+  return { userId, licenseNonce, tier, licenseKeyHash };
+}
+
 export async function emitUsageEvent(
   request: NextRequest,
   response: { status: number; headers?: Headers },
@@ -39,16 +66,10 @@ export async function emitUsageEvent(
   }
 
   try {
-    const licenseInfo = context?.licenseNonce
-      ? { licenseKey: null, licenseNonce: context.licenseNonce, tier: context.tier || 'BASIC' }
-      : extractLicenseInfo(request)
+    const identity = resolveClientIdentity(request, context);
+    if (!identity) return;
 
-    if (!licenseInfo.licenseNonce && !pathname.startsWith('/api')) return
-
-    const userId = licenseInfo.licenseNonce || `anon_${request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'}`
-    const licenseNonce = licenseInfo.licenseNonce || 'none'
-    const tier = context?.tier || licenseInfo.tier || 'BASIC'
-    const licenseKeyHash = licenseInfo.licenseKey ? hashLicenseKey(licenseInfo.licenseKey) : 'none'
+    const { userId, licenseNonce, tier, licenseKeyHash } = identity;
 
     const responseTimeMs = response.headers?.get('x-response-time-ms') ? parseInt(response.headers.get('x-response-time-ms')!, 10) : 0
     const service = determineServiceFromPath(pathname) as AiService

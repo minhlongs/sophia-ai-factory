@@ -587,9 +587,6 @@ export function calculateMcuVelocity(
   const anchorTime = referenceTimestamp ?? (maxLogTs > 0 ? maxLogTs : Date.now());
 
   const MS_PER_DAY = 86_400 * 1000;
-  const cutoff7d = anchorTime - 7 * MS_PER_DAY;
-  const cutoff30d = anchorTime - 30 * MS_PER_DAY;
-  const cutoffWindow = anchorTime - safeWindowDays * MS_PER_DAY;
 
   let consumed7d = 0;
   let consumed30d = 0;
