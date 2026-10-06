@@ -30,9 +30,9 @@ MISSING_MIGRATIONS=(
   migrations/0176_credit_usage_monthly.sql
   migrations/0177_batch_jobs_fanout_dedup.sql
   migrations/0178_idempotency_keys.sql
-  migrations/0178_referral_rewards_table.sql
+  migrations/0448_referral_rewards_table.sql
   migrations/0179_batch_jobs_idempotency_unique.sql
-  migrations/0179_referral_rewards_table.sql
+  migrations/0449_referral_rewards_table.sql
   migrations/0180_fix_campaign_checkpoints_columns.sql
   migrations/0181_engine_missions_checkpoint.sql
   migrations/0182_org_quota_overrides.sql

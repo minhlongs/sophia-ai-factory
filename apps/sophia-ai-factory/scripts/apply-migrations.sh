@@ -68,7 +68,7 @@ run_verify() {
   local output
   output=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
-    --remote \
+    "${WRANGLER_SCOPE_ARGS[@]}" \
     --command "$verify_sql" 2>/dev/null || true)
 
   # Pass if output has a non-empty results array with at least one row object.
@@ -142,7 +142,7 @@ EOSQL
   local count
   count=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
-    --remote \
+    "${WRANGLER_SCOPE_ARGS[@]}" \
     --json \
     --command "$(cat "$tmp_guard_sql")" 2>/dev/null \
     | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
@@ -208,7 +208,7 @@ EOSQL
   local count
   count=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
-    --remote \
+    "${WRANGLER_SCOPE_ARGS[@]}" \
     --json \
     --command "$(cat "$tmp_guard_sql")" 2>/dev/null \
     | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
@@ -260,7 +260,7 @@ for m in $MIGRATIONS; do
   # Guard: skip migrations already recorded in D1 d1_migrations table
   APPLIED_COUNT_DB=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
-    --remote \
+    "${WRANGLER_SCOPE_ARGS[@]}" \
     --json \
     --command "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}' OR name = '${MIGRATION_NAME}.sql'" \
     2>/dev/null | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
@@ -286,8 +286,8 @@ for m in $MIGRATIONS; do
 
   echo "==> Applying ${MIGRATION_NAME} to ${DB_NAME}"
   if ! npx wrangler d1 execute "$DB_NAME" --config "$WRANGLER_CONFIG" --file="$m" "${WRANGLER_SCOPE_ARGS[@]}"; then
-    echo "ERROR: ${MIGRATION_NAME} FAILED — continuing with remaining migrations"
-    continue
+    echo "ERROR: ${MIGRATION_NAME} FAILED — aborting migration run" >&2
+    exit 1
   fi
 
   APPLIED_COUNT=$((APPLIED_COUNT + 1))

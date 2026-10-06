@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_s
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_viginti_rtgs_source ON vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_sessions(source_participant_id);
-CREATE INDEX IF NOT EXISTS idx_viginti_rtgs_target ON vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_sessions(target_participant_id);
-CREATE INDEX IF NOT EXISTS idx_viginti_rtgs_status ON vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_sessions(settlement_status);
+CREATE INDEX IF NOT EXISTS idx_viginti_rtgs_source_0423 ON vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_sessions(source_participant_id);
+CREATE INDEX IF NOT EXISTS idx_viginti_rtgs_target_0423 ON vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_sessions(target_participant_id);
+CREATE INDEX IF NOT EXISTS idx_viginti_rtgs_status_0423 ON vigintiquinquemilliaquadrillion_hyper_rtgs_clearing_sessions(settlement_status);
 
 CREATE TABLE IF NOT EXISTS vigintiquinquemilliaquadrillion_netting_batches (
   id TEXT PRIMARY KEY,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS vigintiquinquemilliaquadrillion_netting_batches (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_viginti_netting_status ON vigintiquinquemilliaquadrillion_netting_batches(netting_status);
+CREATE INDEX IF NOT EXISTS idx_viginti_netting_status_0423 ON vigintiquinquemilliaquadrillion_netting_batches(netting_status);
 
 CREATE TABLE IF NOT EXISTS basel_xxxviii_solvency_audits (
   id TEXT PRIMARY KEY,

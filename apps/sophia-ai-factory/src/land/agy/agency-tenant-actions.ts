@@ -325,27 +325,27 @@ export async function incrementAgencyQuotaUsed(
   const now = Math.floor(Date.now() / 1000);
 
   try {
-    const config = await db
+    // Atomic SQL increment preventing read-modify-write race conditions
+    // Clamps at 0 so quota_used_mcu never drops below 0 on negative deltas
+    const res = await db
+      .prepare(
+        `UPDATE agy_tenant_configs
+         SET quota_used_mcu = MAX(0, ROUND(quota_used_mcu + ?1)), updated_at = ?2
+         WHERE agency_id = ?3`
+      )
+      .bind(deltaMcu, now, agencyId)
+      .run();
+
+    if ((res.meta?.changes ?? 0) === 0) {
+      return { success: false, error: `Agency ${agencyId} not found` };
+    }
+
+    const updated = await db
       .prepare(`SELECT quota_used_mcu FROM agy_tenant_configs WHERE agency_id = ?1 LIMIT 1`)
       .bind(agencyId)
       .first<{ quota_used_mcu: number }>();
 
-    if (!config) {
-      return { success: false, error: `Agency ${agencyId} not found` };
-    }
-
-    const nextUsed = calculateNextQuotaState(config.quota_used_mcu || 0, deltaMcu);
-
-    await db
-      .prepare(
-        `UPDATE agy_tenant_configs
-         SET quota_used_mcu = ?1, updated_at = ?2
-         WHERE agency_id = ?3`
-      )
-      .bind(nextUsed, now, agencyId)
-      .run();
-
-    return { success: true, newQuotaUsedMcu: nextUsed };
+    return { success: true, newQuotaUsedMcu: updated?.quota_used_mcu ?? 0 };
   } catch (err) {
     return { success: false, error: String(err) };
   }

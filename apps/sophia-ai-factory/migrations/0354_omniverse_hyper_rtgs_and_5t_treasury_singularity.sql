@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS omniverse_hyper_rtgs_clearing_sessions (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_omniverse_rtgs_source ON omniverse_hyper_rtgs_clearing_sessions(source_participant_id);
-CREATE INDEX IF NOT EXISTS idx_omniverse_rtgs_target ON omniverse_hyper_rtgs_clearing_sessions(target_participant_id);
-CREATE INDEX IF NOT EXISTS idx_omniverse_rtgs_status ON omniverse_hyper_rtgs_clearing_sessions(settlement_status);
+CREATE INDEX IF NOT EXISTS idx_omniverse_rtgs_source_0354 ON omniverse_hyper_rtgs_clearing_sessions(source_participant_id);
+CREATE INDEX IF NOT EXISTS idx_omniverse_rtgs_target_0354 ON omniverse_hyper_rtgs_clearing_sessions(target_participant_id);
+CREATE INDEX IF NOT EXISTS idx_omniverse_rtgs_status_0354 ON omniverse_hyper_rtgs_clearing_sessions(settlement_status);
 
 CREATE TABLE IF NOT EXISTS omniverse_netting_batches (
   id TEXT PRIMARY KEY,

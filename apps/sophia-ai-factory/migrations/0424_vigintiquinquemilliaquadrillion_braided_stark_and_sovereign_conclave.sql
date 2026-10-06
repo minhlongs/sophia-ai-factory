@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS vigintiquinquemilliaquadrillion_braided_stark_batches
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_viginti_braided_stark_batch_ref ON vigintiquinquemilliaquadrillion_braided_stark_batches(batch_ref);
+CREATE INDEX IF NOT EXISTS idx_viginti_braided_stark_batch_ref_0424 ON vigintiquinquemilliaquadrillion_braided_stark_batches(batch_ref);
 
 CREATE TABLE IF NOT EXISTS sovereign_vigintiquinquemilliaquadrillion_conclave_disputes (
   id TEXT PRIMARY KEY,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS sovereign_vigintiquinquemilliaquadrillion_conclave_di
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_viginti_conclave_case ON sovereign_vigintiquinquemilliaquadrillion_conclave_disputes(dispute_case_ref);
+CREATE INDEX IF NOT EXISTS idx_viginti_conclave_case_0424 ON sovereign_vigintiquinquemilliaquadrillion_conclave_disputes(dispute_case_ref);
 
 CREATE TABLE IF NOT EXISTS vigintiquinquemilliaquadrillion_empire_constitutional_invariants (
   id TEXT PRIMARY KEY,

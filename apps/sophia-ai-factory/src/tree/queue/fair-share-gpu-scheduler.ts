@@ -106,6 +106,45 @@ export async function getTenantActiveRenderCount(
 }
 
 /**
+ * Batch query active render counts for multiple tenants in a single grouped query.
+ * Eliminates N+1 query loops when evaluating lease candidates.
+ */
+export async function getTenantsActiveRenderCounts(
+  db: D1Database,
+  orgIds: string[],
+  nowSeconds = Math.floor(Date.now() / 1000),
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (orgIds.length === 0) return counts;
+
+  try {
+    const uniqueOrgIds = Array.from(new Set(orgIds));
+    const placeholders = uniqueOrgIds.map(() => '?').join(', ');
+    const query = `SELECT org_id, COUNT(*) as count FROM video_render_jobs
+         WHERE org_id IN (${placeholders}) AND (
+           status = 'rendering' OR
+           (status = 'leased' AND leased_until >= ?)
+         )
+         GROUP BY org_id`;
+    const res = await db
+      .prepare(query)
+      .bind(...uniqueOrgIds, nowSeconds)
+      .all<{ org_id: string; count: number }>();
+
+    for (const row of res.results ?? []) {
+      counts.set(row.org_id, Number(row.count));
+    }
+  } catch (error) {
+    logger.warn('[gpu-scheduler] Error fetching batched tenant active render counts', {
+      orgCount: orgIds.length,
+      error: String(error),
+    });
+  }
+
+  return counts;
+}
+
+/**
  * Resolve concurrency limit for an organization given its tier
  */
 export function getTenantConcurrencyLimit(
@@ -227,9 +266,13 @@ export async function leaseNextJob(
       continue;
     }
 
+    // Batch query active render counts for all candidates in this lane (eliminating N+1 query loop)
+    const orgIds = rows.map((r) => r.org_id);
+    const tenantActiveCounts = await getTenantsActiveRenderCounts(db, orgIds, now);
+
     for (const candidate of rows) {
       // Step 3: Check tenant concurrency limits
-      const activeCount = await getTenantActiveRenderCount(db, candidate.org_id, now);
+      const activeCount = tenantActiveCounts.get(candidate.org_id) ?? 0;
       const tenantLimit = getTenantConcurrencyLimit(candidate.tier, config);
 
       if (activeCount >= tenantLimit) {

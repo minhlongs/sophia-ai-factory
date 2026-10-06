@@ -379,6 +379,7 @@ async function executeDebitCas(
   input: WithdrawalRequestInput,
   withdrawalId: string,
   debitAmount: number,
+  initialStatus: string,
   nowMs: number,
 ): Promise<{ ledgerId: string; sequenceNum: number; remainingBalanceCents: number }> {
   for (let attempt = 0; attempt < MAX_CAS_RETRIES; attempt++) {
@@ -415,7 +416,7 @@ async function executeDebitCas(
         txHash: input.txHash,
       });
 
-      await input.db
+      const ledgerStmt = input.db
         .prepare(
           `INSERT INTO creator_earnings_ledger (
             id, creator_id, amount_cents, currency, event_type, source_type,
@@ -436,8 +437,47 @@ async function executeDebitCas(
           nextSeq,
           metadataJson,
           nowMs,
+        );
+
+      const withdrawalStmt = input.db
+        .prepare(
+          `INSERT INTO creator_withdrawal_requests (
+            id, creator_id, amount_cents, currency, rail, destination_address,
+            bank_bin, bank_account_number, bank_account_name, status,
+            tx_hash, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
-        .run();
+        .bind(
+          withdrawalId,
+          input.creatorId,
+          input.amountCents,
+          'USD',
+          input.rail,
+          input.destinationAddress ?? null,
+          input.bankBin ?? null,
+          input.bankAccountNumber ?? null,
+          input.bankAccountName ?? null,
+          initialStatus,
+          input.txHash ?? null,
+          nowMs,
+          nowMs,
+        );
+
+      if (typeof input.db.batch === 'function') {
+        await input.db.batch([ledgerStmt, withdrawalStmt]);
+      } else {
+        await ledgerStmt.run();
+        try {
+          await withdrawalStmt.run();
+        } catch (withdrawalErr) {
+          await input.db
+            .prepare(`DELETE FROM creator_earnings_ledger WHERE id = ?`)
+            .bind(candidateLedgerId)
+            .run()
+            .catch(() => {});
+          throw withdrawalErr;
+        }
+      }
 
       return {
         ledgerId: candidateLedgerId,
@@ -511,42 +551,9 @@ export async function processCreatorWithdrawal(
     input,
     withdrawalId,
     debitAmount,
+    initialStatus,
     nowMs,
   );
-
-
-  // 5. Insert withdrawal request record
-  try {
-    await input.db
-      .prepare(
-        `INSERT INTO creator_withdrawal_requests (
-          id, creator_id, amount_cents, currency, rail, destination_address,
-          bank_bin, bank_account_number, bank_account_name, status,
-          tx_hash, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        withdrawalId,
-        input.creatorId,
-        input.amountCents,
-        'USD',
-        input.rail,
-        input.destinationAddress ?? null,
-        input.bankBin ?? null,
-        input.bankAccountNumber ?? null,
-        input.bankAccountName ?? null,
-        initialStatus,
-        input.txHash ?? null,
-        nowMs,
-        nowMs,
-      )
-      .run();
-  } catch (insertErr) {
-    logger.warn('[royalty-engine] Could not record into creator_withdrawal_requests (non-fatal if mock table missing)', {
-      withdrawalId,
-      error: String(insertErr),
-    });
-  }
 
   return {
     success: true,

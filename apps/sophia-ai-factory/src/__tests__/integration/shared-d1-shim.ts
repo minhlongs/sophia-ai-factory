@@ -63,7 +63,20 @@ export function makeD1(db: InstanceType<typeof DatabaseSync>) {
       };
     },
     exec: (sql: string) => db.exec(sql),
-    batch: (stmts: unknown[]) => Promise.all(stmts),
+    batch: (stmts: unknown[]) =>
+      Promise.all(
+        stmts.map(async (s) => {
+          if (
+            s !== null &&
+            typeof s === 'object' &&
+            'run' in s &&
+            typeof (s as { run: unknown }).run === 'function'
+          ) {
+            return await (s as { run: () => Promise<unknown> }).run();
+          }
+          return s;
+        }),
+      ),
   };
 }
 

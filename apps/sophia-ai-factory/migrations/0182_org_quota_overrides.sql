@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS org_quota_overrides (
   api_keys INTEGER NOT NULL,
   set_by TEXT NOT NULL,
   set_at INTEGER NOT NULL,
-  FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE,
-  FOREIGN KEY (set_by) REFERENCES users(id)
+  FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  FOREIGN KEY (set_by) REFERENCES user(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_org_quota_overrides_org_id ON org_quota_overrides(org_id);

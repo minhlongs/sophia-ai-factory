@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS quinquagintamilliaquadrillion_sub_planck_meshes (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_quinquaginta_mesh_status ON quinquagintamilliaquadrillion_sub_planck_meshes(mesh_status);
+CREATE INDEX IF NOT EXISTS idx_quinquaginta_mesh_status_0428 ON quinquagintamilliaquadrillion_sub_planck_meshes(mesh_status);
 
 CREATE TABLE IF NOT EXISTS quinquagintamilliaquadrillion_sub_planck_power_allocations (
   id TEXT PRIMARY KEY,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS quinquagintamilliaquadrillion_sub_planck_dispatches (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_quinquaginta_dispatch_ref ON quinquagintamilliaquadrillion_sub_planck_dispatches(dispatch_ref);
+CREATE INDEX IF NOT EXISTS idx_quinquaginta_dispatch_ref_0428 ON quinquagintamilliaquadrillion_sub_planck_dispatches(dispatch_ref);
 
 CREATE TABLE IF NOT EXISTS ninety_nine_nines_sla_audits (
   id TEXT PRIMARY KEY,
