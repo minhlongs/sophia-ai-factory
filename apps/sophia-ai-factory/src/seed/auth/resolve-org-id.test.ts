@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { resolveOrgId, resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resolveOrgId, resolveOrgOwnerUserId, clearOrgIdCache, invalidateOrgIdCache } from '@/seed/auth/resolve-org-id'
 
 function mockD1(row: { org_id: string } | null): D1Database {
   return {
@@ -22,6 +22,11 @@ function throwingD1(): D1Database {
 }
 
 describe('resolveOrgId', () => {
+  beforeEach(() => {
+    clearOrgIdCache();
+    vi.clearAllMocks();
+  });
+
   it('returns org_id when user is in org_members', async () => {
     const db = mockD1({ org_id: 'org-42' })
     await expect(resolveOrgId('user-1', db)).resolves.toBe('org-42')
@@ -47,9 +52,48 @@ describe('resolveOrgId', () => {
   it('returns null when no D1 binding is available', async () => {
     await expect(resolveOrgId('user-1', null)).resolves.toBeNull()
   })
+
+  it('caches resolved org_id on repeated calls', async () => {
+    const db = mockD1({ org_id: 'org-99' })
+    const res1 = await resolveOrgId('user-cache-test', db)
+    expect(res1).toBe('org-99')
+    expect(db.prepare).toHaveBeenCalledTimes(1)
+
+    // Repeat call should hit cache without querying db.prepare again
+    const res2 = await resolveOrgId('user-cache-test', db)
+    expect(res2).toBe('org-99')
+    expect(db.prepare).toHaveBeenCalledTimes(1)
+  })
+
+  it('invalidates cache for a specific user via invalidateOrgIdCache', async () => {
+    const db = mockD1({ org_id: 'org-100' })
+    await resolveOrgId('user-to-invalidate', db)
+    expect(db.prepare).toHaveBeenCalledTimes(1)
+
+    invalidateOrgIdCache('user-to-invalidate')
+
+    await resolveOrgId('user-to-invalidate', db)
+    expect(db.prepare).toHaveBeenCalledTimes(2)
+  })
+
+  it('clears all cache entries via clearOrgIdCache', async () => {
+    const db = mockD1({ org_id: 'org-200' })
+    await resolveOrgId('user-alpha', db)
+    expect(db.prepare).toHaveBeenCalledTimes(1)
+
+    clearOrgIdCache()
+
+    await resolveOrgId('user-alpha', db)
+    expect(db.prepare).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('resolveOrgOwnerUserId', () => {
+  beforeEach(() => {
+    clearOrgIdCache();
+    vi.clearAllMocks();
+  });
+
   function mockOwnerD1(row: { user_id: string } | null): D1Database {
     return {
       prepare: vi.fn().mockReturnValue({
