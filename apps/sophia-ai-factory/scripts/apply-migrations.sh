@@ -262,7 +262,7 @@ for m in $MIGRATIONS; do
     --config "$WRANGLER_CONFIG" \
     --remote \
     --json \
-    --command "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}'" \
+    --command "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}' OR name = '${MIGRATION_NAME}.sql'" \
     2>/dev/null | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   if [ "${APPLIED_COUNT_DB:-0}" -gt 0 ]; then
     echo "SKIPPED: ${MIGRATION_NAME} already applied"
@@ -292,11 +292,11 @@ for m in $MIGRATIONS; do
 
   APPLIED_COUNT=$((APPLIED_COUNT + 1))
 
-  # Record applied migration into d1_migrations ledger (idempotent tracking)
+  # Record applied migration into d1_migrations ledger (idempotent tracking for both bash and wrangler)
   npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     "${WRANGLER_SCOPE_ARGS[@]}" \
-    --command "INSERT OR IGNORE INTO d1_migrations (name, applied_at) VALUES ('${MIGRATION_NAME}', CURRENT_TIMESTAMP);" 2>/dev/null || true
+    --command "INSERT OR IGNORE INTO d1_migrations (name, applied_at) VALUES ('${MIGRATION_NAME}', CURRENT_TIMESTAMP), ('${MIGRATION_NAME}.sql', CURRENT_TIMESTAMP);" 2>/dev/null || true
 
   # Post-flight schema verification
   for entry in "${VERIFY_AFTER[@]}"; do
