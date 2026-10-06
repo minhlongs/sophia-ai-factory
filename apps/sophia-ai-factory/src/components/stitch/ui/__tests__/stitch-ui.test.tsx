@@ -15,6 +15,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { Input, Textarea } from '../input';
 import { Button } from '../button';
 import { Avatar } from '../avatar';
+import { Table } from '../table';
 
 // Mock navigation Link
 vi.mock('@/navigation', () => ({
@@ -128,3 +129,26 @@ describe('Stitch Avatar', () => {
     expect(container.textContent).toBe('SF');
   });
 });
+
+describe('Stitch Table', () => {
+  const testData = [{ id: '1', name: 'Alpha' }];
+  const testCols = [
+    { key: 'name', header: 'Name', cell: (row: { id: string; name: string }) => row.name },
+  ];
+
+  it('renders default card variant with obsidian styling and border', () => {
+    const { container } = render(<Table data={testData} columns={testCols} />);
+    const tableWrapper = container.firstElementChild as HTMLElement;
+    expect(tableWrapper.className).toContain('rounded-2xl');
+    expect(tableWrapper.className).toContain('border-white/[0.08]');
+  });
+
+  it('renders embedded variant without outer card border or backdrop background', () => {
+    const { container } = render(<Table variant="embedded" data={testData} columns={testCols} />);
+    const tableWrapper = container.firstElementChild as HTMLElement;
+    expect(tableWrapper.className).toContain('bg-transparent');
+    expect(tableWrapper.className).not.toContain('border-white/[0.08]');
+    expect(tableWrapper.className).not.toContain('shadow-md');
+  });
+});
+

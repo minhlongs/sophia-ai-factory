@@ -133,6 +133,7 @@ export function IpGraphTable({
           </Badge>
         </div>
         <Table
+          variant="embedded"
           data={filtered}
           columns={[
             {

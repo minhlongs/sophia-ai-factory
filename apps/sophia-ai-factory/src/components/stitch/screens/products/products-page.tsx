@@ -140,42 +140,38 @@ export default function ProductsPage({ initialProducts }: ProductsPageProps = {}
       </div>
 
       {/* Products Table */}
-      <Card>
-        <CardHeader>
-          <h4 className="font-headline-sm text-headline-sm text-on-surface">All Products</h4>
-        </CardHeader>
-        <CardContent>
-          <Table
-            data={filteredProducts}
-            emptyMessage="No products configured yet. Click 'Add Product' to create a new package."
-            columns={[
-              { key: 'name', header: 'Product', cell: (row) => (
-                <div>
-                  <p className="font-label-md text-on-surface font-medium">{row.name}</p>
-                  <p className="text-[12px] text-on-surface-variant">{row.type}</p>
-                </div>
-              ) },
-              { key: 'price', header: 'Price', cell: (row) => (
-                <span className="font-body-md text-on-surface">{row.price}/mo</span>
-              )},
-              { key: 'subscribers', header: 'Subscribers', cell: (row) => (
-                <span className="font-body-md text-on-surface">{row.subscribers}</span>
-              ), align: 'center' },
-              { key: 'status', header: 'Status', cell: (row) => (
-                <Badge variant="soft" color={row.status === 'active' ? 'success' : 'neutral'}>
-                  {row.status}
-                </Badge>
-              ), align: 'center' },
-              { key: 'actions', header: '', cell: () => (
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              ), align: 'right' },
-            ]}
-            getRowId={(row) => row.id}
-          />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold">All Products</h4>
+        <Table
+          data={filteredProducts}
+          emptyMessage="No products configured yet. Click 'Add Product' to create a new package."
+          columns={[
+            { key: 'name', header: 'Product', cell: (row) => (
+              <div>
+                <p className="font-label-md text-on-surface font-medium">{row.name}</p>
+                <p className="text-[12px] text-on-surface-variant">{row.type}</p>
+              </div>
+            ) },
+            { key: 'price', header: 'Price', cell: (row) => (
+              <span className="font-body-md text-on-surface">{row.price}/mo</span>
+            )},
+            { key: 'subscribers', header: 'Subscribers', cell: (row) => (
+              <span className="font-body-md text-on-surface">{row.subscribers}</span>
+            ), align: 'center' },
+            { key: 'status', header: 'Status', cell: (row) => (
+              <Badge variant="soft" color={row.status === 'active' ? 'success' : 'neutral'}>
+                {row.status}
+              </Badge>
+            ), align: 'center' },
+            { key: 'actions', header: '', cell: () => (
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            ), align: 'right' },
+          ]}
+          getRowId={(row) => row.id}
+        />
+      </div>
     </DashboardLayout>
   );
 }

@@ -14,6 +14,8 @@ export interface TableProps<T> {
   loading?: boolean;
   /** Row click handler */
   onRowClick?: (row: T) => void;
+  /** Table variant: 'card' (default standalone with glass background and border) or 'embedded' (for inside cards) */
+  variant?: 'card' | 'embedded';
   /** Table className */
   className?: string;
 }
@@ -43,10 +45,19 @@ export function Table<T>({
   emptyMessage = 'No data available',
   loading = false,
   onRowClick,
+  variant = 'card',
   className = '',
 }: TableProps<T>) {
   return (
-    <div className={cn('bg-[#12141F]/80 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-md overflow-hidden', className)}>
+    <div
+      className={cn(
+        variant === 'card'
+          ? 'bg-[#12141F]/80 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-md'
+          : 'bg-transparent rounded-xl',
+        'overflow-hidden',
+        className
+      )}
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>

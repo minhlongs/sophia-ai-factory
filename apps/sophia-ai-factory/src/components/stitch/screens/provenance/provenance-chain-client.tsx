@@ -107,6 +107,7 @@ export function ProvenanceChainClient({ workspaceId: _workspaceId }: { workspace
           </div>
         ) : (
           <Table
+            variant="embedded"
             data={allRecords}
             columns={[
               {

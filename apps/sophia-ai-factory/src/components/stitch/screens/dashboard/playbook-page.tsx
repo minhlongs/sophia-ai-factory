@@ -203,6 +203,7 @@ function PatternsSection({
         </CardHeader>
         <CardContent>
           <Table
+            variant="embedded"
             data={patterns}
             columns={[
               {
@@ -293,6 +294,7 @@ function RulesSection({
       </CardHeader>
       <CardContent>
         <Table
+          variant="embedded"
           data={rules}
           columns={[
             {
@@ -566,6 +568,7 @@ function SchedulesSection({
             />
           ) : (
             <Table
+              variant="embedded"
               data={schedules}
               columns={[
                 {
