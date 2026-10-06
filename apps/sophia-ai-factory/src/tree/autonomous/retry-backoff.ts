@@ -54,7 +54,6 @@ export function calculateBackoff(
   const safeAttempt = Math.max(0, Math.floor(attempt));
   const nextAttempt = safeAttempt + 1;
   const exhausted = safeAttempt >= maxRetries;
-  const shouldRetry = !exhausted;
 
   if (exhausted) {
     return {
