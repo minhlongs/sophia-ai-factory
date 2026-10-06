@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_30_SCALE_TARGETS,
   type MetaverseCurrency,
   type MetaverseNettingBatch,
   type MetaverseNettingObligation,

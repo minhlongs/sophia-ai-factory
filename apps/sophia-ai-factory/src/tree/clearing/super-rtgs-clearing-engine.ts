@@ -11,7 +11,6 @@ import {
 } from './hyper-rtgs-domain-engine';
 import type {
   NettingStatus,
-  ParallelMultilateralNettingBatch,
   ParallelNettingObligation,
   SuperRtgsCurrency,
   SuperRtgsPriorityTier,

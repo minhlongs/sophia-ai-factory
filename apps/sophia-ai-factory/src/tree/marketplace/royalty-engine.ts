@@ -375,49 +375,12 @@ export async function accrueRoyalty(input: RoyaltyAccrualInput): Promise<Royalty
   throw new Error('ROYALTY_ACCRUAL_CAS_EXHAUSTED');
 }
 
-/**
- * Reconciles and processes a creator payout request.
- *
- * Enforces:
- * - Minimum threshold >= 5,000 cents ($50.00)
- * - Payout rail validation (USDT format / VietQR 6-digit NAPAS BIN)
- * - Solvency verification: available balance >= withdrawal amount
- * - Negative debit insertion into creator_earnings_ledger via OCC CAS
- * - Record insertion into creator_withdrawal_requests
- */
-export async function processCreatorWithdrawal(
+async function executeDebitCas(
   input: WithdrawalRequestInput,
-): Promise<WithdrawalRequestResult> {
-  const nowMs = input.nowMs ?? Date.now();
-
-  // 1. Minimum amount check ($50.00 = 5,000 cents)
-  if (input.amountCents < MIN_WITHDRAWAL_CENTS) {
-    throw new Error(`MINIMUM_WITHDRAWAL_5000_CENTS: Requested ${input.amountCents} cents is below the minimum threshold of ${MIN_WITHDRAWAL_CENTS} cents ($50.00).`);
-  }
-
-  // 2. Validate payout rail format
-  validatePayoutRail(input.rail, {
-    destinationAddress: input.destinationAddress,
-    bankBin: input.bankBin,
-    bankAccountNumber: input.bankAccountNumber,
-    bankAccountName: input.bankAccountName,
-  });
-
-  // 3. Solvency check
-  const balanceSummary = await getCreatorBalance(input.db, input.creatorId);
-  if (balanceSummary.availableBalanceCents < input.amountCents) {
-    throw new Error(`INSUFFICIENT_CREATOR_BALANCE: Available balance is ${balanceSummary.availableBalanceCents} cents, requested ${input.amountCents} cents.`);
-  }
-
-  const withdrawalId = `wdr_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}_${nowMs}`;
-  const initialStatus = input.txHash ? 'completed' : 'pending';
-
-  // 4. Record negative debit entry via OCC CAS
-  const debitAmount = -Math.abs(input.amountCents);
-  let ledgerId = '';
-  let sequenceNum = 0;
-  let remainingBalanceCents = 0;
-
+  withdrawalId: string,
+  debitAmount: number,
+  nowMs: number,
+): Promise<{ ledgerId: string; sequenceNum: number; remainingBalanceCents: number }> {
   for (let attempt = 0; attempt < MAX_CAS_RETRIES; attempt++) {
     try {
       const tail = await input.db
@@ -476,10 +439,11 @@ export async function processCreatorWithdrawal(
         )
         .run();
 
-      ledgerId = candidateLedgerId;
-      sequenceNum = nextSeq;
-      remainingBalanceCents = nextBal;
-      break;
+      return {
+        ledgerId: candidateLedgerId,
+        sequenceNum: nextSeq,
+        remainingBalanceCents: nextBal,
+      };
     } catch (err: unknown) {
       const errStr = String(err);
       if (errStr.includes('INSUFFICIENT_CREATOR_BALANCE')) {
@@ -500,6 +464,56 @@ export async function processCreatorWithdrawal(
       throw err;
     }
   }
+
+  throw new Error(`CAS_EXHAUSTED: Could not execute debit after ${MAX_CAS_RETRIES} attempts`);
+}
+
+/**
+ * Reconciles and processes a creator payout request.
+ *
+ * Enforces:
+ * - Minimum threshold >= 5,000 cents ($50.00)
+ * - Payout rail validation (USDT format / VietQR 6-digit NAPAS BIN)
+ * - Solvency verification: available balance >= withdrawal amount
+ * - Negative debit insertion into creator_earnings_ledger via OCC CAS
+ * - Record insertion into creator_withdrawal_requests
+ */
+export async function processCreatorWithdrawal(
+  input: WithdrawalRequestInput,
+): Promise<WithdrawalRequestResult> {
+  const nowMs = input.nowMs ?? Date.now();
+
+  // 1. Minimum amount check ($50.00 = 5,000 cents)
+  if (input.amountCents < MIN_WITHDRAWAL_CENTS) {
+    throw new Error(`MINIMUM_WITHDRAWAL_5000_CENTS: Requested ${input.amountCents} cents is below the minimum threshold of ${MIN_WITHDRAWAL_CENTS} cents ($50.00).`);
+  }
+
+  // 2. Validate payout rail format
+  validatePayoutRail(input.rail, {
+    destinationAddress: input.destinationAddress,
+    bankBin: input.bankBin,
+    bankAccountNumber: input.bankAccountNumber,
+    bankAccountName: input.bankAccountName,
+  });
+
+  // 3. Solvency check
+  const balanceSummary = await getCreatorBalance(input.db, input.creatorId);
+  if (balanceSummary.availableBalanceCents < input.amountCents) {
+    throw new Error(`INSUFFICIENT_CREATOR_BALANCE: Available balance is ${balanceSummary.availableBalanceCents} cents, requested ${input.amountCents} cents.`);
+  }
+
+  const withdrawalId = `wdr_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}_${nowMs}`;
+  const initialStatus = input.txHash ? 'completed' : 'pending';
+
+  // 4. Record negative debit entry via OCC CAS
+  const debitAmount = -Math.abs(input.amountCents);
+  const { ledgerId, sequenceNum, remainingBalanceCents } = await executeDebitCas(
+    input,
+    withdrawalId,
+    debitAmount,
+    nowMs,
+  );
+
 
   // 5. Insert withdrawal request record
   try {

@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_25_SCALE_TARGETS,
   type OmniverseCurrency,
   type OmniverseNettingObligation,
   type OmniverseNettingStatus,

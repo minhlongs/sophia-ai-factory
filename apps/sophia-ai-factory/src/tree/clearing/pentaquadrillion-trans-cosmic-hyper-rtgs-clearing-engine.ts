@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_34_SCALE_TARGETS,
   type PentaquadrillionCurrency,
   type PentaquadrillionNettingBatch,
   type PentaquadrillionNettingObligation,

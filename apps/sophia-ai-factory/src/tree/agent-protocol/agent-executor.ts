@@ -142,33 +142,13 @@ async function isGateAllowed(
  * Deterministic: provider calls are the only non-deterministic step; all
  * bookkeeping (provenance, autonomy, budget) is deterministic.
  */
-export async function executeAgent(
+async function verifyAgentPermissions(
   definition: AgentDefinition,
   context: AgentContext,
-  registry: ProviderRegistry,
-): Promise<Result<AgentExecutionResult, ExecutorError>> {
-  const startedAt = Date.now();
+): Promise<Result<true, ExecutorError>> {
   const correlationId = context.correlationId;
-
-  // ── 1. Autonomy gate ──────────────────────────────────────────────────
-  const autonomyResult = await isGateAllowed(context, definition.id, 'execute_agent');
-  if (!autonomyResult) {
-    logger.warn('[AgentExecutor] autonomy denied', { correlationId, agentId: definition.id });
-    return failure(
-      new ExecutorError(
-        'AUTONOMY_DENIED',
-        `Agent ${definition.id} denied by autonomy gate for workspace ${context.workspaceId}`,
-      ),
-    );
-  }
-
-  // ── 1b. Per-permission enforcement ─────────────────────────────────────
-  // The agent-level gate only covers the agent's own existence. Every
-  // declared permission must independently pass the autonomy gate, and any
-  // permission requiring human approval must be backed by an approved action
-  // id in the context. Fail closed: a missing or denied permission blocks the
-  // run before any provider call.
   const approvedActionIds = new Set(context.approvedActionIds ?? []);
+
   for (const permission of definition.permissions) {
     const allowed = await isGateAllowed(context, definition.id, permission.tool);
     if (!allowed) {
@@ -197,6 +177,34 @@ export async function executeAgent(
         ),
       );
     }
+  }
+  return success(true);
+}
+
+export async function executeAgent(
+  definition: AgentDefinition,
+  context: AgentContext,
+  registry: ProviderRegistry,
+): Promise<Result<AgentExecutionResult, ExecutorError>> {
+  const startedAt = Date.now();
+  const correlationId = context.correlationId;
+
+  // ── 1. Autonomy gate ──────────────────────────────────────────────────
+  const autonomyResult = await isGateAllowed(context, definition.id, 'execute_agent');
+  if (!autonomyResult) {
+    logger.warn('[AgentExecutor] autonomy denied', { correlationId, agentId: definition.id });
+    return failure(
+      new ExecutorError(
+        'AUTONOMY_DENIED',
+        `Agent ${definition.id} denied by autonomy gate for workspace ${context.workspaceId}`,
+      ),
+    );
+  }
+
+  // ── 1b. Per-permission enforcement ─────────────────────────────────────
+  const permCheck = await verifyAgentPermissions(definition, context);
+  if (!permCheck.ok) {
+    return failure(permCheck.error);
   }
 
   // ── 2. Budget check ───────────────────────────────────────────────────

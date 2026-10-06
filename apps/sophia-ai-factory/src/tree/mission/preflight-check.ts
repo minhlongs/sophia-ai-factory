@@ -24,7 +24,6 @@ import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import {
   resolveCapabilities,
-  hasRequiredCapabilities,
   type AICapability,
 } from '@/seed/ai/capability-model';
 import { inngest } from '@/seed/inngest/client';
@@ -346,6 +345,25 @@ function resolveExtendedCapabilities(activeProviders: string[]): {
   return { availableCapabilities, missingCapabilities };
 }
 
+async function isProviderKeyValid(userId: string, provider: ByokProvider): Promise<boolean> {
+  try {
+    const key = await getUserApiKey(userId, provider);
+    return Boolean(key && key.trim().length > 0);
+  } catch {
+    return false;
+  }
+}
+
+async function getValidDecryptedProviders(userId: string, providers: ByokProvider[]): Promise<ByokProvider[]> {
+  const valid: ByokProvider[] = [];
+  for (const provider of providers) {
+    if (await isProviderKeyValid(userId, provider)) {
+      valid.push(provider);
+    }
+  }
+  return valid;
+}
+
 async function evaluateCredentialGate(
   opts: MissionPreflightOptions,
   resolvedUserId: string
@@ -361,14 +379,7 @@ async function evaluateCredentialGate(
   }
 
   if (opts.requiredProvider) {
-    let specificKeyValid = false;
-    try {
-      const plainKey = await getUserApiKey(resolvedUserId, opts.requiredProvider);
-      specificKeyValid = Boolean(plainKey && plainKey.trim().length > 0);
-    } catch {
-      specificKeyValid = false;
-    }
-
+    const specificKeyValid = await isProviderKeyValid(resolvedUserId, opts.requiredProvider);
     if (!specificKeyValid) {
       return {
         passed: false,
@@ -393,19 +404,7 @@ async function evaluateCredentialGate(
       },
     };
   } else {
-    // Validate AES-256-GCM BYOK key decryption before dispatch
-    const validProviders: ByokProvider[] = [];
-    for (const provider of configuredProviders) {
-      try {
-        const decryptedKey = await getUserApiKey(resolvedUserId, provider);
-        if (decryptedKey && decryptedKey.trim().length > 0) {
-          validProviders.push(provider);
-        }
-      } catch {
-        // Corrupted or invalid AES-256-GCM ciphertext
-      }
-    }
-
+    const validProviders = await getValidDecryptedProviders(resolvedUserId, configuredProviders);
     if (validProviders.length === 0) {
       return {
         passed: false,
@@ -418,7 +417,6 @@ async function evaluateCredentialGate(
         },
       };
     }
-
     configuredProviders = validProviders;
   }
 
@@ -436,6 +434,7 @@ async function evaluateCredentialGate(
     },
   };
 }
+
 
 function evaluateCapabilityGate(
   configuredProviders: ByokProvider[],

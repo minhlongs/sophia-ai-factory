@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_20_SCALE_TARGETS,
   type TransCosmicNettingObligation,
   type TransCosmicNettingStatus,
   type TransOmniverseCurrency,

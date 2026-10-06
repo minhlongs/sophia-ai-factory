@@ -230,13 +230,7 @@ export class MemoryPruner {
            AND expires_at IS NULL
            ORDER BY user_id, relevance_score DESC`,
         )
-        .all<{
-          id: string;
-          user_id: string;
-          memory_type: string;
-          content_json: string;
-          relevance_score: number;
-        }>();
+        .all<MemoryCandidate>();
 
       const memories = rows.results ?? [];
       if (memories.length < 2) return 0;
@@ -246,7 +240,7 @@ export class MemoryPruner {
       const threshold = this.config.dedupeSimilarityThreshold;
 
       // Group by user_id for per-user dedup.
-      const byUser = new Map<string, typeof memories>();
+      const byUser = new Map<string, MemoryCandidate[]>();
       for (const m of memories) {
         const existing = byUser.get(m.user_id) ?? [];
         existing.push(m);
@@ -255,52 +249,7 @@ export class MemoryPruner {
 
       for (const [, userMemories] of byUser) {
         if (userMemories.length < 2) continue;
-
-        // Sort by relevance DESC — keep the highest.
-        const sorted = [...userMemories].sort(
-          (a, b) => b.relevance_score - a.relevance_score,
-        );
-
-        for (let i = 0; i < sorted.length; i++) {
-          if (seen.has(sorted[i].id)) continue;
-          for (let j = i + 1; j < sorted.length; j++) {
-            if (seen.has(sorted[j].id)) continue;
-
-            const similarity = levenshteinSimilarity(
-              extractText(sorted[i].content_json),
-              extractText(sorted[j].content_json),
-            );
-
-            if (similarity >= threshold) {
-              // Merge j into i: append content, boost relevance, delete j.
-              const mergedText =
-                `${extractText(sorted[i].content_json)}\n\n${extractText(sorted[j].content_json)}`;
-              const boostedScore = Math.min(1.0, sorted[i].relevance_score + 0.15);
-
-              await db.prepare(
-                `UPDATE creator_memory
-                 SET content_json = ?1,
-                     relevance_score = ?2,
-                     updated_at = ?3
-                 WHERE id = ?4`,
-              )
-                .bind(JSON.stringify({ text: mergedText }), boostedScore, Date.now(), sorted[i].id)
-                .run();
-
-              await db.prepare(`DELETE FROM creator_memory WHERE id = ?1`).bind(sorted[j].id).run();
-
-              seen.add(sorted[j].id);
-              merged++;
-
-              logger.debug('[MemoryPruner] Merged duplicate', undefined, {
-                kept: sorted[i].id,
-                removed: sorted[j].id,
-                similarity,
-                userId: sorted[i].user_id,
-              } as Record<string, unknown>);
-            }
-          }
-        }
+        merged += await deduplicateUserCandidates(db, userMemories, seen, threshold);
       }
 
       if (merged > 0) {
@@ -403,3 +352,73 @@ function levenshteinSimilarity(a: string, b: string): number {
   const distance = prev[slen];
   return 1.0 - distance / Math.max(lenA, lenB);
 }
+
+type D1 = NonNullable<Awaited<ReturnType<typeof getD1>>>;
+
+interface MemoryCandidate {
+  id: string;
+  user_id: string;
+  memory_type: string;
+  content_json: string;
+  relevance_score: number;
+}
+
+async function mergeDuplicatePair(
+  db: D1,
+  primary: MemoryCandidate,
+  duplicate: MemoryCandidate,
+  similarity: number,
+): Promise<void> {
+  const mergedText = `${extractText(primary.content_json)}\n\n${extractText(duplicate.content_json)}`;
+  const boostedScore = Math.min(1.0, primary.relevance_score + 0.15);
+
+  await db
+    .prepare(
+      `UPDATE creator_memory
+       SET content_json = ?1,
+           relevance_score = ?2,
+           updated_at = ?3
+       WHERE id = ?4`,
+    )
+    .bind(JSON.stringify({ text: mergedText }), boostedScore, Date.now(), primary.id)
+    .run();
+
+  await db.prepare(`DELETE FROM creator_memory WHERE id = ?1`).bind(duplicate.id).run();
+
+  logger.debug('[MemoryPruner] Merged duplicate', undefined, {
+    kept: primary.id,
+    removed: duplicate.id,
+    similarity,
+    userId: primary.user_id,
+  } as Record<string, unknown>);
+}
+
+async function deduplicateUserCandidates(
+  db: D1,
+  candidates: MemoryCandidate[],
+  seen: Set<string>,
+  threshold: number,
+): Promise<number> {
+  let merged = 0;
+  const sorted = [...candidates].sort((a, b) => b.relevance_score - a.relevance_score);
+
+  for (let i = 0; i < sorted.length; i++) {
+    if (seen.has(sorted[i].id)) continue;
+    for (let j = i + 1; j < sorted.length; j++) {
+      if (seen.has(sorted[j].id)) continue;
+
+      const similarity = levenshteinSimilarity(
+        extractText(sorted[i].content_json),
+        extractText(sorted[j].content_json),
+      );
+
+      if (similarity < threshold) continue;
+
+      await mergeDuplicatePair(db, sorted[i], sorted[j], similarity);
+      seen.add(sorted[j].id);
+      merged++;
+    }
+  }
+  return merged;
+}
+

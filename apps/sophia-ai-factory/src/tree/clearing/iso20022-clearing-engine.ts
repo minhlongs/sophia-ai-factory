@@ -7,8 +7,6 @@
 
 import type {
   Iso20022MessageType,
-  Iso20022PacsMessage,
-  Iso20022VerificationStatus,
 } from '@/seed/types/central-bank-clearing';
 
 export interface GeneratePacs009Params {

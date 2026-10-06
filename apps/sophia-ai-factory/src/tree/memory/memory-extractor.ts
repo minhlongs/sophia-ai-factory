@@ -165,63 +165,66 @@ export class MemoryExtractor {
    * @param opts — extraction options
    * @returns extraction result with stored memories
    */
-  async extractFromMessages(
-    messages: ChatMessage[],
-    opts?: ExtractOptions,
-  ): Promise<ExtractionResult> {
-    const userId = opts?.userId ?? 'anonymous';
-    const minConfidence = opts?.minConfidence ?? 0.5;
-    const maxPerType = opts?.maxPerType ?? 10;
-
-    const userMessages = messages.filter((m) => m.role === 'user');
+  private collectCandidateMemories(
+    userMessages: ChatMessage[],
+    minConfidence: number,
+  ): { extracted: ExtractedMemory[]; skipped: number } {
     const extracted: ExtractedMemory[] = [];
     let skipped = 0;
 
-    // Extract from each user message.
     for (const msg of userMessages) {
       const text = msg.content.trim();
-      if (text.length < 10) continue; // Skip trivial messages.
+      if (text.length < 10) continue;
 
-      // Preferences.
-      const prefs = this.extractPreferences([msg]);
-      for (const p of prefs) {
-        if (p.confidence >= minConfidence) extracted.push(p);
-        else skipped++;
-      }
+      const candidates = [
+        ...this.extractPreferences([msg]),
+        ...this.extractEpisodic([msg]),
+        ...this.extractSemantic([msg]),
+      ];
 
-      // Episodic outcomes.
-      const episodics = this.extractEpisodic([msg]);
-      for (const e of episodics) {
-        if (e.confidence >= minConfidence) extracted.push(e);
-        else skipped++;
-      }
-
-      // Semantic knowledge.
-      const semantics = this.extractSemantic([msg]);
-      for (const s of semantics) {
-        if (s.confidence >= minConfidence) extracted.push(s);
-        else skipped++;
+      for (const item of candidates) {
+        if (item.confidence >= minConfidence) {
+          extracted.push(item);
+        } else {
+          skipped++;
+        }
       }
     }
 
-    // Deduplicate within this extraction batch.
-    const deduped = this.dedupExtracted(extracted);
+    return { extracted, skipped };
+  }
 
-    // Cap per type.
+  private capMemoriesByType(
+    memories: ExtractedMemory[],
+    maxPerType: number,
+  ): { capped: ExtractedMemory[]; skipped: number } {
+    let skipped = 0;
     const byType = new Map<CreatorMemoryType, ExtractedMemory[]>();
-    for (const m of deduped) {
+
+    for (const m of memories) {
       const existing = byType.get(m.memoryType) ?? [];
-      if (existing.length < maxPerType) existing.push(m);
-      else skipped++;
+      if (existing.length < maxPerType) {
+        existing.push(m);
+      } else {
+        skipped++;
+      }
       byType.set(m.memoryType, existing);
     }
 
     const capped: ExtractedMemory[] = [];
-    for (const arr of byType.values()) capped.push(...arr);
+    for (const arr of byType.values()) {
+      capped.push(...arr);
+    }
 
-    // Store to D1.
+    return { capped, skipped };
+  }
+
+  private async persistExtractedMemories(
+    userId: string,
+    memories: ExtractedMemory[],
+  ): Promise<StoredMemory[]> {
     const stored: StoredMemory[] = [];
-    for (const mem of capped) {
+    for (const mem of memories) {
       try {
         const storedMem = await this.repo.store(userId, mem.memoryType, mem.category, mem.content, {
           relevanceScore: mem.confidence,
@@ -236,13 +239,42 @@ export class MemoryExtractor {
         });
       }
     }
+    return stored;
+  }
+
+  /**
+   * Run full extraction pipeline on a list of chat messages.
+   *
+   * Only processes user messages (assistant messages provide context
+   * but are not directly extracted from).
+   *
+   * @param messages — full chat exchange (user + assistant messages)
+   * @param opts — extraction options
+   * @returns extraction result with stored memories
+   */
+  async extractFromMessages(
+    messages: ChatMessage[],
+    opts?: ExtractOptions,
+  ): Promise<ExtractionResult> {
+    const userId = opts?.userId ?? 'anonymous';
+    const minConfidence = opts?.minConfidence ?? 0.5;
+    const maxPerType = opts?.maxPerType ?? 10;
+
+    const userMessages = messages.filter((m) => m.role === 'user');
+    const { extracted, skipped: confSkipped } = this.collectCandidateMemories(userMessages, minConfidence);
+
+    const deduped = this.dedupExtracted(extracted);
+    const { capped, skipped: capSkipped } = this.capMemoriesByType(deduped, maxPerType);
+    const totalSkipped = confSkipped + capSkipped;
+
+    const stored = await this.persistExtractedMemories(userId, capped);
 
     logger.info('[MemoryExtractor] Extraction complete', {
       userId,
       messageCount: messages.length,
       extracted: capped.length,
       stored: stored.length,
-      skipped,
+      skipped: totalSkipped,
     });
 
     return {
@@ -250,9 +282,10 @@ export class MemoryExtractor {
       messageCount: messages.length,
       extracted: capped,
       stored,
-      skipped,
+      skipped: totalSkipped,
     };
   }
+
 
   // ── Preference extraction ───────────────────────────────────────────────────
 

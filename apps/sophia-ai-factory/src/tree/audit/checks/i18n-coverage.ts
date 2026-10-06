@@ -59,87 +59,100 @@ async function collectTsxFiles(dir: string): Promise<string[]> {
  return files
 }
 
-export async function runI18nChecks(_env: AuditEnv): Promise<CheckResult[]> {
- const start = Date.now()
-
- // Compute path at runtime to avoid NFT module-level tracing
- const { join } = await getFsPath()
- const APP_SRC_DIR = join(process.cwd(), 'src', 'app')
-
- const viKeys = await loadMessageKeys('vi')
- const enKeys = await loadMessageKeys('en')
-
- if (!viKeys || !enKeys) {
-   return [
-     {
-       id: 'i18n-coverage',
-       category: 'i18n Coverage',
-       name: 'Translation Key Parity',
-       status: 'warn',
-       weight: 5,
-       score: 0.5,
-       evidence: `Could not load message files from ${join(process.cwd(), 'messages')}`,
-       fix: 'Ensure messages/vi.json and messages/en.json exist',
-       durationMs: Date.now() - start,
-     },
-   ]
- }
-
- const viSet = new Set(viKeys)
- const enSet = new Set(enKeys)
-
- const missingInEn = viKeys.filter((k) => !enSet.has(k))
- const missingInVi = enKeys.filter((k) => !viSet.has(k))
- const totalMissing = missingInEn.length + missingInVi.length
-
- // Sample hardcoded string check in TSX files — look for JSX text with > 3 chars that isnt a translation call
- const tsxFiles = (await collectTsxFiles(APP_SRC_DIR)).slice(0, 50) // cap at 50 files for performance
- let hardcodedCount = 0
- const { readFileSync } = await getFsPath()
- for (const file of tsxFiles) {
-   try {
-     const content = readFileSync(file, 'utf-8')
-     // Simple heuristic: JSX text content with Vietnamese characters not inside {t(
-     const matches = content.match(/>[^<]{4,}[àáạảãăắặẳẵâấầẩẫ][^<]*</g) ?? []
-     hardcodedCount += matches.length
-   } catch {
-     // skip
-   }
- }
-
- const keyStatus = totalMissing === 0 ? 'pass' : totalMissing <= 10 ? 'warn' : 'fail'
- const hardcodedStatus = hardcodedCount <= 5 ? 'pass' : hardcodedCount <= 20 ? 'warn' : 'fail'
-
- const worstStatus =
-   keyStatus === 'fail' || hardcodedStatus === 'fail'
-     ? 'fail'
-     : keyStatus === 'warn' || hardcodedStatus === 'warn'
-       ? 'warn'
-       : 'pass'
-
- const evidence = [
-   `vi.json: ${viKeys.length} keys, en.json: ${enKeys.length} keys`,
-   totalMissing > 0 ? `Missing in en: ${missingInEn.slice(0, 3).join(', ')}${missingInEn.length > 3 ? '...' : ''}` : '',
-   totalMissing > 0 ? `Missing in vi: ${missingInVi.slice(0, 3).join(', ')}${missingInVi.length > 3 ? '...' : ''}` : '',
-   `Possible hardcoded Vietnamese strings: ${hardcodedCount}`,
- ]
-   .filter(Boolean)
-   .join(' | ')
-
- return [
-   {
-     id: 'i18n-coverage',
-     category: 'i18n Coverage',
-     name: 'Translation Key Parity',
-     status: worstStatus,
-     weight: 5,
-     score: worstStatus === 'pass' ? 1 : worstStatus === 'warn' ? 0.5 : 0,
-     evidence,
-     fix:
-       worstStatus !== 'pass'
-         ? `Sync ${totalMissing} missing translation keys; review ${hardcodedCount} possibly hardcoded strings`
-         : undefined,
-     durationMs: Date.now() - start,
-   },
- ]
+async function countHardcodedStrings(dir: string): Promise<number> {
+  const tsxFiles = (await collectTsxFiles(dir)).slice(0, 50)
+  let count = 0
+  const { readFileSync } = await getFsPath()
+  for (const file of tsxFiles) {
+    try {
+      const content = readFileSync(file, 'utf-8')
+      const matches = content.match(/>[^<]{4,}[àáạảãăắặẳẵâấầẩẫ][^<]*</g) ?? []
+      count += matches.length
+    } catch {
+      // skip
+    }
+  }
+  return count
 }
+
+function resolveWorstStatus(totalMissing: number, hardcodedCount: number): 'pass' | 'warn' | 'fail' {
+  const keyStatus = totalMissing === 0 ? 'pass' : totalMissing <= 10 ? 'warn' : 'fail'
+  const hardcodedStatus = hardcodedCount <= 5 ? 'pass' : hardcodedCount <= 20 ? 'warn' : 'fail'
+
+  if (keyStatus === 'fail' || hardcodedStatus === 'fail') return 'fail'
+  if (keyStatus === 'warn' || hardcodedStatus === 'warn') return 'warn'
+  return 'pass'
+}
+
+function buildI18nEvidence(
+  viCount: number,
+  enCount: number,
+  missingInEn: string[],
+  missingInVi: string[],
+  hardcodedCount: number,
+): string {
+  return [
+    `vi.json: ${viCount} keys, en.json: ${enCount} keys`,
+    missingInEn.length > 0 ? `Missing in en: ${missingInEn.slice(0, 3).join(', ')}${missingInEn.length > 3 ? '...' : ''}` : '',
+    missingInVi.length > 0 ? `Missing in vi: ${missingInVi.slice(0, 3).join(', ')}${missingInVi.length > 3 ? '...' : ''}` : '',
+    `Possible hardcoded Vietnamese strings: ${hardcodedCount}`,
+  ]
+    .filter(Boolean)
+    .join(' | ')
+}
+
+export async function runI18nChecks(_env: AuditEnv): Promise<CheckResult[]> {
+  const start = Date.now()
+
+  // Compute path at runtime to avoid NFT module-level tracing
+  const { join } = await getFsPath()
+  const APP_SRC_DIR = join(process.cwd(), 'src', 'app')
+
+  const viKeys = await loadMessageKeys('vi')
+  const enKeys = await loadMessageKeys('en')
+
+  if (!viKeys || !enKeys) {
+    return [
+      {
+        id: 'i18n-coverage',
+        category: 'i18n Coverage',
+        name: 'Translation Key Parity',
+        status: 'warn',
+        weight: 5,
+        score: 0.5,
+        evidence: `Could not load message files from ${join(process.cwd(), 'messages')}`,
+        fix: 'Ensure messages/vi.json and messages/en.json exist',
+        durationMs: Date.now() - start,
+      },
+    ]
+  }
+
+  const viSet = new Set(viKeys)
+  const enSet = new Set(enKeys)
+
+  const missingInEn = viKeys.filter((k) => !enSet.has(k))
+  const missingInVi = enKeys.filter((k) => !viSet.has(k))
+  const totalMissing = missingInEn.length + missingInVi.length
+
+  const hardcodedCount = await countHardcodedStrings(APP_SRC_DIR)
+  const worstStatus = resolveWorstStatus(totalMissing, hardcodedCount)
+  const evidence = buildI18nEvidence(viKeys.length, enKeys.length, missingInEn, missingInVi, hardcodedCount)
+
+  return [
+    {
+      id: 'i18n-coverage',
+      category: 'i18n Coverage',
+      name: 'Translation Key Parity',
+      status: worstStatus,
+      weight: 5,
+      score: worstStatus === 'pass' ? 1 : worstStatus === 'warn' ? 0.5 : 0,
+      evidence,
+      fix:
+        worstStatus !== 'pass'
+          ? `Sync ${totalMissing} missing translation keys; review ${hardcodedCount} possibly hardcoded strings`
+          : undefined,
+      durationMs: Date.now() - start,
+    },
+  ]
+}
+

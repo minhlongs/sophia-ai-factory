@@ -4,11 +4,10 @@
  * @description Pure domain engine for Continuous Linked Settlement (CLS) Payment-versus-Payment (PvP) atomic dual-leg clearing.
  */
 
-import {
+import type {
   ClsPvpSettlementSession,
   PvpExecutionRequest,
   PvpExecutionResult,
-  SettlementCurrency,
 } from '@/seed/types/cls-liquidity';
 
 function sha256Hex(data: string): string {

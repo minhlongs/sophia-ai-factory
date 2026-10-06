@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_29_SCALE_TARGETS,
   type PanDimensionalCurrency,
   type PanDimensionalNettingBatch,
   type PanDimensionalNettingObligation,

@@ -28,6 +28,7 @@ import type {
   SubmitReviewInput,
   SubmitReviewResult,
   RoyaltyAccrualResult,
+  TemplateSortOrder,
 } from './types';
 import { scoreTemplateQuality } from './quality-scorer';
 import { accrueRoyalty } from './royalty-engine';
@@ -54,29 +55,7 @@ export function calculateTrendingRank(
   return Math.round(rawScore * 1000) / 1000;
 }
 
-/**
- * Lists creator templates with filtering, search, and dynamic sorting (including trending decay).
- */
-export async function listMarketplaceTemplates(
-  db: D1Database | null,
-  filter?: TemplateQueryFilter,
-  nowMs = Date.now(),
-): Promise<PaginatedTemplates> {
-  const page = Math.max(1, filter?.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, filter?.pageSize ?? 12));
-
-  if (!db) {
-    return {
-      items: [],
-      total: 0,
-      page,
-      pageSize,
-      totalPages: 1,
-    };
-  }
-
-  const offset = (page - 1) * pageSize;
-
+function buildTemplateFilterConditions(filter?: TemplateQueryFilter): { conditions: string[]; params: unknown[] } {
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -117,6 +96,49 @@ export async function listMarketplaceTemplates(
     params.push(term, term, term);
   }
 
+  return { conditions, params };
+}
+
+function resolveSqlOrderBy(sortBy?: TemplateSortOrder): string {
+  switch (sortBy) {
+    case 'top_rated':
+      return 'rating DESC, review_count DESC';
+    case 'most_used':
+      return 'use_count DESC, rating DESC';
+    case 'newest':
+      return 'created_at DESC';
+    case 'price_asc':
+      return 'price_cents ASC';
+    case 'price_desc':
+      return 'price_cents DESC';
+    default:
+      return 'created_at DESC';
+  }
+}
+
+/**
+ * Lists creator templates with filtering, search, and dynamic sorting (including trending decay).
+ */
+export async function listMarketplaceTemplates(
+  db: D1Database | null,
+  filter?: TemplateQueryFilter,
+  nowMs = Date.now(),
+): Promise<PaginatedTemplates> {
+  const page = Math.max(1, filter?.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, filter?.pageSize ?? 12));
+
+  if (!db) {
+    return {
+      items: [],
+      total: 0,
+      page,
+      pageSize,
+      totalPages: 1,
+    };
+  }
+
+  const offset = (page - 1) * pageSize;
+  const { conditions, params } = buildTemplateFilterConditions(filter);
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   // Count total matching
@@ -131,21 +153,9 @@ export async function listMarketplaceTemplates(
     logger.warn('[marketplace-service] Count query error, fallback to 0', { error: String(err) });
   }
 
-  // Determine SQL order if sorting in database
   const sortBy = filter?.sortBy ?? 'trending';
-  let sqlOrderBy = 'created_at DESC';
+  const sqlOrderBy = resolveSqlOrderBy(sortBy);
 
-  if (sortBy === 'top_rated') {
-    sqlOrderBy = 'rating DESC, review_count DESC';
-  } else if (sortBy === 'most_used') {
-    sqlOrderBy = 'use_count DESC, rating DESC';
-  } else if (sortBy === 'newest') {
-    sqlOrderBy = 'created_at DESC';
-  } else if (sortBy === 'price_asc') {
-    sqlOrderBy = 'price_cents ASC';
-  } else if (sortBy === 'price_desc') {
-    sqlOrderBy = 'price_cents DESC';
-  }
 
   // If sorting by trending, we fetch matching candidates, annotate with trending score, and sort
   const queryLimit = sortBy === 'trending' ? Math.max(100, page * pageSize) : pageSize;

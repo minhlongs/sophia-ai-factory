@@ -156,6 +156,64 @@ export async function checkClusterHealth(
   };
 }
 
+async function resolveHeartbeatTelemetry(
+  rawTelemetry: MekongHeartbeatTelemetry | undefined,
+  encryptedPayload: string | EncryptedPayloadEnvelope | undefined,
+  bearerToken: string,
+  nodeId: string,
+): Promise<{ telemetry?: MekongHeartbeatTelemetry; decryptionFailed?: boolean }> {
+  if (rawTelemetry) {
+    return { telemetry: rawTelemetry };
+  }
+
+  if (encryptedPayload) {
+    try {
+      const envelope =
+        typeof encryptedPayload === 'string'
+          ? (JSON.parse(encryptedPayload) as EncryptedPayloadEnvelope)
+          : encryptedPayload;
+      const decrypted = await decryptPayload<MekongHeartbeatTelemetry>(envelope, bearerToken);
+      return { telemetry: decrypted };
+    } catch (err) {
+      logger.error('MEKONG_HEARTBEAT_DECRYPTION_FAILED', {
+        nodeId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return { decryptionFailed: true };
+    }
+  }
+
+  return {
+    telemetry: {
+      gpuUtilizationPct: 0,
+      vramUsedBytes: 0,
+      vramTotalBytes: 0,
+      queueDepth: 0,
+      latencyMs: 10.0,
+    },
+  };
+}
+
+function computeEffectiveNodeStatus(
+  reportedStatus: string | undefined,
+  telemetry: MekongHeartbeatTelemetry,
+): EdgeNodeStatus {
+  let effectiveStatus: EdgeNodeStatus = 'ONLINE';
+  if (reportedStatus) {
+    const norm = String(reportedStatus).toUpperCase();
+    if (norm === 'DEGRADED' || norm === 'OFFLINE') {
+      effectiveStatus = norm as EdgeNodeStatus;
+    }
+  }
+
+  const vramSaturation =
+    telemetry.vramTotalBytes > 0 ? telemetry.vramUsedBytes / telemetry.vramTotalBytes : 0;
+  if (vramSaturation > 0.95 || telemetry.queueDepth > 10) {
+    effectiveStatus = 'DEGRADED';
+  }
+  return effectiveStatus;
+}
+
 /**
  * Ingests and records inbound heartbeat telemetry from mekongd daemon.
  *
@@ -208,57 +266,34 @@ export async function processNodeHeartbeat(
     };
   }
 
-  // 3. Resolve telemetry (supports plaintext or AES-256-GCM encrypted payload)
-  let telemetry: MekongHeartbeatTelemetry = rawTelemetry ?? {
-    gpuUtilizationPct: 0,
-    vramUsedBytes: 0,
-    vramTotalBytes: 0,
-    queueDepth: 0,
-    latencyMs: 10.0,
-  };
 
-  if (encryptedPayload && !rawTelemetry) {
-    try {
-      if (typeof encryptedPayload === 'string') {
-        const envelope = JSON.parse(encryptedPayload) as EncryptedPayloadEnvelope;
-        telemetry = await decryptPayload<MekongHeartbeatTelemetry>(envelope, node.bearer_token);
-      } else {
-        telemetry = await decryptPayload<MekongHeartbeatTelemetry>(encryptedPayload, node.bearer_token);
-      }
-    } catch (err) {
-      logger.error('MEKONG_HEARTBEAT_DECRYPTION_FAILED', {
-        nodeId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return {
-        success: false,
-        nodeId,
-        heartbeatId: '',
-        status: 'OFFLINE',
-        recordedAt: nowMs,
-        latencyMs: 0,
-        error: 'DECRYPTION_FAILED',
-      };
-    }
+  // 3. Resolve telemetry (supports plaintext or AES-256-GCM encrypted payload)
+  const resolved = await resolveHeartbeatTelemetry(
+    rawTelemetry,
+    encryptedPayload,
+    node.bearer_token,
+    nodeId,
+  );
+
+  if (resolved.decryptionFailed || !resolved.telemetry) {
+    return {
+      success: false,
+      nodeId,
+      heartbeatId: '',
+      status: 'OFFLINE',
+      recordedAt: nowMs,
+      latencyMs: 0,
+      error: 'DECRYPTION_FAILED',
+    };
   }
+
+  const telemetry = resolved.telemetry;
 
   // 4. Determine operational status based on hardware pressure
-  let effectiveStatus: EdgeNodeStatus = 'ONLINE';
-  if (reportedStatus) {
-    const norm = String(reportedStatus).toUpperCase();
-    if (norm === 'DEGRADED' || norm === 'OFFLINE') {
-      effectiveStatus = norm as EdgeNodeStatus;
-    }
-  }
-
-  const vramSaturation =
-    telemetry.vramTotalBytes > 0 ? telemetry.vramUsedBytes / telemetry.vramTotalBytes : 0;
-  if (vramSaturation > 0.95 || telemetry.queueDepth > 10) {
-    effectiveStatus = 'DEGRADED';
-  }
-
+  const effectiveStatus = computeEffectiveNodeStatus(reportedStatus, telemetry);
   const latencyMs = Number(telemetry.latencyMs ?? 10.0);
   const heartbeatId = `hb_${nodeId}_${nowMs}_${Math.random().toString(36).substring(2, 7)}`;
+
 
   // 5. Persist to D1
   await db

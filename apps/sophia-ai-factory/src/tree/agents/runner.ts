@@ -24,21 +24,13 @@ const log = createLogger('tree/agents/runner');
 
 const COST_PER_TOKEN = 0.000001; // ~$1 / 1M tokens (gpt-4o-mini estimate)
 
-/**
- * Run an agent task inline (sync for Cloudflare Workers free tier).
- * Updates task row with result / error.
- *
- * Phase 03: track() calls are fire-and-forget (void) — never block the runner.
- * Phase 04: assertTierAllowsAgent gate runs before any LLM call.
- *           reportError wraps LLM failures (non-blocking).
- *
- * @param userTier - caller's tier (BASIC|PREMIUM|ENTERPRISE|MASTER). Pass 'MASTER' for system calls.
- */
-export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'): Promise<AgentTask> {
-  // Mark as running
-  await updateTaskStatus(taskId, orgId, 'running');
-  await appendLog({ taskId, action: 'start', payload: { taskId } });
+type AgentRecord = NonNullable<Awaited<ReturnType<typeof getAgentById>>>;
 
+async function validateTaskAndAgent(
+  taskId: string,
+  orgId: string,
+  userTier: string,
+): Promise<{ task: AgentTask; agent: AgentRecord; apiKey: string }> {
   const task = await getTask(taskId, orgId);
   if (!task) {
     throw new Error(`Task ${taskId} not found`);
@@ -56,7 +48,6 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
     throw new Error(`Agent ${task.agentId} not found`);
   }
 
-  // Phase 04: Enforcement gate — block if tier does not permit agent role
   try {
     assertTierAllowsAgent(userTier, agent.role);
   } catch (gateErr) {
@@ -68,14 +59,12 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
         status: 'failed',
         errorMessage: gateErr.message,
       });
-      // Emit tier_blocked signal (fire-and-forget)
       void track(D1Events.AGENT_TASK_FAIL, orgId, {
         task_id: taskId,
         agent_role: agent.role,
         variant: 'control',
         error_class: 'tier_blocked',
       }, orgId);
-      throw gateErr;
     }
     throw gateErr;
   }
@@ -87,7 +76,14 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
     throw new Error(errMsg);
   }
 
-  // Phase 03: resolve A/B variant before LLM call (falls back to 'control' on error)
+  return { task, agent, apiKey };
+}
+
+async function resolveEnrichedPrompt(
+  agent: AgentRecord,
+  orgId: string,
+  taskInput: string,
+): Promise<{ variant: string; enrichedPrompt: string }> {
   const expName = experimentName(agent.role);
   let variant = 'control';
   try {
@@ -97,16 +93,12 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
     // assignVariant already logs — keep 'control'
   }
 
-  // Resolve system prompt for this variant
   const systemPrompt = resolvePrompt(agent.role, variant) || agent.systemPrompt;
-
-  // ── CEO Context Injection ─────────────────────────────────────────────
-  // For CEO agent, pre-fetch campaign/revenue data based on user query
-  // and inject it into the prompt so the LLM can answer with real data.
   let enrichedPrompt = systemPrompt;
+
   if (agent.role === 'CEO') {
     try {
-      const ceoContext = await executeCeoContext(task.input, orgId, orgId);
+      const ceoContext = await executeCeoContext(taskInput, orgId, orgId);
       if (ceoContext.campaigns || ceoContext.revenue || ceoContext.intent !== 'general_query') {
         enrichedPrompt = `${systemPrompt}\n\n===CONTEXT DATA===\n${ceoContext.summary}\n===END CONTEXT DATA===`;
         log.info('[runner] CEO context injected', {
@@ -117,12 +109,32 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
         });
       }
     } catch (ctxErr) {
-      // Context injection is best-effort — never block the LLM call
       log.warn('[runner] CEO context injection failed, proceeding without context', {
         error: getErrorMessage(ctxErr),
       });
     }
   }
+
+  return { variant, enrichedPrompt };
+}
+
+/**
+ * Run an agent task inline (sync for Cloudflare Workers free tier).
+ * Updates task row with result / error.
+ *
+ * Phase 03: track() calls are fire-and-forget (void) — never block the runner.
+ * Phase 04: assertTierAllowsAgent gate runs before any LLM call.
+ *           reportError wraps LLM failures (non-blocking).
+ *
+ * @param userTier - caller's tier (BASIC|PREMIUM|ENTERPRISE|MASTER). Pass 'MASTER' for system calls.
+ */
+export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'): Promise<AgentTask> {
+  // Mark as running
+  await updateTaskStatus(taskId, orgId, 'running');
+  await appendLog({ taskId, action: 'start', payload: { taskId } });
+
+  const { task, agent, apiKey } = await validateTaskAndAgent(taskId, orgId, userTier);
+  const { variant, enrichedPrompt } = await resolveEnrichedPrompt(agent, orgId, task.input);
 
   // Phase 03: emit AGENT_TASK_START (fire-and-forget)
   void track(D1Events.AGENT_TASK_START, orgId, {

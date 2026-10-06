@@ -96,6 +96,116 @@ export function executeCloudFallback(
  * - routeInferenceTask(task, preferredNodeId, db, nowMs)
  * - routeInferenceTask(task, db, preferredNodeId, nowMs, options)
  */
+function resolveRouterArgs(
+  arg2?: D1Database | string,
+  arg3?: string | D1Database,
+): { db?: D1Database; preferredNodeId?: string } {
+  if (isD1Database(arg2)) {
+    return { db: arg2, preferredNodeId: typeof arg3 === 'string' ? arg3 : undefined };
+  }
+  if (typeof arg2 === 'string') {
+    return { preferredNodeId: arg2, db: isD1Database(arg3) ? arg3 : undefined };
+  }
+  if (isD1Database(arg3)) {
+    return { db: arg3 };
+  }
+  return {};
+}
+
+async function queryTargetNode(
+  db: D1Database,
+  preferredNodeId?: string,
+): Promise<{ node?: EdgeNodeRecord; notFoundReason?: FallbackReason; message?: string }> {
+  if (preferredNodeId) {
+    const node = await db
+      .prepare(
+        'SELECT id, name, tunnel_url, bearer_token, status, hardware_profile, cost_kind, last_heartbeat_at, created_at FROM edge_nodes WHERE id = ?',
+      )
+      .bind(preferredNodeId)
+      .first<EdgeNodeRecord>();
+
+    if (!node) {
+      return {
+        notFoundReason: 'PREFERRED_NODE_NOT_FOUND',
+        message: `Preferred node ${preferredNodeId} not found in registry`,
+      };
+    }
+    return { node };
+  }
+
+  const node = await db
+    .prepare(
+      "SELECT id, name, tunnel_url, bearer_token, status, hardware_profile, cost_kind, last_heartbeat_at, created_at FROM edge_nodes WHERE UPPER(status) = 'ONLINE' ORDER BY last_heartbeat_at DESC LIMIT 1",
+    )
+    .first<EdgeNodeRecord>();
+
+  if (!node) {
+    return {
+      notFoundReason: 'NO_ONLINE_NODE',
+      message: 'No nodes currently registered with status ONLINE',
+    };
+  }
+  return { node };
+}
+
+async function validateEdgeNodeHealth(
+  db: D1Database,
+  targetNode: EdgeNodeRecord,
+  nowMs: number,
+  heartbeatThreshold: number,
+): Promise<{ valid: boolean; reason?: FallbackReason; message?: string }> {
+  const normalizedStatus = (targetNode.status || '').toUpperCase();
+  if (normalizedStatus !== 'ONLINE') {
+    return {
+      valid: false,
+      reason: 'NODE_OFFLINE',
+      message: `Target node ${targetNode.id} status is ${targetNode.status}`,
+    };
+  }
+
+  const stalenessMs = nowMs - Number(targetNode.last_heartbeat_at || 0);
+  if (stalenessMs > heartbeatThreshold) {
+    await db
+      .prepare("UPDATE edge_nodes SET status = 'OFFLINE' WHERE id = ?")
+      .bind(targetNode.id)
+      .run()
+      .catch((err) =>
+        logger.warn('Failed to lazily mark stale node OFFLINE', {
+          nodeId: targetNode?.id,
+          error: String(err),
+        }),
+      );
+
+    return {
+      valid: false,
+      reason: 'STALE_HEARTBEAT',
+      message: `Node ${targetNode.id} heartbeat stale by ${stalenessMs}ms (> ${heartbeatThreshold}ms)`,
+    };
+  }
+
+  if (
+    targetNode.tunnel_url.includes('offline') ||
+    targetNode.tunnel_url.includes('unreachable')
+  ) {
+    return {
+      valid: false,
+      reason: 'PROBE_FAILED',
+      message: 'Tunnel URL marked unreachable',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Routes an inference task following the Mekong Hybrid Routing Policy.
+ *
+ * Polymorphic signature supports:
+ * - routeInferenceTask(task, db)
+ * - routeInferenceTask(task, db, preferredNodeId, nowMs)
+ * - routeInferenceTask(task, preferredNodeId, db, nowMs)
+ * - routeInferenceTask(task, db, preferredNodeId, nowMs, options)
+ */
 export async function routeInferenceTask(
   task: InferenceTask,
   arg2?: D1Database | string,
@@ -104,18 +214,7 @@ export async function routeInferenceTask(
   options?: HybridRouterOptions,
 ): Promise<InferenceResult> {
   // 1. Disambiguate polymorphic arguments
-  let db: D1Database | undefined;
-  let preferredNodeId: string | undefined;
-
-  if (isD1Database(arg2)) {
-    db = arg2;
-    preferredNodeId = typeof arg3 === 'string' ? arg3 : undefined;
-  } else if (typeof arg2 === 'string') {
-    preferredNodeId = arg2;
-    db = isD1Database(arg3) ? arg3 : undefined;
-  } else if (isD1Database(arg3)) {
-    db = arg3;
-  }
+  const { db, preferredNodeId } = resolveRouterArgs(arg2, arg3);
 
   // 2. Check explicit edge bypass option
   if (task.options?.bypassEdge) {
@@ -130,77 +229,17 @@ export async function routeInferenceTask(
   const heartbeatThreshold = options?.heartbeatThresholdMs ?? DEFAULT_HEARTBEAT_THRESHOLD_MS;
 
   try {
-    let targetNode: EdgeNodeRecord | null | undefined;
-
-    // 4. Query target node (preferred vs most recent online node)
-    if (preferredNodeId) {
-      targetNode = await db
-        .prepare(
-          'SELECT id, name, tunnel_url, bearer_token, status, hardware_profile, cost_kind, last_heartbeat_at, created_at FROM edge_nodes WHERE id = ?',
-        )
-        .bind(preferredNodeId)
-        .first<EdgeNodeRecord>();
-
-      if (!targetNode) {
-        return executeCloudFallback(
-          task,
-          'PREFERRED_NODE_NOT_FOUND',
-          `Preferred node ${preferredNodeId} not found in registry`,
-        );
-      }
-    } else {
-      targetNode = await db
-        .prepare(
-          "SELECT id, name, tunnel_url, bearer_token, status, hardware_profile, cost_kind, last_heartbeat_at, created_at FROM edge_nodes WHERE UPPER(status) = 'ONLINE' ORDER BY last_heartbeat_at DESC LIMIT 1",
-        )
-        .first<EdgeNodeRecord>();
-
-      if (!targetNode) {
-        return executeCloudFallback(task, 'NO_ONLINE_NODE', 'No nodes currently registered with status ONLINE');
-      }
+    const { node: targetNode, notFoundReason, message } = await queryTargetNode(db, preferredNodeId);
+    if (!targetNode) {
+      return executeCloudFallback(task, notFoundReason ?? 'NO_ONLINE_NODE', message);
     }
 
-    // 5. Status Check
-    const normalizedStatus = (targetNode.status || '').toUpperCase();
-    if (normalizedStatus !== 'ONLINE') {
-      return executeCloudFallback(
-        task,
-        'NODE_OFFLINE',
-        `Target node ${targetNode.id} status is ${targetNode.status}`,
-      );
+    const health = await validateEdgeNodeHealth(db, targetNode, nowMs, heartbeatThreshold);
+    if (!health.valid) {
+      return executeCloudFallback(task, health.reason!, health.message);
     }
 
-    // 6. 15-Second Staleness Check (nowMs - last_heartbeat_at > threshold)
-    const stalenessMs = nowMs - Number(targetNode.last_heartbeat_at || 0);
-    if (stalenessMs > heartbeatThreshold) {
-      // Lazy transition: mark stale node OFFLINE in D1
-      await db
-        .prepare("UPDATE edge_nodes SET status = 'OFFLINE' WHERE id = ?")
-        .bind(targetNode.id)
-        .run()
-        .catch((err) =>
-          logger.warn('Failed to lazily mark stale node OFFLINE', {
-            nodeId: targetNode?.id,
-            error: String(err),
-          }),
-        );
-
-      return executeCloudFallback(
-        task,
-        'STALE_HEARTBEAT',
-        `Node ${targetNode.id} heartbeat stale by ${stalenessMs}ms (> ${heartbeatThreshold}ms)`,
-      );
-    }
-
-    // 7. Pre-flight Probe / Tunnel unreachable check
-    if (
-      targetNode.tunnel_url.includes('offline') ||
-      targetNode.tunnel_url.includes('unreachable')
-    ) {
-      return executeCloudFallback(task, 'PROBE_FAILED', 'Tunnel URL marked unreachable');
-    }
-
-    // 8. Successful local zero-cost GPU execution
+    // Successful local zero-cost GPU execution
     return {
       taskId: task.taskId,
       provider: 'mekong_m1_max',
@@ -219,3 +258,4 @@ export async function routeInferenceTask(
     return executeCloudFallback(task, reason, errorMsg);
   }
 }
+

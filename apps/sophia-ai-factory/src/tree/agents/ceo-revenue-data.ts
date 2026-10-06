@@ -50,6 +50,75 @@ function resolveTimestamps(periodLabel: PeriodLabel, now: number) {
 
 // ── Revenue fetch ─────────────────────────────────────────────────────────────
 
+interface AggregatedLicenseTotals {
+  totalRevenue: number;
+  recurringRevenue: number;
+  oneTimeRevenue: number;
+  byTier: RevenueByTier[];
+}
+
+interface RawLicense {
+  tier?: unknown;
+  created_at?: unknown;
+  metadata?: unknown;
+}
+
+function aggregateLicenseTotals(licenses: RawLicense[]): AggregatedLicenseTotals {
+  let totalRevenue = 0;
+  let recurringRevenue = 0;
+  let oneTimeRevenue = 0;
+  const tierMap: Record<string, { customers: number; revenue: number }> = {};
+
+  for (const lic of licenses) {
+    const tier = (lic.tier as string) ?? 'unknown';
+    const amount = Number((lic.metadata as Record<string, unknown>)?.amount ?? 0);
+    const isRecurring = Boolean((lic.metadata as Record<string, unknown>)?.recurring);
+
+    totalRevenue += amount;
+    if (isRecurring) recurringRevenue += amount;
+    else oneTimeRevenue += amount;
+
+    if (!tierMap[tier]) tierMap[tier] = { customers: 0, revenue: 0 };
+    tierMap[tier].customers += 1;
+    tierMap[tier].revenue += amount;
+  }
+
+  const byTier: RevenueByTier[] = Object.entries(tierMap).map(([tier, data]) => ({
+    tier,
+    ...data,
+  }));
+
+  return { totalRevenue, recurringRevenue, oneTimeRevenue, byTier };
+}
+
+function buildTrendPoints(
+  licenses: RawLicense[],
+  startTimestamp: number,
+  endTimestamp: number,
+): RevenueTrendPoint[] {
+  const trend: RevenueTrendPoint[] = [];
+  const daysDiff = Math.ceil((endTimestamp - startTimestamp) / 86400);
+  const bucketSize = daysDiff <= 7 ? 1 : daysDiff <= 31 ? 7 : 30;
+
+  for (let i = 0; i < daysDiff; i += bucketSize) {
+    const bucketStart = startTimestamp + i * 86400;
+    const bucketEnd = Math.min(bucketStart + bucketSize * 86400, endTimestamp);
+
+    let bucketRevenue = 0;
+    for (const lic of licenses) {
+      const createdAt = Number(lic.created_at);
+      if (createdAt >= bucketStart && createdAt < bucketEnd) {
+        bucketRevenue += Number((lic.metadata as Record<string, unknown>)?.amount ?? 0);
+      }
+    }
+
+    const dateStr = new Date(bucketStart * 1000).toISOString().split('T')[0]!;
+    trend.push({ date: dateStr, revenue: bucketRevenue });
+  }
+
+  return trend;
+}
+
 /**
  * Fetch revenue insights for a time period.
  *
@@ -72,56 +141,14 @@ export async function fetchRevenue(
     .gte('created_at', startTimestamp)
     .lte('created_at', endTimestamp);
 
-  let totalRevenue = 0;
-  let recurringRevenue = 0;
-  let oneTimeRevenue = 0;
-  const tierMap: Record<string, { customers: number; revenue: number }> = {};
-
-  for (const lic of licenses ?? []) {
-    const tier = (lic.tier as string) ?? 'unknown';
-    const amount = Number((lic.metadata as Record<string, unknown>)?.amount ?? 0);
-    const isRecurring = Boolean((lic.metadata as Record<string, unknown>)?.recurring);
-
-    totalRevenue += amount;
-    if (isRecurring) recurringRevenue += amount;
-    else oneTimeRevenue += amount;
-
-    if (!tierMap[tier]) tierMap[tier] = { customers: 0, revenue: 0 };
-    tierMap[tier].customers += 1;
-    tierMap[tier].revenue += amount;
-  }
-
-  // Build tier breakdown
-  const byTier: RevenueByTier[] = Object.entries(tierMap).map(([tier, data]) => ({
-    tier,
-    ...data,
-  }));
-
-  // Build trend data (simplified: daily totals)
-  const trend: RevenueTrendPoint[] = [];
-  const daysDiff = Math.ceil((endTimestamp - startTimestamp) / 86400);
-  const bucketSize = daysDiff <= 7 ? 1 : daysDiff <= 31 ? 7 : 30;
-
-  for (let i = 0; i < daysDiff; i += bucketSize) {
-    const bucketStart = startTimestamp + i * 86400;
-    const bucketEnd = Math.min(bucketStart + bucketSize * 86400, endTimestamp);
-
-    let bucketRevenue = 0;
-    for (const lic of licenses ?? []) {
-      const createdAt = Number(lic.created_at);
-      if (createdAt >= bucketStart && createdAt < bucketEnd) {
-        bucketRevenue += Number((lic.metadata as Record<string, unknown>)?.amount ?? 0);
-      }
-    }
-
-    const dateStr = new Date(bucketStart * 1000).toISOString().split('T')[0]!;
-    trend.push({ date: dateStr, revenue: bucketRevenue });
-  }
+  const rawLicenses = (licenses ?? []) as RawLicense[];
+  const { totalRevenue, recurringRevenue, oneTimeRevenue, byTier } = aggregateLicenseTotals(rawLicenses);
+  const trend = buildTrendPoints(rawLicenses, startTimestamp, endTimestamp);
 
   log.info('[ceo-executor] Revenue fetched', {
     period,
     totalRevenue,
-    licensesCount: (licenses ?? []).length,
+    licensesCount: rawLicenses.length,
   });
 
   return {

@@ -48,6 +48,39 @@ export async function localExecutor(
   };
 }
 
+function formatTaskError(err: unknown): string {
+  if (err instanceof BreakerOpenError) {
+    return "Circuit breaker open — upstream degraded";
+  }
+  if (err instanceof PromptContractError) {
+    return `Contract validation: ${err.message}`;
+  }
+  return String(err);
+}
+
+async function executeTaskWithRetry(
+  task: AgentTask,
+  tenantId: string,
+  onAttempt: () => void,
+): Promise<unknown> {
+  if (task.promptContract !== undefined && task.agentRole !== undefined) {
+    validatePromptContract(task.agentRole, task.promptContract);
+  }
+
+  const enrichedTask: AgentTask = {
+    ...task,
+    context: { ...task.context, tenantId },
+  };
+
+  return withRetry(
+    () => {
+      onAttempt();
+      return withBreaker(FLEET_BREAKER, () => localExecutor(enrichedTask, tenantId));
+    },
+    { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 10_000 },
+  );
+}
+
 export async function runTask(
   task: AgentTask,
   tenantId: string,
@@ -75,23 +108,9 @@ export async function runTask(
   let attempts = 0;
 
   try {
-    // Validate typed prompt contract before dispatch (opt-in: both fields required)
-    if (task.promptContract !== undefined && task.agentRole !== undefined) {
-      validatePromptContract(task.agentRole, task.promptContract);
-    }
-
-    const enrichedTask: AgentTask = {
-      ...task,
-      context: { ...task.context, tenantId },
-    };
-
-    const output = await withRetry(
-      () => {
-        attempts++;
-        return withBreaker(FLEET_BREAKER, () => localExecutor(enrichedTask, tenantId));
-      },
-      { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 10_000 },
-    );
+    const output = await executeTaskWithRetry(task, tenantId, () => {
+      attempts++;
+    });
 
     const durationMs = Date.now() - start;
     logger.info("task_completed", {
@@ -121,11 +140,7 @@ export async function runTask(
     return {
       taskId: task.id,
       success: false,
-      error: err instanceof BreakerOpenError
-        ? "Circuit breaker open — upstream degraded"
-        : err instanceof PromptContractError
-          ? `Contract validation: ${err.message}`
-          : String(err),
+      error: formatTaskError(err),
       durationMs,
       retryCount: attempts > 0 ? attempts - 1 : 0,
     };

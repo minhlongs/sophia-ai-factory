@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_31_SCALE_TARGETS,
   type InfiniteMultiverseCurrency,
   type InfiniteNettingBatch,
   type InfiniteNettingObligation,

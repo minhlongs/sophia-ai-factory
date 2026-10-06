@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_33_SCALE_TARGETS,
   type BiquadrillionCurrency,
   type BiquadrillionNettingBatch,
   type BiquadrillionNettingObligation,

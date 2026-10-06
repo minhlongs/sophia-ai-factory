@@ -10,7 +10,6 @@ import {
   executeParameterizedMultilateralNetting,
 } from './hyper-rtgs-domain-engine';
 import {
-  GATE_22_SCALE_TARGETS,
   type MultiverseCurrency,
   type MultiverseNettingObligation,
   type MultiverseNettingStatus,

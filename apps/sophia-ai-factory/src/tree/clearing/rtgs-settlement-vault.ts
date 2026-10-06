@@ -5,7 +5,6 @@
 
 import type {
   CentralBankClearingNode,
-  RtgsSettlementBatch,
   FxCorridor,
 } from '@/seed/types/central-bank-clearing';
 

@@ -52,6 +52,18 @@ export interface ParsedLanguage {
   q: number;
 }
 
+function parseQualityWeight(params: string[]): number {
+  for (const param of params) {
+    const [key, val] = param.trim().split('=');
+    if (key?.trim() === 'q') {
+      const trimmedVal = val?.trim();
+      const parsedQ = trimmedVal ? parseFloat(trimmedVal) : NaN;
+      return Number.isFinite(parsedQ) && parsedQ >= 0 && parsedQ <= 1 ? parsedQ : 0.0;
+    }
+  }
+  return 1.0;
+}
+
 /**
  * Parse an HTTP `Accept-Language` header according to RFC 5646 and RFC 9110.
  * Example: "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
@@ -70,16 +82,7 @@ export function parseAcceptLanguage(header: string | null | undefined): ParsedLa
     const cleanTag = langTag.trim().toLowerCase();
     if (!cleanTag || cleanTag === '*') continue;
 
-    let q = 1.0;
-    for (const param of params) {
-      const [key, val] = param.trim().split('=');
-      if (key?.trim() === 'q') {
-        const trimmedVal = val?.trim();
-        const parsedQ = trimmedVal ? parseFloat(trimmedVal) : NaN;
-        q = isFinite(parsedQ) && parsedQ >= 0 && parsedQ <= 1 ? parsedQ : 0.0;
-      }
-    }
-
+    const q = parseQualityWeight(params);
     const primaryCode = cleanTag.split('-')[0];
     parsed.push({
       locale: cleanTag,
@@ -91,6 +94,7 @@ export function parseAcceptLanguage(header: string | null | undefined): ParsedLa
   // Sort descending by quality weight
   return parsed.sort((a, b) => b.q - a.q);
 }
+
 
 /**
  * Get default APAC locale for an ISO country code.

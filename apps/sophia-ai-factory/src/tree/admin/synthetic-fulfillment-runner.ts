@@ -86,6 +86,148 @@ function computeDeltas(tl: SyntheticTimeline): SyntheticDeltasMs {
   }
 }
 
+function buildRunResult(
+  paymentId: string,
+  purchaseId: string | null,
+  videoId: string | null,
+  outcome: SyntheticRunResult['outcome'],
+  timeline: SyntheticTimeline,
+  errors: string[],
+): SyntheticRunResult {
+  return {
+    payment_id: paymentId,
+    purchase_id: purchaseId,
+    video_id: videoId,
+    outcome,
+    timeline,
+    deltas_ms: computeDeltas(timeline),
+    errors,
+  }
+}
+
+async function setupSyntheticPurchase(
+  userId: string,
+  skuId: OneTimeSkuId,
+  sku: (typeof ONE_TIME_SKUS)[OneTimeSkuId],
+  paymentId: string,
+  errors: string[],
+): Promise<string | null> {
+  try {
+    const expiresAt = Math.floor(Date.now() / 1000) + 365 * 24 * 3600
+    const purchaseId = await insertPurchase({
+      userId,
+      kind: 'one_time',
+      sku: skuId,
+      paymentId,
+      amountCents: sku.priceUsd * 100,
+      creditsTotal: sku.credits,
+      expiresAt,
+      status: 'pending',
+    })
+
+    if (!purchaseId) {
+      errors.push('insertPurchase returned null')
+      return null
+    }
+
+    // Mark as paid
+    await markPaid(paymentId, sku.credits, Math.floor(Date.now() / 1000) + 365 * 24 * 3600)
+    return purchaseId
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`Purchase setup failed: ${msg}`)
+    return null
+  }
+}
+
+async function invokeFulfillmentTrigger(
+  userId: string,
+  purchaseId: string,
+  sku: (typeof ONE_TIME_SKUS)[OneTimeSkuId],
+  errors: string[],
+): Promise<void> {
+  try {
+    const { triggerOneTimeFulfillment } = await import('@/land/fulfillment/one-time-fulfillment');
+    await triggerOneTimeFulfillment(userId, purchaseId, sku)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`triggerOneTimeFulfillment threw: ${msg}`)
+    logger.warn('[SyntheticRunner] triggerOneTimeFulfillment threw', { msg, purchaseId })
+  }
+}
+
+async function locateQueuedVideo(
+  purchaseId: string,
+  timeline: SyntheticTimeline,
+  errors: string[],
+): Promise<string | null> {
+  try {
+    const videoRow = await findByPurchaseId(purchaseId)
+    if (videoRow) {
+      timeline.queued_at = Date.now()
+      if (videoRow.status === 'processing') timeline.processing_at = Date.now()
+      if (videoRow.status === 'completed') timeline.completed_at = Date.now()
+      return videoRow.id
+    }
+    errors.push('No videos row found after triggerOneTimeFulfillment')
+    return null
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`findByPurchaseId failed: ${msg}`)
+    return null
+  }
+}
+
+async function handleVideoPollTick(
+  videoId: string,
+  timeline: SyntheticTimeline,
+  errors: string[],
+): Promise<boolean> {
+  try {
+    const _db = await getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const row = await _db
+      .prepare(`SELECT id, status FROM videos WHERE id = ?1 LIMIT 1`)
+      .bind(videoId)
+      .first<VideoRow>()
+
+    if (!row) {
+      errors.push('Video row disappeared during polling')
+      return true
+    }
+
+    if (row.status === 'processing' && timeline.processing_at === null) {
+      timeline.processing_at = Date.now()
+    }
+    if (row.status === 'completed') {
+      timeline.completed_at = Date.now()
+      return true
+    }
+    if (row.status === 'failed' || row.status === 'failed_permanent') {
+      errors.push(`Video status: ${row.status}`)
+      return true
+    }
+    return false
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`Poll error: ${msg}`)
+    return false
+  }
+}
+
+async function pollVideoStatus(
+  videoId: string,
+  timeline: SyntheticTimeline,
+  deadline: number,
+  errors: string[],
+): Promise<void> {
+  while (Date.now() < deadline && timeline.completed_at === null) {
+    await new Promise<void>((r) => setTimeout(r, POLL_INTERVAL_MS))
+    const shouldStop = await handleVideoPollTick(videoId, timeline, errors)
+    if (shouldStop) break
+  }
+}
+
 /**
  * Run a synthetic fulfillment E2E test.
  *
@@ -113,140 +255,24 @@ export async function runSyntheticFulfillment(
 
   if (!sku) {
     errors.push(`Unknown SKU: ${skuId}`)
-    return {
-      payment_id: paymentId,
-      purchase_id: null,
-      video_id: null,
-      outcome: 'failed',
-      timeline,
-      deltas_ms: computeDeltas(timeline),
-      errors,
-    }
+    return buildRunResult(paymentId, null, null, 'failed', timeline, errors)
   }
 
-  // Step 1: Insert synthetic purchase
-  let purchaseId: string | null = null
-  try {
-    const expiresAt = Math.floor(Date.now() / 1000) + 365 * 24 * 3600
-    purchaseId = await insertPurchase({
-      userId,
-      kind: 'one_time',
-      sku: skuId,
-      paymentId,
-      amountCents: sku.priceUsd * 100,
-      creditsTotal: sku.credits,
-      expiresAt,
-      status: 'pending',
-    })
-
-    if (!purchaseId) {
-      errors.push('insertPurchase returned null')
-      return {
-        payment_id: paymentId,
-        purchase_id: null,
-        video_id: null,
-        outcome: 'failed',
-        timeline,
-        deltas_ms: computeDeltas(timeline),
-        errors,
-      }
-    }
-
-    // Mark as paid
-    await markPaid(paymentId, sku.credits, Math.floor(Date.now() / 1000) + 365 * 24 * 3600)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    errors.push(`Purchase setup failed: ${msg}`)
-    return {
-      payment_id: paymentId,
-      purchase_id: purchaseId,
-      video_id: null,
-      outcome: 'failed',
-      timeline,
-      deltas_ms: computeDeltas(timeline),
-      errors,
-    }
+  const purchaseId = await setupSyntheticPurchase(userId, skuId, sku, paymentId, errors)
+  if (!purchaseId) {
+    return buildRunResult(paymentId, null, null, 'failed', timeline, errors)
   }
 
-  // Step 2: Trigger fulfillment (dynamic import avoids tree→land boundary violation)
-  try {
-    const { triggerOneTimeFulfillment } = await import('@/land/fulfillment/one-time-fulfillment');
-    await triggerOneTimeFulfillment(userId, purchaseId, sku)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    errors.push(`triggerOneTimeFulfillment threw: ${msg}`)
-    logger.warn('[SyntheticRunner] triggerOneTimeFulfillment threw', { msg, purchaseId })
-  }
+  await invokeFulfillmentTrigger(userId, purchaseId, sku, errors)
 
-  // Step 3: Check if video row was queued
-  let videoId: string | null = null
-  try {
-    const videoRow = await findByPurchaseId(purchaseId)
-    if (videoRow) {
-      videoId = videoRow.id
-      timeline.queued_at = Date.now()
-      if (videoRow.status === 'processing') timeline.processing_at = Date.now()
-      if (videoRow.status === 'completed') timeline.completed_at = Date.now()
-    } else {
-      errors.push('No videos row found after triggerOneTimeFulfillment')
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    errors.push(`findByPurchaseId failed: ${msg}`)
-  }
-
+  const videoId = await locateQueuedVideo(purchaseId, timeline, errors)
   if (!videoId) {
-    return {
-      payment_id: paymentId,
-      purchase_id: purchaseId,
-      video_id: null,
-      outcome: 'failed',
-      timeline,
-      deltas_ms: computeDeltas(timeline),
-      errors,
-    }
+    return buildRunResult(paymentId, purchaseId, null, 'failed', timeline, errors)
   }
 
-  // Step 4: Poll for status transitions
   const deadline = Date.now() + timeoutMs
+  await pollVideoStatus(videoId, timeline, deadline, errors)
 
-  while (Date.now() < deadline && timeline.completed_at === null) {
-    await new Promise<void>((r) => setTimeout(r, POLL_INTERVAL_MS))
-
-    try {
-      const _db = await getD1();
-    if (!_db) throw new Error('D1 binding not available');
-    const db = _db;
-      const row = await db
-        .prepare(
-          `SELECT id, status FROM videos WHERE id = ?1 LIMIT 1`,
-        )
-        .bind(videoId)
-        .first<VideoRow>()
-
-      if (!row) {
-        errors.push('Video row disappeared during polling')
-        break
-      }
-
-      if (row.status === 'processing' && timeline.processing_at === null) {
-        timeline.processing_at = Date.now()
-      }
-      if (row.status === 'completed') {
-        timeline.completed_at = Date.now()
-        break
-      }
-      if (row.status === 'failed' || row.status === 'failed_permanent') {
-        errors.push(`Video status: ${row.status}`)
-        break
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      errors.push(`Poll error: ${msg}`)
-    }
-  }
-
-  // Step 5: Check email
   timeline.email_sent_at = await checkEmailSent(purchaseId)
 
   const outcome =
@@ -264,13 +290,6 @@ export async function runSyntheticFulfillment(
     errors: errors.length,
   })
 
-  return {
-    payment_id: paymentId,
-    purchase_id: purchaseId,
-    video_id: videoId,
-    outcome,
-    timeline,
-    deltas_ms: computeDeltas(timeline),
-    errors,
-  }
+  return buildRunResult(paymentId, purchaseId, videoId, outcome, timeline, errors)
 }
+

@@ -193,6 +193,58 @@ function evaluateHookStrength(
   };
 }
 
+function scoreSceneCount(sceneCount: number, feedback: string[]): number {
+  if (sceneCount >= 4 && sceneCount <= 8) return 10;
+  if (sceneCount >= 2 && sceneCount <= 3) {
+    feedback.push('Storyboard: Increase scene count to 4-8 scenes for dynamic visual variety.');
+    return 6;
+  }
+  if (sceneCount >= 9 && sceneCount <= 12) return 7;
+  if (sceneCount === 1) {
+    feedback.push('Single-scene video: Multi-scene storyboards have significantly higher retention.');
+    return 2;
+  }
+  feedback.push('Missing storyboard scenes: Please provide at least 4 structured scenes.');
+  return 0;
+}
+
+function scorePromptDetail(
+  scenes: SceneParsed[],
+  visualStylePrompt: string | undefined,
+  feedback: string[],
+): { avgPromptWords: number; promptScore: number } {
+  const sceneCount = scenes.length;
+  if (sceneCount > 0) {
+    const totalWords = scenes.reduce((acc, s) => {
+      const text = (s.visualPrompt || visualStylePrompt || '').trim();
+      return acc + extractWords(text).length;
+    }, 0);
+    const avgPromptWords = Math.round(totalWords / sceneCount);
+    if (avgPromptWords >= 15) {
+      return { avgPromptWords, promptScore: 10 };
+    }
+    feedback.push('Scene prompts are brief: Provide at least 15 descriptive words per scene prompt.');
+    return { avgPromptWords, promptScore: Math.min(10, Math.round((avgPromptWords / 15) * 10)) };
+  }
+
+  const visualWords = extractWords(visualStylePrompt || '').length;
+  const promptScore = visualWords >= 15 ? 5 : Math.round((visualWords / 15) * 5);
+  return { avgPromptWords: 0, promptScore };
+}
+
+function scoreAspectRatio(aspectRatio: string, feedback: string[]): { ratioNorm: string; aspectScore: number } {
+  const ratioNorm = aspectRatio.trim();
+  if (ratioNorm === '9:16') {
+    return { ratioNorm, aspectScore: 5 };
+  }
+  if (ratioNorm === '16:9' || ratioNorm === '1:1') {
+    feedback.push('Aspect ratio: 9:16 vertical format is optimal for TikTok, Shorts, and Reels virality.');
+    return { ratioNorm, aspectScore: 3 };
+  }
+  feedback.push('Unrecognized aspect ratio. Standard vertical 9:16 recommended.');
+  return { ratioNorm, aspectScore: 1 };
+}
+
 /**
  * Evaluates Storyboard Coherence (0-25 points)
  */
@@ -204,55 +256,9 @@ function evaluateStoryboardCoherence(
   const feedback: string[] = [];
   const sceneCount = scenes.length;
 
-  // 1. Scene count (0-10)
-  let sceneCountScore = 0;
-  if (sceneCount >= 4 && sceneCount <= 8) {
-    sceneCountScore = 10;
-  } else if (sceneCount >= 2 && sceneCount <= 3) {
-    sceneCountScore = 6;
-    feedback.push('Storyboard: Increase scene count to 4-8 scenes for dynamic visual variety.');
-  } else if (sceneCount >= 9 && sceneCount <= 12) {
-    sceneCountScore = 7;
-  } else if (sceneCount === 1) {
-    sceneCountScore = 2;
-    feedback.push('Single-scene video: Multi-scene storyboards have significantly higher retention.');
-  } else {
-    sceneCountScore = 0;
-    feedback.push('Missing storyboard scenes: Please provide at least 4 structured scenes.');
-  }
-
-  // 2. Prompt detail (0-10)
-  let avgPromptWords = 0;
-  let promptScore = 0;
-  if (sceneCount > 0) {
-    const totalWords = scenes.reduce((acc, s) => {
-      const text = (s.visualPrompt || visualStylePrompt || '').trim();
-      return acc + extractWords(text).length;
-    }, 0);
-    avgPromptWords = Math.round(totalWords / sceneCount);
-    if (avgPromptWords >= 15) {
-      promptScore = 10;
-    } else {
-      promptScore = Math.min(10, Math.round((avgPromptWords / 15) * 10));
-      feedback.push('Scene prompts are brief: Provide at least 15 descriptive words per scene prompt.');
-    }
-  } else {
-    const visualWords = extractWords(visualStylePrompt || '').length;
-    promptScore = visualWords >= 15 ? 5 : Math.round((visualWords / 15) * 5);
-  }
-
-  // 3. Aspect ratio check (0-5)
-  let aspectScore = 1;
-  const ratioNorm = aspectRatio.trim();
-  if (ratioNorm === '9:16') {
-    aspectScore = 5;
-  } else if (ratioNorm === '16:9' || ratioNorm === '1:1') {
-    aspectScore = 3;
-    feedback.push('Aspect ratio: 9:16 vertical format is optimal for TikTok, Shorts, and Reels virality.');
-  } else {
-    aspectScore = 1;
-    feedback.push('Unrecognized aspect ratio. Standard vertical 9:16 recommended.');
-  }
+  const sceneCountScore = scoreSceneCount(sceneCount, feedback);
+  const { avgPromptWords, promptScore } = scorePromptDetail(scenes, visualStylePrompt, feedback);
+  const { ratioNorm, aspectScore } = scoreAspectRatio(aspectRatio, feedback);
 
   const total = Math.min(25, Math.round(sceneCountScore + promptScore + aspectScore));
 
@@ -272,6 +278,7 @@ function evaluateStoryboardCoherence(
     feedback,
   };
 }
+
 
 /**
  * Evaluates Script Cadence & Retention (0-25 points)

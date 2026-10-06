@@ -528,83 +528,63 @@ export async function accruePartnerCommission(
  * Configure or update white-label branding assets.
  * Requires partner to have whitelabel_enabled = 1 (PLATINUM tier).
  */
-export async function upsertWhitelabelConfig(
+async function updateExistingWhitelabelConfig(
+  db: D1Database,
+  existingConfig: PartnerWhitelabelConfig,
+  input: WhitelabelConfigInput,
+  cleanDomain: string | null,
+  verificationToken: string | null,
+  nowMs: number,
+): Promise<void> {
+  const isNewDomain = cleanDomain && cleanDomain !== existingConfig.custom_domain;
+  const isSslActive = isNewDomain ? 0 : existingConfig.is_ssl_active;
+  const dnsVerifiedAt = isNewDomain ? null : existingConfig.dns_verified_at;
+  const token = isNewDomain ? verificationToken : existingConfig.dns_txt_verification_token;
+
+  await db
+    .prepare(
+      `UPDATE partner_whitelabel_configs
+       SET brand_name = ?1,
+           logo_url = ?2,
+           favicon_url = ?3,
+           primary_color = ?4,
+           accent_color = ?5,
+           custom_domain = ?6,
+           custom_email_sender = ?7,
+           support_url = ?8,
+           footer_html = ?9,
+           is_ssl_active = ?10,
+           dns_txt_verification_token = ?11,
+           dns_verified_at = ?12,
+           updated_at = ?13
+       WHERE id = ?14`
+    )
+    .bind(
+      input.brandName.trim(),
+      input.logoUrl ?? null,
+      input.faviconUrl ?? null,
+      input.primaryColor || '#06b6d4',
+      input.accentColor || '#3b82f6',
+      cleanDomain,
+      input.customEmailSender ?? null,
+      input.supportUrl ?? null,
+      input.footerHtml ?? null,
+      isSslActive,
+      token,
+      dnsVerifiedAt,
+      nowMs,
+      existingConfig.id,
+    )
+    .run();
+}
+
+async function insertNewWhitelabelConfig(
   db: D1Database,
   input: WhitelabelConfigInput,
-  nowMs = Date.now(),
-): Promise<PartnerWhitelabelConfig> {
-  const partner = await getPartnerById(db, input.partnerId);
-  if (!partner) {
-    throw new Error(`Partner not found: ${input.partnerId}`);
-  }
-
-  if (partner.whitelabel_enabled !== 1 && partner.tier !== 'PLATINUM') {
-    throw new Error(
-      'WHITELABEL_NOT_PERMITTED: White-label customization is exclusive to PLATINUM tier partners (30+ customers or $20k+ MRR)',
-    );
-  }
-
-  const cleanDomain = input.customDomain?.trim().toLowerCase() || null;
-  const verificationToken = cleanDomain
-    ? generateDnsTxtVerificationToken(input.partnerId, cleanDomain)
-    : null;
-
-  const existingConfig = await getWhitelabelConfigByPartnerId(db, input.partnerId);
-
-  if (existingConfig) {
-    const isNewDomain = cleanDomain && cleanDomain !== existingConfig.custom_domain;
-    const isSslActive = isNewDomain ? 0 : existingConfig.is_ssl_active;
-    const dnsVerifiedAt = isNewDomain ? null : existingConfig.dns_verified_at;
-    const token = isNewDomain ? verificationToken : existingConfig.dns_txt_verification_token;
-
-    await db
-      .prepare(
-        `UPDATE partner_whitelabel_configs
-         SET brand_name = ?1,
-             logo_url = ?2,
-             favicon_url = ?3,
-             primary_color = ?4,
-             accent_color = ?5,
-             custom_domain = ?6,
-             custom_email_sender = ?7,
-             support_url = ?8,
-             footer_html = ?9,
-             is_ssl_active = ?10,
-             dns_txt_verification_token = ?11,
-             dns_verified_at = ?12,
-             updated_at = ?13
-         WHERE id = ?14`
-      )
-      .bind(
-        input.brandName.trim(),
-        input.logoUrl ?? null,
-        input.faviconUrl ?? null,
-        input.primaryColor || '#06b6d4',
-        input.accentColor || '#3b82f6',
-        cleanDomain,
-        input.customEmailSender ?? null,
-        input.supportUrl ?? null,
-        input.footerHtml ?? null,
-        isSslActive,
-        token,
-        dnsVerifiedAt,
-        nowMs,
-        existingConfig.id,
-      )
-      .run();
-
-    if (cleanDomain) {
-      await db
-        .prepare('UPDATE partner_profiles SET custom_domain = ?1, updated_at = ?2 WHERE id = ?3')
-        .bind(cleanDomain, nowMs, input.partnerId)
-        .run();
-    }
-
-    const updated = await getWhitelabelConfigByPartnerId(db, input.partnerId);
-    if (!updated) throw new Error('Failed to retrieve updated white-label config');
-    return updated;
-  }
-
+  cleanDomain: string | null,
+  verificationToken: string | null,
+  nowMs: number,
+): Promise<void> {
   const id = `wlc_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
   await db
     .prepare(
@@ -630,6 +610,40 @@ export async function upsertWhitelabelConfig(
       nowMs,
     )
     .run();
+}
+
+/**
+ * Configure or update white-label branding assets.
+ * Requires partner to have whitelabel_enabled = 1 (PLATINUM tier).
+ */
+export async function upsertWhitelabelConfig(
+  db: D1Database,
+  input: WhitelabelConfigInput,
+  nowMs = Date.now(),
+): Promise<PartnerWhitelabelConfig> {
+  const partner = await getPartnerById(db, input.partnerId);
+  if (!partner) {
+    throw new Error(`Partner not found: ${input.partnerId}`);
+  }
+
+  if (partner.whitelabel_enabled !== 1 && partner.tier !== 'PLATINUM') {
+    throw new Error(
+      'WHITELABEL_NOT_PERMITTED: White-label customization is exclusive to PLATINUM tier partners (30+ customers or $20k+ MRR)',
+    );
+  }
+
+  const cleanDomain = input.customDomain?.trim().toLowerCase() || null;
+  const verificationToken = cleanDomain
+    ? generateDnsTxtVerificationToken(input.partnerId, cleanDomain)
+    : null;
+
+  const existingConfig = await getWhitelabelConfigByPartnerId(db, input.partnerId);
+
+  if (existingConfig) {
+    await updateExistingWhitelabelConfig(db, existingConfig, input, cleanDomain, verificationToken, nowMs);
+  } else {
+    await insertNewWhitelabelConfig(db, input, cleanDomain, verificationToken, nowMs);
+  }
 
   if (cleanDomain) {
     await db
@@ -638,9 +652,9 @@ export async function upsertWhitelabelConfig(
       .run();
   }
 
-  const created = await getWhitelabelConfigByPartnerId(db, input.partnerId);
-  if (!created) throw new Error('Failed to retrieve newly created white-label config');
-  return created;
+  const result = await getWhitelabelConfigByPartnerId(db, input.partnerId);
+  if (!result) throw new Error('Failed to retrieve white-label config');
+  return result;
 }
 
 /**
