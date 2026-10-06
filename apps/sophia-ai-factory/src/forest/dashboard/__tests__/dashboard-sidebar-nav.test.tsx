@@ -18,6 +18,10 @@ vi.mock('next-intl', () => ({
       'sidebar.playbook': 'Playbooks',
       'sidebar.publish_queue': 'Distribution Queue',
       'sidebar.marketplace': 'Creator Marketplace',
+      'sidebar.my_sops': 'My SOPs',
+      'sidebar.sop_marketplace': 'SOP Marketplace',
+      'sidebar.sop_creator': 'SOP Creator',
+      'sidebar.challenges': 'Challenges',
       'sidebar.handover': 'Handover & Acceptance',
       'sidebar.runbooks': 'Runbooks',
       'sidebar.system_health': 'System Health',
@@ -51,10 +55,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
-  it('renders all 11 canonical Sophia AI modules with valid hrefs', () => {
+  it('renders all 14 canonical Sophia AI modules with valid hrefs', () => {
     render(<DashboardSidebarNav />);
 
-    expect(SOPHIA_NAV_MODULES).toHaveLength(11);
+    expect(SOPHIA_NAV_MODULES).toHaveLength(14);
 
     const expectedHrefs = [
       '/dashboard',
@@ -65,6 +69,9 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
       '/dashboard/playbooks',
       '/dashboard/publish/queue',
       '/marketplace',
+      '/dashboard/sops',
+      '/dashboard/sop-marketplace',
+      '/dashboard/challenges',
       '/dashboard/handover',
       '/dashboard/docs/runbooks',
       '/dashboard/system-health',
@@ -74,6 +81,20 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
       const link = document.querySelector(`a[href="${href}"]`);
       expect(link).not.toBeNull();
     }
+  });
+
+  it('renders SOP Creator link conditionally for MASTER tier users only', () => {
+    const { rerender } = render(
+      <DashboardSidebarNav user={{ name: 'Pro User', email: 'pro@sophia.ai', tier: 'PRO' }} />
+    );
+    expect(screen.queryByText('SOP Creator')).toBeNull();
+
+    rerender(
+      <DashboardSidebarNav user={{ name: 'Master User', email: 'master@sophia.ai', tier: 'MASTER' }} />
+    );
+    const creatorLink = screen.getByText('SOP Creator');
+    expect(creatorLink).toBeDefined();
+    expect(creatorLink.closest('a')?.getAttribute('href')).toBe('/dashboard/sop-creator');
   });
 
   it('highlights the active route with primary glow styling', () => {

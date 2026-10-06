@@ -4,7 +4,6 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import {
   DashboardSidebarNav,
   SOPHIA_NAV_MODULES,
-  type DashboardNavModule,
 } from '../dashboard-sidebar-nav';
 import { DashboardShell } from '../dashboard-shell';
 
@@ -20,6 +19,10 @@ vi.mock('next-intl', () => ({
       'sidebar.playbook': 'Playbooks',
       'sidebar.publish_queue': 'Distribution Queue',
       'sidebar.marketplace': 'Creator Marketplace',
+      'sidebar.my_sops': 'My SOPs',
+      'sidebar.sop_marketplace': 'SOP Marketplace',
+      'sidebar.sop_creator': 'SOP Creator',
+      'sidebar.challenges': 'Challenges',
       'sidebar.handover': 'Handover & Acceptance',
       'sidebar.runbooks': 'Runbooks',
       'sidebar.system_health': 'System Health',
@@ -61,11 +64,11 @@ vi.mock('next/navigation', () => ({
 
 describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation', () => {
   /* =========================================================================
-   * 1. EMPIRICAL ROUTE VERIFICATION: All 11 Canonical Modules
+   * 1. EMPIRICAL ROUTE VERIFICATION: All 14 Canonical Modules
    * ========================================================================= */
-  describe('1. Canonical 11 Sophia AI Module Routes & Icons', () => {
-    it('declares exactly 11 canonical Sophia AI modules in SOPHIA_NAV_MODULES', () => {
-      expect(SOPHIA_NAV_MODULES).toHaveLength(11);
+  describe('1. Canonical 14 Sophia AI Module Routes & Icons', () => {
+    it('declares exactly 14 canonical Sophia AI modules in SOPHIA_NAV_MODULES', () => {
+      expect(SOPHIA_NAV_MODULES).toHaveLength(14);
     });
 
     const expectedModules: Array<{
@@ -82,13 +85,16 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       { id: 'playbooks', labelKey: 'sidebar.playbook', fallbackLabel: 'Playbooks', href: '/dashboard/playbooks' },
       { id: 'publish_queue', labelKey: 'sidebar.publish_queue', fallbackLabel: 'Distribution Queue', href: '/dashboard/publish/queue' },
       { id: 'marketplace', labelKey: 'sidebar.marketplace', fallbackLabel: 'Creator Marketplace', href: '/marketplace' },
+      { id: 'my_sops', labelKey: 'sidebar.my_sops', fallbackLabel: 'My SOPs', href: '/dashboard/sops' },
+      { id: 'sop_marketplace', labelKey: 'sidebar.sop_marketplace', fallbackLabel: 'SOP Marketplace', href: '/dashboard/sop-marketplace' },
+      { id: 'challenges', labelKey: 'sidebar.challenges', fallbackLabel: 'Challenges', href: '/dashboard/challenges' },
       { id: 'handover', labelKey: 'sidebar.handover', fallbackLabel: 'Handover & Acceptance', href: '/dashboard/handover' },
       { id: 'runbooks', labelKey: 'sidebar.runbooks', fallbackLabel: 'Runbooks', href: '/dashboard/docs/runbooks' },
       { id: 'system_health', labelKey: 'sidebar.system_health', fallbackLabel: 'System Health', href: '/dashboard/system-health' },
     ];
 
     expectedModules.forEach((expected, idx) => {
-      it(`module [${idx + 1}/11] "${expected.id}" has valid configuration and renders with icon`, () => {
+      it(`module [${idx + 1}/14] "${expected.id}" has valid configuration and renders with icon`, () => {
         const item = SOPHIA_NAV_MODULES[idx];
         expect(item.id).toBe(expected.id);
         expect(item.labelKey).toBe(expected.labelKey);
@@ -131,7 +137,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       const overviewLink = container.querySelector('a[href="/dashboard"]');
       expect(overviewLink?.className).toContain('bg-primary/10');
 
-      // None of the other 10 routes should be active
+      // None of the other 13 routes should be active
       for (const mod of expectedModules) {
         if (mod.href !== '/dashboard') {
           const otherLink = container.querySelector(`a[href="${mod.href}"]`);
@@ -158,6 +164,20 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       const { container: enContainer } = render(<DashboardSidebarNav currentPath="/en/dashboard/handover" />);
       const handoverLinkEn = enContainer.querySelector('a[href="/dashboard/handover"]');
       expect(handoverLinkEn?.className).toContain('bg-primary/10');
+    });
+
+    it('renders conditional SOP Creator navigation item strictly for MASTER tier users', () => {
+      const { rerender } = render(
+        <DashboardSidebarNav user={{ name: 'Standard User', email: 'std@sophia.ai', tier: 'PRO' }} />
+      );
+      expect(screen.queryByText('SOP Creator')).toBeNull();
+
+      rerender(
+        <DashboardSidebarNav user={{ name: 'Master User', email: 'master@sophia.ai', tier: 'MASTER' }} />
+      );
+      const sopCreator = screen.getByText('SOP Creator');
+      expect(sopCreator).toBeDefined();
+      expect(sopCreator.closest('a')?.getAttribute('href')).toBe('/dashboard/sop-creator');
     });
   });
 
@@ -380,7 +400,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       render(<DashboardSidebarNav isMobileOpen={true} onCloseMobile={onClose} />);
       const drawer = screen.getByTestId('mobile-drawer');
       const drawerLinks = within(drawer).getAllByRole('link');
-      expect(drawerLinks.length).toBeGreaterThanOrEqual(11);
+      expect(drawerLinks.length).toBeGreaterThanOrEqual(14);
 
       // Click the 3rd link (AI Missions)
       fireEvent.click(drawerLinks[2]);

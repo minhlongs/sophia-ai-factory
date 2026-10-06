@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import type { DashboardData, DashboardMetric } from '@/forest/dashboard/types';
 import type { SystemReadiness } from '@/tree/readiness/readiness-checker';
 import { DashboardOnboardingBanner } from './dashboard-onboarding-banner';
+import { LocalEngineSetupGuide } from '@/components/dashboard/local-engine-setup-guide';
 import { DashboardMetricsGrid } from './dashboard-metrics-grid';
 import { DashboardRevenueChart } from './dashboard-revenue-chart';
 import { DashboardAffiliatesCard } from './dashboard-affiliates-card';
@@ -70,6 +71,9 @@ export default function DashboardPage({ initialData, readiness }: DashboardPageP
 
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
+
+      {/* Local Engine Setup Guide (Apple Silicon) */}
+      <LocalEngineSetupGuide />
 
       {/* Metrics Grid */}
       <DashboardMetricsGrid metrics={metrics} />

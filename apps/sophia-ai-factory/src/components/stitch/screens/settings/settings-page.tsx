@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Key, BarChart3, Users, Languages } from 'lucide-react';
+import { User, Key, BarChart3, Users, Languages, HardDrive } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
 import { Link } from '@/navigation';
 import { SettingsProfileSection } from '@/components/settings/settings-profile-section';
 import { ApiKeysManager } from '@/components/settings/api-keys-manager';
+import { StorageSettingsForm } from '@/components/settings/storage-settings-form';
 import { AccountOwnershipView } from '@/components/settings/account-ownership-view';
 import { SettingsLocaleDangerSection } from '@/components/settings/settings-locale-danger';
 
@@ -15,11 +16,13 @@ interface SettingsPageProps {
   currentTier?: string;
   periodEnd?: string | null;
   completedOrderCount?: number;
+  initialTab?: string;
 }
 
 const NAV_TABS = [
   { id: 'account', label: 'Profile', icon: User },
   { id: 'apiKeys', label: 'API Keys (BYOK)', icon: Key },
+  { id: 'storage', label: 'Storage (R2 BYOS)', icon: HardDrive },
   { id: 'usage', label: 'Live Metering', icon: BarChart3 },
   { id: 'team', label: 'Team & Ownership', icon: Users },
   { id: 'preferences', label: 'Preferences', icon: Languages },
@@ -28,8 +31,9 @@ const NAV_TABS = [
 export default function SettingsPage({
   userName = '',
   userEmail = '',
+  initialTab = 'account',
 }: SettingsPageProps = {}) {
-  const [activeTab, setActiveTab] = useState('account');
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
@@ -84,6 +88,12 @@ export default function SettingsPage({
 
           {activeTab === 'apiKeys' && (
             <ApiKeysManager />
+          )}
+
+          {activeTab === 'storage' && (
+            <div className="bg-[#18181B] rounded-2xl p-6 sm:p-8 shadow-xl border border-outline-variant/20">
+              <StorageSettingsForm />
+            </div>
           )}
 
           {activeTab === 'usage' && (
