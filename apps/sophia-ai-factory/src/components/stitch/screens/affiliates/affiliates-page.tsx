@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Search, Mail, Plus, MoreVertical, TrendingUp, Sparkles, Users, DollarSign, Clock } from 'lucide-react';
-import { DashboardLayout, StatCard, Button, Badge, Table, Avatar } from '@/components/stitch';
+import { Search, Mail, Plus, Sparkles, TrendingUp, Users, DollarSign, Clock } from 'lucide-react';
+import { DashboardLayout, StatCard, Button, Table } from '@/components/stitch';
 import { cn } from '@/seed/utils/cn';
 import { AffiliateDiscoveryPanel } from './affiliate-discovery-panel';
 import { mockAffiliates, type MockAffiliate } from './mock-affiliates';
+import { getAffiliatesTableColumns } from './affiliates-table-columns';
 
 export interface AffiliatesPageProps {
   initialAffiliates?: MockAffiliate[];
@@ -34,6 +35,17 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
   const activeCount = stats?.active ?? affiliatesList.filter((a) => a.status === 'active').length;
   const totalCommission = stats?.totalCommission ?? '$0';
   const pendingCommission = stats?.pendingCommission ?? '$0';
+
+  const columns = getAffiliatesTableColumns({
+    affiliateHeader: t('columns.affiliate'),
+    statusHeader: t('columns.status'),
+    salesHeader: t('columns.sales'),
+    commissionHeader: t('columns.commission'),
+    pendingHeader: t('columns.pending'),
+    ordersLabel: t('orders'),
+    earnedLabel: t('earned'),
+    actionsAriaLabel: t('affiliateActions'),
+  });
 
   return (
     <DashboardLayout
@@ -154,71 +166,7 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
             data={filteredAffiliates}
             stickyFirstColumn
             emptyMessage={t('emptyMessage')}
-            columns={[
-              {
-                key: 'affiliate',
-                header: t('columns.affiliate'),
-                cell: (row) => (
-                  <div className="flex items-center gap-3">
-                    <Avatar src={row.avatar} alt={row.name} initials={row.name} size="md" />
-                    <div>
-                      <p className="text-sm font-semibold text-white leading-tight">{row.name}</p>
-                      <p className="text-xs text-muted-foreground">{row.email}</p>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: t('columns.status'),
-                cell: (row) => (
-                  <Badge variant="soft" color={row.status === 'active' ? 'success' : 'warning'}>
-                    {row.status}
-                  </Badge>
-                ),
-                align: 'center',
-              },
-              {
-                key: 'sales',
-                header: t('columns.sales'),
-                cell: (row) => (
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-white">{row.totalSales}</p>
-                    <p className="text-xs text-muted-foreground">{t('orders')}</p>
-                  </div>
-                ),
-                align: 'right',
-              },
-              {
-                key: 'commission',
-                header: t('columns.commission'),
-                cell: (row) => (
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-white">{row.totalCommission}</p>
-                    <p className="text-xs text-muted-foreground">{t('earned')}</p>
-                  </div>
-                ),
-                align: 'right',
-              },
-              {
-                key: 'pending',
-                header: t('columns.pending'),
-                cell: (row) => (
-                  <span className="text-sm font-semibold text-amber-400">{row.pending}</span>
-                ),
-                align: 'right',
-              },
-              {
-                key: 'actions',
-                header: '',
-                cell: () => (
-                  <Button variant="ghost" size="sm" aria-label={t('affiliateActions')}>
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                ),
-                align: 'right',
-              },
-            ]}
+            columns={columns}
             getRowId={(row) => row.id}
           />
         </div>

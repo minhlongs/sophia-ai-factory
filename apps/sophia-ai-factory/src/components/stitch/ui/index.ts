@@ -18,7 +18,7 @@ export { Avatar } from './avatar';
 export type { AvatarProps } from './avatar';
 
 export { Table } from './table';
-export type { TableProps, ColumnDef } from './table';
+export type { TableProps, ColumnDef, ColumnDef as Column } from './table';
 
 export { Sidebar } from './sidebar';
 export type { SidebarProps, SidebarItem } from './sidebar';
