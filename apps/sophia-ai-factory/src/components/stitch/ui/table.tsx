@@ -46,16 +46,16 @@ export function Table<T>({
   className = '',
 }: TableProps<T>) {
   return (
-    <div className={cn('bg-surface-container-lowest rounded-xl border border-outline-variant custom-shadow-md overflow-hidden', className)}>
+    <div className={cn('bg-[#12141F]/80 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-md overflow-hidden', className)}>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-surface-container text-on-surface-variant font-label-sm">
+            <tr className="bg-white/[0.03] border-b border-white/[0.08] text-muted-foreground text-xs font-semibold uppercase tracking-wider">
               {columns.map((col, idx) => (
                 <th
                   key={idx}
                   className={cn(
-                    'px-lg py-md font-semibold',
+                    'px-6 py-3.5',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right'
                   )}
@@ -66,19 +66,19 @@ export function Table<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant">
+          <tbody className="divide-y divide-white/[0.06] text-sm">
             {loading ? (
               <tr>
-                <td colSpan={columns.length} className="px-lg py-xl text-center">
-                  <div className="flex items-center justify-center gap-md">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    <span className="text-on-surface-variant">Loading...</span>
+                <td colSpan={columns.length} className="px-6 py-12 text-center">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-muted-foreground">Loading...</span>
                   </div>
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-lg py-xl text-center text-on-surface-variant">
+                <td colSpan={columns.length} className="px-6 py-12 text-center text-muted-foreground">
                   {emptyMessage}
                 </td>
               </tr>
@@ -87,7 +87,7 @@ export function Table<T>({
                 <tr
                   key={getRowId(row, rowIndex)}
                   className={cn(
-                    'hover:bg-background transition-colors group',
+                    'hover:bg-white/[0.02] transition-colors',
                     onRowClick && 'cursor-pointer'
                   )}
                   onClick={() => onRowClick?.(row)}
@@ -96,7 +96,7 @@ export function Table<T>({
                     <td
                       key={colIndex}
                       className={cn(
-                        'px-lg py-md',
+                        'px-6 py-4 text-slate-200',
                         col.align === 'center' && 'text-center',
                         col.align === 'right' && 'text-right'
                       )}

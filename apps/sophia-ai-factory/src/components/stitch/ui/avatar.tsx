@@ -40,30 +40,21 @@ export function Avatar({
     square: 'rounded-xl',
   };
 
-  const initialsBgColors = [
-    'bg-primary-fixed',
-    'bg-secondary-fixed',
-    'bg-tertiary-fixed',
-    'bg-surface-container-high',
-  ];
-
-  const getInitialsColor = (index: number) => initialsBgColors[index % initialsBgColors.length];
-
-  const getInitials = (str: string) => {
+  const getInitials = (str?: string | null) => {
     if (!str) return '?';
-    return str
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    const clean = str.trim();
+    if (!clean) return '?';
+    if (clean.length <= 2) return clean.toUpperCase();
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   };
 
   return (
     <div
       className={cn(
-        'relative flex items-center justify-center',
-        'border-2 border-primary-container p-0.5',
+        'relative flex items-center justify-center overflow-hidden shrink-0 select-none',
+        'border border-primary/30 p-0.5',
         'group-hover:scale-105 transition-transform',
         shapes[shape],
         sizes[size],
@@ -83,13 +74,12 @@ export function Avatar({
       ) : (
         <div
           className={cn(
-            'w-full h-full flex items-center justify-center',
-            getInitialsColor(0),
-            shapes[shape],
-            'text-on-secondary-fixed font-semibold'
+            'w-full h-full flex items-center justify-center overflow-hidden',
+            'bg-primary/20 text-primary font-bold leading-none',
+            shapes[shape]
           )}
         >
-          { initials || getInitials(alt)}
+          {getInitials(initials || alt)}
         </div>
       )}
     </div>

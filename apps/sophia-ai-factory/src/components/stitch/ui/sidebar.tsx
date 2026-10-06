@@ -116,14 +116,14 @@ export function Sidebar({
 
       {/* Upgrade Card */}
       {!collapsed && upgradeCard && (
-        <div className="p-md bg-surface-container-low rounded-xl border border-outline-variant">
+        <div className="mt-auto pt-2">
           {upgradeCard}
         </div>
       )}
 
       {/* User Section */}
       {!collapsed && userSection && (
-        <div className="mt-auto pt-md border-t border-outline-variant">
+        <div className="pt-3 border-t border-white/[0.08]">
           {userSection}
         </div>
       )}

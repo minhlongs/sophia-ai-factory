@@ -138,10 +138,10 @@ export function TopAppBar({
         <div className="h-6 w-[1px] bg-white/[0.08] hidden sm:block" />
 
         {/* User Menu */}
-        <div className="flex items-center gap-3 pl-1 sm:pl-2">
+        <div className="flex items-center gap-3 pl-1 sm:pl-2 shrink-0">
           <div className="text-right hidden sm:block min-w-0">
             <p className="text-xs font-semibold text-white truncate leading-tight">{userName}</p>
-            <span className="inline-block text-[9px] font-bold uppercase tracking-wider text-primary px-1.5 py-0.2 bg-primary/10 rounded border border-primary/20">
+            <span className="inline-block text-[9px] font-bold uppercase tracking-wider text-primary px-1.5 py-0.5 bg-primary/10 rounded border border-primary/20 mt-0.5">
               {userRole}
             </span>
           </div>
@@ -149,7 +149,7 @@ export function TopAppBar({
             src={userAvatar}
             alt={userName}
             initials={userName}
-            size="md"
+            size="sm"
             className="ring-1 ring-white/10 shrink-0"
           />
         </div>
@@ -268,12 +268,12 @@ export function DashboardLayout({
               src={user.avatar}
               alt={user.name}
               initials={user.name}
-              size="md"
+              size="sm"
               className="shrink-0"
             />
             <div className="text-left flex-1 min-w-0 truncate">
               <p className="text-xs font-semibold text-white truncate leading-tight">{user.name}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold truncate leading-tight">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold truncate leading-tight mt-0.5">
                 {user.role}
               </p>
             </div>
@@ -315,18 +315,18 @@ export function DashboardLayout({
       />
 
       {/* Main Content Area */}
-      <main id="main-content" className="md:ml-[280px] ml-0 pt-16 p-4 md:p-8 max-w-7xl mx-auto">
+      <main id="main-content" className="md:ml-[280px] ml-0 pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto min-h-screen">
         {(title || subtitle || actions) && (
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
               {title && <h1 className="text-2xl font-bold text-white tracking-tight">{title}</h1>}
               {subtitle && (
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-1">
                   {subtitle}
                 </p>
               )}
             </div>
-            {actions && <div className="flex items-center gap-3">{actions}</div>}
+            {actions && <div className="flex items-center gap-3 shrink-0">{actions}</div>}
           </div>
         )}
         {children}

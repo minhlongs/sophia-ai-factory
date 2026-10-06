@@ -14,6 +14,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Input, Textarea } from '../input';
 import { Button } from '../button';
+import { Avatar } from '../avatar';
 
 // Mock navigation Link
 vi.mock('@/navigation', () => ({
@@ -103,5 +104,27 @@ describe('Stitch Button Accessibility', () => {
     const link = screen.getByRole('link');
     expect(link.getAttribute('aria-disabled')).toBe('true');
     expect(link.getAttribute('tabindex')).toBe('-1');
+  });
+});
+
+describe('Stitch Avatar', () => {
+  it('correctly extracts 2-letter uppercase initials from full name', () => {
+    const { container } = render(<Avatar initials="Sophia Founder" />);
+    expect(container.textContent).toBe('SF');
+  });
+
+  it('correctly extracts initials from alt if initials not provided', () => {
+    const { container } = render(<Avatar alt="Jane Doe" />);
+    expect(container.textContent).toBe('JD');
+  });
+
+  it('handles single-word names cleanly without overflowing', () => {
+    const { container } = render(<Avatar initials="Admin" />);
+    expect(container.textContent).toBe('AD');
+  });
+
+  it('preserves existing 2-letter initials', () => {
+    const { container } = render(<Avatar initials="SF" />);
+    expect(container.textContent).toBe('SF');
   });
 });

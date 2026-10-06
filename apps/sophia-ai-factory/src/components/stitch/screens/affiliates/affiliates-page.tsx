@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { Search, Mail, Plus, MoreVertical, TrendingUp, Sparkles, Users } from 'lucide-react';
-import { DashboardLayout, Card, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
+import { DashboardLayout, Card, Button, Badge, Table, Avatar } from '@/components/stitch';
+import { cn } from '@/seed/utils/cn';
 import { AffiliateDiscoveryPanel } from './affiliate-discovery-panel';
 import { mockAffiliates, type MockAffiliate } from './mock-affiliates';
 
@@ -37,7 +38,7 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
       title="Affiliates"
       subtitle="Manage your affiliate partners and track commissions"
       actions={
-        <div className="flex items-center gap-xs">
+        <div className="flex items-center gap-3">
           <Button
             variant={activeTab === 'discovery' ? 'primary' : 'outline'}
             onClick={() => setActiveTab(activeTab === 'discovery' ? 'partners' : 'discovery')}
@@ -54,15 +55,16 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
       }
     >
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-xs mb-lg border-b border-outline/10 pb-xs">
+      <div className="flex items-center gap-2 mb-6 border-b border-white/[0.08] pb-3">
         <button
           type="button"
           onClick={() => setActiveTab('partners')}
-          className={`flex items-center gap-xs px-md py-xs rounded-lg text-label-md font-medium transition-colors ${
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
             activeTab === 'partners'
-              ? 'bg-primary/10 text-primary font-bold'
-              : 'text-on-surface-variant hover:text-on-surface'
-          }`}
+              ? 'bg-primary/15 text-primary font-bold border border-primary/30 shadow-sm shadow-primary/10'
+              : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
+          )}
         >
           <Users className="w-4 h-4" />
           <span>Affiliate Partners</span>
@@ -70,11 +72,12 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
         <button
           type="button"
           onClick={() => setActiveTab('discovery')}
-          className={`flex items-center gap-xs px-md py-xs rounded-lg text-label-md font-medium transition-colors ${
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
             activeTab === 'discovery'
-              ? 'bg-primary/10 text-primary font-bold'
-              : 'text-on-surface-variant hover:text-on-surface'
-          }`}
+              ? 'bg-primary/15 text-primary font-bold border border-primary/30 shadow-sm shadow-primary/10'
+              : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
+          )}
         >
           <Sparkles className="w-4 h-4" />
           <span>AI Offer Discovery</span>
@@ -85,95 +88,121 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
         <AffiliateDiscoveryPanel />
       ) : (
         <>
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
-            <Card padding="md">
-              <div className="flex items-center gap-md">
-                <div className="p-sm bg-secondary-container rounded-xl text-secondary">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-primary/15 rounded-xl text-primary border border-primary/20 shrink-0">
                   <TrendingUp className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-label-md text-label-md text-on-surface-variant">Total Affiliates</p>
-                  <p className="font-headline-md text-headline-md text-on-surface">{totalCount}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Total Affiliates</p>
+                  <p className="text-2xl font-bold text-white tracking-tight">{totalCount}</p>
                 </div>
               </div>
             </Card>
-            <Card padding="md">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Active</p>
-              <p className="font-headline-md text-headline-md text-emerald-600">{activeCount}</p>
+            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Active</p>
+              <p className="text-2xl font-bold text-emerald-400 tracking-tight">{activeCount}</p>
             </Card>
-            <Card padding="md">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total Commission</p>
-              <p className="font-headline-md text-headline-md text-on-surface">{totalCommission}</p>
+            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Total Commission</p>
+              <p className="text-2xl font-bold text-white tracking-tight">{totalCommission}</p>
             </Card>
-            <Card padding="md">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Pending</p>
-              <p className="font-headline-md text-headline-md text-amber-600">{pendingCommission}</p>
+            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Pending</p>
+              <p className="text-2xl font-bold text-amber-400 tracking-tight">{pendingCommission}</p>
             </Card>
           </div>
 
-          {/* Search */}
-          <Card className="mb-xl" padding="md">
-            <div className="flex items-center gap-md">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
-                <Input
-                  placeholder="Search affiliates..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" iconLeft={<Mail className="w-4 h-4" />}>
-                Email All
-              </Button>
+          {/* Search Row */}
+          <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-xl bg-[#12141F]/80 backdrop-blur-xl border border-white/[0.08]">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Search affiliates..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+              />
             </div>
-          </Card>
+            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />}>
+              Email All
+            </Button>
+          </div>
 
           {/* Affiliates List */}
-          <Card padding="none">
-            <Table
-              data={filteredAffiliates}
-              emptyMessage="No affiliate partners registered yet. Use 'Discover Offers' to source high-converting affiliate campaigns or invite partners."
-              columns={[
-                { key: 'affiliate', header: 'Affiliate', cell: (row) => (
-                  <div className="flex items-center gap-md">
+          <Table
+            data={filteredAffiliates}
+            emptyMessage="No affiliate partners registered yet. Use 'Discover Offers' to source high-converting affiliate campaigns or invite partners."
+            columns={[
+              {
+                key: 'affiliate',
+                header: 'Affiliate',
+                cell: (row) => (
+                  <div className="flex items-center gap-3">
                     <Avatar src={row.avatar} alt={row.name} initials={row.name} size="md" />
                     <div>
-                      <p className="font-label-md text-on-surface">{row.name}</p>
-                      <p className="text-[12px] text-on-surface-variant">{row.email}</p>
+                      <p className="text-sm font-semibold text-white leading-tight">{row.name}</p>
+                      <p className="text-xs text-muted-foreground">{row.email}</p>
                     </div>
                   </div>
-                ) },
-                { key: 'status', header: 'Status', cell: (row) => (
+                ),
+              },
+              {
+                key: 'status',
+                header: 'Status',
+                cell: (row) => (
                   <Badge variant="soft" color={row.status === 'active' ? 'success' : 'warning'}>
                     {row.status}
                   </Badge>
-                ), align: 'center' },
-                { key: 'sales', header: 'Sales', cell: (row) => (
+                ),
+                align: 'center',
+              },
+              {
+                key: 'sales',
+                header: 'Sales',
+                cell: (row) => (
                   <div className="text-right">
-                    <p className="font-label-md text-on-surface">{row.totalSales}</p>
-                    <p className="text-[12px] text-on-surface-variant">orders</p>
+                    <p className="text-sm font-semibold text-white">{row.totalSales}</p>
+                    <p className="text-xs text-muted-foreground">orders</p>
                   </div>
-                ), align: 'right' },
-                { key: 'commission', header: 'Commission', cell: (row) => (
+                ),
+                align: 'right',
+              },
+              {
+                key: 'commission',
+                header: 'Commission',
+                cell: (row) => (
                   <div className="text-right">
-                    <p className="font-label-md text-on-surface">{row.totalCommission}</p>
-                    <p className="text-[12px] text-on-surface-variant">earned</p>
+                    <p className="text-sm font-semibold text-white">{row.totalCommission}</p>
+                    <p className="text-xs text-muted-foreground">earned</p>
                   </div>
-                ), align: 'right' },
-                { key: 'pending', header: 'Pending', cell: (row) => (
-                  <span className="font-body-sm text-amber-600">{row.pending}</span>
-                ), align: 'right' },
-                { key: 'actions', header: '', cell: () => (
+                ),
+                align: 'right',
+              },
+              {
+                key: 'pending',
+                header: 'Pending',
+                cell: (row) => (
+                  <span className="text-sm font-semibold text-amber-400">{row.pending}</span>
+                ),
+                align: 'right',
+              },
+              {
+                key: 'actions',
+                header: '',
+                cell: () => (
                   <Button variant="ghost" size="sm">
                     <MoreVertical className="w-4 h-4" />
                   </Button>
-                ), align: 'right' },
-              ]}
-              getRowId={(row) => row.id}
-            />
-          </Card>
+                ),
+                align: 'right',
+              },
+            ]}
+            getRowId={(row) => row.id}
+          />
         </>
       )}
     </DashboardLayout>
