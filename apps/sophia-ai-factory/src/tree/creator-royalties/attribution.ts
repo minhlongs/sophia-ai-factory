@@ -86,6 +86,203 @@ export interface AccrueLedgerResult {
   error?: string;
 }
 
+interface InsertLedgerParams {
+  ledgerId: string;
+  creatorId: string;
+  sourceType: string;
+  referenceId: string;
+  amountCents: number;
+  status: string;
+  nowMs: number;
+  balanceAfterCents: number;
+  sequenceNum: number;
+  eventType: string;
+  currency: string;
+  metadataJson: string;
+}
+
+function isConstraintConflict(err: unknown): boolean {
+  const str = String(err);
+  return str.includes('UNIQUE') || str.includes('PRIMARY KEY') || str.includes('constraint');
+}
+
+function isMissingColumnError(err: unknown): boolean {
+  const str = String(err);
+  return str.includes('no column named') || str.includes('has no column named');
+}
+
+async function probeExistingLedger(
+  db: D1Database,
+  creatorId: string,
+  referenceId: string,
+  eventType: string,
+  sourceType: string,
+  amountCents: number,
+): Promise<AccrueLedgerResult | null> {
+  try {
+    const existing = await db
+      .prepare(
+        `SELECT id, balance_after_cents, amount_cents, sequence_num 
+         FROM creator_earnings_ledger 
+         WHERE creator_id = ? AND reference_id = ? AND (event_type = ? OR source_type = ?) 
+         LIMIT 1`,
+      )
+      .bind(creatorId, referenceId, eventType, sourceType)
+      .first<{
+        id: string;
+        balance_after_cents?: number;
+        amount_cents?: number;
+        sequence_num?: number;
+      }>();
+
+    if (existing) {
+      return {
+        success: true,
+        ledgerId: existing.id,
+        newBalanceCents: existing.balance_after_cents ?? existing.amount_cents ?? amountCents,
+        sequenceNum: existing.sequence_num ?? 1,
+      };
+    }
+  } catch {
+    // If table doesn't support complex where clause, proceed to insert
+  }
+  return null;
+}
+
+async function fetchTailLedger(
+  db: D1Database,
+  creatorId: string,
+): Promise<{ lastSeq: number; currentBalance: number }> {
+  try {
+    const tail = await db
+      .prepare(
+        `SELECT sequence_num, balance_after_cents, amount_cents 
+         FROM creator_earnings_ledger 
+         WHERE creator_id = ? 
+         ORDER BY sequence_num DESC, created_at DESC 
+         LIMIT 1`,
+      )
+      .bind(creatorId)
+      .first<{
+        sequence_num?: number;
+        balance_after_cents?: number;
+        amount_cents?: number;
+      }>();
+
+    if (tail) {
+      return {
+        lastSeq: tail.sequence_num ?? 0,
+        currentBalance: tail.balance_after_cents ?? tail.amount_cents ?? 0,
+      };
+    }
+  } catch {
+    // Fallback for schemas without sequence_num column
+  }
+  return { lastSeq: 0, currentBalance: 0 };
+}
+
+async function insertLedgerRecord(db: D1Database, p: InsertLedgerParams): Promise<void> {
+  try {
+    await db
+      .prepare(
+        `INSERT INTO creator_earnings_ledger (
+          id, creator_id, source_type, reference_id, amount_cents, status, created_at,
+          balance_after_cents, sequence_num, event_type, currency, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        p.ledgerId,
+        p.creatorId,
+        p.sourceType,
+        p.referenceId,
+        p.amountCents,
+        p.status,
+        p.nowMs,
+        p.balanceAfterCents,
+        p.sequenceNum,
+        p.eventType,
+        p.currency,
+        p.metadataJson,
+      )
+      .run();
+  } catch (insertErr: unknown) {
+    if (!isMissingColumnError(insertErr)) {
+      throw insertErr;
+    }
+    // Backward-compatible fallback for minimal/test harness schema
+    await db
+      .prepare(
+        `INSERT INTO creator_earnings_ledger (
+          id, creator_id, source_type, reference_id, amount_cents, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        p.ledgerId,
+        p.creatorId,
+        p.sourceType,
+        p.referenceId,
+        p.amountCents,
+        p.status,
+        p.nowMs,
+      )
+      .run();
+  }
+}
+
+async function waitCasJitter(attempt: number): Promise<void> {
+  const maxDelay = 10 * Math.pow(2, attempt);
+  const delay = Math.floor(Math.random() * maxDelay) + Math.floor(Math.random() * 15);
+  await new Promise((r) => setTimeout(r, delay));
+}
+
+async function attemptCasInsert(
+  db: D1Database,
+  entry: AccrueLedgerInput,
+  attempt: number,
+  maxRetries: number,
+  nowMs: number,
+  probe: () => Promise<AccrueLedgerResult | null>,
+): Promise<AccrueLedgerResult | null> {
+  const { lastSeq, currentBalance } = await fetchTailLedger(db, entry.creatorId);
+  const nextSeq = lastSeq + 1;
+  const nextBalance = currentBalance + entry.amountCents;
+  const ledgerId = `led_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}_${nowMs}`;
+
+  try {
+    await insertLedgerRecord(db, {
+      ledgerId,
+      creatorId: entry.creatorId,
+      sourceType: entry.sourceType ?? 'blueprint_remix',
+      referenceId: entry.referenceId,
+      amountCents: entry.amountCents,
+      status: entry.status ?? 'pending',
+      nowMs,
+      balanceAfterCents: nextBalance,
+      sequenceNum: nextSeq,
+      eventType: entry.eventType ?? 'royalty_accrual',
+      currency: entry.currency ?? 'USD',
+      metadataJson: JSON.stringify(entry.metadata ?? {}),
+    });
+
+    return {
+      success: true,
+      ledgerId,
+      newBalanceCents: nextBalance,
+      sequenceNum: nextSeq,
+    };
+  } catch (insertErr: unknown) {
+    if (isConstraintConflict(insertErr)) {
+      const conflictExisting = await probe();
+      if (conflictExisting) return conflictExisting;
+    }
+
+    if (attempt < maxRetries - 1) {
+      await waitCasJitter(attempt);
+    }
+    return null;
+  }
+}
+
 /**
  * Accrues an entry into creator_earnings_ledger using Optimistic Concurrency Control (OCC)
  * Compare-And-Swap (CAS) with monotonic sequence numbers and idempotent deduplication.
@@ -96,214 +293,30 @@ export async function accrueCreatorLedgerEntryCAS(
   maxRetries = 8,
   nowMs = Date.now(),
 ): Promise<AccrueLedgerResult> {
-  const currency = entry.currency ?? 'USD';
   const eventType = entry.eventType ?? 'royalty_accrual';
   const sourceType = entry.sourceType ?? 'blueprint_remix';
-  const status = entry.status ?? 'pending';
-  const metadataJson = JSON.stringify(entry.metadata ?? {});
 
-  // Helper for idempotent deduplication probe
-  const probeExisting = async (): Promise<AccrueLedgerResult | null> => {
-    try {
-      const existing = await db
-        .prepare(
-          `SELECT id, balance_after_cents, amount_cents, sequence_num 
-           FROM creator_earnings_ledger 
-           WHERE creator_id = ? AND reference_id = ? AND (event_type = ? OR source_type = ?) 
-           LIMIT 1`,
-        )
-        .bind(entry.creatorId, entry.referenceId, eventType, sourceType)
-        .first<{
-          id: string;
-          balance_after_cents?: number;
-          amount_cents?: number;
-          sequence_num?: number;
-        }>();
-
-      if (existing) {
-        return {
-          success: true,
-          ledgerId: existing.id,
-          newBalanceCents: existing.balance_after_cents ?? existing.amount_cents ?? entry.amountCents,
-          sequenceNum: existing.sequence_num ?? 1,
-        };
-      }
-    } catch {
-      // If table doesn't support complex where clause, proceed to insert
-    }
-    return null;
-  };
+  const probe = () =>
+    probeExistingLedger(db, entry.creatorId, entry.referenceId, eventType, sourceType, entry.amountCents);
 
   // 1. Initial deduplication probe (fast path for sequential idempotency)
-  const initialExisting = await probeExisting();
-  if (initialExisting) {
-    return initialExisting;
-  }
+  const initial = await probe();
+  if (initial) return initial;
 
   // 2. CAS optimistic insertion loop
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      // 2a. Re-probe deduplication before subsequent retry attempts
-      if (attempt > 0) {
-        const retryExisting = await probeExisting();
-        if (retryExisting) {
-          return retryExisting;
-        }
-      }
-
-      let lastSeq = 0;
-      let currentBalance = 0;
-
-      try {
-        const tail = await db
-          .prepare(
-            `SELECT sequence_num, balance_after_cents, amount_cents 
-             FROM creator_earnings_ledger 
-             WHERE creator_id = ? 
-             ORDER BY sequence_num DESC, created_at DESC 
-             LIMIT 1`,
-          )
-          .bind(entry.creatorId)
-          .first<{
-            sequence_num?: number;
-            balance_after_cents?: number;
-            amount_cents?: number;
-          }>();
-
-        if (tail) {
-          lastSeq = tail.sequence_num ?? 0;
-          currentBalance = tail.balance_after_cents ?? tail.amount_cents ?? 0;
-        }
-      } catch {
-        // Fallback for schemas without sequence_num column
-      }
-
-      const nextSeq = lastSeq + 1;
-      const nextBalance = currentBalance + entry.amountCents;
-      const ledgerId = `led_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}_${nowMs}`;
-
-      try {
-        // Try full 0275 schema insertion
-        await db
-          .prepare(
-            `INSERT INTO creator_earnings_ledger (
-              id, creator_id, source_type, reference_id, amount_cents, status, created_at,
-              balance_after_cents, sequence_num, event_type, currency, metadata_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          )
-          .bind(
-            ledgerId,
-            entry.creatorId,
-            sourceType,
-            entry.referenceId,
-            entry.amountCents,
-            status,
-            nowMs,
-            nextBalance,
-            nextSeq,
-            eventType,
-            currency,
-            metadataJson,
-          )
-          .run();
-
-        return {
-          success: true,
-          ledgerId,
-          newBalanceCents: nextBalance,
-          sequenceNum: nextSeq,
-        };
-      } catch (insertErr: unknown) {
-        const errStr = String(insertErr);
-        if (errStr.includes('no column named') || errStr.includes('has no column named')) {
-          // Backward-compatible fallback for minimal/test harness schema
-          try {
-            await db
-              .prepare(
-                `INSERT INTO creator_earnings_ledger (
-                  id, creator_id, source_type, reference_id, amount_cents, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-              )
-              .bind(
-                ledgerId,
-                entry.creatorId,
-                sourceType,
-                entry.referenceId,
-                entry.amountCents,
-                status,
-                nowMs,
-              )
-              .run();
-
-            return {
-              success: true,
-              ledgerId,
-              newBalanceCents: nextBalance,
-              sequenceNum: nextSeq,
-            };
-          } catch (fallbackErr: unknown) {
-            const fallbackErrStr = String(fallbackErr);
-            if (
-              fallbackErrStr.includes('UNIQUE') ||
-              fallbackErrStr.includes('PRIMARY KEY') ||
-              fallbackErrStr.includes('constraint')
-            ) {
-              const fallbackDedup = await probeExisting();
-              if (fallbackDedup) {
-                return fallbackDedup;
-              }
-            }
-            throw fallbackErr;
-          }
-        }
-
-        // Immediate deduplication re-probe on UNIQUE constraint conflict
-        // If another concurrent worker inserted the identical reference_id, return immediately
-        if (
-          errStr.includes('UNIQUE') ||
-          errStr.includes('PRIMARY KEY') ||
-          errStr.includes('constraint')
-        ) {
-          const conflictExisting = await probeExisting();
-          if (conflictExisting) {
-            return conflictExisting;
-          }
-        }
-
-        // Unique constraint conflict on sequence_num (OCC CAS collision on distinct transactions)
-        if (attempt < maxRetries - 1) {
-          // Full jitter exponential backoff
-          const maxDelay = 10 * Math.pow(2, attempt);
-          const delay = Math.floor(Math.random() * maxDelay) + Math.floor(Math.random() * 15);
-          await new Promise((r) => setTimeout(r, delay));
-          continue;
-        }
-
-        throw insertErr;
-      }
-    } catch (err: unknown) {
-      if (attempt === maxRetries - 1) {
-        // Final safety net probe before returning error
-        const finalExisting = await probeExisting();
-        if (finalExisting) {
-          return finalExisting;
-        }
-        return {
-          success: false,
-          ledgerId: '',
-          newBalanceCents: 0,
-          sequenceNum: 0,
-          error: err instanceof Error ? err.message : 'CAS_CONCURRENCY_EXHAUSTED',
-        };
-      }
+    if (attempt > 0) {
+      const retryExisting = await probe();
+      if (retryExisting) return retryExisting;
     }
+
+    const result = await attemptCasInsert(db, entry, attempt, maxRetries, nowMs, probe);
+    if (result) return result;
   }
 
   // Final safety net probe before returning error
-  const finalExisting = await probeExisting();
-  if (finalExisting) {
-    return finalExisting;
-  }
+  const finalExisting = await probe();
+  if (finalExisting) return finalExisting;
 
   return {
     success: false,

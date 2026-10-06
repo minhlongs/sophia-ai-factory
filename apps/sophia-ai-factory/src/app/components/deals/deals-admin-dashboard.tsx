@@ -9,30 +9,26 @@
  * @module forest/deals/deals-admin-dashboard
  */
 
-import React, { useState, useTransition } from 'react';
+import React, { useState } from 'react';
 import {
   Briefcase,
   Plus,
   Search,
-  Filter,
   LayoutGrid,
   Table as TableIcon,
   Flame,
   DollarSign,
   BarChart3,
   Trophy,
-  RefreshCw,
   Sparkles,
   FileText,
   Cpu,
   Building2,
-  User,
 } from 'lucide-react';
 import type {
   EnterpriseDeal,
   EnterpriseLeadEnrichment,
   DealStage,
-  PipelineTier,
   CreateEnterpriseDealInput,
   MeetingPrepDossier,
   EnterpriseProposalResult,
@@ -72,12 +68,11 @@ export interface DealsAdminDashboardProps {
 
 export function DealsAdminDashboard({
   initialDeals,
-  initialMetrics,
+  initialMetrics: _initialMetrics,
   locale = 'en',
 }: DealsAdminDashboardProps) {
   const isVi = locale === 'vi';
   const [deals, setDeals] = useState<EnterpriseDeal[]>(initialDeals);
-  const [metrics, setMetrics] = useState(initialMetrics);
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
@@ -95,7 +90,6 @@ export function DealsAdminDashboard({
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
   const [sandboxResult, setSandboxResult] = useState<SandboxProvisionResult | null>(null);
 
-  const [isPending, startTransition] = useTransition();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   // Filter deals

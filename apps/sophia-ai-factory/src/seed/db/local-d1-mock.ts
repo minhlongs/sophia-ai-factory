@@ -80,66 +80,77 @@ function applyMigrations(db: SqliteDb): void {
 
 // ---- Helpers ----
 
+function getFileMtimeWithWal(filePath: string): number {
+  let maxFileTime = 0;
+  for (const ext of ['', '-wal', '-shm']) {
+    try {
+      const stats = fs.statSync(filePath + ext);
+      if (stats.mtimeMs > maxFileTime) {
+        maxFileTime = stats.mtimeMs;
+      }
+    } catch {
+      // Ignore missing wal/shm files
+    }
+  }
+  return maxFileTime;
+}
+
+function findNewestSqliteInDir(baseDir: string): { file: string; time: number } | null {
+  if (!fs.existsSync(baseDir)) return null;
+  try {
+    const files = fs
+      .readdirSync(baseDir)
+      .filter((f: string) => f.endsWith('.sqlite') && !f.includes('metadata'))
+      .map((f: string) => path.join(baseDir, f));
+
+    let newestFile: string | null = null;
+    let newestTime = 0;
+
+    for (const file of files) {
+      const fileTime = getFileMtimeWithWal(file);
+      if (fileTime > newestTime) {
+        newestTime = fileTime;
+        newestFile = file;
+      }
+    }
+    return newestFile ? { file: newestFile, time: newestTime } : null;
+  } catch {
+    return null;
+  }
+}
+
 function findLocalD1Path(): string | null {
-// Edge runtime does not support Node.js filesystem APIs, bypass.
-// Production CF Workers define EdgeRuntime and truly cannot run
-// better-sqlite3, so bail there. In dev, Next.js also defines EdgeRuntime
-// on the edge chunk (middleware/proxy) but that chunk actually runs on
-// Node.js (Turbopack dev server) where better-sqlite3 is available, so
-// only bail when we are genuinely in a production edge context.
-if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
-return null;
-}
+  if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
+    return null;
+  }
 
-try {
-const cwd = ((globalThis as unknown) as Record<string, { cwd?: () => string }>).process?.cwd?.() || '';
-const homeDir = ((globalThis as unknown) as Record<string, { env?: Record<string, string | undefined> }>).process?.env?.HOME || '';
-const candidates = [
-path.resolve(cwd, '../..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
-path.resolve(cwd, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
-path.resolve(cwd, '..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
-// Home-dir wrangler state (wrangler stores local D1 here via `d1 execute --local` / `wrangler dev --local`)
-...(homeDir ? [
-  path.resolve(homeDir, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
-  path.resolve(homeDir, '.wrangler/state/v3/d1'),
-] : []),
-];
+  try {
+    const cwd = ((globalThis as unknown) as Record<string, { cwd?: () => string }>).process?.cwd?.() || '';
+    const homeDir = ((globalThis as unknown) as Record<string, { env?: Record<string, string | undefined> }>).process?.env?.HOME || '';
+    const candidates = [
+      path.resolve(cwd, '../..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+      path.resolve(cwd, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+      path.resolve(cwd, '..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+      ...(homeDir ? [
+        path.resolve(homeDir, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+        path.resolve(homeDir, '.wrangler/state/v3/d1'),
+      ] : []),
+    ];
 
-let newestFile: string | null = null;
-let newestTime = 0;
+    let newestFile: string | null = null;
+    let newestTime = 0;
 
-for (const base of candidates) {
-if (!fs.existsSync(base)) continue;
-const files = fs
-.readdirSync(base)
-.filter((f: string) => f.endsWith('.sqlite') && !f.includes('metadata'))
-.map((f: string) => path.join(base, f));
-
-for (const file of files) {
-try {
-// In SQLite WAL mode, updates are written to -wal file, leaving the main .sqlite file mtime outdated.
-// We look at the maximum mtime of the .sqlite, .sqlite-wal, and .sqlite-shm files.
-let maxFileTime = 0;
-for (const ext of ['', '-wal', '-shm']) {
-try {
-const stats = fs.statSync(file + ext);
-if (stats.mtimeMs > maxFileTime) {
-maxFileTime = stats.mtimeMs;
-}
-} catch {}
-}
-
-if (maxFileTime > newestTime) {
-newestTime = maxFileTime;
-newestFile = file;
-}
-} catch {}
-}
-}
-return newestFile;
-} catch {
-return null;
-}
+    for (const base of candidates) {
+      const found = findNewestSqliteInDir(base);
+      if (found && found.time > newestTime) {
+        newestTime = found.time;
+        newestFile = found.file;
+      }
+    }
+    return newestFile;
+  } catch {
+    return null;
+  }
 }
 
 // ---- SQLite-backed D1 implementation ----

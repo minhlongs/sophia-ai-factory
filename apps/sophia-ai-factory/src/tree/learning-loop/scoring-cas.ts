@@ -12,8 +12,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import {
   isCertificationBlocking,
   resolveCertifiedProvider,
-  ProviderNotCertifiedError,
-  type CertifiedProviderResolution,
 } from '@/seed/ai/provider-certification';
 import type {
   VideoEngagementFeedback,
@@ -259,36 +257,36 @@ function safeNonNegative(value: unknown, fallback = 0): number {
  *
  * All inputs are strictly sanitized against NaN, Infinity, -Infinity, null, and undefined.
  */
-export function calculateViralCES(feedback: VideoEngagementFeedback): number {
-  // Retention R (35%): completionRate or watchTime / duration
-  let R = 0;
+function calculateRetentionScore(feedback: VideoEngagementFeedback): number {
   if (typeof feedback.completionRate === 'number' && Number.isFinite(feedback.completionRate)) {
-    R = Math.max(0, Math.min(1, feedback.completionRate));
-  } else if (typeof feedback.metrics?.completionRate === 'number' && Number.isFinite(feedback.metrics.completionRate)) {
-    R = Math.max(0, Math.min(1, feedback.metrics.completionRate));
-  } else {
-    const watchTime = safeNonNegative(feedback.watchTimeSeconds ?? feedback.metrics?.watchTimeSeconds);
-    const duration = safeNonNegative(feedback.totalDurationSeconds ?? feedback.durationSeconds);
-    if (duration > 0 && watchTime > 0) {
-      const rawRatio = watchTime / duration;
-      R = Number.isFinite(rawRatio) ? Math.max(0, Math.min(1, rawRatio)) : 0;
-    }
+    return Math.max(0, Math.min(1, feedback.completionRate));
   }
+  if (typeof feedback.metrics?.completionRate === 'number' && Number.isFinite(feedback.metrics.completionRate)) {
+    return Math.max(0, Math.min(1, feedback.metrics.completionRate));
+  }
+  const watchTime = safeNonNegative(feedback.watchTimeSeconds ?? feedback.metrics?.watchTimeSeconds);
+  const duration = safeNonNegative(feedback.totalDurationSeconds ?? feedback.durationSeconds);
+  if (duration > 0 && watchTime > 0) {
+    const rawRatio = watchTime / duration;
+    return Number.isFinite(rawRatio) ? Math.max(0, Math.min(1, rawRatio)) : 0;
+  }
+  return 0;
+}
 
-  // Viral Shares S (30%): 3% share rate (30 shares / 1000 views) = 1.0
-  const rawViews = safeNonNegative(feedback.views ?? feedback.metrics?.views);
-  const views = Math.max(rawViews, 1);
+function calculateSharesScore(feedback: VideoEngagementFeedback, views: number): number {
   const shares = safeNonNegative(feedback.shares ?? feedback.metrics?.shares);
   const rawS = (shares / views) * 33.33;
-  const S = Number.isFinite(rawS) ? Math.max(0, Math.min(1.0, rawS)) : 0;
+  return Number.isFinite(rawS) ? Math.max(0, Math.min(1.0, rawS)) : 0;
+}
 
-  // Engagement Depth E (20%): (likes + 2 * comments) / views * 10
+function calculateEngagementDepthScore(feedback: VideoEngagementFeedback, views: number): number {
   const likes = safeNonNegative(feedback.likes);
   const comments = safeNonNegative(feedback.comments);
   const rawE = ((likes + 2 * comments) / views) * 10.0;
-  const E = Number.isFinite(rawE) ? Math.max(0, Math.min(1.0, rawE)) : 0;
+  return Number.isFinite(rawE) ? Math.max(0, Math.min(1.0, rawE)) : 0;
+}
 
-  // Commercial Conversion C (15%): 0.6 * (ctr * 10) + 0.4 * (convRate * 5)
+function calculateCommercialConversionScore(feedback: VideoEngagementFeedback, views: number): number {
   const rawImpressions = safeNonNegative(feedback.impressions);
   const impressions = Math.max(rawImpressions > 0 ? rawImpressions : views, 1);
   const clicks = safeNonNegative(feedback.clicks);
@@ -296,7 +294,17 @@ export function calculateViralCES(feedback: VideoEngagementFeedback): number {
   const ctr = impressions > 0 ? clicks / impressions : 0;
   const convRate = clicks > 0 ? conversions / clicks : 0;
   const rawC = 0.6 * (ctr * 10.0) + 0.4 * (convRate * 5.0);
-  const C = Number.isFinite(rawC) ? Math.max(0, Math.min(1.0, rawC)) : 0;
+  return Number.isFinite(rawC) ? Math.max(0, Math.min(1.0, rawC)) : 0;
+}
+
+export function calculateViralCES(feedback: VideoEngagementFeedback): number {
+  const rawViews = safeNonNegative(feedback.views ?? feedback.metrics?.views);
+  const views = Math.max(rawViews, 1);
+
+  const R = calculateRetentionScore(feedback);
+  const S = calculateSharesScore(feedback, views);
+  const E = calculateEngagementDepthScore(feedback, views);
+  const C = calculateCommercialConversionScore(feedback, views);
 
   const rawCes = (0.35 * R + 0.30 * S + 0.20 * E + 0.15 * C) * 100;
   if (!Number.isFinite(rawCes)) {
@@ -314,31 +322,7 @@ function durationToBucket(seconds?: number): string {
   return '90s+';
 }
 
-/**
- * Ingests published video engagement feedback, recalculates Creative Effectiveness
- * Scores (CES), and applies atomic OCC CAS updates on matching `playbook_patterns` rows.
- *
- * Concurrency & Integrity Guarantees:
- * 1. Zero Deadlocks: Sorts candidate pattern IDs in strict ascending lexicographical
- *    order before applying updates, guaranteeing a single monotonic lock acquisition order.
- * 2. Zero Lost Updates: Executes OCC Compare-And-Swap (`detected_at = expectedDetectedAt`)
- *    with exponential full-jitter backoff retry on concurrent modification collisions.
- *    On collision, re-reads latest committed row and dynamically recalculates CMA/SES.
- * 3. Zero Cold-Start Races: Uses `INSERT ... ON CONFLICT DO NOTHING` for cold patterns.
- * 4. Active Provider Fallback: When hermes is uncertified/blocked, actively diverts
- *    downstream prompt optimization / text reasoning to certified fallback providers.
- *
- * @param db D1Database client
- * @param feedback Video performance telemetry
- * @param maxRetries Maximum retry attempts on concurrent modification collision (default 5)
- */
-export async function ingestEngagementFeedback(
-  db: D1Database,
-  feedback: VideoEngagementFeedback,
-  maxRetries = 5,
-): Promise<PatternUpdateResult> {
-  // 1. Provider Certification Gate & Active Fallback Diversion
-  // When hermes is uncertified/blocked, actively divert prompt optimization / text reasoning to certified provider ('openrouter' / 'anthropic')
+function checkAndLogProviderFallback(feedback: VideoEngagementFeedback) {
   isCertificationBlocking('hermes');
   const providerResolution = resolveCertifiedProvider('hermes', ['openrouter', 'anthropic']);
   if (providerResolution.diverted) {
@@ -349,12 +333,10 @@ export async function ingestEngagementFeedback(
       reason: providerResolution.reason,
     });
   }
+  return providerResolution;
+}
 
-  const workspaceId = feedback.workspaceId ?? 'ws_default';
-  const rawCes = calculateViralCES(feedback);
-  const cesScore = Number.isFinite(rawCes) ? Math.max(0, Math.min(100, rawCes)) : 0;
-
-  // 2. Resolve creative feature dimensions
+function resolveFeatureDimensions(feedback: VideoEngagementFeedback): Array<{ key: string; value: string }> {
   const targetDimensions: Array<{ key: string; value: string }> = [];
 
   const hookVal = feedback.hookStyle ?? feedback.features?.hookStyle;
@@ -383,9 +365,17 @@ export async function ingestEngagementFeedback(
     targetDimensions.push({ key: 'hook_style', value: 'curiosity_gap' });
   }
 
-  // 3. Cold pattern insertion via INSERT ... ON CONFLICT DO NOTHING
+  return targetDimensions;
+}
+
+async function insertColdPatterns(
+  db: D1Database,
+  workspaceId: string,
+  dimensions: Array<{ key: string; value: string }>,
+  cesScore: number,
+): Promise<void> {
   const now = Date.now();
-  for (const dim of targetDimensions) {
+  for (const dim of dimensions) {
     const patternId = `pat_${workspaceId}_${dim.key}_${dim.value}`.replace(/[^\w]/g, '_');
     try {
       await db
@@ -407,13 +397,31 @@ export async function ingestEngagementFeedback(
       });
     }
   }
+}
 
-  // 4. Retrieve all matching rows for these feature dimensions
-  const placeholders = targetDimensions
+interface PlaybookPatternCandidateRow {
+  id: string;
+  workspace_id: string;
+  feature_key: string;
+  feature_value: string;
+  metric: string;
+  avg_metric: number;
+  sample_size: number;
+  confidence: number;
+  confidence_level: 'high' | 'medium' | 'low';
+  detected_at: number;
+}
+
+async function fetchCandidatePatterns(
+  db: D1Database,
+  workspaceId: string,
+  dimensions: Array<{ key: string; value: string }>,
+): Promise<PlaybookPatternCandidateRow[]> {
+  const placeholders = dimensions
     .map(() => '(feature_key = ? AND feature_value = ?)')
     .join(' OR ');
   const bindArgs: unknown[] = [workspaceId];
-  for (const dim of targetDimensions) {
+  for (const dim of dimensions) {
     bindArgs.push(dim.key, dim.value);
   }
 
@@ -424,132 +432,174 @@ export async function ingestEngagementFeedback(
        WHERE workspace_id = ? AND metric = 'ces' AND (${placeholders})`,
     )
     .bind(...bindArgs)
-    .all<{
-      id: string;
-      workspace_id: string;
-      feature_key: string;
-      feature_value: string;
-      metric: string;
-      avg_metric: number;
-      sample_size: number;
-      confidence: number;
-      confidence_level: 'high' | 'medium' | 'low';
-      detected_at: number;
-    }>();
+    .all<PlaybookPatternCandidateRow>();
 
   const candidatePatterns = queryRes.results ?? [];
-
-  // 5. Monotonic Lexicographical Sorting to prevent deadlocks across concurrent workers
   candidatePatterns.sort((a, b) => a.id.localeCompare(b.id));
+  return candidatePatterns;
+}
 
-  const updatedPatterns: PatternUpdateDetail[] = [];
+function computeUpdatedAverages(currentAvg: number, currentN: number, cesScore: number) {
+  const newN = currentN + 1;
+  let newAvg: number;
+  if (currentN < 10) {
+    newAvg = (currentAvg * currentN + cesScore) / newN;
+  } else {
+    newAvg = 0.4 * cesScore + 0.6 * currentAvg;
+  }
+  if (!Number.isFinite(newAvg)) {
+    newAvg = cesScore;
+  }
+  const safeNewAvg = Math.round(Math.min(100, Math.max(0, newAvg)) * 100) / 100;
+  const newConfidence = computeLogarithmicConfidence(newN);
+  const newConfidenceLevel = determineConfidenceLevel(newConfidence);
 
-  // 6. Execute atomic OCC CAS updates for each pattern in global linear order
-  // On collision, dynamically re-read latest state and re-calculate CMA / SES to eliminate lost updates
-  for (const pattern of candidatePatterns) {
-    let currentAvg = Number.isFinite(pattern.avg_metric) ? pattern.avg_metric : cesScore;
-    let currentN = Number.isFinite(pattern.sample_size) && pattern.sample_size >= 0 ? pattern.sample_size : 0;
-    let currentDetectedAt = pattern.detected_at;
-    let success = false;
-    let attemptsTaken = 0;
-    let finalNewAvg = currentAvg;
-    let finalNewN = currentN;
+  return { newN, safeNewAvg, newConfidence, newConfidenceLevel };
+}
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      attemptsTaken = attempt;
-      const newN = currentN + 1;
+async function refreshPatternAfterCollision(
+  db: D1Database,
+  patternId: string,
+  attempt: number,
+): Promise<{ nextN?: number; nextAvg?: number; nextDetectedAt?: number } | null> {
+  const baseJitter = 25 * Math.pow(2, attempt) + 10;
+  const jitterMs = Math.floor(Math.random() * Math.min(500, baseJitter));
+  await new Promise((resolve) => setTimeout(resolve, jitterMs));
 
-      // Hybrid CMA (N < 10) or SES (alpha = 0.40, N >= 10)
-      let newAvg: number;
-      if (currentN < 10) {
-        newAvg = (currentAvg * currentN + cesScore) / newN;
-      } else {
-        newAvg = 0.4 * cesScore + 0.6 * currentAvg;
-      }
+  const latestRow = await db
+    .prepare(
+      `SELECT avg_metric, sample_size, detected_at
+       FROM playbook_patterns
+       WHERE id = ?`,
+    )
+    .bind(patternId)
+    .first<{ avg_metric?: number; sample_size?: number; detected_at: number }>();
 
-      if (!Number.isFinite(newAvg)) {
-        newAvg = cesScore;
-      }
+  if (!latestRow) {
+    logger.warn('[ScoringCAS] Pattern row deleted during OCC CAS retry', {
+      patternId,
+    });
+    return null;
+  }
 
-      const safeNewAvg = Math.round(Math.min(100, Math.max(0, newAvg)) * 100) / 100;
-      const newConfidence = computeLogarithmicConfidence(newN);
-      const newConfidenceLevel = determineConfidenceLevel(newConfidence);
+  const nextN = typeof latestRow.sample_size === 'number' && Number.isFinite(latestRow.sample_size)
+    ? latestRow.sample_size
+    : undefined;
+  const nextAvg = typeof latestRow.avg_metric === 'number' && Number.isFinite(latestRow.avg_metric)
+    ? latestRow.avg_metric
+    : undefined;
 
-      finalNewAvg = safeNewAvg;
-      finalNewN = newN;
+  return { nextN, nextAvg, nextDetectedAt: latestRow.detected_at };
+}
 
-      const nowTimestamp = Math.max(Date.now(), currentDetectedAt + 1);
+function applyRefreshedRow(
+  state: { currentN: number; currentAvg: number; currentDetectedAt: number },
+  refreshed: { nextN?: number; nextAvg?: number; nextDetectedAt?: number },
+) {
+  if (refreshed.nextN !== undefined) state.currentN = refreshed.nextN;
+  if (refreshed.nextAvg !== undefined) state.currentAvg = refreshed.nextAvg;
+  if (refreshed.nextDetectedAt !== undefined) state.currentDetectedAt = refreshed.nextDetectedAt;
+}
 
-      const result = await db
-        .prepare(
-          `UPDATE playbook_patterns
-           SET avg_metric = ?,
-               sample_size = ?,
-               confidence = ?,
-               confidence_level = ?,
-               detected_at = ?
-           WHERE id = ? AND detected_at = ?`,
-        )
-        .bind(
-          safeNewAvg,
-          newN,
-          newConfidence,
-          newConfidenceLevel,
-          nowTimestamp,
-          pattern.id,
-          currentDetectedAt,
-        )
-        .run();
+async function executePatternDbUpdate(
+  db: D1Database,
+  patternId: string,
+  currentDetectedAt: number,
+  avgData: ReturnType<typeof computeUpdatedAverages>,
+): Promise<boolean> {
+  const nowTimestamp = Math.max(Date.now(), currentDetectedAt + 1);
+  const result = await db
+    .prepare(
+      `UPDATE playbook_patterns
+       SET avg_metric = ?,
+           sample_size = ?,
+           confidence = ?,
+           confidence_level = ?,
+           detected_at = ?
+       WHERE id = ? AND detected_at = ?`,
+    )
+    .bind(
+      avgData.safeNewAvg,
+      avgData.newN,
+      avgData.newConfidence,
+      avgData.newConfidenceLevel,
+      nowTimestamp,
+      patternId,
+      currentDetectedAt,
+    )
+    .run();
+  return result.meta.changes > 0;
+}
 
-      if (result.meta.changes > 0) {
-        success = true;
-        break;
-      }
+async function updateSinglePatternCAS(
+  db: D1Database,
+  pattern: PlaybookPatternCandidateRow,
+  cesScore: number,
+  maxRetries: number,
+): Promise<PatternUpdateDetail> {
+  const state = {
+    currentAvg: Number.isFinite(pattern.avg_metric) ? pattern.avg_metric : cesScore,
+    currentN: Number.isFinite(pattern.sample_size) && pattern.sample_size >= 0 ? pattern.sample_size : 0,
+    currentDetectedAt: pattern.detected_at,
+  };
+  let success = false;
+  let attemptsTaken = 0;
+  let finalNewAvg = state.currentAvg;
+  let finalNewN = state.currentN;
 
-      // CAS collision detected (changes === 0)
-      if (attempt < maxRetries) {
-        // Full-jitter exponential backoff
-        const baseJitter = 25 * Math.pow(2, attempt) + 10;
-        const jitterMs = Math.floor(Math.random() * Math.min(500, baseJitter));
-        await new Promise((resolve) => setTimeout(resolve, jitterMs));
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    attemptsTaken = attempt;
+    const avgData = computeUpdatedAverages(state.currentAvg, state.currentN, cesScore);
+    finalNewAvg = avgData.safeNewAvg;
+    finalNewN = avgData.newN;
 
-        // Re-read latest committed row state from D1
-        const latestRow = await db
-          .prepare(
-            `/* SELECT detected_at FROM playbook_patterns */ SELECT avg_metric, sample_size, detected_at
-             FROM playbook_patterns
-             WHERE id = ?`,
-          )
-          .bind(pattern.id)
-          .first<{ avg_metric?: number; sample_size?: number; detected_at: number }>();
-
-        if (!latestRow) {
-          logger.warn('[ScoringCAS] Pattern row deleted during OCC CAS retry', {
-            patternId: pattern.id,
-          });
-          break;
-        }
-
-        if (typeof latestRow.sample_size === 'number' && Number.isFinite(latestRow.sample_size)) {
-          currentN = latestRow.sample_size;
-        }
-        if (typeof latestRow.avg_metric === 'number' && Number.isFinite(latestRow.avg_metric)) {
-          currentAvg = latestRow.avg_metric;
-        }
-        currentDetectedAt = latestRow.detected_at;
-      }
+    const updated = await executePatternDbUpdate(db, pattern.id, state.currentDetectedAt, avgData);
+    if (updated) {
+      success = true;
+      break;
     }
 
-    updatedPatterns.push({
-      patternId: pattern.id,
-      featureKey: pattern.feature_key,
-      featureValue: pattern.feature_value,
-      previousAvg: pattern.avg_metric,
-      newAvg: finalNewAvg,
-      sampleSize: finalNewN,
-      retries: attemptsTaken,
-      status: success ? 'updated' : 'conflict_exhausted',
-    });
+    if (attempt >= maxRetries) break;
+
+    const refreshed = await refreshPatternAfterCollision(db, pattern.id, attempt);
+    if (!refreshed) break;
+    applyRefreshedRow(state, refreshed);
+  }
+
+  return {
+    patternId: pattern.id,
+    featureKey: pattern.feature_key,
+    featureValue: pattern.feature_value,
+    previousAvg: pattern.avg_metric,
+    newAvg: finalNewAvg,
+    sampleSize: finalNewN,
+    retries: attemptsTaken,
+    status: success ? 'updated' : 'conflict_exhausted',
+  };
+}
+
+/**
+ * Ingests published video engagement feedback, recalculates Creative Effectiveness
+ * Scores (CES), and applies atomic OCC CAS updates on matching `playbook_patterns` rows.
+ */
+export async function ingestEngagementFeedback(
+  db: D1Database,
+  feedback: VideoEngagementFeedback,
+  maxRetries = 5,
+): Promise<PatternUpdateResult> {
+  const providerResolution = checkAndLogProviderFallback(feedback);
+  const workspaceId = feedback.workspaceId ?? 'ws_default';
+  const rawCes = calculateViralCES(feedback);
+  const cesScore = Number.isFinite(rawCes) ? Math.max(0, Math.min(100, rawCes)) : 0;
+
+  const targetDimensions = resolveFeatureDimensions(feedback);
+  await insertColdPatterns(db, workspaceId, targetDimensions, cesScore);
+  const candidatePatterns = await fetchCandidatePatterns(db, workspaceId, targetDimensions);
+
+  const updatedPatterns: PatternUpdateDetail[] = [];
+  for (const pattern of candidatePatterns) {
+    const detail = await updateSinglePatternCAS(db, pattern, cesScore, maxRetries);
+    updatedPatterns.push(detail);
   }
 
   const primaryPattern = updatedPatterns[0];

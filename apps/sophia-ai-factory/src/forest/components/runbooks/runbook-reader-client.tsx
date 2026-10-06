@@ -22,13 +22,10 @@ import {
   Check,
   Search,
   Clock,
-  User,
   Calendar,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Tag,
-  CheckCircle2,
   Globe,
 } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
@@ -211,7 +208,6 @@ export function RunbookReaderClient({
     );
   });
 
-  const activeTitle = activeLocale === 'vi' ? activeRunbook.titleVi : activeRunbook.titleEn;
   const activeContent = activeLocale === 'vi' ? activeRunbook.contentVi : activeRunbook.contentEn;
 
   const handleDownloadMarkdown = () => {

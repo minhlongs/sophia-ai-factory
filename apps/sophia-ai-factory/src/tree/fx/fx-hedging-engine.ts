@@ -22,18 +22,15 @@ import { logger } from '@/seed/utils/logger-utility';
 import {
   type SupportedCurrency,
   isSupportedCurrency,
-  isZeroDecimalCurrency,
   ALL_SUPPORTED_CURRENCIES,
 } from '@/seed/types/enterprise-billing';
 import {
   type HedgedQuoteInput,
   type HedgedQuoteResult,
   type HedgingReconciliationResult,
-  type FxRateRecord,
-  type HedgingReserveRecord,
   type FxSourceProvider,
 } from '@/seed/types/fx-hedging';
-import { BEDROCK_RATES_TABLE, BEDROCK_FX_RATES } from '@/tree/billing/fx-converter';
+import { BEDROCK_RATES_TABLE } from '@/tree/billing/fx-converter';
 
 export const DEFAULT_HEDGING_BUFFER_PERCENT = 0.015; // +1.5% default buffer
 export const HIGH_VOLATILITY_BUFFER_PERCENT = 0.025; // +2.5% widened buffer on high volatility
@@ -115,45 +112,53 @@ function resolveKv(env?: Record<string, unknown>): MinimalKV | null {
   return null;
 }
 
-/**
- * Fetches market rates across all 10 currencies with multi-tier fallback:
- * Tier 1: Live Edge / ECB API
- * Tier 2: Open Exchange Rates
- * Tier 3: KV Cache
- * Tier 4: Bedrock Fallback
- */
-export async function fetchMultiTierRates(env?: Record<string, unknown>): Promise<{
+async function tryReadCachedKvRates(kv: MinimalKV): Promise<{
   rates: Record<SupportedCurrency, number>;
   sourceProvider: FxSourceProvider;
   fetchedAt: number;
-}> {
-  const kv = resolveKv(env);
-
-  // Tier 1: Check KV cache first if fresh
-  if (kv) {
-    try {
-      const cached = await kv.get(KV_FX_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached) as {
-          rates: Record<SupportedCurrency, number>;
-          sourceProvider: FxSourceProvider;
-          fetchedAt: number;
-          ttlMs: number;
-        };
-        if (parsed?.rates && Date.now() - parsed.fetchedAt < (parsed.ttlMs ?? 3600000)) {
-          return {
-            rates: parsed.rates,
-            sourceProvider: 'KV_CACHE',
-            fetchedAt: parsed.fetchedAt,
-          };
-        }
-      }
-    } catch (kvErr) {
-      logger.warn('[FxHedgingEngine] KV cache read failed', { error: String(kvErr) });
+} | null> {
+  try {
+    const cached = await kv.get(KV_FX_CACHE_KEY);
+    if (!cached) return null;
+    const parsed = JSON.parse(cached) as {
+      rates: Record<SupportedCurrency, number>;
+      sourceProvider: FxSourceProvider;
+      fetchedAt: number;
+      ttlMs: number;
+    };
+    if (parsed?.rates && Date.now() - parsed.fetchedAt < (parsed.ttlMs ?? 3600000)) {
+      return {
+        rates: parsed.rates,
+        sourceProvider: 'KV_CACHE',
+        fetchedAt: parsed.fetchedAt,
+      };
     }
+  } catch (kvErr) {
+    logger.warn('[FxHedgingEngine] KV cache read failed', { error: String(kvErr) });
   }
+  return null;
+}
 
-  // Tier 2: Live Provider (Open Exchange / Live Feed)
+function parseLiveRates(data: { rates?: Record<string, number> }): Record<SupportedCurrency, number> {
+  return {
+    USD: 1.0,
+    EUR: Number(data.rates?.EUR) || BEDROCK_RATES_TABLE.EUR,
+    GBP: Number(data.rates?.GBP) || BEDROCK_RATES_TABLE.GBP,
+    JPY: Number(data.rates?.JPY) || BEDROCK_RATES_TABLE.JPY,
+    SGD: Number(data.rates?.SGD) || BEDROCK_RATES_TABLE.SGD,
+    AUD: Number(data.rates?.AUD) || BEDROCK_RATES_TABLE.AUD,
+    CAD: Number(data.rates?.CAD) || BEDROCK_RATES_TABLE.CAD,
+    VND: Number(data.rates?.VND) || BEDROCK_RATES_TABLE.VND,
+    THB: Number(data.rates?.THB) || BEDROCK_RATES_TABLE.THB,
+    IDR: Number(data.rates?.IDR) || BEDROCK_RATES_TABLE.IDR,
+  };
+}
+
+async function tryFetchLiveRates(kv: MinimalKV | null): Promise<{
+  rates: Record<SupportedCurrency, number>;
+  sourceProvider: FxSourceProvider;
+  fetchedAt: number;
+} | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
@@ -165,26 +170,12 @@ export async function fetchMultiTierRates(env?: Record<string, unknown>): Promis
     if (response.ok) {
       const data = (await response.json()) as { rates?: Record<string, number> };
       if (data?.rates && typeof data.rates === 'object') {
-        const liveRates: Record<SupportedCurrency, number> = {
-          USD: 1.0,
-          EUR: Number(data.rates.EUR) || BEDROCK_RATES_TABLE.EUR,
-          GBP: Number(data.rates.GBP) || BEDROCK_RATES_TABLE.GBP,
-          JPY: Number(data.rates.JPY) || BEDROCK_RATES_TABLE.JPY,
-          SGD: Number(data.rates.SGD) || BEDROCK_RATES_TABLE.SGD,
-          AUD: Number(data.rates.AUD) || BEDROCK_RATES_TABLE.AUD,
-          CAD: Number(data.rates.CAD) || BEDROCK_RATES_TABLE.CAD,
-          VND: Number(data.rates.VND) || BEDROCK_RATES_TABLE.VND,
-          THB: Number(data.rates.THB) || BEDROCK_RATES_TABLE.THB,
-          IDR: Number(data.rates.IDR) || BEDROCK_RATES_TABLE.IDR,
-        };
-
         const result = {
-          rates: liveRates,
+          rates: parseLiveRates(data),
           sourceProvider: 'OPEN_EXCHANGE' as FxSourceProvider,
           fetchedAt: Date.now(),
         };
 
-        // Cache in KV asynchronously
         if (kv) {
           kv.put(
             KV_FX_CACHE_KEY,
@@ -199,8 +190,31 @@ export async function fetchMultiTierRates(env?: Record<string, unknown>): Promis
   } catch (liveErr) {
     logger.warn('[FxHedgingEngine] Live rate fetch failed, falling back', { error: String(liveErr) });
   }
+  return null;
+}
 
-  // Tier 3: Immutable Bedrock Fallback
+/**
+ * Fetches market rates across all 10 currencies with multi-tier fallback:
+ * Tier 1: Live Edge / ECB API
+ * Tier 2: Open Exchange Rates
+ * Tier 3: KV Cache
+ * Tier 4: Bedrock Fallback
+ */
+export async function fetchMultiTierRates(env?: Record<string, unknown>): Promise<{
+  rates: Record<SupportedCurrency, number>;
+  sourceProvider: FxSourceProvider;
+  fetchedAt: number;
+}> {
+  const kv = resolveKv(env);
+  if (kv) {
+    const cachedResult = await tryReadCachedKvRates(kv);
+    if (cachedResult) return cachedResult;
+  }
+
+  const liveResult = await tryFetchLiveRates(kv);
+  if (liveResult) return liveResult;
+
+  // Tier 4: Immutable Bedrock Fallback
   return {
     rates: { ...BEDROCK_RATES_TABLE },
     sourceProvider: 'BEDROCK_FALLBACK',

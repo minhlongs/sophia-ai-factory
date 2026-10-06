@@ -16,7 +16,6 @@ import {
   Eye,
   MousePointerClick,
   Users,
-  TrendingUp,
   Video,
   Sparkles,
   Share2,
@@ -24,14 +23,11 @@ import {
   Check,
   Filter,
   DollarSign,
-  Play,
   Flame,
   ArrowUpRight,
-  ExternalLink,
 } from 'lucide-react';
 import type {
   ViralFunnelOverview,
-  ViralVideoFunnelItem,
   ViralNiche,
   HookArchetype,
   ViralPlatform,

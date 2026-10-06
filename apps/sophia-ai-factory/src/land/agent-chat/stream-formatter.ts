@@ -16,6 +16,63 @@ const TAG_LOOKAHEAD = 64;
 
 type ParseState = 'content' | 'reasoning' | 'tag_open' | 'tag_close';
 
+interface BufferStepResult {
+  events: SseEvent[];
+  remainingBuffer: string;
+  nextState: ParseState;
+  done: boolean;
+}
+
+function flushContentBuffer(buffer: string): BufferStepResult {
+  const openIdx = buffer.indexOf('<think>');
+  if (openIdx === -1) {
+    const safeLen = Math.max(0, buffer.length - TAG_LOOKAHEAD);
+    const events: SseEvent[] = safeLen > 0 ? [{ type: 'token', data: buffer.slice(0, safeLen) }] : [];
+    return {
+      events,
+      remainingBuffer: buffer.slice(safeLen),
+      nextState: 'content',
+      done: true,
+    };
+  }
+
+  const events: SseEvent[] = [];
+  if (openIdx > 0) {
+    events.push({ type: 'token', data: buffer.slice(0, openIdx) });
+  }
+  return {
+    events,
+    remainingBuffer: buffer.slice(openIdx + '<think>'.length),
+    nextState: 'reasoning',
+    done: false,
+  };
+}
+
+function flushReasoningBuffer(buffer: string): BufferStepResult {
+  const closeIdx = buffer.indexOf('</think>');
+  if (closeIdx === -1) {
+    const safeLen = Math.max(0, buffer.length - TAG_LOOKAHEAD);
+    const events: SseEvent[] = safeLen > 0 ? [{ type: 'reasoning', data: buffer.slice(0, safeLen) }] : [];
+    return {
+      events,
+      remainingBuffer: buffer.slice(safeLen),
+      nextState: 'reasoning',
+      done: true,
+    };
+  }
+
+  const events: SseEvent[] = [];
+  if (closeIdx > 0) {
+    events.push({ type: 'reasoning', data: buffer.slice(0, closeIdx) });
+  }
+  return {
+    events,
+    remainingBuffer: buffer.slice(closeIdx + '</think>'.length),
+    nextState: 'content',
+    done: false,
+  };
+}
+
 /**
  * Format an upstream text stream into typed SseEvent objects.
  * Yields events in order; caller serialises to SSE wire format.
@@ -29,45 +86,18 @@ export async function* formatStream(
   for await (const chunk of upstream) {
     buffer += chunk;
 
-    // Flush buffer into events
     while (buffer.length > 0) {
-      if (state === 'content') {
-        // Look for <think> opening
-        const openIdx = buffer.indexOf('<think>');
-        if (openIdx === -1) {
-          // No tag found — safe to flush all but last 64 chars (tag boundary guard)
-          const safeLen = Math.max(0, buffer.length - TAG_LOOKAHEAD);
-          if (safeLen > 0) {
-            yield { type: 'token', data: buffer.slice(0, safeLen) };
-            buffer = buffer.slice(safeLen);
-          }
-          break;
-        }
-        // Emit content before tag
-        if (openIdx > 0) {
-          yield { type: 'token', data: buffer.slice(0, openIdx) };
-        }
-        buffer = buffer.slice(openIdx + '<think>'.length);
-        state = 'reasoning';
-      } else if (state === 'reasoning') {
-        // Look for </think> closing
-        const closeIdx = buffer.indexOf('</think>');
-        if (closeIdx === -1) {
-          // Buffer reasoning, keep last TAG_LOOKAHEAD chars as guard
-          const safeLen = Math.max(0, buffer.length - TAG_LOOKAHEAD);
-          if (safeLen > 0) {
-            yield { type: 'reasoning', data: buffer.slice(0, safeLen) };
-            buffer = buffer.slice(safeLen);
-          }
-          break;
-        }
-        // Emit reasoning up to close tag
-        if (closeIdx > 0) {
-          yield { type: 'reasoning', data: buffer.slice(0, closeIdx) };
-        }
-        buffer = buffer.slice(closeIdx + '</think>'.length);
-        state = 'content';
-      } else {
+      const step: BufferStepResult = state === 'content'
+        ? flushContentBuffer(buffer)
+        : flushReasoningBuffer(buffer);
+
+      for (const event of step.events) {
+        yield event;
+      }
+      buffer = step.remainingBuffer;
+      state = step.nextState;
+
+      if (step.done) {
         break;
       }
     }
@@ -75,11 +105,7 @@ export async function* formatStream(
 
   // Flush remaining buffer
   if (buffer.length > 0) {
-    if (state === 'reasoning') {
-      yield { type: 'reasoning', data: buffer };
-    } else {
-      yield { type: 'token', data: buffer };
-    }
+    yield { type: state === 'reasoning' ? 'reasoning' : 'token', data: buffer };
   }
 
   yield { type: 'done' };
@@ -91,6 +117,26 @@ export async function* formatStream(
  */
 export function serializeSseEvent(event: SseEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
+}
+
+function parseOpenAiLine(line: string): { isDone: boolean; chunks: string[] } {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('data:')) return { isDone: false, chunks: [] };
+  const jsonStr = trimmed.slice('data:'.length).trim();
+  if (jsonStr === '[DONE]') return { isDone: true, chunks: [] };
+
+  try {
+    const parsed = JSON.parse(jsonStr) as {
+      choices?: Array<{ delta?: { content?: string; reasoning_content?: string } }>;
+    };
+    const delta = parsed.choices?.[0]?.delta;
+    const chunks: string[] = [];
+    if (delta?.content) chunks.push(delta.content);
+    if (delta?.reasoning_content) chunks.push(`<think>${delta.reasoning_content}</think>`);
+    return { isDone: false, chunks };
+  } catch {
+    return { isDone: false, chunks: [] };
+  }
 }
 
 /**
@@ -114,20 +160,10 @@ export async function* openAiStreamToChunks(
       partial = lines.pop() ?? '';
 
       for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('data:')) continue;
-        const jsonStr = trimmed.slice('data:'.length).trim();
-        if (jsonStr === '[DONE]') return;
-        try {
-          const parsed = JSON.parse(jsonStr) as {
-            choices?: Array<{ delta?: { content?: string; reasoning_content?: string } }>;
-          };
-          const delta = parsed.choices?.[0]?.delta;
-          if (delta?.content) yield delta.content;
-          // DeepSeek R1 surfaces reasoning separately in some modes
-          if (delta?.reasoning_content) yield `<think>${delta.reasoning_content}</think>`;
-        } catch {
-          // skip malformed lines
+        const { isDone, chunks } = parseOpenAiLine(line);
+        if (isDone) return;
+        for (const chunk of chunks) {
+          yield chunk;
         }
       }
     }
