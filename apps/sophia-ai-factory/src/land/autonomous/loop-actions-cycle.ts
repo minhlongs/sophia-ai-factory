@@ -23,9 +23,6 @@ import {
 import { resolveDb, ensureTenantLoopState } from './loop-actions-db';
 import { executeDueTasks } from './loop-actions-task-executor';
 
-export { executeDueTasks } from './loop-actions-task-executor';
-export type { CycleExecTotals } from './loop-actions-task-executor';
-
 /**
  * Action: Trigger an Autonomous Execution Cycle.
  */
