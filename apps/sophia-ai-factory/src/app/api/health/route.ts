@@ -38,12 +38,15 @@ interface HealthResponse {
   };
 }
 
-function getBinding<T>(key: string): T | null {
+async function getBinding<T>(key: string): Promise<T | null> {
   try {
     const g = globalThis as Record<string, unknown>;
     if (g[key]) return g[key] as T;
     const env = g.__env as Record<string, unknown> | undefined;
-    return (env?.[key] as T) ?? null;
+    if (env?.[key]) return env[key] as T;
+    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    const cf = await getCloudflareContext({ async: true });
+    return ((cf?.env as Record<string, unknown> | undefined)?.[key] as T) ?? null;
   } catch {
     return null;
   }
@@ -53,7 +56,7 @@ async function checkDatabase(): Promise<ComponentStatus> {
   try {
     const { probeD1 } = await import('@/seed/health/probe-d1');
     const { getD1, createServerClient } = await import('@/seed/db/client');
-    let db = getBinding<import('@cloudflare/workers-types').D1Database>('DB') ?? (await getD1());
+    let db = (await getBinding<import('@cloudflare/workers-types').D1Database>('DB')) ?? (await getD1());
     if (!db) {
       try {
         const client = createServerClient();
@@ -72,13 +75,15 @@ async function probeBinding(type: 'kv' | 'r2'): Promise<ComponentStatus> {
   try {
     if (type === 'kv') {
       const { probeKv } = await import('@/seed/health/probe-kv');
-      const kv = getBinding<import('@cloudflare/workers-types').KVNamespace>('EXPERIMENT_KV');
+      const kv = (await getBinding<import('@cloudflare/workers-types').KVNamespace>('EXPERIMENT_KV')) ??
+        (await getBinding<import('@cloudflare/workers-types').KVNamespace>('KV_KV'));
       if (!kv) return { status: 'unknown', error: 'KV binding not available' };
       const res = await probeKv(kv);
       return { status: res.status === 'up' ? 'ok' : 'error', latencyMs: res.latency, ...(res.error ? { error: res.error } : {}) };
     }
     const { probeR2 } = await import('@/seed/health/probe-r2');
-    const b = getBinding<import('@cloudflare/workers-types').R2Bucket>('NEXT_INC_CACHE_R2_BUCKET');
+    const b = (await getBinding<import('@cloudflare/workers-types').R2Bucket>('NEXT_INC_CACHE_R2_BUCKET')) ??
+      (await getBinding<import('@cloudflare/workers-types').R2Bucket>('BACKUPS_BUCKET'));
     if (!b) return { status: 'unknown', error: 'R2 binding not available' };
     const res = await probeR2(b);
     return { status: res.status === 'up' ? 'ok' : 'error', latencyMs: res.latency, ...(res.error ? { error: res.error } : {}) };
@@ -135,7 +140,7 @@ export async function GET(req?: Request) {
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
     if (database.status === 'error') {
       status = 'unhealthy';
-    } else if (circuitBreaker.status === 'degraded' || kv.status === 'error' || realityLoop.status === 'degraded') {
+    } else if (circuitBreaker.status === 'degraded' || kv.status === 'error') {
       status = 'degraded';
     }
 
