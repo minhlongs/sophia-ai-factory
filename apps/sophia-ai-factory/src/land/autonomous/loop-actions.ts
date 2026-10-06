@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Autonomous AGI Loop Control & Heartbeat Scheduler Server Actions
  *

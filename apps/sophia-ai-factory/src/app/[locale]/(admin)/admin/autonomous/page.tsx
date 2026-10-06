@@ -17,7 +17,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
-import { getAutonomousLoopStatusAction } from '@/land/autonomous/loop-actions';
+import { getAutonomousLoopStatusAction } from '@/land/autonomous/loop-actions-status';
 import { OperationsCockpit } from '@/land/autonomous/operations-cockpit';
 
 interface PageProps {

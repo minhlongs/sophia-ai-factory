@@ -45,10 +45,10 @@ import {
   emergencyHaltAutonomousLoopAction,
   resetAutonomousCircuitBreakerAction,
   resetCircuitBreakerAction,
-  triggerAutonomousCycleAction,
-  replayDeadLetterTaskAction,
-  getAutonomousLoopStatusAction,
-} from './loop-actions';
+} from './loop-actions-lifecycle';
+import { getAutonomousLoopStatusAction } from './loop-actions-status';
+import { triggerAutonomousCycleAction } from './loop-actions-cycle';
+import { replayDeadLetterTaskAction } from './loop-actions-dlq';
 
 export interface OperationsCockpitProps {
   initialState: AutonomousLoopStateRow;
