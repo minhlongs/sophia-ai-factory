@@ -314,8 +314,10 @@ export function sanitizeFooterHtml(rawHtml: string | null | undefined): string {
     return '';
   }
 
-  // 0. Pre-sanitization: Strip null bytes and control characters
+  // 0. Pre-sanitization: Strip null bytes, control characters, and malformed tag-split fragments (<scr<script>)
   let sanitized = rawHtml.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  sanitized = sanitized.replace(/<[a-zA-Z0-9_-]+(?=<)/g, '');
+  sanitized = sanitized.replace(/<[a-zA-Z0-9_-]+$/g, '');
 
   // 1. Remove dangerous blocks and their contents completely (<script>, <style>, <iframe>, <object>, etc.)
   // Loop up to 3 passes to prevent nested bypasses like <scr<script>ipt>
