@@ -19,6 +19,7 @@ import { requireAdmin } from '@/seed/auth/require-admin'
 import { runSyntheticFulfillment } from '@/tree/admin/synthetic-fulfillment-runner'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import '@/land/fulfillment/one-time-fulfillment'
 
 export const dynamic = 'force-dynamic'
 

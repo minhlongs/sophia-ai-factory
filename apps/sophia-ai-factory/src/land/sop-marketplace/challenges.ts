@@ -15,13 +15,29 @@ export async function claimChallengeReward(
   rewardType: string,
   rewardValue: string,
 ): Promise<{ ok: boolean; reason?: string; applied: string }> {
-  // Verify user actually completed the challenge
-  const progress = await getUserProgress(db, userId, challengeId);
-  if (!progress || !progress.completed_at) {
-    return { ok: false, reason: 'not_completed', applied: 'none' };
+  // Validate reward parameters before locking
+  if (rewardType === 'credits') {
+    const amount = Number(rewardValue);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { ok: false, reason: 'invalid_amount', applied: 'none' };
+    }
+  } else if (rewardType !== 'badge' && rewardType !== 'commission_boost') {
+    return { ok: false, reason: `unsupported_reward_type:${rewardType}`, applied: 'none' };
   }
 
-  if (progress.reward_claimed) {
+  // Atomic conditional update to eliminate TOCTOU double-spend exploits
+  const now = Date.now();
+  const claimRes = await db.prepare(
+    `UPDATE user_challenge_progress
+     SET reward_claimed = 1, updated_at = ?1
+     WHERE user_id = ?2 AND challenge_id = ?3 AND completed_at IS NOT NULL AND reward_claimed = 0`,
+  ).bind(now, userId, challengeId).run();
+
+  if (!claimRes.meta.changes || claimRes.meta.changes === 0) {
+    const progress = await getUserProgress(db, userId, challengeId);
+    if (!progress || !progress.completed_at) {
+      return { ok: false, reason: 'not_completed', applied: 'none' };
+    }
     return { ok: false, reason: 'already_claimed', applied: 'none' };
   }
 
@@ -29,9 +45,6 @@ export async function claimChallengeReward(
 
   if (rewardType === 'credits') {
     const amount = Number(rewardValue);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return { ok: false, reason: 'invalid_amount', applied: 'none' };
-    }
     // Apply login streak bonus to credit rewards
     const loginStreak = await getStreakInfo(db, userId, 'login_daily');
     const { boostedValue, multiplier } = applyStreakBonus(amount, loginStreak, 'login_daily');
@@ -59,15 +72,7 @@ export async function claimChallengeReward(
     // Commission boost requires affiliate profile updates — deferred to affiliate tier integration.
     // Mark the claim record but do NOT apply boost yet.
     applied = `commission_boost:${rewardValue} (pending)`;
-  } else {
-    return { ok: false, reason: `unsupported_reward_type:${rewardType}`, applied: 'none' };
   }
-
-  // Mark reward as claimed
-  const now = Date.now();
-  await db.prepare(
-    `UPDATE user_challenge_progress SET reward_claimed = 1, updated_at = ?1 WHERE user_id = ?2 AND challenge_id = ?3`,
-  ).bind(now, userId, challengeId).run();
 
   return { ok: true, applied };
 }
@@ -151,36 +156,21 @@ export async function seedInitialChallenges(db: D1Database): Promise<void> {
   const challenges = [
     {
       id: 'challenge-ship-10-videos',
-      title_en: 'Ship 10 Videos',
-      title_vi: 'Tạo 10 Video',
-      description_en: 'Run 10 SOP executions in 30 days',
-      description_vi: 'Chạy 10 SOP trong 30 ngày',
-      goal_type: 'sop_runs',
-      goal_value: 10,
-      reward_type: 'badge',
-      reward_value: 'video-producer',
+      title_en: 'Ship 10 Videos', title_vi: 'Tạo 10 Video',
+      description_en: 'Run 10 SOP executions in 30 days', description_vi: 'Chạy 10 SOP trong 30 ngày',
+      goal_type: 'sop_runs', goal_value: 10, reward_type: 'badge', reward_value: 'video-producer',
     },
     {
       id: 'challenge-first-sale',
-      title_en: 'First SOP Sale',
-      title_vi: 'Bán SOP đầu tiên',
-      description_en: 'Sell your first community SOP on the marketplace',
-      description_vi: 'Bán SOP cộng đồng đầu tiên trên marketplace',
-      goal_type: 'sop_sales',
-      goal_value: 1,
-      reward_type: 'credits',
-      reward_value: '50',
+      title_en: 'First SOP Sale', title_vi: 'Bán SOP đầu tiên',
+      description_en: 'Sell your first community SOP on the marketplace', description_vi: 'Bán SOP cộng đồng đầu tiên trên marketplace',
+      goal_type: 'sop_sales', goal_value: 1, reward_type: 'credits', reward_value: '50',
     },
     {
       id: 'challenge-earn-100',
-      title_en: 'Earn $100 Commission',
-      title_vi: 'Kiếm $100 hoa hồng',
-      description_en: 'Earn $100 in total affiliate + SOP commission',
-      description_vi: 'Kiếm tổng cộng $100 hoa hồng affiliate + SOP',
-      goal_type: 'commission_earned',
-      goal_value: 10000,
-      reward_type: 'commission_boost',
-      reward_value: '1.1x',
+      title_en: 'Earn $100 Commission', title_vi: 'Kiếm $100 hoa hồng',
+      description_en: 'Earn $100 in total affiliate + SOP commission', description_vi: 'Kiếm tổng cộng $100 hoa hồng affiliate + SOP',
+      goal_type: 'commission_earned', goal_value: 10000, reward_type: 'commission_boost', reward_value: '1.1x',
     },
   ];
 

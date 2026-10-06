@@ -11,6 +11,7 @@ import { toNextJsHandler } from 'better-auth/next-js';
 import { NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import '@/tree/email/sender';
 
 export const dynamic = 'force-dynamic';
 

@@ -13,6 +13,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }))
 
 import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client'
+import { registerTikTokOAuthClient } from '@/tree/types/oauth-client-types'
 
 const sampleContent: CampaignOutput = {
   campaignId: 'camp-002',
@@ -25,6 +26,7 @@ const sampleContent: CampaignOutput = {
 describe('TikTokChannelAdapter', () => {
   describe('when tiktok_access_token is provided', () => {
     beforeEach(() => {
+      registerTikTokOAuthClient({ publishVideo, checkPublishStatus })
       vi.mocked(publishVideo).mockResolvedValue('publish-123')
       vi.mocked(checkPublishStatus).mockResolvedValue({
         status: 'PUBLISH_COMPLETE',

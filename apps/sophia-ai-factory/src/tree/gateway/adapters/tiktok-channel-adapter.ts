@@ -13,7 +13,7 @@ import type {
   ChannelStatus,
   PublishResult,
 } from '@/tree/gateway/gateway-types';
-import type { TikTokOAuthClient } from '@/tree/types/oauth-client-types';
+import { type TikTokOAuthClient, getTikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import { logger } from '@/seed/utils/logger-utility';
 
 const CHANNEL_ID = 'tiktok';
@@ -30,25 +30,22 @@ export class TikTokChannelAdapter implements ChannelAdapter {
   private readonly oauthClient: TikTokOAuthClient;
 
   /**
-   * In production, always pass oauthClient as first argument.
-   * The default fallback (land import) is for test backward compat only.
+   * In production, pass oauthClient or rely on registered default client.
    *
-   * @param oauthClientOrApiKeys - TikTok OAuth client (production) or apiKeys object (backward compat)
-   * @param apiKeys - TikTok API keys (production new-API only)
+   * @param oauthClientOrApiKeys - TikTok OAuth client or apiKeys object
+   * @param apiKeys - TikTok API keys (when client passed as first arg)
    */
   constructor(oauthClientOrApiKeys?: TikTokOAuthClient | TikTokApiKeys, apiKeys?: TikTokApiKeys) {
+    const fallbackClient: TikTokOAuthClient = getTikTokOAuthClient() ?? {
+      publishVideo: () => Promise.reject(new Error('TikTok OAuth client not registered')),
+      checkPublishStatus: () => Promise.reject(new Error('TikTok OAuth client not registered')),
+    };
+
     if (oauthClientOrApiKeys && 'tiktok_access_token' in oauthClientOrApiKeys) {
-      // Backward compat: dynamic import avoids tree→land boundary violation
-      this.oauthClient = {
-        publishVideo: (params) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.publishVideo(params)),
-        checkPublishStatus: (token, id) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.checkPublishStatus(token, id)),
-      };
+      this.oauthClient = fallbackClient;
       this.apiKeys = oauthClientOrApiKeys as TikTokApiKeys;
     } else {
-      this.oauthClient = (oauthClientOrApiKeys as TikTokOAuthClient) ?? {
-        publishVideo: (params) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.publishVideo(params)),
-        checkPublishStatus: (token, id) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.checkPublishStatus(token, id)),
-      };
+      this.oauthClient = (oauthClientOrApiKeys as TikTokOAuthClient) ?? fallbackClient;
       this.apiKeys = apiKeys ?? {};
     }
   }

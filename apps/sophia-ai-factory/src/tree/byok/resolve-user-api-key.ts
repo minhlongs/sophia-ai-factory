@@ -16,6 +16,7 @@
  */
 
 import { getUserApiKey, type ByokProvider } from '@/tree/byok/user-api-key-store'
+import { registerApiKeyResolver } from '@/seed/ai/script-generator'
 
 export function isByokEnabled(): boolean {
   return process.env.BYOK_ENABLED === '1'
@@ -36,3 +37,4 @@ export async function resolveUserApiKey(
 }
 
 export type { ByokProvider } from './user-api-key-store'
+registerApiKeyResolver(resolveUserApiKey as never)

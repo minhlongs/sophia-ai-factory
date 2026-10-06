@@ -17,6 +17,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/land/video/templates/heygen-helpers'
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
+import { registerOneTimeFulfillmentTrigger } from '@/tree/admin/synthetic-fulfillment-runner'
 import { getOneTimeWelcomeScript } from '@/land/video/generation/one-time-welcome-script'
 import {
   findByPurchaseId,
@@ -186,3 +187,5 @@ export async function triggerOneTimeFulfillment(
     })
   }
 }
+
+registerOneTimeFulfillmentTrigger(triggerOneTimeFulfillment);

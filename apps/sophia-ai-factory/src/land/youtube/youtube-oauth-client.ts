@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { registerYouTubeOAuthClient } from '@/tree/types/oauth-client-types';
 import {
   shouldAllowRequest,
   recordSuccess,
@@ -204,3 +205,5 @@ export async function getChannelInfo(accessToken: string): Promise<YouTubeChanne
     throw error;
   }
 }
+
+registerYouTubeOAuthClient({ uploadVideo, refreshAccessToken });

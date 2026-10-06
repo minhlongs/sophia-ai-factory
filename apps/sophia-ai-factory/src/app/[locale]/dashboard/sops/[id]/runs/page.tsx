@@ -14,6 +14,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { InstallationRunsTab } from '@/components/sop/detail/installation-runs-tab';
 import type { SopRunRow } from '@/tree/sop/sop-types';
 import { getD1 } from '@/seed/db/get-d1';
+import { getInstallation } from '@/tree/sop/sop-repo';
 
 interface RunsPageProps {
   params: Promise<{ id: string; locale: string }>;
@@ -36,11 +37,7 @@ export default async function RunsPage({ params }: RunsPageProps) {
   }
 
   // Mirror the detail-page ownership check.
-  const installation = (await db
-    .prepare('SELECT * FROM sop_installations WHERE id = ?1')
-    .bind(id)
-    .all<{ id: string; user_id: string }>()
-  ).results.at(0);
+  const installation = await getInstallation(db, id);
   if (!installation || installation.user_id !== user.id) {
     notFound();
   }

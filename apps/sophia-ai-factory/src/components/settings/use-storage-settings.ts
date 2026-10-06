@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 export interface StorageFormData {
   r2AccessKeyId: string;
@@ -30,6 +31,7 @@ export const INITIAL_STORAGE_FORM: StorageFormData = {
 export const MASKED_PLACEHOLDER = '••••••••••••••••';
 
 export function useStorageSettings() {
+  const csrfHeaders = useCsrfToken();
   const [formData, setFormData] = useState<StorageFormData>(INITIAL_STORAGE_FORM);
   const [isMasked, setIsMasked] = useState<{ accessKey: boolean; secretKey: boolean }>({
     accessKey: true,
@@ -98,7 +100,10 @@ export function useStorageSettings() {
 
       const res = await fetch('/api/v1/settings/storage', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...csrfHeaders,
+        },
         body: JSON.stringify(payload),
       });
 

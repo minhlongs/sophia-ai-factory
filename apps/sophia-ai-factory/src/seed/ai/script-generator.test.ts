@@ -30,16 +30,18 @@ vi.mock('@/seed/inference/openrouter-client', () => ({
   resetOpenRouterCircuit: vi.fn(),
 }))
 
-import { generateScript } from './script-generator'
+import { generateScript, registerApiKeyResolver } from './script-generator'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
-import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client'
+import { resilientChatCompletion, resetOpenRouterCircuit } from '@/seed/inference/openrouter-client'
 
 const mockResolveUserApiKey = vi.mocked(resolveUserApiKey)
+const mockResilientChatCompletion = vi.mocked(resilientChatCompletion)
 
 describe('generateScript — Phase 7B BYOK wire', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetOpenRouterCircuit()
+    registerApiKeyResolver(mockResolveUserApiKey as never)
     mockResolveUserApiKey.mockImplementation((_u, _p, envFallback) =>
       Promise.resolve(envFallback ?? null),
     )
@@ -94,6 +96,67 @@ describe('generateScript — Phase 7B BYOK wire', () => {
 
     expect(out).toEqual(expect.objectContaining({
       title: expect.stringContaining('golang'),
+    }))
+  }, 15000)
+
+  it('safely uses OPENROUTER_API_KEY directly when no resolver is registered', async () => {
+    registerApiKeyResolver(null)
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-direct-env-key')
+
+    const out = await generateScript({
+      topic:    'nextjs',
+      audience: 'frontend devs',
+      tier:     'BASIC' as never,
+    })
+
+    expect(mockResolveUserApiKey).not.toHaveBeenCalled()
+    expect(mockResilientChatCompletion).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        openRouterKey: 'sk-direct-env-key',
+      }),
+    )
+    expect(out).toEqual(expect.objectContaining({
+      title: 'T',
+    }))
+  }, 15000)
+
+  it('safely falls back to mock script when no resolver is registered and OPENROUTER_API_KEY is empty', async () => {
+    registerApiKeyResolver(null)
+    vi.stubEnv('OPENROUTER_API_KEY', '')
+
+    const out = await generateScript({
+      topic:    'nextjs',
+      audience: 'frontend devs',
+      tier:     'BASIC' as never,
+    })
+
+    expect(mockResolveUserApiKey).not.toHaveBeenCalled()
+    expect(mockResilientChatCompletion).not.toHaveBeenCalled()
+    expect(out).toEqual(expect.objectContaining({
+      title: expect.stringContaining('nextjs'),
+    }))
+  }, 15000)
+
+  it('safely falls back to OPENROUTER_API_KEY when registered resolver throws an error', async () => {
+    mockResolveUserApiKey.mockRejectedValueOnce(new Error('Resolver network timeout'))
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-fallback-on-error')
+
+    const out = await generateScript({
+      topic:    'rust',
+      audience: 'systems devs',
+      tier:     'BASIC' as never,
+    })
+
+    expect(mockResolveUserApiKey).toHaveBeenCalled()
+    expect(mockResilientChatCompletion).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        openRouterKey: 'sk-env-fallback-on-error',
+      }),
+    )
+    expect(out).toEqual(expect.objectContaining({
+      title: 'T',
     }))
   }, 15000)
 })

@@ -2,9 +2,10 @@
 /**
  * check-layer-imports.ts — Regex-based layer-boundary enforcement for Sophia AI Factory.
  *
- * Scans src/(seed|tree|forest|land) for three violation classes:
+ * Scans src/(seed|tree|forest|land) for three violation classes across BOTH static
+ * and dynamic imports:
  *   (a) land file imports another land file that itself imports from forest
- *       (transitive land→forest violation — direct direct checks catch land->forest
+ *       (transitive land→forest violation — direct checks catch land->forest
  *       but a land -> land -> forest chain is still forbidden)
  *   (b) any file uses the four explicitly banned imports:
  *       @/lib/auth, @/lib/subscription, @/lib/unified-tier-config, @/lib/tier-gate
@@ -16,16 +17,21 @@
  * Design choices (KISS):
  *   - Uses regex on raw text; no TS parser, no AST, no new npm dependencies.
  *   - Ignores __tests__ and *.test.ts(x) — test files may exercise internals.
+ *   - Detects both static (`from '@/...'`) and dynamic (`import('@/...')`) imports.
+ *   - Strips comments while preserving line count to prevent false positives from JSDoc.
  *   - Prints human-readable failures; exits 1 on any violation, 0 on clean.
  *
  * Run:  npx tsx scripts/check-layer-imports.ts
  *   or: npm run check:layers   (after adding to package.json)
  */
 
-import { readdirSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const SRC = resolve(process.cwd(), "src");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const SRC = resolve(__dirname, "../src");
 const LAYERS = ["seed", "tree", "forest", "land"] as const;
 type Layer = (typeof LAYERS)[number];
 
@@ -37,23 +43,26 @@ const BANNED: readonly { pattern: RegExp; why: string }[] = [
 ];
 
 // Direct chain rules: source layer may only import from these target layers.
-// A missing target = forbidden.
-const SELF_IMPORT_OK = new Set<Layer>(["land"]); // land→land is fine (same layer)
-// Chain privilege is strictly seed → tree → forest → land.
-// A layer MAY import from itself (stated via SELF_IMPORT_OK for land; all layers likewise).
-// It must NOT reach backwards or sideways to a less-privileged layer.
-// Extra: "land→forest" is additionally forbidden (would be circular for orchestration paths).
-const CHAIN_RULES: Record<Layer, Layer[]> = {
-  seed: [], // startup — foundational seed cannot import any business layer
-  tree: ["seed"],
-  forest: ["seed", "tree"],
-  // land may import seed and tree only. It must NOT import forest (cross-layer orchestration
-  // runs forest→land; importing forest back would be circular). Explicit exclusion in check below.
-  land: ["seed", "tree"],
+// Intra-layer self-imports (seed→seed, tree→tree, forest→forest, land→land) are allowed.
+const SELF_IMPORT_OK = new Set<Layer>(["seed", "tree", "forest", "land"]);
+
+const ALLOWED_IMPORTS: Record<Layer, Set<Layer>> = {
+  seed: new Set<Layer>(["seed"]),
+  tree: new Set<Layer>(["seed", "tree"]),
+  forest: new Set<Layer>(["seed", "tree", "forest", "land"]),
+  land: new Set<Layer>(["seed", "tree", "land"]),
 };
 
+const CHAIN_RULES: Record<Layer, Layer[]> = {
+  seed: ["seed"],
+  tree: ["seed", "tree"],
+  forest: ["seed", "tree", "forest", "land"],
+  land: ["seed", "tree", "land"],
+};
+
+// Matches static imports (from '@/...', import '@/...'), dynamic imports (import('@/...')) with single, double quotes or backticks
 const IMPORT_PATTERN =
-  /from\s+['"](@\/(?:seed|tree|forest|land)\/[^'"]+)['"]/;
+  /(?:from\s+['"`]|import\s*\(\s*['"`]|import\s+['"`])(@\/[^'"`]+)['"`]/g;
 
 function walk(dir: string): string[] {
   const out: string[] = [];
@@ -70,7 +79,7 @@ function walk(dir: string): string[] {
 }
 
 function layerOf(file: string): Layer | null {
-  let rel = relative(SRC, file);
+  const rel = relative(SRC, file);
   const first = rel.split(sep_)[0];
   return LAYERS.includes(first as Layer) ? (first as Layer) : null;
 }
@@ -113,7 +122,6 @@ try {
 const landImportsForest = new Set<string>(); // absolute paths of land files that import @/forest/*
 for (const f of landFiles) {
   const text = readFileToText(f);
-  if (!text) continue;
   for (const m of text.matchAll(IMPORT_PATTERN)) {
     const target = m[1];
     if (target.startsWith("@/forest/")) {
@@ -129,7 +137,6 @@ for (const hit of landImportsForest) {
 }
 for (const f of landFiles) {
   const text = readFileToText(f);
-  if (!text) continue;
   for (const m of text.matchAll(IMPORT_PATTERN)) {
     const target = m[1];
     const rel = target.slice(2); // strip "@/"
@@ -149,16 +156,12 @@ for (const f of landFiles) {
 // Rules (b) and (c): walk all files once.
 for (const f of files) {
   const text = readFileToText(f);
-  if (!text) continue;
   const layer = layerOf(f);
   if (!layer) continue;
 
-  const allowedTargetLayers = new Set<Layer>(CHAIN_RULES[layer]);
+  const allowedTargetLayers = ALLOWED_IMPORTS[layer];
   for (const m of text.matchAll(IMPORT_PATTERN)) {
-    const target = m[1]; // e.g. "@/land/billing/actions"
-    const targetLayer = target.slice(2).split(sep_)[0] as Layer;
-    if (!LAYERS.includes(targetLayer)) continue; // e.g. "@/seed/types/result" -> seed matches; ignore otherwise
-
+    const target = m[1]; // e.g. "@/land/billing/actions" or "@/lib/auth"
     const line = text.slice(0, m.index).split("\n").length;
 
     // Rule (b): banned lib alias.
@@ -172,6 +175,9 @@ for (const f of files) {
         });
       }
     }
+
+    const targetLayer = target.slice(2).split(sep_)[0] as Layer;
+    if (!LAYERS.includes(targetLayer)) continue; // e.g. "@/components/..." -> ignore for layer boundaries
 
     // Rule (c): chain violation.
     if (!allowedTargetLayers.has(targetLayer) && !(SELF_IMPORT_OK.has(layer) && targetLayer === layer)) {
@@ -195,7 +201,7 @@ for (const f of files) {
 }
 
 if (violations.length === 0) {
-  console.log("✅ Layer boundary check passed — 0 violations.");
+  console.log(`✅ Layer boundary check passed — 0 violations across ${files.length} files (both static and dynamic imports verified).`);
   process.exit(0);
 }
 
@@ -210,15 +216,18 @@ function relativeToCwd(absolute: string): string {
   return relative(process.cwd(), absolute);
 }
 
-function readFileToText(path: string): string | null {
-  try {
-    return readFileSync(path, "utf8");
-  } catch {
-    return null;
-  }
+function stripComments(text: string): string {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, (match) => "\n".repeat(match.split("\n").length - 1))
+    .replace(/\/\/.*$/gm, "");
 }
-function readFileSync(p: string, enc: BufferEncoding): string {
-  // Minimal wrapper so we're explicit about what we want.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return require("node:fs").readFileSync(p, enc);
+
+function readFileToText(filePath: string): string {
+  try {
+    const raw = readFileSync(filePath, "utf8");
+    return stripComments(raw);
+  } catch (err) {
+    console.error(`❌ Failed to read file ${filePath}:`, err);
+    throw err;
+  }
 }

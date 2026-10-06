@@ -14,6 +14,7 @@
 import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
+import { registerEmailSender } from '@/seed/email/email-sender';
 import { htmlToText } from '@/tree/email/templates/shared-layout';
 import {
   formatWhiteLabelEmail,
@@ -120,3 +121,6 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
     return { success: false, error: toError(err).message, provider: 'resend' };
   }
 }
+
+// Auto-register sendEmail with the seed layer email registry
+registerEmailSender(sendEmail);

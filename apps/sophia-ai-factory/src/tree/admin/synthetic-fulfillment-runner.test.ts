@@ -40,7 +40,7 @@ vi.mock('@/seed/db/client', () => ({
 import { insertPurchase, markPaid } from '@/seed/db/repositories/user-purchases-repo'
 import { findByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment'
-import { runSyntheticFulfillment } from '@/tree/admin/synthetic-fulfillment-runner'
+import { runSyntheticFulfillment, registerOneTimeFulfillmentTrigger } from '@/tree/admin/synthetic-fulfillment-runner'
 
 const mockInsertPurchase = vi.mocked(insertPurchase)
 const mockMarkPaid = vi.mocked(markPaid)
@@ -52,6 +52,7 @@ describe('runSyntheticFulfillment', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    registerOneTimeFulfillmentTrigger(mockTrigger)
     mockMarkPaid.mockResolvedValue(undefined)
     // Default: no billing event
     mockD1First.mockResolvedValue(null)

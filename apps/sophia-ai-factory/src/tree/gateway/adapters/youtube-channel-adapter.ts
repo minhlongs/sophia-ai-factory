@@ -14,7 +14,7 @@ import type {
   ChannelStatus,
   PublishResult,
 } from "@/tree/gateway/gateway-types";
-import type { YouTubeOAuthClient } from "@/tree/types/oauth-client-types";
+import { type YouTubeOAuthClient, getYouTubeOAuthClient } from "@/tree/types/oauth-client-types";
 import { createServerClient } from '@/seed/db/client';
 import { logger } from "@/seed/utils/logger-utility";
 
@@ -42,21 +42,19 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
   private readonly oauthClient: YouTubeOAuthClient;
 
   /**
-   * In production, always pass oauthClient as first argument.
-   * The default fallback (land import) is for test backward compat only.
+   * In production, pass oauthClient or rely on registered default client.
    *
-   * @param oauthClientOrUserId - YouTube OAuth client (production) or userId string (backward compat)
-   * @param userId - User ID for credential lookup (production new-API only)
+   * @param oauthClientOrUserId - YouTube OAuth client or userId string
+   * @param userId - User ID for credential lookup (when client passed as first arg)
    */
   constructor(oauthClientOrUserId?: YouTubeOAuthClient | string, userId?: string) {
+    const fallbackClient: YouTubeOAuthClient = getYouTubeOAuthClient() ?? {
+      uploadVideo: () => Promise.reject(new Error("YouTube OAuth client not registered")),
+      refreshAccessToken: () => Promise.reject(new Error("YouTube OAuth client not registered")),
+    };
+
     if (typeof oauthClientOrUserId === 'string' || oauthClientOrUserId === undefined) {
-      // Backward compat / no-client: dynamic import avoids tree→land boundary violation
-      this.oauthClient = {
-        uploadVideo: (params: { accessToken: string; videoUrl: string; title: string; description: string; tags?: string[] }) =>
-          import('@/land/youtube/youtube-oauth-client').then((m) => m.uploadVideo({ ...params, tags: params.tags ?? [] })),
-        refreshAccessToken: (refreshToken: string) =>
-          import('@/land/youtube/youtube-oauth-client').then((m) => m.refreshAccessToken(refreshToken)),
-      };
+      this.oauthClient = fallbackClient;
       this.userId = typeof oauthClientOrUserId === 'string' ? oauthClientOrUserId : userId;
     } else {
       this.oauthClient = oauthClientOrUserId;

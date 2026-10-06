@@ -20,16 +20,16 @@ async function resolveInstallationContext(
 ): Promise<{ userId: string; orgId: string; templateId: string }> {
   const row = await db
     .prepare(
-      `SELECT user_id, org_id, sop_template_id FROM user_sop_installations WHERE id = ?1 LIMIT 1`,
+      `SELECT user_id, template_id FROM user_sop_installations WHERE id = ?1 LIMIT 1`,
     )
     .bind(installationId)
-    .first<{ user_id: string; org_id: string; sop_template_id: string }>();
+    .first<{ user_id: string; template_id: string }>();
 
   if (!row) {
     throw new Error(`resolveInstallationContext: installation not found: ${installationId}`);
   }
 
-  return { userId: row.user_id, orgId: row.org_id, templateId: row.sop_template_id };
+  return { userId: row.user_id, orgId: row.user_id, templateId: row.template_id };
 }
 
 /** Status mapping: legacy → canonical */
@@ -55,8 +55,8 @@ export async function createRun(
       `INSERT INTO sop_executions
       (id, user_id, org_id, sop_template_id, installation_id,
        trigger_type, mission_ids, status, result_summary, error_message,
-       requires_approval, started_at, completed_at, created_at)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, '[]', 'pending', NULL, NULL, 0, NULL, NULL, ?7)`,
+       requires_approval, total_steps, current_step, started_at, completed_at, created_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, '[]', 'pending', NULL, NULL, 0, 1, 0, ?7, NULL, ?7)`,
     )
     .bind(id, userId, orgId, templateId, installationId, triggerType, ts)
     .run();

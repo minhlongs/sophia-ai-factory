@@ -18,6 +18,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }))
 
 import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-client'
+import { registerYouTubeOAuthClient } from '@/tree/types/oauth-client-types'
 import { createServerClient } from '@/seed/db/client'
 
 const sampleContent: CampaignOutput = {
@@ -29,6 +30,9 @@ const sampleContent: CampaignOutput = {
 }
 
 describe('YouTubeChannelAdapter', () => {
+  beforeEach(() => {
+    registerYouTubeOAuthClient({ uploadVideo, refreshAccessToken })
+  })
   describe('when OAuth credentials are configured and userId provided', () => {
     beforeEach(() => {
       vi.stubEnv('YOUTUBE_CLIENT_ID', 'test-client-id')

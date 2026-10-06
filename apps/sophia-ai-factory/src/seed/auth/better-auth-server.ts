@@ -21,6 +21,7 @@ import { bootstrapFounderIfConfigured } from '@/seed/auth/founder-bootstrap';
 import { hashPassword, verifyPassword } from '@/seed/security/password-hash';
 import { grantSignupBonusCredits } from '@/seed/auth/signup-bonus';
 import { revokeAllUserSessions } from '@/seed/auth/revoke-user-sessions';
+import { sendSeedEmail } from '@/seed/email/email-sender';
 
 
 // Use `any` here to escape Better Auth's deeply-nested generic inference. The
@@ -217,9 +218,7 @@ export async function getAuth() {
         sendMagicLink: async ({ email, url }) => {
           // Better-Auth callback doesn't expose locale; ship a bilingual template
           // (EN heading + VI subheading) so users in either locale recognize it.
-          // Lazy import keeps seed layer free of static forest dependency.
-          const { sendEmail } = await import('@/tree/email/sender');
-          await sendEmail({
+          await sendSeedEmail({
             to: email,
             subject: 'Sign in to Sophia AI Factory · Đăng nhập Sophia AI',
             html: buildMagicLinkHtml(url),
@@ -360,12 +359,10 @@ export async function getAuth() {
             }
 
             // Send welcome email (non-blocking)
-            import('@/tree/email/sender').then(({ sendEmail }) => {
-              sendEmail({
-                to: user.email,
-                subject: 'Welcome to Sophia AI Factory!',
-                html: buildWelcomeHtml(user.name || user.email),
-              }).catch(() => {});
+            sendSeedEmail({
+              to: user.email,
+              subject: 'Welcome to Sophia AI Factory!',
+              html: buildWelcomeHtml(user.name || user.email),
             }).catch(() => {});
           },
         },

@@ -9,6 +9,17 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { createServerClient, getD1 } from '@/seed/db/client';
+import {
+  getDecryptedCredentials,
+  storeCredentials,
+  getClientCredentials,
+} from '@/tree/publishing/credential-manager';
+import { getAdapter } from '@/tree/publishing/token-refresh-service';
+import {
+  createVideoPublish,
+  updateVideoPublishStatus,
+} from '@/seed/db/repositories/video-publishes-repo';
+import { createFeedbackCycle } from '@/tree/sop/performance-feedback-engine';
 
 // ─── Public Types ───────────────────────────────────────────────────────────────
 
@@ -44,15 +55,6 @@ export async function publishVideo(
   userId: string,
 ): Promise<VideoPublishResult> {
   try {
-    const { getDecryptedCredentials, storeCredentials, getClientCredentials } = await import(
-      '@/forest/publishing/credential-manager'
-    );
-    const { getAdapter } = await import('@/forest/publishing/token-refresh-service');
-    const { createVideoPublish, updateVideoPublishStatus } = await import(
-      '@/seed/db/repositories/video-publishes-repo'
-    );
-    const { createFeedbackCycle } = await import('@/tree/sop/performance-feedback-engine');
-
     // Verify video exists and user has access (check both videos table and engine_missions)
     const db = createServerClient();
     if (!db) throw new Error('D1 database binding not available');

@@ -52,9 +52,18 @@ export async function createInstallation(
 
   // Stamp customer_first_sop_install_at so handover drop-off metrics work.
   // Idempotent + non-fatal — never blocks an install.
-  void import('@/tree/handover/handover-magic-link')
-    .then((m) => m.markFirstSopInstall(input.userId))
-    .catch(() => { /* swallow */ });
+  try {
+    await db
+      .prepare(
+        `UPDATE customer_handovers
+         SET customer_first_sop_install_at = COALESCE(customer_first_sop_install_at, ?1)
+         WHERE customer_user_id = ?2`,
+      )
+      .bind(ts, input.userId)
+      .run();
+  } catch {
+    // Non-fatal — never block an install
+  }
 
   return row;
 }

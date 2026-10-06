@@ -9,6 +9,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { registerTikTokOAuthClient } from '@/tree/types/oauth-client-types';
 
 export type {
   TikTokTokenResponse,
@@ -137,3 +138,5 @@ export async function getUserInfo(accessToken: string): Promise<TikTokUserInfo> 
   if (!data.data?.user) throw new Error('TikTok user info response missing user');
   return data.data.user;
 }
+
+registerTikTokOAuthClient({ publishVideo, checkPublishStatus });

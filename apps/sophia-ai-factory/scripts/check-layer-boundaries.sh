@@ -1,47 +1,51 @@
 #!/bin/bash
-# Check 4-layer architecture boundary violations
+# Check 4-layer architecture boundary violations (static and dynamic imports)
 # Exit 1 if any violation found
-# Run from: apps/sophia-ai-factory/
+# Anchored to run consistently from any caller directory
 
 set -euo pipefail
+
+# Anchor execution directory to package root (apps/sophia-ai-factory)
+cd "$(dirname "$0")/.."
+
 ERRORS=0
 
 echo "🔍 Checking layer boundaries..."
 
 # tree→land (forbidden)
-TREE_LAND=$(grep -rn "from ['\"]@/land" src/tree/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." | grep -v "index\.ts:.*barrel.*allowed" || true)
+TREE_LAND=$(grep -rnE "(from[[:space:]]+['\"\`]@/land|import[[:space:]]+['\"\`]@/land|import[[:space:]]*\([[:space:]]*['\"\`]@/land)" src/tree/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." | grep -v "index\.ts:.*barrel.*allowed" || true)
 if [ -n "$TREE_LAND" ]; then
-  echo "❌ tree→land violations:"
+  echo "❌ tree→land violations (static or dynamic):"
   echo "$TREE_LAND"
   ERRORS=$((ERRORS+1))
 fi
 
 # tree→forest (forbidden)
-TREE_FOREST=$(grep -rn "from ['\"]@/forest" src/tree/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." | grep -v "index\.ts:.*barrel.*allowed" || true)
+TREE_FOREST=$(grep -rnE "(from[[:space:]]+['\"\`]@/forest|import[[:space:]]+['\"\`]@/forest|import[[:space:]]*\([[:space:]]*['\"\`]@/forest)" src/tree/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." | grep -v "index\.ts:.*barrel.*allowed" || true)
 if [ -n "$TREE_FOREST" ]; then
-  echo "❌ tree→forest violations:"
+  echo "❌ tree→forest violations (static or dynamic):"
   echo "$TREE_FOREST"
   ERRORS=$((ERRORS+1))
 fi
 
 # seed→tree/forest/land (forbidden — foundational)
-SEED_UPPER=$(grep -rn "from ['\"]@/tree\|from ['\"]@/forest\|from ['\"]@/land" src/seed/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." | grep -v "quota-provider\.ts.*comment" || true)
+SEED_UPPER=$(grep -rnE "(from[[:space:]]+['\"\`]@/(tree|forest|land)|import[[:space:]]+['\"\`]@/(tree|forest|land)|import[[:space:]]*\([[:space:]]*['\"\`]@/(tree|forest|land))" src/seed/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." | grep -v "quota-provider\.ts.*comment" || true)
 if [ -n "$SEED_UPPER" ]; then
-  echo "❌ seed→tree/forest/land violations:"
+  echo "❌ seed→tree/forest/land violations (static or dynamic):"
   echo "$SEED_UPPER"
   ERRORS=$((ERRORS+1))
 fi
 
 # land→forest (forbidden — circular)
-LAND_FOREST=$(grep -rn "from ['\"]@/forest" src/land/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." || true)
+LAND_FOREST=$(grep -rnE "(from[[:space:]]+['\"\`]@/forest|import[[:space:]]+['\"\`]@/forest|import[[:space:]]*\([[:space:]]*['\"\`]@/forest)" src/land/ --include="*.ts" --include="*.tsx" | grep -v __tests__ | grep -v "\.test\." || true)
 if [ -n "$LAND_FOREST" ]; then
-  echo "❌ land→forest violations:"
+  echo "❌ land→forest violations (static or dynamic):"
   echo "$LAND_FOREST"
   ERRORS=$((ERRORS+1))
 fi
 
 # Banned imports
-BANNED=$(grep -rn "from ['\"]@/lib/auth\|from ['\"]@/lib/subscription\|from ['\"]@/lib/unified-tier-config\|from ['\"]@/lib/tier-gate\|from ['\"]@/core\|from ['\"]@/db\|from ['\"]@/config/\|from ['\"]@/data/\|from ['\"]@/oracle" src/ --include="*.ts" --include="*.tsx" | grep -v __tests__ || true)
+BANNED=$(grep -rnE "(from[[:space:]]+['\"\`]|import[[:space:]]+['\"\`]|import[[:space:]]*\([[:space:]]*['\"\`])@/(lib/auth|lib/subscription|lib/unified-tier-config|lib/tier-gate|core|db|config/|data/|oracle)" src/ --include="*.ts" --include="*.tsx" | grep -v __tests__ || true)
 if [ -n "$BANNED" ]; then
   echo "❌ Banned import violations:"
   echo "$BANNED"
@@ -54,4 +58,4 @@ if [ $ERRORS -gt 0 ]; then
   exit 1
 fi
 
-echo "✅ All layer boundaries clean"
+echo "✅ All layer boundaries clean (both static and dynamic imports verified)"

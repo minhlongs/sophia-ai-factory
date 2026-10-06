@@ -26,8 +26,20 @@ interface GenerateScriptInput {
   affiliateOffer?: AffiliateOfferCta;
 }
 
+export type ApiKeyResolver = (
+  userId: string | null,
+  provider: string,
+  fallback?: string,
+) => Promise<string | null>;
+
+let globalApiKeyResolver: ApiKeyResolver | null = null;
+
+export function registerApiKeyResolver(resolver: ApiKeyResolver | null): void {
+  globalApiKeyResolver = resolver;
+}
+
 interface ScriptGenDeps {
-  resolveUserApiKey?: (userId: string | null, provider: string, fallback?: string) => Promise<string | null>;
+  resolveUserApiKey?: ApiKeyResolver;
   trackUsage?: (data: Record<string, unknown>) => Promise<void>;
   hashLicenseKey?: (key: string) => string;
   startTimer?: () => () => number;
@@ -51,11 +63,18 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
   const licenseKeyHash = deps?.hashLicenseKey?.(finalLicenseKey || 'unknown') || 'unknown';
 
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
-  const apiKey = deps?.resolveUserApiKey
-    ? await deps.resolveUserApiKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY)
-    : await import('@/tree/byok/resolve-user-api-key').then(m =>
-        m.resolveUserApiKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY)
-      );
+  const resolveKey = deps?.resolveUserApiKey ?? globalApiKeyResolver;
+  let apiKey: string | null = null;
+  if (resolveKey) {
+    try {
+      apiKey = await resolveKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY);
+    } catch {
+      apiKey = null;
+    }
+  }
+  if (!apiKey) {
+    apiKey = process.env.OPENROUTER_API_KEY || null;
+  }
 
   if (!apiKey) {
     const mockResult = generateMockScript(topic, audience);

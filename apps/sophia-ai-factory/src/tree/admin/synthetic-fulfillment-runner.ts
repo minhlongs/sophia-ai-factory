@@ -140,19 +140,36 @@ async function setupSyntheticPurchase(
   }
 }
 
+export type OneTimeFulfillmentTrigger = (
+  userId: string,
+  purchaseId: string,
+  sku: (typeof ONE_TIME_SKUS)[OneTimeSkuId],
+) => Promise<unknown>;
+
+let globalFulfillmentTrigger: OneTimeFulfillmentTrigger | null = null;
+
+export function registerOneTimeFulfillmentTrigger(trigger: OneTimeFulfillmentTrigger | null): void {
+  globalFulfillmentTrigger = trigger;
+}
+
 async function invokeFulfillmentTrigger(
   userId: string,
   purchaseId: string,
   sku: (typeof ONE_TIME_SKUS)[OneTimeSkuId],
   errors: string[],
 ): Promise<void> {
+  const trigger = globalFulfillmentTrigger;
+  if (!trigger) {
+    errors.push('No fulfillment trigger registered');
+    logger.warn('[SyntheticRunner] no fulfillment trigger registered', { purchaseId });
+    return;
+  }
   try {
-    const { triggerOneTimeFulfillment } = await import('@/land/fulfillment/one-time-fulfillment');
-    await triggerOneTimeFulfillment(userId, purchaseId, sku)
+    await trigger(userId, purchaseId, sku);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    errors.push(`triggerOneTimeFulfillment threw: ${msg}`)
-    logger.warn('[SyntheticRunner] triggerOneTimeFulfillment threw', { msg, purchaseId })
+    const msg = err instanceof Error ? err.message : String(err);
+    errors.push(`triggerOneTimeFulfillment threw: ${msg}`);
+    logger.warn('[SyntheticRunner] triggerOneTimeFulfillment threw', { msg, purchaseId });
   }
 }
 
