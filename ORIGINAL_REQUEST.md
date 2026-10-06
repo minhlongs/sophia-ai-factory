@@ -1928,3 +1928,60 @@ Deliver and certify all fixes and enhancements on production edge:
 - [ ] `curl -s https://sophia.agencyos.network/api/version` matches HEAD commit SHA bit-for-bit.
 - [ ] `curl -i https://sophia.agencyos.network/api/health` returns HTTP 200.
 - [ ] `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.
+
+## 2026-10-06T19:05:46Z
+
+Use a very large team of agents to execute a comprehensive Google Stitch design audit and visual tokens standardization across Sophia AI Factory, enforcing WCAG 2.1 AA color contrast, responsive breakpoints (320px–1440px), and unified Obsidian Cyber-Glass component styling across all user-facing and operator views.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. Stitch Visual Design Tokens & Component Harmonization
+- Standardize core Stitch tokens in `globals.css` and Tailwind config for both Dark Obsidian (`.dark` / default) and Light modes:
+  - Surface elevations, border opacity rules (`border-white/[0.08]` vs `border-white/10`), background blur levels (`backdrop-blur-xl`), and accent pill highlights.
+  - Standardize Stat Metric Cards across all dashboard views (`affiliates`, `payments`, `subscribers`, `dashboard-overview`, `system-health`) to feature uniform iconography badges, matching padding (`padding="md"` or `padding="lg"`), and aligned metric typography (`font-headline-md` or `text-2xl font-bold`).
+  - Standardize Button groups and action bars with consistent heights (`h-10`), icon alignment, gap rhythm (`gap-2` to `gap-3`), and hover elevation states.
+  - Align search input fields, dropdown filters, and table toolbars with standard heights and focus rings (`focus-visible:ring-2 focus-visible:ring-primary/50`).
+
+### R2. Responsive Breakpoints & Multi-Device Usability (320px–1440px)
+- Audit and polish responsive rendering across mobile (320px–480px), tablet (768px–1024px), laptop (1280px), and desktop (1440px+):
+  - Ensure zero horizontal scrolling, content truncation, or badge clipping on narrow mobile viewports (320px).
+  - Verify collapsible side navigation, mobile drawer animations, and touch-target sizes (minimum 44x44px for interactive elements per WCAG).
+  - Ensure table containers gracefully scroll horizontally with sticky first columns or card-based responsive collapse on small viewports.
+
+### R3. WCAG 2.1 AA Accessibility & Bilingual Copy Integrity
+- Achieve WCAG 2.1 AA compliance:
+  - Text-to-background contrast ratio >= 4.5:1 for normal text and >= 3:1 for large text across all theme modes.
+  - Visible, high-contrast keyboard focus indicators (`:focus-visible`) for all interactive elements (buttons, inputs, links, tabs).
+  - Proper ARIA attributes, labels, and roles (`aria-label`, `aria-expanded`, `aria-busy`, `aria-invalid`, `role="alert"`).
+  - Maintain 100% bilingual parity (Vietnamese + English) via `next-intl` with zero untranslated strings or technical jargon in user-facing views (`npm run i18n:validate` PASS).
+
+### R4. Verification, Edge Deployment & Zero-Bug Certification
+- Maintain 0 TypeScript compilation errors (`npm run type-check`) with zero `:any` types.
+- Maintain 0 ESLint errors (`npm run lint -- --quiet`).
+- Enforce strict 4-layer architecture boundaries (`seed` → `tree` → `forest` → `land`) with 0 violations (`bash scripts/check-layer-boundaries.sh`).
+- Pass all UI component unit and accessibility tests (`npm test -- src/components/stitch`).
+- Deploy updated build to Cloudflare Workers edge via `./scripts/deploy-with-sha.sh` with bit-for-bit SHA verification (`https://sophia.agencyos.network/api/version`).
+- Run `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` and achieve 9/9 Zero-Bug Certification.
+
+## Acceptance Criteria
+
+### Visual Design & Token Consistency
+- [ ] All stat metric cards on Affiliates, Payments, Subscribers, and Dashboard Overview display uniform icon badges and standardized typography.
+- [ ] Action buttons, search bars, and filter bars align on a standard `h-10` height grid with zero visual collision.
+- [ ] Primary buttons, secondary outlines, and ghost actions adhere to unified Obsidian Cyber-Glass token styling.
+
+### Responsive & Accessibility Compliance
+- [ ] 0 layout breakage or horizontal overflow on 320px, 768px, 1280px, and 1440px viewport tests.
+- [ ] All interactive components pass WCAG 2.1 AA contrast ratio (>= 4.5:1) and display visible focus rings.
+- [ ] 0 missing translation keys across English and Vietnamese (`npm run i18n:validate` PASS).
+
+### Build Quality, Security & Edge Delivery
+- [ ] `npm run type-check` returns exit code 0.
+- [ ] `npm run lint -- --quiet` returns exit code 0.
+- [ ] `bash scripts/check-layer-boundaries.sh` returns exit code 0.
+- [ ] Vitest component unit tests pass 100%.
+- [ ] Cloudflare Workers edge deployment succeeds and live SHA matches local HEAD bit-for-bit.
+- [ ] `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.

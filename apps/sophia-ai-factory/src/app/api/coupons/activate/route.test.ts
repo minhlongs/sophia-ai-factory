@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/seed/security/csrf';
+import { clearOrgIdCache } from '@/seed/auth/resolve-org-id';
 
 const mocks = vi.hoisted(() => ({
   getCurrentUserFromHeaders: vi.fn(),
@@ -48,6 +49,7 @@ function d1Mock(options: {
 
 describe('POST /api/coupons/activate', () => {
   beforeEach(() => {
+    clearOrgIdCache();
     vi.clearAllMocks();
     mocks.getCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'u@example.com' });
   });

@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { clearOrgIdCache } from '@/seed/auth/resolve-org-id'
 import { processRefund } from '../refund-processor'
 import type { RefundProcessInput } from '../refund-processor'
 
@@ -229,6 +230,7 @@ function makeInput(overrides: Partial<RefundProcessInput> = {}): RefundProcessIn
 
 beforeEach(() => {
   resetMockState()
+  clearOrgIdCache()
   vi.clearAllMocks()
   // Ensure NOWPAYMENTS_API_KEY is not set so the external API call is skipped
   // (unless a test explicitly needs it for NOWPAYMENTS_API_ERROR)

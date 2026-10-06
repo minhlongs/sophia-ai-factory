@@ -2,8 +2,9 @@
  * Tests for cascadeDeleteAccount (Wave 22 Phase 06 + R2 cleanup fix + multi-column fix).
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { R2Bucket } from '@cloudflare/workers-types';
+import { clearOrgIdCache } from '@/seed/auth/resolve-org-id';
 import {
   cascadeDeleteAccount,
   ACCOUNT_DELETE_ORDER,
@@ -142,6 +143,11 @@ function makeR2Bucket(deleteMap: Record<string, 'ok' | 'fail'> = {}) {
 }
 
 describe('cascadeDeleteAccount', () => {
+  beforeEach(() => {
+    clearOrgIdCache();
+    vi.clearAllMocks();
+  });
+
   it('issues a DELETE for every table in ACCOUNT_DELETE_ORDER', async () => {
     const { db, calls } = makeDb();
     const res = await cascadeDeleteAccount(db, 'user-1', 'tenant-1');
