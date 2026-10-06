@@ -1751,3 +1751,61 @@ Maintain 100% test pass rate across all existing unit, adversarial stress, and E
 - [ ] Production Edge Deployment: Code builds cleanly and deploys to Cloudflare Edge via `deploy-with-sha.sh`
 - [ ] Edge Live SHA Verification: Live edge `https://sophia.agencyos.network/api/version` matches commit SHA bit-for-bit
 - [ ] Health Verification: `https://sophia.agencyos.network/api/health` returns HTTP 200
+
+
+## 2026-10-06T05:07:29Z
+
+Use a very large team of agents to build, verify, and ship Full-Stack AGY (AgencyOS Multi-Tenancy, Agent Governance YAML, Client Onboarding & Agency Portal) with live Cloudflare Workers Edge deployment and 9/9 Zero-Bug Certification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. AGY Multi-Tenancy & Tenant Isolation
+Implement complete tenant isolation and multi-agency routing across the full stack:
+- Multi-agency domain mapping (`[agencySlug].agencyos.network` and custom domains) via Cloudflare edge routing.
+- Database tenant isolation using D1 row-level tenant tokens (`agency_id` / `org_id`).
+- Tenant isolation middleware with rate-limiting and quota enforcement per agency.
+
+### R2. Agent Governance YAML (AGY) Schema & Engine
+Implement declarative Agent Governance YAML specifications:
+- Declarative agent capabilities, permissions, cost limits, and escalation policies in YAML.
+- Runtime validator and policy enforcement engine in `tree/governance/` ensuring agents cannot exceed allocated compute or autonomy levels.
+- Audit trail logging of all AGY policy evaluations into D1 audit ledgers.
+
+### R3. Agency Client Onboarding & Portal Experience
+Deliver polished customer-facing agency experience:
+- Agency Client Onboarding wizard supporting white-label branding, domain setup, and seed agent deployment.
+- High-performance Agency Admin Portal for agency owners to manage clients, campaigns, and revenue attribution.
+- Bilingual (VI/EN) UI copy without technical jargon.
+
+### R4. Zero-Bug Quality Invariants & Production Edge Deployment
+Enforce all mandatory Sophia production contracts:
+- 4-layer architecture (`seed` → `tree` → `forest` → `land`) with 0 layer boundary violations.
+- 0 TypeScript compilation errors (`tsc --noEmit`).
+- 0 ESLint errors (`npm run lint`).
+- 100% test pass rate across all unit, integration, and stress test suites (`npx vitest run`).
+- 9/9 Zero-Bug verification passing (`apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick`).
+- Cloudflare Workers edge deployment via `./scripts/deploy-with-sha.sh` with bit-for-bit SHA verification against `https://sophia.agencyos.network/api/version`.
+
+## Acceptance Criteria
+
+### AGY Multi-Tenancy & Governance Engine
+- [ ] D1 Migration created for AGY tenant configurations, agency domains, and audit event logs.
+- [ ] Seed layer types defined for AGY schema, tenant isolation contexts, and policy constraints.
+- [ ] Tree layer AGY policy engine validates agent permissions, autonomy gates, and cost thresholds with pure functions.
+- [ ] Land layer server actions implement tenant resolution and agency onboarding workflows.
+- [ ] Unit & integration tests pass with 100% rate.
+
+### Code Quality & Layer Discipline
+- [ ] `bash scripts/check-layer-boundaries.sh` reports 0 violations.
+- [ ] `npm --prefix apps/sophia-ai-factory run type-check` returns exit code 0 with 0 errors.
+- [ ] `npm --prefix apps/sophia-ai-factory run lint` completes with 0 errors.
+- [ ] Zero `:any` types; all protected flows (Setup Wizard, Telegram Bot, NOWPayments IPN) preserved.
+
+### Production Edge & Zero-Bug Certification
+- [ ] Automated edge deploy succeeds via `EMERGENCY_CF_DIRECT=1 ALLOW_UNPUSHED_DEPLOY=1 SKIP_SYMBOL_UPLOAD=1 ./scripts/deploy-with-sha.sh`.
+- [ ] Live edge SHA from `https://sophia.agencyos.network/api/version` matches commit SHA bit-for-bit.
+- [ ] `https://sophia.agencyos.network/api/health` returns HTTP 200.
+- [ ] `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.

@@ -39,7 +39,7 @@
 set -euo pipefail
 
 # Relocate to apps/sophia-ai-factory/ regardless of invocation location
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 

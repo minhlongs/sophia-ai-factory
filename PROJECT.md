@@ -1,123 +1,123 @@
-# Project: APAC Multi-Language AI Video Dubbing, Creator Marketplace & Autonomous Syndication Mesh Engine
+# Project: Full-Stack AGY (AgencyOS Multi-Tenancy, Agent Governance YAML, Client Onboarding & Agency Portal)
 
 ## Architecture
 Clean 4-Layer Architecture (`seed` -> `tree` -> `forest` -> `land`) for Sophia AI Factory on Cloudflare Workers edge:
-- **Seed Layer (`src/seed/`)**: Pure types, constants, Zod schemas, voice presets (VI, EN, JA, KO, TH), and Web Crypto HMAC-SHA256 signature utilities. No dependencies on upper layers.
-- **Tree Layer (`src/tree/`)**: Pure domain logic and reusable algorithms without side effects. Contains subtitle formatters (SRT/VTT), APAC geo-router, dynamic forensic watermark generators, 70/30 integer royalty calculations & OCC CAS ledger engine, APAC golden hour peak optimizer, and viral metadata generators.
-- **Forest Layer (`src/forest/`)**: Infrastructure orchestrators, background workers, Inngest workflows, and cron tasks. Contains video voice dubbing workflow, Edge TTS gateway, Cloudflare Stream client, HLS manifest generator, social token refreshers, and publishing scheduler.
-- **Land Layer (`src/land/`) & App Routes (`src/app/`)**: User-facing business operations, Server Actions, D1 database mutations, API routes, and UI components. Includes Creator Studio (`/creator/studio`, `/vi/creator/studio`), dual-rail payouts (USDT & VietQR), social publisher adapters, 24h signed video download endpoint, and adaptive HLS video player.
+- **Seed Layer (`src/seed/`)**: Pure types, interfaces, Zod schemas, AGY YAML parsers, tenant context tokens, and database tenant scoping (`withTenantScope`). Strictly zero dependencies on upper layers.
+- **Tree Layer (`src/tree/`)**: Pure deterministic domain logic with zero side effects. Contains domain router (`[agencySlug].agencyos.network`), tenant token cryptographic verification, agency quota calculators, sliding-window rate limit algorithms, AGY policy enforcement engine (L0–L4 autonomy, compute caps, allow/deny precedence, SHA-256 digests), and revenue attribution models.
+- **Forest Layer (`src/forest/`)**: Edge middleware, background workers, and rich UI components. Contains `agy-tenant-isolation.ts` middleware, `agency-onboarding-wizard.tsx`, and `agency-admin-portal.tsx`. Never imported by `land`.
+- **Land Layer (`src/land/`) & App Routes (`src/app/`)**: User-facing Server Actions, D1 database transactions, audit logging, and Next.js App Router controllers (`/agency`, `/agency/onboarding`). Calls `tree` for domain logic and `seed` for types/database clients.
 
 ## Feature Inventory
-Every feature from the Survey phase is enumerated below with its assigned milestone. No feature is left unassigned.
+Every feature required by user request 2026-10-06T05:07:29Z is enumerated below:
 
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Audio Extraction & STT | Extracts audio track from video and transcribes to timestamped segments via Whisper/STT | M1 | Survey (R1) |
-| 2 | 5-Language Contextual Translation | Translates transcript segments into 5 APAC languages (VI, EN, JA, KO, TH) preserving regional tone | M1 | Survey (R1) |
-| 3 | Synchronized Subtitle Generator | Formats and serializes translated segments into standard `.srt` and `.vtt` subtitle files | M1 | Survey (R1) |
-| 4 | Native APAC Voice Synthesis & Audio Sync | Synthesizes native speech via ElevenLabs / Edge TTS matched to scene duration and tempo | M1 | Survey (R1) |
-| 5 | Smart Localization Router | Detects user browser `Accept-Language` and `cf-ipcountry` to route to localized UI, videos, checkout | M1 | Survey (R1) |
-| 6 | APAC Voice Presets Expansion | Expands `VoiceLanguage` and registers native voice presets for JA, KO, TH in `presets.ts` | M1 | Survey (R1) |
-| 7 | Bilingual Locale Files & Routing | Expands supported locales to `['en', 'vi', 'ja', 'ko', 'th']` with baseline JSON dictionaries | M1 | Survey (R1) |
-| 8 | D1 `creator_templates` Registry | Manages reusable viral video templates, storyboards, prompt styles, and music in Cloudflare D1 | M2 | Survey (R2) |
-| 9 | Template Review & Quality Rating FSM | FSM governing template lifecycle (`draft`, `pending`, `approved`, `rejected`, `archived`) with ratings | M2 | Survey (R2) |
-| 10 | 70/30 Royalty Revenue Split Math | Pure integer calculation allocating 70% of template fee to creator and 30% to platform with zero leakage | M2 | Survey (R2) |
-| 11 | OCC CAS Creator Earnings Accrual | Idempotent Compare-And-Swap ledger insertion with monotonic sequence tracking on template activation | M2 | Survey (R2) |
-| 12 | Anti-Fraud Lineage Traversal | Traverses parent lineage graph up to depth 10 to block self-remix and circular exploitation | M2 | Survey (R2) |
-| 13 | Bilingual Creator Studio Portal | Administrative UI (`/creator/studio`, `/vi/creator/studio`) for template analytics and earnings | M2 | Survey (R2) |
-| 14 | Multi-Rail Creator Payouts (USDT / VietQR) | Supports payout withdrawal requests via USDT TRC20/ERC20 and Vietnamese bank accounts via VietQR | M2 | Survey (R2) |
-| 15 | D1 Migration `0291_creator_templates` | Schema migration for `creator_templates`, `creator_withdrawal_requests`, and VietQR banking columns | M2 | Survey (R2) |
-| 16 | Omnichannel Video Publishing Adapter Mesh | Dispatches video uploads to YouTube Shorts, TikTok, Instagram Reels, and Facebook Reels | M3 | Survey (R3) |
-| 17 | OAuth2 Platform Token Lifecycle & Refresh | Manages long-lived and short-lived platform tokens with automated background refresh | M3 | Survey (R3) |
-| 18 | APAC Peak-Time Scheduling Optimizer | Golden-hour scheduler for Hà Nội (11:30 & 19:30), Tokyo (12:00 & 20:00), Bangkok (12:00 & 20:30) | M3 | Survey (R3) |
-| 19 | Multi-Channel Anti-Collision & Stagger | Staggers consecutive channel dispatches by 5 min and resolves database slot collisions | M3 | Survey (R3) |
-| 20 | Account Protection Cooldown & Deferral | Checks provider rate limits/cooldowns before job creation; defers jobs safely instead of dropping | M3 | Survey (R3) |
-| 21 | Viral Metadata Generator | Generates localized click-worthy hook titles, SEO descriptions, trending hashtags, and CTR thumbnail specs | M3 | Survey (R3) |
-| 22 | Tracked Funnel & Telegram Bot Deep Linking | Injects UTM attribution tracking parameters and Telegram bot `/start` payloads into syndicated captions | M3 | Survey (R3) |
-| 23 | Adaptive Bitrate HLS Stream Generator | Generates multi-variant HLS master manifest (`.m3u8`) for 1080p, 720p, and 480p streams | M4 | Survey (R4) |
-| 24 | Global Edge CDN Caching Mesh | Caches video chunks and manifests across Cloudflare edge network via `VIDEO_BUCKET` R2 binding | M4 | Survey (R4) |
-| 25 | Dynamic Forensic Watermarking | Injects semi-transparent forensic watermark (Client Tenant ID / User hash / Timestamp) into previews | M4 | Survey (R4) |
-| 26 | 24-Hour HMAC Signed Download URLs | Generates HMAC-SHA256 signed download links with 24-hour timestamp expiry to block hotlinking | M4 | Survey (R4) |
-| 27 | Adaptive Video Player Client Component | Next.js client component supporting HLS playback, quality switcher, and forensic watermark overlay | M4 | Survey (R4) |
-| 28 | 4-Layer Clean Architecture Enforcement | Strict separation of concerns (seed -> tree -> forest -> land) with 0 violations | M5 | Survey (R5) |
-| 29 | TypeScript Strict Compilation Gate | Full TypeScript type check with 0 errors and zero `:any` types allowed in production code | M5 | Survey (R5) |
-| 30 | Production Bit-for-Bit SHA Parity | Verifies commit SHA matches live edge endpoint `https://sophia.agencyos.network/api/version` | M5 | Survey (R5) |
-| 31 | Sophia Doctor 11/11 Diagnostic Health | Comprehensive automated health check reporting 11/11 GREEN pass score | M5 | Survey (R5) |
+| 1 | Multi-Agency Domain Router | Maps `[agencySlug].agencyos.network` and custom domains to tenant organizations via Cloudflare edge routing | M1 | Survey (R1) |
+| 2 | Reserved Domain Partitioning | Distinguishes platform reserved subdomains (`sophia`, `api`, `admin`, `portal`, `sub`) from dynamic customer agency slugs | M1 | Survey (R1) |
+| 3 | D1 Row-Level Tenant Isolation | Schema and row-level tenant token isolation (`agency_id` / `org_id`) with registration in `withTenantScope` | M1 | Survey (R1) |
+| 4 | D1 Multi-Tenancy Migrations | Tables `agy_tenant_configs`, `agy_tenant_tokens`, `agy_agency_domains`, `agy_audit_logs` in migration `0435` | M1 | Survey (R1) |
+| 5 | Edge Tenant Isolation Middleware | Edge middleware enforcing tenant scoping, cross-tenant blocking, and request decoration | M1 | Survey (R1) |
+| 6 | Agency Rate-Limiting & Quota Engine | Sliding-window request rate-limiting (HTTP 429) and monthly compute quota enforcement (HTTP 402) | M1 | Survey (R1) |
+| 7 | Multi-Tenancy Server Actions | Server Actions in `src/land/agy/agency-tenant-actions.ts` for domain binding and tenant token lifecycle | M1 | Survey (R1) |
+| 8 | Declarative AGY YAML Schema | Zod and TypeScript schemas for Agent Governance YAML (capabilities, permissions, compute caps, escalation) | M2 | Survey (R2) |
+| 9 | Safe AGY Parser & Size Guard | Memory-safe YAML parser using `js-yaml` with a 512KB payload cap for Cloudflare Workers edge runtime | M2 | Survey (R2) |
+| 10 | AGY Pure Policy Enforcement Engine | Pure domain engine in `tree/governance/` evaluating L0–L4 autonomy, compute caps, and allow/deny precedence | M2 | Survey (R2) |
+| 11 | Deterministic SHA-256 Policy Digest | Generates tamper-evident SHA-256 evaluation digest and escalation triggers for every policy evaluation | M2 | Survey (R2) |
+| 12 | D1 AGY Policy Audit Ledger | Migration `0436` creating `agy_policy_audit_ledger` with tamper-evident indices and query actions | M2 | Survey (R2) |
+| 13 | AGY Governance Server Actions | Server Actions in `src/land/governance/agy-actions.ts` for policy registration, validation, and audit queries | M2 | Survey (R2) |
+| 14 | Agency Client Onboarding Wizard | 5-step onboarding wizard at `/agency/onboarding` (Profile → Branding → Custom Domain → Seed Agents → Launch) | M3 | Survey (R3) |
+| 15 | White-Label Branding Engine | Custom agency branding, logo upload, color theming, and real-time unbranded client preview | M3 | Survey (R3) |
+| 16 | Seed Agent Deployment Flow | Deploys pre-configured seed agents (Video Creator, UGC Reviewer, Outreach Bot) bound to AGY governance policies | M3 | Survey (R3) |
+| 17 | High-Performance Agency Portal | Responsive admin portal at `/agency` for agency owners: KPI metrics, client management, campaign tracking | M3 | Survey (R3) |
+| 18 | Agency Revenue Attribution Ledger | Real-time attribution and client subaccount tracking for agency MRR and video credit usage | M3 | Survey (R3) |
+| 19 | Bilingual Jargon-Free UI Copy | Full Vietnamese and English localization in `messages/vi.json` and `messages/en.json` explaining concepts cleanly | M3 | Survey (R3) |
+| 20 | Protected Flows Preservation | Preserves `/setup-wizard`, Telegram Commander Bot, and NOWPayments IPN 100% intact | M4 | Survey (R4) |
+| 21 | Clean 4-Layer Architecture Enforcement | `bash scripts/check-layer-boundaries.sh` reports exactly 0 violations across all codebase layers | M4 | Survey (R4) |
+| 22 | Strict TypeScript Compilation | `npm --prefix apps/sophia-ai-factory run type-check` returns exit code 0 with 0 errors and zero `:any` types | M4 | Survey (R4) |
+| 23 | Clean ESLint Standards | `npm --prefix apps/sophia-ai-factory run lint` completes with 0 errors | M4 | Survey (R4) |
+| 24 | Complete Test Suite Coverage | 100% test pass rate across all unit, integration, and stress tests (`npx vitest run`) | M4 | Survey (R4) |
+| 25 | Root Wrapper Script Parity | Repository root wrapper `scripts/zero-bug-verify.sh` forwarding to `apps/sophia-ai-factory/scripts/` | M4 | Survey (R4) |
+| 26 | 9/9 Zero-Bug Certification | `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS with 100/100 score | M4 | Survey (R4) |
+| 27 | Cloudflare Workers Edge Deployment | Direct deploy via `EMERGENCY_CF_DIRECT=1 ALLOW_UNPUSHED_DEPLOY=1 SKIP_SYMBOL_UPLOAD=1 ./scripts/deploy-with-sha.sh` | M4 | Survey (R4) |
+| 28 | Live Edge SHA & Health Verification | Bit-for-bit SHA match at `https://sophia.agencyos.network/api/version` and HTTP 200 at `/api/health` | M4 | Survey (R4) |
+| 29 | Opaque-Box E2E Test Suite | End-to-end tests covering Tiers 1-4 across multi-tenancy, governance, onboarding, and portal flows | E2E | Survey (E2E) |
 
 ## Milestones
 
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | APAC Video Dubbing & Subtitles Engine | Voice presets (VI, EN, JA, KO, TH), SRT/VTT formatters, smart geo-router, dubbing workflow & i18n routing | none | DONE |
-| M2 | Autonomous Creator Marketplace & 70/30 Protocol | D1 migration 0291, template registry & ratings, 70/30 royalty split, OCC CAS ledger, bilingual `/creator/studio`, USDT & VietQR payouts | none | DONE |
-| M3 | Multi-Platform Syndication & Peak-Time Scheduling | Omnichannel publishing (YouTube Shorts, TikTok, IG Reels, FB Reels), APAC peak optimizer (Hà Nội, Tokyo, Bangkok), viral metadata generator | M1 | DONE |
-| M4 | Global Edge CDN & Adaptive HLS Streaming | Adaptive HLS m3u8 generator, Cloudflare Stream & R2 bridge, dynamic forensic watermark, 24h HMAC signed download URLs | none | DONE |
-| M5 | Final Integration, E2E Test Suite & Quality Gates | Pass 100% of E2E tests (Tiers 1-4), adversarial test hardening (Tier 5), 0 layer boundary violations, 0 TS errors, 11/11 Sophia Doctor | M1, M2, M3, M4, E2E-Track | DONE |
-| E2E | E2E Testing Track | Requirement-driven test harness and test suites across Tiers 1-4 for all 31 features, publishes `TEST_READY.md` | none | DONE |
+| M1 | AGY Multi-Tenancy & Tenant Isolation | Features 1–7: Migration 0435, seed types, tree domain router, quota engine, forest middleware, land actions | none | DONE |
+| M2 | Agent Governance YAML Schema & Engine | Features 8–13: Migration 0436, seed parser, tree policy engine, audit ledger, land actions | M1 | DONE |
+| M3 | Agency Client Onboarding & Portal Experience | Features 14–19: Onboarding wizard, agency admin portal, seed agent deployment, attribution, bilingual copy | M1, M2 | PLANNED |
+| M4 | Zero-Bug Quality Invariants & Production Edge Deployment | Features 20–28: Quality checks, root wrapper, 9/9 zero-bug certification, edge deploy, live SHA verification | M1, M2, M3, E2E | PLANNED |
+| E2E | E2E Testing Track | Feature 29: Comprehensive opaque-box test suites (Tiers 1-4), test runner, and `TEST_READY.md` publication | none | DONE |
 
 ## Interface Contracts
 
-### M1 (Dubbing & Localization) ↔ M3 (Syndication) & M4 (HLS)
-- `ApacLocale`: `'vi' | 'en' | 'ja' | 'ko' | 'th'`
-- `SubtitleFormat`: `'srt' | 'vtt'`
-- `DubbingResult`: `{ jobId: string; videoUrl: string; audioTrackUrls: Record<ApacLocale, string>; subtitleUrls: Record<ApacLocale, { srt: string; vtt: string }> }`
+### M1 (Multi-Tenancy) ↔ Core Middleware & M2/M3
+- `AgencyTenantContext`: `{ agencyId: string; orgId: string; agencySlug: string; customDomain?: string; quotaLimitMcu: number; quotaUsedMcu: number; rateLimitRps: number }`
+- `TenantResolutionResult`: `{ isAgencySubdomain: boolean; isCustomDomain: boolean; agencySlug: string | null; tenantOrgId: string | null; agencyId: string | null }`
+- `AgyTenantToken`: `{ token: string; agencyId: string; permissions: string[]; expiresAt: number; signature: string }`
 
-### M2 (Creator Marketplace) ↔ Core Billing & Studio
-- `CreatorTemplate`: `{ id: string; creatorId: string; title: string; niche: string; scriptTemplate: string; storyboardJson: string; visualStylePrompt: string; priceCents: number; royaltyPct: number; status: 'draft'|'pending'|'approved'|'rejected'|'archived' }`
-- `RoyaltySplit`: `{ creatorCents: number; platformCents: number; sequenceNum: number; newBalanceCents: number }`
-- `WithdrawalRequest`: `{ id: string; creatorId: string; amountCents: number; rail: 'USDT' | 'VIETQR'; destination: string; status: 'pending'|'processing'|'completed' }`
+### M2 (Governance Engine) ↔ Agent Runtime & M3
+- `AgentGovernanceYaml`: `{ schemaVersion: string; agent: { id: string; name: string; role: string; maxAutonomyLevel: 'L0' | 'L1' | 'L2' | 'L3' | 'L4' }; compute: { maxTokensPerRun: number; maxComputeUnitsMcu: number }; permissions: { allow: string[]; deny: string[] }; escalation: { onQuotaExceeded: 'halt' | 'request_approval'; onDisallowedAction: 'halt' | 'escalate_human' } }`
+- `PolicyEvaluationRequest`: `{ agencyId: string; agentId: string; action: string; requestedAutonomy: 'L0'|'L1'|'L2'|'L3'|'L4'; requestedComputeUnits: number; metadata?: Record<string, unknown> }`
+- `PolicyEvaluationVerdict`: `{ allowed: boolean; reason: string; requiredAutonomy: 'L0'|'L1'|'L2'|'L3'|'L4'; escalationTriggered: boolean; evaluationSha256: string }`
 
-### M3 (Syndication) ↔ Scheduler & Publishers
-- `ApacMarket`: `'hanoi' | 'tokyo' | 'bangkok' | 'seoul' | 'singapore'`
-- `ViralMetadata`: `{ hookTitle: string; seoDescription: string; hashtags: string[]; thumbnailPrompt: string; trackedFunnelUrl: string }`
-- `PublishingScheduleInput`: `{ videoId: string; channels: string[]; market: ApacMarket; userRequestedTime?: number }`
-
-### M4 (Edge CDN & HLS) ↔ Storage & Client Player
-- `HlsMasterManifest`: `{ masterPlaylistUrl: string; variants: Array<{ quality: '1080p'|'720p'|'480p'; bandwidth: number; url: string }> }`
-- `SignedDownloadToken`: `createSignedDownloadToken(videoId: string, userId: string, ttlSec: number, secret: string) -> string`
-- `DynamicWatermark`: `generateForensicWatermarkText(tenantId: string, userId: string) -> string`
+### M3 (Onboarding & Portal) ↔ Multi-Tenancy & Governance
+- `AgencyOnboardingInput`: `{ agencyName: string; agencySlug: string; customDomain?: string; primaryColor?: string; logoUrl?: string; seedAgents: Array<{ role: string; template: string; maxAutonomy: 'L0'|'L1'|'L2'|'L3'|'L4' }> }`
+- `AgencyPortalOverview`: `{ agencyId: string; agencyName: string; totalClients: number; activeCampaigns: number; totalMcuConsumed: number; estimatedMrrUsd: number }`
 
 ## Code Layout
 ```
-apps/sophia-ai-factory/src/
-├── seed/
-│   ├── types/
-│   │   ├── dubbing.ts                  # M1: Dubbing & Subtitle types
-│   │   ├── creator-marketplace.ts      # M2: Creator Marketplace types
-│   │   ├── apac-syndication.ts         # M3: Syndication & Viral types
-│   │   └── streaming.ts                # M4: HLS & Streaming types
-│   ├── voices/
-│   │   └── presets.ts                  # M1: APAC voice presets (JA, KO, TH)
-│   └── security/
-│       └── signed-url.ts               # M4: HMAC-SHA256 24h URL signing
-├── tree/
-│   ├── subtitles/
-│   │   └── subtitle-formatter.ts       # M1: SRT and VTT formatters
-│   ├── localization/
-│   │   └── geo-router.ts               # M1: Smart geo & accept-language router
-│   ├── creator-royalties/
-│   │   ├── attribution.ts              # M2: OCC CAS ledger engine
-│   │   └── template-activation.ts      # M2: 70/30 royalty split logic
-│   ├── publishing/
-│   │   ├── apac-peak-optimizer.ts      # M3: Hanoi, Tokyo, Bangkok golden hours
-│   │   └── viral-metadata-generator.ts # M3: Multi-language hook & metadata generator
-│   └── watermark/
-│       └── forensic-watermark.ts       # M4: Dynamic forensic watermark generator
-├── forest/
-│   ├── inngest/functions/
-│   │   └── video-voice-dubbing.ts      # M1: Dubbing pipeline workflow
-│   ├── publishing/
-│   │   ├── scheduler.ts                # M3: APAC peak-time scheduler integration
-│   │   └── viral-distributor.ts        # M3: Omnichannel publisher dispatcher
-│   └── streaming/
-│       └── hls-manifest-generator.ts   # M4: Adaptive HLS manifest builder
-├── land/
-│   ├── video/dubbing/                  # M1: Dubbing service & Server Actions
-│   ├── creator/                        # M2: Studio analytics & withdrawal service
-│   └── video/publishing/providers/     # M3: YouTube, TikTok, IG Reels, FB Reels
-└── app/
-    ├── [locale]/(app)/creator/studio/  # M2: Bilingual Creator Studio UI
-    ├── api/creator/                    # M2: Creator API endpoints
-    ├── api/videos/[id]/download/       # M4: 24h signed URL verification route
-    └── api/videos/[id]/hls/            # M4: Adaptive HLS streaming manifest route
+apps/sophia-ai-factory/
+├── migrations/
+│   ├── 0435_agy_multitenancy_and_tenant_isolation.sql   # M1: Multi-tenancy D1 tables
+│   └── 0436_agent_governance_yaml_and_audit_ledger.sql  # M2: AGY audit ledger tables
+├── src/
+│   ├── seed/
+│   │   ├── types/
+│   │   │   ├── agy-multitenancy.ts                      # M1: Multi-tenancy types
+│   │   │   ├── agent-governance.ts                      # M2: AGY schema & evaluation types
+│   │   │   └── agency-portal.ts                         # M3: Onboarding & Portal types
+│   │   ├── validators/
+│   │   │   ├── agy-schema.ts                            # M2: Zod AGY schema
+│   │   │   └── agy-parser.ts                            # M2: YAML parser with size guard
+│   │   └── db/
+│   │       └── with-tenant-scope.ts                     # M1: Register AGY tenant tables
+│   ├── tree/
+│   │   ├── agy/
+│   │   │   ├── domain-router.ts                         # M1: Agency subdomain & custom domain resolver
+│   │   │   ├── tenant-token-engine.ts                   # M1: Token generation & HMAC verification
+│   │   │   └── agency-quota-engine.ts                   # M1: Sliding-window rate-limiter & quota engine
+│   │   ├── governance/
+│   │   │   └── agy-policy-engine.ts                     # M2: Pure policy enforcement & evaluation SHA-256
+│   │   └── agency/
+│   │       ├── attribution-engine.ts                    # M3: Revenue attribution & client usage
+│   │       └── onboarding-validator.ts                  # M3: Agency slug & branding validator
+│   ├── forest/
+│   │   ├── middleware/
+│   │   │   └── agy-tenant-isolation.ts                  # M1: Tenant isolation & quota middleware
+│   │   └── agency/
+│   │       ├── agency-onboarding-wizard.tsx             # M3: 5-step onboarding wizard component
+│   │       └── agency-admin-portal.tsx                  # M3: Agency management portal component
+│   ├── land/
+│   │   ├── agy/
+│   │   │   └── agency-tenant-actions.ts                 # M1: Server actions for tenant management
+│   │   ├── governance/
+│   │   │   └── agy-actions.ts                           # M2: Server actions for policy evaluation
+│   │   └── agency/
+│   │       └── agency-portal-actions.ts                 # M3: Server actions for onboarding & portal
+│   ├── app/
+│   │   └── [locale]/(app)/
+│   │       └── agency/
+│   │           ├── page.tsx                             # M3: Agency Admin Portal page
+│   │           └── onboarding/page.tsx                  # M3: Agency Onboarding Wizard page
+│   └── middleware.ts                                    # M1: Wire AGY domain & tenant router
+├── messages/
+│   ├── en.json                                          # M3: English translations (no jargon)
+│   └── vi.json                                          # M3: Vietnamese translations (no jargon)
+└── tests/
+    └── e2e/
+        └── agy-fullstack.test.ts                        # E2E Track: Comprehensive E2E test suite
 ```
