@@ -228,8 +228,8 @@ EOSQL
 echo "==> Checking for migrations changed since $REF..."
 # --relative emits paths relative to CWD (apps/sophia-ai-factory/) so the
 # [ -f "$m" ] check + wrangler --file=$m resolve correctly.
-MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
-NON_CANONICAL_D1_SQL=$(git diff --name-only --relative "$REF" HEAD -- src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
+MIGRATIONS=$(git diff --name-only --diff-filter=d --relative "$REF" HEAD -- migrations/ 2>/dev/null | grep -E "\.sql$" | grep -v "/_archive/" | sort || true)
+NON_CANONICAL_D1_SQL=$(git diff --name-only --diff-filter=d --relative "$REF" HEAD -- src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
 if [ -n "$NON_CANONICAL_D1_SQL" ]; then
   echo "ERROR: Refusing to apply non-canonical D1 migration files."
   echo "Move these SQL files into migrations/ or document why they are not production D1 migrations."
