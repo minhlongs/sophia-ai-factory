@@ -166,4 +166,48 @@ describe('YouTubeChannelAdapter', () => {
       expect(status.healthy).toBe(false)
     })
   })
+
+  describe('when OAuth credentials and userId are configured but OAuth client is not registered', () => {
+    beforeEach(() => {
+      registerYouTubeOAuthClient(null)
+      vi.stubEnv('YOUTUBE_CLIENT_ID', 'test-client-id')
+      vi.stubEnv('YOUTUBE_CLIENT_SECRET', 'test-client-secret')
+      vi.stubEnv('YOUTUBE_REDIRECT_URI', 'http://localhost/callback')
+
+      vi.mocked(createServerClient).mockReturnValue({
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({
+                data: {
+                  api_keys: {
+                    youtube: {
+                      refresh_token: 'test-refresh',
+                      access_token: 'test-access',
+                      expires_at: Math.floor(Date.now() / 1000) + 3600,
+                    },
+                  },
+                },
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      } as never)
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+      vi.clearAllMocks()
+    })
+
+    it('should return failure on publish indicating client is not registered', async () => {
+      const adapter = new YouTubeChannelAdapter('user-1')
+      const result = await adapter.publish(sampleContent)
+
+      expect(result.channelId).toBe('youtube')
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('YouTube OAuth client not registered')
+    })
+  })
 })

@@ -98,4 +98,23 @@ describe('TikTokChannelAdapter', () => {
       expect(healthy).toBe(false)
     })
   })
+
+  describe('when tiktok_access_token is provided but OAuth client is not registered', () => {
+    beforeEach(() => {
+      registerTikTokOAuthClient(null)
+    })
+
+    afterEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return failure on publish indicating client is not registered', async () => {
+      const adapter = new TikTokChannelAdapter({ tiktok_access_token: 'test-token' })
+      const result = await adapter.publish(sampleContent)
+
+      expect(result.channelId).toBe('tiktok')
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('TikTok OAuth client not registered')
+    })
+  })
 })

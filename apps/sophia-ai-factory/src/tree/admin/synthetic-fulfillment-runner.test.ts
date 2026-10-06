@@ -134,4 +134,16 @@ describe('runSyntheticFulfillment', () => {
     expect(result.errors.some((e) => e.includes('HeyGen unavailable'))).toBe(true)
     expect(result.errors.some((e) => e.includes('No videos row'))).toBe(true)
   })
+
+  it('handles unregistered fulfillment trigger gracefully without crashing', async () => {
+    registerOneTimeFulfillmentTrigger(null)
+    mockInsertPurchase.mockResolvedValue('purchase-unreg-1')
+    mockFindByPurchaseId.mockResolvedValue(null)
+
+    const result = await runSyntheticFulfillment(userId, 'STARTER_BUNDLE', 5000)
+
+    expect(result.outcome).toBe('failed')
+    expect(result.errors).toContain('No fulfillment trigger registered')
+    expect(mockTrigger).not.toHaveBeenCalled()
+  })
 })
