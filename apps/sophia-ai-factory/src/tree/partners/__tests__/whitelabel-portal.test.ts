@@ -16,6 +16,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 import {
   resolveWhitelabelTheme,
   sanitizeBrandCss,
+  sanitizeFooterHtml,
   sanitizeUrlForCss,
   validateHexColor,
   generateThemeCssBlock,
@@ -279,6 +280,44 @@ describe('Advanced White-Label & Custom Domain Federation Test Suite', () => {
       expect(cssBlock).toContain('--brand-primary: #4f46e5;');
       expect(cssBlock).toContain('--brand-secondary: #06b6d4;');
       expect(cssBlock).toContain('.portal-badge { border-radius: 9999px; }');
+    });
+
+    it('sanitizes agency footer HTML against Stored XSS vectors while keeping safe markup', () => {
+      expect(sanitizeFooterHtml(null)).toBe('');
+      expect(sanitizeFooterHtml(undefined)).toBe('');
+      expect(sanitizeFooterHtml('')).toBe('');
+
+      // Strips <script> completely
+      const scriptXss = '<script>alert("pwned")</script><p>© 2026 Acme Agency</p>';
+      expect(sanitizeFooterHtml(scriptXss)).toBe('<p>© 2026 Acme Agency</p>');
+
+      // Strips inline event handlers
+      const handlerXss = '<span onclick="evil()" onmouseover="stealCookie()">Terms</span>';
+      const cleanHandler = sanitizeFooterHtml(handlerXss);
+      expect(cleanHandler).not.toContain('onclick');
+      expect(cleanHandler).not.toContain('onmouseover');
+      expect(cleanHandler).toContain('Terms');
+
+      // Neutralizes javascript: protocol
+      const jsUrlXss = '<a href="javascript:alert(1)">Privacy Policy</a>';
+      expect(sanitizeFooterHtml(jsUrlXss)).toBe('<a href="#">Privacy Policy</a>');
+
+      // Strips iframes, forms, and SVG onload execution
+      const complexXss = '<iframe src="https://evil.com"></iframe><form action="/steal"><input></form><svg onload="alert(1)"></svg><small>All rights reserved</small>';
+      const cleanComplex = sanitizeFooterHtml(complexXss);
+      expect(cleanComplex).not.toContain('iframe');
+      expect(cleanComplex).not.toContain('form');
+      expect(cleanComplex).not.toContain('svg');
+      expect(cleanComplex).not.toContain('onload');
+      expect(cleanComplex).toContain('<small>All rights reserved</small>');
+
+      // Defeats nested tag evasion
+      const nestedXss = '<scr<script>ipt>alert(1)</script><p>Clean content</p>';
+      expect(sanitizeFooterHtml(nestedXss)).toBe('<p>Clean content</p>');
+
+      // Preserves valid safe links and formatting
+      const safeFooter = '<p>© 2026 <strong>Apex Corp</strong>. <a href="https://apex.com/terms" target="_blank">Terms</a></p>';
+      expect(sanitizeFooterHtml(safeFooter)).toBe(safeFooter);
     });
   });
 

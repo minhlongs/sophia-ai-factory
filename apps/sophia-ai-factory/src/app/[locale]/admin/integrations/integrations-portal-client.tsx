@@ -189,7 +189,7 @@ export function IntegrationsPortalClient({
 
     startTransition(async () => {
       setStatusMessage(null);
-      const generatedSecret = newSubSecret || `whsec_${Math.random().toString(36).slice(2, 10)}${Date.now()}`;
+      const generatedSecret = newSubSecret || `whsec_${crypto.randomUUID().replace(/-/g, '')}`;
       const res = await subscribeWebhook(
         tenantId,
         newSubUrl,

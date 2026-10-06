@@ -38,8 +38,8 @@
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
 | M1 | Core Autonomous Loop Engine | Seed types (`autonomous-engine.ts`), D1 migration `0437`, Tree FSM (`state-machine.ts`), Cron/Interval Scheduler (`cron-evaluator.ts`), Retry/DLQ (`retry-backoff.ts`), Circuit Breaker (`circuit-breaker.ts`), and unit test suite | none | DONE |
-| M2 | Swarm Capabilities & Governance Enforcement | Swarm Orchestrator (`swarm-orchestrator.ts`), capability wiring (`affiliate-scout`, `content-producer`, `auto-publisher`), MCU quotas & AGY policy evaluation, D1 audit logging | M1 | IN_PROGRESS |
-| M3 | Land Server Actions & Operations Cockpit UI | Land actions (`loop-actions.ts`), UI cockpit (`/admin/autonomous`), bilingual copy in `vi.json` & `en.json`, admin sidebar navigation | M1, M2 | PLANNED |
+| M2 | Swarm Capabilities & Governance Enforcement | Swarm Orchestrator (`swarm-orchestrator.ts`), capability wiring (`affiliate-scout`, `content-producer`, `auto-publisher`), MCU quotas & AGY policy evaluation, D1 audit logging | M1 | DONE |
+| M3 | Land Server Actions & Operations Cockpit UI | Land actions (`loop-actions.ts`), UI cockpit (`/admin/autonomous`), bilingual copy in `vi.json` & `en.json`, admin sidebar navigation | M1, M2 | IN_PROGRESS |
 | M4 | Zero-Bug Certification & Production Edge Deployment | 100% Vitest pass rate across all suites, 9/9 Zero-Bug verification, Cloudflare Workers edge deploy, live SHA verification, HTTP 200 check | M1, M2, M3 | PLANNED |
 
 ## Interface Contracts

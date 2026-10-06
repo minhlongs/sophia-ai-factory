@@ -8,7 +8,10 @@
  */
 
 import React, { useState } from 'react';
-import type { UnbrandedAgencyPortalConfig } from '@/tree/partners/whitelabel-portal';
+import {
+  sanitizeFooterHtml,
+  type UnbrandedAgencyPortalConfig,
+} from '@/tree/partners/whitelabel-portal';
 
 interface PortalClientProps {
   agency: UnbrandedAgencyPortalConfig;
@@ -561,7 +564,7 @@ export function PortalClient({ agency, locale, isVi }: PortalClientProps) {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
             {agency.footerHtml ? (
-              <div dangerouslySetInnerHTML={{ __html: agency.footerHtml }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeFooterHtml(agency.footerHtml) }} />
             ) : (
               <span>
                 © {currentYear} {agency.brandName}. {isVi ? 'Bảo lưu mọi quyền.' : 'All rights reserved.'}

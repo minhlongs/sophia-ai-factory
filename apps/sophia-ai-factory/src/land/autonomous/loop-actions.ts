@@ -25,14 +25,23 @@ import type {
   AutonomousCycleTelemetry,
   AutonomousEngineState,
   StateTransitionResult,
-  AutonomousCapability,
+  AutonomousActionResult,
+  AutonomousCockpitStatus,
+  TriggerCycleOptions,
 } from '@/seed/types/autonomous-engine';
 import {
   transitionAutonomousState,
   AutonomousStateTransitionError,
 } from '@/tree/autonomous/state-machine';
 import { calculateNextCronRun } from '@/tree/autonomous/cron-evaluator';
-import { executeSwarmTask, canExecuteCapability } from '@/tree/autonomous/swarm-orchestrator';
+import { executeSwarmTask } from '@/tree/autonomous/swarm-orchestrator';
+
+export type {
+  AutonomousActionResult,
+  AutonomousActionResult as ActionResult,
+  AutonomousCockpitStatus,
+  TriggerCycleOptions,
+};
 
 /**
  * Resolves active D1 database binding.
@@ -42,20 +51,6 @@ function resolveDb(dbOverride?: unknown): D1Database {
     return dbOverride as D1Database;
   }
   return getD1Sync();
-}
-
-export interface ActionResult<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  details?: unknown;
-}
-
-export interface AutonomousCockpitStatus {
-  loopState: AutonomousLoopStateRow;
-  tasks: AutonomousScheduleTaskRow[];
-  recentRuns: AutonomousCycleRunRow[];
-  deadLetterTasks: AutonomousDeadLetterRow[];
 }
 
 /**
@@ -108,7 +103,7 @@ async function ensureTenantLoopState(
 export async function getAutonomousLoopStatusAction(
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<AutonomousCockpitStatus>> {
+): Promise<AutonomousActionResult<AutonomousCockpitStatus>> {
   try {
     const db = resolveDb(dbOverride);
     const loopState = await ensureTenantLoopState(db, tenantId);
@@ -167,7 +162,7 @@ export async function getAutonomousLoopStatusAction(
 export async function startAutonomousLoopAction(
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<StateTransitionResult>> {
+): Promise<AutonomousActionResult<StateTransitionResult>> {
   try {
     const db = resolveDb(dbOverride);
     const current = await ensureTenantLoopState(db, tenantId);
@@ -220,7 +215,7 @@ export async function pauseAutonomousLoopAction(
   reason: string = 'Manual operator pause',
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<StateTransitionResult>> {
+): Promise<AutonomousActionResult<StateTransitionResult>> {
   try {
     const db = resolveDb(dbOverride);
     const current = await ensureTenantLoopState(db, tenantId);
@@ -273,7 +268,7 @@ export async function pauseAutonomousLoopAction(
 export async function resumeAutonomousLoopAction(
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<StateTransitionResult>> {
+): Promise<AutonomousActionResult<StateTransitionResult>> {
   try {
     const db = resolveDb(dbOverride);
     const current = await ensureTenantLoopState(db, tenantId);
@@ -326,7 +321,7 @@ export async function emergencyHaltAutonomousLoopAction(
   reason: string = 'Emergency stop triggered by operator',
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<StateTransitionResult>> {
+): Promise<AutonomousActionResult<StateTransitionResult>> {
   try {
     const db = resolveDb(dbOverride);
     const current = await ensureTenantLoopState(db, tenantId);
@@ -379,7 +374,7 @@ export async function emergencyHaltAutonomousLoopAction(
 export async function resetCircuitBreakerAction(
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<StateTransitionResult>> {
+): Promise<AutonomousActionResult<StateTransitionResult>> {
   try {
     const db = resolveDb(dbOverride);
     const current = await ensureTenantLoopState(db, tenantId);
@@ -426,14 +421,6 @@ export async function resetCircuitBreakerAction(
   }
 }
 
-export interface TriggerCycleOptions {
-  force?: boolean;
-  tenantId?: string;
-  availableMcu?: number;
-  maxTokensPerCycle?: number;
-  dbOverride?: unknown;
-}
-
 /**
  * Action: Trigger an Autonomous Execution Cycle.
  * Performs lease acquisition, task filtering, capability execution, DLQ serialization,
@@ -441,7 +428,7 @@ export interface TriggerCycleOptions {
  */
 export async function triggerAutonomousCycleAction(
   options: TriggerCycleOptions = {}
-): Promise<ActionResult<AutonomousCycleTelemetry>> {
+): Promise<AutonomousActionResult<AutonomousCycleTelemetry>> {
   const tenantId = options.tenantId ?? 'default';
   const force = options.force ?? false;
   const availableMcu = options.availableMcu ?? 50000;
@@ -710,7 +697,7 @@ export async function replayDeadLetterTaskAction(
   dlqId: string,
   tenantId: string = 'default',
   dbOverride?: unknown
-): Promise<ActionResult<{ replayed: boolean; newStatus: string }>> {
+): Promise<AutonomousActionResult<{ replayed: boolean; newStatus: string }>> {
   try {
     const db = resolveDb(dbOverride);
     const now = Math.floor(Date.now() / 1000);

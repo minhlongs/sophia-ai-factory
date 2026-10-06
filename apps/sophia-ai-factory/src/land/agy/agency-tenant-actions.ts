@@ -68,7 +68,7 @@ async function recordAuditLog(
   if (!db) return;
 
   const now = Math.floor(Date.now() / 1000);
-  const auditId = `aud_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const auditId = `aud_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 
   try {
     await db
@@ -115,7 +115,7 @@ export async function registerAgencyTenant(input: RegisterAgencyInput): Promise<
   const db = createServerClient();
   const normalizedDomain = customDomain ? normalizeHostname(customDomain) : null;
   const now = Math.floor(Date.now() / 1000);
-  const agencyId = `agy_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const agencyId = `agy_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 
   try {
     await db
@@ -168,8 +168,8 @@ export async function registerAgencyDomain(input: RegisterDomainInput): Promise<
 
   const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
-  const domainId = `dom_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  const verificationToken = `agy_verify_${Math.random().toString(36).substring(2, 14)}`;
+  const domainId = `dom_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
+  const verificationToken = `agy_verify_${crypto.randomUUID().replace(/-/g, '')}`;
 
   try {
     await db

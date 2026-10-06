@@ -8,6 +8,12 @@
  */
 
 import type { AutonomousEngineState } from './autonomous-fsm';
+import type {
+  AutonomousLoopStateRow,
+  AutonomousScheduleTaskRow,
+  AutonomousCycleRunRow,
+  AutonomousDeadLetterRow,
+} from './autonomous-db';
 
 export * from './autonomous-fsm';
 export * from './autonomous-db';
@@ -149,3 +155,29 @@ export interface AutonomousCycleTelemetry {
   durationMs: number;
   errorSummary: string | null;
 }
+
+// ── 6. Land Action Types ───────────────────────────────────────────────────
+
+export interface AutonomousActionResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  details?: unknown;
+}
+export type ActionResult<T> = AutonomousActionResult<T>;
+
+export interface AutonomousCockpitStatus {
+  loopState: AutonomousLoopStateRow;
+  tasks: AutonomousScheduleTaskRow[];
+  recentRuns: AutonomousCycleRunRow[];
+  deadLetterTasks: AutonomousDeadLetterRow[];
+}
+
+export interface TriggerCycleOptions {
+  force?: boolean;
+  tenantId?: string;
+  availableMcu?: number;
+  maxTokensPerCycle?: number;
+  dbOverride?: unknown;
+}
+
