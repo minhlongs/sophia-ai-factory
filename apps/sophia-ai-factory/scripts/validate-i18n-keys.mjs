@@ -4,11 +4,15 @@
  * Extracts t('key') calls with namespace detection and validates against translation files
  */
 
+import { existsSync } from 'fs';
 import { readdir, readFile } from 'fs/promises';
 import { join, relative } from 'path';
 import { cwd } from 'process';
 
-const ROOT = cwd();
+const BASE = existsSync(join(cwd(), 'apps/sophia-ai-factory/messages'))
+  ? join(cwd(), 'apps/sophia-ai-factory')
+  : cwd();
+const ROOT = BASE;
 const SRC_DIR = join(ROOT, 'src');
 const MESSAGES_DIR = join(ROOT, 'messages');
 const LOCALES = ['vi', 'en'];

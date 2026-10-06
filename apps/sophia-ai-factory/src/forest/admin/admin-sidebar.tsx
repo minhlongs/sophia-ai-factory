@@ -27,10 +27,12 @@ import {
   Wallet,
   Tag,
   TrendingUp,
+  Bot,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Autonomous Ops", href: "/admin/autonomous", icon: Bot },
   { name: "Growth Analytics", href: "/admin/growth-analytics", icon: TrendingUp },
   { name: "Handover Console", href: "/admin/handover", icon: ShieldCheck },
   { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },

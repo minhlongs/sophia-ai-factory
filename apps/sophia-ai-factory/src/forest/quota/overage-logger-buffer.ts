@@ -1,6 +1,7 @@
 /**
  * Batch buffer for Overage Event Logger
  * @module quota/overage-logger-buffer
+ * @edge-runtime-allowed: Buffer cleanup listeners are guarded by typeof process check
  */
 
 import { createServerClient } from '@/seed/db/client'

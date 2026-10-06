@@ -8709,6 +8709,7 @@
     },
     "metrics": {
       "activeAgents": "Active Swarm Agents",
+      "tasksExecuted": "Tasks Executed",
       "tasksDue": "Pending Tasks",
       "computeConsumed": "Compute Units Used",
       "costEstimate": "Estimated Operating Cost",

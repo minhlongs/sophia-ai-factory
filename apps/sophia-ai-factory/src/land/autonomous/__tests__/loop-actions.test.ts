@@ -27,10 +27,11 @@ import {
   pauseAutonomousLoopAction,
   resumeAutonomousLoopAction,
   emergencyHaltAutonomousLoopAction,
+  resetAutonomousCircuitBreakerAction,
   resetCircuitBreakerAction,
   triggerAutonomousCycleAction,
   replayDeadLetterTaskAction,
-} from '../loop-actions';
+} from '../index';
 
 describe('Autonomous Land Server Actions (D1 Integration)', () => {
   let db: NodeSqliteD1Database;
@@ -115,7 +116,7 @@ describe('Autonomous Land Server Actions (D1 Integration)', () => {
     expect(statusRes.data?.loopState.last_error).toBe('Emergency budget threshold');
   });
 
-  it('6. resets circuit breaker from CIRCUIT_BROKEN to IDLE', async () => {
+  it('6. resets circuit breaker from CIRCUIT_BROKEN to IDLE via resetAutonomousCircuitBreakerAction', async () => {
     // Manually trip circuit in database
     await db
       .prepare(
@@ -125,7 +126,9 @@ describe('Autonomous Land Server Actions (D1 Integration)', () => {
       )
       .run();
 
-    const resetRes = await resetCircuitBreakerAction('default', db);
+    expect(resetCircuitBreakerAction).toBe(resetAutonomousCircuitBreakerAction);
+
+    const resetRes = await resetAutonomousCircuitBreakerAction('default', db);
     expect(resetRes.success).toBe(true);
     expect(resetRes.data?.nextState).toBe('IDLE');
 

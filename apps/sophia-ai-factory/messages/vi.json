@@ -8716,6 +8716,7 @@
     },
     "metrics": {
       "activeAgents": "Số Tác Nhân Hoạt Động",
+      "tasksExecuted": "Tác vụ Đã Thực hiện",
       "tasksDue": "Tác vụ Đang Chờ",
       "computeConsumed": "Điện toán Đã Dùng",
       "costEstimate": "Chi phí Ước tính",

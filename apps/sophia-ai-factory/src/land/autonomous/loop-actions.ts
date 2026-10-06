@@ -15,7 +15,7 @@
  * @module land/autonomous/loop-actions
  */
 
-import { getD1Sync } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   AutonomousLoopStateRow,
@@ -44,13 +44,17 @@ export type {
 };
 
 /**
- * Resolves active D1 database binding.
+ * Resolves active D1 database binding using createServerClient() (synchronous).
  */
 function resolveDb(dbOverride?: unknown): D1Database {
   if (dbOverride && typeof (dbOverride as D1Database).prepare === 'function') {
+    if ('unwrap' in (dbOverride as Record<string, unknown>) && typeof (dbOverride as { unwrap: () => D1Database }).unwrap === 'function') {
+      return (dbOverride as { unwrap: () => D1Database }).unwrap();
+    }
     return dbOverride as D1Database;
   }
-  return getD1Sync();
+  // createServerClient() is synchronous; unwrap() returns the underlying D1Database
+  return createServerClient().unwrap();
 }
 
 /**
@@ -371,7 +375,7 @@ export async function emergencyHaltAutonomousLoopAction(
 /**
  * Action: Reset Circuit Breaker (CIRCUIT_BROKEN -> IDLE).
  */
-export async function resetCircuitBreakerAction(
+export async function resetAutonomousCircuitBreakerAction(
   tenantId: string = 'default',
   dbOverride?: unknown
 ): Promise<AutonomousActionResult<StateTransitionResult>> {
@@ -410,7 +414,7 @@ export async function resetCircuitBreakerAction(
 
     return { success: true, data: transition };
   } catch (err) {
-    logger.error('[Autonomous Land Action] resetCircuitBreakerAction error', {
+    logger.error('[Autonomous Land Action] resetAutonomousCircuitBreakerAction error', {
       tenantId,
       error: String(err),
     });
@@ -420,6 +424,11 @@ export async function resetCircuitBreakerAction(
     };
   }
 }
+
+/**
+ * Backward compatibility alias for resetAutonomousCircuitBreakerAction.
+ */
+export const resetCircuitBreakerAction = resetAutonomousCircuitBreakerAction;
 
 /**
  * Action: Trigger an Autonomous Execution Cycle.
