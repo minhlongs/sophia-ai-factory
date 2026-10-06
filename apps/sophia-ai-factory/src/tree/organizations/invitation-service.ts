@@ -30,14 +30,21 @@ export type { CreateInvitationInput, CreateInvitationResult, AcceptInvitationRes
  * Creates a new organization invitation with a cryptographic 256-bit single-use token.
  * Supports both input object and positional argument signatures.
  */
-export async function createOrgInvitation(
-  db: D1Database,
+interface NormalizedInvitationParams {
+  orgId: string;
+  email: string;
+  role: OrgRole;
+  invitedByUserId: string;
+  appBaseUrl?: string;
+}
+
+function normalizeInvitationParams(
   orgIdOrInput: string | CreateInvitationInput,
   emailArg?: string,
   roleArg?: OrgRole,
   invitedByUserIdArg?: string,
   appBaseUrlArg?: string,
-): Promise<CreateInvitationResult> {
+): NormalizedInvitationParams {
   const isObject = typeof orgIdOrInput === 'object';
   const orgId = isObject ? orgIdOrInput.orgId : orgIdOrInput;
   const rawEmail = isObject ? orgIdOrInput.email : (emailArg ?? '');
@@ -49,6 +56,135 @@ export async function createOrgInvitation(
   if (!email || !email.includes('@')) {
     throw new Error('VALIDATION_ERROR: A valid email address is required');
   }
+
+  return { orgId, email, role, invitedByUserId, appBaseUrl };
+}
+
+interface InsertInvitationParams {
+  invitationId: string;
+  orgId: string;
+  email: string;
+  role: OrgRole;
+  tokenHash: string;
+  expiresAt: number;
+  invitedByUserId: string;
+  now: number;
+  maxSeats: number;
+  allocated: number;
+}
+
+async function tryInsertOrgInvitations(
+  db: D1Database,
+  memTable: 'organization_members' | 'org_members',
+  params: InsertInvitationParams,
+): Promise<boolean> {
+  try {
+    const res = await db
+      .prepare(
+        `INSERT INTO org_invitations
+         (id, org_id, email, role, token_hash, expires_at, created_by, created_at, status)
+         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'pending'
+         WHERE (
+           (SELECT COUNT(*) FROM ${memTable} WHERE org_id = ?2) +
+           (SELECT COUNT(*) FROM org_invitations WHERE org_id = ?2 AND status = 'pending' AND expires_at > ?8)
+         ) < ?9`
+      )
+      .bind(
+        params.invitationId,
+        params.orgId,
+        params.email,
+        params.role,
+        params.tokenHash,
+        params.expiresAt,
+        params.invitedByUserId,
+        params.now,
+        params.maxSeats,
+      )
+      .run();
+
+    const changes = res.meta?.changes ?? (res as { changes?: number }).changes ?? 0;
+    if (changes === 0) {
+      throw new Error(`SEAT_QUOTA_EXCEEDED: Org has reached seat limit (${params.allocated}/${params.maxSeats})`);
+    }
+    return true;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('SEAT_QUOTA_EXCEEDED') || msg.toLowerCase().includes('unique')) {
+      throw err;
+    }
+    return false;
+  }
+}
+
+async function tryInsertOrganizationInvitations(
+  db: D1Database,
+  memTable: 'organization_members' | 'org_members',
+  params: InsertInvitationParams,
+): Promise<boolean> {
+  try {
+    const res = await db
+      .prepare(
+        `INSERT INTO organization_invitations
+         (id, org_id, email, role, token_hash, invited_by, expires_at, status, created_at)
+         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8
+         WHERE (
+           (SELECT COUNT(*) FROM ${memTable} WHERE org_id = ?2) +
+           (SELECT COUNT(*) FROM organization_invitations WHERE org_id = ?2 AND status = 'pending' AND expires_at > ?8)
+         ) < ?9`
+      )
+      .bind(
+        params.invitationId,
+        params.orgId,
+        params.email,
+        params.role,
+        params.tokenHash,
+        params.invitedByUserId,
+        params.expiresAt,
+        params.now,
+        params.maxSeats,
+      )
+      .run();
+
+    const changes = res.meta?.changes ?? (res as { changes?: number }).changes ?? 0;
+    if (changes === 0) {
+      throw new Error(`SEAT_QUOTA_EXCEEDED: Org has reached seat limit (${params.allocated}/${params.maxSeats})`);
+    }
+    return true;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('SEAT_QUOTA_EXCEEDED') || msg.toLowerCase().includes('unique')) {
+      throw err;
+    }
+    return false;
+  }
+}
+
+async function insertInvitationWithFallback(db: D1Database, params: InsertInvitationParams): Promise<void> {
+  if (await tryInsertOrgInvitations(db, 'organization_members', params)) return;
+  if (await tryInsertOrganizationInvitations(db, 'organization_members', params)) return;
+  if (await tryInsertOrgInvitations(db, 'org_members', params)) return;
+  await tryInsertOrganizationInvitations(db, 'org_members', params);
+}
+
+/**
+ * Creates a new organization invitation with a cryptographic 256-bit single-use token.
+ * Supports both input object and positional argument signatures.
+ */
+export async function createOrgInvitation(
+  db: D1Database,
+  orgIdOrInput: string | CreateInvitationInput,
+  emailArg?: string,
+  roleArg?: OrgRole,
+  invitedByUserIdArg?: string,
+  appBaseUrlArg?: string,
+): Promise<CreateInvitationResult> {
+  const { orgId, email, role, invitedByUserId, appBaseUrl } = normalizeInvitationParams(
+    orgIdOrInput,
+    emailArg,
+    roleArg,
+    invitedByUserIdArg,
+    appBaseUrlArg,
+  );
 
   // 1. Enforce seat quota before generating invitation
   const quota = await checkSeatQuota(db, orgId);
@@ -62,113 +198,18 @@ export async function createOrgInvitation(
   const invitationId = `inv_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
   // 3. Persist to database with atomic quota enforcement guarding against TOCTOU race conditions
-  let inserted = false;
-
-  // Primary: org_invitations table with organization_members seat check
-  try {
-    const res = await db
-      .prepare(
-        `INSERT INTO org_invitations
-         (id, org_id, email, role, token_hash, expires_at, created_by, created_at, status)
-         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'pending'
-         WHERE (
-           (SELECT COUNT(*) FROM organization_members WHERE org_id = ?2) +
-           (SELECT COUNT(*) FROM org_invitations WHERE org_id = ?2 AND status = 'pending' AND expires_at > ?8)
-         ) < ?9`
-      )
-      .bind(invitationId, orgId, email, role, tokenHash, expiresAt, invitedByUserId, now, quota.maxSeats)
-      .run();
-
-    const changes = res.meta?.changes ?? (res as { changes?: number }).changes ?? 0;
-    if (changes === 0) {
-      throw new Error(`SEAT_QUOTA_EXCEEDED: Org has reached seat limit (${quota.allocated}/${quota.maxSeats})`);
-    }
-    inserted = true;
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes('SEAT_QUOTA_EXCEEDED') || msg.toLowerCase().includes('unique')) {
-      throw err;
-    }
-  }
-
-  // Fallback 1: organization_invitations table with organization_members seat check
-  if (!inserted) {
-    try {
-      const res = await db
-        .prepare(
-          `INSERT INTO organization_invitations
-           (id, org_id, email, role, token_hash, invited_by, expires_at, status, created_at)
-           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8
-           WHERE (
-             (SELECT COUNT(*) FROM organization_members WHERE org_id = ?2) +
-             (SELECT COUNT(*) FROM organization_invitations WHERE org_id = ?2 AND status = 'pending' AND expires_at > ?8)
-           ) < ?9`
-        )
-        .bind(invitationId, orgId, email, role, tokenHash, invitedByUserId, expiresAt, now, quota.maxSeats)
-        .run();
-
-      const changes = res.meta?.changes ?? (res as { changes?: number }).changes ?? 0;
-      if (changes === 0) {
-        throw new Error(`SEAT_QUOTA_EXCEEDED: Org has reached seat limit (${quota.allocated}/${quota.maxSeats})`);
-      }
-      inserted = true;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('SEAT_QUOTA_EXCEEDED') || msg.toLowerCase().includes('unique')) {
-        throw err;
-      }
-    }
-  }
-
-  // Fallback 2: org_invitations table with org_members seat check
-  if (!inserted) {
-    try {
-      const res = await db
-        .prepare(
-          `INSERT INTO org_invitations
-           (id, org_id, email, role, token_hash, expires_at, created_by, created_at, status)
-           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'pending'
-           WHERE (
-             (SELECT COUNT(*) FROM org_members WHERE org_id = ?2) +
-             (SELECT COUNT(*) FROM org_invitations WHERE org_id = ?2 AND status = 'pending' AND expires_at > ?8)
-           ) < ?9`
-        )
-        .bind(invitationId, orgId, email, role, tokenHash, expiresAt, invitedByUserId, now, quota.maxSeats)
-        .run();
-
-      const changes = res.meta?.changes ?? (res as { changes?: number }).changes ?? 0;
-      if (changes === 0) {
-        throw new Error(`SEAT_QUOTA_EXCEEDED: Org has reached seat limit (${quota.allocated}/${quota.maxSeats})`);
-      }
-      inserted = true;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('SEAT_QUOTA_EXCEEDED') || msg.toLowerCase().includes('unique')) {
-        throw err;
-      }
-    }
-  }
-
-  // Fallback 3: organization_invitations with org_members
-  if (!inserted) {
-    const res = await db
-      .prepare(
-        `INSERT INTO organization_invitations
-         (id, org_id, email, role, token_hash, invited_by, expires_at, status, created_at)
-         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8
-         WHERE (
-           (SELECT COUNT(*) FROM org_members WHERE org_id = ?2) +
-           (SELECT COUNT(*) FROM organization_invitations WHERE org_id = ?2 AND status = 'pending' AND expires_at > ?8)
-         ) < ?9`
-      )
-      .bind(invitationId, orgId, email, role, tokenHash, invitedByUserId, expiresAt, now, quota.maxSeats)
-      .run();
-
-    const changes = res.meta?.changes ?? (res as { changes?: number }).changes ?? 0;
-    if (changes === 0) {
-      throw new Error(`SEAT_QUOTA_EXCEEDED: Org has reached seat limit (${quota.allocated}/${quota.maxSeats})`);
-    }
-  }
+  await insertInvitationWithFallback(db, {
+    invitationId,
+    orgId,
+    email,
+    role,
+    tokenHash,
+    expiresAt,
+    invitedByUserId,
+    now,
+    maxSeats: quota.maxSeats,
+    allocated: quota.allocated,
+  });
 
   const baseUrl = appBaseUrl || 'https://sophia.agencyos.network';
   const inviteUrl = `${baseUrl}/invitations/accept?token=${rawToken}`;
@@ -181,83 +222,47 @@ export async function createOrgInvitation(
   };
 }
 
-/**
- * Accepts an organization invitation, atomically consumes the token, and creates a member.
- * Re-validates seat quota at time of acceptance to prevent oversubscription races.
- */
-export async function acceptOrgInvitation(
+interface OrgInvitationLookup {
+  id: string;
+  org_id: string;
+  email: string;
+  role: OrgRole;
+  status: string;
+  expires_at: number;
+}
+
+async function findInvitationByTokenHash(
   db: D1Database,
-  token: string,
-  userId: string,
-): Promise<AcceptInvitationResult> {
-  const tokenHash = await sha256Hex(token.trim());
-  const now = Date.now();
-
-  // 1. Look up invitation by SHA-256 token hash (check org_invitations then organization_invitations)
-  let invitation: {
-    id: string;
-    org_id: string;
-    email: string;
-    role: OrgRole;
-    status: string;
-    expires_at: number;
-  } | null = null;
-  let targetTable = 'org_invitations';
-
-  try {
-    const row = await db
-      .prepare('SELECT id, org_id, email, role, status, expires_at FROM org_invitations WHERE token_hash = ?1 LIMIT 1')
-      .bind(tokenHash)
-      .first<{
-        id: string;
-        org_id: string;
-        email: string;
-        role: OrgRole;
-        status: string;
-        expires_at: number;
-      }>();
-    if (row) {
-      invitation = row;
-      targetTable = 'org_invitations';
-    }
-  } catch {
-    // Check fallback
-  }
-
-  if (!invitation) {
+  tokenHash: string,
+): Promise<{ invitation: OrgInvitationLookup; targetTable: string } | null> {
+  for (const table of ['org_invitations', 'organization_invitations']) {
     try {
       const row = await db
-        .prepare('SELECT id, org_id, email, role, status, expires_at FROM organization_invitations WHERE token_hash = ?1 LIMIT 1')
+        .prepare(`SELECT id, org_id, email, role, status, expires_at FROM ${table} WHERE token_hash = ?1 LIMIT 1`)
         .bind(tokenHash)
-        .first<{
-          id: string;
-          org_id: string;
-          email: string;
-          role: OrgRole;
-          status: string;
-          expires_at: number;
-        }>();
+        .first<OrgInvitationLookup>();
       if (row) {
-        invitation = row;
-        targetTable = 'organization_invitations';
+        return { invitation: row, targetTable: table };
       }
     } catch {
-      // Table does not exist
+      // Continue to next candidate table
     }
   }
+  return null;
+}
 
-  if (!invitation) {
-    throw new Error('INVALID_INVITATION_TOKEN: Invitation token not found (TOKEN_NOT_FOUND)');
-  }
-
-  // 2. Validate status and single-use invariant
+async function claimInvitationCas(
+  db: D1Database,
+  invitation: OrgInvitationLookup,
+  targetTable: string,
+  now: number,
+): Promise<void> {
   if (invitation.status !== 'pending') {
     const err = new Error(`INVITATION_ALREADY_USED: Invitation has status '${invitation.status}' (TOKEN_ALREADY_USED)`) as Error & { code?: string };
     err.code = 'TOKEN_ALREADY_USED';
     throw err;
   }
 
-  // 3. Validate TTL expiration
   if (now > invitation.expires_at) {
     await db
       .prepare(`UPDATE ${targetTable} SET status = 'expired' WHERE id = ?1`)
@@ -266,14 +271,11 @@ export async function acceptOrgInvitation(
     throw new Error(`INVITATION_EXPIRED: Token expired at ${invitation.expires_at} (TOKEN_EXPIRED)`);
   }
 
-  // 4. Re-check seat quota at acceptance time to prevent race conditions
   const quota = await checkSeatQuota(db, invitation.org_id);
   if (quota.activeMembers >= quota.maxSeats) {
     throw new Error(`SEAT_QUOTA_EXCEEDED: Organization is full (${quota.allocated}/${quota.maxSeats})`);
   }
 
-  // 5. CAS-FIRST ATOMIC CLAIM: Transition invitation status from 'pending' to 'accepted'
-  // Ensures only exactly ONE concurrent caller can claim this invitation token.
   const updateResult = await db
     .prepare(
       `UPDATE ${targetTable}
@@ -289,11 +291,24 @@ export async function acceptOrgInvitation(
     err.code = 'TOKEN_ALREADY_USED';
     throw err;
   }
+}
 
-  // 6. Add member to organization_members with atomic capacity verification
-  const memberId = `mem_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-  let memberInserted = false;
+async function rollbackCasClaim(db: D1Database, targetTable: string, invitationId: string): Promise<void> {
+  try {
+    await db
+      .prepare(`UPDATE ${targetTable} SET status = 'pending', accepted_at = NULL WHERE id = ?1`)
+      .bind(invitationId)
+      .run();
+  } catch {}
+}
 
+async function insertMemberToOrganizationMembers(
+  db: D1Database,
+  invitation: OrgInvitationLookup,
+  userId: string,
+  memberId: string,
+  now: number,
+): Promise<boolean> {
   try {
     const insertResult = await db
       .prepare(
@@ -308,73 +323,82 @@ export async function acceptOrgInvitation(
 
     const insertChanges = insertResult.meta?.changes ?? (insertResult as { changes?: number }).changes ?? 0;
     if (insertChanges === 0) {
-      // Rollback invitation CAS claim since capacity was exhausted by a racing token
-      try {
-        await db
-          .prepare(`UPDATE ${targetTable} SET status = 'pending', accepted_at = NULL WHERE id = ?1`)
-          .bind(invitation.id)
-          .run();
-      } catch {}
-      throw new Error(`SEAT_QUOTA_EXCEEDED: Organization is full`);
+      throw new Error('SEAT_QUOTA_EXCEEDED: Organization is full');
     }
-    memberInserted = true;
+    return true;
   } catch (err: unknown) {
     const errStr = err instanceof Error ? err.message : String(err);
-    if (errStr.includes('SEAT_QUOTA_EXCEEDED')) {
+    if (errStr.includes('SEAT_QUOTA_EXCEEDED') || errStr.toLowerCase().includes('unique')) {
       throw err;
     }
-    if (errStr.toLowerCase().includes('unique')) {
-      // Rollback CAS claim if duplicate member constraint fails
-      try {
-        await db
-          .prepare(`UPDATE ${targetTable} SET status = 'pending', accepted_at = NULL WHERE id = ?1`)
-          .bind(invitation.id)
-          .run();
-      } catch {}
-      throw err;
+    return false;
+  }
+}
+
+async function insertMemberToOrgMembers(
+  db: D1Database,
+  invitation: OrgInvitationLookup,
+  userId: string,
+  memberId: string,
+  now: number,
+): Promise<void> {
+  const insertResult = await db
+    .prepare(
+      `INSERT INTO org_members (id, org_id, user_id, role, created_at)
+       SELECT ?1, ?2, ?3, ?4, ?5
+       WHERE (SELECT COUNT(*) FROM org_members WHERE org_id = ?2) < (
+         SELECT COALESCE(max_seats, 5) FROM organizations WHERE id = ?2
+       )`
+    )
+    .bind(memberId, invitation.org_id, userId, invitation.role, now)
+    .run();
+
+  const insertChanges = insertResult.meta?.changes ?? (insertResult as { changes?: number }).changes ?? 0;
+  if (insertChanges === 0) {
+    throw new Error('SEAT_QUOTA_EXCEEDED: Organization is full');
+  }
+}
+
+async function insertMemberWithRollback(
+  db: D1Database,
+  targetTable: string,
+  invitation: OrgInvitationLookup,
+  userId: string,
+  now: number,
+): Promise<void> {
+  const memberId = `mem_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  try {
+    const inserted = await insertMemberToOrganizationMembers(db, invitation, userId, memberId, now);
+    if (!inserted) {
+      await insertMemberToOrgMembers(db, invitation, userId, memberId, now);
     }
+  } catch (err: unknown) {
+    await rollbackCasClaim(db, targetTable, invitation.id);
+    throw err;
+  }
+}
+
+/**
+ * Accepts an organization invitation, atomically consumes the token, and creates a member.
+ * Re-validates seat quota at time of acceptance to prevent oversubscription races.
+ */
+export async function acceptOrgInvitation(
+  db: D1Database,
+  token: string,
+  userId: string,
+): Promise<AcceptInvitationResult> {
+  const tokenHash = await sha256Hex(token.trim());
+  const now = Date.now();
+
+  const found = await findInvitationByTokenHash(db, tokenHash);
+  if (!found) {
+    throw new Error('INVALID_INVITATION_TOKEN: Invitation token not found (TOKEN_NOT_FOUND)');
   }
 
-  if (!memberInserted) {
-    try {
-      const insertResult = await db
-        .prepare(
-          `INSERT INTO org_members (id, org_id, user_id, role, created_at)
-           SELECT ?1, ?2, ?3, ?4, ?5
-           WHERE (SELECT COUNT(*) FROM org_members WHERE org_id = ?2) < (
-             SELECT COALESCE(max_seats, 5) FROM organizations WHERE id = ?2
-           )`
-        )
-        .bind(memberId, invitation.org_id, userId, invitation.role, now)
-        .run();
+  const { invitation, targetTable } = found;
 
-      const insertChanges = insertResult.meta?.changes ?? (insertResult as { changes?: number }).changes ?? 0;
-      if (insertChanges === 0) {
-        try {
-          await db
-            .prepare(`UPDATE ${targetTable} SET status = 'pending', accepted_at = NULL WHERE id = ?1`)
-            .bind(invitation.id)
-            .run();
-        } catch {}
-        throw new Error(`SEAT_QUOTA_EXCEEDED: Organization is full`);
-      }
-      memberInserted = true;
-    } catch (err: unknown) {
-      const errStr = err instanceof Error ? err.message : String(err);
-      if (errStr.includes('SEAT_QUOTA_EXCEEDED')) {
-        throw err;
-      }
-      if (errStr.toLowerCase().includes('unique')) {
-        try {
-          await db
-            .prepare(`UPDATE ${targetTable} SET status = 'pending', accepted_at = NULL WHERE id = ?1`)
-            .bind(invitation.id)
-            .run();
-        } catch {}
-      }
-      throw err;
-    }
-  }
+  await claimInvitationCas(db, invitation, targetTable, now);
+  await insertMemberWithRollback(db, targetTable, invitation, userId, now);
 
   return {
     success: true,

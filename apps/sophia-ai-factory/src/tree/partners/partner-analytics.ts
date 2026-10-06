@@ -201,6 +201,304 @@ export function addMonths(baseMonth: string, monthsToAdd: number): string {
  * @param clients Array of client subscription records with history/orders
  * @returns Complete CohortMatrixResult
  */
+// Helper: Normalize a single client subscription record
+interface NormalizedClient {
+  clientId: string;
+  cohortMonth: string;
+  activityMap: Map<string, number>; // month -> mrrCents
+  isCurrentlyActive: boolean;
+  currentMrrCents: number;
+  totalRevenueCents: number;
+}
+
+function populateOrdersAndHistory(client: ClientSubscriptionRecord, activityMap: Map<string, number>): void {
+  if (client.orders) {
+    for (const order of client.orders) {
+      const m = formatYearMonth(order.timestamp);
+      const existing = activityMap.get(m) ?? 0;
+      activityMap.set(m, existing + Math.max(0, order.mrrCents));
+    }
+  }
+
+  if (client.monthlyHistory) {
+    for (const hist of client.monthlyHistory) {
+      const m = formatYearMonth(hist.month);
+      const existing = activityMap.get(m) ?? 0;
+      activityMap.set(m, Math.max(existing, Math.max(0, hist.mrrCents)));
+    }
+  }
+}
+
+function determineCohortMonth(client: ClientSubscriptionRecord, activityMap: Map<string, number>): string {
+  if (client.firstOrderAt) {
+    return formatYearMonth(client.firstOrderAt);
+  }
+  if (activityMap.size > 0) {
+    const sortedMonths = Array.from(activityMap.keys()).sort();
+    return sortedMonths[0];
+  }
+  return formatYearMonth(Date.now());
+}
+
+function determineCurrentActivity(
+  client: ClientSubscriptionRecord,
+  activityMap: Map<string, number>,
+): { isCurrentlyActive: boolean; currentMrrCents: number } {
+  let isCurrentlyActive = client.status === 'active';
+  let currentMrrCents = client.currentMrrCents ?? 0;
+
+  if (activityMap.size > 0) {
+    const sortedMonths = Array.from(activityMap.keys()).sort();
+    const latestMonth = sortedMonths[sortedMonths.length - 1];
+    const latestMrr = activityMap.get(latestMonth) ?? 0;
+
+    if (client.status === undefined) {
+      isCurrentlyActive = latestMrr > 0;
+    }
+    if (client.currentMrrCents === undefined) {
+      currentMrrCents = latestMrr;
+    }
+  }
+  return { isCurrentlyActive, currentMrrCents };
+}
+
+function normalizeSingleClient(client: ClientSubscriptionRecord): NormalizedClient {
+  const activityMap = new Map<string, number>();
+  populateOrdersAndHistory(client, activityMap);
+
+  const cohortMonth = determineCohortMonth(client, activityMap);
+  const initialMrr = client.currentMrrCents ?? 0;
+  if (!activityMap.has(cohortMonth) && initialMrr > 0) {
+    activityMap.set(cohortMonth, initialMrr);
+  }
+
+  const { isCurrentlyActive, currentMrrCents } = determineCurrentActivity(client, activityMap);
+
+  let totalRevenueCents = 0;
+  for (const cents of activityMap.values()) {
+    totalRevenueCents += cents;
+  }
+
+  return {
+    clientId: client.clientId,
+    cohortMonth,
+    activityMap,
+    isCurrentlyActive,
+    currentMrrCents,
+    totalRevenueCents,
+  };
+}
+
+function groupClientsByCohortMonth(clients: NormalizedClient[]): Map<string, NormalizedClient[]> {
+  const cohortGroups = new Map<string, NormalizedClient[]>();
+  for (const client of clients) {
+    const list = cohortGroups.get(client.cohortMonth) ?? [];
+    list.push(client);
+    cohortGroups.set(client.cohortMonth, list);
+  }
+  return cohortGroups;
+}
+
+function countPeriodActivity(
+  k: number,
+  actMonth: string,
+  cohortMembers: NormalizedClient[],
+  initialSize: number,
+): { activeCount: number; monthMrrCents: number } {
+  let activeCount = 0;
+  let monthMrrCents = 0;
+
+  for (const member of cohortMembers) {
+    if (k === 0) {
+      const val = member.activityMap.get(actMonth) ?? member.currentMrrCents ?? 0;
+      if (val > 0 || member.activityMap.has(actMonth) || member.isCurrentlyActive) {
+        activeCount++;
+      }
+      monthMrrCents += val;
+    } else {
+      const val = member.activityMap.get(actMonth);
+      if (val !== undefined && val > 0) {
+        activeCount++;
+        monthMrrCents += val;
+      }
+    }
+  }
+
+  if (k === 0 && activeCount === 0 && initialSize > 0) {
+    activeCount = initialSize;
+  }
+
+  return { activeCount, monthMrrCents };
+}
+
+function calculateCohortPeriodMetric(
+  k: number,
+  actMonth: string,
+  cohortMembers: NormalizedClient[],
+  initialSize: number,
+  initialMrrCents: number,
+): CohortPeriodMetric {
+  const { activeCount, monthMrrCents } = countPeriodActivity(k, actMonth, cohortMembers, initialSize);
+
+  const logoRetentionPct = initialSize > 0
+    ? Number(((activeCount / initialSize) * 100).toFixed(2))
+    : 0;
+
+  const logoChurnPct = Number((Math.max(0, 100 - logoRetentionPct)).toFixed(2));
+
+  const nrrPct = initialMrrCents > 0
+    ? Number(((monthMrrCents / initialMrrCents) * 100).toFixed(2))
+    : (activeCount > 0 ? 100 : 0);
+
+  const mrrChurnPct = Number((Math.max(0, 100 - nrrPct)).toFixed(2));
+
+  return {
+    monthIndex: k,
+    activityMonth: actMonth,
+    activeClients: activeCount,
+    logoRetentionPct,
+    mrrCents: monthMrrCents,
+    nrrPct,
+    logoChurnPct,
+    mrrChurnPct,
+  };
+}
+
+function buildCohortRow(
+  cMonth: string,
+  cohortMembers: NormalizedClient[],
+): { row: CohortRow; m1?: number; m3?: number } {
+  const initialSize = cohortMembers.length;
+  let initialMrrCents = 0;
+  let cohortTotalRevenueCents = 0;
+  let maxMonthIndex = 0;
+
+  for (const member of cohortMembers) {
+    cohortTotalRevenueCents += member.totalRevenueCents;
+    const m0Mrr = member.activityMap.get(cMonth) ?? member.currentMrrCents ?? 0;
+    initialMrrCents += m0Mrr;
+    for (const actMonth of member.activityMap.keys()) {
+      const diff = diffMonths(cMonth, actMonth);
+      if (diff > maxMonthIndex) {
+        maxMonthIndex = diff;
+      }
+    }
+  }
+
+  const periods: CohortPeriodMetric[] = [];
+  let m1: number | undefined;
+  let m3: number | undefined;
+
+  for (let k = 0; k <= maxMonthIndex; k++) {
+    const actMonth = addMonths(cMonth, k);
+    const metric = calculateCohortPeriodMetric(k, actMonth, cohortMembers, initialSize, initialMrrCents);
+    periods.push(metric);
+    if (k === 1) m1 = metric.logoRetentionPct;
+    if (k === 3) m3 = metric.logoRetentionPct;
+  }
+
+  const realizedLtvCents = initialSize > 0
+    ? Math.floor(cohortTotalRevenueCents / initialSize)
+    : 0;
+
+  const latestPeriod = periods[periods.length - 1];
+  const currentActiveSize = latestPeriod ? latestPeriod.activeClients : initialSize;
+
+  return {
+    row: {
+      cohortMonth: cMonth,
+      initialSize,
+      initialMrrCents,
+      totalRealizedRevenueCents: cohortTotalRevenueCents,
+      realizedLtvCents,
+      periods,
+      currentActiveSize,
+    },
+    m1,
+    m3,
+  };
+}
+
+function calculateProjectedLtv(arpuCents: number, blendedChurnPct: number): number {
+  const GROSS_MARGIN_PCT = 0.82;
+  if (blendedChurnPct > 0) {
+    const monthlyChurnRateDecimal = blendedChurnPct / 100;
+    return Math.floor((arpuCents * GROSS_MARGIN_PCT) / monthlyChurnRateDecimal);
+  }
+  return Math.floor(arpuCents * GROSS_MARGIN_PCT * 36);
+}
+
+function computeCohortSummary(
+  normalizedClients: NormalizedClient[],
+  cohortRows: CohortRow[],
+  m1Sum: number,
+  m1Count: number,
+  m3Sum: number,
+  m3Count: number,
+  weightedNrrSum: number,
+  cohortMrrWeight: number,
+): CohortSummary {
+  const totalClients = normalizedClients.length;
+  let activeClients = 0;
+  let totalMrrCents = 0;
+  let totalRevenueAllCents = 0;
+
+  for (const client of normalizedClients) {
+    if (client.isCurrentlyActive) {
+      activeClients++;
+      totalMrrCents += client.currentMrrCents;
+    }
+    totalRevenueAllCents += client.totalRevenueCents;
+  }
+
+  const avgLtvCents = totalClients > 0
+    ? Math.floor(totalRevenueAllCents / totalClients)
+    : 0;
+
+  const churnedClients = Math.max(0, totalClients - activeClients);
+  const blendedChurnPct = totalClients > 0
+    ? Number(((churnedClients / totalClients) * 100).toFixed(2))
+    : 0;
+
+  const arpuCents = activeClients > 0
+    ? Math.floor(totalMrrCents / activeClients)
+    : (totalClients > 0 ? Math.floor(totalMrrCents / totalClients) : 0);
+
+  const projectedLtvCents = calculateProjectedLtv(arpuCents, blendedChurnPct);
+
+  const avgM1RetentionPct = m1Count > 0
+    ? Number((m1Sum / m1Count).toFixed(2))
+    : (totalClients > 0 ? 100 : 0);
+
+  const avgM3RetentionPct = m3Count > 0
+    ? Number((m3Sum / m3Count).toFixed(2))
+    : (avgM1RetentionPct > 0 ? avgM1RetentionPct : 0);
+
+  const overallNrrPct = cohortMrrWeight > 0
+    ? Number((weightedNrrSum / cohortMrrWeight).toFixed(2))
+    : 100;
+
+  return {
+    totalClients,
+    activeClients,
+    totalMrrCents,
+    avgLtvCents,
+    projectedLtvCents,
+    blendedChurnPct,
+    avgM1RetentionPct,
+    avgM3RetentionPct,
+    overallNrrPct,
+    totalCohortsTracked: cohortRows.length,
+  };
+}
+
+/**
+ * Computes the full Partner Cohort Matrix including MRR retention, logo retention,
+ * Net Revenue Retention (NRR), churn rate, realized LTV, and projected LTV.
+ *
+ * @param clients Array of client subscription records with history/orders
+ * @returns Complete CohortMatrixResult
+ */
 export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]): CohortMatrixResult {
   if (!clients || clients.length === 0) {
     return {
@@ -220,100 +518,11 @@ export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]):
     };
   }
 
-  // 1. Normalize client records and group by Cohort Month
-  interface NormalizedClient {
-    clientId: string;
-    cohortMonth: string;
-    activityMap: Map<string, number>; // month -> mrrCents
-    isCurrentlyActive: boolean;
-    currentMrrCents: number;
-    totalRevenueCents: number;
-  }
-
-  const normalizedClients: NormalizedClient[] = [];
-
-  for (const client of clients) {
-    const activityMap = new Map<string, number>();
-
-    // Process explicit orders
-    if (client.orders && client.orders.length > 0) {
-      for (const order of client.orders) {
-        const m = formatYearMonth(order.timestamp);
-        const existing = activityMap.get(m) ?? 0;
-        activityMap.set(m, existing + Math.max(0, order.mrrCents));
-      }
-    }
-
-    // Process monthly history
-    if (client.monthlyHistory && client.monthlyHistory.length > 0) {
-      for (const hist of client.monthlyHistory) {
-        const m = formatYearMonth(hist.month);
-        const existing = activityMap.get(m) ?? 0;
-        activityMap.set(m, Math.max(existing, Math.max(0, hist.mrrCents)));
-      }
-    }
-
-    // Determine cohort month
-    let cohortMonth: string;
-    if (client.firstOrderAt) {
-      cohortMonth = formatYearMonth(client.firstOrderAt);
-    } else if (activityMap.size > 0) {
-      const sortedMonths = Array.from(activityMap.keys()).sort();
-      cohortMonth = sortedMonths[0];
-    } else {
-      cohortMonth = formatYearMonth(Date.now());
-    }
-
-    // If no explicit activity was provided in cohort month, use currentMrrCents
-    const initialMrr = client.currentMrrCents ?? 0;
-    if (!activityMap.has(cohortMonth) && initialMrr > 0) {
-      activityMap.set(cohortMonth, initialMrr);
-    }
-
-    // Determine current activity status and MRR
-    let isCurrentlyActive = client.status === 'active';
-    let currentMrrCents = client.currentMrrCents ?? 0;
-
-    if (activityMap.size > 0) {
-      const sortedMonths = Array.from(activityMap.keys()).sort();
-      const latestMonth = sortedMonths[sortedMonths.length - 1];
-      const latestMrr = activityMap.get(latestMonth) ?? 0;
-
-      if (client.status === undefined) {
-        isCurrentlyActive = latestMrr > 0;
-      }
-      if (client.currentMrrCents === undefined) {
-        currentMrrCents = latestMrr;
-      }
-    }
-
-    let totalRevenueCents = 0;
-    for (const cents of activityMap.values()) {
-      totalRevenueCents += cents;
-    }
-
-    normalizedClients.push({
-      clientId: client.clientId,
-      cohortMonth,
-      activityMap,
-      isCurrentlyActive,
-      currentMrrCents,
-      totalRevenueCents,
-    });
-  }
-
-  // 2. Group by Cohort Month
-  const cohortGroups = new Map<string, NormalizedClient[]>();
-  for (const client of normalizedClients) {
-    const list = cohortGroups.get(client.cohortMonth) ?? [];
-    list.push(client);
-    cohortGroups.set(client.cohortMonth, list);
-  }
-
+  const normalizedClients = clients.map(normalizeSingleClient);
+  const cohortGroups = groupClientsByCohortMonth(normalizedClients);
   const sortedCohortMonths = Array.from(cohortGroups.keys()).sort();
-  const cohortRows: CohortRow[] = [];
 
-  // Track metrics for summary aggregation
+  const cohortRows: CohortRow[] = [];
   let totalM1RetentionSum = 0;
   let m1CohortCount = 0;
   let totalM3RetentionSum = 0;
@@ -323,181 +532,39 @@ export function computePartnerCohortMatrix(clients: ClientSubscriptionRecord[]):
 
   for (const cMonth of sortedCohortMonths) {
     const cohortMembers = cohortGroups.get(cMonth) ?? [];
-    const initialSize = cohortMembers.length;
+    const { row, m1, m3 } = buildCohortRow(cMonth, cohortMembers);
+    cohortRows.push(row);
 
-    // Calculate initial MRR (Month 0 MRR)
-    let initialMrrCents = 0;
-    let cohortTotalRevenueCents = 0;
-
-    for (const member of cohortMembers) {
-      cohortTotalRevenueCents += member.totalRevenueCents;
-      const m0Mrr = member.activityMap.get(cMonth) ?? member.currentMrrCents ?? 0;
-      initialMrrCents += m0Mrr;
+    if (m1 !== undefined) {
+      totalM1RetentionSum += m1;
+      m1CohortCount++;
+    }
+    if (m3 !== undefined) {
+      totalM3RetentionSum += m3;
+      m3CohortCount++;
     }
 
-    // Determine max month index observed for this cohort
-    let maxMonthIndex = 0;
-    for (const member of cohortMembers) {
-      for (const actMonth of member.activityMap.keys()) {
-        const diff = diffMonths(cMonth, actMonth);
-        if (diff > maxMonthIndex) {
-          maxMonthIndex = diff;
-        }
-      }
+    if (row.initialMrrCents > 0) {
+      const latestPeriod = row.periods[row.periods.length - 1];
+      totalWeightedNrrSum += latestPeriod.nrrPct * row.initialMrrCents;
+      totalCohortMrrWeight += row.initialMrrCents;
     }
-
-    const periods: CohortPeriodMetric[] = [];
-
-    for (let k = 0; k <= maxMonthIndex; k++) {
-      const actMonth = addMonths(cMonth, k);
-      let activeCount = 0;
-      let monthMrrCents = 0;
-
-      for (const member of cohortMembers) {
-        if (k === 0) {
-          // In Month 0, by definition all members in the cohort are initial clients
-          const val = member.activityMap.get(actMonth) ?? member.currentMrrCents ?? 0;
-          if (val > 0 || member.activityMap.has(actMonth) || member.isCurrentlyActive) {
-            activeCount++;
-          }
-          monthMrrCents += val;
-        } else {
-          const val = member.activityMap.get(actMonth);
-          if (val !== undefined && val > 0) {
-            activeCount++;
-            monthMrrCents += val;
-          }
-        }
-      }
-
-      // If k === 0 and activeCount was 0, default to initialSize
-      if (k === 0 && activeCount === 0 && initialSize > 0) {
-        activeCount = initialSize;
-      }
-
-      const logoRetentionPct = initialSize > 0
-        ? Number(((activeCount / initialSize) * 100).toFixed(2))
-        : 0;
-
-      const logoChurnPct = Number((Math.max(0, 100 - logoRetentionPct)).toFixed(2));
-
-      const nrrPct = initialMrrCents > 0
-        ? Number(((monthMrrCents / initialMrrCents) * 100).toFixed(2))
-        : (activeCount > 0 ? 100 : 0);
-
-      const mrrChurnPct = Number((Math.max(0, 100 - nrrPct)).toFixed(2));
-
-      periods.push({
-        monthIndex: k,
-        activityMonth: actMonth,
-        activeClients: activeCount,
-        logoRetentionPct,
-        mrrCents: monthMrrCents,
-        nrrPct,
-        logoChurnPct,
-        mrrChurnPct,
-      });
-
-      // Track M1 and M3
-      if (k === 1) {
-        totalM1RetentionSum += logoRetentionPct;
-        m1CohortCount++;
-      } else if (k === 3) {
-        totalM3RetentionSum += logoRetentionPct;
-        m3CohortCount++;
-      }
-    }
-
-    // Weight NRR by initial cohort MRR
-    const latestPeriod = periods[periods.length - 1];
-    if (initialMrrCents > 0) {
-      totalWeightedNrrSum += latestPeriod.nrrPct * initialMrrCents;
-      totalCohortMrrWeight += initialMrrCents;
-    }
-
-    const realizedLtvCents = initialSize > 0
-      ? Math.floor(cohortTotalRevenueCents / initialSize)
-      : 0;
-
-    const currentActiveSize = latestPeriod ? latestPeriod.activeClients : initialSize;
-
-    cohortRows.push({
-      cohortMonth: cMonth,
-      initialSize,
-      initialMrrCents,
-      totalRealizedRevenueCents: cohortTotalRevenueCents,
-      realizedLtvCents,
-      periods,
-      currentActiveSize,
-    });
   }
 
-  // 3. Compute Executive Summary
-  const totalClients = normalizedClients.length;
-  let activeClients = 0;
-  let totalMrrCents = 0;
-  let totalRevenueAllCents = 0;
-
-  for (const client of normalizedClients) {
-    if (client.isCurrentlyActive) {
-      activeClients++;
-      totalMrrCents += client.currentMrrCents;
-    }
-    totalRevenueAllCents += client.totalRevenueCents;
-  }
-
-  const avgLtvCents = totalClients > 0
-    ? Math.floor(totalRevenueAllCents / totalClients)
-    : 0;
-
-  // Blended Churn Rate: (Total - Active) / Total * 100
-  const churnedClients = Math.max(0, totalClients - activeClients);
-  const blendedChurnPct = totalClients > 0
-    ? Number(((churnedClients / totalClients) * 100).toFixed(2))
-    : 0;
-
-  // Projected LTV Model: (ARPU * GrossMarginPct) / MonthlyChurnRate
-  // GrossMarginPct standard is 82% (0.82)
-  const GROSS_MARGIN_PCT = 0.82;
-  const arpuCents = activeClients > 0
-    ? Math.floor(totalMrrCents / activeClients)
-    : (totalClients > 0 ? Math.floor(totalMrrCents / totalClients) : 0);
-
-  let projectedLtvCents = 0;
-  if (blendedChurnPct > 0) {
-    const monthlyChurnRateDecimal = blendedChurnPct / 100;
-    projectedLtvCents = Math.floor((arpuCents * GROSS_MARGIN_PCT) / monthlyChurnRateDecimal);
-  } else {
-    // If churn is 0%, cap projected LTV at 36 months of ARPU at gross margin
-    projectedLtvCents = Math.floor(arpuCents * GROSS_MARGIN_PCT * 36);
-  }
-
-  const avgM1RetentionPct = m1CohortCount > 0
-    ? Number((totalM1RetentionSum / m1CohortCount).toFixed(2))
-    : (totalClients > 0 ? 100 : 0);
-
-  const avgM3RetentionPct = m3CohortCount > 0
-    ? Number((totalM3RetentionSum / m3CohortCount).toFixed(2))
-    : (avgM1RetentionPct > 0 ? avgM1RetentionPct : 0);
-
-  const overallNrrPct = totalCohortMrrWeight > 0
-    ? Number((totalWeightedNrrSum / totalCohortMrrWeight).toFixed(2))
-    : 100;
+  const summary = computeCohortSummary(
+    normalizedClients,
+    cohortRows,
+    totalM1RetentionSum,
+    m1CohortCount,
+    totalM3RetentionSum,
+    m3CohortCount,
+    totalWeightedNrrSum,
+    totalCohortMrrWeight,
+  );
 
   return {
     cohorts: cohortRows,
-    summary: {
-      totalClients,
-      activeClients,
-      totalMrrCents,
-      avgLtvCents,
-      projectedLtvCents,
-      blendedChurnPct,
-      avgM1RetentionPct,
-      avgM3RetentionPct,
-      overallNrrPct,
-      totalCohortsTracked: cohortRows.length,
-    },
+    summary,
   };
 }
 
@@ -510,6 +577,103 @@ export const computeCohortMatrix = computePartnerCohortMatrix;
 // ============================================================================
 // 2. Sub-Client MCU Consumption Velocity & Burn Runway
 // ============================================================================
+
+interface ParsedLog {
+  timestamp: number;
+  consumed: number;
+}
+
+function parseMcuLogRecord(log: McuLogRecord): { ts: number; consumed: number } {
+  let ts = typeof log.timestamp === 'string'
+    ? new Date(log.timestamp).getTime()
+    : log.timestamp;
+
+  if (Number.isNaN(ts)) {
+    ts = Date.now();
+  }
+
+  let consumed = 0;
+  if (log.mcuConsumed !== undefined) {
+    consumed = Math.max(0, log.mcuConsumed);
+  } else if (log.delta !== undefined && log.delta < 0) {
+    consumed = Math.abs(log.delta);
+  } else if (log.delta !== undefined && log.delta > 0 && (log.reason?.toLowerCase().includes('consumption') || log.reason?.toLowerCase().includes('render'))) {
+    consumed = log.delta;
+  }
+
+  return { ts, consumed };
+}
+
+function parseMcuLogs(consumptionLogs: McuLogRecord[]): {
+  parsedLogs: ParsedLog[];
+  maxLogTs: number;
+  totalConsumedLifetime: number;
+} {
+  const parsedLogs: ParsedLog[] = [];
+  let maxLogTs = 0;
+  let totalConsumedLifetime = 0;
+
+  for (const log of consumptionLogs) {
+    const { ts, consumed } = parseMcuLogRecord(log);
+    if (ts > maxLogTs) {
+      maxLogTs = ts;
+    }
+    totalConsumedLifetime += consumed;
+    parsedLogs.push({ timestamp: ts, consumed });
+  }
+
+  return { parsedLogs, maxLogTs, totalConsumedLifetime };
+}
+
+function calculateConsumptionWindows(
+  parsedLogs: ParsedLog[],
+  anchorTime: number,
+  safeWindowDays: number,
+): { consumed7d: number; consumed30d: number; consumedWindow: number } {
+  const MS_PER_DAY = 86_400 * 1000;
+  let consumed7d = 0;
+  let consumed30d = 0;
+  let consumedWindow = 0;
+
+  for (const p of parsedLogs) {
+    const elapsedMs = anchorTime - p.timestamp;
+    if (elapsedMs >= 0 && elapsedMs < 7 * MS_PER_DAY) {
+      consumed7d += p.consumed;
+    }
+    if (elapsedMs >= 0 && elapsedMs < 30 * MS_PER_DAY) {
+      consumed30d += p.consumed;
+    }
+    if (elapsedMs >= 0 && elapsedMs < safeWindowDays * MS_PER_DAY) {
+      consumedWindow += p.consumed;
+    }
+  }
+
+  return { consumed7d, consumed30d, consumedWindow };
+}
+
+function determineRunwayAndRisk(
+  velocity7d: number,
+  velocity30d: number,
+  safeBalance: number,
+): { runwayDays: number; exhaustionRisk: 'imminent' | 'warning' | 'healthy' | 'dormant' } {
+  let runwayDays = 999;
+  if (velocity7d > 0) {
+    runwayDays = Math.floor(safeBalance / velocity7d);
+  } else if (velocity30d > 0) {
+    runwayDays = Math.floor(safeBalance / velocity30d);
+  }
+
+  let exhaustionRisk: 'imminent' | 'warning' | 'healthy' | 'dormant' = 'healthy';
+  if (velocity7d === 0 && velocity30d === 0) {
+    exhaustionRisk = 'dormant';
+  } else if (runwayDays < 7) {
+    exhaustionRisk = 'imminent';
+  } else if (runwayDays < 15) {
+    exhaustionRisk = 'warning';
+  }
+
+  return { runwayDays, exhaustionRisk };
+}
 
 /**
  * Calculates rolling 7-day and 30-day MCU consumption velocity, acceleration,
@@ -545,71 +709,14 @@ export function calculateMcuVelocity(
     };
   }
 
-  // Parse and extract consumption amounts and timestamps
-  interface ParsedLog {
-    timestamp: number;
-    consumed: number;
-  }
-
-  const parsedLogs: ParsedLog[] = [];
-  let maxLogTs = 0;
-  let totalConsumedLifetime = 0;
-
-  for (const log of consumptionLogs) {
-    let ts = typeof log.timestamp === 'string'
-      ? new Date(log.timestamp).getTime()
-      : log.timestamp;
-
-    if (Number.isNaN(ts)) {
-      ts = Date.now();
-    }
-
-    if (ts > maxLogTs) {
-      maxLogTs = ts;
-    }
-
-    // Delta is negative for consumption in mcu_transactions (e.g. -100)
-    // Or positive if mcuConsumed is explicitly specified
-    let consumed = 0;
-    if (log.mcuConsumed !== undefined) {
-      consumed = Math.max(0, log.mcuConsumed);
-    } else if (log.delta !== undefined && log.delta < 0) {
-      consumed = Math.abs(log.delta);
-    } else if (log.delta !== undefined && log.delta > 0 && (log.reason?.toLowerCase().includes('consumption') || log.reason?.toLowerCase().includes('render'))) {
-      consumed = log.delta;
-    }
-
-    totalConsumedLifetime += consumed;
-    parsedLogs.push({ timestamp: ts, consumed });
-  }
-
-  // Anchor time: use explicit referenceTimestamp, or max log timestamp, or current time
+  const { parsedLogs, maxLogTs, totalConsumedLifetime } = parseMcuLogs(consumptionLogs);
   const anchorTime = referenceTimestamp ?? (maxLogTs > 0 ? maxLogTs : Date.now());
-
-  const MS_PER_DAY = 86_400 * 1000;
-
-  let consumed7d = 0;
-  let consumed30d = 0;
-  let consumedWindow = 0;
-
-  for (const p of parsedLogs) {
-    const elapsedMs = anchorTime - p.timestamp;
-    if (elapsedMs >= 0 && elapsedMs < 7 * MS_PER_DAY) {
-      consumed7d += p.consumed;
-    }
-    if (elapsedMs >= 0 && elapsedMs < 30 * MS_PER_DAY) {
-      consumed30d += p.consumed;
-    }
-    if (elapsedMs >= 0 && elapsedMs < safeWindowDays * MS_PER_DAY) {
-      consumedWindow += p.consumed;
-    }
-  }
+  const { consumed7d, consumed30d, consumedWindow } = calculateConsumptionWindows(parsedLogs, anchorTime, safeWindowDays);
 
   const velocity7d = Number((consumed7d / 7.0).toFixed(2));
   const velocity30d = Number((consumed30d / 30.0).toFixed(2));
   const velocityWindowDays = Number((consumedWindow / safeWindowDays).toFixed(2));
 
-  // Acceleration: a_mcu = (V_7d - V_30d) / (V_30d + epsilon)
   const EPSILON = 0.0001;
   const rawAcceleration = (velocity7d - velocity30d) / (velocity30d + EPSILON);
   const acceleration = Number(rawAcceleration.toFixed(3));
@@ -621,25 +728,7 @@ export function calculateMcuVelocity(
     trend = 'decelerating';
   }
 
-  // Runway Days: Math.floor(currentBalance / V_7d)
-  let runwayDays = 999;
-  if (velocity7d > 0) {
-    runwayDays = Math.floor(safeBalance / velocity7d);
-  } else if (velocity30d > 0) {
-    runwayDays = Math.floor(safeBalance / velocity30d);
-  }
-
-  // Exhaustion Risk Status
-  let exhaustionRisk: 'imminent' | 'warning' | 'healthy' | 'dormant' = 'healthy';
-  if (velocity7d === 0 && velocity30d === 0) {
-    exhaustionRisk = 'dormant';
-  } else if (runwayDays < 7) {
-    exhaustionRisk = 'imminent';
-  } else if (runwayDays < 15) {
-    exhaustionRisk = 'warning';
-  } else {
-    exhaustionRisk = 'healthy';
-  }
+  const { runwayDays, exhaustionRisk } = determineRunwayAndRisk(velocity7d, velocity30d, safeBalance);
 
   return {
     velocity7d,
@@ -666,27 +755,43 @@ export function calculateMcuVelocity(
  * @param partnerId ID of the partner
  * @returns Complete PartnerAnalyticsSummary
  */
-export async function getPartnerAnalyticsSummary(
-  db: D1Database,
-  partnerId: string,
-): Promise<PartnerAnalyticsSummary> {
-  const currentPeriod = formatYearMonth(Date.now());
-  const now = Date.now();
+interface ProfileRow {
+  id: string;
+  partner_name: string;
+  tier: PartnerTier;
+  total_referred_customers: number;
+  total_mrr_cents: number;
+  total_earnings_cents: number;
+  pending_payout_cents: number;
+}
 
-  // 1. Fetch Partner Profile
-  interface ProfileRow {
-    id: string;
-    partner_name: string;
-    tier: PartnerTier;
-    total_referred_customers: number;
-    total_mrr_cents: number;
-    total_earnings_cents: number;
-    pending_payout_cents: number;
-  }
+interface CommissionRow {
+  referred_user_id: string;
+  order_id: string;
+  mrr_cents: number;
+  commission_cents: number;
+  created_at: number;
+}
 
-  let profile: ProfileRow | null | undefined;
+interface PoolRow {
+  total_mcu_credits: number;
+  allocated_mcu_credits: number;
+  consumed_mcu_credits: number;
+}
+
+interface ClientGroupData {
+  clientId: string;
+  orders: ClientOrderRecord[];
+  firstSeenAt: number;
+  lastActiveAt: number;
+  lifetimeMrrCents: number;
+  lifetimeCommissionCents: number;
+  currentMrrCents: number;
+}
+
+async function fetchPartnerProfile(db: D1Database, partnerId: string): Promise<ProfileRow | undefined> {
   try {
-    profile = await db
+    const res = await db
       .prepare(
         `SELECT id, partner_name, tier, total_referred_customers, total_mrr_cents,
                 total_earnings_cents, pending_payout_cents
@@ -695,23 +800,13 @@ export async function getPartnerAnalyticsSummary(
       )
       .bind(partnerId)
       .first<ProfileRow>();
+    return res ?? undefined;
   } catch {
-    profile = undefined;
+    return undefined;
   }
+}
 
-  const partnerName = profile?.partner_name ?? 'Partner';
-  const tier: PartnerTier = profile?.tier ?? 'SILVER';
-
-  // 2. Fetch Commissions & Sub-Client Order History
-  interface CommissionRow {
-    referred_user_id: string;
-    order_id: string;
-    mrr_cents: number;
-    commission_cents: number;
-    created_at: number;
-  }
-
-  let commissions: CommissionRow[] = [];
+async function fetchPartnerCommissions(db: D1Database, partnerId: string): Promise<CommissionRow[]> {
   try {
     const res = await db
       .prepare(
@@ -722,21 +817,32 @@ export async function getPartnerAnalyticsSummary(
       )
       .bind(partnerId)
       .all<CommissionRow>();
-    commissions = res.results || [];
+    return res.results || [];
   } catch {
-    commissions = [];
+    return [];
   }
+}
 
-  // 3. Group by Client to build ClientSubscriptionRecords and SubClientMetrics
-  const clientMap = new Map<string, {
-    clientId: string;
-    orders: ClientOrderRecord[];
-    firstSeenAt: number;
-    lastActiveAt: number;
-    lifetimeMrrCents: number;
-    lifetimeCommissionCents: number;
-    currentMrrCents: number;
-  }>();
+async function fetchPartnerPoolStats(db: D1Database, partnerId: string): Promise<PoolRow | undefined> {
+  try {
+    const res = await db
+      .prepare(
+        `SELECT SUM(total_mcu_credits) as total_mcu_credits,
+                SUM(allocated_mcu_credits) as allocated_mcu_credits,
+                SUM(consumed_mcu_credits) as consumed_mcu_credits
+         FROM partner_license_pools
+         WHERE partner_id = ?1 AND status = 'active'`
+      )
+      .bind(partnerId)
+      .first<PoolRow>();
+    return res ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function groupCommissionsByClient(commissions: CommissionRow[]): Map<string, ClientGroupData> {
+  const clientMap = new Map<string, ClientGroupData>();
 
   for (const comm of commissions) {
     const existing = clientMap.get(comm.referred_user_id) ?? {
@@ -769,33 +875,13 @@ export async function getPartnerAnalyticsSummary(
     clientMap.set(comm.referred_user_id, existing);
   }
 
-  // 4. Fetch License Pools / MCU stats if available
-  interface PoolRow {
-    total_mcu_credits: number;
-    allocated_mcu_credits: number;
-    consumed_mcu_credits: number;
-  }
+  return clientMap;
+}
 
-  let poolStats: PoolRow | null | undefined;
-  try {
-    poolStats = await db
-      .prepare(
-        `SELECT SUM(total_mcu_credits) as total_mcu_credits,
-                SUM(allocated_mcu_credits) as allocated_mcu_credits,
-                SUM(consumed_mcu_credits) as consumed_mcu_credits
-         FROM partner_license_pools
-         WHERE partner_id = ?1 AND status = 'active'`
-      )
-      .bind(partnerId)
-      .first<PoolRow>();
-  } catch {
-    poolStats = undefined;
-  }
-
-  const totalMcuAllocated = Number(poolStats?.allocated_mcu_credits ?? 0);
-  const totalMcuConsumed = Number(poolStats?.consumed_mcu_credits ?? 0);
-
-  // 5. Convert to ClientSubscriptionRecords and SubClientMetrics
+function buildSubClientMetrics(
+  clientMap: Map<string, ClientGroupData>,
+  now: number,
+): { subscriptionRecords: ClientSubscriptionRecord[]; subClientMetrics: SubClientMetric[] } {
   const subscriptionRecords: ClientSubscriptionRecord[] = [];
   const subClientMetrics: SubClientMetric[] = [];
 
@@ -808,7 +894,6 @@ export async function getPartnerAnalyticsSummary(
       status: (now - data.lastActiveAt) < 60 * 86_400 * 1000 ? 'active' : 'churned',
     });
 
-    // Approximate daily velocity based on lifetime MRR or consumption
     const daysSinceFirst = Math.max(1, Math.floor((now - data.firstSeenAt) / (86_400 * 1000)));
     const estimatedDailyVelocity = Number((data.currentMrrCents / 100 / Math.min(30, daysSinceFirst)).toFixed(1));
 
@@ -828,24 +913,25 @@ export async function getPartnerAnalyticsSummary(
     });
   }
 
-  // 6. Compute Cohort Matrix
-  const cohortMatrix = computePartnerCohortMatrix(subscriptionRecords);
+  return { subscriptionRecords, subClientMetrics };
+}
 
-  // Sort sub-clients by current MRR descending
-  subClientMetrics.sort((a, b) => b.currentMrrCents - a.currentMrrCents);
-  const topSubClients = subClientMetrics.slice(0, 10);
-
-  // 7. Calculate Revenue Growth Percentage
-  let revenueGrowthPct = 0;
-  if (cohortMatrix.cohorts.length >= 2) {
-    const firstCohortMrr = cohortMatrix.cohorts[0].initialMrrCents;
-    const latestCohortMrr = cohortMatrix.cohorts[cohortMatrix.cohorts.length - 1].initialMrrCents;
+function calculateRevenueGrowthPct(cohorts: CohortRow[]): number {
+  if (cohorts.length >= 2) {
+    const firstCohortMrr = cohorts[0].initialMrrCents;
+    const latestCohortMrr = cohorts[cohorts.length - 1].initialMrrCents;
     if (firstCohortMrr > 0) {
-      revenueGrowthPct = Number((((latestCohortMrr - firstCohortMrr) / firstCohortMrr) * 100).toFixed(1));
+      return Number((((latestCohortMrr - firstCohortMrr) / firstCohortMrr) * 100).toFixed(1));
     }
   }
+  return 0;
+}
 
-  // Monthly commission cents: sum of commissions created in the current period
+function calculateCommissionsAndMrr(
+  commissions: CommissionRow[],
+  currentPeriod: string,
+  profileMrr?: number,
+): { monthlyCommissionCents: number; totalMrrCents: number } {
   const startOfMonth = new Date(currentPeriod + '-01T00:00:00Z').getTime();
   let monthlyCommissionCents = 0;
   let totalMrrCents = 0;
@@ -857,9 +943,52 @@ export async function getPartnerAnalyticsSummary(
     totalMrrCents += c.mrr_cents;
   }
 
-  if (profile?.total_mrr_cents && profile.total_mrr_cents > 0) {
-    totalMrrCents = profile.total_mrr_cents;
+  if (profileMrr && profileMrr > 0) {
+    totalMrrCents = profileMrr;
   }
+
+  return { monthlyCommissionCents, totalMrrCents };
+}
+
+/**
+ * Aggregates client metrics, top sub-clients, and revenue growth for a partner.
+ *
+ * @param db D1Database client instance
+ * @param partnerId ID of the partner
+ * @returns Complete PartnerAnalyticsSummary
+ */
+export async function getPartnerAnalyticsSummary(
+  db: D1Database,
+  partnerId: string,
+): Promise<PartnerAnalyticsSummary> {
+  const currentPeriod = formatYearMonth(Date.now());
+  const now = Date.now();
+
+  const [profile, commissions, poolStats] = await Promise.all([
+    fetchPartnerProfile(db, partnerId),
+    fetchPartnerCommissions(db, partnerId),
+    fetchPartnerPoolStats(db, partnerId),
+  ]);
+
+  const partnerName = profile?.partner_name ?? 'Partner';
+  const tier: PartnerTier = profile?.tier ?? 'SILVER';
+  const totalMcuAllocated = Number(poolStats?.allocated_mcu_credits ?? 0);
+  const totalMcuConsumed = Number(poolStats?.consumed_mcu_credits ?? 0);
+
+  const clientMap = groupCommissionsByClient(commissions);
+  const { subscriptionRecords, subClientMetrics } = buildSubClientMetrics(clientMap, now);
+
+  const cohortMatrix = computePartnerCohortMatrix(subscriptionRecords);
+
+  subClientMetrics.sort((a, b) => b.currentMrrCents - a.currentMrrCents);
+  const topSubClients = subClientMetrics.slice(0, 10);
+
+  const revenueGrowthPct = calculateRevenueGrowthPct(cohortMatrix.cohorts);
+  const { monthlyCommissionCents, totalMrrCents } = calculateCommissionsAndMrr(
+    commissions,
+    currentPeriod,
+    profile?.total_mrr_cents,
+  );
 
   const avgMcuVelocityDaily = subClientMetrics.length > 0
     ? Number((subClientMetrics.reduce((acc, c) => acc + c.mcuVelocityDaily, 0) / subClientMetrics.length).toFixed(1))

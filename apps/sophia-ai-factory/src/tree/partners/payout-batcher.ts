@@ -108,20 +108,27 @@ export function convertCentsToVnd(cents: number, fxRate: number = USD_TO_VND_EXC
  * @param currency - 'USD' | 'VND' | 'USDT'.
  * @param options - Additional FX rate and destination parameters.
  */
-export async function createPayoutBatch(
-  db: D1Database,
+interface NormalizedBatchArgs {
+  partnerId: string | null;
+  batchType: PayoutBatchType;
+  rail: PayoutRail;
+  currency: 'USD' | 'VND' | 'USDT';
+  options?: CreatePayoutBatchOptions;
+}
+
+function parseCreateBatchArgs(
   partnerIdOrParams: string | null | CreatePayoutBatchObjectParams,
   batchTypeArg?: PayoutBatchType,
   railArg?: PayoutRail,
   currencyArg: 'USD' | 'VND' | 'USDT' = 'USD',
   optionsArg?: CreatePayoutBatchOptions,
-): Promise<CreatePayoutBatchResult> {
+): NormalizedBatchArgs {
   const isObjectCall = typeof partnerIdOrParams === 'object' && partnerIdOrParams !== null;
   const partnerId = isObjectCall ? (partnerIdOrParams.partnerId ?? null) : partnerIdOrParams;
   const batchType = isObjectCall ? partnerIdOrParams.batchType : batchTypeArg!;
   const rail = isObjectCall ? (partnerIdOrParams.payoutRail ?? partnerIdOrParams.rail ?? 'USDT') : railArg!;
   const currency = isObjectCall ? (partnerIdOrParams.currency ?? 'USD') : currencyArg;
-  const options: CreatePayoutBatchOptions | undefined = isObjectCall
+  const options = isObjectCall
     ? {
         fxRate: partnerIdOrParams.fxRate,
         destinationAddress: partnerIdOrParams.destinationAddress,
@@ -130,30 +137,166 @@ export async function createPayoutBatch(
       }
     : optionsArg;
 
-  const now = Date.now();
-  const batchId = `batch_${crypto.randomUUID().slice(0, 16)}`;
+  return { partnerId, batchType, rail, currency, options };
+}
 
-  // Optional destination resolution from partner profile
-  let destinationAddress = options?.destinationAddress ?? null;
-  if (partnerId && !destinationAddress) {
+async function resolveDestinationAddress(
+  db: D1Database,
+  partnerId: string | null,
+  rail: PayoutRail,
+  initialDest: string | null | undefined,
+): Promise<string | null> {
+  if (initialDest) return initialDest;
+  if (!partnerId) return null;
+
+  try {
     const partner = await db
       .prepare('SELECT payout_destination_json FROM partner_profiles WHERE id = ?')
       .bind(partnerId)
       .first<{ payout_destination_json: string }>();
 
     if (partner?.payout_destination_json) {
-      try {
-        const dest = JSON.parse(partner.payout_destination_json) as Record<string, unknown>;
-        if (rail === 'USDT' && typeof dest.usdtAddress === 'string') {
-          destinationAddress = dest.usdtAddress;
-        } else if (rail === 'VIETQR' && typeof dest.bankAccountNumber === 'string') {
-          destinationAddress = `${dest.bankCode ?? ''}:${dest.bankAccountNumber}`;
-        }
-      } catch {
-        // Fall back to null if parse fails
+      const dest = JSON.parse(partner.payout_destination_json) as Record<string, unknown>;
+      if (rail === 'USDT' && typeof dest.usdtAddress === 'string') {
+        return dest.usdtAddress;
+      }
+      if (rail === 'VIETQR' && typeof dest.bankAccountNumber === 'string') {
+        return `${dest.bankCode ?? ''}:${dest.bankAccountNumber}`;
       }
     }
+  } catch {
+    // Fall back to null if parse fails
   }
+  return null;
+}
+
+async function claimPendingCommissions(
+  db: D1Database,
+  batchId: string,
+  partnerId: string | null,
+  commissionIds?: string[],
+): Promise<{ count: number; sumCents: number }> {
+  if (commissionIds && commissionIds.length > 0) {
+    for (const cid of commissionIds) {
+      await db
+        .prepare(`
+          UPDATE partner_commissions
+          SET status = 'approved', payout_batch_id = ?1
+          WHERE id = ?2 AND status = 'pending' AND payout_batch_id IS NULL
+        `)
+        .bind(batchId, cid)
+        .run();
+    }
+  } else if (partnerId) {
+    await db
+      .prepare(`
+        UPDATE partner_commissions
+        SET status = 'approved', payout_batch_id = ?1
+        WHERE partner_id = ?2 AND status = 'pending' AND payout_batch_id IS NULL
+      `)
+      .bind(batchId, partnerId)
+      .run();
+  } else {
+    await db
+      .prepare(`
+        UPDATE partner_commissions
+        SET status = 'approved', payout_batch_id = ?1
+        WHERE status = 'pending' AND payout_batch_id IS NULL
+      `)
+      .bind(batchId)
+      .run();
+  }
+
+  const claimed = await db
+    .prepare('SELECT id, commission_cents FROM partner_commissions WHERE payout_batch_id = ?')
+    .bind(batchId)
+    .all<{ id: string; commission_cents: number }>();
+
+  const rows = claimed.results ?? [];
+  return {
+    count: rows.length,
+    sumCents: rows.reduce((sum, c) => sum + Math.max(0, c.commission_cents), 0),
+  };
+}
+
+async function claimApprovedCoOpClaims(
+  db: D1Database,
+  batchId: string,
+  partnerId: string | null,
+  claimIds?: string[],
+): Promise<{ count: number; sumCents: number }> {
+  if (claimIds && claimIds.length > 0) {
+    for (const cid of claimIds) {
+      await db
+        .prepare(`
+          UPDATE partner_co_op_claims
+          SET status = 'processing', payout_batch_id = ?1
+          WHERE id = ?2 AND (status = 'approved' OR status = 'submitted') AND payout_batch_id IS NULL
+        `)
+        .bind(batchId, cid)
+        .run();
+    }
+  } else if (partnerId) {
+    await db
+      .prepare(`
+        UPDATE partner_co_op_claims
+        SET status = 'processing', payout_batch_id = ?1
+        WHERE partner_id = ?2 AND status = 'approved' AND payout_batch_id IS NULL
+      `)
+      .bind(batchId, partnerId)
+      .run();
+  } else {
+    await db
+      .prepare(`
+        UPDATE partner_co_op_claims
+        SET status = 'processing', payout_batch_id = ?1
+        WHERE status = 'approved' AND payout_batch_id IS NULL
+      `)
+      .bind(batchId)
+      .run();
+  }
+
+  const claimed = await db
+    .prepare('SELECT id, approved_amount_cents FROM partner_co_op_claims WHERE payout_batch_id = ?')
+    .bind(batchId)
+    .all<{ id: string; approved_amount_cents: number }>();
+
+  const rows = claimed.results ?? [];
+  return {
+    count: rows.length,
+    sumCents: rows.reduce((sum, c) => sum + Math.max(0, c.approved_amount_cents), 0),
+  };
+}
+
+/**
+ * Creates a payout batch by claiming eligible pending commissions and approved co-op claims using OCC CAS.
+ *
+ * @param db - D1Database instance.
+ * @param partnerIdOrParams - Target partner ID or object params.
+ * @param batchTypeArg - 'commission' | 'co_op_reimbursement' | 'hybrid'.
+ * @param railArg - 'USDT' | 'VIETQR' | 'BANK_WIRE'.
+ * @param currencyArg - 'USD' | 'VND' | 'USDT'.
+ * @param optionsArg - Additional FX rate and destination parameters.
+ */
+export async function createPayoutBatch(
+  db: D1Database,
+  partnerIdOrParams: string | null | CreatePayoutBatchObjectParams,
+  batchTypeArg?: PayoutBatchType,
+  railArg?: PayoutRail,
+  currencyArg: 'USD' | 'VND' | 'USDT' = 'USD',
+  optionsArg?: CreatePayoutBatchOptions,
+): Promise<CreatePayoutBatchResult> {
+  const { partnerId, batchType, rail, currency, options } = parseCreateBatchArgs(
+    partnerIdOrParams,
+    batchTypeArg,
+    railArg,
+    currencyArg,
+    optionsArg,
+  );
+
+  const now = Date.now();
+  const batchId = `batch_${crypto.randomUUID().slice(0, 16)}`;
+  const destinationAddress = await resolveDestinationAddress(db, partnerId, rail, options?.destinationAddress);
 
   // 1. Insert initial pending batch header so foreign keys in partner_co_op_claims / commissions are satisfied
   await db
@@ -184,88 +327,16 @@ export async function createPayoutBatch(
 
   // 2. Claim pending commissions (OCC CAS)
   if (batchType === 'commission' || batchType === 'hybrid') {
-    if (options?.commissionIds && options.commissionIds.length > 0) {
-      for (const cid of options.commissionIds) {
-        await db
-          .prepare(`
-            UPDATE partner_commissions
-            SET status = 'approved', payout_batch_id = ?1
-            WHERE id = ?2 AND status = 'pending' AND payout_batch_id IS NULL
-          `)
-          .bind(batchId, cid)
-          .run();
-      }
-    } else if (partnerId) {
-      await db
-        .prepare(`
-          UPDATE partner_commissions
-          SET status = 'approved', payout_batch_id = ?1
-          WHERE partner_id = ?2 AND status = 'pending' AND payout_batch_id IS NULL
-        `)
-        .bind(batchId, partnerId)
-        .run();
-    } else {
-      await db
-        .prepare(`
-          UPDATE partner_commissions
-          SET status = 'approved', payout_batch_id = ?1
-          WHERE status = 'pending' AND payout_batch_id IS NULL
-        `)
-        .bind(batchId)
-        .run();
-    }
-
-    const claimedCommissions = await db
-      .prepare('SELECT id, commission_cents FROM partner_commissions WHERE payout_batch_id = ?')
-      .bind(batchId)
-      .all<{ id: string; commission_cents: number }>();
-
-    const commRows = claimedCommissions.results ?? [];
-    commissionsClaimedCount = commRows.length;
-    commissionsSumCents = commRows.reduce((sum, c) => sum + Math.max(0, c.commission_cents), 0);
+    const res = await claimPendingCommissions(db, batchId, partnerId, options?.commissionIds);
+    commissionsClaimedCount = res.count;
+    commissionsSumCents = res.sumCents;
   }
 
   // 3. Claim approved Co-Op claims (OCC CAS)
   if (batchType === 'co_op_reimbursement' || batchType === 'hybrid') {
-    if (options?.claimIds && options.claimIds.length > 0) {
-      for (const cid of options.claimIds) {
-        await db
-          .prepare(`
-            UPDATE partner_co_op_claims
-            SET status = 'processing', payout_batch_id = ?1
-            WHERE id = ?2 AND (status = 'approved' OR status = 'submitted') AND payout_batch_id IS NULL
-          `)
-          .bind(batchId, cid)
-          .run();
-      }
-    } else if (partnerId) {
-      await db
-        .prepare(`
-          UPDATE partner_co_op_claims
-          SET status = 'processing', payout_batch_id = ?1
-          WHERE partner_id = ?2 AND status = 'approved' AND payout_batch_id IS NULL
-        `)
-        .bind(batchId, partnerId)
-        .run();
-    } else {
-      await db
-        .prepare(`
-          UPDATE partner_co_op_claims
-          SET status = 'processing', payout_batch_id = ?1
-          WHERE status = 'approved' AND payout_batch_id IS NULL
-        `)
-        .bind(batchId)
-        .run();
-    }
-
-    const claimedClaims = await db
-      .prepare('SELECT id, approved_amount_cents FROM partner_co_op_claims WHERE payout_batch_id = ?')
-      .bind(batchId)
-      .all<{ id: string; approved_amount_cents: number }>();
-
-    const claimRows = claimedClaims.results ?? [];
-    coOpClaimsClaimedCount = claimRows.length;
-    claimsSumCents = claimRows.reduce((sum, c) => sum + Math.max(0, c.approved_amount_cents), 0);
+    const res = await claimApprovedCoOpClaims(db, batchId, partnerId, options?.claimIds);
+    coOpClaimsClaimedCount = res.count;
+    claimsSumCents = res.sumCents;
   }
 
   const itemCount = commissionsClaimedCount + coOpClaimsClaimedCount;
