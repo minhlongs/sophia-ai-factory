@@ -27,10 +27,8 @@ export class D1Client {
   /** Compatibility: direct execute for raw SQL with transient retry */
   async execute(sql: string, params?: unknown[]): Promise<D1Result> {
     const stmt = this.db.prepare(sql);
-    if (params && params.length > 0) {
-      stmt.bind(...params);
-    }
-    return withD1Retry(() => stmt.run());
+    const bound = params && params.length > 0 ? stmt.bind(...params) : stmt;
+    return withD1Retry(() => bound.run());
   }
 
   from<T = Record<string, unknown>>(table: string): D1QueryChain<T> {

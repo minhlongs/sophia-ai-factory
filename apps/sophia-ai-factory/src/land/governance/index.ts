@@ -41,6 +41,7 @@ export * from './trans-dimensional-conclave-actions';
 export * from './transcendental-conclave-actions';
 export * from './universal-court-actions';
 export * from './zk-mpc-constitution-actions';
+export * from './agy-actions';
 
 // Disambiguate symbol collisions
 export type { InvariantCheckActionResult } from './galactic-high-tribunal-actions';

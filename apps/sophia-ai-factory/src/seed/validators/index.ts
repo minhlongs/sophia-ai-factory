@@ -6,3 +6,5 @@ export * from './agent-prompt-contracts';
 export * from './agent-result-contracts';
 export * from './auth';
 export * from './proposal';
+export * from './agy-schema';
+export * from './agy-parser';

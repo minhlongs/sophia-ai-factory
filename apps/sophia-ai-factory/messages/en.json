@@ -1,5 +1,121 @@
 {
   "100": "100",
+  "agency": {
+    "cockpitTitle": "Agency Operations Cockpit",
+    "cockpitSubtitle": "Manage your clients, video campaigns, credit quotas, and revenue attribution.",
+    "onboardNewClient": "Onboard New Client",
+    "kpi": {
+      "totalClients": "Active Client Workspaces",
+      "allocatedMcu": "Allocated Video Credits (MCU)",
+      "usedMcu": "Used Video Credits (MCU)",
+      "utilization": "Quota Utilization",
+      "activeCampaigns": "Active Video Deliverables",
+      "attributedMrr": "Attributed Monthly Revenue",
+      "growthRate": "Growth Rate"
+    },
+    "clientsTable": {
+      "title": "Client Subaccounts",
+      "searchPlaceholder": "Search by client name or URL...",
+      "colClient": "Client Name",
+      "colStatus": "Status",
+      "colMcu": "Credit Quota (MCU)",
+      "colPortal": "Portal Link",
+      "colActions": "Actions",
+      "statusActive": "Active",
+      "statusSuspended": "Suspended",
+      "toggleSuspend": "Suspend",
+      "toggleActivate": "Activate",
+      "noClients": "No client workspaces found. Onboard your first client to get started."
+    },
+    "campaignsCard": {
+      "title": "Recent Video Deliverables",
+      "noCampaigns": "No active video review links or drafts found.",
+      "statusInReview": "In Client Review",
+      "statusApproved": "Approved",
+      "statusDraft": "Draft"
+    },
+    "attributionCard": {
+      "title": "Client Revenue & Margin Breakdown",
+      "colClient": "Client",
+      "colTier": "Tier Plan",
+      "colMrr": "Monthly Value",
+      "colMargin": "Gross Margin",
+      "colVelocity": "Quota Burn Velocity",
+      "velocityNormal": "Normal Pace",
+      "velocityNearLimit": "Near Limit (>80%)",
+      "velocityExceeded": "Exceeded"
+    }
+  },
+  "agencyOnboarding": {
+    "title": "Agency Client Onboarding",
+    "subtitle": "Onboard your clients with white-label branding, custom domains, and autonomous seed agents.",
+    "steps": {
+      "step1": "Client Profile",
+      "step2": "Branding & Theme",
+      "step3": "Custom Domain",
+      "step4": "Seed Agents",
+      "step5": "Launch"
+    },
+    "profile": {
+      "clientNameLabel": "Client Business Name",
+      "clientNamePlaceholder": "e.g. Acme Media Group",
+      "slugLabel": "Workspace URL Identifier",
+      "slugPlaceholder": "acme-media",
+      "slugHelp": "Used for your client portal address: agencyos.network/portal/[slug]",
+      "emailLabel": "Primary Contact Email",
+      "emailPlaceholder": "contact@client.com",
+      "industryLabel": "Industry Category",
+      "mcuBudgetLabel": "Initial Video Production Credits (MCU)",
+      "mcuBudgetHelp": "Allocated compute points for video rendering and agent tasks"
+    },
+    "branding": {
+      "logoUrlLabel": "Logo Image URL",
+      "logoUrlPlaceholder": "https://cdn.youragency.com/logo.png",
+      "primaryColorLabel": "Primary Brand Color",
+      "accentColorLabel": "Accent Color",
+      "customCssLabel": "Custom Styling (CSS)",
+      "previewTitle": "Live Unbranded Portal Preview",
+      "previewSubtitle": "100% unbranded experience tailored for your client.",
+      "previewClientWelcome": "Welcome to Your Client Portal",
+      "previewStatusBadge": "Active Client Space"
+    },
+    "domain": {
+      "domainLabel": "Custom Domain Address",
+      "domainPlaceholder": "portal.clientbrand.com",
+      "domainHelp": "Point your DNS CNAME record to agencyos.network",
+      "cnameTargetLabel": "DNS Target Record",
+      "sslStatusReady": "SSL Certificate Ready & Protected"
+    },
+    "seedAgents": {
+      "title": "Deploy Autonomous Seed Agents",
+      "subtitle": "Pre-configured AI workers governed by safety and budget policies.",
+      "videoCreatorName": "Video Creator Specialist",
+      "videoCreatorDesc": "Generates avatar drafts, UGC clips, and marketing videos.",
+      "ugcReviewerName": "Client Review Assistant",
+      "ugcReviewerDesc": "Captures client feedback, timecoded notes, and revision requests.",
+      "salesOutreachName": "Engagement & Outreach Bot",
+      "salesOutreachDesc": "Automates notification dispatches and client follow-ups.",
+      "autonomyLevelLabel": "Autonomy Level",
+      "autonomyHelp": "Assisted (human review required) to Autonomous (auto-execution within budget).",
+      "computeBudgetLabel": "Agent Budget (MCU)"
+    },
+    "launch": {
+      "summaryTitle": "Review Configuration",
+      "submitButton": "Launch Client Portal",
+      "submittingButton": "Provisioning Workspace...",
+      "successTitle": "Client Workspace Live!",
+      "successSubtitle": "The client subaccount and autonomous agents are active.",
+      "portalUrlLabel": "Client Portal Link",
+      "openPortalButton": "Open Client Portal",
+      "backToAdmin": "Return to Agency Cockpit"
+    },
+    "common": {
+      "back": "Previous Step",
+      "next": "Continue",
+      "cancel": "Cancel",
+      "required": "Required field"
+    }
+  },
   "seo": {
     "home": {
       "title": "Sophia AI Factory — Automate Video, Affiliate & Revenue",

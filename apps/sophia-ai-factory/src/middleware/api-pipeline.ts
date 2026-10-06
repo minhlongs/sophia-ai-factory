@@ -55,6 +55,20 @@ export async function handleApiPipeline(
   }
   requestHeaders.set('x-user-tier', userTier);
 
+  // Propagate AGY tenant isolation headers
+  const agencyId = request.headers.get('x-agency-id');
+  if (agencyId) {
+    requestHeaders.set('x-agency-id', agencyId);
+  }
+  const agencySlug = request.headers.get('x-agency-slug');
+  if (agencySlug) {
+    requestHeaders.set('x-agency-slug', agencySlug);
+  }
+  const isolationStatus = request.headers.get('x-tenant-isolation-status');
+  if (isolationStatus) {
+    requestHeaders.set('x-tenant-isolation-status', isolationStatus);
+  }
+
   // Auth guard for protected API routes: avoid redundant session lookup if already verified by handleApiRoute
   if (!isPublicApiRoute(pathname) && !userId) {
     const authResponse = await withAuth(request);

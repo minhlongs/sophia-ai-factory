@@ -270,3 +270,19 @@ export {
   parseJobPayload,
   mapRowToJob,
 } from './video-render-queue';
+
+export * from './agy-multitenancy';
+export type {
+  EscalationAction,
+  EscalationPolicy,
+  AgentSpec,
+  ComputeLimits,
+  PermissionRules,
+  AgentGovernanceYaml,
+  PolicyEvaluationRequest,
+  PolicyEvaluationVerdict,
+  AuditLedgerRecord,
+  FleetGovernanceYaml,
+} from './agent-governance';
+export type { AutonomyLevel as AgyAutonomyLevel } from './agent-governance';
+export * from './agency-portal';

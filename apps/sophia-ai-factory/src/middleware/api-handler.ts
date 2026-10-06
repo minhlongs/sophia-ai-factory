@@ -10,11 +10,15 @@ import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 import { track } from '@/forest/telemetry/track';
 import { D1Events } from '@/forest/telemetry/d1-event-types';
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation';
+import { agyTenantIsolationMiddleware } from '@/forest/middleware/agy-tenant-isolation';
 
 // Returns a blocking response, or null to continue
 export async function handleApiRoute(request: NextRequest, pathname: string, startTime: number): Promise<NextResponse | null> {
   const isolationResult = await tenantIsolationMiddleware(request);
   if (isolationResult) return isolationResult;
+
+  const agyIsolationResult = await agyTenantIsolationMiddleware(request);
+  if (agyIsolationResult) return agyIsolationResult;
 
   // Webhook version pinning — internal secret required during canary
   if (

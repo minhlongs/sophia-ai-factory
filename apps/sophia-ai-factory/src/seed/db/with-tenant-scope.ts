@@ -18,24 +18,42 @@ import { logger } from '@/seed/utils/logger-utility';
  * Extend this list as new phases add tenant-scoped tables.
  */
 export const TENANT_SCOPED_TABLES = new Set([
-'video_jobs',
-'video_cost_log',
-'voices',
-'video_templates',
-'tenant_storage_usage',
-'brand_kits',
+  'video_jobs',
+  'video_cost_log',
+  'voices',
+  'video_templates',
+  'tenant_storage_usage',
+  'brand_kits',
+  'agy_tenant_configs',
+  'agy_tenant_tokens',
+  'agy_agency_domains',
+  'agy_audit_logs',
+  'agy_policy_audit_ledger',
+  'agy_governance_configs',
 ] as const);
+
+/**
+ * AGY tables that use agency_id as their tenant isolation key.
+ */
+const AGY_TENANT_TABLES = new Set([
+  'agy_tenant_configs',
+  'agy_tenant_tokens',
+  'agy_agency_domains',
+  'agy_audit_logs',
+  'agy_policy_audit_ledger',
+  'agy_governance_configs',
+]);
 
 /**
  * Tables owned by Better Auth (or other global schemas) that MUST bypass injection.
  * Reads from these tables return unfiltered results — auth is handled separately.
  */
 const BYPASS_TABLES = new Set([
-'users',
-'sessions',
-'accounts',
-'verifications',
-'two_factors',
+  'users',
+  'sessions',
+  'accounts',
+  'verifications',
+  'two_factors',
 ]);
 
 /**
@@ -45,63 +63,67 @@ const BYPASS_TABLES = new Set([
 export type TenantScopeMode = 'permissive' | 'strict';
 
 export class TenantScopedClient {
-constructor(
-private readonly inner: D1Client,
-private readonly tenantId: string,
-private readonly mode: TenantScopeMode = 'strict',
-) {}
+  constructor(
+    private readonly inner: D1Client,
+    private readonly tenantId: string,
+    private readonly mode: TenantScopeMode = 'strict',
+  ) {}
 
-/**
- * Returns a D1QueryChain scoped to the current tenant.
- * - Bypass tables: returns chain as-is
- * - Scoped tables: auto-appends .eq('tenant_id', tenantId)
- * - Unknown tables: permissive → scope; strict → throw
- */
-from<T = Record<string, unknown>>(table: string): D1QueryChain<T> {
-const chain = this.inner.from<T>(table);
+  /**
+   * Returns a D1QueryChain scoped to the current tenant.
+   * - Bypass tables: returns chain as-is
+   * - Scoped tables: auto-appends .eq('tenant_id', tenantId) or .eq('agency_id', tenantId)
+   * - Unknown tables: permissive → scope; strict → throw
+   */
+  from<T = Record<string, unknown>>(table: string): D1QueryChain<T> {
+    const chain = this.inner.from<T>(table);
 
-if (BYPASS_TABLES.has(table)) {
-return chain;
-}
+    if (BYPASS_TABLES.has(table)) {
+      return chain;
+    }
 
-if (TENANT_SCOPED_TABLES.has(table as never)) {
-return chain.eq('tenant_id', this.tenantId);
-}
+    if (TENANT_SCOPED_TABLES.has(table as never)) {
+      const scopeCol = AGY_TENANT_TABLES.has(table) ? 'agency_id' : 'tenant_id';
+      return chain.eq(scopeCol, this.tenantId);
+    }
 
-if (this.mode === 'strict') {
-throw new Error(
-`[withTenantScope] Unknown table "${table}" — not in TENANT_SCOPED_TABLES or BYPASS_TABLES. ` +
-`Add it to TENANT_SCOPED_TABLES if it has tenant_id, or BYPASS_TABLES if it is global.`,
-);
-}
+    if (this.mode === 'strict') {
+      throw new Error(
+        `[withTenantScope] Unknown table "${table}" — not in TENANT_SCOPED_TABLES or BYPASS_TABLES. ` +
+        `Add it to TENANT_SCOPED_TABLES if it has tenant_id, or BYPASS_TABLES if it is global.`,
+      );
+    }
 
-// Permissive mode: scope unknown tables (safe default)
-logger.warn('[withTenantScope] Scoping unknown table', { table, tenantId: this.tenantId });
-return chain.eq('tenant_id', this.tenantId);
-}
+    // Permissive mode: scope unknown tables (safe default)
+    logger.warn('[withTenantScope] Scoping unknown table', { table, tenantId: this.tenantId });
+    return chain.eq('tenant_id', this.tenantId);
+  }
 
-/**
- * Insert with mandatory tenant_id field for scoped tables.
- * Throws if tenant_id is absent on a scoped table insert.
- */
-insertScoped(table: string, data: Record<string, unknown>): D1QueryChain {
-if (TENANT_SCOPED_TABLES.has(table as never)) {
-if (!('tenant_id' in data) || !data['tenant_id']) {
-throw new Error(
-`[withTenantScope] Insert into "${table}" requires tenant_id. ` +
-'Use insertScoped with tenant_id or assign it explicitly.',
-);
-}
-// Enforce tenant cannot inject a different tenant_id
-if (data['tenant_id'] !== this.tenantId) {
-throw new Error(
-`[withTenantScope] tenant_id mismatch on insert into "${table}".`,
-);
-}
-}
+  /**
+   * Insert with mandatory tenant_id/agency_id field for scoped tables.
+   * Throws if tenant identifier is absent on a scoped table insert.
+   */
+  insertScoped(table: string, data: Record<string, unknown>): D1QueryChain {
+    if (TENANT_SCOPED_TABLES.has(table as never)) {
+      const scopeCol = AGY_TENANT_TABLES.has(table) ? 'agency_id' : 'tenant_id';
+      const providedId = (data[scopeCol] ?? data['tenant_id']) as string | undefined;
+      if (!providedId) {
+        throw new Error(
+          `[withTenantScope] Insert into "${table}" requires ${scopeCol}. ` +
+          'Use insertScoped with tenant_id or assign it explicitly.',
+        );
+      }
+      // Enforce tenant cannot inject a different tenant_id
+      if (providedId !== this.tenantId) {
+        throw new Error(
+          `[withTenantScope] ${scopeCol} mismatch on insert into "${table}".`,
+        );
+      }
+      return this.inner.from(table).insert({ ...data, [scopeCol]: this.tenantId });
+    }
 
-return this.inner.from(table).insert({ ...data, tenant_id: this.tenantId });
-}
+    return this.inner.from(table).insert({ ...data, tenant_id: this.tenantId });
+  }
 
 /** Pass-through for RPC calls (not tenant-scoped) */
 rpc(fnName: string, params: Record<string, unknown> = {}) {

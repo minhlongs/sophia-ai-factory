@@ -12,6 +12,10 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  classifySubdomain,
+  resolveAgencySlugFromHostname,
+} from '@/tree/agy/domain-router';
 
 export interface TenantHostnameContext {
   /** True if the domain is a platform canonical or development domain */
@@ -28,6 +32,10 @@ export interface TenantHostnameContext {
   whitelabelActive: boolean;
   /** Current SSL certificate status */
   sslStatus: 'pending_validation' | 'pending_deployment' | 'active' | 'error' | null;
+  /** AGY Multi-tenancy metadata */
+  isAgencySubdomain?: boolean;
+  agencySlug?: string | null;
+  agencyId?: string | null;
 }
 
 export type TenantBrandingContext = TenantHostnameContext;
@@ -110,8 +118,15 @@ export function isInternalOrCanonicalHostname(hostname: string): boolean {
   if (hostname.endsWith('.pages.dev') || hostname === 'pages.dev') return true;
   if (hostname.endsWith('.workers.dev') || hostname === 'workers.dev') return true;
 
-  // AgencyOS canonical network
-  if (hostname.endsWith('.agencyos.network') || hostname === 'agencyos.network') return true;
+  // AgencyOS canonical network & reserved subdomains
+  if (hostname.endsWith('.agencyos.network') || hostname === 'agencyos.network') {
+    const classification = classifySubdomain(hostname);
+    if (classification.type === 'canonical' || classification.type === 'reserved_subdomain') {
+      return true;
+    }
+    // Non-reserved agency subdomains (e.g. acme.agencyos.network) are tenant subdomains, not internal
+    return false;
+  }
 
   // Check against runtime environment app URL
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -198,7 +213,49 @@ export async function resolveTenantFromHostname(
     return unverifiedContext;
   }
 
-  // 4. Query D1 database
+  // 4. Check agency subdomain lookup first
+  const agencySlug = resolveAgencySlugFromHostname(hostname);
+  if (agencySlug) {
+    try {
+      const agyRow = await db
+        .prepare(
+          `SELECT agency_id, org_id, agency_slug, status
+           FROM agy_tenant_configs
+           WHERE agency_slug = ?1 AND status = 'active'
+           LIMIT 1`
+        )
+        .bind(agencySlug)
+        .first<{
+          agency_id: string;
+          org_id: string;
+          agency_slug: string;
+          status: string;
+        }>();
+
+      if (agyRow && (agyRow.org_id || agyRow.agency_id)) {
+        const context: TenantHostnameContext = {
+          isInternal: false,
+          isCustomDomain: false,
+          isAgencySubdomain: true,
+          agencySlug: agyRow.agency_slug,
+          agencyId: agyRow.agency_id,
+          tenantOrgId: agyRow.org_id || agyRow.agency_id,
+          customDomain: null,
+          whitelabelActive: agyRow.status === 'active',
+          sslStatus: 'active',
+        };
+        setInCache(hostname, context, CACHE_TTL_MS);
+        return context;
+      }
+    } catch (err) {
+      logger.warn('[hostname-resolver] Error resolving agency slug in D1', {
+        agencySlug,
+        error: String(err),
+      });
+    }
+  }
+
+  // 5. Query D1 custom_domains database
   try {
     const row = await db
       .prepare(
@@ -230,10 +287,12 @@ export async function resolveTenantFromHostname(
       return context;
     }
 
-    // 5. Hostname not found in custom_domains table (negative cache)
+    // 6. Hostname not found in custom_domains table (negative cache)
     const notFoundContext: TenantHostnameContext = {
       isInternal: false,
-      isCustomDomain: true,
+      isCustomDomain: !agencySlug,
+      isAgencySubdomain: !!agencySlug,
+      agencySlug: agencySlug ?? null,
       tenantOrgId: null,
       customDomain: hostname,
       whitelabelActive: false,
@@ -290,8 +349,21 @@ export function injectTenantRoutingHeaders(
   requestHeaders.delete('x-tenant-org-id');
   requestHeaders.delete('x-custom-domain');
   requestHeaders.delete('x-whitelabel-active');
+  requestHeaders.delete('x-agency-id');
+  requestHeaders.delete('x-agency-slug');
+  requestHeaders.delete('x-is-agency-subdomain');
 
   const domainValue = context.customDomain || context.hostname || '';
+
+  if (context.agencyId) {
+    requestHeaders.set('x-agency-id', context.agencyId);
+  }
+  if (context.agencySlug) {
+    requestHeaders.set('x-agency-slug', context.agencySlug);
+  }
+  if (context.isAgencySubdomain) {
+    requestHeaders.set('x-is-agency-subdomain', 'true');
+  }
 
   if (context.whitelabelActive && context.tenantOrgId) {
     requestHeaders.set('x-tenant-org-id', context.tenantOrgId);
@@ -306,6 +378,14 @@ export function injectTenantRoutingHeaders(
   } else {
     requestHeaders.set('x-whitelabel-active', 'false');
   }
+}
+
+export function getAgencyId(headers: Headers): string | null {
+  return headers.get('x-agency-id');
+}
+
+export function getAgencySlug(headers: Headers): string | null {
+  return headers.get('x-agency-slug');
 }
 
 /**

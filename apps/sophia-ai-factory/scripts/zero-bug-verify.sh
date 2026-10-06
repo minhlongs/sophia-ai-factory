@@ -29,7 +29,7 @@ pass()  { echo -e "${GREEN}[PASS]${NC} $*"; }
 fail()  { echo -e "${RED}[FAIL]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 EVIDENCE_DIR="$APP_DIR/plans/evidence"

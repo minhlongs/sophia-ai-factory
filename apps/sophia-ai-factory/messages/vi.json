@@ -1,5 +1,121 @@
 {
   "100": "100",
+  "agency": {
+    "cockpitTitle": "Bảng Điều Khiển Quản Trị Doanh Nghiệp",
+    "cockpitSubtitle": "Quản lý khách hàng, chiến dịch sản xuất video, hạn mức điểm và doanh thu định kỳ.",
+    "onboardNewClient": "Khởi Tạo Khách Hàng Mới",
+    "kpi": {
+      "totalClients": "Khách Hàng Đang Hoạt Động",
+      "allocatedMcu": "Điểm Sản Xuất Đã Phân Bổ (MCU)",
+      "usedMcu": "Điểm Sản Xuất Đã Dùng (MCU)",
+      "utilization": "Tỷ Lệ Tiêu Hao Điểm",
+      "activeCampaigns": "Chiến Dịch Đang Thực Hiện",
+      "attributedMrr": "Doanh Thu Định Kỳ Ước Tính",
+      "growthRate": "Tốc Độ Tăng Trưởng"
+    },
+    "clientsTable": {
+      "title": "Danh Sách Khách Hàng",
+      "searchPlaceholder": "Tìm theo tên hoặc đường dẫn...",
+      "colClient": "Tên Khách Hàng",
+      "colStatus": "Trạng Thái",
+      "colMcu": "Hạn Mức Điểm (MCU)",
+      "colPortal": "Cổng Thông Tin",
+      "colActions": "Thao Tác",
+      "statusActive": "Hoạt Động",
+      "statusSuspended": "Tạm Dừng",
+      "toggleSuspend": "Tạm Dừng",
+      "toggleActivate": "Kích Hoạt",
+      "noClients": "Chưa có khách hàng nào. Hãy khởi tạo khách hàng đầu tiên để bắt đầu."
+    },
+    "campaignsCard": {
+      "title": "Sản Phẩm Video Gần Đây",
+      "noCampaigns": "Chưa có bản thảo video nào đang chờ duyệt.",
+      "statusInReview": "Đang Chờ Khách Duyệt",
+      "statusApproved": "Đã Phê Duyệt",
+      "statusDraft": "Bản Thảo"
+    },
+    "attributionCard": {
+      "title": "Phân Bổ Doanh Thu & Hiệu Quả",
+      "colClient": "Khách Hàng",
+      "colTier": "Gói Dịch Vụ",
+      "colMrr": "Giá Trị Định Kỳ",
+      "colMargin": "Hiệu Suất Lợi Nhuận",
+      "colVelocity": "Tốc Độ Dùng Hạn Mức",
+      "velocityNormal": "Bình Thường",
+      "velocityNearLimit": "Sắp Hết (>80%)",
+      "velocityExceeded": "Đã Vượt Hạn Mức"
+    }
+  },
+  "agencyOnboarding": {
+    "title": "Khởi Tạo Khách Hàng Doanh Nghiệp",
+    "subtitle": "Thiết lập không gian làm việc thương hiệu riêng, tên miền tùy chỉnh và trợ lý AI tự động cho khách hàng.",
+    "steps": {
+      "step1": "Hồ Sơ Khách Hàng",
+      "step2": "Nhận Diện Thương Hiệu",
+      "step3": "Tên Miền Riêng",
+      "step4": "Trợ Lý Tự Động",
+      "step5": "Kích Hoạt"
+    },
+    "profile": {
+      "clientNameLabel": "Tên Doanh Nghiệp Khách Hàng",
+      "clientNamePlaceholder": "Ví dụ: Tập Đoàn Truyền Thông Á Châu",
+      "slugLabel": "Đường Dẫn Không Gian Làm Việc",
+      "slugPlaceholder": "acme-media",
+      "slugHelp": "Được sử dụng cho cổng thông tin khách hàng: agencyos.network/portal/[slug]",
+      "emailLabel": "Email Liên Hệ Chính",
+      "emailPlaceholder": "lienhe@khachhang.vn",
+      "industryLabel": "Lĩnh Vực Hoạt Động",
+      "mcuBudgetLabel": "Hạn Mức Điểm Sản Xuất Video (MCU)",
+      "mcuBudgetHelp": "Điểm hạn mức dùng cho sản xuất video và tác vụ tự động"
+    },
+    "branding": {
+      "logoUrlLabel": "Đường Dẫn Hình Ảnh Logo",
+      "logoUrlPlaceholder": "https://cdn.doanhnghiep.vn/logo.png",
+      "primaryColorLabel": "Màu Sắc Thương Hiệu Chủ Đạo",
+      "accentColorLabel": "Màu Sắc Điểm Nhấn",
+      "customCssLabel": "Tùy Biến Giao Diện (CSS)",
+      "previewTitle": "Xem Trước Cổng Thông Tin Thương Hiệu Riêng",
+      "previewSubtitle": "Giao diện thuần túy theo nhận diện của khách hàng, không hiện logo nhà cung cấp.",
+      "previewClientWelcome": "Chào mừng bạn đến với Cổng Thông Tin Trực Tuyến",
+      "previewStatusBadge": "Không Gian Đang Hoạt Động"
+    },
+    "domain": {
+      "domainLabel": "Địa Chỉ Tên Miền Riêng",
+      "domainPlaceholder": "portal.khachhang.vn",
+      "domainHelp": "Trỏ bản ghi tên miền (CNAME) của bạn về agencyos.network",
+      "cnameTargetLabel": "Bản Ghi Tên Miền Cần Trỏ",
+      "sslStatusReady": "Chứng Chỉ Bảo Mật SSL Đã Sẵn Sàng"
+    },
+    "seedAgents": {
+      "title": "Kích Hoạt Trợ Lý AI Vận Hành Tự Động",
+      "subtitle": "Các trợ lý được thiết lập sẵn với chính sách an toàn và giới hạn ngân sách rõ ràng.",
+      "videoCreatorName": "Trợ Lý Sản Xuất Video",
+      "videoCreatorDesc": "Tự động tạo kịch bản video, clip ngắn và nội dung truyền thông.",
+      "ugcReviewerName": "Trợ Lý Tiếp Nhận Đánh Giá",
+      "ugcReviewerDesc": "Tiếp nhận ý kiến phản hồi theo dòng thời gian và điều chỉnh kịch bản.",
+      "salesOutreachName": "Trợ Lý Chăm Sóc & Tương Tác",
+      "salesOutreachDesc": "Tự động gửi thông báo cập nhật tiến độ đến khách hàng.",
+      "autonomyLevelLabel": "Mức Độ Tự Chủ",
+      "autonomyHelp": "Từ có giám sát (cần người duyệt) đến tự động thực thi trong giới hạn chi phí.",
+      "computeBudgetLabel": "Ngân Sách Tác Vụ (MCU)"
+    },
+    "launch": {
+      "summaryTitle": "Kiểm Tra Thông Tin Khởi Tạo",
+      "submitButton": "Kích Hoạt Cổng Khách Hàng Ngay",
+      "submittingButton": "Đang Khởi Tạo Không Gian...",
+      "successTitle": "Không Gian Khách Hàng Đã Sẵn Sàng!",
+      "successSubtitle": "Tài khoản khách hàng và các trợ lý tự động đã được kích hoạt thành công.",
+      "portalUrlLabel": "Đường Dẫn Cổng Thông Tin Khách Hàng",
+      "openPortalButton": "Truy Cập Cổng Khách Hàng",
+      "backToAdmin": "Quay Lại Bảng Quản Trị"
+    },
+    "common": {
+      "back": "Quay Lại",
+      "next": "Tiếp Tục",
+      "cancel": "Hủy Bỏ",
+      "required": "Trường bắt buộc"
+    }
+  },
   "seo": {
     "home": {
       "title": "Sophia AI Factory — Tự Động Hóa Video, Affiliate & Doanh Thu",
