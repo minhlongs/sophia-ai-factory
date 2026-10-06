@@ -145,6 +145,19 @@ describe('Stitch Table', () => {
     expect(tableWrapper.className).toContain('border-white/[0.08]');
   });
 
+  it('renders sticky first column with opaque theme-adaptive background and shadow', () => {
+    const { container } = render(<Table data={testData} columns={testCols} stickyFirstColumn />);
+    const th = container.querySelector('th') as HTMLElement;
+    const td = container.querySelector('td') as HTMLElement;
+    expect(th.className).toContain('sticky left-0');
+    expect(th.className).toContain('bg-background');
+    expect(th.className).toContain('dark:bg-[#12141F]');
+    expect(th.className).toContain('dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]');
+    expect(td.className).toContain('sticky left-0');
+    expect(td.className).toContain('bg-background');
+    expect(td.className).toContain('dark:bg-[#12141F]');
+  });
+
   it('renders embedded variant without outer card border or backdrop background', () => {
     const { container } = render(<Table variant="embedded" data={testData} columns={testCols} />);
     const tableWrapper = container.firstElementChild as HTMLElement;

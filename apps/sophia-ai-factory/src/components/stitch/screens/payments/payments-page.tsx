@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, Filter, Download, Eye, CreditCard, Calendar, Clock, RotateCcw } from 'lucide-react';
 import { DashboardLayout, Card, StatCard, type StatCardIconColor, Button, Badge, Table, Input } from '@/components/stitch';
 
@@ -45,10 +46,18 @@ export default function PaymentsPage({
   initialPayments,
   initialStats,
 }: PaymentsPageProps = {}) {
+  const t = useTranslations('stitch.payments');
   const [search, setSearch] = useState('');
 
+  const localizedDefaultStats: PaymentSummaryStat[] = [
+    { label: t('totalRevenue'), value: '$0.00', change: '0%', trend: 'neutral' },
+    { label: t('thisMonth'), value: '$0.00', change: '0%', trend: 'neutral' },
+    { label: t('pending'), value: '$0.00', change: '0 items', trend: 'neutral' },
+    { label: t('refunded'), value: '$0.00', change: '0%', trend: 'neutral' },
+  ];
+
   const paymentsList = initialPayments ?? EMPTY_PAYMENTS;
-  const statsList = initialStats ?? DEFAULT_ZERO_STATS;
+  const statsList = initialStats ?? localizedDefaultStats;
 
   const filteredPayments = paymentsList.filter(
     (item) =>
@@ -59,11 +68,11 @@ export default function PaymentsPage({
 
   return (
     <DashboardLayout
-      title="Payments"
-      subtitle="Track transactions, refunds, and revenue"
+      title={t('title')}
+      subtitle={t('subtitle')}
       actions={
         <Button variant="outline" iconLeft={<Download className="w-4 h-4" />}>
-          Export
+          {t('export')}
         </Button>
       }
     >
@@ -98,14 +107,14 @@ export default function PaymentsPage({
           <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search payments by customer, email, or method..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 h-10 w-full"
             />
           </div>
           <Button variant="outline" size="md" iconLeft={<Filter className="w-4 h-4" />} className="w-full sm:w-auto">
-            Filter
+            {t('filter')}
           </Button>
         </div>
       </Card>
@@ -116,10 +125,10 @@ export default function PaymentsPage({
           <div className="py-16 text-center px-4">
             <CreditCard className="w-12 h-12 text-on-surface-variant/40 mx-auto mb-4" />
             <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-1">
-              No payment transactions recorded
+              {t('emptyTitle')}
             </h4>
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-md mx-auto mb-6">
-              Settlements and confirmations via NOWPayments (USDT) or PayOS (VietQR) will automatically populate here in real-time.
+              {t('emptyDesc')}
             </p>
           </div>
         </Card>
@@ -127,24 +136,24 @@ export default function PaymentsPage({
         <Table
           data={filteredPayments}
           stickyFirstColumn
-          emptyMessage="No payment transactions match your query."
+          emptyMessage={t('emptyFilterMessage')}
           columns={[
-            { key: 'date', header: 'Date', cell: (row) => (
+            { key: 'date', header: t('columns.date'), cell: (row) => (
               <span className="font-body-sm text-on-surface-variant">{row.date}</span>
             ) },
-            { key: 'customer', header: 'Customer', cell: (row) => (
+            { key: 'customer', header: t('columns.customer'), cell: (row) => (
               <div>
                 <p className="font-label-md text-on-surface">{row.customer}</p>
                 <p className="text-[12px] text-on-surface-variant">{row.email}</p>
               </div>
             ) },
-            { key: 'amount', header: 'Amount', cell: (row) => (
+            { key: 'amount', header: t('columns.amount'), cell: (row) => (
               <span className="font-semibold text-on-surface">{row.amount}</span>
             ), align: 'right' },
-            { key: 'method', header: 'Method', cell: (row) => (
+            { key: 'method', header: t('columns.method'), cell: (row) => (
               <span className="font-body-sm text-on-surface-variant font-mono text-xs">{row.method}</span>
             ), align: 'center' },
-            { key: 'status', header: 'Status', cell: (row) => (
+            { key: 'status', header: t('columns.status'), cell: (row) => (
               <Badge
                 variant="soft"
                 color={
@@ -157,8 +166,8 @@ export default function PaymentsPage({
               </Badge>
             ), align: 'center' },
             { key: 'actions', header: '', cell: () => (
-              <Button variant="ghost" size="sm" iconLeft={<Eye className="w-4 h-4" />}>
-                View
+              <Button variant="ghost" size="sm" iconLeft={<Eye className="w-4 h-4" />} aria-label={t('view')}>
+                {t('view')}
               </Button>
             ), align: 'right' },
           ]}

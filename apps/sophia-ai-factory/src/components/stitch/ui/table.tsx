@@ -72,7 +72,7 @@ export function Table<T>({
                     'px-3 sm:px-6 py-3.5',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right',
-                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-inherit z-10 shadow-[1px_0_0_rgba(255,255,255,0.08)]'
+                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-background dark:bg-[#12141F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                   )}
                   style={col.width ? { width: col.width } : undefined}
                 >
@@ -114,7 +114,7 @@ export function Table<T>({
                         'px-3 sm:px-6 py-4 text-foreground dark:text-slate-200',
                         col.align === 'center' && 'text-center',
                         col.align === 'right' && 'text-right',
-                        stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-inherit z-10 shadow-[1px_0_0_rgba(255,255,255,0.08)]'
+                        stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-background dark:bg-[#12141F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                       )}
                     >
                       {col.cell(row, rowIndex)}

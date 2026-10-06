@@ -49,7 +49,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
           <LoginForm redirectTo={redirectTo} />
 
           {/* Footer */}
-          <p className="mt-8 text-center text-xs text-zinc-600">
+          <p className="mt-8 text-center text-xs text-zinc-400">
             &copy; {new Date().getFullYear()} Sophia AI Factory. All rights reserved.
           </p>
         </div>
