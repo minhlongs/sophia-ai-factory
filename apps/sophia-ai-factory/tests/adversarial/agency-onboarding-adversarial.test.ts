@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 /**
  * Adversarial Stress Test Suite: Agency Client Onboarding & Portal
  *

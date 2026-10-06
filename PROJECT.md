@@ -1,123 +1,85 @@
-# Project: Full-Stack AGY (AgencyOS Multi-Tenancy, Agent Governance YAML, Client Onboarding & Agency Portal)
+# Project: Autonomous AGI Loop Control (`mk-autonomous` / CHÚA CHÙM 24/7 Agent Swarm & Heartbeat Scheduler)
 
 ## Architecture
-Clean 4-Layer Architecture (`seed` -> `tree` -> `forest` -> `land`) for Sophia AI Factory on Cloudflare Workers edge:
-- **Seed Layer (`src/seed/`)**: Pure types, interfaces, Zod schemas, AGY YAML parsers, tenant context tokens, and database tenant scoping (`withTenantScope`). Strictly zero dependencies on upper layers.
-- **Tree Layer (`src/tree/`)**: Pure deterministic domain logic with zero side effects. Contains domain router (`[agencySlug].agencyos.network`), tenant token cryptographic verification, agency quota calculators, sliding-window rate limit algorithms, AGY policy enforcement engine (L0–L4 autonomy, compute caps, allow/deny precedence, SHA-256 digests), and revenue attribution models.
-- **Forest Layer (`src/forest/`)**: Edge middleware, background workers, and rich UI components. Contains `agy-tenant-isolation.ts` middleware, `agency-onboarding-wizard.tsx`, and `agency-admin-portal.tsx`. Never imported by `land`.
-- **Land Layer (`src/land/`) & App Routes (`src/app/`)**: User-facing Server Actions, D1 database transactions, audit logging, and Next.js App Router controllers (`/agency`, `/agency/onboarding`). Calls `tree` for domain logic and `seed` for types/database clients.
+- **4-Layer Clean Architecture**:
+  - `seed`: Domain types (`src/seed/types/autonomous-engine.ts`), D1 migration `0437_autonomous_loop_and_heartbeat_scheduler.sql`. Zero upper-layer imports.
+  - `tree`: Pure domain logic with zero side-effects (`src/tree/autonomous/state-machine.ts`, `cron-evaluator.ts`, `retry-backoff.ts`, `circuit-breaker.ts`, `task-pipeline.ts`, `swarm-orchestrator.ts`). Zero land/forest imports.
+  - `forest`: Existing background job runners and scheduled events (`src/forest/cron/`).
+  - `land`: Server actions (`src/land/autonomous/loop-actions.ts`), UI cockpit components, route controllers (`src/app/[locale]/(admin)/admin/autonomous/page.tsx`).
+- **Data Flow**:
+  1. Cron Trigger / API Tick / Admin Action → `land/autonomous/loop-actions.ts`
+  2. `land` verifies tenant/admin auth, claims execution lease via CAS on D1 `autonomous_loop_state`.
+  3. `tree/autonomous/state-machine.ts` transitions state (Idle → Running).
+  4. `tree/autonomous/cron-evaluator.ts` checks due tasks from `autonomous_schedule_tasks`.
+  5. `tree/governance/agy-policy-engine.ts` enforces MCU limits and token bounds before task execution.
+  6. `tree/autonomous/swarm-orchestrator.ts` dispatches tasks to capability handlers (`affiliate-scout`, `content-producer`, `auto-publisher`).
+  7. On error: `tree/autonomous/retry-backoff.ts` calculates jittered backoff; retries exhausted → DLQ `autonomous_dead_letter_queue`; 5 consecutive failures → trip circuit breaker.
+  8. Execution cycle recorded in `autonomous_cycle_runs`. State transitions back to Idle (or Paused / Circuit-Broken).
+  9. UI Cockpit polls / triggers actions via Server Actions.
 
 ## Feature Inventory
-Every feature required by user request 2026-10-06T05:07:29Z is enumerated below:
-
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Multi-Agency Domain Router | Maps `[agencySlug].agencyos.network` and custom domains to tenant organizations via Cloudflare edge routing | M1 | Survey (R1) |
-| 2 | Reserved Domain Partitioning | Distinguishes platform reserved subdomains (`sophia`, `api`, `admin`, `portal`, `sub`) from dynamic customer agency slugs | M1 | Survey (R1) |
-| 3 | D1 Row-Level Tenant Isolation | Schema and row-level tenant token isolation (`agency_id` / `org_id`) with registration in `withTenantScope` | M1 | Survey (R1) |
-| 4 | D1 Multi-Tenancy Migrations | Tables `agy_tenant_configs`, `agy_tenant_tokens`, `agy_agency_domains`, `agy_audit_logs` in migration `0435` | M1 | Survey (R1) |
-| 5 | Edge Tenant Isolation Middleware | Edge middleware enforcing tenant scoping, cross-tenant blocking, and request decoration | M1 | Survey (R1) |
-| 6 | Agency Rate-Limiting & Quota Engine | Sliding-window request rate-limiting (HTTP 429) and monthly compute quota enforcement (HTTP 402) | M1 | Survey (R1) |
-| 7 | Multi-Tenancy Server Actions | Server Actions in `src/land/agy/agency-tenant-actions.ts` for domain binding and tenant token lifecycle | M1 | Survey (R1) |
-| 8 | Declarative AGY YAML Schema | Zod and TypeScript schemas for Agent Governance YAML (capabilities, permissions, compute caps, escalation) | M2 | Survey (R2) |
-| 9 | Safe AGY Parser & Size Guard | Memory-safe YAML parser using `js-yaml` with a 512KB payload cap for Cloudflare Workers edge runtime | M2 | Survey (R2) |
-| 10 | AGY Pure Policy Enforcement Engine | Pure domain engine in `tree/governance/` evaluating L0–L4 autonomy, compute caps, and allow/deny precedence | M2 | Survey (R2) |
-| 11 | Deterministic SHA-256 Policy Digest | Generates tamper-evident SHA-256 evaluation digest and escalation triggers for every policy evaluation | M2 | Survey (R2) |
-| 12 | D1 AGY Policy Audit Ledger | Migration `0436` creating `agy_policy_audit_ledger` with tamper-evident indices and query actions | M2 | Survey (R2) |
-| 13 | AGY Governance Server Actions | Server Actions in `src/land/governance/agy-actions.ts` for policy registration, validation, and audit queries | M2 | Survey (R2) |
-| 14 | Agency Client Onboarding Wizard | 5-step onboarding wizard at `/agency/onboarding` (Profile → Branding → Custom Domain → Seed Agents → Launch) | M3 | Survey (R3) |
-| 15 | White-Label Branding Engine | Custom agency branding, logo upload, color theming, and real-time unbranded client preview | M3 | Survey (R3) |
-| 16 | Seed Agent Deployment Flow | Deploys pre-configured seed agents (Video Creator, UGC Reviewer, Outreach Bot) bound to AGY governance policies | M3 | Survey (R3) |
-| 17 | High-Performance Agency Portal | Responsive admin portal at `/agency` for agency owners: KPI metrics, client management, campaign tracking | M3 | Survey (R3) |
-| 18 | Agency Revenue Attribution Ledger | Real-time attribution and client subaccount tracking for agency MRR and video credit usage | M3 | Survey (R3) |
-| 19 | Bilingual Jargon-Free UI Copy | Full Vietnamese and English localization in `messages/vi.json` and `messages/en.json` explaining concepts cleanly | M3 | Survey (R3) |
-| 20 | Protected Flows Preservation | Preserves `/setup-wizard`, Telegram Commander Bot, and NOWPayments IPN 100% intact | M4 | Survey (R4) |
-| 21 | Clean 4-Layer Architecture Enforcement | `bash scripts/check-layer-boundaries.sh` reports exactly 0 violations across all codebase layers | M4 | Survey (R4) |
-| 22 | Strict TypeScript Compilation | `npm --prefix apps/sophia-ai-factory run type-check` returns exit code 0 with 0 errors and zero `:any` types | M4 | Survey (R4) |
-| 23 | Clean ESLint Standards | `npm --prefix apps/sophia-ai-factory run lint` completes with 0 errors | M4 | Survey (R4) |
-| 24 | Complete Test Suite Coverage | 100% test pass rate across all unit, integration, and stress tests (`npx vitest run`) | M4 | Survey (R4) |
-| 25 | Root Wrapper Script Parity | Repository root wrapper `scripts/zero-bug-verify.sh` forwarding to `apps/sophia-ai-factory/scripts/` | M4 | Survey (R4) |
-| 26 | 9/9 Zero-Bug Certification | `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS with 100/100 score | M4 | Survey (R4) |
-| 27 | Cloudflare Workers Edge Deployment | Direct deploy via `EMERGENCY_CF_DIRECT=1 ALLOW_UNPUSHED_DEPLOY=1 SKIP_SYMBOL_UPLOAD=1 ./scripts/deploy-with-sha.sh` | M4 | Survey (R4) |
-| 28 | Live Edge SHA & Health Verification | Bit-for-bit SHA match at `https://sophia.agencyos.network/api/version` and HTTP 200 at `/api/health` | M4 | Survey (R4) |
-| 29 | Opaque-Box E2E Test Suite | End-to-end tests covering Tiers 1-4 across multi-tenancy, governance, onboarding, and portal flows | E2E | Survey (E2E) |
+| 1 | Deterministic FSM | 5-state deterministic state machine (`IDLE`, `RUNNING`, `PAUSED`, `RECOVERING`, `CIRCUIT_BROKEN`) with atomic D1 CAS | M1 | R1 § 1 |
+| 2 | Heartbeat Schedule Processor | Edge-safe cron expression parser and interval scheduler based on `openclaw.json` and `HEARTBEAT.md` | M1 | R1 § 2 |
+| 3 | Fault Tolerance & DLQ | Auto-retry with exponential backoff & jitter, DLQ preservation, and 2-tier circuit breaker | M1 | R1 § 3 |
+| 4 | Swarm Orchestrator | Autonomous agent swarm dispatch: Affiliate Scout (4h), Content Producer (daily 6:00 UTC), Auto-Publisher (event-driven/APAC peak) | M2 | R2 § 1 |
+| 5 | Compute & Cost Governance | Strict MCU quota enforcement, per-cycle token bounds, and AGY escalation policies via `tree/governance/` | M2 | R2 § 2 |
+| 6 | D1 Audit Logging | Persistent telemetry of cycle runs, actions taken, MCU consumption, consciousness score, and error summaries | M1 | R2 § 3 |
+| 7 | Operations Cockpit Controls | Real-time cockpit controls: Start, Pause, Resume, Force Cycle, Emergency Halt | M3 | R3 § 1 |
+| 8 | Cycle Metrics Dashboard | Real-time cycle metrics: active agents, tasks executed, MCU consumed, success rates, health status | M3 | R3 § 2 |
+| 9 | Bilingual UI (Zero Jargon) | Bilingual VI/EN copy adhering to the Constitution without developer jargon | M3 | R3 § 3 |
+| 10 | 4-Layer Purity & TS Invariants | 0 layer boundary violations, 0 TS compiler errors, 0 ESLint errors | M4 | R4 § 1 |
+| 11 | 100% Vitest Test Pass Rate | 100% pass rate across unit, integration, and adversarial tests | M4 | R4 § 2 |
+| 12 | 9/9 Zero-Bug Certification | Verification proof via `scripts/zero-bug-verify.sh --quick` achieving 9/9 PASS | M4 | R4 § 3 |
+| 13 | Live Edge CF Deployment | Cloudflare Workers direct deploy via `./scripts/deploy-with-sha.sh` with bit-for-bit SHA parity and HTTP 200 health check | M4 | R4 § 4 |
 
 ## Milestones
-
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | AGY Multi-Tenancy & Tenant Isolation | Features 1–7: Migration 0435, seed types, tree domain router, quota engine, forest middleware, land actions | none | DONE |
-| M2 | Agent Governance YAML Schema & Engine | Features 8–13: Migration 0436, seed parser, tree policy engine, audit ledger, land actions | M1 | DONE |
-| M3 | Agency Client Onboarding & Portal Experience | Features 14–19: Onboarding wizard, agency admin portal, seed agent deployment, attribution, bilingual copy | M1, M2 | PLANNED |
-| M4 | Zero-Bug Quality Invariants & Production Edge Deployment | Features 20–28: Quality checks, root wrapper, 9/9 zero-bug certification, edge deploy, live SHA verification | M1, M2, M3, E2E | PLANNED |
-| E2E | E2E Testing Track | Feature 29: Comprehensive opaque-box test suites (Tiers 1-4), test runner, and `TEST_READY.md` publication | none | DONE |
+| M1 | Core Autonomous Loop Engine | Seed types (`autonomous-engine.ts`), D1 migration `0437`, Tree FSM (`state-machine.ts`), Cron/Interval Scheduler (`cron-evaluator.ts`), Retry/DLQ (`retry-backoff.ts`), Circuit Breaker (`circuit-breaker.ts`), and unit test suite | none | DONE |
+| M2 | Swarm Capabilities & Governance Enforcement | Swarm Orchestrator (`swarm-orchestrator.ts`), capability wiring (`affiliate-scout`, `content-producer`, `auto-publisher`), MCU quotas & AGY policy evaluation, D1 audit logging | M1 | IN_PROGRESS |
+| M3 | Land Server Actions & Operations Cockpit UI | Land actions (`loop-actions.ts`), UI cockpit (`/admin/autonomous`), bilingual copy in `vi.json` & `en.json`, admin sidebar navigation | M1, M2 | PLANNED |
+| M4 | Zero-Bug Certification & Production Edge Deployment | 100% Vitest pass rate across all suites, 9/9 Zero-Bug verification, Cloudflare Workers edge deploy, live SHA verification, HTTP 200 check | M1, M2, M3 | PLANNED |
 
 ## Interface Contracts
 
-### M1 (Multi-Tenancy) ↔ Core Middleware & M2/M3
-- `AgencyTenantContext`: `{ agencyId: string; orgId: string; agencySlug: string; customDomain?: string; quotaLimitMcu: number; quotaUsedMcu: number; rateLimitRps: number }`
-- `TenantResolutionResult`: `{ isAgencySubdomain: boolean; isCustomDomain: boolean; agencySlug: string | null; tenantOrgId: string | null; agencyId: string | null }`
-- `AgyTenantToken`: `{ token: string; agencyId: string; permissions: string[]; expiresAt: number; signature: string }`
+### Seed Types (`src/seed/types/autonomous-engine.ts`)
+- `AutonomousEngineState = 'IDLE' | 'RUNNING' | 'PAUSED' | 'RECOVERING' | 'CIRCUIT_BROKEN'`
+- `AutonomousStateEvent = 'START' | 'TRIGGER_CYCLE' | 'CYCLE_SUCCESS' | 'NO_TASKS_DUE' | 'TASK_FAILURE' | 'RECOVERY_SUCCESS' | 'MAX_RETRIES_EXCEEDED' | 'CONSECUTIVE_FAILURES' | 'CRITICAL_ERROR' | 'PAUSE_CMD' | 'RESUME_CMD' | 'FORCE_CYCLE_CMD' | 'EMERGENCY_HALT' | 'COOLDOWN_EXPIRED' | 'MANUAL_RESET' | 'BUDGET_EXCEEDED'`
+- `transitionAutonomousState(currentState, event, ctx): StateTransitionResult`
+- `parseCronExpression(expr): CronRules`, `isCronDue(expr, date, tz): boolean`, `calculateNextCronRun(expr, date, tz): Date`
+- `calculateBackoff(attempt, config, jitter): RetryEvaluation`
+- `evaluateCircuitStatus(current, action, now): CircuitEvaluationResult`
 
-### M2 (Governance Engine) ↔ Agent Runtime & M3
-- `AgentGovernanceYaml`: `{ schemaVersion: string; agent: { id: string; name: string; role: string; maxAutonomyLevel: 'L0' | 'L1' | 'L2' | 'L3' | 'L4' }; compute: { maxTokensPerRun: number; maxComputeUnitsMcu: number }; permissions: { allow: string[]; deny: string[] }; escalation: { onQuotaExceeded: 'halt' | 'request_approval'; onDisallowedAction: 'halt' | 'escalate_human' } }`
-- `PolicyEvaluationRequest`: `{ agencyId: string; agentId: string; action: string; requestedAutonomy: 'L0'|'L1'|'L2'|'L3'|'L4'; requestedComputeUnits: number; metadata?: Record<string, unknown> }`
-- `PolicyEvaluationVerdict`: `{ allowed: boolean; reason: string; requiredAutonomy: 'L0'|'L1'|'L2'|'L3'|'L4'; escalationTriggered: boolean; evaluationSha256: string }`
-
-### M3 (Onboarding & Portal) ↔ Multi-Tenancy & Governance
-- `AgencyOnboardingInput`: `{ agencyName: string; agencySlug: string; customDomain?: string; primaryColor?: string; logoUrl?: string; seedAgents: Array<{ role: string; template: string; maxAutonomy: 'L0'|'L1'|'L2'|'L3'|'L4' }> }`
-- `AgencyPortalOverview`: `{ agencyId: string; agencyName: string; totalClients: number; activeCampaigns: number; totalMcuConsumed: number; estimatedMrrUsd: number }`
+### Land Server Actions (`src/land/autonomous/loop-actions.ts`)
+- `getAutonomousLoopStatusAction(): Promise<ActionResult<AutonomousLoopStateRow & { tasks: AutonomousScheduleTaskRow[], recentRuns: AutonomousCycleRunRow[] }>>`
+- `triggerAutonomousCycleAction(options?: { force?: boolean }): Promise<ActionResult<AutonomousCycleTelemetry>>`
+- `pauseAutonomousLoopAction(reason?: string): Promise<ActionResult<void>>`
+- `resumeAutonomousLoopAction(): Promise<ActionResult<void>>`
+- `emergencyHaltAutonomousLoopAction(): Promise<ActionResult<void>>`
+- `resetAutonomousCircuitBreakerAction(): Promise<ActionResult<void>>`
+- `replayDeadLetterTaskAction(dlqId: string): Promise<ActionResult<void>>`
 
 ## Code Layout
-```
-apps/sophia-ai-factory/
-├── migrations/
-│   ├── 0435_agy_multitenancy_and_tenant_isolation.sql   # M1: Multi-tenancy D1 tables
-│   └── 0436_agent_governance_yaml_and_audit_ledger.sql  # M2: AGY audit ledger tables
-├── src/
-│   ├── seed/
-│   │   ├── types/
-│   │   │   ├── agy-multitenancy.ts                      # M1: Multi-tenancy types
-│   │   │   ├── agent-governance.ts                      # M2: AGY schema & evaluation types
-│   │   │   └── agency-portal.ts                         # M3: Onboarding & Portal types
-│   │   ├── validators/
-│   │   │   ├── agy-schema.ts                            # M2: Zod AGY schema
-│   │   │   └── agy-parser.ts                            # M2: YAML parser with size guard
-│   │   └── db/
-│   │       └── with-tenant-scope.ts                     # M1: Register AGY tenant tables
-│   ├── tree/
-│   │   ├── agy/
-│   │   │   ├── domain-router.ts                         # M1: Agency subdomain & custom domain resolver
-│   │   │   ├── tenant-token-engine.ts                   # M1: Token generation & HMAC verification
-│   │   │   └── agency-quota-engine.ts                   # M1: Sliding-window rate-limiter & quota engine
-│   │   ├── governance/
-│   │   │   └── agy-policy-engine.ts                     # M2: Pure policy enforcement & evaluation SHA-256
-│   │   └── agency/
-│   │       ├── attribution-engine.ts                    # M3: Revenue attribution & client usage
-│   │       └── onboarding-validator.ts                  # M3: Agency slug & branding validator
-│   ├── forest/
-│   │   ├── middleware/
-│   │   │   └── agy-tenant-isolation.ts                  # M1: Tenant isolation & quota middleware
-│   │   └── agency/
-│   │       ├── agency-onboarding-wizard.tsx             # M3: 5-step onboarding wizard component
-│   │       └── agency-admin-portal.tsx                  # M3: Agency management portal component
-│   ├── land/
-│   │   ├── agy/
-│   │   │   └── agency-tenant-actions.ts                 # M1: Server actions for tenant management
-│   │   ├── governance/
-│   │   │   └── agy-actions.ts                           # M2: Server actions for policy evaluation
-│   │   └── agency/
-│   │       └── agency-portal-actions.ts                 # M3: Server actions for onboarding & portal
-│   ├── app/
-│   │   └── [locale]/(app)/
-│   │       └── agency/
-│   │           ├── page.tsx                             # M3: Agency Admin Portal page
-│   │           └── onboarding/page.tsx                  # M3: Agency Onboarding Wizard page
-│   └── middleware.ts                                    # M1: Wire AGY domain & tenant router
-├── messages/
-│   ├── en.json                                          # M3: English translations (no jargon)
-│   └── vi.json                                          # M3: Vietnamese translations (no jargon)
-└── tests/
-    └── e2e/
-        └── agy-fullstack.test.ts                        # E2E Track: Comprehensive E2E test suite
-```
+- `apps/sophia-ai-factory/src/seed/types/autonomous-engine.ts`
+- `apps/sophia-ai-factory/migrations/0437_autonomous_loop_and_heartbeat_scheduler.sql`
+- `apps/sophia-ai-factory/src/tree/autonomous/state-machine.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/cron-evaluator.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/retry-backoff.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/circuit-breaker.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/task-pipeline.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/swarm-orchestrator.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/index.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/__tests__/state-machine.test.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/__tests__/cron-evaluator.test.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/__tests__/retry-backoff.test.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/__tests__/circuit-breaker.test.ts`
+- `apps/sophia-ai-factory/src/tree/autonomous/__tests__/swarm-orchestrator.test.ts`
+- `apps/sophia-ai-factory/src/land/autonomous/loop-actions.ts`
+- `apps/sophia-ai-factory/src/land/autonomous/__tests__/loop-actions.test.ts`
+- `apps/sophia-ai-factory/src/app/[locale]/(admin)/admin/autonomous/page.tsx`
+- `apps/sophia-ai-factory/messages/en.json` (under `autonomous` key)
+- `apps/sophia-ai-factory/messages/vi.json` (under `autonomous` key)
+- `tests/integration/autonomous-agi-loop.test.ts`
+- `tests/adversarial/autonomous-agi-loop.test.ts`

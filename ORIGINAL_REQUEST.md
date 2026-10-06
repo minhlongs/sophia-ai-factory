@@ -1809,3 +1809,62 @@ Enforce all mandatory Sophia production contracts:
 - [ ] Live edge SHA from `https://sophia.agencyos.network/api/version` matches commit SHA bit-for-bit.
 - [ ] `https://sophia.agencyos.network/api/health` returns HTTP 200.
 - [ ] `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.
+
+
+## 2026-10-06T09:17:40Z
+
+Use a very large team of agents to build, verify, and ship the production-grade Autonomous AGI Loop Control system (`mk-autonomous` / CHÚA CHÙM 24/7 Agent Swarm & Heartbeat Scheduler) on Sophia AI Factory with live Cloudflare Workers edge deployment and 9/9 Zero-Bug Certification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. Autonomous Loop Engine & Heartbeat Scheduler
+Implement the core 24/7 autonomous loop state machine and scheduler:
+- Continuous AGI execution loop with deterministic state transitions (Idle, Running, Paused, Recovering, Circuit-Broken).
+- Heartbeat schedule processor supporting cron and interval triggers derived from `autonomous-skills/openclaw.json` and `HEARTBEAT.md`.
+- Dead-letter task queue, auto-retry with exponential backoff, and circuit-breaker failure isolation.
+
+### R2. Autonomous Agent Swarm & Governance Enforcement
+Integrate autonomous agent execution with Sophia's 4-layer architecture:
+- Swarm orchestration for autonomous capabilities: Affiliate Scout (scraping/offers), Content Producer (video drafts), and Auto-Publisher (channel syndication).
+- Strict compute and cost limits (MCU quota limits, per-cycle token bounds, and AGY escalation policies).
+- D1 audit logging of all autonomous execution cycles, actions taken, and compute consumption.
+
+### R3. Autonomous Operations Cockpit & Bilingual UI
+Deliver an intuitive, responsive operations cockpit for administrators and operators:
+- Real-time Autonomous Loop Control interface: Start, Pause, Resume, Force Cycle, and Emergency Halt.
+- Cycle metrics dashboard: active agents, tasks executed, MCU consumed, success rates, and live health status.
+- Bilingual (VI/EN) copy without technical jargon across all controls and status indicators.
+
+### R4. Zero-Bug Quality Invariants & Production Edge Deployment
+Enforce all mandatory Sophia production contracts:
+- 4-layer architecture (`seed` → `tree` → `forest` → `land`) with 0 layer boundary violations.
+- 0 TypeScript compilation errors (`tsc --noEmit`).
+- 0 ESLint errors (`npm run lint`).
+- 100% test pass rate across all unit, integration, and adversarial test suites (`npx vitest run`).
+- 9/9 Zero-Bug verification passing (`scripts/zero-bug-verify.sh --quick`).
+- Cloudflare Workers edge deployment via `./scripts/deploy-with-sha.sh` with bit-for-bit SHA verification against `https://sophia.agencyos.network/api/version`.
+- `https://sophia.agencyos.network/api/health` returns HTTP 200.
+
+## Acceptance Criteria
+
+### Autonomous Engine & Swarm Logic
+- [ ] D1 migrations created for autonomous loop state, heartbeat task queue, and cycle run history.
+- [ ] Seed layer types defined for loop configurations, heartbeat schedules, and autonomous cycle telemetry.
+- [ ] Tree layer pure state machine and schedule parser implemented with zero side effects.
+- [ ] Land layer server actions implemented with workspace auth and atomic D1 transaction handling.
+- [ ] Unit & integration tests pass with 100% rate.
+
+### Code Quality & Layer Discipline
+- [ ] `bash scripts/check-layer-boundaries.sh` reports 0 violations.
+- [ ] `npm --prefix apps/sophia-ai-factory run type-check` returns exit code 0 with 0 errors.
+- [ ] `npm --prefix apps/sophia-ai-factory run lint` completes with 0 errors.
+- [ ] Zero `:any` types; all protected flows (Setup Wizard, Telegram Bot, NOWPayments IPN) preserved.
+
+### Production Edge & Zero-Bug Certification
+- [ ] Automated edge deploy succeeds via `EMERGENCY_CF_DIRECT=1 ALLOW_UNPUSHED_DEPLOY=1 SKIP_SYMBOL_UPLOAD=1 ./scripts/deploy-with-sha.sh`.
+- [ ] Live edge SHA from `https://sophia.agencyos.network/api/version` matches commit SHA bit-for-bit.
+- [ ] `https://sophia.agencyos.network/api/health` returns HTTP 200.
+- [ ] `bash scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.

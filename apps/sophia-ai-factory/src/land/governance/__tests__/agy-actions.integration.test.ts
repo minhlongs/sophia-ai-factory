@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 /**
  * Direct Integration Test Suite: AGY Server Actions & D1 Policy Audit Ledger
  *

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 /**
  * Direct Integration Test Suite: Agency Tenant Server Actions
  *

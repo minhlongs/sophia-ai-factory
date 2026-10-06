@@ -286,3 +286,4 @@ export type {
 } from './agent-governance';
 export type { AutonomyLevel as AgyAutonomyLevel } from './agent-governance';
 export * from './agency-portal';
+export * from './autonomous-engine';

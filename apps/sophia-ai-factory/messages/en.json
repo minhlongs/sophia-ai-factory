@@ -8681,6 +8681,84 @@
       "telegramSent": "Telegram alert dispatched successfully.",
       "webhookSent": "Incident webhook dispatched successfully."
     }
+  },
+  "autonomous": {
+    "title": "Autonomous Operations Cockpit",
+    "subtitle": "24/7 Intelligent Automation Engine & Agent Swarm Scheduler",
+    "status": {
+      "idle": "Standby (Ready)",
+      "running": "Active (Executing Tasks)",
+      "paused": "Paused (Suspended by Operator)",
+      "recovering": "Self-Healing (Canary Verification)",
+      "circuitBroken": "Safety Interlock (Tripped)",
+      "consciousness": "System Health Score",
+      "consecutiveFailures": "Sequential Anomalies",
+      "cycleCount": "Cycles Completed",
+      "lastHeartbeat": "Last Signal"
+    },
+    "controls": {
+      "start": "Activate System",
+      "pause": "Pause System",
+      "resume": "Resume System",
+      "forceCycle": "Run On-Demand Cycle",
+      "emergencyHalt": "Emergency Stop",
+      "resetCircuit": "Reset Safety Interlock",
+      "refresh": "Refresh Data",
+      "confirmHalt": "Are you sure you want to stop all active autonomous agents immediately?",
+      "confirmReset": "Reset the safety interlock and resume normal schedule?"
+    },
+    "metrics": {
+      "activeAgents": "Active Swarm Agents",
+      "tasksDue": "Pending Tasks",
+      "computeConsumed": "Compute Units Used",
+      "costEstimate": "Estimated Operating Cost",
+      "successRate": "Success Rate"
+    },
+    "tasks": {
+      "title": "Automated Workflows & Skills",
+      "name": "Workflow Name",
+      "schedule": "Schedule & Frequency",
+      "tier": "Access Tier",
+      "priority": "Priority",
+      "nextRun": "Next Execution",
+      "lastRun": "Last Completed",
+      "status": "State",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "affiliateScout": "Market Intelligence & Partner Scout",
+      "contentProducer": "Autonomous Video & Content Production",
+      "autoPublisher": "Multi-Channel Content Syndication"
+    },
+    "runs": {
+      "title": "Recent Execution Cycles",
+      "cycleId": "Cycle Reference",
+      "trigger": "Trigger Type",
+      "stateChange": "State Transition",
+      "tasksCount": "Tasks Attempted / Succeeded",
+      "compute": "Compute Utilized",
+      "duration": "Execution Duration",
+      "time": "Timestamp"
+    },
+    "dlq": {
+      "title": "Dead-Letter Queue & Issue Recovery",
+      "empty": "No unhandled failures. System running cleanly.",
+      "taskId": "Task ID",
+      "error": "Encountered Issue",
+      "retries": "Attempts",
+      "firstFailed": "First Anomaly",
+      "replay": "Retry Task",
+      "replaying": "Retrying..."
+    },
+    "messages": {
+      "started": "Autonomous operations activated successfully.",
+      "paused": "Autonomous operations paused.",
+      "resumed": "Autonomous operations resumed.",
+      "halted": "Emergency halt engaged. All autonomous tasks suspended.",
+      "circuitReset": "Safety interlock reset. System returned to standby.",
+      "cycleCompleted": "Cycle completed successfully.",
+      "replayed": "Task queued for immediate retry.",
+      "actionFailed": "Action could not be completed."
+    }
   }
 }
 

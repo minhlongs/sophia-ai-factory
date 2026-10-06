@@ -8688,6 +8688,84 @@
       "telegramSent": "Đã gửi thông báo cảnh báo qua Telegram thành công.",
       "webhookSent": "Đã gửi thông báo tới webhook sự cố thành công."
     }
+  },
+  "autonomous": {
+    "title": "Khoang Điều Khiển Tự Động Hoá",
+    "subtitle": "Hệ thống vận hành liên tục 24/7 & Lập lịch Biệt đội AI Tự chủ",
+    "status": {
+      "idle": "Sẵn sàng (Chờ lệnh)",
+      "running": "Đang hoạt động (Đang xử lý nhiệm vụ)",
+      "paused": "Đang tạm dừng (Tạm dừng bởi quản trị viên)",
+      "recovering": "Tự phục hồi (Đang kiểm tra an toàn)",
+      "circuitBroken": "Khoá bảo vệ (Tạm ngắt tự động)",
+      "consciousness": "Chỉ số sức khoẻ hệ thống",
+      "consecutiveFailures": "Sự cố liên tiếp",
+      "cycleCount": "Chu kỳ đã hoàn thành",
+      "lastHeartbeat": "Tín hiệu gần nhất"
+    },
+    "controls": {
+      "start": "Kích hoạt Vận hành",
+      "pause": "Tạm dừng",
+      "resume": "Tiếp tục Vận hành",
+      "forceCycle": "Chạy Ngay Một Chu Kỳ",
+      "emergencyHalt": "Dừng Khẩn Cấp",
+      "resetCircuit": "Đặt lại Khoá Bảo Vệ",
+      "refresh": "Làm mới Dữ liệu",
+      "confirmHalt": "Bạn có chắc chắn muốn dừng khẩn cấp toàn bộ các tác vụ tự động ngay lập tức?",
+      "confirmReset": "Đặt lại khoá bảo vệ và đưa hệ thống về trạng thái sẵn sàng?"
+    },
+    "metrics": {
+      "activeAgents": "Số Tác Nhân Hoạt Động",
+      "tasksDue": "Tác vụ Đang Chờ",
+      "computeConsumed": "Điện toán Đã Dùng",
+      "costEstimate": "Chi phí Ước tính",
+      "successRate": "Tỷ lệ Thành công"
+    },
+    "tasks": {
+      "title": "Quy trình & Kỹ năng Tự động",
+      "name": "Tên Quy trình",
+      "schedule": "Lịch trình & Tần suất",
+      "tier": "Gói Yêu cầu",
+      "priority": "Độ Ưu tiên",
+      "nextRun": "Lần chạy Tiếp theo",
+      "lastRun": "Hoàn thành Gần nhất",
+      "status": "Trạng thái",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "affiliateScout": "Tìm kiếm Thị trường & Đối tác Tiếp thị",
+      "contentProducer": "Sản xuất Video & Nội dung Đa phương tiện",
+      "autoPublisher": "Phát hành & Phân phối Kênh Đa nền tảng"
+    },
+    "runs": {
+      "title": "Nhật ký Chu kỳ Thực thi",
+      "cycleId": "Mã Chu kỳ",
+      "trigger": "Hình thức Kích hoạt",
+      "stateChange": "Chuyển đổi Trạng thái",
+      "tasksCount": "Tác vụ Thử / Thành công",
+      "compute": "Điện toán Tiêu thụ",
+      "duration": "Thời gian Thực thi",
+      "time": "Thời điểm"
+    },
+    "dlq": {
+      "title": "Hàng Đợi Xử Lý Lại (DLQ)",
+      "empty": "Không có sự cố tồn đọng. Hệ thống vận hành hoàn hảo.",
+      "taskId": "Mã Tác vụ",
+      "error": "Nguyên nhân Gặp lỗi",
+      "retries": "Số lần Thử lại",
+      "firstFailed": "Ghi nhận Lỗi Lần đầu",
+      "replay": "Thử lại Tác vụ",
+      "replaying": "Đang xử lý..."
+    },
+    "messages": {
+      "started": "Đã kích hoạt vận hành tự động thành công.",
+      "paused": "Đã tạm dừng vận hành tự động.",
+      "resumed": "Đã tiếp tục vận hành tự động.",
+      "halted": "Đã kích hoạt dừng khẩn cấp. Mọi tác vụ tự động đã được ngắt.",
+      "circuitReset": "Đã đặt lại khoá bảo vệ. Hệ thống trở về trạng thái sẵn sàng.",
+      "cycleCompleted": "Chu kỳ thực thi đã hoàn tất thành công.",
+      "replayed": "Đã đưa tác vụ vào hàng chờ thực thi lại ngay lập tức.",
+      "actionFailed": "Không thể hoàn thành hành động."
+    }
   }
 }
 
