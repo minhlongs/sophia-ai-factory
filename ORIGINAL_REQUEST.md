@@ -1868,3 +1868,63 @@ Enforce all mandatory Sophia production contracts:
 - [ ] Live edge SHA from `https://sophia.agencyos.network/api/version` matches commit SHA bit-for-bit.
 - [ ] `https://sophia.agencyos.network/api/health` returns HTTP 200.
 - [ ] `bash scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.
+
+## 2026-10-06T11:09:49Z
+
+Use a very large team of agents to perform comprehensive Edge Health Debugging, Full-Stack Code Quality & Architecture Audit, and Autonomous Swarm E2E Live Testing on Sophia AI Factory, culminating in edge deployment and 9/9 Zero-Bug Certification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. Edge Health & Bindings Diagnostics
+Investigate and resolve why `https://sophia.agencyos.network/api/health` reports degraded status:
+- Probe each internal subsystem check within `src/app/api/health/route.ts` (D1 database, KV cache, R2 storage bucket, and Workers AI bindings).
+- Ensure transient timeouts, missing environment fallbacks, or misconfigured health check thresholds are cleanly handled without silent failures.
+- Verify the edge health response returns optimal status with complete telemetry details.
+
+### R2. Full-Stack Code Quality, Architecture & Security Audit
+Audit and harden the entire codebase according to the Sophia AI Factory Constitution:
+- Enforce strict 4-layer import discipline (`seed` → `tree` → `forest` → `land`) with 0 boundary violations.
+- Eliminate all TypeScript type errors (`tsc --noEmit`) with zero `:any` types.
+- Ensure 0 ESLint errors across the repository (`npm run lint -- --quiet`).
+- Verify no-tech doctrine compliance (zero operator-managed third-party infrastructure requirements).
+- Preserve all protected flows: Setup Wizard, Telegram Bot, NOWPayments IPN tier activation.
+
+### R3. Autonomous Swarm E2E Live Testing & Execution
+Validate the newly deployed 24/7 Autonomous AGI Loop Control and CHÚA CHÙM Swarm:
+- Execute live simulated cycles through the Land Server Actions and Admin Cockpit (`/admin/autonomous`).
+- Verify capability execution flow for `affiliate-scout`, `content-producer`, and `auto-publisher`.
+- Confirm D1 persistence across `autonomous_loop_state`, `autonomous_cycle_runs`, and `autonomous_dead_letter_queue`.
+- Test circuit breaker tripping, half-open canary recovery, and dead-letter queue replaying under failure conditions.
+
+### R4. Production Edge Deployment & Zero-Bug Certification
+Deliver and certify all fixes and enhancements on production edge:
+- Ensure 100% test pass rate across all unit, integration, adversarial, and E2E test suites.
+- Deploy to Cloudflare Workers edge via `./scripts/deploy-with-sha.sh`.
+- Validate that the live edge version at `https://sophia.agencyos.network/api/version` matches the local commit SHA bit-for-bit.
+- Execute `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` and achieve 9/9 Zero-Bug Certification.
+
+## Acceptance Criteria
+
+### Edge Health & Diagnostics
+- [ ] `/api/health` endpoint analyzed and degraded health triggers remediated.
+- [ ] Diagnostic probes confirm reliable D1, KV, and R2 connectivity on edge runtime.
+
+### Code Quality & Layer Discipline
+- [ ] `tsc --noEmit` returns exit code 0 with 0 errors.
+- [ ] `npm run lint -- --quiet` returns exit code 0 with 0 errors.
+- [ ] `bash scripts/check-layer-boundaries.sh` returns exit code 0 with 0 violations.
+- [ ] `npm run i18n:validate` confirms 0 missing translation keys.
+- [ ] `scripts/check-edge-runtime-safety.sh` reports 0 unannotated Node-only APIs.
+
+### Autonomous Swarm Verification
+- [ ] Autonomous loop state machine and swarm capability execution verified with atomic D1 transactions.
+- [ ] Circuit breaker, backoff jitter, and DLQ re-enqueuing pass automated test assertions.
+
+### Production Edge & Zero-Bug Proof
+- [ ] Edge deploy completes successfully via `./scripts/deploy-with-sha.sh`.
+- [ ] `curl -s https://sophia.agencyos.network/api/version` matches HEAD commit SHA bit-for-bit.
+- [ ] `curl -i https://sophia.agencyos.network/api/health` returns HTTP 200.
+- [ ] `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.
