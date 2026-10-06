@@ -12,15 +12,22 @@ import type {
   AutonomousActionResult,
   StateTransitionResult,
   AutonomousEngineState,
+  AutonomousStateEvent,
 } from '@/seed/types/autonomous-engine';
 import { transitionAutonomousState } from '@/tree/autonomous/state-machine';
 import { resolveDb, ensureTenantLoopState } from './loop-actions-db';
 
-/**
- * Action: Start the autonomous execution loop (IDLE -> RUNNING).
- */
-export async function startAutonomousLoopAction(
-  tenantId: string = 'default',
+interface LifecycleOpts {
+  pauseReason?: string;
+  resetFailures?: boolean;
+  updateHeartbeat?: boolean;
+  lastError?: string | null;
+}
+
+async function performLifecycleTransition(
+  tenantId: string,
+  event: AutonomousStateEvent,
+  opts: LifecycleOpts = {},
   dbOverride?: unknown,
 ): Promise<AutonomousActionResult<StateTransitionResult>> {
   try {
@@ -30,22 +37,36 @@ export async function startAutonomousLoopAction(
 
     const transition = transitionAutonomousState(
       current.state as AutonomousEngineState,
-      'START',
+      event,
       {
         consecutiveFailures: current.consecutive_failures,
         maxConsecutiveFailuresThreshold: 5,
         isBudgetExceeded: false,
+        pauseReason: opts.pauseReason,
         now,
       },
     );
 
+    const consecutiveFailures = opts.resetFailures ? 0 : current.consecutive_failures;
+    const lastHeartbeat = opts.updateHeartbeat ? now : current.last_heartbeat_at;
+    const lastError = opts.lastError !== undefined ? opts.lastError : current.last_error;
+
     const updateRes = await db
       .prepare(
         `UPDATE autonomous_loop_state
-         SET state = ?1, version = version + 1, updated_at = ?2, last_heartbeat_at = ?3
-         WHERE id = ?4 AND version = ?5`,
+         SET state = ?1, version = version + 1, updated_at = ?2,
+             last_heartbeat_at = ?3, consecutive_failures = ?4, last_error = ?5
+         WHERE id = ?6 AND version = ?7`,
       )
-      .bind(transition.nextState, now, now, current.id, current.version)
+      .bind(
+        transition.nextState,
+        now,
+        lastHeartbeat,
+        consecutiveFailures,
+        lastError,
+        current.id,
+        current.version,
+      )
       .run();
 
     if (!updateRes.meta.changes) {
@@ -57,7 +78,7 @@ export async function startAutonomousLoopAction(
 
     return { success: true, data: transition };
   } catch (err) {
-    logger.error('[Autonomous Land Action] startAutonomousLoopAction error', {
+    logger.error(`[Autonomous Land Action] ${event} transition error`, {
       tenantId,
       error: String(err),
     });
@@ -66,6 +87,21 @@ export async function startAutonomousLoopAction(
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+/**
+ * Action: Start the autonomous execution loop (IDLE -> RUNNING).
+ */
+export async function startAutonomousLoopAction(
+  tenantId: string = 'default',
+  dbOverride?: unknown,
+): Promise<AutonomousActionResult<StateTransitionResult>> {
+  return performLifecycleTransition(
+    tenantId,
+    'START',
+    { updateHeartbeat: true },
+    dbOverride,
+  );
 }
 
 /**
@@ -76,50 +112,12 @@ export async function pauseAutonomousLoopAction(
   tenantId: string = 'default',
   dbOverride?: unknown,
 ): Promise<AutonomousActionResult<StateTransitionResult>> {
-  try {
-    const db = resolveDb(dbOverride);
-    const current = await ensureTenantLoopState(db, tenantId);
-    const now = Math.floor(Date.now() / 1000);
-
-    const transition = transitionAutonomousState(
-      current.state as AutonomousEngineState,
-      'PAUSE_CMD',
-      {
-        consecutiveFailures: current.consecutive_failures,
-        maxConsecutiveFailuresThreshold: 5,
-        isBudgetExceeded: false,
-        pauseReason: reason,
-        now,
-      },
-    );
-
-    const updateRes = await db
-      .prepare(
-        `UPDATE autonomous_loop_state
-         SET state = ?1, version = version + 1, updated_at = ?2
-         WHERE id = ?3 AND version = ?4`,
-      )
-      .bind(transition.nextState, now, current.id, current.version)
-      .run();
-
-    if (!updateRes.meta.changes) {
-      return {
-        success: false,
-        error: 'Concurrency conflict: loop state version mismatch, please retry',
-      };
-    }
-
-    return { success: true, data: transition };
-  } catch (err) {
-    logger.error('[Autonomous Land Action] pauseAutonomousLoopAction error', {
-      tenantId,
-      error: String(err),
-    });
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return performLifecycleTransition(
+    tenantId,
+    'PAUSE_CMD',
+    { pauseReason: reason },
+    dbOverride,
+  );
 }
 
 /**
@@ -129,49 +127,12 @@ export async function resumeAutonomousLoopAction(
   tenantId: string = 'default',
   dbOverride?: unknown,
 ): Promise<AutonomousActionResult<StateTransitionResult>> {
-  try {
-    const db = resolveDb(dbOverride);
-    const current = await ensureTenantLoopState(db, tenantId);
-    const now = Math.floor(Date.now() / 1000);
-
-    const transition = transitionAutonomousState(
-      current.state as AutonomousEngineState,
-      'RESUME_CMD',
-      {
-        consecutiveFailures: current.consecutive_failures,
-        maxConsecutiveFailuresThreshold: 5,
-        isBudgetExceeded: false,
-        now,
-      },
-    );
-
-    const updateRes = await db
-      .prepare(
-        `UPDATE autonomous_loop_state
-         SET state = ?1, version = version + 1, updated_at = ?2, last_heartbeat_at = ?3
-         WHERE id = ?4 AND version = ?5`,
-      )
-      .bind(transition.nextState, now, now, current.id, current.version)
-      .run();
-
-    if (!updateRes.meta.changes) {
-      return {
-        success: false,
-        error: 'Concurrency conflict: loop state version mismatch, please retry',
-      };
-    }
-
-    return { success: true, data: transition };
-  } catch (err) {
-    logger.error('[Autonomous Land Action] resumeAutonomousLoopAction error', {
-      tenantId,
-      error: String(err),
-    });
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return performLifecycleTransition(
+    tenantId,
+    'RESUME_CMD',
+    { updateHeartbeat: true },
+    dbOverride,
+  );
 }
 
 /**
@@ -182,50 +143,12 @@ export async function emergencyHaltAutonomousLoopAction(
   tenantId: string = 'default',
   dbOverride?: unknown,
 ): Promise<AutonomousActionResult<StateTransitionResult>> {
-  try {
-    const db = resolveDb(dbOverride);
-    const current = await ensureTenantLoopState(db, tenantId);
-    const now = Math.floor(Date.now() / 1000);
-
-    const transition = transitionAutonomousState(
-      current.state as AutonomousEngineState,
-      'EMERGENCY_HALT',
-      {
-        consecutiveFailures: current.consecutive_failures,
-        maxConsecutiveFailuresThreshold: 5,
-        isBudgetExceeded: false,
-        pauseReason: reason,
-        now,
-      },
-    );
-
-    const updateRes = await db
-      .prepare(
-        `UPDATE autonomous_loop_state
-         SET state = ?1, version = version + 1, updated_at = ?2, last_error = ?3
-         WHERE id = ?4 AND version = ?5`,
-      )
-      .bind(transition.nextState, now, reason, current.id, current.version)
-      .run();
-
-    if (!updateRes.meta.changes) {
-      return {
-        success: false,
-        error: 'Concurrency conflict: loop state version mismatch, please retry',
-      };
-    }
-
-    return { success: true, data: transition };
-  } catch (err) {
-    logger.error('[Autonomous Land Action] emergencyHaltAutonomousLoopAction error', {
-      tenantId,
-      error: String(err),
-    });
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return performLifecycleTransition(
+    tenantId,
+    'EMERGENCY_HALT',
+    { pauseReason: reason, lastError: reason },
+    dbOverride,
+  );
 }
 
 /**
@@ -235,50 +158,12 @@ export async function resetAutonomousCircuitBreakerAction(
   tenantId: string = 'default',
   dbOverride?: unknown,
 ): Promise<AutonomousActionResult<StateTransitionResult>> {
-  try {
-    const db = resolveDb(dbOverride);
-    const current = await ensureTenantLoopState(db, tenantId);
-    const now = Math.floor(Date.now() / 1000);
-
-    const transition = transitionAutonomousState(
-      current.state as AutonomousEngineState,
-      'MANUAL_RESET',
-      {
-        consecutiveFailures: current.consecutive_failures,
-        maxConsecutiveFailuresThreshold: 5,
-        isBudgetExceeded: false,
-        now,
-      },
-    );
-
-    const updateRes = await db
-      .prepare(
-        `UPDATE autonomous_loop_state
-         SET state = ?1, consecutive_failures = 0, last_error = NULL,
-             version = version + 1, updated_at = ?2
-         WHERE id = ?3 AND version = ?4`,
-      )
-      .bind(transition.nextState, now, current.id, current.version)
-      .run();
-
-    if (!updateRes.meta.changes) {
-      return {
-        success: false,
-        error: 'Concurrency conflict: loop state version mismatch, please retry',
-      };
-    }
-
-    return { success: true, data: transition };
-  } catch (err) {
-    logger.error('[Autonomous Land Action] resetAutonomousCircuitBreakerAction error', {
-      tenantId,
-      error: String(err),
-    });
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return performLifecycleTransition(
+    tenantId,
+    'MANUAL_RESET',
+    { resetFailures: true, lastError: null },
+    dbOverride,
+  );
 }
 
 export const resetCircuitBreakerAction = resetAutonomousCircuitBreakerAction;
