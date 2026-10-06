@@ -92,7 +92,7 @@ export function evaluateSeventeenNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.anyonicEntanglementActive),
       entanglementViolationMessage: 'Anyonic topological entangled state redundancy synchronization is inactive',
       minBftQuorumPct: 100.0,
-      minBftViolationFormatter: (actual, min) => `Byzantine Fault Tolerant quorum consensus ${actual}% is below 100.0% requirement`,
+      minBftViolationFormatter: (actual, _min) => `Byzantine Fault Tolerant quorum consensus ${actual}% is below 100.0% requirement`,
     },
     {
       auditSignatureFn: (ctx) =>

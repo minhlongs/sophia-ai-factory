@@ -91,7 +91,7 @@ export function evaluateThirtyThreeNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.omniDimensionalZeroPointEntanglementActive),
       entanglementViolationMessage: 'Omni-dimensional zero-point planck foam entanglement is not active',
       minBftQuorumPct: 99.999999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below 99.999999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below 99.999999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

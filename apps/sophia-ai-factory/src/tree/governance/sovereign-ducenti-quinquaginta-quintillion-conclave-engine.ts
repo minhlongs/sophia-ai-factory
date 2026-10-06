@@ -7,14 +7,12 @@
 import { createHash } from 'node:crypto';
 import {
   arbitrateParameterizedConclaveDispute,
-  verifyParameterizedConstitutionalInvariants,
 } from './sovereign-conclave-domain-engine';
 
 import {
   SOVEREIGN_DUCENTIQUINQUAGINTAQUINTILLION_CONCLAVE_CONSTANTS,
   type DucentiquinquagintaquintillionDisputeVerdict,
   type DucentiquinquagintaquintillionEmpireConstitutionalInvariant,
-  type SovereignDucentiquinquagintaquintillionConclaveDispute,
   type SovereignDucentiquinquagintaquintillionJurorVote,
 } from '@/seed/types/ducenti-quinquaginta-quintillion-braided-stark-conclave';
 

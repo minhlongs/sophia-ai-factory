@@ -7,7 +7,6 @@
 import { createHash } from 'node:crypto';
 import {
   arbitrateParameterizedConclaveDispute,
-  verifyParameterizedConstitutionalInvariants,
 } from './sovereign-conclave-domain-engine';
 
 import {

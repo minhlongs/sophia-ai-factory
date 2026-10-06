@@ -94,7 +94,7 @@ export function evaluateThirteenNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.quantumEntanglementActive),
       entanglementViolationMessage: 'Quantum entangled state redundancy synchronization is inactive',
       minBftQuorumPct: 100.0,
-      minBftViolationFormatter: (actual, min) =>
+      minBftViolationFormatter: (actual, _min) =>
         `Byzantine Fault Tolerant quorum consensus ${actual}% is below 100.0% requirement`,
     },
     {

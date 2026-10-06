@@ -101,7 +101,7 @@ export function evaluateOneHundredTwoNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.centumquintillionFoamSingularityActive),
       entanglementViolationMessage: 'Centum-Quintillion sub-planck foam singularity mesh link is degraded or inactive',
       minBftQuorumPct: 99.99999999999999999999999999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.99999999999999999999999999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below required 99.99999999999999999999999999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

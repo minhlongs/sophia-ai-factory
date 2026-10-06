@@ -101,7 +101,7 @@ export function evaluateSixtyNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.vigintiquadrillionFoamSingularityActive),
       entanglementViolationMessage: 'Viginti-Quadrillion sub-planck foam singularity mesh link is degraded or inactive',
       minBftQuorumPct: 99.9999999999999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.9999999999999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below required 99.9999999999999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

@@ -91,7 +91,7 @@ export function evaluateEighteenNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.zeroPointEntanglementActive),
       entanglementViolationMessage: 'Zero-point entanglement bus is inactive or disconnected',
       minBftQuorumPct: 99.9,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.9% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below required 99.9% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

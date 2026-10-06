@@ -5,8 +5,6 @@
 
 import type {
   QuantumAlgorithm,
-  QuantumIdentityKey,
-  LatticeProofVerification,
 } from '@/seed/types/quantum-dao';
 
 export interface KeyPairResult {

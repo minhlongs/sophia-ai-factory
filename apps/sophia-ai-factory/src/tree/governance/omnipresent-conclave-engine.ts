@@ -7,7 +7,6 @@
 import { createHash } from 'node:crypto';
 import {
   arbitrateParameterizedConclaveDispute,
-  verifyParameterizedConstitutionalInvariants,
 } from './sovereign-conclave-domain-engine';
 
 import type {
@@ -59,7 +58,7 @@ export function arbitrateOmnipresentConclaveDispute(
     slashingPenaltyPct: 95.0,
     slashingMultiplier: 0.95,
     emptyVerdict: 'PENDING_EVIDENCE',
-    emptyRulingHashFn: (input) => createHash('sha256').update('NO_VOTES').digest('hex'),
+    emptyRulingHashFn: (_input) => createHash('sha256').update('NO_VOTES').digest('hex'),
     rulingHashFn: (ctx) =>
       createHash('sha256')
         .update(`OMNIPRESENT_CONCLAVE_RULING:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.executedRemedyCents}:${ctx.totalSlashedStakeCents}`)

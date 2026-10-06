@@ -91,7 +91,7 @@ export function evaluateThirtySixNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.interGalacticZeroPointEntanglementActive),
       entanglementViolationMessage: 'Inter-Galactic zero-point quantum entanglement mesh link is degraded or inactive',
       minBftQuorumPct: 99.99999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.99999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below required 99.99999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

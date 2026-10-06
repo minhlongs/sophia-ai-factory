@@ -108,6 +108,77 @@ export interface MultiNinesSlaResult {
   auditSignature: string;
 }
 
+function checkCarbonAndCop(
+  inp: Record<string, number | string | boolean | undefined>,
+  thresholds: PowerThresholds,
+  violations: string[]
+): { carbonIntensity: number; cop: number } {
+  const carbonIntensity = (inp.carbonIntensityGPerKwh ?? inp.carbonIntensityGCo2PerKwh ?? 0.0) as number;
+  const maxCarbon = thresholds.maxCarbonIntensity ?? 0.0;
+  if (carbonIntensity > maxCarbon) {
+    violations.push(
+      `Carbon intensity ${carbonIntensity} g CO2/kWh violates absolute net-zero (${maxCarbon} required)`
+    );
+  }
+
+  const cop = (inp.boseEinsteinCop ?? inp.coolingEfficiencyCop ?? inp.heliumCryoCop ?? 0.0) as number;
+  if (cop < thresholds.minCop) {
+    violations.push(`Cooling COP ${cop} is below minimum requirement ${thresholds.minCop}`);
+  }
+  return { carbonIntensity, cop };
+}
+
+function checkAllocatedPower(
+  inp: Record<string, number | string | boolean | undefined>,
+  thresholds: PowerThresholds,
+  violations: string[]
+): number {
+  const allocatedMegawatts = (inp.allocatedMegawatts ?? 0) as number;
+  if (allocatedMegawatts <= 0) {
+    violations.push(thresholds.positivePowerMessage ?? 'Allocated power must be strictly positive');
+  }
+
+  const cryoPower = (inp.cryoPowerMw ?? inp.cryoCoolingPowerMw) as number | undefined;
+  if (cryoPower !== undefined && cryoPower <= 0) {
+    violations.push(thresholds.positiveCryoPowerMessage ?? 'Cryo cooling power allocation must be strictly positive');
+  }
+  return allocatedMegawatts;
+}
+
+function checkPowerSourceAndCert(
+  inp: Record<string, number | string | boolean | undefined>,
+  thresholds: PowerThresholds,
+  violations: string[]
+): { powerSourceType: string | undefined; isNetZeroCertified: boolean | undefined } {
+  const powerSourceType = inp.powerSourceType as string | undefined;
+  if (thresholds.powerSourceWhitelist && powerSourceType && !thresholds.powerSourceWhitelist.includes(powerSourceType)) {
+    violations.push(
+      thresholds.invalidPowerSourceMessageFn
+        ? thresholds.invalidPowerSourceMessageFn(powerSourceType)
+        : `Power source type ${powerSourceType} is not in authorized green power whitelist`
+    );
+  }
+
+  const isNetZeroCertified = inp.isNetZeroCertified as boolean | undefined;
+  if (thresholds.requireNetZeroCertification && !isNetZeroCertified) {
+    violations.push(thresholds.netZeroCertificationMessage ?? 'Power allocation must be certified net-zero');
+  }
+  return { powerSourceType, isNetZeroCertified };
+}
+
+function computePowerVerificationHash(
+  ctx: PowerValidationContext,
+  config: PowerValidationConfig
+): string {
+  if (config.powerHashFn) {
+    return config.powerHashFn(ctx);
+  }
+  const prefix = config.hashPrefix ?? 'POWER';
+  return createHash('sha256')
+    .update(`${prefix}:${ctx.allocatedMegawatts}:${ctx.carbonIntensity}:${ctx.cop}:${ctx.isCompliant}`)
+    .digest('hex');
+}
+
 /**
  * Parameterized validator for Net-Zero power sources and cryo-cooling COP.
  */
@@ -119,48 +190,9 @@ export function validateParameterizedPower<T = unknown>(
   const inp = input as Record<string, number | string | boolean | undefined>;
   const violations: string[] = [];
 
-  const carbonIntensity = (inp.carbonIntensityGPerKwh ?? inp.carbonIntensityGCo2PerKwh ?? 0.0) as number;
-  const maxCarbon = thresholds.maxCarbonIntensity ?? 0.0;
-
-  if (carbonIntensity > maxCarbon) {
-    violations.push(
-      `Carbon intensity ${carbonIntensity} g CO2/kWh violates absolute net-zero (${maxCarbon} required)`
-    );
-  }
-
-  const cop = (inp.boseEinsteinCop ?? inp.coolingEfficiencyCop ?? inp.heliumCryoCop ?? 0.0) as number;
-  if (cop < thresholds.minCop) {
-    violations.push(`Cooling COP ${cop} is below minimum requirement ${thresholds.minCop}`);
-  }
-
-  const allocatedMegawatts = (inp.allocatedMegawatts ?? 0) as number;
-  if (allocatedMegawatts <= 0) {
-    violations.push(thresholds.positivePowerMessage ?? 'Allocated power must be strictly positive');
-  }
-
-  const cryoPower = (inp.cryoPowerMw ?? inp.cryoCoolingPowerMw) as number | undefined;
-  if (cryoPower !== undefined && cryoPower <= 0) {
-    violations.push(thresholds.positiveCryoPowerMessage ?? 'Cryo cooling power allocation must be strictly positive');
-  }
-
-  const powerSourceType = inp.powerSourceType as string | undefined;
-  if (thresholds.powerSourceWhitelist && powerSourceType) {
-    if (!thresholds.powerSourceWhitelist.includes(powerSourceType)) {
-      violations.push(
-        thresholds.invalidPowerSourceMessageFn
-          ? thresholds.invalidPowerSourceMessageFn(powerSourceType)
-          : `Power source type ${powerSourceType} is not in authorized green power whitelist`
-      );
-    }
-  }
-
-  const isNetZeroCertified = inp.isNetZeroCertified as boolean | undefined;
-  if (thresholds.requireNetZeroCertification && !isNetZeroCertified) {
-    violations.push(
-      thresholds.netZeroCertificationMessage ??
-        'Power allocation must be certified net-zero'
-    );
-  }
+  const { carbonIntensity, cop } = checkCarbonAndCop(inp, thresholds, violations);
+  const allocatedMegawatts = checkAllocatedPower(inp, thresholds, violations);
+  const { powerSourceType, isNetZeroCertified } = checkPowerSourceAndCert(inp, thresholds, violations);
 
   const isCompliant = violations.length === 0;
 
@@ -173,21 +205,97 @@ export function validateParameterizedPower<T = unknown>(
     isNetZeroCertified,
   };
 
-  let verificationHash: string;
-  if (config.powerHashFn) {
-    verificationHash = config.powerHashFn(ctx);
-  } else {
-    const prefix = config.hashPrefix ?? 'POWER';
-    verificationHash = createHash('sha256')
-      .update(`${prefix}:${allocatedMegawatts}:${carbonIntensity}:${cop}:${isCompliant}`)
-      .digest('hex');
-  }
+  const verificationHash = computePowerVerificationHash(ctx, config);
 
   return {
     isCompliant,
     violations,
     verificationHash,
   };
+}
+
+function checkDowntimeViolation(
+  actualDowntime: number,
+  maxAllowed: number,
+  thresholds: MultiNinesSlaThresholds,
+  violations: string[]
+): void {
+  if (actualDowntime > maxAllowed) {
+    if (thresholds.downtimeViolationFormatter) {
+      violations.push(thresholds.downtimeViolationFormatter(actualDowntime, maxAllowed));
+    } else if (thresholds.slaName) {
+      const unit = thresholds.timeUnit ?? 'ns';
+      violations.push(
+        `Actual downtime ${actualDowntime} ${unit} exceeds maximum allowable ${thresholds.slaName} downtime ${maxAllowed} ${unit}`
+      );
+    } else {
+      violations.push(`Actual downtime ${actualDowntime} exceeds maximum allowable SLA downtime ${maxAllowed}`);
+    }
+  }
+}
+
+function resolveEntanglementStatus(
+  inp: Record<string, unknown>,
+  thresholds: MultiNinesSlaThresholds
+): boolean | undefined {
+  if (thresholds.entanglementActiveGetter) {
+    return thresholds.entanglementActiveGetter(inp);
+  }
+  const rawEnt =
+    inp.entanglementActive ??
+    inp.tachyonEntanglementActive ??
+    inp.anyonicEntanglementActive ??
+    inp.quantumEntanglementActive;
+  if (rawEnt !== undefined) {
+    return Boolean(rawEnt);
+  }
+  for (const k of Object.keys(inp)) {
+    if (k.endsWith('EntanglementActive') || k.endsWith('SingularityActive')) {
+      return Boolean(inp[k]);
+    }
+  }
+  return undefined;
+}
+
+function checkEntanglementAndQuorum(
+  inp: Record<string, unknown>,
+  thresholds: MultiNinesSlaThresholds,
+  violations: string[]
+): number | undefined {
+  const isEntanglementActive = resolveEntanglementStatus(inp, thresholds);
+  if (isEntanglementActive !== undefined && !isEntanglementActive) {
+    if (thresholds.entanglementViolationMessage) {
+      violations.push(thresholds.entanglementViolationMessage);
+    } else if (inp.anyonicEntanglementActive !== undefined) {
+      violations.push('Anyonic topological entangled state redundancy synchronization is inactive');
+    } else {
+      violations.push('Quantum entangled state redundancy synchronization is inactive');
+    }
+  }
+
+  const minQuorum = thresholds.minBftQuorumPct ?? 100.0;
+  const bftQuorumPct = typeof inp.bftQuorumConsensusPct === 'number' ? inp.bftQuorumConsensusPct : undefined;
+  if (bftQuorumPct !== undefined && bftQuorumPct < minQuorum) {
+    if (thresholds.minBftViolationFormatter) {
+      violations.push(thresholds.minBftViolationFormatter(bftQuorumPct, minQuorum));
+    } else {
+      violations.push(`Byzantine Fault Tolerant quorum consensus ${bftQuorumPct}% is below ${minQuorum.toFixed(1)}% requirement`);
+    }
+  }
+  return bftQuorumPct;
+}
+
+function computeSlaAuditSignature(
+  ctx: SlaAuditContext,
+  config: MultiNinesSlaConfig
+): string {
+  if (config.auditSignatureFn) {
+    return config.auditSignatureFn(ctx);
+  }
+  const prefix = config.hashPrefix ?? 'SLA_AUDIT';
+  return createHash('sha256')
+    .update(`${prefix}:${ctx.slaVerdict}:${ctx.actualDowntime}:${ctx.effectiveAvailabilityPct}:${ctx.timestampIso}`)
+    .digest('hex');
 }
 
 /**
@@ -218,61 +326,8 @@ export function evaluateParameterizedMultiNinesSla<T = unknown>(
   );
 
   const violations: string[] = [];
-
-  if (actualDowntime > maxAllowed) {
-    if (thresholds.downtimeViolationFormatter) {
-      violations.push(thresholds.downtimeViolationFormatter(actualDowntime, maxAllowed));
-    } else if (thresholds.slaName) {
-      const unit = thresholds.timeUnit ?? 'ns';
-      violations.push(
-        `Actual downtime ${actualDowntime} ${unit} exceeds maximum allowable ${thresholds.slaName} downtime ${maxAllowed} ${unit}`
-      );
-    } else {
-      violations.push(`Actual downtime ${actualDowntime} exceeds maximum allowable SLA downtime ${maxAllowed}`);
-    }
-  }
-
-  let isEntanglementActive: boolean | undefined;
-  if (thresholds.entanglementActiveGetter) {
-    isEntanglementActive = thresholds.entanglementActiveGetter(inp);
-  } else {
-    const rawEnt =
-      inp.entanglementActive ??
-      inp.tachyonEntanglementActive ??
-      inp.anyonicEntanglementActive ??
-      inp.quantumEntanglementActive;
-    if (rawEnt !== undefined) {
-      isEntanglementActive = Boolean(rawEnt);
-    } else {
-      for (const k of Object.keys(inp)) {
-        if (k.endsWith('EntanglementActive') || k.endsWith('SingularityActive')) {
-          isEntanglementActive = Boolean(inp[k]);
-          break;
-        }
-      }
-    }
-  }
-
-  if (isEntanglementActive !== undefined && !isEntanglementActive) {
-    if (thresholds.entanglementViolationMessage) {
-      violations.push(thresholds.entanglementViolationMessage);
-    } else if (inp.anyonicEntanglementActive !== undefined) {
-      violations.push('Anyonic topological entangled state redundancy synchronization is inactive');
-    } else {
-      violations.push('Quantum entangled state redundancy synchronization is inactive');
-    }
-  }
-
-  const minQuorum = thresholds.minBftQuorumPct ?? 100.0;
-  const bftQuorumPct = typeof inp.bftQuorumConsensusPct === 'number' ? inp.bftQuorumConsensusPct : undefined;
-  if (bftQuorumPct !== undefined && bftQuorumPct < minQuorum) {
-    if (thresholds.minBftViolationFormatter) {
-      violations.push(thresholds.minBftViolationFormatter(bftQuorumPct, minQuorum));
-    } else {
-      const formattedMin = minQuorum.toFixed(1);
-      violations.push(`Byzantine Fault Tolerant quorum consensus ${bftQuorumPct}% is below ${formattedMin}% requirement`);
-    }
-  }
+  checkDowntimeViolation(actualDowntime, maxAllowed, thresholds, violations);
+  const bftQuorumPct = checkEntanglementAndQuorum(inp, thresholds, violations);
 
   const precision = thresholds.precision ?? 10;
   const effectiveAvailabilityPct =
@@ -296,15 +351,7 @@ export function evaluateParameterizedMultiNinesSla<T = unknown>(
     timestampIso: timestamp,
   };
 
-  let auditSignature: string;
-  if (config.auditSignatureFn) {
-    auditSignature = config.auditSignatureFn(ctx);
-  } else {
-    const prefix = config.hashPrefix ?? 'SLA_AUDIT';
-    auditSignature = createHash('sha256')
-      .update(`${prefix}:${slaVerdict}:${actualDowntime}:${effectiveAvailabilityPct}:${timestamp}`)
-      .digest('hex');
-  }
+  const auditSignature = computeSlaAuditSignature(ctx, config);
 
   return {
     slaVerdict,

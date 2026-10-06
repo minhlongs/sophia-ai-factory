@@ -91,7 +91,7 @@ export function evaluateThirtyNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.panDimensionalZeroPointEntanglementActive),
       entanglementViolationMessage: 'Pan-dimensional zero-point quantum foam entanglement is not active',
       minBftQuorumPct: 99.99999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below 99.99999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below 99.99999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

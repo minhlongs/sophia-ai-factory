@@ -6,9 +6,7 @@
 
 import { createHash } from 'node:crypto';
 import {
-  generateParameterizedStarkCommitment,
   buildParameterizedTransactionMerkleRoot,
-  compactStateParameterizedWithStark,
 } from './braided-stark-domain-engine';
 
 import type {

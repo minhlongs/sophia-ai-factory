@@ -87,7 +87,7 @@ export function evaluateTenNinesSla(input: TenNinesSlaInput): TenNinesSlaEvaluat
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.quantumTeleportSyncActive),
       entanglementViolationMessage: 'Quantum teleportation state synchronization is inactive',
       minBftQuorumPct: 100.0,
-      minBftViolationFormatter: (actual, min) =>
+      minBftViolationFormatter: (actual, _min) =>
         `Byzantine Fault Tolerant quorum consensus ${actual}% is below 100.0% requirement`,
     },
     {

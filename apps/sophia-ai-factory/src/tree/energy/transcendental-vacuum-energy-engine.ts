@@ -91,7 +91,7 @@ export function evaluateTwentyNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.transcendentalZeroPointEntanglementActive),
       entanglementViolationMessage: 'Transcendental zero-point quantum vacuum entanglement is not active',
       minBftQuorumPct: 99.9999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below 99.9999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below 99.9999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>

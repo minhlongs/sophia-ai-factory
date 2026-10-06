@@ -91,7 +91,7 @@ export function evaluateThirtyNineNinesSla(
       entanglementActiveGetter: (inp: Record<string, unknown>) => Boolean(inp.panDimensionalZeroPointEntanglementActive),
       entanglementViolationMessage: 'Pan-Dimensional zero-point quantum entanglement mesh link is degraded or inactive',
       minBftQuorumPct: 99.999999,
-      minBftViolationFormatter: (actual, min) => `BFT quorum consensus ${actual}% is below required 99.999999% threshold`,
+      minBftViolationFormatter: (actual, _min) => `BFT quorum consensus ${actual}% is below required 99.999999% threshold`,
     },
     {
       auditSignatureFn: (ctx) =>
