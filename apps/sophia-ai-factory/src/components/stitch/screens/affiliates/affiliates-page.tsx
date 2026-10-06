@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Mail, Plus, MoreVertical, TrendingUp, Sparkles, Users } from 'lucide-react';
-import { DashboardLayout, Card, Button, Badge, Table, Avatar } from '@/components/stitch';
+import { useTranslations } from 'next-intl';
+import { Search, Mail, Plus, Sparkles, TrendingUp, Users, DollarSign, Clock } from 'lucide-react';
+import { DashboardLayout, StatCard, Button, Table } from '@/components/stitch';
 import { cn } from '@/seed/utils/cn';
 import { AffiliateDiscoveryPanel } from './affiliate-discovery-panel';
 import { mockAffiliates, type MockAffiliate } from './mock-affiliates';
+import { getAffiliatesTableColumns } from './affiliates-table-columns';
 
 export interface AffiliatesPageProps {
   initialAffiliates?: MockAffiliate[];
@@ -18,6 +20,7 @@ export interface AffiliatesPageProps {
 }
 
 export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesPageProps = {}) {
+  const t = useTranslations('stitch.affiliates');
   const [activeTab, setActiveTab] = useState<'partners' | 'discovery'>('partners');
   const [search, setSearch] = useState('');
 
@@ -33,10 +36,21 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
   const totalCommission = stats?.totalCommission ?? '$0';
   const pendingCommission = stats?.pendingCommission ?? '$0';
 
+  const columns = getAffiliatesTableColumns({
+    affiliateHeader: t('columns.affiliate'),
+    statusHeader: t('columns.status'),
+    salesHeader: t('columns.sales'),
+    commissionHeader: t('columns.commission'),
+    pendingHeader: t('columns.pending'),
+    ordersLabel: t('orders'),
+    earnedLabel: t('earned'),
+    actionsAriaLabel: t('affiliateActions'),
+  });
+
   return (
     <DashboardLayout
-      title="Affiliates"
-      subtitle="Manage your affiliate partners and track commissions"
+      title={t('title')}
+      subtitle={t('subtitle')}
       actions={
         <div className="flex items-center gap-3">
           <Button
@@ -44,166 +58,118 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
             onClick={() => setActiveTab(activeTab === 'discovery' ? 'partners' : 'discovery')}
             iconLeft={<Sparkles className="w-4 h-4" />}
           >
-            {activeTab === 'discovery' ? 'View Partners' : 'Discover Offers'}
+            {activeTab === 'discovery' ? t('viewPartners') : t('discoverOffers')}
           </Button>
           {activeTab === 'partners' && (
             <Button iconLeft={<Plus className="w-4 h-4" />}>
-              Invite Affiliate
+              {t('inviteAffiliate')}
             </Button>
           )}
         </div>
       }
     >
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 mb-6 border-b border-white/[0.08] pb-3">
+      <div
+        className="flex items-center gap-2 mb-6 border-b border-white/[0.08] pb-3"
+        role="tablist"
+        aria-label={t('partnersTab')}
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === 'partners'}
+          aria-controls="affiliates-partners-tab"
+          id="affiliates-partners-tab-btn"
           onClick={() => setActiveTab('partners')}
           className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+            'flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
             activeTab === 'partners'
               ? 'bg-primary/15 text-primary font-bold border border-primary/30 shadow-sm shadow-primary/10'
               : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
           )}
         >
           <Users className="w-4 h-4" />
-          <span>Affiliate Partners</span>
+          <span>{t('partnersTab')}</span>
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === 'discovery'}
+          aria-controls="affiliates-discovery-tab"
+          id="affiliates-discovery-tab-btn"
           onClick={() => setActiveTab('discovery')}
           className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+            'flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
             activeTab === 'discovery'
               ? 'bg-primary/15 text-primary font-bold border border-primary/30 shadow-sm shadow-primary/10'
               : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
           )}
         >
           <Sparkles className="w-4 h-4" />
-          <span>AI Offer Discovery</span>
+          <span>{t('discoveryTab')}</span>
         </button>
       </div>
 
       {activeTab === 'discovery' ? (
-        <AffiliateDiscoveryPanel />
+        <div id="affiliates-discovery-tab" role="tabpanel" aria-labelledby="affiliates-discovery-tab-btn">
+          <AffiliateDiscoveryPanel />
+        </div>
       ) : (
-        <>
+        <div id="affiliates-partners-tab" role="tabpanel" aria-labelledby="affiliates-partners-tab-btn">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-primary/15 rounded-xl text-primary border border-primary/20 shrink-0">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Total Affiliates</p>
-                  <p className="text-2xl font-bold text-white tracking-tight">{totalCount}</p>
-                </div>
-              </div>
-            </Card>
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Active</p>
-              <p className="text-2xl font-bold text-emerald-400 tracking-tight">{activeCount}</p>
-            </Card>
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Total Commission</p>
-              <p className="text-2xl font-bold text-white tracking-tight">{totalCommission}</p>
-            </Card>
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Pending</p>
-              <p className="text-2xl font-bold text-amber-400 tracking-tight">{pendingCommission}</p>
-            </Card>
+            <StatCard
+              label={t('totalAffiliates')}
+              value={totalCount}
+              icon={TrendingUp}
+              iconColor="indigo"
+            />
+            <StatCard
+              label={t('active')}
+              value={activeCount}
+              icon={Users}
+              iconColor="emerald"
+            />
+            <StatCard
+              label={t('totalCommission')}
+              value={totalCommission}
+              icon={DollarSign}
+              iconColor="violet"
+            />
+            <StatCard
+              label={t('pending')}
+              value={pendingCommission}
+              icon={Clock}
+              iconColor="amber"
+            />
           </div>
 
           {/* Search Row */}
-          <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-xl bg-[#12141F]/80 backdrop-blur-xl border border-white/[0.08]">
-            <div className="relative flex-1 max-w-md">
+          <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-card/85 dark:bg-[#12141F]/80 backdrop-blur-xl border border-border dark:border-white/[0.08]">
+            <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="search"
-                placeholder="Search affiliates..."
+                placeholder={t('searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+                className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-black/[0.04] dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60 transition-all font-sans"
               />
             </div>
-            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />}>
-              Email All
+            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />} className="w-full sm:w-auto">
+              {t('emailAll')}
             </Button>
           </div>
 
           {/* Affiliates List */}
           <Table
             data={filteredAffiliates}
-            emptyMessage="No affiliate partners registered yet. Use 'Discover Offers' to source high-converting affiliate campaigns or invite partners."
-            columns={[
-              {
-                key: 'affiliate',
-                header: 'Affiliate',
-                cell: (row) => (
-                  <div className="flex items-center gap-3">
-                    <Avatar src={row.avatar} alt={row.name} initials={row.name} size="md" />
-                    <div>
-                      <p className="text-sm font-semibold text-white leading-tight">{row.name}</p>
-                      <p className="text-xs text-muted-foreground">{row.email}</p>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                cell: (row) => (
-                  <Badge variant="soft" color={row.status === 'active' ? 'success' : 'warning'}>
-                    {row.status}
-                  </Badge>
-                ),
-                align: 'center',
-              },
-              {
-                key: 'sales',
-                header: 'Sales',
-                cell: (row) => (
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-white">{row.totalSales}</p>
-                    <p className="text-xs text-muted-foreground">orders</p>
-                  </div>
-                ),
-                align: 'right',
-              },
-              {
-                key: 'commission',
-                header: 'Commission',
-                cell: (row) => (
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-white">{row.totalCommission}</p>
-                    <p className="text-xs text-muted-foreground">earned</p>
-                  </div>
-                ),
-                align: 'right',
-              },
-              {
-                key: 'pending',
-                header: 'Pending',
-                cell: (row) => (
-                  <span className="text-sm font-semibold text-amber-400">{row.pending}</span>
-                ),
-                align: 'right',
-              },
-              {
-                key: 'actions',
-                header: '',
-                cell: () => (
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                ),
-                align: 'right',
-              },
-            ]}
+            stickyFirstColumn
+            emptyMessage={t('emptyMessage')}
+            columns={columns}
             getRowId={(row) => row.id}
           />
-        </>
+        </div>
       )}
     </DashboardLayout>
   );

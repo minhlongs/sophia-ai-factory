@@ -5,12 +5,9 @@
 
 import * as React from 'react';
 import { vi, beforeEach } from 'vitest';
-import { clearOrgIdCache } from '@/seed/auth/resolve-org-id';
 
 beforeEach(() => {
-  try {
-    clearOrgIdCache();
-  } catch {}
+  // test setup hook
 });
 
 // ── D1 / R2 / KV mocks ───────────────────────────────────────────────────

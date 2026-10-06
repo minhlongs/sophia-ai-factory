@@ -44,7 +44,7 @@ export function Button({
     font-label-md font-semibold
     rounded-xl transition-all duration-200
     active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
-    focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-primary-container
+    focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60
     custom-shadow-low
   `;
 
@@ -56,16 +56,16 @@ export function Button({
       border border-indigo-400/30
     `,
     secondary: `
-      bg-white/10 text-white border border-white/10
-      hover:bg-white/15 hover:border-white/20
+      bg-black/5 dark:bg-white/10 text-foreground dark:text-white border border-border dark:border-white/[0.08]
+      hover:bg-black/10 dark:hover:bg-white/15 hover:border-border dark:hover:border-white/20
     `,
     outline: `
-      bg-transparent border border-white/15 text-slate-200
-      hover:bg-white/5 hover:border-indigo-400/50 hover:text-white
+      bg-transparent border border-border dark:border-white/[0.08] text-foreground dark:text-slate-200
+      hover:bg-black/5 dark:hover:bg-white/5 hover:border-primary/50 hover:text-foreground dark:hover:text-white
     `,
     ghost: `
-      bg-transparent text-slate-300
-      hover:bg-white/5 hover:text-white
+      bg-transparent text-muted-foreground dark:text-slate-300
+      hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white
     `,
     destructive: `
       bg-rose-600 text-white
@@ -74,9 +74,9 @@ export function Button({
   };
 
   const sizes = {
-    sm: 'px-sm py-sm text-label-sm h-8',
-    md: 'px-md py-2.5 text-label-md h-10',
-    lg: 'px-lg py-3 text-label-lg h-12',
+    sm: 'px-3 py-1 text-label-sm h-8 min-h-[36px] sm:min-h-0',
+    md: 'px-4 py-2 text-label-md h-10',
+    lg: 'px-6 py-2.5 text-label-lg h-12',
   };
 
   const widthClass = fullWidth ? 'w-full' : '';

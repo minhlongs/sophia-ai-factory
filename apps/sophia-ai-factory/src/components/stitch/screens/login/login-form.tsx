@@ -107,7 +107,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           </label>
           <div className="relative group">
             <Mail
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none"
               aria-hidden="true"
             />
             <input
@@ -144,7 +144,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           </div>
           <div className="relative group">
             <Lock
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none"
               aria-hidden="true"
             />
             <input
@@ -163,7 +163,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors rounded-sm p-0.5"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors rounded-sm p-0.5"
               aria-label={showPassword ? t('hidePassword') : t('showPassword')}
               tabIndex={-1}
             >
@@ -200,7 +200,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           <div className="w-full border-t border-zinc-800" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-[#18181B] px-3 text-zinc-500 font-medium tracking-wider">
+          <span className="bg-[#18181B] px-3 text-zinc-400 font-medium tracking-wider">
             {t('orContinueWith')}
           </span>
         </div>

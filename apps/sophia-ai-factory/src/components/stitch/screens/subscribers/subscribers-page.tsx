@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Mail, Phone, MoreVertical } from 'lucide-react';
-import { DashboardLayout, Card, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
+import { useTranslations } from 'next-intl';
+import { Search, Mail, Phone, MoreVertical, Users, UserCheck, UserX, DollarSign } from 'lucide-react';
+import { DashboardLayout, Card, StatCard, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
 
 export interface SubscriberItem {
   id: string;
@@ -27,6 +28,7 @@ export interface SubscribersPageProps {
 export const EMPTY_SUBSCRIBERS: SubscriberItem[] = [];
 
 export default function SubscribersPage({ initialSubscribers, stats }: SubscribersPageProps = {}) {
+  const t = useTranslations('stitch.subscribers');
   const [search, setSearch] = useState('');
 
   const subscribersList = initialSubscribers ?? EMPTY_SUBSCRIBERS;
@@ -44,54 +46,60 @@ export default function SubscribersPage({ initialSubscribers, stats }: Subscribe
 
   return (
     <DashboardLayout
-      title="Subscribers"
-      subtitle="Manage your subscribers and their subscriptions"
+      title={t('title')}
+      subtitle={t('subtitle')}
       actions={
         <Button variant="outline" iconLeft={<MoreVertical className="w-4 h-4" />}>
-          Export
+          {t('export')}
         </Button>
       }
     >
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total</p>
-          <p className="font-headline-md text-headline-md text-on-surface">{totalCount}</p>
-        </Card>
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Active</p>
-          <p className="font-headline-md text-headline-md text-emerald-600">{activeCount}</p>
-        </Card>
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Canceled</p>
-          <p className="font-headline-md text-headline-md text-on-surface-variant">{canceledCount}</p>
-        </Card>
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">MRR</p>
-          <p className="font-headline-md text-headline-md text-primary">{mrrDisplay}</p>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label={t('total')}
+          value={totalCount}
+          icon={Users}
+          iconColor="indigo"
+        />
+        <StatCard
+          label={t('active')}
+          value={activeCount}
+          icon={UserCheck}
+          iconColor="emerald"
+        />
+        <StatCard
+          label={t('canceled')}
+          value={canceledCount}
+          icon={UserX}
+          iconColor="rose"
+        />
+        <StatCard
+          label={t('mrr')}
+          value={mrrDisplay}
+          icon={DollarSign}
+          iconColor="violet"
+        />
       </div>
 
       {/* Search */}
       <Card className="mb-xl" padding="md">
-        <div className="flex items-center gap-md">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search subscribers by name or email..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-10 w-full"
             />
           </div>
-          <div className="flex gap-sm">
-            <Button variant="outline" size="md">
-              <Mail className="w-4 h-4 mr-sm" />
-              Email All
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />} className="w-full sm:w-auto">
+              {t('emailAll')}
             </Button>
-            <Button variant="outline" size="md">
-              <Phone className="w-4 h-4 mr-sm" />
-              SMS
+            <Button variant="outline" size="md" iconLeft={<Phone className="w-4 h-4" />} className="w-full sm:w-auto">
+              {t('sms')}
             </Button>
           </div>
         </div>
@@ -100,9 +108,10 @@ export default function SubscribersPage({ initialSubscribers, stats }: Subscribe
       {/* Subscribers Table */}
       <Table
         data={filteredSubscribers}
-        emptyMessage="No subscribers registered yet. Customer subscriptions activated through NOWPayments or PayOS will appear here."
+        stickyFirstColumn
+        emptyMessage={t('emptyMessage')}
         columns={[
-          { key: 'subscriber', header: 'Subscriber', cell: (row) => (
+          { key: 'subscriber', header: t('columns.subscriber'), cell: (row) => (
             <div className="flex items-center gap-md">
               <Avatar src={row.avatar ?? null} alt={row.name} initials={row.name} size="md" />
               <div>
@@ -111,21 +120,21 @@ export default function SubscribersPage({ initialSubscribers, stats }: Subscribe
               </div>
             </div>
           ) },
-          { key: 'plan', header: 'Plan', cell: (row) => (
+          { key: 'plan', header: t('columns.plan'), cell: (row) => (
             <Badge variant="soft" color={row.plan === 'Enterprise' || row.plan === 'MASTER' ? 'primary' : 'secondary'}>
               {row.plan}
             </Badge>
           ), align: 'center' },
-          { key: 'status', header: 'Status', cell: (row) => (
+          { key: 'status', header: t('columns.status'), cell: (row) => (
             <Badge variant="soft" color={row.status === 'active' ? 'success' : 'neutral'}>
               {row.status}
             </Badge>
           ), align: 'center' },
-          { key: 'joined', header: 'Joined', cell: (row) => (
+          { key: 'joined', header: t('columns.joined'), cell: (row) => (
             <span className="font-body-sm text-on-surface-variant">{row.joined}</span>
           ), align: 'center' },
           { key: 'actions', header: '', cell: () => (
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" aria-label={t('subscriberActions')}>
               <MoreVertical className="w-4 h-4" />
             </Button>
           ), align: 'right' },

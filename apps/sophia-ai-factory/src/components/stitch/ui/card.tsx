@@ -20,21 +20,21 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Card({
   children,
   variant = 'elevated',
-  padding = 'lg',
+  padding = 'md',
   hoverable = false,
   className = '',
   ...props
 }: CardProps) {
   const baseStyles = cn(
-    'bg-[#12141F]/85 backdrop-blur-xl rounded-2xl border border-white/10',
+    'bg-card/85 dark:bg-[#12141F]/85 border border-border dark:border-white/[0.08] backdrop-blur-xl rounded-2xl',
     'shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
     'transition-all duration-300'
   );
 
   const variants = {
     elevated: '',
-    outlined: 'border border-white/15',
-    filled: 'bg-[#181B2A]/90',
+    outlined: 'border border-border dark:border-white/[0.08]',
+    filled: 'bg-muted/80 dark:bg-[#181B2A]/90',
   };
 
   const paddings = {

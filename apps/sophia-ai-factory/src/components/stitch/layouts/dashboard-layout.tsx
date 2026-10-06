@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Sidebar, SidebarItem } from '../ui/sidebar';
 import {
   LayoutDashboard,
@@ -50,13 +51,14 @@ export interface TopAppBarProps {
  * Obsidian Cyber-Glass TopAppBar component
  */
 export function TopAppBar({
-  searchPlaceholder = 'Search missions, campaigns, runbooks...',
+  searchPlaceholder,
   userName = 'Sophia Founder',
   userRole = 'Owner / CEO',
   userAvatar,
   notificationCount = 3,
   onOpenMobileDrawer,
 }: TopAppBarProps) {
+  const t = useTranslations('stitch.navigation');
   const pathname = usePathname() || '';
   const router = useRouter();
 
@@ -73,6 +75,8 @@ export function TopAppBar({
     router.push(newPath);
   };
 
+  const resolvedSearchPlaceholder = searchPlaceholder || t('searchPlaceholder');
+
   return (
     <header className="h-16 fixed top-0 left-0 right-0 md:left-[280px] z-30 bg-[#08090D]/80 backdrop-blur-xl border-b border-white/[0.08] flex items-center justify-between px-4 md:px-8">
       {/* Search & Mobile Trigger */}
@@ -80,8 +84,8 @@ export function TopAppBar({
         <button
           type="button"
           onClick={onOpenMobileDrawer}
-          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-colors"
-          aria-label="Open mobile navigation"
+          className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          aria-label={t('openMobileNav')}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -90,8 +94,8 @@ export function TopAppBar({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <input
             type="search"
-            placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-4 py-1.5 text-xs md:text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+            placeholder={resolvedSearchPlaceholder}
+            className="w-full h-10 pl-9 pr-4 text-xs md:text-sm rounded-lg bg-black/[0.04] dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60 transition-all font-sans"
           />
         </div>
       </div>
@@ -102,8 +106,8 @@ export function TopAppBar({
         <button
           type="button"
           onClick={toggleLocale}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-all"
-          aria-label="Toggle language"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] border border-border dark:border-white/[0.08] transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          aria-label={t('toggleLanguage')}
         >
           <Globe className="w-3.5 h-3.5 text-primary" />
           <span className="uppercase tracking-wider font-mono font-bold">
@@ -114,12 +118,12 @@ export function TopAppBar({
         {/* Notifications */}
         <button
           type="button"
-          className="relative p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-all"
-          aria-label="Notifications"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center relative rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          aria-label={t('notifications')}
         >
           <Notifications className="w-4 h-4" />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm ring-2 ring-[#08090D]">
+            <span className="absolute top-1 right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm ring-2 ring-[#08090D]">
               {notificationCount > 99 ? '99+' : notificationCount}
             </span>
           )}
@@ -128,14 +132,14 @@ export function TopAppBar({
         {/* Help */}
         <Link
           href="/dashboard/docs/runbooks"
-          className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-all hidden sm:block"
-          aria-label="Help"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-all hidden sm:flex focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          aria-label={t('help')}
         >
           <HelpOutline className="w-4 h-4" />
         </Link>
 
         {/* Divider */}
-        <div className="h-6 w-[1px] bg-white/[0.08] hidden sm:block" />
+        <div className="h-6 w-[1px] bg-border dark:bg-white/[0.08] hidden sm:block" />
 
         {/* User Menu */}
         <div className="flex items-center gap-3 pl-1 sm:pl-2 shrink-0">
@@ -193,27 +197,48 @@ export function DashboardLayout({
   subtitle,
   actions,
 }: DashboardLayoutProps) {
+  const t = useTranslations('stitch.navigation');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Close mobile drawer when pressing Escape key
+  React.useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileOpen]);
 
   // 11 Canonical Sophia AI modules
   const defaultNavItems: SidebarItem[] = [
-    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, href: '/dashboard' },
-    { id: 'create_mission', label: 'Create Mission', icon: PlusCircle, href: '/dashboard/missions/new' },
-    { id: 'missions', label: 'AI Missions', icon: Film, href: '/dashboard/missions' },
-    { id: 'creative_studio', label: 'Creative Studio', icon: Wand2, href: '/dashboard/creative-economy' },
-    { id: 'youtube', label: 'YouTube Automation', icon: Youtube, href: '/dashboard/youtube' },
-    { id: 'playbooks', label: 'Playbooks', icon: BookOpen, href: '/dashboard/playbooks' },
-    { id: 'publish_queue', label: 'Distribution Queue', icon: Share2, href: '/dashboard/publish/queue' },
-    { id: 'marketplace', label: 'Creator Marketplace', icon: ShoppingBag, href: '/marketplace' },
-    { id: 'handover', label: 'Handover & Acceptance', icon: ShieldCheck, href: '/dashboard/handover' },
-    { id: 'runbooks', label: 'Runbooks', icon: Terminal, href: '/dashboard/docs/runbooks' },
-    { id: 'system_health', label: 'System Health', icon: Activity, href: '/dashboard/system-health' },
+    { id: 'dashboard', label: t('overview'), icon: LayoutDashboard, href: '/dashboard' },
+    { id: 'create_mission', label: t('createMission'), icon: PlusCircle, href: '/dashboard/missions/new' },
+    { id: 'missions', label: t('aiMissions'), icon: Film, href: '/dashboard/missions' },
+    { id: 'creative_studio', label: t('creativeStudio'), icon: Wand2, href: '/dashboard/creative-economy' },
+    { id: 'youtube', label: t('youtubeAutomation'), icon: Youtube, href: '/dashboard/youtube' },
+    { id: 'playbooks', label: t('playbooks'), icon: BookOpen, href: '/dashboard/playbooks' },
+    { id: 'publish_queue', label: t('distributionQueue'), icon: Share2, href: '/dashboard/publish/queue' },
+    { id: 'marketplace', label: t('creatorMarketplace'), icon: ShoppingBag, href: '/marketplace' },
+    { id: 'handover', label: t('handoverAcceptance'), icon: ShieldCheck, href: '/dashboard/handover' },
+    { id: 'runbooks', label: t('runbooks'), icon: Terminal, href: '/dashboard/docs/runbooks' },
+    { id: 'system_health', label: t('systemHealth'), icon: Activity, href: '/dashboard/system-health' },
   ];
 
   const items = navItems.length > 0 ? navItems : defaultNavItems;
 
   return (
     <div className="min-h-screen bg-[#08090D] text-foreground">
+      {/* Skip to content bypass link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:shadow-lg focus:outline-none"
+      >
+        {t('skipToContent')}
+      </a>
+
       {/* Mobile Drawer Overlay */}
       {isMobileOpen && (
         <div
@@ -224,6 +249,9 @@ export function DashboardLayout({
 
       {/* Mobile Slide-Over Drawer */}
       <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('openMobileNav')}
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-[#08090D] border-r border-[#222536] flex flex-col h-full shadow-2xl transition-transform duration-300 md:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
@@ -234,7 +262,8 @@ export function DashboardLayout({
           <button
             type="button"
             onClick={() => setIsMobileOpen(false)}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-white"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            aria-label={t('closeMobileNav')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -247,7 +276,7 @@ export function DashboardLayout({
                 key={item.id}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all"
+                className="flex items-center gap-3 px-3.5 py-3 min-h-[44px] rounded-xl text-xs text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 <Icon className="w-4 h-4" />
                 <span>{item.label}</span>
@@ -261,7 +290,7 @@ export function DashboardLayout({
       <Sidebar
         items={items}
         brandName="Sophia AI"
-        brandTagline="Revenue Automation"
+        brandTagline={t('brandTagline')}
         userSection={
           <div className="flex items-center gap-2.5 min-w-0">
             <Avatar
@@ -282,7 +311,7 @@ export function DashboardLayout({
         upgradeCard={
           <div className="bg-[#12141F] border border-white/[0.08] rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-primary">Pro Plan</span>
+              <span className="font-semibold text-primary">{t('proPlan')}</span>
               <span className="font-mono text-muted-foreground">80%</span>
             </div>
             <div className="w-full h-1.5 bg-muted/60 rounded-full overflow-hidden">
@@ -293,9 +322,9 @@ export function DashboardLayout({
             </div>
             <Link
               href="/pricing"
-              className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate"
+              className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
-              <span>Upgrade Plan</span>
+              <span>{t('upgradePlan')}</span>
               <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
@@ -304,7 +333,7 @@ export function DashboardLayout({
 
       {/* Fixed TopBar */}
       <TopAppBar
-        searchPlaceholder="Search missions, campaigns, runbooks..."
+        searchPlaceholder={t('searchPlaceholder')}
         userName={user.name}
         userRole={user.role}
         userAvatar={user.avatar}

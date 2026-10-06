@@ -27,6 +27,7 @@
 
   --secondary: 260 70% 60%;            /* #9333EA — vibrant violet */
   --secondary-foreground: 0 0% 100%;
+  --on-secondary: 0 0% 100%;
 
   --muted: 240 5% 94%;                 /* #E4E4E7 — soft muted slate */
   --muted-foreground: 240 4% 42%;      /* #6B7280 — accessible slate text */
@@ -151,8 +152,8 @@
   /* ── Atmosphere ───────────────────────────────────────────────────────── */
   --gradient-space: radial-gradient(ellipse at 50% -20%, rgba(99, 102, 241, 0.18) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(8, 9, 13, 0) 100%);
   --gradient-neon: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #F59E0B 100%);
-  --glass-bg: rgba(18, 20, 31, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
 }
 
 .dark {
@@ -172,6 +173,7 @@
 
   --secondary: 260 70% 65%;             /* #A855F7 */
   --secondary-foreground: 0 0% 100%;
+  --on-secondary: 0 0% 100%;
 
   --muted: 240 14% 12%;                 /* #1A1C28 */
   --muted-foreground: 215 16% 65%;      /* #94A3B8 */
@@ -366,6 +368,8 @@
   --color-violet-800: hsl(var(--violet-800));
   --color-violet-900: hsl(var(--violet-900));
   --color-violet-950: hsl(var(--violet-950));
+  --color-secondary-400: hsl(var(--violet-400));
+  --color-secondary-700: hsl(var(--violet-700));
 
   /* Emerald */
   --color-emerald-50: hsl(var(--emerald-50));
@@ -695,6 +699,10 @@ html {
 :focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
+}
+
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

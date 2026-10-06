@@ -16,6 +16,8 @@ export interface TableProps<T> {
   onRowClick?: (row: T) => void;
   /** Table variant: 'card' (default standalone with glass background and border) or 'embedded' (for inside cards) */
   variant?: 'card' | 'embedded';
+  /** Freeze first column on horizontal scroll */
+  stickyFirstColumn?: boolean;
   /** Table className */
   className?: string;
 }
@@ -46,13 +48,14 @@ export function Table<T>({
   loading = false,
   onRowClick,
   variant = 'card',
+  stickyFirstColumn = false,
   className = '',
 }: TableProps<T>) {
   return (
     <div
       className={cn(
         variant === 'card'
-          ? 'bg-[#12141F]/80 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-md'
+          ? 'bg-card/85 dark:bg-[#12141F]/80 backdrop-blur-xl rounded-2xl border border-border dark:border-white/[0.08] shadow-md'
           : 'bg-transparent rounded-xl',
         'overflow-hidden',
         className
@@ -61,14 +64,15 @@ export function Table<T>({
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-white/[0.03] border-b border-white/[0.08] text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+            <tr className="bg-black/[0.02] dark:bg-white/[0.03] border-b border-border dark:border-white/[0.08] text-muted-foreground text-xs font-semibold uppercase tracking-wider">
               {columns.map((col, idx) => (
                 <th
                   key={idx}
                   className={cn(
-                    'px-6 py-3.5',
+                    'px-3 sm:px-6 py-3.5',
                     col.align === 'center' && 'text-center',
-                    col.align === 'right' && 'text-right'
+                    col.align === 'right' && 'text-right',
+                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-background dark:bg-[#12141F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                   )}
                   style={col.width ? { width: col.width } : undefined}
                 >
@@ -77,10 +81,10 @@ export function Table<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.06] text-sm">
+          <tbody className="divide-y divide-border dark:divide-white/[0.06] text-sm">
             {loading ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center">
+                <td colSpan={columns.length} className="px-3 sm:px-6 py-12 text-center">
                   <div className="flex items-center justify-center gap-3">
                     <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     <span className="text-muted-foreground">Loading...</span>
@@ -89,7 +93,7 @@ export function Table<T>({
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={columns.length} className="px-3 sm:px-6 py-12 text-center text-muted-foreground">
                   {emptyMessage}
                 </td>
               </tr>
@@ -98,7 +102,7 @@ export function Table<T>({
                 <tr
                   key={getRowId(row, rowIndex)}
                   className={cn(
-                    'hover:bg-white/[0.02] transition-colors',
+                    'hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors',
                     onRowClick && 'cursor-pointer'
                   )}
                   onClick={() => onRowClick?.(row)}
@@ -107,9 +111,10 @@ export function Table<T>({
                     <td
                       key={colIndex}
                       className={cn(
-                        'px-6 py-4 text-slate-200',
+                        'px-3 sm:px-6 py-4 text-foreground dark:text-slate-200',
                         col.align === 'center' && 'text-center',
-                        col.align === 'right' && 'text-right'
+                        col.align === 'right' && 'text-right',
+                        stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-background dark:bg-[#12141F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                       )}
                     >
                       {col.cell(row, rowIndex)}

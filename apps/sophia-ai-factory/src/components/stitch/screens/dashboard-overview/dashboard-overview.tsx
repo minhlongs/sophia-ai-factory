@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  TrendingUp,
   CalendarDays,
   ChevronDown,
   ChevronRight,
@@ -15,12 +14,15 @@ import {
   BarChart,
   FileText,
   UserPlus,
+  Eye,
+  DollarSign,
+  Cpu,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/seed/utils/cn';
-import { Card, CardHeader, CardContent } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
 import { Progress } from '@/seed/components/ui/progress';
+import { StatCard, type StatCardIconColor } from '@/components/stitch';
 
 /* ───────────────────────────────────────────────────────────────
  * Types
@@ -83,9 +85,9 @@ const campaignIconMap: Record<string, React.ComponentType<{ className?: string }
  * ─────────────────────────────────────────────────────────────── */
 
 const STATUS_STYLES: Record<string, string> = {
-  live: 'bg-emerald-500/10 text-emerald-400',
-  paused: 'bg-amber-500/10 text-amber-400',
-  draft: 'bg-zinc-500/10 text-zinc-400',
+  live: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
+  paused: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20',
+  draft: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-400 border border-zinc-500/20',
 };
 
 /* ───────────────────────────────────────────────────────────────
@@ -110,7 +112,7 @@ export default function DashboardOverview({
 
   return (
     <main
-      className="flex-1 overflow-y-auto p-8"
+      className="flex-1 overflow-y-auto p-4 sm:p-8"
       aria-label={t('aria.mainContent')}
     >
       {/* ── Header ────────────────────────────────────────────── */}
@@ -124,7 +126,7 @@ export default function DashboardOverview({
           </p>
         </div>
         <div
-          className="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-lg border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-colors"
+          className="flex items-center gap-2 h-10 bg-surface-container-high px-4 rounded-lg border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           role="button"
           tabIndex={0}
           aria-label={t('periodSelector.ariaLabel')}
@@ -137,37 +139,29 @@ export default function DashboardOverview({
 
       {/* ── KPI Row ───────────────────────────────────────────── */}
       <section aria-label={t('aria.kpiSection')} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {metrics.map((metric) => (
-          <Card
-            key={metric.id}
-            className="bg-surface-container border-outline-variant/10 p-6"
-          >
-            <CardHeader className="p-0">
-              <p className="text-on-surface-variant text-sm font-medium uppercase tracking-wider">
-                {t(`kpi.${metric.id}.label`)}
-              </p>
-              {metric.id === 'creditsUsed' && metric.progressValue != null ? (
-                <div className="flex items-baseline gap-1 mt-1">
-                  <h3 className="text-[24px] font-bold text-white">
-                    {metric.value}
-                  </h3>
-                  <span className="text-on-surface-variant text-sm">
-                    / {metric.progressMax?.toLocaleString() ?? '10,000'}
-                  </span>
-                </div>
-              ) : (
-                <h3 className="text-[32px] font-bold text-white mt-1">
-                  {metric.value}
-                </h3>
-              )}
-            </CardHeader>
-            <CardContent className="p-0 mt-4">
-              {metric.trend && (
-                <div className="flex items-center gap-1 text-emerald-400 text-sm">
-                  <TrendingUp className="w-4 h-4" aria-hidden="true" />
-                  <span>{metric.trend}</span>
-                </div>
-              )}
+        {metrics.map((metric) => {
+          const kpiConfigs: Record<string, { icon: React.ComponentType<{ className?: string }>; color: StatCardIconColor }> = {
+            activeCampaigns: { icon: Megaphone, color: 'indigo' },
+            totalViews: { icon: Eye, color: 'emerald' },
+            revenueMtd: { icon: DollarSign, color: 'violet' },
+            creditsUsed: { icon: Cpu, color: 'amber' },
+          };
+          const config = kpiConfigs[metric.id] || { icon: Megaphone, color: 'primary' };
+          const Icon = config.icon;
+
+          return (
+            <StatCard
+              key={metric.id}
+              label={t(`kpi.${metric.id}.label`)}
+              value={metric.value}
+              icon={Icon}
+              iconColor={config.color}
+              trend={metric.trend ? {
+                value: metric.trend,
+                isPositive: metric.trendDirection === 'up',
+              } : undefined}
+              subtitle={metric.id === 'creditsUsed' && metric.progressMax != null ? `/ ${metric.progressMax.toLocaleString()}` : undefined}
+            >
               {metric.sparkline && (
                 <div className="h-8 mt-2" aria-hidden="true">
                   <svg className="w-full h-full overflow-visible" viewBox="0 0 100 20" role="img" aria-label={t('aria.sparkline')}>
@@ -184,17 +178,17 @@ export default function DashboardOverview({
                 <Progress
                   value={metric.progressValue}
                   max={metric.progressMax ?? 100}
-                  className="w-full h-2"
-                  indicatorClassName="bg-primary"
+                  className="w-full h-2 mt-2"
+                  indicatorClassName="bg-amber-400"
                   aria-label={t('kpi.creditsUsed.progressLabel', {
                     used: metric.value,
                     total: metric.progressMax?.toLocaleString() ?? '10,000',
                   })}
                 />
               )}
-            </CardContent>
-          </Card>
-        ))}
+            </StatCard>
+          );
+        })}
       </section>
 
       {/* ── Performance Chart ─────────────────────────────────── */}
