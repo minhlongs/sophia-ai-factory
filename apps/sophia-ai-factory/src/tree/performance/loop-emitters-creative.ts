@@ -40,10 +40,9 @@ export async function emitCreativeAccepted(args: LoopEventContext & {
  * Q3 — creative output edited by human before acceptance. Fires on edit.
  * Answers: "how much human rework is needed?".
  *
- * DEFERRAL NOTE (Phase 2 Wiring): No edit/save UI flow exists in
- * creative-mission/actions.ts or forest. This emitter has no production call
- * site yet. Wire it in when the creative-edit UI ships — wiring to a fake
- * site would produce garbage data.
+ * Wired in Reality Loop v1.2 via Server Action editCreativeArtifact.
+ * Sequential rework revisions are disambiguated via entityId to ensure
+ * FNV-1a hash uniqueness while preserving idempotent retries.
  */
 export async function emitCreativeEdited(args: LoopEventContext & {
   missionId: string;
@@ -55,7 +54,7 @@ export async function emitCreativeEdited(args: LoopEventContext & {
 }): Promise<boolean> {
   return emitLoopEvent('creative.edited', {
     workspaceId: args.workspaceId,
-    entityId: args.missionId,
+    entityId: `${args.missionId}:${args.assetId}:${args.editCount}`,
     recordedAt: args.recordedAt,
     channel: 'creative',
     metrics: {

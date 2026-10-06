@@ -115,7 +115,7 @@ async function checkRealityLoop(): Promise<RealityLoopStatus> {
     const lagging = r.entries.filter((e) => e.wired && e.lagMs !== null && e.lagMs > 43200000 && !e.stale).map((e) => e.eventType);
     return { status: r.staleEmitterTypes.length > 0 ? 'degraded' : 'ok', wired: r.wired, deferred: r.deferred, totalEventTypes: r.totalEventTypes, lagging, staleEmitterTypes: r.staleEmitterTypes, maxLagMs: r.maxLagMs };
   } catch {
-    return { status: 'unknown', wired: 11, deferred: 2, totalEventTypes: 13, lagging: [], staleEmitterTypes: [], maxLagMs: null };
+    return { status: 'unknown', wired: 13, deferred: 0, totalEventTypes: 13, lagging: [], staleEmitterTypes: [], maxLagMs: null };
   }
 }
 

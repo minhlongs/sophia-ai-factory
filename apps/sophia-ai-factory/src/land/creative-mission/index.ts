@@ -12,8 +12,20 @@ export {
   executeMultiTrackMissionAction,
 } from './actions';
 
+export {
+  editCreativeArtifact,
+  editCreativeArtifactSchema,
+} from './edit-artifact-action';
+
+export type {
+  EditCreativeArtifactInput,
+  EditCreativeArtifactResult,
+  EditArtifactError,
+} from './edit-artifact-action';
+
 export type {
   MissionError,
   MissionAction,
   ExecuteMultiTrackMissionInput,
 } from './actions';
+

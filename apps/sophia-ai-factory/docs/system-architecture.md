@@ -963,3 +963,34 @@ for all 30 transformation entity types. It is **extended, never rewritten**:
 `IP_GRAPH.md`, `AGENT_PROTOCOL.md`, `AUTONOMY.md`, `PROVENANCE.md`,
 `DISTRIBUTION_OS.md`, `PERFORMANCE_INTELLIGENCE.md`, `DATA_FLYWHEEL.md`,
 `DEPRECATION_CANDIDATES.md`.
+
+---
+
+## 13. Reality Loop v1.2 & Autonomous E-Commerce Engine (2026-10-07)
+
+### 13.1 Reality Loop Telemetry Hardening (13/13 Wired)
+
+Sophia AI Factory utilizes a closed-loop reality feedback architecture with 13 canonical telemetry events (`REALITY_LOOP_EVENT_TYPES`):
+
+1. `mission.created`, `mission.abandoned`
+2. `agent.started`, `agent.failed`
+3. `approval.requested`, `approval.approved`, `approval.rejected`
+4. `creative.accepted`, `creative.rejected`, `creative.edited`
+5. `memory.used`, `memory.corrected`
+6. `mission.cost_recorded`
+
+#### Idempotency & Revision Disambiguation
+Events are persisted into D1 table `performance_events` via deterministic 64-bit FNV-1a hash IDs (`loopEventId`). Sequential human rework on creative artifacts is disambiguated by embedding revision iterations (`${missionId}:${assetId}:${editCount}`) into the entity identifier, ensuring successive revisions are never dropped by SQLite `INSERT OR IGNORE`.
+
+#### Contingent Health Monitoring
+Events that only fire under error or intervention conditions (`creative.edited`, `memory.corrected`, `mission.abandoned`, `agent.failed`, `approval.rejected`, `creative.rejected`) are tracked via `CONTINGENT_EVENT_TYPES`. This suppresses false staleness degradation on idle or perfectly running production systems.
+
+### 13.2 Autonomous E-Commerce Product-to-Video Engine
+
+The e-commerce pipeline bridges online merchant stores directly with autonomous creative missions:
+
+1. **Shopify Admin GraphQL Client** (`src/tree/ecommerce/shopify-client.ts`): Queries catalog products, prices, images, and tags via GraphQL with domain-scoped circuit breaker.
+2. **WooCommerce REST v3 Client** (`src/tree/ecommerce/woocommerce-client.ts`): Queries store products via Basic Auth with circuit breaker protection.
+3. **Catalog Mapper** (`src/land/commerce/catalog-mapper.ts`): Normalizes store payloads into `UnifiedProductItem` and derives video advertising prompts (headline hooks, selling points, call-to-actions, and target demographics).
+4. **Mission Trigger** (`src/land/commerce/mission-trigger.ts`): Creates autonomous video generation missions in `engine_missions` with constraints and success metrics.
+
