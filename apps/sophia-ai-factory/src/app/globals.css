@@ -10,26 +10,26 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Surface ─────────────────────────────────────────────────────────── */
-  --background: 240 18% 4%;            /* #08090D — deep obsidian */
-  --foreground: 210 20% 98%;           /* #F8FAFC — crisp white */
-  --background-secondary: 240 16% 7%;  /* #0E1017 — deep slate */
+  /* ── Surface (Functional Light Mode) ─────────────────────────────────── */
+  --background: 0 0% 100%;             /* #FFFFFF — clean light canvas */
+  --foreground: 240 10% 4%;            /* #09090B — deep high-contrast text */
+  --background-secondary: 240 5% 96%;  /* #F4F4F5 — light secondary */
 
-  --card: 240 16% 9%;                  /* #12141F — obsidian card */
-  --card-foreground: 210 20% 98%;
+  --card: 0 0% 100%;                   /* #FFFFFF — crisp white card */
+  --card-foreground: 240 10% 4%;       /* #09090B */
 
-  --popover: 240 16% 9%;
-  --popover-foreground: 210 20% 98%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 4%;
 
   /* ── Brand ────────────────────────────────────────────────────────────── */
-  --primary: 246 80% 64%;              /* #6366F1 — electric indigo */
+  --primary: 246 80% 60%;              /* #4F46E5 — electric indigo */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 260 70% 65%;            /* #A855F7 — vibrant violet */
+  --secondary: 260 70% 60%;            /* #9333EA — vibrant violet */
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 240 14% 12%;                /* #1A1C28 — muted slate */
-  --muted-foreground: 215 16% 65%;     /* #94A3B8 — soft slate text */
+  --muted: 240 5% 94%;                 /* #E4E4E7 — soft muted slate */
+  --muted-foreground: 240 4% 42%;      /* #6B7280 — accessible slate text */
 
   --accent: 38 92% 50%;                /* #F59E0B — cyber amber */
   --accent-foreground: 0 0% 100%;
@@ -39,36 +39,36 @@
   --destructive-foreground: 0 0% 100%;
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --border: 240 14% 16%;               /* #222536 — subtle dark border */
-  --input: 240 14% 16%;
-  --ring: 246 80% 64%;                 /* indigo focus ring */
+  --border: 240 6% 90%;                /* #E2E8F0 — crisp border */
+  --input: 240 6% 90%;
+  --ring: 246 80% 60%;                 /* indigo focus ring */
 
   /* ── Radius ───────────────────────────────────────────────────────────── */
   --radius: 0.75rem;                  /* 12px — sleek modern curves */
 
   /* ── Material Design 3 bridge tokens ──────────────────────────────────── */
-  --primary-container: 246 60% 25%;
-  --on-primary-container: 246 100% 92%;
-  --secondary-container: 260 50% 25%;
-  --on-secondary-container: 260 100% 92%;
-  --tertiary: 185 85% 48%;
-  --tertiary-container: 185 60% 20%;
+  --primary-container: 246 95% 94%;
+  --on-primary-container: 246 80% 30%;
+  --secondary-container: 260 90% 94%;
+  --on-secondary-container: 260 70% 30%;
+  --tertiary: 185 85% 40%;
+  --tertiary-container: 185 80% 92%;
   --on-tertiary: 0 0% 100%;
-  --on-tertiary-container: 185 100% 90%;
-  --surface-container: var(--card);
-  --surface-container-lowest: 240 18% 4%;
-  --surface-container-low: var(--muted);
-  --surface-container-high: 240 14% 14%;
-  --surface-container-highest: 240 14% 16%;
-  --surface-bright: var(--background-secondary);
-  --surface-dim: var(--muted);
-  --surface-variant: var(--muted);
-  --inverse-surface: 210 20% 98%;
+  --on-tertiary-container: 185 80% 20%;
+  --surface-container: 240 5% 96%;
+  --surface-container-lowest: 0 0% 100%;
+  --surface-container-low: 240 5% 98%;
+  --surface-container-high: 240 5% 92%;
+  --surface-container-highest: 240 5% 88%;
+  --surface-bright: 0 0% 100%;
+  --surface-dim: 240 5% 90%;
+  --surface-variant: 240 5% 94%;
+  --inverse-surface: 240 18% 4%;
   --inverse-primary: 246 80% 64%;
-  --outline: var(--border);
-  --outline-variant: 240 14% 14%;
-  --error-container: var(--destructive);
-  --on-error-container: var(--destructive-foreground);
+  --outline: 240 6% 80%;
+  --outline-variant: 240 6% 90%;
+  --error-container: 350 90% 94%;
+  --on-error-container: 350 89% 30%;
 
   /* ── Primary color scale (indigo) ─────────────────────────────────────── */
   --primary-50: 246 95% 97%;
@@ -164,6 +164,12 @@
   --card: 240 16% 9%;                   /* #12141F */
   --card-foreground: 210 20% 98%;
 
+  --popover: 240 16% 9%;
+  --popover-foreground: 210 20% 98%;
+
+  --primary: 246 80% 64%;               /* #6366F1 */
+  --primary-foreground: 0 0% 100%;
+
   --secondary: 260 70% 65%;             /* #A855F7 */
   --secondary-foreground: 0 0% 100%;
 
@@ -187,6 +193,24 @@
   --on-primary-container: 246 100% 92%;
   --secondary-container: 260 50% 25%;
   --on-secondary-container: 260 100% 92%;
+  --tertiary: 185 85% 48%;
+  --tertiary-container: 185 60% 20%;
+  --on-tertiary: 0 0% 100%;
+  --on-tertiary-container: 185 100% 90%;
+  --surface-container: var(--card);
+  --surface-container-lowest: 240 18% 4%;
+  --surface-container-low: var(--muted);
+  --surface-container-high: 240 14% 14%;
+  --surface-container-highest: 240 14% 16%;
+  --surface-bright: var(--background-secondary);
+  --surface-dim: var(--muted);
+  --surface-variant: var(--muted);
+  --inverse-surface: 210 20% 98%;
+  --inverse-primary: 246 80% 64%;
+  --outline: var(--border);
+  --outline-variant: 240 14% 14%;
+  --error-container: var(--destructive);
+  --on-error-container: var(--destructive-foreground);
 
   /* ── Primary scale (indigo, dark mode) ────────────────────────────────── */
   --primary-50: 246 95% 97%;
@@ -662,6 +686,15 @@ html {
 /* Industrial heavy: deliberate weight — section reveals, page enter */
 .ease-industrial {
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Accessibility: Keyboard Focus Ring (WCAG 2.1 AA)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

@@ -434,7 +434,7 @@ export default function LandingHero() {
                   <button
                     type="button"
                     onClick={() => toggleFaq(idx)}
-                    className="w-full flex items-center justify-between p-5 text-left text-base font-bold text-white hover:text-indigo-300 transition-colors focus:outline-none"
+                    className="w-full flex items-center justify-between p-5 text-left text-base font-bold text-white hover:text-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#11131E]"
                     aria-expanded={isOpen}
                   >
                     <span>{item.q}</span>

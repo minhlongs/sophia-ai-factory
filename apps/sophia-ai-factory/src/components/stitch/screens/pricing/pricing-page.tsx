@@ -127,7 +127,7 @@ export default function PricingPage() {
                   <button
                     type="button"
                     onClick={() => toggleFaq(index)}
-                    className="flex w-full items-center justify-between p-5 text-left focus:outline-none"
+                    className="flex w-full items-center justify-between p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#11131E]"
                     aria-expanded={isOpen}
                     aria-controls={`faq-answer-${index}`}
                   >

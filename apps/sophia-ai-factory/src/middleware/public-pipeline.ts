@@ -13,7 +13,7 @@ const BARE_AUTH_APP_ROUTES = new Set([
   'reset-password',
   'dashboard', 'checkout', 'settings', 'products',
   'payments', 'admin', 'affiliates', 'affiliate-portal',
-  'subscribers', 'webhook', 'creator', 'investor-room',
+  'subscribers', 'webhook', 'investor-room',
 ]);
 
 function stripLocalePrefix(pathname: string) {
