@@ -55,9 +55,9 @@ export interface AffiliateDashboardPageProps {
 /* ── Constants ───────────────────────────────────────────────────────────── */
 
 export const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  approved: 'bg-emerald-500/20 text-emerald-400',
-  paid: 'bg-primary/20 text-primary',
+  pending: 'bg-amber-500/20 text-amber-800 dark:text-amber-400 border border-amber-500/20',
+  approved: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
+  paid: 'bg-primary/20 text-primary-700 dark:text-primary-400 border border-primary/20',
 };
 
 export interface SocialPlatform {

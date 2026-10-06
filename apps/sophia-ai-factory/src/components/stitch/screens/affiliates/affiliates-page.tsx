@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Mail, Plus, MoreVertical, TrendingUp, Sparkles, Users } from 'lucide-react';
-import { DashboardLayout, Card, Button, Badge, Table, Avatar } from '@/components/stitch';
+import { Search, Mail, Plus, MoreVertical, TrendingUp, Sparkles, Users, DollarSign, Clock } from 'lucide-react';
+import { DashboardLayout, StatCard, Button, Badge, Table, Avatar } from '@/components/stitch';
 import { cn } from '@/seed/utils/cn';
 import { AffiliateDiscoveryPanel } from './affiliate-discovery-panel';
 import { mockAffiliates, type MockAffiliate } from './mock-affiliates';
@@ -60,7 +60,7 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
           type="button"
           onClick={() => setActiveTab('partners')}
           className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+            'flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all',
             activeTab === 'partners'
               ? 'bg-primary/15 text-primary font-bold border border-primary/30 shadow-sm shadow-primary/10'
               : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
@@ -73,7 +73,7 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
           type="button"
           onClick={() => setActiveTab('discovery')}
           className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+            'flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all',
             activeTab === 'discovery'
               ? 'bg-primary/15 text-primary font-bold border border-primary/30 shadow-sm shadow-primary/10'
               : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
@@ -90,44 +90,45 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-primary/15 rounded-xl text-primary border border-primary/20 shrink-0">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Total Affiliates</p>
-                  <p className="text-2xl font-bold text-white tracking-tight">{totalCount}</p>
-                </div>
-              </div>
-            </Card>
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Active</p>
-              <p className="text-2xl font-bold text-emerald-400 tracking-tight">{activeCount}</p>
-            </Card>
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Total Commission</p>
-              <p className="text-2xl font-bold text-white tracking-tight">{totalCommission}</p>
-            </Card>
-            <Card padding="md" className="border border-white/[0.08] bg-[#12141F]/80 backdrop-blur-xl">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Pending</p>
-              <p className="text-2xl font-bold text-amber-400 tracking-tight">{pendingCommission}</p>
-            </Card>
+            <StatCard
+              label="Total Affiliates"
+              value={totalCount}
+              icon={TrendingUp}
+              iconColor="indigo"
+            />
+            <StatCard
+              label="Active"
+              value={activeCount}
+              icon={Users}
+              iconColor="emerald"
+            />
+            <StatCard
+              label="Total Commission"
+              value={totalCommission}
+              icon={DollarSign}
+              iconColor="violet"
+            />
+            <StatCard
+              label="Pending"
+              value={pendingCommission}
+              icon={Clock}
+              iconColor="amber"
+            />
           </div>
 
           {/* Search Row */}
-          <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-xl bg-[#12141F]/80 backdrop-blur-xl border border-white/[0.08]">
-            <div className="relative flex-1 max-w-md">
+          <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-card/85 dark:bg-[#12141F]/80 backdrop-blur-xl border border-border dark:border-white/[0.08]">
+            <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="search"
                 placeholder="Search affiliates..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+                className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-black/[0.04] dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60 transition-all font-sans"
               />
             </div>
-            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />}>
+            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />} className="w-full sm:w-auto">
               Email All
             </Button>
           </div>
@@ -135,6 +136,7 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
           {/* Affiliates List */}
           <Table
             data={filteredAffiliates}
+            stickyFirstColumn
             emptyMessage="No affiliate partners registered yet. Use 'Discover Offers' to source high-converting affiliate campaigns or invite partners."
             columns={[
               {

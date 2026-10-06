@@ -49,7 +49,7 @@ export default function AffiliatePortalPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-md mb-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-xl">
           <Card padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total Earnings</p>
             <p className="font-headline-md text-headline-md text-primary">{affiliateStats.totalEarnings}</p>
@@ -81,11 +81,11 @@ export default function AffiliatePortalPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-md">
-              <div className="flex-1 relative">
-                <Input value={affiliateLink} readOnly className="font-mono text-sm" />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex-1 relative w-full sm:w-auto">
+                <Input value={affiliateLink} readOnly className="font-mono text-sm w-full" />
               </div>
-              <Button onClick={handleCopyLink} iconLeft={copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}>
+              <Button onClick={handleCopyLink} iconLeft={copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />} className="w-full sm:w-auto">
                 {copiedLink ? 'Copied!' : 'Copy'}
               </Button>
             </div>

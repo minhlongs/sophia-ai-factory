@@ -16,6 +16,8 @@ import { Input, Textarea } from '../input';
 import { Button } from '../button';
 import { Avatar } from '../avatar';
 import { Table } from '../table';
+import { StatCard } from '../stat-card';
+import { Badge } from '../badge';
 
 // Mock navigation Link
 vi.mock('@/navigation', () => ({
@@ -149,6 +151,194 @@ describe('Stitch Table', () => {
     expect(tableWrapper.className).toContain('bg-transparent');
     expect(tableWrapper.className).not.toContain('border-white/[0.08]');
     expect(tableWrapper.className).not.toContain('shadow-md');
+  });
+});
+
+describe('Stitch StatCard Primitive', () => {
+  const MockIcon = ({ className }: { className?: string }) => (
+    <svg data-testid="stat-card-icon" className={className} />
+  );
+
+  it('renders label and metric value', () => {
+    render(
+      <StatCard
+        label="Total Platform Revenue"
+        value="$124,500"
+        icon={MockIcon}
+        testId="kpi-revenue-card"
+      />
+    );
+
+    expect(screen.getByText('Total Platform Revenue')).toBeDefined();
+    expect(screen.getByText('$124,500')).toBeDefined();
+    expect(screen.getByTestId('stat-card-icon')).toBeDefined();
+  });
+
+  it('renders icon badge and color variants (e.g. indigo, emerald, rose, primary)', () => {
+    const { container, rerender } = render(
+      <StatCard
+        label="Active Affiliates"
+        value="432"
+        icon={MockIcon}
+        iconColor="emerald"
+      />
+    );
+
+    const iconWrapper = screen.getByTestId('stat-card-icon-badge');
+    expect(iconWrapper.className).toContain('text-emerald-700');
+    expect(iconWrapper.className).toContain('dark:text-emerald-400');
+    expect(iconWrapper.className).toContain('bg-emerald-500/10');
+
+    rerender(
+      <StatCard
+        label="Active Affiliates"
+        value="432"
+        icon={MockIcon}
+        iconColor="indigo"
+      />
+    );
+    expect(screen.getByTestId('stat-card-icon-badge').className).toContain('text-indigo-700');
+    expect(screen.getByTestId('stat-card-icon-badge').className).toContain('dark:text-indigo-400');
+
+    rerender(
+      <StatCard
+        label="Active Affiliates"
+        value="432"
+        icon={MockIcon}
+        iconColor="rose"
+      />
+    );
+    expect(screen.getByTestId('stat-card-icon-badge').className).toContain('text-rose-700');
+    expect(screen.getByTestId('stat-card-icon-badge').className).toContain('dark:text-rose-400');
+
+    rerender(
+      <StatCard
+        label="Active Affiliates"
+        value="432"
+        icon={MockIcon}
+        iconColor="primary"
+      />
+    );
+    expect(screen.getByTestId('stat-card-icon-badge').className).toContain('text-primary-700');
+    expect(screen.getByTestId('stat-card-icon-badge').className).toContain('dark:text-primary-400');
+  });
+
+  it('renders directional trend indicators (positive with ArrowUpRight, negative with ArrowDownRight, neutral with Minus)', () => {
+    const { container, rerender } = render(
+      <StatCard
+        label="Monthly Growth"
+        value="+24.8%"
+        icon={MockIcon}
+        trend={{ value: '+14.2%', isPositive: true }}
+      />
+    );
+
+    let trendPill = screen.getByTestId('stat-card-trend-pill');
+    expect(trendPill.className).toContain('text-emerald-700');
+    expect(trendPill.className).toContain('dark:text-emerald-400');
+    expect(trendPill.className).toContain('bg-emerald-500/10');
+    expect(container.querySelector('.lucide-arrow-up-right')).toBeDefined();
+
+    rerender(
+      <StatCard
+        label="Churn Rate"
+        value="3.1%"
+        icon={MockIcon}
+        trend={{ value: '-2.4%', isPositive: false }}
+      />
+    );
+
+    trendPill = screen.getByTestId('stat-card-trend-pill');
+    expect(trendPill.className).toContain('text-rose-700');
+    expect(trendPill.className).toContain('dark:text-rose-400');
+    expect(trendPill.className).toContain('bg-rose-500/10');
+    expect(container.querySelector('.lucide-arrow-down-right')).toBeDefined();
+
+    rerender(
+      <StatCard
+        label="System Availability"
+        value="99.99%"
+        icon={MockIcon}
+        trend={{ value: '0.0%', isNeutral: true }}
+      />
+    );
+
+    trendPill = screen.getByTestId('stat-card-trend-pill');
+    expect(trendPill.className).toContain('text-muted-foreground');
+    expect(trendPill.className).toContain('bg-muted/30');
+    expect(container.querySelector('.lucide-minus')).toBeDefined();
+  });
+
+  it('renders subtitle and children slots (sparkline / progress bar)', () => {
+    render(
+      <StatCard
+        label="MCU Quota Consumption"
+        value="65,420 / 100,000"
+        icon={MockIcon}
+        subtitle="Refreshes in 12 days"
+      >
+        <div data-testid="quota-progress-slot" className="w-full bg-primary/20 h-2 rounded-full" />
+      </StatCard>
+    );
+
+    expect(screen.getByText('Refreshes in 12 days')).toBeDefined();
+    expect(screen.getByTestId('quota-progress-slot')).toBeDefined();
+  });
+});
+
+describe('Stitch Badge Theme-Adaptive Contrast', () => {
+  it('applies theme-adaptive contrast classes for soft variants', () => {
+    const { rerender } = render(<Badge variant="soft" color="success">Active</Badge>);
+    let badge = screen.getByText('Active');
+    expect(badge.className).toContain('text-emerald-700');
+    expect(badge.className).toContain('dark:text-emerald-400');
+    expect(badge.className).toContain('bg-emerald-500/10');
+
+    rerender(<Badge variant="soft" color="warning">Pending</Badge>);
+    badge = screen.getByText('Pending');
+    expect(badge.className).toContain('text-amber-800');
+    expect(badge.className).toContain('dark:text-amber-400');
+    expect(badge.className).toContain('bg-amber-500/10');
+
+    rerender(<Badge variant="soft" color="error">Failed</Badge>);
+    badge = screen.getByText('Failed');
+    expect(badge.className).toContain('text-rose-700');
+    expect(badge.className).toContain('dark:text-rose-400');
+    expect(badge.className).toContain('bg-rose-500/10');
+
+    rerender(<Badge variant="soft" color="destructive">Destructive</Badge>);
+    badge = screen.getByText('Destructive');
+    expect(badge.className).toContain('text-rose-700');
+    expect(badge.className).toContain('dark:text-rose-400');
+
+    rerender(<Badge variant="soft" color="primary">Primary</Badge>);
+    badge = screen.getByText('Primary');
+    expect(badge.className).toContain('text-primary-700');
+    expect(badge.className).toContain('dark:text-primary-400');
+    expect(badge.className).toContain('bg-primary/10');
+
+    rerender(<Badge variant="soft" color="secondary">Secondary</Badge>);
+    badge = screen.getByText('Secondary');
+    expect(badge.className).toContain('text-secondary-700');
+    expect(badge.className).toContain('dark:text-secondary-400');
+    expect(badge.className).toContain('bg-secondary/10');
+  });
+
+  it('applies theme-adaptive contrast classes for outline variants', () => {
+    const { rerender } = render(<Badge variant="outline" color="success">Success</Badge>);
+    let badge = screen.getByText('Success');
+    expect(badge.className).toContain('text-emerald-700');
+    expect(badge.className).toContain('dark:text-emerald-400');
+
+    rerender(<Badge variant="outline" color="warning">Warning</Badge>);
+    badge = screen.getByText('Warning');
+    expect(badge.className).toContain('text-amber-800');
+    expect(badge.className).toContain('dark:text-amber-400');
+
+    rerender(<Badge variant="outline" color="error">Error</Badge>);
+    badge = screen.getByText('Error');
+    expect(badge.className).toContain('text-rose-700');
+    expect(badge.className).toContain('dark:text-rose-400');
   });
 });
 

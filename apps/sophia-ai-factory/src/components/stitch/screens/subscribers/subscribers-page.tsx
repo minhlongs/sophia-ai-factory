@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Mail, Phone, MoreVertical } from 'lucide-react';
-import { DashboardLayout, Card, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
+import { Search, Mail, Phone, MoreVertical, Users, UserCheck, UserX, DollarSign } from 'lucide-react';
+import { DashboardLayout, Card, StatCard, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
 
 export interface SubscriberItem {
   id: string;
@@ -53,44 +53,50 @@ export default function SubscribersPage({ initialSubscribers, stats }: Subscribe
       }
     >
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total</p>
-          <p className="font-headline-md text-headline-md text-on-surface">{totalCount}</p>
-        </Card>
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Active</p>
-          <p className="font-headline-md text-headline-md text-emerald-600">{activeCount}</p>
-        </Card>
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Canceled</p>
-          <p className="font-headline-md text-headline-md text-on-surface-variant">{canceledCount}</p>
-        </Card>
-        <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">MRR</p>
-          <p className="font-headline-md text-headline-md text-primary">{mrrDisplay}</p>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Total"
+          value={totalCount}
+          icon={Users}
+          iconColor="indigo"
+        />
+        <StatCard
+          label="Active"
+          value={activeCount}
+          icon={UserCheck}
+          iconColor="emerald"
+        />
+        <StatCard
+          label="Canceled"
+          value={canceledCount}
+          icon={UserX}
+          iconColor="rose"
+        />
+        <StatCard
+          label="MRR"
+          value={mrrDisplay}
+          icon={DollarSign}
+          iconColor="violet"
+        />
       </div>
 
       {/* Search */}
       <Card className="mb-xl" padding="md">
-        <div className="flex items-center gap-md">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Search subscribers by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-10 w-full"
             />
           </div>
-          <div className="flex gap-sm">
-            <Button variant="outline" size="md">
-              <Mail className="w-4 h-4 mr-sm" />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <Button variant="outline" size="md" iconLeft={<Mail className="w-4 h-4" />} className="w-full sm:w-auto">
               Email All
             </Button>
-            <Button variant="outline" size="md">
-              <Phone className="w-4 h-4 mr-sm" />
+            <Button variant="outline" size="md" iconLeft={<Phone className="w-4 h-4" />} className="w-full sm:w-auto">
               SMS
             </Button>
           </div>
@@ -100,6 +106,7 @@ export default function SubscribersPage({ initialSubscribers, stats }: Subscribe
       {/* Subscribers Table */}
       <Table
         data={filteredSubscribers}
+        stickyFirstColumn
         emptyMessage="No subscribers registered yet. Customer subscriptions activated through NOWPayments or PayOS will appear here."
         columns={[
           { key: 'subscriber', header: 'Subscriber', cell: (row) => (

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Filter, Download, ArrowUpRight, ArrowDownRight, Eye, CreditCard } from 'lucide-react';
-import { DashboardLayout, Card, Button, Badge, Table, Input } from '@/components/stitch';
+import { Search, Filter, Download, Eye, CreditCard, Calendar, Clock, RotateCcw } from 'lucide-react';
+import { DashboardLayout, Card, StatCard, type StatCardIconColor, Button, Badge, Table, Input } from '@/components/stitch';
 
 export interface PaymentItem {
   id: string;
@@ -68,47 +68,43 @@ export default function PaymentsPage({
       }
     >
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
-        {statsList.map((stat, idx) => (
-          <Card key={idx} padding="md">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">
-              {stat.label}
-            </p>
-            <div className="flex items-baseline gap-sm">
-              <p className="font-headline-md text-headline-md text-on-surface">{stat.value}</p>
-              {stat.trend === 'up' && (
-                <Badge variant="soft" color="success" size="sm">
-                  <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                  {stat.change}
-                </Badge>
-              )}
-              {stat.trend === 'down' && (
-                <Badge variant="soft" color="error" size="sm">
-                  <ArrowDownRight className="w-3 h-3 mr-0.5" />
-                  {stat.change}
-                </Badge>
-              )}
-              {stat.trend === 'neutral' && (
-                <span className="text-[12px] text-on-surface-variant">{stat.change}</span>
-              )}
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {statsList.map((stat, idx) => {
+          const icons = [CreditCard, Calendar, Clock, RotateCcw];
+          const colors: StatCardIconColor[] = ['indigo', 'emerald', 'amber', 'rose'];
+          const Icon = icons[idx] || CreditCard;
+          const color = colors[idx] || 'primary';
+
+          return (
+            <StatCard
+              key={idx}
+              label={stat.label}
+              value={stat.value}
+              icon={Icon}
+              iconColor={color}
+              trend={{
+                value: stat.change,
+                isPositive: stat.trend === 'up',
+                isNeutral: stat.trend === 'neutral',
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Search & Filter */}
       <Card className="mb-xl" padding="md">
-        <div className="flex items-center gap-md">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Search payments by customer, email, or method..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-10 w-full"
             />
           </div>
-          <Button variant="outline" iconLeft={<Filter className="w-4 h-4" />}>
+          <Button variant="outline" size="md" iconLeft={<Filter className="w-4 h-4" />} className="w-full sm:w-auto">
             Filter
           </Button>
         </div>
@@ -130,6 +126,7 @@ export default function PaymentsPage({
       ) : (
         <Table
           data={filteredPayments}
+          stickyFirstColumn
           emptyMessage="No payment transactions match your query."
           columns={[
             { key: 'date', header: 'Date', cell: (row) => (

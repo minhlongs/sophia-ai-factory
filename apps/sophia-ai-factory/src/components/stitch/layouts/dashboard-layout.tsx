@@ -80,7 +80,7 @@ export function TopAppBar({
         <button
           type="button"
           onClick={onOpenMobileDrawer}
-          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-colors"
+          className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-colors"
           aria-label="Open mobile navigation"
         >
           <Menu className="w-5 h-5" />
@@ -91,7 +91,7 @@ export function TopAppBar({
           <input
             type="search"
             placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-4 py-1.5 text-xs md:text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+            className="w-full h-10 pl-9 pr-4 text-xs md:text-sm rounded-lg bg-black/[0.04] dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60 transition-all font-sans"
           />
         </div>
       </div>
@@ -102,7 +102,7 @@ export function TopAppBar({
         <button
           type="button"
           onClick={toggleLocale}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-all"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] border border-border dark:border-white/[0.08] transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           aria-label="Toggle language"
         >
           <Globe className="w-3.5 h-3.5 text-primary" />
@@ -114,12 +114,12 @@ export function TopAppBar({
         {/* Notifications */}
         <button
           type="button"
-          className="relative p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-all"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center relative rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-all focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           aria-label="Notifications"
         >
           <Notifications className="w-4 h-4" />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm ring-2 ring-[#08090D]">
+            <span className="absolute top-1 right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm ring-2 ring-[#08090D]">
               {notificationCount > 99 ? '99+' : notificationCount}
             </span>
           )}
@@ -128,14 +128,14 @@ export function TopAppBar({
         {/* Help */}
         <Link
           href="/dashboard/docs/runbooks"
-          className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-all hidden sm:block"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-all hidden sm:flex focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           aria-label="Help"
         >
           <HelpOutline className="w-4 h-4" />
         </Link>
 
         {/* Divider */}
-        <div className="h-6 w-[1px] bg-white/[0.08] hidden sm:block" />
+        <div className="h-6 w-[1px] bg-border dark:bg-white/[0.08] hidden sm:block" />
 
         {/* User Menu */}
         <div className="flex items-center gap-3 pl-1 sm:pl-2 shrink-0">
@@ -195,6 +195,18 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Close mobile drawer when pressing Escape key
+  React.useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileOpen]);
+
   // 11 Canonical Sophia AI modules
   const defaultNavItems: SidebarItem[] = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, href: '/dashboard' },
@@ -214,6 +226,14 @@ export function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#08090D] text-foreground">
+      {/* Skip to content bypass link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:shadow-lg focus:outline-none"
+      >
+        Skip to content
+      </a>
+
       {/* Mobile Drawer Overlay */}
       {isMobileOpen && (
         <div
@@ -224,6 +244,9 @@ export function DashboardLayout({
 
       {/* Mobile Slide-Over Drawer */}
       <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation"
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-[#08090D] border-r border-[#222536] flex flex-col h-full shadow-2xl transition-transform duration-300 md:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
@@ -234,7 +257,8 @@ export function DashboardLayout({
           <button
             type="button"
             onClick={() => setIsMobileOpen(false)}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-white"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-colors"
+            aria-label="Close mobile navigation"
           >
             <X className="w-5 h-5" />
           </button>
@@ -247,7 +271,7 @@ export function DashboardLayout({
                 key={item.id}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all"
+                className="flex items-center gap-3 px-3.5 py-3 min-h-[44px] rounded-xl text-xs text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all"
               >
                 <Icon className="w-4 h-4" />
                 <span>{item.label}</span>

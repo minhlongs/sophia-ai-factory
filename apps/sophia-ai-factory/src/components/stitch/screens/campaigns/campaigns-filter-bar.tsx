@@ -29,7 +29,7 @@ export function CampaignsFilterBar({
   const hasActiveFilters = statusFilter !== 'all' || channelFilter !== 'all' || searchQuery.trim().length > 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-4 mb-8" role="search" aria-label={t('aria.filterBar')}>
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8" role="search" aria-label={t('aria.filterBar')}>
       <div className="relative w-full sm:w-[240px]">
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none"
@@ -41,18 +41,19 @@ export function CampaignsFilterBar({
           onChange={(e) => onSearch(e.target.value)}
           placeholder={t('filter.searchPlaceholder')}
           aria-label={t('aria.searchCampaigns')}
-          className="pl-10"
+          className="pl-10 w-full"
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider" id="status-filter-label">
           {t('filter.status')}
         </label>
         <select
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
-          className="bg-surface-container-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 bg-surface-container-high border border-outline-variant rounded-lg px-3 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60"
           aria-labelledby="status-filter-label"
         >
           <option value="all">{t('filter.all')}</option>
@@ -70,7 +71,7 @@ export function CampaignsFilterBar({
         <select
           value={channelFilter}
           onChange={(e) => onChannelChange(e.target.value)}
-          className="bg-surface-container-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="h-10 bg-surface-container-high border border-outline-variant rounded-lg px-3 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60"
           aria-labelledby="channel-filter-label"
         >
           <option value="all">{t('filter.all')}</option>
@@ -81,7 +82,7 @@ export function CampaignsFilterBar({
       </div>
 
       <div
-        className="flex items-center gap-2 bg-surface-container-high border border-outline-variant rounded-lg px-3 py-2 cursor-pointer hover:border-foreground/30 transition-colors"
+        className="flex items-center gap-2 h-10 bg-surface-container-high border border-outline-variant rounded-lg px-3 cursor-pointer hover:border-foreground/30 transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         role="button"
         tabIndex={0}
         aria-label={t('filter.date')}
@@ -91,15 +92,16 @@ export function CampaignsFilterBar({
         <ChevronRight className="w-4 h-4 text-muted-foreground -rotate-90" aria-hidden="true" />
       </div>
 
-      {hasActiveFilters && (
-        <button
-          type="button"
-          onClick={onClearFilters}
-          className="text-xs text-primary font-semibold hover:underline transition-colors"
-        >
-          {t('filter.clearAll')}
-        </button>
-      )}
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="h-10 px-2 inline-flex items-center text-xs text-primary font-semibold hover:underline transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
+          >
+            {t('filter.clearAll')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

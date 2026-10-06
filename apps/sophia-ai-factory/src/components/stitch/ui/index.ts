@@ -5,6 +5,9 @@ export type { ButtonProps } from './button';
 export { Card, CardHeader, CardContent, CardFooter } from './card';
 export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps } from './card';
 
+export { StatCard } from './stat-card';
+export type { StatCardProps, StatCardIconColor } from './stat-card';
+
 export { Input, Textarea } from './input';
 export type { InputProps, TextareaProps } from './input';
 

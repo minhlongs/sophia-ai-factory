@@ -31,7 +31,7 @@
  * @module __tests__/integration/enterprise/webhooks-crypto-stress.test
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   generateWebhookSignature,
   verifyWebhookSignature,
@@ -397,6 +397,16 @@ describe('Empirical Challenger: Milestone 4 Cryptography, Timing Attacks & Clock
   // 3. REPLAY ATTACK & CLOCK DRIFT TOLERANCE WINDOW (±300S)
   // ============================================================================
   describe('3. Replay Attack & Clock Drift Window (±300s)', () => {
+    let dateSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      dateSpy = vi.spyOn(Date, 'now').mockReturnValue(1717200000000);
+    });
+
+    afterEach(() => {
+      dateSpy.mockRestore();
+    });
+
     it('accepts signatures within the ±300s window and strictly rejects outside the window', async () => {
       const nowSec = Math.floor(Date.now() / 1000);
 
