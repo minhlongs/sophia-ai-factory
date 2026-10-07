@@ -16,6 +16,9 @@ import {
   createNicheVideoCampaignPlan,
   type NicheVideoCampaignPlan,
 } from '@/tree/video/blueprints/niche-video-service';
+import { NicheConversionStatsCard } from '../niche-conversion-stats-card';
+import { NicheSyndicationPreviewCard } from '../niche-syndication-preview-card';
+import { NicheHookVariantsCard } from '../niche-hook-variants-card';
 
 const mockT = (key: string) => `trans_${key}`;
 
@@ -117,4 +120,38 @@ describe('Niche Studio Components', () => {
       expect(screen.getByText(/trans_dispatchedTitle/)).toBeDefined();
     });
   });
+
+  describe('NicheConversionStatsCard', () => {
+    it('renders metrics and telemetry indicators for saas and crypto', () => {
+      render(<NicheConversionStatsCard niche="saas_global" t={mockT} />);
+      expect(screen.getByText(/trans_statsTitle/)).toBeDefined();
+      expect(screen.getByText('14.2K')).toBeDefined();
+      expect(screen.getByText('trans_metricMrr')).toBeDefined();
+
+      render(<NicheConversionStatsCard niche="crypto_global" t={mockT} />);
+      expect(screen.getByText('trans_metricRebates')).toBeDefined();
+    });
+  });
+
+  describe('NicheSyndicationPreviewCard', () => {
+    it('renders empty placeholder if syndication is null', () => {
+      render(<NicheSyndicationPreviewCard syndication={null} t={mockT} />);
+      expect(screen.getByText('trans_syndicationEmpty')).toBeDefined();
+    });
+  });
+
+  describe('NicheHookVariantsCard', () => {
+    it('renders empty placeholder if hookPackage is null', () => {
+      render(
+        <NicheHookVariantsCard
+          hookPackage={null}
+          selectedHookId={null}
+          onSelectHook={vi.fn()}
+          t={mockT}
+        />,
+      );
+      expect(screen.getByText('trans_hooksEmpty')).toBeDefined();
+    });
+  });
 });
+
