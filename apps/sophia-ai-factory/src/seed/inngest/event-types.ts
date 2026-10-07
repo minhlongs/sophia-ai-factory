@@ -266,6 +266,21 @@ export type AutonomousCampaignScalingRequestedEvent = {
   };
 };
 
+export type SocialSyndicationRequestedEvent = {
+  data: {
+    jobId: string;
+    tenantId: string;
+    videoUrl: string;
+    caption: string;
+    channel: {
+      channelId: string;
+      platform: 'tiktok' | 'youtube' | 'x';
+      todayPublishedCount: number;
+      lastPublishedAtMs: number | null;
+    };
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -317,5 +332,6 @@ export type Events = {
   "niche.video.campaign.requested": NicheVideoCampaignRequestedEvent;
   "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
   "autonomous.campaign.scaling.requested": AutonomousCampaignScalingRequestedEvent;
+  "social.syndication.requested": SocialSyndicationRequestedEvent;
 };
 
