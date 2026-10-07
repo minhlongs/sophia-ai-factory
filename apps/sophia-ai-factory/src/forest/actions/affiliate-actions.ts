@@ -91,7 +91,7 @@ export interface AcceptAffiliateInviteResult {
 /**
  * Generate cryptographically secure 256-bit entropy token (64 hex chars)
  */
-export function generateSecureInviteToken(): string {
+export async function generateSecureInviteToken(): Promise<string> {
   const bytes = new Uint8Array(32); // 32 bytes = 256 bits of entropy
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
@@ -183,7 +183,7 @@ export async function inviteAffiliateAction(
     }
 
     // 4. Token Generation & Expiration (14 days)
-    const token = generateSecureInviteToken();
+    const token = await generateSecureInviteToken();
     const inviteId = `aff_inv_${crypto.randomUUID()}`;
     const now = Date.now();
     const expiresInDays = 14;

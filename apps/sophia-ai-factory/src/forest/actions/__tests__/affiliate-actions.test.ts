@@ -41,16 +41,16 @@ vi.mock('@/seed/security/d1-rate-limiter', () => ({
 }));
 
 describe('Token Generation Entropy & Cryptographic Properties', () => {
-  it('generates a 64-character hexadecimal string with 256 bits of entropy', () => {
-    const token = generateSecureInviteToken();
+  it('generates a 64-character hexadecimal string with 256 bits of entropy', async () => {
+    const token = await generateSecureInviteToken();
     expect(typeof token).toBe('string');
     expect(token).toHaveLength(64);
     expect(/^[0-9a-f]{64}$/.test(token)).toBe(true);
   });
 
-  it('generates unique tokens on subsequent invocations', () => {
-    const tokenA = generateSecureInviteToken();
-    const tokenB = generateSecureInviteToken();
+  it('generates unique tokens on subsequent invocations', async () => {
+    const tokenA = await generateSecureInviteToken();
+    const tokenB = await generateSecureInviteToken();
     expect(tokenA).not.toBe(tokenB);
   });
 });
