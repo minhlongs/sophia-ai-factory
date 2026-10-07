@@ -66,7 +66,9 @@ export * from './revenue-events-ingest';
 export * from './revenue-attribution';
 // Distribution OS Phase 4: Commerce digital fulfillment
 export * from './commerce-fulfillment';
-// Autonomous E-Commerce Inngest Pipeline
+// Autonomous Video Pipeline
+export * from './autonomous-video-pipeline-job';
+export * from './niche-video-dispatcher';
 export * from './commerce-catalog-sync';
 export * from './commerce-video-dispatcher';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/

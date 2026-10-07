@@ -45,6 +45,8 @@ import {
   opsTelegramAlert,
   keyRotationCron,
   keyRotationReencrypt,
+  autonomousVideoPipelineJob,
+  nicheVideoDispatcher,
 } from "@/forest/inngest/functions/index";
 
 
@@ -126,5 +128,8 @@ export const { GET, POST, PUT } = serve({
     // BYOK Key Rotation — 90-day auto-rotation + re-encrypt handler
     keyRotationCron,
     keyRotationReencrypt,
+    // Autonomous Video Factory & Niche Dispatcher
+    autonomousVideoPipelineJob,
+    nicheVideoDispatcher,
   ],
 });

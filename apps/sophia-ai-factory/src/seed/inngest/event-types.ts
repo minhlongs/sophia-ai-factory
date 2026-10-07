@@ -220,6 +220,19 @@ export type CreativeMissionMultiTrackRequestedData = {
  * digital product commerce, and the creative.mission.multitrack.requested
  * event for decoupled multi-track orchestration.
  */
+export type AutonomousVideoPipelineRequestedEvent = {
+  data: {
+    campaignId: string;
+    niche: "saas_global" | "crypto_global";
+    productName: string;
+    productUrl: string;
+    productDescription: string;
+    targetDurationSeconds?: number;
+    affiliateBaseUrl: string;
+    targetPlatforms?: ("youtube_shorts" | "tiktok" | "instagram_reels")[];
+  };
+};
+
 export type NicheVideoCampaignRequestedEvent = {
   data: {
     campaignId?: string;
@@ -286,5 +299,6 @@ export type Events = {
   "affiliate/conversion.reconciled": AffiliateConversionReconciledEvent;
   "affiliate/conversion.recorded": AffiliateConversionRecordedEvent;
   "niche.video.campaign.requested": NicheVideoCampaignRequestedEvent;
+  "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
 };
 
