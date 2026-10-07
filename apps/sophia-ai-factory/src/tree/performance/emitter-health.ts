@@ -17,25 +17,24 @@ import type { RealityLoopEventType } from './loop-events';
 import { REALITY_LOOP_EVENT_TYPES } from './loop-events';
 import { getD1Safe } from '@/seed/db/client';
 
-/** Event types with production call sites (static registry, scouted 2026-09). */
-const WIRED_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set([
-  'mission.created',
-  'mission.abandoned',
-  'agent.started',
-  'agent.failed',
-  'approval.requested',
-  'approval.approved',
-  'approval.rejected',
-  'creative.accepted',
-  'creative.rejected',
-  'memory.used',
-  'mission.cost_recorded',
-]);
+/** Event types with production call sites (all 13 canonical events wired). */
+const WIRED_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set(REALITY_LOOP_EVENT_TYPES);
 
-/** Event types deferred pending a production call site (do not alert on). */
-const DEFERRED_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set([
+/** Event types deferred pending a production call site (none deferred in v1.2). */
+const DEFERRED_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set();
+
+/**
+ * Event types that fire only on human interventions, errors, or cancellations.
+ * In a healthy or idle system, zero events in 24h is expected rather than an anomaly.
+ * Tracking counts, last emitted timestamp, and lag continues without flagging false staleness.
+ */
+export const CONTINGENT_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set([
   'creative.edited',
   'memory.corrected',
+  'mission.abandoned',
+  'agent.failed',
+  'approval.rejected',
+  'creative.rejected',
 ]);
 
 /** A wired emitter with no event in this window is considered stale. */
@@ -87,6 +86,11 @@ export function isDeferredEventType(eventType: RealityLoopEventType): boolean {
   return DEFERRED_EVENT_TYPES.has(eventType);
 }
 
+/** Pure predicate for contingent status. */
+export function isContingentEventType(eventType: RealityLoopEventType): boolean {
+  return CONTINGENT_EVENT_TYPES.has(eventType);
+}
+
 /**
  * Compute the full emitter-health report. Reads D1 via a single aggregate
  * query — errors degrade to a static-wiring-only report (never throws).
@@ -96,11 +100,12 @@ export async function getEmitterHealth(nowMs: number = Date.now()): Promise<Emit
   const entries: EmitterHealthEntry[] = REALITY_LOOP_EVENT_TYPES.map((eventType) => {
     const wired = WIRED_EVENT_TYPES.has(eventType);
     const deferred = DEFERRED_EVENT_TYPES.has(eventType);
+    const contingent = CONTINGENT_EVENT_TYPES.has(eventType);
     const row = counts.get(eventType);
     const count24h = row?.count24h ?? 0;
     const lastEmittedAt = row?.lastMs ?? null;
     const lagMs = wired && lastEmittedAt !== null ? Math.max(0, nowMs - lastEmittedAt) : null;
-    const stale = wired && (lastEmittedAt === null || nowMs - lastEmittedAt > STALE_EMITTER_WINDOW_MS);
+    const stale = wired && !contingent && (lastEmittedAt === null || nowMs - lastEmittedAt > STALE_EMITTER_WINDOW_MS);
     return { eventType, wired, deferred, count24h, lastEmittedAt, lagMs, stale };
   });
 

@@ -37,8 +37,8 @@ describe('/api/reality-loop/health', () => {
 
     expect(resp.status).toBe(200);
     expect(typeof body.status).toBe('string');
-    expect(body.wired).toBe(11);
-    expect(body.deferred).toBe(2);
+    expect(body.wired).toBe(13);
+    expect(body.deferred).toBe(0);
     expect(body.totalEventTypes).toBe(13);
     expect(body.entries).toBeUndefined();
     expect(body.staleEmitterTypes).toBeUndefined();
@@ -71,8 +71,8 @@ describe('/api/reality-loop/health', () => {
     const body = (await resp.json()) as Record<string, unknown>;
 
     expect(resp.status).toBe(200);
-    expect(body.wired).toBe(11);
-    expect(body.deferred).toBe(2);
+    expect(body.wired).toBe(13);
+    expect(body.deferred).toBe(0);
     expect(body.entries).toBeUndefined();
   });
 

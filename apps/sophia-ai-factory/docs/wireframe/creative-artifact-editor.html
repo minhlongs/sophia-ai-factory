@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creative Artifact Editor & Review — Sophia AI Factory</title>
+  <style>
+    :root {
+      --bg: #FDFBF7;
+      --card-bg: #FFFFFF;
+      --fg: #1F2024;
+      --fg-muted: #6B7280;
+      --primary: #CA7F16;
+      --primary-hover: #B56F10;
+      --primary-light: #FEF3C7;
+      --border: #E5E7EB;
+      --success: #059669;
+      --danger: #DC2626;
+      --radius: 8px;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--fg);
+      line-height: 1.5;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .title h1 {
+      margin: 0 0 4px 0;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .title p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--fg-muted);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 16px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--fg);
+    }
+    input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: #FAFAFA;
+      color: var(--fg);
+    }
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn {
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: #FFFFFF;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    .btn-secondary {
+      background-color: #F3F4F6;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+    .btn-success {
+      background-color: var(--success);
+      color: #FFFFFF;
+    }
+    .meta-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #F3F4F6;
+      font-size: 13px;
+    }
+    .meta-item span:first-child {
+      color: var(--fg-muted);
+    }
+    .meta-item span:last-child {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">
+      <h1>Chỉnh sửa & Phê duyệt Kịch bản (Artifact Review & Edit)</h1>
+      <p>Mission #msn_88291 • Agent: Scriptwriter Specialist • Version 2</p>
+    </div>
+    <div>
+      <span class="badge">Awaiting Human Review</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="section-title">
+        <span>Nội dung Video Artifact (Creative Content)</span>
+        <span style="font-size: 12px; color: var(--fg-muted); font-weight: normal;">ID: ast_9941a</span>
+      </div>
+
+      <div class="form-group">
+        <label for="headline">Tiêu đề Hook (Headline / Hook)</label>
+        <input type="text" id="headline" value="5 Bí quyết kinh doanh Dropshipping triệu đô không cần vốn">
+      </div>
+
+      <div class="form-group">
+        <label for="scriptContent">Kịch bản chi tiết (Full Script & Voiceover Prompts)</label>
+        <textarea id="scriptContent">[0:00 - 0:05] Bạn nghĩ kinh doanh online bắt buộc phải có vốn hàng trăm triệu? Sai lầm lớn nhất của 90% người mới khởi nghiệp.
+[0:06 - 0:25] Hôm nay Sophia AI Factory sẽ chỉ cho bạn quy trình tự động hóa 100% từ chọn sản phẩm đến tạo video chuyển đổi cao...</textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="changeSummary">Lý do điều chỉnh (Revision Reason / Edit Summary)</label>
+        <input type="text" id="changeSummary" placeholder="Ví dụ: Tối ưu câu mở đầu giật tít hơn, sửa lỗi chính tả...">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary">
+          💾 Lưu chỉnh sửa (Save & Emit creative.edited)
+        </button>
+        <button class="btn btn-success">
+          ✓ Phê duyệt (Approve Artifact)
+        </button>
+        <button class="btn btn-secondary">
+          Hủy bỏ (Cancel)
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <span>Thông số Đo lường (Telemetry Metadata)</span>
+      </div>
+
+      <div class="meta-item">
+        <span>Graph Run ID</span>
+        <span style="font-family: monospace;">run_732b_live</span>
+      </div>
+      <div class="meta-item">
+        <span>Node ID</span>
+        <span>script_generator</span>
+      </div>
+      <div class="meta-item">
+        <span>Agent Slug</span>
+        <span>creative-director</span>
+      </div>
+      <div class="meta-item">
+        <span>Số lần chỉnh sửa (Edit Count)</span>
+        <span>2</span>
+      </div>
+      <div class="meta-item">
+        <span>Thời gian tạo</span>
+        <span>2026-10-07 04:30 UTC</span>
+      </div>
+      <div class="meta-item">
+        <span>Reality Loop Status</span>
+        <span style="color: var(--success);">13/13 Emitters Active</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
