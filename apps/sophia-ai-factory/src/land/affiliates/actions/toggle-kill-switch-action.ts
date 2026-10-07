@@ -12,6 +12,8 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
+import { verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import {
@@ -33,8 +35,41 @@ export interface ToggleKillSwitchActionResult {
 }
 
 export interface ToggleKillSwitchActionError {
-  code: 'UNAUTHORIZED' | 'INVALID_INPUT' | 'EXECUTION_FAILED';
+  code: 'UNAUTHORIZED' | 'FORBIDDEN' | 'INVALID_INPUT' | 'EXECUTION_FAILED';
   message: string;
+}
+
+/**
+ * Validates whether the authenticated user has administrative control over
+ * the specified tenantId (or platform-wide when tenantId is 'default' / platform-scoped).
+ */
+async function authorizeTenantOperator(
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
+  tenantId: string,
+): Promise<boolean> {
+  // 1. Platform-level admin / operator bypass (DB role or session role)
+  const { isAdmin, dbRole } = await isUserAdminWithRole(user);
+  if (isAdmin || user.role === 'admin' || dbRole === 'operator' || user.role === 'operator') {
+    return true;
+  }
+
+  // 2. Platform-wide 'default' tenant requires platform admin/operator privilege
+  if (tenantId === 'default') {
+    return false;
+  }
+
+  // 3. User-owned solo tenant: e.g. tenantId === user.id or org-{user.id}
+  if (tenantId === user.id || tenantId === `org-${user.id}` || tenantId === `usr_${user.id}`) {
+    return true;
+  }
+
+  // 4. Multi-tenant workspace check: requires ADMIN or OWNER role in org
+  try {
+    const hasOrgAdminRole = await verifyWorkspaceRole(tenantId, user.id, 'ADMIN');
+    return hasOrgAdminRole;
+  } catch {
+    return false;
+  }
 }
 
 export async function toggleAffiliateKillSwitchAction(
@@ -56,8 +91,23 @@ export async function toggleAffiliateKillSwitchAction(
     });
   }
 
+  const { active, tenantId } = parsed.data;
+
+  // Authorization check (BOLA mitigation): user must have admin/operator rights for tenantId
+  const isAuthorized = await authorizeTenantOperator(user, tenantId);
+  if (!isAuthorized) {
+    logger.warn('[security] BOLA blocked: unauthorized attempt to toggle kill switch', {
+      userId: user.id,
+      tenantId,
+      userRole: user.role,
+    });
+    return failure({
+      code: 'FORBIDDEN',
+      message: `User ${user.id} is not authorized to toggle kill switch for tenant ${tenantId}`,
+    });
+  }
+
   try {
-    const { active, tenantId } = parsed.data;
     await setAffiliateKillSwitch(active, tenantId, user.id);
 
     logger.warn('Affiliate kill switch status updated by operator', {
@@ -90,6 +140,14 @@ export async function getAffiliateKillSwitchAction(
     return failure({
       code: 'UNAUTHORIZED',
       message: 'Authentication required to query affiliate kill switch status',
+    });
+  }
+
+  const isAuthorized = await authorizeTenantOperator(user, tenantId);
+  if (!isAuthorized) {
+    return failure({
+      code: 'FORBIDDEN',
+      message: `User ${user.id} is not authorized to inspect kill switch for tenant ${tenantId}`,
     });
   }
 

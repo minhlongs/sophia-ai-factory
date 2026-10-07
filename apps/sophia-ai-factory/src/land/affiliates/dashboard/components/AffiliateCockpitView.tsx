@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useTransition } from 'react';
 import type { CockpitExecutiveSnapshot } from '../affiliate-cockpit-types';
+import { toggleAffiliateKillSwitchAction } from '../../actions/toggle-kill-switch-action';
 
 interface AffiliateCockpitViewProps {
   snapshot: CockpitExecutiveSnapshot;
@@ -21,7 +22,30 @@ export function AffiliateCockpitView({
   onToggleKillSwitch,
   locale = 'vi',
 }: AffiliateCockpitViewProps) {
-  const { metrics, topPerformingHooks, killSwitchActive } = snapshot;
+  const { metrics, topPerformingHooks } = snapshot;
+  const [active, setActive] = useState(snapshot.killSwitchActive);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const handleToggle = () => {
+    const nextState = !active;
+    setActive(nextState);
+    setErrorMessage(null);
+    onToggleKillSwitch?.(nextState);
+
+    startTransition(async () => {
+      const result = await toggleAffiliateKillSwitchAction({
+        active: nextState,
+        tenantId: snapshot.tenantId,
+      });
+
+      if (!result.ok) {
+        // Rollback state on failure
+        setActive(!nextState);
+        setErrorMessage(result.error.message);
+      }
+    });
+  };
 
   const t = {
     title: locale === 'vi' ? 'Bảng Điều Khiển Doanh Thu & Rủi Ro Affiliate' : 'Affiliate Revenue & Risk Cockpit',
@@ -40,6 +64,7 @@ export function AffiliateCockpitView({
     hookCol: locale === 'vi' ? 'Tên Hook' : 'Hook Name',
     cadenceCol: locale === 'vi' ? 'Tần Suất / Ngày' : 'Daily Pace',
     actionCol: locale === 'vi' ? 'Trạng Thái' : 'Status',
+    updating: locale === 'vi' ? 'Đang cập nhật...' : 'Updating...',
   };
 
   return (
@@ -50,18 +75,24 @@ export function AffiliateCockpitView({
           <h2 className="text-xl font-bold tracking-tight text-foreground">{t.title}</h2>
           <p className="text-sm text-muted-foreground">{t.subtitle}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => onToggleKillSwitch?.(!killSwitchActive)}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              killSwitchActive
-                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'
-            }`}
-          >
-            {killSwitchActive ? t.killSwitchActiveText : t.killSwitchNormalText}
-          </button>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={handleToggle}
+              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                active
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              } ${isPending ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isPending ? t.updating : active ? t.killSwitchActiveText : t.killSwitchNormalText}
+            </button>
+          </div>
+          {errorMessage && (
+            <p className="text-xs text-destructive font-medium">{errorMessage}</p>
+          )}
         </div>
       </div>
 
