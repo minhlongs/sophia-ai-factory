@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Search, Mail, Plus, Sparkles, TrendingUp, Users, DollarSign, Clock } from 'lucide-react';
 import { DashboardLayout, StatCard, Button, Table } from '@/components/stitch';
 import { cn } from '@/seed/utils/cn';
 import { AffiliateDiscoveryPanel } from './affiliate-discovery-panel';
+import { InviteAffiliateModal } from './invite-affiliate-modal';
 import { mockAffiliates, type MockAffiliate } from './mock-affiliates';
 import { getAffiliatesTableColumns } from './affiliates-table-columns';
 
@@ -17,12 +18,75 @@ export interface AffiliatesPageProps {
     totalCommission?: string;
     pendingCommission?: string;
   };
+  initialStats?: {
+    total?: number;
+    active?: number;
+    totalCommission?: string;
+    pendingCommission?: string;
+  };
 }
 
-export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesPageProps = {}) {
+export default function AffiliatesPage({
+  initialAffiliates,
+  stats,
+  initialStats,
+}: AffiliatesPageProps = {}) {
   const t = useTranslations('stitch.affiliates');
   const [activeTab, setActiveTab] = useState<'partners' | 'discovery'>('partners');
   const [search, setSearch] = useState('');
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+  const [liveStats, setLiveStats] = useState<{
+    total?: number;
+    active?: number;
+    totalCommission?: string;
+    pendingCommission?: string;
+  } | null>(null);
+
+  // Fetch live stats from Cloudflare D1 via API endpoint when not pre-provided
+  useEffect(() => {
+    if (stats || initialStats) return;
+
+    let isMounted = true;
+    fetch('/api/affiliates/stats')
+      .then((res) => {
+        if (!res.ok) throw new Error('Network error');
+        return res.json() as Promise<{
+          success?: boolean;
+          stats?: {
+            totalAffiliates?: number;
+            activeAffiliates?: number;
+            totalCommissionCents?: number;
+            pendingCommissionCents?: number;
+          };
+        }>;
+      })
+      .then((data) => {
+        if (isMounted && data?.success && data?.stats) {
+          const s = data.stats;
+          const totalComm = s.totalCommissionCents != null
+            ? `$${((s.totalCommissionCents) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : '$0.00';
+          const pendComm = s.pendingCommissionCents != null
+            ? `$${((s.pendingCommissionCents) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : '$0.00';
+
+          setLiveStats({
+            total: s.totalAffiliates,
+            active: s.activeAffiliates,
+            totalCommission: totalComm,
+            pendingCommission: pendComm,
+          });
+        }
+      })
+      .catch(() => {
+        // Non-fatal, fallback to local counts
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [stats, initialStats]);
 
   const affiliatesList = initialAffiliates ?? mockAffiliates;
   const filteredAffiliates = affiliatesList.filter(
@@ -31,10 +95,11 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
       item.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalCount = stats?.total ?? affiliatesList.length;
-  const activeCount = stats?.active ?? affiliatesList.filter((a) => a.status === 'active').length;
-  const totalCommission = stats?.totalCommission ?? '$0';
-  const pendingCommission = stats?.pendingCommission ?? '$0';
+  const effectiveStats = stats || initialStats || liveStats;
+  const totalCount = effectiveStats?.total ?? affiliatesList.length;
+  const activeCount = effectiveStats?.active ?? affiliatesList.filter((a) => a.status === 'active').length;
+  const totalCommission = effectiveStats?.totalCommission ?? '$0.00';
+  const pendingCommission = effectiveStats?.pendingCommission ?? '$0.00';
 
   const columns = getAffiliatesTableColumns({
     affiliateHeader: t('columns.affiliate'),
@@ -61,7 +126,10 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
             {activeTab === 'discovery' ? t('viewPartners') : t('discoverOffers')}
           </Button>
           {activeTab === 'partners' && (
-            <Button iconLeft={<Plus className="w-4 h-4" />}>
+            <Button
+              iconLeft={<Plus className="w-4 h-4" />}
+              onClick={() => setIsInviteModalOpen(true)}
+            >
               {t('inviteAffiliate')}
             </Button>
           )}
@@ -171,6 +239,12 @@ export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesP
           />
         </div>
       )}
+
+      {/* Invite Affiliate Modal */}
+      <InviteAffiliateModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+      />
     </DashboardLayout>
   );
 }

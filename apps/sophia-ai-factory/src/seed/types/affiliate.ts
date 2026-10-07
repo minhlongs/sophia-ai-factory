@@ -1,15 +1,19 @@
 /**
  * Affiliate Domain Types
  *
- * Database row types for affiliate offers, user integrations, metrics.
- * Extracted from supabase-types.ts for modular organization.
+ * Database row types, domain models, and transfer interfaces for the
+ * Sophia AI Factory Interactive Affiliate & Partner Ecosystem.
+ * Pure seed types — zero upward imports from tree, forest, or land.
  *
  * @module seed/types/affiliate
  */
 
 import { Json } from './json';
 
-// Affiliate product catalog (from affiliate_products table)
+// ============================================================================
+// Legacy Catalog & User Integration Types
+// ============================================================================
+
 export interface AffiliateProductRow {
   id: string;
   external_id: string;
@@ -55,7 +59,6 @@ export interface AffiliateProductUpdate {
   updated_at?: string;
 }
 
-// Affiliate metrics tracking
 export interface AffiliateMetricHistoryRow {
   id: string;
   product_id: string;
@@ -70,7 +73,6 @@ export interface AffiliateMetricHistoryInsert {
   value: number;
 }
 
-// Affiliate category taxonomy
 export interface AffiliateCategoryRow {
   id: number;
   name: string;
@@ -90,7 +92,6 @@ export interface AffiliateCategoryUpdate {
   parent_id?: number | null;
 }
 
-// User integration with affiliate networks
 export interface UserIntegrationRow {
   id: string;
   user_id: string;
@@ -117,9 +118,13 @@ export interface UserIntegrationUpdate {
   updated_at?: string;
 }
 
-// Sophia AI Factory Partner Program
-export type PartnerTier = 'STANDARD' | 'VIP' | 'SUPER';
+// ============================================================================
+// Sophia Partner Program & Tier Modeling
+// ============================================================================
+
+export type PartnerTier = 'STANDARD' | 'VIP' | 'SUPER' | 'SILVER' | 'GOLD' | 'PLATINUM';
 export type PartnerStatus = 'active' | 'suspended' | 'under_review';
+export type PayoutRail = 'USDT' | 'VIETQR';
 
 export interface AffiliatePartnerRow {
   id: string;
@@ -133,6 +138,13 @@ export interface AffiliatePartnerRow {
   status: PartnerStatus;
   total_earnings_cents: number;
   pending_payout_cents: number;
+  settled_payout_cents?: number;
+  custom_rate_override_pct?: number | null;
+  payout_rail?: PayoutRail | null;
+  bank_bin?: string | null;
+  bank_account_number?: string | null;
+  bank_account_name?: string | null;
+  activated_mrr_cents?: number;
   created_at: number;
   updated_at: number;
 }
@@ -149,6 +161,13 @@ export interface AffiliatePartner {
   status: PartnerStatus;
   totalEarningsCents: number;
   pendingPayoutCents: number;
+  settledPayoutCents?: number;
+  customRateOverridePct?: number | null;
+  payoutRail?: PayoutRail | null;
+  bankBin?: string | null;
+  bankAccountNumber?: string | null;
+  bankAccountName?: string | null;
+  activatedMrrCents?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -162,6 +181,185 @@ export interface AffiliateReferralClickRow {
   referer_url: string | null;
   sub_id: string | null;
   created_at: number;
+}
+
+// ============================================================================
+// Milestone 1: Attribution, Commission & Ledger Settlement Types
+// ============================================================================
+
+export type ReferralStatus = 'pending' | 'converted' | 'expired';
+
+export interface AffiliateReferralRow {
+  id: string;
+  partner_id: string;
+  partner_code: string;
+  referred_user_id: string | null;
+  sub_id: string | null;
+  attribution_token: string | null;
+  click_id: string | null;
+  ip_hash: string | null;
+  user_agent: string | null;
+  status: ReferralStatus;
+  converted_at: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export type CommissionStatus = 'pending' | 'payable' | 'settled' | 'clawback' | 'rejected';
+export type CommissionTierLevel = 'TIER1' | 'TIER2';
+export type PaymentProvider = 'nowpayments' | 'payos' | 'manual';
+
+export interface AffiliateCommissionRow {
+  id: string;
+  event_key: string;
+  partner_id: string;
+  referral_id: string | null;
+  payment_provider: PaymentProvider;
+  payment_id: string;
+  order_id: string | null;
+  customer_user_id: string;
+  gross_amount_cents: number;
+  commission_rate_pct: number;
+  commission_cents: number;
+  tier_level: CommissionTierLevel;
+  currency: string;
+  status: CommissionStatus;
+  hold_days: number;
+  payable_at: number;
+  settled_at: number | null;
+  payout_id: string | null;
+  version: number;
+  metadata_json: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export type PayoutStatus =
+  | 'draft'
+  | 'pending_approval'
+  | 'approved'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'rejected';
+
+export interface AffiliatePayoutRow {
+  id: string;
+  payout_reference: string;
+  partner_id: string;
+  rail: PayoutRail;
+  amount_cents: number;
+  currency: string;
+  destination_encrypted: string;
+  status: PayoutStatus;
+  commission_count: number;
+  tx_hash_or_bank_ref: string | null;
+  approved_by: string | null;
+  approved_at: number | null;
+  failure_reason: string | null;
+  version: number;
+  created_at: number;
+  updated_at: number;
+}
+
+// ============================================================================
+// AI Offer Discovery & Catalog Types
+// ============================================================================
+
+export type AffiliateOfferCategory = 'SaaS' | 'E-Commerce' | 'Creator Tools' | 'Agency Automation';
+export type AffiliatePayoutModel = 'RevShare %' | 'Flat CPA' | 'Recurring' | 'RevShare';
+
+export interface AffiliateOfferRow {
+  id: string;
+  program_name: string;
+  title?: string | null;
+  category: AffiliateOfferCategory | string;
+  payout_model: AffiliatePayoutModel | string;
+  commission_rate_pct: number;
+  commission_terms: string;
+  epc: number;
+  conversion_rate_pct: number;
+  quality_score: number;
+  destination_url: string;
+  product_url?: string | null;
+  logo_url: string | null;
+  image_url?: string | null;
+  cookie_window_days: number;
+  min_payout_usd: number;
+  status: string;
+  tenant_id?: string | null;
+  network_id?: string | null;
+  external_id?: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface AffiliateOffer {
+  id: string;
+  programName: string;
+  category: AffiliateOfferCategory;
+  payoutModel: AffiliatePayoutModel;
+  commissionRatePct: number;
+  commissionTerms: string;
+  epc: number;
+  conversionRatePct: number;
+  qualityScore: number;
+  destinationUrl: string;
+  logoUrl?: string;
+  cookieWindowDays: number;
+  minPayoutUsd: number;
+  status?: string;
+}
+
+// ============================================================================
+// Partner Invitation & Onboarding Types
+// ============================================================================
+
+export type InviteStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
+
+export interface AffiliateInviteRow {
+  id: string;
+  inviter_user_id: string;
+  partner_name: string;
+  email: string;
+  custom_commission_rate_pct: number | null;
+  welcome_message: string | null;
+  asset_kit_urls: string | null;
+  invite_token: string;
+  status: InviteStatus;
+  expires_at: number;
+  accepted_at: number | null;
+  accepted_partner_id: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface InviteAffiliateInput {
+  partnerName: string;
+  email: string;
+  customRateOverridePct: number;
+  welcomeMessage?: string;
+  assetKitSelected?: string[];
+}
+
+export interface InviteAffiliateResult {
+  success: boolean;
+  inviteId?: string;
+  emailDispatched?: boolean;
+  error?: string;
+}
+
+// ============================================================================
+// Ledger Aggregations & Attribution Result Types
+// ============================================================================
+
+export interface AffiliateLedgerStats {
+  totalAffiliates: number;
+  activeAffiliates: number;
+  totalCommissionCents: number;
+  pendingCommissionCents: number;
+  settledCommissionCents: number;
+  currency: string;
 }
 
 export interface AffiliateStats {
@@ -180,12 +378,33 @@ export interface AffiliateStats {
 
 export interface PayoutBatchWithdrawal {
   partnerId: string;
-  address: string; // TRC-20 address
-  amount: number; // in USDT
+  address: string; // TRC-20 address or bank descriptor
+  amount: number; // in USDT or VND
 }
 
 export interface PayoutBatchRequest {
   batchId: string;
-  currency: 'usdttrc20';
+  currency: 'usdttrc20' | 'vnd';
   withdrawals: PayoutBatchWithdrawal[];
+}
+
+export interface AttributionParams {
+  provider: PaymentProvider;
+  paymentId: string;
+  orderId?: string | null;
+  customerId: string;
+  grossAmountCents: number;
+  currency?: string;
+  partnerCodeOverride?: string;
+}
+
+export interface AffiliateAttributionResult {
+  success: boolean;
+  attributed: boolean;
+  commissionId?: string;
+  tier2CommissionId?: string;
+  commissionCents?: number;
+  partnerId?: string;
+  reason?: string;
+  error?: string;
 }

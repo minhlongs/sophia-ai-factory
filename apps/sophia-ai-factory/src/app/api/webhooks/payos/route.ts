@@ -22,6 +22,7 @@ import type { Tier } from '@/seed/types'
 import type { PendingOrder } from '@/land/orders/pending-order-types'
 import { track } from '@/tree/signals/track'
 import { D1Events } from '@/tree/signals/d1-event-types'
+import { safelyRecordAffiliateCommission } from '@/tree/affiliates/affiliate-attribution'
 
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY
 
@@ -213,6 +214,27 @@ export async function POST(request: NextRequest) {
 
     // Complete the pending order
     await markOrderCompleted(orderId, `payos_${paymentLinkId}`)
+
+    // Non-blocking affiliate attribution
+    try {
+      const d1 = await getD1Raw()
+      await safelyRecordAffiliateCommission(
+        {
+          provider: 'payos',
+          paymentId: String(paymentLinkId),
+          orderId,
+          customerId: userId,
+          grossAmountCents: amount,
+          currency: 'VND',
+        },
+        d1
+      )
+    } catch (affErr) {
+      logger.warn('[PayOS Webhook] Affiliate attribution failed (non-fatal)', {
+        paymentLinkId,
+        error: String(affErr),
+      })
+    }
 
     // Mark event as processed
     await db.from('payment_events').update({ processed: 1 }).eq('event_id', `payos_${paymentLinkId}`)

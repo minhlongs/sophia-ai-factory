@@ -23,6 +23,7 @@ import {
 } from './nowpayments-email-referral'
 import { notifyFounderPaymentSuccess } from '@/tree/telegram/telegram-admin-notifier'
 import { markLeadPaid } from '@/land/telegram-sales/telegram-lead-repo'
+import { safelyRecordAffiliateCommission } from '@/tree/affiliates/affiliate-attribution'
 
 /**
  * Run all post-activation workflows.
@@ -45,6 +46,7 @@ export async function runPostActivationWorkflow(
   await safelySendReceiptEmail(userId, tier, billingPeriod, ipn, db)
   await safelyEnqueueWelcomeEmail(userId, tier, ipn, db, d1)
   await safelyCreditReferralReward(userId, tier, ipn, db, d1)
+  await safelyAttributeAffiliateCommission(userId, ipn, d1)
   await safelyNotifyFounderPayment(userId, tier, ipn, db, d1)
   await safelyTagSubaccount(ipn, d1)
 }
@@ -203,5 +205,33 @@ async function safelyTagSubaccount(ipn: NowPaymentsIpnPayload, d1: D1Database): 
     logger.warn('[NOWPayments] Subaccount tagging failed (non-fatal)', { error: String(err) })
   }
 }
+
+async function safelyAttributeAffiliateCommission(
+  userId: string,
+  ipn: NowPaymentsIpnPayload,
+  d1: D1Database
+): Promise<void> {
+  try {
+    const grossAmount = ipn.price_amount ?? ipn.actually_paid ?? 0
+    const grossAmountCents = Math.round(grossAmount * 100)
+    await safelyRecordAffiliateCommission(
+      {
+        provider: 'nowpayments',
+        paymentId: String(ipn.payment_id),
+        orderId: ipn.order_id ?? null,
+        customerId: userId,
+        grossAmountCents,
+        currency: 'USDT',
+      },
+      d1
+    )
+  } catch (err) {
+    logger.warn('[NOWPayments] Affiliate attribution failed (non-fatal)', {
+      paymentId: ipn.payment_id,
+      error: String(err),
+    })
+  }
+}
+
 
 
