@@ -28,3 +28,4 @@ export * from './actions/discover-offers-action';
 export * from './actions/convert-offer-action';
 export * from './affiliate-partner-service';
 export * from './affiliate-webhook-verifier';
+export * from './dashboard';

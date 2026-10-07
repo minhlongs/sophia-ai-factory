@@ -8,6 +8,11 @@
  */
 
 import React from 'react';
+import {
+  AffiliateCockpitView,
+  generateExecutiveCockpitSnapshot,
+} from '@/land/affiliates/dashboard';
+import type { ScalingDecision } from '@/tree/affiliate/scaling/auto-campaign-scaler';
 
 interface AffiliateMetrics {
   totalVideosGenerated: number;
@@ -29,6 +34,57 @@ export default async function AffiliatesDashboardPage(props: {
     activeNiches: ['saas_global', 'crypto_global'],
   };
 
+  const defaultScalingDecisions: ScalingDecision[] = [
+    {
+      campaignId: 'camp-01',
+      hookName: 'Secret AI Tool Nobody Knows',
+      ctrPercent: 5.4,
+      cvrPercent: 3.2,
+      epcCents: 482,
+      recommendedDailyVideos: 4,
+      action: 'SCALE_AGGRESSIVE',
+      reason: 'High EPC and conversion rate',
+    },
+    {
+      campaignId: 'camp-02',
+      hookName: 'Solana Meme Breakout Alert',
+      ctrPercent: 4.8,
+      cvrPercent: 2.7,
+      epcCents: 365,
+      recommendedDailyVideos: 4,
+      action: 'SCALE_AGGRESSIVE',
+      reason: 'Consistent yield on Crypto audience',
+    },
+    {
+      campaignId: 'camp-03',
+      hookName: 'Dev Tool 10x Velocity',
+      ctrPercent: 1.8,
+      cvrPercent: 1.1,
+      epcCents: 120,
+      recommendedDailyVideos: 1,
+      action: 'MAINTAIN_STEADY',
+      reason: 'Moderate baseline engagement',
+    },
+  ];
+
+  const defaultReconciliation = {
+    tenantId: 'default',
+    totalGrossCommissionCents: 124850,
+    totalHoldbackCents: 12485,
+    totalNetPayableCents: 112365,
+    totalRefundedCents: 0,
+    totalOrdersProcessed: 86,
+    highRiskRefundRate: false,
+    entries: [],
+  };
+
+  const cockpitSnapshot = generateExecutiveCockpitSnapshot({
+    tenantId: 'default',
+    reconciliation: defaultReconciliation,
+    scalingDecisions: defaultScalingDecisions,
+    killSwitchActive: false,
+  });
+
   const topHookArms = [
     { name: 'Secret AI Tool Nobody Knows', niche: 'SaaS Global', rpm: '$48.20', ucbScore: 9.84, status: 'Exploiting' },
     { name: 'Solana Meme Breakout Alert', niche: 'Crypto Global', rpm: '$36.50', ucbScore: 7.92, status: 'Exploiting' },
@@ -48,6 +104,12 @@ export default async function AffiliatesDashboardPage(props: {
             : 'Track automated video syndication, geo-targeted bridge link conversions, and MAB hook yield.'}
         </p>
       </div>
+
+      {/* Executive Affiliate Revenue & Risk Cockpit */}
+      <AffiliateCockpitView
+        snapshot={cockpitSnapshot}
+        locale={locale === 'vi' ? 'vi' : 'en'}
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
