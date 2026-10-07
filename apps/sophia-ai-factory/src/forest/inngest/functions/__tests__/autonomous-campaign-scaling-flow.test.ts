@@ -3,6 +3,11 @@ import {
   processAutonomousScaling,
 } from '../autonomous-campaign-scaling-flow';
 import type { CampaignPerformanceMetrics } from '@/tree/affiliate/scaling/auto-campaign-scaler';
+import * as killSwitchStore from '@/tree/affiliate/kill-switch/kill-switch-store';
+
+vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
+  isAffiliateKillSwitchActive: vi.fn().mockResolvedValue(false),
+}));
 
 vi.mock('@/seed/inngest/client', () => ({
   inngest: {
@@ -39,6 +44,8 @@ describe('Autonomous Campaign Scaling Inngest Flow', () => {
   };
 
   it('correctly processes winners, losers, and triggers scaling actions', async () => {
+    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(false);
+
     const report = await processAutonomousScaling('tenant_test_123', [
       winnerMetrics,
       loserMetrics,
@@ -48,6 +55,7 @@ describe('Autonomous Campaign Scaling Inngest Flow', () => {
     expect(report.scaledCount).toBe(1);
     expect(report.prunedCount).toBe(1);
     expect(report.maintainedCount).toBe(0);
+    expect(report.killSwitchActive).toBe(false);
 
     const winnerDecision = report.decisions.find(
       (d) => d.campaignId === 'camp_scale_1',
@@ -60,5 +68,18 @@ describe('Autonomous Campaign Scaling Inngest Flow', () => {
     );
     expect(loserDecision?.action).toBe('KILL_PRUNE');
     expect(loserDecision?.recommendedDailyVideos).toBe(0);
+  });
+
+  it('aborts aggressive scaling immediately when kill switch is active', async () => {
+    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(true);
+
+    const report = await processAutonomousScaling('tenant_test_123', [
+      winnerMetrics,
+    ]);
+
+    expect(report.killSwitchActive).toBe(true);
+    expect(report.scaledCount).toBe(0);
+    expect(report.decisions[0].recommendedDailyVideos).toBe(0);
+    expect(report.decisions[0].action).toBe('MAINTAIN_STEADY');
   });
 });

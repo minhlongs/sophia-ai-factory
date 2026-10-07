@@ -18,7 +18,11 @@ interface PlatformConfigRow {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used only as type source for PlatformConfigKey
-const CONFIG_KEYS = ['honeycomb_api_key', 'honeycomb_dataset'] as const;
+const CONFIG_KEYS = [
+  'honeycomb_api_key',
+  'honeycomb_dataset',
+  'affiliate_kill_switch_active',
+] as const;
 export type PlatformConfigKey = (typeof CONFIG_KEYS)[number];
 
 /**

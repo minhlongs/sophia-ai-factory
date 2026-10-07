@@ -17,6 +17,7 @@ import {
   type CampaignPerformanceMetrics,
   type ScalingDecision,
 } from '@/tree/affiliate/scaling/auto-campaign-scaler';
+import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 
 export interface ScalingFlowExecutionReport {
   tenantId: string;
@@ -25,12 +26,38 @@ export interface ScalingFlowExecutionReport {
   maintainedCount: number;
   prunedCount: number;
   decisions: ScalingDecision[];
+  killSwitchActive?: boolean;
 }
 
 export async function processAutonomousScaling(
   tenantId: string,
   metricsList: CampaignPerformanceMetrics[],
 ): Promise<ScalingFlowExecutionReport> {
+  const killSwitchActive = await isAffiliateKillSwitchActive(tenantId);
+  if (killSwitchActive) {
+    logger.warn('processAutonomousScaling: Emergency Kill Switch active - pausing video scaling', {
+      tenantId,
+    });
+    return {
+      tenantId,
+      totalEvaluated: metricsList.length,
+      scaledCount: 0,
+      maintainedCount: metricsList.length,
+      prunedCount: 0,
+      decisions: metricsList.map((m) => ({
+        campaignId: m.campaignId,
+        hookName: m.hookName,
+        ctrPercent: (m.clicks / Math.max(m.impressions, 1)) * 100,
+        cvrPercent: (m.conversions / Math.max(m.clicks, 1)) * 100,
+        epcCents: Math.round(m.totalEarningsCents / Math.max(m.clicks, 1)),
+        recommendedDailyVideos: 0,
+        action: 'MAINTAIN_STEADY',
+        reason: 'Emergency Kill Switch is currently active across platform/tenant',
+      })),
+      killSwitchActive: true,
+    };
+  }
+
   let scaledCount = 0;
   let maintainedCount = 0;
   let prunedCount = 0;
@@ -84,6 +111,7 @@ export async function processAutonomousScaling(
     maintainedCount,
     prunedCount,
     decisions,
+    killSwitchActive: false,
   };
 }
 
