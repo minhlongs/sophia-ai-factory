@@ -12,8 +12,13 @@ export interface GrowthSignal {
   nicheMarket: 'ai_agent' | 'dev_tool' | 'marketing' | 'undefined';
 }
 
+export interface RawSaaSItem {
+  id: string;
+  votesCount: number;
+}
+
 export function detectGrowthVelocity(
-  items: any[],
+  items: RawSaaSItem[],
 ): GrowthSignal[] {
   // Logic to identify high-velocity products (e.g., > 10 upvotes/hr)
   return items.map(item => ({

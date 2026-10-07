@@ -8,7 +8,6 @@
  */
 
 import React from 'react';
-import { getTranslations } from 'next-intl/server';
 
 interface AffiliateMetrics {
   totalVideosGenerated: number;

@@ -12,13 +12,18 @@ export interface NarrativeSignal {
   volumeChange24h: number; // percentage
 }
 
+export interface RawCryptoItem {
+  narrative?: string;
+  volume?: number;
+}
+
 export function analyzeNarrativeStrength(
-  items: any[], // Raw feed items
+  items: RawCryptoItem[],
 ): NarrativeSignal[] {
   // Logic to calculate momentum for RWA/DePIN/Meme narratives
   return items.map(item => ({
     narrative: item.narrative || 'unknown',
-    sentiment: item.volume > 1000000 ? 'bullish' : 'neutral',
+    sentiment: (item.volume ?? 0) > 1000000 ? 'bullish' : 'neutral',
     volumeChange24h: 15.5, // stub
   }));
 }

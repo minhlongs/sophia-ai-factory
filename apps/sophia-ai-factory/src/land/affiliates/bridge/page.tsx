@@ -10,6 +10,7 @@
 
 import { notFound } from 'next/navigation';
 import { getAffiliateRoute } from '@/land/affiliates/routing/geo-router';
+import type { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 
 export default async function BridgePage(props: {
@@ -28,9 +29,9 @@ export default async function BridgePage(props: {
   // Create a minimal Request-like object for geo-router
   const request = {
     headers: requestHeaders,
-  } as unknown as Request;
+  } as unknown as NextRequest;
 
-  const destination = getAffiliateRoute(request as any, niche);
+  const destination = getAffiliateRoute(request, niche);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center animate-in fade-in duration-500">

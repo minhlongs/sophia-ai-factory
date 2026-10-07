@@ -8,7 +8,6 @@
  * @module land/affiliates/routing/geo-router
  */
 
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Standard mapping for geo-targeted affiliate offers

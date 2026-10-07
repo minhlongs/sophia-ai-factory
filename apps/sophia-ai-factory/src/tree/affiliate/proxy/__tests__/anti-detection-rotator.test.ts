@@ -71,7 +71,7 @@ describe('Multi-Account Anti-Detection & Creator Proxy Rotator', () => {
 
   it('degrades and bans proxy on consecutive upload failures', () => {
     let currentProxy: ProxyNode = { ...mockProxy };
-    let currentAccount = { ...mockAccount };
+    const currentAccount = { ...mockAccount };
 
     // 3 failures -> DEGRADED
     for (let i = 0; i < 3; i++) {
