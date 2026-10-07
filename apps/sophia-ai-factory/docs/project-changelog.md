@@ -1,6 +1,37 @@
 # Project Changelog
 
-**Last Updated:** 2026-10-07 | **Current Version:** 1.45.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence)
+**Last Updated:** 2026-10-07 | **Current Version:** 1.47.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence)
+
+---
+
+## 2026-10-07 (v1.47.0 — VIDEO CREATIVE SPLITTER STUDIO, E-COMMERCE RECONCILIATION & AUTO CAMPAIGN SCALER)
+
+**Severity: FEATURE LAUNCH | Type: Autonomous Creative & Financial Reconciliation Engine | Status: SHIPPED & VERIFIED**
+
+Delivered high-retention vertical video creative splitting, e-commerce affiliate commission reconciliation with dynamic return risk reserves, and automated multi-channel campaign scaling based on real-time CTR, CVR, and EPC metrics.
+
+**Key Architecture Deliverables:**
+- **AI Video Creative Splitter Studio (`src/tree/affiliate/creative/video-splitter-studio.ts`):** Sub-60s vertical reel generator segmenting long-form video scripts into high-impact hook variations, dynamic subtitle formatting, and platform-specific aspect ratios (9:16).
+- **E-Commerce Reconciliation Engine (`src/land/affiliates/reconciliation/ecommerce-reconciliation-engine.ts`):** Calculates gross commissions, net payouts, platform fees, and category-weighted holdback reserves (5-20%) against return windows (14-30 days) across TikTok Shop, Shopee, and Amazon Associates.
+- **Auto Campaign Scaler (`src/tree/affiliate/scaling/auto-campaign-scaler.ts`):** Automated rule-based budget and bid adjustments evaluating EPC thresholds, conversion rates, and creative fatigue frequency limits.
+- **Quality Gates:** 100% green tests across all suites, zero layer boundary violations, zero TypeScript errors.
+
+---
+
+## 2026-10-07 (v1.46.0 — FULL-STACK NICHE AFFILIATE FLYWHEEL, BIO-LINK BRIDGE & MAB HOOK OPTIMIZER)
+
+**Severity: FEATURE LAUNCH | Type: Growth & Autonomous Monetization Flywheel | Status: SHIPPED & VERIFIED**
+
+Delivered the complete autonomous affiliate monetization flywheel connecting trend auto-discovery, dynamic bio-link bridge pages with edge geo-routing, anti-spam social publishing pacing, and multi-armed bandit (UCB1 & Thompson Sampling) hook optimization.
+
+**Key Architecture Deliverables:**
+- **Trend Discovery & Scraping Engine (`src/tree/affiliate/discovery/` & `src/forest/cron/niche-trend-auto-discovery-job.ts`):** Auto-scrapes ProductHunt, DevHunt, CoinGecko, and DexScreener for breakout AI SaaS and high-volume crypto tokens.
+- **Edge Geo-Router & Dynamic Bio-Link Bridge (`src/land/affiliates/routing/` & `src/land/affiliates/bridge/`):** Ultra-fast edge redirection mapping Cloudflare CF-IPCountry headers to regional affiliate networks with FTC/MiCA compliance disclosures and vanity coupons.
+- **Social Syndication & Pacing Engine (`src/tree/social/syndication/` & `src/forest/social/`):** Staggered publisher applying jitter delays (45-90 min) to prevent platform spam detection across TikTok, YouTube Shorts, and X.
+- **MAB & Thompson Sampling Hook Optimizer (`src/tree/affiliate/optimization/`):** UCB1 and Beta-distribution Thompson Sampling balancing exploration and exploitation of viral video hooks.
+- **E-Commerce Postback Parser & Telegram Alerts (`src/land/affiliates/postbacks/` & `src/tree/telegram/`):** Normalizes conversion postbacks and dispatches real-time commission alerts to Telegram channels.
+- **Affiliate Analytics Dashboard UI (`src/app/[locale]/dashboard/affiliates/page.tsx`):** Bilingual Next.js App Router dashboard displaying live EPC, CVR, total revenue, and trend cards.
+- **Quality Gates:** 0 TypeScript compilation errors, 0 layer boundary violations, all Vitest suites passing.
 
 ---
 
