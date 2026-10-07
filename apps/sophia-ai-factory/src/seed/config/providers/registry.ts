@@ -24,4 +24,6 @@ export const PROVIDER_REGISTRY: Record<string, ProviderConfig> = {
   PRODUCT_HUNT: { id: 'ph', name: 'ProductHunt', isEnabled: false },
   COINGECKO: { id: 'cg', name: 'CoinGecko', isEnabled: false },
   N8N_SYNDICATOR: { id: 'n8n', name: 'N8N Automation', isEnabled: true },
+  TIKTOK_SHOP: { id: 'tt_shop', name: 'TikTok Shop Partner', isEnabled: false },
+  SHOPEE_AFFILIATE: { id: 'shopee_aff', name: 'Shopee Affiliate', isEnabled: false },
 };
