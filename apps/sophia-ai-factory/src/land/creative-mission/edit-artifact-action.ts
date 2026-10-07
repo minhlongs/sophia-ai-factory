@@ -7,7 +7,6 @@
 
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
@@ -17,22 +16,18 @@ import { logger } from '@/seed/utils/logger-utility';
 import { recordProvenance, newProvenanceId } from '@/tree/provenance';
 import { recordLearning } from '@/tree/creative-memory';
 import { emitCreativeEdited } from '@/tree/performance/loop-emitters-creative';
+import {
+  editCreativeArtifactSchema,
+  type EditCreativeArtifactInput,
+  type EditCreativeArtifactResult,
+  type EditArtifactError,
+} from './edit-artifact-schema';
 
-export const editCreativeArtifactSchema = z.object({
-  workspaceId: z.string().min(1),
-  missionId: z.string().min(1),
-  assetId: z.string().min(1),
-  graphRunId: z.string().default('manual-run'),
-  nodeId: z.string().default('human-editor'),
-  agentSlug: z.string().default('human-approval'),
-  editCount: z.number().int().min(1).default(1),
-  changes: z.record(z.string(), z.unknown()),
-  reason: z.string().max(500).optional(),
-});
-
-export type EditCreativeArtifactInput = z.infer<typeof editCreativeArtifactSchema>;
-export interface EditCreativeArtifactResult { assetId: string; version: number; updated: boolean; }
-export interface EditArtifactError { code: string; message: string; }
+export type {
+  EditCreativeArtifactInput,
+  EditCreativeArtifactResult,
+  EditArtifactError,
+};
 
 async function persistArtifactChanges(
   d1: NonNullable<Awaited<ReturnType<typeof getD1>>>,

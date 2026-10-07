@@ -14,14 +14,17 @@ export {
 
 export {
   editCreativeArtifact,
-  editCreativeArtifactSchema,
 } from './edit-artifact-action';
+
+export {
+  editCreativeArtifactSchema,
+} from './edit-artifact-schema';
 
 export type {
   EditCreativeArtifactInput,
   EditCreativeArtifactResult,
   EditArtifactError,
-} from './edit-artifact-action';
+} from './edit-artifact-schema';
 
 export type {
   MissionError,
