@@ -44,7 +44,7 @@ export async function processAutonomousScaling(
       scaledCount++;
       logger.info('processAutonomousScaling: triggering aggressive scale', {
         campaignId: decision.campaignId,
-        hook: decision.hookName,
+        hookId: decision.campaignId,
         targetDailyVideos: decision.recommendedDailyVideos,
       });
 
@@ -69,8 +69,8 @@ export async function processAutonomousScaling(
       prunedCount++;
       logger.info('processAutonomousScaling: pruned underperforming hook', {
         campaignId: decision.campaignId,
-        hook: decision.hookName,
-        reason: decision.reason,
+        hookId: decision.campaignId,
+        action: decision.action,
       });
     } else {
       maintainedCount++;
