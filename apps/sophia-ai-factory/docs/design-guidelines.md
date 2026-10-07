@@ -119,12 +119,26 @@ Components follow shadcn/ui patterns with Tailwind 4 utilities and `tailwindcss-
 - Use semantic elements and labels.
 - Ensure keyboard operability for every interaction.
 
-## 10. Recent Changes (Release Notes)
+## 10. High-Converting Video Creative Design Tokens & Motion (SaaS & Crypto)
+
+### SaaS Clean Dark UI (Video Canvas)
+- **Background**: Minimalist Obsidian `#0B0F19` with subtle card contrast `#111827`.
+- **Primary Highlights**: Neon Indigo `#6366F1` and Amber `#CA7F16`.
+- **Mockup Zoom**: Dynamic 125%-140% camera pan targeting UI text inputs and outputs.
+- **Pacing**: Cut duration 0.8s - 1.8s for short-form (9:16); zero dead air (>150ms silence trimmed).
+
+### Crypto Cyber-Fintech & Compliance Overlays
+- **Obsidian Trading Canvas**: Slate `#0A0B0E`, Chart Emerald `#00F59B`, Chart Crimson `#F6465D`.
+- **Persistent Bottom-Third Banner**: `rgba(10, 11, 14, 0.85)` with `rgba(255, 255, 255, 0.1)` border, margin-bottom 96px for vertical safe area.
+- **15s End-Card Legal Disclosure**: Full-screen static card, WCAG AA contrast ratio ≥ 4.5:1, audio dipped to -18dB.
+
+## 11. Recent Changes (Release Notes)
 
 | Date | Change |
 |------|---------|
+| 2026-10-07 | Add high-converting video creative design tokens & compliance overlay specifications for SaaS & Crypto Global niches. |
 | 2026-08-16 | Normalize registration failure UX; classify rate limit, service unavailable, and password cases in the register form. |
 | 2026-08-15 | Reconcile design tokens against `globals.css` as single source of truth. |
 
 ---
-Last updated: 2026-08-16 — reconciled against `globals.css` shipped tokens.
+Last updated: 2026-10-07 — reconciled against `globals.css` shipped tokens.

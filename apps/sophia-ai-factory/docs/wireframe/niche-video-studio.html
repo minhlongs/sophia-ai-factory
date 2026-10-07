@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaaS & Crypto Video Production Studio — Sophia AI Factory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              amber: '#CA7F16',
+              dark: '#0B0F19',
+              card: '#111827',
+              border: '#1F2937',
+              accent: '#6366F1',
+              emerald: '#10B981',
+              rose: '#F43F5E'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-dark text-slate-100 min-h-screen font-sans antialiased p-6">
+  <div class="max-w-6xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-brand-border pb-5">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-2.5 py-1 text-xs font-semibold rounded bg-amber-500/10 text-brand-amber border border-amber-500/20 uppercase tracking-wider">High-Converting Engine</span>
+          <span class="text-xs text-slate-400">Layer: Land & Forest Orchestration</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-white mt-1">Autonomous Video Campaign Studio</h1>
+        <p class="text-sm text-slate-400">Sản xuất video chuyển đổi cao cho Affiliate SaaS Global & Crypto Global — Tuân thủ FTC & MiCA</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          BYOK Engine Ready
+        </span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Config Column -->
+      <div class="lg:col-span-5 space-y-5">
+        <!-- Niche Selection -->
+        <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-4">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">1. Chọn Niche Chiến Dịch</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="btn-niche-saas" class="p-3.5 rounded-lg border-2 border-brand-amber bg-amber-500/10 text-left transition-all">
+              <div class="font-bold text-white flex items-center justify-between">
+                <span>💻 SaaS Global</span>
+                <span class="text-xs bg-amber-500 text-black px-1.5 py-0.5 rounded font-mono">MRR</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">PartnerStack, Impact, Rewardful. Hoa hồng 20-40% recurring.</p>
+            </button>
+            <button id="btn-niche-crypto" class="p-3.5 rounded-lg border border-brand-border bg-slate-900/60 text-left hover:border-slate-700 transition-all">
+              <div class="font-bold text-slate-300 flex items-center justify-between">
+                <span>⚡ Crypto Global</span>
+                <span class="text-xs bg-indigo-500 text-white px-1.5 py-0.5 rounded font-mono">Vol</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Binance, Bybit, OKX. Rebate phí futures & signup bonus.</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Blueprint Selection -->
+        <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-3">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">2. Cấu Trúc Kịch Bản (Blueprint)</label>
+          <div class="space-y-2">
+            <label class="flex items-start gap-3 p-3 rounded-lg border border-brand-amber/40 bg-amber-500/5 cursor-pointer">
+              <input type="radio" name="blueprint" checked class="mt-1 text-brand-amber focus:ring-brand-amber">
+              <div>
+                <div class="text-sm font-semibold text-white">Blueprint A: Problem - Agitation - Solution (SOP Fix)</div>
+                <div class="text-xs text-slate-400">Hook 0-3s đánh vào số liệu lãng phí -> UI Demo 300ms -> Proof ROI -> CTA link.</div>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-lg border border-brand-border bg-slate-900/40 hover:border-slate-700 cursor-pointer">
+              <input type="radio" name="blueprint" class="mt-1 text-brand-amber focus:ring-brand-amber">
+              <div>
+                <div class="text-sm font-semibold text-slate-300">Blueprint B: Tool Battle / VS Comparison</div>
+                <div class="text-xs text-slate-400">So sánh đối đầu trực diện 3 vòng: Latency, Depth, Seat Pricing. Dual CTA.</div>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-lg border border-brand-border bg-slate-900/40 hover:border-slate-700 cursor-pointer">
+              <input type="radio" name="blueprint" class="mt-1 text-brand-amber focus:ring-brand-amber">
+              <div>
+                <div class="text-sm font-semibold text-slate-300">Blueprint C: Fast Listicle Top 3-5 Tools</div>
+                <div class="text-xs text-slate-400">Micro-demos 12s/tool. Synergy stack chi phí vs thuê ngoài. Reach cao.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-4">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">3. Thông Tin Sản Phẩm & Affiliate</label>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Tên Sản Phẩm / Lệnh Tạo Nhanh</label>
+              <input type="text" value="Cursor AI vs GitHub Copilot" class="w-full bg-slate-900 border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-amber">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Affiliate Link Gốc (Hoặc Sub-Tracking ID)</label>
+              <input type="text" value="https://cursor.com?ref=sophia_agency&sub_id=yt_short_01" class="w-full bg-slate-900 border border-brand-border rounded-lg px-3 py-2 text-sm text-slate-300 font-mono text-xs focus:outline-none focus:border-brand-amber">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-300 mb-1">Mã Giảm Giá (Vanity Code)</label>
+                <input type="text" value="SOPHIA20" class="w-full bg-slate-900 border border-brand-border rounded-lg px-3 py-2 text-sm text-slate-300 font-mono focus:outline-none focus:border-brand-amber">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-300 mb-1">Khu Vực Pháp Lý (Jurisdiction)</label>
+                <select class="w-full bg-slate-900 border border-brand-border rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-brand-amber">
+                  <option value="GLOBAL">Toàn Cầu (FTC Standard)</option>
+                  <option value="US">Hoa Kỳ (FTC 16 CFR §255 + CFTC)</option>
+                  <option value="EU">Châu Âu (EU MiCA Art. 7/53)</option>
+                  <option value="VN" disabled>Việt Nam (Blocked for Crypto)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <button class="w-full py-3 bg-brand-amber hover:bg-amber-600 text-black font-bold rounded-lg transition-all shadow-lg shadow-amber-500/20 text-sm">
+            ⚡ Khởi Tạo Kịch Bản & Render Video Tự Trị
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Live Preview Column -->
+      <div class="lg:col-span-7 space-y-5">
+        <!-- Storyboard Timeline Card -->
+        <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Storyboard & Timeline Flow (60 Giây)</span>
+            <span class="text-xs font-mono text-brand-amber bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Tỷ lệ: 9:16 Shorts / Reels</span>
+          </div>
+
+          <!-- Scenes -->
+          <div class="space-y-3 font-sans">
+            <!-- Scene 1: Hook -->
+            <div class="p-3.5 rounded-lg bg-slate-900/80 border border-brand-border hover:border-slate-700 transition-all">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold text-amber-400">CẢNH 1: HOOK (0:00 - 0:03)</span>
+                <span class="font-mono">Pacing: 0.8s cuts</span>
+              </div>
+              <p class="text-sm text-white font-medium">"Tôi vừa xóa hoàn toàn công cụ AI cũ trên máy để đổi sang Cursor. Đây là lý do."</p>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Visual: Minimalist Dark UI Screen Zoom</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">SFX: Keystroke Clack</span>
+              </div>
+            </div>
+
+            <!-- Scene 2: Agitation / Showdown -->
+            <div class="p-3.5 rounded-lg bg-slate-900/80 border border-brand-border hover:border-slate-700 transition-all">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold text-indigo-400">CẢNH 2: AGITATION & SHOWDOWN (0:03 - 0:38)</span>
+                <span class="font-mono">Pacing: 1.2s cuts</span>
+              </div>
+              <p class="text-sm text-slate-200">Đối đầu 3 vòng thực chiến: Indexing context toàn repo 100k LOC, Multi-file edit và độ trễ latency 350ms vs 1200ms.</p>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Visual: Side-by-side terminal benchmark</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">SFX: Smooth Whoosh transition</span>
+              </div>
+            </div>
+
+            <!-- Scene 3: Proof / ROI -->
+            <div class="p-3.5 rounded-lg bg-slate-900/80 border border-brand-border hover:border-slate-700 transition-all">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold text-emerald-400">CẢNH 3: PROOF & ROI (0:38 - 0:48)</span>
+                <span class="font-mono">Pacing: 1.5s cuts</span>
+              </div>
+              <p class="text-sm text-slate-200">Ship tính năng từ 4 giờ còn 15 phút. Tiết kiệm $200 chi phí API mỗi tháng cho team 3 người.</p>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Visual: Kinetic Typography + Metric Counter</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">SFX: Metric Pop Chime</span>
+              </div>
+            </div>
+
+            <!-- Scene 4: Compliance & CTA End-Card -->
+            <div class="p-3.5 rounded-lg bg-slate-900/80 border border-brand-border hover:border-slate-700 transition-all">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold text-rose-400">CẢNH 4: CTA & 15S COMPLIANCE CARD (0:48 - 1:00)</span>
+                <span class="font-mono">Audio bed: -18dB</span>
+              </div>
+              <p class="text-sm text-slate-200">"Nhận 14 ngày dùng thử miễn phí và 50 credits qua link trong phần bình luận ghim. Sử dụng mã SOPHIA20."</p>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Overlay: Persistent FTC #ad banner</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">End-Card: Full legal disclosure (WCAG AA)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Injected Link & Video Description Output -->
+        <div class="bg-brand-card p-5 rounded-xl border border-brand-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Video Description & Pinned Comment Injector</span>
+            <span class="text-xs text-emerald-400 font-mono">Status: Auto-Injected</span>
+          </div>
+          <pre class="bg-slate-900 p-3.5 rounded-lg border border-brand-border text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+🔥 THỬ NGHIỆM CURSOR AI NGAY HÔM NAY:
+👉 Link nhận ưu đãi & credits độc quyền: https://cursor.com?ref=sophia_agency&sub_id=yt_short_01
+🎁 Nhập mã giảm giá tại checkout: SOPHIA20
+
+⚖️ MINH BẠCH & QUY ĐỊNH PHÁP LÝ (FTC 16 C.F.R. § 255):
+Nội dung này có chứa liên kết tiếp thị liên kết (affiliate link). Chúng tôi nhận được một khoản hoa hồng nhỏ khi bạn đăng ký sử dụng dịch vụ mà không làm phát sinh thêm bất kỳ chi phí nào cho bạn.
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

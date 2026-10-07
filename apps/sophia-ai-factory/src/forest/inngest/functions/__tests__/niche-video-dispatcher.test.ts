@@ -1,0 +1,157 @@
+/**
+ * Niche Video Dispatcher Vitest Suite
+ *
+ * Verifies Inngest function steps:
+ * 1. Jurisdiction compliance evaluation & storyboard generation
+ * 2. Rejection handling when compliance fails
+ * 3. Video payload staging when campaign is approved
+ *
+ * @module forest/inngest/functions/__tests__/niche-video-dispatcher.test
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
+
+type StepRunFn = <T>(name: string, fn: () => Promise<T>) => Promise<T>;
+type InngestHandler = (ctx: {
+  event: {
+    data: {
+      userId: string;
+      niche: 'saas_global' | 'crypto_global';
+      blueprintId: string;
+      productName: string;
+      productUrl: string;
+      targetAudience?: string;
+      jurisdiction?: string;
+      affiliateCode?: string;
+      subId?: string | null;
+      vanityCoupon?: string | null;
+      locale?: 'en' | 'vi';
+    };
+  };
+  step: { run: StepRunFn };
+}) => Promise<{
+  status?: string;
+  error?: unknown;
+  planId?: string;
+  summary?: Record<string, unknown>;
+  plan?: NicheVideoCampaignPlan;
+}>;
+
+const captured = vi.hoisted(() => ({
+  handler: undefined as InngestHandler | undefined,
+}));
+
+vi.mock('@/seed/inngest/client', () => ({
+  inngest: {
+    createFunction: (
+      _config: unknown,
+      _trigger: unknown,
+      handler: InngestHandler,
+    ) => {
+      captured.handler = handler;
+      return { id: 'niche-video-dispatcher', _handler: handler };
+    },
+  },
+}));
+
+vi.mock('@/seed/utils/logger-utility', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
+import { nicheVideoDispatcher } from '../niche-video-dispatcher';
+
+function getHandler(): InngestHandler {
+  return (nicheVideoDispatcher as unknown as { _handler: InngestHandler })._handler;
+}
+
+describe('nicheVideoDispatcher Inngest Function', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const mockStep = {
+    run: (async <T>(_name: string, fn: () => Promise<T>): Promise<T> => {
+      return await fn();
+    }) as StepRunFn,
+  };
+
+  it('rejects campaign when jurisdiction compliance fails', async () => {
+    const handler = getHandler();
+    expect(handler).toBeDefined();
+
+    const event = {
+      data: {
+        userId: 'usr_agency_1',
+        niche: 'crypto_global' as const,
+        blueprintId: 'crypto_fee_discount_signup_bonus',
+        productName: 'Bybit',
+        productUrl: 'https://bybit.com/register',
+        jurisdiction: 'VN',
+      },
+    };
+
+    const result = await handler({ event, step: mockStep });
+
+    expect(result.status).toBe('REJECTED');
+    expect(result.error).toMatchObject({
+      code: 'VIETNAM_PROMOTIONAL_BAN',
+    });
+  });
+
+  it('processes and stages compliant SaaS video campaign', async () => {
+    const handler = getHandler();
+    expect(handler).toBeDefined();
+
+    const event = {
+      data: {
+        userId: 'usr_agency_2',
+        niche: 'saas_global' as const,
+        blueprintId: 'saas_problem_agitation_solution',
+        productName: 'FlowCraft AI',
+        productUrl: 'https://grsm.io/flowcraft',
+        jurisdiction: 'GLOBAL',
+        affiliateCode: 'SOPHIA_VIP',
+        subId: 'yt_short_10',
+        vanityCoupon: 'SAVE30',
+        locale: 'en' as const,
+      },
+    };
+
+    const result = await handler({ event, step: mockStep });
+
+    expect(result.status).toBe('PLANNED');
+    expect(result.plan?.planId).toMatch(/^nvp_[a-f0-9]{16}$/);
+    expect(result.summary?.planId).toMatch(/^nvp_[a-f0-9]{16}$/);
+  });
+
+  it('processes and stages compliant Crypto campaign with overlay spec', async () => {
+    const handler = getHandler();
+    expect(handler).toBeDefined();
+
+    const event = {
+      data: {
+        userId: 'usr_agency_3',
+        niche: 'crypto_global' as const,
+        blueprintId: 'crypto_fee_discount_signup_bonus',
+        productName: 'Binance',
+        productUrl: 'https://accounts.binance.com/register',
+        jurisdiction: 'US',
+        affiliateCode: 'BINANCE20',
+        locale: 'en' as const,
+      },
+    };
+
+    const result = await handler({ event, step: mockStep });
+
+    expect(result.status).toBe('PLANNED');
+    expect(result.plan?.planId).toBeDefined();
+    expect(result.plan?.overlaySpec).toBeDefined();
+    expect(result.plan?.overlaySpec?.endCardDurationSec).toBe(15);
+  });
+});
