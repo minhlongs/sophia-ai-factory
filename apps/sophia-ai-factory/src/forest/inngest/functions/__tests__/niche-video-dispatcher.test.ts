@@ -5,12 +5,17 @@
  * 1. Jurisdiction compliance evaluation & storyboard generation
  * 2. Rejection handling when compliance fails
  * 3. Video payload staging when campaign is approved
+ * 4. Synthesizes scene-by-scene script
+ * 5. Generates voiceover
+ * 6. Assembles complete render manifest
  *
  * @module forest/inngest/functions/__tests__/niche-video-dispatcher.test
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
+import type { SynthesizedCampaignScript } from '@/tree/video/render/niche-script-synthesizer';
+import type { NicheRenderManifest } from '@/tree/video/render/niche-render-composer';
 
 type StepRunFn = <T>(name: string, fn: () => Promise<T>) => Promise<T>;
 type InngestHandler = (ctx: {
@@ -36,6 +41,8 @@ type InngestHandler = (ctx: {
   planId?: string;
   summary?: Record<string, unknown>;
   plan?: NicheVideoCampaignPlan;
+  script?: SynthesizedCampaignScript;
+  manifest?: NicheRenderManifest;
 }>;
 
 const captured = vi.hoisted(() => ({
@@ -104,7 +111,7 @@ describe('nicheVideoDispatcher Inngest Function', () => {
     });
   });
 
-  it('processes and stages compliant SaaS video campaign', async () => {
+  it('processes, synthesizes and stages compliant SaaS video campaign', async () => {
     const handler = getHandler();
     expect(handler).toBeDefined();
 
@@ -125,12 +132,17 @@ describe('nicheVideoDispatcher Inngest Function', () => {
 
     const result = await handler({ event, step: mockStep });
 
-    expect(result.status).toBe('PLANNED');
+    expect(result.status).toBe('RENDER_READY');
     expect(result.plan?.planId).toMatch(/^nvp_[a-f0-9]{16}$/);
     expect(result.summary?.planId).toMatch(/^nvp_[a-f0-9]{16}$/);
+    expect(result.script).toBeDefined();
+    expect(result.script?.scenes.length).toBe(5);
+    expect(result.manifest).toBeDefined();
+    expect(result.manifest?.resolution).toEqual({ width: 1080, height: 1920 });
+    expect(result.manifest?.ffmpegFilter).toContain('Disclosure: Partner Link');
   });
 
-  it('processes and stages compliant Crypto campaign with overlay spec', async () => {
+  it('processes and stages compliant Crypto campaign with overlay spec & audio ducking', async () => {
     const handler = getHandler();
     expect(handler).toBeDefined();
 
@@ -149,9 +161,10 @@ describe('nicheVideoDispatcher Inngest Function', () => {
 
     const result = await handler({ event, step: mockStep });
 
-    expect(result.status).toBe('PLANNED');
+    expect(result.status).toBe('RENDER_READY');
     expect(result.plan?.planId).toBeDefined();
     expect(result.plan?.overlaySpec).toBeDefined();
-    expect(result.plan?.overlaySpec?.endCardDurationSec).toBe(15);
+    expect(result.manifest?.audio.backgroundMusicDuckingDb).toBe(-18);
+    expect(result.manifest?.ffmpegFilter).toContain('drawtext');
   });
 });

@@ -8832,5 +8832,35 @@
         "error": "Thất bại"
       }
     }
+  },
+  "nicheStudio": {
+    "badge": "High-Converting Niche Engine",
+    "layer": "Tree Domain & Forest Pipeline",
+    "title": "Niche Video Studio (SaaS & Crypto)",
+    "subtitle": "Tự động hóa sản xuất video ngắn 9:16 cho SaaS & Crypto với tracking affiliate và tuân thủ pháp lý FTC/CFTC/MiCA",
+    "byokReady": "BYOK AI Ready",
+    "selectNiche": "1. Chọn Ngách Kiếm Tiền",
+    "saasTitle": "SaaS Global",
+    "saasDesc": "Hoa hồng định kỳ 20-40% MRR qua PartnerStack, Rewardful",
+    "cryptoTitle": "Crypto Global",
+    "cryptoDesc": "Chiết khấu phí giao dịch futures/spot và bonus signup",
+    "selectBlueprint": "2. Chọn Kịch Bản Chuyển Đổi Cao (Blueprint)",
+    "productConfig": "3. Cấu Hình Sản Phẩm & Affiliate Tracking",
+    "productName": "Tên Sản Phẩm",
+    "productUrl": "Đường Dẫn Sản Phẩm",
+    "affiliateCode": "Mã Tiếp Thị (Affiliate Code)",
+    "subId": "Sub ID Theo Dõi (SubID)",
+    "vanityCoupon": "Mã Giảm Giá (Vanity Coupon)",
+    "jurisdiction": "Khu Vực Pháp Lý & Tuân Thủ",
+    "btnGenerate": "🚀 Tạo Kịch Bản & Khởi Chạy Render",
+    "btnGenerating": "Đang Phân Tích & Khởi Chạy...",
+    "copied": "Đã Sao Chép!",
+    "copyLink": "Sao Chép Link",
+    "scenesTitle": "Phân Cảnh Storyboard (5 Cảnh)",
+    "captionTitle": "Tiêu Đề & Hashtags Đề Xuất",
+    "playerEmptyTitle": "Xem Trước Video Dọc (9:16)",
+    "playerEmptyDesc": "Nhập thông tin sản phẩm và nhấn 'Tạo Kịch Bản' để xem trước video cùng overlay cảnh báo rủi ro.",
+    "dispatchedTitle": "Tiến Trình Render Tự Động",
+    "storyboardEmpty": "Chưa có kịch bản. Điền thông tin bên trái để tạo kịch bản 5 cảnh chuyển đổi cao."
   }
 }

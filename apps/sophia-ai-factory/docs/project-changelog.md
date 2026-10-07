@@ -1,6 +1,26 @@
 # Project Changelog
 
-**Last Updated:** 2026-10-07 | **Current Version:** 1.44.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence)
+**Last Updated:** 2026-10-07 | **Current Version:** 1.45.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence)
+
+---
+
+## 2026-10-07 (v1.45.0 — NICHE VIDEO RENDER SUBSYSTEM, INNGEST PIPELINE, AUTONOMOUS CRON, TELEGRAM INTEGRATION & NICHE STUDIO UI)
+
+**Severity: FEATURE LAUNCH | Type: Revenue & Video Production Pipeline | Status: SHIPPED & VERIFIED**
+
+Completed end-to-end multi-channel orchestration for SaaS & Crypto Global video production, adding full rendering manifest assembly, BYOK ElevenLabs voiceovers, autonomous scheduling, Telegram bot execution, and customer-facing Studio UI.
+
+**Key Architecture Deliverables:**
+- **Video Render Subsystem (`src/tree/video/render/`):**
+  - `niche-script-synthesizer.ts`: Deterministic per-scene narration script generation, hook/agitation/solution/CTA structuring, pacing calculation, and duration budget enforcement.
+  - `niche-voiceover-generator.ts`: Multi-locale ElevenLabs text-to-speech orchestration (`en` & `vi` presets) with automated fallback.
+  - `niche-scene-visual-generator.ts`: 9:16 vertical (1080x1920) visual asset prompt engineering with transitions and on-screen caption overlays.
+  - `niche-render-composer.ts`: Manifest assembler combining visuals, voiceovers, background music ducking (-12dB / -18dB), and compliance FFmpeg drawtext filter chains.
+- **Inngest Multi-Step Dispatcher (`src/forest/inngest/functions/niche-video-dispatcher.ts`):** Complete 5-step background workflow coordinating compliance checks, script synthesis, voiceover generation, and render manifest staging.
+- **Autonomous Cron Scheduler (`src/forest/cron/autonomous-niche-video-cron.ts`):** Background cron worker automatically selecting trending blueprints and generating scheduled campaigns.
+- **Telegram Bot Command Suite (`src/tree/telegram/niche-video-telegram-handler.ts` & `src/app/api/webhooks/telegram/route.ts`):** Support for `/niche_video`, `/saas_video`, and `/crypto_video` commands while preserving all protected flows.
+- **Niche Studio Customer UI (`src/app/[locale]/dashboard/niche-studio/` & `src/components/niche-studio/`):** Interactive campaign generator, 5-scene storyboard preview card, 9:16 smartphone preview simulator with live compliance disclaimer overlays, and Inngest dispatch telemetry.
+- **Quality Gates:** 0 TypeScript errors, 0 ESLint errors, 0 layer boundary violations, 0 missing i18n keys, 100% of files under 200 LOC, all unit and integration test suites passing.
 
 ---
 

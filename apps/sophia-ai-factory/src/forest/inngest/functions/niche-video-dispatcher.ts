@@ -2,7 +2,7 @@
  * Niche Video Dispatcher
  *
  * Inngest function orchestrating campaign plan resolution, compliance validation,
- * and high-converting script/storyboard generation for SaaS & Crypto niches.
+ * scene-by-scene script synthesis, voiceover audio generation, and render manifest assembly.
  * Layer: forest (reusable infrastructure orchestrator)
  * @module forest/inngest/functions/niche-video-dispatcher
  */
@@ -14,6 +14,12 @@ import {
   type CreateNicheVideoCampaignInput,
   type NicheVideoCampaignPlan,
 } from '@/tree/video/blueprints/niche-video-service';
+import {
+  synthesizeNicheScript,
+  generateNicheCampaignVoiceover,
+  generateSceneVisualAssets,
+  composeNicheRenderManifest,
+} from '@/tree/video/render';
 
 export const nicheVideoDispatcher = inngest.createFunction(
   {
@@ -75,13 +81,6 @@ export const nicheVideoDispatcher = inngest.createFunction(
 
     // Step 2: Stage video generation payload
     const stageSummary = await step.run('stage-video-artifacts', async () => {
-      logger.info('nicheVideoDispatcher: campaign plan staged successfully', {
-        planId: plan.planId,
-        blueprintId: plan.blueprint.id,
-        scenesCount: plan.storyboard.scenes.length,
-        hasOverlay: Boolean(plan.overlaySpec),
-      });
-
       return {
         planId: plan.planId,
         blueprintId: plan.blueprint.id,
@@ -93,10 +92,39 @@ export const nicheVideoDispatcher = inngest.createFunction(
       };
     });
 
+    // Step 3: Synthesize detailed per-scene narration script
+    const script = await step.run('synthesize-script', async () => {
+      return synthesizeNicheScript(plan);
+    });
+
+    // Step 4: Generate voiceover audio track via ElevenLabs BYOK
+    const voiceover = await step.run('generate-voiceover', async () => {
+      return await generateNicheCampaignVoiceover({
+        planId: plan.planId,
+        userId: data.userId,
+        narrationText: script.fullNarration,
+        locale: data.locale,
+      });
+    });
+
+    // Step 5: Assemble visual scenes and full render manifest
+    const manifest = await step.run('assemble-render-manifest', async () => {
+      const visualResult = generateSceneVisualAssets(plan.planId, script.scenes);
+      return composeNicheRenderManifest({
+        plan,
+        script,
+        visuals: visualResult.assets,
+        voiceover,
+      });
+    });
+
     return {
-      status: 'PLANNED',
+      status: 'RENDER_READY',
       summary: stageSummary,
       plan,
+      script,
+      voiceover,
+      manifest,
     };
   },
 );

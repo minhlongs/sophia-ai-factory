@@ -37,6 +37,7 @@ import {
   handleLeadGreeting,
   handleQualificationCallback,
 } from '@/land/telegram-sales/qualification-service'
+import { handleNicheVideoTelegramCommand } from '@/tree/telegram/niche-video-telegram-handler'
 
 interface TelegramUpdate {
   callback_query?: {
@@ -324,7 +325,15 @@ export async function POST(request: NextRequest) {
         await handleConfirmCommand(chatId)
       } else if (text === '/cancel') {
         await TelegramFSM.clearContext(chatId)
-
+      } else if (
+        text.startsWith('/niche_video') ||
+        text.startsWith('/saas_video') ||
+        text.startsWith('/crypto_video')
+      ) {
+        const parts = text.split(' ')
+        const cmd = parts[0]
+        const args = text.slice(cmd.length).trim()
+        await handleNicheVideoTelegramCommand(chatId, cmd, args, `tg_${chatId}`)
       } else if (text === '/status' || text.startsWith('/status ')) {
       const arg = text.slice(7).trim()
       const statusId = arg || undefined

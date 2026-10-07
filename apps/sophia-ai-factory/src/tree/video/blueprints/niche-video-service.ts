@@ -47,6 +47,7 @@ export interface CreateNicheVideoCampaignInput {
 
 export interface NicheVideoCampaignPlan {
   planId: string;
+  productName: string;
   blueprint: VideoBlueprint;
   compliance: ComplianceGuardResult;
   storyboard: StoryboardPlan;
@@ -144,6 +145,7 @@ export function createNicheVideoCampaignPlan(
 
   return success({
     planId,
+    productName,
     blueprint,
     compliance,
     storyboard,

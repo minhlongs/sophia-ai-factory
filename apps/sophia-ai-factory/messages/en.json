@@ -8825,5 +8825,35 @@
         "error": "Failed"
       }
     }
+  },
+  "nicheStudio": {
+    "badge": "High-Converting Niche Engine",
+    "layer": "Tree Domain & Forest Pipeline",
+    "title": "Niche Video Studio (SaaS & Crypto)",
+    "subtitle": "Automated 9:16 short-form video generation for SaaS & Crypto with affiliate tracking and FTC/CFTC/MiCA compliance",
+    "byokReady": "BYOK AI Ready",
+    "selectNiche": "1. Select Monetization Niche",
+    "saasTitle": "SaaS Global",
+    "saasDesc": "Recurring 20-40% MRR commissions via PartnerStack, Rewardful",
+    "cryptoTitle": "Crypto Global",
+    "cryptoDesc": "Trading fee discounts on futures/spot plus signup bonus tiers",
+    "selectBlueprint": "2. Select High-Converting Blueprint",
+    "productConfig": "3. Product & Affiliate Tracking Setup",
+    "productName": "Product Name",
+    "productUrl": "Product URL",
+    "affiliateCode": "Affiliate Code",
+    "subId": "SubID Tracking",
+    "vanityCoupon": "Vanity Coupon",
+    "jurisdiction": "Compliance Jurisdiction",
+    "btnGenerate": "🚀 Generate Plan & Dispatch Render",
+    "btnGenerating": "Analyzing & Dispatching...",
+    "copied": "Copied!",
+    "copyLink": "Copy Link",
+    "scenesTitle": "Storyboard Scenes (5 Scenes)",
+    "captionTitle": "Suggested Caption & Hashtags",
+    "playerEmptyTitle": "Vertical Preview (9:16)",
+    "playerEmptyDesc": "Enter product details and click 'Generate Plan' to preview video with regulatory compliance overlay.",
+    "dispatchedTitle": "Automated Render Dispatch",
+    "storyboardEmpty": "No plan generated yet. Fill in product details on the left to generate a 5-scene blueprint."
   }
 }
