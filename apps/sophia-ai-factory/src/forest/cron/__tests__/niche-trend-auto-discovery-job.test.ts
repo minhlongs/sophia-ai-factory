@@ -45,7 +45,11 @@ describe('nicheTrendAutoDiscoveryJob', () => {
       }),
     };
 
-    const handler = (nicheTrendAutoDiscoveryJob as unknown as { fn: Function }).fn;
+    type InngestHandler = (args: { step: unknown }) => Promise<{
+      saasExecuted: boolean;
+      cryptoExecuted: boolean;
+    }>;
+    const handler = (nicheTrendAutoDiscoveryJob as unknown as { fn: InngestHandler }).fn;
     const result = await handler({ step: mockStep });
 
     expect(result).toEqual({ saasExecuted: true, cryptoExecuted: true });

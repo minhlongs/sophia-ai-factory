@@ -6,6 +6,24 @@ vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
   isAffiliateKillSwitchActive: vi.fn(),
 }));
 
+interface SyndicationJobResult {
+  status: string;
+  jobId?: string;
+  reason?: string;
+  nextAvailableAtMs?: number;
+  result?: {
+    published: boolean;
+    channelId: string;
+    platform: string;
+    fingerprintSummary: {
+      platform: string;
+      viewport: string;
+    };
+  };
+}
+
+type InngestHandler = (args: { event: unknown; step: unknown }) => Promise<SyndicationJobResult>;
+
 describe('socialSyndicationJob', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,7 +53,7 @@ describe('socialSyndicationJob', () => {
     };
 
     // Cast handler to test execution
-    const handler = (socialSyndicationJob as unknown as { fn: Function }).fn;
+    const handler = (socialSyndicationJob as unknown as { fn: InngestHandler }).fn;
     const result = await handler({ event, step: mockStep });
 
     expect(result).toEqual({
@@ -68,7 +86,7 @@ describe('socialSyndicationJob', () => {
       },
     };
 
-    const handler = (socialSyndicationJob as unknown as { fn: Function }).fn;
+    const handler = (socialSyndicationJob as unknown as { fn: InngestHandler }).fn;
     const result = await handler({ event, step: mockStep });
 
     expect(result.status).toBe('PAUSED_BY_PACER');
@@ -99,12 +117,12 @@ describe('socialSyndicationJob', () => {
       },
     };
 
-    const handler = (socialSyndicationJob as unknown as { fn: Function }).fn;
+    const handler = (socialSyndicationJob as unknown as { fn: InngestHandler }).fn;
     const result = await handler({ event, step: mockStep });
 
     expect(mockStep.sleep).toHaveBeenCalled();
     expect(result.status).toBe('PUBLISHED_SUCCESSFULLY');
-    expect(result.result.published).toBe(true);
-    expect(result.result.channelId).toBe('chan_x_1');
+    expect(result.result?.published).toBe(true);
+    expect(result.result?.channelId).toBe('chan_x_1');
   });
 });
