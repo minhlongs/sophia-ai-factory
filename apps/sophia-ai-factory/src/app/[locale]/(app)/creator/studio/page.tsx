@@ -16,7 +16,6 @@
  */
 
 import React, { useState, useEffect, use } from 'react';
-import Link from 'next/link';
 import {
   Layers,
   DollarSign,
@@ -32,7 +31,6 @@ import {
   Building2,
   Coins,
   RefreshCw,
-  Eye,
   Sparkles,
 } from 'lucide-react';
 import type {
@@ -151,7 +149,7 @@ export default function CreatorStudioPage({ params }: PageProps) {
           }));
         }
       }
-    } catch (err) {
+    } catch (_err) {
       setErrorMsg(isVi ? 'Không thể tải dữ liệu phòng sáng tạo.' : 'Failed to load studio data.');
     } finally {
       setLoading(false);

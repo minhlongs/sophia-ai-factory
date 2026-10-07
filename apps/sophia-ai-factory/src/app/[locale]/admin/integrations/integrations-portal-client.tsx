@@ -26,11 +26,8 @@ import {
   Lock,
   Server,
   Zap,
-  ExternalLink,
   Key,
   ArrowRightLeft,
-  Check,
-  AlertTriangle,
 } from 'lucide-react';
 import type {
   EnterpriseCrmConfig,

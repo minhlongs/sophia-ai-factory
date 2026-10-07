@@ -7,7 +7,6 @@ import {
   ShieldCheck,
   Search,
   RotateCcw,
-  SlidersHorizontal,
   ArrowUpDown,
   RefreshCw,
   X,
