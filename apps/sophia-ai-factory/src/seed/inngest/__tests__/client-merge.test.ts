@@ -69,6 +69,11 @@ const EXPECTED_EVENT_KEYS = [
   'production.graph.failed',
   'production.graph.cancelled',
   'creative.mission.multitrack.requested',
+  'commerce/catalog.sync.requested',
+  'commerce/product.delta.detected',
+  'commerce/video.batch.dispatch.requested',
+  'affiliate/conversion.reconciled',
+  'affiliate/conversion.recorded',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -103,12 +108,12 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 42 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(42);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(42);
+    it('expected key list holds exactly 47 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(47);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(47);
     });
 
-    it('Events record key set exactly matches the 42 expected keys', () => {
+    it('Events record key set exactly matches the 47 expected keys', () => {
       // Compile-time: keysAreExact is `true` only if keyof Events === expected.
       expect(keysAreExact).toBe(true);
     });

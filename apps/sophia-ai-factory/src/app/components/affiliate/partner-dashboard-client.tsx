@@ -22,11 +22,10 @@ import {
   Download,
   ShieldCheck,
   Send,
-  ExternalLink,
   Sparkles,
 } from 'lucide-react';
 import type { AffiliatePartner, AffiliateStats } from '@/seed/types/affiliate';
-import { COPY_TEMPLATES, OUTREACH_SCRIPTS, BANNER_SPECS, fillRefLink } from '@/land/affiliates/promo-library';
+import { COPY_TEMPLATES, BANNER_SPECS, fillRefLink } from '@/land/affiliates/promo-library';
 
 interface PartnerDashboardClientProps {
   partner: AffiliatePartner;
@@ -114,7 +113,6 @@ export function PartnerDashboardClient({
 
   // Filter templates for current language
   const filteredTemplates = COPY_TEMPLATES.filter((t) => t.locale === assetLang);
-  const filteredOutreach = OUTREACH_SCRIPTS.filter((s) => s.locale === assetLang);
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 md:p-6 text-foreground">

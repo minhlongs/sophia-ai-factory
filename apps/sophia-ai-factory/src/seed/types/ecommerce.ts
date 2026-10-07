@@ -9,6 +9,7 @@
  */
 
 import { z } from 'zod';
+import type { FailureKind } from '@/seed/types/failure-kind';
 
 export type CommercePlatform = 'shopify' | 'woocommerce';
 
@@ -69,7 +70,7 @@ export interface CatalogSyncResult {
 }
 
 export interface CommerceClientError {
-  kind: string;
+  kind: FailureKind;
   message: string;
   status?: number;
   retryAfterSeconds?: number;

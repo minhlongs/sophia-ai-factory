@@ -15,7 +15,6 @@ import {
   Percent,
   ShieldCheck,
   Share2,
-  Send,
   Loader2,
 } from 'lucide-react';
 import { Button, Badge } from '@/components/stitch';
@@ -27,6 +26,57 @@ export interface AffiliateOfferDrawerProps {
   offer: AffiliateOffer | null;
   onClose: () => void;
   onAdoptSuccess?: (result: { target: string; campaignId: string; deepLink: string }) => void;
+}
+
+function buildTrackingUrl(destinationUrl: string | undefined, offerId: string, subId: string): string {
+  const sanitized = subId.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!destinationUrl) {
+    const query = sanitized ? `?sub_id=${encodeURIComponent(sanitized)}` : '';
+    return `https://sophia.agencyos.network/r/${offerId}${query}`;
+  }
+  const sep = destinationUrl.includes('?') ? '&' : '?';
+  const query = sanitized ? `&sub_id=${encodeURIComponent(sanitized)}` : '';
+  return `${destinationUrl}${sep}via=sophia${query}`;
+}
+
+interface DrawerFeedbackAlertProps {
+  feedback: {
+    type: 'success' | 'error';
+    message: string;
+    deepLink?: string;
+  };
+}
+
+function DrawerFeedbackAlert({ feedback }: DrawerFeedbackAlertProps) {
+  const isSuccess = feedback.type === 'success';
+  return (
+    <div
+      role="alert"
+      className={`mt-4 p-4 rounded-xl text-sm border flex items-start gap-2.5 ${
+        isSuccess
+          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+          : 'bg-red-500/10 text-red-300 border-red-500/30'
+      }`}
+    >
+      {isSuccess ? (
+        <Check className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
+      ) : (
+        <X className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
+      )}
+      <div className="flex-1">
+        <div>{feedback.message}</div>
+        {feedback.deepLink && (
+          <a
+            href={feedback.deepLink}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary underline mt-2"
+          >
+            <span>Open Campaign View</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function AffiliateOfferDrawer({
@@ -79,10 +129,7 @@ export function AffiliateOfferDrawer({
   }
 
   // Generate live tracking link with subId
-  const sanitizedSubId = subId.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-  const generatedTrackingUrl = offer.destinationUrl
-    ? `${offer.destinationUrl}${offer.destinationUrl.includes('?') ? '&' : '?'}via=sophia${sanitizedSubId ? `&sub_id=${encodeURIComponent(sanitizedSubId)}` : ''}`
-    : `https://sophia.agencyos.network/r/${offer.id}${sanitizedSubId ? `?sub_id=${encodeURIComponent(sanitizedSubId)}` : ''}`;
+  const generatedTrackingUrl = buildTrackingUrl(offer.destinationUrl, offer.id, subId);
 
   const handleCopyLink = async () => {
     try {
@@ -333,34 +380,7 @@ export function AffiliateOfferDrawer({
             </div>
 
             {/* Feedback Alerts */}
-            {feedback && (
-              <div
-                role="alert"
-                className={`mt-4 p-4 rounded-xl text-sm border flex items-start gap-2.5 ${
-                  feedback.type === 'success'
-                    ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                    : 'bg-red-500/10 text-red-300 border-red-500/30'
-                }`}
-              >
-                {feedback.type === 'success' ? (
-                  <Check className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
-                ) : (
-                  <X className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <div>{feedback.message}</div>
-                  {feedback.deepLink && (
-                    <a
-                      href={feedback.deepLink}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary underline mt-2"
-                    >
-                      <span>Open Campaign View</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
+            {feedback && <DrawerFeedbackAlert feedback={feedback} />}
           </div>
 
           {/* Action Footer: 1-Click Campaign Adoption */}

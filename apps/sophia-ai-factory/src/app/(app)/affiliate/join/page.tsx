@@ -24,7 +24,6 @@ import {
   ArrowRight,
   ShieldCheck,
   Percent,
-  Gift,
   Package,
   Loader2,
 } from 'lucide-react';

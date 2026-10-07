@@ -338,6 +338,8 @@ const eslintConfig = defineConfig([
 "src/forest/inngest/functions/repurpose-clip-generate.ts",
 "src/forest/inngest/functions/revenue-events-ingest.ts",
 "src/forest/inngest/functions/commerce-fulfillment.ts",
+"src/forest/inngest/functions/commerce-catalog-sync.ts",
+"src/forest/inngest/functions/commerce-video-dispatcher.ts",
 "src/forest/inngest/functions/video-compose.ts",
 "src/forest/inngest/functions/video-generate.ts",
 "src/forest/inngest/functions/video-publish.ts",

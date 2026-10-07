@@ -38,6 +38,186 @@ async function resolveD1(customD1?: D1Database): Promise<D1Database | null> {
   }
 }
 
+function extractReferredByFromSettings(raw: unknown): string | undefined {
+  if (!raw) return undefined;
+  try {
+    const settings = (typeof raw === 'string' ? JSON.parse(raw) : raw) as Record<string, unknown>;
+    return typeof settings.referred_by === 'string' ? settings.referred_by : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+interface Tier2AttributionInput {
+  d1: D1Database;
+  partner: AffiliatePartnerRow;
+  parentPartnerId: string;
+  customerId?: string;
+  grossAmountCents: number;
+  referralId: string | null;
+  provider: string;
+  paymentId: string;
+  orderId?: string | null;
+  currency: string;
+  holdDays: number;
+  payableAt: number;
+  primaryEventKey: string;
+  nowMs: number;
+}
+
+async function processTier2Commission(p: Tier2AttributionInput): Promise<string | undefined> {
+  const parentPartner = await p.d1
+    .prepare(`SELECT * FROM affiliate_partners WHERE id = ?1 AND status = 'active' LIMIT 1`)
+    .bind(p.parentPartnerId)
+    .first<AffiliatePartnerRow>()
+    .catch(() => null);
+
+  if (!parentPartner || parentPartner.user_id === p.customerId) {
+    return undefined;
+  }
+
+  const tier2RatePct = p.partner.tier2_rate_pct ?? 5.0;
+  const tier2AmountCents = Math.round(p.grossAmountCents * (tier2RatePct / 100));
+  if (tier2AmountCents <= 0) return undefined;
+
+  const tier2CommissionId = `comm_t2_${crypto.randomUUID().replace(/-/g, '')}`;
+  const tier2EventKey = `${p.primaryEventKey}_tier2`;
+
+  const t2Res = await p.d1
+    .prepare(
+      `INSERT INTO affiliate_commissions (
+         id, event_key, partner_id, referral_id, payment_provider, payment_id,
+         order_id, customer_user_id, gross_amount_cents, commission_rate_pct,
+         commission_cents, tier_level, currency, status, hold_days, payable_at,
+         version, metadata_json, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'TIER2', ?, 'pending', ?, ?, 1, ?, ?, ?)
+       ON CONFLICT(event_key) DO NOTHING`
+    )
+    .bind(
+      tier2CommissionId,
+      tier2EventKey,
+      parentPartner.id,
+      p.referralId,
+      p.provider,
+      p.paymentId,
+      p.orderId ?? null,
+      p.customerId,
+      p.grossAmountCents,
+      tier2RatePct,
+      tier2AmountCents,
+      p.currency,
+      p.holdDays,
+      p.payableAt,
+      JSON.stringify({ tier1PartnerId: p.partner.id, tier2RatePct }),
+      p.nowMs,
+      p.nowMs
+    )
+    .run();
+
+  if ((t2Res.meta?.changes ?? 0) > 0) {
+    await p.d1
+      .prepare(
+        `UPDATE affiliate_partners
+         SET pending_payout_cents = pending_payout_cents + ?1,
+             total_earnings_cents = total_earnings_cents + ?1,
+             updated_at = ?2
+         WHERE id = ?3`
+      )
+      .bind(tier2AmountCents, p.nowMs, parentPartner.id)
+      .run();
+
+    logger.info('[AffiliateAttribution] Tier 2 parent commission attributed', {
+      tier2CommissionId,
+      parentPartnerId: parentPartner.id,
+      amountCents: tier2AmountCents,
+    });
+  }
+
+  return tier2CommissionId;
+}
+
+interface ReferrerResolution {
+  partner: AffiliatePartnerRow | null;
+  referral: AffiliateReferralRow | null;
+}
+
+async function resolveReferrerPartner(
+  d1: D1Database,
+  params: AttributionParams
+): Promise<ReferrerResolution> {
+  // A. Explicit partner code override passed in params
+  if (params.partnerCodeOverride) {
+    const partner = await d1
+      .prepare(`SELECT * FROM affiliate_partners WHERE partner_code = ?1 AND status = 'active' LIMIT 1`)
+      .bind(params.partnerCodeOverride)
+      .first<AffiliatePartnerRow>();
+    if (partner) return { partner, referral: null };
+  }
+
+  // B. Referral binding table check
+  if (params.customerId) {
+    const referral = await d1
+      .prepare(
+        `SELECT * FROM affiliate_referrals
+         WHERE referred_user_id = ?1 AND status IN ('pending', 'converted')
+         ORDER BY created_at DESC LIMIT 1`
+      )
+      .bind(params.customerId)
+      .first<AffiliateReferralRow>();
+
+    if (referral) {
+      const partner = await d1
+        .prepare(`SELECT * FROM affiliate_partners WHERE id = ?1 AND status = 'active' LIMIT 1`)
+        .bind(referral.partner_id)
+        .first<AffiliatePartnerRow>();
+      if (partner) return { partner, referral };
+    }
+  }
+
+  // C. Pending order referral / promo code fallback
+  if (params.orderId) {
+    const order = await d1
+      .prepare(`SELECT promo_code FROM pending_orders WHERE order_id = ?1 LIMIT 1`)
+      .bind(params.orderId)
+      .first<{ promo_code?: string | null }>()
+      .catch(() => null);
+
+    if (order?.promo_code) {
+      const partner = await d1
+        .prepare(`SELECT * FROM affiliate_partners WHERE (partner_code = ?1 OR id = ?1) AND status = 'active' LIMIT 1`)
+        .bind(order.promo_code)
+        .first<AffiliatePartnerRow>()
+        .catch(() => null);
+      if (partner) return { partner, referral: null };
+    }
+  }
+
+  // D. User profile settings fallback (referred_by)
+  if (params.customerId) {
+    const userProfile = await d1
+      .prepare(`SELECT settings FROM user_profiles WHERE user_id = ?1 LIMIT 1`)
+      .bind(params.customerId)
+      .first<{ settings?: string | null }>()
+      .catch(() => null);
+
+    const referredBy = extractReferredByFromSettings(userProfile?.settings);
+    if (referredBy) {
+      const partner = await d1
+        .prepare(
+          `SELECT * FROM affiliate_partners
+           WHERE (partner_code = ?1 OR user_id = ?1 OR id = ?1) AND status = 'active'
+           LIMIT 1`
+        )
+        .bind(referredBy)
+        .first<AffiliatePartnerRow>()
+        .catch(() => null);
+      if (partner) return { partner, referral: null };
+    }
+  }
+
+  return { partner: null, referral: null };
+}
+
 /**
  * Executes idempotent commission attribution for a verified customer payment.
  */
@@ -77,83 +257,7 @@ export async function recordAffiliateCommission(
     }
 
     // 2. Referrer Resolution
-    let partner: AffiliatePartnerRow | null = null;
-    let referral: AffiliateReferralRow | null = null;
-
-    // A. Explicit partner code override passed in params
-    if (params.partnerCodeOverride) {
-      partner = await d1
-        .prepare(`SELECT * FROM affiliate_partners WHERE partner_code = ?1 AND status = 'active' LIMIT 1`)
-        .bind(params.partnerCodeOverride)
-        .first<AffiliatePartnerRow>();
-    }
-
-    // B. Referral binding table check
-    if (!partner && params.customerId) {
-      referral = await d1
-        .prepare(
-          `SELECT * FROM affiliate_referrals
-           WHERE referred_user_id = ?1 AND status IN ('pending', 'converted')
-           ORDER BY created_at DESC LIMIT 1`
-        )
-        .bind(params.customerId)
-        .first<AffiliateReferralRow>();
-
-      if (referral) {
-        partner = await d1
-          .prepare(`SELECT * FROM affiliate_partners WHERE id = ?1 AND status = 'active' LIMIT 1`)
-          .bind(referral.partner_id)
-          .first<AffiliatePartnerRow>();
-      }
-    }
-
-    // C. Pending order referral / promo code fallback
-    if (!partner && params.orderId) {
-      const order = await d1
-        .prepare(`SELECT promo_code FROM pending_orders WHERE order_id = ?1 LIMIT 1`)
-        .bind(params.orderId)
-        .first<{ promo_code?: string | null }>()
-        .catch(() => null);
-
-      if (order?.promo_code) {
-        partner = await d1
-          .prepare(`SELECT * FROM affiliate_partners WHERE (partner_code = ?1 OR id = ?1) AND status = 'active' LIMIT 1`)
-          .bind(order.promo_code)
-          .first<AffiliatePartnerRow>()
-          .catch(() => null);
-      }
-    }
-
-    // D. User profile settings fallback (referred_by)
-    if (!partner && params.customerId) {
-      const userProfile = await d1
-        .prepare(`SELECT settings FROM user_profiles WHERE user_id = ?1 LIMIT 1`)
-        .bind(params.customerId)
-        .first<{ settings?: string | null }>()
-        .catch(() => null);
-
-      if (userProfile?.settings) {
-        try {
-          const settings = (typeof userProfile.settings === 'string'
-            ? JSON.parse(userProfile.settings)
-            : userProfile.settings) as Record<string, unknown>;
-          const referredBy = settings.referred_by as string | undefined;
-          if (referredBy) {
-            partner = await d1
-              .prepare(
-                `SELECT * FROM affiliate_partners
-                 WHERE (partner_code = ?1 OR user_id = ?1 OR id = ?1) AND status = 'active'
-                 LIMIT 1`
-              )
-              .bind(referredBy)
-              .first<AffiliatePartnerRow>()
-              .catch(() => null);
-          }
-        } catch {
-          // ignore json parse errors
-        }
-      }
-    }
+    const { partner, referral } = await resolveReferrerPartner(d1, params);
 
     // If no active affiliate partner is associated with this customer
     if (!partner) {
@@ -278,71 +382,22 @@ export async function recordAffiliateCommission(
     let tier2CommissionId: string | undefined;
 
     if (partner.parent_partner_id) {
-      const parentPartner = await d1
-        .prepare(`SELECT * FROM affiliate_partners WHERE id = ?1 AND status = 'active' LIMIT 1`)
-        .bind(partner.parent_partner_id)
-        .first<AffiliatePartnerRow>()
-        .catch(() => null);
-
-      if (parentPartner && parentPartner.user_id !== params.customerId) {
-        const tier2RatePct = partner.tier2_rate_pct ?? 5.0;
-        const tier2AmountCents = Math.round(params.grossAmountCents * (tier2RatePct / 100));
-
-        if (tier2AmountCents > 0) {
-          tier2CommissionId = `comm_t2_${crypto.randomUUID().replace(/-/g, '')}`;
-          const tier2EventKey = `${primaryEventKey}_tier2`;
-
-          const t2Res = await d1
-            .prepare(
-              `INSERT INTO affiliate_commissions (
-                 id, event_key, partner_id, referral_id, payment_provider, payment_id,
-                 order_id, customer_user_id, gross_amount_cents, commission_rate_pct,
-                 commission_cents, tier_level, currency, status, hold_days, payable_at,
-                 version, metadata_json, created_at, updated_at
-               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'TIER2', ?, 'pending', ?, ?, 1, ?, ?, ?)
-               ON CONFLICT(event_key) DO NOTHING`
-            )
-            .bind(
-              tier2CommissionId,
-              tier2EventKey,
-              parentPartner.id,
-              referral?.id ?? null,
-              params.provider,
-              params.paymentId,
-              params.orderId ?? null,
-              params.customerId,
-              params.grossAmountCents,
-              tier2RatePct,
-              tier2AmountCents,
-              currency,
-              holdDays,
-              payableAt,
-              JSON.stringify({ tier1PartnerId: partner.id, tier2RatePct }),
-              nowMs,
-              nowMs
-            )
-            .run();
-
-          if ((t2Res.meta?.changes ?? 0) > 0) {
-            await d1
-              .prepare(
-                `UPDATE affiliate_partners
-                 SET pending_payout_cents = pending_payout_cents + ?1,
-                     total_earnings_cents = total_earnings_cents + ?1,
-                     updated_at = ?2
-                 WHERE id = ?3`
-              )
-              .bind(tier2AmountCents, nowMs, parentPartner.id)
-              .run();
-
-            logger.info('[AffiliateAttribution] Tier 2 parent commission attributed', {
-              tier2CommissionId,
-              parentPartnerId: parentPartner.id,
-              amountCents: tier2AmountCents,
-            });
-          }
-        }
-      }
+      tier2CommissionId = await processTier2Commission({
+        d1,
+        partner,
+        parentPartnerId: partner.parent_partner_id,
+        customerId: params.customerId,
+        grossAmountCents: params.grossAmountCents,
+        referralId: referral?.id ?? null,
+        provider: params.provider,
+        paymentId: params.paymentId,
+        orderId: params.orderId,
+        currency,
+        holdDays,
+        payableAt,
+        primaryEventKey,
+        nowMs,
+      });
     }
 
     return {

@@ -24,7 +24,6 @@ import type {
   AffiliatePayoutRow,
   CommissionStatus,
   PayoutRail,
-  PayoutStatus,
 } from '@/seed/types/affiliate';
 import affiliateData from '@/seed/data/affiliate-programs.json';
 

@@ -28,6 +28,13 @@ import type {
   ProductionGraphCancelledEvent,
 } from "@/seed/types/production-factory";
 import type { DubbingJobInput } from "@/seed/types/dubbing";
+import type {
+  CommerceCatalogSyncEvent,
+  CommerceProductDeltaEvent,
+  CommerceVideoBatchDispatchEvent,
+  AffiliateConversionReconciledEvent,
+  AffiliateConversionRecordedEvent,
+} from "@/seed/types/inngest-ecommerce";
 
 type CampaignCreatedEvent = {
   data: {
@@ -256,5 +263,10 @@ export type Events = {
   "production.graph.failed": ProductionGraphFailedEvent;
   "production.graph.cancelled": ProductionGraphCancelledEvent;
   "creative.mission.multitrack.requested": { data: CreativeMissionMultiTrackRequestedData };
+  "commerce/catalog.sync.requested": CommerceCatalogSyncEvent;
+  "commerce/product.delta.detected": CommerceProductDeltaEvent;
+  "commerce/video.batch.dispatch.requested": CommerceVideoBatchDispatchEvent;
+  "affiliate/conversion.reconciled": AffiliateConversionReconciledEvent;
+  "affiliate/conversion.recorded": AffiliateConversionRecordedEvent;
 };
 
