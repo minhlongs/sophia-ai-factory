@@ -250,6 +250,22 @@ export type NicheVideoCampaignRequestedEvent = {
   };
 };
 
+export type AutonomousCampaignScalingRequestedEvent = {
+  data: {
+    tenantId: string;
+    evaluatedMetrics: {
+      campaignId: string;
+      hookName: string;
+      niche: "saas_global" | "crypto_global" | "ecommerce_tiktok";
+      impressions: number;
+      clicks: number;
+      conversions: number;
+      totalEarningsCents: number;
+      publishedVideosCount: number;
+    }[];
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -300,5 +316,6 @@ export type Events = {
   "affiliate/conversion.recorded": AffiliateConversionRecordedEvent;
   "niche.video.campaign.requested": NicheVideoCampaignRequestedEvent;
   "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
+  "autonomous.campaign.scaling.requested": AutonomousCampaignScalingRequestedEvent;
 };
 
