@@ -80,6 +80,9 @@ import {
   submitAudioResonanceJob,
   submitCommunityBaitJob,
   evaluateSubscriberCohortJob,
+  affiliateYieldJob,
+  ghostMatrixJob,
+  cultureInjectorJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -218,5 +221,8 @@ export const { GET, POST, PUT } = serve({
     submitAudioResonanceJob,
     submitCommunityBaitJob,
     evaluateSubscriberCohortJob,
+  affiliateYieldJob,
+  ghostMatrixJob,
+  cultureInjectorJob,
   ],
 });

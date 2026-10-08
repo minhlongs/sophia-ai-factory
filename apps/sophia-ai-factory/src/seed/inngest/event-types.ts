@@ -13,6 +13,12 @@
  * @module seed/inngest/event-types
  */
 
+import type {
+  TrafficRedirect,
+  YieldRouterHealthCheck,
+  ShadowbanTelemetryEvent,
+  ScriptCultureIndexRequest,
+} from "@/seed/types/growth-triad-v9-types";
 import { Tier } from "@/seed/types";
 import type {
   AgentMissionStartedData,
@@ -646,6 +652,26 @@ export type SubscriberCohortEvaluatedEvent = {
   };
 };
 
+
+export type AffiliateYieldRoutedEvent = {
+  data: {
+    routerId: string;
+    redirects: TrafficRedirect[];
+    healthStatus: YieldRouterHealthCheck['status'];
+  };
+};
+
+export type ShadowbanAnomalyDetectedEvent = {
+  data: ShadowbanTelemetryEvent;
+};
+
+export type SemanticCultureScoredEvent = {
+  data: ScriptCultureIndexRequest & {
+    score: number;
+    cultureMatch: "HIGH" | "MEDIUM" | "LOW";
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -733,5 +759,8 @@ export type Events = {
   "audio.resonance.synced": AudioResonanceSyncedEvent;
   "community.bait.generated": CommunityBaitGeneratedEvent;
   "subscriber.cohort.evaluated": SubscriberCohortEvaluatedEvent;
+  "affiliate.yield.routed": AffiliateYieldRoutedEvent;
+  "shadowban.anomaly.detected": ShadowbanAnomalyDetectedEvent;
+  "semantic.culture.scored": SemanticCultureScoredEvent;
 };
 

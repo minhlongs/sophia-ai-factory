@@ -123,3 +123,7 @@ export { sopExecute } from '@/forest/sops';
 export * from './audio-resonance-job';
 export * from './community-bait-job';
 export * from './subscriber-cohort-job';
+// Growth Triad v9: 
+export * from './affiliate-yield-job';
+export * from './ghost-matrix-job';
+export * from './culture-injector-job';
