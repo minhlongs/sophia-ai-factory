@@ -1,4 +1,12 @@
 {
+  "Growth": {
+    "campaign_id": "Mã chiến dịch",
+    "total_revenue": "Tổng doanh thu",
+    "conversion_rate": "Tỷ lệ chuyển đổi",
+    "revenue_timeline": "Dòng thời gian doanh thu",
+    "roi_dashboard": "Bảng điều khiển ROI",
+    "chart_empty": "Không có dữ liệu"
+  },
   "100": "100",
   "agency": {
     "cockpitTitle": "Bảng Điều Khiển Quản Trị Doanh Nghiệp",

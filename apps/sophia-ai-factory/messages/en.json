@@ -1,4 +1,12 @@
 {
+  "Growth": {
+    "campaign_id": "Campaign ID",
+    "total_revenue": "Total Revenue",
+    "conversion_rate": "Conversion Rate",
+    "revenue_timeline": "Revenue Timeline",
+    "roi_dashboard": "ROI Dashboard",
+    "chart_empty": "No data available"
+  },
   "100": "100",
   "agency": {
     "cockpitTitle": "Agency Operations Cockpit",
