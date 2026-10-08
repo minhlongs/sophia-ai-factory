@@ -122,6 +122,9 @@ const EXPECTED_EVENT_KEYS = [
   'growth/v12.webhook.received',
   'growth/v13.bandit.evaluate',
   'growth/v13.deliberation.request',
+  'growth/v14.render.schedule',
+  'growth/v14.render.stage1_evaluate',
+  'growth/v14.render.halt',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -156,9 +159,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 95 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(95);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(95);
+    it('expected key list holds exactly 98 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(98);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(98);
     });
 
     it('Events record key set exactly matches the 65 expected keys', () => {

@@ -714,7 +714,38 @@ export type GrowthV13DeliberationRequestEvent = {
   };
 };
 
+export type GrowthV14RenderScheduleEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    scriptId: string;
+    mabArmId?: string;
+    deliberationScore: number;
+    allocatedMcu: number;
+  };
+};
+
+export type GrowthV14RenderStage1EvaluateEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    interimRetentionScore: number;
+  };
+};
+
+export type GrowthV14RenderHaltEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    reason: string;
+    savedMcu: number;
+  };
+};
+
 export type Events = {
+  "growth/v14.render.schedule": GrowthV14RenderScheduleEvent;
+  "growth/v14.render.stage1_evaluate": GrowthV14RenderStage1EvaluateEvent;
+  "growth/v14.render.halt": GrowthV14RenderHaltEvent;
   "growth/v13.bandit.evaluate": GrowthV13BanditEvaluateEvent;
   "growth/v13.deliberation.request": GrowthV13DeliberationRequestEvent;
   "growth/v12.reseed.trigger": GrowthV12ReseedTriggerEvent;
