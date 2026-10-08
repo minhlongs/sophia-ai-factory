@@ -620,6 +620,32 @@ export type ThumbnailGazeScoredEvent = {
   };
 };
 
+export type AudioResonanceSyncedEvent = {
+  data: {
+    audioTrackId: string;
+    resonanceScore: number;
+    bpm: number;
+    syncQuality: string;
+  };
+};
+
+export type CommunityBaitGeneratedEvent = {
+  data: {
+    videoId: string;
+    campaignId: string;
+    primaryHookQuestion: string;
+    curiosityGapScore: number;
+  };
+};
+
+export type SubscriberCohortEvaluatedEvent = {
+  data: {
+    cohortMonth: string;
+    cumulativeLtvUsd: number;
+    hazardPeakMonth: number;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -704,5 +730,8 @@ export type Events = {
   "sponsorship.ratecard.calculated": SponsorshipRateCardCalculatedEvent;
   "reframe.aspect.rendered": ReframeAspectRenderedEvent;
   "thumbnail.gaze.scored": ThumbnailGazeScoredEvent;
+  "audio.resonance.synced": AudioResonanceSyncedEvent;
+  "community.bait.generated": CommunityBaitGeneratedEvent;
+  "subscriber.cohort.evaluated": SubscriberCohortEvaluatedEvent;
 };
 

@@ -77,6 +77,9 @@ import {
   sponsorshipPitchJob,
   saliencyReframeJob,
   thumbnailHeatmapJob,
+  submitAudioResonanceJob,
+  submitCommunityBaitJob,
+  evaluateSubscriberCohortJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -211,5 +214,9 @@ export const { GET, POST, PUT } = serve({
     sponsorshipPitchJob,
     saliencyReframeJob,
     thumbnailHeatmapJob,
+    // Growth Triad v8: Audio Resonance, Community Bait & Cohort LTV Decay
+    submitAudioResonanceJob,
+    submitCommunityBaitJob,
+    evaluateSubscriberCohortJob,
   ],
 });

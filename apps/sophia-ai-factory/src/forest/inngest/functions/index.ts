@@ -119,3 +119,7 @@ export { financialReconciliationCron } from '@/forest/jobs';
 export { edgeNodeHealthSweepCron } from '@/forest/jobs';
 export { storageTrackerDaily } from '@/forest/quota';
 export { sopExecute } from '@/forest/sops';
+// Growth Triad v8: Audio Resonance, Community Bait, Cohort LTV Decay
+export * from './audio-resonance-job';
+export * from './community-bait-job';
+export * from './subscriber-cohort-job';
