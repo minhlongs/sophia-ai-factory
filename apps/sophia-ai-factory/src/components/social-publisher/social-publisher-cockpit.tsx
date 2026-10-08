@@ -1,7 +1,7 @@
 /**
  * Social Publisher Cockpit Component
  * Obsidian Cyber-Glass control center integrating dispatch form,
- * anti-detection jitter pacing, 9:16 safe-zone player, and channel credential telemetry.
+ * draft approval queue, anti-detection jitter pacing, 9:16 safe-zone player, and channel telemetry.
  *
  * Layer: UI Component | File size: < 200 LOC | Zero :any.
  * @module components/social-publisher/social-publisher-cockpit
@@ -11,8 +11,10 @@
 
 import React, { useState } from 'react';
 import type { SocialPlatform } from '@/seed/types/social-publisher-types';
+import type { StoredPublishJob } from '@/land/social/publish-job-store';
 import { VerticalSafeZonePlayer } from './vertical-safe-zone-player';
 import { ChannelCredentialsGrid, type ChannelCardData } from './channel-credentials-grid';
+import { DraftApprovalQueue } from './draft-approval-queue';
 import { Send, Zap, Shield, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export interface PublishFormPayload {
@@ -25,8 +27,11 @@ export interface PublishFormPayload {
 
 export interface SocialPublisherCockpitProps {
   initialChannels?: ChannelCardData[];
+  initialDrafts?: StoredPublishJob[];
   onDispatch?: (payload: PublishFormPayload) => Promise<{ ok: boolean; message: string }>;
   onToggleKillSwitch?: (channelId: string, current: boolean) => Promise<boolean>;
+  onApproveDraft?: (jobId: string) => Promise<boolean>;
+  onRefreshDrafts?: () => Promise<void>;
 }
 
 const DEFAULT_CHANNELS: ChannelCardData[] = [
@@ -35,8 +40,16 @@ const DEFAULT_CHANNELS: ChannelCardData[] = [
   { platform: 'INSTAGRAM_REELS', channelId: 'ig_channel_main', channelName: '@sophia.aifactory', connected: true, status: 'HEALTHY', dailyPostsUsed: 2, dailyPostsMax: 12, tokenExpiresAt: Date.now() + 30 * 86400000, killSwitchActive: false },
 ];
 
-export function SocialPublisherCockpit({ initialChannels = DEFAULT_CHANNELS, onDispatch, onToggleKillSwitch }: SocialPublisherCockpitProps) {
+export function SocialPublisherCockpit({
+  initialChannels = DEFAULT_CHANNELS,
+  initialDrafts = [],
+  onDispatch,
+  onToggleKillSwitch,
+  onApproveDraft,
+  onRefreshDrafts,
+}: SocialPublisherCockpitProps) {
   const [channels, setChannels] = useState<ChannelCardData[]>(initialChannels);
+  const [drafts, setDrafts] = useState<StoredPublishJob[]>(initialDrafts);
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
@@ -56,17 +69,24 @@ export function SocialPublisherCockpit({ initialChannels = DEFAULT_CHANNELS, onD
     setChannels((prev) => prev.map((c) => (c.channelId === channelId ? { ...c, killSwitchActive: nextVal } : c)));
     if (onToggleKillSwitch) {
       const ok = await onToggleKillSwitch(channelId, current);
-      if (!ok) {
-        setChannels((prev) => prev.map((c) => (c.channelId === channelId ? { ...c, killSwitchActive: current } : c)));
-      }
+      if (!ok) setChannels((prev) => prev.map((c) => (c.channelId === channelId ? { ...c, killSwitchActive: current } : c)));
     }
+  };
+
+  const handleApproveDraft = async (jobId: string): Promise<boolean> => {
+    if (onApproveDraft) {
+      const ok = await onApproveDraft(jobId);
+      if (ok) setDrafts((prev) => prev.filter((d) => d.id !== jobId));
+      return ok;
+    }
+    setDrafts((prev) => prev.filter((d) => d.id !== jobId));
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return setAlert({ type: 'err', text: 'Vui lòng nhập tiêu đề video / Title required' });
     if (selectedPlatforms.length === 0) return setAlert({ type: 'err', text: 'Chọn ít nhất 1 nền tảng / Select at least 1 platform' });
-
     setIsSubmitting(true);
     setAlert(null);
     try {
@@ -82,7 +102,7 @@ export function SocialPublisherCockpit({ initialChannels = DEFAULT_CHANNELS, onD
 
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto">
-      {/* Top Banner: Obsidian Cyber-Glass Navigation & System Status */}
+      {/* Top Banner: Obsidian Cyber-Glass Navigation */}
       <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 gap-3 shadow-sm">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
@@ -98,33 +118,36 @@ export function SocialPublisherCockpit({ initialChannels = DEFAULT_CHANNELS, onD
         </div>
       </div>
 
-      {/* Main Cockpit Split: Dispatch Form (Left) vs 9:16 Safe-Zone Player (Right) */}
+      {/* Draft Approval Queue (If any drafts exist or prop supplied) */}
+      <DraftApprovalQueue
+        drafts={drafts}
+        onApproveDraft={handleApproveDraft}
+        onPreviewDraft={(d) => { setVideoUrl(d.videoUrl); setTitle(d.title); setCaption(d.description); }}
+        onRefresh={onRefreshDrafts}
+      />
+
+      {/* Main Cockpit Split: Dispatch Form vs 9:16 Safe-Zone Player */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-4 p-5 rounded-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-[#F59E0B]" /> Cấu Hình Bài Đăng / Dispatch Payload</h3>
-
           {alert && (
             <div className={`p-3 rounded-lg text-xs flex items-center gap-2 border ${alert.type === 'ok' ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30' : 'bg-[#F43F5E]/10 text-[#F43F5E] border-[#F43F5E]/30'}`}>
               {alert.type === 'ok' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
               <span>{alert.text}</span>
             </div>
           )}
-
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tiêu đề video / Title *</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: 3 Bí Quyết Tự Động Hóa Kênh Triệu View" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F46E5]" />
           </div>
-
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Mô tả & Hashtags / Caption & Tags</label>
             <textarea rows={3} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="#ai #faceless #automation #growth #passiveincome" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F46E5]" />
           </div>
-
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">URL Video (R2 Storage or MP4 URL)</label>
             <input type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://pub-r2.agencyos.network/videos/render-916.mp4" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F46E5]" />
           </div>
-
           <div className="space-y-2 pt-1">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Nền tảng phát tán / Target Platforms</label>
             <div className="flex flex-wrap gap-2">
@@ -135,7 +158,6 @@ export function SocialPublisherCockpit({ initialChannels = DEFAULT_CHANNELS, onD
               ))}
             </div>
           </div>
-
           <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Giãn cách ngẫu nhiên (Organic Jitter)</span>
@@ -143,7 +165,6 @@ export function SocialPublisherCockpit({ initialChannels = DEFAULT_CHANNELS, onD
             </div>
             <input type="checkbox" checked={useJitter} onChange={(e) => setUseJitter(e.target.checked)} className="w-4 h-4 text-[#4F46E5] rounded accent-[#4F46E5]" />
           </div>
-
           <button type="submit" disabled={isSubmitting} className="w-full py-2.5 px-4 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all disabled:opacity-60">
             <Send className="w-3.5 h-3.5" />
             <span>{isSubmitting ? 'Đang điều phối... / Pacing...' : 'Xuất Bản Ngẫu Nhiên (+3-15m) / Dispatch with Jitter'}</span>

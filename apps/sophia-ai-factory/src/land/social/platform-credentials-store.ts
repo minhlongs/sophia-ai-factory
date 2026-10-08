@@ -107,9 +107,9 @@ export async function upsertCredential(
     updated_at = excluded.updated_at`)
     .bind(
       id, input.userId, input.platform, input.channelId, input.channelName,
-      input.encryptedTokens, input.tokenExpiresAt, input.dailyPostCount ?? null,
+      input.encryptedTokens, input.tokenExpiresAt, input.dailyPostCount ?? 0,
       input.lastPublishedAt ?? null,
-      input.killSwitchActive !== undefined ? (input.killSwitchActive ? 1 : 0) : null,
+      input.killSwitchActive ? 1 : 0,
       now,
     ).run();
 

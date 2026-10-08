@@ -7,7 +7,18 @@
 
 export type SocialPlatform = 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
 
-export type PublishJobStatus = 'PENDING' | 'PACED' | 'UPLOADING' | 'PUBLISHED' | 'FAILED';
+export type PublishJobStatus = 'PENDING' | 'PACED' | 'UPLOADING' | 'PUBLISHED' | 'FAILED' | 'DRAFT';
+
+/**
+ * Normalizes any raw platform string (e.g. from syndication or URL params)
+ * into a canonical SocialPlatform enum. Defaults to 'YOUTUBE_SHORTS' if unrecognized.
+ */
+export function toSocialPlatform(raw: string): SocialPlatform {
+  const normalized = raw.trim().toUpperCase().replace(/[-\s]/g, '_');
+  if (normalized.includes('TIKTOK')) return 'TIKTOK_V2';
+  if (normalized.includes('INSTAGRAM') || normalized.includes('REEL')) return 'INSTAGRAM_REELS';
+  return 'YOUTUBE_SHORTS';
+}
 
 export type PacingStatus = 'READY' | 'COOLDOWN' | 'DAILY_LIMIT_REACHED' | 'KILL_SWITCH_ACTIVE';
 
@@ -57,6 +68,7 @@ export interface SocialPublishJobInput {
   title: string;
   description: string;
   tags?: string[];
+  status?: PublishJobStatus;
   scheduledFor?: number;
 }
 

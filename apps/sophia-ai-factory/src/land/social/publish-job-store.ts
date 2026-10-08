@@ -1,6 +1,6 @@
 /**
  * Publish Job Store — D1 persistence for social media video direct publishing
- * Tracks job lifecycle: PENDING -> PACED -> UPLOADING -> PUBLISHED / FAILED.
+ * Tracks job lifecycle: PENDING / DRAFT -> PACED -> UPLOADING -> PUBLISHED / FAILED.
  * Layer: land/social | File size: < 200 LOC | Zero :any.
  * @module land/social/publish-job-store
  */
@@ -93,55 +93,61 @@ async function resolveDb(overrideDb?: D1Database): Promise<D1Database> {
 export async function ensurePublishJobsTable(overrideDb?: D1Database): Promise<void> {
   const db = await resolveDb(overrideDb);
   await db.prepare(`CREATE TABLE IF NOT EXISTS ${PUBLISH_JOBS_TABLE} (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    channel_id TEXT NOT NULL,
-    platform TEXT NOT NULL,
-    video_url TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL DEFAULT '',
-    tags_json TEXT,
-    status TEXT NOT NULL DEFAULT 'PENDING',
-    platform_post_id TEXT,
-    published_url TEXT,
-    error_message TEXT,
-    scheduled_for INTEGER,
-    completed_at INTEGER,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL, channel_id TEXT NOT NULL, platform TEXT NOT NULL,
+    video_url TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
+    tags_json TEXT, status TEXT NOT NULL DEFAULT 'PENDING', platform_post_id TEXT,
+    published_url TEXT, error_message TEXT, scheduled_for INTEGER, completed_at INTEGER,
+    created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
   )`).run();
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_pub_jobs_user ON ${PUBLISH_JOBS_TABLE}(user_id, status)`).run();
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_pub_jobs_channel ON ${PUBLISH_JOBS_TABLE}(channel_id, created_at DESC)`).run();
 }
 
-export async function createPublishJob(
-  input: SocialPublishJobInput,
-  overrideDb?: D1Database,
-): Promise<StoredPublishJob> {
+export async function createPublishJob(input: SocialPublishJobInput, overrideDb?: D1Database): Promise<StoredPublishJob> {
   const db = await resolveDb(overrideDb);
   const now = Date.now();
   const id = `pub_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const tagsJson = input.tags ? JSON.stringify(input.tags) : null;
+  const initialStatus = input.status ?? 'PENDING';
 
   await db.prepare(`INSERT INTO ${PUBLISH_JOBS_TABLE} (
     id, user_id, channel_id, platform, video_url, title, description,
     tags_json, status, scheduled_for, created_at, updated_at
-  ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'PENDING', ?9, ?10, ?10)`)
-    .bind(
-      id, input.userId, input.channelId, input.platform, input.videoUrl,
-      input.title, input.description, tagsJson, input.scheduledFor ?? null, now
-    ).run();
+  ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11)`).bind(
+    id, input.userId, input.channelId, input.platform, input.videoUrl,
+    input.title, input.description, tagsJson, initialStatus, input.scheduledFor ?? null, now
+  ).run();
 
   const job = await getPublishJob(id, overrideDb);
   if (!job) throw new Error('Failed to retrieve created publish job');
   return job;
 }
 
+export async function listUserDraftJobs(userId: string, limit = 20, overrideDb?: D1Database): Promise<StoredPublishJob[]> {
+  const db = await resolveDb(overrideDb);
+  const res = await db.prepare(
+    `SELECT * FROM ${PUBLISH_JOBS_TABLE} WHERE user_id = ?1 AND status = 'DRAFT' ORDER BY created_at DESC, id DESC LIMIT ?2`
+  ).bind(userId, limit).all<PublishJobRow>();
+  return (res.results ?? []).map(mapPublishJobRow);
+}
+
+export async function transitionDraftToPending(id: string, userId: string, overrideDb?: D1Database): Promise<StoredPublishJob> {
+  const db = await resolveDb(overrideDb);
+  const now = Date.now();
+  const res = await db.prepare(
+    `UPDATE ${PUBLISH_JOBS_TABLE} SET status = 'PENDING', updated_at = ?1 WHERE id = ?2 AND user_id = ?3 AND status = 'DRAFT'`
+  ).bind(now, id, userId).run();
+  if ((res.meta?.changes ?? 0) === 0) {
+    throw new Error(`Draft job not found, unauthorized, or not in DRAFT status: ${id}`);
+  }
+  const updated = await getPublishJob(id, overrideDb);
+  if (!updated) throw new Error(`Draft job not found: ${id}`);
+  return updated;
+}
+
 export async function getPublishJob(id: string, overrideDb?: D1Database): Promise<StoredPublishJob | null> {
   const db = await resolveDb(overrideDb);
-  const row = await db.prepare(
-    `SELECT * FROM ${PUBLISH_JOBS_TABLE} WHERE id = ?1 LIMIT 1`
-  ).bind(id).first<PublishJobRow>();
+  const row = await db.prepare(`SELECT * FROM ${PUBLISH_JOBS_TABLE} WHERE id = ?1 LIMIT 1`).bind(id).first<PublishJobRow>();
   return row ? mapPublishJobRow(row) : null;
 }
 
@@ -168,11 +174,7 @@ export async function updatePublishJobStatus(
   return updated;
 }
 
-export async function listChannelPublishJobs(
-  channelId: string,
-  limit = 20,
-  overrideDb?: D1Database,
-): Promise<StoredPublishJob[]> {
+export async function listChannelPublishJobs(channelId: string, limit = 20, overrideDb?: D1Database): Promise<StoredPublishJob[]> {
   const db = await resolveDb(overrideDb);
   const res = await db.prepare(
     `SELECT * FROM ${PUBLISH_JOBS_TABLE} WHERE channel_id = ?1 ORDER BY created_at DESC LIMIT ?2`
