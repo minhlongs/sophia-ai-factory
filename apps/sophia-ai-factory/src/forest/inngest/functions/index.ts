@@ -127,3 +127,6 @@ export * from './subscriber-cohort-job';
 export * from './affiliate-yield-job';
 export * from './ghost-matrix-job';
 export * from './culture-injector-job';
+
+// Growth Triad v10: Process Video Attribution
+export * from './growth/process-video-attribution';

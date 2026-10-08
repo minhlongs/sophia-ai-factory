@@ -116,6 +116,7 @@ const EXPECTED_EVENT_KEYS = [
   'affiliate.yield.routed',
   'shadowban.anomaly.detected',
   'semantic.culture.scored',
+  'growth.video.attribution_received',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -151,8 +152,8 @@ describe('Inngest client merge (Phase 1.6)', () => {
 
   describe('merged schema completeness', () => {
     it('expected key list holds exactly 89 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(89);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(89);
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(90);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(90);
     });
 
     it('Events record key set exactly matches the 65 expected keys', () => {

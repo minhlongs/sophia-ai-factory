@@ -673,6 +673,7 @@ export type SemanticCultureScoredEvent = {
 };
 
 export type Events = {
+  "growth.video.attribution_received": { data: { videoId: string; customerId: string; platform: string; metrics: Record<string, unknown>; }; };
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
   "test/hello.world": { data: Record<string, unknown> };
