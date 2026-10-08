@@ -672,7 +672,34 @@ export type SemanticCultureScoredEvent = {
   };
 };
 
+export type GrowthV12ReseedTriggerEvent = {
+  data: {
+    userId: string;
+    sourceJobId: string;
+    channelId: string;
+    platform: 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+    originalHook: string;
+    retentionZScore: number;
+    classification: 'ALPHA_VIRAL' | 'STEADY' | 'STAGNANT';
+    mutatedHooks: string[];
+  };
+};
+
+export type GrowthV12WebhookReceivedEvent = {
+  data: {
+    affiliateNetwork: 'CLICKBANK' | 'PAYOS' | 'NOWPAYMENTS' | 'AWIN';
+    externalOrderId: string;
+    grossAmountUsd: number;
+    commissionAmountUsd: number;
+    subId?: string;
+    currency?: string;
+    rawPayload?: string;
+  };
+};
+
 export type Events = {
+  "growth/v12.reseed.trigger": GrowthV12ReseedTriggerEvent;
+  "growth/v12.webhook.received": GrowthV12WebhookReceivedEvent;
   "growth.video.attribution_received": { data: { videoId: string; customerId: string; platform: string; metrics: Record<string, unknown>; }; };
   "growth.v11.arbitrage_requested": {
     data: {
