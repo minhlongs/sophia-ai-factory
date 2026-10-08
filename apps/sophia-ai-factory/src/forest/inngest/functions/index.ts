@@ -97,6 +97,10 @@ export * from './omnichannel-attribution-job';
 export * from './churn-winback-job';
 export * from './affiliate-epc-copilot-job';
 export * from './viral-repurpose-job';
+// Growth Triad v5: Paywall MAB, Creator Recruitment & Hook A/B Auto-Promotion
+export * from './paywall-mab-recalibration-job';
+export * from './kol-outreach-sequencer-job';
+export * from './ab-auto-promotion-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

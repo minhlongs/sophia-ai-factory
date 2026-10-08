@@ -538,6 +538,33 @@ export type ViralRepurposeDispatchedEvent = {
   };
 };
 
+export type PaywallMabRecalibratedEvent = {
+  data: {
+    campaignId: string;
+    winningArmId: string;
+    priceUsd: number;
+    expectedRevenue: number;
+  };
+};
+
+export type KolOutreachEnrolledEvent = {
+  data: {
+    kolId: string;
+    handle: string;
+    platform: string;
+    stepIndex: number;
+    offeredSplitPct: number;
+  };
+};
+
+export type HookAbWinnerPromotedEvent = {
+  data: {
+    experimentId: string;
+    winnerVariantId: string;
+    confidenceLevelPct: number;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -613,5 +640,8 @@ export type Events = {
   "retargeting.winback.evaluated": RetargetingWinbackEvaluatedEvent;
   "affiliate.deal.matched": AffiliateDealMatchedEvent;
   "viral.repurpose.dispatched": ViralRepurposeDispatchedEvent;
+  "paywall.mab.recalibrated": PaywallMabRecalibratedEvent;
+  "kol.outreach.enrolled": KolOutreachEnrolledEvent;
+  "hook.ab.winner.promoted": HookAbWinnerPromotedEvent;
 };
 

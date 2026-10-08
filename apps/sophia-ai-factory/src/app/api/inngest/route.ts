@@ -68,6 +68,9 @@ import {
   churnWinbackJob,
   affiliateEpcCopilotJob,
   viralRepurposeJob,
+  paywallMabRecalibrationJob,
+  kolOutreachSequencerJob,
+  abAutoPromotionJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -190,5 +193,9 @@ export const { GET, POST, PUT } = serve({
     churnWinbackJob,
     affiliateEpcCopilotJob,
     viralRepurposeJob,
+    // Growth Triad v5: Paywall MAB, Creator Recruitment & Hook A/B Auto-Promotion
+    paywallMabRecalibrationJob,
+    kolOutreachSequencerJob,
+    abAutoPromotionJob,
   ],
 });
