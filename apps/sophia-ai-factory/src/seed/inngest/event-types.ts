@@ -697,7 +697,26 @@ export type GrowthV12WebhookReceivedEvent = {
   };
 };
 
+export type GrowthV13BanditEvaluateEvent = {
+  data: {
+    experimentId: string;
+    userId: string;
+    forceReweight?: boolean;
+  };
+};
+
+export type GrowthV13DeliberationRequestEvent = {
+  data: {
+    scriptId: string;
+    userId: string;
+    originalScript: string;
+    targetPlatform?: string;
+  };
+};
+
 export type Events = {
+  "growth/v13.bandit.evaluate": GrowthV13BanditEvaluateEvent;
+  "growth/v13.deliberation.request": GrowthV13DeliberationRequestEvent;
   "growth/v12.reseed.trigger": GrowthV12ReseedTriggerEvent;
   "growth/v12.webhook.received": GrowthV12WebhookReceivedEvent;
   "growth.video.attribution_received": { data: { videoId: string; customerId: string; platform: string; metrics: Record<string, unknown>; }; };

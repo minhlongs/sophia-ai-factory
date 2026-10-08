@@ -1,0 +1,33 @@
+/**
+ * Growth Triad v13 Configuration Constants & Hyperparameters
+ * MAB A/B Video Optimizer, Creative Deliberation & Shapley Profit Ledger
+ * Layer: seed/config | Max LOC: < 200 | Zero :any
+ * @module seed/config/growth/bandit-weights
+ */
+
+export const MAB_CONFIG = {
+  DEFAULT_PRIOR_ALPHA: 1.0,
+  DEFAULT_PRIOR_BETA: 1.0,
+  MIN_EXPLORATION_TRAFFIC_WEIGHT: 0.05,
+  MAX_EXPLOITATION_TRAFFIC_WEIGHT: 0.85,
+  CONFIDENCE_CONVERGENCE_THRESHOLD: 0.95,
+  MIN_PULLS_BEFORE_CONVERGENCE: 50,
+  THOMPSON_MONTE_CARLO_ROUNDS: 1000,
+  UCB1_EXPLORATION_FACTOR: 1.414,
+} as const;
+
+export const DELIBERATION_CONFIG = {
+  WEIGHT_HOOK_ANALYST: 0.40,
+  WEIGHT_RETENTION_CRITIC: 0.35,
+  WEIGHT_COMPLIANCE_GUARD: 0.25,
+  MIN_PASSING_SCORE: 75.0,
+  AUTO_REVISE_THRESHOLD: 60.0,
+  COMPLIANCE_HARD_FLOOR: 70.0,
+} as const;
+
+export const SHAPLEY_CONFIG = {
+  MAX_TOUCHPOINTS_PER_JOURNEY: 8,
+  TIME_DECAY_HALF_LIFE_DAYS: 7,
+  MIN_ROAS_ALARM_THRESHOLD: 1.5,
+  TOUCHPOINT_WEIGHT_MIN: 0.01,
+} as const;
