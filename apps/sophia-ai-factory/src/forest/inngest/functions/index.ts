@@ -72,6 +72,10 @@ export * from './niche-video-dispatcher';
 export * from './commerce-catalog-sync';
 export * from './commerce-video-dispatcher';
 export * from './social-syndication-job';
+export * from './social-direct-publish-job';
+export * from './social-analytics-collector';
+export * from './flywheel-feedback-dispatcher';
+export * from './creative-mutator-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

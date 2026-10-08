@@ -78,6 +78,10 @@ const EXPECTED_EVENT_KEYS = [
   'autonomous.video.pipeline.requested',
   'autonomous.campaign.scaling.requested',
   'social.syndication.requested',
+  'social.publish.dispatched',
+  'social.analytics.sync_requested',
+  'social.analytics.feedback_evaluated',
+  'creative.mutation.requested',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -112,12 +116,12 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 51 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(51);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(51);
+    it('expected key list holds exactly 55 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(55);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(55);
     });
 
-    it('Events record key set exactly matches the 51 expected keys', () => {
+    it('Events record key set exactly matches the 55 expected keys', () => {
       // Compile-time: keysAreExact is `true` only if keyof Events === expected.
       expect(keysAreExact).toBe(true);
     });

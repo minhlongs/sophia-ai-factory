@@ -281,6 +281,61 @@ export type SocialSyndicationRequestedEvent = {
   };
 };
 
+export type SocialPublishDispatchedEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    channelId: string;
+    platform: 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+    videoUrl: string;
+    title: string;
+    description?: string;
+    tags?: string[];
+  };
+};
+
+export type SocialAnalyticsSyncRequestedEvent = {
+  data: {
+    userId: string;
+    jobId: string;
+    channelId?: string;
+    platform?: 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+    platformPostId?: string;
+    title?: string;
+    mcuCost?: number;
+    byokCostUsd?: number;
+    revenueUsd?: number;
+  };
+};
+
+export type SocialAnalyticsFeedbackEvaluatedEvent = {
+  data: {
+    userId: string;
+    jobId: string;
+    platform: string;
+    hookScore: number;
+    retentionScore: number;
+    netRoiUsd: number;
+    conversions: number;
+    revenueUsd: number;
+  };
+};
+
+export type CreativeMutationRequestedEvent = {
+  data: {
+    userId: string;
+    parentJobId: string;
+    generation: number;
+    mutationIntensity: 'CONSERVATIVE' | 'MODERATE' | 'RADICAL';
+    triggerReason: 'HOOK_FATIGUE' | 'LOW_RETENTION' | 'WINNING_ARM_EXPLORE' | 'MANUAL';
+    customOverrides?: {
+      targetHookArchetype?: 'STATISTIC_PAIN' | 'POLARIZING_VERDICT' | 'FINANCIAL_LOSS_WARNING' | 'AUTOMATION_PROOF' | 'HIGH_CURIOSITY_LIST' | 'EXCLUSIVE_ACCESS';
+      targetVisualStyle?: string;
+      pacingMultiplier?: number;
+    };
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -333,5 +388,9 @@ export type Events = {
   "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
   "autonomous.campaign.scaling.requested": AutonomousCampaignScalingRequestedEvent;
   "social.syndication.requested": SocialSyndicationRequestedEvent;
+  "social.publish.dispatched": SocialPublishDispatchedEvent;
+  "social.analytics.sync_requested": SocialAnalyticsSyncRequestedEvent;
+  "social.analytics.feedback_evaluated": SocialAnalyticsFeedbackEvaluatedEvent;
+  "creative.mutation.requested": CreativeMutationRequestedEvent;
 };
 

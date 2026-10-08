@@ -2,15 +2,29 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-06-22 (handover refresh — reflects shipped state through 2026-06-21)
-**Production:** https://sophia.agencyos.network (SHA 7c8dc4c5)
+**Last Updated:** 2026-10-08 (Social Direct Publisher & OAuth Cockpit architecture added)
+**Production:** https://sophia.agencyos.network (SHA 287b2c28)
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 **Status Page:** https://sophia.agencyos.network/status (90-day uptime tracking)
 **SOC 2 Status:** Type I audit in progress (Q3 2026 completion target)
 
 ---
 
-## Recent Completions (2026-06-22)
+## Recent Completions (2026-10-08)
+
+### Social Direct Publisher & OAuth Cockpit (2026-10-08)
+
+Automated multi-platform direct video publishing subsystem across YouTube Shorts, TikTok API v2, and Instagram Reels Graph API:
+
+- **Web Crypto HKDF Vault**: Pure edge RFC 5869 HKDF-SHA256 key derivation with AES-256-GCM authenticated encryption bound to `social-vault:${userId}:${platform}:${channelId}` context (`src/seed/security/oauth-token-vault.ts`).
+- **D1 OCC Credential Store**: Optimistic Concurrency Control locking (`lock_version`) preventing concurrent refresh race conditions, with 5-minute stale lock recovery and emergency channel kill switches (`src/land/social/platform-credentials-store.ts`).
+- **Anti-Detection Pacing Engine**: 180-min channel cooldown, daily caps (YouTube: 6, TikTok: 4, IG: 4), and organic uniform jitter delays (45–90 min) (`src/tree/social/publisher/pacing-engine.ts`).
+- **Multi-Platform Protocol Adapters**: YouTube Resumable 256 KiB aligned chunking with `#Shorts` tagging, TikTok Content Posting API v2 chunked binary uploads (5MB-64MB) with status polling, and Meta Instagram Reels 3-stage Cloudflare R2 container publishing (`src/tree/social/publisher/platform-adapters.ts`).
+- **Inngest Workflow & Server Actions**: Multi-step durable publishing background job (`social-direct-publish-job.ts`) with circuit breaker fail-closed safety and authenticated Server Actions (`social-publisher-actions.ts`).
+- **Obsidian Cyber-Glass UI**: 9:16 vertical safe-zone preview player, channel credential telemetry grid with live token expiration countdown, and bilingual VN/EN controls (`src/components/social-publisher/` & `/dashboard/social-publisher`).
+- **Verification**: 44/44 unit tests passing across 6 Vitest suites, zero `:any`, strict 4-layer architecture compliance.
+
+---
 
 ### OpenTelemetry Staging Deployment (2026-06-22)
 

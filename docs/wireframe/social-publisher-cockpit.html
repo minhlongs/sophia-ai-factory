@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sophia AI Factory — Social Direct Publisher Cockpit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              indigo: '#4F46E5',
+              violet: '#9333EA',
+              amber: '#F59E0B',
+              rose: '#F43F5E',
+              emerald: '#10B981',
+              dark: '#09090B',
+              card: '#FFFFFF',
+              border: '#E2E8F0',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: #FFFFFF; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .safe-zone-overlay {
+      position: absolute; inset: 0; pointer-events: none; border: 2px dashed rgba(245, 158, 11, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+        S
+      </div>
+      <div>
+        <h1 class="font-bold text-base tracking-tight text-slate-900">Sophia AI Factory</h1>
+        <p class="text-xs text-slate-500">Autonomous Social Direct Publisher Cockpit (BYOK)</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+        <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+        Vault Engine: Active (AES-256-GCM)
+      </span>
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+        Kill Switch: Armed (Ready)
+      </span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6 space-y-6">
+    <!-- Channel Account Grid -->
+    <section class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold tracking-wider uppercase text-slate-500">Connected Publishing Channels (BYOK)</h2>
+        <span class="text-xs text-slate-500">Auto-Token Refresh Buffer: 60m</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- YouTube Shorts Card -->
+        <div class="glass-card rounded-xl p-5 relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-red-500 text-white flex items-center justify-center font-bold">
+                YT
+              </div>
+              <div>
+                <h3 class="font-semibold text-sm">YouTube Shorts</h3>
+                <p class="text-xs text-slate-500">@SophiaOfficialAI</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Healthy</span>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+            <span>Daily Quota: <strong>2/8 uploads</strong></span>
+            <span>Token: <strong>Expires in 52m</strong></span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400">Resumable Chunk: 5 MiB (Aligned 256 KiB)</div>
+        </div>
+
+        <!-- TikTok Content API Card -->
+        <div class="glass-card rounded-xl p-5 relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold">
+                TT
+              </div>
+              <div>
+                <h3 class="font-semibold text-sm">TikTok API v2</h3>
+                <p class="text-xs text-slate-500">@sophia_wealth_tech</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Healthy</span>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+            <span>Daily Quota: <strong>1/5 uploads</strong></span>
+            <span>Mode: <strong>Direct Post (v2)</strong></span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400">Cooldown: 128 mins remaining</div>
+        </div>
+
+        <!-- Meta Instagram Reels Card -->
+        <div class="glass-card rounded-xl p-5 relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-pink-600 text-white flex items-center justify-center font-bold">
+                IG
+              </div>
+              <div>
+                <h3 class="font-semibold text-sm">Instagram Reels</h3>
+                <p class="text-xs text-slate-500">@sophia_raas_empire</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Token Refreshing</span>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+            <span>Daily Quota: <strong>0/4 uploads</strong></span>
+            <span>R2 Ingestion: <strong>HTTPS Ready</strong></span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400">Long-Lived Meta Token (Day 42/60)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Split: Stager & Pacer Queue -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Video Staging & Preview Panel (2 Columns) -->
+      <section class="lg:col-span-2 glass-card rounded-xl p-6 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h2 class="text-base font-semibold text-slate-900">Direct Publication Stager</h2>
+            <p class="text-xs text-slate-500">Autonomous 9:16 safe-zone framing and multi-platform caption synthesis</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 font-medium">Render ID: #rend-84920</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <!-- 9:16 Vertical Safe-Zone Player Simulation -->
+          <div class="flex flex-col items-center">
+            <div class="relative w-56 h-96 bg-slate-900 rounded-2xl overflow-hidden shadow-xl border-4 border-slate-800 flex items-center justify-center">
+              <div class="text-center p-4">
+                <span class="text-xs font-mono text-indigo-400">1080 × 1920 (9:16)</span>
+                <p class="text-white text-sm font-semibold mt-2">"Crypto Trading Bot Passive Income Guide 2026"</p>
+                <span class="inline-block mt-3 px-2 py-1 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono">Duration: 42s</span>
+              </div>
+              <!-- Safe-Zone Guidelines Indicator -->
+              <div class="safe-zone-overlay">
+                <div class="absolute top-2 left-2 text-[8px] text-amber-400 bg-black/60 px-1 rounded">Top Safe Margin</div>
+                <div class="absolute bottom-6 left-2 right-2 text-[8px] text-amber-400 bg-black/60 px-1 rounded text-center">Bottom Native UI Margin</div>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">Simulated TikTok & Reels native UI safe zone</p>
+          </div>
+
+          <!-- Publication Form -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Video Title & Hook Tag</label>
+              <input type="text" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" value="Stop Trading Manually: The 2026 AI Bot Strategy #Shorts #Crypto">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Multi-Channel Caption & Hashtags</label>
+              <textarea rows="4" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">Automated volume rebate bot generating daily yield without emotional mistakes. Link in bio for exclusive zero-fee tier coupon! #Crypto #TradingBot #PassiveIncome #SophiaAI</textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Target Distribution Channels</label>
+              <div class="flex space-x-2">
+                <label class="flex items-center space-x-1.5 text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer">
+                  <input type="checkbox" checked class="text-indigo-600 rounded">
+                  <span>YouTube Shorts</span>
+                </label>
+                <label class="flex items-center space-x-1.5 text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer">
+                  <input type="checkbox" checked class="text-indigo-600 rounded">
+                  <span>TikTok API v2</span>
+                </label>
+                <label class="flex items-center space-x-1.5 text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer">
+                  <input type="checkbox" checked class="text-indigo-600 rounded">
+                  <span>Instagram Reels</span>
+                </label>
+              </div>
+            </div>
+            <div class="pt-2 flex space-x-3">
+              <button class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs py-2.5 px-4 rounded-lg shadow-sm transition">
+                Dispatch with Organic Jitter Pacing
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pacing Queue & Circuit Breakers (1 Column) -->
+      <section class="glass-card rounded-xl p-6 space-y-5">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">Live Pacing & Circuit Sentinel</h2>
+          <p class="text-xs text-slate-500">Anti-detection jitter engine & health monitors</p>
+        </div>
+
+        <!-- Active Cooldown Box -->
+        <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-indigo-900">Next Scheduled Publish</span>
+            <span class="text-indigo-600 font-mono font-bold">+52m 14s</span>
+          </div>
+          <div class="w-full bg-indigo-200 rounded-full h-1.5">
+            <div class="bg-indigo-600 h-1.5 rounded-full" style="width: 65%"></div>
+          </div>
+          <p class="text-[11px] text-indigo-700">Randomized Jitter: <strong>+38 min</strong> applied to prevent burst flags.</p>
+        </div>
+
+        <!-- Recent Upload Queue -->
+        <div class="space-y-3">
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Queue & Webhook Reconciliation</h3>
+
+          <div class="border border-slate-200 rounded-lg p-3 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-slate-800">SaaS Battle: Notion vs Obsidian</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-semibold">Published</span>
+            </div>
+            <p class="text-slate-500 text-[11px]">YouTube Shorts: Live URL verified</p>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg p-3 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-slate-800">Crypto Fee Discount Hook #3</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-800 font-semibold">Transcoding</span>
+            </div>
+            <p class="text-slate-500 text-[11px]">TikTok v2: Chunks 1-4 PUT complete (16 MiB)</p>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg p-3 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-slate-800">AI Video Splitter Promo #1</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 font-semibold">Staged (Inngest)</span>
+            </div>
+            <p class="text-slate-500 text-[11px]">Pending 180m channel cooldown</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

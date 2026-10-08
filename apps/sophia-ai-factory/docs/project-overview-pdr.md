@@ -1,8 +1,8 @@
 # Sophia AI Factory — Product Development Requirements (PDR)
-## Reality Loop v1.2 Telemetry Hardening & Autonomous E-Commerce Video Engine
+## Social Direct Publisher & OAuth Cockpit (YouTube Shorts, TikTok v2, Reels)
 
-**Version:** 1.2.0  
-**Date:** 2026-10-07  
+**Version:** 1.48.0  
+**Date:** 2026-10-08  
 **Author:** Sophia Engineering Team  
 **Status:** Implemented & Verified  
 
@@ -10,10 +10,12 @@
 
 ### 1. Executive Summary
 
-Sophia AI Factory is a Next.js 16 App Router SaaS platform deployed to Cloudflare Workers for automated AI video generation. This release accomplishes two major architectural milestones:
+Sophia AI Factory is a Next.js 16 App Router SaaS platform deployed to Cloudflare Workers for automated AI video generation. This release accomplishes the **Social Direct Publisher & OAuth Cockpit** milestone:
 
-1. **Reality Loop v1.2 Telemetry Hardening**: All 13 canonical performance event emitters are now fully wired into production call sites (`13 wired, 0 deferred`). Added the `editCreativeArtifact` Server Action for human-in-the-loop artifact refinement, resolved the FNV-1a telemetry idempotency hash collision hazard via disambiguated revision counters, and classified contingent event types to prevent false-positive degradation alerts.
-2. **Autonomous E-Commerce Product-to-Video Engine**: Scaffolds self-service Shopify Admin GraphQL and WooCommerce REST v3 catalog synchronizers with per-store circuit breaker protection, unified catalog normalization, and autonomous creative mission dispatching.
+1. **Social Direct Publisher Engine**: Autonomous direct publishing across YouTube Shorts, TikTok Content Posting API v2, and Instagram Reels with anti-detection pacing (180-min cooldown, platform daily limits, and 45–90 min uniform organic jitter).
+2. **Web Crypto HKDF Token Vault**: Multi-tenant AES-256-GCM authenticated encryption using edge-native `crypto.subtle` with key derivation bound to `social-vault:${userId}:${platform}:${channelId}`.
+3. **Cloudflare D1 OCC Locking**: Atomic token refresh locking with 5-minute stale-lock auto-recovery to prevent multi-isolate token refresh stampedes.
+4. **Obsidian Cyber-Glass UI Cockpit**: Unified management interface featuring real-time token expiry counters, 9:16 vertical safe-zone overlay player (TikTok, Shorts, Reels guides), and emergency kill-switch controls.
 
 ---
 
@@ -23,15 +25,22 @@ The implementation strictly honors the 4-layer Clean Architecture hierarchy:
 
 ```
 seed (Foundational primitives)
-  └── src/seed/types/ecommerce.ts          (Zod schemas, store configs, unified product items)
+  ├── src/seed/types/social-publisher-types.ts      (Social platform types, vault contracts, job statuses)
+  └── src/seed/security/oauth-token-vault.ts        (Web Crypto AES-256-GCM, RFC 5869 HKDF-SHA256)
 tree (Reusable domain logic)
-  ├── src/tree/ecommerce/shopify-client.ts     (GraphQL client, circuit breaker, failure classification)
-  ├── src/tree/ecommerce/woocommerce-client.ts (REST v3 client, Basic Auth, circuit breaker)
-  └── src/tree/performance/emitter-health.ts   (Static registry, 13 wired, contingent classification)
-land (Domain workflows & Server Actions)
-  ├── src/land/creative-mission/edit-artifact-action.ts (Human artifact edits, provenance, telemetry)
-  ├── src/land/commerce/catalog-mapper.ts               (Shopify/WooCommerce to Unified mapper, prompt builder)
-  └── src/land/commerce/mission-trigger.ts              (Bridge dispatching creative video missions)
+  ├── src/tree/social/publisher/platform-adapters.ts (Chunk calculations, protocol payloads)
+  └── src/tree/social/publisher/pacing-engine.ts     (Anti-detection pacing, daily limits, jitter)
+land (D1 persistence & OCC locking)
+  ├── src/land/social/platform-credentials-store.ts  (Credentials CRUD, atomic OCC refresh locks)
+  └── src/land/social/publish-job-store.ts           (Publishing job lifecycle tracking)
+forest (Inngest orchestration & Server Actions)
+  ├── src/forest/inngest/functions/social-direct-publish-job.ts (5-step durable publishing workflow)
+  └── src/forest/actions/social-publisher-actions.ts            (Authenticated Server Actions)
+ui (Obsidian Cyber-Glass Frontend)
+  ├── src/components/social-publisher/vertical-safe-zone-player.tsx
+  ├── src/components/social-publisher/channel-credentials-grid.tsx
+  ├── src/components/social-publisher/social-publisher-cockpit.tsx
+  └── src/app/(app)/dashboard/social-publisher/page.tsx
 ```
 
 ---

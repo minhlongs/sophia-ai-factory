@@ -994,3 +994,55 @@ The e-commerce pipeline bridges online merchant stores directly with autonomous 
 3. **Catalog Mapper** (`src/land/commerce/catalog-mapper.ts`): Normalizes store payloads into `UnifiedProductItem` and derives video advertising prompts (headline hooks, selling points, call-to-actions, and target demographics).
 4. **Mission Trigger** (`src/land/commerce/mission-trigger.ts`): Creates autonomous video generation missions in `engine_missions` with constraints and success metrics.
 
+---
+
+## 14. Social Direct Publisher & OAuth Cockpit (2026-10-08)
+
+### 14.1 4-Layer Architecture Organization
+
+The direct publishing subsystem is split across the strict 4-layer architecture boundaries:
+
+```
+┌────────────────────────────────────────────────────────┐
+│ UI Layer: Obsidian Cyber-Glass Cockpit & Safe-Zone    │
+│ (src/components/social-publisher/*, dashboard page)   │
+└──────────────────────────┬─────────────────────────────┘
+                           │ calls Server Actions
+┌──────────────────────────▼─────────────────────────────┐
+│ forest Layer: Inngest Workflow & Server Actions        │
+│ (social-direct-publish-job.ts, publisher-actions.ts)   │
+└──────────────┬───────────────────────────┬─────────────┘
+               │ orchestrates              │ uses
+┌──────────────▼─────────────┐ ┌──────────▼──────────────┐
+│ land Layer: D1 OCC Stores  │ │ tree Layer: Domain Logic │
+│ (platform-credentials-store│ │ (platform-adapters.ts,   │
+│  publish-job-store.ts)     │ │  pacing-engine.ts)       │
+└──────────────┬─────────────┘ └──────────┬──────────────┘
+               │ imports                  │ imports
+┌──────────────▼──────────────────────────▼──────────────┐
+│ seed Layer: Primitives, Types & Vault Cryptography    │
+│ (social-publisher-types.ts, oauth-token-vault.ts)     │
+└────────────────────────────────────────────────────────┘
+```
+
+### 14.2 Vault Cryptography & Multi-Tenant Isolation
+- **Web Crypto API**: Pure edge-compatible implementation using `crypto.subtle` (no Node.js crypto dependencies).
+- **RFC 5869 HKDF-SHA256**: Derives unique 256-bit AES keys per channel using derivation context string:
+  `social-vault:${userId}:${platform}:${channelId}` with 32 random salt bytes.
+- **AES-256-GCM Encryption**: Encrypts access and refresh tokens with fresh 12-byte IV and 128-bit authentication tag. Ciphertext serialized as `${saltHex}:${ivHex}:${ciphertextHex}`.
+
+### 14.3 D1 Optimistic Concurrency Control (OCC)
+- **Token Refresh Lock**: Atomic SQL conditional update (`UPDATE platform_credentials SET refresh_lock_until = ... WHERE id = ... AND (refresh_lock_until IS NULL OR refresh_lock_until < ...)`).
+- **Stale-Lock Recovery**: Automatic timeout resolution after 5 minutes to prevent permanent deadlocks if an edge isolate terminates mid-refresh.
+
+### 14.4 Anti-Detection Pacing Engine
+- **Cooldown Safeguard**: 180-minute minimum cooldown between consecutive posts on the same channel.
+- **Platform Daily Caps**: YouTube Shorts: 6, TikTok API v2: 4, Instagram Reels: 4 posts per 24 hours.
+- **Organic Jitter**: Uniform random variance (45-90 min total delay) prevents automated behavioral fingerprinting.
+
+### 14.5 Multi-Platform Protocol Adapters
+- **YouTube Shorts**: Resumable Upload protocol with 256 KiB aligned chunk boundaries (default 5 MiB chunk size), automatic `#Shorts` tagging, and 9:16 vertical ratio enforcement.
+- **TikTok API v2**: Content Posting API with Direct Post and Creator Inbox modes, chunked binary streaming, and asynchronous publish polling.
+- **Instagram Reels**: 3-stage Cloudflare R2 container publishing with zero-egress public HTTPS ingestion, container readiness polling, and `media_publish` completion.
+
+

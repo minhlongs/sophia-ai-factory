@@ -2,7 +2,7 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-09-22 (CI/CD Pipeline Conversion: CF-direct → GitHub Actions canonical — doctrine verified & docs synchronized)
+**Last entry:** 2026-10-08 (Social Direct Publisher & OAuth Cockpit — Web Crypto HKDF vault, OCC locks, TikTok/YouTube/IG adapters, anti-detection pacing, Obsidian Cyber-Glass cockpit)
 **Current Production SHA:** 287b2c28
 
 ---
@@ -11,15 +11,18 @@
 
 | Quarter | Date Range | File |
 |---------|-----------|------|
-| 2026 Q3 | 2026-07-01 → present | [changelog/2026-Q3.md](changelog/2026-Q3.md) |
+| 2026 Q4 | 2026-10-01 → present | [changelog/2026-Q4.md](changelog/2026-Q4.md) |
+| 2026 Q3 | 2026-07-01 → 2026-09-30 | [changelog/2026-Q3.md](changelog/2026-Q3.md) |
 | 2026 Q2 | 2026-04-01 → 2026-06-30 | [changelog/2026-Q2.md](changelog/2026-Q2.md) |
 | 2026 Q1 | 2026-01-15 → 2026-03-31 | [changelog/2026-Q1.md](changelog/2026-Q1.md) |
 | 2025 archive | pre-2026 | [changelog/2025-archive.md](changelog/2025-archive.md) — no entries (project started Jan 2026) |
 
 ---
 
-## Recent Entries (Q3 2026 — latest 5)
+## Recent Entries (Q4 2026 — latest)
 
+- **2026-10-08** — **Social Direct Publisher & OAuth Cockpit (v1.48.0).** Shipped automated direct video publishing subsystem across TikTok Content Posting API v2, YouTube Shorts Resumable API, and Instagram Reels Graph API. Architecture highlights: Web Crypto HKDF-SHA256 authenticated AES-256-GCM token vault (`src/seed/security/oauth-token-vault.ts`), D1 Optimistic Concurrency Control (OCC) token refresh storage with 5-min stale lock recovery (`src/land/social/platform-credentials-store.ts`), anti-detection pacing engine with organic jitter (45-90 min), 180-min channel cooldown, and daily caps (`src/tree/social/publisher/pacing-engine.ts`), Inngest background job orchestration (`src/forest/inngest/functions/social-direct-publish-job.ts`), Server Actions (`src/forest/actions/social-publisher-actions.ts`), and Obsidian Cyber-Glass cockpit UI with 9:16 safe-zone player and live credential telemetry (`src/components/social-publisher/` & `/dashboard/social-publisher`). 44/44 Vitest tests passing across 6 suites, 0 TS errors, 0 layer boundary violations.
+- **2026-09-22** — **CI/CD Pipeline Conversion: CF-direct → GitHub Actions Canonical.** Converted deployment doctrine to automated GitHub Actions CI/CD (`.github/workflows/deploy.yml`). Local deploy blocked unless `EMERGENCY_CF_DIRECT=1`. Synchronized 13 documentation files.
 - **2026-09-21** — **M1-M4 Real Logic Certification Suite + Migration 0281 (SHA 287b2c28).** End-to-end real execution & full logic certification harness across 4 milestone phases (M1–M4): `src/app/api/v1/harness/{trigger,poll,update,status,check,jobs}` with D1-backed persistence, circuit breaker, real provider flows gated by `SOPHIA_LIVE_CONFIRM` / `--preflight` for CI. Migration 0281 adds `key_validated_at INTEGER` to `user_api_keys` for BYOK credential timestamp tracking. Live-proof fix: OpenRouter preflight key formatted with canonical `sk-or-v1-` prefix so build no longer rewrites `scripts/live-proof/runtime.mjs`. Fix for `better-sqlite3` native binary `ERR_DLOPEN_FAILED` (Node module version mismatch) via `npm rebuild better-sqlite3` — resolved 15 test files (124 tests) failing with `TypeError: Cannot read properties of undefined (reading 'prepare')`. Commits: `3ae2051e7` (M1-M4 cert), `3b53de35c` (migration 0281), `287b2c281` (live-proof preflight fix). Deployed via CF-direct doctrine: `npm run deploy:full` exit 0, `/api/version` shortSha `287b2c28` matches local HEAD, `/api/health` 200, `/login` 200, `/vi/login` 200, protected flows (Setup Wizard, Telegram Bot, NOWPayments) all 401 as expected. Migration 0281 confirmed applied to production D1. Test suite: 11,942 tests passing across 1,063 files.
 - **2026-09-21** — **100% Green Test Suite Recovery (SHA 38f88db86).** Fixed all 11 pre-existing `node:sqlite` bundling test failures by adding `@vitest-environment node` directive across all affected files (`edge-node-monitor`, `challenger-m2-adversarial`, `challenger-m2-r2-lineage`, `challenger-m1-r2-empirical`, `challenger-m1-r2-stress`, `viral-feedback-concurrency-stress`, `health`, `hybrid-router`, `m4-boundary-fallback`, `m5-challenger-empirical`, `m5-tier5-adversarial-r3-r4`). Test suite 100% green: 1,052/1,053 files pass, 11,729 tests passing, 0 failures. `SKIP_TESTS=1` deploy bypass eliminated.
 - **2026-09-21** — **Full Platform UI/UX Upgrade — Obsidian Cyber-Glass Rollout (Deployed, SHA 835510c3).** Completed all 6 phases of `plans/20260920-1600-full-platform-ui-ux-upgrade/`: (1) loading/error boundaries on 15+ dashboard subroutes, (2) design system polish with amber primary tokens, (3) WCAG 2.1 AA accessibility (44px touch targets, aria-labels on icon buttons), (4) mobile & responsive (sidebar hide on mobile, sticky pricing), (5) empty state unification onto canonical `<EmptyState>` primitive across 10 components + 100% vi/en key parity, (6) final verification. `npm run type-check` 0 errors, `npm run build` exit 0, 1032/1033 test files pass (11 pre-existing node:sqlite known-broken excluded), 0 layer boundary violations, 0 new eslint-suppressions, all protected flows untouched.

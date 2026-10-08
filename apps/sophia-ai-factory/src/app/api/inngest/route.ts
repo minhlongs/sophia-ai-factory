@@ -47,6 +47,8 @@ import {
   keyRotationReencrypt,
   autonomousVideoPipelineJob,
   nicheVideoDispatcher,
+  socialDirectPublishJob,
+  creativeMutatorJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -131,5 +133,9 @@ export const { GET, POST, PUT } = serve({
     // Autonomous Video Factory & Niche Dispatcher
     autonomousVideoPipelineJob,
     nicheVideoDispatcher,
+    // Social Direct Publisher (YouTube Shorts, TikTok v2, Instagram Reels)
+    socialDirectPublishJob,
+    // Darwinian Creative Auto-Mutator Engine
+    creativeMutatorJob,
   ],
 });
