@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sophia AI Factory — Live Stream, Newsjacking & DM Closer Cockpit</title>
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: #121520;
+      --border: #222738;
+      --primary: #f59e0b;
+      --primary-hover: #d97706;
+      --indigo: #6366f1;
+      --green: #10b981;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .badge { background: rgba(245, 158, 11, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; border: 1px solid var(--primary); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .card-title { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .metric { display: flex; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); }
+    .metric-val { font-weight: 700; color: var(--primary); }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+    .status-live { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
+    .btn { background: var(--primary); color: #000; font-weight: 600; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; text-align: center; }
+    .btn-secondary { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid var(--indigo); }
+    .log-window { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; height: 160px; overflow-y: auto; color: #a3e635; }
+    .item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800;">Sophia AI Factory — Growth Engines Trilogy</h1>
+      <p style="color: var(--text-muted); font-size: 13px;">Autonomous Live Streamer | Newsjacking Video Engine | Comment-to-DM Closer</p>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <span class="badge">CLEAN ARCHITECTURE 4-LAYER</span>
+      <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--green); border-color: var(--green);">EDGE WORKERS READY</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- PILLAR 1: LIVE COMMERCE STREAMER -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🎥 AI Live-Commerce Host</div>
+        <span class="status-pill status-live">● BROADCASTING</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Current Active Stream</span>
+        <span class="metric-val">TikTok + Shopee Live</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Loop Playback Mode</span>
+        <span class="metric-val">Cloudflare Stream WHIP</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Comment-to-Voice Latency</span>
+        <span class="metric-val" style="color: var(--green);">< 850ms</span>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">ACTIVE FLASH-SALE PINNED DEAL:</div>
+      <div style="background: rgba(245, 158, 11, 0.1); border: 1px dashed var(--primary); padding: 10px; border-radius: 8px; font-size: 13px;">
+        🔥 <strong>MagSafe Trio Stand 3-in-1</strong> — 45% OFF<br>
+        <span style="color: var(--text-muted); font-size: 11px;">Auto-pinned overlay active | 14 items left</span>
+      </div>
+      <div class="log-window">
+        [14:02:11] Ingest: "Giá bao nhiêu vậy shop?"<br>
+        [14:02:11] LLM: Answer generated (240ms)<br>
+        [14:02:12] TTS Flash: Audio synth (80ms)<br>
+        [14:02:12] WHIP Audio Inject: Broadcasted!
+      </div>
+      <button class="btn">Update Flash Sale Pin</button>
+    </div>
+
+    <!-- PILLAR 2: VIRAL NEWSJACKING ENGINE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⚡ Fast-Track Newsjacking</div>
+        <span class="status-pill" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid var(--indigo);">AUTO-SCANNING</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Signal Ingestion</span>
+        <span class="metric-val">Google Trends RSS</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Target Render SLA</span>
+        <span class="metric-val" style="color: var(--green);">65s - 85s (Sub-120s)</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Affiliate Match Model</span>
+        <span class="metric-val">@cf/baai/bge-small (<20ms)</span>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">LATEST DETECTED VIRAL HOOK:</div>
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 10px; border-radius: 8px; font-size: 13px;">
+        📈 <strong>"Apple Unveils iOS 20 Security Exploit"</strong><br>
+        🎯 Paired Product: <em>NordVPN 2-Year Affiliate (+70% Comm)</em>
+      </div>
+      <div class="log-window">
+        [14:00:02] Trend ingested: Google RSS (score: 98)<br>
+        [14:00:15] OpenRouter Script Hook completed<br>
+        [14:00:22] Fal.ai Schnell: 3 slides generated<br>
+        [14:01:05] Remotion Lambda: Rendered MP4<br>
+        [14:01:10] Telegram alert sent: @Sophia_Bbot
+      </div>
+      <button class="btn btn-secondary">Trigger Manual Newsjack Run</button>
+    </div>
+
+    <!-- PILLAR 3: COMMENT-TO-DM FUNNEL CLOSER -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">💬 Conversational DM Closer</div>
+        <span class="status-pill status-live">ACTIVE 24/7</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Monitored Keywords</span>
+        <span class="metric-val">ib, link, giá, deal, tư vấn</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Active Leads (In-Funnel)</span>
+        <span class="metric-val">142 Leads</span>
+      </div>
+      <div class="metric">
+        <span style="color: var(--text-muted);">Click-to-Conversion Rate</span>
+        <span class="metric-val" style="color: var(--primary);">28.4%</span>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">ACTIVE LEADS FUNNEL:</div>
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px;">
+        <div class="item-row">
+          <span>@minhtuan_92 (TikTok)</span>
+          <span style="color: var(--green);">LINK_SENT (sub_id: d92a)</span>
+        </div>
+        <div class="item-row">
+          <span>@lanhuong.vlog (IG)</span>
+          <span style="color: var(--primary);">OBJECTION_HANDLING</span>
+        </div>
+        <div class="item-row">
+          <span>@alex_creator (Shorts)</span>
+          <span style="color: #a5b4fc;">TELEGRAM_BRIDGED</span>
+        </div>
+      </div>
+      <button class="btn">View Attribution Ledger</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -76,6 +76,14 @@ export * from './social-direct-publish-job';
 export * from './social-analytics-collector';
 export * from './flywheel-feedback-dispatcher';
 export * from './creative-mutator-job';
+export * from './viral-audio-pairing-job';
+export * from './multilingual-dubbing-job';
+export * from './live-stream-loop-job';
+export * from './newsjacking-fasttrack-job';
+export * from './dm-funnel-dispatch-job';
+export * from './flash-sale-sync-job';
+export * from './competitor-outreach-job';
+export * from './video-splittest-evaluation-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

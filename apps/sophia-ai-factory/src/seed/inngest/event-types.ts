@@ -336,6 +336,85 @@ export type CreativeMutationRequestedEvent = {
   };
 };
 
+export type ViralAudioComposeRequestedEvent = {
+  data: {
+    userId: string;
+    videoJobId: string;
+    soundTrackId: string;
+    duckingDb?: number;
+    subtitlePreset?: 'HORMOZI_HIGHLIGHT' | 'BEAST_POP' | 'MINIMAL_CYBER' | 'NEON_PULSE';
+  };
+};
+
+export type MultilingualDubbingRequestedEvent = {
+  data: {
+    userId: string;
+    parentVideoJobId: string;
+    targetLocales: Array<'en' | 'vi' | 'es' | 'id' | 'ja'>;
+    preserveDuration?: boolean;
+  };
+};
+
+export type LiveStreamLoopRefreshRequestedEvent = {
+  data: {
+    userId: string;
+    sessionId: string;
+    loopVideoUrl: string;
+    pinnedOfferId?: string | null;
+  };
+};
+
+export type NewsjackingFastTrackTriggeredEvent = {
+  data: {
+    userId: string;
+    signalId: string;
+    trendTopic: string;
+    pairedOfferId?: string | null;
+  };
+};
+
+export type CommentDmDispatchTriggeredEvent = {
+  data: {
+    platform: 'tiktok' | 'instagram' | 'youtube' | 'telegram' | 'whatsapp';
+    platformUserId: string;
+    commentText: string;
+    sourceVideoId?: string;
+    sourceCommentId?: string;
+    targetOfferId?: string;
+  };
+};
+
+export type LiveStreamStockSurgeDetectedEvent = {
+  data: {
+    sessionId: string;
+    offerId: string;
+    currentViewers: number;
+    surgePercentage: number;
+    remainingStock: number;
+  };
+};
+
+export type CompetitorLeadDiscoveredEvent = {
+  data: {
+    competitorChannel: string;
+    targetVideoId: string;
+    commentAuthorId: string;
+    commentText: string;
+    intentScore: number;
+  };
+};
+
+export type VideoSplitTestEvaluationRequestedEvent = {
+  data: {
+    experimentId: string;
+    campaignId: string;
+    variantAViews: number;
+    variantAConversions: number;
+    variantBViews: number;
+    variantBConversions: number;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -392,5 +471,13 @@ export type Events = {
   "social.analytics.sync_requested": SocialAnalyticsSyncRequestedEvent;
   "social.analytics.feedback_evaluated": SocialAnalyticsFeedbackEvaluatedEvent;
   "creative.mutation.requested": CreativeMutationRequestedEvent;
+  "viral.audio.compose.requested": ViralAudioComposeRequestedEvent;
+  "multilingual.dubbing.requested": MultilingualDubbingRequestedEvent;
+  "live.stream.loop.refresh.requested": LiveStreamLoopRefreshRequestedEvent;
+  "newsjacking.fasttrack.triggered": NewsjackingFastTrackTriggeredEvent;
+  "comment.dm.dispatch.triggered": CommentDmDispatchTriggeredEvent;
+  "live.stream.stock.surge.detected": LiveStreamStockSurgeDetectedEvent;
+  "competitor.lead.discovered": CompetitorLeadDiscoveredEvent;
+  "video.splittest.evaluation.requested": VideoSplitTestEvaluationRequestedEvent;
 };
 

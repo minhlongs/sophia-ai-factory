@@ -49,6 +49,14 @@ import {
   nicheVideoDispatcher,
   socialDirectPublishJob,
   creativeMutatorJob,
+  viralAudioPairingJob,
+  multilingualDubbingJob,
+  liveStreamLoopJob,
+  newsjackingFastTrackJob,
+  dmFunnelDispatchJob,
+  flashSaleSyncJob,
+  competitorOutreachJob,
+  videoSplitTestEvaluationJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -137,5 +145,21 @@ export const { GET, POST, PUT } = serve({
     socialDirectPublishJob,
     // Darwinian Creative Auto-Mutator Engine
     creativeMutatorJob,
+    // Viral Audio Pairing & Dynamic Ducking Engine
+    viralAudioPairingJob,
+    // Multilingual Dubbing & Lip-Sync Pipeline
+    multilingualDubbingJob,
+    // Autonomous AI Live-Commerce Streamer
+    liveStreamLoopJob,
+    // Real-Time Newsjacking & Trend Hijacking Video Engine
+    newsjackingFastTrackJob,
+    // Comment-to-DM Trigger Router & Conversational Closer
+    dmFunnelDispatchJob,
+    // Real-Time Live Flash-Sale & Cart Inventory Synchronizer
+    flashSaleSyncJob,
+    // Autonomous Competitor Video Comment Outreach & Prospecting Engine
+    competitorOutreachJob,
+    // Split-Test Hook Attribution & Auto-Loss Cut Optimization Engine
+    videoSplitTestEvaluationJob,
   ],
 });
