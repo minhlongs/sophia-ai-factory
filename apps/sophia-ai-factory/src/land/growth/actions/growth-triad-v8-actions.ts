@@ -33,7 +33,7 @@ export async function dispatchAudioResonance(
     });
 
     return success({ dispatched: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return failure({ code: 'SERVER_ERROR', message: err instanceof Error ? err.message : 'Failed to dispatch audio resonance sync' });
   }
 }
@@ -61,7 +61,7 @@ export async function dispatchCommunityBait(
     });
 
     return success({ dispatched: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return failure({ code: 'SERVER_ERROR', message: err instanceof Error ? err.message : 'Failed to dispatch community bait generator' });
   }
 }
@@ -86,7 +86,7 @@ export async function dispatchCohortLtvEvaluation(
     });
 
     return success({ dispatched: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return failure({ code: 'SERVER_ERROR', message: err instanceof Error ? err.message : 'Failed to dispatch cohort LTV evaluation' });
   }
 }

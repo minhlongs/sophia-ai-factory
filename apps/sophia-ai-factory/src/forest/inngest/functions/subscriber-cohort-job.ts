@@ -38,8 +38,9 @@ export const evaluateSubscriberCohortJob = inngest.createFunction(
           hazardPeakMonth
         );
         await stmt.run();
-      } catch (e: any) {
-        throw new Error(`Failed to insert subscriber_cohort_ltv_snapshots: ${e.message}`);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(`Failed to insert subscriber_cohort_ltv_snapshots: ${msg}`);
       }
     });
 

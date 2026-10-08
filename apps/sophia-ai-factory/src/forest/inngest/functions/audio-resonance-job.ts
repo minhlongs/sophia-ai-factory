@@ -61,8 +61,9 @@ export const submitAudioResonanceJob = inngest.createFunction(
         );
 
         await stmt.run();
-      } catch (e: any) {
-        throw new Error(`Failed to insert audio_resonance_jobs record: ${e.message}`);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(`Failed to insert audio_resonance_jobs record: ${msg}`);
       }
     });
 

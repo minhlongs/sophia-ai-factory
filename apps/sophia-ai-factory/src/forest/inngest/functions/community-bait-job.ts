@@ -58,8 +58,9 @@ export const submitCommunityBaitJob = inngest.createFunction(
           curiosityGapScore
         );
         await stmt.run();
-      } catch (e: any) {
-        throw new Error(`Failed to insert community_bait_campaigns record: ${e.message}`);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(`Failed to insert community_bait_campaigns record: ${msg}`);
       }
     });
 

@@ -59,7 +59,7 @@ export const affiliateYieldJob = inngest.createFunction(
           optimallyRouted.totalExpectedEpc
         );
         await stmt.run();
-      } catch (e: any) {
+      } catch (_e: unknown) {
         // Table might not exist completely until migrations apply; ignoring structural persistence fail for simulation
         // In real execution, throw new Error
       }
