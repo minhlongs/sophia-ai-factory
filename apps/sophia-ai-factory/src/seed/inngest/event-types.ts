@@ -508,6 +508,36 @@ export type OmnichannelAttributionCalculatedEvent = {
   };
 };
 
+export type RetargetingWinbackEvaluatedEvent = {
+  data: {
+    userId: string;
+    recordId: string;
+    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    discountPercentage: number;
+    bonusMcu: number;
+  };
+};
+
+export type AffiliateDealMatchedEvent = {
+  data: {
+    userId: string;
+    recordId: string;
+    campaignId: string;
+    calculatedEpc: number;
+    tier: 'STANDARD' | 'SILVER_SCALE' | 'GOLD_SCALE' | 'DIAMOND_ELITE';
+  };
+};
+
+export type ViralRepurposeDispatchedEvent = {
+  data: {
+    userId: string;
+    recordId: string;
+    sourceVideoId: string;
+    targetFormat: 'TIKTOK_9_16' | 'YOUTUBE_SHORTS_9_16' | 'INSTAGRAM_REELS_9_16' | 'SQUARE_FEED_1_1';
+    saliencyScore: number;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -580,5 +610,8 @@ export type Events = {
   "b2b.outreach.dispatched": B2bOutreachDispatchedEvent;
   "tiktok.sample.evaluated": TiktokSampleEvaluatedEvent;
   "omnichannel.attribution.calculated": OmnichannelAttributionCalculatedEvent;
+  "retargeting.winback.evaluated": RetargetingWinbackEvaluatedEvent;
+  "affiliate.deal.matched": AffiliateDealMatchedEvent;
+  "viral.repurpose.dispatched": ViralRepurposeDispatchedEvent;
 };
 

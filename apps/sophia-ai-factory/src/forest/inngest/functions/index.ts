@@ -93,6 +93,10 @@ export * from './parasite-seo-publisher-job';
 export * from './b2b-outreach-warmup-job';
 export * from './tiktok-sample-fulfillment-job';
 export * from './omnichannel-attribution-job';
+// Growth Triad v4: Churn Win-Back, Affiliate EPC Co-Pilot & Viral Repurpose
+export * from './churn-winback-job';
+export * from './affiliate-epc-copilot-job';
+export * from './viral-repurpose-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

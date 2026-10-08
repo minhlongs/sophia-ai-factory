@@ -6,3 +6,4 @@
 
 export * from './actions/growth-triad-actions';
 export * from './actions/growth-triad-v3-actions';
+export * from './actions/growth-triad-v4-actions';

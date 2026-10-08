@@ -98,6 +98,9 @@ const EXPECTED_EVENT_KEYS = [
   'b2b.outreach.dispatched',
   'tiktok.sample.evaluated',
   'omnichannel.attribution.calculated',
+  'retargeting.winback.evaluated',
+  'affiliate.deal.matched',
+  'viral.repurpose.dispatched',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -132,9 +135,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 71 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(71);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(71);
+    it('expected key list holds exactly 74 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(74);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(74);
     });
 
     it('Events record key set exactly matches the 65 expected keys', () => {

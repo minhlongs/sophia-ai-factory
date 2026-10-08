@@ -65,6 +65,9 @@ import {
   b2bOutreachWarmupJob,
   tiktokSampleFulfillmentJob,
   omnichannelAttributionJob,
+  churnWinbackJob,
+  affiliateEpcCopilotJob,
+  viralRepurposeJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -183,5 +186,9 @@ export const { GET, POST, PUT } = serve({
     b2bOutreachWarmupJob,
     tiktokSampleFulfillmentJob,
     omnichannelAttributionJob,
+    // Growth Triad v4: Churn Win-Back, Affiliate EPC Co-Pilot & Viral Repurpose
+    churnWinbackJob,
+    affiliateEpcCopilotJob,
+    viralRepurposeJob,
   ],
 });

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Growth Triad v4 Cockpit Wireframe — Sophia AI Factory</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: #18181b;
+      --primary: #f59e0b;
+      --accent: #6366f1;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --border: #27272a;
+      --success: #10b981;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0 0 8px 0;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--primary);
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+    .btn {
+      background: var(--primary);
+      color: #000;
+      font-weight: 600;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .btn-indigo {
+      background: var(--accent);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">Growth Triad v4: Autonomous Retention & Scaling Cockpit</h1>
+    <div class="subtitle">AI Churn Win-Back · Affiliate High-Velocity Co-Pilot · Multi-Platform Repurposer</div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">
+        <span>🔄 Churn Win-Back Engine</span>
+        <span class="badge">Pillar 1</span>
+      </div>
+      <div class="stat-row">
+        <span style="color:var(--text-muted)">RFM Churn Risk:</span>
+        <span style="color:var(--primary); font-weight:700">HIGH (0.84)</span>
+      </div>
+      <div class="stat-row">
+        <span style="color:var(--text-muted)">Staircase Offer:</span>
+        <span>15% Margin Guarded ($12/mo)</span>
+      </div>
+      <button class="btn">Trigger Automated Win-Back</button>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span>📈 High-Velocity Affiliate Co-Pilot</span>
+        <span class="badge">Pillar 2</span>
+      </div>
+      <div class="stat-row">
+        <span style="color:var(--text-muted)">Rolling 7d EPC:</span>
+        <span style="color:var(--success); font-weight:700">$3.42 / click</span>
+      </div>
+      <div class="stat-row">
+        <span style="color:var(--text-muted)">Dynamic Split:</span>
+        <span>Tier 3 (35% Commission)</span>
+      </div>
+      <button class="btn btn-indigo">Evaluate & Route Sub-ID</button>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span>✂️ Multi-Platform Repurposer</span>
+        <span class="badge">Pillar 3</span>
+      </div>
+      <div class="stat-row">
+        <span style="color:var(--text-muted)">Saliency Hook Index:</span>
+        <span style="color:var(--primary); font-weight:700">94.8 / 100</span>
+      </div>
+      <div class="stat-row">
+        <span style="color:var(--text-muted)">Target Aspect Ratios:</span>
+        <span>9:16 (TikTok/Shorts), 1:1 (Reels)</span>
+      </div>
+      <button class="btn">Dispatch Repurpose Pipeline</button>
+    </div>
+  </div>
+</body>
+</html>
