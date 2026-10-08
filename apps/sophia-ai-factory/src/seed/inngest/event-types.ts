@@ -415,6 +415,30 @@ export type VideoSplitTestEvaluationRequestedEvent = {
   };
 };
 
+export type FleetStaggerPublishRequestedEvent = {
+  data: {
+    deploymentId: string;
+    userId: string;
+    skuId: string;
+    targetAccountIds: string[];
+    videoAssetUrl: string;
+    hookAngles: string[];
+    staggerMinutes: number;
+  };
+};
+
+export type TrendingSkuDetectedEvent = {
+  data: {
+    skuId: string;
+    skuCode: string;
+    platform: 'TIKTOK_SHOP' | 'SHOPEE' | 'CLICKBANK';
+    productName: string;
+    growthVelocityScore: number;
+    commissionRate: number;
+    suggestedHook: string;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -479,5 +503,7 @@ export type Events = {
   "live.stream.stock.surge.detected": LiveStreamStockSurgeDetectedEvent;
   "competitor.lead.discovered": CompetitorLeadDiscoveredEvent;
   "video.splittest.evaluation.requested": VideoSplitTestEvaluationRequestedEvent;
+  "fleet.stagger.publish.requested": FleetStaggerPublishRequestedEvent;
+  "trending.sku.detected": TrendingSkuDetectedEvent;
 };
 

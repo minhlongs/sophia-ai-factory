@@ -84,6 +84,8 @@ export * from './dm-funnel-dispatch-job';
 export * from './flash-sale-sync-job';
 export * from './competitor-outreach-job';
 export * from './video-splittest-evaluation-job';
+export * from './fleet-stagger-publish-job';
+export * from './trending-sku-campaign-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

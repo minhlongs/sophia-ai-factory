@@ -57,6 +57,8 @@ import {
   flashSaleSyncJob,
   competitorOutreachJob,
   videoSplitTestEvaluationJob,
+  fleetStaggerPublishJob,
+  trendingSkuCampaignJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -161,5 +163,9 @@ export const { GET, POST, PUT } = serve({
     competitorOutreachJob,
     // Split-Test Hook Attribution & Auto-Loss Cut Optimization Engine
     videoSplitTestEvaluationJob,
+    // Fleet Matrix Staggered Publishing Engine
+    fleetStaggerPublishJob,
+    // Real-Time Trending SKU Radar Auto-Campaign Engine
+    trendingSkuCampaignJob,
   ],
 });
