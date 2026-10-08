@@ -105,6 +105,10 @@ export * from './ab-auto-promotion-job';
 export * from './seo-surge-monitor-job';
 export * from './smart-link-rebalance-job';
 export * from './retention-auto-trim-job';
+// Growth Triad v7: Sponsorship Valuation, Saliency Reframe & Thumbnail Gaze
+export * from './sponsorship-pitch-job';
+export * from './saliency-reframe-job';
+export * from './thumbnail-heatmap-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

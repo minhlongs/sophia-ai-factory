@@ -593,6 +593,33 @@ export type RetentionCliffTrimmedEvent = {
   };
 };
 
+export type SponsorshipRateCardCalculatedEvent = {
+  data: {
+    channelId: string;
+    niche: string;
+    effectiveCpmUsd: number;
+    dedicatedUsd: number;
+  };
+};
+
+export type ReframeAspectRenderedEvent = {
+  data: {
+    videoId: string;
+    targetAspect: string;
+    jitterScore: number;
+    tokenCount: number;
+  };
+};
+
+export type ThumbnailGazeScoredEvent = {
+  data: {
+    thumbnailId: string;
+    saliencyScore: number;
+    predictedCtrPct: number;
+    gazeGrade: string;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -674,5 +701,8 @@ export type Events = {
   "seo.surge.detected": SeoSurgeDetectedEvent;
   "smartlink.yield.rebalanced": SmartLinkYieldRebalancedEvent;
   "retention.cliff.trimmed": RetentionCliffTrimmedEvent;
+  "sponsorship.ratecard.calculated": SponsorshipRateCardCalculatedEvent;
+  "reframe.aspect.rendered": ReframeAspectRenderedEvent;
+  "thumbnail.gaze.scored": ThumbnailGazeScoredEvent;
 };
 

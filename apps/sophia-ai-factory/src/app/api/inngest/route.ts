@@ -74,6 +74,9 @@ import {
   seoSurgeMonitorJob,
   smartLinkRebalanceJob,
   retentionAutoTrimJob,
+  sponsorshipPitchJob,
+  saliencyReframeJob,
+  thumbnailHeatmapJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -204,5 +207,9 @@ export const { GET, POST, PUT } = serve({
     seoSurgeMonitorJob,
     smartLinkRebalanceJob,
     retentionAutoTrimJob,
+    // Growth Triad v7: Sponsorship Valuation, Saliency Reframe & Thumbnail Gaze
+    sponsorshipPitchJob,
+    saliencyReframeJob,
+    thumbnailHeatmapJob,
   ],
 });
