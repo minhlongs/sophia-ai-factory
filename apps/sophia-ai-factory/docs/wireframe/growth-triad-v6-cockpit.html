@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Growth Triad v6 Cockpit Wireframe</title>
+  <style>
+    body {
+      background-color: #09090b;
+      color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid #27272a;
+      padding-bottom: 16px;
+    }
+    .header h1 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+      color: #fbbf24; /* Amber-400 */
+    }
+    .header p {
+      margin: 0;
+      font-size: 13px;
+      color: #a1a1aa;
+    }
+    .cockpit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+    }
+    .panel {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .panel h2 {
+      font-size: 15px;
+      margin: 0;
+      color: #fbbf24;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+    }
+    .badge-amber {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+    }
+    .card {
+      background: #09090b;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      color: #a1a1aa;
+    }
+    .metric-val {
+      font-weight: bold;
+      color: #34d399; /* Emerald */
+    }
+    .btn {
+      background: #fbbf24;
+      color: #09090b;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Growth Triad v6 Autonomous Cockpit</h1>
+    <p>Search-Surge SEO Jacker, Smart-Link Yield Engine & Survival Retention Auto-Trimmer</p>
+  </div>
+
+  <div class="cockpit-grid">
+    <!-- Pillar 1: Search-Surge SEO Jacker -->
+    <div class="panel">
+      <h2>
+        <span>Search-Surge Trend Jacker</span>
+        <span class="badge badge-amber">Z-SCORE &ge; 2.5</span>
+      </h2>
+      <div class="card">
+        <div><strong>Keyword:</strong> "AI Faceless Video Tools 2026"</div>
+        <div class="metric-row">
+          <span>Search Velocity:</span>
+          <span class="metric-val">1,480 queries/hr (+310%)</span>
+        </div>
+        <div class="metric-row">
+          <span>Surge Z-Score:</span>
+          <span class="metric-val">3.42 (HIGH SURGE)</span>
+        </div>
+        <div class="metric-row">
+          <span>Search Intent:</span>
+          <span style="color: #818cf8; font-weight: 600;">Commercial Investigation</span>
+        </div>
+      </div>
+      <button class="btn">Jack Trend & Auto-Generate Metadata</button>
+    </div>
+
+    <!-- Pillar 2: Affiliate Smart-Link Yield Engine -->
+    <div class="panel">
+      <h2>
+        <span>Affiliate Smart-Link Yield</span>
+        <span class="badge">EPC ARBITRAGE</span>
+      </h2>
+      <div class="card">
+        <div><strong>Offer:</strong> Sophia Creator Pro Tier</div>
+        <div class="metric-row">
+          <span>EPC / Gravity:</span>
+          <span class="metric-val">$4.82 / 128.4</span>
+        </div>
+        <div class="metric-row">
+          <span>Expected Yield:</span>
+          <span class="metric-val">$46.85 / 1k views</span>
+        </div>
+        <div class="metric-row">
+          <span>Geo Fallback:</span>
+          <span style="color: #a1a1aa;">Active (US/UK/VN/SG)</span>
+        </div>
+      </div>
+      <button class="btn">Auto-Match Best-Yield Offer</button>
+    </div>
+
+    <!-- Pillar 3: Survival Retention Auto-Trimmer -->
+    <div class="panel">
+      <h2>
+        <span>Survival Retention Trimmer</span>
+        <span class="badge">KAPLAN-MEIER</span>
+      </h2>
+      <div class="card">
+        <div><strong>Video ID:</strong> vid_yt_faceless_092</div>
+        <div class="metric-row">
+          <span>30s Retention:</span>
+          <span class="metric-val">74.2%</span>
+        </div>
+        <div class="metric-row">
+          <span>Cliff Detected:</span>
+          <span style="color: #f87171; font-weight: bold;">At 00:42 (-14.2%/s drop)</span>
+        </div>
+        <div class="metric-row">
+          <span>Recommended Trim:</span>
+          <span style="color: #fbbf24;">Trim 4s dead pause & insert B-roll</span>
+        </div>
+      </div>
+      <button class="btn">Apply Autonomous Pacing Trim</button>
+    </div>
+  </div>
+</body>
+</html>

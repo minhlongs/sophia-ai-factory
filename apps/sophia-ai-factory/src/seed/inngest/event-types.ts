@@ -565,6 +565,34 @@ export type HookAbWinnerPromotedEvent = {
   };
 };
 
+export type SeoSurgeDetectedEvent = {
+  data: {
+    keyword: string;
+    zScore: number;
+    currentVelocity: number;
+    intent: string;
+    generatedTitle: string;
+  };
+};
+
+export type SmartLinkYieldRebalancedEvent = {
+  data: {
+    offerId: string;
+    expectedYieldUsd: number;
+    network: string;
+    niche: string;
+  };
+};
+
+export type RetentionCliffTrimmedEvent = {
+  data: {
+    videoId: string;
+    cliffStartSec: number;
+    trimDurationSec: number;
+    thirtySecRetention: number;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -643,5 +671,8 @@ export type Events = {
   "paywall.mab.recalibrated": PaywallMabRecalibratedEvent;
   "kol.outreach.enrolled": KolOutreachEnrolledEvent;
   "hook.ab.winner.promoted": HookAbWinnerPromotedEvent;
+  "seo.surge.detected": SeoSurgeDetectedEvent;
+  "smartlink.yield.rebalanced": SmartLinkYieldRebalancedEvent;
+  "retention.cliff.trimmed": RetentionCliffTrimmedEvent;
 };
 

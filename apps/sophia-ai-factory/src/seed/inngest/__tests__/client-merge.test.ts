@@ -104,6 +104,9 @@ const EXPECTED_EVENT_KEYS = [
   'paywall.mab.recalibrated',
   'kol.outreach.enrolled',
   'hook.ab.winner.promoted',
+  'seo.surge.detected',
+  'smartlink.yield.rebalanced',
+  'retention.cliff.trimmed',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -138,9 +141,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 77 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(77);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(77);
+    it('expected key list holds exactly 80 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(80);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(80);
     });
 
     it('Events record key set exactly matches the 65 expected keys', () => {

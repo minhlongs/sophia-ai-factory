@@ -101,6 +101,10 @@ export * from './viral-repurpose-job';
 export * from './paywall-mab-recalibration-job';
 export * from './kol-outreach-sequencer-job';
 export * from './ab-auto-promotion-job';
+// Growth Triad v6: SEO Surge Anomaly, Smart-Link Yield & Retention Auto-Trim
+export * from './seo-surge-monitor-job';
+export * from './smart-link-rebalance-job';
+export * from './retention-auto-trim-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

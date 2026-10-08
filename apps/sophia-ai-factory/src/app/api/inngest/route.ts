@@ -71,6 +71,9 @@ import {
   paywallMabRecalibrationJob,
   kolOutreachSequencerJob,
   abAutoPromotionJob,
+  seoSurgeMonitorJob,
+  smartLinkRebalanceJob,
+  retentionAutoTrimJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -197,5 +200,9 @@ export const { GET, POST, PUT } = serve({
     paywallMabRecalibrationJob,
     kolOutreachSequencerJob,
     abAutoPromotionJob,
+    // Growth Triad v6: SEO Surge Anomaly, Smart-Link Yield & Retention Auto-Trim
+    seoSurgeMonitorJob,
+    smartLinkRebalanceJob,
+    retentionAutoTrimJob,
   ],
 });
