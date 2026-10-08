@@ -59,6 +59,9 @@ import {
   videoSplitTestEvaluationJob,
   fleetStaggerPublishJob,
   trendingSkuCampaignJob,
+  voiceCartRecoveryJob,
+  adArbitrageOptimizerJob,
+  parasiteSeoPublisherJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -167,5 +170,11 @@ export const { GET, POST, PUT } = serve({
     fleetStaggerPublishJob,
     // Real-Time Trending SKU Radar Auto-Campaign Engine
     trendingSkuCampaignJob,
+    // AI Voice Abandoned Cart Closer Engine
+    voiceCartRecoveryJob,
+    // Ad Arbitrage MAB Thompson Sampling Optimizer Engine
+    adArbitrageOptimizerJob,
+    // Parasite SEO High-DA Platform Syndication Engine
+    parasiteSeoPublisherJob,
   ],
 });

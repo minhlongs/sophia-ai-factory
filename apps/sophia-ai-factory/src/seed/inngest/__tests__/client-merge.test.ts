@@ -92,6 +92,9 @@ const EXPECTED_EVENT_KEYS = [
   'video.splittest.evaluation.requested',
   'fleet.stagger.publish.requested',
   'trending.sku.detected',
+  'voice.cart.recovery.triggered',
+  'ads.arbitrage.optimized',
+  'seo.parasite.syndicated',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -126,9 +129,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 65 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(65);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(65);
+    it('expected key list holds exactly 68 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(68);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(68);
     });
 
     it('Events record key set exactly matches the 65 expected keys', () => {

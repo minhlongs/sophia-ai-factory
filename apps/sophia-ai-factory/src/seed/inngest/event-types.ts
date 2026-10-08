@@ -439,6 +439,44 @@ export type TrendingSkuDetectedEvent = {
   };
 };
 
+export type VoiceCartRecoveryTriggeredEvent = {
+  data: {
+    callId: string;
+    userId: string;
+    cartSessionId: string;
+    customerPhone: string;
+    customerName?: string;
+    cartValue: number;
+    currency: string;
+    productNames: string[];
+  };
+};
+
+export type AdsArbitrageOptimizedEvent = {
+  data: {
+    campaignId: string;
+    userId: string;
+    platform: 'TIKTOK_ADS' | 'META_GRAPH' | 'GOOGLE_ADS';
+    spend24h: number;
+    gmv24h: number;
+    cpa: number;
+    roas: number;
+    actionTaken: 'SCALE_BUDGET' | 'MAINTAIN' | 'REDUCE_BUDGET' | 'PAUSE_STOP_LOSS';
+    newDailyBudget: number;
+  };
+};
+
+export type SeoParasiteSyndicatedEvent = {
+  data: {
+    articleId: string;
+    userId: string;
+    skuCode: string;
+    targetPlatform: 'MEDIUM' | 'SUBSTACK' | 'LINKEDIN_PULSE' | 'WORDPRESS_NETWORK';
+    canonicalSlug: string;
+    cloakedBridgeUrl: string;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -505,5 +543,8 @@ export type Events = {
   "video.splittest.evaluation.requested": VideoSplitTestEvaluationRequestedEvent;
   "fleet.stagger.publish.requested": FleetStaggerPublishRequestedEvent;
   "trending.sku.detected": TrendingSkuDetectedEvent;
+  "voice.cart.recovery.triggered": VoiceCartRecoveryTriggeredEvent;
+  "ads.arbitrage.optimized": AdsArbitrageOptimizedEvent;
+  "seo.parasite.syndicated": SeoParasiteSyndicatedEvent;
 };
 

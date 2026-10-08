@@ -1,9 +1,7 @@
 /**
- * Canonical growth Domain Barrel
- *
- * @module land/growth
+ * @file index.ts
+ * @description Barrel export for Growth Triad v2 Land layer actions
+ * @layer land
  */
 
-export * from './customer-retention-service';
-export * from './growth-analytics-service';
-export * from './viral-funnel-service';
+export * from './actions/growth-triad-actions';
