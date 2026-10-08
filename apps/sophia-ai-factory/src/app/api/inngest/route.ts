@@ -62,6 +62,9 @@ import {
   voiceCartRecoveryJob,
   adArbitrageOptimizerJob,
   parasiteSeoPublisherJob,
+  b2bOutreachWarmupJob,
+  tiktokSampleFulfillmentJob,
+  omnichannelAttributionJob,
 } from "@/forest/inngest/functions/index";
 
 
@@ -176,5 +179,9 @@ export const { GET, POST, PUT } = serve({
     adArbitrageOptimizerJob,
     // Parasite SEO High-DA Platform Syndication Engine
     parasiteSeoPublisherJob,
+    // Growth Triad v3: Outreach, TikTok CRM & Omnichannel Attribution
+    b2bOutreachWarmupJob,
+    tiktokSampleFulfillmentJob,
+    omnichannelAttributionJob,
   ],
 });

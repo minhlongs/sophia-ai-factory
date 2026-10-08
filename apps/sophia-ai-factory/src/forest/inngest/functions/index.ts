@@ -89,6 +89,10 @@ export * from './trending-sku-campaign-job';
 export * from './voice-cart-recovery-job';
 export * from './ad-arbitrage-optimizer-job';
 export * from './parasite-seo-publisher-job';
+// Growth Triad v3: Outreach, TikTok CRM & Omnichannel Attribution
+export * from './b2b-outreach-warmup-job';
+export * from './tiktok-sample-fulfillment-job';
+export * from './omnichannel-attribution-job';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

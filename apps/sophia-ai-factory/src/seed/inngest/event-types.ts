@@ -477,6 +477,37 @@ export type SeoParasiteSyndicatedEvent = {
   };
 };
 
+export type B2bOutreachDispatchedEvent = {
+  data: {
+    leadId: string;
+    userId: string;
+    email: string;
+    channel: 'EMAIL' | 'LINKEDIN' | 'TWITTER';
+    rampDay: number;
+    intentScore: number;
+  };
+};
+
+export type TiktokSampleEvaluatedEvent = {
+  data: {
+    creatorId: string;
+    userId: string;
+    creatorHandle: string;
+    sampleStatus: 'AUTO_APPROVED' | 'MANUAL_REVIEW' | 'REJECTED_LOW_METRICS';
+    tier: 'TIER_1_STANDARD' | 'TIER_2_GROWTH' | 'TIER_3_ELITE';
+  };
+};
+
+export type OmnichannelAttributionCalculatedEvent = {
+  data: {
+    conversionId: string;
+    userId: string;
+    model: 'FIRST_TOUCH' | 'LAST_TOUCH' | 'TIME_DECAY';
+    totalAttributedGmv: number;
+    touchpointCount: number;
+  };
+};
+
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -546,5 +577,8 @@ export type Events = {
   "voice.cart.recovery.triggered": VoiceCartRecoveryTriggeredEvent;
   "ads.arbitrage.optimized": AdsArbitrageOptimizedEvent;
   "seo.parasite.syndicated": SeoParasiteSyndicatedEvent;
+  "b2b.outreach.dispatched": B2bOutreachDispatchedEvent;
+  "tiktok.sample.evaluated": TiktokSampleEvaluatedEvent;
+  "omnichannel.attribution.calculated": OmnichannelAttributionCalculatedEvent;
 };
 
