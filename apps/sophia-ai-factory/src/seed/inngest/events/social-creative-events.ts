@@ -1,0 +1,166 @@
+/**
+ * @file social-creative-events.ts
+ * @description Inngest event contracts for social syndication, creative mutations, and multimedia generation.
+ * @layer seed
+ */
+
+export type SocialSyndicationRequestedEvent = {
+  data: {
+    jobId: string;
+    tenantId: string;
+    videoUrl: string;
+    caption: string;
+    channel: {
+      channelId: string;
+      platform: 'tiktok' | 'youtube' | 'x';
+      todayPublishedCount: number;
+      lastPublishedAtMs: number | null;
+    };
+  };
+};
+
+export type SocialPublishDispatchedEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    channelId: string;
+    platform: 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+    videoUrl: string;
+    title: string;
+    description?: string;
+    tags?: string[];
+  };
+};
+
+export type SocialAnalyticsSyncRequestedEvent = {
+  data: {
+    userId: string;
+    jobId: string;
+    channelId?: string;
+    platform?: 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+    platformPostId?: string;
+    title?: string;
+    mcuCost?: number;
+    byokCostUsd?: number;
+    revenueUsd?: number;
+  };
+};
+
+export type SocialAnalyticsFeedbackEvaluatedEvent = {
+  data: {
+    userId: string;
+    jobId: string;
+    platform: string;
+    hookScore: number;
+    retentionScore: number;
+    netRoiUsd: number;
+    conversions: number;
+    revenueUsd: number;
+  };
+};
+
+export type CreativeMutationRequestedEvent = {
+  data: {
+    userId: string;
+    parentJobId: string;
+    generation: number;
+    mutationIntensity: 'CONSERVATIVE' | 'MODERATE' | 'RADICAL';
+    triggerReason: 'HOOK_FATIGUE' | 'LOW_RETENTION' | 'WINNING_ARM_EXPLORE' | 'MANUAL';
+    customOverrides?: {
+      targetHookArchetype?: 'STATISTIC_PAIN' | 'POLARIZING_VERDICT' | 'FINANCIAL_LOSS_WARNING' | 'AUTOMATION_PROOF' | 'HIGH_CURIOSITY_LIST' | 'EXCLUSIVE_ACCESS';
+      targetVisualStyle?: string;
+      pacingMultiplier?: number;
+    };
+  };
+};
+
+export type ViralAudioComposeRequestedEvent = {
+  data: {
+    userId: string;
+    videoJobId: string;
+    soundTrackId: string;
+    duckingDb?: number;
+    subtitlePreset?: 'HORMOZI_HIGHLIGHT' | 'BEAST_POP' | 'MINIMAL_CYBER' | 'NEON_PULSE';
+  };
+};
+
+export type MultilingualDubbingRequestedEvent = {
+  data: {
+    userId: string;
+    parentVideoJobId: string;
+    targetLocales: Array<'en' | 'vi' | 'es' | 'id' | 'ja'>;
+    preserveDuration?: boolean;
+  };
+};
+
+export type LiveStreamLoopRefreshRequestedEvent = {
+  data: {
+    userId: string;
+    sessionId: string;
+    loopVideoUrl: string;
+    pinnedOfferId?: string | null;
+  };
+};
+
+export type NewsjackingFastTrackTriggeredEvent = {
+  data: {
+    userId: string;
+    signalId: string;
+    trendTopic: string;
+    pairedOfferId?: string | null;
+  };
+};
+
+export type CommentDmDispatchTriggeredEvent = {
+  data: {
+    platform: 'tiktok' | 'instagram' | 'youtube' | 'telegram' | 'whatsapp';
+    platformUserId: string;
+    commentText: string;
+    sourceVideoId?: string;
+    sourceCommentId?: string;
+    targetOfferId?: string;
+  };
+};
+
+export type LiveStreamStockSurgeDetectedEvent = {
+  data: {
+    sessionId: string;
+    offerId: string;
+    currentViewers: number;
+    surgePercentage: number;
+    remainingStock: number;
+  };
+};
+
+export type CompetitorLeadDiscoveredEvent = {
+  data: {
+    competitorChannel: string;
+    targetVideoId: string;
+    commentAuthorId: string;
+    commentText: string;
+    intentScore: number;
+  };
+};
+
+export type VideoSplitTestEvaluationRequestedEvent = {
+  data: {
+    experimentId: string;
+    campaignId: string;
+    variantAViews: number;
+    variantAConversions: number;
+    variantBViews: number;
+    variantBConversions: number;
+  };
+};
+
+export type FleetStaggerPublishRequestedEvent = {
+  data: {
+    deploymentId: string;
+    userId: string;
+    skuId: string;
+    targetAccountIds: string[];
+    videoAssetUrl: string;
+    hookAngles: string[];
+    staggerMinutes: number;
+  };
+};
