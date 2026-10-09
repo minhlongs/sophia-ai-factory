@@ -280,6 +280,7 @@ const eslintConfig = defineConfig([
     files: ["src/forest/**/*.{ts,tsx}"],
     ignores: [
       // inngest functions orchestrate land billing/affiliates (mekong-exempt: event handlers)
+      "src/forest/inngest/functions/autonomous-video-pipeline-job.ts",
       "src/forest/inngest/functions/auto-discover-affiliates.ts",
       "src/forest/inngest/functions/conversion-to-ledger.ts",
       "src/forest/inngest/functions/index.ts",
