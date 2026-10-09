@@ -1,0 +1,197 @@
+/**
+ * Solutions Catalog Data Partition
+ * Layer: Seed (Configuration and static data, imports only seed)
+ */
+
+import type { SolutionIndustry } from '@/seed/types/solutions-types';
+
+export const SERVICES_WEDDING_LOGISTICS_SOLUTIONS: SolutionIndustry[] = [
+  {
+    slug: 'home-services',
+    nameEn: 'Home Services & Cleaning',
+    nameVi: 'Dịch Vụ Nhà Cửa & Vệ Sinh',
+    category: 'Local Hospitality',
+    iconName: 'Home',
+    heroHeadlineEn: 'Satisfying Deep-Clean & Renovation Videos That Keep Local Technicians Fully Dispatched',
+    heroHeadlineVi: 'Video Vệ Sinh Nhà Cửa Thỏa Mãn Mắt Nhìn Giúp Đội Thợ Luôn Kín Lịch',
+    heroSubheadlineEn: 'Leverage the viral phenomenon of oddly satisfying cleaning transformations, pest elimination, and HVAC repairs to dominate local residential service calls.',
+    heroSubheadlineVi: 'Tận dụng sức hút kỳ diệu của những video dọn dẹp trước/sau siêu sạch để thu hút cư dân trong khu vực gọi dịch vụ sửa chữa và vệ sinh nhà cửa.',
+    painPoints: [
+      {
+        titleEn: 'Competing on Low Price with Unvetted Freelancers',
+        titleVi: 'Bị Cạnh Tranh Giá Rẻ Bởi Thợ Nghiệp Dư',
+        descEn: 'Professional companies lose jobs to cheap handymen unless they showcase superior equipment and safety rigor.',
+        descVi: 'Khách dễ chọn thợ tự do giá rẻ nếu không thấy được sự chuyên nghiệp, máy móc hiện đại của công ty bạn.',
+      },
+      {
+        titleEn: 'Unpredictable Local Lead Flow',
+        titleVi: 'Lượng Khách Gọi Lúc Nhiều Lúc Ít Thất Thường',
+        descEn: 'Service crews sit idle on slow weeks when offline flyers and word-of-mouth dry up.',
+        descVi: 'Đội ngũ thợ phải ngồi chờ việc vào những tuần vắng khách do tiếp thị truyền thống không hiệu quả.',
+      },
+      {
+        titleEn: 'High Google Local Service Ad Costs',
+        titleVi: 'Chi Phí Chạy Quảng Cáo Tìm Thợ Quá Đắt',
+        descEn: 'Plumbing and HVAC search keywords cost upwards of $40 per click on Google Ads.',
+        descVi: 'Giá đấu thầu từ khóa sửa điện nước, bảo dưỡng điều hòa trên Google rất cao.',
+      },
+    ],
+    samplePromptTitleEn: 'Satisfying Deep Rug Wash Transformation',
+    samplePromptTitleVi: 'Biến Hình Giặt Thảm Siêu Sạch Thỏa Mãn Mắt Nhìn',
+    samplePromptEn: 'Create a 25-second satisfying cleaning reel showing heavily stained sofa steam extraction, high-pressure foam, and crystal clean result. Hook: "Watch this 5-year-old sofa get brought back to life in 25 seconds."',
+    samplePromptVi: 'Tạo video ngắn 25s quay cảnh giặt thảm và ghế sofa bằng máy hút hơi nước nóng: Bọt bẩn được hút sạch bóng trả lại màu sắc như mới. Hook: "Chiếc ghế sofa 5 năm chưa giặt này sẽ khiến bạn ngỡ ngàng sau 25 giây."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 1900,
+      traditionalTurnaroundDays: 7,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 45,
+      estimatedMonthlySavingsUsd: 1701,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'Our dispatch calendar filled up 2 weeks in advance within 10 days of posting localized deep cleaning reels.',
+      quoteVi: 'Lịch làm việc của đội thợ vệ sinh chúng tôi kín chỗ trước 2 tuần chỉ sau 10 ngày đăng các clip giặt đệm/sofa lên mạng xã hội.',
+      author: 'Anh Tuan',
+      roleEn: 'Operations Manager',
+      roleVi: 'Trưởng Phòng Vận Hành',
+      company: 'EcoClean Pro Services',
+      metrics: 'Schedule booked 2 weeks out in advance',
+    },
+    faqs: [
+      {
+        questionEn: 'Can Sophia focus videos on specific postal codes or service districts?',
+        questionVi: 'Tôi có thể hướng nội dung đến đúng quận/huyện mình phục vụ không?',
+        answerEn: 'Yes, include your target neighborhoods and city names in the script prompt to capture local search relevance.',
+        answerVi: 'Được chứ, chỉ cần điền tên quận/huyện vào kịch bản, Sophia sẽ chèn lời nhắc phục vụ tận nơi trong khu vực.',
+      },
+    ],
+    keywordsEn: ['home services marketing', 'cleaning business reels', 'plumbing video generator', 'local service ads'],
+    keywordsVi: ['marketing dịch vụ vệ sinh', 'video giặt nệm sofa', 'tìm khách sửa chữa nhà', 'quảng cáo dịch vụ gia đình'],
+  },
+
+  {
+    slug: 'wedding',
+    nameEn: 'Wedding & Event Planning',
+    nameVi: 'Cưới Hỏi & Chụp Ảnh Cưới',
+    category: 'Local Hospitality',
+    iconName: 'Heart',
+    heroHeadlineEn: 'Enchanting Wedding Highlights That Make Brides Book Their Dream Date Immediately',
+    heroHeadlineVi: 'Khoảnh Khắc Cưới Đẹp Như Cổ Tích Khiến Cô Dâu Đặt Lịch Ngay Tức Khắc',
+    heroSubheadlineEn: 'Showcase emotional vows, magical floral decorations, and fairy-tale celebrations with cinematic music and storytelling that tugs at heartstrings.',
+    heroSubheadlineVi: 'Trình diễn những lời thề nguyện xúc động, không gian tiệc cưới lộng lẫy và khoảnh khắc thiêng liêng với âm nhạc điện ảnh lay động lòng người.',
+    painPoints: [
+      {
+        titleEn: 'Long Hesitation Period Before Booking',
+        titleVi: 'Khách Hàng Cân Nhắc Quá Lâu Trước Khi Đặt Cọc',
+        descEn: 'Couples tour dozens of vendors; agencies need emotionally gripping highlight reels to close the deal.',
+        descVi: 'Các cặp đôi tham khảo nhiều nơi; bạn cần video cảm xúc chạm đến trái tim để họ quyết định chọn bạn.',
+      },
+      {
+        titleEn: 'High Production Effort for Teaser Clips',
+        titleVi: 'Mất Quá Nhiều Công Sức Làm Clip Teaser Mẫu',
+        descEn: 'Video editors spend days cutting wedding trailers when couples demand immediate social previews.',
+        descVi: 'Thợ dựng mất cả tuần cắt ghép trong khi cô dâu chú rể muốn có clip ngắn đăng TikTok ngay hôm sau.',
+      },
+      {
+        titleEn: 'Seasonality Feast or Famine',
+        titleVi: 'Doanh Thu Phụ Thuộc Vào Mùa Cưới',
+        descEn: 'Planners experience quiet spring months unless they keep a steady flow of bridal inspiration reels circulating.',
+        descVi: 'Mùa vắng đám cưới dễ hụt dòng tiền nếu không liên tục duy trì hình ảnh thương hiệu để nhận đặt cọc trước.',
+      },
+    ],
+    samplePromptTitleEn: 'Emotional First Look & Outdoor Vow Teaser',
+    samplePromptTitleVi: 'Khoảnh Khắc First Look & Trao Lời Thề Nguyện Xúc Động',
+    samplePromptEn: 'Create a 30-second romantic wedding trailer focusing on the groom seeing his bride in her gown for the first time, tearful vows under fairy lights, and an enthusiastic confetti exit. Hook: "Warning: Have tissues ready before watching this entrance."',
+    samplePromptVi: 'Tạo video ngắn 30s ngọt ngào: Ánh mắt chú rể lần đầu ngắm cô dâu trong váy cưới lộng lẫy, giọt nước mắt hạnh phúc và pháo hoa rực rỡ. Hook: "Hãy chuẩn bị khăn giấy trước khi xem khoảnh khắc thiêng liêng này."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2800,
+      traditionalTurnaroundDays: 14,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2601,
+      estimatedVideoOutputPerMonth: 50,
+    },
+    testimonial: {
+      quoteEn: 'Brides mention our emotional Sophia-edited TikTok trailers in almost every initial inquiry message.',
+      quoteVi: 'Hầu như cô dâu nào nhắn tin cho studio cũng nhắc đến những đoạn video ngắn xúc động mà chúng tôi đăng trên TikTok.',
+      author: 'Lan Phuong',
+      roleEn: 'Lead Wedding Planner',
+      roleVi: 'Chuyên Gia Tổ Chức Tiệc Cưới',
+      company: 'EverAfter Bridal Studio',
+      metrics: '+45% deposit booking rate from initial tours',
+    },
+    faqs: [
+      {
+        questionEn: 'Can we pair royalty-free cinematic music with emotional wedding scenes?',
+        questionVi: 'Sophia có kho nhạc nền điện ảnh không lo dính bản quyền không?',
+        answerEn: 'Yes, Sophia pairs every generated video with 100% commercially licensed soundtrack options safe for social platforms.',
+        answerVi: 'Có, toàn bộ nhạc nền của Sophia đều có bản quyền thương mại đầy đủ, không lo bị tắt tiếng trên TikTok/Facebook.',
+      },
+    ],
+    keywordsEn: ['wedding video marketing', 'bridal reels generator', 'wedding planner tiktok', 'wedding highlights ai'],
+    keywordsVi: ['làm video phóng sự cưới', 'quay phim chụp ảnh cưới', 'quảng cáo tiệc cưới', 'clip đám cưới triệu view'],
+  },
+
+  {
+    slug: 'logistics',
+    nameEn: 'Logistics & Freight',
+    nameVi: 'Vận Tải & Kho Vận',
+    category: 'Technology',
+    iconName: 'Truck',
+    heroHeadlineEn: 'Reliable Supply Chain & Fleet Explainers That Win Commercial Shipping Contracts',
+    heroHeadlineVi: 'Video Giải Pháp Vận Tải & Kho Bãi Chuyên Nghiệp Ký Hợp Đồng B2B',
+    heroSubheadlineEn: 'Demonstrate cold-chain security, automated warehouse sorting, and cross-border customs speed to win manufacturer and e-commerce logistics tenders.',
+    heroSubheadlineVi: 'Trình diễn năng lực kho bãi tự động, hệ thống xe tải hiện đại và tốc độ thông quan hải quan giúp thuyết phục các chủ hàng lớn.',
+    painPoints: [
+      {
+        titleEn: 'Commoditized Price Slashing by Competitors',
+        titleVi: 'Cạnh Tranh Phá Giá Cước Vận Chuyển',
+        descEn: 'Logistics firms struggle against cut-rate operators unless they clearly prove reliability, tracking, and cargo safety.',
+        descVi: 'Chủ hàng dễ so bì từng đồng cước phí nếu bạn không chứng minh được độ an toàn và uy tín qua video.',
+      },
+      {
+        titleEn: 'Complex B2B Tendering Cycles',
+        titleVi: 'Hồ Sơ Năng Lực Dày Cộp Khó Đọc',
+        descEn: 'Procurement teams skip dense 80-page PDF capability decks; a concise 60-second video wins executive attention.',
+        descVi: 'Bộ phận mua hàng doanh nghiệp ngại đọc hồ sơ PDF dày cộp; video 60s tóm tắt năng lực mang lại hiệu quả vượt trội.',
+      },
+      {
+        titleEn: 'Driver & Warehouse Staff Recruitment Shortages',
+        titleVi: 'Khó Khăn Tuyển Dụng Tài Xế & Nhân Sự Kho',
+        descEn: 'Attracting reliable commercial drivers requires modern, respectable brand video storytelling.',
+        descVi: 'Muốn tuyển đội ngũ tài xế tận tâm cần hình ảnh doanh nghiệp đàng hoàng, minh bạch chế độ đãi ngộ.',
+      },
+    ],
+    samplePromptTitleEn: 'Cold Chain Pharmaceutical Logistics Integrity',
+    samplePromptTitleVi: 'Quy Trình Vận Chuyển Hàng Lạnh Dược Phẩm Đạt Chuẩn',
+    samplePromptEn: 'Create a 40-second authoritative supply chain breakdown highlighting continuous IoT temperature telemetry, expedited customs clearance, and zero-breakage guarantee. Hook: "When a 1-degree temperature spike destroys a $200K cargo shipment, who do you trust?"',
+    samplePromptVi: 'Tạo video năng lực vận tải 40s: Hệ thống giám sát nhiệt độ xe lạnh 24/7, định vị GPS chuẩn xác và cam kết đền bù 100%. Hook: "Khi chỉ lệch 1 độ C có thể làm hỏng lô hàng bạc tỷ, doanh nghiệp của bạn đang tin tưởng ai?"',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 3100,
+      traditionalTurnaroundDays: 14,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2901,
+      estimatedVideoOutputPerMonth: 40,
+    },
+    testimonial: {
+      quoteEn: 'A short Sophia capability video shared during an enterprise RFP helped us win a $180,000 annual distribution contract.',
+      quoteVi: 'Video giới thiệu năng lực kho bãi gửi kèm hồ sơ thầu đã giúp chúng tôi trúng gói vận chuyển trị giá 4 tỷ đồng/năm.',
+      author: 'Hoang Nam',
+      roleEn: 'Commercial Director',
+      roleVi: 'Giám Đốc Thương Mại',
+      company: 'TransPacific Global Logistics',
+      metrics: 'Won $180K annual enterprise shipping RFP',
+    },
+    faqs: [
+      {
+        questionEn: 'Can Sophia render 3D warehouse and fleet graphics?',
+        questionVi: 'Sophia có hỗ trợ minh họa đồ họa kho hàng và đội xe tải không?',
+        answerEn: 'Yes! Sophia integrates clean industrial isometric diagrams and route simulation graphics.',
+        answerVi: 'Có! Sophia cung cấp các mẫu đồ họa mô phỏng sơ đồ tuyến đường, cảng biển và quy trình kho hàng rất chuyên nghiệp.',
+      },
+    ],
+    keywordsEn: ['logistics video marketing', 'freight forwarder reels', 'supply chain video generator', 'b2b shipping ads'],
+    keywordsVi: ['marketing logistics vận tải', 'hồ sơ năng lực công ty vận chuyển', 'giới thiệu kho bãi b2b', 'dịch vụ xuất nhập khẩu'],
+  },
+];

@@ -1,0 +1,197 @@
+/**
+ * Solutions Catalog Data Partition
+ * Layer: Seed (Configuration and static data, imports only seed)
+ */
+
+import type { SolutionIndustry } from '@/seed/types/solutions-types';
+
+export const SOLOPRENEUR_DENTAL_MEDICAL_SOLUTIONS: SolutionIndustry[] = [
+  {
+    slug: 'solopreneur',
+    nameEn: 'Solopreneurs & Creators',
+    nameVi: 'Kinh Doanh Độc Lập & Solopreneur',
+    category: 'Creator Economy',
+    iconName: 'Sparkle',
+    heroHeadlineEn: 'Run A 7-Figure Faceless Content Empire As A One-Person Business',
+    heroHeadlineVi: 'Vận Hành Đế Chế Video Triệu View Cho Doanh Nghiệp 1 Người',
+    heroSubheadlineEn: 'Dominate TikTok, YouTube Shorts, and X without showing your face, hiring employees, or spending all day editing clips.',
+    heroSubheadlineVi: 'Thống lĩnh các nền tảng video ngắn mà không cần lộ mặt, không cần thuê nhân viên và không phải ngồi hàng giờ cắt ghép.',
+    painPoints: [
+      {
+        titleEn: 'Severe Solo Burnout',
+        titleVi: 'Kiệt Sức Vì Phải Tự Làm Mọi Khâu Một Mình',
+        descEn: 'Managing ideation, scriptwriting, voiceover, b-roll selection, editing, and publishing alone causes rapid burnout.',
+        descVi: 'Một mình gánh vác từ lên ý tưởng, viết kịch bản, lồng tiếng, tìm tư liệu đến cắt ghép khiến bạn mệt mỏi.',
+      },
+      {
+        titleEn: 'Reluctance to Show Face On-Camera',
+        titleVi: 'Không Muốn Xuất Hiện Khuôn Mặt Trên Mạng Xã Hội',
+        descEn: 'Many entrepreneurs want to monetize faceless content channels without sacrificing personal privacy.',
+        descVi: 'Nhiều người muốn kiếm tiền từ kênh nội dung nhưng không muốn công khai danh tính và đời tư cá nhân.',
+      },
+      {
+        titleEn: 'Inconsistent Content Schedules',
+        titleVi: 'Không Duy Trì Được Lịch Đăng Đều Đặn',
+        descEn: 'Skipping uploads for a few days ruins algorithmic momentum and stalls traffic growth.',
+        descVi: 'Bỏ bê vài ngày không đăng video là thuật toán giảm đề xuất, mất trắng lượng traffic tích lũy.',
+      },
+    ],
+    samplePromptTitleEn: 'Faceless $5K/Mo Business Model Breakdown',
+    samplePromptTitleVi: 'Mô Hình Kiếm $5K/Tháng Cho Solopreneur Không Lộ Mặt',
+    samplePromptEn: 'Generate a 45-second faceless video breakdown explaining how a solo creator sells $49 digital checklists via short video traffic. Hook: "If you want to build a $5K/month income stream in 2026 without showing your face or taking client calls, here is the roadmap."',
+    samplePromptVi: 'Tạo video ngắn 45s chia sẻ cách 1 người xây dựng nguồn thu nhập thụ động từ sản phẩm số qua kênh video ngắn. Hook: "Nếu bạn muốn kiếm 100 triệu mỗi tháng mà không cần lộ mặt hay họp hành với khách, đây là lộ trình 3 bước."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 1500,
+      traditionalTurnaroundDays: 5,
+      sophiaMonthlyUsd: 99,
+      sophiaTurnaroundSeconds: 30,
+      estimatedMonthlySavingsUsd: 1401,
+      estimatedVideoOutputPerMonth: 90,
+    },
+    testimonial: {
+      quoteEn: 'I reached my first $5,000 MRR milestone in 45 days running two faceless channels completely powered by Sophia.',
+      quoteVi: 'Tôi đạt cột mốc $5.000 MRR đầu tiên chỉ sau 45 ngày vận hành 2 kênh video không lộ mặt được tạo tự động bởi Sophia.',
+      author: 'Minh Quan',
+      roleEn: 'Solo Digital Entrepreneur',
+      roleVi: 'Solopreneur & Nhà Sáng Tạo',
+      company: 'Zenith Studio',
+      metrics: 'First $5,000 MRR achieved in 45 days',
+    },
+    faqs: [
+      {
+        questionEn: 'How does the SOLO100 promo code work for solopreneurs?',
+        questionVi: 'Mã ưu đãi SOLO100 áp dụng như thế nào cho người mới khởi nghiệp?',
+        answerEn: 'Use code SOLO100 at checkout to receive an instant $100 discount off your Starter plan, bringing it down to just $99/month.',
+        answerVi: 'Nhập mã SOLO100 khi đăng ký để được giảm ngay 2.500.000 VNĐ ($100), chỉ còn $99/tháng cho gói Starter.',
+      },
+    ],
+    keywordsEn: ['faceless youtube channel ai', 'solopreneur video automation', 'passive income reels', 'solo creator tools'],
+    keywordsVi: ['kênh tiktok không lộ mặt', 'kiếm tiền video ngắn ai', 'solopreneur tự động hóa', 'công cụ tạo video cho 1 người'],
+  },
+
+  {
+    slug: 'dental',
+    nameEn: 'Dental & Orthodontics',
+    nameVi: 'Nha Khoa & Thẩm Mỹ Răng',
+    category: 'Healthcare & Wellness',
+    iconName: 'Smile',
+    heroHeadlineEn: 'Radiant Smile Makeovers That Keep Dental Chairs Continuously Booked',
+    heroHeadlineVi: 'Video Nụ Cười Rạng Rỡ Giúp Phòng Khám Nha Khoa Luôn Kín Lịch Hẹn',
+    heroSubheadlineEn: 'Educate patients on clear aligners, porcelain veneers, and pain-free implant procedures with warm, anxiety-reducing visual video explainers.',
+    heroSubheadlineVi: 'Tư vấn niềng răng trong suốt, bọc răng sứ và trồng răng Implant nhẹ nhàng, xóa tan nỗi sợ hãi đi nha khoa của khách hàng.',
+    painPoints: [
+      {
+        titleEn: 'Patient Fear of Pain & Dental Anxiety',
+        titleVi: 'Bệnh Nhân Sợ Đau & Lo Lắng Khi Đến Nha Khoa',
+        descEn: 'Dental phobia stops thousands of patients from booking consultations unless addressed through calming video explanations.',
+        descVi: 'Tâm lý sợ đau khiến nhiều người trì hoãn làm răng cho đến khi nhìn thấy quy trình nhẹ nhàng qua video.',
+      },
+      {
+        titleEn: 'High Patient Acquisition Costs in Major Cities',
+        titleVi: 'Chi Phí Chạy Quảng Cáo Ngành Nha Khoa Quá Cao',
+        descEn: 'Bidding wars on Google Ads for dental implants exceed $50 per click, making organic social video crucial.',
+        descVi: 'Giá click quảng cáo từ khóa nha khoa rất đắt đỏ, cần video mạng xã hội để thu hút khách tự nhiên.',
+      },
+      {
+        titleEn: 'Price Resistance on High-Ticket Procedures',
+        titleVi: 'Khách Đắn Đo Về Chi Phí Niềng Răng & Trồng Răng',
+        descEn: 'Patients struggle to appreciate the value of high-tier orthodontics without clear visual simulation of long-term health benefits.',
+        descVi: 'Khách hàng khó thấy hết giá trị nếu không được xem trực quan kết quả sau khi chỉnh nha.',
+      },
+    ],
+    samplePromptTitleEn: 'Clear Aligner Smile Journey in 30 Seconds',
+    samplePromptTitleVi: 'Hành Trình Niềng Răng Trong Suốt Trong 30s',
+    samplePromptEn: 'Create a 30-second reassuring reel showcasing a 12-month clear aligner progression. Hook: "Think you are too old to fix your crooked teeth? Watch this 12-month transformation done without metal wires."',
+    samplePromptVi: 'Tạo video ngắn 30s truyền cảm hứng về hành trình niềng răng trong suốt: Không đau, tự tin giao tiếp và sự thay đổi kỳ diệu của khuôn mặt. Hook: "Nhiều người nghĩ 30 tuổi là quá muộn để niềng răng, cho đến khi họ xem kết quả này."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2500,
+      traditionalTurnaroundDays: 10,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2301,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'We secured 22 new clear aligner cases in our first month using Sophia smile makeover explainers.',
+      quoteVi: 'Nha khoa của chúng tôi nhận thêm 22 ca niềng răng trong suốt chỉ sau 1 tháng đăng tải các video giải đáp của Sophia.',
+      author: 'Dr. Tuan Minh',
+      roleEn: 'Chief Orthodontist',
+      roleVi: 'Bác Sĩ Trưởng Khoa Chỉnh Nha',
+      company: 'SmileArt Dental Clinic',
+      metrics: '+22 high-ticket aligner cases booked',
+    },
+    faqs: [
+      {
+        questionEn: 'Can we add doctor introduction cards and booking hotline badges?',
+        questionVi: 'Có thể chèn thông tin bằng cấp của bác sĩ và hotline phòng khám không?',
+        answerEn: 'Yes! Sophia allows persistent doctor credentials, clinic certifications, and 1-tap booking prompts on all video templates.',
+        answerVi: 'Có! Sophia hỗ trợ gắn huy hiệu chứng chỉ bác sĩ, địa chỉ cơ sở và nút gọi hotline đặt lịch khám.',
+      },
+    ],
+    keywordsEn: ['dental clinic marketing', 'orthodontist reels', 'clear aligners video generator', 'dentist tiktok'],
+    keywordsVi: ['marketing phòng khám nha khoa', 'video niềng răng trong suốt', 'quảng cáo trồng răng implant', 'tư vấn làm răng sứ'],
+  },
+
+  {
+    slug: 'medical',
+    nameEn: 'Medical & Healthcare Clinics',
+    nameVi: 'Y Tế, Bác Sĩ & Phòng Khám',
+    category: 'Healthcare & Wellness',
+    iconName: 'Stethoscope',
+    heroHeadlineEn: 'Trusted Health Guidance Videos That Connect Doctors With Patients Who Need Care',
+    heroHeadlineVi: 'Video Y Khoa Đáng Tin Cậy Kết Nối Bác Sĩ Với Người Bệnh Cần Chăm Sóc',
+    heroSubheadlineEn: 'Deliver empathetic, medically sound guidance on common symptoms, wellness prevention, and clinic services while building unshakeable patient trust.',
+    heroSubheadlineVi: 'Truyền tải kiến thức phòng bệnh, nhận biết triệu chứng sớm và giới thiệu dịch vụ khám chữa bệnh với phong thái tận tâm, chuẩn mực y đức.',
+    painPoints: [
+      {
+        titleEn: 'Rampant Medical Misinformation Online',
+        titleVi: 'Nhiều Thông Tin Sức Khỏe Sai Lệch Trên Mạng',
+        descEn: 'Patients follow dangerous internet myths; clinics need authoritative doctor-led videos to correct false advice.',
+        descVi: 'Bệnh nhân dễ tin theo những mẹo chữa bệnh chưa kiểm chứng; cần bác sĩ lên tiếng qua video khoa học.',
+      },
+      {
+        titleEn: 'Overwhelmed Consultation Desks',
+        titleVi: 'Bàn Khám Bệnh Bị Quá Tải Câu Hỏi Lặp Lại',
+        descEn: 'Doctors exhaust time repeating pre-procedure instructions that patients could digest via video before arriving.',
+        descVi: 'Bác sĩ mất nhiều thời gian dặn dò kiêng khem trước phẫu thuật mà bệnh nhân có thể xem trước qua video.',
+      },
+      {
+        titleEn: 'Strict Health Advertising Regulations',
+        titleVi: 'Quy Định Quảng Cáo Y Tế Rất Khắt Khe',
+        descEn: 'Healthcare ads get banned immediately unless framed strictly around accredited medical education.',
+        descVi: 'Quảng cáo y tế dễ bị cấm nếu không được trình bày đúng chuẩn mực giáo dục sức khỏe cộng đồng.',
+      },
+    ],
+    samplePromptTitleEn: '3 Warning Signs of Hormonal Imbalance',
+    samplePromptTitleVi: '3 Dấu Hiệu Cảnh Báo Rối Loạn Nội Tiết Tố Sớm',
+    samplePromptEn: 'Create a 45-second compassionate medical explainer outlining unexplained fatigue, sleep issues, and skin dryness as signs to check hormone levels. Hook: "If you feel exhausted despite sleeping 8 hours, your body is trying to warn you."',
+    samplePromptVi: 'Tạo video y khoa 45s giải thích về tình trạng mệt mỏi kéo dài, rụng tóc và mất ngủ do rối loạn nội tiết. Hook: "Nếu bạn ngủ đủ 8 tiếng mà thức dậy vẫn kiệt sức, cơ thể bạn đang phát đi tín hiệu cầu cứu này."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2800,
+      traditionalTurnaroundDays: 14,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2601,
+      estimatedVideoOutputPerMonth: 40,
+    },
+    testimonial: {
+      quoteEn: 'Our clinic patient appointments doubled after launching weekly doctor health tips powered by Sophia.',
+      quoteVi: 'Lượng bệnh nhân đặt lịch khám tại phòng khám chúng tôi tăng gấp đôi sau khi phát đều đặn các video tư vấn của bác sĩ.',
+      author: 'Dr. Thao Nguyen',
+      roleEn: 'Medical Director',
+      roleVi: 'Giám Đốc Chuyên Môn',
+      company: 'WellCare Health Center',
+      metrics: '2x monthly appointment bookings',
+    },
+    faqs: [
+      {
+        questionEn: 'Can medical disclaimers be automatically embedded?',
+        questionVi: 'Video có tự động đính kèm câu khuyến cáo y tế không?',
+        answerEn: 'Yes, mandatory medical disclaimers ("Consult your physician for personalized diagnosis") are automatically attached.',
+        answerVi: 'Có, các lưu ý y khoa bắt buộc ("Thông tin mang tính tham khảo, vui lòng khám trực tiếp") luôn được tự động hiển thị.',
+      },
+    ],
+    keywordsEn: ['healthcare video marketing', 'doctor reels generator', 'medical clinic tiktok', 'patient education videos'],
+    keywordsVi: ['marketing phòng khám y tế', 'bác sĩ tư vấn sức khỏe', 'video giáo dục y khoa', 'tìm bệnh nhân cho phòng khám'],
+  },
+];

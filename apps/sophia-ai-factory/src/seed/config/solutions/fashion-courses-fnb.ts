@@ -1,0 +1,197 @@
+/**
+ * Solutions Catalog Data Partition
+ * Layer: Seed (Configuration and static data, imports only seed)
+ */
+
+import type { SolutionIndustry } from '@/seed/types/solutions-types';
+
+export const FASHION_COURSES_FNB_SOLUTIONS: SolutionIndustry[] = [
+  {
+    slug: 'fashion',
+    nameEn: 'Fashion & Apparel',
+    nameVi: 'Thời Trang & Phụ Kiện',
+    category: 'E-Commerce & Retail',
+    iconName: 'Shirt',
+    heroHeadlineEn: 'Runway Lookbooks & Outfit Transformations In Seconds Without Photo Studios',
+    heroHeadlineVi: 'Xuất Hàng Loạt Video Biến Hình OOTD Thời Trang Không Cần Thuê Studio',
+    heroSubheadlineEn: 'Transform flat-lay apparel images into dynamic runway walk models, trending styling challenges, and viral haul videos.',
+    heroSubheadlineVi: 'Biến ảnh chụp sản phẩm trải phẳng thành video người mẫu catwalk sống động, phối đồ theo xu hướng và clip thử đồ triệu view.',
+    painPoints: [
+      {
+        titleEn: 'High Model & Studio Rentals',
+        titleVi: 'Chi Phí Thuê Mẫu & Studio Quá Lớn',
+        descEn: 'Studio sessions cost thousands per collection with long editing lead times while micro-trends fade.',
+        descVi: 'Mỗi buổi chụp/quay lookbook tốn 15-20 triệu nhưng khi ra video thì trend đã nguội.',
+      },
+      {
+        titleEn: 'Rapid Trend Cycle Obsolescence',
+        titleVi: 'Xu Hướng Thay Đổi Quá Nhanh',
+        descEn: 'Fast fashion trends change weekly; traditional editing pipelines are too slow to capitalize on virality.',
+        descVi: 'Mỗi tuần lại có trend phối đồ mới; làm thủ công không kịp bắt nhịp thuật toán.',
+      },
+      {
+        titleEn: 'High Return Rates Due to Fit Concerns',
+        titleVi: 'Tỉ Lệ Trả Hàng Do Khách Không Hình Dung Được Form',
+        descEn: 'Customers return items when static photos fail to show fabric drape, texture, and natural movement.',
+        descVi: 'Khách hàng phân vân không biết vải rủ hay đứng form thế nào nếu chỉ xem ảnh tĩnh.',
+      },
+    ],
+    samplePromptTitleEn: 'Autumn Capsule Wardrobe Styling 3 Looks',
+    samplePromptTitleVi: '3 Cách Phối Áo Blazer Đi Làm & Đi Chơi',
+    samplePromptEn: 'Create a 25-second fast-paced styling reel showcasing 1 oversized blazer styled 3 distinct ways: corporate chic, casual coffee run, and evening drinks. Hook: "One blazer, zero excuses to say you have nothing to wear."',
+    samplePromptVi: 'Tạo video 25 giây chuyển cảnh nhanh 3 outfit phối với 1 chiếc blazer: công sở thanh lịch, dạo phố cuối tuần và tiệc tối. Hook: "Chỉ 1 chiếc blazer này, từ nay khỏi lo không biết mặc gì ra đường."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2500,
+      traditionalTurnaroundDays: 7,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2301,
+      estimatedVideoOutputPerMonth: 90,
+    },
+    testimonial: {
+      quoteEn: 'Sophia allowed us to launch 30 new SKUs in a month with unique video reels for every single garment.',
+      quoteVi: 'Sophia cho phép thương hiệu chúng tôi ra mắt 30 mẫu mới mỗi tháng với video phối đồ riêng cho từng mẫu.',
+      author: 'Vy Tran',
+      roleEn: 'Creative Director',
+      roleVi: 'Giám Đốc Sáng Tạo',
+      company: 'Maison Minimal',
+      metrics: '30 SKUs launched with 90 video assets in 1 month',
+    },
+    faqs: [
+      {
+        questionEn: 'Can Sophia animate garments onto different body types?',
+        questionVi: 'Sophia có thể tạo mẫu người nhiều dáng vóc khác nhau không?',
+        answerEn: 'Yes, you can specify model demographics, heights, and body profiles to showcase inclusive sizing.',
+        answerVi: 'Có, bạn có thể chỉ định người mẫu theo nhiều vóc dáng và chiều cao để khách hàng dễ chọn size.',
+      },
+    ],
+    keywordsEn: ['fashion ai video', 'lookbook video generator', 'ootd tiktok creator', 'apparel ecommerce video'],
+    keywordsVi: ['video thời trang ai', 'tạo lookbook tự động', 'clip biến hình ootd', 'quảng cáo quần áo tiktok'],
+  },
+
+  {
+    slug: 'courses',
+    nameEn: 'Online Courses & E-Learning',
+    nameVi: 'Khóa Học Trực Tuyến & E-Learning',
+    category: 'Knowledge Commerce',
+    iconName: 'GraduationCap',
+    heroHeadlineEn: 'Turn High-Value Knowledge Into High-Enrollment Student Funnels',
+    heroHeadlineVi: 'Biến Kiến Thức Chuyên Môn Thành Phễu Tuyển Sinh Trực Tuyến Tự Động',
+    heroSubheadlineEn: 'Generate magnetic micro-lesson hooks, case study breakdowns, and automated webinar promos that fill coaching cohorts on autopilot.',
+    heroSubheadlineVi: 'Tự động tạo video bài học ngắn thu hút, phân tích ca thực tế và clip mời tham gia webinar tuyển sinh cho lớp học của bạn.',
+    painPoints: [
+      {
+        titleEn: 'Struggling to Fill Cohorts',
+        titleVi: 'Khó Khăn Trong Việc Tuyển Đủ Học Viên',
+        descEn: 'Experts spend months building great curriculums but struggle to consistently generate enrolled leads.',
+        descVi: 'Chuyên gia mất hàng tháng soạn giáo trình nhưng không biết cách kéo học viên đăng ký đều đặn.',
+      },
+      {
+        titleEn: 'Camera Shyness and Recording Fatigue',
+        titleVi: 'Ngại Đứng Trước Máy Quay & Tốn Thời Gian',
+        descEn: 'Instructors burn out after hours of speaking to a camera, editing retakes, and fixing audio mistakes.',
+        descVi: 'Nhiều giảng viên mất hàng giờ ghi hình, nói vấp phải quay lại và mất công cắt ghép.',
+      },
+      {
+        titleEn: 'Rising Paid Ad Lead Costs',
+        titleVi: 'Chi Phí Chạy Quảng Cáo Facebook Quá Đắt',
+        descEn: 'Cost per lead on Meta ads has surged 200%, demanding organic video hooks to drive down blended CPA.',
+        descVi: 'Giá lead quảng cáo Facebook ngày càng đắt, cần video ngắn kéo traffic tự nhiên để giảm giá vốn.',
+      },
+    ],
+    samplePromptTitleEn: 'Actionable 60-Second Framework Mini-Lesson',
+    samplePromptTitleVi: 'Kịch Bản Bài Học Ngắn 60s Giải Quyết Vấn Đề',
+    samplePromptEn: 'Create a 60-second micro-lesson explaining the 3 common mistake beginners make in financial accounting. Hook: "If you are still calculating your net profit this way, you are lying to your investors." Call to action: Comment "AUDIT" to receive the free spreadsheet template.',
+    samplePromptVi: 'Tạo video ngắn 60s chia sẻ 3 sai lầm chí mạng khi lập kế hoạch tài chính. Hook: "Nếu bạn vẫn tính điểm hòa vốn kiểu này, bạn đang đốt sạch vốn mà không hề biết." Kêu gọi hành động: Nhắn tin nhận bảng tính mẫu miễn phí.',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2200,
+      traditionalTurnaroundDays: 10,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2001,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'I booked out my $2,000 cohort in 12 days purely using Sophia-generated bite-sized lesson shorts on YouTube.',
+      quoteVi: 'Khóa coaching 20 triệu của tôi kín chỗ trong 12 ngày hoàn toàn nhờ các video bài học ngắn do Sophia tạo trên YouTube Shorts.',
+      author: 'David Le',
+      roleEn: 'Course Creator & Consultant',
+      roleVi: 'Chuyên Gia Đào Tạo Doanh Nghiệp',
+      company: 'GrowthMastery Academy',
+      metrics: '42 new students enrolled in 12 days',
+    },
+    faqs: [
+      {
+        questionEn: 'Can I clone my own voice for teaching videos?',
+        questionVi: 'Tôi có thể dùng chính giọng nói của mình để lồng tiếng không?',
+        answerEn: 'Yes! Sophia provides instant voice cloning from a 30-second audio sample so your videos sound 100% authentically yours.',
+        answerVi: 'Chính xác! Sophia hỗ trợ nhân bản giọng nói chỉ với 30 giây mẫu thu âm để giữ đúng chất giọng cá nhân của bạn.',
+      },
+    ],
+    keywordsEn: ['course creator ai video', 'educational reels generator', 'youtube shorts for teachers', 'elearning marketing'],
+    keywordsVi: ['làm video khóa học', 'tuyển sinh tự động bằng ai', 'bài giảng ngắn youtube shorts', 'marketing giáo dục'],
+  },
+
+  {
+    slug: 'f-and-b',
+    nameEn: 'Food & Beverage',
+    nameVi: 'F&B & Nhà Hàng',
+    category: 'Local Hospitality',
+    iconName: 'Utensils',
+    heroHeadlineEn: 'Mouthwatering Culinary Reels That Pack Tables Every Weekend',
+    heroHeadlineVi: 'Video Món Ăn Chảy Nước Miếng Kéo Khách Kín Bàn Mỗi Cuối Tuần',
+    heroSubheadlineEn: 'Showcase sizzling dishes, mixology secrets, and chef specials with irresistible sensory pacing and background ambient audio.',
+    heroSubheadlineVi: 'Trình diễn những đĩa thức ăn bốc khói nghi ngút, bí quyết pha chế và món đặc sắc của bếp trưởng với âm thanh ASMR kích thích vị giác.',
+    painPoints: [
+      {
+        titleEn: 'Empty Tables on Weekdays',
+        titleVi: 'Vắng Khách Vào Các Ngày Đầu Tuần',
+        descEn: 'Restaurants struggle with low weekday footfall while fixed staff and rent overhead remain constant.',
+        descVi: 'Nhà hàng vắng khách thứ 2 - thứ 5 trong khi chi phí nhân viên và mặt bằng vẫn phải trả đủ.',
+      },
+      {
+        titleEn: 'High Food Reviewer Sponsorship Costs',
+        titleVi: 'Chi Phí Thuê Food Reviewer Tốn Kém',
+        descEn: 'Local food reviewers demand free dining plus hefty sponsorship fees for unpredictable reach.',
+        descVi: 'Mời reviewer đến ăn tốn tiền triệu tiền món cộng thêm phí catxe nhưng lượng khách quay lại không bền.',
+      },
+      {
+        titleEn: 'Failure to Convey Food Appeal in Stills',
+        titleVi: 'Ảnh Menu Tĩnh Không Truyền Tải Được Độ Ngon',
+        descEn: 'Static menu photos fail to evoke the sizzling sound, cheese pulls, and steam that trigger hunger cravings.',
+        descVi: 'Ảnh chụp món đơn thuần không diễn tả được cảnh phô mai kéo sợi, nước sốt sôi sùng sục và khói thơm.',
+      },
+    ],
+    samplePromptTitleEn: 'Sizzling Ribeye Steak ASMR Special',
+    samplePromptTitleVi: 'Video Món Bò Bít Tết Nướng Sốt Nấm ASMR',
+    samplePromptEn: 'Create a 20-second sensory-rich video highlighting an A5 Wagyu ribeye hitting a 500-degree cast-iron skillet, garlic butter basting, and knife slicing tenderly. Hook: "Hear that sound? That is your dinner calling you tonight."',
+    samplePromptVi: 'Tạo video 20s kích thích vị giác quay cận cảnh miếng bò Wagyu áp chảo gang rưới bơ tỏi thơm lừng, cắt từng thớ thịt mọng nước. Hook: "Âm thanh xèo xèo này chính là lý do tối nay bạn phải rủ người thương đi ăn."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 1800,
+      traditionalTurnaroundDays: 7,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 45,
+      estimatedMonthlySavingsUsd: 1601,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'We gained 4,500 new local followers and completely booked out our weekend reservations in month one.',
+      quoteVi: 'Quán ăn của chúng tôi tăng 4.500 người theo dõi địa phương và kín bàn đặt trước suốt cả tháng qua video AI.',
+      author: 'Chef Hai Nguyen',
+      roleEn: 'Executive Chef & Owner',
+      roleVi: 'Bếp Trưởng & Đồng Sáng Lập',
+      company: 'The Rustic Table Kitchen',
+      metrics: '+85% table reservations on weekdays',
+    },
+    faqs: [
+      {
+        questionEn: 'Can I add our restaurant address and Google Maps link to the video CTA?',
+        questionVi: 'Tôi có thể gắn địa chỉ và link Google Maps vào video không?',
+        answerEn: 'Yes, Sophia automatically renders location stickers, opening hours, and direct booking buttons onto your video overlays.',
+        answerVi: 'Được chứ, Sophia tự động chèn thông tin địa chỉ, giờ mở cửa và nút điều hướng xem bản đồ hoặc đặt bàn.',
+      },
+    ],
+    keywordsEn: ['restaurant marketing video', 'food reels generator', 'culinary tiktok video', 'cafe promotion ai'],
+    keywordsVi: ['làm video quán ăn', 'quảng cáo nhà hàng tiktok', 'video review ẩm thực', 'marketing f&b tự động'],
+  },
+];

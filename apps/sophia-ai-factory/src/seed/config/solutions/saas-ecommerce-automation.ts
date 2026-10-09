@@ -1,0 +1,197 @@
+/**
+ * Solutions Catalog Data Partition
+ * Layer: Seed (Configuration and static data, imports only seed)
+ */
+
+import type { SolutionIndustry } from '@/seed/types/solutions-types';
+
+export const SAAS_ECOMMERCE_AUTOMATION_SOLUTIONS: SolutionIndustry[] = [
+  {
+    slug: 'saas',
+    nameEn: 'SaaS & B2B Software',
+    nameVi: 'Phần Mềm SaaS & B2B',
+    category: 'Technology',
+    iconName: 'Laptop',
+    heroHeadlineEn: 'Convert Cold Product Demos Into Product-Led Growth ARR Explosions',
+    heroHeadlineVi: 'Biến Video Demo Tính Năng Thành Cỗ Máy Tăng Trưởng ARR Tự Động',
+    heroSubheadlineEn: 'Produce snappy feature walkthroughs, UI micro-interactions, and problem-solution teardowns that get developer and enterprise trials instantly.',
+    heroSubheadlineVi: 'Tạo video giới thiệu tính năng, tương tác giao diện và giải pháp công nghệ trực quan giúp tăng tỉ lệ đăng ký dùng thử ngay lập tức.',
+    painPoints: [
+      {
+        titleEn: 'Low Demo-to-Trial Conversion',
+        titleVi: 'Khách Đọc Landing Page Nhưng Không Dùng Thử',
+        descEn: 'Visitors bounce off walls of text and static feature screenshots without understanding the core workflow.',
+        descVi: 'Khách rời trang web vì các đoạn mô tả tính năng quá dài dòng, không hình dung được sản phẩm giải quyết việc gì.',
+      },
+      {
+        titleEn: 'Long Sales Cycles for B2B Buyers',
+        titleVi: 'Chu Kỳ Bán Hàng B2B Kéo Dài',
+        descEn: 'Convincing decision-makers takes dozens of meetings when asynchronous video teardowns could close the gap.',
+        descVi: 'Chốt hợp đồng doanh nghiệp mất nhiều tuần nếu không có video demo ngắn gọn gửi cho các cấp phê duyệt.',
+      },
+      {
+        titleEn: 'High Customer Success Onboarding Load',
+        titleVi: 'Nhóm Hỗ Trợ Quá Tải Hướng Dẫn Sử Dụng',
+        descEn: 'Users churn early when initial product setup lacks step-by-step video guidance.',
+        descVi: 'Người dùng bỏ cuộc nếu gặp khó khăn trong bước thiết lập ban đầu mà không có video trực quan.',
+      },
+    ],
+    samplePromptTitleEn: '30-Second API Automation Workflow Teardown',
+    samplePromptTitleVi: 'Kịch Bản Demo Tự Động Hóa Dữ Liệu Trong 30s',
+    samplePromptEn: 'Create a 30-second developer-focused teardown showing manual webhook syncing vs our 1-click cloud sync. Hook: "Still writing custom cron jobs to sync Stripe with your database? Watch this 3-line shortcut."',
+    samplePromptVi: 'Tạo video ngắn 30s cho lập trình viên: So sánh việc viết code cron job thủ công với tính năng đồng bộ 1 chạm. Hook: "Nếu bạn vẫn đang mất cả buổi viết webhook đồng bộ dữ liệu, xem ngay giải pháp 3 dòng lệnh này."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 3000,
+      traditionalTurnaroundDays: 14,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 2801,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'Our self-serve trial signups jumped by 47% after embedding Sophia walkthrough reels across our feature docs.',
+      quoteVi: 'Lượng đăng ký dùng thử phần mềm của chúng tôi tăng 47% sau khi chèn các video hướng dẫn ngắn do Sophia tạo vào trang sản phẩm.',
+      author: 'Victor Chen',
+      roleEn: 'Co-Founder & CTO',
+      roleVi: 'Đồng Sáng Lập & CTO',
+      company: 'SyncPulse API',
+      metrics: '+47% trial signup conversion rate',
+    },
+    faqs: [
+      {
+        questionEn: 'Can Sophia integrate with screen recording clips of our software?',
+        questionVi: 'Tôi có thể tải video quay màn hình giao diện app của mình lên không?',
+        answerEn: 'Yes, upload your Loom or raw MP4 recordings and Sophia will automatically zoom in on clicks, add subtitles, and voice the narration.',
+        answerVi: 'Có, bạn chỉ cần tải video quay màn hình, Sophia sẽ tự động phóng to con trỏ chuột, chèn phụ đề nổi bật và lồng tiếng giải thích.',
+      },
+    ],
+    keywordsEn: ['saas product video', 'software demo generator', 'b2b tech reels', 'plg video marketing'],
+    keywordsVi: ['video demo phần mềm', 'marketing saas tự động', 'giới thiệu ứng dụng công nghệ', 'tăng conversion landing page'],
+  },
+
+  {
+    slug: 'e-commerce',
+    nameEn: 'E-Commerce & Dropshipping',
+    nameVi: 'Thương Mại Điện Tử & Dropshipping',
+    category: 'E-Commerce & Retail',
+    iconName: 'ShoppingBag',
+    heroHeadlineEn: 'Viral Winning Product Ads That Drive Sub-$5 Customer Acquisition Costs',
+    heroHeadlineVi: 'Video Quảng Cáo Sản Phẩm Viral Giúp Giảm Chi Phí Ra Đơn Dưới $5',
+    heroSubheadlineEn: 'Scale your winning TikTok Shop, Shopee, and Shopify products with endless high-converting hooks and unboxing variations generated in minutes.',
+    heroSubheadlineVi: 'Bứt phá doanh số TikTok Shop, Shopee và website với hàng chục biến thể mở đầu video và đập hộp thu hút được tạo chỉ trong vài phút.',
+    painPoints: [
+      {
+        titleEn: 'Skyrocketing Paid Ad CPMs',
+        titleVi: 'Giá Thầu Quảng Cáo Ngày Càng Tăng Cao',
+        descEn: 'Rising ad costs mean you need high click-through rates and high conversion video creatives to stay profitable.',
+        descVi: 'Giá CPM tăng cao buộc các nhà bán hàng phải có video với CTR và tỉ lệ chuyển đổi vượt trội mới giữ được lợi nhuận.',
+      },
+      {
+        titleEn: 'Fast Creative Burnout on TikTok',
+        titleVi: 'Quảng Cáo Nhanh Chóng Bị Chai Sau 3 Ngày',
+        descEn: 'Winning ad creatives on TikTok exhaust their audience in 72 hours, forcing non-stop manual video production.',
+        descVi: 'Một mẫu video win trên TikTok chỉ chạy tốt 3 ngày là bão hòa, bắt buộc phải liên tục có nội dung mới.',
+      },
+      {
+        titleEn: 'Supplier Videos Lack Localization',
+        titleVi: 'Video Của Xưởng Trung Quốc Không Phù Hợp Thị Trường',
+        descEn: 'Repurposing factory videos with watermarks and foreign subtitles destroys buyer trust and gets flagged.',
+        descVi: 'Lấy video của nhà cung cấp có logo lạ và chữ nước ngoài làm mất niềm tin của người mua và dễ bị đánh bản quyền.',
+      },
+    ],
+    samplePromptTitleEn: 'Viral Gadget Problem-Solution TikTok Ad',
+    samplePromptTitleVi: 'Kịch Bản Quảng Cáo Đồ Gia Dụng Thông Minh',
+    samplePromptEn: 'Create a 15-second punchy product demo for an automatic mini vacuum cleaner. Hook: "Tell me your car seats look like this without telling me your car seats look like this." Fast cuts showing crumbs vanishing instantly.',
+    samplePromptVi: 'Tạo video quảng cáo 15s cho máy hút bụi mini cầm tay trên ô tô. Hook: "Nhìn ghế xe thế này là biết chưa có máy này rồi!" Chuyển cảnh nhanh cảnh hút sạch vụn bánh trong 2 giây.',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2400,
+      traditionalTurnaroundDays: 5,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 30,
+      estimatedMonthlySavingsUsd: 2201,
+      estimatedVideoOutputPerMonth: 120,
+    },
+    testimonial: {
+      quoteEn: 'We generated $84,000 in revenue last month by testing 10 new Sophia video hooks every single morning.',
+      quoteVi: 'Tháng vừa rồi shop chúng tôi đạt hơn 2 tỷ doanh thu nhờ thói quen test 10 mẫu hook video mới của Sophia mỗi buổi sáng.',
+      author: 'Ryan Miller',
+      roleEn: 'E-Commerce Founder',
+      roleVi: 'Chủ Thương Hiệu Bán Lẻ',
+      company: 'SwiftGear Direct',
+      metrics: '$84,000 monthly revenue with 10 daily test hooks',
+    },
+    faqs: [
+      {
+        questionEn: 'Can I export videos in vertical 9:16 format with auto-caption styles?',
+        questionVi: 'Sophia có xuất chuẩn khung hình dọc 9:16 với phụ đề động phong cách TikTok không?',
+        answerEn: 'Yes! Sophia formats directly in 1080x1920 with high-contrast animated subtitles proven to boost watch time.',
+        answerVi: 'Chắc chắn rồi! Video xuất ra đúng tỷ lệ 9:16 Full HD với chữ chạy động nhiều màu sắc bắt mắt tối ưu tỷ lệ xem hết clip.',
+      },
+    ],
+    keywordsEn: ['ecommerce video ads', 'tiktok shop ad maker', 'dropshipping winning video', 'product demo ai'],
+    keywordsVi: ['làm video bán hàng online', 'tạo video tiktok shop', 'chạy ads chuyển đổi', 'video đồ gia dụng thông minh'],
+  },
+
+  {
+    slug: 'ai-automation',
+    nameEn: 'AI Automation & Agencies',
+    nameVi: 'Tự Động Hóa AI & Agency',
+    category: 'Agency & Services',
+    iconName: 'Cpu',
+    heroHeadlineEn: 'Showcase Autonomous AI Workflows That Sign $5,000/Month Agency Retainers',
+    heroHeadlineVi: 'Trình Diễn Giải Pháp Tự Động Hóa AI Chốt Hợp Đồng Agency $5.000/Tháng',
+    heroSubheadlineEn: 'Demonstrate multi-agent orchestration, CRM automation, and custom LLM workflows with visual authority that proves high enterprise ROI.',
+    heroSubheadlineVi: 'Chứng minh năng lực triển khai trợ lý ảo AI, tích hợp CRM tự động và mô hình ngôn ngữ lớn cho khách hàng doanh nghiệp.',
+    painPoints: [
+      {
+        titleEn: 'Prospects Fail to Understand Abstract AI Services',
+        titleVi: 'Khách Hàng Khó Hình Dung Dịch Vụ AI Vô Hình',
+        descEn: 'Talking about LLMs and APIs sounds like techno-babble to business owners without visual workflow proof.',
+        descVi: 'Khách hàng không hiểu API hay LLM là gì nếu không thấy màn hình tự động hóa vận hành thực tế.',
+      },
+      {
+        titleEn: 'Competing Against Low-Priced Freelancers',
+        titleVi: 'Bị Cạnh Tranh Phá Giá Bởi Các Freelancer Nghiệp Dư',
+        descEn: 'Agencies need high-end architectural teardowns to position as elite enterprise partners rather than cheap bot builders.',
+        descVi: 'Agency cần định vị là đối tác giải pháp doanh nghiệp cao cấp thay vì những người làm chatbot giá rẻ.',
+      },
+      {
+        titleEn: 'High Cost of Building Bespoke Proof-of-Concepts',
+        titleVi: 'Tốn Quá Nhiều Nguồn Lực Làm Bản Demo Cho Khách',
+        descEn: 'Spending hours building custom client demos before winning contracts drains development bandwidth.',
+        descVi: 'Mất cả tuần lập trình thử nghiệm trước khi khách đồng ý ký hợp đồng làm tốn kém chi phí nhân sự.',
+      },
+    ],
+    samplePromptTitleEn: 'Multi-Agent Customer Support Automation Teardown',
+    samplePromptTitleVi: 'Phân Tích Quy Trình Trợ Lý AI Chăm Sóc Khách Hàng 24/7',
+    samplePromptEn: 'Create a 45-second agency pitch video demonstrating how an autonomous AI agent handles support tickets, updates Hubspot CRM, and issues refunds without human delay. Hook: "This company fired their $8K/month support agency and replaced it with a 3-agent pipeline."',
+    samplePromptVi: 'Tạo video 45s giới thiệu quy trình trợ lý AI tự động trả lời khiếu nại, đồng bộ CRM và gửi hóa đơn trong 5 giây. Hook: "Doanh nghiệp này đã cắt giảm 80 triệu chi phí trực tổng đài mỗi tháng nhờ hệ thống 3 trợ lý AI hoạt động 24/7."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 3600,
+      traditionalTurnaroundDays: 14,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 3401,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'We closed 3 new agency retainer clients worth $14,500/month within two weeks of posting Sophia workflow teardowns on LinkedIn.',
+      quoteVi: 'Chúng tôi ký thêm 3 khách hàng retainer trị giá hơn 300 triệu/tháng chỉ sau 2 tuần đăng tải video phân tích quy trình AI của Sophia lên LinkedIn.',
+      author: 'Khang Pham',
+      roleEn: 'Founder & AI Architect',
+      roleVi: 'Sáng Lập Viên & Kiến Trúc Sư AI',
+      company: 'OmniAI Solutions',
+      metrics: '+$14,500/month recurring revenue closed',
+    },
+    faqs: [
+      {
+        questionEn: 'Can I white-label Sophia videos with our agency logo and branding?',
+        questionVi: 'Tôi có thể gắn logo thương hiệu của Agency mình vào video không?',
+        answerEn: 'Yes! Sophia allows custom intro/outro watermarks, color palettes, and branded intro stings.',
+        answerVi: 'Được chứ! Bạn hoàn toàn có thể tùy chỉnh logo, bảng màu thương hiệu và phần mở đầu/kết thúc mang đậm bản sắc Agency của bạn.',
+      },
+    ],
+    keywordsEn: ['ai agency marketing', 'automation video teardown', 'b2b ai workflow', 'enterprise ai pitch'],
+    keywordsVi: ['marketing agency ai', 'giải pháp tự động hóa doanh nghiệp', 'dịch vụ chatbot b2b', 'tăng doanh thu agency'],
+  },
+];

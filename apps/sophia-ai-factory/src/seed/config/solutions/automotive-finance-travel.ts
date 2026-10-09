@@ -1,0 +1,197 @@
+/**
+ * Solutions Catalog Data Partition
+ * Layer: Seed (Configuration and static data, imports only seed)
+ */
+
+import type { SolutionIndustry } from '@/seed/types/solutions-types';
+
+export const AUTOMOTIVE_FINANCE_TRAVEL_SOLUTIONS: SolutionIndustry[] = [
+  {
+    slug: 'automotive',
+    nameEn: 'Automotive & Dealerships',
+    nameVi: 'Ô Tô & Xe Máy',
+    category: 'High-Ticket Sales',
+    iconName: 'Car',
+    heroHeadlineEn: 'High-Octane Vehicle Walkthroughs That Bring Qualified Drivers To Your Showroom',
+    heroHeadlineVi: 'Video Trải Nghiệm Xe Đỉnh Cao Kéo Khách Lái Thử Về Showroom',
+    heroSubheadlineEn: 'Turn inventory stock listings into cinematic exhaust sound demos, interior tech reviews, and financing breakdowns that spark instant showroom visits.',
+    heroSubheadlineVi: 'Biến kho xe sẵn có thành những video tiếng máy phấn khích, trải nghiệm tiện nghi nội thất và tư vấn trả góp rõ ràng giúp khách muốn lái thử ngay.',
+    painPoints: [
+      {
+        titleEn: 'Depreciating Inventory Holding Costs',
+        titleVi: 'Chi Phí Lãi Vay Tồn Kho Xe Cao',
+        descEn: 'Every week a car sits on the lot bleeds capital and showroom lot fee overhead.',
+        descVi: 'Mỗi chiếc xe nằm ở bãi quá lâu làm đọng vốn và tốn chi phí bảo quản.',
+      },
+      {
+        titleEn: 'Buyers Research Extensively Online First',
+        titleVi: 'Khách Hàng Nghiên Cứu Rất Kỹ Trên Mạng Trước Khi Đến',
+        descEn: 'Car shoppers eliminate dealerships before ever calling unless they see transparent, high-definition video walkthroughs.',
+        descVi: 'Người mua xe sẽ loại bỏ những showroom không có video quay thực tế chi tiết từng góc cạnh.',
+      },
+      {
+        titleEn: 'Financing Confusion Deters Buyers',
+        titleVi: 'Khách Ngại Thủ Tục Trả Góp Phức Tạp',
+        descEn: 'Shoppers hesitate to inquire because they assume monthly payments are outside their current budget.',
+        descVi: 'Khách phân vân không dám hỏi vì tưởng số tiền trả góp hàng tháng vượt quá khả năng tài chính.',
+      },
+    ],
+    samplePromptTitleEn: 'Compact SUV Feature Walkthrough & Monthly Payment',
+    samplePromptTitleVi: 'Review Mẫu SUV Đô Thị & Bài Toán Trả Góp Mỗi Tháng',
+    samplePromptEn: 'Create a 35-second walkthrough of a popular compact SUV highlighting wireless Apple CarPlay, panoramic roof, and an estimated monthly finance payment breakdown. Hook: "Looking for an SUV under $25K with luxury features? Stop scrolling."',
+    samplePromptVi: 'Tạo video 35s đánh giá mẫu SUV đô thị: Cửa sổ trời toàn cảnh, sạc không dây và bảng tính trả góp chỉ từ 7 triệu/tháng. Hook: "Nếu bạn đang tìm chiếc SUV gầm cao đi phố tiện nghi mà chỉ cần trả trước 150 triệu, đây là lựa chọn hàng đầu."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2700,
+      traditionalTurnaroundDays: 7,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 45,
+      estimatedMonthlySavingsUsd: 2501,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'We cleared 14 pre-owned vehicles in 3 weeks solely from TikTok walkthrough shorts created with Sophia.',
+      quoteVi: 'Showroom chúng tôi bán được 14 xe đã qua sử dụng chỉ trong 3 tuần nhờ các video ngắn quay chi tiết xe do Sophia tạo ra.',
+      author: 'Quoc Bao',
+      roleEn: 'Sales Director',
+      roleVi: 'Giám Đốc Bán Hàng',
+      company: 'AutoStar Motors',
+      metrics: '14 cars sold directly from social video leads',
+    },
+    faqs: [
+      {
+        questionEn: 'Can I generate videos directly from our car inventory URL?',
+        questionVi: 'Tôi có thể dán link tin đăng xe để tạo video luôn không?',
+        answerEn: 'Yes! Simply paste the listing page and Sophia extracts exterior photos, mileage, options, and price into a finished reel.',
+        answerVi: 'Rất tiện lợi! Chỉ cần dán link trang bán xe, Sophia sẽ tự lấy ảnh, số km đã đi, trang bị và giá bán để xuất clip.',
+      },
+    ],
+    keywordsEn: ['automotive video marketing', 'car dealership tiktok', 'vehicle walkthrough generator', 'car sales reels'],
+    keywordsVi: ['marketing bán xe ô tô', 'video review xe hơi', 'tạo clip giới thiệu xe', 'quảng cáo showroom ô tô'],
+  },
+
+  {
+    slug: 'financial-advisor',
+    nameEn: 'Financial Advisory & Wealth',
+    nameVi: 'Tư Vấn Tài Chính & Đầu Tư',
+    category: 'Financial Services',
+    iconName: 'TrendingUp',
+    heroHeadlineEn: 'Clarity-Driven Wealth Preservation Advice That High-Net-Worth Investors Value',
+    heroHeadlineVi: 'Video Quản Lý Gia Sản & Đầu Tư Được Giới Thượng Lưu Đánh Giá Cao',
+    heroSubheadlineEn: 'Break down inflation hedges, asset allocation strategies, and retirement tax planning into visually elegant insights that attract accredited investors.',
+    heroSubheadlineVi: 'Phân tích chiến lược phòng ngừa lạm phát, phân bổ tài sản và kế hoạch tài chính hưu trí với góc nhìn sắc bén, thu hút các nhà đầu tư lớn.',
+    painPoints: [
+      {
+        titleEn: 'Difficulty Reaching High-Net-Worth Prospects',
+        titleVi: 'Khó Tiếp Cận Khách Hàng Có Tài Sản Lớn (HNWI)',
+        descEn: 'High-income earners ignore generic banner ads; they only engage with sharp, credible macroeconomic commentary.',
+        descVi: 'Người có tiền không bấm vào quảng cáo đại trà; họ chỉ lắng nghe những chuyên gia có góc nhìn sâu sắc.',
+      },
+      {
+        titleEn: 'Volatile Markets Create Client Panic',
+        titleVi: 'Thị Trường Biến Động Khiến Nhà Đầu Tư Hoang Mang',
+        descEn: 'Advisors lose clients to panic selling when they lack the speed to publish calm, rational market update videos.',
+        descVi: 'Nhà đầu tư dễ bán tháo theo cảm xúc nếu chuyên gia không kịp thời có video phân tích bình ổn tâm lý.',
+      },
+      {
+        titleEn: 'Strict Financial Compliance Rules',
+        titleVi: 'Rào Cản Pháp Lý Trong Tư Vấn Đầu Tư',
+        descEn: 'Advisors cannot make guaranteed return promises; educational storytelling is the only compliant growth channel.',
+        descVi: 'Không được cam kết lợi nhuận; chia sẻ kiến thức quản trị rủi ro là con đường thu hút khách hợp pháp duy nhất.',
+      },
+    ],
+    samplePromptTitleEn: 'Asset Allocation When Inflation Stays Stubborn',
+    samplePromptTitleVi: 'Chiến Lược Phân Bổ Tài Sản Khi Lạm Phát Kéo Dài',
+    samplePromptEn: 'Create a 45-second high-finance breakdown comparing cash drag vs diversified dividend portfolios during high-rate regimes. Hook: "Holding cash in 2026 feels safe, but here is how the silent tax of inflation is eroding your purchasing power."',
+    samplePromptVi: 'Tạo video tài chính 45s phân tích thiệt hại khi để tiền mặt quá nhiều so với danh mục cổ tức và bất động sản dòng tiền. Hook: "Giữ tiền mặt tạo cảm giác an toàn, nhưng đây là cách lạm phát đang âm thầm bào mòn tài sản của bạn."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 3200,
+      traditionalTurnaroundDays: 14,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 60,
+      estimatedMonthlySavingsUsd: 3001,
+      estimatedVideoOutputPerMonth: 40,
+    },
+    testimonial: {
+      quoteEn: 'I onboarded $4.2M in new advisory assets under management directly from viewers of my Sophia educational shorts.',
+      quoteVi: 'Tôi đã tiếp nhận quản lý thêm hơn 100 tỷ đồng vốn ủy thác từ những thân chủ theo dõi chuỗi video kiến thức tài chính của tôi.',
+      author: 'Derrick Lam',
+      roleEn: 'Wealth Manager',
+      roleVi: 'Chuyên Gia Quản Lý Gia Sản',
+      company: 'Heritage Capital Advisory',
+      metrics: '$4.2M in new AUM onboarded',
+    },
+    faqs: [
+      {
+        questionEn: 'Can Sophia integrate real-time financial charts and data graphics?',
+        questionVi: 'Sophia có hỗ trợ chèn biểu đồ tài chính và số liệu trực quan không?',
+        answerEn: 'Yes, Sophia includes modern animated line graphs, pie charts, and asset comparison visuals.',
+        answerVi: 'Có, Sophia tích hợp sẵn các mẫu biểu đồ động, đồ thị cột và bảng so sánh danh mục trực quan.',
+      },
+    ],
+    keywordsEn: ['financial advisor marketing', 'wealth management reels', 'finance video generator', 'investor lead gen'],
+    keywordsVi: ['marketing tư vấn tài chính', 'video quản lý gia sản', 'kiến thức đầu tư chứng khoán', 'tìm khách hàng đầu tư'],
+  },
+
+  {
+    slug: 'travel',
+    nameEn: 'Travel & Hospitality',
+    nameVi: 'Du Lịch & Khách Sạn',
+    category: 'Local Hospitality',
+    iconName: 'Plane',
+    heroHeadlineEn: 'Wanderlust-Inducing Travel Itineraries That Book Out Tours & Rooms',
+    heroHeadlineVi: 'Video Trải Nghiệm Du Lịch Đẹp Như Mơ Giúp Tour & Phòng Luôn Kín Chỗ',
+    heroSubheadlineEn: 'Produce breathtaking resort tours, secret local itinerary guides, and flight deal announcements that trigger immediate vacation bookings.',
+    heroSubheadlineVi: 'Xuất những video khám phá resort thơ mộng, cẩm nang du lịch bản địa và tour trọn gói hấp dẫn thôi thúc du khách xách balo lên và đi.',
+    painPoints: [
+      {
+        titleEn: 'High OTA Commission Fees',
+        titleVi: 'Phí Hoa Hồng Của Các Sàn OTA Quá Cao',
+        descEn: 'Hotels lose 15% - 25% of every reservation to booking platforms; direct booking video funnels preserve margins.',
+        descVi: 'Khách sạn phải trả 15% - 25% cho Agoda/Booking; video mạng xã hội giúp kéo khách đặt phòng trực tiếp để tăng lợi nhuận.',
+      },
+      {
+        titleEn: 'Off-Season Occupancy Slumps',
+        titleVi: 'Tỉ Lệ Trống Phòng Vào Mùa Thấp Điểm',
+        descEn: 'Resorts bleed profits during rainy months without localized weekend getaway promotions.',
+        descVi: 'Resort vắng khách mùa thấp điểm nếu không có các gói combo nghỉ dưỡng cuối tuần hấp dẫn.',
+      },
+      {
+        titleEn: 'Static Destination Photos Look Ordinary',
+        titleVi: 'Ảnh Chụp Tĩnh Không Thể Hiện Hết Vẻ Đẹp Điểm Đến',
+        descEn: 'Static travel brochures fail to capture the breeze, turquoise water, and sunset ambiance that motivate trips.',
+        descVi: 'Ảnh chụp đơn thuần không diễn tả được làn nước trong xanh, tiếng sóng biển và không khí nghỉ dưỡng đích thực.',
+      },
+    ],
+    samplePromptTitleEn: '3-Day Secret Island Getaway Itinerary',
+    samplePromptTitleVi: 'Lịch Trình 3 Ngày 2 Đêm Khám Phá Hòn Đảo Bí Mật',
+    samplePromptEn: 'Create a 30-second dreamlike travel reel highlighting a quiet island escape: ocean-view villa waking up, fresh seafood barbecue at sunset, and coral diving. Hook: "If you need an escape from the city this weekend, save this itinerary immediately."',
+    samplePromptVi: 'Tạo video ngắn 30s tràn đầy năng lượng: Biệt thự view biển đón bình minh, lặn ngắm san hô và tiệc nướng hải sản bên bờ biển. Hook: "Nếu bạn đang quá mệt mỏi với khói bụi thành phố, lưu ngay lịch trình nghỉ ngơi cuối tuần này."',
+    roiComparison: {
+      traditionalAgencyCostMonthlyUsd: 2600,
+      traditionalTurnaroundDays: 10,
+      sophiaMonthlyUsd: 199,
+      sophiaTurnaroundSeconds: 45,
+      estimatedMonthlySavingsUsd: 2401,
+      estimatedVideoOutputPerMonth: 60,
+    },
+    testimonial: {
+      quoteEn: 'Direct website bookings jumped by 62%, saving us over $8,000 in monthly OTA commissions.',
+      quoteVi: 'Lượng khách đặt phòng trực tiếp qua fanpage tăng 62%, giúp khu nghỉ dưỡng tiết kiệm gần 200 triệu tiền phí sàn mỗi tháng.',
+      author: 'Mai Linh',
+      roleEn: 'Marketing Director',
+      roleVi: 'Giám Đốc Tiếp Thị',
+      company: 'Aura Eco-Resort & Spa',
+      metrics: '+62% direct bookings, $8,000 OTA fees saved',
+    },
+    faqs: [
+      {
+        questionEn: 'Can we dynamically update seasonal pricing packages in videos?',
+        questionVi: 'Có thể thay đổi giá gói combo theo từng mùa không?',
+        answerEn: 'Yes, modify the pricing text in your prompt and re-generate the entire video in under 60 seconds.',
+        answerVi: 'Rất dễ dàng, chỉ cần sửa số tiền trong câu lệnh và bấm xuất lại video mới chỉ trong chưa đầy 60 giây.',
+      },
+    ],
+    keywordsEn: ['travel marketing video', 'resort reels generator', 'tour operator tiktok', 'vacation booking ai'],
+    keywordsVi: ['marketing du lịch khách sạn', 'làm video giới thiệu tour', 'review resort nghỉ dưỡng', 'clip du lịch tiktok'],
+  },
+];
