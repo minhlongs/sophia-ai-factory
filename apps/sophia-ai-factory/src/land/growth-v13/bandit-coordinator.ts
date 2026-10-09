@@ -7,10 +7,26 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { acquireCasLock, releaseCasLock } from '@/seed/db/atomic-cas-lock';
 import {
   BanditExperiment,
   TouchpointRecord,
 } from '@/seed/types/growth-triad-v13';
+
+export async function acquireExperimentLock(
+  experimentId: string,
+  workerId: string
+): Promise<boolean> {
+  const res = await acquireCasLock(`bandit:experiment:${experimentId}`, workerId);
+  return res.acquired;
+}
+
+export async function releaseExperimentLock(
+  experimentId: string,
+  workerId: string
+): Promise<boolean> {
+  return releaseCasLock(`bandit:experiment:${experimentId}`, workerId);
+}
 
 export async function createBanditExperiment(
   experiment: BanditExperiment

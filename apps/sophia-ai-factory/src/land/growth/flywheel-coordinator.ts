@@ -7,6 +7,7 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { acquireCasLock, releaseCasLock } from '@/seed/db/atomic-cas-lock';
 import type {
   ReseedJobStatus,
   FlywheelSummaryStats,
@@ -25,19 +26,13 @@ export interface CreateReseedJobInput {
   mutatedHooks: string[];
 }
 
-export interface ReseedJobRecord {
-  id: string;
-  userId: string;
-  sourceJobId: string;
-  channelId: string;
-  platform: string;
-  retentionZScore: number;
-  classification: string;
-  originalHook: string;
-  mutatedHooks: string[];
-  status: ReseedJobStatus;
-  reseededCampaignId?: string | null;
-  createdAt: number;
+export async function acquireReseedLock(jobId: string, workerId: string): Promise<boolean> {
+  const res = await acquireCasLock(`reseed:job:${jobId}`, workerId);
+  return res.acquired;
+}
+
+export async function releaseReseedLock(jobId: string, workerId: string): Promise<boolean> {
+  return releaseCasLock(`reseed:job:${jobId}`, workerId);
 }
 
 export async function createReseedJob(input: CreateReseedJobInput): Promise<boolean> {

@@ -130,3 +130,6 @@ export * from './culture-injector-job';
 
 // Growth Triad v10: Process Video Attribution
 export * from './growth/process-video-attribution';
+
+// Growth Triad v15: Performance Feedback Ingestion Worker
+export * from './feedback-ingest-worker';

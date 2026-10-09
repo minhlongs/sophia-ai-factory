@@ -742,7 +742,26 @@ export type GrowthV14RenderHaltEvent = {
   };
 };
 
+export type GrowthV15FeedbackIngestEvent = {
+  data: {
+    id: string;
+    userId: string;
+    videoManifestId: string;
+    channelId: string;
+    platform: 'YOUTUBE_SHORTS' | 'TIKTOK' | 'INSTAGRAM_REELS' | 'FACEBOOK_REELS';
+    views: number;
+    impressions?: number;
+    watchTimeSeconds: number;
+    durationSeconds: number;
+    retentionCurve: { timePct: number; retentionPct: number }[];
+    ctr?: number;
+    viralityScore?: number;
+    collectedAt: number;
+  };
+};
+
 export type Events = {
+  "growth/v15.feedback.ingest": GrowthV15FeedbackIngestEvent;
   "growth/v14.render.schedule": GrowthV14RenderScheduleEvent;
   "growth/v14.render.stage1_evaluate": GrowthV14RenderStage1EvaluateEvent;
   "growth/v14.render.halt": GrowthV14RenderHaltEvent;
