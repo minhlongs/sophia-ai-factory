@@ -6,6 +6,8 @@
  * @module ai/script-prompt-builders
  */
 
+import type { PriorScriptSteering } from '@/seed/types/growth-triad-v16';
+
 export interface ScriptOutput {
   title: string;
   scenes: {
@@ -29,15 +31,37 @@ export interface AffiliateOfferCta {
 /**
  * Build the user prompt for script generation.
  * If affiliateOffer is provided, injects a CTA line into the last scene instructions.
+ * If steering is provided, injects Bayesian retention prior constraints and hook archetype guidance.
  */
 export function buildScriptUserPrompt(
   topic: string,
   audience: string,
-  affiliateOffer?: AffiliateOfferCta
+  affiliateOffer?: AffiliateOfferCta,
+  steering?: PriorScriptSteering
 ): string {
   const ctaLine = affiliateOffer
     ? `\n- End scene must include CTA: "Get ${affiliateOffer.productName} now at ${affiliateOffer.shortUrl}"`
     : '';
+
+  let steeringLines = '';
+  if (steering) {
+    const parts: string[] = [];
+    if (steering.targetHookDropoffThreshold !== undefined) {
+      parts.push(`- Hook Dropoff Constraint: Target <${steering.targetHookDropoffThreshold}% viewer dropoff in the first 3 seconds.`);
+    }
+    if (steering.winningHookArchetype) {
+      parts.push(`- Hook Archetype: Use "${steering.winningHookArchetype}" pattern for Scene 1.`);
+    }
+    if (steering.pacingDirective) {
+      parts.push(`- Pacing & Rhythm: ${steering.pacingDirective}`);
+    }
+    if (steering.expectedRetentionMultiplier && steering.expectedRetentionMultiplier > 1.0) {
+      parts.push(`- Retention Optimization: Apply high-retention cadence (retention multiplier ${steering.expectedRetentionMultiplier}x).`);
+    }
+    if (parts.length > 0) {
+      steeringLines = `\n\nEmpirical Performance Constraints (Growth Feedback Prior):\n${parts.join('\n')}`;
+    }
+  }
 
   return `Create a video script for promoting a product about "${topic}" to ${audience}.
 
@@ -46,7 +70,7 @@ Requirements:
 - 3-5 scenes total
 - Each scene should have clear visual description and narration
 - Total duration: 15-30 seconds
-- Focus on benefits and transformation${ctaLine}
+- Focus on benefits and transformation${ctaLine}${steeringLines}
 
 Return ONLY valid JSON in this exact format:
 {

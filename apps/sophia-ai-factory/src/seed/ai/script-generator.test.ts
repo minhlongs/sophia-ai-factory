@@ -1,5 +1,5 @@
 /**
- * Phase 7B — script-generator BYOK wire (seed layer).
+ * Phase 7B — script-generator BYOK wire & Growth Triad v16 steering.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -37,7 +37,7 @@ import { resilientChatCompletion, resetOpenRouterCircuit } from '@/seed/inferenc
 const mockResolveUserApiKey = vi.mocked(resolveUserApiKey)
 const mockResilientChatCompletion = vi.mocked(resilientChatCompletion)
 
-describe('generateScript — Phase 7B BYOK wire', () => {
+describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetOpenRouterCircuit()
@@ -158,5 +158,29 @@ describe('generateScript — Phase 7B BYOK wire', () => {
     expect(out).toEqual(expect.objectContaining({
       title: 'T',
     }))
+  }, 15000)
+
+  it('injects Bayesian prior steering constraints into prompt when provided', async () => {
+    registerApiKeyResolver(null)
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-direct-env-key')
+
+    await generateScript({
+      topic:    'trading',
+      audience: 'crypto traders',
+      tier:     'BASIC' as never,
+      steering: {
+        targetHookDropoffThreshold: 18,
+        expectedRetentionMultiplier: 1.25,
+        winningHookArchetype: 'Pattern Interrupt',
+        pacingDirective: 'High-velocity 3-second hook with immediate visual disruption.',
+      },
+    })
+
+    expect(mockResilientChatCompletion).toHaveBeenCalledWith(
+      expect.stringContaining('Empirical Performance Constraints (Growth Feedback Prior)'),
+      expect.objectContaining({
+        openRouterKey: 'sk-direct-env-key',
+      }),
+    )
   }, 15000)
 })

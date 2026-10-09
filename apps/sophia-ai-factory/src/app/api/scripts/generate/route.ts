@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { generateScript, selectModelForTier } from "@/seed/ai/script-generator";
+import { getScriptSteeringForUser } from "@/land/growth-v16/prior-script-bridge";
 import { logger } from "@/seed/utils/logger-utility";
 import type { Tier } from "@/seed/types";
 
@@ -61,11 +62,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     log.info("Script generation started", { userId: user.id, tier: effectiveTier, topic });
 
+    const steering = await getScriptSteeringForUser(user.id, topic, audience).catch(() => undefined);
+
     const script = await generateScript({
       topic,
       audience,
       tier: effectiveTier,
       userId: user.id,
+      steering,
     });
 
     if (script.scenes.length < 2) {

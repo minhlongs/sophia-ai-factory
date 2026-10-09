@@ -8,6 +8,7 @@ import {
   type AffiliateOfferCta,
   type ScriptOutput,
 } from '@/seed/ai/script-prompt-builders';
+import type { PriorScriptSteering } from '@/seed/types/growth-triad-v16';
 
 export type { ScriptOutput } from './script-prompt-builders';
 
@@ -15,7 +16,7 @@ export function selectModelForTier(tier: Tier): string {
   return tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
 }
 
-interface GenerateScriptInput {
+export interface GenerateScriptInput {
   topic: string;
   audience: string;
   tier: Tier;
@@ -24,6 +25,7 @@ interface GenerateScriptInput {
   licenseNonce?: string;
   orgId?: string;
   affiliateOffer?: AffiliateOfferCta;
+  steering?: PriorScriptSteering;
 }
 
 export type ApiKeyResolver = (
@@ -53,7 +55,7 @@ interface ScriptGenDeps {
  * @param deps - Injected dependencies to avoid static layer-boundary imports.
  */
 export async function generateScript(input: GenerateScriptInput, deps?: ScriptGenDeps) {
-  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId: _orgId, affiliateOffer } = input;
+  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId: _orgId, affiliateOffer, steering } = input;
   const stopTimer = deps?.startTimer?.();
 
   const context = deps?.getUsageContext?.();
@@ -98,7 +100,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
   const model = selectModelForTier(tier);
   const messages = [
     { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
-    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer) },
+    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer, steering) },
   ];
 
   try {
@@ -152,31 +154,18 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
 
     const validated = parsed as unknown as { title: string; scenes: Array<{ narration: string }> };
     if (!validated.title || !Array.isArray(validated.scenes) || validated.scenes.length === 0) {
-      throw new Error('Invalid script format from API');
+      throw new Error('Invalid script structure from LLM');
     }
 
-    return parsed as ScriptOutput;
-
+    return parsed;
   } catch (error) {
-    const responseTime = stopTimer?.() ?? 0;
-    if (deps?.trackUsage) {
-      await deps.trackUsage({
-        userId: finalUserId,
-        licenseKeyHash,
-        licenseNonce: finalLicenseNonce,
-        service: 'openrouter',
-        endpoint: '/chat/completions',
-        action: 'chat_completion',
-        tierAtRequest: tier,
-        errorMessage: getErrorMessage(error),
-        responseTimeMs: responseTime,
-        creditsUsed: 0,
-      });
+    const errorMsg = getErrorMessage(error);
+    if (errorMsg.includes('quota') || errorMsg.includes('credits') || errorMsg.includes('insufficient')) {
+      throw new ProviderQuotaExceededError('openrouter', errorMsg);
     }
-
-    if (error instanceof ProviderInvalidKeyError || error instanceof ProviderQuotaExceededError) {
-      throw error;
+    if (errorMsg.includes('api key') || errorMsg.includes('invalid key') || errorMsg.includes('unauthorized') || errorMsg.includes('401')) {
+      throw new ProviderInvalidKeyError('openrouter', errorMsg);
     }
-    return generateMockScript(topic, audience);
+    throw error;
   }
 }

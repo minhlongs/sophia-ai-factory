@@ -9,6 +9,8 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
 // eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
 import { getHeyGenClient } from '@/land/heygen/heygen-client';
 import { createDidTalk } from '@/forest/did/did-client';
@@ -36,23 +38,27 @@ export async function pollHeyGenVideo(
   const heygenClient = await getHeyGenClient(userId);
   if (!heygenClient) return { videoUrl: null, provider: 'heygen' };
 
-  const videoId = await heygenClient.createVideo({
-    avatarId: 'Daisy-inskirt-20220818',
-    voiceId: 'en-US-JennyNeural',
-    script: prompt,
-    title: missionId,
-  });
+  try {
+    const videoId = await heygenClient.createVideo({
+      avatarId: 'Daisy-inskirt-20220818',
+      voiceId: 'en-US-JennyNeural',
+      script: prompt,
+      title: missionId,
+    });
 
-  for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
-    await sleep(`heygen-poll-${attempt}`, POLL_INTERVAL_MS);
-    const status = await heygenClient.getVideoStatus(videoId);
-    if (status.status === 'completed' && status.video_url) {
-      return { videoUrl: status.video_url, provider: 'heygen' };
+    for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
+      await sleep(`heygen-poll-${attempt}`, POLL_INTERVAL_MS);
+      const status = await heygenClient.getVideoStatus(videoId);
+      if (status.status === 'completed' && status.video_url) {
+        return { videoUrl: status.video_url, provider: 'heygen' };
+      }
+      if (status.status === 'failed') {
+        logger.warn('[videoGenerate] HeyGen video failed', { videoId, error: status.error });
+        break;
+      }
     }
-    if (status.status === 'failed') {
-      logger.warn('[videoGenerate] HeyGen video failed', { videoId, error: status.error });
-      break;
-    }
+  } catch (err) {
+    logger.warn('[videoGenerate] HeyGen creation or polling error', { error: err });
   }
 
   return { videoUrl: null, provider: 'heygen' };
@@ -65,27 +71,60 @@ export async function pollDidVideo(
   prompt: string,
   sleep: SleepFn,
 ): Promise<VisualProviderResult> {
+  if (!shouldAllowRequest('did')) {
+    logger.warn('[videoGenerate] Circuit breaker open for D-ID');
+    return { videoUrl: null, provider: 'd-id' };
+  }
+
   const didKey = await getUserApiKey(userId, 'd-id');
   if (!didKey) return { videoUrl: null, provider: 'd-id' };
 
-  const talk = await createDidTalk(didKey, {
-    sourceUrl: 'https://studio.d-id.com/agents/default-avatar.png',
-    script: prompt,
-  });
+  let talkId: string;
+  try {
+    const talk = await createDidTalk(didKey, {
+      sourceUrl: 'https://studio.d-id.com/agents/default-avatar.png',
+      script: prompt,
+    });
+    talkId = talk.id;
+  } catch (err) {
+    logger.warn('[videoGenerate] D-ID talk initialization failed', { error: err });
+    return { videoUrl: null, provider: 'd-id' };
+  }
 
   for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
     await sleep(`did-poll-${attempt}`, POLL_INTERVAL_MS);
-    const pollRes = await fetch(`https://api.d-id.com/talks/${talk.id}`, {
-      headers: { Authorization: `Basic ${didKey}` },
-    });
-    if (!pollRes.ok) break;
 
-    const pollData = await pollRes.json() as { status?: string; result_url?: string };
-    if (pollData.status === 'done' && pollData.result_url) {
-      return { videoUrl: pollData.result_url, provider: 'd-id' };
+    if (!shouldAllowRequest('did')) {
+      logger.warn('[videoGenerate] D-ID circuit breaker open during poll loop');
+      break;
     }
-    if (pollData.status === 'failed' || pollData.status === 'error') {
-      logger.warn('[videoGenerate] D-ID talk failed', { talkId: talk.id, status: pollData.status });
+
+    try {
+      const pollRes = await fetch(`https://api.d-id.com/talks/${talkId}`, {
+        headers: { Authorization: `Basic ${didKey}` },
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (!pollRes.ok) {
+        const kind = classifyHttpStatus(pollRes.status);
+        recordFailure('did', kind);
+        logger.warn('[videoGenerate] D-ID poll response not ok', { status: pollRes.status, kind });
+        break;
+      }
+
+      recordSuccess('did');
+      const pollData = (await pollRes.json()) as { status?: string; result_url?: string };
+      if (pollData.status === 'done' && pollData.result_url) {
+        return { videoUrl: pollData.result_url, provider: 'd-id' };
+      }
+      if (pollData.status === 'failed' || pollData.status === 'error') {
+        logger.warn('[videoGenerate] D-ID talk failed', { talkId, status: pollData.status });
+        break;
+      }
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('did', kind);
+      logger.warn('[videoGenerate] D-ID poll fetch error', { error: err, kind });
       break;
     }
   }
