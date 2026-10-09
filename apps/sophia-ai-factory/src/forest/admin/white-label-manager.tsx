@@ -33,7 +33,7 @@ export function WhiteLabelManager({
   initialBranding = null,
   actions = {},
 }: WhiteLabelManagerProps) {
-  const t = useTranslations('admin.whiteLabel');
+  const t = useTranslations('whiteLabel');
 
   const {
     activeTab,

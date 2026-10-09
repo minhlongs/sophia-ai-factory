@@ -1,3 +1,4 @@
+// i18n-namespace: whiteLabel
 /**
  * White-Label Manager Domain State & Actions Hook.
  *

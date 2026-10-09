@@ -1,3 +1,4 @@
+// i18n-namespace: whiteLabel
 /**
  * White-Label Manager Translation Label Builders.
  *
@@ -33,7 +34,7 @@ export function getDomainsTabLabels(t: (key: string) => string): DomainsTabLabel
       adding: t('domains.adding'),
     },
     list: {
-      title: t('domains.listTitle'),
+      title: t('domains.title'),
       emptyTitle: t('domains.emptyTitle'),
       emptyDescription: t('domains.emptyDescription'),
     },
@@ -89,8 +90,8 @@ export function getBrandingFormLabels(t: (key: string) => string): BrandingFormL
 
 export function getSidePreviewLabels(t: (key: string) => string): SidePreviewLabels {
   return {
-    livePreviewTitle: t('branding.livePreviewTitle'),
-    livePreviewDescription: t('branding.livePreviewDescription'),
+    livePreviewTitle: t('preview.title'),
+    livePreviewDescription: t('preview.subtitle'),
     navHome: t('preview.navHome'),
     navCampaigns: t('preview.navCampaigns'),
     badge: t('preview.badge'),
