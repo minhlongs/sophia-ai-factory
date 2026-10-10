@@ -133,3 +133,6 @@ export * from './growth/process-video-attribution';
 
 // Growth Triad v15: Performance Feedback Ingestion Worker
 export * from './feedback-ingest-worker';
+export * from '@/forest/growth-v15';
+export * from './multi-track-video-pipeline';
+

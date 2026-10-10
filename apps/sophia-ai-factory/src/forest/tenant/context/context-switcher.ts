@@ -1,0 +1,197 @@
+/**
+ * Multi-Tenant Organization Context Switcher
+ *
+ * Layer: forest/tenant/context
+ */
+
+import { getD1, type D1Database } from '@/seed/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { logger } from '@/seed/utils/logger-utility';
+import { logAuditEvent } from '@/tree/audit/logger/audit-query';
+import type { OrgRole } from '@/seed/types/rbac-matrix';
+import {
+  ACTIVE_ORG_COOKIE,
+  ACTIVE_ORG_HEADER,
+  FALLBACK_ORG_HEADER,
+  OrgContextError,
+  type ActiveOrgContext,
+} from './types';
+import { validateOrgMembership } from './membership-validator';
+
+export async function switchActiveOrg(
+  userId: string,
+  targetOrgId: string,
+  dbClient?: D1Database | null,
+): Promise<ActiveOrgContext> {
+  if (!userId) {
+    throw new OrgContextError('Authentication required to switch organization', 'UNAUTHENTICATED');
+  }
+
+  const cleanOrgId = (targetOrgId || '').trim();
+  if (!cleanOrgId) {
+    throw new OrgContextError('Invalid organization identifier provided', 'INVALID_ORG_ID');
+  }
+
+  const d1 = dbClient ?? (await getD1());
+  const validation = await validateOrgMembership(userId, cleanOrgId, d1);
+
+  if (!validation.isMember || !validation.org) {
+    logger.warn('[security] unauthorized_org_context_assertion', {
+      userId,
+      targetOrgId: cleanOrgId,
+      reason: 'not_a_member_or_inactive',
+      timestamp: new Date().toISOString(),
+    });
+
+    logAuditEvent({
+      action: 'UNAUTHORIZED_ORG_CONTEXT_ASSERTION',
+      userId,
+      metadata: { targetOrgId: cleanOrgId, timestamp: Date.now() },
+    }).catch(() => {});
+
+    throw new OrgContextError(
+      `User '${userId}' is not an active member of organization '${cleanOrgId}'`,
+      'MEMBERSHIP_NOT_FOUND',
+      cleanOrgId,
+      userId,
+    );
+  }
+
+  const context: ActiveOrgContext = {
+    orgId: cleanOrgId,
+    orgName: validation.org.name,
+    slug: validation.org.slug,
+    role: validation.role || 'viewer',
+    tier: validation.org.tier || 'free',
+    userId,
+  };
+
+  logger.info('[OrgContext] Active organization switched successfully', {
+    userId,
+    orgId: cleanOrgId,
+    role: context.role,
+  });
+
+  return context;
+}
+
+export async function getActiveOrgContext(options?: {
+  reqHeaders?: Headers | null;
+  activeCookie?: string | null;
+  explicitUserId?: string | null;
+  dbClient?: D1Database | null;
+}): Promise<ActiveOrgContext | null> {
+  const d1 = options?.dbClient ?? (await getD1());
+  let userId = options?.explicitUserId;
+
+  if (!userId) {
+    const user = await getCurrentUser();
+    if (!user) return null;
+    userId = user.id;
+  }
+
+  let candidateOrgId =
+    options?.reqHeaders?.get(ACTIVE_ORG_HEADER) || options?.reqHeaders?.get(FALLBACK_ORG_HEADER);
+
+  if (!candidateOrgId && options?.activeCookie) {
+    candidateOrgId = options.activeCookie;
+  }
+
+  if (!candidateOrgId) {
+    try {
+      const { cookies } = await import('next/headers');
+      const store = await cookies();
+      candidateOrgId = store.get(ACTIVE_ORG_COOKIE)?.value;
+    } catch {
+      // In environments where next/headers is not available
+    }
+  }
+
+  if (candidateOrgId && candidateOrgId.trim() !== '') {
+    const val = await validateOrgMembership(userId, candidateOrgId.trim(), d1);
+    if (val.isMember && val.org) {
+      return {
+        orgId: candidateOrgId.trim(),
+        orgName: val.org.name,
+        slug: val.org.slug,
+        role: val.role || 'viewer',
+        tier: val.org.tier || 'free',
+        userId,
+      };
+    }
+    logger.warn('[OrgContext] Stale or invalid active_org_id candidate ignored', {
+      userId,
+      candidateOrgId,
+    });
+  }
+
+  if (!d1) return null;
+
+  try {
+    const primaryRow = await d1
+      .prepare(
+        `SELECT m.org_id, m.role, o.name, o.slug, o.tier, o.status
+         FROM organization_members m
+         JOIN organizations o ON o.id = m.org_id
+         WHERE m.user_id = ?1 AND o.status = 'active'
+         ORDER BY m.created_at ASC
+         LIMIT 1`,
+      )
+      .bind(userId)
+      .first<{
+        org_id: string;
+        role: string;
+        name: string;
+        slug: string;
+        tier: string;
+      }>();
+
+    if (primaryRow) {
+      return {
+        orgId: primaryRow.org_id,
+        orgName: primaryRow.name,
+        slug: primaryRow.slug,
+        role: primaryRow.role as OrgRole,
+        tier: primaryRow.tier,
+        userId,
+      };
+    }
+  } catch {
+    // Try legacy fallback
+  }
+
+  try {
+    const legacyRow = await d1
+      .prepare(
+        `SELECT m.org_id, m.role, o.name, o.slug, o.tier
+         FROM org_members m
+         JOIN organizations o ON o.id = m.org_id
+         WHERE m.user_id = ?1
+         ORDER BY m.created_at ASC
+         LIMIT 1`,
+      )
+      .bind(userId)
+      .first<{
+        org_id: string;
+        role: string;
+        name: string;
+        slug: string;
+        tier: string;
+      }>();
+
+    if (legacyRow) {
+      return {
+        orgId: legacyRow.org_id,
+        orgName: legacyRow.name,
+        slug: legacyRow.slug,
+        role: (legacyRow.role || 'member') as OrgRole,
+        tier: legacyRow.tier || 'free',
+        userId,
+      };
+    }
+  } catch {
+    // No orgs found
+  }
+
+  return null;
+}

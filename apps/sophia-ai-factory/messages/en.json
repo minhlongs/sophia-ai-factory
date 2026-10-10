@@ -1,4 +1,5 @@
 {
+  "100": "100",
   "Growth": {
     "campaign_id": "Campaign ID",
     "total_revenue": "Total Revenue",
@@ -7,7 +8,6 @@
     "roi_dashboard": "ROI Dashboard",
     "chart_empty": "No data available"
   },
-  "100": "100",
   "agency": {
     "cockpitTitle": "Agency Operations Cockpit",
     "cockpitSubtitle": "Manage your clients, video campaigns, credit quotas, and revenue attribution.",
@@ -5367,7 +5367,12 @@
     "back": "Back",
     "launch": "Launch",
     "next": "Next",
-    "saving": "Saving"
+    "saving": "Saving",
+    "view": "View",
+    "approve": "Approve",
+    "reject": "Reject",
+    "retry": "Retry",
+    "delivered": "Delivered"
   },
   "alerts": {
     "invalidKey": "Invalid API key format",
@@ -5453,7 +5458,17 @@
   },
   "empty": {
     "description": "Description",
-    "title": "Title"
+    "title": "Title",
+    "pending": {
+      "title": "Title",
+      "description": "Description"
+    },
+    "published": {
+      "title": "Title",
+      "description": "Description"
+    },
+    "message": "Message",
+    "cta": "Cta"
   },
   "empty_state": {
     "action": "Action",
@@ -5619,7 +5634,9 @@
   },
   "sections": {
     "active": "Active",
-    "decided": "Decided"
+    "decided": "Decided",
+    "pendingReviews": "Pending Reviews",
+    "publishedListings": "Published Listings"
   },
   "stats": "Stats",
   "statusPanel": {
@@ -5664,7 +5681,23 @@
     "status": "Status",
     "tier": "Tier",
     "title": "Title",
-    "topic": "Topic"
+    "topic": "Topic",
+    "columns": {
+      "title": "Title",
+      "creator": "Creator",
+      "category": "Category",
+      "price": "Price",
+      "submitted": "Submitted",
+      "actions": "Actions",
+      "installs": "Installs",
+      "rating": "Rating",
+      "updated": "Updated"
+    },
+    "uncategorized": "Uncategorized",
+    "video": "Video",
+    "template": "Template",
+    "target": "Target",
+    "created": "Created"
   },
   "table_tier_growth": "Growth",
   "table_tier_master": "Master",
@@ -8886,5 +8919,24 @@
     "metricConversions": "Conversions",
     "metricMrr": "MRR Revenue",
     "metricRebates": "Fee Rebates"
-  }
+  },
+  "legend": {
+    "title": "Title"
+  },
+  "overview": "Overview",
+  "createMission": "Create Mission",
+  "aiMissions": "Ai Missions",
+  "youtubeAutomation": "Youtube Automation",
+  "playbooks": "Playbooks",
+  "distributionQueue": "Distribution Queue",
+  "creatorMarketplace": "Creator Marketplace",
+  "handoverAcceptance": "Handover Acceptance",
+  "byLabel": "By Label",
+  "sales": "Sales",
+  "searchPlaceholder": "Search Placeholder",
+  "filterCategory": "Filter Category",
+  "filterAll": "Filter All",
+  "sortPopular": "Sort Popular",
+  "sortRating": "Sort Rating",
+  "sortNewest": "Sort Newest"
 }

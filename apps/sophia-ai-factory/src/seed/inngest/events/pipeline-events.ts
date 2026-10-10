@@ -169,3 +169,17 @@ export type AutonomousCampaignScalingRequestedEvent = {
     }[];
   };
 };
+
+export type VideoMultiTrackPipelineRequestedEvent = {
+  data: {
+    pipelineId: string;
+    userId: string;
+    topic: string;
+    targetDurationSeconds?: number;
+    aspectRatio?: '16:9' | '9:16' | '1:1';
+    language?: 'en' | 'vi';
+    voiceId?: string;
+    platforms?: ('YOUTUBE_SHORTS' | 'TIKTOK' | 'INSTAGRAM_REELS')[];
+  };
+};
+

@@ -188,3 +188,26 @@ export type GrowthV15FeedbackIngestEvent = {
     collectedAt: number;
   };
 };
+
+export type GrowthV15TelemetryPollEvent = {
+  data: {
+    videoManifestId?: string;
+    userId?: string;
+    platform?: string;
+    interval?: 'T+2h' | 'T+12h' | 'T+24h' | 'T+72h';
+  };
+};
+
+export type GrowthV15PriorRecalibrateEvent = {
+  data: {
+    userId: string;
+    dimKey: string;
+    dimVal: string;
+    hookDropoffRate: number;
+    normalizedCompletionScore: number;
+    priorAlpha?: number;
+    priorBeta?: number;
+    dampeningFactor?: number;
+  };
+};
+

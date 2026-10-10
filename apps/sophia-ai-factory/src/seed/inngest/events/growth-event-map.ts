@@ -58,9 +58,13 @@ import type {
   GrowthV14RenderStage1EvaluateEvent,
   GrowthV14RenderHaltEvent,
   GrowthV15FeedbackIngestEvent,
+  GrowthV15TelemetryPollEvent,
+  GrowthV15PriorRecalibrateEvent,
 } from './growth-viral-events-b';
 
 export type GrowthEvents = {
+  "growth/v15.telemetry.poll": GrowthV15TelemetryPollEvent;
+  "growth/v15.prior.recalibrate": GrowthV15PriorRecalibrateEvent;
   "growth/v15.feedback.ingest": GrowthV15FeedbackIngestEvent;
   "growth/v14.render.schedule": GrowthV14RenderScheduleEvent;
   "growth/v14.render.stage1_evaluate": GrowthV14RenderStage1EvaluateEvent;

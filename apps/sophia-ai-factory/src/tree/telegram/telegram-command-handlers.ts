@@ -16,6 +16,7 @@ export { handleTextMessage, handleUnknown } from './handlers/text-message-handle
 export { handleTicket } from './handlers/ticket-handler'
 export { handleMissions } from './handlers/missions-handler'
 export { handleAnalytics } from './handlers/analytics-handler'
+export { handlePayout } from './handlers/payout-handler'
 
 /**
  * Middleware wrapper - checks rate limit before executing handler

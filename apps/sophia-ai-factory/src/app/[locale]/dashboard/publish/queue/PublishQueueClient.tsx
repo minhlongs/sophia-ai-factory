@@ -2,66 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  RefreshCw,
-  MessageCircle,
-  Send,
-  Shield,
-  Loader2,
-} from 'lucide-react';
+import { RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/seed/components/ui/button';
-import { EmptyState } from '@/seed/components/ui/empty-state';
-
-interface PublishJob {
-  id: string;
-  videoId: string;
-  videoTitle: string;
-  templateId: number;
-  templateName: string;
-  target: string;
-  status: 'pending' | 'scheduled' | 'sent' | 'failed' | 'pending_approval';
-  createdAt: number;
-  sentAt?: number;
-  errorMessage?: string;
-}
-
-const STATUS_CONFIG: Record<PublishJob['status'], { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  pending: {
-    label: 'Pending',
-    icon: <Clock className="w-4 h-4" />,
-    color: 'text-yellow-600',
-    bg: 'bg-yellow-50 border-yellow-200',
-  },
-  scheduled: {
-    label: 'Scheduled',
-    icon: <Clock className="w-4 h-4" />,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50 border-blue-200',
-  },
-  sent: {
-    label: 'Sent',
-    icon: <CheckCircle className="w-4 h-4" />,
-    color: 'text-green-600',
-    bg: 'bg-green-50 border-green-200',
-  },
-  failed: {
-    label: 'Failed',
-    icon: <XCircle className="w-4 h-4" />,
-    color: 'text-red-600',
-    bg: 'bg-red-50 border-red-200',
-  },
-  pending_approval: {
-    label: 'Approval Needed',
-    icon: <Shield className="w-4 h-4" />,
-    color: 'text-orange-600',
-    bg: 'bg-orange-50 border-orange-200',
-  },
-};
+import {
+  type PublishJob,
+  QueueApprovalBanner,
+  QueueTable,
+  QueueLegend,
+} from './modules';
 
 export function PublishQueueClient() {
   const t = useTranslations('publish.queue');
@@ -109,7 +57,6 @@ export function PublishQueueClient() {
         throw new Error(data.error || 'Approval failed');
       }
 
-      // Refresh jobs after approval
       await fetchJobs();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Approval failed');
@@ -137,23 +84,6 @@ export function PublishQueueClient() {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatTarget = (target: string) => {
-    if (target.startsWith('wa:')) {
-      return target.replace('wa:', '+');
-    }
-    return target;
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -168,7 +98,6 @@ export function PublishQueueClient() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">{t('title') || 'Publish Queue'}</h1>
@@ -176,177 +105,44 @@ export function PublishQueueClient() {
               {t('subtitle') || 'Monitor and manage your WhatsApp publish jobs'}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={fetchJobs}
-            className="flex items-center gap-2"
-          >
+          <Button variant="outline" onClick={fetchJobs} className="flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
             {common('refresh') || 'Refresh'}
           </Button>
         </div>
 
-        {/* Approval Gate Banner */}
         {showApprovalBanner && (
-          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-orange-800 mb-1">
-                  {t('approvalBanner.title') || 'First Publish Requires Approval'}
-                </h3>
-                <p className="text-orange-700 text-sm mb-3">
-                  {t('approvalBanner.message') || 'Your first WhatsApp publish requires explicit approval. Click "Approve" on the pending job to continue.'}
-                </p>
-                <p className="text-orange-600 text-xs">
-                  {t('approvalBanner.note') || 'This is a one-time security measure to prevent accidental sends.'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <QueueApprovalBanner
+            title={t('approvalBanner.title')}
+            message={t('approvalBanner.message')}
+            note={t('approvalBanner.note')}
+          />
         )}
 
-        {/* Error State */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
               <span>{error}</span>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchJobs}
-            >
+            <Button variant="outline" size="sm" onClick={fetchJobs}>
               {common('retry') || 'Retry'}
             </Button>
           </div>
         )}
 
-        {/* Jobs Table */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-          {jobs.length === 0 ? (
-            <EmptyState
-              icon={Send}
-              title={t('empty.title') || 'No Publish Jobs Yet'}
-              description={t('empty.message') || 'Schedule your first WhatsApp publish from the video editor or setup wizard.'}
-              cta={{
-                label: t('empty.cta') || 'Create WhatsApp Template',
-                href: '/dashboard/setup/whatsapp-templates',
-              }}
-              className="border-0 rounded-none bg-transparent py-12"
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted/50 border-b border-border">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {t('table.video') || 'Video'}
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {t('table.template') || 'Template'}
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {t('table.target') || 'Target'}
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {t('table.status') || 'Status'}
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {t('table.created') || 'Created'}
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {t('table.actions') || 'Actions'}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {jobs.map((job) => {
-                    const statusConfig = STATUS_CONFIG[job.status];
-                    return (
-                      <tr key={job.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-4">
-                          <div>
-                            <p className="font-medium text-foreground truncate max-w-xs">
-                              {job.videoTitle || `Video ${job.videoId.slice(0, 8)}...`}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{job.videoId}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <MessageCircle className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-foreground">{job.templateName || `Template #${job.templateId}`}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className="text-sm font-mono text-foreground">{formatTarget(job.target)}</span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border', statusConfig.bg, statusConfig.color)}>
-                            {statusConfig.icon}
-                            {t(`status.${job.status}`) || statusConfig.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground">
-                          {formatDate(job.createdAt)}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {job.status === 'pending_approval' && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleApprove(job.id)}
-                                disabled={approvingJobId === job.id}
-                                className="bg-orange-600 hover:bg-orange-700 text-white"
-                              >
-                                {approvingJobId === job.id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Shield className="w-3 h-3" />
-                                )}
-                                {t('actions.approve') || 'Approve'}
-                              </Button>
-                            )}
-                            {job.status === 'failed' && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleRetry(job.id)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                                {t('actions.retry') || 'Retry'}
-                              </Button>
-                            )}
-                            {job.status === 'sent' && (
-                              <span className="px-3 py-1.5 text-xs text-green-600 font-medium">
-                                {t('actions.delivered') || 'Delivered'}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <QueueTable
+            jobs={jobs}
+            locale={locale}
+            approvingJobId={approvingJobId}
+            onApprove={handleApprove}
+            onRetry={handleRetry}
+            t={t}
+          />
         </div>
 
-        {/* Legend */}
-        <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-          <h4 className="text-sm font-medium text-foreground mb-3">{t('legend.title') || 'Status Legend'}</h4>
-          <div className="flex flex-wrap gap-4 text-sm">
-            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-              <span key={key} className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border', config.bg, config.color)}>
-                {config.icon}
-                {t(`status.${key}`) || config.label}
-              </span>
-            ))}
-          </div>
-        </div>
+        <QueueLegend t={t} />
       </div>
     </div>
   );

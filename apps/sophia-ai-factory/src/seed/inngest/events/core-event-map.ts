@@ -22,6 +22,7 @@ import type {
   AutonomousVideoPipelineRequestedEvent,
   NicheVideoCampaignRequestedEvent,
   AutonomousCampaignScalingRequestedEvent,
+  VideoMultiTrackPipelineRequestedEvent,
 } from './pipeline-events';
 
 import type {
@@ -111,4 +112,5 @@ export type CoreEvents = {
   "niche.video.campaign.requested": NicheVideoCampaignRequestedEvent;
   "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
   "autonomous.campaign.scaling.requested": AutonomousCampaignScalingRequestedEvent;
+  "video.multitrack.pipeline.requested": VideoMultiTrackPipelineRequestedEvent;
 };

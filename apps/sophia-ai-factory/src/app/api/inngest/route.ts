@@ -83,6 +83,9 @@ import {
   affiliateYieldJob,
   ghostMatrixJob,
   cultureInjectorJob,
+  socialTelemetryIngestWorker,
+  priorRecalibrationWorker,
+  multiTrackVideoPipeline,
 } from "@/forest/inngest/functions/index";
 
 
@@ -221,8 +224,13 @@ export const { GET, POST, PUT } = serve({
     submitAudioResonanceJob,
     submitCommunityBaitJob,
     evaluateSubscriberCohortJob,
-  affiliateYieldJob,
-  ghostMatrixJob,
-  cultureInjectorJob,
+    affiliateYieldJob,
+    ghostMatrixJob,
+    cultureInjectorJob,
+    // Growth Triad v15: Social Telemetry Ingest & Bayesian Prior Recalibration
+    socialTelemetryIngestWorker,
+    priorRecalibrationWorker,
+    // Multi-Track Atomic Video Production Pipeline
+    multiTrackVideoPipeline,
   ],
 });

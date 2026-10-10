@@ -1,0 +1,173 @@
+/**
+ * CMEK Envelope Encryption & Key Operations Engine
+ *
+ * Layer: tree/sovereignty/cmek
+ */
+
+import type {
+  EnvelopeAad,
+  EnvelopeCiphertextPayload,
+} from '@/seed/types/sovereign-vault';
+import {
+  AES_ALGORITHM,
+  IV_LENGTH_BYTES,
+  ENVELOPE_PREFIX,
+  CmekCryptoError,
+  CmekTamperError,
+} from './envelope-types';
+import {
+  bytesToBase64,
+  base64ToBytes,
+  canonicalAadJson,
+  importAesGcmKey,
+} from './web-crypto-primitives';
+
+export async function wrapDek(
+  rawDek: Uint8Array,
+  rawKek: Uint8Array,
+): Promise<{ wrappedDekBase64: string; dekIvBase64: string }> {
+  const kekCryptoKey = await importAesGcmKey(rawKek);
+  const iv = new Uint8Array(IV_LENGTH_BYTES);
+  crypto.getRandomValues(iv);
+
+  const wrappedBuffer = await crypto.subtle.encrypt(
+    { name: AES_ALGORITHM, iv: iv as unknown as BufferSource },
+    kekCryptoKey,
+    rawDek as unknown as BufferSource,
+  );
+
+  return {
+    wrappedDekBase64: bytesToBase64(new Uint8Array(wrappedBuffer)),
+    dekIvBase64: bytesToBase64(iv),
+  };
+}
+
+export async function unwrapDek(
+  wrappedDekBase64: string,
+  dekIvBase64: string,
+  rawKek: Uint8Array,
+): Promise<Uint8Array> {
+  const kekCryptoKey = await importAesGcmKey(rawKek);
+  const iv = base64ToBytes(dekIvBase64);
+  const ciphertext = base64ToBytes(wrappedDekBase64);
+
+  try {
+    const decryptedBuffer = await crypto.subtle.decrypt(
+      { name: AES_ALGORITHM, iv: iv as unknown as BufferSource },
+      kekCryptoKey,
+      ciphertext as unknown as BufferSource,
+    );
+    return new Uint8Array(decryptedBuffer);
+  } catch {
+    throw new CmekCryptoError(
+      'Failed to unwrap DEK: Invalid KEK, corrupted wrapped DEK, or key has been shredded',
+      'DEK_UNWRAP_FAILED',
+    );
+  }
+}
+
+export async function encryptWithEnvelope(
+  plaintext: string | Uint8Array,
+  rawDek: Uint8Array,
+  aad: EnvelopeAad,
+  keyId: string,
+  keyVersion: number,
+): Promise<{
+  envelopeString: string;
+  payload: EnvelopeCiphertextPayload;
+}> {
+  const dekCryptoKey = await importAesGcmKey(rawDek);
+  const iv = new Uint8Array(IV_LENGTH_BYTES);
+  crypto.getRandomValues(iv);
+
+  const plainBytes =
+    typeof plaintext === 'string' ? new TextEncoder().encode(plaintext) : plaintext;
+
+  const canonicalAad = canonicalAadJson(aad);
+  const aadBytes = new TextEncoder().encode(canonicalAad);
+
+  const cipherBuffer = await crypto.subtle.encrypt(
+    {
+      name: AES_ALGORITHM,
+      iv: iv as unknown as BufferSource,
+      additionalData: aadBytes as unknown as BufferSource,
+    },
+    dekCryptoKey,
+    plainBytes as unknown as BufferSource,
+  );
+
+  const ivBase64 = bytesToBase64(iv);
+  const ciphertextBase64 = bytesToBase64(new Uint8Array(cipherBuffer));
+  const envelopeString = `${ENVELOPE_PREFIX}:${keyId}:${keyVersion}:${ivBase64}:${ciphertextBase64}`;
+
+  return {
+    envelopeString,
+    payload: {
+      header: ENVELOPE_PREFIX,
+      keyId,
+      keyVersion,
+      ivBase64,
+      ciphertextBase64,
+      aadCanonicalJson: canonicalAad,
+    },
+  };
+}
+
+export async function decryptWithEnvelope(
+  envelopeString: string,
+  rawDek: Uint8Array,
+  expectedAad: EnvelopeAad,
+): Promise<string> {
+  const parts = envelopeString.split(':');
+  if (parts.length !== 5 || parts[0] !== ENVELOPE_PREFIX) {
+    throw new CmekCryptoError(
+      `Invalid envelope format: expected ${ENVELOPE_PREFIX}:<keyId>:<keyVersion>:<iv>:<ciphertext>`,
+      'INVALID_ENVELOPE_FORMAT',
+    );
+  }
+
+  const [, , versionStr, ivBase64, ciphertextBase64] = parts;
+  const version = parseInt(versionStr, 10);
+
+  if (version !== expectedAad.keyVersion) {
+    throw new CmekTamperError(
+      `Key version mismatch: envelope specifies v${version}, expected v${expectedAad.keyVersion}`,
+    );
+  }
+
+  const dekCryptoKey = await importAesGcmKey(rawDek);
+  const iv = base64ToBytes(ivBase64);
+  const ciphertext = base64ToBytes(ciphertextBase64);
+  const canonicalAad = canonicalAadJson(expectedAad);
+  const aadBytes = new TextEncoder().encode(canonicalAad);
+
+  try {
+    const decryptedBuffer = await crypto.subtle.decrypt(
+      {
+        name: AES_ALGORITHM,
+        iv: iv as unknown as BufferSource,
+        additionalData: aadBytes as unknown as BufferSource,
+      },
+      dekCryptoKey,
+      ciphertext as unknown as BufferSource,
+    );
+
+    return new TextDecoder().decode(decryptedBuffer);
+  } catch (err) {
+    if (err instanceof CmekCryptoError) throw err;
+    throw new CmekTamperError();
+  }
+}
+
+export function cryptoShredDek(): {
+  shreddedDekBase64: string;
+  shreddedAt: number;
+} {
+  const randomEntropy = new Uint8Array(64);
+  crypto.getRandomValues(randomEntropy);
+
+  return {
+    shreddedDekBase64: bytesToBase64(randomEntropy),
+    shreddedAt: Date.now(),
+  };
+}
