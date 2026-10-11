@@ -35,7 +35,7 @@ export async function switchActiveOrg(
   const d1 = dbClient ?? (await getD1());
   const validation = await validateOrgMembership(userId, cleanOrgId, d1);
 
-  if (!validation.isMember || !validation.org) {
+  if (!validation.isMember || !validation.org || validation.org.status !== 'active') {
     logger.warn('[security] unauthorized_org_context_assertion', {
       userId,
       targetOrgId: cleanOrgId,

@@ -1,0 +1,135 @@
+import { redirect } from 'next/navigation';
+import { getTranslations, getLocale } from 'next-intl/server';
+import Link from 'next/link';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getD1 } from '@/seed/db/get-d1';
+import {
+  getCreatorProfile,
+  listMyListings,
+  getCreatorEarnings,
+  listActiveChallenges,
+  getUserAllProgress,
+} from '@/land/sop-marketplace';
+import { ReferralSection } from '@/components/billing/referral-section';
+import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
+import type { DashboardViewProps } from './types';
+import { ProfileCard, OnboardingView } from './creator-hero';
+import { EarningsSection, ChallengesSection } from './creator-stats';
+
+export function DashboardView({
+  profile,
+  totalInstalls,
+  earningsBreakdown,
+  challenges,
+  userProgress,
+  locale,
+  t,
+}: DashboardViewProps) {
+  return (
+    <div className="mx-auto max-w-4xl space-y-8">
+      <ProfileCard profile={profile} t={t} />
+
+      <EarningsSection
+        profile={profile}
+        totalInstalls={totalInstalls}
+        earningsBreakdown={earningsBreakdown}
+        t={t}
+      />
+
+      <ChallengesSection
+        challenges={challenges}
+        userProgress={userProgress}
+        locale={locale}
+        t={t}
+      />
+
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold">{t('referralEarn')}</h2>
+        <p className="mb-4 text-sm text-muted-foreground">{t('referralDesc')}</p>
+        <ReferralSection />
+      </div>
+
+      <div>
+        <Link
+          href="/creator/listings"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          {t('listings')}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export async function CreatorPage() {
+  const t = await getTranslations('marketplace.creator');
+  const locale = await getLocale();
+
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect('/login');
+  }
+
+  const profileResult = await getCreatorProfile();
+
+  if (!profileResult.ok && profileResult.error.code === 'PROFILE_NOT_FOUND') {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <OnboardingView t={t} />
+      </div>
+    );
+  }
+
+  if (!profileResult.ok) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/30 dark:text-red-400">
+          {profileResult.error.message}
+        </div>
+      </div>
+    );
+  }
+
+  const listingsResult = await listMyListings();
+  const totalInstalls = listingsResult.ok
+    ? listingsResult.value.reduce((sum, l) => sum + l.installCount, 0)
+    : 0;
+
+  const db = await getD1();
+  let earningsBreakdown = { totalEarned: 0, pending: 0, payable: 0, paid: 0 };
+  let challenges: SopChallengeRow[] = [];
+  let userProgress: UserChallengeProgressRow[] = [];
+
+  if (db) {
+    try {
+      const [earnings, activeChallenges, progress] = await Promise.all([
+        getCreatorEarnings(db, user.id),
+        listActiveChallenges(db),
+        getUserAllProgress(db, user.id),
+      ]);
+      earningsBreakdown = earnings;
+      challenges = activeChallenges;
+      userProgress = progress;
+    } catch {
+      // Graceful fallback — chart shows zeros, challenges section shows empty
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
+      </div>
+      <DashboardView
+        profile={profileResult.value}
+        totalInstalls={totalInstalls}
+        earningsBreakdown={earningsBreakdown}
+        challenges={challenges}
+        userProgress={userProgress}
+        locale={locale}
+        t={t}
+      />
+    </div>
+  );
+}

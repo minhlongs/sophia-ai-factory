@@ -334,6 +334,7 @@ const eslintConfig = defineConfig([
 "src/forest/hooks/use-analytics-data.ts",
 // inngest functions — orchestrate land domain services (mekong-exempt)
 "src/forest/inngest/functions/analytics-sync.ts",
+"src/forest/inngest/functions/analytics/**",
 "src/forest/inngest/functions/batch-video-fanout.ts",
 "src/forest/inngest/functions/distribution-fanout.ts",
 "src/forest/inngest/functions/generate-campaign.ts",
@@ -382,6 +383,7 @@ const eslintConfig = defineConfig([
     "src/forest/agents/runner.ts",
     // daily-briefing — uses land/openclaw memory adapter (mekong-exempt: orchestration)
     "src/forest/agents/daily-briefing/briefing-generator.ts",
+    "src/forest/agents/daily-briefing/generator/**",
       // account-delete-finalize-cron orchestrates land/account cascade-delete on Inngest schedule
       // (mekong-exempt: forest → land orchestration per cross-layer-orchestration.md).
       "src/forest/inngest/functions/account-delete-finalize-cron.ts",

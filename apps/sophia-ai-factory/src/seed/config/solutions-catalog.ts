@@ -26,6 +26,7 @@ import {
 } from '@/seed/config/solutions/solutions-lookup';
 
 export { SOLUTION_ALIASES } from '@/seed/config/solutions/solutions-lookup';
+export type { SolutionIndustry } from '@/seed/types/solutions-types';
 
 /**
  * 22+ Canonical Industry Solutions Profiles.

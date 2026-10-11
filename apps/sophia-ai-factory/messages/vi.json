@@ -6126,7 +6126,10 @@
   "signature": "Chữ ký",
   "slug": "Slug",
   "sonner": "Sonner",
-  "sort": "Sort",
+  "sort": {
+    "fallback": "Sort",
+    "label": "Label"
+  },
   "sortBy": "Sort By",
   "start": "Start",
   "state": "State",
@@ -7613,7 +7616,8 @@
       "delete": "Delete"
     },
     "pageTitle": "Page Title",
-    "pageSubtitle": "Page Subtitle"
+    "pageSubtitle": "Page Subtitle",
+    "savePercent": "Save Percent"
   },
   "campaigns": {
     "all_statuses": "All statuses",
@@ -8945,5 +8949,28 @@
   "filterAll": "Filter All",
   "sortPopular": "Sort Popular",
   "sortRating": "Sort Rating",
-  "sortNewest": "Sort Newest"
+  "sortNewest": "Sort Newest",
+  "titlePlaceholder": "Title Placeholder",
+  "bio": "Bio",
+  "bioPlaceholder": "Bio Placeholder",
+  "categoryPlaceholder": "Category Placeholder",
+  "sopTemplate": "Sop Template",
+  "thumbnail": "Thumbnail",
+  "price": "Price",
+  "pricePlaceholder": "Price Placeholder",
+  "emptySearch": "Empty Search",
+  "resetFilters": "Reset Filters",
+  "scamGated": "Scam Gated",
+  "categories": {
+    "label": "Label"
+  },
+  "payoutModels": {
+    "label": "Label"
+  },
+  "popular": "Popular",
+  "plans": {
+    "master": {
+      "price": "Price"
+    }
+  }
 }
