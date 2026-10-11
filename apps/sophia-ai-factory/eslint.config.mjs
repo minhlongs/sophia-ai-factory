@@ -308,6 +308,7 @@ const eslintConfig = defineConfig([
 "src/forest/components/analytics/revenue-card.tsx",
 "src/forest/components/analytics/service-breakdown.tsx",
 "src/forest/components/analytics/unified-revenue-chart.tsx",
+"src/forest/components/analytics/unified-revenue/**",
 "src/forest/components/analytics/usage-chart.tsx",
 // auth/signup-form — reads land/analytics for conversion tracking (mekong-exempt)
 "src/forest/components/auth/signup-form.tsx",
@@ -370,6 +371,7 @@ const eslintConfig = defineConfig([
 "src/forest/missions/handlers/video-create.ts",
 // publishing — reads land/i18n, tiktok, youtube for publishing (mekong-exempt)
 "src/forest/publishing/bundle-publisher.ts",
+"src/forest/publishing/bundle/**",
 "src/forest/publishing/oauth-token-refresher.ts",
 "src/forest/publishing/template-engine.ts",
 "src/forest/publishing/tiktok-publisher.ts",

@@ -1,0 +1,176 @@
+/**
+ * Auto-handover Orchestrator Engine
+ * Layer: tree/handover/auto
+ */
+
+import { getD1 } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
+import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup'
+import { createMagicLinkToken } from '@/tree/handover/handover-magic-link'
+import { sendTierUpgradeEmail } from '@/tree/handover/handover-email-service'
+import { enqueueWelcomeEmail } from '@/tree/outbox'
+import { installStarterSop } from '@/tree/handover/install-starter-sop'
+import type { AutoHandoverOptions, AutoHandoverResult } from './types'
+import {
+  getStarterSops,
+  findUserByEmail,
+  handoverExistsForPayment,
+  getExistingHandoverId,
+  countUserPurchases,
+  localePath,
+} from './handover-queries'
+
+/**
+ * Trigger auto-handover from payment IPN.
+ * Non-fatal — wrap in try/catch at call site.
+ */
+export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<AutoHandoverResult> {
+  const {
+    paymentId,
+    email,
+    tier,
+    agencyType = 'other',
+    locale = 'vi',
+    isFirstPurchase,
+  } = opts
+  const fullName = opts.fullName ?? email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+  const _db = await getD1()
+  if (!_db) throw new Error('D1 binding not available')
+  const db = _db
+
+  // Idempotency — skip if already processed this paymentId
+  const alreadyProcessed = await handoverExistsForPayment(db, paymentId)
+  if (alreadyProcessed) {
+    const existingId = await getExistingHandoverId(db, opts.userId!)
+    logger.info('[AutoHandover] Already processed — skip', { paymentId })
+    return {
+      handoverId: existingId,
+      isNewCustomer: false,
+      magicLink: null,
+      sopsInstalled: [],
+      skipped: true,
+      skipReason: 'duplicate_payment_id',
+    }
+  }
+
+  // Resolve userId
+  let userId = opts.userId ?? null
+  let isNewCustomer = false
+
+  if (!userId) {
+    userId = await findUserByEmail(db, email)
+  }
+
+  if (!userId) {
+    try {
+      userId = await createCustomerUser(db, email, fullName)
+      isNewCustomer = true
+      logger.info('[AutoHandover] New customer created', { userId, email })
+    } catch (err) {
+      logger.error('[AutoHandover] createCustomerUser failed', err instanceof Error ? err : undefined)
+      return { handoverId: null, isNewCustomer: false, magicLink: null, sopsInstalled: [], skipped: true, skipReason: 'user_create_failed' }
+    }
+
+    if (tier === 'MASTER') {
+      installStarterSop(db, userId).catch((err) =>
+        logger.warn('[AutoHandover] installStarterSop failed (non-fatal)', { error: String(err) }),
+      )
+    }
+  }
+
+  // Upsert tier
+  await upsertUserTier(db, userId, tier, email)
+
+  // Check existing handover
+  const existingHandoverId = await getExistingHandoverId(db, userId)
+  const purchaseCount = await countUserPurchases(db, userId)
+  const isTierUpgrade = !!existingHandoverId && !isFirstPurchase && purchaseCount > 1
+
+  if (isTierUpgrade) {
+    try {
+      await sendTierUpgradeEmail({
+        toEmail: email,
+        ownerFullName: fullName,
+        newTier: tier,
+        locale,
+      })
+    } catch (err) {
+      logger.warn('[AutoHandover] Tier upgrade email failed (non-fatal)', { error: getErrorMessage(err) })
+    }
+    return {
+      handoverId: existingHandoverId,
+      isNewCustomer: false,
+      magicLink: null,
+      sopsInstalled: [],
+      skipped: false,
+    }
+  }
+
+  // First handover — install SOPs + create record + magic link + welcome email
+  const sopSlugs = getStarterSops(tier, agencyType)
+  const installedSops = await preInstallSops(db, userId, sopSlugs)
+
+  let handoverId: string | null = null
+  try {
+    handoverId = await createHandoverRecord(db, {
+      userId,
+      agencyName: fullName,
+      agencyType,
+      tier,
+      installedSops,
+      adminId: 'SYSTEM_AUTO',
+      source: 'auto_payment',
+      triggerPaymentId: paymentId,
+    })
+  } catch (err) {
+    logger.error('[AutoHandover] createHandoverRecord failed', err instanceof Error ? err : undefined)
+    return { handoverId: null, isNewCustomer, magicLink: null, sopsInstalled: installedSops, skipped: true, skipReason: 'record_create_failed' }
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+  let magicLink: string | null = null
+  let magicLinkError: string | undefined
+  try {
+    const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' })
+    magicLink = `${appUrl}${localePath(locale)}/welcome/${token}`
+  } catch (err) {
+    magicLinkError = getErrorMessage(err)
+    logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: magicLinkError })
+  }
+
+  try {
+    await enqueueWelcomeEmail(db, {
+      paymentId,
+      toEmail: email,
+      template: 'welcome-magic-link',
+      payload: {
+        ownerFullName: fullName,
+        tier,
+        locale,
+        magicLinkUrl: magicLink ?? `${appUrl}${localePath(locale)}/login`,
+      },
+    })
+  } catch (err) {
+    logger.warn('[AutoHandover] Welcome email enqueue failed (non-fatal)', { error: getErrorMessage(err) })
+  }
+
+  logger.info('[AutoHandover] Handover complete', {
+    handoverId,
+    userId,
+    tier,
+    isNewCustomer,
+    sopsInstalled: installedSops.length,
+    paymentId,
+  })
+
+  return {
+    handoverId,
+    isNewCustomer,
+    magicLink,
+    sopsInstalled: installedSops,
+    skipped: false,
+    error: magicLinkError,
+  }
+}
