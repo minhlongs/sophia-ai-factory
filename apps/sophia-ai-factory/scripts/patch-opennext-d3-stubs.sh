@@ -10,14 +10,18 @@ BUNDLE_SERVER="node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.
 LOAD_MANIFEST="node_modules/@opennextjs/cloudflare/dist/cli/build/patches/plugins/load-manifest.js"
 
 if [ -f "$LOAD_MANIFEST" ]; then
-  if ! grep -q 'preview-props' "$LOAD_MANIFEST"; then
-    sed -i.bak 's/{*-manifest,required-server-files,prefetch-hints}/{*-manifest,required-server-files,prefetch-hints,preview-props}/g' "$LOAD_MANIFEST"
-    sed -i.bak 's/p\.endsWith("prefetch-hints")/p.endsWith("prefetch-hints") || p.endsWith("preview-props")/g' "$LOAD_MANIFEST"
-    rm -f "${LOAD_MANIFEST}.bak"
-    echo "✅ Patched OpenNext load-manifest.js with Next.js 16.4 preview-props.json support"
-  else
-    echo "✅ OpenNext load-manifest.js already includes preview-props.json"
-  fi
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    let s = fs.readFileSync(file, "utf8");
+    s = s.replace("{*{*-manifest,", "{*-manifest,");
+    s = s.replace("{*-manifest,required-server-files,prefetch-hints}.json", "{*-manifest,required-server-files,prefetch-hints,preview-props}.json");
+    if (!s.includes("p.endsWith(\"preview-props\")")) {
+      s = s.replace("p.endsWith(\"prefetch-hints\")", "p.endsWith(\"prefetch-hints\") || p.endsWith(\"preview-props\")");
+    }
+    fs.writeFileSync(file, s);
+  ' "$LOAD_MANIFEST"
+  echo "✅ Patched OpenNext load-manifest.js with Next.js 16.4 preview-props.json support"
 fi
 
 if [ ! -f "$BUNDLE_SERVER" ]; then
