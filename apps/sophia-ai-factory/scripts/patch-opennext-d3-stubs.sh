@@ -8,6 +8,22 @@ set -euo pipefail
 
 BUNDLE_SERVER="node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js"
 LOAD_MANIFEST="node_modules/@opennextjs/cloudflare/dist/cli/build/patches/plugins/load-manifest.js"
+NEXT_SERVER_PATCH="node_modules/@opennextjs/cloudflare/dist/cli/build/patches/plugins/next-server.js"
+
+if [ -f "$NEXT_SERVER_PATCH" ]; then
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    let s = fs.readFileSync(file, "utf8");
+    const target = "  globalThis[handlersSetSymbol] = new Set(globalThis[handlersMapSymbol].values());\n`;";
+    const replacement = "  globalThis[handlersSetSymbol] = new Set(globalThis[handlersMapSymbol].values());\n  return;\n`;";
+    if (s.includes(target)) {
+      s = s.replace(target, replacement);
+      fs.writeFileSync(file, s);
+    }
+  ' "$NEXT_SERVER_PATCH"
+  echo "✅ Patched OpenNext next-server.js createComposableCacheHandlersRule early return for Next.js 16.4"
+fi
 
 if [ -f "$LOAD_MANIFEST" ]; then
   node -e '
