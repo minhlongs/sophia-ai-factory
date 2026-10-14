@@ -795,6 +795,9 @@ postflight_verify_0474() {
          OR (il.name = 'idx_creator_profiles_tenant_id' AND (SELECT COUNT(*) FROM pragma_index_xinfo(il.name) WHERE key = 1) = 1 AND (SELECT COUNT(*) FROM pragma_index_xinfo(il.name) WHERE key = 1 AND seqno = 0 AND name = 'tenant_id' AND \"desc\" = 0) = 1)
        ))
      ) = 20
+     AND (SELECT COUNT(*) FROM pragma_foreign_key_check('sop_listings')) = 0
+     AND (SELECT COUNT(*) FROM pragma_foreign_key_check('sop_installs')) = 0
+     AND (SELECT COUNT(*) FROM pragma_foreign_key_check('sop_reviews')) = 0
     THEN 1 ELSE 0 END AS cnt;"
   if ! constraints_and_indexes_ok=$(d1_query_scalar "$ci_sql" "cnt"); then
     echo "FATAL ERROR: Postflight 0474 failed to verify constraints and indexes" >&2

@@ -8,8 +8,14 @@
 -- Preserves all V1 columns, defaults, existing rows, and indexes on sop_listings.
 -- Adds V2 columns and indexes from 0213 and 0216 without fabricating cross-schema template ID mappings.
 -- Does NOT create idx_sop_installs_user_listing_active (owned by migration 0473 after reconciliation).
-
-PRAGMA foreign_keys = OFF;
+--
+-- D1 Foreign Key & Transaction Note:
+--   Cloudflare D1 executes migrations inside an implicit transaction with foreign_keys = ON,
+--   where PRAGMA foreign_keys = OFF/ON is a SQLite no-op. Because preflight_reconcile_0474
+--   verifies zero inbound foreign keys referencing sop_listings and sop_installs/sop_reviews
+--   are created only AFTER sop_listings_new is renamed to sop_listings, immediate foreign key
+--   enforcement remains valid at every statement without PRAGMA foreign_keys = OFF or
+--   PRAGMA defer_foreign_keys.
 
 -- ============================================================================
 -- 1. Rebuild sop_listings with unified V1 (0126) + V2 (0213, 0216) schema
@@ -152,5 +158,3 @@ CREATE INDEX idx_sop_reviews_tenant_id ON sop_reviews(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_creator_profiles_user_id ON creator_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_creator_profiles_status ON creator_profiles(status);
 CREATE INDEX IF NOT EXISTS idx_creator_profiles_tenant_id ON creator_profiles(tenant_id);
-
-PRAGMA foreign_keys = ON;

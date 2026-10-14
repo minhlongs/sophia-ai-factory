@@ -850,8 +850,9 @@ if [ "$IS_FILE" -eq 1 ]; then
     const { DatabaseSync } = require("node:sqlite");
     const fs = require("node:fs");
     const db = new DatabaseSync(process.argv[1]);
+    db.exec("PRAGMA foreign_keys = ON;");
     const sql = fs.readFileSync(process.argv[2], "utf8");
-    db.exec(sql);
+    db.exec("BEGIN IMMEDIATE;\n" + sql + "\nCOMMIT;");
     if (process.env.SIMULATE_POSTFLIGHT_0474_FAILURE === "1" && process.argv[2].includes("0474")) {
       db.exec("DROP INDEX idx_creator_profiles_tenant_id;");
     }
@@ -1065,6 +1066,15 @@ EOF
 const { DatabaseSync } = require('node:sqlite');
 const assert = require('node:assert');
 const db = new DatabaseSync(process.argv[2]);
+db.exec('PRAGMA foreign_keys = ON;');
+
+// Verify exact column counts (25 / 10 / 7) and foreign key integrity
+assert.strictEqual(db.prepare(`SELECT COUNT(*) AS cnt FROM pragma_table_info('sop_listings')`).get().cnt, 25);
+assert.strictEqual(db.prepare(`SELECT COUNT(*) AS cnt FROM pragma_table_info('sop_installs')`).get().cnt, 10);
+assert.strictEqual(db.prepare(`SELECT COUNT(*) AS cnt FROM pragma_table_info('sop_reviews')`).get().cnt, 7);
+assert.strictEqual(db.prepare(`SELECT foreign_keys FROM pragma_foreign_keys`).get().foreign_keys, 1);
+assert.strictEqual(db.prepare(`SELECT defer_foreign_keys FROM pragma_defer_foreign_keys`).get().defer_foreign_keys, 0);
+assert.strictEqual(db.prepare(`SELECT COUNT(*) AS cnt FROM pragma_foreign_key_check`).get().cnt, 0);
 
 // Check V1 row preserved bit-for-bit without fake cross-schema template mapping
 const v1Row = db.prepare(`SELECT * FROM sop_listings WHERE id = 'v1_list_1'`).get();

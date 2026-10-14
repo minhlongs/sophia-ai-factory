@@ -751,9 +751,41 @@ describe('0474 + 0473 SQLite Schema Reconciliation & V1/V2 Coexistence', () => {
       );
     `);
 
-    // Apply 0474 reconciliation then 0473 partial unique index
-    sqlite.exec(readFileSync(resolve(migrationsDir, '0474_reconcile_sop_marketplace_schema.sql'), 'utf8'));
-    sqlite.exec(readFileSync(resolve(migrationsDir, '0473_sop_installs_active_unique_index.sql'), 'utf8'));
+    // Apply 0474 reconciliation inside an implicit transaction with foreign_keys = ON (matching Cloudflare D1)
+    sqlite.exec('PRAGMA foreign_keys = ON;');
+    const sql0474 = readFileSync(resolve(migrationsDir, '0474_reconcile_sop_marketplace_schema.sql'), 'utf8');
+    sqlite.exec(`BEGIN IMMEDIATE;\n${sql0474}\nCOMMIT;`);
+
+    // Verify 0474 exact column counts: 25 on sop_listings, 10 on sop_installs, 7 on sop_reviews
+    const countCols = (tbl: string) =>
+      (sqlite.prepare(`SELECT COUNT(*) AS cnt FROM pragma_table_info('${tbl}')`).get() as { cnt: number }).cnt;
+    expect(countCols('sop_listings')).toBe(25);
+    expect(countCols('sop_installs')).toBe(10);
+    expect(countCols('sop_reviews')).toBe(7);
+
+    // Verify 0474 creates exactly 20 named indexes across sop_listings (7), sop_installs (6), sop_reviews (4), creator_profiles (3)
+    const countReconciledIndexes = () =>
+      (
+        sqlite
+          .prepare(
+            `SELECT COUNT(*) AS cnt FROM sqlite_master WHERE type = 'index' AND name NOT LIKE 'sqlite_autoindex%' AND tbl_name IN ('sop_listings', 'sop_installs', 'sop_reviews', 'creator_profiles')`,
+          )
+          .get() as { cnt: number }
+      ).cnt;
+    expect(countReconciledIndexes()).toBe(20);
+
+    // Apply 0473 partial unique index inside an implicit transaction with foreign_keys = ON
+    const sql0473 = readFileSync(resolve(migrationsDir, '0473_sop_installs_active_unique_index.sql'), 'utf8');
+    sqlite.exec(`BEGIN IMMEDIATE;\n${sql0473}\nCOMMIT;`);
+    expect(countReconciledIndexes()).toBe(21);
+
+    // Verify foreign key state and integrity after 0474 + 0473 complete
+    const fkEnabled = (sqlite.prepare(`SELECT foreign_keys FROM pragma_foreign_keys`).get() as { foreign_keys: number }).foreign_keys;
+    const deferFk = (sqlite.prepare(`SELECT defer_foreign_keys FROM pragma_defer_foreign_keys`).get() as { defer_foreign_keys: number }).defer_foreign_keys;
+    const fkViolations = sqlite.prepare(`SELECT * FROM pragma_foreign_key_check`).all();
+    expect(fkEnabled).toBe(1);
+    expect(deferFk).toBe(0);
+    expect(fkViolations).toEqual([]);
 
     const d1 = wrapSqliteAsD1(sqlite);
 
@@ -849,5 +881,22 @@ describe('0474 + 0473 SQLite Schema Reconciliation & V1/V2 Coexistence', () => {
     ]) {
       expect(indexNames.has(expectedIdx)).toBe(true);
     }
+
+    // 5. Verify foreign key constraints are actively enforced on the reconciled tables
+    expect(() => {
+      sqlite
+        .prepare(
+          `INSERT INTO sop_listings (id, creator_id, title, price_cents, sop_template_id, status, created_at, updated_at) VALUES ('bad-fk-list', 'nonexistent-cp', 'Bad FK', 0, 'tpl-1', 'draft', 1000, 1000)`,
+        )
+        .run();
+    }).toThrow(/FOREIGN KEY constraint failed/);
+
+    expect(() => {
+      sqlite
+        .prepare(
+          `INSERT INTO sop_installs (id, listing_id, user_id, license_id, price_cents, status, installed_at) VALUES ('bad-fk-inst', 'nonexistent-listing', 'u-buyer', 'lic-bad', 0, 'active', 1000)`,
+        )
+        .run();
+    }).toThrow(/FOREIGN KEY constraint failed/);
   });
 });
