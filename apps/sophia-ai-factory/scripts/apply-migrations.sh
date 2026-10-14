@@ -151,8 +151,8 @@ verify_index_0473_definition() {
      AND (SELECT COUNT(*) FROM pragma_index_xinfo('idx_sop_installs_user_listing_active') WHERE key = 1) = 2
      AND (SELECT COUNT(*) FROM pragma_index_xinfo('idx_sop_installs_user_listing_active') WHERE key = 1 AND ((seqno = 0 AND name = 'user_id' AND \"desc\" = 0) OR (seqno = 1 AND name = 'listing_id' AND \"desc\" = 0))) = 2
      AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'idx_sop_installs_user_listing_active' AND (
-       replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), '') LIKE '%onsop_installs(user_id,listing_id)wherestatus=''active'''
-       OR replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), '') LIKE '%on\"sop_installs\"(user_id,listing_id)wherestatus=''active'''
+       substr(replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), ''), -length('onsop_installs(user_id,listing_id)wherestatus=''active''')) = 'onsop_installs(user_id,listing_id)wherestatus=''active'''
+       OR substr(replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), ''), -length('on\"sop_installs\"(user_id,listing_id)wherestatus=''active''')) = 'on\"sop_installs\"(user_id,listing_id)wherestatus=''active'''
      )) = 1
     THEN 1 ELSE 0 END AS cnt;"
   if ! valid_def=$(d1_query_scalar "$sql" "cnt"); then
@@ -759,9 +759,9 @@ postflight_verify_0474() {
      AND (SELECT COUNT(*) FROM pragma_index_list('sop_listings') il JOIN pragma_index_xinfo(il.name) ix ON ix.key = 1 WHERE il.origin = 'u' AND il.\"unique\" = 1 AND il.partial = 0 AND ix.seqno = 0 AND ix.name = 'template_id') = 1
      AND (SELECT COUNT(*) FROM pragma_index_list('sop_installs') il JOIN pragma_index_xinfo(il.name) ix ON ix.key = 1 WHERE il.origin = 'u' AND il.\"unique\" = 1 AND il.partial = 0 AND ix.seqno = 0 AND ix.name = 'license_id') = 1
      AND (SELECT COUNT(*) FROM pragma_index_list('sop_reviews') il JOIN pragma_index_xinfo(il.name) ix ON ix.key = 1 WHERE il.origin = 'u' AND il.\"unique\" = 1 AND il.partial = 0 AND ix.seqno = 0 AND ix.name = 'install_id') = 1
-     AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sop_listings' AND replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), '') LIKE '%check(statusin(''pending_review'',''published'',''rejected'',''suspended'',''draft'',''archived''))%' AND replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), '') LIKE '%check((template_idisnotnull)or(creator_idisnotnullandtitleisnotnullandsop_template_idisnotnull))%') = 1
-     AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sop_installs' AND replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), '') LIKE '%check(statusin(''active'',''uninstalled''))%') = 1
-     AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sop_reviews' AND replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), '') LIKE '%check(rating>=1andrating<=5)%') = 1
+     AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sop_listings' AND instr(replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), ''), 'check(statusin(''pending_review'',''published'',''rejected'',''suspended'',''draft'',''archived''))') > 0 AND instr(replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), ''), 'check((template_idisnotnull)or(creator_idisnotnullandtitleisnotnullandsop_template_idisnotnull))') > 0) = 1
+     AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sop_installs' AND instr(replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), ''), 'check(statusin(''active'',''uninstalled''))') > 0) = 1
+     AND (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sop_reviews' AND instr(replace(replace(replace(lower(sql), ' ', ''), char(10), ''), char(9), ''), 'check(rating>=1andrating<=5)') > 0) = 1
      AND (SELECT COUNT(*) FROM pragma_index_list('sop_listings') WHERE origin = 'c') = 7
      AND (SELECT COUNT(*) FROM pragma_index_list('sop_installs') WHERE origin = 'c' AND name != 'idx_sop_installs_user_listing_active') = 6
      AND (SELECT COUNT(*) FROM pragma_index_list('sop_reviews') WHERE origin = 'c') = 4
