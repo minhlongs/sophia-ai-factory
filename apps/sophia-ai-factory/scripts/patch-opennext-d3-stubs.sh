@@ -24,14 +24,14 @@ fi
 # Fallback: if the old pattern IS present, patch as before.
 echo "⚠️  OpenNext still uses empty-client-pkg stubs — applying d3 named-export patch"
 
-EXPORTS="range,timeYear,timeFormat,utcWeek,interpolate,group,merge"
+EXPORTS="range,timeYear,timeFormat,utcWeek,interpolate,group,merge,ascending,bisect,format,formatPrefix,formatSpecifier,InternMap,interpolateNumber,interpolateRound,Path,piecewise,precisionFixed,precisionPrefix,precisionRound,quantile,quantileSorted,tickIncrement,ticks,tickStep,timeDay,timeHour,timeMinute,timeMonth,timeSecond,timeTickInterval,timeTicks,timeWeek,utcDay,utcFormat,utcHour,utcMinute,utcMonth,utcSecond,utcTickInterval,utcTicks,utcYear"
 DECLS=$(echo "$EXPORTS" | sed 's/,/=void 0,/g')'=void 0'
 OLD='contents: "export default {};'
 NEW="contents: \"export default {}; export const $DECLS;\","
 sed -i.bak "s|$OLD.*|$NEW|" "$BUNDLE_SERVER"
 rm -f "${BUNDLE_SERVER}.bak"
 
-CRITICAL_EXPORTS="range,timeYear,timeFormat,utcWeek,interpolate,group,merge"
+CRITICAL_EXPORTS="range,timeYear,timeFormat,utcWeek,interpolate,group,merge,ascending,bisect,format,formatPrefix,formatSpecifier,InternMap,interpolateNumber,interpolateRound,Path,piecewise,precisionFixed,precisionPrefix,precisionRound,quantile,quantileSorted,tickIncrement,ticks,tickStep,timeDay,timeHour,timeMinute,timeMonth,timeSecond,timeTickInterval,timeTicks,timeWeek,utcDay,utcFormat,utcHour,utcMinute,utcMonth,utcSecond,utcTickInterval,utcTicks,utcYear"
 for sym in $(echo "$CRITICAL_EXPORTS" | tr ',' '\n'); do
   if ! grep -q "${sym}=void 0" "$BUNDLE_SERVER"; then
     echo "❌ Post-patch assertion failed: '$sym' not exported from empty-client-pkg stub"
