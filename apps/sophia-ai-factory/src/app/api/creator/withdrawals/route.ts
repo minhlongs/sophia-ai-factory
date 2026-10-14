@@ -16,6 +16,11 @@ import {
   getCreatorUnencumberedBalance,
   getVietQrPaymentInfo,
 } from '@/land/creator/creator-withdrawal-service';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  MARKETPLACE_TEMPORARILY_UNAVAILABLE,
+  marketplaceTemporarilyUnavailableError,
+} from '@/land/sop-marketplace/availability';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +29,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user?.id) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    const unavailable = marketplaceTemporarilyUnavailableError();
+    return NextResponse.json(
+      { error: unavailable.message, code: MARKETPLACE_TEMPORARILY_UNAVAILABLE },
+      { status: 503 },
+    );
   }
 
   const db = await getD1();
@@ -64,6 +76,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user?.id) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    const unavailable = marketplaceTemporarilyUnavailableError();
+    return NextResponse.json(
+      { error: unavailable.message, code: MARKETPLACE_TEMPORARILY_UNAVAILABLE },
+      { status: 503 },
+    );
   }
 
   const db = await getD1();

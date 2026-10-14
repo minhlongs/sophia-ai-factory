@@ -16,6 +16,10 @@ import {
   getCreatorProfile as dbGetCreatorProfile,
 } from '@/seed/db/marketplace-ops';
 import type { ListingError } from './listing-types';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from './availability';
 
 /**
  * Submit a draft listing for admin review.
@@ -29,6 +33,9 @@ export async function submitForReview(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();
@@ -88,6 +95,9 @@ export async function publishListing(
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
+    }
 
     const d1 = await getD1();
     if (!d1) {
@@ -121,6 +131,13 @@ export async function publishListing(
       });
     }
 
+    if (listing.price_cents > 0) {
+      return failure({
+        code: 'VALIDATION_ERROR',
+        message: 'Paid listings cannot be published until checkout is enabled. Please keep as draft or set price to 0.',
+      });
+    }
+
     await dbUpdateSopListing(d1, listingId, { status: 'published' });
 
     logger.info('[PublishListing] Listing published', { userId: user.id, listingId });
@@ -143,6 +160,9 @@ export async function archiveListing(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();

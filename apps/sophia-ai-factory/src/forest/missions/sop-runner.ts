@@ -8,6 +8,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { assertTemplateExecutable } from '@/seed/sop/sop-marketplace-guard';
 import { getInstallation } from '@/tree/sop/sop-repo-installations';
 import { getTemplateById } from '@/tree/sop/sop-repo-templates';
 import { createRun, updateRunStatus, appendMissionId } from '@/tree/sop/sop-repo-runs';
@@ -102,6 +103,9 @@ export async function runSop(
 ): Promise<RunResult> {
   const inst = await getInstallation(db, ctx.installationId);
   if (!inst) throw new Error(`Installation not found: ${ctx.installationId}`);
+
+  // Fail-closed gate: block execution of paid marketplace SOP templates
+  await assertTemplateExecutable(db, inst.template_id);
 
   const tpl = await getTemplateById(db, inst.template_id);
   if (!tpl) throw new Error(`Template not found: ${inst.template_id}`);

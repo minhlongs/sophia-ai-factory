@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { checkCreatorAccess } from '../ServerGate';
 import { Suspense } from 'react';
 import { createNewListing } from './actions';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -14,11 +15,14 @@ export default async function NewListingPage({ params }: PageProps) {
   const { locale } = await params;
   const access = await checkCreatorAccess();
 
-  if (!access.hasAccess) {
-    redirect(`/${locale}/dashboard/sop-creator/apply`);
-  }
   if (!access.userId) {
     redirect(`/${locale}/auth/login?redirect=/dashboard/sop-creator/new`);
+  }
+  if (!access.marketplaceAvailable) {
+    return <main className="min-h-screen bg-background p-8"><MarketplaceUnavailableNotice /></main>;
+  }
+  if (!access.hasAccess) {
+    redirect(`/${locale}/dashboard/sop-creator/apply`);
   }
 
   return (

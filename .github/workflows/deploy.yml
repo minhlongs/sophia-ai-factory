@@ -118,16 +118,29 @@ jobs:
       - name: 'Stage 2a: D1 Delta Migration (sophia-raas-db)'
         if: ${{ inputs.skip_migrations != true && inputs.dry_run != true }}
         run: |
+          set -euo pipefail
           echo "==> Fetching current live SHA to calculate migration delta..."
-          PREV_SHA=$(curl -s --connect-timeout 10 --max-time 15 https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "")
-          echo "Current live edge SHA: ${PREV_SHA:-none}"
-          if [ -n "$PREV_SHA" ] && git rev-parse --verify "$PREV_SHA^{commit}" >/dev/null 2>&1; then
-            echo "Applying D1 delta migrations since $PREV_SHA..."
-            bash scripts/apply-migrations.sh "$PREV_SHA"
-          else
-            echo "Applying D1 delta migrations from HEAD~1..."
-            bash scripts/apply-migrations.sh HEAD~1 || bash scripts/apply-migrations.sh
+          VERSION_URL="https://sophia.agencyos.network/api/version"
+          if ! VERSION_PAYLOAD=$(curl -fsS --connect-timeout 10 --max-time 15 "$VERSION_URL"); then
+            echo "❌ CRITICAL: Failed to fetch live version from $VERSION_URL. Aborting before D1 migrations and Worker deploy." >&2
+            exit 1
           fi
+          PREV_SHA=$(printf '%s' "$VERSION_PAYLOAD" | grep -o '"shortSha":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
+          echo "Current live edge SHA: ${PREV_SHA:-none}"
+          if [ -z "$PREV_SHA" ]; then
+            echo "❌ CRITICAL: Live /api/version response is missing 'shortSha'. Aborting before D1 migrations and Worker deploy." >&2
+            exit 1
+          fi
+          if ! printf '%s' "$PREV_SHA" | grep -Eq '^[0-9a-fA-F]{7,40}$'; then
+            echo "❌ CRITICAL: Live shortSha '$PREV_SHA' is not a valid 7-40 hex commit SHA. Aborting before D1 migrations and Worker deploy." >&2
+            exit 1
+          fi
+          if ! git rev-parse --verify "${PREV_SHA}^{commit}" >/dev/null 2>&1; then
+            echo "❌ CRITICAL: Live SHA '$PREV_SHA' does not resolve to a commit in this checkout. Aborting before D1 migrations and Worker deploy." >&2
+            exit 1
+          fi
+          echo "Applying D1 delta migrations since $PREV_SHA..."
+          bash scripts/apply-migrations.sh "$PREV_SHA"
 
       - name: 'Stage 2b: Next.js Turbopack Compilation'
         run: npm run build

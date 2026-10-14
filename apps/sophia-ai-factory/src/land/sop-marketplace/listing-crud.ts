@@ -18,6 +18,10 @@ import {
   getCreatorProfile as dbGetCreatorProfile,
 } from '@/seed/db/marketplace-ops';
 import { toView, createListingSchema, updateListingSchema, type SopListingView, type ListingError } from './listing-types';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from './availability';
 
 /**
  * Create a new SOP listing in draft status.
@@ -37,6 +41,9 @@ export async function createSopListing(formData: {
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const parsed = createListingSchema.safeParse(formData);
@@ -113,8 +120,11 @@ export async function updateSopListing(
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
+    }
 
-    const parsed = updateListingSchema.safeParse(formData);
+    const parsed = updateListingSchema.safeParse({ listingId, ...formData });
     if (!parsed.success) {
       return failure({
         code: 'VALIDATION_ERROR',
@@ -145,6 +155,15 @@ export async function updateSopListing(
     if (parsed.data.priceCents !== undefined) updates.price_cents = parsed.data.priceCents;
     if (parsed.data.status !== undefined) updates.status = parsed.data.status;
 
+    const effectivePrice = parsed.data.priceCents !== undefined ? parsed.data.priceCents : listing.price_cents;
+    const effectiveStatus = parsed.data.status !== undefined ? parsed.data.status : listing.status;
+    if (effectiveStatus === 'published' && effectivePrice > 0) {
+      return failure({
+        code: 'VALIDATION_ERROR',
+        message: 'Paid listings cannot be published until checkout is enabled. Please keep as draft or set price to 0.',
+      });
+    }
+
     if (Object.keys(updates).length === 0) {
       return success({ listingId });
     }
@@ -168,6 +187,9 @@ export async function listMyListings(): Promise<Result<SopListingView[], Listing
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();

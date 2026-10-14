@@ -25,6 +25,10 @@ import {
   updateCreatorProfile as dbUpdateCreatorProfile,
 } from '@/seed/db/marketplace-ops';
 import { validateInviteCode } from './beta-invites';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from './availability';
 
 // ── Public Types ─────────────────────────────────────────────────────────
 
@@ -48,7 +52,8 @@ type CreatorErrorCode =
   | 'VALIDATION_ERROR'
   | 'INVITE_INVALID'
   | 'DB_ERROR'
-  | 'PROFILE_NOT_FOUND';
+  | 'PROFILE_NOT_FOUND'
+  | 'MARKETPLACE_TEMPORARILY_UNAVAILABLE';
 
 interface CreatorError {
   code: CreatorErrorCode;
@@ -112,6 +117,9 @@ export async function registerCreator(formData: {
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     // Validate input
@@ -192,6 +200,9 @@ export async function getCreatorProfile(): Promise<Result<CreatorProfileView, Cr
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
+    }
 
     const d1 = await getD1();
     if (!d1) {
@@ -231,6 +242,9 @@ export async function updateCreatorProfile(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const parsed = updateSchema.safeParse(formData);

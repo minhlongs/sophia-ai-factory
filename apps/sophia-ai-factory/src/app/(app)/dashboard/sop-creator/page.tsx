@@ -3,6 +3,7 @@ import { checkCreatorAccess } from './ServerGate';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { SOPClientTabs } from './SOPClientTabs';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -14,6 +15,12 @@ export default async function SOPCreatorPage({ params }: PageProps) {
   const { locale } = await params;
   const access = await checkCreatorAccess();
 
+  if (!access.userId) {
+    redirect(`/${locale}/auth/login?redirect=/dashboard/sop-creator`);
+  }
+  if (!access.marketplaceAvailable) {
+    return <main className="min-h-screen bg-background p-8"><MarketplaceUnavailableNotice /></main>;
+  }
   if (!access.hasAccess) {
     redirect(`/${locale}/dashboard/sop-creator/apply`);
   }

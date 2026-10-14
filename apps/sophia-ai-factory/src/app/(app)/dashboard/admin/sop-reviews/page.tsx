@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { Clock, CheckCircle, FileText, Eye } from 'lucide-react';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
+import { CREATOR_MARKETPLACE_V2_ENABLED } from '@/land/sop-marketplace/availability';
 import { SopReviewActionsClient } from './sop-review-actions-client';
 
 interface SopListing {
@@ -56,7 +58,14 @@ async function checkAdminAccess(): Promise<{ hasAccess: boolean; isAdmin: boolea
   return { hasAccess: isAdmin, isAdmin, userId: user.id };
 }
 
-async function AdminSOPReviewsContent({ locale, userId: _userId }: { locale: string; userId: string }) {
+export async function AdminSOPReviewsContent({ locale, userId: _userId }: { locale: string; userId: string }) {
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <MarketplaceUnavailableNotice />
+      </main>
+    );
+  }
   const t = await getTranslations({ locale, namespace: 'admin.sopReviews' });
 
   // Fetch pending review listings

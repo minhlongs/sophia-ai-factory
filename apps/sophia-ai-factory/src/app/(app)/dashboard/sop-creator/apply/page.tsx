@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 import { checkCreatorAccess } from '../ServerGate';
 import { Suspense } from 'react';
 import { Sparkles, CheckCircle, Check, Send } from 'lucide-react';
@@ -17,11 +18,14 @@ export default async function ApplyPage({ params, searchParams }: PageProps) {
   const { submitted } = await searchParams;
   const access = await checkCreatorAccess();
 
-  if (access.hasAccess) {
-    redirect(`/${locale}/dashboard/sop-creator`);
-  }
   if (!access.userId) {
     redirect(`/${locale}/auth/login?redirect=/dashboard/sop-creator/apply`);
+  }
+  if (!access.marketplaceAvailable) {
+    return <MarketplaceUnavailableNotice />;
+  }
+  if (access.hasAccess) {
+    redirect(`/${locale}/dashboard/sop-creator`);
   }
 
   return (

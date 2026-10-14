@@ -27,38 +27,73 @@ import type { RunContext } from '@/seed/sop/executor/types';
 function buildTestDb(options: {
   installation?: Record<string, unknown> | null;
   template?: Record<string, unknown> | null;
+  listing?: Record<string, unknown> | null;
+  listingError?: Error | null;
   missionStatus?: string;
   missionResult?: string;
 }) {
   const {
     installation = makeInstallation(),
     template = makeTemplate(),
+    listing = null,
+    listingError = null,
     missionStatus = 'succeeded',
     missionResult = '{"output":"done"}',
   } = options;
+
+  let currentSql = "";
 
   const stmtMock = {
     bind: vi.fn().mockReturnThis(),
     run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
     first: vi.fn().mockImplementation((_col?: string) => {
-      // The runner calls .first() multiple times for different tables
-      // We track call count to differentiate
-      const callCount = (stmtMock.first as ReturnType<typeof vi.fn>).mock.calls.length;
-
-      if (callCount === 1) return Promise.resolve(installation);   // getInstallation
-      if (callCount === 2) return Promise.resolve(template);       // getTemplateById
-	if (callCount === 3) return Promise.resolve({ user_id: 'user-001', org_id: 'org-001', sop_template_id: 'tpl-001' }); // resolveInstallationContext
-	if (callCount === 4) return Promise.resolve({ id: 'run-001', installation_id: 'inst-001', trigger_type: 'cron', mission_ids: '[]', status: 'pending', result_summary: null, error_message: null, requires_approval: 0, started_at: null, completed_at: null, created_at: 1000 }); // createRun SELECT after INSERT
-	// mission_ids for appendMissionId
-	if (callCount === 5) return Promise.resolve({ mission_ids: '[]' });
-      // mission poll
-      return Promise.resolve({ status: missionStatus, result: missionResult, error: null });
+      const sql = currentSql;
+      if (sql.includes("sop_listings")) {
+        if (listingError) {
+          return Promise.reject(listingError);
+        }
+        return Promise.resolve(listing);
+      }
+      if (sql.includes("user_sop_installations") && sql.includes("SELECT *")) {
+        return Promise.resolve(installation);
+      }
+      if (sql.includes("user_sop_installations") && (sql.includes("user_id") || sql.includes("sop_template_id"))) {
+        return Promise.resolve({ user_id: "user-001", org_id: "org-001", sop_template_id: "tpl-001" });
+      }
+      if (sql.includes("sop_templates")) {
+        return Promise.resolve(template);
+      }
+      if (sql.includes("sop_executions") && sql.includes("SELECT *")) {
+        return Promise.resolve({
+          id: "run-001",
+          installation_id: "inst-001",
+          trigger_type: "cron",
+          mission_ids: "[]",
+          status: "pending",
+          result_summary: null,
+          error_message: null,
+          requires_approval: 0,
+          started_at: null,
+          completed_at: null,
+          created_at: 1000,
+        });
+      }
+      if (sql.includes("sop_executions") && sql.includes("mission_ids")) {
+        return Promise.resolve({ mission_ids: "[]" });
+      }
+      if (sql.includes("engine_missions")) {
+        return Promise.resolve({ status: missionStatus, result: missionResult, error: null });
+      }
+      return Promise.resolve(null);
     }),
     all: vi.fn().mockResolvedValue({ results: [] }),
   };
 
   return {
-    prepare: vi.fn().mockReturnValue(stmtMock),
+    prepare: vi.fn().mockImplementation((sql: string) => {
+      currentSql = sql;
+      return stmtMock;
+    }),
     _stmt: stmtMock,
   };
 }
@@ -162,25 +197,53 @@ describe('runSop', () => {
   });
 
   it('returns failed status when step fails immediately', async () => {
-    const db = buildTestDb({ missionStatus: 'succeeded' });
-
-    // Override .first() so the mission poll returns failed on first call
-    const stmtMock = db._stmt;
-    stmtMock.first = vi.fn().mockImplementation(() => {
-      const callCount = stmtMock.first.mock.calls.length;
-      // Calls 1-2: getInstallation, getTemplateById
-      // Call 3: resolveInstallationContext (user_sop_installations)
-      // Calls 4-5: createRun SELECT after INSERT, appendMissionId SELECT
-      // call 6+: mission poll
-      if (callCount === 1) return Promise.resolve(makeInstallation());
-      if (callCount === 2) return Promise.resolve(makeTemplate());
-      if (callCount === 3) return Promise.resolve({ user_id: 'user-001', org_id: 'org-001', sop_template_id: 'tpl-001' }); // resolveInstallationContext
-      if (callCount === 4) return Promise.resolve({ id: 'run-001', installation_id: 'inst-001', trigger_type: 'cron', mission_ids: "[]", status: 'pending', result_summary: null, error_message: null, requires_approval: 0, started_at: null, completed_at: null, created_at: 1000 });
-      if (callCount === 5) return Promise.resolve({ mission_ids: "[]" });
-    });
+    const db = buildTestDb({ missionStatus: 'failed' });
 
     const result = await runSop(db as unknown as D1Database, baseCtx);
     expect(['failed', 'paused']).toContain(result.status);
     expect(result.errorMessage).toBeDefined();
+  });
+
+  it('rejects execution of paid marketplace SOP templates with PAYMENT_REQUIRED', async () => {
+    const db = buildTestDb({
+      listing: { id: 'listing-001', price_cents: 1000, status: 'published' },
+    });
+
+    await expect(runSop(db as unknown as D1Database, baseCtx)).rejects.toThrow(
+      /Paid marketplace SOPs cannot be executed until checkout is enabled/,
+    );
+  });
+
+  it('permits execution of free marketplace SOP templates (price_cents === 0)', async () => {
+    const db = buildTestDb({
+      listing: { id: 'listing-002', price_cents: 0, status: 'published' },
+    });
+
+    const result = await runSop(db as unknown as D1Database, baseCtx);
+    expect(result.status).toBe('completed');
+  });
+
+  it('blocks execution and prevents dispatchMission when listing query fails fail-closed', async () => {
+    const { dispatchMission } = await import('@/forest/missions/dispatcher');
+    const db = buildTestDb({
+      listingError: new Error('D1 connection terminated'),
+    });
+
+    await expect(runSop(db as unknown as D1Database, baseCtx)).rejects.toThrow(
+      /Database query failed for marketplace listings: unable to verify template status/,
+    );
+    expect(dispatchMission).not.toHaveBeenCalled();
+  });
+
+  it('blocks execution when marketplace SOP listing is draft or unpublished', async () => {
+    const { dispatchMission } = await import('@/forest/missions/dispatcher');
+    const db = buildTestDb({
+      listing: { id: 'listing-draft', price_cents: 0, status: 'draft' },
+    });
+
+    await expect(runSop(db as unknown as D1Database, baseCtx)).rejects.toThrow(
+      /Marketplace SOP is not published/,
+    );
+    expect(dispatchMission).not.toHaveBeenCalled();
   });
 });

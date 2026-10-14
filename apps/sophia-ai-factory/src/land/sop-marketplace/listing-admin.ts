@@ -14,6 +14,10 @@ import {
   updateSopListing as dbUpdateSopListing,
 } from '@/seed/db/marketplace-ops';
 import type { ListingError } from './listing-types';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from './availability';
 
 /**
  * Admin: Approve a pending review listing — sets status to 'published'.
@@ -25,6 +29,9 @@ export async function approveListingAdmin(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();
@@ -41,6 +48,13 @@ export async function approveListingAdmin(
       return failure({
         code: 'INVALID_STATUS_TRANSITION',
         message: `Can only approve pending_review listings; current status is '${listing.status}'`,
+      });
+    }
+
+    if (listing.price_cents > 0) {
+      return failure({
+        code: 'VALIDATION_ERROR',
+        message: 'Paid listings cannot be approved or published until checkout is enabled.',
       });
     }
 
@@ -66,6 +80,9 @@ export async function rejectListingAdmin(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();

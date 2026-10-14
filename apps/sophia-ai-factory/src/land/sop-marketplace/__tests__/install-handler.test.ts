@@ -1,9 +1,10 @@
 /**
- * Tests for SOP Installation Handler Server Actions
+ * Tests for SOP Installation Handler Server Actions & Fail-Closed Integrity
  *
- * Unit tests for installSop and uninstallSop by mocking auth, DB,
- * tier config, and marketplace-ops dependencies. Validates that
- * each error code path produces the correct Result.
+ * Unit tests for installSop, uninstallSop, and listing publishing gates.
+ * Validates fail-closed behavior for paid listings, free install handling,
+ * elimination of synthetic payment IDs, absence of commission on free installs,
+ * DB-enforced idempotency handling, and reinstall support.
  *
  * @module land/sop-marketplace/__tests__/install-handler
  */
@@ -14,13 +15,14 @@ import type { D1Database } from '@cloudflare/workers-types';
 // ── Module-level mocks ─────────────────────────────────────────────────────
 
 const mockUser = { id: 'user-test-001', email: 'test@example.com' };
-const mockListing = {
-  id: 'listing-001',
+
+const mockFreeListing = {
+  id: 'listing-free-001',
   creator_id: 'creator-001',
   sop_template_id: 'tpl-001',
-  price_cents: 9900,
+  price_cents: 0,
   status: 'published',
-  title: 'Test SOP',
+  title: 'Free Test SOP',
   description: 'Test description',
   category: 'marketing',
   tags: null,
@@ -31,16 +33,30 @@ const mockListing = {
   created_at: 1000000,
   updated_at: 1000000,
 };
+
+const mockPaidListing = {
+  ...mockFreeListing,
+  id: 'listing-paid-001',
+  price_cents: 9900,
+  title: 'Paid Test SOP',
+};
+
 const mockInstall = {
   id: 'install-001',
-  listing_id: 'listing-001',
+  listing_id: 'listing-free-001',
   user_id: 'user-test-001',
   license_id: 'license-abc-123',
-  price_cents: 9900,
-  commission_id: 'comm-001',
+  price_cents: 0,
+  commission_id: null,
   status: 'active',
   installed_at: 2000000,
   uninstalled_at: null,
+};
+
+const mockCreatorProfile = {
+  id: 'creator-001',
+  user_id: 'user-test-001',
+  status: 'active',
 };
 
 // Track calls to the D1 mock for assertion
@@ -107,8 +123,8 @@ vi.mock('@/seed/db/org-membership', () => ({
   requireOrgMembership: vi.fn(),
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn().mockResolvedValue('PREMIUM'),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn().mockResolvedValue('PREMIUM'),
 }));
 
 vi.mock('@/seed/config/tiers', () => ({
@@ -119,22 +135,30 @@ vi.mock('@/seed/db/marketplace-ops', () => ({
   getSopListing: vi.fn(),
   getSopInstall: vi.fn(),
   createSopInstall: vi.fn(),
+  updateSopListing: vi.fn(),
+  getCreatorProfile: vi.fn(),
 }));
 
 vi.mock('../commission-split', () => ({
-  calculateCreatorCommission: vi
-    .fn()
-    .mockReturnValue({
-      grossCents: 9900,
-      creatorCents: 6930,
-      platformCents: 2970,
-      commissionPct: 0.7,
-    }),
-  recordSopSaleCommission: vi.fn().mockResolvedValue('comm-001'),
+  calculateCreatorCommission: vi.fn(),
+  recordSopSaleCommission: vi.fn(),
 }));
 
-// Now import the module under test (must be after vi.mock)
+// Preserve the enabled-path integrity tests; containment is verified separately.
+vi.mock('../availability', () => ({
+  CREATOR_MARKETPLACE_V2_ENABLED: true,
+  marketplaceTemporarilyUnavailableError: () => ({
+    code: 'MARKETPLACE_TEMPORARILY_UNAVAILABLE',
+    message: 'Creator Marketplace is temporarily unavailable while database integrity is being verified.',
+  }),
+}));
+
 import { installSop, uninstallSop } from '../install-handler';
+import { publishListing } from '../listing-lifecycle';
+import { updateSopListing } from '../listing-crud';
+import { approveListingAdmin } from '../listing-admin';
+import { recordSopSaleCommission } from '../commission-split';
+import { createSopInstall as dbCreateSopInstall } from '@/seed/db/marketplace-ops';
 
 beforeEach(async () => {
   vi.clearAllMocks();
@@ -143,29 +167,92 @@ beforeEach(async () => {
   vi.mocked(orgCheck).mockResolvedValue({ authorized: true, orgId: 'test-org', role: 'owner' });
 });
 
-describe('installSop', () => {
-  it('returns success with valid auth and valid published listing', async () => {
+describe('installSop - Fail-Closed & Integrity', () => {
+  it('1. free install succeeds and does not create commission or synthetic payment ID', async () => {
     const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
     const { getD1 } = await import('@/seed/db/client');
     const { getSopListing } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
-    vi.mocked(getSopListing).mockResolvedValue(mockListing as any);
+    vi.mocked(getSopListing).mockResolvedValue(mockFreeListing as never);
+    vi.mocked(dbCreateSopInstall).mockResolvedValue(mockInstall as never);
 
-    const result = await installSop('listing-001');
+    const result = await installSop('listing-free-001');
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.licenseId).toBeDefined();
     }
+
+    // Commission must NOT be called for free install
+    expect(recordSopSaleCommission).not.toHaveBeenCalled();
+
+    // dbCreateSopInstall must receive commission_id = null and price_cents = 0
+    expect(dbCreateSopInstall).toHaveBeenCalledTimes(1);
+    expect(dbCreateSopInstall).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        listing_id: 'listing-free-001',
+        user_id: 'user-test-001',
+        price_cents: 0,
+        commission_id: null,
+      }),
+      'test-org'
+    );
   });
 
-  it('returns NOT_AUTHENTICATED when no user', async () => {
+  it('2. paid listing install is rejected fail-closed with PAYMENT_REQUIRED before any write', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    const d1Mock = makeD1Mock();
+    vi.mocked(getD1).mockResolvedValue(d1Mock as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue(mockPaidListing as never);
+
+    const result = await installSop('listing-paid-001');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PAYMENT_REQUIRED');
+    }
+
+    // Must NOT write to database
+    expect(dbCreateSopInstall).not.toHaveBeenCalled();
+    expect(recordSopSaleCommission).not.toHaveBeenCalled();
+    // Must NOT execute any queries past the initial listing check
+    expect(d1Calls.length).toBe(0);
+  });
+
+  it('2b. invalid or null price listing is rejected fail-closed with PAYMENT_REQUIRED before any write', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue({
+      ...mockFreeListing,
+      price_cents: null as unknown as number,
+    } as never);
+
+    const result = await installSop('listing-null-price');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('PAYMENT_REQUIRED');
+    }
+    expect(dbCreateSopInstall).not.toHaveBeenCalled();
+    expect(recordSopSaleCommission).not.toHaveBeenCalled();
+  });
+
+  it('3. returns NOT_AUTHENTICATED when no user', async () => {
     const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
     vi.mocked(getCurrentUser).mockResolvedValue(null);
 
-    const result = await installSop('listing-001');
+    const result = await installSop('listing-free-001');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -197,7 +284,7 @@ describe('installSop', () => {
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
-    vi.mocked(getSopListing).mockResolvedValue({ ...mockListing, status: 'draft' } as any);
+    vi.mocked(getSopListing).mockResolvedValue({ ...mockFreeListing, status: 'draft' } as never);
 
     const result = await installSop('listing-draft');
 
@@ -207,31 +294,23 @@ describe('installSop', () => {
     }
   });
 
-  it('returns ALREADY_INSTALLED for duplicate installs', async () => {
+  it('returns ALREADY_INSTALLED for pre-checked duplicate active install', async () => {
     const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
     const { getD1 } = await import('@/seed/db/client');
     const { getSopListing } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
 
-    // For duplicate check, override the COUNT mock to return 1
     const duplicateD1 = {
       prepare: vi.fn().mockImplementation((sql: string) => ({
-        bind: vi.fn().mockImplementation((...binds: unknown[]) => {
-          // Duplicate: return count=1
+        bind: vi.fn().mockImplementation(() => {
           if (sql.includes('SELECT COUNT(*)') && sql.includes('listing_id = ?')) {
             return {
               first: vi.fn().mockResolvedValue({ count: 1 }),
             };
           }
-          if (sql.includes('SELECT COUNT(*)') && sql.includes('status')) {
-            return {
-              first: vi.fn().mockResolvedValue({ count: 0 }),
-            };
-          }
           return {
-            first: vi.fn().mockResolvedValue(null),
+            first: vi.fn().mockResolvedValue({ count: 0 }),
             all: vi.fn().mockResolvedValue({ results: [], success: true }),
             run: vi.fn().mockResolvedValue({ success: true, meta: {} }),
           };
@@ -243,9 +322,31 @@ describe('installSop', () => {
     } as unknown as D1Database;
 
     vi.mocked(getD1).mockResolvedValue(duplicateD1);
-    vi.mocked(getSopListing).mockResolvedValue(mockListing as any);
+    vi.mocked(getSopListing).mockResolvedValue(mockFreeListing as never);
 
-    const result = await installSop('listing-001');
+    const result = await installSop('listing-free-001');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('ALREADY_INSTALLED');
+    }
+  });
+
+  it('4. concurrent duplicate race condition is caught by DB unique constraint and returns ALREADY_INSTALLED', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue(mockFreeListing as never);
+
+    // Simulate DB unique constraint collision on concurrent insert
+    vi.mocked(dbCreateSopInstall).mockRejectedValueOnce(
+      new Error('UNIQUE constraint failed: sop_installs.user_id, sop_installs.listing_id')
+    );
+
+    const result = await installSop('listing-free-001');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -264,14 +365,12 @@ describe('installSop', () => {
 
     const limitD1 = {
       prepare: vi.fn().mockImplementation((sql: string) => ({
-        bind: vi.fn().mockImplementation((...binds: unknown[]) => {
-          // Duplicate check (has listing_id = ?) — return count 0 (not a duplicate)
+        bind: vi.fn().mockImplementation(() => {
           if (sql.includes('SELECT COUNT(*)') && sql.includes('listing_id = ?')) {
             return {
               first: vi.fn().mockResolvedValue({ count: 0 }),
             };
           }
-          // Active count (no listing_id filter) — return at limit (3)
           if (sql.includes('SELECT COUNT(*)')) {
             return {
               first: vi.fn().mockResolvedValue({ count: 3 }),
@@ -290,9 +389,9 @@ describe('installSop', () => {
     } as unknown as D1Database;
 
     vi.mocked(getD1).mockResolvedValue(limitD1);
-    vi.mocked(getSopListing).mockResolvedValue(mockListing as any);
+    vi.mocked(getSopListing).mockResolvedValue(mockFreeListing as never);
 
-    const result = await installSop('listing-001');
+    const result = await installSop('listing-free-001');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -301,7 +400,7 @@ describe('installSop', () => {
   });
 });
 
-describe('uninstallSop', () => {
+describe('uninstallSop & Reinstall Support', () => {
   it('returns success for valid owner', async () => {
     const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
     const { getD1 } = await import('@/seed/db/client');
@@ -309,7 +408,7 @@ describe('uninstallSop', () => {
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
-    vi.mocked(getSopInstall).mockResolvedValue(mockInstall as any);
+    vi.mocked(getSopInstall).mockResolvedValue(mockInstall as never);
 
     const result = await uninstallSop('license-abc-123');
 
@@ -329,13 +428,105 @@ describe('uninstallSop', () => {
     vi.mocked(getSopInstall).mockResolvedValue({
       ...mockInstall,
       user_id: 'different-user',
-    } as any);
+    } as never);
 
     const result = await uninstallSop('license-abc-123');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe('NOT_OWNER');
+    }
+  });
+
+  it('6. reinstall after uninstall succeeds because only status = active rows count as duplicate', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue(mockFreeListing as never);
+    vi.mocked(dbCreateSopInstall).mockResolvedValue({
+      ...mockInstall,
+      id: 'install-new-002',
+      license_id: 'license-new-456',
+    } as never);
+
+    const result = await installSop('listing-free-001');
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.licenseId).toBeDefined();
+    }
+  });
+});
+
+describe('Creator & Admin Publishing Gates for Paid Listings', () => {
+  it('5a. creator cannot publish listing if price_cents > 0', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing, getCreatorProfile } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue({
+      ...mockPaidListing,
+      status: 'draft',
+    } as never);
+    vi.mocked(getCreatorProfile).mockResolvedValue(mockCreatorProfile as never);
+
+    const result = await publishListing('listing-paid-001');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VALIDATION_ERROR');
+      expect(result.error.message).toContain('checkout is enabled');
+    }
+  });
+
+  it('5b. creator cannot update listing to published if price_cents > 0', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing, getCreatorProfile } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue({
+      ...mockPaidListing,
+      status: 'draft',
+    } as never);
+    vi.mocked(getCreatorProfile).mockResolvedValue(mockCreatorProfile as never);
+
+    const result = await updateSopListing('listing-paid-001', {
+      status: 'published',
+      priceCents: 9900,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VALIDATION_ERROR');
+      expect(result.error.message).toContain('checkout is enabled');
+    }
+  });
+
+  it('5c. admin cannot approve listing if price_cents > 0', async () => {
+    const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
+    const { getD1 } = await import('@/seed/db/client');
+    const { getSopListing } = await import('@/seed/db/marketplace-ops');
+
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getSopListing).mockResolvedValue({
+      ...mockPaidListing,
+      status: 'pending_review',
+    } as never);
+
+    const result = await approveListingAdmin('listing-paid-001');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VALIDATION_ERROR');
+      expect(result.error.message).toContain('checkout is enabled');
     }
   });
 });

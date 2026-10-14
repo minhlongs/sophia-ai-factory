@@ -22,8 +22,38 @@ import {
   createSopInstall as dbCreateSopInstall,
   getSopInstall as dbGetSopInstall,
 } from '@/seed/db/marketplace-ops';
-import { recordSopSaleCommission } from './commission-split'
 import { captureSopInstalled } from '@/tree/signals/posthog-capture';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from './availability';
+
+export type InstallErrorCode =
+  | 'NOT_AUTHENTICATED'
+  | 'LISTING_NOT_FOUND'
+  | 'LISTING_NOT_PUBLISHED'
+  | 'PAYMENT_REQUIRED'
+  | 'ALREADY_INSTALLED'
+  | 'INSTALL_LIMIT_REACHED'
+  | 'DB_ERROR'
+  | 'MARKETPLACE_TEMPORARILY_UNAVAILABLE';
+
+export type UninstallErrorCode =
+  | 'NOT_AUTHENTICATED'
+  | 'INSTALL_NOT_FOUND'
+  | 'NOT_OWNER'
+  | 'DB_ERROR'
+  | 'MARKETPLACE_TEMPORARILY_UNAVAILABLE';
+
+export type InstallResult = Result<
+  { licenseId: string },
+  { code: InstallErrorCode; message: string }
+>;
+
+export type UninstallResult = Result<
+  { success: boolean },
+  { code: UninstallErrorCode; message: string }
+>;
 
 // ── Actions ─────────────────────────────────────────────────────────────
 
@@ -31,30 +61,19 @@ import { captureSopInstalled } from '@/tree/signals/posthog-capture';
  * Install an SOP from the Creator Marketplace.
  *
  * Flow: auth gate, listing lookup, published check, duplicate check,
- * tier limit check, commission recording, install creation.
+ * tier limit check, install creation.
  */
 export async function installSop(
   listingId: string,
-): Promise<
-  Result<
-    { licenseId: string },
-    {
-      code:
-        | 'NOT_AUTHENTICATED'
-        | 'LISTING_NOT_FOUND'
-        | 'LISTING_NOT_PUBLISHED'
-        | 'ALREADY_INSTALLED'
-        | 'INSTALL_LIMIT_REACHED'
-        | 'DB_ERROR';
-      message: string;
-    }
-  >
-> {
+): Promise<InstallResult> {
   try {
     // 1. Auth gate
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     // 2. Get database binding
@@ -72,6 +91,13 @@ export async function installSop(
     // 4. Check listing status is 'published'
     if (listing.status !== 'published') {
       return failure({ code: 'LISTING_NOT_PUBLISHED', message: 'SOP listing is not published' });
+    }
+
+    if (typeof listing.price_cents !== 'number' || listing.price_cents !== 0) {
+      return failure({
+        code: 'PAYMENT_REQUIRED',
+        message: 'Paid SOP listings require a verified checkout order (currently disabled)',
+      });
     }
 
     // 5. Check user hasn't already installed this SOP
@@ -117,28 +143,29 @@ export async function installSop(
     // 8. Generate license ID
     const licenseId = crypto.randomUUID();
 
-    // 9. Record commission first (need the commission_ledger id for install record)
-    const commissionId = await recordSopSaleCommission(d1, {
-      creatorId: listing.creator_id,
-      listingId: listing.id,
-      templateId: listing.sop_template_id,
-      licenseId,
-      priceCents: listing.price_cents,
-      paymentId: 'manual_' + licenseId,
-    });
-
-    // 10. Create the install record with commission reference
-    await dbCreateSopInstall(
-      d1,
-      {
-        listing_id: listing.id,
-        user_id: user.id,
-        license_id: licenseId,
-        price_cents: listing.price_cents,
-        commission_id: commissionId,
-      },
-      tenantId,
-    );
+    // 9. Create the install record (free installs have no commission)
+    try {
+      await dbCreateSopInstall(
+        d1,
+        {
+          listing_id: listing.id,
+          user_id: user.id,
+          license_id: licenseId,
+          price_cents: listing.price_cents,
+          commission_id: null,
+        },
+        tenantId,
+      );
+    } catch (createErr) {
+      const errStr = createErr instanceof Error ? createErr.message : String(createErr);
+      if (errStr.includes('UNIQUE constraint failed') || errStr.includes('constraint')) {
+        return failure({
+          code: 'ALREADY_INSTALLED',
+          message: 'You have already installed this SOP',
+        });
+      }
+      throw createErr;
+    }
 
     // Funnel tracking — fire-and-forget sop-installed event
     captureSopInstalled({ distinctId: user.id, listingId: listing.id })
@@ -167,20 +194,15 @@ export async function installSop(
  */
 export async function uninstallSop(
   licenseId: string,
-): Promise<
-  Result<
-    { success: boolean },
-    {
-      code: 'NOT_AUTHENTICATED' | 'INSTALL_NOT_FOUND' | 'NOT_OWNER' | 'DB_ERROR';
-      message: string;
-    }
-  >
-> {
+): Promise<UninstallResult> {
   try {
     // 1. Auth gate
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     // 2. Get database binding

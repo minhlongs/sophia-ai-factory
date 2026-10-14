@@ -16,6 +16,17 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
   resolveUserTier: vi.fn(),
 }));
 
+// These cases verify the existing authorized workflow; the default-off gate is
+// covered by the focused Creator Marketplace containment suite.
+vi.mock('@/land/sop-marketplace/availability', () => ({
+  CREATOR_MARKETPLACE_V2_ENABLED: true,
+  MARKETPLACE_TEMPORARILY_UNAVAILABLE: 'MARKETPLACE_TEMPORARILY_UNAVAILABLE',
+  marketplaceTemporarilyUnavailableError: () => ({
+    code: 'MARKETPLACE_TEMPORARILY_UNAVAILABLE',
+    message: 'Creator Marketplace is temporarily unavailable while database integrity is being verified.',
+  }),
+}));
+
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));

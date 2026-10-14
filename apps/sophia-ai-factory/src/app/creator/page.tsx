@@ -22,6 +22,7 @@ import {
 import { CreatorOnboardingForm } from '@/components/creator/CreatorOnboardingForm';
 import EarningsChart from '@/components/creator/EarningsChart';
 import { ReferralSection } from '@/components/billing/referral-section';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 import type { CreatorProfileView } from '@/land/sop-marketplace';
 import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
 
@@ -221,6 +222,17 @@ export default async function CreatorPage() {
   }
 
   const profileResult = await getCreatorProfile();
+
+  if (
+    !profileResult.ok &&
+    profileResult.error.code === 'MARKETPLACE_TEMPORARILY_UNAVAILABLE'
+  ) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <MarketplaceUnavailableNotice />
+      </div>
+    );
+  }
 
   // Not registered yet — show onboarding form
   if (!profileResult.ok && profileResult.error.code === 'PROFILE_NOT_FOUND') {

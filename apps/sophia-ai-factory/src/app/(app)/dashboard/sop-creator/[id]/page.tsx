@@ -1,4 +1,6 @@
 import { Suspense } from 'react';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
+import { CREATOR_MARKETPLACE_V2_ENABLED } from '@/land/sop-marketplace/availability';
 import { checkCreatorAccess } from '../ServerGate';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -14,12 +16,20 @@ export default async function SOPCreatorListingPage({ params }: PageProps) {
   const { locale, id } = await params;
   const access = await checkCreatorAccess();
 
-  if (!access.hasAccess) {
-    redirect(`/${locale}/dashboard/sop-creator/apply`);
-  }
-
   if (!access.userId) {
     redirect(`/${locale}/auth/login?redirect=/dashboard/sop-creator/${id}`);
+  }
+
+  if (!access.marketplaceAvailable) {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <MarketplaceUnavailableNotice />
+      </main>
+    );
+  }
+
+  if (!access.hasAccess) {
+    redirect(`/${locale}/dashboard/sop-creator/apply`);
   }
 
   return (
@@ -29,7 +39,14 @@ export default async function SOPCreatorListingPage({ params }: PageProps) {
   );
 }
 
-async function ListingDetail({ locale, listingId, userId }: { locale: string; listingId: string; userId: string }) {
+export async function ListingDetail({ locale, listingId, userId }: { locale: string; listingId: string; userId: string }) {
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <MarketplaceUnavailableNotice />
+      </main>
+    );
+  }
   const t = await getTranslations({ locale, namespace: 'sop.creator' });
   const tStatus = await getTranslations({ locale, namespace: 'sop.status' });
 

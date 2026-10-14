@@ -7603,6 +7603,8 @@
       "installError": "Cài đặt thất bại: {error}",
       "alreadyInstalled": "Đã cài đặt",
       "installLimitReached": "Đã đạt giới hạn cài đặt. Nâng cấp gói của bạn.",
+      "paymentRequired": "SOP trả phí yêu cầu xác nhận thanh toán (tạm thời bị khoá).",
+      "paidListingPublishBlocked": "Chưa thể công bố listing trả phí khi chưa có cổng thanh toán.",
       "yourRating": "Đánh Giá Của Bạn",
       "reviewPlaceholder": "Viết đánh giá...",
       "submitReview": "Gửi Đánh Giá",

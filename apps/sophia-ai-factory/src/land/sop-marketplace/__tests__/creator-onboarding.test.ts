@@ -50,6 +50,16 @@ vi.mock('../beta-invites', () => ({
   validateInviteCode: vi.fn().mockResolvedValue({ valid: true }),
 }));
 
+// These tests cover the enabled business workflow; the disabled-state contract
+// is exercised separately by marketplace-containment.test.ts.
+vi.mock('../availability', () => ({
+  CREATOR_MARKETPLACE_V2_ENABLED: true,
+  marketplaceTemporarilyUnavailableError: () => ({
+    code: 'MARKETPLACE_TEMPORARILY_UNAVAILABLE',
+    message: 'Creator Marketplace is temporarily unavailable while database integrity is being verified.',
+  }),
+}));
+
 // Import module under test after mocks
 import { registerCreator, getCreatorProfile, updateCreatorProfile } from '../creator-onboarding';
 
