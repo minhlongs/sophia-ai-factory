@@ -7,6 +7,18 @@
 set -euo pipefail
 
 BUNDLE_SERVER="node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js"
+LOAD_MANIFEST="node_modules/@opennextjs/cloudflare/dist/cli/build/patches/plugins/load-manifest.js"
+
+if [ -f "$LOAD_MANIFEST" ]; then
+  if ! grep -q 'preview-props' "$LOAD_MANIFEST"; then
+    sed -i.bak 's/{*-manifest,required-server-files,prefetch-hints}/{*-manifest,required-server-files,prefetch-hints,preview-props}/g' "$LOAD_MANIFEST"
+    sed -i.bak 's/p\.endsWith("prefetch-hints")/p.endsWith("prefetch-hints") || p.endsWith("preview-props")/g' "$LOAD_MANIFEST"
+    rm -f "${LOAD_MANIFEST}.bak"
+    echo "✅ Patched OpenNext load-manifest.js with Next.js 16.4 preview-props.json support"
+  else
+    echo "✅ OpenNext load-manifest.js already includes preview-props.json"
+  fi
+fi
 
 if [ ! -f "$BUNDLE_SERVER" ]; then
   echo "WARNING: OpenNext bundle-server.js not found — skip d3 stub patch"
