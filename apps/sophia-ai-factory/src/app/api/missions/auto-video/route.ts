@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { checkMissionQuota } from '@/forest/quota/mission-quota';
+import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { runAutoVideoMission, AutoVideoMissionError } from '@/land/missions/auto-video-mission';
 
 const BodySchema = z.object({

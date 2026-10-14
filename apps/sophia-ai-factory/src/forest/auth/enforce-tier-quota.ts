@@ -15,7 +15,7 @@
  */
 
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
-import { checkVideoQuota, VIDEO_QUOTA_BY_TIER } from '@/forest/quota/video-quota'
+import { checkVideoQuota, VIDEO_QUOTA_BY_TIER } from '@/tree/quota/video-quota'
 
 export interface TierQuotaResult {
   allowed: boolean

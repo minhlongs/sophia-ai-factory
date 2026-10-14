@@ -1,7 +1,10 @@
 /**
- * @module rollup
- * Barrel re-exports.
+ * Usage Rollup Submodule Index
+ *
+ * Layer: tree/usage-metering
  */
-export { calculateDailyRollup } from './daily-rollup-calculator';
-export { runDailyRollup, upsertDailySummary } from './daily-rollup';
-export { calculateHourlyRollup, runHourlyRollup, upsertHourlySummary } from './hourly-rollup';
+
+export * from './constants';
+export * from './quota-checker';
+export * from './summary-aggregator';
+export * from './credit-reservation';

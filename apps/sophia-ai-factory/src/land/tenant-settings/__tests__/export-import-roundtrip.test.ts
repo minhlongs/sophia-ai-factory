@@ -14,7 +14,7 @@ import {
   bulkImport,
   deleteNamespace,
 } from '../registry';
-import type { SettingsNamespace } from '../types';
+import type { SettingsNamespace } from '@/seed/tenant-settings/types';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 

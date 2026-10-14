@@ -11,7 +11,10 @@ export {
   calculateHourlyRollup,
   upsertHourlySummary,
   runHourlyRollup,
+} from './rollup/hourly-rollup';
+
+export {
   calculateDailyRollup,
   upsertDailySummary,
   runDailyRollup,
-} from './rollup/index';
+} from './rollup/daily-rollup';

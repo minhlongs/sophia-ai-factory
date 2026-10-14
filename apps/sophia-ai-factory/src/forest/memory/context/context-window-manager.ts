@@ -1,6 +1,5 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { MemoryConsolidator } from '@/tree/memory/memory-consolidator';
 import {
   CHARS_PER_TOKEN,
   DEFAULT_CONTEXT_LIMIT,
@@ -9,6 +8,10 @@ import {
   ContextCheckResult,
   ContextWindowOptions,
 } from './constants-and-types';
+import {
+  summarizeOldestMessages,
+  triggerAsyncMemoryConsolidation,
+} from './context-summarizer-helpers';
 
 /**
  * Orchestrates context window management for chat sessions.
@@ -28,35 +31,22 @@ export class ContextWindowService {
     };
   }
 
-  /**
-   * Estimate token count for a message array.
-   */
   estimateTokens(messages: { role: string; content: string }[]): number {
     const contentTokens = messages.reduce((sum, m) => {
       return sum + Math.ceil(m.content.length / CHARS_PER_TOKEN);
     }, 0);
-    // Add per-message overhead (role, formatting ~10 tokens each).
     const overhead = messages.length * 10;
-    // System prompt overhead if present.
     const hasSystem = messages.some((m) => m.role === 'system');
     const systemOverhead = hasSystem ? 100 : 0;
     return contentTokens + overhead + systemOverhead;
   }
 
-  /**
-   * Check if context window is over the summarization threshold.
-   */
-  isOverThreshold(
-    messages: { role: string; content: string }[],
-  ): boolean {
+  isOverThreshold(messages: { role: string; content: string }[]): boolean {
     const tokens = this.estimateTokens(messages);
     const utilization = tokens / this.options.contextLimit;
     return utilization >= this.options.summarizeThreshold;
   }
 
-  /**
-   * Manage the context window for a chat session.
-   */
   async manageContext(
     messages: { role: string; content: string }[],
   ): Promise<ContextCheckResult> {
@@ -73,7 +63,6 @@ export class ContextWindowService {
       utilizationBefore,
     };
 
-    // Skip if under threshold.
     if (!this.isOverThreshold(messages)) {
       logger.debug('[ContextWindow] Under threshold, no summarization needed', {
         userId: this.options.userId,
@@ -93,7 +82,7 @@ export class ContextWindowService {
     });
 
     try {
-      const trimmed = await this.summarizeOldest(messages);
+      const trimmed = summarizeOldestMessages(messages, this.options.keepRecent);
       const tokensAfter = this.estimateTokens(trimmed);
 
       result.summarized = true;
@@ -109,80 +98,14 @@ export class ContextWindowService {
         savedTokens: tokensBefore - tokensAfter,
       });
 
-      // Trigger async memory consolidation for the user.
-      this.consolidateMemoriesAsync(this.options.userId);
-
+      triggerAsyncMemoryConsolidation(this.options.userId);
       return result;
     } catch (err) {
-      // Graceful degradation: proceed with original messages.
       logger.warn('[ContextWindow] Summarization failed, proceeding without', {
         userId: this.options.userId,
         error: getErrorMessage(err),
       });
       return result;
-    }
-  }
-
-  /**
-   * Summarize the oldest messages, keeping the most recent N.
-   */
-  private async summarizeOldest(
-    messages: { role: string; content: string }[],
-  ): Promise<{ role: string; content: string }[]> {
-    const keepRecent = this.options.keepRecent;
-    const total = messages.length;
-
-    if (total <= keepRecent + 1) {
-      return messages;
-    }
-
-    const systemMsg = messages.find((m) => m.role === 'system');
-    const conversation = messages.filter((m) => m.role !== 'system');
-
-    const recent = conversation.slice(-keepRecent);
-    const older = conversation.slice(0, conversation.length - keepRecent);
-
-    if (older.length === 0) {
-      return messages;
-    }
-
-    const summaryLines: string[] = [];
-    for (const msg of older) {
-      const truncated = msg.content.length > 200
-        ? msg.content.slice(0, 200) + '...'
-        : msg.content;
-      summaryLines.push(`[${msg.role}]: ${truncated}`);
-    }
-
-    const summaryContent = [
-      `[Context summary — ${older.length} earlier messages condensed]`,
-      ...summaryLines,
-    ].join('\n');
-
-    const result: { role: string; content: string }[] = [];
-    if (systemMsg) {
-      result.push(systemMsg);
-    }
-    result.push({ role: 'system', content: summaryContent });
-    result.push(...recent);
-
-    return result;
-  }
-
-  /**
-   * Trigger memory consolidation asynchronously (fire-and-forget).
-   */
-  private consolidateMemoriesAsync(userId: string): void {
-    try {
-      const consolidator = new MemoryConsolidator();
-      consolidator.consolidate(userId).catch((err) => {
-        logger.warn('[ContextWindow] Async consolidation failed', {
-          userId,
-          error: getErrorMessage(err),
-        });
-      });
-    } catch {
-      // Silently ignore — consolidation is non-critical.
     }
   }
 }

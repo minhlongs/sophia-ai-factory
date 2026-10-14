@@ -28,7 +28,8 @@ import {
   executePoolRebalance,
   listClearingBatches,
 } from '@/tree/clearing/multi-asset-clearing-engine';
-import { requireAuth, getRequiredD1 } from './common';
+import { getRequiredD1 } from './common';
+import { runAuthenticatedSettlementAction } from './settlement-action-helpers';
 
 /**
  * 1. Get Clearing Liquidity Pools Action
@@ -37,19 +38,11 @@ import { requireAuth, getRequiredD1 } from './common';
 export async function getClearingLiquidityPoolsAction(): Promise<
   Result<ClearingLiquidityPool[], ClearingActionError>
 > {
-  try {
-    await requireAuth();
-    const db = await getRequiredD1();
-    const pools = await listLiquidityPools(db);
-    return success(pools);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to get clearing liquidity pools', { error: message });
-    return failure({
-      code: 'GET_POOLS_FAILED',
-      message,
-    });
-  }
+  return runAuthenticatedSettlementAction({
+    errorCode: 'GET_POOLS_FAILED',
+    logLabel: 'Failed to get clearing liquidity pools',
+    handler: async (db) => success(await listLiquidityPools(db)),
+  });
 }
 
 /**
@@ -70,15 +63,11 @@ export async function quoteClearingSwapAction(
       });
     }
 
-    const quote = calculateSwapQuote(pool, input);
-    return success(quote);
+    return success(calculateSwapQuote(pool, input));
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error('Failed to calculate swap quote', { error: message, input });
-    return failure({
-      code: 'QUOTE_SWAP_FAILED',
-      message,
-    });
+    return failure({ code: 'QUOTE_SWAP_FAILED', message });
   }
 }
 
@@ -89,27 +78,21 @@ export async function quoteClearingSwapAction(
 export async function executeCrossBorderClearingAction(
   input: ExecuteClearingBatchInput,
 ): Promise<Result<ClearingExecutionResult, ClearingActionError>> {
-  try {
-    await requireAuth();
-    const db = await getRequiredD1();
-    const result = await executeRtgsBatch(db, input);
-
-    if (!result.success) {
-      return failure({
-        code: 'CLEARING_EXECUTION_REJECTED',
-        message: result.error ?? 'Clearing batch execution was rejected',
-      });
-    }
-
-    return success(result);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to execute cross-border clearing batch', { error: message, input });
-    return failure({
-      code: 'EXECUTE_CLEARING_FAILED',
-      message,
-    });
-  }
+  return runAuthenticatedSettlementAction({
+    errorCode: 'EXECUTE_CLEARING_FAILED',
+    logLabel: 'Failed to execute cross-border clearing batch',
+    context: { input },
+    handler: async (db) => {
+      const result = await executeRtgsBatch(db, input);
+      if (!result.success) {
+        return failure({
+          code: 'CLEARING_EXECUTION_REJECTED',
+          message: result.error ?? 'Clearing batch execution was rejected',
+        });
+      }
+      return success(result);
+    },
+  });
 }
 
 /**
@@ -119,27 +102,21 @@ export async function executeCrossBorderClearingAction(
 export async function reconcileClearingBatchAction(
   input: ReconcileBatchInput,
 ): Promise<Result<ReconciliationResult, ClearingActionError>> {
-  try {
-    await requireAuth();
-    const db = await getRequiredD1();
-    const result = await reconcileBatchWithBankStatement(db, input);
-
-    if (!result.success) {
-      return failure({
-        code: 'RECONCILIATION_MISMATCH',
-        message: result.error ?? 'Statement reconciliation mismatch',
-      });
-    }
-
-    return success(result);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to reconcile clearing batch', { error: message, input });
-    return failure({
-      code: 'RECONCILE_BATCH_FAILED',
-      message,
-    });
-  }
+  return runAuthenticatedSettlementAction({
+    errorCode: 'RECONCILE_BATCH_FAILED',
+    logLabel: 'Failed to reconcile clearing batch',
+    context: { input },
+    handler: async (db) => {
+      const result = await reconcileBatchWithBankStatement(db, input);
+      if (!result.success) {
+        return failure({
+          code: 'RECONCILIATION_MISMATCH',
+          message: result.error ?? 'Statement reconciliation mismatch',
+        });
+      }
+      return success(result);
+    },
+  });
 }
 
 /**
@@ -151,27 +128,21 @@ export async function triggerPoolRebalanceAction(input: {
   targetPoolId: string;
   amount: number;
 }): Promise<Result<{ success: boolean; rebalancedAmount: number }, ClearingActionError>> {
-  try {
-    await requireAuth();
-    const db = await getRequiredD1();
-    const result = await executePoolRebalance(db, input.sourcePoolId, input.targetPoolId, input.amount);
-
-    if (!result.success) {
-      return failure({
-        code: 'POOL_REBALANCE_FAILED',
-        message: result.error ?? 'Pool rebalance failed',
-      });
-    }
-
-    return success(result);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to trigger pool rebalance', { error: message, input });
-    return failure({
-      code: 'TRIGGER_REBALANCE_FAILED',
-      message,
-    });
-  }
+  return runAuthenticatedSettlementAction({
+    errorCode: 'TRIGGER_REBALANCE_FAILED',
+    logLabel: 'Failed to trigger pool rebalance',
+    context: { input },
+    handler: async (db) => {
+      const result = await executePoolRebalance(db, input.sourcePoolId, input.targetPoolId, input.amount);
+      if (!result.success) {
+        return failure({
+          code: 'POOL_REBALANCE_FAILED',
+          message: result.error ?? 'Pool rebalance failed',
+        });
+      }
+      return success(result);
+    },
+  });
 }
 
 /**
@@ -182,17 +153,10 @@ export async function getClearingBatchesAction(options?: {
   status?: ClearingBatchStatus;
   limit?: number;
 }): Promise<Result<CrossBorderClearingBatch[], ClearingActionError>> {
-  try {
-    await requireAuth();
-    const db = await getRequiredD1();
-    const batches = await listClearingBatches(db, options);
-    return success(batches);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to get clearing batches', { error: message, options });
-    return failure({
-      code: 'GET_BATCHES_FAILED',
-      message,
-    });
-  }
+  return runAuthenticatedSettlementAction({
+    errorCode: 'GET_BATCHES_FAILED',
+    logLabel: 'Failed to get clearing batches',
+    context: { options },
+    handler: async (db) => success(await listClearingBatches(db, options)),
+  });
 }

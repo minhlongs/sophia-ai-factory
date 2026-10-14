@@ -13,6 +13,10 @@ import {
 import { validateInviteCode } from '../beta-invites';
 import type { CreatorError } from './types';
 import { registerSchema } from './schemas';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from '../availability';
 
 /**
  * Register as a creator on the platform.
@@ -31,6 +35,9 @@ export async function registerCreator(formData: {
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     // Validate input

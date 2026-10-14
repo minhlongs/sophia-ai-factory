@@ -6,7 +6,7 @@
  */
 
 import { useTranslations } from 'next-intl';
-import type { SopTemplateRow } from '@/tree/sop/sop-types';
+import type { SopTemplateRow } from '@/seed/sop/sop-types';
 
 type Category = SopTemplateRow['category'];
 

@@ -1,18 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Send, AlertCircle, CheckCircle2, LifeBuoy, Clock } from 'lucide-react';
+import { X, Send, AlertCircle, CheckCircle2, LifeBuoy } from 'lucide-react';
+import {
+  SupportTicketList,
+  PRIORITY_LABELS,
+  type TicketPriority,
+  type SupportTicket,
+} from './support-ticket-list';
 
-export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
-
-export interface SupportTicket {
-  id: string | number;
-  title: string | null;
-  message: string;
-  status: string;
-  priority: TicketPriority;
-  created_at: string;
-}
+export type { TicketPriority, SupportTicket } from './support-ticket-list';
 
 export interface SupportTicketModalProps {
   isOpen: boolean;
@@ -49,9 +46,7 @@ export function SupportTicketModal({ isOpen, onClose, locale, onTicketCreated }:
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      void fetchTickets();
-    }
+    if (isOpen) void fetchTickets();
   }, [isOpen, fetchTickets]);
 
   if (!isOpen) return null;
@@ -77,9 +72,7 @@ export function SupportTicketModal({ isOpen, onClose, locale, onTicketCreated }:
         return;
       }
       setSuccessMessage(isVi ? 'Đã gửi ticket thành công! Đội ngũ sẽ phản hồi sớm.' : 'Ticket submitted successfully!');
-      setTitle('');
-      setDescription('');
-      setPriority('normal');
+      setTitle(''); setDescription(''); setPriority('normal');
       void fetchTickets();
       onTicketCreated?.();
     } catch {
@@ -89,22 +82,13 @@ export function SupportTicketModal({ isOpen, onClose, locale, onTicketCreated }:
     }
   }
 
-  const priorityLabels: Record<TicketPriority, { vi: string; en: string }> = {
-    low: { vi: 'Thấp', en: 'Low' },
-    normal: { vi: 'Bình thường', en: 'Normal' },
-    high: { vi: 'Cao', en: 'High' },
-    urgent: { vi: 'Khẩn cấp', en: 'Urgent' },
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs" role="dialog" aria-modal="true">
       <div className="relative w-full max-w-xl rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
           <div className="flex items-center gap-2">
             <LifeBuoy className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold text-on-surface">
-              {isVi ? 'Hỗ trợ Khách hàng' : 'Customer Support Desk'}
-            </h2>
+            <h2 className="text-lg font-bold text-on-surface">{isVi ? 'Hỗ trợ Khách hàng' : 'Customer Support Desk'}</h2>
           </div>
           <button onClick={onClose} className="rounded-lg p-1 text-on-surface-variant hover:bg-surface-variant/30" aria-label="Close">
             <X className="h-5 w-5" />
@@ -124,31 +108,25 @@ export function SupportTicketModal({ isOpen, onClose, locale, onTicketCreated }:
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             {errorMessage && (
               <div className="flex items-center gap-2 rounded-lg bg-error/10 p-3 text-xs text-error">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{errorMessage}</span>
+                <AlertCircle className="h-4 w-4 shrink-0" /><span>{errorMessage}</span>
               </div>
             )}
             {successMessage && (
               <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>{successMessage}</span>
+                <CheckCircle2 className="h-4 w-4 shrink-0" /><span>{successMessage}</span>
               </div>
             )}
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant">
-                {isVi ? 'Tiêu đề vấn đề' : 'Issue Subject'}
-              </label>
+              <label className="block text-xs font-semibold text-on-surface-variant">{isVi ? 'Tiêu đề vấn đề' : 'Issue Subject'}</label>
               <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={isVi ? 'VD: Lỗi kết nối fal.ai...' : 'E.g., fal.ai connection timeout...'} className="mt-1 w-full rounded-lg border border-outline-variant/40 bg-surface-variant/20 px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-hidden" maxLength={200} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant">
-                {isVi ? 'Mức độ ưu tiên' : 'Priority Level'}
-              </label>
+              <label className="block text-xs font-semibold text-on-surface-variant">{isVi ? 'Mức độ ưu tiên' : 'Priority Level'}</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value as TicketPriority)} className="mt-1 w-full rounded-lg border border-outline-variant/40 bg-surface-variant/20 px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-hidden">
-                <option value="low">{priorityLabels.low[locale]}</option>
-                <option value="normal">{priorityLabels.normal[locale]}</option>
-                <option value="high">{priorityLabels.high[locale]}</option>
-                <option value="urgent">{priorityLabels.urgent[locale]}</option>
+                <option value="low">{PRIORITY_LABELS.low[locale]}</option>
+                <option value="normal">{PRIORITY_LABELS.normal[locale]}</option>
+                <option value="high">{PRIORITY_LABELS.high[locale]}</option>
+                <option value="urgent">{PRIORITY_LABELS.urgent[locale]}</option>
               </select>
             </div>
             <div>
@@ -168,28 +146,7 @@ export function SupportTicketModal({ isOpen, onClose, locale, onTicketCreated }:
             </div>
           </form>
         ) : (
-          <div className="mt-4 max-h-80 space-y-2.5 overflow-y-auto pr-1 text-sm">
-            {isLoadingTickets && <p className="py-6 text-center text-xs text-on-surface-variant">{isVi ? 'Đang tải danh sách...' : 'Loading tickets...'}</p>}
-            {!isLoadingTickets && tickets.length === 0 && (
-              <p className="py-8 text-center text-xs text-on-surface-variant">{isVi ? 'Bạn chưa có ticket hỗ trợ nào.' : 'You have no open support tickets.'}</p>
-            )}
-            {!isLoadingTickets && tickets.map((t) => (
-              <div key={t.id} className="rounded-xl border border-outline-variant/30 bg-surface-variant/10 p-3.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-on-surface">{t.title || (isVi ? 'Không tiêu đề' : 'Untitled')}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">{t.status}</span>
-                    <span className="rounded-full bg-surface-variant/40 px-2 py-0.5 text-[10px] font-bold text-on-surface-variant uppercase">{t.priority}</span>
-                  </div>
-                </div>
-                <p className="mt-1.5 text-xs text-on-surface-variant line-clamp-2">{t.message}</p>
-                <div className="mt-2 flex items-center gap-1 text-[11px] text-on-surface-variant/70">
-                  <Clock className="h-3 w-3" />
-                  <span>{new Date(t.created_at).toLocaleString(isVi ? 'vi-VN' : 'en-US')}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <SupportTicketList tickets={tickets} isLoadingTickets={isLoadingTickets} isVi={isVi} />
         )}
       </div>
     </div>

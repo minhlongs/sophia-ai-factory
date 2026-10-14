@@ -1,0 +1,59 @@
+/**
+ * SOP Marketplace Uninstall Action
+ * Layer: LAND (Business Workflow)
+ */
+
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getD1 } from '@/seed/db/client';
+import { success, failure } from '@/seed/types/result';
+import { logger } from '@/seed/utils/logger-utility';
+import { getSopInstall as dbGetSopInstall } from '@/seed/db/marketplace-ops';
+import type { UninstallResult } from './types';
+
+export async function uninstallSop(licenseId: string): Promise<UninstallResult> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+
+    const d1 = await getD1();
+    if (!d1) {
+      return failure({ code: 'DB_ERROR', message: 'Database not available' });
+    }
+
+    const install = await dbGetSopInstall(d1, licenseId);
+    if (!install) {
+      return failure({ code: 'INSTALL_NOT_FOUND', message: 'SOP install not found' });
+    }
+
+    if (install.user_id !== user.id) {
+      return failure({ code: 'NOT_OWNER', message: 'You do not own this SOP install' });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const updateResult = await d1
+      .prepare(
+        `UPDATE sop_installs SET status = 'uninstalled', uninstalled_at = ? WHERE license_id = ?`
+      )
+      .bind(now, licenseId)
+      .run();
+
+    if (!updateResult.success) {
+      throw new Error('Failed to uninstall SOP');
+    }
+
+    logger.info('[UninstallSop] SOP uninstalled', {
+      userId: user.id,
+      licenseId,
+    });
+
+    return success({ success: true });
+  } catch (err) {
+    logger.error(
+      '[UninstallSop] Unexpected error',
+      err instanceof Error ? err : new Error(String(err))
+    );
+    return failure({ code: 'DB_ERROR', message: 'An unexpected error occurred' });
+  }
+}

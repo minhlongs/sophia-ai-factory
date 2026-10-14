@@ -11,9 +11,22 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import type { QualityLadder } from '@/seed/types/streaming';
 import { generateForensicWatermark } from '@/tree/watermark/forensic-watermark';
-import type { AdaptiveVideoPlayerProps, SubtitleLanguage } from './player-types';
+import type { SubtitleLanguage } from './player-types';
 import { usePlayerTracks, useQualitySwitch } from './player-stream-source';
 import { usePlayerMediaEvents } from './player-media-events';
+import {
+  resolveVideoManifestUrl,
+  useVideoControlHandlers,
+  type UseVideoPlaybackProps,
+  type VideoControlHandlersParams,
+} from './video-playback-helpers';
+
+export {
+  resolveVideoManifestUrl,
+  useVideoControlHandlers,
+  type UseVideoPlaybackProps,
+  type VideoControlHandlersParams,
+};
 
 export function useVideoPlayback({
   videoId,
@@ -25,18 +38,7 @@ export function useVideoPlayback({
   initialSubtitleLocale = 'vi',
   onTimeUpdate,
   onEnded,
-}: Pick<
-  AdaptiveVideoPlayerProps,
-  | 'videoId'
-  | 'src'
-  | 'tenantId'
-  | 'userId'
-  | 'customWatermarkText'
-  | 'initialQuality'
-  | 'initialSubtitleLocale'
-  | 'onTimeUpdate'
-  | 'onEnded'
->) {
+}: UseVideoPlaybackProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -57,71 +59,28 @@ export function useVideoPlayback({
     [tenantId, userId, customWatermarkText],
   );
 
-  const manifestUrl = useMemo(() => {
-    if (src) return src;
-    return `/api/videos/${encodeURIComponent(videoId)}/hls`;
-  }, [src, videoId]);
+  const manifestUrl = useMemo(() => resolveVideoManifestUrl(videoId, src), [src, videoId]);
 
   const { handleSubtitleSelect: applySubtitle } = usePlayerTracks(videoRef);
   const { handleQualitySelect: applyQuality } = useQualitySwitch(videoId, manifestUrl, videoRef);
 
-  const togglePlay = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused || video.ended) {
-      void video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-  }, []);
-
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      videoRef.current.muted = newVolume === 0;
-    }
-  }, []);
-
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return;
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    videoRef.current.muted = nextMuted;
-    if (!nextMuted && volume === 0) {
-      setVolume(0.5);
-      videoRef.current.volume = 0.5;
-    }
-  }, [isMuted, volume]);
-
-  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const seekTime = parseFloat(e.target.value);
-    setCurrentTime(seekTime);
-    if (videoRef.current) videoRef.current.currentTime = seekTime;
-  }, []);
-
-  const toggleFullscreen = useCallback(async () => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      try {
-        await containerRef.current.requestFullscreen();
-        setIsFullscreen(true);
-      } catch {
-        // Fallback
-      }
-    } else {
-      try {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      } catch {
-        // Fallback
-      }
-    }
-  }, []);
+  const {
+    togglePlay,
+    handleVolumeChange,
+    toggleMute,
+    handleSeek,
+    toggleFullscreen,
+  } = useVideoControlHandlers({
+    videoRef,
+    containerRef,
+    isMuted,
+    volume,
+    setIsPlaying,
+    setCurrentTime,
+    setVolume,
+    setIsMuted,
+    setIsFullscreen,
+  });
 
   const handleQualitySelect = useCallback(
     (quality: 'auto' | QualityLadder) => {

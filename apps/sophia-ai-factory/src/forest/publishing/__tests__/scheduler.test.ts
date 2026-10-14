@@ -21,7 +21,7 @@ vi.mock('../per-channel-quota', () => ({
   consumeQuota: vi.fn().mockResolvedValue({ allowed: true, retryAfterSeconds: 0 }),
 }));
 
-vi.mock('@/forest/quota/channel-cooldown', () => ({
+vi.mock('@/tree/quota/channel-cooldown', () => ({
   checkCooldown: vi.fn().mockResolvedValue({ allowed: true }),
 }));
 

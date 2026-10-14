@@ -5,9 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import {
   upsertMemory,
@@ -17,41 +15,13 @@ import {
 } from '@/tree/creative-memory';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { MemoryCategory, MemoryConfidence, CreativeMemory } from '@/seed/types/creative-domain';
+import {
+  createMemorySchema,
+  deleteMemorySchema,
+  getMemoryWorkspaceId,
+} from './memory-route-helpers';
 
 export const dynamic = 'force-dynamic';
-
-// ---------------------------------------------------------------------------
-// Validation
-// ---------------------------------------------------------------------------
-
-const MEMORY_CATEGORIES: MemoryCategory[] = [
-  'identity', 'creative', 'audience', 'performance',
-  'business', 'operational', 'provenance',
-];
-
-const MEMORY_SCOPES: CreativeMemory['scope'][] = [
-  'global', 'campaign', 'project', 'channel',
-];
-
-const MEMORY_CONFIDENCES: MemoryConfidence[] = ['high', 'medium', 'low'];
-
-const createMemorySchema = z.object({
-  workspaceId: z.string().min(1),
-  category: z.enum(MEMORY_CATEGORIES as [string, ...string[]]),
-  key: z.string().min(1),
-  value: z.unknown(),
-  scope: z.enum(MEMORY_SCOPES as [string, ...string[]]).optional(),
-  scopeId: z.string().optional(),
-  confidence: z.enum(MEMORY_CONFIDENCES as [string, ...string[]]).optional(),
-});
-
-const deleteMemorySchema = z.object({
-  id: z.string().min(1),
-});
-
-// ---------------------------------------------------------------------------
-// POST — create/upsert memory
-// ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -109,10 +79,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET — list memory keys
-// ---------------------------------------------------------------------------
-
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
@@ -144,25 +110,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function getMemoryWorkspaceId(memoryId: string): Promise<string | null> {
-  const d1 = createServerClient();
-  const row = await d1
-    .prepare('SELECT workspace_id FROM creative_memory WHERE id = ? AND is_deleted = 0')
-    .bind(memoryId)
-    .first<{ workspace_id: string; is_deleted?: number }>();
-  if (!row) return null;
-  if ('is_deleted' in row && row.is_deleted === 1) return null;
-  return row.workspace_id ?? null;
-}
-
-// ---------------------------------------------------------------------------
-// DELETE — soft-delete memory by id (query param)
-// ---------------------------------------------------------------------------
 
 export async function DELETE(request: NextRequest) {
   const user = await getCurrentUser();

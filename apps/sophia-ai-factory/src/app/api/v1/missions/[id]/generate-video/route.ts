@@ -15,7 +15,7 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
+import { reserveVideoSlot, releaseVideoSlot } from '@/tree/quota/video-quota';
 import { logger } from '@/seed/utils/logger-utility';
 import { errorResponse } from '@/seed/api';
 

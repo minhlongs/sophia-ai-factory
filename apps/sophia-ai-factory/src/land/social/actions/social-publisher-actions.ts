@@ -8,7 +8,6 @@
 
 'use server';
 
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPlatform, SocialPublishResult } from '@/seed/types/social-publisher-types';
@@ -21,36 +20,19 @@ import {
 } from '@/land/social/platform-credentials-store';
 import { createPublishJob, toSocialPublishResult } from '@/land/social/publish-job-store';
 import { toError } from '@/seed/utils/to-error';
+import {
+  dispatchSocialPublishSchema,
+  updateChannelCredentialsSchema,
+  type DispatchSocialPublishInput,
+  type UpdateChannelCredentialsInput,
+  type SocialPublisherActionResponse,
+} from './social-publisher-schemas';
 
-export const dispatchSocialPublishSchema = z.object({
-  channelId: z.string().min(1, 'Channel ID is required'),
-  platform: z.enum(['YOUTUBE_SHORTS', 'TIKTOK_V2', 'INSTAGRAM_REELS']),
-  videoUrl: z.string().url('Must be a valid video URL'),
-  title: z.string().min(1, 'Title is required').max(150),
-  description: z.string().max(2000).optional().default(''),
-  tags: z.array(z.string()).optional(),
-  totalSizeBytes: z.number().positive().optional(),
-  scheduledFor: z.number().positive().optional(),
-});
-
-export const updateChannelCredentialsSchema = z.object({
-  platform: z.enum(['YOUTUBE_SHORTS', 'TIKTOK_V2', 'INSTAGRAM_REELS']),
-  channelId: z.string().min(1, 'Channel ID is required'),
-  channelName: z.string().min(1, 'Channel name is required'),
-  accessToken: z.string().min(1, 'Access token is required'),
-  refreshToken: z.string().optional(),
-  tokenExpiresAt: z.number().positive('Expiration timestamp must be positive'),
-});
-
-export type DispatchSocialPublishInput = z.input<typeof dispatchSocialPublishSchema>;
-export type UpdateChannelCredentialsInput = z.input<typeof updateChannelCredentialsSchema>;
-
-export interface SocialPublisherActionResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  code?: string;
-}
+export type {
+  DispatchSocialPublishInput,
+  UpdateChannelCredentialsInput,
+  SocialPublisherActionResponse,
+};
 
 export async function dispatchSocialPublishAction(
   rawInput: DispatchSocialPublishInput,
@@ -71,27 +53,17 @@ export async function dispatchSocialPublishAction(
     }
 
     const job = await createPublishJob({
-      userId: user.id,
-      channelId: parsed.data.channelId,
-      platform: parsed.data.platform,
-      videoUrl: parsed.data.videoUrl,
-      title: parsed.data.title,
-      description: parsed.data.description ?? '',
-      tags: parsed.data.tags,
-      scheduledFor: parsed.data.scheduledFor,
+      userId: user.id, channelId: parsed.data.channelId, platform: parsed.data.platform,
+      videoUrl: parsed.data.videoUrl, title: parsed.data.title,
+      description: parsed.data.description ?? '', tags: parsed.data.tags, scheduledFor: parsed.data.scheduledFor,
     });
 
     await inngest.send({
       name: 'social.publish.dispatched',
       data: {
-        jobId: job.id,
-        userId: user.id,
-        channelId: parsed.data.channelId,
-        platform: parsed.data.platform,
-        videoUrl: parsed.data.videoUrl,
-        title: parsed.data.title,
-        description: parsed.data.description ?? '',
-        tags: parsed.data.tags ?? [],
+        jobId: job.id, userId: user.id, channelId: parsed.data.channelId, platform: parsed.data.platform,
+        videoUrl: parsed.data.videoUrl, title: parsed.data.title,
+        description: parsed.data.description ?? '', tags: parsed.data.tags ?? [],
       },
     });
 
@@ -112,15 +84,9 @@ export async function listConnectedChannelsAction(): Promise<SocialPublisherActi
 
     const creds = await listUserCredentials(user.id);
     const sanitized = creds.map((c) => ({
-      id: c.id,
-      platform: c.platform,
-      channelId: c.channelId,
-      channelName: c.channelName,
-      dailyPostCount: c.dailyPostCount,
-      tokenExpiresAt: c.tokenExpiresAt,
-      lastPublishedAt: c.lastPublishedAt,
-      killSwitchActive: c.killSwitchActive,
-      updatedAt: c.updatedAt,
+      id: c.id, platform: c.platform, channelId: c.channelId, channelName: c.channelName,
+      dailyPostCount: c.dailyPostCount, tokenExpiresAt: c.tokenExpiresAt,
+      lastPublishedAt: c.lastPublishedAt, killSwitchActive: c.killSwitchActive, updatedAt: c.updatedAt,
     }));
     return { success: true, data: sanitized };
   } catch (err: unknown) {
@@ -163,21 +129,13 @@ export async function updateChannelCredentialsAction(
     }
 
     const encryptedTokens = await encryptTokenVault(
-      {
-        accessToken: parsed.data.accessToken,
-        refreshToken: parsed.data.refreshToken,
-        expiresAt: parsed.data.tokenExpiresAt,
-      },
+      { accessToken: parsed.data.accessToken, refreshToken: parsed.data.refreshToken, expiresAt: parsed.data.tokenExpiresAt },
       { userId: user.id, platform: parsed.data.platform, channelId: parsed.data.channelId },
     );
 
     const record = await upsertCredential({
-      userId: user.id,
-      platform: parsed.data.platform,
-      channelId: parsed.data.channelId,
-      channelName: parsed.data.channelName,
-      encryptedTokens,
-      tokenExpiresAt: parsed.data.tokenExpiresAt,
+      userId: user.id, platform: parsed.data.platform, channelId: parsed.data.channelId,
+      channelName: parsed.data.channelName, encryptedTokens, tokenExpiresAt: parsed.data.tokenExpiresAt,
     });
 
     return { success: true, data: { channelId: record.channelId, platform: record.platform } };

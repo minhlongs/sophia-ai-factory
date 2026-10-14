@@ -11,7 +11,7 @@ export * from './enterprise-sso-actions';
 export * from './org-invitation-actions';
 export * from './org-manager';
 export * from './sovereign-vault-actions';
-export * from './supabase-migrations-manifest';
+export * from '@/tree/admin/supabase-migrations-manifest';
 export * from './white-label-actions';
 export {
   listWebhooksAction,

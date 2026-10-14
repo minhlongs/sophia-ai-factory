@@ -13,66 +13,12 @@ import type {
   ExportFormat,
 } from './types';
 
-/**
- * JSON formatting options
- */
-interface JSONFormatOptions {
-  /** Indentation spaces (default: 2) */
-  indent?: number;
-  /** Include null fields (default: false) */
-  includeNulls?: boolean;
-  /** Custom field filter */
-  fieldFilter?: (key: string, value: unknown) => boolean;
-}
-
-/**
- * Remove null/undefined fields from object
- */
-function removeNulls(obj: unknown): unknown {
-  if (obj === null || obj === undefined) {
-    return undefined;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => removeNulls(item));
-  }
-
-  if (typeof obj === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      const cleaned = removeNulls(value);
-      if (cleaned !== undefined) {
-        result[key] = cleaned;
-      }
-    }
-    return result;
-  }
-
-  return obj;
-}
-
-/**
- * Format usage export data as JSON string
- *
- * @param data - Usage export records or response object
- * @param options - JSON formatting options
- * @returns Pretty-printed JSON string
- *
- * @example
- * ```typescript
- * const json = formatAsJSON(records, { indent: 2 });
- * ```
- */
-export function formatAsJSON(
-  data: UsageExportRecord[] | UsageExportResponse,
-  options: JSONFormatOptions = {}
-): string {
-  const { indent = 2, includeNulls = false } = options;
-
-  const output = includeNulls ? data : removeNulls(data);
-
-  return JSON.stringify(output, null, indent);
-}
+export {
+  formatAsJSON,
+  formatSummaryAsJSON,
+  createJSONDownload,
+  type JSONFormatOptions,
+} from './json-formatter-helpers';
 
 /**
  * Format complete API response for usage export
@@ -152,45 +98,5 @@ export function formatExportResponse(params: {
     summary,
     records,
     pagination: pagination ?? null,
-  };
-}
-
-/**
- * Format usage summary for JSON export
- *
- * @param summary - Raw summary data
- * @returns Formatted JSON string
- */
-export function formatSummaryAsJSON(
-  summary: UsageExportSummary,
-  options?: JSONFormatOptions
-): string {
-  const { indent = 2, includeNulls = false } = options || {};
-  const output = includeNulls ? summary : removeNulls(summary);
-  return JSON.stringify(output, null, indent);
-}
-
-/**
- * Create downloadable JSON response
- *
- * @param response - Complete export response
- * @param filename - Optional filename for download
- * @returns Object with JSON string and filename
- */
-export function createJSONDownload(
-  response: UsageExportResponse,
-  filename?: string
-): {
-  content: string;
-  filename: string;
-  contentType: string;
-} {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  const defaultFilename = `usage-export-${timestamp}.json`;
-
-  return {
-    content: formatAsJSON(response),
-    filename: filename || defaultFilename,
-    contentType: 'application/json',
   };
 }

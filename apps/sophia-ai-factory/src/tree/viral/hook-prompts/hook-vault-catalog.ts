@@ -1,0 +1,123 @@
+/**
+ * @file hook-vault-catalog.ts
+ * @description E-commerce and Solopreneur hook catalog entries for the deterministic hook vault.
+ * @layer tree
+ */
+
+import type { ViralHook } from '@/seed/types/growth';
+
+export const ECOM_AND_SOLO_HOOKS: ViralHook[] = [
+  // E-commerce
+  {
+    id: 'hook_ecom_curiosity',
+    niche: 'ecommerce',
+    archetype: 'curiosity_gap',
+    hookText: 'The secret reason this $12 product generated $280,000 on TikTok Shop last week.',
+    hookTextVi: 'Bí mật đằng sau món đồ $12 này thu về 6,5 tỷ trên TikTok Shop chỉ trong 7 ngày qua.',
+    estimatedSeconds: 4,
+    expectedRetentionScore: 97,
+    psychologicalTrigger: 'Curiosity Gap: Disproportionate financial return mechanism.',
+    tags: ['tiktok-shop', 'viral-product', 'revenue-proof'],
+  },
+  {
+    id: 'hook_ecom_shock_stat',
+    niche: 'ecommerce',
+    archetype: 'shock_stat',
+    hookText: '71% of people buy immediately after seeing this specific 3-second visual hook.',
+    hookTextVi: '71% khách hàng chốt đơn ngay lập tức khi thấy hook hình ảnh 3 giây đặc biệt này.',
+    estimatedSeconds: 4,
+    expectedRetentionScore: 92,
+    psychologicalTrigger: 'Shocking Stat: Instant conversion power benchmark.',
+    tags: ['conversion-rate', 'visual-hook', 'tiktok-ads'],
+  },
+  {
+    id: 'hook_ecom_direct_question',
+    niche: 'ecommerce',
+    archetype: 'direct_question',
+    hookText: 'Why is your store getting thousands of store visits but zero sales?',
+    hookTextVi: 'Tại sao gian hàng của bạn có hàng ngàn lượt xem nhưng lại không có đơn nào?',
+    estimatedSeconds: 3,
+    expectedRetentionScore: 96,
+    psychologicalTrigger: 'Direct Question: Universal e-commerce pain and urgent diagnostic desire.',
+    tags: ['zero-sales', 'traffic-waste', 'conversion-drop'],
+  },
+  {
+    id: 'hook_ecom_problem_solution',
+    niche: 'ecommerce',
+    archetype: 'problem_solution',
+    hookText: 'Static product photos are dead. Here is how we turned 1 product into 50 selling videos in 10 minutes.',
+    hookTextVi: 'Ảnh chụp sản phẩm tĩnh đã hết thời. Đây là cách biến 1 món đồ thành 50 video bán hàng trong 10 phút.',
+    estimatedSeconds: 5,
+    expectedRetentionScore: 93,
+    psychologicalTrigger: 'Problem-Solution: Visual contrast of static photo failure vs video sellout.',
+    tags: ['sold-out', 'visual-contrast', 'ugc-proof'],
+  },
+  {
+    id: 'hook_ecom_contrarian',
+    niche: 'ecommerce',
+    archetype: 'contrarian',
+    hookText: 'Professional camera crews are killing your TikTok Shop sales. Raw AI UGC converts 4x better.',
+    hookTextVi: 'Thuê ekip quay xịn sò đang bóp nghẹt doanh số TikTok Shop của bạn. Video UGC chân thực chuyển đổi cao gấp 4 lần.',
+    estimatedSeconds: 4,
+    expectedRetentionScore: 94,
+    psychologicalTrigger: 'Contrarian: Anti-perfectionism in social commerce.',
+    tags: ['ugc', 'anti-agency', 'raw-vs-polished'],
+  },
+
+  // Solopreneur
+  {
+    id: 'hook_solo_curiosity',
+    niche: 'solopreneur',
+    archetype: 'curiosity_gap',
+    hookText: 'How I scaled a 1-person software business to $5,000 MRR without ever showing my face.',
+    hookTextVi: 'Cách tôi đưa doanh nghiệp 1 người cán mốc $5.000 MRR mà không cần lộ mặt lấy một giây.',
+    estimatedSeconds: 4,
+    expectedRetentionScore: 98,
+    psychologicalTrigger: 'Curiosity Gap: Faceless scale dream achievement.',
+    tags: ['faceless-business', '5k-mrr', 'solopreneur'],
+  },
+  {
+    id: 'hook_solo_shock_stat',
+    niche: 'solopreneur',
+    archetype: 'shock_stat',
+    hookText: '90% of solo creators fail because they spend 6 hours creating content that gets 42 views.',
+    hookTextVi: '90% người làm nội dung solo bỏ cuộc vì cặm cụi 6 tiếng làm video chỉ nhận lại 42 lượt xem.',
+    estimatedSeconds: 5,
+    expectedRetentionScore: 90,
+    psychologicalTrigger: 'Shocking Stat: Resonating frustration and shared creator trauma.',
+    tags: ['creator-burnout', 'statistics', 'harsh-truth'],
+  },
+  {
+    id: 'hook_solo_direct_question',
+    niche: 'solopreneur',
+    archetype: 'direct_question',
+    hookText: 'What if you could publish 3 viral videos a day while working a 9-to-5 job?',
+    hookTextVi: 'Chuyện gì xảy ra nếu bạn có thể đăng 3 video lên xu hướng mỗi ngày ngay cả khi đang làm văn phòng?',
+    estimatedSeconds: 4,
+    expectedRetentionScore: 93,
+    psychologicalTrigger: 'Direct Question: Time-freedom aspiration and side-hustle feasibility.',
+    tags: ['side-hustle', 'time-freedom', 'multiplication'],
+  },
+  {
+    id: 'hook_solo_problem_solution',
+    niche: 'solopreneur',
+    archetype: 'problem_solution',
+    hookText: 'I used to burn out writing scripts until 2 AM. Now my AI assistant writes and scripts everything in 60 seconds.',
+    hookTextVi: 'Từng kiệt sức vì viết kịch bản đến 2 giờ sáng. Giờ trợ lý AI của tôi lên kịch bản chuẩn SEO chỉ trong 60 giây.',
+    estimatedSeconds: 5,
+    expectedRetentionScore: 95,
+    psychologicalTrigger: 'Problem-Solution: Eradicating creative exhaustion with instant automation.',
+    tags: ['burnout-cure', 'scripting-automation', '60-seconds'],
+  },
+  {
+    id: 'hook_solo_contrarian',
+    niche: 'solopreneur',
+    archetype: 'contrarian',
+    hookText: 'You don’t need a team of 10 to make $100K. You need 1 person and 5 autonomous AI agents.',
+    hookTextVi: 'Bạn không cần đội ngũ 10 người để kiếm 2 tỷ một năm. Bạn chỉ cần 1 người và 5 AI agent tự động hóa.',
+    estimatedSeconds: 4,
+    expectedRetentionScore: 96,
+    psychologicalTrigger: 'Contrarian: The ultra-lean solo operator paradigm shift.',
+    tags: ['lean-scale', 'ai-stack', 'paradigm-shift'],
+  },
+];

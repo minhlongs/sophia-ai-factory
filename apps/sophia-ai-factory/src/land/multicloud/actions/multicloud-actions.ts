@@ -8,7 +8,6 @@
  */
 
 import { success, failure, type Result } from '@/seed/types/result';
-import { logger } from '@/seed/utils/logger-utility';
 import {
   getMulticloudTopology,
   resolveOptimalEdgeRoute,
@@ -19,38 +18,24 @@ import {
   resolveZeroEgressAssetUrl,
 } from '@/tree/multicloud/zero-egress-mesh';
 import type {
-  MulticloudMeshTopology,
-  RouteRequestInput,
-  RouteDecisionResult,
-  TriggerFailoverInput,
-  FailoverExecutionResult,
-  CloudFailoverAuditLog,
-  ZeroEgressFabricStatus,
-  ZeroEgressAssetRoutingInput,
-  ZeroEgressRouteResult,
-  ReplicationSyncInput,
-  RegisterEdgeRegionInput,
-  HeartbeatRegionInput,
-  MulticloudActionError,
+  MulticloudMeshTopology, RouteRequestInput, RouteDecisionResult, TriggerFailoverInput,
+  FailoverExecutionResult, CloudFailoverAuditLog, ZeroEgressFabricStatus,
+  ZeroEgressAssetRoutingInput, ZeroEgressRouteResult, ReplicationSyncInput,
+  RegisterEdgeRegionInput, HeartbeatRegionInput, MulticloudActionError,
 } from './types';
 import {
-  requireAuth,
-  getRequiredD1,
-  executeRegisterEdgeRegion,
-  executeHeartbeatEdgeRegion,
+  requireAuth, getRequiredD1, executeRegisterEdgeRegion, executeHeartbeatEdgeRegion,
 } from './provider-health-checker';
 import { executeAuditLogsQuery, executeReplicationSync } from './failover-orchestrator';
+import { multicloudActionFailure } from './multicloud-action-helpers';
 
 export async function getMulticloudTopologyAction(): Promise<Result<MulticloudMeshTopology, MulticloudActionError>> {
   try {
     await requireAuth();
     const db = await getRequiredD1();
-    const topology = await getMulticloudTopology(db);
-    return success(topology);
+    return success(await getMulticloudTopology(db));
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] getMulticloudTopologyAction failed', { error: message });
-    return failure({ code: 'TOPOLOGY_QUERY_ERROR', message });
+    return multicloudActionFailure('getMulticloudTopologyAction', 'TOPOLOGY_QUERY_ERROR', err);
   }
 }
 
@@ -60,18 +45,11 @@ export async function routeTrafficRequestAction(
   try {
     const db = await getRequiredD1();
     if (!input.geographicZone || !input.workloadType) {
-      return failure({
-        code: 'VALIDATION_ERROR',
-        message: 'geographicZone and workloadType are required parameters.',
-      });
+      return failure({ code: 'VALIDATION_ERROR', message: 'geographicZone and workloadType are required parameters.' });
     }
-
-    const decision = await resolveOptimalEdgeRoute(db, input);
-    return success(decision);
+    return success(await resolveOptimalEdgeRoute(db, input));
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] routeTrafficRequestAction failed', { error: message });
-    return failure({ code: 'ROUTING_ERROR', message });
+    return multicloudActionFailure('routeTrafficRequestAction', 'ROUTING_ERROR', err);
   }
 }
 
@@ -81,20 +59,12 @@ export async function triggerAutonomousFailoverAction(
   try {
     await requireAuth();
     const db = await getRequiredD1();
-
     if (!input.originRegionId || !input.triggerReason) {
-      return failure({
-        code: 'VALIDATION_ERROR',
-        message: 'originRegionId and triggerReason are required.',
-      });
+      return failure({ code: 'VALIDATION_ERROR', message: 'originRegionId and triggerReason are required.' });
     }
-
-    const result = await executeSub30msFailover(db, input);
-    return success(result);
+    return success(await executeSub30msFailover(db, input));
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] triggerAutonomousFailoverAction failed', { error: message });
-    return failure({ code: 'FAILOVER_EXECUTION_ERROR', message });
+    return multicloudActionFailure('triggerAutonomousFailoverAction', 'FAILOVER_EXECUTION_ERROR', err);
   }
 }
 
@@ -107,9 +77,7 @@ export async function getFailoverAuditLogsAction(options?: {
     const db = await getRequiredD1();
     return executeAuditLogsQuery(db, options);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] getFailoverAuditLogsAction failed', { error: message });
-    return failure({ code: 'AUDIT_QUERY_ERROR', message });
+    return multicloudActionFailure('getFailoverAuditLogsAction', 'AUDIT_QUERY_ERROR', err);
   }
 }
 
@@ -117,12 +85,9 @@ export async function getZeroEgressFabricStatusAction(): Promise<Result<ZeroEgre
   try {
     await requireAuth();
     const db = await getRequiredD1();
-    const status = await getZeroEgressFabricStatus(db);
-    return success(status);
+    return success(await getZeroEgressFabricStatus(db));
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] getZeroEgressFabricStatusAction failed', { error: message });
-    return failure({ code: 'STORAGE_FABRIC_ERROR', message });
+    return multicloudActionFailure('getZeroEgressFabricStatusAction', 'STORAGE_FABRIC_ERROR', err);
   }
 }
 
@@ -134,13 +99,9 @@ export async function routeZeroEgressAssetAction(
     if (!input.assetKey) {
       return failure({ code: 'VALIDATION_ERROR', message: 'assetKey is required.' });
     }
-
-    const route = await resolveZeroEgressAssetUrl(db, input);
-    return success(route);
+    return success(await resolveZeroEgressAssetUrl(db, input));
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] routeZeroEgressAssetAction failed', { error: message });
-    return failure({ code: 'ASSET_ROUTING_ERROR', message });
+    return multicloudActionFailure('routeZeroEgressAssetAction', 'ASSET_ROUTING_ERROR', err);
   }
 }
 
@@ -152,9 +113,7 @@ export async function syncStoragePoolReplicaAction(
     const db = await getRequiredD1();
     return executeReplicationSync(db, input);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] syncStoragePoolReplicaAction failed', { error: message });
-    return failure({ code: 'REPLICATION_SYNC_ERROR', message });
+    return multicloudActionFailure('syncStoragePoolReplicaAction', 'REPLICATION_SYNC_ERROR', err);
   }
 }
 
@@ -166,9 +125,7 @@ export async function registerEdgeRegionAction(
     const db = await getRequiredD1();
     return executeRegisterEdgeRegion(db, input);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] registerEdgeRegionAction failed', { error: message });
-    return failure({ code: 'REGION_REGISTRATION_ERROR', message });
+    return multicloudActionFailure('registerEdgeRegionAction', 'REGION_REGISTRATION_ERROR', err);
   }
 }
 
@@ -179,8 +136,6 @@ export async function heartbeatEdgeRegionAction(
     const db = await getRequiredD1();
     return executeHeartbeatEdgeRegion(db, input);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[multicloud-actions] heartbeatEdgeRegionAction failed', { error: message });
-    return failure({ code: 'HEARTBEAT_ERROR', message });
+    return multicloudActionFailure('heartbeatEdgeRegionAction', 'HEARTBEAT_ERROR', err);
   }
 }

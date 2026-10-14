@@ -19,6 +19,12 @@ import {
   NicheFormProductInputs,
   type NicheProductFormValues,
 } from './niche-form-product-inputs';
+import {
+  NICHE_BLUEPRINTS,
+  DEFAULT_SAAS_FORM_VALUES,
+  DEFAULT_CRYPTO_FORM_VALUES,
+  NicheAndBlueprintSelector,
+} from './niche-campaign-selectors';
 
 interface NicheCampaignFormProps {
   onPlanGenerated: (plan: NicheVideoCampaignPlan) => void;
@@ -26,30 +32,10 @@ interface NicheCampaignFormProps {
   t: (key: string) => string;
 }
 
-const BLUEPRINTS = {
-  saas_global: [
-    { id: 'saas_problem_agitation_solution', label: 'Problem - Agitation - Solution (SOP Fix)' },
-    { id: 'saas_battle_direct_vs', label: 'Tool Battle / Direct VS Showdown' },
-    { id: 'saas_listicle_top3_stack', label: 'Fast Listicle: Top 3-5 AI SaaS Stack' },
-  ],
-  crypto_global: [
-    { id: 'crypto_fee_discount_signup_bonus', label: 'Exclusive Fee Rebate & Signup Tier Bonus' },
-    { id: 'crypto_trading_bot_grid_dca', label: 'Automated Trading Bot / DCA Walkthrough' },
-    { id: 'crypto_launchpool_staking_guide', label: 'Exchange Launchpool & Token Staking Guide' },
-  ],
-};
-
 export function NicheCampaignForm({ onPlanGenerated, onDispatched, t }: NicheCampaignFormProps) {
   const [niche, setNiche] = useState<'saas_global' | 'crypto_global'>('saas_global');
-  const [blueprintId, setBlueprintId] = useState(BLUEPRINTS.saas_global[0].id);
-  const [formValues, setFormValues] = useState<NicheProductFormValues>({
-    productName: 'Linear App',
-    productUrl: 'https://linear.app',
-    affiliateCode: 'SOPHIA_VIP',
-    subId: 'aff_short_01',
-    vanityCoupon: 'SAVE30',
-    jurisdiction: 'GLOBAL',
-  });
+  const [blueprintId, setBlueprintId] = useState(NICHE_BLUEPRINTS.saas_global[0].id);
+  const [formValues, setFormValues] = useState<NicheProductFormValues>(DEFAULT_SAAS_FORM_VALUES);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -62,26 +48,8 @@ export function NicheCampaignForm({ onPlanGenerated, onDispatched, t }: NicheCam
 
   const handleNicheSwitch = (newNiche: 'saas_global' | 'crypto_global') => {
     setNiche(newNiche);
-    setBlueprintId(BLUEPRINTS[newNiche][0].id);
-    if (newNiche === 'crypto_global') {
-      setFormValues({
-        productName: 'Binance Global',
-        productUrl: 'https://accounts.binance.com/register',
-        affiliateCode: 'BINANCE20',
-        subId: 'aff_crypto_01',
-        vanityCoupon: 'BONUS500',
-        jurisdiction: 'GLOBAL',
-      });
-    } else {
-      setFormValues({
-        productName: 'Linear App',
-        productUrl: 'https://linear.app',
-        affiliateCode: 'SOPHIA_VIP',
-        subId: 'aff_short_01',
-        vanityCoupon: 'SAVE30',
-        jurisdiction: 'GLOBAL',
-      });
-    }
+    setBlueprintId(NICHE_BLUEPRINTS[newNiche][0].id);
+    setFormValues(newNiche === 'crypto_global' ? DEFAULT_CRYPTO_FORM_VALUES : DEFAULT_SAAS_FORM_VALUES);
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -116,62 +84,13 @@ export function NicheCampaignForm({ onPlanGenerated, onDispatched, t }: NicheCam
 
   return (
     <form onSubmit={handleGenerate} className="space-y-5 bg-zinc-900/60 p-5 rounded-xl border border-zinc-800">
-      <div className="space-y-3">
-        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">{t('selectNiche')}</label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => handleNicheSwitch('saas_global')}
-            className={`p-3.5 rounded-lg text-left transition-all border-2 ${
-              niche === 'saas_global' ? 'border-amber-500 bg-amber-500/10' : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700'
-            }`}
-          >
-            <div className="font-bold text-white flex items-center justify-between text-sm">
-              <span>💻 {t('saasTitle')}</span>
-              <span className="text-[10px] bg-amber-500 text-black px-1.5 py-0.5 rounded font-mono font-bold">MRR</span>
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">{t('saasDesc')}</p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleNicheSwitch('crypto_global')}
-            className={`p-3.5 rounded-lg text-left transition-all border-2 ${
-              niche === 'crypto_global' ? 'border-indigo-500 bg-indigo-500/10' : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700'
-            }`}
-          >
-            <div className="font-bold text-white flex items-center justify-between text-sm">
-              <span>⚡ {t('cryptoTitle')}</span>
-              <span className="text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded font-mono font-bold">VOL</span>
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">{t('cryptoDesc')}</p>
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">{t('selectBlueprint')}</label>
-        <div className="space-y-2">
-          {BLUEPRINTS[niche].map((bp) => (
-            <label
-              key={bp.id}
-              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                blueprintId === bp.id ? 'border-amber-500/60 bg-amber-500/5' : 'border-zinc-800 bg-zinc-950/40 hover:border-zinc-700'
-              }`}
-            >
-              <input
-                type="radio"
-                name="blueprint"
-                value={bp.id}
-                checked={blueprintId === bp.id}
-                onChange={() => setBlueprintId(bp.id)}
-                className="mt-1 text-amber-500 focus:ring-amber-500"
-              />
-              <span className="text-xs font-medium text-zinc-200">{bp.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <NicheAndBlueprintSelector
+        niche={niche}
+        blueprintId={blueprintId}
+        onSelectNiche={handleNicheSwitch}
+        onSelectBlueprint={setBlueprintId}
+        t={t}
+      />
 
       <NicheFormProductInputs values={formValues} onChange={handleInputChange} t={t} />
 

@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
-import { resetQuotaCounters } from '@/forest/quota/quota-checker-kv-cache';
+import { resetQuotaCounters } from '@/tree/quota/quota-checker-kv-cache';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';

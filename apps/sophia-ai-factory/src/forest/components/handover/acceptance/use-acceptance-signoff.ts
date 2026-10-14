@@ -12,30 +12,25 @@ import type {
   HandoverCertificate,
 } from '@/seed/handover/handover-types';
 import type { Result } from '@/seed/types/result';
+import { CANONICAL_ACCEPTANCE_STATEMENTS } from '@/tree/handover/handover-certificate-engine';
 import {
-  CANONICAL_ACCEPTANCE_STATEMENTS,
-  generateCertificateHtml,
-  generateCertificateMarkdown,
-} from '@/tree/handover/handover-certificate-engine';
+  downloadBlob,
+  createCertificateExportHandlers,
+} from './acceptance-certificate-actions';
 
-export function downloadBlob(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+export { downloadBlob } from './acceptance-certificate-actions';
 
 interface UseAcceptanceSignoffParams {
   handover: CustomerHandoverRecord;
   initialCertificate: HandoverCertificate | null;
   onSignAction?: (
     input: HandoverAcceptanceInput,
-  ) => Promise<Result<{ certificate: HandoverCertificate; record: CustomerHandoverRecord }, { code: string; message: string }>>;
+  ) => Promise<
+    Result<
+      { certificate: HandoverCertificate; record: CustomerHandoverRecord },
+      { code: string; message: string }
+    >
+  >;
 }
 
 export function useAcceptanceSignoff({
@@ -44,12 +39,16 @@ export function useAcceptanceSignoff({
   onSignAction,
 }: UseAcceptanceSignoffParams) {
   const [currentHandover, setCurrentHandover] = useState<CustomerHandoverRecord>(handover);
-  const [certificate, setCertificate] = useState<HandoverCertificate | null>(initialCertificate);
+  const [certificate, setCertificate] = useState<HandoverCertificate | null>(
+    initialCertificate,
+  );
   const isAccepted = currentHandover.acceptance_status === 'accepted' || !!certificate;
 
   const [signerName, setSignerName] = useState(currentHandover.signer_name || '');
   const [signerEmail, setSignerEmail] = useState(currentHandover.signer_email || '');
-  const [signerRole, setSignerRole] = useState(currentHandover.signer_role || 'Chief Executive Officer (CEO)');
+  const [signerRole, setSignerRole] = useState(
+    currentHandover.signer_role || 'Chief Executive Officer (CEO)',
+  );
   const [confirmedStatements, setConfirmedStatements] = useState<Record<number, boolean>>({
     0: isAccepted,
     1: isAccepted,
@@ -111,7 +110,11 @@ export function useAcceptanceSignoff({
         }
       }
     } catch (err) {
-      setSignError(err instanceof Error ? err.message : 'An unexpected error occurred during sign-off.');
+      setSignError(
+        err instanceof Error
+          ? err.message
+          : 'An unexpected error occurred during sign-off.',
+      );
     } finally {
       setIsSigning(false);
     }
@@ -127,31 +130,7 @@ export function useAcceptanceSignoff({
     }
   };
 
-  const handleDownloadMarkdown = () => {
-    if (!certificate) return;
-    const content = certificate.contentMarkdown || generateCertificateMarkdown(certificate, null);
-    downloadBlob(content, `handover-certificate-${certificate.id}.md`, 'text/markdown;charset=utf-8');
-  };
-
-  const handleDownloadHtml = () => {
-    if (!certificate) return;
-    const content = generateCertificateHtml(certificate, null);
-    downloadBlob(content, `handover-certificate-${certificate.id}.html`, 'text/html;charset=utf-8');
-  };
-
-  const handlePrintCertificate = () => {
-    if (!certificate) return;
-    const htmlContent = generateCertificateHtml(certificate, null);
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 350);
-    }
-  };
+  const exportHandlers = createCertificateExportHandlers(certificate);
 
   return {
     currentHandover,
@@ -175,8 +154,6 @@ export function useAcceptanceSignoff({
     handleCheckboxToggle,
     handleSignAcceptance,
     handleCopyHash,
-    handleDownloadMarkdown,
-    handleDownloadHtml,
-    handlePrintCertificate,
+    ...exportHandlers,
   };
 }

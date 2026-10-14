@@ -9,30 +9,28 @@
  */
 
 import {
-  getCheckpointSupabase,
-  rowToCheckpoint,
-  type CheckpointRow,
-} from "@/tree/gateway/checkpoint-supabase-persistence";
-import {
   PIPELINE_STEPS,
   getNextStep,
   getStepsFromIndex,
   isValidStep,
-} from "@/tree/gateway/pipeline-step-navigator";
-import type { PipelineStep } from "@/tree/gateway/pipeline-step-navigator";
-import type { Checkpoint } from "@/tree/gateway/gateway-types";
-import { logger } from "@/seed/utils/logger-utility";
+  type PipelineStep,
+} from '@/tree/gateway/pipeline-step-navigator';
+import type { Checkpoint } from '@/tree/gateway/gateway-types';
+import { logger } from '@/seed/utils/logger-utility';
+import {
+  recordSupabaseCheckpoint,
+  fetchSupabaseLastCheckpoint,
+  removeSupabaseCheckpointsFromStep,
+  fetchSupabaseCheckpoints,
+  clearSupabaseCheckpoints,
+  checkSupabaseStepCompleted,
+} from './smart-resume-supabase';
 
 export type { PipelineStep };
+export { PIPELINE_STEPS };
 
 /**
  * SmartResumeEngine manages campaign pipeline checkpoints.
- *
- * Usage:
- *   const engine = new SmartResumeEngine();
- *   await engine.checkpoint(campaignId, "generate-script", { wordCount: 500 });
- *   const last = await engine.getLastCheckpoint(campaignId);
- *   const nextStep = await engine.resumeFrom(last);
  */
 export class SmartResumeEngine {
   private fallbackStore: Map<string, Checkpoint[]> = new Map();
@@ -43,23 +41,8 @@ export class SmartResumeEngine {
     step: PipelineStep,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
-    const supabase = await getCheckpointSupabase();
-
-    if (supabase) {
-      try {
-        // Upsert relies on the table's UNIQUE constraint on (campaign_id, step);
-        // the prior `{ onConflict: 'campaign_id,step' }` second arg was a
-        // Supabase-only hint that D1 ignores — its bare `ON CONFLICT DO UPDATE`
-        // clause picks the constraint from the row shape.
-        const { error } = await supabase
-          .from("campaign_checkpoints")
-          .upsert({ campaign_id: campaignId, step, completed_at: new Date().toISOString(), metadata: metadata ?? null });
-        if (error) throw error;
-        return;
-      } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to record checkpoint for ${campaignId}`, err instanceof Error ? err : undefined);
-      }
-    }
+    const saved = await recordSupabaseCheckpoint(campaignId, step, metadata);
+    if (saved) return;
 
     const cp: Checkpoint = { campaignId, step, completedAt: new Date(), metadata };
     const existing = this.fallbackStore.get(campaignId) ?? [];
@@ -70,24 +53,8 @@ export class SmartResumeEngine {
 
   /** Get the most recent checkpoint for a campaign. Returns null on load failure. */
   async getLastCheckpoint(campaignId: string): Promise<Checkpoint | null> {
-    const supabase = await getCheckpointSupabase();
-
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("campaign_checkpoints")
-          .select("*")
-          .eq("campaign_id", campaignId)
-          .order("completed_at", { ascending: false })
-          .limit(1);
-        if (error) throw error;
-        if (!data || data.length === 0) return null;
-        return rowToCheckpoint(data[0] as unknown as CheckpointRow);
-      } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}, starting from beginning`, err instanceof Error ? err : undefined);
-        return null;
-      }
-    }
+    const res = await fetchSupabaseLastCheckpoint(campaignId);
+    if (res.handled) return res.checkpoint;
 
     const checkpoints = this.fallbackStore.get(campaignId);
     if (!checkpoints || checkpoints.length === 0) return null;
@@ -104,22 +71,8 @@ export class SmartResumeEngine {
     }
 
     const stepsToRemove = getStepsFromIndex(stepName);
-    const supabase = await getCheckpointSupabase();
-
-    if (supabase) {
-      try {
-        const { error } = await supabase
-          .from("campaign_checkpoints")
-          .delete()
-          .eq("campaign_id", campaignId)
-          .in("step", stepsToRemove as string[]);
-        if (error) throw error;
-        logger.info(`[SmartResumeEngine] Cleared checkpoints from step "${stepName}" for retry`, { campaignId });
-        return;
-      } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to clear checkpoints for retryFromStep`, err instanceof Error ? err : undefined, { campaignId });
-      }
-    }
+    const removed = await removeSupabaseCheckpointsFromStep(campaignId, stepsToRemove);
+    if (removed) return;
 
     const existing = this.fallbackStore.get(campaignId) ?? [];
     this.fallbackStore.set(
@@ -130,22 +83,8 @@ export class SmartResumeEngine {
 
   /** Get all checkpoints for a campaign, ordered by completion time */
   async getCheckpoints(campaignId: string): Promise<Checkpoint[]> {
-    const supabase = await getCheckpointSupabase();
-
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("campaign_checkpoints")
-          .select("*")
-          .eq("campaign_id", campaignId)
-          .order("completed_at", { ascending: true });
-        if (error) throw error;
-        if (!data) return [];
-        return (data as unknown as CheckpointRow[]).map(rowToCheckpoint);
-      } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to retrieve checkpoints for ${campaignId}`, err instanceof Error ? err : undefined);
-      }
-    }
+    const res = await fetchSupabaseCheckpoints(campaignId);
+    if (res.handled) return res.checkpoints;
 
     return [...(this.fallbackStore.get(campaignId) ?? [])].sort(
       (a, b) => a.completedAt.getTime() - b.completedAt.getTime(),
@@ -159,47 +98,15 @@ export class SmartResumeEngine {
 
   /** Clear all checkpoints for a campaign */
   async clearCheckpoints(campaignId: string): Promise<void> {
-    const supabase = await getCheckpointSupabase();
-
-    if (supabase) {
-      try {
-        const { error } = await supabase
-          .from("campaign_checkpoints")
-          .delete()
-          .eq("campaign_id", campaignId);
-        if (error) throw error;
-        this.fallbackStore.delete(campaignId);
-        return;
-      } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to clear checkpoints for ${campaignId}`, err instanceof Error ? err : undefined);
-      }
-    }
-
+    await clearSupabaseCheckpoints(campaignId);
     this.fallbackStore.delete(campaignId);
   }
 
   /** Check if a specific step has been completed for a campaign */
   async isStepCompleted(campaignId: string, step: string): Promise<boolean> {
-    const supabase = await getCheckpointSupabase();
-
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("campaign_checkpoints")
-          .select("id")
-          .eq("campaign_id", campaignId)
-          .eq("step", step)
-          .limit(1);
-        if (error) throw error;
-        return (data?.length ?? 0) > 0;
-      } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to check step completion for ${campaignId}`, err instanceof Error ? err : undefined);
-      }
-    }
+    const res = await checkSupabaseStepCompleted(campaignId, step);
+    if (res.handled) return res.completed;
 
     return (this.fallbackStore.get(campaignId) ?? []).some((cp) => cp.step === step);
   }
 }
-
-// Re-export PIPELINE_STEPS for consumers that imported it from this module
-export { PIPELINE_STEPS };

@@ -4,32 +4,10 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, AlertTriangle, Route } from 'lucide-react';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
+import type { ReviewStepProps } from './review/review-types';
+import { KeySection } from './review/key-section';
 
-interface ReviewStepProps {
-  config: {
-    OPENROUTER_API_KEY: string;
-    ANTHROPIC_API_KEY: string;
-    ELEVENLABS_API_KEY: string;
-    DID_API_KEY: string;
-    MUAPI_API_KEY: string;
-    REPLICATE_API_KEY: string;
-  };
-  providerConfig: {
-    HEYGEN_API_KEY: string;
-    RESEND_API_KEY: string;
-    NOWPAYMENTS_API_KEY: string;
-    HEYGEN_WEBHOOK_SECRET: string;
-    ROUTING_STRATEGY: 'priority' | 'costOptimized' | 'leastUsed';
-  };
-  onConfirm: () => void;
-  onBack: () => void;
-  loading?: boolean;
-}
-
-function maskApiKey(key: string): string {
-  if (!key || key.length < 8) return '••••••••';
-  return key.slice(0, 4) + '•'.repeat(Math.min(key.length - 8, 12)) + key.slice(-4);
-}
+export type { ReviewStepProps } from './review/review-types';
 
 export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading }: ReviewStepProps) {
   const t = useTranslations('setupWizard.review');
@@ -83,76 +61,23 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* AI/LLM Keys */}
-        {llmKeys.length > 0 && (
-          <div className="rounded-lg border border-border p-4 bg-card">
-            <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-              <span className="text-lg">🤖</span>
-              {t('sections.llmKeys')}
-            </h4>
-            <ul className="space-y-3">
-              {llmKeys.map(({ key, label }) => (
-                <li key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                      {maskApiKey(config[key])}
-                    </span>
-                    <Check className="w-4 h-4 text-green-500" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <KeySection
+          icon="🤖"
+          title={t('sections.llmKeys')}
+          keys={llmKeys.map(k => ({ key: k.key, label: k.label, value: config[k.key] }))}
+        />
+        <KeySection
+          icon="🎙️"
+          title={t('sections.mediaKeys')}
+          keys={otherKeys.map(k => ({ key: k.key, label: k.label, value: config[k.key] }))}
+        />
+        <KeySection
+          icon="🔗"
+          title={t('sections.providerKeys')}
+          keys={activeProviderKeys.map(k => ({ key: k.key, label: k.label, value: providerConfig[k.key] }))}
+          className="md:col-span-2"
+        />
 
-        {/* Voice/Avatar Keys */}
-        {otherKeys.length > 0 && (
-          <div className="rounded-lg border border-border p-4 bg-card">
-            <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-              <span className="text-lg">🎙️</span>
-              {t('sections.mediaKeys')}
-            </h4>
-            <ul className="space-y-3">
-              {otherKeys.map(({ key, label }) => (
-                <li key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                      {maskApiKey(config[key])}
-                    </span>
-                    <Check className="w-4 h-4 text-green-500" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Provider Keys */}
-        {activeProviderKeys.length > 0 && (
-          <div className="rounded-lg border border-border p-4 bg-card md:col-span-2">
-            <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-              <span className="text-lg">🔗</span>
-              {t('sections.providerKeys')}
-            </h4>
-            <ul className="space-y-3">
-              {activeProviderKeys.map(({ key, label }) => (
-                <li key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                      {maskApiKey(providerConfig[key])}
-                    </span>
-                    <Check className="w-4 h-4 text-green-500" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Routing Strategy */}
         <div className="rounded-lg border border-border p-4 bg-card md:col-span-2">
           <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
             <Route className="w-5 h-5" />
@@ -167,7 +92,6 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
             </span>
           </div>
         </div>
-
       </div>
 
       <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 text-sm text-accent flex gap-3">

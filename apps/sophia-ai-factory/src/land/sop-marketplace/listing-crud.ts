@@ -5,19 +5,25 @@
 
 'use server';
 
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1 } from '@/seed/db/client';
-import { requireOrgMembership } from '@/seed/db/org-membership';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
-import type { CreateSopListingInput, SopListing } from '@/seed/db/marketplace-ops';
 import {
   createSopListing as dbCreateSopListing,
-  getSopListing as dbGetSopListing,
   updateSopListing as dbUpdateSopListing,
   getCreatorProfile as dbGetCreatorProfile,
 } from '@/seed/db/marketplace-ops';
-import { toView, createListingSchema, updateListingSchema, type SopListingView, type ListingError } from './listing-types';
+import { createListingSchema, updateListingSchema, type ListingError, type SopListingView } from './listing-types';
+import {
+  buildAndValidateListingUpdates,
+  buildCreateSopListingDbInput,
+  requireAuthenticatedMarketplaceContext,
+  verifyListingOwnership,
+} from './listing-crud-helpers';
+import { listMyListings as queryListMyListings } from './listing-queries';
+
+export async function listMyListings(): Promise<Result<SopListingView[], ListingError>> {
+  return queryListMyListings();
+}
 
 /**
  * Create a new SOP listing in draft status.
@@ -34,10 +40,9 @@ export async function createSopListing(formData: {
   sopTemplateId: string;
 }): Promise<Result<{ listingId: string }, ListingError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
-    }
+    const ctxResult = await requireAuthenticatedMarketplaceContext();
+    if (!ctxResult.ok) return ctxResult;
+    const { userId, d1, tenantId } = ctxResult.value;
 
     const parsed = createListingSchema.safeParse(formData);
     if (!parsed.success) {
@@ -47,15 +52,7 @@ export async function createSopListing(formData: {
       });
     }
 
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    const orgResult = await requireOrgMembership(user.id);
-    const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-
-    const profile = await dbGetCreatorProfile(d1, user.id, tenantId);
+    const profile = await dbGetCreatorProfile(d1, userId, tenantId);
     if (!profile) {
       return failure({
         code: 'NOT_FOUND',
@@ -63,22 +60,11 @@ export async function createSopListing(formData: {
       });
     }
 
-    const dbInput: CreateSopListingInput = {
-      creator_id: user.id,
-      title: parsed.data.title,
-      description: parsed.data.description ?? null,
-      price_cents: parsed.data.priceCents,
-      category: parsed.data.category ?? null,
-      tags: parsed.data.tags ? JSON.stringify(parsed.data.tags) : null,
-      thumbnail_url: parsed.data.thumbnailUrl || null,
-      demo_video_url: parsed.data.demovideoUrl || null,
-      sop_template_id: parsed.data.sopTemplateId,
-    };
-
+    const dbInput = buildCreateSopListingDbInput(userId, parsed.data);
     const listing = await dbCreateSopListing(d1, dbInput, tenantId);
 
     logger.info('[CreateSopListing] Listing created', {
-      userId: user.id,
+      userId,
       listingId: listing.id,
       creatorId: profile.id,
       tenantId,
@@ -109,12 +95,11 @@ export async function updateSopListing(
   }>,
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
-    }
+    const ctxResult = await requireAuthenticatedMarketplaceContext();
+    if (!ctxResult.ok) return ctxResult;
+    const { userId, d1, tenantId } = ctxResult.value;
 
-    const parsed = updateListingSchema.safeParse(formData);
+    const parsed = updateListingSchema.safeParse({ listingId, ...formData });
     if (!parsed.success) {
       return failure({
         code: 'VALIDATION_ERROR',
@@ -122,77 +107,22 @@ export async function updateSopListing(
       });
     }
 
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
+    const listingResult = await verifyListingOwnership(d1, userId, tenantId, listingId);
+    if (!listingResult.ok) return listingResult;
 
-    const orgResult = await requireOrgMembership(user.id);
-    const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
+    const updatesResult = buildAndValidateListingUpdates(parsed.data, listingResult.value);
+    if (!updatesResult.ok) return updatesResult;
 
-    const listing = await dbGetSopListing(d1, listingId);
-    if (!listing) {
-      return failure({ code: 'NOT_FOUND', message: 'Listing not found' });
-    }
-
-    const profile = await dbGetCreatorProfile(d1, user.id, tenantId);
-    if (!profile || listing.creator_id !== profile.id) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not own this listing' });
-    }
-
-    const updates: Record<string, unknown> = {};
-    if (parsed.data.title !== undefined) updates.title = parsed.data.title;
-    if (parsed.data.priceCents !== undefined) updates.price_cents = parsed.data.priceCents;
-    if (parsed.data.status !== undefined) updates.status = parsed.data.status;
-
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updatesResult.value).length === 0) {
       return success({ listingId });
     }
 
-    const updated = await dbUpdateSopListing(d1, listingId, updates);
+    const updated = await dbUpdateSopListing(d1, listingId, updatesResult.value);
 
-    logger.info('[UpdateSopListing] Listing updated', { userId: user.id, listingId });
+    logger.info('[UpdateSopListing] Listing updated', { userId, listingId });
     return success({ listingId: updated?.id ?? listingId });
   } catch (err) {
     logger.error('[UpdateSopListing] Unexpected error', err instanceof Error ? err : new Error(String(err)));
-    return failure({ code: 'DB_ERROR', message: 'An unexpected error occurred' });
-  }
-}
-
-/**
- * List all SOP listings owned by the authenticated user.
- * Returns an empty array if the user is not a creator.
- */
-export async function listMyListings(): Promise<Result<SopListingView[], ListingError>> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
-    }
-
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    const orgResult = await requireOrgMembership(user.id);
-    const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-
-    const profile = await dbGetCreatorProfile(d1, user.id, tenantId);
-    if (!profile) {
-      // Not a creator — return empty list rather than error
-      return success([]);
-    }
-
-    const result = await d1
-      .prepare('SELECT * FROM sop_listings WHERE creator_id = ? ORDER BY created_at DESC')
-      .bind(profile.id)
-      .all<SopListing>();
-
-    const listings = (result.results ?? []).map(toView);
-    return success(listings);
-  } catch (err) {
-    logger.error('[ListMyListings] Unexpected error', err instanceof Error ? err : new Error(String(err)));
     return failure({ code: 'DB_ERROR', message: 'An unexpected error occurred' });
   }
 }

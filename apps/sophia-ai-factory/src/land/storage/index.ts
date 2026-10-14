@@ -4,6 +4,6 @@
  * @module land/storage
  */
 
-export * from './audio-upload';
-export * from './video-cleanup';
-export * from './video-storage';
+export * from '@/land/r2/audio-upload';
+export * from '@/land/r2/video-cleanup';
+export * from '@/land/r2/video-storage';

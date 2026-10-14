@@ -2,18 +2,12 @@
  * AI Video for [Niche] Landing Page — SSG with LLM fallback.
  *
  * Route: /[locale]/ai-video/[niche]
- * - Build-time: generateStaticParams pre-builds all published D1 pages + NICHE_SLUGS
- * - Request-time (dynamicParams): unknown niches trigger LLM fallback → KV cache → serve
- * - Bilingual: VI+EN via locale param
- *
  * @module app/[locale]/ai-video/[niche]/page
  */
 
 import React from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getBySlug, getAllSlugs } from '@/seed/db/repositories/landing-pages-repo';
-import { NICHE_SLUGS, NICHE_LABELS, type NicheSlug } from '@/seed/config/niche-list';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
@@ -22,32 +16,10 @@ import { resolveNicheContent } from '@/components/landing/niche-page/content-res
 import { HeroSection, FeaturesSection } from '@/components/landing/niche-page/landing-hero-features';
 import { HowItWorksSection, PricingTeaserSection } from '@/components/landing/niche-page/landing-workflow-pricing';
 import { FaqSection, CtaSection } from '@/components/landing/niche-page/landing-faq-cta';
+import { buildNicheStaticParams, buildNicheMetadata } from './niche-seo-helpers';
 
 export async function generateStaticParams(): Promise<PageParams[]> {
-  try {
-    const dbSlugs = await getAllSlugs();
-    const allSlugs = [...new Set([...NICHE_SLUGS, ...dbSlugs])];
-
-    const params: PageParams[] = [];
-    for (const slug of allSlugs) {
-      params.push({ locale: 'en', niche: slug });
-      params.push({ locale: 'vi', niche: slug });
-    }
-
-    logger.info('[LandingSSG] generateStaticParams', {
-      dbSlugsCount: dbSlugs.length,
-      totalSlugs: allSlugs.length,
-      totalPages: params.length,
-    });
-
-    return params;
-  } catch (err) {
-    logger.error('[LandingSSG] generateStaticParams failed', { error: getErrorMessage(err) });
-    return NICHE_SLUGS.flatMap((slug) => [
-      { locale: 'en', niche: slug },
-      { locale: 'vi', niche: slug },
-    ]);
-  }
+  return buildNicheStaticParams();
 }
 
 export const dynamicParams = true;
@@ -58,58 +30,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; niche: string }>;
 }): Promise<Metadata> {
   const { locale, niche } = await params;
-
-  try {
-    const page = await getBySlug(niche);
-
-    if (page) {
-      const title = locale === 'vi' ? page.metaTitleVi : page.metaTitleEn;
-      const desc = locale === 'vi' ? page.metaDescVi : page.metaDescEn;
-
-      return {
-        title: title ?? page.nicheLabel,
-        description: desc ?? '',
-        openGraph: {
-          title: title ?? page.nicheLabel,
-          description: desc ?? '',
-          type: 'article',
-        },
-        alternates: {
-          languages: {
-            en: `/en/ai-video/${niche}`,
-            vi: `/vi/ai-video/${niche}`,
-          },
-          canonical: `/${locale}/ai-video/${niche}`,
-        },
-      };
-    }
-  } catch (err) {
-    logger.warn('[LandingSSG] generateMetadata D1 lookup failed', {
-      niche,
-      error: getErrorMessage(err),
-    });
-  }
-
-  const label = NICHE_LABELS[niche as NicheSlug];
-  const nicheName = label
-    ? (locale === 'vi' ? label.vi : label.en)
-    : niche.replace(/-/g, ' ');
-
-  return {
-    title: locale === 'vi'
-      ? `Video AI Cho ${nicheName} | Sophia AI Factory`
-      : `AI Video for ${nicheName} | Sophia AI Factory`,
-    description: locale === 'vi'
-      ? `Tạo video ${nicheName.toLowerCase()} chuyên nghiệp bằng AI trong vài phút. Không cần kỹ năng quay phim hay chỉnh sửa.`
-      : `Create professional AI-generated ${nicheName.toLowerCase()} videos in minutes. No filming or editing skills needed.`,
-    alternates: {
-      languages: {
-        en: `/en/ai-video/${niche}`,
-        vi: `/vi/ai-video/${niche}`,
-      },
-      canonical: `/${locale}/ai-video/${niche}`,
-    },
-  };
+  return buildNicheMetadata(locale, niche);
 }
 
 export default async function NicheLandingPage({

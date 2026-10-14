@@ -2,7 +2,6 @@
  * Agency Onboarding Wizard State Hook.
  *
  * Layer: forest/agency (Presentation & Client Component)
- *
  * @module forest/agency/onboarding-wizard/use-wizard-state
  */
 
@@ -15,11 +14,16 @@ import type {
   AgencyBrandingInput,
   AgencyDomainInput,
   SeedAgentDeploymentConfig,
-  AgyAutonomyLevel,
-  EscalationAction,
 } from '@/seed/types';
 import { DEFAULT_SEED_AGENTS, type AgencyOnboardingWizardActions } from './types';
 import { runStepValidation } from './validate-wizard-step';
+import {
+  createInitialAgencyProfile,
+  createInitialAgencyBranding,
+  createInitialAgencyDomain,
+  toAgencySlug,
+  createSeedAgentUpdaters,
+} from './wizard-state-helpers';
 
 interface UseWizardStateParams {
   agencyOrgId: string;
@@ -43,33 +47,20 @@ export function useWizardState({
   const [stepErrors, setStepErrors] = useState<string[]>([]);
   const [launchResult, setLaunchResult] = useState<AgencyOnboardingResult | null>(null);
 
-  const [profile, setProfile] = useState<AgencyProfileInput>({
-    clientName: '',
-    agencySlug: initialSlug,
-    contactEmail: '',
-    industryTag: 'ecommerce',
-    initialMcuBudget: 500,
-  });
-
-  const [branding, setBranding] = useState<AgencyBrandingInput>({
-    logoUrl: '',
-    faviconUrl: '',
-    primaryColor: '#0f172a',
-    accentColor: '#10b981',
-    customCss: '',
-  });
-
-  const [domain, setDomain] = useState<AgencyDomainInput>({
-    subdomain: initialSlug || '',
-    customDomain: '',
-    cnameTarget: 'agencyos.network',
-    isSslReady: true,
-  });
-
-  const [seedAgents, setSeedAgents] = useState<SeedAgentDeploymentConfig[]>(DEFAULT_SEED_AGENTS);
+  const [profile, setProfile] = useState<AgencyProfileInput>(() =>
+    createInitialAgencyProfile(initialSlug),
+  );
+  const [branding, setBranding] = useState<AgencyBrandingInput>(
+    createInitialAgencyBranding,
+  );
+  const [domain, setDomain] = useState<AgencyDomainInput>(() =>
+    createInitialAgencyDomain(initialSlug),
+  );
+  const [seedAgents, setSeedAgents] =
+    useState<SeedAgentDeploymentConfig[]>(DEFAULT_SEED_AGENTS);
 
   const handleClientNameChange = (name: string) => {
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 32);
+    const slug = toAgencySlug(name);
     setProfile((prev) => ({
       ...prev,
       clientName: name,
@@ -101,7 +92,9 @@ export function useWizardState({
         setCurrentStep((prev) => (prev + 1) as AgencyOnboardingStep);
       }
     } catch {
-      setGeneralError(isVi ? 'Đã có lỗi xảy ra khi xác thực bước này.' : 'Error validating step data.');
+      setGeneralError(
+        isVi ? 'Đã có lỗi xảy ra khi xác thực bước này.' : 'Error validating step data.',
+      );
     } finally {
       setIsValidating(false);
     }
@@ -115,42 +108,44 @@ export function useWizardState({
     }
   };
 
-  const handleToggleAgent = (idx: number) => {
-    setSeedAgents((prev) => prev.map((a, i) => (i === idx ? { ...a, enabled: !a.enabled } : a)));
-  };
-
-  const handleUpdateAgentAutonomy = (idx: number, level: AgyAutonomyLevel) => {
-    setSeedAgents((prev) => prev.map((a, i) => (i === idx ? { ...a, maxAutonomy: level } : a)));
-  };
-
-  const handleUpdateAgentMcu = (idx: number, mcu: number) => {
-    setSeedAgents((prev) => prev.map((a, i) => (i === idx ? { ...a, maxComputeUnitsMcu: Math.max(0, mcu) } : a)));
-  };
-
-  const handleUpdateAgentEscalation = (idx: number, policy: EscalationAction) => {
-    setSeedAgents((prev) => prev.map((a, i) => (i === idx ? { ...a, escalationPolicy: policy } : a)));
-  };
+  const agentUpdaters = createSeedAgentUpdaters(setSeedAgents);
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
     setGeneralError(null);
     setStepErrors([]);
-    const submission: AgencyOnboardingSubmission = { agencyOrgId, profile, branding, domain, seedAgents };
+    const submission: AgencyOnboardingSubmission = {
+      agencyOrgId,
+      profile,
+      branding,
+      domain,
+      seedAgents,
+    };
     try {
       if (!actions?.submitOnboarding) {
-        setGeneralError(isVi ? 'Hành động kích hoạt không gian chưa được cấu hình.' : 'Submit action not provided.');
+        setGeneralError(
+          isVi
+            ? 'Hành động kích hoạt không gian chưa được cấu hình.'
+            : 'Submit action not provided.',
+        );
         return;
       }
       const res = await actions.submitOnboarding(submission);
       if (!res.success) {
-        setGeneralError(res.error || (isVi ? 'Không thể hoàn tất khởi tạo.' : 'Submission failed.'));
+        setGeneralError(
+          res.error || (isVi ? 'Không thể hoàn tất khởi tạo.' : 'Submission failed.'),
+        );
         if (res.stepErrors) setStepErrors(Object.values(res.stepErrors).flat());
         return;
       }
       setLaunchResult(res);
       if (onSuccess) onSuccess(res);
     } catch {
-      setGeneralError(isVi ? 'Lỗi máy chủ trong quá trình kích hoạt không gian.' : 'Server error during workspace provisioning.');
+      setGeneralError(
+        isVi
+          ? 'Lỗi máy chủ trong quá trình kích hoạt không gian.'
+          : 'Server error during workspace provisioning.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -173,10 +168,7 @@ export function useWizardState({
     handleClientNameChange,
     handleNextStep,
     handlePrevStep,
-    handleToggleAgent,
-    handleUpdateAgentAutonomy,
-    handleUpdateAgentMcu,
-    handleUpdateAgentEscalation,
+    ...agentUpdaters,
     handleLaunch,
   };
 }

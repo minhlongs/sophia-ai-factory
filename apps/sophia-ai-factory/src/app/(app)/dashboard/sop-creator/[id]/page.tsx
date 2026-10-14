@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { checkCreatorAccess } from '../ServerGate';
 import { type PageProps, ListingDetail } from './modules';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
 export type { PageProps };
 export const dynamic = 'force-dynamic';
@@ -10,12 +11,14 @@ export default async function SOPCreatorListingPage({ params }: PageProps) {
   const { locale, id } = await params;
   const access = await checkCreatorAccess();
 
-  if (!access.hasAccess) {
-    redirect(`/${locale}/dashboard/sop-creator/apply`);
-  }
-
   if (!access.userId) {
     redirect(`/${locale}/auth/login?redirect=/dashboard/sop-creator/${id}`);
+  }
+  if (!access.marketplaceAvailable) {
+    return <main className="min-h-screen bg-background p-8"><MarketplaceUnavailableNotice /></main>;
+  }
+  if (!access.hasAccess) {
+    redirect(`/${locale}/dashboard/sop-creator/apply`);
   }
 
   return (

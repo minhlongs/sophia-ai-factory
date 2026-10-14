@@ -11,12 +11,24 @@ import {
   SettingsValidationError,
 } from './types';
 import { NAMESPACE_DEFAULTS } from './defaults';
+import {
+  deleteNamespace,
+  deleteAllForTenant,
+  listAll,
+  bulkExport,
+} from './registry-bulk-ops';
 
-/** Generates a simple unique ID (timestamp + random, no external dep). */
+export {
+  deleteNamespace,
+  deleteAllForTenant,
+  listAll,
+  bulkExport,
+};
+
 function generateId(): string {
   const buf = new Uint8Array(4);
   crypto.getRandomValues(buf);
-  const rand = Array.from(buf, b => b.toString(16).padStart(2, '0')).join('');
+  const rand = Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
   return `ts_${Date.now().toString(36)}_${rand}`;
 }
 
@@ -95,7 +107,6 @@ export async function set<T>(
 
 /**
  * Shallow-merge partial into the existing namespace value.
- * Creates the row with default + partial if not present.
  */
 export async function merge<T extends Record<string, unknown>>(
   db: D1Database,
@@ -110,57 +121,8 @@ export async function merge<T extends Record<string, unknown>>(
   return merged;
 }
 
-/** Delete a namespace row (resets to default on next read). */
-export async function deleteNamespace(
-  db: D1Database,
-  tenantId: string,
-  namespace: SettingsNamespace,
-): Promise<void> {
-  await db
-    .prepare('DELETE FROM tenant_settings WHERE tenant_id = ? AND namespace = ?')
-    .bind(tenantId, namespace)
-    .run();
-}
-
-/** Delete ALL settings rows for a tenant (full reset). */
-export async function deleteAllForTenant(
-  db: D1Database,
-  tenantId: string,
-): Promise<void> {
-  await db
-    .prepare('DELETE FROM tenant_settings WHERE tenant_id = ?')
-    .bind(tenantId)
-    .run();
-}
-
-/** Fetch all persisted namespaces for a tenant in a single query. */
-export async function listAll(
-  db: D1Database,
-  tenantId: string,
-): Promise<Partial<Record<SettingsNamespace, unknown>>> {
-  const { results } = await db
-    .prepare(
-      'SELECT namespace, value FROM tenant_settings WHERE tenant_id = ?',
-    )
-    .bind(tenantId)
-    .all<Pick<TenantSettingRow, 'namespace' | 'value'>>();
-
-  const out: Partial<Record<SettingsNamespace, unknown>> = {};
-  for (const row of results ?? []) {
-    if (SETTINGS_NAMESPACES.includes(row.namespace as SettingsNamespace)) {
-      try {
-        out[row.namespace as SettingsNamespace] = JSON.parse(row.value);
-      } catch {
-        // skip malformed rows
-      }
-    }
-  }
-  return out;
-}
-
 /**
  * Bulk-import settings. Validates each namespace if validator map provided.
- * Throws SettingsValidationError on first invalid namespace.
  */
 export async function bulkImport(
   db: D1Database,
@@ -175,13 +137,3 @@ export async function bulkImport(
     await set(db, tenantId, namespace, value, validator);
   }
 }
-
-/** Export all settings as a plain object (present namespaces only). */
-export async function bulkExport(
-  db: D1Database,
-  tenantId: string,
-): Promise<Partial<Record<SettingsNamespace, unknown>>> {
-  return listAll(db, tenantId);
-}
-
-// Re-export error types for convenience

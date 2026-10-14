@@ -23,7 +23,7 @@ import {
   type VideoTaskType,
 } from '@/seed/config/routing-strategies';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { checkVideoQuota } from '@/forest/quota/video-quota';
+import { checkVideoQuota } from '@/tree/quota/video-quota';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { getSharedRegistry } from '@/forest/ai/provider-factory';

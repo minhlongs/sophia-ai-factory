@@ -13,24 +13,14 @@ import {
   CONVERSATION_MEMORY_TYPE,
   CONVERSATION_KEY_PREFIX,
   CONVERSATION_RETENTION_MS,
-  MAX_CONVERSATIONS_PER_USER,
   type ConversationMemory,
 } from './memory-consolidation-types';
+import {
+  getMemory,
+  updateConversationIndex,
+} from './memory-consolidation-adapter';
 
-// ── Storage Adapter ───────────────────────────────────────────────────────────
-
-type MemoryAdapter = import('@/land/openclaw/memory-adapter').MemoryAdapter;
-let memoryAdapter: MemoryAdapter | null = null;
-
-async function getMemory(): Promise<MemoryAdapter> {
-  if (!memoryAdapter) {
-    const mod = await import('@/land/openclaw/memory-adapter');
-    memoryAdapter = mod.memory;
-  }
-  return memoryAdapter;
-}
-
-// ── Public Storage Functions ──────────────────────────────────────────────────
+export { updateConversationIndex };
 
 /**
  * Retrieve a stored conversation summary by ID.
@@ -120,37 +110,6 @@ export async function storeSummaryAsync(
       error: getErrorMessage(err),
     });
     return false;
-  }
-}
-
-/**
- * Update the conversation index for a user.
- */
-export async function updateConversationIndex(
-  conversationId: string,
-  userId: string,
-): Promise<void> {
-  const memory = await getMemory();
-  try {
-    const key = `${CONVERSATION_KEY_PREFIX}${userId}:index`;
-    const existing = (await memory.query(
-      CONVERSATION_MEMORY_TYPE,
-      key,
-      userId,
-    )) as string[] | undefined;
-
-    const index = Array.isArray(existing) ? [...existing] : [];
-    const filtered = index.filter((id) => id !== conversationId);
-    filtered.unshift(conversationId);
-    const trimmed = filtered.slice(0, MAX_CONVERSATIONS_PER_USER);
-
-    await memory.store(CONVERSATION_MEMORY_TYPE, key, trimmed, userId);
-  } catch (err) {
-    logger.warn('[MemoryConsolidation] Index update failed', {
-      conversationId,
-      userId,
-      error: getErrorMessage(err),
-    });
   }
 }
 

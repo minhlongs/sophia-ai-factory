@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Server Actions for Global Partner & White-Label Agency Engine Facade
  *

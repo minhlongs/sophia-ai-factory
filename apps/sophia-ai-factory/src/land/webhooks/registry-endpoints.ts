@@ -6,37 +6,22 @@
 
 import type { WebhookEndpoint, WebhookEvent } from './types';
 import type { EndpointRow } from './registry-row-types';
+import {
+  MAX_ENDPOINTS_PER_TENANT,
+  rowToEndpoint,
+  generateWebhookSecret,
+  markSuccess,
+  markFailure,
+  getActiveEndpointsForEvent,
+} from './registry-endpoint-status';
 
-export const MAX_ENDPOINTS_PER_TENANT = 50;
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-export function rowToEndpoint(row: EndpointRow, includeSecret = false): WebhookEndpoint {
-  const ep: WebhookEndpoint = {
-    id: row.id,
-    tenantId: row.tenant_id,
-    url: row.url,
-    events: JSON.parse(row.events) as WebhookEvent[],
-    active: row.active === 1,
-    description: row.description ?? undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    lastSuccessAt: row.last_success_at ?? undefined,
-    lastFailureAt: row.last_failure_at ?? undefined,
-    failureCount: row.failure_count,
-  };
-  if (includeSecret) ep.secret = row.secret;
-  return ep;
-}
-
-/** Generate a 32-byte hex secret using Web Crypto */
-function generateSecret(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ── CRUD ──────────────────────────────────────────────────────────────────────
+export {
+  MAX_ENDPOINTS_PER_TENANT,
+  rowToEndpoint,
+  markSuccess,
+  markFailure,
+  getActiveEndpointsForEvent,
+};
 
 export async function listByTenant(
   db: D1Database,
@@ -46,7 +31,7 @@ export async function listByTenant(
     .prepare(`SELECT * FROM webhook_endpoints WHERE tenant_id = ?1 ORDER BY created_at DESC`)
     .bind(tenantId)
     .all<EndpointRow>();
-  return (result.results ?? []).map(r => rowToEndpoint(r));
+  return (result.results ?? []).map((r) => rowToEndpoint(r));
 }
 
 export async function getById(
@@ -86,7 +71,7 @@ export async function create(
   }
 
   const id = crypto.randomUUID();
-  const secret = generateSecret();
+  const secret = generateWebhookSecret();
   const now = new Date().toISOString();
 
   await db
@@ -98,9 +83,16 @@ export async function create(
     .run();
 
   return {
-    id, tenantId: input.tenantId, url: input.url, secret,
-    events: input.events, active: true, description: input.description,
-    createdAt: now, updatedAt: now, failureCount: 0,
+    id,
+    tenantId: input.tenantId,
+    url: input.url,
+    secret,
+    events: input.events,
+    active: true,
+    description: input.description,
+    createdAt: now,
+    updatedAt: now,
+    failureCount: 0,
   };
 }
 
@@ -120,7 +112,7 @@ export async function update(
   if (!existing) return null;
 
   const now = new Date().toISOString();
-  const active = patch.active !== undefined ? (patch.active ? 1 : 0) : (existing.active ? 1 : 0);
+  const active = patch.active !== undefined ? (patch.active ? 1 : 0) : existing.active ? 1 : 0;
   const events = JSON.stringify(patch.events ?? existing.events);
   const description = patch.description !== undefined ? patch.description : (existing.description ?? null);
 
@@ -145,47 +137,4 @@ export async function remove(
     .bind(id, tenantId)
     .run();
   return (result.meta?.changes ?? 0) > 0;
-}
-
-export async function markSuccess(db: D1Database, endpointId: string): Promise<void> {
-  const now = new Date().toISOString();
-  await db
-    .prepare(
-      `UPDATE webhook_endpoints SET last_success_at = ?1, failure_count = 0, updated_at = ?1
-       WHERE id = ?2`,
-    )
-    .bind(now, endpointId)
-    .run();
-}
-
-export async function markFailure(db: D1Database, endpointId: string): Promise<void> {
-  const now = new Date().toISOString();
-  await db
-    .prepare(
-      `UPDATE webhook_endpoints
-       SET last_failure_at = ?1, failure_count = failure_count + 1, updated_at = ?1
-       WHERE id = ?2`,
-    )
-    .bind(now, endpointId)
-    .run();
-}
-
-/** Load active endpoints subscribed to a specific event for a tenant. */
-export async function getActiveEndpointsForEvent(
-  db: D1Database,
-  tenantId: string,
-  event: WebhookEvent,
-): Promise<(WebhookEndpoint & { secret: string })[]> {
-  const result = await db
-    .prepare(`SELECT * FROM webhook_endpoints WHERE tenant_id = ?1 AND active = 1`)
-    .bind(tenantId)
-    .all<EndpointRow>();
-
-  return (result.results ?? [])
-    .filter(row => {
-      try {
-        return (JSON.parse(row.events) as string[]).includes(event);
-      } catch { return false; }
-    })
-    .map(r => rowToEndpoint(r, true) as WebhookEndpoint & { secret: string });
 }

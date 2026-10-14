@@ -8,10 +8,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation, updateCustomizations } from '@/tree/sop/sop-repo';
-import { customizationInputSchema } from '@/tree/sop/install-input-schema';
-import { getSopD1 } from '@/tree/sop/d1';
-import type { SopCustomizations } from '@/tree/sop/sop-types';
+import { getInstallation, updateCustomizations } from '@/seed/sop/sop-repo';
+import { customizationInputSchema } from '@/seed/sop/install-input-schema';
+import { getSopD1 } from '@/seed/sop/d1';
+import type { SopCustomizations } from '@/seed/sop/sop-types';
 
 export const dynamic = 'force-dynamic';
 

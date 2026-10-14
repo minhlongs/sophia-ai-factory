@@ -58,34 +58,34 @@ vi.mock('@/seed/config/tiers', () => ({
 }))
 
 // Mock the quota-checker internals
-vi.mock('../quota-checker', () => ({
+vi.mock('@/tree/quota/quota-checker', () => ({
   checkQuotaWithOverage: mockCheckQuotaWithOverage,
   DEFAULT_CONFIG: { softWarningThreshold: 0.8, enableOverageBilling: false, failClosed: true },
 }))
 
-vi.mock('../quota-enforcer-response', () => ({
+vi.mock('@/tree/quota/quota-enforcer-response', () => ({
   createQuotaExceededResponse: mockCreateQuotaExceededResponse,
   createDunningBlockResponse: vi.fn(),
 }))
 
-vi.mock('../quota-checker-kv-cache', () => ({
+vi.mock('@/tree/quota/quota-checker-kv-cache', () => ({
   getCachedUsage: vi.fn(),
   updateCachedUsage: vi.fn(),
   invalidateQuotaCache: vi.fn(),
   atomicIncrementQuota: vi.fn(),
 }))
 
-vi.mock('../quota-checker-db', () => ({
+vi.mock('@/tree/quota/quota-checker-db', () => ({
   getEffectiveQuotaLimits: vi.fn(),
   calculateCurrentUsage: vi.fn(),
 }))
 
-vi.mock('../quota-checker-overage', () => ({
+vi.mock('@/tree/quota/quota-checker-overage', () => ({
   logOverageEvent: vi.fn(),
   getQuotaStatus: vi.fn(),
 }))
 
-vi.mock('@/forest/alerts/realtime-alert-service', () => ({
+vi.mock('@/tree/alerts/realtime-alert-service', () => ({
   triggerUsageThresholdAlert: vi.fn(),
 }))
 

@@ -145,53 +145,9 @@ export interface ProductionGraphRun {
   endedAt: number | null;
 }
 
-/** Payload for `production.graph.started`. */
-export type ProductionGraphStartedEvent = {
-  data: {
-    graphRunId: string;
-    graphId: string;
-    missionId: string;
-    workspaceId: string;
-    missionType: string;
-    retryCount: number;
-    /** When true, run executes with fixed time source and random seed. */
-    deterministic?: boolean;
-  };
-};
-
-/** Payload for `production.graph.completed`. */
-export type ProductionGraphCompletedEvent = {
-  data: {
-    graphRunId: string;
-    graphId: string;
-    missionId: string;
-    workspaceId: string;
-    totalCostCents: number;
-    totalTokens: number;
-  };
-};
-
-/** Payload for `production.graph.failed`. */
-export type ProductionGraphFailedEvent = {
-  data: {
-    graphRunId: string;
-    graphId: string;
-    missionId: string;
-    workspaceId: string;
-    errorCode: string;
-    errorMessage: string;
-    retryCount: number;
-  };
-};
-
-/** Payload for `production.graph.cancelled`. */
-export type ProductionGraphCancelledEvent = {
-  data: {
-    graphRunId: string;
-    graphId: string;
-    missionId: string;
-    workspaceId: string;
-    cancelledAt: number;
-    reason?: string;
-  };
-};
+export type {
+  ProductionGraphStartedEvent,
+  ProductionGraphCompletedEvent,
+  ProductionGraphFailedEvent,
+  ProductionGraphCancelledEvent,
+} from './production-factory-events';

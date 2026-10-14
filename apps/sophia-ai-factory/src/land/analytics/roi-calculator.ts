@@ -5,31 +5,16 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import {
+  extractLicenseCost,
+  sumUsageCredits,
+  formatRoiMetrics,
+  type ROIMetrics,
+  type RaasLicenseRoiRow,
+  type UsageEventCreditRow,
+} from './roi-projection';
 
-interface RaasLicenseRoiRow {
-  tier: string;
-  created_at: number;
-  metadata: Record<string, unknown> | null;
-  nonce?: string;
-}
-
-interface UsageEventCreditRow {
-  credits_used: number | null;
-  created_at?: number;
-}
-
-/**
- * ROI Metrics result
- */
-export interface ROIMetrics {
-  projectedAnnual: number;
-  actualYTD: number;
-  paybackMonths: number;
-  costPerUsage: number;
-  roiPercent: number;      // ROI percentage: (projectedAnnual - licenseCost) / licenseCost * 100
-  licenseCost: number;      // Original license cost from Polar
-  totalCredits: number;     // Total credits used
-}
+export type { ROIMetrics } from './roi-projection';
 
 /**
  * Calculate ROI metrics for a specific license
@@ -43,9 +28,6 @@ export async function calculateRoiMetrics(
 ): Promise<ROIMetrics> {
   const db = createServerClient();
 
-  // Get license details
-  // Note: Using type assertion for Supabase query result since generated types
-  // may not be available. The query returns RaasLicenseRow format.
   const { data: rawLicense } = await db
     .from('raas_licenses')
     .select('tier, created_at, metadata')
@@ -57,11 +39,7 @@ export async function calculateRoiMetrics(
     throw new Error('License not found');
   }
 
-  // Get license cost from metadata
-  const metadata = license.metadata as { amount_usd?: { amount: number }; price?: number };
-  const licenseCost = metadata?.amount_usd?.amount || metadata?.price || 0;
-
-  // Get usage data for the license (last 30 days)
+  const licenseCost = extractLicenseCost(license.metadata);
   const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 86400);
 
   const { data: rawUsageEvents } = await db
@@ -69,15 +47,8 @@ export async function calculateRoiMetrics(
     .select('credits_used, created_at')
     .eq('license_nonce', licenseNonce)
     .gte('created_at', thirtyDaysAgo);
-  const usageEvents = rawUsageEvents as UsageEventCreditRow[] | null;
+  const totalCreditsUsed = sumUsageCredits(rawUsageEvents as UsageEventCreditRow[] | null);
 
-  // Calculate total credits used
-  const totalCreditsUsed = usageEvents?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
-
-  // Calculate cost per usage
-  const costPerUsage = totalCreditsUsed > 0 ? licenseCost / totalCreditsUsed : 0;
-
-  // Get year-to-date usage for actual YTD calculation
   const yearStart = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
 
   const { data: rawYtdUsage } = await db
@@ -85,39 +56,21 @@ export async function calculateRoiMetrics(
     .select('credits_used')
     .eq('license_nonce', licenseNonce)
     .gte('created_at', yearStart);
-  const ytdUsage = rawYtdUsage as UsageEventCreditRow[] | null;
+  const ytdCredits = sumUsageCredits(rawYtdUsage as UsageEventCreditRow[] | null);
 
-  const ytdCredits = ytdUsage?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
-
-  // Calculate actual YTD value based on credits used
   const actualYTD = ytdCredits * valuePerCredit;
-
-  // Project annual revenue based on current usage
   const monthsSinceCreation = Math.max(
     1,
     Math.floor((Date.now() / 1000 - license.created_at) / (30 * 86400))
   );
   const projectedAnnual = (actualYTD / monthsSinceCreation) * 12;
 
-  // Calculate ROI percentage: (projectedAnnual - licenseCost) / licenseCost * 100
-  const roiPercent = licenseCost > 0
-    ? ((projectedAnnual - licenseCost) / licenseCost) * 100
-    : 0;
-
-  // Calculate payback period in months
-  const paybackMonths = licenseCost > 0 && projectedAnnual > 0
-    ? Math.ceil(licenseCost / (projectedAnnual / 12))
-    : 0;
-
-  return {
-    projectedAnnual: Math.round(projectedAnnual * 100) / 100,
-    actualYTD: Math.round(actualYTD * 100) / 100,
-    paybackMonths: Math.max(1, paybackMonths),
-    costPerUsage: Math.round(costPerUsage * 10000) / 10000,
-    roiPercent: Math.round(roiPercent * 100) / 100,
-    licenseCost: Math.round(licenseCost * 100) / 100,
-    totalCredits: totalCreditsUsed,
-  };
+  return formatRoiMetrics({
+    projectedAnnual,
+    actualYTD,
+    licenseCost,
+    totalCreditsUsed,
+  });
 }
 
 /**
@@ -132,7 +85,6 @@ export async function calculateAggregateRoi(
 ): Promise<ROIMetrics> {
   const db = createServerClient();
 
-  // Get all licenses for user
   const { data: rawLicenses } = await db
     .from('raas_licenses')
     .select('nonce, tier, created_at, metadata')
@@ -152,23 +104,18 @@ export async function calculateAggregateRoi(
     };
   }
 
-  // Calculate ROI for each license and aggregate
   let totalProjectedAnnual = 0;
   let totalActualYTD = 0;
   let totalCost = 0;
-  let totalCreditsUsed = 0;
 
   for (const license of licenses) {
     if (!license.nonce) continue;
     const metrics = await calculateRoiMetrics(license.nonce, valuePerCredit);
     totalProjectedAnnual += metrics.projectedAnnual;
     totalActualYTD += metrics.actualYTD;
-
-    const metadata = license.metadata as { amount_usd?: { amount: number }; price?: number };
-    totalCost += metadata?.amount_usd?.amount || metadata?.price || 0;
+    totalCost += extractLicenseCost(license.metadata);
   }
 
-  // Get total credits used across all licenses
   const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 86400);
 
   const { data: rawAggUsageEvents } = await db
@@ -179,21 +126,12 @@ export async function calculateAggregateRoi(
       licenses.map((l) => l.nonce).filter((n): n is string => !!n)
     )
     .gte('created_at', thirtyDaysAgo);
-  const usageEvents = rawAggUsageEvents as UsageEventCreditRow[] | null;
+  const totalCreditsUsed = sumUsageCredits(rawAggUsageEvents as UsageEventCreditRow[] | null);
 
-  totalCreditsUsed = usageEvents?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
-
-  const costPerUsage = totalCreditsUsed > 0 ? totalCost / totalCreditsUsed : 0;
-  const paybackMonths = totalProjectedAnnual > 0 ? Math.ceil(totalCost / (totalProjectedAnnual / 12)) : 0;
-  const roiPercent = totalCost > 0 ? ((totalProjectedAnnual - totalCost) / totalCost) * 100 : 0;
-
-  return {
-    projectedAnnual: Math.round(totalProjectedAnnual * 100) / 100,
-    actualYTD: Math.round(totalActualYTD * 100) / 100,
-    paybackMonths: Math.max(1, paybackMonths),
-    costPerUsage: Math.round(costPerUsage * 10000) / 10000,
-    roiPercent: Math.round(roiPercent * 100) / 100,
-    licenseCost: Math.round(totalCost * 100) / 100,
-    totalCredits: totalCreditsUsed,
-  };
+  return formatRoiMetrics({
+    projectedAnnual: totalProjectedAnnual,
+    actualYTD: totalActualYTD,
+    licenseCost: totalCost,
+    totalCreditsUsed,
+  });
 }

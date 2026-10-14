@@ -7,9 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation } from '@/tree/sop/sop-repo';
-import { getSopD1 } from '@/tree/sop/d1';
-import type { SopRunRow } from '@/tree/sop/sop-types';
+import { getInstallation } from '@/seed/sop/sop-repo';
+import { getSopD1 } from '@/seed/sop/d1';
+import type { SopRunRow } from '@/seed/sop/sop-types';
 
 export const dynamic = 'force-dynamic';
 

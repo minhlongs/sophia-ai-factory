@@ -10,19 +10,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
-import { Input } from '@/seed/components/ui/input';
 import type { LTVByTier, TierLTVRow } from '@/seed/types/analytics-cohort';
 import type { Tier } from '@/seed/types';
+import {
+  TIERS,
+  TIER_COLORS,
+  LTVTableSection,
+  LTVCacInputSection,
+  type LTVTableSectionProps,
+  type LTVCacInputSectionProps,
+} from './ltv-calculator-cards';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
-
-const TIER_COLORS: Record<Tier, string> = {
-  BASIC: 'bg-muted text-foreground',
-  PREMIUM: 'bg-blue-100 text-blue-700',
-  ENTERPRISE: 'bg-purple-100 text-purple-700',
-  MASTER: 'bg-amber-100 text-amber-700',
+export {
+  TIERS,
+  TIER_COLORS,
+  LTVTableSection,
+  LTVCacInputSection,
+  type LTVTableSectionProps,
+  type LTVCacInputSectionProps,
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -104,75 +109,15 @@ export function LTVCalculator({ showCacInput = true }: LTVCalculatorProps) {
         )}
 
         {!loading && data && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 font-medium text-foreground">Tier</th>
-                  <th className="text-right py-2 font-medium text-foreground">Customers</th>
-                  <th className="text-right py-2 font-medium text-foreground">ARPU/mo</th>
-                  <th className="text-right py-2 font-medium text-foreground">Avg Lifetime</th>
-                  <th className="text-right py-2 font-medium text-foreground">LTV</th>
-                  {data.ltvCacRatios && (
-                    <th className="text-right py-2 font-medium text-foreground">LTV:CAC</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(row => (
-                  <tr key={row.tier} className="bg-background hover:bg-muted">
-                    <td className="py-2">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${TIER_COLORS[row.tier]}`}>
-                        {row.tier}
-                      </span>
-                    </td>
-                    <td className="text-right py-2 text-foreground">{row.customers}</td>
-                    <td className="text-right py-2 text-foreground">${row.arpu.toFixed(2)}</td>
-                    <td className="text-right py-2 text-foreground">{row.avgLifetimeMonths}mo</td>
-                    <td className="text-right py-2 font-semibold text-foreground">
-                      ${row.ltv.toFixed(2)}
-                    </td>
-                    {data.ltvCacRatios && (
-                      <td className="text-right py-2 text-foreground">
-                        {data.ltvCacRatios[row.tier] != null
-                          ? `${data.ltvCacRatios[row.tier]}×`
-                          : '—'}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <LTVTableSection rows={rows} ltvCacRatios={data.ltvCacRatios} />
         )}
 
         {showCacInput && !loading && (
-          <div className="border-t border-border pt-4 space-y-3">
-            <p className="text-xs font-medium text-foreground">
-              Optional: enter CAC per tier to compute LTV:CAC ratio
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {TIERS.map(tier => (
-                <div key={tier} className="space-y-1">
-                  <label className="text-xs text-muted-foreground">{tier} CAC ($)</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="e.g. 50"
-                    value={cac[tier] ?? ''}
-                    onChange={e => handleCacChange(tier, e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleApplyCac}
-              className="text-xs px-3 py-1.5 bg-background text-foreground rounded hover:bg-muted transition-colors"
-            >
-              Apply CAC
-            </button>
-          </div>
+          <LTVCacInputSection
+            cac={cac}
+            onCacChange={handleCacChange}
+            onApplyCac={handleApplyCac}
+          />
         )}
       </CardContent>
     </Card>

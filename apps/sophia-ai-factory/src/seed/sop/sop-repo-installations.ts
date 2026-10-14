@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { assertTemplateInstallable } from '@/seed/sop/sop-marketplace-guard';
 import type { SopInstallationRow, CreateInstallationInput, SopCustomizations } from './sop-types';
 
 function nowSec(): number { return Math.floor(Date.now() / 1000); }
@@ -12,7 +13,7 @@ function genId(): string { return crypto.randomUUID().replace(/-/g, ''); }
 /** List all installations for a user */
 export async function listInstallationsForUser(db: D1Database, userId: string): Promise<SopInstallationRow[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM user_sop_installations WHERE user_id = ?1 ORDER BY created_at DESC`)
+    .prepare(`SELECT * FROM user_sop_installations WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 100`)
     .bind(userId)
     .all<SopInstallationRow>();
   return results;
@@ -32,6 +33,9 @@ export async function createInstallation(
   db: D1Database,
   input: CreateInstallationInput,
 ): Promise<SopInstallationRow> {
+  // Fail-closed gate: block paid marketplace SOP templates from install
+  await assertTemplateInstallable(db, input.templateId);
+
   const id = genId();
   const ts = nowSec();
   const customizationsJson = input.customizations ? JSON.stringify(input.customizations) : null;

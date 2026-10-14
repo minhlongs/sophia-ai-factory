@@ -7,4 +7,4 @@
 export * from './github-issue-poster';
 export * from './telegram-poster';
 export * from './d1-aggregates';
-export * from './markdown-renderer';
+export * from '@/tree/signals/digest/markdown-renderer';

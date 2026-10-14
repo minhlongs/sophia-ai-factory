@@ -12,17 +12,12 @@ import { Button } from '@/seed/components/ui/button'
 import { AuditScoreCard } from './audit-score-card'
 import { AuditCheckRow } from './audit-check-row'
 import type { CheckResult } from '@/tree/audit/zero-gap-types'
-
-type RunState = 'idle' | 'running' | 'done' | 'error'
-
-interface AuditSummary {
-  id: string
-  totalScore: number
-  totalChecks: number
-  passed: number
-  warned: number
-  failed: number
-}
+import {
+  consumeAuditSseStream,
+  triggerAuditMarkdownDownload,
+  type RunState,
+  type AuditSummary,
+} from './audit-runner-helpers'
 
 export function AuditRunnerButton() {
   const [state, setState] = useState<RunState>('idle')
@@ -46,42 +41,23 @@ export function AuditRunnerButton() {
         return
       }
 
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const frames = buffer.split('\n\n')
-        buffer = frames.pop() ?? ''
-
-        for (const frame of frames) {
-          if (!frame.trim()) continue
-          const eventMatch = frame.match(/^event: (\w+)/)
-          const dataMatch = frame.match(/^data: (.+)$/m)
-          if (!eventMatch || !dataMatch) continue
-
-          const event = eventMatch[1]
-          const data = JSON.parse(dataMatch[1])
-
-          if (event === 'check') {
-            setChecks((prev) => {
-              const next = [...prev, data as CheckResult]
-              setProgress(Math.round((next.length / 13) * 100))
-              return next
-            })
-          } else if (event === 'complete') {
-            setSummary(data as AuditSummary)
-            setState('done')
-          } else if (event === 'error') {
-            setErrorMsg((data as { message: string }).message)
-            setState('error')
-          }
-        }
-      }
+      await consumeAuditSseStream(res.body, {
+        onCheck: (check) => {
+          setChecks((prev) => {
+            const next = [...prev, check]
+            setProgress(Math.round((next.length / 13) * 100))
+            return next
+          })
+        },
+        onComplete: (doneSummary) => {
+          setSummary(doneSummary)
+          setState('done')
+        },
+        onError: (msg) => {
+          setErrorMsg(msg)
+          setState('error')
+        },
+      })
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Unknown error')
       setState('error')
@@ -90,39 +66,14 @@ export function AuditRunnerButton() {
 
   const downloadReport = useCallback(() => {
     if (!summary || checks.length === 0) return
-    const date = new Date().toISOString().slice(0, 10)
-    const lines = [
-      `# Zero-GAP Audit Report — ${date}`,
-      `Score: ${summary.totalScore}/100`,
-      `Pass: ${summary.passed} | Warn: ${summary.warned} | Fail: ${summary.failed}`,
-      ``,
-      `## Check Results`,
-      ...checks.map(
-        (c) =>
-          `### ${c.status === 'pass' ? '✅' : c.status === 'warn' ? '⚠️' : '❌'} ${c.name}\n- Category: ${c.category}\n- Evidence: ${c.evidence}${c.fix ? `\n- Fix: ${c.fix}` : ''}`,
-      ),
-    ].join('\n')
-
-    const blob = new Blob([lines], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `zero-gap-audit-${date}-${summary.id.slice(0, 8)}.md`
-    a.click()
-    URL.revokeObjectURL(url)
+    triggerAuditMarkdownDownload(summary, checks)
   }, [summary, checks])
 
   return (
     <div className="space-y-6">
       {/* Trigger button */}
       <div className="flex flex-wrap gap-3 items-center">
-        <Button
-          variant="glow"
-          size="xl"
-          onClick={runAudit}
-          disabled={state === 'running'}
-          className="font-black"
-        >
+        <Button variant="glow" size="xl" onClick={runAudit} disabled={state === 'running'} className="font-black">
           {state === 'running' ? (
             <>
               <Loader2 className="w-5 h-5 motion-safe:animate-spin" aria-hidden="true" />
@@ -137,10 +88,7 @@ export function AuditRunnerButton() {
         </Button>
 
         {state === 'done' && (
-          <Button
-            variant="outline"
-            onClick={downloadReport}
-          >
+          <Button variant="outline" onClick={downloadReport}>
             <Download className="w-4 h-4" aria-hidden="true" />
             Download Report
           </Button>

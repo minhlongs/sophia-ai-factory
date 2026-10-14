@@ -11,10 +11,11 @@ import {
   getUserAllProgress,
 } from '@/land/sop-marketplace';
 import { ReferralSection } from '@/components/billing/referral-section';
-import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
+import type { SopChallengeRow, UserChallengeProgressRow } from '@/seed/sop/sop-types';
 import type { DashboardViewProps } from './types';
 import { ProfileCard, OnboardingView } from './creator-hero';
 import { EarningsSection, ChallengesSection } from './creator-stats';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
 export function DashboardView({
   profile,
@@ -76,6 +77,14 @@ export async function CreatorPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-10">
         <OnboardingView t={t} />
+      </div>
+    );
+  }
+
+  if (!profileResult.ok && profileResult.error.code === 'MARKETPLACE_TEMPORARILY_UNAVAILABLE') {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <MarketplaceUnavailableNotice />
       </div>
     );
   }

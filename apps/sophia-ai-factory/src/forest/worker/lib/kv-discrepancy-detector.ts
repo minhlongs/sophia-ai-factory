@@ -14,8 +14,19 @@
  */
 
 import type { MeteringLogEntry } from '@/tree/usage-metering/kv-metering-log-sync';
-import type { Discrepancy, DiscrepancySeverity } from '@/seed/types/billing-contracts';
+import type { Discrepancy } from '@/seed/types/billing-contracts';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  classifyDiscrepancySeverity,
+  groupDiscrepanciesByType,
+  groupDiscrepanciesBySeverity,
+  filterDiscrepanciesBySeverity,
+} from './kv-discrepancy-classifiers';
+
+export {
+  classifyDiscrepancySeverity,
+  filterDiscrepanciesBySeverity,
+} from './kv-discrepancy-classifiers';
 
 /**
  * Database usage event for comparison
@@ -115,83 +126,4 @@ export function detectDiscrepancies(
   }
 
   return discrepancies;
-}
-
-/**
- * Classify discrepancy severity based on type and context
- */
-export function classifyDiscrepancySeverity(
-  type: Discrepancy['type'],
-  context?: {
-    isRecurring?: boolean;
-    affectsBilling?: boolean;
-    amount?: number;
-  }
-): DiscrepancySeverity {
-  // Critical: Direct billing impact
-  if (context?.affectsBilling && (context.amount || 0) > 100) {
-    return 'critical';
-  }
-
-  // High: Recurring issue or significant amount
-  if (context?.isRecurring || (context?.amount || 0) > 50) {
-    return 'high';
-  }
-
-  // Default severity by type
-  switch (type) {
-    case 'credit_mismatch':
-      return 'critical';
-    case 'gateway_discrepancy':
-      return 'critical';
-    case 'missing_in_db':
-      return 'high';
-    case 'missing_in_kv':
-      return 'medium';
-    default:
-      return 'low';
-  }
-}
-
-/**
- * Group discrepancies by type for reporting
- */
-function groupDiscrepanciesByType(
-  discrepancies: Discrepancy[]
-): Record<string, number> {
-  return discrepancies.reduce((acc, d) => {
-    acc[d.type] = (acc[d.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-}
-
-/**
- * Group discrepancies by severity for reporting
- */
-function groupDiscrepanciesBySeverity(
-  discrepancies: Discrepancy[]
-): Record<string, number> {
-  return discrepancies.reduce((acc, d) => {
-    acc[d.severity] = (acc[d.severity] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-}
-
-/**
- * Filter discrepancies by severity for alerting
- */
-export function filterDiscrepanciesBySeverity(
-  discrepancies: Discrepancy[],
-  minSeverity: DiscrepancySeverity
-): Discrepancy[] {
-  const severityOrder: Record<DiscrepancySeverity, number> = {
-    low: 0,
-    medium: 1,
-    high: 2,
-    critical: 3,
-  };
-
-  const minLevel = severityOrder[minSeverity];
-
-  return discrepancies.filter((d) => severityOrder[d.severity] >= minLevel);
 }

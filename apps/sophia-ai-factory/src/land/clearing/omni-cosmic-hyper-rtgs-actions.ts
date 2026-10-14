@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Omni-Cosmic Hyper-RTGS settlement, Netting 13.0, and Basel XVII Solvency audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   executeOmniCosmicNetting,
   validateOmniCosmicHyperRtgsPayment,
@@ -23,6 +22,11 @@ import type {
   OmniCosmicCurrency,
   OmniCosmicNettingObligation,
 } from '@/seed/types/omni-cosmic-hyper-rtgs-capital';
+import {
+  insertHyperRtgsSessionRow,
+  insertHyperNettingBatchRow,
+  insertBaselSolvencyAuditRow,
+} from './hyper-rtgs-persistence-helpers';
 
 export interface OmniCosmicRtgsActionResult {
   success: boolean;
@@ -42,46 +46,19 @@ export interface BaselXviiSolvencyActionResult {
   error?: string;
 }
 
-/**
- * Server Action to settle an instantaneous Omni-Cosmic Hyper-RTGS transaction in sub-25 picoseconds (15 ps).
- */
 export async function settleOmniCosmicRtgsAction(
-  input: OmniCosmicRtgsValidationInput
+  input: OmniCosmicRtgsValidationInput,
 ): Promise<OmniCosmicRtgsActionResult> {
   try {
     const data = validateOmniCosmicHyperRtgsPayment(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO omni_cosmic_hyper_rtgs_clearing_sessions (
-             id, session_ref, source_participant_id, target_participant_id,
-             asset_currency, gross_amount_cents, priority_tier, settlement_status,
-             execution_latency_picoseconds, clearing_receipt_hash, settled_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `OMNI-RTGS-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.sourceParticipantId,
-          input.targetParticipantId,
-          input.assetCurrency,
-          input.grossAmountCents,
-          input.priorityTier ?? 'OMNI_COSMIC_EXPEDITE',
-          data.status,
-          data.executionLatencyPicoseconds,
-          data.receiptHash,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: data.valid,
+    await insertHyperRtgsSessionRow(
+      'omni_cosmic_hyper_rtgs_clearing_sessions',
+      `OMNI-RTGS-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      input,
+      'OMNI_COSMIC_EXPEDITE',
       data,
-      error: data.error,
-    };
+    );
+    return { success: data.valid, data, error: data.error };
   } catch (error) {
     return {
       success: false,
@@ -90,46 +67,15 @@ export async function settleOmniCosmicRtgsAction(
   }
 }
 
-/**
- * Server Action to execute Multiverse Zero-Entropy Netting 13.0 across 1,048,576 shards.
- */
 export async function executeOmniCosmicNettingBatchAction(
   obligations: OmniCosmicNettingObligation[],
   currency: OmniCosmicCurrency = 'USDT',
-  hyperShardCount: number = 1048576
+  hyperShardCount: number = 1048576,
 ): Promise<OmniCosmicNettingActionResult> {
   try {
     const data = executeOmniCosmicNetting(obligations, currency, hyperShardCount);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO omni_cosmic_netting_batches (
-             id, batch_ref, hyper_shard_count, gross_flow_count,
-             gross_volume_cents, net_settlement_volume_cents, compression_ratio_pct,
-             netting_status, multiverse_solution_hash, executed_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          data.batchRef,
-          data.hyperShardCount,
-          data.grossFlowCount,
-          data.grossVolumeCents,
-          data.netSettlementVolumeCents,
-          data.compressionRatioPct,
-          data.nettingStatus,
-          data.multiverseSolutionHash,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: true,
-      data,
-    };
+    await insertHyperNettingBatchRow('omni_cosmic_netting_batches', data);
+    return { success: true, data };
   } catch (error) {
     return {
       success: false,
@@ -138,53 +84,31 @@ export async function executeOmniCosmicNettingBatchAction(
   }
 }
 
-/**
- * Server Action to evaluate and record Basel XVII Solvency Audit under $25.0 Trillion reserve requirements.
- */
 export async function auditBaselXviiSolvencyAction(
-  input: BaselXviiSolvencyInput
+  input: BaselXviiSolvencyInput,
 ): Promise<BaselXviiSolvencyActionResult> {
   try {
     const data = evaluateBaselXviiSolvency(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO basel_xvii_solvency_audits (
-             id, audit_ref, common_equity_tier1_cents, total_risk_exposure_cents,
-             high_quality_liquid_assets_cents, net_cash_outflows_30_days_cents,
-             available_stable_funding_cents, required_stable_funding_cents,
-             sovereign_capital_buffer_cents, stress_test_survival_days,
-             cet1_ratio_bps, lcr_bps, nsfr_bps, solvency_status,
-             supervisory_signature, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `AUDIT-BASEL-XVII-${Date.now()}`,
-          input.commonEquityTier1Cents,
-          input.totalRiskExposureCents,
-          input.highQualityLiquidAssetsCents,
-          input.netCashOutflows30DaysCents,
-          input.availableStableFundingCents,
-          input.requiredStableFundingCents,
-          data.sovereignCapitalBufferCents,
-          data.stressTestSurvivalDays,
-          data.cet1RatioBps,
-          data.liquidityCoverageRatioBps,
-          data.netStableFundingRatioBps,
-          data.solvencyStatus,
-          data.supervisorySignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: data.isSolvent,
-      data,
-    };
+    await insertBaselSolvencyAuditRow(
+      'basel_xvii_solvency_audits',
+      `AUDIT-BASEL-XVII-${Date.now()}`,
+      {
+        commonEquityTier1Cents: input.commonEquityTier1Cents,
+        totalRiskExposureCents: input.totalRiskExposureCents,
+        highQualityLiquidAssetsCents: input.highQualityLiquidAssetsCents,
+        netCashOutflows30DaysCents: input.netCashOutflows30DaysCents,
+        availableStableFundingCents: input.availableStableFundingCents,
+        requiredStableFundingCents: input.requiredStableFundingCents,
+        sovereignCapitalBufferCents: data.sovereignCapitalBufferCents,
+        stressTestSurvivalDays: data.stressTestSurvivalDays,
+        cet1RatioBps: data.cet1RatioBps,
+        liquidityCoverageRatioBps: data.liquidityCoverageRatioBps,
+        netStableFundingRatioBps: data.netStableFundingRatioBps,
+        solvencyStatus: data.solvencyStatus,
+        supervisorySignature: data.supervisorySignature,
+      },
+    );
+    return { success: data.isSolvent, data };
   } catch (error) {
     return {
       success: false,

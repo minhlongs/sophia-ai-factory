@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { checkMissionQuota } from '../mission-quota';
+import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { getD1 } from '@/seed/db/client';
 import { resolveOrgId, resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id';
 

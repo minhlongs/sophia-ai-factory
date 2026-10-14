@@ -10,25 +10,17 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/seed/components/ui/dialog';
 import { Button } from '@/seed/components/ui/button';
-import type { SopTemplateRow } from '@/tree/sop/sop-types';
-import { CRON_PRESETS } from '@/tree/sop/install-input-schema';
+import type { SopTemplateRow } from '@/seed/sop/sop-types';
+import { CRON_PRESETS } from '@/seed/sop/install-input-schema';
 import { CategoryBadge } from './category-badge';
 import { SopConfigForm, parseConfigSchema } from './sop-config-form';
-
-interface Preset {
-  key: keyof typeof CRON_PRESETS;
-  labelKey: 'scheduleHourly' | 'scheduleDaily' | 'scheduleWeekly' | 'scheduleManual';
-}
-
-const PRESETS: Preset[] = [
-  { key: 'manual', labelKey: 'scheduleManual' },
-  { key: 'hourly', labelKey: 'scheduleHourly' },
-  { key: 'daily9am', labelKey: 'scheduleDaily' },
-  { key: 'weeklyMon9am', labelKey: 'scheduleWeekly' },
-];
+import {
+  SopAdvancedCustomizationSection,
+  SopScheduleAndToggleSection,
+} from './sop-install-modal-sections';
 
 interface SopInstallModalProps {
   template: SopTemplateRow | null;
@@ -55,7 +47,6 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
 
   const { schema, defaults } = parseConfigSchema(template.config_schema, template.config_defaults);
 
-  // Initialize config values with defaults when template changes
   function getEffectiveValues() {
     return { ...defaults, ...configValues };
   }
@@ -95,7 +86,6 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* Config form — primary no-code input */}
           {hasConfigSchema && (
             <div>
               <p className="text-sm font-medium text-foreground mb-3">{t('configureTitle')}</p>
@@ -107,65 +97,20 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
             </div>
           )}
 
-          {/* Schedule presets */}
-          <div>
-            <p className="text-sm font-medium text-foreground mb-2">{t('schedule')}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => setSelectedPreset(p.key)}
-                  className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-                    selectedPreset === p.key
-                      ? 'border-primary bg-primary/20 text-primary'
-                      : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  {t(p.labelKey)}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SopScheduleAndToggleSection
+            selectedPreset={selectedPreset}
+            onSelectPreset={setSelectedPreset}
+            enabled={enabled}
+            onToggleEnabled={() => setEnabled(!enabled)}
+            error={error}
+          />
 
-          {/* Enable toggle */}
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <div
-              role="switch"
-              aria-checked={enabled}
-              onClick={() => setEnabled(!enabled)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-muted'}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-background rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : ''}`} />
-            </div>
-            <span className="text-sm text-foreground">{t('enable')}</span>
-          </label>
-
-          {error && <p className="text-sm text-red-400">{error}</p>}
-
-          {/* Advanced section — Markdown override */}
-          <div className="border border-border rounded-lg overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setAdvancedOpen(!advancedOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
-            >
-              <span>{t('advancedLabel')}</span>
-              {advancedOpen ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
-            </button>
-            {advancedOpen && (
-              <div className="px-4 pb-4 pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-2">{t('advancedHelp')}</p>
-                <textarea
-                  value={customizations}
-                  onChange={(e) => setCustomizations(e.target.value)}
-                  placeholder={t('customizationsPlaceholder')}
-                  rows={6}
-                  className="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-                />
-              </div>
-            )}
-          </div>
+          <SopAdvancedCustomizationSection
+            advancedOpen={advancedOpen}
+            onToggleAdvanced={() => setAdvancedOpen(!advancedOpen)}
+            customizations={customizations}
+            onChangeCustomizations={setCustomizations}
+          />
         </div>
 
         <DialogFooter>

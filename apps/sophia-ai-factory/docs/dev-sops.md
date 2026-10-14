@@ -53,7 +53,7 @@ i18n validation auto-runs via `pretest` hook (validates `t('...')` keys match lo
 1. Create `src/app/api/<route>/route.ts`:
    ```ts
    import { NextRequest, NextResponse } from 'next/server';
-   import { getCurrentUser } from '@/lib/better-auth-session';
+   import { getCurrentUser } from '@/seed/auth/better-auth-session';
    import { mySchema } from '@/seed/validators/...';
 
    export const dynamic = 'force-dynamic';
@@ -72,7 +72,7 @@ i18n validation auto-runs via `pretest` hook (validates `t('...')` keys match lo
    ```
 
 2. Zod validate ALL inputs.
-3. DB access via `createServerClient()` from `@/lib/db/client` (**sync, no await**).
+3. DB access via `createServerClient()` from `@/seed/db/client` (**sync, no await**).
 4. Add test `src/app/api/<route>/__tests__/route.test.ts`.
 
 **Acceptance:** `npm run build` 0 errors + new test passes.
@@ -94,10 +94,10 @@ Reference: `.claude/rules/sophia-layer-architecture.md`
 **Canonical import aliases** (do NOT use deprecated paths):
 | Concern | Use |
 |---|---|
-| Auth session | `@/lib/better-auth-session` |
-| Tier lookup | `@/lib/db/get-user-tier` |
-| DB client | `@/lib/db/client` (sync) |
-| Tier config | `@/config/tiers` |
+| Auth session | `@/seed/auth/better-auth-session` |
+| Tier lookup | `@/seed/db/get-user-tier` |
+| DB client | `@/seed/db/client` (sync) |
+| Tier config | `@/seed/config/tiers` |
 
 **Banned imports:** `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`.
 
@@ -194,8 +194,8 @@ apps/sophia-ai-factory/
 │   ├── forest/              # ~362 files — infra orchestrators (inngest, raas, quota, metering)
 │   ├── land/                # ~113 files — business workflows (billing, payouts, affiliates, promo)
 │   ├── app/                 # Next.js App Router (routes, layouts, api/)
-│   ├── lib/                 # Legacy + canonical aliases (better-auth-session, db/client, tier-gate*)
-│   ├── config/tiers/        # Tier source-of-truth
+│   ├── lib/                 # Compatibility/legacy area (new primitives belong in seed/tree/forest/land)
+│   ├── config/tiers/        # Tier source-of-truth (canonical: @/seed/config/tiers)
 │   └── components/          # UI components (shared)
 ├── migrations/              # D1 SQL migrations (numbered)
 ├── scripts/                 # deploy-with-sha.sh, apply-migrations.sh, sophia-doctor.mjs
@@ -243,7 +243,7 @@ Gates run **locally** via npm + husky AND in the automated GitHub Actions pipeli
 - [ ] Zod validation on every API input
 
 **Auth:**
-- [ ] Routes use `getCurrentUser()` from `@/lib/better-auth-session`
+- [ ] Routes use `getCurrentUser()` from `@/seed/auth/better-auth-session`
 - [ ] NEVER raw JWT parsing in handlers
 - [ ] Webhook auth: HMAC verification (NOWPayments IPN)
 

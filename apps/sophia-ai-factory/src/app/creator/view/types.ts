@@ -1,6 +1,6 @@
 import type { getTranslations } from 'next-intl/server';
 import type { CreatorProfileView } from '@/land/sop-marketplace';
-import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
+import type { SopChallengeRow, UserChallengeProgressRow } from '@/seed/sop/sop-types';
 
 export type TranslationFn = Awaited<ReturnType<typeof getTranslations>>;
 

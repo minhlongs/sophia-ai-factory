@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { BookOpen, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Download } from 'lucide-react';
 import { Card } from '@/seed/components/ui/card';
 import {
   exportRunbookMarkdown,
@@ -14,18 +13,11 @@ import type { RunbookReaderClientProps, SupportedLocale } from './types';
 import { MarkdownRenderer } from './markdown-renderer';
 import { RunbookSidebar } from './runbook-sidebar';
 import { RunbookToolbar } from './runbook-toolbar';
-
-function downloadBlob(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+import {
+  downloadRunbookBlob,
+  printRunbookHtmlContent,
+  RunbookPaginationFooter,
+} from './runbook-reader-helpers';
 
 export function RunbookReaderClient({
   runbooks,
@@ -53,29 +45,21 @@ export function RunbookReaderClient({
 
   const handleDownloadMarkdown = () => {
     const content = exportRunbookMarkdown(activeRunbook.slug, activeLocale);
-    if (content) downloadBlob(content, `SOP-${activeRunbook.number}-${activeRunbook.slug}.md`, 'text/markdown;charset=utf-8');
+    if (content) downloadRunbookBlob(content, `SOP-${activeRunbook.number}-${activeRunbook.slug}.md`, 'text/markdown;charset=utf-8');
   };
 
   const handleDownloadHtml = () => {
     const content = exportRunbookHtml(activeRunbook.slug, activeLocale);
-    if (content) downloadBlob(content, `SOP-${activeRunbook.number}-${activeRunbook.slug}.html`, 'text/html;charset=utf-8');
+    if (content) downloadRunbookBlob(content, `SOP-${activeRunbook.number}-${activeRunbook.slug}.html`, 'text/html;charset=utf-8');
   };
 
   const handlePrint = () => {
-    const content = exportRunbookHtml(activeRunbook.slug, activeLocale);
-    if (!content) return;
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(content);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => printWindow.print(), 350);
-    }
+    printRunbookHtmlContent(exportRunbookHtml(activeRunbook.slug, activeLocale));
   };
 
   const handleDownloadMasterDossier = () => {
     const masterMd = exportAllRunbooksMarkdown(activeLocale);
-    downloadBlob(masterMd, `SOPHIA-MASTER-OPERATIONAL-RUNBOOK-DOSSIER-${activeLocale.toUpperCase()}.md`, 'text/markdown;charset=utf-8');
+    downloadRunbookBlob(masterMd, `SOPHIA-MASTER-OPERATIONAL-RUNBOOK-DOSSIER-${activeLocale.toUpperCase()}.md`, 'text/markdown;charset=utf-8');
   };
 
   const handleCopyText = async () => {
@@ -147,37 +131,12 @@ export function RunbookReaderClient({
               <MarkdownRenderer content={activeContent} />
             </article>
 
-            <div className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-              {prevRunbook ? (
-                <Link
-                  href={`/dashboard/docs/runbooks/${prevRunbook.slug}`}
-                  className="w-full sm:w-auto inline-flex items-center gap-2 p-3 rounded-lg border border-border hover:border-primary/40 bg-background hover:bg-muted/30 transition-all text-xs text-foreground font-semibold"
-                >
-                  <ChevronLeft className="w-4 h-4 text-primary" />
-                  <div className="text-left">
-                    <span className="text-[10px] text-muted-foreground block uppercase font-normal">{t('prevRunbook')}</span>
-                    <span className="truncate max-w-[200px] block">
-                      #{prevRunbook.number} {activeLocale === 'vi' ? prevRunbook.titleVi : prevRunbook.titleEn}
-                    </span>
-                  </div>
-                </Link>
-              ) : <div />}
-
-              {nextRunbook ? (
-                <Link
-                  href={`/dashboard/docs/runbooks/${nextRunbook.slug}`}
-                  className="w-full sm:w-auto inline-flex items-center justify-end gap-2 p-3 rounded-lg border border-border hover:border-primary/40 bg-background hover:bg-muted/30 transition-all text-xs text-foreground font-semibold"
-                >
-                  <div className="text-right">
-                    <span className="text-[10px] text-muted-foreground block uppercase font-normal">{t('nextRunbook')}</span>
-                    <span className="truncate max-w-[200px] block">
-                      #{nextRunbook.number} {activeLocale === 'vi' ? nextRunbook.titleVi : nextRunbook.titleEn}
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-primary" />
-                </Link>
-              ) : <div />}
-            </div>
+            <RunbookPaginationFooter
+              prevRunbook={prevRunbook}
+              nextRunbook={nextRunbook}
+              activeLocale={activeLocale}
+              t={(k) => t(k)}
+            />
           </Card>
         </div>
       </div>

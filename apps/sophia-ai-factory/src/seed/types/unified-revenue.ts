@@ -12,9 +12,8 @@ export type RevenueChannel = 'direct_sales' | 'affiliate' | 'content_seo' | 'ent
 
 export type SnapshotStatus = 'draft' | 'active' | 'archived' | 'reconciled';
 
-export type SlaBreachLevel = 'none' | 'minor' | 'moderate' | 'critical';
-
-export type SlaPenaltyStatus = 'none' | 'pending_approval' | 'credited' | 'refunded' | 'waived';
+export * from './unified-revenue-cohort';
+export * from './unified-revenue-sla';
 
 /**
  * Breakdown of MRR by channel.
@@ -81,101 +80,6 @@ export interface ConsolidateChannelsInput {
   channelCustomerCounts?: Partial<Record<RevenueChannel, number>>;
   status?: SnapshotStatus;
   currency?: string;
-}
-
-/**
- * Single cell in the triangular cohort retention matrix.
- */
-export interface CohortRetentionCell {
-  id?: string;
-  cohortMonth: string; // 'YYYY-MM'
-  periodOffset: number; // Month 0 to 24
-  startingCustomers: number;
-  retainedCustomers: number;
-  churnedCustomers: number;
-  startingMrrCents: number;
-  retainedBaseMrrCents: number;
-  expansionMrrCents: number;
-  contractionMrrCents: number;
-  churnedMrrCents: number;
-  endingMrrCents: number;
-  grrPct: number; // Gross Revenue Retention %: <= 100.0%
-  nrrPct: number; // Net Revenue Retention %: target >= 130.0%
-  calculatedAt: number;
-}
-
-/**
- * Cohort row in the triangular matrix.
- */
-export interface CohortRow {
-  cohortMonth: string;
-  startingCustomers: number;
-  startingMrrCents: number;
-  offsets: CohortRetentionCell[];
-}
-
-/**
- * Complete triangular cohort retention matrix.
- */
-export interface CohortTriangularMatrix {
-  cohorts: CohortRow[];
-  aggregateAverageNrrPct: number;
-  aggregateAverageGrrPct: number;
-  targetNrrAchieved: boolean; // aggregateAverageNrrPct >= 130.0
-}
-
-/**
- * Input for computing a cohort cell.
- */
-export interface CreateCohortCellInput {
-  id?: string;
-  cohortMonth: string;
-  periodOffset: number;
-  startingCustomers: number;
-  startingMrrCents: number;
-  retainedCustomers?: number;
-  churnedCustomers?: number;
-  expansionMrrCents?: number;
-  contractionMrrCents?: number;
-  churnedMrrCents?: number;
-}
-
-/**
- * Enterprise SLA evaluation and penalty credit ledger entry.
- */
-export interface EnterpriseSlaEvaluation {
-  id: string;
-  tenantId: string;
-  contractId: string;
-  billingPeriod: string; // 'YYYY-MM'
-  targetSlaPct: number; // 99.999
-  actualUptimePct: number;
-  totalPeriodSeconds: number; // 2,592,000 (30 days)
-  downtimeSeconds: number;
-  errorBudgetAllocatedSeconds: number; // 25.92
-  errorBudgetConsumedSeconds: number;
-  errorBudgetRemainingSeconds: number;
-  breachLevel: SlaBreachLevel;
-  penaltyCreditPct: number;
-  penaltyCreditCents: number;
-  penaltyStatus: SlaPenaltyStatus;
-  incidentIds: string[];
-  evaluatedAt: number;
-  createdAt: number;
-  updatedAt: number;
-}
-
-/**
- * Input for evaluating tenant SLA uptime.
- */
-export interface EvaluateSlaInput {
-  tenantId: string;
-  contractId: string;
-  billingPeriod: string;
-  monthlyContractCents: number;
-  downtimeSeconds: number;
-  totalPeriodSeconds?: number;
-  incidentIds?: string[];
 }
 
 /**

@@ -8,7 +8,7 @@ import {
   checkCooldown,
   recordPostInMemory,
   _resetMemStoreForTests,
-} from '../channel-cooldown';
+} from '@/tree/quota/channel-cooldown';
 import {
   CHANNEL_COOLDOWN_SECONDS,
   BURST_LIMIT_PER_HOUR,

@@ -12,26 +12,16 @@ import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { safeCatch } from '@/seed/utils/safe-catch'
 import { success, failure, type Result } from '@/seed/types/result'
+import {
+  mapCommissionDlqRow,
+  COMMISSION_DLQ_SCHEMA,
+  type CommissionDlqEntry,
+} from './commission-dlq-schema'
 
-export interface CommissionDlqEntry {
-  event_id: string
-  receipt: string
-  transaction_type: string
-  amount: number
-  payload: string
-  failure_reason: string
-  retry_count: number
-  first_failed_at: string
-  last_attempted_at: string
-  resolved: boolean
-  resolved_at?: string
-}
+export { COMMISSION_DLQ_SCHEMA, type CommissionDlqEntry }
 
 /**
- * Enqueue a failed commission event to the DLQ.
- *
- * Uses INSERT ON CONFLICT DO UPDATE to increment retry_count
- * on duplicate event_id.
+ * Enqueue a failed commission event to the DLQ (INSERT ON CONFLICT increments retry_count).
  */
 export async function enqueueCommissionDlq(
   eventId: string,
@@ -123,19 +113,7 @@ export async function getStaleCommissionEntries(
       .bind(cutoff, limit)
       .all<Record<string, unknown>>()
 
-    return (result.results ?? []).map((r) => ({
-      event_id: r.event_id as string,
-      receipt: r.receipt as string,
-      transaction_type: r.transaction_type as string,
-      amount: r.amount as number,
-      payload: r.payload as string,
-      failure_reason: r.failure_reason as string,
-      retry_count: r.retry_count as number,
-      first_failed_at: r.first_failed_at as string,
-      last_attempted_at: r.last_attempted_at as string,
-      resolved: (r.resolved as number) === 1,
-      resolved_at: (r.resolved_at as string | undefined) ?? undefined,
-    }))
+    return (result.results ?? []).map(mapCommissionDlqRow)
   } catch (err) {
     safeCatch('getStaleCommissionEntries')(err)
     return []
@@ -163,22 +141,3 @@ export async function resolveCommissionDlqEntry(eventId: string): Promise<void> 
     safeCatch('resolveCommissionDlqEntry')(err)
   }
 }
-
-/**
- * DLQ CREATE TABLE statement — run as migration.
- */
-export const COMMISSION_DLQ_SCHEMA = `
-CREATE TABLE IF NOT EXISTS commission_dead_letter (
-  event_id          TEXT PRIMARY KEY,
-  receipt           TEXT NOT NULL,
-  transaction_type  TEXT NOT NULL,
-  amount            REAL NOT NULL,
-  payload           TEXT NOT NULL DEFAULT '',
-  failure_reason    TEXT NOT NULL DEFAULT '',
-  retry_count       INTEGER NOT NULL DEFAULT 0,
-  first_failed_at   TEXT NOT NULL,
-  last_attempted_at TEXT NOT NULL,
-  resolved          INTEGER NOT NULL DEFAULT 0,
-  resolved_at       TEXT
-)
-`

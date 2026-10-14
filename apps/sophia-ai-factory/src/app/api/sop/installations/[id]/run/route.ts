@@ -8,11 +8,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation } from '@/tree/sop/sop-repo';
+import { getInstallation } from '@/seed/sop/sop-repo';
 import { runSop } from '@/forest/missions/sop-runner';
-import { createRun } from '@/tree/sop/sop-repo-runs';
-import { getSopD1 } from '@/tree/sop/d1';
-import { waitUntilSopWork } from '@/tree/sop/wait-until';
+import { createRun } from '@/seed/sop/sop-repo-runs';
+import { getSopD1 } from '@/seed/sop/d1';
+import { waitUntilSopWork } from '@/seed/sop/wait-until';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';

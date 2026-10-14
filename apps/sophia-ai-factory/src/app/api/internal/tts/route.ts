@@ -10,59 +10,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/land/video/storage/r2-binding';
-import { tenantScopedKey } from '@/land/video/storage/r2-binding';
+import { getVideoBucket, tenantScopedKey } from '@/land/video/storage/r2-binding';
 import { uploadToR2 } from '@/land/video/storage/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
 import { getVoicePreset } from '@/seed/voices/presets';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
-
-const CIRCUIT_SERVICE = 'tts-coqui' as const;
-
-// 1-second silent WAV (44 bytes: RIFF header + empty data chunk)
-const SILENT_WAV_B64 =
-  'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-
-const bodySchema = z.object({
-  text: z.string().min(1).max(10000),
-  /** Custom Coqui speaker reference (BYOV / ref-audio URL). Mutually exclusive with voicePresetId. */
-  voiceId: z.string().optional(),
-  /** Stable preset ID from VOICE_PRESETS (e.g. 'alex-en-m'). Resolved server-side. */
-  voicePresetId: z.string().optional(),
-  language: z.string().min(2).max(10).optional(),
-  tenantId: z.string().min(1),
-  jobId: z.string().min(1),
-});
-
-function timingSafeCompare(a: string, b: string): boolean {
-  const maxLen = Math.max(a.length, b.length);
-  let mismatch = a.length !== b.length ? 1 : 0;
-  for (let i = 0; i < maxLen; i++) {
-    mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-  return mismatch === 0;
-}
-
-function verifyInternalToken(request: NextRequest): boolean {
-  const expected = process.env.COQUI_INTERNAL_TOKEN;
-  if (!expected) {
-    if (process.env.NODE_ENV !== 'production') {
-      logger.warn('[TTS] COQUI_INTERNAL_TOKEN not set — allowing non-production dev mode');
-      return true;
-    }
-    logger.error('[TTS] COQUI_INTERNAL_TOKEN not set — rejecting production request');
-    return false;
-  }
-  const provided = request.headers.get('x-internal-token') ?? '';
-  return timingSafeCompare(provided, expected);
-}
-
-interface VideoJobRow {
-  audio_r2_key: string | null;
-}
+import {
+  CIRCUIT_SERVICE,
+  SILENT_WAV_B64,
+  bodySchema,
+  verifyInternalToken,
+  type VideoJobRow,
+} from './tts-route-helpers';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!verifyInternalToken(request)) {
@@ -114,22 +75,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Idempotency: check if audio_r2_key already set
   const db = createServerClient();
-  const { data: existing } = await db
-    .from('video_jobs')
-    .select('audio_r2_key')
-    .eq('id', jobId)
-    .eq('tenant_id', tenantId)
-    .single();
-
+  const { data: existing } = await db.from('video_jobs').select('audio_r2_key').eq('id', jobId).eq('tenant_id', tenantId).single();
   const existingRow = existing as VideoJobRow | null;
   if (existingRow?.audio_r2_key) {
     logger.info('[TTS] Returning cached audio', { jobId, r2Key: existingRow.audio_r2_key });
-    return NextResponse.json({
-      r2Key: existingRow.audio_r2_key,
-      durationSec: 0,
-      costUsd: 0,
-      cached: true,
-    });
+    return NextResponse.json({ r2Key: existingRow.audio_r2_key, durationSec: 0, costUsd: 0, cached: true });
   }
 
   const r2Key = tenantScopedKey(tenantId, jobId, 'audio.wav');
@@ -167,10 +117,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return 'unknown';
       });
       logger.warn('[TTS] Coqui error', { status: coquiResp.status, errText, jobId });
-      return NextResponse.json(
-        { error: `Coqui TTS failed: ${coquiResp.status}` },
-        { status: 502 },
-      );
+      return NextResponse.json({ error: `Coqui TTS failed: ${coquiResp.status}` }, { status: 502 });
     }
 
     const durationSec = Number(coquiResp.headers.get('x-duration-sec') ?? '0');

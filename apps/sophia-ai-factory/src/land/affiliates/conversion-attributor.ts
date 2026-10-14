@@ -9,87 +9,47 @@
  *
  * Match strategies use parameterized SQLite bindings (safe from injection).
  *
- * @module affiliates/conversion-attributor
+ * @module land/affiliates/conversion-attributor
  */
 
-import { logger } from '@/seed/utils/logger-utility'
-import { getD1 } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility';
+import { getD1 } from '@/seed/db/client';
+import type {
+  AttributionResult,
+  NetworkAttributionResult,
+  ClickRow,
+  LinkRow,
+  AttributionLookupResult,
+} from './conversion-attributor-types';
 
-export interface AttributionResult {
-  clickId: string
-  campaignId: string
-  userId: string
-  offerId: string
-}
-
-/** Phase 09 extended result includes tenant context */
-export interface NetworkAttributionResult {
-  linkId: string
-  tenantId: string
-  offerId: string
-  userId: string
-}
-
-interface ClickRow {
-  click_id: string
-  campaign_id: string
-  user_id: string
-  offer_id: string
-}
-
-interface LinkRow {
-  id: string
-  tenant_id: string
-  offer_id: string
-  user_id: string
-}
-
-/**
- * Safe lookup result — separates "not found" (null) from "DB error" (Result.failure).
- *
- * Callers that only need the data (backward compat) can use attributeClick()
- * which returns AttributionResult | null.
- * Callers that need to distinguish DB errors can use safeAttributeClick().
- */
-export interface AttributionLookupResult {
-  /** The attribution data, or null if not found / invalid input */
-  data: AttributionResult | null
-  /** Non-null only on DB failures — null means "not found" or invalid input */
-  error: Error | null
-}
+export type {
+  AttributionResult,
+  NetworkAttributionResult,
+  AttributionLookupResult,
+};
 
 /**
  * Look up the click that generated this conversion via ClickBank cvendthru field.
  * Backward-compatible — returns null for both "not found" and DB errors.
- *
- * @param tid - The `cvendthru` value from ClickBank INS (24-char hex, no dashes)
- * @returns Attribution data or null
  */
 export async function attributeClick(tid: string): Promise<AttributionResult | null> {
-  const result = await safeAttributeClick(tid)
-  return result.data
+  const result = await safeAttributeClick(tid);
+  return result.data;
 }
 
 /**
  * Safe variant of attributeClick — distinguishes "not found" from DB errors.
- *
- * Returns:
- *   { data: AttributionResult, error: null } — found
- *   { data: null, error: null } — not found or invalid input
- *   { data: null, error: Error } — DB failure, caller may retry
- *
- * @param tid - The `cvendthru` value from ClickBank INS (24-char hex, no dashes)
  */
 export async function safeAttributeClick(tid: string): Promise<AttributionLookupResult> {
   if (!tid || tid.length !== 24 || !/^[0-9a-f]+$/i.test(tid)) {
-    logger.warn('[conversion-attributor] invalid tid format', { tidLen: tid?.length })
-    return { data: null, error: null }
+    logger.warn('[conversion-attributor] invalid tid format', { tidLen: tid?.length });
+    return { data: null, error: null };
   }
 
   const db = await getD1();
   if (!db) {
     logger.warn('[conversion-attributor] D1 binding not available');
-    return { data: null, error: null }
+    return { data: null, error: null };
   }
 
   try {
@@ -98,14 +58,14 @@ export async function safeAttributeClick(tid: string): Promise<AttributionLookup
         `SELECT click_id, campaign_id, user_id, offer_id
          FROM affiliate_clicks
          WHERE substr(replace(click_id,'-',''),1,24) = ?
-         LIMIT 1`
+         LIMIT 1`,
       )
       .bind(tid)
-      .first<ClickRow>()
+      .first<ClickRow>();
 
     if (!row) {
-      logger.info('[conversion-attributor] no click found', { tidPrefix: tid.slice(0, 8) })
-      return { data: null, error: null }
+      logger.info('[conversion-attributor] no click found', { tidPrefix: tid.slice(0, 8) });
+      return { data: null, error: null };
     }
 
     return {
@@ -116,71 +76,58 @@ export async function safeAttributeClick(tid: string): Promise<AttributionLookup
         offerId: row.offer_id,
       },
       error: null,
-    }
+    };
   } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err))
-    logger.warn('[conversion-attributor] lookup error', {
-      error: error.message,
-    })
-    return { data: null, error }
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.warn('[conversion-attributor] lookup error', { error: error.message });
+    return { data: null, error };
   }
 }
 
 /**
  * Multi-network attribution via sub_id.
  * Backward-compatible — returns null for both "not found" and DB errors.
- *
- * Dispatches based on network slug to look up the correct affiliate_links row.
- * sub_id format: `{tenantSlug}-{linkIdHex}` (set at redirect time in Phase 09 cloak).
- *
- * @param network - Network slug (e.g. "tiktok-shop", "accesstrade", "awin", "amazon")
- * @param subId - The sub_id / click_ref / tag value echoed back in postback
- * @returns Attribution data or null
  */
 export async function attributeByNetwork(
   network: string,
-  subId: string
+  subId: string,
 ): Promise<NetworkAttributionResult | null> {
-  const result = await safeAttributeByNetwork(network, subId)
-  return result.data
+  const result = await safeAttributeByNetwork(network, subId);
+  return result.data;
 }
 
 /**
  * Safe variant of attributeByNetwork — distinguishes "not found" from DB errors.
- *
- * @param network - Network slug
- * @param subId - The sub_id value echoed back in postback
  */
 export async function safeAttributeByNetwork(
   network: string,
-  subId: string
+  subId: string,
 ): Promise<{ data: NetworkAttributionResult | null; error: Error | null }> {
   if (!subId) {
-    logger.warn('[conversion-attributor] empty subId', { network })
-    return { data: null, error: null }
+    logger.warn('[conversion-attributor] empty subId', { network });
+    return { data: null, error: null };
   }
 
   const db = await getD1();
   if (!db) {
     logger.warn('[conversion-attributor] D1 binding not available', { network });
-    return { data: null, error: null }
+    return { data: null, error: null };
   }
 
   try {
-    // All networks use the affiliate_links.sub_id column for lookup
     const row = await db
       .prepare(
         `SELECT id, tenant_id, offer_id, user_id
          FROM affiliate_links
          WHERE sub_id = ?
-         LIMIT 1`
+         LIMIT 1`,
       )
       .bind(subId)
-      .first<LinkRow>()
+      .first<LinkRow>();
 
     if (!row) {
-      logger.info('[conversion-attributor] no link found', { network, subIdPrefix: subId.slice(0, 12) })
-      return { data: null, error: null }
+      logger.info('[conversion-attributor] no link found', { network, subIdPrefix: subId.slice(0, 12) });
+      return { data: null, error: null };
     }
 
     return {
@@ -191,13 +138,10 @@ export async function safeAttributeByNetwork(
         userId: row.user_id,
       },
       error: null,
-    }
+    };
   } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err))
-    logger.warn('[conversion-attributor] network lookup error', {
-      network,
-      error: error.message,
-    })
-    return { data: null, error }
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.warn('[conversion-attributor] network lookup error', { network, error: error.message });
+    return { data: null, error };
   }
 }

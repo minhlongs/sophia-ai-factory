@@ -2,55 +2,28 @@
  * Stripe Connect Express — onboarding, status sync, fiat transfer helpers.
  *
  * Domain: land/payouts (business workflow).
- * Used by:
- *   - app/api/connect/onboard         → createOnboardLink
- *   - app/api/webhooks/stripe-connect → applyAccountUpdate
- *   - payout-batcher (future)         → transferToConnectedAccount
- *
- * Design:
- *   - Lazy Stripe SDK init — secret read on first use; throws if missing.
- *   - All exported fns are pure orchestrators; DB writes via passed D1Database.
- *   - Status mapping is the single source of truth for stripe_payout_enabled flag.
- *
  * @module land/payouts/stripe-connect
  */
 
 import Stripe from 'stripe';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  deriveAccountStatus,
+  type StripeAccountStatus,
+  type CreateOnboardLinkInput,
+  type CreateOnboardLinkResult,
+  type ApplyAccountUpdateInput,
+  type ApplyAccountUpdateResult,
+} from './stripe-connect-types';
 
-export type StripeAccountStatus = 'pending' | 'enabled' | 'restricted' | 'rejected';
-
-export interface CreateOnboardLinkInput {
-  userId: string;
-  /** Existing acct_... if onboarding was previously started; undefined creates a new one. */
-  existingAccountId?: string;
-  /** URL Stripe redirects to on success — typically /dashboard/affiliate?connect=success */
-  returnUrl: string;
-  /** URL Stripe redirects to if the user re-requests the link (token expires after ~5min) */
-  refreshUrl: string;
-  email?: string;
-  /** ISO 3166-1 alpha-2 — defaults to 'US'. Stripe Connect coverage varies by country. */
-  country?: string;
-}
-
-export interface CreateOnboardLinkResult {
-  accountId: string;
-  url: string;
-  expiresAt: number;
-}
-
-export interface ApplyAccountUpdateInput {
-  accountId: string;
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
-  requirementsDisabledReason?: string | null;
-}
-
-export interface ApplyAccountUpdateResult {
-  status: StripeAccountStatus;
-  payoutEnabled: boolean;
-}
+export {
+  deriveAccountStatus,
+  type StripeAccountStatus,
+  type CreateOnboardLinkInput,
+  type CreateOnboardLinkResult,
+  type ApplyAccountUpdateInput,
+  type ApplyAccountUpdateResult,
+};
 
 let stripeSingleton: Stripe | null = null;
 
@@ -75,28 +48,8 @@ export function __setStripeClientForTesting(client: Stripe | null): void {
 }
 
 /**
- * Map Stripe account flags → internal status enum.
- * Single source of truth for whether we treat the account as "ready to receive payouts".
- */
-export function deriveAccountStatus(input: ApplyAccountUpdateInput): ApplyAccountUpdateResult {
-  if (input.requirementsDisabledReason && input.requirementsDisabledReason.startsWith('rejected.')) {
-    return { status: 'rejected', payoutEnabled: false };
-  }
-  if (input.chargesEnabled && input.payoutsEnabled && input.detailsSubmitted) {
-    return { status: 'enabled', payoutEnabled: true };
-  }
-  if (input.detailsSubmitted) {
-    return { status: 'restricted', payoutEnabled: false };
-  }
-  return { status: 'pending', payoutEnabled: false };
-}
-
-/**
  * Create (or reuse) a Stripe Connect Express account and return an Account Link
  * URL the user can navigate to in order to complete KYC.
- *
- * Caller is responsible for persisting result.accountId to user_payout_settings
- * (we keep this pure to ease testing and avoid passing DB into core domain logic).
  */
 export async function createOnboardLink(
   input: CreateOnboardLinkInput,
@@ -134,8 +87,6 @@ export async function createOnboardLink(
 
 /**
  * Send a fiat USD payout to a connected affiliate.
- * @param amountCents amount in USD cents — use commission-cents conversions upstream.
- * @param idempotencyKey REQUIRED — payout cron must derive a stable key (e.g. payout_batch_id).
  */
 export async function transferToConnectedAccount(args: {
   destinationAccountId: string;
@@ -165,8 +116,6 @@ export async function transferToConnectedAccount(args: {
 
 /**
  * Verify Stripe webhook signature.
- * Uses the SDK's helper which implements the t=<ts>,v1=<sig> format with timing-safe compare.
- * Returns the parsed Event on success or null on signature failure / parse error.
  */
 export function verifyWebhookSignature(
   rawBody: string,

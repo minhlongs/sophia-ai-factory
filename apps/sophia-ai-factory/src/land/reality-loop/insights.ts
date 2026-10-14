@@ -9,9 +9,6 @@
  * snapshot. Every query is workspace-scoped. Missing economic data renders as
  * null, never 0 — 0 means "we measured zero", null means "we have no signal".
  *
- * DB access: createServerClient() (sync, no await on the client itself) —
- * mirrors the creative-economy dashboard modules.
- *
  * @module land/reality-loop/insights
  */
 
@@ -21,10 +18,11 @@ import { toError } from '@/seed/utils/to-error';
 import { aggregateFeedbackByWorkspace } from './feedback-store';
 import { getEconomicOutcomes } from './insights-economic';
 import { getAgentFailures } from './insights-failures';
+import {
+  createEmptyRealityLoopInsights,
+  queryWorkspaceEventRollup,
+} from './insights-queries';
 import type { RealityLoopInsights } from './insights-types';
-
-// ── Domain types ─────────────────────────────────────────────────────────────
-// Types live in insights-types.ts; re-exported here for a single public API.
 
 export type {
   RealityLoopInsights,
@@ -32,8 +30,6 @@ export type {
   MemoryInsight,
   EconomicOutcomes,
 } from './insights-types';
-
-// ── Single-workspace query ───────────────────────────────────────────────────
 
 /**
  * Build the full product-learning insight bundle for one workspace.
@@ -44,113 +40,26 @@ export type {
 export async function getRealityLoopInsights(
   workspaceId: string,
 ): Promise<RealityLoopInsights> {
-  const empty: RealityLoopInsights = {
-    workspaceId,
-    missionsCreated: 0,
-    missionsCompleted: 0,
-    completionRate: null,
-    creativeAccepted: 0,
-    creativeRejected: 0,
-    acceptanceRate: null,
-    humanCorrections: 0,
-    correctionRate: null,
-    agentFailures: [],
-    agentFailureTotal: 0,
-    missionCostCents: 0,
-    memory: { used: 0, corrected: 0, correctionRate: null },
-    economic: { revenueCents: null, costCents: null, netCents: null, roiPct: null },
-    feedback: null,
-  };
+  const empty = createEmptyRealityLoopInsights(workspaceId);
 
   try {
     const db = createServerClient();
-
-    // Mission funnel (Q1, Q8, Q9, Q10) — created vs completed.
-    // MED-3 fix: `creative_missions` is the source of truth for mission status.
-    // `mission.completed` is in REALITY_LOOP_EVENT_TYPES but has NO production
-    // writer — querying performance_events would return 0 forever. Read status
-    // from the table directly instead. `IN ('completed', 'review')` because
-    // advanceMissionToReview sets status='review' and never auto-completes;
-    // `completed` is reachable via updateMissionStatus action.
-    const funnel = await db
-      .prepare(
-        `SELECT
-           COUNT(*) AS created,
-           SUM(CASE WHEN status IN ('completed', 'review') THEN 1 ELSE 0 END) AS completed
-         FROM creative_missions
-         WHERE workspace_id = ?1`,
-      )
-      .bind(workspaceId)
-      .first<{ created: number | null; completed: number | null }>();
-
-    const missionsCreated = funnel?.created ?? 0;
-    const missionsCompleted = funnel?.completed ?? 0;
-
-    // Creative acceptance (Q3) — accepted vs rejected.
-    const creative = await db
-      .prepare(
-        `SELECT
-           SUM(CASE WHEN event_type = 'creative.accepted' THEN count ELSE 0 END) AS accepted,
-           SUM(CASE WHEN event_type = 'creative.rejected' THEN count ELSE 0 END) AS rejected
-         FROM performance_events
-         WHERE workspace_id = ?1
-           AND event_type IN ('creative.accepted', 'creative.rejected')`,
-      )
-      .bind(workspaceId)
-      .first<{ accepted: number | null; rejected: number | null }>();
-
-    const creativeAccepted = creative?.accepted ?? 0;
-    const creativeRejected = creative?.rejected ?? 0;
-
-    // Human corrections (Q6) — creative.edited events.
-    const corrections = await db
-      .prepare(
-        `SELECT SUM(count) AS cnt
-         FROM performance_events
-         WHERE workspace_id = ?1
-           AND event_type = 'creative.edited'`,
-      )
-      .bind(workspaceId)
-      .first<{ cnt: number | null }>();
-    const humanCorrections = corrections?.cnt ?? 0;
-
-    // Agent failure taxonomy (Q7) — delegated to insights-failures.ts.
+    const rollup = await queryWorkspaceEventRollup(db, workspaceId);
     const { agentFailures, agentFailureTotal } = await getAgentFailures(db, workspaceId);
-
-    // Mission cost (Q4) — value_cents on mission.cost_recorded.
-    const cost = await db
-      .prepare(
-        `SELECT SUM(value_cents) AS cost_cents
-         FROM performance_events
-         WHERE workspace_id = ?1
-           AND event_type = 'mission.cost_recorded'`,
-      )
-      .bind(workspaceId)
-      .first<{ cost_cents: number | null }>();
-    const missionCostCents = cost?.cost_cents ?? 0;
-
-    // Memory usage + correction (Q5).
-    const memory = await db
-      .prepare(
-        `SELECT
-           SUM(CASE WHEN event_type = 'memory.used' THEN count ELSE 0 END) AS used,
-           SUM(CASE WHEN event_type = 'memory.corrected' THEN count ELSE 0 END) AS corrected
-         FROM performance_events
-         WHERE workspace_id = ?1
-           AND event_type IN ('memory.used', 'memory.corrected')`,
-      )
-      .bind(workspaceId)
-      .first<{ used: number | null; corrected: number | null }>();
-    const memoryUsed = memory?.used ?? 0;
-    const memoryCorrected = memory?.corrected ?? 0;
-
-    // Economic outcomes (Phase H) — nullable, never 0-for-null.
     const economic = await getEconomicOutcomes(db, workspaceId);
-
-    // Feedback aggregates (Phase E).
     const feedback = await aggregateFeedbackByWorkspace(workspaceId);
 
-    // Derived rates — null when denominator is 0 (no signal).
+    const {
+      missionsCreated,
+      missionsCompleted,
+      creativeAccepted,
+      creativeRejected,
+      humanCorrections,
+      missionCostCents,
+      memoryUsed,
+      memoryCorrected,
+    } = rollup;
+
     const completionRate = missionsCreated > 0 ? missionsCompleted / missionsCreated : null;
     const creativeDecisions = creativeAccepted + creativeRejected;
     const acceptanceRate = creativeDecisions > 0 ? creativeAccepted / creativeDecisions : null;
@@ -177,8 +86,6 @@ export async function getRealityLoopInsights(
   } catch (err) {
     const error = toError(err);
     logger.error('[RealityLoop] getRealityLoopInsights failed', error, { workspaceId });
-    // Degraded partial bundle — every field has a safe default.
     return empty;
   }
 }
-

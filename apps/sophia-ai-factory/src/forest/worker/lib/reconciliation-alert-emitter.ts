@@ -4,82 +4,30 @@
  * Emits alerts for billing reconciliation discrepancies
  * to the /api/alerts endpoint.
  *
- * Features:
- * - Severity-based alerting (critical/high/medium/low)
- * - Rate limiting per user/threshold
- * - Webhook notification support
- *
  * @module worker/reconciliation-alert-emitter
  */
 
 import type { ReconciliationAlert, Discrepancy } from '@/seed/types/billing-contracts';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import {
+  DEFAULT_ALERT_EMITTER_CONFIG,
+  isAlertRateLimited,
+  type AlertEmitterConfig,
+} from './reconciliation-alert-config';
 
-/**
- * Alert emitter configuration
- */
-export interface AlertEmitterConfig {
-  alertsEndpoint: string;
-  apiKey: string;
-  rateLimitWindowMs: number;
-  maxAlertsPerWindow: number;
-}
-
-/**
- * Default alert emitter configuration
- */
-export const DEFAULT_ALERT_EMITTER_CONFIG: AlertEmitterConfig = {
-  alertsEndpoint: process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/api/alerts` : '/api/alerts',
-  apiKey: '',
-  rateLimitWindowMs: 60000, // 1 minute
-  maxAlertsPerWindow: 10,
-};
-
-/**
- * Rate limit state stored in memory (for Worker execution)
- */
-const rateLimitState = new Map<string, { count: number; windowStart: number }>();
-
-/**
- * Check if alert is rate limited
- */
-function isRateLimited(
-  key: string,
-  config: AlertEmitterConfig
-): boolean {
-  const now = Date.now();
-  const state = rateLimitState.get(key);
-
-  if (!state || (now - state.windowStart) > config.rateLimitWindowMs) {
-    // New window
-    rateLimitState.set(key, { count: 1, windowStart: now });
-    return false;
-  }
-
-  if (state.count >= config.maxAlertsPerWindow) {
-    return true;
-  }
-
-  state.count++;
-  return false;
-}
+export { DEFAULT_ALERT_EMITTER_CONFIG, type AlertEmitterConfig };
 
 /**
  * Emit reconciliation alert to /api/alerts endpoint
- *
- * @param alert - Alert payload
- * @param config - Emitter configuration
- * @returns true if alert was emitted successfully
  */
 export async function emitReconciliationAlert(
   alert: ReconciliationAlert,
   config: AlertEmitterConfig = DEFAULT_ALERT_EMITTER_CONFIG
 ): Promise<boolean> {
-  // Rate limit check
   const rateLimitKey = `${alert.userId}:${alert.type}:${alert.severity}`;
 
-  if (isRateLimited(rateLimitKey, config)) {
+  if (isAlertRateLimited(rateLimitKey, config)) {
     logger.debug('[Alert Emitter] Alert rate limited', {
       userId: alert.userId,
       type: alert.type,
@@ -133,10 +81,6 @@ export async function emitReconciliationAlert(
 
 /**
  * Emit multiple alerts for discrepancies
- *
- * @param discrepancies - Array of discrepancies
- * @param config - Emitter configuration
- * @returns Number of alerts emitted successfully
  */
 export async function emitDiscrepancyAlerts(
   discrepancies: Discrepancy[],
@@ -175,11 +119,6 @@ export async function emitDiscrepancyAlerts(
 
 /**
  * Emit reconciliation completion alert
- *
- * @param reportId - Report ID
- * @param userId - User ID (system)
- * @param config - Emitter configuration
- * @returns true if alert was emitted
  */
 export async function emitCompletionAlert(
   reportId: string,

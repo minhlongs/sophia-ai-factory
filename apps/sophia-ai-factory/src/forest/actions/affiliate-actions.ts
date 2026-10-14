@@ -11,6 +11,4 @@
  * @module forest/actions/affiliate-actions
  */
 
-'use server';
-
 export * from './affiliate';

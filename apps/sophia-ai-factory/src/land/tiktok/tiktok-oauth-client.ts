@@ -14,13 +14,13 @@ import { registerTikTokOAuthClient } from '@/tree/types/oauth-client-types';
 export type {
   TikTokTokenResponse,
   TikTokRefreshResponse,
-} from './tiktok-token-manager';
+} from '@/tree/publishing/tiktok/tiktok-token-manager';
 
 export {
   getAuthorizationUrl,
   exchangeCodeForTokens,
   refreshAccessToken,
-} from './tiktok-token-manager';
+} from '@/tree/publishing/tiktok/tiktok-token-manager';
 
 const TIKTOK_PUBLISH_INIT_URL = 'https://open.tiktokapis.com/v2/post/publish/video/init/';
 const TIKTOK_PUBLISH_STATUS_URL = 'https://open.tiktokapis.com/v2/post/publish/status/fetch/';

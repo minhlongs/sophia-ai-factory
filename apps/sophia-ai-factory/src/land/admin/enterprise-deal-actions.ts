@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Enterprise Deals & B2B AI Sales Agent Server Actions
  *

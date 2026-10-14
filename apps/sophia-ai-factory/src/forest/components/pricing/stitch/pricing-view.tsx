@@ -9,7 +9,6 @@
 import React, { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import dynamic from 'next/dynamic';
-import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { usePricingData } from '../pricing-data';
 import { CouponInput, type PromoDiscount } from '../coupon-input';
 import { useCsrfToken } from '@/seed/security/use-csrf-token';
@@ -19,23 +18,19 @@ import { BillingToggle } from './billing-toggle';
 import {
   CARD_CONFIGS,
   type BillingPeriod,
-  type PaymentMethod,
-  type CheckoutResponse,
   type CheckoutDataState,
   type PricingStitchSectionProps,
 } from './types';
+import {
+  calculateDiscount,
+  resolveTierBaseCents,
+  requestTierCheckout,
+} from './pricing-checkout-helper';
 
 const CheckoutPanel = dynamic(
   () => import('../../checkout/checkout-panel').then((m) => ({ default: m.CheckoutPanel })),
   { ssr: false }
 );
-
-function calculateDiscount(base: number, d: PromoDiscount | null): number | undefined {
-  if (!d || (d.appliesToTier && d.discountType !== 'free_trial' && d.discountType !== 'free_full')) return undefined;
-  if (d.discountType === 'percent_off') return Math.max(0, Math.round(base * (1 - d.discountValue / 100)));
-  if (d.discountType === 'fixed_off') return Math.max(0, base - d.discountValue);
-  return undefined;
-}
 
 export function PricingStitchSection({
   isAuthenticated = false,
@@ -61,43 +56,10 @@ export function PricingStitchSection({
     }
 
     try {
-      const period = tierKey === 'MASTER' ? 'lifetime' : billingPeriod === 'annual' ? 'yearly' : 'monthly';
-      const body: Record<string, unknown> = { tier: tierKey, paymentMethod: 'nowpayments', period };
-      if (appliedDiscount && (appliedDiscount.discountType === 'percent_off' || appliedDiscount.discountType === 'fixed_off')) {
-        body.promoCode = appliedDiscount.code;
-      }
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders },
-        body: JSON.stringify(body),
+      const nextCheckout = await requestTierCheckout({
+        tierKey, billingPeriod, appliedDiscount, csrfHeaders, masterTierPrice: MASTER_TIER.price,
       });
-
-      if (!res.ok) {
-        const errData = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(errData.error || `HTTP ${res.status}`);
-      }
-
-      const data: CheckoutResponse = await res.json();
-      const isAnnual = billingPeriod === 'annual';
-      const tierConfig = UNIFIED_TIERS[tierKey as keyof typeof UNIFIED_TIERS];
-      const baseCents = tierKey === 'MASTER'
-        ? MASTER_TIER.price
-        : isAnnual
-          ? (tierConfig?.yearlyPrice ? tierConfig.yearlyPrice * 100 : tierConfig?.priceInCents ?? 0)
-          : tierConfig?.priceInCents ?? 0;
-      const discountedCents = calculateDiscount(baseCents, appliedDiscount);
-
-      setCheckoutData({
-        tier: tierKey,
-        url: data.url,
-        orderId: data.orderId,
-        period,
-        paymentMethod: 'nowpayments',
-        priceCents: baseCents,
-        discountedPriceCents: discountedCents,
-        couponCode: appliedDiscount?.code,
-      });
+      setCheckoutData(nextCheckout);
       setIsCheckoutOpen(true);
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : t('error_checkout'));
@@ -133,12 +95,7 @@ export function PricingStitchSection({
           {CARD_CONFIGS.map((cfg) => {
             const isMaster = cfg.tier === 'MASTER';
             const tierData = isMaster ? null : PRICING_TIERS.find((p) => p.tier === cfg.tier);
-            const tierConfig = UNIFIED_TIERS[cfg.tier as keyof typeof UNIFIED_TIERS];
-            const basePriceCents = isMaster
-              ? MASTER_TIER.price
-              : isAnnual
-                ? (tierConfig?.yearlyPrice ? tierConfig.yearlyPrice * 100 : tierConfig?.priceInCents ?? 0)
-                : (tierConfig?.priceInCents ?? 0);
+            const basePriceCents = resolveTierBaseCents(cfg.tier, isAnnual, MASTER_TIER.price);
             const discountedPriceCents = calculateDiscount(basePriceCents, appliedDiscount);
             const features = isMaster
               ? MASTER_TIER.features

@@ -6,6 +6,7 @@
  */
 
 import type { RunbookContent } from '@/seed/handover/handover-types';
+import { SOP_03_BYOK } from './sop-03-byok';
 
 export const SOPS_01_TO_03: RunbookContent[] = [
   {
@@ -43,10 +44,10 @@ curl -s https://sophia.agencyos.network/api/health | jq
 \`\`\`
 Expected response for \`/api/health\`: \`{"status":"healthy","database":"connected","environment":"production"}\`.
 
-## Step 3: Run First Video Creation Run
-1. Open \`/dashboard/missions/new\`.
-2. Select a starter blueprint (e.g., *Product Showcase Short*).
-3. Confirm pre-flight MCU estimation passes.
+## Step 3: First Test Video Mission
+1. Navigate to \`/dashboard/missions/new\`.
+2. Select a pre-built starter template (e.g., *Short-Form Product Pitch*).
+3. Confirm MCU pre-flight cost calculation.
 4. Click **Dispatch Mission** and watch the state transition from \`queued\` to \`completed\`.
 `,
     contentVi: `# 01. Khởi Động Nhanh & Thiết Lập Vận Hành
@@ -128,55 +129,5 @@ Tải lên tài nguyên nhận diện tại \`/dashboard/settings/branding\`:
 - **Watermark**: Logo mờ tự động chèn vào góc video khi xuất bản.
 `,
   },
-  {
-    id: 'sop-03',
-    slug: 'byok',
-    number: '03',
-    titleEn: '03. BYOK Provider Key Management',
-    titleVi: '03. Quản Lý Khóa AI (BYOK)',
-    summaryEn: 'Provisioning, validating, and rotating customer API keys for OpenRouter, ElevenLabs, HeyGen, and fal.ai.',
-    summaryVi: 'Cấp phát, kiểm tra và xoay vòng khóa API OpenRouter, ElevenLabs, HeyGen và fal.ai của khách hàng.',
-    category: 'Security & AI Providers',
-    readTimeMinutes: 15,
-    tags: ['byok', 'keys', 'encryption', 'providers'],
-    author: 'Sophia Security Team',
-    lastVerified: '2026-09-20',
-    contentEn: `# 03. BYOK Provider Key Management
-
-## Architecture & Zero-Retention Security
-Sophia utilizes **Envelope Encryption with AES-256-GCM**. Customer keys are encrypted in D1 with a customer-specific derived sub-key and only decrypted in memory during active synthesis tasks.
-
-## Supported Upstream AI Providers
-| Provider | Target Capability | Recommended Model / Tier |
-|---|---|---|
-| **OpenRouter** | Script Generation & Hook Logic | Claude 3.5 Sonnet / Llama 3.3 70B |
-| **ElevenLabs** | Multilingual Voiceover Synthesis | Multilingual V2 (Turbo) |
-| **fal.ai** | AI Visual Frame Generation | Flux Schnell / Kling AI |
-| **HeyGen** | Talking Avatar Video Generation | Streaming Avatar API |
-
-## Key Rotation SOP
-To rotate provider keys without downtime:
-1. Navigate to \`/dashboard/settings/providers\`.
-2. Input new API key. Sophia runs a pre-flight probe against upstream \`/models\` or \`/user\` endpoint.
-3. Upon green response, previous key is securely overwritten with zero plain-text retention.
-`,
-    contentVi: `# 03. Quản Lý Khóa AI (BYOK)
-
-## Kiến Trúc Bảo Mật & Không Lưu Trữ Khóa Thô
-Sophia áp dụng chuẩn **Mã hóa Phong bì AES-256-GCM**. Khóa API của khách hàng được mã hóa trong D1 và chỉ giải mã tạm thời trong bộ nhớ đệm khi thực thi tác vụ render.
-
-## Danh Sách Nhà Cung Cấp AI Được Hỗ Trợ
-| Nhà Cung Cấp | Mục Đích Sử Dụng | Model Khuyên Dùng |
-|---|---|---|
-| **OpenRouter** | Viết Kịch Bản & Ý Tưởng | Claude 3.5 Sonnet / Llama 3.3 70B |
-| **ElevenLabs** | Lồng Tiếng Song Ngữ Đa Giọng | Multilingual V2 (Turbo) |
-| **fal.ai** | Tạo Khung Hình & Video AI | Flux Schnell / Kling AI |
-| **HeyGen** | Video MC Ảo Nói Chuyện | Streaming Avatar API |
-
-## Quy Trình Xoay Vòng Khóa API
-1. Truy cập \`/dashboard/settings/providers\`.
-2. Nhập khóa mới. Hệ thống sẽ kiểm tra thử tính hợp lệ với nhà cung cấp.
-3. Khi kiểm tra thành công, khóa cũ sẽ được ghi đè an toàn.
-`,
-  },
+  SOP_03_BYOK,
 ];

@@ -81,6 +81,13 @@ export async function applyPlaybook(
 
     return { success: true, installationId: row.id };
   } catch (err) {
+    if ((err as unknown as { code?: string })?.code === 'PAYMENT_REQUIRED') {
+      return {
+        success: false,
+        code: 'PAYMENT_REQUIRED',
+        message: err instanceof Error ? err.message : 'Paid marketplace SOPs cannot be installed until checkout is enabled.',
+      };
+    }
     logger.error('[applyPlaybook] Install failed', err instanceof Error ? err : new Error(String(err)), {
       ruleId: rule.id,
       templateId,

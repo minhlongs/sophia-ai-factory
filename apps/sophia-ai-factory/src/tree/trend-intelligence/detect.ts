@@ -13,110 +13,17 @@
  * @module tree/trend-intelligence/detect
  */
 
-import { createServerClient } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
-import type { MarketSignal, PerformanceEvent } from '@/seed/types/creative-domain';
 import { logger } from '@/seed/utils/logger-utility';
 import { listSignals, consumeSignals } from '@/tree/market-signals/store';
 import { getPerformanceEvents } from '@/tree/performance/events';
-import { buildForecast, type ForecastPayload } from './forecast';
-import {
-  bucketEvidence,
-  computeTopicMomentum,
-  topicsFromText,
-  type EvidencePoint,
-} from './detect-math';
+import { buildForecast } from './forecast';
+import { bucketEvidence, computeTopicMomentum } from './detect-math';
+import type { TrendDetectionRecord, DetectTrendsInput } from './detect-types';
+import { groupEvidence, newTrendDetectionId } from './detect-evidence';
+import { insertDetection } from './detect-storage';
 
-export interface TrendDetectionRecord {
-  readonly id: string;
-  readonly workspaceId: string;
-  readonly topic: string;
-  readonly channel: string;
-  readonly momentum: number;
-  readonly velocity: number;
-  readonly z: number;
-  readonly forecast: ForecastPayload;
-  readonly evidenceIds: readonly string[];
-  readonly detectedAt: number;
-}
-
-export interface DetectTrendsInput {
-  readonly workspaceId: string;
-  /** Injected clock — defaults to Date.now() only at the async boundary. */
-  readonly nowMs?: number;
-  /** Width of one sliding-window bucket in ms (default 24h). */
-  readonly windowMs?: number;
-  /** Number of buckets ending at nowMs (default 7). */
-  readonly windowCount?: number;
-  /** Max detections persisted per run, ranked by momentum (default 50). */
-  readonly maxDetections?: number;
-  /** Mark ingested signals as consumed after detection (default false). */
-  readonly consumeProcessed?: boolean;
-}
-
-interface TopicGroup {
-  readonly channel: string;
-  readonly topic: string;
-  readonly points: EvidencePoint[];
-}
-
-function newTrendDetectionId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return 'tdet_' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** Signals contribute keyword topics from their titles, keyed by source channel. */
-function addSignalPoints(groups: Map<string, TopicGroup>, signal: MarketSignal): void {
-  const topics = topicsFromText(signal.title);
-  for (const topic of topics) {
-    const key = `${signal.source}::${topic}`;
-    const group = groups.get(key) ?? { channel: signal.source, topic, points: [] };
-    group.points.push({ id: signal.id, atMs: signal.createdAt });
-    groups.set(key, group);
-  }
-}
-
-/** Performance events contribute one topic per eventType, keyed by channel. */
-function addEventPoints(groups: Map<string, TopicGroup>, event: PerformanceEvent): void {
-  const channel = event.channel || 'unknown';
-  const key = `${channel}::${event.eventType}`;
-  const group = groups.get(key) ?? { channel, topic: event.eventType, points: [] };
-  group.points.push({ id: event.id, atMs: event.recordedAt });
-  groups.set(key, group);
-}
-
-function groupEvidence(
-  signals: readonly MarketSignal[],
-  events: readonly PerformanceEvent[],
-): Map<string, TopicGroup> {
-  const groups = new Map<string, TopicGroup>();
-  for (const signal of signals) addSignalPoints(groups, signal);
-  for (const event of events) addEventPoints(groups, event);
-  return groups;
-}
-
-async function insertDetection(record: TrendDetectionRecord): Promise<number> {
-  const db = createServerClient().unwrap();
-  const { meta } = await db
-    .prepare(
-      `INSERT OR REPLACE INTO trend_detections
-       (id, workspace_id, topic, channel, momentum, forecast, evidence_ids, detected_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      record.id,
-      record.workspaceId,
-      record.topic,
-      record.channel,
-      record.momentum,
-      JSON.stringify(record.forecast),
-      JSON.stringify(record.evidenceIds),
-      record.detectedAt,
-    )
-    .run();
-  return meta?.changes ?? 0;
-}
+export type { TrendDetectionRecord, DetectTrendsInput } from './detect-types';
 
 /**
  * Run one detection cycle for a workspace: signals + events in →
@@ -147,7 +54,6 @@ export async function detectTrends(
     const candidates: TrendDetectionRecord[] = [];
 
     for (const { channel, topic, points } of groups.values()) {
-      // Half-open evidence window [start, nowMs) — matches bucketEvidence.
       const start = nowMs - windowCount * windowMs;
       const inWindow = points.filter((p) => p.atMs >= start && p.atMs < nowMs);
       if (inWindow.length === 0) continue;

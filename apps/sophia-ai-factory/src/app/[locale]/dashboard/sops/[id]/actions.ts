@@ -12,13 +12,13 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation, deleteInstallation, updateCustomizations, updateConfigValues } from '@/tree/sop/sop-repo';
-import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
-import { customizationInputSchema } from '@/tree/sop/install-input-schema';
+import { getInstallation, deleteInstallation, updateCustomizations, updateConfigValues } from '@/seed/sop/sop-repo';
+import { generateWebhookSecret } from '@/seed/sop/webhook-hmac';
+import { customizationInputSchema } from '@/seed/sop/install-input-schema';
 import { runSop } from '@/forest/missions/sop-runner';
-import { createRun } from '@/tree/sop/sop-repo-runs';
+import { createRun } from '@/seed/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
-import type { SopCustomizations } from '@/tree/sop/sop-types';
+import type { SopCustomizations } from '@/seed/sop/sop-types';
 import { getD1 } from '@/seed/db/client';
 
 

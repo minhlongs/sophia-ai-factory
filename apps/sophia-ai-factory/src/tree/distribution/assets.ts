@@ -14,25 +14,17 @@ import {
   assetDomainToRow,
   type DistributionAssetRow,
 } from './types';
+import { isValidAssetTransition } from './asset-transitions';
+import {
+  updateDistributionAssetStatus,
+  markDistributionAssetFailed,
+} from './assets-mutations';
 
-// ─── Status transition guards ────────────────────────────────────────────────
-
-const VALID_TRANSITIONS: Record<DistributionAsset['status'], DistributionAsset['status'][]> = {
-  draft: ['scheduled', 'posting', 'failed'],
-  scheduled: ['posting', 'failed'],
-  posting: ['posted', 'failed'],
-  posted: ['failed'],
-  failed: ['scheduled'],
+export {
+  isValidAssetTransition,
+  updateDistributionAssetStatus,
+  markDistributionAssetFailed,
 };
-
-export function isValidAssetTransition(
-  from: DistributionAsset['status'],
-  to: DistributionAsset['status'],
-): boolean {
-  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
-}
-
-// ─── CRUD ────────────────────────────────────────────────────────────────────
 
 export async function createDistributionAsset(
   asset: Omit<DistributionAsset, 'id' | 'createdAt'>,
@@ -116,89 +108,3 @@ export async function listDistributionAssets(
   const result = await db.prepare(query).bind(...params).all<DistributionAssetRow>();
   return (result.results ?? []).map(assetRowToDomain);
 }
-
-export async function updateDistributionAssetStatus(
-  id: string,
-  status: DistributionAsset['status'],
-  workspaceId: string,
-): Promise<DistributionAsset> {
-  const db = await getD1();
-  if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
-
-  const now = Math.floor(Date.now() / 1000);
-
-  const current = await db
-    .prepare(`SELECT * FROM distribution_assets WHERE id = ?1 AND workspace_id = ?2`)
-    .bind(id, workspaceId)
-    .first<DistributionAssetRow>();
-
-  if (!current) {
-    throw new DistributionError('NOT_FOUND', `Asset ${id} not found`);
-  }
-
-  if (!isValidAssetTransition(current.status as DistributionAsset['status'], status)) {
-    throw new DistributionError(
-      'INVALID_TRANSITION',
-      `Cannot transition asset ${id} from ${current.status} to ${status}`,
-    );
-  }
-
-  const updates: Record<string, string | number> = {
-    status,
-    updated_at: now,
-  };
-
-  if (status === 'posted') {
-    updates.posted_at = now;
-  }
-
-  await db
-    .prepare(
-      `UPDATE distribution_assets SET status = ?1, updated_at = ?2 WHERE id = ?3 AND workspace_id = ?4`,
-    )
-    .bind(status, now, id, workspaceId)
-    .run();
-
-  const updated = await db
-    .prepare(`SELECT * FROM distribution_assets WHERE id = ?1 AND workspace_id = ?2`)
-    .bind(id, workspaceId)
-    .first<DistributionAssetRow>();
-
-  if (!updated) {
-    throw new DistributionError('NOT_FOUND', `Asset ${id} not found after update`);
-  }
-
-  return assetRowToDomain(updated);
-}
-
-export async function markDistributionAssetFailed(
-  id: string,
-  error: string,
-  workspaceId: string,
-): Promise<DistributionAsset> {
-  const db = await getD1();
-  if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
-
-  const now = Math.floor(Date.now() / 1000);
-
-  await db
-    .prepare(
-      `UPDATE distribution_assets
-       SET status = 'failed', error = ?1, updated_at = ?2
-       WHERE id = ?3 AND workspace_id = ?4`,
-    )
-    .bind(error, now, id, workspaceId)
-    .run();
-
-  const updated = await db
-    .prepare(`SELECT * FROM distribution_assets WHERE id = ?1 AND workspace_id = ?2`)
-    .bind(id, workspaceId)
-    .first<DistributionAssetRow>();
-
-  if (!updated) {
-    throw new DistributionError('NOT_FOUND', `Asset ${id} not found after update`);
-  }
-
-  return assetRowToDomain(updated);
-}
-

@@ -55,7 +55,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => mocks.mockDb),
 }));
 
-vi.mock('@/land/tiktok/tiktok-token-manager', () => ({
+vi.mock('@/tree/publishing/tiktok/tiktok-token-manager', () => ({
   refreshAccessToken: mocks.refreshTikTok,
 }));
 

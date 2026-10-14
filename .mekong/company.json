@@ -1,94 +1,138 @@
 {
   "name": "Sophia AI Factory",
-  "tagline": "AI Video Factory — Robot-as-a-Service cho sản xuất video tự động",
-  "stage": "zero_psf",
+  "tagline": "Create. Automate. Earn. No code required.",
+  "stage": "zero",
   "stage_label": "Zero → Problem-Solution Fit",
-  "founded": "2026-03",
+  "stage_as_of": "2026-10-15",
+  "founded": "2026-03 (repository profile; legal establishment date not verified)",
   "domain": "sophia.agencyos.network",
-  "region": "VN/SEA",
-  "industry": "AI SaaS / Video Production / RaaS",
+  "region": "Vietnam first; Southeast Asia expansion only after validation",
+  "industry": "AI SaaS / AI video production / Revenue-as-a-Service",
+  "model": "B2B SaaS + Revenue-as-a-Service (RaaS), with customer-managed BYOK integrations",
+  "target_arr": "$1M ARR directional goal; not a forecast",
+  "icp": "Primary hypothesis: Vietnamese marketing agencies and small businesses (roughly 3–20 staff) without an in-house video team, led by a founder or marketing manager who needs repeatable short-form video production. Validate need, budget, and BYOK onboarding in customer interviews.",
+  "moat": "Unvalidated differentiation hypothesis: bilingual VN/EN onboarding, customer-owned provider keys, and a single workflow for AI video campaigns and revenue operations. No defensible moat or willingness-to-pay has been proven yet.",
   "business_model": {
-    "type": "B2B SaaS + RaaS (Robot-as-a-Service)",
+    "type": "B2B SaaS + Revenue-as-a-Service (RaaS)",
     "revenue_streams": [
-      "Subscription tiers (BASIC $199, PREMIUM $399, ENTERPRISE $799, MASTER $4,999)",
-      "AI credit metering (MCU — Mission Credit Unit)",
-      "BYOK platform fee (customers bring own API keys)"
+      "Monthly subscriptions at the canonical published tiers",
+      "MASTER one-time source-code / white-label handover, subject to a defined handover scope"
     ],
-    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"],
-    "pricing_model": "Tiered subscription + usage metering"
+    "pricing": {
+      "BASIC": "$199/month",
+      "PREMIUM": "$399/month",
+      "ENTERPRISE": "$799/month",
+      "MASTER": "$4,999 one-time"
+    },
+    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"] ,
+    "pricing_model": "Tiered subscription plus one-time MASTER handover; customer-paid AI provider usage under BYOK. Any usage charges beyond published tiers require confirmation against the canonical tier configuration before customer communication.",
+    "unit_economics": "Unvalidated. Track subscription revenue, payment fees, platform and workflow costs, affiliate liabilities if enabled, founder support minutes, refunds, retention, and customer-paid AI spend separately."
   },
   "tech_stack": {
-    "frontend": "Next.js 16, React 19, TypeScript, Tailwind CSS 4",
-    "backend": "Cloudflare Workers (Edge), D1 SQLite, R2 Storage",
-    "ai_services": ["HeyGen (avatar video)", "ElevenLabs (voice)", "MuAPI (100+ media models)", "OpenRouter (LLM)"],
-    "auth": "Custom JWT + D1 (magic link + password)",
-    "email": "Resend (mekongmind.com domain, verified)",
+    "frontend": "Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4",
+    "backend": "Cloudflare Workers, D1, R2, KV, and Inngest",
+    "ai_services": ["HeyGen", "ElevenLabs", "MuAPI", "OpenRouter; configured by each customer where applicable"],
+    "auth": "Better Auth with D1 Kysely adapter",
+    "email": "Resend",
     "bot": "Telegram (@Sophia_Bbot)",
-    "deployment": "Cloudflare Workers via GitHub Actions",
-    "monitoring": "Sentry"
+    "deployment": "Cloudflare Workers through GitHub Actions CI/CD; production SHA verification is required",
+    "monitoring": "Sentry error capture and Cloudflare Worker logs"
   },
   "product": {
-    "core_value": "Non-technical users create professional AI videos without editing skills",
+    "core_value": "Help non-technical business operators create and manage AI video campaigns without building an in-house technical team.",
     "key_features": [
-      "AI video generation (HeyGen avatars, text-to-video)",
-      "Voice synthesis (ElevenLabs, 50+ languages)",
-      "Media generation (Midjourney, Kling, Suno via MuAPI)",
-      "Campaign management dashboard",
-      "BYOK — users bring their own API keys",
-      "Telegram bot interface",
-      "ROI calculator for customer cost estimation"
+      "AI video generation workflows using customer-configured providers",
+      "Campaign management and video delivery workflows",
+      "BYOK setup for customer-managed third-party integrations",
+      "Telegram bot commands and onboarding support",
+      "Subscription billing through the approved payment providers"
     ],
     "target_users": [
-      "Vietnamese SMBs needing video content",
-      "Marketing agencies automating video production",
-      "Content creators scaling output",
-      "Non-technical CEOs/founders"
-    ]
+      "Vietnamese marketing agencies and SMBs that need recurring video content",
+      "Agency operators testing AI video workflows",
+      "Content creators who need higher-volume production"
+    ],
+    "availability_note": "These are documented product capabilities; perform a fresh end-to-end availability check before promising an individual feature to a customer."
   },
   "team": {
-    "structure": "Solo founder + AI agents (OpenClaw CTO)",
+    "structure": "Solo founder supported by AI agents; founder retains commercial, financial, legal, and production approval authority.",
     "roles": {
-      "founder": "Strategic decisions, customer development",
-      "openclaw_cto": "Architecture, code, deployment, operations",
-      "ai_agents": "Content creation, video production, customer support"
+      "founder_ceo": "Strategy, customer discovery, sales, final decisions, and external commitments",
+      "cto_agent": "Architecture, engineering proposals, quality and deployment evidence; no bypass of deploy or security controls",
+      "cmo_agent": "Bilingual positioning, content drafts, campaign experiments, and claims review",
+      "sales_customer_success_agent": "Lead research, qualification drafts, demo preparation, and onboarding guidance; founder approves external contact",
+      "coo_cfo_agents": "Operating procedures, KPI reporting, cash and cost summaries; qualified professionals review legal, tax, accounting, and securities matters"
     }
+  },
+  "agents": {
+    "executive": "Founder / CEO — owns strategy, customer relationships, and approvals",
+    "product_engineering": "CTO agent — plans and implements product work under architecture, security, and deploy controls",
+    "marketing": "CMO agent — prepares Vietnamese and English positioning and content for founder review",
+    "sales_customer_success": "Sales and CS agents — qualify, prepare demos, and support onboarding; founder approves outreach and promises",
+    "operations_finance_governance": "COO/CFO agents — maintain evidence and operating reports; founder and qualified advisers approve financial and legal decisions"
   },
   "metrics": {
+    "as_of": "2026-10-15",
     "current": {
-      "mrr": 0,
+      "mrr_usd": 0,
       "paying_customers": 0,
-      "total_users": "early access",
-      "tests_passing": 863,
-      "deployment_status": "live",
-      "prod_url": "https://sophia.agencyos.network"
+      "total_users": "Not verified in the source records reviewed",
+      "deployment_status": "Documented as live; not re-verified for this blueprint",
+      "production_url": "https://sophia.agencyos.network"
     },
-    "targets_q2_2026": {
-      "mrr": 5000,
-      "paying_customers": 15,
-      "target_tier_mix": "10 BASIC + 3 PREMIUM + 2 ENTERPRISE"
-    }
+    "targets_next_six_months": [
+      "Close and onboard the first paying customer through the real payment, tier activation, BYOK setup, and first-video path.",
+      "Reach three cumulative paying customers only as a provisional validation target; report actual revenue, retention, acquisition effort, and support time before treating the model as validated."
+    ],
+    "target_arr_note": "$1M ARR is a directional company goal from GOAL.md, not a current run rate or forecast."
   },
-  "competitive_advantages": [
-    "Zero-infrastructure for customers (BYOK = no vendor lock-in)",
-    "Vietnamese market focus (localized UX, PayOS for domestic payments)",
-    "AI-operated company (minimal human overhead, 24/7 delivery)",
-    "Crypto payments (NOWPayments USDT — global accessibility)",
-    "Cloudflare-only stack ($0 hosting, global edge)"
+  "okrs": [
+    "Q4 2026 target: complete five qualified customer discovery conversations, run at least three product demos, and close the first paying customer who completes BYOK setup and generates a usable AI video.",
+    "Q1 2027 target: reach three cumulative paying customers, observe month-two activity for the first cohort where timing allows, and record actual acquisition effort, support time, payment fees, and platform costs. Targets are hypotheses, not achieved results."
+  ],
+  "next_steps": [
+    "Interview five qualified Vietnamese agency or SMB prospects and record pains, current alternatives, and willingness to pay.",
+    "Walk through the customer funnel, including Setup Wizard, Telegram Bot, and NOWPayments IPN tier activation; document evidence and gaps.",
+    "Close and onboard the first paid pilot only through the canonical NOWPayments or PayOS flow.",
+    "Track real per-customer revenue, payment fees, platform costs, and founder support time before stating a gross-margin claim.",
+    "Run small bilingual organic acquisition experiments and choose a repeatable channel from measured results."
+  ],
+  "differentiation_hypotheses": [
+    "Vietnamese-first onboarding and PayOS support may reduce adoption friction for local buyers; test this with prospects.",
+    "BYOK may limit platform AI COGS and reduce provider lock-in, while increasing setup friction for non-technical users; measure both effects.",
+    "Combining campaign workflows with AI video operations may distinguish Sophia from standalone generators; validate the value in demos and paid use."
   ],
   "risks": [
-    "Single founder dependency",
-    "AI API cost volatility (HeyGen, ElevenLabs pricing changes)",
-    "Customer acquisition in early market",
-    "BYOK complexity for non-technical users",
-    "Payment provider limitations (NOWPayments crypto-only international)"
+    "Zero paying customers means demand, retention, CAC, and unit economics remain unvalidated.",
+    "BYOK setup may be too technical for the target buyer and increase onboarding support.",
+    "Payment routing or IPN activation failure could block conversion; the protected flow needs explicit end-to-end evidence.",
+    "AI provider pricing, availability, licensing, and output quality can change; customers own configured provider accounts and terms.",
+    "Solo-founder dependency may constrain sales, support, and incident response.",
+    "Vietnam and destination-market privacy, AI, e-commerce, consumer, tax, and securities obligations require current professional review before expansion or fundraising claims."
   ],
-  "next_milestones": [
-    "First paying customer",
-    "10 BASIC tier subscriptions",
-    "Telegram bot onboarding automation",
-    "Video generation pipeline E2E test",
-    "Landing page SEO + content marketing launch"
+  "ipo_readiness": {
+    "baseline": "1/10 evidence-backed internal score as of 2026-10-15; not an audit, legal opinion, or public-company readiness assessment.",
+    "basis": "Repository review documents a software platform and governance/deploy controls. Revenue, audited financials, formal board controls, legal-entity compliance evidence, and repeatable acquisition are not evidenced in the reviewed source set.",
+    "next_milestone": "Build reliable revenue, accounting, customer, security, and governance evidence before treating IPO preparation as an active company objective."
+  },
+  "market_and_compliance_sources": [
+    "Grand View Research, AI Video Market (global estimate; market definition is broader than Sophia's serviceable market): https://www.grandviewresearch.com/industry-analysis/artificial-intelligence-ai-video-market-report",
+    "Vietnam Ministry of Industry and Trade, 2025 e-commerce and digital economy summary: https://moit.gov.vn/media/video/dinh-hinh-huong-di-moi-cho-thuong-mai-dien-tu-va-kinh-te-so-giai-doan-2026-2030.html",
+    "Vietnam Law on Personal Data Protection 91/2025/QH15: https://vanban.chinhphu.vn/?classid=1&docid=214590&pageid=27160",
+    "Vietnam Law on Data 60/2024/QH15: https://vanban.chinhphu.vn/?classid=1&docid=212488&pageid=27160",
+    "Vietnam Law on Artificial Intelligence 134/2025/QH15: https://vanban.chinhphu.vn/?classid=1&docid=216334&pageid=27160",
+    "Vietnam Law on E-commerce 122/2025/QH15: https://vanban.chinhphu.vn/?docid=216503&pageid=27160",
+    "Vietnam Law on Securities 54/2019/QH14: https://vanban.chinhphu.vn/default.aspx?docid=198541&pageid=27160"
   ],
-  "generated_at": "2026-04-10T15:40:00Z",
-  "generated_by": "OpenClaw CTO via /idea command"
+  "source_of_truth": [
+    "README.md",
+    "GOAL.md",
+    "BUSINESS_MODEL.md",
+    "docs/admin-ops/payment-pricing-source-of-truth.md",
+    "apps/sophia-ai-factory/CLAUDE.md",
+    "apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md",
+    "apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md"
+  ],
+  "generated_at": "2026-10-15",
+  "generated_by": "Codex, based on repository sources, founder-confirmed zero paying customers, and cited public research"
 }

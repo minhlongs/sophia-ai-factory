@@ -3,33 +3,17 @@
  * Ported from Lumen's operator-service quality gates.
  */
 
-export interface QualityCheckResult {
-  readonly passed: boolean;
-  readonly violations: readonly string[];
-  readonly warnings: readonly string[];
-}
+import type { ContentArtifact, QualityCheckResult, QualityGateConfig } from './quality-gate-types';
+import {
+  checkTitle,
+  checkDescription,
+  checkTags,
+  checkScript,
+  checkTopicUniqueness,
+  checkAssets,
+} from './quality-gate-checks';
 
-export interface ContentArtifact {
-  readonly title?: string;
-  readonly description?: string;
-  readonly tags?: readonly string[];
-  readonly script?: string;
-  readonly topic?: string;
-  readonly publishedAt?: Date;
-  readonly assetUrls?: readonly string[];
-}
-
-export interface QualityGateConfig {
-  readonly maxTitleLength: number;
-  readonly minTitleLength: number;
-  readonly maxDescriptionLength: number;
-  readonly maxTagCount: number;
-  readonly maxTagCharTotal: number;
-  readonly minScriptWordCount: number;
-  readonly maxScriptWordCount: number;
-  readonly deduplicationWindowDays: number;
-  readonly requiredAssetCount: number;
-}
+export type { QualityCheckResult, ContentArtifact, QualityGateConfig } from './quality-gate-types';
 
 const DEFAULT_CONFIG: QualityGateConfig = {
   maxTitleLength: 100,
@@ -66,120 +50,4 @@ export function runQualityChecks(
     violations,
     warnings,
   };
-}
-
-function checkTitle(
-  title: string | undefined,
-  config: QualityGateConfig,
-  violations: string[],
-  warnings: string[],
-): void {
-  if (!title || title.trim().length === 0) {
-    violations.push('Title is required');
-    return;
-  }
-  if (title.length < config.minTitleLength) {
-    violations.push(`Title too short: ${title.length} chars (min ${config.minTitleLength})`);
-  }
-  if (title.length > config.maxTitleLength) {
-    violations.push(`Title too long: ${title.length} chars (max ${config.maxTitleLength})`);
-  }
-  if (title !== title.trim()) {
-    warnings.push('Title has leading/trailing whitespace');
-  }
-}
-
-function checkDescription(
-  description: string | undefined,
-  config: QualityGateConfig,
-  violations: string[],
-  warnings: string[],
-): void {
-  if (!description || description.trim().length === 0) {
-    warnings.push('Description is empty');
-    return;
-  }
-  if (description.length > config.maxDescriptionLength) {
-    violations.push(`Description exceeds ${config.maxDescriptionLength} chars`);
-  }
-  if (description.length < 100) {
-    warnings.push('Description is very short (< 100 chars)');
-  }
-}
-
-function checkTags(
-  tags: readonly string[] | undefined,
-  config: QualityGateConfig,
-  violations: string[],
-  warnings: string[],
-): void {
-  if (!tags || tags.length === 0) {
-    warnings.push('No tags provided');
-    return;
-  }
-  if (tags.length > config.maxTagCount) {
-    violations.push(`Too many tags: ${tags.length} (max ${config.maxTagCount})`);
-  }
-  const totalChars = tags.join(',').length;
-  if (totalChars > config.maxTagCharTotal) {
-    violations.push(`Tag total ${totalChars} chars exceeds ${config.maxTagCharTotal}`);
-  }
-  const uniqueTags = new Set(tags);
-  if (uniqueTags.size < tags.length) {
-    warnings.push('Duplicate tags detected');
-  }
-}
-
-function checkScript(
-  script: string | undefined,
-  config: QualityGateConfig,
-  violations: string[],
-  warnings: string[],
-): void {
-  if (!script || script.trim().length === 0) {
-    warnings.push('No script content');
-    return;
-  }
-  const wordCount = script.split(/\s+/).length;
-  if (wordCount < config.minScriptWordCount) {
-    violations.push(`Script too short: ${wordCount} words (min ${config.minScriptWordCount})`);
-  }
-  if (wordCount > config.maxScriptWordCount) {
-    warnings.push(`Script very long: ${wordCount} words`);
-  }
-}
-
-function checkTopicUniqueness(
-  topic: string | undefined,
-  recentTopics: readonly string[],
-  config: QualityGateConfig,
-  violations: string[],
-): void {
-  if (!topic) return;
-  const normalized = topic.toLowerCase().trim();
-  const isDuplicate = recentTopics.some(
-    (t) => t.toLowerCase().trim() === normalized,
-  );
-  if (isDuplicate) {
-    violations.push(
-      `Topic "${topic}" was used within the last ${config.deduplicationWindowDays} days`,
-    );
-  }
-}
-
-function checkAssets(
-  assetUrls: readonly string[] | undefined,
-  config: QualityGateConfig,
-  violations: string[],
-  warnings: string[],
-): void {
-  if (!assetUrls || assetUrls.length === 0) {
-    warnings.push('No asset URLs provided');
-    return;
-  }
-  if (assetUrls.length < config.requiredAssetCount) {
-    violations.push(
-      `Insufficient assets: ${assetUrls.length} (min ${config.requiredAssetCount})`,
-    );
-  }
 }

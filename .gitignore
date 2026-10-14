@@ -113,5 +113,8 @@ sync-*.sh
 # Quality harness generated state & evidence
 scripts/harness/state/
 apps/sophia-ai-factory/plans/
-plans/
+/plans/
+!/plans/
+/plans/*
+!/plans/company-blueprint/
 .agentkit/

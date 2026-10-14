@@ -3,94 +3,27 @@
  *
  * Parses agents + playbook, dispatches each step as an engine_mission,
  * polls for completion, validates output, persists run history.
- *
- * File kept ≤200 LOC; arg resolution + validation in separate modules.
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getInstallation } from '@/tree/sop/sop-repo-installations';
-import { getTemplateById } from '@/tree/sop/sop-repo-templates';
-import { createRun, updateRunStatus, appendMissionId } from '@/tree/sop/sop-repo-runs';
-import { advanceSchedule } from '@/tree/sop/sop-repo-installations';
+import { assertTemplateExecutable } from '@/seed/sop/sop-marketplace-guard';
+import { getInstallation, advanceSchedule } from '@/seed/sop/sop-repo-installations';
+import { getTemplateById } from '@/seed/sop/sop-repo-templates';
+import { createRun, updateRunStatus, appendMissionId } from '@/seed/sop/sop-repo-runs';
 import { parseAgentsYaml } from '@/seed/sop/executor/agents-yaml-parser';
-import { parsePlaybook } from '@/tree/sop/executor/playbook-parser';
-import { validateOutput } from '@/tree/sop/executor/output-validator';
-import { resolveArgs } from '@/tree/sop/executor/arg-resolver';
+import { parsePlaybook } from '@/seed/sop/executor/playbook-parser';
+import { validateOutput } from '@/seed/sop/executor/output-validator';
+import { resolveArgs } from '@/seed/sop/executor/arg-resolver';
 import type { RunContext, RunResult, StepResult } from '@/seed/sop/executor/types';
 import { StepFailed } from '@/seed/sop/executor/types';
-import type { SopCustomizations } from '@/tree/sop/sop-types';
-
-function nowSec(): number { return Math.floor(Date.now() / 1000); }
-
-/** Poll a mission for completion (max 5 min, 3s intervals) */
-async function awaitMissionResult(
-  db: D1Database,
-  missionId: string,
-): Promise<{ ok: boolean; output: Record<string, unknown>; error?: string }> {
-  const maxAttempts = 100;   // 100 × 3s = 5 min
-  const pollMs = 3_000;
-
-  for (let i = 0; i < maxAttempts; i++) {
-    const row = await db
-      .prepare(`SELECT status, result, error FROM engine_missions WHERE id = ?1`)
-      .bind(missionId)
-      .first<{ status: string; result: string | null; error: string | null }>();
-
-    if (!row) return { ok: false, output: {}, error: 'mission not found' };
-
-    if (row.status === 'succeeded') {
-      let output: Record<string, unknown> = {};
-      try { output = row.result ? (JSON.parse(row.result) as Record<string, unknown>) : {}; } catch { /* ignore */ }
-      return { ok: true, output };
-    }
-
-    if (row.status === 'failed' || row.status === 'cancelled') {
-      return { ok: false, output: {}, error: row.error ?? 'mission failed' };
-    }
-
-    await new Promise(r => setTimeout(r, pollMs));
-  }
-
-  return { ok: false, output: {}, error: 'mission timeout after 5 minutes' };
-}
-
-/** Create and dispatch a single mission, returning missionId */
-async function dispatchStep(
-  db: D1Database,
-  userId: string,
-  command: string,
-  args: Record<string, unknown>,
-): Promise<string> {
-  const missionId = crypto.randomUUID();
-  await db
-    .prepare(
-      `INSERT INTO engine_missions (id, user_id, command, params, status, created_at, updated_at)
-       VALUES (?1, ?2, ?3, ?4, 'pending', ?5, ?5)`,
-    )
-    .bind(missionId, userId, command, JSON.stringify(args), nowSec())
-    .run();
-
-  const { dispatchMission } = await import('@/forest/missions/dispatcher');
-  void dispatchMission(missionId).catch(e => {
-    logger.error('[sop-runner] dispatch error', e instanceof Error ? e : new Error(String(e)), { missionId, command });
-  });
-
-  return missionId;
-}
-
-async function getRunById(db: D1Database, runId: string) {
-  return db
-    .prepare(`SELECT * FROM sop_executions WHERE id = ?1 LIMIT 1`)
-    .bind(runId)
-    .first<Awaited<ReturnType<typeof createRun>>>();
-}
-
-/** Compute next cron trigger time (simplified: null if no cron pattern) */
-function nextCronAt(cron: string | null): number | null {
-  if (!cron) return null;
-  // Basic: advance by 24h as default; real cron parsing deferred to Phase 3
-  return nowSec() + 24 * 3600;
-}
+import type { SopCustomizations } from '@/seed/sop/sop-types';
+import {
+  nowSec,
+  awaitMissionResult,
+  dispatchStep,
+  getRunById,
+  nextCronAt,
+} from './sop-runner-helpers';
 
 /**
  * Main SOP run orchestrator.
@@ -102,6 +35,8 @@ export async function runSop(
 ): Promise<RunResult> {
   const inst = await getInstallation(db, ctx.installationId);
   if (!inst) throw new Error(`Installation not found: ${ctx.installationId}`);
+
+  await assertTemplateExecutable(db, inst.template_id);
 
   const tpl = await getTemplateById(db, inst.template_id);
   if (!tpl) throw new Error(`Template not found: ${inst.template_id}`);
@@ -117,7 +52,7 @@ export async function runSop(
   const agentsYaml = customizations.agents_yaml_override ?? tpl.agents_yaml;
   const playbookMd = customizations.playbook_md_override ?? tpl.playbook_md;
 
-  parseAgentsYaml(agentsYaml);  // validate — throws on invalid
+  parseAgentsYaml(agentsYaml);
   const steps = parsePlaybook(playbookMd);
 
   const run = ctx.runId
@@ -144,11 +79,9 @@ export async function runSop(
       stepResults.push({ order: step.order, command: step.command, missionId, output: missionResult.output });
     }
 
-    // Build aggregate output from last step or merge all outputs
     const aggregate: Record<string, unknown> = {};
     for (const r of stepResults) Object.assign(aggregate, r.output);
 
-    // Check requiresApproval flag in output schema
     if (tpl.output_schema.includes('"requiresApproval"')) {
       requiresApproval = aggregate.requiresApproval === true;
     }
@@ -164,14 +97,11 @@ export async function runSop(
     });
     await advanceSchedule(db, inst.id, completedAt, nextCronAt(inst.schedule_cron));
 
-    // Stamp customer_first_run_at so handover drop-off metrics work.
-    // Idempotent + non-fatal — never blocks a successful run.
     void import('@/tree/handover/handover-magic-link')
       .then((m) => m.markFirstRun(inst.user_id))
       .catch(() => { /* swallow */ });
 
     return { runId: run.id, status: 'completed', summary: aggregate };
-
   } catch (e) {
     const isPartial = e instanceof StepFailed && stepResults.length > 0;
     const errMsg = e instanceof Error ? e.message : String(e);

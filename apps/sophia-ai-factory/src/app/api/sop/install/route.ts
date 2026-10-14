@@ -8,11 +8,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getTemplateBySlug, createInstallation, setEnabled } from '@/tree/sop/sop-repo';
-import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
-import { installInputSchema } from '@/tree/sop/install-input-schema';
-import { getSopD1 } from '@/tree/sop/d1';
-import type { SopCustomizations } from '@/tree/sop/sop-types';
+import { getTemplateBySlug, createInstallation, setEnabled } from '@/seed/sop/sop-repo';
+import { generateWebhookSecret } from '@/seed/sop/webhook-hmac';
+import { installInputSchema } from '@/seed/sop/install-input-schema';
+import { getSopD1 } from '@/seed/sop/d1';
+import type { SopCustomizations } from '@/seed/sop/sop-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,12 +42,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const webhookSecret = generateWebhookSecret();
   const customizations: SopCustomizations = { webhookSecret };
 
-  const installation = await createInstallation(db, {
-    userId: user.id,
-    templateId: template.id,
-    scheduleCron: scheduleCron ?? undefined,
-    customizations,
-  });
+  let installation;
+  try {
+    installation = await createInstallation(db, {
+      userId: user.id,
+      templateId: template.id,
+      scheduleCron: scheduleCron ?? undefined,
+      customizations,
+    });
+  } catch (err) {
+    if ((err as unknown as { code?: string })?.code === 'PAYMENT_REQUIRED') {
+      return NextResponse.json(
+        { error: 'Payment required', message: err instanceof Error ? err.message : 'Payment required' },
+        { status: 402 },
+      );
+    }
+    throw err;
+  }
 
   if (!enabled) {
     await setEnabled(db, installation.id, false);

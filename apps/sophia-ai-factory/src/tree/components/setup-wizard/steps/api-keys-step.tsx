@@ -2,30 +2,10 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip';
+import type { ApiKeysStepProps } from './api-keys/types';
+import { ExtraProviders } from './api-keys/extra-providers';
 
-interface ApiKeysStepProps {
-  config: {
-    OPENROUTER_API_KEY: string;
-    ANTHROPIC_API_KEY: string;
-    ELEVENLABS_API_KEY: string;
-    DID_API_KEY: string;
-    MUAPI_API_KEY: string;
-    REPLICATE_API_KEY: string;
-    FAL_API_KEY: string;
-  };
-  updateConfig: (key: string, value: string) => void;
-  verifyKey: (service: string, keyName: string, keyValue: string) => Promise<boolean>;
-  status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>;
-  errors: Record<string, string>;
-  latencies?: Record<string, number>;
-  savedProviders?: string[];
-  onRevokeProvider?: (provider: string, keyName: string) => Promise<void>;
-  revokingProvider?: string | null;
-  saveError?: string | null;
-  isSaving?: boolean;
-  onNext: () => void;
-  onBack?: () => void;
-}
+export * from './api-keys/types';
 
 export function ApiKeysStep({
   config,
@@ -108,73 +88,17 @@ export function ApiKeysStep({
         <ByokHelpTip provider="d-id" />
       </div>
 
-      <ApiKeyInput
-        id="anthropic"
-        label={t('anthropic.label')}
-        value={config.ANTHROPIC_API_KEY}
-        onChange={(v) => updateConfig('ANTHROPIC_API_KEY', v)}
-        onVerify={() => verifyKey('anthropic', 'ANTHROPIC_API_KEY', config.ANTHROPIC_API_KEY)}
-        status={status.ANTHROPIC_API_KEY}
-        errorMessage={errors.ANTHROPIC_API_KEY}
-        placeholder={t('anthropic.placeholder')}
-        helpText={t('anthropic.help')}
-        latency={latencies?.ANTHROPIC_API_KEY}
-        saved={savedProviders.includes('anthropic')}
-        onRevoke={onRevokeProvider ? () => onRevokeProvider('anthropic', 'ANTHROPIC_API_KEY') : undefined}
-        isRevoking={revokingProvider === 'anthropic'}
+      <ExtraProviders
+        config={config}
+        updateConfig={updateConfig}
+        verifyKey={verifyKey}
+        status={status}
+        errors={errors}
+        latencies={latencies}
+        savedProviders={savedProviders}
+        onRevokeProvider={onRevokeProvider}
+        revokingProvider={revokingProvider}
       />
-
-      <ApiKeyInput
-        id="muapi"
-        label={`${t('muapi.label')}  (${t('muapi.optionalBadge')})`}
-        value={config.MUAPI_API_KEY}
-        onChange={(v) => updateConfig('MUAPI_API_KEY', v)}
-        onVerify={() => verifyKey('muapi', 'MUAPI_API_KEY', config.MUAPI_API_KEY)}
-        status={status.MUAPI_API_KEY}
-        errorMessage={errors.MUAPI_API_KEY}
-        placeholder={t('muapi.placeholder')}
-        helpText={t('muapi.help')}
-        latency={latencies?.MUAPI_API_KEY}
-        saved={savedProviders.includes('muapi')}
-        onRevoke={onRevokeProvider ? () => onRevokeProvider('muapi', 'MUAPI_API_KEY') : undefined}
-        isRevoking={revokingProvider === 'muapi'}
-      />
-
-      <div className="mt-4">
-        <ApiKeyInput
-          id="replicate"
-          label={`${t('replicate.label')}  (${t('replicate.optionalBadge')})`}
-          value={config.REPLICATE_API_KEY}
-          onChange={(v) => updateConfig('REPLICATE_API_KEY', v)}
-          onVerify={() => verifyKey('replicate', 'REPLICATE_API_KEY', config.REPLICATE_API_KEY)}
-          status={status.REPLICATE_API_KEY}
-          errorMessage={errors.REPLICATE_API_KEY}
-          placeholder={t('replicate.placeholder')}
-          helpText={t('replicate.help')}
-          latency={latencies?.REPLICATE_API_KEY}
-          saved={savedProviders.includes('replicate')}
-          onRevoke={onRevokeProvider ? () => onRevokeProvider('replicate', 'REPLICATE_API_KEY') : undefined}
-          isRevoking={revokingProvider === 'replicate'}
-        />
-      </div>
-
-      <div className="mt-4">
-        <ApiKeyInput
-          id="fal-ai"
-          label={`${t('falai.label')}  (${t('falai.optionalBadge')})`}
-          value={config.FAL_API_KEY}
-          onChange={(v) => updateConfig('FAL_API_KEY', v)}
-          onVerify={() => verifyKey('fal-ai', 'FAL_API_KEY', config.FAL_API_KEY)}
-          status={status.FAL_API_KEY}
-          errorMessage={errors.FAL_API_KEY}
-          placeholder={t('falai.placeholder')}
-          helpText={t('falai.help')}
-          latency={latencies?.FAL_API_KEY}
-          saved={savedProviders.includes('fal-ai')}
-          onRevoke={onRevokeProvider ? () => onRevokeProvider('fal-ai', 'FAL_API_KEY') : undefined}
-          isRevoking={revokingProvider === 'fal-ai'}
-        />
-      </div>
 
       {saveError && (
         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">

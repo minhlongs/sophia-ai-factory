@@ -3,8 +3,8 @@
 > Operator-facing deployment reference. For engineering-internal details (migrations, load-test, GO-LIVE checklist), see `apps/sophia-ai-factory/docs/`.
 
 **Production URL:** https://sophia.agencyos.network
-**Deploy method:** CF-direct via `npm run deploy:full` (wrangler CLI)
-**GitHub Actions:** DISABLED by design since 2026-05-03 — do NOT re-enable without updating this guide.
+**Deploy method:** Automated GitHub Actions CI/CD (`.github/workflows/deploy.yml`) on push to `main`
+**Emergency break-glass:** CF-direct via `EMERGENCY_CF_DIRECT=1 npm run deploy:full` (CI outage only)
 
 ---
 
@@ -44,22 +44,31 @@ npm run dev   # http://localhost:3000
 
 ---
 
-## CF-Direct Deploy Flow
+## Canonical Deploy Flow (GitHub Actions CI/CD)
 
-This is the **only** supported deploy path. GitHub Actions CI is disabled.
+Pushing to `main` triggers the automated deployment pipeline (`.github/workflows/deploy.yml`).
 
 ```bash
-# Step 0: Push to origin FIRST (mandatory — deploy guard checks this)
+# Step 1: Push changes to main
 git push origin main
 
-# Step 1: Build + inject SHA + deploy
-cd apps/sophia-ai-factory
-npm run deploy:full
-# This runs: type-check → tests → next build → OpenNext build → changed D1 migrations → wrangler deploy → SHA verification
+# Step 2: Observe automated deployment pipeline
+gh run watch || gh run list --workflow=deploy.yml
 
-# The deploy script exits 2 if unpushed commits or dirty files exist.
-# Emergency bypass (document reason in deploy log):
-# ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full
+# Step 3: Verify bit-for-bit SHA parity on live edge
+LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
+LIVE_SHA=$(curl -s "https://sophia.agencyos.network/api/version" | jq -r .shortSha)
+echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
+[ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE"; exit 1; }
+```
+
+### Emergency Break-Glass (Local CF-Direct)
+
+In the event of a severe GitHub Actions outage, local direct deployment is guarded and requires the break-glass flag:
+
+```bash
+cd apps/sophia-ai-factory
+EMERGENCY_CF_DIRECT=1 npm run deploy:full
 ```
 
 ---
@@ -80,7 +89,7 @@ curl -sI https://sophia.agencyos.network | head -1
 # Must return: HTTP/2 200
 
 # 3. Report format (required for any deploy report)
-echo "Deploy: ✅ CF-direct | SHA: $LIVE_SHA | HTTP: 200"
+echo "Deploy: ✅ CI/CD deploy.yml | SHA: $LIVE_SHA | HTTP: 200"
 ```
 
 ---
@@ -115,7 +124,12 @@ Phase 4 introduced env-gated features that remain inert until explicitly activat
 
 ## Cron Setup
 
-Most scheduled endpoints are defined in `wrangler.toml` under `[triggers]` and activate automatically on deploy. The D1 backup route is the exception: `/api/cron/d1-backup` is triggered by external scheduler (Upstash QStash) and writes SQL dumps to the R2 `sophia-backups` bucket.
+Most scheduled endpoints are defined in `wrangler.toml` under `[triggers]` and activate automatically on deploy.
+
+Per the **Sophia No-Code / No-Tech Doctrine**, the operator does NOT manage external third-party crons (such as Upstash QStash). Instead:
+- **Primary backup strategy (Design / Architecture)**: Cloudflare R2 bucket lifecycle (30-day retention on `sophia-backups` bucket auto-rotates).  
+  *Note on verification*: This lifecycle rule is configured at the Cloudflare Dashboard / Infrastructure level and cannot be configured via `wrangler.toml`. Operators must verify in Cloudflare Dashboard (R2 > sophia-backups > Settings > Lifecycle rules) before committing to automated 30-day rotation in production SLAs.
+- **Ad-hoc backup endpoint**: `/api/cron/d1-backup` exists and can be manually triggered with `CRON_SECRET` via authenticated curl when needed.
 
 Cron routes require Bearer authentication:
 ```
@@ -141,7 +155,7 @@ Representative cron jobs:
 | `0 */4 * * *` | `/api/cron/affiliate-scout` | Affiliate network discovery (PREMIUM+) |
 | `0 6 * * 1` | `/api/cron/weekly-signals-digest` | PostHog signals digest |
 | `0 0 1 * *` | `/api/cron/mcu-monthly-reset` | Monthly MCU credit top-up |
-| External | `/api/cron/d1-backup` | Daily D1 → R2 backup (triggered by Upstash QStash) |
+| Ad-hoc (manual) | `/api/cron/d1-backup` | D1 → R2 backup (triggered on-demand via authenticated curl with CRON_SECRET) |
 | `0 * * * *` | `/api/cron/overage-billing` | Hourly overage reconciliation (Phase 6) |
 
 Full list: See `wrangler.toml` `[triggers]` section comments.

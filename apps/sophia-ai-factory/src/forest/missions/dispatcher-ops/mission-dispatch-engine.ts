@@ -8,10 +8,10 @@ import { deductCredits } from '@/tree/mcu/credits-repo';
 import { getCommand } from '@/tree/missions/command-registry';
 import { fireMissionWebhook } from '@/forest/webhooks/missions/fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';
-import type { MissionHandlerResult } from '@/tree/missions/types';
 import { clearMissionCheckpoint } from '@/tree/missions/checkpoint-persistence';
 import type { MissionRow } from './types';
-import { loadHandler, saveCp, loadCp, failMission } from './queue-router';
+import { loadHandler, failMission } from './queue-router';
+import { executeMissionHandlerWithTimeout } from './mission-handler-runner';
 
 /**
  * Execute a mission asynchronously.
@@ -43,7 +43,6 @@ export async function dispatchMission(missionId: string): Promise<void> {
     return;
   }
 
-  // Mark running
   try {
     await db
       .from('engine_missions')
@@ -82,13 +81,12 @@ export async function dispatchMission(missionId: string): Promise<void> {
 
   const creditsUsed = commandDef.credits;
 
-  // Deduct credits BEFORE handler execution to prevent TOCTOU double-spend.
   if (creditsUsed > 0) {
     const deducted = await deductCredits(
       mission.user_id,
       creditsUsed,
       missionId,
-      `command:${mission.command}`
+      `command:${mission.command}`,
     );
     if (!deducted) {
       logger.warn('[Dispatcher] Credit deduction failed', { missionId, creditsUsed });
@@ -97,59 +95,12 @@ export async function dispatchMission(missionId: string): Promise<void> {
     }
   }
 
-  // Load checkpoint for resume support
-  const existingCheckpoint = await loadCp(db, missionId);
-  const resumeTokensUsed = existingCheckpoint?.tokensUsed ?? 0;
-
-  // Wrap handler in timeout to prevent indefinite CF Worker I/O hangs.
-  const HANDLER_TIMEOUT_MS = 25_000;
-  let handlerResult: MissionHandlerResult;
-  try {
-    handlerResult = await Promise.race([
-      handler({
-        missionId: mission.id,
-        userId: mission.user_id,
-        command: mission.command,
-        params,
-        checkpoint: existingCheckpoint
-          ? {
-              partialResult: existingCheckpoint.partialResult,
-              tokensUsed: existingCheckpoint.tokensUsed,
-              provider: existingCheckpoint.provider,
-              model: existingCheckpoint.model,
-              state: existingCheckpoint.state,
-            }
-          : undefined,
-        onProgress: async (stepData) => {
-          await saveCp(db, missionId, {
-            stepOrder: stepData.stepOrder,
-            stepType: stepData.stepType,
-            savedAt: new Date().toISOString(),
-            partialResult: stepData.partialResult,
-            tokensUsed: resumeTokensUsed + (stepData.tokensUsed ?? 0),
-            provider: stepData.provider,
-            model: stepData.model,
-            retryCount: 0,
-            state: stepData.state,
-          });
-        },
-      }),
-      new Promise<MissionHandlerResult>((_, reject) =>
-        setTimeout(() => reject(new Error('Mission handler timeout')), HANDLER_TIMEOUT_MS)
-      ),
-    ]);
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : 'Handler threw unexpected error';
-    if (errMsg === 'Mission handler timeout') {
-      logger.error('[Dispatcher] Mission handler timeout', { missionId });
-    } else {
-      logger.error('[Dispatcher] Handler threw unexpected error', { missionId, error: errMsg });
-    }
-    handlerResult = {
-      ok: false,
-      error: errMsg === 'Mission handler timeout' ? 'handler_timeout' : errMsg,
-    };
-  }
+  const handlerResult = await executeMissionHandlerWithTimeout({
+    db,
+    mission,
+    handler,
+    parsedParams: params,
+  });
 
   const nowAfter = Math.floor(Date.now() / 1000);
 
@@ -164,14 +115,11 @@ export async function dispatchMission(missionId: string): Promise<void> {
         completed_at: nowAfter,
       })
       .eq('id', missionId);
-    // Clear checkpoint on success
     await clearMissionCheckpoint(missionId);
   } else {
     await failMission(db, missionId, handlerResult.error ?? 'Unknown error');
-    // Keep checkpoint on failure for potential resume
   }
 
-  // Fire webhook if configured
   if (mission.webhook_url) {
     try {
       await fireMissionWebhook(missionId, mission.webhook_url);

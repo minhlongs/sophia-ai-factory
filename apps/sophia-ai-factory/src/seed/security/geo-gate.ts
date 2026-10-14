@@ -12,10 +12,6 @@
  * @module seed/security/geo-gate
  */
 
-import { getOrDefault } from '@/seed/tenant-settings/registry';
-import { DEFAULT_GEO } from '@/seed/tenant-settings/defaults';
-import type { GeoSettings } from '@/seed/tenant-settings/defaults';
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -126,69 +122,10 @@ export function enforceGeoGate(
 }
 
 // ---------------------------------------------------------------------------
-// Per-tenant rule resolution
+// Per-tenant rule resolution (re-exported for backward compatibility)
 // ---------------------------------------------------------------------------
 
-/**
- * Merge default geo rules with tenant overrides stored in tenant-settings.
- *
- * Flow:
- * 1. Start with DEFAULT_GEO_RULES.
- * 2. Apply tenant additionalRules (appended, may add new categories or countries).
- * 3. Filter out entries matching tenant removedRules (category + country pairs).
- *
- * Returns the effective rule set for the tenant.
- */
-export async function resolveTenantRules(
-  db: D1Database,
-  tenantId: string,
-): Promise<GeoRule[]> {
-  const settings = await getOrDefault<GeoSettings>(db, tenantId, 'geo', DEFAULT_GEO);
-
-  // Convert tenant additionalRules to GeoRule shape (reason optional)
-  const tenantExtras: GeoRule[] = (settings.additionalRules ?? []).map((r) => ({
-    category: r.category,
-    blockedCountries: r.blockedCountries,
-    reason: r.reason ?? 'Tenant-defined rule',
-  }));
-
-  // Merge: default rules first, then tenant additions
-  const merged: GeoRule[] = [...DEFAULT_GEO_RULES, ...tenantExtras];
-
-  // Apply removedRules: filter out (category, country) pairs the tenant has unlocked
-  const removed = settings.removedRules ?? [];
-  if (removed.length === 0) return merged;
-
-  return merged
-    .map((rule) => {
-      const countriesToRemove = removed
-        .filter((r) => r.category.toLowerCase() === rule.category.toLowerCase())
-        .map((r) => r.country.toUpperCase());
-
-      if (countriesToRemove.length === 0) return rule;
-
-      const filteredCountries = rule.blockedCountries.filter(
-        (c) => !countriesToRemove.includes(c.toUpperCase()),
-      );
-
-      // Drop the entire rule if no countries remain
-      if (filteredCountries.length === 0) return null;
-
-      return { ...rule, blockedCountries: filteredCountries };
-    })
-    .filter((r): r is GeoRule => r !== null);
-}
-
-/**
- * Tenant-aware variant of isCategoryAllowed.
- * Loads effective rules from D1 then delegates to isCategoryAllowed.
- */
-export async function isCategoryAllowedForTenant(
-  db: D1Database,
-  tenantId: string,
-  country: string,
-  category: string,
-): Promise<boolean> {
-  const rules = await resolveTenantRules(db, tenantId);
-  return isCategoryAllowed(country, category, rules);
-}
+export {
+  resolveTenantRules,
+  isCategoryAllowedForTenant,
+} from './geo-gate-tenant-rules';

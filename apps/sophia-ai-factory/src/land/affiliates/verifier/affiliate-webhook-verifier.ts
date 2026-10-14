@@ -5,17 +5,15 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { calculatePartnerCommission } from '../affiliate-partner-service';
 import type { AffiliatePartnerRow } from '@/seed/types/affiliate';
 import type {
   VerifySignatureOptions,
   CommissionWebhookPayload,
-  CommissionLedgerEntry,
   AffiliateCommissionLedgerResult,
 } from './types';
 import { verifyPostbackSignature } from './hmac-validator';
-import { calculatePayableTimestamp, validateAntiFraudRules } from './replay-guard';
-import { insertLedgerRecord } from './ledger-writer';
+import { validateAntiFraudRules } from './replay-guard';
+import { recordTieredCommissionEntries } from './affiliate-ledger-recorder';
 
 /**
  * Process and verify an inbound affiliate commission webhook, enforcing
@@ -23,7 +21,7 @@ import { insertLedgerRecord } from './ledger-writer';
  */
 export async function processAffiliateCommissionWebhook(
   payload: CommissionWebhookPayload,
-  verification?: VerifySignatureOptions
+  verification?: VerifySignatureOptions,
 ): Promise<AffiliateCommissionLedgerResult> {
   const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
@@ -92,90 +90,12 @@ export async function processAffiliateCommissionWebhook(
     .first<{ count: number }>();
   const activeSalesCount = salesCountRes?.count ?? 0;
 
-  const now = payload.timestamp ?? Date.now();
-  const payableAt = calculatePayableTimestamp(now);
-  const nowSec = Math.floor(now / 1000);
-  const tenantId = payload.tenantId || 'sophia-global';
-  const offerId = payload.offerId || 'sophia_subscription';
-  const entries: CommissionLedgerEntry[] = [];
-
-  const tier1Calc = calculatePartnerCommission({
-    orderAmountCents: payload.orderAmountCents,
-    activeSalesCount,
-    isTier2: false,
-    partnerTier: partnerRow.tier,
-    customRatePct: Number(partnerRow.commission_rate_pct),
-  });
-
-  const tier1LedgerId = `led_t1_${payload.conversionEventId}`;
-  await insertLedgerRecord({
+  const { entries, payableAt } = await recordTieredCommissionEntries({
     db,
-    ledgerId: tier1LedgerId,
-    tenantId,
-    partnerId: partnerRow.id,
-    conversionEventId: payload.conversionEventId,
-    offerId,
-    orderAmountCents: payload.orderAmountCents,
-    ratePct: tier1Calc.ratePct,
-    commissionCents: tier1Calc.commissionCents,
-    payableAt,
-    nowSec,
+    partnerRow,
+    payload,
+    activeSalesCount,
   });
-
-  entries.push({
-    ledgerId: tier1LedgerId,
-    affiliateId: partnerRow.id,
-    partnerCode: partnerRow.partner_code,
-    tier: tier1Calc.tier,
-    ratePct: tier1Calc.ratePct,
-    commissionCents: tier1Calc.commissionCents,
-    payableAt,
-    status: 'pending',
-    isTier2: false,
-  });
-
-  if (partnerRow.parent_partner_id) {
-    const parentRow = await db
-      .prepare('SELECT * FROM affiliate_partners WHERE id = ?')
-      .bind(partnerRow.parent_partner_id)
-      .first<AffiliatePartnerRow>();
-
-    if (parentRow && parentRow.status === 'active') {
-      const tier2Calc = calculatePartnerCommission({
-        orderAmountCents: payload.orderAmountCents,
-        activeSalesCount: 0,
-        isTier2: true,
-      });
-
-      const tier2LedgerId = `led_t2_${payload.conversionEventId}`;
-      await insertLedgerRecord({
-        db,
-        ledgerId: tier2LedgerId,
-        tenantId,
-        partnerId: parentRow.id,
-        conversionEventId: `${payload.conversionEventId}_t2`,
-        offerId,
-        orderAmountCents: payload.orderAmountCents,
-        ratePct: tier2Calc.ratePct,
-        commissionCents: tier2Calc.commissionCents,
-        payableAt,
-        nowSec,
-        parentConversionId: tier1LedgerId,
-      });
-
-      entries.push({
-        ledgerId: tier2LedgerId,
-        affiliateId: parentRow.id,
-        partnerCode: parentRow.partner_code,
-        tier: 'TIER2',
-        ratePct: tier2Calc.ratePct,
-        commissionCents: tier2Calc.commissionCents,
-        payableAt,
-        status: 'pending',
-        isTier2: true,
-      });
-    }
-  }
 
   logger.info('[AffiliateWebhookVerifier] Commission ledgered with 14-day hold', {
     conversionEventId: payload.conversionEventId,

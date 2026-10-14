@@ -9,73 +9,19 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  REDDIT_OAUTH_BASE,
+  REDDIT_SUBMIT,
+  REDDIT_USER_AGENT,
+  isMockMode,
+  buildTitle,
+  refreshAccessToken,
+  type RedditTokenResponse,
+  type RedditSubmitResponse,
+  type RedditPostResponse,
+} from './reddit-auth';
 
-const REDDIT_OAUTH_BASE = 'https://oauth.reddit.com';
-const REDDIT_SUBMIT = `${REDDIT_OAUTH_BASE}/api/submit`;
-const REDDIT_USER_AGENT = 'SophiaAIFactory/1.0';
-
-function isMockMode(): boolean {
-  return !process.env.REDDIT_CLIENT_ID;
-}
-
-interface RedditSubmitResponse {
-  json?: {
-    errors?: string[][];
-    data?: { id?: string; name?: string; url?: string };
-  };
-}
-
-interface RedditPostResponse {
-  data?: { name?: string; is_video?: boolean; score?: number; num_comments?: number; ups?: number };
-}
-
-function buildTitle(meta: PublishMeta): string {
-  const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-  return adCaption.slice(0, 300);
-}
-
-export interface RedditTokenResponse {
-  access_token: string;
-  refresh_token?: string;
-  token_type?: string;
-  expires_in: number;
-  scope?: string;
-}
-
-/**
- * Refresh Reddit access token via OAuth2.
- * Uses HTTP Basic auth with client_id:client_secret.
- */
-export async function refreshAccessToken(refreshToken: string): Promise<RedditTokenResponse> {
-  const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!clientId || !clientSecret || !appUrl) {
-    throw new Error('REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET / NEXT_PUBLIC_APP_URL not set');
-  }
-
-  const res = await fetch(REDDIT_OAUTH_BASE + '/api/v1/access_token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': REDDIT_USER_AGENT,
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      redirect_uri: `${appUrl}/api/oauth/reddit/callback`,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
-      return '';
-    });
-    throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
-  }
-  return res.json() as Promise<RedditTokenResponse>;
-}
+export { refreshAccessToken, type RedditTokenResponse };
 
 export class RedditPublisher implements Publisher {
   constructor(
@@ -196,7 +142,7 @@ export class RedditPublisher implements Publisher {
     }
   }
 
-async delete(_postId: string): Promise<void> {
-  // Platform-specific deletion not implemented
-  logger.warn("[reddit.ts] delete not implemented");
-}}
+  async delete(_postId: string): Promise<void> {
+    logger.warn('[reddit.ts] delete not implemented');
+  }
+}

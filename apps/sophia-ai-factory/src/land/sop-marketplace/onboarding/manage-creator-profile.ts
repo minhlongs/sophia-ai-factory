@@ -12,6 +12,10 @@ import {
 } from '@/seed/db/marketplace-ops';
 import type { CreatorProfileView, CreatorError } from './types';
 import { toView, updateSchema } from './schemas';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from '../availability';
 
 /**
  * Get the authenticated user's creator profile.
@@ -21,6 +25,9 @@ export async function getCreatorProfile(): Promise<Result<CreatorProfileView, Cr
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();
@@ -61,6 +68,9 @@ export async function updateCreatorProfile(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const parsed = updateSchema.safeParse(formData);

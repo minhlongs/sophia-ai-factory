@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Agency Quota Reallocation Modal Dialog
  * Layer: forest/agency (UI components & presentation)

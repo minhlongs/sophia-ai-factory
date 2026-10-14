@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Customer Handover & Acceptance Server Actions (Backward-Compatible Facade)
  * @module land/actions/handover-actions

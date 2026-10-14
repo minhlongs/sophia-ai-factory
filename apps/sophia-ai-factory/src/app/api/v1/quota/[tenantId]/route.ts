@@ -22,7 +22,7 @@ import { validateJwt } from '@/seed/security/jwt-validator';
 import { requireOrgMembership } from '@/seed/db/org-membership';
 import { checkRateLimit as checkApiRateLimit } from '@/seed/security/rate-limiter';
 import { getQuotaStatus } from '@/forest/quota/quota-enforcer';
-import { formatQuotaResponse } from '@/forest/quota/quota-api-helpers';
+import { formatQuotaResponse } from '@/tree/quota/quota-api-helpers';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import type { Tier } from '@/seed/types';
 

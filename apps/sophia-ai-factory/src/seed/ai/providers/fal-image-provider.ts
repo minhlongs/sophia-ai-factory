@@ -19,51 +19,30 @@ import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
 import { registerCertification, ProviderCertificationState } from '@/seed/ai/provider-certification';
 import { logger, type Logger } from '@/seed/utils/logger-utility';
-import { z } from 'zod';
 import { executeFalFetch, fetchWithRetry } from './fal-image-fetch';
 import { getFalModelPriceCents } from '@/seed/config/fal-pricing';
 import { classifyCost } from '@/seed/types/creative-job-economics';
+import {
+  FAL_PROVIDER_ID,
+  FAL_PROVIDER_LABEL,
+  DEFAULT_FAL_BASE_URL,
+  DEFAULT_FAL_MODEL,
+  DEFAULT_FAL_TIMEOUT_MS,
+  FalImageRequestSchema,
+  FalImageResponseSchema,
+  ASPECT_RATIO_TO_IMAGE_SIZE,
+  type FalImageRequest,
+  type FalImageProviderConfig,
+} from './fal-image-schemas';
 
-const PROVIDER_ID = 'fal-ai';
-const PROVIDER_LABEL = 'fal.ai Image Generation';
-const DEFAULT_BASE_URL = 'https://queue.fal.run/';
-const DEFAULT_MODEL = 'fal-ai/flux-schnell';
-const DEFAULT_TIMEOUT_MS = 30_000;
-
-export const FalImageRequestSchema = z.object({
-  prompt: z.string().min(1),
-  image_size: z.string().optional(),
-  num_inference_steps: z.number().int().positive().optional(),
-  guidance_scale: z.number().positive().optional(),
-  num_images: z.number().int().positive().default(1),
-  enable_safety_checker: z.boolean().default(true),
-  output_format: z.enum(['png', 'jpeg', 'webp']).default('png'),
-});
-
-export type FalImageRequest = z.infer<typeof FalImageRequestSchema>;
-
-export const FalImageResponseSchema = z.object({
-  images: z.array(
-    z.object({
-      url: z.string().url(),
-      width: z.number().optional(),
-      height: z.number().optional(),
-      content_type: z.string().optional(),
-    }),
-  ).min(1),
-  timings: z.object({ inference: z.number().optional() }).optional(),
-  seed: z.number().optional(),
-  prompt: z.string().optional(),
-});
-
-const ASPECT_RATIO_TO_IMAGE_SIZE: Record<string, string> = {
-  '1:1': 'square',
-  '16:9': 'landscape_16_9',
-  '9:16': 'portrait_16_9',
-  '4:3': 'landscape_4_3',
+export {
+  FalImageRequestSchema,
+  FalImageResponseSchema,
+  type FalImageRequest,
+  type FalImageProviderConfig,
 };
 
-registerCertification(PROVIDER_ID, {
+registerCertification(FAL_PROVIDER_ID, {
   state: ProviderCertificationState.PRODUCTION_CANDIDATE,
   security: 'PASS',
   health: 'PASS',
@@ -71,19 +50,9 @@ registerCertification(PROVIDER_ID, {
   reason: 'R2 + billing wired, smoke verified',
 });
 
-export interface FalImageProviderConfig {
-  apiKey: string;
-  model?: string;
-  keyRef?: string;
-  baseUrl?: string;
-  timeoutMs?: number;
-  requestId?: string;
-  logger?: Logger;
-}
-
 export class FalImageProvider implements ImageGenerationProvider {
-  readonly id = PROVIDER_ID;
-  readonly label = PROVIDER_LABEL;
+  readonly id = FAL_PROVIDER_ID;
+  readonly label = FAL_PROVIDER_LABEL;
   private readonly apiKey: string;
   private readonly model: string;
   private readonly keyRef: string;
@@ -93,10 +62,10 @@ export class FalImageProvider implements ImageGenerationProvider {
 
   constructor(config: FalImageProviderConfig) {
     this.apiKey = config.apiKey;
-    this.model = config.model ?? DEFAULT_MODEL;
+    this.model = config.model ?? DEFAULT_FAL_MODEL;
     this.keyRef = config.keyRef ?? 'platform';
-    this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
-    this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.baseUrl = config.baseUrl ?? DEFAULT_FAL_BASE_URL;
+    this.timeoutMs = config.timeoutMs ?? DEFAULT_FAL_TIMEOUT_MS;
     this.log = config.requestId
       ? (config.logger ?? logger).withRequestId(config.requestId)
       : (config.logger ?? logger);
@@ -105,48 +74,39 @@ export class FalImageProvider implements ImageGenerationProvider {
   async generate(input: ImageGenerationInput): Promise<ImageGenerationResult> {
     const start = Date.now();
     const requestedAt = Math.floor(Date.now() / 1000);
-    if (!shouldAllowRequest(PROVIDER_ID, this.keyRef)) {
+    if (!shouldAllowRequest(FAL_PROVIDER_ID, this.keyRef)) {
       throw new ImageGenerationError(
-        `Circuit breaker open for ${PROVIDER_ID}`,
+        `Circuit breaker open for ${FAL_PROVIDER_ID}`,
         'CIRCUIT_BREAKER_OPEN',
-        PROVIDER_ID,
+        FAL_PROVIDER_ID,
         true,
       );
     }
     const priceCents = getFalModelPriceCents(this.model);
     const imageSize = input.aspectRatio ? ASPECT_RATIO_TO_IMAGE_SIZE[input.aspectRatio] : undefined;
     const requestBody: FalImageRequest = FalImageRequestSchema.parse({
-      prompt: input.prompt,
-      image_size: imageSize,
-      num_inference_steps: 4,
-      num_images: 1,
-      enable_safety_checker: true,
-      output_format: 'png',
+      prompt: input.prompt, image_size: imageSize, num_inference_steps: 4,
+      num_images: 1, enable_safety_checker: true, output_format: 'png',
     });
 
     const startedAt = Math.floor(Date.now() / 1000);
     try {
       const { result, attempts } = await fetchWithRetry({
-        providerId: PROVIDER_ID,
+        providerId: FAL_PROVIDER_ID,
         keyRef: this.keyRef,
         log: this.log,
         attempt: () =>
           executeFalFetch({
-            baseUrl: this.baseUrl,
-            model: this.model,
-            apiKey: this.apiKey,
-            keyRef: this.keyRef,
-            providerId: PROVIDER_ID,
-            requestBody,
-            responseSchema: FalImageResponseSchema,
-            timeoutMs: this.timeoutMs,
+            baseUrl: this.baseUrl, model: this.model, apiKey: this.apiKey,
+            keyRef: this.keyRef, providerId: FAL_PROVIDER_ID, requestBody,
+            responseSchema: FalImageResponseSchema, timeoutMs: this.timeoutMs,
             timeoutOverride: input.timeoutMs,
           }),
       });
 
       return {
         assetRef: result.imageUrl,
-        provider: PROVIDER_ID,
+        provider: FAL_PROVIDER_ID,
         costCents: priceCents,
         costClassification: classifyCost(priceCents, false),
         retryCount: attempts,
@@ -154,20 +114,13 @@ export class FalImageProvider implements ImageGenerationProvider {
         startedAt,
         latencyMs: Date.now() - start,
         metadata: {
-          model: this.model,
-          seed: result.seed,
-          timings: result.timings,
-          width: result.width,
-          height: result.height,
-          contentType: result.contentType,
-          attempts,
+          model: this.model, seed: result.seed, timings: result.timings,
+          width: result.width, height: result.height, contentType: result.contentType, attempts,
         },
       };
     } catch (err) {
-      const wrapped = ImageGenerationError.fromUnknown(err, PROVIDER_ID);
-      if (err instanceof ImageGenerationError) {
-        wrapped.retryCount = err.retryCount;
-      }
+      const wrapped = ImageGenerationError.fromUnknown(err, FAL_PROVIDER_ID);
+      if (err instanceof ImageGenerationError) wrapped.retryCount = err.retryCount;
       throw wrapped;
     }
   }

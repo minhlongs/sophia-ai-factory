@@ -12,6 +12,4 @@
  * @module land/agency/agency-portal-actions
  */
 
-'use server';
-
 export * from './portal-actions/index';

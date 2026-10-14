@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { AffiliateProgram } from "@/seed/types";
-import { scoreAffiliates, getRecommendedAffiliates } from "./affiliate-ai-scorer";
-import { DEFAULT_WEIGHTS } from "./affiliate-scoring-primitives";
+import { scoreAffiliates, getRecommendedAffiliates } from "@/tree/discovery/affiliate-ai-scorer";
+import { DEFAULT_WEIGHTS } from "@/tree/discovery/affiliate-scoring-primitives";
 
 describe("scoreAffiliates()", () => {
   const mockPrograms: AffiliateProgram[] = [

@@ -20,3 +20,18 @@ export * from './telegram';
 
 export * from './autonomy';
 export * from './rollback';
+
+// Disambiguate crypto primitives exported by both byok and credentials
+export {
+  ALGORITHM,
+  IV_BYTES,
+  KEY_LEN_BITS,
+  KEY_LEN_BYTES,
+  base64ToBytes,
+  bytesToBase64,
+  importKeyByVersion,
+  importKeyMaterial,
+  importMasterKey,
+  loadKeyVersion,
+  type KeyVersionRow,
+} from './byok';

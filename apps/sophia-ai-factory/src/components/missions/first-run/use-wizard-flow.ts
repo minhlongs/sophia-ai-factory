@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * First-Run Wizard Flow & Polling Hook
  * Layer: components/missions (UI Presentation)
@@ -11,7 +13,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { FirstRunTemplate } from '@/land/missions/first-run-template';
 import { estimateTemplateCost } from '@/land/missions/cost-estimator';
 import type { MissionStageId } from '../mission-progress-bar';
-import { createMission, getMissionTrackStatus } from '@/land/creative-mission/actions';
+import { getMissionTrackStatus } from '@/land/creative-mission/actions';
 import { estimateBlueprintStudioCost } from '@/tree/marketplace/preflight-cost-engine';
 import {
   type FirstRunWizardProps,
@@ -21,29 +23,17 @@ import {
   STAGE_TO_KEY,
 } from './types';
 import { mapTrackStatusToStage } from './stage-resolver';
-import {
-  buildCreateMissionInput,
-  resolveExecutionTemplate,
-  triggerExecutionAction,
-} from './execution-helper';
+import { launchWizardMission } from './wizard-launch-helper';
 
 export function useWizardFlow(
   props: FirstRunWizardProps,
   templates: FirstRunTemplate[],
   t: (key: string, values?: Record<string, string | number>) => string,
 ) {
-  const {
-    workspaceId,
-    locale = 'vi',
-    initialBlueprint,
-    initialMcuBalance = 0,
-    userTier = 'BASIC',
-  } = props;
+  const { workspaceId, locale = 'vi', initialBlueprint, initialMcuBalance = 0, userTier = 'BASIC' } = props;
 
   const [selectedTemplate, setSelectedTemplate] = useState<FirstRunTemplate>(templates[0]);
-  const [topic, setTopic] = useState<string>(
-    initialBlueprint?.title || selectedTemplate.defaultTopic[locale],
-  );
+  const [topic, setTopic] = useState<string>(initialBlueprint?.title || selectedTemplate.defaultTopic[locale]);
   const [status, setStatus] = useState<WizardStatus>('idle');
   const [currentStage, setCurrentStage] = useState<MissionStageId>('SCRIPT_GENERATION');
   const [missionId, setMissionId] = useState<string>('');
@@ -52,14 +42,12 @@ export function useWizardFlow(
   const blueprintCost = initialBlueprint
     ? estimateBlueprintStudioCost(initialBlueprint.estimatedScenes, initialBlueprint.estimatedDurationSeconds, 3)
     : null;
-
   const isAllowed = !blueprintCost || userTier === 'MASTER' || initialMcuBalance >= blueprintCost.totalMCU;
   const missingMcu = blueprintCost && !isAllowed ? blueprintCost.totalMCU - initialMcuBalance : 0;
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const pollStartRef = useRef<number>(0);
-
   const costEstimate = estimateTemplateCost(selectedTemplate.id);
 
   const clearPolling = useCallback(() => {
@@ -132,65 +120,35 @@ export function useWizardFlow(
     setErrorMessage('');
     pollStartRef.current = Date.now();
 
-    try {
-      const budgetCents = blueprintCost ? blueprintCost.totalCostCents : Math.round(costEstimate.totalUsd * 100);
-      const missionInput = buildCreateMissionInput({
-        workspaceId,
-        topic,
-        template: selectedTemplate,
-        locale,
-        budgetCents,
-        blueprint: initialBlueprint,
-      });
-
-      const createRes = await createMission(missionInput);
-
-      if (!createRes.ok) {
+    const budgetCents = blueprintCost ? blueprintCost.totalCostCents : Math.round(costEstimate.totalUsd * 100);
+    await launchWizardMission({
+      workspaceId,
+      topic,
+      selectedTemplate,
+      locale,
+      budgetCents,
+      estimatedUsd: blueprintCost ? blueprintCost.estimatedUsd : costEstimate.totalUsd,
+      initialBlueprint,
+      isMounted: () => isMountedRef.current,
+      onCreated: (newId) => {
+        setMissionId(newId);
+        pollTimeoutRef.current = setTimeout(() => void pollTrackStatus(newId), 500);
+      },
+      onError: (msg) => {
         setStatus('failed');
-        setErrorMessage(createRes.error.message || t('launchError'));
-        return;
-      }
-
-      const newId = createRes.value.missionId;
-      setMissionId(newId);
-      pollTimeoutRef.current = setTimeout(() => void pollTrackStatus(newId), 500);
-
-      const execTmpl = resolveExecutionTemplate(selectedTemplate, initialBlueprint);
-
-      triggerExecutionAction(
-        newId,
-        topic,
-        execTmpl,
-        blueprintCost ? blueprintCost.estimatedUsd : costEstimate.totalUsd,
-        () => isMountedRef.current,
-        (execError) => {
-          if (execError) {
-            setStatus('failed');
-            setErrorMessage(execError);
-            clearPolling();
-          }
-        },
-      );
-    } catch {
-      setStatus('failed');
-      setErrorMessage(t('launchError'));
-    }
+        setErrorMessage(msg);
+        clearPolling();
+      },
+      defaultLaunchError: t('launchError'),
+    });
   };
 
   return {
-    selectedTemplate,
-    setSelectedTemplate,
-    topic,
-    setTopic,
-    status,
-    setStatus,
-    currentStage,
-    missionId,
-    errorMessage,
-    blueprintCost,
-    isAllowed,
-    missingMcu,
-    costEstimate,
+    selectedTemplate, setSelectedTemplate,
+    topic, setTopic,
+    status, setStatus,
+    currentStage, missionId, errorMessage,
+    blueprintCost, isAllowed, missingMcu, costEstimate,
     handleLaunch,
   };
 }

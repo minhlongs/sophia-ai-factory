@@ -15,7 +15,7 @@ vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn().mockResolvedValue('PREMIUM'),
 }));
 
-vi.mock('@/forest/quota/video-quota', () => ({
+vi.mock('@/tree/quota/video-quota', () => ({
   checkVideoQuota: vi.fn().mockResolvedValue({ allowed: true, limit: 100, used: 10 }),
 }));
 

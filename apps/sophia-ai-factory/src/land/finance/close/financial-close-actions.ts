@@ -7,8 +7,7 @@
  * @module land/finance/close/financial-close-actions
  */
 
-import { success, failure, type Result } from '@/seed/types/result';
-import { logger } from '@/seed/utils/logger-utility';
+import type { Result } from '@/seed/types/result';
 import type {
   FinancialClosePeriod,
   RevenueSchedule,
@@ -21,12 +20,7 @@ import type {
   LedgerIntegrityResult,
   FormS1AuditPack,
 } from '@/seed/types/financial-close';
-import {
-  createRevenueSchedule,
-  processDailyAccrual,
-  formatDateIso,
-} from '@/tree/finance/revenue-recognition-engine';
-import { type FinancialCloseActionError, normalizeErrorArg } from './types';
+import type { FinancialCloseActionError } from './types';
 import {
   assertFinanceAdminAccess,
   resolveDb,
@@ -42,48 +36,21 @@ import {
   executeReconcileTransfer,
   executeGetPeriodStatus,
 } from './period-closer';
+import {
+  executeCreateRevenueSchedule,
+  executeRunDailyAccrual,
+} from './revenue-schedule-runner';
 
 export async function createRevenueScheduleAction(
   input: CreateScheduleInput,
 ): Promise<Result<RevenueSchedule, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-
-  try {
-    const schedule = await createRevenueSchedule(dbRes.value, input);
-    logger.info(`Created revenue schedule ${schedule.id} for contract ${schedule.contractId}`);
-    return success(schedule);
-  } catch (err) {
-    logger.error('Failed to create revenue schedule', normalizeErrorArg(err));
-    return failure({
-      code: 'SCHEDULE_CREATION_FAILED',
-      message: err instanceof Error ? err.message : 'Unknown revenue schedule creation error',
-    });
-  }
+  return executeCreateRevenueSchedule(input);
 }
 
 export async function runDailyAccrualAction(
   targetDate?: string,
 ): Promise<Result<AccrualRunResult, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-
-  try {
-    const asOf = targetDate ?? formatDateIso(new Date());
-    const result = await processDailyAccrual(dbRes.value, asOf);
-    logger.info(`Processed daily accrual for ${asOf}: ${result.schedulesAccrued} accrued, ${result.totalAccruedCents} cents recognized`);
-    return success(result);
-  } catch (err) {
-    logger.error('Failed to process daily accrual', normalizeErrorArg(err));
-    return failure({
-      code: 'DAILY_ACCRUAL_FAILED',
-      message: err instanceof Error ? err.message : 'Unknown accrual processing error',
-    });
-  }
+  return executeRunDailyAccrual(targetDate);
 }
 
 export async function initiateFinancialCloseAction(
@@ -152,9 +119,7 @@ export async function reconcileIntercompanyTransferAction(
   return executeReconcileTransfer(dbRes.value, transferId, authRes.value.userId, notes);
 }
 
-export async function verifyAuditVaultIntegrityAction(
-  periodKey?: string,
-): Promise<Result<LedgerIntegrityResult, FinancialCloseActionError>> {
+export async function verifyAuditVaultIntegrityAction(periodKey?: string): Promise<Result<LedgerIntegrityResult, FinancialCloseActionError>> {
   const authRes = await assertFinanceAdminAccess();
   if (!authRes.ok) return authRes;
   const dbRes = await resolveDb();
@@ -162,9 +127,7 @@ export async function verifyAuditVaultIntegrityAction(
   return executeVerifyAuditVaultIntegrity(dbRes.value, periodKey);
 }
 
-export async function exportFormS1AuditReportAction(
-  periodKey: string,
-): Promise<Result<FormS1AuditPack, FinancialCloseActionError>> {
+export async function exportFormS1AuditReportAction(periodKey: string): Promise<Result<FormS1AuditPack, FinancialCloseActionError>> {
   const authRes = await assertFinanceAdminAccess();
   if (!authRes.ok) return authRes;
   const dbRes = await resolveDb();
@@ -172,9 +135,7 @@ export async function exportFormS1AuditReportAction(
   return executeExportFormS1AuditReport(dbRes.value, periodKey);
 }
 
-export async function getFinancialPeriodStatusAction(
-  periodKey: string,
-): Promise<Result<FinancialClosePeriod | null, FinancialCloseActionError>> {
+export async function getFinancialPeriodStatusAction(periodKey: string): Promise<Result<FinancialClosePeriod | null, FinancialCloseActionError>> {
   const authRes = await assertFinanceAdminAccess();
   if (!authRes.ok) return authRes;
   const dbRes = await resolveDb();

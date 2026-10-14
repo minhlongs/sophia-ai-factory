@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import type { SettingsNamespace } from './types';
+import type { SettingsNamespace } from '@/seed/tenant-settings/types';
 
 // ---------- per-namespace schemas ----------
 

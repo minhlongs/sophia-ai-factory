@@ -18,7 +18,8 @@ export type CreatorErrorCode =
   | 'VALIDATION_ERROR'
   | 'INVITE_INVALID'
   | 'DB_ERROR'
-  | 'PROFILE_NOT_FOUND';
+  | 'PROFILE_NOT_FOUND'
+  | 'MARKETPLACE_TEMPORARILY_UNAVAILABLE';
 
 export interface CreatorError {
   code: CreatorErrorCode;

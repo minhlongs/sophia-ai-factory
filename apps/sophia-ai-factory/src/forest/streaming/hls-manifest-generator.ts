@@ -23,6 +23,18 @@ import {
   type HlsAudioTrack,
   type HlsSubtitleTrack,
 } from '@/seed/types/streaming';
+import {
+  generateMediaPlaylist,
+  buildMasterManifestRecord,
+  type MediaSegment,
+  type GenerateMediaPlaylistOptions,
+} from './hls-media-playlist';
+
+export {
+  generateMediaPlaylist,
+  type MediaSegment,
+  type GenerateMediaPlaylistOptions,
+} from './hls-media-playlist';
 
 export interface GenerateMasterManifestOptions {
   basePlaybackUrl?: string;
@@ -30,19 +42,6 @@ export interface GenerateMasterManifestOptions {
   audioTracks?: HlsAudioTrack[];
   subtitles?: HlsSubtitleTrack[];
   independentSegments?: boolean;
-}
-
-export interface MediaSegment {
-  durationSec: number;
-  uri: string;
-  title?: string;
-}
-
-export interface GenerateMediaPlaylistOptions {
-  targetDurationSec: number;
-  segments: MediaSegment[];
-  isVod?: boolean;
-  mediaSequence?: number;
 }
 
 /**
@@ -112,61 +111,16 @@ export function generateMasterManifest(options: GenerateMasterManifestOptions = 
     : buildDefaultVariants(options.basePlaybackUrl);
 
   for (const variant of variants) {
-    const attrs: string[] = [
-      `BANDWIDTH=${variant.bandwidth}`,
-    ];
-
-    if (variant.averageBandwidth) {
-      attrs.push(`AVERAGE-BANDWIDTH=${variant.averageBandwidth}`);
-    }
-
+    const attrs: string[] = [`BANDWIDTH=${variant.bandwidth}`];
+    if (variant.averageBandwidth) attrs.push(`AVERAGE-BANDWIDTH=${variant.averageBandwidth}`);
     attrs.push(`RESOLUTION=${variant.width}x${variant.height}`);
-
-    if (variant.frameRate) {
-      attrs.push(`FRAME-RATE=${variant.frameRate.toFixed(3)}`);
-    }
-
-    if (variant.codecs) {
-      attrs.push(`CODECS="${variant.codecs}"`);
-    }
-
-    if (options.audioTracks && options.audioTracks.length > 0) {
-      attrs.push(`AUDIO="${audioGroupId}"`);
-    }
-
-    if (options.subtitles && options.subtitles.length > 0) {
-      attrs.push(`SUBTITLES="${subsGroupId}"`);
-    }
+    if (variant.frameRate) attrs.push(`FRAME-RATE=${variant.frameRate.toFixed(3)}`);
+    if (variant.codecs) attrs.push(`CODECS="${variant.codecs}"`);
+    if (options.audioTracks && options.audioTracks.length > 0) attrs.push(`AUDIO="${audioGroupId}"`);
+    if (options.subtitles && options.subtitles.length > 0) attrs.push(`SUBTITLES="${subsGroupId}"`);
 
     lines.push(`#EXT-X-STREAM-INF:${attrs.join(',')}`);
     lines.push(variant.url);
-  }
-
-  return lines.join('\n') + '\n';
-}
-
-/**
- * Generates an RFC 8216 compliant HLS Media Segment Playlist (.m3u8).
- */
-export function generateMediaPlaylist(options: GenerateMediaPlaylistOptions): string {
-  const lines: string[] = [
-    '#EXTM3U',
-    '#EXT-X-VERSION:3',
-    `#EXT-X-TARGETDURATION:${Math.ceil(options.targetDurationSec)}`,
-    `#EXT-X-MEDIA-SEQUENCE:${options.mediaSequence ?? 0}`,
-  ];
-
-  if (options.isVod !== false) {
-    lines.push('#EXT-X-PLAYLIST-TYPE:VOD');
-  }
-
-  for (const segment of options.segments) {
-    lines.push(`#EXTINF:${segment.durationSec.toFixed(3)},${segment.title ?? ''}`);
-    lines.push(segment.uri);
-  }
-
-  if (options.isVod !== false) {
-    lines.push('#EXT-X-ENDLIST');
   }
 
   return lines.join('\n') + '\n';
@@ -184,17 +138,5 @@ export function createHlsMasterManifestData(
   }
 ): HlsMasterManifest {
   const cleanBase = basePlaybackUrl.replace(/\/+$/, '');
-  const masterPlaylistUrl = `${cleanBase}/api/videos/${encodeURIComponent(videoId)}/hls`;
-  const defaultVariants = buildDefaultVariants(cleanBase);
-
-  return {
-    masterPlaylistUrl,
-    variants: defaultVariants.map((v) => ({
-      quality: v.quality,
-      bandwidth: v.bandwidth,
-      url: v.url,
-    })),
-    audioTracks: options?.audioTracks,
-    subtitles: options?.subtitles,
-  };
+  return buildMasterManifestRecord(videoId, basePlaybackUrl, buildDefaultVariants(cleanBase), options);
 }

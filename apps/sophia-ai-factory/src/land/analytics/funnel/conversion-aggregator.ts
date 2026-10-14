@@ -1,10 +1,22 @@
 import { getD1 } from '@/seed/db/client';
 import type {
   TierConversionRates,
-  TierTransition,
   PromoCodeEffectiveness,
   CheckoutAbandonmentRate,
 } from './types';
+import {
+  countTierTransition,
+  queryTierTransitions,
+  queryTierCancellations,
+  queryPromoRedemptionStats,
+} from './conversion-aggregator-helpers';
+
+export {
+  countTierTransition,
+  queryTierTransitions,
+  queryTierCancellations,
+  queryPromoRedemptionStats,
+} from './conversion-aggregator-helpers';
 
 /**
  * Compute tier upgrade/downgrade rates within a time window.
@@ -23,51 +35,20 @@ export async function getTierConversionRates(
   const fromIso = new Date(fromTs * 1000).toISOString();
   const toIso = new Date(toTs * 1000).toISOString();
 
-  // Aggregate all transitions in window
-  const rows = await db
-    .prepare(
-      `SELECT from_tier, to_tier, COUNT(*) AS cnt
-       FROM tier_change_events
-       WHERE datetime(created_at) >= datetime(?1)
-         AND datetime(created_at) <= datetime(?2)
-       GROUP BY from_tier, to_tier`,
-    )
-    .bind(fromIso, toIso)
-    .all<{ from_tier: string | null; to_tier: string | null; cnt: number }>();
-
-  const transitions: TierTransition[] = (rows.results ?? []).map((r) => ({
-    fromTier: r.from_tier ?? 'FREE',
-    toTier: r.to_tier ?? 'FREE',
-    count: Number(r.cnt),
-  }));
-
-  // Summaries for common upgrade paths
-  function countTransition(from: string | null, to: string): number {
-    return transitions
-      .filter((t) => (from === null || t.fromTier === from) && t.toTier === to)
-      .reduce((sum, t) => sum + t.count, 0);
-  }
-
-  const cancellationRows = await db
-    .prepare(
-      `SELECT COUNT(*) AS n
-       FROM tier_change_events
-       WHERE event_type IN ('cancel', 'downgrade')
-         AND datetime(created_at) >= datetime(?1)
-         AND datetime(created_at) <= datetime(?2)`,
-    )
-    .bind(fromIso, toIso)
-    .first<{ n: number }>();
+  const transitions = await queryTierTransitions(db, fromIso, toIso);
+  const cancellations = await queryTierCancellations(db, fromIso, toIso);
 
   return {
     fromTs,
     toTs,
     transitions,
-    freeToPaid: countTransition(null, 'BASIC') + countTransition('FREE', 'BASIC'),
-    basicToPremium: countTransition('BASIC', 'PREMIUM'),
-    premiumToEnterprise: countTransition('PREMIUM', 'ENTERPRISE'),
-    enterpriseToMaster: countTransition('ENTERPRISE', 'MASTER'),
-    cancellations: Number(cancellationRows?.n ?? 0),
+    freeToPaid:
+      countTierTransition(transitions, null, 'BASIC') +
+      countTierTransition(transitions, 'FREE', 'BASIC'),
+    basicToPremium: countTierTransition(transitions, 'BASIC', 'PREMIUM'),
+    premiumToEnterprise: countTierTransition(transitions, 'PREMIUM', 'ENTERPRISE'),
+    enterpriseToMaster: countTierTransition(transitions, 'ENTERPRISE', 'MASTER'),
+    cancellations,
   };
 }
 
@@ -84,39 +65,8 @@ export async function getPromoCodeEffectiveness(
   const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
-  const fromEpoch = fromTs;
-  const toEpoch = toTs;
-
-  const statusRow = await db
-    .prepare(
-      `SELECT
-         COUNT(*) AS total,
-         SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) AS redeemed,
-         SUM(CASE WHEN status = 'reserved' THEN 1 ELSE 0 END) AS reserved,
-         SUM(CASE WHEN status = 'reverted' THEN 1 ELSE 0 END) AS reverted
-       FROM promo_code_redemptions
-       WHERE redeemed_at >= ?1 AND redeemed_at <= ?2`,
-    )
-    .bind(fromEpoch, toEpoch)
-    .first<{ total: number; redeemed: number; reserved: number; reverted: number }>();
-
-  const topCodesRows = await db
-    .prepare(
-      `SELECT promo_code AS code, COUNT(*) AS cnt
-       FROM promo_code_redemptions
-       WHERE redeemed_at >= ?1 AND redeemed_at <= ?2
-         AND status = 'redeemed'
-       GROUP BY promo_code
-       ORDER BY cnt DESC
-       LIMIT ?3`,
-    )
-    .bind(fromEpoch, toEpoch, limit)
-    .all<{ code: string; cnt: number }>();
-
-  const total = Number(statusRow?.total ?? 0);
-  const redeemed = Number(statusRow?.redeemed ?? 0);
-  const reserved = Number(statusRow?.reserved ?? 0);
-  const reverted = Number(statusRow?.reverted ?? 0);
+  const { total, redeemed, reserved, reverted, topCodes } =
+    await queryPromoRedemptionStats(db, fromTs, toTs, limit);
 
   return {
     fromTs,
@@ -126,10 +76,7 @@ export async function getPromoCodeEffectiveness(
     reserved,
     reverted,
     successRate: total > 0 ? redeemed / total : 0,
-    topCodes: (topCodesRows.results ?? []).map((r) => ({
-      code: r.code,
-      count: Number(r.cnt),
-    })),
+    topCodes,
   };
 }
 
@@ -173,8 +120,9 @@ export async function getCheckoutAbandonmentRate(
     toTs,
     checkoutStarted,
     paymentSuccess,
-    abandonmentRate: checkoutStarted > 0
-      ? (checkoutStarted - paymentSuccess) / checkoutStarted
-      : 0,
+    abandonmentRate:
+      checkoutStarted > 0
+        ? (checkoutStarted - paymentSuccess) / checkoutStarted
+        : 0,
   };
 }

@@ -4,6 +4,8 @@ import type { SopListing } from './types';
 import { StatCard } from './stat-card';
 import { PendingReviewsTable } from './pending-reviews-table';
 import { PublishedListingsTable } from './published-listings-table';
+import { CREATOR_MARKETPLACE_V2_ENABLED } from '@/land/sop-marketplace/availability';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
 export interface AdminSOPReviewsContentProps {
   locale: string;
@@ -11,6 +13,10 @@ export interface AdminSOPReviewsContentProps {
 }
 
 export async function AdminSOPReviewsContent({ locale, userId: _userId }: AdminSOPReviewsContentProps) {
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    return <main className="min-h-screen bg-background p-8"><MarketplaceUnavailableNotice /></main>;
+  }
+
   const t = await getTranslations({ locale, namespace: 'admin.sopReviews' });
 
   const { getD1 } = await import('@/seed/db/client');

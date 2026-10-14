@@ -6,8 +6,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as registry from '../registry';
-import { SettingsValidationError } from '../types';
-import type { SettingsNamespace } from '../types';
+import { SettingsValidationError } from '@/seed/tenant-settings/types';
+import type { SettingsNamespace } from '@/seed/tenant-settings/types';
 
 // ---------- lightweight D1 mock ----------
 

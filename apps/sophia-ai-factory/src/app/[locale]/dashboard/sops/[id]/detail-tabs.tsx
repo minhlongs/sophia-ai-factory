@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopInstallationRow, SopRunRow, SopTemplateRow } from '@/tree/sop/sop-types';
+import type { SopInstallationRow, SopRunRow, SopTemplateRow } from '@/seed/sop/sop-types';
 
 // Each tab is a thin, focused component.
 import { InstallationOverviewTab } from '@/forest/components/sop/installation-overview-tab';

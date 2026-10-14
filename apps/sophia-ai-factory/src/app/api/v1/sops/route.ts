@@ -9,9 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listOfficialTemplates, getTemplateBySlug, createInstallation } from '@/tree/sop/sop-repo';
-import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
-import { getSopD1 } from '@/tree/sop/d1';
+import { listOfficialTemplates, getTemplateBySlug, createInstallation } from '@/seed/sop/sop-repo';
+import { generateWebhookSecret } from '@/seed/sop/webhook-hmac';
+import { getSopD1 } from '@/seed/sop/d1';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
@@ -77,6 +77,12 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     });
     return NextResponse.json({ installation }, { status: 201 });
   } catch (err) {
+    if ((err as unknown as { code?: string })?.code === 'PAYMENT_REQUIRED') {
+      return NextResponse.json(
+        { error: 'Payment required', message: err instanceof Error ? err.message : 'Payment required' },
+        { status: 402 },
+      );
+    }
     logger.error('[POST /api/v1/sops] Install failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Install failed' }, { status: 500 });
   }

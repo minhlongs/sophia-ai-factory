@@ -3,45 +3,18 @@
  * POST /api/content-graph/cross-platform — register distribution mapping or scheduled post
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import { createServerClient } from '@/seed/db/client';
 import { getErrorMessage } from '@/seed/utils/to-error';
+import {
+  GetCrossPlatformSchema,
+  PostCrossPlatformSchema,
+  mapDistAssetRow,
+  type DistAssetRow,
+} from './cross-platform-route-helpers';
 
 export const dynamic = 'force-dynamic';
-
-const GetCrossPlatformSchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  projectId: z.string().optional(),
-  channel: z.string().optional(),
-});
-
-const PostCrossPlatformSchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  planId: z.string().min(1, 'planId is required'),
-  assetId: z.string().min(1, 'assetId is required'),
-  channel: z.string().min(1, 'channel is required'),
-  platformPostId: z.string().optional(),
-  status: z.enum(['draft', 'scheduled', 'posting', 'posted', 'failed']).optional().default('scheduled'),
-  scheduledAt: z.number().int().positive().optional(),
-  analytics: z.record(z.string(), z.unknown()).optional().default({}),
-});
-
-interface DistAssetRow {
-  id: string;
-  workspace_id: string;
-  plan_id: string;
-  asset_id: string;
-  channel: string;
-  platform_post_id: string | null;
-  status: string;
-  scheduled_at: number;
-  posted_at: number | null;
-  analytics: string;
-  error: string | null;
-  created_at: number;
-}
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -83,26 +56,7 @@ export async function GET(request: NextRequest) {
     sql += ' ORDER BY created_at DESC LIMIT 50';
 
     const result = await d1.prepare(sql).bind(...params).all<DistAssetRow>();
-    const distributions = (result.results ?? []).map((row) => ({
-      id: row.id,
-      workspaceId: row.workspace_id,
-      planId: row.plan_id,
-      assetId: row.asset_id,
-      channel: row.channel,
-      platformPostId: row.platform_post_id,
-      status: row.status,
-      scheduledAt: row.scheduled_at,
-      postedAt: row.posted_at,
-      analytics: (() => {
-        try {
-          return typeof row.analytics === 'string' ? JSON.parse(row.analytics) : (row.analytics ?? {});
-        } catch {
-          return {};
-        }
-      })(),
-      error: row.error,
-      createdAt: row.created_at,
-    }));
+    const distributions = (result.results ?? []).map(mapDistAssetRow);
 
     return NextResponse.json({ distributions, count: distributions.length });
   } catch (err) {
@@ -131,16 +85,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const {
-    workspaceId,
-    planId,
-    assetId,
-    channel,
-    platformPostId,
-    status,
-    scheduledAt,
-    analytics,
-  } = parsed.data;
+  const { workspaceId, planId, assetId, channel, platformPostId, status, scheduledAt, analytics } = parsed.data;
 
   const hasOperator = await verifyWorkspaceRole(workspaceId, user.id, 'OPERATOR');
   if (!hasOperator) {
@@ -159,20 +104,9 @@ export async function POST(request: NextRequest) {
           id, workspace_id, plan_id, asset_id,
           channel, platform_post_id, status, scheduled_at,
           analytics, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .bind(
-        id,
-        workspaceId,
-        planId,
-        assetId,
-        channel,
-        platformPostId ?? null,
-        status,
-        scheduleTime,
-        JSON.stringify(analytics),
-        now
-      )
+      .bind(id, workspaceId, planId, assetId, channel, platformPostId ?? null, status, scheduleTime, JSON.stringify(analytics), now)
       .run();
 
     return NextResponse.json(

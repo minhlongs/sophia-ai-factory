@@ -12,6 +12,14 @@ import { Progress } from '@/seed/components/ui/progress';
 import { Badge } from '@/seed/components/ui/badge';
 import { Alert, AlertDescription } from '@/seed/components/ui/alert';
 import { Zap, TrendingUp, Calendar, AlertTriangle } from 'lucide-react';
+import {
+  PERIOD_LABELS,
+  getStatusColor,
+  getProgressColor,
+  FullUsageSummary,
+} from './usage-summary-grid';
+
+export { FullUsageSummary };
 
 interface UsageSummaryCardProps {
   title: string;
@@ -23,37 +31,6 @@ interface UsageSummaryCardProps {
   percentage?: number;
   status?: 'ok' | 'warning' | 'critical' | 'overage';
 }
-
-const PERIOD_LABELS: Record<'hourly' | 'daily' | 'monthly', string> = {
-  hourly: 'This hour',
-  daily: 'Today',
-  monthly: 'This month',
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'overage':
-      return 'text-red-600';
-    case 'critical':
-      return 'text-orange-600';
-    case 'warning':
-      return 'text-yellow-600';
-    default:
-      return 'text-green-600';
-  }
-};
-
-const getProgressColor = (status: string) => {
-  switch (status) {
-    case 'overage':
-    case 'critical':
-      return 'bg-red-600';
-    case 'warning':
-      return 'bg-yellow-600';
-    default:
-      return 'bg-green-600';
-  }
-};
 
 export function UsageSummaryCard({
   title,
@@ -92,7 +69,6 @@ export function UsageSummaryCard({
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Progress Bar */}
         <div className="space-y-1">
           <Progress
             value={displayPercentage}
@@ -109,7 +85,6 @@ export function UsageSummaryCard({
           </div>
         </div>
 
-        {/* Usage Stats */}
         <div className="flex items-center justify-between pt-2 border-t">
           <div>
             <p className="text-xs text-muted-foreground">Usage</p>
@@ -125,7 +100,6 @@ export function UsageSummaryCard({
           </div>
         </div>
 
-        {/* Overage Warning */}
         {isOverage && (
           <Alert variant="destructive" className="mt-3">
             <AlertTriangle className="h-4 w-4" />
@@ -140,48 +114,5 @@ export function UsageSummaryCard({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-/**
- * Usage Summary Grid - Renders all three period cards
- */
-type UsageStatus = 'ok' | 'warning' | 'critical' | 'overage';
-
-interface FullUsageSummaryProps {
-  hourly: { used: number; limit: number; percentage: number; status: UsageStatus };
-  daily: { used: number; limit: number; percentage: number; status: UsageStatus };
-  monthly: { used: number; limit: number; percentage: number; status: UsageStatus; overage?: number };
-}
-
-export function FullUsageSummary({ hourly, daily, monthly }: FullUsageSummaryProps) {
-  return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <UsageSummaryCard
-        title="Hourly Usage"
-        used={hourly.used}
-        limit={hourly.limit}
-        percentage={hourly.percentage}
-        status={hourly.status}
-        period="hourly"
-      />
-      <UsageSummaryCard
-        title="Daily Usage"
-        used={daily.used}
-        limit={daily.limit}
-        percentage={daily.percentage}
-        status={daily.status}
-        period="daily"
-      />
-      <UsageSummaryCard
-        title="Monthly Usage"
-        used={monthly.used}
-        limit={monthly.limit}
-        percentage={monthly.percentage}
-        status={monthly.status}
-        period="monthly"
-        overage={monthly.overage}
-      />
-    </div>
   );
 }

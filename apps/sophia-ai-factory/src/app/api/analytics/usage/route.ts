@@ -20,106 +20,32 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { fetchUsageMetrics } from '@/land/analytics/queries';
-import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
-import { analyticsUsageQuerySchema } from '@/land/validation/services';
-import type { UsageFilters, UsageMetrics } from '@/land/analytics/types';;
-function emptyUsageMetrics(): UsageMetrics {
-  return {
-    summary: {
-      totalRequests: 0,
-      totalTokensInput: 0,
-      totalTokensOutput: 0,
-      totalCredits: 0,
-      avgResponseTimeMs: 0,
-      errorRate: 0,
-    },
-    timeSeries: [],
-    serviceBreakdown: [],
-  };
-}
+import type { UsageFilters, UsageMetrics } from '@/land/analytics/types';
+import {
+  emptyUsageMetrics,
+  parseUsageQueryParams,
+  resolveUsageQueryRbac,
+} from './usage-route-helpers';
 
 export async function GET(request: NextRequest) {
   try {
-    // Step 1: Get authenticated user
     const user = await getCurrentUser();
-
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized - authentication required' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // Step 2: Parse query params with Zod schema
-    const searchParams = request.nextUrl.searchParams;
-    const validation = analyticsUsageQuerySchema.safeParse({
-      license_nonce: searchParams.get('license_nonce') ?? undefined,
-      start: searchParams.get('start'),
-      end: searchParams.get('end'),
-      granularity: searchParams.get('granularity') ?? undefined,
-      service: searchParams.get('service') ?? undefined,
-    });
+    const parsed = parseUsageQueryParams(request.nextUrl.searchParams);
+    if (!parsed.ok) return parsed.response;
+    const { license_nonce, startTimestamp, endTimestamp, granularity, service } = parsed.data;
 
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query params', details: validation.error.flatten() },
-        { status: 400 }
-      );
-    }
+    const rbac = await resolveUsageQueryRbac(user.id, license_nonce);
+    if (!rbac.ok) return rbac.response;
+    const { isAdmin, queryLicenseNonce } = rbac;
 
-    const { license_nonce, start, end, granularity, service } = validation.data;
-
-    // Handle NaN from transform
-    if (!start || !end || isNaN(start) || isNaN(end)) {
-      return NextResponse.json(
-        { error: 'Invalid start/end timestamps - must be valid Unix seconds' },
-        { status: 400 }
-      );
-    }
-
-    const startTimestamp = start;
-    const endTimestamp = end;
-
-    // Validate date range
-    if (startTimestamp > endTimestamp) {
-      return NextResponse.json(
-        { error: 'start must be before end' },
-        { status: 400 }
-      );
-    }
-
-    // Limit to 90 days max
-    const maxRange = 90 * 86400;
-    if (endTimestamp - startTimestamp > maxRange) {
-      return NextResponse.json(
-        { error: `Date range exceeds maximum of 90 days`, suggestion: 'Split into smaller ranges' },
-        { status: 400 }
-      );
-    }
-
-    // Step 3: RBAC - Determine license_nonce to query
-    let queryLicenseNonce: string | undefined = license_nonce || undefined;
-
-    // Check if user is admin
-    const isAdmin = await checkAdmin(user.id);
     const userTier = await resolveUserTier(user.id);
-
-    if (!isAdmin) {
-      // Customer users can only see their own data
-      if (license_nonce) {
-        // Verify the license belongs to this user
-        const access = await verifyLicenseAccess(user.id, license_nonce, isAdmin);
-        if (!access.allowed) {
-          return NextResponse.json(
-            { error: access.error || 'Access denied' },
-            { status: 403 }
-          );
-        }
-      } else {
-        // Auto-inject user's own license nonce if not provided
-        queryLicenseNonce = await getUserLicenseNonce(user.id) || undefined;
-      }
-    }
 
     logger.info('[Analytics Usage] Querying usage metrics', {
       userId: user.id,

@@ -9,7 +9,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client'
-import { shouldAllowRequest, getState } from '@/seed/security/circuit-breaker'
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker'
 import { AIProviderError, AIProviderErrorCode } from './errors'
 import type {
   AIModel,
@@ -18,45 +18,14 @@ import type {
   ProviderRow,
   ProviderStatus,
 } from './types'
+import {
+  cacheGet,
+  cacheSet,
+  invalidateCache,
+  mapRowToProvider,
+} from './registry-cache'
 
-// ── LRU Cache ─────────────────────────────────────────────────────────────────
-
-const CACHE_MAX = 50
-const cache = new Map<string, AIProvider>()
-
-function cacheSet(key: string, value: AIProvider): void {
-  if (cache.size >= CACHE_MAX) {
-    const oldest = cache.keys().next().value
-    if (oldest !== undefined) cache.delete(oldest)
-  }
-  cache.set(key, value)
-}
-
-export function invalidateCache(id?: string): void {
-  if (id) {
-    cache.delete(id)
-  } else {
-    cache.clear()
-  }
-}
-
-// ── Row → Domain Mapping ──────────────────────────────────────────────────────
-
-function mapRowToProvider(row: ProviderRow): AIProvider {
-  const models = JSON.parse(row.models_json) as AIModel[]
-  const providerId = row.id
-  const cbState = getState(providerId)
-
-  return {
-    id: providerId,
-    workspaceId: row.workspace_id,
-    name: row.name,
-    type: row.type as AIModelType,
-    models,
-    status: row.status as ProviderStatus,
-    circuitBreakerState: cbState.state,
-  }
-}
+export { invalidateCache } from './registry-cache'
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -87,14 +56,7 @@ export async function registerProvider(config: {
            models_json = excluded.models_json,
            status = excluded.status`,
       )
-      .bind(
-        config.id,
-        config.workspaceId,
-        config.name,
-        config.type,
-        modelsJson,
-        status,
-      )
+      .bind(config.id, config.workspaceId, config.name, config.type, modelsJson, status)
       .run()
   } catch (err) {
     throw new AIProviderError(
@@ -104,14 +66,9 @@ export async function registerProvider(config: {
     )
   }
 
-  // Rebuild row for cache
   const row: ProviderRow = {
-    id: config.id,
-    workspace_id: config.workspaceId,
-    name: config.name,
-    type: config.type,
-    models_json: modelsJson,
-    status,
+    id: config.id, workspace_id: config.workspaceId, name: config.name,
+    type: config.type, models_json: modelsJson, status,
   }
   cacheSet(config.id, mapRowToProvider(row))
 }
@@ -121,7 +78,7 @@ export async function registerProvider(config: {
  */
 export async function getProvider(id: string, workspaceId: string): Promise<AIProvider> {
   const cacheKey = `${workspaceId}:${id}`
-  const cached = cache.get(cacheKey)
+  const cached = cacheGet(cacheKey)
   if (cached) return cached
 
   const db = createServerClient()
@@ -142,11 +99,7 @@ export async function getProvider(id: string, workspaceId: string): Promise<AIPr
   }
 
   if (!row) {
-    throw new AIProviderError(
-      AIProviderErrorCode.PROVIDER_NOT_FOUND,
-      `Provider ${id} not found`,
-      { providerId: id },
-    )
+    throw new AIProviderError(AIProviderErrorCode.PROVIDER_NOT_FOUND, `Provider ${id} not found`, { providerId: id })
   }
 
   const provider = mapRowToProvider(row)

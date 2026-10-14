@@ -5,7 +5,7 @@
 
 import type { D1Database } from '@/seed/db/client';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { checkMissionQuota } from '@/forest/quota/mission-quota';
+import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { runMissionPreflightCheck } from '@/tree/mission/preflight-check';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import { createMission } from '@/tree/mission/repository';

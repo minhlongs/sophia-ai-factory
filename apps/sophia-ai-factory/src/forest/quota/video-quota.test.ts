@@ -30,7 +30,7 @@ import {
   reserveVideoSlot,
   releaseVideoSlot,
   checkVideoQuota,
-} from './video-quota';
+} from '@/tree/quota/video-quota';
 
 type PreparedRow = { count: number };
 

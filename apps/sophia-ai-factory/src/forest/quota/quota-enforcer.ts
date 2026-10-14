@@ -7,14 +7,14 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota-checker'
-import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker'
+import { checkQuotaWithOverage, DEFAULT_CONFIG } from '@/tree/quota/quota-checker'
+import type { QuotaCheckContext, EnhancedQuotaCheckResult } from '@/tree/quota/quota-checker'
 import { canAccessApi } from '@/land/billing/dunning-workflow'
-import { createQuotaExceededResponse, createDunningBlockResponse } from './quota-enforcer-response'
+import { createQuotaExceededResponse, createDunningBlockResponse } from '@/tree/quota/quota-enforcer-response'
 import { captureFreeQuotaExhaustion } from '@/forest/telemetry/posthog-capture'
 
-export type { QuotaExceededResponse } from './quota-enforcer-response'
-export { getQuotaStatus, getUserIdFromLicense } from './quota-enforcer-status'
+export type { QuotaExceededResponse } from '@/tree/quota/quota-enforcer-response'
+export { getQuotaStatus, getUserIdFromLicense } from '@/tree/quota/quota-enforcer-status'
 
 export class QuotaExceededError extends Error {
  public readonly status = 429;

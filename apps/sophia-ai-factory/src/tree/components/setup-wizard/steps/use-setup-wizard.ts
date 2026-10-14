@@ -3,16 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { TierType } from './payment-step';
+import {
+  KEY_TO_PROVIDER,
+  INITIAL_WIZARD_CONFIG,
+  bootstrapSetupWizardState,
+  type WizardKeyConfig,
+} from './use-setup-wizard-helpers';
 
-export const KEY_TO_PROVIDER: Record<string, string> = {
-  OPENROUTER_API_KEY: 'openrouter',
-  ANTHROPIC_API_KEY: 'anthropic',
-  ELEVENLABS_API_KEY: 'elevenlabs',
-  DID_API_KEY: 'd-id',
-  MUAPI_API_KEY: 'muapi',
-  REPLICATE_API_KEY: 'replicate',
-  FAL_API_KEY: 'fal-ai',
-};
+export { KEY_TO_PROVIDER };
 
 export function useSetupWizard() {
   const t = useTranslations('setupWizard');
@@ -24,15 +22,7 @@ export function useSetupWizard() {
   const [savedProviders, setSavedProviders] = useState<string[]>([]);
   const [revokingProvider, setRevokingProvider] = useState<string | null>(null);
 
-  const [config, setConfig] = useState({
-    OPENROUTER_API_KEY: '',
-    ANTHROPIC_API_KEY: '',
-    ELEVENLABS_API_KEY: '',
-    DID_API_KEY: '',
-    MUAPI_API_KEY: '',
-    REPLICATE_API_KEY: '',
-    FAL_API_KEY: '',
-  });
+  const [config, setConfig] = useState<WizardKeyConfig>(INITIAL_WIZARD_CONFIG);
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [latencies, setLatencies] = useState<Record<string, number>>({});
@@ -41,31 +31,14 @@ export function useSetupWizard() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetch('/api/user/byok')
-      .then(async (res) => (res.ok ? (await res.json() as { providers?: string[] }) : null))
-      .then((d) => {
-        if (d?.providers) setSavedProviders(d.providers);
-      })
-      .catch(() => {});
-
-    fetch('/api/user/profile')
-      .then(async (res) => (res.ok ? (await res.json() as { email?: string }) : null))
-      .then((d) => {
-        if (d?.email) setAccountEmail(d.email);
-      })
-      .catch(() => {});
-
-    fetch('/api/setup-wizard/readiness')
-      .then(async (res) => (res.ok ? (await res.json() as { tier?: string; mcuBalance?: number; subscriptionActive?: boolean; ownerVerified?: boolean }) : null))
-      .then((d) => {
-        if (d) {
-          if (d.tier) setCurrentTier((d.tier.toUpperCase() as TierType) || 'PREMIUM');
-          if (typeof d.mcuBalance === 'number') setMcuBalance(d.mcuBalance);
-          if (d.subscriptionActive) setSubscriptionStatus('ACTIVE');
-          if (typeof d.ownerVerified === 'boolean') setIsOwner(d.ownerVerified);
-        }
-      })
-      .catch(() => {});
+    bootstrapSetupWizardState({
+      setSavedProviders,
+      setAccountEmail,
+      setCurrentTier,
+      setMcuBalance,
+      setSubscriptionStatus,
+      setIsOwner,
+    });
   }, []);
 
   const updateConfig = useCallback((key: string, value: string) => {
@@ -132,7 +105,6 @@ export function useSetupWizard() {
       const entries = Object.entries(config).filter(([k, v]) => KEY_TO_PROVIDER[k] && v.trim());
       const newlySaved: string[] = [];
 
-      // Enforce live ping verification on all pending keys before persisting to D1
       for (const [k, v] of entries) {
         const provider = KEY_TO_PROVIDER[k];
         if (status[k] !== 'valid') {
@@ -158,16 +130,7 @@ export function useSetupWizard() {
       }
       if (newlySaved.length > 0) {
         setSavedProviders(prev => Array.from(new Set([...prev, ...newlySaved])));
-        // NEVER display the key after save — wipe raw keys from client state
-        setConfig({
-          OPENROUTER_API_KEY: '',
-          ANTHROPIC_API_KEY: '',
-          ELEVENLABS_API_KEY: '',
-          DID_API_KEY: '',
-          MUAPI_API_KEY: '',
-          REPLICATE_API_KEY: '',
-          FAL_API_KEY: '',
-        });
+        setConfig(INITIAL_WIZARD_CONFIG);
       }
       return true;
     } catch (e) {
@@ -181,23 +144,9 @@ export function useSetupWizard() {
   }, [t, config, status, verifyKey]);
 
   return {
-    accountEmail,
-    isOwner,
-    currentTier,
-    mcuBalance,
-    subscriptionStatus,
-    savedProviders,
-    revokingProvider,
-    config,
-    updateConfig,
-    verifyKey,
-    handleRevokeProvider,
-    handleSave,
-    status,
-    errors,
-    latencies,
-    saveError,
-    saveFailed,
-    isSaving,
+    accountEmail, isOwner, currentTier, mcuBalance, subscriptionStatus,
+    savedProviders, revokingProvider, config, updateConfig, verifyKey,
+    handleRevokeProvider, handleSave, status, errors, latencies,
+    saveError, saveFailed, isSaving,
   };
 }

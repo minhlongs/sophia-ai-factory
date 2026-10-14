@@ -9,12 +9,12 @@
  * Circuit breaker: delegated to @/seed/security/circuit-breaker, keyed per provider.
  */
 
-import { estimateCost, getCostForModel } from './llm-cost-tracker';
+import { estimateCost, getCostForModel } from '@/tree/agent-fleet/llm-cost-tracker';
 import { shouldAllowRequest, recordSuccess, recordFailure, reset as resetCircuit } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
 
-export type { TenantUsage } from './llm-cost-tracker';
-export { MODEL_COSTS, trackUsage, getUsageSummary, _resetUsage } from './llm-cost-tracker';
+export type { TenantUsage } from '@/tree/agent-fleet/llm-cost-tracker';
+export { MODEL_COSTS, trackUsage, getUsageSummary, _resetUsage } from '@/tree/agent-fleet/llm-cost-tracker';
 
 export type LLMTier = 'lite' | 'standard' | 'max';
 

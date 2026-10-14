@@ -8,7 +8,7 @@
  * so even if the tick fires twice, the same rows won't be double-processed.
  */
 
-import { claimDueInstallations } from '@/tree/sop/sop-repo-installations';
+import { claimDueInstallations } from '@/seed/sop/sop-repo-installations';
 import { logger } from '@/seed/utils/logger-utility';
 import type { RunContext, RunResult } from '@/seed/sop/executor/types';
 

@@ -87,7 +87,7 @@ describe('checkVideoQuota', () => {
     const mockD1 = makeD1WithVideoCount(5);
     (globalThis as unknown as Record<string, Record<string, unknown>>).__env = { DB: mockD1 as unknown as Record<string, unknown> };
 
-    const { checkVideoQuota } = await import('../quota-enforcer-video');
+    const { checkVideoQuota } = await import('@/tree/quota/quota-enforcer-video');
     await expect(checkVideoQuota('tenant-a', 'free')).resolves.toBeUndefined();
   });
 
@@ -98,7 +98,7 @@ describe('checkVideoQuota', () => {
 
     // Reset module cache to pick up fresh globalThis
     vi.resetModules();
-    const { checkVideoQuota } = await import('../quota-enforcer-video');
+    const { checkVideoQuota } = await import('@/tree/quota/quota-enforcer-video');
 
     let caught: unknown;
     try {
@@ -118,7 +118,7 @@ describe('checkVideoQuota', () => {
     (globalThis as unknown as Record<string, Record<string, unknown>>).__env = { DB: mockD1 as unknown as Record<string, unknown> };
 
     vi.resetModules();
-    const { checkVideoQuota } = await import('../quota-enforcer-video');
+    const { checkVideoQuota } = await import('@/tree/quota/quota-enforcer-video');
     await expect(checkVideoQuota('tenant-a', 'enterprise')).resolves.toBeUndefined();
   });
 
@@ -127,7 +127,7 @@ describe('checkVideoQuota', () => {
     (globalThis as unknown as Record<string, Record<string, unknown>>).__env = { DB: mockD1 as unknown as Record<string, unknown> };
 
     vi.resetModules();
-    const { checkVideoQuota } = await import('../quota-enforcer-video');
+    const { checkVideoQuota } = await import('@/tree/quota/quota-enforcer-video');
     // BASIC maps to 'free' → 10 video limit
     let caught: unknown;
     try {

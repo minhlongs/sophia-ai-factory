@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { logger } from '@/seed/utils/logger-utility';
+import type { ZaloTokenResponse } from './types';
+import { verifyState, exchangeZaloCode, fetchZaloOAInfo } from './token-client';
+import { bindZaloChannel } from './account-binder';
+
+export async function handleZaloCallback(request: NextRequest): Promise<NextResponse> {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const oaId = searchParams.get('oa_id');
+  const stateParam = searchParams.get('state');
+  const errorParam = searchParams.get('error');
+
+  if (errorParam) {
+    logger.warn('[Zalo Callback] OAuth error', { error: errorParam });
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/channels?error=oauth_denied`);
+  }
+
+  if (!code || !stateParam) {
+    return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
+  }
+
+  let stateData: { userId: string };
+  try {
+    stateData = await verifyState(stateParam);
+  } catch {
+    return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
+  }
+
+  const user = await getCurrentUserFromHeaders(request.headers);
+  if (!user || user.id !== stateData.userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/zalo/callback`;
+  let tokenData: ZaloTokenResponse;
+  try {
+    tokenData = await exchangeZaloCode(code, redirectUri);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+  }
+
+  if (tokenData.error && tokenData.error !== 0) {
+    logger.error('[Zalo Callback] Token error', new Error(`Zalo error ${tokenData.error}: ${tokenData.message}`));
+    return NextResponse.json({ error: tokenData.message ?? 'Token error' }, { status: 502 });
+  }
+  if (!tokenData.access_token) {
+    return NextResponse.json({ error: 'No access token returned' }, { status: 502 });
+  }
+
+  const oaInfo = await fetchZaloOAInfo(tokenData.access_token);
+  const resolvedOaId = oaInfo.data?.oa_id ?? oaId ?? 'unknown';
+  const displayName = oaInfo.data?.name ?? resolvedOaId;
+
+  await bindZaloChannel(user.id, tokenData, resolvedOaId, displayName);
+
+  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/channels?connected=zalo`);
+}

@@ -22,53 +22,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/c
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
 import type { TierAdoptionChartRow } from '@/seed/types/analytics-tier';
-
-// ── Constants ────────────────────────────────────────────────────────────────
-
-const TIER_COLORS: Record<string, string> = {
-  BASIC: '#94a3b8',      // slate-400
-  PREMIUM: '#3b82f6',    // blue-500
-  ENTERPRISE: '#a855f7', // purple-500
-  MASTER: '#f59e0b',     // amber-500
-};
-
-const TIERS = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] as const;
+import {
+  TIER_COLORS,
+  TIERS,
+  TierAdoptionTooltip,
+} from './tier-adoption-tooltip';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
 export interface TierAdoptionChartProps {
   from: string;
   to: string;
-}
-
-// ── Tooltip ──────────────────────────────────────────────────────────────────
-
-interface TooltipPayloadItem {
-  name: string;
-  value: number;
-  color: string;
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayloadItem[];
-  label?: string;
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-      <p className="font-medium mb-2">{label}</p>
-      {payload.map(entry => (
-        <div key={entry.name} className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-          <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-medium tabular-nums">{entry.value}</span>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -105,35 +69,25 @@ export function TierAdoptionChart({ from, to }: TierAdoptionChartProps) {
     return () => { cancelled = true; };
   }, [from, to]);
 
-  if (loading) {
+  if (loading || error) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>{t('tier_adoption_title') || 'Tier Adoption Timeline'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[280px] w-full rounded-lg" />
+          {loading ? (
+            <Skeleton className="h-[280px] w-full rounded-lg" />
+          ) : (
+            <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
+              {error}
+            </div>
+          )}
         </CardContent>
       </Card>
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('tier_adoption_title') || 'Tier Adoption Timeline'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
-            {error}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Format x-axis label: YYYY-MM-DD → MM/DD
   const formatDate = (d: string) => d.slice(5).replace('-', '/');
 
   return (
@@ -158,31 +112,14 @@ export function TierAdoptionChart({ from, to }: TierAdoptionChartProps) {
                 ))}
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={formatDate}
-                tick={{ fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                allowDecimals={false}
-              />
-              <Tooltip content={<CustomTooltip />} />
+              <XAxis dataKey="date" tickFormatter={formatDate} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+              <Tooltip content={<TierAdoptionTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
               {TIERS.map(tier => (
                 <Area
-                  key={tier}
-                  type="monotone"
-                  dataKey={tier}
-                  stackId="1"
-                  stroke={TIER_COLORS[tier]}
-                  strokeWidth={2}
-                  fill={`url(#grad-${tier})`}
-                  dot={false}
+                  key={tier} type="monotone" dataKey={tier} stackId="1"
+                  stroke={TIER_COLORS[tier]} strokeWidth={2} fill={`url(#grad-${tier})`} dot={false}
                 />
               ))}
             </AreaChart>

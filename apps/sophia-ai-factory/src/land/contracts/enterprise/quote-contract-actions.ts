@@ -11,9 +11,7 @@ import type {
 } from '@/seed/types/enterprise-contracts';
 import {
   createEnterpriseQuote,
-  getQuoteById,
   convertQuoteToContract,
-  getContractById,
   executeContractSigning,
   type CreateQuoteInput,
 } from '@/land/contracts/quote-to-cash-workflow';
@@ -23,6 +21,10 @@ import {
 } from '@/tree/contracts/contract-generator';
 import type { ContractActionError } from './types';
 import { assertContractAccess } from './contract-access';
+import {
+  loadAuthorizedQuote,
+  loadAuthorizedContract,
+} from './quote-contract-action-helpers';
 
 /**
  * Server Action: Generate a new custom Enterprise Volume Quote.
@@ -55,20 +57,9 @@ export async function getEnterpriseQuoteAction(
   quoteId: string,
 ): Promise<Result<EnterpriseQuote, ContractActionError>> {
   try {
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DATABASE_ERROR', message: 'D1 database binding unavailable' });
-    }
-
-    const quote = await getQuoteById(db, quoteId);
-    if (!quote) {
-      return failure({ code: 'NOT_FOUND', message: 'Enterprise quote not found' });
-    }
-
-    const authRes = await assertContractAccess(db, quote.orgId);
-    if (!authRes.ok) return authRes;
-
-    return success(quote);
+    const loaded = await loadAuthorizedQuote(quoteId);
+    if (!loaded.ok) return loaded;
+    return success(loaded.value.quote);
   } catch (err) {
     const error = toError(err);
     logger.error('[EnterpriseContractActions] getQuote error', error);
@@ -83,20 +74,10 @@ export async function convertQuoteToContractAction(
   quoteId: string,
 ): Promise<Result<EnterpriseContract, ContractActionError>> {
   try {
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DATABASE_ERROR', message: 'D1 database binding unavailable' });
-    }
+    const loaded = await loadAuthorizedQuote(quoteId);
+    if (!loaded.ok) return loaded;
 
-    const quote = await getQuoteById(db, quoteId);
-    if (!quote) {
-      return failure({ code: 'NOT_FOUND', message: 'Enterprise quote not found' });
-    }
-
-    const authRes = await assertContractAccess(db, quote.orgId);
-    if (!authRes.ok) return authRes;
-
-    const contract = await convertQuoteToContract(db, quoteId);
+    const contract = await convertQuoteToContract(loaded.value.db, quoteId);
     return success(contract);
   } catch (err) {
     const error = toError(err);
@@ -112,20 +93,9 @@ export async function getEnterpriseContractAction(
   contractId: string,
 ): Promise<Result<EnterpriseContract, ContractActionError>> {
   try {
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DATABASE_ERROR', message: 'D1 database binding unavailable' });
-    }
-
-    const contract = await getContractById(db, contractId);
-    if (!contract) {
-      return failure({ code: 'NOT_FOUND', message: 'Enterprise contract not found' });
-    }
-
-    const authRes = await assertContractAccess(db, contract.orgId);
-    if (!authRes.ok) return authRes;
-
-    return success(contract);
+    const loaded = await loadAuthorizedContract(contractId);
+    if (!loaded.ok) return loaded;
+    return success(loaded.value.contract);
   } catch (err) {
     const error = toError(err);
     logger.error('[EnterpriseContractActions] getContract error', error);
@@ -141,20 +111,10 @@ export async function signEnterpriseContractAction(
   signer: CustomerSignerInput,
 ): Promise<Result<EnterpriseContract, ContractActionError>> {
   try {
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DATABASE_ERROR', message: 'D1 database binding unavailable' });
-    }
+    const loaded = await loadAuthorizedContract(contractId);
+    if (!loaded.ok) return loaded;
 
-    const contract = await getContractById(db, contractId);
-    if (!contract) {
-      return failure({ code: 'NOT_FOUND', message: 'Enterprise contract not found' });
-    }
-
-    const authRes = await assertContractAccess(db, contract.orgId);
-    if (!authRes.ok) return authRes;
-
-    const signedContract = await executeContractSigning(db, contractId, signer);
+    const signedContract = await executeContractSigning(loaded.value.db, contractId, signer);
     return success(signedContract);
   } catch (err) {
     const error = toError(err);
@@ -171,21 +131,11 @@ export async function getContractTermsDocumentAction(
   locale: 'vi' | 'en' = 'vi',
 ): Promise<Result<{ termsMarkdown: string; termsHtml: string }, ContractActionError>> {
   try {
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DATABASE_ERROR', message: 'D1 database binding unavailable' });
-    }
+    const loaded = await loadAuthorizedContract(contractId);
+    if (!loaded.ok) return loaded;
 
-    const contract = await getContractById(db, contractId);
-    if (!contract) {
-      return failure({ code: 'NOT_FOUND', message: 'Enterprise contract not found' });
-    }
-
-    const authRes = await assertContractAccess(db, contract.orgId);
-    if (!authRes.ok) return authRes;
-
-    const termsMarkdown = generateContractLegalTerms(contract, locale);
-    const termsHtml = generateContractHtml(contract, locale);
+    const termsMarkdown = generateContractLegalTerms(loaded.value.contract, locale);
+    const termsHtml = generateContractHtml(loaded.value.contract, locale);
 
     return success({ termsMarkdown, termsHtml });
   } catch (err) {

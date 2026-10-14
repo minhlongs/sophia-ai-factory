@@ -7,7 +7,7 @@ import { isPublicApiRoute } from '@/forest/middleware/auth-guard';
 import { emitUsageEvent } from '@/tree/usage-metering';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
-import { track } from '@/forest/telemetry/track';
+import { track } from '@/tree/signals/track';
 import { D1Events } from '@/forest/telemetry/d1-event-types';
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation';
 import { agyTenantIsolationMiddleware } from '@/forest/middleware/agy-tenant-isolation';

@@ -1,28 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Link2, Copy, Check, BarChart3, ExternalLink } from 'lucide-react';
-import { Card, CardHeader, CardContent, Button, Badge, Input } from '@/components/stitch';
-
-const affiliateStats = {
-  totalEarnings: '$12,450',
-  pending: '$3,200',
-  clicks: '4,521',
-  conversions: '127',
-  conversionRate: '2.8%',
-};
-
-const recentReferrals = [
-  { id: '1', customer: 'Acme Corp', plan: 'Professional', value: '$79', status: 'approved', date: 'Oct 24' },
-  { id: '2', customer: 'TechStart Inc', plan: 'Starter', value: '$29', status: 'pending', date: 'Oct 24' },
-  { id: '3', customer: 'Design Studio', plan: 'Business', value: '$199', status: 'approved', date: 'Oct 23' },
-  { id: '4', customer: 'Dev Agency', plan: 'Professional', value: '$79', status: 'paid', date: 'Oct 23' },
-];
-
-const banners = [
-  { id: '1', name: 'Hero Banner', size: '728x90', impressions: '12,451', clicks: '234' },
-  { id: '2', name: 'Sidebar', size: '300x250', impressions: '8,234', clicks: '156' },
-];
+import { Link2, Copy, Check } from 'lucide-react';
+import { Card, CardHeader, CardContent, Button, Input } from '@/components/stitch';
+import {
+  AFFILIATE_PORTAL_STATS,
+  AffiliateReferralsAndMaterialsGrid,
+} from './affiliate-portal-sections';
 
 export default function AffiliatePortalPage() {
   const [copiedLink, setCopiedLink] = React.useState(false);
@@ -38,7 +22,6 @@ export default function AffiliatePortalPage() {
   return (
     <div className="min-h-screen bg-background p-lg">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-xl">
           <h1 className="font-headline-xl text-headline-xl text-on-surface mb-sm">
             Affiliate Portal
@@ -48,31 +31,29 @@ export default function AffiliatePortalPage() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-xl">
           <Card padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total Earnings</p>
-            <p className="font-headline-md text-headline-md text-primary">{affiliateStats.totalEarnings}</p>
+            <p className="font-headline-md text-headline-md text-primary">{AFFILIATE_PORTAL_STATS.totalEarnings}</p>
           </Card>
           <Card padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Pending</p>
-            <p className="font-headline-md text-headline-md text-amber-600">{affiliateStats.pending}</p>
+            <p className="font-headline-md text-headline-md text-amber-600">{AFFILIATE_PORTAL_STATS.pending}</p>
           </Card>
           <Card padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Clicks</p>
-            <p className="font-headline-md text-headline-md text-on-surface">{affiliateStats.clicks}</p>
+            <p className="font-headline-md text-headline-md text-on-surface">{AFFILIATE_PORTAL_STATS.clicks}</p>
           </Card>
           <Card padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Conversions</p>
-            <p className="font-headline-md text-headline-md text-on-surface">{affiliateStats.conversions}</p>
+            <p className="font-headline-md text-headline-md text-on-surface">{AFFILIATE_PORTAL_STATS.conversions}</p>
           </Card>
           <Card padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Conv. Rate</p>
-            <p className="font-headline-md text-headline-md text-emerald-600">{affiliateStats.conversionRate}</p>
+            <p className="font-headline-md text-headline-md text-emerald-600">{AFFILIATE_PORTAL_STATS.conversionRate}</p>
           </Card>
         </div>
 
-        {/* Referral Link */}
         <Card className="mb-xl" padding="lg">
           <CardHeader>
             <h3 className="font-headline-sm text-headline-sm text-on-surface">Your Referral Link</h3>
@@ -92,79 +73,8 @@ export default function AffiliatePortalPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
-          {/* Referrals */}
-          <Card padding="lg">
-            <CardHeader>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Recent Referrals</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-md">
-                {recentReferrals.map((ref) => (
-                  <div key={ref.id} className="flex items-center justify-between pb-md border-b border-outline-variant last:border-0 last:pb-0">
-                    <div>
-                      <p className="font-label-md text-on-surface">{ref.customer}</p>
-                      <p className="text-sm text-on-surface-variant">{ref.plan} • {ref.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-label-md text-on-surface">{ref.value}</p>
-                      <Badge
-                        variant="soft"
-                        color={
-                          ref.status === 'approved' ? 'success' :
-                          ref.status === 'paid' ? 'primary' : 'warning'
-                        }
-                      >
-                        {ref.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <AffiliateReferralsAndMaterialsGrid />
 
-          {/* Marketing Materials */}
-          <Card padding="lg">
-            <CardHeader>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Marketing Materials</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-md">
-                {banners.map((banner) => (
-                  <div key={banner.id} className="bg-surface rounded-xl p-md flex items-center gap-md">
-                    <div className="w-16 h-12 bg-secondary-container rounded flex items-center justify-center text-secondary font-mono text-xs">
-                      {banner.size}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-label-md text-on-surface">{banner.name}</p>
-                      <p className="text-sm text-on-surface-variant">
-                        {banner.impressions} impressions • {banner.clicks} clicks
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" iconLeft={<ExternalLink className="w-4 h-4" />}>
-                      Get Code
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-lg pt-lg border-t border-outline-variant">
-                <p className="font-label-sm text-label-sm text-on-surface-variant mb-sm">Commission Structure</p>
-                <div className="bg-primary/5 rounded-xl p-md">
-                  <div className="flex items-center gap-md mb-sm">
-                    <BarChart3 className="w-8 h-8 text-primary" />
-                    <div>
-                      <p className="font-label-lg text-primary">30% Recurring</p>
-                      <p className="text-sm text-on-surface-variant">Earn 30% of all subscription revenue for 24 months</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Resources */}
         <Card className="mt-xl" padding="lg">
           <CardHeader>
             <h3 className="font-headline-sm text-headline-sm text-on-surface">Resources</h3>

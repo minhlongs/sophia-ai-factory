@@ -10,11 +10,6 @@ import type {
   AutonomousCapability,
   AutonomousScheduleTaskRow,
 } from '@/seed/types/autonomous-engine';
-import type {
-  PolicyEvaluationRequest,
-  PolicyEvaluationVerdict,
-} from '@/seed/types/agent-governance';
-import { evaluateAgyPolicySync } from '@/tree/governance/agy-policy-engine';
 import {
   CAPABILITY_BUDGETS,
   type SwarmExecutionContext,
@@ -23,65 +18,14 @@ import {
 import { discoverAffiliateOffers } from './swarm-affiliate-scout';
 import { generateViralVideoScript } from './swarm-content-producer';
 import { generateMultiPlatformSyndication } from './swarm-auto-publisher';
+import { canExecuteCapability } from './swarm-capability-gate';
 
-// Re-export all submodules for complete backward compatibility
+export { canExecuteCapability };
 export * from './swarm-types';
 export * from './swarm-affiliate-scout';
 export * from './swarm-content-producer';
 export * from './swarm-auto-publisher';
 export * from './swarm-telemetry';
-
-/**
- * Validates capability execution against MCU budget, cycle token limits, and AGY governance policies.
- */
-export function canExecuteCapability(
-  capability: AutonomousCapability,
-  context: SwarmExecutionContext,
-): { allowed: boolean; reason?: string; verdict?: PolicyEvaluationVerdict } {
-  const budget = CAPABILITY_BUDGETS[capability];
-  if (!budget) {
-    return { allowed: false, reason: `Unknown capability: ${capability}` };
-  }
-
-  if (context.availableMcu < budget.mcuRequired) {
-    return {
-      allowed: false,
-      reason: `Insufficient MCU: required ${budget.mcuRequired}, available ${context.availableMcu}`,
-    };
-  }
-
-  if (context.maxTokensPerCycle < budget.tokensEstimate) {
-    return {
-      allowed: false,
-      reason: `Cycle token limit exceeded: estimate ${budget.tokensEstimate}, cap ${context.maxTokensPerCycle}`,
-    };
-  }
-
-  if (context.agyConfig) {
-    const policyReq: PolicyEvaluationRequest = {
-      agencyId: context.tenantId || 'default',
-      agentId: `agent-${capability}`,
-      action: budget.actionName,
-      requestedAutonomy: context.requestedAutonomy || budget.requiredAutonomy,
-      requestedComputeUnits: budget.mcuRequired,
-    };
-    const verdict = evaluateAgyPolicySync(
-      context.agyConfig,
-      policyReq,
-      budget.requiredAutonomy,
-    );
-    if (!verdict.allowed) {
-      return {
-        allowed: false,
-        reason: `Governance policy rejected action ${budget.actionName}: ${verdict.reason}`,
-        verdict,
-      };
-    }
-    return { allowed: true, verdict };
-  }
-
-  return { allowed: true };
-}
 
 /**
  * Executes an autonomous swarm task with genuine capability handler logic,

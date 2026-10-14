@@ -9,38 +9,18 @@
 
 'use server';
 
-import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
-import type { CampaignBlueprintRow } from '@/seed/types/playbook-pattern';
 import { runMissionPreflightCheck, type MissionPreflightResult } from '@/tree/mission/preflight-check';
 import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import type { ActionResult, TriggerBatchParams } from './types';
-import { getDbAccess } from './db-access';
 import { dispatchBatchMissions } from './batch-dispatch-helper';
-
-function resolveFallbackBlueprint(blueprintId: string, workspaceId: string): CampaignBlueprintRow {
-  return {
-    id: blueprintId,
-    workspace_id: workspaceId,
-    name_en: 'Batch Campaign',
-    name_vi: 'Chiến dịch Batch',
-    description_en: 'Automated batch run',
-    description_vi: 'Chạy loạt tự động',
-    target_platform: 'youtube_shorts',
-    hook_style: 'curiosity_gap',
-    voice_style: 'dynamic_hook',
-    duration_seconds: 60,
-    aspect_ratio: '9:16',
-    estimated_scenes: 3,
-    suggested_prompts: '[]',
-    is_active: 1,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-  };
-}
+import {
+  loadOrFallbackBlueprint,
+  revalidateBatchRunPaths,
+} from './batch-run-helpers';
 
 export async function triggerBatchRunAction(
   params: TriggerBatchParams,
@@ -51,30 +31,12 @@ export async function triggerBatchRunAction(
       return { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' };
     }
 
-    const { d1, client } = await getDbAccess();
-    if (!d1 && !client) {
+    const { blueprint, dbAvailable } = await loadOrFallbackBlueprint(
+      params.blueprintId,
+      params.workspaceId,
+    );
+    if (!dbAvailable || !blueprint) {
       return { success: false, error: 'Database not available', code: 'DB_UNAVAILABLE' };
-    }
-
-    let blueprint: CampaignBlueprintRow | null = null;
-    if (d1) {
-      blueprint = await d1
-        .prepare(`SELECT * FROM campaign_blueprints WHERE id = ?`)
-        .bind(params.blueprintId)
-        .first<CampaignBlueprintRow>();
-    } else if (client) {
-      const res = await client.execute(
-        `SELECT * FROM campaign_blueprints WHERE id = ?`,
-        [params.blueprintId],
-      );
-      blueprint = (res.results?.[0] as CampaignBlueprintRow) ?? null;
-    }
-
-    if (!blueprint) {
-      logger.warn('[triggerBatchRunAction] Blueprint not found in campaign_blueprints, using fallback', {
-        blueprintId: params.blueprintId,
-      });
-      blueprint = resolveFallbackBlueprint(params.blueprintId, params.workspaceId);
     }
 
     const batchSize = Math.max(1, Math.min(params.batchSize || 1, 20));
@@ -157,12 +119,7 @@ export async function triggerBatchRunAction(
       blueprintId: params.blueprintId,
     });
 
-    revalidatePath('/dashboard/playbook');
-    revalidatePath('/[locale]/dashboard/playbook');
-    revalidatePath('/dashboard/missions');
-    revalidatePath('/[locale]/dashboard/missions');
-    revalidateTag('playbook_runs', 'max');
-    revalidateTag('missions', 'max');
+    revalidateBatchRunPaths();
     return {
       success: true,
       data: { batchId, missionIds, preflight },

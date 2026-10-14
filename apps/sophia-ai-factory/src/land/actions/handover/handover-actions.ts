@@ -20,17 +20,19 @@ import type {
 } from '@/seed/handover/handover-types';
 import {
   getCustomerHandover,
-  recordHandoverAcceptance,
   getHandoverCertificate,
 } from '@/tree/handover/customer-handover-service';
 import type { ActionError } from './types';
 import {
-  validateSignerInput,
   executeDay1ProbesReport,
   saveVerificationReport,
   revalidateHandoverViews,
 } from './handover-audit';
 import { buildSanitizedEnvExport, type SanitizedEnvResult } from './package-generator';
+import {
+  isAuthorizedForHandover,
+  executeSignHandoverAcceptance,
+} from './handover-action-helpers';
 
 export async function signHandoverAcceptanceAction(
   input: HandoverAcceptanceInput,
@@ -40,57 +42,7 @@ export async function signHandoverAcceptanceAction(
     if (!user) {
       return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to sign handover acceptance' });
     }
-
-    const validation = validateSignerInput(input);
-    if (!validation.valid) {
-      return failure({ code: 'INVALID_INPUT', message: validation.message });
-    }
-    const { cleanHandoverId, cleanSignerName, cleanSignerEmail, cleanSignerRole } = validation.data;
-
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding currently unavailable' });
-    }
-
-    const existing = await getCustomerHandover(db, cleanHandoverId);
-    if (!existing) {
-      return failure({ code: 'NOT_FOUND', message: `Handover record not found: ${cleanHandoverId}` });
-    }
-
-    if (existing.acceptance_status === 'accepted') {
-      return failure({
-        code: 'ALREADY_ACCEPTED',
-        message: 'This customer handover has already been accepted and certified. Re-signing is prohibited to preserve certificate immutability.',
-      });
-    }
-
-    const isAdmin = await isUserAdmin(user);
-    const isOwner = user.id === existing.customer_user_id || Boolean(existing.tenant_id && (user as { orgId?: string }).orgId === existing.tenant_id);
-
-    if (!isOwner && !isAdmin) {
-      return failure({ code: 'FORBIDDEN', message: 'Unauthorized: you are not permitted to sign acceptance for this handover' });
-    }
-
-    const sanitizedInput: HandoverAcceptanceInput = {
-      ...input,
-      handoverId: cleanHandoverId,
-      signerName: cleanSignerName,
-      signerEmail: cleanSignerEmail,
-      signerRole: cleanSignerRole,
-    };
-
-    const report = await executeDay1ProbesReport(db);
-    report.durationMs = 0;
-    const result = await recordHandoverAcceptance(db, sanitizedInput, report);
-
-    logger.info('[handover-actions] Handover accepted via server action', {
-      handoverId: cleanHandoverId,
-      signerName: cleanSignerName,
-      certificateHash: result.certificate.certificateSha256,
-    });
-
-    revalidateHandoverViews(cleanHandoverId);
-    return success(result);
+    return await executeSignHandoverAcceptance(user, input);
   } catch (err) {
     logger.error('[handover-actions] signHandoverAcceptanceAction failed', err instanceof Error ? err : undefined);
     return failure({
@@ -108,8 +60,7 @@ export async function triggerHandoverVerificationAction(
     const user = await getCurrentUser();
     if (!user) return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
 
-    const isAdmin = await isUserAdmin(user);
-    if (!isAdmin) {
+    if (!(await isUserAdmin(user))) {
       return failure({
         code: 'FORBIDDEN',
         message: 'Forbidden: Administrator privileges required to trigger verification suite',
@@ -139,8 +90,7 @@ export async function exportSanitizedEnvAction(): Promise<Result<SanitizedEnvRes
     const user = await getCurrentUser();
     if (!user) return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
 
-    const isAdmin = await isUserAdmin(user);
-    if (!isAdmin) {
+    if (!(await isUserAdmin(user))) {
       return failure({
         code: 'FORBIDDEN',
         message: 'Forbidden: Administrator privileges required to export environment configuration',
@@ -171,10 +121,7 @@ export async function getHandoverDetailsAction(
     const handover = await getCustomerHandover(db, cleanId);
     if (!handover) return failure({ code: 'NOT_FOUND', message: `Handover not found: ${cleanId}` });
 
-    const isAdmin = await isUserAdmin(user);
-    const isOwner = user.id === handover.customer_user_id || Boolean(handover.tenant_id && (user as { orgId?: string }).orgId === handover.tenant_id);
-
-    if (!isOwner && !isAdmin) {
+    if (!(await isAuthorizedForHandover(user, handover))) {
       return failure({ code: 'FORBIDDEN', message: 'Unauthorized: you are not permitted to view this handover' });
     }
 

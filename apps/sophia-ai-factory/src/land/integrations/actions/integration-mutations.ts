@@ -6,6 +6,8 @@
  * @module land/integrations/actions/integration-mutations
  */
 
+'use server';
+
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type {

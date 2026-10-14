@@ -15,8 +15,6 @@
  * @module land/playbook/actions
  */
 
-'use server';
-
 export * from './actions/types';
 export * from './actions/overview-actions';
 export * from './actions/rule-actions';

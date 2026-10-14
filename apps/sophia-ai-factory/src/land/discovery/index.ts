@@ -4,6 +4,6 @@
  * @module land/discovery
  */
 
-export * from './affiliate-ai-scorer';
+export * from '@/tree/discovery/affiliate-ai-scorer';
 export * from './affiliate-openrouter-niche-enhancer';
-export * from './affiliate-scoring-primitives';
+export * from '@/tree/discovery/affiliate-scoring-primitives';

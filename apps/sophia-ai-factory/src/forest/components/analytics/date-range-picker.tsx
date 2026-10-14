@@ -16,36 +16,15 @@ import { Button } from '@/seed/components/ui/button';
 import { Calendar } from '@/seed/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/seed/components/ui/popover';
 import { useTranslations } from 'next-intl';
+import {
+  PRESETS,
+  toISO,
+  resolvePresetDateRange,
+  type ISODateRange,
+  type PresetKey,
+} from './date-range-presets';
 
-// ── ISO range ────────────────────────────────────────────────────────────────
-
-/** ISO 8601 date range emitted by onChange */
-export interface ISODateRange {
-  from: string;  // YYYY-MM-DD
-  to: string;    // YYYY-MM-DD
-  fromDate: Date;
-  toDate: Date;
-}
-
-// ── Presets ──────────────────────────────────────────────────────────────────
-
-type PresetKey = '7d' | '30d' | '90d' | 'month' | 'last-month';
-
-interface DaysPreset { label: string; days: number }
-interface TypePreset { label: string; type: 'current' | 'previous' }
-type PresetConfig = DaysPreset | TypePreset;
-
-const PRESETS: Record<PresetKey, PresetConfig> = {
-  '7d':         { label: 'Last 7 days',  days: 7 },
-  '30d':        { label: 'Last 30 days', days: 30 },
-  '90d':        { label: 'Last 90 days', days: 90 },
-  'month':      { label: 'This month',   type: 'current' },
-  'last-month': { label: 'Last month',   type: 'previous' },
-};
-
-function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+export type { ISODateRange };
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -89,21 +68,7 @@ export function DateRangePicker({
   }, [onChange, onISOChange]);
 
   const applyPreset = (preset: PresetKey) => {
-    const config = PRESETS[preset];
-    const now = new Date();
-    let from = new Date(now);
-    let to = new Date(now);
-
-    if ('days' in config) {
-      from.setDate(now.getDate() - config.days);
-    } else if (config.type === 'current') {
-      from = new Date(now.getFullYear(), now.getMonth(), 1);
-    } else {
-      from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      to = new Date(now.getFullYear(), now.getMonth(), 0);
-    }
-
-    emitRange({ from, to });
+    emitRange(resolvePresetDateRange(preset));
     setOpen(false);
   };
 
@@ -139,29 +104,14 @@ export function DateRangePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4" align="start">
-        {/* Preset buttons */}
         <div className="flex flex-wrap gap-2 mb-4">
           {presets.map((key) => (
-            <Button
-              key={key}
-              variant="ghost"
-              size="sm"
-              onClick={() => applyPreset(key)}
-            >
+            <Button key={key} variant="ghost" size="sm" onClick={() => applyPreset(key)}>
               {PRESETS[key].label}
             </Button>
           ))}
         </div>
-        {/* Calendar */}
-        <Calendar
-          initialFocus
-          mode="range"
-          defaultMonth={date?.from}
-          selected={date}
-          onSelect={handleDateSelect}
-          numberOfMonths={2}
-        />
-        {/* Custom date inputs as fallback */}
+        <Calendar initialFocus mode="range" defaultMonth={date?.from} selected={date} onSelect={handleDateSelect} numberOfMonths={2} />
         <div className="flex gap-2 mt-3 pt-3 border-t">
           <input
             type="date"
@@ -179,11 +129,7 @@ export function DateRangePicker({
             value={date?.to ? toISO(date.to) : ''}
             onChange={e => {
               const to = e.target.value ? new Date(e.target.value) : undefined;
-              if (to && date?.from) {
-                const newRange = { from: date.from, to };
-                emitRange(newRange);
-                setOpen(false);
-              }
+              if (to && date?.from) { emitRange({ from: date.from, to }); setOpen(false); }
             }}
           />
         </div>

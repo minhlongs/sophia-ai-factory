@@ -22,6 +22,7 @@ export interface ParsedStep {
   command: string;
   args: Record<string, unknown>;
   dependsOn?: number[];
+  rawYaml?: string;
 }
 
 /** Context carried through a SOP run execution */
@@ -36,9 +37,11 @@ export interface RunContext {
 /** Result collected from each step execution */
 export interface StepResult {
   order: number;
-  command: string;
-  missionId: string;
+  command?: string;
+  missionId?: string;
   output: Record<string, unknown>;
+  status?: 'success' | 'skipped' | 'failed';
+  error?: Error;
 }
 
 /** Final result returned by runSop */
@@ -47,6 +50,33 @@ export interface RunResult {
   status: 'completed' | 'failed' | 'paused';
   summary?: Record<string, unknown>;
   errorMessage?: string;
+}
+
+export interface ParsedPlaybook {
+  title: string;
+  version: string;
+  steps: ParsedStep[];
+}
+
+export interface ExecutorContext {
+  executorId: string;
+  playbookId: string;
+  orgId: string;
+  userId: string;
+  variables: Record<string, unknown>;
+  stepResults: Record<number, unknown>;
+}
+
+export type StepOutcome =
+  | { status: 'success'; result?: unknown }
+  | { status: 'skipped'; reason?: string }
+  | { status: 'failed'; error: Error };
+
+/** Metadata for a command */
+export interface CommandMetadata {
+  name: string;
+  description: string;
+  argSchema?: Record<string, unknown>;
 }
 
 /** Error thrown when a step fails, carries step order for partial status */

@@ -1,9 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  MARKETPLACE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+} from '@/land/sop-marketplace/availability';
 import type { CreatorTemplate, CreatorStudioStats } from '@/seed/types/creator-marketplace';
 import type { WithdrawalWithQr, ActiveQrModalState, TemplateFormData, WithdrawFormData } from './types';
-import { INITIAL_TEMPLATE_FORM, INITIAL_WITHDRAW_FORM, NAPAS_BANKS } from './constants';
+import { INITIAL_TEMPLATE_FORM, INITIAL_WITHDRAW_FORM } from './constants';
+import { postCreatorTemplate, postCreatorWithdrawal } from './creator-studio-api';
 
 export function useCreatorStudioData(isVi: boolean) {
   const [stats, setStats] = useState<CreatorStudioStats>({
@@ -20,7 +25,7 @@ export function useCreatorStudioData(isVi: boolean) {
 
   const [templates, setTemplates] = useState<CreatorTemplate[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalWithQr[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(CREATOR_MARKETPLACE_V2_ENABLED);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
@@ -34,6 +39,10 @@ export function useCreatorStudioData(isVi: boolean) {
   const [activeQrModal, setActiveQrModal] = useState<ActiveQrModalState | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -73,33 +82,19 @@ export function useCreatorStudioData(isVi: boolean) {
 
   const handleCreateTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      setErrorMsg(
+        isVi
+          ? 'Creator Marketplace tạm thời bảo trì. Vui lòng quay lại sau.'
+          : MARKETPLACE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+      );
+      return;
+    }
     setSubmittingTemplate(true);
     setErrorMsg(null);
-    const priceCents = Math.round(parseFloat(templateForm.priceDollars || '0') * 100);
 
     try {
-      const res = await fetch('/api/creator/templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: templateForm.title,
-          description: templateForm.description || undefined,
-          niche: templateForm.niche,
-          targetPlatform: templateForm.targetPlatform,
-          aspectRatio: templateForm.aspectRatio,
-          hookStyle: templateForm.hookStyle,
-          scriptTemplate: templateForm.scriptTemplate,
-          visualStylePrompt: templateForm.visualStylePrompt,
-          musicPrompt: templateForm.musicPrompt || undefined,
-          priceCents,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || 'Failed to submit template');
-      }
-
+      await postCreatorTemplate(templateForm);
       setIsTemplateModalOpen(false);
       setTemplateForm(INITIAL_TEMPLATE_FORM);
       await fetchData();
@@ -112,44 +107,24 @@ export function useCreatorStudioData(isVi: boolean) {
 
   const handleCreateWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      setErrorMsg(
+        isVi
+          ? 'Creator Marketplace tạm thời bảo trì. Vui lòng quay lại sau.'
+          : MARKETPLACE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+      );
+      return;
+    }
     setSubmittingWithdraw(true);
     setErrorMsg(null);
-    const amountCents = Math.round(parseFloat(withdrawForm.amountDollars || '0') * 100);
 
     try {
-      const res = await fetch('/api/creator/withdrawals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amountCents,
-          rail: withdrawForm.rail,
-          destinationAddress: withdrawForm.rail === 'USDT' ? withdrawForm.destinationAddress : undefined,
-          bankBin: withdrawForm.rail === 'VIETQR' ? withdrawForm.bankBin : undefined,
-          bankAccountNumber: withdrawForm.rail === 'VIETQR' ? withdrawForm.bankAccountNumber : undefined,
-          bankAccountName: withdrawForm.rail === 'VIETQR' ? withdrawForm.bankAccountName : undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || 'Withdrawal failed');
-      }
-
-      const result = (await res.json()) as {
-        vietQr?: { qrUrl: string; amountVnd: number; amountUsd: number } | null;
-      };
-
+      const qrModal = await postCreatorWithdrawal(withdrawForm);
       setIsWithdrawModalOpen(false);
       await fetchData();
 
-      if (result.vietQr) {
-        setActiveQrModal({
-          qrUrl: result.vietQr.qrUrl,
-          amountVnd: result.vietQr.amountVnd,
-          amountUsd: result.vietQr.amountUsd,
-          bankName: NAPAS_BANKS.find((b) => b.bin === withdrawForm.bankBin)?.short || 'NAPAS',
-          accountNumber: withdrawForm.bankAccountNumber,
-        });
+      if (qrModal) {
+        setActiveQrModal(qrModal);
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Withdrawal submission failed');

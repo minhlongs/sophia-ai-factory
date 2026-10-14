@@ -43,11 +43,34 @@ function importedIdentifiers(): string[] {
   const routePath = resolve(__dirname, '../route.ts');
   const source = readFileSync(routePath, 'utf8');
   const match = source.match(/import\s*\{([^}]*?)\}\s*from\s*["']@\/forest\/inngest\/functions\/index["']/);
-  if (!match) return [];
-  return match[1]
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  if (match) {
+    return match[1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  }
+
+  // Support modularized serve definitions
+  const serveDir = resolve(__dirname, '../serve');
+  const serveFiles = ['core-functions.ts', 'growth-functions.ts'];
+  const identifiers: string[] = [];
+  for (const file of serveFiles) {
+    try {
+      const content = readFileSync(resolve(serveDir, file), 'utf8');
+      const m = content.match(/import\s*\{([^}]*?)\}\s*from\s*["']@\/forest\/inngest\/functions\/index["']/);
+      if (m) {
+        identifiers.push(
+          ...m[1]
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+        );
+      }
+    } catch {
+      // file may not exist
+    }
+  }
+  return identifiers;
 }
 
 describe('Inngest route registration', () => {

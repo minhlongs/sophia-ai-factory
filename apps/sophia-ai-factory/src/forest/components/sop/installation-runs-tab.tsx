@@ -6,7 +6,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { SopRunRow } from '@/tree/sop/sop-types';
+import type { SopRunRow } from '@/seed/sop/sop-types';
 import { RunStatusBadge } from './run-status-badge';
 import { Play } from 'lucide-react';
 import { EmptyState } from '@/seed/components/ui/empty-state';

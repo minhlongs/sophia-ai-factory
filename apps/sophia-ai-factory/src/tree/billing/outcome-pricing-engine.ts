@@ -8,46 +8,36 @@
  * All money values are in cents (integer) to avoid floating-point errors.
  */
 
-import { getD1 } from '@/seed/db/client'
-import { logger } from '@/seed/utils/logger-utility'
-import { getErrorMessage } from '@/seed/utils/to-error'
+import { getD1 } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import type {
   BillingEvent,
   BillingStatus,
   CreatorBillingSummary,
   OutcomePricingTier,
-} from '@/seed/types/outcome-pricing'
+} from '@/seed/types/outcome-pricing';
+import {
+  calculateFee,
+  getActivePricingTiers,
+  DEFAULT_FEE_PERCENTAGE,
+} from './outcome-pricing-calc';
 
-const DEFAULT_FEE_PERCENTAGE = 15.0
-
-// ---------------------------------------------------------------------------
-// Fee calculation (pure — no I/O)
-// ---------------------------------------------------------------------------
-
-export function calculateFee(
-  grossRevenueCents: number,
-  percentage = DEFAULT_FEE_PERCENTAGE,
-): { feeCents: number; feePercentage: number } {
-  const feeCents = Math.floor(grossRevenueCents * (percentage / 100))
-  return { feeCents, feePercentage: percentage }
-}
-
-// ---------------------------------------------------------------------------
-// Write operations
-// ---------------------------------------------------------------------------
+export { calculateFee, getActivePricingTiers, DEFAULT_FEE_PERCENTAGE };
+export type { BillingEvent, BillingStatus, CreatorBillingSummary, OutcomePricingTier };
 
 export async function createBillingEvent(params: {
-  userId: string
-  executionId: string
-  outcomeId?: string
-  grossRevenueCents: number
-  pricingTierId?: string
-  percentage?: number
+  userId: string;
+  executionId: string;
+  outcomeId?: string;
+  grossRevenueCents: number;
+  pricingTierId?: string;
+  percentage?: number;
 }): Promise<string> {
-  const { userId, executionId, outcomeId, grossRevenueCents, pricingTierId, percentage } = params
-  const { feeCents, feePercentage } = calculateFee(grossRevenueCents, percentage)
-  const id = crypto.randomUUID()
-  const now = Math.floor(Date.now() / 1000)
+  const { userId, executionId, outcomeId, grossRevenueCents, pricingTierId, percentage } = params;
+  const { feeCents, feePercentage } = calculateFee(grossRevenueCents, percentage);
+  const id = crypto.randomUUID();
+  const now = Math.floor(Date.now() / 1000);
 
   try {
     const db = await getD1();
@@ -70,18 +60,18 @@ export async function createBillingEvent(params: {
         pricingTierId ?? null,
         now,
       )
-      .run()
+      .run();
 
-    logger.info('billing_event_created', { id, userId, feeCents, feePercentage })
-    return id
+    logger.info('billing_event_created', { id, userId, feeCents, feePercentage });
+    return id;
   } catch (err) {
-    logger.warn('billing_event_create_failed', { userId, executionId, error: getErrorMessage(err) })
-    throw new Error(`Failed to create billing event: ${getErrorMessage(err)}`)
+    logger.warn('billing_event_create_failed', { userId, executionId, error: getErrorMessage(err) });
+    throw new Error(`Failed to create billing event: ${getErrorMessage(err)}`);
   }
 }
 
 export async function settleBillingEvent(eventId: string): Promise<void> {
-  const now = Math.floor(Date.now() / 1000)
+  const now = Math.floor(Date.now() / 1000);
   try {
     const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
@@ -92,39 +82,35 @@ export async function settleBillingEvent(eventId: string): Promise<void> {
          WHERE id = ? AND status != 'settled'`,
       )
       .bind(now, eventId)
-      .run()
-    logger.info('billing_event_settled', { eventId })
+      .run();
+    logger.info('billing_event_settled', { eventId });
   } catch (err) {
-    logger.warn('billing_event_settle_failed', { eventId, error: getErrorMessage(err) })
-    throw new Error(`Failed to settle billing event: ${getErrorMessage(err)}`)
+    logger.warn('billing_event_settle_failed', { eventId, error: getErrorMessage(err) });
+    throw new Error(`Failed to settle billing event: ${getErrorMessage(err)}`);
   }
 }
-
-// ---------------------------------------------------------------------------
-// Read operations
-// ---------------------------------------------------------------------------
 
 export async function getCreatorBillingSummary(
   userId: string,
   opts?: { fromDate?: number; toDate?: number },
 ): Promise<CreatorBillingSummary> {
-  const conditions: string[] = ['user_id = ?']
-  const bindings: (string | number)[] = [userId]
+  const conditions: string[] = ['user_id = ?'];
+  const bindings: (string | number)[] = [userId];
 
   if (opts?.fromDate !== undefined) {
-    conditions.push('created_at >= ?')
-    bindings.push(opts.fromDate)
+    conditions.push('created_at >= ?');
+    bindings.push(opts.fromDate);
   }
   if (opts?.toDate !== undefined) {
-    conditions.push('created_at <= ?')
-    bindings.push(opts.toDate)
+    conditions.push('created_at <= ?');
+    bindings.push(opts.toDate);
   }
 
-  const where = conditions.join(' AND ')
+  const where = conditions.join(' AND ');
   const period =
     opts?.fromDate || opts?.toDate
       ? `${opts?.fromDate ?? 0}-${opts?.toDate ?? 'now'}`
-      : 'all-time'
+      : 'all-time';
 
   try {
     const db = await getD1();
@@ -141,11 +127,11 @@ export async function getCreatorBillingSummary(
       )
       .bind(...bindings)
       .first<{
-        total_gross: number
-        total_fees: number
-        total_settled: number
-        pending_fees: number
-      }>()
+        total_gross: number;
+        total_fees: number;
+        total_settled: number;
+        pending_fees: number;
+      }>();
 
     return {
       userId,
@@ -154,51 +140,9 @@ export async function getCreatorBillingSummary(
       totalSettledCents: row?.total_settled ?? 0,
       pendingFeesCents: row?.pending_fees ?? 0,
       period,
-    }
+    };
   } catch (err) {
-    logger.warn('billing_summary_fetch_failed', { userId, error: getErrorMessage(err) })
-    throw new Error(`Failed to fetch billing summary: ${getErrorMessage(err)}`)
+    logger.warn('billing_summary_fetch_failed', { userId, error: getErrorMessage(err) });
+    throw new Error(`Failed to fetch billing summary: ${getErrorMessage(err)}`);
   }
 }
-
-export async function getActivePricingTiers(): Promise<OutcomePricingTier[]> {
-  try {
-    const db = await getD1();
-    if (!db) throw new Error('D1 database binding not available');
-    const result = await db
-      .prepare(
-        `SELECT id, name, percentage, min_revenue_cents, max_revenue_cents,
-                is_active, created_at, updated_at
-         FROM outcome_pricing_tiers
-         WHERE is_active = 1
-         ORDER BY min_revenue_cents ASC`,
-      )
-      .all<{
-        id: string
-        name: string
-        percentage: number
-        min_revenue_cents: number
-        max_revenue_cents: number | null
-        is_active: number
-        created_at: number
-        updated_at: number
-      }>()
-
-    return (result.results ?? []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      percentage: row.percentage,
-      minRevenueCents: row.min_revenue_cents,
-      maxRevenueCents: row.max_revenue_cents ?? undefined,
-      isActive: row.is_active === 1,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }))
-  } catch (err) {
-    logger.warn('pricing_tiers_fetch_failed', { error: getErrorMessage(err) })
-    throw new Error(`Failed to fetch pricing tiers: ${getErrorMessage(err)}`)
-  }
-}
-
-// Re-export types for consumers that only import from this module
-export type { BillingEvent, BillingStatus, CreatorBillingSummary, OutcomePricingTier }

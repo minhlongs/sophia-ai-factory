@@ -19,7 +19,6 @@ import {
 } from '@/tree/partners/co-op-engine';
 import type {
   PartnerCoOpClaim,
-  SubmitCoOpClaimInput,
   AuditCoOpClaimResult,
 } from '@/tree/partners/types';
 import { verifyPartnerOwnership } from './ownership-verifier';
@@ -28,6 +27,10 @@ import type {
   AuditClaimActionInput,
   CoOpActionError,
 } from './types';
+import {
+  validateSubmitClaimAccess,
+  resolveDisburseClaimAccess,
+} from './claim-validators';
 
 /**
  * Submits a marketing reimbursement claim, evaluates heuristic appraisal,
@@ -37,52 +40,12 @@ export async function submitCoOpClaimAction(
   input: SubmitClaimActionInput,
 ): Promise<Result<PartnerCoOpClaim, CoOpActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to submit Co-Op claims' });
+    const validation = await validateSubmitClaimAccess(input);
+    if (!validation.ok) {
+      return validation;
     }
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const partnerId = input.partnerId?.trim();
-    const invoiceNumber = input.invoiceNumber?.trim();
-    const invoiceUrl = input.invoiceUrl?.trim();
-
-    if (!partnerId || !invoiceNumber || !invoiceUrl) {
-      return failure({ code: 'INVALID_INPUT', message: 'partnerId, invoiceNumber, and invoiceUrl are required' });
-    }
-
-    // Enforce object ownership
-    const authCheck = await verifyPartnerOwnership(db, partnerId, user.id, user.role);
-    if (!authCheck.ok) {
-      return failure(authCheck.error);
-    }
-
-    const claimInput: SubmitCoOpClaimInput & {
-      vendorName?: string;
-      brandKeywords?: string[];
-      periodStart?: number;
-      periodEnd?: number;
-      notes?: string;
-    } = {
-      partnerId,
-      campaignName: input.campaignName,
-      claimType: input.claimType,
-      invoiceNumber,
-      invoiceUrl,
-      invoiceDate: input.invoiceDate,
-      requestedAmountCents: input.requestedAmountCents,
-      reimbursementCurrency: input.reimbursementCurrency ?? 'USDT',
-      vendorName: input.vendorName,
-      brandKeywords: input.brandKeywords,
-      periodStart: input.periodStart,
-      periodEnd: input.periodEnd,
-      notes: input.notes,
-    };
-
+    const { db, claimInput } = validation.value;
     const result = await submitCoOpClaim(db, claimInput);
 
     if (!result.success || !result.claim) {
@@ -141,39 +104,12 @@ export async function disburseApprovedClaimAction(
   partnerId?: string,
 ): Promise<Result<{ success: boolean; claimId: string }, CoOpActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to disburse approved claim' });
+    const access = await resolveDisburseClaimAccess(claimId, partnerId);
+    if (!access.ok) {
+      return access;
     }
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const trimmedClaimId = claimId?.trim();
-    if (!trimmedClaimId) {
-      return failure({ code: 'INVALID_INPUT', message: 'claimId is required' });
-    }
-
-    let targetPartnerId = partnerId?.trim();
-    if (!targetPartnerId) {
-      const claimRow = await db
-        .prepare('SELECT partner_id FROM partner_co_op_claims WHERE id = ?')
-        .bind(trimmedClaimId)
-        .first<{ partner_id: string }>();
-      if (!claimRow) {
-        return failure({ code: 'CLAIM_NOT_FOUND', message: 'Claim not found' });
-      }
-      targetPartnerId = claimRow.partner_id;
-    }
-
-    const authCheck = await verifyPartnerOwnership(db, targetPartnerId, user.id, user.role);
-    if (!authCheck.ok) {
-      return failure(authCheck.error);
-    }
-
-    return success({ success: true, claimId: trimmedClaimId });
+    return success({ success: true, claimId: access.value.trimmedClaimId });
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('disburseApprovedClaimAction failed', { error: error.message, claimId });

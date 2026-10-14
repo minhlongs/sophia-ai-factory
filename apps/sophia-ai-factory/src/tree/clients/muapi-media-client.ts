@@ -4,70 +4,39 @@
  * REST client for muapi.ai — unified API for 100+ AI media models.
  * Supports image (Midjourney, Flux), video (Kling, Seedance, Veo3),
  * and audio (Suno, MMAudio) generation with async polling.
- *
- * Ref: github.com/SamurAIGPT/Generative-Media-Skills
  */
 
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
-import { toError } from '@/seed/utils/to-error'
+import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  MUAPI_BASE,
+  SUPPORTED_MODELS,
+  getMuApiKey,
+  isModelSupported,
+  type MediaType,
+  type JobStatus,
+  type MediaGenerationRequest,
+  type MediaJob,
+  type MediaGenerationResult,
+} from './muapi-media-types';
 
-const MUAPI_BASE = 'https://api.muapi.ai/v1'
-
-export type MediaType = 'image' | 'video' | 'audio'
-export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed'
-
-export interface MediaGenerationRequest {
-  type: MediaType
-  model: string
-  prompt: string
-  negativePrompt?: string
-  aspectRatio?: string
-  duration?: number
-  style?: string
-  seed?: number
-  imageUrl?: string
-}
-
-export interface MediaJob {
-  id: string
-  status: JobStatus
-  type: MediaType
-  model: string
-  resultUrl?: string
-  thumbnailUrl?: string
-  progress?: number
-  error?: string
-  createdAt: string
-  completedAt?: string
-}
-
-export interface MediaGenerationResult {
-  success: boolean
-  job?: MediaJob
-  error?: string
-  code?: string
-}
-
-/** Supported models per media type */
-export const SUPPORTED_MODELS: Record<MediaType, string[]> = {
-  image: ['midjourney-v7', 'flux-schnell', 'flux-dev', 'hidream', 'flux-kontext'],
-  video: ['kling-3.0', 'seedance-2.0', 'veo3', 'kling-lip-sync'],
-  audio: ['suno-v4', 'mmaudio'],
-}
-
-function getApiKey(): string {
-  const key = process.env.MUAPI_API_KEY
-  if (!key) throw new Error('MUAPI_API_KEY not configured')
-  return key
-}
+export {
+  SUPPORTED_MODELS,
+  isModelSupported,
+  type MediaType,
+  type JobStatus,
+  type MediaGenerationRequest,
+  type MediaJob,
+  type MediaGenerationResult,
+};
 
 /**
  * Submit a media generation job to muapi.ai
  */
 export async function submitMediaJob(
-  req: MediaGenerationRequest
+  req: MediaGenerationRequest,
 ): Promise<MediaGenerationResult> {
   if (!shouldAllowRequest('muapi')) {
     return { success: false, error: 'Circuit breaker open for muapi' };
@@ -77,37 +46,31 @@ export async function submitMediaJob(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getApiKey()}`,
+        Authorization: `Bearer ${getMuApiKey()}`,
       },
       body: JSON.stringify({
-        type: req.type,
-        model: req.model,
-        prompt: req.prompt,
-        negative_prompt: req.negativePrompt,
-        aspect_ratio: req.aspectRatio || '16:9',
-        duration: req.duration,
-        style: req.style,
-        seed: req.seed,
-        image_url: req.imageUrl,
+        type: req.type, model: req.model, prompt: req.prompt,
+        negative_prompt: req.negativePrompt, aspect_ratio: req.aspectRatio || '16:9',
+        duration: req.duration, style: req.style, seed: req.seed, image_url: req.imageUrl,
       }),
       signal: AbortSignal.timeout(30_000),
-    })
+    });
 
     if (!res.ok) {
       const errBody = await res.text().catch((err) => {
         logger.warn('Failed to read MuAPI error response', { error: String(err), context: 'submitMediaJob' });
         return '';
-      })
-      logger.error(`[MuAPI] ${res.status} error body: ${errBody}`)
-      const snippet = errBody.length > 200 ? `${errBody.slice(0, 200)}…` : errBody
-   return { success: false, error: `MuAPI ${res.status}${snippet ? ` ${snippet}` : ''}` }
+      });
+      logger.error(`[MuAPI] ${res.status} error body: ${errBody}`);
+      const snippet = errBody.length > 200 ? `${errBody.slice(0, 200)}…` : errBody;
+      return { success: false, error: `MuAPI ${res.status}${snippet ? ` ${snippet}` : ''}` };
     }
 
     const data = (await res.json()) as {
-      id: string
-      status: string
-      created_at: string
-    }
+      id: string;
+      status: string;
+      created_at: string;
+    };
 
     recordSuccess('muapi');
     return {
@@ -119,10 +82,10 @@ export async function submitMediaJob(
         model: req.model,
         createdAt: data.created_at,
       },
-    }
+    };
   } catch (err) {
     recordFailure('muapi', classifyError(err));
-    return { success: false, error: toError(err).message }
+    return { success: false, error: toError(err).message };
   }
 }
 
@@ -135,26 +98,26 @@ export async function getJobStatus(jobId: string): Promise<MediaGenerationResult
   }
   try {
     const res = await fetch(`${MUAPI_BASE}/jobs/${jobId}`, {
-      headers: { Authorization: `Bearer ${getApiKey()}` },
+      headers: { Authorization: `Bearer ${getMuApiKey()}` },
       signal: AbortSignal.timeout(10_000),
-    })
+    });
 
     if (!res.ok) {
-      return { success: false, error: `MuAPI ${res.status}` }
+      return { success: false, error: `MuAPI ${res.status}` };
     }
 
     const data = (await res.json()) as {
-      id: string
-      status: string
-      type: string
-      model: string
-      result_url?: string
-      thumbnail_url?: string
-      progress?: number
-      error?: string
-      created_at: string
-      completed_at?: string
-    }
+      id: string;
+      status: string;
+      type: string;
+      model: string;
+      result_url?: string;
+      thumbnail_url?: string;
+      progress?: number;
+      error?: string;
+      created_at: string;
+      completed_at?: string;
+    };
 
     recordSuccess('muapi');
     return {
@@ -171,16 +134,9 @@ export async function getJobStatus(jobId: string): Promise<MediaGenerationResult
         createdAt: data.created_at,
         completedAt: data.completed_at,
       },
-    }
+    };
   } catch (err) {
     recordFailure('muapi', classifyError(err));
-    return { success: false, error: toError(err).message }
+    return { success: false, error: toError(err).message };
   }
-}
-
-/**
- * Check if a model is supported
- */
-export function isModelSupported(type: MediaType, model: string): boolean {
-  return SUPPORTED_MODELS[type]?.includes(model) ?? false
 }

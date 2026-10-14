@@ -14,29 +14,21 @@ import type { Tier } from '@/seed/types';
 import {
   DUNNING_TIER_CONFIGS,
   getDunningState,
-  transitionDunningState,
   type DunningState,
-  type DunningStateResult,
   type DunningSettingsRow,
 } from './dunning-state-machine';
 import type { DunningAttemptRow } from './dunning-actions';
-
 import {
   getDunningKvClient,
   invalidateDunningCache,
   DUNNING_CACHE_TTL_SECONDS,
 } from './dunning-kv-cache';
+import { suspendLicense, restoreLicense } from './dunning-license-lifecycle';
 
-export { invalidateDunningCache } from './dunning-kv-cache';
+export { invalidateDunningCache, suspendLicense, restoreLicense };
 
 /**
  * Quick API access check without full state lookup.
- *
- * KV-caches the result for DUNNING_CACHE_TTL_SECONDS (5 min) because dunning
- * state changes rarely (only on payment fail/success). This avoids 2 D1 queries
- * on every API request (#R2-18 fix).
- *
- * Cache is invalidated by `invalidateDunningCache()` on state transitions.
  */
 export async function canAccessApi(licenseNonce: string): Promise<{
   allowed: boolean;
@@ -48,13 +40,16 @@ export async function canAccessApi(licenseNonce: string): Promise<{
 
   if (kv) {
     try {
-      const cached = await kv.get(cacheKey) as unknown as { allowed: boolean; state: DunningState; reason?: string } | null;
+      const cached = (await kv.get(cacheKey)) as unknown as {
+        allowed: boolean;
+        state: DunningState;
+        reason?: string;
+      } | null;
       if (cached && typeof cached === 'object' && 'allowed' in cached) {
         return cached;
       }
     } catch (err) {
       logger.error('[Dunning] KV cache read error', toError(err));
-      // Fall through to D1 on cache error
     }
   }
 
@@ -63,7 +58,11 @@ export async function canAccessApi(licenseNonce: string): Promise<{
 
   if (kv) {
     try {
-      await kv.set(cacheKey as unknown as Parameters<typeof kv.set>[0], result as unknown as Parameters<typeof kv.set>[1], { expirationTtl: DUNNING_CACHE_TTL_SECONDS });
+      await kv.set(
+        cacheKey as unknown as Parameters<typeof kv.set>[0],
+        result as unknown as Parameters<typeof kv.set>[1],
+        { expirationTtl: DUNNING_CACHE_TTL_SECONDS },
+      );
     } catch (err) {
       logger.error('[Dunning] KV cache write error', toError(err));
     }
@@ -77,7 +76,7 @@ export async function canAccessApi(licenseNonce: string): Promise<{
  */
 export async function getDunningHistory(
   licenseNonce: string,
-  limit: number = 20
+  limit: number = 20,
 ): Promise<DunningAttemptRow[]> {
   const db = createServerClient();
 
@@ -103,7 +102,7 @@ export async function initializeDunningSettings(
   userId: string,
   licenseNonce: string,
   tier: Tier,
-  stripeCustomerId?: string
+  stripeCustomerId?: string,
 ): Promise<DunningSettingsRow> {
   const db = createServerClient();
   const tierConfig = DUNNING_TIER_CONFIGS[tier];
@@ -116,7 +115,7 @@ export async function initializeDunningSettings(
       stripe_customer_id: stripeCustomerId || null,
       grace_period_days: tierConfig.gracePeriodDays,
       max_retry_attempts: tierConfig.maxRetryAttempts,
-      retry_schedule: tierConfig.retryIntervals.map(d => `${d} days`),
+      retry_schedule: tierConfig.retryIntervals.map((d) => `${d} days`),
       send_email_notifications: true,
       email_language: 'en',
       dunning_state: 'current',
@@ -135,56 +134,4 @@ export async function initializeDunningSettings(
   });
 
   return data as unknown as DunningSettingsRow;
-}
-
-/**
- * Manually suspend a license (admin action)
- */
-export async function suspendLicense(
-  licenseNonce: string,
-  userId: string,
-  reason: string
-): Promise<DunningStateResult> {
-  await transitionDunningState(licenseNonce, userId, 'suspended');
-  // Invalidate dunning cache so next API call reads fresh suspended state
-  await invalidateDunningCache(licenseNonce);
-
-  const db = createServerClient();
-  await db.from('billing_events').insert({
-    user_id: userId,
-    license_nonce: licenseNonce,
-    event_type: 'suspension_started',
-    event_category: 'dunning',
-    event_data: { reason, manual: true },
-  });
-
-  logger.warn('[Dunning] License manually suspended', { licenseNonce: licenseNonce.slice(0, 8), reason });
-
-  return getDunningState(licenseNonce);
-}
-
-/**
- * Manually restore a license (admin action)
- */
-export async function restoreLicense(
-  licenseNonce: string,
-  userId: string,
-  reason: string
-): Promise<DunningStateResult> {
-  await transitionDunningState(licenseNonce, userId, 'current');
-  // Invalidate dunning cache so next API call reads fresh current state
-  await invalidateDunningCache(licenseNonce);
-
-  const db = createServerClient();
-  await db.from('billing_events').insert({
-    user_id: userId,
-    license_nonce: licenseNonce,
-    event_type: 'suspension_ended',
-    event_category: 'dunning',
-    event_data: { reason, manual: true },
-  });
-
-  logger.info('[Dunning] License manually restored', { licenseNonce: licenseNonce.slice(0, 8), reason });
-
-  return getDunningState(licenseNonce);
 }

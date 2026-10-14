@@ -23,7 +23,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: mockLogger,
 }))
 
-vi.mock('@/forest/quota/overage-logger-ops', () => ({
+vi.mock('@/tree/quota/overage-logger-ops', () => ({
   markEventsAsBillable: mockMarkEventsAsBillable,
   getOverageSummary: mockGetOverageSummary,
 }))
@@ -112,7 +112,7 @@ describe('Reconciliation — markEventsAsBillable after top-up', () => {
     })
 
     // Import overage-logger-ops to call getOverageSummary
-    const { getOverageSummary } = await import('@/forest/quota/overage-logger-ops')
+    const { getOverageSummary } = await import('@/tree/quota/overage-logger-ops')
 
     const summary = await getOverageSummary('license_nonce_1', 1000, 2000)
 
@@ -131,7 +131,7 @@ describe('Reconciliation — markEventsAsBillable after top-up', () => {
       billableEvents: 3,
     })
 
-    const { getOverageSummary } = await import('@/forest/quota/overage-logger-ops')
+    const { getOverageSummary } = await import('@/tree/quota/overage-logger-ops')
 
     const summary = await getOverageSummary('license_nonce_2', 1000, 2000)
     expect(summary.billableEvents).toBe(3)

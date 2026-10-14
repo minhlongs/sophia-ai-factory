@@ -8,6 +8,10 @@ import type { WithdrawalRequestInput, WithdrawalRequestResult } from '../types';
 import { getCreatorBalance } from './balance-service';
 import { MAX_CAS_RETRIES, MIN_WITHDRAWAL_CENTS } from './constants';
 import { validatePayoutRail } from './payout-validator';
+import {
+  buildWithdrawalCasStatements,
+  isCasConstraintConflict,
+} from './withdrawal-cas-helpers';
 
 async function executeDebitCas(
   input: WithdrawalRequestInput,
@@ -40,62 +44,16 @@ async function executeDebitCas(
       const nextBal = lastBal + debitAmount; // subtracts amount
       const candidateLedgerId = `led_deb_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}_${nowMs}`;
 
-      const metadataJson = JSON.stringify({
+      const { ledgerStmt, withdrawalStmt } = buildWithdrawalCasStatements({
+        input,
+        candidateLedgerId,
         withdrawalId,
-        rail: input.rail,
-        destinationAddress: input.destinationAddress,
-        bankBin: input.bankBin,
-        bankAccountNumber: input.bankAccountNumber,
-        bankAccountName: input.bankAccountName,
-        txHash: input.txHash,
+        debitAmount,
+        nextBal,
+        nextSeq,
+        initialStatus,
+        nowMs,
       });
-
-      const ledgerStmt = input.db
-        .prepare(
-          `INSERT INTO creator_earnings_ledger (
-            id, creator_id, amount_cents, currency, event_type, source_type,
-            reference_id, balance_after_cents, status, sequence_num,
-            metadata_json, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(
-          candidateLedgerId,
-          input.creatorId,
-          debitAmount,
-          'USD',
-          'royalty_payout',
-          'withdrawal',
-          withdrawalId,
-          nextBal,
-          input.txHash ? 'paid' : 'pending',
-          nextSeq,
-          metadataJson,
-          nowMs,
-        );
-
-      const withdrawalStmt = input.db
-        .prepare(
-          `INSERT INTO creator_withdrawal_requests (
-            id, creator_id, amount_cents, currency, rail, destination_address,
-            bank_bin, bank_account_number, bank_account_name, status,
-            tx_hash, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(
-          withdrawalId,
-          input.creatorId,
-          input.amountCents,
-          'USD',
-          input.rail,
-          input.destinationAddress ?? null,
-          input.bankBin ?? null,
-          input.bankAccountNumber ?? null,
-          input.bankAccountName ?? null,
-          initialStatus,
-          input.txHash ?? null,
-          nowMs,
-          nowMs,
-        );
 
       if (typeof input.db.batch === 'function') {
         await input.db.batch([ledgerStmt, withdrawalStmt]);
@@ -123,13 +81,8 @@ async function executeDebitCas(
       if (errStr.includes('INSUFFICIENT_CREATOR_BALANCE')) {
         throw err;
       }
-      const isConstraint =
-        errStr.includes('UNIQUE') ||
-        errStr.includes('PRIMARY KEY') ||
-        errStr.includes('constraint') ||
-        errStr.includes('SQLITE_CONSTRAINT');
 
-      if (isConstraint && attempt < MAX_CAS_RETRIES - 1) {
+      if (isCasConstraintConflict(errStr) && attempt < MAX_CAS_RETRIES - 1) {
         const maxWait = 10 * Math.pow(2, attempt);
         const delay = Math.floor(Math.random() * maxWait) + Math.floor(Math.random() * 15);
         await new Promise((r) => setTimeout(r, delay));

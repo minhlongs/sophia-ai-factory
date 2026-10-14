@@ -20,7 +20,7 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { checkCooldown } from '@/forest/quota/channel-cooldown';
+import { checkCooldown } from '@/tree/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
 

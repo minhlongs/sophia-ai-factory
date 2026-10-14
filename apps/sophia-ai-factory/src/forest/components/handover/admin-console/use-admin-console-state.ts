@@ -15,18 +15,11 @@ import type {
   DrDrillReport,
   StatusFilterType,
 } from './types';
-
-function downloadBlob(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+import {
+  downloadBlob,
+  filterHandoverRecords,
+  executeDrDrillProbe,
+} from './admin-console-helpers';
 
 export function useAdminConsoleState({
   handovers,
@@ -39,7 +32,8 @@ export function useAdminConsoleState({
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all');
 
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationReport, setVerificationReport] = useState<VerificationRunReport | null>(null);
+  const [verificationReport, setVerificationReport] =
+    useState<VerificationRunReport | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
 
   const [isDrilling, setIsDrilling] = useState(false);
@@ -48,23 +42,11 @@ export function useAdminConsoleState({
   const [isExportingEnv, setIsExportingEnv] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
-  const [selectedRecord, setSelectedRecord] = useState<CustomerHandoverRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] =
+    useState<CustomerHandoverRecord | null>(null);
   const [copiedHash, setCopiedHash] = useState(false);
 
-  const filteredHandovers = handovers.filter((h) => {
-    const matchesSearch =
-      searchQuery.trim() === '' ||
-      h.agency_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      h.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (h.signer_name && h.signer_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (h.signer_email && h.signer_email.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    if (!matchesSearch) return false;
-    if (statusFilter === 'pending') return h.acceptance_status === 'pending';
-    if (statusFilter === 'accepted') return h.acceptance_status === 'accepted';
-    if (statusFilter === 'at_risk') return h.status === 'at_risk';
-    return true;
-  });
+  const filteredHandovers = filterHandoverRecords(handovers, searchQuery, statusFilter);
 
   const handleRunVerification = async () => {
     setIsVerifying(true);
@@ -84,7 +66,9 @@ export function useAdminConsoleState({
         setVerificationReport(data);
       }
     } catch (err) {
-      setVerificationError(err instanceof Error ? err.message : 'Failed to execute verification suite.');
+      setVerificationError(
+        err instanceof Error ? err.message : 'Failed to execute verification suite.',
+      );
     } finally {
       setIsVerifying(false);
     }
@@ -93,31 +77,8 @@ export function useAdminConsoleState({
   const handleRunDrDrill = async () => {
     setIsDrilling(true);
     try {
-      const res = await fetch('/api/admin/handover/verify?timeoutMs=8000', { method: 'POST' });
-      if (res.ok) {
-        const data = (await res.json()) as VerificationRunReport;
-        const drCheckpoint = data.checkpoints.find((c) => c.checkpointId === 'dr_drill_backup');
-        setDrDrillReport({
-          status: (drCheckpoint?.status as 'PASS' | 'FAIL' | 'WARN') || 'PASS',
-          latencyMs: drCheckpoint?.latencyMs || 42,
-          tablesVerified: 12,
-          details: drCheckpoint?.details || 'D1 schema integrity & read-after-write non-destructive probe validated.',
-        });
-      } else {
-        setDrDrillReport({
-          status: 'WARN',
-          latencyMs: 15,
-          tablesVerified: 10,
-          details: 'DR verification completed in offline diagnostic mode.',
-        });
-      }
-    } catch {
-      setDrDrillReport({
-        status: 'WARN',
-        latencyMs: 25,
-        tablesVerified: 10,
-        details: 'D1 backup probe executed cleanly in fallback test environment.',
-      });
+      const report = await executeDrDrillProbe();
+      setDrDrillReport(report);
     } finally {
       setIsDrilling(false);
     }
@@ -130,8 +91,14 @@ export function useAdminConsoleState({
       if (onExportEnvAction) {
         const res = await onExportEnvAction();
         if (res.ok) {
-          downloadBlob(res.value.sanitizedContent, '.env.production', 'text/plain;charset=utf-8');
-          setExportNotice(`Exported ${res.value.totalKeys} keys (${res.value.missingKeys.length} unconfigured).`);
+          downloadBlob(
+            res.value.sanitizedContent,
+            '.env.production',
+            'text/plain;charset=utf-8',
+          );
+          setExportNotice(
+            `Exported ${res.value.totalKeys} keys (${res.value.missingKeys.length} unconfigured).`,
+          );
         } else {
           setExportNotice(`Export error: ${res.error.message}`);
         }
@@ -140,7 +107,9 @@ export function useAdminConsoleState({
         setExportNotice('Downloading .env.production bundle...');
       }
     } catch (err) {
-      setExportNotice(`Failed to export: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setExportNotice(
+        `Failed to export: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      );
     } finally {
       setIsExportingEnv(false);
     }
@@ -157,26 +126,10 @@ export function useAdminConsoleState({
   };
 
   return {
-    stats,
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-    filteredHandovers,
-    isVerifying,
-    verificationReport,
-    verificationError,
-    handleRunVerification,
-    isDrilling,
-    drDrillReport,
-    handleRunDrDrill,
-    isExportingEnv,
-    exportNotice,
-    setExportNotice,
-    handleExportEnv,
-    selectedRecord,
-    setSelectedRecord,
-    copiedHash,
-    handleCopy,
+    stats, searchQuery, setSearchQuery, statusFilter, setStatusFilter, filteredHandovers,
+    isVerifying, verificationReport, verificationError, handleRunVerification,
+    isDrilling, drDrillReport, handleRunDrDrill,
+    isExportingEnv, exportNotice, setExportNotice, handleExportEnv,
+    selectedRecord, setSelectedRecord, copiedHash, handleCopy,
   };
 }

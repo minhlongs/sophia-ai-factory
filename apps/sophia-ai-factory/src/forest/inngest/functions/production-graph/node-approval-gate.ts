@@ -6,15 +6,11 @@
  * @module forest/inngest/functions/production-graph/node-approval-gate
  */
 
-import { logger } from '@/seed/utils/logger-utility';
-import type { ProductionGraphRunError } from '@/seed/types/production-factory';
 import { PUBLISH_CONTENT_TOOL } from '@/tree/agent-protocol/graph-agents';
 import { updateRunStatus } from '@/tree/production-graph/repo';
 import type { GraphNodeRuntimeState } from '@/tree/production-graph/types';
 import {
-  emitApprovalRequested,
   emitApprovalApproved,
-  emitApprovalRejected,
 } from '@/tree/performance/loop-emitters-runner';
 import { requestApprovalAndAwait } from '../agent-approval-gate';
 import {
@@ -25,16 +21,16 @@ import {
   type RunnerLogContext,
 } from './types';
 import {
-  emitFailed,
-  failTerminal,
   resolveApprovalRow,
 } from './emitter-helpers';
 import {
-  checkpoint,
   handleApprovalDecision,
-  markNodeFailed,
   toApprovalGateStep,
 } from './execution-helpers';
+import {
+  emitNodeApprovalRequestedSafe,
+  handleRejectedOrTimedOutApproval,
+} from './node-approval-helpers';
 
 export interface HandleApprovalParams {
   nodeId: string;
@@ -102,27 +98,7 @@ export async function handleNodeApproval(
     { step: toApprovalGateStep(step) },
   );
 
-  try {
-    const approvalRow = await resolveApprovalRow(graphRunId);
-    await emitApprovalRequested({
-      workspaceId,
-      missionId,
-      graphRunId,
-      nodeId,
-      approvalId: approvalRow?.id ?? '',
-      actionType: PUBLISH_CONTENT_TOOL,
-      recordedAt: runnerContext.nowMs(),
-    });
-  } catch (err) {
-    logger.warn(
-      'productionGraphRunner: approval.requested emit failed (non-fatal)',
-      {
-        graphRunId,
-        nodeId,
-        error: err instanceof Error ? err.message : String(err),
-      },
-    );
-  }
+  await emitNodeApprovalRequestedSafe({ logCtx, nodeId, runnerContext });
 
   const gateOutcome = handleApprovalDecision(decision, graphRunId);
   const approvalRow = await resolveApprovalRow(graphRunId);
@@ -140,43 +116,17 @@ export async function handleNodeApproval(
       recordedAt: runnerContext.nowMs(),
     });
   } else {
-    await emitApprovalRejected({
-      workspaceId,
-      missionId,
-      graphRunId,
+    return handleRejectedOrTimedOutApproval({
+      gateOutcome,
+      approvalIdForEvent,
       nodeId,
-      approvalId: approvalIdForEvent,
-      actionType: PUBLISH_CONTENT_TOOL,
-      reasonCode:
-        gateOutcome === 'rejected' ? 'APPROVAL_REJECTED' : 'APPROVAL_TIMEOUT',
-      latencySeconds: 0,
-      recordedAt: runnerContext.nowMs(),
-    });
-
-    const code =
-      gateOutcome === 'rejected' ? 'APPROVAL_REJECTED' : 'APPROVAL_TIMEOUT';
-    const error: ProductionGraphRunError = {
-      code,
-      message: `Publish node ${nodeId} ${gateOutcome}`,
-      details: { nodeId },
-    };
-    markNodeFailed(
       states,
-      nodeId,
-      error.message ?? gateOutcome,
-      runnerContext.nowMs,
-    );
-    await checkpoint(graphRunId, states);
-    await failTerminal(
-      graphRunId,
-      'awaiting_approval',
-      error,
+      step,
+      logCtx,
+      retryCount,
+      runnerContext,
       totals,
-      workspaceId,
-      missionId,
-    );
-    await emitFailed(step, logCtx, error, retryCount);
-    return { ok: false, code };
+    });
   }
 
   await step.run(`resume-running-${nodeId}`, () =>

@@ -5,91 +5,14 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import type {
-  WithdrawalRequest,
-  WithdrawalStatus,
-} from '@/seed/types/creator-marketplace';
+import type { WithdrawalStatus } from '@/seed/types/creator-marketplace';
+import type { WithdrawalDbRow } from './types';
 import {
-  buildVietQrPaymentUrl,
-  getExchangeRateVnd,
-} from '@/land/payouts/dual-rail-payout-engine';
-import { mapWithdrawalRow, type WithdrawalDbRow } from './types';
+  getVietQrPaymentInfo,
+  listCreatorWithdrawals,
+} from './payout-dispatcher-helpers';
 
-/**
- * Generate instant VietQR payment info and QR link for domestic Vietnamese transfers.
- */
-export function getVietQrPaymentInfo(
-  request: WithdrawalRequest,
-  customExchangeRate?: number,
-): { qrUrl: string; amountVnd: number; amountUsd: number } | null {
-  if (request.rail !== 'VIETQR' || !request.bankBin || !request.bankAccountNumber) {
-    return null;
-  }
-
-  const rate = customExchangeRate && customExchangeRate > 0
-    ? customExchangeRate
-    : getExchangeRateVnd();
-
-  const amountUsd = request.amountCents / 100;
-  const amountVnd = Math.round(amountUsd * rate);
-  const memo = `SOPHIA CREATOR ${request.id.slice(-8).toUpperCase()}`;
-  const accountName = request.bankAccountName || 'CREATOR';
-
-  const qrUrl = buildVietQrPaymentUrl(
-    request.bankBin,
-    request.bankAccountNumber,
-    amountVnd,
-    memo,
-    accountName,
-  );
-
-  return {
-    qrUrl,
-    amountVnd,
-    amountUsd,
-  };
-}
-
-/**
- * List withdrawal history for a creator.
- */
-export async function listCreatorWithdrawals(
-  db: D1Database,
-  creatorId: string,
-  options?: { limit?: number; offset?: number },
-): Promise<{ items: WithdrawalRequest[]; total: number }> {
-  const limit = Math.min(Math.max(options?.limit ?? 20, 1), 100);
-  const offset = Math.max(options?.offset ?? 0, 0);
-
-  let total = 0;
-  try {
-    const countRow = await db
-      .prepare(`SELECT COUNT(*) as cnt FROM creator_withdrawal_requests WHERE creator_id = ?`)
-      .bind(creatorId)
-      .first<{ cnt?: number }>();
-    total = countRow?.cnt ?? 0;
-  } catch (err) {
-    logger.warn('Failed to count creator withdrawals', { creatorId, error: String(err) });
-  }
-
-  try {
-    const rows = await db
-      .prepare(
-        `SELECT * FROM creator_withdrawal_requests
-         WHERE creator_id = ?
-         ORDER BY created_at DESC
-         LIMIT ? OFFSET ?`,
-      )
-      .bind(creatorId, limit, offset)
-      .all<WithdrawalDbRow>();
-
-    const items = (rows.results ?? []).map(mapWithdrawalRow);
-    return { items, total };
-  } catch (err) {
-    logger.error('Failed to list creator withdrawals', { creatorId, error: String(err) });
-    return { items: [], total: 0 };
-  }
-}
+export { getVietQrPaymentInfo, listCreatorWithdrawals };
 
 /**
  * Process a withdrawal request (admin / automated completion or rejection).
@@ -128,7 +51,6 @@ export async function processWithdrawalRequest(
       .run();
 
     if (action === 'complete') {
-      // Update creator profile total_paid_cents
       await db
         .prepare(
           `UPDATE creator_profiles
@@ -138,7 +60,6 @@ export async function processWithdrawalRequest(
         .bind(current.amount_cents, nowMs, current.creator_id, current.creator_id)
         .run();
 
-      // Record in creator_earnings_ledger as royalty_payout
       try {
         const ledgerId = `led_payout_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}_${nowMs}`;
         await db

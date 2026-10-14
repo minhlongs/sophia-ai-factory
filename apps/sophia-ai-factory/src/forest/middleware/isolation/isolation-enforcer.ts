@@ -3,8 +3,7 @@
  * @module forest/middleware/isolation/isolation-enforcer
  */
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextResponse, NextRequest } from 'next/server';
 import { checkRateLimitWindow } from '@/tree/agy/agency-quota-engine';
 import type { AgyIsolationOptions, AgyTenantIsolationResult } from './types';
 import {
@@ -13,6 +12,10 @@ import {
   validateTokenCredentials,
   checkCrossTenantConflict,
 } from './tenant-validator';
+import {
+  buildIsolationDeniedResponse,
+  applyIsolationHeaders,
+} from './isolation-middleware-response';
 
 /** In-memory sliding-window buckets per agencyId */
 const RATE_LIMIT_CACHE = new Map<string, number[]>();
@@ -49,52 +52,30 @@ export async function validateAgyTenantIsolation(
   const { agencyId: headerAgencyId, agencySlug: headerAgencySlug } = extractAgencyIdentifier(request);
 
   // 2. Validate token credentials and permissions
-  const tokenResult = await validateTokenCredentials(
-    tokenString,
-    requireToken,
-    secret,
-    nowMs,
-    requiredPermission
-  );
-
+  const tokenResult = await validateTokenCredentials(tokenString, requireToken, secret, nowMs, requiredPermission);
   if (!tokenResult.valid) {
     return {
-      allowed: false,
-      status: tokenResult.status ?? 401,
-      reason: tokenResult.reason,
-      errorCode: tokenResult.errorCode,
+      allowed: false, status: tokenResult.status ?? 401,
+      reason: tokenResult.reason, errorCode: tokenResult.errorCode,
     };
   }
 
   // 3. Cross-tenant protection
   const targetAgencyId = headerAgencyId || tokenResult.verifiedAgencyId || null;
   const conflict = checkCrossTenantConflict(
-    tokenResult.verifiedAgencyId,
-    headerAgencyId,
-    pathname,
-    url.searchParams.get('agency_id'),
-    targetAgencyId
+    tokenResult.verifiedAgencyId, headerAgencyId, pathname, url.searchParams.get('agency_id'), targetAgencyId,
   );
-
   if (!conflict.allowed) {
     return {
-      allowed: false,
-      status: conflict.status ?? 403,
-      reason: conflict.reason,
-      errorCode: conflict.errorCode,
+      allowed: false, status: conflict.status ?? 403,
+      reason: conflict.reason, errorCode: conflict.errorCode,
     };
   }
 
   // 4. Sliding-window rate-limiting per agency
   const effectiveAgency = targetAgencyId || headerAgencySlug || 'global_agency';
   const timestamps = RATE_LIMIT_CACHE.get(effectiveAgency) || [];
-
-  const windowResult = checkRateLimitWindow({
-    timestamps,
-    nowMs,
-    windowMs: 1000,
-    maxRequests: defaultRpsLimit,
-  });
+  const windowResult = checkRateLimitWindow({ timestamps, nowMs, windowMs: 1000, maxRequests: defaultRpsLimit });
 
   if (windowResult.allowed) {
     if (RATE_LIMIT_CACHE.size >= MAX_RATE_LIMIT_ENTRIES) {
@@ -104,38 +85,23 @@ export async function validateAgyTenantIsolation(
     RATE_LIMIT_CACHE.set(effectiveAgency, windowResult.prunedTimestamps);
   } else {
     return {
-      allowed: false,
-      status: 429,
-      reason: 'Agency request rate limit exceeded',
+      allowed: false, status: 429, reason: 'Agency request rate limit exceeded',
       errorCode: 'AGENCY_RATE_LIMIT_EXCEEDED',
       rateLimit: {
-        allowed: false,
-        agencyId: effectiveAgency,
-        currentRps: windowResult.currentCount,
-        limitRps: windowResult.limit,
-        remaining: 0,
-        resetMs: windowResult.resetMs,
+        allowed: false, agencyId: effectiveAgency, currentRps: windowResult.currentCount,
+        limitRps: windowResult.limit, remaining: 0, resetMs: windowResult.resetMs,
         retryAfterSeconds: windowResult.retryAfterSeconds,
       },
     };
   }
 
   return {
-    allowed: true,
-    status: 200,
-    context: {
-      agencyId: targetAgencyId || undefined,
-      agencySlug: headerAgencySlug || undefined,
-      rateLimitRps: defaultRpsLimit,
-    },
+    allowed: true, status: 200,
+    context: { agencyId: targetAgencyId || undefined, agencySlug: headerAgencySlug || undefined, rateLimitRps: defaultRpsLimit },
     rateLimit: {
-      allowed: true,
-      agencyId: effectiveAgency,
-      currentRps: windowResult.currentCount,
-      limitRps: windowResult.limit,
-      remaining: windowResult.remaining,
-      resetMs: windowResult.resetMs,
-      retryAfterSeconds: 0,
+      allowed: true, agencyId: effectiveAgency, currentRps: windowResult.currentCount,
+      limitRps: windowResult.limit, remaining: windowResult.remaining,
+      resetMs: windowResult.resetMs, retryAfterSeconds: 0,
     },
   };
 }
@@ -152,41 +118,9 @@ export async function agyTenantIsolationMiddleware(
   const result = await validateAgyTenantIsolation(request, options);
 
   if (!result.allowed) {
-    const errorBody = {
-      error: result.status === 429 ? 'Too Many Requests' : result.status === 401 ? 'Unauthorized' : 'Forbidden',
-      message: result.reason || 'Access denied by AGY tenant isolation',
-      code: result.errorCode || 'TENANT_ISOLATION_ERROR',
-    };
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'X-Tenant-Isolation-Status': 'denied',
-      'X-Tenant-Isolation-Reason': result.errorCode || 'unknown',
-    };
-
-    if (result.rateLimit) {
-      headers['X-Agency-RateLimit-Limit'] = String(result.rateLimit.limitRps);
-      headers['X-Agency-RateLimit-Remaining'] = String(result.rateLimit.remaining);
-      headers['X-Agency-RateLimit-Reset'] = String(result.rateLimit.resetMs);
-      if (result.rateLimit.retryAfterSeconds && result.rateLimit.retryAfterSeconds > 0) {
-        headers['Retry-After'] = String(result.rateLimit.retryAfterSeconds);
-      }
-    }
-
-    return NextResponse.json(errorBody, {
-      status: result.status,
-      headers,
-    });
+    return buildIsolationDeniedResponse(result);
   }
 
-  // Decorate request headers for downstream consumption
-  if (result.context?.agencyId) {
-    request.headers.set('x-agency-id', result.context.agencyId);
-  }
-  if (result.context?.agencySlug) {
-    request.headers.set('x-agency-slug', result.context.agencySlug);
-  }
-  request.headers.set('x-tenant-isolation-status', 'verified');
-
+  applyIsolationHeaders(request, result);
   return null;
 }

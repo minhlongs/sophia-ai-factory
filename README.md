@@ -22,7 +22,7 @@ npm run dev
 - `apps/sophia-ai-factory/docs/` - engineering-internal Sophia runbooks, migrations, and launch notes.
 - `plans/` - implementation plans and audit reports.
 - `.claude/`, `.opencode/`, `.agent/`, `.sophia-factory/`, `.mekong/` - agent/tooling instructions and generated operational context.
-- `.github/workflows/`, `.gitlab-ci.yml` - auxiliary automation. GitHub deploy workflow is intentionally disabled; production deploy is CF-direct from the app package.
+- `.github/workflows/`, `.gitlab-ci.yml` - CI/CD automation. Automated deployment runs via GitHub Actions (`.github/workflows/deploy.yml`) on push to `main`.
 
 There is no active root `packages/` workspace. Treat the root package as orchestration/tooling context and treat `apps/sophia-ai-factory/package.json` as the canonical Sophia app package.
 
@@ -35,7 +35,7 @@ There is no active root `packages/` workspace. Treat the root package as orchest
 - **Bot**: Telegram (@Sophia_Bbot)
 - **AI Services**: HeyGen, ElevenLabs, MuAPI (100+ models), OpenRouter
 - **Auth**: Better Auth v1.6.2 with D1 Kysely adapter (email/password + magic link + org plugin)
-- **Deployment**: Cloudflare Workers via CF-direct `npm run deploy:full` from `apps/sophia-ai-factory`
+- **Deployment**: Cloudflare Workers via GitHub Actions CI/CD (`.github/workflows/deploy.yml`) on push to `main` (local `npm run deploy:full` is break-glass only with `EMERGENCY_CF_DIRECT=1`)
 - **Background Jobs**: Inngest
 - **i18n**: next-intl (Vietnamese + English)
 - **Styling**: Tailwind CSS 4
@@ -50,7 +50,7 @@ There is no active root `packages/` workspace. Treat the root package as orchest
 ## Production
 
 - **URL**: https://sophia.agencyos.network
-- **Deploy doctrine**: GitHub Actions deploy is disabled by design; push first, run `npm run deploy:full` from `apps/sophia-ai-factory`, then verify `/api/version` SHA.
+- **Deploy doctrine**: Automated GitHub Actions CI/CD (`.github/workflows/deploy.yml`) on push to `main`; verify edge SHA parity via `GET /api/version`. Local deploy is guarded and requires `EMERGENCY_CF_DIRECT=1` only in emergency CI outages.
 - **Validation**: `npm run type-check`, `npm run build`, `npm run ci:test`, and Playwright smoke suites live in the app package.
 - **Pre-deploy gate**: Runs automatically before deploy via `scripts/pre-deploy-gate.mjs` — checks git clean, tests, typecheck, secrets, migrations.
 - **Post-deploy smoke**: Basic health checks run after deploy (`scripts/post-deploy-smoke.mjs`). Full E2E smoke can be enabled with `RUN_POSTDEPLOY_E2E=1`.

@@ -9,12 +9,12 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation, getTemplateById } from '@/tree/sop/sop-repo';
+import { getInstallation, getTemplateById } from '@/seed/sop/sop-repo';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { SopDetailTabs } from './detail-tabs';
 import { runNowAction, savePlaybookAction, regenSecretAction, deleteInstallAction, saveConfigAction } from './actions';
 import { ArrowLeft } from 'lucide-react';
-import type { SopRunRow } from '@/tree/sop/sop-types';
+import type { SopRunRow } from '@/seed/sop/sop-types';
 import { getD1 } from '@/seed/db/get-d1';
 
 interface Props {

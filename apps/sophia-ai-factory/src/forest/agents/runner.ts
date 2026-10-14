@@ -10,14 +10,13 @@ import {
   getTask,
   getAgentById,
   updateTaskResult,
-  appendLog,
 } from './repository';
-import { reportError } from '@/seed/observability/telemetry/error-tracker';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
-import { track } from '@/tree/signals/track';
-import { assignVariant } from '@/tree/signals/ab-experiment';
-import { D1Events } from '@/tree/signals/d1-event-types';
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
+import {
+  resolveAgentVariantConfig,
+  recordAgentRunSuccess,
+  recordAgentRunFailure,
+} from './agent-runner-helpers';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
@@ -73,20 +72,11 @@ export async function runAgent(
     { role: 'user', content: task.input },
   ];
 
-  // Get A/B experiment variant for this agent
-  const { variant } = await assignVariant(`agent-${agent.id}`, orgId);
-
-  // Adjust model or parameters based on variant
-  let model = agent.model;
-  let temperature = 0.7;
-  switch (variant) {
-    case 'temperature-high':
-      temperature = 1.0;
-      break;
-    case 'model-gpt4':
-      model = 'openai/gpt-4o';
-      break;
-  }
+  const { variant, model, temperature } = await resolveAgentVariantConfig(
+    agent.id,
+    agent.model,
+    orgId,
+  );
 
   // Circuit breaker: check if OpenRouter is available
   if (!shouldAllowRequest('openrouter')) {
@@ -121,73 +111,24 @@ export async function runAgent(
     };
     const output = data.choices?.[0]?.message?.content || '';
 
-    // Circuit breaker: record success
-    recordSuccess('openrouter');
-
-    // Update task with success
-    await updateTaskResult(taskId, orgId, {
-      status: 'completed',
+    await recordAgentRunSuccess({
+      taskId,
+      orgId,
+      agent,
       output,
-      tokensUsed: (data.usage?.completion_tokens || 0) + (data.usage?.prompt_tokens || 0),
-      costUsd: data.usage?.cost || 0,
-    });
-
-    // Track success (fire-and-forget)
-    track(D1Events.AGENT_TASK_COMPLETE, orgId, {
-      agentId: agent.id,
-      agentRole: agent.role,
-      taskId,
-      tokens: (data.usage?.completion_tokens || 0) + (data.usage?.prompt_tokens || 0),
+      usage: data.usage,
       model,
+      temperature,
       variant,
-    });
-
-    // Append invoke log
-    await appendLog({
-      taskId,
-      action: 'invoke',
-      payload: {
-        model,
-        temperature,
-        tokens: data.usage,
-        variant,
-      },
     });
 
     return output;
   } catch (err) {
-    // Record failure
-    const error = err instanceof Error ? err : new Error(String(err));
-    const errorMessage = error.message;
-
-    // Circuit breaker: classify and record failure
-    const kind = classifyError(error);
-    recordFailure('openrouter', kind);
-
-    await updateTaskResult(taskId, orgId, {
-      status: 'failed',
-      output: '',
-      errorMessage,
-    });
-
-    // Report to error tracker
-    await reportError(error, {
-      route: 'agent.runner',
-      agent_role: agent.role,
-      task_id: taskId,
-      org_id: orgId,
-    });
-
-    // Append error log
-    await appendLog({
+    return recordAgentRunFailure({
+      err,
       taskId,
-      action: 'error',
-      payload: {
-        error: errorMessage,
-        stack: error.stack,
-      },
+      orgId,
+      agentRole: agent.role,
     });
-
-    throw error;
   }
 }

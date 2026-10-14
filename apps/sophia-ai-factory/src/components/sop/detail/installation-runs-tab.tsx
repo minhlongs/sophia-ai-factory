@@ -9,7 +9,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { SopRunRow } from '@/tree/sop/sop-types';
+import type { SopRunRow } from '@/seed/sop/sop-types';
 import { RunStatusBadge } from '@/forest/components/sop/run-status-badge';
 
 interface Props {

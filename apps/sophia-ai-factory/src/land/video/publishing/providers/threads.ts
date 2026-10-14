@@ -9,59 +9,19 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  THREADS_BASE,
+  buildThreadsCaption,
+  refreshLongLivedToken,
+  type ThreadsTokenResponse,
+  type ThreadsCreateResponse,
+  type ThreadsInsightsResponse,
+} from './threads-helpers';
 
-const THREADS_BASE = 'https://graph.threads.net/v1.0';
-const _THREADS_TOKEN_URL = 'https://graph.threads.net/oauth/access_token';
-const THREADS_LONG_LIVED_URL = 'https://graph.threads.net/access_token';
-
-export interface ThreadsTokenResponse {
-  access_token: string;
-  token_type?: string;
-  expires_in?: number;
-  user_id?: string;
-}
+export { refreshLongLivedToken, type ThreadsTokenResponse };
 
 function isMockMode(): boolean {
   return !process.env.THREADS_APP_ID;
-}
-
-interface ThreadsCreateResponse { id?: string; error?: { message?: string } }
-interface ThreadsInsightsResponse {
-  data?: Array<{ name: string; values?: Array<{ value: number }> }>
-}
-
-function buildCaption(meta: PublishMeta): string {
-  const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-  const tags = meta.hashtags.map((h: string) => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-  const link = meta.productLink ? `\n\n${meta.productLink}` : '';
-  return `${adCaption}${tags ? ` ${tags}` : ''}${link}`.slice(0, 500);
-}
-
-/**
- * Refresh a Threads long-lived token via th_exchange_token grant (60d TTL).
- * This is a standalone OAuth helper function for token refresh operations.
- */
-export async function refreshLongLivedToken(currentToken: string): Promise<ThreadsTokenResponse> {
-  const appSecret = process.env.THREADS_APP_SECRET ?? '';
-
-  // Refresh via POST body (secret not in URL)
-  const res = await fetch(THREADS_LONG_LIVED_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'th_refresh_token',
-      access_token: currentToken,
-      client_secret: appSecret,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Threads token refresh response', { error: String(err), context: 'refreshLongLivedToken' });
-      return '';
-    });
-    throw new Error(`Threads token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
-  }
-  return res.json() as Promise<ThreadsTokenResponse>;
 }
 
 export class ThreadsPublisher implements Publisher {
@@ -81,9 +41,8 @@ export class ThreadsPublisher implements Publisher {
     }
 
     try {
-      const text = buildCaption(meta);
+      const text = buildThreadsCaption(meta);
 
-      // Step 1: Create media container
       const containerRes = await fetch(`${THREADS_BASE}/${this.userId}/threads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,7 +65,6 @@ export class ThreadsPublisher implements Publisher {
         throw new Error(`Threads container returned no id: ${containerData.error?.message ?? 'unknown'}`);
       }
 
-      // Step 2: Publish container
       const publishRes = await fetch(`${THREADS_BASE}/${this.userId}/threads_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,16 +94,13 @@ export class ThreadsPublisher implements Publisher {
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
-    // Fail-soft: circuit open → treat as still processing
     if (!shouldAllowRequest('threads')) return 'processing';
 
     try {
-      // Threads publishes synchronously — if post exists it's live
       const res = await fetch(
         `${THREADS_BASE}/${externalPostId}?fields=id,status&access_token=${this.accessToken}`,
       );
-      if (res.status === 404) return 'failed';
-      if (!res.ok) return 'failed';
+      if (res.status === 404 || !res.ok) return 'failed';
       recordSuccess('threads');
       return 'live';
     } catch (error) {
@@ -158,7 +113,6 @@ export class ThreadsPublisher implements Publisher {
     if (isMockMode() || externalPostId.startsWith('mock_')) {
       return { views: 0, likes: 0, comments: 0 };
     }
-    // Fail-soft: circuit open → return zero metrics
     if (!shouldAllowRequest('threads')) return { views: 0, likes: 0, comments: 0 };
 
     try {
@@ -170,7 +124,7 @@ export class ThreadsPublisher implements Publisher {
       recordSuccess('threads');
       const data = (await res.json()) as ThreadsInsightsResponse;
       const findNum = (name: string): number => {
-        const v = data.data?.find(m => m.name === name)?.values?.[0]?.value;
+        const v = data.data?.find((m) => m.name === name)?.values?.[0]?.value;
         return typeof v === 'number' ? v : 0;
       };
       return {
@@ -184,7 +138,7 @@ export class ThreadsPublisher implements Publisher {
     }
   }
 
-async delete(_postId: string): Promise<void> {
-  // Platform-specific deletion not implemented
-  logger.warn("[threads.ts] delete not implemented");
-}}
+  async delete(_postId: string): Promise<void> {
+    logger.warn('[threads.ts] delete not implemented');
+  }
+}

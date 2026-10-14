@@ -16,18 +16,18 @@ import { DEFAULT_DESTINATION_ADDRESS } from './constants';
 import { calculateSmartSplitWaterfall } from './split-calculator';
 import { calculateTaxWithholding } from './tax-calculator';
 import { validatePayoutDestination } from './destination-validator';
-import { mapContractRow } from './contract-row-mapper';
-import {
-  insertSettlementRow,
-  mapSettlementRow,
-} from './settlement-row-mapper';
+import { insertSettlementRow } from './settlement-row-mapper';
 import { resolveSettlementCurrencyAndAmount } from './settlement-currency';
 import { buildSettlementRecord } from './settlement-builder';
-import type { ContractDbRow, SettlementDbRow } from './types';
+import {
+  findIdempotentSettlement,
+  loadActiveLicensingContract,
+} from './settlement-service-helpers';
 
 export * from './settlement-builder';
 export * from './settlement-currency';
 export * from './settlement-queries';
+export * from './settlement-service-helpers';
 
 /**
  * Executes a Smart Split Waterfall distribution, applies contractor tax withholding,
@@ -40,62 +40,17 @@ export async function executeRoyaltySplitAndSettle(
   const { contractId, grossRevenueCents, idempotencyKey } = input;
 
   // 1. Idempotency Check
-  const existingRow = await db
-    .prepare(
-      'SELECT * FROM creator_royalty_settlements WHERE idempotency_key = ? LIMIT 1',
-    )
-    .bind(idempotencyKey)
-    .first<SettlementDbRow>();
-
-  if (existingRow) {
-    const existing = mapSettlementRow(existingRow);
-    const waterfall = calculateSmartSplitWaterfall(
-      existing.grossRoyaltyCents,
-      'STANDARD_70_30',
-    );
-    const taxWithholding = calculateTaxWithholding(
-      existing.grossRoyaltyCents,
-      existing.contractorTaxRegime,
-      existing.taxWithholdingRatePct,
-    );
-    return {
-      success: true,
-      settlementId: existing.id,
-      settlementReference: existing.settlementReference,
-      waterfall,
-      taxWithholding,
-      settlementRecord: existing,
-    };
+  const existingResult = await findIdempotentSettlement(db, idempotencyKey);
+  if (existingResult) {
+    return existingResult;
   }
 
-  // 2. Fetch Licensing Contract
-  const contractRow = await db
-    .prepare('SELECT * FROM creator_licensing_contracts WHERE id = ? LIMIT 1')
-    .bind(contractId)
-    .first<ContractDbRow>();
-
-  if (!contractRow) {
-    return {
-      success: false,
-      settlementId: '',
-      settlementReference: '',
-      waterfall: calculateSmartSplitWaterfall(0, 'STANDARD_70_30'),
-      taxWithholding: calculateTaxWithholding(0, 'EXEMPT_NONE'),
-      error: `Contract not found: ${contractId}`,
-    };
+  // 2. Fetch & Validate Licensing Contract
+  const contractLookup = await loadActiveLicensingContract(db, contractId);
+  if (!contractLookup.ok) {
+    return contractLookup.failureResult;
   }
-
-  const contract = mapContractRow(contractRow);
-  if (contract.status !== 'active') {
-    return {
-      success: false,
-      settlementId: '',
-      settlementReference: '',
-      waterfall: calculateSmartSplitWaterfall(0, contract.splitTier),
-      taxWithholding: calculateTaxWithholding(0, contract.contractorTaxRegime),
-      error: `Contract is not active (status: ${contract.status})`,
-    };
-  }
+  const { contract } = contractLookup;
 
   // 3. Compute Smart Split Waterfall
   const waterfall = calculateSmartSplitWaterfall(

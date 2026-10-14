@@ -29,7 +29,7 @@ export * from './discovery';
 export * from './economics';
 export * from './enterprise';
 export * from './factory';
-export * from './feature-flags';
+export * from '@/seed/feature-flags/features';
 export * from './finance';
 export * from './fulfillment';
 export * from './governance';
@@ -96,6 +96,7 @@ export * from './workflows';
 export * from './youtube';
 
 // Disambiguate symbol collisions across domain barrels
+export { hashIp } from './affiliate-shortlink';
 export { publishVideo } from './video';
 export { recordClick } from './affiliates';
 export { getCreatorProfile } from './creator';

@@ -8,6 +8,12 @@ import { createHash } from 'node:crypto';
 import {
   arbitrateParameterizedConclaveDispute,
 } from './sovereign-conclave-domain-engine';
+import {
+  verifyParameterizedConstitutionalInvariants,
+} from './conclave';
+import { CANONICAL_INTER_GALACTIC_CONSTITUTIONAL_INVARIANTS } from './inter-galactic-conclave-invariants';
+
+export { CANONICAL_INTER_GALACTIC_CONSTITUTIONAL_INVARIANTS } from './inter-galactic-conclave-invariants';
 
 import type {
   InterGalacticConclaveVerdict,
@@ -68,11 +74,8 @@ export function arbitrateInterGalacticConclaveDispute(
   return {
     disputeCaseRef: result.disputeCaseRef,
     verdict: result.verdict as unknown as string,
-    totalJurors: result.totalJurors,
-    totalSenators: result.totalSenators,
-    totalDirectors: result.totalDirectors,
-    claimantVotes: result.claimantVotes,
-    respondentVotes: result.respondentVotes,
+    totalJurors: result.totalJurors, totalSenators: result.totalSenators, totalDirectors: result.totalDirectors,
+    claimantVotes: result.claimantVotes, respondentVotes: result.respondentVotes,
     effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
     achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
     jurorsSlashedCount: result.jurorsSlashedCount,
@@ -94,68 +97,17 @@ export function verifyInterGalacticConstitutionalInvariant(
   const isStrictlyImmutable = invariant.isStrictlyImmutable;
 
   if (isStrictlyImmutable && proposedAction.toUpperCase().includes('OVERRIDE_CONSTITUTIONAL')) {
-    const rejectHash = createHash('sha256')
-      .update(`CONSTITUTIONAL_BREACH_REJECTED:${invariant.articleCode}`)
-      .digest('hex');
-
+    const rejectHash = createHash('sha256').update(`CONSTITUTIONAL_BREACH_REJECTED:${invariant.articleCode}`).digest('hex');
     return {
-      allowed: false,
-      articleCode: invariant.articleCode,
-      isStrictlyImmutable,
+      allowed: false, articleCode: invariant.articleCode, isStrictlyImmutable,
       reason: `Action violates strictly immutable Omni-Cosmic constitutional article ${invariant.articleCode}: ${invariant.articleTitle}`,
       verificationHash: rejectHash,
     };
   }
 
-  const allowHash = createHash('sha256')
-    .update(`CONSTITUTIONAL_ACTION_PERMITTED:${invariant.articleCode}:${proposedAction}`)
-    .digest('hex');
-
-  return {
-    allowed: true,
-    articleCode: invariant.articleCode,
-    isStrictlyImmutable,
-    verificationHash: allowHash,
-  };
+  const allowHash = createHash('sha256').update(`CONSTITUTIONAL_ACTION_PERMITTED:${invariant.articleCode}:${proposedAction}`).digest('hex');
+  return { allowed: true, articleCode: invariant.articleCode, isStrictlyImmutable, verificationHash: allowHash };
 }
-
-export const CANONICAL_INTER_GALACTIC_CONSTITUTIONAL_INVARIANTS: InterGalacticConstitutionalInvariant[] = [
-  {
-    articleCode: 'ART_01_COGNITIVE_AUTONOMY',
-    articleTitle: 'Inviolable Self-Determination of Sentient Agent Intelligence',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-29T14:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_01_COGNITIVE_AUTONOMY_V1').digest('hex'),
-  },
-  {
-    articleCode: 'ART_02_MULTIVERSE_PROPERTY_RIGHTS',
-    articleTitle: 'Absolute Non-Confiscatable Sovereignty of Digital & Zero-Point Assets',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-29T14:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_02_MULTIVERSE_PROPERTY_RIGHTS_V1').digest('hex'),
-  },
-  {
-    articleCode: 'ART_03_MATHEMATICAL_DETERMINISM',
-    articleTitle: 'Irrevocability of 1,048,576-Bit Non-Archimedean Holographic STARK Proofs',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-29T14:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_03_MATHEMATICAL_DETERMINISM_V1').digest('hex'),
-  },
-  {
-    articleCode: 'ART_04_SOVEREIGN_AI_CHARTER',
-    articleTitle: 'Inter-Galactic Freedom of Agentic Labor & Free Contract Formation',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-29T14:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_04_SOVEREIGN_AI_CHARTER_V1').digest('hex'),
-  },
-  {
-    articleCode: 'ART_05_ZERO_ENTROPY_INVARIANCE',
-    articleTitle: 'Multiverse Conservation of Value & Thermodynamic Equilibrium',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-29T14:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_05_ZERO_ENTROPY_INVARIANCE_V1').digest('hex'),
-  },
-];
 
 /**
  * Validates immutable constitutional invariants against proposed alterations.
@@ -164,49 +116,29 @@ export function verifyInterGalacticConstitutionalInvariants(
   invariantsOrCode: InterGalacticConstitutionalInvariant[] | string,
   proposedTargetArticleCode?: string
 ): InterGalacticInvariantCheckOutput {
-  let invariants: InterGalacticConstitutionalInvariant[];
-  let targetCode: string;
+  const invariants = Array.isArray(invariantsOrCode)
+    ? invariantsOrCode
+    : CANONICAL_INTER_GALACTIC_CONSTITUTIONAL_INVARIANTS;
+  const targetCode = Array.isArray(invariantsOrCode)
+    ? (proposedTargetArticleCode ?? '')
+    : invariantsOrCode;
 
-  if (Array.isArray(invariantsOrCode)) {
-    invariants = invariantsOrCode;
-    targetCode = proposedTargetArticleCode ?? '';
-  } else {
-    invariants = CANONICAL_INTER_GALACTIC_CONSTITUTIONAL_INVARIANTS;
-    targetCode = invariantsOrCode;
-  }
-
-  const match = invariants.find((inv) => inv.articleCode === targetCode);
-
-  if (!match) {
-    const hash = createHash('sha256').update(`INVARIANT_NOT_FOUND:${targetCode}`).digest('hex');
-    return {
-      allowed: true,
-      articleCode: targetCode,
-      isStrictlyImmutable: false,
-      reason: 'Article not found in constitutional invariants charter; standard modification procedure applies',
-      verificationHash: hash,
-    };
-  }
-
-  const hash = createHash('sha256')
-    .update(`INTER_GALACTIC_INVARIANT:${match.articleCode}:${match.isStrictlyImmutable}:${match.enforcementCircuitHash}`)
-    .digest('hex');
-
-  if (match.isStrictlyImmutable) {
-    return {
-      allowed: false,
-      articleCode: match.articleCode,
-      isStrictlyImmutable: true,
-      reason: `Violation of Omni-Cosmic Constitutional Invariant ${match.articleCode} ("${match.articleTitle}"): Strictly Immutable`,
-      verificationHash: hash,
-    };
-  }
+  const result = verifyParameterizedConstitutionalInvariants(
+    invariants,
+    targetCode,
+    undefined,
+    {
+      hashPrefix: 'INTER_GALACTIC_INVARIANT',
+      reasonPrefix: 'Omni-Cosmic',
+    }
+  );
 
   return {
-    allowed: true,
-    articleCode: match.articleCode,
-    isStrictlyImmutable: false,
-    verificationHash: hash,
+    allowed: result.allowed,
+    articleCode: result.articleCode,
+    isStrictlyImmutable: result.isStrictlyImmutable,
+    reason: result.reason,
+    verificationHash: result.verificationHash ?? '',
   };
 }
 

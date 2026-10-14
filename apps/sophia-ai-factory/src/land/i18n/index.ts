@@ -5,5 +5,5 @@
 export * from './caption-translator';
 export * from './channel-caption-rules';
 export * from './localized-href';
-export * from './to-bcp47';
+export * from '@/seed/i18n/to-bcp47';
 export * from './translate-script';

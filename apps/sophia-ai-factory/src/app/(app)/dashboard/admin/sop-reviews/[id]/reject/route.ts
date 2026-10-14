@@ -4,10 +4,16 @@ import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { revalidatePath } from 'next/cache';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  MARKETPLACE_TEMPORARILY_UNAVAILABLE,
+  marketplaceTemporarilyUnavailableError,
+} from '@/land/sop-marketplace/availability';
 
 export interface RejectResult {
   success: boolean;
   error?: string;
+  code?: typeof MARKETPLACE_TEMPORARILY_UNAVAILABLE;
 }
 
 export async function rejectSopListing(listingId: string, reason: string): Promise<RejectResult> {
@@ -15,6 +21,10 @@ export async function rejectSopListing(listingId: string, reason: string): Promi
     const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: 'Not authenticated' };
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      const unavailable = marketplaceTemporarilyUnavailableError();
+      return { success: false, code: unavailable.code, error: unavailable.message };
     }
 
     // Check admin tier
@@ -78,5 +88,6 @@ export async function POST(
   }
 
   const result = await rejectSopListing(id, reason);
-  return NextResponse.json(result, { status: result.success ? 200 : 400 });
+  const status = result.success ? 200 : result.code === MARKETPLACE_TEMPORARILY_UNAVAILABLE ? 503 : 400;
+  return NextResponse.json(result, { status });
 }

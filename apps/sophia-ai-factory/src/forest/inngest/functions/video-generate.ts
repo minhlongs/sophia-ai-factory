@@ -21,11 +21,8 @@
  */
 import { inngest } from '@/seed/inngest/client';
 import { createServerClient } from '@/seed/db/client';
-import { recordCost } from '@/land/video/templates/cost-ledger';
-import { computeTtsCost, computeVisualCost } from '@/land/video/pipeline-pricing';
 import { logger } from '@/seed/utils/logger-utility';
 import { muxVideoAudio } from '@/land/video/assembly/ffmpeg-muxer';
-import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
 import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo } from '@/land/video/assembly/composer-ffmpeg';
@@ -39,6 +36,11 @@ import {
 } from './video-generate-helpers';
 import { executeTtsStep } from './video-generate-tts';
 import { executeVisualStep } from './video-generate-poll';
+import {
+  updateEngineMission,
+  recordGalleryVideo,
+  recordGenerationUsage,
+} from './video-generate-finalize';
 
 // ── Inngest Function ───────────────────────────────────────────────────────
 
@@ -134,7 +136,6 @@ export const videoGenerate = inngest.createFunction(
       const videoPublicUrl = base ? `${base}/${videoR2Key}` : videoR2Key;
       const audioPublicUrl = base ? `${base}/${audioR2Key}` : audioR2Key;
 
-      // Check for brand kit — if present with logo, use composeFinalVideo; otherwise mux
       const brandKit = await getBrandKit(userId);
       if (brandKit?.logo_r2_key) {
         const result = await composeFinalVideo({ jobId: missionId, tenantId, audioR2Key, visualR2Key: videoR2Key, subtitleSrt });
@@ -152,47 +153,24 @@ export const videoGenerate = inngest.createFunction(
       asset_manifest: { audioR2Key, videoR2Key, brandKitApplied: false, assets: [{ type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' }, { type: 'video', r2Key: videoR2Key, mimeType: 'video/mp4' }, { type: 'video', r2Key: muxOutputKey, mimeType: 'video/mp4' }] },
     });
     // ── Step 7: Update engine_mission ─────────────────────────────────────
-    await step.run('update-mission', async () => {
-      const db = createServerClient();
-      await db.from('engine_missions').update({
-        status: 'succeeded',
-        result: JSON.stringify({ output_video_url: muxed.url, audio_duration_sec: audioDurationSec }),
-        output_video_url: muxed.url,
-        output_audio_url: null,
-        video_job_id: wanJobId,
-        completed_at: Math.floor(Date.now() / 1000),
-        updated_at: Math.floor(Date.now() / 1000),
-      }).eq('id', missionId);
-      logger.info('[videoGenerate] engine_mission updated to succeeded', { missionId });
-    });
+    await step.run('update-mission', () =>
+      updateEngineMission({ missionId, muxedUrl: muxed.url, audioDurationSec, wanJobId }),
+    );
     await writeStageCheckpoint(missionId, 'update_mission', 'completed', tenantId, {
       render_report: { finalR2Key: muxOutputKey, finalUrl: muxed.url, durationMs: muxed.durationMs, muxedAt: new Date().toISOString(), brandKitApplied: false },
     });
     // ── Insert videos row for gallery ─────────────────────────────────────
-    await step.run('insert-videos-row', async () => {
-      try {
-        const videoId = await insertAiPromptVideo({ userId, missionId, videoUrl: muxed.url, r2Key: muxOutputKey });
-        return { videoId };
-      } catch (err) {
-        logger.error('[videoGenerate] insert-videos-row failed (non-fatal)', err instanceof Error ? err : new Error(String(err)), { missionId });
-        return { videoId: null };
-      }
-    });
+    await step.run('insert-videos-row', () =>
+      recordGalleryVideo({ userId, missionId, videoUrl: muxed.url, r2Key: muxOutputKey }),
+    );
     await emitProgress(missionId, 'publish', 80, 'Sẵn sàng xuất bản / Ready for publishing');
     await writeStageCheckpoint(missionId, 'emit_usage', 'completed', tenantId, {
       render_report: { finalR2Key: muxOutputKey, finalUrl: muxed.url, durationMs: muxed.durationMs, muxedAt: new Date().toISOString(), brandKitApplied: false },
     });
     // ── Step 8: Emit Usage ────────────────────────────────────────────────
-    await step.run('emit-usage', async () => {
-      const ttsCostUsd = computeTtsCost(ttsProvider);
-      const visualCostUsd = computeVisualCost(selectedVisualProvider, audioDurationSec);
-
-      const totalCostUsd = ttsCostUsd + visualCostUsd;
-      const providers = `tts:${ttsProvider},visual:${selectedVisualProvider}`;
-
-      await recordCost({ jobId: missionId, stage: 'video-generate', provider: providers, units: 1, costUsd: totalCostUsd });
-      logger.info('[videoGenerate] Usage cost recorded', { missionId, costUsd: totalCostUsd, ttsCostUsd, visualCostUsd, ttsProvider, visualProvider: selectedVisualProvider });
-    });
+    await step.run('emit-usage', () =>
+      recordGenerationUsage({ missionId, ttsProvider, selectedVisualProvider, audioDurationSec }),
+    );
 
     await emitProgress(missionId, 'complete', 100, 'Video đã tạo xong / Video generation complete');
 

@@ -6,6 +6,8 @@
  * @module land/partners/partner-ops/partner-whitelabel-actions
  */
 
+'use server';
+
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure, type Result } from '@/seed/types/result';

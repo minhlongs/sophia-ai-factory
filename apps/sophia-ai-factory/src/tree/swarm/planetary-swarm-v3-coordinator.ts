@@ -16,8 +16,12 @@ import {
   type AgenticSpotAuction,
   type SpotBidRequest,
   type SpotAuctionMatchResult,
-  rowToPlanetarySwarmNode,
 } from '@/seed/types/planetary-swarm';
+import {
+  persistPlanetarySwarmNode,
+  getAllPlanetarySwarmNodes,
+  recordPlanetarySpotAuction,
+} from './planetary-swarm-v3-persistence';
 
 export interface PartitionHealthReport {
   totalNodes: number;
@@ -73,13 +77,9 @@ export class PlanetarySwarmV3Coordinator {
 
     if (eligibleNodes.length === 0) {
       return {
-        auctionId: `spot_reject_${Date.now()}`,
-        sellerNodeId: '',
-        clearingPriceMicros: 0,
-        unitsAllocated: 0,
-        totalCostUsdCents: 0,
-        status: 'DISPUTED',
-        bidProofHash: '',
+        auctionId: `spot_reject_${Date.now()}`, sellerNodeId: '',
+        clearingPriceMicros: 0, unitsAllocated: 0, totalCostUsdCents: 0,
+        status: 'DISPUTED', bidProofHash: '',
       };
     }
 
@@ -100,12 +100,9 @@ export class PlanetarySwarmV3Coordinator {
 
     return {
       auctionId: `spot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      sellerNodeId: selectedSeller.id,
-      clearingPriceMicros,
-      unitsAllocated: bid.unitsRequested,
-      totalCostUsdCents: costCents,
-      status: 'SETTLED',
-      bidProofHash,
+      sellerNodeId: selectedSeller.id, clearingPriceMicros,
+      unitsAllocated: bid.unitsRequested, totalCostUsdCents: costCents,
+      status: 'SETTLED', bidProofHash,
     };
   }
 
@@ -131,66 +128,20 @@ export class PlanetarySwarmV3Coordinator {
    * Persists a planetary swarm node into Cloudflare D1.
    */
   public static async persistNode(db: D1Database, node: PlanetarySwarmNode): Promise<void> {
-    await db
-      .prepare(
-        `INSERT OR REPLACE INTO planetary_swarm_nodes (
-          id, node_key, continent, datacenter_code, ip_address_hash,
-          ed25519_public_key, status, consensus_role, heartbeat_latency_ms,
-          uptime_percentage, last_heartbeat_at, registered_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        node.id,
-        node.nodeKey,
-        node.continent,
-        node.datacenterCode,
-        node.ipAddressHash,
-        node.ed25519PublicKey,
-        node.status,
-        node.consensusRole,
-        node.heartbeatLatencyMs,
-        node.uptimePercentage,
-        node.lastHeartbeatAt,
-        node.registeredAt
-      )
-      .run();
+    return persistPlanetarySwarmNode(db, node);
   }
 
   /**
    * Fetches all registered planetary nodes from Cloudflare D1.
    */
   public static async getAllNodes(db: D1Database): Promise<PlanetarySwarmNode[]> {
-    const { results } = await db.prepare('SELECT * FROM planetary_swarm_nodes').all<Record<string, unknown>>();
-    return results.map(rowToPlanetarySwarmNode);
+    return getAllPlanetarySwarmNodes(db);
   }
 
   /**
    * Records a settled spot compute auction into Cloudflare D1.
    */
   public static async recordAuction(db: D1Database, auction: AgenticSpotAuction): Promise<void> {
-    await db
-      .prepare(
-        `INSERT INTO agentic_spot_auctions (
-          id, auction_batch_id, seller_node_id, buyer_agent_did,
-          resource_type, units_allocated, clearing_price_micros,
-          settlement_currency, duration_seconds, bid_proof_hash,
-          settlement_status, executed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        auction.id,
-        auction.auctionBatchId,
-        auction.sellerNodeId,
-        auction.buyerAgentDid,
-        auction.resourceType,
-        auction.unitsAllocated,
-        auction.clearingPriceMicros,
-        auction.settlementCurrency,
-        auction.durationSeconds,
-        auction.bidProofHash,
-        auction.settlementStatus,
-        auction.executedAt
-      )
-      .run();
+    return recordPlanetarySpotAuction(db, auction);
   }
 }

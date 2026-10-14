@@ -9,17 +9,14 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { submitMediaJob } from '@/tree/clients/muapi-media-client';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
-import { ImageGenerationError } from '@/seed/ai/image-generation-provider';
 import { storeFalImageInR2 } from '@/land/image/fal-image-r2-service';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import { trackUsage, calculateCredits, hashLicenseKey, resolveUserLicenseNonce } from '@/tree/usage-metering';
 import { logger } from '@/seed/utils/logger-utility';
 import { classifyCost } from '@/seed/types/creative-job-economics';
-import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-mapper';
-import { FailureKind } from '@/seed/types/failure-kind';
+import { recordFailedFalImageJob, submitMuApiImageJob } from './image-generation-helpers';
 
 export interface GenerateImageJobInput {
   userId: string;
@@ -132,65 +129,9 @@ export async function executeImageGeneration(
 
       return { success: true, jobId };
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const code = err instanceof ImageGenerationError ? err.code : 'FAL_ERROR';
-      const retryCount = err instanceof ImageGenerationError ? err.retryCount : undefined;
-      const failureKind = Object.values(FailureKind).includes(code as FailureKind)
-        ? (code as FailureKind)
-        : FailureKind.UNKNOWN;
-      const errorCategory = mapFailureKindToErrorCategory(failureKind);
-      const failedAt = Math.floor(Date.now() / 1000);
-
-      try {
-        const db = createServerClient();
-        await db.from('media_jobs').insert({
-          id: jobId,
-          user_id: userId,
-          type: 'image',
-          model,
-          prompt,
-          status: 'failed',
-          provider: 'fal-ai',
-          error_category: errorCategory,
-          retry_count: retryCount ?? null,
-          cost_classification: 'UNKNOWN',
-          requested_at: failedAt,
-          started_at: failedAt,
-          latency_ms: Date.now() - startTime,
-        });
-      } catch (dbErr) {
-        logger.error('[image-orchestrator] failed to record failed job', dbErr instanceof Error ? dbErr : new Error(String(dbErr)));
-      }
-
-      logger.warn('[image-orchestrator] fal-ai generation failed', { error: message, code });
-      return { success: false, error: message, code };
+      return recordFailedFalImageJob({ jobId, userId, model, prompt, startTime, err });
     }
   }
 
-  // MuAPI path
-  const muResult = await submitMediaJob({ type: 'image', model, prompt, aspectRatio });
-  if (!muResult.success || !muResult.job) {
-    logger.warn('[image-orchestrator] MuAPI submission failed', { error: muResult.error });
-    return { success: false, error: muResult.error ?? 'Failed to submit job', code: 'MUAPI_ERROR' };
-  }
-
-  const jobId = muResult.job.id;
-  const db = createServerClient();
-  const { error: insertError } = await db.from('media_jobs').insert({
-    id: jobId,
-    user_id: userId,
-    type: 'image',
-    model,
-    prompt,
-    status: 'pending',
-    cost_classification: 'UNKNOWN',
-    requested_at: Math.floor(Date.now() / 1000),
-  }) as { error: { message: string } | null };
-
-  if (insertError) {
-    logger.error('[image-orchestrator] D1 insert failed', new Error(insertError.message));
-    return { success: false, error: 'Failed to record job', code: 'DB_ERROR' };
-  }
-
-  return { success: true, jobId };
+  return submitMuApiImageJob(input);
 }

@@ -13,28 +13,19 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  AUTH_RATE_LIMIT_CONFIG,
+  ensureRateLimitTable,
+  isPermanentRateLimitError,
+  type D1RateLimitConfig,
+  type D1RateLimitResult,
+} from './d1-rate-limiter-schema';
 
-export interface D1RateLimitConfig {
-  /** Maximum requests allowed within the window */
-  maxRequests: number;
-  /** Time window in seconds */
-  windowSeconds: number;
-}
-
-/** Default auth rate limit: 10 requests per 60 seconds */
-export const AUTH_RATE_LIMIT_CONFIG: D1RateLimitConfig = {
-  maxRequests: 10,
-  windowSeconds: 60,
-};
-
-export interface D1RateLimitResult {
-  /** Whether the request is allowed */
-  allowed: boolean;
-  /** Remaining requests within the current window */
-  remaining: number;
-  /** Unix timestamp (seconds) when the rate limit resets */
-  resetAt: number;
-}
+export {
+  AUTH_RATE_LIMIT_CONFIG,
+  type D1RateLimitConfig,
+  type D1RateLimitResult,
+} from './d1-rate-limiter-schema';
 
 /**
  * Check rate limit using D1-backed counter.
@@ -73,7 +64,7 @@ export async function checkD1RateLimit(
 
   try {
     // Ensure table exists (idempotent, per-isolate cache)
-    await ensureTable(db);
+    await ensureRateLimitTable(db);
 
     // Clean up expired entries inline (best-effort, non-fatal)
     try {
@@ -132,21 +123,7 @@ export async function checkD1RateLimit(
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
 
-    // Fail-closed on schema/constraint errors (permanent)
-    const permanentPatterns = [
-      /no such table/i,
-      /schema mismatch/i,
-      /no such column/i,
-      /datatype mismatch/i,
-      /UNIQUE constraint/i,
-      /NOT NULL constraint/i,
-      /FOREIGN KEY constraint/i,
-      /syntax error/i,
-    ];
-
-    const isPermanent = permanentPatterns.some((p) => p.test(error.message));
-
-    if (isPermanent) {
+    if (isPermanentRateLimitError(error.message)) {
       logger.error('D1 rate limit: PERMANENT ERROR - failing closed', {
         error: error.message,
       });
@@ -165,36 +142,5 @@ export async function checkD1RateLimit(
       remaining: 0,
       resetAt: Math.floor(Date.now() / 1000) + config.windowSeconds,
     };
-  }
-}
-
-// ── Per-isolate table creation cache ─────────────────────────────────────
-
-let _tableEnsured = false;
-
-/**
- * Ensure the d1_rate_limits table exists.
- * Uses a per-isolate boolean flag to skip the DDL after first call.
- */
-async function ensureTable(db: Awaited<ReturnType<typeof getD1>>): Promise<void> {
-  if (_tableEnsured || !db) return;
-
-  try {
-    await db
-      .prepare(
-        'CREATE TABLE IF NOT EXISTS d1_rate_limits (' +
-          'client_id TEXT PRIMARY KEY, ' +
-          'counter INTEGER NOT NULL DEFAULT 1, ' +
-          'window_start INTEGER NOT NULL, ' +
-          'created_at INTEGER DEFAULT (unixepoch())' +
-          ')',
-      )
-      .run();
-    _tableEnsured = true;
-  } catch (err) {
-    logger.error(
-      'Failed to ensure d1_rate_limits table',
-      err instanceof Error ? err : new Error(String(err)),
-    );
   }
 }

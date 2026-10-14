@@ -26,89 +26,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 import { verifyWebhook } from '@/land/webhooks/signature'
 import { logger } from '@/seed/utils/logger-utility'
+import {
+  THRESHOLDS,
+  WINDOW_SEC,
+  recordVerification,
+  getMismatchRate,
+  parseTimestampFromHeader,
+  detectFormat,
+  type CanaryResponse,
+} from './canary-webhook-helpers'
 
 const SIG_HEADER = 'x-sophia-signature'
 const CANARY_SECRET_ENV = 'CANARY_WEBHOOK_SECRET'
 const MAX_AGE_SEC = 300
-
-/** Alert thresholds exposed to external monitors (Better Stack / Pingdom). */
-const THRESHOLDS = {
-  /** Maximum acceptable HMAC-mismatch rate (%) over the rolling window. */
-  hmacMismatchRatePctMax: 1.0,
-  /** Maximum acceptable p95 latency in ms (self-reported via X-Request-Latency if present). */
-  latencyP95MsMax: 500,
-} as const
-
-/**
- * Rolling 5-minute mismatch counter (in-memory, best-effort).
- * In a multi-worker Cloudflare environment each isolate maintains its own bucket —
- * sufficient for approximate alerting; a KV-backed counter would be more precise
- * but adds latency to the diagnostic endpoint.
- */
-const WINDOW_SEC = 300 // 5 min
-
-interface MismatchWindow {
-  windowStart: number // unix seconds
-  total: number
-  mismatches: number
-}
-
-let mismatchWindow: MismatchWindow = { windowStart: 0, total: 0, mismatches: 0 }
-
-/** Advance the window if the current 5-minute bucket has expired. */
-function advanceWindowIfNeeded(nowSec: number): void {
-  if (nowSec - mismatchWindow.windowStart >= WINDOW_SEC) {
-    mismatchWindow = { windowStart: nowSec, total: 0, mismatches: 0 }
-  }
-}
-
-/** Record a verification result into the rolling window. */
-function recordVerification(valid: boolean): void {
-  const nowSec = Math.floor(Date.now() / 1000)
-  advanceWindowIfNeeded(nowSec)
-  mismatchWindow.total += 1
-  if (!valid) mismatchWindow.mismatches += 1
-}
-
-/** Compute current mismatch rate and breach status. */
-function getMismatchRate(): { windowSec: number; total: number; mismatches: number; ratePct: number; breach: boolean } {
-  const nowSec = Math.floor(Date.now() / 1000)
-  advanceWindowIfNeeded(nowSec)
-  const { total, mismatches } = mismatchWindow
-  const ratePct = total > 0 ? (mismatches / total) * 100 : 0
-  const breach = total >= 10 && ratePct > THRESHOLDS.hmacMismatchRatePctMax
-  return { windowSec: WINDOW_SEC, total, mismatches, ratePct: Math.round(ratePct * 100) / 100, breach }
-}
-
-interface CanaryResponse {
-  valid: boolean
-  format: 'unified' | 'legacy' | 'unknown'
-  skewMs: number
-  ageMs: number
-  thresholds: typeof THRESHOLDS
-  mismatchRate: ReturnType<typeof getMismatchRate>
-  breach: boolean
-}
-
-function parseTimestampFromHeader(header: string): number | null {
-  for (const part of header.split(',')) {
-    const eqIdx = part.indexOf('=')
-    if (eqIdx === -1) continue
-    const k = part.slice(0, eqIdx).trim()
-    const v = part.slice(eqIdx + 1).trim()
-    if (k === 't') {
-      const ts = parseInt(v, 10)
-      return isNaN(ts) ? null : ts
-    }
-  }
-  return null
-}
-
-function detectFormat(signature: string): CanaryResponse['format'] {
-  if (signature.includes('t=') && signature.includes('v1=')) return 'unified'
-  if (/^[0-9a-f]{64}$/i.test(signature)) return 'legacy'
-  return 'unknown'
-}
 
 async function handleCanaryWebhook(request: NextRequest): Promise<NextResponse> {
   const sigHeader = request.headers.get(SIG_HEADER)

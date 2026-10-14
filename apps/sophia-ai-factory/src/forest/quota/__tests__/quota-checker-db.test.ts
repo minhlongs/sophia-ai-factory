@@ -46,7 +46,7 @@ vi.mock('@/seed/db/client', () => {
   };
 });
 
-import { calculateCurrentUsage, getEffectiveQuotaLimits } from '../quota-checker-db';
+import { calculateCurrentUsage, getEffectiveQuotaLimits } from '@/tree/quota/quota-checker-db';
 
 describe('quota-checker-db', () => {
   beforeEach(async () => {

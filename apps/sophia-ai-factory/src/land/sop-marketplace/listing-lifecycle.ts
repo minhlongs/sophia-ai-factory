@@ -5,17 +5,11 @@
 
 'use server';
 
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1 } from '@/seed/db/client';
-import { requireOrgMembership } from '@/seed/db/org-membership';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
-import {
-  getSopListing as dbGetSopListing,
-  updateSopListing as dbUpdateSopListing,
-  getCreatorProfile as dbGetCreatorProfile,
-} from '@/seed/db/marketplace-ops';
+import { updateSopListing as dbUpdateSopListing } from '@/seed/db/marketplace-ops';
 import type { ListingError } from './listing-types';
+import { loadOwnedListingContext } from './listing-lifecycle-context';
 
 /**
  * Submit a draft listing for admin review.
@@ -26,28 +20,11 @@ export async function submitForReview(
   listingId: string,
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    const ctxResult = await loadOwnedListingContext(listingId);
+    if (!ctxResult.ok) {
+      return ctxResult;
     }
-
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    const orgResult = await requireOrgMembership(user.id);
-    const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-
-    const listing = await dbGetSopListing(d1, listingId);
-    if (!listing) {
-      return failure({ code: 'NOT_FOUND', message: 'Listing not found' });
-    }
-
-    const profile = await dbGetCreatorProfile(d1, user.id, tenantId);
-    if (!profile || listing.creator_id !== profile.id) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not own this listing' });
-    }
+    const { userId, d1, listing, profile } = ctxResult.value;
 
     if (listing.status !== 'draft') {
       return failure({
@@ -65,7 +42,7 @@ export async function submitForReview(
 
     await dbUpdateSopListing(d1, listingId, { status: 'pending_review' });
 
-    logger.info('[SubmitForReview] Listing submitted for review', { userId: user.id, listingId });
+    logger.info('[SubmitForReview] Listing submitted for review', { userId, listingId });
 
     return success({ listingId });
   } catch (err) {
@@ -84,28 +61,11 @@ export async function publishListing(
   listingId: string,
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    const ctxResult = await loadOwnedListingContext(listingId);
+    if (!ctxResult.ok) {
+      return ctxResult;
     }
-
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    const orgResult = await requireOrgMembership(user.id);
-    const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-
-    const listing = await dbGetSopListing(d1, listingId);
-    if (!listing) {
-      return failure({ code: 'NOT_FOUND', message: 'Listing not found' });
-    }
-
-    const profile = await dbGetCreatorProfile(d1, user.id, tenantId);
-    if (!profile || listing.creator_id !== profile.id) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not own this listing' });
-    }
+    const { userId, d1, listing, profile } = ctxResult.value;
 
     if (listing.status !== 'draft') {
       return failure({
@@ -121,9 +81,16 @@ export async function publishListing(
       });
     }
 
+    if (listing.price_cents > 0) {
+      return failure({
+        code: 'VALIDATION_ERROR',
+        message: 'Paid listings cannot be published until checkout is enabled. Please keep as draft or set price to 0.',
+      });
+    }
+
     await dbUpdateSopListing(d1, listingId, { status: 'published' });
 
-    logger.info('[PublishListing] Listing published', { userId: user.id, listingId });
+    logger.info('[PublishListing] Listing published', { userId, listingId });
 
     return success({ listingId });
   } catch (err) {
@@ -140,28 +107,11 @@ export async function archiveListing(
   listingId: string,
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    const ctxResult = await loadOwnedListingContext(listingId);
+    if (!ctxResult.ok) {
+      return ctxResult;
     }
-
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    const orgResult = await requireOrgMembership(user.id);
-    const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-
-    const listing = await dbGetSopListing(d1, listingId);
-    if (!listing) {
-      return failure({ code: 'NOT_FOUND', message: 'Listing not found' });
-    }
-
-    const profile = await dbGetCreatorProfile(d1, user.id, tenantId);
-    if (!profile || listing.creator_id !== profile.id) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not own this listing' });
-    }
+    const { userId, d1, listing } = ctxResult.value;
 
     if (listing.status === 'archived') {
       return failure({
@@ -179,7 +129,7 @@ export async function archiveListing(
 
     await dbUpdateSopListing(d1, listingId, { status: 'archived' });
 
-    logger.info('[ArchiveListing] Listing archived', { userId: user.id, listingId });
+    logger.info('[ArchiveListing] Listing archived', { userId, listingId });
 
     return success({ listingId });
   } catch (err) {

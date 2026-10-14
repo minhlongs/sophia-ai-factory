@@ -4,4 +4,4 @@
  * @module land/overage
  */
 
-export * from './overage-formatter';
+export * from '@/land/billing/overage-formatter';

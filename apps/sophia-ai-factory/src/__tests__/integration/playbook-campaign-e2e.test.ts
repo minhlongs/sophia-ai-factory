@@ -259,6 +259,14 @@ CREATE TABLE IF NOT EXISTS user_sop_installations (
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
+CREATE TABLE IF NOT EXISTS sop_listings (
+  id TEXT PRIMARY KEY,
+  sop_template_id TEXT,
+  template_id TEXT,
+  price_cents INTEGER,
+  status TEXT DEFAULT 'published'
+);
+
 CREATE TABLE IF NOT EXISTS missions (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL,
@@ -383,7 +391,7 @@ import { transitionStatusCAS } from '@/forest/mission/multi-track-orchestrator';
 import {
   checkMissionQuota,
   MISSION_QUOTA_BY_TIER,
-} from '@/forest/quota/mission-quota';
+} from '@/tree/quota/mission-quota';
 import type {
   PlaybookPattern,
   PlaybookRule,

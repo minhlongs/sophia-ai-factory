@@ -8,8 +8,6 @@
  * @module land/creative-mission/actions
  */
 
-'use server';
-
 // Types
 export type {
   MissionError,

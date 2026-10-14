@@ -5,7 +5,6 @@ import { useTranslations, useLocale } from "next-intl";
 import { useCsrfToken } from "@/seed/security/use-csrf-token";
 import { usePricingData } from "../pricing-data";
 import { CouponInput, type PromoDiscount } from "../coupon-input";
-import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import dynamic from "next/dynamic";
 import { BillingIntervalSwitch } from "./billing-interval-switch";
 import { PaymentMethodSwitch } from "./payment-method-switch";
@@ -13,7 +12,12 @@ import { PricingTierGrid } from "./pricing-tier-grid";
 import { MasterTierCard } from "./master-tier-card";
 import { RefundPolicyBanner } from "./refund-policy-banner";
 import { CheckoutErrorAlert } from "./checkout-error-alert";
-import type { BillingPeriod, PaymentMethod, CheckoutData, CheckoutResponse, PricingSectionProps } from "./types";
+import type { BillingPeriod, PaymentMethod, CheckoutData, PricingSectionProps } from "./types";
+import {
+  calculateDiscountedCents,
+  prepareTierCheckoutInit,
+  postCheckoutRequest,
+} from "./pricing-checkout-helpers";
 
 const CheckoutPanel = dynamic(
   () => import("@/forest/components/checkout/checkout-panel").then((m) => ({ default: m.CheckoutPanel })),
@@ -34,19 +38,8 @@ export function PricingSectionView({ isAuthenticated = false }: PricingSectionPr
   const csrfHeaders = useCsrfToken();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
 
-  function getDiscountedCents(basePriceCents: number): number | undefined {
-    if (!appliedDiscount) return undefined;
-    if (appliedDiscount.appliesToTier && appliedDiscount.discountType !== "free_trial" && appliedDiscount.discountType !== "free_full") {
-      return undefined;
-    }
-    if (appliedDiscount.discountType === "percent_off") {
-      return Math.max(0, Math.round(basePriceCents * (1 - appliedDiscount.discountValue / 100)));
-    }
-    if (appliedDiscount.discountType === "fixed_off") {
-      return Math.max(0, basePriceCents - appliedDiscount.discountValue);
-    }
-    return undefined;
-  }
+  const getDiscountedCents = (basePriceCents: number) =>
+    calculateDiscountedCents(basePriceCents, appliedDiscount);
 
   const handleSelectTier = async (tier: string) => {
     setLoading(tier);
@@ -56,39 +49,21 @@ export function PricingSectionView({ isAuthenticated = false }: PricingSectionPr
     }
 
     try {
-      const period = tier === "MASTER" ? "lifetime" : billingPeriod === "annual" ? "yearly" : "monthly";
-      const body: Record<string, unknown> = { tier, paymentMethod, period };
-      if (appliedDiscount && (appliedDiscount.discountType === "percent_off" || appliedDiscount.discountType === "fixed_off")) {
-        body.promoCode = appliedDiscount.code;
-      }
-
-      const isAnnual = billingPeriod === "annual";
-      const tierConfig = UNIFIED_TIERS[tier as keyof typeof UNIFIED_TIERS];
-      const annualPriceCents = isAnnual && tierConfig && tierConfig.yearlyPrice > 0 ? tierConfig.yearlyPrice * 100 : undefined;
-      const pricing = PRICING_TIERS.find((p) => p.tier === tier);
-      const monthlyPrice = pricing ? pricing.monthlyPrice : 0;
-      const baseCents = tier === "MASTER" ? MASTER_TIER.price : isAnnual && annualPriceCents ? annualPriceCents : monthlyPrice;
-      const discountedCents = getDiscountedCents(baseCents);
-
-      setCheckoutData({
+      const { body, initialCheckoutData } = prepareTierCheckoutInit({
         tier,
-        period: period as "monthly" | "yearly" | "lifetime",
+        billingPeriod,
         paymentMethod,
-        priceCents: baseCents,
-        discountedPriceCents: discountedCents,
-        couponCode: appliedDiscount?.code,
+        appliedDiscount,
+        pricingTiers: PRICING_TIERS,
+        masterTierPrice: MASTER_TIER.price,
       });
+
+      setCheckoutData(initialCheckoutData);
       setIsCheckoutOpen(true);
       setCheckoutError(null);
 
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...csrfHeaders },
-        body: JSON.stringify(body),
-      });
-
-      const data = (await response.json()) as CheckoutResponse;
-      if (response.status === 401) {
+      const { status, data } = await postCheckoutRequest(body, csrfHeaders);
+      if (status === 401) {
         setIsCheckoutOpen(false);
         window.location.href = `/${locale}/login?next=${encodeURIComponent(`/${locale}/pricing`)}`;
         return;
@@ -146,45 +121,26 @@ export function PricingSectionView({ isAuthenticated = false }: PricingSectionPr
         <RefundPolicyBanner />
 
         <PricingTierGrid
-          pricingTiers={PRICING_TIERS}
-          billingPeriod={billingPeriod}
-          paymentMethod={paymentMethod}
-          loadingTier={loading}
-          locale={locale}
-          getDiscountedCents={getDiscountedCents}
-          onSelectTier={handleSelectTier}
+          pricingTiers={PRICING_TIERS} billingPeriod={billingPeriod} paymentMethod={paymentMethod}
+          loadingTier={loading} locale={locale} getDiscountedCents={getDiscountedCents} onSelectTier={handleSelectTier}
         />
 
         <MasterTierCard
-          name={MASTER_TIER.name}
-          description={MASTER_TIER.description}
-          tier={MASTER_TIER.tier}
-          price={MASTER_TIER.price}
-          features={MASTER_TIER.features}
-          locale={locale}
-          discountedPrice={getDiscountedCents(MASTER_TIER.price)}
-          paymentMethod={paymentMethod}
-          loading={loading === MASTER_TIER.tier}
-          onSelectTier={handleSelectTier}
+          name={MASTER_TIER.name} description={MASTER_TIER.description} tier={MASTER_TIER.tier}
+          price={MASTER_TIER.price} features={MASTER_TIER.features} locale={locale}
+          discountedPrice={getDiscountedCents(MASTER_TIER.price)} paymentMethod={paymentMethod}
+          loading={loading === MASTER_TIER.tier} onSelectTier={handleSelectTier}
         />
       </div>
 
       {checkoutData && (
         <CheckoutPanel
           isOpen={isCheckoutOpen}
-          onClose={() => {
-            setIsCheckoutOpen(false);
-            setCheckoutError(null);
-          }}
-          tier={checkoutData.tier}
-          priceCents={checkoutData.priceCents}
-          discountedPriceCents={checkoutData.discountedPriceCents}
-          period={checkoutData.period}
-          paymentMethod={checkoutData.paymentMethod}
-          couponCode={checkoutData.couponCode}
-          checkoutUrl={checkoutData.url}
-          orderId={checkoutData.orderId}
-          locale={locale}
+          onClose={() => { setIsCheckoutOpen(false); setCheckoutError(null); }}
+          tier={checkoutData.tier} priceCents={checkoutData.priceCents}
+          discountedPriceCents={checkoutData.discountedPriceCents} period={checkoutData.period}
+          paymentMethod={checkoutData.paymentMethod} couponCode={checkoutData.couponCode}
+          checkoutUrl={checkoutData.url} orderId={checkoutData.orderId} locale={locale}
         />
       )}
     </section>

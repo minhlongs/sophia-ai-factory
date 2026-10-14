@@ -12,9 +12,9 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { InstallationRunsTab } from '@/components/sop/detail/installation-runs-tab';
-import type { SopRunRow } from '@/tree/sop/sop-types';
+import type { SopRunRow } from '@/seed/sop/sop-types';
 import { getD1 } from '@/seed/db/get-d1';
-import { getInstallation } from '@/tree/sop/sop-repo';
+import { getInstallation } from '@/seed/sop/sop-repo';
 
 interface RunsPageProps {
   params: Promise<{ id: string; locale: string }>;

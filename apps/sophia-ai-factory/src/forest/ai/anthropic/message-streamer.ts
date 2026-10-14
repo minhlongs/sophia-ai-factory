@@ -4,7 +4,7 @@
  */
 
 import type { StreamChunk } from '@/seed/ai/provider-interface';
-import { parseAnthropicSse } from '@/forest/ai/anthropic-sse-parser';
+import { parseAnthropicSse } from '@/seed/ai/anthropic-sse-parser';
 import { logger } from '@/seed/utils/logger-utility';
 
 /**

@@ -8,8 +8,9 @@
  */
 
 import type { D1Database } from '@cloudflare/workers-types';
-import type { RecentGrowthLeadItem } from '@/seed/types/solutions-types';
 import type { RawChannelAttributionData } from './types';
+
+export { fetchRecentLeads } from './recent-leads-query';
 
 export async function fetchChannelAttributionData(
   db: D1Database,
@@ -35,20 +36,13 @@ export async function fetchChannelAttributionData(
       GROUP BY source
     `);
     const sourceRows = await growthSourceStmt.bind(windowStartMs).all<{
-      source: string;
-      cnt: number;
-      trials_cnt: number;
-      paid_cnt: number;
+      source: string; cnt: number; trials_cnt: number; paid_cnt: number;
     }>();
 
     if (sourceRows.results) {
       for (const row of sourceRows.results) {
         if (sourceStats[row.source]) {
-          sourceStats[row.source] = {
-            leads: row.cnt || 0,
-            trials: row.trials_cnt || 0,
-            paid: row.paid_cnt || 0,
-          };
+          sourceStats[row.source] = { leads: row.cnt || 0, trials: row.trials_cnt || 0, paid: row.paid_cnt || 0 };
         }
       }
     }
@@ -56,10 +50,7 @@ export async function fetchChannelAttributionData(
     // Non-fatal
   }
 
-  let viralLinksViews = 0;
-  let viralLinksClicks = 0;
-  let viralLinksLeads = 0;
-  let viralLinksConversions = 0;
+  let viralLinksViews = 0, viralLinksClicks = 0, viralLinksLeads = 0, viralLinksConversions = 0;
   try {
     const viralSummaryStmt = db.prepare(`
       SELECT
@@ -71,10 +62,7 @@ export async function fetchChannelAttributionData(
       WHERE created_at >= ?
     `);
     const vSummary = await viralSummaryStmt.bind(windowStartMs).first<{
-      total_views: number;
-      total_clicks: number;
-      total_leads: number;
-      total_conversions: number;
+      total_views: number; total_clicks: number; total_leads: number; total_conversions: number;
     }>();
     if (vSummary) {
       viralLinksViews = vSummary.total_views || 0;
@@ -86,9 +74,7 @@ export async function fetchChannelAttributionData(
     // Non-fatal
   }
 
-  let tgBotLeads = 0;
-  let tgBotTrials = 0;
-  let tgBotPaid = 0;
+  let tgBotLeads = 0, tgBotTrials = 0, tgBotPaid = 0;
   try {
     const tgStatsStmt = db.prepare(`
       SELECT
@@ -98,11 +84,7 @@ export async function fetchChannelAttributionData(
       FROM telegram_leads
       WHERE created_at >= ?
     `);
-    const tgRes = await tgStatsStmt.bind(windowStartMs).first<{
-      cnt: number;
-      trials_cnt: number;
-      paid_cnt: number;
-    }>();
+    const tgRes = await tgStatsStmt.bind(windowStartMs).first<{ cnt: number; trials_cnt: number; paid_cnt: number }>();
     if (tgRes) {
       tgBotLeads = tgRes.cnt || 0;
       tgBotTrials = tgRes.trials_cnt || 0;
@@ -159,38 +141,4 @@ export async function fetchChannelAttributionData(
       visitors: Math.max(affiliateClicks, sourceStats.affiliate.leads * 2),
     },
   ];
-}
-
-export async function fetchRecentLeads(db: D1Database): Promise<RecentGrowthLeadItem[]> {
-  const recentLeads: RecentGrowthLeadItem[] = [];
-  try {
-    const recentStmt = db.prepare(
-      'SELECT id, source, niche, status, lead_score, created_at, telegram_username FROM growth_leads ORDER BY created_at DESC LIMIT 10',
-    );
-    const rows = await recentStmt.all<{
-      id: string;
-      source: string;
-      niche: string | null;
-      status: string;
-      lead_score: number;
-      created_at: number;
-      telegram_username: string | null;
-    }>();
-    if (rows.results) {
-      for (const r of rows.results) {
-        recentLeads.push({
-          id: r.id,
-          source: r.source,
-          nameOrChat: r.telegram_username ? `@${r.telegram_username}` : `lead_${r.id.slice(0, 6)}`,
-          niche: r.niche || 'general',
-          score: r.lead_score || 50,
-          status: (r.status as RecentGrowthLeadItem['status']) || 'new',
-          createdAt: new Date(r.created_at).toISOString(),
-        });
-      }
-    }
-  } catch {
-    // Non-fatal
-  }
-  return recentLeads;
 }

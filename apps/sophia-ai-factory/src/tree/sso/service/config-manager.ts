@@ -17,6 +17,7 @@ import {
 } from './domain-validator';
 import { encryptClientSecret } from './crypto-service';
 import { getEnterpriseSsoById } from './sso-repository';
+import { upsertEnterpriseSsoRow } from './sso-config-statements';
 
 /**
  * Create or save an Enterprise SSO configuration.
@@ -50,60 +51,16 @@ export async function saveEnterpriseSsoConfig(
   const enabledInt = input.enabled !== false ? 1 : 0;
   const now = Math.floor(Date.now() / 1000);
 
-  if (existingDomainConfig) {
-    await db
-      .prepare(
-        `UPDATE enterprise_sso_configs
-         SET provider_type = ?1,
-             issuer = ?2,
-             client_id = ?3,
-             client_secret_encrypted = COALESCE(?4, client_secret_encrypted),
-             metadata_url = ?5,
-             sso_url = ?6,
-             certificate = ?7,
-             enabled = ?8,
-             updated_at = ?9
-         WHERE id = ?10`,
-      )
-      .bind(
-        input.providerType,
-        input.issuer,
-        input.clientId,
-        encryptedSecret,
-        input.metadataUrl ?? null,
-        input.ssoUrl ?? null,
-        input.certificate ?? null,
-        enabledInt,
-        now,
-        id,
-      )
-      .run();
-  } else {
-    await db
-      .prepare(
-        `INSERT INTO enterprise_sso_configs (
-          id, org_id, domain, provider_type, issuer, client_id,
-          client_secret_encrypted, metadata_url, sso_url, certificate,
-          enabled, created_at, updated_at
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)`,
-      )
-      .bind(
-        id,
-        input.orgId,
-        normalizedDomain,
-        input.providerType,
-        input.issuer,
-        input.clientId,
-        encryptedSecret,
-        input.metadataUrl ?? null,
-        input.ssoUrl ?? null,
-        input.certificate ?? null,
-        enabledInt,
-        now,
-        now,
-      )
-      .run();
-  }
+  await upsertEnterpriseSsoRow({
+    db,
+    id,
+    isUpdate: Boolean(existingDomainConfig),
+    normalizedDomain,
+    input,
+    encryptedSecret,
+    enabledInt,
+    now,
+  });
 
   const saved = await getEnterpriseSsoById(db, id);
   if (!saved) {
@@ -162,31 +119,14 @@ export async function updateEnterpriseSsoConfig(
   await db
     .prepare(
       `UPDATE enterprise_sso_configs
-       SET domain = ?1,
-           provider_type = ?2,
-           issuer = ?3,
-           client_id = ?4,
-           client_secret_encrypted = ?5,
-           metadata_url = ?6,
-           sso_url = ?7,
-           certificate = ?8,
-           enabled = ?9,
-           updated_at = ?10
+       SET domain = ?1, provider_type = ?2, issuer = ?3, client_id = ?4,
+           client_secret_encrypted = ?5, metadata_url = ?6, sso_url = ?7,
+           certificate = ?8, enabled = ?9, updated_at = ?10
        WHERE id = ?11 AND org_id = ?12`,
     )
     .bind(
-      domain,
-      providerType,
-      issuer,
-      clientId,
-      encryptedSecret,
-      metadataUrl,
-      ssoUrl,
-      certificate,
-      enabledInt,
-      now,
-      id,
-      orgId,
+      domain, providerType, issuer, clientId, encryptedSecret,
+      metadataUrl, ssoUrl, certificate, enabledInt, now, id, orgId,
     )
     .run();
 

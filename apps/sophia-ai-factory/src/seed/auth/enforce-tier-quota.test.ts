@@ -8,7 +8,7 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
   resolveUserTier: vi.fn(),
 }))
 
-vi.mock('@/forest/quota/video-quota', () => ({
+vi.mock('@/tree/quota/video-quota', () => ({
   checkVideoQuota: vi.fn(),
   VIDEO_QUOTA_BY_TIER: {
     BASIC: 0,
@@ -19,7 +19,7 @@ vi.mock('@/forest/quota/video-quota', () => ({
 }))
 
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
-import { checkVideoQuota } from '@/forest/quota/video-quota'
+import { checkVideoQuota } from '@/tree/quota/video-quota'
 import { checkTierQuota } from '@/forest/auth/enforce-tier-quota'
 
 const mockResolveUserTier = resolveUserTier as ReturnType<typeof vi.fn>

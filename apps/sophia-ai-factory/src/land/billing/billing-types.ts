@@ -1,138 +1,22 @@
 /**
  * Billing Types for Overage Reconciliation
- *
- * Type definitions for overage billing, Stripe integration,
- * Polar.sh metered billing, and quota exceeded event reconciliation
+ * Type definitions, pricing constants, and row mapping helpers.
+ * @module land/billing/billing-types
  */
 
 import type { Tier } from '@/seed/types';
+import type {
+  OverageEvent,
+  OverageEventRow,
+  PricingTier,
+  OverageBillingConfig,
+} from './overage-types';
 
-/**
- * Overage event from database
- */
-export interface OverageEvent {
-  id: string;
-  userId: string;
-  licenseNonce: string;
-  exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests';
-  exceededLimit: number;
-  exceededCurrent: number;
-  exceededBy: number;
-  requestedCredits: number;
-  endpoint?: string;
-  serviceName?: string;
-  action?: string;
-  tierAtExceeded: Tier;
-  externalCustomerId?: string;
-  billable: boolean;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: number;
-}
-
-/**
- * Overage event database row
- */
-export interface OverageEventRow {
-  id: string;
-  user_id: string;
-  license_nonce: string;
-  exceeded_type: string;
-  exceeded_limit: number;
-  exceeded_current: number;
-  exceeded_by: number;
-  requested_credits: number;
-  endpoint: string | null;
-  service_name: string | null;
-  action: string | null;
-  tier_at_exceeded: string;
-  external_customer_id: string | null;
-  billable: boolean;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: number;
-}
-
-/**
- * Pricing tier configuration
- */
-export interface PricingTier {
-  tier: Tier;
-  pricePerCredit: number;
-  currency: string;
-}
-
-/**
- * Overage charge calculation
- */
-export interface OverageCharge {
-  userId: string;
-  licenseNonce: string;
-  tier: Tier;
-  overageCredits: number;
-  pricePerCredit: number;
-  totalCharge: number;
-  currency: string;
-  eventCount: number;
-  periodStart: number;
-  periodEnd: number;
-  externalCustomerId?: string;
-}
-
-/**
- * Reconciliation result
- */
-export interface ReconciliationResult {
-  success: boolean;
-  scannedEvents: number;
-  unbilledEvents: number;
-  billableEvents: number;
-  totalOverageCredits: number;
-  totalCharge: number;
-  currency: string;
-  charges: OverageCharge[];
-  invoiceItemsCreated: number;
-  eventsMarkedAsBilled: number;
-  errors: ReconciliationError[];
-}
-
-/**
- * Reconciliation error
- */
-export interface ReconciliationError {
-  type: 'scanning' | 'calculation' | 'stripe' | 'database' | 'billing';
-  message: string;
-  details?: unknown;
-  retryable: boolean;
-}
-
-/**
- * Unbilled overage events grouped by user
- */
-export interface UnbilledEventsByUser {
-  userId: string;
-  licenseNonce: string;
-  tier: Tier;
-  externalCustomerId?: string;
-  events: OverageEvent[];
-  totalOverageCredits: number;
-  periodStart: number;
-  periodEnd: number;
-}
-
-/**
- * Configuration for overage billing
- */
-export interface OverageBillingConfig {
-  enableOverageBilling: boolean;
-  autoCreateInvoiceItems: boolean;
-  maxRetryAttempts: number;
-  retryDelayMs: number;
-}
+export * from './overage-types';
 
 /**
  * Default pricing tiers for overage billing
- * BASIC: $0.10/credit, PREMIUM: $0.05/credit, ENTERPRISE: $0.03/credit
+ * BASIC: $0.10/credit, PREMIUM: $0.05/credit, ENTERPRISE: $0.03/credit, MASTER: $0.02/credit
  */
 export const PRICING_TIERS: Record<Tier, PricingTier> = {
   BASIC: {
@@ -202,5 +86,3 @@ export function generateIdempotencyKey(
 ): string {
   return `overage-${licenseNonce}-${periodStart}-${periodEnd}`;
 }
-
-// Polar billing types removed — NOWPayments IPN handles payments

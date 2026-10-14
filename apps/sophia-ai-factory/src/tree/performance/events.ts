@@ -8,76 +8,18 @@
 import { getD1 } from '@/seed/db/client';
 import type { PerformanceEvent } from '@/seed/types/creative-domain';
 import { PerformanceError } from './errors';
+import {
+  newPerformanceEventId,
+  performanceRowToDomain as rowToDomain,
+  performanceDomainToRow as domainToRow,
+  type PerformanceEventRow,
+} from './performance-event-mappers';
 
-// ─── ID generation ─────────────────────────────────────────────────────────
-
-export function newPerformanceEventId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return 'pevt_' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ─── Row types ─────────────────────────────────────────────────────────────
-
-interface PerformanceEventRow {
-  id: string;
-  workspace_id: string;
-  asset_id: string;
-  project_id: string;
-  entity_type: string;
-  entity_id: string;
-  channel: string;
-  event_type: string;
-  count: number;
-  value_cents: number | null;
-  metrics_json: string | null;
-  recorded_at: number;
-  raw_data: string | null;
-}
-
-// ─── Row ↔ Domain mapping ──────────────────────────────────────────────────
-
-function rowToDomain(row: PerformanceEventRow): PerformanceEvent {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    assetId: row.asset_id,
-    projectId: row.project_id,
-    entityType: row.entity_type,
-    entityId: row.entity_id,
-    channel: row.channel,
-    eventType: row.event_type,
-    count: row.count,
-    valueCents: row.value_cents ?? undefined,
-    recordedAt: row.recorded_at,
-    rawData: row.raw_data ? JSON.parse(row.raw_data) as Record<string, unknown> : undefined,
-  };
-}
-
-function domainToRow(event: PerformanceEvent): Omit<PerformanceEventRow, 'id'> {
-  // metrics_json is the canonical read column (migration 0243, NOT NULL).
-  // It must always hold parseable JSON, so an absent rawData serializes
-  // to '{}' rather than NULL.
-  const serialized = event.rawData ? JSON.stringify(event.rawData) : '{}';
-  return {
-    workspace_id: event.workspaceId,
-    asset_id: event.assetId,
-    project_id: event.projectId,
-    entity_type: event.entityType,
-    entity_id: event.entityId,
-    channel: event.channel,
-    event_type: event.eventType,
-    count: event.count,
-    // Column is NOT NULL DEFAULT 0 (migration 0245) — an explicit NULL bind
-    // would violate the constraint, so absent valueCents coerces to 0.
-    value_cents: event.valueCents ?? 0,
-    recorded_at: event.recordedAt,
-    metrics_json: serialized,
-    raw_data: event.rawData ? JSON.stringify(event.rawData) : null,
-  };
-}
-
-export { rowToDomain as performanceRowToDomain, domainToRow as performanceDomainToRow };
+export {
+  newPerformanceEventId,
+  performanceRowToDomain,
+  performanceDomainToRow,
+} from './performance-event-mappers';
 
 // ─── Repository functions ──────────────────────────────────────────────────
 

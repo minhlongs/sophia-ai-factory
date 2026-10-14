@@ -9,48 +9,34 @@
 
 'use server';
 
-import { getD1 } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
-import {
-  type AmmLiquidityPool,
-  type AmmSwapTransaction,
-  type AmmSwapQuoteRequest,
-  type AmmSwapQuoteResult,
-  type TreasuryRebalanceEvent,
+import type {
+  AmmSwapTransaction,
+  AmmSwapQuoteRequest,
+  AmmSwapQuoteResult,
+  TreasuryRebalanceEvent,
 } from '@/seed/types/amm-clearing';
 import { ConcentratedLiquidityEngine } from '@/tree/amm/concentrated-liquidity-engine';
 import { TreasuryRebalancer, type RebalanceEvaluationResult } from '@/tree/amm/treasury-rebalancer';
+import {
+  resolveAuthenticatedAmmContext,
+  resolveAuthenticatedAmmPool,
+  type AmmActionResponse,
+} from './amm-clearing-helpers';
 
-export interface AmmActionResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type { AmmActionResponse } from './amm-clearing-helpers';
 
 /**
  * Calculates a real-time AMM swap quote.
  */
 export async function getSwapQuoteAction(
-  request: AmmSwapQuoteRequest
+  request: AmmSwapQuoteRequest,
 ): Promise<AmmActionResponse<AmmSwapQuoteResult>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
+    const resolved = await resolveAuthenticatedAmmPool(request.poolId);
+    if (!resolved.ok) return { success: false, error: resolved.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database binding not available' };
-    }
-
-    const pool = await ConcentratedLiquidityEngine.getPoolById(db, request.poolId);
-    if (!pool) {
-      return { success: false, error: `Pool not found: ${request.poolId}` };
-    }
-
-    const quote = ConcentratedLiquidityEngine.calculateSwapQuote(pool, request);
+    const quote = ConcentratedLiquidityEngine.calculateSwapQuote(resolved.pool, request);
     return { success: true, data: quote };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to calculate swap quote';
@@ -65,33 +51,21 @@ export async function getSwapQuoteAction(
 export async function executeAmmSwapAction(
   request: AmmSwapQuoteRequest,
   recipientAddress: string,
-  antiSandwichNonce: number
+  antiSandwichNonce: number,
 ): Promise<AmmActionResponse<AmmSwapTransaction>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
-
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database binding not available' };
-    }
-
-    const pool = await ConcentratedLiquidityEngine.getPoolById(db, request.poolId);
-    if (!pool) {
-      return { success: false, error: `Pool not found: ${request.poolId}` };
-    }
+    const resolved = await resolveAuthenticatedAmmPool(request.poolId);
+    if (!resolved.ok) return { success: false, error: resolved.error };
 
     const { transaction, updatedPool } = ConcentratedLiquidityEngine.executeSwap(
-      pool,
+      resolved.pool,
       request,
       recipientAddress,
-      antiSandwichNonce
+      antiSandwichNonce,
     );
 
     if (transaction.executionStatus === 'EXECUTED') {
-      await ConcentratedLiquidityEngine.persistPool(db, updatedPool);
+      await ConcentratedLiquidityEngine.persistPool(resolved.db, updatedPool);
     }
 
     return { success: true, data: transaction };
@@ -107,25 +81,13 @@ export async function executeAmmSwapAction(
  */
 export async function evaluateRebalanceAction(
   poolId: string,
-  targetRatio = 1.0
+  targetRatio = 1.0,
 ): Promise<AmmActionResponse<RebalanceEvaluationResult>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
+    const resolved = await resolveAuthenticatedAmmPool(poolId);
+    if (!resolved.ok) return { success: false, error: resolved.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database binding not available' };
-    }
-
-    const pool = await ConcentratedLiquidityEngine.getPoolById(db, poolId);
-    if (!pool) {
-      return { success: false, error: `Pool not found: ${poolId}` };
-    }
-
-    const evalResult = TreasuryRebalancer.evaluatePoolDeviation(pool, targetRatio);
+    const evalResult = TreasuryRebalancer.evaluatePoolDeviation(resolved.pool, targetRatio);
     return { success: true, data: evalResult };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to evaluate rebalance';
@@ -142,21 +104,14 @@ export async function executeRebalanceAction(
   targetPoolId: string,
   currencyMoved: string,
   amountUnits: string,
-  operatorKeys: string[]
+  operatorKeys: string[],
 ): Promise<AmmActionResponse<TreasuryRebalanceEvent>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
+    const ctx = await resolveAuthenticatedAmmContext();
+    if (!ctx.ok) return { success: false, error: ctx.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database binding not available' };
-    }
-
-    const sourcePool = await ConcentratedLiquidityEngine.getPoolById(db, sourcePoolId);
-    const targetPool = await ConcentratedLiquidityEngine.getPoolById(db, targetPoolId);
+    const sourcePool = await ConcentratedLiquidityEngine.getPoolById(ctx.db, sourcePoolId);
+    const targetPool = await ConcentratedLiquidityEngine.getPoolById(ctx.db, targetPoolId);
 
     if (!sourcePool || !targetPool) {
       return { success: false, error: 'Source or target pool not found' };
@@ -167,12 +122,12 @@ export async function executeRebalanceAction(
       targetPool,
       currencyMoved,
       amountUnits,
-      operatorKeys
+      operatorKeys,
     );
 
     if (event.status === 'SETTLED') {
-      await ConcentratedLiquidityEngine.persistPool(db, rebalancedSourcePool);
-      await TreasuryRebalancer.recordRebalanceEvent(db, event);
+      await ConcentratedLiquidityEngine.persistPool(ctx.db, rebalancedSourcePool);
+      await TreasuryRebalancer.recordRebalanceEvent(ctx.db, event);
     }
 
     return { success: true, data: event };

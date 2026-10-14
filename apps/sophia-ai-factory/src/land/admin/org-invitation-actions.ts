@@ -15,11 +15,7 @@ import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
-import type { OrgRole } from '@/seed/types/rbac-matrix';
-import {
-  canInviteMembers,
-  canAssignRole,
-} from '@/tree/rbac/permissions';
+import { canAssignRole } from '@/tree/rbac/permissions';
 import {
   createOrgInvitation,
   acceptOrgInvitation,
@@ -27,17 +23,13 @@ import {
   type CreateInvitationResult,
   type AcceptInvitationResult,
 } from '@/tree/organizations/invitation-service';
+import {
+  loadAuthenticatedInviterContext,
+  type SendInvitationInput,
+  type ActionError,
+} from './org-invitation-helpers';
 
-export interface SendInvitationInput {
-  orgId: string;
-  email: string;
-  role: OrgRole;
-}
-
-export interface ActionError {
-  code: string;
-  message: string;
-}
+export type { SendInvitationInput, ActionError } from './org-invitation-helpers';
 
 /**
  * Sends a cryptographic single-use invitation to an email address.
@@ -46,41 +38,9 @@ export async function sendOrgInvitationAction(
   input: SendInvitationInput,
 ): Promise<Result<CreateInvitationResult, ActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-    }
-
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database connection unavailable' });
-    }
-
-    // Verify caller membership and role in this org
-    const callerMember = await db
-      .prepare(
-        `SELECT role FROM organization_members WHERE org_id = ?1 AND user_id = ?2
-         UNION
-         SELECT role FROM org_members WHERE org_id = ?1 AND user_id = ?2
-         LIMIT 1`
-      )
-      .bind(input.orgId, user.id)
-      .first<{ role: string }>();
-
-    if (!callerMember) {
-      return failure({
-        code: 'FORBIDDEN',
-        message: 'You are not a member of this organization',
-      });
-    }
-
-    const callerRole = callerMember.role as OrgRole;
-    if (!canInviteMembers(callerRole)) {
-      return failure({
-        code: 'INSUFFICIENT_PERMISSIONS',
-        message: `Role '${callerRole}' is not permitted to invite members`,
-      });
-    }
+    const ctx = await loadAuthenticatedInviterContext(input.orgId, 'INSUFFICIENT_PERMISSIONS');
+    if (!ctx.ok) return ctx;
+    const { userId, db, callerRole } = ctx.value;
 
     if (!canAssignRole(callerRole, input.role)) {
       return failure({
@@ -93,7 +53,7 @@ export async function sendOrgInvitationAction(
       orgId: input.orgId,
       email: input.email,
       role: input.role,
-      invitedByUserId: user.id,
+      invitedByUserId: userId,
     });
 
     logger.info('[OrgInvitations] Invitation created successfully', {
@@ -157,35 +117,10 @@ export async function revokeOrgInvitationAction(
   orgId: string,
 ): Promise<Result<{ revoked: boolean }, ActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-    }
+    const ctx = await loadAuthenticatedInviterContext(orgId, 'FORBIDDEN');
+    if (!ctx.ok) return ctx;
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database connection unavailable' });
-    }
-
-    // Verify caller membership and role in this org
-    const callerMember = await db
-      .prepare(
-        `SELECT role FROM organization_members WHERE org_id = ?1 AND user_id = ?2
-         UNION
-         SELECT role FROM org_members WHERE org_id = ?1 AND user_id = ?2
-         LIMIT 1`
-      )
-      .bind(orgId, user.id)
-      .first<{ role: string }>();
-
-    if (!callerMember || !canInviteMembers(callerMember.role as OrgRole)) {
-      return failure({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to revoke invitations for this organization',
-      });
-    }
-
-    const revoked = await revokeOrgInvitation(db, invitationId, orgId);
+    const revoked = await revokeOrgInvitation(ctx.value.db, invitationId, orgId);
     return success({ revoked });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

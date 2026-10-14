@@ -56,7 +56,7 @@ describe('auth-helper: requireAuth', () => {
     const sessionModule = await import('@/seed/auth/better-auth-session')
     const spy = vi.spyOn(sessionModule, 'getCurrentUserFromHeaders').mockResolvedValue(null)
 
-    const { requireAuth } = await import('./auth-helper')
+    const { requireAuth } = await import('@/tree/signals/auth-helper')
     const req = new Request('https://sophia.agencyos.network/api/signals/track') as unknown as import('next/server').NextRequest
     const result = await requireAuth(req)
     expect(result).toBeInstanceOf(Response)
@@ -66,7 +66,7 @@ describe('auth-helper: requireAuth', () => {
   }, 10000)
 
   it('(c) accepts valid CRON_SECRET bearer', async () => {
-    const { requireAuth } = await import('./auth-helper')
+    const { requireAuth } = await import('@/tree/signals/auth-helper')
     const req = new Request('https://sophia.agencyos.network/api/signals/track', {
       headers: { Authorization: 'Bearer test-cron-secret-abc' },
     }) as unknown as import('next/server').NextRequest
@@ -87,7 +87,7 @@ describe('auth-helper: requireAuth', () => {
     })
 
     // Re-import to pick up spy (same module instance is fine since we spy)
-    const { requireAuth } = await import('./auth-helper')
+    const { requireAuth } = await import('@/tree/signals/auth-helper')
     const req = new Request('https://sophia.agencyos.network/api/signals/track') as unknown as import('next/server').NextRequest
     const result = await requireAuth(req)
     expect(result).toEqual({ type: 'session', userId: 'user-123' })
@@ -96,7 +96,7 @@ describe('auth-helper: requireAuth', () => {
   })
 
   it('rejects wrong bearer token → 401', async () => {
-    const { requireAuth } = await import('./auth-helper')
+    const { requireAuth } = await import('@/tree/signals/auth-helper')
     const req = new Request('https://sophia.agencyos.network/api/signals/track', {
       headers: { Authorization: 'Bearer wrong-secret' },
     }) as unknown as import('next/server').NextRequest

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getD1 } from "@/seed/db/client";
 import { errorResponse, handleThrownError } from "@/seed/api";
-import { listPublishedListings } from "@/tree/sop/sop-repo-marketplace";
+import { listPublishedListings } from "@/seed/sop/sop-repo-marketplace";
 import { fetchAuthorBrandings } from "@/tree/branding/org-branding-repo";
 
 export const dynamic = "force-dynamic";

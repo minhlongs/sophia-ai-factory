@@ -27,7 +27,7 @@ vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: mocks.mockGetUserTier,
 }));
 
-vi.mock('@/forest/quota/mission-quota', () => ({
+vi.mock('@/tree/quota/mission-quota', () => ({
   checkMissionQuota: mocks.mockCheckMissionQuota,
 }));
 

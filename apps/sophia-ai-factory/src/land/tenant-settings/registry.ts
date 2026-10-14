@@ -10,7 +10,7 @@ import {
   SETTINGS_NAMESPACES,
   SettingsValidationError,
   SettingsNotFoundError,
-} from './types';
+} from '@/seed/tenant-settings/types';
 import { NAMESPACE_DEFAULTS } from './defaults';
 
 /** Generates a simple unique ID (timestamp + random, no external dep). */

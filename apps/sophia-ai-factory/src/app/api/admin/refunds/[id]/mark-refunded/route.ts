@@ -13,21 +13,16 @@ import { z } from 'zod'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { getRefundById } from '@/land/refunds/refund-repo'
 import { processRefund } from '@/land/refunds/refund-processor'
-import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
-import { writeAuditLog } from '@/tree/admin/audit-log'
-import { sendRefundCompletedEmail } from '@/land/billing/email/send-refund-emails'
-import { getD1 } from '@/seed/db/client'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { logger } from '@/seed/utils/logger-utility'
+import {
+  bodySchema,
+  checkIdempotency,
+  storeIdempotency,
+  runPostRefundSideEffects,
+} from './mark-refunded-helpers'
 
 export const dynamic = 'force-dynamic'
-
-const bodySchema = z.object({
-  tx_hash: z.string().min(1).max(200),
-  notes: z.string().max(500).optional(),
-})
-
-interface UserRow { email: string }
 
 export async function POST(
   request: NextRequest,
@@ -89,33 +84,16 @@ export async function POST(
       return NextResponse.json({ error: result.error.message, code: result.error.code }, { status: 500 })
     }
 
-    // Side effects: revoke access, audit log, email (only on successful first update)
-    await revokeAccessByPurchaseId(refund.purchase_id)
-
-    await writeAuditLog({
+    await runPostRefundSideEffects({
+      id,
       actorUserId: auth.user.id,
-      actionType: 'refund_marked_refunded',
       targetUserId: refund.user_id,
-      payload: {
-        refundId: id,
-        purchaseId: refund.purchase_id,
-        txHash: body.tx_hash,
-        tierBefore: result.value.tierBefore,
-        tierAfter: result.value.tierAfter,
-        mcuClawedBack: result.value.mcuClawedBack,
-      },
+      purchaseId: refund.purchase_id,
+      txHash: body.tx_hash,
+      tierBefore: result.value.tierBefore,
+      tierAfter: result.value.tierAfter,
+      mcuClawedBack: result.value.mcuClawedBack,
     })
-
-    const db = await getD1();
-    if (!db) throw new Error('D1 database binding not available');
-    const userRow = await db.prepare('SELECT email FROM user WHERE id = ?1').bind(refund.user_id).first<UserRow>()
-    if (userRow) {
-      sendRefundCompletedEmail({
-        userEmail: userRow.email,
-        purchaseId: refund.purchase_id,
-        txHash: body.tx_hash,
-      }).catch(() => null)
-    }
 
     const responseBody = {
       id,
@@ -143,51 +121,5 @@ export async function POST(
   } catch (err) {
     logger.error('[AdminRefunds] mark-refunded failed', err instanceof Error ? err : undefined)
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Idempotency helpers (FIX-10)
-// ---------------------------------------------------------------------------
-
-interface CachedResult {
-  id: string
-  status: string
-  tx_hash: string
-}
-
-/** Return cached result if key exists and not expired, else null. */
-async function checkIdempotency(key: string, refundId: string): Promise<CachedResult | null> {
-  try {
-    const db = await getD1();
-    if (!db) throw new Error('D1 database binding not available');
-    const row = await db
-      .prepare(
-        `SELECT refund_id, status FROM idempotency_keys
-         WHERE key = ?1 AND refund_id = ?2 AND expires_at > unixepoch()`,
-      )
-      .bind(key, refundId)
-      .first<{ refund_id: string; status: string }>()
-    if (!row) return null
-    return { id: row.refund_id, status: row.status, tx_hash: '' }
-  } catch {
-    return null // fail-open: if idempotency table unreadable, process normally
-  }
-}
-
-/** Persist idempotency key (24h TTL). */
-async function storeIdempotency(key: string, refundId: string, body: CachedResult): Promise<void> {
-  try {
-    const db = await getD1();
-    if (!db) throw new Error('D1 database binding not available');
-    await db
-      .prepare(
-        `INSERT OR REPLACE INTO idempotency_keys (key, refund_id, status, expires_at)
-         VALUES (?1, ?2, ?3, unixepoch() + 86400)`,
-      )
-      .bind(key, refundId, body.status)
-      .run()
-  } catch (err) {
-    logger.warn('[AdminRefunds] Idempotency store failed', { key, err: getErrorMessage(err) })
   }
 }

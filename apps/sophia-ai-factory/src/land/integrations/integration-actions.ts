@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Enterprise CRM & Webhook Bus — Land Server Actions Facade
  *

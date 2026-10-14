@@ -17,6 +17,8 @@
 
 import React, { useState, use } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
+import { CREATOR_MARKETPLACE_V2_ENABLED } from '@/land/sop-marketplace/availability';
 import {
   type PageProps,
   useCreatorStudioData,
@@ -56,6 +58,14 @@ export default function CreatorStudioPage({ params }: PageProps) {
     handleCreateTemplate,
     handleCreateWithdrawal,
   } = useCreatorStudioData(isVi);
+
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 space-y-8 max-w-7xl mx-auto">
+        <MarketplaceUnavailableNotice />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 space-y-8 max-w-7xl mx-auto">

@@ -16,9 +16,12 @@ import { DetailModal } from './detail-modal';
 import type {
   EnterpriseAuditEvent,
   ChainVerificationResult,
-  AuditFilterOptions,
   AuditVaultExplorerProps,
 } from './types';
+import {
+  buildAuditFilterOptions,
+  formatAuditEventTimestamp,
+} from './vault-explorer-helpers';
 
 export function AuditVaultExplorer({
   orgId,
@@ -76,22 +79,15 @@ export function AuditVaultExplorer({
 
     startFilterTransition(async () => {
       try {
-        const fromTimestamp = fromDate
-          ? Math.floor(new Date(fromDate).getTime() / 1000)
-          : undefined;
-        const toTimestamp = toDate
-          ? Math.floor(new Date(toDate).setHours(23, 59, 59, 999) / 1000)
-          : undefined;
-
-        const filters: AuditFilterOptions = {
+        const filters = buildAuditFilterOptions({
           orgId,
-          action: selectedAction !== 'all' ? selectedAction : undefined,
-          actorEmail: actorQuery ? actorQuery.trim() : undefined,
-          fromTimestamp,
-          toTimestamp,
-          limit: pageSize,
-          offset: newPage * pageSize,
-        };
+          selectedAction,
+          actorQuery,
+          fromDate,
+          toDate,
+          pageSize,
+          newPage,
+        });
 
         const result = await actions.queryEvents!(filters);
         if (result.ok) {
@@ -127,65 +123,23 @@ export function AuditVaultExplorer({
     }
   };
 
-  const formatTimestamp = (ts: string | number) => {
-    const epochSec =
-      typeof ts === 'string'
-        ? Math.floor(new Date(ts).getTime() / 1000)
-        : ts;
-    return new Date(epochSec * 1000).toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  };
-
   return (
     <div className="mx-auto w-full max-w-7xl space-y-8">
-      <HeaderBanner
-        t={t}
-        verification={verification}
-        isVerifying={isVerifying}
-        onVerifyChain={handleVerifyChain}
-      />
-
+      <HeaderBanner t={t} verification={verification} isVerifying={isVerifying} onVerifyChain={handleVerifyChain} />
       <FilterToolbar
-        t={t}
-        selectedAction={selectedAction}
-        setSelectedAction={setSelectedAction}
-        actorQuery={actorQuery}
-        setActorQuery={setActorQuery}
-        fromDate={fromDate}
-        setFromDate={setFromDate}
-        toDate={toDate}
-        setToDate={setToDate}
-        isFiltering={isFiltering}
-        onApplyFilters={() => applyFilters(0)}
-        onResetFilters={handleResetFilters}
+        t={t} selectedAction={selectedAction} setSelectedAction={setSelectedAction}
+        actorQuery={actorQuery} setActorQuery={setActorQuery} fromDate={fromDate}
+        setFromDate={setFromDate} toDate={toDate} setToDate={setToDate}
+        isFiltering={isFiltering} onApplyFilters={() => applyFilters(0)} onResetFilters={handleResetFilters}
       />
-
       <EventsTable
-        t={t}
-        events={events}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        copiedHash={copiedHash}
-        onCopyHash={copyToClipboard}
-        onSelectEvent={setSelectedEvent}
-        onPageChange={(p) => applyFilters(p)}
-        formatTimestamp={formatTimestamp}
+        t={t} events={events} total={total} page={page} pageSize={pageSize}
+        copiedHash={copiedHash} onCopyHash={copyToClipboard} onSelectEvent={setSelectedEvent}
+        onPageChange={(p) => applyFilters(p)} formatTimestamp={formatAuditEventTimestamp}
       />
-
       <DetailModal
-        t={t}
-        selectedEvent={selectedEvent}
-        copiedHash={copiedHash}
-        onClose={() => setSelectedEvent(null)}
-        onCopyText={copyToClipboard}
-        formatTimestamp={formatTimestamp}
+        t={t} selectedEvent={selectedEvent} copiedHash={copiedHash}
+        onClose={() => setSelectedEvent(null)} onCopyText={copyToClipboard} formatTimestamp={formatAuditEventTimestamp}
       />
     </div>
   );

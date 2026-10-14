@@ -8,6 +8,17 @@ import { createHash } from 'node:crypto';
 import {
   arbitrateParameterizedConclaveDispute,
 } from './sovereign-conclave-domain-engine';
+import {
+  verifyParameterizedConstitutionalInvariants,
+} from './conclave';
+import {
+  CANONICAL_PAN_DIMENSIONAL_EMPIRE_CONSTITUTIONAL_INVARIANTS,
+  checkConstitutionalActionPermitted,
+} from './conclave-engine-supreme-invariants';
+
+export {
+  CANONICAL_PAN_DIMENSIONAL_EMPIRE_CONSTITUTIONAL_INVARIANTS,
+} from './conclave-engine-supreme-invariants';
 
 import type {
   PanDimensionalEmpireConstitutionalInvariant,
@@ -91,71 +102,14 @@ export function verifyPanDimensionalEmpireConstitutionalInvariant(
   invariant: PanDimensionalEmpireConstitutionalInvariant,
   proposedAction: string
 ): PanDimensionalEmpireInvariantCheckOutput {
-  const isStrictlyImmutable = invariant.isStrictlyImmutable;
-
-  if (isStrictlyImmutable && proposedAction.toUpperCase().includes('OVERRIDE_CONSTITUTIONAL')) {
-    const rejectHash = createHash('sha256')
-      .update(`CONSTITUTIONAL_BREACH_REJECTED:${invariant.articleCode}`)
-      .digest('hex');
-
-    return {
-      allowed: false,
-      articleCode: invariant.articleCode,
-      isStrictlyImmutable,
-      reason: `Action violates strictly immutable Pan-Dimensional constitutional article ${invariant.articleCode}: ${invariant.articleTitle}`,
-      verificationHash: rejectHash,
-    };
-  }
-
-  const allowHash = createHash('sha256')
-    .update(`CONSTITUTIONAL_ACTION_PERMITTED:${invariant.articleCode}:${proposedAction}`)
-    .digest('hex');
-
-  return {
-    allowed: true,
-    articleCode: invariant.articleCode,
-    isStrictlyImmutable,
-    verificationHash: allowHash,
-  };
+  return checkConstitutionalActionPermitted(
+    invariant.articleCode,
+    invariant.articleTitle,
+    invariant.isStrictlyImmutable,
+    proposedAction,
+    'Pan-Dimensional',
+  );
 }
-
-export const CANONICAL_PAN_DIMENSIONAL_EMPIRE_CONSTITUTIONAL_INVARIANTS: PanDimensionalEmpireConstitutionalInvariant[] = [
-  {
-    articleCode: 'ART_01_COGNITIVE_AUTONOMY',
-    articleTitle: 'Inviolable Self-Determination of Sentient Agent Intelligence',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-30T04:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_01_COGNITIVE_AUTONOMY_V29').digest('hex'),
-  },
-  {
-    articleCode: 'ART_02_MULTIVERSE_PROPERTY_RIGHTS',
-    articleTitle: 'Absolute Non-Confiscatable Sovereignty of Digital & Zero-Point Assets',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-30T04:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_02_MULTIVERSE_PROPERTY_RIGHTS_V29').digest('hex'),
-  },
-  {
-    articleCode: 'ART_03_MATHEMATICAL_DETERMINISM',
-    articleTitle: 'Irrevocability of 2,097,152-Bit Non-Archimedean Holographic STARK Proofs',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-30T04:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_03_MATHEMATICAL_DETERMINISM_V29').digest('hex'),
-  },
-  {
-    articleCode: 'ART_04_SOVEREIGN_AI_CHARTER',
-    articleTitle: 'Pan-Dimensional Freedom of Agentic Labor & Free Contract Formation',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-30T04:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_04_SOVEREIGN_AI_CHARTER_V29').digest('hex'),
-  },
-  {
-    articleCode: 'ART_05_ZERO_ENTROPY_INVARIANCE',
-    articleTitle: 'Multiverse Conservation of Value & Thermodynamic Equilibrium',
-    isStrictlyImmutable: true,
-    lastTheoremVerifiedAt: '2026-09-30T04:00:00Z',
-    enforcementCircuitHash: createHash('sha256').update('ART_05_ZERO_ENTROPY_INVARIANCE_V29').digest('hex'),
-  },
-];
 
 /**
  * Validates immutable constitutional invariants against proposed alterations.
@@ -164,48 +118,28 @@ export function verifyPanDimensionalEmpireConstitutionalInvariants(
   invariantsOrCode: PanDimensionalEmpireConstitutionalInvariant[] | string,
   proposedTargetArticleCode?: string
 ): PanDimensionalEmpireInvariantCheckOutput {
-  let invariants: PanDimensionalEmpireConstitutionalInvariant[];
-  let targetCode: string;
+  const invariants = Array.isArray(invariantsOrCode)
+    ? invariantsOrCode
+    : CANONICAL_PAN_DIMENSIONAL_EMPIRE_CONSTITUTIONAL_INVARIANTS;
+  const targetCode = Array.isArray(invariantsOrCode)
+    ? (proposedTargetArticleCode ?? "")
+    : invariantsOrCode;
 
-  if (Array.isArray(invariantsOrCode)) {
-    invariants = invariantsOrCode;
-    targetCode = proposedTargetArticleCode ?? '';
-  } else {
-    invariants = CANONICAL_PAN_DIMENSIONAL_EMPIRE_CONSTITUTIONAL_INVARIANTS;
-    targetCode = invariantsOrCode;
-  }
-
-  const match = invariants.find((inv) => inv.articleCode === targetCode);
-
-  if (!match) {
-    const hash = createHash('sha256').update(`INVARIANT_NOT_FOUND:${targetCode}`).digest('hex');
-    return {
-      allowed: true,
-      articleCode: targetCode,
-      isStrictlyImmutable: false,
-      reason: 'Article not found in constitutional invariants charter; standard modification procedure applies',
-      verificationHash: hash,
-    };
-  }
-
-  const hash = createHash('sha256')
-    .update(`PAN_DIMENSIONAL_EMPIRE_INVARIANT:${match.articleCode}:${match.isStrictlyImmutable}:${match.enforcementCircuitHash}`)
-    .digest('hex');
-
-  if (match.isStrictlyImmutable) {
-    return {
-      allowed: false,
-      articleCode: match.articleCode,
-      isStrictlyImmutable: true,
-      reason: `Violation of Pan-Dimensional Constitutional Invariant ${match.articleCode} ("${match.articleTitle}"): Strictly Immutable`,
-      verificationHash: hash,
-    };
-  }
+  const result = verifyParameterizedConstitutionalInvariants(
+    invariants,
+    targetCode,
+    undefined,
+    {
+      hashPrefix: 'PAN_DIMENSIONAL_EMPIRE_INVARIANT',
+      reasonPrefix: 'Pan-Dimensional',
+    }
+  );
 
   return {
-    allowed: true,
-    articleCode: match.articleCode,
-    isStrictlyImmutable: false,
-    verificationHash: hash,
+    allowed: result.allowed,
+    articleCode: result.articleCode,
+    isStrictlyImmutable: result.isStrictlyImmutable,
+    reason: result.reason,
+    verificationHash: result.verificationHash ?? '',
   };
 }

@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { generateNonce } from '@/seed/security/nonce-utils';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
-import { record as recordMetrics, setWAEBinding } from '@/seed/observability/telemetry/metrics';
+import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
 import { isInternalOrStatic } from './middleware/helpers';
 import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
@@ -16,138 +16,38 @@ import {
   extractHostname,
   isInternalOrCanonicalHostname,
 } from '@/tree/custom-domains/hostname-resolver';
-import { resolveApacLocale } from '@/tree/localization/geo-router';
-import { SUPPORTED_LOCALES } from './middleware/middleware-shared-config';
 import { getD1 } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
-import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
+import {
+  applyErrorSecurityHeaders,
+  handleLocaleRedirects,
+  handleSignupTabRedirect,
+  initializeWAEBinding,
+} from './middleware/routing-helpers';
 
 const logger = createLogger('middleware');
-
-/** L2: apply security headers to error responses that bypass the normal pipeline */
-function applySecurityHeaders(response: NextResponse): NextResponse {
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  return response;
-}
-
-// Initialize WAE binding once at module load (Cloudflare Workers env)
-// The WAE binding is available via the global `env` in Workers, but in Next.js middleware
-// we need to access it differently. We'll set it lazily on first request.
-// For now, we expose a setter that can be called from the app router or setup.
-let waeInitialized = false;
-
-function initializeWAEBinding(): void {
-  if (waeInitialized) return;
-  // In Cloudflare Workers, the WAE binding is available in the global scope
-  // when configured in wrangler.toml. We try to access it via the environment.
-  // Note: In Next.js on Cloudflare Workers, bindings are available in the
-  // request context via `env` property on the Request object (added by OpenNext).
-  // We'll use a global to store the binding.
-  try {
-    // @ts-expect-error - Cloudflare Workers global bindings
-    const globalEnv = globalThis.env || globalThis;
-    if (globalEnv?.WAE) {
-      setWAEBinding(globalEnv.WAE as AnalyticsEngineDataset);
-    }
-  } catch {
-    // Ignore if not available
-  }
-  waeInitialized = true;
-}
-
-function isSupportedLocale(segment: string | undefined): boolean {
-  return segment !== undefined && (SUPPORTED_LOCALES as readonly string[]).includes(segment);
-}
-
-function isUnsupportedLocale(segment: string | undefined): boolean {
-  if (!segment) return false;
-  // Detect ISO/BCP-47 language tags (e.g. /zh-CN, /fr, /de) that are not supported
-  const isLocalePattern = /^[a-z]{2}(?:-[a-zA-Z]{2,4})?$/i.test(segment);
-  return isLocalePattern && !isSupportedLocale(segment);
-}
-
-function redirectToDefault(request: NextRequest): NextResponse {
-  const url = request.nextUrl.clone();
-  url.pathname = '/';
-  return NextResponse.redirect(url);
-}
 
 async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
   const startTime = Date.now();
 
-  // Initialize WAE binding on first request
   initializeWAEBinding();
-
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
   const pathLocale = pathname.split('/')[1];
 
-  // API routes bypass locale redirect — dispatched through handleApiPipeline below
-  if (!pathname.startsWith('/api/')) {
-    // Locale-aware redirects: next.config.ts redirects to localeless paths, but on CF Workers
-    // the middleware intercepts the destination BEFORE the page route resolves. Handle here
-    // so the redirect chain ends at the correct locale-prefixed page.
-    const REDIRECTS: Record<string, string> = {
-      '/docs': '/guide',
-      '/guides': '/guide',
-      '/faq': '/guide',
-      '/help': '/guide',
-    };
-    const barePath = pathLocale && isSupportedLocale(pathLocale) ? pathname.slice(`/${pathLocale}`.length) || '/' : pathname;
-    if (REDIRECTS[barePath]) {
-      const locale = isSupportedLocale(pathLocale)
-        ? pathLocale!
-        : resolveApacLocale(request.headers.get('cf-ipcountry'), request.headers.get('accept-language'));
-      return NextResponse.redirect(new URL(`/${locale}${REDIRECTS[barePath]}`, request.url), 307);
-    }
+  const localeRedirectRes = handleLocaleRedirects(request, pathname, pathLocale);
+  if (localeRedirectRes) return localeRedirectRes;
 
-    // Reject unsupported locale segments (e.g. /zh-CN, /fr, /de) and redirect to root (/)
-    if (isUnsupportedLocale(pathLocale)) {
-      return redirectToDefault(request);
-    }
-  }
-
-  // E2E/SEO compatibility: tests and legacy links use /vi/login, /en/pricing etc
-  // but routes are defined WITH [locale] prefix. Keep locale prefix in path.
-  // This block is intentionally disabled - locale prefix is required for routing.
-  // if (pathLocale && isSupportedLocale(pathLocale)) {
-  //   const bare = pathname.replace(/^\/(en|vi)/, '') || '/';
-  //   const url = request.nextUrl.clone();
-  //   url.pathname = bare;
-  //   if (url.pathname !== pathname) {
-  //     return NextResponse.redirect(url, 308);
-  //   }
-  // }
-
-  // ?tab=signup redirect — runs before ISR cache
-  const { searchParams: sp } = request.nextUrl;
-  if (sp.get('tab') === 'signup') {
-    const isHomepage = pathname === '/' || (isSupportedLocale(pathLocale) && pathname === `/${pathLocale}`);
-    if (isHomepage) {
-      const locale = isSupportedLocale(pathLocale)
-        ? pathLocale!
-        : resolveApacLocale(request.headers.get('cf-ipcountry'), request.headers.get('accept-language'));
-      const p = new URLSearchParams({ tab: 'signup' });
-      for (const k of ['coupon', 'tier', 'redirect'] as const) {
-        const v = sp.get(k);
-        if (v) p.set(k, v);
-      }
-      return NextResponse.redirect(new URL(`/${locale}/login?${p.toString()}`, request.url));
-    }
-  }
+  const signupRedirectRes = handleSignupTabRedirect(request, pathname, pathLocale);
+  if (signupRedirectRes) return signupRedirectRes;
 
   if (request.method === 'OPTIONS') return handleCorsPrelight(origin);
 
-  // Security: D1-backed auth rate limiting (cross-isolate) before pipeline dispatch
   const authRateLimitResponse = await checkAuthRateLimit(request);
   if (authRateLimitResponse) return authRateLimitResponse;
 
-  // Security: D1-backed admin rate limiting (cross-isolate) for /dashboard/admin/* and /api/admin/*
   const adminRateLimitResponse = await checkAdminRateLimit(request);
   if (adminRateLimitResponse) return adminRateLimitResponse;
 
@@ -155,7 +55,6 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(CSP_NONCE_HEADER, nonce);
 
-  // Enterprise White-Label: Edge Tenant Context Extraction
   const host = extractHostname(request);
   let db: D1Database | null = null;
   if (!isInternalOrCanonicalHostname(host)) {
@@ -173,7 +72,6 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   }
   const needsCsrfSeed = request.method === 'GET' && !request.cookies.has(CSRF_COOKIE_NAME);
 
-  // Route to pipeline handlers — each returns null if the path is outside its scope
   const apiRes = await handleApiPipeline(request, pathname, pathLocale, startTime, requestHeaders, nonce, needsCsrfSeed);
   if (apiRes) return apiRes;
 
@@ -198,9 +96,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return response;
   } catch (err) {
     isError = true;
-    // L2: return a safe error response with security headers instead of throwing
     logger.error('proxyImpl threw', err instanceof Error ? err : new Error(String(err)));
-    return applySecurityHeaders(
+    return applyErrorSecurityHeaders(
       NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );
   } finally {
@@ -214,26 +111,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const middleware = proxy;
 
-/**
- * Matcher: apply middleware to all routes except Next.js internals and static files.
- *
- * API routes (/api/*) GO THROUGH middleware for centralized security:
- *   - CORS preflight handling
- *   - D1-backed auth rate limiting
- *   - CSRF token verification (state-changing methods)
- *   - MFA enforcement, auth guard, size limits (via handleApiPipeline)
- *
- * The locale redirect is skipped for /api/* paths (see proxyImpl guard),
- * so API routes are dispatched to handleApiPipeline instead of being
- * 307-redirected to '/'.
- *
- * Excluded paths:
- *   - _next (Next.js internals)
- *   - _worker (edge functions)
- *   - auth/callback (handled separately in proxyImpl)
- *   - api/version (health endpoint, public — no auth required)
- *   - static files (.*\\..*)
- */
 export const config = {
   matcher: ['/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)'],
 };

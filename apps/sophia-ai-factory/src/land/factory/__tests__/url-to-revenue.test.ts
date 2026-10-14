@@ -25,7 +25,7 @@ vi.mock('@/seed/db/client', () => ({
   })),
 }));
 
-vi.mock('../url-product-extractor', () => ({
+vi.mock('@/seed/factory/url-product-extractor', () => ({
   extractProductInfo: vi.fn().mockResolvedValue({
     title: 'Test Product',
     description: 'A great product',

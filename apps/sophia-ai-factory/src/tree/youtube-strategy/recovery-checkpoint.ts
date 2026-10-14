@@ -4,6 +4,13 @@
  * Ported from Lumen's generation-recovery-service.
  */
 
+import {
+  GENERATION_STAGES,
+  validateArtifact,
+  isRetryable,
+  sleep,
+} from './recovery-checkpoint-helpers';
+
 export type GenerationStage =
   | 'strategy'
   | 'script'
@@ -37,15 +44,6 @@ export interface RecoveryServiceOptions {
   readonly maxAttempts?: number;
   readonly baseDelayMs?: number;
 }
-
-const GENERATION_STAGES: readonly GenerationStage[] = [
-  'strategy',
-  'script',
-  'thumbnail',
-  'seo',
-  'production',
-  'quality_review',
-];
 
 const DEFAULT_MAX_ATTEMPTS = 2;
 const DEFAULT_BASE_DELAY_MS = 1000;
@@ -105,62 +103,14 @@ export async function runStage<T>(
         error: lastError.message,
         completedAt: new Date().toISOString(),
       });
-      if (
-        (err as { code?: string }).code === 'JOB_CANCELLED' ||
-        attempt >= maxAttempts ||
-        !isRetryable(err)
-      ) {
+      if ((err as { code?: string }).code === 'JOB_CANCELLED' || attempt >= maxAttempts || !isRetryable(err)) {
         throw lastError;
       }
       const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
-      if (delayMs > 0) {
-        await sleep(delayMs);
-      }
+      if (delayMs > 0) await sleep(delayMs);
     }
   }
   throw lastError ?? new Error(`Stage ${stage} failed after ${maxAttempts} attempts`);
-}
-
-function validateArtifact(stage: GenerationStage, artifact: unknown): boolean {
-  if (!artifact || typeof artifact !== 'object') return false;
-  const a = artifact as Record<string, unknown>;
-  switch (stage) {
-    case 'strategy':
-      return Boolean(a.topic);
-    case 'script':
-      return Boolean(a.title && (a.fullScript || a.mainContent));
-    case 'thumbnail':
-      return Boolean(a.path);
-    case 'seo':
-      return Boolean(a.title && a.description && Array.isArray(a.tags));
-    case 'production': {
-      const finalVideo = (a.assets as Record<string, unknown> | undefined)?.finalVideo;
-      return Boolean(a.id && (finalVideo as Record<string, unknown> | undefined)?.path);
-    }
-    case 'quality_review':
-      return Boolean(a.contentId && a.reviewStatus);
-    default:
-      return false;
-  }
-}
-
-function isRetryable(error: unknown): boolean {
-  const err = error as { status?: number; code?: string; response?: { status?: number } };
-  const status = Number(err.status ?? err.response?.status ?? 0);
-  if ([408, 425, 429].includes(status) || status >= 500) return true;
-  const code = String(err.code ?? '').toUpperCase();
-  return [
-    'ECONNRESET',
-    'ECONNREFUSED',
-    'EPIPE',
-    'ETIMEDOUT',
-    'ENETUNREACH',
-    'EAI_AGAIN',
-  ].includes(code);
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

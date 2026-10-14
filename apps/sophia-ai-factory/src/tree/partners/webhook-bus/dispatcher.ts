@@ -17,10 +17,11 @@ import {
 } from './types';
 import { signPartnerWebhookPayload } from './signature-verifier';
 import { calculateBackoffDelayMs, isRetryableHttpStatus } from './backoff-strategy';
-
-function generateEventId(prefix = 'evt'): string {
-  return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-}
+import {
+  generateWebhookEventId,
+  resolvePartnerWebhookSubscription,
+  recordWebhookDeliveryLog,
+} from './webhook-delivery-persistence';
 
 /**
  * Dispatches a partner webhook event with Web Crypto HMAC-SHA256 signing
@@ -53,39 +54,16 @@ export async function dispatchPartnerQuotaWebhook(
     db = options?.db;
   }
 
-  const eventId = generateEventId('pwevt');
+  const eventId = generateWebhookEventId('pwevt');
   const now = Math.floor(Date.now() / 1000);
 
-  let endpointUrl = options?.endpointUrl;
-  let secretKey = options?.secretKey;
-
-  if ((!endpointUrl || !secretKey) && db) {
-    try {
-      interface SubRow {
-        endpoint_url: string;
-        secret_key: string;
-      }
-      const sub = await db
-        .prepare(
-          `SELECT endpoint_url, secret_key
-           FROM webhook_subscriptions
-           WHERE tenant_id = ?1 AND is_active = 1
-           LIMIT 1`,
-        )
-        .bind(partnerId)
-        .first<SubRow>();
-
-      if (sub) {
-        endpointUrl = endpointUrl || sub.endpoint_url;
-        secretKey = secretKey || sub.secret_key;
-      }
-    } catch {
-      // Ignore if table does not exist
-    }
-  }
-
-  endpointUrl = endpointUrl || `https://api.partner-mesh.internal/webhooks/${partnerId}`;
-  secretKey = secretKey || `whsec_${partnerId}_${now.toString(36)}`;
+  const { endpointUrl, secretKey } = await resolvePartnerWebhookSubscription(
+    db,
+    partnerId,
+    now,
+    options?.endpointUrl,
+    options?.secretKey,
+  );
 
   const fullEnvelope = {
     id: eventId,
@@ -147,48 +125,17 @@ export async function dispatchPartnerQuotaWebhook(
     }
   }
 
-  let deliveryLogId: string | undefined;
-  if (db) {
-    try {
-      deliveryLogId = generateEventId('pwlog');
-      await db
-        .prepare(
-          `INSERT INTO webhook_delivery_logs (
-             id, subscription_id, event_type, payload_json, signature,
-             http_status, status, attempt_number, created_at
-           ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
-        )
-        .bind(
-          deliveryLogId,
-          partnerId,
-          eventType,
-          payloadJson,
-          headerValue,
-          lastStatus ?? null,
-          delivered ? 'success' : 'failed',
-          attempts,
-          Date.now(),
-        )
-        .run();
-    } catch {
-      // Table may not exist in all test environments, fail soft
-    }
-  }
+  const deliveryLogId = await recordWebhookDeliveryLog({
+    db, partnerId, eventType, payloadJson, headerValue, lastStatus, delivered, attempts,
+  });
 
   const nextRetryDelayMs = (!delivered && attempts < maxAttempts)
     ? calculateBackoffDelayMs(attempts + 1, false)
     : undefined;
 
   return {
-    eventId,
-    partnerId,
-    eventType,
-    delivered,
-    httpStatus: lastStatus,
-    attempts,
-    lastError,
-    signatureHeader: headerValue,
-    nextRetryDelayMs,
-    deliveryLogId,
+    eventId, partnerId, eventType, delivered,
+    httpStatus: lastStatus, attempts, lastError,
+    signatureHeader: headerValue, nextRetryDelayMs, deliveryLogId,
   };
 }

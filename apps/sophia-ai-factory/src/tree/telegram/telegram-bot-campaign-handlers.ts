@@ -16,28 +16,11 @@ import {
   handleOfferSelection,
   handleCampaignConfirm,
 } from '@/tree/telegram/telegram-bot-campaign-fsm';
-
-// -------------------------------------------------------------------------
-// Internal D1 row types (matches 0018-campaigns.sql schema)
-// -------------------------------------------------------------------------
-
-interface CampaignD1Row {
-  id: string;
-  user_id: string;
-  title: string;
-  topic: string | null;
-  audience: string | null;
-  status: string | null;
-  progress: number | null;
-  template_id: string | null;
-  script_content: string | null;
-  audio_url: string | null;
-  video_url: string | null;
-  thumbnail_url: string | null;
-  error_message: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import {
+  formatActiveCampaignsMessage,
+  formatCompletedCampaignsMessage,
+  type CampaignD1Row,
+} from './telegram-campaign-formatters';
 
 // -------------------------------------------------------------------------
 // Helpers
@@ -105,14 +88,8 @@ export async function handleConfirmCommand(chatId: string): Promise<void> {
 
 export async function handleStatus(chatId: string) {
   try {
-    const { data: profileData } = await getDb()
-      .from('user_profiles')
-      .select('user_id')
-      .eq('telegram_chat_id', chatId)
-      .single()
-
+    const { data: profileData } = await getDb().from('user_profiles').select('user_id').eq('telegram_chat_id', chatId).single()
     const profile = profileData as { user_id: string } | null;
-
     if (!profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked. Please use /email to setup.')
       return
@@ -126,22 +103,12 @@ export async function handleStatus(chatId: string) {
       .limit(5)
 
     const campaigns = campaignsData as CampaignD1Row[] | null;
-
     if (!campaigns || campaigns.length === 0) {
       await sendTelegramMessage(chatId, 'ℹ️ No active campaigns running right now.')
       return
     }
 
-    let message = '📊 *Active Campaigns:*\n\n'
-    campaigns.forEach((c) => {
-      const statusEmoji = c.status === 'queued' ? '⏳' : '⚙️'
-      message += `${statusEmoji} *${c.title}*\n`
-      message += `Status: ${c.status?.replace('_', ' ')}\n`
-      message += `Progress: ${c.progress ?? 0}%\n\n`
-    })
-
-    await sendTelegramMessage(chatId, message)
-
+    await sendTelegramMessage(chatId, formatActiveCampaignsMessage(campaigns))
   } catch {
     await sendTelegramMessage(chatId, '❌ Error fetching status.')
   }
@@ -149,14 +116,8 @@ export async function handleStatus(chatId: string) {
 
 export async function handleResults(chatId: string) {
   try {
-    const { data: profileData } = await getDb()
-      .from('user_profiles')
-      .select('user_id')
-      .eq('telegram_chat_id', chatId)
-      .single()
-
+    const { data: profileData } = await getDb().from('user_profiles').select('user_id').eq('telegram_chat_id', chatId).single()
     const profile = profileData as { user_id: string } | null;
-
     if (!profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked.')
       return
@@ -170,25 +131,12 @@ export async function handleResults(chatId: string) {
       .limit(5)
 
     const campaigns = campaignsData as CampaignD1Row[] | null;
-
     if (!campaigns || campaigns.length === 0) {
       await sendTelegramMessage(chatId, 'ℹ️ No completed campaigns found.')
       return
     }
 
-    let message = '✅ *Recent Results:*\n\n'
-    campaigns.forEach((c) => {
-      message += `🎬 *${c.title}*\n`
-      if (c.video_url) {
-        message += `[Watch Video](${c.video_url})\n`
-      } else {
-        message += `(Video URL missing)\n`
-      }
-      message += `Completed: ${new Date(c.updated_at).toLocaleDateString()}\n\n`
-    })
-
-    await sendTelegramMessage(chatId, message)
-
+    await sendTelegramMessage(chatId, formatCompletedCampaignsMessage(campaigns))
   } catch {
     await sendTelegramMessage(chatId, '❌ Error fetching results.')
   }

@@ -8,7 +8,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/tree/missions/api-key-auth';
 import { isValidCommand, getCommand } from '@/tree/missions/command-registry';
@@ -17,24 +16,15 @@ import { dispatchMission } from '@/forest/missions/dispatcher';
 import { checkAiCommandQuota } from '@/seed/auth/enforce-ai-command-quota';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import {
+  CreateMissionSchema,
+  ListQuerySchema,
+  listUserMissionsPaginated,
+} from './missions-v1-helpers';
 
 export const dynamic = 'force-dynamic';
+export { CreateMissionSchema, ListQuerySchema };
 
-export const CreateMissionSchema = z.object({
-  command: z.string().min(1).max(100),
-  params: z.record(z.string(), z.unknown()).optional().default({}),
-  webhook_url: z.string().url().optional(),
-});
-
-export const ListQuerySchema = z.object({
-  status: z.string().optional(),
-  command: z.string().optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
-  cursor: z.string().optional(),
-});
-
-// Mission creation triggers Inngest pipeline (LLM + provider costs).
-// 30/min ceiling prevents runaway loops; tier-config can lift higher.
 export const POST = withRateLimit(async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await validateMissionApiKey(
     request.headers.get('authorization'),
@@ -54,7 +44,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
   const parsed = CreateMissionSchema.safeParse(body);
   if (!parsed.success) {
-    // R2-7: Log full Zod issues server-side; never expose internal field names to callers.
     logger.warn('[/api/v1/missions POST] validation error', { issues: parsed.error.issues });
     return NextResponse.json({ error: 'Invalid mission parameters' }, { status: 400 });
   }
@@ -63,7 +52,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
   if (!isValidCommand(command)) {
     const { COMMANDS } = await import('@/tree/missions/command-registry');
-    // R2-8: Filter out any commands with status 'internal' to avoid leaking private endpoints.
     const publicCommands = Object.entries(COMMANDS)
       .filter(([, def]) => (def.status as string) !== 'internal')
       .map(([name]) => name);
@@ -75,7 +63,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
   const commandDef = getCommand(command)!;
 
-  // Tier monthly AI command quota check (P30 tier-gate completeness)
   const quota = await checkAiCommandQuota(userId);
   if (!quota.allowed) {
     return NextResponse.json({
@@ -87,9 +74,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     }, { status: 429 });
   }
 
-  // Credit check — fast-path rejection only.
-  // R2-6: This check is NOT atomic; concurrent requests can both pass here.
-  // The authoritative atomic deduction happens in dispatcher.ts BEFORE handler execution.
   if (commandDef.credits > 0) {
     const balance = await getBalance(userId);
     if (balance.credits_remaining < commandDef.credits) {
@@ -102,7 +86,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     }
   }
 
-  // Insert mission row
   const db = createServerClient();
   const missionId = crypto.randomUUID();
 
@@ -120,10 +103,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     return NextResponse.json({ error: 'Failed to create mission' }, { status: 500 });
   }
 
-  // Fire-and-forget dispatch
-  // In Cloudflare Workers, use waitUntil from executionCtx
-  // In Node.js (dev/test), use Promise void
-  void dispatchMission(missionId).catch(err => {
+  void dispatchMission(missionId).catch((err) => {
     logger.error('[/api/v1/missions POST] dispatch error', err instanceof Error ? err : new Error(String(err)));
   });
 
@@ -145,44 +125,5 @@ export const GET = withRateLimit(async function GET(request: NextRequest): Promi
   if (!auth.valid) {
     return apiKeyAuthErrorResponse(auth);
   }
-  const userId = auth.userId!;
-
-  const { searchParams } = new URL(request.url);
-  const queryParsed = ListQuerySchema.safeParse({
-    status: searchParams.get('status') ?? undefined,
-    command: searchParams.get('command') ?? undefined,
-    limit: searchParams.get('limit') ?? undefined,
-    cursor: searchParams.get('cursor') ?? undefined,
-  });
-
-  if (!queryParsed.success) {
-    return NextResponse.json({ error: 'Invalid query params' }, { status: 400 });
-  }
-
-  const { status, command, limit, cursor } = queryParsed.data;
-  const db = createServerClient();
-
-  let query = db
-    .from('engine_missions')
-    .select('id, command, status, credits_used, created_at, completed_at, webhook_url')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit + 1);
-
-  if (status) query = query.eq('status', status);
-  if (command) query = query.eq('command', command);
-  if (cursor) query = query.lt('created_at', Number(cursor));
-
-  const { data } = await query as { data: Array<Record<string, unknown>> | null; error: unknown };
-  const rows = data ?? [];
-  const hasMore = rows.length > limit;
-  if (hasMore) rows.pop();
-
-  const nextCursor = hasMore && rows.length > 0 ? String(rows[rows.length - 1].created_at) : null;
-
-  return NextResponse.json({
-    missions: rows,
-    has_more: hasMore,
-    next_cursor: nextCursor,
-  });
+  return listUserMissionsPaginated(auth.userId!, new URL(request.url).searchParams);
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });

@@ -2,31 +2,20 @@
 
 /**
  * CeoAgentTourOverlay — modal dialog for the 4-step CEO Agent onboarding tour.
- *
- * Follows the same pattern as TourOverlay from the main dashboard, but
- * specialized for the agents page steps (Chat, Briefing, Campaigns, Revenue).
- * Uses its own storage key to avoid conflict with the main dashboard tour.
  */
 
 import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { X, ChevronRight, ChevronLeft, Bot, BrainCircuit, BarChart3, TrendingUp } from 'lucide-react';
-import { Button } from '@/seed/components/ui/button';
+import { X } from 'lucide-react';
 import {
   CEO_AGENT_TOUR_STEPS,
   CEO_AGENT_TOTAL_STEPS,
 } from './ceo-agent-tour-config';
-
-// ── Step icons ──────────────────────────────────────────────────────────────────
-
-const STEP_ICONS = [
-  Bot,
-  BrainCircuit,
-  BarChart3,
-  TrendingUp,
-] as const;
-
-// ── Props ───────────────────────────────────────────────────────────────────────
+import {
+  STEP_ICONS,
+  handleTourDialogKeyDown,
+  CeoAgentTourFooter,
+} from './ceo-agent-tour-helpers';
 
 interface CeoAgentTourOverlayProps {
   step: number;
@@ -35,8 +24,6 @@ interface CeoAgentTourOverlayProps {
   onNext: () => void;
   onBack: () => void;
 }
-
-// ── Component ───────────────────────────────────────────────────────────────────
 
 export function CeoAgentTourOverlay({
   step,
@@ -53,31 +40,6 @@ export function CeoAgentTourOverlay({
   const isLast = step === CEO_AGENT_TOTAL_STEPS;
   const StepIcon = STEP_ICONS[step - 1];
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    if (e.key === 'Escape') {
-      onSkip();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>(
-        'button, [href], [tabindex]:not([tabindex="-1"])',
-      ),
-    ).filter((el) => !el.hasAttribute('disabled'));
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
@@ -89,9 +51,8 @@ export function CeoAgentTourOverlay({
         aria-modal="true"
         aria-labelledby={titleId}
         className="relative w-full max-w-md bg-card border border-border shadow-xl rounded-2xl p-6"
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => handleTourDialogKeyDown(e, dialogRef.current, onSkip)}
       >
-        {/* Close button */}
         <button
           onClick={onSkip}
           className="absolute top-4 right-4 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -100,7 +61,6 @@ export function CeoAgentTourOverlay({
           <X className="w-4 h-4" aria-hidden="true" />
         </button>
 
-        {/* Header */}
         <div className="flex items-center gap-3 mb-5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <StepIcon className="w-5 h-5" aria-hidden="true" />
@@ -115,7 +75,6 @@ export function CeoAgentTourOverlay({
           </div>
         </div>
 
-        {/* Progress dots */}
         <div className="flex gap-1.5 mb-5">
           {CEO_AGENT_TOUR_STEPS.map((_, i) => (
             <div
@@ -129,7 +88,6 @@ export function CeoAgentTourOverlay({
           ))}
         </div>
 
-        {/* Step content */}
         <div className="min-h-[100px] mb-4">
           <p className="text-xs font-medium text-primary mb-2">
             {t('progress', {
@@ -145,42 +103,15 @@ export function CeoAgentTourOverlay({
           </p>
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between border-t border-border pt-4">
-          <button
-            onClick={onSkip}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t('skip')}
-          </button>
-          <div className="flex gap-2">
-            {step > 1 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onBack}
-                className="flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-                {t('back')}
-              </Button>
-            )}
-            {!isLast ? (
-              <Button
-                size="sm"
-                onClick={onNext}
-                className="flex items-center gap-1"
-              >
-                {t('next')}
-                <ChevronRight className="w-4 h-4" aria-hidden="true" />
-              </Button>
-            ) : (
-              <Button size="sm" onClick={onFinish}>
-                {t('finish')}
-              </Button>
-            )}
-          </div>
-        </div>
+        <CeoAgentTourFooter
+          step={step}
+          isLast={isLast}
+          onSkip={onSkip}
+          onBack={onBack}
+          onNext={onNext}
+          onFinish={onFinish}
+          t={(k) => t(k)}
+        />
       </div>
     </div>
   );

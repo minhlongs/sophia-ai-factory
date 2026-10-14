@@ -8,19 +8,16 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  buildCaption,
+  createMediaContainer,
+  fetchMediaInsights,
+  fetchMediaStatusCode,
+  isMockMode,
+  publishContainer,
+} from './instagram-graph-api';
 
-const GRAPH_API_VERSION = 'v19.0';
-const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-function isMockMode(): boolean { return !process.env.INSTAGRAM_APP_ID; }
-
-interface IGMediaResponse {
-  id: string;
-  status_code?: string;
-}
-
-interface IGInsightsResponse {
-  data?: Array<{ name: string; values?: Array<{ value: number }> }>;
-}
+const EMPTY_METRICS: MetricsJson = { views: 0, likes: 0, comments: 0 };
 
 export class InstagramPublisher implements Publisher {
   constructor(
@@ -39,82 +36,15 @@ export class InstagramPublisher implements Publisher {
     }
 
     try {
-      const hashtags = meta.hashtags.map((h: string) => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-      const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-      const caption = `${adCaption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
-
-      // Step 1: Create media container
-      const containerRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          video_url: videoUrl,
-          caption: caption.slice(0, 2200),
-          media_type: 'REELS',
-          access_token: this.accessToken,
-        }),
-      });
-
-      if (!containerRes.ok) {
-        const text = await containerRes.text();
-        throw new Error(`Instagram media container creation failed (${containerRes.status}): ${text}`);
-      }
-
-      const container = (await containerRes.json()) as IGMediaResponse;
-      const containerId = container.id;
-
-      // Step 2: Publish
-      let publishRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media_publish`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          creation_id: containerId,
-          access_token: this.accessToken,
-        }),
-      });
-
-      if (!publishRes.ok) {
-        const text = await publishRes.text();
-        // Meta Graph API error 9007 / 2207027: "The media is not ready for publishing, please wait for a moment"
-        const isProcessing = text.includes('2207027') || text.includes('9007') || text.toLowerCase().includes('not ready');
-        if (isProcessing) {
-          logger.info('[InstagramPublisher] Container still encoding, polling status before publishing', { containerId });
-          let ready = false;
-          for (let poll = 0; poll < 10; poll++) {
-            await new Promise((r) => setTimeout(r, 2000));
-            const statusRes = await fetch(
-              `${GRAPH_BASE}/${containerId}?fields=status_code&access_token=${this.accessToken}`,
-            );
-            if (statusRes.ok) {
-              const statusData = (await statusRes.json()) as IGMediaResponse;
-              if (statusData.status_code === 'FINISHED') {
-                ready = true;
-                break;
-              }
-              if (statusData.status_code === 'ERROR') {
-                throw new Error('Instagram container processing failed on Meta edge');
-              }
-            }
-          }
-          if (ready) {
-            publishRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media_publish`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                creation_id: containerId,
-                access_token: this.accessToken,
-              }),
-            });
-          }
-        }
-        if (!publishRes.ok) {
-          throw new Error(`Instagram media publish failed (${publishRes.status}): ${text}`);
-        }
-      }
-
-      const published = (await publishRes.json()) as IGMediaResponse;
+      const containerId = await createMediaContainer(
+        this.igUserId,
+        this.accessToken,
+        videoUrl,
+        buildCaption(meta),
+      );
+      const publishedId = await publishContainer(this.igUserId, this.accessToken, containerId);
       recordSuccess('instagram');
-      return published.id;
+      return publishedId;
     } catch (error) {
       recordFailure('instagram', classifyError(error));
       throw error;
@@ -126,15 +56,9 @@ export class InstagramPublisher implements Publisher {
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
 
     try {
-      const res = await fetch(
-        `${GRAPH_BASE}/${externalPostId}?fields=status_code&access_token=${this.accessToken}`,
-      );
-
-      if (!res.ok) return 'processing';
+      const code = await fetchMediaStatusCode(externalPostId, this.accessToken);
+      if (code === null) return 'processing';
       recordSuccess('instagram');
-
-      const data = (await res.json()) as IGMediaResponse;
-      const code = data.status_code;
 
       if (code === 'FINISHED' || code === 'PUBLISHED') return 'live';
       if (code === 'ERROR') return 'failed';
@@ -146,24 +70,16 @@ export class InstagramPublisher implements Publisher {
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
-    if (!shouldAllowRequest('instagram')) {
-      return { views: 0, likes: 0, comments: 0 };
-    }
-    if (isMockMode() || externalPostId.startsWith('mock_')) {
-      return { views: 0, likes: 0, comments: 0 };
-    }
+    if (!shouldAllowRequest('instagram')) return { ...EMPTY_METRICS };
+    if (isMockMode() || externalPostId.startsWith('mock_')) return { ...EMPTY_METRICS };
 
     try {
-      const res = await fetch(
-        `${GRAPH_BASE}/${externalPostId}/insights?metric=impressions,reach,likes,comments,shares&access_token=${this.accessToken}`,
-      );
-
-      if (!res.ok) return { views: 0, likes: 0, comments: 0 };
+      const data = await fetchMediaInsights(externalPostId, this.accessToken);
+      if (!data) return { ...EMPTY_METRICS };
       recordSuccess('instagram');
 
-      const data = (await res.json()) as IGInsightsResponse;
       const find = (name: string) =>
-        data.data?.find(m => m.name === name)?.values?.[0]?.value ?? 0;
+        data.data?.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
 
       return {
         views: find('impressions'),
@@ -174,11 +90,12 @@ export class InstagramPublisher implements Publisher {
       };
     } catch (error) {
       recordFailure('instagram', classifyError(error));
-      return { views: 0, likes: 0, comments: 0 };
+      return { ...EMPTY_METRICS };
     }
   }
 
-async delete(_postId: string): Promise<void> {
-  // Platform-specific deletion not implemented
-  logger.warn("[instagram-publisher.ts] delete not implemented");
-}}
+  async delete(_postId: string): Promise<void> {
+    // Platform-specific deletion not implemented
+    logger.warn('[instagram-publisher.ts] delete not implemented');
+  }
+}

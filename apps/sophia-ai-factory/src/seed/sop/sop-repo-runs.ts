@@ -1,43 +1,17 @@
 /**
  * SOP Execution Repository
  * CRUD for sop_executions (canonical table — migration 0160).
- *
- * sop_runs (migration 0057) is preserved as historical/read-only.
- * All new writes go to sop_executions.
- *
- * Function signatures are preserved from the sop_runs era for backward compatibility.
  */
 
 import type { SopRunRow, UpdateRunFields } from './sop-types';
-import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
+import {
+  nowSec,
+  genId,
+  resolveInstallationContext,
+  incrementSopRunCount,
+} from './sop-repo-runs-helpers';
 
-function nowSec(): number { return Math.floor(Date.now() / 1000); }
-function genId(): string { return crypto.randomUUID().replace(/-/g, ''); }
-
-/** Look up user_id, org_id, sop_template_id from an installation */
-async function resolveInstallationContext(
-  db: D1Database,
-  installationId: string,
-): Promise<{ userId: string; orgId: string; templateId: string }> {
-  const row = await db
-    .prepare(
-      `SELECT user_id, template_id FROM user_sop_installations WHERE id = ?1 LIMIT 1`,
-    )
-    .bind(installationId)
-    .first<{ user_id: string; template_id: string }>();
-
-  if (!row) {
-    throw new Error(`resolveInstallationContext: installation not found: ${installationId}`);
-  }
-
-  return { userId: row.user_id, orgId: row.user_id, templateId: row.template_id };
-}
-
-/** Status mapping: legacy → canonical */
-function mapStatus(status: SopRunRow['status']): SopRunRow['status'] {
-  return status;
-}
+export { incrementSopRunCount };
 
 /**
  * Create a new execution record (status = pending, formerly 'queued').
@@ -70,29 +44,12 @@ export async function createRun(
 
   if (!row) throw new Error(`createRun: row not found after insert: ${id}`);
 
-  // Best-effort: keep the cached `total_runs` counter on the installation
-  // in sync so the Analytics tab stays accurate.
-  try {
-    await db
-      .prepare(
-        `UPDATE user_sop_installations SET total_runs = total_runs + 1 WHERE id = ?1`,
-      )
-      .bind(installationId)
-      .run();
-  } catch (err) {
-    // Analytics cache should never block execution creation.
-    logger.warn('[SopRepo] total_runs increment failed', {
-      installationId,
-      error: getErrorMessage(err),
-    });
-  }
-
+  await incrementSopRunCount(db, installationId);
   return row;
 }
 
 /**
  * Update execution status and optional metadata fields.
- * Maps legacy status values to canonical equivalents.
  */
 export async function updateRunStatus(
   db: D1Database,
@@ -105,7 +62,7 @@ export async function updateRunStatus(
 
   if (fields.status !== undefined) {
     sets.push(`status = ?${idx++}`);
-    bindings.push(mapStatus(fields.status));
+    bindings.push(fields.status);
   }
   if (fields.resultSummary !== undefined) {
     sets.push(`result_summary = ?${idx++}`);
@@ -165,24 +122,4 @@ export async function appendMissionId(
     .prepare(`UPDATE sop_executions SET mission_ids = ?1 WHERE id = ?2`)
     .bind(JSON.stringify(ids), runId)
     .run();
-}
-
-/**
- * Best-effort increment of the cached `total_runs` counter on
- * `user_sop_installations`. This mirrors the legacy behavior from
- * `seed/db/repositories/sop-repo.ts` so that the Analytics tab stays
- * in sync without expensive COUNT(*) queries.
- */
-export async function incrementSopRunCount(db: D1Database, installationId: string): Promise<void> {
-  try {
-    await db
-      .prepare(
-        `UPDATE user_sop_installations SET total_runs = total_runs + 1 WHERE id = ?1`,
-      )
-      .bind(installationId)
-      .run();
-  } catch (err) {
-    // Best-effort: analytics cache should never block execution writes.
-    logger.warn('[SopRepo] incrementSopRunCount failed', { installationId, error: getErrorMessage(err) });
-  }
 }

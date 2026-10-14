@@ -7,7 +7,6 @@
 
 'use server';
 
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -16,58 +15,24 @@ import { createChannelConfig, getChannelConfig, getChannelConfigById } from './c
 import { type CreateChannelConfigInput } from './channel-config-types';
 import { createCalendarEntry, evaluateFrequency, type CreateCalendarEntryInput } from './content-calendar';
 import { inngest } from '@/seed/inngest/client';
+import {
+  CreateChannelConfigSchema,
+  ScheduleContentSchema,
+  formatZodError,
+  type CreateChannelConfigActionInput,
+  type ScheduleContentActionInput,
+  type ChannelConfigActionError,
+  type ScheduleContentActionError,
+  type TriggerPipelineActionError,
+} from './actions-schemas';
 
-// ── Zod schemas ──────────────────────────────────────────────────────────────
-
-const CadenceSchema = z.enum(['daily', 'every-2-days', '3-per-week', 'weekly']);
-
-const CreateChannelConfigSchema = z.object({
-  channelId: z.string().min(1, 'channelId is required'),
-  channelTitle: z.string().max(255).optional(),
-  objective: z.string().min(1, 'objective is required').max(500),
-  audience: z.string().min(1, 'audience is required').max(500),
-  contentPillars: z.array(z.string().min(1)).min(1, 'at least one content pillar required'),
-  cadence: CadenceSchema,
-  postsPerWeek: z.number().int().positive().optional(),
-  guardrails: z.string().max(2000).optional(),
-  contentBufferDays: z.number().int().min(0).optional(),
-  autonomyLevel: z.number().int().min(0).max(5).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
-
-const ScheduleContentSchema = z.object({
-  channelConfigId: z.string().min(1, 'channelConfigId is required'),
-  title: z.string().min(1, 'title is required').max(200),
-  topic: z.string().max(500).optional(),
-  contentType: z.string().max(100).optional(),
-  scheduledAt: z.string().datetime('scheduledAt must be a valid ISO datetime'),
-  notes: z.string().max(2000).optional(),
-});
-
-export type CreateChannelConfigActionInput = z.infer<typeof CreateChannelConfigSchema>;
-export type ScheduleContentActionInput = z.infer<typeof ScheduleContentSchema>;
-
-export type ChannelConfigActionError =
-  | { code: 'UNAUTHENTICATED'; message: string }
-  | { code: 'VALIDATION_ERROR'; message: string }
-  | { code: 'DB_ERROR'; message: string }
-  | { code: 'REPO_ERROR'; message: string; details?: string };
-
-export type ScheduleContentActionError =
-  | { code: 'UNAUTHENTICATED'; message: string }
-  | { code: 'VALIDATION_ERROR'; message: string }
-  | { code: 'DB_ERROR'; message: string }
-  | { code: 'REPO_ERROR'; message: string; details?: string };
-
-export type TriggerPipelineActionError =
-  | { code: 'UNAUTHENTICATED'; message: string }
-  | { code: 'VALIDATION_ERROR'; message: string }
-  | { code: 'DB_ERROR'; message: string }
-  | { code: 'REPO_ERROR'; message: string; details?: string };
-
-function formatZodError(err: z.ZodError): string {
-  return err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
-}
+export type {
+  CreateChannelConfigActionInput,
+  ScheduleContentActionInput,
+  ChannelConfigActionError,
+  ScheduleContentActionError,
+  TriggerPipelineActionError,
+} from './actions-schemas';
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -83,17 +48,7 @@ export async function createChannelConfigAction(
 
   const payload: CreateChannelConfigInput = {
     userId: user.id,
-    channelId: parsed.data.channelId,
-    channelTitle: parsed.data.channelTitle,
-    objective: parsed.data.objective,
-    audience: parsed.data.audience,
-    contentPillars: parsed.data.contentPillars,
-    cadence: parsed.data.cadence,
-    postsPerWeek: parsed.data.postsPerWeek,
-    guardrails: parsed.data.guardrails,
-    contentBufferDays: parsed.data.contentBufferDays,
-    autonomyLevel: parsed.data.autonomyLevel,
-    metadata: parsed.data.metadata,
+    ...parsed.data,
   };
 
   const result = await createChannelConfig(payload);
@@ -133,12 +88,7 @@ export async function scheduleContentAction(
 
   const payload: CreateCalendarEntryInput = {
     userId: user.id,
-    channelConfigId: parsed.data.channelConfigId,
-    title: parsed.data.title,
-    topic: parsed.data.topic,
-    contentType: parsed.data.contentType,
-    scheduledAt: parsed.data.scheduledAt,
-    notes: parsed.data.notes,
+    ...parsed.data,
   };
 
   const result = await createCalendarEntry(payload);

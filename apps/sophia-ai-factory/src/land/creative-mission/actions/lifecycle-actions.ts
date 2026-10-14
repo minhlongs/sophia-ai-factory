@@ -21,6 +21,7 @@ import { updateMissionStatus as treeUpdateMissionStatus } from '@/tree/mission';
 import { createMissionSchema, updateMissionStatusSchema } from '../schemas';
 import type { MissionAction, MissionError } from '../types';
 import { actionFailure } from './action-helpers';
+import { createMissionAndEmitTelemetry } from './lifecycle-action-helpers';
 
 /**
  * Create a new creative mission.
@@ -54,61 +55,7 @@ export async function createMission(
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
-    // Create the mission via tree layer
-    const mission = await import('@/tree/mission').then((mod) =>
-      mod.createMission({
-        id: '',
-        workspaceId: parsed.data.workspaceId,
-        creatorId: user.id,
-        brandId: parsed.data.brandId,
-        title: parsed.data.title,
-        objective: parsed.data.objective,
-        audience: parsed.data.audience,
-        geography: parsed.data.geography,
-        timeframeStart: parsed.data.timeframeStart,
-        timeframeEnd: parsed.data.timeframeEnd,
-        budgetCents: parsed.data.budgetCents,
-        spentCents: 0,
-        autonomyLevel: parsed.data.autonomyLevel as 0 | 1 | 2 | 3 | 4,
-        channels: parsed.data.channels,
-        monetizationGoals: parsed.data.monetizationGoals,
-        constraints: parsed.data.constraints,
-        successMetrics: parsed.data.successMetrics,
-        status: 'draft',
-        currentPhase: 'init',
-        createdAt: 0,
-        updatedAt: 0,
-      })
-    );
-
-    logger.info('[CreativeMission] Created mission', {
-      missionId: mission.id,
-      workspaceId: parsed.data.workspaceId,
-      userId: user.id,
-    });
-
-    // ── SIDE-CHANNEL: mission.created (Q9/Q10 funnel entry) — non-fatal.
-    // Fires AFTER the row commit so the event never appears if creation
-    // rolled back. Telemetry failure must not abort the 201 path.
-    try {
-      const { emitMissionCreated } = await import('@/tree/performance/loop-emitters-runner');
-      await emitMissionCreated({
-        workspaceId: parsed.data.workspaceId,
-        missionId: mission.id,
-        autonomyLevel: parsed.data.autonomyLevel,
-        budgetCents: parsed.data.budgetCents,
-        recordedAt: Date.now(),
-      });
-    } catch (err) {
-      logger.warn('[CreativeMission.createMission] mission.created emit failed (non-fatal)', {
-        missionId: mission.id,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-
-    revalidatePath('/dashboard/missions');
-    revalidatePath('/[locale]/dashboard/missions');
-    revalidateTag('missions', 'max');
+    const mission = await createMissionAndEmitTelemetry(parsed.data, user.id);
     return success({ missionId: mission.id });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] createMission', err));

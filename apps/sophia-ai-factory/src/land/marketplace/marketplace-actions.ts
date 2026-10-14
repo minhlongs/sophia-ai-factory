@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Server Actions: Creator Marketplace & Royalty Operations
  *

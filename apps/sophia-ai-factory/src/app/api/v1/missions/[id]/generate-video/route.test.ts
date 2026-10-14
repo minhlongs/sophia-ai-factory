@@ -39,7 +39,7 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
   resolveUserTier: mockResolveUserTier,
 }));
 
-vi.mock('@/forest/quota/video-quota', () => ({
+vi.mock('@/tree/quota/video-quota', () => ({
   reserveVideoSlot: mockReserveVideoSlot,
   releaseVideoSlot: mockReleaseVideoSlot,
 }));

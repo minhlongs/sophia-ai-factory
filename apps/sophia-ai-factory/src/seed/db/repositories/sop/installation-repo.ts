@@ -5,6 +5,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
+import { assertTemplateInstallable } from '@/seed/sop/sop-marketplace-guard';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { UserSopInstallationDbRow } from '@/seed/db/types';
@@ -51,6 +52,10 @@ export async function installSop(
 ): Promise<string> {
   const db = await getD1();
   if (!db) throw new Error('D1 binding not available');
+
+  // Fail-closed gate: block paid marketplace SOP templates from install
+  await assertTemplateInstallable(db, sopTemplateId);
+
   const id = crypto.randomUUID();
   const now = Date.now();
 

@@ -5,11 +5,22 @@
  * is unavailable on this Node.js version. Each test builds fresh
  * mock implementations to ensure isolation.
  *
+ * @vitest-environment node
  * @module land/sop-marketplace/__tests__/marketplace-ops
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { D1Database } from '@cloudflare/workers-types';
+import {
+  createListing as createV1Listing,
+  listPublishedListings as listV1PublishedListings,
+  updateListingStatus as updateV1ListingStatus,
+  incrementSales as incrementV1Sales,
+  createLicense as createV1License,
+} from '@/seed/sop/sop-repo-marketplace';
 import {
   createCreatorProfile,
   getCreatorProfile,
@@ -651,5 +662,192 @@ describe('getSopListingReviews', () => {
 
     const noReviews = await getSopListingReviews(db as unknown as D1Database, 'no-reviews');
     expect(noReviews).toEqual([]);
+  });
+});
+
+function wrapSqliteAsD1(sqlite: DatabaseSync): D1Database {
+  const normalizeBinds = (binds: unknown[]) =>
+    binds.map((v) => (v === undefined ? null : (v as string | number | bigint | Buffer | null)));
+
+  const makeStmt = (sql: string, boundArgs: unknown[] = []) => ({
+    bind: (...args: unknown[]) => makeStmt(sql, args),
+    run: async () => {
+      const stmt = sqlite.prepare(sql);
+      const res = stmt.run(...normalizeBinds(boundArgs));
+      return { success: true, meta: { changes: Number(res.changes) } };
+    },
+    first: async <T = Record<string, unknown>>() => {
+      const stmt = sqlite.prepare(sql);
+      const row = stmt.get(...normalizeBinds(boundArgs)) as T | undefined;
+      return row ?? null;
+    },
+    all: async <T = Record<string, unknown>>() => {
+      const stmt = sqlite.prepare(sql);
+      const rows = stmt.all(...normalizeBinds(boundArgs)) as T[];
+      return { results: rows, success: true, meta: {} };
+    },
+  });
+
+  return {
+    prepare: (sql: string) => makeStmt(sql),
+  } as unknown as D1Database;
+}
+
+describe('0474 + 0473 SQLite Schema Reconciliation & V1/V2 Coexistence', () => {
+  it('preserves V1 rows/defaults without fake template mapping and supports both V1 and V2 operations', async () => {
+    const sqlite = new DatabaseSync(':memory:');
+    sqlite.exec(`
+      CREATE TABLE "user" (id TEXT PRIMARY KEY);
+      CREATE TABLE sop_templates (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL,
+        name_en TEXT NOT NULL,
+        name_vi TEXT NOT NULL,
+        category TEXT NOT NULL,
+        author_user_id TEXT,
+        status TEXT NOT NULL DEFAULT 'published'
+      );
+      CREATE TABLE creator_profiles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        display_name TEXT NOT NULL,
+        bio TEXT,
+        avatar_url TEXT,
+        payout_method TEXT,
+        payout_address TEXT,
+        total_earnings_cents INTEGER DEFAULT 0,
+        total_paid_cents INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        tenant_id TEXT NOT NULL DEFAULT 'default',
+        created_at INTEGER NOT NULL DEFAULT 1000,
+        updated_at INTEGER NOT NULL DEFAULT 1000,
+        payout_rail TEXT DEFAULT 'USDT',
+        bank_bin TEXT,
+        bank_account_number TEXT,
+        bank_account_name TEXT
+      );
+      INSERT INTO "user" (id) VALUES ('u-v1'), ('u-v2'), ('u-buyer');
+      INSERT INTO sop_templates (id, slug, name_en, name_vi, category, author_user_id, status)
+      VALUES
+        ('tpl-v1-seeded', 'v1-seeded', 'V1 Seeded EN', 'V1 Seeded VI', 'automation', 'u-v1', 'published'),
+        ('tpl-v1-after', 'v1-after', 'V1 After EN', 'V1 After VI', 'content', 'u-v1', 'published');
+      INSERT INTO creator_profiles (id, user_id, display_name, status, tenant_id)
+      VALUES ('cp-v2-1', 'u-v2', 'V2 Creator', 'active', 'default');
+    `);
+
+    const migrationsDir = resolve(process.cwd(), 'migrations');
+    sqlite.exec(readFileSync(resolve(migrationsDir, '0126_sop_marketplace_tables.sql'), 'utf8'));
+
+    // Seed pre-existing V1 listing and license before 0474 runs
+    sqlite.exec(`
+      INSERT INTO sop_listings (
+        id, template_id, price_cents, currency, preview_md, demo_video_url,
+        tags, total_sales, total_revenue_cents, rating_avg, rating_count,
+        status, rejection_reason, published_at, created_at, updated_at
+      ) VALUES (
+        'v1-seed-id', 'tpl-v1-seeded', 1900, 'USD', 'Preview MD', 'https://example.test/v1.mp4',
+        '["tag1"]', 4, 7600, 4.75, 4,
+        'published', NULL, 1700000100, 1700000000, 1700000200
+      );
+    `);
+
+    // Apply 0474 reconciliation then 0473 partial unique index
+    sqlite.exec(readFileSync(resolve(migrationsDir, '0474_reconcile_sop_marketplace_schema.sql'), 'utf8'));
+    sqlite.exec(readFileSync(resolve(migrationsDir, '0473_sop_installs_active_unique_index.sql'), 'utf8'));
+
+    const d1 = wrapSqliteAsD1(sqlite);
+
+    // 1. Pre-existing V1 row is preserved bit-for-bit with no fake sop_template_id mapping
+    const seededRow = sqlite.prepare(`SELECT * FROM sop_listings WHERE id = 'v1-seed-id'`).get() as Record<string, unknown>;
+    expect(seededRow.template_id).toBe('tpl-v1-seeded');
+    expect(seededRow.price_cents).toBe(1900);
+    expect(seededRow.currency).toBe('USD');
+    expect(seededRow.preview_md).toBe('Preview MD');
+    expect(seededRow.total_sales).toBe(4);
+    expect(seededRow.total_revenue_cents).toBe(7600);
+    expect(seededRow.rating_avg).toBe(4.75);
+    expect(seededRow.rating_count).toBe(4);
+    expect(seededRow.status).toBe('published');
+    expect(seededRow.tenant_id).toBe('default');
+    expect(seededRow.creator_id).toBeNull();
+    expect(seededRow.sop_template_id).toBeNull();
+
+    // 2. V1 repository operations continue to work on the unified table
+    const newV1 = await createV1Listing(d1, {
+      templateId: 'tpl-v1-after',
+      priceCents: 0,
+      previewMd: 'V1 after reconcile',
+      tags: ['v1'],
+    });
+    expect(newV1.template_id).toBe('tpl-v1-after');
+    expect(newV1.status).toBe('pending_review');
+
+    await updateV1ListingStatus(d1, newV1.id, 'published');
+    await incrementV1Sales(d1, newV1.id, 0);
+    const v1Catalog = await listV1PublishedListings(d1);
+    expect(v1Catalog.map((r) => r.id)).toContain('v1-seed-id');
+    expect(v1Catalog.map((r) => r.id)).toContain(newV1.id);
+
+    const v1Lic = await createV1License(d1, {
+      userId: 'u-buyer',
+      templateId: 'tpl-v1-after',
+      listingId: newV1.id,
+      priceCents: 0,
+    });
+    expect(v1Lic.listing_id).toBe(newV1.id);
+
+    // 3. V2 repository operations work without template_id and support draft/archived
+    const newV2 = await createSopListing(d1, {
+      creator_id: 'cp-v2-1',
+      title: 'V2 Workflow Listing',
+      description: 'Created via V2 repo',
+      price_cents: 0,
+      category: 'marketing',
+      sop_template_id: 'v2-sop-tpl-1',
+      status: 'draft',
+    });
+    expect(newV2.status).toBe('draft');
+    const rawV2 = sqlite.prepare(`SELECT template_id, sop_template_id FROM sop_listings WHERE id = ?`).get(newV2.id) as Record<string, unknown>;
+    expect(rawV2.template_id).toBeNull();
+    expect(rawV2.sop_template_id).toBe('v2-sop-tpl-1');
+
+    // All 6 statuses are accepted; invalid status is rejected
+    for (const validStatus of ['pending_review', 'published', 'rejected', 'suspended', 'draft', 'archived'] as const) {
+      sqlite.prepare(`UPDATE sop_listings SET status = ? WHERE id = ?`).run(validStatus, newV2.id);
+    }
+    expect(() => {
+      sqlite.prepare(`UPDATE sop_listings SET status = 'invalid' WHERE id = ?`).run(newV2.id);
+    }).toThrow(/CHECK constraint failed/);
+
+    // 4. Verify all 21 named indexes (20 from 0474 + 1 from 0473) exist in sqlite_master
+    const indexes = sqlite
+      .prepare(`SELECT name FROM sqlite_master WHERE type = 'index' AND name NOT LIKE 'sqlite_autoindex%'`)
+      .all() as Array<{ name: string }>;
+    const indexNames = new Set(indexes.map((i) => i.name));
+    for (const expectedIdx of [
+      'idx_listing_status',
+      'idx_listing_template',
+      'idx_sop_listings_creator_id',
+      'idx_sop_listings_status',
+      'idx_sop_listings_category',
+      'idx_sop_listings_rating',
+      'idx_sop_listings_tenant_id',
+      'idx_sop_installs_listing_id',
+      'idx_sop_installs_user_id',
+      'idx_sop_installs_license_id',
+      'idx_sop_installs_status',
+      'idx_sop_installs_user_status',
+      'idx_sop_installs_tenant_id',
+      'idx_sop_installs_user_listing_active',
+      'idx_sop_reviews_install_id',
+      'idx_sop_reviews_user_id',
+      'idx_sop_reviews_rating',
+      'idx_sop_reviews_tenant_id',
+      'idx_creator_profiles_user_id',
+      'idx_creator_profiles_status',
+      'idx_creator_profiles_tenant_id',
+    ]) {
+      expect(indexNames.has(expectedIdx)).toBe(true);
+    }
   });
 });

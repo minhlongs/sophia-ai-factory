@@ -7633,6 +7633,8 @@
       "installError": "Installation failed: {error}",
       "alreadyInstalled": "Already installed",
       "installLimitReached": "Install limit reached. Upgrade your plan.",
+      "paymentRequired": "Paid SOP listings require a verified checkout order (currently disabled).",
+      "paidListingPublishBlocked": "Paid listings cannot be published until checkout is enabled.",
       "yourRating": "Your Rating",
       "reviewPlaceholder": "Write your review...",
       "submitReview": "Submit Review",

@@ -2,19 +2,21 @@
 """
 Reconcile d1_migrations tracking table with actual applied migrations.
 
-This script:
-1. Identifies migrations that are applied in the database but not tracked
-2. Backfills tracking entries for those migrations
-3. Reports on the state after reconciliation
+READ-ONLY AUDIT MODE:
+Inspects and reports differences between filesystem migration files and d1_migrations ledger.
+AUTOMATIC WRITES DISABLED:
+Speculative ledger backfills based on prefix comparisons (prefix <= max_tracked) are unsafe
+and can cause ghost-ledger drift. This tool operates strictly in read-only audit mode.
 """
 
 import subprocess
 import json
 import sys
 from pathlib import Path
-from datetime import datetime
 
-MIGRATIONS_DIR = "/Users/macbook/projects/worktrees/sophia-ai-factory-code-review-check/apps/sophia-ai-factory/migrations"
+# Resolve migrations directory relative to this script
+SCRIPT_DIR = Path(__file__).resolve().parent
+MIGRATIONS_DIR = SCRIPT_DIR.parent / "migrations"
 DB_NAME = "sophia-raas-db"
 
 def run_wrangler_command(sql: str) -> str:
@@ -24,17 +26,28 @@ def run_wrangler_command(sql: str) -> str:
         "--remote", "--command", sql
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        raise RuntimeError(f"Wrangler command failed (exit code {result.returncode}): {result.stderr.strip()}")
     return result.stdout
 
 def get_filesystem_migrations():
     """Get sorted list of migration files from filesystem."""
     path = Path(MIGRATIONS_DIR)
-    files = sorted([f.name for f in path.glob("*.sql") if f.name[0].isdigit()])
+    if not path.exists():
+        print(f"FATAL: migrations directory not found at {path}", file=sys.stderr)
+        sys.exit(1)
+    files = sorted([f.name for f in path.glob("*.sql") if f.name[0].isdigit() and "_archive" not in str(f)])
     return files
 
 def get_database_migrations():
     """Get sorted list of migrations from d1_migrations table."""
-    stdout = run_wrangler_command("SELECT name FROM d1_migrations ORDER BY name;")
+    try:
+        stdout = run_wrangler_command("SELECT name FROM d1_migrations ORDER BY name;")
+    except Exception as e:
+        print(f"FATAL: Database query failed while reading d1_migrations ledger: {e}", file=sys.stderr)
+        print("Status is UNKNOWN. Aborting audit without reporting pending migrations.", file=sys.stderr)
+        sys.exit(1)
+
     lines = stdout.split('\n')
 
     json_start = None
@@ -47,7 +60,10 @@ def get_database_migrations():
             json_end = i
 
     if json_start is None or json_end is None:
-        return []
+        print("FATAL: Failed to locate valid JSON output from wrangler command.", file=sys.stderr)
+        print("Raw output:\n" + stdout, file=sys.stderr)
+        print("Status is UNKNOWN. Aborting audit without reporting pending migrations.", file=sys.stderr)
+        sys.exit(1)
 
     json_lines = lines[json_start:json_end+1]
     json_str = '\n'.join(json_lines)
@@ -61,49 +77,33 @@ def get_database_migrations():
             migrations = []
         return sorted(migrations)
     except (json.JSONDecodeError, KeyError, IndexError) as e:
-        print(f"Error parsing JSON: {e}", file=sys.stderr)
-        return []
+        print(f"FATAL: Error parsing JSON from wrangler output: {e}", file=sys.stderr)
+        print("Status is UNKNOWN. Aborting audit without reporting pending migrations.", file=sys.stderr)
+        sys.exit(1)
 
 def check_table_exists():
     """Check if d1_migrations table exists."""
-    stdout = run_wrangler_command(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='d1_migrations';"
-    )
+    try:
+        stdout = run_wrangler_command(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='d1_migrations';"
+        )
+    except Exception as e:
+        print(f"FATAL: Database query failed while checking d1_migrations table existence: {e}", file=sys.stderr)
+        print("Status is UNKNOWN. Aborting audit.", file=sys.stderr)
+        sys.exit(1)
     return '"name":"d1_migrations"' in stdout or 'd1_migrations' in stdout
 
-def create_migrations_table():
-    """Create the d1_migrations tracking table if it doesn't exist."""
-    sql = """
-    CREATE TABLE IF NOT EXISTS d1_migrations (
-      name TEXT PRIMARY KEY NOT NULL,
-      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+def analyze_discrepancies(fs_migrations, db_migrations):
     """
-    subprocess.run([
-        "npx", "wrangler", "d1", "execute", DB_NAME,
-        "--remote", "--file", "-"
-    ], input=sql, text=True, check=True)
-    print("Created d1_migrations table")
-
-def backfill_tracking(fs_migrations, db_migrations):
-    """
-    Backfill tracking for migrations that are in filesystem and have been applied
-    (can be detected by checking if the migration's SQL changes exist in the schema)
-    but are not in the tracking table.
-
-    Since we can't reliably detect if a migration was applied without tracking,
-    we'll use a conservative approach:
-    - Only backfill if we're reasonably certain (e.g., migration number is less than
-      the max tracked number AND the migration file exists and the schema objects exist)
+    Audit differences between filesystem and ledger without writing anything.
     """
     fs_set = set(fs_migrations)
     db_set = set(db_migrations)
     untracked = fs_set - db_set
 
     if not untracked:
-        return []
+        return [], []
 
-    # Sort by numeric prefix
     def get_prefix(name):
         import re
         match = re.match(r'^(\d+)', name)
@@ -111,7 +111,6 @@ def backfill_tracking(fs_migrations, db_migrations):
 
     sorted_untracked = sorted(untracked, key=get_prefix)
 
-    # Get max tracked migration number
     max_tracked = 0
     for name in db_migrations:
         import re
@@ -120,64 +119,33 @@ def backfill_tracking(fs_migrations, db_migrations):
             max_tracked = max(max_tracked, int(match.group(1)))
 
     print(f"\nMax tracked migration number: {max_tracked}")
-    print(f"Untracked migrations: {len(untracked)}")
+    print(f"Untracked migrations in filesystem: {len(untracked)}")
 
-    # For untracked migrations with prefix <= max_tracked, they were likely applied
-    # but not tracked. For those with higher prefixes, they might be unapplied.
-    likely_applied = []
-    likely_unapplied = []
+    gap_migrations = []
+    future_migrations = []
 
     for name in sorted_untracked:
         prefix = get_prefix(name)
         if prefix <= max_tracked:
-            likely_applied.append(name)
+            gap_migrations.append(name)
         else:
-            likely_unapplied.append(name)
+            future_migrations.append(name)
 
-    print(f"Likely applied (but untracked): {len(likely_applied)}")
-    print(f"Likely truly unapplied: {len(likely_unapplied)}")
+    print(f"Untracked with prefix <= max_tracked (gap/drift risk): {len(gap_migrations)}")
+    print(f"Untracked with prefix > max_tracked (pending execution): {len(future_migrations)}")
 
-    return likely_applied, likely_unapplied
-
-def insert_tracking_entries(migrations_to_insert):
-    """Insert tracking entries for the given migrations."""
-    if not migrations_to_insert:
-        return 0
-
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    inserted = 0
-
-    for mig_name in migrations_to_insert:
-        sql = f"""INSERT OR IGNORE INTO d1_migrations (name, applied_at)
-VALUES ('{mig_name}', '{now}');"""
-        try:
-            # Use a temporary file for the SQL
-            import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as f:
-                f.write(sql)
-                sql_file = f.name
-            subprocess.run([
-                "npx", "wrangler", "d1", "execute", DB_NAME,
-                "--remote", "--file", sql_file
-            ], check=True, capture_output=True, text=True)
-            inserted += 1
-            print(f"  Backfilled: {mig_name}")
-            Path(sql_file).unlink(missing_ok=True)
-        except subprocess.CalledProcessError as e:
-            print(f"  Failed to backfill {mig_name}: {e.stderr}")
-            Path(sql_file).unlink(missing_ok=True) if 'sql_file' in locals() else None
-
-    return inserted
+    return gap_migrations, future_migrations
 
 def main():
     print("=" * 80)
-    print("D1 MIGRATIONS TRACKING RECONCILIATION")
+    print("D1 MIGRATIONS TRACKING AUDIT (READ-ONLY)")
     print("=" * 80)
 
     # Check table exists
     if not check_table_exists():
-        print("d1_migrations table does not exist. Creating it...")
-        create_migrations_table()
+        print("ALERT: d1_migrations table does not exist in target database.")
+        print("Exiting audit without modifying database.")
+        sys.exit(1)
 
     fs_migrations = get_filesystem_migrations()
     db_migrations = get_database_migrations()
@@ -193,47 +161,36 @@ def main():
     in_both = sorted(fs_set & db_set)
 
     print(f"\nIn sync: {len(in_both)}")
-    print(f"DB only (orphaned): {len(in_db_not_fs)}")
-    print(f"FS only (untracked): {len(in_fs_not_db)}")
+    print(f"DB only (orphaned in ledger): {len(in_db_not_fs)}")
+    print(f"FS only (untracked in ledger): {len(in_fs_not_db)}")
 
     if in_db_not_fs:
-        print("\nOrphaned tracking entries (file missing):")
+        print("\nOrphaned tracking entries (recorded in ledger but file missing):")
         for m in in_db_not_fs:
             print(f"  - {m}")
 
-    # Analyze untracked files
     if in_fs_not_db:
-        likely_applied, likely_unapplied = backfill_tracking(fs_migrations, db_migrations)
+        gap_migrations, future_migrations = analyze_discrepancies(fs_migrations, db_migrations)
+        if gap_migrations:
+            print("\nWARNING: Gap migrations detected (filesystem file has prefix <= max_tracked but missing in ledger):")
+            for m in gap_migrations:
+                print(f"  - {m}")
+            print("  -> DO NOT automatically backfill ledger without verifying physical schema objects!")
 
-        if likely_applied:
-            print("\nBackfilling tracking for likely-applied migrations...")
-            inserted = insert_tracking_entries(likely_applied)
-            print(f"Inserted {inserted} tracking entries")
-
-            # Update the lists
-            for name in likely_applied:
-                in_fs_not_db.remove(name)
-                in_both.append(name)
-
-        print(f"\nRemaining untracked (likely unapplied): {len(in_fs_not_db)}")
-        for m in in_fs_not_db:
-            print(f"  - {m}")
+        if future_migrations:
+            print("\nPending migrations (filesystem file has prefix > max_tracked):")
+            for m in future_migrations:
+                print(f"  - {m}")
 
     print("\n" + "=" * 80)
-    print("RECONCILIATION SUMMARY")
+    print("AUDIT SUMMARY (NO CHANGES APPLIED)")
     print("=" * 80)
     print(f"Total filesystem migrations: {len(fs_migrations)}")
-    print(f"Total tracked migrations: {len(db_migrations) + (inserted if 'inserted' in locals() else 0)}")
+    print(f"Total tracked migrations: {len(db_migrations)}")
     print(f"In sync: {len(in_both)}")
     print(f"Orphaned (DB only): {len(in_db_not_fs)}")
-    print(f"Untracked/unapplied: {len(in_fs_not_db)}")
-
-    print("\nNext steps:")
-    if in_fs_not_db:
-        print(f"  - Review and apply {len(in_fs_not_db)} unapplied migrations")
-    if in_db_not_fs:
-        print(f"  - Consider removing {len(in_db_not_fs)} orphaned tracking entries")
-    print("  - Consider switching apply-migrations.sh to use 'wrangler d1 migrations apply'")
+    print(f"Untracked (FS only): {len(in_fs_not_db)}")
+    print("\nAutomatic backfill is DISABLED. Operator must verify physical schema state.")
 
 if __name__ == "__main__":
     main()

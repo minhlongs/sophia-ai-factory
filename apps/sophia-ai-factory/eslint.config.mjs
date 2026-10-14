@@ -48,7 +48,6 @@ const eslintConfig = defineConfig([
       "src/**/*.test.tsx",
       "src/**/*.spec.ts",
       "src/**/*.spec.tsx",
-      "src/lib/utils/to-error.ts",
     ],
     plugins: { sonarjs },
     rules: {
@@ -105,7 +104,6 @@ const eslintConfig = defineConfig([
       // enforce-tier-quota.ts is now a back-compat re-export stub pointing to
       // forest/auth/enforce-tier-quota (M4 migration). The re-export crosses
       // seed→forest boundary, allowed as a thin stub only.
-      "src/seed/auth/enforce-tier-quota.ts",
       // Security cluster — formerly imported tree audit/crypto-utils; fixed in M2
       // (now imports from seed/security/crypto-utils). Stubs kept for safety.
       "src/seed/security/api-key-validator-crypto.ts",
@@ -141,7 +139,6 @@ const eslintConfig = defineConfig([
 "src/seed/utils/logger-internals.ts",
 // seed/utils/circuit-breaker — reads land/monitoring + land/fulfillment for alerting (mekong-exempt: infra alerting)
 "src/seed/utils/circuit-breaker.ts",
-      "src/seed/telemetry/llm-trace.ts",
       // Test files (may import mocks from any layer)
       "src/seed/**/*.test.ts",
       "src/seed/**/*.test.tsx",
@@ -213,18 +210,13 @@ const eslintConfig = defineConfig([
       "src/tree/email/sender.ts",
       "src/tree/email/week-stats.ts",
       // llm domain wrapper (re-exports from land/openclaw)
-      "src/tree/llm/index.ts",
       // missions wrapper (re-exports forest/missions dispatcher)
-      "src/tree/missions/dispatcher.ts",
-      "src/tree/missions/fire-webhook.ts",
       // openclaw gateway wrapper (re-exports land + forest)
       "src/tree/openclaw/index.ts",
       // outbox wrapper
-      "src/tree/outbox/email-outbox.ts",
       // publishing wrapper
       "src/tree/publishing/providers/telegram-publisher.ts",
       // fulfillment wrapper (re-exports from land/fulfillment)
-      "src/tree/fulfillment/index.ts",
       // inngest client wrapper (re-exports from forest/inngest)
       "src/tree/inngest/client.ts",
       // admin/synthetic-fulfillment-runner — reads land/fulfillment for fulfillment logic (mekong-exempt)
@@ -243,11 +235,9 @@ const eslintConfig = defineConfig([
       // sop/auto-dispatch-layer — reads land/openclaw for LLM routing (mekong-exempt)
       "src/tree/sop/auto-dispatch-layer.ts",
       // sop/executor/sop-runner — reads forest/missions for dispatching (mekong-exempt)
-      "src/tree/sop/executor/sop-runner.ts",
       // sop/solo-orchestrator — reads land/openclaw for agent orchestration (mekong-exempt)
       "src/tree/sop/solo-orchestrator.ts",
       // sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
-      "src/tree/sop/webhook-hmac.ts",
       // alerts/webhook-notification-signature — reads land/webhooks for HMAC (mekong-exempt)
       "src/tree/alerts/webhook-notification-signature.ts",
       // Test files
@@ -293,7 +283,6 @@ const eslintConfig = defineConfig([
 // ab/experiment-store — reads land/tracking for A/B attribution (mekong-exempt)
 "src/forest/ab/experiment-store.ts",
 // alerts/webhook-notification-signature — reads land/webhooks for HMAC (mekong-exempt)
-"src/forest/alerts/webhook-notification-signature.ts",
 // agent-sidebar components — reads land/agent-chat types for UI (mekong-exempt)
 "src/forest/components/agent-sidebar/chat-message-list.tsx",
 "src/forest/components/agent-sidebar/use-agent-chat.ts",
@@ -312,11 +301,10 @@ const eslintConfig = defineConfig([
 "src/forest/components/analytics/usage-chart.tsx",
 // auth/signup-form — reads land/analytics for conversion tracking (mekong-exempt)
 "src/forest/components/auth/signup-form.tsx",
+"src/forest/components/auth/signup/**",
 // experiment-variant — reads land/signals for A/B (mekong-exempt)
 "src/forest/components/experiment-variant.tsx",
 // raas components — reads land/i18n for locale (mekong-exempt)
-"src/forest/components/raas/mission-dashboard.tsx",
-"src/forest/components/raas/mission-detail.tsx",
 // settings components — reads land/schemas/settings for forms (mekong-exempt)
 "src/forest/components/settings/sections/api-keys-section.tsx",
 "src/forest/components/settings/sections/appearance-section.tsx",
@@ -329,10 +317,6 @@ const eslintConfig = defineConfig([
 "src/forest/components/workflows/workflow-step-row.tsx",
 "src/forest/components/workflows/workflow-timeline.tsx",
 // analytics hooks — reads land/analytics for data fetching (mekong-exempt)
-"src/forest/hooks/analytics/use-license-metrics.ts",
-"src/forest/hooks/analytics/use-revenue-metrics.ts",
-"src/forest/hooks/analytics/use-usage-metrics.ts",
-"src/forest/hooks/use-analytics-data.ts",
 // inngest functions — orchestrate land domain services (mekong-exempt)
 "src/forest/inngest/functions/analytics-sync.ts",
 "src/forest/inngest/functions/analytics/**",
@@ -348,6 +332,8 @@ const eslintConfig = defineConfig([
 "src/forest/inngest/functions/commerce-video-dispatcher.ts",
 "src/forest/inngest/functions/video-compose.ts",
 "src/forest/inngest/functions/video-generate.ts",
+"src/forest/inngest/functions/video-generate-finalize.ts",
+"src/forest/publishing/oauth-http-providers.ts",
 "src/forest/inngest/functions/video-publish.ts",
 "src/forest/inngest/functions/video-scripting.ts",
 "src/forest/inngest/functions/video-tts.ts",
@@ -359,29 +345,15 @@ const eslintConfig = defineConfig([
 "src/forest/inngest/functions/flywheel-feedback-dispatcher.ts",
 "src/forest/inngest/functions/feedback-ingest-worker.ts",
 // missions — orchestrate land video/lead services (mekong-exempt)
-"src/forest/missions/api-key-auth.ts",
 "src/forest/missions/dispatcher.ts",
-"src/forest/missions/emit-video-generate.ts",
-"src/forest/missions/handlers/analytics-report.ts",
-"src/forest/missions/handlers/avatar-create-did.ts",
-"src/forest/missions/handlers/caption-generate.ts",
-"src/forest/missions/handlers/lead-enrich.ts",
-"src/forest/missions/handlers/subtitle-generate.ts",
-"src/forest/missions/handlers/thumbnail-generate.ts",
-"src/forest/missions/handlers/video-create.ts",
 // publishing — reads land/i18n, tiktok, youtube for publishing (mekong-exempt)
 "src/forest/publishing/bundle-publisher.ts",
 "src/forest/publishing/bundle/**",
 "src/forest/publishing/oauth-token-refresher.ts",
 "src/forest/publishing/template-engine.ts",
-"src/forest/publishing/tiktok-publisher.ts",
 // raas-service — reads land/redis for caching (mekong-exempt: infra)
-"src/forest/raas-service-key-operations.ts",
-"src/forest/raas-service-types-and-constants.ts",
-"src/forest/raas-service.ts",
 // usage-metering — reads land/redis for KV ops (mekong-exempt: infra)
 // quota — reads land/redis for KV cache ops (mekong-exempt: infra)
-"src/forest/quota/quota-checker-kv-cache.ts",
     "src/forest/agents/runner.ts",
     // daily-briefing — uses land/openclaw memory adapter (mekong-exempt: orchestration)
     "src/forest/agents/daily-briefing/briefing-generator.ts",
@@ -415,11 +387,9 @@ const eslintConfig = defineConfig([
 // sop/auto-dispatch-layer — reads land/openclaw for LLM routing (mekong-exempt)
 "src/tree/sop/auto-dispatch-layer.ts",
 // sop/executor/sop-runner — reads forest/missions for dispatching (mekong-exempt)
-"src/tree/sop/executor/sop-runner.ts",
 // sop/solo-orchestrator — reads land/openclaw for agent orchestration (mekong-exempt)
 "src/tree/sop/solo-orchestrator.ts",
 // sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
-"src/tree/sop/webhook-hmac.ts",
 // usage-metering — KV client from land/redis (mekong-exempt: infra access pattern)
 "src/forest/usage-metering/**/*.ts",
 // dlq-reaper — reads land/billing/nowpayments-ipn-dead-letter for DLQ ops (mekong-exempt: orchestration)
@@ -481,10 +451,7 @@ const eslintConfig = defineConfig([
 "scripts/**/*.cjs",
 "scripts/**/*.mjs",
 // Test helper files — CJS require() for better-sqlite3 ESM interop (mekong-exempt)
-"src/forest/publishing/__tests__/fake-d1-sqlite.ts",
-"src/lib/publishing/__tests__/fake-d1-sqlite.ts",
 // SOP marketplace — any cast for server→client template hydration (mekong-exempt)
-"src/app/sop-marketplace/page.tsx",
   ]),
 ]);
 

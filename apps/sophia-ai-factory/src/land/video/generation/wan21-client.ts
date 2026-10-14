@@ -1,11 +1,5 @@
 /**
- * Wan 2.1 Video Client
- *
- * Wraps the Replicate API for Wan 2.1 text-to-video generation.
- * Model: wan-video/wan-2.1 on https://replicate.com
- *
- * Handles: rate limit (429), payment required (402), invalid prompt (400).
- * Uses AbortController with configurable timeout (default 5 min).
+ * Wan 2.1 Video Client — wraps Replicate API (wan-video/wan-2.1).
  */
 
 import { logger } from '@/seed/utils/logger-utility';
@@ -18,27 +12,17 @@ import type {
   WanApiInput,
   WanApiPrediction,
 } from '../templates/types';
+import {
+  DEFAULT_WAN_MODEL,
+  DEFAULT_WAN_BASE_URL,
+  DEFAULT_WAN_TIMEOUT_MS,
+  WanVideoClientError,
+  type WanVideoClientConfig,
+  extractWanVideoUrl,
+  throwWanErrorResponse,
+} from './wan21-client-helpers';
 
-const DEFAULT_MODEL = 'wan-video/wan-2.1';
-const DEFAULT_BASE_URL = 'https://api.replicate.com/v1';
-const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
-export class WanVideoClientError extends Error {
-  constructor(
-    public readonly statusCode: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'WanVideoClientError';
-  }
-}
-
-export interface WanVideoClientConfig {
-  apiKey: string;
-  baseUrl?: string;
-  model?: string;
-  timeoutMs?: number;
-}
+export { WanVideoClientError, type WanVideoClientConfig } from './wan21-client-helpers';
 
 export class WanVideoClient {
   private readonly apiKey: string;
@@ -48,9 +32,9 @@ export class WanVideoClient {
 
   constructor({ apiKey, baseUrl, model, timeoutMs }: WanVideoClientConfig) {
     this.apiKey = apiKey;
-    this.baseUrl = (baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '');
-    this.model = model ?? DEFAULT_MODEL;
-    this.timeoutMs = timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.baseUrl = (baseUrl ?? DEFAULT_WAN_BASE_URL).replace(/\/$/, '');
+    this.model = model ?? DEFAULT_WAN_MODEL;
+    this.timeoutMs = timeoutMs ?? DEFAULT_WAN_TIMEOUT_MS;
   }
 
   /**
@@ -90,7 +74,7 @@ export class WanVideoClient {
       });
 
       if (!response.ok) {
-        await this.handleErrorResponse(response);
+        await throwWanErrorResponse(response);
       }
 
       const prediction = (await response.json()) as WanApiPrediction;
@@ -135,17 +119,11 @@ export class WanVideoClient {
       });
 
       if (!response.ok) {
-        await this.handleErrorResponse(response);
+        await throwWanErrorResponse(response);
       }
 
       const prediction = (await response.json()) as WanApiPrediction;
-
-      const videoUrl =
-        prediction.output != null
-          ? Array.isArray(prediction.output)
-            ? prediction.output[0]
-            : prediction.output
-          : undefined;
+      const videoUrl = extractWanVideoUrl(prediction.output);
 
       recordSuccess('wan21');
       return {
@@ -161,24 +139,5 @@ export class WanVideoClient {
     } finally {
       clearTimeout(timer);
     }
-  }
-
-  private async handleErrorResponse(response: Response): Promise<never> {
-    const body = await response.text().catch((err) => {
-      logger.warn('Failed to read Wan21 error response', { error: String(err), context: 'WanVideoClient.handleErrorResponse' });
-      return '';
-    });
-    const code = response.status;
-
-    if (code === 429) {
-      throw new WanVideoClientError(429, `[WanVideoClient] Rate limit exceeded: ${body}`);
-    }
-    if (code === 402) {
-      throw new WanVideoClientError(402, `[WanVideoClient] Payment required — check Replicate credits: ${body}`);
-    }
-    if (code === 400) {
-      throw new WanVideoClientError(400, `[WanVideoClient] Invalid prompt or parameters: ${body}`);
-    }
-    throw new WanVideoClientError(code, `[WanVideoClient] API error ${code}: ${body}`);
   }
 }

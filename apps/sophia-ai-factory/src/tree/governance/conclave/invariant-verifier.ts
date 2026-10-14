@@ -11,7 +11,7 @@ export function verifyParameterizedConstitutionalInvariants(
   invariants: ConstitutionalInvariantItem[],
   proposedTargetArticleCode: string,
   actionCode?: string,
-  config: { hashPrefix?: string } = {}
+  config: { hashPrefix?: string; reasonPrefix?: string } = {}
 ): InvariantCheckResult {
   const match = invariants.find((inv) => inv.articleCode === proposedTargetArticleCode);
 

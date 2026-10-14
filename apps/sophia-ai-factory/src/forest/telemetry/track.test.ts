@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { track } from './track'
+import { track } from '@/tree/signals/track'
 import { D1Events } from './d1-event-types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

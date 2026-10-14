@@ -20,7 +20,7 @@ import { memory } from './memory-adapter';
 import { mcp } from './mcp-gateway';
 import { enqueue } from './queue';
 import { audit } from '@/tree/agent-fleet/audit';
-import { rateLimitGate } from './rate-limit';
+import { rateLimitGate } from '@/tree/agent-fleet/rate-limit';
 import { routeLLM } from './llm-router';
 
 export const openclaw = {
