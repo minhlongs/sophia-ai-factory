@@ -13,6 +13,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
+import { assertTemplateInstallable } from '@/seed/sop/sop-marketplace-guard';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type {
@@ -234,6 +235,7 @@ export async function installSop(
   const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
+  await assertTemplateInstallable(db, sopTemplateId);
   const id = crypto.randomUUID();
   const now = Date.now();
 

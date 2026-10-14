@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getCreatorProfile } from '@/land/sop-marketplace';
 import CreatorSettingsForm from './settings-form';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
 export default async function CreatorSettingsPage() {
   const t = await getTranslations('marketplace.creator');
@@ -23,6 +24,14 @@ export default async function CreatorSettingsPage() {
   }
 
   const profileResult = await getCreatorProfile();
+
+  if (!profileResult.ok && profileResult.error.code === 'MARKETPLACE_TEMPORARILY_UNAVAILABLE') {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <MarketplaceUnavailableNotice />
+      </div>
+    );
+  }
 
   // Not registered — redirect to creator dashboard to register first
   if (!profileResult.ok && profileResult.error.code === 'PROFILE_NOT_FOUND') {

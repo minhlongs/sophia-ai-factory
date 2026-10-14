@@ -41,6 +41,11 @@ import type {
   TemplateStatus,
   CreatorTemplatePlatform,
 } from '@/seed/types/creator-marketplace';
+import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  MARKETPLACE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+} from '@/land/sop-marketplace/availability';
 
 interface PageProps {
   params: Promise<{
@@ -82,7 +87,7 @@ export default function CreatorStudioPage({ params }: PageProps) {
   const [withdrawals, setWithdrawals] = useState<
     Array<WithdrawalRequest & { vietQr?: { qrUrl: string; amountVnd: number; amountUsd: number } | null }>
   >([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(CREATOR_MARKETPLACE_V2_ENABLED);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Template Modal State
@@ -123,6 +128,10 @@ export default function CreatorStudioPage({ params }: PageProps) {
   } | null>(null);
 
   const fetchData = async () => {
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -162,6 +171,14 @@ export default function CreatorStudioPage({ params }: PageProps) {
 
   const handleCreateTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      setErrorMsg(
+        isVi
+          ? 'Creator Marketplace tạm thời bảo trì. Vui lòng quay lại sau.'
+          : MARKETPLACE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+      );
+      return;
+    }
     setSubmittingTemplate(true);
     setErrorMsg(null);
 
@@ -213,6 +230,14 @@ export default function CreatorStudioPage({ params }: PageProps) {
 
   const handleCreateWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      setErrorMsg(
+        isVi
+          ? 'Creator Marketplace tạm thời bảo trì. Vui lòng quay lại sau.'
+          : MARKETPLACE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+      );
+      return;
+    }
     setSubmittingWithdraw(true);
     setErrorMsg(null);
 
@@ -294,6 +319,14 @@ export default function CreatorStudioPage({ params }: PageProps) {
         );
     }
   };
+
+  if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 max-w-4xl mx-auto">
+        <MarketplaceUnavailableNotice />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 space-y-8 max-w-7xl mx-auto">

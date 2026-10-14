@@ -5,6 +5,10 @@ import { getD1 } from '@/seed/db/client';
 import { hasCreatorAccess } from '@/land/sop-marketplace';
 import { createSopListing } from '@/land/sop-marketplace/listing-manager';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from '@/land/sop-marketplace/availability';
 
 export async function createNewListing(formData: {
   title: string;
@@ -15,11 +19,18 @@ export async function createNewListing(formData: {
   thumbnailUrl?: string;
   demovideoUrl?: string;
   sopTemplateId: string;
-}): Promise<{ success: boolean; data?: { listingId: string }; error?: { message: string } }> {
+}): Promise<{
+  success: boolean;
+  data?: { listingId: string };
+  error?: { code?: string; message: string };
+}> {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return { success: false, error: { message: 'Authentication required' } };
+      return { success: false, error: { code: 'NOT_AUTHENTICATED', message: 'Authentication required' } };
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return { success: false, error: marketplaceTemporarilyUnavailableError() };
     }
 
     const d1 = await getD1();

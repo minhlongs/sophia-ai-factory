@@ -34,7 +34,8 @@ export type ListingErrorCode =
   | 'FORBIDDEN'
   | 'INVALID_STATUS_TRANSITION'
   | 'VALIDATION_ERROR'
-  | 'DB_ERROR';
+  | 'DB_ERROR'
+  | 'MARKETPLACE_TEMPORARILY_UNAVAILABLE';
 
 export interface ListingError {
   code: ListingErrorCode;

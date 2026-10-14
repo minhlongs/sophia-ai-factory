@@ -259,6 +259,14 @@ CREATE TABLE IF NOT EXISTS user_sop_installations (
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
+CREATE TABLE IF NOT EXISTS sop_listings (
+  id TEXT PRIMARY KEY,
+  template_id TEXT UNIQUE,
+  sop_template_id TEXT,
+  price_cents INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'published'
+);
+
 CREATE TABLE IF NOT EXISTS missions (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL,

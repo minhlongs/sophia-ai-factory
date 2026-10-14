@@ -77,6 +77,12 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     });
     return NextResponse.json({ installation }, { status: 201 });
   } catch (err) {
+    if ((err as unknown as { code?: string })?.code === 'PAYMENT_REQUIRED') {
+      return NextResponse.json(
+        { error: 'Payment required', message: err instanceof Error ? err.message : 'Payment required' },
+        { status: 402 },
+      );
+    }
     logger.error('[POST /api/v1/sops] Install failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Install failed' }, { status: 500 });
   }

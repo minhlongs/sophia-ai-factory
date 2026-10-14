@@ -42,12 +42,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const webhookSecret = generateWebhookSecret();
   const customizations: SopCustomizations = { webhookSecret };
 
-  const installation = await createInstallation(db, {
-    userId: user.id,
-    templateId: template.id,
-    scheduleCron: scheduleCron ?? undefined,
-    customizations,
-  });
+  let installation;
+  try {
+    installation = await createInstallation(db, {
+      userId: user.id,
+      templateId: template.id,
+      scheduleCron: scheduleCron ?? undefined,
+      customizations,
+    });
+  } catch (err) {
+    if ((err as unknown as { code?: string })?.code === 'PAYMENT_REQUIRED') {
+      return NextResponse.json(
+        { error: 'Payment required', message: err instanceof Error ? err.message : 'Payment required' },
+        { status: 402 },
+      );
+    }
+    throw err;
+  }
 
   if (!enabled) {
     await setEnabled(db, installation.id, false);

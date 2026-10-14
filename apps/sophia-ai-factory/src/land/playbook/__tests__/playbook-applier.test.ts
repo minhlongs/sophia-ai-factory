@@ -13,10 +13,17 @@ import type { D1Database } from '@cloudflare/workers-types'
 
 const mockRow = { id: 'inst-001', config_values: null as string | null } as { id: string; config_values: string | null }
 
+let currentSql = ''
 const fakeDb = {
-  prepare: vi.fn().mockReturnThis(),
+  prepare: vi.fn((sql: string) => {
+    currentSql = sql ?? ''
+    return fakeDb
+  }),
   bind: vi.fn().mockReturnThis(),
-  first: vi.fn(async () => mockRow),
+  first: vi.fn(async () => {
+    if (currentSql.includes('sop_listings')) return null
+    return mockRow
+  }),
   run: vi.fn(async () => ({ success: true, meta: { changes: 1 } })),
   all: vi.fn(async () => ({ results: [] })),
   execute: vi.fn(async () => ({ results: [] })),

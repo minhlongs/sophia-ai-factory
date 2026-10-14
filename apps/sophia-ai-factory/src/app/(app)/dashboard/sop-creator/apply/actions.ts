@@ -4,6 +4,10 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  marketplaceTemporarilyUnavailableError,
+} from '@/land/sop-marketplace/availability';
 
 export interface SubmitCreatorApplicationInput {
   website: string;
@@ -16,7 +20,12 @@ export interface SubmitCreatorApplicationInput {
 }
 
 interface ApplyError {
-  code: 'NOT_AUTHENTICATED' | 'ALREADY_HAS_ACCESS' | 'VALIDATION_ERROR' | 'DB_ERROR';
+  code:
+    | 'NOT_AUTHENTICATED'
+    | 'ALREADY_HAS_ACCESS'
+    | 'VALIDATION_ERROR'
+    | 'DB_ERROR'
+    | 'MARKETPLACE_TEMPORARILY_UNAVAILABLE';
   message: string;
 }
 
@@ -27,6 +36,9 @@ export async function submitCreatorApplication(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      return failure(marketplaceTemporarilyUnavailableError());
     }
 
     const d1 = await getD1();

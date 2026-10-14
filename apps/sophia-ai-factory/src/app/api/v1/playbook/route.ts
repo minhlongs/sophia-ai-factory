@@ -109,7 +109,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       parsed.data.scheduleCron,
     );
 
-    return NextResponse.json(result, { status: result.success ? 201 : 400 });
+    const status = result.success
+      ? 201
+      : result.code === 'PAYMENT_REQUIRED'
+        ? 402
+        : 400;
+    return NextResponse.json(result, { status });
   } catch (err) {
     logger.error('[POST /api/v1/playbook]', err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

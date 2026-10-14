@@ -10,6 +10,11 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { createSopReview } from '@/seed/db/marketplace-ops';
+import {
+  CREATOR_MARKETPLACE_V2_ENABLED,
+  MARKETPLACE_TEMPORARILY_UNAVAILABLE,
+  marketplaceTemporarilyUnavailableError,
+} from '@/land/sop-marketplace/availability';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +38,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Validation failed', issues: parsed.error.issues },
         { status: 400 },
+      );
+    }
+
+    if (!CREATOR_MARKETPLACE_V2_ENABLED) {
+      const unavailable = marketplaceTemporarilyUnavailableError();
+      return NextResponse.json(
+        { error: unavailable.message, code: MARKETPLACE_TEMPORARILY_UNAVAILABLE },
+        { status: 503 },
       );
     }
 
