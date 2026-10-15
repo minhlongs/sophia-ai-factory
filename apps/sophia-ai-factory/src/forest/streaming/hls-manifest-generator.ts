@@ -65,12 +65,41 @@ export function buildDefaultVariants(baseUrl: string = ''): HlsVariantStream[] {
   });
 }
 
+function buildMediaTrackLines(
+  type: 'AUDIO' | 'SUBTITLES',
+  groupId: string,
+  tracks: Array<{ name: string; isDefault?: boolean; autoSelect?: boolean; language: string; uri: string }> | undefined,
+): string[] {
+  if (!tracks || tracks.length === 0) return [];
+  return tracks.map((track) => {
+    const isDef = track.isDefault ? 'YES' : 'NO';
+    const autoSel = track.autoSelect !== false ? 'YES' : 'NO';
+    return `#EXT-X-MEDIA:TYPE=${type},GROUP-ID="${groupId}",NAME="${track.name}",DEFAULT=${isDef},AUTOSELECT=${autoSel},LANGUAGE="${track.language}",URI="${track.uri}"`;
+  });
+}
+
+function buildVariantAttrs(
+  variant: HlsVariantStream,
+  hasAudio: boolean,
+  hasSubtitles: boolean,
+  audioGroupId: string,
+  subsGroupId: string,
+): string {
+  const attrs: string[] = [`BANDWIDTH=${variant.bandwidth}`];
+  if (variant.averageBandwidth) attrs.push(`AVERAGE-BANDWIDTH=${variant.averageBandwidth}`);
+  attrs.push(`RESOLUTION=${variant.width}x${variant.height}`);
+  if (variant.frameRate) attrs.push(`FRAME-RATE=${variant.frameRate.toFixed(3)}`);
+  if (variant.codecs) attrs.push(`CODECS="${variant.codecs}"`);
+  if (hasAudio) attrs.push(`AUDIO="${audioGroupId}"`);
+  if (hasSubtitles) attrs.push(`SUBTITLES="${subsGroupId}"`);
+  return attrs.join(',');
+}
+
 /**
  * Generates an RFC 8216 compliant HLS Master Playlist string (.m3u8).
  */
 export function generateMasterManifest(options: GenerateMasterManifestOptions = {}): string {
   const lines: string[] = ['#EXTM3U', '#EXT-X-VERSION:6'];
-
   if (options.independentSegments ?? true) {
     lines.push('#EXT-X-INDEPENDENT-SEGMENTS');
   }
@@ -78,43 +107,20 @@ export function generateMasterManifest(options: GenerateMasterManifestOptions = 
   const audioGroupId = 'audio-aac';
   const subsGroupId = 'subtitles-vtt';
 
-  // 1. Audio Track Signaling (#EXT-X-MEDIA:TYPE=AUDIO)
-  if (options.audioTracks && options.audioTracks.length > 0) {
-    for (const track of options.audioTracks) {
-      const isDef = track.isDefault ? 'YES' : 'NO';
-      const autoSel = track.autoSelect !== false ? 'YES' : 'NO';
-      lines.push(
-        `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audioGroupId}",NAME="${track.name}",DEFAULT=${isDef},AUTOSELECT=${autoSel},LANGUAGE="${track.language}",URI="${track.uri}"`
-      );
-    }
-  }
+  lines.push(...buildMediaTrackLines('AUDIO', audioGroupId, options.audioTracks));
+  lines.push(...buildMediaTrackLines('SUBTITLES', subsGroupId, options.subtitles));
 
-  // 2. Subtitle Track Signaling (#EXT-X-MEDIA:TYPE=SUBTITLES)
-  if (options.subtitles && options.subtitles.length > 0) {
-    for (const sub of options.subtitles) {
-      const isDef = sub.isDefault ? 'YES' : 'NO';
-      const autoSel = sub.autoSelect !== false ? 'YES' : 'NO';
-      lines.push(
-        `#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="${subsGroupId}",NAME="${sub.name}",DEFAULT=${isDef},AUTOSELECT=${autoSel},LANGUAGE="${sub.language}",URI="${sub.uri}"`
-      );
-    }
-  }
-
-  // 3. Variant Stream Definitions (#EXT-X-STREAM-INF)
-  const variants = options.variants && options.variants.length > 0
-    ? options.variants
-    : buildDefaultVariants(options.basePlaybackUrl);
+  const variants =
+    options.variants && options.variants.length > 0
+      ? options.variants
+      : buildDefaultVariants(options.basePlaybackUrl);
+  const hasAudio = Boolean(options.audioTracks && options.audioTracks.length > 0);
+  const hasSubtitles = Boolean(options.subtitles && options.subtitles.length > 0);
 
   for (const variant of variants) {
-    const attrs: string[] = [`BANDWIDTH=${variant.bandwidth}`];
-    if (variant.averageBandwidth) attrs.push(`AVERAGE-BANDWIDTH=${variant.averageBandwidth}`);
-    attrs.push(`RESOLUTION=${variant.width}x${variant.height}`);
-    if (variant.frameRate) attrs.push(`FRAME-RATE=${variant.frameRate.toFixed(3)}`);
-    if (variant.codecs) attrs.push(`CODECS="${variant.codecs}"`);
-    if (options.audioTracks && options.audioTracks.length > 0) attrs.push(`AUDIO="${audioGroupId}"`);
-    if (options.subtitles && options.subtitles.length > 0) attrs.push(`SUBTITLES="${subsGroupId}"`);
-
-    lines.push(`#EXT-X-STREAM-INF:${attrs.join(',')}`);
+    lines.push(
+      `#EXT-X-STREAM-INF:${buildVariantAttrs(variant, hasAudio, hasSubtitles, audioGroupId, subsGroupId)}`,
+    );
     lines.push(variant.url);
   }
 

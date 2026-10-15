@@ -693,6 +693,49 @@ html {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Director's Studio & Cinema Deck Signature Badges & Panels
+   ═══════════════════════════════════════════════════════════════════════════ */
+.rec-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: rgba(244, 63, 94, 0.12);
+  color: #F43F5E;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+.rec-indicator::before {
+  content: '';
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: #F43F5E;
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+.studio-viewport {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 50%, rgba(18, 20, 31, 0.95) 0%, rgba(8, 9, 13, 1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+}
+
+.studio-crosshair {
+  pointer-events: none;
+  position: absolute;
+  inset: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Accessibility: Keyboard Focus Ring (WCAG 2.1 AA)
    ═══════════════════════════════════════════════════════════════════════════ */
 

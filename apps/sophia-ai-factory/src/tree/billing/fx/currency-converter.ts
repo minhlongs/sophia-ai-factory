@@ -54,6 +54,19 @@ export function convertCurrency(
   };
 }
 
+const DEFAULT_CURRENCY_LOCALE: Record<SupportedCurrency, string> = {
+  VND: 'vi-VN',
+  JPY: 'ja-JP',
+  IDR: 'id-ID',
+  THB: 'th-TH',
+  EUR: 'de-DE',
+  GBP: 'en-GB',
+  SGD: 'en-SG',
+  AUD: 'en-AU',
+  CAD: 'en-CA',
+  USD: 'en-US',
+};
+
 /**
  * Format an amount in cents into localized currency display text.
  * Respects decimal requirements per currency (e.g. 0 decimals for VND, JPY).
@@ -68,28 +81,7 @@ export function formatCurrency(
   }
 
   const isZeroDecimal = currency === 'VND' || currency === 'JPY' || currency === 'IDR';
-  const defaultLocale =
-    currency === 'VND'
-      ? 'vi-VN'
-      : currency === 'JPY'
-        ? 'ja-JP'
-        : currency === 'IDR'
-          ? 'id-ID'
-          : currency === 'THB'
-            ? 'th-TH'
-            : currency === 'EUR'
-              ? 'de-DE'
-              : currency === 'GBP'
-                ? 'en-GB'
-                : currency === 'SGD'
-                  ? 'en-SG'
-                  : currency === 'AUD'
-                    ? 'en-AU'
-                    : currency === 'CAD'
-                      ? 'en-CA'
-                      : 'en-US';
-
-  const effectiveLocale = locale ?? defaultLocale;
+  const effectiveLocale = locale ?? DEFAULT_CURRENCY_LOCALE[currency] ?? 'en-US';
   const majorAmount = amountCents / 100;
 
   return new Intl.NumberFormat(effectiveLocale, {

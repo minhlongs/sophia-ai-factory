@@ -16,6 +16,61 @@ import { sha256Hex, hmacSha256Hex } from './hasher';
 import { buildMerkleTree } from './tree-builder';
 import { mapRowToAuditRecord } from './ledger-appender';
 
+type MappedAuditRecord = ReturnType<typeof mapRowToAuditRecord>;
+
+async function verifySingleAuditRow(
+  row: MappedAuditRecord,
+  index: number,
+  prevExpectedHash: string,
+  periodKey: string | undefined,
+  secret: string,
+): Promise<{ genesisFailed: boolean; issues: string[] }> {
+  const issues: string[] = [];
+  let genesisFailed = false;
+
+  if (index === 0 && !periodKey && row.prevHash !== GENESIS_PREV_HASH) {
+    genesisFailed = true;
+    issues.push(
+      `Genesis hash mismatch on record ${row.id}: expected ${GENESIS_PREV_HASH}, got ${row.prevHash}`,
+    );
+  } else if (index > 0 && row.prevHash !== prevExpectedHash) {
+    issues.push(
+      `Chain break at seq ${row.sequenceNumber}: prev_hash ${row.prevHash} != expected ${prevExpectedHash}`,
+    );
+  }
+
+  const expectedContentDigest = [
+    row.prevHash,
+    String(row.sequenceNumber),
+    row.periodKey,
+    row.eventType,
+    row.actorId,
+    String(row.amountCents),
+    row.payloadCanonicalJson,
+  ].join(':');
+
+  const recomputedContentHash = await sha256Hex(expectedContentDigest);
+  if (recomputedContentHash !== row.contentHash) {
+    issues.push(
+      `Content hash tamper detected at seq ${row.sequenceNumber}: stored ${row.contentHash} != computed ${recomputedContentHash}`,
+    );
+  }
+
+  const recomputedLeaf = await sha256Hex(row.contentHash);
+  if (recomputedLeaf !== row.merkleLeafHash) {
+    issues.push(
+      `Leaf hash mismatch at seq ${row.sequenceNumber}: stored ${row.merkleLeafHash} != computed ${recomputedLeaf}`,
+    );
+  }
+
+  const recomputedSig = await hmacSha256Hex(row.contentHash, secret);
+  if (recomputedSig !== row.digitalSignature) {
+    issues.push(`Signature invalid at seq ${row.sequenceNumber}`);
+  }
+
+  return { genesisFailed, issues };
+}
+
 /**
  * Verify complete hash-chain cryptographic integrity of the audit ledger
  */
@@ -24,13 +79,10 @@ export async function verifyAuditLedgerChain(
   periodKey?: string,
   secret: string = DEFAULT_AUDIT_SECRET
 ): Promise<LedgerIntegrityResult> {
-  let query = `SELECT * FROM ipo_audit_ledger`;
-  const params: unknown[] = [];
-  if (periodKey) {
-    query += ` WHERE period_key = ?1`;
-    params.push(periodKey);
-  }
-  query += ` ORDER BY sequence_number ASC`;
+  const query = periodKey
+    ? `SELECT * FROM ipo_audit_ledger WHERE period_key = ?1 ORDER BY sequence_number ASC`
+    : `SELECT * FROM ipo_audit_ledger ORDER BY sequence_number ASC`;
+  const params: unknown[] = periodKey ? [periodKey] : [];
 
   const { results } = await db.prepare(query).bind(...params).all<RawAuditLedgerRow>();
   const rows = (results ?? []).map(mapRowToAuditRecord);
@@ -46,68 +98,21 @@ export async function verifyAuditLedgerChain(
     const row = rows[i];
     leafHashes.push(row.merkleLeafHash);
 
-    // If first record overall and not filtered by period, check genesis
-    if (i === 0 && !periodKey && row.prevHash !== GENESIS_PREV_HASH) {
-      genesisValid = false;
-      discrepancies.push(`Genesis hash mismatch on record ${row.id}: expected ${GENESIS_PREV_HASH}, got ${row.prevHash}`);
-      if (brokenIndex === null) {
-        brokenIndex = i;
-        tamperedId = row.id;
-      }
-    } else if (i > 0 && row.prevHash !== prevExpectedHash) {
-      discrepancies.push(
-        `Chain break at seq ${row.sequenceNumber}: prev_hash ${row.prevHash} != expected ${prevExpectedHash}`
-      );
-      if (brokenIndex === null) {
-        brokenIndex = i;
-        tamperedId = row.id;
-      }
-    }
-
-    // Recompute content_hash
-    const expectedContentDigest = [
-      row.prevHash,
-      String(row.sequenceNumber),
-      row.periodKey,
-      row.eventType,
-      row.actorId,
-      String(row.amountCents),
-      row.payloadCanonicalJson,
-    ].join(':');
-
-    const recomputedContentHash = await sha256Hex(expectedContentDigest);
-    if (recomputedContentHash !== row.contentHash) {
-      discrepancies.push(
-        `Content hash tamper detected at seq ${row.sequenceNumber}: stored ${row.contentHash} != computed ${recomputedContentHash}`
-      );
+    const { genesisFailed, issues } = await verifySingleAuditRow(
+      row,
+      i,
+      prevExpectedHash,
+      periodKey,
+      secret,
+    );
+    if (genesisFailed) genesisValid = false;
+    if (issues.length > 0) {
+      discrepancies.push(...issues);
       if (brokenIndex === null) {
         brokenIndex = i;
         tamperedId = row.id;
       }
     }
-
-    // Recompute leaf hash
-    const recomputedLeaf = await sha256Hex(row.contentHash);
-    if (recomputedLeaf !== row.merkleLeafHash) {
-      discrepancies.push(
-        `Leaf hash mismatch at seq ${row.sequenceNumber}: stored ${row.merkleLeafHash} != computed ${recomputedLeaf}`
-      );
-      if (brokenIndex === null) {
-        brokenIndex = i;
-        tamperedId = row.id;
-      }
-    }
-
-    // Recompute HMAC signature
-    const recomputedSig = await hmacSha256Hex(row.contentHash, secret);
-    if (recomputedSig !== row.digitalSignature) {
-      discrepancies.push(`Signature invalid at seq ${row.sequenceNumber}`);
-      if (brokenIndex === null) {
-        brokenIndex = i;
-        tamperedId = row.id;
-      }
-    }
-
     prevExpectedHash = row.contentHash;
   }
 
@@ -119,13 +124,11 @@ export async function verifyAuditLedgerChain(
       .prepare(`SELECT merkle_root_hash FROM financial_close_periods WHERE period_key = ?1 LIMIT 1`)
       .bind(periodKey)
       .first<{ merkle_root_hash: string | null }>();
-    if (periodRow) {
-      anchoredMerkleRoot = periodRow.merkle_root_hash;
-      if (anchoredMerkleRoot && anchoredMerkleRoot !== computedMerkleRoot) {
-        discrepancies.push(
-          `Anchored Merkle root mismatch for period ${periodKey}: anchored ${anchoredMerkleRoot} != computed ${computedMerkleRoot}`
-        );
-      }
+    anchoredMerkleRoot = periodRow?.merkle_root_hash ?? null;
+    if (anchoredMerkleRoot && anchoredMerkleRoot !== computedMerkleRoot) {
+      discrepancies.push(
+        `Anchored Merkle root mismatch for period ${periodKey}: anchored ${anchoredMerkleRoot} != computed ${computedMerkleRoot}`,
+      );
     }
   }
 

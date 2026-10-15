@@ -22,6 +22,60 @@ import type {
  * 3. Last-Write-Wins (LWW): For remaining fields, compare timestamps. If incoming > existing,
  *    apply; otherwise ignore to prevent sync loops.
  */
+function applyAuthoritativeContactFields(
+  currentDeal: SophiaDealSnapshot,
+  incomingUpdate: Partial<SophiaDealSnapshot>,
+  resolved: SophiaDealSnapshot,
+  appliedFields: string[],
+): void {
+  const keys: Array<'leadEmail' | 'leadPhone' | 'sdrNotes' | 'notes'> = [
+    'leadEmail',
+    'leadPhone',
+    'sdrNotes',
+    'notes',
+  ];
+  for (const key of keys) {
+    const val = incomingUpdate[key];
+    if (val !== undefined && val !== currentDeal[key]) {
+      resolved[key] = val as never;
+      appliedFields.push(key);
+    }
+  }
+}
+
+function applyCommercialFields(
+  currentDeal: SophiaDealSnapshot,
+  incomingUpdate: Partial<SophiaDealSnapshot>,
+  resolved: SophiaDealSnapshot,
+  isProtectedClosedWon: boolean,
+  isIncomingFresher: boolean,
+  appliedFields: string[],
+  ignoredFields: string[],
+): void {
+  if (
+    incomingUpdate.dealValueEstimateCents !== undefined &&
+    incomingUpdate.dealValueEstimateCents !== currentDeal.dealValueEstimateCents
+  ) {
+    if (!isProtectedClosedWon && isIncomingFresher) {
+      resolved.dealValueEstimateCents = incomingUpdate.dealValueEstimateCents;
+      appliedFields.push('dealValueEstimateCents');
+    } else {
+      ignoredFields.push('dealValueEstimateCents');
+    }
+  }
+
+  for (const key of ['currency', 'closeDate'] as const) {
+    const val = incomingUpdate[key];
+    if (val === undefined || val === currentDeal[key]) continue;
+    if (isIncomingFresher) {
+      resolved[key] = val as never;
+      appliedFields.push(key);
+    } else {
+      ignoredFields.push(key);
+    }
+  }
+}
+
 export function resolveCrmConflict(
   currentDeal: SophiaDealSnapshot,
   incomingUpdate: Partial<SophiaDealSnapshot>,
@@ -29,10 +83,8 @@ export function resolveCrmConflict(
 ): ConflictResolutionResult {
   const appliedFields: string[] = [];
   const ignoredFields: string[] = [];
-
   const resolved: SophiaDealSnapshot = { ...currentDeal };
 
-  // Rule 1: Closed Won with signed contract authority check
   const isProtectedClosedWon =
     currentDeal.dealStage === 'closed_won' && options.hasSignedContract === true;
 
@@ -43,64 +95,27 @@ export function resolveCrmConflict(
     appliedFields.push('dealStage');
   }
 
-  // Rule 2: Contact info & SDR notes from CRM are authoritative
-  if (incomingUpdate.leadEmail !== undefined && incomingUpdate.leadEmail !== currentDeal.leadEmail) {
-    resolved.leadEmail = incomingUpdate.leadEmail;
-    appliedFields.push('leadEmail');
-  }
-  if (incomingUpdate.leadPhone !== undefined && incomingUpdate.leadPhone !== currentDeal.leadPhone) {
-    resolved.leadPhone = incomingUpdate.leadPhone;
-    appliedFields.push('leadPhone');
-  }
-  if (incomingUpdate.sdrNotes !== undefined && incomingUpdate.sdrNotes !== currentDeal.sdrNotes) {
-    resolved.sdrNotes = incomingUpdate.sdrNotes;
-    appliedFields.push('sdrNotes');
-  }
-  if (incomingUpdate.notes !== undefined && incomingUpdate.notes !== currentDeal.notes) {
-    resolved.notes = incomingUpdate.notes;
-    appliedFields.push('notes');
-  }
+  applyAuthoritativeContactFields(currentDeal, incomingUpdate, resolved, appliedFields);
 
-  // Rule 3: Timestamp comparison for commercial values (dealValueEstimateCents, currency, closeDate)
   const incomingTs = options.incomingTimestamp ?? Date.now();
   const existingTs = options.existingTimestamp ?? (currentDeal.updatedAt || 0);
   const isIncomingFresher = incomingTs > existingTs;
 
-  if (incomingUpdate.dealValueEstimateCents !== undefined && incomingUpdate.dealValueEstimateCents !== currentDeal.dealValueEstimateCents) {
-    if (isProtectedClosedWon) {
-      // Commercial value of closed won contract cannot be downgraded by external CRM
-      ignoredFields.push('dealValueEstimateCents');
-    } else if (isIncomingFresher) {
-      resolved.dealValueEstimateCents = incomingUpdate.dealValueEstimateCents;
-      appliedFields.push('dealValueEstimateCents');
-    } else {
-      ignoredFields.push('dealValueEstimateCents');
-    }
-  }
+  applyCommercialFields(
+    currentDeal,
+    incomingUpdate,
+    resolved,
+    isProtectedClosedWon,
+    isIncomingFresher,
+    appliedFields,
+    ignoredFields,
+  );
 
-  if (incomingUpdate.currency !== undefined && incomingUpdate.currency !== currentDeal.currency) {
-    if (isIncomingFresher) {
-      resolved.currency = incomingUpdate.currency;
-      appliedFields.push('currency');
-    } else {
-      ignoredFields.push('currency');
-    }
-  }
-
-  if (incomingUpdate.closeDate !== undefined && incomingUpdate.closeDate !== currentDeal.closeDate) {
-    if (isIncomingFresher) {
-      resolved.closeDate = incomingUpdate.closeDate;
-      appliedFields.push('closeDate');
-    } else {
-      ignoredFields.push('closeDate');
-    }
-  }
-
-  // Determine overall action and reason
+  const stageIgnored = isProtectedClosedWon && ignoredFields.includes('dealStage');
   if (appliedFields.length === 0 && ignoredFields.length > 0) {
     return {
       action: 'ignore',
-      reason: isProtectedClosedWon && ignoredFields.includes('dealStage')
+      reason: stageIgnored
         ? 'SOPHIA_CLOSED_WON_CONTRACT_AUTHORITY_BIAS: Reverting closed_won deal with signed contract is rejected'
         : 'STALE_UPDATE_IGNORED: Incoming update is older than or equal to existing record',
       resolvedDeal: resolved,
@@ -111,7 +126,7 @@ export function resolveCrmConflict(
 
   return {
     action: 'apply',
-    reason: isProtectedClosedWon && ignoredFields.includes('dealStage')
+    reason: stageIgnored
       ? 'PARTIAL_APPLY_WITH_STAGE_PROTECTION: Updated CRM attributes while preserving closed_won authority'
       : 'APPLIED_LWW_UPDATE: Successfully resolved and applied CRM updates',
     resolvedDeal: resolved,

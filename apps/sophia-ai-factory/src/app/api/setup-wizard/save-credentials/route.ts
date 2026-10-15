@@ -31,6 +31,87 @@ const saveCredentialsSchema = z.object({
   routing_strategy: z.enum(['priority', 'costOptimized', 'leastUsed']).optional(),
 })
 
+type SaveCredentialsInput = z.infer<typeof saveCredentialsSchema>
+
+function buildSaveList(data: SaveCredentialsInput): Array<{ provider: ProviderType; key: string }> {
+  const saves: Array<{ provider: ProviderType; key: string }> = []
+  if (data.heygen_api_key) saves.push({ provider: 'heygen', key: data.heygen_api_key })
+  if (data.heygen_webhook_secret) saves.push({ provider: 'heygen_webhook_secret', key: data.heygen_webhook_secret })
+  if (data.resend_api_key) saves.push({ provider: 'resend', key: data.resend_api_key })
+  if (data.nowpayments_api_key) saves.push({ provider: 'nowpayments', key: data.nowpayments_api_key })
+  return saves
+}
+
+async function handleHeyGenWebhookAutoRegister(
+  userId: string,
+  heygenApiKey: string | undefined,
+  credErrors: string[],
+): Promise<boolean> {
+  if (!heygenApiKey || credErrors.some((e) => e.startsWith('heygen:'))) return false
+  const regResult = await registerHeyGenWebhook(heygenApiKey, SOPHIA_HEYGEN_WEBHOOK_URL)
+  if (!regResult.success) {
+    credErrors.push(`webhook: ${regResult.error ?? 'HeyGen webhook registration failed'}`)
+    logger.warn('[SaveCredentials] HeyGen auto-register failed (non-fatal)', {
+      userId,
+      error: regResult.error,
+    })
+    return false
+  }
+  if (regResult.signingSecret) {
+    try {
+      await setUserCredential(userId, 'heygen_webhook_secret', regResult.signingSecret)
+    } catch (err) {
+      logger.warn('[SaveCredentials] Failed to auto-store heygen_webhook_secret', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+  return true
+}
+
+async function markOnboardingCompleteAndWelcome(
+  user: { id: string; email?: string; full_name?: string },
+  routingStrategy: SaveCredentialsInput['routing_strategy'],
+): Promise<void> {
+  try {
+    const _db = await getD1()
+    if (!_db) throw new Error('D1 unavailable')
+    const db = _db
+    const nowMs = Date.now()
+    await db
+      .prepare('UPDATE user_profiles SET onboarding_completed_at = ?, settings = json_set(COALESCE(settings, \'{}\'), \'$.routing_strategy\', ?1) WHERE user_id = ?2')
+      .bind(routingStrategy ?? 'priority', nowMs, user.id)
+      .run()
+
+    if (!user.email) return
+    try {
+      const already = await db
+        .prepare('SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1')
+        .bind(user.id, 'setup-complete')
+        .first<{ 1: number }>()
+      if (!already) {
+        const ownerName = user.full_name ?? user.email.split('@')[0]
+        await enqueueWelcomeEmail(db, {
+          paymentId: `lifecycle_${user.id}_setup-complete`,
+          toEmail: user.email,
+          template: 'setup-complete',
+          payload: { ownerFullName: ownerName, locale: 'en' },
+        })
+        await db
+          .prepare('INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)')
+          .bind(user.id, 'setup-complete', nowMs)
+          .run()
+      }
+    } catch (emailErr) {
+      logger.warn('[SaveCredentials] Failed to enqueue setup-complete email', {
+        error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+      })
+    }
+  } catch (dbErr) {
+    logger.warn('[SaveCredentials] Failed to set onboarding_completed_at', { error: dbErr })
+  }
+}
+
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
@@ -52,27 +133,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const {
-    heygen_api_key,
-    heygen_webhook_secret,
-    resend_api_key,
-    nowpayments_api_key,
-    routing_strategy,
-  } = parsed.data
-
-  const saves: Array<{ provider: ProviderType; key: string }> = []
-  if (heygen_api_key) saves.push({ provider: 'heygen', key: heygen_api_key })
-  if (heygen_webhook_secret) saves.push({ provider: 'heygen_webhook_secret', key: heygen_webhook_secret })
-  if (resend_api_key) saves.push({ provider: 'resend', key: resend_api_key })
-  if (nowpayments_api_key) saves.push({ provider: 'nowpayments', key: nowpayments_api_key })
-
+  const saves = buildSaveList(parsed.data)
   if (saves.length === 0) {
     return NextResponse.json({ success: false, message: 'No credentials provided' }, { status: 400 })
   }
 
   const credErrors: string[] = []
-  let webhookRegistered = false
-
   for (const { provider, key } of saves) {
     try {
       await setUserCredential(user.id, provider, key)
@@ -82,30 +148,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Auto-register HeyGen webhook when heygen_api_key is saved — fail-soft
-  if (heygen_api_key && !credErrors.some((e) => e.startsWith('heygen:'))) {
-    const regResult = await registerHeyGenWebhook(heygen_api_key, SOPHIA_HEYGEN_WEBHOOK_URL)
-    if (regResult.success) {
-      webhookRegistered = true
-      // Auto-store the signing secret so customer never sees/touches it
-      if (regResult.signingSecret) {
-        try {
-          await setUserCredential(user.id, 'heygen_webhook_secret', regResult.signingSecret)
-        } catch (err) {
-          logger.warn('[SaveCredentials] Failed to auto-store heygen_webhook_secret', {
-            error: err instanceof Error ? err.message : String(err),
-          })
-        }
-      }
-    } else {
-      // Non-blocking but surfaced to frontend via webhook_registered: false
-      credErrors.push(`webhook: ${regResult.error ?? 'HeyGen webhook registration failed'}`)
-      logger.warn('[SaveCredentials] HeyGen auto-register failed (non-fatal)', {
-        userId: user.id,
-        error: regResult.error,
-      })
-    }
-  }
+  const webhookRegistered = await handleHeyGenWebhookAutoRegister(
+    user.id,
+    parsed.data.heygen_api_key,
+    credErrors,
+  )
 
   if (credErrors.some((e) => !e.startsWith('webhook:'))) {
     return NextResponse.json(
@@ -114,48 +161,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Mark onboarding complete in DB (primary) — cookie fallback handled by /api/setup/save
-  try {
-    const _db = await getD1();
-    if (!_db) throw new Error('D1 unavailable');
-    const db = _db;
-    const nowMs = Date.now()
-    await db
-      .prepare('UPDATE user_profiles SET onboarding_completed_at = ?, settings = json_set(COALESCE(settings, \'{}\'), \'$.routing_strategy\', ?1) WHERE user_id = ?2')
-      .bind(routing_strategy ?? 'priority', nowMs, user.id)
-      .run()
-
-    // E2 setup-complete lifecycle email — fire ONCE per user (lifecycle_email_log dedup).
-    // Multiple save-credentials POSTs are safe; only the first inserts the log row + enqueues.
-    if (user.email) {
-      try {
-        const already = await db
-          .prepare('SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1')
-          .bind(user.id, 'setup-complete')
-          .first<{ 1: number }>()
-        if (!already) {
-          const ownerName = user.full_name ?? user.email.split('@')[0]
-          await enqueueWelcomeEmail(db, {
-            paymentId: `lifecycle_${user.id}_setup-complete`,
-            toEmail: user.email,
-            template: 'setup-complete',
-            payload: { ownerFullName: ownerName, locale: 'en' },
-          })
-          await db
-            .prepare('INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)')
-            .bind(user.id, 'setup-complete', nowMs)
-            .run()
-        }
-      } catch (emailErr) {
-        logger.warn('[SaveCredentials] Failed to enqueue setup-complete email', {
-          error: emailErr instanceof Error ? emailErr.message : String(emailErr),
-        })
-      }
-    }
-  } catch (dbErr) {
-    logger.warn('[SaveCredentials] Failed to set onboarding_completed_at', { error: dbErr })
-  }
-
+  await markOnboardingCompleteAndWelcome(user, parsed.data.routing_strategy)
   const webhookErrors = credErrors.filter((e) => e.startsWith('webhook:'))
 
   return NextResponse.json({

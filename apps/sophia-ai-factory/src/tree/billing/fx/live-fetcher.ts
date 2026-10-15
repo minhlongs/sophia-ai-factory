@@ -47,29 +47,49 @@ function isValidFreshFxRateMap(parsed: FxRateMap | null | undefined): parsed is 
   return Date.now() - parsed.fetchedAt < parsed.ttlSeconds * 1000;
 }
 
+function pickPositiveNumber(val: unknown, fallback: number): number {
+  return typeof val === 'number' && val > 0 ? val : fallback;
+}
+
+function buildLiveRates(rawRates: Record<string, unknown>): Record<SupportedCurrency, number> {
+  const b = BEDROCK_FX_RATES.rates;
+  return {
+    USD: 1.0,
+    EUR: pickPositiveNumber(rawRates.EUR, b.EUR),
+    GBP: pickPositiveNumber(rawRates.GBP, b.GBP),
+    JPY: pickPositiveNumber(rawRates.JPY, b.JPY),
+    SGD: pickPositiveNumber(rawRates.SGD, b.SGD),
+    AUD: pickPositiveNumber(rawRates.AUD, b.AUD),
+    CAD: pickPositiveNumber(rawRates.CAD, b.CAD),
+    VND: pickPositiveNumber(rawRates.VND, b.VND),
+    THB: pickPositiveNumber(rawRates.THB, b.THB),
+    IDR: pickPositiveNumber(rawRates.IDR, b.IDR),
+  };
+}
+
+async function readCachedFxRates(kv: MinimalKV | null): Promise<FxRateMap | null> {
+  if (!kv) return null;
+  try {
+    const cached = await kv.get(KV_CACHE_KEY);
+    if (!cached) return null;
+    const parsed = JSON.parse(cached) as FxRateMap;
+    return isValidFreshFxRateMap(parsed) ? parsed : null;
+  } catch (kvErr) {
+    logger.warn('[FxConverter] KV cache read failed, attempting live fetch', {
+      error: String(kvErr),
+    });
+    return null;
+  }
+}
+
 /**
  * Retrieve current exchange rates with multi-tier resilience:
  * KV Cache -> Live Edge API -> Static Bedrock Fallback.
  */
 export async function getLiveOrCachedFxRates(env?: Record<string, unknown>): Promise<FxRateMap> {
   const kv = resolveKv(env);
-
-  // Tier 1: Check KV Cache
-  if (kv) {
-    try {
-      const cached = await kv.get(KV_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached) as FxRateMap;
-        if (isValidFreshFxRateMap(parsed)) {
-          return parsed;
-        }
-      }
-    } catch (kvErr) {
-      logger.warn('[FxConverter] KV cache read failed, attempting live fetch', {
-        error: String(kvErr),
-      });
-    }
-  }
+  const cached = await readCachedFxRates(kv);
+  if (cached) return cached;
 
   // Tier 2: Live Edge Provider
   try {
@@ -87,28 +107,13 @@ export async function getLiveOrCachedFxRates(env?: Record<string, unknown>): Pro
       };
 
       if (payload?.rates && typeof payload.rates === 'object') {
-        const rawRates = payload.rates;
-        const liveRates: Record<SupportedCurrency, number> = {
-          USD: 1.0,
-          EUR: typeof rawRates.EUR === 'number' && rawRates.EUR > 0 ? rawRates.EUR : BEDROCK_FX_RATES.rates.EUR,
-          GBP: typeof rawRates.GBP === 'number' && rawRates.GBP > 0 ? rawRates.GBP : BEDROCK_FX_RATES.rates.GBP,
-          JPY: typeof rawRates.JPY === 'number' && rawRates.JPY > 0 ? rawRates.JPY : BEDROCK_FX_RATES.rates.JPY,
-          SGD: typeof rawRates.SGD === 'number' && rawRates.SGD > 0 ? rawRates.SGD : BEDROCK_FX_RATES.rates.SGD,
-          AUD: typeof rawRates.AUD === 'number' && rawRates.AUD > 0 ? rawRates.AUD : BEDROCK_FX_RATES.rates.AUD,
-          CAD: typeof rawRates.CAD === 'number' && rawRates.CAD > 0 ? rawRates.CAD : BEDROCK_FX_RATES.rates.CAD,
-          VND: typeof rawRates.VND === 'number' && rawRates.VND > 0 ? rawRates.VND : BEDROCK_FX_RATES.rates.VND,
-          THB: typeof rawRates.THB === 'number' && rawRates.THB > 0 ? rawRates.THB : BEDROCK_FX_RATES.rates.THB,
-          IDR: typeof rawRates.IDR === 'number' && rawRates.IDR > 0 ? rawRates.IDR : BEDROCK_FX_RATES.rates.IDR,
-        };
-
         const freshRates: FxRateMap = {
           base: 'USD',
-          rates: liveRates,
+          rates: buildLiveRates(payload.rates),
           fetchedAt: Date.now(),
           ttlSeconds: 3600,
         };
 
-        // Asynchronously populate KV cache if available
         if (kv) {
           kv.put(KV_CACHE_KEY, JSON.stringify(freshRates), { expirationTtl: 3600 }).catch(
             (putErr) => {
