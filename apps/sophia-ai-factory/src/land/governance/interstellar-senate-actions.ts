@@ -14,17 +14,8 @@ import {
   type InterstellarInvariantCheckOutput,
   type InterstellarSenateVerdictOutput,
 } from '@/tree/governance/interstellar-senate-engine';
-import {
-  compactStateWithHyperStark,
-  generateHyperStarkCommitment,
-  type HyperStarkCommitmentOutput,
-  type HyperStarkCompactionResult,
-} from '@/tree/crypto/hyper-stark-compaction-engine';
-import type {
-  HyperStarkProtocol,
-  HyperStarkTransaction,
-  InterstellarConstitutionalInvariant,
-} from '@/seed/types/hyper-stark-senate';
+import { compactStateWithHyperStark, type HyperStarkCompactionResult } from '@/tree/crypto/hyper-stark-compaction-engine';
+import type { HyperStarkTransaction, InterstellarConstitutionalInvariant } from '@/seed/types/hyper-stark-senate';
 
 export interface InterstellarDisputeActionResult {
   success: boolean;

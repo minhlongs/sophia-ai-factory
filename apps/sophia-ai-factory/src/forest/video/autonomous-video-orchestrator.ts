@@ -29,7 +29,7 @@ export function runAutonomousVideoPipeline(
     productUrl,
     productDescription,
     targetDurationSeconds = 15.0,
-    affiliateBaseUrl,
+    affiliateBaseUrl: _affiliateBaseUrl,
   } = input;
 
   // 1. Resolve Blueprint and Campaign Plan

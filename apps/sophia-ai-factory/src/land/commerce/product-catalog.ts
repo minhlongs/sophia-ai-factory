@@ -20,7 +20,7 @@ import {
   type ProductRow,
   type ProductUpdate,
 } from './product-model';
-import { getProduct, listProducts, deactivateProduct } from './product-catalog-queries';
+import { getProduct } from './product-catalog-queries';
 
 export {
   PRODUCT_TYPES,

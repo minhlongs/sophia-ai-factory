@@ -14,7 +14,6 @@ import { AnalyticsKpiSummary } from './analytics-kpi-summary';
 import { RetentionCurveChart } from './retention-curve-chart';
 import { BanditFlywheelPanel } from './bandit-flywheel-panel';
 import { VideoAttributionTable } from './video-attribution-table';
-import { Sparkles, RefreshCcw } from 'lucide-react';
 
 interface VideoAnalyticsCockpitViewProps {
   initialMetrics: ChannelAggregateMetrics;
@@ -27,9 +26,9 @@ export function VideoAnalyticsCockpitView({
   initialSnapshots,
   onTriggerSync,
 }: VideoAnalyticsCockpitViewProps) {
-  const [metrics, setMetrics] = useState<ChannelAggregateMetrics>(initialMetrics);
-  const [snapshots, setSnapshots] = useState<VideoAnalyticsSnapshot[]>(initialSnapshots);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [metrics, _setMetrics] = useState<ChannelAggregateMetrics>(initialMetrics);
+  const [snapshots, _setSnapshots] = useState<VideoAnalyticsSnapshot[]>(initialSnapshots);
+  const [_isRefreshing, _setIsRefreshing] = useState(false);
 
   const handleSyncVideo = async (jobId: string) => {
     if (onTriggerSync) {

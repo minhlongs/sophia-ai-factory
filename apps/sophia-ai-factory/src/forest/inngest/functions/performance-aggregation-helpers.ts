@@ -24,10 +24,9 @@ export function mergeMetrics(events: Array<{ metrics_json: string }>): Record<st
     try {
       const metrics = JSON.parse(ev.metrics_json) as Record<string, unknown>;
       for (const [k, v] of Object.entries(metrics)) {
-        if (typeof v === 'number') {
-          if (!accumulator[k]) accumulator[k] = [];
-          accumulator[k].push(v);
-        }
+        if (typeof v !== 'number') continue;
+        const list = accumulator[k] ?? (accumulator[k] = []);
+        list.push(v);
       }
     } catch {
       // skip malformed

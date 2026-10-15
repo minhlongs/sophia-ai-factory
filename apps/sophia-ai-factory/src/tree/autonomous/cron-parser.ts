@@ -9,6 +9,22 @@
 
 import type { CronFieldMatchRules } from '@/seed/types/autonomous-engine';
 
+function parseStepBounds(rangePart: string, fieldStr: string, min: number, max: number): [number, number] {
+  if (rangePart === '*') return [min, max];
+  if (rangePart.includes('-')) {
+    const [rangeStart, rangeEnd] = rangePart.split('-').map((v) => parseInt(v, 10));
+    if (isNaN(rangeStart) || isNaN(rangeEnd)) {
+      throw new Error(`Invalid range '${rangePart}' in cron field '${fieldStr}'`);
+    }
+    return [rangeStart, rangeEnd];
+  }
+  const start = parseInt(rangePart, 10);
+  if (isNaN(start)) {
+    throw new Error(`Invalid range start '${rangePart}' in cron field '${fieldStr}'`);
+  }
+  return [start, max];
+}
+
 /**
  * Parses a single cron field into an array of matched integer values.
  * Supports: '*', exact '5', list '1,2,5', range '1-5', step '* /5' or '1-10/2'.
@@ -33,24 +49,7 @@ export function parseField(
         throw new Error(`Invalid step value '${stepPart}' in cron field '${fieldStr}'`);
       }
 
-      let start = min;
-      let end = max;
-
-      if (rangePart !== '*') {
-        if (rangePart.includes('-')) {
-          const [rangeStart, rangeEnd] = rangePart.split('-').map((v) => parseInt(v, 10));
-          if (isNaN(rangeStart) || isNaN(rangeEnd)) {
-            throw new Error(`Invalid range '${rangePart}' in cron field '${fieldStr}'`);
-          }
-          start = rangeStart;
-          end = rangeEnd;
-        } else {
-          start = parseInt(rangePart, 10);
-          if (isNaN(start)) {
-            throw new Error(`Invalid range start '${rangePart}' in cron field '${fieldStr}'`);
-          }
-        }
-      }
+      const [start, end] = parseStepBounds(rangePart, fieldStr, min, max);
 
       for (let i = start; i <= end; i += step) {
         let val = i;

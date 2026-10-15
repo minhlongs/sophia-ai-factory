@@ -32,6 +32,21 @@ function resolveKv(env?: Record<string, unknown>): MinimalKV | null {
   return null;
 }
 
+function isValidFreshFxRateMap(parsed: FxRateMap | null | undefined): parsed is FxRateMap {
+  if (
+    !parsed ||
+    parsed.base !== 'USD' ||
+    !parsed.rates ||
+    typeof parsed.rates.VND !== 'number' ||
+    typeof parsed.rates.EUR !== 'number' ||
+    typeof parsed.rates.JPY !== 'number' ||
+    typeof parsed.rates.SGD !== 'number'
+  ) {
+    return false;
+  }
+  return Date.now() - parsed.fetchedAt < parsed.ttlSeconds * 1000;
+}
+
 /**
  * Retrieve current exchange rates with multi-tier resilience:
  * KV Cache -> Live Edge API -> Static Bedrock Fallback.
@@ -45,19 +60,8 @@ export async function getLiveOrCachedFxRates(env?: Record<string, unknown>): Pro
       const cached = await kv.get(KV_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached) as FxRateMap;
-        if (
-          parsed &&
-          parsed.base === 'USD' &&
-          parsed.rates &&
-          typeof parsed.rates.VND === 'number' &&
-          typeof parsed.rates.EUR === 'number' &&
-          typeof parsed.rates.JPY === 'number' &&
-          typeof parsed.rates.SGD === 'number'
-        ) {
-          const ageMs = Date.now() - parsed.fetchedAt;
-          if (ageMs < parsed.ttlSeconds * 1000) {
-            return parsed;
-          }
+        if (isValidFreshFxRateMap(parsed)) {
+          return parsed;
         }
       }
     } catch (kvErr) {

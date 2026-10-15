@@ -9,14 +9,7 @@
  * @module tree/contracts/volume-discount-calculator
  */
 
-import {
-  BASE_ENTERPRISE_MCU_PRICE_CENTS,
-  ANNUAL_COMMITMENT_DISCOUNT_PERCENT,
-  MIN_ENTERPRISE_MCU,
-  VOLUME_DISCOUNT_BRACKETS,
-  type VolumeDiscountBracket,
-  type VolumeDiscountResult,
-} from '@/seed/types/enterprise-contracts';
+import { ANNUAL_COMMITMENT_DISCOUNT_PERCENT, MIN_ENTERPRISE_MCU, VOLUME_DISCOUNT_BRACKETS, type VolumeDiscountBracket, type VolumeDiscountResult } from '@/seed/types/enterprise-contracts';
 
 /**
  * Resolve the applicable volume discount bracket based on monthly MCU volume.

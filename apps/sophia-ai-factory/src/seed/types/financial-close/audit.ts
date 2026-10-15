@@ -3,16 +3,7 @@
  * Layer: seed
  */
 
-import type {
-  ActorRole,
-  AuditEventType,
-  AuditOpinion,
-  CloseStatus,
-  EventScope,
-  PeriodType,
-  SoxControlId,
-  VasAccountCode,
-} from './enums';
+import type { ActorRole, AuditEventType, AuditOpinion, CloseStatus, EventScope, PeriodType, SoxControlId } from './enums';
 
 export interface IpoAuditLedgerRecord {
   id: string;

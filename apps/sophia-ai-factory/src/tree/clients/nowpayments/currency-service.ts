@@ -5,7 +5,7 @@
  */
 
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
-import { getOneTimeSkuById, getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus';
+import { getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus';
 import type { OneTimeSku } from '@/seed/types';
 import type { NowPaymentsTierConfig, InvoiceLookup } from './types';
 

@@ -3,12 +3,7 @@
  * @module forest/onboarding/tracker/milestone-evaluator
  */
 
-import {
-  MILESTONE_SEQUENCE,
-  type MilestoneRecord,
-  type OnboardingMilestone,
-  type OnboardingStatus,
-} from './types';
+import { MILESTONE_SEQUENCE, type MilestoneRecord, type OnboardingStatus } from './types';
 
 export function calculateProgressPct(milestones: MilestoneRecord[]): number {
   const achieved = new Set(milestones.map((r) => r.milestone));

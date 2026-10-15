@@ -1,10 +1,4 @@
-import type {
-  EnterpriseCrmConfig,
-  CrmSyncEvent,
-  WebhookSubscription,
-  WebhookDeliveryLog,
-  CrmProvider,
-} from '@/tree/integrations/types';
+import type { EnterpriseCrmConfig, CrmSyncEvent, WebhookSubscription, WebhookDeliveryLog } from '@/tree/integrations/types';
 
 export interface IntegrationsPortalClientProps {
   initialConfigs: EnterpriseCrmConfig[];

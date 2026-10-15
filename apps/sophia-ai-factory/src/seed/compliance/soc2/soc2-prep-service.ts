@@ -1,6 +1,5 @@
 import type { Tier } from '@/seed/types';
 import { evaluateSOC2Readiness } from './evidence-builder';
-import type { SOC2Finding, SOC2ReadinessResult } from './types';
 
 export function getSoc2Report(tier: Tier): string {
   const result = evaluateSOC2Readiness(tier);

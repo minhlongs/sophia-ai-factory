@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/seed/components/ui/button';
@@ -21,7 +21,7 @@ export function PublishQueueClient() {
   const [showApprovalBanner, setShowApprovalBanner] = useState(false);
   const [approvingJobId, setApprovingJobId] = useState<string | null>(null);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -37,11 +37,11 @@ export function PublishQueueClient() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [locale]);
 
   useEffect(() => {
-    fetchJobs();
-  }, [locale]);
+    void fetchJobs();
+  }, [fetchJobs]);
 
   const handleApprove = async (jobId: string) => {
     setApprovingJobId(jobId);

@@ -4,7 +4,6 @@
  * Layer: land/video/queue-actions
  */
 
-import type { QueueLane } from '@/seed/types/video-render-queue';
 import type { VideoTierPriority } from './types';
 
 /**

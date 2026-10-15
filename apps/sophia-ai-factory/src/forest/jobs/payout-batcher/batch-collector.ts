@@ -9,7 +9,7 @@ const rateLimiter = new TokenBucket({ capacity: 5, refillRatePerSecond: 5 });
 export async function executeRailPayout(
   batchId: string,
   totalCents: number,
-  rail: PayoutRail,
+  _rail: PayoutRail,
 ): Promise<{ externalPaymentId: string }> {
   await rateLimiter.acquire();
 

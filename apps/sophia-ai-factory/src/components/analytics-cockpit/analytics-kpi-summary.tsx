@@ -10,7 +10,7 @@
 
 import React from 'react';
 import type { ChannelAggregateMetrics } from '@/seed/types/video-analytics-types';
-import { TrendingUp, DollarSign, Eye, Flame, Compass, Video } from 'lucide-react';
+import { TrendingUp, DollarSign, Eye, Flame, Compass } from 'lucide-react';
 
 interface AnalyticsKpiSummaryProps {
   metrics: ChannelAggregateMetrics;

@@ -13,10 +13,7 @@ import type {
 } from '@/seed/handover/handover-types';
 import type { Result } from '@/seed/types/result';
 import { CANONICAL_ACCEPTANCE_STATEMENTS } from '@/tree/handover/handover-certificate-engine';
-import {
-  downloadBlob,
-  createCertificateExportHandlers,
-} from './acceptance-certificate-actions';
+import { createCertificateExportHandlers } from './acceptance-certificate-actions';
 
 export { downloadBlob } from './acceptance-certificate-actions';
 

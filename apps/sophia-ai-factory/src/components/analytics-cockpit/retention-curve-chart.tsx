@@ -9,7 +9,7 @@
 'use client';
 
 import React from 'react';
-import { Activity, ShieldAlert, Sparkles } from 'lucide-react';
+import { Activity, Sparkles } from 'lucide-react';
 
 interface RetentionCurveProps {
   threeSecRate?: number;

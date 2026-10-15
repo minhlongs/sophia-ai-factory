@@ -1,5 +1,4 @@
 import { createRequire } from 'module';
-import { logger } from '@/seed/utils/logger-utility';
 import type { D1Statement, D1Result, LocalD1Database, SqliteDb } from './types';
 import { SQLiteD1PreparedStatement } from './statement';
 import { applyMigrations } from './sqlite-finder';

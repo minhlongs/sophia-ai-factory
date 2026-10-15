@@ -1,5 +1,5 @@
 // i18n-namespace: dashboard.playbook
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   getPlaybookOverviewAction,
   type PlaybookOverviewData,
@@ -33,7 +33,7 @@ export function usePlaybookData(
   const [isTriggering, setIsTriggering] = useState(false);
   const [batchResult, setBatchResult] = useState<BatchRunResult | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const ws = workspaceId || userId;
     if (!ws) return;
     setLoading(true);
@@ -50,13 +50,13 @@ export function usePlaybookData(
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceId, userId]);
 
   useEffect(() => {
     if (!initialData) {
       void loadData();
     }
-  }, [workspaceId, userId]);
+  }, [initialData, loadData]);
 
   const handleToggleAutoApply = async (rule: PlaybookRule) => {
     await togglePlaybookRuleAutoApplyHelper({

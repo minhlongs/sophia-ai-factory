@@ -90,13 +90,14 @@ export function createMissionStream({
             }
 
             const dbCursor = data.updated_at ?? 0;
-            if (dbCursor > 0 && dbCursor <= eventCursor) {
-              if (TERMINAL_STATUSES.has(data.status)) {
-                controller.enqueue(
-                  encoder.encode(sseMessage('done', { status: data.status }, dbCursor))
-                );
-                break;
-              }
+            const isUnchanged = dbCursor > 0 && dbCursor <= eventCursor;
+            if (isUnchanged && TERMINAL_STATUSES.has(data.status)) {
+              controller.enqueue(
+                encoder.encode(sseMessage('done', { status: data.status }, dbCursor))
+              );
+              break;
+            }
+            if (isUnchanged) {
               continue;
             }
 

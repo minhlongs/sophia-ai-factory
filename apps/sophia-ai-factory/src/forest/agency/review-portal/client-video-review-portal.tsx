@@ -18,7 +18,7 @@ import { ReviewDecisionModals } from './review-decision-modals';
 
 export function ClientVideoReviewPortal(props: ClientVideoReviewPortalProps) {
   const {
-    locale,
+    locale: _locale,
     setLocale,
     isVi,
     review,

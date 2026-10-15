@@ -1,5 +1,4 @@
 import { createServerClient } from '@/seed/db/client';
-import { logger } from '@/seed/utils/logger-utility';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { NonRetriableError } from 'inngest';
 import type { Tier } from '@/seed/types';

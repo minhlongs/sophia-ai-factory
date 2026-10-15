@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { CreatorBalanceSummary, PayoutRail } from '@/tree/marketplace/types';
+import type { CreatorBalanceSummary } from '@/tree/marketplace/types';
 import { requestWithdrawal } from '@/land/marketplace/marketplace-actions';
 import type { CreatorRoyaltyWidgetProps, PayoutFormData, StatusMessage } from './types';
 import { BalanceSummary } from './balance-summary';

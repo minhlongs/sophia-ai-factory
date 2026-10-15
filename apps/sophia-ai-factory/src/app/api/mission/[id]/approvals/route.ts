@@ -6,7 +6,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import { getErrorMessage } from '@/seed/utils/to-error';
 import { listPendingApprovals, resolveApproval } from '@/tree/mission';
 
 const ResolveApprovalSchema = z.object({

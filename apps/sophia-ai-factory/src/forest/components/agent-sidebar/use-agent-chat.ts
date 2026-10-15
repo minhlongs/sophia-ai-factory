@@ -87,33 +87,30 @@ export function useAgentChat(): UseAgentChatReturn {
         const lines = partial.split('\n\n');
         partial = lines.pop() ?? '';
 
-        for (const chunk of lines) {
-          const events = parseSseChunk(chunk);
-          for (const event of events) {
-            if (event.type === 'token') {
-              setMessages((prev) => {
-                const next = [...prev];
-                const last = next[next.length - 1];
-                if (last?.role === 'assistant') {
-                  next[next.length - 1] = { ...last, content: last.content + event.data };
-                }
-                return next;
-              });
-            } else if (event.type === 'reasoning') {
-              setMessages((prev) => {
-                const next = [...prev];
-                const last = next[next.length - 1];
-                if (last?.role === 'assistant') {
-                  next[next.length - 1] = {
-                    ...last,
-                    reasoning: (last.reasoning ?? '') + event.data,
-                  };
-                }
-                return next;
-              });
-            } else if (event.type === 'error') {
-              setError(event.message);
-            }
+        for (const event of lines.flatMap(parseSseChunk)) {
+          if (event.type === 'token') {
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === 'assistant') {
+                next[next.length - 1] = { ...last, content: last.content + event.data };
+              }
+              return next;
+            });
+          } else if (event.type === 'reasoning') {
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === 'assistant') {
+                next[next.length - 1] = {
+                  ...last,
+                  reasoning: (last.reasoning ?? '') + event.data,
+                };
+              }
+              return next;
+            });
+          } else if (event.type === 'error') {
+            setError(event.message);
           }
         }
       }

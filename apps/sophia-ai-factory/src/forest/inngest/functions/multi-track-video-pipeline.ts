@@ -23,7 +23,7 @@ export const multiTrackVideoPipeline = inngest.createFunction(
       topic,
       targetDurationSeconds = 45,
       aspectRatio = '9:16',
-      language = 'en',
+      language: _language = 'en',
       voiceId = '21m00Tcm4TlvDq8ikWAM',
       platforms = ['YOUTUBE_SHORTS', 'TIKTOK'],
     } = event.data;
@@ -50,7 +50,7 @@ export const multiTrackVideoPipeline = inngest.createFunction(
     });
 
     // Stage 2: Voice Synthesis (ElevenLabs BYOK & Word Timestamps)
-    const audioResult = await step.run('2-voice-synthesis', async () => {
+    const _audioResult = await step.run('2-voice-synthesis', async () => {
       logger.info('Stage 2: Synthesizing voice audio', { pipelineId, voiceId });
       return {
         audioUrl: `https://storage.sophia.network/audio/${pipelineId}.mp3`,
@@ -60,7 +60,7 @@ export const multiTrackVideoPipeline = inngest.createFunction(
     });
 
     // Stage 3: Visual Asset Curation & Generative Scenes
-    const visualResult = await step.run('3-visual-curation', async () => {
+    const _visualResult = await step.run('3-visual-curation', async () => {
       logger.info('Stage 3: Curating visual scenes and generative clips', { pipelineId });
       return {
         sceneAssets: [

@@ -6,7 +6,6 @@
  * @module forest/inngest/functions/production-graph/init-helpers
  */
 
-import type { Result } from '@/seed/types/result';
 import type {
   ProductionGraphRunError,
   ProductionGraph,

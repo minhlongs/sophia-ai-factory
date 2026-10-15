@@ -13,7 +13,7 @@ import { failure, success, type Result } from '@/seed/types/result';
 export async function dispatchAudioResonance(
   audioTrackId: string,
   bpm: number,
-  candidateCuts: number[]
+  _candidateCuts: number[]
 ): Promise<Result<{ dispatched: true }, { code: string; message: string }>> {
   try {
     const user = await getCurrentUser();
@@ -68,7 +68,7 @@ export async function dispatchCommunityBait(
 
 export async function dispatchCohortLtvEvaluation(
   cohortMonth: string,
-  initialSubscribers: number
+  _initialSubscribers: number
 ): Promise<Result<{ dispatched: true }, { code: string; message: string }>> {
   try {
     const user = await getCurrentUser();

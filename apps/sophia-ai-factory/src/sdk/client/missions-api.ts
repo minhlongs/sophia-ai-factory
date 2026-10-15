@@ -15,7 +15,31 @@ import {
 } from './types';
 import { combineSignals, type TransportConfig } from './http-transport';
 
-export async function* streamMissionEvents(
+export function parseMissionSseData(line: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(line.slice(5).trim()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function parseMissionSseLine(
+  line: string,
+  state: { currentEvent: string },
+): { event: string; data: Record<string, unknown>; done: boolean } | null {
+  const trimmed = line.trim();
+  if (trimmed.startsWith('event:')) {
+    state.currentEvent = trimmed.slice(6).trim();
+    return null;
+  }
+  if (!trimmed.startsWith('data:')) return null;
+  const data = parseMissionSseData(trimmed);
+  if (!data) return null;
+  const event = state.currentEvent || 'message';
+  return { event, data, done: state.currentEvent === 'done' || state.currentEvent === 'timeout' };
+}
+
+async function* streamMissionEvents(
   config: TransportConfig,
   id: string,
   ro?: RequestOptions,
@@ -35,6 +59,7 @@ export async function* streamMissionEvents(
     ? combineSignals([ro.signal, controller.signal])
     : controller.signal;
 
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   try {
     const resp = await fetch(url, {
       headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {},
@@ -45,39 +70,28 @@ export async function* streamMissionEvents(
       throw new SophiaApiError(`Stream error ${resp.status}`, resp.status);
     }
 
-    const reader = resp.body.getReader();
+    reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
 
-        let currentEvent = '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('event:')) {
-            currentEvent = trimmed.slice(6).trim();
-          } else if (trimmed.startsWith('data:')) {
-            try {
-              const data = JSON.parse(trimmed.slice(5).trim()) as Record<string, unknown>;
-              yield { event: currentEvent || 'message', data };
-              if (currentEvent === 'done' || currentEvent === 'timeout') return;
-            } catch {
-              // Skip malformed data line
-            }
-          }
-        }
+      const state = { currentEvent: '' };
+      for (const line of lines) {
+        const parsed = parseMissionSseLine(line, state);
+        if (!parsed) continue;
+        yield { event: parsed.event, data: parsed.data };
+        if (parsed.done) return;
       }
-    } finally {
-      reader.releaseLock();
     }
   } finally {
+    reader?.releaseLock();
     if (timeoutId) {
       clearTimeout(timeoutId);
     }

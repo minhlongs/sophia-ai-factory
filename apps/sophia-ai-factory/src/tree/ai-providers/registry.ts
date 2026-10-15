@@ -18,12 +18,7 @@ import type {
   ProviderRow,
   ProviderStatus,
 } from './types'
-import {
-  cacheGet,
-  cacheSet,
-  invalidateCache,
-  mapRowToProvider,
-} from './registry-cache'
+import { cacheGet, cacheSet, mapRowToProvider } from './registry-cache'
 
 export { invalidateCache } from './registry-cache'
 

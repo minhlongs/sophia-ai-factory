@@ -11,16 +11,8 @@ import {
   signWithMlDsa,
   verifyMlDsaSignature,
 } from '@/tree/crypto/quantum-lattice-crypto';
-import {
-  evaluateDaoVoteTally,
-  computeVoteMerkleLeaf,
-} from '@/tree/governance/sovereign-dao-governance';
-import type {
-  QuantumAlgorithm,
-  SovereignDaoProposal,
-  DaoVoteReceipt,
-  DaoVoteChoice,
-} from '@/seed/types/quantum-dao';
+import { computeVoteMerkleLeaf } from '@/tree/governance/sovereign-dao-governance';
+import type { QuantumAlgorithm, DaoVoteChoice } from '@/seed/types/quantum-dao';
 
 export async function registerQuantumKeyAction(agentDid: string, algorithm: QuantumAlgorithm) {
   try {

@@ -103,18 +103,10 @@ export async function buildProviderPool(
       }
     } else {
       const registryProviderId = providerHealthMap[provider];
-      if (registryProviderId) {
-        const health = registry.getHealth(registryProviderId);
-        if (health) {
-          // Healthy = 1.0, in cooldown = 0.5, unhealthy = 0.1
-          if (health.healthy) {
-            healthScore = 1;
-          } else if (health.inCooldown) {
-            healthScore = 0.5;
-          } else {
-            healthScore = 0.1;
-          }
-        }
+      const health = registryProviderId ? registry.getHealth(registryProviderId) : undefined;
+      if (health) {
+        // Healthy = 1.0, in cooldown = 0.5, unhealthy = 0.1
+        healthScore = health.healthy ? 1 : health.inCooldown ? 0.5 : 0.1;
       }
     }
 

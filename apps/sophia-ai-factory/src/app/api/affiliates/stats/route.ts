@@ -30,7 +30,7 @@ function getKv(): KVNamespace | null {
   return null;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const kv = getKv();
     const user = await getCurrentUser().catch(() => null);
@@ -73,13 +73,11 @@ export async function GET(request: NextRequest) {
 
       if (!partnerStats) {
         const partner = await getPartnerSummary(user.id);
-        if (partner) {
-          partnerStats = await getPartnerLedgerStats(partner.id);
-          if (kv && partnerStats) {
-            await kv
-              .put(partnerCacheKey, JSON.stringify(partnerStats), { expirationTtl: 60 })
-              .catch(() => {});
-          }
+        partnerStats = partner ? await getPartnerLedgerStats(partner.id) : null;
+        if (kv && partnerStats) {
+          await kv
+            .put(partnerCacheKey, JSON.stringify(partnerStats), { expirationTtl: 60 })
+            .catch(() => {});
         }
       }
     }

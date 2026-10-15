@@ -11,7 +11,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { toError } from '@/seed/utils/to-error';
 import type { CreateSopListingInput, SopListing } from './marketplace-types';
-import { getSopListing, listSopListings } from './marketplace-listings-queries';
+import { getSopListing } from './marketplace-listings-queries';
 
 export { getSopListing, listSopListings } from './marketplace-listings-queries';
 

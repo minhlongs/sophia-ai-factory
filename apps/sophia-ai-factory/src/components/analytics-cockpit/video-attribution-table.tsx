@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import type { VideoAnalyticsSnapshot } from '@/seed/types/video-analytics-types';
-import { ExternalLink, RefreshCw, Flame, Video, Youtube } from 'lucide-react';
+import { RefreshCw, Flame } from 'lucide-react';
 
 interface VideoAttributionTableProps {
   snapshots: VideoAnalyticsSnapshot[];

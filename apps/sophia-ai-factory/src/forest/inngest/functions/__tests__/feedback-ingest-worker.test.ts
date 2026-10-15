@@ -46,7 +46,6 @@ describe('Forest: Performance Feedback Ingestion Worker', () => {
 
     // Extract the handler logic from createFunction config
     // In Vitest, createFunction returns an object whose fn property or execution logic can be tested
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fn = (performanceFeedbackIngestWorker as any).fn;
     if (typeof fn === 'function') {
       const result = await fn({
@@ -65,7 +64,6 @@ describe('Forest: Performance Feedback Ingestion Worker', () => {
   });
 
   it('returns failure when payload validation fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fn = (performanceFeedbackIngestWorker as any).fn;
     if (typeof fn === 'function') {
       const result = await fn({

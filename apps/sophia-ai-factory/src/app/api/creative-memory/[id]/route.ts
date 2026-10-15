@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { deleteMemory } from '@/tree/creative-memory';
 import { memoryRowToDomain } from '@/tree/creative-memory/types';
 import { getErrorMessage } from '@/seed/utils/to-error';

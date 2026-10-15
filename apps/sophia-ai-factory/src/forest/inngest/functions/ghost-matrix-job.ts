@@ -75,7 +75,7 @@ export const ghostMatrixJob = inngest.createFunction(
           zScoreRes.velocityZScore
         );
         await stmt.run();
-      } catch (e) {
+      } catch (_e) {
         // Mock failover due to incomplete local testing tables
       }
     });

@@ -3,7 +3,6 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopListingView } from '@/land/sop-marketplace';
 import { publishListing, archiveListing } from '@/land/sop-marketplace';
 import { ListingForm, type ListingFormInitialData } from '@/components/creator/ListingForm';
 import type { ActiveView, ListingsClientProps } from './types';

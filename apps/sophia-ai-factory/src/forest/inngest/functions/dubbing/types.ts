@@ -6,7 +6,7 @@
  * @module forest/inngest/functions/dubbing/types
  */
 
-import type { ApacLocale, TranscriptWord } from '@/seed/types/dubbing';
+import type { ApacLocale } from '@/seed/types/dubbing';
 
 export interface DialogueTempoConstraints {
   targetDurationSec?: number;

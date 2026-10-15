@@ -51,7 +51,7 @@ export const cultureInjectorJob = inngest.createFunction(
           cultureScore.alignmentScore
         );
         await stmt.run();
-      } catch (e) {
+      } catch (_e) {
         // mock swallow
       }
     });

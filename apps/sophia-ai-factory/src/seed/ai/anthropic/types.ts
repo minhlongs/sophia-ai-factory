@@ -1,4 +1,3 @@
-import type { AnthropicStreamEvent } from '../anthropic-sse-parser';
 
 export type { AnthropicStreamEvent } from '../anthropic-sse-parser';
 

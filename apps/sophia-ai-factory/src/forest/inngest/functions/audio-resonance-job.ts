@@ -7,7 +7,6 @@
 import { inngest } from '@/seed/inngest/client';
 import { NonRetriableError } from 'inngest';
 import { createServerClient } from '@/seed/db/client';
-import { computeAudioResonance } from '@/tree/audio/audio-resonance-engine';
 import { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops';
 import { recordSuccess, recordFailure, shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import { FailureKind } from '@/seed/types/failure-kind';

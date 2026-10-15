@@ -14,13 +14,7 @@ import { sha256 } from "@/tree/audit/crypto-utils";
 import { logger } from "@/seed/utils/logger-utility";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { forwardToSentry } from '@/seed/observability/sentry-forwarder';
-import {
-  extractRawApiKey,
-  apiKeyAuthErrorResponse,
-  type ApiKeyAuthErrorType,
-  type ApiKeyAuthResult,
-  type ApiKeyRow,
-} from "./api-key-auth-helpers";
+import { extractRawApiKey, type ApiKeyAuthResult, type ApiKeyRow } from "./api-key-auth-helpers";
 
 export {
   apiKeyAuthErrorResponse,

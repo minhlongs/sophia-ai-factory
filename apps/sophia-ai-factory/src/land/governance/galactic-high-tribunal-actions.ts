@@ -14,17 +14,8 @@ import {
   type GalacticInvariantCheckOutput,
   type GalacticTribunalVerdictOutput,
 } from '@/tree/governance/galactic-high-tribunal-engine';
-import {
-  compactStateWithHolographicStark,
-  generateHolographicStarkCommitment,
-  type HolographicStarkCommitmentOutput,
-  type HolographicStarkCompactionResult,
-} from '@/tree/crypto/holographic-stark-compaction-engine';
-import type {
-  GalacticConstitutionalInvariant,
-  HolographicStarkProtocol,
-  HolographicTransaction,
-} from '@/seed/types/holographic-stark-tribunal';
+import { compactStateWithHolographicStark, type HolographicStarkCompactionResult } from '@/tree/crypto/holographic-stark-compaction-engine';
+import type { GalacticConstitutionalInvariant, HolographicTransaction } from '@/seed/types/holographic-stark-tribunal';
 
 export interface GalacticDisputeActionResult {
   success: boolean;

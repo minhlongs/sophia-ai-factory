@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Users, ShieldCheck, Clock, Plus, BarChart3 } from 'lucide-react';
+import { Users, ShieldCheck, Clock } from 'lucide-react';
 import type { FleetCreatorAccount } from '@/seed/types/fleet-matrix-sku-radar-types';
 
 interface FleetMatrixCardProps {

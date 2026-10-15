@@ -5,7 +5,6 @@
  */
 
 import { z } from 'zod';
-import type { SocialPlatform } from './social-publisher-types';
 
 export type VideoViralityClass = 'ALPHA_VIRAL' | 'STEADY' | 'STAGNANT';
 export type ReseedJobStatus = 'PENDING' | 'RESEEDED' | 'SKIPPED' | 'FAILED';

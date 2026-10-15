@@ -6,7 +6,6 @@
  * calculates cross-currency deviations, and dispatches multi-sig approved rebalancing.
  */
 
-import { createHash } from 'node:crypto';
 import type { D1Database } from '@cloudflare/workers-types';
 import {
   AMM_CONSTANTS,

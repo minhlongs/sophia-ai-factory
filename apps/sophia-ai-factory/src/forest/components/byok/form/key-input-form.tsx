@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip';
-import type { Provider, ProviderInfo } from './types';
+import type { ProviderInfo } from './types';
 import { stripNamespace } from './types';
 import type { validateProviderKey } from '@/tree/byok/key-format-validators';
 

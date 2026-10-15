@@ -9,8 +9,6 @@ import { NonRetriableError } from 'inngest';
 import { createServerClient } from '@/seed/db/client';
 import { findOptimalYieldRoute, YieldNode } from '@/tree/growth-v9/dead-click-router.engine';
 import { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops';
-import { FailureKind } from '@/seed/types/failure-kind';
-import { recordFailure, recordSuccess, shouldAllowRequest } from '@/seed/security/circuit-breaker';
 
 export const affiliateYieldJob = inngest.createFunction(
   {
@@ -20,7 +18,7 @@ export const affiliateYieldJob = inngest.createFunction(
   },
   { event: 'affiliate.yield.routed' },
   async ({ event, step }) => {
-    const { routerId, redirects, healthStatus } = event.data;
+    const { routerId, redirects: _redirects, healthStatus } = event.data;
 
     if (!routerId) {
       throw new NonRetriableError('Missing routerId');

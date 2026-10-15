@@ -10,6 +10,16 @@ import { getDb } from '../workflow-stepper-runtime-utils';
 import { executeStep } from './step-evaluator';
 import { CRON_NAME, IDEMPOTENCY_WINDOW_MS } from './types';
 
+async function advanceWorkflowTicks(db: D1Database, wf: WorkflowRow, actions: ActionRecord[]): Promise<void> {
+  for (let tick = 0; tick < 8; tick++) {
+    const record = await advanceOne(db, wf, executeStep);
+    actions.push(record);
+    if (record.action !== 'execute' && record.action !== 'unblock') {
+      break;
+    }
+  }
+}
+
 export async function handleWorkflowStepperCron(req: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
@@ -42,13 +52,7 @@ export async function handleWorkflowStepperCron(req: NextRequest): Promise<NextR
 
     for (const wf of active) {
       try {
-        for (let tick = 0; tick < 8; tick++) {
-          const record = await advanceOne(db, wf, executeStep);
-          actions.push(record);
-          if (record.action !== 'execute' && record.action !== 'unblock') {
-            break;
-          }
-        }
+        await advanceWorkflowTicks(db, wf, actions);
       } catch (err) {
         logger.warn('[workflow-stepper] advanceOne failed', { workflowId: wf.id, err });
         actions.push({ workflowId: wf.id, action: 'error' });

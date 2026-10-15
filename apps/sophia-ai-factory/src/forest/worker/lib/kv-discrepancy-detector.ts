@@ -16,12 +16,7 @@
 import type { MeteringLogEntry } from '@/tree/usage-metering/kv-metering-log-sync';
 import type { Discrepancy } from '@/seed/types/billing-contracts';
 import { logger } from '@/seed/utils/logger-utility';
-import {
-  classifyDiscrepancySeverity,
-  groupDiscrepanciesByType,
-  groupDiscrepanciesBySeverity,
-  filterDiscrepanciesBySeverity,
-} from './kv-discrepancy-classifiers';
+import { groupDiscrepanciesByType, groupDiscrepanciesBySeverity } from './kv-discrepancy-classifiers';
 
 export {
   classifyDiscrepancySeverity,

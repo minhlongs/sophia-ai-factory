@@ -43,7 +43,7 @@ export function generateSFXCues(input: SFXPlacementInput): SFXCue[] {
     scriptText,
     cutTimestamps,
     hasAffiliateCallout = true,
-    hasComplianceDisclaimer = true,
+    hasComplianceDisclaimer: _hasComplianceDisclaimer = true,
   } = input;
 
   const cues: SFXCue[] = [];

@@ -4,14 +4,7 @@
  */
 
 import { getAssetsByNiche } from './broll-asset-registry';
-import type {
-  BRollAsset,
-  BRollCategory,
-  BRollCue,
-  BRollMatchRequest,
-  BRollMatchResult,
-  BRollMotionStyle,
-} from './broll-types';
+import type { BRollCategory, BRollCue, BRollMatchRequest, BRollMatchResult, BRollMotionStyle } from './broll-types';
 
 const KEYWORD_CATEGORY_MAP: Record<string, BRollCategory> = {
   // SaaS triggers

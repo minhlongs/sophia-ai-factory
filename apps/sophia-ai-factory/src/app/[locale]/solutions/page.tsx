@@ -13,18 +13,7 @@ import type { Metadata } from 'next';
 import { Link } from '@/navigation';
 import { PRIMARY_SOLUTIONS } from '@/seed/config/solutions-catalog';
 import { SITE_URL } from '@/land/seo/solutions-schema-builder';
-import {
-  Sparkles,
-  ArrowRight,
-  Search,
-  Building2,
-  ShoppingBag,
-  Laptop,
-  Heart,
-  TrendingUp,
-  ShieldCheck,
-  Zap,
-} from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{
@@ -68,7 +57,7 @@ export default async function SolutionsDirectoryPage({ params }: PageProps) {
   const locale = resolved.locale === 'vi' ? 'vi' : 'en';
   const isVi = locale === 'vi';
 
-  const categories = Array.from(new Set(PRIMARY_SOLUTIONS.map((s) => s.category)));
+  const _categories = Array.from(new Set(PRIMARY_SOLUTIONS.map((s) => s.category)));
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">

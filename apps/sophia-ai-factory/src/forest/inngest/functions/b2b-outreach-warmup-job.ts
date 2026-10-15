@@ -19,7 +19,7 @@ export const b2bOutreachWarmupJob = inngest.createFunction(
   },
   { event: 'b2b.outreach.dispatched' },
   async ({ event, step }) => {
-    const { leadId, userId, email, channel, rampDay, intentScore } = event.data;
+    const { leadId, userId: _userId, email, channel, rampDay, intentScore: _intentScore } = event.data;
 
     // Step 1: Validate Corporate Domain
     const domainValid = await step.run('validate-domain', async () => {

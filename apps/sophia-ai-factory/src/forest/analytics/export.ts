@@ -8,13 +8,7 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import type { UsageEventRow } from '@/tree/database/supabase-types';
-import {
-  generateUsageCsvRows,
-  rowsToCsv,
-  downloadCsv,
-  type ExportOptions,
-  type UsageCsvRow,
-} from './forest-export-formatters';
+import { generateUsageCsvRows, rowsToCsv, type ExportOptions } from './forest-export-formatters';
 
 export {
   generateUsageCsvRows,

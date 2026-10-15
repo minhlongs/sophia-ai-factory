@@ -13,12 +13,7 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getRefundBadgeCap, CREDITS_PER_VIDEO } from '@/seed/db/repositories/campaign-videos-repo';
 import { toError } from '@/seed/utils/to-error';
-import {
-  recalculateRefundBadgeCap,
-  getCurrentRefundBadgeCap,
-  type CapWriteOutcome,
-  type WriteRefundBadgeInput,
-} from './refund-badge-cap-queries';
+import { type CapWriteOutcome, type WriteRefundBadgeInput } from './refund-badge-cap-queries';
 
 export {
   recalculateRefundBadgeCap,

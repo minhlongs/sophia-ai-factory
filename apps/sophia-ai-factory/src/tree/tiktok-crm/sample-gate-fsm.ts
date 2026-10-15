@@ -4,7 +4,7 @@
  * @layer tree
  */
 
-import type { SampleGateStatus, CommissionTier } from '@/seed/types/growth-triad-v3-types';
+import type { CommissionTier } from '@/seed/types/growth-triad-v3-types';
 
 export interface CreatorMetricsInput {
   followerCount: number;

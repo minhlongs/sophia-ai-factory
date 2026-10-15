@@ -31,7 +31,7 @@ export const socialSyndicationJob = inngest.createFunction(
   },
   { event: 'social.syndication.requested' },
   async ({ event, step }) => {
-    const { jobId, tenantId, videoUrl, caption, channel } = event.data as SocialSyndicationEventData;
+    const { jobId, tenantId, videoUrl: _videoUrl, caption: _caption, channel } = event.data as SocialSyndicationEventData;
 
     // Step 1: Emergency Kill Switch Safety Gate
     const killSwitchHalt = await step.run('check-kill-switch', async () => {

@@ -111,17 +111,15 @@ export async function querySettledRevenue(db: D1Database): Promise<number> {
       WHERE processed = 1
     `);
     const paymentRows = await paymentStmt.all<{ payload: string }>();
-    if (paymentRows.results) {
-      for (const row of paymentRows.results) {
-        try {
-          const data = JSON.parse(row.payload || '{}');
-          const amount = Number(data.price_amount || data.amount || 0);
-          if (!isNaN(amount) && amount > 0) {
-            settledRevenueUsd += amount;
-          }
-        } catch {
-          // non-fatal
+    for (const row of paymentRows.results ?? []) {
+      try {
+        const data = JSON.parse(row.payload || '{}');
+        const amount = Number(data.price_amount || data.amount || 0);
+        if (!isNaN(amount) && amount > 0) {
+          settledRevenueUsd += amount;
         }
+      } catch {
+        // non-fatal
       }
     }
   } catch (err) {

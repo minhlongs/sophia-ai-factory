@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { createProject, listProjects, newProjectId } from '@/tree/content-graph';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { ContentKind, ContentStatus } from '@/seed/types/creative-domain';

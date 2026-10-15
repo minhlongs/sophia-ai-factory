@@ -91,10 +91,11 @@ export const sopExecute = inngest.createFunction(
     });
 
     const stepResults: SopStepResult[] = [];
+    const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
 
     for (const wave of plan.waves) {
       const waveResults = await step.run(`wave-${wave.waveIndex}`, async () => {
-        const waveNodes = wave.nodeIds.map((id) => graph.nodes.find((n) => n.id === id)!);
+        const waveNodes = wave.nodeIds.map((id) => nodeById.get(id)!);
         const results = await Promise.all(
           waveNodes.map((node) =>
             runNode(sopSteps[node.stepIndex], node.stepIndex, inputJson, stepResults, analyticsCtx),

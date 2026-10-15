@@ -8,16 +8,7 @@
 import type { D1Database } from '@/seed/db/client';
 import type { PlatformCredentialRecord, SocialPlatform } from '@/seed/types/social-publisher-types';
 import { logger } from '@/seed/utils/logger-utility';
-import {
-  CREDENTIALS_TABLE,
-  OCC_STALE_LOCK_MS,
-  mapCredentialRow,
-  resolveCredentialsDb,
-  ensurePlatformCredentialsTable,
-  getCredential,
-  listUserCredentials,
-  type CredentialRow,
-} from './platform-credentials-queries';
+import { CREDENTIALS_TABLE, OCC_STALE_LOCK_MS, resolveCredentialsDb, getCredential } from './platform-credentials-queries';
 
 export {
   CREDENTIALS_TABLE,

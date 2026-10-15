@@ -32,14 +32,12 @@ export async function GET(request: NextRequest) {
       const kv = env.EXPERIMENT_KV as {
         get(key: string): Promise<string | null>;
       } | undefined;
-      if (kv) {
-        lastPoll = await kv.get('harness:daemon_last_poll');
-        if (lastPoll) {
-          const lastPollTime = new Date(lastPoll).getTime();
-          const nowTime = new Date().getTime();
-          if (!isNaN(lastPollTime) && Math.abs(nowTime - lastPollTime) <= 30000) {
-            daemonStatus = 'ONLINE';
-          }
+      lastPoll = kv ? await kv.get('harness:daemon_last_poll') : null;
+      if (lastPoll) {
+        const lastPollTime = new Date(lastPoll).getTime();
+        const nowTime = new Date().getTime();
+        if (!isNaN(lastPollTime) && Math.abs(nowTime - lastPollTime) <= 30000) {
+          daemonStatus = 'ONLINE';
         }
       }
     } catch (err) {

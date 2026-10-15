@@ -19,11 +19,7 @@ import { SOLOPRENEUR_DENTAL_MEDICAL_SOLUTIONS } from '@/seed/config/solutions/so
 import { AUTOMOTIVE_FINANCE_TRAVEL_SOLUTIONS } from '@/seed/config/solutions/automotive-finance-travel';
 import { SERVICES_WEDDING_LOGISTICS_SOLUTIONS } from '@/seed/config/solutions/services-wedding-logistics';
 import { CONSTRUCTION_PETS_SOLUTIONS } from '@/seed/config/solutions/construction-pets';
-import {
-  SOLUTION_ALIASES,
-  getAllSolutionSlugs as getSlugsHelper,
-  resolveSolutionIndustry,
-} from '@/seed/config/solutions/solutions-lookup';
+import { getAllSolutionSlugs as getSlugsHelper, resolveSolutionIndustry } from '@/seed/config/solutions/solutions-lookup';
 
 export { SOLUTION_ALIASES } from '@/seed/config/solutions/solutions-lookup';
 export type { SolutionIndustry } from '@/seed/types/solutions-types';

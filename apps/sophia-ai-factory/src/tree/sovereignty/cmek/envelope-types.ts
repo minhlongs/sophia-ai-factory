@@ -4,7 +4,7 @@
  * Layer: tree/sovereignty/cmek
  */
 
-import type { SovereignZoneCode, KeyType, KeyState, TenantSovereignKey } from '@/seed/types/sovereign-vault';
+import type { SovereignZoneCode, KeyType } from '@/seed/types/sovereign-vault';
 
 export const AES_ALGORITHM = 'AES-GCM';
 export const KEY_LENGTH_BITS = 256;

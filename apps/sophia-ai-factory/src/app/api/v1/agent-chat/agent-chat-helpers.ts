@@ -53,20 +53,19 @@ export function extractToolCallsFromEvents(events: SseEvent[]): ParsedToolCall[]
 
     try {
       const fullMatch = data.match(/"choices"\s*:\s*\[\{.*?"delta"\s*:\s*\{.*?"tool_calls"\s*:\s*(\[.*?\])/s);
-      if (fullMatch) {
-        const toolCallsArray = JSON.parse(fullMatch[1]) as Array<{
-          index: number;
-          id?: string;
-          function?: { name?: string; arguments?: string };
-        }>;
+      if (!fullMatch) continue;
+      const toolCallsArray = JSON.parse(fullMatch[1]) as Array<{
+        index: number;
+        id?: string;
+        function?: { name?: string; arguments?: string };
+      }>;
 
-        for (const tc of toolCallsArray) {
-          const existing = pendingCalls.get(tc.index) ?? { args: '' };
-          if (tc.id) existing.id = tc.id;
-          if (tc.function?.name) existing.name = tc.function.name;
-          if (tc.function?.arguments) existing.args += tc.function.arguments;
-          pendingCalls.set(tc.index, existing);
-        }
+      for (const tc of toolCallsArray) {
+        const existing = pendingCalls.get(tc.index) ?? { args: '' };
+        if (tc.id) existing.id = tc.id;
+        if (tc.function?.name) existing.name = tc.function.name;
+        if (tc.function?.arguments) existing.args += tc.function.arguments;
+        pendingCalls.set(tc.index, existing);
       }
     } catch {
       // Partial JSON — accumulate and parse later

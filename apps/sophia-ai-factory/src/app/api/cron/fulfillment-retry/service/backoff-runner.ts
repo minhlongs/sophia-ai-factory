@@ -75,33 +75,34 @@ export async function processRowRetry(
           attempts: nextAttemptCount,
         })
 
-        if (row.purchase_id) {
-          const clientDb = createServerClient();
-          const { data: purchaseData } = await clientDb
-            .from('user_purchases')
-            .select('status')
-            .eq('id', row.purchase_id)
-            .single();
-          const purchase = purchaseData as { status?: string } | null;
-          if (purchase?.status === 'refunded') {
-            logger.info('[fulfillment-retry] Skipping email and compensation — purchase refunded', {
-              videoId: row.id,
-              purchaseId: row.purchase_id,
-            });
-            return;
-          }
-
-          await grantCompensationCredit(row.purchase_id, 'render_failed_permanent');
-
-          const userInfo = await fetchUserEmail(row.user_id);
-          const failedEmailInput: SendBundleRenderFailedInput = {
-            userEmail: userInfo?.email,
-            userId: row.user_id,
-            purchaseId: row.purchase_id,
-            locale: userInfo?.locale ?? row.locale ?? 'vi',
-          };
-          await sendBundleRenderFailedEmail(failedEmailInput);
+        if (!row.purchase_id) {
+          return;
         }
+        const clientDb = createServerClient();
+        const { data: purchaseData } = await clientDb
+          .from('user_purchases')
+          .select('status')
+          .eq('id', row.purchase_id)
+          .single();
+        const purchase = purchaseData as { status?: string } | null;
+        if (purchase?.status === 'refunded') {
+          logger.info('[fulfillment-retry] Skipping email and compensation — purchase refunded', {
+            videoId: row.id,
+            purchaseId: row.purchase_id,
+          });
+          return;
+        }
+
+        await grantCompensationCredit(row.purchase_id, 'render_failed_permanent');
+
+        const userInfo = await fetchUserEmail(row.user_id);
+        const failedEmailInput: SendBundleRenderFailedInput = {
+          userEmail: userInfo?.email,
+          userId: row.user_id,
+          purchaseId: row.purchase_id,
+          locale: userInfo?.locale ?? row.locale ?? 'vi',
+        };
+        await sendBundleRenderFailedEmail(failedEmailInput);
       } else {
         const newCount = await recordAttemptCAS(row.id, errMsg);
         if (newCount === null) {

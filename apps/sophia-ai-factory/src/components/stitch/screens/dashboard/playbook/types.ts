@@ -1,11 +1,5 @@
 import type { ReactNode } from 'react';
 import type { useTranslations } from 'next-intl';
-import type {
-  PlaybookPattern,
-  PlaybookRule,
-  CampaignBlueprint,
-  RecurringCampaignSchedule,
-} from '@/seed/types/playbook-pattern';
 import type { PlaybookOverviewData } from '@/land/playbook/actions';
 import type { MissionPreflightResult } from '@/tree/mission/preflight-check';
 

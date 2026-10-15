@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 import type { UnbrandedAgencyPortalConfig } from '@/tree/partners/whitelabel-portal';
 import type { PortalTab } from './portal-types';
 
@@ -24,10 +25,13 @@ export function PortalHeader({ agency, isVi, activeTab, onSelectTab }: PortalHea
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div className="flex items-center gap-3.5">
         {agency.logoUrl ? (
-          <img
+          <Image
             src={agency.logoUrl}
             alt={agency.brandName}
-            className="h-9 max-w-[180px] object-contain"
+            width={180}
+            height={36}
+            unoptimized
+            className="h-9 max-w-[180px] w-auto object-contain"
           />
         ) : (
           <div className="flex items-center gap-2">

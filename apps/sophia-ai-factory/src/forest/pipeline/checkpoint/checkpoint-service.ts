@@ -4,11 +4,7 @@
  * @module forest/pipeline/checkpoint/checkpoint-service
  */
 
-import {
-  type Checkpoint,
-  type CheckpointStatus,
-  type PipelineType,
-} from '../checkpoint-schemas';
+import { type Checkpoint, type CheckpointStatus } from '../checkpoint-schemas';
 import {
   writeCheckpointRecord,
   appendDecisionLogRecords,

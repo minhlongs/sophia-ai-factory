@@ -35,12 +35,10 @@ export async function transcribeAudioSample(
         audioBytes = new Uint8Array(audioSource);
       } else if (typeof audioSource === 'string' && audioSource.trim()) {
         const bucket = await getR2Bucket();
-        if (bucket) {
-          const r2Obj = await bucket.get(audioSource.trim());
-          if (r2Obj) {
-            const buf = await r2Obj.arrayBuffer();
-            audioBytes = new Uint8Array(buf);
-          }
+        const r2Obj = bucket ? await bucket.get(audioSource.trim()) : null;
+        if (r2Obj) {
+          const buf = await r2Obj.arrayBuffer();
+          audioBytes = new Uint8Array(buf);
         }
       }
 

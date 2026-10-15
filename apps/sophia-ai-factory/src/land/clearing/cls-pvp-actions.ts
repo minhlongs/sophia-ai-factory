@@ -7,7 +7,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { executeAtomicPvpSettlement, validatePvpLegEquivalence } from '@/tree/clearing/cls-pvp-settlement-engine';
+import { executeAtomicPvpSettlement } from '@/tree/clearing/cls-pvp-settlement-engine';
 import { evaluateBaselIvCapital } from '@/tree/reserve/basel-iv-capital-engine';
 import type {
   ClsPvpSettlementSession,

@@ -4,12 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { Result, success, failure } from "@/seed/types/result";
 import { inngest } from "@/seed/inngest/client";
-import {
-  ScriptCultureIndexRequestSchema,
-  ScriptCultureIndexRequest,
-  TrafficRedirect,
-  ShadowbanTelemetryEvent,
-} from "@/seed/types/growth-triad-v9-types";
+import { ScriptCultureIndexRequestSchema, TrafficRedirect, ShadowbanTelemetryEvent } from "@/seed/types/growth-triad-v9-types";
 
 // Note: To respect 'DO NOT mutate other layers' and since D1/Postgres details aren't implemented in tree/forest,
 // we supply mock data in these Server Actions as they are the first entrypoint.

@@ -7,11 +7,7 @@
 import { createHash } from 'node:crypto';
 import { planParameterizedBatchDispatch } from './sub-planck-scheduler-domain-engine';
 
-import {
-  TEN_NINES_SLA_CONSTANTS,
-  type OpticalPipelineDispatch,
-  type RonanflopComputeGrid,
-} from '@/seed/types/ronanflop-matrix';
+import { TEN_NINES_SLA_CONSTANTS, type RonanflopComputeGrid } from '@/seed/types/ronanflop-matrix';
 
 export interface OpticalDispatchPlan {
   targetGridId: string;

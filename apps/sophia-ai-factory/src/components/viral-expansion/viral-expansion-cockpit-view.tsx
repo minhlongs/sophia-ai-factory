@@ -30,7 +30,7 @@ export function ViralExpansionCockpitView({
   initialLineages,
 }: ViralExpansionCockpitViewProps) {
   const [sounds] = useState<ViralSoundTrack[]>(initialSounds);
-  const [lineages, setLineages] = useState<LocalizedLineageRecord[]>(initialLineages);
+  const [lineages, _setLineages] = useState<LocalizedLineageRecord[]>(initialLineages);
   const [selectedSoundId, setSelectedSoundId] = useState<string | null>(sounds[0]?.id ?? null);
   const [duckingDb, setDuckingDb] = useState<number>(-14);
   const [subtitlePreset, setSubtitlePreset] = useState<SubtitleAnimationPreset>('HORMOZI_HIGHLIGHT');

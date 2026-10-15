@@ -7,11 +7,7 @@
  */
 
 import type { Result } from '@/seed/types/result';
-import type {
-  ProductionGraphRun,
-  ProductionGraphRunError,
-  ProductionGraphRunPhase,
-} from '@/seed/types/production-factory';
+import type { ProductionGraphRun, ProductionGraphRunPhase } from '@/seed/types/production-factory';
 import type { GraphRepoError } from '@/tree/production-graph/repo';
 
 export const APPROVAL_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24h human review window

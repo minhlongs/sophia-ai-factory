@@ -7,7 +7,7 @@
 'use client';
 
 import React from 'react';
-import { Radar, TrendingUp, Zap, Sparkles, DollarSign } from 'lucide-react';
+import { Radar, TrendingUp, Zap } from 'lucide-react';
 import type { TrendingSkuRadarItem } from '@/seed/types/fleet-matrix-sku-radar-types';
 
 interface TrendingSkuRadarCardProps {

@@ -8,11 +8,7 @@
  */
 
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
-import type {
-  HookPsychologicalAngle,
-  HookVariant,
-  HookVariantPackage,
-} from './hook-variant-types';
+import type { HookVariant, HookVariantPackage } from './hook-variant-types';
 
 interface HookContentBuilderParams {
   productName: string;
@@ -35,7 +31,7 @@ function buildCuriosityHook(params: HookContentBuilderParams): Omit<HookVariant,
 }
 
 function buildLossAversionHook(params: HookContentBuilderParams): Omit<HookVariant, 'id'> {
-  const { productName, isEn, isCrypto } = params;
+  const { productName, isEn, isCrypto: _isCrypto } = params;
   return {
     angle: 'loss_aversion',
     headline: isEn ? 'Stop Burning Capital' : 'Dừng lãng phí ngân sách',
@@ -49,7 +45,7 @@ function buildLossAversionHook(params: HookContentBuilderParams): Omit<HookVaria
 }
 
 function buildShockingStatHook(params: HookContentBuilderParams): Omit<HookVariant, 'id'> {
-  const { productName, isEn, isCrypto } = params;
+  const { productName, isEn, isCrypto: _isCrypto } = params;
   return {
     angle: 'shocking_stat',
     headline: isEn ? 'Shocking Industry Metric' : 'Thống kê giật mình',

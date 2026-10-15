@@ -1,9 +1,4 @@
-import type {
-  PartnerDashboardData,
-  PartnerProfile,
-  PayoutRail,
-  PartnerType,
-} from '@/tree/partners/types';
+import type { PartnerDashboardData } from '@/tree/partners/types';
 
 export type PortalTab = 'overview' | 'whitelabel' | 'payouts' | 'commissions';
 

@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod';
-import { unifiedProductItemSchema, type UnifiedProductItem } from './ecommerce';
+import { unifiedProductItemSchema } from './ecommerce';
 
 export const commerceCatalogSyncRequestedSchema = z.object({
   syncId: z.string().min(1),

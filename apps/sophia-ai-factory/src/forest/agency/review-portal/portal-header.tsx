@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 import { ShieldCheck } from 'lucide-react';
 import type { ReviewPortalBranding } from './types';
 
@@ -27,10 +28,13 @@ export function ReviewPortalHeader({
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           {branding?.logoUrl ? (
-            <img
+            <Image
               src={branding.logoUrl}
               alt={branding.clientName || 'Client Brand'}
-              className="h-8 sm:h-9 object-contain max-w-[140px]"
+              width={140}
+              height={36}
+              unoptimized
+              className="h-8 sm:h-9 w-auto object-contain max-w-[140px]"
             />
           ) : (
             <div

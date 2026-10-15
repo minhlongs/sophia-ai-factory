@@ -6,7 +6,6 @@
  * @module components/growth/arbitrage/types
  */
 
-import React from 'react';
 
 export interface ArbitragePlatformRow {
   platform: 'TIKTOK' | 'YOUTUBE_SHORTS' | 'INSTAGRAM_REELS' | string;

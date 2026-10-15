@@ -26,17 +26,14 @@ export function parseToolCallsFromEvents(events: SseEvent[]): ParsedToolCall[] {
     }
 
     // Also parse from raw Anthropic content_block events if present in token stream
-    if (event.type === 'token' && typeof event.data === 'string') {
-      const toolMatch = event.data.match(/"type"\s*:\s*"tool_use"/);
-      if (toolMatch) {
-        try {
-          const parsed = JSON.parse(event.data) as { id?: string; name?: string; input?: Record<string, unknown> };
-          if (parsed.id && parsed.name) {
-            pendingBlocks.set(parsed.id, { name: parsed.name, input: parsed.input ?? {} });
-          }
-        } catch {
-          // Partial JSON — will be completed in subsequent chunks
+    if (event.type === 'token' && typeof event.data === 'string' && /"type"\s*:\s*"tool_use"/.test(event.data)) {
+      try {
+        const parsed = JSON.parse(event.data) as { id?: string; name?: string; input?: Record<string, unknown> };
+        if (parsed.id && parsed.name) {
+          pendingBlocks.set(parsed.id, { name: parsed.name, input: parsed.input ?? {} });
         }
+      } catch {
+        // Partial JSON — will be completed in subsequent chunks
       }
     }
   }

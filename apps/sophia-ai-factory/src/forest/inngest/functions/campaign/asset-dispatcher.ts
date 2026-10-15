@@ -11,7 +11,7 @@ import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-no
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import { NonRetriableError } from 'inngest';
 import type { Tier } from '@/seed/types';
-import type { AffiliateOfferResult, StatusUpdater, UserNotifier, ProviderErrorNotifier, VideoAssets, DistributionResult } from './types';
+import type { AffiliateOfferResult, StatusUpdater, UserNotifier, ProviderErrorNotifier } from './types';
 
 export function getD1ForWebhooks(): D1Database | null {
   try {

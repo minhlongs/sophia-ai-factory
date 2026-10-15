@@ -116,7 +116,7 @@ export const socialTelemetryIngestWorker = inngest.createFunction(
     // Step 3: Emit recalibration events for ingested records
     await step.run('dispatch-recalibration-events', async () => {
       const successfulIngests = ingestedList.filter((item) => item.success);
-      for (const item of successfulIngests) {
+      for (const _item of successfulIngests) {
         await inngest.send({
           name: 'growth/v15.prior.recalibrate',
           data: {

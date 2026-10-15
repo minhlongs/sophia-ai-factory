@@ -8,7 +8,7 @@
 
 import { getD1 } from '@/seed/db/client';
 import { evaluateFheComputation, validateFheCircuitParams } from '@/tree/crypto/fhe-compute-engine';
-import { adjudicateDisputeCase, validateAppealEligibility } from '@/tree/judicial/autonomous-court-engine';
+import { adjudicateDisputeCase } from '@/tree/judicial/autonomous-court-engine';
 import type {
   FheCiphertextWorkload,
   FheEvaluationRequest,

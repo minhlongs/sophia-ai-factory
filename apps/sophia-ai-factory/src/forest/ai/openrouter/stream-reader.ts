@@ -1,5 +1,24 @@
 import type { StreamChunk } from '@/seed/ai/provider-interface';
 
+function parseSseDataPayload(line: string): StreamChunk | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('data:')) return null;
+
+  const payload = trimmed.slice(5).trim();
+  if (!payload || payload === '[DONE]') return null;
+
+  try {
+    const data = JSON.parse(payload) as {
+      choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
+    };
+    const delta = data.choices?.[0]?.delta?.content ?? '';
+    const isDone = data.choices?.[0]?.finish_reason != null;
+    return { type: 'text_delta', delta, done: isDone };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Reads and decodes an SSE response stream from OpenRouter into StreamChunks.
  */
@@ -21,26 +40,10 @@ export async function* readStreamChunks(
       while ((eol = buffer.indexOf('\n')) >= 0) {
         const line = buffer.slice(0, eol);
         buffer = buffer.slice(eol + 1);
-
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('data:')) continue;
-
-        const payload = trimmed.slice(5).trim();
-        if (!payload || payload === '[DONE]') continue;
-
-        try {
-          const data = JSON.parse(payload) as {
-            choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
-          };
-
-          const delta = data.choices?.[0]?.delta?.content ?? '';
-          const isDone = data.choices?.[0]?.finish_reason != null;
-
-          yield { type: 'text_delta', delta, done: isDone };
-          if (isDone) return;
-        } catch {
-          continue;
-        }
+        const chunk = parseSseDataPayload(line);
+        if (!chunk) continue;
+        yield chunk;
+        if (chunk.done) return;
       }
     }
 

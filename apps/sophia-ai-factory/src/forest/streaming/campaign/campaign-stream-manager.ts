@@ -75,21 +75,19 @@ export async function* campaignStream(
           state.lastProgress = campaign.progress;
         }
 
-        // Terminal status — end the stream
-        if (
+        const isTerminal =
           campaign.status === 'completed' ||
           campaign.status === 'failed' ||
-          campaign.status === 'video_timeout'
-        ) {
-          // Emit error event for failure states before closing
-          if (campaign.status === 'failed') {
-            yield buildErrorEvent(
-              campaignId,
-              'CAMPAIGN_FAILED',
-              'Campaign processing failed',
-              true,
-            );
-          }
+          campaign.status === 'video_timeout';
+        if (isTerminal && campaign.status === 'failed') {
+          yield buildErrorEvent(
+            campaignId,
+            'CAMPAIGN_FAILED',
+            'Campaign processing failed',
+            true,
+          );
+        }
+        if (isTerminal) {
           yield buildStreamEndEvent(campaignId, campaign.status, campaign.progress);
           return;
         }

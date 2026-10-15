@@ -12,15 +12,7 @@ import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { LearningVelocityMetric } from '@/seed/types/learning-velocity';
-import {
-  LOOKBACK_MS,
-  EARLY_RATIO,
-  parseMetrics,
-  avgMetrics,
-  computeVelocityScore,
-  writeVelocity,
-  type EventRow,
-} from './learning-velocity-helpers';
+import { LOOKBACK_MS, EARLY_RATIO, avgMetrics, computeVelocityScore, writeVelocity, type EventRow } from './learning-velocity-helpers';
 
 export {
   parseMetrics,

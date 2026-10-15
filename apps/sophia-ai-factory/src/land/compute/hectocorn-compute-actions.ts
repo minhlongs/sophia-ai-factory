@@ -6,10 +6,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import {
-  planRenderBatchDispatch,
-  evaluateSevenNinesSla,
-} from '@/tree/compute/hectocorn-compute-grid';
+import { planRenderBatchDispatch } from '@/tree/compute/hectocorn-compute-grid';
 import {
   detectTriangularArbitrage,
   executeArbitrageTrade,

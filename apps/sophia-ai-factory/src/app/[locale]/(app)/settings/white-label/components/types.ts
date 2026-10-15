@@ -1,4 +1,3 @@
-import type { User } from '@/seed/db/client';
 import type { WhiteLabelBrandingSettings } from '@/seed/types/custom-domains';
 import type { CustomDomainRecord } from '@/seed/types/custom-domains';
 

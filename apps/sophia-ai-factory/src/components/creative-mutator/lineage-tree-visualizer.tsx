@@ -7,7 +7,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, GitFork, ShieldAlert, Sparkles } from 'lucide-react';
+import { ArrowRight, GitFork } from 'lucide-react';
 
 interface LineageTreeVisualizerProps {
   parentJobId?: string;

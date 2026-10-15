@@ -3,12 +3,7 @@
  * Hectocorn Multi-Region GPU Grid Orchestrator & Seven-Nines SLA Tracker
  */
 
-import type {
-  HectocornComputeNode,
-  DistributedRenderBatch,
-  SevenNinesSlaEvent,
-  ComputeRegion,
-} from '@/seed/types/hectocorn-compute';
+import type { HectocornComputeNode, SevenNinesSlaEvent, ComputeRegion } from '@/seed/types/hectocorn-compute';
 
 export interface NodeFitnessScore {
   nodeId: string;

@@ -1,10 +1,4 @@
-import type {
-  AffiliatePartner,
-  AffiliatePartnerRow,
-  PartnerTier,
-  PartnerStatus,
-  AffiliateStats,
-} from '@/seed/types/affiliate';
+import type { PartnerTier } from '@/seed/types/affiliate';
 
 export interface RegisterPartnerInput {
   userId: string;

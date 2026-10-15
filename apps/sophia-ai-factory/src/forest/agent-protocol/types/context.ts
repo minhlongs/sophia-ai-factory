@@ -3,16 +3,7 @@
  * Layer: forest/agent-protocol/types
  */
 
-import type {
-  AgentDefinition,
-  AgentRun,
-  AgentContext,
-  AgentDecision,
-  AgentAction,
-  AgentResult,
-  AgentApproval,
-  AutonomyLevel,
-} from '@/seed/types/creative-domain';
+import type { AgentDefinition, AgentRun, AgentContext, AgentDecision, AgentResult, AgentApproval } from '@/seed/types/creative-domain';
 
 // ---------------------------------------------------------------------------
 // Registry

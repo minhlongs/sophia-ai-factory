@@ -22,11 +22,7 @@ import {
   getCertification,
   ProviderNotCertifiedError,
 } from '@/seed/ai/provider-certification';
-import type {
-  ProviderConfig,
-  ProviderFactoryOptions,
-  ProviderFactoryResult,
-} from './providers/types';
+import type { ProviderFactoryOptions, ProviderFactoryResult } from './providers/types';
 import { resolveApiKey } from './providers/key-resolver';
 import { createProvider } from './providers/provider-creator';
 

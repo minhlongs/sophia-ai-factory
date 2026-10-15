@@ -14,17 +14,8 @@ import {
   type MultiverseInvariantCheckOutput,
   type MultiverseDirectorateVerdictOutput,
 } from '@/tree/governance/multiverse-directorate-engine';
-import {
-  compactStateWithAnyonicStark,
-  generateAnyonicStarkCommitment,
-  type AnyonicStarkCommitmentOutput,
-  type AnyonicStarkCompactionResult,
-} from '@/tree/crypto/anyonic-stark-compaction-engine';
-import type {
-  AnyonicStarkProtocol,
-  AnyonicTransaction,
-  MultiverseConstitutionalInvariant,
-} from '@/seed/types/anyonic-stark-directorate';
+import { compactStateWithAnyonicStark, type AnyonicStarkCompactionResult } from '@/tree/crypto/anyonic-stark-compaction-engine';
+import type { AnyonicTransaction, MultiverseConstitutionalInvariant } from '@/seed/types/anyonic-stark-directorate';
 
 export interface MultiverseDisputeActionResult {
   success: boolean;

@@ -11,7 +11,7 @@
 import React, { useState } from 'react';
 import type { StoredPublishJob } from '@/land/social/publish-job-store';
 import { DraftApprovalCard } from './draft-approval-card';
-import { Sparkles, RefreshCw, Layers, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Layers, CheckCircle2 } from 'lucide-react';
 
 export interface DraftApprovalQueueProps {
   drafts: StoredPublishJob[];

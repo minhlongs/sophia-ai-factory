@@ -6,17 +6,7 @@
  * @module tree/creators/royalty/types
  */
 
-import type {
-  ContractStatus,
-  ContractType,
-  ContractorTaxRegime,
-  CreatorLicensingContract,
-  CreatorRoyaltySettlement,
-  SettlementCurrency,
-  SettlementPayoutRail,
-  SettlementStatus,
-  SplitTier,
-} from '@/seed/types/creator-dao-c2pa';
+import type { SettlementCurrency } from '@/seed/types/creator-dao-c2pa';
 
 export type {
   ContractStatus,

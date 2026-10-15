@@ -4,11 +4,7 @@
  * @description Pure domain engine for YottaFLOP Super-Scale Planetary Quantum Compute scheduling.
  */
 
-import {
-  YottaflopComputeGrid,
-  QuantumPipelineBatch,
-  PlanetaryQuantumDispatchPlan,
-} from '@/seed/types/yottaflop-matrix';
+import { YottaflopComputeGrid, PlanetaryQuantumDispatchPlan } from '@/seed/types/yottaflop-matrix';
 
 export interface GridSchedulingScore {
   gridIdentifier: string;
