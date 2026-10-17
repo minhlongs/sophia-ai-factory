@@ -1,76 +1,82 @@
-# Sophia AI Factory
+# Sophia AI Factory — Autonomous AI Video & Revenue-as-a-Service (RaaS) Platform
 
-> AI Video Factory — SaaS platform for automated AI video creation
-> Binh Phap Venture Studio 2026
+> **Open-Core Dual-License Architecture** (`Apache-2.0` Community Core + `Sophia Commercial / FSL-1.1` Enterprise & Cloud Modules)
+> **Official Managed Cloud SaaS:** [https://sophia.agencyos.network](https://sophia.agencyos.network) | **Pricing & Enterprise Licensing:** [https://sophia.agencyos.network/pricing](https://sophia.agencyos.network/pricing)
 
-## Quick Start
+**Sophia AI Factory** is an edge-native, bilingual (Vietnamese + English) autonomous AI video production and affiliate revenue engine built on **Next.js 16**, **Cloudflare Workers / D1 / R2 / KV**, and **Inngest**.
+
+---
+
+## ☁️ Sophia Managed Cloud vs. Self-Hosted Community Edition
+
+Don't want to spend 2–4 weeks passing TikTok/YouTube/Meta OAuth developer app reviews, provisioning Cloudflare D1/R2/KV bindings, or operating 24/7 Inngest durable workers? **Launch in 60 seconds on Sophia Managed Cloud.**
+
+| Capability | Community Self-Hosted (`Apache-2.0`) | Sophia Cloud (`$199 – $799/mo`) | Master Handover (`$4,999`) |
+|---|:---:|:---:|:---:|
+| **4-Layer Foundation (`seed` + `tree` Core)** | ✅ Included | ✅ Managed | ✅ Full Source + License |
+| **BYOK Envelope Encryption Vault (`AES-256-GCM`)** | ✅ Included | ✅ Managed | ✅ Included |
+| **Bilingual `/ask` Intent Router & 4-Advisor Consultation** | ✅ Included | ✅ Managed | ✅ Included |
+| **Single-Workspace AI Script, TTS & Video Studio** | ✅ Included | ✅ Managed | ✅ Included |
+| **Pre-Approved TikTok, YouTube Shorts & IG Reels OAuth Relay** | ❌ Bring Own Dev Apps | ✅ **1-Click Connect** | ✅ Dedicated App Handover |
+| **Growth Triad v14 (Thompson Sampling MAB + Half-Kelly)** | 🔒 Commercial | ✅ **Included (PREMIUM+)** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
+| **Affiliate Attribution & Automated USDT Mass-Payouts** | 🔒 Commercial | ✅ **Included** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
+| **White-Label Agency Subaccount Portal & Custom Domains** | 🔒 Enterprise | ✅ **Included (ENTERPRISE)** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
+| **Cryptographic Merkle IPO Audit Vault & 10-Gate Handover** | 🔒 Enterprise | ✅ **Included (ENTERPRISE)** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
+
+👉 **[Start Instantly on Sophia Cloud](https://sophia.agencyos.network/pricing)** | **[Self-Hosting Guide (`docs/SELF_HOSTING.md`)](docs/SELF_HOSTING.md)**
+
+---
+
+## 🚀 5-Minute Developer Quickstart (Community Edition)
 
 ```bash
+# 1. Clone the repository and copy the Community environment template
+git clone https://github.com/minhlongs/sophia-ai-factory.git
+cd sophia-ai-factory
+cp .env.community.example apps/sophia-ai-factory/.env.local
+
+# 2. Install dependencies & run the development server
 cd apps/sophia-ai-factory
 npm install
 npm run dev
 ```
 
-## Structure
+Open `http://localhost:3000/vi/setup-wizard` (or `/en/setup-wizard`) to enter your own AI provider keys (OpenRouter, ElevenLabs, HeyGen, D-ID) encrypted locally with Web Crypto AES-256-GCM.
 
-- `apps/sophia-ai-factory/` - canonical production app deployed to Cloudflare Workers.
-- `apps/84tea/` - secondary Next.js app; not part of Sophia production deploy.
-- `services/` - optional sidecar service blueprints (`coqui-tts`, `moviepy-render`, `runpod-hunyuan`). These are external workers, not loaded by the main Next runtime.
-- `scripts/` - root automation and verification helpers. App deploy helpers live under `apps/sophia-ai-factory/scripts/`.
-- `supabase/` - legacy/shared migration artifacts; Sophia production persistence is Cloudflare D1 from the app package.
-- `docs/` - operator and cross-project documentation.
-- `apps/sophia-ai-factory/docs/` - engineering-internal Sophia runbooks, migrations, and launch notes.
-- `plans/` - implementation plans and audit reports.
-- `.claude/`, `.opencode/`, `.agent/`, `.sophia-factory/`, `.mekong/` - agent/tooling instructions and generated operational context.
-- `.github/workflows/`, `.gitlab-ci.yml` - CI/CD automation. Automated deployment runs via GitHub Actions (`.github/workflows/deploy.yml`) on push to `main`.
+### Migrate Local Workspace to Sophia Cloud in 60 Seconds
+Tested the Community Edition locally and ready for automated multi-channel publishing and Growth Triad optimization? Use `exportWorkspaceBundle()` (`src/tree/open-core/workspace-portability.ts`) to export your channel presets and routing strategy into Sophia Cloud with zero reconfiguration.
 
-There is no active root `packages/` workspace. Treat the root package as orchestration/tooling context and treat `apps/sophia-ai-factory/package.json` as the canonical Sophia app package.
+---
 
-## Tech Stack
+## 🏛️ 4-Layer Mekong Architecture (`seed -> tree -> forest -> land`)
 
-- **Framework**: Next.js 16 (App Router, React 19, TypeScript)
-- **Database**: Cloudflare D1 (SQLite) + Supabase (Postgres)
-- **Payments**: NOWPayments (USDT crypto) + PayOS (Vietnam domestic)
-- **Email**: Resend (mekongmind.com verified domain)
-- **Bot**: Telegram (@Sophia_Bbot)
-- **AI Services**: HeyGen, ElevenLabs, MuAPI (100+ models), OpenRouter
-- **Auth**: Better Auth v1.6.2 with D1 Kysely adapter (email/password + magic link + org plugin)
-- **Deployment**: Cloudflare Workers via GitHub Actions CI/CD (`.github/workflows/deploy.yml`) on push to `main` (local `npm run deploy:full` is break-glass only with `EMERGENCY_CF_DIRECT=1`)
-- **Background Jobs**: Inngest
-- **i18n**: next-intl (Vietnamese + English)
-- **Styling**: Tailwind CSS 4
+Every module in `apps/sophia-ai-factory/src/` obeys strict one-way import boundaries (`npm run check:boundaries`) and a `< 180 LOC` file budget:
 
-## Revenue Stack
+```text
+seed   -> Foundational primitives (types, tier configs, D1 client, Web Crypto HMAC/AES, circuit breaker)
+tree   -> Reusable domain logic (BYOK store, Bilingual /ask router, social pacing, Merkle audit vault)
+forest -> Infrastructure orchestrators (Inngest durable jobs, RaaS gateway, quota enforcer, UI portals)
+land   -> Business workflows & Server Actions (NOWPayments/PayOS billing, payouts, affiliates, growth)
+```
 
-- NOWPayments subscription management (BASIC $199 / PREMIUM $399 / ENTERPRISE $799 / MASTER $4,999)
-- BYOK — Customers bring their own API keys (zero vendor lock-in)
-- Telegram bot for user onboarding & commands
-- Automated subscription lifecycle notifications
+---
 
-## Production
+## 🛠️ Tech Stack & Production Doctrine
 
-- **URL**: https://sophia.agencyos.network
-- **Deploy doctrine**: Automated GitHub Actions CI/CD (`.github/workflows/deploy.yml`) on push to `main`; verify edge SHA parity via `GET /api/version`. Local deploy is guarded and requires `EMERGENCY_CF_DIRECT=1` only in emergency CI outages.
-- **Validation**: `npm run type-check`, `npm run build`, `npm run ci:test`, and Playwright smoke suites live in the app package.
-- **Pre-deploy gate**: Runs automatically before deploy via `scripts/pre-deploy-gate.mjs` — checks git clean, tests, typecheck, secrets, migrations.
-- **Post-deploy smoke**: Basic health checks run after deploy (`scripts/post-deploy-smoke.mjs`). Full E2E smoke can be enabled with `RUN_POSTDEPLOY_E2E=1`.
-- **Runbooks**: Incident response procedures in `apps/sophia-ai-factory/docs/runbooks/`.
+- **Framework:** Next.js 16 (App Router, React 19, TypeScript strict mode, zero `:any`)
+- **Edge Runtime & Storage:** Cloudflare Workers (OpenNext), Cloudflare D1 (SQLite), Cloudflare R2, Cloudflare KV
+- **Payments:** NOWPayments (USDT crypto primary) + PayOS (Vietnam domestic backup)
+- **Authentication:** Better Auth v1.6.2 (`emailAndPassword` + Magic Link + Organization RBAC)
+- **Background Workflows:** Inngest durable functions
+- **Internationalization:** `next-intl` (100% parity across Vietnamese `vi` and English `en`)
+- **Design System:** Director's Control Deck (`src/app/globals.css` — Warm Amber `--primary` + Indigo `--accent`)
 
-## Canonical Runtime Paths
+---
 
-- Auth session: `@/seed/auth/better-auth-session`
-- Better Auth server: `@/seed/auth/better-auth-server`
-- D1 client: `@/seed/db/client`
-- Tier lookup: `@/seed/db/get-user-tier`
-- Tier config: `@/seed/config/tiers`
-- NOWPayments client: `@/tree/clients/nowpayments-client`
-- Mission dispatcher: `@/forest/missions/dispatcher`
-- Billing workflows: `@/land/billing`
+## 📜 Licensing & Governance
 
-## Onboarding Reading Order
-
-1. `docs/codebase-summary.md` - repo map, ownership boundaries, runtime entrypoints, risk register.
-2. `docs/system-architecture.md` - request/data flow, deployment topology, cron/Inngest/payment/video architecture.
-3. `docs/deployment-guide.md` - local setup, secrets, CF-direct deploy, post-deploy verification.
-4. `docs/code-standards.md` - canonical imports, type-safety rules, DB patterns.
-5. `docs/troubleshooting.md` and `apps/sophia-ai-factory/docs/testing-guide.md` - operational debugging and test execution.
+- **Community Core (`Apache-2.0`):** See [`LICENSE`](LICENSE).
+- **Commercial & Enterprise Modules (`FSL-1.1 / Sophia Commercial License`):** See [`LICENSE-COMMERCIAL.md`](LICENSE-COMMERCIAL.md) and [`src/seed/config/open-core-manifest.ts`](apps/sophia-ai-factory/src/seed/config/open-core-manifest.ts).
+- **Contributing & CLA:** See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- **Security Policy:** See [`SECURITY.md`](SECURITY.md).
+- **Trademarks:** See [`TRADEMARKS.md`](TRADEMARKS.md).

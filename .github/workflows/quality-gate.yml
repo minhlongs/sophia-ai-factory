@@ -88,3 +88,13 @@ jobs:
             exit 1
           fi
           echo "PASS"
+
+      - name: Gate 3d — Secret Leak Prevention (Public GitHub Hygiene)
+        run: |
+          LEAKS=$(grep -rnE '(sk-or-v1-[a-f0-9]{48,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" 2>/dev/null | wc -l | tr -d ' ')
+          echo "Potential live secret leaks: $LEAKS"
+          if [ "$LEAKS" -gt 0 ]; then
+            echo "FAIL: live credential pattern detected in production source"
+            exit 1
+          fi
+          echo "PASS"

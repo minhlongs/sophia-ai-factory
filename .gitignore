@@ -118,3 +118,5 @@ apps/sophia-ai-factory/plans/
 /plans/*
 !/plans/company-blueprint/
 .agentkit/
+all_files.txt
+broken-imports-report.json
