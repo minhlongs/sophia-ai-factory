@@ -64,10 +64,10 @@ export function FinishStep({
   return (
     <div className="space-y-6 text-center py-4 animate-in fade-in slide-in-from-right-4 duration-300">
       <div
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ring-8 ${
+        className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto border ${
           isReady
-            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/5"
-            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-500/5"
+            ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-400"
+            : "bg-[#D97706]/10 dark:bg-[#F59E0B]/10 border-[#D97706]/25 dark:border-[#F59E0B]/25 text-[#D97706] dark:text-[#F59E0B]"
         }`}
       >
         {isReady ? (
@@ -79,22 +79,22 @@ export function FinishStep({
 
       <div>
         <span
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-2 ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-2 border ${
             isReady
-              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-              : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+              : "bg-[#D97706]/10 dark:bg-[#F59E0B]/10 border-[#D97706]/20 dark:border-[#F59E0B]/20 text-[#D97706] dark:text-[#F59E0B]"
           }`}
         >
           {isReady
             ? "Setup Complete / Cấu hình hoàn tất"
             : "Verification Notice / Cần hoàn thiện cấu hình"}
         </span>
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">
           {isReady
             ? "Sophia is Ready / Sophia đã sẵn sàng!"
             : "Configuration Incomplete / Cấu hình chưa đầy đủ"}
         </h2>
-        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto leading-relaxed">
           {isReady
             ? "Your AI Video Empire is verified and ready. Launch your first autonomous mission below."
             : "Some essential capabilities or provider credentials are still missing. Review the scorecard below."}
@@ -110,7 +110,7 @@ export function FinishStep({
 
       {saveFailed && (
         <div className="max-w-md mx-auto space-y-3">
-          <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/10 text-xs text-destructive text-left flex items-start gap-2">
+          <div className="p-3.5 rounded-xl border border-destructive/30 bg-destructive/10 text-xs text-destructive text-left flex items-start gap-2">
             <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">Lưu cấu hình thất bại / Save Failed</p>
@@ -121,7 +121,7 @@ export function FinishStep({
             <button
               type="button"
               onClick={onRetry}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#4338CA] dark:bg-[#6366F1] text-white text-sm font-semibold hover:opacity-95 transition-all shadow-xs"
             >
               <RefreshCw className="w-4 h-4" />
               Thử lại / Retry Finalize
@@ -134,7 +134,7 @@ export function FinishStep({
         {isReady ? (
           <Link
             href="/dashboard/missions/new"
-            className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-semibold text-sm shadow-md hover:shadow-lg"
+            className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-[#4338CA] dark:bg-[#6366F1] text-white hover:opacity-95 transition-all font-semibold text-sm shadow-xs"
           >
             <Rocket className="w-4 h-4" />
             Khởi tạo Video đầu tiên / Launch First Mission
@@ -145,7 +145,7 @@ export function FinishStep({
             <button
               type="button"
               onClick={() => onNavigateToStep(2)}
-              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-semibold text-sm shadow-md hover:shadow-lg"
+              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-[#4338CA] dark:bg-[#6366F1] text-white hover:opacity-95 transition-all font-semibold text-sm shadow-xs"
             >
               <Key className="w-4 h-4" />
               Cấu hình khóa API / Configure API Keys
@@ -155,7 +155,7 @@ export function FinishStep({
         )}
         <Link
           href="/dashboard"
-          className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors text-xs font-medium"
+          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-border dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]/60 text-foreground hover:bg-muted/60 transition-colors text-xs font-semibold"
         >
           <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
           Vào Dashboard / Go to Dashboard

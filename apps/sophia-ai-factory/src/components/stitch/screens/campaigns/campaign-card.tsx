@@ -18,15 +18,15 @@ export function CampaignCard({
   const statusCfg = STATUS_CONFIG[campaign.status];
   const badgeClass =
     statusCfg.color === 'success'
-      ? 'bg-emerald-500/20 text-emerald-400'
+      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
       : statusCfg.color === 'warning'
-        ? 'bg-amber-500/20 text-amber-400'
+        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
         : 'bg-muted text-muted-foreground';
 
   return (
     <div
       className={cn(
-        'group flex flex-col gap-4 rounded-2xl border border-outline-variant bg-surface-container p-4 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
+        'group flex flex-col gap-4 rounded-2xl border border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] p-4 transition-all hover:border-primary/40 shadow-sm',
       )}
       role="article"
       aria-label={campaign.title}
@@ -34,7 +34,7 @@ export function CampaignCard({
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-white group-hover:text-primary transition-colors truncate">
+          <h3 className="text-base font-semibold text-foreground dark:text-white group-hover:text-primary transition-colors truncate">
             {campaign.title}
           </h3>
           <div className="flex items-center gap-2 mt-1">
@@ -48,7 +48,7 @@ export function CampaignCard({
         </div>
         <button
           type="button"
-          className="p-1 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+          className="p-1 text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors flex-shrink-0"
           aria-label={t('aria.moreOptions') + ' ' + campaign.title}
         >
           <MoreVertical className="w-5 h-5" />
@@ -58,8 +58,8 @@ export function CampaignCard({
       {/* Thumbnail placeholder */}
       <div
         className={cn(
-          'relative rounded-lg overflow-hidden h-32 w-full',
-          !campaign.thumbnail && 'bg-muted'
+          'relative rounded-lg overflow-hidden h-32 w-full border border-border/50 dark:border-white/[0.06]',
+          !campaign.thumbnail && 'bg-muted dark:bg-[#090A10]'
         )}
       >
         {campaign.thumbnail ? (
@@ -108,7 +108,7 @@ export function CampaignCard({
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
               {label}
             </p>
-            <p className="text-sm font-bold text-foreground mt-0.5">
+            <p className="text-sm font-bold font-mono text-foreground dark:text-white mt-0.5 tabular-nums">
               {campaign.metrics[key]}
             </p>
           </div>
@@ -120,9 +120,9 @@ export function CampaignCard({
         <div>
           <div className="flex justify-between items-center mb-1">
             <span className="text-[11px] text-muted-foreground">{campaign.progressLabel}</span>
-            <span className="text-[11px] font-semibold text-foreground">{campaign.progress}%</span>
+            <span className="text-[11px] font-mono font-semibold text-foreground dark:text-white">{campaign.progress}%</span>
           </div>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-muted dark:bg-white/[0.08] rounded-full overflow-hidden">
             <div
               className="h-full bg-primary rounded-full transition-all duration-500"
               style={{ width: `${campaign.progress}%` }}
@@ -133,7 +133,7 @@ export function CampaignCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto">
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-[11px] font-mono text-muted-foreground">
           {t('lastPublished') + ' ' + campaign.lastPublished}
         </span>
         <button

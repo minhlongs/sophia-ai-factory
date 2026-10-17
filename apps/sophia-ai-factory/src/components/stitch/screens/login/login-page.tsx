@@ -6,7 +6,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center bg-[#08090D] p-6 antialiased relative"
+      className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 p-6 antialiased relative transition-colors duration-300"
       data-testid="login-page"
     >
       {/* Ambient background accent */}
@@ -14,20 +14,20 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
         className="fixed inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-indigo-600/10 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] bg-purple-600/10 rounded-full blur-[140px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-[#4338CA]/8 dark:bg-[#6366F1]/10 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] bg-[#D97706]/8 dark:bg-[#F59E0B]/10 rounded-full blur-[140px]" />
       </div>
 
       <div className="w-full max-w-[440px] relative z-10">
-        {/* Stitch card — Obsidian Cyber-Glass */}
+        {/* Director's Control Deck card */}
         <div
-          className="rounded-2xl border border-white/10 bg-[#12141F]/90 p-8 md:p-10 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl transition-all duration-500"
+          className="rounded-2xl border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] p-8 md:p-10 shadow-xl dark:shadow-2xl transition-all duration-500"
           aria-label={t('title')}
         >
           {/* Logo + Header */}
           <div className="flex flex-col items-center mb-8">
             {/* Brand icon */}
-            <div className="w-12 h-12 mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-500/25">
+            <div className="w-12 h-12 mb-6 rounded-2xl bg-[#4338CA] dark:bg-[#6366F1] flex items-center justify-center shadow-lg shadow-[#4338CA]/20 dark:shadow-indigo-500/25">
               <svg
                 className="w-6 h-6 text-white"
                 viewBox="0 0 24 24"
@@ -38,10 +38,10 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-black text-white tracking-tight mb-1 font-display">
+            <h1 className="text-2xl font-black text-[#0B0F19] dark:text-white tracking-tight mb-1 font-display">
               {t('heading')}
             </h1>
-            <p className="text-sm text-slate-400 text-center">
+            <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
               {t('description')}
             </p>
           </div>
@@ -49,7 +49,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
           <LoginForm redirectTo={redirectTo} />
 
           {/* Footer */}
-          <p className="mt-8 text-center text-xs text-zinc-400">
+          <p className="mt-8 text-center text-xs text-slate-500 dark:text-zinc-400">
             &copy; {new Date().getFullYear()} Sophia AI Factory. All rights reserved.
           </p>
         </div>

@@ -66,11 +66,11 @@ export function SetupWizardPage() {
   }, [currentStepIndex]);
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#090A10] text-foreground py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-3xl mx-auto space-y-6">
         <WizardStepper currentStep={currentStepIndex + 1} steps={Array.from(STEPS)} />
         <ByokDoctrineBanner />
-        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div className="bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-xs">
           {currentStepIndex === 0 && <WelcomeStep onNext={handleNext} />}
           {currentStepIndex === 1 && (
             <AccountStep

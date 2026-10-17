@@ -150,12 +150,12 @@ describe('Stitch Table', () => {
     const th = container.querySelector('th') as HTMLElement;
     const td = container.querySelector('td') as HTMLElement;
     expect(th.className).toContain('sticky left-0');
-    expect(th.className).toContain('bg-background');
-    expect(th.className).toContain('dark:bg-[#12141F]');
+    expect(th.className).toContain('bg-card');
+    expect(th.className).toContain('dark:bg-[#11131F]');
     expect(th.className).toContain('dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]');
     expect(td.className).toContain('sticky left-0');
-    expect(td.className).toContain('bg-background');
-    expect(td.className).toContain('dark:bg-[#12141F]');
+    expect(td.className).toContain('bg-card');
+    expect(td.className).toContain('dark:bg-[#11131F]');
   });
 
   it('renders embedded variant without outer card border or backdrop background', () => {

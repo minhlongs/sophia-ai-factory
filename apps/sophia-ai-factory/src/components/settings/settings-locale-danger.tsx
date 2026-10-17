@@ -21,8 +21,8 @@ export function SettingsLocaleDangerSection() {
   return (
     <div className="space-y-6">
       {/* Locale & Language */}
-      <section className="bg-[#18181B] rounded-2xl p-6 shadow-xl border border-outline-variant/20">
-        <h3 className="text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
+      <section className="bg-card dark:bg-[#11131F] rounded-2xl p-6 shadow-sm border border-border dark:border-white/[0.08]">
+        <h3 className="text-lg font-bold text-foreground dark:text-white mb-6 flex items-center gap-2">
           <Languages className="w-5 h-5 text-primary" />
           Language & Localization (i18n)
         </h3>
@@ -37,19 +37,19 @@ export function SettingsLocaleDangerSection() {
                   'h-[50px] flex items-center justify-between px-4 rounded-xl transition-all',
                   isSelected
                     ? 'border-2 border-primary bg-primary/10'
-                    : 'border border-outline-variant/30 hover:bg-surface-variant/50',
+                    : 'border border-border dark:border-white/[0.08] bg-background/60 dark:bg-[#090A10]/60 hover:bg-muted',
                 )}
                 role="radio"
                 aria-checked={isSelected}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xl">{option.flag}</span>
-                  <span className="text-xs font-bold text-on-surface">{option.label}</span>
+                  <span className="text-xs font-bold text-foreground dark:text-white">{option.label}</span>
                 </div>
                 <div
                   className={cn(
                     'w-4 h-4 rounded-full transition-all',
-                    isSelected ? 'border-4 border-primary bg-white' : 'border-2 border-outline-variant',
+                    isSelected ? 'border-4 border-primary bg-white' : 'border-2 border-border dark:border-white/20',
                   )}
                 />
               </button>
@@ -59,18 +59,18 @@ export function SettingsLocaleDangerSection() {
       </section>
 
       {/* Danger Zone */}
-      <section className="bg-[#18181B] rounded-2xl p-6 border-t-4 border-red-500/60 bg-red-500/5 shadow-xl border border-outline-variant/20">
-        <h3 className="text-lg font-bold text-error mb-2 flex items-center gap-2">
+      <section className="bg-card dark:bg-[#11131F] rounded-2xl p-6 border-t-4 border-red-500/60 shadow-sm border border-border dark:border-white/[0.08]">
+        <h3 className="text-lg font-bold text-destructive mb-2 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
           Danger Zone
         </h3>
-        <p className="text-xs text-on-surface-variant mb-6">
+        <p className="text-xs text-muted-foreground mb-6">
           Irreversible and destructive actions for your workspace and personal account.
         </p>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-red-500/20 bg-red-500/5">
           <div>
-            <h4 className="text-sm font-bold text-on-surface mb-1">Delete Account & Data</h4>
-            <p className="text-xs text-on-surface-variant">Permanently delete your account, pipelines, and stored credentials.</p>
+            <h4 className="text-sm font-bold text-foreground dark:text-white mb-1">Delete Account & Data</h4>
+            <p className="text-xs text-muted-foreground">Permanently delete your account, pipelines, and stored credentials.</p>
           </div>
           <button
             onClick={() => {
@@ -78,7 +78,7 @@ export function SettingsLocaleDangerSection() {
                 alert('Account deletion initiated.');
               }
             }}
-            className="border border-red-500 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95"
+            className="border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95"
           >
             Delete Account
           </button>

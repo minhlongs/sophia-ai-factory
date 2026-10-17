@@ -26,11 +26,13 @@ export function ApiKeysStep({
   const actions = useTranslations('setupWizard.actions');
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-xl font-semibold text-foreground">{t('title')}</h2>
-      <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
+    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div>
+        <h2 className="text-xl font-bold text-foreground tracking-tight">{t('title')}</h2>
+        <p className="text-muted-foreground text-sm mt-1">{t('subtitle')}</p>
+      </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <ApiKeyInput
           id="openrouter"
           label={t('openrouter.label')}
@@ -50,7 +52,7 @@ export function ApiKeysStep({
         <ByokHelpTip provider="openrouter" />
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <ApiKeyInput
           id="elevenlabs"
           label={`${t('elevenlabs.label')}  (${t('elevenlabs.optionalBadge')})`}
@@ -69,7 +71,7 @@ export function ApiKeysStep({
         <ByokHelpTip provider="elevenlabs" />
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <ApiKeyInput
           id="did"
           label={`${t('did.label')}  (${t('did.optionalBadge')})`}
@@ -101,17 +103,17 @@ export function ApiKeysStep({
       />
 
       {saveError && (
-        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+        <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/25 text-destructive text-sm font-medium">
           {saveError}
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-2">
+      <div className="flex justify-between items-center pt-4 border-t border-border dark:border-white/[0.08]">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2"
+            className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors"
           >
             Quay lại / Back
           </button>
@@ -120,7 +122,7 @@ export function ApiKeysStep({
           type="button"
           onClick={onNext}
           disabled={isSaving}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-lg bg-[#4338CA] dark:bg-[#6366F1] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-95 transition-opacity disabled:opacity-50 shadow-xs"
         >
           {isSaving ? 'Đang xác thực... / Validating...' : actions('next')}
         </button>

@@ -36,21 +36,21 @@ export default function SettingsPage({
   const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface">
+    <div className="min-h-screen bg-background dark:bg-[#090A10] text-foreground dark:text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-outline-variant/30 pb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border dark:border-white/[0.08] pb-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-on-surface">
+            <h1 className="text-3xl font-black tracking-tight text-foreground dark:text-white">
               Account & Workspace Settings
             </h1>
-            <p className="text-xs sm:text-sm text-on-surface-variant mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Manage personal identity, live AI provider credentials, usage telemetry, and team ownership.
             </p>
           </div>
           <Link
             href="/settings/usage"
-            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
           >
             <BarChart3 className="w-4 h-4" />
             View Billing Metering
@@ -58,7 +58,7 @@ export default function SettingsPage({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-outline-variant/20 custom-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border dark:border-white/[0.08] custom-scrollbar">
           {NAV_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -69,8 +69,8 @@ export default function SettingsPage({
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
                   isActive
-                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/60',
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/[0.06]',
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -91,23 +91,23 @@ export default function SettingsPage({
           )}
 
           {activeTab === 'storage' && (
-            <div className="bg-[#18181B] rounded-2xl p-6 sm:p-8 shadow-xl border border-outline-variant/20">
+            <div className="bg-card dark:bg-[#11131F] rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-white/[0.08]">
               <StorageSettingsForm />
             </div>
           )}
 
           {activeTab === 'usage' && (
-            <div className="bg-[#18181B] rounded-2xl p-8 shadow-xl border border-outline-variant/20 text-center space-y-4">
+            <div className="bg-card dark:bg-[#11131F] rounded-2xl p-8 shadow-sm border border-border dark:border-white/[0.08] text-center space-y-4">
               <BarChart3 className="w-10 h-10 text-primary mx-auto" />
               <div className="max-w-md mx-auto space-y-2">
-                <h3 className="text-lg font-bold text-on-surface">Transparent Consumption Ledger</h3>
-                <p className="text-xs text-on-surface-variant">
+                <h3 className="text-lg font-bold text-foreground dark:text-white">Transparent Consumption Ledger</h3>
+                <p className="text-xs text-muted-foreground">
                   Inspect granular video generation minutes, ElevenLabs synthesis, fal.ai diffusion calls, and LLM tokens.
                 </p>
               </div>
               <Link
                 href="/settings/usage"
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-mono font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"
               >
                 Open Real-Time Metering Portal
               </Link>

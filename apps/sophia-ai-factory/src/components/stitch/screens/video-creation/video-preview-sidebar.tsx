@@ -25,7 +25,7 @@ export function VideoPreviewSidebar({
 
   return (
     <aside
-      className="hidden w-[320px] flex-shrink-0 overflow-y-auto border-l border-border bg-background p-4 md:block lg:p-6 stitch-scrollbar"
+      className="hidden w-[320px] flex-shrink-0 overflow-y-auto border-l border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] p-4 md:block lg:p-6 stitch-scrollbar"
       aria-label={t('sidebarLabel')}
     >
       {/* Preview */}
@@ -34,10 +34,14 @@ export function VideoPreviewSidebar({
           {t('preview')}
         </h3>
         <div
-          className="group relative cursor-pointer overflow-hidden rounded-xl border border-border"
+          className="group relative cursor-pointer overflow-hidden rounded-xl border border-border dark:border-white/[0.08] bg-slate-950 studio-glass film-strip"
         >
+          <div className="absolute left-2.5 top-2.5 z-10 inline-flex items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-400 backdrop-blur-sm">
+            <span className="camera-rec inline-block h-2 w-2 rounded-full bg-rose-500" aria-hidden="true" />
+            <span>REC</span>
+          </div>
           <div className="aspect-video w-full overflow-hidden">
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center text-slate-400">
               <Play className="h-12 w-12" aria-hidden="true" />
             </div>
           </div>
@@ -49,7 +53,6 @@ export function VideoPreviewSidebar({
           </div>
           <div
             className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 font-mono text-[10px] text-white backdrop-blur-sm"
-            style={{ fontFamily: 'monospace' }}
           >
             {t('previewDuration')}
           </div>
@@ -65,7 +68,7 @@ export function VideoPreviewSidebar({
           <select
             value={selectedVoice}
             onChange={(e) => onVoiceChange(e.target.value)}
-            className="w-full appearance-none rounded-lg border border-border bg-muted px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/40"
+            className="w-full appearance-none rounded-lg border border-border dark:border-white/[0.08] bg-background dark:bg-[#090A10] px-4 py-2.5 pr-10 text-sm text-foreground dark:text-white outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
             aria-label={t('voicePreview')}
           >
             {VOICE_OPTIONS.map((voice) => (
@@ -81,11 +84,7 @@ export function VideoPreviewSidebar({
           />
         </div>
         <div
-          className="mt-3 flex items-center gap-3 rounded-lg border p-2"
-          style={{
-            backgroundColor: 'rgba(78, 79, 116, 0.2)',
-            borderColor: 'rgba(195, 195, 238, 0.2)',
-          }}
+          className="mt-3 flex items-center gap-3 rounded-lg border border-border dark:border-white/[0.08] bg-background dark:bg-[#090A10] p-2.5"
         >
           <button
             type="button"
@@ -95,8 +94,7 @@ export function VideoPreviewSidebar({
             <Play className="h-4 w-4" aria-hidden="true" />
           </button>
           <div
-            className="relative h-1 flex-1 overflow-hidden rounded-full"
-            style={{ backgroundColor: 'muted' }}
+            className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted dark:bg-white/[0.08]"
             role="progressbar"
             aria-valuenow={33}
             aria-valuemin={0}
@@ -104,10 +102,9 @@ export function VideoPreviewSidebar({
             aria-label={t('voiceProgress')}
           >
             <div
-              className="absolute inset-0"
+              className="absolute inset-0 bg-primary/70"
               style={{
                 width: '33%',
-                backgroundColor: 'rgba(195, 195, 238, 0.4)',
               }}
             />
           </div>
@@ -130,9 +127,8 @@ export function VideoPreviewSidebar({
                 className={`group relative overflow-hidden rounded-lg transition-all ${
                   isSelected
                     ? 'border-2 border-primary bg-primary/5'
-                    : 'border bg-muted hover:border-primary/50'
+                    : 'border border-border dark:border-white/[0.08] bg-background dark:bg-[#090A10] hover:border-primary/50'
                 }`}
-                style={!isSelected ? { borderColor: 'border' } : undefined}
                 aria-label={t(`visualStyles.${style.id}`)}
                 aria-pressed={isSelected}
               >
@@ -142,7 +138,7 @@ export function VideoPreviewSidebar({
                     src={style.imageUrl}
                     alt={t(`visualStyles.${style.id}`)}
                     className={`h-full w-full object-cover transition-all ${
-                      isSelected ? 'opacity-80' : 'opacity-40 group-hover:opacity-60'
+                      isSelected ? 'opacity-85' : 'opacity-50 group-hover:opacity-75'
                     }`}
                   />
                 </div>

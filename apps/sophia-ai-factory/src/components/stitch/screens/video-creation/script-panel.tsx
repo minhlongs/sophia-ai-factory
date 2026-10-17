@@ -29,13 +29,13 @@ export function ScriptPanel({
     <div className="flex-1 flex flex-col">
       {/* Panel Header */}
       <div
-        className="flex items-center justify-between border-b border-border bg-background px-6 py-4"
+        className="flex items-center justify-between border-b border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] px-6 py-4"
       >
-        <h2 className="text-lg font-bold text-foreground">{t('scriptEditor')}</h2>
+        <h2 className="text-lg font-bold text-foreground dark:text-white">{t('scriptEditor')}</h2>
         <button
           type="button"
           onClick={onAIGenerate}
-          className="group flex items-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm text-foreground transition-all hover:bg-primary-container"
+          className="group flex items-center gap-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 px-4 py-2 text-sm font-semibold transition-all hover:bg-amber-500/20"
           aria-label={t('aiGenerate')}
         >
           <Sparkles
@@ -53,8 +53,7 @@ export function ScriptPanel({
           onChange={onScriptChange}
           placeholder={t('scriptPlaceholder')}
           rows={6}
-          className="stitch-scrollbar w-full resize-none rounded-lg border bg-black p-4 text-foreground placeholder-[muted-foreground] outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-[primary]"
-          style={{ borderColor: 'border' }}
+          className="stitch-scrollbar w-full resize-none rounded-lg border border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] p-4 text-foreground dark:text-white placeholder:text-muted-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/30"
           aria-label={t('scriptInput')}
         />
 
@@ -64,17 +63,12 @@ export function ScriptPanel({
             {t('generatedPreview')}
           </h3>
           <div
-            className="stitch-scrollbar max-h-64 overflow-y-auto rounded-lg border p-4 leading-relaxed md:p-6"
-            style={{
-              backgroundColor: 'muted',
-              borderColor: 'border',
-              color: 'rgba(231, 228, 240, 0.8)',
-            }}
+            className="stitch-scrollbar max-h-64 overflow-y-auto rounded-lg border border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] p-4 leading-relaxed text-foreground/90 dark:text-slate-200 md:p-6"
           >
             {script.trim() ? (
               <p className="text-sm">{script}</p>
             ) : (
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-sm text-muted-foreground">
                 <p>{t('previewPlaceholder1')}</p>
                 <p>{t('previewPlaceholder2')}</p>
                 <p>{t('previewPlaceholder3')}</p>
@@ -85,24 +79,24 @@ export function ScriptPanel({
         </div>
 
         {/* Character Counter */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
           <span>{t('characterCount', { count: charCount, max: MAX_CHARS })}</span>
           <div className="flex items-center gap-2">
             <div
-              className="h-1.5 w-24 overflow-hidden rounded-full"
-              style={{ backgroundColor: 'muted' }}
+              className="h-1.5 w-24 overflow-hidden rounded-full bg-muted dark:bg-white/[0.08]"
             >
               <div
                 className={`h-2 rounded-full transition-all ${
                       percentUsed >= 90
-                        ? 'bg-red-500/60'
+                        ? 'bg-red-500/80'
                         : percentUsed >= 70
-                          ? 'bg-yellow-500/60'
-                          : 'bg-primary/40'
+                          ? 'bg-amber-500/80'
+                          : 'bg-primary'
                     }`}
+                style={{ width: `${percentUsed}%` }}
               />
             </div>
-            <span className="font-medium">{percentUsed}%</span>
+            <span className="font-mono font-medium text-foreground dark:text-white">{percentUsed}%</span>
           </div>
         </div>
       </div>

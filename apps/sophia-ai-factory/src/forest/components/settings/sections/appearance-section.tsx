@@ -22,14 +22,14 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
   const theme = watch('settings.theme');
 
   return (
-    <Card>
+    <Card className="bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08]">
       <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
+        <CardTitle className="text-foreground dark:text-white">{t('title')}</CardTitle>
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <Label>{t('themeLabel')}</Label>
+          <Label className="text-foreground dark:text-white">{t('themeLabel')}</Label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label={t('themeAriaLabel')}>
             <button
               type="button"
@@ -37,16 +37,16 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               aria-checked={theme === 'light'}
               className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
                 theme === 'light'
-                  ? 'border-primary'
-                  : 'border-muted'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border dark:border-white/[0.08]'
               }`}
               onClick={() =>
                 setValue('settings.theme', 'light', { shouldDirty: true })
               }
             >
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border border-primary bg-[#ffffff]" aria-hidden="true" />
-                <span className="font-medium">{t('themeLight')}</span>
+                <div className="h-4 w-4 rounded-full border border-primary bg-[#F8F9FC]" aria-hidden="true" />
+                <span className="font-medium text-foreground dark:text-white">{t('themeLight')}</span>
               </div>
             </button>
             <button
@@ -55,16 +55,16 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               aria-checked={theme === 'dark'}
               className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
                 theme === 'dark'
-                  ? 'border-primary'
-                  : 'border-muted'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border dark:border-white/[0.08]'
               }`}
               onClick={() =>
                 setValue('settings.theme', 'dark', { shouldDirty: true })
               }
             >
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border border-primary bg-[#09090b]" aria-hidden="true" />
-                <span className="font-medium">{t('themeDark')}</span>
+                <div className="h-4 w-4 rounded-full border border-primary bg-[#090A10]" aria-hidden="true" />
+                <span className="font-medium text-foreground dark:text-white">{t('themeDark')}</span>
               </div>
             </button>
             <button
@@ -73,8 +73,8 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               aria-checked={theme === 'system'}
               className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
                 theme === 'system'
-                  ? 'border-primary'
-                  : 'border-muted'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border dark:border-white/[0.08]'
               }`}
               onClick={() =>
                 setValue('settings.theme', 'system', { shouldDirty: true })
@@ -84,7 +84,7 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
                 <div className="flex h-4 w-4 items-center justify-center rounded-full border border-primary bg-transparent" aria-hidden="true">
                   <span className="text-[10px] font-bold">A</span>
                 </div>
-                <span className="font-medium">{t('themeSystem')}</span>
+                <span className="font-medium text-foreground dark:text-white">{t('themeSystem')}</span>
               </div>
             </button>
           </div>

@@ -21,9 +21,9 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
     <div className="w-full py-4 sm:py-6">
       <div className="relative">
         {/* Connecting Line */}
-        <div className="absolute left-3.5 right-3.5 sm:left-5 sm:right-5 top-3.5 sm:top-5 -translate-y-1/2 h-0.5 sm:h-1 bg-muted rounded-full" />
+        <div className="absolute left-3.5 right-3.5 sm:left-5 sm:right-5 top-3.5 sm:top-5 -translate-y-1/2 h-0.5 sm:h-1 bg-border dark:bg-white/[0.08] rounded-full" />
         <div
-          className="absolute left-3.5 sm:left-5 top-3.5 sm:top-5 -translate-y-1/2 h-0.5 sm:h-1 bg-primary rounded-full transition-all duration-300 ease-in-out"
+          className="absolute left-3.5 sm:left-5 top-3.5 sm:top-5 -translate-y-1/2 h-0.5 sm:h-1 bg-emerald-600 dark:bg-emerald-500 rounded-full transition-all duration-300 ease-in-out"
           style={{
             width: steps.length > 1
               ? `calc(${progressRatio * 100}% - ${progressRatio > 0 ? (progressRatio * 16) : 0}px)`
@@ -43,31 +43,31 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
               <div key={index} className="flex flex-col items-center flex-1 min-w-0">
                 <div
                   className={cn(
-                    'w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ease-in-out bg-background shrink-0',
+                    'w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ease-in-out shrink-0',
                     isCompleted
-                      ? 'bg-primary border-primary text-primary-foreground shadow-sm'
+                      ? 'bg-emerald-600 dark:bg-emerald-500 border-emerald-600 dark:border-emerald-500 text-white shadow-xs'
                       : isCurrent
-                        ? 'bg-background border-primary text-primary ring-2 ring-primary/40 font-bold'
-                        : 'bg-muted/80 border-border text-muted-foreground'
+                        ? 'bg-[#4338CA] dark:bg-[#6366F1] border-[#4338CA] dark:border-[#6366F1] text-white ring-4 ring-[#4338CA]/15 dark:ring-[#6366F1]/20 font-bold shadow-xs'
+                        : 'bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08] text-muted-foreground'
                   )}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   {isCompleted ? (
                     <Check className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.5px]" aria-hidden="true" />
                   ) : (
-                    <span className="text-xs sm:text-sm font-semibold">{stepNum}</span>
+                    <span className="font-mono text-xs sm:text-sm font-semibold">{stepNum}</span>
                   )}
                 </div>
 
                 {/* Step label on tablet/desktop */}
                 <span
                   className={cn(
-                    'hidden sm:block text-[10px] md:text-xs font-semibold uppercase tracking-wider mt-2 text-center truncate max-w-[80px] transition-colors duration-300',
+                    'hidden sm:block text-[10px] md:text-xs font-semibold uppercase tracking-wider mt-2 text-center truncate max-w-[84px] transition-colors duration-300',
                     isCurrent
-                      ? 'text-foreground'
+                      ? 'text-[#4338CA] dark:text-[#6366F1] font-bold'
                       : isCompleted
-                        ? 'text-muted-foreground'
-                        : 'text-muted-foreground/60'
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-muted-foreground/70'
                   )}
                   title={step}
                 >
@@ -81,7 +81,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
 
       {/* Mobile Active Step Indicator (320px–639px) */}
       <div className="sm:hidden text-center mt-3 px-2">
-        <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+        <span className="font-mono text-[11px] font-semibold text-[#4338CA] dark:text-[#6366F1] uppercase tracking-wider">
           Step {currentStep} of {steps.length}:
         </span>{' '}
         <span className="text-xs font-bold text-foreground">

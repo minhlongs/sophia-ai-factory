@@ -65,7 +65,7 @@ export default function VideoCreationPage({
     <>
       {/* ── Header ────────────────────────────────────────────────────── */}
       <header
-        className="border-b border-border bg-background px-4 py-2 md:px-8"
+        className="border-b border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] px-4 py-2 md:px-8"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -78,7 +78,7 @@ export default function VideoCreationPage({
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </button>
             <div>
-              <h1 className="text-base font-bold text-foreground md:text-lg">
+              <h1 className="text-base font-bold text-foreground dark:text-white md:text-lg">
                 {t('title')}
               </h1>
               <p className="text-xs text-muted-foreground md:text-sm">
@@ -92,8 +92,7 @@ export default function VideoCreationPage({
 
       {/* ── Main Content ──────────────────────────────────────────────── */}
       <div
-        className="flex flex-1 overflow-hidden"
-        style={{ backgroundColor: 'muted' }}
+        className="flex flex-1 overflow-hidden bg-background dark:bg-[#090A10]"
       >
         {/* ── Script Panel ── */}
         <ScriptPanel
@@ -115,16 +114,12 @@ export default function VideoCreationPage({
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer
-        className="flex items-center justify-between border-t px-4 py-4 md:px-8"
-        style={{
-          backgroundColor: 'muted',
-          borderColor: 'border',
-        }}
+        className="flex items-center justify-between border-t border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] px-4 py-4 md:px-8"
       >
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-muted-foreground hover:text-foreground"
+          className="flex items-center gap-2 rounded-lg border border-border dark:border-white/[0.08] px-6 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-foreground/30 hover:text-foreground dark:hover:text-white"
           aria-label={t('back')}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -133,7 +128,7 @@ export default function VideoCreationPage({
         <button
           type="button"
           onClick={handleContinue}
-          className="flex items-center gap-2 rounded-lg bg-primary px-8 py-2.5 font-bold text-primary-foreground shadow-lg transition-all hover:scale-105 active:scale-95"
+          className="flex items-center gap-2 rounded-lg bg-primary px-8 py-2.5 font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
           aria-label={t('continueToVoice')}
         >
           {t('continueToVoice')}

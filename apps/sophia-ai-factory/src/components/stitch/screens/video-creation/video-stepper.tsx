@@ -21,12 +21,12 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
               className={`flex items-center gap-2 ${!isActive && !isPast ? 'opacity-60' : ''}`}
             >
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-mono text-sm font-bold ${
                   isActive
                     ? 'bg-primary text-primary-foreground'
                     : isPast
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
+                      : 'bg-muted dark:bg-white/[0.06] text-muted-foreground border border-border dark:border-white/[0.08]'
                 }`}
                 aria-current={isActive ? 'step' : undefined}
                 aria-label={`${t('step')} ${step.id}`}
@@ -35,7 +35,7 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
               </div>
               <span
                 className={`hidden text-xs font-medium sm:block ${
-                  isActive ? 'text-foreground' : 'text-muted-foreground'
+                  isActive ? 'text-foreground dark:text-white font-semibold' : 'text-muted-foreground'
                 }`}
               >
                 {t(`steps.${step.key}`)}
@@ -44,7 +44,7 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
             {idx < STEPS.length - 1 && (
               <div
                 className={`hidden h-px flex-1 sm:block ${
-                  isPast ? 'bg-primary' : 'bg-border'
+                  isPast ? 'bg-primary' : 'bg-border dark:bg-white/[0.08]'
                 }`}
                 aria-hidden="true"
               />

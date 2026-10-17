@@ -15,27 +15,27 @@ interface PricingHeroProps {
 export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
   return (
     <section className="mb-20 text-center max-w-4xl mx-auto">
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-6">
-        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] text-[#4338CA] dark:text-indigo-300 text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
+        <Sparkles className="w-3.5 h-3.5 text-[#D97706] dark:text-[#F59E0B]" />
         Transparent Pricing
       </div>
-      <h1 className="mb-5 text-4xl sm:text-6xl font-black text-white tracking-tight font-display">
+      <h1 className="mb-5 text-4xl sm:text-6xl font-black text-[#0B0F19] dark:text-white tracking-tight font-display">
         {t('hero.title')}
       </h1>
-      <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-300 leading-relaxed">
+      <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
         {t('hero.subtitle')}
       </p>
 
       {/* Billing Toggle */}
-      <div className="inline-flex items-center justify-center p-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md">
+      <div className="inline-flex items-center justify-center p-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] shadow-sm">
         {(['monthly', 'yearly'] as const).map((period) => (
           <label
             key={period}
             className={cn(
               'inline-flex cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-200 select-none',
               billing === period
-                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25'
-                : 'text-slate-400 hover:text-white',
+                ? 'bg-[#4338CA] dark:bg-[#6366F1] text-white shadow-md shadow-[#4338CA]/20 dark:shadow-indigo-500/25'
+                : 'text-slate-600 dark:text-slate-400 hover:text-[#0B0F19] dark:hover:text-white',
             )}
           >
             <input
@@ -48,7 +48,7 @@ export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
             />
             <span>{t(`billing.${period}`)}</span>
             {period === 'yearly' && (
-              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="text-[11px] font-extrabold font-mono px-2 py-0.5 rounded-full bg-[#D97706]/15 dark:bg-[#F59E0B]/20 text-[#D97706] dark:text-[#F59E0B] border border-[#D97706]/30 dark:border-[#F59E0B]/30">
                 {t('billing.savePercent')}
               </span>
             )}

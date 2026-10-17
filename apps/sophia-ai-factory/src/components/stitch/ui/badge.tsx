@@ -15,7 +15,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 /**
  * Stitch-compatible Badge component
  *
- * Material Design 3 badge/chip styles with Sophia theme.
+ * Director's Control Deck badge/chip with adaptive light/dark theming.
  */
 export function Badge({
   children,

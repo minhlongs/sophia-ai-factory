@@ -24,11 +24,11 @@ export function ChartCanvas({
   return (
     <div className="relative pt-6">
       {/* Subtle Horizontal Reference Grid Lines */}
-      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-        <div className="border-b border-white/20 w-full" />
-        <div className="border-b border-white/20 w-full" />
-        <div className="border-b border-white/20 w-full" />
-        <div className="border-b border-white/20 w-full" />
+      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-40 dark:opacity-20">
+        <div className="border-b border-border dark:border-white/20 w-full" />
+        <div className="border-b border-border dark:border-white/20 w-full" />
+        <div className="border-b border-border dark:border-white/20 w-full" />
+        <div className="border-b border-border dark:border-white/20 w-full" />
       </div>
 
       {chartData.length === 0 ? (
@@ -36,10 +36,10 @@ export function ChartCanvas({
           className="h-56 flex flex-col items-center justify-center text-center p-6 relative z-10"
           data-testid="chart-empty-state"
         >
-          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2.5 text-slate-400">
+          <div className="w-10 h-10 rounded-xl bg-muted dark:bg-white/[0.04] border border-border dark:border-white/[0.08] flex items-center justify-center mb-2.5 text-muted-foreground dark:text-slate-400">
             <TrendingUp className="w-5 h-5 opacity-40" />
           </div>
-          <p className="text-xs font-semibold text-slate-300">
+          <p className="text-xs font-semibold text-foreground dark:text-slate-300">
             {emptyTitle}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5 max-w-xs">
@@ -76,9 +76,9 @@ export function ChartCanvas({
                   </div>
 
                   {/* Column Track & Bottom-Up Bar */}
-                  <div className="w-full h-full bg-white/[0.03] border border-white/[0.04] rounded-t-md relative flex flex-col justify-end overflow-hidden group-hover:border-primary/40 transition-colors">
+                  <div className="w-full h-full bg-white/[0.03] border border-border/60 dark:border-white/[0.04] rounded-t-md relative flex flex-col justify-end overflow-hidden group-hover:border-primary/40 transition-colors">
                     <div
-                      className="w-full bg-gradient-to-t from-primary/80 via-primary to-indigo-400 rounded-t-md transition-all duration-500 ease-out group-hover:from-primary group-hover:to-cyan-400 group-hover:shadow-[0_0_16px_rgba(99,102,241,0.6)]"
+                      className="w-full bg-gradient-to-t from-primary/80 via-primary to-indigo-400 rounded-t-md transition-all duration-500 ease-out group-hover:from-primary group-hover:to-amber-400"
                       style={heightStyle ? { height: heightStyle } : undefined}
                       data-testid={`revenue-bar-${idx}`}
                     />
@@ -89,13 +89,13 @@ export function ChartCanvas({
           </div>
 
           {/* Date / Period Axis Labels strictly aligned 1:1 with columns */}
-          <div className="flex justify-between gap-3 mt-3 pt-2 border-t border-white/[0.06]">
+          <div className="flex justify-between gap-3 mt-3 pt-2 border-t border-border dark:border-white/[0.06]">
             {chartData.map((item, idx) => {
               const label = item.label || item.period || `P${idx + 1}`;
               return (
                 <div
                   key={`label-${idx}`}
-                  className="flex-1 text-center text-xs font-mono text-muted-foreground group-hover:text-white transition-colors"
+                  className="flex-1 text-center text-xs font-mono text-muted-foreground group-hover:text-foreground dark:group-hover:text-white transition-colors"
                 >
                   <span>{label}</span>
                 </div>

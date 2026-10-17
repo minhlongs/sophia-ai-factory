@@ -20,13 +20,13 @@ export function PricingPageView() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#08090D] text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-200 transition-colors duration-300">
       <MarketingNav />
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-6 pt-36 pb-24 relative overflow-hidden">
         {/* Ambient background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#4338CA]/10 dark:bg-[#6366F1]/15 rounded-full blur-[140px] pointer-events-none -z-10" />
 
         {/* Hero Section */}
         <PricingHero billing={billing} onBillingChange={setBilling} t={t} />

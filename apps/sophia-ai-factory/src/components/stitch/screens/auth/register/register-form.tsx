@@ -32,7 +32,7 @@ export function RegisterForm({
     <form className="space-y-4" onSubmit={onSubmit} noValidate>
       {/* Company Name */}
       <div>
-        <label htmlFor="company" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+        <label htmlFor="company" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
           {t('companyLabel')}
         </label>
         <div className="relative">
@@ -43,14 +43,14 @@ export function RegisterForm({
             placeholder={t('companyPlaceholder')}
             value={formState.companyName}
             onChange={(e) => setFormState((p) => ({ ...p, companyName: e.target.value }))}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#08090D]/80 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
           />
         </div>
       </div>
 
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+        <label htmlFor="email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
           {t('emailLabel')}
         </label>
         <div className="relative">
@@ -62,14 +62,14 @@ export function RegisterForm({
             value={formState.email}
             onChange={(e) => setFormState((p) => ({ ...p, email: e.target.value }))}
             required
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#08090D]/80 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
           />
         </div>
       </div>
 
       {/* Password */}
       <div>
-        <label htmlFor="password" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+        <label htmlFor="password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
           {t('passwordLabel')}
         </label>
         <div className="relative">
@@ -81,14 +81,14 @@ export function RegisterForm({
             value={formState.password}
             onChange={(e) => setFormState((p) => ({ ...p, password: e.target.value }))}
             required
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#08090D]/80 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
           />
         </div>
       </div>
 
       {/* Confirm Password */}
       <div>
-        <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+        <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
           {t('confirmPasswordLabel')}
         </label>
         <div className="relative">
@@ -100,7 +100,7 @@ export function RegisterForm({
             value={formState.confirmPassword}
             onChange={(e) => setFormState((p) => ({ ...p, confirmPassword: e.target.value }))}
             required
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#08090D]/80 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
           />
         </div>
       </div>
@@ -113,15 +113,15 @@ export function RegisterForm({
           checked={formState.agreeTerms}
           onChange={(e) => setFormState((p) => ({ ...p, agreeTerms: e.target.checked }))}
           required
-          className="w-4 h-4 mt-0.5 rounded border-white/20 bg-[#08090D] text-indigo-600 focus:ring-indigo-500/30"
+          className="w-4 h-4 mt-0.5 rounded border-[#E2E8F0] dark:border-white/20 bg-[#F8F9FC] dark:bg-[#090A10] text-[#4338CA] dark:text-indigo-600 focus:ring-[#4338CA]/30 dark:focus:ring-indigo-500/30"
         />
-        <label htmlFor="terms" className="ml-2.5 text-xs text-slate-400 leading-normal select-none">
+        <label htmlFor="terms" className="ml-2.5 text-xs text-slate-600 dark:text-slate-400 leading-normal select-none">
           {t('termsPrefix')}{' '}
-          <Link href="/terms" className="text-indigo-400 hover:text-indigo-300 underline">
+          <Link href="/terms" className="text-[#4338CA] dark:text-indigo-400 hover:opacity-80 dark:hover:text-indigo-300 underline">
             {t('termsLink')}
           </Link>
           {' '}{t('and')}{' '}
-          <Link href="/privacy" className="text-indigo-400 hover:text-indigo-300 underline">
+          <Link href="/privacy" className="text-[#4338CA] dark:text-indigo-400 hover:opacity-80 dark:hover:text-indigo-300 underline">
             {t('privacyLink')}
           </Link>
         </label>
@@ -129,7 +129,7 @@ export function RegisterForm({
 
       {/* Submit Button */}
       <div className="pt-2">
-        <Button type="submit" fullWidth loading={loading} className="h-12 text-base font-bold shadow-xl shadow-indigo-500/25">
+        <Button type="submit" fullWidth loading={loading} className="h-12 text-base font-bold shadow-lg shadow-[#4338CA]/20 dark:shadow-indigo-500/25">
           {t('submit')}
         </Button>
       </div>

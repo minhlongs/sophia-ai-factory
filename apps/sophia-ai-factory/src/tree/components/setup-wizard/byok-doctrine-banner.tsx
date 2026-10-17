@@ -24,12 +24,12 @@ interface BulletProps {
 
 function Bullet({ icon, title, body }: BulletProps) {
   return (
-    <div className="flex items-start gap-3 rounded-lg bg-card/60 px-3 py-3 border border-border/40">
-      <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+    <div className="flex items-start gap-3 rounded-lg bg-[#F8F9FC] dark:bg-[#090A10]/80 px-3.5 py-3 border border-border dark:border-white/[0.08]">
+      <div className="shrink-0 w-8 h-8 rounded-lg bg-[#4338CA]/10 dark:bg-[#6366F1]/15 border border-[#4338CA]/20 dark:border-[#6366F1]/25 flex items-center justify-center text-[#4338CA] dark:text-[#6366F1]">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs sm:text-sm font-semibold text-foreground">{title}</p>
         <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{body}</p>
       </div>
     </div>
@@ -41,13 +41,18 @@ export function ByokDoctrineBanner() {
   return (
     <section
       aria-label={t('aria_label')}
-      className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 space-y-3"
+      className="rounded-xl border border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] px-4 py-4 space-y-3 shadow-xs"
     >
-      <header>
-        <h2 className="text-base font-semibold text-foreground">{t('title')}</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">{t('subtitle')}</p>
+      <header className="flex items-center justify-between gap-2">
+        <div>
+          <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">{t('title')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('subtitle')}</p>
+        </div>
+        <span className="hidden sm:inline-flex items-center font-mono text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#D97706]/10 dark:bg-[#F59E0B]/10 text-[#D97706] dark:text-[#F59E0B] border border-[#D97706]/20 dark:border-[#F59E0B]/20 shrink-0">
+          BYOK · AES-256-GCM
+        </span>
       </header>
-      <div className="grid sm:grid-cols-3 gap-2">
+      <div className="grid sm:grid-cols-3 gap-2.5">
         <Bullet
           icon={<Key className="w-4 h-4" aria-hidden="true" />}
           title={t('bullet_keys_title')}

@@ -38,7 +38,7 @@ export interface ColumnDef<T> {
 /**
  * Stitch-compatible Table component
  *
- * Material Design 3 data table with Sophia theme.
+ * Director's Control Deck data table with adaptive light/dark theming.
  */
 export function Table<T>({
   data,
@@ -55,7 +55,7 @@ export function Table<T>({
     <div
       className={cn(
         variant === 'card'
-          ? 'bg-card/85 dark:bg-[#12141F]/80 backdrop-blur-xl rounded-2xl border border-border dark:border-white/[0.08] shadow-md'
+          ? 'bg-card dark:bg-[#11131F] rounded-2xl border border-border dark:border-white/[0.08] shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]'
           : 'bg-transparent rounded-xl',
         'overflow-hidden',
         className
@@ -64,7 +64,7 @@ export function Table<T>({
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-black/[0.02] dark:bg-white/[0.03] border-b border-border dark:border-white/[0.08] text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+            <tr className="bg-muted/30 dark:bg-white/[0.03] border-b border-border dark:border-white/[0.08] text-muted-foreground text-xs font-semibold uppercase tracking-wider">
               {columns.map((col, idx) => (
                 <th
                   key={idx}
@@ -72,7 +72,7 @@ export function Table<T>({
                     'px-3 sm:px-6 py-3.5',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right',
-                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-background dark:bg-[#12141F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
+                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-card dark:bg-[#11131F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                   )}
                   style={col.width ? { width: col.width } : undefined}
                 >
@@ -114,7 +114,7 @@ export function Table<T>({
                         'px-3 sm:px-6 py-4 text-foreground dark:text-slate-200',
                         col.align === 'center' && 'text-center',
                         col.align === 'right' && 'text-right',
-                        stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-background dark:bg-[#12141F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
+                        stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-card dark:bg-[#11131F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                       )}
                     >
                       {col.cell(row, rowIndex)}

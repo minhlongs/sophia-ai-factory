@@ -61,9 +61,9 @@ export function ApiKeyInput({
   };
 
   return (
-    <div className="w-full space-y-2 text-left">
-      <div className="flex items-center justify-between">
-        <label htmlFor={id} className="block text-sm font-medium text-foreground">
+    <div className="w-full space-y-2 text-left rounded-xl border border-border dark:border-white/[0.08] bg-card dark:bg-[#11131F] p-3.5 transition-colors">
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={id} className="block text-sm font-semibold text-foreground">
           {label} {required && <span className="text-destructive">*</span>}
         </label>
         <ApiKeyHeaderBadges saved={saved} value={value} helpText={helpText} />
@@ -77,10 +77,10 @@ export function ApiKeyInput({
           onChange={(e) => handleTextChange(e.target.value)}
           placeholder={saved && !value ? '•••••••••••••••• (Saved / Đã lưu an toàn)' : placeholder}
           className={cn(
-            "w-full px-4 py-2 pr-40 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none transition-all duration-200 bg-background text-foreground",
+            "w-full px-3.5 py-2 pr-44 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary/25 focus:border-primary focus:outline-none transition-all duration-200 bg-[#F8F9FC] dark:bg-[#090A10] text-foreground placeholder:font-sans placeholder:text-muted-foreground/70",
             status === 'invalid' ? "border-destructive focus:ring-destructive/20" :
-            (status === 'valid' || (saved && !value)) ? "border-emerald-500/40 focus:ring-emerald-500/20" :
-            "border-input"
+            (status === 'valid' || (saved && !value)) ? "border-emerald-500/50 dark:border-emerald-500/40 focus:ring-emerald-500/20" :
+            "border-border dark:border-white/[0.08]"
           )}
         />
 
@@ -88,7 +88,7 @@ export function ApiKeyInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="text-muted-foreground hover:text-foreground p-1 transition-all duration-100 active:scale-95"
+            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted/60 transition-all duration-100 active:scale-95"
             aria-label={showPassword ? 'Hide API key' : 'Show API key'}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -101,11 +101,11 @@ export function ApiKeyInput({
           {(status === 'valid' || (saved && !value)) && (
             <div className="flex items-center gap-1 transition-all duration-300">
               {latency !== null && (
-                <span className="inline-flex items-center text-[10px] font-bold bg-primary/15 text-primary border border-primary/20 px-1.5 py-0.5 rounded transition-all duration-300">
+                <span className="inline-flex items-center font-mono text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 px-1.5 py-0.5 rounded transition-all duration-300">
                   ✓ {latency}ms
                 </span>
               )}
-              <CheckCircle className="w-4 h-4 text-green-500 transition-all duration-300" aria-hidden="true" />
+              <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 transition-all duration-300" aria-hidden="true" />
             </div>
           )}
 
@@ -118,7 +118,7 @@ export function ApiKeyInput({
               type="button"
               onClick={onRevoke}
               disabled={isRevoking}
-              className="text-[11px] font-semibold text-destructive hover:bg-destructive/10 px-2 py-0.5 rounded border border-destructive/30 disabled:opacity-50 transition-all duration-100 active:scale-95"
+              className="text-[11px] font-semibold text-destructive hover:bg-destructive/10 px-2.5 py-1 rounded-md border border-destructive/30 disabled:opacity-50 transition-all duration-100 active:scale-95"
             >
               {isRevoking ? 'Revoking...' : 'Revoke'}
             </button>
@@ -127,7 +127,7 @@ export function ApiKeyInput({
               type="button"
               onClick={handleVerify}
               disabled={status === 'validating' || !value}
-              className="text-[11px] font-semibold bg-muted hover:bg-muted/80 text-foreground px-2 py-0.5 rounded disabled:opacity-50 transition-all duration-100 active:scale-95"
+              className="text-[11px] font-semibold bg-primary/10 hover:bg-primary/20 text-[#4338CA] dark:text-[#6366F1] border border-primary/20 px-2.5 py-1 rounded-md disabled:opacity-40 transition-all duration-100 active:scale-95"
             >
               Verify
             </button>

@@ -36,12 +36,12 @@ export function RevenueChartHeader({
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
       <div>
         <div className="flex items-center gap-2">
-          <h4 className="text-base font-bold text-white tracking-tight">
+          <h4 className="text-base font-bold text-foreground dark:text-white tracking-tight">
             {title}
           </h4>
           {activeTrend === "up" && (
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
               data-testid="revenue-trend-badge"
             >
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
@@ -50,7 +50,7 @@ export function RevenueChartHeader({
           )}
           {activeTrend === "down" && (
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
               data-testid="revenue-trend-badge"
             >
               <ArrowDownRight className="w-3 h-3 mr-0.5" />
@@ -59,7 +59,7 @@ export function RevenueChartHeader({
           )}
           {activeTrend === "neutral" && (
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.05] text-slate-400 border border-white/[0.08]"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-muted dark:bg-white/[0.05] text-muted-foreground dark:text-slate-400 border border-border dark:border-white/[0.08]"
               data-testid="revenue-trend-badge"
             >
               <Minus className="w-3 h-3 mr-0.5" />
@@ -69,23 +69,23 @@ export function RevenueChartHeader({
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
           {subtitle} • Total:{" "}
-          <span className="text-white font-mono font-semibold">
+          <span className="text-foreground dark:text-white font-mono font-semibold">
             ${totalRevenue.toLocaleString()}
           </span>
         </p>
       </div>
 
-      <div className="flex items-center bg-white/[0.04] p-1 rounded-lg border border-white/[0.08] self-start sm:self-auto">
+      <div className="flex items-center bg-muted/60 dark:bg-white/[0.04] p-1 rounded-lg border border-border dark:border-white/[0.08] self-start sm:self-auto">
         {periodOptions.map((opt) => (
           <button
             key={opt.key}
             type="button"
             onClick={() => onPeriodChange(opt.key)}
             className={cn(
-              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
+              "px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all",
               activePeriod === opt.key
                 ? "bg-primary text-white shadow-sm font-bold"
-                : "text-muted-foreground hover:text-white hover:bg-white/[0.04]"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-background/60 dark:hover:bg-white/[0.04]"
             )}
             data-testid={`period-selector-${opt.key}`}
           >

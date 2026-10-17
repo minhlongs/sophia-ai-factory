@@ -15,13 +15,13 @@ export interface DashboardUserCardProps {
 export function getTierBadgeClass(tier: string) {
   const normalized = tier.toUpperCase();
   if (normalized === "MASTER") {
-    return "bg-gradient-to-r from-amber-500/20 to-primary/20 text-amber-300 border border-amber-500/30";
+    return "bg-gradient-to-r from-amber-500/20 to-primary/20 text-amber-700 dark:text-amber-300 border border-amber-500/30";
   }
   if (normalized === "ENTERPRISE") {
     return "bg-primary/20 text-primary border border-primary/30";
   }
   if (normalized === "PRO") {
-    return "bg-violet-500/20 text-violet-300 border border-violet-500/30";
+    return "bg-primary/15 dark:bg-violet-500/20 text-primary dark:text-violet-300 border border-primary/30";
   }
   return "bg-muted text-muted-foreground border border-border";
 }
@@ -45,20 +45,20 @@ export function DashboardUserCard({
   const userTier = user.tier || "PRO";
 
   return (
-    <div className="p-3 border-t border-border/70 bg-[#0E1017]/80 shrink-0">
-      <div className="bg-[#12141F] border border-border/80 rounded-xl p-3 space-y-2.5 shadow-md">
+    <div className="p-3 border-t border-border dark:border-white/[0.08] bg-muted/30 dark:bg-[#090A10] shrink-0">
+      <div className="bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-xl p-3 space-y-2.5 shadow-sm">
         {/* User Identity Row */}
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs shrink-0">
             {userInitials}
           </div>
           <div className="min-w-0 flex-1 truncate">
-            <p className="text-xs font-semibold text-white truncate leading-tight">{user.name}</p>
+            <p className="text-xs font-semibold text-foreground dark:text-white truncate leading-tight">{user.name}</p>
             <p className="text-[10px] text-muted-foreground truncate leading-tight">{user.email}</p>
           </div>
           <span
             className={cn(
-              "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase shrink-0",
+              "px-1.5 py-0.5 rounded text-[9px] font-mono font-bold tracking-wider uppercase shrink-0",
               getTierBadgeClass(userTier)
             )}
           >
@@ -70,7 +70,7 @@ export function DashboardUserCard({
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
             <span>MCU Quota</span>
-            <span className="font-mono text-slate-300">{quotaPercent}%</span>
+            <span className="font-mono text-foreground dark:text-slate-300">{quotaPercent}%</span>
           </div>
           <div className="w-full h-1.5 bg-muted/60 rounded-full overflow-hidden">
             <div
@@ -84,7 +84,7 @@ export function DashboardUserCard({
         <Link
           href="/pricing"
           onClick={onCloseMobile}
-          className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate"
+          className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary hover:text-foreground dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate"
         >
           <span>{isVi ? "Nâng Cấp Gói" : "Upgrade Tier"}</span>
           <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />

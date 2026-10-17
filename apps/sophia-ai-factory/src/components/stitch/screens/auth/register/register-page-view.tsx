@@ -107,17 +107,17 @@ export function RegisterPageView() {
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center bg-[#08090D] p-6 antialiased relative"
+      className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 p-6 antialiased relative transition-colors duration-300"
       data-testid="register-page"
     >
       {/* Locale Toggle */}
       <button
         type="button"
         onClick={switchLocale}
-        className="fixed top-4 right-4 z-20 flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors rounded-full px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08]"
+        className="fixed top-4 right-4 z-20 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-[#0B0F19] dark:hover:text-white transition-colors rounded-full px-3 py-1.5 bg-white dark:bg-[#11131F] hover:bg-slate-50 dark:hover:bg-white/[0.1] border border-[#E2E8F0] dark:border-white/[0.08] shadow-sm"
         aria-label="Toggle language"
       >
-        <Globe className="w-3.5 h-3.5 text-indigo-400" aria-hidden="true" />
+        <Globe className="w-3.5 h-3.5 text-[#4338CA] dark:text-indigo-400" aria-hidden="true" />
         <span className="font-semibold uppercase tracking-wider">
           {locale === 'en' ? 'VI' : 'EN'}
         </span>
@@ -125,15 +125,15 @@ export function RegisterPageView() {
 
       {/* Ambient background glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-indigo-600/10 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] bg-purple-600/10 rounded-full blur-[140px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-[#4338CA]/8 dark:bg-[#6366F1]/10 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] bg-[#D97706]/8 dark:bg-[#F59E0B]/10 rounded-full blur-[140px]" />
       </div>
 
       <div className="w-full max-w-[460px] relative z-10">
         {step === 'success' ? (
           <RegisterSuccessView />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#12141F]/90 p-8 md:p-10 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl transition-all duration-500">
+          <div className="rounded-2xl border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] p-8 md:p-10 shadow-xl dark:shadow-2xl transition-all duration-500">
             <RegisterHeader error={error} />
 
             <RegisterForm
@@ -145,19 +145,19 @@ export function RegisterPageView() {
 
             {/* Divider */}
             <div className="relative flex items-center my-6">
-              <div className="flex-grow border-t border-white/[0.08]" />
-              <span className="flex-shrink mx-3 text-xs font-bold text-slate-500 uppercase tracking-widest">
+              <div className="flex-grow border-t border-[#E2E8F0] dark:border-white/[0.08]" />
+              <span className="flex-shrink mx-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                 {t('or')}
               </span>
-              <div className="flex-grow border-t border-white/[0.08]" />
+              <div className="flex-grow border-t border-[#E2E8F0] dark:border-white/[0.08]" />
             </div>
 
             <SocialAuthButtons />
 
             {/* Switch to Login Link */}
-            <p className="text-center mt-6 text-xs text-slate-400">
+            <p className="text-center mt-6 text-xs text-slate-600 dark:text-slate-400">
               {t('hasAccount')}{' '}
-              <Link href="/login" className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
+              <Link href="/login" className="text-[#4338CA] dark:text-indigo-400 font-semibold hover:opacity-80 dark:hover:text-indigo-300 transition-colors">
                 {t('signIn')}
               </Link>
             </p>
@@ -165,7 +165,7 @@ export function RegisterPageView() {
         )}
 
         {/* Footer */}
-        <p className="mt-8 text-center text-xs text-slate-500">
+        <p className="mt-8 text-center text-xs text-slate-500 dark:text-slate-500">
           &copy; {new Date().getFullYear()} Sophia AI Factory. All rights reserved.
         </p>
       </div>

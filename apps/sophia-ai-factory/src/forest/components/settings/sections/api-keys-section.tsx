@@ -92,16 +92,16 @@ export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
   }, []);
 
   return (
-    <Card>
+    <Card className="bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08]">
       <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
+        <CardTitle className="text-foreground dark:text-white">{t('title')}</CardTitle>
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 font-mono">
         {KEY_CONFIGS.map((config) => {
           const keyValue = form.watch(`apiKeys.${config.id}`) ?? '';
           return (
-            <div key={config.id} className="space-y-1.5 relative">
+            <div key={config.id} className="space-y-1.5 relative font-sans">
               <div className="sm:absolute sm:right-0 sm:top-0 flex items-center justify-end z-10">
                 <a
                   href={config.helpUrl}
@@ -139,9 +139,9 @@ export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
           );
         })}
 
-        <div className="rounded-lg bg-primary/5 border border-primary/10 px-4 py-3 mt-4">
+        <div className="rounded-lg bg-primary/5 border border-border dark:border-white/[0.08] px-4 py-3 mt-4 font-sans">
           <p className="text-xs text-muted-foreground">
-            <strong className="text-foreground">{t('securityNoteLabel')}</strong> {t('securityNoteBody')}
+            <strong className="text-foreground dark:text-white">{t('securityNoteLabel')}</strong> {t('securityNoteBody')}
           </p>
         </div>
       </CardContent>

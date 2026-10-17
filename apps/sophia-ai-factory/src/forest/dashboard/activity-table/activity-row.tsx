@@ -20,7 +20,7 @@ export function ActivityRow({ row }: { row: DashboardActivityItem }) {
 
   return (
     <tr
-      className="hover:bg-white/[0.02] transition-colors group"
+      className="hover:bg-muted/40 dark:hover:bg-white/[0.02] transition-colors group"
       data-testid={`activity-row-${row.id}`}
     >
       <td className="py-3 px-4 font-mono text-muted-foreground whitespace-nowrap">
@@ -32,7 +32,7 @@ export function ActivityRow({ row }: { row: DashboardActivityItem }) {
             className={cn(
               "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border",
               isPayment
-                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                 : "bg-primary/10 text-primary border-primary/20"
             )}
           >
@@ -42,12 +42,12 @@ export function ActivityRow({ row }: { row: DashboardActivityItem }) {
               <Film className="w-3.5 h-3.5" />
             )}
           </div>
-          <span className="font-semibold text-white tracking-wide truncate max-w-xs">
+          <span className="font-semibold text-foreground dark:text-white tracking-wide truncate max-w-xs">
             {title}
           </span>
         </div>
       </td>
-      <td className="py-3 px-4 text-right font-mono font-medium text-slate-300">
+      <td className="py-3 px-4 text-right font-mono font-medium text-foreground/80 dark:text-slate-300">
         {detailText}
       </td>
       <td className="py-3 px-4 whitespace-nowrap">
@@ -56,7 +56,7 @@ export function ActivityRow({ row }: { row: DashboardActivityItem }) {
       <td className="py-3 px-4 text-right">
         <Link
           href={actionHref}
-          className="inline-flex items-center justify-center p-1.5 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.06] transition-colors"
+          className="inline-flex items-center justify-center p-1.5 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/[0.06] transition-colors"
           aria-label="View activity details"
         >
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

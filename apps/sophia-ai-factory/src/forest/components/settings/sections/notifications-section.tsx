@@ -31,15 +31,15 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
   const telegramEnabled = watch('settings.notifications.telegram.enabled');
 
   return (
-    <Card>
+    <Card className="bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08]">
       <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
+        <CardTitle className="text-foreground dark:text-white">{t('title')}</CardTitle>
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border dark:border-white/[0.08] bg-background/50 dark:bg-[#090A10]/60 p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="notif-marketing" className="text-base">{t('marketingTitle')}</Label>
+            <Label htmlFor="notif-marketing" className="text-base text-foreground dark:text-white">{t('marketingTitle')}</Label>
             <p className="text-sm text-muted-foreground">{t('marketingDesc')}</p>
           </div>
           <Switch
@@ -51,9 +51,9 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
             }
           />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border dark:border-white/[0.08] bg-background/50 dark:bg-[#090A10]/60 p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="notif-security" className="text-base">{t('securityTitle')}</Label>
+            <Label htmlFor="notif-security" className="text-base text-foreground dark:text-white">{t('securityTitle')}</Label>
             <p className="text-sm text-muted-foreground">{t('securityDesc')}</p>
           </div>
           <Switch
@@ -65,9 +65,9 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
             }
           />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border dark:border-white/[0.08] bg-background/50 dark:bg-[#090A10]/60 p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="notif-telegram" className="text-base">{t('telegramTitle')}</Label>
+            <Label htmlFor="notif-telegram" className="text-base text-foreground dark:text-white">{t('telegramTitle')}</Label>
             <p className="text-sm text-muted-foreground">{t('telegramDesc')}</p>
           </div>
           <Switch

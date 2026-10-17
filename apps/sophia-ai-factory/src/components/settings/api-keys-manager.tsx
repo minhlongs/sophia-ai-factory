@@ -97,13 +97,13 @@ export function ApiKeysManager() {
   };
 
   return (
-    <section className="bg-[#18181B] rounded-2xl p-6 shadow-xl border border-outline-variant/20">
+    <section className="bg-card dark:bg-[#11131F] rounded-2xl p-6 shadow-sm border border-border dark:border-white/[0.08]">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
+          <h3 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
             <Key className="w-5 h-5 text-primary" /> AI Provider Credentials (BYOK)
           </h3>
-          <p className="text-xs text-on-surface-variant mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Keys are encrypted at rest with AES-GCM-256 and never logged or exposed in plaintext.
           </p>
         </div>
@@ -111,7 +111,7 @@ export function ApiKeysManager() {
 
       {statusMessage && (
         <div className={`mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-          statusMessage.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+          statusMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
         }`}>
           {statusMessage.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
           {statusMessage.text}
@@ -124,13 +124,13 @@ export function ApiKeysManager() {
           const isEditing = editingProvider === p.id;
 
           return (
-            <div key={p.id} className="p-4 bg-surface-container-highest/40 rounded-xl border border-outline-variant/30">
+            <div key={p.id} className="p-4 bg-background/60 dark:bg-[#090A10]/60 rounded-xl border border-border dark:border-white/[0.08]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${isConfigured ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-amber-500'}`} />
+                  <div className={`w-2.5 h-2.5 rounded-full ${isConfigured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                   <div>
-                    <h4 className="text-sm font-bold text-on-surface">{p.name}</h4>
-                    <p className="text-xs text-on-surface-variant font-mono">
+                    <h4 className="text-sm font-bold text-foreground dark:text-white">{p.name}</h4>
+                    <p className="text-xs text-muted-foreground font-mono">
                       {isConfigured ? '••••••••••••••••••••••••••••' : p.hint}
                     </p>
                   </div>
@@ -138,7 +138,7 @@ export function ApiKeysManager() {
 
                 <div className="flex items-center gap-2">
                   {isConfigured && !isEditing && (
-                    <button onClick={() => handleRevoke(p.id)} disabled={actionLoading} className="p-2 text-on-surface-variant hover:text-error" title="Revoke">
+                    <button onClick={() => handleRevoke(p.id)} disabled={actionLoading} className="p-2 text-muted-foreground hover:text-destructive" title="Revoke">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -147,7 +147,7 @@ export function ApiKeysManager() {
                       {isConfigured ? 'Replace Key' : 'Connect'}
                     </button>
                   ) : (
-                    <button onClick={() => setEditingProvider(null)} className="text-xs text-on-surface-variant hover:text-on-surface px-2">
+                    <button onClick={() => setEditingProvider(null)} className="text-xs text-muted-foreground hover:text-foreground dark:hover:text-white px-2">
                       Cancel
                     </button>
                   )}
@@ -155,9 +155,9 @@ export function ApiKeysManager() {
               </div>
 
               {isEditing && (
-                <div className="mt-3 pt-3 border-t border-outline-variant/20 flex flex-col sm:flex-row gap-2">
-                  <Input type="password" placeholder={`Enter ${p.name} key`} value={inputKey} onChange={(e) => setInputKey(e.target.value)} className="flex-1 bg-surface-container-lowest text-xs font-mono" />
-                  <button onClick={() => handleTestAndSave(p.id)} disabled={actionLoading || !inputKey.trim()} className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-md shadow-primary/20">
+                <div className="mt-3 pt-3 border-t border-border dark:border-white/[0.08] flex flex-col sm:flex-row gap-2">
+                  <Input type="password" placeholder={`Enter ${p.name} key`} value={inputKey} onChange={(e) => setInputKey(e.target.value)} className="flex-1 bg-background dark:bg-[#090A10] text-xs font-mono" />
+                  <button onClick={() => handleTestAndSave(p.id)} disabled={actionLoading || !inputKey.trim()} className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-sm">
                     {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                     Test & Save
                   </button>

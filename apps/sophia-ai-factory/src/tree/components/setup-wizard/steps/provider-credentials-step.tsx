@@ -56,7 +56,7 @@ export function ProviderCredentialsStep({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-bold text-foreground tracking-tight">
           Provider Keys / Khóa nhà cung cấp
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
@@ -66,9 +66,9 @@ export function ProviderCredentialsStep({
         </p>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-primary/10 text-primary">
+          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#4338CA]/10 dark:bg-[#6366F1]/15 border border-[#4338CA]/20 dark:border-[#6366F1]/25 text-[#4338CA] dark:text-[#6366F1]">
             Avatar Video Engine / Khuyến nghị
           </span>
         </div>
@@ -84,9 +84,9 @@ export function ProviderCredentialsStep({
         <SavedHint hint={getSaved('heygen')} />
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted text-muted-foreground">
+          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted border border-border dark:border-white/[0.08] text-muted-foreground">
             Optional / Tùy chọn
           </span>
         </div>
@@ -102,9 +102,9 @@ export function ProviderCredentialsStep({
         <SavedHint hint={getSaved('resend')} />
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted text-muted-foreground">
+          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted border border-border dark:border-white/[0.08] text-muted-foreground">
             Crypto Billing (Optional / Tùy chọn)
           </span>
         </div>
@@ -127,13 +127,13 @@ export function ProviderCredentialsStep({
         tRouting={(k) => tRouting(k)}
       />
 
-      <div className="flex justify-between items-center pt-4 border-t border-border">
+      <div className="flex justify-between items-center pt-4 border-t border-border dark:border-white/[0.08]">
         {onBack ? (
-          <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2">
+          <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors">
             Quay lại / Back
           </button>
         ) : <div />}
-        <button type="button" onClick={onNext} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all">
+        <button type="button" onClick={onNext} className="rounded-lg bg-[#4338CA] dark:bg-[#6366F1] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-95 transition-all shadow-xs">
           {actions('next')}
         </button>
       </div>

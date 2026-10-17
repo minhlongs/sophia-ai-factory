@@ -67,7 +67,7 @@ export function DashboardRevenueChart({
   return (
     <div
       className={cn(
-        "lg:col-span-2 bg-[#12141F]/85 backdrop-blur-xl border border-white/[0.08] hover:border-primary/30 transition-all duration-300 rounded-xl p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_20px_rgba(0,0,0,0.35)] flex flex-col justify-between",
+        "lg:col-span-2 bg-card dark:bg-[#11131F] backdrop-blur-xl border border-border dark:border-white/[0.08] hover:border-primary/30 transition-all duration-300 rounded-xl p-5 shadow-sm dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_20px_rgba(0,0,0,0.35)] flex flex-col justify-between",
         className
       )}
       data-testid="revenue-chart-card"

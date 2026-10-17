@@ -87,17 +87,17 @@ export function DashboardNavItems({
             className={cn(
               "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-300 group min-h-[42px]",
               active
-                ? "text-white bg-primary/10 font-medium border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                : "text-muted-foreground hover:text-white hover:bg-muted/60 hover:translate-x-1.5 border border-transparent"
+                ? "text-foreground dark:text-white bg-primary/10 font-medium border border-primary/30"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 hover:translate-x-1.5 border border-transparent"
             )}
           >
             {active && (
-              <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent shadow-[0_0_8px_hsl(var(--primary))]" />
+              <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent" />
             )}
             <IconComponent
               className={cn(
                 "w-4 h-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
-                active ? "text-primary" : "text-muted-foreground group-hover:text-white"
+                active ? "text-primary" : "text-muted-foreground group-hover:text-foreground dark:group-hover:text-white"
               )}
               aria-hidden="true"
             />
@@ -119,17 +119,17 @@ export function DashboardNavItems({
                 className={cn(
                   "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-300 group min-h-[42px]",
                   creatorActive
-                    ? "text-white bg-primary/10 font-medium border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                    : "text-muted-foreground hover:text-white hover:bg-muted/60 hover:translate-x-1.5 border border-transparent"
+                    ? "text-foreground dark:text-white bg-primary/10 font-medium border border-primary/30"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 hover:translate-x-1.5 border border-transparent"
                 )}
               >
                 {creatorActive && (
-                  <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent shadow-[0_0_8px_hsl(var(--primary))]" />
+                  <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent" />
                 )}
                 <Sparkles
                   className={cn(
                     "w-4 h-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
-                    creatorActive ? "text-primary" : "text-muted-foreground group-hover:text-white"
+                    creatorActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground dark:group-hover:text-white"
                   )}
                   aria-hidden="true"
                 />

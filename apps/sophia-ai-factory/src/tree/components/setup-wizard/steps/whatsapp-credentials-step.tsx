@@ -28,7 +28,7 @@ interface WhatsAppCredentialsStepProps {
 function SavedHint({ hint }: { hint: string | null }) {
   if (!hint) return null;
   return (
-    <p className="text-xs text-green-600 mt-1">
+    <p className="font-mono text-xs text-emerald-700 dark:text-emerald-400 mt-1">
       Saved / Đã lưu: {hint} &nbsp;·&nbsp; Enter new value to replace / Nhập giá trị mới để thay thế
     </p>
   );
@@ -42,9 +42,9 @@ export function WhatsAppCredentialsStep({
   const t = useTranslations('setupWizard.whatsapp');
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-bold text-foreground tracking-tight">
           {t('title') || 'WhatsApp Business Setup'}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
@@ -56,7 +56,7 @@ export function WhatsAppCredentialsStep({
       {/* Phone Number ID — required */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">
             Required / Bắt buộc
           </span>
         </div>
@@ -84,7 +84,7 @@ export function WhatsAppCredentialsStep({
       {/* WA Token — required */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">
             Required / Bắt buộc
           </span>
         </div>
@@ -109,7 +109,7 @@ export function WhatsAppCredentialsStep({
       {/* WABA ID — optional */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-muted-100 text-foreground px-2 py-0.5 rounded">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-muted border border-border dark:border-white/[0.08] text-muted-foreground px-2 py-0.5 rounded">
             Optional / Tùy chọn
           </span>
         </div>
@@ -132,7 +132,7 @@ export function WhatsAppCredentialsStep({
       {/* Business ID — optional */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-muted-100 text-foreground px-2 py-0.5 rounded">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-muted border border-border dark:border-white/[0.08] text-muted-foreground px-2 py-0.5 rounded">
             Optional / Tùy chọn
           </span>
         </div>

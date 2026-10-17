@@ -26,15 +26,15 @@ export function Card({
   ...props
 }: CardProps) {
   const baseStyles = cn(
-    'bg-card/85 dark:bg-[#12141F]/85 border border-border dark:border-white/[0.08] backdrop-blur-xl rounded-2xl',
-    'shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
+    'bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-2xl',
+    'shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
     'transition-all duration-300'
   );
 
   const variants = {
     elevated: '',
     outlined: 'border border-border dark:border-white/[0.08]',
-    filled: 'bg-muted/80 dark:bg-[#181B2A]/90',
+    filled: 'bg-muted dark:bg-[#0D0F19]',
   };
 
   const paddings = {
@@ -46,7 +46,7 @@ export function Card({
   };
 
   const hoverStyles = hoverable
-    ? 'hover:-translate-y-1 hover:border-indigo-500/40 hover:shadow-[0_12px_32px_-8px_rgba(99,102,241,0.25)]'
+    ? 'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md dark:hover:shadow-[0_8px_30px_-8px_rgba(99,102,241,0.2)]'
     : '';
 
   return (

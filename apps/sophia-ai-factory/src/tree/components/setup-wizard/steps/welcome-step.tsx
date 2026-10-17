@@ -28,15 +28,15 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+      <div className="text-center space-y-2.5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D97706]/10 dark:bg-[#F59E0B]/10 text-[#D97706] dark:text-[#F59E0B] border border-[#D97706]/20 dark:border-[#F59E0B]/20 font-mono text-xs font-semibold">
           <Clock className="w-3.5 h-3.5" />
           ~5 Minutes Setup / Thiết lập trong ~5 phút
         </div>
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">
           Welcome to Sophia AI Factory / Chào mừng đến với Sophia
         </h2>
-        <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+        <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
           Your autonomous video empire platform for non-technical CEOs. Let’s configure your system in a few simple steps.
           <br />
           Nền tảng vận hành đế chế video AI tự động dành cho nhà lãnh đạo.
@@ -45,9 +45,9 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         {highlights.map((h, i) => (
-          <div key={i} className="p-4 rounded-xl border border-border bg-card space-y-2 text-left">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              <h.icon className="w-5 h-5" />
+          <div key={i} className="p-4 rounded-xl border border-border dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]/60 space-y-2.5 text-left transition-colors">
+            <div className="w-9 h-9 rounded-lg bg-[#4338CA]/10 dark:bg-[#6366F1]/15 border border-[#4338CA]/20 dark:border-[#6366F1]/25 flex items-center justify-center text-[#4338CA] dark:text-[#6366F1]">
+              <h.icon className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-semibold text-foreground">{h.title}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">{h.desc}</p>
@@ -57,9 +57,9 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
 
       {/* What You Need vs Optional */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
+        <div className="p-4 rounded-xl border border-border dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]/60 space-y-2.5 text-xs">
           <span className="font-semibold text-foreground flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-primary" />
+            <CheckCircle2 className="w-4 h-4 text-[#4338CA] dark:text-[#6366F1]" />
             What You Need / Bạn cần chuẩn bị:
           </span>
           <ul className="space-y-1.5 text-muted-foreground pl-5 list-disc">
@@ -68,9 +68,9 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
             <li>d-id or fal.ai key (for image & video creation)</li>
           </ul>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
-          <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+        <div className="p-4 rounded-xl border border-border dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]/60 space-y-2.5 text-xs">
+          <span className="font-semibold text-foreground flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Optional Providers / Tùy chọn nâng cao:
           </span>
           <ul className="space-y-1.5 text-muted-foreground pl-5 list-disc">
@@ -81,11 +81,11 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         </div>
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-2 border-t border-border dark:border-white/[0.08]">
         <button
           type="button"
           onClick={onNext}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-sm"
+          className="bg-[#4338CA] dark:bg-[#6366F1] hover:opacity-95 text-white px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-xs"
         >
           Bắt đầu thiết lập / Get Started
           <ArrowRight className="w-4 h-4" />

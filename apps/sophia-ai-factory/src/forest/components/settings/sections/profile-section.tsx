@@ -23,14 +23,14 @@ export function ProfileSection({ form, isPending }: ProfileSectionProps) {
   const { register, formState: { errors } } = form;
 
   return (
-    <Card>
+    <Card className="bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08]">
       <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
+        <CardTitle className="text-foreground dark:text-white">{t('title')}</CardTitle>
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="fullName">{t('fullName')}</Label>
+          <Label htmlFor="fullName" className="text-foreground dark:text-white">{t('fullName')}</Label>
           <Input
             id="fullName"
             placeholder={t('fullNamePlaceholder')}
@@ -45,12 +45,12 @@ export function ProfileSection({ form, isPending }: ProfileSectionProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">{t('email')}</Label>
+          <Label htmlFor="email" className="text-foreground dark:text-white">{t('email')}</Label>
           <Input
             id="email"
             {...register('email')}
             disabled={true}
-            className="bg-muted text-muted-foreground"
+            className="bg-muted text-muted-foreground font-mono"
           />
           <p className="text-xs text-muted-foreground">{t('emailManagedNote')}</p>
         </div>

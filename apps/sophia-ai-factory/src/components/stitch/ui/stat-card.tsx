@@ -28,12 +28,12 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const ICON_COLOR_STYLES: Record<StatCardIconColor, string> = {
-  indigo: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]',
-  emerald: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.15)]',
-  violet: 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border border-violet-500/20 shadow-[0_0_12px_rgba(168,85,247,0.15)]',
-  amber: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.15)]',
-  rose: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 shadow-[0_0_12px_rgba(244,63,94,0.15)]',
-  primary: 'bg-primary/10 text-primary-700 dark:text-primary-400 border border-primary/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]',
+  indigo: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20',
+  emerald: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
+  violet: 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border border-violet-500/20',
+  amber: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20',
+  rose: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20',
+  primary: 'bg-primary/10 text-primary-700 dark:text-primary-400 border border-primary/20',
 };
 
 /**
@@ -63,19 +63,19 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'bg-card/85 dark:bg-[#12141F]/85 backdrop-blur-xl',
-        'border border-border dark:border-white/[0.08] hover:border-primary/40',
-        'rounded-2xl p-6 shadow-sm',
-        'transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)]',
+        'bg-card dark:bg-[#11131F]',
+        'border border-border dark:border-white/[0.08] hover:border-primary/30',
+        'rounded-2xl p-6 shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
+        'transition-all duration-300 hover:-translate-y-0.5',
         'group relative overflow-hidden flex flex-col justify-between',
         className
       )}
       data-testid={testId}
       {...props}
     >
-      {/* Ambient background accent glow */}
+      {/* Subtle top highlight — Director's studio lighting */}
       <div
-        className="absolute -top-12 -right-12 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"
+        className="absolute -top-12 -right-12 w-24 h-24 bg-accent/3 dark:bg-accent/5 rounded-full blur-3xl pointer-events-none"
         aria-hidden="true"
       />
 
@@ -121,7 +121,7 @@ export function StatCard({
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1">
           {label}
         </span>
-        <div className="text-2xl lg:text-3xl font-bold font-mono text-foreground tracking-tight">
+        <div className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
           {value}
         </div>
         {subtitle && (

@@ -49,7 +49,7 @@ export default function CampaignsPage({
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-foreground tracking-tight">
+          <h1 className="text-[28px] font-bold text-foreground dark:text-white tracking-tight">
             {t('title')}
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -59,7 +59,7 @@ export default function CampaignsPage({
         <Button
           onClick={onCreateCampaign}
           variant="primary"
-          className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-white hover:text-white"
+          className="bg-primary hover:bg-primary/90 shadow-sm text-white hover:text-white"
         >
           <Plus className="w-5 h-5 mr-2" aria-hidden="true" />
           {t('actions.createCampaign')}

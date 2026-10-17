@@ -16,7 +16,7 @@ export function SocialAuthButtons({ onMagicLink, magicLinkLoading }: SocialAuthB
         type="button"
         disabled
         title={t('ssoComingSoon')}
-        className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-zinc-800 bg-transparent text-white text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-transparent text-[#0B0F19] dark:text-white text-sm font-medium transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
         aria-label={t('googleSignIn')}
       >
         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true" role="img">
@@ -33,7 +33,7 @@ export function SocialAuthButtons({ onMagicLink, magicLinkLoading }: SocialAuthB
         type="button"
         onClick={onMagicLink}
         disabled={magicLinkLoading}
-        className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-zinc-800 bg-transparent text-white text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-transparent text-[#0B0F19] dark:text-white text-sm font-medium transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
         aria-label={t('magicLink')}
       >
         {magicLinkLoading ? (

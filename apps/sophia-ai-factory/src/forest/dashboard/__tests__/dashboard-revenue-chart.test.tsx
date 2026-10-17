@@ -101,11 +101,12 @@ describe('DashboardRevenueChart — Bottom-Up Financial Visualization', () => {
     expect(tooltips[0].textContent).toContain('$4,200');
   });
 
-  it('applies Obsidian Cyber-Glass container styling', () => {
+  it('applies Director Control Deck adaptive container styling', () => {
     render(<DashboardRevenueChart />);
 
     const card = screen.getByTestId('revenue-chart-card');
-    expect(card.className).toContain('bg-[#12141F]/85');
+    expect(card.className).toContain('bg-card');
+    expect(card.className).toContain('dark:bg-[#11131F]');
     expect(card.className).toContain('backdrop-blur-xl');
   });
 });

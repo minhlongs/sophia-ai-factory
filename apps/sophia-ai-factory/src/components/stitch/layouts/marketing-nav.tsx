@@ -34,20 +34,20 @@ export function MarketingNav({ className }: MarketingNavProps) {
     <header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        'bg-[#08090D]/80 backdrop-blur-xl border-b border-white/[0.08]',
+        'bg-background/85 dark:bg-[#090A10]/85 studio-glass backdrop-blur-xl border-b border-border dark:border-white/[0.08]',
         className
       )}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 text-white" />
+        <Link href="/" className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+          <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground border border-primary/25 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <Sparkles className="w-5 h-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+            <span className="text-xl font-black tracking-tight text-foreground dark:text-white flex items-center gap-1.5">
               Sophia
-              <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
                 AI Factory
               </span>
             </span>
@@ -55,7 +55,7 @@ export function MarketingNav({ className }: MarketingNavProps) {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-full px-4 py-1.5 backdrop-blur-md">
+        <nav className="hidden md:flex items-center gap-1 bg-muted/60 dark:bg-[#11131F]/90 border border-border dark:border-white/[0.08] rounded-full px-4 py-1.5 backdrop-blur-md">
           {navLinks.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -65,8 +65,8 @@ export function MarketingNav({ className }: MarketingNavProps) {
                 className={cn(
                   'px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'bg-indigo-500/20 text-white shadow-inner font-semibold'
-                    : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                    ? 'bg-primary text-primary-foreground shadow-xs font-semibold'
+                    : 'text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/80 dark:hover:bg-white/[0.06]'
                 )}
               >
                 {item.label}
@@ -81,17 +81,17 @@ export function MarketingNav({ className }: MarketingNavProps) {
           <button
             type="button"
             onClick={switchLocale}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] hover:bg-muted dark:hover:bg-white/[0.08] border border-border dark:border-white/[0.08] transition-all"
             aria-label="Toggle language"
           >
-            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+            <Globe className="w-3.5 h-3.5 text-primary" />
             <span className="uppercase tracking-wider">{locale === 'en' ? 'VI' : 'EN'}</span>
           </button>
 
           {/* Login Button */}
           <Link
             href="/login"
-            className="text-sm font-semibold text-slate-300 hover:text-white px-3 py-2 transition-colors"
+            className="text-sm font-semibold text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-white px-3 py-2 transition-colors"
           >
             {t('login')}
           </Link>
@@ -99,7 +99,7 @@ export function MarketingNav({ className }: MarketingNavProps) {
           {/* Get Started CTA */}
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2 text-sm font-bold text-white px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 border border-indigo-400/30 transition-all active:scale-[0.98]"
+            className="group inline-flex items-center gap-2 text-sm font-bold text-primary-foreground px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 border border-primary/25 shadow-sm transition-all active:scale-[0.98]"
           >
             <span>{tStitch('nav.getStarted')}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -111,14 +111,14 @@ export function MarketingNav({ className }: MarketingNavProps) {
           <button
             type="button"
             onClick={switchLocale}
-            className="p-2 rounded-lg text-slate-300 hover:text-white bg-white/[0.05] text-xs font-bold uppercase"
+            className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-xs font-mono font-bold uppercase"
           >
             {locale === 'en' ? 'VI' : 'EN'}
           </button>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-300 hover:text-white bg-white/[0.05] border border-white/[0.08]"
+            className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08]"
             aria-label="Toggle mobile menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -128,31 +128,31 @@ export function MarketingNav({ className }: MarketingNavProps) {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#08090D]/95 border-b border-white/[0.08] px-6 py-6 space-y-4 backdrop-blur-2xl">
+        <div className="md:hidden bg-card/95 dark:bg-[#090A10]/95 border-b border-border dark:border-white/[0.08] px-6 py-6 space-y-4 backdrop-blur-2xl">
           <div className="flex flex-col space-y-2">
             {navLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-xl text-base font-medium text-slate-200 hover:text-white hover:bg-white/[0.05]"
+                className="px-4 py-3 rounded-xl text-base font-medium text-foreground dark:text-slate-200 hover:text-primary dark:hover:text-white hover:bg-muted/60 dark:hover:bg-white/[0.05]"
               >
                 {item.label}
               </Link>
             ))}
           </div>
-          <div className="pt-4 border-t border-white/[0.08] flex flex-col gap-3">
+          <div className="pt-4 border-t border-border dark:border-white/[0.08] flex flex-col gap-3">
             <Link
               href="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-3 rounded-xl text-slate-200 bg-white/[0.05] text-sm font-semibold"
+              className="w-full text-center py-3 rounded-xl text-foreground dark:text-slate-200 bg-muted/60 dark:bg-white/[0.05] border border-border dark:border-white/[0.08] text-sm font-semibold"
             >
               {t('login')}
             </Link>
             <Link
               href="/register"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/25"
+              className="w-full text-center py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-sm"
             >
               {tStitch('nav.getStarted')}
             </Link>

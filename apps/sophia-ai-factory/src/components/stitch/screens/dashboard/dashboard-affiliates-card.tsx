@@ -15,10 +15,10 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
   const t = useTranslations('stitch.dashboard');
 
   return (
-    <Card padding="lg">
+    <Card padding="lg" className="bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08]">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h4 className="font-headline-sm text-headline-sm text-on-surface">
+          <h4 className="text-base font-bold text-foreground dark:text-white tracking-tight">
             {t('topAffiliates.title')}
           </h4>
           {affiliates.length > 0 && (
@@ -33,13 +33,13 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
       <CardContent>
         {affiliates.length === 0 ? (
           <div className="py-xl text-center flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant mb-md">
+            <div className="w-12 h-12 rounded-full bg-muted dark:bg-white/[0.04] border border-border dark:border-white/[0.08] flex items-center justify-center text-muted-foreground mb-md">
               <Users className="w-6 h-6 opacity-60" />
             </div>
-            <p className="font-label-lg text-on-surface font-medium mb-xs">
+            <p className="text-sm text-foreground dark:text-white font-semibold mb-xs">
               {t('topAffiliates.emptyTitle')}
             </p>
-            <p className="font-body-sm text-on-surface-variant max-w-xs mb-lg">
+            <p className="text-xs text-muted-foreground max-w-xs mb-lg">
               {t('topAffiliates.emptyDesc')}
             </p>
             <Link href="/affiliates">
@@ -60,16 +60,16 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
                     size="md"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-label-md text-on-surface truncate">{affiliate.name}</p>
-                    <p className="text-[12px] text-on-surface-variant truncate">{affiliate.stats}</p>
+                    <p className="text-sm font-semibold text-foreground dark:text-white truncate">{affiliate.name}</p>
+                    <p className="text-[12px] font-mono text-muted-foreground truncate">{affiliate.stats}</p>
                   </div>
-                  <div className="text-emerald-600 font-label-md font-semibold shrink-0">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-semibold shrink-0">
                     {affiliate.commission}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-lg pt-lg border-t border-outline-variant">
+            <div className="mt-lg pt-lg border-t border-border dark:border-white/[0.08]">
               <Link href="/affiliates">
                 <Button variant="outline" fullWidth>
                   {t('topAffiliates.invite')}

@@ -13,7 +13,7 @@ export function LandingHeroView() {
   const tLanding = useTranslations('landing');
 
   return (
-    <div className="min-h-screen bg-[#08090D] text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-200 transition-colors duration-300">
       <MarketingNav />
 
       <main className="relative pt-32 pb-20 md:pt-44 md:pb-32 overflow-hidden">

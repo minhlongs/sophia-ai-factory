@@ -41,27 +41,26 @@ export function Button({
 }: ButtonProps) {
   const baseStyles = `
     inline-flex items-center justify-center gap-sm
-    font-label-md font-semibold
+    font-semibold
     rounded-xl transition-all duration-200
     active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
-    focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60
-    custom-shadow-low
+    focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1
   `;
 
   const variants = {
     primary: `
-      bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white
-      hover:from-indigo-500 hover:via-indigo-400 hover:to-violet-500
-      shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40
-      border border-indigo-400/30
+      bg-primary text-primary-foreground
+      hover:bg-primary/90
+      shadow-md hover:shadow-lg
+      border border-primary/20
     `,
     secondary: `
-      bg-black/5 dark:bg-white/10 text-foreground dark:text-white border border-border dark:border-white/[0.08]
-      hover:bg-black/10 dark:hover:bg-white/15 hover:border-border dark:hover:border-white/20
+      bg-card dark:bg-card text-foreground border border-border dark:border-white/[0.08]
+      hover:bg-muted dark:hover:bg-white/10 hover:border-primary/30
     `,
     outline: `
-      bg-transparent border border-border dark:border-white/[0.08] text-foreground dark:text-slate-200
-      hover:bg-black/5 dark:hover:bg-white/5 hover:border-primary/50 hover:text-foreground dark:hover:text-white
+      bg-transparent border border-border dark:border-white/[0.08] text-foreground
+      hover:bg-muted/50 dark:hover:bg-white/5 hover:border-primary/40
     `,
     ghost: `
       bg-transparent text-muted-foreground dark:text-slate-300

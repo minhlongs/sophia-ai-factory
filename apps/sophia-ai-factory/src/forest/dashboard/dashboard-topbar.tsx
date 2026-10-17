@@ -74,7 +74,7 @@ export function DashboardTopBar({
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 md:left-[280px] h-16 z-20 bg-[#08090D]/80 backdrop-blur-xl border-b border-[#222536] px-4 md:px-8 flex items-center justify-between transition-all select-none",
+        "fixed top-0 left-0 right-0 md:left-[280px] h-16 z-20 bg-background/85 dark:bg-[#08090D]/80 studio-glass backdrop-blur-xl border-b border-border dark:border-[#222536] px-4 md:px-8 flex items-center justify-between transition-all select-none",
         className
       )}
       data-testid="dashboard-topbar"
@@ -85,7 +85,7 @@ export function DashboardTopBar({
         <button
           type="button"
           onClick={onOpenMobileDrawer}
-          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-white/[0.08] transition-colors shrink-0"
+          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 dark:hover:bg-white/[0.06] border border-transparent hover:border-border dark:hover:border-white/[0.08] transition-colors shrink-0"
           aria-label="Open mobile navigation"
           data-testid="mobile-drawer-trigger"
         >
@@ -101,7 +101,7 @@ export function DashboardTopBar({
           <input
             type="search"
             placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-4 py-1.5 text-xs md:text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+            className="w-full pl-9 pr-4 py-1.5 text-xs md:text-sm rounded-lg bg-muted/60 dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
             data-testid="dashboard-search-input"
           />
         </div>
@@ -113,7 +113,7 @@ export function DashboardTopBar({
         <button
           type="button"
           onClick={toggleLocale}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-primary/30 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] hover:bg-muted/70 dark:hover:bg-white/[0.08] border border-border dark:border-white/[0.08] hover:border-primary/30 transition-all"
           aria-label="Toggle language"
           data-testid="locale-switcher"
         >
@@ -126,14 +126,14 @@ export function DashboardTopBar({
         {/* Notification Bell with Unread Badge */}
         <button
           type="button"
-          className="relative p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] transition-all"
+          className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 dark:hover:bg-white/[0.05] border border-transparent hover:border-border dark:hover:border-white/[0.08] transition-all"
           aria-label="Notifications"
           data-testid="notification-button"
         >
           <Bell className="w-4 h-4" />
           {unreadNotificationCount > 0 && (
             <span
-              className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm ring-2 ring-[#08090D]"
+              className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-mono font-bold text-white shadow-sm ring-2 ring-background dark:ring-[#090A10]"
               data-testid="unread-notification-badge"
             >
               {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
@@ -142,7 +142,7 @@ export function DashboardTopBar({
         </button>
 
         {/* Divider */}
-        <div className="h-6 w-[1px] bg-white/[0.08] hidden sm:block" />
+        <div className="h-6 w-[1px] bg-border dark:bg-white/[0.08] hidden sm:block" />
 
         {/* High-Contrast User Profile Header */}
         <div
@@ -150,12 +150,12 @@ export function DashboardTopBar({
           data-testid="topbar-user-profile"
         >
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-semibold text-white leading-tight">{userName}</p>
-            <span className="inline-block text-[9px] font-bold uppercase tracking-wider text-primary px-1.5 py-0.2 bg-primary/10 rounded border border-primary/20">
+            <p className="text-xs font-semibold text-foreground dark:text-white leading-tight">{userName}</p>
+            <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-wider text-primary px-1.5 py-0.2 bg-primary/10 rounded border border-primary/20">
               {userRole}
             </span>
           </div>
-          <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs ring-1 ring-white/10 shrink-0">
+          <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs ring-1 ring-border dark:ring-white/10 shrink-0">
             {userInitials}
           </div>
         </div>

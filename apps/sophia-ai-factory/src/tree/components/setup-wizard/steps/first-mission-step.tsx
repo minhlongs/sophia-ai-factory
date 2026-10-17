@@ -48,11 +48,11 @@ export function FirstMissionStep({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#4338CA]/10 dark:bg-[#6366F1]/15 border border-[#4338CA]/20 dark:border-[#6366F1]/25 text-[#4338CA] dark:text-[#6366F1] text-xs font-semibold mb-2">
           <Compass className="w-3.5 h-3.5" />
           First Campaign Blueprint / Kế hoạch Video Đầu Tiên
         </div>
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-bold text-foreground tracking-tight">
           How Sophia Runs Your First Mission / Quy trình khởi tạo an toàn
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
@@ -64,24 +64,24 @@ export function FirstMissionStep({
 
       <div className="grid gap-2.5">
         {blueprints.map((item, idx) => (
-          <div key={idx} className="p-3.5 rounded-xl border border-border bg-card/80 flex items-start gap-3">
-            <HelpCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <div key={idx} className="p-3.5 rounded-xl border border-border dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]/60 flex items-start gap-3">
+            <HelpCircle className="w-4 h-4 text-[#4338CA] dark:text-[#6366F1] shrink-0 mt-0.5" />
             <div className="text-xs space-y-0.5 text-left">
-              <h4 className="font-semibold text-foreground">{item.q}</h4>
-              <p className="text-muted-foreground">{item.a}</p>
+              <h4 className="font-mono font-semibold text-foreground">{item.q}</h4>
+              <p className="text-muted-foreground leading-relaxed">{item.a}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-2 text-left">
-        <span className="text-xs font-semibold text-primary flex items-center gap-1.5">
+      <div className="p-3.5 rounded-xl border border-[#D97706]/25 dark:border-[#F59E0B]/25 bg-[#D97706]/5 dark:bg-[#F59E0B]/5 space-y-2 text-left">
+        <span className="text-xs font-semibold text-[#D97706] dark:text-[#F59E0B] flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5" />
           Popular Mission Ideas / Ý tưởng chiến dịch phổ biến:
         </span>
         <div className="flex flex-wrap gap-1.5">
           {quickConcepts.map((c, i) => (
-            <span key={i} className="text-[11px] bg-background border border-border px-2.5 py-1 rounded-lg text-foreground font-medium">
+            <span key={i} className="text-[11px] bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] px-2.5 py-1 rounded-lg text-foreground font-medium">
               {c}
             </span>
           ))}
@@ -89,17 +89,17 @@ export function FirstMissionStep({
       </div>
 
       {saveError && (
-        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/10 text-xs text-destructive font-medium text-left">
+        <div className="p-3.5 rounded-xl border border-destructive/30 bg-destructive/10 text-xs text-destructive font-medium text-left">
           {saveError}
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-4 border-t border-border">
+      <div className="flex justify-between items-center pt-4 border-t border-border dark:border-white/[0.08]">
         <button
           type="button"
           onClick={onBack}
           disabled={isSaving}
-          className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 flex items-center gap-1.5 disabled:opacity-50"
+          className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 flex items-center gap-1.5 disabled:opacity-50 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại / Back
         </button>
@@ -107,7 +107,7 @@ export function FirstMissionStep({
           type="button"
           onClick={onNext}
           disabled={isSaving}
-          className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm"
+          className="bg-[#4338CA] dark:bg-[#6366F1] hover:opacity-95 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all duration-200 shadow-xs"
         >
           {isSaving ? 'Đang lưu / Saving...' : 'Tiếp tục / Continue'} <ArrowRight className="w-4 h-4" />
         </button>

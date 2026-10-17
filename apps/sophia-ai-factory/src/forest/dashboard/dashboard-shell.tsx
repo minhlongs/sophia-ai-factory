@@ -37,7 +37,7 @@ export function DashboardShell({
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   return (
-    <div className={cn("min-h-screen bg-[#08090D] text-foreground flex", className)}>
+    <div className={cn("min-h-screen bg-background dark:bg-[#090A10] text-foreground dark:text-white flex", className)}>
       {/* Canonical Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebarNav
         currentPath={currentPath}

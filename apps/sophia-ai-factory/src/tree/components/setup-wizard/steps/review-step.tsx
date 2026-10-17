@@ -46,21 +46,21 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">{t('title')}</h2>
+        <h2 className="text-xl font-bold text-foreground tracking-tight">{t('title')}</h2>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {!hasRequired && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-400">
+        <div className="flex items-start gap-2.5 rounded-xl border border-[#D97706]/40 dark:border-[#F59E0B]/40 bg-[#D97706]/10 dark:bg-[#F59E0B]/10 p-4 text-sm text-[#D97706] dark:text-[#F59E0B]">
           <AlertTriangle className="mt-0.5 w-5 h-5 shrink-0" />
           <div>
-            <p className="font-medium">{t('missingRequired.title')}</p>
+            <p className="font-semibold">{t('missingRequired.title')}</p>
             <p className="mt-1 opacity-90">{t('missingRequired.description')}</p>
           </div>
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <KeySection
           icon="🤖"
           title={t('sections.llmKeys')}
@@ -78,31 +78,31 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
           className="md:col-span-2"
         />
 
-        <div className="rounded-lg border border-border p-4 bg-card md:col-span-2">
-          <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-            <Route className="w-5 h-5" />
+        <div className="rounded-xl border border-border dark:border-white/[0.08] p-4 bg-[#F8F9FC] dark:bg-[#090A10]/60 md:col-span-2">
+          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
+            <Route className="w-4 h-4 text-[#4338CA] dark:text-[#6366F1]" />
             {t('sections.routingStrategy')}
           </h4>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm bg-muted px-3 py-1.5 rounded-lg">
+            <span className="font-mono text-xs font-semibold bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-foreground px-3 py-1.5 rounded-lg">
               {routingStrategyLabels[providerConfig.ROUTING_STRATEGY]}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="font-mono text-xs text-muted-foreground">
               ({providerConfig.ROUTING_STRATEGY})
             </span>
           </div>
         </div>
       </div>
 
-      <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 text-sm text-accent flex gap-3">
+      <div className="bg-[#D97706]/10 dark:bg-[#F59E0B]/10 border border-[#D97706]/25 dark:border-[#F59E0B]/25 rounded-xl p-4 text-xs sm:text-sm text-[#D97706] dark:text-[#F59E0B] flex gap-3 items-start">
         <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
         <p>{t('securityNote')}</p>
       </div>
 
-      <div className="flex justify-between items-center pt-4 border-t border-border">
+      <div className="flex justify-between items-center pt-4 border-t border-border dark:border-white/[0.08]">
         <button
           onClick={onBack}
-          className="text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors"
+          className="text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors text-sm"
         >
           {t('actions.back')}
         </button>
@@ -110,7 +110,7 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
           onClick={onConfirm}
           disabled={loading || !hasRequired}
           className={cn(
-            "bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-all duration-200",
+            "bg-[#4338CA] dark:bg-[#6366F1] hover:opacity-95 text-white px-7 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all duration-200 shadow-xs",
             (!hasRequired || loading) && "opacity-50 cursor-not-allowed"
           )}
         >

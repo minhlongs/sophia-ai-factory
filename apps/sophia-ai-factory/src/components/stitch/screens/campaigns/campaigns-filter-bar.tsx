@@ -53,7 +53,7 @@ export function CampaignsFilterBar({
         <select
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
-          className="h-10 bg-surface-container-high border border-outline-variant rounded-lg px-3 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60"
+          className="h-10 bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-lg px-3 text-sm text-foreground dark:text-white focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60"
           aria-labelledby="status-filter-label"
         >
           <option value="all">{t('filter.all')}</option>
@@ -71,7 +71,7 @@ export function CampaignsFilterBar({
         <select
           value={channelFilter}
           onChange={(e) => onChannelChange(e.target.value)}
-          className="h-10 bg-surface-container-high border border-outline-variant rounded-lg px-3 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60"
+          className="h-10 bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-lg px-3 text-sm text-foreground dark:text-white focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60"
           aria-labelledby="channel-filter-label"
         >
           <option value="all">{t('filter.all')}</option>
@@ -82,13 +82,13 @@ export function CampaignsFilterBar({
       </div>
 
       <div
-        className="flex items-center gap-2 h-10 bg-surface-container-high border border-outline-variant rounded-lg px-3 cursor-pointer hover:border-foreground/30 transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="flex items-center gap-2 h-10 bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-lg px-3 cursor-pointer hover:border-foreground/30 transition-colors focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         role="button"
         tabIndex={0}
         aria-label={t('filter.date')}
       >
         <Calendar className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-        <span className="text-sm text-foreground">{t('filter.last30Days')}</span>
+        <span className="text-sm text-foreground dark:text-white">{t('filter.last30Days')}</span>
         <ChevronRight className="w-4 h-4 text-muted-foreground -rotate-90" aria-hidden="true" />
       </div>
 
