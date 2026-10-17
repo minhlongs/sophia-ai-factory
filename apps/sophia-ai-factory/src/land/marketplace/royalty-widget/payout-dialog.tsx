@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import type { PayoutFormData, StatusMessage } from './types';
+import { PayoutDestinationFields } from './payout-destination-fields';
 
 interface PayoutDialogProps {
   showModal: boolean;
@@ -61,7 +62,7 @@ export function PayoutDialog({
               step="1"
               value={formData.amountUsd}
               onChange={(e) => setFormData((prev) => ({ ...prev, amountUsd: e.target.value }))}
-              className="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-foreground focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-foreground focus:border-primary focus:outline-none"
               required
             />
           </div>
@@ -74,7 +75,7 @@ export function PayoutDialog({
                 onClick={() => setFormData((prev) => ({ ...prev, rail: 'USDT' }))}
                 className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
                   formData.rail === 'USDT'
-                    ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300'
+                    ? 'border-primary bg-primary/20 text-primary'
                     : 'border-white/10 bg-black/20 text-muted-foreground'
                 }`}
               >
@@ -85,7 +86,7 @@ export function PayoutDialog({
                 onClick={() => setFormData((prev) => ({ ...prev, rail: 'VIETQR' }))}
                 className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
                   formData.rail === 'VIETQR'
-                    ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300'
+                    ? 'border-primary bg-primary/20 text-primary'
                     : 'border-white/10 bg-black/20 text-muted-foreground'
                 }`}
               >
@@ -94,64 +95,7 @@ export function PayoutDialog({
             </div>
           </div>
 
-          {formData.rail === 'USDT' ? (
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1">
-                USDT Destination Address
-              </label>
-              <input
-                type="text"
-                value={formData.destinationAddress}
-                onChange={(e) => setFormData((prev) => ({ ...prev, destinationAddress: e.target.value }))}
-                placeholder="0x... or T..."
-                className="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-foreground focus:border-indigo-500 focus:outline-none"
-                required
-              />
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">
-                  Bank 6-Digit NAPAS BIN
-                </label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={formData.bankBin}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, bankBin: e.target.value }))}
-                  placeholder="e.g. 970422 (MB Bank), 970436 (VCB)"
-                  className="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-foreground focus:border-indigo-500 focus:outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  value={formData.bankAccountNumber}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, bankAccountNumber: e.target.value }))}
-                  placeholder="Account number"
-                  className="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-foreground focus:border-indigo-500 focus:outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">
-                  Account Holder Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.bankAccountName}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, bankAccountName: e.target.value }))}
-                  placeholder="NGUYEN VAN A"
-                  className="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-foreground focus:border-indigo-500 focus:outline-none uppercase"
-                  required
-                />
-              </div>
-            </div>
-          )}
+          <PayoutDestinationFields formData={formData} setFormData={setFormData} />
 
           <div className="flex justify-end gap-2 pt-2">
             <button
@@ -164,7 +108,7 @@ export function PayoutDialog({
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition"
+              className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
             >
               {isPending ? 'Processing...' : 'Confirm Withdrawal'}
             </button>

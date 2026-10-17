@@ -15,6 +15,14 @@ test.describe("Stitch v4.2 Director's Control Deck & Phase 2 Routes E2E", () => 
     await page.keyboard.press('ArrowRight');
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
 
+    // Trigger Half-Kelly MCU Rebalance Server Action
+    const rebalanceBtn = page.getByTestId('rebalance-half-kelly-btn');
+    await expect(rebalanceBtn).toBeVisible();
+    await rebalanceBtn.click();
+
+    const rebalanceReceipt = page.getByTestId('rebalance-half-kelly-receipt');
+    await expect(rebalanceReceipt).toBeVisible();
+
     // Trigger 1-Click Approve & Dispatch Server Action
     const dispatchBtn = page.getByTestId('dispatch-advisor-council-btn');
     await expect(dispatchBtn).toBeVisible();

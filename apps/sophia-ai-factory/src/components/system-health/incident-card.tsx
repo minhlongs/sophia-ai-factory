@@ -9,16 +9,17 @@
 
 import React from 'react';
 import {
-  Key,
-  Clock,
-  CreditCard,
-  WifiOff,
-  ShieldAlert,
   RefreshCw,
   MessageSquare,
   ArrowRight,
 } from 'lucide-react';
-import type { CustomerIncident, IncidentCategory } from '@/land/production-monitoring/customer-health-summary';
+import type { CustomerIncident } from '@/land/production-monitoring/customer-health-summary';
+import {
+  CATEGORY_META,
+  type IncidentCategoryMetaItem,
+} from './incident-category-meta';
+
+export { CATEGORY_META, type IncidentCategoryMetaItem };
 
 export interface IncidentCardProps {
   incident: CustomerIncident;
@@ -27,42 +28,6 @@ export interface IncidentCardProps {
   onContactSupport?: (incident: CustomerIncident) => void;
   isRetrying?: boolean;
 }
-
-const CATEGORY_META: Record<
-  IncidentCategory,
-  { labelEn: string; labelVi: string; badgeCls: string; icon: React.ElementType }
-> = {
-  KEY_EXPIRED_OR_INVALID: {
-    labelEn: 'Key Expired / Invalid',
-    labelVi: 'Khóa hết hạn hoặc không hợp lệ',
-    badgeCls: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300',
-    icon: Key,
-  },
-  PROVIDER_RATE_LIMIT: {
-    labelEn: 'Provider Rate Limit',
-    labelVi: 'Giới hạn tốc độ nhà cung cấp',
-    badgeCls: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950/50 dark:text-orange-300',
-    icon: Clock,
-  },
-  QUOTA_EXHAUSTED: {
-    labelEn: 'Quota / Credit Exhausted',
-    labelVi: 'Hết hạn mức hoặc số dư',
-    badgeCls: 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/50 dark:text-rose-300',
-    icon: CreditCard,
-  },
-  NETWORK_TIMEOUT: {
-    labelEn: 'Network Timeout',
-    labelVi: 'Hết thời gian chờ mạng',
-    badgeCls: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-300',
-    icon: WifiOff,
-  },
-  ASSET_VALIDATION_FAILED: {
-    labelEn: 'Asset Validation Rejected',
-    labelVi: 'Tài nguyên bị từ chối kiểm duyệt',
-    badgeCls: 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/50 dark:text-purple-300',
-    icon: ShieldAlert,
-  },
-};
 
 export function IncidentCard({
   incident,
@@ -119,7 +84,6 @@ export function IncidentCard({
 
       {/* 3 Standard Action Zones */}
       <div className="mt-4 space-y-4 text-sm">
-        {/* Zone 1: WHAT HAPPENED */}
         <div className="rounded-lg bg-muted/40 p-3" data-testid="zone-what-happened">
           <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
             <span>📌</span> {isVi ? '1. Chuyện gì đã xảy ra' : '1. What Happened'}
@@ -127,7 +91,6 @@ export function IncidentCard({
           <p className="mt-1 font-semibold text-foreground">{whatHappened}</p>
         </div>
 
-        {/* Zone 2: WHAT IT MEANS */}
         <div className="rounded-lg bg-muted/20 p-3" data-testid="zone-what-it-means">
           <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
             <span>💡</span> {isVi ? '2. Điều này có ý nghĩa gì' : '2. What It Means'}
@@ -135,7 +98,6 @@ export function IncidentCard({
           <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{whatItMeans}</p>
         </div>
 
-        {/* Zone 3: WHAT YOU CAN DO */}
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-3" data-testid="zone-what-you-can-do">
           <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-primary">
             <span>🛠️</span> {isVi ? '3. Bạn có thể làm gì' : '3. What You Can Do'}
@@ -145,7 +107,6 @@ export function IncidentCard({
 
         {/* Zones 4 & 5: Actions (TRY AGAIN & CONTACT SUPPORT) */}
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          {/* Zone 3: TRY AGAIN */}
           <button
             type="button"
             onClick={handleRetry}
@@ -157,7 +118,6 @@ export function IncidentCard({
             <span>{isVi ? 'Thử lại' : 'Try Again'}</span>
           </button>
 
-          {/* Zone 4: CONTACT SUPPORT */}
           <button
             type="button"
             onClick={handleSupport}

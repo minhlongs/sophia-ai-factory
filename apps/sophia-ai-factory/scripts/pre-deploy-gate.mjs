@@ -15,12 +15,14 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import { join, dirname, relative, sep } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+const REPO_ROOT = join(ROOT, '..', '..');
+const APP_PREFIX = `${relative(REPO_ROOT, ROOT).split(sep).join('/')}/`;
 const BASE_URL = process.env.PREVIEW_URL || process.env.PROD_URL || 'https://sophia.agencyos.network';
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
@@ -119,10 +121,11 @@ async function checkCSSAudit() {
   let changedFiles;
   try {
     const output = execSync(
-      `git diff --cached --name-only && git diff --name-only`,
-      { cwd: ROOT, encoding: 'utf-8' }
+      `git diff --cached --name-only; git diff --name-only; git ls-files --others --exclude-standard`,
+      { cwd: REPO_ROOT, encoding: 'utf-8' }
     );
-    changedFiles = output.trim().split('\n').filter(Boolean);
+    changedFiles = [...new Set(output.trim().split('\n').filter((file) => file.startsWith(APP_PREFIX)))]
+      .map((file) => file.slice(APP_PREFIX.length));
   } catch {
     changedFiles = [];
   }
@@ -130,7 +133,7 @@ async function checkCSSAudit() {
   if (changedFiles.length === 0) { console.log('  ℹ️  No changed files'); return; }
 
   let stepFail = 0;
-  const patterns = ['#6366F1', 'indigo-500', 'indigo-400', 'indigo-600'];
+  const patterns = ['#6366F1', '#6366f1', 'indigo-500', 'indigo-400', 'indigo-600'];
 
   for (const file of changedFiles) {
     if (!file.endsWith('.tsx') && !file.endsWith('.ts') && !file.endsWith('.css')) continue;
@@ -138,10 +141,8 @@ async function checkCSSAudit() {
 
     for (const pattern of patterns) {
       try {
-        const count = parseInt(execSync(
-          `grep -c '${pattern}' "${file}" 2>/dev/null || echo 0`,
-          { encoding: 'utf-8' }
-        ).trim());
+        const content = readFileSync(join(ROOT, file), 'utf8');
+        const count = content.split(pattern).length - 1;
         if (count > 0) {
           console.log(`  ❌ ${file}: ${count}× ${pattern}`);
           stepFail++;

@@ -7211,6 +7211,7 @@
       }
     },
     "pricingPage": {
+      "pricingLabel": "Transparent pricing",
       "hero": {
         "title": "Choose Your Plan",
         "subtitle": "Scale your AI video business with the right plan"
@@ -7218,55 +7219,65 @@
       "billing": {
         "monthly": "Monthly",
         "yearly": "Yearly",
-        "savePercent": "(Save 20%)"
+        "savePercent": "(Save 17%)"
       },
       "popular": "Most Popular",
       "plans": {
         "basic": {
-          "name": "Basic",
-          "description": "For starters",
-          "period": "/mo",
+          "name": "Starter",
+          "description": "For small businesses testing AI video",
+          "period": {
+            "monthly": "/month",
+            "yearly": "/year"
+          },
           "features": [
-            "10 campaigns",
-            "3 channels",
-            "Basic analytics"
+            "10 campaigns per month",
+            "1 YouTube channel",
+            "5 video templates"
           ],
-          "cta": "Get Started"
+          "cta": "Create account"
         },
         "premium": {
-          "name": "Premium",
-          "description": "High performance",
-          "period": "/mo",
+          "name": "Growth",
+          "description": "For teams producing video every week",
+          "period": {
+            "monthly": "/month",
+            "yearly": "/year"
+          },
           "features": [
-            "100 campaigns",
-            "All channels",
-            "Advanced analytics",
-            "Priority support"
+            "50 campaigns per month",
+            "3 YouTube channels",
+            "5,000 MCU credits per month",
+            "API and webhook access"
           ],
-          "cta": "Start Free Trial"
+          "cta": "Create account"
         },
         "enterprise": {
-          "name": "Enterprise",
-          "description": "Scale without limits",
-          "period": "/mo",
+          "name": "Premium",
+          "description": "For agencies and enterprises needing automation and API access",
+          "period": {
+            "monthly": "/month",
+            "yearly": "/year"
+          },
           "features": [
-            "Unlimited campaigns",
-            "Custom integrations",
-            "API access",
-            "Dedicated manager"
+            "Up to 999 campaigns per month",
+            "Unlimited YouTube channels",
+            "20,000 MCU credits per month",
+            "API and custom integrations"
           ],
-          "cta": "Contact Sales"
+          "cta": "Create account"
         },
         "master": {
           "name": "Master",
-          "description": "For agencies",
-          "price": "Custom",
+          "description": "One-time white-label and source-code handover",
+          "price": "$4,999",
+          "period": "one-time",
           "features": [
-            "Everything unlimited",
-            "White-label platform",
-            "Custom rendering farm"
+            "Lifetime access",
+            "White-label license",
+            "One-time source-code handover"
           ],
-          "cta": "Talk to Us"
+          "cta": "Contact sales"
         }
       },
       "faq": {
@@ -8967,5 +8978,20 @@
     "master": {
       "price": "Price"
     }
+  },
+  "displayName": "Display Name",
+  "displayNamePlaceholder": "Display Name Placeholder",
+  "payoutMethod": "Payout Method",
+  "payoutMethodPlaceholder": "Payout Method Placeholder",
+  "payoutAddress": "Payout Address",
+  "payoutAddressPlaceholder": "Payout Address Placeholder",
+  "inviteCode": "Invite Code",
+  "inviteCodePlaceholder": "Invite Code Placeholder",
+  "messages": {
+    "actionFailed": "Action Failed"
+  },
+  "controls": {
+    "confirmHalt": "Confirm Halt",
+    "confirmReset": "Confirm Reset"
   }
 }

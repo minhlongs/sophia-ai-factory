@@ -17,12 +17,11 @@ import {
 import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
-import { toError } from '@/seed/utils/to-error';
-import { inngest } from '@/seed/inngest/client';
 import { resolveApproval } from '@/tree/mission';
 import { resolveApprovalSchema } from '../schemas';
 import type { MissionError } from '../types';
 import { actionFailure } from './action-helpers';
+import { emitApprovalResolutionEvents } from './approval-resolve-emitters';
 
 /**
  * Resolve an approval (approve or reject).
@@ -50,7 +49,6 @@ export async function resolveApprovalAction(
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
 
-    // Fetch approval + linked agent run for workspace check
     const approval = await d1
       .prepare('SELECT * FROM agent_approvals WHERE id = ?')
       .bind(parsed.data.approvalId)
@@ -69,13 +67,11 @@ export async function resolveApprovalAction(
       return failure({ code: 'NOT_FOUND', message: 'Agent run not found for this approval' });
     }
 
-    // Verify workspace membership (IDOR prevention)
     const hasAccess = await verifyWorkspaceAccess(agentRun.workspace_id, user.id, d1);
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
-    // Verify user is admin/owner
     const hasAdmin = await hasWorkspaceRole(agentRun.workspace_id, user.id, 'ADMIN', d1);
     if (!hasAdmin) {
       return failure({ code: 'FORBIDDEN', message: 'Only workspace owner or admin can resolve approvals' });
@@ -102,70 +98,21 @@ export async function resolveApprovalAction(
       userId: user.id,
     });
 
-    // Close the approval loop: notify the Inngest agent-approval-handler so it
-    // resumes (approved) or fails (rejected) the agent run. Fire-and-forget —
-    // an emit failure must never flip the approve/reject outcome returned below.
     const resolvedRow = result.value;
     const runId =
       typeof resolvedRow.agent_run_id === 'string'
         ? resolvedRow.agent_run_id
         : (approval.agent_run_id as string);
-    try {
-      await inngest.send({
-        name: 'agent.approval.resolved',
-        data: {
-          approvalId: parsed.data.approvalId,
-          runId,
-          status,
-          reviewerId: user.id,
-          comment: parsed.data.reason,
-        },
-      });
-    } catch (err) {
-      logger.warn('[Approval] agent.approval.resolved emit failed (non-fatal)', {
-        approvalId: parsed.data.approvalId,
-        error: toError(err).message,
-      });
-    }
 
-    // ── SIDE-CHANNEL: creative.accepted / creative.rejected (Q3) — non-fatal.
-    try {
-      const runRow = await d1
-        .prepare('SELECT mission_id FROM agent_runs WHERE id = ?')
-        .bind(runId)
-        .first<{ mission_id: string | null }>();
-      const { emitCreativeAccepted, emitCreativeRejected } = await import('@/tree/performance/loop-emitters-creative');
-      if (runRow?.mission_id) {
-        if (status === 'approved') {
-          await emitCreativeAccepted({
-            workspaceId: agentRun.workspace_id,
-            missionId: runRow.mission_id,
-            graphRunId: runId,
-            nodeId: parsed.data.approvalId,
-            assetId: '',
-            agentSlug: 'human-approval',
-            recordedAt: Date.now(),
-          });
-        } else {
-          await emitCreativeRejected({
-            workspaceId: agentRun.workspace_id,
-            missionId: runRow.mission_id,
-            graphRunId: runId,
-            nodeId: parsed.data.approvalId,
-            assetId: '',
-            agentSlug: 'human-approval',
-            reasonCode: parsed.data.reason ?? 'REJECTED',
-            recordedAt: Date.now(),
-          });
-        }
-      }
-    } catch (err) {
-      logger.warn('[Approval] creative.accepted/rejected emit failed (non-fatal)', {
-        approvalId: parsed.data.approvalId,
-        status,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
+    await emitApprovalResolutionEvents({
+      d1,
+      approvalId: parsed.data.approvalId,
+      runId,
+      workspaceId: agentRun.workspace_id,
+      status,
+      reviewerId: user.id,
+      reason: parsed.data.reason,
+    });
 
     revalidatePath('/dashboard/missions');
     revalidateTag('approvals', 'max');

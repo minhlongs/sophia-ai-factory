@@ -15,6 +15,7 @@
     "setup": "./scripts/setup.sh",
     "verify": "./scripts/verify.sh",
     "verify:green": "./scripts/verify.sh",
+    "verify:open-core": "node scripts/verify-open-core-readiness.mjs && node scripts/verify-blueprint-protected-flows.mjs",
     "verify:user-video-flow": "node scripts/verify-user-video-flow.mjs",
     "verify:user-video-flow:live": "node scripts/verify-user-video-flow-live.mjs",
     "verify:user-video-flow:live-evidence": "node scripts/verify-user-video-flow-live-evidence.mjs",

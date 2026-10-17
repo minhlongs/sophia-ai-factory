@@ -1,10 +1,11 @@
 // i18n-namespace: dashboard.playbook
 import React from 'react';
 import { Card, CardContent, CardHeader, Badge, Table } from '@/components/stitch';
-import { TrendingUp, Film, Mic, Clock } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import type { PlaybookPattern } from '@/seed/types/playbook-pattern';
 import type { PlaybookTranslation } from './types';
 import { LEVEL_COLOR, EmptyState } from './empty-state';
+import { PatternsSummaryGrid } from './patterns-summary-cards';
 
 interface PatternsSectionProps {
   patterns: PlaybookPattern[];
@@ -38,82 +39,12 @@ export function PatternsSection({ patterns, t }: PatternsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card/50">
-          <CardHeader className="pb-2">
-            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Film className="h-4 w-4 text-primary" />
-              {t('hookStyles')} ({hookPatterns.length})
-            </div>
-          </CardHeader>
-          <CardContent>
-            {hookPatterns.length > 0 ? (
-              <div className="space-y-2">
-                {hookPatterns.slice(0, 3).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-medium">{p.featureValue}</span>
-                    <Badge className={LEVEL_COLOR[p.confidenceLevel]}>
-                      {Math.round(p.confidence * 100)}%
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t('noData')}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50">
-          <CardHeader className="pb-2">
-            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Mic className="h-4 w-4 text-primary" />
-              {t('voiceProfiles')} ({voicePatterns.length})
-            </div>
-          </CardHeader>
-          <CardContent>
-            {voicePatterns.length > 0 ? (
-              <div className="space-y-2">
-                {voicePatterns.slice(0, 3).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-medium">{p.featureValue}</span>
-                    <Badge className={LEVEL_COLOR[p.confidenceLevel]}>
-                      {Math.round(p.confidence * 100)}%
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t('noData')}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50">
-          <CardHeader className="pb-2">
-            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              {t('durationPatterns')} ({durationPatterns.length})
-            </div>
-          </CardHeader>
-          <CardContent>
-            {durationPatterns.length > 0 ? (
-              <div className="space-y-2">
-                {durationPatterns.slice(0, 3).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-medium">{p.featureValue}</span>
-                    <Badge className={LEVEL_COLOR[p.confidenceLevel]}>
-                      {Math.round(p.confidence * 100)}%
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t('noData')}</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <PatternsSummaryGrid
+        hookPatterns={hookPatterns}
+        voicePatterns={voicePatterns}
+        durationPatterns={durationPatterns}
+        t={t}
+      />
 
       <Card>
         <CardHeader>

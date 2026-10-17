@@ -1,4 +1,5 @@
 'use client';
+// i18n-namespace: stitch.pricingPage
 
 import React from 'react';
 import { Check } from 'lucide-react';
@@ -36,12 +37,12 @@ export function PricingCard({ tier, billing, selectedTier, onSelectTier, t }: Pr
     'relative flex flex-col rounded-2xl p-8',
     'transition-all duration-300',
     isPremium
-      ? 'z-10 lg:-translate-y-2 border-2 border-[#4338CA] dark:border-[#6366F1] bg-white dark:bg-[#11131F] shadow-xl shadow-[#4338CA]/10 dark:shadow-2xl dark:shadow-indigo-950/60'
-      : 'border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] hover:border-[#4338CA]/40 dark:hover:border-white/20 hover:-translate-y-1 shadow-sm dark:shadow-none',
+      ? 'z-10 lg:-translate-y-2 border-2 border-primary bg-white dark:bg-[#11131F] shadow-xl shadow-primary/10 dark:shadow-2xl dark:shadow-primary-950/60'
+      : 'border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] hover:border-primary/40 dark:hover:border-white/20 hover:-translate-y-1 shadow-sm dark:shadow-none',
   );
 
   const badgeClasses =
-    'absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#D97706] dark:bg-[#F59E0B] px-4 py-1 text-xs font-black uppercase tracking-wider text-white dark:text-[#090A10] shadow-md';
+    'absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-accent dark:bg-[#F59E0B] px-4 py-1 text-xs font-black uppercase tracking-wider text-white dark:text-[#090A10] shadow-md';
 
   return (
     <div
@@ -83,13 +84,16 @@ export function PricingCard({ tier, billing, selectedTier, onSelectTier, t }: Pr
             <span className="text-3xl font-bold text-slate-400 dark:text-slate-400">$</span>
             <span className="text-5xl font-black text-[#0B0F19] dark:text-white tracking-tight font-mono">{priceNumber}</span>
             <span className="ml-1 text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">
-              {t(`plans.${tier.id}.period`)}
+              {t(`plans.${tier.id}.period.${billing}`)}
             </span>
           </div>
         ) : (
           <div className="flex items-baseline">
             <span className="text-4xl font-black font-mono text-[#0B0F19] dark:text-white tracking-tight">
               {t('plans.master.price')}
+            </span>
+            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">
+              {t('plans.master.period')}
             </span>
           </div>
         )}
@@ -100,7 +104,7 @@ export function PricingCard({ tier, billing, selectedTier, onSelectTier, t }: Pr
         {features.map((feature, idx) => (
           <li key={idx} className="flex items-start gap-3 text-xs text-slate-600 dark:text-slate-300">
             <Check
-              className="h-4 w-4 flex-shrink-0 text-[#4338CA] dark:text-indigo-400 mt-0.5"
+              className="h-4 w-4 flex-shrink-0 text-primary dark:text-primary-400 mt-0.5"
               aria-hidden="true"
             />
             <span className="leading-normal">{feature}</span>
@@ -111,13 +115,13 @@ export function PricingCard({ tier, billing, selectedTier, onSelectTier, t }: Pr
       {/* CTA Button */}
       <div className="mt-auto">
         <Link
-          href={`/register?tier=${tier.id}`}
+          href={tier.id === 'master' ? '/contact' : '/register'}
           className={cn(
             'w-full block text-center rounded-xl py-3.5 text-sm font-bold transition-all active:scale-[0.98]',
             isPremium
-              ? 'bg-[#4338CA] hover:bg-indigo-600 dark:bg-[#6366F1] dark:hover:bg-indigo-500 text-white shadow-lg shadow-[#4338CA]/20 dark:shadow-indigo-500/25'
+              ? 'bg-primary hover:bg-primary-700 dark:bg-primary dark:hover:bg-primary-500 text-white shadow-lg shadow-primary/20 dark:shadow-primary-500/25'
               : isEnterprise
-              ? 'bg-[#4338CA]/10 dark:bg-indigo-500/15 border border-[#4338CA]/25 dark:border-indigo-500/30 text-[#4338CA] dark:text-indigo-300 hover:bg-[#4338CA]/20 dark:hover:bg-indigo-500/25 dark:hover:text-white'
+              ? 'bg-primary/10 dark:bg-primary-500/15 border border-primary/25 dark:border-primary-500/30 text-primary dark:text-primary-300 hover:bg-primary/20 dark:hover:bg-primary-500/25 dark:hover:text-white'
               : 'bg-[#F8F9FC] dark:bg-white/[0.06] border border-[#E2E8F0] dark:border-white/[0.1] text-[#0B0F19] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.12] dark:hover:text-white',
           )}
         >

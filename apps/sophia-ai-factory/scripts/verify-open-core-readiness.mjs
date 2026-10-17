@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Verify Open-Core Readiness & License Boundaries (Lane 2)
+ * Verify Open-Core catalog references & License Boundaries (Lane 2)
  *
  * Verifies:
  * 1. All modulePaths declared in OPEN_CORE_FEATURES exist on disk.
@@ -8,6 +8,8 @@
  * 3. Truthful baseline in .mekong/company.json (mrr_usd: 0, paying_customers: 0).
  * 4. Payment providers only include NOWPayments and PayOS (Polar/PayPal banned).
  * 5. npm scripts in docs/SELF_HOSTING.md exist in apps/sophia-ai-factory/package.json.
+ * 6. All 6 GitHub Community Standards files exist (including CODE_OF_CONDUCT.md).
+ * 7. All 25 Open-Core catalog steps are unique and their reference paths exist.
  *
  * File size budget: <= 170 LOC. Uses process.stdout.write. Exits 0 on success.
  */
@@ -49,12 +51,7 @@ const communityDirs = [
   path.join(appRoot, 'src/tree/telegram'),
   path.join(appRoot, 'src/seed/ai'),
 ];
-
-const bannedImports = [
-  '@/tree/finance/merkle',
-  '@/tree/handover',
-  '@/forest/admin/white-label',
-];
+const bannedImports = ['@/tree/finance/merkle', '@/tree/handover', '@/forest/admin/white-label'];
 
 for (const dir of communityDirs) {
   if (!fs.existsSync(dir)) continue;
@@ -85,9 +82,7 @@ if (!fs.existsSync(companyJsonPath)) {
   }
   const providers = (company.business_model?.payment_providers ?? []).map(String);
   const bannedProviders = (company.business_model?.banned_payment_providers ?? []).map(String);
-  const hasNowpayments = providers.some((p) => p.includes('NOWPayments'));
-  const hasPayOs = providers.some((p) => p.includes('PayOS'));
-  if (!hasNowpayments || !hasPayOs) {
+  if (!providers.some((p) => p.includes('NOWPayments')) || !providers.some((p) => p.includes('PayOS'))) {
     errors.push(`Active payment providers must be NOWPayments and PayOS; found: ${providers.join(', ')}`);
   }
   for (const banned of ['Polar', 'PayPal']) {
@@ -100,35 +95,72 @@ if (!fs.existsSync(companyJsonPath)) {
   }
 }
 
-// 4. Verify docs/SELF_HOSTING.md referenced scripts exist in package.json
+// 4. Verify docs/SELF_HOSTING.md referenced scripts & GitHub Community Standards files
 const pkgJsonPath = path.join(appRoot, 'package.json');
 const selfHostingPath = path.join(repoRoot, 'docs/SELF_HOSTING.md');
 if (fs.existsSync(pkgJsonPath) && fs.existsSync(selfHostingPath)) {
   const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
   const selfHostingContent = fs.readFileSync(selfHostingPath, 'utf8');
-  const referencedScripts = ['type-check', 'test', 'dev'];
-  for (const script of referencedScripts) {
-    if (selfHostingContent.includes(`npm run ${script}`) || selfHostingContent.includes(`npm ${script}`)) {
-      if (!pkg.scripts?.[script]) {
-        errors.push(`docs/SELF_HOSTING.md references npm script '${script}' which is missing in package.json`);
-      }
+  for (const script of ['type-check', 'test', 'dev']) {
+    if ((selfHostingContent.includes(`npm run ${script}`) || selfHostingContent.includes(`npm ${script}`)) && !pkg.scripts?.[script]) {
+      errors.push(`docs/SELF_HOSTING.md references missing npm script '${script}'`);
     }
   }
+}
+
+for (const govFile of ['LICENSE', 'LICENSE-COMMERCIAL.md', 'README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODE_OF_CONDUCT.md']) {
+  if (!fs.existsSync(path.join(repoRoot, govFile))) {
+    errors.push(`Missing GitHub Community Standards file at repo root: ${govFile}`);
+  }
+}
+
+// 5. Verify 25-Step Open-Core Catalog & Auditor
+const p1Path = path.join(appRoot, 'src/seed/config/open-core-25-steps-data-p1.ts');
+const p2Path = path.join(appRoot, 'src/seed/config/open-core-25-steps-data-p2.ts');
+const auditorPath = path.join(appRoot, 'src/tree/open-core/open-core-25-steps-auditor.ts');
+let catalogEntries = 0;
+let catalogCompletenessPercentage = 0;
+let catalogComplete = false;
+if (!fs.existsSync(p1Path) || !fs.existsSync(p2Path) || !fs.existsSync(auditorPath)) {
+  errors.push('Missing 25-step Open-Core catalog or auditor files');
+} else {
+  const combined = fs.readFileSync(p1Path, 'utf8') + '\n' + fs.readFileSync(p2Path, 'utf8');
+  const steps = [...combined.matchAll(/\bstep:\s*(\d+)\b/g)].map((match) => Number(match[1]));
+  const uniqueSteps = new Set(steps);
+  catalogEntries = uniqueSteps.size;
+  catalogCompletenessPercentage = Math.round(
+    (Array.from(uniqueSteps).filter((step) => step >= 1 && step <= 25).length / 25) * 100,
+  );
+  const sequenceValid = steps.length === 25 && uniqueSteps.size === 25 &&
+    Array.from({ length: 25 }, (_, index) => index + 1).every((step) => uniqueSteps.has(step));
+  if (!sequenceValid) errors.push('25-Step Open-Core catalog must contain each step 1..25 exactly once');
+
+  const artifacts = [...combined.matchAll(/verificationArtifact:\s*'([^']+)'/g)].map((match) => match[1]);
+  let missingArtifactCount = 0;
+  for (const artifact of artifacts) {
+    const exists = [path.join(appRoot, artifact), path.join(repoRoot, artifact)].some((fullPath) => fs.existsSync(fullPath));
+    if (!exists) {
+      missingArtifactCount++;
+      errors.push(`Catalog reference does not exist: ${artifact}`);
+    }
+  }
+  catalogComplete = sequenceValid && artifacts.length === 25 && missingArtifactCount === 0;
 }
 
 const report = {
   timestamp: new Date().toISOString(),
   passed: errors.length === 0,
+  catalogEntries,
+  catalogCompletenessPercentage,
+  catalogComplete,
   errorCount: errors.length,
   errors,
 };
 
 process.stdout.write(JSON.stringify(report, null, 2) + '\n');
-
 if (errors.length > 0) {
-  process.stderr.write(`Open-core readiness verification failed with ${errors.length} errors.\n`);
+  process.stderr.write(`Open-core catalog verification failed with ${errors.length} errors.\n`);
   process.exit(1);
-} else {
-  process.stdout.write('Open-core readiness and license boundaries verified successfully.\n');
-  process.exit(0);
 }
+process.stdout.write('Open-core catalog references and license boundaries verified successfully.\n');
+process.exit(0);

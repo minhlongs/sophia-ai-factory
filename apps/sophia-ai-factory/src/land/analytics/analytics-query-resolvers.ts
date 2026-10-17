@@ -5,17 +5,14 @@
  * Consumed by graphql-resolvers.ts.
  */
 
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { fetchUsageMetrics, fetchRevenueMetrics, fetchLicenseMetrics } from '@/land/analytics/queries';
-import {
-  checkAdmin,
-  canAccessRevenue,
-  verifyLicenseAccess,
-  getUserLicenseNonce,
-  getAnalyticsAccess,
-} from '@/land/analytics/rbac';
+import { canAccessRevenue, verifyLicenseAccess } from '@/land/analytics/rbac';
 import { calculateRoiMetrics } from '@/land/analytics/roi-calculator';
+import {
+  getUserContext,
+  resolveUsageLicenseNonce,
+  scopeLicenseMetricsToUser,
+} from '@/land/analytics/analytics-resolver-helpers';
 import type {
   UsageFilters,
   AnalyticsGranularity,
@@ -25,34 +22,7 @@ import type {
   LicenseFilters,
 } from '@/land/analytics/types';
 
-// -------------------------------------------------------------------------
-// Auth context helper
-// -------------------------------------------------------------------------
-
-/**
- * Verify user authentication and return enriched user context.
- * Throws if unauthenticated.
- */
-export async function getUserContext() {
-  const user = await getCurrentUser();
-  if (!user) throw new Error('Unauthorized - authentication required');
-
-  const [isAdmin, tier] = await Promise.all([
-    checkAdmin(user.id),
-    resolveUserTier(user.id),
-  ]);
-
-  return {
-    userId: user.id,
-    tier,
-    isAdmin,
-    access: getAnalyticsAccess(tier, isAdmin),
-  };
-}
-
-// -------------------------------------------------------------------------
-// Analytics namespace resolver object
-// -------------------------------------------------------------------------
+export { getUserContext };
 
 export const AnalyticsResolvers = {
   /**
@@ -73,22 +43,18 @@ export const AnalyticsResolvers = {
     const dateRangeDays = (args.end - args.start) / 86400;
     if (dateRangeDays > 90) throw new Error('Date range exceeds maximum of 90 days');
 
-    let queryLicenseNonce = args.licenseNonce;
-    if (!user.isAdmin) {
-      if (args.licenseNonce) {
-        const access = await verifyLicenseAccess(user.userId, args.licenseNonce, user.isAdmin);
-        if (!access.allowed) throw new Error(access.error || 'Access denied');
-      } else {
-        queryLicenseNonce = await getUserLicenseNonce(user.userId) || undefined;
-      }
-    }
+    const queryLicenseNonce = await resolveUsageLicenseNonce(
+      user.userId,
+      user.isAdmin,
+      args.licenseNonce
+    );
 
     const filters: UsageFilters = {
-      licenseNonce:    queryLicenseNonce,
-      startTimestamp:  args.start,
-      endTimestamp:    args.end,
-      granularity:     args.granularity || 'hour',
-      service:         args.service,
+      licenseNonce:   queryLicenseNonce,
+      startTimestamp: args.start,
+      endTimestamp:   args.end,
+      granularity:    args.granularity || 'hour',
+      service:        args.service,
     };
 
     return fetchUsageMetrics(filters);
@@ -134,25 +100,7 @@ export const AnalyticsResolvers = {
     const metrics = await fetchLicenseMetrics(filters);
 
     if (!user.isAdmin) {
-      const { createServerClient } = await import('@/seed/db/client');
-      const db = createServerClient();
-
-      const { data: userLicenses } = await db
-        .from('raas_licenses')
-        .select('nonce')
-        .eq('created_by', user.userId);
-
-      interface LicenseRow { nonce: string; }
-      const userNonces = new Set(userLicenses?.map((l: unknown) => (l as LicenseRow).nonce) || []);
-
-      metrics.utilization = metrics.utilization.filter((u) => userNonces.has(u.licenseNonce));
-      metrics.total = metrics.utilization.length;
-
-      const newByTier: Record<string, number> = {};
-      for (const u of metrics.utilization) {
-        newByTier[u.tier] = (newByTier[u.tier] || 0) + 1;
-      }
-      metrics.byTier = newByTier;
+      return scopeLicenseMetricsToUser(user.userId, metrics);
     }
 
     return metrics;

@@ -12,63 +12,16 @@
  */
 
 import { getD1 } from '@/seed/db/client';
+import {
+  windowStart,
+  pivotRowsToRoleMetrics,
+  type WindowOption,
+  type AgentRoleMetrics,
+  type AgentPerformanceReport,
+  type AggRow,
+} from './agent-performance-helpers';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export type WindowOption = '24h' | '7d'
-
-export interface AgentRoleMetrics {
-  role: string
-  variant: string
-  start_count: number
-  complete_count: number
-  fail_count: number
-  /** Completion rate 0–1 (complete / start), null if no starts */
-  completion_rate: number | null
-  /** Average duration in ms for completed tasks, null if none */
-  avg_duration_ms: number | null
-}
-
-export interface AgentPerformanceReport {
-  window: WindowOption
-  generated_at: string
-  roles: AgentRoleMetrics[]
-}
-
-// ── Internal helpers ─────────────────────────────────────────────────────────
-
-/** Returns unix ms timestamp for the start of the given window */
-function windowStart(window: WindowOption): number {
-  const hours = window === '24h' ? 24 : 7 * 24
-  return Date.now() - hours * 60 * 60 * 1000
-}
-
-function toInt(v: unknown): number {
-  if (typeof v === 'number') return Math.round(v)
-  if (typeof v === 'string') return parseInt(v, 10) || 0
-  return 0
-}
-
-function toFloatOrNull(v: unknown): number | null {
-  if (v === null || v === undefined) return null
-  if (typeof v === 'number') return isNaN(v) ? null : v
-  if (typeof v === 'string') {
-    const n = parseFloat(v)
-    return isNaN(n) ? null : n
-  }
-  return null
-}
-
-// ── D1 row shape ─────────────────────────────────────────────────────────────
-
-interface AggRow {
-  role: string | null
-  event_type: string | null
-  count: number | string
-  avg_duration_ms: number | string | null
-}
-
-// ── Main resolver ─────────────────────────────────────────────────────────────
+export type { WindowOption, AgentRoleMetrics, AgentPerformanceReport };
 
 /**
  * Query agent performance aggregates from signals_events.
@@ -84,15 +37,15 @@ export async function resolveAgentPerformance(
   window: WindowOption,
   role?: string,
 ): Promise<AgentPerformanceReport> {
-  const ts = windowStart(window)
+  const ts = windowStart(window);
 
   const eventTypes = [
     'agent_task_start',
     'agent_task_complete',
     'agent_task_fail',
-  ]
+  ];
 
-  const placeholders = eventTypes.map(() => '?').join(', ')
+  const placeholders = eventTypes.map(() => '?').join(', ');
 
   let sql = `
     SELECT
@@ -104,71 +57,29 @@ export async function resolveAgentPerformance(
     WHERE event_type IN (${placeholders})
       AND org_id = ?
       AND ts >= ?
-  `
+  `;
 
-  const bindings: (string | number)[] = [...eventTypes, orgId, ts]
+  const bindings: (string | number)[] = [...eventTypes, orgId, ts];
 
   if (role) {
-    sql += `  AND json_extract(props_json, '$.agent_role') = ?\n`
-    bindings.push(role)
+    sql += `  AND json_extract(props_json, '$.agent_role') = ?\n`;
+    bindings.push(role);
   }
 
-  sql += `GROUP BY role, event_type`
+  sql += `GROUP BY role, event_type`;
 
   const result = await db
     .prepare(sql)
     .bind(...bindings)
-    .all<AggRow>()
+    .all<AggRow>();
 
-  const rows = result.results ?? []
-
-  // ── Pivot rows into per-role metrics ───────────────────────────────────────
-  const roleMap = new Map<string, AgentRoleMetrics>()
-
-  for (const row of rows) {
-    const roleName = row.role ?? 'unknown'
-    if (!roleMap.has(roleName)) {
-      roleMap.set(roleName, {
-        role: roleName,
-        variant: 'control', // variant not aggregated here — kept simple per YAGNI
-        start_count: 0,
-        complete_count: 0,
-        fail_count: 0,
-        completion_rate: null,
-        avg_duration_ms: null,
-      })
-    }
-
-    const entry = roleMap.get(roleName)!
-    const count = toInt(row.count)
-
-    switch (row.event_type) {
-      case 'agent_task_start':
-        entry.start_count = count
-        break
-      case 'agent_task_complete':
-        entry.complete_count = count
-        entry.avg_duration_ms = toFloatOrNull(row.avg_duration_ms)
-        break
-      case 'agent_task_fail':
-        entry.fail_count = count
-        break
-    }
-  }
-
-  // Compute derived completion_rate
-  for (const entry of roleMap.values()) {
-    entry.completion_rate =
-      entry.start_count > 0
-        ? entry.complete_count / entry.start_count
-        : null
-  }
+  const rows = result.results ?? [];
 
   return {
     window,
     generated_at: new Date().toISOString(),
-    roles: Array.from(roleMap.values()),
-  }
+    roles: pivotRowsToRoleMetrics(rows),
+  };
 }
 
 /** Get D1 database — canonical pattern */

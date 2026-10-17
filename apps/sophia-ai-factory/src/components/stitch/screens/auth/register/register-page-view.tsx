@@ -16,6 +16,9 @@ import { RegisterSuccessView } from './register-success-view';
 import { RegisterHeader } from './register-header';
 import { RegisterForm } from './register-form';
 import { SocialAuthButtons } from './social-auth-buttons';
+import { mapRegisterAuthError, validateRegisterForm } from './register-validation';
+
+export { validateRegisterForm, mapRegisterAuthError };
 
 export function RegisterPageView() {
   const t = useTranslations('stitch.auth.register');
@@ -35,39 +38,20 @@ export function RegisterPageView() {
   const [error, setError] = useState<string | null>(null);
 
   const switchLocale = () => {
-    const nextLocale = locale === 'en' ? 'vi' : 'en';
-    router.replace(pathname, { locale: nextLocale });
+    router.replace(pathname, { locale: locale === 'en' ? 'vi' : 'en' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const { password, confirmPassword, companyName, email } = formState;
-
-    if (password !== confirmPassword) {
-      setError(t('errorPasswordMismatch') || 'Passwords do not match');
+    const validationError = validateRegisterForm(formState, t);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    if (password.length < 8) {
-      setError(t('errorPasswordTooShort') || 'Password must be at least 8 characters');
-      return;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      setError(t('errorPasswordUppercase') || 'Password must include at least one uppercase letter');
-      return;
-    }
-    if (!/[a-z]/.test(password)) {
-      setError(t('errorPasswordLowercase') || 'Password must include at least one lowercase letter');
-      return;
-    }
-    if (!/[0-9]/.test(password)) {
-      setError(t('errorPasswordNumber') || 'Password must include at least one number');
-      return;
-    }
-
+    const { password, companyName, email } = formState;
     setLoading(true);
     try {
       const resolvedName = companyName.trim() || email.split('@')[0].trim() || 'user';
@@ -79,21 +63,12 @@ export function RegisterPageView() {
       });
 
       if (result.error) {
-        const code = (result.error as { code?: string }).code?.toLowerCase() ?? '';
-        const msg = result.error.message?.toLowerCase() ?? '';
-        const status = (result.error as { status?: number }).status ?? 0;
-
-        if (code === 'user_already_exists' || code === 'email_already_exists' || msg.includes('already') || msg.includes('exist') || msg.includes('duplicate')) {
-          setError(t('errorEmailExists') || 'An account with this email already exists');
-        } else if (code === 'password_too_short' || code === 'invalid_password' || code === 'weak_password' || msg.includes('password')) {
-          setError(t('errorPasswordComplexity') || 'Password must be at least 8 characters with uppercase, lowercase, and a number');
-        } else if (status === 429) {
-          setError(t('errorRateLimited') || 'Too many attempts. Please wait a moment and try again.');
-        } else if (status === 503) {
-          setError(t('errorServiceUnavailable') || 'Registration is temporarily unavailable. Please try again later.');
-        } else {
-          setError(t('errorGeneric') || 'Registration failed. Please try again.');
-        }
+        setError(
+          mapRegisterAuthError(
+            result.error as { code?: string; message?: string; status?: number },
+            t,
+          ),
+        );
         return;
       }
 
@@ -110,22 +85,18 @@ export function RegisterPageView() {
       className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 p-6 antialiased relative transition-colors duration-300"
       data-testid="register-page"
     >
-      {/* Locale Toggle */}
       <button
         type="button"
         onClick={switchLocale}
         className="fixed top-4 right-4 z-20 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-[#0B0F19] dark:hover:text-white transition-colors rounded-full px-3 py-1.5 bg-white dark:bg-[#11131F] hover:bg-slate-50 dark:hover:bg-white/[0.1] border border-[#E2E8F0] dark:border-white/[0.08] shadow-sm"
-        aria-label="Toggle language"
+        aria-label={locale === 'en' ? 'Switch language' : 'Đổi ngôn ngữ'}
       >
-        <Globe className="w-3.5 h-3.5 text-[#4338CA] dark:text-indigo-400" aria-hidden="true" />
-        <span className="font-semibold uppercase tracking-wider">
-          {locale === 'en' ? 'VI' : 'EN'}
-        </span>
+        <Globe className="w-3.5 h-3.5 text-primary dark:text-primary-400" aria-hidden="true" />
+        <span className="font-semibold uppercase tracking-wider">{locale === 'en' ? 'VI' : 'EN'}</span>
       </button>
 
-      {/* Ambient background glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-[#4338CA]/8 dark:bg-[#6366F1]/10 rounded-full blur-[140px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-primary/8 dark:bg-primary/10 rounded-full blur-[140px]" />
         <div className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] bg-[#D97706]/8 dark:bg-[#F59E0B]/10 rounded-full blur-[140px]" />
       </div>
 
@@ -135,36 +106,21 @@ export function RegisterPageView() {
         ) : (
           <div className="rounded-2xl border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] p-8 md:p-10 shadow-xl dark:shadow-2xl transition-all duration-500">
             <RegisterHeader error={error} />
-
-            <RegisterForm
-              formState={formState}
-              setFormState={setFormState}
-              onSubmit={handleSubmit}
-              loading={loading}
-            />
-
-            {/* Divider */}
+            <RegisterForm formState={formState} setFormState={setFormState} onSubmit={handleSubmit} loading={loading} />
             <div className="relative flex items-center my-6">
               <div className="flex-grow border-t border-[#E2E8F0] dark:border-white/[0.08]" />
-              <span className="flex-shrink mx-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                {t('or')}
-              </span>
+              <span className="flex-shrink mx-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('or')}</span>
               <div className="flex-grow border-t border-[#E2E8F0] dark:border-white/[0.08]" />
             </div>
-
             <SocialAuthButtons />
-
-            {/* Switch to Login Link */}
             <p className="text-center mt-6 text-xs text-slate-600 dark:text-slate-400">
               {t('hasAccount')}{' '}
-              <Link href="/login" className="text-[#4338CA] dark:text-indigo-400 font-semibold hover:opacity-80 dark:hover:text-indigo-300 transition-colors">
+              <Link href="/login" className="text-primary dark:text-primary-400 font-semibold hover:opacity-80 dark:hover:text-primary-300 transition-colors">
                 {t('signIn')}
               </Link>
             </p>
           </div>
         )}
-
-        {/* Footer */}
         <p className="mt-8 text-center text-xs text-slate-500 dark:text-slate-500">
           &copy; {new Date().getFullYear()} Sophia AI Factory. All rights reserved.
         </p>

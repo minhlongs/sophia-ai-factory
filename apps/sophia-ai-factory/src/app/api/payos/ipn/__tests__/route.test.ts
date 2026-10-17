@@ -264,6 +264,33 @@ describe('POST /api/payos/ipn', () => {
     expect(event?.amount).toBe(4975000)
   })
 
+  it('validates the amount against the order matched by the payment link', async () => {
+    mockPendingOrders.set('user123', [
+      { order_id: 'sophia_user123_premium', tier: 'PREMIUM', invoice_url: 'link_unrelated', period: 'monthly' },
+      { order_id: 'sophia_user123_basic', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
+    ])
+
+    const req = makeRequest({ orderCode: 123456, amount: 4975000, paymentLinkId: 'link_123', success: true })
+    const res = await POST(req)
+
+    expect(res.status).toBe(200)
+    expect(mockDbEvents.get('payos_123456')?.processed).toBe(1)
+  })
+
+  it('releases the event lock when the paid user has no organization to activate', async () => {
+    orgIdForUser = null
+    mockPendingOrders.set('user_without_org', [
+      { order_id: 'sophia_user_without_org_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
+    ])
+
+    const req = makeRequest({ orderCode: 123456, amount: 4975000, paymentLinkId: 'link_123', success: true })
+    const res = await POST(req)
+
+    expect(res.status).toBe(500)
+    expect(await res.json()).toMatchObject({ error: 'Organization not found' })
+    expect(mockDbEvents.has('payos_123456')).toBe(false)
+  })
+
   it('rejects duplicate processing when already processed (processed = 1)', async () => {
     mockDbEvents.set('payos_123456', { event_id: 'payos_123456', processed: 1, amount: 4975000 })
 

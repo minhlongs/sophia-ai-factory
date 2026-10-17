@@ -7218,6 +7218,7 @@
       }
     },
     "pricingPage": {
+      "pricingLabel": "Bảng giá minh bạch",
       "hero": {
         "title": "Chọn Gói Của Bạn",
         "subtitle": "Mở rộng kinh doanh video AI của bạn với gói phù hợp"
@@ -7225,55 +7226,65 @@
       "billing": {
         "monthly": "Hàng tháng",
         "yearly": "Hàng năm",
-        "savePercent": "(Tiết kiệm 20%)"
+        "savePercent": "(Tiết kiệm 17%)"
       },
       "popular": "Phổ biến nhất",
       "plans": {
         "basic": {
-          "name": "Cơ bản",
-          "description": "Dành cho người mới bắt đầu",
-          "period": "/tháng",
+          "name": "Starter",
+          "description": "Dành cho doanh nghiệp nhỏ đang thử nghiệm video AI",
+          "period": {
+            "monthly": "/tháng",
+            "yearly": "/năm"
+          },
           "features": [
-            "10 chiến dịch",
-            "3 kênh",
-            "Phân tích cơ bản"
+            "10 chiến dịch mỗi tháng",
+            "1 kênh YouTube",
+            "5 mẫu video"
           ],
-          "cta": "Bắt Đầu"
+          "cta": "Tạo tài khoản"
         },
         "premium": {
-          "name": "Cao cấp",
-          "description": "Hiệu suất cao",
-          "period": "/tháng",
+          "name": "Growth",
+          "description": "Dành cho đội ngũ sản xuất video hằng tuần",
+          "period": {
+            "monthly": "/tháng",
+            "yearly": "/năm"
+          },
           "features": [
-            "100 chiến dịch",
-            "Tất cả kênh",
-            "Phân tích nâng cao",
-            "Hỗ trợ ưu tiên"
+            "50 chiến dịch mỗi tháng",
+            "3 kênh YouTube",
+            "5.000 MCU mỗi tháng",
+            "Có API và webhook"
           ],
-          "cta": "Dùng Thử Miễn Phí"
+          "cta": "Tạo tài khoản"
         },
         "enterprise": {
-          "name": "Doanh nghiệp",
-          "description": "Mở rộng không giới hạn",
-          "period": "/tháng",
+          "name": "Premium",
+          "description": "Dành cho đại lý và doanh nghiệp cần tự động hóa cùng API",
+          "period": {
+            "monthly": "/tháng",
+            "yearly": "/năm"
+          },
           "features": [
-            "Chiến dịch không giới hạn",
-            "Tích hợp tùy chỉnh",
-            "Truy cập API",
-            "Quản lý riêng"
+            "Tối đa 999 chiến dịch mỗi tháng",
+            "Không giới hạn kênh YouTube",
+            "20.000 MCU mỗi tháng",
+            "API và tích hợp tùy chỉnh"
           ],
-          "cta": "Liên hệ Bán hàng"
+          "cta": "Tạo tài khoản"
         },
         "master": {
-          "name": "Chuyên gia",
-          "description": "Dành cho đại lý",
-          "price": "Tùy chỉnh",
+          "name": "Master",
+          "description": "Bàn giao white-label và mã nguồn, thanh toán một lần",
+          "price": "$4.999",
+          "period": "một lần",
           "features": [
-            "Mọi thứ không giới hạn",
-            "Nền tảng thương hiệu trắng",
-            "Trang trại render tùy chỉnh"
+            "Quyền truy cập trọn đời",
+            "Giấy phép white-label",
+            "Bàn giao mã nguồn một lần"
           ],
-          "cta": "Liên hệ Chúng tôi"
+          "cta": "Liên hệ tư vấn"
         }
       },
       "faq": {
@@ -8974,5 +8985,20 @@
     "master": {
       "price": "Price"
     }
+  },
+  "displayName": "Display Name",
+  "displayNamePlaceholder": "Display Name Placeholder",
+  "payoutMethod": "Payout Method",
+  "payoutMethodPlaceholder": "Payout Method Placeholder",
+  "payoutAddress": "Payout Address",
+  "payoutAddressPlaceholder": "Payout Address Placeholder",
+  "inviteCode": "Invite Code",
+  "inviteCodePlaceholder": "Invite Code Placeholder",
+  "messages": {
+    "actionFailed": "Action Failed"
+  },
+  "controls": {
+    "confirmHalt": "Confirm Halt",
+    "confirmReset": "Confirm Reset"
   }
 }

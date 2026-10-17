@@ -21,6 +21,7 @@ import {
   type EditionContextInput,
 } from '@/seed/config/edition-config';
 import { verifyRaasLicenseToken } from '@/seed/security/raas-license-verifier';
+import { auditOpenCore25StepCatalog } from '@/tree/open-core/open-core-25-steps-auditor';
 import { checkUpstreamReleaseBeacon } from '@/tree/open-core/version-beacon';
 import {
   evaluateAllFeatureGates,
@@ -47,6 +48,8 @@ export async function GET(request: NextRequest) {
 
   const edition = resolveSophiaEdition(ctx);
   const features = evaluateAllFeatureGates(ctx);
+  const auditRes = await auditOpenCore25StepCatalog({ editionContext: ctx });
+  const catalogAudit = auditRes.ok ? auditRes.value : null;
   const includeBeacon = request.nextUrl.searchParams.get('beacon') === 'true';
   const beacon = includeBeacon
     ? await checkUpstreamReleaseBeacon({
@@ -64,6 +67,7 @@ export async function GET(request: NextRequest) {
     licensedTier,
     pricingUrl: 'https://sophia.agencyos.network/pricing',
     features,
+    catalogAudit,
     beacon,
   });
 }

@@ -17,87 +17,30 @@
  * @module land/voice/clone-voice
  */
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { assertSafeAudioUrl } from '@/seed/security/assert-safe-audio-url';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, FailureKind } from '@/seed/types/failure-kind';
+import {
+  ELEVENLABS_ADD_VOICE_URL,
+  VoiceCloneConfigurationError,
+  validateCloneInput,
+  fetchSample,
+  buildVoiceMultipartForm,
+  type CloneVoiceInput,
+  type CloneVoiceResult,
+} from './clone-voice-helpers';
 
-export interface CloneVoiceInput {
-  userId: string;
-  /** Display name for the voice (1–80 chars per ElevenLabs). */
-  name: string;
-  /** Public/signed audio URLs (1–25 samples, 1–11 minutes total). */
-  audioUrls: string[];
-  /** Optional human description shown in the ElevenLabs dashboard. */
-  description?: string;
-  /** Optional comma-separated labels. ElevenLabs expects a JSON object string. */
-  labels?: Record<string, string>;
-}
-
-export interface CloneVoiceResult {
-  voiceId: string;
-  name: string;
-  source: 'user' | 'platform';
-  samplesUploaded: number;
-}
-
-export class VoiceCloneConfigurationError extends Error {
-  code: 'BYOK_REQUIRED' | 'EMPTY_AUDIO' | 'NAME_INVALID' | 'TOO_MANY_SAMPLES' | 'SAMPLE_TOO_LARGE';
-  constructor(
-    code: 'BYOK_REQUIRED' | 'EMPTY_AUDIO' | 'NAME_INVALID' | 'TOO_MANY_SAMPLES' | 'SAMPLE_TOO_LARGE',
-    message: string,
-  ) {
-    super(message);
-    this.name = 'VoiceCloneConfigurationError';
-    this.code = code;
-  }
-}
-
-const ELEVENLABS_ADD_VOICE_URL = 'https://api.elevenlabs.io/v1/voices/add';
-const MAX_SAMPLES = 25;
-const MAX_BYTES_PER_SAMPLE = 11 * 1024 * 1024; // 11MB per ElevenLabs docs
-const NAME_MIN = 1;
-const NAME_MAX = 80;
-
-/**
- * Pure helper: validate input shape before any network call. Public so
- * unit tests can exercise it without mocking fetch.
- */
-export function validateCloneInput(input: CloneVoiceInput): void {
-  const name = input.name?.trim() ?? '';
-  if (name.length < NAME_MIN || name.length > NAME_MAX) {
-    throw new VoiceCloneConfigurationError('NAME_INVALID', `name must be ${NAME_MIN}–${NAME_MAX} chars`);
-  }
-  if (!Array.isArray(input.audioUrls) || input.audioUrls.length === 0) {
-    throw new VoiceCloneConfigurationError('EMPTY_AUDIO', 'at least one audio URL is required');
-  }
-  if (input.audioUrls.length > MAX_SAMPLES) {
-    throw new VoiceCloneConfigurationError('TOO_MANY_SAMPLES', `max ${MAX_SAMPLES} samples per voice`);
-  }
-}
+export {
+  VoiceCloneConfigurationError,
+  validateCloneInput,
+  type CloneVoiceInput,
+  type CloneVoiceResult,
+};
 
 interface ElevenLabsAddVoiceResponse {
   voice_id?: string;
   detail?: { message?: string } | string;
-}
-
-async function fetchSample(url: string): Promise<{ blob: Blob; filename: string }> {
-  // SSRF guard: reject private IPs, loopback, link-local, non-http(s) schemes.
-  assertSafeAudioUrl(url);
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`audio fetch ${url} returned ${res.status}`);
-  }
-  const blob = await res.blob();
-  if (blob.size > MAX_BYTES_PER_SAMPLE) {
-    throw new VoiceCloneConfigurationError(
-      'SAMPLE_TOO_LARGE',
-      `sample ${url} is ${blob.size} bytes (> ${MAX_BYTES_PER_SAMPLE})`,
-    );
-  }
-  const filename = url.split('/').pop()?.split('?')[0] || 'sample.mp3';
-  return { blob, filename };
 }
 
 /**
@@ -122,15 +65,7 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
   const source: 'user' | 'platform' = process.env.ELEVENLABS_API_KEY === keyOrNull ? 'platform' : 'user';
 
   const samples = await Promise.all(input.audioUrls.map((u) => fetchSample(u)));
-
-  const form = new FormData();
-  form.append('name', input.name.trim());
-  if (input.description) form.append('description', input.description);
-  if (input.labels) form.append('labels', JSON.stringify(input.labels));
-  for (const { blob, filename } of samples) {
-    // ElevenLabs accepts repeated `files` fields for multi-sample upload.
-    form.append('files', blob, filename);
-  }
+  const form = buildVoiceMultipartForm(input, samples);
 
   // Circuit breaker: check if ElevenLabs is available before fetch
   if (!shouldAllowRequest('elevenlabs')) {
@@ -154,8 +89,8 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
         ? FailureKind.AUTH_FAILURE
         : res.status === 429 || res.status === 402
           ? FailureKind.RATE_LIMIT
-          : FailureKind.SERVER_ERROR
-      recordFailure('elevenlabs', kind)
+          : FailureKind.SERVER_ERROR;
+      recordFailure('elevenlabs', kind);
       throw new Error(`Voice provider returned ${res.status}`);
     }
     const json = (await res.json()) as ElevenLabsAddVoiceResponse;
@@ -164,13 +99,13 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
       throw new Error('Voice provider returned no voice_id');
     }
     // Circuit breaker: record success
-    recordSuccess('elevenlabs')
+    recordSuccess('elevenlabs');
     return { voiceId, name: input.name.trim(), source, samplesUploaded: samples.length };
   } catch (err) {
     // HTTP-status failures are already recorded in the non-2xx branch
     if (!(err instanceof Error && err.message.startsWith('Voice provider returned'))) {
-      const kind = classifyError(err)
-      recordFailure('elevenlabs', kind)
+      const kind = classifyError(err);
+      recordFailure('elevenlabs', kind);
     }
     logger.error('[clone-voice] failed', toError(err), { userId: input.userId, name: input.name });
     throw err;

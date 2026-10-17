@@ -6,7 +6,10 @@
  * @description Land layer Server Actions for Trans-Dimensional Conclave arbitration, constitutional invariant checks, and Non-Euclidean STARK compaction.
  */
 
-import { getD1 } from '@/seed/db/client';
+import {
+  recordContinuumConclaveArbitration,
+  recordContinuumStarkCompactionProof,
+} from '@/land/governance/conclave-d1-recorder';
 import {
   arbitrateTransDimensionalDispute,
   verifyTransDimensionalConstitutionalInvariants,
@@ -73,36 +76,12 @@ export async function arbitrateTransDimensionalDisputeAction(
 ): Promise<TransDimensionalDisputeActionResult> {
   try {
     const data = arbitrateTransDimensionalDispute(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO trans_dimensional_conclave_arbitrations (
-             id, dispute_case_ref, claimant_participant_id, respondent_participant_id,
-             dispute_value_cents, contract_stark_root, evidence_sha256, conclave_juror_count,
-             supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents,
-             resolved_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          input.disputeCaseRef,
-          input.claimantParticipantId,
-          input.respondentParticipantId,
-          input.disputeValueCents,
-          data.rulingHash,
-          input.evidenceSha256,
-          input.votes.length,
-          input.supermajorityThresholdPct ?? 99.0,
-          data.verdict,
-          data.jurorsSlashedCount,
-          data.executedRemedyCents,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordContinuumConclaveArbitration(
+      'trans_dimensional_conclave_arbitrations',
+      input,
+      data,
+      99.0
+    );
     return { success: true, data };
   } catch (error) {
     return {
@@ -140,32 +119,11 @@ export async function compactNonEuclideanStarkStateAction(
 ): Promise<NonEuclideanStarkCompactionActionResult> {
   try {
     const data = compactStateWithNonEuclideanStark(previousStateRoot, transactions, circuitIdentifier);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO non_euclidean_stark_compaction_proofs (
-             id, proof_ref, batch_transaction_count, previous_state_root,
-             new_state_root, stark_proof_bytes_length, verification_time_micros,
-             verifier_circuit_identifier, is_mathematically_sound, verified_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `STARK-PROOF-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          data.batchTransactionCount,
-          data.previousStateRoot,
-          data.newStateRoot,
-          data.starkProofBytesLength,
-          data.verificationTimeMicros,
-          data.verifierCircuitIdentifier,
-          data.isMathematicallySound ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordContinuumStarkCompactionProof(
+      'non_euclidean_stark_compaction_proofs',
+      'STARK-PROOF',
+      data
+    );
     return { success: data.isMathematicallySound, data };
   } catch (error) {
     return {

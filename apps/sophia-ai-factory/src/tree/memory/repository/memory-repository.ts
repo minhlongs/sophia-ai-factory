@@ -15,9 +15,9 @@ import type {
   RelevantMemory,
   StoredMemory,
 } from './types';
-import { DEFAULT_RELEVANCE } from './types';
 import { buildMemoryQuery, rowToMemory } from './query-builder';
 import { rankMemoriesByQuery } from './relevance-ranker';
+import { insertCreatorMemory, purgeExpiredMemories } from './memory-store-ops';
 
 /**
  * Typed repository over the creator_memory D1 table.
@@ -50,49 +50,7 @@ export class MemoryRepository {
     const db = await this.getDb();
     if (!db) throw new Error('D1 database binding not available');
 
-    const id = crypto.randomUUID();
-    const now = Date.now();
-    const contentJson = JSON.stringify(content);
-
-    await db
-      .prepare(
-        `INSERT INTO creator_memory
-        (id, user_id, memory_type, category, content_json,
-         relevance_score, source_execution_id, expires_at, created_at, updated_at)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9)`,
-      )
-      .bind(
-        id,
-        userId,
-        memoryType,
-        category,
-        contentJson,
-        opts?.relevanceScore ?? DEFAULT_RELEVANCE,
-        opts?.sourceExecutionId ?? null,
-        opts?.expiresAt ?? null,
-        now,
-      )
-      .run();
-
-    logger.info('[MemoryRepository] Stored', {
-      id,
-      userId,
-      memoryType,
-      category,
-    });
-
-    return {
-      id,
-      userId,
-      memoryType,
-      category,
-      content,
-      relevanceScore: opts?.relevanceScore ?? DEFAULT_RELEVANCE,
-      sourceExecutionId: opts?.sourceExecutionId ?? null,
-      expiresAt: opts?.expiresAt ?? null,
-      createdAt: now,
-      updatedAt: now,
-    };
+    return insertCreatorMemory(db, userId, memoryType, category, content, opts);
   }
 
   /**
@@ -152,20 +110,7 @@ export class MemoryRepository {
       const db = await this.getDb();
       if (!db) throw new Error('D1 database binding not available');
 
-      const now = Date.now();
-      const result = await db
-        .prepare(
-          `DELETE FROM creator_memory
-           WHERE expires_at IS NOT NULL AND expires_at <= ?1`,
-        )
-        .bind(now)
-        .run();
-
-      const deleted = result.meta?.changes ?? 0;
-      if (deleted > 0) {
-        logger.info('[MemoryRepository] Deleted expired memories', { deleted });
-      }
-      return deleted;
+      return await purgeExpiredMemories(db);
     } catch (err) {
       logger.error('[MemoryRepository] deleteExpired failed', {
         error: getErrorMessage(err),

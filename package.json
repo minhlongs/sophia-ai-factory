@@ -8,6 +8,7 @@
     "type-check": "npm --prefix apps/sophia-ai-factory run type-check",
     "test": "npm --prefix apps/sophia-ai-factory run test",
     "lint": "npm --prefix apps/sophia-ai-factory run lint",
+    "verify:open-core": "npm --prefix apps/sophia-ai-factory run verify:open-core",
     "harness": "bash scripts/harness/harness.sh",
     "harness:audit": "bash scripts/harness/harness.sh audit",
     "harness:fix": "bash scripts/harness/harness.sh fix",

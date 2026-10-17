@@ -4,7 +4,7 @@ import { POST as triggerPOST } from '../trigger/route';
 import { GET as pollGET } from '../jobs/poll/route';
 import { PATCH as updatePATCH } from '../jobs/[id]/route';
 import { GET as statusGET } from '../status/route';
-import { getLocalD1Mock } from '@/seed/db/local-d1-mock';
+import { SQLiteD1Database } from '@/seed/db/mock/database';
 
 vi.mock('@opennextjs/cloudflare', () => {
   return {
@@ -53,11 +53,8 @@ describe('Harness Engineering API Routes', () => {
     vi.stubEnv('HARNESS_SECRET', HARNESS_SECRET);
     (globalThis as any).__kvStore = new Map();
 
-    // Override setup.tsx's mock D1 with the actual local sqlite file database
-    const realDb = getLocalD1Mock();
-    if (!realDb) {
-      throw new Error('Local D1 sqlite database mock not available');
-    }
+    // Use an isolated real SQLite database; never write into local Wrangler state.
+    const realDb = new SQLiteD1Database(':memory:');
     (globalThis as any).__env.DB = realDb;
     db = realDb;
 

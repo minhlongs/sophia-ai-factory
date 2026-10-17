@@ -19,26 +19,17 @@ import { logger } from '@/seed/utils/logger-utility';
 import { getD1Safe } from '@/seed/db/client';
 import { isAlertThrottled, markAlertThrottled } from '@/forest/alerts/alert-throttle';
 import { triggerDistributionPipelineAlert } from '@/forest/alerts/distribution-pipeline-alert';
+import {
+  ALERT_THROTTLE_TTL,
+  type DistPostRow,
+  evaluateWorkspacePlatformMetrics,
+  groupRowsByWorkspacePlatform,
+} from './scan-metrics-helper';
 
 export const dynamic = 'force-dynamic';
 
 const CRON_NAME = 'distribution-pipeline-scan';
 const IDEMPOTENCY_WINDOW_MS = 14 * 60 * 1000; // 14m (cron runs every 15m)
-const ALERT_THROTTLE_TTL = 6 * 60 * 60; // 6 hours in KV seconds
-const FAILURE_RATE_THRESHOLD = 0.15; // 15%
-const LATENCY_MULTIPLIER = 2; // 2x baseline p95
-const ZERO_POST_RATIO = 0.2; // 20% of baseline
-const MIN_BASELINE_HOURLY = 5; // minimum baseline posts/hour for zero-post check
-
-interface DistPostRow {
-  workspace_id: string;
-  platform: string;
-  status: string;
-  error: string | null;
-  created_at: number;
-  scheduled_at: number | null;
-  posted_at: number | null;
-}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
@@ -66,7 +57,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const hourAgo = now - 60 * 60 * 1000;
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-    // Query last 7 days of distribution_posts joined with distribution_plans for workspace_id
     const stmt = db.prepare(
       `SELECT
          dp.workspace_id,
@@ -83,61 +73,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { results } = await stmt.bind(sevenDaysAgo).all<DistPostRow>();
     const rows = (results ?? []) as DistPostRow[];
 
-    // Group by workspace+platform
-    const byWorkspacePlatform = new Map<string, DistPostRow[]>();
-    for (const row of rows) {
-      const key = `${row.workspace_id}:${row.platform}`;
-      if (!byWorkspacePlatform.has(key)) {
-        byWorkspacePlatform.set(key, []);
-      }
-      byWorkspacePlatform.get(key)!.push(row);
-    }
-
+    const byWorkspacePlatform = groupRowsByWorkspacePlatform(rows);
     scanned = byWorkspacePlatform.size;
 
     for (const [key, platformRows] of byWorkspacePlatform) {
       const [workspaceId, platform] = key.split(':');
+      const metrics = evaluateWorkspacePlatformMetrics(platformRows, hourAgo, sevenDaysAgo);
 
-      // Current hour (last 60 min)
-      const currentHourRows = platformRows.filter(r => r.created_at >= hourAgo);
-      const totalCount = currentHourRows.length;
-      const failedCount = currentHourRows.filter(r => r.status === 'failed').length;
-
-      // 7-day hourly baseline (exclude current hour)
-      const baselineRows = platformRows.filter(r => r.created_at >= sevenDaysAgo && r.created_at < hourAgo);
-      const baselineHours = 7 * 24 - 1; // 167 hours
-      const baselineFailedHourly = baselineRows.filter(r => r.status === 'failed').length / baselineHours;
-      const baselineTotalHourly = baselineRows.length / baselineHours;
-
-      // Failure rate check
-      const failureRate = totalCount > 0 ? failedCount / totalCount : 0;
-      const baselineFailureRate = baselineTotalHourly > 0 ? baselineFailedHourly / baselineTotalHourly : 0;
-
-      // Latency p95 check (only for published posts with both timestamps)
-      const publishedCurrent = currentHourRows.filter(r => r.status === 'published' && r.posted_at && r.scheduled_at);
-      const latencies = publishedCurrent.map(r => r.posted_at! - r.scheduled_at!).sort((a, b) => a - b);
-      const p95LatencyMs = latencies.length > 0 ? latencies[Math.floor(latencies.length * 0.95)] : 0;
-
-      const publishedBaseline = baselineRows.filter(r => r.status === 'published' && r.posted_at && r.scheduled_at);
-      const baselineLatencies = publishedBaseline.map(r => r.posted_at! - r.scheduled_at!).sort((a, b) => a - b);
-      const baselineP95LatencyMs = baselineLatencies.length > 0 ? baselineLatencies[Math.floor(baselineLatencies.length * 0.95)] : 0;
-
-      // Failure taxonomy
-      const failureTaxonomy: Record<string, number> = {};
-      for (const row of currentHourRows.filter(r => r.status === 'failed' && r.error)) {
-        failureTaxonomy[row.error!] = (failureTaxonomy[row.error!] || 0) + 1;
-      }
-
-      // Zero-post stall check
-      const zeroPostStall = totalCount < baselineTotalHourly * ZERO_POST_RATIO && baselineTotalHourly > MIN_BASELINE_HOURLY;
-
-      // Check thresholds
-      const shouldAlert =
-        (totalCount > 0 && failureRate > FAILURE_RATE_THRESHOLD && failureRate > baselineFailureRate * 2) ||
-        (p95LatencyMs > 0 && baselineP95LatencyMs > 0 && p95LatencyMs > baselineP95LatencyMs * LATENCY_MULTIPLIER) ||
-        zeroPostStall;
-
-      if (!shouldAlert) continue;
+      if (!metrics.shouldAlert) continue;
 
       const throttleKey = `dist_pipeline_alert:${workspaceId}:${platform}`;
       if (await isAlertThrottled(throttleKey)) {
@@ -148,13 +91,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const alertId = await triggerDistributionPipelineAlert({
         workspaceId,
         platform,
-        failedCount,
-        totalCount,
-        failureRate,
-        baselineFailureRate,
-        p95LatencyMs,
-        baselineP95LatencyMs,
-        failureTaxonomy,
+        failedCount: metrics.failedCount,
+        totalCount: metrics.totalCount,
+        failureRate: metrics.failureRate,
+        baselineFailureRate: metrics.baselineFailureRate,
+        p95LatencyMs: metrics.p95LatencyMs,
+        baselineP95LatencyMs: metrics.baselineP95LatencyMs,
+        failureTaxonomy: metrics.failureTaxonomy,
       });
 
       if (alertId) {

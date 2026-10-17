@@ -8,8 +8,11 @@
  */
 
 import React, { useState } from 'react';
-import { Zap, X, AlertCircle } from 'lucide-react';
+import { Zap, X } from 'lucide-react';
 import type { AgencyClientSummary } from './types';
+import { QuotaModalFields } from './quota-modal-fields';
+
+export { QuotaModalFields, type QuotaModalFieldsProps } from './quota-modal-fields';
 
 export interface QuotaModalProps {
   client: AgencyClientSummary | null;
@@ -30,7 +33,6 @@ export function QuotaModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync state when client changes
   React.useEffect(() => {
     if (client) {
       setQuota(client.allocatedMcu);
@@ -46,7 +48,7 @@ export function QuotaModal({
       setError(
         isVi
           ? `Hạn mức mới không được thấp hơn lượng MCU đã dùng (${client!.usedMcu} MCU)`
-          : `New quota cannot be lower than currently used MCU (${client!.usedMcu} MCU)`
+          : `New quota cannot be lower than currently used MCU (${client!.usedMcu} MCU)`,
       );
       return;
     }
@@ -61,8 +63,8 @@ export function QuotaModal({
         err instanceof Error
           ? err.message
           : isVi
-          ? 'Không thể cập nhật hạn mức'
-          : 'Failed to update quota'
+            ? 'Không thể cập nhật hạn mức'
+            : 'Failed to update quota',
       );
     } finally {
       setIsSubmitting(false);
@@ -86,67 +88,13 @@ export function QuotaModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground block mb-1">
-              {isVi ? 'Khách Hàng' : 'Client Workspace'}
-            </label>
-            <p className="text-sm font-bold text-foreground">
-              {client.name}
-            </p>
-            <p className="text-xs text-muted-foreground font-mono">
-              {client.id}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 p-3 bg-muted/40 rounded-xl border border-border/50 text-xs">
-            <div>
-              <span className="text-muted-foreground">
-                {isVi ? 'Đã sử dụng:' : 'Currently Used:'}
-              </span>
-              <p className="font-bold text-foreground font-mono text-sm mt-0.5">
-                {client.usedMcu} MCU
-              </p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">
-                {isVi ? 'Hạn mức cũ:' : 'Current Quota:'}
-              </span>
-              <p className="font-bold text-foreground font-mono text-sm mt-0.5">
-                {client.allocatedMcu} MCU
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="quota-input"
-              className="text-xs font-semibold text-muted-foreground block mb-1"
-            >
-              {isVi ? 'Hạn Mức MCU Mới' : 'New MCU Quota'}
-            </label>
-            <input
-              id="quota-input"
-              type="number"
-              min={client.usedMcu}
-              step={10}
-              value={quota}
-              onChange={(e) => setQuota(Number(e.target.value))}
-              className="w-full px-3.5 py-2 rounded-xl bg-background border border-border text-foreground font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-              required
-            />
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {isVi
-                ? 'Đơn vị tính: 1 MCU = 1 lượt render video 60s độ phân giải cao'
-                : '1 MCU = 1 standard 60s high-definition video render unit'}
-            </p>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-500/10 text-rose-500 rounded-xl text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+          <QuotaModalFields
+            client={client}
+            quota={quota}
+            setQuota={setQuota}
+            error={error}
+            isVi={isVi}
+          />
 
           <div className="flex items-center justify-end gap-3 pt-3">
             <button
@@ -167,8 +115,8 @@ export function QuotaModal({
                   ? 'Đang lưu...'
                   : 'Saving...'
                 : isVi
-                ? 'Cập Nhật Hạn Mức'
-                : 'Update Quota'}
+                  ? 'Cập Nhật Hạn Mức'
+                  : 'Update Quota'}
             </button>
           </div>
         </form>

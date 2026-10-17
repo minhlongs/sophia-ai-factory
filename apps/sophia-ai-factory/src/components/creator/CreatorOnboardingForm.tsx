@@ -13,6 +13,8 @@ import { useTranslations } from 'next-intl';
 import { useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { registerCreator } from '@/land/sop-marketplace';
+import { CreatorOnboardingFields } from './creator-onboarding-fields';
+export { CreatorOnboardingFields } from './creator-onboarding-fields';
 
 type CreatorFormState = (
   | { ok: true; value: { profileId: string } }
@@ -65,96 +67,7 @@ export function CreatorOnboardingForm() {
         </div>
       )}
 
-      {/* Display Name */}
-      <div>
-        <label
-          htmlFor="displayName"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('displayName')}
-        </label>
-        <input
-          id="displayName"
-          name="displayName"
-          type="text"
-          required
-          placeholder={t('displayNamePlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      {/* Bio */}
-      <div>
-        <label
-          htmlFor="bio"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('bio')}
-        </label>
-        <textarea
-          id="bio"
-          name="bio"
-          rows={3}
-          placeholder={t('bioPlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      {/* Payout Method */}
-      <div>
-        <label
-          htmlFor="payoutMethod"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('payoutMethod')}
-        </label>
-        <select
-          id="payoutMethod"
-          name="payoutMethod"
-          required
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">{t('payoutMethodPlaceholder')}</option>
-          <option value="nowpayments">NOWPayments</option>
-          <option value="stripe_connect">Stripe Connect</option>
-          <option value="usdt">USDT</option>
-        </select>
-      </div>
-
-      {/* Payout Address */}
-      <div>
-        <label
-          htmlFor="payoutAddress"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('payoutAddress')}
-        </label>
-        <input
-          id="payoutAddress"
-          name="payoutAddress"
-          type="text"
-          required
-          placeholder={t('payoutAddressPlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      {/* Invite Code */}
-      <div>
-        <label
-          htmlFor="inviteCode"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('inviteCode')}
-        </label>
-        <input
-          id="inviteCode"
-          name="inviteCode"
-          type="text"
-          placeholder={t('inviteCodePlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
+      <CreatorOnboardingFields t={t} />
 
       {/* Submit */}
       <button

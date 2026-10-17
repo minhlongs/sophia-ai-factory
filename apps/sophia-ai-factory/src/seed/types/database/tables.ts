@@ -14,26 +14,13 @@ import type {
 import type {
   UserProfileRow,
   UserProfileInsert,
-  UserSessionRow,
-  TelegramUserMappingRow,
 } from '../user';
 import type { CampaignRow, CampaignTemplateRow } from '../video';
-import type { RateLimitRow, TelegramRateLimitRow } from '../infra';
-import type {
-  OverageEventRow,
-  OverageEventInsert,
-  QuotaLimitRow,
-  QuotaLimitInsert,
-  QuotaLimitUpdate,
-  DunningSettingsRow,
-  DunningSettingsInsert,
-  DunningAttemptRow,
-  DunningAttemptInsert,
-  BillingEventRow,
-  BillingEventInsert,
-} from '../billing';
+import type { DatabaseBillingAndInfraTables } from './tables-billing-infra';
 
-export interface DatabaseTables {
+export type { DatabaseBillingAndInfraTables };
+
+export interface DatabaseTables extends DatabaseBillingAndInfraTables {
   affiliate_products: {
     Row: AffiliateProductRow;
     Insert: Omit<AffiliateProductRow, 'id' | 'created_at' | 'updated_at'>;
@@ -119,60 +106,6 @@ export interface DatabaseTables {
       processed?: boolean;
       created_at?: string;
     };
-    Relationships: [];
-  };
-  user_sessions: {
-    Row: UserSessionRow;
-    Insert: Omit<UserSessionRow, 'id' | 'created_at'>;
-    Update: Partial<UserSessionRow>;
-    Relationships: [];
-  };
-  rate_limits: {
-    Row: RateLimitRow;
-    Insert: Omit<RateLimitRow, 'id' | 'created_at'>;
-    Update: Partial<RateLimitRow>;
-    Relationships: [];
-  };
-  telegram_rate_limits: {
-    Row: TelegramRateLimitRow;
-    Insert: Omit<TelegramRateLimitRow, 'id' | 'created_at'>;
-    Update: Partial<TelegramRateLimitRow>;
-    Relationships: [];
-  };
-  telegram_user_mappings: {
-    Row: TelegramUserMappingRow;
-    Insert: Omit<TelegramUserMappingRow, 'id' | 'created_at' | 'updated_at'>;
-    Update: Partial<TelegramUserMappingRow>;
-    Relationships: [];
-  };
-  overage_events: {
-    Row: OverageEventRow;
-    Insert: OverageEventInsert;
-    Update: Partial<OverageEventRow>;
-    Relationships: [];
-  };
-  quota_limits: {
-    Row: QuotaLimitRow;
-    Insert: QuotaLimitInsert;
-    Update: QuotaLimitUpdate;
-    Relationships: [];
-  };
-  dunning_settings: {
-    Row: DunningSettingsRow;
-    Insert: DunningSettingsInsert;
-    Update: Partial<DunningSettingsRow>;
-    Relationships: [];
-  };
-  dunning_attempts: {
-    Row: DunningAttemptRow;
-    Insert: DunningAttemptInsert;
-    Update: Partial<DunningAttemptRow>;
-    Relationships: [];
-  };
-  billing_events: {
-    Row: BillingEventRow;
-    Insert: BillingEventInsert;
-    Update: Partial<BillingEventRow>;
     Relationships: [];
   };
 }
