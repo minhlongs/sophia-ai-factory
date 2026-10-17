@@ -1041,3 +1041,21 @@ crons = ["*/5 * * * *"]
 | L10 Backup | 7/10 | Route + bucket + 30d lifecycle; no external cron |
 
 Raising above 87.5/100 requires months of DR drills + restore tests — not code changes. See `apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md`.
+
+---
+
+## Autonomous Social Direct Publishing Pipeline
+
+Sophia AI Factory features a direct multi-channel social publishing system (`src/components/social-publisher/`, `src/land/social/`, `src/forest/inngest/functions/social-direct-publish-job.ts`):
+- **Anti-Detection Pacing Engine (`src/tree/social/publisher/pacing-engine.ts`):** Enforces platform daily limits (TikTok: 4, YouTube: 6, Instagram: 4), channel-level cooldowns (180m), and randomized organic jitter delays (45–90m).
+- **D1 OCC Credential & Job Store (`src/land/social/`):** Optimistic Concurrency Control (OCC) lock versioning on channel credentials and draft job queues (`PUBLISH_JOBS_TABLE`).
+- **Server Actions & UI (`src/app/actions/social-publisher-actions.ts`):** Authenticated video dispatch, emergency channel killswitch toggling, and draft review transitions.
+- **Durable Inngest Execution:** Handles direct multipart video uploads with circuit breakers, exponential backoff, and rollover counters.
+
+---
+
+## High-Throughput Synthetic Stress Test Harness
+
+The repository includes a suite of ultra-high-concurrency synthetic stress test modules (`src/land/compute/`, `src/land/clearing/`, `src/tree/reserve/`, `src/seed/types/sub-planck*`):
+- **Purpose:** Extreme stress testing, mathematical solvency verification, and zero-leakage state compaction under simulated multi-million transaction loads.
+- **Separation of Concerns:** Production customer-facing features (Setup Wizard, Video Generation Studio, Billing & Invoicing, Telegram Bot) operate independently on core primitives (`seed/`, `tree/`, `forest/`, `land/`). Stress modules validate memory boundaries, concurrency locks, and type safety under simulated maximum throughput.
