@@ -32,11 +32,11 @@ npm run dev
 
 ---
 
-## 3. Why Non-Technical CEOs & Agencies Use Sophia Managed Cloud
+## 3. Why Non-Technical CEOs & Agencies Choose Sophia Managed Cloud
 
 While developers can self-host the Community Core, running a production multi-channel AI video and affiliate business requires:
-- **Platform OAuth Approvals:** TikTok Content Posting API v2, Google YouTube Shorts resumable upload scopes, and Meta Graph API require business verification and app review (2–4 weeks). Sophia Cloud provides pre-verified OAuth relays out of the box.
-- **Zero-Ops Durable Infrastructure:** Cloudflare Workers + D1 SQLite OCC locking + R2 media buckets + Inngest retry queues + daily backups managed 24/7.
-- **Quantitative Revenue Optimization:** Growth Triad v14 automatically reallocates video production budgets toward winning hooks using Thompson Sampling and Half-Kelly criterion.
+- **Platform Publisher Integrations:** Direct social publishing adapters (TikTok, YouTube, Meta) require provider API credentials and approved developer access. Sophia Cloud provides configured cloud integration endpoints.
+- **Zero-Ops Durable Infrastructure:** Managed Cloudflare Workers edge runtime, D1 SQLite storage, R2 media storage, Inngest job execution, and verified operational runbooks.
+- **Quantitative Revenue Optimization:** Growth Triad v14 automatically evaluates video performance hooks using Thompson Sampling and Half-Kelly allocation models.
 
 👉 **Subscribe or request a Master License Key:** [https://sophia.agencyos.network/pricing](https://sophia.agencyos.network/pricing)

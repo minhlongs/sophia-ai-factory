@@ -8,9 +8,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const mockGetCurrentUser = vi.fn();
+const mockGetUserTier = vi.fn();
+const mockResolveOrgId = vi.fn();
+const mockLoadUserPortableConfig = vi.fn();
+const mockSaveUserPortableConfig = vi.fn();
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: () => mockGetCurrentUser(),
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: (...args: unknown[]) => mockGetUserTier(...args),
+}));
+
+vi.mock('@/seed/auth/org-resolver/org-resolver-service', () => ({
+  resolveOrgId: (...args: unknown[]) => mockResolveOrgId(...args),
+}));
+
+vi.mock('@/tree/open-core/workspace-portability-store', () => ({
+  loadUserPortableConfig: (...args: unknown[]) => mockLoadUserPortableConfig(...args),
+  saveUserPortableConfig: (...args: unknown[]) => mockSaveUserPortableConfig(...args),
 }));
 
 import { GET as getStatus, POST as postStatus } from '../status/route';
@@ -27,31 +44,50 @@ describe('/api/open-core/status route', () => {
     process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
     process.env.RAAS_LICENSE_SECRET = TEST_LICENSE_SECRET;
     delete process.env.RAAS_LICENSE_KEY;
+    mockGetCurrentUser.mockReset();
+    mockGetUserTier.mockReset();
+    mockResolveOrgId.mockReset();
   });
 
   afterEach(() => {
     process.env = { ...origEnv };
   });
 
-  it('GET returns community edition and 12 evaluated feature gates by default', async () => {
-    const req = new NextRequest('http://localhost:3000/api/open-core/status');
-    const res = await getStatus(req);
+  it('returns 401 when unauthenticated on GET or POST', async () => {
+    mockGetCurrentUser.mockResolvedValue(null);
+    const getRes = await getStatus(new NextRequest('http://localhost:3000/api/open-core/status'));
+    expect(getRes.status).toBe(401);
+
+    const postRes = await postStatus(
+      new NextRequest('http://localhost:3000/api/open-core/status', {
+        method: 'POST',
+        body: JSON.stringify({ licenseKey: 'SOPHIA-RAAS-v1.abc.def' }),
+      }),
+    );
+    expect(postRes.status).toBe(401);
+  });
+
+  it('GET returns community edition with 4 unlocked COMMUNITY features for self-hosted user', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'dev@agency.vn' });
+    mockGetUserTier.mockResolvedValue('BASIC');
+
+    const res = await getStatus(new NextRequest('http://localhost:3000/api/open-core/status'));
     expect(res.status).toBe(200);
 
     const json = (await res.json()) as {
-      success: boolean;
+      mode: string;
       edition: string;
-      features: Array<{ allowed: boolean; feature: { scope: string } }>;
+      features: Array<{ allowed: boolean }>;
     };
-    expect(json.success).toBe(true);
+    expect(json.mode).toBe('runtime_status');
     expect(json.edition).toBe('community');
-    expect(json.features.length).toBe(12);
-
-    const unlocked = json.features.filter((f) => f.allowed);
-    expect(unlocked.length).toBe(4);
+    expect(json.features.filter((f) => f.allowed).length).toBe(4);
   });
 
-  it('POST verifies a valid MASTER RaaS license token and unlocks all 12 features', async () => {
+  it('POST validates an org-bound MASTER license preview without leaking orgId', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'ceo@agency.vn' });
+    mockResolveOrgId.mockResolvedValue('org_vn_01');
+
     const token = await issueRaasLicenseToken(
       {
         licenseId: 'lic_master_route_01',
@@ -65,80 +101,95 @@ describe('/api/open-core/status route', () => {
       TEST_LICENSE_SECRET,
     );
 
-    const req = new NextRequest('http://localhost:3000/api/open-core/status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ licenseKey: token }),
-    });
-
-    const res = await postStatus(req);
+    const res = await postStatus(
+      new NextRequest('http://localhost:3000/api/open-core/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ licenseKey: token }),
+      }),
+    );
     expect(res.status).toBe(200);
 
     const json = (await res.json()) as {
-      success: boolean;
       valid: boolean;
-      edition: string;
+      mode: string;
+      persisted: boolean;
+      licenseSummary: Record<string, unknown>;
       features: Array<{ allowed: boolean }>;
     };
-    expect(json.success).toBe(true);
     expect(json.valid).toBe(true);
-    expect(json.edition).toBe('enterprise');
+    expect(json.mode).toBe('validation_preview');
+    expect(json.persisted).toBe(false);
+    expect(json.licenseSummary.orgId).toBeUndefined();
     expect(json.features.every((f) => f.allowed)).toBe(true);
   });
 
-  it('POST returns 422 when given a tampered RaaS license token', async () => {
-    const req = new NextRequest('http://localhost:3000/api/open-core/status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ licenseKey: 'SOPHIA-RAAS-v1.eyJbad.00000000' }),
-    });
+  it('POST returns 403 ORG_MISMATCH when token belongs to another organization', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'ceo@agency.vn' });
+    mockResolveOrgId.mockResolvedValue('org_vn_01');
 
-    const res = await postStatus(req);
-    expect(res.status).toBe(422);
+    const foreignToken = await issueRaasLicenseToken(
+      {
+        licenseId: 'lic_other_01',
+        orgId: 'org_foreign_99',
+        edition: 'enterprise',
+        tier: 'ENTERPRISE',
+        issuedAt: 1700000000,
+        expiresAt: 2000000000,
+      },
+      TEST_LICENSE_SECRET,
+    );
+
+    const res = await postStatus(
+      new NextRequest('http://localhost:3000/api/open-core/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ licenseKey: foreignToken }),
+      }),
+    );
+    expect(res.status).toBe(403);
   });
 });
 
 describe('/api/open-core/portability route', () => {
   beforeEach(() => {
     mockGetCurrentUser.mockReset();
+    mockLoadUserPortableConfig.mockReset();
+    mockSaveUserPortableConfig.mockReset();
   });
 
-  it('returns 401 when user is unauthenticated', async () => {
-    mockGetCurrentUser.mockResolvedValueOnce(null);
-    const req = new NextRequest('http://localhost:3000/api/open-core/portability');
-    const res = await getPortability(req);
-    expect(res.status).toBe(401);
-  });
-
-  it('exports and re-imports a signed workspace bundle for an authenticated user', async () => {
+  it('exports persisted D1 config and persists validated bundle on POST', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'usr_open_core_1', email: 'dev@agency.vn' });
+    mockLoadUserPortableConfig.mockResolvedValue({
+      defaultLocale: 'vi',
+      routingStrategy: 'costOptimized',
+      configuredProviders: ['openrouter', 'heygen'],
+      channelPresets: [{ slug: 'ai-news', niche: 'tech', locale: 'vi', cadencePerWeek: 5 }],
+    });
+    mockSaveUserPortableConfig.mockResolvedValue({ persisted: true });
 
-    const exportReq = new NextRequest(
-      'http://localhost:3000/api/open-core/portability?locale=vi&routingStrategy=costOptimized&providers=openrouter,heygen',
+    const exportRes = await getPortability(
+      new NextRequest('http://localhost:3000/api/open-core/portability'),
     );
-    const exportRes = await getPortability(exportReq);
     expect(exportRes.status).toBe(200);
-
     const exportedJson = (await exportRes.json()) as {
-      success: boolean;
       bundle: { config: Record<string, unknown>; checksumHex: string };
     };
-    expect(exportedJson.success).toBe(true);
 
-    const importReq = new NextRequest('http://localhost:3000/api/open-core/portability', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(exportedJson.bundle),
-    });
-    const importRes = await postPortability(importReq);
+    const importRes = await postPortability(
+      new NextRequest('http://localhost:3000/api/open-core/portability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(exportedJson.bundle),
+      }),
+    );
     expect(importRes.status).toBe(200);
-
     const importedJson = (await importRes.json()) as {
-      success: boolean;
+      persisted: boolean;
       importedConfig: { routingStrategy: string; configuredProviders: string[] };
     };
-    expect(importedJson.success).toBe(true);
+    expect(importedJson.persisted).toBe(true);
     expect(importedJson.importedConfig.routingStrategy).toBe('costOptimized');
-    expect(importedJson.importedConfig.configuredProviders).toEqual(['openrouter', 'heygen']);
+    expect(mockSaveUserPortableConfig).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Key, BarChart3, Users, Languages, HardDrive } from 'lucide-react';
+import { User, Key, BarChart3, Users, Languages, HardDrive, Shield } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
 import { Link } from '@/navigation';
 import { SettingsProfileSection } from '@/components/settings/settings-profile-section';
@@ -9,6 +9,7 @@ import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { StorageSettingsForm } from '@/components/settings/storage-settings-form';
 import { AccountOwnershipView } from '@/components/settings/account-ownership-view';
 import { SettingsLocaleDangerSection } from '@/components/settings/settings-locale-danger';
+import { OpenCorePortabilityPanel } from '@/components/settings/open-core-portability-panel';
 
 interface SettingsPageProps {
   userName?: string;
@@ -25,6 +26,7 @@ const NAV_TABS = [
   { id: 'storage', label: 'Storage (R2 BYOS)', icon: HardDrive },
   { id: 'usage', label: 'Live Metering', icon: BarChart3 },
   { id: 'team', label: 'Team & Ownership', icon: Users },
+  { id: 'openCore', label: 'Open-Core & Portability', icon: Shield },
   { id: 'preferences', label: 'Preferences', icon: Languages },
 ];
 
@@ -116,6 +118,10 @@ export default function SettingsPage({
 
           {activeTab === 'team' && (
             <AccountOwnershipView />
+          )}
+
+          {activeTab === 'openCore' && (
+            <OpenCorePortabilityPanel />
           )}
 
           {activeTab === 'preferences' && (

@@ -1,13 +1,11 @@
 /**
  * GET & POST /api/open-core/portability
  *
- * Enables 60-second workspace migration from a self-hosted Apache-2.0 Community
- * instance into a paid `https://sophia.agencyos.network` Managed Cloud workspace.
+ * Tenant-scoped, D1-backed export and import of non-sensitive workspace
+ * configuration (`defaultLocale`, `routingStrategy`, `configuredProviders`
+ * metadata, and `channelPresets`) for self-host <-> Sophia Cloud portability.
  *
- * - GET: Exports a signed `SignedWorkspaceBundle` for the authenticated user.
- * - POST: Validates and imports a `SignedWorkspaceBundle` (HMAC-SHA256 verified).
- *
- * Security invariant: Raw BYOK API keys are NEVER exported.
+ * Security invariant: Raw BYOK API keys are NEVER read or exported.
  *
  * @module app/api/open-core/portability/route
  */
@@ -19,8 +17,11 @@ import { resolveSophiaEdition } from '@/seed/config/edition-config';
 import {
   exportWorkspaceBundle,
   importWorkspaceBundle,
-  type AllowedPortableProvider,
 } from '@/tree/open-core/workspace-portability';
+import {
+  loadUserPortableConfig,
+  saveUserPortableConfig,
+} from '@/tree/open-core/workspace-portability-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ const importBundleBodySchema = z.object({
   checksumHex: z.string().min(64).max(64),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json(
@@ -55,39 +56,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const localeParam = request.nextUrl.searchParams.get('locale');
-  const defaultLocale: 'vi' | 'en' = localeParam === 'en' ? 'en' : 'vi';
-  const routingParam = request.nextUrl.searchParams.get('routingStrategy');
-  const routingStrategy: 'priority' | 'costOptimized' | 'leastUsed' =
-    routingParam === 'costOptimized' || routingParam === 'leastUsed'
-      ? routingParam
-      : 'priority';
-
-  const providersParam = request.nextUrl.searchParams.get('providers');
-  const allowedSet = new Set<AllowedPortableProvider>([
-    'openrouter', 'elevenlabs', 'heygen', 'did', 'resend', 'nowpayments',
-  ]);
-  const configuredProviders: AllowedPortableProvider[] = providersParam
-    ? (providersParam
-        .split(',')
-        .map((s) => s.trim())
-        .filter((s): s is AllowedPortableProvider => allowedSet.has(s as AllowedPortableProvider)))
-    : ['openrouter', 'elevenlabs', 'heygen'];
-
+  const persistedState = await loadUserPortableConfig(user.id);
   const bundle = await exportWorkspaceBundle({
     exportedAt: Math.floor(Date.now() / 1000),
-    sourceEdition: resolveSophiaEdition({ appUrl: request.nextUrl.origin }),
-    defaultLocale,
-    routingStrategy,
-    configuredProviders,
-    channelPresets: [],
+    sourceEdition: resolveSophiaEdition({
+      sophiaEdition: process.env.SOPHIA_EDITION,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    }),
+    defaultLocale: persistedState.defaultLocale,
+    routingStrategy: persistedState.routingStrategy,
+    configuredProviders: persistedState.configuredProviders,
+    channelPresets: persistedState.channelPresets,
   });
 
   return NextResponse.json({
     success: true,
     userId: user.id,
     bundle,
-    cloudImportUrl: 'https://sophia.agencyos.network/vi/setup-wizard?import=workspace-v1',
+    settingsUrl: 'https://sophia.agencyos.network/vi/dashboard/settings?tab=openCore',
   });
 }
 
@@ -134,9 +120,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { persisted } = await saveUserPortableConfig(user.id, result.value);
+
   return NextResponse.json({
     success: true,
     userId: user.id,
+    persisted,
     importedConfig: result.value,
   });
 }

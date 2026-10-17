@@ -9,7 +9,7 @@
 
 ## ☁️ Sophia Managed Cloud vs. Self-Hosted Community Edition
 
-Don't want to spend 2–4 weeks passing TikTok/YouTube/Meta OAuth developer app reviews, provisioning Cloudflare D1/R2/KV bindings, or operating 24/7 Inngest durable workers? **Launch in 60 seconds on Sophia Managed Cloud.**
+Looking for managed Cloudflare edge hosting, Inngest durable workflow execution, and pre-configured multi-channel distribution? **Deploy with Sophia Managed Cloud.**
 
 | Capability | Community Self-Hosted (`Apache-2.0`) | Sophia Cloud (`$199 – $799/mo`) | Master Handover (`$4,999`) |
 |---|:---:|:---:|:---:|
@@ -17,13 +17,13 @@ Don't want to spend 2–4 weeks passing TikTok/YouTube/Meta OAuth developer app 
 | **BYOK Envelope Encryption Vault (`AES-256-GCM`)** | ✅ Included | ✅ Managed | ✅ Included |
 | **Bilingual `/ask` Intent Router & 4-Advisor Consultation** | ✅ Included | ✅ Managed | ✅ Included |
 | **Single-Workspace AI Script, TTS & Video Studio** | ✅ Included | ✅ Managed | ✅ Included |
-| **Pre-Approved TikTok, YouTube Shorts & IG Reels OAuth Relay** | ❌ Bring Own Dev Apps | ✅ **1-Click Connect** | ✅ Dedicated App Handover |
+| **Direct Social Publisher Adapters (TikTok, YouTube, Meta)** | ⚙️ Bring Own Dev Apps | ✅ **Configured Cloud Adapters** | ✅ Dedicated Adapter Handover |
 | **Growth Triad v14 (Thompson Sampling MAB + Half-Kelly)** | 🔒 Commercial | ✅ **Included (PREMIUM+)** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
 | **Affiliate Attribution & Automated USDT Mass-Payouts** | 🔒 Commercial | ✅ **Included** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
 | **White-Label Agency Subaccount Portal & Custom Domains** | 🔒 Enterprise | ✅ **Included (ENTERPRISE)** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
 | **Cryptographic Merkle IPO Audit Vault & 10-Gate Handover** | 🔒 Enterprise | ✅ **Included (ENTERPRISE)** | ✅ Unlocked via `RAAS_LICENSE_KEY` |
 
-👉 **[Start Instantly on Sophia Cloud](https://sophia.agencyos.network/pricing)** | **[Self-Hosting Guide (`docs/SELF_HOSTING.md`)](docs/SELF_HOSTING.md)**
+👉 **[Start on Sophia Cloud](https://sophia.agencyos.network/pricing)** | **[Self-Hosting Guide (`docs/SELF_HOSTING.md`)](docs/SELF_HOSTING.md)**
 
 ---
 
@@ -43,8 +43,8 @@ npm run dev
 
 Open `http://localhost:3000/vi/setup-wizard` (or `/en/setup-wizard`) to enter your own AI provider keys (OpenRouter, ElevenLabs, HeyGen, D-ID) encrypted locally with Web Crypto AES-256-GCM.
 
-### Migrate Local Workspace to Sophia Cloud in 60 Seconds
-Tested the Community Edition locally and ready for automated multi-channel publishing and Growth Triad optimization? Use `exportWorkspaceBundle()` (`src/tree/open-core/workspace-portability.ts`) to export your channel presets and routing strategy into Sophia Cloud with zero reconfiguration.
+### Export & Import Workspace Configuration
+Tested the Community Edition locally and ready to transfer your non-secret settings to another deployment or Sophia Cloud? Use the Settings Dashboard **Open-Core & Portability** panel or `exportWorkspaceBundle()` (`src/tree/open-core/workspace-portability.ts`) to export signed channel presets and routing strategies (raw BYOK API keys are never exported).
 
 ---
 

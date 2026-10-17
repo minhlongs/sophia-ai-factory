@@ -1,9 +1,15 @@
 /**
  * Open-Core Edition Resolver & Commercial Feature Gate
  *
- * Determines the active runtime edition (`community` | 'cloud' | 'enterprise')
+ * Determines the active runtime edition (`community` | `cloud` | `enterprise`)
  * and evaluates whether a specific feature is unlocked in the current deployment
- * or requires upgrading to Managed Sophia Cloud / entering a RaaS License Key.
+ * or requires an active Cloud subscription / verified RaaS License Key.
+ *
+ * Security invariants:
+ * - Fail-closed when `licensedTier` is missing (`meetsMinimumTierRank` returns false
+ *   for any non-FREE feature).
+ * - `enterprise` edition requires `hasValidRaasLicense === true` (unverified env
+ *   strings alone never grant enterprise entitlements).
  *
  * Layer: seed/config
  * @module seed/config/edition-config
@@ -64,16 +70,20 @@ function meetsMinimumTierRank(
   licensedTier: EditionContextInput['licensedTier'],
   requiredTier: OpenCoreFeatureSpec['minPaidTier'],
 ): boolean {
-  if (!licensedTier) return true;
+  if (requiredTier === 'FREE') return true;
+  if (!licensedTier) return false;
   return TIER_RANK[licensedTier] >= TIER_RANK[requiredTier];
 }
 
 /**
- * Resolves the active Sophia edition from environment or explicit context.
- * Defaults to `'cloud'` when running on `sophia.agencyos.network` and
- * `'community'` on self-hosted localhost / custom deployments without a license.
+ * Resolves the active Sophia edition from verified license or server config.
+ * Only grants `'enterprise'` when `ctx?.hasValidRaasLicense === true`.
  */
 export function resolveSophiaEdition(ctx?: EditionContextInput): SophiaEdition {
+  if (ctx?.hasValidRaasLicense) {
+    return 'enterprise';
+  }
+
   const rawEdition = (
     ctx?.sophiaEdition ??
     process.env.SOPHIA_EDITION ??
@@ -83,9 +93,6 @@ export function resolveSophiaEdition(ctx?: EditionContextInput): SophiaEdition {
     .trim()
     .toLowerCase();
 
-  if (rawEdition === 'enterprise' || ctx?.hasValidRaasLicense) {
-    return 'enterprise';
-  }
   if (rawEdition === 'cloud') {
     return 'cloud';
   }
@@ -125,27 +132,27 @@ export function evaluateFeatureGate(
 
   const tierSufficient = meetsMinimumTierRank(ctx?.licensedTier, feature.minPaidTier);
 
-  if ((activeEdition === 'enterprise' || ctx?.hasValidRaasLicense) && tierSufficient) {
+  if (ctx?.hasValidRaasLicense && tierSufficient) {
     return {
       feature,
       activeEdition: 'enterprise',
       allowed: true,
       reasonCode: 'ENTERPRISE_LICENSE_VERIFIED',
       upgradeUrl: feature.upgradeCtaUrl,
-      messageVi: `Đã mở khóa thương mại cho "${feature.titleVi}" qua giấy phép RaaS Enterprise/Master.`,
-      messageEn: `Commercial feature "${feature.titleEn}" unlocked via verified RaaS Enterprise/Master license.`,
+      messageVi: `Đã mở khóa thương mại cho "${feature.titleVi}" qua giấy phép RaaS (${ctx.licensedTier}).`,
+      messageEn: `Commercial feature "${feature.titleEn}" unlocked via verified RaaS license (${ctx.licensedTier}).`,
     };
   }
 
-  if (activeEdition === 'cloud' && tierSufficient) {
+  if (activeEdition === 'cloud' && ctx?.licensedTier && tierSufficient) {
     return {
       feature,
       activeEdition: 'cloud',
       allowed: true,
       reasonCode: 'MANAGED_CLOUD_ACTIVE',
       upgradeUrl: feature.upgradeCtaUrl,
-      messageVi: `Tính năng "${feature.titleVi}" đang hoạt động trên Sophia Managed Cloud.`,
-      messageEn: `Feature "${feature.titleEn}" is active on Sophia Managed Cloud.`,
+      messageVi: `Tính năng "${feature.titleVi}" đang hoạt động trên Sophia Cloud (${ctx.licensedTier}).`,
+      messageEn: `Feature "${feature.titleEn}" is active on Sophia Managed Cloud (${ctx.licensedTier}).`,
     };
   }
 
@@ -159,11 +166,11 @@ export function evaluateFeatureGate(
       : 'REQUIRES_CLOUD_SUBSCRIPTION',
     upgradeUrl: feature.upgradeCtaUrl,
     messageVi: isEnterpriseOnly
-      ? `🔒 "${feature.titleVi}" thuộc bản Enterprise ($799/tháng) hoặc Master Handover ($4,999). Nâng cấp trên Sophia Cloud hoặc nhập khóa RAAS_LICENSE_KEY để mở khóa.`
-      : `☁️ "${feature.titleVi}" được vận hành tự động trên Sophia Cloud (từ $199/tháng) hoặc cần khóa bản quyền thương mại. Trải nghiệm ngay không cần tự cấu hình hạ tầng.`,
+      ? `🔒 "${feature.titleVi}" yêu cầu gói Enterprise ($799/tháng) hoặc Master Handover ($4,999).`
+      : `☁️ "${feature.titleVi}" yêu cầu gói Sophia Cloud (từ $199/tháng) hoặc khóa bản quyền RaaS hợp lệ.`,
     messageEn: isEnterpriseOnly
-      ? `🔒 "${feature.titleEn}" requires Sophia Enterprise ($799/mo) or Master Handover ($4,999). Upgrade on Sophia Cloud or enter a valid RAAS_LICENSE_KEY to unlock.`
-      : `☁️ "${feature.titleEn}" is available on Sophia Managed Cloud (from $199/mo) or with a Commercial License Key. Launch instantly without managing OAuth or queue infra.`,
+      ? `🔒 "${feature.titleEn}" requires Sophia Enterprise ($799/mo) or Master Handover ($4,999).`
+      : `☁️ "${feature.titleEn}" requires an active Sophia Cloud subscription (from $199/mo) or a valid RaaS License Key.`,
   };
 }
 

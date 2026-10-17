@@ -1,164 +1,186 @@
-'use client';
-
 /**
- * Director's Control Deck — Commercial SaaS & Enterprise License Upgrade Modal
+ * Director's Control Deck — Commercial SaaS Upgrade & License Validation Modal
  *
- * Rendered when a self-hosted `COMMUNITY` instance attempts to use a
- * `CLOUD_SAAS` ($199–$799/mo) or `ENTERPRISE_MASTER` ($4,999) capability.
+ * Renders an executive bilingual (VI/EN) modal when a Community Edition user
+ * inspects a commercial feature (`CLOUD_SAAS` or `ENTERPRISE_MASTER`), offering:
+ * 1. Direct upgrade CTA to Sophia Managed Cloud (`https://sophia.agencyos.network/pricing`)
+ * 2. Stateless server-side `SOPHIA-RAAS-v1` License Key validation preview
+ *    (explicitly noting that runtime activation requires server env configuration).
  *
- * Layer: components/open-core
  * @module components/open-core/commercial-upgrade-modal
  */
 
+'use client';
+
 import React, { useState } from 'react';
-import { Cloud, KeyRound, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, Cloud, KeyRound, ShieldCheck, Sparkles, X } from 'lucide-react';
 import type { FeatureGateEvaluation } from '@/seed/config/edition-config';
 
 export interface CommercialUpgradeModalProps {
-  readonly evaluation: FeatureGateEvaluation;
+  readonly evaluation: FeatureGateEvaluation | null;
   readonly locale?: 'vi' | 'en';
-  readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly onSubmitLicenseKey?: (licenseKey: string) => void;
+  readonly onValidateLicenseKey?: (licenseKey: string) => Promise<void> | void;
+  readonly validationFeedback?: { readonly ok: boolean; readonly message: string } | null;
 }
 
-const COPY = {
+const MODAL_COPY = {
   vi: {
-    badge: 'SOPHIA OPEN-CORE → COMMERCIAL BRIDGE',
-    whyCloudHeading: 'Vì sao 95% CEO & Agency chọn Sophia Managed Cloud?',
-    whyCloudPoints: [
-      'Không cần xin duyệt TikTok / YouTube / Meta OAuth App (mất 2–4 tuần thẩm định).',
-      'Hạ tầng Cloudflare Workers + D1 + R2 + Inngest vận hành tự động 24/7, sao lưu mỗi ngày.',
-      'Mở khóa Growth Triad v14 (Thompson Sampling MAB + phân bổ vốn Half-Kelly) & Đối soát Affiliate.',
-    ],
-    cloudCta: 'Nâng cấp lên Sophia Cloud (từ $199/tháng)',
-    licenseToggle: 'Đã mua gói Master ($4,999) / Enterprise? Nhập RAAS_LICENSE_KEY',
+    badge: 'SOPHIA CLOUD & ENTERPRISE EDITION',
+    cloudCta: 'Nâng cấp trên Sophia Managed Cloud',
+    licenseLabel: 'Hoặc kiểm tra tính hợp lệ của Khóa Giấy Phép RaaS (Xem trước — không tự lưu):',
     licensePlaceholder: 'SOPHIA-RAAS-v1.eyJ...',
-    activateBtn: 'Kích hoạt Giấy phép',
-    closeBtn: 'Để sau',
+    validateBtn: 'Kiểm tra Khóa (Preview)',
+    validatingBtn: 'Đang kiểm tra...',
+    persistHint:
+      'Lưu ý: Bước này chỉ xác thực chữ ký HMAC và phạm vi Tier của khóa. Để kích hoạt vĩnh viễn trên máy chủ tự vận hành, hãy đặt RAAS_LICENSE_KEY trong biến môi trường.',
+    closeBtn: 'Đóng',
+    benefitsTitle: 'Đặc quyền khi nâng cấp lên Sophia Managed Cloud:',
+    benefits: [
+      'Hạ tầng Cloudflare D1 + R2 + Inngest vận hành sẵn (không cần tự quản lý queue/worker)',
+      'Growth Triad v14: Thompson Sampling Bandit & phân bổ ngân sách Half-Kelly',
+      'White-Label Agency Subaccount Portal, Custom Domain & Merkle IPO Audit Vault',
+    ],
   },
   en: {
-    badge: 'SOPHIA OPEN-CORE → COMMERCIAL BRIDGE',
-    whyCloudHeading: 'Why 95% of CEOs & Agencies choose Sophia Managed Cloud',
-    whyCloudPoints: [
-      'Skip painful 2–4 week TikTok, YouTube & Meta OAuth developer app reviews.',
-      'Zero-ops Cloudflare Workers + D1 + R2 + Inngest durable queues managed 24/7.',
-      'Unlock Growth Triad v14 (Thompson Sampling MAB + Half-Kelly allocator) & Affiliate Payouts.',
-    ],
-    cloudCta: 'Launch Instantly on Sophia Cloud (from $199/mo)',
-    licenseToggle: 'Have a Master ($4,999) or Enterprise key? Enter RAAS_LICENSE_KEY',
+    badge: 'SOPHIA CLOUD & ENTERPRISE EDITION',
+    cloudCta: 'Upgrade on Sophia Managed Cloud',
+    licenseLabel: 'Or validate a RaaS Commercial License Key (Preview Only — stateless):',
     licensePlaceholder: 'SOPHIA-RAAS-v1.eyJ...',
-    activateBtn: 'Activate License',
-    closeBtn: 'Maybe Later',
+    validateBtn: 'Validate Key (Preview)',
+    validatingBtn: 'Validating...',
+    persistHint:
+      'Note: This check previews HMAC signature and tier entitlements only. For persistent activation on a self-hosted server, set RAAS_LICENSE_KEY in your server environment.',
+    closeBtn: 'Close',
+    benefitsTitle: 'Included with Sophia Managed Cloud & Enterprise:',
+    benefits: [
+      'Managed Cloudflare D1 + R2 + Inngest queue execution with zero DevOps maintenance',
+      'Growth Triad v14: Thompson Sampling Bandit & Half-Kelly capital allocator',
+      'White-Label Agency Subaccount Portal, Custom Domains & Merkle IPO Audit Vault',
+    ],
   },
 } as const;
 
 export function CommercialUpgradeModal({
   evaluation,
   locale = 'vi',
-  isOpen,
   onClose,
-  onSubmitLicenseKey,
+  onValidateLicenseKey,
+  validationFeedback,
 }: CommercialUpgradeModalProps) {
-  const [showKeyInput, setShowKeyInput] = useState(false);
   const [licenseKey, setLicenseKey] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen || evaluation.allowed) {
-    return null;
-  }
+  if (!evaluation || evaluation.allowed) return null;
 
   const isVi = locale === 'vi';
-  const t = isVi ? COPY.vi : COPY.en;
-  const featureTitle = isVi ? evaluation.feature.titleVi : evaluation.feature.titleEn;
-  const featureSummary = isVi ? evaluation.feature.summaryVi : evaluation.feature.summaryEn;
-  const gateMessage = isVi ? evaluation.messageVi : evaluation.messageEn;
+  const copy = isVi ? MODAL_COPY.vi : MODAL_COPY.en;
+  const title = isVi ? evaluation.feature.titleVi : evaluation.feature.titleEn;
+  const summary = isVi ? evaluation.messageVi : evaluation.messageEn;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!licenseKey.trim() || !onValidateLicenseKey) return;
+    setIsSubmitting(true);
+    try {
+      await onValidateLicenseKey(licenseKey.trim());
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sophia-upgrade-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-amber-500/30 bg-slate-950 p-6 text-slate-100 shadow-2xl space-y-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-semibold tracking-wider text-amber-400">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t.badge}
-            </span>
-            <h3 id="sophia-upgrade-modal-title" className="text-lg font-bold text-white pt-1">
-              {featureTitle}
-            </h3>
-            <p className="text-xs text-slate-400">{featureSummary}</p>
+      <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-950 p-6 text-slate-100 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold tracking-wider text-amber-300">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{copy.badge}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label={t.closeBtn}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+            aria-label={copy.closeBtn}
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3.5 text-xs text-amber-200/90">
-          {gateMessage}
-        </div>
+        <h3 id="sophia-upgrade-modal-title" className="mt-4 text-xl font-bold text-white">
+          {title}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">{summary}</p>
 
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            {t.whyCloudHeading}
-          </h4>
-          <ul className="space-y-1.5 text-xs text-slate-300">
-            {t.whyCloudPoints.map((pt) => (
-              <li key={pt} className="flex items-start gap-2">
-                <span className="text-amber-400 font-bold">•</span>
-                <span>{pt}</span>
+        <div className="mt-4 rounded-xl border border-slate-800/90 bg-slate-900/70 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
+            {copy.benefitsTitle}
+          </p>
+          <ul className="mt-2.5 space-y-2 text-xs text-slate-300">
+            {copy.benefits.map((item) => (
+              <li key={item} className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                <span>{item}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="space-y-3 pt-1">
+        <div className="mt-5 flex flex-col gap-3">
           <a
             href={evaluation.upgradeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-500 px-4 py-3 text-xs font-bold text-white shadow-lg transition"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-amber-400"
           >
             <Cloud className="h-4 w-4" />
-            {t.cloudCta}
+            <span>{copy.cloudCta}</span>
           </a>
 
-          <button
-            type="button"
-            onClick={() => setShowKeyInput((prev) => !prev)}
-            className="flex w-full items-center justify-center gap-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition"
-          >
-            <KeyRound className="h-3.5 w-3.5" />
-            {t.licenseToggle}
-          </button>
-
-          {showKeyInput && (
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="text"
-                value={licenseKey}
-                onChange={(e) => setLicenseKey(e.target.value)}
-                placeholder={t.licensePlaceholder}
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                disabled={!licenseKey.trim()}
-                onClick={() => onSubmitLicenseKey?.(licenseKey.trim())}
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-3.5 py-2 text-xs font-semibold text-white transition"
-              >
-                {t.activateBtn}
-              </button>
-            </div>
+          {onValidateLicenseKey && (
+            <form onSubmit={handleSubmit} className="mt-2 border-t border-slate-800 pt-3">
+              <label className="block text-xs font-medium text-slate-400">
+                {copy.licenseLabel}
+              </label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={licenseKey}
+                  onChange={(e) => setLicenseKey(e.target.value)}
+                  placeholder={copy.licensePlaceholder}
+                  className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !licenseKey.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  <KeyRound className="h-3.5 w-3.5" />
+                  <span>{isSubmitting ? copy.validatingBtn : copy.validateBtn}</span>
+                </button>
+              </div>
+              <p className="mt-1.5 text-[11px] text-slate-400">{copy.persistHint}</p>
+              {validationFeedback && (
+                <div
+                  className={`mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ${
+                    validationFeedback.ok
+                      ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                      : 'border border-rose-500/30 bg-rose-500/10 text-rose-300'
+                  }`}
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                  <span>{validationFeedback.message}</span>
+                </div>
+              )}
+            </form>
           )}
         </div>
       </div>

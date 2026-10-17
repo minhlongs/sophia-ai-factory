@@ -44,6 +44,16 @@ describe('Open-Core Manifest & Edition Resolver', () => {
     ).toBe('community');
   });
 
+  it('does not grant enterprise edition when sophiaEdition="enterprise" lacks hasValidRaasLicense', () => {
+    expect(
+      resolveSophiaEdition({
+        sophiaEdition: 'enterprise',
+        appUrl: 'http://localhost:3000',
+        hasValidRaasLicense: false,
+      }),
+    ).toBe('community');
+  });
+
   it('resolves cloud edition automatically on official sophia.agencyos.network domain', () => {
     expect(
       resolveSophiaEdition({
@@ -75,30 +85,40 @@ describe('Open-Core Manifest & Edition Resolver', () => {
     );
   });
 
-  it('gates CLOUD_SAAS and ENTERPRISE_MASTER features in community mode with upgrade CTA', () => {
-    const cloudGate = evaluateFeatureGate('growth_triad_bandit_kelly', {
-      sophiaEdition: 'community',
-      appUrl: 'http://localhost:3000',
+  it('fails closed when licensedTier is missing even on cloud or enterprise', () => {
+    const cloudNoTier = evaluateFeatureGate('managed_social_oauth_relay', {
+      sophiaEdition: 'cloud',
+      appUrl: 'https://sophia.agencyos.network',
     });
-    expect(cloudGate.allowed).toBe(false);
-    expect(cloudGate.reasonCode).toBe('REQUIRES_CLOUD_SUBSCRIPTION');
-    expect(cloudGate.upgradeUrl).toContain('https://sophia.agencyos.network/pricing');
+    expect(cloudNoTier.allowed).toBe(false);
 
-    const enterpriseGate = evaluateFeatureGate('white_label_agency_portal', {
-      sophiaEdition: 'community',
-      appUrl: 'http://localhost:3000',
+    const enterpriseNoTier = evaluateFeatureGate('white_label_agency_portal', {
+      sophiaEdition: 'enterprise',
+      hasValidRaasLicense: true,
     });
-    expect(enterpriseGate.allowed).toBe(false);
-    expect(enterpriseGate.reasonCode).toBe('REQUIRES_ENTERPRISE_OR_MASTER_LICENSE');
+    expect(enterpriseNoTier.allowed).toBe(false);
   });
 
-  it('enforces licensedTier rank so a BASIC license cannot unlock MASTER features', () => {
-    const basicAttempt = evaluateFeatureGate('day1_master_handover_suite', {
+  it('enforces licensedTier rank on both cloud and enterprise editions', () => {
+    const basicAffiliate = evaluateFeatureGate('affiliate_attribution_payouts', {
+      sophiaEdition: 'cloud',
+      licensedTier: 'BASIC',
+    });
+    expect(basicAffiliate.allowed).toBe(true);
+    expect(basicAffiliate.reasonCode).toBe('MANAGED_CLOUD_ACTIVE');
+
+    const basicCloudGrowth = evaluateFeatureGate('growth_triad_bandit_kelly', {
+      sophiaEdition: 'cloud',
+      licensedTier: 'BASIC',
+    });
+    expect(basicCloudGrowth.allowed).toBe(false);
+
+    const basicMasterAttempt = evaluateFeatureGate('day1_master_handover_suite', {
       sophiaEdition: 'enterprise',
       hasValidRaasLicense: true,
       licensedTier: 'BASIC',
     });
-    expect(basicAttempt.allowed).toBe(false);
+    expect(basicMasterAttempt.allowed).toBe(false);
 
     const masterAttempt = evaluateFeatureGate('day1_master_handover_suite', {
       sophiaEdition: 'enterprise',
