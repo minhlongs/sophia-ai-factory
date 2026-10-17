@@ -3,14 +3,12 @@
  * Uses D1 table welcome_email_outbox (migration 0073).
  */
 
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 import { sendEmail } from './sender';
 import { renderEmail, type TemplateKey, type TemplateDataMap } from './render-email';
 import { SENDER_FROM } from './templates/shared-layout';
+import { handleOutboxFailure, type OutboxRow } from './outbox-failure-handler';
 
-const MAX_ATTEMPTS = 5;
 const BATCH_SIZE = 20;
 
 export interface EnqueueEmailInput {
@@ -37,15 +35,6 @@ export async function enqueueWelcomeEmail(db: D1Database, input: EnqueueEmailInp
   } catch (err) {
     logger.error('[EmailOutbox] Enqueue failed', err instanceof Error ? err : new Error(String(err)));
   }
-}
-
-interface OutboxRow {
-  id: string;
-  to_email: string;
-  template: string;
-  payload: string;
-  attempts: number;
-  locked_at?: number | null;
 }
 
 /** Process up to BATCH_SIZE pending rows; return {sent, failed, skipped} summary. */
@@ -106,15 +95,15 @@ export async function flushOutbox(db: D1Database): Promise<{ sent: number; faile
         sent++;
         logger.info('[EmailOutbox] Sent', { id: row.id, to: row.to_email });
       } else {
-        await handleFailure(db, row, emailResult.error ?? 'Unknown', now);
+        await handleOutboxFailure(db, row, emailResult.error ?? 'Unknown', now);
         failed++;
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       try {
-        await handleFailure(db, row, msg, now);
+        await handleOutboxFailure(db, row, msg, now);
       } catch (handleErr) {
-        // handleFailure itself failed — force-release the lock so the row
+        // handleOutboxFailure itself failed — force-release the lock so the row
         // is not permanently stuck in 'processing' state.
         logger.error('[EmailOutbox] handleFailure threw, force-releasing lock', {
           id: row.id,
@@ -132,46 +121,4 @@ export async function flushOutbox(db: D1Database): Promise<{ sent: number; faile
   skipped = BATCH_SIZE - rows.length;
   logger.info('[EmailOutbox] Flush complete', { sent, failed, rows: rows.length });
   return { sent, failed, skipped };
-}
-
-async function handleFailure(db: D1Database, row: OutboxRow, error: string, now: number): Promise<void> {
-  const newAttempts = row.attempts + 1;
-  if (newAttempts >= MAX_ATTEMPTS) {
-    await db
-      .prepare(`UPDATE welcome_email_outbox SET status='failed', locked_at=NULL, attempts=?1, last_error=?2 WHERE id=?3`)
-      .bind(newAttempts, error.slice(0, 500), row.id)
-      .run();
-    logger.warn('[EmailOutbox] Max retries reached — marking failed', { id: row.id, error });
-    await sendAdminAlert(`📧 Email outbox row failed after ${MAX_ATTEMPTS} attempts.\nRow: ${row.id}\nError: ${error.slice(0, 200)}`);
-  } else {
-    // Exponential backoff: 2^attempts minutes. Reset to 'pending' so next cron run can re-claim.
-    const backoffSec = Math.pow(2, newAttempts) * 60;
-    const nextRetry = now + backoffSec;
-    await db
-      .prepare(`UPDATE welcome_email_outbox SET status='pending', locked_at=NULL, attempts=?1, next_retry_at=?2, last_error=?3 WHERE id=?4`)
-      .bind(newAttempts, nextRetry, error.slice(0, 500), row.id)
-      .run();
-    logger.warn('[EmailOutbox] Retry scheduled', { id: row.id, attempt: newAttempts, nextRetryIn: backoffSec });
-  }
-}
-
-async function sendAdminAlert(message: string): Promise<void> {
-  if (!shouldAllowRequest('telegram')) {
-    return;
-  }
-  const chatId = process.env.ADMIN_TELEGRAM_CHAT_ID;
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!chatId || !token) return;
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
-    });
-    if (res.ok) recordSuccess('telegram');
-    else recordFailure('telegram', classifyError(new Error(`HTTP ${res.status}`)));
-  } catch (err) {
-    recordFailure('telegram', classifyError(err));
-    // best-effort — never propagate
-  }
 }

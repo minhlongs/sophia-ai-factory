@@ -5,21 +5,19 @@
 
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
-import { getErrorMessage } from '@/seed/utils/to-error'
-import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup'
-import { createMagicLinkToken } from '@/tree/handover/handover-magic-link'
-import { sendTierUpgradeEmail } from '@/tree/handover/handover-email-service'
-import { enqueueWelcomeEmail } from '@/tree/outbox'
-import { installStarterSop } from '@/tree/handover/install-starter-sop'
+import { upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup'
 import type { AutoHandoverOptions, AutoHandoverResult } from './types'
 import {
   getStarterSops,
-  findUserByEmail,
   handoverExistsForPayment,
   getExistingHandoverId,
   countUserPurchases,
-  localePath,
 } from './handover-queries'
+import {
+  resolveOrCreateHandoverUser,
+  notifyTierUpgradeSafe,
+  dispatchHandoverWelcomeNotification,
+} from './handover-notification-helper'
 
 /**
  * Trigger auto-handover from payment IPN.
@@ -55,28 +53,21 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     }
   }
 
-  // Resolve userId
-  let userId = opts.userId ?? null
-  let isNewCustomer = false
-
+  // Resolve or create userId
+  const { userId, isNewCustomer } = await resolveOrCreateHandoverUser(db, {
+    userId: opts.userId,
+    email,
+    fullName,
+    tier,
+  })
   if (!userId) {
-    userId = await findUserByEmail(db, email)
-  }
-
-  if (!userId) {
-    try {
-      userId = await createCustomerUser(db, email, fullName)
-      isNewCustomer = true
-      logger.info('[AutoHandover] New customer created', { userId, email })
-    } catch (err) {
-      logger.error('[AutoHandover] createCustomerUser failed', err instanceof Error ? err : undefined)
-      return { handoverId: null, isNewCustomer: false, magicLink: null, sopsInstalled: [], skipped: true, skipReason: 'user_create_failed' }
-    }
-
-    if (tier === 'MASTER') {
-      installStarterSop(db, userId).catch((err) =>
-        logger.warn('[AutoHandover] installStarterSop failed (non-fatal)', { error: String(err) }),
-      )
+    return {
+      handoverId: null,
+      isNewCustomer: false,
+      magicLink: null,
+      sopsInstalled: [],
+      skipped: true,
+      skipReason: 'user_create_failed',
     }
   }
 
@@ -89,16 +80,7 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   const isTierUpgrade = !!existingHandoverId && !isFirstPurchase && purchaseCount > 1
 
   if (isTierUpgrade) {
-    try {
-      await sendTierUpgradeEmail({
-        toEmail: email,
-        ownerFullName: fullName,
-        newTier: tier,
-        locale,
-      })
-    } catch (err) {
-      logger.warn('[AutoHandover] Tier upgrade email failed (non-fatal)', { error: getErrorMessage(err) })
-    }
+    await notifyTierUpgradeSafe({ email, fullName, tier, locale })
     return {
       handoverId: existingHandoverId,
       isNewCustomer: false,
@@ -129,32 +111,14 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     return { handoverId: null, isNewCustomer, magicLink: null, sopsInstalled: installedSops, skipped: true, skipReason: 'record_create_failed' }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
-  let magicLink: string | null = null
-  let magicLinkError: string | undefined
-  try {
-    const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' })
-    magicLink = `${appUrl}${localePath(locale)}/welcome/${token}`
-  } catch (err) {
-    magicLinkError = getErrorMessage(err)
-    logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: magicLinkError })
-  }
-
-  try {
-    await enqueueWelcomeEmail(db, {
-      paymentId,
-      toEmail: email,
-      template: 'welcome-magic-link',
-      payload: {
-        ownerFullName: fullName,
-        tier,
-        locale,
-        magicLinkUrl: magicLink ?? `${appUrl}${localePath(locale)}/login`,
-      },
-    })
-  } catch (err) {
-    logger.warn('[AutoHandover] Welcome email enqueue failed (non-fatal)', { error: getErrorMessage(err) })
-  }
+  const { magicLink, magicLinkError } = await dispatchHandoverWelcomeNotification(db, {
+    handoverId,
+    paymentId,
+    email,
+    fullName,
+    tier,
+    locale,
+  })
 
   logger.info('[AutoHandover] Handover complete', {
     handoverId,

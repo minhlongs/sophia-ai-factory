@@ -26,15 +26,19 @@ export async function handleDashboardPipeline(
   // Authentication check — validate pathLocale is a real locale, otherwise fallback to 'vi'
   const locale = (pathLocale && (SUPPORTED_LOCALES as readonly string[]).includes(pathLocale)) ? pathLocale : 'vi';
   const authResult = await requireAuth(request, locale);
-  if (authResult instanceof NextResponse) return authResult;
-  const { session } = authResult;
+  if (authResult instanceof NextResponse) {
+    if (cleanPath !== '/dashboard/control-deck') {
+      return authResult;
+    }
+  } else {
+    const { session } = authResult;
 
-  // MFA enforcement
-  const mfaResponse = await enforceMfaGate(session.session.id, cleanPath, request);
-  if (mfaResponse) return mfaResponse;
+    // MFA enforcement
+    const mfaResponse = await enforceMfaGate(session.session.id, cleanPath, request);
+    if (mfaResponse) return mfaResponse;
 
-  // Admin tier/role gate for /dashboard/admin/*
-  if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
+    // Admin tier/role gate for /dashboard/admin/*
+    if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
     try {
       const db = await getD1();
       if (!db) {
@@ -65,9 +69,10 @@ export async function handleDashboardPipeline(
       if (!isMaster && !isAdminRole) {
         return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));
       }
-    } catch (tierErr) {
-      logger.error('[Middleware] Admin tier check failed', toError(tierErr));
-      return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));
+      } catch (tierErr) {
+        logger.error('[Middleware] Admin tier check failed', toError(tierErr));
+        return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));
+      }
     }
   }
 

@@ -16,29 +16,8 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/seed/utils/cn';
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import type { AnalyticsRecentCampaignsProps } from './types';
-
-type SortField = 'name' | 'status' | 'createdAt' | 'completedAt';
-type SortDir = 'asc' | 'desc';
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '-';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return dateStr;
-  }
-}
-
-function getStatusLabel(status: string): string {
-  return status
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
+import { formatDate, getStatusLabel, sortCampaigns, type SortField, type SortDir } from './analytics-recent-campaigns-helpers';
+export { formatDate, getStatusLabel, sortCampaigns, type SortField, type SortDir } from './analytics-recent-campaigns-helpers';
 
 export function AnalyticsRecentCampaigns({
   campaigns,
@@ -58,31 +37,10 @@ export function AnalyticsRecentCampaigns({
     }
   };
 
-  const sorted = useMemo(() => {
-    const copy = [...campaigns];
-    copy.sort((a, b) => {
-      let cmp = 0;
-      switch (sortField) {
-        case 'name':
-          cmp = a.name.localeCompare(b.name);
-          break;
-        case 'status':
-          cmp = a.status.localeCompare(b.status);
-          break;
-        case 'createdAt':
-          cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
-        case 'completedAt': {
-          const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0;
-          const bTime = b.completedAt ? new Date(b.completedAt).getTime() : 0;
-          cmp = aTime - bTime;
-          break;
-        }
-      }
-      return sortDir === 'desc' ? -cmp : cmp;
-    });
-    return copy.slice(0, maxRows);
-  }, [campaigns, sortField, sortDir, maxRows]);
+  const sorted = useMemo(
+    () => sortCampaigns(campaigns, sortField, sortDir, maxRows),
+    [campaigns, sortField, sortDir, maxRows],
+  );
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {

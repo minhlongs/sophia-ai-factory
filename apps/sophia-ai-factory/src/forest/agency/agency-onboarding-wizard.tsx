@@ -17,26 +17,29 @@
  */
 
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
 import {
   type AgencyOnboardingWizardProps,
   type AgencyOnboardingWizardActions,
   DEFAULT_SEED_AGENTS,
   useWizardState,
   StepIndicator,
-  StepProfile,
-  StepBranding,
-  StepDomain,
-  StepSeedAgents,
-  StepReviewLaunch,
-  WizardControls,
   WizardSuccessView,
 } from './onboarding-wizard';
+import {
+  WizardErrorBanner,
+  WizardStepBody,
+  type WizardErrorBannerProps,
+  type WizardStepBodyProps,
+} from './agency-onboarding-wizard-step-body';
 
 export {
   type AgencyOnboardingWizardProps,
   type AgencyOnboardingWizardActions,
   DEFAULT_SEED_AGENTS,
+  WizardErrorBanner,
+  WizardStepBody,
+  type WizardErrorBannerProps,
+  type WizardStepBodyProps,
 };
 
 export function AgencyOnboardingWizard({
@@ -92,84 +95,29 @@ export function AgencyOnboardingWizard({
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Step Stepper Header */}
       <StepIndicator currentStep={currentStep} isVi={isVi} />
-
-      {/* Errors Banner */}
-      {(generalError || stepErrors.length > 0) && (
-        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            {generalError && <p className="font-semibold">{generalError}</p>}
-            {stepErrors.map((err, i) => (
-              <p key={i} className="text-xs">
-                • {err}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Step Content Card */}
-      <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-md">
-        {currentStep === 1 && (
-          <StepProfile
-            profile={profile}
-            setProfile={setProfile}
-            onClientNameChange={handleClientNameChange}
-            isVi={isVi}
-          />
-        )}
-
-        {currentStep === 2 && (
-          <StepBranding
-            branding={branding}
-            setBranding={setBranding}
-            profile={profile}
-            isVi={isVi}
-          />
-        )}
-
-        {currentStep === 3 && (
-          <StepDomain
-            domain={domain}
-            setDomain={setDomain}
-            isVi={isVi}
-          />
-        )}
-
-        {currentStep === 4 && (
-          <StepSeedAgents
-            seedAgents={seedAgents}
-            handleToggleAgent={handleToggleAgent}
-            handleUpdateAgentAutonomy={handleUpdateAgentAutonomy}
-            handleUpdateAgentMcu={handleUpdateAgentMcu}
-            handleUpdateAgentEscalation={handleUpdateAgentEscalation}
-            isVi={isVi}
-          />
-        )}
-
-        {currentStep === 5 && (
-          <StepReviewLaunch
-            profile={profile}
-            branding={branding}
-            domain={domain}
-            seedAgents={seedAgents}
-            isVi={isVi}
-          />
-        )}
-
-        {/* Wizard Controls Footer */}
-        <WizardControls
-          currentStep={currentStep}
-          isSubmitting={isSubmitting}
-          isValidating={isValidating}
-          handlePrevStep={handlePrevStep}
-          handleNextStep={handleNextStep}
-          handleLaunch={handleLaunch}
-          isVi={isVi}
-        />
-      </div>
+      <WizardErrorBanner generalError={generalError} stepErrors={stepErrors} />
+      <WizardStepBody
+        currentStep={currentStep}
+        isSubmitting={isSubmitting}
+        isValidating={isValidating}
+        isVi={isVi}
+        profile={profile}
+        setProfile={setProfile}
+        branding={branding}
+        setBranding={setBranding}
+        domain={domain}
+        setDomain={setDomain}
+        seedAgents={seedAgents}
+        handleClientNameChange={handleClientNameChange}
+        handleToggleAgent={handleToggleAgent}
+        handleUpdateAgentAutonomy={handleUpdateAgentAutonomy}
+        handleUpdateAgentMcu={handleUpdateAgentMcu}
+        handleUpdateAgentEscalation={handleUpdateAgentEscalation}
+        handlePrevStep={handlePrevStep}
+        handleNextStep={handleNextStep}
+        handleLaunch={handleLaunch}
+      />
     </div>
   );
 }

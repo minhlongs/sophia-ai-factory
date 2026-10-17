@@ -19,6 +19,7 @@ import { requireAdmin } from '@/seed/auth/require-admin'
 import { runSyntheticFulfillment } from '@/tree/admin/synthetic-fulfillment-runner'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { isSyntheticTestingEnvironment } from '@/tree/admin/synthetic-testing-policy'
 import '@/land/fulfillment/one-time-fulfillment'
 
 export const dynamic = 'force-dynamic'
@@ -32,6 +33,10 @@ const bodySchema = z.object({
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (!isSyntheticTestingEnvironment()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const auth = await requireAdmin(request)
   if (auth instanceof Response) return auth
 

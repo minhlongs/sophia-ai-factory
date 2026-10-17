@@ -14,38 +14,19 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { get, set } from '@/seed/tenant-settings/registry';
 import { encryptToken } from '@/tree/crypto/token-crypto';
-import { resolveTenantMcpServers } from '@/land/openclaw/mcp-gateway';
 import { McpCustomServerSchema } from '@/seed/tenant-settings/namespace-validators';
 import type { McpSettings, McpCustomServer } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { errorResponse } from '@/seed/api';
+import {
+  DEFAULT_MCP_SETTINGS,
+  getD1,
+  redactAuthValue,
+  handleTest,
+} from './mcp-route-helpers';
 
 export const dynamic = 'force-dynamic';
-
-const DEFAULT_MCP_SETTINGS: McpSettings = {
-  enabledServers: [],
-  customEndpoints: [],
-  customServers: [],
-};
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[
-      Symbol.for('__cloudflare-context__')
-    ];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function redactAuthValue(server: McpCustomServer): Omit<McpCustomServer, 'authValue'> & { authValue?: string } {
-  return { ...server, authValue: server.authValue ? '[REDACTED]' : undefined };
-}
 
 /** GET — list all custom MCP servers for the tenant (authValues redacted) */
 export const GET = withRateLimit(async function GET(req: NextRequest) {
@@ -146,32 +127,3 @@ export const DELETE = withRateLimit(async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ ok: true, removed: name });
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 20 } });
-
-async function handleTest(
-  _req: NextRequest,
-  tenantId: string,
-  db: D1Database,
-  body: unknown,
-): Promise<NextResponse> {
-  const schema = z.object({ name: z.string().min(1) });
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Body must contain { name }' }, { status: 400 });
-  }
-
-  const { name } = parsed.data;
-
-  try {
-    const servers = await resolveTenantMcpServers(db, tenantId);
-    const client = servers.get(name);
-    if (!client) {
-      return NextResponse.json({ ok: false, error: `Server '${name}' not found or disabled` }, { status: 404 });
-    }
-
-    await client.call('ping', {});
-    return NextResponse.json({ ok: true, name, status: 'reachable' });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, name, error: msg }, { status: 200 });
-  }
-}

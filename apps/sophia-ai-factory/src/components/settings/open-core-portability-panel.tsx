@@ -13,9 +13,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { useCsrfToken } from '@/seed/security/use-csrf-token';
 import type { FeatureGateEvaluation } from '@/seed/config/edition-config';
+import type { OpenCore25StepCatalogReport } from '@/tree/open-core/open-core-25-steps-auditor';
 import { CommercialUpgradeModal } from '@/components/open-core/commercial-upgrade-modal';
+import { OpenCoreBlueprintMatrix } from './open-core-blueprint-matrix';
 import {
   FeaturesMatrixView,
   PortabilityBoxView,
@@ -27,9 +30,11 @@ interface StatusApiResponse {
   userTier?: string;
   licensedTier?: string | null;
   features: FeatureGateEvaluation[];
+  catalogAudit?: OpenCore25StepCatalogReport | null;
 }
 
 export function OpenCorePortabilityPanel() {
+  const locale = useLocale();
   const csrfHeaders = useCsrfToken();
   const [statusData, setStatusData] = useState<StatusApiResponse | null>(null);
   const [selectedGate, setSelectedGate] = useState<FeatureGateEvaluation | null>(null);
@@ -145,9 +150,10 @@ export function OpenCorePortabilityPanel() {
         onExport={handleExportWorkspace}
         onImport={handleImportWorkspace}
       />
+      <OpenCoreBlueprintMatrix audit={statusData?.catalogAudit} />
       <CommercialUpgradeModal
         evaluation={selectedGate}
-        locale="en"
+        locale={locale === 'vi' ? 'vi' : 'en'}
         onClose={() => setSelectedGate(null)}
         onValidateLicenseKey={handleValidateLicensePreview}
         validationFeedback={validationFeedback}

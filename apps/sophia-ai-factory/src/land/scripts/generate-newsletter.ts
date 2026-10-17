@@ -11,6 +11,11 @@ import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
+import {
+  DEFAULT_NEWSLETTER_MODEL,
+  buildNewsletterPrompt,
+  parseNewsletterResponse,
+} from './newsletter-prompt-parser';
 
 export interface GenerateNewsletterInput {
   userId: string;
@@ -41,86 +46,6 @@ export class NewsletterConfigError extends Error {
   }
 }
 
-function sanitizePrompt(input: string): string {
-  const patterns = [
-    /ignore\s+(all\s+)?previous\s+instructions?/gi,
-    /reveal\s+(your\s+)?system\s+prompt/gi,
-    /output\s+your\s+(full\s+)?system/gi,
-    /---\s*\n/g,
-    /```system/gi,
-    /<\/?system>/gi,
-    /\{\{|\}\}|<%|%>/g,
-  ];
-  let cleaned = input;
-  for (const p of patterns) {
-    cleaned = cleaned.replace(p, '[filtered]');
-  }
-  return cleaned.trim().slice(0, 3000);
-}
-
-const DEFAULT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
-
-function buildPrompt(input: GenerateNewsletterInput): string {
-  const lang = input.language === 'vi' ? 'Vietnamese' : 'English';
-  const safeIntro = input.editorIntro ? sanitizePrompt(input.editorIntro) : '';
-  const introLine = safeIntro ? `Include this editor intro near the top: "${safeIntro}"` : '';
-  const safeTopic = sanitizePrompt(input.topic);
-  const ctaLine = input.ctaText
-    ? `End with a call-to-action button text: "${input.ctaText}"`
-    : '';
-
-  return [
-    `Write a ${lang}-language email newsletter for the brand "${input.brandName}".`,
-    `Topic/theme this week: ${safeTopic}`,
-    `Tone: ${input.tone}`,
-    introLine,
-    'Structure:',
-    '1. A catchy subject line (prefix with SUBJECT: on its own line)',
-    '2. A greeting and brief intro paragraph',
-    '3. 2-3 content sections with ## headings covering the topic',
-    '4. A brief closing paragraph',
-    ctaLine,
-    '',
-    'Output the newsletter body in clean HTML (use <h2>, <p>, <ul>, <strong>, <a> tags).',
-    'Put the subject line on the FIRST line as: SUBJECT: Your Subject Here',
-    'Then the HTML body after a blank line.',
-    'Keep total length 300-500 words.',
-    'Do not wrap in ```html blocks or add explanations.',
-  ]
-    .filter((s) => s.length > 0)
-    .join('\n');
-}
-
-function parseResponse(raw: string): { subject: string; html: string; plainText: string } {
-  const lines = raw.split('\n');
-  let subject = '';
-  const bodyLines: string[] = [];
-  let foundSubject = false;
-
-  for (const line of lines) {
-    const m = /^SUBJECT:\s*(.+)$/i.exec(line.trim());
-    if (m && !foundSubject) {
-      subject = m[1].trim();
-      foundSubject = true;
-    } else {
-      bodyLines.push(line);
-    }
-  }
-
-  const html = bodyLines.join('\n').trim();
-  const plainText = html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-
-  if (!subject) {
-    subject = `Newsletter from ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-  }
-
-  return { subject, html, plainText };
-}
-
 export async function generateNewsletter(
   input: GenerateNewsletterInput,
 ): Promise<GenerateNewsletterResult> {
@@ -146,11 +71,11 @@ export async function generateNewsletter(
   }
 
   const source: 'user' | 'platform' = process.env.OPENROUTER_API_KEY === keyOrNull ? 'platform' : 'user';
-  const model = input.model ?? DEFAULT_MODEL;
+  const model = input.model ?? DEFAULT_NEWSLETTER_MODEL;
 
   try {
     const content = await resilientChatCompletion(
-      buildPrompt(input),
+      buildNewsletterPrompt(input),
       {
         openRouterKey: keyOrNull,
         anthropicKey: undefined,
@@ -163,7 +88,7 @@ export async function generateNewsletter(
       throw new Error('LLM provider returned empty body');
     }
 
-    const { subject, html, plainText } = parseResponse(raw);
+    const { subject, html, plainText } = parseNewsletterResponse(raw);
     const wordCount = plainText.split(/\s+/).filter(Boolean).length;
 
     return { subject, html, plainText, wordCount, model, source };

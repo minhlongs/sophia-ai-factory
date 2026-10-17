@@ -10,20 +10,19 @@
 
 import React from 'react';
 import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
   Maximize,
   Minimize,
 } from 'lucide-react';
 import type { QualityLadder } from '@/seed/types/streaming';
-import {
-  formatTime,
-  type SubtitleLanguage,
-} from './player-types';
+import type { SubtitleLanguage } from './player-types';
 import { PlayerQualityMenu } from './player-quality-menu';
 import { PlayerSubtitlesMenu } from './player-subtitles-menu';
+import {
+  PlayerPlaybackControls,
+  type PlayerPlaybackControlsProps,
+} from './player-playback-controls';
+
+export { PlayerPlaybackControls, type PlayerPlaybackControlsProps };
 
 export interface PlayerControlsBarProps {
   isPlaying: boolean;
@@ -92,50 +91,16 @@ export function PlayerControlsBar({
 
       {/* Action Row */}
       <div className="flex items-center justify-between gap-3 text-sm">
-        {/* Left Controls: Play, Volume, Time */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={togglePlay}
-            className="rounded-lg p-1.5 transition-colors hover:bg-white/20 focus:outline-none"
-            aria-label={isPlaying ? 'Pause' : 'Play'}
-          >
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </button>
-
-          {/* Volume Control */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="rounded-lg p-1.5 transition-colors hover:bg-white/20 focus:outline-none"
-              aria-label={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="h-5 w-5" />
-              ) : (
-                <Volume2 className="h-5 w-5" />
-              )}
-            </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={isMuted ? 0 : volume}
-              onChange={handleVolumeChange}
-              className="h-1 w-16 cursor-pointer appearance-none rounded-lg bg-white/30 accent-primary focus:outline-none"
-              aria-label="Volume slider"
-            />
-          </div>
-
-          {/* Time Stamp */}
-          <div className="font-mono text-xs text-white/80">
-            <span>{formatTime(currentTime)}</span>
-            <span className="mx-1 text-white/40">/</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
+        <PlayerPlaybackControls
+          isPlaying={isPlaying}
+          isMuted={isMuted}
+          volume={volume}
+          currentTime={currentTime}
+          duration={duration}
+          togglePlay={togglePlay}
+          toggleMute={toggleMute}
+          handleVolumeChange={handleVolumeChange}
+        />
 
         {/* Right Controls: Subtitles, Quality, Fullscreen */}
         <div className="flex items-center gap-2">

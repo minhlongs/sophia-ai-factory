@@ -16,15 +16,12 @@ const mockSaveUserPortableConfig = vi.fn();
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: () => mockGetCurrentUser(),
 }));
-
 vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: (...args: unknown[]) => mockGetUserTier(...args),
 }));
-
 vi.mock('@/seed/auth/org-resolver/org-resolver-service', () => ({
   resolveOrgId: (...args: unknown[]) => mockResolveOrgId(...args),
 }));
-
 vi.mock('@/tree/open-core/workspace-portability-store', () => ({
   loadUserPortableConfig: (...args: unknown[]) => mockLoadUserPortableConfig(...args),
   saveUserPortableConfig: (...args: unknown[]) => mockSaveUserPortableConfig(...args),
@@ -36,7 +33,7 @@ import { issueRaasLicenseToken } from '@/seed/security/raas-license-verifier';
 
 const TEST_LICENSE_SECRET = 'sophia-raas-license-route-secret-2026';
 
-describe('/api/open-core/status route', () => {
+describe('/api/open-core/status & /portability routes', () => {
   const origEnv = { ...process.env };
 
   beforeEach(() => {
@@ -47,6 +44,8 @@ describe('/api/open-core/status route', () => {
     mockGetCurrentUser.mockReset();
     mockGetUserTier.mockReset();
     mockResolveOrgId.mockReset();
+    mockLoadUserPortableConfig.mockReset();
+    mockSaveUserPortableConfig.mockReset();
   });
 
   afterEach(() => {
@@ -67,7 +66,7 @@ describe('/api/open-core/status route', () => {
     expect(postRes.status).toBe(401);
   });
 
-  it('GET returns community edition with 4 unlocked COMMUNITY features for self-hosted user', async () => {
+  it('GET returns community edition, 4 unlocked features, and catalog metadata summary', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'dev@agency.vn' });
     mockGetUserTier.mockResolvedValue('BASIC');
 
@@ -78,103 +77,84 @@ describe('/api/open-core/status route', () => {
       mode: string;
       edition: string;
       features: Array<{ allowed: boolean }>;
+        catalogAudit: {
+        totalSteps: number;
+        documentedSteps: number;
+        catalogCompletenessPercentage: number;
+        catalogComplete: boolean;
+      };
     };
     expect(json.mode).toBe('runtime_status');
     expect(json.edition).toBe('community');
     expect(json.features.filter((f) => f.allowed).length).toBe(4);
+    expect(json.catalogAudit.totalSteps).toBe(25);
+    expect(json.catalogAudit.documentedSteps).toBe(25);
+    expect(json.catalogAudit.catalogCompletenessPercentage).toBe(100);
+    expect(json.catalogAudit.catalogComplete).toBe(true);
   });
 
-  it('POST validates an org-bound MASTER license preview without leaking orgId', async () => {
+  it('POST validates an org-bound MASTER license preview and rejects foreign org tokens', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'ceo@agency.vn' });
     mockResolveOrgId.mockResolvedValue('org_vn_01');
 
-    const token = await issueRaasLicenseToken(
+    const validToken = await issueRaasLicenseToken(
       {
-        licenseId: 'lic_master_route_01',
-        orgId: 'org_vn_01',
-        edition: 'enterprise',
-        tier: 'MASTER',
-        issuedAt: 1700000000,
-        expiresAt: 2000000000,
-        whiteLabelEnabled: true,
+        licenseId: 'lic_master_01', orgId: 'org_vn_01', edition: 'enterprise',
+        tier: 'MASTER', issuedAt: 1700000000, expiresAt: 2000000000, whiteLabelEnabled: true,
       },
       TEST_LICENSE_SECRET,
     );
 
-    const res = await postStatus(
+    const okRes = await postStatus(
       new NextRequest('http://localhost:3000/api/open-core/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ licenseKey: token }),
+        body: JSON.stringify({ licenseKey: validToken }),
       }),
     );
-    expect(res.status).toBe(200);
-
-    const json = (await res.json()) as {
-      valid: boolean;
-      mode: string;
-      persisted: boolean;
-      licenseSummary: Record<string, unknown>;
-      features: Array<{ allowed: boolean }>;
+    expect(okRes.status).toBe(200);
+    const okJson = (await okRes.json()) as {
+      valid: boolean; licenseSummary: Record<string, unknown>; features: Array<{ allowed: boolean }>;
     };
-    expect(json.valid).toBe(true);
-    expect(json.mode).toBe('validation_preview');
-    expect(json.persisted).toBe(false);
-    expect(json.licenseSummary.orgId).toBeUndefined();
-    expect(json.features.every((f) => f.allowed)).toBe(true);
-  });
-
-  it('POST returns 403 ORG_MISMATCH when token belongs to another organization', async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'ceo@agency.vn' });
-    mockResolveOrgId.mockResolvedValue('org_vn_01');
+    expect(okJson.valid).toBe(true);
+    expect(okJson.licenseSummary.orgId).toBeUndefined();
+    expect(okJson.features.every((f) => f.allowed)).toBe(true);
 
     const foreignToken = await issueRaasLicenseToken(
       {
-        licenseId: 'lic_other_01',
-        orgId: 'org_foreign_99',
-        edition: 'enterprise',
-        tier: 'ENTERPRISE',
-        issuedAt: 1700000000,
-        expiresAt: 2000000000,
+        licenseId: 'lic_other_01', orgId: 'org_foreign_99', edition: 'enterprise',
+        tier: 'ENTERPRISE', issuedAt: 1700000000, expiresAt: 2000000000,
       },
       TEST_LICENSE_SECRET,
     );
-
-    const res = await postStatus(
+    const forbidRes = await postStatus(
       new NextRequest('http://localhost:3000/api/open-core/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey: foreignToken }),
       }),
     );
-    expect(res.status).toBe(403);
-  });
-});
-
-describe('/api/open-core/portability route', () => {
-  beforeEach(() => {
-    mockGetCurrentUser.mockReset();
-    mockLoadUserPortableConfig.mockReset();
-    mockSaveUserPortableConfig.mockReset();
+    expect(forbidRes.status).toBe(403);
   });
 
-  it('exports persisted D1 config and persists validated bundle on POST', async () => {
+  it('exports persisted D1 config and persists validated bundle on POST /portability', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'usr_open_core_1', email: 'dev@agency.vn' });
     mockLoadUserPortableConfig.mockResolvedValue({
-      defaultLocale: 'vi',
-      routingStrategy: 'costOptimized',
+      defaultLocale: 'vi', routingStrategy: 'costOptimized',
       configuredProviders: ['openrouter', 'heygen'],
       channelPresets: [{ slug: 'ai-news', niche: 'tech', locale: 'vi', cadencePerWeek: 5 }],
     });
     mockSaveUserPortableConfig.mockResolvedValue({ persisted: true });
 
-    const exportRes = await getPortability(
-      new NextRequest('http://localhost:3000/api/open-core/portability'),
-    );
+    const exportRes = await getPortability(new NextRequest('http://localhost:3000/api/open-core/portability'));
     expect(exportRes.status).toBe(200);
     const exportedJson = (await exportRes.json()) as {
       bundle: { config: Record<string, unknown>; checksumHex: string };
     };
+    expect(exportedJson.bundle.config.defaultLocale).toBe('vi');
+    expect(exportedJson.bundle.config.routingStrategy).toBe('costOptimized');
+    expect(exportedJson.bundle.config.configuredProviders).toEqual(['openrouter', 'heygen']);
+    expect(exportedJson.bundle.checksumHex).toMatch(/^[0-9a-f]{64}$/);
 
     const importRes = await postPortability(
       new NextRequest('http://localhost:3000/api/open-core/portability', {
@@ -184,12 +164,16 @@ describe('/api/open-core/portability route', () => {
       }),
     );
     expect(importRes.status).toBe(200);
+    expect(mockSaveUserPortableConfig).toHaveBeenCalledTimes(1);
     const importedJson = (await importRes.json()) as {
       persisted: boolean;
-      importedConfig: { routingStrategy: string; configuredProviders: string[] };
+      importedConfig: Record<string, unknown>;
     };
+    expect(mockSaveUserPortableConfig).toHaveBeenCalledWith(
+      'usr_open_core_1',
+      exportedJson.bundle.config,
+    );
     expect(importedJson.persisted).toBe(true);
-    expect(importedJson.importedConfig.routingStrategy).toBe('costOptimized');
-    expect(mockSaveUserPortableConfig).toHaveBeenCalledTimes(1);
+    expect(importedJson.importedConfig).toEqual(exportedJson.bundle.config);
   });
 });

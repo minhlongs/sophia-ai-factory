@@ -6,7 +6,11 @@
  * @description Land layer Server Actions for Millia-Quadrillion Hyper-RTGS settlement, Netting 30.0, and Basel XXXIV Solvency audits.
  */
 
-import { getD1 } from '@/seed/db/client';
+import {
+  recordHyperRtgsNettingBatch,
+  recordHyperRtgsSession,
+  recordHyperRtgsSolvencyAudit,
+} from '@/land/clearing/hyper-rtgs-d1-recorder';
 import {
   executeMilliaquadrillionMultiverseNetting,
   validateMilliaquadrillionHyperRtgsPayment,
@@ -51,32 +55,18 @@ export async function settleMilliaquadrillionRtgsAction(
 ): Promise<MilliaquadrillionRtgsActionResult> {
   try {
     const data = validateMilliaquadrillionHyperRtgsPayment(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO milliaquadrillion_hyper_rtgs_clearing_sessions (
-             id, session_ref, source_participant_id, target_participant_id,
-             asset_currency, gross_amount_cents, priority_tier, settlement_status,
-             execution_latency_picoseconds, clearing_receipt_hash, settled_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `MILLIA-RTGS-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.sourceParticipantId,
-          input.targetParticipantId,
-          input.assetCurrency,
-          input.grossAmountCents,
-          input.priorityTier ?? 'MILLIAQUADRILLION_SOVEREIGN_EXPEDITE',
-          data.status,
-          data.executionLatencyPicoseconds,
-          data.receiptHash
-        )
-        .run();
-    }
-
+    await recordHyperRtgsSession({
+      tablePrefix: 'milliaquadrillion',
+      sessionRefPrefix: 'MILLIA-RTGS',
+      sourceParticipantId: input.sourceParticipantId,
+      targetParticipantId: input.targetParticipantId,
+      assetCurrency: input.assetCurrency,
+      grossAmountCents: input.grossAmountCents,
+      priorityTier: input.priorityTier ?? 'MILLIAQUADRILLION_SOVEREIGN_EXPEDITE',
+      status: data.status,
+      executionLatencyPicoseconds: data.executionLatencyPicoseconds,
+      receiptHash: data.receiptHash,
+    });
     return { success: data.valid, data };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
@@ -94,31 +84,7 @@ export async function executeMilliaquadrillionNettingAction(
 ): Promise<MilliaquadrillionNettingActionResult> {
   try {
     const data = executeMilliaquadrillionMultiverseNetting(obligations, currency, hyperShardCount);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO milliaquadrillion_netting_batches (
-             id, batch_ref, hyper_shard_count, gross_flow_count,
-             gross_volume_cents, net_settlement_volume_cents, compression_ratio_pct,
-             netting_status, multiverse_solution_hash, executed_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          data.batchRef,
-          data.hyperShardCount,
-          data.grossFlowCount,
-          data.grossVolumeCents,
-          data.netSettlementVolumeCents,
-          data.compressionRatioPct,
-          data.nettingStatus,
-          data.multiverseSolutionHash
-        )
-        .run();
-    }
-
+    await recordHyperRtgsNettingBatch('milliaquadrillion', data);
     return { success: true, data };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
@@ -134,40 +100,23 @@ export async function auditBaselXxxivSolvencyAction(
 ): Promise<BaselXxxivSolvencyActionResult> {
   try {
     const data = evaluateBaselXxxivSolvency(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO basel_xxxiv_solvency_audits (
-             id, audit_ref, common_equity_tier1_cents, total_risk_exposure_cents,
-             highQuality_liquid_assets_cents, net_cash_outflows_30_days_cents,
-             available_stable_funding_cents, required_stable_funding_cents,
-             sovereign_capital_buffer_cents, stress_test_survival_days,
-             cet1_ratio_bps, lcr_bps, nsfr_bps, solvency_status,
-             supervisory_signature, audited_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `AUDIT-BASEL-XXXIV-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.commonEquityTier1Cents,
-          input.totalRiskExposureCents,
-          input.highQualityLiquidAssetsCents,
-          input.netCashOutflows30DaysCents,
-          input.availableStableFundingCents,
-          input.requiredStableFundingCents,
-          data.sovereignCapitalBufferCents,
-          data.stressTestSurvivalDays,
-          data.cet1RatioBps,
-          data.liquidityCoverageRatioBps,
-          data.netStableFundingRatioBps,
-          data.solvencyStatus,
-          data.supervisorySignature
-        )
-        .run();
-    }
-
+    await recordHyperRtgsSolvencyAudit({
+      tableName: 'basel_xxxiv_solvency_audits',
+      auditRefPrefix: 'AUDIT-BASEL-XXXIV',
+      commonEquityTier1Cents: input.commonEquityTier1Cents,
+      totalRiskExposureCents: input.totalRiskExposureCents,
+      highQualityLiquidAssetsCents: input.highQualityLiquidAssetsCents,
+      netCashOutflows30DaysCents: input.netCashOutflows30DaysCents,
+      availableStableFundingCents: input.availableStableFundingCents,
+      requiredStableFundingCents: input.requiredStableFundingCents,
+      sovereignCapitalBufferCents: data.sovereignCapitalBufferCents,
+      stressTestSurvivalDays: data.stressTestSurvivalDays,
+      cet1RatioBps: data.cet1RatioBps,
+      liquidityCoverageRatioBps: data.liquidityCoverageRatioBps,
+      netStableFundingRatioBps: data.netStableFundingRatioBps,
+      solvencyStatus: data.solvencyStatus,
+      supervisorySignature: data.supervisorySignature,
+    });
     return { success: data.isSolvent, data };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);

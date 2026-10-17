@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Video Production Studio &amp; Multi-Track Timeline Editor - Sophia AI Factory</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-background": "#e3e1eb",
+            "surface-tint": "#c0c1ff",
+            "error-container": "#93000a",
+            "on-secondary": "#490080",
+            "surface-container": "#1e1f26",
+            "outline": "#908fa0",
+            "on-primary": "#1000a9",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-container-highest": "#34343b",
+            "on-secondary-fixed": "#2c0051",
+            "error": "#ffb4ab",
+            "primary-fixed": "#e1e0ff",
+            "on-secondary-container": "#d6a9ff",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-primary-container": "#0d0096",
+            "on-error": "#690005",
+            "on-tertiary-fixed": "#2a1700",
+            "tertiary-fixed": "#ffddb8",
+            "surface-dim": "#121319",
+            "on-surface": "#e3e1eb",
+            "background": "#121319",
+            "secondary-fixed": "#f0dbff",
+            "inverse-on-surface": "#2f3037",
+            "primary": "#c0c1ff",
+            "surface-variant": "#34343b",
+            "surface-container-high": "#292930",
+            "on-surface-variant": "#c7c4d7",
+            "secondary": "#ddb7ff",
+            "inverse-surface": "#e3e1eb",
+            "primary-container": "#8083ff",
+            "secondary-container": "#6f00be",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-tertiary": "#472a00",
+            "tertiary-container": "#ca8100",
+            "on-primary-fixed": "#07006c",
+            "surface": "#121319",
+            "tertiary": "#ffb95f",
+            "surface-container-lowest": "#0d0e14",
+            "surface-bright": "#383940",
+            "surface-container-low": "#1a1b22",
+            "on-tertiary-container": "#3e2400",
+            "inverse-primary": "#494bd6",
+            "secondary-fixed-dim": "#ddb7ff",
+            "outline-variant": "#464554",
+            "on-secondary-fixed-variant": "#6900b3",
+            "on-error-container": "#ffdad6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "margin-desktop": "2rem",
+            "space-sm": "0.5rem",
+            "margin": "1rem",
+            "space-xl": "2.5rem",
+            "space-md": "1rem",
+            "gutter-desktop": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Space Grotesk"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Space Grotesk"],
+            "telemetry-lg": ["JetBrains Mono"],
+            "caption": ["Inter"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "body-md": ["Inter"],
+            "telemetry-sm": ["JetBrains Mono"],
+            "headline-xl": ["Space Grotesk"],
+            "telemetry-md": ["JetBrains Mono"],
+            "headline-xl-mobile": ["Space Grotesk"],
+            "timecode": ["JetBrains Mono"],
+            "headline-lg": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "telemetry-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "caption": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "telemetry-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "telemetry-md": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "timecode": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom Specular Edge Highlight and Hardware Deck Aesthetics */
+    .specular-top {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+    .specular-intense {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 24px -2px rgba(99, 102, 241, 0.35);
+    }
+    .glow-amber {
+      box-shadow: 0 0 18px 0 rgba(245, 158, 11, 0.28);
+    }
+    .glow-violet {
+      box-shadow: 0 0 20px 0 rgba(168, 85, 247, 0.30);
+    }
+    /* Hide scrollbars for dense telemetry racks */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased select-none overflow-hidden h-screen w-screen flex font-body-md">
+<!-- ==================== SHARED COMPONENT 1: SideNavBar ==================== -->
+<aside class="fixed left-0 top-0 h-screen w-60 flex flex-col justify-between py-4 px-3 z-40 bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant shadow-none">
+<!-- Brand Header -->
+<div>
+<div class="px-2 py-2 flex items-center justify-between mb-4">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary specular-top">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+</div>
+<div>
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-surface tracking-tight leading-none">Sophia AI Factory</div>
+<div class="text-telemetry-sm font-telemetry-sm text-tertiary font-semibold tracking-wider mt-1">ENTERPRISE</div>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs (7 tabs, active: Video Studio) -->
+<nav class="space-y-1">
+<!-- Tab 1: Command Deck -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="dashboard">dashboard</span>
+<span>Command Deck</span>
+</a>
+<!-- Tab 2: Video Studio (ACTIVE) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-primary dark:text-primary-fixed border-l-2 border-primary bg-surface-container-high dark:bg-surface-container font-semibold transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="movie_creation">movie_creation</span>
+<span>Video Studio</span>
+<span class="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+</a>
+<!-- Tab 3: /ask 4-Advisor -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="psychology">psychology</span>
+<span>/ask 4-Advisor</span>
+</a>
+<!-- Tab 4: Revenue & Webhooks -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Revenue &amp; Webhooks</span>
+</a>
+<!-- Tab 5: BYOK Setup -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="vpn_key">vpn_key</span>
+<span>BYOK Setup</span>
+</a>
+<!-- Tab 6: Agency Portal -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="corporate_fare">corporate_fare</span>
+<span>Agency Portal</span>
+</a>
+<!-- Tab 7: Style Guide -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-telemetry-sm font-telemetry-sm text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="palette">palette</span>
+<span>Style Guide</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Bottom Footer Area -->
+<div class="space-y-3 pt-3 border-t border-outline-variant/60">
+<div class="px-3 py-2 bg-surface-container-low rounded-lg border border-outline-variant flex items-center justify-between text-telemetry-sm font-telemetry-sm">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="verified_user">verified_user</span>
+<span>Circuit Health: 8/8 Active</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+</div>
+<button class="w-full h-9 px-3 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface flex items-center justify-center gap-2 transition-all active:scale-[0.99] specular-top">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="lock">lock</span>
+<span>Lock Vault</span>
+</button>
+<div class="flex items-center gap-2.5 px-2 pt-1 text-telemetry-sm font-telemetry-sm text-on-surface-variant">
+<div class="w-6 h-6 rounded-full bg-surface-container border border-outline flex items-center justify-center text-[10px] font-bold text-primary">
+          EX
+        </div>
+<div class="truncate">
+<div class="text-caption font-caption text-on-surface">op-hcm-0984a</div>
+<div class="text-[10px] text-outline">Executive Operator</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- ==================== SHARED COMPONENT 2: TopNavBar ==================== -->
+<header class="fixed top-0 right-0 left-60 h-16 flex items-center justify-between px-6 z-30 bg-surface-container-low dark:bg-surface-container-lowest border-b border-outline-variant shadow-sm">
+<!-- Brand / Product Name & Search Bar -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="text-headline-sm font-headline-sm font-semibold text-on-surface dark:text-inverse-surface">Acme Media Vietnam - Production</span>
+</div>
+<!-- Quick Command Basin -->
+<div class="relative flex items-center ml-4">
+<span class="material-symbols-outlined absolute left-3 text-[18px] text-outline" data-icon="search">search</span>
+<input class="h-9 w-64 pl-9 pr-14 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-sm font-body-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:border-primary specular-top" placeholder="Tìm kiếm hoặc thực thi lệnh..." type="text"/>
+<span class="absolute right-2 px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm text-outline border border-outline-variant bg-surface-container">Cmd+K</span>
+</div>
+</div>
+<!-- Status Telemetry Links & Action Buttons -->
+<div class="flex items-center gap-4">
+<!-- Status Badges -->
+<div class="flex items-center gap-3 text-telemetry-sm font-telemetry-sm text-on-surface-variant">
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container rounded-full border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+<span class="text-on-surface">Inngest: 14 Active</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container rounded-full border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-primary-fixed">@Sophia_Bbot: Live</span>
+</div>
+<!-- Language Switcher -->
+<button class="px-2.5 py-1 rounded bg-surface-container-high hover:bg-surface-bright text-tertiary font-bold border border-outline-variant text-[11px] font-telemetry-sm transition-colors">
+          VI | EN
+        </button>
+</div>
+<!-- Icon Actions -->
+<div class="flex items-center gap-1 border-l border-outline-variant pl-3">
+<button class="p-2 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="sync">sync</span>
+</button>
+</div>
+<!-- Trailing Action: Render / Export Full Master -->
+<div class="flex items-center gap-2">
+<button class="h-9 px-3.5 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-outline-variant text-body-sm font-body-sm text-on-surface flex items-center gap-1.5 transition-all specular-top">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="movie">movie</span>
+<span>New Campaign</span>
+</button>
+<button class="h-9 px-4 rounded-lg bg-primary-container hover:bg-inverse-primary text-on-surface font-body-sm text-body-sm font-semibold flex items-center gap-2 transition-all active:scale-[0.98] specular-intense glow-indigo">
+<span class="material-symbols-outlined text-[18px]" data-icon="bolt">bolt</span>
+<span>Xuất 4K Master / Render</span>
+</button>
+</div>
+</div>
+</header>
+<!-- ==================== MAIN WORKSPACE AREA ==================== -->
+<main class="fixed top-16 left-60 right-0 bottom-0 flex flex-col bg-[#090A10]">
+<!-- TOP STAGE SECTION (PANE 1 + PANE 2 + PANE 3) -->
+<div class="flex-1 flex overflow-hidden border-b border-outline-variant/80" style="height: calc(100vh - 64px - 220px);">
+<!-- PANE 1: LEFT DOCK - Bilingual Script Deck (300px fixed) -->
+<section class="w-[300px] border-r border-outline-variant bg-[#0D0E17]/90 flex flex-col justify-between shrink-0">
+<!-- Deck Header -->
+<div class="p-3 border-b border-outline-variant flex flex-col gap-2 bg-surface-container-low/60">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="subtitles">subtitles</span>
+<span class="text-headline-sm font-headline-sm text-on-surface text-[14px]">Kịch Bản &amp; Phân Cảnh</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container-high text-secondary border border-outline-variant">
+              Claude 3.7 + 4o
+            </span>
+</div>
+<p class="text-caption font-caption text-outline">Bilingual Script Deck • Frame-Accurate Syllable Map</p>
+</div>
+<!-- Segment Cards Rack (Scrollable) -->
+<div class="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar">
+<!-- Card 1: HOOK (Active/Selected) -->
+<div class="p-3 rounded-xl bg-surface-container-low border border-primary/60 relative specular-top shadow-[0_0_12px_rgba(99,102,241,0.15)]">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded bg-primary/20 text-primary-fixed font-telemetry-sm text-[10px] font-bold">HOOK</span>
+<span class="text-timecode font-timecode text-on-surface text-[11px]">00:00 - 00:03.5</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold">
+                Ret: 91.4%
+              </span>
+</div>
+<h4 class="text-body-sm font-body-sm font-semibold text-on-surface">"Hook Giật Gân / 3 Sai Lầm Khi Dùng AI Video"</h4>
+<p class="text-caption font-caption text-outline mt-1 italic">"3 critical mistakes Vietnamese agencies make with AI video automation."</p>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-telemetry-sm font-telemetry-sm">
+<span class="flex items-center gap-1 text-primary text-[10px]">
+<span class="material-symbols-outlined text-[13px]" data-icon="auto_fix_high">auto_fix_high</span>
+                Auto-Cut 3.5s by Sophia
+              </span>
+<span class="flex items-center gap-1 text-emerald-400 text-[10px]">
+<span class="material-symbols-outlined text-[13px]" data-icon="sync">sync</span>
+                Audio Sync 100%
+              </span>
+</div>
+</div>
+<!-- Card 2: BODY -->
+<div class="p-3 rounded-xl bg-surface-container-low/70 border border-outline-variant hover:border-outline transition-colors specular-top">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-telemetry-sm text-[10px]">BODY</span>
+<span class="text-timecode font-timecode text-outline text-[11px]">00:03.5 - 00:14.5</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm bg-tertiary/10 border border-tertiary/30 text-tertiary font-semibold">
+                Thompson: 94.2%
+              </span>
+</div>
+<h4 class="text-body-sm font-body-sm font-semibold text-on-surface">Phân Tích Giải Pháp &amp; Toolchain</h4>
+<p class="text-caption font-caption text-outline mt-1">Cloud GPU pipeline, BYOK orchestration &amp; HeyGen lip-sync precision workflow.</p>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-telemetry-sm font-telemetry-sm">
+<span class="text-outline text-[10px]">Pacing: 148 WPM (Optimal)</span>
+<span class="text-primary-fixed text-[10px]">11.0s Duration</span>
+</div>
+</div>
+<!-- Card 3: CTA -->
+<div class="p-3 rounded-xl bg-surface-container-low/70 border border-outline-variant hover:border-outline transition-colors specular-top">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded bg-tertiary-container/40 text-tertiary font-telemetry-sm text-[10px]">CTA</span>
+<span class="text-timecode font-timecode text-outline text-[11px]">00:14.5 - 00:18.2</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm bg-primary/10 border border-primary/30 text-primary-fixed">
+                Conv: High
+              </span>
+</div>
+<h4 class="text-body-sm font-body-sm font-semibold text-on-surface">Kêu Gọi Hành Động / Free Trial PayOS QR</h4>
+<p class="text-caption font-caption text-outline mt-1">Quét mã QR trải nghiệm hạ tầng render đa luồng ngay hôm nay.</p>
+<div class="mt-2.5 flex items-center gap-1 text-[10px] font-telemetry-sm text-tertiary">
+<span class="material-symbols-outlined text-[13px]" data-icon="qr_code">qr_code</span>
+<span>TikTok Shop Link + UTM Tag Attached</span>
+</div>
+</div>
+</div>
+<!-- Script Deck Bottom Actions -->
+<div class="p-3 border-t border-outline-variant bg-surface-container-low/40 space-y-2">
+<div class="grid grid-cols-2 gap-2">
+<button class="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant hover:border-outline text-telemetry-sm font-telemetry-sm text-on-surface flex items-center justify-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="psychology">psychology</span>
+<span>Multi-Advisor</span>
+</button>
+<button class="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant hover:border-outline text-telemetry-sm font-telemetry-sm text-on-surface flex items-center justify-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="graphic_eq">graphic_eq</span>
+<span>Re-synthesize</span>
+</button>
+</div>
+<button class="w-full h-8 px-3 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface flex items-center justify-center gap-1.5 specular-top">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="add_circle">add_circle</span>
+<span>+ Thêm Cảnh (Scene)</span>
+</button>
+</div>
+</section>
+<!-- PANE 2: CENTER HUB - Video Viewport Stage & Cast-Light Monitor -->
+<section class="flex-1 bg-[#090A10] flex flex-col items-center justify-between p-3 relative overflow-hidden">
+<!-- Top Stage Toolbar -->
+<div class="w-full h-10 px-3 bg-[#11131F]/90 rounded-xl border border-outline-variant flex items-center justify-between text-telemetry-sm font-telemetry-sm z-20 specular-top">
+<!-- Aspect Switcher & Format -->
+<div class="flex items-center gap-2">
+<div class="flex items-center bg-surface-container-lowest rounded-lg p-0.5 border border-outline-variant">
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-primary font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="stay_current_portrait">stay_current_portrait</span>
+<span>9:16 Vertical</span>
+</button>
+<button class="px-2.5 py-1 rounded text-outline hover:text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[14px]" data-icon="stay_current_landscape">stay_current_landscape</span>
+<span>16:9 Cinema</span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant mx-1"></div>
+<span class="text-outline">1080x1920 @ 60fps</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-[10px] text-on-surface">Rec.709 HDR</span>
+</div>
+<!-- Zoom & Stage Settings -->
+<div class="flex items-center gap-3 text-outline">
+<div class="flex items-center gap-1 text-[11px]">
+<span class="material-symbols-outlined text-[15px]" data-icon="zoom_in">zoom_in</span>
+<span>100% Fit</span>
+</div>
+<button class="flex items-center gap-1 text-[11px] text-primary hover:text-primary-fixed">
+<span class="material-symbols-outlined text-[15px]" data-icon="light_mode">light_mode</span>
+<span>Backlight Glow: ON</span>
+</button>
+</div>
+</div>
+<!-- Phone-Frame Vertical Video Stage with Specular Edge & Backlight -->
+<div class="relative flex items-center justify-center my-auto">
+<!-- Indigo Photon Cast Light behind Phone -->
+<div class="absolute w-[290px] h-[510px] bg-primary/20 blur-3xl rounded-full pointer-events-none"></div>
+<!-- Hardware Phone Monitor -->
+<div class="relative w-[270px] h-[480px] bg-[#000000] rounded-[28px] p-2 border-2 border-outline-variant/90 shadow-2xl specular-intense flex flex-col overflow-hidden">
+<!-- Video Canvas Frame -->
+<div class="relative w-full h-full rounded-[20px] overflow-hidden bg-surface-container-lowest flex items-center justify-center">
+<!-- Realistic AI Avatar Background Image -->
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A hyper-realistic cinematic portrait of a professional Vietnamese female executive in her early 30s presenting to camera with perfect lip-sync articulation. She is wearing a tailored graphite blazer with micro-textured lapels inside a sleek Saigon tech studio at night, with dark glass walls, subtle violet and indigo edge lighting, soft cinematic bokeh, and clean deterministic enterprise aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCgFxsqqjAAk6ZUMsRPtLQwFNJW_SsPIPCBnF9R2UdbcUrNaaZGNL8YTsXX5Ms1BcKyUYHV9aiuVNvb34j9fNeI7NCoSaybZFQPpKRxn4K_RAvcxyzHWZJffQD1eJmM6gmRTm3ZSazUtaI__AVFSiPINTJVIrW7I6wivNYw5ksZvvexHqcGYH0bOaQVxqJQT_4sNa7fMmkCJ8mc4H6zyYL-NFvc-0i4ucKStGpU9BzDNy5qMVK3ZNTP9mpuW7Bs5CHI-DCeupkzFQ"/>
+<!-- Video Safe-Area HUD Overlay (TikTok/Reels ghost UI margins) -->
+<div class="absolute inset-0 pointer-events-none p-3 flex flex-col justify-between">
+<!-- Top Status Telemetry -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-telemetry-sm text-white">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+<span>Node-SG #04 [LipSync 4K]</span>
+</div>
+<div class="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur text-[9px] font-timecode text-tertiary">
+                    SAFE AREA 9:16
+                  </div>
+</div>
+<!-- Right Ghost Action Icons (TikTok UI boundary simulation) -->
+<div class="self-end space-y-3 opacity-30 pr-1">
+<div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]" data-icon="favorite">favorite</span>
+</div>
+<div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]" data-icon="chat_bubble">chat_bubble</span>
+</div>
+<div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[16px]" data-icon="share">share</span>
+</div>
+</div>
+<!-- Bottom Karaoke Motion Subtitle Layer -->
+<div class="pb-6 px-1">
+<div class="bg-black/75 backdrop-blur-md p-2.5 rounded-xl border border-white/15 text-center shadow-lg">
+<p class="text-[11px] font-headline-sm font-bold tracking-tight text-white leading-tight">
+                      "3 SAI LẦM KHIẾN AGENCY VIỆT NAM 
+                      <span class="text-tertiary px-1 py-0.5 rounded bg-tertiary/20 glow-amber border border-tertiary/40">ĐỐT TIỀN</span> 
+                      VÀO AI VIDEO..."
+                    </p>
+<div class="mt-1 flex items-center justify-center gap-2 text-[8px] font-telemetry-sm text-outline">
+<span>Target: C-Level &amp; Brand Marketers</span>
+<span>•</span>
+<span class="text-emerald-400">Word Sync: 00:04.18</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Center Frame Playhead Overlay Indicator -->
+<div class="absolute inset-0 border border-primary/20 pointer-events-none"></div>
+</div>
+</div>
+</div>
+<!-- Frame-Accurate Transport & Scrubber Bar -->
+<div class="w-full bg-[#11131F] rounded-xl border border-outline-variant p-2.5 flex items-center justify-between text-telemetry-sm font-telemetry-sm z-20 specular-top">
+<!-- Timecode Display -->
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-tertiary" data-icon="timer">timer</span>
+<div class="flex items-baseline gap-1">
+<span class="text-timecode font-timecode text-primary text-[14px]">00:00:04:18</span>
+<span class="text-outline text-[11px]">/ 00:00:18:12</span>
+</div>
+<span class="px-1.5 py-0.2 rounded bg-surface-container border border-outline-variant text-[10px] text-outline">Frame 258</span>
+</div>
+<!-- Transport Center Controls -->
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-outline-variant flex items-center justify-center text-on-surface transition-colors" title="Frame -1f">
+<span class="material-symbols-outlined text-[16px]" data-icon="skip_previous">skip_previous</span>
+</button>
+<button class="w-10 h-10 rounded-xl bg-primary-container hover:bg-inverse-primary text-on-surface flex items-center justify-center specular-intense glow-indigo transition-transform active:scale-95" title="Play / Pause">
+<span class="material-symbols-outlined text-[24px]" data-icon="play_arrow">play_arrow</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-outline-variant flex items-center justify-center text-on-surface transition-colors" title="Frame +1f">
+<span class="material-symbols-outlined text-[16px]" data-icon="skip_next">skip_next</span>
+</button>
+<div class="h-4 w-[1px] bg-outline-variant mx-1"></div>
+<button class="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant flex items-center justify-center text-outline hover:text-on-surface transition-colors" title="Loop Playback">
+<span class="material-symbols-outlined text-[16px]" data-icon="repeat">repeat</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant flex items-center justify-center text-outline hover:text-on-surface transition-colors" title="Split Clip at Playhead">
+<span class="material-symbols-outlined text-[16px]" data-icon="content_cut">content_cut</span>
+</button>
+</div>
+<!-- Render Pipeline Telemetry -->
+<div class="flex items-center gap-3 text-outline text-[11px]">
+<span>28.4 Mbps H.265</span>
+<span>•</span>
+<span class="text-emerald-400">18ms Latency</span>
+<span>•</span>
+<span class="text-primary-fixed">A100-SXM4 (SG)</span>
+</div>
+</div>
+</section>
+<!-- PANE 3: RIGHT RACK - Executive Voiceover, Avatar Engine & 1-Click Publisher (320px fixed) -->
+<section class="w-[320px] border-l border-outline-variant bg-[#0D0E17]/90 flex flex-col p-3 gap-3.5 overflow-y-auto no-scrollbar shrink-0">
+<!-- SECTION 1: ElevenLabs Voiceover & Pronunciation -->
+<div class="p-3 rounded-xl bg-[#11131F] border border-outline-variant specular-top">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="record_voice_over">record_voice_over</span>
+<span class="text-headline-sm font-headline-sm text-on-surface text-[13px]">ElevenLabs Voiceover</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm bg-tertiary/10 text-tertiary border border-tertiary/20">v2 Turbo</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-lowest border border-outline-variant mb-2.5">
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Minh Nam - Natural Executive</div>
+<div class="text-caption font-caption text-outline">Accent: Saigon Business • Latency: 42ms</div>
+</div>
+<!-- Sliders: Stability, Clarity, Exaggeration -->
+<div class="space-y-2 text-telemetry-sm font-telemetry-sm">
+<div>
+<div class="flex justify-between text-outline text-[10px] mb-1">
+<span>Stability (Giọng Đọc Ổn Định)</span>
+<span class="text-on-surface font-mono">72%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 72%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-outline text-[10px] mb-1">
+<span>Clarity + Similarity (Độ Trong Trẻo)</span>
+<span class="text-on-surface font-mono">88%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 88%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-outline text-[10px] mb-1">
+<span>Style Exaggeration</span>
+<span class="text-on-surface font-mono">12%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 12%;"></div>
+</div>
+</div>
+</div>
+<!-- Waveform Visualizer Preview -->
+<div class="mt-3 h-7 bg-surface-container-lowest rounded border border-outline-variant flex items-center justify-around px-2">
+<div class="w-1 h-3 bg-tertiary rounded-full"></div>
+<div class="w-1 h-5 bg-tertiary rounded-full animate-pulse"></div>
+<div class="w-1 h-2 bg-tertiary rounded-full"></div>
+<div class="w-1 h-6 bg-tertiary rounded-full animate-pulse"></div>
+<div class="w-1 h-4 bg-tertiary rounded-full"></div>
+<div class="w-1 h-1 bg-tertiary rounded-full"></div>
+<div class="w-1 h-5 bg-tertiary rounded-full"></div>
+<div class="w-1 h-3 bg-tertiary rounded-full"></div>
+<div class="w-1 h-6 bg-tertiary rounded-full animate-pulse"></div>
+<div class="w-1 h-2 bg-tertiary rounded-full"></div>
+</div>
+</div>
+<!-- SECTION 2: HeyGen 4K Avatar & Studio Engine -->
+<div class="p-3 rounded-xl bg-[#11131F] border border-outline-variant specular-top">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="face">face</span>
+<span class="text-headline-sm font-headline-sm text-on-surface text-[13px]">HeyGen 4K Avatar Engine</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm bg-secondary/15 text-secondary border border-secondary/30">v3.2 LipSync</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-lg bg-surface-container overflow-hidden shrink-0 border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="High resolution face crop of Vietnamese female AI executive model with confident expression, sleek dark hair, professional studio key light reflection in eyes, pristine cyberpunk ambient gradient." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHv0WiDvvAypm_tra0yE7tGfHFYlbgXinBmmsFkByaFToQs9BrNcTRoXOKsIs3JTQqsMXXZ5cfeF-iG-ooLnU_2tYza86id3a2czMnTWP2QEpeMcSNLzDHXGEoVYsNjyL1ZftRKqh73RVIaSCu-7g6wIaR7VpcyytwxsyqLgZmLL96TxSEazgXZXrHKEHQFk4l6ULQh6etSrLSQHd8Bas3czgM_lKKDLSW2FdAkTkoqiHPbjLC0PLk6zRoz9s__OXyrOLarP9330A"/>
+</div>
+<div class="truncate">
+<div class="text-body-sm font-body-sm font-semibold text-on-surface truncate">Sophia Executive Director</div>
+<div class="text-caption font-caption text-outline">Saigon Tech Studio Preset</div>
+</div>
+</div>
+<div class="mt-2.5 grid grid-cols-2 gap-2 text-[11px] font-telemetry-sm">
+<div class="p-2 bg-surface-container-lowest rounded border border-outline-variant">
+<div class="text-outline text-[9px]">GESTURE PACING</div>
+<div class="text-on-surface font-semibold mt-0.5">Dynamic Exec</div>
+</div>
+<div class="p-2 bg-surface-container-lowest rounded border border-outline-variant">
+<div class="text-outline text-[9px]">RESOLUTION</div>
+<div class="text-emerald-400 font-semibold mt-0.5">4K UHD Master</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: 1-Click Cloud Social Publisher -->
+<div class="p-3 rounded-xl bg-[#11131F] border border-outline-variant specular-top">
+<div class="flex items-center justify-between mb-2.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="send">send</span>
+<span class="text-headline-sm font-headline-sm text-on-surface text-[13px]">Cloud Social Publisher</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+</div>
+<!-- Channel Toggles -->
+<div class="space-y-2">
+<!-- TikTok -->
+<div class="p-2 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<div>
+<div class="text-body-sm font-body-sm text-on-surface font-medium">TikTok (@sophia.vn)</div>
+<div class="text-caption font-caption text-outline">Auto-Caption • Shop Tag</div>
+</div>
+</div>
+<input checked="" class="rounded border-outline-variant bg-surface-container text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+</div>
+<!-- YouTube Shorts -->
+<div class="p-2 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<div>
+<div class="text-body-sm font-body-sm text-on-surface font-medium">YouTube Shorts (Acme VN)</div>
+<div class="text-caption font-caption text-outline">4K VP9 • Auto Chapters</div>
+</div>
+</div>
+<input checked="" class="rounded border-outline-variant bg-surface-container text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+</div>
+<!-- Meta Reels -->
+<div class="p-2 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<div>
+<div class="text-body-sm font-body-sm text-on-surface font-medium">Meta Reels (Growth Lab)</div>
+<div class="text-caption font-caption text-outline">Boost Budget: $50 Ready</div>
+</div>
+</div>
+<input checked="" class="rounded border-outline-variant bg-surface-container text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+</div>
+</div>
+<!-- 1-Click Multi-Publish CTA -->
+<button class="mt-3 w-full h-10 px-3 rounded-lg bg-primary-container hover:bg-inverse-primary text-on-surface font-body-sm text-body-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] specular-intense glow-indigo">
+<span class="material-symbols-outlined text-[18px]" data-icon="cloud_upload">cloud_upload</span>
+<span>Xuất Bản Đa Kênh Tức Thì</span>
+</button>
+<div class="text-center mt-1.5 text-[10px] font-telemetry-sm text-outline">
+            Inngest Async Durable Queue • Zero Egress Loss
+          </div>
+</div>
+</section>
+</div>
+<!-- ==================== BOTTOM DOCK: MULTI-TRACK TIMELINE EDITOR (220px fixed) ==================== -->
+<div class="h-[220px] bg-[#0B0C14] border-t border-outline-variant flex flex-col z-20 shrink-0">
+<!-- Timeline Header Bar -->
+<div class="h-9 border-b border-outline-variant/60 px-4 flex items-center justify-between bg-[#11131F] text-telemetry-sm font-telemetry-sm select-none">
+<!-- Left Track Controls -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="view_timeline">view_timeline</span>
+<span>4 Đồng Bộ / 4 Synced Tracks</span>
+</div>
+<div class="h-3.5 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-3 text-outline">
+<span class="text-emerald-400 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Snapping: ON
+            </span>
+<span class="hover:text-on-surface cursor-pointer">Ripple Edit</span>
+</div>
+</div>
+<!-- Center Zoom & Time Ruler Tick Controls -->
+<div class="flex items-center gap-3">
+<span class="text-outline text-[10px]">ZOOM</span>
+<div class="flex items-center bg-surface-container-lowest rounded p-0.5 border border-outline-variant text-[10px]">
+<button class="px-2 py-0.5 rounded text-outline hover:text-on-surface">1s</button>
+<button class="px-2 py-0.5 rounded bg-surface-container-high text-primary font-bold">5s</button>
+<button class="px-2 py-0.5 rounded text-outline hover:text-on-surface">Frame</button>
+</div>
+<span class="text-timecode font-timecode text-primary-fixed">Cursor @ 00:04.18</span>
+</div>
+<!-- Right System Cache Telemetry -->
+<div class="flex items-center gap-3 text-outline text-[11px]">
+<span class="flex items-center gap-1 text-emerald-400">
+<span class="material-symbols-outlined text-[14px]" data-icon="memory">memory</span>
+            Render Cache: 100% RAM
+          </span>
+<span class="text-tertiary">Durable Step-Lock: Verified</span>
+</div>
+</div>
+<!-- Multi-Track Canvas & Scrubber Workspace -->
+<div class="flex-1 flex overflow-hidden relative">
+<!-- Track Labels Column (Left 140px fixed) -->
+<div class="w-[140px] border-r border-outline-variant bg-[#0D0E17] flex flex-col justify-around py-1 shrink-0 z-10 select-none">
+<!-- Track 1 Label -->
+<div class="px-3 flex items-center justify-between text-telemetry-sm font-telemetry-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="text-primary font-bold">V1</span>
+<span class="text-[11px] text-on-surface truncate">Dialogue / Script</span>
+</div>
+<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span>
+</div>
+<!-- Track 2 Label -->
+<div class="px-3 flex items-center justify-between text-telemetry-sm font-telemetry-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="text-tertiary font-bold">A1</span>
+<span class="text-[11px] text-on-surface truncate">ElevenLabs Voice</span>
+</div>
+<span class="material-symbols-outlined text-[14px]" data-icon="volume_up">volume_up</span>
+</div>
+<!-- Track 3 Label -->
+<div class="px-3 flex items-center justify-between text-telemetry-sm font-telemetry-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="text-secondary font-bold">V2</span>
+<span class="text-[11px] text-on-surface truncate">HeyGen Avatar</span>
+</div>
+<span class="material-symbols-outlined text-[14px]" data-icon="visibility">visibility</span>
+</div>
+<!-- Track 4 Label -->
+<div class="px-3 flex items-center justify-between text-telemetry-sm font-telemetry-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="text-emerald-400 font-bold">FX</span>
+<span class="text-[11px] text-on-surface truncate">B-Roll &amp; Captions</span>
+</div>
+<span class="material-symbols-outlined text-[14px]" data-icon="layers">layers</span>
+</div>
+</div>
+<!-- Timeline Grid Tracks & Interactive Clips Area -->
+<div class="flex-1 relative bg-[#090A10] flex flex-col justify-around py-1 overflow-x-hidden">
+<!-- Subtle Vertical Timeline Ruler Ticks (Background Grid) -->
+<div class="absolute inset-0 flex justify-between pointer-events-none opacity-15">
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+<div class="w-[1px] h-full bg-outline"></div>
+</div>
+<!-- ==================== TRACK 1: Dialogue Script Blocks ==================== -->
+<div class="h-9 px-2 flex items-center gap-1.5 z-0">
+<!-- Hook Block -->
+<div class="w-[20%] h-8 rounded-md bg-primary-container/20 border border-primary text-primary-fixed px-2.5 flex items-center justify-between text-[11px] font-telemetry-sm specular-top shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+<span class="truncate font-semibold">Hook (3.5s)</span>
+<span class="text-[9px] opacity-75">Claude 3.7</span>
+</div>
+<!-- Body Argument Block -->
+<div class="w-[58%] h-8 rounded-md bg-[#1A1C28] border border-outline-variant hover:border-primary/50 text-on-surface px-3 flex items-center justify-between text-[11px] font-telemetry-sm specular-top">
+<span class="truncate">Body: 3 Sai Lầm &amp; Phân Tích Toolchain Cloud GPU (11.0s)</span>
+<span class="text-[9px] text-outline">148 WPM</span>
+</div>
+<!-- CTA Offer Block -->
+<div class="w-[20%] h-8 rounded-md bg-tertiary-container/20 border border-tertiary/60 text-tertiary px-2.5 flex items-center justify-between text-[11px] font-telemetry-sm specular-top">
+<span class="truncate font-semibold">CTA PayOS (3.7s)</span>
+<span class="text-[9px]">Conv Opt</span>
+</div>
+</div>
+<!-- ==================== TRACK 2: ElevenLabs Audio Waveform ==================== -->
+<div class="h-9 px-2 flex items-center z-0">
+<div class="w-full h-8 rounded-md bg-[#1A1C28] border border-tertiary/40 px-3 flex items-center justify-between relative overflow-hidden specular-top">
+<!-- Rendered Audio Waveform Syllables SVG -->
+<div class="absolute inset-0 flex items-center justify-between px-2 opacity-80 pointer-events-none">
+<span class="h-3 w-1 bg-tertiary rounded"></span>
+<span class="h-6 w-1 bg-tertiary rounded"></span>
+<span class="h-4 w-1 bg-tertiary rounded"></span>
+<span class="h-7 w-1 bg-tertiary rounded"></span>
+<span class="h-2 w-1 bg-tertiary rounded"></span>
+<span class="h-5 w-1 bg-tertiary rounded"></span>
+<span class="h-8 w-1 bg-tertiary rounded"></span>
+<span class="h-6 w-1 bg-tertiary rounded"></span>
+<span class="h-3 w-1 bg-tertiary rounded"></span>
+<span class="h-7 w-1 bg-tertiary rounded"></span>
+<span class="h-5 w-1 bg-tertiary rounded"></span>
+<span class="h-2 w-1 bg-tertiary rounded"></span>
+<span class="h-8 w-1 bg-tertiary rounded"></span>
+<span class="h-4 w-1 bg-tertiary rounded"></span>
+<span class="h-6 w-1 bg-tertiary rounded"></span>
+<span class="h-3 w-1 bg-tertiary rounded"></span>
+<span class="h-5 w-1 bg-tertiary rounded"></span>
+<span class="h-7 w-1 bg-tertiary rounded"></span>
+<span class="h-2 w-1 bg-tertiary rounded"></span>
+<span class="h-4 w-1 bg-tertiary rounded"></span>
+</div>
+<span class="relative z-10 text-[10px] font-telemetry-sm text-tertiary font-bold bg-[#1A1C28]/80 px-1.5 py-0.5 rounded border border-tertiary/30">
+                Minh Nam (Saigon Turbo) - Syllable Synced Envelope (48kHz)
+              </span>
+<span class="relative z-10 text-[9px] font-telemetry-sm text-outline">-3.2 dBFS Peak</span>
+</div>
+</div>
+<!-- ==================== TRACK 3: HeyGen Avatar Filmstrip Thumbnails ==================== -->
+<div class="h-9 px-2 flex items-center z-0">
+<div class="w-full h-8 rounded-md bg-[#11131F] border border-secondary/40 flex items-center overflow-hidden relative specular-top">
+<!-- Continuous High-Res Avatar Video Thumbnail Strip (6 Keyframe Blocks) -->
+<div class="w-1/6 h-full border-r border-outline-variant/60 relative">
+<img class="w-full h-full object-cover" data-alt="Close up cinema keyframe 1 of Vietnamese woman presenter opening statement with sharp focus, studio dark neon background, flawless lip position." src="https://lh3.googleusercontent.com/aida-public/AB6AXuASZTIzH_NWDxBRQXUwMsRdqHA_wSJzELCLrTI4mNezRRrvQHdgxV7QwcrsHEmkFhcRbNw0uuKhInj72U7VqJtqXgoEBUTY1KPEtccxWANiTrlCoH8XgI6cbmQ2Owtm93MsdY1I9LjAL-jrbbNRKHrYj-ZJambRsj6Uyh9k73TwwScGqaC9gClWymbshAWhJrp1BcDlCBq69MURCH6mFeKus8PhfI9czuJc6pbKLsCgkSn7IS337Tb7SXdezu9ZrnhwifxKmrDAX-w"/>
+<span class="absolute bottom-0.5 left-1 text-[8px] font-timecode text-white bg-black/60 px-0.5 rounded">00:00</span>
+</div>
+<div class="w-1/6 h-full border-r border-outline-variant/60 relative">
+<img class="w-full h-full object-cover" data-alt="Close up cinema keyframe 2 of Vietnamese female speaker articulating with hand gesture in high tech production set with purple rim lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiWUPJpxyFO3udCC7Te5ZiwGtMuJbN8F7tl4cIrq_cl3dGSwBPBaDbrKYQFpk1fqY-Swl93e_60gPpIspwdtZuPvZXpVvnK1hnyAQNbScWBPhA1VL0W0GCcpqEmFj_NIh2YErfHwfulkNvVS1Pq1FtK-3gQL9g2rUsfaAcDXvAAQqa7lSLbUfNc9ZzkQzHg2eIqzpnRseGQLEpWAbM4uK6mvtFyyp8jxhJerX1Z6DlFZ65lwEMplHQHsMAA8CzXATfpNI_tpJHCAU"/>
+<span class="absolute bottom-0.5 left-1 text-[8px] font-timecode text-white bg-black/60 px-0.5 rounded">00:03</span>
+</div>
+<div class="w-1/6 h-full border-r border-outline-variant/60 relative">
+<img class="w-full h-full object-cover" data-alt="Close up cinema keyframe 3 of Vietnamese executive woman presenting data analysis with subtle head turn in modern Saigon media studio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmvY7hzVitua1HCUir63XHwRMpw7xlnbeU3La2cN3mFq5vRTnFJYBGgK1_CAh1UTzbpa1NgwjzYMTZUnx_dwgUVbPqf89e-WbJiIKnq9v2n-xOhwquu0udbGkUBSy1uPIDcQckn4ZuiraGJI3jcJ8nqo8FtMlwvrcIJvykNq1ZxS0aTSgNC5uFFGQu8ElgArXCJEztPnDLI5K53Wc5MzDxPN-kA_-aSg2ISOvrEDvusT-mkZBQ8V3f2ZvvB-C5kgGDf4kT0VMvktY"/>
+<span class="absolute bottom-0.5 left-1 text-[8px] font-timecode text-white bg-black/60 px-0.5 rounded">00:06</span>
+</div>
+<div class="w-1/6 h-full border-r border-outline-variant/60 relative">
+<img class="w-full h-full object-cover" data-alt="Close up cinema keyframe 4 of female presenter explaining AI workflow with confident expression and cinematic dark studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwOQsoS0ubqWWDka3k-BNKx9Za1bn4nKFP3ALjEiYmIQgLAW150ev1kbzifpn8wp4I5MwuvmrCnWw8R-fn1U7eod207fXS1hOWH0-RkVp8IwiR5jbQTxVCfrzRWPiHoHGMbwQ9QYZLEmVyFkpcOlXU1Z745V_7xSg-W_ZxsS4S8r-D2kskFpHUE0mpEfC1YoURZ8ciw4zPokVPx4WEfsNIuAowP_t7dfLtjNiTIC5sZklNlY3jRo9HsPPt58Ax29KFdWwr0up64Kc"/>
+<span class="absolute bottom-0.5 left-1 text-[8px] font-timecode text-white bg-black/60 px-0.5 rounded">00:09</span>
+</div>
+<div class="w-1/6 h-full border-r border-outline-variant/60 relative">
+<img class="w-full h-full object-cover" data-alt="Close up cinema keyframe 5 of Vietnamese AI executive emphasizing call to action with sharp eye contact and studio specular reflection." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiUDEFlrpZSgMc1G5mm27Aa71HnwyU32N1jCpTwVMo3QehmC95uG47LHYWI25479deFnw6k0Z7hkldIoz1RA-G1oOo2fxaFTx2C8UvyNgf2-Gztb-zmZSU5QX9ExOfz9o0ZXbO3reIio3h1vjCZI3q28-rrm-ErM9KX7snzmZRoUqnHc8v3YwzoqE4yMCKpgrEtBYzXDtSNF266cvqtu6HJEomIwpJ1qf2d5TwKW-_4CTto9b7ukC_xOs2-VBxvRCKqww66yWCuCY"/>
+<span class="absolute bottom-0.5 left-1 text-[8px] font-timecode text-white bg-black/60 px-0.5 rounded">00:12</span>
+</div>
+<div class="w-1/6 h-full relative">
+<img class="w-full h-full object-cover" data-alt="Close up cinema keyframe 6 of female avatar closing out video campaign with warm executive smile in high resolution tech studio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9kBWJz-fp7rcXt7GtujGF4BU6D5VKDSxb5r5fHufAz5OJOVdspepyG36wS8GcMf4dEeyHH016HrxquE4RvAoqReITYSq7X8nRsFBIcOzrAlCuv4cU9vNxhH_Ytq73Rf4Gt2M-8cGBMcKVuS-vpuqxY4k05vVN-m1OXHS_l1GrKFjskDfp0v90cI29gvhzUFe2TWNrE7moxAwDaQmU7YFVPpTo5bSQr_iIAu_V046H5uokHNijoUZxhIhq77dVs5-4LfgXhLxbMyM"/>
+<span class="absolute bottom-0.5 left-1 text-[8px] font-timecode text-white bg-black/60 px-0.5 rounded">00:15</span>
+</div>
+<div class="absolute right-3 px-2 py-0.5 rounded bg-black/80 backdrop-blur text-secondary text-[10px] font-telemetry-sm border border-secondary/40">
+                HeyGen 4K LipSync Keyframes [30fps Active]
+              </div>
+</div>
+</div>
+<!-- ==================== TRACK 4: B-Roll & Overlay FX ==================== -->
+<div class="h-9 px-2 flex items-center gap-2 z-0">
+<!-- FX Block 1: GPU Server Rack B-Roll -->
+<div class="w-[30%] h-8 rounded-md bg-secondary/15 border border-secondary/50 text-secondary px-2.5 flex items-center justify-between text-[11px] font-telemetry-sm specular-top">
+<span class="truncate flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="videocam">videocam</span>
+                B-Roll: Cloud GPU Server Rack
+              </span>
+<span class="text-[9px] text-outline">Opacity 70%</span>
+</div>
+<!-- FX Block 2: Karaoke Motion Text -->
+<div class="w-[45%] h-8 rounded-md bg-tertiary/15 border border-tertiary/50 text-tertiary px-2.5 flex items-center justify-between text-[11px] font-telemetry-sm specular-top">
+<span class="truncate flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="title">title</span>
+                Karaoke Kinetic Typography Overlay
+              </span>
+<span class="text-[9px] text-emerald-400">Word-Level Tracked</span>
+</div>
+<!-- FX Block 3: PayOS QR Overlay -->
+<div class="w-[23%] h-8 rounded-md bg-emerald-500/15 border border-emerald-500/50 text-emerald-400 px-2.5 flex items-center justify-between text-[11px] font-telemetry-sm specular-top">
+<span class="truncate flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="qr_code_2">qr_code_2</span>
+                PayOS Dynamic QR + UTM
+              </span>
+</div>
+</div>
+<!-- ==================== VERTICAL PLAYHEAD CURSOR (AT 00:04:18) ==================== -->
+<div class="absolute top-0 bottom-0 left-[24%] w-[1.5px] bg-primary z-20 pointer-events-none shadow-[0_0_10px_#6366F1]">
+<!-- Scrubber Diamond Head -->
+<div class="w-3 h-3 bg-white border border-primary rotate-45 -ml-[5px] -mt-1 shadow-[0_0_8px_#6366F1]"></div>
+<!-- Timecode Flag Bubble -->
+<div class="absolute -top-6 -left-7 px-1.5 py-0.5 bg-primary text-black font-timecode text-[9px] font-bold rounded shadow-md whitespace-nowrap">
+              00:04:18
+            </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

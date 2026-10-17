@@ -7,13 +7,23 @@
 
 import { Tier, TierConfig, FeatureFlag } from '@/seed/types';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
+import {
+  NOWPAYMENTS_INVOICE_IDS,
+  TIER_CONFIG,
+  DB_TIER_MAPPING,
+  TIER_DB_MAPPING,
+  TIER_ALLOWED_VIDEO,
+  TOPUP_PRICE_PER_MCU,
+  REFERRAL_REWARD_CENTS,
+} from './tier-mappings';
 
-/** NOWPayments pre-created invoice IDs (static, no runtime dependency needed) */
-const NOWPAYMENTS_INVOICE_IDS: Record<string, string> = {
-  BASIC: '5710519960',
-  PREMIUM: '4559269964',
-  ENTERPRISE: '6336799275',
-  MASTER: '5589879034',
+export {
+  TIER_CONFIG,
+  DB_TIER_MAPPING,
+  TIER_DB_MAPPING,
+  TIER_ALLOWED_VIDEO,
+  TOPUP_PRICE_PER_MCU,
+  REFERRAL_REWARD_CENTS,
 };
 
 export const TIER_CONFIGS: Record<Tier, TierConfig> = {
@@ -22,10 +32,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     price: UNIFIED_TIERS.BASIC.price,
     priceDisplay: `$${UNIFIED_TIERS.BASIC.price}/mo`,
     nowpaymentsInvoiceId: NOWPAYMENTS_INVOICE_IDS.BASIC,
-    features: [
-      'enable_affiliate_engine',
-      'enable_roi_calculator',
-    ] satisfies FeatureFlag[],
+    features: ['enable_affiliate_engine', 'enable_roi_calculator'] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.BASIC.youtubeChannels,
       videoTemplates: UNIFIED_TIERS.BASIC.templates,
@@ -33,7 +40,6 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       supportMonths: 1,
     },
   },
-
   PREMIUM: {
     name: UNIFIED_TIERS.PREMIUM.name,
     price: UNIFIED_TIERS.PREMIUM.price,
@@ -43,8 +49,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     features: [
       'enable_affiliate_engine',
       'enable_roi_calculator',
-      'enable_api_integrations', // API access + webhooks unlocked at PREMIUM (Growth) tier
-      // Phase 4 features
+      'enable_api_integrations',
       'enable_distribution_os',
       'enable_commerce_catalog',
       'enable_creative_economy',
@@ -59,7 +64,6 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       affiliateDashboard: true,
     },
   },
-
   ENTERPRISE: {
     name: UNIFIED_TIERS.ENTERPRISE.name,
     price: UNIFIED_TIERS.ENTERPRISE.price,
@@ -71,7 +75,6 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       'enable_roi_calculator',
       'enable_api_integrations',
       'enable_auto_update',
-      // Phase 4 features
       'enable_distribution_os',
       'enable_commerce_catalog',
       'enable_creative_economy',
@@ -89,7 +92,6 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       monthlyStrategyCalls: true,
     },
   },
-
   MASTER: {
     name: UNIFIED_TIERS.MASTER.name,
     price: UNIFIED_TIERS.MASTER.price,
@@ -102,7 +104,6 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       'enable_api_integrations',
       'enable_auto_update',
       'enable_early_access',
-      // Phase 4 features
       'enable_distribution_os',
       'enable_commerce_catalog',
       'enable_creative_economy',
@@ -136,42 +137,3 @@ export function tierHasFeature(tier: Tier, feature: FeatureFlag): boolean {
 export function getAllTiers(): Tier[] {
   return Object.keys(TIER_CONFIGS) as Tier[];
 }
-
-/** Tier rank/label/features for subscription gate checks */
-export const TIER_CONFIG: Record<Tier, { rank: number; label: string; features: string[] }> = {
-  BASIC: { rank: 1, label: 'Starter', features: ['1 YouTube Channel', '5 Templates', 'Basic Analytics'] },
-  PREMIUM: { rank: 2, label: 'Growth', features: ['3 YouTube Channels', 'Unlimited Templates', 'Advanced Analytics', 'Priority Support'] },
-  ENTERPRISE: { rank: 3, label: 'Premium', features: ['Unlimited Channels', 'Custom Templates', 'Custom Integrations', 'Dedicated Account Manager', 'API Access'] },
-  MASTER: { rank: 4, label: 'Master', features: ['Everything in Enterprise', 'Lifetime Access', 'VIP Support Forever', 'Monthly Strategy Calls', 'Early Access'] },
-};
-
-/** Map DB values → Tier enum */
-export const DB_TIER_MAPPING: Record<string, Tier> = {
-  'basic': 'BASIC',
-  'premium': 'PREMIUM',
-  'pro': 'PREMIUM',
-  'enterprise': 'ENTERPRISE',
-  'master': 'MASTER',
-  'free': 'BASIC',
-};
-
-/** Map Tier enum → DB values */
-export const TIER_DB_MAPPING: Record<Tier, string> = {
-  BASIC: 'basic',
-  PREMIUM: 'premium',
-  ENTERPRISE: 'enterprise',
-  MASTER: 'master',
-};
-
-/** Tiers that allow video generation (PREMIUM+ required) */
-export const TIER_ALLOWED_VIDEO: Tier[] = ['PREMIUM', 'ENTERPRISE', 'MASTER'];
-
-/** Price per MCU credit for overage top-ups (USD). Canonical location — imported by land and forest layers. */
-export const TOPUP_PRICE_PER_MCU = 0.10;
-
-/**
- * Default referral reward amount in cents (USD).
- * Overridable via REFERRAL_REWARD_CENTS env var.
- * Used by POST /api/referral/generate when creating new codes.
- */
-export const REFERRAL_REWARD_CENTS = Number(process.env.REFERRAL_REWARD_CENTS) || 1990;

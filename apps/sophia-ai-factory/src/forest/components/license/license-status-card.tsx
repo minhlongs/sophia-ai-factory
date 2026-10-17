@@ -6,23 +6,26 @@
  * @module components/license/license-status-card
  */
 
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchJson } from '@/seed/utils/fetch-json';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
-import { Badge } from '@/seed/components/ui/badge';
 import { Button } from '@/seed/components/ui/button';
-import { Key, RefreshCw, AlertCircle } from 'lucide-react';
+import { Key, RefreshCw } from 'lucide-react';
 import { LicenseStatusTierSection } from './license-status-tier-section';
 import { LicenseStatusUsageSection } from './license-status-usage-section';
 import { LicenseStatusInfoGrid } from './license-status-info-grid';
+import type { LicenseStatus } from './license-status-helpers';
 import {
-  type LicenseStatus,
-  getTierVariant,
-  getStatusColor,
-  formatTier,
-} from './license-status-helpers';
+  LicenseStatusLoadingCard,
+  LicenseStatusErrorCard,
+  LicenseStatusCompactCard,
+} from './license-status-card-states';
+
+export {
+  LicenseStatusLoadingCard,
+  LicenseStatusErrorCard,
+  LicenseStatusCompactCard,
+};
 
 interface LicenseStatusCardProps {
   licenseNonce?: string;
@@ -55,78 +58,20 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
   });
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="motion-safe:animate-pulse space-y-2">
-            <div className="h-4 bg-muted rounded w-1/3" />
-            <div className="h-3 bg-muted rounded w-1/4" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="motion-safe:animate-pulse space-y-4">
-            <div className="h-10 bg-muted rounded" />
-            <div className="h-4 bg-muted rounded w-1/2" />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <LicenseStatusLoadingCard />;
   }
 
   if (error || !license) {
-    return (
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertCircle className="h-5 w-5" />
-            License Error
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Failed to load license status. Please try again.
-          </p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    return <LicenseStatusErrorCard onRetry={() => refetch()} />;
   }
 
-  const statusColor = getStatusColor(license.status);
-
   if (compact) {
-    const dotClass =
-      statusColor === 'green' ? 'bg-green-500' :
-      statusColor === 'red' ? 'bg-red-500' :
-      statusColor === 'yellow' ? 'bg-yellow-500' : 'bg-muted';
-
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">License</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${dotClass}`} />
-              <Badge variant={getTierVariant(license.tier)}>
-                {formatTier(license.tier)}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={syncMutation.isPending}
-            >
-              <RefreshCw className={`h-4 w-4 ${syncMutation.isPending ? 'motion-safe:animate-spin' : ''}`} />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <LicenseStatusCompactCard
+        license={license}
+        isSyncing={syncMutation.isPending}
+        onRefresh={() => refetch()}
+      />
     );
   }
 

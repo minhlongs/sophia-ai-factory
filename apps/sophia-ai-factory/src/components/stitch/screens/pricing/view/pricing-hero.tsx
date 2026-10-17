@@ -1,4 +1,5 @@
 'use client';
+// i18n-namespace: stitch.pricingPage
 
 import React from 'react';
 import { Sparkles } from 'lucide-react';
@@ -15,9 +16,9 @@ interface PricingHeroProps {
 export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
   return (
     <section className="mb-20 text-center max-w-4xl mx-auto">
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] text-[#4338CA] dark:text-indigo-300 text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] text-primary dark:text-primary-300 text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
         <Sparkles className="w-3.5 h-3.5 text-[#D97706] dark:text-[#F59E0B]" />
-        Transparent Pricing
+        {t('pricingLabel')}
       </div>
       <h1 className="mb-5 text-4xl sm:text-6xl font-black text-[#0B0F19] dark:text-white tracking-tight font-display">
         {t('hero.title')}
@@ -34,7 +35,7 @@ export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
             className={cn(
               'inline-flex cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-200 select-none',
               billing === period
-                ? 'bg-[#4338CA] dark:bg-[#6366F1] text-white shadow-md shadow-[#4338CA]/20 dark:shadow-indigo-500/25'
+                ? 'bg-primary text-white shadow-md shadow-primary/20 dark:shadow-primary-500/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-[#0B0F19] dark:hover:text-white',
             )}
           >

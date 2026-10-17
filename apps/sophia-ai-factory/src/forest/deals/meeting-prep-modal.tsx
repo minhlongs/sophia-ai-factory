@@ -9,8 +9,14 @@
  */
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Sparkles, Building2, Target, Shield, DollarSign } from 'lucide-react';
+import { X, Copy, Check, Sparkles, Building2 } from 'lucide-react';
 import type { EnterpriseDeal, MeetingPrepDossier } from '@/seed/types/enterprise-deal';
+import { MeetingPrepDossierView } from './meeting-prep-dossier-view';
+
+export {
+  MeetingPrepDossierView,
+  type MeetingPrepDossierViewProps,
+} from './meeting-prep-dossier-view';
 
 interface MeetingPrepModalProps {
   deal: EnterpriseDeal;
@@ -64,7 +70,11 @@ export function MeetingPrepModal({
                 onClick={handleCopy}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
                 {copied ? 'Copied' : 'Copy Dossier'}
               </button>
             )}
@@ -85,7 +95,8 @@ export function MeetingPrepModal({
               <div>
                 <h3 className="text-base font-medium text-white">No Dossier Generated Yet</h3>
                 <p className="text-xs text-zinc-400 max-w-md mx-auto mt-1">
-                  Synthesize an executive briefing with company intelligence, pain points, objection battlecards, and commercial recommendations.
+                  Synthesize an executive briefing with company intelligence, pain points, objection
+                  battlecards, and commercial recommendations.
                 </p>
               </div>
               <button
@@ -104,61 +115,7 @@ export function MeetingPrepModal({
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Snapshot Card */}
-              <div className="p-4 rounded-lg bg-zinc-950/60 border border-zinc-800/80 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                  <Building2 className="w-4 h-4" /> 1. Company & Stakeholders
-                </div>
-                <p className="text-sm text-zinc-300 leading-relaxed">{dossier.companyOverview}</p>
-                <div className="text-xs text-zinc-400 pt-1 border-t border-zinc-800/60">
-                  <span className="font-semibold text-zinc-300">Decision Makers:</span> {dossier.keyStakeholders}
-                </div>
-              </div>
-
-              {/* Pain Point Analysis */}
-              <div className="p-4 rounded-lg bg-zinc-950/60 border border-zinc-800/80 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
-                  <Target className="w-4 h-4" /> 2. Pain Points & Bottlenecks
-                </div>
-                <p className="text-sm text-zinc-300 leading-relaxed">{dossier.painPointAnalysis}</p>
-              </div>
-
-              {/* Solution Blueprint */}
-              <div className="p-4 rounded-lg bg-zinc-950/60 border border-zinc-800/80 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
-                  <Shield className="w-4 h-4" /> 3. Sophia Solution Blueprint
-                </div>
-                <p className="text-sm text-zinc-300 leading-relaxed">{dossier.proposedSolutionBlueprint}</p>
-              </div>
-
-              {/* Battlecards */}
-              <div className="space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-2">
-                  <Shield className="w-4 h-4" /> 4. Competitive Battlecards & Objection Handling
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {dossier.battlecards.map((card, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3.5 rounded-lg bg-zinc-950 border border-zinc-800 space-y-2 text-xs"
-                    >
-                      <div className="font-semibold text-zinc-200">{card.competitorOrObjection}</div>
-                      <div className="text-emerald-400 font-medium">{card.ourDifferentiator}</div>
-                      <p className="text-zinc-400 leading-relaxed">{card.talkingPoint}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Commercial Terms */}
-              <div className="p-4 rounded-lg bg-zinc-950/60 border border-zinc-800/80 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                  <DollarSign className="w-4 h-4" /> 5. Commercial Recommendation
-                </div>
-                <p className="text-sm text-zinc-300 leading-relaxed">{dossier.commercialRecommendation}</p>
-              </div>
-            </div>
+            <MeetingPrepDossierView dossier={dossier} />
           )}
         </div>
 

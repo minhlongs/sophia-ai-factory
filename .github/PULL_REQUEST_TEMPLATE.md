@@ -1,6 +1,6 @@
 <!--
 Pull Request — Sophia AI Factory
-GitHub Actions is intentionally disabled on this account; this template is the gate.
+GitHub Actions runs PR validation and deploys to production after merge to `main`.
 Required reading: apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
 -->
 
@@ -10,7 +10,7 @@ Required reading: apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
 
 -
 
-## Doctrine compliance (Sophia v1.28.1 — REJECT PRs that violate)
+## Product and architecture checks
 
 - [ ] No Polar.sh code/config/docs added (Polar is REJECTED for this product)
 - [ ] No operator-side third-party setup gate introduced (BYOK pattern preserved)
@@ -29,13 +29,16 @@ Required reading: apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
 - [ ] **Docs only** — `docs/**`, `*.md`
 - [ ] **Tests only** — `**/*.test.ts`, `__tests__/**`
 
-## Test plan
+## Validation
 
 <!-- For every new code path: how did you verify it works? -->
 
-- [ ] `npm test` passes locally (or test-skip justified below)
-- [ ] `npm run build` exits 0
-- [ ] Manual UI check OR `curl` smoke test included below (for routes/UI changes)
+- [ ] `npm run type-check` passes on Node.js 22
+- [ ] `npm run lint` passes
+- [ ] `npm run check:boundaries` passes
+- [ ] `npm run i18n:validate` passes
+- [ ] `npm test` passes
+- [ ] UI/route behavior checked for changed flows
 
 ```
 # Paste smoke test command(s) + observed output, e.g.
@@ -66,20 +69,23 @@ If touching money columns:
 
 - [ ] Followed convention in `contributor-handover.md` §6.8 (cents-new vs USD-float-legacy)
 
-## Deploy (CF-direct doctrine)
+## Deploy and production proof
 
-GitHub Actions is disabled on this account — deploys are local-wrangler-only.
+Merge to `main` triggers the canonical GitHub Actions pipeline in `.github/workflows/deploy.yml`.
+Do not deploy locally unless a critical CI outage is declared and the break-glass override is approved.
 
-- [ ] Already deployed via `npm run deploy:full` — SHA: `__________`
-- [ ] OR will deploy after merge — reviewer assigns
-- [ ] OR docs/tests-only — no deploy needed
+- [ ] PR quality and security checks passed
+- [ ] Deploy workflow passed after merge
+- [ ] Live `/api/version` short SHA matches the merged commit exactly
+- [ ] Production smoke passed (`/api/health`, `/login`, `/vi/login`)
+- [ ] Docs/tests-only — no deploy needed
 
 If deployed, verify report attached below:
 
 ```
-Local SHA:  __________
-Live SHA:   __________   (curl -s $PROD_URL/api/version | jq .shortSha)
-HTTP:       200 / __________
+Merged SHA: __________
+Live SHA:   __________
+Smoke:      __________
 ```
 
 ## Risk + rollback
@@ -90,7 +96,7 @@ HTTP:       200 / __________
 
 Rollback plan if shipped breaks production:
 
-> `npx wrangler rollback --name sophia-ai-factory --yes` OR `git revert <sha> && npm run deploy:full`
+> Revert the production Worker version through the approved Cloudflare rollback procedure, or revert the commit on `main` and verify the resulting CI deployment.
 
 ## Linked issues / postmortems
 

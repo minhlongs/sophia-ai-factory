@@ -1,15 +1,10 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
-  ErasureCertificate,
   ErasureRequestInput,
   ErasureExecutionResult,
-  ErasureMethod,
   ExecuteRtbfOptions,
-  VerifyCertificateResult,
 } from './types';
-import { DEFAULT_SIGNING_KEY_ID } from './types';
-import { bytesToHex } from '../cmek-envelope-engine';
-import { appendComplianceAuditLog, signContentHash, verifySignature } from '../compliance-ledger';
+import { appendComplianceAuditLog } from '../compliance-ledger';
 import {
   sha256Hex,
   computeMerkleRoot,
@@ -19,6 +14,10 @@ import {
   redactUserProfileRecord,
 } from './cascading-purger';
 import { persistErasureCertificate } from './tombstone-writer';
+import {
+  buildSignedErasureCertificate,
+  verifyErasureCertificate,
+} from './rtbf-certificate';
 
 // Re-export helpers for backwards compatibility
 export {
@@ -26,6 +25,7 @@ export {
   computeMerkleRoot,
   generateSubjectPseudonym,
   checkLegalHold,
+  verifyErasureCertificate,
 };
 
 /**
@@ -87,40 +87,16 @@ export async function executeRightToBeForgotten(
   const recordsManifestHash = await computeMerkleRoot(affectedRecordIds);
 
   // 5. Generate Signed Certificate of Erasure
-  const randomSuffix = bytesToHex(new Uint8Array(4)).toUpperCase();
-  const certNumber = `SOV-ERASURE-${now}-${randomSuffix}`;
-  const certId = `ec_${bytesToHex(new Uint8Array(16))}`;
-
-  const signatureData = `${certNumber}|${pseudonym}|${input.jurisdiction}|${recordsManifestHash}|${now}`;
-  const digitalSignature = await signContentHash(signatureData, signingKey);
-
-  const erasureMethod: ErasureMethod = input.erasureMethod ?? (shreddedCount > 0 ? 'hybrid_shred_and_redact' : 'anonymization_and_redaction');
-  const legalBasis = input.legalBasis ?? (input.jurisdiction === 'EU_GDPR' ? 'GDPR Article 17(1)' : 'Vietnam PDPD Article 16');
-
-  const certMetadata = {
-    affectedRecordIdsCount: affectedRecordIds.length,
-    shreddedKeysCount: shreddedCount,
-    statutoryNotice: 'This digital certificate constitutes cryptographic non-repudiation proof of data erasure.',
-  };
-
-  const certificate: ErasureCertificate = {
-    id: certId,
-    certificateNumber: certNumber,
-    orgId: input.orgId ?? null,
-    subjectIdPseudonym: pseudonym,
-    jurisdiction: input.jurisdiction,
-    legalBasis,
-    erasureMethod,
-    shreddedKeyFingerprint: fingerprint,
-    affectedRecordsCount: affectedRecordIds.length,
+  const certificate = await buildSignedErasureCertificate({
+    input,
+    pseudonym,
     recordsManifestHash,
-    verifierPublicKeyId: DEFAULT_SIGNING_KEY_ID,
-    digitalSignature,
-    issuedAt: now,
-    certificatePdfUrl: null,
-    metadata: certMetadata,
-    createdAt: now,
-  };
+    affectedRecordsCount: affectedRecordIds.length,
+    shreddedCount,
+    fingerprint,
+    now,
+    signingKey,
+  });
 
   await persistErasureCertificate(db, certificate);
 
@@ -133,11 +109,11 @@ export async function executeRightToBeForgotten(
     actorIpHash: await sha256Hex('127.0.0.1'),
     action: 'SOVEREIGN_ERASURE_CERTIFICATE_ISSUED',
     resourceType: 'erasure_certificate',
-    resourceId: certNumber,
+    resourceId: certificate.certificateNumber,
     jurisdictionCompliance: input.jurisdiction,
     policyVerdict: 'ENFORCED',
     payload: {
-      certificateNumber: certNumber,
+      certificateNumber: certificate.certificateNumber,
       subjectPseudonym: pseudonym,
       recordsManifestHash,
       affectedRecordsCount: affectedRecordIds.length,
@@ -148,29 +124,9 @@ export async function executeRightToBeForgotten(
 
   return {
     success: true,
-    certificateNumber: certNumber,
+    certificateNumber: certificate.certificateNumber,
     certificate,
     affectedRecordsCount: affectedRecordIds.length,
     shreddedKeysCount: shreddedCount,
   };
-}
-
-/**
- * Validates the cryptographic non-repudiation signature of an Erasure Certificate.
- */
-export async function verifyErasureCertificate(
-  certificate: ErasureCertificate,
-  signingKeySecret: string,
-): Promise<VerifyCertificateResult> {
-  const signatureData = `${certificate.certificateNumber}|${certificate.subjectIdPseudonym}|${certificate.jurisdiction}|${certificate.recordsManifestHash}|${certificate.issuedAt}`;
-  const isValid = await verifySignature(signatureData, certificate.digitalSignature, signingKeySecret);
-
-  if (!isValid) {
-    return {
-      isValid: false,
-      error: 'Digital signature mismatch: Certificate content or Merkle manifest has been altered.',
-    };
-  }
-
-  return { isValid: true };
 }

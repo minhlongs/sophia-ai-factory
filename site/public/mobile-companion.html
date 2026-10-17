@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Sophia Pocket Deck - Mobile Bridge</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary": "#ddb7ff",
+            "on-secondary-fixed-variant": "#6900b3",
+            "surface-container": "#1e1f26",
+            "on-error": "#690005",
+            "primary-fixed": "#e1e0ff",
+            "on-error-container": "#ffdad6",
+            "error": "#ffb4ab",
+            "on-surface-variant": "#c7c4d7",
+            "surface-container-low": "#1a1b22",
+            "on-primary-fixed": "#07006c",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-surface": "#e3e1eb",
+            "on-background": "#e3e1eb",
+            "error-container": "#93000a",
+            "surface-dim": "#121319",
+            "tertiary-container": "#ca8100",
+            "secondary-fixed-dim": "#ddb7ff",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-variant": "#34343b",
+            "on-tertiary-container": "#3e2400",
+            "inverse-primary": "#494bd6",
+            "primary-container": "#8083ff",
+            "inverse-on-surface": "#2f3037",
+            "inverse-surface": "#e3e1eb",
+            "secondary-fixed": "#f0dbff",
+            "secondary-container": "#6f00be",
+            "surface-bright": "#383940",
+            "on-tertiary": "#472a00",
+            "surface-container-highest": "#34343b",
+            "on-secondary": "#490080",
+            "on-primary-container": "#0d0096",
+            "on-tertiary-fixed-variant": "#653e00",
+            "outline": "#908fa0",
+            "tertiary": "#ffb95f",
+            "surface-tint": "#c0c1ff",
+            "surface-container-lowest": "#0d0e14",
+            "tertiary-fixed-dim": "#ffb95f",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-secondary-container": "#d6a9ff",
+            "surface-container-high": "#292930",
+            "on-secondary-fixed": "#2c0051",
+            "background": "#121319",
+            "outline-variant": "#464554",
+            "primary": "#c0c1ff",
+            "surface": "#121319",
+            "on-primary": "#1000a9",
+            "tertiary-fixed": "#ffddb8"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-xl": "1.5rem",
+            "gutter-desktop": "1.25rem",
+            "space-lg": "1rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "margin": "1rem",
+            "margin-desktop": "2rem",
+            "gutter": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Space Grotesk"],
+            "label-telemetry-sm": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "label-telemetry-md": ["JetBrains Mono"],
+            "label-telemetry-lg": ["JetBrains Mono"],
+            "label-ui": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-md": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "headline-xl": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-telemetry-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-telemetry-md": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-telemetry-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-ui": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom Specular & Telemetry Depth Accents */
+    .specular-deck {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+    .specular-inset {
+      box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    }
+    .hud-glow-indigo {
+      box-shadow: 0 0 16px -2px rgba(99, 102, 241, 0.25);
+    }
+    .hud-glow-amber {
+      box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.22);
+    }
+    /* Hide scrollbars for pill scroller */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface antialiased font-body-md min-h-screen flex justify-center selection:bg-primary-container selection:text-on-primary-container">
+<!-- iPhone 15 / 390px Mobile Viewport Container -->
+<main class="w-full max-w-[390px] bg-surface-container-lowest min-h-screen flex flex-col relative pb-28 border-x border-outline-variant/30">
+<!-- Top Status Bar Simulation -->
+<section class="w-full pt-3 px-4 pb-1 flex justify-between items-center text-on-surface-variant font-label-telemetry-sm text-label-telemetry-sm tracking-widest select-none">
+<span class="font-semibold text-on-surface">09:41 <span class="text-outline">UTC+7</span></span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span>
+<span class="font-bold text-[10px] tracking-tight">5G</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">battery_charging_90</span>
+<span class="text-on-surface font-semibold text-[10px]">98%</span>
+</div>
+</section>
+<!-- TopAppBar Shared Component Anchor -->
+<header class="bg-surface-container-lowest border-b border-outline-variant docked full-width top-0 z-50 specular-deck">
+<div class="flex justify-between items-center w-full px-4 py-2.5 max-w-md mx-auto">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight leading-tight">@Sophia_Bbot</div>
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-on-surface-variant">WS_LIVE • 42ms</span>
+</div>
+</div>
+</div>
+<!-- Trailing Action: Locale Toggle -->
+<button aria-label="Toggle language" class="px-2.5 py-1 rounded bg-surface-container border border-outline-variant font-label-telemetry-sm text-label-telemetry-sm text-primary hover:bg-surface-container-high transition-colors duration-150 active:scale-95">
+<span class="font-bold text-primary">VI</span> <span class="text-outline-variant">|</span> <span class="text-on-surface-variant">EN</span>
+</button>
+</div>
+</header>
+<!-- Pocket Deck Sub-Header & Telemetry Strip -->
+<section class="px-4 pt-3 pb-2 flex flex-col gap-2.5">
+<!-- Deck Brand & Quick Actions -->
+<div class="flex items-center justify-between">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Sophia Pocket Deck</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Mission-Critical Cinema &amp; Growth Cockpit</p>
+</div>
+<div class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant/60 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-primary">v2.4-turbo</span>
+</div>
+</div>
+<!-- Quick Status Badges Bento -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Revenue Pill -->
+<div class="bg-surface-container-low border border-tertiary-container/40 rounded-xl p-2.5 specular-deck hud-glow-amber flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface-variant">USDT Hôm nay</span>
+<span class="material-symbols-outlined text-tertiary text-[14px]">monetization_on</span>
+</div>
+<div class="mt-1 flex items-baseline gap-1.5">
+<span class="font-label-telemetry-lg text-label-telemetry-lg font-bold text-tertiary">+$640.00</span>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-emerald-400">▲ 18.4%</span>
+</div>
+<span class="font-body-sm text-[10px] text-outline mt-0.5">Automated Arbitrum Vault</span>
+</div>
+<!-- Circuit Breakers Status Pill -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-2.5 specular-deck flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface-variant">Circuit Breaker</span>
+<span class="material-symbols-outlined text-emerald-400 text-[14px]">shield</span>
+</div>
+<div class="mt-1 flex items-baseline gap-1">
+<span class="font-label-telemetry-lg text-label-telemetry-lg font-bold text-on-surface">8/8</span>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-emerald-400">Active</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden mt-1">
+<div class="bg-emerald-400 h-full w-full"></div>
+</div>
+</div>
+</div>
+<!-- Quick Command Pill Scroller -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 text-on-surface-variant">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-high border border-outline-variant font-label-telemetry-sm text-label-telemetry-sm text-primary shrink-0 active:scale-95 transition-transform">
+          [/campaign]
+        </button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container border border-outline-variant font-label-telemetry-sm text-label-telemetry-sm text-on-surface-variant shrink-0 hover:text-on-surface active:scale-95 transition-transform">
+          [/status]
+        </button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container border border-outline-variant font-label-telemetry-sm text-label-telemetry-sm text-on-surface-variant shrink-0 hover:text-on-surface active:scale-95 transition-transform">
+          [/results]
+        </button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container border border-outline-variant font-label-telemetry-sm text-label-telemetry-sm text-secondary shrink-0 active:scale-95 transition-transform">
+          [/bandit_tune]
+        </button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container border border-outline-variant font-label-telemetry-sm text-label-telemetry-sm text-tertiary shrink-0 active:scale-95 transition-transform">
+          [/payout_run]
+        </button>
+</div>
+</section>
+<!-- Section 1: Telegram @Sophia_Bbot Live Stream Terminal -->
+<section class="px-4 py-2 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">cell_tower</span>
+<span class="font-headline-md text-headline-md text-on-surface">Bridge Feed</span>
+</div>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-outline">STREAM #42-NODE</span>
+</div>
+<!-- Live Terminal Feed Bubble Card -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-3 specular-deck relative overflow-hidden">
+<!-- Accent Top Bar -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-secondary to-tertiary"></div>
+<!-- Terminal Header -->
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/50">
+<div class="flex items-center gap-2">
+<div class="w-5 h-5 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined text-[13px]">smart_toy</span>
+</div>
+<span class="font-label-ui text-label-ui font-semibold text-on-surface">Sophia AI Core</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-label-telemetry-sm bg-secondary-container/40 text-secondary border border-secondary/30">BOT STREAM</span>
+</div>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-outline">14:22:08 UTC</span>
+</div>
+<!-- Primary Notification Message -->
+<div class="mt-2.5 text-on-surface">
+<p class="font-body-md text-body-md font-medium leading-relaxed">
+            ⚡ <span class="text-primary font-semibold">Chiến dịch #42 hoàn tất:</span> 6/6 video đã đăng đồng thời lên TikTok &amp; Shorts.
+          </p>
+<div class="mt-1 flex items-center gap-2">
+<span class="font-label-telemetry-md text-label-telemetry-md text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30">ROAS: 4.8x</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Multi-armed Bandit Variant B</span>
+</div>
+</div>
+<!-- Telemetry Breakdown Inset Pod -->
+<div class="mt-3 bg-surface-container-lowest border border-outline-variant/70 rounded-lg p-2.5 specular-inset flex flex-col gap-2">
+<!-- Metrics Row -->
+<div class="grid grid-cols-3 gap-1 divide-x divide-outline-variant/40 text-center">
+<div class="px-1">
+<span class="block font-body-sm text-[10px] text-on-surface-variant">Views</span>
+<span class="font-label-telemetry-md text-label-telemetry-md font-bold text-on-surface">342.8K</span>
+</div>
+<div class="px-1">
+<span class="block font-body-sm text-[10px] text-on-surface-variant">CTR</span>
+<span class="font-label-telemetry-md text-label-telemetry-md font-bold text-primary">6.42%</span>
+</div>
+<div class="px-1">
+<span class="block font-body-sm text-[10px] text-on-surface-variant">Conversion</span>
+<span class="font-label-telemetry-md text-label-telemetry-md font-bold text-emerald-400">4.18%</span>
+</div>
+</div>
+<!-- Thompson Sampling Probability -->
+<div class="pt-2 border-t border-outline-variant/40 flex items-center justify-between font-label-telemetry-sm text-label-telemetry-sm">
+<span class="text-on-surface-variant">Thompson Sampling:</span>
+<span class="text-secondary font-semibold font-label-telemetry-sm">θ = 0.892 (Variant B Dominant)</span>
+</div>
+<!-- Merkle Audit Hash -->
+<div class="flex items-center justify-between font-label-telemetry-sm text-label-telemetry-sm bg-surface-container-high/40 px-2 py-1 rounded">
+<span class="text-outline">Merkle Audit:</span>
+<div class="flex items-center gap-1 text-emerald-400">
+<span class="font-mono">0x7f...e42b</span>
+<span class="material-symbols-outlined text-[13px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Bot Quick Action Button -->
+<div class="mt-3 flex items-center justify-between gap-2">
+<button class="flex-1 py-1.5 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant font-label-ui text-label-ui text-on-surface flex items-center justify-center gap-1.5 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[15px] text-primary">description</span>
+<span>Xem báo cáo chi tiết</span>
+</button>
+<button aria-label="Export CSV" class="p-1.5 rounded-lg bg-surface-container border border-outline-variant text-on-surface-variant hover:text-on-surface active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]">ios_share</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Section 2: 1-Tap Executive Approval Queue -->
+<section class="px-4 py-2 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">bolt</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Queue Phê duyệt (2)</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-error-container/40 border border-error/30 text-error font-label-telemetry-sm text-label-telemetry-sm">HIGH PRIORITY</span>
+</div>
+<!-- Card A: Half-Kelly Bandit Budget Scaling -->
+<article class="bg-surface-container-low border border-outline-variant rounded-xl p-3 specular-deck flex flex-col gap-2.5 hud-glow-indigo">
+<!-- Card Header Pill & Time -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 bg-secondary-container/30 border border-secondary/30 px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-secondary text-[13px]">auto_graph</span>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-secondary font-semibold">ALGO RECOMMENDATION</span>
+</div>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-outline">Half-Kelly V4</span>
+</div>
+<!-- Metric & Headline -->
+<div>
+<h3 class="font-headline-md text-[17px] text-on-surface font-bold leading-snug">
+            +42.5% Budget to Variant B
+          </h3>
+<div class="mt-0.5 flex items-baseline gap-2 font-label-telemetry-md text-label-telemetry-md">
+<span class="text-on-surface-variant line-through">$850.00</span>
+<span class="material-symbols-outlined text-[12px] text-outline">arrow_forward</span>
+<span class="text-primary font-bold">$1,211.25 USDT</span>
+</div>
+</div>
+<!-- Context Description (Bilingual) -->
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-variant/60 specular-inset">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Variant B (<span class="text-on-surface font-medium">Hook: 'Bí mật affiliate 2025'</span>) outperforming baseline with <span class="text-emerald-400 font-semibold">99.4% Bayesian confidence</span>.
+          </p>
+</div>
+<!-- Dual Action Triggers -->
+<div class="flex items-center gap-2 pt-1">
+<!-- 1-Tap Indigo Approval -->
+<button class="flex-1 min-h-[44px] px-3 rounded-lg bg-inverse-primary hover:bg-primary-container text-on-primary font-headline-md text-[14px] font-semibold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Phê duyệt (1-Tap)</span>
+</button>
+<!-- Ghost Dismiss -->
+<button class="min-h-[44px] px-3 rounded-lg bg-surface-container-high hover:bg-surface-variant border border-outline-variant font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-transform active:scale-95">
+            Từ chối
+          </button>
+</div>
+</article>
+<!-- Card B: Batch Affiliate USDT Payout Signing -->
+<article class="bg-surface-container-low border border-tertiary-container/30 rounded-xl p-3 specular-deck flex flex-col gap-2.5">
+<!-- Header Pill -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 bg-tertiary-container/30 border border-tertiary/30 px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-tertiary text-[13px]">payments</span>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-tertiary font-semibold">TREASURY CONTRACT</span>
+</div>
+<span class="font-label-telemetry-sm text-label-telemetry-sm text-tertiary font-mono">Arbitrum One</span>
+</div>
+<!-- Headline & Amount -->
+<div>
+<h3 class="font-headline-md text-[17px] text-tertiary font-bold leading-snug">
+            $1,240.00 USDT Batch Payout
+          </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Giải ngân hoa hồng cho 14 Cinema Creators</p>
+</div>
+<!-- Telemetry Details Inset -->
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-variant/60 specular-inset flex flex-col gap-1 font-label-telemetry-sm text-label-telemetry-sm">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Network Gas Est.:</span>
+<span class="text-emerald-400 font-semibold">$0.12 (Low)</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Merkle Tree Root:</span>
+<span class="text-on-surface font-mono">0xd8a9...31c0</span>
+</div>
+</div>
+<!-- Action Triggers -->
+<div class="flex items-center gap-2 pt-1">
+<!-- Executive Amber Signoff Button -->
+<button class="flex-1 min-h-[44px] px-3 rounded-lg bg-tertiary text-on-tertiary-fixed font-headline-md text-[14px] font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span>Ký &amp; Giải ngân</span>
+</button>
+<!-- Secondary View Creators -->
+<button class="min-h-[44px] px-3 rounded-lg bg-surface-container-high border border-outline-variant font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-transform active:scale-95">
+            Xem 14 ví
+          </button>
+</div>
+</article>
+</section>
+<!-- Bottom Navigation Component (Fixed Mobile Deck Navigation) -->
+<!-- Mapped directly to BottomNavBar Shared Component -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-3 py-2 max-w-md mx-auto bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant specular-deck">
+<!-- Tab 1: Deck (Active) -->
+<button aria-label="Deck" class="flex flex-col items-center justify-center text-primary font-semibold py-1 active:scale-90 transition-transform duration-100">
+<span class="material-symbols-outlined text-[22px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-ui text-label-ui">Deck</span>
+</button>
+<!-- Tab 2: Commands -->
+<button aria-label="Commands" class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-on-surface transition-colors duration-150 active:scale-90 transition-transform duration-100">
+<span class="material-symbols-outlined text-[22px]">terminal</span>
+<span class="font-label-ui text-label-ui">Commands</span>
+</button>
+<!-- Tab 3: Approvals (with Badge) -->
+<button aria-label="Approvals" class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-on-surface transition-colors duration-150 active:scale-90 transition-transform duration-100 relative">
+<div class="relative">
+<span class="material-symbols-outlined text-[22px]">verified</span>
+<span class="absolute -top-1 -right-2 bg-error text-on-error font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center">2</span>
+</div>
+<span class="font-label-ui text-label-ui">Approvals</span>
+</button>
+<!-- Tab 4: Telemetry -->
+<button aria-label="Telemetry" class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-on-surface transition-colors duration-150 active:scale-90 transition-transform duration-100">
+<span class="material-symbols-outlined text-[22px]">monitoring</span>
+<span class="font-label-ui text-label-ui">Telemetry</span>
+</button>
+</nav>
+</main>
+
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

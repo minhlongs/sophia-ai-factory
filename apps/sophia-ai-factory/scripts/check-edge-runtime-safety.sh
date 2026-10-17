@@ -42,21 +42,18 @@ violations=0
 allowlisted=0
 checked=0
 
-while IFS= read -r ts_file; do
+mapfile -t candidate_files < <(rg -l --glob '*.ts' "$BANNED_PATTERN" src instrumentation.ts 2>/dev/null || true)
+
+for ts_file in "${candidate_files[@]}"; do
   # Skip excluded paths
   if printf '%s' "$ts_file" | grep -qE "$EXCLUDE_PATHS"; then
-    continue
-  fi
-
-  # Skip if no banned API used at all
-  if ! grep -qE "$BANNED_PATTERN" "$ts_file"; then
     continue
   fi
 
   checked=$((checked + 1))
 
   # Allowlist: file must explicitly acknowledge the risk
-  if grep -qE '@edge-runtime-allowed' "$ts_file"; then
+  if rg -q '@edge-runtime-allowed' "$ts_file"; then
     allowlisted=$((allowlisted + 1))
     continue
   fi
@@ -65,8 +62,8 @@ while IFS= read -r ts_file; do
   while IFS= read -r line; do
     echo "VIOLATION: ${ts_file}:${line}"
     violations=$((violations + 1))
-  done < <(grep -nE "$BANNED_PATTERN" "$ts_file" | cut -d: -f1)
-done < <(find src instrumentation.ts -name "*.ts" -type f 2>/dev/null | sort)
+  done < <(rg -n "$BANNED_PATTERN" "$ts_file" | cut -d: -f1)
+done
 
 echo
 echo "Edge Runtime safety check:"

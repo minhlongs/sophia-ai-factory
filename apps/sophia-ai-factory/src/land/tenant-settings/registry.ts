@@ -7,11 +7,11 @@
 import {
   type SettingsNamespace,
   type TenantSettingRow,
-  SETTINGS_NAMESPACES,
   SettingsValidationError,
   SettingsNotFoundError,
 } from '@/seed/tenant-settings/types';
 import { NAMESPACE_DEFAULTS } from './defaults';
+import { listAll, executeBulkImport, bulkExport } from './registry-bulk-ops';
 
 /** Generates a simple unique ID (timestamp + random, no external dep). */
 function generateId(): string {
@@ -120,31 +120,6 @@ export async function deleteNamespace(
     .run();
 }
 
-/** Fetch all persisted namespaces for a tenant in a single query. */
-export async function listAll(
-  db: D1Database,
-  tenantId: string,
-): Promise<Partial<Record<SettingsNamespace, unknown>>> {
-  const { results } = await db
-    .prepare(
-      'SELECT namespace, value FROM tenant_settings WHERE tenant_id = ?',
-    )
-    .bind(tenantId)
-    .all<Pick<TenantSettingRow, 'namespace' | 'value'>>();
-
-  const out: Partial<Record<SettingsNamespace, unknown>> = {};
-  for (const row of results ?? []) {
-    if (SETTINGS_NAMESPACES.includes(row.namespace as SettingsNamespace)) {
-      try {
-        out[row.namespace as SettingsNamespace] = JSON.parse(row.value);
-      } catch {
-        // skip malformed rows
-      }
-    }
-  }
-  return out;
-}
-
 /**
  * Bulk-import settings. Validates each namespace if validator map provided.
  * Throws SettingsValidationError on first invalid namespace.
@@ -155,21 +130,7 @@ export async function bulkImport(
   settings: Partial<Record<SettingsNamespace, unknown>>,
   validators?: Partial<Record<SettingsNamespace, (v: unknown) => unknown>>,
 ): Promise<void> {
-  for (const [ns, value] of Object.entries(settings)) {
-    const namespace = ns as SettingsNamespace;
-    if (!SETTINGS_NAMESPACES.includes(namespace)) continue;
-    const validator = validators?.[namespace];
-    await set(db, tenantId, namespace, value, validator);
-  }
+  return executeBulkImport(db, tenantId, settings, set, validators);
 }
 
-/** Export all settings as a plain object (present namespaces only). */
-export async function bulkExport(
-  db: D1Database,
-  tenantId: string,
-): Promise<Partial<Record<SettingsNamespace, unknown>>> {
-  return listAll(db, tenantId);
-}
-
-// Re-export error types for convenience
-export { SettingsValidationError, SettingsNotFoundError };
+export { listAll, bulkExport, SettingsValidationError, SettingsNotFoundError };

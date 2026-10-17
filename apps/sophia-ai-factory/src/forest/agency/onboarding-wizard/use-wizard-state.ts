@@ -7,7 +7,6 @@
 
 import { useState } from 'react';
 import type {
-  AgencyOnboardingSubmission,
   AgencyOnboardingResult,
   AgencyOnboardingStep,
   AgencyProfileInput,
@@ -16,7 +15,6 @@ import type {
   SeedAgentDeploymentConfig,
 } from '@/seed/types';
 import { DEFAULT_SEED_AGENTS, type AgencyOnboardingWizardActions } from './types';
-import { runStepValidation } from './validate-wizard-step';
 import {
   createInitialAgencyProfile,
   createInitialAgencyBranding,
@@ -24,8 +22,11 @@ import {
   toAgencySlug,
   createSeedAgentUpdaters,
 } from './wizard-state-helpers';
+import { executeWizardNextStep, executeWizardLaunch } from './wizard-step-actions';
 
-interface UseWizardStateParams {
+export { executeWizardNextStep, executeWizardLaunch };
+
+export interface UseWizardStateParams {
   agencyOrgId: string;
   isVi: boolean;
   initialSlug?: string;
@@ -50,9 +51,7 @@ export function useWizardState({
   const [profile, setProfile] = useState<AgencyProfileInput>(() =>
     createInitialAgencyProfile(initialSlug),
   );
-  const [branding, setBranding] = useState<AgencyBrandingInput>(
-    createInitialAgencyBranding,
-  );
+  const [branding, setBranding] = useState<AgencyBrandingInput>(createInitialAgencyBranding);
   const [domain, setDomain] = useState<AgencyDomainInput>(() =>
     createInitialAgencyDomain(initialSlug),
   );
@@ -71,34 +70,20 @@ export function useWizardState({
     }
   };
 
-  const handleNextStep = async () => {
-    setIsValidating(true);
-    setGeneralError(null);
-    setStepErrors([]);
-    try {
-      const res = await runStepValidation({
-        currentStep,
-        profile,
-        branding,
-        domain,
-        seedAgents,
-        actions,
-      });
-      if (!res.valid) {
-        setStepErrors(res.errors);
-        return;
-      }
-      if (currentStep < 5) {
-        setCurrentStep((prev) => (prev + 1) as AgencyOnboardingStep);
-      }
-    } catch {
-      setGeneralError(
-        isVi ? 'Đã có lỗi xảy ra khi xác thực bước này.' : 'Error validating step data.',
-      );
-    } finally {
-      setIsValidating(false);
-    }
-  };
+  const handleNextStep = () =>
+    executeWizardNextStep({
+      currentStep,
+      isVi,
+      profile,
+      branding,
+      domain,
+      seedAgents,
+      actions,
+      setIsValidating,
+      setGeneralError,
+      setStepErrors,
+      setCurrentStep,
+    });
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
@@ -108,48 +93,21 @@ export function useWizardState({
     }
   };
 
-  const agentUpdaters = createSeedAgentUpdaters(setSeedAgents);
-
-  const handleLaunch = async () => {
-    setIsSubmitting(true);
-    setGeneralError(null);
-    setStepErrors([]);
-    const submission: AgencyOnboardingSubmission = {
+  const handleLaunch = () =>
+    executeWizardLaunch({
       agencyOrgId,
+      isVi,
       profile,
       branding,
       domain,
       seedAgents,
-    };
-    try {
-      if (!actions?.submitOnboarding) {
-        setGeneralError(
-          isVi
-            ? 'Hành động kích hoạt không gian chưa được cấu hình.'
-            : 'Submit action not provided.',
-        );
-        return;
-      }
-      const res = await actions.submitOnboarding(submission);
-      if (!res.success) {
-        setGeneralError(
-          res.error || (isVi ? 'Không thể hoàn tất khởi tạo.' : 'Submission failed.'),
-        );
-        if (res.stepErrors) setStepErrors(Object.values(res.stepErrors).flat());
-        return;
-      }
-      setLaunchResult(res);
-      if (onSuccess) onSuccess(res);
-    } catch {
-      setGeneralError(
-        isVi
-          ? 'Lỗi máy chủ trong quá trình kích hoạt không gian.'
-          : 'Server error during workspace provisioning.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      actions,
+      onSuccess,
+      setIsSubmitting,
+      setGeneralError,
+      setStepErrors,
+      setLaunchResult,
+    });
 
   return {
     currentStep,
@@ -168,7 +126,7 @@ export function useWizardState({
     handleClientNameChange,
     handleNextStep,
     handlePrevStep,
-    ...agentUpdaters,
+    ...createSeedAgentUpdaters(setSeedAgents),
     handleLaunch,
   };
 }
