@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory — Executive Command Dashboard &amp; Growth Triad MAB</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-container": "#0d0096",
+            "surface-container-low": "#1a1b22",
+            "secondary-fixed-dim": "#ddb7ff",
+            "inverse-surface": "#e3e1eb",
+            "on-secondary-container": "#d6a9ff",
+            "tertiary": "#ffb95f",
+            "surface-tint": "#c0c1ff",
+            "on-secondary": "#490080",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-container": "#1e1f26",
+            "surface-container-high": "#292930",
+            "secondary-container": "#6f00be",
+            "inverse-on-surface": "#2f3037",
+            "surface-variant": "#34343b",
+            "tertiary-fixed": "#ffddb8",
+            "outline": "#908fa0",
+            "on-primary": "#1000a9",
+            "primary-container": "#8083ff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "error": "#ffb4ab",
+            "on-error-container": "#ffdad6",
+            "surface-container-highest": "#34343b",
+            "on-surface": "#e3e1eb",
+            "primary-fixed": "#e1e0ff",
+            "surface-container-lowest": "#0d0e14",
+            "on-tertiary-container": "#3e2400",
+            "on-tertiary-fixed-variant": "#653e00",
+            "secondary": "#ddb7ff",
+            "on-error": "#690005",
+            "primary-fixed-dim": "#c0c1ff",
+            "error-container": "#93000a",
+            "on-background": "#e3e1eb",
+            "on-secondary-fixed": "#2c0051",
+            "on-primary-fixed": "#07006c",
+            "primary": "#c0c1ff",
+            "background": "#121319",
+            "inverse-primary": "#494bd6",
+            "tertiary-container": "#ca8100",
+            "surface-bright": "#383940",
+            "on-tertiary": "#472a00",
+            "on-surface-variant": "#c7c4d7",
+            "surface-dim": "#121319",
+            "secondary-fixed": "#f0dbff",
+            "on-tertiary-fixed": "#2a1700",
+            "on-secondary-fixed-variant": "#6900b3",
+            "outline-variant": "#464554",
+            "surface": "#121319"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "margin": "1rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "1.5rem",
+            "space-lg": "1.5rem",
+            "margin-desktop": "2rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Space Grotesk"],
+            "headline-xl-mobile": ["Space Grotesk"],
+            "telemetry-sm": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Space Grotesk"],
+            "caption": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-xl": ["Space Grotesk"],
+            "telemetry-md": ["JetBrains Mono"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "telemetry-lg": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "timecode": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "telemetry-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "caption": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "telemetry-md": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "telemetry-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "timecode": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Physical specular edge styling from design system */
+    .specular-top {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+    .specular-primary {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.22);
+    }
+    .photon-glow-primary {
+      box-shadow: 0 0 16px rgba(192, 193, 255, 0.3);
+    }
+    .photon-glow-amber {
+      box-shadow: 0 0 18px rgba(255, 185, 95, 0.25);
+    }
+    .photon-glow-emerald {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+    }
+    /* Custom scrollbar for dark deck */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0e14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #292930;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #464554;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased selection:bg-primary selection:text-on-primary">
+<!-- ========================================================================= -->
+<!-- 1. LEFT COLLAPSIBLE SIDEBAR RAIL (Shared Component: SideNavBar)           -->
+<!-- ========================================================================= -->
+<aside class="fixed left-0 top-0 h-screen w-60 flex flex-col justify-between py-4 px-3 z-40 bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant select-none">
+<!-- Top Rail Identity -->
+<div>
+<div class="flex items-center justify-between px-2 pb-5 mb-3 border-b border-outline-variant">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high border border-outline flex items-center justify-center text-primary shadow-inner">
+<span class="material-symbols-outlined text-xl">token</span>
+</div>
+<div>
+<h1 class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-surface tracking-tight leading-none">Sophia AI Factory</h1>
+<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-telemetry-sm tracking-wider font-semibold bg-surface-container-highest text-tertiary border border-tertiary-container/40">
+              ENTERPRISE
+            </span>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors" title="Toggle Rail Width">
+<span class="material-symbols-outlined text-lg">dock_to_right</span>
+</button>
+</div>
+<!-- Navigation Tabs (JSON: Command Deck [ACTIVE], Video Studio, /ask 4-Advisor, Revenue & Webhooks, BYOK Setup, Agency Portal, Style Guide) -->
+<nav class="space-y-1">
+<!-- Item 0: Command Deck (ACTIVE MATCH) -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-primary dark:text-primary-fixed border-l-2 border-primary bg-surface-container-high dark:bg-surface-container font-semibold transition-transform duration-100 active:scale-[0.99] group" href="#">
+<span class="material-symbols-outlined text-lg text-primary group-hover:scale-105 transition-transform" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-body-md font-body-md tracking-tight">Command Deck</span>
+</a>
+<!-- Item 1: Video Studio -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-lg text-on-surface-variant group-hover:text-on-surface">movie_creation</span>
+<span class="text-body-md font-body-md">Video Studio</span>
+</a>
+<!-- Item 2: /ask 4-Advisor -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-lg text-on-surface-variant group-hover:text-on-surface">psychology</span>
+<span class="text-body-md font-body-md">/ask 4-Advisor</span>
+</a>
+<!-- Item 3: Revenue & Webhooks -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-lg text-on-surface-variant group-hover:text-on-surface">account_balance_wallet</span>
+<span class="text-body-md font-body-md">Revenue &amp; Webhooks</span>
+</a>
+<!-- Item 4: BYOK Setup -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-lg text-on-surface-variant group-hover:text-on-surface">vpn_key</span>
+<span class="text-body-md font-body-md">BYOK Setup</span>
+</a>
+<!-- Item 5: Agency Portal -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-lg text-on-surface-variant group-hover:text-on-surface">corporate_fare</span>
+<span class="text-body-md font-body-md">Agency Portal</span>
+</a>
+<!-- Item 6: Style Guide -->
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-lg text-on-surface-variant group-hover:text-on-surface">palette</span>
+<span class="text-body-md font-body-md">Style Guide</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Footer Telemetry & Vault Lock Action -->
+<div class="pt-4 border-t border-outline-variant space-y-3">
+<!-- Circuit Health Indicator -->
+<div class="px-2.5 py-2 rounded bg-surface-container-high/60 border border-outline-variant flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="text-telemetry-sm font-telemetry-sm text-on-surface">Circuit Health: 8/8 Active</span>
+</div>
+<span class="material-symbols-outlined text-primary text-sm">verified_user</span>
+</div>
+<!-- Lock Vault Action (Shared JSON CTA) -->
+<button class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-surface-container hover:bg-surface-variant text-on-surface-variant hover:text-on-surface border border-outline-variant transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-sm">lock</span>
+<span class="text-body-sm font-body-sm font-medium">Lock Vault</span>
+</button>
+<!-- Executive Profile Snapshot -->
+<div class="flex items-center space-x-2.5 px-2 pt-1">
+<div class="w-7 h-7 rounded-full bg-surface-variant border border-primary/40 flex items-center justify-center text-xs font-telemetry-sm text-primary font-bold">
+          EO
+        </div>
+<div class="overflow-hidden">
+<p class="text-caption font-caption text-on-surface truncate font-semibold">Executive Operator</p>
+<p class="text-[10px] font-telemetry-sm text-on-surface-variant truncate">0x9942...f08a</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 2. TOP COMMAND HEADER (Shared Component: TopNavBar)                       -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 right-0 left-60 h-16 flex items-center justify-between px-6 z-30 bg-surface-container-low dark:bg-surface-container-lowest border-b border-outline-variant shadow-sm backdrop-blur-md">
+<!-- Left Workspace Anchor & Global Search -->
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-2.5">
+<span class="text-headline-sm font-headline-sm font-semibold text-on-surface dark:text-inverse-surface">Acme Media Vietnam - Production</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm cursor-pointer hover:text-on-surface">unfold_more</span>
+</div>
+<!-- Search basin (Cmd+K) -->
+<div class="relative w-72">
+<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant text-base">search</span>
+</div>
+<input class="w-full h-9 pl-9 pr-14 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-sm font-body-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all" placeholder="Search pipelines, hooks, hashes..." type="text"/>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center">
+<kbd class="px-1.5 py-0.5 text-[10px] font-telemetry-sm text-on-surface-variant bg-surface-container-high rounded border border-outline-variant">Cmd+K</kbd>
+</div>
+</div>
+</div>
+<!-- Right Telemetry Badges, Language, Actions -->
+<div class="flex items-center space-x-3.5">
+<!-- Bilingual pill toggle (VI | EN) -->
+<div class="flex items-center bg-surface-container rounded-lg p-0.5 border border-outline-variant text-body-sm font-body-sm">
+<span class="px-2 py-0.5 rounded text-tertiary dark:text-tertiary-fixed font-bold bg-surface-container-high cursor-pointer shadow-sm">VI</span>
+<span class="px-2 py-0.5 rounded text-on-surface-variant hover:text-on-surface cursor-pointer">EN</span>
+</div>
+<!-- Inngest Telemetry Pill -->
+<div class="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="text-on-surface-variant">Inngest:</span>
+<span class="text-primary font-semibold">14 Active</span>
+</div>
+<!-- Telegram Bridge Pill -->
+<div class="hidden xl:flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+<span class="text-on-surface-variant">@Sophia_Bbot:</span>
+<span class="text-emerald-400 font-medium">Live</span>
+</div>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center space-x-1 text-on-surface-variant border-x border-outline-variant px-2">
+<button class="p-1.5 rounded hover:bg-surface-container hover:text-on-surface transition-colors" title="Notifications">
+<span class="material-symbols-outlined text-lg">notifications</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container hover:text-on-surface transition-colors" title="Operator Terminal">
+<span class="material-symbols-outlined text-lg">terminal</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container hover:text-on-surface transition-colors" title="Sync Mesh">
+<span class="material-symbols-outlined text-lg">sync</span>
+</button>
+</div>
+<!-- Trailing Primary Action (New Campaign) -->
+<button class="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-all font-body-sm text-body-sm font-semibold specular-primary active:scale-[0.98]">
+<span class="material-symbols-outlined text-base">add</span>
+<span>New Campaign</span>
+</button>
+<!-- Profile Avatar Container -->
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">person</span>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 3. MAIN CANVO ARCHITECTURE (Desktop Locked Shell Left: 240px, Top: 64px)  -->
+<!-- ========================================================================= -->
+<main class="ml-60 pt-16 min-h-screen bg-surface-container-lowest p-6 space-y-6">
+<!-- ----------------------------------------------------------------------- -->
+<!-- SECTION 1: HEADER GREETING & MERKLE / HALF-KELLY ACTION BANNER          -->
+<!-- ----------------------------------------------------------------------- -->
+<section class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-outline-variant">
+<div>
+<div class="flex items-center space-x-3">
+<h2 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+            Bảng Điều Khiển Giám Đốc <span class="text-on-surface-variant font-light">/ Executive Command Deck</span>
+</h2>
+<span class="px-2 py-0.5 rounded text-[11px] font-telemetry-sm bg-primary/10 text-primary border border-primary/30 flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs">auto_graph</span>
+<span>MAB Auto-Steer v4.2</span>
+</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1 max-w-3xl">
+          Giám sát thời gian thực: Sản xuất video AI, phân bổ ngân sách Thompson Sampling &amp; Doanh thu RaaS tức thì.
+        </p>
+</div>
+<div class="flex items-center space-x-3 shrink-0">
+<!-- Merkle Export Proof Button -->
+<button class="flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-surface-container border border-outline-variant hover:border-primary text-on-surface text-body-sm font-body-sm transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">fact_check</span>
+<span>Xuất Báo Cáo Merkle / Export Proof</span>
+</button>
+<!-- Amber Gold Glowing Half-Kelly Deploy Button -->
+<button class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-tertiary-container hover:bg-tertiary text-on-tertiary font-body-sm text-body-sm font-semibold photon-glow-amber transition-all active:scale-[0.98] specular-primary">
+<span class="material-symbols-outlined text-base">bolt</span>
+<span>Áp Dụng Phân Bổ Half-Kelly (42.5%)</span>
+</button>
+</div>
+</section>
+<!-- ----------------------------------------------------------------------- -->
+<!-- SECTION 2: BENTO KPI ROW (4 Elevated Panels with Top Specular Edge)     -->
+<!-- ----------------------------------------------------------------------- -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+<!-- Card 1: Net USDT Revenue 30d -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant specular-top flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-caption font-caption tracking-wider uppercase font-semibold">Doanh Thu Ròng 30 Ngày</span>
+<span class="material-symbols-outlined text-tertiary text-base">payments</span>
+</div>
+<p class="text-telemetry-lg font-telemetry-lg text-tertiary mt-2">$48,920.50 <span class="text-xs font-normal text-on-surface-variant">USDT</span></p>
+<div class="flex items-center space-x-2 mt-1">
+<span class="text-emerald-400 text-telemetry-sm font-telemetry-sm flex items-center">
+<span class="material-symbols-outlined text-xs">trending_up</span> +34.8%
+            </span>
+<span class="text-caption font-caption text-on-surface-variant">vs tháng trước</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/60 flex items-center justify-between">
+<div class="flex items-center space-x-1.5 px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+<span>NOWPayments Verified (TRC-20)</span>
+</div>
+<!-- Tiny Amber Sparkline Visual Mock -->
+<svg class="w-16 h-4 text-tertiary" fill="none" viewbox="0 0 60 16">
+<path d="M1 14L12 11L24 13L36 7L48 9L59 2" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"></path>
+</svg>
+</div>
+</div>
+<!-- Card 2: Active Pipelines -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant specular-top flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-caption font-caption tracking-wider uppercase font-semibold">Đường Ống Video Tự Hành</span>
+<span class="material-symbols-outlined text-primary text-base">video_library</span>
+</div>
+<p class="text-telemetry-lg font-telemetry-lg text-on-surface mt-2">142 <span class="text-xs font-normal text-on-surface-variant">Videos Published</span></p>
+<div class="flex items-center space-x-2 text-caption font-caption text-on-surface-variant mt-1">
+<span>TikTok: <strong class="text-on-surface">68</strong></span>
+<span>•</span>
+<span>Shorts: <strong class="text-on-surface">46</strong></span>
+<span>•</span>
+<span>Reels: <strong class="text-on-surface">28</strong></span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/60 flex items-center justify-between text-telemetry-sm font-telemetry-sm">
+<span class="text-emerald-400 flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs">done_all</span>
+<span>99.4% Durable Complete</span>
+</span>
+<span class="text-[10px] text-on-surface-variant bg-surface-container-high px-1.5 py-0.5 rounded">Inngest Live</span>
+</div>
+</div>
+<!-- Card 3: MAB Posterior Win -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant specular-top flex flex-col justify-between relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-caption font-caption tracking-wider uppercase font-semibold">Tỷ Lệ Thắng Growth Triad</span>
+<span class="material-symbols-outlined text-secondary text-base">psychology</span>
+</div>
+<div class="flex items-baseline space-x-2 mt-2">
+<p class="text-telemetry-lg font-telemetry-lg text-primary font-bold">Variant B — 94.2%</p>
+<span class="text-telemetry-sm font-telemetry-sm text-on-surface-variant">Posterior</span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-1 truncate">
+            Hook: <span class="text-on-surface italic">"3 Sai Lầm Khi Dùng AI Video"</span>
+</p>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/60 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-primary/20 text-primary border border-primary/40 photon-glow-primary">
+            Auto-Scaling Active
+          </div>
+<span class="text-[10px] font-telemetry-sm text-on-surface-variant">α=148, β=9</span>
+</div>
+</div>
+<!-- Card 4: Quota & Vault -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant specular-top flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-caption font-caption tracking-wider uppercase font-semibold">Hạn Mức MCU &amp; BYOK</span>
+<span class="material-symbols-outlined text-on-surface-variant text-base">security</span>
+</div>
+<p class="text-telemetry-lg font-telemetry-lg text-on-surface mt-2">18,450 <span class="text-xs font-normal text-on-surface-variant">/ 25,000 MCU</span></p>
+<!-- Custom Usage Gauge -->
+<div class="w-full bg-surface-container-high h-1.5 rounded-full mt-2.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 73.8%"></div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/60 flex items-center justify-between text-telemetry-sm font-telemetry-sm">
+<div class="flex items-center space-x-1.5 text-on-surface-variant text-[10px]">
+<span class="material-symbols-outlined text-xs text-emerald-400">lock</span>
+<span>AES-256-GCM Vault Locked</span>
+</div>
+<span class="text-[10px] text-emerald-400">OpenRouter/Eleven/HeyGen OK</span>
+</div>
+</div>
+</section>
+<!-- ----------------------------------------------------------------------- -->
+<!-- SECTION 3: MIDDLE 2-COLUMN SPLIT (Bandit Matrix vs Sizing Gauge)        -->
+<!-- ----------------------------------------------------------------------- -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+<!-- ===================================================================== -->
+<!-- LEFT COLUMN (65% -> 8 Cols): Growth Triad MAB Matrix                  -->
+<!-- ===================================================================== -->
+<div class="xl:col-span-8 space-y-4">
+<div class="bg-surface-container rounded-xl border border-outline-variant specular-top p-5">
+<!-- Section Title & Thompson Sampling Monte Carlo Controls -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-outline-variant gap-3">
+<div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-xl">insights</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Growth Triad MAB Matrix (Thompson Sampling)</h3>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">
+                Multi-Armed Bandit tự động phân bổ tỷ trọng theo phân phối Posterior Beta(α, β).
+              </p>
+</div>
+<!-- Monte Carlo Simulation Trigger -->
+<div class="flex items-center space-x-2">
+<span class="text-telemetry-sm font-telemetry-sm text-on-surface-variant">Simulate:</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface text-telemetry-sm font-telemetry-sm transition-colors active:scale-95 flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs">play_arrow</span>
+<span>10,000 Draws</span>
+</button>
+<button class="p-1 rounded bg-surface-container-high border border-outline-variant text-on-surface-variant hover:text-on-surface transition-colors" title="Bandit Parameters">
+<span class="material-symbols-outlined text-sm">tune</span>
+</button>
+</div>
+</div>
+<!-- Bayesian Probability Density Curve Chart (SVG Visualization) -->
+<div class="mt-4 p-4 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between text-telemetry-sm font-telemetry-sm text-on-surface-variant mb-2">
+<span>Posterior Probability Density f(θ | Data)</span>
+<div class="flex items-center space-x-4">
+<span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span class="text-on-surface">Variant B (Dominant)</span></span>
+<span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span><span>Variant A</span></span>
+<span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-secondary"></span><span>Variant C</span></span>
+<span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-outline"></span><span>Variant D</span></span>
+</div>
+</div>
+<div class="relative h-44 w-full">
+<!-- SVG Curves Representing Thompson Beta Distributions -->
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 700 160">
+<defs>
+<!-- Gradient for Variant B -->
+<lineargradient id="gradVariantB" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#10B981" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#10B981" stop-opacity="0.0"></stop>
+</lineargradient>
+<!-- Gradient for Variant A -->
+<lineargradient id="gradVariantA" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#8083ff" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#8083ff" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Gridlines -->
+<line stroke="#1E2235" stroke-dasharray="2 2" x1="0" x2="700" y1="40" y2="40"></line>
+<line stroke="#1E2235" stroke-dasharray="2 2" x1="0" x2="700" y1="80" y2="80"></line>
+<line stroke="#1E2235" stroke-dasharray="2 2" x1="0" x2="700" y1="120" y2="120"></line>
+<line stroke="#464554" x1="0" x2="700" y1="158" y2="158"></line>
+<!-- Variant D: Flat & low (Finance, muted) -->
+<path d="M 0,158 Q 120,150 180,140 T 320,158 L 700,158" fill="none" opacity="0.6" stroke="#908fa0" stroke-dasharray="4 2" stroke-width="1.5"></path>
+<!-- Variant C: Moderate peak (Tech Review) -->
+<path d="M 100,158 Q 240,110 320,80 T 480,158 L 700,158" fill="none" opacity="0.8" stroke="#ddb7ff" stroke-width="2"></path>
+<!-- Variant A: Strong secondary peak (Make Money Online) -->
+<path d="M 220,158 Q 380,40 480,30 T 600,158 L 700,158" fill="url(#gradVariantA)"></path>
+<path d="M 220,158 Q 380,40 480,30 T 600,158" fill="none" stroke="#8083ff" stroke-width="2.5"></path>
+<!-- Variant B: Dominant High-Density Peak (AI SaaS) -->
+<path d="M 380,158 Q 540,-20 590,10 T 680,158 L 700,158" fill="url(#gradVariantB)"></path>
+<path d="M 380,158 Q 540,-20 590,10 T 680,158" fill="none" stroke="#10B981" stroke-width="3"></path>
+<!-- Peak marker at 94.2% -->
+<circle cx="560" cy="18" fill="#10B981" r="4"></circle>
+<text fill="#10B981" font-family="JetBrains Mono" font-size="11" font-weight="bold" x="568" y="16">94.2% (Peak Mode)</text>
+</svg>
+<!-- X-Axis Labels -->
+<div class="flex justify-between text-[10px] font-telemetry-sm text-on-surface-variant pt-2 border-t border-outline-variant">
+<span>0% θ (Expected Conversion)</span>
+<span>25%</span>
+<span>50%</span>
+<span>75%</span>
+<span class="text-emerald-400 font-semibold">94.2% (Selected Arm)</span>
+<span>100%</span>
+</div>
+</div>
+</div>
+<!-- Bandit Matrix Table -->
+<div class="mt-4 overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant text-[11px] font-telemetry-sm text-on-surface-variant tracking-wider uppercase">
+<th class="py-2.5 px-3">Arm / Hook Variant</th>
+<th class="py-2.5 px-3">Niche Category</th>
+<th class="py-2.5 px-3 text-right">Posterior P(Win)</th>
+<th class="py-2.5 px-3 text-right">CTR</th>
+<th class="py-2.5 px-3 text-right">ROAS</th>
+<th class="py-2.5 px-3 text-right">Half-Kelly</th>
+<th class="py-2.5 px-3 text-center">Status</th>
+</tr>
+</thead>
+<tbody class="text-body-sm font-body-sm divide-y divide-outline-variant/40">
+<!-- Row 1: Winner (Variant B) -->
+<tr class="bg-surface-container-high/40 hover:bg-surface-container-high transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<div>
+<div class="font-semibold text-on-surface flex items-center space-x-1.5">
+<span>Variant B (HK-01)</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-telemetry-sm bg-emerald-500/20 text-emerald-300">WINNER</span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant truncate max-w-xs">3 Sai Lầm Khi Dùng AI Video</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-[11px] font-telemetry-sm bg-surface-container-lowest border border-outline-variant text-on-surface">AI SaaS</span>
+</td>
+<td class="py-3 px-3 text-right font-telemetry-sm font-semibold text-emerald-400">94.2%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface">6.8%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-tertiary font-bold">4.8x</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-emerald-400 font-bold">42.5%</td>
+<td class="py-3 px-3 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      SCALING
+                    </span>
+</td>
+</tr>
+<!-- Row 2: Active (Variant A) -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<div>
+<div class="font-medium text-on-surface">Variant A (HK-02)</div>
+<p class="text-caption font-caption text-on-surface-variant truncate max-w-xs">Zero-Tech Affiliate Blueprint</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-[11px] font-telemetry-sm bg-surface-container-lowest border border-outline-variant text-on-surface">Make Money Online</span>
+</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-primary">71.4%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface">4.9%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface">3.2x</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-primary font-medium">28.0%</td>
+<td class="py-3 px-3 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-primary/10 text-primary border border-primary/30">
+                      ACTIVE
+                    </span>
+</td>
+</tr>
+<!-- Row 3: Testing (Variant C) -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div>
+<div class="font-medium text-on-surface">Variant C (HK-03)</div>
+<p class="text-caption font-caption text-on-surface-variant truncate max-w-xs">So Sánh Claude 3.7 vs GPT-4o Studio</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-[11px] font-telemetry-sm bg-surface-container-lowest border border-outline-variant text-on-surface">Tech Review</span>
+</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-secondary">38.6%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface">2.8%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface">1.9x</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-secondary">14.5%</td>
+<td class="py-3 px-3 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-secondary/10 text-secondary border border-secondary/30">
+                      TESTING
+                    </span>
+</td>
+</tr>
+<!-- Row 4: Paused (Variant D) -->
+<tr class="hover:bg-surface-container-high/20 opacity-60 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<div>
+<div class="font-medium text-on-surface">Variant D (HK-04)</div>
+<p class="text-caption font-caption text-on-surface-variant truncate max-w-xs">Bí Mật Doanh Thu Thụ Động 2025</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-[11px] font-telemetry-sm bg-surface-container-lowest border border-outline-variant text-on-surface">Finance</span>
+</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface-variant">12.1%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface-variant">1.4%</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-error">0.9x</td>
+<td class="py-3 px-3 text-right font-telemetry-sm text-on-surface-variant">0.0%</td>
+<td class="py-3 px-3 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-error/10 text-error border border-error/30">
+                      PAUSED
+                    </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- ===================================================================== -->
+<!-- RIGHT COLUMN (35% -> 4 Cols): Half-Kelly Gauge & Inngest Live Stream  -->
+<!-- ===================================================================== -->
+<div class="xl:col-span-4 space-y-4">
+<!-- Half-Kelly Capital Sizing Widget -->
+<div class="bg-surface-container rounded-xl border border-outline-variant specular-top p-5">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-tertiary text-lg">calculate</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Half-Kelly Sizing</h3>
+</div>
+<!-- Math Formula Badge -->
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container-lowest border border-outline-variant text-tertiary">
+              f* = (bp - q) / 2b
+            </span>
+</div>
+<!-- Radial Gauge Visualization -->
+<div class="my-4 flex items-center justify-center">
+<div class="relative w-36 h-36 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<!-- Track Bed -->
+<circle cx="50" cy="50" fill="none" r="40" stroke="#292930" stroke-width="8"></circle>
+<!-- 42.5% Segment (Length = 251.2 * 0.425 = 106.76) -->
+<circle class="photon-glow-amber" cx="50" cy="50" fill="none" r="40" stroke="#ffb95f" stroke-dasharray="106.76 251.2" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="text-telemetry-lg font-telemetry-lg text-tertiary font-bold">42.5%</span>
+<span class="text-[10px] font-telemetry-sm text-on-surface-variant uppercase tracking-wider">Stake Weight</span>
+</div>
+</div>
+</div>
+<!-- Parameter Summary & Capital Call -->
+<div class="space-y-2 pt-2 border-t border-outline-variant text-telemetry-sm font-telemetry-sm">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Recommended Shift:</span>
+<span class="text-on-surface font-semibold">Variant B (HK-01)</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Capital Deployment:</span>
+<span class="text-emerald-400 font-semibold">+$3,200 USDT</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Calculated Edge:</span>
+<span class="text-tertiary font-semibold">+68.4% Net Edge</span>
+</div>
+</div>
+</div>
+<!-- Live Inngest Durable Workflow Stream -->
+<div class="bg-surface-container rounded-xl border border-outline-variant specular-top p-5">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Durable Workflow Stream</h3>
+</div>
+<span class="text-[11px] font-telemetry-sm text-on-surface-variant">Inngest Engine</span>
+</div>
+<!-- Stream Timeline Events -->
+<div class="mt-3 space-y-3 font-telemetry-sm">
+<!-- Event 1: Running Vid Pipeline -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-primary font-semibold">inngest_vid_9941a</span>
+<span class="text-[10px] px-1.5 py-0.2 rounded bg-primary/20 text-primary border border-primary/40 animate-pulse">Running 14.2s</span>
+</div>
+<p class="text-[11px] text-on-surface mt-1 truncate">Script → ElevenLabs TTS → HeyGen LipSync → R2</p>
+<div class="flex items-center justify-between text-[10px] text-on-surface-variant mt-2 pt-1 border-t border-outline-variant/60">
+<span>Step 3 of 4 [LipSync 4K]</span>
+<span class="text-primary">75%</span>
+</div>
+</div>
+<!-- Event 2: MAB Monte Carlo Completed -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-on-surface font-semibold">inngest_mab_8812f</span>
+<span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Completed (210ms)</span>
+</div>
+<p class="text-[11px] text-on-surface mt-1">Monte Carlo 10k Bandit Posterior Update</p>
+<div class="text-[10px] text-on-surface-variant mt-1">Convergence reach: 0.0004 tolerance</div>
+</div>
+<!-- Event 3: IPN Settled -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-on-surface font-semibold">nowpayments_ipn_492</span>
+<span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Settled (0ms)</span>
+</div>
+<p class="text-[11px] text-on-surface mt-1">D1 Atomic Lock Acquired → Tier Synced</p>
+<div class="text-[10px] text-tertiary mt-1">+1,200 USDT TRC-20 tx: 890a...b11</div>
+</div>
+<!-- Event 4: TikTok Scheduled -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">inngest_pub_3319c</span>
+<span class="text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant">Scheduled</span>
+</div>
+<p class="text-[11px] text-on-surface mt-1">TikTok Open API Cloud Upload</p>
+<div class="text-[10px] text-on-surface-variant mt-1">Cron dispatch set for 19:30 ICT</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------- -->
+<!-- SECTION 4: DENSE BOTTOM TELEMETRY & CIRCUIT BREAKER HEALTH LOG          -->
+<!-- ----------------------------------------------------------------------- -->
+<section class="bg-surface-container rounded-xl border border-outline-variant specular-top p-5">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-outline-variant gap-2">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-emerald-400 text-lg">shield</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+            Nhật Ký Giao Dịch &amp; Khóa Mạch Ngoại Vi <span class="text-on-surface-variant font-light">/ Circuit Breaker &amp; Provider Health Log</span>
+</h3>
+</div>
+<div class="flex items-center space-x-2 text-telemetry-sm font-telemetry-sm text-emerald-400">
+<span class="w-2 h-2 rounded-full bg-emerald-400 photon-glow-emerald"></span>
+<span>All 6 Critical Providers In-Spec (Target &lt; 1000ms)</span>
+</div>
+</div>
+<!-- Telemetry Provider Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-4">
+<!-- Provider 1: OpenRouter -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">OpenRouter</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">Claude 3.7 Sonnet</p>
+<div class="flex items-center justify-between mt-3 text-telemetry-sm font-telemetry-sm">
+<span class="text-emerald-400 font-semibold">112ms</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-surface-container text-on-surface-variant">CLOSED</span>
+</div>
+</div>
+<!-- Provider 2: ElevenLabs -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">ElevenLabs</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">Multilingual v2</p>
+<div class="flex items-center justify-between mt-3 text-telemetry-sm font-telemetry-sm">
+<span class="text-emerald-400 font-semibold">245ms</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-surface-container text-on-surface-variant">CLOSED</span>
+</div>
+</div>
+<!-- Provider 3: HeyGen -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">HeyGen</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">Avatar v3 4K</p>
+<div class="flex items-center justify-between mt-3 text-telemetry-sm font-telemetry-sm">
+<span class="text-tertiary font-semibold">820ms</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-surface-container text-on-surface-variant">CLOSED</span>
+</div>
+</div>
+<!-- Provider 4: D-ID Fallback -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">D-ID Engine</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">Fallback Standby</p>
+<div class="flex items-center justify-between mt-3 text-telemetry-sm font-telemetry-sm">
+<span class="text-on-surface-variant">Standby</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-surface-container text-on-surface-variant">CLOSED</span>
+</div>
+</div>
+<!-- Provider 5: PayOS VietQR -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">PayOS VietQR</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">Domestic Rails</p>
+<div class="flex items-center justify-between mt-3 text-telemetry-sm font-telemetry-sm">
+<span class="text-emerald-400 font-semibold">95ms</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-surface-container text-on-surface-variant">CLOSED</span>
+</div>
+</div>
+<!-- Provider 6: NOWPayments TRC-20 -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">NOWPayments</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant mt-0.5">TRC-20 IPN Gateway</p>
+<div class="flex items-center justify-between mt-3 text-telemetry-sm font-telemetry-sm">
+<span class="text-emerald-400 font-semibold">140ms</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-surface-container text-on-surface-variant">CLOSED</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+
+
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

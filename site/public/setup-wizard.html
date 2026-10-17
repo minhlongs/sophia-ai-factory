@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory — Zero-Tech BYOK Setup Wizard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#2f3037",
+            "primary-fixed": "#e1e0ff",
+            "surface": "#121319",
+            "secondary": "#ddb7ff",
+            "on-surface": "#e3e1eb",
+            "surface-tint": "#c0c1ff",
+            "tertiary-fixed": "#ffddb8",
+            "surface-bright": "#383940",
+            "surface-container-low": "#1a1b22",
+            "background": "#121319",
+            "surface-container-high": "#292930",
+            "surface-container-highest": "#34343b",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed-dim": "#ddb7ff",
+            "outline": "#908fa0",
+            "on-secondary-fixed-variant": "#6900b3",
+            "on-tertiary-fixed": "#2a1700",
+            "primary": "#c0c1ff",
+            "surface-dim": "#121319",
+            "surface-container-lowest": "#0d0e14",
+            "on-secondary-fixed": "#2c0051",
+            "on-background": "#e3e1eb",
+            "tertiary-container": "#ca8100",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-tertiary-container": "#3e2400",
+            "primary-container": "#8083ff",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-secondary": "#490080",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#ffb95f",
+            "secondary-fixed": "#f0dbff",
+            "on-tertiary": "#472a00",
+            "on-primary": "#1000a9",
+            "surface-container": "#1e1f26",
+            "error": "#ffb4ab",
+            "inverse-surface": "#e3e1eb",
+            "surface-variant": "#34343b",
+            "inverse-primary": "#494bd6",
+            "outline-variant": "#464554",
+            "on-error": "#690005",
+            "on-primary-fixed": "#07006c",
+            "on-surface-variant": "#c7c4d7",
+            "secondary-container": "#6f00be",
+            "on-primary-container": "#0d0096",
+            "on-secondary-container": "#d6a9ff",
+            "tertiary": "#ffb95f"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "1rem",
+            "space-md": "0.75rem",
+            "margin": "1.5rem",
+            "space-xl": "1.5rem",
+            "margin-mobile": "0.75rem",
+            "gutter-mobile": "0.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "display-lg": ["Space Grotesk", "sans-serif"],
+            "display-lg-mobile": ["Space Grotesk", "sans-serif"],
+            "label-code-lg": ["JetBrains Mono", "monospace"],
+            "body-lg": ["Inter", "sans-serif"],
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            "label-code-sm": ["JetBrains Mono", "monospace"],
+            "label-code-md": ["JetBrains Mono", "monospace"],
+            "headline-lg-mobile": ["Space Grotesk", "sans-serif"],
+            "headline-md": ["Space Grotesk", "sans-serif"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-code-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-code-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-code-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.005em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Physical hardware specular edge & subtle dark room accents */
+    .hardware-specular {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+    .recessed-well {
+      box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+    }
+    .cinema-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .cinema-scroll::-webkit-scrollbar-track {
+      background: #0d0e14;
+    }
+    .cinema-scroll::-webkit-scrollbar-thumb {
+      background: #292930;
+      border-radius: 3px;
+    }
+    .cinema-scroll::-webkit-scrollbar-thumb:hover {
+      background: #464554;
+    }
+  </style>
+</head>
+<body class="bg-[#090A10] text-on-surface antialiased font-body-md text-body-md min-h-screen overflow-x-hidden cinema-scroll flex">
+<!-- ==================== SIDEBAR COMPONENT (Source of Truth JSON) ==================== -->
+<aside class="fixed top-0 left-0 h-screen w-60 z-40 bg-surface-container-low border-r border-outline-variant/30 flex flex-col justify-between p-4 hardware-specular select-none">
+<!-- Header Brand Lockup -->
+<div>
+<div class="flex items-center gap-2.5 px-2 py-1 mb-6">
+<div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container border border-outline-variant/40">
+<span class="material-symbols-outlined text-primary text-[20px]">psychology</span>
+<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-surface-container-low animate-ping"></span>
+<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400"></span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-on-surface">Sophia AI Factory</span>
+<span class="text-label-code-sm font-label-code-sm text-on-surface-variant/80">Studio Core OS v2.4</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="space-y-1">
+<!-- 1. Command Deck -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span class="text-label-code-md font-label-code-md">Command Deck</span>
+</a>
+<!-- 2. Video Studio -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">movie</span>
+<span class="text-label-code-md font-label-code-md">Video Studio</span>
+</a>
+<!-- 3. /ask 4-Advisor -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+<span class="text-label-code-md font-label-code-md">/ask 4-Advisor</span>
+</a>
+<!-- 4. Revenue & Webhooks -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">webhook</span>
+<span class="text-label-code-md font-label-code-md">Revenue &amp; Webhooks</span>
+</a>
+<!-- 5. BYOK Setup (ACTIVE STATE per JSON rules) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-highest text-primary font-medium border border-outline-variant/40 scale-[0.99] transition-transform duration-100 ease-out shadow-sm shadow-primary/10" href="#">
+<span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">key</span>
+<span class="text-label-code-md font-label-code-md tracking-tight flex-1">BYOK Setup</span>
+<span class="w-1.5 h-3.5 rounded-full bg-primary shadow-sm shadow-primary"></span>
+</a>
+<!-- 6. Agency Portal -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">domain</span>
+<span class="text-label-code-md font-label-code-md">Agency Portal</span>
+</a>
+<!-- 7. Style Guide -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">palette</span>
+<span class="text-label-code-md font-label-code-md">Style Guide</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Footer Diagnostics -->
+<div class="pt-4 border-t border-outline-variant/30 space-y-2">
+<a class="flex items-center justify-between px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-body-sm font-body-sm transition-colors" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span class="text-label-code-sm font-label-code-sm">System Diagnostics</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+</a>
+<a class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-body-sm font-body-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="text-label-code-sm font-label-code-sm">Documentation</span>
+</a>
+<div class="px-3 py-2 rounded bg-surface-container-lowest border border-outline-variant/30 text-label-code-sm font-label-code-sm flex items-center justify-between">
+<span class="text-on-surface-variant">Node Health</span>
+<span class="text-emerald-400 font-semibold">99.98%</span>
+</div>
+</div>
+</aside>
+<!-- ==================== TOP NAVIGATION BAR ==================== -->
+<header class="fixed top-0 right-0 left-60 h-16 z-30 bg-surface-container-lowest border-b border-outline-variant/30 flex items-center justify-between px-6 hardware-specular">
+<!-- Breadcrumb & Architecture Route -->
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-outline text-[18px]">account_tree</span>
+<div class="flex items-center gap-2 text-label-code-sm font-label-code-sm text-on-surface-variant">
+<span class="hover:text-on-surface transition-colors cursor-pointer">Architecture</span>
+<span class="text-outline">/</span>
+<span class="hover:text-on-surface transition-colors cursor-pointer">BYOK Vault &amp; Migration</span>
+<span class="text-outline">/</span>
+<span class="text-primary font-medium flex items-center gap-1.5">
+          Setup Wizard
+          <span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant text-[9px] border border-outline-variant/40">v2.4.8-p3</span>
+</span>
+</div>
+</div>
+<!-- Right Cluster Controls -->
+<div class="flex items-center gap-3">
+<!-- Bilingual Switcher -->
+<div class="flex items-center bg-surface-container-low rounded border border-outline-variant/40 p-0.5">
+<button class="px-2 py-0.5 text-label-code-sm font-label-code-sm rounded text-on-surface-variant hover:text-on-surface transition-colors" id="langVi">VI</button>
+<span class="text-outline-variant text-[10px]">|</span>
+<button class="px-2 py-0.5 text-label-code-sm font-label-code-sm rounded bg-surface-container-highest text-primary font-semibold" id="langEn">EN</button>
+</div>
+<!-- Tier Badge -->
+<span class="px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-tertiary text-label-code-sm font-label-code-sm tracking-wider uppercase">
+        ENTERPRISE
+      </span>
+<!-- Breaker Status Pill -->
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-label-code-sm font-label-code-sm">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="font-semibold">8/8 Breakers Active</span>
+</div>
+<!-- Action Icons -->
+<div class="flex items-center gap-1 pl-2 border-l border-outline-variant/30">
+<button class="w-8 h-8 flex items-center justify-center rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">notifications</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">shield</span>
+</button>
+<div class="w-8 h-8 ml-1 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant/50 text-primary cursor-pointer hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ==================== MAIN CONTENT CANVAS ==================== -->
+<main class="ml-60 pt-16 flex-1 min-h-screen bg-[#090A10] p-6 lg:p-8 space-y-6">
+<!-- 1. Page Header & Security Telemetry Banner -->
+<section class="bg-[#11131F] rounded-xl border border-[#1E2235] p-6 hardware-specular relative overflow-hidden">
+<!-- Subtle top subtle signal accent line -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+<div class="space-y-1.5 max-w-4xl">
+<div class="flex items-center gap-2 text-primary text-label-code-sm font-label-code-sm uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span>Client-Side Envelope Encryption Protocol (Web Crypto API)</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+            Zero-Tech BYOK Setup Wizard &amp; Open-Core Portability
+          </h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant italic">
+            Thiết lập Khóa API Tự quản &amp; Di chuyển Hệ thống Không Ràng buộc
+          </p>
+<p class="text-body-md font-body-md text-on-surface-variant/90 pt-1 leading-relaxed">
+            Hardware-grade Web Crypto API client-side AES-256-GCM envelope encryption. Raw provider API keys are never stored on central servers or transmitted in plaintext. All telemetry probes run via stateless zero-knowledge circuit breakers.
+          </p>
+</div>
+<!-- Security Metric Badges Cluster -->
+<div class="flex flex-wrap xl:flex-col gap-2 shrink-0 justify-start xl:justify-center">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-[#1E2235] text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+<span class="text-on-surface-variant">Enclave:</span>
+<span class="text-on-surface font-semibold">EAL6+ Emulated</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-[#1E2235] text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-on-surface-variant">Salt:</span>
+<span class="text-on-surface font-semibold">SHA-256 HKDF Active</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-[#1E2235] text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+<span class="text-on-surface-variant">Retention:</span>
+<span class="text-tertiary font-semibold">ZDR Enforced</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Top 4-Step Guided Onboarding Stepper -->
+<section class="bg-[#11131F] rounded-xl border border-[#1E2235] p-5 hardware-specular">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+<!-- Step 1 (Completed) -->
+<div class="flex items-center gap-3.5 p-3 rounded-lg bg-[#1A1C28]/60 border border-primary/40 relative overflow-hidden">
+<div class="w-8 h-8 rounded-lg bg-primary/20 border border-primary text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm font-label-code-sm text-primary uppercase font-semibold">Step 1 • Completed</span>
+<span class="text-[10px] text-on-surface-variant">~1m</span>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-surface truncate">AI Brains</span>
+<span class="text-[11px] text-on-surface-variant truncate">Bước 1: Bộ não AI (DeepSeek &amp; Claude)</span>
+</div>
+</div>
+<!-- Step 2 (Active Step with pulsing ring) -->
+<div class="flex items-center gap-3.5 p-3 rounded-lg bg-surface-container-highest/80 border-2 border-primary relative overflow-hidden shadow-lg shadow-primary/10">
+<div class="relative w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="text-label-code-md font-label-code-md font-bold">02</span>
+<span class="absolute -inset-1 rounded-lg border border-primary animate-ping opacity-60"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm font-label-code-sm text-primary-fixed uppercase font-semibold">Step 2 • In Progress</span>
+<span class="text-[10px] text-primary-fixed-dim">~3m</span>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-surface truncate">Voice &amp; Avatar</span>
+<span class="text-[11px] text-on-surface-variant truncate">Bước 2: Giọng nói &amp; Avatar (ElevenLabs/HeyGen)</span>
+</div>
+</div>
+<!-- Step 3 (Pending) -->
+<div class="flex items-center gap-3.5 p-3 rounded-lg bg-[#1A1C28]/30 border border-[#1E2235] opacity-75 hover:opacity-100 transition-opacity">
+<div class="w-8 h-8 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="text-label-code-md font-label-code-md">03</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm font-label-code-sm text-outline uppercase font-semibold">Step 3 • Pending</span>
+<span class="text-[10px] text-on-surface-variant">~2m</span>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-surface truncate">Monetization &amp; Bot</span>
+<span class="text-[11px] text-on-surface-variant truncate">Bước 3: Cổng thanh toán &amp; Bot</span>
+</div>
+</div>
+<!-- Step 4 (Locked / Final) -->
+<div class="flex items-center gap-3.5 p-3 rounded-lg bg-[#1A1C28]/20 border border-[#1E2235]/60 opacity-60">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-outline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm font-label-code-sm text-outline uppercase font-semibold">Step 4 • Locked</span>
+<span class="text-[10px] text-on-surface-variant">Auto</span>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-surface truncate">Portability &amp; Launch</span>
+<span class="text-[11px] text-on-surface-variant truncate">Bước 4: Xuất &amp; Kích hoạt</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Web Crypto AES-256-GCM Envelope Encryption Key Vault Cards -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">encrypted</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Hardware Key Enclaves &amp; API Breakers</h2>
+<span class="text-label-code-sm font-label-code-sm text-on-surface-variant px-2 py-0.5 rounded bg-surface-container border border-outline-variant/30">AES-256-GCM Isolated</span>
+</div>
+<div class="flex items-center gap-3 text-label-code-sm font-label-code-sm">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-[#1E2235] text-on-surface transition-colors" id="runAllProbes">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+<span>Batch Probe All Circuits</span>
+</button>
+</div>
+</div>
+<!-- 2x2 High-Density Card Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+<!-- CARD A: OpenRouter AI Vault -->
+<div class="bg-[#11131F] rounded-xl border border-[#1E2235] p-5 hardware-specular flex flex-col justify-between space-y-4">
+<!-- Card Header -->
+<div>
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">smart_toy</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">OpenRouter AI Vault</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Core LLM Orchestrator (DeepSeek-V3 / Claude 3.5 Sonnet)</p>
+</div>
+</div>
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                CERTIFIED &amp; ENCRYPTED
+              </span>
+</div>
+<!-- Envelope ID -->
+<div class="mt-3 text-label-code-sm font-label-code-sm text-on-surface-variant/70 flex items-center gap-1">
+<span>Envelope Key ID:</span>
+<span class="text-primary font-mono select-all">env_key_secp256k1_0x892f...d41</span>
+</div>
+</div>
+<!-- Masked Input Field & Actions -->
+<div class="space-y-1.5">
+<label class="text-label-code-sm font-label-code-sm text-on-surface-variant flex items-center justify-between">
+<span>Encrypted API Secret (Client-side GCM payload)</span>
+<span class="text-[10px] text-emerald-400">Validated 2m ago</span>
+</label>
+<div class="flex items-center gap-2 bg-[#1A1C28] border border-[#1E2235] rounded-lg p-1.5 recessed-well focus-within:border-primary">
+<span class="material-symbols-outlined text-outline text-[18px] ml-1">vpn_key</span>
+<input class="bg-transparent border-0 text-on-surface font-label-code-md text-label-code-md flex-1 focus:ring-0 focus:outline-none tracking-wider" id="inputA" readonly="" type="password" value="sk-or-v1-9892408102830182301982301928301928309a4f"/>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="toggleVisibility('inputA', this)" title="Toggle Secret Visibility">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="copyValue('inputA')" title="Copy to Clipboard">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Regenerate Hash">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+</button>
+</div>
+</div>
+<!-- Circuit Breaker Matrix -->
+<div class="p-3 rounded-lg bg-[#1A1C28] border border-[#1E2235] space-y-2 text-label-code-sm font-label-code-sm">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Circuit Breaker State:</span>
+<span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                CLOSED — CERTIFIED
+              </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Ping Latency:</span>
+<span class="text-on-surface font-mono">112ms (via Tokyo Gateway)</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Fallback Route:</span>
+<span class="text-tertiary font-mono">DeepSeek-V3 Direct (Zero-Wait)</span>
+</div>
+</div>
+<!-- Probe Button -->
+<button class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-primary hover:bg-indigo-500 text-on-primary font-medium text-body-sm transition-all duration-150 active:scale-[0.98] hardware-specular" onclick="simulateProbe(this, 'OpenRouter')">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+<span>Run Connection Probe (Test 1 Token)</span>
+</button>
+</div>
+<!-- CARD B: ElevenLabs Neural Audio -->
+<div class="bg-[#11131F] rounded-xl border border-[#1E2235] p-5 hardware-specular flex flex-col justify-between space-y-4">
+<!-- Card Header -->
+<div>
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 border border-secondary/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">graphic_eq</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">ElevenLabs Neural Audio</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Multilingual Voice Synthesis &amp; Persona Cloning</p>
+</div>
+</div>
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                CERTIFIED &amp; ENCRYPTED
+              </span>
+</div>
+<!-- Envelope ID -->
+<div class="mt-3 text-label-code-sm font-label-code-sm text-on-surface-variant/70 flex items-center gap-1">
+<span>Envelope Key ID:</span>
+<span class="text-secondary font-mono select-all">env_key_secp256k1_0x7b11...e89</span>
+</div>
+</div>
+<!-- Masked Input Field -->
+<div class="space-y-1.5">
+<label class="text-label-code-sm font-label-code-sm text-on-surface-variant flex items-center justify-between">
+<span>Encrypted API Secret (Client-side GCM payload)</span>
+<span class="text-[10px] text-emerald-400">Validated 14m ago</span>
+</label>
+<div class="flex items-center gap-2 bg-[#1A1C28] border border-[#1E2235] rounded-lg p-1.5 recessed-well focus-within:border-secondary">
+<span class="material-symbols-outlined text-outline text-[18px] ml-1">vpn_key</span>
+<input class="bg-transparent border-0 text-on-surface font-label-code-md text-label-code-md flex-1 focus:ring-0 focus:outline-none tracking-wider" id="inputB" readonly="" type="password" value="xi-api-key-8739182379182371982739182739182371924c82"/>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="toggleVisibility('inputB', this)" title="Toggle Secret Visibility">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="copyValue('inputB')" title="Copy to Clipboard">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Regenerate Hash">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+</button>
+</div>
+</div>
+<!-- Telemetry & Quota Progress -->
+<div class="p-3 rounded-lg bg-[#1A1C28] border border-[#1E2235] space-y-2 text-label-code-sm font-label-code-sm">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Quota Consumption:</span>
+<span class="text-on-surface font-mono">480,210 / 500,000 chars remaining</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 96%;"></div>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant pt-1">
+<span>Circuit Breaker State:</span>
+<span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                CLOSED — OPTIMAL (148ms)
+              </span>
+</div>
+</div>
+<!-- Probe Button -->
+<button class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#1A1C28] hover:bg-[#222536] border border-[#1E2235] hover:border-primary text-on-surface font-medium text-body-sm transition-all duration-150 active:scale-[0.98]" onclick="simulateProbe(this, 'ElevenLabs')">
+<span class="material-symbols-outlined text-[18px]">volume_up</span>
+<span>Test Voice Synthesis (1 Sample Frame)</span>
+</button>
+</div>
+<!-- CARD C: HeyGen Cinematic Video Engine -->
+<div class="bg-[#11131F] rounded-xl border border-[#1E2235] p-5 hardware-specular flex flex-col justify-between space-y-4">
+<!-- Card Header -->
+<div>
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 border border-tertiary/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[22px]">videocam</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">HeyGen Cinematic Engine</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">4K AI Avatar Generation &amp; Video Pipeline</p>
+</div>
+</div>
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                ACTIVE &amp; ENCRYPTED
+              </span>
+</div>
+<!-- Envelope ID -->
+<div class="mt-3 text-label-code-sm font-label-code-sm text-on-surface-variant/70 flex items-center gap-1">
+<span>Envelope Key ID:</span>
+<span class="text-tertiary font-mono select-all">env_key_secp256k1_0x334a...7e1</span>
+</div>
+</div>
+<!-- Masked Input Field -->
+<div class="space-y-1.5">
+<label class="text-label-code-sm font-label-code-sm text-on-surface-variant flex items-center justify-between">
+<span>Encrypted API Secret (Client-side GCM payload)</span>
+<span class="text-[10px] text-emerald-400">Validated 1m ago</span>
+</label>
+<div class="flex items-center gap-2 bg-[#1A1C28] border border-[#1E2235] rounded-lg p-1.5 recessed-well focus-within:border-tertiary">
+<span class="material-symbols-outlined text-outline text-[18px] ml-1">vpn_key</span>
+<input class="bg-transparent border-0 text-on-surface font-label-code-md text-label-code-md flex-1 focus:ring-0 focus:outline-none tracking-wider" id="inputC" readonly="" type="password" value="hey_live_9381029381092830192830192830192830197e19"/>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="toggleVisibility('inputC', this)" title="Toggle Secret Visibility">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="copyValue('inputC')" title="Copy to Clipboard">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Regenerate Hash">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+</button>
+</div>
+</div>
+<!-- Circuit Breaker Matrix -->
+<div class="p-3 rounded-lg bg-[#1A1C28] border border-[#1E2235] space-y-2 text-label-code-sm font-label-code-sm">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Circuit Breaker State:</span>
+<span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                CLOSED — CERTIFIED (194ms)
+              </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Render Queue State:</span>
+<span class="text-on-surface font-mono">0 jobs waiting (Dedicated GPU Pipe)</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Max Avatar Resolution:</span>
+<span class="text-tertiary font-mono">3840x2160 ProRes / H.265</span>
+</div>
+</div>
+<!-- Probe Button -->
+<button class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#1A1C28] hover:bg-[#222536] border border-[#1E2235] hover:border-primary text-on-surface font-medium text-body-sm transition-all duration-150 active:scale-[0.98]" onclick="simulateProbe(this, 'HeyGen')">
+<span class="material-symbols-outlined text-[18px]">slow_motion_video</span>
+<span>Probe Avatar Engine</span>
+</button>
+</div>
+<!-- CARD D: D-ID Interactive Stream -->
+<div class="bg-[#11131F] rounded-xl border border-[#1E2235] p-5 hardware-specular flex flex-col justify-between space-y-4">
+<!-- Card Header -->
+<div>
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container border border-outline-variant/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">podcasts</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">D-ID Interactive Stream</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Real-Time WebRTC Live Video &amp; Tele-Agents</p>
+</div>
+</div>
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-primary text-label-code-sm font-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                READY / STANDBY
+              </span>
+</div>
+<!-- Envelope ID -->
+<div class="mt-3 text-label-code-sm font-label-code-sm text-on-surface-variant/70 flex items-center gap-1">
+<span>Envelope Key ID:</span>
+<span class="text-primary font-mono select-all">env_key_secp256k1_0x5c09...2b1</span>
+</div>
+</div>
+<!-- Masked Input Field -->
+<div class="space-y-1.5">
+<label class="text-label-code-sm font-label-code-sm text-on-surface-variant flex items-center justify-between">
+<span>Encrypted API Secret (Client-side GCM payload)</span>
+<span class="text-[10px] text-on-surface-variant">Standby Mode</span>
+</label>
+<div class="flex items-center gap-2 bg-[#1A1C28] border border-[#1E2235] rounded-lg p-1.5 recessed-well focus-within:border-primary">
+<span class="material-symbols-outlined text-outline text-[18px] ml-1">vpn_key</span>
+<input class="bg-transparent border-0 text-on-surface font-label-code-md text-label-code-md flex-1 focus:ring-0 focus:outline-none tracking-wider" id="inputD" readonly="" type="password" value="basic_auth_1982739182371982739182739182739182732b10"/>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="toggleVisibility('inputD', this)" title="Toggle Secret Visibility">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" onclick="copyValue('inputD')" title="Copy to Clipboard">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Regenerate Hash">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+</button>
+</div>
+</div>
+<!-- Circuit Breaker Matrix -->
+<div class="p-3 rounded-lg bg-[#1A1C28] border border-[#1E2235] space-y-2 text-label-code-sm font-label-code-sm">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Circuit Breaker State:</span>
+<span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                CLOSED — NOMINAL (165ms)
+              </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Stream Socket:</span>
+<span class="text-on-surface font-mono">wss://api.d-id.com/v1/talks</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>WebRTC Sub-channels:</span>
+<span class="text-primary font-mono">3 Active Lanes (Low Jitter)</span>
+</div>
+</div>
+<!-- Probe Button -->
+<button class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#1A1C28] hover:bg-[#222536] border border-[#1E2235] hover:border-primary text-on-surface font-medium text-body-sm transition-all duration-150 active:scale-[0.98]" onclick="simulateProbe(this, 'D-ID Stream')">
+<span class="material-symbols-outlined text-[18px]">sensors</span>
+<span>Probe Realtime Stream</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 4. Bottom Open-Core & Workspace Portability Panel -->
+<section class="bg-[#11131F] rounded-xl border border-[#1E2235] p-6 hardware-specular space-y-6">
+<!-- Section Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#1E2235] pb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container border border-outline-variant/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">dataset</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Open-Core Sovereignty &amp; Portable Runtime Engine</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant italic">Chủ quyền Mã nguồn Mở &amp; Đóng gói Không Ràng buộc Nhà cung cấp</p>
+</div>
+</div>
+<!-- Action Cluster -->
+<div class="flex flex-wrap items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-indigo-500 text-on-primary font-medium text-body-sm transition-all duration-150 active:scale-[0.98] hardware-specular shadow-md shadow-primary/20" onclick="exportBundleAction()">
+<span class="material-symbols-outlined text-[18px]">download_for_offline</span>
+<span>Export Signed Workspace Bundle (.json)</span>
+</button>
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#1A1C28] hover:bg-[#222536] border border-[#1E2235] hover:border-primary text-on-surface font-medium text-body-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+<span>Import / Restore Bundle</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1A1C28] hover:bg-[#222536] border border-[#1E2235] text-on-surface-variant hover:text-on-surface text-label-code-sm font-label-code-sm transition-colors">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span>Verify Ed25519</span>
+</button>
+</div>
+</div>
+<!-- Description & Zero-Leak Assurance Box -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 space-y-4">
+<p class="text-body-md font-body-md text-on-surface-variant leading-relaxed">
+            Full vendor independence guaranteed by Sophia AI Factory open specifications. Export an encrypted, cryptographically signed workspace manifest containing all persona workflows, Thompson Sampling prompts, video presets, and zero-knowledge encrypted vault references. Restore seamlessly to any on-premise Docker instance or private cloud cluster.
+          </p>
+<!-- Security Assurance Callout -->
+<div class="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+<span class="material-symbols-outlined text-tertiary text-[20px] shrink-0 mt-0.5">verified</span>
+<div class="space-y-1 text-label-code-sm font-label-code-sm">
+<span class="text-tertiary font-semibold block uppercase">Zero-Leak Assurance Enforced</span>
+<p class="text-on-surface-variant">
+                Raw BYOK keys are stripped or envelope-encrypted with user master passkey before manifest generation. central keys are never leaked to logs or JSON payloads.
+              </p>
+<div class="pt-1 text-[11px] font-mono text-on-surface/80">
+                Merkle Root Hash: <span class="text-primary font-semibold">0x9e71a4f02bc81da40182379182740928a</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Manifest Preview Drawer -->
+<div class="bg-[#1A1C28] rounded-lg border border-[#1E2235] p-3.5 flex flex-col justify-between recessed-well">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-2 mb-2">
+<div class="flex items-center gap-1.5 text-label-code-sm font-label-code-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">code</span>
+<span>signed_manifest_v2.4.json</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-emerald-400 text-[10px] font-mono">ED25519 OK</span>
+</div>
+<pre class="text-[11px] font-mono text-on-surface-variant/90 leading-tight overflow-x-auto cinema-scroll p-1 space-y-1">{
+  <span class="text-secondary">"$schema"</span>: <span class="text-emerald-400">"sophia://core/v2.4"</span>,
+  <span class="text-secondary">"workspace_id"</span>: <span class="text-primary">"ws_ent_tokyo_098"</span>,
+  <span class="text-secondary">"encryption"</span>: {
+    <span class="text-secondary">"cipher"</span>: <span class="text-tertiary">"AES-256-GCM"</span>,
+    <span class="text-secondary">"kdf"</span>: <span class="text-tertiary">"HKDF-SHA256"</span>,
+    <span class="text-secondary">"vault_hashes"</span>: [
+      <span class="text-on-surface">"0x892fd41..."</span>,
+      <span class="text-on-surface">"0x7b11e89..."</span>
+    ]
+  },
+  <span class="text-secondary">"breakers_enabled"</span>: <span class="text-emerald-400">true</span>,
+  <span class="text-secondary">"export_timestamp"</span>: <span class="text-on-surface">1716942000</span>
+}</pre>
+<div class="pt-2 text-right">
+<span class="text-[10px] text-outline font-mono">Payload Size: 4.8 KB (deflated)</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Interactive JavaScript for Live UI Controls -->
+<script>
+    // Visibility toggle for masked keys
+    function toggleVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+
+    // Copy to clipboard helper
+    function copyValue(inputId) {
+      const input = document.getElementById(inputId);
+      navigator.clipboard.writeText(input.value).then(() => {
+        const originalVal = input.value;
+        const parent = input.parentElement;
+        parent.classList.add('border-emerald-500');
+        setTimeout(() => {
+          parent.classList.remove('border-emerald-500');
+        }, 800);
+      });
+    }
+
+    // Micro-interaction: connection probe simulation
+    function simulateProbe(btn, name) {
+      const origText = btn.innerHTML;
+      btn.innerHTML = `
+        <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+        <span>Probing ${name}...</span>
+      `;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = `
+          <span class="material-symbols-outlined text-[18px] text-emerald-400">check_circle</span>
+          <span class="text-emerald-400">Probe OK (0.0001s, 0 Dropped)</span>
+        `;
+        setTimeout(() => {
+          btn.innerHTML = origText;
+          btn.disabled = false;
+        }, 1800);
+      }, 700);
+    }
+
+    // Export Bundle Button Action
+    function exportBundleAction() {
+      const dummyData = {
+        schema: "sophia://core/v2.4",
+        workspace_id: "ws_ent_tokyo_098",
+        timestamp: new Date().toISOString(),
+        encryption: "AES-256-GCM",
+        vault_records: 4,
+        signature: "ed25519:3a8901bc74e98f...certified"
+      };
+      const blob = new Blob([JSON.stringify(dummyData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "sophia-workspace-bundle-signed.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Language switcher toggle aesthetic
+    const btnVi = document.getElementById('langVi');
+    const btnEn = document.getElementById('langEn');
+    btnVi.addEventListener('click', () => {
+      btnVi.className = "px-2 py-0.5 text-label-code-sm font-label-code-sm rounded bg-surface-container-highest text-primary font-semibold";
+      btnEn.className = "px-2 py-0.5 text-label-code-sm font-label-code-sm rounded text-on-surface-variant hover:text-on-surface transition-colors";
+    });
+    btnEn.addEventListener('click', () => {
+      btnEn.className = "px-2 py-0.5 text-label-code-sm font-label-code-sm rounded bg-surface-container-highest text-primary font-semibold";
+      btnVi.className = "px-2 py-0.5 text-label-code-sm font-label-code-sm rounded text-on-surface-variant hover:text-on-surface transition-colors";
+    });
+
+    // Batch probe
+    document.getElementById('runAllProbes').addEventListener('click', function() {
+      const self = this;
+      self.innerHTML = `
+        <span class="material-symbols-outlined text-[16px] animate-spin">refresh</span>
+        <span>Probing 4 Enclaves...</span>
+      `;
+      setTimeout(() => {
+        self.innerHTML = `
+          <span class="material-symbols-outlined text-[16px] text-emerald-400">check</span>
+          <span class="text-emerald-400 font-semibold">All 4 Circuits Certified</span>
+        `;
+        setTimeout(() => {
+          self.innerHTML = `
+            <span class="material-symbols-outlined text-[16px]">bolt</span>
+            <span>Batch Probe All Circuits</span>
+          `;
+        }, 2000);
+      }, 1000);
+    });
+  </script>
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

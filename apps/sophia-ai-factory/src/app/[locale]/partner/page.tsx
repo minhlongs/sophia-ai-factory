@@ -11,6 +11,7 @@ import { Metadata } from 'next';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getPartnerDashboardAction } from '@/land/partners/partner-actions';
 import { PartnerPortalClient } from './partner-portal-client';
+import { StitchAgencySubaccountStrip } from './stitch-agency-subaccount-strip';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -53,12 +54,15 @@ export default async function PartnerPortalPage({ params }: PageProps) {
   }
 
   return (
-    <PartnerPortalClient
-      initialDashboard={initialDashboard}
-      locale={locale}
-      isVi={isVi}
-      userEmail={user?.email}
-      isAuthenticated={Boolean(user)}
-    />
+    <>
+      <StitchAgencySubaccountStrip isVi={isVi} />
+      <PartnerPortalClient
+        initialDashboard={initialDashboard}
+        locale={locale}
+        isVi={isVi}
+        userEmail={user?.email}
+        isAuthenticated={Boolean(user)}
+      />
+    </>
   );
 }

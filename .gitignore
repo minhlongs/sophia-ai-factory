@@ -123,3 +123,9 @@ apps/sophia-ai-factory/plans/
 .agentkit/
 all_files.txt
 broken-imports-report.json
+
+# Stitch Kit loop scratch & session state (keep DESIGN.md, SITE.md, design-tokens.css, tailwind-theme.css, site/public/)
+.stitch/
+temp/
+queue/
+next-prompt.md

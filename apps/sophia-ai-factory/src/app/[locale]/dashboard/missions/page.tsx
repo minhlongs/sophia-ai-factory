@@ -15,6 +15,7 @@ import { getTranslations } from 'next-intl/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { Link } from '@/navigation';
 import { listMissions } from '@/land/creative-mission/actions';
+import { StitchStudioDeckStrip } from '@/components/missions/stitch-studio-deck-strip';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('missionConsole');
@@ -32,9 +33,9 @@ const STATUS_BADGE_CLASSES: Record<string, string> = {
   running: 'bg-primary/10 text-primary',
   paused: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
   review: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  completed: 'bg-green-500/10 text-green-600 dark:text-green-400',
+  completed: 'bg-green-500/10 text-green-400',
   learning: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-  iterating: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+  iterating: 'bg-primary-500/10 text-primary-600 dark:text-primary-400',
 };
 
 type MissionRow = { id: string; title: string; status: string };
@@ -60,6 +61,7 @@ export default async function MissionsPage() {
       <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
         <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
+        <StitchStudioDeckStrip />
         <div className="mt-6 rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">{t('noWorkspace')}</p>
         </div>
@@ -87,6 +89,8 @@ export default async function MissionsPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
       <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
+
+      <StitchStudioDeckStrip />
 
       {missions.length === 0 ? (
         <div className="mt-6 rounded-lg border border-border bg-card p-8 text-center">

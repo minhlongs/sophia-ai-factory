@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory — Bilingual Executive Pricing &amp; Revenue Deck</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed-dim": "#ffb95f",
+            "outline-variant": "#464554",
+            "inverse-surface": "#d4e4fa",
+            "surface-container-low": "#0d1c2d",
+            "inverse-on-surface": "#233143",
+            "on-tertiary-fixed-variant": "#653e00",
+            "primary-fixed": "#e1e0ff",
+            "surface": "#051424",
+            "on-error-container": "#ffdad6",
+            "on-primary": "#1000a9",
+            "inverse-primary": "#494bd6",
+            "surface-bright": "#2c3a4c",
+            "tertiary-fixed": "#ffddb8",
+            "on-tertiary": "#472a00",
+            "secondary-fixed": "#f0dbff",
+            "surface-container-high": "#1c2b3c",
+            "on-secondary-container": "#d6a9ff",
+            "secondary-container": "#6f00be",
+            "background": "#051424",
+            "primary": "#c0c1ff",
+            "on-secondary-fixed-variant": "#6900b3",
+            "outline": "#908fa0",
+            "on-primary-container": "#0d0096",
+            "error": "#ffb4ab",
+            "surface-container": "#122131",
+            "on-surface-variant": "#c7c4d7",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-tint": "#c0c1ff",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-background": "#d4e4fa",
+            "tertiary": "#ffb95f",
+            "on-error": "#690005",
+            "surface-container-lowest": "#010f1f",
+            "surface-container-highest": "#273647",
+            "on-tertiary-container": "#3e2400",
+            "secondary": "#ddb7ff",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-secondary": "#490080",
+            "on-primary-fixed": "#07006c",
+            "error-container": "#93000a",
+            "surface-variant": "#273647",
+            "primary-container": "#8083ff",
+            "secondary-fixed-dim": "#ddb7ff",
+            "on-secondary-fixed": "#2c0051",
+            "on-surface": "#d4e4fa",
+            "tertiary-container": "#ca8100",
+            "surface-dim": "#051424"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "gutter-lg": "1.5rem",
+            "margin": "1.5rem",
+            "margin-mobile": "1rem",
+            "gutter-sm": "0.75rem",
+            "space-xl": "2rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Space Grotesk"],
+            "metric-display": ["JetBrains Mono"],
+            "headline-xl": ["Space Grotesk"],
+            "label-lg": ["JetBrains Mono"],
+            "headline-md": ["Space Grotesk"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"],
+            "headline-sm": ["Space Grotesk"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "fontWeight": "700" }],
+            "metric-display": ["36px", { "lineHeight": "44px", "fontWeight": "700" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Physical machined specular highlight and cinema scanning grid */
+    .director-grid-bg {
+      background-color: #051424;
+      background-image: 
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(128, 131, 255, 0.12), transparent 70%),
+        linear-gradient(rgba(70, 69, 84, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(70, 69, 84, 0.08) 1px, transparent 1px);
+      background-size: 100% 100%, 32px 32px, 32px 32px;
+      background-position: center top, -1px -1px, -1px -1px;
+    }
+    .specular-card {
+      background-color: #0d1c2d;
+      border: 1px solid rgba(70, 69, 84, 0.45);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.09);
+    }
+    .recessed-well {
+      background-color: #010f1f;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(70, 69, 84, 0.3);
+    }
+    .amber-halo {
+      box-shadow: 0 0 0 1px #ffb95f, 0 16px 36px -8px rgba(202, 129, 0, 0.28), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    }
+    .pulse-dot {
+      animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.9); }
+    }
+    /* Knurled slider handle styling */
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 9999px;
+      background: #f8fafc;
+      border: 2px solid #8083ff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      border-color: #ffb95f;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased director-grid-bg min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- ========================================================================= -->
+<!-- 1. SHARED COMPONENT: SideNavBar (Console Sidebar Fixed 240px)              -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-[240px] z-40 bg-surface-container-lowest border-r border-outline-variant/30 flex flex-col justify-between p-4">
+<div class="flex flex-col gap-5">
+<!-- Director's Deck Identity Header -->
+<div class="flex items-center gap-3 px-2 py-1">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high border border-outline-variant/40 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="videocam">videocam</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight truncate">Sophia AI Factory</span>
+<span class="text-label-sm font-label-sm text-outline tracking-wider uppercase truncate">Director's Deck</span>
+</div>
+</div>
+<!-- Navigation Links: 7 Items per JSON Spec -->
+<nav class="flex flex-col gap-1">
+<!-- Item 1: Command Deck -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-150 ease-in-out" href="#command">
+<span class="material-symbols-outlined text-[18px]" data-icon="dashboard">dashboard</span>
+<span class="text-label-md font-label-md">Command Deck</span>
+</a>
+<!-- Item 2: Video Studio -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-150 ease-in-out" href="#studio">
+<span class="material-symbols-outlined text-[18px]" data-icon="movie_creation">movie_creation</span>
+<span class="text-label-md font-label-md">Video Studio</span>
+</a>
+<!-- Item 3: /ask 4-Advisor -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-150 ease-in-out" href="#advisor">
+<span class="material-symbols-outlined text-[18px]" data-icon="psychology">psychology</span>
+<span class="text-label-md font-label-md">/ask 4-Advisor</span>
+</a>
+<!-- Item 4: Revenue & Webhooks (ACTIVE MATCH: Pricing & Affiliate Revenue Console) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-high text-primary font-semibold border-l-2 border-primary transition-all duration-150 ease-in-out" href="#pricing">
+<span class="material-symbols-outlined text-[18px]" data-icon="payments">payments</span>
+<span class="text-label-md font-label-md font-semibold text-primary">Revenue &amp; Webhooks</span>
+</a>
+<!-- Item 5: BYOK Setup -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-150 ease-in-out" href="#byok">
+<span class="material-symbols-outlined text-[18px]" data-icon="key">key</span>
+<span class="text-label-md font-label-md">BYOK Setup</span>
+</a>
+<!-- Item 6: Agency Portal -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-150 ease-in-out" href="#agency">
+<span class="material-symbols-outlined text-[18px]" data-icon="business_center">business_center</span>
+<span class="text-label-md font-label-md">Agency Portal</span>
+</a>
+<!-- Item 7: Style Guide -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all duration-150 ease-in-out" href="#styles">
+<span class="material-symbols-outlined text-[18px]" data-icon="palette">palette</span>
+<span class="text-label-md font-label-md">Style Guide</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Bottom Action & Utilities -->
+<div class="flex flex-col gap-3 pt-3 border-t border-outline-variant/30">
+<button class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-gradient-to-r from-primary-container to-secondary-container text-on-surface font-label-md text-label-md font-semibold shadow-md hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="rocket_launch">rocket_launch</span>
+<span>Deploy Pipeline</span>
+</button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-2 px-2 py-1.5 rounded text-on-surface-variant hover:text-on-surface text-label-sm font-label-sm transition-colors" href="#docs">
+<span class="material-symbols-outlined text-[16px]" data-icon="menu_book">menu_book</span>
+<span>Documentation</span>
+</a>
+<a class="flex items-center gap-2 px-2 py-1.5 rounded text-on-surface-variant hover:text-on-surface text-label-sm font-label-sm transition-colors" href="#settings">
+<span class="material-symbols-outlined text-[16px]" data-icon="settings">settings</span>
+<span>Terminal Settings</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 2. SHARED COMPONENT: TopNavBar (Executive Header 64px Fixed)              -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 right-0 left-[240px] h-16 z-30 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 flex items-center justify-between px-6">
+<!-- Breadcrumb & Transport Status -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold text-primary tracking-tight">Sophia AI Factory</span>
+<span class="text-outline-variant font-label-sm">/</span>
+<span class="text-label-md font-label-md text-on-surface font-medium">Pricing &amp; Arbitrage Yield Deck</span>
+</div>
+<!-- Circuit Breaker Health Status Pill -->
+<div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+<span class="tracking-wide">8/8 Circuit Breakers Active</span>
+</div>
+<!-- Enterprise Badge -->
+<div class="px-2 py-0.5 rounded bg-tertiary-container/30 border border-tertiary/40 text-tertiary font-label-sm text-[10px] uppercase font-bold tracking-wider">
+        Enterprise
+      </div>
+</div>
+<!-- Navigation Hub & Bilingual Controls -->
+<div class="flex items-center gap-4">
+<nav class="hidden md:flex items-center gap-5 mr-2">
+<a class="text-on-surface-variant hover:text-on-surface text-body-md font-body-md transition-colors" href="#docs">Docs</a>
+<a class="text-on-surface-variant hover:text-on-surface text-body-md font-body-md transition-colors" href="#apihub">API Hub</a>
+<a class="text-on-surface-variant hover:text-on-surface text-body-md font-body-md transition-colors" href="#telemetry">Telemetry</a>
+</nav>
+<!-- Bilingual VI | EN Sliding Toggle -->
+<div class="recessed-well h-8 rounded-full p-0.5 flex items-center">
+<button class="px-2.5 py-1 text-label-sm font-label-sm rounded-full bg-surface-container border border-outline-variant/60 text-on-surface font-semibold shadow-xs transition-all" id="lang-vi" onclick="toggleLang('vi')">VI</button>
+<button class="px-2.5 py-1 text-label-sm font-label-sm rounded-full text-on-surface-variant hover:text-on-surface font-medium transition-all" id="lang-en" onclick="toggleLang('en')">EN</button>
+</div>
+<!-- Header Icon Actions -->
+<div class="flex items-center gap-1.5 border-l border-outline-variant/30 pl-4">
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Telemetry Alert Bus">
+<span class="material-symbols-outlined text-[19px]" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Node Terminal">
+<span class="material-symbols-outlined text-[19px]" data-icon="terminal">terminal</span>
+</button>
+</div>
+<!-- Deploy Node Action Button -->
+<button class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-primary-container text-on-surface font-label-md text-label-md font-semibold hover:bg-inverse-primary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="add_circle">add_circle</span>
+<span>Deploy Node</span>
+</button>
+<!-- Director Profile Avatar -->
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary font-headline-sm font-bold text-xs" title="Executive Director Avatar">
+        SD
+      </div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE CANVAS                                                      -->
+<!-- ========================================================================= -->
+<main class="ml-[240px] pt-20 px-8 pb-16 flex flex-col gap-12 w-[calc(100%-240px)] max-w-[1600px] mx-auto">
+<!-- ======================================================================= -->
+<!-- SECTION 1: HERO SECTION ('Director's Control Deck')                     -->
+<!-- ======================================================================= -->
+<section class="relative pt-6 pb-4">
+<div class="flex flex-col items-center text-center max-w-4xl mx-auto gap-4">
+<!-- Top Status Pill -->
+<div class="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-surface-container border border-outline-variant/50 text-tertiary-fixed-dim font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary pulse-dot"></span>
+<span class="tracking-wide uppercase font-semibold">Autonomous Revenue Engine v4.2 • Production Ready</span>
+</div>
+<!-- Bilingual Headline -->
+<div class="flex flex-col gap-1.5 mt-2">
+<h1 class="text-headline-xl font-headline-xl text-on-surface tracking-tight leading-tight">
+            Nhà Máy Video AI &amp; Đế Chế Affiliate Tự Hành
+          </h1>
+<p class="text-headline-md font-headline-md text-primary font-semibold tracking-normal">
+            Autonomous AI Video &amp; Affiliate Revenue Factory
+          </p>
+</div>
+<!-- Descriptive Paragraph -->
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+          High-velocity multi-model video generation orchestrating ElevenLabs voice synthesis, custom ComfyUI cloud rendering, auto-caption typography, and Thompson-sampled TikTok Shop &amp; YouTube Shorts arbitrage syndication with zero human latency.
+        </p>
+<!-- Dual High-Impact CTAs -->
+<div class="flex flex-wrap items-center justify-center gap-4 mt-4">
+<a class="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-primary-container via-inverse-primary to-tertiary-container text-on-surface font-headline-sm font-semibold tracking-wide shadow-lg shadow-primary-container/20 hover:scale-[1.02] active:scale-[0.99] transition-all duration-150 border-t border-t-white/20" href="#tiers">
+<span class="material-symbols-outlined text-[20px]" data-icon="bolt">bolt</span>
+<span>Start on Sophia Cloud (Instant TRC-20 / VietQR)</span>
+</a>
+<a class="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-surface-container border border-outline-variant/50 text-on-surface font-headline-sm font-medium hover:bg-surface-container-high hover:border-outline transition-all duration-150" href="https://github.com" target="_blank">
+<span class="material-symbols-outlined text-[20px]" data-icon="code_blocks">code_blocks</span>
+<span>Self-Host Open-Core Apache-2.0 (GitHub Repo)</span>
+</a>
+</div>
+<!-- Live Director Telemetry Trust Strip -->
+<div class="w-full grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8 pt-6 border-t border-outline-variant/30">
+<div class="specular-card rounded-lg p-3.5 flex flex-col items-center">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Videos Rendered</span>
+<span class="text-headline-md font-metric-display text-on-surface font-bold mt-1">14,892,100+</span>
+<span class="text-label-sm font-label-sm text-emerald-400 flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="trending_up">trending_up</span> +38.4k today
+            </span>
+</div>
+<div class="specular-card rounded-lg p-3.5 flex flex-col items-center">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Affiliate GMV Generated</span>
+<span class="text-headline-md font-metric-display text-tertiary font-bold mt-1">$4,821,940</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant mt-0.5">VietQR / Stripe / TikTok Shop</span>
+</div>
+<div class="specular-card rounded-lg p-3.5 flex flex-col items-center">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Pipeline SLA Uptime</span>
+<span class="text-headline-md font-metric-display text-primary font-bold mt-1">99.98%</span>
+<span class="text-label-sm font-label-sm text-emerald-400 flex items-center gap-1 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Zero Cluster Dropout
+            </span>
+</div>
+<div class="specular-card rounded-lg p-3.5 flex flex-col items-center">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Human Labor Overhead</span>
+<span class="text-headline-md font-metric-display text-on-surface font-bold mt-1">0.00 HRS</span>
+<span class="text-label-sm font-label-sm text-tertiary-fixed-dim mt-0.5">100% Autonomous Daemon</span>
+</div>
+</div>
+<!-- Compliance & Security Assurance Tags -->
+<div class="flex flex-wrap items-center justify-center gap-6 text-label-sm font-label-sm text-outline pt-2">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-primary" data-icon="verified_user">verified_user</span> SOC2 Type II Verified</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="neurology">neurology</span> Thompson Sampling Active</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-emerald-400" data-icon="license">license</span> Apache 2.0 Open-Core Certified</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-on-secondary" data-icon="shield">shield</span> Non-Custodial Key Storage</span>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- SECTION 2: 4-TIER PRICING COMPARISON MATRIX                             -->
+<!-- ======================================================================= -->
+<section class="flex flex-col gap-6" id="tiers">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<span class="text-label-sm font-label-sm text-primary uppercase tracking-wider font-semibold">Direct Node Provisioning</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface tracking-tight mt-1">
+            Production Tiers &amp; Compute Allocation
+          </h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">
+            Switch anytime. Dual billing supported: USDT (TRC-20) and VietQR instant banking wire.
+          </p>
+</div>
+<!-- Dual Currency Toggle -->
+<div class="specular-card rounded-lg p-1.5 flex items-center gap-1">
+<span class="text-label-sm font-label-sm text-outline px-2">Display Currency:</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-on-surface text-label-sm font-label-sm font-bold border border-outline-variant/60">USD ($)</button>
+<button class="px-2.5 py-1 rounded text-outline hover:text-on-surface text-label-sm font-label-sm font-medium">VND (₫)</button>
+</div>
+</div>
+<!-- Grid of 4 Pricing Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+<!-- CARD 1: Community Self-Hosted -->
+<div class="specular-card rounded-xl p-6 flex flex-col justify-between hover:border-outline transition-all duration-200">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm text-on-surface font-semibold">Community</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-outline text-label-sm font-label-sm">Apache 2.0</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant min-h-[36px]">
+              Indie researchers, hackers, and engineers running on private local GPU rigs.
+            </p>
+<div class="flex items-baseline gap-1 my-2">
+<span class="text-headline-xl font-headline-xl text-on-surface font-bold">$0</span>
+<span class="text-body-sm font-body-sm text-outline">/mo perpetual</span>
+</div>
+<div class="w-full h-px bg-outline-variant/20"></div>
+<div class="flex flex-col gap-2.5 text-body-sm font-body-sm">
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-emerald-400 text-[18px] shrink-0" data-icon="check">check</span>
+<span>Unlimited local video compilation</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-emerald-400 text-[18px] shrink-0" data-icon="check">check</span>
+<span>BYOK (OpenAI, Claude, ElevenLabs)</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-emerald-400 text-[18px] shrink-0" data-icon="check">check</span>
+<span>Local SQLite telemetry storage</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-emerald-400 text-[18px] shrink-0" data-icon="check">check</span>
+<span>Manual cron scheduling &amp; proxies</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0" data-icon="check">check</span>
+<span>Discord Open-Source Community</span>
+</div>
+</div>
+</div>
+<div class="pt-6 mt-6 border-t border-outline-variant/20">
+<a class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-on-surface text-label-md font-label-md font-semibold transition-colors" href="https://github.com" target="_blank">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>Clone GitHub Repo (v4.2)</span>
+</a>
+</div>
+</div>
+<!-- CARD 2: Sophia Cloud Basic -->
+<div class="specular-card rounded-xl p-6 flex flex-col justify-between hover:border-primary/50 transition-all duration-200">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm text-on-surface font-semibold">Cloud Basic</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-primary text-label-sm font-label-sm font-medium">Solo Creator</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant min-h-[36px]">
+              Individual creators &amp; TikTok Shop affiliates scaling automated single accounts.
+            </p>
+<div class="flex items-baseline gap-1 my-2">
+<span class="text-headline-xl font-headline-xl text-on-surface font-bold">$199</span>
+<span class="text-body-sm font-body-sm text-outline">/month</span>
+</div>
+<div class="w-full h-px bg-outline-variant/20"></div>
+<div class="flex flex-col gap-2.5 text-body-sm font-body-sm">
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span><strong>500 HQ</strong> Automated Shorts / mo</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Cloud ComfyUI managed GPU cluster</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Auto TikTok &amp; YouTube Shorts upload</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Dynamic affiliate redirect cloaking</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Email &amp; Telegram conversion pings</span>
+</div>
+</div>
+</div>
+<div class="pt-6 mt-6 border-t border-outline-variant/20">
+<button class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-surface-container-high hover:bg-surface-variant border border-primary/40 text-primary text-label-md font-label-md font-semibold transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="rocket">rocket</span>
+<span>Deploy Basic Node</span>
+</button>
+</div>
+</div>
+<!-- CARD 3: Sophia Cloud Premium -->
+<div class="specular-card rounded-xl p-6 flex flex-col justify-between hover:border-primary transition-all duration-200">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm text-on-surface font-semibold">Cloud Premium</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 text-primary text-label-sm font-label-sm font-medium">Growth Teams</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant min-h-[36px]">
+              Multi-channel affiliate syndicates running up to 5 concurrent brand verticals.
+            </p>
+<div class="flex items-baseline gap-1 my-2">
+<span class="text-headline-xl font-headline-xl text-on-surface font-bold">$399</span>
+<span class="text-body-sm font-body-sm text-outline">/month</span>
+</div>
+<div class="w-full h-px bg-outline-variant/20"></div>
+<div class="flex flex-col gap-2.5 text-body-sm font-body-sm">
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span><strong>1,500 HQ</strong> Automated Videos / mo</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Multi-niche Thompson Sampling daemon</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Instant Voice Cloning (5 custom voices)</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>VietQR &amp; TikTok Shop auto-webhooks</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0" data-icon="check">check</span>
+<span>Priority A100 GPU queue &amp; 24/7 VIP chat</span>
+</div>
+</div>
+</div>
+<div class="pt-6 mt-6 border-t border-outline-variant/20">
+<button class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary-container text-on-surface text-label-md font-label-md font-semibold hover:bg-inverse-primary transition-colors shadow-md">
+<span class="material-symbols-outlined text-[16px]" data-icon="layers">layers</span>
+<span>Deploy Premium Node</span>
+</button>
+</div>
+</div>
+<!-- CARD 4: Sophia Cloud Enterprise (FEATURED / LỰA CHỌN TỐI ƯU) -->
+<div class="specular-card amber-halo relative rounded-xl p-6 flex flex-col justify-between bg-gradient-to-b from-[#1c2b3c] to-[#0d1c2d] transition-all duration-200">
+<!-- Absolute Golden Badge -->
+<div class="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-tertiary text-on-tertiary-container font-label-sm text-[10px] font-bold uppercase tracking-wider shadow-md">
+            Most Popular / Lựa Chọn Tối Ưu
+          </div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm text-tertiary font-bold">Cloud Enterprise</span>
+<span class="px-2 py-0.5 rounded bg-tertiary/20 text-tertiary text-label-sm font-label-sm font-bold">Fleet Fleet</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant min-h-[36px]">
+              Media conglomerates, scaled affiliate agencies &amp; commercial production studios.
+            </p>
+<div class="flex items-baseline gap-1 my-2">
+<span class="text-headline-xl font-headline-xl text-tertiary font-bold">$799</span>
+<span class="text-body-sm font-body-sm text-outline">/month</span>
+</div>
+<div class="w-full h-px bg-outline-variant/40"></div>
+<div class="flex flex-col gap-2.5 text-body-sm font-body-sm">
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0" data-icon="verified">verified</span>
+<span><strong>Unlimited</strong> Automated Video Pipelines</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0" data-icon="verified">verified</span>
+<span>Custom LoRA character fine-tuning</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0" data-icon="verified">verified</span>
+<span>Anti-detect proxy pooling &amp; multi-geo IP</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0" data-icon="verified">verified</span>
+<span>Dedicated private <strong>NVIDIA H100</strong> cluster</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0" data-icon="verified">verified</span>
+<span>Real-time Half-Kelly Arbitrage Engine</span>
+</div>
+<div class="flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0" data-icon="verified">verified</span>
+<span>Dedicated Solution Architect &amp; Webhooks</span>
+</div>
+</div>
+</div>
+<div class="pt-6 mt-6 border-t border-outline-variant/40">
+<button class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-tertiary text-on-tertiary-container text-label-md font-label-md font-bold hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-tertiary/20">
+<span class="material-symbols-outlined text-[18px]" data-icon="flash_on">flash_on</span>
+<span>Launch Enterprise Fleet</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- SECTION 3: FEATURED MASTER HANDOVER HERO BANNER (VIP Golden Horizon)    -->
+<!-- ======================================================================= -->
+<section class="relative overflow-hidden rounded-2xl border border-tertiary/60 bg-gradient-to-r from-surface-container-high via-surface-container to-surface-container-lowest p-8 shadow-2xl">
+<!-- Ambient light effect -->
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-tertiary/10 blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-8">
+<div class="flex flex-col gap-3 max-w-3xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/30 border border-tertiary text-tertiary-fixed-dim text-label-sm font-label-sm w-fit font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[15px]" data-icon="workspace_premium">workspace_premium</span>
+            Perpetual Source Code &amp; White-Label Buyout
+          </div>
+<h3 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+            Full Enterprise Handover &amp; Perpetual Source License
+          </h3>
+<p class="text-body-md font-body-md text-on-surface-variant leading-relaxed">
+            Own the complete, battle-tested software intellectual property. We deploy Sophia AI Factory natively inside your AWS/GCP or on-prem Kubernetes infrastructure with white-labeled interfaces, complete unminified monorepo access, zero vendor lock-in, and zero ongoing royalty.
+          </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2 text-body-sm font-body-sm">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="folder_zip">folder_zip</span>
+<span>Complete Monorepo (Next.js + Fastify + ComfyUI + Agent Swarm)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="vpn_key">vpn_key</span>
+<span>Complete IP Assignment &amp; Perpetual Apache-2.0 License</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="terminal">terminal</span>
+<span>Turnkey On-Prem Deploy by Senior Core Engineers</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="support_agent">support_agent</span>
+<span>1-Year Dedicated Engineering SLA &amp; Architecture Hotline</span>
+</div>
+</div>
+</div>
+<!-- Buyout Pricing & Action Column -->
+<div class="specular-card rounded-xl p-6 min-w-[320px] flex flex-col items-center text-center gap-4 border-tertiary/40 shrink-0">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">All-Inclusive One-Time Fee</span>
+<div class="flex flex-col items-center">
+<span class="text-metric-display font-metric-display text-tertiary font-bold tracking-tight">$4,999</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-metric-display">~127,500,000 VND (Zero Royalty)</span>
+</div>
+<div class="w-full flex flex-col gap-2.5 mt-2">
+<button class="w-full py-3 px-4 rounded-lg bg-tertiary text-on-tertiary-container font-headline-sm font-bold hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-tertiary/20">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+<span>Schedule Handover Call</span>
+</button>
+<button class="w-full py-2.5 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-on-surface font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span>Inspect Contract Spec (PDF)</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- SECTION 4: INTERACTIVE RaaS REVENUE & HALF-KELLY ROI CALCULATOR         -->
+<!-- ======================================================================= -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-label-sm font-label-sm text-primary uppercase tracking-wider font-semibold">Quantitative Forecasting Model</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface tracking-tight mt-0.5">
+            Interactive RaaS Yield &amp; Half-Kelly Arbitrage Calculator
+          </h2>
+</div>
+<div class="hidden sm:flex items-center gap-2 text-label-sm font-label-sm text-outline">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="calculate">calculate</span>
+<span>Stochastic Monte Carlo Projection v2.8</span>
+</div>
+</div>
+<div class="specular-card rounded-2xl p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+<!-- Left Slider Controls (7 Columns) -->
+<div class="lg:col-span-7 flex flex-col gap-6">
+<!-- Slider 1: Daily Video Production Volume -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="text-label-md font-label-md text-on-surface font-semibold flex items-center gap-2" for="slider-volume">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="video_settings">video_settings</span>
+                Daily Video Production Volume
+              </label>
+<span class="recessed-well px-3 py-1 rounded font-metric-display text-primary text-label-md font-bold" id="val-volume">
+                100 videos/day
+              </span>
+</div>
+<input class="w-full h-2 rounded-lg bg-surface-container-lowest appearance-none cursor-pointer accent-primary" id="slider-volume" max="500" min="10" oninput="updateCalculator()" step="5" type="range" value="100"/>
+<div class="flex justify-between text-label-sm font-label-sm text-outline">
+<span>10 vids/day (Indie)</span>
+<span>100 vids (Pro)</span>
+<span>500 vids/day (Syndicate)</span>
+</div>
+</div>
+<!-- Slider 2: Niche Projected RPM / 1k views -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="text-label-md font-label-md text-on-surface font-semibold flex items-center gap-2" for="slider-rpm">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="monetization_on">monetization_on</span>
+                Blended RPM (Creator Ad Pool + Affiliate Rev/1k views)
+              </label>
+<span class="recessed-well px-3 py-1 rounded font-metric-display text-tertiary text-label-md font-bold" id="val-rpm">
+                $6.80 / 1k views
+              </span>
+</div>
+<input class="w-full h-2 rounded-lg bg-surface-container-lowest appearance-none cursor-pointer accent-tertiary" id="slider-rpm" max="18.0" min="2.5" oninput="updateCalculator()" step="0.1" type="range" value="6.8"/>
+<div class="flex justify-between text-label-sm font-label-sm text-outline">
+<span>$2.50 (Gaming/Meme)</span>
+<span>$6.80 (TikTok Shop Tech)</span>
+<span>$18.00 (High-Ticket Finance)</span>
+</div>
+</div>
+<!-- Slider 3 / Dropdown: Conversion Rate -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="text-label-md font-label-md text-on-surface font-semibold flex items-center gap-2" for="slider-cvr">
+<span class="material-symbols-outlined text-emerald-400 text-[18px]" data-icon="ads_click">ads_click</span>
+                Bio Link &amp; Affiliate Conversion Rate (CVR)
+              </label>
+<span class="recessed-well px-3 py-1 rounded font-metric-display text-emerald-400 text-label-md font-bold" id="val-cvr">
+                1.4% CVR
+              </span>
+</div>
+<input class="w-full h-2 rounded-lg bg-surface-container-lowest appearance-none cursor-pointer accent-emerald-400" id="slider-cvr" max="3.2" min="0.5" oninput="updateCalculator()" step="0.1" type="range" value="1.4"/>
+<div class="flex justify-between text-label-sm font-label-sm text-outline">
+<span>0.5% (Conservative)</span>
+<span>1.4% (Standard Benchmark)</span>
+<span>3.2% (Hyper-Targeted)</span>
+</div>
+</div>
+</div>
+<!-- Right Dynamic Telemetry Readout (5 Columns) -->
+<div class="lg:col-span-5 recessed-well rounded-xl p-6 flex flex-col justify-between border border-outline-variant/40 gap-4">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold">Real-Time Yield Telemetry</span>
+<span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 text-label-sm font-label-sm font-bold">
+              Half-Kelly Optimized
+            </span>
+</div>
+<!-- Dynamic Numbers Matrix -->
+<div class="flex flex-col gap-3 font-metric-display">
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Est. Monthly Total Views:</span>
+<span class="font-bold text-on-surface font-metric-display" id="metric-views">9,000,000</span>
+</div>
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Sophia Cloud Compute Cost:</span>
+<span class="font-bold text-error font-metric-display">-$799 /mo</span>
+</div>
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Net Operating Margin:</span>
+<span class="font-bold text-emerald-400 font-metric-display" id="metric-margin">~96.7%</span>
+</div>
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Kelly Criterion Growth Score:</span>
+<span class="font-bold text-tertiary font-metric-display" id="metric-kelly">0.84x Optimal Kelly</span>
+</div>
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Capital Break-even Horizon:</span>
+<span class="font-bold text-primary font-metric-display" id="metric-breakeven">3.8 Days</span>
+</div>
+<div class="w-full h-px bg-outline-variant/30 my-1"></div>
+<!-- Projected Gross Yield Callout -->
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold">Projected Gross Monthly Yield:</span>
+<span class="text-metric-display font-metric-display text-tertiary font-bold tracking-tight" id="metric-yield">
+                $24,480 /mo
+              </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-metric-display" id="metric-yield-vnd">
+                ~624,240,000 VND / month
+              </span>
+</div>
+</div>
+<button class="w-full py-2.5 px-3 rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md font-semibold border border-outline-variant/40 transition-colors flex items-center justify-center gap-2 mt-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="tune">tune</span>
+<span>Lock Parameters &amp; Deploy Agent</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- SECTION 5: INSTANT ON-RAMP & PAYMENT GATEWAYS BAR                       -->
+<!-- ======================================================================= -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-label-sm font-label-sm text-tertiary uppercase tracking-wider font-semibold">Autonomous Settlement Rail</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface tracking-tight mt-0.5">
+            Instant On-Ramp &amp; Zero-Latency Payment Gateway
+          </h2>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2.5 py-1 rounded-full bg-surface-container border border-outline-variant/40 text-on-surface-variant font-label-sm text-label-sm">
+            5-Second Auto-Provisioning
+          </span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- GATEWAY 1: NOWPayments USDT (Crypto TRC-20 & ERC-20) -->
+<div class="specular-card rounded-xl p-6 flex flex-col justify-between gap-5">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+<span class="material-symbols-outlined text-[22px]" data-icon="currency_exchange">currency_exchange</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">NOWPayments USDT</span>
+<span class="text-label-sm font-label-sm text-outline">TRC-20 / ERC-20 / Webhook Webhook Instant</span>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 text-on-surface text-label-sm font-label-sm font-medium">0% Platform Fee</span>
+</div>
+<!-- Mock Payment Card Detail -->
+<div class="recessed-well rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4">
+<!-- Simulated QR Frame -->
+<div class="w-24 h-24 rounded-lg bg-surface-container-highest border border-emerald-500/30 flex flex-col items-center justify-center p-2 relative shrink-0">
+<span class="material-symbols-outlined text-[44px] text-emerald-400" data-icon="qr_code_2">qr_code_2</span>
+<span class="text-[9px] font-metric-display text-outline mt-0.5 uppercase">USDT TRC20</span>
+</div>
+<div class="flex flex-col gap-1.5 overflow-hidden w-full">
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-outline">Deposit Address (TRC-20):</span>
+<span class="text-emerald-400 font-metric-display">1 Confirm Auto-Trigger</span>
+</div>
+<div class="recessed-well px-2.5 py-1.5 rounded flex items-center justify-between text-on-surface font-metric-display text-label-sm truncate">
+<span class="truncate">TXYZSophiaFactoryNode99x41K...</span>
+<button class="text-primary hover:text-on-surface ml-2" title="Copy Address">
+<span class="material-symbols-outlined text-[15px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<span class="text-label-sm font-label-sm text-outline-variant">
+                Auto-detected within 3 seconds. Instant license token dispatched to email.
+              </span>
+</div>
+</div>
+<button class="w-full py-2.5 px-4 rounded-lg bg-surface-container-high hover:bg-surface-variant border border-outline-variant/40 text-on-surface text-label-md font-label-md font-semibold transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-emerald-400" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Pay with USDT Wallet (TronLink / Metamask / Binance)</span>
+</button>
+</div>
+<!-- GATEWAY 2: PayOS VietQR (Napas247 Instant Transfer) -->
+<div class="specular-card rounded-xl p-6 flex flex-col justify-between gap-5">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 border border-primary/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">PayOS VietQR (Napas247)</span>
+<span class="text-label-sm font-label-sm text-outline">Vietcombank / MBBank / Techcombank Instant Transfer</span>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded bg-tertiary-container/30 border border-tertiary/40 text-tertiary text-label-sm font-label-sm font-bold">Kích Hoạt &lt; 5s</span>
+</div>
+<!-- Mock Payment Card Detail -->
+<div class="recessed-well rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4">
+<!-- Simulated QR Frame -->
+<div class="w-24 h-24 rounded-lg bg-surface-container-highest border border-primary/30 flex flex-col items-center justify-center p-2 relative shrink-0">
+<span class="material-symbols-outlined text-[44px] text-primary" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="text-[9px] font-metric-display text-outline mt-0.5 uppercase">Napas 247</span>
+</div>
+<div class="flex flex-col gap-1.5 overflow-hidden w-full">
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-outline">Cú pháp chuyển khoản tự động:</span>
+<span class="text-primary font-metric-display">Zero Surcharge</span>
+</div>
+<div class="recessed-well px-2.5 py-1.5 rounded flex items-center justify-between text-on-surface font-metric-display text-label-sm truncate">
+<span class="truncate text-tertiary font-bold">SOPHIA42 NODE 098481</span>
+<button class="text-primary hover:text-on-surface ml-2" title="Copy Memo">
+<span class="material-symbols-outlined text-[15px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<span class="text-label-sm font-label-sm text-outline-variant">
+                Quét mã qua app ngân hàng bất kỳ. Webhook mở cổng node API tức thời.
+              </span>
+</div>
+</div>
+<button class="w-full py-2.5 px-4 rounded-lg bg-surface-container-high hover:bg-surface-variant border border-outline-variant/40 text-on-surface text-label-md font-label-md font-semibold transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="account_balance">account_balance</span>
+<span>Mở VietQR &amp; Quét Ngay Trên Mobile Banking</span>
+</button>
+</div>
+</div>
+<!-- Security seals bar -->
+<div class="flex flex-wrap items-center justify-between px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-label-sm font-label-sm text-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-400 text-[18px]" data-icon="lock">lock</span>
+<span>End-to-End Encrypted Settlement Channel (TLS 1.3 / 256-bit AES)</span>
+</div>
+<div class="flex items-center gap-4">
+<span>Non-Custodial BYOK Engine</span>
+<span>•</span>
+<span>Smart Contract Escrow Ready</span>
+<span>•</span>
+<span>Automated VAT Invoicing Available</span>
+</div>
+</div>
+</section>
+</main>
+<!-- ========================================================================= -->
+<!-- 3. SHARED COMPONENT: Footer (Institutional Footer)                        -->
+<!-- ========================================================================= -->
+<footer class="w-[calc(100%-240px)] ml-[240px] bg-surface-container-lowest border-t border-outline-variant/30 py-8 px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex flex-col gap-1 text-center md:text-left">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Sophia AI Factory</span>
+<p class="text-body-sm font-body-sm text-on-surface-variant max-w-xl">
+        © 2025 Sophia AI Factory Inc. High-velocity automated production systems under Apache-2.0 and Enterprise licensing. All rights reserved.
+      </p>
+</div>
+<!-- Institutional Links Array from JSON -->
+<div class="flex flex-wrap justify-center md:justify-end gap-x-5 gap-y-2 text-label-sm font-label-sm">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#compliance">Security &amp; Compliance</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#soc2">SOC2 Status</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#handover">Terms of Handover</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#privacy">Privacy Shield</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#merchant">Merchant Terms (VietQR / USDT)</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#sla">SLA Verification</a>
+</div>
+</footer>
+<!-- ========================================================================= -->
+<!-- LIGHTWEIGHT INTERACTIVITY SCRIPT                                         -->
+<!-- ========================================================================= -->
+<script>
+    // Interactive RaaS ROI Calculator
+    function updateCalculator() {
+      const volume = parseInt(document.getElementById('slider-volume').value, 10);
+      const rpm = parseFloat(document.getElementById('slider-rpm').value);
+      const cvr = parseFloat(document.getElementById('slider-cvr').value);
+
+      document.getElementById('val-volume').innerText = volume + " videos/day";
+      document.getElementById('val-rpm').innerText = "$" + rpm.toFixed(2) + " / 1k views";
+      document.getElementById('val-cvr').innerText = cvr.toFixed(1) + "% CVR";
+
+      // Mathematical projections
+      // Average 3,000 views per autonomous video distributed across TikTok / Shorts / Reels
+      const monthlyVideos = volume * 30;
+      const avgViewsPerVid = 3000;
+      const totalMonthlyViews = monthlyVideos * avgViewsPerVid;
+
+      // Gross yield based on blended RPM and Affiliate conversion factor
+      const baseGross = (totalMonthlyViews / 1000) * rpm;
+      const affiliateMultiplier = 1 + ((cvr - 0.5) * 0.4);
+      const projectedYield = Math.round(baseGross * affiliateMultiplier);
+
+      const fixedCompute = 799;
+      const netProfit = Math.max(0, projectedYield - fixedCompute);
+      const margin = projectedYield > 0 ? ((netProfit / projectedYield) * 100).toFixed(1) : "0.0";
+      const dailyYield = projectedYield / 30;
+      const breakevenDays = dailyYield > 0 ? (fixedCompute / dailyYield).toFixed(1) : "0.0";
+
+      // Half-Kelly Score
+      const kellyScore = (0.5 + (cvr * 0.25)).toFixed(2);
+
+      // DOM Updates
+      document.getElementById('metric-views').innerText = totalMonthlyViews.toLocaleString('en-US');
+      document.getElementById('metric-yield').innerText = "$" + projectedYield.toLocaleString('en-US') + " /mo";
+      document.getElementById('metric-yield-vnd').innerText = "~" + (projectedYield * 25500).toLocaleString('vi-VN') + " VND / month";
+      document.getElementById('metric-margin').innerText = "~" + margin + "%";
+      document.getElementById('metric-breakeven').innerText = breakevenDays + " Days";
+      document.getElementById('metric-kelly').innerText = kellyScore + "x Optimal Kelly";
+    }
+
+    // Bilingual Header Toggle
+    function toggleLang(lang) {
+      const btnVi = document.getElementById('lang-vi');
+      const btnEn = document.getElementById('lang-en');
+
+      if (lang === 'vi') {
+        btnVi.className = "px-2.5 py-1 text-label-sm font-label-sm rounded-full bg-surface-container border border-outline-variant/60 text-on-surface font-semibold shadow-xs transition-all";
+        btnEn.className = "px-2.5 py-1 text-label-sm font-label-sm rounded-full text-on-surface-variant hover:text-on-surface font-medium transition-all";
+      } else {
+        btnEn.className = "px-2.5 py-1 text-label-sm font-label-sm rounded-full bg-surface-container border border-outline-variant/60 text-on-surface font-semibold shadow-xs transition-all";
+        btnVi.className = "px-2.5 py-1 text-label-sm font-label-sm rounded-full text-on-surface-variant hover:text-on-surface font-medium transition-all";
+      }
+    }
+
+    // Run initial calculation on load
+    window.addEventListener('DOMContentLoaded', () => {
+      updateCalculator();
+    });
+  </script>
+
+
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

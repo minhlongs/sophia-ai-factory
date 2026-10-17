@@ -8,6 +8,7 @@ import { getD1 } from '@/seed/db/client';
 import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
 import { ApprovalQueue } from '@/components/approval-queue';
+import { StitchMobileCompanionBanner } from '@/components/approval-queue/stitch-mobile-companion-banner';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('approvals');
@@ -34,14 +35,18 @@ export default async function ApprovalsPage() {
 
   if (!primaryWorkspaceId) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
-        No workspace found. Please create or join a workspace first.
+      <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
+        <StitchMobileCompanionBanner />
+        <div className="p-8 text-center text-muted-foreground">
+          No workspace found. Please create or join a workspace first.
+        </div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
+      <StitchMobileCompanionBanner />
       <ApprovalQueue workspaceId={primaryWorkspaceId} />
     </div>
   );
