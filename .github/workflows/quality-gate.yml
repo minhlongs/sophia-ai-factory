@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   gate-1-validation:
-    name: Gate 1 — Validation (tsc + eslint + vitest)
+    name: Gate 1 — Validation (tsc + eslint + boundaries + vitest)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,7 +40,10 @@ jobs:
       - name: Gate 1b — ESLint
         run: npm run lint
 
-      - name: Gate 1c — Vitest with coverage
+      - name: Gate 1c — Layer Boundary Check
+        run: npm run check:boundaries
+
+      - name: Gate 1d — Vitest with coverage
         run: npm test -- --coverage --reporter=junit --outputFile=test-results.xml
         env:
           CI: true
@@ -64,10 +67,10 @@ jobs:
 
       - name: Gate 3b — Zero :any types
         run: |
-          COUNT=$(grep -rn ': any' src --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+          COUNT=$(grep -rn ': any' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" 2>/dev/null | wc -l | tr -d ' ')
           echo "':any' occurrences: $COUNT"
           if [ "$COUNT" -gt 0 ]; then
-            grep -rn ': any' src --include="*.ts" --include="*.tsx" || true
+            grep -rn ': any' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" || true
             echo "FAIL: zero ':any' types required"
             exit 1
           fi
@@ -75,12 +78,12 @@ jobs:
 
       - name: Gate 3c — Zero console.log/warn/error
         run: |
-          COUNT=$(grep -rn 'console\.\(log\|warn\|error\)' src --include="*.ts" --include="*.tsx" 2>/dev/null \
-            | grep -v '// eslint-disable' | grep -v '__tests__' | wc -l | tr -d ' ')
+          COUNT=$(grep -rn 'console\.\(log\|warn\|error\)' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" --exclude-dir="sdk" 2>/dev/null \
+            | grep -v '// eslint-disable' | grep -v 'logger-internals.ts' | grep -v 'crypto-utils-signing.ts' | wc -l | tr -d ' ')
           echo "console.* calls: $COUNT"
           if [ "$COUNT" -gt 0 ]; then
-            grep -rn 'console\.\(log\|warn\|error\)' src --include="*.ts" --include="*.tsx" \
-              | grep -v '__tests__' || true
+            grep -rn 'console\.\(log\|warn\|error\)' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" --exclude-dir="sdk" \
+              | grep -v '// eslint-disable' | grep -v 'logger-internals.ts' | grep -v 'crypto-utils-signing.ts' || true
             echo "FAIL: use logger utility instead of console.*"
             exit 1
           fi

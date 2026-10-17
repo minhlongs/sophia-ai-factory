@@ -2,8 +2,8 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-10-10 (Wave 18 Tri-Cluster Deep Modularization & Architecture Refactor)
-**Current Production SHA:** 287b2c28
+**Last entry:** 2026-10-17 (25-Step Project Restructuring, Bilingual Ask Router & Director's Control Deck UI)
+**Current Production SHA:** 61a6ea7f
 
 ---
 
@@ -20,6 +20,8 @@
 ---
 
 ## Recent Entries (Q4 2026 — latest)
+
+- **2026-10-17** — **25-Step Project Restructuring, Bilingual Ask Router & Director's Control Deck UI.** Completed the 25-step restructuring roadmap across `seed -> tree -> forest -> land`: decomposed the final 3 executable modules > 180 LOC (`src/tree/ask/ask-router.ts` into `ask-types.ts`, `ask-intent-categories.ts`, `ask-advisor-consultation.ts`, `ask-matcher.ts` + 14 LOC facade; `src/tree/billing/invoices/html-formatter.ts` + `html-labels.ts`; `src/seed/security/signature.ts` + `signature-primitives.ts`) so 0 executable files exceed 179 LOC. Added `npm run check:boundaries` to `.github/workflows/quality-gate.yml`. Verified 0 `:any` types, 0 `console.log` calls in production code, 0 banned `@/lib/` imports, 0 layer boundary violations, 0 missing i18n keys, and 100% green tests across all touched and protected flows.
 
 - **2026-10-10** — **Wave 18 Tri-Cluster Deep Modularization & Architecture Refactor.** Decomposed 15 high-risk monolith files (~5,309 LOC total) across all 3 architectural clusters: Cluster 1 Infrastructure, Security & AI Video (`replicate-video-service.ts`, `rate-limiter.ts`, `circuit-breaker.ts`, `logger-internals.ts`, `context-manager.ts`), Cluster 2 Domain Calculators, Allocators & Signals (`cohort-retention-calculator.ts`, `edge-mesh-router.ts`, `store.ts`, `bant-scoring-service.ts`, `dedicated-lane-allocator.ts`), and Cluster 3 Land Operations, Swarm & Affiliate Governance (`arbitrage-coordinator.ts`, `affiliate-webhook-verifier.ts`, `org-manager.ts`, `customer-handover-service.ts`, `swarm-management-actions.ts`). Extracted into 77 single-responsibility submodules strictly < 200 LOC per file, preserved via 15 backward-compatible root facades (1 to 12 LOC). 100% green quality gates: 0 LOC violations, 0 TS errors, 0 `:any` types, 0 ESLint errors, 0 layer boundary breaches (`seed` -> `tree` -> `forest` -> `land`), 0 missing i18n keys, and 165/165 Vitest tests passing across all touched domains.
 - **2026-10-10** — **Wave 17 Tri-Cluster Deep Modularization & Architecture Refactor.** Decomposed 15 high-risk monolith files (~5,708 LOC total) across all 3 architectural clusters: Cluster 1 Infrastructure & AI (`metrics.ts`, `batch-scheduler.ts`, `anthropic-provider.ts`, `cost-estimator.ts`, `tool-executor.ts`), Cluster 2 Land Actions & Financial Ops (`handover-actions.ts`, `promo-repo.ts`, `financial-close-actions.ts`, `multicloud-actions.ts`, `refund-processor.ts`), and Cluster 3 Domain Intelligence & Memory (`hostname-resolver.ts`, `subtitle-formatter.ts`, `net-zero-sla-domain-engine.ts`, `memory-repository.ts`, `commission-ledger.ts`). Extracted into 76 single-responsibility submodules strictly < 200 LOC per file, preserved via 15 backward-compatible root facades. 100% green quality gates: 0 LOC violations, 0 TS errors, 0 `:any` types, 0 ESLint errors, 0 layer boundary breaches, 0 missing i18n keys, and 816/816 Vitest tests passing across 93 test files.

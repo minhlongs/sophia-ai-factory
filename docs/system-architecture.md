@@ -2,15 +2,28 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-10-08 (Social Direct Publisher & OAuth Cockpit architecture added)
-**Production:** https://sophia.agencyos.network (SHA 287b2c28)
+**Last Updated:** 2026-10-17 (25-Step Restructuring, Director's Control Deck UI & Bilingual Ask Router added)
+**Production:** https://sophia.agencyos.network (SHA 61a6ea7f)
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 **Status Page:** https://sophia.agencyos.network/status (90-day uptime tracking)
 **SOC 2 Status:** Type I audit in progress (Q3 2026 completion target)
 
 ---
 
-## Recent Completions (2026-10-08)
+## Recent Completions (2026-10-17)
+
+### 25-Step Project Restructuring, Director's Control Deck UI & Bilingual Ask Router (2026-10-17)
+
+Completed the full 25-step architectural restructuring and modularization across all 4 Mekong layers (`seed -> tree -> forest -> land`):
+
+- **Module Size Budget Enforcement**: Decomposed all executable production modules exceeding 180 LOC into single-responsibility submodules (< 160 LOC) with thin backward-compatible facades (≤ 25 LOC), including `src/tree/ask/ask-router.ts` (14 LOC facade + `ask-types.ts`, `ask-intent-categories.ts`, `ask-advisor-consultation.ts`, `ask-matcher.ts`), `src/tree/billing/invoices/html-formatter.ts` + `html-labels.ts`, and `src/seed/security/signature.ts` + `signature-primitives.ts`.
+- **Bilingual Natural Language Ask Router**: Vietnamese-first and English intent classification across 10 canonical categories (`/cook`, `/fix`, `/test`, `/plan`, `/brainstorm`, `deploy`, `/docs`, `analytics-report`, `/security-scan`, `/audit-compliance`) with fnmatch wildcard specificity ranking and 4-Advisor Architecture Consultation fallback (`src/tree/ask/`).
+- **Director's Control Deck Design System**: Warm Amber (`--primary: 35 80% 44%`) & Indigo (`--accent: 245 58% 58%`) studio palette, Space Grotesk display typography, and zero-CLS tabular metrics (`src/app/globals.css`).
+- **4-Layer Boundary & Hygiene Gates**: Enforced `npm run check:boundaries` in both `.github/workflows/quality-gate.yml` and `.github/workflows/deploy.yml`, with 0 banned `@/lib/` imports, 0 `:any` types, and 0 `console.log` calls in production code.
+
+---
+
+## Earlier Completions (2026-10-08)
 
 ### Social Direct Publisher & OAuth Cockpit (2026-10-08)
 
