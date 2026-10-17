@@ -8,13 +8,22 @@ export function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-/** Timing-safe hex string comparison. Returns true iff a === b. */
+/**
+ * Timing-safe string comparison. Returns true iff a === b.
+ * Resilient against length-based timing leaks by executing constant-time
+ * bitwise accumulation across maxLen without early exit on length discrepancy.
+ */
 export function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
   const ab = ENC.encode(a);
   const bb = ENC.encode(b);
-  let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  const maxLen = Math.max(ab.length, bb.length);
+  let diff = ab.length ^ bb.length;
+  for (let i = 0; i < maxLen; i++) {
+    const byteA = i < ab.length ? ab[i]! : 0;
+    const byteB = i < bb.length ? bb[i]! : 0;
+    diff |= byteA ^ byteB;
+  }
   return diff === 0;
 }
 
