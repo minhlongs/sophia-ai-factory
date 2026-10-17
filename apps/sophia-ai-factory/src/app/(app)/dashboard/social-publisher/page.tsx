@@ -2,7 +2,7 @@
  * Social Publisher Dashboard Page Route
  * Renders the Obsidian Cyber-Glass Social Direct Publisher Cockpit.
  *
- * Layer: Land/App Route | File size: < 200 LOC | Zero :any.
+ * Layer: Land/App Route | File size: < 120 LOC | Zero :any.
  * @module app/(app)/dashboard/social-publisher/page
  */
 
@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic';
 import React from 'react';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
-import { SocialPublisherCockpit } from '@/components/social-publisher/social-publisher-cockpit';
+import { SocialPublisherPageClient } from '@/components/social-publisher/social-publisher-page-client';
 import { listUserCredentials } from '@/land/social/platform-credentials-store';
+import { listUserDraftJobs, type StoredPublishJob } from '@/land/social/publish-job-store';
 import type { ChannelCardData, ChannelHealthStatus } from '@/components/social-publisher/channel-credentials-grid';
 import type { SocialPlatform } from '@/seed/types/social-publisher-types';
 
@@ -23,11 +24,18 @@ export default async function SocialPublisherPage() {
   }
 
   let dbCredentials: Awaited<ReturnType<typeof listUserCredentials>> = [];
+  let drafts: StoredPublishJob[] = [];
+
   try {
-    dbCredentials = await listUserCredentials(user.id);
+    const [creds, userDrafts] = await Promise.all([
+      listUserCredentials(user.id),
+      listUserDraftJobs(user.id, 20),
+    ]);
+    dbCredentials = creds;
+    drafts = userDrafts;
   } catch {
-    // Falls back to empty list on initial database schema provisioning
     dbCredentials = [];
+    drafts = [];
   }
 
   const channels: ChannelCardData[] = (
@@ -70,7 +78,7 @@ export default async function SocialPublisherPage() {
 
   return (
     <main className="p-4 md:p-8 space-y-6">
-      <SocialPublisherCockpit initialChannels={channels} />
+      <SocialPublisherPageClient initialChannels={channels} initialDrafts={drafts} />
     </main>
   );
 }
