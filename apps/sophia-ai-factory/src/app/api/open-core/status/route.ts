@@ -6,7 +6,7 @@
  *   or server-configured `RAAS_LICENSE_KEY`.
  * - POST (`mode: 'validation_preview'`, `persisted: false`): Stateless server-side
  *   HMAC-SHA256 validation preview for a `SOPHIA-RAAS-v1` token bound to the
- *   authenticated caller's organization/user ID. Never exposes raw `orgId`.
+ *   authenticated caller's organization/user ID.
  *
  * @module app/api/open-core/status/route
  */
@@ -17,27 +17,21 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/org-resolver/org-resolver-service';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import {
-  OPEN_CORE_FEATURES,
-  type SophiaModuleFeatureId,
-} from '@/seed/config/open-core-manifest';
-import {
-  evaluateFeatureGate,
   resolveSophiaEdition,
   type EditionContextInput,
 } from '@/seed/config/edition-config';
 import { verifyRaasLicenseToken } from '@/seed/security/raas-license-verifier';
 import { checkUpstreamReleaseBeacon } from '@/tree/open-core/version-beacon';
+import {
+  evaluateAllFeatureGates,
+  resolveServerEditionContext,
+} from './status-context-resolver';
 
 export const dynamic = 'force-dynamic';
 
 const verifyLicenseBodySchema = z.object({
   licenseKey: z.string().min(20, 'License key is required'),
 });
-
-function evaluateAllFeatureGates(ctx: EditionContextInput) {
-  const featureIds = Object.keys(OPEN_CORE_FEATURES) as SophiaModuleFeatureId[];
-  return featureIds.map((id) => evaluateFeatureGate(id, ctx));
-}
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -49,38 +43,7 @@ export async function GET(request: NextRequest) {
   }
 
   const userTier = await getUserTier(user.id);
-  const envLicenseKey = (process.env.RAAS_LICENSE_KEY ?? '').trim();
-  const envSecret = (process.env.RAAS_LICENSE_SECRET ?? '').trim();
-
-  let hasValidRaasLicense = false;
-  let envVerifiedTier: EditionContextInput['licensedTier'];
-
-  if (envLicenseKey && envSecret.length >= 16) {
-    const verified = await verifyRaasLicenseToken(envLicenseKey, envSecret);
-    if (verified.valid && verified.payload) {
-      hasValidRaasLicense = true;
-      envVerifiedTier = verified.payload.tier;
-    }
-  }
-
-  const baseEdition = resolveSophiaEdition({
-    sophiaEdition: process.env.SOPHIA_EDITION,
-    appUrl: process.env.NEXT_PUBLIC_APP_URL,
-    hasValidRaasLicense,
-  });
-
-  const licensedTier: EditionContextInput['licensedTier'] = hasValidRaasLicense
-    ? envVerifiedTier
-    : baseEdition === 'cloud'
-      ? userTier
-      : undefined;
-
-  const ctx: EditionContextInput = {
-    sophiaEdition: process.env.SOPHIA_EDITION,
-    appUrl: process.env.NEXT_PUBLIC_APP_URL,
-    hasValidRaasLicense,
-    licensedTier,
-  };
+  const { ctx, hasValidRaasLicense, licensedTier } = await resolveServerEditionContext(userTier);
 
   const edition = resolveSophiaEdition(ctx);
   const features = evaluateAllFeatureGates(ctx);
@@ -98,7 +61,7 @@ export async function GET(request: NextRequest) {
     edition,
     userTier,
     hasValidRaasLicense,
-    licensedTier: licensedTier ?? null,
+    licensedTier,
     pricingUrl: 'https://sophia.agencyos.network/pricing',
     features,
     beacon,
@@ -127,11 +90,7 @@ export async function POST(request: NextRequest) {
   const parsed = verifyLicenseBodySchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
-      {
-        success: false,
-        error: 'VALIDATION_ERROR',
-        message: parsed.error.issues[0]?.message ?? 'Invalid license key input',
-      },
+      { success: false, error: 'VALIDATION_ERROR', message: parsed.error.issues[0]?.message },
       { status: 400 },
     );
   }
@@ -142,10 +101,7 @@ export async function POST(request: NextRequest) {
   if (!verification.valid || !verification.payload) {
     return NextResponse.json(
       {
-        success: false,
-        valid: false,
-        mode: 'validation_preview',
-        persisted: false,
+        success: false, valid: false, mode: 'validation_preview', persisted: false,
         reason: verification.reason ?? 'SIGNATURE_MISMATCH',
         pricingUrl: 'https://sophia.agencyos.network/pricing',
       },
@@ -155,18 +111,9 @@ export async function POST(request: NextRequest) {
 
   const resolvedOrgId = await resolveOrgId(user.id).catch(() => null);
   const callerOrgId = resolvedOrgId ?? user.id;
-  if (
-    verification.payload.orgId !== callerOrgId &&
-    verification.payload.orgId !== user.id
-  ) {
+  if (verification.payload.orgId !== callerOrgId && verification.payload.orgId !== user.id) {
     return NextResponse.json(
-      {
-        success: false,
-        valid: false,
-        mode: 'validation_preview',
-        persisted: false,
-        reason: 'ORG_MISMATCH',
-      },
+      { success: false, valid: false, mode: 'validation_preview', persisted: false, reason: 'ORG_MISMATCH' },
       { status: 403 },
     );
   }
@@ -178,10 +125,7 @@ export async function POST(request: NextRequest) {
   };
 
   return NextResponse.json({
-    success: true,
-    valid: true,
-    mode: 'validation_preview',
-    persisted: false,
+    success: true, valid: true, mode: 'validation_preview', persisted: false,
     edition: resolveSophiaEdition(ctx),
     licenseSummary: {
       edition: verification.payload.edition,

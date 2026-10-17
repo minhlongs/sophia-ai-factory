@@ -1,12 +1,6 @@
 /**
  * Director's Control Deck — Commercial SaaS Upgrade & License Validation Modal
  *
- * Renders an executive bilingual (VI/EN) modal when a Community Edition user
- * inspects a commercial feature (`CLOUD_SAAS` or `ENTERPRISE_MASTER`), offering:
- * 1. Direct upgrade CTA to Sophia Managed Cloud (`https://sophia.agencyos.network/pricing`)
- * 2. Stateless server-side `SOPHIA-RAAS-v1` License Key validation preview
- *    (explicitly noting that runtime activation requires server env configuration).
- *
  * @module components/open-core/commercial-upgrade-modal
  */
 
@@ -15,6 +9,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, Cloud, KeyRound, ShieldCheck, Sparkles, X } from 'lucide-react';
 import type { FeatureGateEvaluation } from '@/seed/config/edition-config';
+import { UPGRADE_MODAL_COPY } from './commercial-upgrade-modal-copy';
 
 export interface CommercialUpgradeModalProps {
   readonly evaluation: FeatureGateEvaluation | null;
@@ -23,43 +18,6 @@ export interface CommercialUpgradeModalProps {
   readonly onValidateLicenseKey?: (licenseKey: string) => Promise<void> | void;
   readonly validationFeedback?: { readonly ok: boolean; readonly message: string } | null;
 }
-
-const MODAL_COPY = {
-  vi: {
-    badge: 'SOPHIA CLOUD & ENTERPRISE EDITION',
-    cloudCta: 'Nâng cấp trên Sophia Managed Cloud',
-    licenseLabel: 'Hoặc kiểm tra tính hợp lệ của Khóa Giấy Phép RaaS (Xem trước — không tự lưu):',
-    licensePlaceholder: 'SOPHIA-RAAS-v1.eyJ...',
-    validateBtn: 'Kiểm tra Khóa (Preview)',
-    validatingBtn: 'Đang kiểm tra...',
-    persistHint:
-      'Lưu ý: Bước này chỉ xác thực chữ ký HMAC và phạm vi Tier của khóa. Để kích hoạt vĩnh viễn trên máy chủ tự vận hành, hãy đặt RAAS_LICENSE_KEY trong biến môi trường.',
-    closeBtn: 'Đóng',
-    benefitsTitle: 'Đặc quyền khi nâng cấp lên Sophia Managed Cloud:',
-    benefits: [
-      'Hạ tầng Cloudflare D1 + R2 + Inngest vận hành sẵn (không cần tự quản lý queue/worker)',
-      'Growth Triad v14: Thompson Sampling Bandit & phân bổ ngân sách Half-Kelly',
-      'White-Label Agency Subaccount Portal, Custom Domain & Merkle IPO Audit Vault',
-    ],
-  },
-  en: {
-    badge: 'SOPHIA CLOUD & ENTERPRISE EDITION',
-    cloudCta: 'Upgrade on Sophia Managed Cloud',
-    licenseLabel: 'Or validate a RaaS Commercial License Key (Preview Only — stateless):',
-    licensePlaceholder: 'SOPHIA-RAAS-v1.eyJ...',
-    validateBtn: 'Validate Key (Preview)',
-    validatingBtn: 'Validating...',
-    persistHint:
-      'Note: This check previews HMAC signature and tier entitlements only. For persistent activation on a self-hosted server, set RAAS_LICENSE_KEY in your server environment.',
-    closeBtn: 'Close',
-    benefitsTitle: 'Included with Sophia Managed Cloud & Enterprise:',
-    benefits: [
-      'Managed Cloudflare D1 + R2 + Inngest queue execution with zero DevOps maintenance',
-      'Growth Triad v14: Thompson Sampling Bandit & Half-Kelly capital allocator',
-      'White-Label Agency Subaccount Portal, Custom Domains & Merkle IPO Audit Vault',
-    ],
-  },
-} as const;
 
 export function CommercialUpgradeModal({
   evaluation,
@@ -73,10 +31,9 @@ export function CommercialUpgradeModal({
 
   if (!evaluation || evaluation.allowed) return null;
 
-  const isVi = locale === 'vi';
-  const copy = isVi ? MODAL_COPY.vi : MODAL_COPY.en;
-  const title = isVi ? evaluation.feature.titleVi : evaluation.feature.titleEn;
-  const summary = isVi ? evaluation.messageVi : evaluation.messageEn;
+  const copy = locale === 'vi' ? UPGRADE_MODAL_COPY.vi : UPGRADE_MODAL_COPY.en;
+  const title = locale === 'vi' ? evaluation.feature.titleVi : evaluation.feature.titleEn;
+  const summary = locale === 'vi' ? evaluation.messageVi : evaluation.messageEn;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
