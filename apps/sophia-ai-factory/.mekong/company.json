@@ -1,26 +1,129 @@
 {
   "name": "Sophia AI Factory",
-  "stage": "pmf",
-  "model": "SaaS B2B + Marketplace",
-  "target_arr": "$1M",
-  "icp": "Non-technical CEO/founder running faceless YouTube channels who want to automate video production without hiring a team",
-  "moat": "Vertical integration (AI video generation + SOP automation + NOWPayments/PayOS payment in one platform) + creator network effects on SOP marketplace",
-  "agents": {
-    "ceo": "Strategy, investor relations, board prep, quarterly OKR alignment",
-    "revenue": "Sales pipeline management, NOWPayments/PayOS ops, upsell campaigns, churn prevention",
-    "ops": "SRE, CF deployment, health sweeps, incident response, billing reconciliation",
-    "product": "SOP marketplace curation, feature prioritization, user research, onboarding optimization",
-    "cto": "Architecture decisions, migration management, code review, infra scaling"
+  "tagline": "Create. Automate. Earn. Open-Core AI Video & Revenue Automation.",
+  "stage": "zero",
+  "stage_label": "Zero → Problem-Solution Fit",
+  "stage_as_of": "2026-10-17",
+  "founded": "2026-03 (repository profile; legal establishment date not verified)",
+  "domain": "sophia.agencyos.network",
+  "region": "Vietnam first; Southeast Asia expansion only after validation",
+  "industry": "Open-Core AI SaaS / AI Video Production / Revenue-as-a-Service (RaaS)",
+  "model": "Open-Core Dual-License: Apache-2.0 Community Core + Sophia Commercial / FSL-1.1 Cloud SaaS & Enterprise RaaS",
+  "target_arr": "$1M ARR directional goal; not a forecast",
+  "icp": "Primary commercial ICP: Vietnamese marketing agencies and SMBs (roughly 3–20 staff) without an in-house video team, led by a founder or marketing manager who needs automated, repeatable short-form video production. Secondary PLG developer/agency persona: technical operators evaluating the Apache-2.0 codebase on GitHub before converting to Managed Cloud or purchasing the $4,999 Master white-label license.",
+  "moat": "Dual-engine moat hypothesis: (1) Open-Core trust and developer adoption via Public GitHub Apache-2.0 core, paired with (2) friction-free no-code execution on Cloudflare Workers/Inngest edge, bilingual VN/EN interfaces, customer-owned BYOK envelope encryption (AES-256-GCM), and built-in multi-channel Direct Publishing with anti-detection pacing.",
+  "open_core_architecture": {
+    "editions": {
+      "community": {
+        "edition_flag": "SOPHIA_EDITION=community",
+        "license": "Apache-2.0 (see LICENSE)",
+        "price": "Free / Open Source",
+        "distribution": "Public GitHub Repository",
+        "scope": "4-layer architecture foundation (seed/), BYOK AES-256-GCM Setup Wizard, bilingual /ask 4-advisor router, Telegram Bot (@Sophia_Bbot), single-workspace AI script, TTS, and video generation.",
+        "target": "Developers, technical agencies, and self-hosters."
+      },
+      "cloud": {
+        "edition_flag": "SOPHIA_EDITION=cloud",
+        "license": "Sophia Commercial License (FSL-1.1-style, see LICENSE-COMMERCIAL.md)",
+        "price": "BASIC $199/mo | PREMIUM $399/mo | ENTERPRISE $799/mo",
+        "distribution": "https://sophia.agencyos.network",
+        "scope": "Fully managed Cloudflare Workers edge deployment, 24/7 Inngest durable queues, Direct Social Publisher Cockpit (/dashboard/social-publisher with anti-detection pacing and OCC killswitches), Growth Triad v14 (Thompson Sampling MAB + Half-Kelly allocator), and automated affiliate payouts.",
+        "target": "Non-technical CEOs, growing agencies, and marketing teams."
+      },
+      "enterprise": {
+        "edition_flag": "SOPHIA_EDITION=enterprise",
+        "license": "Sophia Commercial License + Signed RAAS_LICENSE_KEY",
+        "price": "$4,999 one-time Master Handover",
+        "distribution": "Self-hosted with cryptographically signed license key (SOPHIA-RAAS-v1.<payload>.<hmac-sha256>)",
+        "scope": "Self-hosted commercial unlock, White-Label Agency Subaccount Portal, Custom Domains, Cryptographic Merkle IPO Audit Vault, and Day-1 Master Handover probes.",
+        "target": "Large agencies, white-label operators, and enterprise self-hosters."
+      }
+    },
+    "conversion_funnel": {
+      "portability": "Signed HMAC-SHA256 workspace portability bundle (/api/open-core/portability, src/tree/open-core/workspace-portability-store.ts). Allows self-hosted community users to export their channel configurations, script templates, and SOP workflows (excluding raw BYOK keys) and import them into Sophia Managed Cloud in under 60 seconds.",
+      "telemetry_beacon": "Optional, privacy-preserving version beacon (/api/version) checking for security advisories and upgrade paths (opt-out available via SOPHIA_DISABLE_VERSION_BEACON=true)."
+    }
   },
-  "okrs": [
-    "Q2 2026: Fix SOP sync system (all 93 tests pass, sidebar navigation discoverable), launch SOP marketplace publicly (20 creators, 50 SOPs), reach $20K MRR",
-    "Q3 2026: Enterprise tier launch (3 MASTER customers), Vietnam market expansion (Vietnamese UI, PayOS optimization), 70% agent automation of routine ops"
-  ],
+  "business_model": {
+    "type": "Open-Core B2B SaaS + Revenue-as-a-Service (RaaS)",
+    "revenue_streams": [
+      "Managed Cloud monthly subscriptions at published tiers (BASIC $199, PREMIUM $399, ENTERPRISE $799)",
+      "MASTER one-time commercial source-code / white-label handover ($4,999), unlocked via signed RAAS_LICENSE_KEY",
+      "Optional usage-based video credit top-ups if re-enabled intentionally"
+    ],
+    "pricing": {
+      "BASIC": "$199/month",
+      "PREMIUM": "$399/month",
+      "ENTERPRISE": "$799/month",
+      "MASTER": "$4,999 one-time"
+    },
+    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"],
+    "banned_payment_providers": ["Polar.sh", "PayPal", "Stripe for primary customer billing"],
+    "pricing_model": "Tiered subscription plus one-time MASTER handover; customer-paid AI provider usage under BYOK. Gross margin on platform subscription remains high because AI compute costs are paid directly by customer to AI vendors.",
+    "unit_economics_hypotheses": {
+      "target_gross_margin": "85-95% on subscription revenue (excluding founder support time)",
+      "target_cac_payback": "< 3 months for direct sales; < 1 month for GitHub PLG conversions",
+      "status": "Unvalidated hypothesis; 0 paying customers baseline as of 2026-10-17"
+    }
+  },
+  "tech_stack": {
+    "frontend": "Next.js 16 App Router, React 19, TypeScript strict mode (0 :any), Tailwind CSS 4",
+    "backend": "Cloudflare Workers (OpenNext), Cloudflare D1 (SQLite), Cloudflare R2, Cloudflare KV, and Inngest",
+    "ai_services": ["OpenRouter (DeepSeek/Claude/GPT-4o)", "ElevenLabs", "HeyGen", "D-ID", "fal.ai", "Replicate; customer-configured via BYOK Setup Wizard"],
+    "auth": "Better Auth v1.6.2 with D1 Kysely adapter (emailAndPassword, magic links, org RBAC)",
+    "email": "Resend",
+    "bot": "Telegram (@Sophia_Bbot)",
+    "publishing": "Multi-channel Direct Social Publisher (YouTube Shorts, TikTok v2, Instagram Reels) with anti-detection pacing engine",
+    "deployment": "Canonical GitHub Actions CI/CD (.github/workflows/deploy.yml) on push to main with mandatory /api/version bit-for-bit SHA parity check",
+    "monitoring": "Sentry error capture and Cloudflare Worker real-time logs"
+  },
+  "product": {
+    "core_value": "Help non-technical business operators create, automate, and publish AI video campaigns without building an in-house technical or video team.",
+    "key_features": [
+      "Open-Core foundation with dual-license separation and signed workspace portability",
+      "BYOK AES-256-GCM envelope encryption setup wizard for customer-managed API keys",
+      "Multi-channel Direct Social Publisher with organic jitter pacing and channel killswitches",
+      "Bilingual /ask 4-advisor business intelligence consultation router",
+      "Telegram bot commands (@Sophia_Bbot: /campaign, /status, /results)",
+      "Subscription billing through NOWPayments (USDT) and PayOS (Vietnam domestic)"
+    ],
+    "target_users": [
+      "Vietnamese marketing agencies and SMBs that need recurring video content",
+      "Agency operators testing autonomous AI video and affiliate workflows",
+      "Developers and creators leveraging the Apache-2.0 self-hosted community core"
+    ]
+  },
+  "team": {
+    "structure": "Solo founder supported by specialized AI agents; founder retains commercial, financial, legal, and production approval authority.",
+    "roles": {
+      "founder_ceo": "Strategy, customer discovery, direct sales, final business decisions, and external commitments",
+      "cto_agent": "Architecture, engineering, Open-Core code partitioning, quality gates, and deployment evidence",
+      "cmo_agent": "Bilingual positioning, GitHub community content, campaign experiments, and claims verification",
+      "sales_customer_success_agent": "Lead research, discovery/demo preparation, and customer onboarding guidance",
+      "coo_cfo_agents": "Operating procedures, unit-economics ledger, cash tracking, and compliance evidence"
+    }
+  },
+  "metrics": {
+    "as_of": "2026-10-17",
+    "current": {
+      "mrr_usd": 0,
+      "paying_customers": 0,
+      "total_users": "Unvalidated in production ledger",
+      "deployment_status": "Live & verified on Cloudflare Workers edge",
+      "production_url": "https://sophia.agencyos.network"
+    },
+    "targets_next_six_months": [
+      "Close and onboard the first paying customer through the real payment, tier activation, BYOK setup, and first-video path.",
+      "Achieve 500+ GitHub Stars on the Apache-2.0 Community Core repository as an organic PLG acquisition wedge.",
+      "Convert 5 self-hosted community instances to Sophia Managed Cloud via signed Workspace Portability (/api/open-core/portability).",
+      "Validate real unit economics: collected revenue, payment fees, platform costs, and founder support minutes."
+    ]
+  },
   "next_steps": [
-    "Fix SOP sync + navigation audit items (R1-R2)",
-    "Create investor deck + financial model",
-    "Board governance setup",
-    "Launch SOP marketplace publicly",
-    "Growth experiments + channel testing"
+    "1. Founder customer discovery interviews with 5 qualified Vietnamese agency prospects to validate willingness-to-pay at canonical tiers.",
+    "2. Walk the complete customer journey: landing -> BYOK Setup Wizard -> Telegram bot -> NOWPayments/PayOS -> tier activation -> video studio -> direct social publish.",
+    "3. Close the first paid customer pilot using the live canonical payment gateway.",
+    "4. Promote the Public GitHub Open-Core repository to agency and developer communities as a self-hosted alternative.",
+    "5. Maintain strict quality gates: zero :any, all code files <= 180 LOC, and CI/CD live edge SHA parity."
   ]
 }

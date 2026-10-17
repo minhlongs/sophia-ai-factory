@@ -1,19 +1,13 @@
-# Sophia AI Factory — First Five Priority Tasks
+# Sophia AI Factory — First Five Priority Tasks (Open-Core RaaS)
 
-**Planning stage:** Zero → Problem-Solution Fit
-
-**Prepared:** 2026-10-15
-
-**Baseline:** 0 paying customers; targets below are proposed work, not completed results.
+**Planning stage:** Zero → Problem-Solution Fit  
+**Prepared:** 2026-10-17  
+**Baseline:** 0 paying customers; targets below are proposed work, not completed results.  
 
 | # | Priority | Task | Owner | Completion evidence |
 |---:|---|---|---|---|
-| 1 | P0 | Interview five qualified Vietnamese agency or SMB prospects. Record current video workflow, cost/time pain, alternatives, buying authority, willingness to pay at the canonical tiers, and BYOK setup concerns. | Founder / CEO; Sales agent prepares the guide and notes | Five dated interview records; anonymized insight summary; explicit ICP/offer decisions and unresolved assumptions. |
-| 2 | P0 | Walk the real customer funnel from landing/signup through Setup Wizard, Telegram onboarding, NOWPayments or PayOS checkout, confirmed tier activation, and first usable video. Capture failures and route each to its owner. | Founder / Product owner with CTO agent | Dated walkthrough checklist with evidence for each protected flow; defects or blockers linked to follow-up work. Do not treat test payment or simulated activation as a customer sale. |
-| 3 | P0 | Run founder-led demos with qualified prospects and close the first paid pilot using canonical billing. Guide the customer through BYOK setup and the first video, then capture consented feedback. | Founder / CEO; Sales and CS agents support preparation and onboarding | A confirmed payment record, correct tier activation, completed BYOK setup, usable first video, and customer-approved feedback record—or a written explanation of the blocker. |
-| 4 | P1 | Build an actual unit-economics ledger for the pilot: collected subscription revenue, payment fees, platform/workflow expense, refunds, affiliate obligations if any, and founder support minutes. Keep customer-paid provider spend separate. | Founder as finance owner; CFO agent prepares the ledger; accountant reviews as needed | One customer-month ledger with source records and formulas; no estimated “95% margin” claim substituted for missing costs. |
-| 5 | P1 | Prepare and run three bilingual, founder-approved acquisition experiments across direct outreach, educational content, and referral/partner discovery. Measure time, qualified conversations, demos, paid conversion, and follow-up effort before choosing a channel. | CMO and Sales agents prepare; Founder approves and owns external activity | Three experiment records in Vietnamese and English, with audience, hypothesis, actual effort, observed result, and continue/change/stop decision; no unapproved paid spend. |
-
-## Execution Order
-
-Start Tasks 1 and 2 in parallel. Use discovery findings to shape Task 3. Begin Task 4 with the first real pilot payment and keep updating it monthly. Run Task 5 after the offer and tracking baseline are clear enough to compare results.
+| 1 | P0 | **Customer Discovery Interviews:** Interview five qualified Vietnamese agency or SMB prospects. Validate video creation bottlenecks, current tool costs, and willingness to pay at canonical tiers ($199–$799/mo) vs. self-hosting the open-core community edition. | Founder / CEO; Sales agent prepares bilingual guide and question set | Five dated interview logs; synthesized objection matrix; clear ICP and pricing validation findings. |
+| 2 | P0 | **Customer Journey & Protected Flow Verification:** End-to-end verification of the live journey: landing (`sophia.agencyos.network`) → BYOK Setup Wizard → Telegram Bot (`@Sophia_Bbot`) → NOWPayments (USDT) / PayOS checkout → D1 tier activation → video generation → Direct Social Publishing Cockpit (`/dashboard/social-publisher`). | Founder / Product owner with CTO agent | Recorded verification checklist with live edge SHA; 0 defects across protected flows; all failures captured with GitHub issue links. |
+| 3 | P0 | **First Paid Customer Pilot:** Close the first paid customer pilot using canonical billing (NOWPayments or PayOS). Guide the customer through BYOK onboarding, generate their first production video, and schedule automated multi-channel publishing. | Founder / CEO; Sales and CS agents assist onboarding | Live transaction hash / invoice record, confirmed D1 tier activation, completed BYOK encryption, usable published video, and customer feedback. |
+| 4 | P1 | **Open-Core Community Wedge Launch:** Publish and announce the Apache-2.0 Community Core repository on developer and agency channels (GitHub, ProductHunt, VN Tech communities). Demonstrate free local self-hosting via `docs/SELF_HOSTING.md` and the 60-second Cloud upgrade path via `/api/open-core/portability`. | CMO and CTO agents prepare launch materials; Founder approves release | Public repository live with Apache-2.0 license, clean README, verified CI secret gate, and first 100 community stars. |
+| 5 | P1 | **Pilot Unit-Economics & Audit Ledger:** Record real financial actuals for the initial pilots in D1: collected subscription revenue, payment processing fees, Cloudflare edge hosting expense, and founder support minutes. Verify cryptographic Merkle audit hash-chain integrity via `verifyAuditLedgerChain`. | Founder as finance owner; CFO agent compiles ledger; accountant reviews | One customer-month ledger reconciling cash-in/cash-out, verified Merkle root anchor in D1 `financial_close_periods`, and documented unit margin. |

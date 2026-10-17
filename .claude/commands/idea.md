@@ -1,105 +1,58 @@
 ---
-description: "🚀 Business Idea → Validated Strategy → Plan. Entrypoint for /goal pipeline. Integrates with Mekong SDLC (spec/design) + Sophia /cook-auto for execution."
-argument-hint: "[idea description]"
-allowed-tools: Read, Write, Bash, Task, Glob, Grep, AskUserQuestion
+description: "🚀 Open-Core Business Idea → 25-Step Agentic BizPlan OS → Execution Plan. Integrates Community Core (Apache-2.0) + Managed Cloud SaaS & Enterprise RaaS License (FSL-1.1)."
+argument-hint: "[idea description or --deep]"
+allowed-tools: Read, Write, Edit, Bash, Task, Glob, Grep, AskUserQuestion
 ---
 
-# /idea — Business Idea to $1M RAAS Pipeline
+# /idea — Open-Core Business Idea to $1M RaaS & 25-Step BizPlan Pipeline
 
-You are a disciplined business architect. When user provides an idea, execute this STRICT pipeline.
+You are an elite Open-Core SaaS & Revenue-as-a-Service (RaaS) architect. When the user runs `/idea`, execute this structured pipeline grounded in Sophia AI Factory's **Open-Core Dual-License Architecture**:
+
+- **Community Edition (`SOPHIA_EDITION=community`, `Apache-2.0`):** Free self-hosted core on Public GitHub (`seed/` 4-layer foundation, AES-256-GCM BYOK Setup Wizard, bilingual `/ask` 4-advisor router, Telegram Bot `@Sophia_Bbot`, single-workspace AI script/TTS/video studio). Acts as the Product-Led Growth (PLG) top-of-funnel.
+- **Managed Cloud Edition (`SOPHIA_EDITION=cloud`, `$199 / $399 / $799 per month`):** Hosted on Cloudflare Workers + D1 + R2 + KV + Inngest (`https://sophia.agencyos.network`), with configured social publishing adapters (`/dashboard/social-publisher`), Growth Triad v14 (Thompson Sampling MAB + Half-Kelly allocator), and automated affiliate payouts.
+- **Enterprise / Master Handover Edition (`SOPHIA_EDITION=enterprise`, `$4,999 one-time`):** Self-hosted commercial features unlocked via cryptographically signed `RAAS_LICENSE_KEY` (`SOPHIA-RAAS-v1.<payload>.<hmac-sha256>` verified by `src/seed/security/raas-license-verifier.ts`), enabling White-Label Agency Subaccount Portals, Custom Domains, Cryptographic Merkle IPO Audit Vault, and Day-1 Master Handover probes.
+- **Community-to-Cloud Conversion Funnel:** Self-hosters export a signed HMAC workspace portability bundle (`/api/open-core/portability`, `src/tree/open-core/workspace-portability-store.ts`, excluding raw BYOK secrets) and import it into Managed Cloud or Enterprise instances.
 
 ## IMPORTANT CONSTRAINTS
 
-- DO NOT freestyle or explore tangents
-- Each step has a TOKEN BUDGET — stay within it
-- Output ONLY what's asked, nothing more
-- If uncertain, ASK instead of guessing and wasting tokens
-- This command lives in the project `.claude/commands/` folder
+- **Truthfulness & Evidence Labels:** Distinguish `Verified` (backed by live repo/financial records), `Hypothesis` (requires customer validation), and `Target` (directional goal). Never fabricate MRR, customer counts, or third-party compliance certifications.
+- **Canonical Stack & Billing:** Next.js 16 App Router + Cloudflare Workers/D1/R2/KV + Inngest + Customer BYOK. Billing strictly via **NOWPayments (USDT)** and **PayOS (Vietnam domestic)** (`BASIC $199/mo`, `PREMIUM $399/mo`, `ENTERPRISE $799/mo`, `MASTER $4,999`). Polar.sh and PayPal are banned.
+- **Protected Flows:** Setup Wizard, Telegram Bot (`@Sophia_Bbot`), and NOWPayments IPN webhook → tier activation must never be broken.
+- **Clean Architecture:** 4-layer boundaries (`seed → tree → forest → land`), all executable files strictly $\le 180$ LOC, 0 `:any`, 0 `console.log`.
 
-## Pipeline (Sequential, No Skipping)
+## Pipeline Execution
 
-### Step 1: Idea Validation (max 500 tokens output)
+### Step 1: Open-Core Idea & Edition Partitioning (max 500 tokens output)
 
-Analyze the idea against these criteria:
+Analyze the idea or feature across the Open-Core boundary:
+- **Community Core (`Apache-2.0`):** What belongs in the free self-hosted developer wedge to maximize GitHub adoption, trust, and stars?
+- **Commercial / Cloud Boundary (`Sophia Commercial / FSL-1.1`):** What requires managed multi-tenant orchestration, 24/7 Inngest queues, or cryptographic `RAAS_LICENSE_KEY` gating (`src/seed/config/open-core-manifest.ts`)?
+- **PLG Upgrade Trigger:** How does a self-hosted user hit the natural scale/operations ceiling and convert via `CommercialUpgradeModal` + `/api/open-core/portability`?
+- **Technical Feasibility:** Verify against Next.js 16 + Cloudflare D1/R2/KV + Inngest + BYOK no-tech doctrine.
 
-- Market size (TAM/SAM/SOM estimate)
-- Competition level (low/med/high)
-- Technical feasibility with current stack (Next.js + Cloudflare D1 + NOWPayments + AI services)
-- Time to MVP (days, not weeks)
-- Revenue potential (monthly, realistic)
+Output: **GO / NO-GO** with edition placement (`community` vs `cloud` vs `enterprise`) and 3-line reasoning.
 
-Output: GO / NO-GO with 3-line reasoning.
+### Step 2: Open-Core Business Model Canvas & 25-Step Architecture Sync
 
-If NO-GO, suggest pivot.
+Map the strategy across the **Tri-Layer Architecture (`[Business]`, `[Agentic]`, `[Governance]`)** and synchronize the 25-step Company Blueprint:
+- **Phase 1 — Foundation (Steps 1–5):** Open-Core Master Framework, 2026 Truthful Plan Refresh, Agentic OS (CTO, CMO, Sales/CS, COO/CFO agents under human approval), IPO-Readiness Evidence Baseline, and 6-Month PLG + Direct Sales Roadmap.
+- **Phase 2 — Business Model (Steps 6–7):** Dual-Funnel Unit Economics (GitHub Community Self-Hosted PLG + Direct Agency/SMB SaaS + $4,999 Master License) and Buyer/Developer Personas.
+- **Phase 3 — Brand, Open-Source Community & Content (Steps 8–12):** Open-Core Category Positioning, GitHub README/Docs/Bilingual Content Pillars, Conversion Narrative, Performance Creative Testing, and Case Study Evidence Rules.
+- **Phase 4 — Revenue & Conversion Engine (Steps 13–15):** Bilingual Lifecycle & Upgrade Sequences, Self-Host → Managed Cloud Portability Funnel + Founder-Led Sales Playbook, and Bullseye GTM Experiments.
+- **Phase 5 — Operations, Security & Readiness (Steps 16–21):** AARRR + Open-Core Funnel Metrics, VC/Strategic Narrative, Dual-License IP & Secret Hygiene Risk OS, Solo-Founder + Agent Org Design, Open-Core Comparable Benchmarks, and Evidence-Backed Data Room.
+- **Phase 6 — Execution & Governance (Steps 22–25):** Quarterly OKRs, Board/Founder Governance, Responsible AI & ESG Controls, and Crisis/Incident Playbook.
 
-Do NOT proceed until user confirms.
+Update canonical artifacts:
+1. `.mekong/company.json` (and `apps/sophia-ai-factory/.mekong/company.json`)
+2. `plans/company-blueprint/plan.md`
+3. `plans/company-blueprint/tasks.md`
 
-### Step 2: Business Model Canvas (max 800 tokens output)
+### Step 3: Implementation Plan Generation
 
-ONLY if Step 1 = GO:
+When turning the validated idea into code:
+- Create a bounded implementation plan at `./plans/{date}-{slug}/plan.md` via `/ak:plan` with explicit file ownership, `< 180` LOC per file constraint, and Open-Core manifest classification (`src/seed/config/open-core-manifest.ts`).
 
-- Value Proposition (1 sentence)
-- Customer Segments (max 3)
-- Revenue Streams (pricing model)
-- Key Resources (what we build)
-- Cost Structure (hosting, API costs)
-- Unfair Advantage (why us)
+### Step 4: Execution & CI/CD Edge Verification Handoff
 
-### Step 3: Generate PRD (delegate to planner subagent)
-
-ONLY if Step 2 approved:
-
-```
-Use planner subagent to create PRD at:
-./plans/{date}-{slug}/plan.md
-
-Include: user stories, tech stack, API spec, data model, deployment target
-Max 5 phases, each phase max 1 day of work
-```
-
-After PRD created, ask user to review and approve.
-
-### Step 4: Execution Handoff
-
-After PRD approved, hand off to Mekong SDLC + Sophia execution:
-
-1. **Mekong spec phase** (if technical spec needed):
-   ```
-   /mekong spec new {slug}
-   ```
-   This generates Mekong's spec scaffold (CLAUDE.spec.md) with formal requirements.
-
-2. **Sophia execution** — output to user:
-   ```
-   /cook-auto ./plans/{date}-{slug}/plan.md
-   ```
-
-User runs `/cook-auto` to start automatic implementation.
-
-## Integration with Mekong CLI
-
-| Step | Tool | Purpose |
-|------|------|---------|
-| Strategy validation | `/idea` (this command) | Business model, GO/NO-GO, PRD |
-| Technical spec | `/mekong spec new <slug>` | Formal SDLC spec scaffold |
-| Design | `/mekong design <slug>` | Architecture + data model |
-| Implementation | `/cook-auto <plan-path>` | Auto-execute plan phases |
-| Metrics | `/mekong metrics` | Track progress |
-| Eval | `/mekong eval-agent <id>` | Quality assessment |
-
-## Cross-repo artifact sync
-
-When `/idea` creates a plan, also register it with Mekong:
-
-```
-cd /Users/macbook/mekong-cli && mekong spec sync ./plans/{date}-{slug}/plan.md
-```
-
-This creates a symlink in `.mekong/phases/` so Mekong can track the Sophia plan.
-
-## Anti-Waste Rules
-
-- No market research essays — bullet points only
-- No "let me think about this" — think silently, output conclusions
-- No code in this command — code happens in `/cook-auto`
-- If you catch yourself writing >1000 tokens for any step, STOP and summarize
+- Execute implementation via `/ak:cook ./plans/{date}-{slug}/plan.md`.
+- Deploy exclusively through the canonical **GitHub Actions CI/CD pipeline** (`.github/workflows/deploy.yml`) on push to `main`, followed by bit-for-bit live SHA parity verification against `https://sophia.agencyos.network/api/version`.

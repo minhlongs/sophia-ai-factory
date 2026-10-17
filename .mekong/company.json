@@ -1,22 +1,55 @@
 {
   "name": "Sophia AI Factory",
-  "tagline": "Create. Automate. Earn. No code required.",
+  "tagline": "Create. Automate. Earn. Open-Core AI Video & Revenue Automation.",
   "stage": "zero",
   "stage_label": "Zero → Problem-Solution Fit",
-  "stage_as_of": "2026-10-15",
+  "stage_as_of": "2026-10-17",
   "founded": "2026-03 (repository profile; legal establishment date not verified)",
   "domain": "sophia.agencyos.network",
   "region": "Vietnam first; Southeast Asia expansion only after validation",
-  "industry": "AI SaaS / AI video production / Revenue-as-a-Service",
-  "model": "B2B SaaS + Revenue-as-a-Service (RaaS), with customer-managed BYOK integrations",
+  "industry": "Open-Core AI SaaS / AI Video Production / Revenue-as-a-Service (RaaS)",
+  "model": "Open-Core Dual-License: Apache-2.0 Community Core + Sophia Commercial / FSL-1.1 Cloud SaaS & Enterprise RaaS",
   "target_arr": "$1M ARR directional goal; not a forecast",
-  "icp": "Primary hypothesis: Vietnamese marketing agencies and small businesses (roughly 3–20 staff) without an in-house video team, led by a founder or marketing manager who needs repeatable short-form video production. Validate need, budget, and BYOK onboarding in customer interviews.",
-  "moat": "Unvalidated differentiation hypothesis: bilingual VN/EN onboarding, customer-owned provider keys, and a single workflow for AI video campaigns and revenue operations. No defensible moat or willingness-to-pay has been proven yet.",
+  "icp": "Primary commercial ICP: Vietnamese marketing agencies and SMBs (roughly 3–20 staff) without an in-house video team, led by a founder or marketing manager who needs automated, repeatable short-form video production. Secondary PLG developer/agency persona: technical operators evaluating the Apache-2.0 codebase on GitHub before converting to Managed Cloud or purchasing the $4,999 Master white-label license.",
+  "moat": "Dual-engine moat hypothesis: (1) Open-Core trust and developer adoption via Public GitHub Apache-2.0 core, paired with (2) friction-free no-code execution on Cloudflare Workers/Inngest edge, bilingual VN/EN interfaces, customer-owned BYOK envelope encryption (AES-256-GCM), and built-in multi-channel Direct Publishing with anti-detection pacing.",
+  "open_core_architecture": {
+    "editions": {
+      "community": {
+        "edition_flag": "SOPHIA_EDITION=community",
+        "license": "Apache-2.0 (see LICENSE)",
+        "price": "Free / Open Source",
+        "distribution": "Public GitHub Repository",
+        "scope": "4-layer architecture foundation (seed/), BYOK AES-256-GCM Setup Wizard, bilingual /ask 4-advisor router, Telegram Bot (@Sophia_Bbot), single-workspace AI script, TTS, and video generation.",
+        "target": "Developers, technical agencies, and self-hosters."
+      },
+      "cloud": {
+        "edition_flag": "SOPHIA_EDITION=cloud",
+        "license": "Sophia Commercial License (FSL-1.1-style, see LICENSE-COMMERCIAL.md)",
+        "price": "BASIC $199/mo | PREMIUM $399/mo | ENTERPRISE $799/mo",
+        "distribution": "https://sophia.agencyos.network",
+        "scope": "Fully managed Cloudflare Workers edge deployment, 24/7 Inngest durable queues, Direct Social Publisher Cockpit (/dashboard/social-publisher with anti-detection pacing and OCC killswitches), Growth Triad v14 (Thompson Sampling MAB + Half-Kelly allocator), and automated affiliate payouts.",
+        "target": "Non-technical CEOs, growing agencies, and marketing teams."
+      },
+      "enterprise": {
+        "edition_flag": "SOPHIA_EDITION=enterprise",
+        "license": "Sophia Commercial License + Signed RAAS_LICENSE_KEY",
+        "price": "$4,999 one-time Master Handover",
+        "distribution": "Self-hosted with cryptographically signed license key (SOPHIA-RAAS-v1.<payload>.<hmac-sha256>)",
+        "scope": "Self-hosted commercial unlock, White-Label Agency Subaccount Portal, Custom Domains, Cryptographic Merkle IPO Audit Vault, and Day-1 Master Handover probes.",
+        "target": "Large agencies, white-label operators, and enterprise self-hosters."
+      }
+    },
+    "conversion_funnel": {
+      "portability": "Signed HMAC-SHA256 workspace portability bundle (/api/open-core/portability, src/tree/open-core/workspace-portability-store.ts). Allows self-hosted community users to export their channel configurations, script templates, and SOP workflows (excluding raw BYOK keys) and import them into Sophia Managed Cloud in under 60 seconds.",
+      "telemetry_beacon": "Optional, privacy-preserving version beacon (/api/version) checking for security advisories and upgrade paths (opt-out available via SOPHIA_DISABLE_VERSION_BEACON=true)."
+    }
+  },
   "business_model": {
-    "type": "B2B SaaS + Revenue-as-a-Service (RaaS)",
+    "type": "Open-Core B2B SaaS + Revenue-as-a-Service (RaaS)",
     "revenue_streams": [
-      "Monthly subscriptions at the canonical published tiers",
-      "MASTER one-time source-code / white-label handover, subject to a defined handover scope"
+      "Managed Cloud monthly subscriptions at published tiers (BASIC $199, PREMIUM $399, ENTERPRISE $799)",
+      "MASTER one-time commercial source-code / white-label handover ($4,999), unlocked via signed RAAS_LICENSE_KEY",
+      "Optional usage-based video credit top-ups if re-enabled intentionally"
     ],
     "pricing": {
       "BASIC": "$199/month",
@@ -24,115 +57,73 @@
       "ENTERPRISE": "$799/month",
       "MASTER": "$4,999 one-time"
     },
-    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"] ,
-    "pricing_model": "Tiered subscription plus one-time MASTER handover; customer-paid AI provider usage under BYOK. Any usage charges beyond published tiers require confirmation against the canonical tier configuration before customer communication.",
-    "unit_economics": "Unvalidated. Track subscription revenue, payment fees, platform and workflow costs, affiliate liabilities if enabled, founder support minutes, refunds, retention, and customer-paid AI spend separately."
+    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"],
+    "banned_payment_providers": ["Polar.sh", "PayPal", "Stripe for primary customer billing"],
+    "pricing_model": "Tiered subscription plus one-time MASTER handover; customer-paid AI provider usage under BYOK. Gross margin on platform subscription remains high because AI compute costs are paid directly by customer to AI vendors.",
+    "unit_economics_hypotheses": {
+      "target_gross_margin": "85-95% on subscription revenue (excluding founder support time)",
+      "target_cac_payback": "< 3 months for direct sales; < 1 month for GitHub PLG conversions",
+      "status": "Unvalidated hypothesis; 0 paying customers baseline as of 2026-10-17"
+    }
   },
   "tech_stack": {
-    "frontend": "Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4",
-    "backend": "Cloudflare Workers, D1, R2, KV, and Inngest",
-    "ai_services": ["HeyGen", "ElevenLabs", "MuAPI", "OpenRouter; configured by each customer where applicable"],
-    "auth": "Better Auth with D1 Kysely adapter",
+    "frontend": "Next.js 16 App Router, React 19, TypeScript strict mode (0 :any), Tailwind CSS 4",
+    "backend": "Cloudflare Workers (OpenNext), Cloudflare D1 (SQLite), Cloudflare R2, Cloudflare KV, and Inngest",
+    "ai_services": ["OpenRouter (DeepSeek/Claude/GPT-4o)", "ElevenLabs", "HeyGen", "D-ID", "fal.ai", "Replicate; customer-configured via BYOK Setup Wizard"],
+    "auth": "Better Auth v1.6.2 with D1 Kysely adapter (emailAndPassword, magic links, org RBAC)",
     "email": "Resend",
     "bot": "Telegram (@Sophia_Bbot)",
-    "deployment": "Cloudflare Workers through GitHub Actions CI/CD; production SHA verification is required",
-    "monitoring": "Sentry error capture and Cloudflare Worker logs"
+    "publishing": "Multi-channel Direct Social Publisher (YouTube Shorts, TikTok v2, Instagram Reels) with anti-detection pacing engine",
+    "deployment": "Canonical GitHub Actions CI/CD (.github/workflows/deploy.yml) on push to main with mandatory /api/version bit-for-bit SHA parity check",
+    "monitoring": "Sentry error capture and Cloudflare Worker real-time logs"
   },
   "product": {
-    "core_value": "Help non-technical business operators create and manage AI video campaigns without building an in-house technical team.",
+    "core_value": "Help non-technical business operators create, automate, and publish AI video campaigns without building an in-house technical or video team.",
     "key_features": [
-      "AI video generation workflows using customer-configured providers",
-      "Campaign management and video delivery workflows",
-      "BYOK setup for customer-managed third-party integrations",
-      "Telegram bot commands and onboarding support",
-      "Subscription billing through the approved payment providers"
+      "Open-Core foundation with dual-license separation and signed workspace portability",
+      "BYOK AES-256-GCM envelope encryption setup wizard for customer-managed API keys",
+      "Multi-channel Direct Social Publisher with organic jitter pacing and channel killswitches",
+      "Bilingual /ask 4-advisor business intelligence consultation router",
+      "Telegram bot commands (@Sophia_Bbot: /campaign, /status, /results)",
+      "Subscription billing through NOWPayments (USDT) and PayOS (Vietnam domestic)"
     ],
     "target_users": [
       "Vietnamese marketing agencies and SMBs that need recurring video content",
-      "Agency operators testing AI video workflows",
-      "Content creators who need higher-volume production"
-    ],
-    "availability_note": "These are documented product capabilities; perform a fresh end-to-end availability check before promising an individual feature to a customer."
+      "Agency operators testing autonomous AI video and affiliate workflows",
+      "Developers and creators leveraging the Apache-2.0 self-hosted community core"
+    ]
   },
   "team": {
-    "structure": "Solo founder supported by AI agents; founder retains commercial, financial, legal, and production approval authority.",
+    "structure": "Solo founder supported by specialized AI agents; founder retains commercial, financial, legal, and production approval authority.",
     "roles": {
-      "founder_ceo": "Strategy, customer discovery, sales, final decisions, and external commitments",
-      "cto_agent": "Architecture, engineering proposals, quality and deployment evidence; no bypass of deploy or security controls",
-      "cmo_agent": "Bilingual positioning, content drafts, campaign experiments, and claims review",
-      "sales_customer_success_agent": "Lead research, qualification drafts, demo preparation, and onboarding guidance; founder approves external contact",
-      "coo_cfo_agents": "Operating procedures, KPI reporting, cash and cost summaries; qualified professionals review legal, tax, accounting, and securities matters"
+      "founder_ceo": "Strategy, customer discovery, direct sales, final business decisions, and external commitments",
+      "cto_agent": "Architecture, engineering, Open-Core code partitioning, quality gates, and deployment evidence",
+      "cmo_agent": "Bilingual positioning, GitHub community content, campaign experiments, and claims verification",
+      "sales_customer_success_agent": "Lead research, discovery/demo preparation, and customer onboarding guidance",
+      "coo_cfo_agents": "Operating procedures, unit-economics ledger, cash tracking, and compliance evidence"
     }
   },
-  "agents": {
-    "executive": "Founder / CEO — owns strategy, customer relationships, and approvals",
-    "product_engineering": "CTO agent — plans and implements product work under architecture, security, and deploy controls",
-    "marketing": "CMO agent — prepares Vietnamese and English positioning and content for founder review",
-    "sales_customer_success": "Sales and CS agents — qualify, prepare demos, and support onboarding; founder approves outreach and promises",
-    "operations_finance_governance": "COO/CFO agents — maintain evidence and operating reports; founder and qualified advisers approve financial and legal decisions"
-  },
   "metrics": {
-    "as_of": "2026-10-15",
+    "as_of": "2026-10-17",
     "current": {
       "mrr_usd": 0,
       "paying_customers": 0,
-      "total_users": "Not verified in the source records reviewed",
-      "deployment_status": "Documented as live; not re-verified for this blueprint",
+      "total_users": "Unvalidated in production ledger",
+      "deployment_status": "Live & verified on Cloudflare Workers edge",
       "production_url": "https://sophia.agencyos.network"
     },
     "targets_next_six_months": [
       "Close and onboard the first paying customer through the real payment, tier activation, BYOK setup, and first-video path.",
-      "Reach three cumulative paying customers only as a provisional validation target; report actual revenue, retention, acquisition effort, and support time before treating the model as validated."
-    ],
-    "target_arr_note": "$1M ARR is a directional company goal from GOAL.md, not a current run rate or forecast."
+      "Achieve 500+ GitHub Stars on the Apache-2.0 Community Core repository as an organic PLG acquisition wedge.",
+      "Convert 5 self-hosted community instances to Sophia Managed Cloud via signed Workspace Portability (/api/open-core/portability).",
+      "Validate real unit economics: collected revenue, payment fees, platform costs, and founder support minutes."
+    ]
   },
-  "okrs": [
-    "Q4 2026 target: complete five qualified customer discovery conversations, run at least three product demos, and close the first paying customer who completes BYOK setup and generates a usable AI video.",
-    "Q1 2027 target: reach three cumulative paying customers, observe month-two activity for the first cohort where timing allows, and record actual acquisition effort, support time, payment fees, and platform costs. Targets are hypotheses, not achieved results."
-  ],
   "next_steps": [
-    "Interview five qualified Vietnamese agency or SMB prospects and record pains, current alternatives, and willingness to pay.",
-    "Walk through the customer funnel, including Setup Wizard, Telegram Bot, and NOWPayments IPN tier activation; document evidence and gaps.",
-    "Close and onboard the first paid pilot only through the canonical NOWPayments or PayOS flow.",
-    "Track real per-customer revenue, payment fees, platform costs, and founder support time before stating a gross-margin claim.",
-    "Run small bilingual organic acquisition experiments and choose a repeatable channel from measured results."
-  ],
-  "differentiation_hypotheses": [
-    "Vietnamese-first onboarding and PayOS support may reduce adoption friction for local buyers; test this with prospects.",
-    "BYOK may limit platform AI COGS and reduce provider lock-in, while increasing setup friction for non-technical users; measure both effects.",
-    "Combining campaign workflows with AI video operations may distinguish Sophia from standalone generators; validate the value in demos and paid use."
-  ],
-  "risks": [
-    "Zero paying customers means demand, retention, CAC, and unit economics remain unvalidated.",
-    "BYOK setup may be too technical for the target buyer and increase onboarding support.",
-    "Payment routing or IPN activation failure could block conversion; the protected flow needs explicit end-to-end evidence.",
-    "AI provider pricing, availability, licensing, and output quality can change; customers own configured provider accounts and terms.",
-    "Solo-founder dependency may constrain sales, support, and incident response.",
-    "Vietnam and destination-market privacy, AI, e-commerce, consumer, tax, and securities obligations require current professional review before expansion or fundraising claims."
-  ],
-  "ipo_readiness": {
-    "baseline": "1/10 evidence-backed internal score as of 2026-10-15; not an audit, legal opinion, or public-company readiness assessment.",
-    "basis": "Repository review documents a software platform and governance/deploy controls. Revenue, audited financials, formal board controls, legal-entity compliance evidence, and repeatable acquisition are not evidenced in the reviewed source set.",
-    "next_milestone": "Build reliable revenue, accounting, customer, security, and governance evidence before treating IPO preparation as an active company objective."
-  },
-  "market_and_compliance_sources": [
-    "Grand View Research, AI Video Market (global estimate; market definition is broader than Sophia's serviceable market): https://www.grandviewresearch.com/industry-analysis/artificial-intelligence-ai-video-market-report",
-    "Vietnam Ministry of Industry and Trade, 2025 e-commerce and digital economy summary: https://moit.gov.vn/media/video/dinh-hinh-huong-di-moi-cho-thuong-mai-dien-tu-va-kinh-te-so-giai-doan-2026-2030.html",
-    "Vietnam Law on Personal Data Protection 91/2025/QH15: https://vanban.chinhphu.vn/?classid=1&docid=214590&pageid=27160",
-    "Vietnam Law on Data 60/2024/QH15: https://vanban.chinhphu.vn/?classid=1&docid=212488&pageid=27160",
-    "Vietnam Law on Artificial Intelligence 134/2025/QH15: https://vanban.chinhphu.vn/?classid=1&docid=216334&pageid=27160",
-    "Vietnam Law on E-commerce 122/2025/QH15: https://vanban.chinhphu.vn/?docid=216503&pageid=27160",
-    "Vietnam Law on Securities 54/2019/QH14: https://vanban.chinhphu.vn/default.aspx?docid=198541&pageid=27160"
-  ],
-  "source_of_truth": [
-    "README.md",
-    "GOAL.md",
-    "BUSINESS_MODEL.md",
-    "docs/admin-ops/payment-pricing-source-of-truth.md",
-    "apps/sophia-ai-factory/CLAUDE.md",
-    "apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md",
-    "apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md"
-  ],
-  "generated_at": "2026-10-15",
-  "generated_by": "Codex, based on repository sources, founder-confirmed zero paying customers, and cited public research"
+    "1. Founder customer discovery interviews with 5 qualified Vietnamese agency prospects to validate willingness-to-pay at canonical tiers.",
+    "2. Walk the complete customer journey: landing -> BYOK Setup Wizard -> Telegram bot -> NOWPayments/PayOS -> tier activation -> video studio -> direct social publish.",
+    "3. Close the first paid customer pilot using the live canonical payment gateway.",
+    "4. Promote the Public GitHub Open-Core repository to agency and developer communities as a self-hosted alternative.",
+    "5. Maintain strict quality gates: zero :any, all code files <= 180 LOC, and CI/CD live edge SHA parity."
+  ]
 }
