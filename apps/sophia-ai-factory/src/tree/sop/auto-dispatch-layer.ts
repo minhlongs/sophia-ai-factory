@@ -15,76 +15,14 @@
 
 import { routeLLM } from '@/tree/openclaw';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  RULES,
+  getDispatchRule,
+  type MissionType,
+  type MissionTypeRule,
+} from './mission-taxonomy-rules';
 
-// ---------------------------------------------------------------------------
-// Mission taxonomy — add new types here as coverage grows.
-// ---------------------------------------------------------------------------
-
-export type MissionType =
-  | 'content'
-  | 'video'
-  | 'social'
-  | 'support'
-  | 'finance'
-  | 'sales'
-  | 'onboarding'
-  | 'engineering'
-  | 'marketing'
-  | 'unknown';
-
-interface MissionTypeRule {
-	missionType: MissionType;
-  keywords: string[];
-  agentFleet: string[];
-}
-
-const RULES: MissionTypeRule[] = [
-  {
-    keywords: ['post', 'blog', 'article', 'newsletter', 'copy', 'seo', 'email campaign'],
-    agentFleet: ['copywriter', 'seo-reviewer'],
-    missionType: 'content' as MissionType,
-  },
-  {
-    keywords: ['video', 'render', 'avatar', 'voiceover', 'caption', 'subtitle'],
-    agentFleet: ['video-producer', 'captioner', 'quality-checker'],
-    missionType: 'video' as MissionType,
-  },
-  {
-    keywords: ['social', 'tiktok', 'instagram', 'linkedin', 'twitter', 'engagement'],
-    agentFleet: ['social-manager', 'copywriter'],
-    missionType: 'social' as MissionType,
-  },
-  {
-    keywords: ['support', 'ticket', 'complaint', 'refund', 'helpdesk', 'customer'],
-    agentFleet: ['support-agent', 'sentinel'],
-    missionType: 'support' as MissionType,
-  },
-  {
-    keywords: ['invoice', 'revenue', 'billing', 'tax', 'expense', 'payroll'],
-    agentFleet: ['finance-clerk', 'auditor'],
-    missionType: 'finance' as MissionType,
-  },
-  {
-    keywords: ['proposal', 'outreach', 'cold email', 'meeting', 'deal', 'pipeline'],
-    agentFleet: ['sales-writer', 'scheduler'],
-    missionType: 'sales' as MissionType,
-  },
-  {
-    keywords: ['onboard', 'new client', 'setup', 'kickoff', 'welcome'],
-    agentFleet: ['onboarding-coordinator'],
-    missionType: 'onboarding' as MissionType,
-  },
-  {
-    keywords: ['deploy', 'migrate', 'fix', 'bug', 'incident', 'ci/cd', 'infrastructure'],
-    agentFleet: ['devops-engineer', 'qa-tester'],
-    missionType: 'engineering' as MissionType,
-  },
-  {
-    keywords: ['campaign', 'ads', 'cac', 'growth', 'channel', 'acquisition', 'referral'],
-    agentFleet: ['growth-hacker', 'analyst'],
-    missionType: 'marketing' as MissionType,
-  },
-];
+export { RULES, getDispatchRule, type MissionType, type MissionTypeRule };
 
 // ---------------------------------------------------------------------------
 // Classification
@@ -103,12 +41,28 @@ export async function classifyMission(text: string): Promise<MissionType> {
   }
   // LLM fallback — try once; swallow errors so caller still gets a type.
   try {
-	const result = await routeLLM('lite', `Classify the following mission into one of: content, video, social, support, finance, sales, onboarding, engineering, marketing, unknown.\nMission: ${text.slice(0, 2000)}`);
+    const result = await routeLLM(
+      'lite',
+      `Classify the following mission into one of: content, video, social, support, finance, sales, onboarding, engineering, marketing, unknown.\nMission: ${text.slice(0, 2000)}`,
+    );
     const answer = result.text.trim().toLowerCase();
-    const allowed = new Set<MissionType>(['content', 'video', 'social', 'support', 'finance', 'sales', 'onboarding', 'engineering', 'marketing', 'unknown']);
+    const allowed = new Set<MissionType>([
+      'content',
+      'video',
+      'social',
+      'support',
+      'finance',
+      'sales',
+      'onboarding',
+      'engineering',
+      'marketing',
+      'unknown',
+    ]);
     if (allowed.has(answer as MissionType)) return answer as MissionType;
   } catch (err) {
-    logger.warn('auto-dispatch: LLM classify failed', { error: err instanceof Error ? err.message : String(err) });
+    logger.warn('auto-dispatch: LLM classify failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
   return 'unknown';
 }
@@ -116,14 +70,6 @@ export async function classifyMission(text: string): Promise<MissionType> {
 // ---------------------------------------------------------------------------
 // Auto-dispatch decision
 // ---------------------------------------------------------------------------
-
-/**
- * Returns a fleet spec when the mission can be dispatched without human input.
- * Returns null when classification is `unknown` or the rule has no fleet.
- */
-export function getDispatchRule(missionType: MissionType): MissionTypeRule | undefined {
-  return RULES.find((r) => r.missionType === missionType);
-}
 
 export interface DispatchDecision {
   canAuto: boolean;
@@ -147,7 +93,7 @@ export async function canAutoDispatch(missionText: string): Promise<DispatchDeci
 // Coverage metrics
 // ---------------------------------------------------------------------------
 
-interface CoverageSnapshot {
+export interface CoverageSnapshot {
   totalTypes: number;
   autoTypes: number;
   coveragePct: number;

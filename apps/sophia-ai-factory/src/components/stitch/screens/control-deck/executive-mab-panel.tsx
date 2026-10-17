@@ -7,6 +7,7 @@ import type {
   StitchScreenSpec,
 } from '@/seed/types/stitch-control-deck';
 import { rebalanceHalfKellyAction } from '@/land/control-deck';
+import { MabArmCard } from './control-deck-subcards';
 
 export interface ExecutiveMabPanelProps {
   readonly screen: StitchScreenSpec;
@@ -73,7 +74,6 @@ export function ExecutiveMabPanel({
         </div>
       </header>
 
-      {/* Interactive MCU Half-Kelly Rebalancer Bar */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#1E2235] bg-[#1A1C28]/70 px-4 py-3">
         <div className="flex flex-1 flex-wrap items-center gap-3">
           <label
@@ -122,55 +122,7 @@ export function ExecutiveMabPanel({
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {armsState.map((arm) => (
-          <article
-            key={arm.armId}
-            aria-label={arm.hookName[lang]}
-            className={`rounded-lg border p-4 transition-colors duration-150 motion-reduce:transition-none ${
-              arm.isChampion
-                ? 'border-primary bg-[#1A1C28] shadow-[0_0_16px_hsl(var(--primary)/0.2)]'
-                : 'border-[#1E2235] bg-[#090A10]/80'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs text-[#94A3B8]">{arm.armId}</span>
-              {arm.isChampion ? (
-                <span className="rounded-full border border-[#10B981]/40 bg-[#10B981]/15 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-[#10B981]">
-                  {lang === 'vi' ? 'NHÁNH DẪN ĐẦU' : 'CHAMPION ARM'}
-                </span>
-              ) : (
-                <span className="rounded-full border border-[#1E2235] bg-[#11131F] px-2.5 py-0.5 font-mono text-[11px] text-[#94A3B8]">
-                  {lang === 'vi' ? 'ĐANG THỬ NGHIỆM' : 'EXPLORING'}
-                </span>
-              )}
-            </div>
-
-            <h3 className="mt-2 font-sans text-sm font-semibold text-[#F8FAFC]">
-              {arm.hookName[lang]}
-            </h3>
-
-            <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-[#1E2235] pt-3 font-mono text-xs">
-              <div>
-                <dt className="text-[11px] text-[#94A3B8]">Beta(α,β)</dt>
-                <dd className="mt-0.5 font-semibold text-[#F8FAFC]">
-                  ({arm.alpha},{arm.beta})
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] text-[#94A3B8]">
-                  {lang === 'vi' ? 'Xác Suất Thắng' : 'Win Prob'}
-                </dt>
-                <dd className="mt-0.5 font-semibold text-[#10B981]">
-                  {arm.winProbabilityPct}%
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] text-[#94A3B8]">Half-Kelly</dt>
-                <dd className="mt-0.5 font-semibold text-[#F59E0B]">
-                  {arm.halfKellyAllocationPct}% ({arm.roasMultiplier})
-                </dd>
-              </div>
-            </dl>
-          </article>
+          <MabArmCard key={arm.armId} arm={arm} lang={lang} />
         ))}
       </div>
     </section>

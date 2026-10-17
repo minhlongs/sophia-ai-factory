@@ -4,7 +4,8 @@
  * Layer: seed/types/multicloud-mesh
  */
 
-import type { GeographicZone } from './types';
+export const GEOGRAPHIC_ZONES = ['apac', 'nam', 'emea', 'latam', 'global'] as const;
+export type GeographicZone = (typeof GEOGRAPHIC_ZONES)[number];
 
 // ── Storage Pool Contracts ───────────────────────────────────────────────
 

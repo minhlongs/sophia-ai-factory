@@ -7,6 +7,7 @@ import type {
   VideoTimelineTrack,
 } from '@/seed/types/stitch-control-deck';
 import { dispatchAdvisorCouncilMissionAction } from '@/land/control-deck';
+import { VideoTimelineSection } from './control-deck-subcards';
 
 export interface AdvisorTimelinePanelProps {
   readonly advisors: readonly AdvisorNodeTelemetry[];
@@ -108,68 +109,7 @@ export function AdvisorTimelinePanel({
         </div>
       </section>
 
-      {/* Screen 3: AI Video Production Studio Multi-Track Timeline */}
-      <section
-        aria-labelledby="timeline-heading"
-        className="rounded-xl border border-[#1E2235] bg-[#11131F] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]"
-      >
-        <header className="flex items-center justify-between border-b border-[#1E2235] pb-3">
-          <div>
-            <span className="font-mono text-xs text-primary">
-              {lang === 'vi'
-                ? 'MÀN HÌNH 03 · MÃ THỜI GIAN 00:01:24:18'
-                : 'SCREEN 03 · TIMECODE 00:01:24:18'}
-            </span>
-            <h2
-              id="timeline-heading"
-              className="mt-1 font-sans text-lg font-semibold text-[#F8FAFC]"
-            >
-              {lang === 'vi'
-                ? 'Timeline Đa Làn & Xưởng Kết Xuất Video AI'
-                : 'Multi-Track NLE Timeline & AI Render Stage'}
-            </h2>
-          </div>
-          <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs text-[#C0C1FF]">
-            16:9 + 9:16 SYNC
-          </span>
-        </header>
-
-        <div
-          className="mt-4 space-y-3"
-          role="list"
-          aria-label={
-            lang === 'vi' ? 'Các làn timeline video' : 'Video timeline tracks'
-          }
-        >
-          {timelineTracks.map((track) => (
-            <div
-              key={track.trackId}
-              role="listitem"
-              className="rounded-lg border border-[#1E2235] bg-[#090A10] p-3"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-6 w-9 items-center justify-center rounded bg-[#1A1C28] font-mono text-xs font-bold text-[#C0C1FF]">
-                    {track.trackCode}
-                  </span>
-                  <span className="font-sans text-sm font-medium text-[#F8FAFC]">
-                    {track.label[lang]}
-                  </span>
-                </div>
-                <span className="font-mono text-xs text-[#94A3B8]">
-                  {track.modelBadge} · {track.durationTimecode}
-                </span>
-              </div>
-              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-[#1A1C28]">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300 motion-reduce:transition-none"
-                  style={{ width: `${track.progressPct}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <VideoTimelineSection timelineTracks={timelineTracks} lang={lang} />
     </div>
   );
 }

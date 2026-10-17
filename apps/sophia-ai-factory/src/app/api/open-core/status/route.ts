@@ -22,11 +22,13 @@ import {
 } from '@/seed/config/edition-config';
 import { verifyRaasLicenseToken } from '@/seed/security/raas-license-verifier';
 import { auditOpenCore25StepCatalog } from '@/tree/open-core/open-core-25-steps-auditor';
+import { auditVideoBlueprintCatalog } from '@/tree/open-core/video-blueprint-auditor';
 import { checkUpstreamReleaseBeacon } from '@/tree/open-core/version-beacon';
 import {
   evaluateAllFeatureGates,
   resolveServerEditionContext,
 } from './status-context-resolver';
+import type { VideoBlueprintAuditReport } from '@/tree/open-core/video-blueprint-auditor';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +52,12 @@ export async function GET(request: NextRequest) {
   const features = evaluateAllFeatureGates(ctx);
   const auditRes = await auditOpenCore25StepCatalog({ editionContext: ctx });
   const catalogAudit = auditRes.ok ? auditRes.value : null;
+  let blueprintAudit: VideoBlueprintAuditReport | null = null;
+  try {
+    blueprintAudit = auditVideoBlueprintCatalog();
+  } catch {
+    // Keep runtime status available if the optional blueprint audit fails.
+  }
   const includeBeacon = request.nextUrl.searchParams.get('beacon') === 'true';
   const beacon = includeBeacon
     ? await checkUpstreamReleaseBeacon({
@@ -68,6 +76,7 @@ export async function GET(request: NextRequest) {
     pricingUrl: 'https://sophia.agencyos.network/pricing',
     features,
     catalogAudit,
+    blueprintAudit,
     beacon,
   });
 }

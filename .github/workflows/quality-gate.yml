@@ -22,10 +22,11 @@ jobs:
     steps:
       # RED-TEAM #1: SHA-pinned action (actions/checkout v4.2.2)
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
 
-      # RED-TEAM #1: prior SHA-pin (1d0ff46…) was invalid → unblocked via tag.
-      # Re-pin to a verified v4.x SHA in follow-up.
-      - uses: actions/setup-node@v4
+      # RED-TEAM #1: pinned to the verified setup-node v4.4.0 release commit.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -48,48 +49,15 @@ jobs:
         env:
           CI: true
 
-      - name: Gate 3a — Coverage threshold >= 70%
-        run: |
-          python3 -c "
-          import json, sys, os
-          cov_file = 'coverage/coverage-summary.json'
-          if not os.path.exists(cov_file):
-            print('WARNING: coverage file not found — skipping threshold check')
-            sys.exit(0)
-          data = json.load(open(cov_file))
-          pct = data.get('total', {}).get('lines', {}).get('pct', 0)
-          print(f'Lines coverage: {pct}%')
-          if pct < 70:
-            print(f'FAIL: {pct}% < 70% threshold')
-            sys.exit(1)
-          print('PASS')
-          "
+      - name: Gate 3a — Changed executable lines coverage >= 70%
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/check-diff-coverage.mjs
 
-      - name: Gate 3b — Zero :any types
-        run: |
-          COUNT=$(grep -rn ': any' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" 2>/dev/null | wc -l | tr -d ' ')
-          echo "':any' occurrences: $COUNT"
-          if [ "$COUNT" -gt 0 ]; then
-            grep -rn ': any' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" || true
-            echo "FAIL: zero ':any' types required"
-            exit 1
-          fi
-          echo "PASS"
+      - name: Gate 3b — Production TypeScript source guards
+        run: node scripts/check-production-source-guards.mjs
 
-      - name: Gate 3c — Zero console.log/warn/error
-        run: |
-          COUNT=$(grep -rn 'console\.\(log\|warn\|error\)' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" --exclude-dir="sdk" 2>/dev/null \
-            | grep -v '// eslint-disable' | grep -v 'logger-internals.ts' | grep -v 'crypto-utils-signing.ts' | wc -l | tr -d ' ')
-          echo "console.* calls: $COUNT"
-          if [ "$COUNT" -gt 0 ]; then
-            grep -rn 'console\.\(log\|warn\|error\)' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" --exclude-dir="test" --exclude-dir="sdk" \
-              | grep -v '// eslint-disable' | grep -v 'logger-internals.ts' | grep -v 'crypto-utils-signing.ts' || true
-            echo "FAIL: use logger utility instead of console.*"
-            exit 1
-          fi
-          echo "PASS"
-
-      - name: Gate 3d — Secret Leak Prevention (Public GitHub Hygiene)
+      - name: Gate 3c — Secret Leak Prevention (Public GitHub Hygiene)
         run: |
           LEAKS=$(grep -rnE '(sk-or-v1-[a-f0-9]{48,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' src --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" --exclude-dir="__tests__" 2>/dev/null | wc -l | tr -d ' ')
           echo "Potential live secret leaks: $LEAKS"

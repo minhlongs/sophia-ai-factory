@@ -180,7 +180,7 @@ jobs:
   stage-4-post-deploy-verify:
     name: 'Stage 4: Post-Deploy Verification & Health Smoke Test'
     needs: stage-2-3-build-and-deploy
-    if: ${{ inputs.dry_run != true && inputs.force_verify != false }}
+    if: ${{ !inputs.dry_run && (github.event_name != 'workflow_dispatch' || inputs.force_verify) }}
     runs-on: ubuntu-latest
     defaults:
       run:

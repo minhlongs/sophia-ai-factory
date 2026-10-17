@@ -4,6 +4,10 @@
  * Layer: seed/types/multicloud-mesh
  */
 
+import { GEOGRAPHIC_ZONES, type GeographicZone } from './storage-pool-types';
+
+export { GEOGRAPHIC_ZONES, type GeographicZone };
+
 // ── Multi-Cloud Provider & Role Contracts ─────────────────────────────────
 
 export const CLOUD_PROVIDERS = ['cloudflare', 'aws', 'gcp', 'hybrid'] as const;
@@ -25,9 +29,6 @@ export const REGION_STATUSES = [
   'offline',
 ] as const;
 export type RegionStatus = (typeof REGION_STATUSES)[number];
-
-export const GEOGRAPHIC_ZONES = ['apac', 'nam', 'emea', 'latam', 'global'] as const;
-export type GeographicZone = (typeof GEOGRAPHIC_ZONES)[number];
 
 // ── Database Row: multicloud_edge_regions ─────────────────────────────────
 

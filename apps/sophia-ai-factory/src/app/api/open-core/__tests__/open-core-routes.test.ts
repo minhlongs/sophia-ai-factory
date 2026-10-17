@@ -12,6 +12,7 @@ const mockGetUserTier = vi.fn();
 const mockResolveOrgId = vi.fn();
 const mockLoadUserPortableConfig = vi.fn();
 const mockSaveUserPortableConfig = vi.fn();
+const mockAuditVideoBlueprintCatalog = vi.fn();
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: () => mockGetCurrentUser(),
@@ -25,6 +26,9 @@ vi.mock('@/seed/auth/org-resolver/org-resolver-service', () => ({
 vi.mock('@/tree/open-core/workspace-portability-store', () => ({
   loadUserPortableConfig: (...args: unknown[]) => mockLoadUserPortableConfig(...args),
   saveUserPortableConfig: (...args: unknown[]) => mockSaveUserPortableConfig(...args),
+}));
+vi.mock('@/tree/open-core/video-blueprint-auditor', () => ({
+  auditVideoBlueprintCatalog: () => mockAuditVideoBlueprintCatalog(),
 }));
 
 import { GET as getStatus, POST as postStatus } from '../status/route';
@@ -46,6 +50,14 @@ describe('/api/open-core/status & /portability routes', () => {
     mockResolveOrgId.mockReset();
     mockLoadUserPortableConfig.mockReset();
     mockSaveUserPortableConfig.mockReset();
+    mockAuditVideoBlueprintCatalog.mockReset();
+    mockAuditVideoBlueprintCatalog.mockReturnValue({
+      totalBlueprints: 6,
+      validBlueprints: 6,
+      invalidBlueprintIds: [],
+      duplicateBlueprintIds: [],
+      catalogComplete: true,
+    });
   });
 
   afterEach(() => {
@@ -83,6 +95,13 @@ describe('/api/open-core/status & /portability routes', () => {
         catalogCompletenessPercentage: number;
         catalogComplete: boolean;
       };
+      blueprintAudit: {
+        totalBlueprints: number;
+        validBlueprints: number;
+        invalidBlueprintIds: string[];
+        duplicateBlueprintIds: string[];
+        catalogComplete: boolean;
+      } | null;
     };
     expect(json.mode).toBe('runtime_status');
     expect(json.edition).toBe('community');
@@ -90,6 +109,27 @@ describe('/api/open-core/status & /portability routes', () => {
     expect(json.catalogAudit.totalSteps).toBe(25);
     expect(json.catalogAudit.documentedSteps).toBe(25);
     expect(json.catalogAudit.catalogCompletenessPercentage).toBe(100);
+    expect(json.catalogAudit.catalogComplete).toBe(true);
+    expect(json.blueprintAudit).toEqual({
+      totalBlueprints: 6,
+      validBlueprints: 6,
+      invalidBlueprintIds: [],
+      duplicateBlueprintIds: [],
+      catalogComplete: true,
+    });
+  });
+
+  it('keeps runtime status available with a null blueprint audit if the optional audit fails', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'dev@agency.vn' });
+    mockGetUserTier.mockResolvedValue('BASIC');
+    mockAuditVideoBlueprintCatalog.mockImplementationOnce(() => {
+      throw new Error('blueprint audit unavailable');
+    });
+
+    const res = await getStatus(new NextRequest('http://localhost:3000/api/open-core/status'));
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { blueprintAudit: unknown; catalogAudit: { catalogComplete: boolean } };
+    expect(json.blueprintAudit).toBeNull();
     expect(json.catalogAudit.catalogComplete).toBe(true);
   });
 
