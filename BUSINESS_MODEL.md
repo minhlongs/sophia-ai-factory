@@ -79,7 +79,7 @@ Baseline as of `2026-10-17`: **0 paying customers / $0 MRR** (all figures below 
 - 1st paying customer closed and activated end-to-end via NOWPayments or PayOS.
 - 3 referenceable paying agency/SMB customers with positive unit-economics ledger.
 - 500+ GitHub Stars on the `Apache-2.0` Open-Core repository.
-- 5 Community → Managed Cloud portability conversions verified in D1 (`user_profiles.settings.open_core_portability`).
+- 5 Community → Managed Cloud portability conversions verified in D1 (`user_profiles.settings` and `tenant_settings` namespace `misc` via `src/tree/open-core/workspace-portability-store.ts`).
 
 ## Business & Operational Risks
 
