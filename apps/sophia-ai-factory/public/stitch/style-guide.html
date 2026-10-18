@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Director's Control Deck — Component Style Guide v4.2</title>
+<!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with form & container query plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-primary": "#494bd6",
+            "on-secondary-fixed-variant": "#6900b3",
+            "secondary": "#ddb7ff",
+            "surface-variant": "#34343b",
+            "surface-container": "#1e1f26",
+            "secondary-fixed-dim": "#ddb7ff",
+            "secondary-container": "#6f00be",
+            "surface-tint": "#c0c1ff",
+            "on-tertiary-fixed": "#2a1700",
+            "on-surface-variant": "#c7c4d7",
+            "on-secondary-fixed": "#2c0051",
+            "primary-fixed": "#e1e0ff",
+            "primary": "#c0c1ff",
+            "tertiary-fixed": "#ffddb8",
+            "surface-bright": "#383940",
+            "on-primary-fixed": "#07006c",
+            "inverse-surface": "#e3e1eb",
+            "surface-dim": "#121319",
+            "surface-container-lowest": "#0d0e14",
+            "on-tertiary-container": "#3e2400",
+            "outline": "#908fa0",
+            "inverse-on-surface": "#2f3037",
+            "surface": "#121319",
+            "tertiary-fixed-dim": "#ffb95f",
+            "outline-variant": "#464554",
+            "surface-container-highest": "#34343b",
+            "on-surface": "#e3e1eb",
+            "background": "#121319",
+            "tertiary-container": "#ca8100",
+            "on-tertiary": "#472a00",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "surface-container-high": "#292930",
+            "on-primary-container": "#0d0096",
+            "tertiary": "#ffb95f",
+            "on-primary": "#1000a9",
+            "on-background": "#e3e1eb",
+            "on-error": "#690005",
+            "primary-container": "#8083ff",
+            "on-secondary": "#490080",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-secondary-container": "#d6a9ff",
+            "error": "#ffb4ab",
+            "surface-container-low": "#1a1b22",
+            "secondary-fixed": "#f0dbff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.25rem",
+            "margin-desktop": "1.5rem",
+            "gutter-desktop": "1.25rem",
+            "space-md": "0.75rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "label-code-lg": ["JetBrains Mono"],
+            "headline-xl-mobile": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "body-md": ["Inter"],
+            "label-code-sm": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "headline-xl": ["Space Grotesk"],
+            "label-code-md": ["JetBrains Mono"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "headline-sm": ["Space Grotesk"],
+            "body-sm": ["Inter"]
+          },
+          "fontSize": {
+            "label-code-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-xl-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-code-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-code-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Direct design system custom tokens for high-fidelity dark cinema aesthetics */
+    :root {
+      --color-ground: #090A10;
+      --color-panel: #11131F;
+      --color-well: #1A1C28;
+      --color-frame: #1E2235;
+      --color-indigo-core: #6366F1;
+      --color-neural-violet: #A855F7;
+      --color-amber-gold: #F59E0B;
+      --color-emerald-live: #10B981;
+      --color-rose-abort: #F43F5E;
+    }
+
+    body {
+      background-color: var(--color-ground);
+      color: #e3e1eb;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Custom specular top rim for cards & panels */
+    .specular-rim {
+      box-shadow: inset 0 1px 0 0 rgba(248, 250, 252, 0.08);
+    }
+
+    /* Micro directional glow states */
+    .glow-indigo-focus {
+      box-shadow: 0 0 0 1px #6366F1, 0 0 18px -2px rgba(99, 102, 241, 0.45);
+    }
+    .glow-amber-focus {
+      box-shadow: 0 0 0 1px #F59E0B, 0 0 18px -2px rgba(245, 158, 11, 0.35);
+    }
+    .glow-emerald-pulse {
+      box-shadow: 0 0 12px 1px rgba(16, 185, 129, 0.35);
+    }
+
+    /* Material Symbols base */
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Smooth anchor scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased selection:bg-primary selection:text-on-primary">
+<!-- ========================================================================= -->
+<!-- 1. LEFT NAVIGATION SIDEBAR (Fixed 240px Desktop Shell)                     -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-60 bg-surface-container-lowest dark:bg-surface-container-lowest border-r border-outline-variant dark:border-outline-variant z-50 flex flex-col justify-between p-space-sm">
+<!-- Top Branding & Navigation -->
+<div class="flex flex-col gap-space-md">
+<!-- Brand Monogram Core Header -->
+<div class="flex items-center gap-space-sm px-space-sm pt-space-xs pb-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-outline-variant text-primary font-label-code-md text-label-code-md">
+<span class="material-symbols-outlined text-primary" data-icon="videocam">videocam</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface dark:text-on-surface tracking-tight font-bold">CineMetrics Core</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant dark:text-on-surface-variant">Enterprise Suite v4.2</span>
+</div>
+</div>
+<!-- Navigation Tab Cluster -->
+<nav aria-label="Main Navigation" class="flex flex-col gap-1">
+<!-- 1. Command Deck -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant font-label-code-md text-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-on-surface dark:hover:text-on-surface transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Command Deck</span>
+</a>
+<!-- 2. Video Studio -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant font-label-code-md text-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-on-surface dark:hover:text-on-surface transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="movie_creation">movie_creation</span>
+<span>Video Studio</span>
+</a>
+<!-- 3. /ask 4-Advisor -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant font-label-code-md text-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-on-surface dark:hover:text-on-surface transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span>/ask 4-Advisor</span>
+</a>
+<!-- 4. Revenue & Webhooks -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant font-label-code-md text-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-on-surface dark:hover:text-on-surface transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="monetization_on">monetization_on</span>
+<span>Revenue &amp; Webhooks</span>
+</a>
+<!-- 5. BYOK Setup -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant font-label-code-md text-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-on-surface dark:hover:text-on-surface transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="key">key</span>
+<span>BYOK Setup</span>
+</a>
+<!-- 6. Agency Portal -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant font-label-code-md text-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-on-surface dark:hover:text-on-surface transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span>Agency Portal</span>
+</a>
+<!-- 7. Style Guide [ACTIVE TAB] -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg bg-surface-container dark:bg-surface-container text-primary dark:text-primary border border-outline-variant dark:border-outline-variant font-label-code-md text-label-code-md shadow-sm" href="#style-guide">
+<span class="material-symbols-outlined text-primary" data-icon="palette">palette</span>
+<span class="font-semibold text-primary">Style Guide</span>
+<span class="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+</a>
+</nav>
+</div>
+<!-- Bottom Actions & Footer Links -->
+<div class="flex flex-col gap-space-sm pt-space-md border-t border-outline-variant">
+<!-- Deploy Pipeline Action CTA -->
+<button class="w-full h-9 px-space-md rounded-lg bg-primary text-on-primary font-label-code-md text-label-code-md flex items-center justify-center gap-space-xs hover:bg-primary-container transition-colors duration-150 shadow-md">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+<span>Deploy Pipeline</span>
+</button>
+<!-- Settings & Documentation -->
+<a class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md text-label-code-md" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md text-label-code-md" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span>Documentation</span>
+</a>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 2. TOP HEADER NAVIGATION BAR (Fixed 64px, Left-Offset 240px)               -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 right-0 left-60 h-16 bg-surface-container-low dark:bg-surface-container-low border-b border-outline-variant dark:border-outline-variant z-40 flex items-center justify-between px-gutter-desktop">
+<!-- Left Breadcrumbs -->
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">CineMetrics Core</span>
+<span class="text-outline-variant font-label-code-sm">/</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Design Systems</span>
+<span class="text-outline-variant font-label-code-sm">/</span>
+<span class="font-label-code-sm text-label-code-sm text-primary font-medium">Style Guide v4.2</span>
+</div>
+<!-- Center/Right Meta & Actions -->
+<div class="flex items-center gap-space-md">
+<!-- Bilingual Locale Pill Switch [VI | EN] -->
+<div class="flex items-center bg-surface-container-lowest rounded-full p-0.5 border border-outline-variant">
+<button class="px-space-sm py-0.5 rounded-full text-on-surface-variant font-label-code-sm text-label-code-sm hover:text-on-surface transition-colors">VI</button>
+<div class="w-px h-3 bg-outline-variant"></div>
+<button class="px-space-sm py-0.5 rounded-full bg-surface-container text-primary font-label-code-sm text-label-code-sm font-semibold">EN</button>
+</div>
+<!-- Enterprise Tier Badge (Gradient Border) -->
+<div class="px-space-sm py-0.5 rounded-full border border-tertiary-container bg-tertiary-container/10 flex items-center gap-1">
+<span class="material-symbols-outlined text-tertiary text-xs" data-icon="military_tech">military_tech</span>
+<span class="font-label-code-sm text-label-code-sm text-tertiary font-bold tracking-wider">ENTERPRISE</span>
+</div>
+<!-- Live Circuit Breakers Pill -->
+<div class="flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container border border-outline-variant text-label-code-sm">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse glow-emerald-pulse"></span>
+<span class="font-label-code-sm text-emerald-400">8/8 Circuit Breakers Active</span>
+</div>
+<!-- Emergency Abort Secondary -->
+<button class="px-space-sm py-1 rounded bg-error-container/20 border border-error-container/50 text-error font-label-code-sm text-label-code-sm hover:bg-error-container hover:text-on-error transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="dangerous">dangerous</span>
+<span>Emergency Stop</span>
+</button>
+<!-- Trailing Action Icons -->
+<div class="flex items-center gap-1 border-l border-outline-variant pl-space-md">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Notifications">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Terminal Logs">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Engine Tuning">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Director Avatar -->
+<div class="flex items-center gap-space-xs pl-space-xs">
+<div class="w-8 h-8 rounded-full border border-primary/40 bg-surface-container overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A sophisticated executive studio director profile portrait in a low-light dark cyber-cinema aesthetic with subtle indigo rim lighting and sharp obsidian shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnVig0S6M8647N09HbMwfCyrM1BBMpVZUnRI_37DIS5iTB3JvhhAod0M1JT0_RxSKZVemREUCIqX1QQ2vTvsW8ib3BtMI1Z_YY_IZcMPXmzPP4ddEMIVzwtUiR39eXvWDdP0gTH74kszXRsohsxE-LoIE5j9iC62ZFoUDAzwzdeQZQ8L3KiFw-dAgXGRnLRKmGF4vtvfecTS4uw47VsQ6sCWNVIQK8dqAJ0MqTAcJtluHo2wqwprWbdVX3Z-jIoQ9UZMaRUPtd"/>
+</div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 3. MAIN WORKSPACE CANVAS (Left Margin 240px, Top Margin 64px)              -->
+<!-- ========================================================================= -->
+<main class="ml-60 pt-16 min-h-screen bg-[#090A10] px-margin-desktop py-space-xl flex flex-col gap-space-xl">
+<!-- PAGE HEADER BLOCK -->
+<header class="flex flex-col gap-space-md pb-space-lg border-b border-outline-variant">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<div class="flex items-center gap-space-sm mb-space-xs">
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-widest text-primary font-bold">FOUNDATIONAL TOKENS &amp; ATOMIC PREREQUISITES</span>
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">CINEMA WORKFLOW SUITE</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl tracking-tight text-on-surface font-bold">
+            Director's Control Deck — Component Style Guide <span class="text-primary font-normal text-headline-lg">v4.2</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-3xl">
+            Master design system tokens, interactive component matrices, and telemetry primitives for Sophia AI Factory. Synthesizing high-throughput autonomous generation pipelines with real-time financial settlement telemetry.
+          </p>
+</div>
+<!-- Quick Jump Anchor Pills -->
+<div class="flex flex-wrap items-center gap-1.5 bg-[#11131F] p-1.5 rounded-xl border border-[#1E2235]">
+<a class="px-space-sm py-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[#1A1C28] font-label-code-sm text-label-code-sm transition-colors" href="#swatches">Colors</a>
+<a class="px-space-sm py-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[#1A1C28] font-label-code-sm text-label-code-sm transition-colors" href="#typography">Typography</a>
+<a class="px-space-sm py-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[#1A1C28] font-label-code-sm text-label-code-sm transition-colors" href="#button-matrix">Button Matrix</a>
+<a class="px-space-sm py-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[#1A1C28] font-label-code-sm text-label-code-sm transition-colors" href="#inputs-keys">Inputs &amp; Keys</a>
+<a class="px-space-sm py-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[#1A1C28] font-label-code-sm text-label-code-sm transition-colors" href="#telemetry-badges">System Telemetry</a>
+<a class="px-space-sm py-1 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[#1A1C28] font-label-code-sm text-label-code-sm transition-colors" href="#kpi-spacing">Bento &amp; Spacing</a>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- SECTION 1: COLOR SWATCHES GRID                                            -->
+<!-- ========================================================================= -->
+<section class="flex flex-col gap-space-md" id="swatches">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="palette">palette</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">01 / Master Color Swatches Grid</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">11 CORE CINEMATIC TOKENS</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-space-md">
+<!-- 1. Ground Canvas -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#090A10] border border-[#1E2235] flex items-center justify-center">
+<span class="font-label-code-sm text-on-surface-variant/50">CANVAS GROUND</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-on-surface font-bold">#090A10</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(9,10,16)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Canvas Background</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">Ground Plane</span>
+</div>
+</div>
+<!-- 2. Obsidian Surface Panel -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#11131F] border border-[#1E2235] flex items-center justify-center">
+<span class="font-label-code-sm text-on-surface-variant">SURFACE PANEL</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-on-surface font-bold">#11131F</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(17,19,31)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Card Surface</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">Obsidian Panel</span>
+</div>
+</div>
+<!-- 3. Secondary Well -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#1A1C28] border border-[#1E2235] flex items-center justify-center">
+<span class="font-label-code-sm text-on-surface-variant">INSET WELL</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-on-surface font-bold">#1A1C28</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(26,28,40)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Secondary Well</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">Track &amp; Input Fill</span>
+</div>
+</div>
+<!-- 4. Structural Frame -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#1E2235] flex items-center justify-center border border-white/5">
+<span class="font-label-code-sm text-on-surface">FRAME BORDER</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-on-surface font-bold">#1E2235</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(30,34,53)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Structural Border</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">Slate Partition</span>
+</div>
+</div>
+<!-- 5. Pure Glint Text -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#F8FAFC] flex items-center justify-center">
+<span class="font-label-code-sm text-black font-bold">PURE GLINT</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-on-surface font-bold">#F8FAFC</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(248,250,252)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Text Primary</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">High-Luminance Titles</span>
+</div>
+</div>
+<!-- 6. Slate Muted Text -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#94A3B8] flex items-center justify-center">
+<span class="font-label-code-sm text-[#090A10] font-bold">MUTED SLATE</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-on-surface font-bold">#94A3B8</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(148,163,184)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Text Muted</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">Low Alpha Descriptions</span>
+</div>
+</div>
+<!-- 7. Director Indigo (Primary) -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#6366F1] flex items-center justify-center shadow-lg shadow-indigo-500/20">
+<span class="font-label-code-sm text-white font-bold">DIRECTOR INDIGO</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-[#6366F1] font-bold">#6366F1</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(99,102,241)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Primary Accent</span>
+<span class="text-[11px] font-label-code-sm text-primary mt-1">Engine Core &amp; Commands</span>
+</div>
+</div>
+<!-- 8. Neural Violet -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#A855F7] flex items-center justify-center shadow-lg shadow-purple-500/20">
+<span class="font-label-code-sm text-white font-bold">NEURAL VIOLET</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-[#A855F7] font-bold">#A855F7</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(168,85,247)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Secondary Accent</span>
+<span class="text-[11px] font-label-code-sm text-secondary mt-1">AI Inference &amp; Shaders</span>
+</div>
+</div>
+<!-- 9. Amber Gold -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#F59E0B] flex items-center justify-center shadow-lg shadow-amber-500/20">
+<span class="font-label-code-sm text-black font-bold">AMBER GOLD</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-[#F59E0B] font-bold">#F59E0B</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(245,158,11)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Executive Accent</span>
+<span class="text-[11px] font-label-code-sm text-tertiary mt-1">Treasury &amp; Yield Sweeps</span>
+</div>
+</div>
+<!-- 10. Emerald Profit/Live -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#10B981] flex items-center justify-center shadow-lg shadow-emerald-500/20">
+<span class="font-label-code-sm text-black font-bold">EMERALD LIVE</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-[#10B981] font-bold">#10B981</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(16,185,129)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Operational State</span>
+<span class="text-[11px] font-label-code-sm text-emerald-400 mt-1">Healthy Telemetry</span>
+</div>
+</div>
+<!-- 11. Crimson Rose (Abort) -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-sm flex flex-col gap-space-sm specular-rim hover:border-primary/50 transition-colors">
+<div class="w-full h-16 rounded-lg bg-[#F43F5E] flex items-center justify-center shadow-lg shadow-rose-500/20">
+<span class="font-label-code-sm text-white font-bold">CRIMSON ROSE</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-code-md text-label-code-md text-[#F43F5E] font-bold">#F43F5E</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-[#1A1C28] text-on-surface-variant font-label-code-sm">rgb(244,63,94)</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Trip &amp; Abort</span>
+<span class="text-[11px] font-label-code-sm text-error mt-1">Emergency Breakers</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 2: TYPOGRAPHY SCALE & FONT PAIRINGS                                -->
+<!-- ========================================================================= -->
+<section class="flex flex-col gap-space-md" id="typography">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="match_case">match_case</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">02 / Typography Hierarchy &amp; Bilingual Copy Spec</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">SPACE GROTESK + INTER + JETBRAINS MONO</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
+<!-- Column A: Space Grotesk Scale -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="text_fields">text_fields</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Space Grotesk</h3>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-primary">Display &amp; Cockpit</span>
+</div>
+<div class="flex flex-col gap-space-md divide-y divide-[#1E2235]/60">
+<!-- H1 -->
+<div class="flex flex-col gap-1 pt-1">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">H1 / 40px / 2.5rem</span>
+<span class="font-label-code-sm text-[10px] text-primary">font-headline-xl</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-[#F8FAFC] tracking-tight">Neural Video Synthesis</h1>
+</div>
+<!-- H2 -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">H2 / 32px / 2.0rem</span>
+<span class="font-label-code-sm text-[10px] text-primary">font-headline-lg</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-[#F8FAFC]">Autonomous Workflow Director</h2>
+</div>
+<!-- H3 -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">H3 / 24px / 1.5rem</span>
+<span class="font-label-code-sm text-[10px] text-primary">font-headline-md</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-[#F8FAFC]">Multi-Camera Latency Buffer</h3>
+</div>
+<!-- H4 -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">H4 / 20px / 1.25rem</span>
+<span class="font-label-code-sm text-[10px] text-primary">font-headline-sm</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Frame Interpolation Core</h4>
+</div>
+<!-- H5 -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">H5 / 16px / 1.0rem</span>
+<span class="font-label-code-sm text-[10px] text-primary">font-body-lg</span>
+</div>
+<h5 class="text-base text-on-surface font-semibold font-['Space_Grotesk']">Sub-Pixel Quantum Grading</h5>
+</div>
+<!-- H6 -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">H6 / 14px / 0.875rem</span>
+<span class="font-label-code-sm text-[10px] text-primary">font-label-code-md</span>
+</div>
+<h6 class="text-sm text-on-surface-variant font-medium font-['Space_Grotesk']">Telemetry Synchronizer Bus</h6>
+</div>
+</div>
+</div>
+<!-- Column B: Inter Bilingual & Microcopy -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="translate">translate</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Inter Bilingual UI</h3>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary">Body &amp; Descriptions</span>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- English Sample -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#1E2235]">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-code-sm text-label-code-sm text-primary font-bold">EN / Primary Pipeline Telemetry</span>
+<span class="font-label-code-sm text-[10px] text-on-surface-variant">font-body-lg</span>
+</div>
+<p class="font-body-lg text-body-lg text-[#F8FAFC]">
+                "High-throughput video rendering pipeline running at 120 FPS latency ceiling with automatic frame drop mitigation."
+              </p>
+</div>
+<!-- Vietnamese Sample -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#1E2235]">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-code-sm text-label-code-sm text-secondary font-bold">VI / Đồng Bộ Hóa Song Ngữ</span>
+<span class="font-label-code-sm text-[10px] text-on-surface-variant">font-body-lg</span>
+</div>
+<p class="font-body-lg text-body-lg text-[#F8FAFC]">
+                "Quy trình kết xuất video thông lượng cao vận hành ở giới hạn độ trễ 120 FPS cùng cơ chế giảm thiểu mất khung hình tự động."
+              </p>
+</div>
+<!-- Microcopy & Tooltip UI text -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">FORM LABELS &amp; TOOLTIPS (font-body-sm)</span>
+<div class="p-space-sm rounded-lg bg-[#090A10] border border-[#1E2235] flex flex-col gap-1.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Render Node Affinity Rule:</span>
+<p class="font-body-sm text-body-sm text-on-surface">
+                  Requires 4x H100 GPU clusters with distributed lock leases active. Hover on tooltips for live trace IDs.
+                </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Column C: JetBrains Mono Telemetry -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="data_array">data_array</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">JetBrains Mono</h3>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-tertiary">Tabular Telemetry</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- USDT Settlement -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#1E2235] flex flex-col gap-1">
+<span class="font-label-code-sm text-[10px] text-tertiary uppercase">USDT Financial Clearing</span>
+<div class="font-label-code-lg text-label-code-lg text-emerald-400 font-bold">
+                +₮284,590.25 USDT <span class="text-xs text-on-surface-variant font-normal">(99.4% Settlement Rate)</span>
+</div>
+</div>
+<!-- Thompson Sampling -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#1E2235] flex flex-col gap-1">
+<span class="font-label-code-sm text-[10px] text-[#A855F7] uppercase">Thompson Sampling Multi-Arm Bandit</span>
+<div class="font-label-code-sm text-label-code-sm text-on-surface">
+                θ ~ Beta(α=142.4, β=18.6) =&gt; <span class="text-[#A855F7] font-bold">88.46% Posterior Mean</span>
+</div>
+</div>
+<!-- Merkle Proof Hash -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#1E2235] flex flex-col gap-1">
+<span class="font-label-code-sm text-[10px] text-primary uppercase">Merkle Proof Transaction Hash</span>
+<div class="font-label-code-sm text-[11px] text-on-surface-variant truncate font-mono select-all">
+                0x7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+              </div>
+</div>
+<!-- Video Timecode SMPTE -->
+<div class="p-space-sm rounded-lg bg-[#090A10] border border-[#1E2235] flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-code-sm text-[10px] text-on-surface-variant uppercase">SMPTE Drop-Frame Counter</span>
+<span class="font-label-code-lg text-label-code-lg text-[#F43F5E] font-bold tracking-wider">01:42:18:24</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm px-2 py-0.5 rounded bg-[#1A1C28] text-on-surface border border-[#1E2235]">24.000 FPS</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 3: COMPONENT STATE MATRIX                                         -->
+<!-- ========================================================================= -->
+<section class="flex flex-col gap-space-md" id="button-matrix">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="smart_button">smart_button</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">03 / Interactive Component State Matrix</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">5 EXPLICIT STATES (DEFAULT, HOVER, FOCUS, ACTIVE, DISABLED)</span>
+</div>
+<!-- State Matrix Table Container -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl overflow-hidden specular-rim">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-[#1E2235] bg-[#1A1C28]/40 font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">
+<th class="p-space-md">Component Variant</th>
+<th class="p-space-md">Default State</th>
+<th class="p-space-md">Hover State</th>
+<th class="p-space-md">Focused State</th>
+<th class="p-space-md">Active / Pressed</th>
+<th class="p-space-md">Disabled State</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#1E2235] font-body-sm text-body-sm">
+<!-- Row 1: Primary Indigo Cast-Light -->
+<tr>
+<td class="p-space-md">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Primary Indigo Command</span>
+<span class="font-label-code-sm text-on-surface-variant">Engine Dispatch CTAs</span>
+</div>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#6366F1] text-[#F8FAFC] border border-white/15 font-label-code-md text-label-code-md flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+<span>Deploy Pipeline</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#4F46E5] text-[#F8FAFC] border border-white/20 font-label-code-md text-label-code-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/40">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+<span>Deploy Pipeline</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#6366F1] text-[#F8FAFC] font-label-code-md text-label-code-md flex items-center gap-1.5 glow-indigo-focus">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+<span>Deploy Pipeline</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#4338CA] text-[#F8FAFC] border border-indigo-400 font-label-code-md text-label-code-md flex items-center gap-1.5 translate-y-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+<span>Deploy Pipeline</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#1A1C28] text-outline-variant border border-outline-variant/30 font-label-code-md text-label-code-md flex items-center gap-1.5 cursor-not-allowed opacity-60" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+<span>Deploy Pipeline</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Executive Amber Gold CTA -->
+<tr>
+<td class="p-space-md">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Executive Amber CTA</span>
+<span class="font-label-code-sm text-tertiary">Treasury &amp; Yield Sweeps</span>
+</div>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#F59E0B] text-black font-semibold border border-amber-200/40 font-label-code-md text-label-code-md flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Authorize Sweep</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#D97706] text-black font-semibold border border-amber-200/60 font-label-code-md text-label-code-md flex items-center gap-1.5 shadow-lg shadow-amber-500/40">
+<span class="material-symbols-outlined text-sm" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Authorize Sweep</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#F59E0B] text-black font-semibold font-label-code-md text-label-code-md flex items-center gap-1.5 glow-amber-focus">
+<span class="material-symbols-outlined text-sm" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Authorize Sweep</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#B45309] text-black font-semibold border border-amber-300 font-label-code-md text-label-code-md flex items-center gap-1.5 translate-y-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Authorize Sweep</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#1A1C28] text-outline-variant border border-outline-variant/30 font-label-code-md text-label-code-md flex items-center gap-1.5 cursor-not-allowed opacity-60" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="lock_clock">lock_clock</span>
+<span>Authorize Sweep</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Secondary Well / Ghost -->
+<tr>
+<td class="p-space-md">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Secondary Inset Well</span>
+<span class="font-label-code-sm text-on-surface-variant">Neutral Control Actions</span>
+</div>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#1A1C28] text-[#F8FAFC] border border-[#1E2235] font-label-code-md text-label-code-md flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" data-icon="refresh">refresh</span>
+<span>Sync State</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#232738] text-[#F8FAFC] border border-[#6366F1] font-label-code-md text-label-code-md flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="refresh">refresh</span>
+<span>Sync State</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#232738] text-[#F8FAFC] border border-[#6366F1] font-label-code-md text-label-code-md flex items-center gap-1.5 ring-1 ring-[#6366F1]">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="refresh">refresh</span>
+<span>Sync State</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#161824] text-[#F8FAFC] border border-[#6366F1] font-label-code-md text-label-code-md flex items-center gap-1.5 translate-y-0.5">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="refresh">refresh</span>
+<span>Sync State</span>
+</button>
+</td>
+<td class="p-space-md">
+<button class="px-space-md py-2 rounded-lg bg-[#11131F] text-outline-variant border border-outline-variant/30 font-label-code-md text-label-code-md flex items-center gap-1.5 cursor-not-allowed opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="block">block</span>
+<span>Sync State</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 4: INPUTS, KEYS & AES-256-GCM MASKING                             -->
+<!-- ========================================================================= -->
+<section class="flex flex-col gap-space-md" id="inputs-keys">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="key">key</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">04 / BYOK Setup &amp; AES-256-GCM Masked Key Primitive</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">CRYPTOGRAPHIC CREDENTIAL INPUTS</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Interactive Masked Key Component Card -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="security">security</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">AES-256-GCM Secure Key Well</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-code-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified GCM
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Zero-knowledge client key masking with split steppers, visual integrity check, and one-click clipboard telemetry.
+          </p>
+<!-- Input Field Assembly -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-code-sm text-label-code-sm text-on-surface-variant flex items-center justify-between">
+<span>PRIMARY_OPENAI_OR_CLAUDE_SECRET</span>
+<span class="text-primary text-[11px]">Vault Lease: 23h 58m</span>
+</label>
+<div class="relative flex items-center">
+<div class="absolute left-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="vpn_key">vpn_key</span>
+</div>
+<input class="w-full h-11 pl-10 pr-24 rounded-lg bg-[#1A1C28] border border-[#1E2235] text-[#F8FAFC] font-label-code-md text-label-code-md focus:border-[#6366F1] focus:ring-1 focus:ring-[#6366F1] transition-all" id="vaultKeyInput" readonly="" type="password" value="sk-ant-api03-9F81a82fca093F9A"/>
+<div class="absolute right-2 flex items-center gap-1">
+<!-- Eye Toggle Button -->
+<button class="w-7 h-7 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-[#11131F] transition-colors" id="toggleKeyBtn" onclick="const input = document.getElementById('vaultKeyInput'); const icon = document.getElementById('eyeIcon'); if(input.type === 'password'){ input.type = 'text'; icon.innerText = 'visibility_off'; } else { input.type = 'password'; icon.innerText = 'visibility'; }" title="Toggle Reveal" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="visibility" id="eyeIcon">visibility</span>
+</button>
+<!-- Copy Button -->
+<button class="w-7 h-7 rounded flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-[#11131F] transition-colors" onclick="navigator.clipboard.writeText('sk-ant-api03-9F81a82fca093F9A'); alert('Encrypted Secret Key copied to clipboard');" title="Copy Key Hash" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+<!-- Verified Check -->
+<span class="w-7 h-7 rounded flex items-center justify-center text-emerald-400">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+</span>
+</div>
+</div>
+<span class="font-label-code-sm text-[11px] text-on-surface-variant">
+              SHA256 Fingerprint: <span class="text-on-surface font-mono">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+</span>
+</div>
+</div>
+<!-- Numeric & Timecode Steppers Card -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="pin">pin</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Numeric &amp; Timecode Steppers</span>
+</div>
+<span class="font-label-code-sm text-xs text-on-surface-variant">32px Precision Rims</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<!-- Numeric Input -->
+<div class="flex flex-col gap-1">
+<label class="font-label-code-sm text-label-code-sm text-on-surface-variant">TARGET RENDER FPS</label>
+<div class="flex items-center bg-[#1A1C28] border border-[#1E2235] rounded-lg overflow-hidden h-10 px-2 focus-within:border-primary">
+<input class="w-full bg-transparent border-none text-[#F8FAFC] font-label-code-md text-label-code-md focus:ring-0 p-0" type="text" value="120.00"/>
+<div class="flex flex-col -space-y-1">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-xs" data-icon="arrow_drop_up">arrow_drop_up</span></button>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-xs" data-icon="arrow_drop_down">arrow_drop_down</span></button>
+</div>
+</div>
+</div>
+<!-- Timecode Input -->
+<div class="flex flex-col gap-1">
+<label class="font-label-code-sm text-label-code-sm text-on-surface-variant">IN-POINT SMPTE TIMECODE</label>
+<div class="flex items-center bg-[#1A1C28] border border-[#1E2235] rounded-lg overflow-hidden h-10 px-2 focus-within:border-primary">
+<input class="w-full bg-transparent border-none text-[#F8FAFC] font-label-code-md text-label-code-md focus:ring-0 p-0" type="text" value="00:14:32:12"/>
+<span class="text-primary font-label-code-sm text-xs">SMPTE</span>
+</div>
+</div>
+</div>
+<!-- Segmented Toggle Rail -->
+<div class="flex flex-col gap-1 pt-1">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">INFERENCE PRECISION ENGINE</span>
+<div class="flex p-1 bg-[#1A1C28] rounded-lg border border-[#1E2235]">
+<button class="flex-1 py-1.5 text-center font-label-code-sm text-label-code-sm rounded bg-[#11131F] text-primary border border-[#1E2235] font-semibold specular-rim">FP-16 Half</button>
+<button class="flex-1 py-1.5 text-center font-label-code-sm text-label-code-sm text-on-surface-variant hover:text-on-surface">FP-32 Float</button>
+<button class="flex-1 py-1.5 text-center font-label-code-sm text-label-code-sm text-on-surface-variant hover:text-on-surface">INT-8 Quantized</button>
+<button class="flex-1 py-1.5 text-center font-label-code-sm text-label-code-sm text-on-surface-variant hover:text-on-surface">BF-16 Brain</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 5: SYSTEM TELEMETRY & STATUS BADGES                                -->
+<!-- ========================================================================= -->
+<section class="flex flex-col gap-space-md" id="telemetry-badges">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="shield">shield</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">05 / System Telemetry &amp; Circuit Breaker Status Primitives</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">FAILURE-ISOLATION ARCHITECTURE</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+<!-- Circuit Breakers Box -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Circuit Breaker Telemetry Statuses</span>
+<span class="font-label-code-sm text-xs text-on-surface-variant">Real-Time Mesh State</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Closed / Healthy -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-[#1A1C28] border border-emerald-500/20">
+<div class="flex items-center gap-space-sm">
+<span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse glow-emerald-pulse"></span>
+<span class="font-label-code-md text-label-code-md text-emerald-400 font-bold">CIRCUIT_CLOSED</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">All Systems Normal (0% Tripped)</span>
+</div>
+<!-- Half-Open / Testing Fallback -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-[#1A1C28] border border-amber-500/20">
+<div class="flex items-center gap-space-sm">
+<span class="w-3 h-3 rounded-full bg-amber-500"></span>
+<span class="font-label-code-md text-label-code-md text-amber-400 font-bold">CIRCUIT_HALF_OPEN</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Canary Routing (10% Traffic Test)</span>
+</div>
+<!-- Open / Tripped / Safe Lock -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-[#1A1C28] border border-rose-500/20">
+<div class="flex items-center gap-space-sm">
+<span class="w-3 h-3 rounded-full bg-rose-500"></span>
+<span class="font-label-code-md text-label-code-md text-rose-400 font-bold">CIRCUIT_OPEN</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tripped — Safe Lock Mode Engaged</span>
+</div>
+</div>
+</div>
+<!-- License & Tier Badges Box -->
+<div class="bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-md specular-rim">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Enterprise Tier Authorization Badges</span>
+<span class="font-label-code-sm text-xs text-on-surface-variant">Smart Contract Roles</span>
+</div>
+<div class="grid grid-cols-2 gap-space-md">
+<!-- Basic Tier -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#1E2235] flex flex-col items-center justify-center gap-1 text-center">
+<span class="px-space-sm py-0.5 rounded-full border border-outline-variant text-outline font-label-code-sm text-label-code-sm font-semibold">BASIC</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">1 Node / 1080p Cap</span>
+</div>
+<!-- Premium Tier -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#A855F7]/30 flex flex-col items-center justify-center gap-1 text-center">
+<span class="px-space-sm py-0.5 rounded-full bg-[#A855F7]/15 border border-[#A855F7] text-[#A855F7] font-label-code-sm text-label-code-sm font-bold">PREMIUM</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">4 Nodes / 4K ProRes</span>
+</div>
+<!-- Enterprise Tier -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-primary/40 flex flex-col items-center justify-center gap-1 text-center">
+<span class="px-space-sm py-0.5 rounded-full bg-primary/20 border border-primary text-primary font-label-code-sm text-label-code-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="crown">crown</span>
+<span>ENTERPRISE</span>
+</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Unlimited / BYOK SLA</span>
+</div>
+<!-- Master Tier -->
+<div class="p-space-sm rounded-lg bg-[#1A1C28] border border-[#F59E0B]/50 flex flex-col items-center justify-center gap-1 text-center">
+<span class="px-space-sm py-0.5 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B] text-tertiary font-label-code-sm text-label-code-sm font-bold glow-amber-focus">
+                MASTER CORE
+              </span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Executive Root Override</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 6: BENTO KPI CARD & SPACING SCALE                                 -->
+<!-- ========================================================================= -->
+<section class="flex flex-col gap-space-md" id="kpi-spacing">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-base" data-icon="grid_view">grid_view</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">06 / Bento KPI Card Primitives &amp; 4px Rhythm Spacing Visualizer</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">4PX BASE GRID INCREMENT</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- Sample Bento KPI Card (5 Cols) -->
+<div class="lg:col-span-5 bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col justify-between specular-rim">
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase tracking-wider">REALTIME SETTLEMENT VELOCITY</span>
+<span class="material-symbols-outlined text-emerald-400 text-sm" data-icon="trending_up">trending_up</span>
+</div>
+<div class="flex items-baseline gap-space-sm mt-2">
+<span class="font-label-code-lg text-[28px] text-[#F8FAFC] font-bold font-mono">$14,820.00</span>
+<span class="font-label-code-sm text-on-surface-variant">/hr</span>
+<div class="ml-auto px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-label-code-sm text-xs font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs" data-icon="north_east">north_east</span>
+                +14.2%
+              </div>
+</div>
+</div>
+<!-- Mini Inline SVG Sparkline Wave -->
+<div class="w-full h-16 my-space-md bg-[#090A10] rounded-lg border border-[#1E2235] p-2 flex items-end overflow-hidden">
+<svg class="w-full h-full text-primary" fill="none" preserveaspectratio="none" viewbox="0 0 200 40">
+<path d="M0 35 L20 28 L40 32 L60 18 L80 22 L100 12 L120 16 L140 8 L160 14 L180 5 L200 2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M0 35 L20 28 L40 32 L60 18 L80 22 L100 12 L120 16 L140 8 L160 14 L180 5 L200 2 L200 40 L0 40 Z" fill="currentColor" fill-opacity="0.1"></path>
+</svg>
+</div>
+<!-- Bottom Micro Metadata -->
+<div class="flex items-center justify-between border-t border-[#1E2235] pt-space-xs font-label-code-sm text-xs text-on-surface-variant">
+<span>Aggregated 24 Nodes</span>
+<span class="text-primary font-mono">Tx Latency: 42ms</span>
+</div>
+</div>
+<!-- Spacing Scale Visualizer (7 Cols) -->
+<div class="lg:col-span-7 bg-[#11131F] border border-[#1E2235] rounded-xl p-space-md flex flex-col gap-space-sm specular-rim">
+<div class="flex items-center justify-between border-b border-[#1E2235] pb-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface">Spacing Scale Rulers (4px Base Multipliers)</span>
+<span class="font-label-code-sm text-xs text-primary">Tailwind &amp; Token Alignments</span>
+</div>
+<div class="flex flex-col gap-2.5 pt-1">
+<!-- 4px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">4px (p-1)</span>
+<div class="h-4 bg-primary/40 rounded border border-primary/60" style="width: 4px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">space-xs / micro-gaps</span>
+</div>
+<!-- 8px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">8px (p-2)</span>
+<div class="h-4 bg-primary/50 rounded border border-primary/70" style="width: 8px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">space-sm / compact pads</span>
+</div>
+<!-- 12px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">12px (p-3)</span>
+<div class="h-4 bg-primary/60 rounded border border-primary/80" style="width: 12px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">space-md / standard wells</span>
+</div>
+<!-- 16px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">16px (p-4)</span>
+<div class="h-4 bg-primary/70 rounded border border-primary" style="width: 16px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">gutter / mobile layout unit</span>
+</div>
+<!-- 24px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">24px (p-6)</span>
+<div class="h-4 bg-primary/80 rounded border border-primary" style="width: 24px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">margin-desktop / cockpit dividers</span>
+</div>
+<!-- 32px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">32px (p-8)</span>
+<div class="h-4 bg-primary/90 rounded border border-primary" style="width: 32px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">space-xl / section margins</span>
+</div>
+<!-- 48px -->
+<div class="flex items-center gap-space-md">
+<span class="w-20 font-label-code-sm text-label-code-sm text-on-surface-variant">48px (p-12)</span>
+<div class="h-4 bg-primary rounded border border-primary" style="width: 48px;"></div>
+<span class="text-[11px] font-label-code-sm text-outline">hero block separation gutters</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- FOOTER METRICS AND REVISION STAMP -->
+<footer class="mt-space-xl pt-space-lg border-t border-[#1E2235] flex flex-col md:flex-row items-center justify-between text-on-surface-variant text-label-code-sm gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Sophia AI Factory "Director's Control Deck" v4.2 Precision Design System</span>
+</div>
+<div class="flex items-center gap-space-md">
+<span>Tailwind v3 + Space Grotesk + JetBrains Mono</span>
+<span>Build Hash: 0x9fa1...34c</span>
+</div>
+</footer>
+</main>
+
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

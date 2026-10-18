@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Sophia AI Factory — 10. Creative Studio &amp; Viral Hook Lab (/dashboard/creative-economy)</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            obsidian: "#0B0E14",
+            panel: "#121722",
+            "panel-high": "#1A2130",
+            outline: "#263044",
+            amber: { 400: "#F59E0B", 500: "#D97706" },
+            emerald: { 400: "#10B981", 500: "#059669" },
+            indigo: { 400: "#6366F1", 500: "#4F46E5" }
+          },
+          fontFamily: {
+            display: ["Space Grotesk", "sans-serif"],
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .specular-card {
+      background: linear-gradient(180deg, rgba(26,33,48,0.85) 0%, rgba(18,23,34,0.96) 100%);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+    }
+    .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.25); }
+    .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.28); }
+  </style>
+</head>
+<body class="bg-[#0B0E14] text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-slate-950">
+  <!-- LEFT SIDEBAR -->
+  <aside class="fixed left-0 top-0 h-screen w-64 bg-[#121722] border-r border-[#263044] z-40 hidden lg:flex flex-col justify-between p-4 select-none">
+    <div>
+      <div class="flex items-center gap-3 pb-4 mb-4 border-b border-[#263044]">
+        <div class="w-10 h-10 rounded-xl bg-[#1A2130] border border-amber-400/40 flex items-center justify-center text-amber-400 glow-amber">
+          <span class="material-symbols-outlined">auto_awesome</span>
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-base text-white tracking-tight">Sophia AI Factory</h1>
+          <span class="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">Stitch v4.2 Deck</span>
+        </div>
+      </div>
+      <nav aria-label="Control Deck Navigation" class="space-y-1 text-sm">
+        <a href="index.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">dashboard</span><span>1. Command Deck</span>
+        </a>
+        <a href="creative-economy.html" aria-current="page" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg bg-amber-400/15 text-amber-400 border-l-2 border-amber-400 font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">bolt</span><span data-en="10. Creative Hook Lab" data-vi="10. Xưởng Hook Sáng Tạo">10. Xưởng Hook Sáng Tạo</span>
+        </a>
+        <a href="youtube-automation.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">smart_display</span><span>11. YouTube Automation</span>
+        </a>
+        <a href="playbooks.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">schema</span><span>12. Playbooks Matrix</span>
+        </a>
+        <a href="publish-queue.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">schedule_send</span><span>13. Publish Queue</span>
+        </a>
+        <a href="marketplace.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">storefront</span><span>14. SOP Marketplace</span>
+        </a>
+        <a href="my-sops.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">Inventory_2</span><span>15. My SOPs Studio</span>
+        </a>
+        <a href="challenges.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">emoji_events</span><span>16. Growth Challenges</span>
+        </a>
+        <a href="handover-runbooks.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">menu_book</span><span>17. Handover Runbooks</span>
+        </a>
+        <a href="system-health.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-lg">monitor_heart</span><span>18. System Health</span>
+        </a>
+      </nav>
+    </div>
+    <div class="pt-4 border-t border-[#263044] space-y-2">
+      <div class="px-3 py-2 rounded-lg bg-[#0B0E14] border border-[#263044] flex items-center justify-between text-xs font-mono">
+        <span class="text-slate-400">Route:</span>
+        <span class="text-amber-400 truncate">/dashboard/creative-economy</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TOP HEADER -->
+  <header class="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-[#121722]/95 backdrop-blur-md border-b border-[#263044] z-30 flex items-center justify-between px-4 sm:px-6">
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="px-2.5 py-1 rounded-md font-mono text-xs bg-indigo-400/15 text-indigo-400 border border-indigo-400/30 shrink-0">SCREEN #10</span>
+      <h2 class="font-display font-bold text-base sm:text-lg text-white truncate" data-en="Creative Studio &amp; Viral Hook Lab" data-vi="Xưởng Sáng Tạo &amp; Phòng Thí Nghiệm Viral Hook">Xưởng Sáng Tạo &amp; Phòng Thí Nghiệm Viral Hook</h2>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center bg-[#0B0E14] rounded-lg p-1 border border-[#263044]" role="group" aria-label="Language Switcher">
+        <button id="btn-vi" onclick="setLang('vi')" class="px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">VI</button>
+        <button id="btn-en" onclick="setLang('en')" class="px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">EN</button>
+      </div>
+      <a href="video-studio.html" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold text-xs transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+        <span class="material-symbols-outlined text-base">movie_edit</span>
+        <span data-en="Send Winner to Video Studio" data-vi="Chuyển Hook Thắng Sang Studio">Chuyển Hook Thắng Sang Studio</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="lg:ml-64 pt-20 pb-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+    <!-- Hero Banner -->
+    <section class="specular-card rounded-2xl p-6 border border-[#263044] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none"></span>
+          <span class="font-mono text-xs uppercase tracking-wider text-emerald-400" data-en="P5 VIRAL HOOK ENGINE • CLAUDE 3.7 + THOMPSON SAMPLING" data-vi="ĐỘNG CƠ VIRAL HOOK P5 • CLAUDE 3.7 + THOMPSON SAMPLING">ĐỘNG CƠ VIRAL HOOK P5 • CLAUDE 3.7 + THOMPSON SAMPLING</span>
+        </div>
+        <h3 class="font-display text-2xl sm:text-3xl font-bold text-white" data-en="3-Second Scroll-Stopper Generator &amp; Retention Matrix" data-vi="Trình Tạo Hook Giữ Chân 3 Giây Đầu &amp; Ma Trận Tỷ Lệ Xem">Trình Tạo Hook Giữ Chân 3 Giây Đầu &amp; Ma Trận Tỷ Lệ Xem</h3>
+        <p class="text-slate-400 text-sm max-w-3xl" data-en="Synthesize high-converting bilingual TikTok/Reels/Shorts hooks, score dopamine pacing, and auto-promote 90%+ posterior winners into autonomous production." data-vi="Tổng hợp kịch bản mở đầu TikTok/Reels/Shorts song ngữ chuyển đổi cao, chấm điểm nhịp độ dopamine và tự động đưa biến thể thắng (>90%) vào dây chuyền sản xuất.">Tổng hợp kịch bản mở đầu TikTok/Reels/Shorts song ngữ chuyển đổi cao, chấm điểm nhịp độ dopamine và tự động đưa biến thể thắng (&gt;90%) vào dây chuyền sản xuất.</p>
+      </div>
+      <div class="flex flex-wrap gap-3 shrink-0">
+        <button class="px-4 py-2.5 min-h-[44px] rounded-xl bg-[#1A2130] border border-[#263044] hover:border-indigo-400 text-xs font-mono text-slate-200 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-indigo-400 text-base">psychology</span>
+          <span data-en="Run 50x Hook Mutation" data-vi="Đột Biến 50 Biến Thể Hook">Đột Biến 50 Biến Thể Hook</span>
+        </button>
+        <button class="px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-400 text-slate-950 font-semibold text-xs flex items-center gap-2 glow-amber focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+          <span class="material-symbols-outlined text-base">rocket_launch</span>
+          <span data-en="Deploy Top 3 Hooks (45 MCU)" data-vi="Triển Khai 3 Hook Đầu (45 MCU)">Triển Khai 3 Hook Đầu (45 MCU)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 4 KPI Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" aria-label="Creative Economy Metrics">
+      <div class="specular-card rounded-xl p-5 border border-[#263044]">
+        <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+          <span data-en="AVG 3S THUMB-STOP RATE" data-vi="TỶ LỆ DỪNG LƯỚT 3 GIÂY">TỶ LỆ DỪNG LƯỚT 3 GIÂY</span>
+          <span class="material-symbols-outlined text-amber-400">visibility</span>
+        </div>
+        <p class="font-mono text-2xl font-bold text-amber-400 mt-2">78.4%</p>
+        <p class="text-xs text-emerald-400 font-mono mt-1" data-en="+19.2% vs baseline (59.2%)" data-vi="+19.2% so với chuẩn ngành (59.2%)">+19.2% so với chuẩn ngành (59.2%)</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044]">
+        <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+          <span data-en="ACTIVE HOOK VARIANTS" data-vi="BIẾN THỂ HOOK ĐANG TEST">BIẾN THỂ HOOK ĐANG TEST</span>
+          <span class="material-symbols-outlined text-indigo-400">science</span>
+        </div>
+        <p class="font-mono text-2xl font-bold text-white mt-2">64 <span class="text-xs font-normal text-slate-400">Arms</span></p>
+        <p class="text-xs text-slate-400 font-mono mt-1" data-en="12 Winners • 38 Exploring • 14 Pruned" data-vi="12 Thắng • 38 Đang dò • 14 Đã cắt">12 Thắng • 38 Đang dò • 14 Đã cắt</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044]">
+        <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+          <span data-en="VIRAL VELOCITY SCORE" data-vi="ĐIỂM GIA TỐC LAN TRUYỀN">ĐIỂM GIA TỐC LAN TRUYỀN</span>
+          <span class="material-symbols-outlined text-emerald-400">trending_up</span>
+        </div>
+        <p class="font-mono text-2xl font-bold text-emerald-400 mt-2">94.6 / 100</p>
+        <p class="text-xs text-slate-400 font-mono mt-1" data-en="Peak: Contrarian AI SaaS Hook" data-vi="Đỉnh: Hook Phản Biện AI SaaS">Đỉnh: Hook Phản Biện AI SaaS</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044]">
+        <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+          <span data-en="CREATIVE ATTRIBUTION ROAS" data-vi="ROAS QUY GÁN SÁNG TẠO">ROAS QUY GÁN SÁNG TẠO</span>
+          <span class="material-symbols-outlined text-amber-400">paid</span>
+        </div>
+        <p class="font-mono text-2xl font-bold text-white mt-2">5.4x <span class="text-xs text-amber-400 font-normal">USDT</span></p>
+        <p class="text-xs text-emerald-400 font-mono mt-1" data-en="$19,420 attributed 14d" data-vi="$19,420 doanh thu 14 ngày qua">$19,420 doanh thu 14 ngày qua</p>
+      </div>
+    </section>
+
+    <!-- Interactive Split: Left Hook Composer + Right Viral Hook Lab Matrix -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left 5 Cols: Interactive Hook Synthesizer -->
+      <section class="lg:col-span-5 specular-card rounded-2xl p-6 border border-[#263044] space-y-4">
+        <div class="flex items-center justify-between border-b border-[#263044] pb-3">
+          <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-400">tune</span>
+            <span data-en="Neural Hook Synthesizer" data-vi="Bộ Tổng Hợp Hook Thần Kinh">Bộ Tổng Hợp Hook Thần Kinh</span>
+          </h4>
+          <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">Latency: 180ms</span>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label for="hook-archetype" class="block text-xs font-mono uppercase text-slate-400 mb-1" data-en="Psychological Archetype" data-vi="Nguyên Mẫu Tâm Lý Học">Nguyên Mẫu Tâm Lý Học</label>
+            <select id="hook-archetype" class="w-full min-h-[44px] rounded-lg bg-[#0B0E14] border border-[#263044] text-slate-100 text-sm px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+              <option>Contrarian Shock ("Đừng bao giờ làm điều này với AI...")</option>
+              <option>Proof-First Telemetry ("$48,920 trong 30 ngày chỉ với 1 quy trình...")</option>
+              <option>Secret Unmasked ("3 công cụ ngầm mà các Agency giấu bạn...")</option>
+              <option>Founder Split-Screen Story ("Tôi đã sa thải toàn bộ đội dựng phim...")</option>
+            </select>
+          </div>
+          <div>
+            <label for="hook-prompt" class="block text-xs font-mono uppercase text-slate-400 mb-1" data-en="Core Offer / Value Proposition" data-vi="Giá Trị Cốt Lõi / Sản Phẩm">Giá Trị Cốt Lõi / Sản Phẩm</label>
+            <textarea id="hook-prompt" rows="3" class="w-full rounded-lg bg-[#0B0E14] border border-[#263044] text-slate-100 text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">Tự động hóa kênh YouTube &amp; TikTok bằng Sophia AI Factory chỉ với 15 phút mỗi tuần, thu về hoa hồng Affiliate USDT tự động.</textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 rounded-lg bg-[#0B0E14] border border-[#263044]">
+              <span class="text-[11px] font-mono text-slate-400 block" data-en="Visual Cue (0-1.5s)" data-vi="Hiệu Ứng Hình Ảnh (0-1.5s)">Hiệu Ứng Hình Ảnh (0-1.5s)</span>
+              <span class="text-xs font-semibold text-amber-400 mt-1 block">Whip-Pan + Glitch Cash Counter</span>
+            </div>
+            <div class="p-3 rounded-lg bg-[#0B0E14] border border-[#263044]">
+              <span class="text-[11px] font-mono text-slate-400 block" data-en="Audio Stinger" data-vi="Âm Thanh Mở Đầu">Âm Thanh Mở Đầu</span>
+              <span class="text-xs font-semibold text-indigo-400 mt-1 block">Sub-Bass Drop 80Hz + Riser</span>
+            </div>
+          </div>
+          <button class="w-full min-h-[44px] rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm flex items-center justify-center gap-2 glow-indigo transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+            <span class="material-symbols-outlined text-lg">auto_fix_high</span>
+            <span data-en="Generate 8 Bilingual Hook Variations" data-vi="Tạo 8 Biến Thể Hook Song Ngữ">Tạo 8 Biến Thể Hook Song Ngữ</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right 7 Cols: Live Hook Leaderboard Table -->
+      <section class="lg:col-span-7 specular-card rounded-2xl p-6 border border-[#263044] space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#263044] pb-3">
+          <div>
+            <h4 class="font-display font-bold text-base text-white" data-en="Live Viral Hook Telemetry Leaderboard" data-vi="Bảng Xếp Hạng Hook Thực Chiến Thời Gian Thực">Bảng Xếp Hạng Hook Thực Chiến Thời Gian Thực</h4>
+            <p class="text-xs text-slate-400" data-en="Ranked by 3-second thumb-stop &amp; 30-second retention hold" data-vi="Xếp hạng theo tỷ lệ giữ chân 3 giây đầu và 30 giây tiếp theo">Xếp hạng theo tỷ lệ giữ chân 3 giây đầu và 30 giây tiếp theo</p>
+          </div>
+          <div role="tablist" aria-label="Filter Hooks by Platform" class="flex gap-1.5 bg-[#0B0E14] p-1 rounded-lg border border-[#263044] text-xs font-mono">
+            <button role="tab" aria-selected="true" class="px-2.5 py-1.5 min-h-[36px] rounded bg-amber-400 text-slate-950 font-bold">All (64)</button>
+            <button role="tab" aria-selected="false" class="px-2.5 py-1.5 min-h-[36px] rounded text-slate-400 hover:text-white">TikTok</button>
+            <button role="tab" aria-selected="false" class="px-2.5 py-1.5 min-h-[36px] rounded text-slate-400 hover:text-white">YT Shorts</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-[#263044] text-[11px] font-mono uppercase text-slate-400">
+                <th class="py-2.5 px-3" data-en="Hook Script (0-3s)" data-vi="Kịch Bản Hook (0-3s)">Kịch Bản Hook (0-3s)</th>
+                <th class="py-2.5 px-3 text-right">3s Hold</th>
+                <th class="py-2.5 px-3 text-right">30s Hold</th>
+                <th class="py-2.5 px-3 text-right">ROAS</th>
+                <th class="py-2.5 px-3 text-center" data-en="Action" data-vi="Tác Vụ">Tác Vụ</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#263044]/60">
+              <tr class="hover:bg-[#1A2130]/60">
+                <td class="py-3 px-3">
+                  <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">HK-901 • WINNER</span>
+                  <p class="font-medium text-white mt-1">"99% creator mất 6 tiếng dựng 1 video ngắn — đây là cách AI làm trong 40 giây..."</p>
+                </td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400">84.2%</td>
+                <td class="py-3 px-3 text-right font-mono text-slate-200">61.8%</td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-amber-400">6.1x</td>
+                <td class="py-3 px-3 text-center">
+                  <button class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-amber-400/20 text-amber-400 border border-amber-400/40 font-mono text-xs hover:bg-amber-400 hover:text-slate-950 transition-colors">Clone SOP</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-[#1A2130]/60">
+                <td class="py-3 px-3">
+                  <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-indigo-400/15 text-indigo-400 border border-indigo-400/30">HK-904 • SCALING</span>
+                  <p class="font-medium text-white mt-1">"Đừng thuê ekip quay dựng năm 2026 trước khi xem bảng chi phí AI ngầm này..."</p>
+                </td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-indigo-400">79.5%</td>
+                <td class="py-3 px-3 text-right font-mono text-slate-200">54.3%</td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-amber-400">4.9x</td>
+                <td class="py-3 px-3 text-center">
+                  <button class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-[#1A2130] text-slate-200 border border-[#263044] font-mono text-xs hover:border-amber-400">Clone SOP</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-[#1A2130]/60">
+                <td class="py-3 px-3">
+                  <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">HK-912 • TESTING</span>
+                  <p class="font-medium text-white mt-1">"Mình đã thử cho 4 Giám đốc AI tranh luận trực tiếp để chọn ngách kiếm USDT..."</p>
+                </td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-amber-400">73.1%</td>
+                <td class="py-3 px-3 text-right font-mono text-slate-200">49.0%</td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-slate-200">3.8x</td>
+                <td class="py-3 px-3 text-center">
+                  <button class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-[#1A2130] text-slate-200 border border-[#263044] font-mono text-xs hover:border-amber-400">Clone SOP</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Unified 18-Screen Stitch-Loop Navigation Ribbon -->
+  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-[96vw] overflow-x-auto bg-[#0B0E14]/95 backdrop-blur-md border border-[#263044] rounded-full px-4 py-1.5 flex items-center gap-2 text-xs font-mono whitespace-nowrap shadow-2xl">
+    <span class="text-amber-400 font-bold pr-2 border-r border-[#263044]">Stitch 18/18</span>
+    <a href="index.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">1.Deck</a>
+    <a href="ask-advisors.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">2.Advisors</a>
+    <a href="video-studio.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">3.Studio</a>
+    <a href="billing-revenue.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">4.Billing</a>
+    <a href="setup-wizard.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">5.BYOK</a>
+    <a href="agency-portal.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">6.Agency</a>
+    <a href="mobile-companion.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">7.Mobile</a>
+    <a href="pricing.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">8.Pricing</a>
+    <a href="style-guide.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">9.Style</a>
+    <a href="creative-economy.html" class="px-2 py-1 rounded bg-amber-400 text-slate-950 font-bold">10.Hooks</a>
+    <a href="youtube-automation.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">11.YouTube</a>
+    <a href="playbooks.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">12.Playbooks</a>
+    <a href="publish-queue.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">13.Queue</a>
+    <a href="marketplace.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">14.Market</a>
+    <a href="my-sops.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">15.MySOPs</a>
+    <a href="challenges.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">16.Challenges</a>
+    <a href="handover-runbooks.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">17.Runbooks</a>
+    <a href="system-health.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">18.Health</a>
+  </div>
+
+  <script>
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-' + lang + ']').forEach(function(el) {
+        el.textContent = el.getAttribute('data-' + lang);
+      });
+      var btnVi = document.getElementById('btn-vi');
+      var btnEn = document.getElementById('btn-en');
+      if (lang === 'vi') {
+        btnVi.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
+        btnEn.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
+      } else {
+        btnEn.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
+        btnVi.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
+      }
+    }
+  </script>
+</body>
+</html>

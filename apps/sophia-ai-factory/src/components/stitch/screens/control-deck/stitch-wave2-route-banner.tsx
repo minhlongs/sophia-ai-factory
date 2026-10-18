@@ -11,12 +11,14 @@ import {
 export interface StitchWave2RouteBannerProps {
   readonly routeKey: StitchRouteBannerKey;
   readonly testId?: string;
+  readonly defaultShowCanvas?: boolean;
   readonly className?: string;
 }
 
 export function StitchWave2RouteBanner({
   routeKey,
   testId,
+  defaultShowCanvas = false,
   className = 'mb-6',
 }: Readonly<StitchWave2RouteBannerProps>) {
   const isVi = useLocale() === 'vi';
@@ -34,6 +36,7 @@ export function StitchWave2RouteBanner({
       description={copy.description}
       ctaHref={copy.ctaHref}
       ctaLabel={copy.ctaLabel}
+      defaultShowCanvas={defaultShowCanvas}
       tone={copy.tone}
       className={className}
     />

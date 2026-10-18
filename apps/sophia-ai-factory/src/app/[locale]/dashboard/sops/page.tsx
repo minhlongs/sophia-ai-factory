@@ -4,7 +4,6 @@
  * Server Component: fetches installations with template data.
  */
 
-import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listInstallationsForUser, getTemplatesByIds } from '@/seed/sop/sop-repo';
@@ -35,7 +34,13 @@ export default async function SopsListPage({ params }: Props) {
   ]);
 
   const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
+  if (!user) {
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <StitchWave2RouteBanner routeKey="my-sops" defaultShowCanvas={true} className="" />
+      </div>
+    );
+  }
 
   const db = await getD1();
   const installations = db ? await listInstallationsForUser(db, user.id) : [];

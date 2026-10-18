@@ -13,6 +13,7 @@
  */
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/seed/utils/cn";
 import { DashboardSidebarNav, type DashboardUserProps } from "./dashboard-sidebar-nav";
 import { DashboardTopBar } from "./dashboard-topbar";
@@ -35,9 +36,19 @@ export function DashboardShell({
   className,
 }: DashboardShellProps) {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const pathnameFromHook = usePathname();
+  const activePath = currentPath || pathnameFromHook || "";
+
+  if (activePath.includes("/dashboard/control-deck")) {
+    return (
+      <div className={cn("min-h-screen w-full bg-[#0B0E14] text-[#F8FAFC]", className)}>
+        {children}
+      </div>
+    );
+  }
 
   return (
-    <div className={cn("min-h-screen bg-background dark:bg-[#090A10] text-foreground dark:text-white flex", className)}>
+    <div className={cn("min-h-screen bg-[#0B0E14] text-[#F8FAFC] flex", className)}>
       {/* Canonical Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebarNav
         currentPath={currentPath}

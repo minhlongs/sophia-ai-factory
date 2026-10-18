@@ -78,7 +78,8 @@ export default async function SystemHealthPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-rose-600">{t('notAuthenticated')}</p>
+        <StitchWave2RouteBanner routeKey="system-health" defaultShowCanvas={true} />
+        <p className="text-sm text-rose-400">{t('notAuthenticated')}</p>
       </div>
     );
   }

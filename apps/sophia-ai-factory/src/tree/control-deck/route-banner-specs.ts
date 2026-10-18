@@ -37,7 +37,7 @@ export interface ResolvedRouteBannerCopy {
 export const STITCH_ROUTE_BANNER_SPECS: Readonly<Record<StitchRouteBannerKey, StitchRouteBannerSpec>> = {
   dashboard: {
     ariaLabel: { vi: 'Bản xem trước Director’s Control Deck', en: "Director's Control Deck preview" },
-    badge: { vi: 'STITCH v4.2 · 9 Ý TƯỞNG GIAO DIỆN', en: 'STITCH v4.2 · 9 DESIGN CONCEPTS' },
+    badge: { vi: 'STITCH v4.2 · 18 MÀN HÌNH GIAO DIỆN', en: 'STITCH v4.2 · 18 DESIGN SCREENS' },
     pill: { vi: 'SỐ LIỆU MẪU', en: 'SAMPLE TELEMETRY' },
     title: { vi: 'Director’s Control Deck — Bản xem trước thiết kế', en: 'Director’s Control Deck — Design Preview' },
     description: {

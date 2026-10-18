@@ -7,6 +7,7 @@ import type {
 } from '@/seed/types/stitch-control-deck';
 import { ControlDeckDemoNotice } from './control-deck-demo-notice';
 import { ControlDeckScreenNav } from './control-deck-screen-nav';
+import { StitchScreenLiveCanvas } from './stitch-screen-live-canvas';
 import { ExecutiveMabPanel } from './executive-mab-panel';
 import { AdvisorTimelinePanel } from './advisor-timeline-panel';
 import { RevenuePortalsPanel } from './revenue-portals-panel';
@@ -16,14 +17,16 @@ export { ControlDeckInspector, type ControlDeckInspectorProps } from './control-
 export interface ControlDeckHubProps {
   readonly dataset: ControlDeckDataset;
   readonly initialLang?: 'en' | 'vi';
+  readonly initialScreenId?: ControlDeckScreenId;
 }
 
 export function ControlDeckHub({
   dataset,
   initialLang = 'en',
+  initialScreenId = 'dashboard',
 }: Readonly<ControlDeckHubProps>) {
   const [lang, setLang] = useState<'en' | 'vi'>(initialLang);
-  const [activeId, setActiveId] = useState<ControlDeckScreenId>('dashboard');
+  const [activeId, setActiveId] = useState<ControlDeckScreenId>(initialScreenId);
 
   const activeScreen =
     dataset.screens.find((item) => item.id === activeId) ?? dataset.screens[0];
@@ -45,7 +48,7 @@ export function ControlDeckHub({
               </span>
               <span className="truncate">STITCH PROJECT {dataset.projectId}</span>
               <span aria-hidden="true">·</span>
-              <span>{lang === 'vi' ? '9 Ý TƯỞNG GIAO DIỆN' : '9 DESIGN CONCEPTS'}</span>
+              <span>{lang === 'vi' ? `${dataset.screens.length} MÀN HÌNH STITCH V4.2` : `${dataset.screens.length} STITCH V4.2 SCREENS`}</span>
             </div>
             <h1 className="mt-2 break-words font-sans text-2xl font-bold tracking-tight text-[#F8FAFC] md:text-3xl">
               {dataset.directionName[lang]}
@@ -84,6 +87,12 @@ export function ControlDeckHub({
           className="min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
         >
           <ControlDeckInspector activeScreen={activeScreen} lang={lang} />
+          <StitchScreenLiveCanvas
+            activeScreen={activeScreen}
+            lang={lang}
+            screens={dataset.screens}
+            onSelectScreen={setActiveId}
+          />
           <div className="mt-6 min-w-0 space-y-6">
             <ExecutiveMabPanel screen={activeScreen} mabArms={dataset.mabArms} lang={lang} />
             <AdvisorTimelinePanel advisors={dataset.advisors} timelineTracks={dataset.timelineTracks} lang={lang} />

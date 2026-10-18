@@ -21,6 +21,7 @@ import {
   MarketplaceSkeleton,
   CreatorTemplatesSection,
 } from '@/land/marketplace';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -97,8 +98,9 @@ export default async function MarketplacePage({ params, searchParams }: PageProp
   ]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#0B0E14] text-[#F8FAFC]">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <StitchWave2RouteBanner routeKey="marketplace" defaultShowCanvas={true} />
         {/* Hero Headline */}
         <MarketplaceHeader />
 

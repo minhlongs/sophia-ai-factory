@@ -17,6 +17,7 @@ import {
   RUNBOOK_CATALOG,
 } from '@/tree/handover/runbook-catalog-service';
 import { RunbookReaderClient } from '@/forest/components/runbooks/runbook-reader-client';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export default async function RunbooksOverviewPageRoute({
   params,
@@ -34,10 +35,13 @@ export default async function RunbooksOverviewPageRoute({
   }
 
   return (
-    <RunbookReaderClient
-      runbooks={catalog}
-      activeRunbook={defaultRunbook}
-      locale={locale}
-    />
+    <div className="space-y-6">
+      <StitchWave2RouteBanner routeKey="handover" defaultShowCanvas={true} />
+      <RunbookReaderClient
+        runbooks={catalog}
+        activeRunbook={defaultRunbook}
+        locale={locale}
+      />
+    </div>
   );
 }

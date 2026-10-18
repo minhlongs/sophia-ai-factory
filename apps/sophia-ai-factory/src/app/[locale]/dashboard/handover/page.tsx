@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic';
  * @module app/[locale]/dashboard/handover/page
  */
 
-import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import type {
@@ -34,7 +33,11 @@ export default async function CustomerHandoverPageRoute({
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect(`/${locale}/login?redirect=/dashboard/handover`);
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <StitchWave2RouteBanner routeKey="handover" defaultShowCanvas={true} className="" />
+      </div>
+    );
   }
 
   const db = await getD1();

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Sophia AI Factory — 18. Edge System Health, Circuit Breakers &amp; Mekong Doctor (/dashboard/system-health)</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            obsidian: "#0B0E14",
+            panel: "#121722",
+            "panel-high": "#1A2130",
+            outline: "#263044",
+            amber: { 400: "#F59E0B", 500: "#D97706" },
+            emerald: { 400: "#10B981", 500: "#059669" },
+            indigo: { 400: "#6366F1", 500: "#4F46E5" }
+          },
+          fontFamily: {
+            display: ["Space Grotesk", "sans-serif"],
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .specular-card {
+      background: linear-gradient(180deg, rgba(26,33,48,0.85) 0%, rgba(18,23,34,0.96) 100%);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+    }
+    .glow-emerald { box-shadow: 0 0 20px rgba(16, 185, 129, 0.25); }
+  </style>
+</head>
+<body class="bg-[#0B0E14] text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-slate-950">
+  <!-- LEFT SIDEBAR -->
+  <aside class="fixed left-0 top-0 h-screen w-64 bg-[#121722] border-r border-[#263044] z-40 hidden lg:flex flex-col justify-between p-4 select-none">
+    <div>
+      <div class="flex items-center gap-3 pb-4 mb-4 border-b border-[#263044]">
+        <div class="w-10 h-10 rounded-xl bg-[#1A2130] border border-emerald-400/40 flex items-center justify-center text-emerald-400 glow-emerald">
+          <span class="material-symbols-outlined">monitor_heart</span>
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-base text-white tracking-tight">Sophia AI Factory</h1>
+          <span class="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">Stitch v4.2 Deck</span>
+        </div>
+      </div>
+      <nav aria-label="Control Deck Navigation" class="space-y-1 text-sm">
+        <a href="index.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">dashboard</span><span>1. Command Deck</span>
+        </a>
+        <a href="creative-economy.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">bolt</span><span>10. Creative Hook Lab</span>
+        </a>
+        <a href="youtube-automation.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">smart_display</span><span>11. YouTube Automation</span>
+        </a>
+        <a href="playbooks.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">schema</span><span>12. Playbooks Matrix</span>
+        </a>
+        <a href="publish-queue.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">schedule_send</span><span>13. Publish Queue</span>
+        </a>
+        <a href="marketplace.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">storefront</span><span>14. SOP Marketplace</span>
+        </a>
+        <a href="my-sops.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">inventory_2</span><span>15. My SOPs Studio</span>
+        </a>
+        <a href="challenges.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">emoji_events</span><span>16. Growth Challenges</span>
+        </a>
+        <a href="handover-runbooks.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">menu_book</span><span>17. Handover Runbooks</span>
+        </a>
+        <a href="system-health.html" aria-current="page" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg bg-amber-400/15 text-amber-400 border-l-2 border-amber-400 font-semibold">
+          <span class="material-symbols-outlined text-lg">monitor_heart</span><span data-en="18. System Health" data-vi="18. Sức Khỏe Hệ Thống">18. Sức Khỏe Hệ Thống</span>
+        </a>
+      </nav>
+    </div>
+    <div class="pt-4 border-t border-[#263044]">
+      <div class="px-3 py-2 rounded-lg bg-[#0B0E14] border border-[#263044] flex items-center justify-between text-xs font-mono">
+        <span class="text-slate-400">Route:</span>
+        <span class="text-amber-400">/dashboard/system-health</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TOP HEADER -->
+  <header class="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-[#121722]/95 backdrop-blur-md border-b border-[#263044] z-30 flex items-center justify-between px-4 sm:px-6">
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="px-2.5 py-1 rounded-md font-mono text-xs bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 shrink-0">SCREEN #18</span>
+      <h2 class="font-display font-bold text-base sm:text-lg text-white truncate" data-en="Edge System Health, Circuit Breakers &amp; Mekong Doctor" data-vi="Sức Khỏe Hạ Tầng Biên, Cầu Dao Tự Ngắt &amp; Mekong Doctor">Sức Khỏe Hạ Tầng Biên, Cầu Dao Tự Ngắt &amp; Mekong Doctor</h2>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center bg-[#0B0E14] rounded-lg p-1 border border-[#263044]" role="group" aria-label="Language Switcher">
+        <button id="btn-vi" onclick="setLang('vi')" class="px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950">VI</button>
+        <button id="btn-en" onclick="setLang('en')" class="px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white">EN</button>
+      </div>
+      <button class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-semibold text-xs glow-emerald">
+        <span class="material-symbols-outlined text-base">medical_services</span>
+        <span data-en="Run Mekong Doctor Sweep" data-vi="Chạy Chẩn Đoán Mekong Doctor">Chạy Chẩn Đoán Mekong Doctor</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="lg:ml-64 pt-20 pb-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+    <!-- Global Telemetry Banner -->
+    <section class="specular-card rounded-2xl p-6 border border-emerald-400/40 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping motion-reduce:animate-none"></span>
+          <span class="font-mono text-xs uppercase tracking-wider text-emerald-400" data-en="CLOUDFLARE WORKERS SGP/HAN/SJC • 99.98% UPTIME SLA" data-vi="CLOUDFLARE WORKERS SGP/HAN/SJC • CAM KẾT 99.98% UPTIME">CLOUDFLARE WORKERS SGP/HAN/SJC • CAM KẾT 99.98% UPTIME</span>
+        </div>
+        <h3 class="font-display text-2xl sm:text-3xl font-bold text-white" data-en="All 8 Edge Circuit Breakers CLOSED &amp; Sub-Second" data-vi="Toàn Bộ 8 Cầu Dao Ngoại Vi Đóng Khép Kín &amp; Phản Hồi Dưới 1 Giây">Toàn Bộ 8 Cầu Dao Ngoại Vi Đóng Khép Kín &amp; Phản Hồi Dưới 1 Giây</h3>
+        <p class="text-slate-400 text-sm max-w-3xl" data-en="Real-time P95 latency telemetry across OpenRouter, ElevenLabs, HeyGen, D-ID, Cloudflare D1/R2/KV, NOWPayments, and PayOS." data-vi="Giám sát độ trễ P95 thời gian thực trên OpenRouter, ElevenLabs, HeyGen, D-ID, Cloudflare D1/R2/KV, NOWPayments và PayOS.">Giám sát độ trễ P95 thời gian thực trên OpenRouter, ElevenLabs, HeyGen, D-ID, Cloudflare D1/R2/KV, NOWPayments và PayOS.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 shrink-0 font-mono text-xs">
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044]">
+          <span class="text-slate-400 block">Edge Worker P95</span>
+          <span class="text-emerald-400 font-bold text-base">38.4 ms</span>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044]">
+          <span class="text-slate-400 block">D1 Query P95</span>
+          <span class="text-amber-400 font-bold text-base">4.2 ms</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 Circuit Breaker Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="Circuit Breaker Matrix">
+      <div class="specular-card rounded-xl p-5 border border-[#263044] space-y-2">
+        <div class="flex justify-between items-center font-mono text-xs">
+          <span class="text-white font-bold">OpenRouter (Claude 3.7)</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">CLOSED • 112ms</span>
+        </div>
+        <p class="text-xs text-slate-400">Fallback: GPT-4o / DeepSeek-R1 • Error Rate: 0.01%</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044] space-y-2">
+        <div class="flex justify-between items-center font-mono text-xs">
+          <span class="text-white font-bold">ElevenLabs Turbo v2.5</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">CLOSED • 245ms</span>
+        </div>
+        <p class="text-xs text-slate-400">Fallback: OpenAI TTS-1-HD • Error Rate: 0.00%</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044] space-y-2">
+        <div class="flex justify-between items-center font-mono text-xs">
+          <span class="text-white font-bold">HeyGen Avatar 4K Engine</span>
+          <span class="px-2 py-0.5 rounded bg-amber-400/15 text-amber-400">CLOSED • 820ms</span>
+        </div>
+        <p class="text-xs text-slate-400">Hot Standby: D-ID Studio API • Error Rate: 0.14%</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044] space-y-2">
+        <div class="flex justify-between items-center font-mono text-xs">
+          <span class="text-white font-bold">NOWPayments TRC-20 IPN</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">CLOSED • 140ms</span>
+        </div>
+        <p class="text-xs text-slate-400">HMAC-SHA512 Verified • D1 Atomic Lock Active</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044] space-y-2">
+        <div class="flex justify-between items-center font-mono text-xs">
+          <span class="text-white font-bold">PayOS VietQR Napas247</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">CLOSED • 95ms</span>
+        </div>
+        <p class="text-xs text-slate-400">Domestic Banking Rails • Instant Settlement</p>
+      </div>
+      <div class="specular-card rounded-xl p-5 border border-[#263044] space-y-2">
+        <div class="flex justify-between items-center font-mono text-xs">
+          <span class="text-white font-bold">Cloudflare D1 + R2 + KV</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">CLOSED • 4.2ms</span>
+        </div>
+        <p class="text-xs text-slate-400">Merkle Root Synced • 0 Replication Lag</p>
+      </div>
+    </section>
+
+    <!-- Mekong Doctor Diagnostic Terminal -->
+    <section class="specular-card rounded-2xl p-6 border border-[#263044] space-y-3">
+      <div class="flex items-center justify-between border-b border-[#263044] pb-3">
+        <h4 class="font-display font-bold text-base text-white" data-en="Mekong Doctor Automated Self-Healing Log" data-vi="Nhật Ký Tự Chữa Lành &amp; Chẩn Đoán Mekong Doctor">Nhật Ký Tự Chữa Lành &amp; Chẩn Đoán Mekong Doctor</h4>
+        <span class="font-mono text-xs text-emerald-400">Exit Code: 0 (All Checks Green)</span>
+      </div>
+      <pre class="p-4 rounded-xl bg-[#0B0E14] border border-[#263044] font-mono text-xs text-emerald-400 overflow-x-auto leading-relaxed">$ sophia-doctor --verify-edge --check-merkle --check-breakers
+[OK] Cloudflare D1 binding (DB_PROD): 24/24 tables healthy (3.9ms)
+[OK] Cloudflare R2 bucket (MEDIA_VAULT): zero-egress CORS &amp; presigner verified
+[OK] WebCrypto AES-256-GCM BYOK envelope: key rotation epoch #18 verified
+[OK] Circuit Breakers: 8/8 CLOSED | Failover simulation HeyGen -&gt; D-ID passed in 118ms
+[OK] Merkle Audit Root: 0x94f8a2c1...77e01b9d matches 1,420 immutable ledger leaves</pre>
+    </section>
+  </main>
+
+  <!-- Unified 18-Screen Stitch-Loop Navigation Ribbon -->
+  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-[96vw] overflow-x-auto bg-[#0B0E14]/95 backdrop-blur-md border border-[#263044] rounded-full px-4 py-1.5 flex items-center gap-2 text-xs font-mono whitespace-nowrap shadow-2xl">
+    <span class="text-amber-400 font-bold pr-2 border-r border-[#263044]">Stitch 18/18</span>
+    <a href="index.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">1.Deck</a>
+    <a href="ask-advisors.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">2.Advisors</a>
+    <a href="video-studio.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">3.Studio</a>
+    <a href="billing-revenue.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">4.Billing</a>
+    <a href="setup-wizard.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">5.BYOK</a>
+    <a href="agency-portal.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">6.Agency</a>
+    <a href="mobile-companion.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">7.Mobile</a>
+    <a href="pricing.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">8.Pricing</a>
+    <a href="style-guide.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">9.Style</a>
+    <a href="creative-economy.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">10.Hooks</a>
+    <a href="youtube-automation.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">11.YouTube</a>
+    <a href="playbooks.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">12.Playbooks</a>
+    <a href="publish-queue.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">13.Queue</a>
+    <a href="marketplace.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">14.Market</a>
+    <a href="my-sops.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">15.MySOPs</a>
+    <a href="challenges.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">16.Challenges</a>
+    <a href="handover-runbooks.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">17.Runbooks</a>
+    <a href="system-health.html" class="px-2 py-1 rounded bg-amber-400 text-slate-950 font-bold">18.Health</a>
+  </div>
+
+  <script>
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-' + lang + ']').forEach(function(el) {
+        el.textContent = el.getAttribute('data-' + lang);
+      });
+      var btnVi = document.getElementById('btn-vi');
+      var btnEn = document.getElementById('btn-en');
+      if (lang === 'vi') {
+        btnVi.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950';
+        btnEn.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white';
+      } else {
+        btnEn.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950';
+        btnVi.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white';
+      }
+    }
+  </script>
+</body>
+</html>

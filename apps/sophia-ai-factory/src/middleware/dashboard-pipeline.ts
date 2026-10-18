@@ -27,7 +27,10 @@ export async function handleDashboardPipeline(
   const locale = (pathLocale && (SUPPORTED_LOCALES as readonly string[]).includes(pathLocale)) ? pathLocale : 'vi';
   const authResult = await requireAuth(request, locale);
   if (authResult instanceof NextResponse) {
-    if (cleanPath !== '/dashboard/control-deck') {
+    const isDemoPreview =
+      cleanPath === '/dashboard/control-deck' ||
+      (process.env.NODE_ENV !== 'production' && request.nextUrl.searchParams.get('demo') === '1');
+    if (!isDemoPreview) {
       return authResult;
     }
   } else {
