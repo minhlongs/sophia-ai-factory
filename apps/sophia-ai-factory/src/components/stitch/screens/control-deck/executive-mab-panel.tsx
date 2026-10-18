@@ -43,30 +43,36 @@ export function ExecutiveMabPanel({
   return (
     <section
       aria-labelledby="mab-panel-heading"
-      className="rounded-xl border border-[#1E2235] bg-[#11131F] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]"
+      className="min-w-0 rounded-xl border border-[#1E2638] bg-[#121722] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
     >
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1E2235] pb-4">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-0.5 font-mono text-xs text-[#C0C1FF]">
-            {screen.statusBadge[lang]}
-          </span>
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1E2638] pb-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/40 bg-indigo-500/15 px-3 py-0.5 font-mono text-xs text-indigo-300">
+              {screen.statusBadge[lang]}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-amber-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+              {lang === 'vi' ? 'TRẦN HALF-KELLY f* ≤ 25%' : 'HALF-KELLY CAP f* ≤ 25%'}
+            </span>
+          </div>
           <h2
             id="mab-panel-heading"
-            className="mt-2 font-sans text-xl font-semibold tracking-tight text-[#F8FAFC]"
+            className="mt-2 break-words font-sans text-xl font-semibold tracking-tight text-[#F8FAFC]"
           >
             {screen.title[lang]}
           </h2>
-          <p className="mt-1 text-sm text-[#94A3B8]">{screen.subtitle[lang]}</p>
+          <p className="mt-1 break-words text-sm text-[#94A3B8]">{screen.subtitle[lang]}</p>
         </div>
 
-        <div className="rounded-lg border border-[#F59E0B]/40 bg-[#1A1C28] px-4 py-3 text-right">
+        <div className="shrink-0 rounded-lg border border-amber-400/40 bg-[#0B0E14] px-4 py-3 text-right shadow-[inset_0_1px_0_0_rgba(245,158,11,0.18)]">
           <div className="text-xs font-medium text-[#94A3B8]">
             {screen.primaryKpiLabel[lang]}
           </div>
-          <div className="font-mono text-2xl font-bold text-[#F59E0B]">
+          <div className="font-mono text-2xl font-bold tabular-nums text-amber-400">
             {screen.primaryKpiValue}
           </div>
-          <div className="font-mono text-[11px] text-[#10B981]">
+          <div className="font-mono text-[11px] text-emerald-400">
             {lang === 'vi'
               ? 'Half-Kelly f* = 18.4% · Ngắt lỗ -15%'
               : 'Demo values · Half-Kelly f* = 18.4% · -15% Circuit Breaker'}
@@ -74,14 +80,14 @@ export function ExecutiveMabPanel({
         </div>
       </header>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#1E2235] bg-[#1A1C28]/70 px-4 py-3">
-        <div className="flex flex-1 flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#1E2638] bg-[#0B0E14]/90 px-4 py-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <label
             htmlFor="mab-mcu-budget-slider"
-            className="font-mono text-xs text-[#C0C1FF]"
+            className="font-mono text-xs text-indigo-300"
           >
             {lang === 'vi' ? 'Ngân sách MCU:' : 'MCU Pool:'}{' '}
-            <strong className="text-[#F8FAFC]">{mcuBudget} MCU</strong>
+            <strong className="tabular-nums text-[#F8FAFC]">{mcuBudget} MCU</strong>
           </label>
           <input
             id="mab-mcu-budget-slider"
@@ -96,7 +102,7 @@ export function ExecutiveMabPanel({
                 ? 'Thanh trượt ngân sách MCU Half-Kelly'
                 : 'Half-Kelly MCU budget slider'
             }
-            className="h-2 w-40 cursor-pointer appearance-none rounded-lg bg-[#090A10] accent-[#6366F1]"
+            className="min-h-[44px] w-full max-w-[180px] cursor-pointer appearance-none rounded-lg bg-transparent accent-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           />
         </div>
         <button
@@ -104,9 +110,13 @@ export function ExecutiveMabPanel({
           disabled={isRebalancing}
           onClick={handleRebalance}
           data-testid="rebalance-half-kelly-btn"
-          className="rounded-lg border border-[#F59E0B]/60 bg-[#F59E0B]/15 px-3 py-1.5 font-mono text-xs font-semibold text-[#F59E0B] transition-colors hover:bg-[#F59E0B] hover:text-[#090A10] disabled:opacity-60"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-amber-400/70 bg-amber-400/15 px-4 py-2 font-mono text-xs font-semibold text-amber-400 transition-colors motion-reduce:transition-none hover:bg-amber-400 hover:text-[#0B0E14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 disabled:opacity-60"
         >
-          {lang === 'vi' ? 'Tái Cân Bằng Half-Kelly' : 'Rebalance Half-Kelly'}
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 rounded-full ${isRebalancing ? 'animate-ping bg-amber-300 motion-reduce:animate-none' : 'bg-amber-400'}`}
+          />
+          <span>{lang === 'vi' ? 'Tái Cân Bằng Half-Kelly' : 'Rebalance Half-Kelly'}</span>
         </button>
       </div>
 
@@ -114,9 +124,10 @@ export function ExecutiveMabPanel({
         <div
           role="status"
           data-testid="rebalance-half-kelly-receipt"
-          className="mt-3 rounded-lg border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-3 py-2 font-mono text-xs text-[#F59E0B]"
+          className="mt-3 flex items-center gap-2 rounded-lg border border-amber-400/50 bg-amber-400/10 px-3.5 py-2.5 font-mono text-xs text-amber-300"
         >
-          {rebalanceReceipt[lang]}
+          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" aria-hidden="true" />
+          <span className="min-w-0 flex-1 break-words">{rebalanceReceipt[lang]}</span>
         </div>
       )}
 

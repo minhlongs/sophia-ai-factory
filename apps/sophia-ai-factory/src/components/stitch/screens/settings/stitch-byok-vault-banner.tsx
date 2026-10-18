@@ -2,43 +2,41 @@ import React from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/navigation';
 import { KeyRound, ArrowUpRight } from 'lucide-react';
+import { resolveRouteBannerCopy } from '@/tree/control-deck';
 
 export function StitchByokVaultBanner() {
-  const isVi = useLocale() === 'vi';
+  const copy = resolveRouteBannerCopy('settings', useLocale() === 'vi');
 
   return (
     <section
-      aria-label={isVi ? 'Quản lý khóa BYOK và xuất dữ liệu workspace' : 'BYOK key management and workspace export'}
+      role="region"
+      aria-label={copy.ariaLabel}
       data-testid="stitch-byok-vault-banner"
-      className="mx-auto mb-6 max-w-6xl px-4 pt-4 md:px-6"
+      className="mx-auto mb-6 max-w-6xl overflow-x-hidden px-4 pt-4 md:px-6"
     >
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-[#10B981]/40 bg-[#11131F] p-4 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)] sm:flex-row sm:items-center">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#10B981]/50 bg-[#10B981]/15 text-[#10B981]">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-emerald-400/35 bg-gradient-to-br from-[#121722] via-[#11131F] to-[#0B0E14] p-4 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] sm:flex-row sm:items-center sm:p-5">
+        <div className="flex min-w-0 items-start gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-400/40 bg-emerald-400/15 text-emerald-400 shadow-[inset_0_1px_0_0_rgba(16,185,129,0.2)]">
             <KeyRound className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-              <span className="font-semibold text-[#10B981]">
-                {isVi ? 'QUẢN LÝ KHÓA BYOK' : 'BYOK KEY MANAGEMENT'}
-              </span>
-              <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary-200">
-                {isVi ? 'XUẤT WORKSPACE' : 'WORKSPACE EXPORT'}
+              <span className="font-semibold text-emerald-400">{copy.badge}</span>
+              <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-400">
+                {copy.pill}
               </span>
             </div>
-            <h2 className="mt-1 font-sans text-sm font-semibold text-[#F8FAFC]">
-              {isVi
-                ? 'Quản lý khóa nhà cung cấp và xuất dữ liệu workspace.'
-                : 'Manage provider keys and export workspace data.'}
+            <h2 className="mt-1 font-sans text-sm font-semibold tracking-tight text-[#F8FAFC]">
+              {copy.title}
             </h2>
           </div>
         </div>
 
         <Link
-          href="/dashboard/control-deck"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#1E2235] bg-[#1A1C28] px-3.5 py-2 font-mono text-xs font-semibold text-primary-200 transition-colors hover:border-primary hover:text-[#F8FAFC]"
+          href={copy.ctaHref}
+          className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-400/40 bg-[#121722] px-4 py-2.5 font-mono text-xs font-semibold text-amber-300 transition-colors hover:border-amber-400 hover:bg-amber-400/15 hover:text-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none"
         >
-          <span>{isVi ? 'Quản Lý Khóa BYOK' : 'BYOK Key Management'}</span>
+          <span>{copy.ctaLabel}</span>
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>

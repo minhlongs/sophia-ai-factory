@@ -22,3 +22,9 @@ export type { TableProps, ColumnDef, ColumnDef as Column } from './table';
 
 export { Sidebar } from './sidebar';
 export type { SidebarProps, SidebarItem } from './sidebar';
+
+export { StitchRouteBanner } from './stitch-route-banner';
+export type { StitchRouteBannerProps } from './stitch-route-banner';
+
+export { StitchProgressMeter } from './stitch-progress-meter';
+export type { StitchProgressMeterProps } from './stitch-progress-meter';

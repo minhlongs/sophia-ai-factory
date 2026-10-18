@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from '@/navigation';
 import { Building2, ArrowUpRight } from 'lucide-react';
+import { resolveRouteBannerCopy } from '@/tree/control-deck';
 
 export interface StitchAgencySubaccountStripProps {
   readonly isVi: boolean;
@@ -9,43 +10,38 @@ export interface StitchAgencySubaccountStripProps {
 export function StitchAgencySubaccountStrip({
   isVi,
 }: Readonly<StitchAgencySubaccountStripProps>) {
+  const copy = resolveRouteBannerCopy('partner', isVi);
+
   return (
     <section
-      aria-label={
-        isVi
-          ? 'Cổng Quản Trị Subaccount Đại Lý White-Label Stitch v4.2'
-          : 'Stitch v4.2 White-Label Agency Subaccount Portal'
-      }
+      role="region"
+      aria-label={copy.ariaLabel}
       data-testid="stitch-agency-subaccount-strip"
-      className="mx-auto max-w-7xl px-4 pt-6 md:px-8"
+      className="mx-auto max-w-7xl overflow-x-hidden px-4 pt-6 md:px-8"
     >
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-primary/40 bg-[#11131F] p-4 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)] sm:flex-row sm:items-center">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/50 bg-primary/15 text-primary-200">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-amber-400/35 bg-gradient-to-br from-[#121722] via-[#11131F] to-[#0B0E14] p-4 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] sm:flex-row sm:items-center sm:p-5">
+        <div className="flex min-w-0 items-start gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-400/40 bg-amber-400/15 text-amber-400 shadow-[inset_0_1px_0_0_rgba(245,158,11,0.2)]">
             <Building2 className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-              <span className="font-semibold text-primary-200">
-                {isVi ? 'BẢN XEM TRƯỚC · QUẢN LÝ SUBACCOUNT' : 'DESIGN PREVIEW · AGENCY SUBACCOUNTS'}
-              </span>
-              <span className="rounded-full border border-[#10B981]/40 bg-[#10B981]/10 px-2 py-0.5 text-[10px] font-semibold text-[#10B981]">
-                {isVi ? 'BẢN MẪU GIAO DIỆN' : 'UI CONCEPT'}
+              <span className="font-semibold text-amber-400">{copy.badge}</span>
+              <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                {copy.pill}
               </span>
             </div>
-            <h2 className="mt-1 font-sans text-sm font-semibold text-[#F8FAFC]">
-              {isVi
-                ? 'Quản lý subaccount, hạn mức theo tenant và báo cáo song ngữ.'
-                : 'Manage agency subaccounts, tenant quotas, and bilingual reports.'}
+            <h2 className="mt-1 font-sans text-sm font-semibold tracking-tight text-[#F8FAFC]">
+              {copy.title}
             </h2>
           </div>
         </div>
 
         <Link
-          href="/dashboard/control-deck"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary bg-primary px-3.5 py-2 font-mono text-xs font-semibold text-[#F8FAFC] transition-colors hover:bg-primary-700"
+          href={copy.ctaHref}
+          className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-400/50 bg-amber-400/15 px-4 py-2.5 font-mono text-xs font-semibold text-amber-300 transition-colors hover:border-amber-400 hover:bg-amber-400/25 hover:text-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none"
         >
-          <span>{isVi ? 'Mở Bàn Chỉ Huy Đại Lý' : 'Open Agency Deck'}</span>
+          <span>{copy.ctaLabel}</span>
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>

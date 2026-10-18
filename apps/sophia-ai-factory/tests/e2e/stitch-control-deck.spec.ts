@@ -51,4 +51,50 @@ test.describe("Stitch v4.2 Director's Control Deck & Phase 2 Routes E2E", () => 
     await expect(calculator).toBeVisible();
     await expect(calculator).toContainText('NOWPAYMENTS USDT');
   });
+
+  test('enforces zero horizontal overflow and >= 44px touch targets across 375x812, 768x1024, and 1440x900 viewports', async ({
+    page,
+  }) => {
+    const viewports = [
+      { width: 375, height: 812 },
+      { width: 768, height: 1024 },
+      { width: 1440, height: 900 },
+    ] as const;
+
+    for (const vp of viewports) {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+
+      await page.goto('/en/dashboard/control-deck');
+      const firstTab = page.getByRole('tab').first();
+      await expect(firstTab).toBeVisible();
+
+      const controlDeckNoOverflow = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      );
+      expect(controlDeckNoOverflow).toBe(true);
+
+      for (const target of [
+        firstTab,
+        page.getByTestId('rebalance-half-kelly-btn'),
+        page.getByTestId('dispatch-advisor-council-btn'),
+      ]) {
+        const box = await target.boundingBox();
+        expect(box).not.toBeNull();
+        expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      }
+
+      await page.goto('/vi/pricing');
+      const calculator = page.getByTestId('stitch-pricing-roi-calculator');
+      await expect(calculator).toBeVisible();
+
+      const pricingNoOverflow = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      );
+      expect(pricingNoOverflow).toBe(true);
+
+      const sliderBox = await calculator.getByRole('slider').boundingBox();
+      expect(sliderBox).not.toBeNull();
+      expect(sliderBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+    }
+  });
 });

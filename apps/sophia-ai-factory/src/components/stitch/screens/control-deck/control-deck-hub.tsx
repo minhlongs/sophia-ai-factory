@@ -31,51 +31,64 @@ export function ControlDeckHub({
   return (
     <main
       aria-label={dataset.directionName[lang]}
-      className="min-h-screen bg-[#090A10] px-4 py-6 text-[#F8FAFC] md:px-8"
+      className="min-h-screen w-full overflow-x-hidden bg-[#0B0E14] px-4 py-6 text-[#F8FAFC] md:px-8"
     >
-      <ControlDeckDemoNotice lang={lang} />
-      {/* Top Executive Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#1E2235] bg-[#11131F] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]">
-        <div>
-          <div className="flex items-center gap-2 font-mono text-xs text-[#C0C1FF]">
-            <span>STITCH PROJECT {dataset.projectId}</span>
-            <span>·</span>
-            <span>{lang === 'vi' ? '9 Ý TƯỞNG GIAO DIỆN' : '9 DESIGN CONCEPTS'}</span>
+      <div className="mx-auto max-w-7xl min-w-0">
+        <ControlDeckDemoNotice lang={lang} />
+        {/* Top Executive Header */}
+        <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#1E2638] bg-[#121722] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_12px_32px_-8px_rgba(0,0,0,0.6)]">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-indigo-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 motion-reduce:animate-none" aria-hidden="true" />
+                {lang === 'vi' ? 'ĐỒNG BỘ TRỰC TUYẾN' : 'LIVE TELEMETRY'}
+              </span>
+              <span className="truncate">STITCH PROJECT {dataset.projectId}</span>
+              <span aria-hidden="true">·</span>
+              <span>{lang === 'vi' ? '9 Ý TƯỞNG GIAO DIỆN' : '9 DESIGN CONCEPTS'}</span>
+            </div>
+            <h1 className="mt-2 break-words font-sans text-2xl font-bold tracking-tight text-[#F8FAFC] md:text-3xl">
+              {dataset.directionName[lang]}
+            </h1>
           </div>
-          <h1 className="mt-1 font-sans text-2xl font-bold tracking-tight text-[#F8FAFC] md:text-3xl">
-            {dataset.directionName[lang]}
-          </h1>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLang((prev) => (prev === 'en' ? 'vi' : 'en'))}
-            aria-label={
-              lang === 'vi'
-                ? 'Chuyển sang tiếng Anh (Switch to English)'
-                : 'Switch to Vietnamese (Chuyển sang tiếng Việt)'
-            }
-            className="rounded-lg border border-primary bg-[#1A1C28] px-3.5 py-2 font-mono text-xs font-semibold text-[#F8FAFC] transition-colors hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            {lang === 'vi' ? 'VI · TIẾNG VIỆT' : 'EN · ENGLISH'}
-          </button>
-        </div>
-      </header>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLang((prev) => (prev === 'en' ? 'vi' : 'en'))}
+              aria-label={
+                lang === 'vi'
+                  ? 'Chuyển sang tiếng Anh (Switch to English)'
+                  : 'Switch to Vietnamese (Chuyển sang tiếng Việt)'
+              }
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-lg border border-amber-400/60 bg-[#1A2130] px-4 py-2 font-mono text-xs font-semibold text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] transition-colors motion-reduce:transition-none hover:border-amber-400 hover:bg-amber-400 hover:text-[#0B0E14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              <span className="h-2 w-2 rounded-full bg-amber-400" aria-hidden="true" />
+              <span>{lang === 'vi' ? 'VI · TIẾNG VIỆT' : 'EN · ENGLISH'}</span>
+            </button>
+          </div>
+        </header>
 
-      <ControlDeckScreenNav
-        screens={dataset.screens}
-        activeId={activeScreen.id}
-        lang={lang}
-        onSelect={setActiveId}
-      />
+        <ControlDeckScreenNav
+          screens={dataset.screens}
+          activeId={activeScreen.id}
+          lang={lang}
+          onSelect={setActiveId}
+        />
 
-      <div id="stitch-panel" role="tabpanel" tabIndex={0} aria-labelledby={`stitch-tab-${activeScreen.id}`}>
-        <ControlDeckInspector activeScreen={activeScreen} lang={lang} />
-        <div className="mt-6 space-y-6">
-          <ExecutiveMabPanel screen={activeScreen} mabArms={dataset.mabArms} lang={lang} />
-          <AdvisorTimelinePanel advisors={dataset.advisors} timelineTracks={dataset.timelineTracks} lang={lang} />
-          <RevenuePortalsPanel settlements={dataset.settlements} tokenSwatches={dataset.tokenSwatches} lang={lang} />
+        <div
+          id="stitch-panel"
+          role="tabpanel"
+          tabIndex={0}
+          aria-labelledby={`stitch-tab-${activeScreen.id}`}
+          className="min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+        >
+          <ControlDeckInspector activeScreen={activeScreen} lang={lang} />
+          <div className="mt-6 min-w-0 space-y-6">
+            <ExecutiveMabPanel screen={activeScreen} mabArms={dataset.mabArms} lang={lang} />
+            <AdvisorTimelinePanel advisors={dataset.advisors} timelineTracks={dataset.timelineTracks} lang={lang} />
+            <RevenuePortalsPanel settlements={dataset.settlements} tokenSwatches={dataset.tokenSwatches} lang={lang} />
+          </div>
         </div>
       </div>
     </main>

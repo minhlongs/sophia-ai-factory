@@ -1,7 +1,7 @@
 /**
  * Unified Growth Triad Barrel Export (Binh Pháp 4-Layer Consolidation)
  * Bridges fragmented tree/growth and tree/growth-v13..v16 engines into a single canonical surface.
- * Layer: tree/growth-triad | Max LOC: < 180 | Zero :any
+ * Layer: tree/growth-triad | Max LOC: < 180 | Strict TypeScript
  */
 
 export {

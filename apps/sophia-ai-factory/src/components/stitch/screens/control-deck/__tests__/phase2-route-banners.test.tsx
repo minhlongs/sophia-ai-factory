@@ -14,25 +14,41 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('@/navigation', () => ({
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    children,
+    href,
+    className,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    className?: string;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
   ),
 }));
 
 describe('Stitch Phase 2 UI Preview Components', () => {
-  it('renders DashboardControlDeckBanner (Screen 1)', () => {
+  it('renders DashboardControlDeckBanner with data-testid and accessible region (Screen 1)', () => {
     render(<DashboardControlDeckBanner />);
-    expect(screen.getByTestId('dashboard-control-deck-banner')).toBeDefined();
+    const banner = screen.getByTestId('dashboard-control-deck-banner');
+    expect(banner).toBeDefined();
+    expect(banner.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByText(/STITCH v4\.2/i)).toBeDefined();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
   });
 
-  it('renders StitchStudioDeckStrip (Screens 2 & 3)', () => {
+  it('renders StitchStudioDeckStrip with data-testid and accessible region (Screens 2 & 3)', () => {
     render(<StitchStudioDeckStrip />);
-    expect(screen.getByTestId('stitch-studio-deck-strip')).toBeDefined();
+    const strip = screen.getByTestId('stitch-studio-deck-strip');
+    expect(strip).toBeDefined();
+    expect(strip.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByText(/PHÒNG DỰNG VIDEO AI · BẢN XEM TRƯỚC/i)).toBeDefined();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
   });
 
-  it('renders MerkleSettlementBanner (Screen 4)', () => {
+  it('renders MerkleSettlementBanner with data-testid and accessible region (Screen 4)', () => {
     render(
       <MerkleSettlementBanner
         partnerCode="SOPHIA_VIP"
@@ -40,31 +56,44 @@ describe('Stitch Phase 2 UI Preview Components', () => {
         locale="vi"
       />,
     );
-    expect(screen.getByTestId('stitch-merkle-settlement-banner')).toBeDefined();
+    const banner = screen.getByTestId('stitch-merkle-settlement-banner');
+    expect(banner).toBeDefined();
+    expect(banner.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByText(/30% HOA HỒNG · SOPHIA_VIP/i)).toBeDefined();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
   });
 
-  it('renders StitchByokVaultBanner (Screen 5)', () => {
+  it('renders StitchByokVaultBanner with data-testid and accessible region (Screen 5)', () => {
     render(<StitchByokVaultBanner />);
-    expect(screen.getByTestId('stitch-byok-vault-banner')).toBeDefined();
+    const banner = screen.getByTestId('stitch-byok-vault-banner');
+    expect(banner).toBeDefined();
+    expect(banner.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByRole('link', { name: /Quản Lý Khóa BYOK/i })).toBeDefined();
   });
 
-  it('renders StitchAgencySubaccountStrip (Screen 6)', () => {
+  it('renders StitchAgencySubaccountStrip with data-testid and accessible region (Screen 6)', () => {
     render(<StitchAgencySubaccountStrip isVi={true} />);
-    expect(screen.getByTestId('stitch-agency-subaccount-strip')).toBeDefined();
+    const strip = screen.getByTestId('stitch-agency-subaccount-strip');
+    expect(strip).toBeDefined();
+    expect(strip.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByText(/BẢN MẪU GIAO DIỆN/i)).toBeDefined();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
   });
 
-  it('renders StitchMobileCompanionBanner (Screen 7)', () => {
+  it('renders StitchMobileCompanionBanner with data-testid and accessible region (Screen 7)', () => {
     render(<StitchMobileCompanionBanner />);
-    expect(screen.getByTestId('stitch-mobile-companion-banner')).toBeDefined();
+    const banner = screen.getByTestId('stitch-mobile-companion-banner');
+    expect(banner).toBeDefined();
+    expect(banner.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByText(/TRẢI NGHIỆM DI ĐỘNG · BẢN XEM TRƯỚC/i)).toBeDefined();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
   });
 
-  it('renders PricingRoiCalculator and updates savings when slider changes (Screen 8)', () => {
+  it('renders PricingRoiCalculator with aria-labelledby and updates savings when slider changes (Screen 8)', () => {
     render(<PricingRoiCalculator />);
-    expect(screen.getByTestId('stitch-pricing-roi-calculator')).toBeDefined();
+    const calc = screen.getByTestId('stitch-pricing-roi-calculator');
+    expect(calc).toBeDefined();
+    expect(calc.getAttribute('aria-labelledby')).toBe('stitch-roi-calculator-heading');
     expect(screen.getByText('$199/mo')).toBeDefined();
     const slider = screen.getByRole('slider');
     fireEvent.change(slider, { target: { value: '60' } });

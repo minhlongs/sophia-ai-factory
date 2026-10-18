@@ -10,14 +10,13 @@
  */
 
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import AffiliatesPage from '../screens/affiliates/affiliates-page';
 import PaymentsPage from '../screens/payments/payments-page';
 import SubscribersPage from '../screens/subscribers/subscribers-page';
 import { DashboardLayout } from '../layouts/dashboard-layout';
 
-// Mock next-intl
 vi.mock('next-intl', () => ({
   useTranslations: (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
     if (params) return `${namespace || ''}.${key}:${JSON.stringify(params)}`;
@@ -26,17 +25,11 @@ vi.mock('next-intl', () => ({
   useLocale: () => 'en',
 }));
 
-// Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: () => '/en/dashboard',
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-  }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
-// Mock @/navigation Link
 vi.mock('@/navigation', () => ({
   Link: ({ children, href, ...props }: { children: React.ReactNode; href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a href={href} {...props}>{children}</a>
@@ -46,18 +39,13 @@ vi.mock('@/navigation', () => ({
 describe('Stitch AffiliatesPage Accessibility & Semantic Roles', () => {
   it('renders tablist and tabs with correct ARIA roles and aria-selected state', () => {
     render(<AffiliatesPage initialAffiliates={[]} />);
-
-    const tablist = screen.getByRole('tablist');
-    expect(tablist).toBeDefined();
+    expect(screen.getByRole('tablist')).toBeDefined();
 
     const tabs = screen.getAllByRole('tab');
     expect(tabs.length).toBe(2);
-
-    // Initial state: partners tab active
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[1].getAttribute('aria-selected')).toBe('false');
 
-    // Switch to discovery tab
     fireEvent.click(tabs[1]);
     expect(tabs[0].getAttribute('aria-selected')).toBe('false');
     expect(tabs[1].getAttribute('aria-selected')).toBe('true');
@@ -80,16 +68,13 @@ describe('Stitch AffiliatesPage Accessibility & Semantic Roles', () => {
         ]}
       />
     );
-
-    const actionBtn = screen.getByRole('button', { name: /stitch\.affiliates\.affiliateActions/i });
-    expect(actionBtn).toBeDefined();
+    expect(screen.getByRole('button', { name: /stitch\.affiliates\.affiliateActions/i })).toBeDefined();
   });
 });
 
 describe('Stitch PaymentsPage Accessibility & Data Flow', () => {
   it('renders export and filter controls with accessible roles', () => {
     render(<PaymentsPage initialPayments={[]} />);
-
     expect(screen.getByText('stitch.payments.title')).toBeDefined();
     expect(screen.getByText('stitch.payments.export')).toBeDefined();
     expect(screen.getByText('stitch.payments.filter')).toBeDefined();
@@ -97,7 +82,6 @@ describe('Stitch PaymentsPage Accessibility & Data Flow', () => {
 
   it('renders empty state when no transactions exist', () => {
     render(<PaymentsPage initialPayments={[]} />);
-
     expect(screen.getByText('stitch.payments.emptyTitle')).toBeDefined();
     expect(screen.getByText('stitch.payments.emptyDesc')).toBeDefined();
   });
@@ -118,11 +102,9 @@ describe('Stitch PaymentsPage Accessibility & Data Flow', () => {
         ]}
       />
     );
-
     expect(screen.getByText('Acme Corp')).toBeDefined();
     expect(screen.getByText('$299.00')).toBeDefined();
-    const viewBtn = screen.getByRole('button', { name: /stitch\.payments\.view/i });
-    expect(viewBtn).toBeDefined();
+    expect(screen.getByRole('button', { name: /stitch\.payments\.view/i })).toBeDefined();
   });
 });
 
@@ -143,11 +125,9 @@ describe('Stitch SubscribersPage Accessibility & Controls', () => {
         ]}
       />
     );
-
     expect(screen.getByText('Jane Doe')).toBeDefined();
     expect(screen.getByText('jane@example.com')).toBeDefined();
-    const actionBtn = screen.getByRole('button', { name: /stitch\.subscribers\.subscriberActions/i });
-    expect(actionBtn).toBeDefined();
+    expect(screen.getByRole('button', { name: /stitch\.subscribers\.subscriberActions/i })).toBeDefined();
   });
 });
 
@@ -158,7 +138,6 @@ describe('Stitch DashboardLayout Accessibility & Responsive Drawer', () => {
         <div>Child Content</div>
       </DashboardLayout>
     );
-
     const skipLink = screen.getByRole('link', { name: /stitch\.navigation\.skipToContent/i });
     expect(skipLink).toBeDefined();
     expect(skipLink.getAttribute('href')).toBe('#main-content');
@@ -170,22 +149,16 @@ describe('Stitch DashboardLayout Accessibility & Responsive Drawer', () => {
         <div>Child Content</div>
       </DashboardLayout>
     );
-
     const mobileMenuTrigger = screen.getByRole('button', {
       name: /stitch\.navigation\.openMobileNav/i,
     });
-    expect(mobileMenuTrigger).toBeDefined();
-
-    // Drawer is present with dialog semantics
     const drawer = screen.getByRole('dialog');
     expect(drawer.getAttribute('aria-modal')).toBe('true');
     expect(drawer.className).toContain('-translate-x-full');
 
-    // Click trigger to open
     fireEvent.click(mobileMenuTrigger);
     expect(drawer.className).toContain('translate-x-0');
 
-    // Press Escape key
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(drawer.className).toContain('-translate-x-full');
   });

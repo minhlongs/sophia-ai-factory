@@ -1,7 +1,7 @@
 /**
  * Tree Layer: Live Thompson Bandit & Half-Kelly Telemetry Calculator for Control Deck
  * Connects tree/growth-v13 & tree/growth-v14 mathematical engines to Stitch Control Deck dataset.
- * Layer: tree/control-deck | Max LOC: < 180 | Zero :any | Zero IO
+ * Layer: tree/control-deck | Max LOC: < 180 | Strict TypeScript | Zero IO
  */
 
 import type {

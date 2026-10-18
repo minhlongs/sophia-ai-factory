@@ -3,7 +3,7 @@
 /**
  * Land Layer: Server Actions for Stitch v4.2 Director's Control Deck
  * Executes 1-Click 4-Advisor Council Mission Dispatch & Half-Kelly Rebalancing.
- * Layer: land/control-deck | Max LOC: < 180 | Zero :any | Zero forest imports
+ * Layer: land/control-deck | Max LOC: < 180 | Strict TypeScript | Zero forest imports
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
