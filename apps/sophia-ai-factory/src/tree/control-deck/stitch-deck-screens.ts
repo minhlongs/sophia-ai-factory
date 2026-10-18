@@ -1,7 +1,13 @@
 import type { StitchScreenSpec } from '@/seed/types/stitch-control-deck';
 import { STITCH_SECONDARY_DECK_SCREENS } from './stitch-deck-secondary-screens';
+import { STITCH_WAVE2_DECK_SCREENS } from './stitch-deck-wave2-screens';
+import { STITCH_WAVE2_OPS_DECK_SCREENS } from './stitch-deck-wave2-ops-screens';
 
-export { STITCH_SECONDARY_DECK_SCREENS };
+export {
+  STITCH_SECONDARY_DECK_SCREENS,
+  STITCH_WAVE2_DECK_SCREENS,
+  STITCH_WAVE2_OPS_DECK_SCREENS,
+};
 
 export const STITCH_CONTROL_DECK_SCREENS: readonly StitchScreenSpec[] = [
   {
@@ -91,4 +97,6 @@ export const STITCH_CONTROL_DECK_SCREENS: readonly StitchScreenSpec[] = [
     ],
   },
   ...STITCH_SECONDARY_DECK_SCREENS,
+  ...STITCH_WAVE2_DECK_SCREENS,
+  ...STITCH_WAVE2_OPS_DECK_SCREENS,
 ];

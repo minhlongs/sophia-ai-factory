@@ -12,7 +12,18 @@ export type ControlDeckScreenId =
   | 'agency-portal'
   | 'mobile-companion'
   | 'pricing'
-  | 'style-guide';
+  | 'style-guide'
+  | 'creative-economy'
+  | 'youtube-automation'
+  | 'playbooks'
+  | 'publish-queue'
+  | 'marketplace'
+  | 'my-sops'
+  | 'challenges'
+  | 'handover-runbooks'
+  | 'system-health';
+
+export type StitchScreenId = ControlDeckScreenId;
 
 export type ControlDeckPillar = 'studio' | 'webapp' | 'mobile' | 'marketing';
 
@@ -24,17 +35,22 @@ export interface BilingualText {
 export interface StitchScreenSpec {
   readonly id: ControlDeckScreenId;
   readonly index: number;
+  readonly order?: number;
   readonly navLabel: BilingualText;
   readonly stitchProjectId: string;
   readonly stitchScreenId: string;
   readonly routeHtml: string;
+  readonly htmlFile?: string;
+  readonly routeBind?: string;
   readonly pillar: ControlDeckPillar;
   readonly title: BilingualText;
   readonly subtitle: BilingualText;
+  readonly heroWidget?: BilingualText;
   readonly primaryKpiLabel: BilingualText;
   readonly primaryKpiValue: string;
   readonly statusBadge: BilingualText;
   readonly highlights: readonly BilingualText[];
+  readonly keyMetrics?: readonly BilingualText[];
 }
 
 export interface MabArmTelemetry {

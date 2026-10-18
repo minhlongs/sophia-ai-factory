@@ -8,6 +8,12 @@ import { StitchStudioDeckStrip } from '@/components/missions/stitch-studio-deck-
 import { StitchByokVaultBanner } from '@/components/stitch/screens/settings/stitch-byok-vault-banner';
 import { StitchAgencySubaccountStrip } from '@/app/[locale]/partner/stitch-agency-subaccount-strip';
 import { StitchMobileCompanionBanner } from '@/components/approval-queue/stitch-mobile-companion-banner';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
+import {
+  resolveRouteBannerCopy,
+  STITCH_WAVE2_ROUTE_BANNER_SPECS,
+  type StitchWave2RouteBannerKey,
+} from '@/tree/control-deck/route-banner-specs';
 
 vi.mock('next-intl', () => ({
   useLocale: () => 'vi',
@@ -98,5 +104,23 @@ describe('Stitch Phase 2 UI Preview Components', () => {
     const slider = screen.getByRole('slider');
     fireEvent.change(slider, { target: { value: '60' } });
     expect(screen.getByText(/60 video\/tháng/i)).toBeDefined();
+  });
+
+  it('renders StitchWave2RouteBanner across all 9 Wave 2 route keys with bilingual copy (Screens 10–18)', () => {
+    const wave2Keys = Object.keys(STITCH_WAVE2_ROUTE_BANNER_SPECS) as StitchWave2RouteBannerKey[];
+    expect(wave2Keys).toHaveLength(9);
+
+    for (const key of wave2Keys) {
+      const viCopy = resolveRouteBannerCopy(key, true);
+      const enCopy = resolveRouteBannerCopy(key, false);
+      expect(viCopy.title).not.toBe(enCopy.title);
+      expect(viCopy.ctaHref).toBe('/dashboard/control-deck');
+
+      const { unmount } = render(<StitchWave2RouteBanner routeKey={key} />);
+      const banner = screen.getByTestId(`stitch-wave2-route-banner-${key}`);
+      expect(banner.getAttribute('aria-label')).toBe(viCopy.ariaLabel);
+      expect(screen.getByText(viCopy.badge)).toBeDefined();
+      unmount();
+    }
   });
 });

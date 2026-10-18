@@ -23,6 +23,7 @@ import {
 } from '@/tree/handover/customer-handover-service';
 import { signHandoverAcceptanceAction } from '@/land/actions/handover-actions';
 import { HandoverAcceptanceClient } from '@/forest/components/handover/handover-acceptance-client';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export default async function CustomerHandoverPageRoute({
   params,
@@ -105,11 +106,14 @@ export default async function CustomerHandoverPageRoute({
   }
 
   return (
-    <HandoverAcceptanceClient
-      handover={handover}
-      initialCertificate={certificate}
-      locale={locale}
-      onSignAction={signHandoverAcceptanceAction}
-    />
+    <div className="space-y-6">
+      <StitchWave2RouteBanner routeKey="handover" className="" />
+      <HandoverAcceptanceClient
+        handover={handover}
+        initialCertificate={certificate}
+        locale={locale}
+        onSignAction={signHandoverAcceptanceAction}
+      />
+    </div>
   );
 }

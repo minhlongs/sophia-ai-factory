@@ -1,6 +1,15 @@
 import type { BilingualText } from '@/seed/types/stitch-control-deck';
+import { STITCH_WAVE2_ROUTE_BANNER_SPECS, type StitchWave2RouteBannerKey } from './route-banner-wave2-specs';
 
-export type StitchRouteBannerKey = 'dashboard' | 'missions' | 'affiliate' | 'settings' | 'partner' | 'approvals';
+export { STITCH_WAVE2_ROUTE_BANNER_SPECS, type StitchWave2RouteBannerKey };
+export type StitchRouteBannerKey =
+  | 'dashboard'
+  | 'missions'
+  | 'affiliate'
+  | 'settings'
+  | 'partner'
+  | 'approvals'
+  | StitchWave2RouteBannerKey;
 export type StitchRouteBannerTone = 'amber' | 'indigo' | 'emerald';
 
 export interface StitchRouteBannerSpec {
@@ -89,6 +98,7 @@ export const STITCH_ROUTE_BANNER_SPECS: Readonly<Record<StitchRouteBannerKey, St
     ctaHref: '/dashboard/control-deck',
     tone: 'indigo',
   },
+  ...STITCH_WAVE2_ROUTE_BANNER_SPECS,
 };
 
 export function resolveRouteBannerCopy(

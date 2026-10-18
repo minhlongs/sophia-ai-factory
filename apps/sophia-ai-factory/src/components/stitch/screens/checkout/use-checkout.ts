@@ -12,6 +12,10 @@ import type {
   BillingPeriod,
   EffectivePeriod,
 } from './types';
+import { initiateCheckoutRequest } from './checkout-api-helper';
+
+export { initiateCheckoutRequest } from './checkout-api-helper';
+export type { InitiateCheckoutParams } from './checkout-api-helper';
 
 export function useCheckout() {
   const locale = useLocale();
@@ -62,66 +66,18 @@ export function useCheckout() {
     setErrorMessage(null);
 
     try {
-      const payload: Record<string, unknown> = {
-        tier: selectedTier,
-        period: effectivePeriod,
+      await initiateCheckoutRequest({
+        selectedTier,
+        effectivePeriod,
         paymentMethod,
-      };
-
-      if (couponCode.trim()) {
-        payload.promoCode = couponCode.trim();
-      }
-
-      setCheckoutData({
-        tier: selectedTier,
-        period: effectivePeriod,
-        paymentMethod,
-        priceCents: basePriceCents,
-        couponCode: couponCode.trim() || undefined,
-      });
-      setIsCheckoutOpen(true);
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...csrfHeaders,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.status === 401) {
-        setIsCheckoutOpen(false);
-        const nextUrl = encodeURIComponent(`/${locale}/checkout?tier=${selectedTier}`);
-        router.push(`/${locale}/login?next=${nextUrl}`);
-        return;
-      }
-
-      const data = (await res.json()) as {
-        success?: boolean;
-        url?: string;
-        orderId?: string;
-        priceCents?: number;
-        discountedPriceCents?: number;
-        message?: string;
-        error?: string;
-      };
-
-      if (!res.ok) {
-        setIsCheckoutOpen(false);
-        setErrorMessage(data.error || data.message || 'Unable to initiate payment. Please try again.');
-        return;
-      }
-
-      setCheckoutData({
-        tier: selectedTier,
-        url: data.url,
-        orderId: data.orderId,
-        period: effectivePeriod,
-        paymentMethod,
-        priceCents: data.priceCents ?? basePriceCents,
-        discountedPriceCents: data.discountedPriceCents,
-        couponCode: couponCode.trim() || undefined,
+        couponCode,
+        basePriceCents,
+        locale,
+        csrfHeaders,
+        onRedirectLogin: (loginUrl) => router.push(loginUrl),
+        onUpdateCheckoutData: setCheckoutData,
+        onSetCheckoutOpen: setIsCheckoutOpen,
+        onError: setErrorMessage,
       });
     } catch (err) {
       setIsCheckoutOpen(false);

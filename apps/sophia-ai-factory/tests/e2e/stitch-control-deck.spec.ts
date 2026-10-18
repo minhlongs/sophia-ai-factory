@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe("Stitch v4.2 Director's Control Deck & Phase 2 Routes E2E", () => {
-  test('renders 9-screen Control Deck Hub with WAI-ARIA tablist, bilingual toggle, and 1-Click Council Dispatch', async ({
+  test('renders 18-screen Control Deck Hub with WAI-ARIA tablist, bilingual toggle, and 1-Click Council Dispatch', async ({
     page,
   }) => {
     await page.goto('/en/dashboard/control-deck');
 
     const tabs = page.getByRole('tab');
-    await expect(tabs).toHaveCount(9);
+    await expect(tabs).toHaveCount(18);
     await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
 
     // Keyboard navigation across tabs

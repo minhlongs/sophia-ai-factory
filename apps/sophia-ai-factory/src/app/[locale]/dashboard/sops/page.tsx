@@ -14,6 +14,7 @@ import { BookOpen, Store, PartyPopper } from 'lucide-react';
 import type { SopInstallationRow, SopTemplateRow } from '@/seed/sop/sop-types';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 import { getD1 } from '@/seed/db/get-d1';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -50,6 +51,7 @@ export default async function SopsListPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <StitchWave2RouteBanner routeKey="my-sops" className="" />
       <div className="flex flex-wrap items-center gap-3">
         <BookOpen className="w-5 h-5 text-primary-400" aria-hidden="true" />
         <div className="flex-1">

@@ -6,15 +6,16 @@ import { ControlDeckSkeleton } from '../control-deck-skeleton';
 import { STITCH_CONTROL_DECK_DATASET } from '@/tree/control-deck';
 
 describe('ControlDeckHub (Stitch Director’s Control Deck)', () => {
-  it('renders all 9 Stitch loop screen tabs with WAI-ARIA roles and default English copy', () => {
+  it('renders all 18 Stitch loop screen tabs with WAI-ARIA roles and default English copy', () => {
     render(
       <ControlDeckHub dataset={STITCH_CONTROL_DECK_DATASET} initialLang="en" />,
     );
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(9);
+    expect(tabs).toHaveLength(18);
     expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
     expect(tabs[0]?.getAttribute('aria-controls')).toBe('stitch-panel');
+    expect(screen.getByTestId('control-deck-screen-count-badge').textContent).toMatch(/18\/18/i);
     expect(screen.getByRole('tabpanel')).toBeDefined();
     expect(screen.getByRole('note').textContent).toMatch(/figures are illustrative/i);
 
@@ -55,6 +56,12 @@ describe('ControlDeckHub (Stitch Director’s Control Deck)', () => {
     expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
     expect(document.activeElement).toBe(tabs[1]);
     expect(tabs[1]?.textContent).toMatch(/Tham vấn/i);
+
+    if (tabs[1]) {
+      fireEvent.keyDown(tabs[1], { key: 'End' });
+    }
+    expect(tabs[17]?.getAttribute('aria-selected')).toBe('true');
+    expect(tabs[17]?.textContent).toMatch(/18\.Sức khỏe/i);
     expect(screen.getByRole('note').textContent).toMatch(/minh họa/i);
   });
 
