@@ -9,56 +9,18 @@
  * Layer rule: tree — imports from seed only.
  */
 
-// ── Types ────────────────────────────────────────────────────────────────────
+import {
+  calculatePercentile,
+  classifyJobDataConfidence,
+  type MediaJobMetricsRow,
+  type ProviderReliabilityMetrics,
+} from './media-job-percentile-math';
 
-export interface MediaJobMetricsRow {
-  status: string;
-  latency_ms: number | null;
-  retry_count: number | null;
-}
-
-export interface ProviderReliabilityMetrics {
-  provider: string;
-  windowSeconds: number;
-  totalJobs: number;
-  successfulJobs: number;
-  failedJobs: number;
-  successRate: number | null;
-  failureRate: number | null;
-  p50LatencyMs: number | null;
-  p95LatencyMs: number | null;
-  retryRate: number | null;
-  dataConfidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT';
-}
-
-// ── Percentile Calculator ────────────────────────────────────────────────────
-
-/**
- * Compute a percentile from a sorted array of values.
- *
- * Uses linear interpolation between adjacent values.
- * Returns null for empty arrays or invalid percentiles.
- */
-export function calculatePercentile(
-  sortedValues: number[],
-  percentile: number,
-): number | null {
-  if (sortedValues.length === 0) return null;
-  if (percentile < 0 || percentile > 100) return null;
-
-  if (sortedValues.length === 1) return sortedValues[0];
-
-  const index = (percentile / 100) * (sortedValues.length - 1);
-  const lower = Math.floor(index);
-  const upper = Math.ceil(index);
-
-  if (lower === upper) return sortedValues[lower];
-
-  const weight = index - lower;
-  return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight;
-}
-
-// ── Provider Metrics ─────────────────────────────────────────────────────────
+export {
+  calculatePercentile,
+  type MediaJobMetricsRow,
+  type ProviderReliabilityMetrics,
+};
 
 /**
  * Compute reliability metrics from raw media_jobs rows.
@@ -111,18 +73,6 @@ export function computeProviderMetrics(
   ).length;
   const retryRate = (jobsWithRetries / totalJobs) * 100;
 
-  // Data confidence based on sample size
-  let dataConfidence: ProviderReliabilityMetrics['dataConfidence'];
-  if (totalJobs >= 100) {
-    dataConfidence = 'HIGH';
-  } else if (totalJobs >= 30) {
-    dataConfidence = 'MEDIUM';
-  } else if (totalJobs >= 10) {
-    dataConfidence = 'LOW';
-  } else {
-    dataConfidence = 'INSUFFICIENT';
-  }
-
   return {
     provider,
     windowSeconds,
@@ -134,6 +84,6 @@ export function computeProviderMetrics(
     p50LatencyMs,
     p95LatencyMs,
     retryRate: Math.round(retryRate * 100) / 100,
-    dataConfidence,
+    dataConfidence: classifyJobDataConfidence(totalJobs),
   };
 }

@@ -11,19 +11,9 @@ import {
   SettingsValidationError,
 } from './types';
 import { NAMESPACE_DEFAULTS } from './defaults';
-import {
-  deleteNamespace,
-  deleteAllForTenant,
-  listAll,
-  bulkExport,
-} from './registry-bulk-ops';
+import { deleteNamespace, deleteAllForTenant, listAll, bulkExport } from './registry-bulk-ops';
 
-export {
-  deleteNamespace,
-  deleteAllForTenant,
-  listAll,
-  bulkExport,
-};
+export { deleteNamespace, deleteAllForTenant, listAll, bulkExport };
 
 function generateId(): string {
   const buf = new Uint8Array(4);
@@ -39,9 +29,7 @@ export async function get<T = unknown>(
   namespace: SettingsNamespace,
 ): Promise<T | null> {
   const row = await db
-    .prepare(
-      'SELECT value FROM tenant_settings WHERE tenant_id = ? AND namespace = ? LIMIT 1',
-    )
+    .prepare('SELECT value FROM tenant_settings WHERE tenant_id = ? AND namespace = ? LIMIT 1')
     .bind(tenantId, namespace)
     .first<Pick<TenantSettingRow, 'value'>>();
 
@@ -97,17 +85,13 @@ export async function set<T>(
     .prepare(
       `INSERT INTO tenant_settings (id, tenant_id, namespace, value, schema_version, created_at, updated_at)
        VALUES (?, ?, ?, ?, 1, ?, ?)
-       ON CONFLICT(tenant_id, namespace) DO UPDATE SET
-         value = excluded.value,
-         updated_at = excluded.updated_at`,
+       ON CONFLICT(tenant_id, namespace) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
     )
     .bind(generateId(), tenantId, namespace, serialized, now, now)
     .run();
 }
 
-/**
- * Shallow-merge partial into the existing namespace value.
- */
+/** Shallow-merge partial into the existing namespace value. */
 export async function merge<T extends Record<string, unknown>>(
   db: D1Database,
   tenantId: string,
@@ -121,9 +105,7 @@ export async function merge<T extends Record<string, unknown>>(
   return merged;
 }
 
-/**
- * Bulk-import settings. Validates each namespace if validator map provided.
- */
+/** Bulk-import settings. Validates each namespace if validator map provided. */
 export async function bulkImport(
   db: D1Database,
   tenantId: string,

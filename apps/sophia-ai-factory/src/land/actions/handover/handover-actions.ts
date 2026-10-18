@@ -7,7 +7,6 @@
  * @module land/actions/handover/handover-actions
  */
 
-import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import { success, failure, type Result } from '@/seed/types/result';
@@ -18,21 +17,13 @@ import type {
   HandoverCertificate,
   VerificationRunReport,
 } from '@/seed/handover/handover-types';
-import {
-  getCustomerHandover,
-  getHandoverCertificate,
-} from '@/tree/handover/customer-handover-service';
 import type { ActionError } from './types';
-import {
-  executeDay1ProbesReport,
-  saveVerificationReport,
-  revalidateHandoverViews,
-} from './handover-audit';
 import { buildSanitizedEnvExport, type SanitizedEnvResult } from './package-generator';
+import { executeSignHandoverAcceptance } from './handover-action-helpers';
 import {
-  isAuthorizedForHandover,
-  executeSignHandoverAcceptance,
-} from './handover-action-helpers';
+  runHandoverVerificationForAdmin,
+  fetchAuthorizedHandoverDetails,
+} from './handover-verification-query-helper';
 
 export async function signHandoverAcceptanceAction(
   input: HandoverAcceptanceInput,
@@ -59,23 +50,7 @@ export async function triggerHandoverVerificationAction(
   try {
     const user = await getCurrentUser();
     if (!user) return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-
-    if (!(await isUserAdmin(user))) {
-      return failure({
-        code: 'FORBIDDEN',
-        message: 'Forbidden: Administrator privileges required to trigger verification suite',
-      });
-    }
-
-    const db = await getD1();
-    const report = await executeDay1ProbesReport(db, startTime);
-
-    if (handoverId && db) {
-      await saveVerificationReport(db, handoverId, report);
-    }
-
-    revalidateHandoverViews(handoverId);
-    return success(report);
+    return await runHandoverVerificationForAdmin(user, startTime, handoverId);
   } catch (err) {
     logger.error('[handover-actions] triggerHandoverVerificationAction failed', err instanceof Error ? err : undefined);
     return failure({
@@ -113,20 +88,7 @@ export async function getHandoverDetailsAction(
   try {
     const user = await getCurrentUser();
     if (!user) return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-
-    const db = await getD1();
-    if (!db) return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-
-    const cleanId = handoverId.trim();
-    const handover = await getCustomerHandover(db, cleanId);
-    if (!handover) return failure({ code: 'NOT_FOUND', message: `Handover not found: ${cleanId}` });
-
-    if (!(await isAuthorizedForHandover(user, handover))) {
-      return failure({ code: 'FORBIDDEN', message: 'Unauthorized: you are not permitted to view this handover' });
-    }
-
-    const certificate = await getHandoverCertificate(db, handover.id);
-    return success({ handover, certificate });
+    return await fetchAuthorizedHandoverDetails(user, handoverId);
   } catch (err) {
     logger.error('[handover-actions] getHandoverDetailsAction failed', err instanceof Error ? err : undefined);
     return failure({

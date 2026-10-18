@@ -9,7 +9,10 @@ import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
 import { updateSopListing as dbUpdateSopListing } from '@/seed/db/marketplace-ops';
 import type { ListingError } from './listing-types';
-import { loadOwnedListingContext } from './listing-lifecycle-context';
+import {
+  loadOwnedListingContext,
+  validateDraftWithActiveProfile,
+} from './listing-lifecycle-context';
 
 /**
  * Submit a draft listing for admin review.
@@ -21,29 +24,19 @@ export async function submitForReview(
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
     const ctxResult = await loadOwnedListingContext(listingId);
-    if (!ctxResult.ok) {
-      return ctxResult;
-    }
+    if (!ctxResult.ok) return ctxResult;
     const { userId, d1, listing, profile } = ctxResult.value;
 
-    if (listing.status !== 'draft') {
-      return failure({
-        code: 'INVALID_STATUS_TRANSITION',
-        message: `Can only submit draft for review; current status is '${listing.status}'`,
-      });
-    }
-
-    if (profile.status !== 'active') {
-      return failure({
-        code: 'PROFILE_NOT_ACTIVE',
-        message: 'Creator profile must be active to submit for review',
-      });
-    }
+    const validationErr = validateDraftWithActiveProfile(
+      listing,
+      profile,
+      'submit draft for review',
+      'submit for review',
+    );
+    if (validationErr) return failure(validationErr);
 
     await dbUpdateSopListing(d1, listingId, { status: 'pending_review' });
-
     logger.info('[SubmitForReview] Listing submitted for review', { userId, listingId });
-
     return success({ listingId });
   } catch (err) {
     logger.error('[SubmitForReview] Unexpected error', err instanceof Error ? err : new Error(String(err)));
@@ -62,24 +55,16 @@ export async function publishListing(
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
     const ctxResult = await loadOwnedListingContext(listingId);
-    if (!ctxResult.ok) {
-      return ctxResult;
-    }
+    if (!ctxResult.ok) return ctxResult;
     const { userId, d1, listing, profile } = ctxResult.value;
 
-    if (listing.status !== 'draft') {
-      return failure({
-        code: 'INVALID_STATUS_TRANSITION',
-        message: `Can only publish a draft listing; current status is '${listing.status}'`,
-      });
-    }
-
-    if (profile.status !== 'active') {
-      return failure({
-        code: 'PROFILE_NOT_ACTIVE',
-        message: 'Creator profile must be active to publish a listing',
-      });
-    }
+    const validationErr = validateDraftWithActiveProfile(
+      listing,
+      profile,
+      'publish a draft listing',
+      'publish a listing',
+    );
+    if (validationErr) return failure(validationErr);
 
     if (listing.price_cents > 0) {
       return failure({
@@ -89,9 +74,7 @@ export async function publishListing(
     }
 
     await dbUpdateSopListing(d1, listingId, { status: 'published' });
-
     logger.info('[PublishListing] Listing published', { userId, listingId });
-
     return success({ listingId });
   } catch (err) {
     logger.error('[PublishListing] Unexpected error', err instanceof Error ? err : new Error(String(err)));
@@ -108,9 +91,7 @@ export async function archiveListing(
 ): Promise<Result<{ listingId: string }, ListingError>> {
   try {
     const ctxResult = await loadOwnedListingContext(listingId);
-    if (!ctxResult.ok) {
-      return ctxResult;
-    }
+    if (!ctxResult.ok) return ctxResult;
     const { userId, d1, listing } = ctxResult.value;
 
     if (listing.status === 'archived') {
@@ -128,9 +109,7 @@ export async function archiveListing(
     }
 
     await dbUpdateSopListing(d1, listingId, { status: 'archived' });
-
     logger.info('[ArchiveListing] Listing archived', { userId, listingId });
-
     return success({ listingId });
   } catch (err) {
     logger.error('[ArchiveListing] Unexpected error', err instanceof Error ? err : new Error(String(err)));

@@ -9,12 +9,6 @@
 import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { getD1 } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listMarketplaceBlueprints } from '@/forest/marketplace/blueprint-service';
-import { listMarketplaceTemplates } from '@/tree/marketplace/marketplace-service';
-import { getCreatorBalance } from '@/tree/marketplace/royalty-engine';
-import type { BlueprintSortOrder, MarketplacePlatform } from '@/seed/types/creator-marketplace';
 import {
   MarketplaceHeader,
   MarketplaceFilterBar,
@@ -22,20 +16,15 @@ import {
   CreatorTemplatesSection,
 } from '@/land/marketplace';
 import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
+import {
+  parseMarketplaceSearchParams,
+  loadMarketplacePageData,
+  type MarketplaceSearchParamsInput,
+} from './marketplace-page-helpers';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{
-    niche?: string;
-    platform?: string;
-    minConversionRate?: string;
-    royalty?: string;
-    sort?: string;
-    search?: string;
-    q?: string;
-    page?: string;
-    pageSize?: string;
-  }>;
+  searchParams: Promise<MarketplaceSearchParamsInput>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -61,41 +50,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function MarketplacePage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   const sp = await searchParams;
+  const filters = parseMarketplaceSearchParams(sp);
+  const { page, pageSize, niche, platform, minConversionRate, royaltyRate, search, sort } = filters;
 
-  const page = sp.page ? Math.max(1, parseInt(sp.page, 10) || 1) : 1;
-  const pageSize = sp.pageSize ? Math.min(50, Math.max(1, parseInt(sp.pageSize, 10) || 12)) : 12;
-  const minConversionRate = sp.minConversionRate ? parseFloat(sp.minConversionRate) : undefined;
-  const royaltyRate = sp.royalty ? parseFloat(sp.royalty) : undefined;
-  const search = sp.search || sp.q || undefined;
-  const niche = sp.niche && sp.niche !== 'all' ? sp.niche : undefined;
-  const platform = sp.platform && sp.platform !== 'all' ? (sp.platform as MarketplacePlatform) : undefined;
-  const sort = sp.sort as BlueprintSortOrder | undefined;
-
-  const d1 = await getD1();
-  const currentUser = await getCurrentUser();
-
-  const [blueprintsData, templatesData, royaltyBalance] = await Promise.all([
-    listMarketplaceBlueprints(d1, {
-      page,
-      pageSize,
-      niche,
-      platform,
-      minConversionRate,
-      royaltyRate,
-      search,
-      sort,
-      locale: locale as 'en' | 'vi',
-    }),
-    listMarketplaceTemplates(d1, {
-      page,
-      pageSize,
-      niche,
-      targetPlatform: platform,
-      search,
-      sortBy: 'trending',
-    }),
-    currentUser?.id ? getCreatorBalance(d1, currentUser.id) : null,
-  ]);
+  const { blueprintsData, templatesData, royaltyBalance, currentUser } =
+    await loadMarketplacePageData(locale, filters);
 
   return (
     <div className="min-h-screen bg-[#0B0E14] text-[#F8FAFC]">

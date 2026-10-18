@@ -6,11 +6,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const scriptPath = resolve('scripts/verify-user-video-flow-live-evidence.mjs');
 const tempDirs: string[] = [];
+const deploymentSha = 'abcdef1234567890abcdef1234567890abcdef12';
+const shortSha = deploymentSha.slice(0, 8);
 
 function makeEvidence(overrides: Record<string, unknown> = {}) {
   const context = {
+    runId: 'run-1',
     baseUrl: 'https://sophia.agencyos.network',
-    deployment: { shortSha: 'abc1234', version: '0.1.0' },
+    deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
     channelProviders: ['telegram', 'youtube'],
     missionId: 'mission-1',
     videoId: '00000000-0000-4000-8000-000000000001',
@@ -18,7 +21,7 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
     distributionJobIds: ['job-1', 'job-2'],
   };
   const events = [
-    ['deployment-version', { shortSha: 'abc1234' }],
+    ['deployment-version', { sha: deploymentSha, shortSha }],
     ['sign-in', { cookieCount: 1 }],
     ['save-llm-byok', { providers: ['openrouter'] }],
     ['save-heygen-credential', { provider: 'heygen' }],
@@ -27,6 +30,18 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
     ['auto-video', { status: 'succeeded' }],
     ['heygen-completion', { status: 'completed', videoUrlPresent: true }],
     ['video-row', { status: 'completed', videoUrlPresent: true }],
+    ['video-full-decode', {
+      status: 200,
+      totalBytes: 1024,
+      sha256: 'a'.repeat(64),
+      majorBrand: 'isom',
+      compatibleMp4Brand: 'mp42',
+      formatName: 'mov,mp4,m4a,3gp,3g2,mj2',
+      durationSec: 12,
+      videoStreams: [{ codec: 'h264', width: 720, height: 1280 }],
+      audioStreams: [{ codec: 'aac' }],
+      fullDecode: true,
+    }],
     ['distribution-scheduled', { jobIds: ['job-1', 'job-2'] }],
     ['publish-jobs-live', {
       jobs: [
@@ -37,7 +52,7 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
   ].map(([step, data]) => ({ step, status: 'passed', data }));
 
   return {
-    schema: 'sophia-live-user-video-flow-proof-v1',
+    schema: 'sophia-live-user-video-flow-proof-v4',
     status: 'passed',
     context,
     events,
@@ -71,7 +86,7 @@ describe('verify-user-video-flow-live-evidence', () => {
     const result = runValidator(writeEvidenceFile(makeEvidence()));
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('LIVE EVIDENCE PASS');
+    expect(result.stdout).toContain('LIVE VIDEO EVIDENCE STRUCTURE PASS');
   });
 
   it('rejects artifacts that are not passed', () => {
@@ -79,6 +94,13 @@ describe('verify-user-video-flow-live-evidence', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('evidence status is not passed');
+  });
+
+  it('rejects legacy evidence that cannot prove full download and decoding', () => {
+    const result = runValidator(writeEvidenceFile(makeEvidence({ schema: 'sophia-live-user-video-flow-proof-v3' })));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('only v4 full-download/full-decode evidence can pass');
   });
 
   it('rejects publish jobs that did not reach a successful status', () => {
@@ -93,16 +115,63 @@ describe('verify-user-video-flow-live-evidence', () => {
     expect(result.stderr).toContain('status not successful');
   });
 
+  it('rejects a completed video without a full-decode proof', () => {
+    const evidence = makeEvidence();
+    evidence.events = evidence.events.filter((event) => event.step !== 'video-full-decode');
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('required step not passed: video-full-decode');
+  });
+
+  it('rejects a video artifact whose decode did not complete', () => {
+    const evidence = makeEvidence();
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.fullDecode = false;
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('did not prove a full audio/video decode');
+  });
+
+  it('rejects a non-MP4-compatible container brand', () => {
+    const evidence = makeEvidence();
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.compatibleMp4Brand = 'qt  ';
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('does not prove an MP4-compatible brand');
+  });
+
+  it('rejects evidence whose decoder metadata names a non-MP4 container', () => {
+    const evidence = makeEvidence();
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.formatName = 'matroska,webm';
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('container metadata does not identify MP4');
+  });
+
   it('accepts a preflight proof artifact only in preflight mode', () => {
     const preflight = makeEvidence({
       status: 'preflight-passed',
       context: {
+        runId: 'run-preflight',
         baseUrl: 'https://sophia.agencyos.network',
-        deployment: { shortSha: 'abc1234', version: '0.1.0' },
+        deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
         channelProviders: ['telegram', 'youtube'],
       },
       events: [
-        ['deployment-version', { shortSha: 'abc1234' }],
+        ['deployment-version', { sha: deploymentSha, shortSha }],
         ['sign-in', { cookieCount: 1 }],
         ['save-llm-byok', { providers: ['openrouter'] }],
         ['save-heygen-credential', { provider: 'heygen' }],

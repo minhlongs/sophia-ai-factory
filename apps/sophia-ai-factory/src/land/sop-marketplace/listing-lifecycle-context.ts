@@ -61,3 +61,26 @@ export async function loadOwnedListingContext(
 
   return success({ userId: user.id, d1, listing, profile });
 }
+
+export function validateDraftWithActiveProfile(
+  listing: SopListing,
+  profile: CreatorProfile,
+  actionVerb: 'submit draft for review' | 'publish a draft listing',
+  inactiveVerb: 'submit for review' | 'publish a listing',
+): ListingError | null {
+  if (listing.status !== 'draft') {
+    return {
+      code: 'INVALID_STATUS_TRANSITION',
+      message: `Can only ${actionVerb}; current status is '${listing.status}'`,
+    };
+  }
+
+  if (profile.status !== 'active') {
+    return {
+      code: 'PROFILE_NOT_ACTIVE',
+      message: `Creator profile must be active to ${inactiveVerb}`,
+    };
+  }
+
+  return null;
+}

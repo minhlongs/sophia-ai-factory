@@ -8,11 +8,12 @@
  */
 
 import type { D1Database } from '@cloudflare/workers-types';
-import type {
-  PartnerLicensePool,
-  AllocateLicensePoolResult,
-} from '@/tree/partners/types';
+import type { AllocateLicensePoolResult } from '@/tree/partners/types';
 import { diagnoseAllocationFailure } from './pool-allocation-guard';
+import {
+  validatePoolAllocationInput,
+  syncPoolExhaustionAndSubaccountMcu,
+} from './pool-allocation-sync';
 
 /**
  * Allocates seats and MCU quota from a partner license pool to a client subaccount.
@@ -31,43 +32,9 @@ export async function allocatePoolQuota(
   seats: number,
   mcuCredits: number,
 ): Promise<AllocateLicensePoolResult> {
-  if (!poolId || !subaccountId) {
-    return {
-      success: false,
-      poolId: poolId ?? '',
-      subaccountId: subaccountId ?? '',
-      allocatedSeats: 0,
-      allocatedMcuCredits: 0,
-      remainingPoolSeats: 0,
-      remainingPoolMcu: 0,
-      error: 'INVALID_INPUT',
-    };
-  }
-
-  if (seats < 0 || !Number.isInteger(seats) || mcuCredits < 0 || !Number.isInteger(mcuCredits)) {
-    return {
-      success: false,
-      poolId,
-      subaccountId,
-      allocatedSeats: 0,
-      allocatedMcuCredits: 0,
-      remainingPoolSeats: 0,
-      remainingPoolMcu: 0,
-      error: 'INVALID_ALLOCATION_AMOUNT',
-    };
-  }
-
-  if (seats === 0 && mcuCredits === 0) {
-    return {
-      success: false,
-      poolId,
-      subaccountId,
-      allocatedSeats: 0,
-      allocatedMcuCredits: 0,
-      remainingPoolSeats: 0,
-      remainingPoolMcu: 0,
-      error: 'NO_ALLOCATION_REQUESTED',
-    };
+  const validationError = validatePoolAllocationInput(poolId, subaccountId, seats, mcuCredits);
+  if (validationError) {
+    return validationError;
   }
 
   const now = Date.now();
@@ -93,39 +60,13 @@ export async function allocatePoolQuota(
     return await diagnoseAllocationFailure(db, poolId, subaccountId, seats, mcuCredits);
   }
 
-  // Fetch updated pool state
-  const updatedPool = await db
-    .prepare('SELECT total_seats, allocated_seats, total_mcu_credits, allocated_mcu_credits FROM partner_license_pools WHERE id = ?')
-    .bind(poolId)
-    .first<PartnerLicensePool>();
-
-  const remainingPoolSeats = (updatedPool?.total_seats ?? 0) - (updatedPool?.allocated_seats ?? 0);
-  const remainingPoolMcu = (updatedPool?.total_mcu_credits ?? 0) - (updatedPool?.allocated_mcu_credits ?? 0);
-
-  // If pool capacity is completely consumed, mark as exhausted
-  if (remainingPoolSeats === 0 && remainingPoolMcu === 0) {
-    await db
-      .prepare("UPDATE partner_license_pools SET status = 'exhausted', updated_at = ? WHERE id = ?")
-      .bind(now, poolId)
-      .run();
-  }
-
-  // Optional: Record in subaccount_mcu_allocations if table exists
-  try {
-    const suballocId = `submcu_${crypto.randomUUID().slice(0, 16)}`;
-    await db
-      .prepare(`
-        INSERT INTO subaccount_mcu_allocations (id, subaccount_id, allocated_mcu, used_mcu, created_at, updated_at)
-        VALUES (?, ?, ?, 0, ?, ?)
-        ON CONFLICT(subaccount_id) DO UPDATE SET
-          allocated_mcu = allocated_mcu + excluded.allocated_mcu,
-          updated_at = excluded.updated_at
-      `)
-      .bind(suballocId, subaccountId, mcuCredits, now, now)
-      .run();
-  } catch {
-    // Non-fatal if subaccount_mcu_allocations table is not provisioned in current context
-  }
+  const { remainingPoolSeats, remainingPoolMcu } = await syncPoolExhaustionAndSubaccountMcu(
+    db,
+    poolId,
+    subaccountId,
+    mcuCredits,
+    now,
+  );
 
   return {
     success: true,

@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for zk-STARK state compaction and Universal Constitutional Court arbitration.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   compactStateWithZkStark,
   type ZkStarkCompactionResult,
@@ -23,6 +22,7 @@ import type {
   UniversalConstitutionalInvariant,
 } from '@/seed/types/zk-stark-constitution';
 import { recordCourtCompactionProof } from './cosmic-court-d1-recorder';
+import { persistUniversalArbitration } from './court-arbitration-d1-recorder';
 
 export interface ZkStarkCompactActionResult {
   success: boolean;
@@ -83,31 +83,7 @@ export async function arbitrateUniversalDisputeAction(
 ): Promise<UniversalCourtActionResult> {
   try {
     const data = arbitrateUniversalDispute(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO universal_court_arbitrations (id, dispute_case_ref, claimant_participant_id, respondent_participant_id, dispute_value_cents, contract_stark_root, evidence_sha256, juror_count, supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `ucourt_${Date.now()}`,
-          params.disputeCaseRef,
-          params.claimantParticipantId,
-          params.respondentParticipantId,
-          params.disputeValueCents,
-          'STARK_CONTRACT_ROOT_PLACEHOLDER',
-          params.evidenceSha256,
-          data.totalJurors,
-          params.supermajorityThresholdPct ?? 80.0,
-          data.verdict,
-          data.jurorsSlashedCount,
-          data.executedRemedyCents,
-          data.verdict !== 'DELIBERATING' ? new Date().toISOString() : null
-        )
-        .run();
-    }
-
+    await persistUniversalArbitration(params, data);
     return { success: true, data };
   } catch (err: unknown) {
     return {

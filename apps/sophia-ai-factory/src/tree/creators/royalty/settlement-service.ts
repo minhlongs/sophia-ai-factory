@@ -12,10 +12,8 @@ import type {
   ExecuteRoyaltySplitInput,
   RoyaltySettlementResult,
 } from '@/seed/types/creator-dao-c2pa';
-import { DEFAULT_DESTINATION_ADDRESS } from './constants';
 import { calculateSmartSplitWaterfall } from './split-calculator';
 import { calculateTaxWithholding } from './tax-calculator';
-import { validatePayoutDestination } from './destination-validator';
 import { insertSettlementRow } from './settlement-row-mapper';
 import { resolveSettlementCurrencyAndAmount } from './settlement-currency';
 import { buildSettlementRecord } from './settlement-builder';
@@ -23,6 +21,7 @@ import {
   findIdempotentSettlement,
   loadActiveLicensingContract,
 } from './settlement-service-helpers';
+import { resolveAndValidateDestination } from './settlement-destination-resolver';
 
 export * from './settlement-builder';
 export * from './settlement-currency';
@@ -39,20 +38,17 @@ export async function executeRoyaltySplitAndSettle(
 ): Promise<RoyaltySettlementResult> {
   const { contractId, grossRevenueCents, idempotencyKey } = input;
 
-  // 1. Idempotency Check
   const existingResult = await findIdempotentSettlement(db, idempotencyKey);
   if (existingResult) {
     return existingResult;
   }
 
-  // 2. Fetch & Validate Licensing Contract
   const contractLookup = await loadActiveLicensingContract(db, contractId);
   if (!contractLookup.ok) {
     return contractLookup.failureResult;
   }
   const { contract } = contractLookup;
 
-  // 3. Compute Smart Split Waterfall
   const waterfall = calculateSmartSplitWaterfall(
     grossRevenueCents,
     contract.splitTier,
@@ -65,53 +61,39 @@ export async function executeRoyaltySplitAndSettle(
     },
   );
 
-  // 4. Apply Contractor Tax Withholding on Creator Portion
   const taxWithholding = calculateTaxWithholding(
     waterfall.creatorGrossCents,
     contract.contractorTaxRegime,
     contract.taxWithholdingRatePct,
   );
 
-  // 5. Rail & Destination Resolution
-  const payoutRail = input.payoutRail ?? contract.preferredPayoutRail;
-  const destinationAddress =
-    input.destinationAddress ?? DEFAULT_DESTINATION_ADDRESS;
-  const destinationBankBin = input.destinationBankBin ?? null;
-  const destinationName = input.destinationName ?? 'Creator Payee';
-
-  const destValidation = validatePayoutDestination(
-    payoutRail,
-    destinationAddress,
-    destinationBankBin,
-  );
-  if (!destValidation.valid) {
+  const destination = resolveAndValidateDestination(input, contract);
+  if (!destination.valid) {
     return {
       success: false,
       settlementId: '',
       settlementReference: '',
       waterfall,
       taxWithholding,
-      error: destValidation.error,
+      error: destination.error,
     };
   }
 
-  // 6. Currency & FX Settlement Amount
   const currencyDetails = resolveSettlementCurrencyAndAmount(
-    payoutRail,
+    destination.payoutRail,
     taxWithholding.netPayableCents,
     input.fxRate,
   );
 
-  // 7. Settlement Record Construction & Persistence
   const settlementRecord = buildSettlementRecord({
     input,
     contract,
     waterfall,
     taxWithholding,
-    payoutRail,
-    destinationAddress,
-    destinationBankBin,
-    destinationName,
+    payoutRail: destination.payoutRail,
+    destinationAddress: destination.destinationAddress,
+    destinationBankBin: destination.destinationBankBin,
+    destinationName: destination.destinationName,
     currencyDetails,
   });
 
@@ -122,7 +104,7 @@ export async function executeRoyaltySplitAndSettle(
     creatorId: contract.creatorId,
     grossRevenueCents,
     netPayableCents: taxWithholding.netPayableCents,
-    payoutRail,
+    payoutRail: destination.payoutRail,
   });
 
   return {

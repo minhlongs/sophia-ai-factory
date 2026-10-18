@@ -8,12 +8,8 @@
 'use server';
 
 import type { z } from 'zod';
-import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import {
-  verifyWorkspaceAccess,
-  hasWorkspaceRole,
-} from '@/seed/auth/workspace-access';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -21,7 +17,11 @@ import { updateMissionStatus as treeUpdateMissionStatus } from '@/tree/mission';
 import { createMissionSchema, updateMissionStatusSchema } from '../schemas';
 import type { MissionAction, MissionError } from '../types';
 import { actionFailure } from './action-helpers';
-import { createMissionAndEmitTelemetry } from './lifecycle-action-helpers';
+import {
+  authorizeMissionStatusUpdate,
+  createMissionAndEmitTelemetry,
+  revalidateMissionStatusPaths,
+} from './lifecycle-action-helpers';
 
 /**
  * Create a new creative mission.
@@ -49,7 +49,6 @@ export async function createMission(
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
 
-    // Verify workspace membership (IDOR prevention)
     const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, d1);
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
@@ -88,38 +87,13 @@ export async function updateMissionStatus(
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
 
-    // Read only what permission checks need; transitions belong to tree.
-    const mission = await d1
-      .prepare('SELECT workspace_id, creator_id, current_phase FROM creative_missions WHERE id = ?')
-      .bind(parsed.data.missionId)
-      .first<{ workspace_id: string; creator_id: string; current_phase: string }>();
+    const authResult = await authorizeMissionStatusUpdate(d1, parsed.data.missionId, user.id);
+    if (!authResult.ok) return authResult;
 
-    if (!mission) {
-      return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
-    }
-
-    // Verify workspace membership (IDOR prevention)
-    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
-    if (!hasAccess) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
-    }
-
-    // Verify ownership or admin access
-    const isCreator = mission.creator_id === user.id;
-    if (!isCreator) {
-      // Check if user is workspace admin/owner
-      const hasAdmin = await hasWorkspaceRole(mission.workspace_id, user.id, 'ADMIN', d1);
-      if (!hasAdmin) {
-        return failure({ code: 'FORBIDDEN', message: 'You do not have permission to update this mission' });
-      }
-    }
-
-    // Single transition authority: validation, optimistic concurrency guard,
-    // and the write live in the tree layer. Phase preserved (status-only).
     const updated = await treeUpdateMissionStatus(
       parsed.data.missionId,
       parsed.data.status,
-      mission.current_phase
+      authResult.value.currentPhase
     );
 
     logger.info('[CreativeMission] Updated mission status', {
@@ -128,10 +102,7 @@ export async function updateMissionStatus(
       userId: user.id,
     });
 
-    revalidatePath('/dashboard/missions');
-    revalidatePath(`/[locale]/dashboard/missions/${parsed.data.missionId}`);
-    revalidateTag('missions', 'max');
-    revalidateTag(`mission_${parsed.data.missionId}`, 'max');
+    revalidateMissionStatusPaths(parsed.data.missionId);
     return success({ missionId: parsed.data.missionId });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] updateMissionStatus', err));

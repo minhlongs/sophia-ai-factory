@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter, usePathname, Link } from '@/navigation';
+import { useRouter, usePathname } from '@/navigation';
 import { authClient } from '@/seed/auth/better-auth-client';
 import { Loader2 } from 'lucide-react';
 import type { LoginFormProps } from './types';
 import { PasswordInputField } from './password-input-field';
-import { SocialAuthButtons } from './social-auth-buttons';
 import { LoginLocaleSwitcher, LoginEmailField } from './login-email-field';
+import { LoginErrorBanner, LoginFormFooter } from './login-form-footer';
+
+export { LoginErrorBanner, LoginFormFooter };
 
 export function LoginFormView({ redirectTo }: LoginFormProps) {
   const t = useTranslations('stitch.auth.login');
@@ -70,16 +72,7 @@ export function LoginFormView({ redirectTo }: LoginFormProps) {
     <>
       <LoginLocaleSwitcher locale={locale} onSwitch={switchLocale} />
 
-      {error && (
-        <div
-          role="alert"
-          id="login-error"
-          className="mb-5 rounded-lg bg-rose-50 dark:bg-red-900/20 border border-rose-200 dark:border-red-800/30 px-4 py-3 text-sm text-rose-600 dark:text-red-400 flex items-center gap-2"
-        >
-          <span aria-hidden="true" className="text-rose-500 dark:text-red-400/70">&#9888;</span>
-          <span>{error}</span>
-        </div>
-      )}
+      <LoginErrorBanner error={error} />
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <LoginEmailField email={email} setEmail={setEmail} error={error} />
@@ -109,28 +102,7 @@ export function LoginFormView({ redirectTo }: LoginFormProps) {
         </button>
       </form>
 
-      <div className="relative my-8" role="separator" aria-orientation="horizontal">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#E2E8F0] dark:border-white/[0.08]" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white dark:bg-[#11131F] px-3 text-slate-500 dark:text-zinc-400 font-medium tracking-wider">
-            {t('orContinueWith')}
-          </span>
-        </div>
-      </div>
-
-      <SocialAuthButtons onMagicLink={handleMagicLink} magicLinkLoading={magicLinkLoading} />
-
-      <p className="text-center text-sm text-slate-600 dark:text-zinc-400">
-        {t('noAccount')}{' '}
-        <Link
-          href="/register"
-          className="text-[#4338CA] dark:text-[#6366F1] hover:opacity-80 font-semibold transition-opacity"
-        >
-          {t('signUp')}
-        </Link>
-      </p>
+      <LoginFormFooter onMagicLink={handleMagicLink} magicLinkLoading={magicLinkLoading} />
     </>
   );
 }

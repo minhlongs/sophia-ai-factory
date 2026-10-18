@@ -21,27 +21,11 @@ export const GATE_18_SCALE_TARGETS = {
   MAX_SETTLEMENT_LATENCY_NANOS: 100,
 } as const;
 
-export type GalacticRtgsCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR'
-  | 'USDT'
-  | 'GSC'
-  | 'K3_ENERGY';
+export type GalacticRtgsCurrency = 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR' | 'USDT' | 'GSC' | 'K3_ENERGY';
 
-export type GalacticRtgsPriorityTier =
-  | 'QUANTUM_EXPEDITE'
-  | 'GALACTIC_INSTITUTIONAL'
-  | 'STANDARD_FEDERATION';
+export type GalacticRtgsPriorityTier = 'QUANTUM_EXPEDITE' | 'GALACTIC_INSTITUTIONAL' | 'STANDARD_FEDERATION';
 
-export type GalacticRtgsSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_INSUFFICIENT_LIQUIDITY';
+export type GalacticRtgsSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_INSUFFICIENT_LIQUIDITY';
 
 export interface GalacticRtgsClearingSession {
   id?: string;
@@ -58,11 +42,7 @@ export interface GalacticRtgsClearingSession {
   createdAt?: string;
 }
 
-export type FractalNettingStatus =
-  | 'ACCUMULATING'
-  | 'FRACTAL_SOLVED'
-  | 'NET_EXECUTED'
-  | 'NET_ABORTED';
+export type FractalNettingStatus = 'ACCUMULATING' | 'FRACTAL_SOLVED' | 'NET_EXECUTED' | 'NET_ABORTED';
 
 export interface FractalNettingObligation {
   fromParticipantId: string;
@@ -85,20 +65,9 @@ export interface FractalMultilateralNettingBatch {
   createdAt?: string;
 }
 
-export type GalacticCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'GSC_CREDITS'
-  | 'K3_ENERGY_CRYSTALS';
+export type GalacticCollateralAsset = 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_BASKET' | 'TIER_1_EQUITIES' | 'GSC_CREDITS' | 'K3_ENERGY_CRYSTALS';
 
-export type GalacticVaultHubId =
-  | 'MILKY_WAY_PRIME'
-  | 'ANDROMEDA_HUB'
-  | 'TRIANGULUM_RELAY'
-  | 'VIRGO_CLUSTER_CORE'
-  | 'DEEP_GALACTIC_NODE';
+export type GalacticVaultHubId = 'MILKY_WAY_PRIME' | 'ANDROMEDA_HUB' | 'TRIANGULUM_RELAY' | 'VIRGO_CLUSTER_CORE' | 'DEEP_GALACTIC_NODE';
 
 export interface SovereignPlanetaryCapitalReserve {
   id?: string;
@@ -112,11 +81,7 @@ export interface SovereignPlanetaryCapitalReserve {
   createdAt?: string;
 }
 
-export type BaselViiiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_RISK'
-  | 'REGULATORY_HALT';
+export type BaselViiiSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_RISK' | 'REGULATORY_HALT';
 
 export interface BaselViiiSolvencySnapshot {
   id?: string;

@@ -5,6 +5,8 @@
  * @module tree/components/setup-wizard/steps/use-setup-wizard-actions
  */
 
+import { KEY_TO_PROVIDER, type WizardKeyConfig } from './use-setup-wizard-helpers';
+
 export interface ValidateKeyResponse {
   valid: boolean;
   latencyMs: number;
@@ -59,4 +61,35 @@ export async function requestProviderKeySave(
     const d = (await res.json()) as { error?: string };
     throw new Error(d.error || fallbackError);
   }
+}
+
+export async function validateAndSaveConfiguredKeys(params: {
+  config: WizardKeyConfig;
+  status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>;
+  verifyKey: (service: string, keyName: string, keyValue: string) => Promise<boolean>;
+  saveFailedFallback: string;
+}): Promise<string[]> {
+  const { config, status, verifyKey, saveFailedFallback } = params;
+  const entries = Object.entries(config).filter(([k, v]) => KEY_TO_PROVIDER[k] && v.trim());
+  const newlySaved: string[] = [];
+
+  for (const [k, v] of entries) {
+    const provider = KEY_TO_PROVIDER[k];
+    if (status[k] !== 'valid') {
+      const isValid = await verifyKey(provider, k, v);
+      if (!isValid) {
+        throw new Error(
+          `Xác thực ${provider} không thành công / Verification for ${provider} failed. Please verify API key with upstream provider.`,
+        );
+      }
+    }
+  }
+
+  for (const [k, v] of entries) {
+    const provider = KEY_TO_PROVIDER[k];
+    await requestProviderKeySave(provider, v, saveFailedFallback);
+    newlySaved.push(provider);
+  }
+
+  return newlySaved;
 }

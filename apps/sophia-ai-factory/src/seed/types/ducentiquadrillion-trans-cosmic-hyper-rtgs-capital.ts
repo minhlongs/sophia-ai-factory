@@ -22,16 +22,8 @@ export const GATE_39_SCALE_TARGETS = {
 } as const;
 
 export type DucentiquadrillionCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V21'
-  | 'USDT'
-  | 'DUCENTIQUADRILLION_TRANS_COSMIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'DUCENTIQUADRILLION_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V21' | 'USDT'
+  | 'DUCENTIQUADRILLION_TRANS_COSMIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'DUCENTIQUADRILLION_FOAM_CREDIT';
 
 export type DucentiquadrillionPriorityTier =
   | 'DUCENTIQUADRILLION_SINGULARITY'
@@ -39,11 +31,7 @@ export type DucentiquadrillionPriorityTier =
   | 'DUCENTIQUADRILLION_INSTITUTIONAL'
   | 'STANDARD_DUCENTIQUADRILLION';
 
-export type DucentiquadrillionSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type DucentiquadrillionSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface DucentiquadrillionRtgsPaymentSession {
   id?: string;
@@ -82,11 +70,7 @@ export interface DucentiquadrillionNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXxixSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXxixSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXxixSolvencyAudit {
   id?: string;
@@ -109,20 +93,12 @@ export interface BaselXxixSolvencyAudit {
 }
 
 export type DucentiquadrillionCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V21_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'DUCENTIQUADRILLION_CREDITS'
-  | 'DUCENTIQUADRILLION_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V21_BASKET' | 'TIER_1_EQUITIES'
+  | 'DUCENTIQUADRILLION_CREDITS' | 'DUCENTIQUADRILLION_SUB_PLANCK_FOAM';
 
 export type DucentiquadrillionCollateralVaultSector =
-  | 'DUCENTIQUADRILLION_SINGULARITY_CORE'
-  | 'TRANS_COSMIC_APEX_VAULT'
-  | 'OMNIVERSAL_SUPRACLUSTER_HUB'
-  | 'SUB_PLANCK_QUANTUM_WELL'
-  | 'ZERO_POINT_RESERVE_MATRIX'
-  | 'ETERNAL_SOVEREIGN_SANCTUM';
+  | 'DUCENTIQUADRILLION_SINGULARITY_CORE' | 'TRANS_COSMIC_APEX_VAULT' | 'OMNIVERSAL_SUPRACLUSTER_HUB'
+  | 'SUB_PLANCK_QUANTUM_WELL' | 'ZERO_POINT_RESERVE_MATRIX' | 'ETERNAL_SOVEREIGN_SANCTUM';
 
 export interface DucentiquadrillionCollateralReserve {
   id?: string;

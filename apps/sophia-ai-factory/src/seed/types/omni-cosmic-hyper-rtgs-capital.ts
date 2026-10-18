@@ -21,28 +21,15 @@ export const GATE_27_SCALE_TARGETS = {
 } as const;
 
 export type OmniCosmicCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V9'
-  | 'USDT'
-  | 'OMNI_COSMIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'PLANCK_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V9' | 'USDT'
+  | 'OMNI_COSMIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'PLANCK_FOAM_CREDIT';
 
 export type OmniCosmicPriorityTier =
-  | 'OMNI_COSMIC_SINGULARITY'
-  | 'OMNI_COSMIC_EXPEDITE'
-  | 'MULTIVERSE_INSTITUTIONAL'
-  | 'STANDARD_MULTIVERSE';
+  | 'OMNI_COSMIC_SINGULARITY' | 'OMNI_COSMIC_EXPEDITE'
+  | 'MULTIVERSE_INSTITUTIONAL' | 'STANDARD_MULTIVERSE';
 
 export type OmniCosmicSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+  | 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface OmniCosmicRtgsPaymentSession {
   id?: string;
@@ -82,10 +69,8 @@ export interface OmniCosmicNettingBatch {
 }
 
 export type BaselXviiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+  | 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH'
+  | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXviiSolvencyAudit {
   id?: string;
@@ -108,21 +93,12 @@ export interface BaselXviiSolvencyAudit {
 }
 
 export type OmniCosmicCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V9_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'MULTIVERSE_CREDITS'
-  | 'OMNI_DIMENSIONAL_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V9_BASKET'
+  | 'TIER_1_EQUITIES' | 'MULTIVERSE_CREDITS' | 'OMNI_DIMENSIONAL_PLANCK_FOAM';
 
 export type OmniCosmicVaultSector =
-  | 'OMNI_COSMIC_CORE'
-  | 'INTER_UNIVERSAL_HUB'
-  | 'TRANS_DIMENSIONAL_VAULT'
-  | 'VIRGO_PRIME'
-  | 'SUB_PLANCK_VAULT'
-  | 'ZERO_POINT_NEXUS'
-  | 'ETERNAL_GATEWAY';
+  | 'OMNI_COSMIC_CORE' | 'INTER_UNIVERSAL_HUB' | 'TRANS_DIMENSIONAL_VAULT' | 'VIRGO_PRIME'
+  | 'SUB_PLANCK_VAULT' | 'ZERO_POINT_NEXUS' | 'ETERNAL_GATEWAY';
 
 export interface OmniCosmicCollateralReserve {
   id?: string;

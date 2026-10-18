@@ -19,8 +19,8 @@ import type {
 import { ConcentratedLiquidityEngine } from '@/tree/amm/concentrated-liquidity-engine';
 import { TreasuryRebalancer, type RebalanceEvaluationResult } from '@/tree/amm/treasury-rebalancer';
 import {
-  resolveAuthenticatedAmmContext,
   resolveAuthenticatedAmmPool,
+  runAuthenticatedRebalance,
   type AmmActionResponse,
 } from './amm-clearing-helpers';
 
@@ -107,30 +107,13 @@ export async function executeRebalanceAction(
   operatorKeys: string[],
 ): Promise<AmmActionResponse<TreasuryRebalanceEvent>> {
   try {
-    const ctx = await resolveAuthenticatedAmmContext();
-    if (!ctx.ok) return { success: false, error: ctx.error };
-
-    const sourcePool = await ConcentratedLiquidityEngine.getPoolById(ctx.db, sourcePoolId);
-    const targetPool = await ConcentratedLiquidityEngine.getPoolById(ctx.db, targetPoolId);
-
-    if (!sourcePool || !targetPool) {
-      return { success: false, error: 'Source or target pool not found' };
-    }
-
-    const { event, rebalancedSourcePool } = TreasuryRebalancer.executeRebalance(
-      sourcePool,
-      targetPool,
+    return await runAuthenticatedRebalance(
+      sourcePoolId,
+      targetPoolId,
       currencyMoved,
       amountUnits,
       operatorKeys,
     );
-
-    if (event.status === 'SETTLED') {
-      await ConcentratedLiquidityEngine.persistPool(ctx.db, rebalancedSourcePool);
-      await TreasuryRebalancer.recordRebalanceEvent(ctx.db, event);
-    }
-
-    return { success: true, data: event };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to execute rebalance';
     logger.error('executeRebalanceAction failed', { error: message });

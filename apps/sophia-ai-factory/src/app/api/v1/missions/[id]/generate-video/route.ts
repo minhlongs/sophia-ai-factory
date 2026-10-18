@@ -9,33 +9,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
-import { inngest } from '@/seed/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { reserveVideoSlot, releaseVideoSlot } from '@/tree/quota/video-quota';
-import { logger } from '@/seed/utils/logger-utility';
+import { reserveVideoSlot } from '@/tree/quota/video-quota';
 import { errorResponse } from '@/seed/api';
+import {
+  GenerateVideoBody,
+  BLOCKED_STATUSES,
+  dispatchGenerateVideoEvent,
+  type MissionRow,
+} from './generate-video-helpers';
 
 export const dynamic = 'force-dynamic';
-
-const GenerateVideoBody = z.object({
-  prompt: z.string().min(1, 'prompt is required'),
-  voiceoverText: z.string().optional(),
-  aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional(),
-  durationSec: z.number().int().positive().optional(),
-  language: z.enum(['en', 'vi']).optional(),
-});
-
-interface MissionRow {
-  id: string;
-  user_id: string;
-  status: string;
-}
-
-const BLOCKED_STATUSES = new Set(['failed', 'cancelled']);
 
 export async function POST(
   request: NextRequest,
@@ -90,8 +77,6 @@ export async function POST(
       }
 
       // ── Quota gate (defense-in-depth) ────────────────────────────────────
-      // Parity with generateVideoAction — without this, an authenticated user
-      // could bypass server-action quota by POSTing directly to this route.
       const tier = await resolveUserTier(userId);
       const reservation = await reserveVideoSlot(userId, tier);
       if (!reservation.reserved) {
@@ -103,33 +88,7 @@ export async function POST(
       }
 
       // ── Send Inngest event ────────────────────────────────────────────────
-      let jobId: string | null;
-      try {
-        const { ids } = await inngest.send({
-          name: 'video/generate.requested',
-          data: {
-            missionId,
-            userId,
-            prompt: parsed.data.prompt,
-            voiceoverText: parsed.data.voiceoverText,
-            aspectRatio: parsed.data.aspectRatio,
-            durationSec: parsed.data.durationSec,
-            language: parsed.data.language,
-          },
-        });
-        jobId = ids[0] ?? null;
-      } catch (err) {
-        // Release the slot we just reserved — the job never queued.
-        await releaseVideoSlot(userId).catch((err) => {
-          logger.warn('Failed to release video slot after queuing error', {
-            error: String(err),
-            context: 'POST',
-            missionId,
-            userId,
-          });
-        });
-        throw err;
-      }
+      const jobId = await dispatchGenerateVideoEvent(missionId, userId, parsed.data);
 
       return NextResponse.json({ jobId, missionId, status: 'queued' }, { status: 202 });
     },

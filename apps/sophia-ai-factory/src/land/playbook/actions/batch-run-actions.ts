@@ -1,5 +1,5 @@
 /**
- * Playbook Batch Run Actions.
+ * Playbook Batch Run Action.
  *
  * Layer: land (business workflows / Server Actions)
  * STRICT 4-LAYER BOUNDARY: imports only from @/seed and @/tree.
@@ -10,16 +10,15 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { runMissionPreflightCheck, type MissionPreflightResult } from '@/tree/mission/preflight-check';
-import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import type { ActionResult, TriggerBatchParams } from './types';
 import { dispatchBatchMissions } from './batch-dispatch-helper';
 import {
   loadOrFallbackBlueprint,
   revalidateBatchRunPaths,
+  verifyBatchMissionQuota,
 } from './batch-run-helpers';
 
 export async function triggerBatchRunAction(
@@ -64,18 +63,11 @@ export async function triggerBatchRunAction(
       };
     }
 
-    const userTier = await getUserTier(user.id);
-    const quota = await checkMissionQuota(user.id, userTier, 'missions');
-    if (!quota.allowed) {
-      logger.warn('[triggerBatchRunAction] Monthly quota exceeded', {
-        userId: user.id,
-        tier: userTier,
-        used: quota.used,
-        limit: quota.limit,
-      });
+    const quotaCheck = await verifyBatchMissionQuota(user.id);
+    if (!quotaCheck.ok) {
       return {
         success: false,
-        error: `Monthly mission quota exceeded for ${userTier} tier (${quota.used}/${quota.limit})`,
+        error: quotaCheck.error,
         code: 'QUOTA_EXCEEDED',
         data: { batchId: '', missionIds: [], preflight },
       };
@@ -90,10 +82,7 @@ export async function triggerBatchRunAction(
     );
 
     if (!creditDeducted) {
-      logger.warn('[triggerBatchRunAction] Credit deduction failed', {
-        userId: user.id,
-        totalCostCents,
-      });
+      logger.warn('[triggerBatchRunAction] Credit deduction failed', { userId: user.id, totalCostCents });
       return {
         success: false,
         error: 'Insufficient MCU credits balance to dispatch batch',
@@ -120,16 +109,9 @@ export async function triggerBatchRunAction(
     });
 
     revalidateBatchRunPaths();
-    return {
-      success: true,
-      data: { batchId, missionIds, preflight },
-    };
+    return { success: true, data: { batchId, missionIds, preflight } };
   } catch (err) {
-    logger.error(
-      '[triggerBatchRunAction] Unexpected error',
-      err instanceof Error ? err : new Error(String(err)),
-      { params },
-    );
+    logger.error('[triggerBatchRunAction] Unexpected error', err instanceof Error ? err : new Error(String(err)), { params });
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Failed to trigger batch campaign run',

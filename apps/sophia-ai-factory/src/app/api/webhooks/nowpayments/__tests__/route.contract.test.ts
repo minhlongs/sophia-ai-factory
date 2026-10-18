@@ -3,10 +3,11 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
 // Hoisted mocks for dependencies
-const { mockParseIpnWebhook, mockProcessIpn, mockLogger } = vi.hoisted(() => ({
+const { mockParseIpnWebhook, mockProcessIpn, mockLogger, mockPostPaymentSideEffects } = vi.hoisted(() => ({
   mockParseIpnWebhook: vi.fn(),
   mockProcessIpn: vi.fn(),
   mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  mockPostPaymentSideEffects: vi.fn(),
 }))
 
 vi.mock('@/tree/clients/nowpayments-client', () => ({
@@ -16,6 +17,12 @@ vi.mock('@/tree/clients/nowpayments-client', () => ({
 
 vi.mock('@/land/billing/nowpayments-ipn-handlers', () => ({
   processNowPaymentsIpn: mockProcessIpn,
+}))
+
+vi.mock('../service/payment-processor', () => ({
+  routeCommerceIpn: vi.fn().mockResolvedValue(null),
+  processTopupIfApplicable: vi.fn().mockResolvedValue(null),
+  handlePostPaymentSideEffects: mockPostPaymentSideEffects,
 }))
 
 vi.mock('@/land/commerce/commerce-payment', () => ({
@@ -84,6 +91,8 @@ beforeEach(() => {
   vi.stubEnv('NOWPAYMENTS_IPN_SECRET', TEST_SECRET)
   mockParseIpnWebhook.mockReset()
   mockProcessIpn.mockReset()
+  mockPostPaymentSideEffects.mockReset()
+  mockPostPaymentSideEffects.mockResolvedValue(undefined)
   // Default: parseIpnWebhook returns valid result (simulating successful SDK verification)
   mockParseIpnWebhook.mockImplementation((payload: Record<string, unknown>) => validIpnResult(payload))
   mockProcessIpn.mockResolvedValue({ success: true, message: 'Processed finished' })
@@ -159,6 +168,21 @@ describe('contract: valid IPN processing', () => {
     expect(res.status).toBe(200)
     const body = await res.json() as { received: boolean }
     expect(body.received).toBe(true)
+    expect(mockPostPaymentSideEffects).toHaveBeenCalledOnce()
+  })
+
+  it('acknowledges a late finished event after refund without emitting payment-success side effects', async () => {
+    mockProcessIpn.mockResolvedValue({
+      success: true,
+      message: 'Ignored finished event after refund',
+      shouldRunPostPaymentSideEffects: false,
+    })
+    const { POST } = await import('../route')
+    const response = await POST(makePostRequest(VALID_PAYLOAD, 'valid-sig'))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ received: true })
+    expect(mockPostPaymentSideEffects).not.toHaveBeenCalled()
   })
 
   it('returns 500 when IPN processing fails', async () => {

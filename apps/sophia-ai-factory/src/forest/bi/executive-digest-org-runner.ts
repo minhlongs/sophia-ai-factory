@@ -5,45 +5,18 @@
 
 import type { D1Database } from '@/seed/db/client';
 import { aggregateExecutiveBIMetrics } from '@/tree/bi/metrics-aggregator';
-import {
-  sendTelegramExecutiveDigest,
-  type TelegramConfig,
-} from '@/forest/bi/telegram-digest-sender';
+import { sendTelegramExecutiveDigest } from '@/forest/bi/telegram-digest-sender';
 import { sendEmailExecutiveDigest } from '@/forest/bi/email-digest-sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
+import {
+  resolveDigestRecipientEmails,
+  type DispatchExecutiveDigestOptions,
+  type DigestDeliveryReceipt,
+} from './executive-digest-org-types';
 
-export interface DispatchExecutiveDigestOptions {
-  orgId?: string;
-  telegramConfig?: TelegramConfig;
-  resendApiKey?: string;
-  recipientEmails?: string[];
-}
-
-export interface DigestDeliveryReceipt {
-  cadence: 'weekly' | 'monthly';
-  executedAt: number;
-  periodStart: number;
-  periodEnd: number;
-  totalOrgs: number;
-  telegramDeliveries: {
-    attempted: number;
-    succeeded: number;
-    failed: number;
-  };
-  emailDeliveries: {
-    attempted: number;
-    succeeded: number;
-    failed: number;
-  };
-  details: Array<{
-    orgId: string;
-    telegramSuccess: boolean;
-    emailSuccess: boolean;
-    error?: string;
-  }>;
-}
+export type { DispatchExecutiveDigestOptions, DigestDeliveryReceipt };
 
 export async function dispatchDigestForOrganization(params: {
   db: D1Database;
@@ -83,21 +56,11 @@ export async function dispatchDigestForOrganization(params: {
       orgError = tgResult.error;
     }
 
-    let recipientEmails = options.recipientEmails ?? [];
-    if (recipientEmails.length === 0) {
-      const { results: members } = await db
-        .prepare(
-          `SELECT email FROM org_invitations
-           WHERE org_id = ?1 AND role IN ('owner', 'admin') AND status = 'accepted'
-           LIMIT 5`,
-        )
-        .bind(org.id)
-        .all<{ email: string }>();
-
-      if (members && members.length > 0) {
-        recipientEmails = members.map((m) => m.email).filter(Boolean);
-      }
-    }
+    const recipientEmails = await resolveDigestRecipientEmails(
+      db,
+      org.id,
+      options.recipientEmails,
+    );
 
     if (recipientEmails.length > 0) {
       receipt.emailDeliveries.attempted += recipientEmails.length;

@@ -1,7 +1,14 @@
 import React from 'react';
 import { Key } from 'lucide-react';
+import {
+  WebhookEventsSelector,
+  AVAILABLE_WEBHOOK_EVENTS,
+  type WebhookEventsSelectorProps,
+} from './webhook-events-selector';
 
-interface WebhookRegisterFormProps {
+export { WebhookEventsSelector, AVAILABLE_WEBHOOK_EVENTS, type WebhookEventsSelectorProps };
+
+export interface WebhookRegisterFormProps {
   isVi: boolean;
   isPending: boolean;
   newSubUrl: string;
@@ -28,14 +35,6 @@ export function WebhookRegisterForm({
   setSelectedEvents,
   onCreateSubscription,
 }: WebhookRegisterFormProps) {
-  const availableEvents = [
-    'deal.won',
-    'deal.updated',
-    'contract.signed',
-    'invoice.paid',
-    'video.rendered',
-  ];
-
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 backdrop-blur-sm">
       <h3 className="text-base font-semibold text-white">
@@ -90,37 +89,11 @@ export function WebhookRegisterForm({
           />
         </div>
 
-        <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-zinc-300 mb-2">
-            {isVi ? 'Loại Sự Kiện Đăng Ký' : 'Subscribed Events'}
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {availableEvents.map((ev) => {
-              const isSelected = selectedEvents.includes(ev);
-              return (
-                <button
-                  key={ev}
-                  type="button"
-                  onClick={() => {
-                    if (isSelected) {
-                      setSelectedEvents(selectedEvents.filter((e) => e !== ev));
-                    } else {
-                      setSelectedEvents([...selectedEvents, ev]);
-                    }
-                  }}
-                  className={`rounded-lg px-3 py-1 text-xs font-mono transition border ${
-                    isSelected
-                      ? 'bg-cyan-950/80 border-cyan-700 text-cyan-300 font-semibold'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
-                  }`}
-                >
-                  {isSelected ? '✓ ' : '+ '}
-                  {ev}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <WebhookEventsSelector
+          isVi={isVi}
+          selectedEvents={selectedEvents}
+          setSelectedEvents={setSelectedEvents}
+        />
       </div>
 
       <div className="mt-4 flex justify-end">

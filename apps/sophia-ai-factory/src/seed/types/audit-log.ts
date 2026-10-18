@@ -2,15 +2,12 @@
  * Audit Log Types - Hash Chain Compliance
  *
  * Types for cryptographic hash chain audit logging (SOC 2 compliance)
- *
  * @module @/types/audit-log
  */
 
 export * from './audit-compliance';
 
-/**
- * Hash chain entry for audit log integrity verification
- */
+/** Hash chain entry for audit log integrity verification */
 export interface HashChainEntry {
   /** SHA-256 hash of current log content */
   contentHash: string;
@@ -20,9 +17,7 @@ export interface HashChainEntry {
   timestamp: number;
 }
 
-/**
- * Hash chain verification result
- */
+/** Hash chain verification result */
 export interface HashChainVerificationResult {
   /** Overall chain validity */
   isValid: boolean;
@@ -40,24 +35,17 @@ export interface HashChainVerificationResult {
   }>;
 }
 
-/**
- * Audit log with computed hash chain fields
- * Extends base RaasAuditLogRow with hash chain properties
- */
+/** Audit log with computed hash chain fields */
 export interface AuditLogWithHash extends Record<string, unknown> {
   content_hash: string;
   previous_log_hash: string | null;
   hash_chain_valid: boolean;
 }
 
-/**
- * Audit action types
- */
+/** Audit action types */
 export type AuditAction = 'CREATE' | 'VALIDATE' | 'REVOKE' | 'UPDATE' | 'USAGE';
 
-/**
- * Base interface for audit actions with common fields
- */
+/** Base interface for audit actions with common fields */
 export interface AuditActionBase {
   /** Action timestamp (Unix epoch) */
   timestamp: number;
@@ -71,9 +59,7 @@ export interface AuditActionBase {
   tier?: string;
 }
 
-/**
- * Usage audit action for model invocation tracking
- */
+/** Usage audit action for model invocation tracking */
 export interface UsageAuditAction extends AuditActionBase {
   action: 'USAGE';
   /** AI model name (e.g., gpt-4, claude-3) */
@@ -88,9 +74,7 @@ export interface UsageAuditAction extends AuditActionBase {
   endpoint?: string;
 }
 
-/**
- * Combined audit action type union
- */
+/** Combined audit action type union */
 export type AuditActionType =
   | { action: 'CREATE'; tier: string }
   | { action: 'VALIDATE'; isValid: boolean }
@@ -98,9 +82,7 @@ export type AuditActionType =
   | { action: 'UPDATE'; changes?: Record<string, unknown> }
   | UsageAuditAction;
 
-/**
- * Audit log query filters
- */
+/** Audit log query filters */
 export interface AuditLogFilters {
   action?: AuditAction;
   licenseNonce?: string;
@@ -110,10 +92,7 @@ export interface AuditLogFilters {
   hashChainValid?: boolean;
 }
 
-/**
- * Merkle tree node for multi-log verification
- * Used for efficient partial verification (future enhancement)
- */
+/** Merkle tree node for multi-log verification */
 export interface MerkleTreeNode {
   /** Node hash */
   hash: string;
@@ -125,9 +104,7 @@ export interface MerkleTreeNode {
   logIds: string[];
 }
 
-/**
- * Environment variables required for audit logging
- */
+/** Environment variables required for audit logging */
 export interface AuditEnvConfig {
   /** Salt for hash computation (prevent rainbow tables) */
   AUDIT_HASH_SALT: string;

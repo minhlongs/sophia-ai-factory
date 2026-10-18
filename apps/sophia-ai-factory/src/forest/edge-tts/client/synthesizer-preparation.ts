@@ -5,18 +5,25 @@
 
 import type { ApacLocale } from '@/seed/types/dubbing';
 import {
-  normalizeDialect,
   tuneProsodyForDialect,
 } from '@/tree/cultural-adaptation/dialect-normalizer';
-import {
-  generateAiDisclosure,
-} from '@/tree/cultural-adaptation/compliance-engine';
 import {
   type EdgeTtsSynthesisOptions,
   resolveEdgeVoice,
   resolveEdgeVoiceForDialect,
 } from './types';
 import { buildSsml, calculateTempoAdjustment } from './ssml-builder';
+import {
+  normalizeAndInjectCompliance,
+  AUTO_DISCLAIMER_JURISDICTIONS,
+  type ComplianceNormalizationResult,
+} from './compliance-preparation';
+
+export {
+  normalizeAndInjectCompliance,
+  AUTO_DISCLAIMER_JURISDICTIONS,
+  type ComplianceNormalizationResult,
+};
 
 export interface PreparedEdgeTtsPayload {
   processedText: string;
@@ -28,49 +35,6 @@ export interface PreparedEdgeTtsPayload {
   rate: string;
   ssml: string;
   estimatedDuration: number;
-}
-
-const AUTO_DISCLAIMER_JURISDICTIONS = new Set(['EU', 'VN', 'JP']);
-
-function normalizeAndInjectCompliance(
-  text: string,
-  options?: EdgeTtsSynthesisOptions,
-): {
-  processedText: string;
-  normalizedScript?: string;
-  disclaimerInjected: boolean;
-  disclaimerText?: string;
-} {
-  let processedText = text;
-  let normalizedScript: string | undefined;
-
-  if (options?.dialect && options.sourceDialect) {
-    const dialectResult = normalizeDialect(processedText, options.sourceDialect, options.dialect);
-    processedText = dialectResult.normalizedText;
-    normalizedScript = processedText;
-  }
-
-  const jurisdiction = options?.complianceJurisdiction;
-  if (!jurisdiction) {
-    return { processedText, normalizedScript, disclaimerInjected: false };
-  }
-
-  const disclosure = generateAiDisclosure(jurisdiction, 'audio');
-  const shouldInject =
-    Boolean(disclosure.audioDisclaimer) &&
-    (Boolean(options?.injectAudioDisclaimer) || AUTO_DISCLAIMER_JURISDICTIONS.has(jurisdiction));
-
-  if (!shouldInject || !disclosure.audioDisclaimer) {
-    return { processedText, normalizedScript, disclaimerInjected: false };
-  }
-
-  const disclaimerText = disclosure.audioDisclaimer.textLocal;
-  return {
-    processedText: `${processedText}. ${disclaimerText}`,
-    normalizedScript,
-    disclaimerInjected: true,
-    disclaimerText,
-  };
 }
 
 function resolveVoiceAndProsody(

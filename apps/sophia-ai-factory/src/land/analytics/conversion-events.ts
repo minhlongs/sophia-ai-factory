@@ -20,36 +20,7 @@
  * @module lib/analytics/conversion-events
  */
 
-import { getUtmParams } from '@/seed/utils/utm-capture'
-
-/** GA4 gtag function type — subset we use */
-type GtagFn = (command: string, action: string, params?: Record<string, unknown>) => void
-
-/** Retrieve gtag from window if loaded, else no-op */
-function gtag(...args: Parameters<GtagFn>): void {
-  if (typeof window === 'undefined') return
-  const w = window as typeof window & { gtag?: GtagFn }
-  if (typeof w.gtag === 'function') {
-    w.gtag(...args)
-  }
-}
-
-/** PostHog capture helper — safe no-op if posthog not loaded */
-function phCapture(event: string, props?: Record<string, unknown>): void {
-  if (typeof window === 'undefined') return
-  const w = window as typeof window & { posthog?: { capture?: (e: string, p?: Record<string, unknown>) => void } }
-  if (typeof w.posthog?.capture === 'function') {
-    w.posthog.capture(event, props)
-  }
-}
-
-/** Attach UTM params to an event payload. */
-function withUtm(props: Record<string, unknown>): Record<string, unknown> {
-  const utm = getUtmParams()
-  return { ...props, ...utm }
-}
-
-// ─── Public event functions ──────────────────────────────────────────────────
+import { gtag, phCapture, withUtm } from './conversion-event-dispatchers'
 
 /**
  * Track completed signup (after Better Auth signUp.email resolves without error).
@@ -94,7 +65,6 @@ export function trackPaymentSuccess(props: {
     currency: 'USD',
     payment_method: props.paymentMethod ?? 'nowpayments',
   })
-  // GA4 purchase event (standard ecommerce)
   gtag('event', 'purchase', {
     transaction_id: `sophia_${Date.now()}`,
     value: props.amountUsd,

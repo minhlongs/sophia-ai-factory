@@ -8,8 +8,10 @@
  */
 
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CampaignBlueprintRow } from '@/seed/types/playbook-pattern';
+import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { getDbAccess } from './db-access';
 
 export function resolveFallbackBlueprint(
@@ -76,4 +78,24 @@ export function revalidateBatchRunPaths(): void {
   revalidatePath('/[locale]/dashboard/missions');
   revalidateTag('playbook_runs', 'max');
   revalidateTag('missions', 'max');
+}
+
+export async function verifyBatchMissionQuota(
+  userId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userTier = await getUserTier(userId);
+  const quota = await checkMissionQuota(userId, userTier, 'missions');
+  if (!quota.allowed) {
+    logger.warn('[triggerBatchRunAction] Monthly quota exceeded', {
+      userId,
+      tier: userTier,
+      used: quota.used,
+      limit: quota.limit,
+    });
+    return {
+      ok: false,
+      error: `Monthly mission quota exceeded for ${userTier} tier (${quota.used}/${quota.limit})`,
+    };
+  }
+  return { ok: true };
 }

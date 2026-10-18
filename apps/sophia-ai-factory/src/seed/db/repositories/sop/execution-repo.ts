@@ -32,24 +32,12 @@ export async function createExecution(params: {
       `INSERT INTO sop_executions
          (id, user_id, org_id, sop_template_id, installation_id,
           status, input_json, output_json, error_message,
-          current_step, total_steps, step_results, credits_used,
-          started_at, completed_at)
-       VALUES
-         (?1, ?2, ?3, ?4, ?5,
-          'pending', ?6, NULL, NULL,
-          0, ?7, ?8, 0,
-          ?9, NULL)`,
+          current_step, total_steps, step_results, credits_used, started_at, completed_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6, NULL, NULL, 0, ?7, ?8, 0, ?9, NULL)`,
     )
     .bind(
-      id,
-      params.userId,
-      params.orgId,
-      params.sopTemplateId,
-      params.installationId ?? null,
-      params.inputJson,
-      params.totalSteps,
-      emptyStepResults,
-      now,
+      id, params.userId, params.orgId, params.sopTemplateId,
+      params.installationId ?? null, params.inputJson, params.totalSteps, emptyStepResults, now,
     )
     .run();
 
@@ -73,11 +61,7 @@ export async function updateExecutionStep(
 
   await db
     .prepare(
-      `UPDATE sop_executions
-       SET current_step = ?2,
-           step_results = ?3,
-           status = ?4
-       WHERE id = ?1`,
+      `UPDATE sop_executions SET current_step = ?2, step_results = ?3, status = ?4 WHERE id = ?1`,
     )
     .bind(executionId, currentStep, stepResults, resolvedStatus)
     .run();
@@ -99,11 +83,7 @@ export async function completeExecution(
   await db
     .prepare(
       `UPDATE sop_executions
-       SET status = 'completed',
-           output_json = ?2,
-           credits_used = ?3,
-           completed_at = ?4,
-           error_message = NULL
+       SET status = 'completed', output_json = ?2, credits_used = ?3, completed_at = ?4, error_message = NULL
        WHERE id = ?1`,
     )
     .bind(executionId, outputJson, creditsUsed, now)
@@ -126,11 +106,7 @@ export async function failExecution(
 
   await db
     .prepare(
-      `UPDATE sop_executions
-       SET status = 'failed',
-           error_message = ?2,
-           completed_at = ?3
-       WHERE id = ?1`,
+      `UPDATE sop_executions SET status = 'failed', error_message = ?2, completed_at = ?3 WHERE id = ?1`,
     )
     .bind(executionId, errorMessage, now)
     .run();

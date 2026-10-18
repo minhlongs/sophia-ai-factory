@@ -9,23 +9,7 @@ import { incrementAndRecord, setUserTrialExpiry } from './promo-repo';
 import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ApplyOptions, ApplyResult, RedemptionStatus } from './promo-types';
-import type { Tier } from '@/seed/types';
-import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
-
-/** Tier price map in cents (used for fixed_off / percent_off calculations). */
-const TIER_PRICE_CENTS: Record<string, number> = {
-  BASIC: UNIFIED_TIERS.BASIC.priceInCents,
-  PREMIUM: UNIFIED_TIERS.PREMIUM.priceInCents,
-  ENTERPRISE: UNIFIED_TIERS.ENTERPRISE.priceInCents,
-  MASTER: UNIFIED_TIERS.MASTER.priceInCents,
-};
-
-const VALID_TIERS = new Set<string>(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']);
-
-function normalizeTier(tier: string | undefined): Tier {
-  const upper = (tier ?? 'BASIC').toUpperCase();
-  return (VALID_TIERS.has(upper) ? upper : 'BASIC') as Tier;
-}
+import { computePromoPricing, normalizeTier } from './promo-applier-helpers';
 
 /**
  * Apply a promo code for a user.
@@ -43,24 +27,17 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
 
   const { codeId, discountType, discountValue, appliesToTier } = validation;
   const effectiveTier = normalizeTier(appliesToTier ?? tier);
-
-  const originalAmountCents = paymentAmountCents ?? TIER_PRICE_CENTS[effectiveTier] ?? 0;
-  let discountedAmountCents = originalAmountCents;
-  let trialDaysGranted = 0;
-
-  if (discountType === 'percent_off') {
-    const discount = Math.round(originalAmountCents * discountValue / 100);
-    discountedAmountCents = Math.max(0, originalAmountCents - discount);
-  } else if (discountType === 'fixed_off') {
-    discountedAmountCents = Math.max(0, originalAmountCents - discountValue);
-  } else if (discountType === 'free_trial') {
-    trialDaysGranted = discountValue;
-    discountedAmountCents = 0;
-  } else if (discountType === 'free_full') {
-    discountedAmountCents = 0;
-  }
-
-  const discountAppliedCents = originalAmountCents - discountedAmountCents;
+  const {
+    originalAmountCents,
+    discountedAmountCents,
+    discountAppliedCents,
+    trialDaysGranted,
+  } = computePromoPricing({
+    effectiveTier,
+    paymentAmountCents,
+    discountType,
+    discountValue,
+  });
 
   let handoverId: string | null = null;
   let magicLink: string | null = null;
@@ -68,7 +45,6 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
   // For free tiers, fire auto-handover immediately.
   // Saga: handover MUST succeed before recording the redemption. If it fails,
   // throw so the caller can retry without polluting promo_codes.used_count.
-  // (Historical drift cause — see plans/reports/cleanup-260505-0546-orphan-free100.md.)
   if (discountType === 'free_trial' || discountType === 'free_full') {
     const promoPaymentId = `promo_${code.toUpperCase()}_${userId}_${Date.now()}`;
 

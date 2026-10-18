@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for zk-SNARK state compaction and Planetary Constitutional Court arbitration.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   compactStateWithZkSnark,
   type ZkStateCompactionResult,
@@ -23,6 +22,7 @@ import type {
   ConstitutionalInvariant,
 } from '@/seed/types/post-quantum-constitution';
 import { recordCourtCompactionProof } from './cosmic-court-d1-recorder';
+import { persistPlanetaryArbitration } from './court-arbitration-d1-recorder';
 
 export interface ZkCompactActionResult {
   success: boolean;
@@ -83,31 +83,7 @@ export async function arbitratePlanetaryDisputeAction(
 ): Promise<CourtVerdictActionResult> {
   try {
     const data = arbitratePlanetaryDispute(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO planetary_court_arbitrations (id, dispute_case_ref, claimant_participant_id, respondent_participant_id, dispute_value_cents, contract_merkle_root, evidence_sha256, juror_count, supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `court_${Date.now()}`,
-          params.disputeCaseRef,
-          params.claimantParticipantId,
-          params.respondentParticipantId,
-          params.disputeValueCents,
-          'CONTRACT_ROOT_PLACEHOLDER',
-          params.evidenceSha256,
-          data.totalJurors,
-          params.supermajorityThresholdPct ?? 75.0,
-          data.verdict,
-          data.jurorsSlashedCount,
-          data.executedRemedyCents,
-          data.verdict !== 'DELIBERATING' ? new Date().toISOString() : null
-        )
-        .run();
-    }
-
+    await persistPlanetaryArbitration(params, data);
     return { success: true, data };
   } catch (err: unknown) {
     return {

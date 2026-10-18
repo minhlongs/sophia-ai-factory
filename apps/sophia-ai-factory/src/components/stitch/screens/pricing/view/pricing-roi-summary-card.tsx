@@ -2,7 +2,38 @@
 
 import React from 'react';
 import { Link } from '@/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ShieldCheck } from 'lucide-react';
+
+export function PricingRoiCalculatorHeader({ isVi }: Readonly<{ isVi: boolean }>) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1E2235] pb-5">
+      <div className="min-w-0">
+        <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 font-mono text-xs font-semibold text-amber-400">
+          {isVi
+            ? 'STITCH v4.2 · MÁY TÍNH TIẾT KIỆM CHI PHÍ DỰNG PHIM'
+            : 'STITCH v4.2 · INTERACTIVE EDITOR SAVINGS CALCULATOR'}
+        </span>
+        <h2
+          id="stitch-roi-calculator-heading"
+          className="mt-2 font-sans text-xl font-bold tracking-tight text-[#F8FAFC] sm:text-2xl"
+        >
+          {isVi
+            ? 'Tính Toán Lợi Tức Đầu Tư (ROI) Khi Tự Động Hóa Video AI'
+            : 'Calculate Your Monthly AI Video Automation ROI'}
+        </h2>
+      </div>
+
+      <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3.5 py-2 font-mono text-xs font-semibold text-emerald-400">
+        <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>
+          {isVi
+            ? 'THANH TOÁN: NOWPAYMENTS USDT · PAYOS VIETQR'
+            : 'RAILS: NOWPAYMENTS USDT · PAYOS VIETQR'}
+        </span>
+      </span>
+    </div>
+  );
+}
 
 export function PricingRoiSummaryCard({
   isVi,

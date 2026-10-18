@@ -1,6 +1,5 @@
 import { getD1 } from '@/seed/db/client';
 import { decryptSecret } from '@/tree/crypto/encrypt-secret';
-import { logger } from '@/seed/utils/logger-utility';
 import { fromCents, sanitizeErrorText } from '../commission-cents';
 import { sendSinglePayout, sleep, RATE_LIMIT_MS } from './single-payout';
 import type {
@@ -9,6 +8,7 @@ import type {
   MultiPayoutBatchResult,
 } from './types';
 import { exportBankReconciliationCsv } from './bank-reconciliation-csv';
+import { markBatchFailedAndLog } from './batch-payout-helpers';
 
 export { exportBankReconciliationCsv };
 
@@ -66,23 +66,7 @@ export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaym
       });
     } catch (err) {
       const safeMsg = sanitizeErrorText(err instanceof Error ? err.message : String(err));
-      try {
-        await db
-          .prepare(
-            `UPDATE payout_batches SET status = 'failed', failed_reason = ? WHERE id = ?`,
-          )
-          .bind(safeMsg, input.batchId)
-          .run();
-        logger.error('[NOWPayments] Mass payout failed — status updated to failed', undefined, {
-          batchId: input.batchId,
-          error: safeMsg,
-        });
-      } catch (updateErr) {
-        logger.error('[NOWPayments] Failed to update payout_batches status after API error', undefined, {
-          batchId: input.batchId,
-          updateError: String(updateErr),
-        });
-      }
+      await markBatchFailedAndLog(db, input.batchId, safeMsg);
       throw new Error(safeMsg);
     }
     await sleep(RATE_LIMIT_MS);

@@ -10,8 +10,6 @@
 
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 // eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
 import { WanVideoClient } from '@/land/video/generation/wan21-client';
 // eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
@@ -19,8 +17,12 @@ import { FishSpeechClient } from '@/land/video/generation/fish-speech-client';
 // eslint-disable-next-line no-restricted-imports -- forest→land orchestration: R2 bucket binding
 import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { CheckpointService } from '@/forest/pipeline';
+import {
+  uploadBufferWithBucketGetter,
+  downloadToBuffer,
+} from './video-generate-storage';
 
-export { getVideoBucket };
+export { getVideoBucket, downloadToBuffer };
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -101,37 +103,12 @@ export function getFishSpeechClient(): FishSpeechClient {
   return new FishSpeechClient({ apiKey });
 }
 
-// ── R2 Upload / Download ──────────────────────────────────────────────────
+// ── R2 Upload ─────────────────────────────────────────────────────────────
 
-export async function uploadBufferToR2(key: string, data: ArrayBuffer, contentType: string): Promise<void> {
-  const ref = await getVideoBucket();
-  if (!ref?.bucket) {
-    logger.warn('[videoGenerate] R2 bucket not available — skipping upload', { key });
-    return;
-  }
-  await ref.bucket.put(key, data, { httpMetadata: { contentType } });
-}
-
-export async function downloadToBuffer(url: string): Promise<ArrayBuffer> {
-  if (!shouldAllowRequest('video-download')) {
-    throw new Error('[videoGenerate] Circuit breaker open for video-download — too many failures');
-  }
-
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
-    if (!res.ok) {
-      const kind = classifyHttpStatus(res.status);
-      recordFailure('video-download', kind);
-      throw new Error(`[videoGenerate] Failed to download from ${url}: ${res.status}`);
-    }
-    recordSuccess('video-download');
-    return res.arrayBuffer();
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('[videoGenerate] Failed to download from')) {
-      throw error;
-    }
-    const kind = classifyError(error);
-    recordFailure('video-download', kind);
-    throw error;
-  }
+export async function uploadBufferToR2(
+  key: string,
+  data: ArrayBuffer,
+  contentType: string,
+): Promise<void> {
+  return uploadBufferWithBucketGetter(getVideoBucket, key, data, contentType);
 }

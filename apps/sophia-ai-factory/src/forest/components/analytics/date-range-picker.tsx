@@ -13,20 +13,21 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/seed/utils/cn';
 import { Button } from '@/seed/components/ui/button';
-import { Calendar } from '@/seed/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/seed/components/ui/popover';
 import { useTranslations } from 'next-intl';
 import {
-  PRESETS,
   toISO,
   resolvePresetDateRange,
   type ISODateRange,
   type PresetKey,
 } from './date-range-presets';
+import {
+  DateRangePickerContent,
+  type DateRangePickerContentProps,
+} from './date-range-picker-content';
 
-export type { ISODateRange };
-
-// ── Props ────────────────────────────────────────────────────────────────────
+export type { ISODateRange, DateRangePickerContentProps };
+export { DateRangePickerContent };
 
 export interface DateRangePickerProps {
   /** Legacy DateRange compatibility */
@@ -39,8 +40,6 @@ export interface DateRangePickerProps {
   maxRangeDays?: number;
   className?: string;
 }
-
-// ── Component ────────────────────────────────────────────────────────────────
 
 export function DateRangePicker({
   value,
@@ -104,35 +103,23 @@ export function DateRangePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4" align="start">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {presets.map((key) => (
-            <Button key={key} variant="ghost" size="sm" onClick={() => applyPreset(key)}>
-              {PRESETS[key].label}
-            </Button>
-          ))}
-        </div>
-        <Calendar initialFocus mode="range" defaultMonth={date?.from} selected={date} onSelect={handleDateSelect} numberOfMonths={2} />
-        <div className="flex gap-2 mt-3 pt-3 border-t">
-          <input
-            type="date"
-            className="flex-1 text-xs rounded-md border border-input bg-background px-2 py-1"
-            value={date?.from ? toISO(date.from) : ''}
-            onChange={e => {
-              const from = e.target.value ? new Date(e.target.value) : undefined;
-              if (from) setDate(prev => ({ from, to: prev?.to }));
-            }}
-          />
-          <span className="text-muted-foreground text-xs self-center">to</span>
-          <input
-            type="date"
-            className="flex-1 text-xs rounded-md border border-input bg-background px-2 py-1"
-            value={date?.to ? toISO(date.to) : ''}
-            onChange={e => {
-              const to = e.target.value ? new Date(e.target.value) : undefined;
-              if (to && date?.from) { emitRange({ from: date.from, to }); setOpen(false); }
-            }}
-          />
-        </div>
+        <DateRangePickerContent
+          presets={presets}
+          date={date}
+          onApplyPreset={applyPreset}
+          onDateSelect={handleDateSelect}
+          onFromInputChange={(val) => {
+            const from = val ? new Date(val) : undefined;
+            if (from) setDate((prev) => ({ from, to: prev?.to }));
+          }}
+          onToInputChange={(val) => {
+            const to = val ? new Date(val) : undefined;
+            if (to && date?.from) {
+              emitRange({ from: date.from, to });
+              setOpen(false);
+            }
+          }}
+        />
       </PopoverContent>
     </Popover>
   );

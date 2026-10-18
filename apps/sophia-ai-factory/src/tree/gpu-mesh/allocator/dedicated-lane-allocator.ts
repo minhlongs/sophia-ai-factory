@@ -9,15 +9,11 @@ import type { LaneAllocationResult } from '@/seed/types/gpu-mesh';
 import { GPU_MESH_SLA_CONFIG } from '@/seed/config/gpu-mesh';
 import { logger } from '@/seed/utils/logger-utility';
 import type { AllocateLaneOptions } from './types';
-import { getReservationById } from './lane-scheduler';
-import {
-  validateReservationCapacity,
-  getReservationActiveJobCount,
-} from './capacity-checker';
 import {
   applyDedicatedLaneUpgradeAndConsumeMcu,
   releaseDedicatedLane,
 } from './dedicated-lane-sql';
+import { verifyReservationEligibility } from './allocation-validator';
 
 export { releaseDedicatedLane };
 
@@ -34,44 +30,19 @@ export async function allocateDedicatedLane(
   const now = options.nowSeconds ?? Math.floor(Date.now() / 1000);
   const requestedMcu = options.requestedMcu ?? 0;
 
-  const reservation = await getReservationById(db, reservationId);
-  if (!reservation) {
-    return {
-      success: false,
-      jobId,
-      reservationId,
-      lane: 'priority',
-      priorityScore: 10,
-      reason: 'RESERVATION_NOT_FOUND',
-    };
+  const eligibility = await verifyReservationEligibility({
+    db,
+    jobId,
+    reservationId,
+    requestedMcu,
+    now,
+  });
+
+  if (!eligibility.eligible) {
+    return eligibility.failureResult;
   }
 
-  const capacityCheck = validateReservationCapacity(reservation, requestedMcu, now);
-  if (!capacityCheck.valid) {
-    return {
-      success: false,
-      jobId,
-      reservationId,
-      lane: 'priority',
-      priorityScore: reservation.priorityScore,
-      reason: capacityCheck.reason,
-    };
-  }
-
-  const activeCount = await getReservationActiveJobCount(db, reservation.id, now);
-  if (activeCount >= reservation.concurrencyLimit) {
-    return {
-      success: false,
-      jobId,
-      reservationId,
-      lane: 'priority',
-      priorityScore: reservation.priorityScore,
-      activeJobs: activeCount,
-      concurrencyLimit: reservation.concurrencyLimit,
-      reason: 'CONCURRENCY_LIMIT_EXCEEDED',
-    };
-  }
-
+  const { reservation, activeCount } = eligibility;
   const targetRegion = options.targetRegion ?? reservation.primaryRegion;
   const priorityScore =
     reservation.priorityScore || GPU_MESH_SLA_CONFIG.dedicatedLanePriorityScore;

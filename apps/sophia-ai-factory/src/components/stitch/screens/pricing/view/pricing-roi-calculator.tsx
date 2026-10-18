@@ -2,9 +2,13 @@
 
 import React, { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { ShieldCheck } from 'lucide-react';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
-import { PricingRoiSummaryCard } from './pricing-roi-summary-card';
+import {
+  PricingRoiCalculatorHeader,
+  PricingRoiSummaryCard,
+} from './pricing-roi-summary-card';
+
+export { PricingRoiCalculatorHeader, PricingRoiSummaryCard };
 
 const VIDEO_PRESETS = [12, 30, 60, 90] as const;
 
@@ -25,32 +29,7 @@ export function PricingRoiCalculator() {
       data-testid="stitch-pricing-roi-calculator"
       className="mb-24 overflow-x-hidden rounded-2xl border border-amber-400/35 bg-gradient-to-br from-[#121722] via-[#11131F] to-[#0B0E14] p-5 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] sm:p-6 md:p-8"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1E2235] pb-5">
-        <div className="min-w-0">
-          <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 font-mono text-xs font-semibold text-amber-400">
-            {isVi
-              ? 'STITCH v4.2 · MÁY TÍNH TIẾT KIỆM CHI PHÍ DỰNG PHIM'
-              : 'STITCH v4.2 · INTERACTIVE EDITOR SAVINGS CALCULATOR'}
-          </span>
-          <h2
-            id="stitch-roi-calculator-heading"
-            className="mt-2 font-sans text-xl font-bold tracking-tight text-[#F8FAFC] sm:text-2xl"
-          >
-            {isVi
-              ? 'Tính Toán Lợi Tức Đầu Tư (ROI) Khi Tự Động Hóa Video AI'
-              : 'Calculate Your Monthly AI Video Automation ROI'}
-          </h2>
-        </div>
-
-        <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3.5 py-2 font-mono text-xs font-semibold text-emerald-400">
-          <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>
-            {isVi
-              ? 'THANH TOÁN: NOWPAYMENTS USDT · PAYOS VIETQR'
-              : 'RAILS: NOWPAYMENTS USDT · PAYOS VIETQR'}
-          </span>
-        </span>
-      </div>
+      <PricingRoiCalculatorHeader isVi={isVi} />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="min-w-0 rounded-xl border border-[#1E2235] bg-[#121722]/90 p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] lg:col-span-2">

@@ -13,28 +13,20 @@ import {
   evaluateGalacticBuffersHealth,
   generateStabilizationAdvice,
 } from '@/tree/reserve/ssdr-basket-engine';
-import type {
-  SovereignSwapLine,
-  SwapExecutionRequest,
-  SwapExecutionResult,
-  SsdrCurrencyBasket,
-  SsdrValuationQuote,
-  GalacticLiquidityBuffer,
-  ReserveOperationType,
-} from '@/seed/types/galactic-reserve';
+import {
+  recordStabilizationEventIfNeeded,
+  type ExecuteSwapActionParams,
+  type SwapActionResult,
+  type RebalanceReserveActionParams,
+  type RebalanceReserveActionResult,
+} from './galactic-reserve-helpers';
 
-export interface ExecuteSwapActionParams {
-  swapLine: SovereignSwapLine;
-  request: SwapExecutionRequest;
-  spotRate: number;
-  quoteInterestRateBps: number;
-}
-
-export interface SwapActionResult {
-  success: boolean;
-  result?: SwapExecutionResult;
-  error?: string;
-}
+export type {
+  ExecuteSwapActionParams,
+  SwapActionResult,
+  RebalanceReserveActionParams,
+  RebalanceReserveActionResult,
+} from './galactic-reserve-helpers';
 
 export async function executeSovereignSwapAction(
   params: ExecuteSwapActionParams
@@ -64,28 +56,6 @@ export async function executeSovereignSwapAction(
   }
 }
 
-export interface RebalanceReserveActionParams {
-  basket: SsdrCurrencyBasket;
-  quotes: SsdrValuationQuote;
-  buffers: GalacticLiquidityBuffer[];
-}
-
-export interface RebalanceReserveActionResult {
-  success: boolean;
-  basketValuation?: {
-    calculatedIndexCents: number;
-    impliedMarketCapCents: number;
-    isSolvent: boolean;
-  };
-  bufferStatus?: {
-    totalAvailableCents: number;
-    overallHealthFactor: number;
-    isTargetMet: boolean;
-  };
-  recommendedOperation?: ReserveOperationType;
-  error?: string;
-}
-
 export async function rebalanceSsdrReserveAction(
   params: RebalanceReserveActionParams
 ): Promise<RebalanceReserveActionResult> {
@@ -98,26 +68,12 @@ export async function rebalanceSsdrReserveAction(
       bufferHealth.deficitCents
     );
 
-    const db = await getD1();
-    if (db && advice.amountCents > 0) {
-      const eventRef = `STABILIZE_${Date.now()}`;
-      await db
-        .prepare(
-          `INSERT INTO reserve_stabilization_events (id, event_ref, operation_type, currency, amount_cents, pre_stabilization_backing_bps, post_stabilization_backing_bps, clearing_hash, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `evt_${eventRef}`,
-          eventRef,
-          advice.requiredOperation,
-          'SSDR',
-          advice.amountCents,
-          valuation.reserveBackingRatioBps,
-          Math.round(advice.targetHealthFactor * 10000),
-          `hash_${eventRef}`,
-          'COMMITTED'
-        )
-        .run();
-    }
+    await recordStabilizationEventIfNeeded({
+      amountCents: advice.amountCents,
+      requiredOperation: advice.requiredOperation,
+      reserveBackingRatioBps: valuation.reserveBackingRatioBps,
+      targetHealthFactor: advice.targetHealthFactor,
+    });
 
     return {
       success: true,

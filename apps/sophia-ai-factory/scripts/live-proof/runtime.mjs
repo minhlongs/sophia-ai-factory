@@ -1,5 +1,6 @@
 try {
-  const { setGlobalDispatcher, EnvHttpProxyAgent } = await import('undici');
+  const optionalUndici = 'undici';
+  const { setGlobalDispatcher, EnvHttpProxyAgent } = await import(optionalUndici);
   if (process.env.https_proxy || process.env.http_proxy || process.env.HTTPS_PROXY || process.env.HTTP_PROXY) {
     setGlobalDispatcher(new EnvHttpProxyAgent());
   }
@@ -19,11 +20,14 @@ export function usage() {
   npm run verify:user-video-flow:live
 
 Optional:
+  SOPHIA_LIVE_TEST_TENANT=1 (required; confirms a dedicated non-customer test tenant)
+  SOPHIA_LIVE_ALLOW_PRODUCTION=1 (required for the production host)
   SOPHIA_LIVE_ANTHROPIC_API_KEY
   SOPHIA_LIVE_ELEVENLABS_API_KEY
   SOPHIA_LIVE_DID_API_KEY
   SOPHIA_LIVE_MUAPI_API_KEY
   SOPHIA_LIVE_EVIDENCE_PATH=plans/reports/live-video-proof.json
+  SOPHIA_VERSION_INTROSPECT_TOKEN (required for full deployment SHA verification)
   SOPHIA_LIVE_PREFLIGHT_ONLY=1
   SOPHIA_LIVE_TOPIC
   SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS=900
@@ -34,7 +38,8 @@ Optional:
 export function redact(value) {
   return String(value)
     .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
-    .replace(/(api[_-]?key|password|token|secret)["':=\s]+[^"',\s}]+/gi, '$1=[REDACTED]');
+    .replace(/(api[_-]?key|password|token|secret)["':=\s]+[^"',\s}]+/gi, '$1=[REDACTED]')
+    .replace(/https?:\/\/[^\s"'<>\\]+/gi, '[URL_REDACTED]');
 }
 
 function requireEnv(env, name, fail) {
@@ -82,6 +87,19 @@ export function parseLiveConfig(env, fail) {
 
   const baseUrlStr = optionalEnv(env, 'SOPHIA_LIVE_BASE_URL') || (preflightOnly ? 'https://sophia.agencyos.network' : undefined);
   if (!baseUrlStr) fail('missing required env SOPHIA_LIVE_BASE_URL');
+  let baseUrl;
+  try {
+    baseUrl = new URL(baseUrlStr);
+  } catch {
+    fail('SOPHIA_LIVE_BASE_URL must be an absolute URL');
+  }
+  const hostname = baseUrl.hostname.toLowerCase().replace(/\.$/, '');
+  const localHttp = baseUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(hostname);
+  if (baseUrl.protocol !== 'https:' && !localHttp) fail('live video proof target must use HTTPS');
+  if (['sophia.agencyos.network', 'www.sophia.agencyos.network'].includes(hostname) && env.SOPHIA_LIVE_ALLOW_PRODUCTION !== '1') {
+    fail('production target requires SOPHIA_LIVE_ALLOW_PRODUCTION=1');
+  }
+  if (env.SOPHIA_LIVE_TEST_TENANT !== '1') fail('set SOPHIA_LIVE_TEST_TENANT=1 to confirm this is a dedicated non-customer test tenant');
 
   const email = optionalEnv(env, 'SOPHIA_LIVE_EMAIL') || (preflightOnly ? (optionalEnv(env, 'E2E_TEST_USER_EMAIL') || 'e2e-master@sophia.test') : undefined);
   if (!email) fail('missing required env SOPHIA_LIVE_EMAIL');
@@ -92,11 +110,14 @@ export function parseLiveConfig(env, fail) {
   const heygenKey = optionalEnv(env, 'SOPHIA_LIVE_HEYGEN_API_KEY') || (preflightOnly ? 'mock-heygen-key-0123456789' : undefined);
   if (!heygenKey) fail('missing required env SOPHIA_LIVE_HEYGEN_API_KEY');
 
+  const versionIntrospectToken = requireEnv(env, 'SOPHIA_VERSION_INTROSPECT_TOKEN', fail);
+
   return {
-    baseUrl: new URL(baseUrlStr),
+    baseUrl,
     email,
     password,
     heygenKey,
+    versionIntrospectToken,
     openrouterKey,
     anthropicKey,
     optionalKeys: {
@@ -110,6 +131,22 @@ export function parseLiveConfig(env, fail) {
     videoTimeoutMs: secondsEnv(env, 'SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS', 900, fail) * 1000,
     publishTimeoutMs: secondsEnv(env, 'SOPHIA_LIVE_PUBLISH_TIMEOUT_SECONDS', 600, fail) * 1000,
     pollIntervalMs: secondsEnv(env, 'SOPHIA_LIVE_POLL_INTERVAL_SECONDS', 15, fail) * 1000,
+  };
+}
+
+export function parseDeploymentVersion(version, fail) {
+  const sha = version?.commitSha;
+  if (typeof sha !== 'string' || !/^[a-f0-9]{40,64}$/i.test(sha)) {
+    fail('authorized /api/version response must provide a full commitSha');
+  }
+  const shortSha = version.shortSha;
+  if (typeof shortSha !== 'string' || shortSha.toLowerCase() !== sha.slice(0, 8).toLowerCase()) {
+    fail('deployment shortSha does not match the full commitSha');
+  }
+  return {
+    sha,
+    shortSha,
+    version: version.opennextVersion ?? null,
   };
 }
 

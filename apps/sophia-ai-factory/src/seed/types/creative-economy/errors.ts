@@ -1,18 +1,10 @@
 /**
  * Typed domain error hierarchy for the Creative Economy OS.
- *
- * Every error carries a `code` discriminator so callers can branch on the
- * failure kind without string-matching messages. Style mirrors
- * `seed/types/failure-kind.ts` (enum-like code table) and `seed/types/result.ts`
- * (explicit success/failure, no silent swallowing).
- *
  * @module seed/types/creative-economy/errors
  */
 
 import type { Result } from '@/seed/types/result'
 import { failure } from '@/seed/types/result'
-
-// ─── Error code table ────────────────────────────────────────────────────────
 
 export const CreativeEconomyErrorCode = {
   INVALID_STATE_TRANSITION: 'invalid-state-transition',
@@ -25,8 +17,6 @@ export const CreativeEconomyErrorCode = {
 export type CreativeEconomyErrorCode =
   (typeof CreativeEconomyErrorCode)[keyof typeof CreativeEconomyErrorCode]
 
-// ─── Base error ──────────────────────────────────────────────────────────────
-
 export class CreativeEconomyError extends Error {
   readonly code: CreativeEconomyErrorCode
 
@@ -36,8 +26,6 @@ export class CreativeEconomyError extends Error {
     this.code = code
   }
 }
-
-// ─── Concrete error kinds ────────────────────────────────────────────────────
 
 export class InvalidStateTransitionError extends CreativeEconomyError {
   readonly from: string
@@ -117,8 +105,6 @@ export class ProvenanceMissingError extends CreativeEconomyError {
   }
 }
 
-// ─── Type guard ──────────────────────────────────────────────────────────────
-
 export function isCreativeEconomyError(error: unknown): error is CreativeEconomyError {
   return error instanceof CreativeEconomyError
 }
@@ -130,9 +116,6 @@ export function isErrorCode(
   return isCreativeEconomyError(error) && error.code === code
 }
 
-// ─── Result bridge ───────────────────────────────────────────────────────────
-
-/** Wrap a thrown CreativeEconomyError into a failure Result. */
 export function toFailure(error: CreativeEconomyError): Result<never, CreativeEconomyError> {
   return failure(error)
 }

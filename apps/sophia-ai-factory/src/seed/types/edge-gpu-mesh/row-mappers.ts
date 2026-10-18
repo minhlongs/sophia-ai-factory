@@ -27,21 +27,16 @@ import type {
   EscrowStatus,
 } from './enums';
 
+function parseJsonOrFallback<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export function mapRowToGpuComputeNode(row: GpuComputeNodeDbRow): GpuComputeNode {
-  let supportedCodecs: VideoCodec[] = ['h264', 'hevc'];
-  try {
-    supportedCodecs = JSON.parse(row.supported_codecs_json || '[]') as VideoCodec[];
-  } catch {
-    supportedCodecs = ['h264', 'hevc'];
-  }
-
-  let metadata: Record<string, unknown> = {};
-  try {
-    metadata = JSON.parse(row.metadata_json || '{}') as Record<string, unknown>;
-  } catch {
-    metadata = {};
-  }
-
   return {
     id: row.id,
     nodeId: row.node_id,
@@ -59,27 +54,20 @@ export function mapRowToGpuComputeNode(row: GpuComputeNodeDbRow): GpuComputeNode
     p99LatencyMs: Number(row.p99_latency_ms),
     spotPriceCentsPerHour: Number(row.spot_price_cents_per_hour),
     onDemandPriceCentsPerHour: Number(row.on_demand_price_cents_per_hour),
-    supportedCodecs,
+    supportedCodecs: parseJsonOrFallback<VideoCodec[]>(row.supported_codecs_json, ['h264', 'hevc']),
     maxResolution: row.max_resolution as VideoResolution,
     healthScore: Number(row.health_score),
     isHealthy: Boolean(row.is_healthy),
     totalRendersCompleted: Number(row.total_renders_completed),
     totalRenderSeconds: Number(row.total_render_seconds),
     lastHeartbeatAt: Number(row.last_heartbeat_at),
-    metadata,
+    metadata: parseJsonOrFallback<Record<string, unknown>>(row.metadata_json, {}),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
 }
 
 export function mapRowToVideoRenderDispatch(row: VideoRenderDispatchDbRow): VideoRenderDispatch {
-  let failoverHistory: FailoverEvent[] = [];
-  try {
-    failoverHistory = JSON.parse(row.failover_history_json || '[]') as FailoverEvent[];
-  } catch {
-    failoverHistory = [];
-  }
-
   return {
     id: row.id,
     dispatchId: row.dispatch_id,
@@ -100,7 +88,7 @@ export function mapRowToVideoRenderDispatch(row: VideoRenderDispatchDbRow): Vide
     slaTargetMs: Number(row.sla_target_ms),
     slaBreached: Boolean(row.sla_breached),
     rerouteCount: Number(row.reroute_count),
-    failoverHistory,
+    failoverHistory: parseJsonOrFallback<FailoverEvent[]>(row.failover_history_json, []),
     errorMessage: row.error_message,
     dispatchedAt: Number(row.dispatched_at),
     completedAt: row.completed_at !== null ? Number(row.completed_at) : null,

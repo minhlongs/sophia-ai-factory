@@ -12,10 +12,8 @@ export const template: SopSeedEntry = {
   slug,
   nameVi: 'Kiếm Tiền Từ YouTube Shorts',
   nameEn: 'YouTube Shorts Monetization',
-  descVi:
-    'Tự động tạo YouTube Shorts viral, thêm hook text và CTA đăng ký, sau đó cross-post sang TikTok và Reels để tối đa doanh thu',
-  descEn:
-    'Auto-create viral YouTube Shorts with hook text overlay and subscribe CTA, then cross-post to TikTok and Reels for maximum reach and monetization',
+  descVi: 'Tự động tạo YouTube Shorts viral, thêm hook text và CTA đăng ký, sau đó cross-post sang TikTok và Reels để tối đa doanh thu',
+  descEn: 'Auto-create viral YouTube Shorts with hook text overlay and subscribe CTA, then cross-post to TikTok and Reels for maximum reach and monetization',
   category: 'content',
   creditsPerRun: 10,
   setupTimeMinutes: 15,
@@ -109,30 +107,14 @@ schedule: now
   outputSchema: JSON.stringify({
     type: 'object',
     required: ['youtube_shorts_url'],
-    properties: {
-      youtube_shorts_url: { type: 'string' },
-      tiktok_url: { type: 'string' },
-      reels_url: { type: 'string' },
-    },
+    properties: { youtube_shorts_url: { type: 'string' }, tiktok_url: { type: 'string' }, reels_url: { type: 'string' } },
   }),
   configSchema: JSON.stringify({
     properties: {
-      niche: {
-        type: 'string',
-        title: 'Niche / Topic',
-        description: 'Your content niche for Shorts',
-        placeholder: 'e.g. finance tips, productivity hacks, AI tools',
-      },
-      language: {
-        type: 'string',
-        title: 'Language',
-        enum: ['en', 'vi'],
-        default: 'en',
-      },
+      niche: { type: 'string', title: 'Niche / Topic', description: 'Your content niche for Shorts', placeholder: 'e.g. finance tips, productivity hacks, AI tools' },
+      language: { type: 'string', title: 'Language', enum: ['en', 'vi'], default: 'en' },
     },
     required: ['niche'],
   }),
-  configDefaults: JSON.stringify({
-    language: 'en',
-  }),
+  configDefaults: JSON.stringify({ language: 'en' }),
 };

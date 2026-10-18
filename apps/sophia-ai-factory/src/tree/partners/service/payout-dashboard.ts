@@ -14,6 +14,7 @@ import {
 } from '@/tree/partners/types';
 import { getPartnerById } from './partner-profile';
 import { getPartnerDashboardData } from './partner-dashboard-query';
+import { deductPartnerBalanceAndApproveCommissions } from './payout-deduction-sql';
 
 export { getPartnerDashboardData };
 
@@ -65,33 +66,14 @@ export async function requestCommissionPayout(
 
   const payoutBatchId = `payout_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
-  // Atomic database-level balance deduction with CAS constraint (pending_payout_cents >= amountCents)
-  const updateRes = await db
-    .prepare(
-      `UPDATE partner_profiles
-       SET pending_payout_cents = pending_payout_cents - ?1,
-           payout_rail = ?2,
-           payout_destination_json = ?3,
-           updated_at = ?4
-       WHERE id = ?5 AND pending_payout_cents >= ?1`
-    )
-    .bind(
-      input.amountCents,
-      input.payoutRail,
-      JSON.stringify(input.destinationDetails),
-      nowMs,
-      input.partnerId,
-    )
-    .run();
-
-  const changes = Number(
-    (updateRes as { changes?: number })?.changes ??
-    (updateRes as { meta?: { changes?: number } })?.meta?.changes ??
-    0
+  const deducted = await deductPartnerBalanceAndApproveCommissions(
+    db,
+    input,
+    payoutBatchId,
+    nowMs,
   );
 
-  if (changes === 0) {
-    // CAS check failed (insufficient balance or concurrent deduction)
+  if (!deducted) {
     const currentPartner = await getPartnerById(db, input.partnerId);
     const currentPending = currentPartner ? currentPartner.pending_payout_cents : 0;
     return {
@@ -105,18 +87,6 @@ export async function requestCommissionPayout(
     };
   }
 
-  // Mark pending commissions as approved / linked to payout batch
-  await db
-    .prepare(
-      `UPDATE partner_commissions
-       SET status = 'approved',
-           payout_batch_id = ?1
-       WHERE partner_id = ?2 AND status = 'pending'`
-    )
-    .bind(payoutBatchId, input.partnerId)
-    .run();
-
-  // Query updated partner to return verified remaining balance
   const updatedPartner = await getPartnerById(db, input.partnerId);
   const remainingPending = updatedPartner ? updatedPartner.pending_payout_cents : 0;
 

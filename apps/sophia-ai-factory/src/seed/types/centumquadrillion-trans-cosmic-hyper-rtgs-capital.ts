@@ -22,16 +22,8 @@ export const GATE_38_SCALE_TARGETS = {
 } as const;
 
 export type CentumquadrillionCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V20'
-  | 'USDT'
-  | 'CENTUMQUADRILLION_TRANS_COSMIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'CENTUMQUADRILLION_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V20' | 'USDT'
+  | 'CENTUMQUADRILLION_TRANS_COSMIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'CENTUMQUADRILLION_FOAM_CREDIT';
 
 export type CentumquadrillionPriorityTier =
   | 'CENTUMQUADRILLION_SINGULARITY'
@@ -39,11 +31,7 @@ export type CentumquadrillionPriorityTier =
   | 'CENTUMQUADRILLION_INSTITUTIONAL'
   | 'STANDARD_CENTUMQUADRILLION';
 
-export type CentumquadrillionSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type CentumquadrillionSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface CentumquadrillionRtgsPaymentSession {
   id?: string;
@@ -82,11 +70,7 @@ export interface CentumquadrillionNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXxviiiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXxviiiSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXxviiiSolvencyAudit {
   id?: string;
@@ -109,20 +93,12 @@ export interface BaselXxviiiSolvencyAudit {
 }
 
 export type CentumquadrillionCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V20_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'CENTUMQUADRILLION_CREDITS'
-  | 'CENTUMQUADRILLION_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V20_BASKET' | 'TIER_1_EQUITIES'
+  | 'CENTUMQUADRILLION_CREDITS' | 'CENTUMQUADRILLION_SUB_PLANCK_FOAM';
 
 export type CentumquadrillionCollateralVaultSector =
-  | 'CENTUMQUADRILLION_SINGULARITY_CORE'
-  | 'TRANS_COSMIC_APEX_VAULT'
-  | 'OMNIVERSAL_SUPRACLUSTER_HUB'
-  | 'SUB_PLANCK_QUANTUM_WELL'
-  | 'ZERO_POINT_RESERVE_MATRIX'
-  | 'ETERNAL_SOVEREIGN_SANCTUM';
+  | 'CENTUMQUADRILLION_SINGULARITY_CORE' | 'TRANS_COSMIC_APEX_VAULT' | 'OMNIVERSAL_SUPRACLUSTER_HUB'
+  | 'SUB_PLANCK_QUANTUM_WELL' | 'ZERO_POINT_RESERVE_MATRIX' | 'ETERNAL_SOVEREIGN_SANCTUM';
 
 export interface CentumquadrillionCollateralReserve {
   id?: string;

@@ -4,28 +4,18 @@
  * Maps jurisdiction codes to regulatory-required disclosure text.
  * Text is IMMUTABLE per release — no user override permitted.
  *
- * Jurisdictions covered:
- *   US  — SEC / CFTC guidance (past performance warning)
- *   EU  — MiCA Article 7 (in force 2024-12)
- *   VN  — State Bank of Vietnam ban on crypto trading promotion
- *   SG  — MAS Notice PSN08 (DPT risk warning)
- *   JP  — FSA Registered Exchange Disclosure (金融庁)
- *
+ * Jurisdictions covered: US (SEC/CFTC), EU (MiCA Art. 7), VN (SBV ban), SG (MAS PSN08), JP (FSA)
  * @module seed/config/crypto-disclaimer-registry
  */
 
-/** Supported jurisdiction codes for crypto compliance. */
 export const CRYPTO_JURISDICTIONS = ['US', 'EU', 'VN', 'SG', 'JP'] as const;
-
 export type CryptoJurisdiction = typeof CRYPTO_JURISDICTIONS[number];
 
-/** Short disclaimer per jurisdiction — for caption prepend (fits in most char limits). */
 export interface CryptoDisclaimerShort {
   en: string;
   vi: string;
 }
 
-/** Full disclaimer per jurisdiction — for video overlay (15-second end card). */
 export interface CryptoDisclaimerFull {
   en: string;
   vi: string;
@@ -35,16 +25,10 @@ export interface JurisdictionDisclaimer {
   code: CryptoJurisdiction;
   short: CryptoDisclaimerShort;
   full: CryptoDisclaimerFull;
-  /** Whether crypto content is BLOCKED entirely in this jurisdiction. */
   blocked: boolean;
-  /** Regulatory reference for audit trail. */
   regulatoryRef: string;
 }
 
-/**
- * Registry of per-jurisdiction crypto disclaimers.
- * Ordered by strictness (blocked first, then strictest).
- */
 export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, JurisdictionDisclaimer> = {
   VN: {
     code: 'VN',
@@ -59,7 +43,6 @@ export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, Jurisdiction
       vi: 'Nội dung này không thể được đăng lên các kênh nhắm mục tiêu đến Việt Nam. Việc quảng bá hoặc quảng cáo tài sản tiền điện tử bị cấm theo pháp luật Việt Nam (Ngân hàng Nhà nước — Nghị định 52/2024/NĐ-CP).',
     },
   },
-
   US: {
     code: 'US',
     blocked: false,
@@ -73,7 +56,6 @@ export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, Jurisdiction
       vi: 'CÔNG BỐ: Nội dung này có liên kết affiliate. Tiền điện tử là tài sản đầu cơ, biến động cao. Kết quả quá khứ không đảm bảo kết quả tương lai. Đây không phải là tư vấn tài chính, đầu tư hoặc pháp lý. Đầu tư vào tiền điện tử có rủi ro mất vốn đáng kể.',
     },
   },
-
   EU: {
     code: 'EU',
     blocked: false,
@@ -87,7 +69,6 @@ export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, Jurisdiction
       vi: 'CÔNG BỐ: Nội dung này có liên kết affiliate. Tài sản tiền điện tử là công cụ đầu cơ cao. Giá trị có thể biến động mạnh và nhà đầu tư có thể mất toàn bộ vốn. Nội dung này không cấu thành tư vấn tài chính. Tuân thủ Quy định MiCA (EU) 2023/1114, Điều 7.',
     },
   },
-
   SG: {
     code: 'SG',
     blocked: false,
@@ -101,7 +82,6 @@ export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, Jurisdiction
       vi: 'CÔNG BỐ: Nội dung này có liên kết affiliate liên quan đến dịch vụ Mã thông báo thanh toán kỹ thuật số (DPT). DPT không phải là tiền hợp pháp tại Singapore. Giá trị DPT có thể biến động lớn. Vui lòng đánh giá rủi ro cẩn thận. Đây không phải tư vấn tài chính. (MAS Notice PSN08)',
     },
   },
-
   JP: {
     code: 'JP',
     blocked: false,
@@ -117,20 +97,13 @@ export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, Jurisdiction
   },
 };
 
-/**
- * Retrieve disclaimer for a jurisdiction.
- * Falls back to US (most common, well-known strictness) if unknown code provided.
- */
-export function getDisclaimerForJurisdiction(
-  jurisdiction: string,
-): JurisdictionDisclaimer {
+/** Retrieve disclaimer for a jurisdiction. Falls back to US if unknown code provided. */
+export function getDisclaimerForJurisdiction(jurisdiction: string): JurisdictionDisclaimer {
   const key = jurisdiction.toUpperCase() as CryptoJurisdiction;
   return CRYPTO_DISCLAIMER_REGISTRY[key] ?? CRYPTO_DISCLAIMER_REGISTRY['US'];
 }
 
-/**
- * Return true if crypto content is blocked in this jurisdiction.
- */
+/** Return true if crypto content is blocked in this jurisdiction. */
 export function isCryptoBlockedInJurisdiction(jurisdiction: string): boolean {
   return getDisclaimerForJurisdiction(jurisdiction).blocked;
 }

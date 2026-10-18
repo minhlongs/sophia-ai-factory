@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Pan-Cosmic Constitutional Conclave Arbitration and 4096-Bit Braided STARK.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   arbitratePanCosmicDispute,
   verifyPanCosmicConstitutionalInvariants,
@@ -23,6 +22,7 @@ import type {
   PanCosmicConstitutionalInvariant,
 } from '@/seed/types/topological-braided-conclave';
 import { recordCourtCompactionProof } from './cosmic-court-d1-recorder';
+import { persistPanCosmicArbitration } from './court-arbitration-d1-recorder';
 
 export interface PanCosmicArbitrationActionResult {
   success: boolean;
@@ -50,31 +50,7 @@ export async function arbitratePanCosmicDisputeAction(
 ): Promise<PanCosmicArbitrationActionResult> {
   try {
     const data = arbitratePanCosmicDispute(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pan_cosmic_conclave_arbitrations (id, dispute_case_ref, claimant_participant_id, respondent_participant_id, dispute_value_cents, contract_stark_root, evidence_sha256, conclave_juror_count, supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          params.disputeCaseRef,
-          params.claimantParticipantId,
-          params.respondentParticipantId,
-          params.disputeValueCents,
-          data.rulingHash,
-          params.evidenceSha256,
-          data.totalJurors,
-          params.supermajorityThresholdPct ?? 98.0,
-          data.verdict,
-          data.jurorsSlashedCount,
-          data.executedRemedyCents,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await persistPanCosmicArbitration(params, data);
     return { success: true, data };
   } catch (error) {
     return {

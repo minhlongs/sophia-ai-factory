@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname, Link } from '@/navigation';
-import { Sparkles, Globe, ArrowRight } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
 import {
   MarketingNavMobileTrigger,
@@ -12,13 +12,19 @@ import {
   type MarketingNavMobileTriggerProps,
   type MarketingNavMobileDrawerProps,
 } from './marketing-nav-mobile-drawer';
+import {
+  MarketingNavDesktopActions,
+  type MarketingNavDesktopActionsProps,
+} from './marketing-nav-desktop-actions';
 
 export {
   MarketingNavMobileTrigger,
   MarketingNavMobileDrawer,
+  MarketingNavDesktopActions,
   type MarketingNavLinkItem,
   type MarketingNavMobileTriggerProps,
   type MarketingNavMobileDrawerProps,
+  type MarketingNavDesktopActionsProps,
 };
 
 export interface MarketingNavProps {
@@ -88,32 +94,12 @@ export function MarketingNav({ className }: MarketingNavProps) {
           })}
         </nav>
 
-        <div className="hidden md:flex items-center gap-4">
-          <button
-            type="button"
-            onClick={switchLocale}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] hover:bg-muted dark:hover:bg-white/[0.08] border border-border dark:border-white/[0.08] transition-all"
-            aria-label="Toggle language"
-          >
-            <Globe className="w-3.5 h-3.5 text-primary" />
-            <span className="uppercase tracking-wider">{locale === 'en' ? 'VI' : 'EN'}</span>
-          </button>
-
-          <Link
-            href="/login"
-            className="text-sm font-semibold text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-white px-3 py-2 transition-colors"
-          >
-            {t('login')}
-          </Link>
-
-          <Link
-            href="/register"
-            className="group inline-flex items-center gap-2 text-sm font-bold text-primary-foreground px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 border border-primary/25 shadow-sm transition-all active:scale-[0.98]"
-          >
-            <span>{tStitch('nav.getStarted')}</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
+        <MarketingNavDesktopActions
+          locale={locale}
+          loginLabel={t('login')}
+          getStartedLabel={tStitch('nav.getStarted')}
+          onSwitchLocale={switchLocale}
+        />
 
         <MarketingNavMobileTrigger
           locale={locale}

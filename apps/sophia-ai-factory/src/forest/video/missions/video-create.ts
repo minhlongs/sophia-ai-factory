@@ -6,6 +6,9 @@ import type { MissionHandlerResult, MissionContext } from '@/forest/missions/typ
 import { getOrDefault } from '@/seed/tenant-settings/registry';
 import type { StorageSettings } from '@/seed/tenant-settings/defaults';
 import { openclaw } from '@/land/openclaw';
+import { renderViaCheetahClaws, type LocalVideoCreateParams, type McpInvokeFn } from './video-create-local';
+
+export { renderViaCheetahClaws, type LocalVideoCreateParams, type McpInvokeFn };
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {
   const { userId, params } = ctx;
@@ -23,66 +26,16 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const videoId = crypto.randomUUID();
 
   if (storageSettings?.useTenantStorage && storageSettings.r2AccessKeyId) {
-    logger.info('[video:create] Routing video generation to local CheetahClaws engine', { userId, videoId });
-
-    // Insert video row in queued state
-    await db.from('videos').insert({
-      id: videoId,
-      user_id: userId,
+    return renderViaCheetahClaws({
+      db,
+      rawDb,
+      userId,
+      videoId,
       title,
       script,
-      status: 'queued',
-      source: 'mission',
+      storageSettings,
+      mcpInvoke: (s, t, a, o) => openclaw.mcp(s, t, a, o),
     });
-
-    try {
-      const mcpResult = (await openclaw.mcp(
-        'cheetahclaws',
-        'renderVideo',
-        {
-          jobId: videoId,
-          script,
-          title,
-          userId,
-          storage: {
-            accessKeyId: storageSettings.r2AccessKeyId,
-            secretAccessKey: storageSettings.r2SecretAccessKey,
-            bucketName: storageSettings.r2BucketName,
-            endpoint: storageSettings.r2Endpoint,
-            publicBaseUrl: storageSettings.r2PublicBaseUrl,
-          },
-        },
-        {
-          ctx: { tenantId: userId },
-          db: rawDb,
-        }
-      )) as Record<string, unknown>;
-
-      await db
-        .from('videos')
-        .update({ status: 'processing', heygen_job_id: `local_${videoId}` })
-        .eq('id', videoId);
-
-      return {
-        ok: true,
-        data: {
-          videoId,
-          video_id: videoId,
-          heygen_job_id: `local_${videoId}`,
-          status: 'processing',
-          title,
-          local_render: true,
-          output: mcpResult,
-        },
-      };
-    } catch (err) {
-      logger.error('[video:create] CheetahClaws rendering error', err instanceof Error ? err : new Error(String(err)));
-      await db.from('videos').update({ status: 'failed' }).eq('id', videoId);
-      return {
-        ok: false,
-        error: err instanceof Error ? err.message : 'CheetahClaws rendering failed',
-      };
-    }
   }
 
   // 2. Fallback to HeyGen legacy execution path

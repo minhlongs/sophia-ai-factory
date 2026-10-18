@@ -7,7 +7,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/seed/components/ui/card';
-import { Progress } from '@/seed/components/ui/progress';
+import { QuotaGaugeRow } from './quota-gauge-row';
 
 interface QuotaUsage {
   hourly: number;
@@ -36,59 +36,6 @@ export function QuotaUsageGauge({
   status = 'ok',
   overageAllowed = false,
 }: QuotaUsageGaugeProps) {
-  const calculatePercentage = (current: number, limit: number) => {
-    if (limit === 0) return 0;
-    return Math.min((current / limit) * 100, 100);
-  };
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return 'bg-red-500';
-    if (percentage >= 80) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  const getStatusIcon = (percentage: number) => {
-    if (percentage >= 100) return '🔴';
-    if (percentage >= 80) return '🟡';
-    return '🟢';
-  };
-
-  const renderGauge = (
-    label: string,
-    current: number,
-    limit: number,
-    suffix = 'credits'
-  ) => {
-    const percentage = calculatePercentage(current, limit);
-    const color = getProgressColor(percentage);
-    const icon = getStatusIcon(percentage);
-
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">
-            {icon} {label}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {current.toLocaleString()} / {limit.toLocaleString()} {suffix}
-          </span>
-        </div>
-        <Progress
-          value={percentage}
-          className={`h-2 ${color}`}
-          indicatorClassName={color}
-        />
-        {percentage >= 80 && (
-          <p className="text-xs text-orange-600">
-            {percentage >= 100
-              ? 'Limit exceeded!'
-              : `${Math.round(100 - percentage)}% remaining before limit`}
-          </p>
-        )}
-      </div>
-    );
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -105,9 +52,9 @@ export function QuotaUsageGauge({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {renderGauge('Hourly', usage.hourly, limits.hourlyCredits)}
-        {renderGauge('Daily', usage.daily, limits.dailyCredits)}
-        {renderGauge('Monthly', usage.monthly, limits.monthlyCredits)}
+        <QuotaGaugeRow label="Hourly" current={usage.hourly} limit={limits.hourlyCredits} />
+        <QuotaGaugeRow label="Daily" current={usage.daily} limit={limits.dailyCredits} />
+        <QuotaGaugeRow label="Monthly" current={usage.monthly} limit={limits.monthlyCredits} />
 
         {/* Overall Status */}
         <div className="border-t pt-4 mt-4">

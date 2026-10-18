@@ -12,7 +12,7 @@ import {
 import {
   requestKeyValidation,
   requestProviderRevoke,
-  requestProviderKeySave,
+  validateAndSaveConfiguredKeys,
 } from './use-setup-wizard-actions';
 
 export { KEY_TO_PROVIDER };
@@ -26,7 +26,6 @@ export function useSetupWizard() {
   const [subscriptionStatus, setSubscriptionStatus] = useState('PENDING');
   const [savedProviders, setSavedProviders] = useState<string[]>([]);
   const [revokingProvider, setRevokingProvider] = useState<string | null>(null);
-
   const [config, setConfig] = useState<WizardKeyConfig>(INITIAL_WIZARD_CONFIG);
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -37,12 +36,8 @@ export function useSetupWizard() {
 
   useEffect(() => {
     bootstrapSetupWizardState({
-      setSavedProviders,
-      setAccountEmail,
-      setCurrentTier,
-      setMcuBalance,
-      setSubscriptionStatus,
-      setIsOwner,
+      setSavedProviders, setAccountEmail, setCurrentTier,
+      setMcuBalance, setSubscriptionStatus, setIsOwner,
     });
   }, []);
 
@@ -94,32 +89,16 @@ export function useSetupWizard() {
     setSaveFailed(false);
     setIsSaving(true);
     try {
-      const entries = Object.entries(config).filter(([k, v]) => KEY_TO_PROVIDER[k] && v.trim());
-      const newlySaved: string[] = [];
-
-      for (const [k, v] of entries) {
-        const provider = KEY_TO_PROVIDER[k];
-        if (status[k] !== 'valid') {
-          const isValid = await verifyKey(provider, k, v);
-          if (!isValid) {
-            throw new Error(`Xác thực ${provider} không thành công / Verification for ${provider} failed. Please verify API key with upstream provider.`);
-          }
-        }
-      }
-
-      for (const [k, v] of entries) {
-        const provider = KEY_TO_PROVIDER[k];
-        await requestProviderKeySave(provider, v, t('errors.saveFailed'));
-        newlySaved.push(provider);
-      }
+      const newlySaved = await validateAndSaveConfiguredKeys({
+        config, status, verifyKey, saveFailedFallback: t('errors.saveFailed'),
+      });
       if (newlySaved.length > 0) {
         setSavedProviders(prev => Array.from(new Set([...prev, ...newlySaved])));
         setConfig(INITIAL_WIZARD_CONFIG);
       }
       return true;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('errors.saveFailed');
-      setSaveError(msg);
+      setSaveError(e instanceof Error ? e.message : t('errors.saveFailed'));
       setSaveFailed(true);
       return false;
     } finally {

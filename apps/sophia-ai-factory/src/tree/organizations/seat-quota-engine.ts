@@ -19,6 +19,7 @@
 import type { D1Database } from '@/seed/db/client';
 import { getMaxSeatsForTier, TIER_SEAT_LIMITS } from '@/seed/config/tiers/seat-quotas';
 import type { SeatQuotaCheckResult } from '@/seed/types/org-invitations';
+import { countActiveOrgMembers, countPendingOrgInvites } from './seat-quota-queries';
 
 export { TIER_SEAT_LIMITS, type SeatQuotaCheckResult };
 
@@ -48,82 +49,9 @@ export async function checkSeatQuota(
   const effectiveTier = (org.tier ?? org.plan ?? 'free').toLowerCase();
   const maxSeats = org.max_seats ?? getMaxSeatsForTier(effectiveTier);
 
-  // 2. Count active confirmed members (check organization_members first, then org_members fallback)
-  let activeMembers = 0;
-  try {
-    const memRow = await db
-      .prepare('SELECT COUNT(*) AS count FROM organization_members WHERE org_id = ?1')
-      .bind(orgId)
-      .first<{ count: number }>();
-    if (memRow && Number(memRow.count) > 0) {
-      activeMembers = Number(memRow.count);
-    } else {
-      try {
-        const legacyMemRow = await db
-          .prepare('SELECT COUNT(*) AS count FROM org_members WHERE org_id = ?1')
-          .bind(orgId)
-          .first<{ count: number }>();
-        activeMembers = legacyMemRow ? Number(legacyMemRow.count) : Number(memRow?.count ?? 0);
-      } catch {
-        activeMembers = Number(memRow?.count ?? 0);
-      }
-    }
-  } catch {
-    try {
-      const legacyMemRow = await db
-        .prepare('SELECT COUNT(*) AS count FROM org_members WHERE org_id = ?1')
-        .bind(orgId)
-        .first<{ count: number }>();
-      activeMembers = legacyMemRow ? Number(legacyMemRow.count) : 0;
-    } catch {
-      activeMembers = 0;
-    }
-  }
-
-  // 3. Count pending, unexpired invitations
-  let pendingInvites = 0;
-  const now = Date.now();
-  try {
-    const invRow = await db
-      .prepare(
-        `SELECT COUNT(*) AS count 
-         FROM organization_invitations 
-         WHERE org_id = ?1 AND status = 'pending' AND expires_at > ?2`
-      )
-      .bind(orgId, now)
-      .first<{ count: number }>();
-    if (invRow && Number(invRow.count) > 0) {
-      pendingInvites = Number(invRow.count);
-    } else {
-      try {
-        const legacyInvRow = await db
-          .prepare(
-            `SELECT COUNT(*) AS count 
-             FROM org_invitations 
-             WHERE org_id = ?1 AND status = 'pending' AND expires_at > ?2`
-          )
-          .bind(orgId, now)
-          .first<{ count: number }>();
-        pendingInvites = legacyInvRow ? Number(legacyInvRow.count) : Number(invRow?.count ?? 0);
-      } catch {
-        pendingInvites = Number(invRow?.count ?? 0);
-      }
-    }
-  } catch {
-    try {
-      const legacyInvRow = await db
-        .prepare(
-          `SELECT COUNT(*) AS count 
-           FROM org_invitations 
-           WHERE org_id = ?1 AND status = 'pending' AND expires_at > ?2`
-        )
-        .bind(orgId, now)
-        .first<{ count: number }>();
-      pendingInvites = legacyInvRow ? Number(legacyInvRow.count) : 0;
-    } catch {
-      pendingInvites = 0;
-    }
-  }
+  // 2. Count active confirmed members & pending unexpired invitations
+  const activeMembers = await countActiveOrgMembers(db, orgId);
+  const pendingInvites = await countPendingOrgInvites(db, orgId, Date.now());
 
   const allocated = activeMembers + pendingInvites;
   const isAllowed = allocated < maxSeats;

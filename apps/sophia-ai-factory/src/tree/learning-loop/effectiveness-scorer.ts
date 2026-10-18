@@ -12,6 +12,12 @@ import type {
   CreativeEffectivenessScore,
   CreativeMetricsInput,
 } from './types';
+import {
+  normalizeCtr,
+  normalizeRetention,
+  normalizeConv,
+  normalizeEfficiency,
+} from './effectiveness-metric-normalizers';
 
 /** Minimum sample size required before computing non-zero statistical confidence */
 export const MIN_LEARNING_SAMPLE = 5;
@@ -43,61 +49,6 @@ export function determineConfidenceLevel(confidence: number): 'high' | 'medium' 
   if (confidence >= 0.7) return 'high';
   if (confidence >= 0.5) return 'medium';
   return 'low';
-}
-
-function normalizeCtr(metrics: CreativeMetricsInput): number {
-  if (typeof metrics.ctr === 'number') {
-    return Math.max(0, Math.min(1, metrics.ctr));
-  }
-  if (metrics.impressions && metrics.impressions > 0) {
-    return Math.max(0, Math.min(1, (metrics.clicks ?? 0) / metrics.impressions));
-  }
-  if (metrics.views && metrics.views > 0) {
-    return Math.max(0, Math.min(1, (metrics.clicks ?? 0) / metrics.views));
-  }
-  return 0;
-}
-
-function normalizeRetention(metrics: CreativeMetricsInput): number {
-  if (typeof metrics.retentionRate === 'number') {
-    return Math.max(0, Math.min(1, metrics.retentionRate));
-  }
-  if (
-    metrics.totalDurationSeconds &&
-    metrics.totalDurationSeconds > 0 &&
-    typeof metrics.watchTimeSeconds === 'number'
-  ) {
-    return Math.max(0, Math.min(1, metrics.watchTimeSeconds / metrics.totalDurationSeconds));
-  }
-  return 0;
-}
-
-function normalizeConv(metrics: CreativeMetricsInput): number {
-  if (typeof metrics.conversionRate === 'number') {
-    return Math.max(0, Math.min(1, metrics.conversionRate));
-  }
-  if (metrics.clicks && metrics.clicks > 0) {
-    return Math.max(0, Math.min(1, (metrics.conversions ?? 0) / metrics.clicks));
-  }
-  if (metrics.views && metrics.views > 0) {
-    return Math.max(0, Math.min(1, (metrics.conversions ?? 0) / metrics.views));
-  }
-  return 0;
-}
-
-function normalizeEfficiency(metrics: CreativeMetricsInput): number {
-  if (typeof metrics.efficiencyScore === 'number') {
-    return Math.max(0, Math.min(1, metrics.efficiencyScore));
-  }
-  if (typeof metrics.spendCents === 'number' && metrics.spendCents > 0) {
-    const revenue = metrics.revenueCents ?? 0;
-    const roas = revenue / metrics.spendCents;
-    return Math.max(0, Math.min(1, roas / 3.0));
-  }
-  if (typeof metrics.revenueCents === 'number' && metrics.revenueCents > 0) {
-    return 1.0;
-  }
-  return 0;
 }
 
 /**

@@ -49,21 +49,27 @@ async function resolveCreateRequireAsync(): Promise<((url: string | URL) => (id:
 let getLocalD1Mock: (() => unknown) | null = null;
 let _mockLoader: (() => unknown) | null = null;
 
-void (async () => {
-  const _createRequire = await resolveCreateRequireAsync();
-  if (!_createRequire) return;
-  try {
-    const _mockMod = _createRequire(import.meta.url)('../local-d1-mock') as
-      | { getLocalD1Mock?: () => unknown }
-      | undefined;
-    if (typeof _mockMod?.getLocalD1Mock === 'function') {
-      getLocalD1Mock = _mockMod.getLocalD1Mock as () => unknown;
-      _mockLoader = () => getLocalD1Mock;
+const hasNodeRuntime = Boolean(
+  (globalThis as unknown as { process?: { versions?: { node?: string } } }).process?.versions?.node,
+);
+
+if (hasNodeRuntime) {
+  void (async () => {
+    const _createRequire = await resolveCreateRequireAsync();
+    if (!_createRequire) return;
+    try {
+      const _mockMod = _createRequire(import.meta.url)('../local-d1-mock') as
+        | { getLocalD1Mock?: () => unknown }
+        | undefined;
+      if (typeof _mockMod?.getLocalD1Mock === 'function') {
+        getLocalD1Mock = _mockMod.getLocalD1Mock as () => unknown;
+        _mockLoader = () => getLocalD1Mock;
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore
-  }
-})();
+  })();
+}
 
 export function getMockLoader(): (() => unknown) | null {
   return _mockLoader;

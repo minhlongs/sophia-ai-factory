@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  ExternalLink,
-  Check,
-  Copy,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
-import { Button, Badge } from '@/components/stitch';
+import { ShieldCheck } from 'lucide-react';
+import { Badge } from '@/components/stitch';
 import type { AffiliateOffer } from '@/seed/types/affiliate';
 import { AffiliateOfferKpiRow } from './affiliate-offer-kpi-row';
+import {
+  AffiliateOfferActionBar,
+  type AffiliateOfferActionBarProps,
+} from './affiliate-offer-action-bar';
+
+export { AffiliateOfferActionBar, type AffiliateOfferActionBarProps };
 
 export interface AffiliateOfferCardProps {
   offer: AffiliateOffer;
@@ -94,45 +94,15 @@ export function AffiliateOfferCard({
       </div>
 
       {/* Action Bar */}
-      <div className="mt-4 pt-3 border-t border-border dark:border-white/[0.06] flex items-center justify-between gap-2">
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleOpenDetails}
-          disabled={isConverting}
-          className="flex-1"
-          iconLeft={<Sparkles className="w-3.5 h-3.5" />}
-        >
-          {isConverting ? t('adopting') : t('adoptOffer')}
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCopy}
-          iconLeft={
-            copied ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )
-          }
-        >
-          {copied ? t('copied') : t('copyLink')}
-        </Button>
-
-        {offer.destinationUrl && (
-          <a
-            href={offer.destinationUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${t('visitSite')} - ${displayName}`}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-white/[0.06] transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        )}
-      </div>
+      <AffiliateOfferActionBar
+        displayName={displayName}
+        destinationUrl={offer.destinationUrl}
+        isConverting={isConverting}
+        copied={copied}
+        onOpenDetails={handleOpenDetails}
+        onCopy={handleCopy}
+        t={t}
+      />
     </div>
   );
 }

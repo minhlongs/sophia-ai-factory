@@ -22,16 +22,8 @@ export const GATE_42_SCALE_TARGETS = {
 } as const;
 
 export type DucentiquinquagintaquadrillionCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V24'
-  | 'USDT'
-  | 'DUCENTIQUINQUAGINTAQUADRILLION_TRANS_COSMIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'DUCENTIQUINQUAGINTAQUADRILLION_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V24' | 'USDT'
+  | 'DUCENTIQUINQUAGINTAQUADRILLION_TRANS_COSMIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'DUCENTIQUINQUAGINTAQUADRILLION_FOAM_CREDIT';
 
 export type DucentiquinquagintaquadrillionPriorityTier =
   | 'DUCENTIQUINQUAGINTAQUADRILLION_SINGULARITY'
@@ -39,11 +31,7 @@ export type DucentiquinquagintaquadrillionPriorityTier =
   | 'DUCENTIQUINQUAGINTAQUADRILLION_INSTITUTIONAL'
   | 'STANDARD_DUCENTIQUINQUAGINTAQUADRILLION';
 
-export type DucentiquinquagintaquadrillionSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type DucentiquinquagintaquadrillionSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface DucentiquinquagintaquadrillionRtgsPaymentSession {
   id?: string;
@@ -82,11 +70,7 @@ export interface DucentiquinquagintaquadrillionNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXxxiiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXxxiiSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXxxiiSolvencyAudit {
   id?: string;
@@ -109,20 +93,12 @@ export interface BaselXxxiiSolvencyAudit {
 }
 
 export type DucentiquinquagintaquadrillionCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V24_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'DUCENTIQUINQUAGINTAQUADRILLION_CREDITS'
-  | 'DUCENTIQUINQUAGINTAQUADRILLION_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V24_BASKET' | 'TIER_1_EQUITIES'
+  | 'DUCENTIQUINQUAGINTAQUADRILLION_CREDITS' | 'DUCENTIQUINQUAGINTAQUADRILLION_SUB_PLANCK_FOAM';
 
 export type DucentiquinquagintaquadrillionCollateralVaultSector =
-  | 'DUCENTIQUINQUAGINTAQUADRILLION_SINGULARITY_CORE'
-  | 'TRANS_COSMIC_APEX_VAULT'
-  | 'OMNIVERSAL_SUPRACLUSTER_HUB'
-  | 'SUB_PLANCK_QUANTUM_WELL'
-  | 'ZERO_POINT_RESERVE_MATRIX'
-  | 'ETERNAL_SOVEREIGN_SANCTUM';
+  | 'DUCENTIQUINQUAGINTAQUADRILLION_SINGULARITY_CORE' | 'TRANS_COSMIC_APEX_VAULT' | 'OMNIVERSAL_SUPRACLUSTER_HUB'
+  | 'SUB_PLANCK_QUANTUM_WELL' | 'ZERO_POINT_RESERVE_MATRIX' | 'ETERNAL_SOVEREIGN_SANCTUM';
 
 export interface DucentiquinquagintaquadrillionCollateralReserve {
   id?: string;

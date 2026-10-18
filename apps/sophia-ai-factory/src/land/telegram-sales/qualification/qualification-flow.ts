@@ -4,16 +4,10 @@
  */
 
 import type { BudgetTier } from '@/seed/types/telegram-sales';
-import {
-  sendTelegramMessageWithKeyboard,
-  sendTelegramVideo,
-} from '@/tree/telegram/telegram-client';
-import { notifyFounderLeadQualified } from '@/tree/telegram/telegram-admin-notifier';
+import { sendTelegramMessageWithKeyboard } from '@/tree/telegram/telegram-client';
 import {
   buildNicheSelectionKeyboard,
   buildBudgetSelectionKeyboard,
-  buildDemoActionKeyboard,
-  buildCheckoutKeyboard,
 } from '@/tree/telegram/telegram-lead-keyboards';
 import {
   upsertLead,
@@ -21,14 +15,12 @@ import {
   recordSurveyStep,
   recordDemoDelivery,
 } from '../telegram-lead-repo';
-import { getSampleVideoForNiche } from '../sample-video-catalog';
 import { calculateLeadScore, parseStartPayload } from './lead-scorer';
 import {
   buildGreetingMessage,
   buildBudgetPromptMessage,
-  buildSampleVideoCaption,
-  buildSolo100OfferMessage,
 } from './qualification-messages';
+import { deliverSampleVideoAndOffer } from './qualification-demo-delivery';
 
 /**
  * Handles inbound /start or viral deep-link greeting.
@@ -99,39 +91,11 @@ export async function handleBudgetSelection(
   });
   await recordDemoDelivery(chatId, 'SOLO100');
 
-  const sampleVideo = getSampleVideoForNiche(niche);
-  const caption = buildSampleVideoCaption(sampleVideo);
-
-  const sentVideo = await sendTelegramVideo(chatId, sampleVideo.videoUrl, {
-    caption,
-    supports_streaming: true,
-    reply_markup: buildDemoActionKeyboard(sampleVideo.videoUrl),
-  });
-
-  if (!sentVideo) {
-    await sendTelegramMessageWithKeyboard(
-      chatId,
-      caption + `\n\n🔗 Xem video tại: ${sampleVideo.videoUrl}`,
-      buildDemoActionKeyboard(sampleVideo.videoUrl),
-    );
-  }
-
-  await sendTelegramMessageWithKeyboard(
+  await deliverSampleVideoAndOffer({
     chatId,
-    buildSolo100OfferMessage(),
-    buildCheckoutKeyboard(),
-  );
-
-  if (score >= 70 && lead) {
-    await notifyFounderLeadQualified({
-      chatId,
-      firstName: lead.first_name || 'Khách tiềm năng',
-      username: lead.username || undefined,
-      niche,
-      budgetTier,
-      leadScore: score,
-      sourceUtm: lead.source_utm || undefined,
-      campaignId: lead.campaign_id || undefined,
-    });
-  }
+    niche,
+    budgetTier,
+    score,
+    lead,
+  });
 }

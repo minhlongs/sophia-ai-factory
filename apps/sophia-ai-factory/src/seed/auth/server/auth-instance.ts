@@ -1,19 +1,10 @@
 import { betterAuth } from 'better-auth';
-import { logger } from '@/seed/utils/logger-utility';
-import { toError } from '@/seed/utils/to-error';
-import { requireMfaIfEnabled, markSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
 import { getD1 } from '@/seed/db/client';
-import { bootstrapFounderIfConfigured } from '@/seed/auth/founder-bootstrap';
 import { hashPassword, verifyPassword } from '@/seed/security/password-hash';
-import { revokeAllUserSessions } from '@/seed/auth/revoke-user-sessions';
 import type { AuthInstance } from './types';
-import {
-  resolveBaseURL,
-  resolveTrustedOrigins,
-  sanitizeAndResolveUserName,
-  provisionNewUser,
-} from './d1-adapter-helpers';
+import { resolveBaseURL, resolveTrustedOrigins } from './d1-adapter-helpers';
 import { createMagicLinkPlugin } from './plugin-configs';
+import { authDatabaseHooks, validatePasswordStrength } from './auth-database-hooks';
 
 let _auth: AuthInstance | null = null;
 
@@ -44,18 +35,9 @@ export async function getAuth(): Promise<AuthInstance> {
       revokeSessionsOnPasswordReset: true,
       password: {
         hash: (password: string) => hashPassword(password),
-        verify: ({ hash, password }: { hash: string; password: string }) => verifyPassword(password, hash),
-        validate: (password: string) => {
-          const issues: string[] = [];
-          if (password.length < 8) issues.push('at least 8 characters');
-          if (!/[A-Z]/.test(password)) issues.push('one uppercase letter');
-          if (!/[a-z]/.test(password)) issues.push('one lowercase letter');
-          if (!/[0-9]/.test(password)) issues.push('one number');
-          if (issues.length > 0) {
-            return { success: false, message: `Password requires: ${issues.join(', ')}` };
-          }
-          return { success: true };
-        },
+        verify: ({ hash, password }: { hash: string; password: string }) =>
+          verifyPassword(password, hash),
+        validate: validatePasswordStrength,
       },
     },
     user: {
@@ -78,58 +60,7 @@ export async function getAuth(): Promise<AuthInstance> {
       },
     },
     plugins: [createMagicLinkPlugin()],
-    databaseHooks: {
-      session: {
-        create: {
-          before: async (session) => {
-            try {
-              const { required } = await requireMfaIfEnabled(session.userId);
-              if (required) {
-                await markSessionMfaPending(session.id);
-              }
-            } catch (err) {
-              logger.error('[databaseHook] MFA pre-session check failed', toError(err));
-              throw new Error('MFA verification setup failed');
-            }
-          },
-        },
-      },
-      user: {
-        create: {
-          before: async (user) => {
-            const name = sanitizeAndResolveUserName(user.name, user.email);
-            return { data: { ...user, name } };
-          },
-          after: async (user) => {
-            await provisionNewUser(user as { id: string; name?: string | null; email?: string | null });
-          },
-        },
-        update: {
-          after: async (user) => {
-            const isEmailVerified = Boolean((user as unknown as { emailVerified?: boolean | number }).emailVerified);
-            if (isEmailVerified) {
-              await bootstrapFounderIfConfigured(user as Parameters<typeof bootstrapFounderIfConfigured>[0]);
-            }
-          },
-        },
-      },
-      account: {
-        update: {
-          after: async (account) => {
-            try {
-              if (account && account.userId && account.password) {
-                await revokeAllUserSessions(account.userId);
-                logger.info('[databaseHook] Account credentials changed; active sessions revoked', {
-                  userId: account.userId,
-                });
-              }
-            } catch (err) {
-              logger.error('[databaseHook] Failed to revoke sessions on account update', toError(err));
-            }
-          },
-        },
-      },
-    },
+    databaseHooks: authDatabaseHooks,
   }) as unknown as AuthInstance;
 
   return _auth;

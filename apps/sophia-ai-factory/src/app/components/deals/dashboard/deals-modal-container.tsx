@@ -21,11 +21,11 @@ import type {
 } from '@/seed/types/enterprise-deal';
 import {
   DealDetailDrawer,
-  MeetingPrepModal,
-  ProposalGeneratorModal,
-  SandboxProvisionModal,
   NewDealModal,
 } from '@/forest/deals';
+import { DealActionModals, type DealActionModalsProps } from './deal-action-modals';
+
+export { DealActionModals, type DealActionModalsProps };
 
 export interface DealsModalContainerProps {
   selectedDeal: EnterpriseDeal | null;
@@ -98,34 +98,22 @@ export function DealsModalContainer({
       />
 
       {selectedDeal && (
-        <>
-          <MeetingPrepModal
-            deal={selectedDeal}
-            dossier={prepDossier}
-            isOpen={isPrepOpen}
-            onClose={onClosePrep}
-            onGenerate={onGeneratePrep}
-            isLoading={loadingAction === 'prep'}
-          />
-
-          <ProposalGeneratorModal
-            deal={selectedDeal}
-            proposal={proposalResult}
-            isOpen={isProposalOpen}
-            onClose={onCloseProposal}
-            onGenerate={onGenerateProposal}
-            isLoading={loadingAction === 'proposal'}
-          />
-
-          <SandboxProvisionModal
-            deal={selectedDeal}
-            sandbox={sandboxResult}
-            isOpen={isSandboxOpen}
-            onClose={onCloseSandbox}
-            onProvision={onProvisionSandbox}
-            isLoading={loadingAction === 'sandbox'}
-          />
-        </>
+        <DealActionModals
+          deal={selectedDeal}
+          isPrepOpen={isPrepOpen}
+          onClosePrep={onClosePrep}
+          prepDossier={prepDossier}
+          onGeneratePrep={onGeneratePrep}
+          isProposalOpen={isProposalOpen}
+          onCloseProposal={onCloseProposal}
+          proposalResult={proposalResult}
+          onGenerateProposal={onGenerateProposal}
+          isSandboxOpen={isSandboxOpen}
+          onCloseSandbox={onCloseSandbox}
+          sandboxResult={sandboxResult}
+          onProvisionSandbox={onProvisionSandbox}
+          loadingAction={loadingAction}
+        />
       )}
 
       <NewDealModal
