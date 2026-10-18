@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Key, CheckCircle, XCircle } from 'lucide-react';
 import { PROVIDERS, ProviderKeyCard } from './provider-key-card';
+import { handleTestAndSave, handleRevoke } from './api-keys-manager-handlers';
 
 export { PROVIDERS, ProviderKeyCard, type ProviderConfig, type ProviderKeyCardProps } from './provider-key-card';
 
@@ -29,60 +30,31 @@ export function ApiKeysManager() {
     void fetchConfigured();
   }, []);
 
-  const handleTestAndSave = async (providerId: string) => {
-    if (!inputKey.trim()) return;
+  const handleTestAndSaveWrapper = async (providerId: string) => {
     setActionLoading(true);
     setStatusMessage(null);
-    try {
-      const valRes = await fetch('/api/setup-wizard/validate-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: providerId, api_key: inputKey.trim() }),
-      });
-      const valData = (await valRes.json()) as { ok?: boolean; message?: string };
-      if (!valRes.ok || !valData.ok) {
-        setStatusMessage({ type: 'error', text: valData.message || 'Key validation failed.' });
-        return;
-      }
-      const saveRes = await fetch('/api/user/byok', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: providerId, key: inputKey.trim() }),
-      });
-      if (saveRes.ok) {
-        setStatusMessage({ type: 'success', text: `Connected ${providerId}!` });
-        setInputKey('');
-        setEditingProvider(null);
-        await fetchConfigured();
-      } else {
-        const err = (await saveRes.json()) as { error?: string };
-        setStatusMessage({ type: 'error', text: err.error || 'Failed to save key' });
-      }
-    } catch {
-      setStatusMessage({ type: 'error', text: 'Network connection failed' });
-    } finally {
-      setActionLoading(false);
+    const result = await handleTestAndSave(providerId, inputKey);
+    if (result.ok) {
+      setStatusMessage({ type: 'success', text: result.message || `Connected ${providerId}!` });
+      setInputKey('');
+      setEditingProvider(null);
+      await fetchConfigured();
+    } else {
+      setStatusMessage({ type: 'error', text: result.message || 'Failed to save key' });
     }
+    setActionLoading(false);
   };
 
-  const handleRevoke = async (providerId: string) => {
-    if (!confirm(`Are you sure you want to revoke the key for ${providerId}?`)) return;
+  const handleRevokeWrapper = async (providerId: string) => {
     setActionLoading(true);
-    try {
-      const res = await fetch('/api/user/byok', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: providerId }),
-      });
-      if (res.ok) {
-        setStatusMessage({ type: 'success', text: `Revoked ${providerId} key.` });
-        await fetchConfigured();
-      }
-    } catch {
-      setStatusMessage({ type: 'error', text: 'Failed to revoke key' });
-    } finally {
-      setActionLoading(false);
+    const result = await handleRevoke(providerId);
+    if (result.ok) {
+      setStatusMessage({ type: 'success', text: result.message || `Revoked ${providerId} key.` });
+      await fetchConfigured();
+    } else {
+      setStatusMessage({ type: 'error', text: result.message || 'Failed to revoke key' });
     }
+    setActionLoading(false);
   };
 
   return (
@@ -122,8 +94,8 @@ export function ApiKeysManager() {
             }}
             onCancelEdit={() => setEditingProvider(null)}
             onInputKeyChange={setInputKey}
-            onTestAndSave={handleTestAndSave}
-            onRevoke={handleRevoke}
+            onTestAndSave={handleTestAndSaveWrapper}
+            onRevoke={handleRevokeWrapper}
           />
         ))}
       </div>

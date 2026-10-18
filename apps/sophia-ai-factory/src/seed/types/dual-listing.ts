@@ -10,6 +10,21 @@ export {
   rowToBepsTaxAllocation,
 } from './dual-listing-mappers';
 
+export {
+  type BepsJurisdictionCode,
+  type FcpaScreeningType,
+  type FcpaDisposition,
+  type BepsTaxAllocation,
+  type FcpaComplianceScreening,
+  type BepsComputationInput,
+  type BepsComputationResult,
+} from './dual-listing-beps-types';
+
+import type {
+  BepsTaxAllocation,
+  FcpaComplianceScreening,
+} from './dual-listing-beps-types';
+
 export const GATE_11_CONSTANTS = {
   TARGET_MRR_CENTS: 1_000_000_000, // $10,000,000
   TARGET_ARR_CENTS: 12_000_000_000, // $120,000,000
@@ -26,9 +41,6 @@ export type DualListingFilingType = 'SEC_10K' | 'SEC_10Q' | 'SGX_ANNUAL' | 'SGX_
 export type DualListingAuditOpinion = 'UNQUALIFIED' | 'QUALIFIED' | 'ADVERSE' | 'DISCLAIMER';
 export type DualListingStatus = 'DRAFT' | 'AUDIT_IN_PROGRESS' | 'BOARD_APPROVED' | 'FILED' | 'AMENDED';
 export type IxbrlStandard = 'US_GAAP_2026' | 'IFRS_2026' | 'SFRS_I_2026';
-export type BepsJurisdictionCode = 'US' | 'SG' | 'VN' | 'IE' | 'KY';
-export type FcpaScreeningType = 'PEP_CHECK' | 'SANCTIONS_OFAC' | 'BRIBERY_RISK' | 'TRANSACTION_AUDIT';
-export type FcpaDisposition = 'CLEARED' | 'FLAGGED' | 'ESCALATED_LEGAL' | 'BLOCKED';
 
 export interface DualListingPeriod {
   id: string;
@@ -71,56 +83,6 @@ export interface IxbrlTaxonomy {
   isNegated: boolean;
   lineItemDescription: string | null;
   createdAt: string;
-}
-
-export interface BepsTaxAllocation {
-  id: string;
-  filingPeriodId: string;
-  jurisdictionCode: BepsJurisdictionCode;
-  coveredTaxesCents: number;
-  globeIncomeCents: number;
-  effectiveTaxRateBps: number;
-  minimumRateBps: number;
-  topUpTaxPercentageBps: number;
-  topUpTaxCents: number;
-  substanceCarveOutCents: number;
-  netTopUpTaxCents: number;
-  safeguardMerkleRoot: string;
-  createdAt: string;
-}
-
-export interface FcpaComplianceScreening {
-  id: string;
-  filingPeriodId: string;
-  counterpartyName: string;
-  counterpartyJurisdiction: string;
-  screeningType: FcpaScreeningType;
-  riskScore: number;
-  disposition: FcpaDisposition;
-  reviewedBy: string;
-  reviewNotes: string | null;
-  immutableHash: string;
-  createdAt: string;
-}
-
-export interface BepsComputationInput {
-  jurisdictionCode: BepsJurisdictionCode;
-  coveredTaxesCents: number;
-  globeIncomeCents: number;
-  substanceCarveOutCents?: number;
-}
-
-export interface BepsComputationResult {
-  jurisdictionCode: BepsJurisdictionCode;
-  coveredTaxesCents: number;
-  globeIncomeCents: number;
-  effectiveTaxRateBps: number;
-  minimumRateBps: number;
-  topUpTaxPercentageBps: number;
-  topUpTaxCents: number;
-  substanceCarveOutCents: number;
-  netTopUpTaxCents: number;
-  isCompliant: boolean;
 }
 
 export interface DualListingConsolidatedPackage {

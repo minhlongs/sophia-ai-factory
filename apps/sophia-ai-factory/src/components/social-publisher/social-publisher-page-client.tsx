@@ -8,10 +8,8 @@
  */
 
 import React, { useState } from 'react';
-import {
-  SocialPublisherCockpit,
-  type PublishFormPayload,
-} from './social-publisher-cockpit';
+import { SocialPublisherCockpit } from './social-publisher-cockpit';
+import type { PublishFormPayload } from './social-publisher-types';
 import type { ChannelCardData } from './channel-credentials-grid';
 import type { StoredPublishJob } from '@/land/social/publish-job-store';
 import {

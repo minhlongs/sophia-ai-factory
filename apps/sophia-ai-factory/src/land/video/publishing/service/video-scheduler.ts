@@ -4,49 +4,28 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { createServerClient, getD1, type D1Database } from '@/seed/db/client';
+import type { D1Database } from '@/seed/db/client';
 import {
   type SchedulePublishInput,
   type SchedulePublishResult,
   PublishConfigurationError,
 } from './types';
+import {
+  resolvePublishDb,
+  validateVideoAndChannel,
+} from './video-scheduler-helpers';
+
+export {
+  resolvePublishDb,
+  validateVideoAndChannel,
+  type VideoRow,
+  type ChannelRow,
+} from './video-scheduler-helpers';
 
 function newJobId(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-interface VideoRow {
-  id: string;
-  user_id: string;
-}
-
-interface ChannelRow {
-  id: string;
-  user_id: string | null;
-  tenant_id: string | null;
-  provider: string;
-}
-
-async function resolveDb(customDb?: D1Database): Promise<D1Database> {
-  let db: D1Database | null | undefined = customDb;
-  if (!db && typeof getD1 === 'function') {
-    try {
-      db = await getD1();
-    } catch {
-      // ignore
-    }
-  }
-  if (!db && typeof createServerClient === 'function') {
-    try {
-      db = createServerClient() as unknown as D1Database;
-    } catch {
-      // ignore
-    }
-  }
-  if (!db) throw new Error('D1 database binding not available');
-  return db;
 }
 
 /**
@@ -69,32 +48,8 @@ export async function scheduleVideoPublish(
     );
   }
 
-  const db = await resolveDb(customDb);
-
-  const video = await db
-    .prepare('SELECT id, user_id FROM videos WHERE id = ?1 LIMIT 1')
-    .bind(input.videoId)
-    .first<VideoRow>();
-  if (!video) {
-    throw new PublishConfigurationError('VIDEO_NOT_FOUND', `video ${input.videoId} not found`);
-  }
-  if (video.user_id !== input.userId) {
-    throw new PublishConfigurationError('FORBIDDEN', 'video belongs to a different user');
-  }
-
-  const channel = await db
-    .prepare(
-      'SELECT id, user_id, tenant_id, provider FROM publishing_channels WHERE id = ?1 LIMIT 1',
-    )
-    .bind(input.channelId)
-    .first<ChannelRow>();
-  if (!channel) {
-    throw new PublishConfigurationError('CHANNEL_NOT_FOUND', `channel ${input.channelId} not found`);
-  }
-  const owns = channel.user_id === input.userId || channel.tenant_id === input.userId;
-  if (!owns) {
-    throw new PublishConfigurationError('FORBIDDEN', 'channel belongs to a different user');
-  }
+  const db = await resolvePublishDb(customDb);
+  const { channel } = await validateVideoAndChannel(db, input.videoId, input.channelId, input.userId);
 
   const jobId = newJobId();
   try {

@@ -41,3 +41,5 @@ export type SopStepDef = {
   is_automated: boolean;
 };
 
+export type SopStep = SopStepDef;
+

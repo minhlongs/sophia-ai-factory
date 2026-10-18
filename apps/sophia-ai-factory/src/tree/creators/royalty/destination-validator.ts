@@ -1,14 +1,6 @@
 /**
  * Multi-Rail Payout Destination Validator & QR Code Generator.
- *
- * Validates payout destination format across:
- * - EVM addresses (Arbitrum/Polygon USDC)
- * - VietQR (NAPAS 6-digit BIN + account)
- * - PromptPay (10-digit phone or 13-digit tax ID)
- * - SEPA Instant (IBAN)
- *
  * Layer: tree/creators/royalty
- *
  * @module tree/creators/royalty/destination-validator
  */
 
@@ -24,9 +16,6 @@ import {
 } from './constants';
 import type { PayoutDestinationValidation } from './types';
 
-/**
- * Validates payout rail destination parameters.
- */
 export function validatePayoutDestination(
   rail: SettlementPayoutRail,
   destinationAddress: string,
@@ -35,68 +24,39 @@ export function validatePayoutDestination(
   if (!destinationAddress || destinationAddress.trim().length === 0) {
     return { valid: false, error: 'Destination address is required' };
   }
-
   const cleanAddr = destinationAddress.trim();
 
   switch (rail) {
     case 'NOWPAYMENTS_USDC_ARBITRUM':
-    case 'NOWPAYMENTS_USDC_POLYGON': {
+    case 'NOWPAYMENTS_USDC_POLYGON':
       if (!EVM_ADDRESS_REGEX.test(cleanAddr)) {
-        return {
-          valid: false,
-          error: `Invalid EVM address format for ${rail}: ${cleanAddr}`,
-        };
+        return { valid: false, error: `Invalid EVM address format for ${rail}: ${cleanAddr}` };
       }
       if (cleanAddr === ZERO_ADDRESS) {
-        return {
-          valid: false,
-          error: 'Zero address is not allowed as a payout destination',
-        };
+        return { valid: false, error: 'Zero address is not allowed as a payout destination' };
       }
       return { valid: true };
-    }
 
-    case 'PAYOS_VIETQR': {
-      if (
-        !destinationBankBin ||
-        !VIETQR_BANK_BIN_REGEX.test(destinationBankBin.trim())
-      ) {
-        return {
-          valid: false,
-          error: `Invalid or missing 6-digit NAPAS Bank BIN for VietQR: ${destinationBankBin}`,
-        };
+    case 'PAYOS_VIETQR':
+      if (!destinationBankBin || !VIETQR_BANK_BIN_REGEX.test(destinationBankBin.trim())) {
+        return { valid: false, error: `Invalid or missing 6-digit NAPAS Bank BIN for VietQR: ${destinationBankBin}` };
       }
       if (!VIETQR_ACCOUNT_REGEX.test(cleanAddr)) {
-        return {
-          valid: false,
-          error: `Invalid bank account number for VietQR: ${cleanAddr}`,
-        };
+        return { valid: false, error: `Invalid bank account number for VietQR: ${cleanAddr}` };
       }
       return { valid: true };
-    }
 
-    case 'PROMPTPAY': {
-      const isPhone = PROMPTPAY_PHONE_REGEX.test(cleanAddr);
-      const isNationalId = PROMPTPAY_NATIONAL_ID_REGEX.test(cleanAddr);
-      if (!isPhone && !isNationalId) {
-        return {
-          valid: false,
-          error: `PromptPay ID must be a 10-digit phone or 13-digit national/tax ID: ${cleanAddr}`,
-        };
+    case 'PROMPTPAY':
+      if (!PROMPTPAY_PHONE_REGEX.test(cleanAddr) && !PROMPTPAY_NATIONAL_ID_REGEX.test(cleanAddr)) {
+        return { valid: false, error: `PromptPay ID must be a 10-digit phone or 13-digit national/tax ID: ${cleanAddr}` };
       }
       return { valid: true };
-    }
 
-    case 'SEPA_INSTANT': {
-      const sanitizedIban = cleanAddr.replace(/\s+/g, '').toUpperCase();
-      if (!SEPA_IBAN_REGEX.test(sanitizedIban)) {
-        return {
-          valid: false,
-          error: `Invalid IBAN format for SEPA Instant: ${cleanAddr}`,
-        };
+    case 'SEPA_INSTANT':
+      if (!SEPA_IBAN_REGEX.test(cleanAddr.replace(/\s+/g, '').toUpperCase())) {
+        return { valid: false, error: `Invalid IBAN format for SEPA Instant: ${cleanAddr}` };
       }
       return { valid: true };
-    }
 
     default:
       return { valid: false, error: `Unsupported payout rail: ${rail}` };

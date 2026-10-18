@@ -1,21 +1,15 @@
-import type { QueryResult, FilterOp, OrderSpec } from '@/seed/db/d1-query-types';
+import type { QueryResult } from '@/seed/db/d1-query-types';
 import { executeQuery, type QueryState } from '@/seed/db/d1-query-chain-executors';
-import { parseOrFilter } from './d1-query-or-parser';
+import { D1FilterBuilder } from './d1-filter-builder';
 
 /**
  * Chainable query builder for D1.
  * Usage mirrors Supabase: db.from('missions').select('*').eq('org_id', x).limit(10)
  */
-export class D1QueryChain<T = Record<string, unknown>> {
+export class D1QueryChain<T = Record<string, unknown>> extends D1FilterBuilder {
   private db: D1Database;
   private table: string;
   private selectCols = '*';
-  private filters: FilterOp[] = [];
-  private inFilters: { col: string; vals: unknown[] }[] = [];
-  private orFilters: FilterOp[][] = [];
-  private orderSpecs: OrderSpec[] = [];
-  private limitVal?: number;
-  private offsetVal?: number;
   private isSingle = false;
   private isMaybeSingle = false;
   private isCount = false;
@@ -24,6 +18,7 @@ export class D1QueryChain<T = Record<string, unknown>> {
   private returnCols?: string;
 
   constructor(db: D1Database, table: string) {
+    super();
     this.db = db;
     this.table = table;
   }
@@ -66,47 +61,6 @@ export class D1QueryChain<T = Record<string, unknown>> {
 
   delete(): this {
     this.operation = 'delete';
-    return this;
-  }
-
-  eq(col: string, val: unknown): this { this.filters.push({ col, op: '=', val }); return this; }
-  neq(col: string, val: unknown): this { this.filters.push({ col, op: '!=', val }); return this; }
-  gt(col: string, val: unknown): this { this.filters.push({ col, op: '>', val }); return this; }
-  gte(col: string, val: unknown): this { this.filters.push({ col, op: '>=', val }); return this; }
-  lt(col: string, val: unknown): this { this.filters.push({ col, op: '<', val }); return this; }
-  lte(col: string, val: unknown): this { this.filters.push({ col, op: '<=', val }); return this; }
-  like(col: string, pattern: string): this { this.filters.push({ col, op: 'LIKE', val: pattern }); return this; }
-  ilike(col: string, pattern: string): this { this.filters.push({ col, op: 'LIKE', val: pattern }); return this; }
-
-  is(col: string, val: unknown): this {
-    this.filters.push(val === null ? { col, op: 'IS', val: null } : { col, op: '=', val });
-    return this;
-  }
-
-  in(col: string, vals: unknown[]): this { this.inFilters.push({ col, vals }); return this; }
-
-  or(filterString: string): this {
-    const group = parseOrFilter(filterString);
-    if (group.length > 0) this.orFilters.push(group);
-    return this;
-  }
-
-  not(col: string, op: string, val: unknown): this {
-    if (op === 'eq') this.filters.push({ col, op: '!=', val });
-    else if (op === 'is' && val === null) this.filters.push({ col, op: 'IS NOT', val: null });
-    return this;
-  }
-
-  order(col: string, opts?: { ascending?: boolean }): this {
-    this.orderSpecs.push({ col, ascending: opts?.ascending ?? true });
-    return this;
-  }
-
-  limit(n: number): this { this.limitVal = n; return this; }
-
-  range(from: number, to: number): this {
-    this.offsetVal = from;
-    this.limitVal = to - from + 1;
     return this;
   }
 

@@ -84,6 +84,7 @@ ehthumbs.db
 Thumbs.db
 repomix-output.xml
 *.sql
+!apps/sophia-ai-factory/migrations/0188_add_amount_vnd_to_pending_orders.sql
 backups/*.sql
 **/d1-*.sql
 

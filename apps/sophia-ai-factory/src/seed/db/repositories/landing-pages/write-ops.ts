@@ -6,6 +6,8 @@ import type {
 } from '@/seed/types/landing-page-types';
 import { getBySlug } from './read-ops';
 
+export { remove, togglePublish } from './mutate-ops';
+
 /** Create a new landing page. Returns the created page. */
 export async function create(input: CreateLandingPageInput): Promise<LandingPage> {
   const _db = await getD1();
@@ -94,39 +96,6 @@ export async function update(
       input.metaDescVi ?? existing.metaDescVi,
       isPublished,
     )
-    .run();
-
-  return getBySlug(slug);
-}
-
-/** Delete a landing page by slug. Returns true if deleted, false if not found. */
-export async function remove(slug: string): Promise<boolean> {
-  const _db = await getD1();
-  if (!_db) throw new Error('D1 binding not available');
-  const db = _db;
-
-  const result = await db
-    .prepare(`DELETE FROM landing_pages WHERE id = ?1`)
-    .bind(slug)
-    .run();
-
-  return (result.meta?.changes ?? 0) > 0;
-}
-
-/** Toggle is_published for a landing page. Returns the updated page. */
-export async function togglePublish(slug: string): Promise<LandingPage | null> {
-  const _db = await getD1();
-  if (!_db) throw new Error('D1 binding not available');
-  const db = _db;
-
-  await db
-    .prepare(
-      `UPDATE landing_pages
-       SET is_published = CASE WHEN is_published = 1 THEN 0 ELSE 1 END,
-           updated_at = datetime('now')
-       WHERE id = ?1`,
-    )
-    .bind(slug)
     .run();
 
   return getBySlug(slug);

@@ -25,6 +25,7 @@ import {
   tryCreateCampaignAbExperiment,
   tryDispatchCampaignCreatedEvent,
 } from "./campaigns-helpers";
+import { authorizeCampaignCreation, checkMultiChannelAccess } from "./campaigns-guard-helpers";
 
 export async function createCampaign(formData: FormData) {
   const { offerId, templateId, platforms, rawData } = extractCampaignFormData(formData);
@@ -34,29 +35,14 @@ export async function createCampaign(formData: FormData) {
   }
 
   const { title, topic, audience } = validation.data;
-  let userId: string | undefined;
-  try {
-    const user = await getCurrentUser();
-    if (user) userId = user.id;
-  } catch {
-    /* Auth session check failed */
+  const authResult = await authorizeCampaignCreation();
+  if ('error' in authResult) {
+    return { success: false, message: authResult.error };
   }
 
-  if (!userId) {
-    return { success: false, message: "Vui lòng đăng nhập để tạo chiến dịch." };
-  }
-
-  const db = createServerClient();
-  const orgId = await resolveOrgId(userId, db);
-  if (!orgId) {
-    return { success: false, message: "Forbidden: user is not a member of any organization" };
-  }
-
-  const d1db = await getD1();
-  if (!d1db) throw new Error("D1 database binding not available");
-
+  const { userId, orgId, d1db, tier } = authResult;
   if (platforms && platforms.length > 1) {
-    const multiChannelAccess = await tierGuard.checkMultiChannelAccess(userId);
+    const multiChannelAccess = await checkMultiChannelAccess(userId);
     if (!multiChannelAccess) {
       return {
         success: false,
@@ -67,7 +53,6 @@ export async function createCampaign(formData: FormData) {
     }
   }
 
-  const tier = await resolveUserTier(userId);
   const limitCheck = await checkMonthlyCampaignLimit(userId, tier);
   if (!limitCheck.allowed) {
     return {

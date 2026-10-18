@@ -7,126 +7,46 @@
  * @module forest/agency/review-portal/use-review-portal-state
  */
 
-import { useState, useRef } from 'react';
-import type { VideoReviewPayload, FeedbackComment } from '@/seed/types/agency-multitenancy';
 import type { ClientVideoReviewPortalProps, ReviewDecisionType } from './types';
-import { postReviewCommentRequest, postReviewDecisionRequest } from './review-portal-api';
+import { useReviewPortalStateBase } from './review-portal-state-helpers';
+import { handleAddComment, handleDecision } from './review-portal-handlers';
 
 export function useReviewPortalState(props: ClientVideoReviewPortalProps) {
-  const {
-    review: initialReview,
-    locale: initialLocale = 'vi',
-    onFeedbackSubmit,
-    onDecisionSubmit,
-  } = props;
+  const baseState = useReviewPortalStateBase(props);
 
-  const [locale, setLocale] = useState<'en' | 'vi'>(initialLocale);
-  const isVi = locale === 'vi';
-
-  const [review, setReview] = useState<VideoReviewPayload>(initialReview);
-  const [comments, setComments] = useState<FeedbackComment[]>(initialReview.feedbackComments || []);
-  const [currentTimeSec, setCurrentTimeSec] = useState<number>(0);
-  const [authorName, setAuthorName] = useState<string>('');
-  const [commentText, setCommentText] = useState<string>('');
-  const [pinTimestamp, setPinTimestamp] = useState<boolean>(true);
-  const [decisionNote, setDecisionNote] = useState<string>('');
-  const [activeModal, setActiveModal] = useState<ReviewDecisionType | null>(null);
-
-  const [isSubmittingComment, setIsSubmittingComment] = useState<boolean>(false);
-  const [isSubmittingDecision, setIsSubmittingDecision] = useState<boolean>(false);
-  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  const branding = review.subaccountBranding;
-  const primaryColor = branding?.primaryColor || '#0f172a';
-  const accentColor = branding?.accentColor || '#10b981';
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTimeSec(Math.floor(videoRef.current.currentTime));
-    }
+  const handleAddCommentWrapper = (e: React.FormEvent) => {
+    handleAddComment({
+      ...baseState,
+      review: props.review,
+      onFeedbackSubmit: props.onFeedbackSubmit,
+      setComments: baseState.setComments,
+      setCommentText: baseState.setCommentText,
+      setFeedbackSuccess: baseState.setFeedbackSuccess,
+      setErrorMessage: baseState.setErrorMessage,
+      setIsSubmittingComment: baseState.setIsSubmittingComment,
+    });
   };
 
-  const seekTo = (seconds?: number) => {
-    if (typeof seconds === 'number' && videoRef.current) {
-      videoRef.current.currentTime = seconds;
-      videoRef.current.play().catch(() => {});
-    }
-  };
-
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-
-    setIsSubmittingComment(true);
-    setErrorMessage(null);
-    setFeedbackSuccess(null);
-
-    const newComment: FeedbackComment = {
-      author: authorName.trim() || (isVi ? 'Khách hàng' : 'Client Reviewer'),
-      comment: commentText.trim(),
-      timestampSec: pinTimestamp ? currentTimeSec : undefined,
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      await postReviewCommentRequest(review.token, newComment, onFeedbackSubmit);
-      setComments((prev) => [...prev, newComment]);
-      setCommentText('');
-      setFeedbackSuccess(isVi ? 'Đã gửi góp ý thành công!' : 'Feedback submitted successfully!');
-      setTimeout(() => setFeedbackSuccess(null), 4000);
-    } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  };
-
-  const handleDecision = async (decision: ReviewDecisionType) => {
-    setIsSubmittingDecision(true);
-    setErrorMessage(null);
-    const resolvedAuthor =
-      authorName.trim() || (decision === 'approve' ? 'Client Approver' : 'Client Reviewer');
-
-    try {
-      await postReviewDecisionRequest(
-        review.token,
-        decision,
-        decisionNote.trim(),
-        resolvedAuthor,
-        onDecisionSubmit,
-      );
-
-      const nextStatus = decision === 'approve' ? 'APPROVED' : 'CHANGES_REQUESTED';
-      setReview((prev) => ({ ...prev, status: nextStatus }));
-      if (decisionNote.trim()) {
-        setComments((prev) => [
-          ...prev,
-          {
-            author: resolvedAuthor,
-            comment: decisionNote.trim(),
-            createdAt: new Date().toISOString(),
-          },
-        ]);
-      }
-      setActiveModal(null);
-      setDecisionNote('');
-    } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsSubmittingDecision(false);
-    }
+  const handleDecisionWrapper = async (decision: ReviewDecisionType) => {
+    await handleDecision({
+      review: props.review,
+      decision,
+      decisionNote: baseState.decisionNote,
+      authorName: baseState.authorName,
+      isVi: baseState.isVi,
+      onDecisionSubmit: props.onDecisionSubmit,
+      setReview: baseState.setReview,
+      setComments: baseState.setComments,
+      setActiveModal: baseState.setActiveModal,
+      setDecisionNote: baseState.setDecisionNote,
+      setErrorMessage: baseState.setErrorMessage,
+      setIsSubmittingDecision: baseState.setIsSubmittingDecision,
+    });
   };
 
   return {
-    locale, setLocale, isVi, review, comments, currentTimeSec,
-    authorName, setAuthorName, commentText, setCommentText,
-    pinTimestamp, setPinTimestamp, decisionNote, setDecisionNote,
-    activeModal, setActiveModal, isSubmittingComment, isSubmittingDecision,
-    feedbackSuccess, errorMessage, setErrorMessage, videoRef,
-    branding, primaryColor, accentColor,
-    handleTimeUpdate, seekTo, handleAddComment, handleDecision,
+    ...baseState,
+    handleAddComment: handleAddCommentWrapper,
+    handleDecision: handleDecisionWrapper,
   };
 }

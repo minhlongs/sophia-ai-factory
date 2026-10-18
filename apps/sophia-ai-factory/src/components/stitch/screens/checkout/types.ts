@@ -15,4 +15,5 @@ export interface CheckoutData {
   couponCode?: string;
 }
 
+export type { Tier } from '@/seed/types';
 export const TIER_ORDER: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];

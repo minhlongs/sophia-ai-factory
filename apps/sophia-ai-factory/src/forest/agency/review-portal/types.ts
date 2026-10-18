@@ -13,10 +13,10 @@ export interface ClientVideoReviewPortalProps {
   review: VideoReviewPayload;
   locale?: 'en' | 'vi';
   onFeedbackSubmit?: (comment: FeedbackComment) => Promise<void>;
-  onDecisionSubmit?: (decision: 'approve' | 'request_changes', note?: string) => Promise<void>;
+  onDecisionSubmit?: (decision: 'approve' | 'changes' | 'request_changes', note?: string) => Promise<void>;
 }
 
-export type ReviewDecisionType = 'approve' | 'request_changes';
+export type ReviewDecisionType = 'approve' | 'changes' | 'request_changes';
 
 export function formatTime(seconds?: number): string {
   if (typeof seconds !== 'number' || isNaN(seconds) || seconds < 0) return '00:00';

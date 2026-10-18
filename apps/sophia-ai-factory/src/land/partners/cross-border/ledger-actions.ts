@@ -1,24 +1,14 @@
 'use server';
 
 import { getD1 } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure, type Result } from '@/seed/types/result';
+import { recordCrossBorderCommission } from '@/tree/partners/cross-border-ledger';
+import type { PartnerCrossBorderLedgerEntry, CrossBorderPartnerSummary } from '@/seed/types/cross-border-ledger';
+import type { CrossBorderActionError, RecordCrossBorderCommissionActionInput } from './types';
+import { getCrossBorderLedgerByPartner, getCrossBorderLedgerSummary } from '@/tree/partners/cross-border-ledger';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { getPartnerByUserId } from '@/tree/partners/partner-service';
-import {
-  recordCrossBorderCommission,
-  getCrossBorderLedgerByPartner,
-  getCrossBorderLedgerSummary,
-} from '@/tree/partners/cross-border-ledger';
-import type {
-  PartnerCrossBorderLedgerEntry,
-  CrossBorderPartnerSummary,
-} from '@/seed/types/cross-border-ledger';
-import type {
-  CrossBorderActionError,
-  RecordCrossBorderCommissionActionInput,
-} from './types';
+import { resolveCrossBorderAuth, handleCrossBorderError } from './ledger-helpers';
 
 /**
  * Record an attributed cross-border commission and calculate withholding tax + FX reserve.
@@ -76,28 +66,14 @@ export async function recordCrossBorderCommissionAction(
 export async function getPartnerCrossBorderLedgerAction(
   limit = 50,
 ): Promise<Result<PartnerCrossBorderLedgerEntry[], CrossBorderActionError>> {
+  const authResult = await resolveCrossBorderAuth();
+  if (!authResult.ok) return authResult;
+
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-    }
-
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const partner = await getPartnerByUserId(db, user.id);
-    if (!partner) {
-      return failure({ code: 'NOT_FOUND', message: 'Partner profile not found for user' });
-    }
-
-    const entries = await getCrossBorderLedgerByPartner(db, partner.id, limit);
+    const entries = await getCrossBorderLedgerByPartner(authResult.value.db, authResult.value.partnerId, limit);
     return success(entries);
   } catch (err) {
-    const error = toError(err);
-    logger.error('Failed to fetch cross-border ledger', { error: error.message });
-    return failure({ code: 'FETCH_LEDGER_FAILED', message: error.message });
+    return failure(handleCrossBorderError('fetch cross-border ledger', err));
   }
 }
 
@@ -107,27 +83,13 @@ export async function getPartnerCrossBorderLedgerAction(
 export async function getPartnerCrossBorderSummaryAction(): Promise<
   Result<CrossBorderPartnerSummary, CrossBorderActionError>
 > {
+  const authResult = await resolveCrossBorderAuth();
+  if (!authResult.ok) return authResult;
+
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-    }
-
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const partner = await getPartnerByUserId(db, user.id);
-    if (!partner) {
-      return failure({ code: 'NOT_FOUND', message: 'Partner profile not found for user' });
-    }
-
-    const summary = await getCrossBorderLedgerSummary(db, partner.id);
+    const summary = await getCrossBorderLedgerSummary(authResult.value.db, authResult.value.partnerId);
     return success(summary);
   } catch (err) {
-    const error = toError(err);
-    logger.error('Failed to fetch cross-border summary', { error: error.message });
-    return failure({ code: 'FETCH_SUMMARY_FAILED', message: error.message });
+    return failure(handleCrossBorderError('fetch cross-border summary', err));
   }
 }

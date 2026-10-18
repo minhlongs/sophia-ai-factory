@@ -1,9 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type {
-  ErasureRequestInput,
-  ErasureExecutionResult,
-  ExecuteRtbfOptions,
-} from './types';
+import type { ErasureRequestInput, ErasureExecutionResult, ExecuteRtbfOptions } from './types';
 import { appendComplianceAuditLog } from '../compliance-ledger';
 import {
   sha256Hex,
@@ -14,12 +10,8 @@ import {
   redactUserProfileRecord,
 } from './cascading-purger';
 import { persistErasureCertificate } from './tombstone-writer';
-import {
-  buildSignedErasureCertificate,
-  verifyErasureCertificate,
-} from './rtbf-certificate';
+import { buildSignedErasureCertificate, verifyErasureCertificate } from './rtbf-certificate';
 
-// Re-export helpers for backwards compatibility
 export {
   sha256Hex,
   computeMerkleRoot,
@@ -28,9 +20,6 @@ export {
   verifyErasureCertificate,
 };
 
-/**
- * Orchestrated Right-to-be-Forgotten Execution.
- */
 export async function executeRightToBeForgotten(
   db: D1Database,
   input: ErasureRequestInput,
@@ -53,20 +42,10 @@ export async function executeRightToBeForgotten(
       resourceId: input.subjectId,
       jurisdictionCompliance: input.jurisdiction,
       policyVerdict: 'DENIED',
-      payload: {
-        reason: legalHold.reason,
-        statutoryBasis: legalHold.statutoryBasis,
-      },
+      payload: { reason: legalHold.reason, statutoryBasis: legalHold.statutoryBasis },
       signingKeySecret: signingKey,
     });
-
-    return {
-      success: false,
-      legalHoldBlocked: true,
-      reason: legalHold.reason,
-      affectedRecordsCount: 0,
-      shreddedKeysCount: 0,
-    };
+    return { success: false, legalHoldBlocked: true, reason: legalHold.reason, affectedRecordsCount: 0, shreddedKeysCount: 0 };
   }
 
   // 2. Zero-Knowledge Crypto-Shredding of Customer CMEK Keys
@@ -76,12 +55,7 @@ export async function executeRightToBeForgotten(
   const now = Date.now();
   const pseudonym = await generateSubjectPseudonym(input.subjectId);
   const profileRecordIds = await redactUserProfileRecord(db, input.subjectId, now);
-
-  const affectedRecordIds: string[] = [
-    ...keyRecordIds,
-    ...profileRecordIds,
-    `subject:${input.subjectId}`,
-  ];
+  const affectedRecordIds: string[] = [...keyRecordIds, ...profileRecordIds, `subject:${input.subjectId}`];
 
   // 4. Merkle Root Manifest of Purged Record Identifiers
   const recordsManifestHash = await computeMerkleRoot(affectedRecordIds);
@@ -97,7 +71,6 @@ export async function executeRightToBeForgotten(
     now,
     signingKey,
   });
-
   await persistErasureCertificate(db, certificate);
 
   // 6. Record Immutable Audit Event
@@ -112,21 +85,9 @@ export async function executeRightToBeForgotten(
     resourceId: certificate.certificateNumber,
     jurisdictionCompliance: input.jurisdiction,
     policyVerdict: 'ENFORCED',
-    payload: {
-      certificateNumber: certificate.certificateNumber,
-      subjectPseudonym: pseudonym,
-      recordsManifestHash,
-      affectedRecordsCount: affectedRecordIds.length,
-      shreddedKeysCount: shreddedCount,
-    },
+    payload: { certificateNumber: certificate.certificateNumber, subjectPseudonym: pseudonym, recordsManifestHash, affectedRecordsCount: affectedRecordIds.length, shreddedKeysCount: shreddedCount },
     signingKeySecret: signingKey,
   });
 
-  return {
-    success: true,
-    certificateNumber: certificate.certificateNumber,
-    certificate,
-    affectedRecordsCount: affectedRecordIds.length,
-    shreddedKeysCount: shreddedCount,
-  };
+  return { success: true, certificateNumber: certificate.certificateNumber, certificate, affectedRecordsCount: affectedRecordIds.length, shreddedKeysCount: shreddedCount };
 }

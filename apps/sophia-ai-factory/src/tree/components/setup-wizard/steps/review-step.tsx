@@ -61,22 +61,9 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <KeySection
-          icon="🤖"
-          title={t('sections.llmKeys')}
-          keys={llmKeys.map(k => ({ key: k.key, label: k.label, value: config[k.key] }))}
-        />
-        <KeySection
-          icon="🎙️"
-          title={t('sections.mediaKeys')}
-          keys={otherKeys.map(k => ({ key: k.key, label: k.label, value: config[k.key] }))}
-        />
-        <KeySection
-          icon="🔗"
-          title={t('sections.providerKeys')}
-          keys={activeProviderKeys.map(k => ({ key: k.key, label: k.label, value: providerConfig[k.key] }))}
-          className="md:col-span-2"
-        />
+        <KeySection icon="🤖" title={t('sections.llmKeys')} keys={llmKeys.map(k => ({ key: k.key, label: k.label, value: config[k.key] }))} />
+        <KeySection icon="🎙️" title={t('sections.mediaKeys')} keys={otherKeys.map(k => ({ key: k.key, label: k.label, value: config[k.key] }))} />
+        <KeySection icon="🔗" title={t('sections.providerKeys')} keys={activeProviderKeys.map(k => ({ key: k.key, label: k.label, value: providerConfig[k.key] }))} className="md:col-span-2" />
 
         <div className="rounded-xl border border-border dark:border-white/[0.08] p-4 bg-[#F8F9FC] dark:bg-[#090A10]/60 md:col-span-2">
           <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-sm">
@@ -87,9 +74,7 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
             <span className="font-mono text-xs font-semibold bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-foreground px-3 py-1.5 rounded-lg">
               {routingStrategyLabels[providerConfig.ROUTING_STRATEGY]}
             </span>
-            <span className="font-mono text-xs text-muted-foreground">
-              ({providerConfig.ROUTING_STRATEGY})
-            </span>
+            <span className="font-mono text-xs text-muted-foreground">({providerConfig.ROUTING_STRATEGY})</span>
           </div>
         </div>
       </div>
@@ -100,10 +85,7 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
       </div>
 
       <div className="flex justify-between items-center pt-4 border-t border-border dark:border-white/[0.08]">
-        <button
-          onClick={onBack}
-          className="text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors text-sm"
-        >
+        <button onClick={onBack} className="text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors text-sm">
           {t('actions.back')}
         </button>
         <button

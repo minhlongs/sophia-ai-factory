@@ -55,7 +55,7 @@ function main() {
   }
 
   const checks = [];
-  const isCurrentSchema = evidence.schema === 'sophia-core-video-deterministic-proof-v2';
+  const isCurrentSchema = evidence.schema === 'sophia-core-video-deterministic-proof-v4';
   const isLegacySchema = !evidence.schema && evidence.proofMode === true;
   const requiredGates = [
     'mock provider safety tests',
@@ -64,8 +64,13 @@ function main() {
     'TypeScript compile',
     'ESLint zero-error gate',
   ];
+  if (isCurrentSchema) {
+    requiredGates.push('snapshot input identity matched the source repository');
+    requiredGates.push('proof ran from immutable read-only worktree');
+    requiredGates.push('source identity matched at run boundaries');
+  }
   const requiredGatesForEvidence = isLegacySchema
-    ? requiredGates.filter((name) => name !== 'live and business evidence contract tests')
+    ? requiredGates.filter((name) => name !== 'live and business evidence contract tests' && name !== 'source identity matched at run boundaries')
     : requiredGates;
   const gates = Array.isArray(evidence.gates) ? evidence.gates : [];
   const byName = new Map(gates.map((gate) => [gate.name, gate]));
@@ -77,10 +82,32 @@ function main() {
   checks.push({ name: 'mock provider used', passed: evidence.provider === 'mock' });
 
   checks.push({ name: 'recognized evidence schema', passed: isCurrentSchema || isLegacySchema });
+  checks.push({ name: 'proof run status passed', passed: evidence.status === 'passed' });
+  checks.push({ name: 'real provider keys were not used', passed: evidence.realKeysUsed === false });
 
   if (isCurrentSchema) {
     checks.push({ name: 'deterministic mock scope declared', passed: evidence.scope === 'deterministic-mock-tests' });
+    checks.push({ name: 'immutable source snapshot execution declared', passed: evidence.executionMode === 'immutable-readonly-worktree' });
+    checks.push({ name: 'snapshot input matches tested source identity', passed:
+      evidence.snapshotInputSource?.commitSha === evidence.sourceAtStart?.commitSha &&
+      evidence.snapshotInputSource?.worktreeFingerprint === evidence.sourceAtStart?.worktreeFingerprint &&
+      typeof evidence.snapshotInputSource?.worktreeFingerprint === 'string' &&
+      /^[0-9a-f]{64}$/.test(evidence.snapshotInputSource.worktreeFingerprint),
+    });
     checks.push({ name: 'worktree fingerprint present', passed: typeof evidence.source?.worktreeFingerprint === 'string' && evidence.source.worktreeFingerprint.length === 64 });
+    const validCommitSha = (value) => typeof value === 'string' && /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(value);
+    const validFingerprint = (value) => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+    checks.push({ name: 'source commit identity is valid and matches', passed:
+        validCommitSha(evidence.sourceAtStart?.commitSha) &&
+        validCommitSha(evidence.source?.commitSha) &&
+        evidence.sourceAtStart.commitSha === evidence.source.commitSha,
+    });
+    checks.push({ name: 'source fingerprints are valid and match at run boundaries', passed:
+        evidence.sourceIdentityMatchedAtBoundaries === true &&
+        validFingerprint(evidence.sourceAtStart?.worktreeFingerprint) &&
+        validFingerprint(evidence.source?.worktreeFingerprint) &&
+        evidence.sourceAtStart.worktreeFingerprint === evidence.source.worktreeFingerprint,
+      });
     checks.push({ name: 'live and commercial claims remain false', passed:
       evidence.liveProviderValidated === false &&
       evidence.checkoutValidated === false &&

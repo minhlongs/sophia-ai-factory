@@ -19,74 +19,29 @@
  */
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import { saveFeedback, type FeedbackInput } from '@/land/reality-loop/feedback-store';
-import { logger } from '@/seed/utils/logger-utility';
-
-// ── Validation ───────────────────────────────────────────────────────────────
-
-const feedbackBodySchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  missionId:   z.string().min(1, 'missionId is required'),
-  checkpoint: z.enum([
-    'mission_complete',
-    'creative_rejected',
-    'human_correction',
-    'mission_abandoned',
-  ], { message: 'checkpoint must be one of: mission_complete, creative_rejected, human_correction, mission_abandoned' }),
-  useful: z.enum(['YES', 'NO'], { message: 'useful must be YES or NO' }),
-  reason: z.enum([
-    'WRONG',
-    'LOW_QUALITY',
-    'NOT_MY_STYLE',
-    'TOO_EXPENSIVE',
-    'TOO_SLOW',
-    'TOO_COMPLEX',
-    'NOT_USEFUL',
-    'OTHER',
-  ]).optional().nullable(),
-  freeText: z.string().max(2000, 'freeText must be <= 2000 chars').optional().nullable(),
-});
-
-// ── Handler ──────────────────────────────────────────────────────────────────
+import { saveFeedback, type FeedbackStored } from '@/land/reality-loop/feedback-store';
+import {
+  authenticateAndValidate,
+  createSuccessResponse,
+  createErrorResponse,
+  logFeedbackSubmission,
+} from './feedback-helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request): Promise<NextResponse> {
-  // Auth
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Parse + validate body
-  let rawBody: unknown;
-  try {
-    rawBody = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const validation = feedbackBodySchema.safeParse(rawBody);
-  if (!validation.success) {
+  const authResult = await authenticateAndValidate(request);
+  if (authResult instanceof Response) {
     return NextResponse.json(
-      { error: 'Invalid feedback payload', details: validation.error.flatten() },
-      { status: 400 },
+      JSON.parse(await authResult.text()),
+      { status: authResult.status, headers: authResult.headers }
     );
   }
 
-  const { workspaceId, missionId, checkpoint, useful, reason, freeText } = validation.data;
+  const { user, data } = authResult;
+  const { workspaceId, missionId, checkpoint, useful, reason, freeText } = data;
 
-  // Workspace access check
-  const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
-  if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  // Persist (idempotent). Log only metadata — NEVER free_text.
-  const input: FeedbackInput = {
+  const input = {
     workspaceId,
     missionId,
     checkpoint,
@@ -96,38 +51,21 @@ export async function POST(request: Request): Promise<NextResponse> {
   };
 
   try {
-    const stored = await saveFeedback(input);
-
-    logger.info('[RealityFeedback] Submitted', {
-      userId: user.id,
-      workspaceId,
-      missionId,
-      checkpoint,
-      useful,
+    const stored = await saveFeedback(input) as FeedbackStored;
+    logFeedbackSubmission(user.id, data, stored);
+    const successResponse = createSuccessResponse({
+      id: stored.id,
+      missionId: stored.missionId,
+      checkpoint: stored.checkpoint,
+      useful: stored.useful,
       reason: stored.reason,
-      feedbackId: stored.id,
+      createdAt: String(stored.createdAt),
     });
-
     return NextResponse.json(
-      {
-        ok: true,
-        feedback: {
-          id: stored.id,
-          missionId: stored.missionId,
-          checkpoint: stored.checkpoint,
-          useful: stored.useful,
-          reason: stored.reason,
-          createdAt: stored.createdAt,
-        },
-      },
-      { status: 201 },
+      JSON.parse(await successResponse.text()),
+      { status: successResponse.status, headers: successResponse.headers }
     );
   } catch (error) {
-    logger.error(
-      '[RealityFeedback] Persist failed',
-      error instanceof Error ? error : new Error(String(error)),
-      { workspaceId, missionId, checkpoint },
-    );
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

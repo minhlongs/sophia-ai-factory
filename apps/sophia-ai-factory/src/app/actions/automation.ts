@@ -1,15 +1,18 @@
 "use server";
 
-import { createServerClient } from "@/seed/db/client";
 import { Tier } from "@/seed/types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/seed/utils/logger-utility";
-import { toError } from "@/seed/utils/to-error";
 import {
   getAuthenticatedUser,
   triggerGenerateScriptWebhook,
   triggerRenderVideoWebhook,
 } from "./automation-helpers";
+import {
+  createCampaignRecord,
+  updateCampaignForRender,
+  fetchUserProjects,
+} from "./automation-db-helpers";
 
 /**
  * Trigger Script Generation Workflow
@@ -33,28 +36,13 @@ export async function generateScript(formData: FormData) {
   const userTier: Tier = await resolveUserTier(user.id);
 
   try {
-    const db = createServerClient();
-    const { data: campaign, error: dbError } = await db
-      .from("campaigns")
-      .insert({
-        topic,
-        audience,
-        title: topic,
-        status: "draft",
-        user_id: user.id,
-      })
-      .select()
-      .single();
-
-    if (dbError || !campaign) {
-      logger.error("Failed to create campaign record", toError(dbError));
-      return { success: false, message: "Failed to initialize campaign" };
+    const result = await createCampaignRecord(user.id, topic, audience);
+    if ('error' in result) {
+      return { success: false, message: result.error };
     }
 
-    const campaignData = campaign as Record<string, string>;
-
     await triggerGenerateScriptWebhook({
-      scriptId: campaignData.id,
+      scriptId: result.id,
       topic,
       audience,
       userId: user.id,
@@ -62,7 +50,7 @@ export async function generateScript(formData: FormData) {
     });
 
     revalidatePath("/dashboard");
-    return { success: true, message: "Script generation started", scriptId: campaignData.id };
+    return { success: true, message: "Script generation started", scriptId: result.id };
   } catch (err) {
     logger.error("Exception in generateScript", err instanceof Error ? err : undefined);
     return { success: false, message: "Failed to start generation" };
@@ -82,16 +70,9 @@ export async function renderVideo(scriptId: string) {
   if (!scriptId) return { success: false, message: "Script ID required" };
 
   try {
-    const db = createServerClient();
-    const { error: dbError } = await db
-      .from("campaigns")
-      .update({ status: "processing_video" })
-      .eq("id", scriptId)
-      .eq("user_id", user.id);
-
-    if (dbError) {
-      logger.error("Failed to update campaign status for rendering", toError(dbError));
-      return { success: false, message: "Failed to update status" };
+    const result = await updateCampaignForRender(scriptId, user.id);
+    if ('error' in result) {
+      return { success: false, message: result.error };
     }
 
     triggerRenderVideoWebhook({ scriptId, userId: user.id });
@@ -109,23 +90,10 @@ export async function renderVideo(scriptId: string) {
  */
 export async function getUserProjects() {
   const user = await getAuthenticatedUser();
-
   if (!user) return [];
 
   try {
-    const db = createServerClient();
-    const { data: campaigns, error } = await db
-      .from("campaigns")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      logger.error("Failed to fetch user projects", toError(error));
-      return [];
-    }
-
-    return campaigns || [];
+    return await fetchUserProjects(user.id);
   } catch {
     return [];
   }

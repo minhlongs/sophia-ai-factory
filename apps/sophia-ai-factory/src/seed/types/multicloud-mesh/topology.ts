@@ -12,11 +12,13 @@ import type {
   MulticloudEdgeRegion,
   ZeroEgressStoragePool,
 } from './types';
-import type {
-  FailoverTriggerReason,
-  FailoverStatus,
-  FailoverActorType,
-} from './failover-types';
+
+export {
+  type TriggerFailoverInput,
+  type FailoverExecutionResult,
+  type ReplicationSyncInput,
+  type MulticloudActionError,
+} from './failover-dtos';
 
 export interface RouteRequestInput {
   clientIp?: string;
@@ -39,26 +41,6 @@ export interface RouteDecisionResult {
   resolvedAt: number;
 }
 
-export interface TriggerFailoverInput {
-  originRegionId: string;
-  destinationRegionId?: string;
-  triggerReason: FailoverTriggerReason;
-  errorRateBefore?: number;
-  requestsDiverted?: number;
-  actorType?: FailoverActorType;
-  telemetrySnapshot?: Record<string, unknown>;
-}
-
-export interface FailoverExecutionResult {
-  incidentCode: string;
-  originRegionId: string;
-  destinationRegionId: string;
-  failoverDurationMs: number;
-  isSub30ms: boolean;
-  status: FailoverStatus;
-  trafficShiftPct: number;
-}
-
 export interface ZeroEgressAssetRoutingInput {
   assetKey: string;
   expectedSha256?: string;
@@ -74,14 +56,6 @@ export interface ZeroEgressRouteResult {
   sha256Hash: string;
   integrityVerified: boolean;
   egressCostCents: number;
-}
-
-export interface ReplicationSyncInput {
-  assetKey: string;
-  sourcePoolKey: string;
-  targetPoolKey: string;
-  sha256Hash: string;
-  fileSizeBytes: number;
 }
 
 export interface RegisterEdgeRegionInput {
@@ -124,10 +98,4 @@ export interface ZeroEgressFabricStatus {
   primaryPoolKey: string;
   pools: ZeroEgressStoragePool[];
   overallZeroEgressCompliance: boolean;
-}
-
-export interface MulticloudActionError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
 }

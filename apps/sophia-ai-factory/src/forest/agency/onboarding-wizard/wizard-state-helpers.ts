@@ -1,81 +1,38 @@
 /**
- * Agency Onboarding Wizard — Default State Factories & Agent Updaters.
+ * Agency Onboarding Wizard State Helpers.
  *
  * Layer: forest/agency (Presentation & Client Component)
  * @module forest/agency/onboarding-wizard/wizard-state-helpers
  */
 
-import type {
-  AgencyProfileInput,
-  AgencyBrandingInput,
-  AgencyDomainInput,
-  SeedAgentDeploymentConfig,
-  AgyAutonomyLevel,
-  EscalationAction,
-} from '@/seed/types';
+import { useWizardStateBase } from './use-wizard-state-base';
+import { createWizardActions } from './wizard-state-actions';
+import { executeWizardNextStep, executeWizardLaunch } from './wizard-step-actions';
+import type { AgencyOnboardingWizardActions } from './types';
+import type { AgencyOnboardingResult } from '@/seed/types';
 
-export function createInitialAgencyProfile(initialSlug = ''): AgencyProfileInput {
-  return {
-    clientName: '',
-    agencySlug: initialSlug,
-    contactEmail: '',
-    industryTag: 'ecommerce',
-    initialMcuBudget: 500,
-  };
+export { executeWizardNextStep, executeWizardLaunch };
+
+export interface UseWizardStateParams {
+  agencyOrgId: string;
+  isVi: boolean;
+  initialSlug?: string;
+  actions?: AgencyOnboardingWizardActions;
+  onSuccess?: (result: AgencyOnboardingResult) => void;
 }
 
-export function createInitialAgencyBranding(): AgencyBrandingInput {
-  return {
-    logoUrl: '',
-    faviconUrl: '',
-    primaryColor: '#0f172a',
-    accentColor: '#10b981',
-    customCss: '',
-  };
-}
+export function useWizardState({
+  agencyOrgId,
+  isVi,
+  initialSlug = '',
+  actions,
+  onSuccess,
+}: UseWizardStateParams) {
+  const baseState = useWizardStateBase({ initialSlug });
+  const actionsObj = createWizardActions({ agencyOrgId, isVi, actions, onSuccess, baseState });
 
-export function createInitialAgencyDomain(initialSlug = ''): AgencyDomainInput {
   return {
-    subdomain: initialSlug || '',
-    customDomain: '',
-    cnameTarget: 'agencyos.network',
-    isSslReady: true,
-  };
-}
-
-export function toAgencySlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 32);
-}
-
-export function createSeedAgentUpdaters(
-  setSeedAgents: React.Dispatch<React.SetStateAction<SeedAgentDeploymentConfig[]>>,
-) {
-  return {
-    handleToggleAgent: (idx: number) => {
-      setSeedAgents((prev) =>
-        prev.map((a, i) => (i === idx ? { ...a, enabled: !a.enabled } : a)),
-      );
-    },
-    handleUpdateAgentAutonomy: (idx: number, level: AgyAutonomyLevel) => {
-      setSeedAgents((prev) =>
-        prev.map((a, i) => (i === idx ? { ...a, maxAutonomy: level } : a)),
-      );
-    },
-    handleUpdateAgentMcu: (idx: number, mcu: number) => {
-      setSeedAgents((prev) =>
-        prev.map((a, i) =>
-          i === idx ? { ...a, maxComputeUnitsMcu: Math.max(0, mcu) } : a,
-        ),
-      );
-    },
-    handleUpdateAgentEscalation: (idx: number, policy: EscalationAction) => {
-      setSeedAgents((prev) =>
-        prev.map((a, i) => (i === idx ? { ...a, escalationPolicy: policy } : a)),
-      );
-    },
+    ...baseState,
+    ...actionsObj,
   };
 }

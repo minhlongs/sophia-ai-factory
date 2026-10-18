@@ -7,6 +7,12 @@ import { ExtraProviders } from './api-keys/extra-providers';
 
 export * from './api-keys/types';
 
+const KEY_FIELDS = [
+  { id: 'openrouter', key: 'OPENROUTER_API_KEY', provider: 'openrouter', required: true },
+  { id: 'elevenlabs', key: 'ELEVENLABS_API_KEY', provider: 'elevenlabs', required: false },
+  { id: 'did', key: 'DID_API_KEY', provider: 'd-id', required: false },
+] as const;
+
 export function ApiKeysStep({
   config,
   updateConfig,
@@ -32,63 +38,27 @@ export function ApiKeysStep({
         <p className="text-muted-foreground text-sm mt-1">{t('subtitle')}</p>
       </div>
 
-      <div className="space-y-1.5">
-        <ApiKeyInput
-          id="openrouter"
-          label={t('openrouter.label')}
-          value={config.OPENROUTER_API_KEY}
-          onChange={(v) => updateConfig('OPENROUTER_API_KEY', v)}
-          onVerify={() => verifyKey('openrouter', 'OPENROUTER_API_KEY', config.OPENROUTER_API_KEY)}
-          status={status.OPENROUTER_API_KEY}
-          errorMessage={errors.OPENROUTER_API_KEY}
-          placeholder={t('openrouter.placeholder')}
-          required
-          helpText={t('openrouter.help')}
-          latency={latencies?.OPENROUTER_API_KEY}
-          saved={savedProviders.includes('openrouter')}
-          onRevoke={onRevokeProvider ? () => onRevokeProvider('openrouter', 'OPENROUTER_API_KEY') : undefined}
-          isRevoking={revokingProvider === 'openrouter'}
-        />
-        <ByokHelpTip provider="openrouter" />
-      </div>
-
-      <div className="space-y-1.5">
-        <ApiKeyInput
-          id="elevenlabs"
-          label={`${t('elevenlabs.label')}  (${t('elevenlabs.optionalBadge')})`}
-          value={config.ELEVENLABS_API_KEY}
-          onChange={(v) => updateConfig('ELEVENLABS_API_KEY', v)}
-          onVerify={() => verifyKey('elevenlabs', 'ELEVENLABS_API_KEY', config.ELEVENLABS_API_KEY)}
-          status={status.ELEVENLABS_API_KEY}
-          errorMessage={errors.ELEVENLABS_API_KEY}
-          placeholder={t('elevenlabs.placeholder')}
-          helpText={t('elevenlabs.help')}
-          latency={latencies?.ELEVENLABS_API_KEY}
-          saved={savedProviders.includes('elevenlabs')}
-          onRevoke={onRevokeProvider ? () => onRevokeProvider('elevenlabs', 'ELEVENLABS_API_KEY') : undefined}
-          isRevoking={revokingProvider === 'elevenlabs'}
-        />
-        <ByokHelpTip provider="elevenlabs" />
-      </div>
-
-      <div className="space-y-1.5">
-        <ApiKeyInput
-          id="did"
-          label={`${t('did.label')}  (${t('did.optionalBadge')})`}
-          value={config.DID_API_KEY}
-          onChange={(v) => updateConfig('DID_API_KEY', v)}
-          onVerify={() => verifyKey('d-id', 'DID_API_KEY', config.DID_API_KEY)}
-          status={status.DID_API_KEY}
-          errorMessage={errors.DID_API_KEY}
-          placeholder={t('did.placeholder')}
-          helpText={t('did.help')}
-          latency={latencies?.DID_API_KEY}
-          saved={savedProviders.includes('d-id')}
-          onRevoke={onRevokeProvider ? () => onRevokeProvider('d-id', 'DID_API_KEY') : undefined}
-          isRevoking={revokingProvider === 'd-id'}
-        />
-        <ByokHelpTip provider="d-id" />
-      </div>
+      {KEY_FIELDS.map(({ id, key, provider, required }) => (
+        <div key={id} className="space-y-1.5">
+          <ApiKeyInput
+            id={id}
+            label={required ? t(`${id}.label`) : `${t(`${id}.label`)}  (${t(`${id}.optionalBadge`)})`}
+            value={config[key]}
+            onChange={(v) => updateConfig(key, v)}
+            onVerify={() => verifyKey(provider, key, config[key])}
+            status={status[key]}
+            errorMessage={errors[key]}
+            placeholder={t(`${id}.placeholder`)}
+            required={required}
+            helpText={t(`${id}.help`)}
+            latency={latencies?.[key]}
+            saved={savedProviders.includes(provider)}
+            onRevoke={onRevokeProvider ? () => onRevokeProvider(provider, key) : undefined}
+            isRevoking={revokingProvider === provider}
+          />
+          <ByokHelpTip provider={provider} />
+        </div>
+      ))}
 
       <ExtraProviders
         config={config}
@@ -110,11 +80,7 @@ export function ApiKeysStep({
 
       <div className="flex justify-between items-center pt-4 border-t border-border dark:border-white/[0.08]">
         {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors"
-          >
+          <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 transition-colors">
             Quay lại / Back
           </button>
         ) : <div />}

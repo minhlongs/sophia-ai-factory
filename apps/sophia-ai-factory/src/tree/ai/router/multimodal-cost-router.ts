@@ -1,6 +1,5 @@
 /**
  * Optimal Multimodal Cost Arbitrage Router
- *
  * Layer: tree/ai/router
  */
 
@@ -34,9 +33,6 @@ export {
 
 const logger = createLogger('tree/ai/multimodal-cost-router');
 
-/**
- * Intelligently routes each stage of a video pipeline to the cheapest healthy provider.
- */
 export function routeMultimodalCostArbitrage(
   spec: VideoPipelineSpec,
   options: MultimodalRouterOptions = {},
@@ -47,7 +43,6 @@ export function routeMultimodalCostArbitrage(
   const tenantKeyRef = options.tenantKeyRef ?? 'platform';
 
   const stages: PipelineStage[] = ['script', 'visuals', 'audio', 'render'];
-
   const stageOptionsMap: Record<PipelineStage, StageProviderOption[]> = {
     script: SCRIPT_PROVIDER_OPTIONS,
     visuals: VISUALS_PROVIDER_OPTIONS,
@@ -74,35 +69,20 @@ export function routeMultimodalCostArbitrage(
       edgeAvailable,
       tenantKeyRef,
     });
-
-    if (isMekongProvider) {
-      isMekongGpuAccelerated = true;
-    }
-
+    if (isMekongProvider) isMekongGpuAccelerated = true;
     selectedStages[stage] = selection;
     totalEstimatedCostUsd += selection.estimatedCostUsd;
   }
 
   totalEstimatedCostUsd = Number(totalEstimatedCostUsd.toFixed(4));
   const costPerSecondUsd = Number((totalEstimatedCostUsd / duration).toFixed(6));
-
   const cloudBaselineCost = calculateCloudBaselineCost(spec);
-  const savingsVsCloudUsd = Number(
-    Math.max(0, cloudBaselineCost - totalEstimatedCostUsd).toFixed(4),
-  );
-  const savingsPercentage =
-    cloudBaselineCost > 0
-      ? Number(((savingsVsCloudUsd / cloudBaselineCost) * 100).toFixed(1))
-      : 0;
-
-  const withinBudget =
-    spec.maxBudgetUsd !== undefined ? totalEstimatedCostUsd <= spec.maxBudgetUsd : true;
+  const savingsVsCloudUsd = Number(Math.max(0, cloudBaselineCost - totalEstimatedCostUsd).toFixed(4));
+  const savingsPercentage = cloudBaselineCost > 0 ? Number(((savingsVsCloudUsd / cloudBaselineCost) * 100).toFixed(1)) : 0;
+  const withinBudget = spec.maxBudgetUsd !== undefined ? totalEstimatedCostUsd <= spec.maxBudgetUsd : true;
 
   if (!withinBudget) {
-    logger.warn('ARBITRAGE_BUDGET_EXCEEDED', {
-      totalEstimatedCostUsd,
-      budgetLimitUsd: spec.maxBudgetUsd,
-    });
+    logger.warn('ARBITRAGE_BUDGET_EXCEEDED', { totalEstimatedCostUsd, budgetLimitUsd: spec.maxBudgetUsd });
   }
 
   const decisionReason = buildArbitrageDecisionReason({

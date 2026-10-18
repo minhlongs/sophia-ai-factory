@@ -8,60 +8,22 @@
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
 import { Badge } from '@/seed/components/ui/badge';
 import { Bell } from 'lucide-react';
 import { LicenseAlertItem } from './license-alert-item';
-import type { UserAlert } from './license-alert-item';
-import { useCsrfToken } from '@/seed/security/use-csrf-token';
-
-interface AlertPanelProps {
-  userId?: string;
-  licenseNonce?: string;
-  limit?: number;
-}
+import type { AlertPanelProps } from './license-alert-hooks';
+import { useLicenseAlerts } from './license-alert-hooks';
 
 export function LicenseAlertPanel({ userId, licenseNonce, limit = 10 }: AlertPanelProps) {
-  const queryClient = useQueryClient();
-  const csrfHeaders = useCsrfToken();
-
-  const { data: alertsData, isLoading } = useQuery<{ alerts: UserAlert[]; count: number }>({
-    queryKey: ['/api/alerts/history', userId, licenseNonce],
-    enabled: !!userId,
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: limit.toString(), includeDismissed: 'false' });
-      if (licenseNonce) params.set('licenseNonce', licenseNonce);
-      const response = await fetch(`/api/alerts/history?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch alerts');
-      return response.json();
-    },
-  });
-
-  const markReadMutation = useMutation({
-    mutationFn: async (alertId: string) => {
-      const response = await fetch(`/api/alerts/${alertId}/read`, { method: 'POST', headers: { ...csrfHeaders } });
-      if (!response.ok) throw new Error('Failed to mark as read');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/alerts/history'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/alerts/unread-count'] });
-    },
-  });
-
-  const dismissMutation = useMutation({
-    mutationFn: async (alertId: string) => {
-      const response = await fetch(`/api/alerts/${alertId}/dismiss`, { method: 'POST', headers: { ...csrfHeaders } });
-      if (!response.ok) throw new Error('Failed to dismiss alert');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/alerts/history'] });
-    },
-  });
-
-  const alerts = alertsData?.alerts || [];
-  const unreadCount = alerts.filter((a) => !a.read).length;
+  const {
+    alerts,
+    unreadCount,
+    isLoading,
+    markReadMutation,
+    dismissMutation,
+  } = useLicenseAlerts(userId, licenseNonce, limit);
 
   if (isLoading) {
     return (

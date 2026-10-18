@@ -17,12 +17,14 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { captureSourceIdentity, sourceIdentityMatchesAtBoundaries } from './core-proof-source-identity.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const repoRootResult = spawnSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' });
+const repoRoot = repoRootResult.status === 0 ? repoRootResult.stdout.trim() : root;
 
 const proofTests = [
   'src/land/video/__tests__/video-render-provider.test.ts',
@@ -36,6 +38,7 @@ const proofTests = [
   'src/app/api/webhooks/payos/modules/payos-idempotency.test.ts',
   'src/app/api/webhooks/payos/modules/payos-order-validator.test.ts',
   'src/app/api/webhooks/payos/modules/payos-subscription.test.ts',
+  'src/app/api/webhooks/payos/modules/payos-subscription.sqlite.test.ts',
   'src/app/api/webhooks/payos/route.test.ts',
   'src/land/orders/__tests__/pending-order-repo.test.ts',
   'src/land/payments/__tests__/payos.test.ts',
@@ -47,6 +50,7 @@ const proofTests = [
   'src/tree/live-proof/__tests__/runtime.test.ts',
   'src/tree/live-proof/__tests__/verify-mp4-playback.test.ts',
   'src/tree/live-proof/__tests__/verify-core-video-factory-evidence.test.ts',
+  'src/tree/live-proof/__tests__/core-proof-source-identity.test.ts',
   'src/tree/live-proof/__tests__/verify-saas-payment-live.test.ts',
   'src/tree/live-proof/__tests__/verify-saas-payment-live-evidence.test.ts',
   'src/tree/live-proof/__tests__/verify-saas-payout-live.test.ts',
@@ -104,6 +108,13 @@ function assertExistingTests() {
 }
 
 assertExistingTests();
+const sourceAtStart = captureSourceIdentity(repoRoot);
+let snapshotInputSource = null;
+try {
+  snapshotInputSource = JSON.parse(process.env.SOPHIA_CORE_VIDEO_SOURCE_IDENTITY ?? 'null');
+} catch {
+  snapshotInputSource = null;
+}
 
 const gatesToRun = [
   [
@@ -126,6 +137,7 @@ const gatesToRun = [
       'src/app/api/webhooks/payos/modules/payos-idempotency.test.ts',
       'src/app/api/webhooks/payos/modules/payos-order-validator.test.ts',
       'src/app/api/webhooks/payos/modules/payos-subscription.test.ts',
+      'src/app/api/webhooks/payos/modules/payos-subscription.sqlite.test.ts',
       'src/app/api/webhooks/payos/route.test.ts',
       'src/land/orders/__tests__/pending-order-repo.test.ts',
       'src/land/payments/__tests__/payos.test.ts',
@@ -145,6 +157,7 @@ const gatesToRun = [
       'src/tree/live-proof/__tests__/runtime.test.ts',
       'src/tree/live-proof/__tests__/verify-mp4-playback.test.ts',
       'src/tree/live-proof/__tests__/verify-core-video-factory-evidence.test.ts',
+      'src/tree/live-proof/__tests__/core-proof-source-identity.test.ts',
       'src/tree/live-proof/__tests__/verify-saas-payment-live.test.ts',
       'src/tree/live-proof/__tests__/verify-saas-payment-live-evidence.test.ts',
       'src/tree/live-proof/__tests__/verify-saas-payout-live.test.ts',
@@ -165,61 +178,61 @@ for (const [label, command, commandArgs] of gatesToRun) {
   run(label, command, commandArgs);
 }
 
+const sourceAtEnd = captureSourceIdentity(repoRoot);
+const sourceIdentityMatchedAtBoundaries = sourceIdentityMatchesAtBoundaries(sourceAtStart, sourceAtEnd);
+const immutableSnapshotMode = process.env.SOPHIA_CORE_VIDEO_EXECUTION_MODE === 'immutable-readonly-worktree';
+const snapshotInputMatched = immutableSnapshotMode && sourceIdentityMatchesAtBoundaries(snapshotInputSource, sourceAtStart);
+gates.push({
+  name: 'snapshot input identity matched the source repository',
+  command: ['source and immutable snapshot identity comparison'],
+  status: snapshotInputMatched ? 'passed' : 'failed',
+  exitCode: snapshotInputMatched ? 0 : 1,
+  durationMs: 0,
+});
+if (!snapshotInputMatched) console.error('\nFAIL: immutable snapshot does not match the captured source repository identity');
+gates.push({
+  name: 'proof ran from immutable read-only worktree',
+  command: ['read-only temporary Git worktree'],
+  status: immutableSnapshotMode ? 'passed' : 'failed',
+  exitCode: immutableSnapshotMode ? 0 : 1,
+  durationMs: 0,
+});
+if (!immutableSnapshotMode) console.error('\nFAIL: run the proof with npm run verify:core-video-factory to use the immutable snapshot wrapper');
+gates.push({
+  name: 'source identity matched at run boundaries',
+  command: ['git', 'source identity at start and end'],
+  status: sourceIdentityMatchedAtBoundaries ? 'passed' : 'failed',
+  exitCode: sourceIdentityMatchedAtBoundaries ? 0 : 1,
+  durationMs: 0,
+});
+if (!sourceIdentityMatchedAtBoundaries) console.error('\nFAIL: source identity differed or could not be captured at the proof run boundaries');
+
 const evidence = writeEvidence();
 const allPassed = gates.every((gate) => gate.status === 'passed');
 console.log(`\n${allPassed ? 'DETERMINISTIC MOCK GATES PASS' : 'DETERMINISTIC MOCK GATES FAIL'}: ${evidence.path}`);
 console.log('This report covers mocked video tests and static checks only; it does not prove live provider, payment, publishing, production SLO, or positive unit economics.');
 if (!allPassed) process.exit(1);
 
-function gitOutput(args) {
-  const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
-  return result.status === 0 ? result.stdout : null;
-}
-
-function sourceIdentity() {
-  const status = gitOutput(['status', '--porcelain=v1', '--untracked-files=all']);
-  const diff = gitOutput(['diff', 'HEAD', '--binary', '--', '.']);
-  const untracked = gitOutput(['ls-files', '--others', '--exclude-standard', '-z']);
-  const fingerprint = createHash('sha256');
-  fingerprint.update(status ?? 'git-status-unavailable');
-  fingerprint.update(diff ?? 'git-diff-unavailable');
-
-  if (untracked) {
-    for (const relativePath of untracked.split('\0').filter(Boolean)) {
-      const absolutePath = resolve(root, relativePath);
-      try {
-        if (statSync(absolutePath).isFile()) {
-          fingerprint.update(relativePath);
-          fingerprint.update(readFileSync(absolutePath));
-        }
-      } catch {
-        fingerprint.update(`${relativePath}:unreadable`);
-      }
-    }
-  }
-
-  return {
-    commitSha: gitOutput(['rev-parse', 'HEAD'])?.trim() ?? null,
-    worktreeClean: status === '',
-    changedPathCount: status ? status.split('\n').filter(Boolean).length : 0,
-    worktreeFingerprint: fingerprint.digest('hex'),
-  };
-}
-
 function writeEvidence() {
-  const reportsDir = resolve(root, 'plans/reports');
+  const reportsDir = process.env.SOPHIA_CORE_VIDEO_EVIDENCE_DIR
+    ? resolve(process.env.SOPHIA_CORE_VIDEO_EVIDENCE_DIR)
+    : resolve(root, 'plans/reports');
   mkdirSync(reportsDir, { recursive: true });
   const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const path = resolve(reportsDir, `core-video-factory-proof-${ts}.json`);
   const latestPath = resolve(reportsDir, 'core-video-factory-proof-latest.json');
   const proof = {
-    schema: 'sophia-core-video-deterministic-proof-v2',
+    schema: 'sophia-core-video-deterministic-proof-v4',
     status: gates.every((gate) => gate.status === 'passed') ? 'passed' : 'failed',
     generatedAt: new Date().toISOString(),
     scope: 'deterministic-mock-tests',
     proofMode: true,
     provider: 'mock',
-    source: sourceIdentity(),
+    sourceAtStart,
+    source: sourceAtEnd,
+    snapshotInputSource,
+    sourceIdentityMatchedAtBoundaries,
+    executionMode: immutableSnapshotMode ? 'immutable-readonly-worktree' : 'mutable-worktree',
     gates,
     realKeysUsed: false,
     liveProviderValidated: false,
@@ -230,6 +243,7 @@ function writeEvidence() {
     commercialUnitEconomicsValidated: false,
     limitations: [
       'Provider calls are mocked.',
+      'Source identity is sampled before and after gates. Matching samples do not rule out a transient edit that is reverted before the final sample.',
       'No real MP4 download or production publish is verified by this runner.',
       'Payment lifecycle and production SLO require separate evidence.',
       'Crypto payout confirmation, full media decoding, and production SLO require separate evidence.',

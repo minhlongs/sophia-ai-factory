@@ -16,7 +16,7 @@
     "verify": "./scripts/verify.sh",
     "verify:green": "./scripts/verify.sh",
     "verify:open-core": "node scripts/verify-open-core-readiness.mjs && node scripts/verify-blueprint-protected-flows.mjs",
-    "verify:core-video-factory": "node scripts/verify-core-video-factory.mjs",
+    "verify:core-video-factory": "node scripts/verify-core-video-factory-snapshot.mjs",
     "verify:core-video-factory:evidence": "node scripts/verify-core-video-factory-evidence.mjs",
     "verify:user-video-flow": "node scripts/verify-user-video-flow.mjs",
     "verify:user-video-flow:live": "node scripts/verify-user-video-flow-live.mjs",

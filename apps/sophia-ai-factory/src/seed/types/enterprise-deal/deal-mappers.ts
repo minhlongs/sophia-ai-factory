@@ -14,17 +14,12 @@ import type {
   DealCurrency,
   AssignedAgentRole,
   SandboxStatus,
-  EnrichmentSource,
-  EnrichmentStatus,
   ProposalLanguage,
 } from './deal-constants';
 import type { BantAnalysis } from './bant-types';
-import type {
-  EnterpriseDeal,
-  EnterpriseLeadEnrichment,
-  EnterpriseDealRow,
-  EnterpriseLeadEnrichmentRow,
-} from './deal-entities';
+import type { EnterpriseDeal, EnterpriseDealRow } from './deal-entities';
+
+export { mapEnrichmentRowToEnrichment } from './enrichment-mapper';
 
 export type {
   QueryEnterpriseDealsFilters,
@@ -87,45 +82,6 @@ export function mapDealRowToDeal(row: EnterpriseDealRow): EnterpriseDeal {
     sandboxExpiresAt: row.sandbox_expires_at ? Number(row.sandbox_expires_at) : null,
     notes: row.notes,
     metadata: parsedMetadata,
-    createdAt: Number(row.created_at || 0),
-    updatedAt: Number(row.updated_at || 0),
-  };
-}
-
-export function mapEnrichmentRowToEnrichment(
-  row: EnterpriseLeadEnrichmentRow
-): EnterpriseLeadEnrichment {
-  let techStack: string[] = [];
-  try {
-    techStack = JSON.parse(row.tech_stack_json || '[]');
-  } catch {
-    techStack = [];
-  }
-
-  let rawPayload: Record<string, unknown> = {};
-  try {
-    rawPayload = JSON.parse(row.raw_payload_json || '{}');
-  } catch {
-    rawPayload = {};
-  }
-
-  return {
-    id: row.id,
-    dealId: row.deal_id,
-    domain: row.domain,
-    companyName: row.company_name,
-    industry: row.industry,
-    employeeCountRange: row.employee_count_range,
-    estimatedAnnualRevenue: row.estimated_annual_revenue,
-    headquartersLocation: row.headquarters_location,
-    country: row.country,
-    techStack,
-    linkedinCompanyUrl: row.linkedin_company_url,
-    twitterHandle: row.twitter_handle,
-    enrichmentSource: (row.enrichment_source as EnrichmentSource) || 'heuristic',
-    confidenceScore: Number(row.confidence_score ?? 1.0),
-    rawPayload,
-    status: (row.status as EnrichmentStatus) || 'completed',
     createdAt: Number(row.created_at || 0),
     updatedAt: Number(row.updated_at || 0),
   };

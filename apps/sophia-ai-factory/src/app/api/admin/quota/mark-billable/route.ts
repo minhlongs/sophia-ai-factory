@@ -12,17 +12,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/seed/db/client';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { requireAdmin } from '@/seed/auth/require-admin';
-import { z } from 'zod';
-
-const markBillableSchema = z.object({
-  eventIds: z.array(z.string().uuid()),
-  pricePerCredit: z.number().positive().optional(),
-  reason: z.string().min(10),
-});
+import {
+  markBillableSchema,
+  fetchOverageEvents,
+  markEventsBillable,
+  logAuditEvent,
+} from './mark-billable-helpers';
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -36,73 +34,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: 'Invalid request body',
-          details: validation.error.issues
+          details: validation.error.issues,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { eventIds, pricePerCredit, reason } = validation.data;
-    const db = createServerClient();
 
-    // Get events to calculate total credits
-    interface OverageEventRow {
-      id: string;
-      exceeded_by: number;
-      user_id: string;
-      license_nonce: string;
-    }
-    const { data: rawEvents, error: fetchError } = await db
-      .from('overage_events')
-      .select('id, exceeded_by, user_id, license_nonce')
-      .in('id', eventIds);
-    const events = rawEvents as OverageEventRow[] | null;
-
-    if (fetchError || !events || events.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid events found' },
-        { status: 404 }
-      );
-    }
-
-    // Mark events as billable
-    const { error: updateError } = await (db
-      .from('overage_events') as ReturnType<typeof db.from>)
-      .update({
-        billable: true,
-        updated_at: new Date().toISOString(),
-      })
-      .in('id', eventIds);
-
-    if (updateError) {
-      logger.error('[Admin Quota API] Failed to mark events as billable', toError(updateError));
-      return NextResponse.json(
-        { error: 'Failed to mark events as billable', details: updateError.message },
-        { status: 500 }
-      );
-    }
+    const events = await fetchOverageEvents(eventIds);
+    await markEventsBillable(eventIds);
 
     // Calculate total billable credits
     const totalCredits = events.reduce((sum, e) => sum + (e.exceeded_by || 0), 0);
     const estimatedCost = pricePerCredit ? totalCredits * pricePerCredit : null;
 
     // Log audit event
-    await db
-      .from('audit_logs')
-      .insert({
-        event_type: 'overage_marked_billable',
-        user_id: events[0]?.user_id || 'system',
-        license_nonce: events[0]?.license_nonce,
-        metadata: {
-          eventCount: eventIds.length,
-          totalCredits,
-          pricePerCredit,
-          estimatedCost,
-          reason,
-          marked_by: 'admin-api',
-        },
-        ip_address: req.headers.get('x-forwarded-for'),
-      });
+    await logAuditEvent({
+      eventIds,
+      totalCredits,
+      pricePerCredit,
+      estimatedCost,
+      reason,
+      userId: events[0]?.user_id || 'system',
+      licenseNonce: events[0]?.license_nonce,
+      ipAddress: req.headers.get('x-forwarded-for'),
+    });
 
     logger.info('[Admin Quota API] Marked events as billable', {
       eventCount: eventIds.length,
@@ -122,12 +79,11 @@ export async function POST(req: NextRequest) {
         estimatedCost,
       },
     });
-
   } catch (error) {
     logger.error('[Admin Quota API] Unexpected error', toError(error));
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

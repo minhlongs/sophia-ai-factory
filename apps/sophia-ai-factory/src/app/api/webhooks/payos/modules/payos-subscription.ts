@@ -1,6 +1,7 @@
 import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { invalidateOrgIdCache } from '@/seed/auth/org-resolver';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
+import { invalidateUserTierCache } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import type { Tier } from '@/seed/types';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
@@ -42,20 +43,37 @@ export async function activatePayOsSubscription(params: {
     logger.warn('[PayOS Webhook] No org membership found; creating a dedicated customer org', { userId, orgId });
   }
 
-  const existingSubscription = createdOrg
-    ? null
+  const subscriptionState = createdOrg
+    ? { id: null, count: 0 }
     : await rawDb
-        .prepare('SELECT id FROM subscriptions WHERE org_id = ?1 LIMIT 1')
+        .prepare('SELECT MIN(id) AS id, COUNT(*) AS count FROM subscriptions WHERE org_id = ?1')
         .bind(orgId)
-        .first<{ id: string }>();
+        .first<{ id: string | null; count: number }>();
+  if (!subscriptionState || subscriptionState.count > 1) {
+    throw new Error('PayOS activation requires an unambiguous organization subscription');
+  }
 
   const lockExists =
     'EXISTS (SELECT 1 FROM payment_events WHERE event_id = ? AND created_at = ? AND processed = 2)';
   const planLower = tier.toLowerCase();
   const statements = [
     rawDb
-      .prepare('UPDATE payment_events SET processed = 2 WHERE event_id = ?1 AND created_at = ?2 AND processed = 0')
-      .bind(eventId, lockCreatedAt),
+      // Check mutable order and tenant state inside the batch, before any entitlement write.
+      // Inspecting meta.changes after batch() cannot roll back a committed zero-row update.
+      .prepare(`UPDATE payment_events SET processed = 2
+        WHERE event_id = ?1 AND created_at = ?2 AND processed = 0
+        AND EXISTS (SELECT 1 FROM pending_orders
+          WHERE order_id = ?3 AND provider_payment_id = ?4 AND user_id = ?5
+          AND status = 'pending' AND payment_method = 'payos'
+          AND tier = ?6 AND period = ?7 AND amount_usd_cents = ?8 AND amount_vnd IS ?9)
+        AND ((?10 = 1 AND NOT EXISTS (SELECT 1 FROM org_members WHERE user_id = ?5))
+          OR (?10 = 0 AND EXISTS (SELECT 1 FROM organizations WHERE id = ?11)
+            AND EXISTS (SELECT 1 FROM org_members WHERE org_id = ?11 AND user_id = ?5)
+            AND (SELECT COUNT(*) FROM subscriptions WHERE org_id = ?11) = ?12
+            AND (?12 = 0 OR EXISTS (SELECT 1 FROM subscriptions WHERE id = ?13 AND org_id = ?11))))`)
+      .bind(eventId, lockCreatedAt, order.order_id, paymentLinkId, userId,
+        tier, order.period, order.amount_usd_cents, order.amount_vnd ?? null,
+        createdOrg ? 1 : 0, orgId, subscriptionState.count, subscriptionState.id),
   ];
 
   if (createdOrg) {
@@ -68,20 +86,20 @@ export async function activatePayOsSubscription(params: {
         .prepare(`INSERT INTO org_members (org_id, user_id, role) SELECT ?1, ?2, 'owner' WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`)
         .bind(orgId, userId, eventId, lockCreatedAt),
       rawDb
-        .prepare(`INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, 'active', ?3, ?4 WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`)
-        .bind(orgId, planLower, now, periodEnd, eventId, lockCreatedAt),
+        .prepare(`INSERT INTO subscriptions (org_id, user_id, tier, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, ?3, ?4, 'active', ?5, ?6 WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`)
+        .bind(orgId, userId, tier, planLower, now, periodEnd, eventId, lockCreatedAt),
     );
-  } else if (existingSubscription) {
+  } else if (subscriptionState.id) {
     statements.push(
       rawDb
-        .prepare(`UPDATE subscriptions SET plan = ?1, status = 'active', current_period_end = ?2, updated_at = ?3 WHERE org_id = ?4 AND ${lockExists}`)
-        .bind(planLower, periodEnd, now, orgId, eventId, lockCreatedAt),
+        .prepare(`UPDATE subscriptions SET tier = ?1, plan = ?2, status = 'active', current_period_end = ?3, updated_at = ?4 WHERE id = ?5 AND org_id = ?6 AND ${lockExists}`)
+        .bind(tier, planLower, periodEnd, now, subscriptionState.id, orgId, eventId, lockCreatedAt),
     );
   } else {
     statements.push(
       rawDb
-        .prepare(`INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, 'active', ?3, ?4 WHERE ${lockExists}`)
-        .bind(orgId, planLower, now, periodEnd, eventId, lockCreatedAt),
+        .prepare(`INSERT INTO subscriptions (org_id, user_id, tier, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, ?3, ?4, 'active', ?5, ?6 WHERE ${lockExists}`)
+        .bind(orgId, userId, tier, planLower, now, periodEnd, eventId, lockCreatedAt),
     );
   }
 
@@ -112,6 +130,7 @@ export async function activatePayOsSubscription(params: {
   }
 
   if (createdOrg) invalidateOrgIdCache(userId);
+  invalidateUserTierCache(userId);
 
   return { orgId, periodEnd, isLifetime };
 }

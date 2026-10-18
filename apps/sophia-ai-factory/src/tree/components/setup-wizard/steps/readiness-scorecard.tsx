@@ -61,68 +61,47 @@ export function ReadinessScorecard({
           <div className="flex items-center justify-between pt-1">
             <span className="text-muted-foreground">Account Ownership:</span>
             {readiness.ownerVerified ? (
-              <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                ✓ Verified Owner
-              </span>
+              <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">✓ Verified Owner</span>
             ) : (
-              <span className="font-mono font-semibold text-[#D97706] dark:text-[#F59E0B] flex items-center gap-1">
-                ⚠ Unverified Email
-              </span>
+              <span className="font-mono font-semibold text-[#D97706] dark:text-[#F59E0B] flex items-center gap-1">⚠ Unverified Email</span>
             )}
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <span className="text-muted-foreground">BYOK AI Providers:</span>
             {readiness.byokEncrypted ? (
-              <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                ✓ {readiness.providersConfigured.length} Provider(s) Encrypted
-              </span>
+              <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">✓ {readiness.providersConfigured.length} Provider(s) Encrypted</span>
             ) : (
-              <span className="font-mono font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                ✕ No Keys Configured
-              </span>
+              <span className="font-mono font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">✕ No Keys Configured</span>
             )}
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <span className="text-muted-foreground">Compute Allowance:</span>
             {readiness.mcuBalance > 0 ? (
-              <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                ✓ {readiness.mcuBalance} MCU Available ({readiness.tier})
-              </span>
+              <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">✓ {readiness.mcuBalance} MCU Available ({readiness.tier})</span>
             ) : (
-              <span className="font-mono font-semibold text-[#D97706] dark:text-[#F59E0B] flex items-center gap-1">
-                ⚠ 0 MCU Balance
-              </span>
+              <span className="font-mono font-semibold text-[#D97706] dark:text-[#F59E0B] flex items-center gap-1">⚠ 0 MCU Balance</span>
             )}
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <span className="text-muted-foreground">Production Safety:</span>
-            <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-              ✓ Fail-Closed Guard Active
-            </span>
+            <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">✓ Fail-Closed Guard Active</span>
           </div>
 
           <div className="pt-2">
-            <div className="text-muted-foreground mb-1.5">
-              Active AI Capabilities / Năng lực AI sẵn sàng:
-            </div>
+            <div className="text-muted-foreground mb-1.5">Active AI Capabilities / Năng lực AI sẵn sàng:</div>
             {readiness.capabilities.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {readiness.capabilities.map((cap) => (
-                  <span
-                    key={cap}
-                    className="font-mono px-2 py-0.5 rounded text-[10px] font-semibold bg-[#4338CA]/10 dark:bg-[#6366F1]/15 border border-[#4338CA]/20 dark:border-[#6366F1]/25 text-[#4338CA] dark:text-[#6366F1]"
-                  >
+                  <span key={cap} className="font-mono px-2 py-0.5 rounded text-[10px] font-semibold bg-[#4338CA]/10 dark:bg-[#6366F1]/15 border border-[#4338CA]/20 dark:border-[#6366F1]/25 text-[#4338CA] dark:text-[#6366F1]">
                     {cap}
                   </span>
                 ))}
               </div>
             ) : (
-              <span className="font-semibold text-rose-600 dark:text-rose-400 text-[11px]">
-                ✕ None. Add provider keys to enable video/image generation.
-              </span>
+              <span className="font-semibold text-rose-600 dark:text-rose-400 text-[11px]">✕ None. Add provider keys to enable video/image generation.</span>
             )}
           </div>
         </div>

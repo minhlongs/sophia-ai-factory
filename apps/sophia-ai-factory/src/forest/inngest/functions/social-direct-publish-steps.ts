@@ -11,9 +11,11 @@ import {
   buildTikTokInitPayload,
   buildInstagramContainerInit,
 } from '@/tree/social/publisher/platform-adapters';
-import { evaluateChannelPacing, isSameUTCDay } from '@/tree/social/publisher/pacing-engine';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { isSameUTCDay } from '@/tree/social/publisher/pacing-engine';
+import { recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { FailureKind } from '@/seed/types/failure-kind';
+
+export { evaluatePacingStepDecision, evaluateSafetyGuardsDecision } from './social-direct-publish-guards';
 
 export interface SocialPublishDispatchedEventData {
   jobId: string;
@@ -34,38 +36,6 @@ export interface ChannelCredentialSnapshot {
   dailyPostCount: number;
   lastPublishedAt?: number | null;
   killSwitchActive: boolean;
-}
-
-export function evaluatePacingStepDecision(
-  data: SocialPublishDispatchedEventData,
-  cred: ChannelCredentialSnapshot | null,
-): { allowed: boolean; reason: string; delayMs: number } {
-  const decision = evaluateChannelPacing({
-    platform: data.platform,
-    channelId: data.channelId,
-    todayPublishedCount: cred?.dailyPostCount ?? 0,
-    lastPublishedAtMs: cred?.lastPublishedAt ?? null,
-  });
-  if (decision.reason === 'DAILY_CAP_EXCEEDED') {
-    return { allowed: false, reason: decision.reason, delayMs: 0 };
-  }
-  return { allowed: decision.allowed, reason: decision.reason, delayMs: decision.delayMs };
-}
-
-export function evaluateSafetyGuardsDecision(
-  data: SocialPublishDispatchedEventData,
-  cred: ChannelCredentialSnapshot | null,
-): { allowed: boolean; reason: string; errorMessage?: string } {
-  if (!cred) {
-    return { allowed: false, reason: 'CREDENTIAL_NOT_FOUND', errorMessage: 'Channel credential not found' };
-  }
-  if (cred.killSwitchActive) {
-    return { allowed: false, reason: 'KILL_SWITCH_ACTIVE', errorMessage: 'Channel emergency kill switch active' };
-  }
-  if (!shouldAllowRequest(data.platform, data.channelId)) {
-    return { allowed: false, reason: 'CIRCUIT_BREAKER_OPEN', errorMessage: 'Platform circuit breaker open' };
-  }
-  return { allowed: true, reason: 'OK' };
 }
 
 export function executePlatformUploadAdapter(
