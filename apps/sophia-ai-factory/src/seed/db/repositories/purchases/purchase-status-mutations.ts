@@ -14,7 +14,7 @@ export async function markPaid(
   const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
 
-  await db
+  const { error } = await db
     .from('user_purchases')
     .update({
       status: 'paid',
@@ -25,6 +25,10 @@ export async function markPaid(
       updated_at: now,
     })
     .eq('payment_id', paymentId);
+
+  if (error) {
+    throw new Error(`Failed to mark purchase ${paymentId} as paid`, { cause: error });
+  }
 }
 
 /** Mark a purchase as refunded and zero out credits. */
@@ -32,7 +36,7 @@ export async function markRefunded(paymentId: string): Promise<void> {
   const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
 
-  await db
+  const { error } = await db
     .from('user_purchases')
     .update({
       status: 'refunded',
@@ -41,6 +45,10 @@ export async function markRefunded(paymentId: string): Promise<void> {
       updated_at: now,
     })
     .eq('payment_id', paymentId);
+
+  if (error) {
+    throw new Error(`Failed to mark purchase ${paymentId} as refunded`, { cause: error });
+  }
 }
 
 /**

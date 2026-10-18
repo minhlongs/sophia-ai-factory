@@ -6,29 +6,12 @@
  */
 
 import { createServerClient } from '@/seed/db/client'
-import { generateReceipt } from '@/tree/audit/compliance-receipt'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
-import { insertAuditLog, updateReceiptSignature } from '@/tree/audit/logger/audit-event-builder'
 import type { Json } from '@/seed/types/json'
 import type { UsageLogParams } from '@/tree/audit/logger/audit-event-builder'
-
-/**
- * Shared helper: generate receipt and store signature back in DB
- */
-async function finalizeReceipt(
-  db: ReturnType<typeof createServerClient>,
-  logId: string,
-  log: Record<string, unknown>
-): Promise<ComplianceReceipt> {
-  const receipt = generateReceipt(log)
-  const updateError = await updateReceiptSignature(db, logId, receipt.signature)
-  if (updateError) {
-    logger.error('[Audit Logger] Failed to store receipt signature', toError(updateError))
-  }
-  return receipt
-}
+import { insertAndFinalizeAuditLog } from '@/tree/audit/logger/audit-receipt-finalizer'
 
 /**
  * Log license update (extension) with compliance receipt generation
@@ -65,22 +48,19 @@ export async function logUpdateWithReceipt(
   }
 
   try {
-    const { data: insertedLog, error } = await insertAuditLog(db, logData)
-    if (error || !insertedLog) {
-      logger.error('[Audit Logger] Failed to insert update audit log', toError(error))
-      return null
-    }
-    const logId = (insertedLog as Record<string, unknown>).id as string
-    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
-    logger.info(
-  '[Audit Logger] Update logged',
-  {
-    logId,
-    nonce: String(params.nonce).slice(0, 8),
-    changes: params.changes,
-    receiptId: receipt.receiptId,
-  },
-)
+    const finalized = await insertAndFinalizeAuditLog(
+      db,
+      logData,
+      '[Audit Logger] Failed to insert update audit log',
+    )
+    if (!finalized) return null
+    const { logId, receipt } = finalized
+    logger.info('[Audit Logger] Update logged', {
+      logId,
+      nonce: String(params.nonce).slice(0, 8),
+      changes: params.changes,
+      receiptId: receipt.receiptId,
+    })
     return receipt
   } catch (error) {
     logger.error('[Audit Logger] Update audit logging failed', toError(error))
@@ -124,13 +104,13 @@ export async function logUsageWithReceipt(
   }
 
   try {
-    const { data: insertedLog, error } = await insertAuditLog(db, logData)
-    if (error || !insertedLog) {
-      logger.error('[Audit Logger] Failed to insert usage audit log', toError(error))
-      return null
-    }
-    const logId = (insertedLog as Record<string, unknown>).id as string
-    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
+    const finalized = await insertAndFinalizeAuditLog(
+      db,
+      logData,
+      '[Audit Logger] Failed to insert usage audit log',
+    )
+    if (!finalized) return null
+    const { logId, receipt } = finalized
     logger.info('[Audit Logger] Usage logged', {
       logId,
       nonce: String(params.nonce).slice(0, 8),

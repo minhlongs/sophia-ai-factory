@@ -22,6 +22,7 @@ import type {
   BraidedTransaction,
   PanCosmicConstitutionalInvariant,
 } from '@/seed/types/topological-braided-conclave';
+import { recordCourtCompactionProof } from './cosmic-court-d1-recorder';
 
 export interface PanCosmicArbitrationActionResult {
   success: boolean;
@@ -54,11 +55,7 @@ export async function arbitratePanCosmicDisputeAction(
     if (db) {
       await db
         .prepare(
-          `INSERT INTO pan_cosmic_conclave_arbitrations (
-             id, dispute_case_ref, claimant_participant_id, respondent_participant_id,
-             dispute_value_cents, contract_stark_root, evidence_sha256, conclave_juror_count,
-             supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO pan_cosmic_conclave_arbitrations (id, dispute_case_ref, claimant_participant_id, respondent_participant_id, dispute_value_cents, contract_stark_root, evidence_sha256, conclave_juror_count, supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(
           crypto.randomUUID(),
@@ -114,31 +111,20 @@ export async function compactBraidedStarkStateAction(
 ): Promise<BraidedCompactionActionResult> {
   try {
     const data = compactStateWithBraidedStark(previousStateRoot, transactions);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO braided_stark_compaction_proofs (
-             id, proof_ref, batch_transaction_count, previous_state_root,
-             new_state_root, stark_proof_bytes_length, verification_time_micros,
-             verifier_circuit_identifier, is_mathematically_sound, verified_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `BRAID-PROOF-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          data.batchTransactionCount,
-          data.previousStateRoot,
-          data.newStateRoot,
-          data.starkProofBytesLength,
-          data.verificationTimeMicros,
-          data.verifierCircuitIdentifier,
-          data.isMathematicallySound ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
+    await recordCourtCompactionProof({
+      tableName: 'braided_stark_compaction_proofs',
+      id: crypto.randomUUID(),
+      proofRef: `BRAID-PROOF-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      proofLengthColumn: 'stark_proof_bytes_length',
+      batchTransactionCount: data.batchTransactionCount,
+      previousStateRoot: data.previousStateRoot,
+      newStateRoot: data.newStateRoot,
+      proofBytesLength: data.starkProofBytesLength,
+      verificationTimeMicros: data.verificationTimeMicros,
+      verifierCircuitIdentifier: data.verifierCircuitIdentifier,
+      isMathematicallySound: data.isMathematicallySound,
+      includeVerifiedAt: true,
+    });
 
     return { success: data.isMathematicallySound, data };
   } catch (error) {

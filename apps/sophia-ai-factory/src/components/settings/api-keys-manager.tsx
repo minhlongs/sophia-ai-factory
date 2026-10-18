@@ -1,21 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Key, Trash2, CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
-import { Input } from '@/seed/components/ui/input';
+import { Key, CheckCircle, XCircle } from 'lucide-react';
+import { PROVIDERS, ProviderKeyCard } from './provider-key-card';
 
-interface ProviderConfig {
-  id: string;
-  name: string;
-  hint: string;
-}
-
-const PROVIDERS: ProviderConfig[] = [
-  { id: 'openrouter', name: 'OpenRouter (LLM Scripting)', hint: 'sk-or-v1-...' },
-  { id: 'elevenlabs', name: 'ElevenLabs (Voice Synthesis)', hint: 'xi-api-key...' },
-  { id: 'fal-ai', name: 'fal.ai (Image & Diffusion)', hint: 'key-...' },
-  { id: 'd-id', name: 'D-ID (Avatar Animation)', hint: 'Basic token or email:pass' },
-];
+export { PROVIDERS, ProviderKeyCard, type ProviderConfig, type ProviderKeyCardProps } from './provider-key-card';
 
 export function ApiKeysManager() {
   const [configuredProviders, setConfiguredProviders] = useState<string[]>([]);
@@ -119,53 +108,24 @@ export function ApiKeysManager() {
       )}
 
       <div className="space-y-4">
-        {PROVIDERS.map((p) => {
-          const isConfigured = configuredProviders.includes(p.id);
-          const isEditing = editingProvider === p.id;
-
-          return (
-            <div key={p.id} className="p-4 bg-background/60 dark:bg-[#090A10]/60 rounded-xl border border-border dark:border-white/[0.08]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${isConfigured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <div>
-                    <h4 className="text-sm font-bold text-foreground dark:text-white">{p.name}</h4>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      {isConfigured ? '••••••••••••••••••••••••••••' : p.hint}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {isConfigured && !isEditing && (
-                    <button onClick={() => handleRevoke(p.id)} disabled={actionLoading} className="p-2 text-muted-foreground hover:text-destructive" title="Revoke">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                  {!isEditing ? (
-                    <button onClick={() => { setEditingProvider(p.id); setInputKey(''); }} className="text-xs font-semibold text-primary hover:underline px-3 py-1.5 border border-primary/30 rounded-lg hover:bg-primary/10">
-                      {isConfigured ? 'Replace Key' : 'Connect'}
-                    </button>
-                  ) : (
-                    <button onClick={() => setEditingProvider(null)} className="text-xs text-muted-foreground hover:text-foreground dark:hover:text-white px-2">
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {isEditing && (
-                <div className="mt-3 pt-3 border-t border-border dark:border-white/[0.08] flex flex-col sm:flex-row gap-2">
-                  <Input type="password" placeholder={`Enter ${p.name} key`} value={inputKey} onChange={(e) => setInputKey(e.target.value)} className="flex-1 bg-background dark:bg-[#090A10] text-xs font-mono" />
-                  <button onClick={() => handleTestAndSave(p.id)} disabled={actionLoading || !inputKey.trim()} className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-sm">
-                    {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                    Test & Save
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {PROVIDERS.map((p) => (
+          <ProviderKeyCard
+            key={p.id}
+            provider={p}
+            isConfigured={configuredProviders.includes(p.id)}
+            isEditing={editingProvider === p.id}
+            inputKey={inputKey}
+            actionLoading={actionLoading}
+            onStartEdit={(id) => {
+              setEditingProvider(id);
+              setInputKey('');
+            }}
+            onCancelEdit={() => setEditingProvider(null)}
+            onInputKeyChange={setInputKey}
+            onTestAndSave={handleTestAndSave}
+            onRevoke={handleRevoke}
+          />
+        ))}
       </div>
     </section>
   );

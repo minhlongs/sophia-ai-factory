@@ -13,8 +13,24 @@ import {
   getQuoteById,
   getContractById,
 } from '@/land/contracts/quote-to-cash-workflow';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { ContractActionError } from './types';
 import { assertContractAccess } from './contract-access';
+
+export async function runContractAction<T>(
+  tag: string,
+  code: string,
+  fn: () => Promise<Result<T, ContractActionError>>,
+): Promise<Result<T, ContractActionError>> {
+  try {
+    return await fn();
+  } catch (err) {
+    const error = toError(err);
+    logger.error(`[EnterpriseContractActions] ${tag} error`, error);
+    return failure({ code, message: error.message });
+  }
+}
 
 export type AuthorizedQuoteResult = Result<
   { db: NonNullable<Awaited<ReturnType<typeof getD1>>>; quote: EnterpriseQuote },

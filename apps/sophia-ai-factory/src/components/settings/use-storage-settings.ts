@@ -9,26 +9,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useCsrfToken } from '@/seed/security/use-csrf-token';
+import {
+  type StorageFormData,
+  INITIAL_STORAGE_FORM,
+  MASKED_PLACEHOLDER,
+  fetchStorageSettings,
+  patchStorageSettings,
+} from './storage-settings-api';
 
-export interface StorageFormData {
-  r2AccessKeyId: string;
-  r2SecretAccessKey: string;
-  r2BucketName: string;
-  r2Endpoint: string;
-  r2PublicBaseUrl: string;
-  useTenantStorage: boolean;
-}
-
-export const INITIAL_STORAGE_FORM: StorageFormData = {
-  r2AccessKeyId: '',
-  r2SecretAccessKey: '',
-  r2BucketName: '',
-  r2Endpoint: '',
-  r2PublicBaseUrl: '',
-  useTenantStorage: false,
-};
-
-export const MASKED_PLACEHOLDER = '••••••••••••••••';
+export { type StorageFormData, INITIAL_STORAGE_FORM, MASKED_PLACEHOLDER };
 
 export function useStorageSettings() {
   const csrfHeaders = useCsrfToken();
@@ -47,22 +36,10 @@ export function useStorageSettings() {
   const loadSettings = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/v1/settings/storage');
-      if (res.ok) {
-        const data = (await res.json()) as { value?: Partial<StorageFormData> };
-        const val = data.value || {};
-        setFormData({
-          r2AccessKeyId: val.r2AccessKeyId || '',
-          r2SecretAccessKey: val.r2SecretAccessKey || '',
-          r2BucketName: val.r2BucketName || '',
-          r2Endpoint: val.r2Endpoint || '',
-          r2PublicBaseUrl: val.r2PublicBaseUrl || '',
-          useTenantStorage: Boolean(val.useTenantStorage),
-        });
-        setIsMasked({
-          accessKey: Boolean(val.r2AccessKeyId),
-          secretKey: Boolean(val.r2SecretAccessKey),
-        });
+      const loaded = await fetchStorageSettings();
+      if (loaded) {
+        setFormData(loaded.formData);
+        setIsMasked(loaded.isMasked);
       }
     } catch {
       setStatusMessage({ type: 'error', text: 'Failed to load storage configuration.' });
@@ -89,30 +66,9 @@ export function useStorageSettings() {
     setIsSaving(true);
     setStatusMessage(null);
     try {
-      const payload = {
-        r2AccessKeyId: formData.r2AccessKeyId.trim() || null,
-        r2SecretAccessKey: formData.r2SecretAccessKey.trim() || null,
-        r2BucketName: formData.r2BucketName.trim() || null,
-        r2Endpoint: formData.r2Endpoint.trim() || null,
-        r2PublicBaseUrl: formData.r2PublicBaseUrl.trim() || null,
-        useTenantStorage: formData.useTenantStorage,
-      };
-
-      const res = await fetch('/api/v1/settings/storage', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...csrfHeaders,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
-        setStatusMessage({
-          type: 'error',
-          text: err.message || err.error || 'Failed to save storage settings.',
-        });
+      const result = await patchStorageSettings(formData, csrfHeaders);
+      if (!result.ok) {
+        setStatusMessage({ type: 'error', text: result.errorText });
         return false;
       }
 
@@ -120,10 +76,7 @@ export function useStorageSettings() {
         type: 'success',
         text: 'Cloudflare R2 storage credentials saved successfully.',
       });
-      setIsMasked({
-        accessKey: Boolean(payload.r2AccessKeyId),
-        secretKey: Boolean(payload.r2SecretAccessKey),
-      });
+      setIsMasked(result.isMasked);
       return true;
     } catch {
       setStatusMessage({ type: 'error', text: 'Network error saving storage settings.' });

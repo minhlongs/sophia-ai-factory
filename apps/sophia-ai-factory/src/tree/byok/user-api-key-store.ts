@@ -9,16 +9,18 @@
  * Plaintext keys never cross this module boundary in persisted form.
  */
 
-import { getD1 } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client'
 import { getActiveKeyVersion, decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto'
+
+export { clearUserApiKey, listUserApiKeyProviders } from '@/tree/byok/user-api-key-store-queries'
 
 /** All providers that can be stored in user_api_keys. 'heygen' is server-managed (not user-settable via admin UI). */
 export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'replicate' | 'muapi' | 'apollo' | 'hunter' | 'fal-ai'
 
 interface KeyRow {
- encrypted_key: ArrayBuffer | Uint8Array
- key_version: number | null
- key_validated_at?: number | null
+  encrypted_key: ArrayBuffer | Uint8Array
+  key_version: number | null
+  key_validated_at?: number | null
 }
 
 function toBytes(blob: ArrayBuffer | Uint8Array): Uint8Array {
@@ -30,17 +32,16 @@ function toBytes(blob: ArrayBuffer | Uint8Array): Uint8Array {
  * Throws on missing D1 or missing BYOK_MASTER_KEY (caller must surface).
  */
 export async function setUserApiKey(
-  userId:   string,
+  userId: string,
   provider: ByokProvider,
   plainKey: string,
 ): Promise<void> {
   if (!userId || !provider || !plainKey) {
     throw new Error('BYOK_SET_INVALID_ARGS')
   }
-  const _db = await getD1();
-  if (!_db) throw new Error('BYOK_D1_UNAVAILABLE');
-  const d1 = _db;
-  if (!d1) throw new Error('BYOK_D1_UNAVAILABLE')
+  const _db = await getD1()
+  if (!_db) throw new Error('BYOK_D1_UNAVAILABLE')
+  const d1 = _db
 
   const encrypted = await encryptApiKey(plainKey, userId)
   const keyVersion = await getActiveKeyVersion()
@@ -87,13 +88,13 @@ export async function setUserApiKey(
  * All failure modes collapse to `null` so callers degrade to env fallback.
  */
 export async function getUserApiKey(
-  userId:   string,
+  userId: string,
   provider: ByokProvider,
 ): Promise<string | null> {
   if (!userId || !provider) return null
-  const _db = await getD1();
-  if (!_db) return null; // Graceful degrade: no D1 → null (fallback to env)
-  const d1 = _db;
+  const _db = await getD1()
+  if (!_db) return null
+  const d1 = _db
 
   try {
     const row = await d1
@@ -113,52 +114,5 @@ export async function getUserApiKey(
     )
   } catch {
     return null
-  }
-}
-
-/**
- * Remove a stored key. Idempotent — no-op on missing row.
- * Throws on missing D1 (surfaces to admin UI).
- */
-export async function clearUserApiKey(
-  userId:   string,
-  provider: ByokProvider,
-): Promise<void> {
-  if (!userId || !provider) throw new Error('BYOK_CLEAR_INVALID_ARGS')
-  const _db = await getD1();
-  if (!_db) throw new Error('D1 binding not available');
-  const d1 = _db;
-  if (!d1) throw new Error('BYOK_D1_UNAVAILABLE')
-
-  await d1
-    .prepare(`DELETE FROM user_api_keys WHERE user_id = ? AND provider = ?`)
-    .bind(userId, provider)
-    .run()
-}
-
-/**
- * List providers for which a user has stored a key. Returns empty array
- * on failure. Used by /dashboard/api-keys UI (future).
- */
-export async function listUserApiKeyProviders(
-  userId: string,
-): Promise<ByokProvider[]> {
-  if (!userId) return []
-  const _db = await getD1();
-  if (!_db) throw new Error('D1 binding not available');
-  const d1 = _db;
-  if (!d1) return []
-
-  try {
-    const { results } = await d1
-      .prepare(
-        `SELECT provider FROM user_api_keys WHERE user_id = ? ORDER BY provider ASC`,
-      )
-      .bind(userId)
-      .all<{ provider: string }>()
-
-    return (results ?? []).map((r) => r.provider as ByokProvider)
-  } catch {
-    return []
   }
 }

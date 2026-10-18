@@ -10,92 +10,17 @@
 
 import type { OfferProvider, AffiliateOffer, ListOffersOpts } from '../provider-interface'
 import { asTrending } from '../provider-interface'
-
-const API_BASE = 'https://api.shareasale.com/x.cfm'
-const API_VERSION = '2.8'
-const ACTION_VERB = 'getMerchantList'
-const NETWORK_SLUG = 'shareasale'
-
-interface SasMerchant {
-  merchantID?: string | number
-  merchantName?: string
-  www?: string
-  category?: string
-  description?: string
-  commission?: string | number
-  EPC?: string | number
-  networkEarnings?: string | number
-}
-
-interface SasResponse {
-  merchants?: SasMerchant[]
-}
-
-async function buildSig(token: string, ts: string): Promise<string> {
-  const msg = `${token}:${ts}:${API_VERSION}:${ACTION_VERB}`
-  const enc = new TextEncoder()
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(token),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
-  const buf = await crypto.subtle.sign('HMAC', key, enc.encode(msg))
-  return Array.from(new Uint8Array(buf))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-function mapMerchant(m: SasMerchant): AffiliateOffer {
-  const commRaw = m.commission ?? m.networkEarnings
-  const commVal = commRaw !== undefined && String(commRaw) !== '' ? parseFloat(String(commRaw)) : null
-  const isPercent = commRaw ? !String(commRaw).includes('$') : true
-  return {
-    externalId: String(m.merchantID ?? ''),
-    title: String(m.merchantName ?? ''),
-    description: String(m.description ?? '').slice(0, 500),
-    imageUrl: 'https://placehold.co/400x400?text=ShareASale',
-    productUrl: m.www ? String(m.www) : `https://shareasale.com/r.cfm?m=${m.merchantID}`,
-    commissionPct: isPercent && commVal !== null && !isNaN(commVal) ? commVal : null,
-    commissionFixedUsd: !isPercent && commVal !== null && !isNaN(commVal) ? commVal : null,
-    niche: m.category ? String(m.category).toLowerCase() : 'software',
-    language: 'en',
-    region: 'US',
-    isTrending: false,
-  }
-}
-
-function mockOffers(): AffiliateOffer[] {
-  return [
-    {
-      externalId: 'sas-mock-001',
-      title: 'ShareASale Cloud Platform (Mock)',
-      description: 'Enterprise cloud management platform with high EPC – mock fixture',
-      imageUrl: 'https://placehold.co/400x400?text=ShareASale',
-      productUrl: 'https://shareasale.com/r.cfm?b=123&u=AFFILIATE&m=SAS1001',
-      commissionPct: 30,
-      commissionFixedUsd: null,
-      niche: 'software',
-      language: 'en',
-      region: 'US',
-      isTrending: false,
-    },
-    {
-      externalId: 'sas-mock-002',
-      title: 'ShareASale E-Commerce SaaS (Mock)',
-      description: 'Automated conversion optimizer for digital merchants – mock fixture',
-      imageUrl: 'https://placehold.co/400x400?text=ShareASale+2',
-      productUrl: 'https://shareasale.com/r.cfm?b=456&u=AFFILIATE&m=SAS1002',
-      commissionPct: 25,
-      commissionFixedUsd: 50,
-      niche: 'saas',
-      language: 'en',
-      region: 'US',
-      isTrending: false,
-    },
-  ]
-}
+import {
+  API_BASE,
+  API_VERSION,
+  ACTION_VERB,
+  NETWORK_SLUG,
+  buildSig,
+  mapMerchant,
+  mockOffers,
+  type SasMerchant,
+  type SasResponse,
+} from './shareasale-mappers'
 
 export class ShareASaleProvider implements OfferProvider {
   readonly networkSlug = NETWORK_SLUG

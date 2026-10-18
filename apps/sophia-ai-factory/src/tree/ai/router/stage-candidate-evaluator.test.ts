@@ -27,6 +27,16 @@ describe('stage candidate evaluator', () => {
     expect(result.isMekongProvider).toBe(false);
   });
 
+  it('fails closed when Mekong is the only candidate but edge is unavailable or bypassed', () => {
+    const mekongOnly = [candidates[0]];
+    expect(() => selectBestStageCandidate({
+      stage: 'script', candidates: mekongOnly, spec, strategy: 'cheapest_healthy', edgeAvailable: false, tenantKeyRef: 'tenant',
+    })).toThrow('No eligible providers for script stage');
+    expect(() => selectBestStageCandidate({
+      stage: 'script', candidates: mekongOnly, spec: { ...spec, bypassEdge: true }, strategy: 'cheapest_healthy', edgeAvailable: true, tenantKeyRef: 'tenant',
+    })).toThrow('No eligible providers for script stage');
+  });
+
   it('chooses the higher-cost paid option for quality priority and uses edge when available', () => {
     const quality = selectBestStageCandidate({
       stage: 'script', candidates: candidates.slice(1), spec, strategy: 'quality_priority', edgeAvailable: false, tenantKeyRef: 'tenant',

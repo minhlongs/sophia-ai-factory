@@ -9,55 +9,16 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/templates/cost-ledger';
-import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
-import { logger } from '@/seed/utils/logger-utility';
-import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
+import { assertValidTransition, type VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 import { synthesize } from '@/land/video/generation/tts-client';
-
-/** Progress payload emitted via inngest.send for SSE streaming */
-interface ProgressPayload {
-  type: 'campaign.progress';
-  campaignId: string;
-  step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
-  progress: number;
-  message: string;
-  timestamp: number;
-}
-
-/**
- * Emit a campaign.progress event for SSE subscribers.
- * Uses inngest.send() for cross-function event delivery.
- */
-async function emitProgress(
-  campaignId: string,
-  step: ProgressPayload['step'],
-  progress: number,
-  message: string,
-): Promise<void> {
-  const payload: ProgressPayload = {
-    type: 'campaign.progress',
-    campaignId,
-    step,
-    progress,
-    message,
-    timestamp: Date.now(),
-  };
-  await inngest.send({
-    id: `progress-${campaignId}-${step}-${payload.timestamp}`,
-    name: 'campaign.progress',
-    data: payload,
-  });
-  logger.info('[videoTTS] Progress emitted', { campaignId, step, progress, message });
-}
-
-interface VideoJobRow {
-  status: VideoJobStatus;
-  script_text: string | null;
-  prompt: string;
-  audio_r2_key: string | null;
-}
+import {
+  emitProgress,
+  fetchVideoJobForTransition,
+  markVideoJobTtsPending,
+  fetchVideoJobForSynthesis,
+  saveVideoJobAudioKey,
+} from './video-tts-helpers';
 
 export const videoTTS = inngest.createFunction(
   { id: 'video-tts', retries: 3 },
@@ -73,35 +34,13 @@ export const videoTTS = inngest.createFunction(
     await emitProgress(jobId, 'tts', 15, 'Bắt đầu tổng hợp giọng nói / Starting TTS synthesis');
 
     await step.run('transition-to-tts-pending', async () => {
-      const db = createServerClient();
-      const { data } = await db
-        .from('video_jobs')
-        .select('status, script_text, prompt, audio_r2_key')
-        .eq('id', jobId)
-        .eq('tenant_id', tenantId)
-        .single();
-
-      const row = data as VideoJobRow | null;
-      if (!row) throw new Error(`[videoTTS] Job not found: ${jobId}`);
-
+      const row = await fetchVideoJobForTransition<VideoJobStatus>(jobId, tenantId);
       assertValidTransition(row.status, 'tts_pending');
-
-      await db
-        .from('video_jobs')
-        .update({ status: 'tts_pending', updated_at: Math.floor(Date.now() / 1000) })
-        .eq('id', jobId);
+      await markVideoJobTtsPending(jobId);
     });
 
     const { r2Key, durationSec, costUsd } = await step.run('synthesize-audio', async () => {
-      const db = createServerClient();
-      const { data } = await db
-        .from('video_jobs')
-        .select('script_text, prompt, audio_r2_key')
-        .eq('id', jobId)
-        .single();
-
-      const row = data as Pick<VideoJobRow, 'script_text' | 'prompt' | 'audio_r2_key'> | null;
-      if (!row) throw new Error(`[videoTTS] Job not found during synthesis: ${jobId}`);
+      const row = await fetchVideoJobForSynthesis(jobId);
 
       // Idempotency: already synthesised in a previous attempt
       if (row.audio_r2_key) {
@@ -121,12 +60,7 @@ export const videoTTS = inngest.createFunction(
         internalToken,
       });
 
-      // Persist audio key
-      await db
-        .from('video_jobs')
-        .update({ audio_r2_key: result.r2Key, updated_at: Math.floor(Date.now() / 1000) })
-        .eq('id', jobId);
-
+      await saveVideoJobAudioKey(jobId, result.r2Key);
       return result;
     });
 

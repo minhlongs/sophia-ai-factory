@@ -52,3 +52,29 @@ CREATE TABLE IF NOT EXISTS commission_dead_letter (
   resolved_at       TEXT
 )
 `
+
+export const UPSERT_COMMISSION_DLQ_SQL = `INSERT INTO commission_dead_letter
+  (event_id, receipt, transaction_type, amount, payload,
+   failure_reason, retry_count, first_failed_at, last_attempted_at, resolved)
+  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)
+  ON CONFLICT(event_id) DO UPDATE SET
+    retry_count = retry_count + 1,
+    failure_reason = ?6,
+    last_attempted_at = ?9`
+
+export const SELECT_STALE_COMMISSION_DLQ_SQL = `SELECT * FROM commission_dead_letter
+  WHERE resolved = 0 AND last_attempted_at < ?1
+  ORDER BY first_failed_at ASC
+  LIMIT ?2`
+
+export const RESOLVE_COMMISSION_DLQ_SQL = `UPDATE commission_dead_letter
+  SET resolved = 1, resolved_at = ?1
+  WHERE event_id = ?2`
+
+export interface RawD1QueryHandle {
+  prepare: (sql: string) => {
+    bind: (...args: unknown[]) => {
+      all: <T>() => Promise<{ results: T[] }>
+    }
+  }
+}

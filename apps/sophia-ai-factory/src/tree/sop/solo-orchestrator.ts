@@ -3,17 +3,19 @@
  * Layer: tree (domain-reusable, imports seed only)
  */
 
-import { routeLLM } from '@/tree/openclaw'
-import { spawnAgentFleet } from '@/tree/openclaw'
-import type { AgentTask } from '@/tree/openclaw'
+import { routeLLM, spawnAgentFleet } from '@/tree/openclaw'
 import type {
   AgentThought,
   SoloCompanyConfig,
-  SoloCompanyRole,
 } from '@/seed/types/solo-company-types'
 import { DEFAULT_SOLO_COMPANY_CONFIG } from '@/seed/types/solo-company-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import {
+  buildCeoPrompt,
+  delegationsToAgentTasks,
+  parseCeoResponse,
+} from './solo-orchestrator-helpers'
 
 export interface SoloCompanyResult {
   missionId: string
@@ -28,69 +30,6 @@ export interface SoloCompanyResult {
   }>
   summary: string
   durationMs: number
-}
-
-// Parse CEO JSON response with fallback to minimal valid thought
-function parseCeoResponse(text: string): AgentThought {
-  // Attempt: extract JSON object from surrounding text
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  const raw = jsonMatch ? jsonMatch[0].replace(/,\s*([}\]])/g, '$1') : text
-
-  try {
-    const parsed = JSON.parse(raw) as unknown
-    if (
-      parsed !== null &&
-      typeof parsed === 'object' &&
-      'analysis' in parsed &&
-      'plan' in parsed &&
-      'delegations' in parsed
-    ) {
-      return parsed as AgentThought
-    }
-  } catch {
-    // fall through to default
-  }
-
-  // Fallback: minimal valid thought so the fleet still runs
-  logger.warn('solo-orchestrator: CEO response not parseable — using fallback thought')
-  return {
-    analysis: text.slice(0, 500),
-    plan: ['Execute mission as described'],
-    delegations: [],
-  }
-}
-
-function buildCeoPrompt(mission: string, activeRoles: SoloCompanyRole[]): string {
-  return `You are the CEO of a Solo AI Company. Analyze the mission and break it into concrete tasks.
-
-Mission: ${mission}
-
-Available specialist roles: ${activeRoles.filter((r) => r !== 'ceo').join(', ')}
-
-Respond with ONLY valid JSON matching this structure:
-{
-  "analysis": "your analysis of the mission",
-  "plan": ["step 1", "step 2", "..."],
-  "delegations": [
-    { "role": "<role>", "task": "<specific task description>", "context": {} }
-  ]
-}
-
-Rules:
-- Each delegation must use one of the available roles
-- Tasks must be concrete and actionable
-- Limit delegations to 5 maximum`
-}
-
-function delegationsToAgentTasks(
-  delegations: AgentThought['delegations'],
-): AgentTask[] {
-  return delegations.map((d) => ({
-    id: crypto.randomUUID(),
-    prompt: d.task,
-    context: { role: d.role, ...(d.context ?? {}) },
-    tier: 'standard' as const,
-  }))
 }
 
 export async function runSoloCompany(

@@ -6,39 +6,20 @@
 
 import { randomUUID } from 'crypto';
 import { createServerClient } from '@/seed/db/client';
-import { extractProductInfo } from '../url-product-extractor';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   URLToRevenueRequest,
   URLToRevenueResult,
   URLToRevenueVariant,
   JobStatus,
-  Channel,
 } from './types';
 import { validateRequest } from './validator';
-
-async function dispatchVideoRequested(params: {
-  jobId: string;
-  tenantId: string;
-  prompt: string;
-  locale: string;
-  channel: Channel;
-  trackingLink?: string;
-}): Promise<void> {
-  // Deprecated 2026-05-17 (ADR 0007): the `url_revenue.video.requested` chain
-  // depended on the `video_jobs` table which was never applied to prod D1.
-  // The handler chain has been removed from Inngest serve registration.
-  // URL-to-Revenue jobs are still persisted in `url_to_revenue_jobs`; video
-  // generation is handled by HeyGen direct path (mission video:create).
-  logger.warn(
-    '[url-to-revenue] video dispatch deprecated — use HeyGen mission path',
-    {
-      jobId: params.jobId,
-      locale: params.locale,
-      channel: params.channel,
-    },
-  );
-}
+import {
+  buildVariantPrompt,
+  buildVariantSlots,
+  dispatchVideoRequested,
+  safeExtractProductInfo,
+} from './orchestrator-helpers';
 
 /**
  * Start a URL-to-revenue job.
@@ -55,38 +36,9 @@ export async function startUrlToRevenue(
   const jobId = randomUUID();
   const now = new Date().toISOString();
 
-  // Extract product info (non-blocking failure: use empty defaults)
-  let productTitle = '';
-  let productDescription = '';
-  let productImageUrl = '';
-  let productPrice = '';
+  const meta = await safeExtractProductInfo(req.url);
+  const variantSlots = buildVariantSlots(locales, req.channels, variants);
 
-  try {
-    const info = await extractProductInfo(req.url);
-    productTitle = info.title;
-    productDescription = info.description;
-    productImageUrl = info.imageUrl;
-    productPrice = info.price;
-  } catch (err) {
-    logger.warn(
-      '[url-to-revenue] Product extraction failed, continuing with empty metadata',
-      {
-        url: req.url,
-        error: err instanceof Error ? err.message : String(err),
-      },
-    );
-  }
-
-  // Build variant slots (locale × channel combinations, capped at variants count)
-  const variantSlots: URLToRevenueVariant[] = [];
-  outer: for (const locale of locales) {
-    for (const channel of req.channels) {
-      if (variantSlots.length >= variants) break outer;
-      variantSlots.push({ locale, channel });
-    }
-  }
-
-  // Persist job to D1
   const db = createServerClient();
   await db.from('url_to_revenue_jobs').insert({
     id: jobId,
@@ -97,30 +49,18 @@ export async function startUrlToRevenue(
     locales_json: JSON.stringify(locales),
     variants_count: variants,
     tracking_id: req.trackingId ?? null,
-    product_title: productTitle,
-    product_description: productDescription,
-    product_image_url: productImageUrl,
-    product_price: productPrice,
+    product_title: meta.title,
+    product_description: meta.description,
+    product_image_url: meta.imageUrl,
+    product_price: meta.price,
     variants_json: JSON.stringify(variantSlots),
     error_message: null,
     created_at: now,
     updated_at: now,
   });
 
-  // Dispatch Inngest events for each variant
+  const prompt = buildVariantPrompt(meta, req.url, req.trackingId);
   for (const variant of variantSlots) {
-    const prompt = [
-      productTitle ? `Product: ${productTitle}` : '',
-      productDescription ? `Description: ${productDescription}` : '',
-      productPrice ? `Price: ${productPrice}` : '',
-      `Affiliate URL: ${req.url}`,
-      req.trackingId
-        ? `Tracking URL: https://track.sophia.agencyos.network/r/${req.trackingId}`
-        : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-
     await dispatchVideoRequested({
       jobId,
       tenantId: req.tenantId,

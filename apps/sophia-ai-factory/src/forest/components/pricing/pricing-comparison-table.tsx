@@ -5,49 +5,17 @@
  * Shows feature matrix across BASIC / PREMIUM / ENTERPRISE / MASTER.
  */
 
-import { Check, Minus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
-
-interface PricingComparisonTableProps {
-  currentTier?: string | null;
-}
-
-interface TierDef {
-  key: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
-  label: string;
-  popular?: boolean;
-}
-
-// Tier label keys resolved via t() inside component to avoid stale closure
-const TIER_KEYS: TierDef[] = [
-  { key: 'BASIC', label: '' },
-  { key: 'PREMIUM', label: '', popular: true },
-  { key: 'ENTERPRISE', label: '' },
-  { key: 'MASTER', label: '' },
-];
-
-interface FeatureRow {
-  label: string;
-  values: (string | boolean)[];
-}
-
-function formatNum(n: number): string {
-  return n >= 999 ? '∞' : n.toLocaleString();
-}
-
-function Cell({ value }: { value: string | boolean }) {
-  if (value === true) return <Check className="w-4 h-4 text-primary mx-auto" role="img" aria-label="Included" />;
-  if (value === false) return <Minus className="w-4 h-4 text-muted-foreground mx-auto" role="img" aria-label="Not included" />;
-  return <span className="text-sm text-foreground">{value}</span>;
-}
-
-const TIER_LABEL_KEYS: Record<TierDef['key'], 'table_tier_starter' | 'table_tier_growth' | 'table_tier_premium' | 'table_tier_master'> = {
-  BASIC: 'table_tier_starter',
-  PREMIUM: 'table_tier_growth',
-  ENTERPRISE: 'table_tier_premium',
-  MASTER: 'table_tier_master',
-};
+import {
+  Cell,
+  type FeatureRow,
+  formatNum,
+  type PricingComparisonTableProps,
+  TIER_KEYS,
+  TIER_LABEL_KEYS,
+  type TierDef,
+} from './pricing-comparison-table-helpers';
 
 export function PricingComparisonTable({ currentTier }: PricingComparisonTableProps) {
   const t = useTranslations('pricing');

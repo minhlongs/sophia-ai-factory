@@ -9,7 +9,6 @@ import { getUserTier } from '@/seed/db/get-user-tier';
 import { checkMissionQuota } from '@/tree/quota/mission-quota';
 import { runMissionPreflightCheck } from '@/tree/mission/preflight-check';
 import { deductCredits } from '@/tree/mcu/credits-repo';
-import { createMission } from '@/tree/mission/repository';
 import { dispatchMultiTrackMission } from '@/tree/mission/executor-bridge';
 import { generateCampaignBlueprint } from '../campaign-generator';
 import type { BatchRunResult, ScheduledCampaignRow } from './types';
@@ -19,6 +18,7 @@ import {
   advanceScheduleCAS,
 } from './batch-queue-manager';
 import { processRecurringCampaignRunsTable } from './cron-trigger-evaluator';
+import { createScheduledCampaignMission } from './scheduled-mission-factory';
 
 export async function executeSingleSchedule(
   schedule: ScheduledCampaignRow,
@@ -54,35 +54,13 @@ export async function executeSingleSchedule(
       return;
     }
 
-    const missionId = `m_sched_${schedule.id}_${Date.now()}`;
-    const nowSec = Math.floor(Date.now() / 1000);
-    const mission = await createMission({
-      id: missionId,
+    const mission = await createScheduledCampaignMission({
+      schedule,
       workspaceId,
-      creatorId: userId,
-      title: `${schedule.topic} — ${effectiveToday}`,
-      objective: `Automated recurring playbook campaign for ${schedule.topic}`,
-      audience: 'Target audience derived from playbook patterns',
-      geography: 'global',
-      timeframeStart: nowSec,
-      timeframeEnd: nowSec + 7 * 86400,
-      budgetCents: estimatedCostCents,
-      spentCents: 0,
-      autonomyLevel: 3,
-      channels: [blueprint.targetPlatform],
-      monetizationGoals: ['conversion'],
-      constraints: {
-        blueprintId: blueprint.id,
-        scheduleId: schedule.id,
-        source: 'playbook_recurring_batch',
-        hookStyle: blueprint.hookStyle,
-        voiceStyle: blueprint.voiceStyle,
-      },
-      successMetrics: {},
-      status: 'draft',
-      currentPhase: 'init',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+      userId,
+      effectiveToday,
+      blueprint,
+      estimatedCostCents,
     });
 
     const creditDeducted = await deductCredits(

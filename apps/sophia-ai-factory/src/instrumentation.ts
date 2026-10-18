@@ -12,8 +12,12 @@
 
 export async function register(): Promise<void> {
   try {
-    const { initializeOTel } = await import('@/seed/telemetry/opentelemetry-setup');
-    await initializeOTel();
+    // The OTLP exporters use Node's http/https/fs modules. Next.js invokes this
+    // hook for both runtimes, so import their module only in Node.js builds.
+    if (process.env.NEXT_RUNTIME === 'nodejs') {
+      const { register: registerNodeInstrumentation } = await import('./instrumentation-node');
+      await registerNodeInstrumentation();
+    }
   } catch {
     // OTEL failure is non-fatal — platform boots regardless.
     // Diagnostics are logged by initializeOTel() itself.

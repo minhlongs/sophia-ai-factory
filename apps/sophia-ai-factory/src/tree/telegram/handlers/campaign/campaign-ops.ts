@@ -1,14 +1,12 @@
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
-import { truncateMarkdownV2Safely } from '@/tree/telegram/format-markdown-v2';
 import {
   CampaignRow,
   ACTIVE_STATUSES,
   MAX_CAMPAIGN_LIST_ROWS,
-  MAX_CAMPAIGN_TITLE_LEN,
-  MAX_CAMPAIGN_MESSAGE_LEN,
   getCampaignDb,
 } from './types-and-db';
+import { formatCampaignListMessage } from './campaign-ops-formatter';
 
 /**
  * Handle /campaign list — list all campaigns for the user with their statuses.
@@ -46,33 +44,7 @@ export async function handleCampaignList(chatId: string): Promise<void> {
       return;
     }
 
-    const statusEmoji: Record<string, string> = {
-      draft: '📝',
-      queued: '⏳',
-      processing_script: '⚙️',
-      processing_video: '🎬',
-      completed: '✅',
-      failed: '❌',
-      video_timeout: '⏰',
-    };
-
-    let message = '📋 *All Campaigns:*\n\n';
-    campaigns.forEach((c, i) => {
-      const emoji = statusEmoji[c.status ?? ''] || '❓';
-      const shortId = c.id.slice(0, 8);
-      const date = new Date(c.created_at).toLocaleDateString();
-      const title = truncateMarkdownV2Safely(c.title, MAX_CAMPAIGN_TITLE_LEN);
-      message += `${emoji} *${title}*\n`;
-      message += ` ID: \`${shortId}\` | Status: ${c.status ?? 'unknown'} | Progress: ${c.progress ?? 0}%\n`;
-      message += ` Created: ${date}\n`;
-      if (i < campaigns.length - 1) message += '\n';
-    });
-
-    const finalMessage = truncateMarkdownV2Safely(message, MAX_CAMPAIGN_MESSAGE_LEN);
-    await sendMessage(
-      chatId,
-      finalMessage + (finalMessage.length >= MAX_CAMPAIGN_MESSAGE_LEN ? '…\n_(truncated)_' : ''),
-    );
+    await sendMessage(chatId, formatCampaignListMessage(campaigns));
   } catch (error) {
     logger.error('Error listing campaigns', error instanceof Error ? error : new Error(String(error)));
     await sendMessage(chatId, '❌ Error fetching campaign list.');

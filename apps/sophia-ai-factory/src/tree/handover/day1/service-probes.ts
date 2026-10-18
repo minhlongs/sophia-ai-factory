@@ -8,6 +8,8 @@
 import type { CheckpointResult } from '@/seed/handover/handover-types';
 import type { Day1ProbeOptions } from './types';
 
+export { probeTelegramConnectivity } from './telegram-probe';
+
 /**
  * 5. Checkpoint: Better Auth Session Authentication Readiness
  */
@@ -85,73 +87,5 @@ export async function probeNowpaymentsReadiness(options?: Day1ProbeOptions): Pro
     details: `NOWPayments API: ${hasApiKey ? 'Configured' : 'Key pending'}, IPN Secret: ${hasIpnSecret ? 'Active' : 'Secret pending'}, Upstream Status API: ${publicApiAvailable ? 'Reachable (OK)' : 'Checked'}`,
     expected: 'API Key & IPN Secret present',
     actual: hasApiKey && hasIpnSecret ? 'Fully Configured' : 'Ready for Customer Keys',
-  };
-}
-
-/**
- * 7. Checkpoint: Telegram Alert Bot Connectivity
- */
-export async function probeTelegramConnectivity(options?: Day1ProbeOptions): Promise<CheckpointResult> {
-  const start = Date.now();
-  const botToken = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
-  const hasToken = botToken.length > 10;
-  const latency = Date.now() - start;
-
-  // If token is unset or empty -> WARN (do not self-certify as PASS)
-  if (!hasToken) {
-    return {
-      checkpointId: 'notifications_telegram',
-      name: 'Telegram Ops Alert & Notification Bot',
-      nameVi: 'Bot Cảnh Báo Vận Hành Telegram',
-      category: 'notifications',
-      status: 'WARN',
-      latencyMs: latency,
-      details: 'TELEGRAM_BOT_TOKEN is not configured; operational alert notifications will be disabled',
-      expected: 'TELEGRAM_BOT_TOKEN configured',
-      actual: 'Unconfigured',
-      diagnosticData: { hasToken: false, botReachable: false },
-    };
-  }
-
-  let botReachable = false;
-  let botUsername = '@Sophia_Bbot';
-
-  if (!options?.skipNetworkCalls && !botToken.startsWith('mock_')) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? 3000);
-      const res = await fetch(`https://api.telegram.org/bot${botToken}/getMe`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (res.ok) {
-        const json = (await res.json()) as { ok: boolean; result?: { username?: string } };
-        if (json.ok && json.result?.username) {
-          botReachable = true;
-          botUsername = `@${json.result.username}`;
-        }
-      }
-    } catch {
-      // Non-fatal
-    }
-  }
-
-  const isVerified = botReachable || options?.skipNetworkCalls || botToken.startsWith('mock_');
-
-  return {
-    checkpointId: 'notifications_telegram',
-    name: 'Telegram Ops Alert & Notification Bot',
-    nameVi: 'Bot Cảnh Báo Vận Hành Telegram',
-    category: 'notifications',
-    status: isVerified ? 'PASS' : 'WARN',
-    latencyMs: Date.now() - start,
-    details: botReachable
-      ? `Telegram Bot ${botUsername} live API verified via getMe`
-      : isVerified
-        ? `Telegram Bot ${botUsername} token configured (network validation skipped)`
-        : 'Telegram Bot token configured but getMe API call failed or timed out',
-    expected: 'Telegram Bot active',
-    actual: isVerified ? botUsername : 'Unreachable',
-    diagnosticData: { hasToken: true, botReachable, username: botUsername },
   };
 }

@@ -13,17 +13,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { FirstRunTemplate } from '@/land/missions/first-run-template';
 import { estimateTemplateCost } from '@/land/missions/cost-estimator';
 import type { MissionStageId } from '../mission-progress-bar';
-import { getMissionTrackStatus } from '@/land/creative-mission/actions';
 import { estimateBlueprintStudioCost } from '@/tree/marketplace/preflight-cost-engine';
-import {
-  type FirstRunWizardProps,
-  type WizardStatus,
-  POLL_INTERVAL_MS,
-  MAX_POLL_TIMEOUT_MS,
-  STAGE_TO_KEY,
-} from './types';
-import { mapTrackStatusToStage } from './stage-resolver';
+import { type FirstRunWizardProps, type WizardStatus } from './types';
 import { launchWizardMission } from './wizard-launch-helper';
+import { pollWizardTrackStep } from './wizard-poll-helper';
 
 export function useWizardFlow(
   props: FirstRunWizardProps,
@@ -66,46 +59,19 @@ export function useWizardFlow(
   }, [clearPolling]);
 
   const pollTrackStatus = useCallback(async (targetMissionId: string) => {
-    if (!isMountedRef.current) return;
-    if (Date.now() - pollStartRef.current > MAX_POLL_TIMEOUT_MS) {
-      setStatus('failed');
-      setErrorMessage(t('timeoutError'));
-      clearPolling();
-      return;
-    }
-
-    try {
-      const res = await getMissionTrackStatus(targetMissionId);
-      if (!isMountedRef.current) return;
-
-      if (res.ok) {
-        const { status: mStatus, currentPhase, trackStatus } = res.value;
-        const mapped = mapTrackStatusToStage(mStatus, currentPhase, trackStatus);
-        setCurrentStage(mapped.stage);
-
-        if (mapped.uiStatus === 'completed') {
-          setStatus('completed');
-          clearPolling();
-          return;
-        }
-
-        if (mapped.uiStatus === 'failed') {
-          setStatus('failed');
-          const stageKey = STAGE_TO_KEY[mapped.stage] || 'script_generation';
-          setErrorMessage(t('stageFailureMessage', { stage: t(`stages.${stageKey}.label`) }));
-          clearPolling();
-          return;
-        }
-      }
-      pollTimeoutRef.current = setTimeout(() => {
-        void pollTrackStatus(targetMissionId);
-      }, POLL_INTERVAL_MS);
-    } catch {
-      if (!isMountedRef.current) return;
-      pollTimeoutRef.current = setTimeout(() => {
-        void pollTrackStatus(targetMissionId);
-      }, POLL_INTERVAL_MS);
-    }
+    await pollWizardTrackStep({
+      targetMissionId,
+      isMounted: () => isMountedRef.current,
+      getPollStartedAt: () => pollStartRef.current,
+      t,
+      setStatus,
+      setCurrentStage,
+      setErrorMessage,
+      clearPolling,
+      scheduleNextPoll: (delayMs) => {
+        pollTimeoutRef.current = setTimeout(() => void pollTrackStatus(targetMissionId), delayMs);
+      },
+    });
   }, [t, clearPolling]);
 
   const handleLaunch = async () => {

@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for FHE Computation Workloads and Autonomous Court Arbitration.
  */
 
-import { getD1 } from '@/seed/db/client';
 import { evaluateFheComputation, validateFheCircuitParams } from '@/tree/crypto/fhe-compute-engine';
 import { adjudicateDisputeCase } from '@/tree/judicial/autonomous-court-engine';
 import type {
@@ -17,6 +16,10 @@ import type {
   JurorBallot,
   JudicialArbitrationVerdict,
 } from '@/seed/types/fhe-court';
+import {
+  persistFheWorkloadEvaluation,
+  persistJudicialVerdict,
+} from './fhe-court-persistence';
 
 export interface SubmitFheWorkloadActionParams {
   workload: FheCiphertextWorkload;
@@ -44,37 +47,7 @@ export async function submitFheWorkloadAction(
     }
 
     const result = evaluateFheComputation(params.workload, params.request);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO fhe_ciphertext_workloads (
-             id, workload_id, scheme_type, ciphertext_digest_sha256,
-             polynomial_modulus_degree, current_noise_budget_bits,
-             min_noise_budget_threshold, requires_bootstrapping,
-             status, execution_duration_ms
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(workload_id) DO UPDATE SET
-             current_noise_budget_bits = ?,
-             execution_duration_ms = execution_duration_ms + ?`
-        )
-        .bind(
-          `fhe_${params.workload.workloadId}`,
-          params.workload.workloadId,
-          params.workload.schemeType,
-          result.resultCiphertextDigest,
-          params.workload.polynomialModulusDegree,
-          result.remainingNoiseBudgetBits,
-          params.workload.minNoiseBudgetThreshold,
-          result.bootstrappingTriggered ? 1 : 0,
-          'EVALUATED_READY',
-          result.durationMs,
-          result.remainingNoiseBudgetBits,
-          result.durationMs
-        )
-        .run();
-    }
+    await persistFheWorkloadEvaluation(params.workload, result);
 
     return {
       success: true,
@@ -103,39 +76,7 @@ export async function adjudicateJudicialDisputeAction(
 ): Promise<AdjudicateActionResult> {
   try {
     const verdict = adjudicateDisputeCase(params.disputeCase, params.ballots);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO judicial_arbitration_verdicts (
-             id, case_number, verdict_outcome, affirmative_votes, dissenting_votes,
-             slashed_juror_stakes_cents, disbursed_compensation_cents,
-             zero_knowledge_proof_hash, formal_verification_passed
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          verdict.id,
-          verdict.caseNumber,
-          verdict.verdictOutcome,
-          verdict.affirmativeVotes,
-          verdict.dissentingVotes,
-          verdict.slashedJurorStakesCents,
-          verdict.disbursedCompensationCents,
-          verdict.zeroKnowledgeProofHash,
-          verdict.formalVerificationPassed ? 1 : 0
-        )
-        .run();
-
-      await db
-        .prepare(
-          `UPDATE judicial_dispute_cases
-           SET status = ?
-           WHERE case_number = ?`
-        )
-        .bind('VERDICT_RENDERED', verdict.caseNumber)
-        .run();
-    }
+    await persistJudicialVerdict(verdict);
 
     return { success: true, verdict };
   } catch (err: unknown) {

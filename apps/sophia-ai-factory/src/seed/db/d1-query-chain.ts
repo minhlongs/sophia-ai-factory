@@ -1,5 +1,6 @@
 import type { QueryResult, FilterOp, OrderSpec } from '@/seed/db/d1-query-types';
 import { executeQuery, type QueryState } from '@/seed/db/d1-query-chain-executors';
+import { parseOrFilter } from './d1-query-or-parser';
 
 /**
  * Chainable query builder for D1.
@@ -35,7 +36,7 @@ export class D1QueryChain<T = Record<string, unknown>> {
       limitVal: this.limitVal, offsetVal: this.offsetVal,
       isSingle: this.isSingle, isMaybeSingle: this.isMaybeSingle, isCount: this.isCount,
       operation: this.operation, payload: this.payload, returnCols: this.returnCols,
-    }
+    };
   }
 
   select(cols = '*', opts?: { count?: string; head?: boolean }): this {
@@ -84,31 +85,8 @@ export class D1QueryChain<T = Record<string, unknown>> {
 
   in(col: string, vals: unknown[]): this { this.inFilters.push({ col, vals }); return this; }
 
-  /**
-   * PostgREST-style OR filter. Parses comma-separated `col.op.val` pairs into a SQL OR clause.
-   * Example: `or('expires_at.is.null,expires_at.gt.1234')` → `(expires_at IS NULL OR expires_at > 1234)`
-   * Supported ops: eq, neq, gt, gte, lt, lte, is, like.
-   */
   or(filterString: string): this {
-    const opMap: Record<string, string> = {
-      eq: '=', neq: '!=', gt: '>', gte: '>=', lt: '<', lte: '<=', is: 'IS', like: 'LIKE',
-    };
-    const colAllowlist = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
-    const group: FilterOp[] = [];
-    for (const part of filterString.split(',')) {
-      const [col, op, ...rest] = part.split('.');
-      const rawVal = rest.join('.');
-      if (!col || !op || !colAllowlist.test(col)) continue;
-      const sqlOp = opMap[op];
-      if (!sqlOp) continue;
-      let val: unknown = rawVal;
-      if (rawVal === 'null') val = null;
-      else if (op === 'gt' || op === 'gte' || op === 'lt' || op === 'lte') {
-        const num = Number(rawVal);
-        if (!isNaN(num)) val = num;
-      }
-      group.push({ col, op: sqlOp, val });
-    }
+    const group = parseOrFilter(filterString);
     if (group.length > 0) this.orFilters.push(group);
     return this;
   }

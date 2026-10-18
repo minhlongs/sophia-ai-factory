@@ -6,10 +6,16 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { CheckCircle2, Cloud, KeyRound, ShieldCheck, Sparkles, X } from 'lucide-react';
+import React from 'react';
+import { CheckCircle2, Cloud, Sparkles, X } from 'lucide-react';
 import type { FeatureGateEvaluation } from '@/seed/config/edition-config';
 import { UPGRADE_MODAL_COPY } from './commercial-upgrade-modal-copy';
+import {
+  CommercialLicenseValidationForm,
+  type CommercialLicenseValidationFormProps,
+} from './commercial-license-form';
+
+export { CommercialLicenseValidationForm, type CommercialLicenseValidationFormProps };
 
 export interface CommercialUpgradeModalProps {
   readonly evaluation: FeatureGateEvaluation | null;
@@ -26,25 +32,11 @@ export function CommercialUpgradeModal({
   onValidateLicenseKey,
   validationFeedback,
 }: CommercialUpgradeModalProps) {
-  const [licenseKey, setLicenseKey] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   if (!evaluation || evaluation.allowed) return null;
 
   const copy = locale === 'vi' ? UPGRADE_MODAL_COPY.vi : UPGRADE_MODAL_COPY.en;
   const title = locale === 'vi' ? evaluation.feature.titleVi : evaluation.feature.titleEn;
   const summary = locale === 'vi' ? evaluation.messageVi : evaluation.messageEn;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!licenseKey.trim() || !onValidateLicenseKey) return;
-    setIsSubmitting(true);
-    try {
-      await onValidateLicenseKey(licenseKey.trim());
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div
@@ -103,41 +95,11 @@ export function CommercialUpgradeModal({
           </a>
 
           {onValidateLicenseKey && (
-            <form onSubmit={handleSubmit} className="mt-2 border-t border-slate-800 pt-3">
-              <label className="block text-xs font-medium text-slate-400">
-                {copy.licenseLabel}
-              </label>
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  value={licenseKey}
-                  onChange={(e) => setLicenseKey(e.target.value)}
-                  placeholder={copy.licensePlaceholder}
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 font-mono text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !licenseKey.trim()}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
-                >
-                  <KeyRound className="h-3.5 w-3.5" />
-                  <span>{isSubmitting ? copy.validatingBtn : copy.validateBtn}</span>
-                </button>
-              </div>
-              <p className="mt-1.5 text-[11px] text-slate-400">{copy.persistHint}</p>
-              {validationFeedback && (
-                <div
-                  className={`mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ${
-                    validationFeedback.ok
-                      ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                      : 'border border-rose-500/30 bg-rose-500/10 text-rose-300'
-                  }`}
-                >
-                  <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-                  <span>{validationFeedback.message}</span>
-                </div>
-              )}
-            </form>
+            <CommercialLicenseValidationForm
+              copy={copy}
+              onValidateLicenseKey={onValidateLicenseKey}
+              validationFeedback={validationFeedback}
+            />
           )}
         </div>
       </div>

@@ -2,20 +2,13 @@ import { redirect } from 'next/navigation';
 import { getTranslations, getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1 } from '@/seed/db/get-d1';
-import {
-  getCreatorProfile,
-  listMyListings,
-  getCreatorEarnings,
-  listActiveChallenges,
-  getUserAllProgress,
-} from '@/land/sop-marketplace';
+import { getCreatorProfile } from '@/land/sop-marketplace';
 import { ReferralSection } from '@/components/billing/referral-section';
-import type { SopChallengeRow, UserChallengeProgressRow } from '@/seed/sop/sop-types';
 import type { DashboardViewProps } from './types';
 import { ProfileCard, OnboardingView } from './creator-hero';
 import { EarningsSection, ChallengesSection } from './creator-stats';
 import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
+import { loadCreatorDashboardMetrics } from './creator-data-loader';
 
 export function DashboardView({
   profile,
@@ -99,30 +92,8 @@ export async function CreatorPage() {
     );
   }
 
-  const listingsResult = await listMyListings();
-  const totalInstalls = listingsResult.ok
-    ? listingsResult.value.reduce((sum, l) => sum + l.installCount, 0)
-    : 0;
-
-  const db = await getD1();
-  let earningsBreakdown = { totalEarned: 0, pending: 0, payable: 0, paid: 0 };
-  let challenges: SopChallengeRow[] = [];
-  let userProgress: UserChallengeProgressRow[] = [];
-
-  if (db) {
-    try {
-      const [earnings, activeChallenges, progress] = await Promise.all([
-        getCreatorEarnings(db, user.id),
-        listActiveChallenges(db),
-        getUserAllProgress(db, user.id),
-      ]);
-      earningsBreakdown = earnings;
-      challenges = activeChallenges;
-      userProgress = progress;
-    } catch {
-      // Graceful fallback — chart shows zeros, challenges section shows empty
-    }
-  }
+  const { totalInstalls, earningsBreakdown, challenges, userProgress } =
+    await loadCreatorDashboardMetrics(user.id);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">

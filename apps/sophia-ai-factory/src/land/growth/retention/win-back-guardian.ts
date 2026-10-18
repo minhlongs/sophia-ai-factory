@@ -10,12 +10,13 @@ import { logger } from '@/seed/utils/logger-utility';
 import {
   checkWinBackCooldown,
   listAllCustomerHealthMetrics,
-  recordWinBackOutreach,
 } from './activity-aggregator';
 import { CHURN_HEALTH_THRESHOLD } from './constants';
-import { sendWinBackEmail } from './email-notifier';
-import { sendWinBackTelegramAlert } from './telegram-notifier';
 import type { CustomerHealthMetrics, WinBackTriggerResult } from './types';
+import {
+  buildSkippedWinBackResult,
+  executeWinBackDelivery,
+} from './win-back-outreach-executor';
 
 // Set to track in-flight dispatches within current isolate to prevent intra-process TOCTOU races
 const inFlightDispatches = new Set<string>();
@@ -35,28 +36,12 @@ export async function dispatchWinBackOutreach(
     Number.isFinite(customer.totalHealthScore) &&
     customer.totalHealthScore >= CHURN_HEALTH_THRESHOLD
   ) {
-    return {
-      userId: customer.userId,
-      userEmail: customer.userEmail,
-      emailSent: false,
-      telegramNotified: false,
-      timestamp: nowStr,
-      healthScore: customer.totalHealthScore,
-      skippedReason: 'NOT_AT_RISK',
-    };
+    return buildSkippedWinBackResult(customer, nowStr, 'NOT_AT_RISK');
   }
 
   // Guard: Intra-process in-flight concurrency lock
   if (inFlightDispatches.has(customer.userId)) {
-    return {
-      userId: customer.userId,
-      userEmail: customer.userEmail,
-      emailSent: false,
-      telegramNotified: false,
-      timestamp: nowStr,
-      healthScore: customer.totalHealthScore,
-      skippedReason: 'COOLDOWN_ACTIVE',
-    };
+    return buildSkippedWinBackResult(customer, nowStr, 'COOLDOWN_ACTIVE');
   }
 
   inFlightDispatches.add(customer.userId);
@@ -65,15 +50,7 @@ export async function dispatchWinBackOutreach(
     // Guard: Anti-spam cooldown in D1 audit log
     const cooldown = await checkWinBackCooldown(customer.userId);
     if (cooldown.inCooldown) {
-      return {
-        userId: customer.userId,
-        userEmail: customer.userEmail,
-        emailSent: false,
-        telegramNotified: false,
-        timestamp: nowStr,
-        healthScore: customer.totalHealthScore,
-        skippedReason: 'COOLDOWN_ACTIVE',
-      };
+      return buildSkippedWinBackResult(customer, nowStr, 'COOLDOWN_ACTIVE');
     }
 
     if (options?.dryRun) {
@@ -87,37 +64,7 @@ export async function dispatchWinBackOutreach(
       };
     }
 
-    // Write in-flight reservation record to admin_audit_log BEFORE async network I/O
-    await recordWinBackOutreach(customer.userId, {
-      status: 'in_flight',
-      healthScore: customer.totalHealthScore,
-      dispatchedAt: nowStr,
-    });
-
-    // 1. Send targeted bilingual win-back email via Resend
-    const emailSent = await sendWinBackEmail(customer);
-
-    // 2. Send Telegram alert to founder
-    const telegramNotified = await sendWinBackTelegramAlert(customer);
-
-    // 3. Record completion status in audit log
-    await recordWinBackOutreach(customer.userId, {
-      status: 'completed',
-      healthScore: customer.totalHealthScore,
-      breakdown: customer.breakdown,
-      emailSent,
-      telegramNotified,
-      dispatchedAt: nowStr,
-    });
-
-    return {
-      userId: customer.userId,
-      userEmail: customer.userEmail,
-      emailSent,
-      telegramNotified,
-      timestamp: nowStr,
-      healthScore: customer.totalHealthScore,
-    };
+    return await executeWinBackDelivery(customer, nowStr);
   } finally {
     inFlightDispatches.delete(customer.userId);
   }

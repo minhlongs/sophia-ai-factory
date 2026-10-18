@@ -2,8 +2,7 @@
  * instrumentation.ts tests — Phase 01 TDD Production Readiness Sprint.
  *
  * Tests the Next.js instrumentation register hook.
- * Current state: register() is a no-op (disabled for Cloudflare Workers compatibility).
- * Target state: register() calls initializeOTel() from @/seed/telemetry/opentelemetry-setup.
+ * The Node runtime initializes OTel; the Edge runtime avoids Node-only exporter imports.
  *
  * @vitest-environment node
  */
@@ -34,29 +33,61 @@ describe('instrumentation.ts — register hook', () => {
     mocks.mockStartSpan.mockReset();
   });
 
-  it('exports register function (currently disabled/no-op)', async () => {
-    // Currently register() is a no-op - it should exist and not throw
-    const mod = await import('@/../instrumentation');
-    expect(mod.register).toBeDefined();
-    expect(typeof mod.register).toBe('function');
+  it('exports register and leaves an unspecified runtime alone', async () => {
+    const previousRuntime = process.env.NEXT_RUNTIME;
+    delete process.env.NEXT_RUNTIME;
 
-    // Should not throw when called
-    await expect(mod.register()).resolves.toBeUndefined();
+    try {
+      const mod = await import('@/../instrumentation');
+      expect(mod.register).toBeDefined();
+      expect(typeof mod.register).toBe('function');
+      await expect(mod.register()).resolves.toBeUndefined();
+      expect(mocks.mockInitializeOTel).not.toHaveBeenCalled();
+    } finally {
+      if (previousRuntime === undefined) delete process.env.NEXT_RUNTIME;
+      else process.env.NEXT_RUNTIME = previousRuntime;
+    }
   });
 
-  it('register() should call initializeOTel (post-fix expectation)', async () => {
-    const { register } = await import('@/../instrumentation');
-    await register();
+  it('register() initializes Node-only OTel in the Node.js runtime', async () => {
+    const previousRuntime = process.env.NEXT_RUNTIME;
+    process.env.NEXT_RUNTIME = 'nodejs';
 
-    const { initializeOTel } = await import('@/seed/telemetry/opentelemetry-setup');
-    expect(initializeOTel).toHaveBeenCalled();
+    try {
+      const { register } = await import('@/../instrumentation');
+      await register();
+      expect(mocks.mockInitializeOTel).toHaveBeenCalledOnce();
+    } finally {
+      if (previousRuntime === undefined) delete process.env.NEXT_RUNTIME;
+      else process.env.NEXT_RUNTIME = previousRuntime;
+    }
+  });
+
+  it('does not import Node-only OTel in the Edge runtime', async () => {
+    const previousRuntime = process.env.NEXT_RUNTIME;
+    process.env.NEXT_RUNTIME = 'edge';
+
+    try {
+      const { register } = await import('@/../instrumentation');
+      await expect(register()).resolves.toBeUndefined();
+      expect(mocks.mockInitializeOTel).not.toHaveBeenCalled();
+    } finally {
+      if (previousRuntime === undefined) delete process.env.NEXT_RUNTIME;
+      else process.env.NEXT_RUNTIME = previousRuntime;
+    }
   });
 
   it('register() should not throw if initializeOTel fails', async () => {
+    const previousRuntime = process.env.NEXT_RUNTIME;
+    process.env.NEXT_RUNTIME = 'nodejs';
     mocks.mockInitializeOTel.mockRejectedValueOnce(new Error('No API key'));
 
-    const { register } = await import('@/../instrumentation');
-    // Should not throw — OTEL failure is non-fatal
-    await expect(register()).resolves.toBeUndefined();
+    try {
+      const { register } = await import('@/../instrumentation');
+      await expect(register()).resolves.toBeUndefined();
+    } finally {
+      if (previousRuntime === undefined) delete process.env.NEXT_RUNTIME;
+      else process.env.NEXT_RUNTIME = previousRuntime;
+    }
   });
 });

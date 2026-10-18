@@ -20,6 +20,7 @@ import {
   type CircuitEvaluationInput,
   type CircuitEvaluationOutput,
 } from './circuit-breaker-status';
+import { normalizeCircuitInput } from './circuit-breaker-transition';
 
 export {
   DEFAULT_CIRCUIT_CONFIG,
@@ -35,40 +36,17 @@ export {
 
 /**
  * Pure state evaluator for Circuit Breaker.
- *
- * @param current Current status record
- * @param action Event ('SUCCESS' | 'FAILURE' | 'PROBE' | 'RESET')
- * @param now Current epoch timestamp in ms (defaults to Date.now())
  */
 export function evaluateCircuitStatus(
   current: CircuitEvaluationInput,
   action: 'SUCCESS' | 'FAILURE' | 'PROBE' | 'RESET',
   now: number = Date.now()
 ): CircuitEvaluationOutput {
-  const rawStatus = (current as { status?: CircuitStatus | CircuitBreakerStatus }).status;
-  const statusObj = typeof rawStatus === 'object' && rawStatus !== null ? rawStatus : null;
-
-  const currentState: CircuitState =
-    statusObj?.state ??
-    (typeof rawStatus === 'string' ? rawStatus : undefined) ??
-    (current as { state?: CircuitState }).state ??
-    'CLOSED';
-
-  const cooldown =
-    statusObj?.cooldownPeriodMs ??
-    (current as { cooldownMs?: number }).cooldownMs ??
-    (current as { cooldownPeriodMs?: number }).cooldownPeriodMs ??
-    DEFAULT_CIRCUIT_CONFIG.cooldownPeriodMs;
-
-  const failureThreshold =
-    statusObj?.failureThreshold ??
-    (current as { failureThreshold?: number }).failureThreshold ??
-    DEFAULT_CIRCUIT_CONFIG.failureThreshold;
-
-  let nextState: CircuitState = currentState;
-  let nextFailures = statusObj?.consecutiveFailures ?? current.consecutiveFailures ?? 0;
-  let nextLastFailureAt = statusObj?.lastFailureAt ?? current.lastFailureAt ?? null;
-  let nextLastStateChangeAt = statusObj?.lastStateChangeAt ?? current.lastStateChangeAt ?? now;
+  const norm = normalizeCircuitInput(current, now);
+  let nextState: CircuitState = norm.currentState;
+  let nextFailures = norm.initialFailures;
+  let nextLastFailureAt = norm.initialLastFailureAt;
+  let nextLastStateChangeAt = norm.initialLastStateChangeAt;
   let tripped = false;
   let recovered = false;
 
@@ -80,47 +58,31 @@ export function evaluateCircuitStatus(
       recovered = true;
       break;
     }
-
     case 'SUCCESS': {
-      if (currentState === 'HALF_OPEN') {
+      if (norm.currentState === 'HALF_OPEN' || norm.currentState === 'OPEN') {
         nextState = 'CLOSED';
         nextFailures = 0;
         nextLastStateChangeAt = now;
         recovered = true;
-      } else if (currentState === 'CLOSED') {
+      } else if (norm.currentState === 'CLOSED') {
         nextFailures = 0;
-      } else if (currentState === 'OPEN') {
-        nextState = 'CLOSED';
-        nextFailures = 0;
-        nextLastStateChangeAt = now;
-        recovered = true;
       }
       break;
     }
-
     case 'FAILURE': {
       nextFailures = (current.consecutiveFailures ?? 0) + 1;
       nextLastFailureAt = now;
-
-      if (currentState === 'HALF_OPEN') {
+      if (norm.currentState === 'HALF_OPEN' || (norm.currentState === 'CLOSED' && nextFailures >= norm.failureThreshold)) {
         nextState = 'OPEN';
         nextLastStateChangeAt = now;
         tripped = true;
-      } else if (currentState === 'CLOSED') {
-        if (nextFailures >= failureThreshold) {
-          nextState = 'OPEN';
-          nextLastStateChangeAt = now;
-          tripped = true;
-        }
       }
       break;
     }
-
     case 'PROBE': {
-      if (currentState === 'OPEN') {
+      if (norm.currentState === 'OPEN') {
         const lastRef = nextLastFailureAt ?? nextLastStateChangeAt;
-        const elapsed = now - lastRef;
-        if (elapsed >= cooldown) {
+        if (now - lastRef >= norm.cooldown) {
           nextState = 'HALF_OPEN';
           nextLastStateChangeAt = now;
         }
@@ -131,19 +93,15 @@ export function evaluateCircuitStatus(
 
   const lastRef = nextLastFailureAt ?? nextLastStateChangeAt;
   const cooldownRemainingMs =
-    nextState === 'OPEN' ? Math.max(0, cooldown - (now - lastRef)) : 0;
-
+    nextState === 'OPEN' ? Math.max(0, norm.cooldown - (now - lastRef)) : 0;
   const allowRequest = nextState === 'CLOSED' || nextState === 'HALF_OPEN';
 
   const updatedStatus: CircuitBreakerStatus = {
-    serviceOrSkill:
-      (current as { serviceOrSkill?: string }).serviceOrSkill ??
-      (current as { service?: string }).service ??
-      'default',
+    serviceOrSkill: norm.serviceOrSkill,
     state: nextState,
     consecutiveFailures: nextFailures,
-    failureThreshold,
-    cooldownPeriodMs: cooldown,
+    failureThreshold: norm.failureThreshold,
+    cooldownPeriodMs: norm.cooldown,
     lastFailureAt: nextLastFailureAt,
     lastStateChangeAt: nextLastStateChangeAt,
   };

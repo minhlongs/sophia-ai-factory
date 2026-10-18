@@ -14,8 +14,13 @@ import type {
 } from '@/seed/types/video-analytics-types';
 import {
   ANALYTICS_TABLE,
+  INSERT_SNAPSHOT_SQL,
+  AGGREGATE_METRICS_SQL,
+  EMPTY_AGGREGATE_METRICS,
+  mapAggregateRow,
   mapSnapshotRow,
   type AnalyticsSnapshotRow,
+  type AggregateQueryRow,
 } from './video-analytics-mapper';
 
 export { ANALYTICS_TABLE, mapSnapshotRow, type AnalyticsSnapshotRow };
@@ -31,15 +36,7 @@ export async function upsertAnalyticsSnapshot(
   const now = Date.now();
 
   await db
-    .prepare(
-      `INSERT INTO ${ANALYTICS_TABLE} (
-      id, job_id, user_id, channel_id, platform, platform_post_id, title,
-      views, watch_time_seconds, avg_view_duration_seconds, avg_view_percentage,
-      three_sec_view_rate, completion_rate, likes, comments, shares, saves,
-      hook_score, retention_score, revenue_usd, cost_mcu, cost_usd, net_roi_usd,
-      bandit_status, recorded_at, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
+    .prepare(INSERT_SNAPSHOT_SQL)
     .bind(
       id, snapshot.jobId, snapshot.userId, snapshot.channelId, snapshot.platform, snapshot.platformPostId,
       snapshot.title ?? null, snapshot.views, snapshot.watchTimeSeconds, snapshot.avgViewDurationSeconds,
@@ -82,10 +79,7 @@ export async function listUserAnalyticsSnapshots(
     params.push(filter.endDate);
   }
 
-  const limit = filter?.limit ?? 50;
-  const offset = filter?.offset ?? 0;
-  params.push(limit, offset);
-
+  params.push(filter?.limit ?? 50, filter?.offset ?? 0);
   const query = `SELECT * FROM ${ANALYTICS_TABLE} WHERE ${clauses.join(' AND ')} ORDER BY recorded_at DESC LIMIT ? OFFSET ?`;
   const result = await db.prepare(query).bind(...params).all<AnalyticsSnapshotRow>();
 
@@ -97,46 +91,12 @@ export async function getUserAggregateMetrics(
   dbOverride?: D1Database,
 ): Promise<ChannelAggregateMetrics> {
   const db = dbOverride ?? (await getD1());
-  const fallback: ChannelAggregateMetrics = {
-    totalViews: 0,
-    totalRevenueUsd: 0,
-    totalCostUsd: 0,
-    totalNetMarginUsd: 0,
-    avgHookScore: 0,
-    avgRetentionScore: 0,
-    roiPercent: 0,
-    publishedCount: 0,
-  };
-  if (!db) return fallback;
+  if (!db) return EMPTY_AGGREGATE_METRICS;
 
   const row = await db
-    .prepare(
-      `SELECT COUNT(DISTINCT job_id) as job_count, SUM(views) as total_views,
-              SUM(revenue_usd) as total_revenue, SUM(cost_usd) as total_cost,
-              AVG(hook_score) as avg_hook, AVG(retention_score) as avg_retention
-       FROM ${ANALYTICS_TABLE} WHERE user_id = ?`,
-    )
+    .prepare(AGGREGATE_METRICS_SQL)
     .bind(userId)
-    .first<{
-      job_count: number; total_views: number; total_revenue: number;
-      total_cost: number; avg_hook: number; avg_retention: number;
-    }>();
+    .first<AggregateQueryRow>();
 
-  if (!row || !row.job_count) return fallback;
-
-  const totalRev = Math.round((row.total_revenue ?? 0) * 100) / 100;
-  const totalCost = Math.round((row.total_cost ?? 0) * 100) / 100;
-  const netMargin = Math.round((totalRev - totalCost) * 100) / 100;
-  const roiPct = totalCost > 0 ? Math.round(((totalRev - totalCost) / totalCost) * 1000) / 10 : 0;
-
-  return {
-    totalViews: row.total_views ?? 0,
-    totalRevenueUsd: totalRev,
-    totalCostUsd: totalCost,
-    totalNetMarginUsd: netMargin,
-    avgHookScore: Math.round((row.avg_hook ?? 0) * 10) / 10,
-    avgRetentionScore: Math.round((row.avg_retention ?? 0) * 10) / 10,
-    roiPercent: roiPct,
-    publishedCount: row.job_count,
-  };
+  return mapAggregateRow(row);
 }

@@ -4,10 +4,11 @@
  * @description Pure domain engine for Transcendental Supreme Conclave Arbitration (99.99% Supermajority, 99% Slashing).
  */
 
-import { createHash } from 'node:crypto';
 import {
-  arbitrateParameterizedConclaveDispute,
-} from './sovereign-conclave-domain-engine';
+  executeParameterizedConclaveRuling,
+  verifyConstitutionalInvariantsList,
+  verifySingleConstitutionalInvariant,
+} from './conclave-engine-shared-helpers';
 
 import type {
   TranscendentalConclaveVerdict,
@@ -53,35 +54,15 @@ export interface TranscendentalInvariantCheckOutput {
 export function arbitrateTranscendentalConclaveDispute(
   input: TranscendentalDisputeInput
 ): TranscendentalDisputeRuling {
-  const result = arbitrateParameterizedConclaveDispute(input, {
-    defaultSupermajorityThresholdPct: 99.99,
-    slashingPenaltyPct: 99.0,
-    slashingMultiplier: 0.99,
-    emptyVerdict: 'PENDING_EVIDENCE',
-    emptyRulingHashFn: (_input) => createHash('sha256').update('NO_VOTES').digest('hex'),
-    rulingHashFn: (ctx) =>
-      createHash('sha256')
-        .update(`TRANSCENDENTAL_CONCLAVE_RULING:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.executedRemedyCents}:${ctx.totalSlashedStakeCents}`)
-        .digest('hex'),
-  });
-
-  return {
-    disputeCaseRef: result.disputeCaseRef,
-    verdict: result.verdict as unknown as string,
-    totalJurors: result.totalJurors,
-    totalSenators: result.totalSenators,
-    totalDirectors: result.totalDirectors,
-    claimantVotes: result.claimantVotes,
-    respondentVotes: result.respondentVotes,
-    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
-    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
-    jurorsSlashedCount: result.jurorsSlashedCount,
-    senatorsSlashedCount: result.senatorsSlashedCount,
-    directorsSlashedCount: result.directorsSlashedCount,
-    totalSlashedStakeCents: result.totalSlashedStakeCents,
-    executedRemedyCents: result.executedRemedyCents,
-    rulingHash: result.rulingHash,
-  } as unknown as TranscendentalDisputeRuling;
+  return executeParameterizedConclaveRuling<TranscendentalDisputeRuling>(
+    input,
+    {
+      defaultSupermajorityThresholdPct: 99.99,
+      slashingPenaltyPct: 99.0,
+      slashingMultiplier: 0.99,
+      rulingPrefix: 'TRANSCENDENTAL_CONCLAVE_RULING',
+    }
+  );
 }
 
 /**
@@ -91,32 +72,11 @@ export function verifyTranscendentalConstitutionalInvariant(
   invariant: TranscendentalConstitutionalInvariant,
   proposedAction: string
 ): TranscendentalInvariantCheckOutput {
-  const isStrictlyImmutable = invariant.isStrictlyImmutable;
-
-  if (isStrictlyImmutable && proposedAction.toUpperCase().includes('OVERRIDE_CONSTITUTIONAL')) {
-    const rejectHash = createHash('sha256')
-      .update(`CONSTITUTIONAL_BREACH_REJECTED:${invariant.articleCode}`)
-      .digest('hex');
-
-    return {
-      allowed: false,
-      articleCode: invariant.articleCode,
-      isStrictlyImmutable,
-      reason: `Action violates strictly immutable Transcendental constitutional article ${invariant.articleCode}: ${invariant.articleTitle}`,
-      verificationHash: rejectHash,
-    };
-  }
-
-  const allowHash = createHash('sha256')
-    .update(`CONSTITUTIONAL_ACTION_PERMITTED:${invariant.articleCode}:${proposedAction}`)
-    .digest('hex');
-
-  return {
-    allowed: true,
-    articleCode: invariant.articleCode,
-    isStrictlyImmutable,
-    verificationHash: allowHash,
-  };
+  return verifySingleConstitutionalInvariant(
+    invariant,
+    proposedAction,
+    'Transcendental'
+  );
 }
 
 /**
@@ -126,37 +86,10 @@ export function verifyTranscendentalConstitutionalInvariants(
   invariants: TranscendentalConstitutionalInvariant[],
   proposedTargetArticleCode: string
 ): TranscendentalInvariantCheckOutput {
-  const match = invariants.find((inv) => inv.articleCode === proposedTargetArticleCode);
-
-  if (!match) {
-    const hash = createHash('sha256').update(`INVARIANT_NOT_FOUND:${proposedTargetArticleCode}`).digest('hex');
-    return {
-      allowed: true,
-      articleCode: proposedTargetArticleCode,
-      isStrictlyImmutable: false,
-      reason: 'Article not found in constitutional invariants charter; standard modification procedure applies',
-      verificationHash: hash,
-    };
-  }
-
-  const hash = createHash('sha256')
-    .update(`TRANSCENDENTAL_INVARIANT:${match.articleCode}:${match.isStrictlyImmutable}:${match.enforcementCircuitHash}`)
-    .digest('hex');
-
-  if (match.isStrictlyImmutable) {
-    return {
-      allowed: false,
-      articleCode: match.articleCode,
-      isStrictlyImmutable: true,
-      reason: `Violation of Transcendental Constitutional Invariant ${match.articleCode} ("${match.articleTitle}"): Strictly Immutable`,
-      verificationHash: hash,
-    };
-  }
-
-  return {
-    allowed: true,
-    articleCode: match.articleCode,
-    isStrictlyImmutable: false,
-    verificationHash: hash,
-  };
+  return verifyConstitutionalInvariantsList(
+    invariants,
+    proposedTargetArticleCode,
+    'TRANSCENDENTAL_INVARIANT',
+    'Transcendental'
+  );
 }

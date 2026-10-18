@@ -18,14 +18,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getD1 } from '@/seed/db/client';
 import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
-import { sendAutoHandoverWelcomeEmail, sendWelcomeEmail } from '@/tree/handover/handover-email-service';
-import { generateHandoverDoc } from '@/tree/handover/handover-doc-generator';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { hashEmail } from '@/seed/auth/sign-cookie-value';
 import { logger } from '@/seed/utils/logger-utility';
 import { checkRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import type { CustomerHandoverRow, AgencyType } from '@/tree/handover/handover-types';
-import type { Tier } from '@/seed/types';
+import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
+import { deliverHandoverWelcomeEmail } from './welcome-resend-delivery';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,58 +89,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
   const magicLinkUrl = `${baseUrl}/vi/welcome/${token}`;
 
-  // Branch on source: auto_signup uses the lighter promo welcome email;
-  // manual handovers re-send the full welcome with handover doc.
-  let emailOk = false;
-  try {
-    if (handover.source === 'auto_signup' || handover.source === 'auto_payment') {
-      await sendAutoHandoverWelcomeEmail({
-        toEmail: userRow.email,
-        ownerFullName: userRow.name,
-        tier: handover.tier as Tier,
-        locale: 'vi',
-        magicLinkUrl,
-      });
-      emailOk = true;
-    } else {
-      const installedSops: string[] = handover.starter_sops
-        ? (JSON.parse(handover.starter_sops) as string[])
-        : [];
-      const docMarkdown = generateHandoverDoc({
-        customerId: handover.customer_user_id,
-        agencyName: handover.agency_name,
-        ownerFullName: userRow.name,
-        ownerEmail: userRow.email,
-        tier: handover.tier as Tier,
-        agencyType: (handover.agency_type ?? 'other') as AgencyType,
-        locale: 'vi',
-        installedSops,
-        magicLinkUrl,
-        contractDate: new Date(handover.created_at * 1000).toISOString().split('T')[0],
-      });
-      const r = await sendWelcomeEmail({
-        toEmail: userRow.email,
-        ownerFullName: userRow.name,
-        agencyName: handover.agency_name,
-        tier: handover.tier as Tier,
-        magicLinkUrl,
-        locale: 'vi',
-        handoverMarkdown: docMarkdown,
-      });
-      emailOk = r.success;
-    }
-
-    if (emailOk) {
-      await db
-        .prepare(`UPDATE customer_handovers SET welcome_email_sent_at = ?1 WHERE id = ?2`)
-        .bind(Math.floor(Date.now() / 1000), handover.id)
-        .run();
-    }
-  } catch (err) {
-    logger.warn('[Welcome/Resend] Email send failed (still 200)', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  const emailOk = await deliverHandoverWelcomeEmail({
+    db,
+    userRow,
+    handover,
+    magicLinkUrl,
+  });
 
   await writeAuditLog({
     actorUserId: userRow.id,

@@ -14,6 +14,11 @@ import { detectIntent } from './ceo-intent-detector';
 import { fetchRecentCampaigns, fetchCampaigns, createCampaignForUser } from './ceo-campaign-data';
 import { fetchRevenue } from './ceo-revenue-data';
 import type { CeoContext } from './ceo-intent-types';
+import {
+  formatCeoCampaignStatus,
+  formatCampaignListSummary,
+  formatRevenueInsightsSummary,
+} from './ceo-executor-formatters';
 
 // ── Re-exports ────────────────────────────────────────────────────────────────
 export type {
@@ -29,26 +34,6 @@ export { fetchRecentCampaigns, fetchCampaigns, createCampaignForUser } from './c
 export { fetchRevenue } from './ceo-revenue-data';
 
 const log = createLogger('ceo-executor');
-
-/**
- * Format a currency value for bilingual display.
- */
-function formatCurrency(amount: number): string {
-  return `$${amount.toFixed(2)}`;
-}
-
-/**
- * Map campaign status to bilingual label.
- */
-function formatStatus(status: string): string {
-  switch (status) {
-    case 'pending': return 'Chờ xử lý (Pending)';
-    case 'running': return 'Đang chạy (Running)';
-    case 'completed': return 'Hoàn thành (Completed)';
-    case 'failed': return 'Thất bại (Failed)';
-    default: return status;
-  }
-}
 
 /**
  * Main entry point: detect intent from user input and enrich with data.
@@ -72,12 +57,11 @@ export async function executeCeoContext(
   switch (intent) {
     case 'list_campaigns': {
       const allCampaigns = await fetchCampaigns(userId);
-      const summary = allCampaigns.length > 0
-        ? `Found ${allCampaigns.length} campaigns:\n` +
-          allCampaigns.map((c) => `- ${c.title} (${formatStatus(c.status as string)})`).join('\n')
-        : 'No campaigns found. Create one with "create campaign [topic]"!';
-
-      return { intent, summary, campaigns: allCampaigns };
+      return {
+        intent,
+        summary: formatCampaignListSummary(allCampaigns),
+        campaigns: allCampaigns,
+      };
     }
 
     case 'get_campaign_status': {
@@ -85,7 +69,7 @@ export async function executeCeoContext(
       if (match) {
         return {
           intent,
-          summary: `Campaign "${match.title}" status: ${formatStatus(match.status as string)} (${match.progress}% complete)`,
+          summary: `Campaign "${match.title}" status: ${formatCeoCampaignStatus(match.status as string)} (${match.progress}% complete)`,
           campaigns: [match],
         };
       }
@@ -118,19 +102,9 @@ export async function executeCeoContext(
 
     case 'revenue_insights': {
       const revenue = await fetchRevenue(topic ?? 'last_30_days', userId);
-
-      const summary =
-        `Revenue insights (${revenue.periodLabel}):\n` +
-        `Total: ${formatCurrency(revenue.totalRevenue)}\n` +
-        `Recurring: ${formatCurrency(revenue.recurringRevenue)}\n` +
-        `One-time: ${formatCurrency(revenue.oneTimeRevenue)}\n` +
-        (revenue.byTier.length > 0
-          ? `By tier: ${revenue.byTier.map((t) => `${t.tier}: ${formatCurrency(t.revenue)}`).join(', ')}`
-          : 'No license data available for this period.');
-
       return {
         intent,
-        summary,
+        summary: formatRevenueInsightsSummary(revenue),
         revenue,
       };
     }

@@ -7,10 +7,10 @@
 
 'use server';
 
-import { getD1 } from '@/seed/db/client';
 import { getAffiliateOffers } from '@/tree/affiliates/affiliate-ledger-service';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { persistAdoptedCampaignRun } from './discovery-helpers';
 import type {
   AdoptAffiliateOfferInput,
   AdoptAffiliateOfferResult,
@@ -83,36 +83,13 @@ export async function adoptAffiliateOfferAction(
     const campaignId = `camp_${crypto.randomUUID().slice(0, 8)}`;
     const now = Date.now();
 
-    const db = await getD1();
-    if (db) {
-      try {
-        await db
-          .prepare(
-            `INSERT INTO campaign_runs (id, campaign_id, title, status, metadata, created_at, updated_at)
-             VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?5)`
-          )
-          .bind(
-            `run_${crypto.randomUUID().slice(0, 8)}`,
-            campaignId,
-            `${programTitle} (${input.target === 'creator_studio' ? 'Creator Studio' : 'Distribution Queue'})`,
-            JSON.stringify({
-              offerId: input.offerId,
-              target: input.target,
-              destinationUrl: offer?.destinationUrl,
-              epc: offer?.epc,
-              commissionTerms: offer?.commissionTerms,
-              adoptedAt: now,
-            }),
-            now
-          )
-          .run()
-          .catch(() => {
-            // Non-fatal if table doesn't exist
-          });
-      } catch {
-        // Non-fatal
-      }
-    }
+    await persistAdoptedCampaignRun({
+      campaignId,
+      programTitle,
+      input,
+      offer,
+      now,
+    });
 
     const deepLink =
       input.target === 'creator_studio'

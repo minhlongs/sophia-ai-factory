@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Transcendental Vacuum Singularity Mesh dispatching, Net-Zero power verification, and Twenty-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planTranscendentalVacuumBatchDispatch,
   type TranscendentalVacuumDispatchPlan,
@@ -20,6 +19,11 @@ import {
   type TranscendentalPowerValidationOutput,
 } from '@/tree/energy/transcendental-vacuum-energy-engine';
 import type { TranscendentalVacuumSingularityMesh } from '@/seed/types/transcendental-vacuum-singularity-nexus';
+import {
+  recordMeshBatchDispatchD1,
+  recordMeshPowerAllocationD1,
+  recordMeshSlaAuditD1,
+} from './mesh-actions-d1-recorder';
 
 export interface TranscendentalDispatchActionResult {
   success: boolean;
@@ -49,32 +53,16 @@ export async function dispatchTranscendentalVacuumBatchAction(
 ): Promise<TranscendentalDispatchActionResult> {
   try {
     const data = planTranscendentalVacuumBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO omniverse_pipeline_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `OM-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `TOKEN-OM-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.008,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS',
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordMeshBatchDispatchD1({
+      table: 'omniverse_pipeline_dispatches',
+      refPrefix: 'OM-DISPATCH',
+      tokenPrefix: 'TOKEN-OM',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.008,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (error) {
     return {
@@ -92,29 +80,15 @@ export async function allocateTranscendentalPowerAction(
 ): Promise<TranscendentalPowerActionResult> {
   try {
     const data = validateTranscendentalPower(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO transcendental_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified, allocated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `OM-PWR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          'TRANSCENDENTAL_ZERO_POINT_HARVESTER',
-          params.allocatedMegawatts,
-          params.carbonIntensityGPerKwh,
-          params.boseEinsteinCop,
-          data.isCompliant ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordMeshPowerAllocationD1({
+      table: 'transcendental_power_allocations',
+      refPrefix: 'OM-PWR',
+      powerSourceType: 'TRANSCENDENTAL_ZERO_POINT_HARVESTER',
+      allocatedMegawatts: params.allocatedMegawatts,
+      carbonIntensityGPerKwh: params.carbonIntensityGPerKwh,
+      boseEinsteinCop: params.boseEinsteinCop,
+      isCompliant: data.isCompliant,
+    });
     return { success: data.isCompliant, data };
   } catch (error) {
     return {
@@ -133,36 +107,19 @@ export async function auditTwentyNinesSlaAction(
 ): Promise<TwentyNinesSlaActionResult> {
   try {
     const data = evaluateTwentyNinesSla(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO twenty_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_twenty_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-20N-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          evaluationPeriodMonth,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'TWENTY_NINES_CERTIFIED' ? 1 : 0,
-          65536,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: data.slaVerdict === 'TWENTY_NINES_CERTIFIED',
-      data,
-    };
+    const isSlaMet = data.slaVerdict === 'TWENTY_NINES_CERTIFIED';
+    await recordMeshSlaAuditD1({
+      table: 'twenty_nines_sla_audits',
+      metColumn: 'is_twenty_nines_met',
+      refPrefix: 'SLA-20N',
+      evaluationPeriodMonth,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet,
+      bftConsensusNodes: 65536,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isSlaMet, data };
   } catch (error) {
     return {
       success: false,

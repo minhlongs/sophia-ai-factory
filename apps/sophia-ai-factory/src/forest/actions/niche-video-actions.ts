@@ -10,38 +10,21 @@
 
 'use server';
 
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
 import {
-  createNicheVideoCampaignPlan,
-  type CreateNicheVideoCampaignInput,
-  type NicheVideoCampaignPlan,
-} from '@/tree/video/blueprints/niche-video-service';
+  validateAndBuildNichePlan,
+  type CreateNicheVideoCampaignActionInput,
+  type NicheVideoActionResponse,
+} from './niche-video-action-helpers';
 
-export const createNicheVideoCampaignSchema = z.object({
-  niche: z.enum(['saas_global', 'crypto_global']),
-  blueprintId: z.string().min(1, 'Blueprint ID is required'),
-  productName: z.string().min(1, 'Product name is required'),
-  productUrl: z.string().url('Must be a valid product URL'),
-  targetAudience: z.string().optional(),
-  jurisdiction: z.string().optional().default('GLOBAL'),
-  affiliateCode: z.string().optional().default('sophia_partner'),
-  subId: z.string().nullable().optional(),
-  vanityCoupon: z.string().nullable().optional(),
-  locale: z.enum(['en', 'vi']).optional().default('en'),
-});
-
-export type CreateNicheVideoCampaignActionInput = z.input<typeof createNicheVideoCampaignSchema>;
-
-export interface NicheVideoActionResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  code?: string;
-}
+export type {
+  CreateNicheVideoCampaignActionInput,
+  NicheVideoActionResponse,
+} from './niche-video-action-helpers';
 
 export async function previewNicheVideoPlanAction(
   rawInput: CreateNicheVideoCampaignActionInput,
@@ -52,24 +35,14 @@ export async function previewNicheVideoPlanAction(
       return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
     }
 
-    const parsed = createNicheVideoCampaignSchema.safeParse(rawInput);
-    if (!parsed.success) {
-      const issue = parsed.error.issues[0]?.message ?? 'Invalid input data';
-      return { success: false, error: issue, code: 'VALIDATION_ERROR' };
-    }
-
-    const result = createNicheVideoCampaignPlan(parsed.data as CreateNicheVideoCampaignInput);
-    if (!result.ok) {
-      return {
-        success: false,
-        error: result.error.message,
-        code: result.error.code,
-      };
+    const built = validateAndBuildNichePlan(rawInput);
+    if (!built.ok) {
+      return built.response;
     }
 
     return {
       success: true,
-      data: result.value,
+      data: built.plan,
     };
   } catch (err: unknown) {
     const error = toError(err);
@@ -87,23 +60,12 @@ export async function dispatchNicheVideoCampaignAction(
       return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
     }
 
-    const parsed = createNicheVideoCampaignSchema.safeParse(rawInput);
-    if (!parsed.success) {
-      const issue = parsed.error.issues[0]?.message ?? 'Invalid input data';
-      return { success: false, error: issue, code: 'VALIDATION_ERROR' };
+    const built = validateAndBuildNichePlan(rawInput);
+    if (!built.ok) {
+      return built.response;
     }
 
-    const planInput = parsed.data as CreateNicheVideoCampaignInput;
-    const planResult = createNicheVideoCampaignPlan(planInput);
-    if (!planResult.ok) {
-      return {
-        success: false,
-        error: planResult.error.message,
-        code: planResult.error.code,
-      };
-    }
-
-    const plan = planResult.value;
+    const { planInput, plan } = built;
 
     await inngest.send({
       name: 'niche.video.campaign.requested',

@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import type { InviteAffiliateResult } from '@/forest/actions/affiliate-actions';
 import {
-  inviteAffiliateAction,
-  type InviteAffiliateResult,
-} from '@/forest/actions/affiliate-actions';
+  DEFAULT_INVITE_ASSET_KITS,
+  copyTextWithFallback,
+  submitInviteAffiliateRequest,
+  validateInviteAffiliateFields,
+} from './invite-affiliate-helpers';
 
 interface UseInviteAffiliateParams {
   isOpen: boolean;
@@ -18,17 +21,14 @@ export function useInviteAffiliate({
 }: UseInviteAffiliateParams) {
   const t = useTranslations('stitch.affiliates.inviteModal');
 
-  // Form State
   const [partnerName, setPartnerName] = useState('');
   const [email, setEmail] = useState('');
   const [customRate, setCustomRate] = useState<number>(20);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [selectedAssetKits, setSelectedAssetKits] = useState<string[]>([
-    'brand_kit',
-    'video_scripts',
+    ...DEFAULT_INVITE_ASSET_KITS,
   ]);
 
-  // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successResult, setSuccessResult] = useState<InviteAffiliateResult | null>(null);
@@ -42,7 +42,7 @@ export function useInviteAffiliate({
       setEmail('');
       setCustomRate(20);
       setWelcomeMessage('');
-      setSelectedAssetKits(['brand_kit', 'video_scripts']);
+      setSelectedAssetKits([...DEFAULT_INVITE_ASSET_KITS]);
       setErrorMessage(null);
       setSuccessResult(null);
       setCopiedLink(false);
@@ -62,62 +62,46 @@ export function useInviteAffiliate({
 
   const handleCopyLink = async () => {
     if (!successResult?.inviteLink) return;
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(successResult.inviteLink);
-      }
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
-    } catch {
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
-    }
+    await copyTextWithFallback(successResult.inviteLink);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!partnerName.trim() || partnerName.trim().length < 2) {
-      setErrorMessage(t('nameRequired'));
-      return;
-    }
-
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!email.trim() || !emailPattern.test(email.trim())) {
-      setErrorMessage(t('emailInvalid'));
-      return;
-    }
-
-    if (isNaN(customRate) || customRate < 5 || customRate > 80) {
-      setErrorMessage(t('rateInvalid'));
+    const validationError = validateInviteAffiliateFields({
+      partnerName,
+      email,
+      customRate,
+      labels: {
+        nameRequired: t('nameRequired'),
+        emailInvalid: t('emailInvalid'),
+        rateInvalid: t('rateInvalid'),
+      },
+    });
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
     setIsSubmitting(true);
+    const outcome = await submitInviteAffiliateRequest({
+      partnerName,
+      email,
+      customRate,
+      welcomeMessage,
+      selectedAssetKits,
+      fallbackErrorLabel: t('error'),
+    });
+    setIsSubmitting(false);
 
-    try {
-      const result = await inviteAffiliateAction({
-        partnerName: partnerName.trim(),
-        email: email.trim().toLowerCase(),
-        customRateOverridePct: Number(customRate),
-        welcomeMessage: welcomeMessage.trim() || undefined,
-        assetKitSelected: selectedAssetKits,
-      });
-
-      if (result.success) {
-        setSuccessResult(result);
-        if (onInviteSuccess) {
-          onInviteSuccess(result);
-        }
-      } else {
-        setErrorMessage(result.error || t('error'));
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : t('error');
-      setErrorMessage(msg);
-    } finally {
-      setIsSubmitting(false);
+    if (outcome.ok) {
+      setSuccessResult(outcome.result);
+      onInviteSuccess?.(outcome.result);
+    } else {
+      setErrorMessage(outcome.errorMessage);
     }
   };
 

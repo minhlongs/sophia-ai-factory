@@ -1985,3 +1985,54 @@ Integrity mode: benchmark
 - [ ] Vitest component unit tests pass 100%.
 - [ ] Cloudflare Workers edge deployment succeeds and live SHA matches local HEAD bit-for-bit.
 - [ ] `bash apps/sophia-ai-factory/scripts/zero-bug-verify.sh --quick` achieves 9/9 PASS.
+
+
+## 2026-10-17T23:57:19Z
+
+Execute a comprehensive UI/UX Pro Max elevation across Sophia AI Factory's 9-screen Stitch v4.2 Director's Control Deck, its 7 standalone production routes, and public conversion surfaces to achieve production-grade visual polish, interactive ergonomics, WCAG 2.2 AA accessibility, and responsive excellence (`375px` to `1440px`).
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+Reference material:
+- `DESIGN.md`, `SITE.md`, `design-tokens.css`, `tailwind-theme.css` (Stitch v4.2 Obsidian-Gold Director's Control Deck design system)
+- `AGENTS.md` and `apps/sophia-ai-factory/CLAUDE.md` (4-layer architecture `seed -> tree -> forest -> land`, protected flows, bilingual `vi` + `en` requirement)
+
+## Requirements
+
+### R1. 9-Screen Control Deck & 7 Standalone Route UI/UX Pro Max Polish
+Elevate the visual hierarchy, interactive micro-states, data visualization clarity, and 4px spatial grid alignment across the unified Control Deck Hub (`/[locale]/dashboard/control-deck`) and all 7 standalone routes (`/[locale]/dashboard`, `/[locale]/dashboard/missions`, `/[locale]/dashboard/affiliate`, `/[locale]/dashboard/settings`, `/[locale]/partner`, `/[locale]/dashboard/approvals`, `/[locale]/pricing`). Ensure interactive controls provide immediate, clear state feedback, loading/pending states, and empty/fallback states grounded in the Obsidian-Gold (`#0B0E14` / `#F59E0B` / `#10B981`) design tokens.
+
+### R2. Public Conversion Surfaces & Onboarding Ergonomics
+Refine the visual presentation, scannability, CTA hierarchy, and trust signals across public-facing conversion surfaces (`/[locale]/pricing`, `/[locale]/partner`, and onboarding/setup flows) while strictly preserving the 3 Protected Flows (Setup Wizard `/setup-wizard`, Telegram Bot webhook, and NOWPayments USDT IPN tier activation) and maintaining bilingual Vietnamese (`vi`) + English (`en`) parity.
+
+### R3. WCAG 2.2 AA Accessibility, Keyboard Ergonomics & Responsive Layout (`375px` → `1440px`)
+Ensure all interactive surfaces meet WCAG 2.2 AA accessibility standards: full keyboard operability (`Tab`, arrow navigation, visible `:focus-visible` rings), semantic ARIA roles/labels, minimum `44x44px` mobile touch targets, zero horizontal overflow across mobile (`375px`), tablet (`768px`), and desktop (`1440px`) viewports, and full respect for `@media (prefers-reduced-motion: reduce)`.
+
+### R4. Perceived Performance, Layout Stability & Codebase Governance
+Provide smooth skeleton/loading transitions and prevent cumulative layout shift (CLS) on dynamic telemetry panels. All code changes inside `apps/sophia-ai-factory` must obey repository governance: strict 4-layer import boundaries (`seed -> tree -> forest -> land`), zero `:any` types, zero `console.log`/`warn`/`error` in production code, and `< 180` lines of code per modified/created TypeScript file.
+
+## Verification Resources
+
+- Layer boundary check: `bash apps/sophia-ai-factory/scripts/check-layer-boundaries.sh`
+- TypeScript check: `npm --prefix apps/sophia-ai-factory run ci:typecheck`
+- i18n parity validation: `npm --prefix apps/sophia-ai-factory run i18n:validate`
+- GET route side-effects check: `npm --prefix apps/sophia-ai-factory run ci:get-side-effects`
+- Open-Core & Protected Flows verification: `npm run verify:open-core`
+- Unit & Component test suite: `npx --prefix apps/sophia-ai-factory vitest run src/land/control-deck src/forest/control-deck src/components/stitch`
+- E2E Playwright suite: `apps/sophia-ai-factory/tests/e2e/stitch-control-deck.spec.ts`
+
+## Acceptance Criteria
+
+### UI/UX & Accessibility Verification
+- [ ] All 9 Control Deck screens and 7 standalone route banners/calculators render with cohesive Obsidian-Gold token styling, visible `:focus-visible` states, `>= 44x44px` interactive touch targets, and bilingual (`vi` + `en`) copy.
+- [ ] Responsive viewports at `375px` (mobile), `768px` (tablet), and `1440px` (desktop) exhibit zero unintended horizontal scrollbars (`document.documentElement.scrollWidth <= window.innerWidth`) on `/en/dashboard/control-deck` and `/vi/pricing`.
+- [ ] Skeleton/loading and transition states respect `prefers-reduced-motion: reduce`.
+
+### Programmatic Quality & Architecture Gates
+- [ ] Every newly created or modified `.ts`/`.tsx` source file in `apps/sophia-ai-factory/src/` has `< 180` lines of code, zero `:any` types, and zero `console.log`/`console.warn`/`console.error` calls.
+- [ ] `bash apps/sophia-ai-factory/scripts/check-layer-boundaries.sh` exits with code `0` (0 violations).
+- [ ] `npm --prefix apps/sophia-ai-factory run ci:typecheck` exits with code `0` (0 TypeScript errors).
+- [ ] `npm --prefix apps/sophia-ai-factory run i18n:validate` exits with code `0` (0 missing translation keys).
+- [ ] `npm run verify:open-core` (`verify-open-core-readiness.mjs` + `verify-blueprint-protected-flows.mjs`) exits with code `0`.
+- [ ] All Vitest unit/component tests and Playwright E2E specs (`stitch-control-deck.spec.ts`) pass with exit code `0`.

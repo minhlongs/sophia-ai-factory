@@ -9,15 +9,17 @@
 
 import type { z } from 'zod';
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { createApproval, listPendingApprovals } from '@/tree/mission';
 import { requestApprovalSchema, listPendingApprovalsSchema } from '../schemas';
 import type { MissionError } from '../types';
 import { actionFailure } from './action-helpers';
+import {
+  requireAuthAndDb,
+  verifyMissionWorkspaceAccess,
+} from './approval-request-helpers';
 
 /**
  * Request human approval for a sensitive action.
@@ -34,30 +36,15 @@ export async function requestApproval(
       });
     }
 
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
-    }
+    const authCtx = await requireAuthAndDb();
+    if (!authCtx.ok) return authCtx;
 
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    // Verify mission exists and user has workspace access
-    const mission = await d1
-      .prepare('SELECT workspace_id FROM creative_missions WHERE id = ?')
-      .bind(parsed.data.missionId)
-      .first<{ workspace_id: string }>();
-
-    if (!mission) {
-      return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
-    }
-
-    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
-    if (!hasAccess) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
-    }
+    const accessCtx = await verifyMissionWorkspaceAccess(
+      parsed.data.missionId,
+      authCtx.value.userId,
+      authCtx.value.d1
+    );
+    if (!accessCtx.ok) return accessCtx;
 
     const approvalId = crypto.randomUUID().replace(/-/g, '').slice(0, 24);
     const result = await createApproval({
@@ -82,8 +69,8 @@ export async function requestApproval(
       missionId: parsed.data.missionId,
       agentId: parsed.data.agentId,
       runId: parsed.data.runId,
-      userId: user.id,
-      workspaceId: mission.workspace_id,
+      userId: authCtx.value.userId,
+      workspaceId: accessCtx.value.workspaceId,
     });
 
     revalidatePath('/dashboard/missions');
@@ -116,18 +103,14 @@ export async function listPendingApprovalsAction(
       });
     }
 
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
-    }
+    const authCtx = await requireAuthAndDb();
+    if (!authCtx.ok) return authCtx;
 
-    const d1 = await getD1();
-    if (!d1) {
-      return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    }
-
-    // Verify workspace membership (IDOR prevention)
-    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, d1);
+    const hasAccess = await verifyWorkspaceAccess(
+      parsed.data.workspaceId,
+      authCtx.value.userId,
+      authCtx.value.d1
+    );
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }

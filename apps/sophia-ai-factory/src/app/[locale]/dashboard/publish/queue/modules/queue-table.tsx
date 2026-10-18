@@ -1,11 +1,19 @@
-import React from 'react';
-import { Send, Shield, RefreshCw, Loader2, MessageCircle } from 'lucide-react';
-import { Button } from '@/seed/components/ui/button';
-import { EmptyState } from '@/seed/components/ui/empty-state';
-import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
-import { type PublishJob, STATUS_CONFIG } from './types';
+'use client';
 
-interface QueueTableProps {
+import React from 'react';
+import { Send } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
+import { type PublishJob } from './types';
+import {
+  QueueTableRow,
+  type QueueTableRowProps,
+  formatPublishQueueDate,
+  formatPublishTarget,
+} from './queue-table-row';
+
+export { QueueTableRow, type QueueTableRowProps, formatPublishQueueDate, formatPublishTarget };
+
+export interface QueueTableProps {
   jobs: PublishJob[];
   locale: string;
   approvingJobId: string | null;
@@ -22,23 +30,6 @@ export function QueueTable({
   onRetry,
   t,
 }: QueueTableProps) {
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatTarget = (target: string) => {
-    if (target.startsWith('wa:')) {
-      return target.replace('wa:', '+');
-    }
-    return target;
-  };
-
   if (jobs.length === 0) {
     return (
       <EmptyState
@@ -83,81 +74,17 @@ export function QueueTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {jobs.map((job) => {
-            const statusConfig = STATUS_CONFIG[job.status];
-            return (
-              <tr key={job.id} className="hover:bg-muted/30 transition-colors">
-                <td className="px-4 py-4">
-                  <div>
-                    <p className="font-medium text-foreground truncate max-w-xs">
-                      {job.videoTitle || `Video ${job.videoId.slice(0, 8)}...`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{job.videoId}</p>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-foreground">
-                      {job.templateName || `Template #${job.templateId}`}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <span className="text-sm font-mono text-foreground">{formatTarget(job.target)}</span>
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
-                      statusConfig.bg,
-                      statusConfig.color
-                    )}
-                  >
-                    {statusConfig.icon}
-                    {t(`status.${job.status}`) || statusConfig.label}
-                  </span>
-                </td>
-                <td className="px-4 py-4 text-sm text-muted-foreground">
-                  {formatDate(job.createdAt)}
-                </td>
-                <td className="px-4 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {job.status === 'pending_approval' && (
-                      <Button
-                        size="sm"
-                        onClick={() => onApprove(job.id)}
-                        disabled={approvingJobId === job.id}
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                      >
-                        {approvingJobId === job.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Shield className="w-3 h-3" />
-                        )}
-                        {t('actions.approve') || 'Approve'}
-                      </Button>
-                    )}
-                    {job.status === 'failed' && (
-                      <Button
-                        size="sm"
-                        onClick={() => onRetry(job.id)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        {t('actions.retry') || 'Retry'}
-                      </Button>
-                    )}
-                    {job.status === 'sent' && (
-                      <span className="px-3 py-1.5 text-xs text-green-600 font-medium">
-                        {t('actions.delivered') || 'Delivered'}
-                      </span>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+          {jobs.map((job) => (
+            <QueueTableRow
+              key={job.id}
+              job={job}
+              locale={locale}
+              approvingJobId={approvingJobId}
+              onApprove={onApprove}
+              onRetry={onRetry}
+              t={t}
+            />
+          ))}
         </tbody>
       </table>
     </div>

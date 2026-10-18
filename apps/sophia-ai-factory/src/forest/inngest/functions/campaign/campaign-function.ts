@@ -1,18 +1,21 @@
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { createServerClient } from '@/seed/db/client';
-import { TIER_RANK } from '@/seed/types';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine';
 import { notifyUserByTelegram } from '@/tree/telegram/user-notifier';
-import { getExperiment } from '@/forest/ab/experiment-store';
 import { NonRetriableError } from 'inngest';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
-import type { CampaignCreatedEventData, AffiliateOfferSelectedRow } from './types';
+import type { CampaignCreatedEventData } from './types';
 import { runGenerateScript, runGenerateVoiceover } from './step-prompt-runner';
 import { runStartVideo, runPollVideo, runDistribution } from './asset-dispatcher';
 import { runStepSafely } from './step-runner-helper';
 import { runFinalizeCampaign } from './campaign-finalizer';
+import {
+  checkCampaignIdempotency,
+  enforceMidFlightTier,
+  loadCampaignAffiliateOffer,
+  resolveCampaignAbTitle,
+} from './campaign-pipeline-steps';
 
 const resumeEngine = new SmartResumeEngine();
 
@@ -27,14 +30,8 @@ export const generateCampaign = inngest.createFunction(
     const { notifyRefundRequired, notifyProviderError } = await import('@/land/video/generation/generate-campaign-refund-notify');
 
     if (!resume) {
-      const idempotencyDb = createServerClient();
-      const { data: existingCampaign } = await idempotencyDb
-        .from('campaigns')
-        .select('id, status')
-        .eq('id', campaignId)
-        .single() as { data: { id: string; status: string } | null };
-      if (existingCampaign && ['processing_script', 'processing_video', 'completed'].includes(existingCampaign.status)) {
-        logger.info('[generateCampaign] Campaign already processed — skipping', { campaignId, status: existingCampaign.status });
+      const idempotency = await checkCampaignIdempotency(campaignId);
+      if (idempotency.shouldSkip) {
         return { skipped: true, campaignId };
       }
     }
@@ -54,21 +51,7 @@ export const generateCampaign = inngest.createFunction(
       }, stepOpts);
 
       const affiliateOffer = await step.run('load-affiliate-offer', async () => {
-        try {
-          const db = createServerClient();
-          const { data } = await db
-            .from('affiliate_offers_selected')
-            .select('short_code, offer_name, affiliate_link')
-            .eq('campaign_id', campaignId)
-            .single();
-          const row = data as AffiliateOfferSelectedRow | null;
-          if (!row) return null;
-          const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'}/r/${row.short_code}`;
-          return { productName: row.offer_name, shortUrl };
-        } catch (error) {
-          logger.warn('[generate-campaign] failed to load affiliate offer for campaign', { campaignId, error: String(error) });
-          return null;
-        }
+        return loadCampaignAffiliateOffer(campaignId);
       });
 
       const script = await runStepSafely(step, 'generate-script', async () => {
@@ -111,35 +94,12 @@ export const generateCampaign = inngest.createFunction(
       const currentTier = await step.run('validate-tier-mid-flight', async () => {
         return resolveUserTier(userId);
       });
-      const eventTierRank = TIER_RANK[tier] ?? 0;
-      const currentTierRank = TIER_RANK[currentTier] ?? 0;
-      if (currentTierRank < eventTierRank) {
-        logger.warn('[generateCampaign] Tier downgrade mid-flight — aborting distribution', {
-          campaignId, userId, eventTier: tier, currentTier,
-        });
-        await updateCampaignStatus(campaignId, 'failed', 0, {
-          error_message: `Tier downgraded mid-flight from ${tier} to ${currentTier}. Campaign aborted.`,
-        }).catch((err) => {
-          logger.warn('Failed to update campaign status after tier downgrade', {
-            error: String(err), context: 'generateCampaign', campaignId,
-          });
-        });
-        throw new NonRetriableError(
-          `Tier downgrade mid-flight: ${tier} → ${currentTier}. Please re-run with an active tier.`,
-        );
-      }
+      await enforceMidFlightTier(campaignId, userId, tier, currentTier, (errorMsg) =>
+        updateCampaignStatus(campaignId, 'failed', 0, { error_message: errorMsg }),
+      );
 
       const campaignTitle = await step.run('resolve-ab-title', async () => {
-        if (!abExperimentId) return topic || `Campaign ${campaignId}`;
-        try {
-          const experiment = await getExperiment(abExperimentId);
-          if (experiment?.variantACaption) return experiment.variantACaption;
-        } catch (err) {
-          logger.warn('[generateCampaign] AB experiment lookup failed — using original title', {
-            campaignId, abExperimentId, error: String(err),
-          });
-        }
-        return topic || `Campaign ${campaignId}`;
+        return resolveCampaignAbTitle(abExperimentId, topic, campaignId);
       });
 
       const distributionResult = await runStepSafely(step, 'distribute-channels', async () => {

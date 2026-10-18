@@ -6,25 +6,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  VALID_STATUSES,
+  createTicketSchema,
+  fetchUserSupportTickets,
+  insertSupportTicketRecord,
+  isValidTicketStatus,
+} from './ticket-route-helpers';
 
 export const dynamic = 'force-dynamic';
-
-// ── Zod validation ───────────────────────────────────────────────────────────
-
-const VALID_PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
-const VALID_STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
-
-const createTicketSchema = z.object({
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().min(10).max(5000),
-  priority: z.enum(VALID_PRIORITIES).default('normal'),
-});
-
-// ── Route handlers ───────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -59,20 +51,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       priority: parsed.data.priority,
     });
 
-    const db = createServerClient();
-    const ticketId = crypto.randomUUID();
-
     try {
-      await db.from('support_tickets').insert({
-        id: ticketId,
-        user_id: user.id,
-        source: 'web',
-        title: parsed.data.title ?? null,
-        message: parsed.data.description,
-        status: 'open',
-        priority: parsed.data.priority,
-        created_at: new Date().toISOString(),
-      });
+      const ticket = await insertSupportTicketRecord(user.id, parsed.data);
+      return NextResponse.json({ ticket }, { status: 201 });
     } catch (err) {
       logger.error(
         '[Support Tickets] insert error',
@@ -83,19 +64,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 500 },
       );
     }
-
-    return NextResponse.json(
-      {
-        ticket: {
-          id: ticketId,
-          title: parsed.data.title ?? null,
-          message: parsed.data.description,
-          status: 'open',
-          priority: parsed.data.priority,
-        },
-      },
-      { status: 201 },
-    );
   } catch (err) {
     logger.error(
       '[Support Tickets] POST error',
@@ -119,7 +87,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const statusParam = request.nextUrl.searchParams.get('status');
-    if (statusParam && !VALID_STATUSES.includes(statusParam as typeof VALID_STATUSES[number])) {
+    if (statusParam && !isValidTicketStatus(statusParam)) {
       return NextResponse.json(
         { error: 'Invalid status filter', validValues: VALID_STATUSES },
         { status: 400 },
@@ -131,15 +99,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       status: statusParam,
     });
 
-    const db = createServerClient();
-
     try {
-      let query = db.from('support_tickets').select('*').eq('user_id', user.id);
-      if (statusParam) {
-        query = query.eq('status', statusParam);
-      }
-      const result = await query;
-
+      const result = await fetchUserSupportTickets(user.id, statusParam);
       if (result.error) {
         return NextResponse.json(
           { error: 'Failed to list support tickets' },

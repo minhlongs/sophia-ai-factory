@@ -144,7 +144,7 @@ describe('Subscription Lifecycle — handleFinished', () => {
     const payload = buildIpnPayload({ actually_paid: 0.01, price_amount: 199 })
     const { logger } = await import('@/seed/utils/logger-utility')
     await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
-    // Underpayment guard: actually_paid < price_amount * UNDERPAYMENT_THRESHOLD → early return
+    // Underpayment guard compares actually_paid to pay_amount in crypto units.
   })
 
 })

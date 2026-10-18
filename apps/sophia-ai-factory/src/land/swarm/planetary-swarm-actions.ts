@@ -9,8 +9,6 @@
 'use server';
 
 import { getD1 } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { logger } from '@/seed/utils/logger-utility';
 import {
   type PlanetarySwarmNode,
   type ZkDidIdentity,
@@ -26,128 +24,94 @@ import {
   type DidIssuanceInput,
   type DidVerificationResult,
 } from '@/tree/identity/zk-did-verifier';
+import {
+  loadSwarmNodesFromD1,
+  runAuthenticatedSwarmAction,
+  type SwarmActionResponse,
+} from './planetary-swarm-action-helpers';
 
-export interface SwarmActionResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type { SwarmActionResponse };
 
 /**
  * Registers or updates a planetary swarm node.
  */
 export async function registerPlanetaryNodeAction(
-  node: PlanetarySwarmNode
+  node: PlanetarySwarmNode,
 ): Promise<SwarmActionResponse<PlanetarySwarmNode>> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
-
-    const db = await getD1();
-    if (db) {
-      await PlanetarySwarmV3Coordinator.persistNode(db, node);
-    }
-
-    return { success: true, data: node };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to register swarm node';
-    logger.error('registerPlanetaryNodeAction failed', { error: message });
-    return { success: false, error: message };
-  }
+  return runAuthenticatedSwarmAction(
+    'registerPlanetaryNodeAction',
+    'Failed to register swarm node',
+    async () => {
+      const db = await getD1();
+      if (db) {
+        await PlanetarySwarmV3Coordinator.persistNode(db, node);
+      }
+      return node;
+    },
+  );
 }
 
 /**
  * Issues a new W3C compliant ZK-DID identity.
  */
 export async function issueZkDidIdentityAction(
-  input: DidIssuanceInput
+  input: DidIssuanceInput,
 ): Promise<SwarmActionResponse<ZkDidIdentity>> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
-
-    const identity = ZkDidVerifier.issueIdentity(input);
-    const db = await getD1();
-
-    if (db) {
-      await ZkDidVerifier.registerIdentityInDb(db, identity);
-    }
-
-    return { success: true, data: identity };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to issue ZK-DID';
-    logger.error('issueZkDidIdentityAction failed', { error: message });
-    return { success: false, error: message };
-  }
+  return runAuthenticatedSwarmAction(
+    'issueZkDidIdentityAction',
+    'Failed to issue ZK-DID',
+    async () => {
+      const identity = ZkDidVerifier.issueIdentity(input);
+      const db = await getD1();
+      if (db) {
+        await ZkDidVerifier.registerIdentityInDb(db, identity);
+      }
+      return identity;
+    },
+  );
 }
 
 /**
  * Verifies a ZK-DID identity's cryptographic validity and status.
  */
 export async function verifyZkDidIdentityAction(
-  identity: ZkDidIdentity
+  identity: ZkDidIdentity,
 ): Promise<SwarmActionResponse<DidVerificationResult>> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
-
-    const result = ZkDidVerifier.verifyIdentity(identity);
-    return { success: true, data: result };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to verify ZK-DID';
-    logger.error('verifyZkDidIdentityAction failed', { error: message });
-    return { success: false, error: message };
-  }
+  return runAuthenticatedSwarmAction(
+    'verifyZkDidIdentityAction',
+    'Failed to verify ZK-DID',
+    async () => ZkDidVerifier.verifyIdentity(identity),
+  );
 }
 
 /**
  * Matches and clears an agentic spot compute auction order.
  */
 export async function matchSpotAuctionAction(
-  bid: SpotBidRequest
+  bid: SpotBidRequest,
 ): Promise<SwarmActionResponse<SpotAuctionMatchResult>> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
-
-    const db = await getD1();
-    const nodes = db ? await PlanetarySwarmV3Coordinator.getAllNodes(db) : [];
-    const result = PlanetarySwarmV3Coordinator.matchSpotComputeAuction(nodes, bid);
-
-    return { success: true, data: result };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to match spot auction';
-    logger.error('matchSpotAuctionAction failed', { error: message });
-    return { success: false, error: message };
-  }
+  return runAuthenticatedSwarmAction(
+    'matchSpotAuctionAction',
+    'Failed to match spot auction',
+    async () => {
+      const nodes = await loadSwarmNodesFromD1();
+      return PlanetarySwarmV3Coordinator.matchSpotComputeAuction(nodes, bid);
+    },
+  );
 }
 
 /**
  * Evaluates the trans-continental mesh health and Byzantine quorum status.
  */
-export async function getPlanetaryMeshHealthAction(): Promise<SwarmActionResponse<PartitionHealthReport>> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required' };
-    }
-
-    const db = await getD1();
-    const nodes = db ? await PlanetarySwarmV3Coordinator.getAllNodes(db) : [];
-    const report = PlanetarySwarmV3Coordinator.evaluateByzantineQuorum(nodes);
-
-    return { success: true, data: report };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to evaluate mesh health';
-    logger.error('getPlanetaryMeshHealthAction failed', { error: message });
-    return { success: false, error: message };
-  }
+export async function getPlanetaryMeshHealthAction(): Promise<
+  SwarmActionResponse<PartitionHealthReport>
+> {
+  return runAuthenticatedSwarmAction(
+    'getPlanetaryMeshHealthAction',
+    'Failed to evaluate mesh health',
+    async () => {
+      const nodes = await loadSwarmNodesFromD1();
+      return PlanetarySwarmV3Coordinator.evaluateByzantineQuorum(nodes);
+    },
+  );
 }

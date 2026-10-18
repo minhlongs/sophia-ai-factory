@@ -10,75 +10,32 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type { Tier } from '@/seed/types';
-
-// -------------------------------------------------------------------------
-// Types
-// -------------------------------------------------------------------------
-
-export type AlertSeverity = 'warning' | 'critical' | 'info';
-export type AlertChannel = 'email' | 'sms' | 'webhook';
-export type AlertThreshold = 80 | 90 | 100;
-
-export interface QuotaAlertContext {
-  userId: string;
-  licenseNonce: string;
-  tier: Tier;
-  threshold: AlertThreshold;
-  currentUsage: number;
-  limit: number;
-  percentage: number;
-  exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests';
-  stripeCustomerId?: string;
-  ipAddress?: string;
-}
-
-export interface AlertTemplate {
-  subject: string;
-  body: string;
-  htmlBody?: string;
-  smsBody?: string;
-}
-
-export interface AlertConfig {
-  enabledChannels: AlertChannel[];
-  rateLimitWindowSeconds: number;
-  includeBillingLink: boolean;
-  upgradePrompt: boolean;
-}
-
-export interface AlertDeliveryResult {
-  success: boolean;
-  emailSent?: boolean;
-  smsSent?: boolean;
-  webhookSent?: boolean;
-  error?: string;
-  rateLimited?: boolean;
-}
-
-const DEFAULT_ALERT_CONFIG: AlertConfig = {
-  enabledChannels: ['email', 'sms'],
-  rateLimitWindowSeconds: 3600,
-  includeBillingLink: true,
-  upgradePrompt: true,
-};
-
-export const TIER_ALERT_CONFIGS: Record<Tier, AlertConfig> = {
-  BASIC:      { ...DEFAULT_ALERT_CONFIG, enabledChannels: ['email'], upgradePrompt: true },
-  PREMIUM:    { ...DEFAULT_ALERT_CONFIG, enabledChannels: ['email', 'sms'], upgradePrompt: true },
-  ENTERPRISE: { ...DEFAULT_ALERT_CONFIG, rateLimitWindowSeconds: 1800, upgradePrompt: false },
-  MASTER:     { ...DEFAULT_ALERT_CONFIG, rateLimitWindowSeconds: 900, upgradePrompt: false },
-};
-
-// -------------------------------------------------------------------------
-// Template building (delegates HTML to alert-email-templates module)
-// -------------------------------------------------------------------------
-
 import {
   buildEmailHtml80,
   buildEmailHtml90,
   buildEmailHtml100,
 } from './alert-email-templates';
+import {
+  type AlertSeverity,
+  type AlertChannel,
+  type AlertThreshold,
+  type QuotaAlertContext,
+  type AlertTemplate,
+  type AlertConfig,
+  type AlertDeliveryResult,
+  TIER_ALERT_CONFIGS,
+} from './alert-rule-types';
+
+export type {
+  AlertSeverity,
+  AlertChannel,
+  AlertThreshold,
+  QuotaAlertContext,
+  AlertTemplate,
+  AlertConfig,
+  AlertDeliveryResult,
+};
+export { TIER_ALERT_CONFIGS };
 
 /**
  * Get alert template for a given threshold and channel
@@ -122,10 +79,6 @@ export function getAlertTemplate(context: QuotaAlertContext, channel: AlertChann
   }
 }
 
-// -------------------------------------------------------------------------
-// Rate limiting
-// -------------------------------------------------------------------------
-
 /**
  * Check if an alert is rate-limited (true = suppress alert)
  */
@@ -152,10 +105,6 @@ export async function isRateLimited(
     return false; // Fail-open
   }
 }
-
-// -------------------------------------------------------------------------
-// Multi-threshold evaluation
-// -------------------------------------------------------------------------
 
 /**
  * Determine which alert thresholds to trigger for a given usage percentage

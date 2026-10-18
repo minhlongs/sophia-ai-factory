@@ -12,6 +12,7 @@ import type {
 import { TELEGRAM_SAFE_CHUNK_LENGTH } from './types';
 import { formatTelegramDigest } from './metrics-formatter';
 import { splitTelegramMarkdownV2 } from './digest-delivery';
+import { sendTelegramChunkWithFallback } from './telegram-chunk-sender';
 
 /**
  * Sends an Executive BI Digest to Telegram Bot API.
@@ -57,38 +58,13 @@ export async function sendTelegramExecutiveDigest(
     const chunk = chunks[i];
 
     try {
-      let res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: chunk,
-          parse_mode: 'MarkdownV2',
-          disable_web_page_preview: telegramConfig?.disableWebPagePreview ?? true,
-        }),
-        signal: AbortSignal.timeout(10_000),
+      const res = await sendTelegramChunkWithFallback({
+        botToken,
+        chatId,
+        chunk,
+        chunkIndex: i,
+        disableWebPagePreview: telegramConfig?.disableWebPagePreview ?? true,
       });
-
-      // Fallback to plain text on MarkdownV2 parse failure (HTTP 400 with "can't parse")
-      if (!res.ok && res.status === 400) {
-        const bodyText = await res.text().catch(() => '');
-        if (bodyText.includes("can't parse") || bodyText.includes('entities')) {
-          logger.warn('[telegram-digest-sender] MarkdownV2 parse failed, falling back to plain text', {
-            chatId,
-            chunkIndex: i,
-          });
-          res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: chunk.replace(/\\([_*[\]()~`>#+\-=|{}.!\\])/g, '$1'),
-              disable_web_page_preview: true,
-            }),
-            signal: AbortSignal.timeout(10_000),
-          });
-        }
-      }
 
       if (!res.ok) {
         const errBody = await res.text().catch(() => '');

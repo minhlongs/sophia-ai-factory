@@ -14,8 +14,6 @@
  * @module land/revenue/mrr-dashboard-actions
  */
 
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   ActionResult,
@@ -25,20 +23,14 @@ import type {
   UnifiedRevenueSnapshot,
 } from '@/seed/types/unified-revenue';
 import {
-  aggregateRealtimeMrrFromD1,
-  consolidateMrrChannels,
-  getLatestUnifiedRevenueSnapshot,
   getUnifiedRevenueSnapshotsHistory,
   saveUnifiedRevenueSnapshot,
 } from '@/tree/revenue/mrr-consolidation-engine';
 import { queryCohortMatrix } from '@/tree/revenue/cohort-retention-calculator';
-
-function getCurrentPeriodMonth(): string {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
-}
+import {
+  requireAuthenticatedD1,
+  resolveUnifiedMrrOverview,
+} from './mrr-dashboard-helpers';
 
 /**
  * Fetches the unified MRR overview and Gate 8 progress tracking.
@@ -50,41 +42,11 @@ export async function getUnifiedMrrOverviewAction(): Promise<
   }>
 > {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'UNAUTHORIZED: Authentication required' };
-    }
+    const ctx = await requireAuthenticatedD1();
+    if (!ctx.ok) return { success: false, error: ctx.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database unavailable' };
-    }
-
-    const currentPeriod = getCurrentPeriodMonth();
-    let snapshot = await getLatestUnifiedRevenueSnapshot(db);
-
-    if (!snapshot || snapshot.periodMonth !== currentPeriod) {
-      snapshot = await aggregateRealtimeMrrFromD1(db, currentPeriod);
-    }
-
-    const consolidated = consolidateMrrChannels({
-      periodMonth: snapshot.periodMonth,
-      directSalesCents: snapshot.directSalesCents,
-      affiliateSalesCents: snapshot.affiliateSalesCents,
-      contentSeoCents: snapshot.contentSeoCents,
-      enterpriseDealsCents: snapshot.enterpriseDealsCents,
-      activeCustomersCount: snapshot.activeCustomersCount,
-      currency: snapshot.currency,
-      status: snapshot.status,
-    });
-
-    return {
-      success: true,
-      data: {
-        snapshot,
-        progress: consolidated.progress,
-      },
-    };
+    const data = await resolveUnifiedMrrOverview(ctx.db);
+    return { success: true, data };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error('[mrr-dashboard-actions] getUnifiedMrrOverviewAction error', { error: message });
@@ -99,17 +61,10 @@ export async function getMrrTrendSnapshotsAction(
   limit = 12,
 ): Promise<ActionResult<UnifiedRevenueSnapshot[]>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'UNAUTHORIZED: Authentication required' };
-    }
+    const ctx = await requireAuthenticatedD1();
+    if (!ctx.ok) return { success: false, error: ctx.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database unavailable' };
-    }
-
-    const snapshots = await getUnifiedRevenueSnapshotsHistory(db, limit);
+    const snapshots = await getUnifiedRevenueSnapshotsHistory(ctx.db, limit);
     return { success: true, data: snapshots };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -125,17 +80,10 @@ export async function getCohortRetentionMatrixAction(
   months = 12,
 ): Promise<ActionResult<CohortTriangularMatrix>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'UNAUTHORIZED: Authentication required' };
-    }
+    const ctx = await requireAuthenticatedD1();
+    if (!ctx.ok) return { success: false, error: ctx.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database unavailable' };
-    }
-
-    const matrix = await queryCohortMatrix(db, { limitMonths: months });
+    const matrix = await queryCohortMatrix(ctx.db, { limitMonths: months });
     return { success: true, data: matrix };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -151,17 +99,10 @@ export async function recordUnifiedRevenueSnapshotAction(
   input: ConsolidateChannelsInput,
 ): Promise<ActionResult<UnifiedRevenueSnapshot>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'UNAUTHORIZED: Authentication required' };
-    }
+    const ctx = await requireAuthenticatedD1();
+    if (!ctx.ok) return { success: false, error: ctx.error };
 
-    const db = await getD1();
-    if (!db) {
-      return { success: false, error: 'Database unavailable' };
-    }
-
-    const snapshot = await saveUnifiedRevenueSnapshot(db, input);
+    const snapshot = await saveUnifiedRevenueSnapshot(ctx.db, input);
     return { success: true, data: snapshot };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

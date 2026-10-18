@@ -11,12 +11,14 @@ import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/securit
 import { classifyError } from '@/seed/types/failure-kind';
 import {
   THREADS_BASE,
-  buildThreadsCaption,
   refreshLongLivedToken,
   type ThreadsTokenResponse,
-  type ThreadsCreateResponse,
   type ThreadsInsightsResponse,
 } from './threads-helpers';
+import {
+  createAndPublishThreadsContainer,
+  parseThreadsInsights,
+} from './threads-api-client';
 
 export { refreshLongLivedToken, type ThreadsTokenResponse };
 
@@ -41,51 +43,14 @@ export class ThreadsPublisher implements Publisher {
     }
 
     try {
-      const text = buildThreadsCaption(meta);
-
-      const containerRes = await fetch(`${THREADS_BASE}/${this.userId}/threads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          media_type: 'VIDEO',
-          video_url: videoUrl,
-          text,
-          access_token: this.accessToken,
-        }),
-      });
-      if (!containerRes.ok) {
-        const body = await containerRes.text().catch((err) => {
-          logger.warn('Failed to read Threads container response', { error: String(err), context: 'ThreadsPublisher.upload' });
-          return '';
-        });
-        throw new Error(`Threads container creation failed (${containerRes.status}): ${body.slice(0, 300)}`);
-      }
-      const containerData = (await containerRes.json()) as ThreadsCreateResponse;
-      if (!containerData.id) {
-        throw new Error(`Threads container returned no id: ${containerData.error?.message ?? 'unknown'}`);
-      }
-
-      const publishRes = await fetch(`${THREADS_BASE}/${this.userId}/threads_publish`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          creation_id: containerData.id,
-          access_token: this.accessToken,
-        }),
-      });
-      if (!publishRes.ok) {
-        const body = await publishRes.text().catch((err) => {
-          logger.warn('Failed to read Threads publish response', { error: String(err), context: 'ThreadsPublisher.upload' });
-          return '';
-        });
-        throw new Error(`Threads publish failed (${publishRes.status}): ${body.slice(0, 300)}`);
-      }
-      const publishData = (await publishRes.json()) as ThreadsCreateResponse;
-      if (!publishData.id) {
-        throw new Error(`Threads publish returned no post id: ${publishData.error?.message ?? 'unknown'}`);
-      }
+      const postId = await createAndPublishThreadsContainer(
+        this.userId,
+        this.accessToken,
+        videoUrl,
+        meta,
+      );
       recordSuccess('threads');
-      return publishData.id;
+      return postId;
     } catch (error) {
       recordFailure('threads', classifyError(error));
       throw error;
@@ -123,15 +88,7 @@ export class ThreadsPublisher implements Publisher {
       if (!res.ok) return { views: 0, likes: 0, comments: 0 };
       recordSuccess('threads');
       const data = (await res.json()) as ThreadsInsightsResponse;
-      const findNum = (name: string): number => {
-        const v = data.data?.find((m) => m.name === name)?.values?.[0]?.value;
-        return typeof v === 'number' ? v : 0;
-      };
-      return {
-        views: findNum('views'),
-        likes: findNum('likes'),
-        comments: findNum('replies'),
-      };
+      return parseThreadsInsights(data);
     } catch (error) {
       recordFailure('threads', classifyError(error));
       throw error;

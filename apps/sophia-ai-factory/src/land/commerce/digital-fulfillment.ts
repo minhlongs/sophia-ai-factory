@@ -21,6 +21,14 @@ import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { getOrder, markOrderFulfilled } from './commerce-order';
+import {
+  newFulfillmentId,
+  buildGrantRef,
+  fetchExistingFulfillment,
+  claimFulfillmentSlot,
+  resolveProductGrantRef,
+  updateFulfillmentGranted,
+} from './digital-fulfillment-helpers';
 
 export type FulfillmentErrorCode =
   | 'DB_UNAVAILABLE'
@@ -41,16 +49,7 @@ export interface FulfillmentOk {
   alreadyFulfilled: boolean;
 }
 
-function newFulfillmentId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return 'cful_' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** Build the deterministic grant reference for a product + order. */
-export function buildGrantRef(assetRef: string | null, orderId: string): string {
-  return assetRef ? `access:${assetRef}` : `download:${orderId}`;
-}
+export { buildGrantRef };
 
 /**
  * Fulfill a paid order exactly once:
@@ -75,10 +74,7 @@ export async function fulfillOrder(orderId: string): Promise<Result<FulfillmentO
   const order = orderResult.value;
 
   if (order.status === 'fulfilled') {
-    const existing = await db
-      .prepare('SELECT id, grant_ref FROM commerce_fulfillments WHERE order_id = ?1 LIMIT 1')
-      .bind(orderId)
-      .first<{ id: string; grant_ref: string | null }>();
+    const existing = await fetchExistingFulfillment(db, orderId);
     return success({
       fulfillmentId: existing?.id ?? '',
       orderId,
@@ -94,26 +90,20 @@ export async function fulfillOrder(orderId: string): Promise<Result<FulfillmentO
     });
   }
 
-  // Atomic claim: UNIQUE(order_id) makes this a single-writer gate.
   const fulfillmentId = newFulfillmentId();
   const now = Date.now();
   try {
-    const claim = await db
-      .prepare(
-        `INSERT INTO commerce_fulfillments
-           (id, order_id, product_id, workspace_id, status, grant_ref, error, fulfilled_at, created_at)
-         VALUES (?1, ?2, ?3, ?4, 'pending', NULL, NULL, NULL, ?5)
-         ON CONFLICT(order_id) DO NOTHING`,
-      )
-      .bind(fulfillmentId, orderId, order.productId, order.workspaceId, now)
-      .run();
+    const changes = await claimFulfillmentSlot(
+      db,
+      fulfillmentId,
+      orderId,
+      order.productId,
+      order.workspaceId,
+      now
+    );
 
-    if ((claim.meta?.changes ?? 0) === 0) {
-      // Another run claimed it first — report the existing grant if present.
-      const existing = await db
-        .prepare('SELECT id, grant_ref FROM commerce_fulfillments WHERE order_id = ?1 LIMIT 1')
-        .bind(orderId)
-        .first<{ id: string; grant_ref: string | null }>();
+    if (changes === 0) {
+      const existing = await fetchExistingFulfillment(db, orderId);
       return success({
         fulfillmentId: existing?.id ?? '',
         orderId,
@@ -126,31 +116,10 @@ export async function fulfillOrder(orderId: string): Promise<Result<FulfillmentO
     return failure({ code: 'WRITE_FAILED', message: toError(err).message });
   }
 
-  // Resolve the grant from the product catalog.
-  let grantRef = buildGrantRef(null, orderId);
-  try {
-    const product = await db
-      .prepare('SELECT asset_ref FROM commerce_products WHERE id = ?1 LIMIT 1')
-      .bind(order.productId)
-      .first<{ asset_ref: string | null }>();
-    grantRef = buildGrantRef(product?.asset_ref ?? null, orderId);
-  } catch (err) {
-    // Non-fatal: fall back to the download reference.
-    logger.warn('[commerce] product lookup failed, using download grant', {
-      orderId,
-      error: String(err),
-    });
-  }
+  const grantRef = await resolveProductGrantRef(db, order.productId, orderId);
 
   try {
-    await db
-      .prepare(
-        `UPDATE commerce_fulfillments
-         SET status = 'granted', grant_ref = ?2, fulfilled_at = ?3
-         WHERE id = ?1`,
-      )
-      .bind(fulfillmentId, grantRef, Date.now())
-      .run();
+    await updateFulfillmentGranted(db, fulfillmentId, grantRef, Date.now());
   } catch (err) {
     logger.error('[commerce] fulfillment grant failed', toError(err), { orderId, fulfillmentId });
     return failure({ code: 'WRITE_FAILED', message: toError(err).message });

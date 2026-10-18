@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Pan-Dimensional Empire Conclave arbitration, constitutional invariant checks, and STARK compaction.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   arbitratePanDimensionalEmpireConclaveDispute,
   verifyPanDimensionalEmpireConstitutionalInvariants,
@@ -22,6 +21,10 @@ import type {
   PanDimensionalEmpireConstitutionalInvariant,
   PanDimensionalEmpireTransaction,
 } from '@/seed/types/pan-dimensional-holographic-stark-conclave';
+import {
+  recordCosmicConclaveDispute,
+  recordCosmicStarkBatch,
+} from './cosmic-court-d1-recorder';
 
 export interface PanDimensionalEmpireDisputeActionResult {
   success: boolean;
@@ -43,39 +46,23 @@ export async function arbitratePanDimensionalEmpireDisputeAction(
 ): Promise<PanDimensionalEmpireDisputeActionResult> {
   try {
     const data = arbitratePanDimensionalEmpireConclaveDispute(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pan_dimensional_supreme_conclave_disputes (
-             id, dispute_case_ref, claimant_participant_id, respondent_participant_id,
-             dispute_value_cents, evidence_sha256, total_jurors, claimant_votes,
-             respondent_votes, supermajority_pct, jurors_slashed_count,
-             total_slashed_stake_cents, executed_remedy_cents, verdict,
-             ruling_hash, ruled_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          input.disputeCaseRef,
-          input.claimantParticipantId,
-          input.respondentParticipantId,
-          input.disputeValueCents,
-          input.evidenceSha256,
-          data.totalJurors,
-          data.claimantVotes,
-          data.respondentVotes,
-          data.effectiveSupermajorityPct,
-          data.jurorsSlashedCount,
-          data.totalSlashedStakeCents,
-          data.executedRemedyCents,
-          data.verdict,
-          data.rulingHash,
-          new Date().toISOString()
-        )
-        .run();
-    }
+    await recordCosmicConclaveDispute({
+      tableName: 'pan_dimensional_supreme_conclave_disputes',
+      disputeCaseRef: input.disputeCaseRef,
+      claimantParticipantId: input.claimantParticipantId,
+      respondentParticipantId: input.respondentParticipantId,
+      disputeValueCents: input.disputeValueCents,
+      evidenceSha256: input.evidenceSha256,
+      totalJurors: data.totalJurors,
+      claimantVotes: data.claimantVotes,
+      respondentVotes: data.respondentVotes,
+      effectiveSupermajorityPct: data.effectiveSupermajorityPct,
+      jurorsSlashedCount: data.jurorsSlashedCount,
+      totalSlashedStakeCents: data.totalSlashedStakeCents,
+      executedRemedyCents: data.executedRemedyCents,
+      verdict: data.verdict,
+      rulingHash: data.rulingHash,
+    });
 
     return { success: true, data };
   } catch (error) {
@@ -100,32 +87,20 @@ export async function compactPanDimensionalHolographicStateAction(
       transactions,
       circuitIdentifier
     );
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pan_dimensional_holographic_stark_batches (
-             id, batch_ref, batch_tx_count, previous_state_root,
-             new_state_root, proof_bytes_length, verification_time_nanos,
-             circuit_identifier, is_mathematically_sound, stark_digest, compacted_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `STARK-PAN-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          data.batchTransactionCount,
-          data.previousStateRoot,
-          data.newStateRoot,
-          data.starkProofBytesLength,
-          data.verificationTimeNanos,
-          data.verifierCircuitIdentifier,
-          data.isMathematicallySound ? 1 : 0,
-          data.compactionDigest,
-          new Date().toISOString()
-        )
-        .run();
-    }
+    await recordCosmicStarkBatch({
+      tableName: 'pan_dimensional_holographic_stark_batches',
+      batchRefPrefix: 'STARK-PAN',
+      newStateColumn: 'new_state_root',
+      timeColumn: 'verification_time_nanos',
+      batchTransactionCount: data.batchTransactionCount,
+      previousStateRoot: data.previousStateRoot,
+      newStateRoot: data.newStateRoot,
+      starkProofBytesLength: data.starkProofBytesLength,
+      verificationTime: data.verificationTimeNanos,
+      verifierCircuitIdentifier: data.verifierCircuitIdentifier,
+      isMathematicallySound: data.isMathematicallySound,
+      compactionDigest: data.compactionDigest,
+    });
 
     return { success: data.isMathematicallySound, data };
   } catch (error) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { verifyCsrfToken } from '@/seed/security/csrf';
 import { errorResponse, handleThrownError } from '@/seed/api';
 import {
   scheduleCreateSchema,
@@ -10,6 +9,11 @@ import {
   updateScheduleForUser,
   deleteScheduleForUser,
 } from './service';
+import {
+  mapScheduleErrorStatus,
+  parseJsonBody,
+  requireCsrfUser,
+} from './route-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,31 +36,21 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyCsrfToken(req)) {
-    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
-  }
+  const auth = await requireCsrfUser(req);
+  if ('response' in auth) return auth.response;
+
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const json = await parseJsonBody(req);
+    if (!json.ok) return json.response;
 
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-    }
-
-    const parsed = scheduleCreateSchema.safeParse(body);
+    const parsed = scheduleCreateSchema.safeParse(json.body);
     if (!parsed.success) {
       return errorResponse('Invalid schedule input', 'VALIDATION_ERROR', 400);
     }
 
-    const result = await createScheduleForUser(user.id, parsed.data);
+    const result = await createScheduleForUser(auth.userId, parsed.data);
     if (result.error) {
-      const status = result.code === 'TABLE_NOT_FOUND' ? 503 : 500;
-      return NextResponse.json({ error: result.error }, { status });
+      return NextResponse.json({ error: result.error }, { status: mapScheduleErrorStatus(result.code) });
     }
 
     return NextResponse.json({
@@ -69,36 +63,21 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!verifyCsrfToken(req)) {
-    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
-  }
+  const auth = await requireCsrfUser(req);
+  if ('response' in auth) return auth.response;
+
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const json = await parseJsonBody(req);
+    if (!json.ok) return json.response;
 
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-    }
-
-    const parsed = schedulePatchSchema.safeParse(body);
+    const parsed = schedulePatchSchema.safeParse(json.body);
     if (!parsed.success) {
       return errorResponse('Invalid schedule input', 'VALIDATION_ERROR', 400);
     }
 
-    const result = await updateScheduleForUser(user.id, parsed.data);
+    const result = await updateScheduleForUser(auth.userId, parsed.data);
     if (result.error) {
-      const status =
-        result.code === 'NOT_FOUND'
-          ? 404
-          : result.code === 'TABLE_NOT_FOUND'
-            ? 503
-            : 500;
-      return NextResponse.json({ error: result.error }, { status });
+      return NextResponse.json({ error: result.error }, { status: mapScheduleErrorStatus(result.code) });
     }
 
     return NextResponse.json({
@@ -111,30 +90,19 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!verifyCsrfToken(req)) {
-    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
-  }
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const auth = await requireCsrfUser(req);
+  if ('response' in auth) return auth.response;
 
+  try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) {
       return NextResponse.json({ error: 'Missing schedule id' }, { status: 400 });
     }
 
-    const result = await deleteScheduleForUser(user.id, id);
+    const result = await deleteScheduleForUser(auth.userId, id);
     if (result.error) {
-      const status =
-        result.code === 'NOT_FOUND'
-          ? 404
-          : result.code === 'TABLE_NOT_FOUND'
-            ? 503
-            : 500;
-      return NextResponse.json({ error: result.error }, { status });
+      return NextResponse.json({ error: result.error }, { status: mapScheduleErrorStatus(result.code) });
     }
 
     return NextResponse.json({ success: true });

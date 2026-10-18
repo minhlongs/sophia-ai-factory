@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Ducenti-Quinquaginta-Quintillion ($250.0 Quintillion) Hyper-RTGS settlement, Omniverse Netting 45.0, and Basel XLI solvency audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   executeDucentiquinquagintaquintillionOmniverseNetting,
   validateDucentiquinquagintaquintillionHyperRtgsPayment,
@@ -20,6 +19,11 @@ import {
   type BaselXliSolvencyOutput,
 } from '@/tree/reserve/basel-xli-solvency-engine';
 import type { DucentiquinquagintaquintillionNettingObligation } from '@/seed/types/ducenti-quinquaginta-quintillion-trans-cosmic-hyper-rtgs-capital';
+import {
+  recordBaselSolvencyAuditD1,
+  recordHyperRtgsNettingBatchD1,
+  recordHyperRtgsSettlementD1,
+} from './quintillion-hyper-rtgs-d1-recorder';
 
 export interface DucentiquinquagintaquintillionRtgsActionResult {
   success: boolean;
@@ -47,32 +51,20 @@ export async function executeDucentiquinquagintaquintillionHyperRtgsAction(
 ): Promise<DucentiquinquagintaquintillionRtgsActionResult> {
   try {
     const data = validateDucentiquinquagintaquintillionHyperRtgsPayment(input);
-    const db = await getD1();
-
-    if (db && data.valid) {
-      await db
-        .prepare(
-          `INSERT INTO ducentiquinquagintaquintillion_hyper_rtgs_clearing_sessions (
-             id, session_ref, source_participant_id, target_participant_id,
-             asset_currency, gross_amount_cents, priority_tier, settlement_status,
-             execution_latency_picoseconds, clearing_receipt_hash, settled_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SESSION-DUCENTI-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.sourceParticipantId,
-          input.targetParticipantId,
-          input.assetCurrency,
-          input.grossAmountCents,
-          input.priorityTier ?? 'DUCENTIQUINQUAGINTAQUINTILLION_SOVEREIGN_EXPEDITE',
-          data.status,
-          data.executionLatencyPicoseconds,
-          data.receiptHash
-        )
-        .run();
+    if (data.valid) {
+      await recordHyperRtgsSettlementD1({
+        tablePrefix: 'ducentiquinquagintaquintillion',
+        sessionRefPrefix: 'SESSION-DUCENTI',
+        sourceParticipantId: input.sourceParticipantId,
+        targetParticipantId: input.targetParticipantId,
+        assetCurrency: input.assetCurrency,
+        grossAmountCents: input.grossAmountCents,
+        priorityTier: input.priorityTier ?? 'DUCENTIQUINQUAGINTAQUINTILLION_SOVEREIGN_EXPEDITE',
+        status: data.status,
+        executionLatencyPicoseconds: data.executionLatencyPicoseconds,
+        receiptHash: data.receiptHash,
+      });
     }
-
     return { success: data.valid, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown Hyper-RTGS failure';
@@ -88,32 +80,19 @@ export async function executeDucentiquinquagintaquintillionNettingAction(
 ): Promise<DucentiquinquagintaquintillionNettingActionResult> {
   try {
     const data = executeDucentiquinquagintaquintillionOmniverseNetting(obligations);
-    const db = await getD1();
-
-    if (db && data.nettingStatus === 'NET_EXECUTED') {
-      await db
-        .prepare(
-          `INSERT INTO ducentiquinquagintaquintillion_netting_batches (
-             id, batch_ref, hyper_shard_count, gross_flow_count,
-             gross_volume_cents, net_settlement_volume_cents,
-             compression_ratio_pct, netting_status, omniverse_solution_hash,
-             executed_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          data.batchRef,
-          data.hyperShardCount,
-          data.grossFlowCount,
-          data.grossVolumeCents,
-          data.netSettlementVolumeCents,
-          data.compressionRatioPct,
-          data.nettingStatus,
-          data.omniverseSolutionHash
-        )
-        .run();
+    if (data.nettingStatus === 'NET_EXECUTED') {
+      await recordHyperRtgsNettingBatchD1({
+        tablePrefix: 'ducentiquinquagintaquintillion',
+        batchRef: data.batchRef,
+        hyperShardCount: data.hyperShardCount,
+        grossFlowCount: data.grossFlowCount,
+        grossVolumeCents: data.grossVolumeCents,
+        netSettlementVolumeCents: data.netSettlementVolumeCents,
+        compressionRatioPct: data.compressionRatioPct,
+        nettingStatus: data.nettingStatus,
+        omniverseSolutionHash: data.omniverseSolutionHash,
+      });
     }
-
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown netting execution failure';
@@ -129,40 +108,16 @@ export async function auditBaselXliSolvencyAction(
 ): Promise<BaselXliSolvencyActionResult> {
   try {
     const data = evaluateBaselXliSolvencyCompliance(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO basel_xli_solvency_audits (
-             id, audit_ref, common_equity_tier1_cents, total_risk_exposure_cents,
-             high_quality_liquid_assets_cents, net_cash_outflows_30days_cents,
-             available_stable_funding_cents, required_stable_funding_cents,
-             sovereign_capital_buffer_cents, stress_test_survival_days,
-             cet1_ratio_bps, lcr_bps, nsfr_bps, solvency_status,
-             supervisory_signature, audited_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `AUDIT-BASEL-XLI-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.commonEquityTier1Cents,
-          input.totalRiskExposureCents,
-          input.highQualityLiquidAssetsCents,
-          input.netCashOutflows30DaysCents,
-          input.availableStableFundingCents,
-          input.requiredStableFundingCents,
-          input.sovereignCapitalBufferCents,
-          input.stressTestSurvivalDays,
-          data.cet1RatioBps,
-          data.liquidityCoverageRatioBps,
-          data.netStableFundingRatioBps,
-          data.solvencyStatus,
-          data.supervisorySignature
-        )
-        .run();
-    }
-
+    await recordBaselSolvencyAuditD1({
+      tableName: 'basel_xli_solvency_audits',
+      auditRefPrefix: 'AUDIT-BASEL-XLI',
+      ...input,
+      cet1RatioBps: data.cet1RatioBps,
+      liquidityCoverageRatioBps: data.liquidityCoverageRatioBps,
+      netStableFundingRatioBps: data.netStableFundingRatioBps,
+      solvencyStatus: data.solvencyStatus,
+      supervisorySignature: data.supervisorySignature,
+    });
     return { success: data.isSolvent, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown Basel XLI audit failure';

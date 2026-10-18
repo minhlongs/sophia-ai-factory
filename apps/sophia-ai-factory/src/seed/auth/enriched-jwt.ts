@@ -7,11 +7,12 @@
  *   enriched-jwt-types.ts        — FeatureLimit, EnrichedJwtPayload, LicenseContext
  *   enriched-jwt-entitlements.ts — getDefaultEntitlements, getFeatureLimits
  *   enriched-jwt-billing.ts      — getLicenseContext, fetchDunningState
+ *   enriched-jwt-codec.ts        — verifyEnrichedJwt, decodeEnrichedJwt, extractQuotaFromJwt, isJwtExpired
  *
  * @module auth/enriched-jwt
  */
 
-import { SignJWT, jwtVerify } from 'jose'
+import { SignJWT } from 'jose'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import type { QuotaLimit } from '@/seed/types/quota-limit'
@@ -20,23 +21,20 @@ import type { QuotaProvider } from '@/seed/types/quota-provider'
 export type { FeatureLimit, EnrichedJwtPayload, EnrichedJwtClaims, LicenseContext } from './enriched-jwt-types'
 export { getDefaultEntitlements } from './enriched-jwt-entitlements'
 export { getLicenseContext } from './enriched-jwt-billing'
+export {
+  verifyEnrichedJwt,
+  decodeEnrichedJwt,
+  extractQuotaFromJwt,
+  isJwtExpired,
+} from './enriched-jwt-codec'
 
 import type { EnrichedJwtPayload } from '@/seed/auth/enriched-jwt-types'
 import { getDefaultEntitlements, getFeatureLimits } from '@/seed/auth/enriched-jwt-entitlements'
 import { getLicenseContext, fetchDunningState } from '@/seed/auth/enriched-jwt-billing'
+import { JWT_CONFIG, getJwtSecret, decodeEnrichedJwt, isJwtExpired } from '@/seed/auth/enriched-jwt-codec'
 
 const EMPTY_QUOTA: QuotaLimit = {
   tier: 'unknown', dailyCredits: 0, hourlyCredits: 0, dailyRequests: 0, monthlyCredits: 0,
-}
-
-const JWT_CONFIG = { algorithm: 'HS256' as const, ttlSeconds: 3600 }
-
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    throw new Error('[Enriched JWT] JWT_SECRET is required — refusing to start with insecure default')
-  }
-  return new TextEncoder().encode(secret)
 }
 
 export async function createEnrichedJwt(
@@ -55,10 +53,7 @@ export async function createEnrichedJwt(
     } else {
       // DI fallback: emit a default-DENY EMPTY_QUOTA (0 credits across all dimensions)
       // when caller did not inject a provider. Downstream `quota.dailyCredits > 0`
-      // checks fail safely, enforcing the paywall. DO NOT raise these defaults —
-      // doing so would silently bypass tier limits (default-ALLOW security regression).
-      // This branch SHOULD NOT execute in production; the warn log surfaces missed
-      // injections in observability for triage.
+      // checks fail safely, enforcing the paywall.
       logger.warn('[Enriched JWT] quotaProvider not injected — emitting EMPTY_QUOTA (caller must inject in production)', {
         userId, licenseNonce: licenseNonce.slice(0, 8) + '...',
       })
@@ -104,40 +99,6 @@ export async function createEnrichedJwt(
     logger.error('[Enriched JWT] Failed to create JWT', toError(error))
     return null
   }
-}
-
-export async function verifyEnrichedJwt(token: string): Promise<EnrichedJwtPayload | null> {
-  try {
-    const { payload } = await jwtVerify(token, getJwtSecret(), {
-      algorithms: [JWT_CONFIG.algorithm],
-      clockTolerance: 60,
-    })
-    return payload as unknown as EnrichedJwtPayload
-  } catch (error) {
-    logger.warn('[Enriched JWT] JWT verification failed', toError(error))
-    return null
-  }
-}
-
-export function decodeEnrichedJwt(token: string): EnrichedJwtPayload | null {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return null
-    const payloadStr = Buffer.from(parts[1], 'base64url').toString('utf-8')
-    return JSON.parse(payloadStr) as EnrichedJwtPayload
-  } catch {
-    return null
-  }
-}
-
-export function extractQuotaFromJwt(payload: EnrichedJwtPayload): QuotaLimit {
-  return payload.quota
-}
-
-export function isJwtExpired(token: string): boolean {
-  const payload = decodeEnrichedJwt(token)
-  if (!payload) return true
-  return payload.exp < Math.floor(Date.now() / 1000)
 }
 
 export async function refreshJwtIfExpired(token: string, quotaProvider?: QuotaProvider): Promise<string> {

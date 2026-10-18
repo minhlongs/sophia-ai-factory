@@ -1,14 +1,21 @@
 'use client';
 
+// i18n-namespace: pricing.coupon
 /**
  * Free Redemption Modal for Trial / Full Access Promo Codes
  *
  * Layer: forest/components/pricing/coupon
  */
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React from "react";
 import { useTranslations } from "next-intl";
 import type { FreeModalState } from "./types";
+import { useFreeRedemptionDialog } from "./use-free-redemption-dialog";
+
+export {
+  useFreeRedemptionDialog,
+  type UseFreeRedemptionDialogParams,
+} from "./use-free-redemption-dialog";
 
 export interface FreeRedemptionModalProps {
   modal: FreeModalState;
@@ -17,79 +24,22 @@ export interface FreeRedemptionModalProps {
 }
 
 export function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalProps) {
-  const tError = useTranslations("pricing.error");
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState("");
-  const emailRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const {
+    tError,
+    email,
+    setEmail,
+    name,
+    setName,
+    submitting,
+    done,
+    error,
+    emailRef,
+    dialogRef,
+    handleFocusTrap,
+    handleSubmit,
+  } = useFreeRedemptionDialog({ modal, onClose, tLabel: t });
+
   const freeTitleId = "free-redemption-modal-title";
-
-  // Escape key to close
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
-  // Focus trap
-  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== "Tab") return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>("button, input, [href], [tabindex]:not([tabindex=\"-1\"])")
-    ).filter(el => !el.hasAttribute("disabled"));
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) { emailRef.current?.focus(); return; }
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/promo/redeem-free", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: modal.code,
-          email: email.trim(),
-          fullName: name.trim() || undefined,
-          tier: modal.appliesToTier ?? "BASIC",
-        }),
-      });
-
-      const data = await res.json() as { error?: string; magicLink?: string; success?: boolean };
-      if (!res.ok || data.error) {
-        setError(data.error ?? tError("redemption_failed"));
-        setSubmitting(false);
-        return;
-      }
-
-      setDone(true);
-      if (data.magicLink) {
-        setTimeout(() => { window.location.href = data.magicLink!; }, 2000);
-      }
-    } catch {
-      setError(t("network_error"));
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div

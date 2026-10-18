@@ -7,8 +7,6 @@
  * Shows requests and credits trends with customizable granularity.
  */
 
-'use client';
-
 import {
   XAxis,
   YAxis,
@@ -20,8 +18,11 @@ import {
   Area,
 } from 'recharts';
 import type { TimeSeriesPoint } from '@/land/analytics/types';
-import type { TooltipProps } from 'recharts';
-import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import {
+  formatChartTimestamp,
+  formatChartNumber,
+  UsageChartTooltip,
+} from './usage-chart-tooltip';
 
 interface UsageChartProps {
   data: TimeSeriesPoint[];
@@ -35,61 +36,10 @@ export function UsageChart({
   data,
   granularity,
   showCredits = true,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- part of public chart props API
-  showTokens = false,
   height = 300,
 }: UsageChartProps) {
-  // Format timestamp for display
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
-    if (granularity === 'hour') {
-      return date.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        month: 'short',
-        day: 'numeric'
-      });
-    }
-    return date.toLocaleDateString('vi-VN', {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  // Format large numbers
-  const formatNumber = (value: number) => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}K`;
-    }
-    return value.toString();
-  };
-
-  // Custom tooltip with proper Recharts types
-  type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
-    payload?: Array<{ name?: string; value?: number; color?: string; payload?: unknown }>;
-    label?: string;
-  };
-
-  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-semibold mb-2">{label}</p>
-          {payload.map((entry: { name?: string; value?: number; color?: string }, index: number) => (
-            <div key={index} className="flex items-center gap-2 text-sm" style={{ color: entry.color }}>
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span>{entry.name}:</span>
-              <span className="font-mono">{formatNumber(entry.value as number)}</span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  const formatTimestamp = (timestamp: number) =>
+    formatChartTimestamp(timestamp, granularity);
 
   if (!data || data.length === 0) {
     return (
@@ -125,18 +75,18 @@ export function UsageChart({
           />
           <YAxis
             yAxisId="left"
-            tickFormatter={formatNumber}
+            tickFormatter={formatChartNumber}
             tick={{ fontSize: 12 }}
             className="text-muted-foreground"
           />
           <YAxis
             yAxisId="right"
             orientation="right"
-            tickFormatter={formatNumber}
+            tickFormatter={formatChartNumber}
             tick={{ fontSize: 12 }}
             className="text-muted-foreground"
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<UsageChartTooltip />} />
           <Legend />
           <Area
             yAxisId="left"

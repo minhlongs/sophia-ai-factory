@@ -8,67 +8,31 @@
  * @module tree/audience/audience-segments
  */
 
-import { z } from 'zod/v4';
 import { createServerClient } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import type { AudienceSegment } from './types';
 import {
-  AGE_BUCKETS,
-  AUDIENCE_PLATFORMS,
-  CONTENT_TYPES,
-  type AudienceSegment,
-} from './types';
+  AudienceSegmentInputSchema,
+  parseSegmentRow,
+  type SegmentError,
+  type AudienceSegmentInput,
+  type AudienceSegmentRow,
+} from './audience-segment-schema';
 
-export interface SegmentError {
-  code: 'INVALID_INPUT' | 'INSERT_FAILED' | 'QUERY_FAILED';
-  message: string;
-}
-
-/** Input schema for creating a segment. */
-export const AudienceSegmentInputSchema = z.object({
-  workspaceId: z.string().min(1),
-  name: z.string().min(1).max(120),
-  platforms: z.array(z.enum(AUDIENCE_PLATFORMS)).min(1),
-  contentTypes: z.array(z.enum(CONTENT_TYPES)).min(1),
-  ageBuckets: z.array(z.enum(AGE_BUCKETS)).default([]),
-  countries: z.array(z.string().length(2)).default([]),
-});
-
-export type AudienceSegmentInput = z.infer<typeof AudienceSegmentInputSchema>;
-
-/** D1 row shape for audience_segments. */
-export interface AudienceSegmentRow {
-  id: string;
-  workspace_id: string;
-  name: string;
-  platforms: string; // JSON array
-  content_types: string; // JSON array
-  age_buckets: string; // JSON array
-  countries: string; // JSON array
-  created_at: number;
-  updated_at: number;
-}
+export {
+  AudienceSegmentInputSchema,
+  parseSegmentRow,
+  type SegmentError,
+  type AudienceSegmentInput,
+  type AudienceSegmentRow,
+};
 
 function newSegmentId(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return `seg_${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
-}
-
-/** Parse a D1 row into a typed segment. Fails loud on malformed JSON. */
-export function parseSegmentRow(row: AudienceSegmentRow): AudienceSegment {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    name: row.name,
-    platforms: JSON.parse(row.platforms) as AudienceSegment['platforms'],
-    contentTypes: JSON.parse(row.content_types) as AudienceSegment['contentTypes'],
-    ageBuckets: JSON.parse(row.age_buckets) as AudienceSegment['ageBuckets'],
-    countries: JSON.parse(row.countries) as AudienceSegment['countries'],
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
 }
 
 /** Create and persist a segment. */

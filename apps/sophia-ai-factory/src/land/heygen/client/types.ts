@@ -31,3 +31,34 @@ export interface HeyGenVideoStatusResponse {
     error?: { message?: string };
   };
 }
+
+export interface HeyGenCreateVideoParams {
+  avatarId: string;
+  voiceId: string;
+  script: string;
+  title?: string;
+}
+
+export function buildCreateVideoPayload(params: HeyGenCreateVideoParams) {
+  return {
+    video_inputs: [
+      {
+        character: {
+          type: 'avatar',
+          avatar_id: params.avatarId,
+          avatar_style: 'normal',
+        },
+        voice: {
+          type: 'text',
+          input_text: params.script,
+          voice_id: params.voiceId,
+        },
+      },
+    ],
+    dimension: {
+      width: 1920,
+      height: 1080,
+    },
+    title: params.title,
+  };
+}

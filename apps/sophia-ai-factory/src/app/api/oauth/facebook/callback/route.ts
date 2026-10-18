@@ -6,42 +6,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
-import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
-import { randomUUID } from 'crypto';
-
-const STATE_MAX_AGE_MS = 10 * 60 * 1000;
-const FB_GRAPH = 'https://graph.facebook.com/v21.0';
-
-function decodeBase64Url(str: string): string {
-  const padded = str.replace(/-/g, '+').replace(/_/g, '/');
-  const pad = padded.length % 4;
-  return atob(pad ? padded + '='.repeat(4 - pad) : padded);
-}
-
-async function verifyState(state: string): Promise<{ userId: string }> {
-  const dotIdx = state.lastIndexOf('.');
-  if (dotIdx === -1) throw new Error('Invalid state format');
-  const payload = state.slice(0, dotIdx);
-  const sig = state.slice(dotIdx + 1);
-  const secret = process.env.OAUTH_STATE_SECRET;
-  if (!secret) throw new Error('OAUTH_STATE_SECRET not set');
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['verify'],
-  );
-  const sigBytes = Uint8Array.from(atob(sig.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
-  const valid = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(payload));
-  if (!valid) throw new Error('State signature invalid');
-  const { userId, ts } = JSON.parse(decodeBase64Url(payload)) as { userId: string; ts: number };
-  if (Date.now() - ts > STATE_MAX_AGE_MS) throw new Error('State expired');
-  return { userId };
-}
-
-interface FBTokenResponse { access_token?: string; expires_in?: number; error?: { message: string } }
-interface FBPage { id: string; name: string; access_token: string }
-interface FBAccountsResponse { data?: FBPage[] }
+import {
+  FB_GRAPH,
+  verifyState,
+  upsertFacebookPublishingChannel,
+  type FBTokenResponse,
+  type FBAccountsResponse,
+} from './facebook-callback-helpers';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -78,10 +50,18 @@ export async function GET(request: NextRequest) {
   const shortRes = await fetch(`${FB_GRAPH}/oauth/access_token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ client_id: appId, client_secret: appSecret, code, redirect_uri: redirectUri }),
+    body: new URLSearchParams({
+      client_id: appId,
+      client_secret: appSecret,
+      code,
+      redirect_uri: redirectUri,
+    }),
   });
   if (!shortRes.ok) {
-    logger.error('[Facebook Callback] Short-lived exchange failed', new Error(`HTTP ${shortRes.status}`));
+    logger.error(
+      '[Facebook Callback] Short-lived exchange failed',
+      new Error(`HTTP ${shortRes.status}`),
+    );
     return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
   }
   const shortData = (await shortRes.json()) as FBTokenResponse;
@@ -95,9 +75,13 @@ export async function GET(request: NextRequest) {
     fb_exchange_token: shortData.access_token,
   });
   const longRes = await fetch(`${FB_GRAPH}/oauth/access_token?${longParams.toString()}`);
-  if (!longRes.ok) return NextResponse.json({ error: 'Long-lived token exchange failed' }, { status: 502 });
+  if (!longRes.ok) {
+    return NextResponse.json({ error: 'Long-lived token exchange failed' }, { status: 502 });
+  }
   const longData = (await longRes.json()) as FBTokenResponse;
-  if (!longData.access_token) return NextResponse.json({ error: 'No long-lived token' }, { status: 502 });
+  if (!longData.access_token) {
+    return NextResponse.json({ error: 'No long-lived token' }, { status: 502 });
+  }
 
   // Step 3: GET /me/accounts → pick first managed page
   const pagesRes = await fetch(
@@ -110,44 +94,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/dashboard/integrations/channels?error=no_pages`);
   }
 
-  // Page Access Tokens never expire when user is admin — store with expires_at=null.
-  const encryptedPageToken = await encryptToken(page.access_token);
-  const now = Math.floor(Date.now() / 1000);
-  const db = createServerClient();
-  const tenantId = user.id;
-
-  const { data: existing } = await db
-    .from('publishing_channels')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('provider', 'facebook')
-    .eq('external_account_id', page.id)
-    .single();
-
-  if (existing) {
-    await db.from('publishing_channels').update({
-      access_token: encryptedPageToken,
-      expires_at: null,
-      status: 'active',
-      display_name: page.name,
-      updated_at: now,
-    }).eq('id', (existing as { id: string }).id);
-  } else {
-    await db.from('publishing_channels').insert({
-      id: randomUUID(),
-      tenant_id: tenantId,
-      user_id: user.id,
-      provider: 'facebook',
-      external_account_id: page.id,
-      display_name: page.name,
-      access_token: encryptedPageToken,
-      refresh_token: null,
-      expires_at: null,
-      status: 'active',
-      created_at: now,
-      updated_at: now,
-    });
-  }
+  await upsertFacebookPublishingChannel(user.id, page);
 
   logger.info('[Facebook Callback] Page connected', { userId: user.id, pageId: page.id });
   return NextResponse.redirect(`${appUrl}/dashboard/integrations/channels?connected=facebook`);

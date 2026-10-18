@@ -8,8 +8,11 @@
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
-import type { AgentRunRecord, CreateAgentRunInput, UpdateAgentRunInput } from './types';
+import type { AgentRunRecord, CreateAgentRunInput } from './types';
 import { toJson, rowToRun } from './helpers';
+import { updateAgentRun } from './run-updater';
+
+export { updateAgentRun };
 
 export async function createAgentRun(
   input: CreateAgentRunInput
@@ -94,49 +97,6 @@ export async function listAgentRunsForMission(
       missionId,
       workspaceId,
     });
-    return failure({ code: 'DB_ERROR', message: err instanceof Error ? err.message : 'Unknown DB error' });
-  }
-}
-
-export async function updateAgentRun(
-  id: string,
-  patch: UpdateAgentRunInput
-): Promise<Result<AgentRunRecord, { code: string; message: string }>> {
-  try {
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
-    }
-
-    const fields: string[] = [];
-    const values: unknown[] = [];
-
-    if (patch.status) { fields.push('status = ?'); values.push(patch.status); }
-    if (patch.phase) { fields.push('phase = ?'); values.push(patch.phase); }
-    if (patch.outputJson !== undefined) { fields.push('output_json = ?'); values.push(toJson(patch.outputJson)); }
-    if (patch.errorJson !== undefined) { fields.push('error_json = ?'); values.push(toJson(patch.errorJson)); }
-    if (patch.errorMessage !== undefined) { fields.push('error_message = ?'); values.push(patch.errorMessage); }
-    if (patch.totalCostCents !== undefined) { fields.push('total_cost_cents = ?'); values.push(patch.totalCostCents); }
-    if (patch.totalTokens !== undefined) { fields.push('total_tokens = ?'); values.push(patch.totalTokens); }
-    if (patch.retryCount !== undefined) { fields.push('retry_count = ?'); values.push(patch.retryCount); }
-    if (patch.startedAt !== undefined) { fields.push('started_at = ?'); values.push(patch.startedAt); }
-    if (patch.endedAt !== undefined) { fields.push('ended_at = ?'); values.push(patch.endedAt); }
-
-    if (fields.length === 0) {
-      return failure({ code: 'NO_CHANGES', message: 'No fields to update' });
-    }
-
-    values.push(id);
-    await db.prepare(`UPDATE agent_runs SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
-
-    const row = await db.prepare(`SELECT * FROM agent_runs WHERE id = ?`).bind(id).first<Record<string, unknown>>();
-    if (!row) {
-      return failure({ code: 'NOT_FOUND', message: `AgentRun ${id} not found after update` });
-    }
-
-    return success(rowToRun(row));
-  } catch (err) {
-    logger.error('updateAgentRun failed', { error: err instanceof Error ? err.message : String(err), id, patch });
     return failure({ code: 'DB_ERROR', message: err instanceof Error ? err.message : 'Unknown DB error' });
   }
 }

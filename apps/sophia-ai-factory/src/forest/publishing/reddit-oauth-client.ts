@@ -4,35 +4,20 @@
  * Auth: HTTP Basic (client_id:client_secret) for all token requests.
  */
 
-import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+import {
+  SERVICE_NAME,
+  REDDIT_AUTHORIZE,
+  REDDIT_ME_URL,
+  postRedditTokenRequest,
+  type RedditTokenResponse,
+  type RedditUserInfo,
+} from './reddit-oauth-http';
 
-const SERVICE_NAME = 'reddit-oauth';
-const REDDIT_AUTHORIZE = 'https://www.reddit.com/api/v1/authorize';
-const REDDIT_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
-const REDDIT_ME_URL = 'https://oauth.reddit.com/api/v1/me';
+export type { RedditTokenResponse, RedditUserInfo };
 
 export const REDDIT_SCOPES = ['identity', 'submit', 'read'];
-
-export interface RedditTokenResponse {
-  access_token: string;
-  refresh_token?: string;
-  token_type?: string;
-  expires_in: number;
-  scope?: string;
-}
-
-export interface RedditUserInfo {
-  id: string;
-  name: string;
-}
-
-function basicAuthHeader(): string {
-  const id = process.env.REDDIT_CLIENT_ID ?? '';
-  const secret = process.env.REDDIT_CLIENT_SECRET ?? '';
-  return `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`;
-}
 
 export function getAuthorizationUrl(state: string): string {
   const clientId = process.env.REDDIT_CLIENT_ID;
@@ -50,73 +35,27 @@ export function getAuthorizationUrl(state: string): string {
 }
 
 export async function exchangeCodeForTokens(code: string): Promise<RedditTokenResponse> {
-  if (!shouldAllowRequest(SERVICE_NAME)) {
-    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
-  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  try {
-    const res = await fetch(REDDIT_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: basicAuthHeader(),
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'SophiaAIFactory/1.0',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: `${appUrl}/api/oauth/reddit/callback`,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch((err) => {
-        logger.warn('Failed to read Reddit token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
-        return '';
-      });
-      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
-      throw new Error(`Reddit token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
-    }
-    recordSuccess(SERVICE_NAME);
-    return res.json() as Promise<RedditTokenResponse>;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
-    recordFailure(SERVICE_NAME, classifyError(error));
-    throw error;
-  }
+  return postRedditTokenRequest(
+    new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: `${appUrl}/api/oauth/reddit/callback`,
+    }),
+    'exchangeCodeForTokens',
+    'token exchange',
+  );
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<RedditTokenResponse> {
-  if (!shouldAllowRequest(SERVICE_NAME)) {
-    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
-  }
-  try {
-    const res = await fetch(REDDIT_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: basicAuthHeader(),
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'SophiaAIFactory/1.0',
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch((err) => {
-        logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
-        return '';
-      });
-      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
-      throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
-    }
-    recordSuccess(SERVICE_NAME);
-    return res.json() as Promise<RedditTokenResponse>;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
-    recordFailure(SERVICE_NAME, classifyError(error));
-    throw error;
-  }
+  return postRedditTokenRequest(
+    new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+    'refreshAccessToken',
+    'token refresh',
+  );
 }
 
 export async function getUserInfo(accessToken: string): Promise<RedditUserInfo> {

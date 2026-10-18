@@ -1,6 +1,7 @@
 import { Tier } from "@/seed/types";
-import { getTierConfig, UNIFIED_TIERS, type UnifiedTierLimits } from "@/seed/config/tiers";
+import { UNIFIED_TIERS, type UnifiedTierLimits } from "@/seed/config/tiers";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
+import { evaluateTierLimitRule } from "./tier-guard-evaluator";
 
 // ─── Shared types ──────────────────────────────────────────────────────────────
 
@@ -63,10 +64,6 @@ export async function checkLimit(
   currentUsage: number
 ): Promise<LimitCheckResult> {
   const userTier = await resolveUserTier(userId);
-  const config = getTierConfig(userTier);
-
-  let limit = 0;
-  let requiredTier: Tier = "PREMIUM";
 
   // MASTER tier always has maximum access
   if (userTier === "MASTER") {
@@ -78,67 +75,18 @@ export async function checkLimit(
     };
   }
 
-  switch (limitType) {
-    case "youtubeChannels":
-      limit = config.limits.youtubeChannels;
-      // Architecture note: the current data model stores ONE set of YouTube
-      // credentials per user in user_profiles.api_keys.youtube (Supabase).
-      // This inherently enforces the BASIC=1 channel limit by design.
-      currentUsage = 0; // limit check at OAuth callback is the real gate
-      if (userTier === "BASIC") requiredTier = "PREMIUM";
-      else if (userTier === "PREMIUM") requiredTier = "ENTERPRISE";
-      break;
+  const { limit, requiredTier, effectiveUsage } = evaluateTierLimitRule(
+    userTier,
+    limitType,
+    currentUsage
+  );
 
-    case "videoTemplates":
-      limit = config.limits.videoTemplates;
-      // currentUsage is passed in by the caller (land counts custom templates dynamically)
-      if (userTier === "BASIC") requiredTier = "PREMIUM";
-      else if (userTier === "PREMIUM") requiredTier = "ENTERPRISE";
-      break;
-
-    case "automationScripts":
-      limit = config.limits.automationScripts ? Infinity : 0;
-      currentUsage = 0; // Boolean feature
-      requiredTier = "PREMIUM";
-      break;
-
-    case "affiliateDashboard":
-      limit = config.limits.affiliateDashboard ? Infinity : 0;
-      currentUsage = 0; // Boolean feature
-      requiredTier = "PREMIUM";
-      break;
-
-    case "adminDashboard":
-      limit = config.features.includes("enable_admin_dashboard") ? Infinity : 0;
-      currentUsage = 0;
-      requiredTier = "ENTERPRISE";
-      break;
-
-    case "apiAccess":
-      limit = config.features.includes("enable_api_integrations") ? Infinity : 0;
-      currentUsage = 0;
-      requiredTier = "ENTERPRISE";
-      break;
-
-    case "earlyAccess":
-      limit = config.features.includes("enable_early_access") ? Infinity : 0;
-      currentUsage = 0;
-      requiredTier = "MASTER";
-      break;
-
-    case "trainingSessions":
-      limit = config.limits.trainingSessions ?? 0;
-      currentUsage = 0; // Would count actual training sessions in production
-      requiredTier = "ENTERPRISE";
-      break;
-  }
-
-  const allowed = currentUsage < limit;
+  const allowed = effectiveUsage < limit;
 
   return {
     allowed,
     limit,
-    currentusage: currentUsage,
+    currentusage: effectiveUsage,
     requiredTier,
     message: allowed
       ? undefined

@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { Play } from 'lucide-react';
 import type { AdaptiveVideoPlayerProps } from './player-types';
 
 export function usePlayerKeyboardAndFullscreen(params: {
@@ -85,5 +86,19 @@ export function VideoSubtitleTracks({
       <track kind="subtitles" src={`/api/videos/${encodeURIComponent(videoId)}/subtitles/ko.vtt`} srcLang="ko" label="한국어" default={selectedSubtitle === 'ko'} />
       <track kind="subtitles" src={`/api/videos/${encodeURIComponent(videoId)}/subtitles/th.vtt`} srcLang="th" label="ไทย" default={selectedSubtitle === 'th'} />
     </>
+  );
+}
+
+export function PlayerCenterPlayOverlay({ isPlaying }: { isPlaying: boolean }) {
+  if (isPlaying) return null;
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity"
+      aria-hidden="true"
+    >
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-lg backdrop-blur-md">
+        <Play className="h-8 w-8 ml-1" />
+      </div>
+    </div>
   );
 }

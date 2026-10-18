@@ -6,6 +6,15 @@
  * Omniverse Hyper-RTGS, Netting 11.0 & $5.0 Trillion Treasury Singularity.
  */
 
+export {
+  type BaselXvSolvencyStatus,
+  type BaselXvSolvencySnapshot,
+  type OmniverseVaultHub,
+  ALL_OMNIVERSE_VAULT_HUBS,
+  type OmniverseCollateralAsset,
+  type OmniverseTreasuryReserve,
+} from './omniverse-treasury-solvency-types';
+
 export const GATE_25_SCALE_TARGETS = {
   MRR_TARGET_USD: 500_000_000_000,
   ARR_TARGET_USD: 6_000_000_000_000,
@@ -84,69 +93,5 @@ export interface OmniverseNettingBatch {
   nettingStatus: OmniverseNettingStatus;
   multiverseSolutionHash: string;
   executedAt?: string;
-  createdAt?: string;
-}
-
-export type BaselXvSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
-
-export interface BaselXvSolvencySnapshot {
-  id?: string;
-  snapshotRef: string;
-  commonEquityTier1Cents: number;
-  totalRiskExposureCents: number;
-  cet1RatioBps: number;
-  highQualityLiquidAssetsCents: number;
-  netCashOutflows30dCents: number;
-  liquidityCoverageRatioBps: number;
-  availableStableFundingCents: number;
-  requiredStableFundingCents: number;
-  netStableFundingRatioBps: number;
-  sovereignCapitalBufferCents: number;
-  stressTestSurvivalDays: number;
-  isBaselXvCompliant: boolean;
-  supervisorySignature: string;
-  createdAt?: string;
-}
-
-export type OmniverseVaultHub =
-  | 'OMNIVERSE_CORE'
-  | 'TRANSCENDENTAL_SINGULARITY_HUB'
-  | 'MULTIVERSE_TREASURY_VAULT'
-  | 'VIRGO_SUPER_MATRIX'
-  | 'SUB_PLANCK_QUANTUM_VAULT'
-  | 'ZERO_POINT_CONTINUUM_NEXUS'
-  | 'TRANSCENDENTAL_SINGULARITY_GATEWAY';
-
-export const ALL_OMNIVERSE_VAULT_HUBS: OmniverseVaultHub[] = [
-  'OMNIVERSE_CORE',
-  'TRANSCENDENTAL_SINGULARITY_HUB',
-  'MULTIVERSE_TREASURY_VAULT',
-  'VIRGO_SUPER_MATRIX',
-  'SUB_PLANCK_QUANTUM_VAULT',
-  'ZERO_POINT_CONTINUUM_NEXUS',
-  'TRANSCENDENTAL_SINGULARITY_GATEWAY',
-];
-
-export type OmniverseCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V7_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'MULTIVERSE_CREDITS'
-  | 'TRANSCENDENTAL_VACUUM_SINGULARITIES';
-
-export interface OmniverseTreasuryReserve {
-  id?: string;
-  vaultHubId: OmniverseVaultHub;
-  assetType: OmniverseCollateralAsset;
-  parValueCents: number;
-  haircutPct: number;
-  eligibleCollateralValueCents: number;
-  isUnencumbered: boolean;
-  lastAuditEpoch: string;
   createdAt?: string;
 }

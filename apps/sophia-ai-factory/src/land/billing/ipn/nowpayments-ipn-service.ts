@@ -6,18 +6,14 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { safeCatch } from '@/seed/utils/safe-catch';
-import { getD1 } from '@/seed/db/client';
-import { recordAudit } from '@/seed/db/audit/audit-log';
 import { insertPurchase, markPaid } from '@/seed/db/repositories/user-purchases-repo';
-import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment';
-import { parseUserIdFromOrderId, getDb } from '../nowpayments-ipn-db';
-import { triggerAutoHandover } from '@/tree/handover/auto-handover';
+import { parseUserIdFromOrderId } from '../nowpayments-ipn-db';
 import { success, failure, type Result } from '@/seed/types/result';
 import { IPNError } from '../nowpayments-ipn-errors';
 import type { NowPaymentsIpnPayload, OneTimeSku } from './types';
 import { addMonths } from './types';
 import { verifyPaymentAmountAndUnderpayment } from './ipn-signature-verifier';
+import { runOneTimePostPaymentEffects } from './one-time-post-payment-effects';
 
 /**
  * Handle one-time IPN `finished` event.
@@ -67,79 +63,8 @@ export async function handleOneTimeFinished(
     // Mark paid + set credits_remaining
     await markPaid(ipn.payment_id, sku.credits, expiresAt);
 
-    // Update pending_orders to completed
-    try {
-      const db = await getD1();
-      if (db) {
-        await db
-          .prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?')
-          .bind('completed', ipn.payment_id, Math.floor(Date.now() / 1000), ipn.order_id);
-      }
-    } catch (e) {
-      safeCatch('One-time pending_orders mark complete')(e);
-    }
-
-    // Audit trail
-    try {
-      const db = await getD1();
-      if (!db) throw new Error('D1 database binding not available');
-      await recordAudit(db, {
-        tableName: 'user_purchases',
-        rowId: purchaseId,
-        action: 'update',
-        actorId: userId,
-        after: {
-          status: 'paid',
-          sku: sku.id,
-          credits: sku.credits,
-          expiresAt,
-          paymentId: ipn.payment_id,
-        },
-      });
-    } catch (auditErr) {
-      logger.error('[IPN/OneTime] Audit record failed (non-fatal)', auditErr instanceof Error ? auditErr : undefined, {
-        userId,
-        purchaseId,
-      });
-    }
-
-    logger.info('[IPN/OneTime] Purchase paid', {
-      userId,
-      purchaseId,
-      skuId: sku.id,
-      credits: sku.credits,
-      paymentId: ipn.payment_id,
-    });
-
-    // Auto-handover for one-time bundle buyers — non-fatal
-    try {
-      const db = getDb();
-      const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single();
-      const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ipn.customer_email ?? '';
-      const userName = (userRow as { email?: string; name?: string } | null)?.name ?? undefined;
-      if (userEmail) {
-        await triggerAutoHandover({
-          paymentId: ipn.payment_id,
-          userId,
-          email: userEmail,
-          fullName: userName,
-          tier: 'BASIC',
-          isFirstPurchase: true,
-        });
-      }
-    } catch (err) {
-      logger.warn('[IPN/OneTime] Auto-handover failed (non-fatal)', { userId, error: String(err) });
-    }
-
-    // Trigger fulfillment (video gen + email) — non-fatal
-    try {
-      await triggerOneTimeFulfillment(userId, purchaseId, sku);
-    } catch (err) {
-      logger.error('[IPN/OneTime] Fulfillment trigger failed (non-fatal)', err instanceof Error ? err : undefined, {
-        userId,
-        purchaseId,
-      });
-    }
+    // Non-fatal post-payment side effects (pending_orders, audit, auto-handover, fulfillment)
+    await runOneTimePostPaymentEffects(ipn, sku, userId, purchaseId, expiresAt);
 
     return success(undefined);
   } catch (err) {

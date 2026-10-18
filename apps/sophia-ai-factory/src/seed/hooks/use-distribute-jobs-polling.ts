@@ -10,33 +10,17 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { logger } from '@/seed/utils/logger-utility';
+import {
+  FAST_INTERVAL_MS,
+  SLOW_INTERVAL_MS,
+  FAST_PHASE_MS,
+  allTerminal,
+  fetchDistributeJobsStatus,
+  type DistributeJob,
+  type UseDistributeJobsPollingResult,
+} from './distribute-jobs-polling-helpers';
 
-const FAST_INTERVAL_MS = 4_000;
-const SLOW_INTERVAL_MS = 10_000;
-const FAST_PHASE_MS = 60_000;
-const TERMINAL_STATUSES = new Set(['live', 'failed', 'paused']);
-
-export interface DistributeJob {
-  id: string;
-  channelId: string;
-  provider: string;
-  status: string;
-  attempts: number;
-  lastError: string | null;
-  updatedAt: number | null;
-}
-
-export interface UseDistributeJobsPollingResult {
-  jobs: DistributeJob[];
-  isPolling: boolean;
-  lastError: string | null;
-  refresh: () => void;
-}
-
-function allTerminal(jobs: DistributeJob[]): boolean {
-  return jobs.length > 0 && jobs.every((j) => TERMINAL_STATUSES.has(j.status));
-}
+export type { DistributeJob, UseDistributeJobsPollingResult };
 
 export function useDistributeJobsPolling(videoId: string): UseDistributeJobsPollingResult {
   const [jobs, setJobs] = useState<DistributeJob[]>([]);
@@ -53,32 +37,7 @@ export function useDistributeJobsPolling(videoId: string): UseDistributeJobsPoll
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
-    try {
-      const res = await fetch(`/api/v1/distribute/jobs/${encodeURIComponent(videoId)}/status`, {
-        signal: controller.signal,
-        cache: 'no-store',
-      });
-      if (!res.ok) {
-        const body = await res.text().catch((err) => {
-          logger.warn('Failed to read distribute job status error body', {
-            error: String(err),
-            context: 'fetchJobs',
-            videoId,
-          });
-          return '';
-        });
-        setLastError(`HTTP ${res.status}: ${body.slice(0, 100)}`);
-        return null;
-      }
-      const data = (await res.json()) as { jobs: DistributeJob[] };
-      setLastError(null);
-      return data.jobs;
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return null;
-      setLastError(err instanceof Error ? err.message : 'Fetch error');
-      return null;
-    }
+    return fetchDistributeJobsStatus(videoId, controller.signal, setLastError);
   }, [videoId]);
 
   const refresh = useCallback(async () => {

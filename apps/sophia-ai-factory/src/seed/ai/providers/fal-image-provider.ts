@@ -16,12 +16,15 @@ import type {
 } from '../image-generation-provider';
 import { ImageGenerationError } from '../image-generation-provider';
 import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
-import { registerCertification, ProviderCertificationState } from '@/seed/ai/provider-certification';
 import { logger, type Logger } from '@/seed/utils/logger-utility';
 import { executeFalFetch, fetchWithRetry } from './fal-image-fetch';
 import { getFalModelPriceCents } from '@/seed/config/fal-pricing';
 import { classifyCost } from '@/seed/types/creative-job-economics';
+import {
+  checkFalEndpointHealth,
+  getFalProviderCapabilities,
+  registerFalProviderCertification,
+} from './fal-image-health';
 import {
   FAL_PROVIDER_ID,
   FAL_PROVIDER_LABEL,
@@ -42,13 +45,7 @@ export {
   type FalImageProviderConfig,
 };
 
-registerCertification(FAL_PROVIDER_ID, {
-  state: ProviderCertificationState.PRODUCTION_CANDIDATE,
-  security: 'PASS',
-  health: 'PASS',
-  canary: 'PASS',
-  reason: 'R2 + billing wired, smoke verified',
-});
+registerFalProviderCertification();
 
 export class FalImageProvider implements ImageGenerationProvider {
   readonly id = FAL_PROVIDER_ID;
@@ -126,19 +123,10 @@ export class FalImageProvider implements ImageGenerationProvider {
   }
 
   capabilities(): ProviderCapabilities {
-    return { supportsAspectRatio: true, supportsStyle: false, maxConcurrency: 5 };
+    return getFalProviderCapabilities();
   }
 
   async health(): Promise<HealthStatus> {
-    const start = Date.now();
-    try {
-      const res = await fetch(this.baseUrl, { method: 'GET', signal: AbortSignal.timeout(5_000) });
-      const latencyMs = Date.now() - start;
-      if (res.ok || res.status === 404) return { healthy: true, latencyMs };
-      return { healthy: false, latencyMs, error: `HTTP ${res.status}` };
-    } catch (err) {
-      const latencyMs = Date.now() - start;
-      return { healthy: false, latencyMs, error: classifyError(err) };
-    }
+    return checkFalEndpointHealth(this.baseUrl);
   }
 }

@@ -4,12 +4,8 @@
  * @description Pure domain engine for Basel VII Extreme Solvency & $10.0B Interstellar Capital Buffer.
  */
 
-import { createHash } from 'node:crypto';
-import {
-  calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
-} from './basel-solvency-domain-engine';
-
+import { calculateParameterizedCollateralValue } from './basel-solvency-domain-engine';
+import { evaluateTieredBaselSolvency } from './basel-tiered-solvency-evaluator';
 import {
   GATE_17_SCALE_TARGETS,
   type BaselViiSolvencyStatus,
@@ -53,13 +49,13 @@ export const INTERSTELLAR_COLLATERAL_HAIRCUTS: Record<InterstellarCollateralAsse
  */
 export function calculateInterstellarCollateralValue(
   pledgedAmountCents: number,
-  assetType: InterstellarCollateralAsset
+  assetType: InterstellarCollateralAsset,
 ): { netValuationCents: number; haircutFactor: number } {
   return calculateParameterizedCollateralValue(
     pledgedAmountCents,
     assetType,
     INTERSTELLAR_COLLATERAL_HAIRCUTS,
-    1.5
+    1.5,
   );
 }
 
@@ -67,77 +63,20 @@ export function calculateInterstellarCollateralValue(
  * Evaluates extreme capital adequacy and solvency under Basel VII standards.
  */
 export function evaluateBaselViiSolvency(
-  input: BaselViiSolvencyInput
+  input: BaselViiSolvencyInput,
 ): BaselViiSolvencyOutput {
-  const violations: string[] = [];
-
-  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
-    calculateBaselSolvencyRatios(input);
-
-  if (cet1RatioBps < GATE_17_SCALE_TARGETS.BASEL_VII_MIN_CET1_BPS) {
-    violations.push(
-      `CET1 ratio ${cet1RatioBps} bps breaches Basel VII minimum ${GATE_17_SCALE_TARGETS.BASEL_VII_MIN_CET1_BPS} bps (22.00%)`
-    );
-  }
-
-  if (liquidityCoverageRatioBps < GATE_17_SCALE_TARGETS.BASEL_VII_MIN_LCR_BPS) {
-    violations.push(
-      `LCR ${liquidityCoverageRatioBps} bps breaches Basel VII minimum ${GATE_17_SCALE_TARGETS.BASEL_VII_MIN_LCR_BPS} bps (350.00%)`
-    );
-  }
-
-  if (netStableFundingRatioBps < GATE_17_SCALE_TARGETS.BASEL_VII_MIN_NSFR_BPS) {
-    violations.push(
-      `NSFR ${netStableFundingRatioBps} bps breaches Basel VII minimum ${GATE_17_SCALE_TARGETS.BASEL_VII_MIN_NSFR_BPS} bps (160.00%)`
-    );
-  }
-
-  const targetBufferCents = GATE_17_SCALE_TARGETS.SOVEREIGN_BUFFER_TARGET_USD * 100;
-  if (input.totalLiquidityBufferCents < targetBufferCents) {
-    violations.push(
-      `Total liquidity buffer $${(input.totalLiquidityBufferCents / 100).toLocaleString()} below $10.0B requirement`
-    );
-  }
-
-  if (input.stressTestSurvivalDays < 180) {
-    violations.push(
-      `Stress test survival duration ${input.stressTestSurvivalDays} days is below 180-day Basel VII requirement`
-    );
-  }
-
-  const isSolvent = violations.length === 0;
-  let solvencyStatus: BaselViiSolvencyStatus = 'SOLVENT_AND_CAPITALIZED';
-
-  if (!isSolvent) {
-    if (
-      cet1RatioBps < GATE_17_SCALE_TARGETS.BASEL_VII_MIN_CET1_BPS ||
-      input.totalLiquidityBufferCents < targetBufferCents
-    ) {
-      solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-    } else if (
-      liquidityCoverageRatioBps < GATE_17_SCALE_TARGETS.BASEL_VII_MIN_LCR_BPS
-    ) {
-      solvencyStatus = 'LIQUIDITY_RUN_RISK';
-    } else {
-      solvencyStatus = 'REGULATORY_HALT';
-    }
-  }
-
-  const supervisorySignature = createHash('sha256')
-    .update(
-      `BASEL_VII:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${input.totalLiquidityBufferCents}:${isSolvent}:${solvencyStatus}`
-    )
-    .digest('hex');
-
-  return {
-    isSolvent,
-    solvencyStatus,
-    cet1RatioBps,
-    liquidityCoverageRatioBps,
-    netStableFundingRatioBps,
-    totalLiquidityBufferCents: input.totalLiquidityBufferCents,
-    stressTestSurvivalDays: input.stressTestSurvivalDays,
-    violations,
-    supervisorySignature,
-  };
+  return evaluateTieredBaselSolvency(input, {
+    standardLabel: 'Basel VII',
+    signaturePrefix: 'BASEL_VII',
+    minCet1Bps: GATE_17_SCALE_TARGETS.BASEL_VII_MIN_CET1_BPS,
+    cet1Label: '22.00%',
+    minLcrBps: GATE_17_SCALE_TARGETS.BASEL_VII_MIN_LCR_BPS,
+    lcrLabel: '350.00%',
+    minNsfrBps: GATE_17_SCALE_TARGETS.BASEL_VII_MIN_NSFR_BPS,
+    nsfrLabel: '160.00%',
+    targetBufferCents: GATE_17_SCALE_TARGETS.SOVEREIGN_BUFFER_TARGET_USD * 100,
+    bufferLabel: '$10.0B',
+    minSurvivalDays: 180,
+    survivalLabel: '180-day',
+  });
 }

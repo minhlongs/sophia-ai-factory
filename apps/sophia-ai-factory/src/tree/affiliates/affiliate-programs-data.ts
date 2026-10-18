@@ -1,5 +1,13 @@
 import { AffiliateProgram, Tier } from "@/seed/types";
 import affiliateData from "@/seed/data/affiliate-programs.json";
+export {
+  getCategories,
+  getProgramsByCommissionType,
+  getProgramsWithMinCookieDuration,
+  getTags,
+  getTopPrograms,
+  sortProgramsByEPC,
+} from "./affiliate-programs-filters";
 
 /**
  * Data access layer for affiliate programs — domain tree layer.
@@ -83,66 +91,4 @@ export function searchPrograms(query: string): AffiliateProgram[] {
  */
 export function getProgramById(id: string): AffiliateProgram | undefined {
   return getAllPrograms().find((program) => program.id === id);
-}
-
-/**
- * Sort programs by EPC (Earnings Per Click)
- */
-export function sortProgramsByEPC(
-  programs: AffiliateProgram[],
-  order: "asc" | "desc" = "desc"
-): AffiliateProgram[] {
-  return [...programs].sort((a, b) => {
-    return order === "desc" ? b.epc - a.epc : a.epc - b.epc;
-  });
-}
-
-/**
- * Get top performing programs
- */
-export function getTopPrograms(
-  count: number = 10,
-  userTier?: Tier
-): AffiliateProgram[] {
-  const programs = userTier
-    ? getProgramsByTier(userTier)
-    : getAllPrograms();
-
-  return sortProgramsByEPC(programs, "desc").slice(0, count);
-}
-
-/**
- * Get all unique categories
- */
-export function getCategories(): string[] {
-  const categories = getAllPrograms().map((program) => program.category);
-  return Array.from(new Set(categories)).sort();
-}
-
-/**
- * Get all unique tags
- */
-export function getTags(): string[] {
-  const tags = getAllPrograms().flatMap((program) => program.tags || []);
-  return Array.from(new Set(tags)).sort();
-}
-
-/**
- * Filter programs by commission type
- */
-export function getProgramsByCommissionType(
-  type: "recurring" | "one-time" | "hybrid"
-): AffiliateProgram[] {
-  return getAllPrograms().filter((program) => program.commissionType === type);
-}
-
-/**
- * Get programs with minimum cookie duration
- */
-export function getProgramsWithMinCookieDuration(
-  minDays: number
-): AffiliateProgram[] {
-  return getAllPrograms().filter(
-    (program) => program.cookieDuration >= minDays
-  );
 }

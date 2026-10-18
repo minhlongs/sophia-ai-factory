@@ -6,6 +6,10 @@ import { useTranslations } from "next-intl";
 import type { CheckoutPanelProps } from "./types";
 import { PricingSummary } from "./pricing-summary";
 import { PaymentQrSection } from "./payment-methods";
+import {
+  computeCheckoutDisplayValues,
+  verifyCheckoutOrderStatus,
+} from "./checkout-panel-formatters";
 
 export function CheckoutPanel({
   isOpen,
@@ -34,51 +38,31 @@ export function CheckoutPanel({
 
   if (!isOpen) return null;
 
-  const finalPriceCents = discountedPriceCents !== undefined ? discountedPriceCents : priceCents;
-  const originalPriceFormatted = new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(priceCents / 100);
-
-  const finalPriceFormatted = new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(finalPriceCents / 100);
-
-  const qrCodeSrc = checkoutUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkoutUrl)}`
-    : "";
-
-  const USD_TO_VND_DISPLAY = 25500;
-  const vndAmount = Math.round(((finalPriceCents / 100) * USD_TO_VND_DISPLAY) / 1000) * 1000;
-  const vndFormatted = new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    minimumFractionDigits: 0,
-  }).format(vndAmount);
+  const {
+    originalPriceFormatted,
+    finalPriceFormatted,
+    qrCodeSrc,
+    vndFormatted,
+  } = computeCheckoutDisplayValues({
+    priceCents,
+    discountedPriceCents,
+    checkoutUrl,
+    locale,
+  });
 
   const handleVerifyStatus = async () => {
     if (!orderId) return;
     setChecking(true);
     try {
-      const res = await fetch(`/api/checkout/status?orderId=${encodeURIComponent(orderId)}`);
-      if (res.ok) {
-        const data = (await res.json()) as { status: string };
-        if (data.status === "completed") {
-          setPaymentStatus("completed");
+      const nextStatus = await verifyCheckoutOrderStatus(orderId);
+      if (nextStatus) {
+        setPaymentStatus(nextStatus);
+        if (nextStatus === "completed") {
           setTimeout(() => {
             window.location.href = `/${locale}/payment-success?tier=${tier}&order_id=${orderId}`;
           }, 1500);
-        } else if (data.status === "failed" || data.status === "expired") {
-          setPaymentStatus("failed");
-        } else {
-          setPaymentStatus("pending");
         }
       }
-    } catch {
-      // Non-fatal network error
     } finally {
       setChecking(false);
     }

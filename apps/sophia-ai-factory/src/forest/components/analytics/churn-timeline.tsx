@@ -21,43 +21,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import type { ChurnTimeline as ChurnTimelineData } from '@/seed/types/analytics-cohort';
-
-// ── Props ─────────────────────────────────────────────────────────────────────
+import { ChurnTimelineTooltip } from './churn-timeline-tooltip';
 
 export interface ChurnTimelineProps {
   /** Lookback months (1–12, default 3) */
   months?: number;
 }
-
-// ── Custom tooltip ────────────────────────────────────────────────────────────
-
-interface TooltipPayload {
-  name: string;
-  value: number;
-  color: string;
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayload[];
-  label?: string;
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-muted border-border rounded shadow-md px-3 py-2 text-xs">
-      <p className="font-medium text-muted-foreground mb-1">{label}</p>
-      {payload.map(p => (
-        <p key={p.name} style={{ color: p.color }}>
-          {p.name}: {p.value}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function ChurnTimeline({ months = 3 }: ChurnTimelineProps) {
   const [data, setData] = useState<ChurnTimelineData | null>(null);
@@ -118,10 +87,10 @@ export function ChurnTimeline({ months = 3 }: ChurnTimelineProps) {
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 10 }}
-                tickFormatter={d => d.slice(5)} // MM-DD
+                tickFormatter={d => d.slice(5)}
               />
               <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<ChurnTimelineTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line
                 type="monotone"

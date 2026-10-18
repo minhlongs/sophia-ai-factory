@@ -37,10 +37,16 @@ import { POST } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserApiKey } from '@/tree/byok/user-api-key-store';
 import { verifyCsrfToken } from '@/seed/security/csrf';
+import { getD1 } from '@/seed/db/client';
+import { markSetupOnboardingComplete } from './setup-save-schema';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockSetUserApiKey = vi.mocked(setUserApiKey);
 const mockVerifyCsrfToken = vi.mocked(verifyCsrfToken);
+const mockGetD1 = vi.mocked(getD1);
+const onboardingRun = vi.fn().mockResolvedValue({});
+const onboardingBind = vi.fn(() => ({ run: onboardingRun }));
+const onboardingPrepare = vi.fn(() => ({ bind: onboardingBind }));
 
 const MOCK_USER = { id: 'user-1', email: 'test@example.com', name: 'Test' };
 
@@ -67,6 +73,8 @@ describe('POST /api/setup/save', () => {
     // Restore default mock implementations after clearAllMocks
     mockVerifyCsrfToken.mockReturnValue(true);
     mockSetUserApiKey.mockResolvedValue(undefined);
+    onboardingRun.mockResolvedValue({});
+    mockGetD1.mockResolvedValue({ prepare: onboardingPrepare } as never);
   });
 
   it('returns 401 when no authenticated user', async () => {
@@ -169,5 +177,19 @@ describe('POST /api/setup/save', () => {
     );
     expect(res.status).toBe(200);
     expect(mockSetUserApiKey).toHaveBeenCalledWith(MOCK_USER.id, 'openrouter', 'sk-or-test-key');
+  });
+
+  it('waits for both onboarding persistence writes and propagates a failed write', async () => {
+    const run = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('SOP enable failed'));
+    const bind = vi.fn(() => ({ run }));
+    const prepare = vi.fn(() => ({ bind }));
+    mockGetD1.mockResolvedValue({ prepare } as never);
+
+    await expect(markSetupOnboardingComplete(MOCK_USER.id)).rejects.toThrow('SOP enable failed');
+
+    expect(prepare).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledTimes(2);
   });
 });

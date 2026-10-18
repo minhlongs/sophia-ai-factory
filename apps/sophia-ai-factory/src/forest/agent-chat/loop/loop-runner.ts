@@ -3,7 +3,6 @@
  * @module forest/agent-chat/loop/loop-runner
  */
 
-import { createLogger } from '@/seed/utils/logger-utility';
 import { SophiaToolExecutor } from '../tool-executor';
 import { ToolRegistry } from '../tool-registry';
 import type { SseEvent } from '../types';
@@ -14,8 +13,7 @@ import {
   type ToolUseLoopOptions,
 } from './types';
 import { buildToolResultMessages as buildToolMessagesHelper } from './step-evaluator';
-
-const logger = createLogger('tool-use-loop');
+import { executeSingleToolCall, executeBatchToolCalls } from './tool-call-runner';
 
 /**
  * Run the tool-use loop:
@@ -28,7 +26,6 @@ export class ToolUseLoop {
   private registry: ToolRegistry;
   private executor: SophiaToolExecutor;
   private options: Required<ToolUseLoopOptions>;
-  private logger = logger;
 
   constructor(registry: ToolRegistry, executor: SophiaToolExecutor, options: ToolUseLoopOptions = {}) {
     this.registry = registry;
@@ -47,39 +44,7 @@ export class ToolUseLoop {
     call: ParsedToolCall,
     userId: string,
   ): Promise<SseEvent & { type: 'tool_result' }> {
-    this.logger.debug('Executing tool call', { tool: call.name, id: call.id, userId });
-
-    try {
-      const result = await this.executor.execute(call.name, call.args, userId);
-
-      const contentStr = typeof result.content === 'string'
-        ? result.content
-        : JSON.stringify(result.content);
-
-      return {
-        type: 'tool_result',
-        data: {
-          id: call.id,
-          name: call.name,
-          success: result.success,
-          content: contentStr,
-          error: result.error,
-        },
-      };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Tool execution failed';
-      this.logger.error('Tool execution threw', { tool: call.name, error: message });
-      return {
-        type: 'tool_result',
-        data: {
-          id: call.id,
-          name: call.name,
-          success: false,
-          content: message,
-          error: message,
-        },
-      };
-    }
+    return executeSingleToolCall(this.executor, call, userId);
   }
 
   /**
@@ -90,25 +55,7 @@ export class ToolUseLoop {
     calls: ParsedToolCall[],
     userId: string,
   ): Promise<SseEvent[]> {
-    const results: SseEvent[] = [];
-
-    for (const call of calls) {
-      if (this.options.emitToolEvents) {
-        results.push({
-          type: 'tool_call',
-          data: { id: call.id, name: call.name, args: call.args },
-        });
-      }
-
-      const result = await this.executeToolCall(call, userId);
-      results.push(result);
-
-      if (calls.length > 1) {
-        await this.sleep(TOOL_ROUND_DELAY_MS);
-      }
-    }
-
-    return results;
+    return executeBatchToolCalls(this.executor, calls, userId, this.options.emitToolEvents);
   }
 
   /**
@@ -138,9 +85,5 @@ export class ToolUseLoop {
   /** Get total description tokens for context budgeting */
   getToolDescriptionTokens(): number {
     return this.registry.getTotalDescriptionTokens();
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

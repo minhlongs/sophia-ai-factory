@@ -8,6 +8,8 @@ import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
 
+export { markFirstRun, markFirstSopInstall } from './handover-milestones';
+
 const DEFAULT_TOKEN_TTL_HOURS = 24;
 const AUTO_SIGNUP_TOKEN_TTL_HOURS = 72;
 
@@ -74,13 +76,7 @@ export async function validateMagicLinkToken(
 
 /**
  * Consume magic link — mark first login AND invalidate the token to enforce
- * single-use semantics. Without clearing the token, an attacker who captures
- * the link still has 24-72h to mint additional sessions.
- *
- * Returns true when this caller WON the consume race (was the actual single
- * use). Two concurrent consumes for the same handoverId would otherwise both
- * pass validate-then-update; gating on the magic_link_token = ?2 condition
- * means only the first writer's UPDATE has changes>0 — the loser must abort.
+ * single-use semantics.
  */
 export async function consumeMagicLink(handoverId: string, token: string): Promise<boolean> {
   const _db = await getD1();
@@ -100,54 +96,4 @@ export async function consumeMagicLink(handoverId: string, token: string): Promi
     .run();
 
   return (result.meta?.changes ?? 0) > 0;
-}
-
-/**
- * Stamp customer_first_run_at exactly once. Idempotent — subsequent calls
- * are no-ops thanks to COALESCE. Call from anywhere a customer runs a SOP.
- */
-export async function markFirstRun(customerUserId: string): Promise<void> {
-  try {
-    const _db = await getD1();
-    if (!_db) throw new Error('D1 binding not available');
-    const db = _db;
-    const now = Math.floor(Date.now() / 1000);
-    await db
-      .prepare(
-        `UPDATE customer_handovers
-         SET customer_first_run_at = COALESCE(customer_first_run_at, ?1)
-         WHERE customer_user_id = ?2`,
-      )
-      .bind(now, customerUserId)
-      .run();
-  } catch (err) {
-    // Non-fatal — should never block a SOP run
-    logger.warn('[MagicLink] markFirstRun failed', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-}
-
-/**
- * Stamp customer_first_sop_install_at exactly once for a customer.
- */
-export async function markFirstSopInstall(customerUserId: string): Promise<void> {
-  try {
-    const _db = await getD1();
-    if (!_db) throw new Error('D1 binding not available');
-    const db = _db;
-    const now = Math.floor(Date.now() / 1000);
-    await db
-      .prepare(
-        `UPDATE customer_handovers
-         SET customer_first_sop_install_at = COALESCE(customer_first_sop_install_at, ?1)
-         WHERE customer_user_id = ?2`,
-      )
-      .bind(now, customerUserId)
-      .run();
-  } catch (err) {
-    logger.warn('[MagicLink] markFirstSopInstall failed', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
 }

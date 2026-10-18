@@ -6,15 +6,16 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getD1 } from '@/seed/db/client';
-import { recordAudit } from '@/seed/db/audit/audit-log';
 import { markRefunded, getByPaymentId } from '@/seed/db/repositories/user-purchases-repo';
-import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo';
 import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from '../nowpayments-ipn-underpaid';
 import { parseUserIdFromOrderId } from '../nowpayments-ipn-db';
 import { success, failure, type Result } from '@/seed/types/result';
 import { IPNError } from '../nowpayments-ipn-errors';
-import { resolveOrgId } from '@/seed/auth/workspace-access';
+import { checkCryptoPaidAmount } from '../ipn-amount-check';
+import {
+  recordRefundAudit,
+  revokeRefundedPurchaseAccess,
+} from './ipn-refund-helpers';
 import type { NowPaymentsIpnPayload, OneTimeSku } from './types';
 
 /**
@@ -26,7 +27,7 @@ export async function verifyPaymentAmountAndUnderpayment(
   sku: OneTimeSku,
   userId: string,
 ): Promise<{ ok: boolean }> {
-  // P0.4: Underpayment guard — reject if actually_paid < price_amount * 0.99
+  // Compare paid and expected amounts in pay_currency. price_amount is fiat.
   // H8 fix: Cross-check IPN price_amount against SKU price
   const skuPriceUsd = sku.priceUsd ?? ipn.price_amount;
   const ipnPriceUsd = ipn.price_amount;
@@ -43,17 +44,29 @@ export async function verifyPaymentAmountAndUnderpayment(
   }
 
   const actuallyPaid = ipn.actually_paid;
-  if (actuallyPaid !== undefined && actuallyPaid !== null) {
-    const required = ipn.price_amount * UNDERPAYMENT_THRESHOLD;
-    if (actuallyPaid < required) {
+  const amountCheck = checkCryptoPaidAmount(actuallyPaid, ipn.pay_amount, UNDERPAYMENT_THRESHOLD);
+  if (amountCheck.status === 'missing-expected' || amountCheck.status === 'invalid') {
+    logger.error('[IPN/OneTime] Paid amount cannot be verified without a valid crypto payment amount', {
+      userId,
+      paymentId: ipn.payment_id,
+      payAmount: ipn.pay_amount,
+      actuallyPaid,
+      payCurrency: ipn.pay_currency,
+    });
+    return { ok: false };
+  }
+  if (amountCheck.status === 'underpaid') {
+    const required = amountCheck.required;
+    if (actuallyPaid !== undefined && actuallyPaid !== null) {
       logger.warn('[IPN/OneTime] Underpayment detected — not fulfilling', {
         userId,
         paymentId: ipn.payment_id,
-        priceAmount: ipn.price_amount,
+        payAmount: ipn.pay_amount,
+        payCurrency: ipn.pay_currency,
         actuallyPaid,
         required,
       });
-      await markUnderpaid(ipn.payment_id, userId, sku, actuallyPaid);
+      await markUnderpaid(ipn.payment_id, userId, sku, actuallyPaid, amountCheck.expected, ipn.pay_currency ?? 'unknown');
       return { ok: false };
     }
   }
@@ -79,71 +92,8 @@ export async function handleOneTimeRefunded(
     const purchaseId = existingPurchase?.id ?? null;
 
     await markRefunded(ipn.payment_id);
-
-    if (purchaseId) {
-      try {
-        await revokeAccessByPurchaseId(purchaseId);
-        logger.info('[IPN/OneTime] Video access revoked for refunded purchase', {
-          userId,
-          purchaseId,
-          paymentId: ipn.payment_id,
-        });
-      } catch (revokeErr) {
-        logger.error('[IPN/OneTime] Video access revocation failed', revokeErr instanceof Error ? revokeErr : undefined, {
-          userId,
-          purchaseId,
-          paymentId: ipn.payment_id,
-        });
-        throw revokeErr;
-      }
-    }
-
-    try {
-      const db = await getD1();
-      if (!db) throw new Error('D1 database binding not available');
-      await recordAudit(db, {
-        tableName: 'user_purchases',
-        rowId: ipn.payment_id,
-        action: 'update',
-        actorId: userId,
-        after: { status: 'refunded', credits_remaining: 0, paymentId: ipn.payment_id, accessRevoked: true },
-      });
-    } catch (auditErr) {
-      logger.error('[IPN/OneTime] Refund audit failed (non-fatal)', auditErr instanceof Error ? auditErr : undefined, {
-        userId,
-        purchaseId,
-        paymentId: ipn.payment_id,
-      });
-    }
-
-    try {
-      const db = await getD1();
-      if (!db) throw new Error('D1 database binding not available');
-      const nowSec = Math.floor(Date.now() / 1000);
-      const subResult = await db
-        .prepare('UPDATE subscriptions SET plan = ?, updated_at = ? WHERE user_id = ? AND plan != ?')
-        .bind('basic', nowSec, userId, 'basic')
-        .run();
-      const orgId = await resolveOrgId(userId, db);
-      if (orgId) {
-        await db
-          .prepare('UPDATE organizations SET plan = ?, updated_at = ? WHERE id = ? AND plan != ?')
-          .bind('basic', nowSec, orgId, 'basic')
-          .run();
-      }
-      logger.info('[IPN/OneTime] Tier reverted to basic after refund', {
-        userId,
-        purchaseId,
-        paymentId: ipn.payment_id,
-        subscriptionRowsAffected: subResult.meta?.changes ?? 0,
-      });
-    } catch (tierErr) {
-      logger.error('[IPN/OneTime] Tier revert failed (non-fatal)', tierErr instanceof Error ? tierErr : undefined, {
-        userId,
-        purchaseId,
-        paymentId: ipn.payment_id,
-      });
-    }
+    await revokeRefundedPurchaseAccess(userId, purchaseId, ipn.payment_id);
+    await recordRefundAudit(userId, purchaseId, ipn.payment_id);
 
     logger.info('[IPN/OneTime] Purchase refunded — credits zeroed, access revoked', {
       userId,

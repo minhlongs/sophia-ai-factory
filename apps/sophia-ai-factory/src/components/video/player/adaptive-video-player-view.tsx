@@ -9,12 +9,12 @@
  */
 
 import React from 'react';
-import { Play } from 'lucide-react';
 import type { AdaptiveVideoPlayerProps } from './player-types';
 import { useVideoPlayback } from './use-video-playback';
 import { PlayerWatermarkOverlay } from './player-watermark-overlay';
 import { PlayerControlsBar } from './player-controls-bar';
 import {
+  PlayerCenterPlayOverlay,
   usePlayerKeyboardAndFullscreen,
   VideoSubtitleTracks,
 } from './player-keyboard-subtitles';
@@ -39,18 +39,20 @@ export function AdaptiveVideoPlayerView({
     videoRef,
     containerRef,
     isPlaying,
-    currentTime,
-    duration,
-    volume,
     isMuted,
     isFullscreen,
+    volume,
+    currentTime,
+    duration,
+    showControls,
     selectedQuality,
     selectedSubtitle,
-    showControls,
     showQualityMenu,
     showSubtitleMenu,
-    watermark,
     manifestUrl,
+    watermark,
+    setVolume,
+    setIsFullscreen,
     setShowControls,
     setShowQualityMenu,
     setShowSubtitleMenu,
@@ -61,8 +63,6 @@ export function AdaptiveVideoPlayerView({
     handleVolumeChange,
     handleQualitySelect,
     handleSubtitleSelect,
-    setVolume,
-    setIsFullscreen,
   } = useVideoPlayback({
     videoId,
     src,
@@ -108,15 +108,12 @@ export function AdaptiveVideoPlayerView({
         <VideoSubtitleTracks videoId={videoId} selectedSubtitle={selectedSubtitle} />
       </video>
 
-      <PlayerWatermarkOverlay watermark={watermark} enableForensicWatermark={enableForensicWatermark} />
+      <PlayerWatermarkOverlay
+        watermark={watermark}
+        enableForensicWatermark={enableForensicWatermark}
+      />
 
-      {!isPlaying && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity" aria-hidden="true">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-lg backdrop-blur-md">
-            <Play className="h-8 w-8 ml-1" />
-          </div>
-        </div>
-      )}
+      <PlayerCenterPlayOverlay isPlaying={isPlaying} />
 
       <PlayerControlsBar
         isPlaying={isPlaying}

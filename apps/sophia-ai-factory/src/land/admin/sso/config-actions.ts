@@ -13,9 +13,12 @@ import {
   saveEnterpriseSsoConfig,
   deleteEnterpriseSsoConfig,
 } from '@/tree/sso/enterprise-sso-service';
-import { recordEnterpriseAuditEvent } from '@/tree/audit/enterprise-audit-vault';
-import { AUDIT_ACTIONS } from '@/seed/types/enterprise-audit';
 import { assertEnterpriseSsoAccess } from './auth-guard';
+import {
+  recordSsoConfigSavedAudit,
+  recordSsoConfigDeletedAudit,
+  mapSaveSsoConfigError,
+} from './config-action-helpers';
 
 /**
  * Retrieve all SSO configurations for an organization.
@@ -63,40 +66,10 @@ export async function saveEnterpriseSsoConfigAction(
 
   try {
     const saved = await saveEnterpriseSsoConfig(db, input);
-
-    // Record tamper-evident audit event
-    await recordEnterpriseAuditEvent(db, {
-      orgId: input.orgId,
-      actorId: auth.value.userId,
-      actorEmail: auth.value.userEmail,
-      action: AUDIT_ACTIONS.SSO_CONFIGURED,
-      resourceType: 'enterprise_sso',
-      resourceId: saved.id,
-      payload: {
-        domain: saved.domain,
-        providerType: saved.providerType,
-        issuer: saved.issuer,
-        clientId: saved.clientId,
-        enabled: saved.enabled,
-      },
-    });
-
+    await recordSsoConfigSavedAudit(db, input.orgId, auth.value, saved);
     return success(saved);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[enterprise-sso-actions] Failed to save SSO config', {
-      orgId: input.orgId,
-      error: message,
-    });
-
-    if (message.includes('already claimed')) {
-      return failure({ code: 'DOMAIN_CONFLICT', message });
-    }
-    if (message.includes('Invalid corporate email domain')) {
-      return failure({ code: 'INVALID_DOMAIN', message });
-    }
-
-    return failure({ code: 'INTERNAL_ERROR', message });
+    return mapSaveSsoConfigError(input.orgId, err);
   }
 }
 
@@ -119,19 +92,9 @@ export async function deleteEnterpriseSsoConfigAction(
 
   try {
     const deleted = await deleteEnterpriseSsoConfig(db, configId, orgId);
-
     if (deleted) {
-      await recordEnterpriseAuditEvent(db, {
-        orgId,
-        actorId: auth.value.userId,
-        actorEmail: auth.value.userEmail,
-        action: AUDIT_ACTIONS.SSO_DELETED,
-        resourceType: 'enterprise_sso',
-        resourceId: configId,
-        payload: { configId },
-      });
+      await recordSsoConfigDeletedAudit(db, orgId, auth.value, configId);
     }
-
     return success(deleted);
   } catch (err) {
     logger.error('[enterprise-sso-actions] Failed to delete SSO config', {

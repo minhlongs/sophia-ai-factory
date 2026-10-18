@@ -4,10 +4,9 @@
  * @description Pure domain engine for Eternal Supreme Conclave Arbitration (99.99999999% Supermajority, 99.9999% Slashing).
  */
 
-import { createHash } from 'node:crypto';
 import {
-  arbitrateParameterizedConclaveDispute,
-} from './sovereign-conclave-domain-engine';
+  executeQuadrillionConclaveArbitration,
+} from './sovereign-conclave-shared-math';
 import {
   verifyParameterizedConstitutionalInvariants,
 } from './conclave';
@@ -64,35 +63,12 @@ export interface EternalEmpireInvariantCheckOutput {
 export function arbitrateEternalSupremeConclaveDispute(
   input: EternalEmpireDisputeInput
 ): EternalEmpireDisputeRuling {
-  const result = arbitrateParameterizedConclaveDispute(input, {
+  return executeQuadrillionConclaveArbitration<EternalEmpireDisputeRuling>(input, {
+    conclavePrefix: 'ETERNAL_SUPREME_CONCLAVE',
     defaultSupermajorityThresholdPct: 99.99999999,
     slashingPenaltyPct: 99.9999,
     slashingMultiplier: 0.999999,
-    emptyVerdict: 'PENDING_EVIDENCE',
-    emptyRulingHashFn: (_input) => createHash('sha256').update('NO_VOTES').digest('hex'),
-    rulingHashFn: (ctx) =>
-      createHash('sha256')
-        .update(`ETERNAL_SUPREME_CONCLAVE:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.totalJurors}:${ctx.claimantVotes}:${ctx.respondentVotes}:${ctx.jurorsSlashedCount}:${ctx.totalSlashedStakeCents}:${ctx.executedRemedyCents}`)
-        .digest('hex'),
   });
-
-  return {
-    disputeCaseRef: result.disputeCaseRef,
-    verdict: result.verdict as unknown as string,
-    totalJurors: result.totalJurors,
-    totalSenators: result.totalSenators,
-    totalDirectors: result.totalDirectors,
-    claimantVotes: result.claimantVotes,
-    respondentVotes: result.respondentVotes,
-    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
-    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
-    jurorsSlashedCount: result.jurorsSlashedCount,
-    senatorsSlashedCount: result.senatorsSlashedCount,
-    directorsSlashedCount: result.directorsSlashedCount,
-    totalSlashedStakeCents: result.totalSlashedStakeCents,
-    executedRemedyCents: result.executedRemedyCents,
-    rulingHash: result.rulingHash,
-  } as unknown as EternalEmpireDisputeRuling;
 }
 
 /**

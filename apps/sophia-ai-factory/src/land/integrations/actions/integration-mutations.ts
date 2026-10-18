@@ -8,7 +8,6 @@
 
 'use server';
 
-import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   EnterpriseCrmConfig,
@@ -28,7 +27,10 @@ import {
   listWebhookSubscriptions,
   listWebhookDeliveryLogs,
 } from '@/tree/integrations/webhook-dispatcher';
-import { assertAdminSession } from './admin-guard';
+import {
+  runAdminD1Action,
+  validateWebhookEndpointUrl,
+} from './integration-mutation-helpers';
 
 /**
  * Configures or updates CRM integration settings for a tenant.
@@ -36,20 +38,11 @@ import { assertAdminSession } from './admin-guard';
 export async function configureCrm(
   input: UpsertCrmConfigInput
 ): Promise<ActionResult<EnterpriseCrmConfig>> {
-  try {
-    await assertAdminSession();
-    const db = await getD1();
-    if (!db) throw new Error('Database connection unavailable');
-
+  return runAdminD1Action(async (db) => {
     const config = await saveCrmConfig(db, input);
     logger.info('CRM configuration saved', { tenantId: input.tenantId, provider: input.provider });
-
-    return { success: true, data: config };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to configure CRM', err instanceof Error ? err : undefined, { errorMsg });
-    return { success: false, error: errorMsg };
-  }
+    return config;
+  }, 'Failed to configure CRM');
 }
 
 /**
@@ -58,17 +51,7 @@ export async function configureCrm(
 export async function listCrmConfigsAction(
   tenantId: string
 ): Promise<ActionResult<EnterpriseCrmConfig[]>> {
-  try {
-    await assertAdminSession();
-    const db = await getD1();
-    if (!db) throw new Error('Database connection unavailable');
-
-    const configs = await listCrmConfigs(db, tenantId);
-    return { success: true, data: configs };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
-  }
+  return runAdminD1Action((db) => listCrmConfigs(db, tenantId));
 }
 
 /**
@@ -81,15 +64,8 @@ export async function subscribeWebhook(
   eventTypes: string[],
   description?: string
 ): Promise<ActionResult<WebhookSubscription>> {
-  try {
-    await assertAdminSession();
-    const db = await getD1();
-    if (!db) throw new Error('Database connection unavailable');
-
-    if (!endpointUrl || !endpointUrl.startsWith('http')) {
-      throw new Error('INVALID_URL: Webhook endpoint URL must start with http:// or https://');
-    }
-
+  return runAdminD1Action(async (db) => {
+    validateWebhookEndpointUrl(endpointUrl);
     const subscription = await createWebhookSubscription(db, {
       tenantId,
       endpointUrl,
@@ -98,14 +74,9 @@ export async function subscribeWebhook(
       description,
       isActive: true,
     });
-
     logger.info('Webhook subscription created', { tenantId, endpointUrl, subId: subscription.id });
-    return { success: true, data: subscription };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to subscribe webhook', err instanceof Error ? err : undefined, { errorMsg });
-    return { success: false, error: errorMsg };
-  }
+    return subscription;
+  }, 'Failed to subscribe webhook');
 }
 
 /**
@@ -115,21 +86,13 @@ export async function updateWebhookSubscriptionAction(
   subscriptionId: string,
   updates: UpdateWebhookSubscriptionInput
 ): Promise<ActionResult<WebhookSubscription>> {
-  try {
-    await assertAdminSession();
-    const db = await getD1();
-    if (!db) throw new Error('Database connection unavailable');
-
+  return runAdminD1Action(async (db) => {
     const updated = await updateWebhookSubscription(db, subscriptionId, updates);
     if (!updated) {
       throw new Error(`Webhook subscription '${subscriptionId}' not found`);
     }
-
-    return { success: true, data: updated };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
-  }
+    return updated;
+  });
 }
 
 /**
@@ -138,17 +101,7 @@ export async function updateWebhookSubscriptionAction(
 export async function listWebhookSubscriptionsAction(
   tenantId: string
 ): Promise<ActionResult<WebhookSubscription[]>> {
-  try {
-    await assertAdminSession();
-    const db = await getD1();
-    if (!db) throw new Error('Database connection unavailable');
-
-    const subs = await listWebhookSubscriptions(db, tenantId);
-    return { success: true, data: subs };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
-  }
+  return runAdminD1Action((db) => listWebhookSubscriptions(db, tenantId));
 }
 
 /**
@@ -158,15 +111,5 @@ export async function listDeliveryLogs(
   subscriptionId?: string,
   limit = 50
 ): Promise<ActionResult<WebhookDeliveryLog[]>> {
-  try {
-    await assertAdminSession();
-    const db = await getD1();
-    if (!db) throw new Error('Database connection unavailable');
-
-    const logs = await listWebhookDeliveryLogs(db, subscriptionId, limit);
-    return { success: true, data: logs };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
-  }
+  return runAdminD1Action((db) => listWebhookDeliveryLogs(db, subscriptionId, limit));
 }

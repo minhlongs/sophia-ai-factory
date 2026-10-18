@@ -1,7 +1,7 @@
 /**
  * Conversion-to-Ledger Inngest Function
  *
- * Listens for `conversion.created` events emitted by Phase 9 affiliate webhooks.
+ * Listens for `conversion.created` events emitted by affiliate webhooks.
  * Calculates commission (with optional VN PIT 5% withholding) and inserts a
  * pending commission_ledger row. Idempotent via UNIQUE(conversion_event_id).
  *
@@ -12,25 +12,24 @@ import { inngest } from '@/seed/inngest/client'
 import { calculateCommission } from '@/land/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/land/payouts/commission-ledger'
 import { toCents } from '@/land/payouts/commission-cents'
-import { getD1 } from '@/seed/db/client'
 import { writeConversionRevenueEvent } from '@/land/analytics/tiktok-revenue-ingestion'
 import { logger } from '@/seed/utils/logger-utility'
+import {
+  fetchConversionRow,
+  fetchTenantTierForAffiliate,
+  fetchTenantVnPitEnabled,
+} from './conversion-to-ledger-queries'
+
+export {
+  fetchConversionRow,
+  fetchTenantTierForAffiliate,
+  fetchTenantVnPitEnabled,
+  type ConversionRow,
+} from './conversion-to-ledger-queries'
 
 const CLAWBACK_WINDOW_DAYS = 14
 const SECONDS_PER_DAY = 86400
 const VN_PIT_RATE = 0.05
-
-interface ConversionRow {
-  id: string
-  tenant_id: string
-  gross_amount_usd: number
-  commission_usd: number
-  attributed_at: number
-  status: string
-  affiliate_id: string
-  offer_id: string
-  commission_pct: number | null
-}
 
 export const conversionToLedger = inngest.createFunction(
   {
@@ -41,24 +40,9 @@ export const conversionToLedger = inngest.createFunction(
   async ({ event, step }) => {
     const { conversionEventId, tenantId } = event.data
 
-    const conversion = await step.run('fetch-conversion', async () => {
-      const _db = await getD1();
-      if (!_db) throw new Error('D1 database binding not available');
-      const db = _db;
-      return db
-        .prepare(
-          `SELECT ce.id, ce.tenant_id, ce.gross_amount_usd, ce.commission_usd,
-                  ce.attributed_at, ce.status,
-                  al.user_id AS affiliate_id,
-                  ao.id AS offer_id, ao.commission_pct
-           FROM conversion_events ce
-           JOIN affiliate_links al ON al.id = ce.link_id
-           JOIN affiliate_offers ao ON ao.id = al.offer_id
-           WHERE ce.id = ? AND ce.tenant_id = ?`,
-        )
-        .bind(conversionEventId, tenantId)
-        .first<ConversionRow>()
-    })
+    const conversion = await step.run('fetch-conversion', async () =>
+      fetchConversionRow(conversionEventId, tenantId),
+    )
 
     if (!conversion) {
       return { skipped: true, reason: 'Conversion event not found' }
@@ -68,40 +52,13 @@ export const conversionToLedger = inngest.createFunction(
       return { skipped: true, reason: 'Conversion already rejected' }
     }
 
-    const tenantTier = await step.run('fetch-tenant-tier', async () => {
-      const _db = await getD1();
-      if (!_db) throw new Error('D1 database binding not available');
-      const db = _db;
-      const row = await db
-        .prepare(`SELECT tier FROM users WHERE id = ? LIMIT 1`)
-        .bind(conversion.affiliate_id)
-        .first<{ tier: string }>()
-      return row?.tier ?? 'BASIC'
-    })
+    const tenantTier = await step.run('fetch-tenant-tier', async () =>
+      fetchTenantTierForAffiliate(conversion.affiliate_id),
+    )
 
-    // H1: check VN PIT flag for tenant.
-    // Reads the canonical namespaced tenant_settings schema (migration 0085):
-    // one row per (tenant_id, namespace) with a JSON `value` payload. Older 0038
-    // schema (`vn_pit_enabled` column on tenant_settings) was never deployed to
-    // remote D1, so this is the only working source of truth.
-    const vnPitEnabled = await step.run('fetch-tenant-vn-pit', async () => {
-      const _db = await getD1();
-      if (!_db) throw new Error('D1 database binding not available');
-      const db = _db;
-      const row = await db
-        .prepare(
-          `SELECT value FROM tenant_settings WHERE tenant_id = ? AND namespace = 'vn_pit' LIMIT 1`,
-        )
-        .bind(tenantId)
-        .first<{ value: string }>()
-      if (!row?.value) return false
-      try {
-        const parsed = JSON.parse(row.value) as { enabled?: boolean }
-        return parsed.enabled === true
-      } catch {
-        return false
-      }
-    })
+    const vnPitEnabled = await step.run('fetch-tenant-vn-pit', async () =>
+      fetchTenantVnPitEnabled(tenantId),
+    )
 
     const { commissionUsd, commissionPct } = await step.run('calculate-commission', async () => {
       return calculateCommission({
@@ -111,7 +68,7 @@ export const conversionToLedger = inngest.createFunction(
       })
     })
 
-    // H1: compute VN PIT withholding in cents (floor to avoid over-withholding)
+    // Compute VN PIT withholding in cents (floor to avoid over-withholding)
     const commissionCents = toCents(commissionUsd)
     const withheldCents = vnPitEnabled ? Math.floor(commissionCents * VN_PIT_RATE) : 0
 
@@ -149,7 +106,6 @@ export const conversionToLedger = inngest.createFunction(
         })
         return result.written
       } catch (err) {
-        // Dashboard bridge is best-effort; log and continue.
         logger.warn('[conversion-to-ledger] performance event write failed', {
           conversionEventId,
           error: err instanceof Error ? err.message : String(err),

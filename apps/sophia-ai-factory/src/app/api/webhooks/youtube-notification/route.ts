@@ -11,44 +11,11 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-
-async function verifyHmac(request: Request, body: string): Promise<boolean> {
-  const secret = process.env.YOUTUBE_WEBHOOK_SECRET;
-  // H6: fail-closed in production — accept unsigned only in dev/test
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') return false;
-    logger.warn('[youtube-notification] YOUTUBE_WEBHOOK_SECRET not set — skipping signature check (dev only)');
-    return true;
-  }
-
-  const signature = request.headers.get('x-hub-signature-256') ?? '';
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const signatureBytes = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
-  const expectedHex = `sha256=${Array.from(new Uint8Array(signatureBytes)).map(b => b.toString(16).padStart(2, '0')).join('')}`;
-
-  // Timing-safe comparison
-  if (signature.length !== expectedHex.length) return false;
-  let diff = 0;
-  for (let i = 0; i < signature.length; i++) {
-    diff |= signature.charCodeAt(i) ^ expectedHex.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
-interface YouTubeWebhookPayload {
-  videoId?: string;
-  statistics?: {
-    viewCount?: string;
-    likeCount?: string;
-    commentCount?: string;
-  };
-}
+import {
+  verifyHmac,
+  ingestYouTubePerformanceEvent,
+  type YouTubeWebhookPayload,
+} from './youtube-webhook-helpers';
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -82,7 +49,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const result = resultData as { id: number; tenant_id: string; metrics_json: string | null };
-    const existing = result.metrics_json ? JSON.parse(result.metrics_json) as Record<string, unknown> : {};
+    const existing = result.metrics_json
+      ? (JSON.parse(result.metrics_json) as Record<string, unknown>)
+      : {};
 
     const merged = {
       ...existing,
@@ -94,45 +63,23 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     await db
       .from('publishing_results')
-      .update({ metrics_json: JSON.stringify(merged), recorded_at: Math.floor(Date.now() / 1000) })
+      .update({
+        metrics_json: JSON.stringify(merged),
+        recorded_at: Math.floor(Date.now() / 1000),
+      })
       .eq('id', result.id);
 
-    // Ingest engagement metrics into performance_events
     if (payload.statistics) {
-      try {
-        const { recordPerformanceEventIdempotent } = await import('@/tree/performance/events');
-        const today = new Date().toISOString().slice(0, 10);
-        await recordPerformanceEventIdempotent({
-          id: `pevt_yt_${videoId}_${today}`,
-          workspaceId: result.tenant_id || 'sophia-global',
-          assetId: videoId,
-          projectId: videoId,
-          entityType: 'video',
-          entityId: videoId,
-          channel: 'youtube',
-          eventType: 'engagement',
-          count: Number(merged.views),
-          valueCents: 0,
-          recordedAt: Date.now(),
-          rawData: {
-            views: merged.views,
-            likes: merged.likes,
-            comments: merged.comments,
-            source: 'youtube-webhook',
-          },
-        });
-      } catch (evtErr) {
-        logger.warn('[youtube-notification] Failed to record performance event (non-fatal)', {
-          videoId,
-          error: String(evtErr),
-        });
-      }
+      await ingestYouTubePerformanceEvent(videoId, result.tenant_id, merged);
     }
 
     logger.info('[youtube-notification] Metrics updated', { videoId, resultId: result.id });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    logger.error('[youtube-notification] Error', err instanceof Error ? err : new Error(String(err)));
+    logger.error(
+      '[youtube-notification] Error',
+      err instanceof Error ? err : new Error(String(err)),
+    );
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

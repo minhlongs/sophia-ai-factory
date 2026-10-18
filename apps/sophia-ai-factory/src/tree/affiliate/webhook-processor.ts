@@ -12,6 +12,7 @@
 import { verifyAffiliateHmac, type HmacAlgorithm } from './hmac-verifier';
 import { parseAffiliateSubId, type AffiliateNetwork } from './attribution-parser';
 import { recordCommissionEntry } from './commission-ledger';
+import { extractWebhookMoneyValues } from './webhook-payload-extractor';
 
 export interface WebhookProcessingResult {
   success: boolean;
@@ -69,39 +70,11 @@ export async function processAffiliateWebhook(
   const attribution = parseAffiliateSubId({ network, payload }, network);
 
   // 4. Resolve conversion ID & money values
-  const conversionId =
-    attribution.orderId ||
-    (payload.conversionId as string) ||
-    (payload.order_id as string) ||
-    (payload.orderId as string) ||
-    `conv_${network}_${Math.random().toString(36).substring(2, 9)}`;
-
-  // Parse commission cents: handles integer cents or USD float
-  let commissionCents = 0;
-  if (typeof payload.commissionCents === 'number') {
-    commissionCents = payload.commissionCents;
-  } else if (typeof payload.commission_amount === 'number') {
-    commissionCents = Math.round(payload.commission_amount * 100);
-  } else if (typeof payload.commission === 'number') {
-    commissionCents = Math.round(payload.commission * 100);
-  } else if (typeof payload.commissionUsd === 'number') {
-    commissionCents = Math.round(payload.commissionUsd * 100);
-  }
-
-  let orderValueCents = 0;
-  if (typeof payload.orderValueCents === 'number') {
-    orderValueCents = payload.orderValueCents;
-  } else if (typeof payload.settlement_amount === 'number') {
-    orderValueCents = Math.round(payload.settlement_amount * 100);
-  } else if (typeof payload.revenue === 'number') {
-    orderValueCents = Math.round(payload.revenue * 100);
-  } else if (typeof payload.order_value === 'number') {
-    orderValueCents = Math.round(payload.order_value * 100);
-  } else if (typeof payload.sale_amount === 'number') {
-    orderValueCents = Math.round(payload.sale_amount * 100);
-  } else if (typeof payload.orderValueUsd === 'number') {
-    orderValueCents = Math.round(payload.orderValueUsd * 100);
-  }
+  const { conversionId, commissionCents, orderValueCents } = extractWebhookMoneyValues(
+    payload,
+    network,
+    attribution.orderId,
+  );
 
   // 5. Commission validation rule: must be strictly positive
   if (commissionCents <= 0) {

@@ -10,20 +10,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket, tenantScopedKey } from '@/land/video/storage/r2-binding';
 import { uploadToR2 } from '@/land/video/storage/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
-import { getVoicePreset } from '@/seed/voices/presets';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import {
   CIRCUIT_SERVICE,
-  SILENT_WAV_B64,
   bodySchema,
   verifyInternalToken,
-  type VideoJobRow,
 } from './tts-route-helpers';
+import {
+  checkCachedOrMockTts,
+  resolveVoiceAndLanguage,
+} from './tts-precheck';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!verifyInternalToken(request)) {
@@ -58,49 +58,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { text, voiceId, voicePresetId, language: rawLanguage, tenantId, jobId } = parsed.data;
 
-  // Resolve preset → coqui speaker + default language. Preset wins over raw voiceId.
-  let resolvedVoiceRef: string | null = voiceId ?? null;
-  let resolvedLanguage = rawLanguage ?? 'en';
-  if (voicePresetId) {
-    const preset = getVoicePreset(voicePresetId);
-    if (!preset) {
-      return NextResponse.json(
-        { error: `Unknown voicePresetId: ${voicePresetId}` },
-        { status: 400 },
-      );
-    }
-    resolvedVoiceRef = preset.coquiSpeaker;
-    if (!rawLanguage) resolvedLanguage = preset.language;
+  const voiceResolution = resolveVoiceAndLanguage({ voiceId, voicePresetId, rawLanguage });
+  if (!voiceResolution.ok) {
+    return voiceResolution.response;
   }
-
-  // Idempotency: check if audio_r2_key already set
-  const db = createServerClient();
-  const { data: existing } = await db.from('video_jobs').select('audio_r2_key').eq('id', jobId).eq('tenant_id', tenantId).single();
-  const existingRow = existing as VideoJobRow | null;
-  if (existingRow?.audio_r2_key) {
-    logger.info('[TTS] Returning cached audio', { jobId, r2Key: existingRow.audio_r2_key });
-    return NextResponse.json({ r2Key: existingRow.audio_r2_key, durationSec: 0, costUsd: 0, cached: true });
-  }
+  const { resolvedVoiceRef, resolvedLanguage } = voiceResolution;
 
   const r2Key = tenantScopedKey(tenantId, jobId, 'audio.wav');
-
-  if (!coquiUrl) {
-    // Dev mock: return silent 1-sec WAV
-    logger.warn('[TTS] COQUI_FLY_URL not set — returning mock WAV', { jobId });
-    const wavBuffer = Buffer.from(SILENT_WAV_B64, 'base64');
-
-    const bucketRef = await getVideoBucket();
-    if (bucketRef) {
-      await uploadToR2({ bucket: bucketRef.bucket, key: r2Key, data: wavBuffer.buffer });
-    }
-
-    return NextResponse.json({ r2Key, durationSec: 1, costUsd: 0, mock: true });
+  const earlyResponse = await checkCachedOrMockTts({ jobId, tenantId, r2Key, coquiUrl });
+  if (earlyResponse) {
+    return earlyResponse;
   }
 
   // Fetch from Coqui XTTS v2
   try {
     if (!shouldAllowRequest(CIRCUIT_SERVICE)) {
-      throw new Error(`[circuit-breaker] Circuit open for ${CIRCUIT_SERVICE}`)
+      throw new Error(`[circuit-breaker] Circuit open for ${CIRCUIT_SERVICE}`);
     }
 
     const coquiResp = await fetch(`${coquiUrl}/synth`, {

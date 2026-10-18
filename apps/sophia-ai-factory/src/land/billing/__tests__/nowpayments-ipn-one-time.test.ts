@@ -39,6 +39,8 @@ function buildIpnPayload(overrides: Partial<NowPaymentsIpnPayload> = {}): NowPay
     payment_status: 'finished',
     price_amount: 49,
     price_currency: 'usd',
+    pay_amount: 49,
+    pay_currency: 'USDT',
     ...overrides,
   }
 }
@@ -211,6 +213,15 @@ describe('handleOneTimeRefunded — purchase refund handling', () => {
 
     // Verify audit trail attempted
     expect(auditLog.recordAudit).toHaveBeenCalled()
+    expect(auditLog.recordAudit).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ tableName: 'user_purchases', rowId: payload.payment_id }),
+    )
+    expect(logger.error).not.toHaveBeenCalledWith(
+      expect.stringContaining('Tier revert'),
+      expect.anything(),
+      expect.anything(),
+    )
 
     expect(logger.info).toHaveBeenCalledWith(
       expect.stringContaining('refunded'),
@@ -285,9 +296,8 @@ describe('handleOneTimeFinished — underpayment guard (P0.4)', () => {
     vi.clearAllMocks()
   })
 
-  it('rejects when actually_paid < price_amount * 0.99', async () => {
-    // $49 * 0.99 = $48.51 — $46.55 is underpaid
-    const payload = buildIpnPayload({ price_amount: 49, actually_paid: 46.55 })
+  it('rejects when actually_paid is below 99% of pay_amount in crypto units', async () => {
+    const payload = buildIpnPayload({ price_amount: 49, pay_amount: 10, actually_paid: 9.8 })
 
     await handleOneTimeFinished(payload, STARTER_SKU)
 
@@ -302,9 +312,8 @@ describe('handleOneTimeFinished — underpayment guard (P0.4)', () => {
     )
   })
 
-  it('accepts when actually_paid >= price_amount * 0.99 (within tolerance)', async () => {
-    // $49 * 0.99 = $48.51 — $48.60 is acceptable
-    const payload = buildIpnPayload({ price_amount: 49, actually_paid: 48.60 })
+  it('accepts when actually_paid is at least 99% of pay_amount in crypto units', async () => {
+    const payload = buildIpnPayload({ price_amount: 49, pay_amount: 10, actually_paid: 9.95 })
     const purchaseId = 'purchase_ok'
     vi.mocked(userPurchasesRepo.insertPurchase).mockResolvedValue(purchaseId)
     vi.mocked(userPurchasesRepo.markPaid).mockResolvedValue(undefined)
@@ -330,7 +339,7 @@ describe('handleOneTimeFinished — underpayment guard (P0.4)', () => {
     expect(fulfillment.triggerOneTimeFulfillment).toHaveBeenCalled()
   })
 
-  it('accepts exact payment (actually_paid === price_amount)', async () => {
+  it('accepts exact payment (actually_paid === pay_amount)', async () => {
     const payload = buildIpnPayload({ price_amount: 49, actually_paid: 49 })
     const purchaseId = 'purchase_exact'
     vi.mocked(userPurchasesRepo.insertPurchase).mockResolvedValue(purchaseId)
@@ -341,5 +350,37 @@ describe('handleOneTimeFinished — underpayment guard (P0.4)', () => {
 
     expect(userPurchasesRepo.insertPurchase).toHaveBeenCalled()
     expect(fulfillment.triggerOneTimeFulfillment).toHaveBeenCalled()
+  })
+
+  it('compares NOWPayments crypto fields in the same unit when fiat and crypto amounts differ', async () => {
+    const payload = buildIpnPayload({
+      price_amount: 1,
+      price_currency: 'usd',
+      pay_amount: 15,
+      pay_currency: 'trx',
+      actually_paid: 15,
+    })
+    const sku = { ...STARTER_SKU, priceUsd: 1 }
+    vi.mocked(userPurchasesRepo.insertPurchase).mockResolvedValue('purchase_trx')
+    vi.mocked(userPurchasesRepo.markPaid).mockResolvedValue(undefined)
+    vi.mocked(fulfillment.triggerOneTimeFulfillment).mockResolvedValue(undefined)
+
+    await handleOneTimeFinished(payload, sku)
+
+    expect(userPurchasesRepo.insertPurchase).toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).toHaveBeenCalled()
+  })
+
+  it('fails closed when actually_paid is present but pay_amount is missing', async () => {
+    const payload = buildIpnPayload({ pay_amount: undefined, actually_paid: 49 })
+
+    await handleOneTimeFinished(payload, STARTER_SKU)
+
+    expect(userPurchasesRepo.insertPurchase).not.toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('without a valid crypto payment amount'),
+      expect.objectContaining({ paymentId: payload.payment_id }),
+    )
   })
 })

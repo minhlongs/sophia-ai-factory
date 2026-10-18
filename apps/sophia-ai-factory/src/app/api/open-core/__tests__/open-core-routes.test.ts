@@ -86,10 +86,16 @@ describe('/api/open-core/status & /portability routes', () => {
     expect(res.status).toBe(200);
 
     const json = (await res.json()) as {
+      success: boolean;
       mode: string;
+      persisted: boolean;
       edition: string;
+      userTier: string;
+      hasValidRaasLicense: boolean;
+      licensedTier: string | null;
+      pricingUrl: string;
       features: Array<{ allowed: boolean }>;
-        catalogAudit: {
+      catalogAudit: {
         totalSteps: number;
         documentedSteps: number;
         catalogCompletenessPercentage: number;
@@ -102,7 +108,19 @@ describe('/api/open-core/status & /portability routes', () => {
         duplicateBlueprintIds: string[];
         catalogComplete: boolean;
       } | null;
+      beacon: unknown;
     };
+    expect(json).toMatchObject({
+      success: true,
+      mode: 'runtime_status',
+      persisted: true,
+      edition: 'community',
+      userTier: 'BASIC',
+      hasValidRaasLicense: false,
+      licensedTier: null,
+      pricingUrl: 'https://sophia.agencyos.network/pricing',
+      beacon: null,
+    });
     expect(json.mode).toBe('runtime_status');
     expect(json.edition).toBe('community');
     expect(json.features.filter((f) => f.allowed).length).toBe(4);

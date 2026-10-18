@@ -306,6 +306,7 @@ const eslintConfig = defineConfig([
 "src/forest/components/experiment-variant.tsx",
 // raas components — reads land/i18n for locale (mekong-exempt)
 // settings components — reads land/schemas/settings for forms (mekong-exempt)
+"src/forest/components/settings/sections/api-keys-config.ts",
 "src/forest/components/settings/sections/api-keys-section.tsx",
 "src/forest/components/settings/sections/appearance-section.tsx",
 "src/forest/components/settings/sections/notifications-section.tsx",
@@ -330,6 +331,7 @@ const eslintConfig = defineConfig([
 "src/forest/inngest/functions/commerce-fulfillment.ts",
 "src/forest/inngest/functions/commerce-catalog-sync.ts",
 "src/forest/inngest/functions/commerce-video-dispatcher.ts",
+"src/forest/inngest/functions/autonomous-video-pipeline-distribution.ts",
 "src/forest/inngest/functions/video-compose.ts",
 "src/forest/inngest/functions/video-generate.ts",
 "src/forest/inngest/functions/video-generate-finalize.ts",

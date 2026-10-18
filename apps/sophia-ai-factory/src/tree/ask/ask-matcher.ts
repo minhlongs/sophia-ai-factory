@@ -6,48 +6,19 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import type { AskRouteResult, IntentCategoryDefinition } from './ask-types';
-import { CANONICAL_INTENT_CATEGORIES, RECOGNIZED_COMMANDS } from './ask-intent-categories';
+import type { AskRouteResult } from './ask-types';
+import { RECOGNIZED_COMMANDS } from './ask-intent-categories';
 import {
   formatConsultationMessages,
   generateArchitecturalConsultation,
 } from './ask-advisor-consultation';
+import {
+  findBestIntentMatch,
+  matchesWildcard,
+  type MatchCandidate,
+} from './ask-wildcard-matcher';
 
-/**
- * Checks if a candidate text matches a pattern using fnmatch wildcard semantics.
- */
-export function matchesWildcard(pattern: string, text: string): boolean {
-  const normPattern = pattern.trim().toLowerCase();
-  const normText = text.trim().toLowerCase();
-
-  if (normPattern.length === 0 || normText.length === 0) {
-    return false;
-  }
-
-  if (normPattern.startsWith('*') && normPattern.endsWith('*')) {
-    const sub = normPattern.slice(1, -1);
-    return sub.length > 0 && normText.includes(sub);
-  }
-
-  if (normPattern.startsWith('*')) {
-    const sub = normPattern.slice(1);
-    return sub.length > 0 && normText.endsWith(sub);
-  }
-
-  if (normPattern.endsWith('*')) {
-    const sub = normPattern.slice(0, -1);
-    return sub.length > 0 && normText.startsWith(sub);
-  }
-
-  return normText.includes(normPattern);
-}
-
-interface MatchCandidate {
-  readonly intent: IntentCategoryDefinition;
-  readonly keyword: string;
-  readonly language: 'vi' | 'en';
-  readonly specificity: number;
-}
+export { matchesWildcard };
 
 function checkUnknownCommand(trimmed: string): AskRouteResult | null {
   if (!trimmed.startsWith('/')) {
@@ -69,28 +40,6 @@ function checkUnknownCommand(trimmed: string): AskRouteResult | null {
     outputMessageVi: `❌ [Từ chối lệnh] Lệnh "${commandToken}" không được công nhận. Vui lòng sử dụng các lệnh chuẩn như /cook, /fix, /test, /plan, /brainstorm, /docs, /security-scan, /audit-compliance hoặc nhập câu hỏi tự nhiên.`,
     outputMessageEn: `❌ [Command Rejected] Command "${commandToken}" is unrecognized. Please use supported commands (/cook, /fix, /test, /plan, /brainstorm, /docs, /security-scan, /audit-compliance) or enter a natural language prompt.`,
   };
-}
-
-function findBestIntentMatch(trimmed: string, language: 'vi' | 'en'): MatchCandidate | null {
-  const matches: MatchCandidate[] = [];
-  for (const intent of CANONICAL_INTENT_CATEGORIES) {
-    const keywords = language === 'vi' ? intent.keywordsVi : intent.keywordsEn;
-    for (const kw of keywords) {
-      if (matchesWildcard(kw, trimmed)) {
-        matches.push({
-          intent,
-          keyword: kw,
-          language,
-          specificity: kw.length,
-        });
-      }
-    }
-  }
-  if (matches.length === 0) {
-    return null;
-  }
-  matches.sort((a, b) => b.specificity - a.specificity);
-  return matches[0] ?? null;
 }
 
 function buildRoutedResult(trimmed: string, match: MatchCandidate): AskRouteResult {

@@ -7,6 +7,8 @@ import {
   HeyGenVoice,
   HeyGenVideoStatus,
   HeyGenVideoStatusResponse,
+  HeyGenCreateVideoParams,
+  buildCreateVideoPayload,
 } from './types';
 
 export class HeyGenClient {
@@ -56,34 +58,9 @@ export class HeyGenClient {
     }
   }
 
-  async createVideo(params: {
-    avatarId: string;
-    voiceId: string;
-    script: string;
-    title?: string;
-  }): Promise<string> {
+  async createVideo(params: HeyGenCreateVideoParams): Promise<string> {
     const stopTimer = startTimer();
-    const body = {
-      video_inputs: [
-        {
-          character: {
-            type: 'avatar',
-            avatar_id: params.avatarId,
-            avatar_style: 'normal',
-          },
-          voice: {
-            type: 'text',
-            input_text: params.script,
-            voice_id: params.voiceId,
-          },
-        },
-      ],
-      dimension: {
-        width: 1920,
-        height: 1080,
-      },
-      title: params.title,
-    };
+    const body = buildCreateVideoPayload(params);
 
     try {
       const data = await this.request<{ data?: { video_id?: string } }>('/video/generate', {

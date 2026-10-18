@@ -16,6 +16,14 @@ import type {
 } from '@/seed/types/custom-domains';
 import type { Result } from '@/seed/types/result';
 
+export {
+  PRESET_SWATCHES,
+  type ColorSwatch,
+  type SidePreviewLabels,
+  type FullPreviewLabels,
+  type BrandingFormLabels,
+} from './label-types';
+
 export type WhiteLabelTab = 'domains' | 'branding' | 'preview';
 
 export interface WhiteLabelManagerActions {
@@ -42,11 +50,6 @@ export interface WhiteLabelManagerProps {
   initialDomains?: CustomDomainRecord[];
   initialBranding?: Partial<WhiteLabelBrandingSettings> | null;
   actions?: WhiteLabelManagerActions;
-}
-
-export interface ColorSwatch {
-  name: string;
-  hex: string;
 }
 
 export interface HeaderTabLabels {
@@ -76,67 +79,3 @@ export interface DomainsTabLabels {
   actions: Record<'verifying' | 'verify' | 'deleting' | 'delete', string>;
   dnsInstructions: Record<'title' | 'cnameHost' | 'cnameTarget', string>;
 }
-
-export interface SidePreviewLabels {
-  livePreviewTitle: string;
-  livePreviewDescription: string;
-  navHome: string;
-  navCampaigns: string;
-  badge: string;
-  heroHeading: string;
-  heroSubheading: string;
-  primaryCta: string;
-  secondaryCta: string;
-  sampleCardTitle: string;
-  sampleCardDesc: string;
-}
-
-export interface FullPreviewLabels {
-  title: string;
-  subtitle: string;
-  navHome: string;
-  navCampaigns: string;
-  navAnalytics: string;
-  badge: string;
-  heroHeading: string;
-  heroSubheading: string;
-  primaryCta: string;
-  secondaryCta: string;
-  sampleCardTitle: string;
-  sampleCardDesc: string;
-}
-
-export interface BrandingFormLabels {
-  title: string;
-  description: string;
-  fields: {
-    agencyName: string;
-    agencyNamePlaceholder: string;
-    logoUrl: string;
-    logoUrlPlaceholder: string;
-    faviconUrl: string;
-    faviconUrlPlaceholder: string;
-    primaryColor: string;
-    primaryColorHelp: string;
-    accentColor: string;
-    accentColorHelp: string;
-    pageTitle: string;
-    pageTitlePlaceholder: string;
-    footerText: string;
-    footerTextPlaceholder: string;
-  };
-  actions: {
-    reset: string;
-    save: string;
-    saving: string;
-  };
-}
-
-export const PRESET_SWATCHES: ColorSwatch[] = [
-  { name: 'Electric Indigo', hex: '#6366F1' },
-  { name: 'Purple Royalty', hex: '#7C3AED' },
-  { name: 'Emerald Mint', hex: '#10B981' },
-  { name: 'Crimson Rose', hex: '#F43F5E' },
-  { name: 'Cyber Amber', hex: '#F59E0B' },
-  { name: 'Neon Cyan', hex: '#06B6D4' },
-];

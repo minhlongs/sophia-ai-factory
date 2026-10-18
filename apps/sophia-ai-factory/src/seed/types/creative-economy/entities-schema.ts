@@ -17,38 +17,34 @@ import type {
   CreativeMissionStatus,
   GoalType,
   Mission,
-  PerformanceSnapshot,
   ProvenanceAction,
   ProvenanceRecord,
-  RevenueEvent,
 } from '@/seed/types/creative-domain'
+import {
+  NonEmptyString,
+  Cents,
+  UnixMs,
+  Channel,
+  PerformanceSnapshotSchema,
+  RevenueEventSchema,
+} from './telemetry-entities-schema'
 
 // ─── Canonical entity type re-exports ────────────────────────────────────────
-// These types live in `creative-domain.ts`; they are re-exported here so the
-// mission lifecycle module can import them from the Creative Economy barrel
-// (@/seed/types/creative-economy) instead of reaching directly into
-// creative-domain.ts. Schemas below mirror these types — they do not redefine
-// them.
 
 export type { AutonomyLevel, CreativeGoal, CreativeMissionStatus, GoalType, Mission }
 
-// ─── Primitive re-exports ────────────────────────────────────────────────────
+// ─── Primitive & telemetry schema re-exports ─────────────────────────────────
 
-/** Non-empty string with surrounding whitespace trimmed. */
-export const NonEmptyString = z.string().trim().min(1)
-
-/** Positive integer cents (currency is stored as integer cents). */
-export const Cents = z.number().int().nonnegative()
-
-/** Unix milliseconds. */
-export const UnixMs = z.number().int().nonnegative()
-
-/** ISO-8601 or arbitrary tag string; kept loose so legacy payloads validate. */
-export const Channel = z.string().trim().min(1).max(64)
+export {
+  NonEmptyString,
+  Cents,
+  UnixMs,
+  Channel,
+  PerformanceSnapshotSchema,
+  RevenueEventSchema,
+}
 
 // ─── Entity schemas ──────────────────────────────────────────────────────────
-// Branded IDs validate as plain non-empty strings here; the brand is a
-// compile-time guard in `ids.ts`, not a runtime coercion.
 
 export const CreativeMissionStatusSchema = z.enum([
   'draft',
@@ -114,40 +110,4 @@ export const ProvenanceRecordSchema: z.ZodType<ProvenanceRecord> = z.object({
   derivativeOf: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()),
   createdAt: UnixMs,
-})
-
-export const PerformanceSnapshotSchema: z.ZodType<PerformanceSnapshot> = z.object({
-  id: z.string().min(1),
-  workspaceId: z.string().min(1),
-  assetId: z.string().min(1),
-  channel: Channel,
-  snapshotDate: UnixMs,
-  impressions: z.number().int().nonnegative(),
-  views: z.number().int().nonnegative(),
-  likes: z.number().int().nonnegative(),
-  comments: z.number().int().nonnegative(),
-  shares: z.number().int().nonnegative(),
-  saves: z.number().int().nonnegative(),
-  watchTimeSeconds: z.number().int().nonnegative(),
-  retention3s: z.number().min(0).max(1),
-  retention30s: z.number().min(0).max(1),
-  followerDelta: z.number().int(),
-  leadDelta: z.number().int(),
-  revenueCents: Cents,
-  costCents: Cents,
-  creativeRoi: z.number(),
-})
-
-export const RevenueEventSchema: z.ZodType<RevenueEvent> = z.object({
-  id: z.string().min(1),
-  workspaceId: z.string().min(1),
-  assetId: z.string().optional(),
-  projectId: z.string().optional(),
-  channel: Channel,
-  type: z.enum(['sale', 'affiliate', 'ad', 'subscription', 'lead', 'licensing']),
-  amountCents: Cents,
-  currency: NonEmptyString.max(8),
-  metadata: z.record(z.string(), z.unknown()),
-  occurredAt: UnixMs,
-  recordedAt: UnixMs,
 })

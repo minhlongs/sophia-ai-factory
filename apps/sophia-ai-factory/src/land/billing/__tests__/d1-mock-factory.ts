@@ -193,6 +193,8 @@ export function buildIpnPayload(overrides: Partial<{
     order_id: `sophia_user_test123_${Date.now()}`,
     invoice_id: 'inv_test_001',
     actually_paid: 199,
+    pay_amount: 199,
+    pay_currency: 'USDT',
     customer_email: 'test@example.com',
   }
   return { ...defaults, ...overrides }

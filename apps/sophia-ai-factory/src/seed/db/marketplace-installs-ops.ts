@@ -14,7 +14,7 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getSopInstallLimit } from '@/seed/config/tiers';
 import type { CreateSopInstallInput, SopInstall } from './marketplace-types';
 
-// ── SOP Install Operations ─────────────────────────────────────────────────
+export { getSopInstall, listUserInstalls } from './marketplace-installs-queries';
 
 /**
  * Create a new SOP install for a user.
@@ -91,51 +91,6 @@ export async function createSopInstall(
       .run();
 
     return install;
-  } catch (error) {
-    throw toError(error);
-  }
-}
-
-/**
- * Get an SOP install by its license ID.
- * Returns the install or null if not found.
- */
-export async function getSopInstall(
-  db: D1Database,
-  licenseId: string,
-): Promise<SopInstall | null> {
-  try {
-    const row = await db
-      .prepare('SELECT * FROM sop_installs WHERE license_id = ?')
-      .bind(licenseId)
-      .first<SopInstall>();
-
-    return row ?? null;
-  } catch (error) {
-    throw toError(error);
-  }
-}
-
-/**
- * List all SOP installs for a given user.
- * Returns an empty array if the user has no installs.
- */
-export async function listUserInstalls(
-  db: D1Database,
-  userId: string,
-  tenantId?: string,
-): Promise<SopInstall[]> {
-  const resolvedTenantId = tenantId ?? 'default';
-
-  try {
-    const result = await db
-      .prepare(
-        'SELECT * FROM sop_installs WHERE user_id = ? AND tenant_id = ? ORDER BY installed_at DESC',
-      )
-      .bind(userId, resolvedTenantId)
-      .all<SopInstall>();
-
-    return result.results ?? [];
   } catch (error) {
     throw toError(error);
   }

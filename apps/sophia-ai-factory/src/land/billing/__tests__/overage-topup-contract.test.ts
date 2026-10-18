@@ -65,24 +65,24 @@ function buildD1Mock(): unknown {
         }),
       }),
     }),
-    prepare: (_sql: string) => ({
+    prepare: (sql: string) => ({
       bind: (..._args: unknown[]) => ({
         run: () => Promise.resolve(d1MockState.prepareBindRunResult ?? { meta: { changes: 1 } }),
-        first: <T>() => Promise.resolve(d1MockState.prepareBindFirstResult as T | null ?? null),
+        first: <T>() => {
+          if (sql.includes('nowpayments_refund_barriers')) return Promise.resolve(null)
+          return Promise.resolve(d1MockState.prepareBindFirstResult as T | null ?? null)
+        },
       }),
     }),
+    batch: (statements: unknown[]) => Promise.resolve(statements.map(() => ({ meta: { changes: 1 } }))),
   }
 }
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => buildD1Mock()),
   getD1: vi.fn(() => ({
-    prepare: () => ({
-      bind: () => ({
-        run: () => Promise.resolve({ meta: { changes: 1 } }),
-        first: () => Promise.resolve(null),
-      }),
-    }),
+    prepare: () => ({ bind: () => ({ run: () => Promise.resolve({ meta: { changes: 1 } }) }) }),
+    batch: (statements: unknown[]) => Promise.resolve(statements.map(() => ({ meta: { changes: 1 } }))),
   })),
 }))
 
@@ -95,6 +95,8 @@ function makeTopupIpn(overrides: Record<string, unknown> = {}) {
     payment_status: 'finished' as const,
     price_amount: 10,
     price_currency: 'USD',
+    pay_amount: 10,
+    pay_currency: 'USDT',
     order_id: 'topup_user1_' + Date.now(),
     invoice_id: 'topup_inv_001',
     actually_paid: 10,

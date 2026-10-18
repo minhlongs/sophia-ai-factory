@@ -8,16 +8,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
-
 import {
   generateApiKey,
   getUserApiKeys,
 } from '@/seed/security/api-key-validator'
 import { logApiKeyCreation } from '@/tree/audit/audit-query-logger'
+import {
+  createApiKeyBodySchema,
+  formatApiKeyListResponse,
+} from './api-keys-route-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,21 +34,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const apiKeys = await getUserApiKeys(userId)
-
-    return NextResponse.json({
-      success: true,
-      count: apiKeys.length,
-      keys: apiKeys.map(key => ({
-        keyId: key.keyId,
-        keyPrefix: key.keyPrefix,
-        permissions: key.permissions,
-        createdAt: key.createdAt,
-        expiresAt: key.expiresAt,
-        lastUsedAt: key.lastUsedAt,
-        rateLimitPerMinute: key.rateLimitPerMinute,
-        // Don't include full key - only shown on creation
-      })),
-    })
+    return NextResponse.json(formatApiKeyListResponse(apiKeys))
   } catch (error) {
     logger.error('[API Keys] Failed to fetch API keys', toError(error))
     return NextResponse.json(
@@ -56,22 +44,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const PERMISSION_VALUES = ['audit:read', 'audit:write', 'reports:download', 'reports:generate'] as const
-
-const createApiKeyBodySchema = z.object({
-  permissions: z.array(z.enum(PERMISSION_VALUES)).min(1, 'permissions array is required'),
-  expiresAt: z.coerce.number().int().positive().optional(),
-  rateLimitPerMinute: z.coerce.number().int().positive().default(100),
-})
-
 /**
  * POST /api/admin/api-keys
  * Create a new API key
- *
- * Body:
- * - permissions: string[] (required) - e.g., ['audit:read', 'audit:write']
- * - expiresAt: number (optional) - Expiration timestamp in ms
- * - rateLimitPerMinute: number (optional, default 100)
  */
 export async function POST(request: NextRequest) {
   const auth = await requireAdminWithRecentAuth(request);
@@ -96,7 +71,6 @@ export async function POST(request: NextRequest) {
 
     const { permissions, expiresAt, rateLimitPerMinute } = parsed.data
 
-    // Generate API key
     const result = await generateApiKey(
       userId,
       permissions,

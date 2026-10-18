@@ -22,8 +22,6 @@ import type {
 } from '@/seed/types/financial-close';
 import type { FinancialCloseActionError } from './types';
 import {
-  assertFinanceAdminAccess,
-  resolveDb,
   executeVerifyAuditVaultIntegrity,
   executeExportFormS1AuditReport,
 } from './reconciliation-checker';
@@ -40,6 +38,7 @@ import {
   executeCreateRevenueSchedule,
   executeRunDailyAccrual,
 } from './revenue-schedule-runner';
+import { withFinanceAdminDb } from './with-finance-admin-db';
 
 export async function createRevenueScheduleAction(
   input: CreateScheduleInput,
@@ -59,86 +58,68 @@ export async function initiateFinancialCloseAction(
   startDateStr?: string,
   endDateStr?: string,
 ): Promise<Result<FinancialClosePeriod, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeInitiatePeriodClose(dbRes.value, periodKey, periodType, authRes.value.userId, startDateStr, endDateStr);
+  return withFinanceAdminDb((db, auth) =>
+    executeInitiatePeriodClose(db, periodKey, periodType, auth.userId, startDateStr, endDateStr),
+  );
 }
 
 export async function finalizeFinancialCloseAction(
   periodKey: string,
 ): Promise<Result<FinalizePeriodResult, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeFinalizePeriodClose(dbRes.value, periodKey, authRes.value.userId);
+  return withFinanceAdminDb((db, auth) =>
+    executeFinalizePeriodClose(db, periodKey, auth.userId),
+  );
 }
 
 export async function lockFinancialPeriodAction(
   periodKey: string,
   lockReason: string,
 ): Promise<Result<FinancialClosePeriod, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeLockPeriod(dbRes.value, periodKey, lockReason, authRes.value.userId);
+  return withFinanceAdminDb((db, auth) =>
+    executeLockPeriod(db, periodKey, lockReason, auth.userId),
+  );
 }
 
 export async function reopenFinancialPeriodAction(
   periodKey: string,
   reason: string,
 ): Promise<Result<FinancialClosePeriod, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeReopenPeriod(dbRes.value, periodKey, reason, authRes.value.userId);
+  return withFinanceAdminDb((db, auth) =>
+    executeReopenPeriod(db, periodKey, reason, auth.userId),
+  );
 }
 
 export async function recordIntercompanyTransferAction(
   input: RecordTransferInput,
 ): Promise<Result<IntercompanyTransfer, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeRecordTransfer(dbRes.value, input, authRes.value.userId);
+  return withFinanceAdminDb((db, auth) =>
+    executeRecordTransfer(db, input, auth.userId),
+  );
 }
 
 export async function reconcileIntercompanyTransferAction(
   transferId: string,
   notes?: string,
 ): Promise<Result<IntercompanyTransfer, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeReconcileTransfer(dbRes.value, transferId, authRes.value.userId, notes);
+  return withFinanceAdminDb((db, auth) =>
+    executeReconcileTransfer(db, transferId, auth.userId, notes),
+  );
 }
 
-export async function verifyAuditVaultIntegrityAction(periodKey?: string): Promise<Result<LedgerIntegrityResult, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeVerifyAuditVaultIntegrity(dbRes.value, periodKey);
+export async function verifyAuditVaultIntegrityAction(
+  periodKey?: string,
+): Promise<Result<LedgerIntegrityResult, FinancialCloseActionError>> {
+  return withFinanceAdminDb((db) => executeVerifyAuditVaultIntegrity(db, periodKey));
 }
 
-export async function exportFormS1AuditReportAction(periodKey: string): Promise<Result<FormS1AuditPack, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeExportFormS1AuditReport(dbRes.value, periodKey);
+export async function exportFormS1AuditReportAction(
+  periodKey: string,
+): Promise<Result<FormS1AuditPack, FinancialCloseActionError>> {
+  return withFinanceAdminDb((db) => executeExportFormS1AuditReport(db, periodKey));
 }
 
-export async function getFinancialPeriodStatusAction(periodKey: string): Promise<Result<FinancialClosePeriod | null, FinancialCloseActionError>> {
-  const authRes = await assertFinanceAdminAccess();
-  if (!authRes.ok) return authRes;
-  const dbRes = await resolveDb();
-  if (!dbRes.ok) return dbRes;
-  return executeGetPeriodStatus(dbRes.value, periodKey);
+export async function getFinancialPeriodStatusAction(
+  periodKey: string,
+): Promise<Result<FinancialClosePeriod | null, FinancialCloseActionError>> {
+  return withFinanceAdminDb((db) => executeGetPeriodStatus(db, periodKey));
 }

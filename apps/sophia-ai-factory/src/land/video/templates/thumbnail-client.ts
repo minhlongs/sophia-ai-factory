@@ -14,45 +14,24 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  ThumbnailClientError,
+  throwThumbnailResponseError,
+  type OpenAIImageResponse,
+  type ThumbnailClientConfig,
+  type ThumbnailGenerateParams,
+  type ThumbnailGenerateResult,
+} from './thumbnail-client-types';
+
+export {
+  ThumbnailClientError,
+  type ThumbnailClientConfig,
+  type ThumbnailGenerateParams,
+  type ThumbnailGenerateResult,
+};
 
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_TIMEOUT_MS = 60_000; // 60s — image gen is slower than text
-
-export class ThumbnailClientError extends Error {
-  constructor(
-    public readonly statusCode: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'ThumbnailClientError';
-  }
-}
-
-export interface ThumbnailClientConfig {
-  apiKey: string;
-  baseUrl?: string;
-  timeoutMs?: number;
-}
-
-export interface ThumbnailGenerateParams {
-  prompt: string;
-  size?: '1024x1024' | '1792x1024' | '1024x1792';
-  quality?: 'standard' | 'hd';
-  style?: 'vivid' | 'natural';
-}
-
-export interface ThumbnailGenerateResult {
-  imageUrl: string;
-  revisedPrompt?: string;
-}
-
-interface OpenAIImageResponse {
-  data: Array<{
-    url?: string;
-    b64_json?: string;
-    revised_prompt?: string;
-  }>;
-}
 
 export class ThumbnailClient {
   private readonly apiKey: string;
@@ -78,7 +57,10 @@ export class ThumbnailClient {
     } = params;
 
     if (!shouldAllowRequest('openai')) {
-      throw new ThumbnailClientError(0, '[ThumbnailClient] Circuit breaker open for openai — too many failures');
+      throw new ThumbnailClientError(
+        0,
+        '[ThumbnailClient] Circuit breaker open for openai — too many failures',
+      );
     }
 
     logger.info('[ThumbnailClient] Generating thumbnail', { size, quality, style });
@@ -105,7 +87,7 @@ export class ThumbnailClient {
       });
 
       if (!response.ok) {
-        await this.handleErrorResponse(response);
+        await throwThumbnailResponseError(response);
       }
 
       recordSuccess('openai');
@@ -117,7 +99,9 @@ export class ThumbnailClient {
         throw new ThumbnailClientError(0, '[ThumbnailClient] No image URL in response');
       }
 
-      logger.info('[ThumbnailClient] Thumbnail generated', { imageUrl: imageUrl.slice(0, 60) + '…' });
+      logger.info('[ThumbnailClient] Thumbnail generated', {
+        imageUrl: imageUrl.slice(0, 60) + '…',
+      });
 
       return {
         imageUrl,
@@ -130,24 +114,5 @@ export class ThumbnailClient {
     } finally {
       clearTimeout(timer);
     }
-  }
-
-  private async handleErrorResponse(response: Response): Promise<never> {
-    const body = await response.text().catch((err) => {
-      logger.warn('Failed to read response body', { error: String(err), context: 'handleErrorResponse' });
-      return '';
-    });
-    const code = response.status;
-
-    if (code === 429) {
-      throw new ThumbnailClientError(429, `[ThumbnailClient] Rate limit exceeded: ${body}`);
-    }
-    if (code === 401) {
-      throw new ThumbnailClientError(401, `[ThumbnailClient] Invalid or missing OpenAI API key: ${body}`);
-    }
-    if (code === 400) {
-      throw new ThumbnailClientError(400, `[ThumbnailClient] Invalid prompt or content policy violation: ${body}`);
-    }
-    throw new ThumbnailClientError(code, `[ThumbnailClient] API error ${code}: ${body}`);
   }
 }

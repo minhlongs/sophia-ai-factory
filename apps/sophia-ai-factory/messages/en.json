@@ -440,7 +440,22 @@
       "vietQrCheckout": "Domestic VietQR (PayOS)",
       "vietQrDesc": "Instant Vietnam bank transfer with auto-activation in 30 seconds.",
       "enterpriseNotice": "Need custom scale? Contact our enterprise team for dedicated capacity.",
-      "continue": "Continue"
+      "continue": "Continue",
+      "planPrice": "Plan price",
+      "monthlyPrice": "{amount} USDT per month",
+      "oneTimePrice": "{amount} USDT one-time",
+      "billingCycle": "Billing cycle",
+      "monthlyBilling": "Monthly automatic renewal",
+      "oneTimeBilling": "One-time lifetime purchase",
+      "nextPayment": "Next payment",
+      "renewalDatePending": "Renewal date not available yet",
+      "noRenewal": "No renewal",
+      "estimatedProduction": "Estimated production",
+      "variesByWorkflow": "Varies by workflow",
+      "planBaseQuota": "Plan base quota",
+      "monthlyMcuQuota": "{mcu} MCU per month",
+      "providerCosts": "AI provider costs",
+      "directProviderBilling": "Paid directly to your AI providers"
     },
     "firstMission": {
       "title": "First Mission Blueprint",

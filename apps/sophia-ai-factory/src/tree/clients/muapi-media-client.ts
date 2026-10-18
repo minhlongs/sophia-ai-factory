@@ -21,10 +21,12 @@ import {
   type MediaJob,
   type MediaGenerationResult,
 } from './muapi-media-types';
+import { getJobStatus } from './muapi-job-poller';
 
 export {
   SUPPORTED_MODELS,
   isModelSupported,
+  getJobStatus,
   type MediaType,
   type JobStatus,
   type MediaGenerationRequest,
@@ -81,58 +83,6 @@ export async function submitMediaJob(
         type: req.type,
         model: req.model,
         createdAt: data.created_at,
-      },
-    };
-  } catch (err) {
-    recordFailure('muapi', classifyError(err));
-    return { success: false, error: toError(err).message };
-  }
-}
-
-/**
- * Poll job status from muapi.ai
- */
-export async function getJobStatus(jobId: string): Promise<MediaGenerationResult> {
-  if (!shouldAllowRequest('muapi')) {
-    return { success: false, error: 'Circuit breaker open for muapi' };
-  }
-  try {
-    const res = await fetch(`${MUAPI_BASE}/jobs/${jobId}`, {
-      headers: { Authorization: `Bearer ${getMuApiKey()}` },
-      signal: AbortSignal.timeout(10_000),
-    });
-
-    if (!res.ok) {
-      return { success: false, error: `MuAPI ${res.status}` };
-    }
-
-    const data = (await res.json()) as {
-      id: string;
-      status: string;
-      type: string;
-      model: string;
-      result_url?: string;
-      thumbnail_url?: string;
-      progress?: number;
-      error?: string;
-      created_at: string;
-      completed_at?: string;
-    };
-
-    recordSuccess('muapi');
-    return {
-      success: true,
-      job: {
-        id: data.id,
-        status: data.status as JobStatus,
-        type: data.type as MediaType,
-        model: data.model,
-        resultUrl: data.result_url,
-        thumbnailUrl: data.thumbnail_url,
-        progress: data.progress,
-        error: data.error,
-        createdAt: data.created_at,
-        completedAt: data.completed_at,
       },
     };
   } catch (err) {

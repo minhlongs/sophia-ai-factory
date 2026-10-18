@@ -10,8 +10,11 @@ import {
   type VideoRenderInput,
   type VideoRenderStatus,
 } from '@/seed/ai/multimodal-provider-interface';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
+import {
+  createReplicatePrediction,
+  getReplicatePredictionStatus,
+} from './replicate-video-http';
 
 export class ReplicateVideoRenderingProvider implements IVideoRenderingProvider {
   readonly id = 'replicate';
@@ -44,102 +47,27 @@ export class ReplicateVideoRenderingProvider implements IVideoRenderingProvider 
       throw new Error('[ReplicateVideoRenderingProvider] audioUrl is required and cannot be empty');
     }
 
-    const effectiveKeyRef = keyRefOverride || this.keyRef;
-    if (!shouldAllowRequest('replicate', effectiveKeyRef)) {
-      throw new Error(`[Replicate] Circuit breaker open for replicate (${effectiveKeyRef})`);
-    }
-
-    let failureRecorded = false;
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/models/${this.modelOwner}/${this.modelName}/predictions`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            input: {
-              face: input.faceUrl,
-              audio: input.audioUrl,
-              ...(input.options ?? {}),
-            },
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        recordFailure('replicate', classifyHttpStatus(response.status), effectiveKeyRef);
-        failureRecorded = true;
-        throw new Error(`Replicate renderVideo failed: ${response.status} - ${errorText}`);
-      }
-
-      const prediction = (await response.json()) as { id: string };
-      recordSuccess('replicate', effectiveKeyRef);
-      return { jobId: prediction.id };
-    } catch (err) {
-      if (!failureRecorded && !(err instanceof Error && err.message.includes('Circuit breaker'))) {
-        recordFailure('replicate', classifyError(err), effectiveKeyRef);
-      }
-      throw err;
-    }
+    return createReplicatePrediction(
+      {
+        apiKey: this.apiKey,
+        effectiveKeyRef: keyRefOverride || this.keyRef,
+        baseUrl: this.baseUrl,
+        modelOwner: this.modelOwner,
+        modelName: this.modelName,
+      },
+      input,
+    );
   }
 
   async checkStatus(jobId: string, keyRefOverride?: string): Promise<VideoRenderStatus> {
-    const effectiveKeyRef = keyRefOverride || this.keyRef;
-    if (!shouldAllowRequest('replicate', effectiveKeyRef)) {
-      throw new Error(`[Replicate] Circuit breaker open for replicate (${effectiveKeyRef})`);
-    }
-
-    let failureRecorded = false;
-    try {
-      const response = await fetch(`${this.baseUrl}/predictions/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        recordFailure('replicate', classifyHttpStatus(response.status), effectiveKeyRef);
-        failureRecorded = true;
-        throw new Error(`Replicate checkStatus failed: ${response.status} - ${errorText}`);
-      }
-
-      const prediction = (await response.json()) as {
-        id: string;
-        status: 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled';
-        output?: string | string[];
-        error?: string;
-      };
-
-      recordSuccess('replicate', effectiveKeyRef);
-
-      const statusMap: Record<string, VideoRenderStatus['status']> = {
-        starting: 'pending',
-        processing: 'processing',
-        succeeded: 'completed',
-        failed: 'failed',
-        canceled: 'failed',
-      };
-
-      const videoUrl = Array.isArray(prediction.output)
-        ? prediction.output[0]
-        : (prediction.output ?? undefined);
-
-      return {
-        status: statusMap[prediction.status] ?? 'pending',
-        videoUrl,
-        error: prediction.error,
-      };
-    } catch (err) {
-      if (!failureRecorded && !(err instanceof Error && err.message.includes('Circuit breaker'))) {
-        recordFailure('replicate', classifyError(err), effectiveKeyRef);
-      }
-      throw err;
-    }
+    return getReplicatePredictionStatus(
+      {
+        apiKey: this.apiKey,
+        effectiveKeyRef: keyRefOverride || this.keyRef,
+        baseUrl: this.baseUrl,
+      },
+      jobId,
+    );
   }
 
   async health(keyRefOverride?: string): Promise<{ healthy: boolean; latencyMs?: number; error?: string }> {

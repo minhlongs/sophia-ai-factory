@@ -16,9 +16,22 @@ import { logger } from '@/seed/utils/logger-utility';
 import { recordLearning } from '@/tree/creative-memory';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
-import type { StrategyRecommendation } from '@/seed/types/performance-feedback';
+import {
+  MIN_HIGH_CONFIDENCE_SIGNALS,
+  validateConfidence,
+  buildStrategyPrompt,
+  buildStrategyRecommendation,
+  type CreativeMemorySignalRow,
+  type ParsedStrategyResponse,
+} from './strategy-feedback-helpers';
 
-const MIN_HIGH_CONFIDENCE_SIGNALS = 5;
+export {
+  MIN_HIGH_CONFIDENCE_SIGNALS,
+  validateConfidence,
+  buildStrategyPrompt,
+  buildStrategyRecommendation,
+};
+export type { CreativeMemorySignalRow, ParsedStrategyResponse };
 
 export const strategyFeedback = inngest.createFunction(
   { id: 'strategy-feedback' },
@@ -36,7 +49,6 @@ export const strategyFeedback = inngest.createFunction(
       return { generated: false };
     }
 
-    // Count high-confidence memories
     const countResult = await db.prepare(
       `SELECT COUNT(*) as cnt FROM creative_memory
        WHERE workspace_id = ? AND confidence = 'high' AND is_deleted = 0`,
@@ -52,21 +64,14 @@ export const strategyFeedback = inngest.createFunction(
       return { generated: false, signalCount };
     }
 
-    // Gather high-confidence memories for context
     const memories = await db.prepare(
       `SELECT key, value, category, evidence FROM creative_memory
        WHERE workspace_id = ? AND confidence = 'high' AND is_deleted = 0
        ORDER BY updated_at DESC LIMIT 20`,
-    ).bind(workspaceId).all<{
-      key: string;
-      value: string;
-      category: string;
-      evidence: string;
-    }>();
+    ).bind(workspaceId).all<CreativeMemorySignalRow>();
 
     const memoryRows = memories.results ?? [];
 
-    // Resolve API key (BYOK)
     const apiKey = await resolveUserApiKey(workspaceId, 'openrouter', process.env.OPENROUTER_API_KEY);
     const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
 
@@ -84,30 +89,14 @@ export const strategyFeedback = inngest.createFunction(
         enableFallback: !!anthropicKey,
       });
 
-      const parsed = JSON.parse(content) as {
-        recommendation?: string;
-        reasoning?: string;
-        confidence?: string;
-        category?: string;
-      };
+      const parsed = JSON.parse(content) as ParsedStrategyResponse;
 
       if (!parsed.recommendation) {
         logger.warn('[strategy-feedback] empty recommendation', { workspaceId });
         return { generated: false, reason: 'empty_response' };
       }
 
-      const rec: StrategyRecommendation = {
-        id: `strat_${Date.now()}_${workspaceId.slice(0, 8)}`,
-        workspaceId,
-        signalCount,
-        signalSummary: memoryRows.slice(0, 5).map((m) => m.key).join(', '),
-        recommendation: parsed.recommendation,
-        reasoning: parsed.reasoning ?? '',
-        confidence: validateConfidence(parsed.confidence),
-        category: parsed.category ?? 'general',
-        applied: false,
-        createdAt: Date.now(),
-      };
+      const rec = buildStrategyRecommendation(workspaceId, signalCount, memoryRows, parsed);
 
       await recordLearning(
         workspaceId,
@@ -135,35 +124,3 @@ export const strategyFeedback = inngest.createFunction(
     }
   },
 );
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function validateConfidence(raw: string | undefined): 'high' | 'medium' | 'low' {
-  if (raw === 'high' || raw === 'medium' || raw === 'low') return raw;
-  return 'medium';
-}
-
-function buildStrategyPrompt(
-  memories: { key: string; value: string; category: string; evidence: string }[],
-  signalCount: number,
-): string {
-  const memoryList = memories.map((m) =>
-    `- [${m.category}] ${m.key}: ${m.value}`,
-  ).join('\n');
-
-  return `You are a creative strategy advisor for a YouTube content creator.
-Based on ${signalCount} high-confidence performance signals, generate ONE actionable strategy recommendation.
-
-High-confidence creative memory signals:
-${memoryList}
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "recommendation": "one clear, actionable strategy change",
-  "reasoning": "why this recommendation is supported by the signals",
-  "confidence": "high | medium | low",
-  "category": "content_type | posting_schedule | audience_targeting | thumbnail | hook | general"
-}`;
-}

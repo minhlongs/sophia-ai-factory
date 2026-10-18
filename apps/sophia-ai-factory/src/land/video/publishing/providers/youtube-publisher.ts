@@ -8,25 +8,18 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
-
-const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
-function isMockMode(): boolean { return !process.env.YOUTUBE_CLIENT_ID; }
-
-interface YouTubeVideoResource {
-  id: string;
-  status?: { uploadStatus?: string; privacyStatus?: string };
-  statistics?: {
-    viewCount?: string;
-    likeCount?: string;
-    commentCount?: string;
-  };
-}
+import {
+  YOUTUBE_VIDEOS_URL,
+  isYouTubeMockMode,
+  performResumableYouTubeUpload,
+  type YouTubeVideoResource,
+} from './youtube-upload-helper';
 
 export class YouTubePublisher implements Publisher {
   constructor(private readonly accessToken: string) {}
 
   async upload(videoUrl: string, meta: PublishMeta): Promise<string> {
-    if (isMockMode()) {
+    if (isYouTubeMockMode()) {
       logger.warn('[YouTubePublisher] Mock mode — YOUTUBE_CLIENT_ID missing');
       return `mock_youtube_${Date.now()}`;
     }
@@ -36,63 +29,9 @@ export class YouTubePublisher implements Publisher {
     }
 
     try {
-    // Fetch video binary
-    const videoRes = await fetch(videoUrl);
-    if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
-    const videoBlob = await videoRes.blob();
-    const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
-
-    const hashtags = meta.hashtags.map((h: string) => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-    const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-        const description = `${adCaption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
-
-    const metadata = {
-      snippet: {
-        title: (meta.title ?? meta.caption).slice(0, 100),
-        description: description.slice(0, 5000),
-        tags: meta.hashtags.slice(0, 500),
-        categoryId: '22',
-      },
-      status: { privacyStatus: 'public', selfDeclaredMadeForKids: false },
-    };
-
-    // Initiate resumable upload
-    const initRes = await fetch(
-      'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json; charset=UTF-8',
-          'X-Upload-Content-Type': contentType,
-          'X-Upload-Content-Length': String(videoBlob.size),
-        },
-        body: JSON.stringify(metadata),
-      },
-    );
-
-    if (!initRes.ok) {
-      const text = await initRes.text();
-      throw new Error(`YouTube upload init failed (${initRes.status}): ${text}`);
-    }
-
-    const uploadUri = initRes.headers.get('Location');
-    if (!uploadUri) throw new Error('YouTube did not return resumable upload URI');
-
-    const uploadRes = await fetch(uploadUri, {
-      method: 'PUT',
-      headers: { 'Content-Type': contentType, 'Content-Length': String(videoBlob.size) },
-      body: videoBlob,
-    });
-
-    if (!uploadRes.ok) {
-      const text = await uploadRes.text();
-      throw new Error(`YouTube video upload failed (${uploadRes.status}): ${text}`);
-    }
-
-    const result = (await uploadRes.json()) as YouTubeVideoResource;
-    recordSuccess('youtube');
-    return result.id;
+      const videoId = await performResumableYouTubeUpload(this.accessToken, videoUrl, meta);
+      recordSuccess('youtube');
+      return videoId;
     } catch (error) {
       recordFailure('youtube', classifyError(error));
       throw error;
@@ -100,7 +39,7 @@ export class YouTubePublisher implements Publisher {
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
-    if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
+    if (isYouTubeMockMode() || externalPostId.startsWith('mock_')) return 'live';
 
     if (!shouldAllowRequest('youtube')) return 'processing';
 
@@ -126,7 +65,7 @@ export class YouTubePublisher implements Publisher {
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
-    if (isMockMode() || externalPostId.startsWith('mock_')) {
+    if (isYouTubeMockMode() || externalPostId.startsWith('mock_')) {
       return { views: 0, likes: 0, comments: 0 };
     }
 
@@ -157,7 +96,8 @@ export class YouTubePublisher implements Publisher {
     }
   }
 
-async delete(_postId: string): Promise<void> {
-  // Platform-specific deletion not implemented
-  logger.warn("[youtube-publisher.ts] delete not implemented");
-}}
+  async delete(_postId: string): Promise<void> {
+    // Platform-specific deletion not implemented
+    logger.warn('[youtube-publisher.ts] delete not implemented');
+  }
+}

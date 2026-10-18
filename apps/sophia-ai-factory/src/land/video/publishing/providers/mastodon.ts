@@ -9,49 +9,16 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  isMockMode,
+  buildStatusText,
+  parseExternalAccountId,
+  ZERO_MASTODON_METRICS,
+  type MastodonStatusResponse,
+  type MastodonStatusStats,
+} from './mastodon-helpers';
 
-const MAX_STATUS_LENGTH = 500;
-
-function isMockMode(): boolean {
-  return !process.env.MASTODON_INSTANCE_URL;
-}
-
-interface MastodonStatusResponse {
-  id?: string;
-  uri?: string;
-  error?: string;
-}
-
-interface MastodonStatusStats {
-  id?: string;
-  replies_count?: number;
-  reblogs_count?: number;
-  favourites_count?: number;
-}
-
-function buildStatusText(meta: PublishMeta, videoUrl: string): string {
-  const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-  const tags = meta.hashtags.map((h: string) => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-  const link = meta.productLink ?? videoUrl;
-  const full = `${adCaption}${tags ? ` ${tags}` : ''}\n\n${link}`;
-  return full.length > MAX_STATUS_LENGTH ? full.slice(0, MAX_STATUS_LENGTH - 1) + '…' : full;
-}
-
-/** Parse instanceUrl from compound external_account_id "<instanceUrl>|<accountId>" */
-export function parseExternalAccountId(externalAccountId: string): { instanceUrl: string; accountId: string } {
-  const separatorIdx = externalAccountId.lastIndexOf('|');
-  if (separatorIdx === -1) {
-    // Fallback: treat entire value as accountId with default instance
-    return {
-      instanceUrl: process.env.MASTODON_INSTANCE_URL ?? 'https://mastodon.social',
-      accountId: externalAccountId,
-    };
-  }
-  return {
-    instanceUrl: externalAccountId.slice(0, separatorIdx),
-    accountId: externalAccountId.slice(separatorIdx + 1),
-  };
-}
+export { parseExternalAccountId };
 
 export class MastodonPublisher implements Publisher {
   private readonly instanceUrl: string;
@@ -89,11 +56,15 @@ export class MastodonPublisher implements Publisher {
 
       if (!res.ok) {
         const body = await res.text().catch((err) => {
-          logger.warn('Failed to read Mastodon status response', { error: String(err), context: 'MastodonPublisher.upload' });
+          logger.warn('Failed to read Mastodon status response', {
+            error: String(err),
+            context: 'MastodonPublisher.upload',
+          });
           return '';
         });
-        recordFailure('mastodon', classifyError(new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`)));
-        throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
+        const err = new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
+        recordFailure('mastodon', classifyError(err));
+        throw err;
       }
 
       const data = (await res.json()) as MastodonStatusResponse;
@@ -109,7 +80,6 @@ export class MastodonPublisher implements Publisher {
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
-    // Mastodon posts are synchronous
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
     const res = await fetch(`${this.instanceUrl}/api/v1/statuses/${externalPostId}`, {
       headers: { Authorization: `Bearer ${this.accessToken}` },
@@ -121,12 +91,12 @@ export class MastodonPublisher implements Publisher {
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
     if (isMockMode() || externalPostId.startsWith('mock_')) {
-      return { views: 0, likes: 0, comments: 0, shares: 0 };
+      return { ...ZERO_MASTODON_METRICS };
     }
     const res = await fetch(`${this.instanceUrl}/api/v1/statuses/${externalPostId}`, {
       headers: { Authorization: `Bearer ${this.accessToken}` },
     });
-    if (!res.ok) return { views: 0, likes: 0, comments: 0, shares: 0 };
+    if (!res.ok) return { ...ZERO_MASTODON_METRICS };
     const data = (await res.json()) as MastodonStatusStats;
     return {
       views: 0,
@@ -136,7 +106,7 @@ export class MastodonPublisher implements Publisher {
     };
   }
 
-async delete(_postId: string): Promise<void> {
-  // Platform-specific deletion not implemented
-  logger.warn("[mastodon.ts] delete not implemented");
-}}
+  async delete(_postId: string): Promise<void> {
+    logger.warn('[mastodon.ts] delete not implemented');
+  }
+}

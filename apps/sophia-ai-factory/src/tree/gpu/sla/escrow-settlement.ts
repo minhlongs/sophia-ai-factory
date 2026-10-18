@@ -8,14 +8,15 @@
  */
 
 import type { D1Database } from '@cloudflare/workers-types';
-import {
-  type SlaPenaltyEscrowDbRow,
-  type EscrowStatus,
-  type PenaltyClaimResult,
-  type EscrowReleaseResult,
-  mapRowToSlaPenaltyEscrow,
+import type {
+  EscrowStatus,
+  PenaltyClaimResult,
+  EscrowReleaseResult,
 } from '@/seed/types/edge-gpu-mesh';
-import { generateEscrowAuditHash } from './crypto-hasher';
+import {
+  fetchEscrowOrThrow,
+  computeUpdatedEscrowAuditHash,
+} from './escrow-settlement-helpers';
 
 /**
  * Claims accumulated penalty from the SLA escrow fund.
@@ -25,17 +26,8 @@ export async function claimSlaPenalty(
   escrowId: string,
 ): Promise<PenaltyClaimResult> {
   const now = Date.now();
+  const escrow = await fetchEscrowOrThrow(db, escrowId);
 
-  const escrowRow = await db
-    .prepare('SELECT * FROM sla_penalty_escrow WHERE escrow_id = ?')
-    .bind(escrowId)
-    .first<SlaPenaltyEscrowDbRow>();
-
-  if (!escrowRow) {
-    throw new Error(`SLA Escrow not found: ${escrowId}`);
-  }
-
-  const escrow = mapRowToSlaPenaltyEscrow(escrowRow);
   if (escrow.breachTier === 'none' || escrow.penaltyPct === 0) {
     throw new Error('No SLA penalty available to claim for this period');
   }
@@ -47,14 +39,10 @@ export async function claimSlaPenalty(
   const newStatus: EscrowStatus =
     remainingEscrowCents === 0 ? 'fully_disbursed' : 'partially_disbursed';
 
-  const updatedAuditHash = await generateEscrowAuditHash({
-    tenantId: escrow.tenantId,
-    contractId: escrow.contractId,
-    periodMonth: escrow.periodMonth,
-    downtimeSeconds: escrow.downtimeSeconds,
-    balanceCents: remainingEscrowCents,
-    breachTier: escrow.breachTier,
-  });
+  const updatedAuditHash = await computeUpdatedEscrowAuditHash(
+    escrow,
+    remainingEscrowCents,
+  );
 
   await db
     .prepare(
@@ -94,17 +82,8 @@ export async function releaseEscrowToRevenue(
   escrowId: string,
 ): Promise<EscrowReleaseResult> {
   const now = Date.now();
+  const escrow = await fetchEscrowOrThrow(db, escrowId);
 
-  const escrowRow = await db
-    .prepare('SELECT * FROM sla_penalty_escrow WHERE escrow_id = ?')
-    .bind(escrowId)
-    .first<SlaPenaltyEscrowDbRow>();
-
-  if (!escrowRow) {
-    throw new Error(`SLA Escrow not found: ${escrowId}`);
-  }
-
-  const escrow = mapRowToSlaPenaltyEscrow(escrowRow);
   if (escrow.escrowStatus === 'released_to_revenue') {
     throw new Error(`Escrow ${escrowId} has already been released to revenue`);
   }
@@ -114,14 +93,7 @@ export async function releaseEscrowToRevenue(
     throw new Error(`Escrow ${escrowId} has 0 remaining balance to release`);
   }
 
-  const updatedAuditHash = await generateEscrowAuditHash({
-    tenantId: escrow.tenantId,
-    contractId: escrow.contractId,
-    periodMonth: escrow.periodMonth,
-    downtimeSeconds: escrow.downtimeSeconds,
-    balanceCents: 0,
-    breachTier: escrow.breachTier,
-  });
+  const updatedAuditHash = await computeUpdatedEscrowAuditHash(escrow, 0);
 
   await db
     .prepare(

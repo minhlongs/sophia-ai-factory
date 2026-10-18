@@ -13,10 +13,12 @@ import type {
   DubbingJobInput,
   DubbingJobResult,
 } from '@/seed/types/dubbing';
-import { wordsToSrt, wordsToVtt } from '@/tree/subtitles/subtitle-formatter';
-import { synthesizeEdgeTts, resolveEdgeVoice } from '@/forest/edge-tts/edge-tts-client';
-import { transcribeAudioSample, mapTranscriptToTarget } from './transcription-aligner';
+import { transcribeAudioSample } from './transcription-aligner';
 import { translateDialogueText } from './dialogue-translator';
+import {
+  synthesizeLocaleAudioTracks,
+  generateLocaleSubtitleTracks,
+} from './dubbing-track-steps';
 
 export const videoVoiceDubbingFunction = inngest.createFunction(
   {
@@ -73,58 +75,23 @@ export const videoVoiceDubbingFunction = inngest.createFunction(
     });
 
     // Step 4: Synthesize multilingual speech with tempo matching
-    const synthesizedAudioUrls = await step.run('synthesize-voice', async () => {
-      const urls: Partial<Record<ApacLocale, string>> = {};
-
-      for (const locale of targetLocales) {
-        const textToSpeak = translations[locale] || transcript.map((w) => w.word).join(' ');
-        const voice = input.voiceIds?.[locale] || resolveEdgeVoice(locale);
-
-        const synthesisResult = await synthesizeEdgeTts(textToSpeak, locale, {
-          voice,
-          targetDurationSec: audioMeta.durationSec,
-        });
-
-        const audioKey = `tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/${locale}.mp3`;
-        urls[locale] = `https://storage.sophia.agencyos.network/${audioKey}`;
-
-        logger.info('[VideoVoiceDubbing] Synthesized audio track', {
-          jobId,
-          locale,
-          voice: synthesisResult.voice,
-          rate: synthesisResult.rate,
-          durationSec: synthesisResult.durationSec,
-        });
-      }
-
-      return urls;
-    });
+    const synthesizedAudioUrls = await step.run('synthesize-voice', async () =>
+      synthesizeLocaleAudioTracks({
+        input,
+        transcript,
+        translations,
+        durationSec: audioMeta.durationSec,
+      }),
+    );
 
     // Step 5: Generate SRT and VTT synchronized subtitles
-    const subtitleUrls = await step.run('generate-subtitles', async () => {
-      const urls: Partial<Record<ApacLocale, { srt: string; vtt: string }>> = {};
-
-      for (const locale of targetLocales) {
-        const localizedWords = mapTranscriptToTarget(transcript, translations[locale] || '', locale);
-        const srtContent = wordsToSrt(localizedWords);
-        const vttContent = wordsToVtt(localizedWords);
-
-        const baseKey = `tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/subtitles_${locale}`;
-        urls[locale] = {
-          srt: `https://storage.sophia.agencyos.network/${baseKey}.srt`,
-          vtt: `https://storage.sophia.agencyos.network/${baseKey}.vtt`,
-        };
-
-        logger.info('[VideoVoiceDubbing] Generated subtitle tracks', {
-          jobId,
-          locale,
-          srtLength: srtContent.length,
-          vttLength: vttContent.length,
-        });
-      }
-
-      return urls;
-    });
+    const subtitleUrls = await step.run('generate-subtitles', async () =>
+      generateLocaleSubtitleTracks({
+        input,
+        transcript,
+        translations,
+      }),
+    );
 
     // Step 6: Finalize job result
     const finalResult: DubbingJobResult = {

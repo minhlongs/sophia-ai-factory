@@ -4,14 +4,14 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { logger } from '@/seed/utils/logger-utility';
 import { updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
 import type { UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
-import { recordSpend } from '@/tree/mission/repository';
-import { deductCredits } from '@/tree/mcu/credits-repo';
-import { newPerformanceEventId, recordPerformanceEvent } from '@/tree/performance';
 import { emitMissionCompleted, emitMissionFailed, advanceMissionToReview } from '../agent-mission-lifecycle';
 import { persistAgentLearning } from '../agent-context';
+import {
+  recordMissionSpendAndCredits,
+  recordMissionPerformanceEvent,
+} from './step-billing-helpers';
 
 export async function markRunFailed(
   runId: string,
@@ -64,42 +64,7 @@ export async function handleMissionSuccess(payload: MissionSuccessPayload): Prom
   };
   await updateAgentRun(payload.runId, patch);
 
-  try {
-    await recordSpend(payload.missionId, payload.costCents);
-  } catch (spendErr) {
-    logger.error('agentMissionExecutor: failed to record spend', {
-      runId: payload.runId,
-      missionId: payload.missionId,
-      costCents: payload.costCents,
-      error: spendErr instanceof Error ? spendErr.message : String(spendErr),
-    });
-  }
-
-  try {
-    const mcuAmount = Math.ceil(payload.costCents / 10);
-    if (mcuAmount > 0) {
-      const deducted = await deductCredits(
-        payload.creatorId,
-        mcuAmount,
-        payload.missionId,
-        'agent_mission_execution',
-      );
-      if (!deducted) {
-        logger.warn('agentMissionExecutor: MCU credit deduction failed', {
-          runId: payload.runId,
-          missionId: payload.missionId,
-          userId: payload.creatorId,
-          mcuAmount,
-        });
-      }
-    }
-  } catch (creditErr) {
-    logger.error('agentMissionExecutor: error deducting MCU credits', {
-      runId: payload.runId,
-      userId: payload.creatorId,
-      error: creditErr instanceof Error ? creditErr.message : String(creditErr),
-    });
-  }
+  await recordMissionSpendAndCredits(payload);
 
   await persistAgentLearning({
     workspaceId: payload.workspaceId,
@@ -110,27 +75,7 @@ export async function handleMissionSuccess(payload: MissionSuccessPayload): Prom
     output: payload.output,
   });
 
-  try {
-    await recordPerformanceEvent({
-      id: newPerformanceEventId(),
-      workspaceId: payload.workspaceId,
-      assetId: '',
-      projectId: '',
-      entityType: 'mission',
-      entityId: payload.missionId,
-      channel: 'agent',
-      eventType: 'mission_completed',
-      count: 1,
-      valueCents: payload.costCents,
-      rawData: { agentId: payload.agentId, totalTokens: payload.totalTokens, runId: payload.runId },
-      recordedAt: Date.now(),
-    });
-  } catch (perfErr) {
-    logger.error('agentMissionExecutor: failed to record performance event', {
-      runId: payload.runId,
-      error: perfErr instanceof Error ? perfErr.message : String(perfErr),
-    });
-  }
+  await recordMissionPerformanceEvent(payload);
 
   await emitMissionCompleted(inngest, {
     runId: payload.runId,

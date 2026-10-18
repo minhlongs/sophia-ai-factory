@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Interstellar Supreme Senate arbitration and invariant verification.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   arbitrateInterstellarDispute,
   verifyInterstellarConstitutionalInvariants,
@@ -16,6 +15,10 @@ import {
 } from '@/tree/governance/interstellar-senate-engine';
 import { compactStateWithHyperStark, type HyperStarkCompactionResult } from '@/tree/crypto/hyper-stark-compaction-engine';
 import type { HyperStarkTransaction, InterstellarConstitutionalInvariant } from '@/seed/types/hyper-stark-senate';
+import {
+  persistArbitrationRuling,
+  persistHyperStarkCompactionProof,
+} from './interstellar-senate-persistence';
 
 export interface InterstellarDisputeActionResult {
   success: boolean;
@@ -43,36 +46,7 @@ export async function arbitrateInterstellarDisputeAction(
 ): Promise<InterstellarDisputeActionResult> {
   try {
     const data = arbitrateInterstellarDispute(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO interstellar_senate_arbitrations (
-             id, dispute_case_ref, claimant_participant_id, respondent_participant_id,
-             dispute_value_cents, contract_stark_root, evidence_sha256, senator_count,
-             supermajority_threshold_pct, verdict, senators_slashed_count,
-             executed_remedy_cents, resolved_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `senate_disp_${Date.now()}`,
-          params.disputeCaseRef,
-          params.claimantParticipantId,
-          params.respondentParticipantId,
-          params.disputeValueCents,
-          data.rulingHash,
-          params.evidenceSha256,
-          data.totalSenators,
-          params.supermajorityThresholdPct ?? 85.0,
-          data.verdict,
-          data.senatorsSlashedCount,
-          data.executedRemedyCents,
-          data.verdict !== 'DELIBERATING' ? new Date().toISOString() : null
-        )
-        .run();
-    }
-
+    await persistArbitrationRuling(params, data);
     return { success: true, data };
   } catch (err: unknown) {
     return {
@@ -92,33 +66,7 @@ export async function compactHyperStarkBatchAction(
 ): Promise<HyperStarkCompactionActionResult> {
   try {
     const data = compactStateWithHyperStark(previousStateRoot, transactions, circuitIdentifier);
-    const db = await getD1();
-
-    if (db) {
-      const proofRef = `HSTARK_PROOF_${Date.now()}`;
-      await db
-        .prepare(
-          `INSERT INTO hyper_stark_compaction_proofs (
-             id, proof_ref, batch_transaction_count, previous_state_root,
-             new_state_root, stark_proof_bytes_length, verification_time_micros,
-             verifier_circuit_identifier, is_mathematically_sound, verified_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `hstark_${Date.now()}`,
-          proofRef,
-          data.batchTransactionCount,
-          data.previousStateRoot,
-          data.newStateRoot,
-          data.starkProofBytesLength,
-          data.verificationTimeMicros,
-          data.verifierCircuitIdentifier,
-          data.isMathematicallySound ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await persistHyperStarkCompactionProof(data);
     return { success: data.isMathematicallySound, data };
   } catch (err: unknown) {
     return {

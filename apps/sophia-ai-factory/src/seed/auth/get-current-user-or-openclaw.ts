@@ -13,80 +13,25 @@
  *
  * @module seed/auth/get-current-user-or-openclaw
  */
-import { NextResponse } from 'next/server';
 import { verifyOpenclawToken } from '@/seed/auth/openclaw-token';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  ALL_OPENCLAW_SCOPES,
+  extractBearer,
+  isAuthError,
+  makeAuthError,
+  type OpenClawAuthError,
+  type OpenClawAuthResult,
+  type OpenClawScope,
+} from './openclaw-auth-types';
 
-// ---------------------------------------------------------------------------
-// Scope definitions
-// ---------------------------------------------------------------------------
-
-export type OpenClawScope =
-  | 'publish:write'
-  | 'publish:read'
-  | 'video:write'
-  | 'video:read';
-
-/** All scopes implicitly granted to a verified OpenClaw exchange token. */
-const ALL_OPENCLAW_SCOPES: OpenClawScope[] = [
-  'publish:write',
-  'publish:read',
-  'video:write',
-  'video:read',
-];
-
-// ---------------------------------------------------------------------------
-// Return types — plain discriminated union (no instanceof)
-// ---------------------------------------------------------------------------
-
-export interface OpenClawAuthResult {
-  _type: 'auth_ok';
-  userId: string;
-  source: 'openclaw' | 'cookie';
-  /** Populated only for Bearer source. */
-  scopes?: OpenClawScope[];
-}
-
-export interface OpenClawAuthError {
-  _type: 'auth_error';
-  status: 401 | 403;
-  error: string;
-  detail?: string;
-  /** Convenience method — converts to NextResponse for route return. */
-  toNextResponse(): NextResponse;
-}
-
-/** Type guard — narrows to error branch. */
-export function isAuthError(result: OpenClawAuthResult | OpenClawAuthError): result is OpenClawAuthError {
-  return result._type === 'auth_error';
-}
-
-function makeError(status: 401 | 403, error: string, detail?: string): OpenClawAuthError {
-  return {
-    _type: 'auth_error',
-    status,
-    error,
-    detail,
-    toNextResponse() {
-      return NextResponse.json(
-        detail ? { error, detail } : { error },
-        { status },
-      );
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Helper — extract Bearer token from Authorization header
-// ---------------------------------------------------------------------------
-
-function extractBearer(headers: Headers): string | null {
-  const raw = headers.get('authorization');
-  if (!raw) return null;
-  const match = /^Bearer\s+(.+)$/i.exec(raw.trim());
-  return match ? match[1].trim() : null;
-}
+export {
+  isAuthError,
+  type OpenClawAuthError,
+  type OpenClawAuthResult,
+  type OpenClawScope,
+};
 
 // ---------------------------------------------------------------------------
 // Main export
@@ -119,12 +64,12 @@ export async function getCurrentUserOrOpenClaw(
 
     if (!verified) {
       // Bearer present but invalid — 401. Not fallback to cookie (explicit Bearer = plugin path).
-      return makeError(401, 'Unauthorized');
+      return makeAuthError(401, 'Unauthorized');
     }
 
     // Scope check — current token grants ALL_OPENCLAW_SCOPES implicitly
     if (!ALL_OPENCLAW_SCOPES.includes(requiredScope)) {
-      return makeError(403, 'Forbidden', `Scope '${requiredScope}' is not recognised`);
+      return makeAuthError(403, 'Forbidden', `Scope '${requiredScope}' is not recognised`);
     }
 
     return { _type: 'auth_ok', userId: verified.userId, source: 'openclaw', scopes: ALL_OPENCLAW_SCOPES };
@@ -139,7 +84,7 @@ export async function getCurrentUserOrOpenClaw(
   }
 
   if (!user) {
-    return makeError(401, 'Unauthorized');
+    return makeAuthError(401, 'Unauthorized');
   }
 
   return { _type: 'auth_ok', userId: user.id, source: 'cookie' };

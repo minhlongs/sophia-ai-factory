@@ -9,24 +9,21 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { inngest } from '@/seed/inngest/client';
 import type { SocialPlatform, SocialPublishResult } from '@/seed/types/social-publisher-types';
-import { encryptTokenVault } from '@/seed/security/oauth-token-vault';
 import {
-  getCredential,
-  upsertCredential,
   listUserCredentials,
   setChannelKillSwitch,
 } from '@/land/social/platform-credentials-store';
-import { createPublishJob, toSocialPublishResult } from '@/land/social/publish-job-store';
 import { toError } from '@/seed/utils/to-error';
-import {
-  dispatchSocialPublishSchema,
-  updateChannelCredentialsSchema,
-  type DispatchSocialPublishInput,
-  type UpdateChannelCredentialsInput,
-  type SocialPublisherActionResponse,
+import type {
+  DispatchSocialPublishInput,
+  UpdateChannelCredentialsInput,
+  SocialPublisherActionResponse,
 } from './social-publisher-schemas';
+import {
+  executeDispatchSocialPublish,
+  executeUpdateChannelCredentials,
+} from './social-publisher-helpers';
 
 export type {
   DispatchSocialPublishInput,
@@ -40,34 +37,7 @@ export async function dispatchSocialPublishAction(
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized: login required', code: 'UNAUTHORIZED' };
-
-    const parsed = dispatchSocialPublishSchema.safeParse(rawInput);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'VALIDATION_ERROR' };
-    }
-
-    const cred = await getCredential(user.id, parsed.data.platform, parsed.data.channelId);
-    if (!cred) return { success: false, error: 'Channel credentials not configured', code: 'NOT_FOUND' };
-    if (cred.killSwitchActive) {
-      return { success: false, error: 'Channel emergency kill switch active', code: 'KILL_SWITCH_ACTIVE' };
-    }
-
-    const job = await createPublishJob({
-      userId: user.id, channelId: parsed.data.channelId, platform: parsed.data.platform,
-      videoUrl: parsed.data.videoUrl, title: parsed.data.title,
-      description: parsed.data.description ?? '', tags: parsed.data.tags, scheduledFor: parsed.data.scheduledFor,
-    });
-
-    await inngest.send({
-      name: 'social.publish.dispatched',
-      data: {
-        jobId: job.id, userId: user.id, channelId: parsed.data.channelId, platform: parsed.data.platform,
-        videoUrl: parsed.data.videoUrl, title: parsed.data.title,
-        description: parsed.data.description ?? '', tags: parsed.data.tags ?? [],
-      },
-    });
-
-    return { success: true, data: toSocialPublishResult(job) };
+    return await executeDispatchSocialPublish(user.id, rawInput);
   } catch (err: unknown) {
     return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };
   }
@@ -122,23 +92,7 @@ export async function updateChannelCredentialsAction(
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' };
-
-    const parsed = updateChannelCredentialsSchema.safeParse(rawInput);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'VALIDATION_ERROR' };
-    }
-
-    const encryptedTokens = await encryptTokenVault(
-      { accessToken: parsed.data.accessToken, refreshToken: parsed.data.refreshToken, expiresAt: parsed.data.tokenExpiresAt },
-      { userId: user.id, platform: parsed.data.platform, channelId: parsed.data.channelId },
-    );
-
-    const record = await upsertCredential({
-      userId: user.id, platform: parsed.data.platform, channelId: parsed.data.channelId,
-      channelName: parsed.data.channelName, encryptedTokens, tokenExpiresAt: parsed.data.tokenExpiresAt,
-    });
-
-    return { success: true, data: { channelId: record.channelId, platform: record.platform } };
+    return await executeUpdateChannelCredentials(user.id, rawInput);
   } catch (err: unknown) {
     return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };
   }

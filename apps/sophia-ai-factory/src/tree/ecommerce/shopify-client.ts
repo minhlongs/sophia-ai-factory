@@ -13,64 +13,9 @@ import { FailureKind, classifyHttpStatus, classifyError } from '@/seed/types/fai
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ShopifyStoreConfig, CommerceClientError } from '@/seed/types/ecommerce';
+import { PRODUCTS_QUERY, type ShopifyProductNode } from './shopify-graphql-queries';
 
-export interface ShopifyProductNode {
-  id: string;
-  title: string;
-  descriptionHtml?: string;
-  vendor?: string;
-  productType?: string;
-  status: string;
-  tags: string[];
-  onlineStoreUrl?: string;
-  variants?: {
-    edges: Array<{
-      node: {
-        price: string;
-      };
-    }>;
-  };
-  images?: {
-    edges: Array<{
-      node: {
-        url: string;
-      };
-    }>;
-  };
-}
-
-const PRODUCTS_QUERY = `
-query GetProducts($first: Int!, $query: String) {
-  products(first: $first, query: $query) {
-    edges {
-      node {
-        id
-        title
-        descriptionHtml
-        vendor
-        productType
-        status
-        tags
-        onlineStoreUrl
-        variants(first: 1) {
-          edges {
-            node {
-              price
-            }
-          }
-        }
-        images(first: 5) {
-          edges {
-            node {
-              url
-            }
-          }
-        }
-      }
-    }
-  }
-}
-`;
+export type { ShopifyProductNode };
 
 export async function fetchShopifyProducts(
   config: ShopifyStoreConfig,

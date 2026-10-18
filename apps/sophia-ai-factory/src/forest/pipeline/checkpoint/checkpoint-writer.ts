@@ -16,56 +16,19 @@ import {
   validateArtifactsForStage,
   DecisionEntrySchema,
 } from '../checkpoint-schemas';
-import { CHECKPOINTS_TABLE, DECISION_LOGS_TABLE } from './constants';
+import { CHECKPOINTS_TABLE } from './constants';
+import {
+  appendDecisionLogRecords,
+  type DecisionLogRecordInput,
+} from './decision-log-writer';
+
+export { appendDecisionLogRecords, type DecisionLogRecordInput };
 
 export interface WriteCheckpointOptions {
   pipelineType?: PipelineType;
   error?: string;
   metadata?: Record<string, unknown>;
-  decisionLog?: Array<{
-    decisionId: string;
-    decisionType: string;
-    stage: string;
-    payload: Record<string, unknown>;
-  }>;
-}
-
-/**
- * Append decision entries to the append-only decision log.
- */
-export async function appendDecisionLogRecords(
-  tenantId: string,
-  pipelineId: string,
-  decisions: Array<{
-    decisionId: string;
-    decisionType: string;
-    stage: string;
-    payload: Record<string, unknown>;
-  }>,
-): Promise<void> {
-  if (decisions.length === 0) return;
-
-  const db = createServerClient();
-  const now = new Date().toISOString();
-
-  const stmt = db.prepare(
-    `INSERT INTO ${DECISION_LOGS_TABLE}
-      (id, tenant_id, pipeline_id, decision_id, decision_type, stage, payload_json, created_at)
-     VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(tenant_id, pipeline_id, decision_id) DO NOTHING`,
-  );
-
-  const bound = decisions.map((d) =>
-    stmt.bind(tenantId, pipelineId, d.decisionId, d.decisionType, d.stage, JSON.stringify(d.payload), now),
-  );
-
-  await db.unwrap().batch(bound);
-
-  logger.debug('[CheckpointService] Decision log appended', {
-    tenantId,
-    pipelineId,
-    count: decisions.length,
-  });
+  decisionLog?: DecisionLogRecordInput[];
 }
 
 /**

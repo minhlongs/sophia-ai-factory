@@ -13,24 +13,17 @@ import { useSearchParams } from 'next/navigation';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
 import { Crown, ArrowUp, Loader2 } from 'lucide-react';
+import {
+	TIER_ORDER,
+	formatPeriodEndDisplay,
+	triggerTierCheckout,
+} from './plan-upgrade-helpers';
 
 interface Props {
 	currentTier: Tier;
 	periodEnd?: string | null;
 	showHistoryLink?: boolean;
 }
-
-interface CheckoutResponse {
-	url?: string;
-	orderId?: string;
-	error?: string;
-	redirectTo?: string;
-	status?: string;
-	handoverId?: string;
-	magicLink?: string;
-}
-
-const TIER_ORDER: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: Props) {
 	const locale = useLocale();
@@ -56,39 +49,13 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 	const handleUpgrade = async (tier: Tier) => {
 		setLoading(tier);
 		try {
-			const res = await fetch('/api/checkout', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ tier }),
-			});
-			const data = await res.json() as CheckoutResponse;
-
-			if (res.status === 401 && data.redirectTo) {
-				window.location.href = data.redirectTo;
-				return;
-			}
-			if (data.status === 'free_order_completed') {
-				window.location.href = `/${locale}/dashboard?handover=${data.handoverId}`;
-			} else if (data.url) {
-				window.location.href = data.url;
-			} else {
-				alert(data.error || 'Checkout failed. Please try again.');
-			}
-		} catch {
-			alert('Network error. Please try again.');
+			await triggerTierCheckout(tier, locale);
 		} finally {
 			setLoading(null);
 		}
 	};
 
-	// Format period end date
-	const periodEndDisplay = effectiveTier === 'MASTER' && handoverId
-		? 'Lifetime — never expires'
-		: periodEnd
-			? (UNIFIED_TIERS[effectiveTier]?.billingType === 'lifetime'
-				? 'Lifetime — never expires'
-				: `Renews ${new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(periodEnd))}`)
-			: null;
+	const periodEndDisplay = formatPeriodEndDisplay(effectiveTier, handoverId, periodEnd, locale);
 
 	if (upgradeTiers.length === 0) {
 		return (
@@ -125,7 +92,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 			</div>
 
 			<div className="grid gap-2">
-				{upgradeTiers.map(tier => {
+				{upgradeTiers.map((tier) => {
 					const t = UNIFIED_TIERS[tier];
 					const tierBillingLabel = t.billingType === 'lifetime' ? 'trọn đời' : 'tháng';
 					const isLoading = loading === tier;
@@ -142,10 +109,11 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 									${t.price}/{tierBillingLabel}
 								</span>
 							</div>
-							{isLoading
-								? <Loader2 className="w-4 h-4 text-primary motion-safe:animate-spin" aria-hidden="true" />
-								: <ArrowUp className="w-4 h-4 text-primary" aria-hidden="true" />
-							}
+							{isLoading ? (
+								<Loader2 className="w-4 h-4 text-primary motion-safe:animate-spin" aria-hidden="true" />
+							) : (
+								<ArrowUp className="w-4 h-4 text-primary" aria-hidden="true" />
+							)}
 						</button>
 					);
 				})}

@@ -6,34 +6,21 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Table,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/seed/components/ui/table';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { Table } from '@/seed/components/ui/table';
 import type { LicenseUtilization } from '@/land/analytics/types';
 import { LicenseMetricsFilterBar } from './license-metrics-filter-bar';
 import { LicenseMetricsTableBody } from './license-metrics-table-body';
+import {
+  LicenseMetricsTableHeader,
+  type SortKey,
+  type SortDirection,
+} from './license-metrics-table-header';
+
+export { type SortKey, type SortDirection };
 
 interface LicenseMetricsTableProps {
   licenses: LicenseUtilization[];
   isLoading?: boolean;
-}
-
-type SortKey = 'licenseNonce' | 'tier' | 'usedCredits' | 'limitCredit' | 'percentage' | 'expiresAt';
-type SortDirection = 'asc' | 'desc';
-
-function SortIcon({ columnKey, sortKey, sortDirection }: {
-  columnKey: SortKey;
-  sortKey: SortKey;
-  sortDirection: SortDirection;
-}) {
-  if (sortKey !== columnKey) return null;
-  return sortDirection === 'asc'
-    ? <ChevronUp className="w-4 h-4 ml-1" aria-hidden="true" />
-    : <ChevronDown className="w-4 h-4 ml-1" aria-hidden="true" />;
 }
 
 export function LicenseMetricsTable({ licenses, isLoading }: LicenseMetricsTableProps) {
@@ -110,48 +97,11 @@ export function LicenseMetricsTable({ licenses, isLoading }: LicenseMetricsTable
 
       <div className="border border-border rounded-lg overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[200px] cursor-pointer" onClick={() => handleSort('licenseNonce')}>
-                <div className="flex items-center">
-                  License
-                  <SortIcon columnKey="licenseNonce" sortKey={sortKey} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('tier')}>
-                <div className="flex items-center">
-                  Tier
-                  <SortIcon columnKey="tier" sortKey={sortKey} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="text-right cursor-pointer" onClick={() => handleSort('usedCredits')}>
-                <div className="flex items-center justify-end">
-                  Used Credits
-                  <SortIcon columnKey="usedCredits" sortKey={sortKey} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="text-right cursor-pointer" onClick={() => handleSort('limitCredit')}>
-                <div className="flex items-center justify-end">
-                  Limit
-                  <SortIcon columnKey="limitCredit" sortKey={sortKey} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="w-[200px] cursor-pointer" onClick={() => handleSort('percentage')}>
-                <div className="flex items-center">
-                  Usage
-                  <SortIcon columnKey="percentage" sortKey={sortKey} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="text-right cursor-pointer" onClick={() => handleSort('expiresAt')}>
-                <div className="flex items-center justify-end">
-                  Expires
-                  <SortIcon columnKey="expiresAt" sortKey={sortKey} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="text-right">Overages</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
+          <LicenseMetricsTableHeader
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+          />
           <LicenseMetricsTableBody licenses={filteredLicenses} />
         </Table>
       </div>

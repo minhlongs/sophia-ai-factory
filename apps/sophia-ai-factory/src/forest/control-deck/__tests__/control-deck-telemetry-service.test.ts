@@ -51,7 +51,7 @@ describe('Track 1 & 2 — Growth Triad Consolidation & Live Control Deck Telemet
   it('gracefully falls back to computed baseline dataset when unauthenticated', async () => {
     const payload = await loadLiveControlDeckTelemetry();
     expect(payload.isLiveAuthenticated).toBe(false);
-    expect(payload.dataset.screens).toHaveLength(9);
+    expect(payload.dataset.screens).toHaveLength(18);
   });
 
   it('shows account payments without inventing a provider, split, or Merkle proof', async () => {

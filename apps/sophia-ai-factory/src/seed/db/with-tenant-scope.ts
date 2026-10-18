@@ -12,55 +12,14 @@
 import { D1Client } from '@/seed/db/d1-client-rpc';
 import { D1QueryChain } from '@/seed/db/d1-query-chain';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  TENANT_SCOPED_TABLES,
+  AGY_TENANT_TABLES,
+  BYPASS_TABLES,
+  type TenantScopeMode,
+} from './tenant-scope-tables';
 
-/**
- * Tables that have a tenant_id column and MUST be scoped.
- * Extend this list as new phases add tenant-scoped tables.
- */
-export const TENANT_SCOPED_TABLES = new Set([
-  'video_jobs',
-  'video_cost_log',
-  'voices',
-  'video_templates',
-  'tenant_storage_usage',
-  'brand_kits',
-  'agy_tenant_configs',
-  'agy_tenant_tokens',
-  'agy_agency_domains',
-  'agy_audit_logs',
-  'agy_policy_audit_ledger',
-  'agy_governance_configs',
-] as const);
-
-/**
- * AGY tables that use agency_id as their tenant isolation key.
- */
-const AGY_TENANT_TABLES = new Set([
-  'agy_tenant_configs',
-  'agy_tenant_tokens',
-  'agy_agency_domains',
-  'agy_audit_logs',
-  'agy_policy_audit_ledger',
-  'agy_governance_configs',
-]);
-
-/**
- * Tables owned by Better Auth (or other global schemas) that MUST bypass injection.
- * Reads from these tables return unfiltered results — auth is handled separately.
- */
-const BYPASS_TABLES = new Set([
-  'users',
-  'sessions',
-  'accounts',
-  'verifications',
-  'two_factors',
-]);
-
-/**
- * Strict mode: throw on unknown tables instead of silently scoping.
- * Enable when you want to catch typos or unregistered tenant-scoped tables.
- */
-export type TenantScopeMode = 'permissive' | 'strict';
+export { TENANT_SCOPED_TABLES, type TenantScopeMode } from './tenant-scope-tables';
 
 export class TenantScopedClient {
   constructor(
@@ -125,30 +84,24 @@ export class TenantScopedClient {
     return this.inner.from(table).insert({ ...data, tenant_id: this.tenantId });
   }
 
-/** Pass-through for RPC calls (not tenant-scoped) */
-rpc(fnName: string, params: Record<string, unknown> = {}) {
-return this.inner.rpc(fnName, params);
-}
+  /** Pass-through for RPC calls (not tenant-scoped) */
+  rpc(fnName: string, params: Record<string, unknown> = {}) {
+    return this.inner.rpc(fnName, params);
+  }
 }
 
 /**
  * Wrap a D1Client with tenant-scope enforcement.
  *
- * Usage:
- * const tid = requireTenantId(session);
- * const db = withTenantScope(createServerClient() as unknown as D1Client, tid);
- * const jobs = await db.from('video_jobs').select('*');
- * // Automatically includes WHERE tenant_id = ?
- *
  * @param mode - 'permissive' (default) scopes unknown tables; 'strict' throws on unknown tables
  */
 export function withTenantScope(
-db: D1Client,
-tenantId: string,
-mode: TenantScopeMode = 'permissive',
+  db: D1Client,
+  tenantId: string,
+  mode: TenantScopeMode = 'permissive',
 ): TenantScopedClient {
-if (!tenantId) {
-throw new Error('[withTenantScope] tenantId must be a non-empty string');
-}
-return new TenantScopedClient(db, tenantId, mode);
+  if (!tenantId) {
+    throw new Error('[withTenantScope] tenantId must be a non-empty string');
+  }
+  return new TenantScopedClient(db, tenantId, mode);
 }

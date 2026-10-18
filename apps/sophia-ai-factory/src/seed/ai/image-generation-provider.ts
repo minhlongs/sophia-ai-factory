@@ -10,6 +10,10 @@
  * Layer rule: seed only — no imports from tree/, forest/, or land/.
  */
 
+import { ImageGenerationError, isImageGenerationError } from './image-generation-error';
+
+export { ImageGenerationError, isImageGenerationError };
+
 /**
  * Input parameters for image generation.
  */
@@ -80,44 +84,6 @@ export interface HealthStatus {
 }
 
 /**
- * Typed error class for image generation failures.
- *
- * Carries a machine-readable error code for programmatic handling
- * (e.g. retry decisions, circuit breaker integration).
- */
-export class ImageGenerationError extends Error {
-  public readonly code: string;
-  public readonly provider: string;
-  public readonly retryable: boolean;
-  /** Number of attempts made before this error (1 = first try). Optional — not all callers track it. */
-  public retryCount?: number;
-
-  constructor(message: string, code: string, provider: string, retryable: boolean = false) {
-    super(message);
-    this.name = 'ImageGenerationError';
-    this.code = code;
-    this.provider = provider;
-    this.retryable = retryable;
-
-    // Maintains proper prototype chain for instanceof checks
-    Object.setPrototypeOf(this, ImageGenerationError.prototype);
-  }
-
-  /**
-   * Create an error from an unknown caught value.
-   */
-  static fromUnknown(error: unknown, provider: string): ImageGenerationError {
-    if (error instanceof ImageGenerationError) {
-      return error;
-    }
-    if (error instanceof Error) {
-      return new ImageGenerationError(error.message, 'UNKNOWN_ERROR', provider, false);
-    }
-    return new ImageGenerationError(String(error), 'UNKNOWN_ERROR', provider, false);
-  }
-}
-
-/**
  * Abstract image generation provider.
  *
  * Every image generation service integration (Mock, MuAPI, OpenRouter, etc.)
@@ -131,37 +97,12 @@ export class ImageGenerationError extends Error {
 export interface ImageGenerationProvider {
   /** Stable provider identifier (matches the key used in the registry). */
   readonly id: string;
-
   /** Human-readable label for logs and UI. */
   readonly label: string;
-
-  /**
-   * Generate an image from the given input.
-   *
-   * @param input — Prompt and optional parameters.
-   * @returns Result with assetRef, cost, latency, and metadata.
-   * @throws {ImageGenerationError} — with code indicating failure kind.
-   */
+  /** Generate an image from the given input. */
   generate(input: ImageGenerationInput): Promise<ImageGenerationResult>;
-
-  /**
-   * Return the static capability profile for this provider.
-   *
-   * Capabilities are resolved at registration time and do not change at runtime.
-   */
+  /** Return the static capability profile for this provider. */
   capabilities(): ProviderCapabilities;
-
-  /**
-   * Check provider health.
-   *
-   * Used by the registry for fallback decisions.
-   */
+  /** Check provider health. */
   health(): Promise<HealthStatus>;
-}
-
-/**
- * Type guard for ImageGenerationError.
- */
-export function isImageGenerationError(error: unknown): error is ImageGenerationError {
-  return error instanceof ImageGenerationError;
 }

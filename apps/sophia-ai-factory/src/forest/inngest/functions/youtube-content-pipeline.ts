@@ -9,7 +9,6 @@ import { NonRetriableError } from 'inngest';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { getD1Sync } from '@/seed/db/client';
 import { buildAIGenerateFn } from '@/land/youtube/ai-generate-fn';
 import { createCheckpointStore } from '@/land/youtube/pipeline-checkpoint-store';
 import { genId } from '@/land/youtube/channel-config-types';
@@ -19,8 +18,12 @@ import {
   runSEOStage,
   runThumbnailStage,
   runQualityGateStage,
-  type ChannelConfigSnapshot,
 } from '@/land/youtube/pipeline-stages';
+import {
+  loadChannelConfigSnapshot,
+  savePipelineCheckpoints,
+  insertYoutubeCalendarEntry,
+} from './youtube-content-pipeline-steps';
 
 interface PipelineEventData {
   userId: string;
@@ -59,94 +62,45 @@ export const youtubeContentPipeline = inngest.createFunction(
       }
     }
 
-    // ── Load channel config ────────────────────────────────────────────────
-    const config = await runStepSafely('load-channel-config', async (): Promise<ChannelConfigSnapshot> => {
-      const db = getD1Sync();
-      const row = await db
-        .prepare(`SELECT * FROM youtube_channel_configs WHERE id = ?1 AND user_id = ?2 LIMIT 1`)
-        .bind(channelConfigId, userId)
-        .first<Record<string, unknown>>();
-      if (!row) throw new Error(`Channel config not found: ${channelConfigId}`);
-      let pillars: string[] = [];
-      try {
-        const parsed = JSON.parse(String(row.content_pillars ?? '[]'));
-        if (Array.isArray(parsed)) pillars = parsed.map((v) => String(v));
-      } catch {
-        pillars = [];
-      }
-      return {
-        objective: String(row.objective),
-        audience: String(row.audience),
-        contentPillars: pillars,
-        cadence: String(row.cadence),
-        postsPerWeek: Number(row.posts_per_week) || 3,
-        bufferDays: Number(row.content_buffer_days) || 3,
-        autonomyLevel: Number(row.autonomy_level) || 2,
-      };
-    });
+    const config = await runStepSafely('load-channel-config', () =>
+      loadChannelConfigSnapshot(channelConfigId, userId),
+    );
 
-    // ── Build AI generator (BYOK) ──────────────────────────────────────────
     const generateText = await runStepSafely('build-ai-generator', () => buildAIGenerateFn(userId));
-
     const ctx = { userId, channelConfigId, topic, generateText };
 
-    // ── Stage 1: Strategy ──────────────────────────────────────────────────
     const strategy = await runStepSafely('strategy', () => runStrategyStage(ctx, config));
-
-    // ── Stage 2: Script ────────────────────────────────────────────────────
     const script = await runStepSafely('script', () => runScriptStage(strategy));
-
-    // ── Stage 3: SEO ───────────────────────────────────────────────────────
     const seo = await runStepSafely('seo', () => runSEOStage(strategy, script));
-
-    // ── Stage 4: Thumbnail (best-effort) ───────────────────────────────────
     const thumbnail = await runStepSafely('thumbnail', () => runThumbnailStage(ctx, strategy, script));
 
-    // ── Stage 5: Quality gate ──────────────────────────────────────────────
     const quality = await runStepSafely('quality-gate', () => runQualityGateStage(strategy, script, seo));
     if (!quality.passed) {
       throw new NonRetriableError(`Quality gate failed: ${quality.violations.join('; ')}`);
     }
 
-    // ── Stage 6: Checkpoint ────────────────────────────────────────────────
     await runStepSafely('checkpoint', async () => {
       const store = await createCheckpointStore();
-      if (!store) return { saved: false };
-      const completedAt = new Date().toISOString();
-      await store.saveGenerationCheckpoint(jobId, 'strategy', {
-        status: 'completed',
-        artifact: strategy as unknown as Record<string, unknown>,
-        completedAt,
-      });
-      await store.saveGenerationCheckpoint(jobId, 'script', {
-        status: 'completed',
-        artifact: script as unknown as Record<string, unknown>,
-        completedAt,
-      });
-      await store.saveGenerationCheckpoint(jobId, 'seo', {
-        status: 'completed',
-        artifact: seo as unknown as Record<string, unknown>,
-        completedAt,
-      });
-      return { saved: true };
+      return savePipelineCheckpoints({ store, jobId, strategy, script, seo });
     });
 
-    // ── Stage 7: Publish — schedule calendar entry ─────────────────────────
-    const calendarId = await runStepSafely('publish', async () => {
-      const db = getD1Sync();
-      const id = genId();
-      await db
-        .prepare(
-          `INSERT INTO youtube_content_calendar
-           (id, user_id, channel_config_id, title, content_type, status, scheduled_at, notes)
-           VALUES (?1,?2,?3,?4,?5,'scheduled',datetime('now'),?6)`,
-        )
-        .bind(id, userId, channelConfigId, seo.title, strategy.contentType, `Pipeline ${jobId}`)
-        .run();
-      return id;
-    });
+    const calendarId = await runStepSafely('publish', () =>
+      insertYoutubeCalendarEntry({
+        id: genId(),
+        userId,
+        channelConfigId,
+        title: seo.title,
+        contentType: strategy.contentType,
+        jobId,
+      }),
+    );
 
-    logger.info('[youtube-pipeline] completed', undefined, { jobId, userId, channelConfigId, thumbnailSkipped: thumbnail.skipped });
+    logger.info('[youtube-pipeline] completed', undefined, {
+      jobId,
+      userId,
+      channelConfigId,
+      thumbnailSkipped: thumbnail.skipped,
+    });
 
     return { success: true, jobId, stage: 'publish', calendarId };
   },

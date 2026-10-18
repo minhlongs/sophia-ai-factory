@@ -6,20 +6,16 @@
 import { logger } from '@/seed/utils/logger-utility';
 import type { ApacLocale } from '@/seed/types/dubbing';
 import {
-  normalizeDialect,
-  tuneProsodyForDialect,
-} from '@/tree/cultural-adaptation/dialect-normalizer';
-import {
-  generateAiDisclosure,
-} from '@/tree/cultural-adaptation/compliance-engine';
-import {
   type EdgeTtsSynthesisOptions,
   type EdgeTtsSynthesisResult,
-  resolveEdgeVoice,
-  resolveEdgeVoiceForDialect,
 } from './types';
-import { buildSsml, calculateTempoAdjustment } from './ssml-builder';
 import { createSyntheticAudioBuffer } from './audio-buffer-generator';
+import {
+  prepareEdgeTtsSynthesis,
+  type PreparedEdgeTtsPayload,
+} from './synthesizer-preparation';
+
+export { prepareEdgeTtsSynthesis, type PreparedEdgeTtsPayload };
 
 /**
  * Synthesize speech via Edge TTS service with dialect normalization and compliance injection.
@@ -29,80 +25,18 @@ export async function synthesizeEdgeTts(
   locale: ApacLocale,
   options?: EdgeTtsSynthesisOptions,
 ): Promise<EdgeTtsSynthesisResult> {
-  let processedText = text;
-  let normalizedScript: string | undefined;
-
-  // 1. Dialect lexical normalization if requested
-  if (options?.dialect && options.sourceDialect) {
-    const dialectResult = normalizeDialect(processedText, options.sourceDialect, options.dialect);
-    processedText = dialectResult.normalizedText;
-    normalizedScript = processedText;
-  }
-
-  // 2. Compliance audio disclaimer injection if requested
-  let disclaimerInjected = false;
-  let disclaimerText: string | undefined;
-
-  if (options?.complianceJurisdiction) {
-    const disclosure = generateAiDisclosure(options.complianceJurisdiction, 'audio');
-    if (
-      disclosure.audioDisclaimer &&
-      (options.injectAudioDisclaimer ||
-        options.complianceJurisdiction === 'EU' ||
-        options.complianceJurisdiction === 'VN' ||
-        options.complianceJurisdiction === 'JP')
-    ) {
-      disclaimerText = disclosure.audioDisclaimer.textLocal;
-      processedText = `${processedText}. ${disclaimerText}`;
-      disclaimerInjected = true;
-    }
-  }
-
-  const words = processedText.trim().split(/\s+/).filter(Boolean);
-  const wordCount = words.length;
-
-  // 3. Resolve Voice
-  let voice: string;
-  if (options?.voice) {
-    voice = options.voice;
-  } else if (options?.dialect) {
-    voice = resolveEdgeVoiceForDialect(options.dialect, options.gender || 'female');
-  } else {
-    voice = resolveEdgeVoice(locale, options?.gender || 'female');
-  }
-
-  // 4. Resolve Prosody (Rate, Pitch, Volume)
-  let rate = options?.rate;
-  let pitch = options?.pitch;
-
-  if (options?.dialect && (!rate || !pitch)) {
-    const prosody = tuneProsodyForDialect(options.dialect, {
-      rate: options.rate,
-      pitch: options.pitch,
-    });
-    if (!rate) rate = prosody.rate;
-    if (!pitch) pitch = prosody.pitch;
-  }
-
-  if (!rate) {
-    if (options?.targetDurationSec && options.targetDurationSec > 0) {
-      rate = calculateTempoAdjustment(options.targetDurationSec, wordCount, locale);
-    } else {
-      rate = '+0%';
-    }
-  }
-
-  if (!pitch) {
-    pitch = '+0Hz';
-  }
-
-  const volume = options?.volume || '+0%';
-  const ssml = buildSsml(processedText, voice, rate, pitch, volume);
-
-  // Natural duration estimation
-  const rateModifier = 1 + (parseFloat(rate.replace('%', '')) || 0) / 100;
-  const baseRate = locale === 'ja' ? 3.5 : locale === 'vi' ? 2.8 : 2.5;
-  const estimatedDuration = Math.max(0.5, wordCount / (baseRate * rateModifier));
+  const prepared = prepareEdgeTtsSynthesis(text, locale, options);
+  const {
+    processedText,
+    normalizedScript,
+    disclaimerInjected,
+    disclaimerText,
+    wordCount,
+    voice,
+    rate,
+    ssml,
+    estimatedDuration,
+  } = prepared;
 
   try {
     const endpoint = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
@@ -142,7 +76,6 @@ export async function synthesizeEdgeTts(
     });
   }
 
-  // Edge-resilient fallback audio generation (valid MP3/WAV synthetic payload)
   const syntheticPayload = createSyntheticAudioBuffer(processedText, estimatedDuration);
 
   return {

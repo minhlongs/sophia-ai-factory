@@ -6,7 +6,11 @@
  * @description Land layer Server Actions for Quingenti-Quadrillion Sub-Planck Singularity Mesh dispatching, Net-Zero power verification, and Eighty-One-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
+import {
+  recordQuadrillionSubPlanckDispatchD1,
+  recordQuadrillionSubPlanckPowerD1,
+  recordQuadrillionSubPlanckSlaAuditD1,
+} from '@/land/compute/quadrillion-sub-planck-d1-recorder';
 import {
   planQuingentiquadrillionSubPlanckBatchDispatch,
   type QuingentiquadrillionSubPlanckDispatchPlan,
@@ -39,9 +43,6 @@ export interface EightyOneNinesSlaActionResult {
   error?: string;
 }
 
-/**
- * Server Action to plan and record 2,000,000,000,000,000 workload dispatch to Quingenti-Quadrillion Sub-Planck Singularity Mesh.
- */
 export async function dispatchQuingentiquadrillionSubPlanckBatchAction(
   meshes: QuingentiquadrillionSubPlanckMesh[],
   workloads: number = 2_000_000_000_000_000,
@@ -49,79 +50,41 @@ export async function dispatchQuingentiquadrillionSubPlanckBatchAction(
 ): Promise<QuingentiquadrillionSubPlanckDispatchActionResult> {
   try {
     const data = planQuingentiquadrillionSubPlanckBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO quingentiquadrillion_sub_planck_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `QUINGENTI-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `SESSION-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.00000000001,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS'
-        )
-        .run();
-    }
-
+    await recordQuadrillionSubPlanckDispatchD1({
+      table: 'quingentiquadrillion_sub_planck_dispatches',
+      refPrefix: 'QUINGENTI-DISPATCH',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.00000000001,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { success: false, error };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
-/**
- * Server Action to validate Quingenti-Quadrillion Net-Zero harvest power and extreme Bose-Einstein Condensate cooling (COP >= 800.0).
- */
 export async function validateQuingentiquadrillionPowerAction(
   input: QuingentiquadrillionSubPlanckPowerInput
 ): Promise<QuingentiquadrillionSubPlanckPowerActionResult> {
   try {
     const data = validateQuingentiquadrillionSubPlanckPower(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO quingentiquadrillion_sub_planck_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified,
-             allocated_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `QUINGENTI-POWER-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.powerSourceType,
-          input.allocatedMegawatts,
-          input.carbonIntensityGPerKwh,
-          input.boseEinsteinCop,
-          input.isNetZeroCertified ? 1 : 0
-        )
-        .run();
-    }
-
+    await recordQuadrillionSubPlanckPowerD1({
+      table: 'quingentiquadrillion_sub_planck_power_allocations',
+      refPrefix: 'QUINGENTI-POWER',
+      powerSourceType: input.powerSourceType,
+      allocatedMegawatts: input.allocatedMegawatts,
+      carbonIntensityGPerKwh: input.carbonIntensityGPerKwh,
+      boseEinsteinCop: input.boseEinsteinCop,
+      isNetZeroCertified: input.isNetZeroCertified,
+    });
     return { success: data.isCompliant, data };
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { success: false, error };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
-/**
- * Server Action to audit and certify Eighty-One-Nines SLA continuous availability.
- */
 export async function auditEightyOneNinesSlaAction(
   auditRef: string,
   evaluationPeriodMonth: string,
@@ -129,34 +92,21 @@ export async function auditEightyOneNinesSlaAction(
 ): Promise<EightyOneNinesSlaActionResult> {
   try {
     const data = evaluateEightyOneNinesSla(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO eighty_one_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_eighty_one_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          auditRef,
-          evaluationPeriodMonth,
-          input.totalWindowNanoseconds ? Math.floor(input.totalWindowNanoseconds / 1e9) : 2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'EIGHTY_ONE_NINES_CERTIFIED' ? 1 : 0,
-          17179869184,
-          data.auditSignature
-        )
-        .run();
-    }
-
-    return { success: data.slaVerdict === 'EIGHTY_ONE_NINES_CERTIFIED', data };
+    const isMet = data.slaVerdict === 'EIGHTY_ONE_NINES_CERTIFIED';
+    await recordQuadrillionSubPlanckSlaAuditD1({
+      table: 'eighty_one_nines_sla_audits',
+      metColumn: 'is_eighty_one_nines_met',
+      auditRef,
+      evaluationPeriodMonth,
+      totalEvalSeconds: input.totalWindowNanoseconds ? Math.floor(input.totalWindowNanoseconds / 1e9) : 2592000,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet: isMet,
+      bftConsensusNodes: 17179869184,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isMet, data };
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { success: false, error };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

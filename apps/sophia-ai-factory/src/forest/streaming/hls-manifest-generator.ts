@@ -24,6 +24,7 @@ import {
   type HlsSubtitleTrack,
 } from '@/seed/types/streaming';
 import { buildMasterManifestRecord } from './hls-media-playlist';
+import { buildMediaTrackLines, buildVariantAttrs } from './hls-manifest-tag-builders';
 
 export {
   generateMediaPlaylist,
@@ -63,36 +64,6 @@ export function buildDefaultVariants(baseUrl: string = ''): HlsVariantStream[] {
       uri: relUri,
     };
   });
-}
-
-function buildMediaTrackLines(
-  type: 'AUDIO' | 'SUBTITLES',
-  groupId: string,
-  tracks: Array<{ name: string; isDefault?: boolean; autoSelect?: boolean; language: string; uri: string }> | undefined,
-): string[] {
-  if (!tracks || tracks.length === 0) return [];
-  return tracks.map((track) => {
-    const isDef = track.isDefault ? 'YES' : 'NO';
-    const autoSel = track.autoSelect !== false ? 'YES' : 'NO';
-    return `#EXT-X-MEDIA:TYPE=${type},GROUP-ID="${groupId}",NAME="${track.name}",DEFAULT=${isDef},AUTOSELECT=${autoSel},LANGUAGE="${track.language}",URI="${track.uri}"`;
-  });
-}
-
-function buildVariantAttrs(
-  variant: HlsVariantStream,
-  hasAudio: boolean,
-  hasSubtitles: boolean,
-  audioGroupId: string,
-  subsGroupId: string,
-): string {
-  const attrs: string[] = [`BANDWIDTH=${variant.bandwidth}`];
-  if (variant.averageBandwidth) attrs.push(`AVERAGE-BANDWIDTH=${variant.averageBandwidth}`);
-  attrs.push(`RESOLUTION=${variant.width}x${variant.height}`);
-  if (variant.frameRate) attrs.push(`FRAME-RATE=${variant.frameRate.toFixed(3)}`);
-  if (variant.codecs) attrs.push(`CODECS="${variant.codecs}"`);
-  if (hasAudio) attrs.push(`AUDIO="${audioGroupId}"`);
-  if (hasSubtitles) attrs.push(`SUBTITLES="${subsGroupId}"`);
-  return attrs.join(',');
 }
 
 /**

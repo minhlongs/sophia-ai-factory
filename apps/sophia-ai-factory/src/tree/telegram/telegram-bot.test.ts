@@ -229,6 +229,32 @@ describe('Telegram Bot Handlers', () => {
   })
 
   describe('handleStatus', () => {
+    it('scopes campaign ID lookups to the linked account', async () => {
+      const profileQuery = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { user_id: 'user-1' }, error: null }),
+      }
+      const campaignQuery = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === 'user_profiles') return { select: vi.fn(() => profileQuery) }
+        if (table === 'campaigns') return { select: vi.fn(() => campaignQuery) }
+        return createChainableMock()
+      })
+
+      await handleStatus(chatId, 'campaign-owned-by-someone-else')
+
+      expect(campaignQuery.eq).toHaveBeenNthCalledWith(1, 'id', 'campaign-owned-by-someone-else')
+      expect(campaignQuery.eq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1')
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
+        chatId,
+        expect.stringContaining('Campaign not found'),
+        expect.any(Object),
+      )
+    })
+
     it('should show active campaigns', async () => {
       const testUserId = 'user-1';
 
@@ -245,20 +271,25 @@ describe('Telegram Bot Handlers', () => {
       })
 
       // Mock campaigns fetch
-      const mockSelectCampaigns = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          in: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  { title: 'Camp 1', status: 'processing_video', progress: 50 },
-                ],
-                error: null
-              })
-            })
-          })
+      const campaignsQuery = {
+        eq: vi.fn().mockReturnThis(),
+        not: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: 'campaign-1',
+              title: 'Camp 1',
+              status: 'processing_video',
+              progress: 50,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ],
+          error: null
         })
-      })
+      }
+      const mockSelectCampaigns = vi.fn().mockReturnValue(campaignsQuery)
 
       mockSupabase.from.mockImplementation((table) => {
         if (table === 'user_profiles') return { select: mockSelectProfile }
@@ -268,12 +299,17 @@ describe('Telegram Bot Handlers', () => {
 
       await handleStatus(chatId)
 
-  // D1 user_profiles is empty → handler returns catch error message
-  expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
-    chatId,
-    expect.stringContaining("Failed to fetch status"),
-    expect.any(Object)
-  )
+      expect(campaignsQuery.eq).toHaveBeenCalledWith('user_id', testUserId)
+      expect(campaignsQuery.not).toHaveBeenCalledWith(
+        'status',
+        'in',
+        '("draft","completed","failed","video_timeout")',
+      )
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
+        chatId,
+        expect.stringContaining('Camp 1'),
+        expect.any(Object),
+      )
     })
   })
 

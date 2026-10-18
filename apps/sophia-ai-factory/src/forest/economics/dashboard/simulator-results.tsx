@@ -7,6 +7,7 @@
 
 import React from 'react';
 import type { CostArbitrageDecision } from '@/seed/types/unit-economics-types';
+import { StageCostBreakdown } from './simulator-stage-breakdown';
 
 interface SimulatorResultsProps {
   simResult: CostArbitrageDecision;
@@ -45,32 +46,15 @@ export function SimulatorResults({
             </div>
           </div>
 
-          <div className="mt-6 space-y-2 text-xs">
-            <div className="flex justify-between text-zinc-400 py-1 border-b border-zinc-800">
-              <span>{isVi ? 'Kịch bản (Script):' : 'Script Cost:'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${simResult.selectedStages.script.estimatedCostUsd}
-              </span>
-            </div>
-            <div className="flex justify-between text-zinc-400 py-1 border-b border-zinc-800">
-              <span>{isVi ? 'Khung hình (Visuals):' : 'Visuals Cost:'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${simResult.selectedStages.visuals.estimatedCostUsd}
-              </span>
-            </div>
-            <div className="flex justify-between text-zinc-400 py-1 border-b border-zinc-800">
-              <span>{isVi ? 'Giọng đọc (Audio):' : 'Audio Cost:'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${simResult.selectedStages.audio.estimatedCostUsd}
-              </span>
-            </div>
-            <div className="flex justify-between text-zinc-400 py-1">
-              <span>{isVi ? 'Dựng video (Render):' : 'Render Cost:'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${simResult.selectedStages.render.estimatedCostUsd}
-              </span>
-            </div>
-          </div>
+          <StageCostBreakdown
+            decision={simResult}
+            labels={{
+              script: isVi ? 'Kịch bản (Script):' : 'Script Cost:',
+              visuals: isVi ? 'Khung hình (Visuals):' : 'Visuals Cost:',
+              audio: isVi ? 'Giọng đọc (Audio):' : 'Audio Cost:',
+              render: isVi ? 'Dựng video (Render):' : 'Render Cost:',
+            }}
+          />
         </div>
 
         <div className="mt-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center justify-between">
@@ -103,32 +87,15 @@ export function SimulatorResults({
             </div>
           </div>
 
-          <div className="mt-6 space-y-2 text-xs">
-            <div className="flex justify-between text-zinc-400 py-1 border-b border-zinc-800">
-              <span>{isVi ? 'Kịch bản (DeepSeek):' : 'Script (DeepSeek):'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${cloudSimResult.selectedStages.script.estimatedCostUsd}
-              </span>
-            </div>
-            <div className="flex justify-between text-zinc-400 py-1 border-b border-zinc-800">
-              <span>{isVi ? 'Khung hình (fal Flux):' : 'Visuals (fal Flux):'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${cloudSimResult.selectedStages.visuals.estimatedCostUsd}
-              </span>
-            </div>
-            <div className="flex justify-between text-zinc-400 py-1 border-b border-zinc-800">
-              <span>{isVi ? 'Giọng đọc (ElevenLabs):' : 'Audio (ElevenLabs):'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${cloudSimResult.selectedStages.audio.estimatedCostUsd}
-              </span>
-            </div>
-            <div className="flex justify-between text-zinc-400 py-1">
-              <span>{isVi ? 'Dựng video (Worker):' : 'Render (Worker):'}</span>
-              <span className="text-zinc-200 font-mono">
-                ${cloudSimResult.selectedStages.render.estimatedCostUsd}
-              </span>
-            </div>
-          </div>
+          <StageCostBreakdown
+            decision={cloudSimResult}
+            labels={{
+              script: isVi ? 'Kịch bản (DeepSeek):' : 'Script (DeepSeek):',
+              visuals: isVi ? 'Khung hình (fal Flux):' : 'Visuals (fal Flux):',
+              audio: isVi ? 'Giọng đọc (ElevenLabs):' : 'Audio (ElevenLabs):',
+              render: isVi ? 'Dựng video (Worker):' : 'Render (Worker):',
+            }}
+          />
         </div>
 
         <div className="mt-6 p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-400 flex items-center justify-between">

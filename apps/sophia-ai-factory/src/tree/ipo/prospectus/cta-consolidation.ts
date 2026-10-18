@@ -9,20 +9,15 @@
  * @module tree/ipo/prospectus/cta-consolidation
  */
 
-import {
-  CANONICAL_ENTITIES,
-  type ConsolidationEntityCode,
-  type CtaBalanceType,
-  type EntityFinancialInput,
-  type MultiEntityConsolidation,
-  type MultiEntityConsolidationResult,
+import type {
+  CtaBalanceType,
+  EntityFinancialInput,
+  MultiEntityConsolidation,
+  MultiEntityConsolidationResult,
 } from '@/seed/types/ipo-filing';
-import {
-  canonicalJson,
-  sha256Hex,
-  buildMerkleTree,
-} from '@/tree/finance/merkle-audit-vault';
+import { buildMerkleTree } from '@/tree/finance/merkle-audit-vault';
 import { translateSingleEntity } from './entity-translator';
+import { buildConsolidatedGroupRecord } from './cta-group-builder';
 
 /**
  * Executes ASC 830 (FASB Statement 52) multi-entity consolidation with Cumulative Translation
@@ -88,45 +83,26 @@ export async function consolidateMultiEntityCta(
     (groupLiabilitiesCents + groupEquityCents + groupNetIncomeCents + groupCtaCents);
   const groupZeroPennyLeakageVerified = groupLeakage === 0 && eliminationsBalanced;
 
-  const groupRecord: MultiEntityConsolidation = {
-    id: `mec_group_${rawBatchId.substring(0, 8)}`,
+  const groupRecord = await buildConsolidatedGroupRecord({
+    rawBatchId,
     consolidationBatchId,
     periodKey,
-    reportingCurrency: 'USD',
-    entityCode: CANONICAL_ENTITIES.CONSOLIDATED as ConsolidationEntityCode,
-    functionalCurrency: 'USD',
-    localRevenueUnits: groupRevenueCents / 100,
-    localOperatingExpensesUnits: groupExpensesCents / 100,
-    localNetIncomeUnits: groupNetIncomeCents / 100,
-    localTotalAssetsUnits: groupAssetsCents / 100,
-    localTotalLiabilitiesUnits: groupLiabilitiesCents / 100,
-    localEquityUnits: groupEquityCents / 100,
-    periodEndSpotRate: 1.0,
-    periodWeightedAverageRate: 1.0,
-    historicalEquityRate: 1.0,
-    translatedRevenueCents: groupRevenueCents,
-    translatedExpensesCents: groupExpensesCents,
-    translatedNetIncomeCents: groupNetIncomeCents,
-    translatedAssetsCents: groupAssetsCents,
-    translatedLiabilitiesCents: groupLiabilitiesCents,
-    translatedEquityCents: groupEquityCents,
-    intercompanyReceivablesEliminatedCents: totalReceivablesEliminated,
-    intercompanyPayablesEliminatedCents: totalPayablesEliminated,
-    intercompanyRevenueEliminatedCents: totalRevenueEliminated,
-    intercompanyExpenseEliminatedCents: totalExpenseEliminated,
-    cumulativeTranslationAdjustmentCents: groupCtaCents,
-    ctaBalanceType: groupCtaBalanceType,
-    eliminationBalanced: eliminationsBalanced,
-    zeroPennyLeakageVerified: groupZeroPennyLeakageVerified,
-    merkleSnapshotHash: '',
-    auditedBy: 'SOPHIA_CONSOLIDATION_ENGINE',
-    status: eliminationsBalanced && groupZeroPennyLeakageVerified ? 'locked' : 'draft',
-    notes: `Consolidated Group ASC 830 Batch ${consolidationBatchId}. Zero-Penny Leakage: ${groupZeroPennyLeakageVerified}`,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-
-  groupRecord.merkleSnapshotHash = await sha256Hex(canonicalJson(groupRecord));
+    timestamp,
+    groupRevenueCents,
+    groupExpensesCents,
+    groupNetIncomeCents,
+    groupAssetsCents,
+    groupLiabilitiesCents,
+    groupEquityCents,
+    groupCtaCents,
+    groupCtaBalanceType,
+    totalReceivablesEliminated,
+    totalPayablesEliminated,
+    totalRevenueEliminated,
+    totalExpenseEliminated,
+    eliminationsBalanced,
+    groupZeroPennyLeakageVerified,
+  });
 
   const allLeafHashes = [
     ...translatedEntities.map((e) => e.merkleSnapshotHash),

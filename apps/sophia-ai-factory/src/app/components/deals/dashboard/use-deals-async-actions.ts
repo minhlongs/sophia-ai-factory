@@ -17,16 +17,13 @@ import type {
   MeetingPrepDossier,
   EnterpriseProposalResult,
   SandboxProvisionResult,
-  ProposalLanguage,
 } from '@/seed/types/enterprise-deal';
 import {
   createEnterpriseDealAction,
   updateEnterpriseDealAction,
   enrichDealAction,
-  generateMeetingPrepAction,
-  generateProposalAction,
-  provisionSandboxAction,
 } from '@/land/admin/enterprise-deal-actions';
+import { createDealsWorkflowHandlers } from './use-deals-workflow-handlers';
 
 export interface UseDealsAsyncActionsParams {
   selectedDeal: EnterpriseDeal | null;
@@ -90,63 +87,18 @@ export function useDealsAsyncActions({
     }
   };
 
-  const handleGeneratePrep = async () => {
-    if (!selectedDeal) return;
-    setLoadingAction('prep');
-    try {
-      const res = await generateMeetingPrepAction(selectedDeal.id);
-      if (res.success && res.data) {
-        setPrepDossier(res.data);
-        setDeals((prev) =>
-          prev.map((d) =>
-            d.id === selectedDeal.id ? { ...d, meetingPrepBrief: res.data!.fullBriefMarkdown, dealStage: 'demo_prepared' } : d
-          )
-        );
-      }
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  const handleGenerateProposal = async (lang: ProposalLanguage) => {
-    if (!selectedDeal) return;
-    setLoadingAction('proposal');
-    try {
-      const res = await generateProposalAction(selectedDeal.id, lang);
-      if (res.success && res.data) {
-        setProposalResult(res.data);
-        setDeals((prev) =>
-          prev.map((d) =>
-            d.id === selectedDeal.id
-              ? { ...d, proposalId: res.data!.proposalId, proposalLanguage: lang, proposalContent: res.data!.fullMarkdown, dealStage: 'proposal_sent' }
-              : d
-          )
-        );
-      }
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  const handleProvisionSandbox = async () => {
-    if (!selectedDeal) return;
-    setLoadingAction('sandbox');
-    try {
-      const res = await provisionSandboxAction(selectedDeal.id);
-      if (res.success && res.data) {
-        setSandboxResult(res.data);
-        setDeals((prev) =>
-          prev.map((d) =>
-            d.id === selectedDeal.id
-              ? { ...d, sandboxSubaccountId: res.data!.subaccountId, sandboxStatus: 'active', sandboxToken: res.data!.sandboxToken, sandboxExpiresAt: res.data!.expiresAt, dealStage: 'demo_active' }
-              : d
-          )
-        );
-      }
-    } finally {
-      setLoadingAction(null);
-    }
-  };
+  const {
+    handleGeneratePrep,
+    handleGenerateProposal,
+    handleProvisionSandbox,
+  } = createDealsWorkflowHandlers({
+    selectedDeal,
+    setDeals,
+    setLoadingAction,
+    setPrepDossier,
+    setProposalResult,
+    setSandboxResult,
+  });
 
   return {
     loadingAction,

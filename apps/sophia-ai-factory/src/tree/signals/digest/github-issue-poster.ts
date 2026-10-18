@@ -9,64 +9,22 @@
  * SECURITY: GITHUB_TOKEN_DIGEST stored as CF secret, never logged.
  */
 
-import { z } from 'zod'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
 import { classifyError } from '@/seed/types/failure-kind'
+import {
+  GhIssueSchema,
+  GhIssueListSchema,
+  type UpsertIssueParams,
+  type UpsertIssueResult,
+  getIsoWeek,
+  buildIssueTitle,
+  ghHeaders,
+} from './github-issue-helpers'
 
-// ── Zod schemas for GH API responses ─────────────────────────────────────────
-
-const GhIssueSchema = z.object({
-  number: z.number(),
-  html_url: z.string().url(),
-  title: z.string(),
-})
-
-const GhIssueListSchema = z.array(GhIssueSchema)
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export interface UpsertIssueParams {
-  title: string
-  body: string
-  labels?: string[]
-}
-
-export interface UpsertIssueResult {
-  url: string
-  action: 'created' | 'updated'
-  issueNumber: number
-}
-
-// ── ISO week helpers ──────────────────────────────────────────────────────────
-
-/** Returns ISO week number (1–53) for a given Date */
-export function getIsoWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
-/** Build canonical issue title for a given date */
-export function buildIssueTitle(date = new Date()): string {
-  const week = getIsoWeek(date)
-  const dateStr = date.toISOString().slice(0, 10)
-  return `Weekly Metrics Digest — Week ${week} (${dateStr})`
-}
-
-// ── GH API helpers ────────────────────────────────────────────────────────────
-
-function ghHeaders(token: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'Content-Type': 'application/json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  }
-}
+export type { UpsertIssueParams, UpsertIssueResult }
+export { getIsoWeek, buildIssueTitle }
 
 /**
  * Find existing open issue by label + title prefix.

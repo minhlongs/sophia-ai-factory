@@ -4,25 +4,15 @@
  * @module forest/ai/cost-router/cost-aware-router
  */
 
-import type {
-  ChatMessage,
-  ChatOptions,
-  StreamChunk,
-} from '@/seed/ai/provider-interface';
+import type { ChatMessage, ChatOptions, StreamChunk } from '@/seed/ai/provider-interface';
 import type { ProviderRegistry } from '@/seed/ai/provider-registry';
 import { logger } from '@/seed/utils/logger-utility';
-import { classifyComplexity, selectRoute } from '../llm-router';
 import type { MultiProviderRouter, RoutedChatResult } from '../multi-provider-router';
 import type { BudgetTracker } from '@/tree/budget';
-import {
-  TIER_COST_LIMITS,
-  type UserTier,
-  type CostAwareRouterOptions,
-  type CostAwareRouteDecision,
-  type ProviderChainEntry,
-} from './types';
-import { selectCostAwareProvider, findCheaperProvider } from './cost-evaluator';
+import { TIER_COST_LIMITS, type UserTier, type CostAwareRouterOptions, type CostAwareRouteDecision } from './types';
+import { findCheaperProvider } from './cost-evaluator';
 import { createBudgetTracker, handleBudgetReservation, enforceTierLimit } from './budget-guard';
+import { prepareCostAwareRoute } from './route-preparer';
 
 export class CostAwareRouter {
   private readonly router: MultiProviderRouter;
@@ -47,24 +37,14 @@ export class CostAwareRouter {
    * Route and execute a chat request with cost awareness.
    */
   async chat(prompt: string, messages: ChatMessage[], options: ChatOptions): Promise<RoutedChatResult> {
-    const complexity = classifyComplexity(prompt);
-    const routeDecision = selectRoute(complexity);
-    const chain = this.registry.getFallbackChain(routeDecision.provider) as ProviderChainEntry[];
-
-    if (chain.length === 0) {
-      throw new Error('No healthy providers available');
-    }
-
-    const costDecision = selectCostAwareProvider({
-      chain,
+    const { complexity, chain, costDecision, adjustedOptions } = prepareCostAwareRoute({
+      prompt,
       messages,
       options,
-      complexity,
+      registry: this.registry,
       preferCheaper: this.preferCheaper,
       userTier: this.userTier,
     });
-
-    const adjustedOptions: ChatOptions = { ...options, model: costDecision.model };
 
     let { entryId } = handleBudgetReservation({
       budgetTracker: this.budgetTracker,
@@ -122,26 +102,16 @@ export class CostAwareRouter {
     messages: ChatMessage[],
     options: ChatOptions,
   ): AsyncGenerator<StreamChunk & { costMetadata?: CostAwareRouteDecision }, void, unknown> {
-    const complexity = classifyComplexity(prompt);
-    const routeDecision = selectRoute(complexity);
-    const chain = this.registry.getFallbackChain(routeDecision.provider) as ProviderChainEntry[];
-
-    if (chain.length === 0) {
-      throw new Error('No healthy providers available');
-    }
-
-    const costDecision = selectCostAwareProvider({
-      chain,
+    const { chain, costDecision, adjustedOptions } = prepareCostAwareRoute({
+      prompt,
       messages,
       options,
-      complexity,
+      registry: this.registry,
       preferCheaper: this.preferCheaper,
       userTier: this.userTier,
     });
 
-    const adjustedOptions: ChatOptions = { ...options, model: costDecision.model };
     const tierLimit = TIER_COST_LIMITS[this.userTier];
-
     if (this.enforceCostLimits && costDecision.estimatedCost > tierLimit) {
       const cheaperProvider = findCheaperProvider(chain, messages, adjustedOptions, tierLimit);
       if (cheaperProvider) {

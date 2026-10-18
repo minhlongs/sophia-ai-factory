@@ -4,18 +4,14 @@
  * Layer: tree (domain-specific reusable). Imports seed only.
  * Read-only queries against performance_events — no writes, no new tables.
  *
- * Static wired-registry: 11 of 13 event types have production call sites.
- * 2 are deferred by design (no production call site yet — wiring them to a
- * fake site would produce garbage data):
- *   - creative.edited  (no creative-edit UI flow exists yet)
- *   - memory.corrected (no human-correction hook exists yet)
- *
  * @module tree/performance/emitter-health
  */
 
 import type { RealityLoopEventType } from './loop-events';
 import { REALITY_LOOP_EVENT_TYPES } from './loop-events';
-import { getD1Safe } from '@/seed/db/client';
+import { queryEventCounts, STALE_EMITTER_WINDOW_MS } from './emitter-health-query';
+
+export { STALE_EMITTER_WINDOW_MS } from './emitter-health-query';
 
 /** Event types with production call sites (all 13 canonical events wired). */
 const WIRED_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set(REALITY_LOOP_EVENT_TYPES);
@@ -26,7 +22,6 @@ const DEFERRED_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set();
 /**
  * Event types that fire only on human interventions, errors, or cancellations.
  * In a healthy or idle system, zero events in 24h is expected rather than an anomaly.
- * Tracking counts, last emitted timestamp, and lag continues without flagging false staleness.
  */
 export const CONTINGENT_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set([
   'creative.edited',
@@ -36,9 +31,6 @@ export const CONTINGENT_EVENT_TYPES: ReadonlySet<RealityLoopEventType> = new Set
   'approval.rejected',
   'creative.rejected',
 ]);
-
-/** A wired emitter with no event in this window is considered stale. */
-export const STALE_EMITTER_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 
 /** Per-event-type health snapshot. */
 export interface EmitterHealthEntry {
@@ -68,12 +60,6 @@ export interface EmitterHealthReport {
   entries: EmitterHealthEntry[];
   /** Max lag among wired emitters that have ever emitted (ms, null-safe). */
   maxLagMs: number | null;
-}
-
-interface EventAggRow {
-  event_type: string;
-  cnt: number;
-  last_ms: number | null;
 }
 
 /** Pure predicate for wired status (exported for tests + static registry use). */
@@ -123,33 +109,4 @@ export async function getEmitterHealth(nowMs: number = Date.now()): Promise<Emit
     entries,
     maxLagMs,
   };
-}
-
-/** Single-grouped-query event counts: { eventType: { count24h, lastMs } }. */
-async function queryEventCounts(): Promise<Map<string, { count24h: number; lastMs: number | null }>> {
-  const db = await getD1Safe();
-  if (!db) return new Map();
-
-  try {
-    const since24h = Date.now() - STALE_EMITTER_WINDOW_MS;
-    const { results } = await db
-      .prepare(
-        `SELECT event_type,
-                SUM(CASE WHEN recorded_at >= ? THEN 1 ELSE 0 END) AS cnt_24h,
-                MAX(recorded_at) AS last_ms
-         FROM performance_events
-         WHERE event_type IN (${REALITY_LOOP_EVENT_TYPES.map(() => '?').join(',')})
-         GROUP BY event_type`
-      )
-      .bind(since24h, ...REALITY_LOOP_EVENT_TYPES)
-      .all<EventAggRow>();
-    const out = new Map<string, { count24h: number; lastMs: number | null }>();
-    for (const row of (results ?? []) as EventAggRow[]) {
-      out.set(row.event_type, { count24h: row.cnt ?? 0, lastMs: row.last_ms ?? null });
-    }
-    return out;
-  } catch {
-    // D1 read failure → static wiring-only report. Never throw from health.
-    return new Map();
-  }
 }

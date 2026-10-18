@@ -4,81 +4,16 @@
  * @module land/affiliates/scout/writer/orchestrator
  */
 
-import type { ScoutEnv, Affiliate, ScoutResult } from '../types';
+import type { ScoutEnv, ScoutResult } from '../types';
 import { mockClient } from '../client-mock';
-import { scoreAffiliate } from '../scoring';
 import type { ScoringContext } from '../scoring';
-import { isCategoryAllowedForTenant } from '@/seed/security/geo-gate';
 import { getOrDefault } from '@/seed/tenant-settings/registry';
 import { DEFAULT_SCORING } from '@/seed/tenant-settings/defaults';
 import type { ScoringSettings } from '@/seed/tenant-settings/defaults';
-import { emit } from '@/land/webhooks';
 import { logger } from '@/seed/utils/logger-utility';
 import { ALL_CLIENTS } from './client-registry';
-import { upsertAffiliate } from './upsert';
+import { hasRealAffiliateCredentials, processOffer } from './offer-processor';
 import type { ScoutRunResult } from './types';
-
-/**
- * Process a single affiliate offer: score, persist, and emit webhook if eligible.
- */
-async function processOffer(
-  env: ScoutEnv,
-  db: D1Database,
-  tenantId: string,
-  raw: Omit<Affiliate, 'id' | 'tenantId' | 'discoveredAt'>,
-  discoveredAt: string,
-  scoringCtx: ScoringContext,
-  tenantCountry?: string,
-): Promise<boolean> {
-  const affiliate: Affiliate = {
-    id: crypto.randomUUID(),
-    tenantId,
-    discoveredAt,
-    ...raw,
-  };
-
-  const scored = scoreAffiliate(affiliate, scoringCtx);
-  if (!scored.passes) {
-    logger.info(
-      `[affiliate-scout] Skipping low-quality offer ${affiliate.externalId} (score ${scored.score})`,
-    );
-    return false;
-  }
-
-  const inserted = await upsertAffiliate(db, affiliate, scored.score, scored.breakdown);
-  if (!inserted) {
-    return false;
-  }
-
-  const category = affiliate.category ?? '';
-  if (tenantCountry && category) {
-    const allowed = await isCategoryAllowedForTenant(db, tenantId, tenantCountry, category);
-    if (!allowed) {
-      logger.info(
-        `[affiliate-scout] Geo-blocked emit for ${affiliate.externalId} (country=${tenantCountry}, category=${category})`,
-      );
-      return true;
-    }
-  }
-
-  emit(
-    env,
-    'affiliate.discovered',
-    {
-      affiliateId: affiliate.id,
-      tenantId,
-      network: affiliate.network,
-      externalId: affiliate.externalId,
-      productName: affiliate.productName,
-      commissionPct: affiliate.commissionPct ?? null,
-      commissionFlatUsd: affiliate.commissionFlatUsd ?? null,
-      score: scored.score,
-    },
-    tenantId,
-  );
-
-  return true;
-}
 
 /**
  * Run the affiliate scout for a single tenant.
@@ -108,17 +43,7 @@ export async function runAffiliateScout(
     ...scoringCtx,
   };
 
-  const hasAnyRealCred = Boolean(
-    env.IMPACT_RADIUS_API_KEY || env.PARTNERSTACK_API_KEY || env.CJ_AFFILIATE_API_KEY ||
-    env.SHAREASALE_TOKEN ||
-    env.AWIN_API_TOKEN ||
-    env.RAKUTEN_TOKEN ||
-    env.BINANCE_API_KEY ||
-    env.BYBIT_API_KEY ||
-    env.BITGET_API_KEY ||
-    env.COINBASE_API_KEY,
-  );
-
+  const hasAnyRealCred = hasRealAffiliateCredentials(env);
   const clientsToUse = hasAnyRealCred ? ALL_CLIENTS : [mockClient];
   if (!hasAnyRealCred) {
     logger.warn('[affiliate-scout] No real network credentials — using mock client');

@@ -14,6 +14,7 @@ import {
   APAC_MARKET_CONFIGS,
   isApacPeakTime,
 } from './swarm-apac-scheduler';
+import { buildPlatformPublishPayload } from './swarm-platform-payloads';
 
 // Re-export APAC scheduler utilities for seamless backward compatibility
 export {
@@ -86,48 +87,12 @@ export function generateMultiPlatformSyndication(
 
   for (const market of markets) {
     const nextSlot = calculateNextApacPeakSlot(refDate, market);
-    scheduledSlots[market] = nextSlot.toISOString();
+    const slotIso = nextSlot.toISOString();
+    scheduledSlots[market] = slotIso;
 
     for (const platform of platforms) {
       const utmUrl = buildUtmUrl(baseAffiliateUrl, platform);
-
-      let payload: PlatformPublishPayload;
-      if (platform === 'youtube') {
-        payload = {
-          platform: 'youtube',
-          title: `Tự Động Hoá Kênh Video Với AI 2026 | Sophia AI Factory`,
-          caption: `Hướng dẫn từng bước triển khai hệ thống AI tự động hóa sản xuất video và tiếp thị liên kết.\n\nĐăng ký trải nghiệm: ${utmUrl}\n\n⚠️ Tuyên bố tiếp thị: Video này có chứa đường dẫn tiếp thị liên kết theo chuẩn FTC/YouTube.`,
-          aspectRatio: '16:9',
-          tags: ['SophiaAI', 'TuDongHoa', 'KiemTienOnline', 'AffiliateMarketing', 'AI2026'],
-          utmUrl,
-          scheduledTimeUtc: nextSlot.toISOString(),
-          targetMarket: market,
-        };
-      } else if (platform === 'tiktok') {
-        payload = {
-          platform: 'tiktok',
-          title: `AI Video Factory 24/7`,
-          caption: `3 bước tự động hóa kênh không cần quay hình 🚀 Thử ngay tại link tiểu sử! #sophiaai #kiemtienonline #automation #learnontiktok`,
-          aspectRatio: '9:16',
-          tags: ['sophiaai', 'kiemtienonline', 'automation', 'learnontiktok'],
-          utmUrl,
-          scheduledTimeUtc: nextSlot.toISOString(),
-          targetMarket: market,
-        };
-      } else {
-        payload = {
-          platform: 'instagram',
-          title: `Sophia AI Reels`,
-          caption: `Bí mật tạo chuỗi video viral tự động 24/7. Nhấp vào liên kết trong bio để nhận tài liệu miễn phí! 📲\n\n#SophiaAI #PassiveIncome #MarketingAutomation`,
-          aspectRatio: '9:16',
-          tags: ['SophiaAI', 'PassiveIncome', 'MarketingAutomation', 'Reels'],
-          utmUrl,
-          scheduledTimeUtc: nextSlot.toISOString(),
-          targetMarket: market,
-        };
-      }
-
-      publishedPayloads.push(payload);
+      publishedPayloads.push(buildPlatformPublishPayload(platform, utmUrl, slotIso, market));
     }
   }
 

@@ -23,19 +23,19 @@ import {
   type PageProps,
   useCreatorStudioData,
   StudioStatsHeader,
-  TemplatesTab,
-  WithdrawalsTab,
-  CreateTemplateModal,
-  CreateWithdrawalModal,
-  VietQrModal,
 } from './components';
+import {
+  type StudioTabKey,
+  StudioTabsSection,
+  StudioModalsSection,
+} from './studio-tabs-and-modals';
 
 export default function CreatorStudioPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const locale = resolvedParams.locale === 'vi' ? 'vi' : 'en';
   const isVi = locale === 'vi';
 
-  const [activeTab, setActiveTab] = useState<'templates' | 'withdrawals'>('templates');
+  const [activeTab, setActiveTab] = useState<StudioTabKey>('templates');
 
   const {
     stats,
@@ -84,73 +84,34 @@ export default function CreatorStudioPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Tabs Switcher */}
-      <div className="flex items-center gap-4 border-b border-zinc-800">
-        <button
-          onClick={() => setActiveTab('templates')}
-          className={`pb-3 font-medium text-sm transition-all border-b-2 ${
-            activeTab === 'templates'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          {isVi ? 'Mẫu Video Của Bạn' : 'My Video Templates'} ({templates.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('withdrawals')}
-          className={`pb-3 font-medium text-sm transition-all border-b-2 ${
-            activeTab === 'withdrawals'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          {isVi ? 'Lịch Sử Rút Tiền' : 'Withdrawal History'} ({withdrawals.length})
-        </button>
-      </div>
-
-      {activeTab === 'templates' && (
-        <TemplatesTab
-          isVi={isVi}
-          loading={loading}
-          templates={templates}
-          onOpenTemplateModal={() => setIsTemplateModalOpen(true)}
-        />
-      )}
-
-      {activeTab === 'withdrawals' && (
-        <WithdrawalsTab
-          isVi={isVi}
-          loading={loading}
-          withdrawals={withdrawals}
-          onOpenQrModal={setActiveQrModal}
-        />
-      )}
-
-      <CreateTemplateModal
+      <StudioTabsSection
         isVi={isVi}
-        isOpen={isTemplateModalOpen}
-        submitting={submittingTemplate}
-        formData={templateForm}
-        onChange={setTemplateForm}
-        onClose={() => setIsTemplateModalOpen(false)}
-        onSubmit={handleCreateTemplate}
+        loading={loading}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        templates={templates}
+        withdrawals={withdrawals}
+        onOpenTemplateModal={() => setIsTemplateModalOpen(true)}
+        onOpenQrModal={setActiveQrModal}
       />
 
-      <CreateWithdrawalModal
+      <StudioModalsSection
         isVi={isVi}
-        isOpen={isWithdrawModalOpen}
-        submitting={submittingWithdraw}
         availableBalanceCents={stats.availableBalanceCents}
-        formData={withdrawForm}
-        onChange={setWithdrawForm}
-        onClose={() => setIsWithdrawModalOpen(false)}
-        onSubmit={handleCreateWithdrawal}
-      />
-
-      <VietQrModal
-        isVi={isVi}
-        modalData={activeQrModal}
-        onClose={() => setActiveQrModal(null)}
+        isTemplateModalOpen={isTemplateModalOpen}
+        submittingTemplate={submittingTemplate}
+        templateForm={templateForm}
+        onChangeTemplateForm={setTemplateForm}
+        onCloseTemplateModal={() => setIsTemplateModalOpen(false)}
+        onSubmitTemplate={handleCreateTemplate}
+        isWithdrawModalOpen={isWithdrawModalOpen}
+        submittingWithdraw={submittingWithdraw}
+        withdrawForm={withdrawForm}
+        onChangeWithdrawForm={setWithdrawForm}
+        onCloseWithdrawModal={() => setIsWithdrawModalOpen(false)}
+        onSubmitWithdraw={handleCreateWithdrawal}
+        activeQrModal={activeQrModal}
+        onCloseQrModal={() => setActiveQrModal(null)}
       />
     </div>
   );

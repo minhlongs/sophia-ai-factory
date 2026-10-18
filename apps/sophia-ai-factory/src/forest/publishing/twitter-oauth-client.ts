@@ -7,67 +7,25 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+import {
+  basicAuthHeader,
+  generatePkce,
+  getAuthorizationUrl,
+  TWITTER_SCOPES,
+  type TwitterTokenResponse,
+  type TwitterUserInfo,
+} from './twitter-oauth-pkce';
 
-const X_AUTHORIZE_URL = 'https://twitter.com/i/oauth2/authorize';
+export {
+  TWITTER_SCOPES,
+  generatePkce,
+  getAuthorizationUrl,
+  type TwitterTokenResponse,
+  type TwitterUserInfo,
+};
+
 const X_TOKEN_URL = 'https://api.x.com/2/oauth2/token';
 const X_USER_ME = 'https://api.x.com/2/users/me';
-
-export const TWITTER_SCOPES = [
-  'tweet.read',
-  'tweet.write',
-  'users.read',
-  'media.write',
-  'offline.access',
-];
-
-export interface TwitterTokenResponse {
-  access_token: string;
-  refresh_token?: string;
-  expires_in: number;
-  scope?: string;
-  token_type?: string;
-}
-
-export interface TwitterUserInfo {
-  id: string;
-  username: string;
-  name: string;
-}
-
-function base64UrlEncode(bytes: Uint8Array): string {
-  return Buffer.from(bytes).toString('base64url');
-}
-
-/** Generate PKCE pair: code_verifier (43-128 chars) + code_challenge (S256). */
-export async function generatePkce(): Promise<{ codeVerifier: string; codeChallenge: string }> {
-  const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
-  const codeVerifier = base64UrlEncode(verifierBytes);
-  const challengeBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
-  const codeChallenge = base64UrlEncode(new Uint8Array(challengeBuf));
-  return { codeVerifier, codeChallenge };
-}
-
-export function getAuthorizationUrl(state: string, codeChallenge: string): string {
-  const clientId = process.env.TWITTER_CLIENT_ID;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!clientId || !appUrl) throw new Error('TWITTER_CLIENT_ID / NEXT_PUBLIC_APP_URL not set');
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: clientId,
-    redirect_uri: `${appUrl}/api/oauth/twitter/callback`,
-    scope: TWITTER_SCOPES.join(' '),
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-  });
-  return `${X_AUTHORIZE_URL}?${params.toString()}`;
-}
-
-function basicAuthHeader(): string {
-  const id = process.env.TWITTER_CLIENT_ID ?? '';
-  const secret = process.env.TWITTER_CLIENT_SECRET ?? '';
-  return `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`;
-}
 
 export async function exchangeCodeForTokens(code: string, codeVerifier: string): Promise<TwitterTokenResponse> {
   if (!shouldAllowRequest('twitter')) {
@@ -169,4 +127,3 @@ export const twitterOAuthClient = {
   refreshAccessToken,
   getUserInfo,
 };
-

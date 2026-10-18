@@ -22,6 +22,7 @@ import type {
   StarkTransaction,
   UniversalConstitutionalInvariant,
 } from '@/seed/types/zk-stark-constitution';
+import { recordCourtCompactionProof } from './cosmic-court-d1-recorder';
 
 export interface ZkStarkCompactActionResult {
   success: boolean;
@@ -51,30 +52,19 @@ export async function compactZkStarkStateAction(
 ): Promise<ZkStarkCompactActionResult> {
   try {
     const data = compactStateWithZkStark(previousStateRoot, transactions);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO zk_stark_compaction_proofs (
-             id, proof_ref, batch_transaction_count, previous_state_root,
-             new_state_root, stark_proof_bytes_length, verification_time_micros,
-             verifier_circuit_identifier, is_mathematically_sound
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `stark_${Date.now()}`,
-          proofRef,
-          data.batchTransactionCount,
-          data.previousStateRoot,
-          data.newStateRoot,
-          data.starkProofBytesLength,
-          data.verificationTimeMicros,
-          data.verifierCircuitIdentifier,
-          data.isMathematicallySound ? 1 : 0
-        )
-        .run();
-    }
+    await recordCourtCompactionProof({
+      tableName: 'zk_stark_compaction_proofs',
+      id: `stark_${Date.now()}`,
+      proofRef,
+      proofLengthColumn: 'stark_proof_bytes_length',
+      batchTransactionCount: data.batchTransactionCount,
+      previousStateRoot: data.previousStateRoot,
+      newStateRoot: data.newStateRoot,
+      proofBytesLength: data.starkProofBytesLength,
+      verificationTimeMicros: data.verificationTimeMicros,
+      verifierCircuitIdentifier: data.verifierCircuitIdentifier,
+      isMathematicallySound: data.isMathematicallySound,
+    });
 
     return { success: data.isMathematicallySound, data };
   } catch (err: unknown) {
@@ -98,12 +88,7 @@ export async function arbitrateUniversalDisputeAction(
     if (db) {
       await db
         .prepare(
-          `INSERT INTO universal_court_arbitrations (
-             id, dispute_case_ref, claimant_participant_id, respondent_participant_id,
-             dispute_value_cents, contract_stark_root, evidence_sha256,
-             juror_count, supermajority_threshold_pct, verdict,
-             jurors_slashed_count, executed_remedy_cents, resolved_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO universal_court_arbitrations (id, dispute_case_ref, claimant_participant_id, respondent_participant_id, dispute_value_cents, contract_stark_root, evidence_sha256, juror_count, supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(
           `ucourt_${Date.now()}`,
