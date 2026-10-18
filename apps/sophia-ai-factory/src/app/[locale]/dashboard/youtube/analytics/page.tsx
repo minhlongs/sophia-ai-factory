@@ -10,10 +10,7 @@ import { listSnapshots, parseJson } from '../data';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('youtube');
-  return {
-    title: t('navAnalytics'),
-    description: t('performance'),
-  };
+  return { title: t('navAnalytics'), description: t('performance') };
 }
 
 interface MetricSummary {
@@ -25,21 +22,8 @@ interface MetricSummary {
   avgEngagement: number;
 }
 
-function emptySummary(): MetricSummary {
-  return {
-    count: 0,
-    totalViews: 0,
-    totalImpressions: 0,
-    avgCTR: 0,
-    avgRetention: 0,
-    avgEngagement: 0,
-  };
-}
-
-function summarize(
-  snapshots: Array<{ metrics: string }>,
-): MetricSummary {
-  const summary = emptySummary();
+function summarize(snapshots: Array<{ metrics: string }>): MetricSummary {
+  const summary: MetricSummary = { count: 0, totalViews: 0, totalImpressions: 0, avgCTR: 0, avgRetention: 0, avgEngagement: 0 };
   for (const snap of snapshots) {
     const metrics = parseJson(snap.metrics, {} as Record<string, number>);
     summary.count += 1;
@@ -50,20 +34,14 @@ function summarize(
     summary.avgEngagement += Number(metrics.engagementRate) || 0;
   }
   if (summary.count > 0) {
-    summary.avgCTR = summary.avgCTR / summary.count;
-    summary.avgRetention = summary.avgRetention / summary.count;
-    summary.avgEngagement = summary.avgEngagement / summary.count;
+    summary.avgCTR /= summary.count;
+    summary.avgRetention /= summary.count;
+    summary.avgEngagement /= summary.count;
   }
   return summary;
 }
 
-interface MetricCardProps {
-  label: string;
-  value: string;
-  helper?: string;
-}
-
-function MetricCard({ label, value, helper }: MetricCardProps) {
+function MetricCard({ label, value, helper }: { label: string; value: string; helper?: string }) {
   return (
     <div className="rounded-lg border border-border bg-background p-4">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>

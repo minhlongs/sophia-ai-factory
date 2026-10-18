@@ -20,15 +20,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const db = createServerClient();
-    const { searchParams } = new URL(req.url);
-    const campaignId = searchParams.get('id');
+    const campaignId = new URL(req.url).searchParams.get('id');
 
-    // Single campaign by id
     if (campaignId) {
       const { data, error } = await db
         .from('campaigns')
@@ -37,16 +33,10 @@ export async function GET(req: NextRequest) {
         .eq('user_id', user.id)
         .single();
 
-      if (error || !data) {
-        return NextResponse.json({ error: 'Not found' }, { status: 404 });
-      }
-
-      return NextResponse.json({
-        campaigns: [data as unknown as Campaign],
-      });
+      if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return NextResponse.json({ campaigns: [data as unknown as Campaign] });
     }
 
-    // List user's campaigns
     const { data, error } = await db
       .from('campaigns')
       .select('*')
@@ -55,21 +45,13 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       logger.error('[api/campaigns] DB error', new Error(error.message));
-      return NextResponse.json(
-        { error: 'Failed to fetch campaigns' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 });
     }
 
-    return NextResponse.json({
-      campaigns: (data as unknown as Campaign[]) || [],
-    });
+    return NextResponse.json({ campaigns: (data as unknown as Campaign[]) || [] });
   } catch (err) {
     logger.error('[api/campaigns] Unexpected error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -79,16 +61,10 @@ export async function DELETE(req: NextRequest) {
   }
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { searchParams } = new URL(req.url);
-    const campaignId = searchParams.get('id');
-
-    if (!campaignId) {
-      return NextResponse.json({ error: 'Missing campaign id' }, { status: 400 });
-    }
+    const campaignId = new URL(req.url).searchParams.get('id');
+    if (!campaignId) return NextResponse.json({ error: 'Missing campaign id' }, { status: 400 });
 
     const db = createServerClient();
     const { data: existing, error: lookupError } = await db
@@ -100,36 +76,21 @@ export async function DELETE(req: NextRequest) {
 
     if (lookupError) {
       logger.error('[api/campaigns] Delete lookup error', new Error(lookupError.message));
-      return NextResponse.json(
-        { error: 'Failed to delete campaign' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to delete campaign' }, { status: 500 });
     }
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const { error } = await db
-      .from('campaigns')
-      .delete()
-      .eq('id', campaignId)
-      .eq('user_id', user.id);
+    const { error } = await db.from('campaigns').delete().eq('id', campaignId).eq('user_id', user.id);
 
     if (error) {
       logger.error('[api/campaigns] Delete error', new Error(error.message));
-      return NextResponse.json(
-        { error: 'Failed to delete campaign' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to delete campaign' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     logger.error('[api/campaigns] Delete unexpected error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

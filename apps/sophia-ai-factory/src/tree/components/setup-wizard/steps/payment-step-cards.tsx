@@ -3,41 +3,14 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { CreditCard, Zap } from 'lucide-react';
-import { UNIFIED_TIERS } from '@/seed/config/tiers';
-import type { Tier } from '@/seed/types';
+import {
+  TIER_DETAILS,
+  type TierType,
+  type TierDetailInfo,
+  type PaymentCardsGridProps,
+} from './payment-step-tier-details';
 
-export type TierType = Tier;
-
-export interface TierDetailInfo {
-  name: string;
-  mcuMonthly: number;
-  price: number;
-  billingType: 'monthly' | 'lifetime';
-}
-
-function getTierDetails(tier: TierType): TierDetailInfo {
-  const canonical = UNIFIED_TIERS[tier];
-  return {
-    name: canonical.name,
-    mcuMonthly: canonical.mcuMonthly,
-    price: canonical.price,
-    billingType: canonical.billingType,
-  };
-}
-
-export const TIER_DETAILS: Record<TierType, TierDetailInfo> = {
-  BASIC: getTierDetails('BASIC'),
-  PREMIUM: getTierDetails('PREMIUM'),
-  ENTERPRISE: getTierDetails('ENTERPRISE'),
-  MASTER: getTierDetails('MASTER'),
-};
-
-interface PaymentCardsGridProps {
-  details: TierDetailInfo;
-  subscriptionStatus: string;
-  renewalDate?: string;
-  mcuBalance?: number;
-}
+export { TIER_DETAILS, type TierType, type TierDetailInfo };
 
 export function PaymentCardsGrid({
   details,

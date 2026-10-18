@@ -10,12 +10,7 @@ export type ExaflopArchitectureClass =
   | 'AMD_MI300X_POD'
   | 'APPLE_SILICON_M_MAX_MESH';
 
-export type ExaflopClusterStatus =
-  | 'OPTIMAL'
-  | 'DEGRADED'
-  | 'THERMAL_THROTTLED'
-  | 'DRAINING'
-  | 'OFFLINE';
+export type ExaflopClusterStatus = 'OPTIMAL' | 'DEGRADED' | 'THERMAL_THROTTLED' | 'DRAINING' | 'OFFLINE';
 
 export type DatacenterLocation =
   | 'ICELAND_GEOTHERMAL'
@@ -28,7 +23,7 @@ export interface ExaflopComputeCluster {
   id: string;
   clusterRef: string;
   architectureClass: ExaflopArchitectureClass;
-  totalFlopsExa: number; // e.g. 1.25 ExaFLOPs
+  totalFlopsExa: number;
   activeGpusCount: number;
   thermalEfficiencyPercentage: number;
   pueScore: number;
@@ -39,12 +34,7 @@ export interface ExaflopComputeCluster {
   createdAt: string;
 }
 
-export type PlanetaryBatchStatus =
-  | 'QUEUED'
-  | 'SCHEDULED'
-  | 'STREAMING'
-  | 'COMPLETED'
-  | 'FAILED';
+export type PlanetaryBatchStatus = 'QUEUED' | 'SCHEDULED' | 'STREAMING' | 'COMPLETED' | 'FAILED';
 
 export interface PlanetaryWorkloadBatch {
   id: string;
@@ -61,17 +51,9 @@ export interface PlanetaryWorkloadBatch {
   createdAt: string;
 }
 
-export type ConstellationOrbit =
-  | 'LEO_SUN_SYNCHRONOUS'
-  | 'MEO_EQUATORIAL'
-  | 'GEO_STATIONARY'
-  | 'EARTH_MOON_L2';
+export type ConstellationOrbit = 'LEO_SUN_SYNCHRONOUS' | 'MEO_EQUATORIAL' | 'GEO_STATIONARY' | 'EARTH_MOON_L2';
 
-export type OrbitalRelayHealth =
-  | 'ALIGNED'
-  | 'ACQUIRING_LOCK'
-  | 'ECLIPSE_BATTERY_MODE'
-  | 'MAINTENANCE';
+export type OrbitalRelayHealth = 'ALIGNED' | 'ACQUIRING_LOCK' | 'ECLIPSE_BATTERY_MODE' | 'MAINTENANCE';
 
 export interface OrbitalRelayNode {
   id: string;

@@ -1,6 +1,5 @@
-import { createLogger } from '@/seed/utils/logger-utility';
-import { hashAuthToken, verifyAuthTokenHash } from '../crypto';
-import type { NodeHealthStatus, MekongHealthResponse } from '../types';
+import { hashAuthToken } from '../crypto';
+import type { NodeHealthStatus } from '../types';
 import {
   DEFAULT_TIMEOUT_MS,
   MIN_PROBE_TIMEOUT_MS,
@@ -8,8 +7,7 @@ import {
   normalizeTunnelUrl,
   createTimeoutSignal,
 } from './url-utils';
-
-const logger = createLogger('tree/mekong/tunnel/probe');
+import { parseProbeResponse } from './probe-response-parser';
 
 /**
  * Active pre-flight probe for an edge node via Cloudflare Tunnel.
@@ -66,59 +64,7 @@ export async function probeEdgeTunnel(
     });
 
     const elapsed = Math.round(performance.now() - startTime);
-
-    if (!res.ok) {
-      if (res.status === 429 || res.status === 503) {
-        return {
-          nodeId: tunnelUrl,
-          status: 'DEGRADED',
-          latencyMs: elapsed,
-          reachable: true,
-          lastCheckedAt: Date.now(),
-          error: `HTTP_${res.status}`,
-        };
-      }
-      return {
-        nodeId: tunnelUrl,
-        status: 'OFFLINE',
-        latencyMs: elapsed,
-        reachable: false,
-        lastCheckedAt: Date.now(),
-        error: `HTTP status ${res.status}: ${res.statusText}`,
-      };
-    }
-
-    // Verify mutual auth response header if present
-    const nodeAckHash = res.headers.get('X-Mekong-Node-Auth-Hash');
-    if (nodeAckHash) {
-      const isAuthentic = await verifyAuthTokenHash(bearerToken, nodeAckHash);
-      if (!isAuthentic) {
-        logger.warn('MEKONG_MUTUAL_AUTH_FAILED', {
-          tunnelUrl,
-          reason: 'Node returned invalid token hash',
-        });
-        return {
-          nodeId: tunnelUrl,
-          status: 'OFFLINE',
-          latencyMs: elapsed,
-          reachable: false,
-          lastCheckedAt: Date.now(),
-          error: 'Mutual authentication failed: node returned invalid token hash',
-        };
-      }
-    }
-
-    const data = (await res.json().catch(() => ({}))) as Partial<MekongHealthResponse>;
-
-    return {
-      nodeId: tunnelUrl,
-      status: data.status === 'degraded' ? 'DEGRADED' : 'ONLINE',
-      latencyMs: Math.max(1, elapsed),
-      reachable: true,
-      lastCheckedAt: Date.now(),
-      runtime: data.runtime ?? 'mlx',
-      version: data.version ?? '0.1.0',
-    };
+    return await parseProbeResponse(res, tunnelUrl, bearerToken, elapsed);
   } catch (err) {
     const elapsed = Math.round(performance.now() - startTime);
     return {

@@ -41,9 +41,7 @@ export type GraphRunnerResult =
   | { ok: true; totalCostCents: number; totalTokens: number }
   | { ok: false; code: string };
 
-export async function handleGraphRunner(
-  input: GraphRunnerInput,
-): Promise<GraphRunnerResult> {
+export async function handleGraphRunner(input: GraphRunnerInput): Promise<GraphRunnerResult> {
   const { event, step } = input;
   const {
     graphRunId,
@@ -55,13 +53,10 @@ export async function handleGraphRunner(
     deterministic = false,
   } = event.data;
   const logCtx = { graphRunId, graphId, missionId, workspaceId };
-
   const nowMs = deterministic ? () => DETERMINISTIC_TIMESTAMP : Date.now;
 
   const initResult = await initializeGraphRun(step, logCtx, retryCount);
-  if (!initResult.ok) {
-    return initResult;
-  }
+  if (!initResult.ok) return initResult;
   const { run, mission, validated } = initResult.context;
 
   if (run.status === 'queued') {
@@ -85,21 +80,9 @@ export async function handleGraphRunner(
     autoRegister: true,
   });
 
-  const states = hydrateNodeStates(
-    validated.definition.nodes,
-    run.nodeStates,
-  );
-  const totals = {
-    totalCostCents: run.totalCostCents,
-    totalTokens: run.totalTokens,
-  };
-
-  const runnerContext: RunnerContext = {
-    deterministic,
-    nowMs,
-    getRun,
-    graphRunId,
-  };
+  const states = hydrateNodeStates(validated.definition.nodes, run.nodeStates);
+  const totals = { totalCostCents: run.totalCostCents, totalTokens: run.totalTokens };
+  const runnerContext: RunnerContext = { deterministic, nowMs, getRun, graphRunId };
 
   const loopResult = await runTopologicalNodes({
     topologicalOrder: validated.topologicalOrder,
@@ -113,10 +96,7 @@ export async function handleGraphRunner(
     runnerContext,
     totals,
   });
-
-  if (!loopResult.ok) {
-    return loopResult;
-  }
+  if (!loopResult.ok) return loopResult;
 
   await completeGraphRun({
     step,
@@ -127,9 +107,5 @@ export async function handleGraphRunner(
     totalTokens: totals.totalTokens,
   });
 
-  return {
-    ok: true,
-    totalCostCents: totals.totalCostCents,
-    totalTokens: totals.totalTokens,
-  };
+  return { ok: true, totalCostCents: totals.totalCostCents, totalTokens: totals.totalTokens };
 }

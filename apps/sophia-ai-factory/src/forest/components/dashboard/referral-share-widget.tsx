@@ -37,9 +37,7 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
         headers: { ...csrfHeaders },
       });
       const data = (await res.json()) as ReferralGenerateResponse;
-      if (data.code) {
-        setCode(data.code);
-      }
+      if (data.code) setCode(data.code);
     } catch {
       /* ignore */
     }
@@ -55,8 +53,7 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
 
   function shareWhatsApp() {
     if (!shareUrl) return;
-    const text = encodeURIComponent(`${t('shareText')}\n${shareUrl}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${t('shareText')}\n${shareUrl}`)}`, '_blank', 'noopener,noreferrer');
   }
 
   function shareTelegram() {
@@ -71,6 +68,12 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
     const body = encodeURIComponent(`${t('shareText')}\n${shareUrl}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank', 'noopener,noreferrer');
   }
+
+  const shareButtons = [
+    { onClick: shareWhatsApp, label: t('shareWhatsApp'), icon: MessageCircle, cls: 'hover:bg-green-500/10 hover:text-green-500' },
+    { onClick: shareTelegram, label: t('shareTelegram'), icon: Send, cls: 'hover:bg-sky-500/10 hover:text-sky-500' },
+    { onClick: shareEmail, label: t('shareEmail'), icon: Mail, cls: 'hover:bg-blue-500/10 hover:text-blue-500' },
+  ];
 
   return (
     <div className="bg-card border border-border rounded-xl p-4 md:p-5 space-y-3">
@@ -87,7 +90,6 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
         </Button>
       ) : (
         <div className="space-y-3">
-          {/* Share link with copy button */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg border border-border font-mono truncate select-all">
               {shareUrl}
@@ -97,36 +99,13 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
             </Button>
           </div>
 
-          {/* Native share buttons */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground mr-1">{t('shareLabel')}</span>
-            <Button
-              onClick={shareWhatsApp}
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-green-500/10 hover:text-green-500"
-              aria-label={t('shareWhatsApp')}
-            >
-              <MessageCircle className="w-4 h-4" aria-hidden="true" />
-            </Button>
-            <Button
-              onClick={shareTelegram}
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-sky-500/10 hover:text-sky-500"
-              aria-label={t('shareTelegram')}
-            >
-              <Send className="w-4 h-4" aria-hidden="true" />
-            </Button>
-            <Button
-              onClick={shareEmail}
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-blue-500/10 hover:text-blue-500"
-              aria-label={t('shareEmail')}
-            >
-              <Mail className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            {shareButtons.map(({ onClick, label, icon: Icon, cls }) => (
+              <Button key={label} onClick={onClick} variant="ghost" size="sm" className={`h-10 w-10 md:h-8 md:w-8 p-0 rounded-full ${cls}`} aria-label={label}>
+                <Icon className="w-4 h-4" aria-hidden="true" />
+              </Button>
+            ))}
           </div>
         </div>
       )}

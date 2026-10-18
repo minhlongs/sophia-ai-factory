@@ -25,10 +25,7 @@ export function useOpenCorePortability() {
   const csrfHeaders = useCsrfToken();
   const [statusData, setStatusData] = useState<StatusApiResponse | null>(null);
   const [selectedGate, setSelectedGate] = useState<FeatureGateEvaluation | null>(null);
-  const [validationFeedback, setValidationFeedback] = useState<{
-    ok: boolean;
-    message: string;
-  } | null>(null);
+  const [validationFeedback, setValidationFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [bundleJson, setBundleJson] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -37,15 +34,9 @@ export function useOpenCorePortability() {
     let active = true;
     fetch('/api/open-core/status')
       .then(async (r) => (r.ok ? ((await r.json()) as StatusApiResponse) : null))
-      .then((json) => {
-        if (active && json?.success) setStatusData(json);
-      })
-      .catch(() => {
-        // Non-fatal in test/offline environments
-      });
-    return () => {
-      active = false;
-    };
+      .then((json) => { if (active && json?.success) setStatusData(json); })
+      .catch(() => {});
+    return () => { active = false; };
   }, []);
 
   const handleValidateLicensePreview = async (licenseKey: string) => {
@@ -119,17 +110,9 @@ export function useOpenCorePortability() {
   };
 
   return {
-    statusData,
-    selectedGate,
-    setSelectedGate,
-    validationFeedback,
-    setValidationFeedback,
-    bundleJson,
-    setBundleJson,
-    notice,
-    isBusy,
-    handleValidateLicensePreview,
-    handleExportWorkspace,
-    handleImportWorkspace,
+    statusData, selectedGate, setSelectedGate,
+    validationFeedback, setValidationFeedback,
+    bundleJson, setBundleJson, notice, isBusy,
+    handleValidateLicensePreview, handleExportWorkspace, handleImportWorkspace,
   };
 }

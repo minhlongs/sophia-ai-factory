@@ -75,10 +75,7 @@ track_link_clicks: true
         type: 'array',
         items: {
           type: 'object',
-          properties: {
-            proposalId: { type: 'string' },
-            leadId: { type: 'string' },
-          },
+          properties: { proposalId: { type: 'string' }, leadId: { type: 'string' } },
           required: ['proposalId', 'leadId'],
         },
         minItems: 1,
@@ -87,41 +84,12 @@ track_link_clicks: true
   }),
   configSchema: JSON.stringify({
     properties: {
-      service_name: {
-        type: 'string',
-        title: 'Service / product name',
-        placeholder: 'e.g. AI Social Media Management',
-      },
-      sender_name: {
-        type: 'string',
-        title: 'Your name (sender)',
-        placeholder: 'e.g. Nguyen Van A',
-      },
-      pricing_model: {
-        type: 'string',
-        title: 'Pricing model',
-        enum: ['fixed', 'monthly_retainer', 'hourly', 'performance'],
-        default: 'monthly_retainer',
-      },
-      starting_price: {
-        type: 'integer',
-        title: 'Starting price',
-        default: 500,
-        minimum: 0,
-      },
-      currency: {
-        type: 'string',
-        title: 'Currency',
-        enum: ['USD', 'VND', 'EUR', 'SGD'],
-        default: 'USD',
-      },
-      proposals_per_day: {
-        type: 'integer',
-        title: 'Proposals per day',
-        default: 5,
-        minimum: 1,
-        maximum: 20,
-      },
+      service_name: { type: 'string', title: 'Service / product name', placeholder: 'e.g. AI Social Media Management' },
+      sender_name: { type: 'string', title: 'Your name (sender)', placeholder: 'e.g. Nguyen Van A' },
+      pricing_model: { type: 'string', title: 'Pricing model', enum: ['fixed', 'monthly_retainer', 'hourly', 'performance'], default: 'monthly_retainer' },
+      starting_price: { type: 'integer', title: 'Starting price', default: 500, minimum: 0 },
+      currency: { type: 'string', title: 'Currency', enum: ['USD', 'VND', 'EUR', 'SGD'], default: 'USD' },
+      proposals_per_day: { type: 'integer', title: 'Proposals per day', default: 5, minimum: 1, maximum: 20 },
     },
     required: ['service_name', 'sender_name'],
   }),

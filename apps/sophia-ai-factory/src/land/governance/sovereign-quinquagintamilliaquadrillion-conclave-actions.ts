@@ -45,9 +45,6 @@ export interface QuinquagintamilliaquadrillionEmpireInvariantActionResult {
   error?: string;
 }
 
-/**
- * Server Action to arbitrate a Quinquaginta-Millia-Quadrillion dispute via Sovereign Conclave (99.99999999999999999999999999% consensus).
- */
 export async function arbitrateSovereignQuinquagintamilliaquadrillionDisputeAction(
   input: QuinquagintamilliaquadrillionDisputeInput
 ): Promise<SovereignQuinquagintamilliaquadrillionDisputeActionResult> {
@@ -55,64 +52,33 @@ export async function arbitrateSovereignQuinquagintamilliaquadrillionDisputeActi
     const data = arbitrateSovereignQuinquagintamilliaquadrillionConclaveDispute(input);
     await recordSovereignConclaveDispute({
       tablePrefix: 'quinquagintamilliaquadrillion',
-      disputeCaseRef: data.disputeCaseRef,
-      claimantParticipantId: input.claimantParticipantId,
-      respondentParticipantId: input.respondentParticipantId,
-      disputeValueCents: input.disputeValueCents,
-      evidenceSha256: input.evidenceSha256,
-      totalJurors: data.totalJurors,
-      claimantVotes: data.claimantVotes,
-      respondentVotes: data.respondentVotes,
-      effectiveSupermajorityPct: data.effectiveSupermajorityPct,
-      jurorsSlashedCount: data.jurorsSlashedCount,
-      totalSlashedStakeCents: data.totalSlashedStakeCents,
-      executedRemedyCents: data.executedRemedyCents,
-      verdict: data.verdict,
-      rulingHash: data.rulingHash,
+      ...input,
+      ...data,
     });
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown dispute arbitration error';
-    return { success: false, error: message };
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown dispute arbitration error' };
   }
 }
 
-/**
- * Server Action to compact 200,000,000,000,000,000 transactions using 2,199,023,255,552-bit Non-Archimedean Braided STARK.
- */
 export async function compactQuinquagintamilliaquadrillionBraidedStarkAction(
   previousStateRoot: string,
   transactions: QuinquagintamilliaquadrillionEmpireTransaction[],
   circuitIdentifier?: string
 ): Promise<QuinquagintamilliaquadrillionBraidedCompactionActionResult> {
   try {
-    const data = compactStateWithQuinquagintamilliaquadrillionBraidedStark(
-      previousStateRoot,
-      transactions,
-      circuitIdentifier
-    );
+    const data = compactStateWithQuinquagintamilliaquadrillionBraidedStark(previousStateRoot, transactions, circuitIdentifier);
     await recordSovereignBraidedStarkBatch({
       tablePrefix: 'quinquagintamilliaquadrillion',
       batchRefPrefix: 'STARK-BATCH-QUINQUAGINTA',
-      batchTransactionCount: data.batchTransactionCount,
-      previousStateRoot: data.previousStateRoot,
-      newStateRoot: data.newStateRoot,
-      starkProofBytesLength: data.starkProofBytesLength,
-      verificationTimeNanos: data.verificationTimeNanos,
-      verifierCircuitIdentifier: data.verifierCircuitIdentifier,
-      isMathematicallySound: data.isMathematicallySound,
-      compactionDigest: data.compactionDigest,
+      ...data,
     });
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown STARK compaction error';
-    return { success: false, error: message };
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown STARK compaction error' };
   }
 }
 
-/**
- * Server Action to verify adherence to Quinquaginta-Millia-Quadrillion Empire Constitutional Charter.
- */
 export async function verifyQuinquagintamilliaquadrillionEmpireInvariantAction(
   invariant: QuinquagintamilliaquadrillionEmpireConstitutionalInvariant,
   proposedAction: string
@@ -128,7 +94,6 @@ export async function verifyQuinquagintamilliaquadrillionEmpireInvariantAction(
     });
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown constitutional invariant error';
-    return { success: false, error: message };
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown constitutional invariant error' };
   }
 }

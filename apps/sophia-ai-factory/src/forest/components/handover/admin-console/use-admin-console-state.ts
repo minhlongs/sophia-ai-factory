@@ -6,20 +6,9 @@
  */
 
 import { useState } from 'react';
-import type {
-  CustomerHandoverRecord,
-  VerificationRunReport,
-} from '@/seed/handover/handover-types';
-import type {
-  HandoverAdminConsoleClientProps,
-  DrDrillReport,
-  StatusFilterType,
-} from './types';
-import {
-  downloadBlob,
-  filterHandoverRecords,
-  executeDrDrillProbe,
-} from './admin-console-helpers';
+import type { CustomerHandoverRecord, VerificationRunReport } from '@/seed/handover/handover-types';
+import type { HandoverAdminConsoleClientProps, DrDrillReport, StatusFilterType } from './types';
+import { downloadBlob, filterHandoverRecords, executeDrDrillProbe } from './admin-console-helpers';
 
 export function useAdminConsoleState({
   handovers,
@@ -30,20 +19,14 @@ export function useAdminConsoleState({
   const [stats] = useState(initialStats);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all');
-
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationReport, setVerificationReport] =
-    useState<VerificationRunReport | null>(null);
+  const [verificationReport, setVerificationReport] = useState<VerificationRunReport | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
-
   const [isDrilling, setIsDrilling] = useState(false);
   const [drDrillReport, setDrDrillReport] = useState<DrDrillReport | null>(null);
-
   const [isExportingEnv, setIsExportingEnv] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
-
-  const [selectedRecord, setSelectedRecord] =
-    useState<CustomerHandoverRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<CustomerHandoverRecord | null>(null);
   const [copiedHash, setCopiedHash] = useState(false);
 
   const filteredHandovers = filterHandoverRecords(handovers, searchQuery, statusFilter);
@@ -54,21 +37,15 @@ export function useAdminConsoleState({
     try {
       if (onVerifyAction) {
         const res = await onVerifyAction();
-        if (res.ok) {
-          setVerificationReport(res.value);
-        } else {
-          setVerificationError(res.error.message || 'Verification execution failed.');
-        }
+        if (res.ok) setVerificationReport(res.value);
+        else setVerificationError(res.error.message || 'Verification execution failed.');
       } else {
         const res = await fetch('/api/admin/handover/verify', { method: 'POST' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as VerificationRunReport;
-        setVerificationReport(data);
+        setVerificationReport((await res.json()) as VerificationRunReport);
       }
     } catch (err) {
-      setVerificationError(
-        err instanceof Error ? err.message : 'Failed to execute verification suite.',
-      );
+      setVerificationError(err instanceof Error ? err.message : 'Failed to execute verification suite.');
     } finally {
       setIsVerifying(false);
     }
@@ -77,8 +54,7 @@ export function useAdminConsoleState({
   const handleRunDrDrill = async () => {
     setIsDrilling(true);
     try {
-      const report = await executeDrDrillProbe();
-      setDrDrillReport(report);
+      setDrDrillReport(await executeDrDrillProbe());
     } finally {
       setIsDrilling(false);
     }
@@ -91,14 +67,8 @@ export function useAdminConsoleState({
       if (onExportEnvAction) {
         const res = await onExportEnvAction();
         if (res.ok) {
-          downloadBlob(
-            res.value.sanitizedContent,
-            '.env.production',
-            'text/plain;charset=utf-8',
-          );
-          setExportNotice(
-            `Exported ${res.value.totalKeys} keys (${res.value.missingKeys.length} unconfigured).`,
-          );
+          downloadBlob(res.value.sanitizedContent, '.env.production', 'text/plain;charset=utf-8');
+          setExportNotice(`Exported ${res.value.totalKeys} keys (${res.value.missingKeys.length} unconfigured).`);
         } else {
           setExportNotice(`Export error: ${res.error.message}`);
         }
@@ -107,9 +77,7 @@ export function useAdminConsoleState({
         setExportNotice('Downloading .env.production bundle...');
       }
     } catch (err) {
-      setExportNotice(
-        `Failed to export: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      );
+      setExportNotice(`Failed to export: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsExportingEnv(false);
     }

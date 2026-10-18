@@ -1,19 +1,6 @@
 /**
- * Algorithm: digital product fulfillment — grant download/access for a paid
- * order, exactly once.
- *
- * Idempotency is enforced by the commerce_fulfillments UNIQUE(order_id)
- * constraint: the fulfillment row is inserted with
- * INSERT ... ON CONFLICT(order_id) DO NOTHING and meta.changes decides
- * ownership. A duplicate delivery (double IPN) finds the existing row and
- * returns success with alreadyFulfilled=true — no second grant, no error.
- *
- * The grant itself is a deterministic reference (access:<assetRef> or
- * download:<orderId>) persisted on the fulfillment row; no live platform
- * call is made, so fulfillment is safe to retry.
- *
- * Timestamps are MILLISECONDS (performance_events convention).
- *
+ * Digital product fulfillment — grant download/access for a paid order, exactly once.
+ * Idempotency is enforced by commerce_fulfillments UNIQUE(order_id) with ON CONFLICT DO NOTHING.
  * @module land/commerce/digital-fulfillment
  */
 import { getD1 } from '@/seed/db/client';
@@ -45,31 +32,18 @@ export interface FulfillmentOk {
   fulfillmentId: string;
   orderId: string;
   grantRef: string;
-  /** True when a prior run already granted this order. */
   alreadyFulfilled: boolean;
 }
 
 export { buildGrantRef };
 
-/**
- * Fulfill a paid order exactly once:
- *   1. Load the order — must exist and be in `paid` state.
- *   2. Atomically claim the fulfillment row (UNIQUE(order_id) lock).
- *   3. Resolve the grant reference from the product's asset_ref.
- *   4. Mark the fulfillment granted + the order fulfilled.
- *
- * Returns success(alreadyFulfilled=true) for a duplicate delivery.
- */
 export async function fulfillOrder(orderId: string): Promise<Result<FulfillmentOk, FulfillmentError>> {
   const db = await getD1();
   if (!db) return failure({ code: 'DB_UNAVAILABLE', message: 'D1 binding not available' });
 
   const orderResult = await getOrder(orderId);
   if (!orderResult.ok) {
-    return failure({
-      code: 'ORDER_NOT_FOUND',
-      message: `Order ${orderId} not found: ${orderResult.error.message}`,
-    });
+    return failure({ code: 'ORDER_NOT_FOUND', message: `Order ${orderId} not found: ${orderResult.error.message}` });
   }
   const order = orderResult.value;
 
@@ -84,24 +58,13 @@ export async function fulfillOrder(orderId: string): Promise<Result<FulfillmentO
   }
 
   if (order.status !== 'paid') {
-    return failure({
-      code: 'ORDER_NOT_PAID',
-      message: `Order ${orderId} is ${order.status}, expected paid`,
-    });
+    return failure({ code: 'ORDER_NOT_PAID', message: `Order ${orderId} is ${order.status}, expected paid` });
   }
 
   const fulfillmentId = newFulfillmentId();
   const now = Date.now();
   try {
-    const changes = await claimFulfillmentSlot(
-      db,
-      fulfillmentId,
-      orderId,
-      order.productId,
-      order.workspaceId,
-      now
-    );
-
+    const changes = await claimFulfillmentSlot(db, fulfillmentId, orderId, order.productId, order.workspaceId, now);
     if (changes === 0) {
       const existing = await fetchExistingFulfillment(db, orderId);
       return success({

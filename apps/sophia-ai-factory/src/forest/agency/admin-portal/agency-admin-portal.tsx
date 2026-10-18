@@ -18,93 +18,70 @@ import type {
   AgencyAdminPortalProps,
 } from './types';
 
-export function AgencyAdminPortal({
-  initialData,
-  locale = 'vi',
-  actions,
-}: AgencyAdminPortalProps) {
+function applyStatusUpdate(
+  prev: AgencyAdminDashboardData,
+  subaccountId: string,
+  newStatus: 'active' | 'suspended',
+): AgencyAdminDashboardData {
+  return {
+    ...prev,
+    clients: prev.clients.map((c) => (c.id === subaccountId ? { ...c, status: newStatus } : c)),
+    kpi: {
+      ...prev.kpi,
+      totalActiveClients:
+        newStatus === 'active'
+          ? prev.kpi.totalActiveClients + 1
+          : Math.max(0, prev.kpi.totalActiveClients - 1),
+    },
+  };
+}
+
+function applyQuotaUpdate(
+  prev: AgencyAdminDashboardData,
+  subaccountId: string,
+  newQuota: number,
+): AgencyAdminDashboardData {
+  const updatedClients = prev.clients.map((c) =>
+    c.id === subaccountId
+      ? {
+          ...c,
+          allocatedMcu: newQuota,
+          mcuUtilizationRate: newQuota > 0 ? Math.min(100, Math.round((c.usedMcu / newQuota) * 100)) : 0,
+        }
+      : c,
+  );
+  const totalAllocated = updatedClients.reduce((acc, c) => acc + c.allocatedMcu, 0);
+  const totalUsed = updatedClients.reduce((acc, c) => acc + c.usedMcu, 0);
+  return {
+    ...prev,
+    clients: updatedClients,
+    kpi: {
+      ...prev.kpi,
+      totalAllocatedMcu: totalAllocated,
+      mcuUtilizationRate: totalAllocated > 0 ? Math.round((totalUsed / totalAllocated) * 100) : 0,
+    },
+  };
+}
+
+export function AgencyAdminPortal({ initialData, locale = 'vi', actions }: AgencyAdminPortalProps) {
   const isVi = locale === 'vi';
   const [data, setData] = useState<AgencyAdminDashboardData>(initialData);
-  const [selectedClientForQuota, setSelectedClientForQuota] =
-    useState<AgencyClientSummary | null>(null);
+  const [selectedClientForQuota, setSelectedClientForQuota] = useState<AgencyClientSummary | null>(null);
 
-  async function handleToggleStatus(
-    subaccountId: string,
-    newStatus: 'active' | 'suspended'
-  ) {
+  async function handleToggleStatus(subaccountId: string, newStatus: 'active' | 'suspended') {
     if (actions?.updateClientStatus) {
-      const res = await actions.updateClientStatus(
-        subaccountId,
-        data.agencyContext.agencyId,
-        newStatus
-      );
-      if (!res.success) {
-        throw new Error(res.error || 'Failed to update client status');
-      }
+      const res = await actions.updateClientStatus(subaccountId, data.agencyContext.agencyId, newStatus);
+      if (!res.success) throw new Error(res.error || 'Failed to update client status');
     }
-
-    // Optimistic local state update
-    setData((prev) => ({
-      ...prev,
-      clients: prev.clients.map((c) =>
-        c.id === subaccountId ? { ...c, status: newStatus } : c
-      ),
-      kpi: {
-        ...prev.kpi,
-        totalActiveClients:
-          newStatus === 'active'
-            ? prev.kpi.totalActiveClients + 1
-            : Math.max(0, prev.kpi.totalActiveClients - 1),
-      },
-    }));
+    setData((prev) => applyStatusUpdate(prev, subaccountId, newStatus));
   }
 
   async function handleSaveQuota(subaccountId: string, newQuota: number) {
     if (actions?.reallocateQuota) {
-      const res = await actions.reallocateQuota(
-        subaccountId,
-        data.agencyContext.agencyId,
-        newQuota
-      );
-      if (!res.success) {
-        throw new Error(res.error || 'Failed to reallocate quota');
-      }
+      const res = await actions.reallocateQuota(subaccountId, data.agencyContext.agencyId, newQuota);
+      if (!res.success) throw new Error(res.error || 'Failed to reallocate quota');
     }
-
-    // Optimistic local state update
-    setData((prev) => {
-      const updatedClients = prev.clients.map((c) =>
-        c.id === subaccountId
-          ? {
-              ...c,
-              allocatedMcu: newQuota,
-              mcuUtilizationRate:
-                newQuota > 0
-                  ? Math.min(100, Math.round((c.usedMcu / newQuota) * 100))
-                  : 0,
-            }
-          : c
-      );
-      const totalAllocated = updatedClients.reduce(
-        (acc, c) => acc + c.allocatedMcu,
-        0
-      );
-      const totalUsed = updatedClients.reduce((acc, c) => acc + c.usedMcu, 0);
-      const mcuUtilizationRate =
-        totalAllocated > 0
-          ? Math.round((totalUsed / totalAllocated) * 100)
-          : 0;
-
-      return {
-        ...prev,
-        clients: updatedClients,
-        kpi: {
-          ...prev.kpi,
-          totalAllocatedMcu: totalAllocated,
-          mcuUtilizationRate,
-        },
-      };
-    });
+    setData((prev) => applyQuotaUpdate(prev, subaccountId, newQuota));
   }
 
   return (

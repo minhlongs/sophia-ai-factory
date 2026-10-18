@@ -45,9 +45,6 @@ export interface DecemmilliaquadrillionEmpireInvariantActionResult {
   error?: string;
 }
 
-/**
- * Server Action to arbitrate a Decem-Millia-Quadrillion dispute via Sovereign Conclave (99.999999999999999999999999% consensus).
- */
 export async function arbitrateSovereignDecemmilliaquadrillionDisputeAction(
   input: DecemmilliaquadrillionDisputeInput
 ): Promise<SovereignDecemmilliaquadrillionDisputeActionResult> {
@@ -55,64 +52,33 @@ export async function arbitrateSovereignDecemmilliaquadrillionDisputeAction(
     const data = arbitrateSovereignDecemmilliaquadrillionConclaveDispute(input);
     await recordSovereignConclaveDispute({
       tablePrefix: 'decemmilliaquadrillion',
-      disputeCaseRef: data.disputeCaseRef,
-      claimantParticipantId: input.claimantParticipantId,
-      respondentParticipantId: input.respondentParticipantId,
-      disputeValueCents: input.disputeValueCents,
-      evidenceSha256: input.evidenceSha256,
-      totalJurors: data.totalJurors,
-      claimantVotes: data.claimantVotes,
-      respondentVotes: data.respondentVotes,
-      effectiveSupermajorityPct: data.effectiveSupermajorityPct,
-      jurorsSlashedCount: data.jurorsSlashedCount,
-      totalSlashedStakeCents: data.totalSlashedStakeCents,
-      executedRemedyCents: data.executedRemedyCents,
-      verdict: data.verdict,
-      rulingHash: data.rulingHash,
+      ...input,
+      ...data,
     });
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown dispute arbitration error';
-    return { success: false, error: message };
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown dispute arbitration error' };
   }
 }
 
-/**
- * Server Action to compact 40,000,000,000,000,000 transactions using 549,755,813,888-bit Non-Archimedean Braided STARK.
- */
 export async function compactDecemmilliaquadrillionBraidedStarkAction(
   previousStateRoot: string,
   transactions: DecemmilliaquadrillionEmpireTransaction[],
   circuitIdentifier?: string
 ): Promise<DecemmilliaquadrillionBraidedCompactionActionResult> {
   try {
-    const data = compactStateWithDecemmilliaquadrillionBraidedStark(
-      previousStateRoot,
-      transactions,
-      circuitIdentifier
-    );
+    const data = compactStateWithDecemmilliaquadrillionBraidedStark(previousStateRoot, transactions, circuitIdentifier);
     await recordSovereignBraidedStarkBatch({
       tablePrefix: 'decemmilliaquadrillion',
       batchRefPrefix: 'STARK-BATCH-DECEM',
-      batchTransactionCount: data.batchTransactionCount,
-      previousStateRoot: data.previousStateRoot,
-      newStateRoot: data.newStateRoot,
-      starkProofBytesLength: data.starkProofBytesLength,
-      verificationTimeNanos: data.verificationTimeNanos,
-      verifierCircuitIdentifier: data.verifierCircuitIdentifier,
-      isMathematicallySound: data.isMathematicallySound,
-      compactionDigest: data.compactionDigest,
+      ...data,
     });
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown STARK compaction error';
-    return { success: false, error: message };
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown STARK compaction error' };
   }
 }
 
-/**
- * Server Action to verify adherence to Decem-Millia-Quadrillion Empire Constitutional Charter.
- */
 export async function verifyDecemmilliaquadrillionEmpireInvariantAction(
   invariant: DecemmilliaquadrillionEmpireConstitutionalInvariant,
   proposedAction: string
@@ -128,7 +94,6 @@ export async function verifyDecemmilliaquadrillionEmpireInvariantAction(
     });
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown constitutional invariant error';
-    return { success: false, error: message };
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown constitutional invariant error' };
   }
 }

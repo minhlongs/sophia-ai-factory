@@ -5,15 +5,12 @@
  * Compatible with `wrangler d1 execute --file=<dump.sql>` for restore.
  *
  * Scope: tables only. Indices and views are recreated by migrations; this dump
- * is a DATA snapshot, NOT a schema snapshot. Restore procedure must run
- * migrations first, then apply this dump.
+ * is a DATA snapshot, NOT a schema snapshot.
  *
  * @module forest/dr/d1-dump-builder
  */
 
-/**
- * SQLite system tables we skip — auto-managed by SQLite and re-created by migrations.
- */
+/** SQLite system tables we skip — auto-managed by SQLite and re-created by migrations. */
 const SQLITE_INTERNAL_TABLES = new Set([
   'sqlite_sequence',
   'sqlite_stat1',
@@ -22,26 +19,17 @@ const SQLITE_INTERNAL_TABLES = new Set([
   'd1_migrations',
 ]);
 
-/**
- * Maximum rows per table dump. Hard ceiling to keep Worker CPU bounded.
- * Tables exceeding this should use a paginated dump (future enhancement).
- */
+/** Maximum rows per table dump. Hard ceiling to keep Worker CPU bounded. */
 const MAX_ROWS_PER_TABLE = 100_000;
 
-/**
- * SQLite identifier quoting — doubles embedded `"` per ANSI SQL.
- * Required for column/table names that contain quote chars (rare but possible
- * if schema is loaded from untrusted source or migrated from another DB).
- */
+/** SQLite identifier quoting — doubles embedded `"` per ANSI SQL. */
 function quoteIdent(name: string): string {
   return '"' + name.replaceAll('"', '""') + '"';
 }
 
 /**
  * Escape a single SQL value into its literal form.
- *
  * Handles: null, boolean, number, bigint, string, ArrayBuffer (blob).
- * Strings use SQLite-safe single-quote doubling. Blobs use X'…' hex literal.
  */
 export function sqlEscape(value: unknown): string {
   if (value === null || value === undefined) return 'NULL';
@@ -55,37 +43,24 @@ export function sqlEscape(value: unknown): string {
     }
     return `X'${hex}'`;
   }
-  // Default: string-coerce + escape single quotes by doubling per SQLite spec.
   return "'" + String(value).replaceAll("'", "''") + "'";
 }
 
-/**
- * Serialize a single table row to `(val1, val2, ...)` literal.
- */
 function serializeRow(columns: string[], row: Record<string, unknown>): string {
-  const values = columns.map((col) => sqlEscape(row[col]));
-  return '(' + values.join(', ') + ')';
+  return '(' + columns.map((col) => sqlEscape(row[col])).join(', ') + ')';
 }
 
 /**
  * Build a SQL dump for all user tables in a D1 database.
- *
- * Output format (suitable for `wrangler d1 execute --file=`):
- * ```
- * -- Sophia D1 dump generated 2026-05-13T03:00:00Z
- * INSERT INTO users (id, email, ...) VALUES (...), (...);
- * INSERT INTO orders (id, user_id, ...) VALUES (...);
- * ```
- *
  * Tables exceeding `MAX_ROWS_PER_TABLE` are truncated with a `-- TRUNCATED` marker.
  */
 export async function buildD1Dump(db: D1Database): Promise<string> {
-  const lines: string[] = [];
-  const startedAt = new Date().toISOString();
-  lines.push(`-- Sophia AI Factory D1 dump`);
-  lines.push(`-- Generated: ${startedAt}`);
-  lines.push(`-- Restore: wrangler d1 execute sophia-raas-db --file=<this-file> --remote`);
-  lines.push('');
+  const lines: string[] = [
+    `-- Sophia AI Factory D1 dump`,
+    `-- Generated: ${new Date().toISOString()}`,
+    `-- Restore: wrangler d1 execute sophia-raas-db --file=<this-file> --remote`,
+    '',
+  ];
 
   const tablesResult = await db
     .prepare(
@@ -94,12 +69,6 @@ export async function buildD1Dump(db: D1Database): Promise<string> {
        ORDER BY name`,
     )
     .all<{ name: string }>();
-
-  // FK ordering: SQLite default `INSERT` enforces FK constraints during restore
-  // when sqlite_master is populated. The restore script SHOULD wrap the dump in
-  // `PRAGMA foreign_keys = OFF; ... PRAGMA foreign_keys = ON;` to handle tables
-  // dumped in alphabetical order regardless of dependency direction. Documented
-  // in SOP 15 step 4 — verify there if changing dump order policy.
 
   const tables = (tablesResult.results ?? []).filter(
     (t) => !SQLITE_INTERNAL_TABLES.has(t.name),
@@ -111,8 +80,7 @@ export async function buildD1Dump(db: D1Database): Promise<string> {
       .all<Record<string, unknown>>();
     const rows = rowsResult.results ?? [];
     if (rows.length === 0) {
-      lines.push(`-- Table: ${tableName} (0 rows)`);
-      lines.push('');
+      lines.push(`-- Table: ${tableName} (0 rows)`, '');
       continue;
     }
 
@@ -123,13 +91,9 @@ export async function buildD1Dump(db: D1Database): Promise<string> {
 
     lines.push(`-- Table: ${tableName} (${rows.length} rows${truncated ? ' — TRUNCATED' : ''})`);
     lines.push(`INSERT INTO ${quoteIdent(tableName)} (${columnList}) VALUES`);
-    const values = dumpRows.map((r) => serializeRow(columns, r)).join(',\n  ');
-    lines.push('  ' + values + ';');
-    lines.push('');
+    lines.push('  ' + dumpRows.map((r) => serializeRow(columns, r)).join(',\n  ') + ';', '');
   }
 
-  const finishedAt = new Date().toISOString();
-  lines.push(`-- Dump finished: ${finishedAt}`);
-  lines.push(`-- Tables: ${tables.length}`);
+  lines.push(`-- Dump finished: ${new Date().toISOString()}`, `-- Tables: ${tables.length}`);
   return lines.join('\n');
 }

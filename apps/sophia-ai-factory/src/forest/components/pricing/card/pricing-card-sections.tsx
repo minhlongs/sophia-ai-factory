@@ -24,13 +24,7 @@ export interface PricingCardPriceSectionProps {
 }
 
 export function PricingCardPriceSection({
-  isAnnual,
-  monthlyPrice,
-  annualPriceCents,
-  discountedPriceCents,
-  locale,
-  showVnd,
-  yearlySavingsPercent,
+  isAnnual, monthlyPrice, annualPriceCents, discountedPriceCents, locale, showVnd, yearlySavingsPercent,
 }: PricingCardPriceSectionProps) {
   const t = useTranslations("landing");
 
@@ -39,17 +33,11 @@ export function PricingCardPriceSection({
       {isAnnual ? (
         <>
           <div className="flex items-baseline gap-2 flex-wrap">
-            {discountedPriceCents !== undefined ? (
-              <>
-                <span className="text-3xl font-bold text-emerald-400">
-                  {formatPrice(discountedPriceCents, locale)}
-                </span>
-                <span className="text-xl line-through text-muted-foreground/60">
-                  {formatPrice(annualPriceCents!, locale)}
-                </span>
-              </>
-            ) : (
-              <span className="text-3xl font-bold text-emerald-400">
+            <span className="text-3xl font-bold text-emerald-400">
+              {formatPrice(discountedPriceCents ?? annualPriceCents!, locale)}
+            </span>
+            {discountedPriceCents !== undefined && (
+              <span className="text-xl line-through text-muted-foreground/60">
                 {formatPrice(annualPriceCents!, locale)}
               </span>
             )}
@@ -68,17 +56,11 @@ export function PricingCardPriceSection({
         <div className="flex items-baseline gap-2">
           {discountedPriceCents !== undefined ? (
             <>
-              <span className="text-3xl font-bold text-emerald-400">
-                {formatPrice(discountedPriceCents, locale)}
-              </span>
-              <span className="text-xl line-through text-muted-foreground/60">
-                {formatPrice(monthlyPrice, locale)}
-              </span>
+              <span className="text-3xl font-bold text-emerald-400">{formatPrice(discountedPriceCents, locale)}</span>
+              <span className="text-xl line-through text-muted-foreground/60">{formatPrice(monthlyPrice, locale)}</span>
             </>
           ) : (
-            <span className="text-3xl font-bold text-foreground">
-              {formatPrice(monthlyPrice, locale)}
-            </span>
+            <span className="text-3xl font-bold text-foreground">{formatPrice(monthlyPrice, locale)}</span>
           )}
           <span className="text-muted-foreground">{t("pricing.per_month")}</span>
         </div>
@@ -102,9 +84,7 @@ export interface PricingCardFeaturesSectionProps {
   featureGroups: PricingCardProps["featureGroups"];
 }
 
-export function PricingCardFeaturesSection({
-  featureGroups,
-}: PricingCardFeaturesSectionProps) {
+export function PricingCardFeaturesSection({ featureGroups }: PricingCardFeaturesSectionProps) {
   const t = useTranslations("landing");
 
   return (
@@ -114,9 +94,7 @@ export function PricingCardFeaturesSection({
         {t("pricing.features.group_video")}
       </p>
       <ul className="space-y-2">
-        {featureGroups.video.map((f) => (
-          <FeatureItem key={f} text={f} />
-        ))}
+        {featureGroups.video.map((f) => <FeatureItem key={f} text={f} />)}
       </ul>
 
       <div className="my-4 border-t border-border/50" />
@@ -126,9 +104,7 @@ export function PricingCardFeaturesSection({
         {t("pricing.features.group_raas")}
       </p>
       <ul className="space-y-2">
-        {featureGroups.raas.map((f) => (
-          <FeatureItem key={f} text={f} />
-        ))}
+        {featureGroups.raas.map((f) => <FeatureItem key={f} text={f} />)}
       </ul>
     </div>
   );

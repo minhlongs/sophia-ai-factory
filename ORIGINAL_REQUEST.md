@@ -2036,3 +2036,59 @@ Provide smooth skeleton/loading transitions and prevent cumulative layout shift 
 - [ ] `npm --prefix apps/sophia-ai-factory run i18n:validate` exits with code `0` (0 missing translation keys).
 - [ ] `npm run verify:open-core` (`verify-open-core-readiness.mjs` + `verify-blueprint-protected-flows.mjs`) exits with code `0`.
 - [ ] All Vitest unit/component tests and Playwright E2E specs (`stitch-control-deck.spec.ts`) pass with exit code `0`.
+
+
+## 2026-10-18T08:26:00Z
+
+Audit and release all current uncommitted worktree changes to `https://sophia.agencyos.network` with zero known defects across all changed paths and 100% passing release, security, coverage, and post-deploy verification gates.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+Reference material:
+- `AGENTS.md` and `apps/sophia-ai-factory/CLAUDE.md` (4-layer architecture `seed -> tree -> forest -> land`, protected flows, bilingual `vi` + `en` requirement, CF-direct deploy verification)
+- `.github/workflows/deploy.yml` and `.github/workflows/pr-checks.yml` (canonical CI/CD pipelines)
+- Current `HEAD` / `origin/main` baseline: `354d008f572b7f5e73a82b999517fb0ec925f539` (currently live at `https://sophia.agencyos.network/api/version` as `"shortSha": "354d008f"`, deployed via run `39108311095`)
+
+## Requirements
+
+### R1. Full Worktree Preservation, Codebase Governance & Regression Fixes
+Preserve and review the full uncommitted worktree change set (all modified and untracked helper extractions, UI, API, billing, workflow, and design artifacts). Fix any behavior, security, bilingual-copy (`vi` + `en`), TypeScript, ESLint, or 4-layer architecture boundary (`seed -> tree -> forest -> land`) regressions found, while keeping changed production source files under 180 lines of code with zero `:any` types and zero prohibited `console.*` calls.
+
+### R2. Open-Core Blueprint Audit & Protected Flows Verification
+Verify that `GET /api/open-core/status` preserves its additive, nullable `blueprintAudit` report and keeps all existing response fields backward-compatible, with zero migration files changed. Add or adjust regression and branch-coverage tests for the extracted campaign, video, tenancy, publishing, and checkout helpers, and run protected-flow integration tests for Setup Wizard, Telegram Bot, and payment activation.Validate localized checkout in provider test mode using ledger/idempotency tests and signed webhook fixtures without charging real funds.
+
+### R3. Controlled Promotion via PR & Canonical GitHub Actions Deployment
+Commit the verified candidate on a feature branch, open a PR to `main`, and require passing PR checks (`Quality Gate (Gates 1 + 3)` including `>= 70%` diff line and branch coverage, `Security Scan (Gate 2)`, and `Dependency Audit (Gate 4)`). Merge only after all local and PR release gates pass so the merge triggers the canonical GitHub Actions production deploy (`.github/workflows/deploy.yml`). Do not use local direct deploy (`npm run deploy:full`), and do not treat `site/public` prototypes as a separate deployment target.
+
+### R4. Bit-for-Bit Live Edge Verification & Rollback Guardrail
+Before and after promotion, fetch the live SHA from `https://sophia.agencyos.network/api/version` and the GitHub Actions deployment run status. Require the post-deploy live `/api/version` SHA to match the merged `main` commit bit-for-bit and verify production smoke checks (`/api/health`, `/login`, `/vi/login`, `/en/login`). If post-deploy verification fails or remains unverifiable, stop the release report and roll back the Cloudflare Worker to its prior verified version (`354d008f`).
+
+## Verification Resources
+
+- TypeScript check: `npm --prefix apps/sophia-ai-factory run type-check`
+- Lint check: `npm --prefix apps/sophia-ai-factory run lint`
+- Layer boundary check: `npm --prefix apps/sophia-ai-factory run check:boundaries`
+- Bilingual i18n check: `npm --prefix apps/sophia-ai-factory run i18n:validate`
+- Production source guards: `node apps/sophia-ai-factory/scripts/check-production-source-guards.mjs`
+- Unit & integration test suite: `npm --prefix apps/sophia-ai-factory test`
+- Diff line & branch coverage gate (`>= 70%`): `node apps/sophia-ai-factory/scripts/check-diff-coverage.mjs`
+- Open-Core & Protected Flows suite: `npm run verify:open-core`
+- Production build: `npm --prefix apps/sophia-ai-factory run build`
+- Live edge endpoints: `https://sophia.agencyos.network/api/version`, `https://sophia.agencyos.network/api/health`, `https://sophia.agencyos.network/login`, `https://sophia.agencyos.network/vi/login`, `https://sophia.agencyos.network/en/login`
+
+## Acceptance Criteria
+
+### Local Release Gates (`apps/sophia-ai-factory`)
+- [ ] `npm run type-check` exits with code `0` (`0` TypeScript errors).
+- [ ] `npm run lint` and `node scripts/check-production-source-guards.mjs` exit with code `0` (`0` errors, `0` explicit `any`, `0` prohibited `console.*`).
+- [ ] `npm run check:boundaries` exits with code `0` (`0` layer boundary violations).
+- [ ] `npm run i18n:validate` exits with code `0` (`0` missing translation keys).
+- [ ] `npm test` and `npm run verify:open-core` exit with code `0`, including regression tests for extracted helpers, test-mode checkout/webhook idempotency fixtures, and additive nullable `blueprintAudit` verification on `GET /api/open-core/status`.
+- [ ] `npm run build` exits with code `0`.
+
+### PR & Canonical Edge Deployment Verification
+- [ ] All PR checks (`Quality Gate (Gates 1 + 3)` with `>= 70%` diff line and branch coverage, `Security Scan (Gate 2)`, `Dependency Audit (Gate 4)`) pass with `0` failures before merging to `main`.
+- [ ] The canonical GitHub Actions `Production CI/CD Deploy` workflow run on `main` completes with `success` (without using local direct deploy).
+- [ ] `GET https://sophia.agencyos.network/api/version` returns HTTP `200` with `shortSha` matching the merged `main` commit SHA bit-for-bit.
+- [ ] Production smoke checks pass: `GET /api/health` (`200` healthy), `GET /login` (`200`/`307`), `GET /vi/login` (`200`), and `GET /en/login` (`200`).

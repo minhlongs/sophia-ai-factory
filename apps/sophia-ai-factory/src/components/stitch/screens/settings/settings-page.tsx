@@ -40,7 +40,6 @@ export default function SettingsPage({
   return (
     <div className="min-h-screen bg-background dark:bg-[#090A10] text-foreground dark:text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border dark:border-white/[0.08] pb-6">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-foreground dark:text-white">
@@ -59,7 +58,6 @@ export default function SettingsPage({
           </Link>
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border dark:border-white/[0.08] custom-scrollbar">
           {NAV_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -82,22 +80,14 @@ export default function SettingsPage({
           })}
         </div>
 
-        {/* Tab Panels */}
         <main className="space-y-8">
-          {activeTab === 'account' && (
-            <SettingsProfileSection initialName={userName} email={userEmail} />
-          )}
-
-          {activeTab === 'apiKeys' && (
-            <ApiKeysManager />
-          )}
-
+          {activeTab === 'account' && <SettingsProfileSection initialName={userName} email={userEmail} />}
+          {activeTab === 'apiKeys' && <ApiKeysManager />}
           {activeTab === 'storage' && (
             <div className="bg-card dark:bg-[#11131F] rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-white/[0.08]">
               <StorageSettingsForm />
             </div>
           )}
-
           {activeTab === 'usage' && (
             <div className="bg-card dark:bg-[#11131F] rounded-2xl p-8 shadow-sm border border-border dark:border-white/[0.08] text-center space-y-4">
               <BarChart3 className="w-10 h-10 text-primary mx-auto" />
@@ -115,18 +105,9 @@ export default function SettingsPage({
               </Link>
             </div>
           )}
-
-          {activeTab === 'team' && (
-            <AccountOwnershipView />
-          )}
-
-          {activeTab === 'openCore' && (
-            <OpenCorePortabilityPanel />
-          )}
-
-          {activeTab === 'preferences' && (
-            <SettingsLocaleDangerSection />
-          )}
+          {activeTab === 'team' && <AccountOwnershipView />}
+          {activeTab === 'openCore' && <OpenCorePortabilityPanel />}
+          {activeTab === 'preferences' && <SettingsLocaleDangerSection />}
         </main>
       </div>
     </div>

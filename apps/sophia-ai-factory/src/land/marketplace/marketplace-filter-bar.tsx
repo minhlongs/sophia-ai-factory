@@ -2,9 +2,6 @@
 
 /**
  * Reactive Faceted Filtering Bar for Marketplace Discovery
- *
- * Layer: land (pure client UI component)
- *
  * @module land/marketplace/marketplace-filter-bar
  */
 
@@ -19,6 +16,8 @@ import { MarketplaceSelectControlsRow } from './marketplace-filter-controls';
 export interface MarketplaceFilterBarProps {
   initialFilters?: MarketplaceFilters;
 }
+
+const NICHE_KEYS = ['all', 'ecommerce', 'saas', 'fitness', 'education', 'finance', 'entertainment', 'general'] as const;
 
 export function MarketplaceFilterBar({ initialFilters }: MarketplaceFilterBarProps) {
   const t = useTranslations('blueprintMarketplace');
@@ -35,22 +34,19 @@ export function MarketplaceFilterBar({ initialFilters }: MarketplaceFilterBarPro
 
   const [searchTerm, setSearchTerm] = useState(currentSearch);
 
-  // Count active non-default filters
-  let activeCount = 0;
-  if (currentSearch.trim()) activeCount++;
-  if (currentNiche && currentNiche !== 'all') activeCount++;
-  if (currentPlatform && currentPlatform !== 'all') activeCount++;
-  if (currentCvr && currentCvr !== 'all') activeCount++;
-  if (currentSort && currentSort !== 'highest_conversion') activeCount++;
+  const activeCount = [
+    Boolean(currentSearch.trim()),
+    Boolean(currentNiche && currentNiche !== 'all'),
+    Boolean(currentPlatform && currentPlatform !== 'all'),
+    Boolean(currentCvr && currentCvr !== 'all'),
+    Boolean(currentSort && currentSort !== 'highest_conversion'),
+  ].filter(Boolean).length;
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (!value || value === 'all') {
-      params.delete(key);
-    } else {
-      params.set(key, value);
-    }
-    params.set('page', '1'); // Reset to page 1 on filter change
+    if (!value || value === 'all') params.delete(key);
+    else params.set(key, value);
+    params.set('page', '1');
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
@@ -68,20 +64,8 @@ export function MarketplaceFilterBar({ initialFilters }: MarketplaceFilterBarPro
     });
   };
 
-  const niches = [
-    { key: 'all', label: t('niches.all') },
-    { key: 'ecommerce', label: t('niches.ecommerce') },
-    { key: 'saas', label: t('niches.saas') },
-    { key: 'fitness', label: t('niches.fitness') },
-    { key: 'education', label: t('niches.education') },
-    { key: 'finance', label: t('niches.finance') },
-    { key: 'entertainment', label: t('niches.entertainment') },
-    { key: 'general', label: t('niches.general') },
-  ];
-
   return (
     <div className="mb-8 space-y-4 rounded-2xl border border-white/10 bg-[#12131A]/80 p-4 md:p-6 backdrop-blur-md shadow-xl">
-      {/* Search Input Bar */}
       <form onSubmit={handleSearchSubmit} className="relative flex items-center">
         <Search className="pointer-events-none absolute left-3.5 h-4 w-4 text-muted-foreground" />
         <input
@@ -99,24 +83,23 @@ export function MarketplaceFilterBar({ initialFilters }: MarketplaceFilterBarPro
         </button>
       </form>
 
-      {/* Niche Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <span className="text-xs font-medium text-muted-foreground shrink-0 flex items-center gap-1">
           <Filter className="h-3.5 w-3.5" />
           {t('nicheLabel')}:
         </span>
-        {niches.map((n) => (
+        {NICHE_KEYS.map((key) => (
           <button
-            key={n.key}
+            key={key}
             type="button"
-            onClick={() => updateParam('niche', n.key)}
+            onClick={() => updateParam('niche', key)}
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
-              currentNiche === n.key
+              currentNiche === key
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-white/[0.05] text-muted-foreground hover:bg-white/10 hover:text-foreground'
             }`}
           >
-            {n.label}
+            {t(`niches.${key}`)}
           </button>
         ))}
       </div>

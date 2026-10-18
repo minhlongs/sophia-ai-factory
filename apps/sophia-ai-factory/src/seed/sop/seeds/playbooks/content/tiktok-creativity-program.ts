@@ -12,10 +12,8 @@ export const template: SopSeedEntry = {
   slug,
   nameVi: 'Chương Trình Sáng Tạo TikTok',
   nameEn: 'TikTok Creativity Program',
-  descVi:
-    'Tự động tạo video TikTok viral theo xu hướng với AI avatar — đủ điều kiện và kiếm tiền từ Chương Trình Sáng Tạo TikTok',
-  descEn:
-    'Auto-create trending TikTok videos with AI avatar — qualify and earn from the TikTok Creativity Program with viral hooks and trending sounds',
+  descVi: 'Tự động tạo video TikTok viral theo xu hướng với AI avatar — đủ điều kiện và kiếm tiền từ Chương Trình Sáng Tạo TikTok',
+  descEn: 'Auto-create trending TikTok videos with AI avatar — qualify and earn from the TikTok Creativity Program with viral hooks and trending sounds',
   category: 'content',
   creditsPerRun: 10,
   setupTimeMinutes: 15,
@@ -106,29 +104,14 @@ check_after_hours: 24
   outputSchema: JSON.stringify({
     type: 'object',
     required: ['video_url', 'tiktok_url'],
-    properties: {
-      video_url: { type: 'string' },
-      tiktok_url: { type: 'string' },
-    },
+    properties: { video_url: { type: 'string' }, tiktok_url: { type: 'string' } },
   }),
   configSchema: JSON.stringify({
     properties: {
-      niche: {
-        type: 'string',
-        title: 'Niche / Topic',
-        description: 'Your TikTok content niche',
-        placeholder: 'e.g. personal finance, self-improvement, tech tips',
-      },
-      language: {
-        type: 'string',
-        title: 'Language',
-        enum: ['en', 'vi'],
-        default: 'en',
-      },
+      niche: { type: 'string', title: 'Niche / Topic', description: 'Your TikTok content niche', placeholder: 'e.g. personal finance, self-improvement, tech tips' },
+      language: { type: 'string', title: 'Language', enum: ['en', 'vi'], default: 'en' },
     },
     required: ['niche'],
   }),
-  configDefaults: JSON.stringify({
-    language: 'en',
-  }),
+  configDefaults: JSON.stringify({ language: 'en' }),
 };

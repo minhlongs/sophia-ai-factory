@@ -51,6 +51,7 @@ export async function activatePayOsSubscription(params: {
 
   const lockExists =
     'EXISTS (SELECT 1 FROM payment_events WHERE event_id = ? AND created_at = ? AND processed = 2)';
+  const planLower = tier.toLowerCase();
   const statements = [
     rawDb
       .prepare('UPDATE payment_events SET processed = 2 WHERE event_id = ?1 AND created_at = ?2 AND processed = 0')
@@ -61,41 +62,26 @@ export async function activatePayOsSubscription(params: {
     const slug = `customer-${orgId.slice(0, 8)}`;
     statements.push(
       rawDb
-        .prepare(
-          `INSERT INTO organizations (id, name, slug, plan, created_at, updated_at)
-           SELECT ?1, ?2, ?3, ?4, ?5, ?5 WHERE ${lockExists}`,
-        )
-        .bind(orgId, `User ${userId}`, slug, tier.toLowerCase(), now, eventId, lockCreatedAt),
+        .prepare(`INSERT INTO organizations (id, name, slug, plan, created_at, updated_at) SELECT ?1, ?2, ?3, ?4, ?5, ?5 WHERE ${lockExists}`)
+        .bind(orgId, `User ${userId}`, slug, planLower, now, eventId, lockCreatedAt),
       rawDb
-        .prepare(
-          `INSERT INTO org_members (org_id, user_id, role)
-           SELECT ?1, ?2, 'owner' WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`,
-        )
+        .prepare(`INSERT INTO org_members (org_id, user_id, role) SELECT ?1, ?2, 'owner' WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`)
         .bind(orgId, userId, eventId, lockCreatedAt),
       rawDb
-        .prepare(
-          `INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end)
-           SELECT ?1, ?2, 'active', ?3, ?4 WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`,
-        )
-        .bind(orgId, tier.toLowerCase(), now, periodEnd, eventId, lockCreatedAt),
+        .prepare(`INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, 'active', ?3, ?4 WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`)
+        .bind(orgId, planLower, now, periodEnd, eventId, lockCreatedAt),
     );
   } else if (existingSubscription) {
     statements.push(
       rawDb
-        .prepare(
-          `UPDATE subscriptions SET plan = ?1, status = 'active', current_period_end = ?2, updated_at = ?3
-           WHERE org_id = ?4 AND ${lockExists}`,
-        )
-        .bind(tier.toLowerCase(), periodEnd, now, orgId, eventId, lockCreatedAt),
+        .prepare(`UPDATE subscriptions SET plan = ?1, status = 'active', current_period_end = ?2, updated_at = ?3 WHERE org_id = ?4 AND ${lockExists}`)
+        .bind(planLower, periodEnd, now, orgId, eventId, lockCreatedAt),
     );
   } else {
     statements.push(
       rawDb
-        .prepare(
-          `INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end)
-           SELECT ?1, ?2, 'active', ?3, ?4 WHERE ${lockExists}`,
-        )
-        .bind(orgId, tier.toLowerCase(), now, periodEnd, eventId, lockCreatedAt),
+        .prepare(`INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, 'active', ?3, ?4 WHERE ${lockExists}`)
+        .bind(orgId, planLower, now, periodEnd, eventId, lockCreatedAt),
     );
   }
 
@@ -103,21 +89,16 @@ export async function activatePayOsSubscription(params: {
     statements.push(
       rawDb
         .prepare(`UPDATE organizations SET plan = ?1, updated_at = ?2 WHERE id = ?3 AND ${lockExists}`)
-        .bind(tier.toLowerCase(), now, orgId, eventId, lockCreatedAt),
+        .bind(planLower, now, orgId, eventId, lockCreatedAt),
     );
   }
 
   statements.push(
     rawDb
-      .prepare(
-        `UPDATE pending_orders SET status = 'completed', payment_id = ?1, completed_at = ?2
-         WHERE order_id = ?3 AND provider_payment_id = ?4 AND status = 'pending' AND ${lockExists}`,
-      )
+      .prepare(`UPDATE pending_orders SET status = 'completed', payment_id = ?1, completed_at = ?2 WHERE order_id = ?3 AND provider_payment_id = ?4 AND status = 'pending' AND ${lockExists}`)
       .bind(`payos_${paymentLinkId}`, now, order.order_id, paymentLinkId, eventId, lockCreatedAt),
     rawDb
-      .prepare(
-        'UPDATE payment_events SET processed = 1 WHERE event_id = ?1 AND created_at = ?2 AND processed = 2',
-      )
+      .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1 AND created_at = ?2 AND processed = 2')
       .bind(eventId, lockCreatedAt),
   );
 

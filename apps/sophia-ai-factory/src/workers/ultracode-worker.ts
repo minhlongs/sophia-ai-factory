@@ -2,17 +2,14 @@ import type { D1Client } from '@/seed/db/d1-query-builder'
 import { createLogger } from '@/seed/utils/logger-utility'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
 import { classifyError } from '@/seed/types/failure-kind'
+import { isAllowed, requestPairing } from '../tree/telegram/pairing'
 
 const ULTRACODE_TG_SERVICE = 'ultracode-telegram'
-
 const log = createLogger('workers/ultracode')
 
 /**
  * ultracode-worker — standalone Cloudflare Worker for ultracode runtime.
- *
- * Routes: POST /webhook/telegram  — Telegram bot payload (dual-tree pairing)
- *         GET  /health            — liveness probe
- *         POST /api/v1/agent/:id/chat — Agent chat endpoint (future)
+ * Routes: POST /webhook/telegram, GET /health
  */
 
 interface TelegramMessage {
@@ -60,33 +57,22 @@ export default {
   },
 } satisfies ExportedHandler<UltracodeEnv>
 
-// ── handlers ────────────────────────────────────────────────────────────────
-
-import { isAllowed, requestPairing } from '../tree/telegram/pairing'
-
 async function handleTelegram(request: Request, env: UltracodeEnv): Promise<Response> {
   try {
     const raw = await request.json()
-  const update = raw as TelegramUpdate
-  if (!update || typeof update !== 'object') {
-    return jsonResponse({ status: 'ignored', reason: 'invalid-payload' })
-  }
+    const update = raw as TelegramUpdate
+    if (!update || typeof update !== 'object') {
+      return jsonResponse({ status: 'ignored', reason: 'invalid-payload' })
+    }
     const message = update.message || update.callback_query?.message
     if (!message) return jsonResponse({ status: 'ignored', reason: 'no-message' })
 
     const chatId = String(message.chat.id)
     const firstName = message.from.first_name
     const text = (message.text || '').trim()
-
     const paired = await isAllowed(env.DB, chatId)
 
-    if (!paired) {
-      const code = await requestPairing(env.DB, chatId, firstName)
-      await sendTg(env, chatId, `Pairing code: <code>${code.code}</code>\nAsk admin to /pair_approve ${code.code}`)
-      return jsonResponse({ status: 'pairing-requested', code: code.code })
-    }
-
-    if (text === '/pair') {
+    if (!paired || text === '/pair') {
       const code = await requestPairing(env.DB, chatId, firstName)
       await sendTg(env, chatId, `Pairing code: <code>${code.code}</code>\nAsk admin to /pair_approve ${code.code}`)
       return jsonResponse({ status: 'pairing-requested', code: code.code })
@@ -103,10 +89,7 @@ async function handleTelegram(request: Request, env: UltracodeEnv): Promise<Resp
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      'content-type': 'application/json',
-      'access-control-allow-origin': '*',
-    },
+    headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
   })
 }
 

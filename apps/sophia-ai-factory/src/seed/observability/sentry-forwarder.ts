@@ -1,12 +1,7 @@
 /**
  * Minimal Sentry HTTP Forwarder
- *
- * Fire-and-forget error forwarding to Sentry's store API endpoint.
- * Uses no SDK — just a raw HTTP POST. Only fires when SENTRY_DSN is set.
- *
+ * Fire-and-forget error forwarding to Sentry's envelope API endpoint.
  * PII policy: strips email, payment_id; keeps purchase_id and user_id.
- * Timeout: 2s AbortSignal — never blocks caller.
- *
  * @module lib/observability/sentry-forwarder
  */
 
@@ -20,17 +15,9 @@ export interface SentryForwardEvent {
   extra?: Record<string, unknown>
 }
 
-// Allowlist of extra fields that may be forwarded (no PII)
 const ALLOWED_EXTRA_KEYS = new Set([
-  'userId',
-  'purchaseId',
-  'videoId',
-  'sku',
-  'stage',
-  'cronName',
-  'orphanCount',
-  'attemptCount',
-  'provider',
+  'userId', 'purchaseId', 'videoId', 'sku', 'stage',
+  'cronName', 'orphanCount', 'attemptCount', 'provider',
 ])
 
 /** Remove PII fields and restrict to allowlist. */
@@ -40,9 +27,7 @@ export function stripPii(
   if (!extra) return undefined
   const cleaned: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(extra)) {
-    if (ALLOWED_EXTRA_KEYS.has(key)) {
-      cleaned[key] = value
-    }
+    if (ALLOWED_EXTRA_KEYS.has(key)) cleaned[key] = value
   }
   return Object.keys(cleaned).length > 0 ? cleaned : undefined
 }
@@ -63,8 +48,7 @@ export function parseSentryEndpoint(dsn: string): string | null {
   try {
     const url = new URL(dsn)
     const projectId = parseSentryProjectId(dsn)
-    if (!projectId) return null
-    return `${url.protocol}//${url.host}`
+    return projectId ? `${url.protocol}//${url.host}` : null
   } catch {
     return null
   }
@@ -74,9 +58,9 @@ export function parseSentryEndpoint(dsn: string): string | null {
 export function buildSentryAuthHeader(dsn: string): string | null {
   try {
     const url = new URL(dsn)
-    const key = url.username
-    if (!key) return null
-    return `Sentry sentry_version=7, sentry_key=${key}, sentry_client=sophia-http-forwarder/1`
+    return url.username
+      ? `Sentry sentry_version=7, sentry_key=${url.username}, sentry_client=sophia-http-forwarder/1`
+      : null
   } catch {
     return null
   }
@@ -84,8 +68,7 @@ export function buildSentryAuthHeader(dsn: string): string | null {
 
 /**
  * Forward an event to Sentry via direct HTTP POST.
- * Fire-and-forget: caller does NOT await — import and call, then continue.
- * Errors are silently swallowed.
+ * Fire-and-forget: caller does NOT await — errors are silently swallowed.
  */
 export async function forwardToSentry(evt: SentryForwardEvent): Promise<void> {
   const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN
@@ -94,7 +77,6 @@ export async function forwardToSentry(evt: SentryForwardEvent): Promise<void> {
   const endpoint = parseSentryEndpoint(dsn)
   const projectId = parseSentryProjectId(dsn)
   const authHeader = buildSentryAuthHeader(dsn)
-
   if (!endpoint || !projectId || !authHeader) return
 
   const body = JSON.stringify({
@@ -107,29 +89,20 @@ export async function forwardToSentry(evt: SentryForwardEvent): Promise<void> {
     logger: 'sophia.forwarder',
   })
 
-  // Sentry envelope format (replaces deprecated /store/ endpoint)
-  // https://develop.sentry.dev/sdk/envelopes/
   const envelopeHeader = JSON.stringify({ dsn, sdk: { name: 'sophia-http-forwarder', version: '1' } })
   const itemHeader = JSON.stringify({ type: 'event', content_type: 'application/json' })
   const envelope = `${envelopeHeader}\n${itemHeader}\n${body}`
 
   try {
-    if (!shouldAllowRequest('sentry')) {
-      // Circuit open — fail-soft, don't block caller
-      return
-    }
+    if (!shouldAllowRequest('sentry')) return
     await fetch(`${endpoint}/api/${projectId}/envelope/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-sentry-envelope',
-        'X-Sentry-Auth': authHeader,
-      },
+      headers: { 'Content-Type': 'application/x-sentry-envelope', 'X-Sentry-Auth': authHeader },
       body: envelope,
       signal: AbortSignal.timeout(2000),
     })
     recordSuccess('sentry')
   } catch (error) {
     recordFailure('sentry', classifyError(error))
-    // Fire-and-forget — silently discard
   }
 }
