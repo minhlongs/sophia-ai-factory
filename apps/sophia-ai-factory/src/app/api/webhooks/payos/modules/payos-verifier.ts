@@ -27,21 +27,8 @@ export async function verifyPayOsRequest(
   }
 
   const rawBody = await request.text();
-  const signature = request.headers.get('x-checksum');
-  if (!signature) {
-    logger.warn('[PayOS Webhook] Missing x-checksum header');
-    return { ok: false, response: NextResponse.json({ error: 'Missing signature' }, { status: 400 }) };
-  }
-
-  const isValid = await verifyPayOsWebhook(rawBody, signature, checksumKey);
-  if (!isValid) {
-    logger.warn('[PayOS Webhook] Invalid checksum signature');
-    return { ok: false, response: NextResponse.json({ error: 'Invalid signature' }, { status: 400 }) };
-  }
-
   try {
     const raw = JSON.parse(rawBody) as unknown;
-    const sanitizedBody = JSON.stringify(raw);
     const parsed = payOsIpnSchema.safeParse(raw);
     if (!parsed.success) {
       logger.warn('[PayOS Webhook] Invalid payload shape', { errors: parsed.error.flatten() });
@@ -50,6 +37,14 @@ export async function verifyPayOsRequest(
         response: NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 }),
       };
     }
+    // PayOS sends the HMAC in the JSON body's `signature` field.
+    const isValid = await verifyPayOsWebhook(rawBody, parsed.data.signature, checksumKey);
+    if (!isValid) {
+      logger.warn('[PayOS Webhook] Invalid checksum signature');
+      return { ok: false, response: NextResponse.json({ error: 'Invalid signature' }, { status: 400 }) };
+    }
+
+    const sanitizedBody = JSON.stringify(raw);
     return { ok: true, data: { rawBody, sanitizedBody, ipn: parsed.data } };
   } catch {
     return { ok: false, response: NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }) };

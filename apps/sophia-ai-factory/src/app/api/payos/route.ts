@@ -11,6 +11,8 @@ import { createPayOsInvoice, FEATURE_PAYOS } from '@/land/payments/payos'
 import { writeOrder } from '@/land/orders/pending-order-repo'
 import { logger } from '@/seed/utils/logger-utility'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
+import { assertPeriodAllowed } from '@/land/checkout/checkout-validators'
+import type { PendingOrderPeriod } from '@/land/orders/pending-order-types'
 
 const payosCheckoutSchema = z.object({
   tier: z.enum(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']),
@@ -52,6 +54,14 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
   }
 
   const { tier, period, customerEmail } = parsed.data
+  try {
+    assertPeriodAllowed(tier, period as PendingOrderPeriod)
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Invalid period' },
+      { status: 400 },
+    )
+  }
   const orderId = `sophia_${userId}_${Date.now()}`
 
   try {
@@ -63,26 +73,21 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       customerEmail,
     })
 
-    // Write pending order for tracking
-    try {
-      const { getPayOsTierConfig } = await import('@/land/payments/payos')
-      const config = getPayOsTierConfig(tier)
-      await writeOrder({
-        order_id: orderId,
-        user_id: userId,
-        tier,
-        period,
-        payment_method: 'payos',
-        amount_usd_cents: config.usdAmount * 100,
-        customer_email: customerEmail,
-        invoice_url: result.checkoutUrl,
-      })
-    } catch (dbErr) {
-      logger.warn('[PayOS] Failed to write pending_order (non-fatal)', {
-        orderId,
-        error: dbErr instanceof Error ? dbErr.message : String(dbErr),
-      })
-    }
+    // Persist the exact invoice amount and provider ID before exposing the payment link.
+    const { getPayOsTierConfig } = await import('@/land/payments/payos')
+    const config = getPayOsTierConfig(tier, period)
+    await writeOrder({
+      order_id: orderId,
+      user_id: userId,
+      tier,
+      period,
+      payment_method: 'payos',
+      amount_usd_cents: Math.round(config.usdAmount * 100),
+      amount_vnd: config.vndAmount,
+      customer_email: customerEmail,
+      invoice_url: result.checkoutUrl,
+      provider_payment_id: result.paymentLinkId,
+    })
 
     return NextResponse.json({
       checkoutUrl: result.checkoutUrl,

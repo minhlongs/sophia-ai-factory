@@ -9,7 +9,7 @@ export interface PayOsTierConfig {
 
 export interface PayOsCheckoutInput {
   tier: Tier;
-  period: 'monthly' | 'lifetime';
+  period: 'monthly' | 'yearly' | 'lifetime';
   userId: string;
   orderId: string;
   customerEmail?: string;
@@ -57,19 +57,19 @@ export const payOsIpnSchema = z.object({
     orderCode: z.number(),
     amount: z.number(),
     description: z.string(),
-    accountNumber: z.string().optional(),
-    reference: z.string().optional(),
-    transactionDateTime: z.string().optional(),
-    currency: z.string().optional(),
+    accountNumber: z.string().nullable().optional(),
+    reference: z.string().nullable().optional(),
+    transactionDateTime: z.string().nullable().optional(),
+    currency: z.string().nullable().optional(),
     paymentLinkId: z.string(),
-    code: z.string().optional(),
-    desc: z.string().optional(),
-    counterAccountBankId: z.string().optional(),
-    counterAccountBankName: z.string().optional(),
-    counterAccountName: z.string().optional(),
-    counterAccountNumber: z.string().optional(),
-    virtualAccountName: z.string().optional(),
-    virtualAccountNumber: z.string().optional(),
+    code: z.string(),
+    desc: z.string().nullable().optional(),
+    counterAccountBankId: z.string().nullable().optional(),
+    counterAccountBankName: z.string().nullable().optional(),
+    counterAccountName: z.string().nullable().optional(),
+    counterAccountNumber: z.string().nullable().optional(),
+    virtualAccountName: z.string().nullable().optional(),
+    virtualAccountNumber: z.string().nullable().optional(),
   }),
   signature: z.string(),
 });

@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { verifyMp4Playback } from '../../../../scripts/live-proof/media.mjs';
+import { isMp4Brand, verifyMp4Playback } from '../../../../scripts/live-proof/media.mjs';
 
 const tempRoots: string[] = [];
 const mp4Bytes = new Uint8Array([
@@ -136,6 +136,28 @@ describe('verifyMp4Playback', () => {
     expect(leftoverDownloads(root)).toEqual([]);
   });
 
+  it('uses the complete ftyp box and rejects broad ISO-like brands', async () => {
+    expect(isMp4Brand('isoa')).toBe(false);
+    const root = createTempRoot();
+    const laterCompatibleBrand = Uint8Array.from([
+      0, 0, 0, 32, 0x66, 0x74, 0x79, 0x70,
+      0x71, 0x74, 0x20, 0x20, 0, 0, 2, 0,
+      0x71, 0x74, 0x20, 0x20, 0x71, 0x74, 0x20, 0x20,
+      0x6d, 0x70, 0x34, 0x32, 0x71, 0x74, 0x20, 0x20,
+    ]);
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse(laterCompatibleBrand));
+    const tools = createSuccessfulTools(root);
+
+    const result = await verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ...tools,
+    });
+
+    expect(result).toMatchObject({ majorBrand: 'qt  ', compatibleMp4Brand: 'mp42' });
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
   it('rejects an explicit non-MP4 content type', async () => {
     const root = createTempRoot();
     const fetchMock = vi.fn().mockResolvedValue(mediaResponse(mp4Bytes, { 'content-type': 'video/webm' }));
@@ -146,6 +168,37 @@ describe('verifyMp4Playback', () => {
       tempRoot: root,
       ...tools,
     })).rejects.toThrow('content type is not MP4-compatible');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('rejects unsuccessful full-download HTTP responses', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(new Response('provider unavailable', { status: 503 }));
+    const tools = createSuccessfulTools(root);
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ...tools,
+    })).rejects.toThrow('full media download returned HTTP 503');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('rejects an empty artifact even when the response itself is successful', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Uint8Array(), {
+      status: 200,
+      headers: { 'content-type': 'video/mp4' },
+    }));
+    const tools = createSuccessfulTools(root);
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ...tools,
+    })).rejects.toThrow('media artifact download was empty');
 
     expect(leftoverDownloads(root)).toEqual([]);
   });
@@ -296,6 +349,26 @@ describe('verifyMp4Playback', () => {
     expect(leftoverDownloads(root)).toEqual([]);
   });
 
+  it('aborts a response body that stalls after headers arrive', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn((_url: URL, init: RequestInit) => Promise.resolve(new Response(new ReadableStream({
+      start(controller) {
+        init.signal?.addEventListener('abort', () => controller.error(new Error('aborted')), { once: true });
+      },
+    }), {
+      status: 200,
+      headers: { 'content-type': 'video/mp4' },
+    })));
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      downloadTimeoutMs: 25,
+    })).rejects.toThrow('media artifact download exceeded its time limit');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
   it('kills a decoder that exceeds its configured timeout', async () => {
     const root = createTempRoot();
     const fetchMock = vi.fn().mockResolvedValue(mediaResponse());
@@ -312,6 +385,23 @@ describe('verifyMp4Playback', () => {
 
     expect(leftoverDownloads(root)).toEqual([]);
   });
+
+  it('escalates to SIGKILL when a timed-out decoder ignores SIGTERM', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse());
+    const ffprobePath = createSuccessfulTools(root).ffprobePath;
+    const ffmpegPath = createTool(root, 'ffmpeg', "process.on('SIGTERM', () => {}); setInterval(() => {}, 10000);");
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ffprobePath,
+      ffmpegPath,
+      decodeTimeoutMs: 25,
+    })).rejects.toThrow('ffmpeg full decode timed out');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  }, 5000);
 
   it('fails the proof when temporary-file cleanup fails', async () => {
     const root = createTempRoot();

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeOrder } from '@/land/orders/pending-order-repo';
-import { createPayOsInvoice } from '@/land/payments/payos';
+import { createPayOsInvoice, getPayOsTierConfig } from '@/land/payments/payos';
 import type { MethodDispatcherInput } from './payment-dispatcher';
 
 export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise<NextResponse> {
@@ -10,18 +10,20 @@ export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise
   try {
     const payOsResult = await createPayOsInvoice({
       tier,
-      period: period as 'monthly' | 'lifetime',
+      period,
       userId,
       orderId,
       customerEmail,
     });
+    const pricing = getPayOsTierConfig(tier, period);
     await writeOrder({
       order_id: orderId,
       user_id: userId,
       tier,
       period: period || 'monthly',
       payment_method: 'payos',
-      amount_usd_cents: 0,
+      amount_usd_cents: Math.round(pricing.usdAmount * 100),
+      amount_vnd: pricing.vndAmount,
       promo_code: promoCode,
       customer_email: customerEmail,
       invoice_url: payOsResult.checkoutUrl,

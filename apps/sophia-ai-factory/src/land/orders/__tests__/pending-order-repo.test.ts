@@ -30,6 +30,7 @@ const BASE_INPUT = {
 
 // Mock createServerClient to use an in-memory store
 const orderStore = new Map<string, PendingOrder>()
+const dbFailure = vi.hoisted(() => ({ message: null as string | null }))
 
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock('@/seed/db/client', () => ({
       if (table !== 'pending_orders') throw new Error(`Unexpected table: ${table}`)
       return {
         insert: vi.fn(async (row: PendingOrder) => {
+          if (dbFailure.message) return { data: null, error: { message: dbFailure.message } }
           if (orderStore.has(row.order_id)) throw new Error('UNIQUE constraint failed')
           orderStore.set(row.order_id, row)
           return { data: row, error: null }
@@ -59,7 +61,7 @@ vi.mock('@/seed/db/client', () => ({
           eq: vi.fn((_col: string, val: string) => {
             const row = [...orderStore.values()].find(r => r.order_id === val)
             if (row) Object.assign(row, updates)
-            return Promise.resolve({ data: null, error: null })
+            return Promise.resolve({ data: null, error: dbFailure.message ? { message: dbFailure.message } : null })
           }),
         }),
       }
@@ -69,6 +71,7 @@ vi.mock('@/seed/db/client', () => ({
 
 beforeEach(() => {
   orderStore.clear()
+  dbFailure.message = null
 })
 
 describe('writeOrder', () => {
@@ -89,6 +92,11 @@ describe('writeOrder', () => {
   it('throws on duplicate order_id', async () => {
     await writeOrder(BASE_INPUT)
     await expect(writeOrder(BASE_INPUT)).rejects.toThrow('UNIQUE constraint failed')
+  })
+
+  it('throws when D1 returns an insert error instead of rejecting', async () => {
+    dbFailure.message = 'D1 write failed'
+    await expect(writeOrder(BASE_INPUT)).rejects.toThrow('Pending order insert failed: D1 write failed')
   })
 })
 
@@ -113,6 +121,14 @@ describe('markOrderCompleted', () => {
     const order = await getOrderById(BASE_INPUT.order_id)
     expect(order!.status).toBe('completed')
     expect(order!.payment_id).toBe('pay_abc123')
+  })
+
+  it('throws when D1 returns an order completion error', async () => {
+    await writeOrder(BASE_INPUT)
+    dbFailure.message = 'D1 write failed'
+    await expect(markOrderCompleted(BASE_INPUT.order_id, 'pay_abc123')).rejects.toThrow(
+      'Pending order completion failed: D1 write failed',
+    )
   })
 })
 

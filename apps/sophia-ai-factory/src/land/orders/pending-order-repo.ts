@@ -22,6 +22,7 @@ export async function writeOrder(input: PendingOrderInput): Promise<PendingOrder
     period: input.period ?? 'monthly',
     payment_method: input.payment_method ?? 'nowpayments',
     amount_usd_cents: input.amount_usd_cents,
+    amount_vnd: input.amount_vnd ?? null,
     promo_code: input.promo_code ?? null,
     customer_email: input.customer_email ?? null,
     invoice_url: input.invoice_url ?? null,
@@ -31,7 +32,8 @@ export async function writeOrder(input: PendingOrderInput): Promise<PendingOrder
     created_at: new Date().toISOString(),
     completed_at: null,
   }
-  await db.from('pending_orders').insert(row)
+  const { error } = await db.from('pending_orders').insert(row)
+  if (error) throw new Error(`Pending order insert failed: ${error.message}`)
   logger.info('[PendingOrder] Created', { order_id: input.order_id, tier: input.tier })
   return row as PendingOrder
 }
@@ -72,20 +74,22 @@ export async function findPendingOrderByUserAndMethod(
 /** Flip status to completed and record payment_id. */
 export async function markOrderCompleted(orderId: string, paymentId: string): Promise<void> {
   const db = getDb()
-  await db
+  const { error } = await db
     .from('pending_orders')
     .update({ status: 'completed', payment_id: paymentId, completed_at: new Date().toISOString() })
     .eq('order_id', orderId)
+  if (error) throw new Error(`Pending order completion failed: ${error.message}`)
   logger.info('[PendingOrder] Completed', { order_id: orderId, payment_id: paymentId })
 }
 
 /** Flip status to failed. */
 export async function markOrderFailed(orderId: string, reason?: string): Promise<void> {
   const db = getDb()
-  await db
+  const { error } = await db
     .from('pending_orders')
     .update({ status: 'failed', completed_at: new Date().toISOString() })
     .eq('order_id', orderId)
+  if (error) throw new Error(`Pending order failure update failed: ${error.message}`)
   logger.info('[PendingOrder] Failed', { order_id: orderId, reason })
 }
 

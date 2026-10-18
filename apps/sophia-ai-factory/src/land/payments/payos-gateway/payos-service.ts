@@ -29,7 +29,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
   }
 
   const { tier, userId: _userId, orderId, customerEmail } = input;
-  const config = getPayOsTierConfig(tier);
+  const config = getPayOsTierConfig(tier, input.period);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
 
   // PayOS orderCode must be a positive integer — use last 9 digits of timestamp

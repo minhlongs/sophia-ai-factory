@@ -1,54 +1,47 @@
 # Service Level Objectives (SLOs)
 
-This document defines the SLOs for Sophia AI Factory production service.
+This document defines the production targets and the evidence required to claim them. A target is not a measured result.
 
-## Overview
+## Targets
 
-SLOs are measured in Honeycomb and tracked over rolling 30-day windows.
+| SLI | Target | Window |
+| --- | --- | --- |
+| API availability | ≥ 99.9% successful responses | Rolling 30 days |
+| API latency | p95 < 500 ms | Rolling 30 days |
+| API server errors | < 0.1% 5xx responses | Rolling 30 days |
+| Video generation | Use the declared completion-rate and completion-time targets in the production evidence report | Same window |
 
-## Latency SLO
+Availability is `eligible successful requests / eligible requests`. Exclude static assets and explicitly list excluded routes. Define success as HTTP 2xx or 3xx; server errors are HTTP 5xx. The report must include denominators, route scope, time boundaries in UTC, and the full deployed SHA. A job accepted or queued is not a completed video job.
 
-- **Target**: p95 request latency < 500ms
-- **Measurement**: All API requests (excluding static assets)
-- **Baseline**: Establish over first 7 days of production data
-- **Alert**: Burn rate > 2 (error budget consumption > 2x expected)
+## Current evidence status
 
-## Availability SLO
+**Production SLOs are unverified until a raw, source-bound Cloudflare export covers at least 28 days on the approved deployed SHA.** The target values above are not evidence that production currently meets them.
 
-- **Target**: 99.9% successful responses (2xx/3xx) over 30 days
-- **Measurement**: All API and page requests
-- **Calculation**: `successful_requests / total_requests`
-- **Alert**: Availability < 99.9% for 1 hour window
+The repository currently has an isolate-local ring buffer in `src/seed/observability/telemetry/metrics.ts`. `/api/metrics` reads that buffer; it is not a durable 28-day history. The optional Workers Analytics Engine writer is not yet configured as a `WAE` binding in `wrangler.toml`. The current middleware sample is recorded before downstream route handlers finish, so its duration does not establish full API handler latency. Do not use these values as production request latency or a rolling SLO until collection is wired and validated end to end.
 
-## Error Rate SLO
+Older Honeycomb dashboard/runbook instructions are historical optional integrations. Honeycomb is not required by the no-tech doctrine and must not be treated as an active canonical SLO source without current evidence.
 
-- **Target**: < 0.1% server errors (5xx) over 30 days
-- **Measurement**: API requests only
-- **Alert**: Error rate > 0.5% for 15 minutes
+## Cloudflare-native evidence path
 
-## Instrumentation
+Use Cloudflare Workers metrics/Analytics Engine, with a configured Worker binding and bounded-cardinality fields for route template, method, status class, duration, and environment. Do not include user IDs, API keys, prompt text, video URLs, or other customer data in metric dimensions. Validate the actual production binding and write/read path before starting the 28-day measurement window.
 
-- Traces exported to Honeycomb with attributes:
-  - `http.method`
-  - `http.route`
-  - `component` (api, middleware, inngest)
-  - `duration_ms`
-  - `http.status_code`
+Workers Logs are useful for incident investigation, but their retention is limited (3 days on Free and 7 days on paid plans), so logs alone cannot establish a 28-day SLO. Workers Analytics Engine retains queryable data for up to 3 months and can support a 28-day window when configured and populated. See [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/), [Workers metrics and analytics](https://developers.cloudflare.com/workers/observability/metrics-and-analytics/), and [Analytics Engine limits](https://developers.cloudflare.com/analytics/analytics-engine/limits/).
 
-- Metrics recorded via in-memory ring buffer at `/api/metrics` (protected)
+If exports must be captured as files, preserve each raw export in an access-controlled location, compute its SHA-256, record the query and UTC window, and keep the approved deployment SHA with it. The business-flow verifier binds summary JSON to source-file hashes but does not independently authenticate Cloudflare origin or recompute metrics from raw rows; the calculation remains operator-attested.
 
-## Dashboards
+## Alerts and review
 
-- Honeycomb board: `sophia-prod` → "SLO Overview"
-- Panels:
-  - Latency heatmap (p50/p95/p99 by route)
-  - Error rate by status code
-  - Availability gauge
-  - Burn rate tracker
-  - Top slowest routes
+- Alert on sustained 5xx/error-budget burn and video completion failures using Cloudflare-native telemetry and the existing platform alert path.
+- Review weekly; report the 28-day SLI, denominator, error-budget burn, unresolved P0/P1 count, and any data gaps.
+- A monitoring gap or missing denominator makes the SLO **unknown**, not passed.
 
-## Review Cadence
+## Claiming a pass
 
-- Weekly SLO review (Monday 09:00 UTC)
-- Monthly error budget burn assessment
-- Alert tuning based on false positive rate
+Only claim a production SLO pass when the evidence includes:
+
+1. The approved full deployment SHA, matching the live `/api/version` SHA.
+2. A raw Cloudflare export for one common UTC window of at least 28 days.
+3. Route scope, denominators, API availability, p95 latency, and 5xx rate computed from completed request observations.
+4. Video job counts, completion rate, and completion-time percentile from durable job records.
+5. Zero unresolved P0/P1 incidents in the same window.
+6. The raw-export SHA-256 and the calculation summary, saved with the business-flow proof.
