@@ -12,7 +12,12 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager';
 import { sendTelegramMessage, sendTelegramMessageWithKeyboard } from '@/tree/telegram/telegram-client';
 import { buildOfferKeyboard, formatOfferList, extractOfferIdFromCallback } from '@/tree/telegram/telegram-bot-offer-picker';
-import { getUserProfile, mapTier, type CampaignFsmContext } from '@/tree/telegram/telegram-bot-campaign-fsm-helpers';
+import {
+  getUserProfile,
+  mapTier,
+  resolveCampaignConfirmInputs,
+  type CampaignFsmContext,
+} from '@/tree/telegram/telegram-bot-campaign-fsm-helpers';
 import { insertCampaignWithOffer } from '@/tree/telegram/telegram-bot-campaign-fsm-confirm';
 import { getTopPrograms, getProgramById } from '@/tree/affiliates';
 
@@ -76,9 +81,7 @@ export async function handleAudienceInput(chatId: string, audience: string): Pro
     campaignAudience: audience.trim(),
   } as CampaignFsmContext);
 
-  const keyboard = buildOfferKeyboard(topPrograms);
-  const text = formatOfferList(topPrograms);
-  await sendTelegramMessageWithKeyboard(chatId, text, keyboard);
+  await sendTelegramMessageWithKeyboard(chatId, formatOfferList(topPrograms), buildOfferKeyboard(topPrograms));
 }
 
 /**
@@ -112,25 +115,7 @@ export async function handleOfferSelection(chatId: string, callbackData: string)
  * Handle /confirm — creates campaign + affiliate offer row + sends Inngest event.
  */
 export async function handleCampaignConfirm(chatId: string): Promise<void> {
-  const context = await TelegramFSM.getContext(chatId) as CampaignFsmContext | null;
-
-  if (!context?.campaignTopic || !context.campaignAudience || !context.selectedOfferId) {
-    await sendTelegramMessage(chatId, '❌ Campaign setup incomplete. Please start again with /campaign.');
-    return;
-  }
-
-  const profile = await getUserProfile(chatId);
-  if (!profile) {
-    await sendTelegramMessage(chatId, '❌ Account not linked. Use /email first.');
-    return;
-  }
-
-  const program = getProgramById(context.selectedOfferId);
-  if (!program) {
-    await sendTelegramMessage(chatId, '❌ Selected offer no longer available.');
-    return;
-  }
-
-  await insertCampaignWithOffer(chatId, context, profile, program);
+  const ready = await resolveCampaignConfirmInputs(chatId);
+  if (!ready) return;
+  await insertCampaignWithOffer(chatId, ready.context, ready.profile, ready.program);
 }
-

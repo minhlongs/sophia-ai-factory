@@ -11,7 +11,7 @@
  * Default evidence path: plans/reports/core-video-factory-proof-latest.json
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,7 +26,7 @@ function resolveEvidencePath() {
   const reportsDir = resolve(root, 'plans/reports');
   const files = [];
   try {
-    const entries = require('node:fs').readdirSync(reportsDir);
+    const entries = readdirSync(reportsDir);
     files.push(...entries.filter((f) => f.startsWith('core-video-factory-proof-') && f.endsWith('.json')));
   } catch { /* directory may not exist */ }
   files.sort().reverse();
@@ -55,28 +55,44 @@ function main() {
   }
 
   const checks = [];
+  const isCurrentSchema = evidence.schema === 'sophia-core-video-deterministic-proof-v2';
+  const isLegacySchema = !evidence.schema && evidence.proofMode === true;
+  const requiredGates = [
+    'mock provider safety tests',
+    'proof flow integration tests',
+    'live and business evidence contract tests',
+    'TypeScript compile',
+    'ESLint zero-error gate',
+  ];
+  const requiredGatesForEvidence = isLegacySchema
+    ? requiredGates.filter((name) => name !== 'live and business evidence contract tests')
+    : requiredGates;
+  const gates = Array.isArray(evidence.gates) ? evidence.gates : [];
+  const byName = new Map(gates.map((gate) => [gate.name, gate]));
+  checks.push({
+    name: 'all required deterministic gates passed',
+    passed: requiredGatesForEvidence.every((name) => byName.get(name)?.status === 'passed'),
+  });
+  checks.push({ name: 'proof mode active', passed: evidence.proofMode === true });
+  checks.push({ name: 'mock provider used', passed: evidence.provider === 'mock' });
 
-  // Check 1: all gates passed
-  const gates = evidence.gates ?? [];
-  const allPassed = gates.every((g) => g.status === 'passed');
-  checks.push({ name: 'all gates passed', passed: allPassed });
+  checks.push({ name: 'recognized evidence schema', passed: isCurrentSchema || isLegacySchema });
 
-  // Check 2: proof mode was active (no real keys)
-  const proofMode = evidence.proofMode ?? false;
-  checks.push({ name: 'proof mode active', passed: proofMode });
-
-  // Check 3: mock provider was used
-  const provider = evidence.provider ?? 'unknown';
-  checks.push({ name: 'mock provider used', passed: provider === 'mock' });
-
-  // Check 4: video artifact has deterministic URL
-  const videoUrl = evidence.artifacts?.videoUrl ?? '';
-  const hasMockUrl = videoUrl.includes('mock.sophia.local');
-  checks.push({ name: 'mock video URL present', passed: hasMockUrl });
-
-  // Check 5: video row status is completed
-  const videoStatus = evidence.artifacts?.videoStatus ?? '';
-  checks.push({ name: 'video status completed', passed: videoStatus === 'completed' });
+  if (isCurrentSchema) {
+    checks.push({ name: 'deterministic mock scope declared', passed: evidence.scope === 'deterministic-mock-tests' });
+    checks.push({ name: 'worktree fingerprint present', passed: typeof evidence.source?.worktreeFingerprint === 'string' && evidence.source.worktreeFingerprint.length === 64 });
+    checks.push({ name: 'live and commercial claims remain false', passed:
+      evidence.liveProviderValidated === false &&
+      evidence.checkoutValidated === false &&
+      evidence.livePayoutValidated === false &&
+      evidence.productionPublishValidated === false &&
+      evidence.productionSloValidated === false &&
+      evidence.commercialUnitEconomicsValidated === false,
+    });
+  } else if (isLegacySchema) {
+    const hasMockUrl = String(evidence.artifacts?.videoUrl ?? '').includes('mock.sophia.local');
+    checks.push({ name: 'legacy mock artifact declaration present', passed: hasMockUrl && evidence.artifacts?.videoStatus === 'completed' });
+  }
 
   // Print results
   let allOk = true;
@@ -91,7 +107,11 @@ function main() {
     process.exit(1);
   }
 
-  console.log('\nEVIDENCE VALID: core video factory proof is complete and verified.');
+  if (isLegacySchema) {
+    console.log('\nLEGACY MOCK EVIDENCE VALID: this only validates the historical deterministic test declaration.');
+  } else {
+    console.log('\nDETERMINISTIC MOCK EVIDENCE VALID: live provider, payment, production SLO, and unit economics remain unproven.');
+  }
 }
 
 main();

@@ -10,7 +10,6 @@
  * @module tree/byok/byok-audit-writer
  */
 
-import { z } from 'zod';
 import { getAuditBucket, appendJsonl } from '@/seed/utils/jsonl-append';
 import { logger } from '@/seed/utils/logger-utility';
 import {
@@ -19,41 +18,17 @@ import {
   shouldAllowRequest,
 } from '@/seed/security/circuit-breaker';
 import { classifyError, FailureKind } from '@/seed/types/failure-kind';
+import {
+  AuditEventSchema,
+  auditKey,
+  redactKey,
+  type AuditEvent,
+} from './byok-audit-schema';
+
+export { AuditEventSchema, redactKey };
+export type { AuditEvent };
 
 const SERVICE_NAME = 'byok-audit-writer';
-
-export const AuditEventSchema = z.object({
-  ts: z.string().describe('ISO-8601 timestamp'),
-  tenantId: z.string().describe('Tenant identifier'),
-  event: z.enum([
-    'key.created',
-    'key.rotated',
-    'key.revoked',
-    'key.used',
-    'key.validation_failed',
-  ]),
-  provider: z.string().describe('Provider name (openrouter, elevenlabs, d-id, etc.)'),
-  keyPrefix: z.string().describe('First 4 characters of the API key'),
-  metadata: z.record(z.string(), z.unknown()).optional().describe('Additional event context'),
-});
-
-export type AuditEvent = z.infer<typeof AuditEventSchema>;
-
-/**
- * Redact an API key to a safe 4-character prefix.
- * Never logs the full key.
- */
-export function redactKey(apiKey: string): string {
-  if (!apiKey || apiKey.length < 4) return '****';
-  return apiKey.slice(0, 4);
-}
-
-/**
- * R2 object key for a tenant's BYOK audit trail.
- */
-function auditKey(tenantId: string): string {
-  return `audit/byok/${tenantId}.jsonl`;
-}
 
 /**
  * Write a BYOK audit event to R2.

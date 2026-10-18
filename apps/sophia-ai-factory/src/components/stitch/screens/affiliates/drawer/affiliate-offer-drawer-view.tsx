@@ -2,13 +2,16 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { X, Sparkles, Layers, ShieldCheck, Loader2 } from 'lucide-react';
-import { Button, Badge } from '@/components/stitch';
+import { X, ShieldCheck } from 'lucide-react';
+import { Badge } from '@/components/stitch';
 import type { AffiliateOfferDrawerProps } from './types';
 import { OfferDetails } from './offer-details';
 import { PayoutTerms } from './payout-terms';
 import { useAffiliateDrawer } from './use-affiliate-drawer';
 import { DrawerFeedbackAlert } from './drawer-feedback-alert';
+import { DrawerFooterActions, type DrawerFooterActionsProps } from './drawer-footer-actions';
+
+export { DrawerFooterActions, type DrawerFooterActionsProps };
 
 export function AffiliateOfferDrawerView({
   isOpen,
@@ -96,41 +99,11 @@ export function AffiliateOfferDrawerView({
             {feedback && <DrawerFeedbackAlert feedback={feedback} />}
           </div>
 
-          <div className="pt-6 border-t border-border dark:border-white/[0.08] mt-6 flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="primary"
-              size="lg"
-              className="flex-1"
-              disabled={adoptingTarget !== null}
-              onClick={() => handleAdopt('creator_studio')}
-              iconLeft={
-                adoptingTarget === 'creator_studio' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )
-              }
-            >
-              {adoptingTarget === 'creator_studio' ? t('adopting') : t('adoptCreatorStudio')}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              className="flex-1"
-              disabled={adoptingTarget !== null}
-              onClick={() => handleAdopt('distribution_queue')}
-              iconLeft={
-                adoptingTarget === 'distribution_queue' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Layers className="w-4 h-4" />
-                )
-              }
-            >
-              {adoptingTarget === 'distribution_queue' ? t('adopting') : t('queueDistribution')}
-            </Button>
-          </div>
+          <DrawerFooterActions
+            adoptingTarget={adoptingTarget}
+            onAdopt={handleAdopt}
+            t={t}
+          />
         </div>
       </div>
     </div>

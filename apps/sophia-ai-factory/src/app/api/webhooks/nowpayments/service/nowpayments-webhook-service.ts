@@ -68,7 +68,9 @@ export async function handleNowPaymentsPost(request: NextRequest): Promise<NextR
     return NextResponse.json({ error: result.message }, { status: 500 });
   }
 
-  await handlePostPaymentSideEffects(ipn);
+  if (result.shouldRunPostPaymentSideEffects !== false) {
+    await handlePostPaymentSideEffects(ipn);
+  }
 
   return NextResponse.json({ received: true });
 }

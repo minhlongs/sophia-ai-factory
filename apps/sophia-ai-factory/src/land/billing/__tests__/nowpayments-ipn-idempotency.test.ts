@@ -235,6 +235,7 @@ describe('IPN idempotency', () => {
 
     expect(lateFinish.success).toBe(true)
     expect(lateFinish.message).toContain('after refund')
+    expect(lateFinish.shouldRunPostPaymentSideEffects).toBe(false)
     expect(handleFinishedSpy).not.toHaveBeenCalled()
   })
 

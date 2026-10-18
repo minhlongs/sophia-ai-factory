@@ -8,7 +8,6 @@
 'use server';
 
 import type { z } from 'zod';
-import { revalidatePath, revalidateTag } from 'next/cache';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -18,12 +17,11 @@ import type { MissionError } from '../types';
 import { actionFailure } from './action-helpers';
 import {
   requireAuthAndDb,
+  revalidateApprovalPaths,
   verifyMissionWorkspaceAccess,
 } from './approval-request-helpers';
 
-/**
- * Request human approval for a sensitive action.
- */
+/** Request human approval for a sensitive action. */
 export async function requestApproval(
   data: z.infer<typeof requestApprovalSchema>
 ): Promise<Result<{ approvalId: string }, MissionError>> {
@@ -58,10 +56,7 @@ export async function requestApproval(
     });
 
     if (!result.ok) {
-      return failure({
-        code: result.error.code,
-        message: result.error.message,
-      });
+      return failure({ code: result.error.code, message: result.error.message });
     }
 
     logger.info('[Approval] Approval requested', {
@@ -73,27 +68,17 @@ export async function requestApproval(
       workspaceId: accessCtx.value.workspaceId,
     });
 
-    revalidatePath('/dashboard/missions');
-    revalidatePath(`/[locale]/dashboard/missions/${parsed.data.missionId}`);
-    revalidateTag('approvals', 'max');
-    revalidateTag(`mission_${parsed.data.missionId}`, 'max');
+    revalidateApprovalPaths(parsed.data.missionId);
     return success({ approvalId });
   } catch (err) {
     return failure(actionFailure('[Approval] requestApproval', err));
   }
 }
 
-/**
- * List pending approvals for the user's workspace.
- */
+/** List pending approvals for the user's workspace. */
 export async function listPendingApprovalsAction(
   data: { workspaceId: string; limit?: number; offset?: number }
-): Promise<
-  Result<
-    { approvals: Array<Record<string, unknown>>; count: number },
-    MissionError
-  >
-> {
+): Promise<Result<{ approvals: Array<Record<string, unknown>>; count: number }, MissionError>> {
   try {
     const parsed = listPendingApprovalsSchema.safeParse(data);
     if (!parsed.success) {
@@ -122,10 +107,7 @@ export async function listPendingApprovalsAction(
     );
 
     if (!result.ok) {
-      return failure({
-        code: result.error.code,
-        message: result.error.message,
-      });
+      return failure({ code: result.error.code, message: result.error.message });
     }
 
     return success({

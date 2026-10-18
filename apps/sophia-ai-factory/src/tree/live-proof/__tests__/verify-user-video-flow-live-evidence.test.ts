@@ -6,11 +6,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const scriptPath = resolve('scripts/verify-user-video-flow-live-evidence.mjs');
 const tempDirs: string[] = [];
+const deploymentSha = 'abcdef1234567890abcdef1234567890abcdef12';
+const shortSha = deploymentSha.slice(0, 8);
 
 function makeEvidence(overrides: Record<string, unknown> = {}) {
   const context = {
+    runId: 'run-1',
     baseUrl: 'https://sophia.agencyos.network',
-    deployment: { shortSha: 'abc1234', version: '0.1.0' },
+    deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
     channelProviders: ['telegram', 'youtube'],
     missionId: 'mission-1',
     videoId: '00000000-0000-4000-8000-000000000001',
@@ -18,7 +21,7 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
     distributionJobIds: ['job-1', 'job-2'],
   };
   const events = [
-    ['deployment-version', { shortSha: 'abc1234' }],
+    ['deployment-version', { sha: deploymentSha, shortSha }],
     ['sign-in', { cookieCount: 1 }],
     ['save-llm-byok', { providers: ['openrouter'] }],
     ['save-heygen-credential', { provider: 'heygen' }],
@@ -27,6 +30,16 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
     ['auto-video', { status: 'succeeded' }],
     ['heygen-completion', { status: 'completed', videoUrlPresent: true }],
     ['video-row', { status: 'completed', videoUrlPresent: true }],
+    ['video-full-decode', {
+      status: 200,
+      totalBytes: 1024,
+      sha256: 'a'.repeat(64),
+      formatName: 'mov,mp4,m4a,3gp,3g2,mj2',
+      durationSec: 12,
+      videoStreams: [{ codec: 'h264', width: 720, height: 1280 }],
+      audioStreams: [{ codec: 'aac' }],
+      fullDecode: true,
+    }],
     ['distribution-scheduled', { jobIds: ['job-1', 'job-2'] }],
     ['publish-jobs-live', {
       jobs: [
@@ -37,7 +50,7 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
   ].map(([step, data]) => ({ step, status: 'passed', data }));
 
   return {
-    schema: 'sophia-live-user-video-flow-proof-v1',
+    schema: 'sophia-live-user-video-flow-proof-v4',
     status: 'passed',
     context,
     events,
@@ -71,7 +84,7 @@ describe('verify-user-video-flow-live-evidence', () => {
     const result = runValidator(writeEvidenceFile(makeEvidence()));
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('LIVE EVIDENCE PASS');
+    expect(result.stdout).toContain('LIVE VIDEO EVIDENCE PASS');
   });
 
   it('rejects artifacts that are not passed', () => {
@@ -93,16 +106,38 @@ describe('verify-user-video-flow-live-evidence', () => {
     expect(result.stderr).toContain('status not successful');
   });
 
+  it('rejects a completed video without a full-decode proof', () => {
+    const evidence = makeEvidence();
+    evidence.events = evidence.events.filter((event) => event.step !== 'video-full-decode');
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('required step not passed: video-full-decode');
+  });
+
+  it('rejects a video artifact whose decode did not complete', () => {
+    const evidence = makeEvidence();
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode');
+    artifact!.data.fullDecode = false;
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('did not prove a full audio/video decode');
+  });
+
   it('accepts a preflight proof artifact only in preflight mode', () => {
     const preflight = makeEvidence({
       status: 'preflight-passed',
       context: {
+        runId: 'run-preflight',
         baseUrl: 'https://sophia.agencyos.network',
-        deployment: { shortSha: 'abc1234', version: '0.1.0' },
+        deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
         channelProviders: ['telegram', 'youtube'],
       },
       events: [
-        ['deployment-version', { shortSha: 'abc1234' }],
+        ['deployment-version', { sha: deploymentSha, shortSha }],
         ['sign-in', { cookieCount: 1 }],
         ['save-llm-byok', { providers: ['openrouter'] }],
         ['save-heygen-credential', { provider: 'heygen' }],

@@ -4,12 +4,8 @@
  * @description Pure domain engine for Basel XV Omniverse Solvency & $5.0 Trillion Multiverse Treasury Singularity.
  */
 
-import { createHash } from 'node:crypto';
-import {
-  calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
-} from './basel-solvency-domain-engine';
-
+import { calculateParameterizedCollateralValue } from './basel-solvency-domain-engine';
+import { evaluateBaselXToXviiSolvency } from './basel-x-to-xvii-solvency-helper';
 import {
   GATE_25_SCALE_TARGETS,
   type BaselXvSolvencyStatus,
@@ -48,9 +44,6 @@ export const OMNIVERSE_COLLATERAL_HAIRCUTS: Record<OmniverseCollateralAsset, num
   TRANSCENDENTAL_VACUUM_SINGULARITIES: 1.35,
 };
 
-/**
- * Calculates net haircut-adjusted collateral valuation for Omniverse sovereign reserves.
- */
 export function calculateOmniverseCollateralValue(
   pledgedAmountCents: number,
   assetType: OmniverseCollateralAsset
@@ -63,74 +56,19 @@ export function calculateOmniverseCollateralValue(
   );
 }
 
-/**
- * Evaluates extreme capital adequacy and solvency under Basel XV standards.
- */
 export function evaluateBaselXvSolvency(input: BaselXvSolvencyInput): BaselXvSolvencyOutput {
-  const violations: string[] = [];
-
-  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
-    calculateBaselSolvencyRatios(input);
-
-  if (cet1RatioBps < GATE_25_SCALE_TARGETS.BASEL_XV_MIN_CET1_BPS) {
-    violations.push(
-      `CET1 Ratio ${cet1RatioBps} bps is below Basel XV requirement of ${GATE_25_SCALE_TARGETS.BASEL_XV_MIN_CET1_BPS} bps (42.00%)`
-    );
-  }
-
-  if (liquidityCoverageRatioBps < GATE_25_SCALE_TARGETS.BASEL_XV_MIN_LCR_BPS) {
-    violations.push(
-      `Liquidity Coverage Ratio ${liquidityCoverageRatioBps} bps is below Basel XV requirement of ${GATE_25_SCALE_TARGETS.BASEL_XV_MIN_LCR_BPS} bps (1200.00%)`
-    );
-  }
-
-  if (netStableFundingRatioBps < GATE_25_SCALE_TARGETS.BASEL_XV_MIN_NSFR_BPS) {
-    violations.push(
-      `Net Stable Funding Ratio ${netStableFundingRatioBps} bps is below Basel XV requirement of ${GATE_25_SCALE_TARGETS.BASEL_XV_MIN_NSFR_BPS} bps (450.00%)`
-    );
-  }
-
-  const targetBufferCents = GATE_25_SCALE_TARGETS.SOVEREIGN_RESERVE_SINGULARITY_USD * 100;
-  if (input.sovereignCapitalBufferCents < targetBufferCents) {
-    violations.push(
-      `Sovereign capital buffer ${input.sovereignCapitalBufferCents} cents is below $5.0T requirement (${targetBufferCents} cents)`
-    );
-  }
-
-  if (input.stressTestSurvivalDays < 7300) {
-    violations.push(
-      `Stress test survival ${input.stressTestSurvivalDays} days is below 7,300 days (20 years) requirement`
-    );
-  }
-
-  const isSolvent = violations.length === 0;
-
-  let solvencyStatus: BaselXvSolvencyStatus = 'SOLVENT_AND_CAPITALIZED';
-  if (!isSolvent) {
-    if (cet1RatioBps < GATE_25_SCALE_TARGETS.BASEL_XV_MIN_CET1_BPS) {
-      solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-    } else if (liquidityCoverageRatioBps < GATE_25_SCALE_TARGETS.BASEL_XV_MIN_LCR_BPS) {
-      solvencyStatus = 'LIQUIDITY_RUN_DEFICIT';
-    } else {
-      solvencyStatus = 'SUPERVISORY_INTERVENTION';
-    }
-  }
-
-  const supervisorySignature = createHash('sha256')
-    .update(
-      `BASEL_XV_AUDIT:${solvencyStatus}:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${input.sovereignCapitalBufferCents}:${input.stressTestSurvivalDays}`
-    )
-    .digest('hex');
-
-  return {
-    isSolvent,
-    solvencyStatus,
-    cet1RatioBps,
-    liquidityCoverageRatioBps,
-    netStableFundingRatioBps,
-    sovereignCapitalBufferCents: input.sovereignCapitalBufferCents,
-    stressTestSurvivalDays: input.stressTestSurvivalDays,
-    violations,
-    supervisorySignature,
-  };
+  return evaluateBaselXToXviiSolvency<BaselXvSolvencyStatus>(input, {
+    tierLabel: 'Basel XV',
+    auditPrefix: 'BASEL_XV_AUDIT',
+    minCet1Bps: GATE_25_SCALE_TARGETS.BASEL_XV_MIN_CET1_BPS,
+    cet1PctLabel: '42.00%',
+    minLcrBps: GATE_25_SCALE_TARGETS.BASEL_XV_MIN_LCR_BPS,
+    lcrPctLabel: '1200.00%',
+    minNsfrBps: GATE_25_SCALE_TARGETS.BASEL_XV_MIN_NSFR_BPS,
+    nsfrPctLabel: '450.00%',
+    targetBufferCents: GATE_25_SCALE_TARGETS.SOVEREIGN_RESERVE_SINGULARITY_USD * 100,
+    bufferLabel: '$5.0T',
+    minSurvivalDays: 7300,
+    survivalLabel: '7,300 days (20 years)',
+  });
 }

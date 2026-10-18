@@ -8,14 +8,13 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
-  PartnerProfile,
-  CoOpBudgetAllocation,
   CoOpClaimStatus,
   SubmitCoOpClaimInput,
 } from '@/tree/partners/types';
 import { auditCoOpClaimInvoice } from './heuristic-scorer';
 import type { InvoiceAppraisalInput, SubmitCoOpClaimResult } from './types';
 import { persistCoOpClaimAndDeductBudget } from './claim-submission-persistence';
+import { validateClaimPartnerAndBudget } from './claim-submission-validator';
 
 /**
  * Submits a Co-Op marketing claim, checks solvency against active budget allocations,
@@ -45,54 +44,20 @@ export async function submitCoOpClaim(
     return { success: false, error: 'INVALID_CLAIM_AMOUNT' };
   }
 
-  // 1. Verify partner exists and is active
-  const partner = await db
-    .prepare('SELECT id, partner_name, tier, status FROM partner_profiles WHERE id = ?')
-    .bind(partnerId)
-    .first<PartnerProfile>();
-
-  if (!partner) {
-    return { success: false, error: 'PARTNER_NOT_FOUND' };
-  }
-
-  if (partner.status !== 'active') {
-    return {
-      success: false,
-      error: partner.status === 'suspended' ? 'PARTNER_SUSPENDED' : 'PARTNER_NOT_ACTIVE',
-    };
-  }
-
-  // 2. Idempotency Check: Reject duplicate invoice submission per partner
-  const duplicate = await db
-    .prepare('SELECT id FROM partner_co_op_claims WHERE partner_id = ? AND invoice_number = ?')
-    .bind(partnerId, invoiceNumber)
-    .first<{ id: string }>();
-
-  if (duplicate) {
-    return { success: false, error: 'DUPLICATE_INVOICE_SUBMISSION' };
-  }
-
-  // 3. Solvency Check: Find active, non-expired budget allocations for this partner
   const now = Date.now();
-  const allocationsResult = await db
-    .prepare(`
-      SELECT * FROM co_op_budget_allocations
-      WHERE partner_id = ? AND status = 'active' AND expires_at > ? AND remaining_cents > 0
-      ORDER BY expires_at ASC
-    `)
-    .bind(partnerId, now)
-    .all<CoOpBudgetAllocation>();
+  const validation = await validateClaimPartnerAndBudget(
+    db,
+    partnerId,
+    invoiceNumber,
+    requestedCents,
+    now,
+  );
 
-  const activeAllocations = allocationsResult.results ?? [];
-  const totalAvailableCents = activeAllocations.reduce((sum, a) => sum + a.remaining_cents, 0);
-
-  if (totalAvailableCents < requestedCents) {
-    return { success: false, error: 'INSUFFICIENT_CO_OP_BUDGET' };
+  if (validation.errorResult || !validation.context) {
+    return validation.errorResult ?? { success: false, error: 'INSUFFICIENT_CO_OP_BUDGET' };
   }
 
-  // Pick target allocation (earliest expiring with capacity, or first active)
-  const targetAlloc =
-    activeAllocations.find((a) => a.remaining_cents >= requestedCents) ?? activeAllocations[0];
+  const { targetAlloc, totalAvailableCents } = validation.context;
 
   // 4. Run automated invoice appraisal scoring
   const appraisalInput: InvoiceAppraisalInput = {

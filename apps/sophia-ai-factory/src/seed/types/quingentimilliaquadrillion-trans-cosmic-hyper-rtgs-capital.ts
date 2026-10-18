@@ -22,16 +22,8 @@ export const GATE_46_SCALE_TARGETS = {
 } as const;
 
 export type QuingentimilliaquadrillionCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V28'
-  | 'USDT'
-  | 'QUINGENTIMILLIAQUADRILLION_TRANS_COSMIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'QUINGENTIMILLIAQUADRILLION_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V28' | 'USDT'
+  | 'QUINGENTIMILLIAQUADRILLION_TRANS_COSMIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'QUINGENTIMILLIAQUADRILLION_FOAM_CREDIT';
 
 export type QuingentimilliaquadrillionPriorityTier =
   | 'QUINGENTIMILLIAQUADRILLION_SINGULARITY'
@@ -39,11 +31,7 @@ export type QuingentimilliaquadrillionPriorityTier =
   | 'QUINGENTIMILLIAQUADRILLION_INSTITUTIONAL'
   | 'STANDARD_QUINGENTIMILLIAQUADRILLION';
 
-export type QuingentimilliaquadrillionSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type QuingentimilliaquadrillionSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface QuingentimilliaquadrillionRtgsPaymentSession {
   id?: string;
@@ -82,11 +70,7 @@ export interface QuingentimilliaquadrillionNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXxxviSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXxxviSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXxxviSolvencyAudit {
   id?: string;
@@ -109,20 +93,12 @@ export interface BaselXxxviSolvencyAudit {
 }
 
 export type QuingentimilliaquadrillionCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V28_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'QUINGENTIMILLIAQUADRILLION_CREDITS'
-  | 'QUINGENTIMILLIAQUADRILLION_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V28_BASKET' | 'TIER_1_EQUITIES'
+  | 'QUINGENTIMILLIAQUADRILLION_CREDITS' | 'QUINGENTIMILLIAQUADRILLION_SUB_PLANCK_FOAM';
 
 export type QuingentimilliaquadrillionCollateralVaultSector =
-  | 'QUINGENTIMILLIAQUADRILLION_SINGULARITY_CORE'
-  | 'TRANS_COSMIC_APEX_VAULT'
-  | 'OMNIVERSAL_SUPRACLUSTER_HUB'
-  | 'SUB_PLANCK_QUANTUM_WELL'
-  | 'ZERO_POINT_RESERVE_MATRIX'
-  | 'ETERNAL_SOVEREIGN_SANCTUM';
+  | 'QUINGENTIMILLIAQUADRILLION_SINGULARITY_CORE' | 'TRANS_COSMIC_APEX_VAULT' | 'OMNIVERSAL_SUPRACLUSTER_HUB'
+  | 'SUB_PLANCK_QUANTUM_WELL' | 'ZERO_POINT_RESERVE_MATRIX' | 'ETERNAL_SOVEREIGN_SANCTUM';
 
 export interface QuingentimilliaquadrillionCollateralReserve {
   id?: string;

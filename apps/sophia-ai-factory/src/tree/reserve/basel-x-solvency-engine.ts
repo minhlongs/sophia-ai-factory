@@ -4,12 +4,8 @@
  * @description Pure domain engine for Basel X Pan-Cosmic Solvency & $100.0B Sovereign Reserve Grid.
  */
 
-import { createHash } from 'node:crypto';
-import {
-  calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
-} from './basel-solvency-domain-engine';
-
+import { calculateParameterizedCollateralValue } from './basel-solvency-domain-engine';
+import { evaluateBaselXToXviiSolvency } from './basel-x-to-xvii-solvency-helper';
 import {
   GATE_20_SCALE_TARGETS,
   type BaselXSolvencyStatus,
@@ -48,9 +44,6 @@ export const PAN_COSMIC_COLLATERAL_HAIRCUTS: Record<PanCosmicCollateralAsset, nu
   ZERO_POINT_SINGULARITIES: 1.40,
 };
 
-/**
- * Calculates net haircut-adjusted collateral valuation for Pan-Cosmic sovereign reserves.
- */
 export function calculatePanCosmicCollateralValue(
   pledgedAmountCents: number,
   assetType: PanCosmicCollateralAsset
@@ -63,74 +56,19 @@ export function calculatePanCosmicCollateralValue(
   );
 }
 
-/**
- * Evaluates extreme capital adequacy and solvency under Basel X standards.
- */
 export function evaluateBaselXSolvency(input: BaselXSolvencyInput): BaselXSolvencyOutput {
-  const violations: string[] = [];
-
-  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
-    calculateBaselSolvencyRatios(input);
-
-  if (cet1RatioBps < GATE_20_SCALE_TARGETS.BASEL_X_MIN_CET1_BPS) {
-    violations.push(
-      `CET1 Ratio ${cet1RatioBps} bps is below Basel X requirement of ${GATE_20_SCALE_TARGETS.BASEL_X_MIN_CET1_BPS} bps (30.00%)`
-    );
-  }
-
-  if (liquidityCoverageRatioBps < GATE_20_SCALE_TARGETS.BASEL_X_MIN_LCR_BPS) {
-    violations.push(
-      `Liquidity Coverage Ratio ${liquidityCoverageRatioBps} bps is below Basel X requirement of ${GATE_20_SCALE_TARGETS.BASEL_X_MIN_LCR_BPS} bps (600.00%)`
-    );
-  }
-
-  if (netStableFundingRatioBps < GATE_20_SCALE_TARGETS.BASEL_X_MIN_NSFR_BPS) {
-    violations.push(
-      `Net Stable Funding Ratio ${netStableFundingRatioBps} bps is below Basel X requirement of ${GATE_20_SCALE_TARGETS.BASEL_X_MIN_NSFR_BPS} bps (220.00%)`
-    );
-  }
-
-  const targetBufferCents = GATE_20_SCALE_TARGETS.SOVEREIGN_RESERVE_GRID_USD * 100;
-  if (input.sovereignCapitalBufferCents < targetBufferCents) {
-    violations.push(
-      `Sovereign capital buffer ${input.sovereignCapitalBufferCents} cents is below $100.0B requirement (${targetBufferCents} cents)`
-    );
-  }
-
-  if (input.stressTestSurvivalDays < 1095) {
-    violations.push(
-      `Stress test survival ${input.stressTestSurvivalDays} days is below 1,095 days (3 years) requirement`
-    );
-  }
-
-  const isSolvent = violations.length === 0;
-
-  let solvencyStatus: BaselXSolvencyStatus = 'SOLVENT_AND_CAPITALIZED';
-  if (!isSolvent) {
-    if (cet1RatioBps < GATE_20_SCALE_TARGETS.BASEL_X_MIN_CET1_BPS) {
-      solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-    } else if (liquidityCoverageRatioBps < GATE_20_SCALE_TARGETS.BASEL_X_MIN_LCR_BPS) {
-      solvencyStatus = 'LIQUIDITY_RUN_DEFICIT';
-    } else {
-      solvencyStatus = 'SUPERVISORY_INTERVENTION';
-    }
-  }
-
-  const supervisorySignature = createHash('sha256')
-    .update(
-      `BASEL_X_AUDIT:${solvencyStatus}:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${input.sovereignCapitalBufferCents}:${input.stressTestSurvivalDays}`
-    )
-    .digest('hex');
-
-  return {
-    isSolvent,
-    solvencyStatus,
-    cet1RatioBps,
-    liquidityCoverageRatioBps,
-    netStableFundingRatioBps,
-    sovereignCapitalBufferCents: input.sovereignCapitalBufferCents,
-    stressTestSurvivalDays: input.stressTestSurvivalDays,
-    violations,
-    supervisorySignature,
-  };
+  return evaluateBaselXToXviiSolvency<BaselXSolvencyStatus>(input, {
+    tierLabel: 'Basel X',
+    auditPrefix: 'BASEL_X_AUDIT',
+    minCet1Bps: GATE_20_SCALE_TARGETS.BASEL_X_MIN_CET1_BPS,
+    cet1PctLabel: '30.00%',
+    minLcrBps: GATE_20_SCALE_TARGETS.BASEL_X_MIN_LCR_BPS,
+    lcrPctLabel: '600.00%',
+    minNsfrBps: GATE_20_SCALE_TARGETS.BASEL_X_MIN_NSFR_BPS,
+    nsfrPctLabel: '220.00%',
+    targetBufferCents: GATE_20_SCALE_TARGETS.SOVEREIGN_RESERVE_GRID_USD * 100,
+    bufferLabel: '$100.0B',
+    minSurvivalDays: 1095,
+    survivalLabel: '1,095 days (3 years)',
+  });
 }

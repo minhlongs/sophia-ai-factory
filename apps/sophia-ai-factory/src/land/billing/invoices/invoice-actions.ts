@@ -8,39 +8,30 @@
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type {
-  EInvoice,
-  CreateInvoiceInput,
-} from '@/seed/types/enterprise-billing';
+import type { EInvoice, CreateInvoiceInput } from '@/seed/types/enterprise-billing';
 import {
   createInvoiceRecord,
   getInvoicesByOrg,
   updateInvoiceStatus,
   markInvoicePaid,
-  validateVietnameseTaxId,
 } from '@/tree/billing/invoice-generator';
 import type { BillingActionError } from './auth-check';
-import { loadAuthorizedInvoice, loadAuthorizedOrgDb } from './invoice-action-helpers';
+import {
+  loadAuthorizedInvoice,
+  loadAuthorizedOrgDb,
+  validateInvoiceTaxIdIfNeeded,
+} from './invoice-action-helpers';
 
-/**
- * Server Action: Create a new compliant enterprise invoice record in D1.
- */
+/** Server Action: Create a new compliant enterprise invoice record in D1. */
 export async function createInvoiceAction(
   input: CreateInvoiceInput,
 ): Promise<Result<EInvoice, BillingActionError>> {
   try {
     const orgDb = await loadAuthorizedOrgDb(input.orgId);
-    if (!orgDb.ok) {
-      return failure(orgDb.error);
-    }
+    if (!orgDb.ok) return failure(orgDb.error);
 
-    // Validate Tax ID if Vietnamese domestic tax ID is supplied
-    if (input.taxId && input.currency === 'VND') {
-      const taxValidation = validateVietnameseTaxId(input.taxId);
-      if (!taxValidation.valid) {
-        return failure({ code: 'INVALID_TAX_ID', message: taxValidation.error ?? 'Invalid Tax ID format' });
-      }
-    }
+    const taxErr = validateInvoiceTaxIdIfNeeded(input);
+    if (taxErr) return failure(taxErr);
 
     const invoice = await createInvoiceRecord(orgDb.db, input);
     return success(invoice);
@@ -50,9 +41,7 @@ export async function createInvoiceAction(
   }
 }
 
-/**
- * Server Action: Retrieve all invoices belonging to an organization.
- */
+/** Server Action: Retrieve all invoices belonging to an organization. */
 export async function getInvoicesByOrgAction(
   orgId: string,
 ): Promise<Result<EInvoice[], BillingActionError>> {
@@ -68,16 +57,13 @@ export async function getInvoicesByOrgAction(
   }
 }
 
-/**
- * Server Action: Retrieve single invoice by ID with organization verification.
- */
+/** Server Action: Retrieve single invoice by ID with organization verification. */
 export async function getInvoiceByIdAction(
   id: string,
 ): Promise<Result<EInvoice, BillingActionError>> {
   try {
     const loaded = await loadAuthorizedInvoice(id);
     if (!loaded.ok) return failure(loaded.error);
-
     return success(loaded.invoice);
   } catch (err) {
     logger.error('[EnterpriseBillingActions] getInvoiceByIdAction failed', toError(err));
@@ -85,9 +71,7 @@ export async function getInvoiceByIdAction(
   }
 }
 
-/**
- * Server Action: Issue a draft invoice to 'issued' status.
- */
+/** Server Action: Issue a draft invoice to 'issued' status. */
 export async function issueInvoiceAction(
   id: string,
 ): Promise<Result<EInvoice, BillingActionError>> {
@@ -99,7 +83,6 @@ export async function issueInvoiceAction(
     if (!updated) {
       return failure({ code: 'UPDATE_FAILED', message: 'Failed to update invoice status' });
     }
-
     return success(updated);
   } catch (err) {
     logger.error('[EnterpriseBillingActions] issueInvoiceAction failed', toError(err));
@@ -107,9 +90,7 @@ export async function issueInvoiceAction(
   }
 }
 
-/**
- * Server Action: Mark an invoice as paid.
- */
+/** Server Action: Mark an invoice as paid. */
 export async function markInvoicePaidAction(
   id: string,
   paymentRail?: string,
@@ -129,7 +110,6 @@ export async function markInvoicePaidAction(
     if (!updated) {
       return failure({ code: 'UPDATE_FAILED', message: 'Failed to mark invoice as paid' });
     }
-
     return success(updated);
   } catch (err) {
     logger.error('[EnterpriseBillingActions] markInvoicePaidAction failed', toError(err));

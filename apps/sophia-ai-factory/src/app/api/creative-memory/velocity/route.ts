@@ -5,13 +5,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
-import { createServerClient } from '@/seed/db/client';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import {
   GetVelocitySchema,
   PostVelocitySchema,
-  mapVelocityRow,
-  type VelocityRow,
+  queryVelocityEntries,
+  insertVelocityEntry,
 } from './velocity-route-helpers';
 
 export const dynamic = 'force-dynamic';
@@ -37,31 +36,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { workspaceId, entityType, channel } = parsed.data;
-
-  const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
+  const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id);
   if (!hasAccess) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    const d1 = createServerClient();
-    let sql = 'SELECT * FROM learning_velocity WHERE workspace_id = ?';
-    const params: (string | number)[] = [workspaceId];
-
-    if (entityType) {
-      sql += ' AND entity_type = ?';
-      params.push(entityType);
-    }
-    if (channel) {
-      sql += ' AND channel = ?';
-      params.push(channel);
-    }
-    sql += ' ORDER BY created_at DESC LIMIT 50';
-
-    const result = await d1.prepare(sql).bind(...params).all<VelocityRow>();
-    const records = (result.results ?? []).map(mapVelocityRow);
-
+    const records = await queryVelocityEntries(parsed.data);
     return NextResponse.json({ velocity: records, count: records.length });
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
@@ -89,47 +70,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { workspaceId, entityType, channel, velocityScore, eventCount, windowStartMs, windowEndMs, avgMetrics } = parsed.data;
-
-  // Mutation requires OPERATOR or higher role
-  const hasOperatorRole = await verifyWorkspaceRole(workspaceId, user.id, 'OPERATOR');
+  const hasOperatorRole = await verifyWorkspaceRole(parsed.data.workspaceId, user.id, 'OPERATOR');
   if (!hasOperatorRole) {
     return NextResponse.json({ error: 'Forbidden', message: 'Insufficient workspace role' }, { status: 403 });
   }
 
   try {
-    const d1 = createServerClient();
-    const now = Date.now();
-    const id = `vel_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-    const startMs = windowStartMs ?? (now - 7 * 86400000);
-    const endMs = windowEndMs ?? now;
-
-    await d1
-      .prepare(
-        `INSERT INTO learning_velocity (
-          id, workspace_id, entity_type, channel,
-          velocity_score, event_count, window_start_ms, window_end_ms,
-          avg_metrics, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(id, workspaceId, entityType, channel, velocityScore, eventCount, startMs, endMs, JSON.stringify(avgMetrics), now)
-      .run();
-
-    return NextResponse.json(
-      {
-        id,
-        workspaceId,
-        entityType,
-        channel,
-        velocityScore,
-        eventCount,
-        windowStartMs: startMs,
-        windowEndMs: endMs,
-        avgMetrics,
-        createdAt: now,
-      },
-      { status: 201 },
-    );
+    const created = await insertVelocityEntry(parsed.data);
+    return NextResponse.json(created, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }

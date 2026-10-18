@@ -20,27 +20,11 @@ export const GATE_17_SCALE_TARGETS = {
   MIN_NETTING_COMPRESSION_RATIO_PCT: 98.0,
 } as const;
 
-export type HyperRtgsCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'SSDR'
-  | 'USDT'
-  | 'KSCE'
-  | 'ISCE';
+export type HyperRtgsCurrency = 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'SSDR' | 'USDT' | 'KSCE' | 'ISCE';
 
-export type HyperRtgsPriorityTier =
-  | 'WARP_EXPEDITE'
-  | 'INTERSTELLAR_INSTITUTIONAL'
-  | 'STANDARD_SYSTEM';
+export type HyperRtgsPriorityTier = 'WARP_EXPEDITE' | 'INTERSTELLAR_INSTITUTIONAL' | 'STANDARD_SYSTEM';
 
-export type HyperRtgsSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_INSUFFICIENT_LIQUIDITY';
+export type HyperRtgsSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_INSUFFICIENT_LIQUIDITY';
 
 export interface HyperRtgsClearingSession {
   id?: string;
@@ -57,11 +41,7 @@ export interface HyperRtgsClearingSession {
   createdAt?: string;
 }
 
-export type DistributedNettingStatus =
-  | 'ACCUMULATING'
-  | 'GRAPH_SOLVED'
-  | 'NET_EXECUTED'
-  | 'NET_ABORTED';
+export type DistributedNettingStatus = 'ACCUMULATING' | 'GRAPH_SOLVED' | 'NET_EXECUTED' | 'NET_ABORTED';
 
 export interface DistributedNettingObligation {
   fromParticipantId: string;
@@ -84,20 +64,9 @@ export interface DistributedMultilateralNettingBatch {
   createdAt?: string;
 }
 
-export type InterstellarCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'KSCE_CREDITS'
-  | 'ISCE_TACHYON';
+export type InterstellarCollateralAsset = 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_BASKET' | 'TIER_1_EQUITIES' | 'KSCE_CREDITS' | 'ISCE_TACHYON';
 
-export type InterstellarVaultHubId =
-  | 'SOL_EARTH_CENTRAL'
-  | 'ALPHA_CENTAURI_RELAY'
-  | 'LUNAR_LAGRANGE_VAULT'
-  | 'MARS_OASIS_VAULT'
-  | 'DEEP_SPACE_NODE';
+export type InterstellarVaultHubId = 'SOL_EARTH_CENTRAL' | 'ALPHA_CENTAURI_RELAY' | 'LUNAR_LAGRANGE_VAULT' | 'MARS_OASIS_VAULT' | 'DEEP_SPACE_NODE';
 
 export interface InterstellarCapitalReserve {
   id?: string;
@@ -111,11 +80,7 @@ export interface InterstellarCapitalReserve {
   createdAt?: string;
 }
 
-export type BaselViiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_RISK'
-  | 'REGULATORY_HALT';
+export type BaselViiSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_RISK' | 'REGULATORY_HALT';
 
 export interface BaselViiSolvencySnapshot {
   id?: string;

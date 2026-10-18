@@ -7,37 +7,17 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
   EnterpriseAuditEvent,
-  EnterpriseAuditRow,
   RecordEnterpriseAuditInput,
 } from '@/seed/types/enterprise-audit';
 import { randomBytes } from 'node:crypto';
 import { canonicalJson, computeEnterpriseContentHash } from './merkle-chain';
+import {
+  fetchLatestChainHash,
+  insertAuditEventRow,
+  mapRowToAuditEvent,
+} from './audit-vault-queries';
 
-export function mapRowToAuditEvent(row: EnterpriseAuditRow): EnterpriseAuditEvent {
-  let parsedPayload: Record<string, unknown> = {};
-  try {
-    parsedPayload = JSON.parse(row.payload) as Record<string, unknown>;
-  } catch {
-    parsedPayload = { _raw: row.payload };
-  }
-
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    actorId: row.actor_id,
-    actorEmail: row.actor_email,
-    action: row.action,
-    resourceType: row.resource_type,
-    resourceId: row.resource_id,
-    payload: parsedPayload,
-    prevHash: row.prev_hash,
-    contentHash: row.content_hash,
-    timestamp: row.timestamp,
-    ipAddress: row.ip_address,
-    userAgent: row.user_agent,
-    createdAt: row.created_at,
-  };
-}
+export { mapRowToAuditEvent };
 
 /**
  * Atomically records an enterprise audit event into the cryptographic hash-chain.
@@ -54,35 +34,8 @@ export async function recordEnterpriseAuditEvent(
   const payload = input.payload ?? {};
   const serializedPayload = canonicalJson(payload);
 
-  // 1. Fetch latest event in this organization's chain (or global chain if orgId is null)
-  let latestRow: { content_hash: string } | null = null;
-  if (orgId) {
-    latestRow = await db
-      .prepare(
-        `SELECT content_hash
-         FROM enterprise_audit_events
-         WHERE org_id = ?1
-         ORDER BY timestamp DESC, created_at DESC, rowid DESC
-         LIMIT 1`,
-      )
-      .bind(orgId)
-      .first<{ content_hash: string }>();
-  } else {
-    latestRow = await db
-      .prepare(
-        `SELECT content_hash
-         FROM enterprise_audit_events
-         WHERE org_id IS NULL
-         ORDER BY timestamp DESC, created_at DESC, rowid DESC
-         LIMIT 1`,
-      )
-      .bind(orgId)
-      .first<{ content_hash: string }>();
-  }
+  const prevHash = await fetchLatestChainHash(db, orgId);
 
-  const prevHash = latestRow ? latestRow.content_hash : null;
-
-  // 2. Compute canonical content hash
   const contentHash = computeEnterpriseContentHash(
     prevHash,
     timestamp,
@@ -91,34 +44,7 @@ export async function recordEnterpriseAuditEvent(
     payload,
   );
 
-  // 3. Insert record into D1
-  await db
-    .prepare(
-      `INSERT INTO enterprise_audit_events (
-        id, org_id, actor_id, actor_email, action, resource_type,
-        resource_id, payload, prev_hash, content_hash, timestamp,
-        ip_address, user_agent, created_at
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`,
-    )
-    .bind(
-      id,
-      orgId,
-      input.actorId,
-      input.actorEmail ?? null,
-      input.action,
-      input.resourceType,
-      input.resourceId ?? null,
-      serializedPayload,
-      prevHash,
-      contentHash,
-      timestamp,
-      input.ipAddress ?? null,
-      input.userAgent ?? null,
-      now,
-    )
-    .run();
-
-  return {
+  const event: EnterpriseAuditEvent = {
     id,
     orgId,
     actorId: input.actorId,
@@ -134,4 +60,8 @@ export async function recordEnterpriseAuditEvent(
     userAgent: input.userAgent ?? null,
     createdAt: now,
   };
+
+  await insertAuditEventRow(db, event, serializedPayload);
+
+  return event;
 }

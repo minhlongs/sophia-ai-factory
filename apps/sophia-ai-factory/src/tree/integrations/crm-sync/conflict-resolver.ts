@@ -9,6 +9,10 @@ import type {
   ConflictResolutionResult,
   SophiaDealSnapshot,
 } from '../types';
+import {
+  applyAuthoritativeContactFields,
+  applyCommercialFields,
+} from './conflict-field-applier';
 
 /**
  * Resolves conflicts between the current Sophia deal state and incoming CRM updates.
@@ -22,60 +26,6 @@ import type {
  * 3. Last-Write-Wins (LWW): For remaining fields, compare timestamps. If incoming > existing,
  *    apply; otherwise ignore to prevent sync loops.
  */
-function applyAuthoritativeContactFields(
-  currentDeal: SophiaDealSnapshot,
-  incomingUpdate: Partial<SophiaDealSnapshot>,
-  resolved: SophiaDealSnapshot,
-  appliedFields: string[],
-): void {
-  const keys: Array<'leadEmail' | 'leadPhone' | 'sdrNotes' | 'notes'> = [
-    'leadEmail',
-    'leadPhone',
-    'sdrNotes',
-    'notes',
-  ];
-  for (const key of keys) {
-    const val = incomingUpdate[key];
-    if (val !== undefined && val !== currentDeal[key]) {
-      resolved[key] = val as never;
-      appliedFields.push(key);
-    }
-  }
-}
-
-function applyCommercialFields(
-  currentDeal: SophiaDealSnapshot,
-  incomingUpdate: Partial<SophiaDealSnapshot>,
-  resolved: SophiaDealSnapshot,
-  isProtectedClosedWon: boolean,
-  isIncomingFresher: boolean,
-  appliedFields: string[],
-  ignoredFields: string[],
-): void {
-  if (
-    incomingUpdate.dealValueEstimateCents !== undefined &&
-    incomingUpdate.dealValueEstimateCents !== currentDeal.dealValueEstimateCents
-  ) {
-    if (!isProtectedClosedWon && isIncomingFresher) {
-      resolved.dealValueEstimateCents = incomingUpdate.dealValueEstimateCents;
-      appliedFields.push('dealValueEstimateCents');
-    } else {
-      ignoredFields.push('dealValueEstimateCents');
-    }
-  }
-
-  for (const key of ['currency', 'closeDate'] as const) {
-    const val = incomingUpdate[key];
-    if (val === undefined || val === currentDeal[key]) continue;
-    if (isIncomingFresher) {
-      resolved[key] = val as never;
-      appliedFields.push(key);
-    } else {
-      ignoredFields.push(key);
-    }
-  }
-}
-
 export function resolveCrmConflict(
   currentDeal: SophiaDealSnapshot,
   incomingUpdate: Partial<SophiaDealSnapshot>,

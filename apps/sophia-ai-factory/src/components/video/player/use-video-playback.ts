@@ -8,11 +8,8 @@
  * @module components/video/player/use-video-playback
  */
 
-import { useState, useRef, useCallback, useMemo } from 'react';
-import type { QualityLadder } from '@/seed/types/streaming';
+import { useState, useRef, useMemo } from 'react';
 import { generateForensicWatermark } from '@/tree/watermark/forensic-watermark';
-import type { SubtitleLanguage } from './player-types';
-import { usePlayerTracks, useQualitySwitch } from './player-stream-source';
 import { usePlayerMediaEvents } from './player-media-events';
 import {
   resolveVideoManifestUrl,
@@ -20,12 +17,15 @@ import {
   type UseVideoPlaybackProps,
   type VideoControlHandlersParams,
 } from './video-playback-helpers';
+import { useVideoMenuState, type UseVideoMenuStateParams } from './use-video-menu-state';
 
 export {
   resolveVideoManifestUrl,
   useVideoControlHandlers,
+  useVideoMenuState,
   type UseVideoPlaybackProps,
   type VideoControlHandlersParams,
+  type UseVideoMenuStateParams,
 };
 
 export function useVideoPlayback({
@@ -48,29 +48,22 @@ export function useVideoPlayback({
   const [volume, setVolume] = useState<number>(1);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [selectedQuality, setSelectedQuality] = useState<'auto' | QualityLadder>(initialQuality);
-  const [selectedSubtitle, setSelectedSubtitle] = useState<SubtitleLanguage>(initialSubtitleLocale);
-  const [showControls, setShowControls] = useState<boolean>(true);
-  const [showQualityMenu, setShowQualityMenu] = useState<boolean>(false);
-  const [showSubtitleMenu, setShowSubtitleMenu] = useState<boolean>(false);
 
   const watermark = useMemo(
     () => generateForensicWatermark(tenantId, userId, customWatermarkText),
     [tenantId, userId, customWatermarkText],
   );
-
   const manifestUrl = useMemo(() => resolveVideoManifestUrl(videoId, src), [src, videoId]);
 
-  const { handleSubtitleSelect: applySubtitle } = usePlayerTracks(videoRef);
-  const { handleQualitySelect: applyQuality } = useQualitySwitch(videoId, manifestUrl, videoRef);
+  const menuState = useVideoMenuState({
+    videoId,
+    manifestUrl,
+    videoRef,
+    initialQuality,
+    initialSubtitleLocale,
+  });
 
-  const {
-    togglePlay,
-    handleVolumeChange,
-    toggleMute,
-    handleSeek,
-    toggleFullscreen,
-  } = useVideoControlHandlers({
+  const controlHandlers = useVideoControlHandlers({
     videoRef,
     containerRef,
     isMuted,
@@ -81,22 +74,6 @@ export function useVideoPlayback({
     setIsMuted,
     setIsFullscreen,
   });
-
-  const handleQualitySelect = useCallback(
-    (quality: 'auto' | QualityLadder) => {
-      setShowQualityMenu(false);
-      applyQuality(quality, setSelectedQuality);
-    },
-    [applyQuality],
-  );
-
-  const handleSubtitleSelect = useCallback(
-    (lang: SubtitleLanguage) => {
-      setShowSubtitleMenu(false);
-      applySubtitle(lang, setSelectedSubtitle);
-    },
-    [applySubtitle],
-  );
 
   usePlayerMediaEvents({
     videoRef,
@@ -116,24 +93,11 @@ export function useVideoPlayback({
     volume,
     isMuted,
     isFullscreen,
-    selectedQuality,
-    selectedSubtitle,
-    showControls,
-    showQualityMenu,
-    showSubtitleMenu,
     watermark,
     manifestUrl,
-    setShowControls,
-    setShowQualityMenu,
-    setShowSubtitleMenu,
-    togglePlay,
-    toggleMute,
-    toggleFullscreen,
-    handleSeek,
-    handleVolumeChange,
-    handleQualitySelect,
-    handleSubtitleSelect,
     setVolume,
     setIsFullscreen,
+    ...menuState,
+    ...controlHandlers,
   };
 }

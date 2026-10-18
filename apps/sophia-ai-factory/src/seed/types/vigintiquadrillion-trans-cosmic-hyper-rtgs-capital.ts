@@ -22,16 +22,8 @@ export const GATE_36_SCALE_TARGETS = {
 } as const;
 
 export type VigintiquadrillionCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V18'
-  | 'USDT'
-  | 'VIGINTIQUADRILLION_TRANS_COSMIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'VIGINTIQUADRILLION_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V18' | 'USDT'
+  | 'VIGINTIQUADRILLION_TRANS_COSMIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'VIGINTIQUADRILLION_FOAM_CREDIT';
 
 export type VigintiquadrillionPriorityTier =
   | 'VIGINTIQUADRILLION_SINGULARITY'
@@ -39,11 +31,7 @@ export type VigintiquadrillionPriorityTier =
   | 'VIGINTIQUADRILLION_INSTITUTIONAL'
   | 'STANDARD_VIGINTIQUADRILLION';
 
-export type VigintiquadrillionSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type VigintiquadrillionSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface VigintiquadrillionRtgsPaymentSession {
   id?: string;
@@ -82,11 +70,7 @@ export interface VigintiquadrillionNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXxviSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXxviSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXxviSolvencyAudit {
   id?: string;
@@ -109,20 +93,12 @@ export interface BaselXxviSolvencyAudit {
 }
 
 export type VigintiquadrillionCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V18_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'VIGINTIQUADRILLION_CREDITS'
-  | 'VIGINTIQUADRILLION_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V18_BASKET' | 'TIER_1_EQUITIES'
+  | 'VIGINTIQUADRILLION_CREDITS' | 'VIGINTIQUADRILLION_SUB_PLANCK_FOAM';
 
 export type VigintiquadrillionCollateralVaultSector =
-  | 'VIGINTIQUADRILLION_SINGULARITY_CORE'
-  | 'TRANS_COSMIC_APEX_VAULT'
-  | 'OMNIVERSAL_SUPRACLUSTER_HUB'
-  | 'SUB_PLANCK_QUANTUM_WELL'
-  | 'ZERO_POINT_RESERVE_MATRIX'
-  | 'ETERNAL_SOVEREIGN_SANCTUM';
+  | 'VIGINTIQUADRILLION_SINGULARITY_CORE' | 'TRANS_COSMIC_APEX_VAULT' | 'OMNIVERSAL_SUPRACLUSTER_HUB'
+  | 'SUB_PLANCK_QUANTUM_WELL' | 'ZERO_POINT_RESERVE_MATRIX' | 'ETERNAL_SOVEREIGN_SANCTUM';
 
 export interface VigintiquadrillionCollateralReserve {
   id?: string;

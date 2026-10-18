@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Mark wizard completed so middleware skips the new-user redirect on /dashboard.
+    // The cookie is the fallback when the best-effort D1 onboarding write is unavailable.
     // Cookie name is per-user (`wizard_done_<uid12>`) — middleware reads the same shape.
     const uid12 = user.id.slice(0, 12);
     const cookieFlags = [

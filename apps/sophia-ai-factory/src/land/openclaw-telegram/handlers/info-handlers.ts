@@ -8,10 +8,13 @@ import {
   callGetVideoStatus,
   callGetHandover,
 } from '@/land/openclaw-telegram/openclaw-bridge';
+import {
+  NOT_PAIRED_MSG,
+  formatQuotaReply,
+  formatHandoverReply,
+} from './info-handler-formatters';
 
-export const NOT_PAIRED_MSG =
-  '⚠️ Bạn chưa liên kết tài khoản. Mở https://sophia.agencyos.network/dashboard/settings → "Connect Telegram" để pair.\n\n' +
-  '⚠️ Your account is not linked yet. Visit the dashboard → "Connect Telegram" to pair.';
+export { NOT_PAIRED_MSG };
 
 /** /version — public, returns deploy SHA + timestamp. */
 export async function handleVersion(chatId: string): Promise<void> {
@@ -48,18 +51,7 @@ export async function handleQuota(chatId: string): Promise<void> {
     return;
   }
   const q = await callGetQuota(userId);
-  const pctH = q.percentages.hourly;
-  const pctD = q.percentages.daily;
-  const pctM = q.percentages.monthly;
-  await sendMessage(
-    chatId,
-    `📊 *Quota — tier ${q.tier}*\n` +
-      `• Giờ: ${q.usage.hourly}/${q.limits.hourlyCredits} (${pctH}%)\n` +
-      `• Ngày: ${q.usage.daily}/${q.limits.dailyCredits} (${pctD}%)\n` +
-      `• Tháng: ${q.usage.monthly}/${q.limits.monthlyCredits} (${pctM}%)\n` +
-      `• Requests hôm nay: ${q.usage.requests}/${q.limits.dailyRequests}\n` +
-      `• Status: \`${q.status}\``,
-  );
+  await sendMessage(chatId, formatQuotaReply(q));
 }
 
 /** /affiliate — paired user only. Shows last 5 conversions + total count. */
@@ -123,16 +115,5 @@ export async function handleHandover(chatId: string): Promise<void> {
     await sendMessage(chatId, '🔖 *Handover*\n_Chưa có bản handover nào cho user này._');
     return;
   }
-  const fmt = (sec: number | null): string =>
-    sec ? new Date(sec * 1000).toISOString().slice(0, 10) : '—';
-  await sendMessage(
-    chatId,
-    `🔖 *Handover*\n` +
-      `• Agency: ${h.agencyName ?? '—'}\n` +
-      `• Tier: \`${h.tier ?? '—'}\`\n` +
-      `• Status: \`${h.status ?? '—'}\`\n` +
-      `• First login: ${fmt(h.firstLoginAt)}\n` +
-      `• First SOP install: ${fmt(h.firstSopInstallAt)}\n` +
-      `• First run: ${fmt(h.firstRunAt)}`,
-  );
+  await sendMessage(chatId, formatHandoverReply(h));
 }

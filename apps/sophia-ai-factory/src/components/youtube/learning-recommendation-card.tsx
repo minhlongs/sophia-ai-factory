@@ -7,15 +7,20 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, X, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import {
   confidenceClass,
   statusLabel,
   LearningRecommendationPayloads,
   type LearningRecommendation,
 } from './learning-recommendation-helpers';
+import {
+  LearningRecommendationActions,
+  type LearningRecommendationActionsProps,
+} from './learning-recommendation-actions';
 
-export type { LearningRecommendation };
+export type { LearningRecommendation, LearningRecommendationActionsProps };
+export { LearningRecommendationActions };
 
 interface LearningRecommendationCardProps {
   recommendation: LearningRecommendation;
@@ -102,37 +107,13 @@ export function LearningRecommendationCard({
         </div>
       )}
 
-      {isDecided ? (
-        <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
-          {recommendation.status === 'approved' ? (
-            <Check className="h-3.5 w-3.5" />
-          ) : (
-            <X className="h-3.5 w-3.5" />
-          )}
-          {statusLabel(recommendation.status, t)}
-        </div>
-      ) : (
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleApprove}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-          >
-            <Check className="h-4 w-4" />
-            {t('approve')}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleReject}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:opacity-50"
-          >
-            <X className="h-4 w-4" />
-            {t('reject')}
-          </button>
-        </div>
-      )}
+      <LearningRecommendationActions
+        status={recommendation.status}
+        busy={busy}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        t={t}
+      />
     </div>
   );
 }

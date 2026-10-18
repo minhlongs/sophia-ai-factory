@@ -16,6 +16,9 @@ import type {
   BackoffConfig,
   RetryEvaluation,
 } from '@/seed/types/autonomous-engine';
+import { isRetryableError } from './retry-error-classifier';
+
+export { isRetryableError };
 
 export const DEFAULT_BACKOFF_CONFIG: BackoffConfig & { maxRetries: number } = {
   baseDelayMs: 60_000,      // 60 seconds base delay
@@ -87,50 +90,3 @@ export function calculateBackoff(
     exhausted: false,
   };
 }
-
-/**
- * Classifies whether an error is transient and retryable or permanent.
- */
-export function isRetryableError(error: unknown): boolean {
-  if (!error) return false;
-  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
-
-  const nonRetryablePatterns = [
-    'invalid_api_key',
-    'unauthorized',
-    'forbidden',
-    'invalid credentials',
-    'not_found',
-    'syntax',
-    'validation',
-  ];
-
-  for (const pattern of nonRetryablePatterns) {
-    if (message.includes(pattern)) {
-      return false;
-    }
-  }
-
-  const retryablePatterns = [
-    'timeout',
-    'network',
-    'rate limit',
-    '429',
-    '500',
-    '502',
-    '503',
-    '504',
-    'econnreset',
-    'etimedout',
-    'fetch failed',
-  ];
-
-  for (const pattern of retryablePatterns) {
-    if (message.includes(pattern)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-

@@ -4,6 +4,8 @@
  * @module land/llm/cache/llm-cache-types
  */
 
+import { createServerClient } from '@/seed/db/client';
+
 export const DEFAULT_TTL_SEC = 24 * 60 * 60;
 
 export interface CacheMessage {
@@ -65,4 +67,16 @@ export async function hashCacheKey(key: CacheKey): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
+}
+
+/**
+ * Fire-and-forget hit_count increment via D1 RPC. Never throws.
+ */
+export async function incrementHitCount(hash: string, orgId: string): Promise<void> {
+  try {
+    const db = createServerClient();
+    await db.rpc('increment_llm_cache_hit', { p_hash: hash, p_org_id: orgId });
+  } catch {
+    // Swallow
+  }
 }

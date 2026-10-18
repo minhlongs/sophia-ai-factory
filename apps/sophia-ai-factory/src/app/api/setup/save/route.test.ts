@@ -179,7 +179,22 @@ describe('POST /api/setup/save', () => {
     expect(mockSetUserApiKey).toHaveBeenCalledWith(MOCK_USER.id, 'openrouter', 'sk-or-test-key');
   });
 
-  it('waits for both onboarding persistence writes and propagates a failed write', async () => {
+  it('waits for both onboarding persistence writes when they succeed', async () => {
+    const run = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
+    const bind = vi.fn(() => ({ run }));
+    const prepare = vi.fn(() => ({ bind }));
+    mockGetD1.mockResolvedValue({ prepare } as never);
+
+    await expect(markSetupOnboardingComplete(MOCK_USER.id)).resolves.toBeUndefined();
+
+    expect(prepare).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses the wizard cookie fallback when onboarding persistence fails after credentials are saved', async () => {
+    mockGetCurrentUser.mockResolvedValue(MOCK_USER as never);
     const run = vi.fn()
       .mockResolvedValueOnce({})
       .mockRejectedValueOnce(new Error('SOP enable failed'));
@@ -187,9 +202,13 @@ describe('POST /api/setup/save', () => {
     const prepare = vi.fn(() => ({ bind }));
     mockGetD1.mockResolvedValue({ prepare } as never);
 
-    await expect(markSetupOnboardingComplete(MOCK_USER.id)).rejects.toThrow('SOP enable failed');
+    const response = await POST(makeRequest({
+      config: { OPENROUTER_API_KEY: 'sk-or-test-key' },
+    }));
 
-    expect(prepare).toHaveBeenCalledTimes(2);
+    expect(response.status).toBe(200);
+    expect(mockSetUserApiKey).toHaveBeenCalledWith(MOCK_USER.id, 'openrouter', 'sk-or-test-key');
+    expect(response.headers.get('set-cookie')).toContain(`wizard_done_${MOCK_USER.id.slice(0, 12)}=1`);
     expect(run).toHaveBeenCalledTimes(2);
   });
 });

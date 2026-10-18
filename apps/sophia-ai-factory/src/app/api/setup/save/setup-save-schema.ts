@@ -97,6 +97,6 @@ export async function markSetupOnboardingComplete(userId: string): Promise<void>
       .run();
   } catch (dbErr) {
     logger.warn('[SetupSave] Failed to set onboarding_completed_at in DB', { error: dbErr });
-    throw dbErr;
+    // D1 onboarding state is best-effort; the response cookie remains the fallback gate.
   }
 }

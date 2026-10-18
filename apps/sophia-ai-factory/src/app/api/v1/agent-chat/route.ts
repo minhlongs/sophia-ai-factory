@@ -13,21 +13,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveLlmRoute, type ResolveLlmRouteOptions } from '@/forest/agent-chat/llm-router';
-import { buildSystemPrompt } from '@/forest/agent-chat/system-prompt';
 import { deductCredits, getBalance } from '@/tree/mcu/credits-repo';
-import { getContextManager, type ContextCheckResult } from '@/forest/agent-chat/context-manager';
 import type { ChatMessage, ChatContext } from '@/forest/agent-chat/types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { BodySchema } from './agent-chat-schema';
-import { emit, buildConsolidatedMessages } from './agent-chat-helpers';
+import { emit } from './agent-chat-helpers';
 import { buildAgentChatStream } from './agent-chat-stream';
-
-// Re-export extracted modules for barrel compatibility
-export { BodySchema, ChatMessageSchema } from './agent-chat-schema';
-export { emit, buildConsolidatedMessages, extractToolCallsFromEvents, buildToolResultMessages } from './agent-chat-helpers';
-export { callLlmWithTools, runToolUseLoop } from './agent-chat-llm';
-export { buildAgentChatStream } from './agent-chat-stream';
-export type { LlmCallOptions, LlmCallResult } from './agent-chat-llm';
+import { prepareChatContextAndMessages } from './agent-chat-context-prep';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,22 +63,12 @@ async function postHandler(request: NextRequest): Promise<Response> {
     );
   }
 
-  // Build system prompt
-  const systemPrompt = await buildSystemPrompt(context, {
-    userId: user.id,
-    injectMemories: true,
-    maxMemories: 5,
-  });
-
-  // Context management
-  const contextManager = getContextManager();
-  const contextMessages = messages.map((m) => ({ role: m.role, content: m.content }));
-  let contextResult: ContextCheckResult;
-  try {
-    contextResult = contextManager.checkContext(contextMessages, systemPrompt);
-  } catch {
-    contextResult = { withinLimit: true, currentTokens: 0, limitTokens: 8192, action: 'none' };
-  }
+  // Build system prompt & prepare consolidated messages
+  const { contextResult, fullMessages } = await prepareChatContextAndMessages(
+    user.id,
+    messages,
+    context,
+  );
 
   // Resolve LLM route
   let llmRoute: Awaited<ReturnType<typeof resolveLlmRoute>>;
@@ -97,24 +79,6 @@ async function postHandler(request: NextRequest): Promise<Response> {
       status: 503,
       headers: { 'Content-Type': 'text/event-stream' },
     });
-  }
-
-  // Build message array
-  let fullMessages: Array<{ role: string; content: string }>;
-  try {
-    if (contextResult.action !== 'none') {
-      const trimmed = await contextManager.trimMessages(contextMessages, systemPrompt, undefined, contextResult.limitTokens);
-      if (contextResult.action === 'summarize+trim') {
-        const { summary } = await contextManager.summarizeOlder(contextMessages, contextManager['minRecent']);
-        fullMessages = buildConsolidatedMessages(systemPrompt, contextMessages, contextManager['minRecent'], summary.content);
-      } else {
-        fullMessages = [{ role: 'system', content: systemPrompt }, ...trimmed];
-      }
-    } else {
-      fullMessages = [{ role: 'system', content: systemPrompt }, ...contextMessages];
-    }
-  } catch {
-    fullMessages = [{ role: 'system', content: systemPrompt }, ...contextMessages];
   }
 
   // Create SSE stream

@@ -6,12 +6,14 @@
 import { createServerClient } from '@/seed/db/client';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import { getCommand } from '@/tree/missions/command-registry';
-import { fireMissionWebhook } from '@/forest/webhooks/missions/fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';
-import { clearMissionCheckpoint } from '@/tree/missions/checkpoint-persistence';
 import type { MissionRow } from './types';
 import { loadHandler, failMission } from './queue-router';
 import { executeMissionHandlerWithTimeout } from './mission-handler-runner';
+import {
+  parseMissionParams,
+  finalizeMissionExecution,
+} from './mission-state-helpers';
 
 /**
  * Execute a mission asynchronously.
@@ -67,18 +69,7 @@ export async function dispatchMission(missionId: string): Promise<void> {
     return;
   }
 
-  let params: Record<string, unknown> = {};
-  try {
-    params = mission.params ? (JSON.parse(mission.params) as Record<string, unknown>) : {};
-  } catch (parseErr) {
-    logger.warn('[Dispatcher] Failed to parse mission params — using empty object', {
-      missionId,
-      raw: mission.params?.slice(0, 200),
-      error: parseErr instanceof Error ? parseErr.message : String(parseErr),
-    });
-    params = {};
-  }
-
+  const params = parseMissionParams(missionId, mission.params);
   const creditsUsed = commandDef.credits;
 
   if (creditsUsed > 0) {
@@ -102,35 +93,10 @@ export async function dispatchMission(missionId: string): Promise<void> {
     parsedParams: params,
   });
 
-  const nowAfter = Math.floor(Date.now() / 1000);
-
-  if (handlerResult.ok) {
-    await db
-      .from('engine_missions')
-      .update({
-        status: 'succeeded',
-        result: JSON.stringify(handlerResult.data ?? {}),
-        credits_used: creditsUsed,
-        updated_at: nowAfter,
-        completed_at: nowAfter,
-      })
-      .eq('id', missionId);
-    await clearMissionCheckpoint(missionId);
-  } else {
-    await failMission(db, missionId, handlerResult.error ?? 'Unknown error');
-  }
-
-  if (mission.webhook_url) {
-    try {
-      await fireMissionWebhook(missionId, mission.webhook_url);
-    } catch (err) {
-      logger.error('[Dispatcher] Webhook fire failed', { missionId, err });
-    }
-  }
-
-  logger.debug('[Dispatcher] Mission complete', {
-    missionId,
-    command: mission.command,
-    ok: handlerResult.ok,
+  await finalizeMissionExecution({
+    db,
+    mission,
+    creditsUsed,
+    handlerResult,
   });
 }

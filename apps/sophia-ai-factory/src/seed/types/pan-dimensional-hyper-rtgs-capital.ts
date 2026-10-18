@@ -21,28 +21,15 @@ export const GATE_29_SCALE_TARGETS = {
 } as const;
 
 export type PanDimensionalCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V11'
-  | 'USDT'
-  | 'PAN_DIMENSIONAL_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'TRANS_COSMIC_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V11' | 'USDT'
+  | 'PAN_DIMENSIONAL_CREDIT' | 'ZERO_POINT_ENERGY' | 'TRANS_COSMIC_FOAM_CREDIT';
 
 export type PanDimensionalPriorityTier =
-  | 'PAN_DIMENSIONAL_SINGULARITY'
-  | 'PAN_DIMENSIONAL_EXPEDITE'
-  | 'MULTIVERSE_INSTITUTIONAL'
-  | 'STANDARD_MULTIVERSE';
+  | 'PAN_DIMENSIONAL_SINGULARITY' | 'PAN_DIMENSIONAL_EXPEDITE'
+  | 'MULTIVERSE_INSTITUTIONAL' | 'STANDARD_MULTIVERSE';
 
 export type PanDimensionalSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+  | 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface PanDimensionalRtgsPaymentSession {
   id?: string;
@@ -82,10 +69,8 @@ export interface PanDimensionalNettingBatch {
 }
 
 export type BaselXixSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+  | 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH'
+  | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXixSolvencyAudit {
   id?: string;
@@ -108,21 +93,12 @@ export interface BaselXixSolvencyAudit {
 }
 
 export type PanDimensionalCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V11_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'MULTIVERSE_CREDITS'
-  | 'PAN_DIMENSIONAL_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V11_BASKET'
+  | 'TIER_1_EQUITIES' | 'MULTIVERSE_CREDITS' | 'PAN_DIMENSIONAL_SUB_PLANCK_FOAM';
 
 export type PanDimensionalVaultSector =
-  | 'PAN_DIMENSIONAL_CORE'
-  | 'OMNI_COSMIC_APEX'
-  | 'TRANS_COSMIC_VAULT'
-  | 'VIRGO_SUPRACLUSTER_HUB'
-  | 'SUB_PLANCK_FOAM_MATRIX'
-  | 'ZERO_POINT_RESERVE_WELL'
-  | 'ETERNAL_SOVEREIGN_GATEWAY';
+  | 'PAN_DIMENSIONAL_CORE' | 'OMNI_COSMIC_APEX' | 'TRANS_COSMIC_VAULT' | 'VIRGO_SUPRACLUSTER_HUB'
+  | 'SUB_PLANCK_FOAM_MATRIX' | 'ZERO_POINT_RESERVE_WELL' | 'ETERNAL_SOVEREIGN_GATEWAY';
 
 export interface PanDimensionalCollateralReserve {
   id?: string;

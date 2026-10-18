@@ -12,49 +12,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import type { LlmRoute } from './types';
-
-const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
-const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1';
-
-// ── Model context windows (tokens) ─────────────────────────────────────────────
-
-function buildCatalog(): Array<{ model: string; provider: LlmRoute['provider']; baseUrl: string; apiKey: string; contextWindow: number }> {
-  const catalog: Array<{ model: string; provider: LlmRoute['provider']; baseUrl: string; apiKey: string; contextWindow: number }> = [];
-
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
-  if (deepseekKey) {
-    catalog.push({
-      model: 'deepseek-reasoner',
-      provider: 'deepseek',
-      baseUrl: DEEPSEEK_BASE_URL,
-      apiKey: deepseekKey,
-      contextWindow: 64000,
-    });
-  }
-
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (anthropicKey) {
-    catalog.push({
-      model: 'claude-sonnet-4-20250514',
-      provider: 'anthropic',
-      baseUrl: ANTHROPIC_BASE_URL,
-      apiKey: anthropicKey,
-      contextWindow: 200000,
-    });
-    // Fallback with smaller context.
-    catalog.push({
-      model: 'claude-3-5-sonnet-20241022',
-      provider: 'anthropic',
-      baseUrl: ANTHROPIC_BASE_URL,
-      apiKey: anthropicKey,
-      contextWindow: 8192,
-    });
-  }
-
-  return catalog;
-}
-
-// ── Options ────────────────────────────────────────────────────────────────────
+import { buildCatalog, type LlmCatalogEntry } from './llm-catalog';
 
 /**
  * Options for LLM route resolution.
@@ -85,7 +43,6 @@ export async function resolveLlmRoute(
     throw new Error('NO_LLM_CONFIGURED');
   }
 
-  // If no token estimate provided, return the highest-capability default (first entry).
   if (!options?.estimatedTokens && !options?.minContextWindow) {
     const defaultRoute = catalog[0];
     logger.info('[LlmRouter] Resolved default route', {
@@ -102,12 +59,9 @@ export async function resolveLlmRoute(
   }
 
   const requiredContext = options.minContextWindow ?? options.estimatedTokens ?? 0;
-
-  // Sort by context window descending, then pick the smallest model that fits.
   const sortedByContext = [...catalog].sort((a, b) => b.contextWindow - a.contextWindow);
 
-  // Find the best fit: smallest context window that still fits the conversation.
-  let bestFit: (typeof catalog)[0] | null = null;
+  let bestFit: LlmCatalogEntry | null = null;
   for (const entry of sortedByContext) {
     if (entry.contextWindow >= requiredContext) {
       bestFit = entry;
@@ -115,7 +69,6 @@ export async function resolveLlmRoute(
     }
   }
 
-  // If no model fits, use the largest available (will truncate upstream).
   const selected = bestFit ?? sortedByContext[0];
 
   logger.info('[LlmRouter] Context-aware route resolved', {

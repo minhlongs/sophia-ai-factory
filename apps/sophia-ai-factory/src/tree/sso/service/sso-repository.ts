@@ -11,24 +11,13 @@ import type {
 } from '@/seed/types/enterprise-sso';
 import { logger } from '@/seed/utils/logger-utility';
 import { normalizeCorporateDomain } from './domain-validator';
+import {
+  SSO_SELECT_COLUMNS,
+  deleteEnterpriseSsoConfig,
+  mapRowToConfig,
+} from './sso-row-mapper';
 
-export function mapRowToConfig(row: EnterpriseSsoRow): EnterpriseSsoConfig {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    domain: row.domain,
-    providerType: row.provider_type as 'saml' | 'oidc',
-    issuer: row.issuer,
-    clientId: row.client_id,
-    clientSecretEncrypted: row.client_secret_encrypted,
-    metadataUrl: row.metadata_url,
-    ssoUrl: row.sso_url,
-    certificate: row.certificate,
-    enabled: row.enabled === 1,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
+export { deleteEnterpriseSsoConfig, mapRowToConfig };
 
 /**
  * Retrieve an active Enterprise SSO configuration by email domain.
@@ -43,8 +32,7 @@ export async function getEnterpriseSsoByDomain(
   try {
     const row = await db
       .prepare(
-        `SELECT id, org_id, domain, provider_type, issuer, client_id, client_secret_encrypted,
-                metadata_url, sso_url, certificate, enabled, created_at, updated_at
+        `SELECT ${SSO_SELECT_COLUMNS}
          FROM enterprise_sso_configs
          WHERE domain = ?1 AND enabled = 1
          LIMIT 1`,
@@ -72,8 +60,7 @@ export async function getEnterpriseSsoByOrg(
   try {
     const { results } = await db
       .prepare(
-        `SELECT id, org_id, domain, provider_type, issuer, client_id, client_secret_encrypted,
-                metadata_url, sso_url, certificate, enabled, created_at, updated_at
+        `SELECT ${SSO_SELECT_COLUMNS}
          FROM enterprise_sso_configs
          WHERE org_id = ?1
          ORDER BY created_at DESC`,
@@ -101,8 +88,7 @@ export async function getEnterpriseSsoById(
   try {
     const row = await db
       .prepare(
-        `SELECT id, org_id, domain, provider_type, issuer, client_id, client_secret_encrypted,
-                metadata_url, sso_url, certificate, enabled, created_at, updated_at
+        `SELECT ${SSO_SELECT_COLUMNS}
          FROM enterprise_sso_configs
          WHERE id = ?1
          LIMIT 1`,
@@ -118,20 +104,4 @@ export async function getEnterpriseSsoById(
     });
     return null;
   }
-}
-
-/**
- * Delete an SSO configuration.
- */
-export async function deleteEnterpriseSsoConfig(
-  db: D1Database,
-  id: string,
-  orgId: string,
-): Promise<boolean> {
-  const result = await db
-    .prepare('DELETE FROM enterprise_sso_configs WHERE id = ?1 AND org_id = ?2')
-    .bind(id, orgId)
-    .run();
-
-  return (result.meta?.changes ?? 0) > 0;
 }

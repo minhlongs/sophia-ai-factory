@@ -21,27 +21,11 @@ export const GATE_20_SCALE_TARGETS = {
   MAX_SETTLEMENT_LATENCY_NANOS: 10, // target 9 ns
 } as const;
 
-export type TransOmniverseCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V2'
-  | 'USDT'
-  | 'PAN_COSMIC_CREDIT'
-  | 'ZERO_POINT_FLUX';
+export type TransOmniverseCurrency = 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V2' | 'USDT' | 'PAN_COSMIC_CREDIT' | 'ZERO_POINT_FLUX';
 
-export type TransOmniversePriorityTier =
-  | 'SUB_PLANCK_EXPEDITE'
-  | 'PAN_COSMIC_INSTITUTIONAL'
-  | 'STANDARD_TRANS_OMNIVERSE';
+export type TransOmniversePriorityTier = 'SUB_PLANCK_EXPEDITE' | 'PAN_COSMIC_INSTITUTIONAL' | 'STANDARD_TRANS_OMNIVERSE';
 
-export type TransOmniverseSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type TransOmniverseSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface TransOmniverseRtgsSession {
   id?: string;
@@ -58,11 +42,7 @@ export interface TransOmniverseRtgsSession {
   createdAt?: string;
 }
 
-export type TransCosmicNettingStatus =
-  | 'ACCUMULATING'
-  | 'TRANS_COSMIC_SOLVED'
-  | 'NET_EXECUTED'
-  | 'NET_ABORTED';
+export type TransCosmicNettingStatus = 'ACCUMULATING' | 'TRANS_COSMIC_SOLVED' | 'NET_EXECUTED' | 'NET_ABORTED';
 
 export interface TransCosmicNettingObligation {
   fromParticipantId: string;
@@ -86,11 +66,7 @@ export interface TransCosmicNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXSolvencySnapshot {
   id?: string;
@@ -111,20 +87,9 @@ export interface BaselXSolvencySnapshot {
   createdAt?: string;
 }
 
-export type PanCosmicVaultHub =
-  | 'PRIME_MULTIVERSE_CORE'
-  | 'DIMENSION_OMEGA_HUB'
-  | 'VIRGO_SUPER_NEXUS'
-  | 'QUANTUM_ZERO_POINT_RESERVOIR'
-  | 'COSMIC_HORIZON_GATEWAY';
+export type PanCosmicVaultHub = 'PRIME_MULTIVERSE_CORE' | 'DIMENSION_OMEGA_HUB' | 'VIRGO_SUPER_NEXUS' | 'QUANTUM_ZERO_POINT_RESERVOIR' | 'COSMIC_HORIZON_GATEWAY';
 
-export type PanCosmicCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V2_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'PAN_COSMIC_CREDITS'
-  | 'ZERO_POINT_SINGULARITIES';
+export type PanCosmicCollateralAsset = 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V2_BASKET' | 'TIER_1_EQUITIES' | 'PAN_COSMIC_CREDITS' | 'ZERO_POINT_SINGULARITIES';
 
 export interface PanCosmicCapitalReserve {
   id?: string;

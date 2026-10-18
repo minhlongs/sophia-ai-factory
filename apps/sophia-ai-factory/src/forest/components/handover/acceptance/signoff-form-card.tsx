@@ -11,6 +11,7 @@ import { AlertCircle, Check, ShieldCheck } from 'lucide-react';
 import { Card } from '@/seed/components/ui/card';
 import { cn } from '@/seed/utils/cn';
 import { SignoffCheckpointsList } from './signoff-checkpoints-list';
+import { SignoffSignerInputs } from './signoff-signer-inputs';
 
 interface SignoffFormCardProps {
   signError: string | null;
@@ -58,40 +59,14 @@ export function SignoffFormCard({
           onCheckboxToggle={onCheckboxToggle}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          <div>
-            <label htmlFor="signer-name-input" className="text-xs font-semibold text-foreground block mb-1.5">
-              {t('signOff.form.nameLabel')} <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="signer-name-input" type="text" required value={signerName}
-              onChange={(e) => setSignerName(e.target.value)} placeholder={t('signOff.form.namePlaceholder')}
-              className="w-full px-3.5 py-2 rounded-lg text-sm bg-background border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="signer-role-input" className="text-xs font-semibold text-foreground block mb-1.5">
-              {t('signOff.form.roleLabel')} <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="signer-role-input" type="text" required value={signerRole}
-              onChange={(e) => setSignerRole(e.target.value)} placeholder={t('signOff.form.rolePlaceholder')}
-              className="w-full px-3.5 py-2 rounded-lg text-sm bg-background border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="signer-email-input" className="text-xs font-semibold text-foreground block mb-1.5">
-              {t('signOff.form.emailLabel')} <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="signer-email-input" type="email" required value={signerEmail}
-              onChange={(e) => setSignerEmail(e.target.value)} placeholder={t('signOff.form.emailPlaceholder')}
-              className="w-full px-3.5 py-2 rounded-lg text-sm bg-background border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-            />
-          </div>
-        </div>
+        <SignoffSignerInputs
+          signerName={signerName}
+          setSignerName={setSignerName}
+          signerRole={signerRole}
+          setSignerRole={setSignerRole}
+          signerEmail={signerEmail}
+          setSignerEmail={setSignerEmail}
+        />
 
         <button
           type="button"

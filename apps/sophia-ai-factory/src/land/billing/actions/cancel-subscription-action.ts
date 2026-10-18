@@ -19,13 +19,16 @@ import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
 import { isUserInDunning } from '@/land/billing/dunning/check-user-dunning';
 import type { BillingError } from './change-tier-action';
+import {
+  calculateRemainingDays,
+  fetchActiveSubscriptionByOrg,
+  markSubscriptionCancelAtPeriodEnd,
+} from './subscription-lifecycle-queries';
 
 export interface CancelSubscriptionOptions {
   /** Bypass dunning cache check (e.g. immediately returning from successful checkout redirect) */
   bypassDunningCache?: boolean;
 }
-
-// ── Types ─────────────────────────────────────────────────────────────────
 
 export interface CancelResult {
   endDate: string;
@@ -33,67 +36,38 @@ export interface CancelResult {
   tier: string;
 }
 
-// ── Subscription row shape ────────────────────────────────────────────────
-
-interface SubscriptionRow {
-  id: string;
-  org_id: string;
-  plan: string;
-  status: string;
-  current_period_start: string;
-  current_period_end: string;
-  cancel_at_period_end?: number;
-  cancellation_date?: string | null;
-}
-
-// ── Main action ───────────────────────────────────────────────────────────
-
 export async function cancelSubscription(
   options?: CancelSubscriptionOptions,
 ): Promise<Result<CancelResult, BillingError>> {
   try {
-    // Auth gate
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    // Get D1
     const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
 
-    // Get org for user
     const orgId = await resolveOrgId(user.id, d1);
     if (!orgId) {
       return failure({ code: 'NO_ACTIVE_SUBSCRIPTION', message: 'No organization found' });
     }
 
-    // Get current subscription
-    const sub = await d1
-      .prepare(
-        "SELECT id, org_id, plan, status, current_period_start, current_period_end, cancel_at_period_end, cancellation_date FROM subscriptions WHERE org_id = ? AND status = 'active' LIMIT 1",
-      )
-      .bind(orgId)
-      .first<SubscriptionRow>();
-
+    const sub = await fetchActiveSubscriptionByOrg(d1, orgId);
     if (!sub) {
       return failure({ code: 'NO_ACTIVE_SUBSCRIPTION', message: 'No active subscription found' });
     }
 
-    // Already cancelled check
     if (sub.cancel_at_period_end === 1) {
       return success({
         endDate: sub.current_period_end,
-        remainingDays: Math.max(0, Math.ceil(
-          (new Date(sub.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-        )),
+        remainingDays: calculateRemainingDays(sub.current_period_end),
         tier: sub.plan,
       });
     }
 
-    // Dunning check with active subscription self-healing and cache-busting
     const inDunning = await isUserInDunning(user.id, {
       bypassDunningCache: options?.bypassDunningCache,
       orgId,
@@ -106,16 +80,9 @@ export async function cancelSubscription(
       });
     }
 
-    // Set end_date to current period end
     const now = new Date().toISOString();
-
-    await d1.prepare(
-      'UPDATE subscriptions SET cancel_at_period_end = 1, cancellation_date = ?, updated_at = ? WHERE id = ?',
-    ).bind(now, now, sub.id).run();
-
-    const remainingDays = Math.max(0, Math.ceil(
-      (new Date(sub.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-    ));
+    await markSubscriptionCancelAtPeriodEnd(d1, sub.id, now);
+    const remainingDays = calculateRemainingDays(sub.current_period_end);
 
     logger.info('[CancelSubscription] Subscription cancelled', {
       userId: user.id,

@@ -11,31 +11,17 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation, deleteInstallation, updateCustomizations, updateConfigValues } from '@/seed/sop/sop-repo';
+import { deleteInstallation, updateCustomizations, updateConfigValues } from '@/seed/sop/sop-repo';
 import { generateWebhookSecret } from '@/seed/sop/webhook-hmac';
 import { customizationInputSchema } from '@/seed/sop/install-input-schema';
 import { runSop } from '@/forest/missions/sop-runner';
 import { createRun } from '@/seed/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
-import type { SopCustomizations } from '@/seed/sop/sop-types';
-import { getD1 } from '@/seed/db/client';
+import {
+  assertOwner,
+  mergeInstallationCustomizations,
+} from './sop-installation-owner-helper';
 
-
-async function assertOwner(id: string) {
-  const user = await getCurrentUser();
-  if (!user) return { error: 'Unauthorized' as const };
-  const db = await getD1();
-  if (!db) return { error: 'Database unavailable' as const };
-  const inst = await getInstallation(db, id);
-  if (!inst) return { error: 'Installation not found' as const };
-  if (inst.user_id !== user.id) return { error: 'Forbidden' as const };
-  return { user, db, inst };
-}
-
-// ---------------------------------------------------------------------------
-// Run now
-// ---------------------------------------------------------------------------
 export async function runNowAction(installationId: string): Promise<{ error?: string }> {
   const r = await assertOwner(installationId);
   if ('error' in r) return { error: r.error };
@@ -61,9 +47,6 @@ export async function runNowAction(installationId: string): Promise<{ error?: st
   return {};
 }
 
-// ---------------------------------------------------------------------------
-// Save playbook
-// ---------------------------------------------------------------------------
 export async function savePlaybookAction(
   installationId: string,
   playbookMd: string,
@@ -75,43 +58,29 @@ export async function savePlaybookAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' };
 
   const { db, inst } = r;
-  const existing: SopCustomizations = inst.customizations
-    ? (JSON.parse(inst.customizations) as SopCustomizations)
-    : {};
-
-  const merged: SopCustomizations = {
-    ...existing,
+  const merged = mergeInstallationCustomizations(inst.customizations, {
     playbook_md_override: parsed.data.playbookMdOverride,
-  };
+  });
 
   await updateCustomizations(db, installationId, merged);
   revalidatePath(`/dashboard/sops/${installationId}`);
   return {};
 }
 
-// ---------------------------------------------------------------------------
-// Regenerate secret
-// ---------------------------------------------------------------------------
 export async function regenSecretAction(installationId: string): Promise<{ error?: string; webhookSecret?: string }> {
   const r = await assertOwner(installationId);
   if ('error' in r) return { error: r.error };
 
   const { db, inst } = r;
   const newSecret = generateWebhookSecret();
-
-  const existing: SopCustomizations = inst.customizations
-    ? (JSON.parse(inst.customizations) as SopCustomizations)
-    : {};
-
-  const merged: SopCustomizations = { ...existing, webhookSecret: newSecret };
+  const merged = mergeInstallationCustomizations(inst.customizations, {
+    webhookSecret: newSecret,
+  });
   await updateCustomizations(db, installationId, merged);
 
   return { webhookSecret: newSecret };
 }
 
-// ---------------------------------------------------------------------------
-// Save config values (no-code form on edit tab)
-// ---------------------------------------------------------------------------
 export async function saveConfigAction(
   installationId: string,
   configValues: Record<string, unknown>,
@@ -124,9 +93,6 @@ export async function saveConfigAction(
   return {};
 }
 
-// ---------------------------------------------------------------------------
-// Delete installation
-// ---------------------------------------------------------------------------
 export async function deleteInstallAction(installationId: string): Promise<{ error?: string }> {
   const r = await assertOwner(installationId);
   if ('error' in r) return { error: r.error };

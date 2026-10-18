@@ -9,8 +9,6 @@
  * @module components/cmd-k/cmd-k-palette
  */
 
-'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -24,33 +22,16 @@ import {
 } from '@/seed/components/ui/command';
 import { useCmdKActions } from './use-cmd-k-actions';
 import type { ActionGroup } from './cmd-k-action-types';
+import { loadRecent, saveRecent } from './cmd-k-recent-storage';
 import { toast } from 'sonner';
 
-const RECENT_KEY = 'sophia.cmdK.recent';
-const MAX_RECENT = 5;
+export { loadRecent, saveRecent };
 
 interface CmdKPaletteProps {
   isAdmin: boolean;
 }
 
 type GroupLabel = Record<ActionGroup, string>;
-
-function loadRecent(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as string[];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecent(id: string) {
-  try {
-    const prev = loadRecent().filter((r) => r !== id);
-    localStorage.setItem(RECENT_KEY, JSON.stringify([id, ...prev].slice(0, MAX_RECENT)));
-  } catch {
-    // ignore
-  }
-}
 
 export function CmdKPalette({ isAdmin }: CmdKPaletteProps) {
   const [open, setOpen] = useState(false);

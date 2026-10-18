@@ -18,16 +18,13 @@ import {
   type ScalingDecision,
 } from '@/tree/affiliate/scaling/auto-campaign-scaler';
 import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import {
+  buildKillSwitchReport,
+  dispatchWinningHookCampaign,
+  type ScalingFlowExecutionReport,
+} from './autonomous-campaign-scaling-helpers';
 
-export interface ScalingFlowExecutionReport {
-  tenantId: string;
-  totalEvaluated: number;
-  scaledCount: number;
-  maintainedCount: number;
-  prunedCount: number;
-  decisions: ScalingDecision[];
-  killSwitchActive?: boolean;
-}
+export type { ScalingFlowExecutionReport };
 
 export async function processAutonomousScaling(
   tenantId: string,
@@ -38,24 +35,7 @@ export async function processAutonomousScaling(
     logger.warn('processAutonomousScaling: Emergency Kill Switch active - pausing video scaling', {
       tenantId,
     });
-    return {
-      tenantId,
-      totalEvaluated: metricsList.length,
-      scaledCount: 0,
-      maintainedCount: metricsList.length,
-      prunedCount: 0,
-      decisions: metricsList.map((m) => ({
-        campaignId: m.campaignId,
-        hookName: m.hookName,
-        ctrPercent: (m.clicks / Math.max(m.impressions, 1)) * 100,
-        cvrPercent: (m.conversions / Math.max(m.clicks, 1)) * 100,
-        epcCents: Math.round(m.totalEarningsCents / Math.max(m.clicks, 1)),
-        recommendedDailyVideos: 0,
-        action: 'MAINTAIN_STEADY',
-        reason: 'Emergency Kill Switch is currently active across platform/tenant',
-      })),
-      killSwitchActive: true,
-    };
+    return buildKillSwitchReport(tenantId, metricsList);
   }
 
   let scaledCount = 0;
@@ -75,23 +55,7 @@ export async function processAutonomousScaling(
         targetDailyVideos: decision.recommendedDailyVideos,
       });
 
-      // Dispatch video generation for aggressive scaling winners
-      await inngest.send({
-        name: 'niche.video.campaign.requested',
-        data: {
-          userId: `tenant_${tenantId}`,
-          campaignId: decision.campaignId,
-          niche: metrics.niche === 'ecommerce_tiktok' ? 'saas_global' : metrics.niche,
-          blueprintId: 'saas_problem_agitation_solution',
-          productName: `Winning Hook: ${decision.hookName}`,
-          productUrl: 'https://sophia.agencyos.network/affiliate',
-          targetAudience: 'High Converting Demographic',
-          jurisdiction: 'GLOBAL',
-          affiliateCode: 'SCALE_WINNER',
-          subId: `scale_${Date.now()}`,
-          locale: 'en',
-        },
-      });
+      await dispatchWinningHookCampaign(tenantId, metrics, decision);
     } else if (decision.action === 'KILL_PRUNE') {
       prunedCount++;
       logger.info('processAutonomousScaling: pruned underperforming hook', {

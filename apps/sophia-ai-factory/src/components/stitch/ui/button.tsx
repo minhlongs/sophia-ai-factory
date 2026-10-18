@@ -1,11 +1,11 @@
 import React from 'react';
-import { Link } from '@/navigation';
 import { Loader2 } from 'lucide-react';
 import {
   resolveButtonClasses,
   type ButtonVariant,
   type ButtonSize,
 } from './button-styles';
+import { renderButtonLink, type RenderButtonLinkParams } from './button-link';
 
 export {
   BUTTON_BASE_STYLES,
@@ -14,6 +14,7 @@ export {
   resolveButtonClasses,
 } from './button-styles';
 export type { ButtonVariant, ButtonSize } from './button-styles';
+export { renderButtonLink, type RenderButtonLinkParams };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Button content */
@@ -32,48 +33,6 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   iconRight?: React.ReactNode;
   /** URL to link to (renders as <a> if provided) */
   href?: string;
-}
-
-function renderButtonLink(params: {
-  href: string;
-  classes: string;
-  isDisabled: boolean;
-  loading: boolean;
-  content: React.ReactNode;
-}) {
-  const { href, classes, isDisabled, loading, content } = params;
-  const isExternal = /^https?:\/\/|^mailto:|^tel:/.test(href);
-  const ariaDisabled = isDisabled ? 'true' : undefined;
-  const ariaBusy = loading ? 'true' : undefined;
-  const tabIndex = isDisabled ? -1 : undefined;
-
-  if (isExternal) {
-    return (
-      <a
-        href={isDisabled ? undefined : href}
-        className={classes}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-disabled={ariaDisabled}
-        aria-busy={ariaBusy}
-        tabIndex={tabIndex}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link
-      href={isDisabled ? '#' : href}
-      className={classes}
-      aria-disabled={ariaDisabled}
-      aria-busy={ariaBusy}
-      tabIndex={tabIndex}
-    >
-      {content}
-    </Link>
-  );
 }
 
 /**

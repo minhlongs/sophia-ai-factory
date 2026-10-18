@@ -9,20 +9,23 @@
  */
 
 import React from 'react';
-import {
-  Maximize,
-  Minimize,
-} from 'lucide-react';
 import type { QualityLadder } from '@/seed/types/streaming';
 import type { SubtitleLanguage } from './player-types';
-import { PlayerQualityMenu } from './player-quality-menu';
-import { PlayerSubtitlesMenu } from './player-subtitles-menu';
 import {
   PlayerPlaybackControls,
   type PlayerPlaybackControlsProps,
 } from './player-playback-controls';
+import {
+  PlayerExtraControls,
+  type PlayerExtraControlsProps,
+} from './player-extra-controls';
 
-export { PlayerPlaybackControls, type PlayerPlaybackControlsProps };
+export {
+  PlayerPlaybackControls,
+  PlayerExtraControls,
+  type PlayerPlaybackControlsProps,
+  type PlayerExtraControlsProps,
+};
 
 export interface PlayerControlsBarProps {
   isPlaying: boolean;
@@ -102,37 +105,18 @@ export function PlayerControlsBar({
           handleVolumeChange={handleVolumeChange}
         />
 
-        {/* Right Controls: Subtitles, Quality, Fullscreen */}
-        <div className="flex items-center gap-2">
-          <PlayerSubtitlesMenu
-            selectedSubtitle={selectedSubtitle}
-            showSubtitleMenu={showSubtitleMenu}
-            setShowSubtitleMenu={setShowSubtitleMenu}
-            setShowQualityMenu={setShowQualityMenu}
-            onSubtitleSelect={handleSubtitleSelect}
-          />
-
-          <PlayerQualityMenu
-            selectedQuality={selectedQuality}
-            showQualityMenu={showQualityMenu}
-            setShowQualityMenu={setShowQualityMenu}
-            setShowSubtitleMenu={setShowSubtitleMenu}
-            onQualitySelect={handleQualitySelect}
-          />
-
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="rounded-lg p-1.5 transition-colors hover:bg-white/20 focus:outline-none"
-            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-          >
-            {isFullscreen ? (
-              <Minimize className="h-5 w-5" />
-            ) : (
-              <Maximize className="h-5 w-5" />
-            )}
-          </button>
-        </div>
+        <PlayerExtraControls
+          isFullscreen={isFullscreen}
+          selectedQuality={selectedQuality}
+          selectedSubtitle={selectedSubtitle}
+          showQualityMenu={showQualityMenu}
+          showSubtitleMenu={showSubtitleMenu}
+          setShowQualityMenu={setShowQualityMenu}
+          setShowSubtitleMenu={setShowSubtitleMenu}
+          toggleFullscreen={toggleFullscreen}
+          handleQualitySelect={handleQualitySelect}
+          handleSubtitleSelect={handleSubtitleSelect}
+        />
       </div>
     </div>
   );

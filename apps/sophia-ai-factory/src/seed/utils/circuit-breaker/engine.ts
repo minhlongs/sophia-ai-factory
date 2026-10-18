@@ -1,6 +1,5 @@
 /**
  * Circuit Breaker Core State Machine & Dispatch Logic
- *
  * Layer: seed/utils/circuit-breaker
  */
 
@@ -28,10 +27,7 @@ export async function recordHeyGenAttempt(
   if (!kv) return;
 
   const [log, state] = await Promise.all([readLog(kv), readState(kv)]);
-
-  const entry = { ts: Date.now(), ok: success };
-  const updated = [...log, entry].slice(-MAX_LOG_ENTRIES);
-
+  const updated = [...log, { ts: Date.now(), ok: success }].slice(-MAX_LOG_ENTRIES);
   await kv.put(KV_LOG_KEY, JSON.stringify(updated), { expirationTtl: KV_TTL_SECONDS });
 
   if (state.openedAt !== undefined && state.halfOpenProbeAllowed === false) {
@@ -39,8 +35,9 @@ export async function recordHeyGenAttempt(
       await kv.delete(KV_STATE_KEY);
       logger.info('[CircuitBreaker] Half-open probe succeeded — circuit closed');
     } else {
-      const newState: KvCircuitData = { openedAt: Date.now() };
-      await kv.put(KV_STATE_KEY, JSON.stringify(newState), { expirationTtl: KV_TTL_SECONDS });
+      await kv.put(KV_STATE_KEY, JSON.stringify({ openedAt: Date.now() } satisfies KvCircuitData), {
+        expirationTtl: KV_TTL_SECONDS,
+      });
       logger.warn('[CircuitBreaker] Half-open probe failed — circuit re-opened');
     }
     return;
@@ -52,17 +49,14 @@ export async function recordHeyGenAttempt(
       const failures = recent.filter((e) => !e.ok).length;
       const rate = failures / recent.length;
       if (rate > FAILURE_RATE_THRESHOLD) {
-        const openedAt = Date.now();
-        const newState: KvCircuitData = { openedAt };
+        const newState: KvCircuitData = { openedAt: Date.now() };
         await kv.put(KV_STATE_KEY, JSON.stringify(newState), { expirationTtl: KV_TTL_SECONDS });
         logger.error('[CircuitBreaker] Circuit OPENED — HeyGen failure rate exceeded threshold', undefined, {
           failures,
           total: recent.length,
           rate: rate.toFixed(2),
         });
-        if (onCircuitOpen) {
-          onCircuitOpen({ failures, total: recent.length, windowMinutes: WINDOW_MS / 60000 });
-        }
+        onCircuitOpen?.({ failures, total: recent.length, windowMinutes: WINDOW_MS / 60000 });
       }
     }
   }
@@ -70,9 +64,7 @@ export async function recordHeyGenAttempt(
 
 export async function getCircuitState(): Promise<CircuitStatus> {
   const kv = await getKv();
-  if (!kv) {
-    return { state: 'closed', recentFailures: 0, recentSuccesses: 0 };
-  }
+  if (!kv) return { state: 'closed', recentFailures: 0, recentSuccesses: 0 };
 
   const [log, state] = await Promise.all([readLog(kv), readState(kv)]);
   const recent = filterWindow(log);
@@ -83,8 +75,7 @@ export async function getCircuitState(): Promise<CircuitStatus> {
     return { state: 'closed', recentFailures, recentSuccesses };
   }
 
-  const ageMs = Date.now() - state.openedAt;
-  if (ageMs >= HALF_OPEN_TIMEOUT_MS) {
+  if (Date.now() - state.openedAt >= HALF_OPEN_TIMEOUT_MS) {
     if (state.halfOpenProbeAllowed === undefined) {
       const next: KvCircuitData = { openedAt: state.openedAt, halfOpenProbeAllowed: true };
       await kv.put(KV_STATE_KEY, JSON.stringify(next), { expirationTtl: KV_TTL_SECONDS });
@@ -97,15 +88,10 @@ export async function getCircuitState(): Promise<CircuitStatus> {
 
 export async function shouldDispatch(): Promise<DispatchDecision> {
   const kv = await getKv();
-  if (!kv) {
-    return { allowed: true };
-  }
+  if (!kv) return { allowed: true };
 
   const status = await getCircuitState();
-
-  if (status.state === 'closed') {
-    return { allowed: true };
-  }
+  if (status.state === 'closed') return { allowed: true };
 
   if (status.state === 'half-open') {
     const state = await readState(kv);
@@ -117,19 +103,13 @@ export async function shouldDispatch(): Promise<DispatchDecision> {
     return { allowed: false, reason: 'half_open_probe_pending' };
   }
 
-  return {
-    allowed: false,
-    reason: `circuit_open since ${new Date(status.openedAt!).toISOString()}`,
-  };
+  return { allowed: false, reason: `circuit_open since ${new Date(status.openedAt!).toISOString()}` };
 }
 
 export async function resetCircuit(): Promise<CircuitStatus> {
   const kv = await getKv();
   if (kv) {
-    await Promise.all([
-      kv.delete(KV_STATE_KEY),
-      kv.delete(KV_LOG_KEY),
-    ]);
+    await Promise.all([kv.delete(KV_STATE_KEY), kv.delete(KV_LOG_KEY)]);
     logger.info('[CircuitBreaker] Circuit manually reset by admin');
   }
   return { state: 'closed', recentFailures: 0, recentSuccesses: 0 };

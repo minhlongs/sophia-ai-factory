@@ -10,38 +10,19 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type {
   AgencyClientSummary,
   AgencyCampaignSummary,
-  AgencyKpiOverview,
 } from '@/seed/types';
-import { calculateMcuUtilization } from '@/tree/agency/attribution-engine';
+import {
+  EMPTY_AGENCY_OVERVIEW_KPI,
+  mapSubaccountRow,
+  mapVideoReviewRow,
+  type SubaccountDbRow,
+  type VideoReviewDbRow,
+} from './dashboard-query-mappers';
 
-export interface SubaccountDbRow {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  custom_domain: string | null;
-  created_at: string;
-  allocated_mcu: number;
-  used_mcu: number;
-}
-
-export interface VideoReviewDbRow {
-  id: string;
-  subaccount_id: string;
-  video_title: string | null;
-  status: string;
-  created_at: string;
-  client_name: string;
-}
-
-export const EMPTY_AGENCY_OVERVIEW_KPI: AgencyKpiOverview = {
-  totalActiveClients: 0,
-  totalAllocatedMcu: 0,
-  totalUsedMcu: 0,
-  mcuUtilizationRate: 0,
-  activeCampaigns: 0,
-  attributedMrrUsd: 0,
-  growthRatePercent: 0,
+export {
+  EMPTY_AGENCY_OVERVIEW_KPI,
+  type SubaccountDbRow,
+  type VideoReviewDbRow,
 };
 
 /**
@@ -65,24 +46,7 @@ export async function fetchAgencyClients(
     .bind(agencyOrgId)
     .all<SubaccountDbRow>();
 
-  const clientRows = rows.results || [];
-  return clientRows.map((r) => {
-    const util = calculateMcuUtilization(r.allocated_mcu, r.used_mcu);
-    const isSuspended = r.status.toLowerCase() === 'suspended';
-    return {
-      id: r.id,
-      name: r.name,
-      slug: r.slug,
-      status: isSuspended ? 'suspended' : 'active',
-      allocatedMcu: r.allocated_mcu,
-      usedMcu: r.used_mcu,
-      mcuUtilizationRate: util.usedRatePercent,
-      customDomain: r.custom_domain,
-      portalUrl: `/portal/${r.slug}`,
-      activeCampaignsCount: 0,
-      createdAt: r.created_at,
-    };
-  });
+  return (rows.results || []).map(mapSubaccountRow);
 }
 
 /**
@@ -107,26 +71,7 @@ export async function fetchAndBindAgencyCampaigns(
     .bind(...subaccountIds)
     .all<VideoReviewDbRow>();
 
-  const campaigns: AgencyCampaignSummary[] = (reviewRows.results || []).map((rev) => {
-    const statusNormalized = rev.status.toLowerCase();
-    const campaignStatus: 'draft' | 'in_review' | 'approved' | 'published' =
-      statusNormalized === 'approved'
-        ? 'approved'
-        : statusNormalized === 'changes_requested'
-        ? 'draft'
-        : 'in_review';
-
-    return {
-      id: rev.id,
-      subaccountId: rev.subaccount_id,
-      clientName: rev.client_name,
-      title: rev.video_title || 'Untitled Campaign',
-      status: campaignStatus,
-      rendersCount: 1,
-      mcuConsumed: 10,
-      updatedAt: rev.created_at,
-    };
-  });
+  const campaigns: AgencyCampaignSummary[] = (reviewRows.results || []).map(mapVideoReviewRow);
 
   for (const client of clients) {
     client.activeCampaignsCount = campaigns.filter(

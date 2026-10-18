@@ -21,27 +21,11 @@ export const GATE_21_SCALE_TARGETS = {
   MAX_SETTLEMENT_LATENCY_NANOS: 5, // target 3 ns
 } as const;
 
-export type ContinuumCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V3'
-  | 'USDT'
-  | 'OMEGA_CREDIT'
-  | 'QUANTUM_FOAM_ENERGY';
+export type ContinuumCurrency = 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V3' | 'USDT' | 'OMEGA_CREDIT' | 'QUANTUM_FOAM_ENERGY';
 
-export type ContinuumPriorityTier =
-  | 'WARP_EXPEDITE'
-  | 'INTERDIMENSIONAL_INSTITUTIONAL'
-  | 'STANDARD_CONTINUUM';
+export type ContinuumPriorityTier = 'WARP_EXPEDITE' | 'INTERDIMENSIONAL_INSTITUTIONAL' | 'STANDARD_CONTINUUM';
 
-export type ContinuumSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+export type ContinuumSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface InfiniteContinuumRtgsSession {
   id?: string;
@@ -58,11 +42,7 @@ export interface InfiniteContinuumRtgsSession {
   createdAt?: string;
 }
 
-export type ContinuumNettingStatus =
-  | 'ACCUMULATING'
-  | 'CONTINUUM_SOLVED'
-  | 'NET_EXECUTED'
-  | 'NET_ABORTED';
+export type ContinuumNettingStatus = 'ACCUMULATING' | 'CONTINUUM_SOLVED' | 'NET_EXECUTED' | 'NET_ABORTED';
 
 export interface ContinuumNettingObligation {
   fromParticipantId: string;
@@ -86,11 +66,7 @@ export interface ContinuumNettingBatch {
   createdAt?: string;
 }
 
-export type BaselXiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+export type BaselXiSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXiSolvencySnapshot {
   id?: string;
@@ -111,20 +87,9 @@ export interface BaselXiSolvencySnapshot {
   createdAt?: string;
 }
 
-export type InterdimensionalVaultHub =
-  | 'OMEGA_POINT_CORE'
-  | 'DIMENSION_INFINITY_VAULT'
-  | 'VIRGO_MEGA_NEXUS'
-  | 'QUANTUM_FOAM_SOVEREIGN_VAULT'
-  | 'CONTINUUM_GATEWAY';
+export type InterdimensionalVaultHub = 'OMEGA_POINT_CORE' | 'DIMENSION_INFINITY_VAULT' | 'VIRGO_MEGA_NEXUS' | 'QUANTUM_FOAM_SOVEREIGN_VAULT' | 'CONTINUUM_GATEWAY';
 
-export type InterdimensionalCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V3_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'OMEGA_CREDITS'
-  | 'ZERO_POINT_FOAM_SINGULARITIES';
+export type InterdimensionalCollateralAsset = 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V3_BASKET' | 'TIER_1_EQUITIES' | 'OMEGA_CREDITS' | 'ZERO_POINT_FOAM_SINGULARITIES';
 
 export interface InterdimensionalTreasuryReserve {
   id?: string;

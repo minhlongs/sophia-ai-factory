@@ -4,6 +4,8 @@
  * Layer: seed/auth
  */
 
+import type { D1Client, D1Database } from '@/seed/db/client';
+
 export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'OPERATOR' | 'MEMBER' | 'VIEWER';
 
 export const WORKSPACE_ROLE_HIERARCHY: Record<WorkspaceRole, number> = {
@@ -18,31 +20,18 @@ export const ROLE_HIERARCHY = WORKSPACE_ROLE_HIERARCHY;
 
 /**
  * Normalizes input role string to canonical WorkspaceRole (case-insensitive, trimmed).
- * Defaults to fallback ('MEMBER' by default for backward compatibility, or 'VIEWER' for least-privilege)
- * if undefined, empty, or unparseable.
+ * Defaults to fallback ('MEMBER' by default for backward compatibility, or 'VIEWER' for least-privilege).
  */
 export function normalizeWorkspaceRole(
   role: string | null | undefined,
   fallback: WorkspaceRole = 'MEMBER'
 ): WorkspaceRole {
-  if (!role || typeof role !== 'string') {
-    return fallback;
-  }
+  if (!role || typeof role !== 'string') return fallback;
   const upper = role.trim().toUpperCase();
-  switch (upper) {
-    case 'OWNER':
-      return 'OWNER';
-    case 'ADMIN':
-      return 'ADMIN';
-    case 'OPERATOR':
-      return 'OPERATOR';
-    case 'MEMBER':
-      return 'MEMBER';
-    case 'VIEWER':
-      return 'VIEWER';
-    default:
-      return fallback;
+  if (upper === 'OWNER' || upper === 'ADMIN' || upper === 'OPERATOR' || upper === 'MEMBER' || upper === 'VIEWER') {
+    return upper;
   }
+  return fallback;
 }
 
 /**
@@ -57,10 +46,6 @@ export function hasMinimumRole(
   const normalizedReq = normalizeWorkspaceRole(requiredRole, 'MEMBER');
   return WORKSPACE_ROLE_HIERARCHY[normalizedUser] >= WORKSPACE_ROLE_HIERARCHY[normalizedReq];
 }
-
-// ---------------------------------------------------------------------------
-// Typed Security Error Classes (Fail-Closed)
-// ---------------------------------------------------------------------------
 
 export class WorkspaceAccessError extends Error {
   readonly status: number;
@@ -116,12 +101,6 @@ export class InsufficientWorkspaceRoleError extends WorkspaceAccessError {
     this.actualRole = actualRole;
   }
 }
-
-// ---------------------------------------------------------------------------
-// Tenant Scope Context Interfaces
-// ---------------------------------------------------------------------------
-
-import type { D1Client, D1Database } from '@/seed/db/client';
 
 export interface TenantScopeContext {
   readonly workspaceId: string;

@@ -21,27 +21,11 @@ export const GATE_19_SCALE_TARGETS = {
   MAX_SETTLEMENT_LATENCY_NANOS: 30, // target 28 ns
 } as const;
 
-export type OmniverseRtgsCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR'
-  | 'USDT'
-  | 'OMNI_CREDIT'
-  | 'PLANCK_ENERGY';
+export type OmniverseRtgsCurrency = 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR' | 'USDT' | 'OMNI_CREDIT' | 'PLANCK_ENERGY';
 
-export type OmniverseRtgsPriorityTier =
-  | 'PLANCK_EXPEDITE'
-  | 'MULTIVERSE_INSTITUTIONAL'
-  | 'STANDARD_OMNIVERSE';
+export type OmniverseRtgsPriorityTier = 'PLANCK_EXPEDITE' | 'MULTIVERSE_INSTITUTIONAL' | 'STANDARD_OMNIVERSE';
 
-export type OmniverseRtgsSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_INSUFFICIENT_LIQUIDITY';
+export type OmniverseRtgsSettlementStatus = 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_INSUFFICIENT_LIQUIDITY';
 
 export interface OmniverseRtgsClearingSession {
   id?: string;
@@ -58,11 +42,7 @@ export interface OmniverseRtgsClearingSession {
   createdAt?: string;
 }
 
-export type HyperDimensionalNettingStatus =
-  | 'ACCUMULATING'
-  | 'HYPER_DIMENSIONAL_SOLVED'
-  | 'NET_EXECUTED'
-  | 'NET_ABORTED';
+export type HyperDimensionalNettingStatus = 'ACCUMULATING' | 'HYPER_DIMENSIONAL_SOLVED' | 'NET_EXECUTED' | 'NET_ABORTED';
 
 export interface HyperDimensionalNettingObligation {
   fromParticipantId: string;
@@ -85,20 +65,9 @@ export interface HyperDimensionalNettingBatch {
   createdAt?: string;
 }
 
-export type MultidimensionalCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'OMNI_CREDITS'
-  | 'PLANCK_ENERGY_SINGULARITIES';
+export type MultidimensionalCollateralAsset = 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_BASKET' | 'TIER_1_EQUITIES' | 'OMNI_CREDITS' | 'PLANCK_ENERGY_SINGULARITIES';
 
-export type MultidimensionalVaultHubId =
-  | 'PRIME_UNIVERSE_CORE'
-  | 'DIMENSION_THETA_VAULT'
-  | 'ANDROMEDA_NEXUS'
-  | 'QUANTUM_VACUUM_RESERVE'
-  | 'MULTIVERSE_GATEWAY';
+export type MultidimensionalVaultHubId = 'PRIME_UNIVERSE_CORE' | 'DIMENSION_THETA_VAULT' | 'ANDROMEDA_NEXUS' | 'QUANTUM_VACUUM_RESERVE' | 'MULTIVERSE_GATEWAY';
 
 export interface MultidimensionalCapitalReserve {
   id?: string;
@@ -112,11 +81,7 @@ export interface MultidimensionalCapitalReserve {
   createdAt?: string;
 }
 
-export type BaselIxSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_RISK'
-  | 'REGULATORY_HALT';
+export type BaselIxSolvencyStatus = 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH' | 'LIQUIDITY_RUN_RISK' | 'REGULATORY_HALT';
 
 export interface BaselIxSolvencySnapshot {
   id?: string;

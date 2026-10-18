@@ -5,6 +5,7 @@
  * Layer: land — imports seed only.
  */
 
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1, type D1Database } from '@/seed/db/client';
@@ -50,4 +51,11 @@ export async function verifyMissionWorkspaceAccess(
   }
 
   return success({ workspaceId: mission.workspace_id });
+}
+
+export function revalidateApprovalPaths(missionId: string): void {
+  revalidatePath('/dashboard/missions');
+  revalidatePath(`/[locale]/dashboard/missions/${missionId}`);
+  revalidateTag('approvals', 'max');
+  revalidateTag(`mission_${missionId}`, 'max');
 }

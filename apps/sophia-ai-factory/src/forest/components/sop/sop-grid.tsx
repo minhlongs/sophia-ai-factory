@@ -6,13 +6,26 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopTemplateRow, SopCategory } from '@/seed/sop/sop-types';
+import type { SopTemplateRow } from '@/seed/sop/sop-types';
 import { SopCard } from './sop-card';
 import { SopFilters } from './sop-filters';
 import { SopInstallModal } from './sop-install-modal';
 import { ALL_SOP_CATEGORIES, SopCategorySection } from './sop-category-section';
+import {
+  SopFeaturedSection,
+  filterSopTemplates,
+  groupSopByCategory,
+  type CategoryFilter,
+  type SopFeaturedSectionProps,
+} from './sop-featured-section';
 
-type CategoryFilter = SopCategory | 'all';
+export {
+  SopFeaturedSection,
+  filterSopTemplates,
+  groupSopByCategory,
+  type CategoryFilter,
+  type SopFeaturedSectionProps,
+};
 
 interface SopGridProps {
   templates: SopTemplateRow[];
@@ -40,58 +53,26 @@ export function SopGrid({
   const tierLocked = (installCount ?? 0) >= (sopInstallLimit ?? 999);
 
   const featured = useMemo(() => templates.filter((tpl) => tpl.is_featured === 1), [templates]);
-
-  const filtered = useMemo(() => {
-    let list = templates;
-    if (category !== 'all') list = list.filter((tpl) => tpl.category === category);
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      list = list.filter(
-        (tpl) =>
-          tpl.name_vi.toLowerCase().includes(q) ||
-          tpl.name_en.toLowerCase().includes(q) ||
-          (isVi ? tpl.description_vi : tpl.description_en).toLowerCase().includes(q),
-      );
-    }
-    return list;
-  }, [templates, category, query, isVi]);
-
+  const filtered = useMemo(
+    () => filterSopTemplates(templates, category, query, isVi),
+    [templates, category, query, isVi],
+  );
   const showGrouped = category === 'all' && !query.trim();
-
-  const byCategory = useMemo(() => {
-    const map: Partial<Record<SopCategory, SopTemplateRow[]>> = {};
-    for (const tpl of filtered) {
-      const cat = tpl.category;
-      if (!map[cat]) map[cat] = [];
-      map[cat]!.push(tpl);
-    }
-    return map;
-  }, [filtered]);
+  const byCategory = useMemo(() => groupSopByCategory(filtered), [filtered]);
 
   return (
     <div className="space-y-10">
       <SopFilters category={category} query={query} onCategoryChange={setCategory} onQueryChange={setQuery} />
 
-      {category === 'all' && !query.trim() && featured.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2 border-b border-primary/10 pb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            {t('featuredTitle')}
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((tpl) => (
-              <SopCard
-                key={tpl.id}
-                template={tpl}
-                locale={locale}
-                alreadyInstalled={installedSet.has(tpl.id)}
-                onInstallClick={setModalTemplate}
-                featured
-                tierLocked={tierLocked && !installedSet.has(tpl.id)}
-              />
-            ))}
-          </div>
-        </section>
+      {showGrouped && (
+        <SopFeaturedSection
+          featured={featured}
+          installedSet={installedSet}
+          locale={locale}
+          tierLocked={tierLocked}
+          featuredTitle={t('featuredTitle')}
+          onInstallClick={setModalTemplate}
+        />
       )}
 
       {filtered.length === 0 ? (

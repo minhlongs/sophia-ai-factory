@@ -7,7 +7,9 @@
  * It requires SOPHIA_LIVE_CONFIRM=run-real-provider-flow.
  */
 import { createEvidenceRecorder } from './live-proof/evidence.mjs';
-import { createRequester, parseLiveConfig, poll, redact, usage } from './live-proof/runtime.mjs';
+import { createRequester, parseDeploymentVersion, parseLiveConfig, poll, redact, usage } from './live-proof/runtime.mjs';
+import { verifyMp4Playback } from './live-proof/media.mjs';
+import { randomUUID } from 'node:crypto';
 
 const SUCCESS_JOB_STATUSES = new Set(['live', 'published', 'completed', 'succeeded']);
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -15,7 +17,9 @@ if (process.argv.includes('--help') || process.argv.includes('-h')) {
   process.exit(0);
 }
 
-const evidence = createEvidenceRecorder(process.env.SOPHIA_LIVE_EVIDENCE_PATH?.trim());
+const evidence = createEvidenceRecorder(process.env.SOPHIA_LIVE_EVIDENCE_PATH?.trim(), {
+  schema: 'sophia-live-user-video-flow-proof-v4',
+});
 
 function fail(message) {
   evidence.record('failure', 'failed', { message });
@@ -27,6 +31,7 @@ function fail(message) {
 const config = parseLiveConfig(process.env, fail);
 const { request, cookieCount } = createRequester(config.baseUrl, fail);
 Object.assign(evidence.context, {
+  runId: randomUUID(),
   baseUrl: config.baseUrl.origin,
   channelProviders: config.channelProviders,
   topic: config.topic,
@@ -39,12 +44,11 @@ evidence.record('start', 'running', {
   publishTimeoutSeconds: config.publishTimeoutMs / 1000,
 });
 
-const version = await request('/api/version', { label: 'deployment version' });
-evidence.context.deployment = {
-  sha: version.sha,
-  shortSha: version.shortSha,
-  version: version.version,
-};
+const version = await request('/api/version', {
+  label: 'deployment version',
+  headers: { authorization: `Bearer ${config.versionIntrospectToken}` },
+});
+evidence.context.deployment = parseDeploymentVersion(version, fail);
 evidence.record('deployment-version', 'passed', evidence.context.deployment);
 console.log(`PASS deployment version shortSha=${version.shortSha ?? 'unknown'}`);
 
@@ -163,6 +167,15 @@ evidence.record('video-row', 'passed', {
   videoUrlPresent: Boolean(detail.video.video_url),
 });
 console.log('PASS completed video visible via API');
+
+let playableArtifact;
+try {
+  playableArtifact = await verifyMp4Playback(detail.video.video_url);
+} catch (error) {
+  fail(`completed video did not pass full-download/decode verification: ${redact(error instanceof Error ? error.message : String(error))}`);
+}
+evidence.record('video-full-decode', 'passed', playableArtifact);
+console.log(`PASS full media download and decode: ${playableArtifact.totalBytes} bytes, ${playableArtifact.videoStreams.length} video stream(s), ${playableArtifact.durationSec}s`);
 
 const distribute = await request(`/api/v1/videos/${encodeURIComponent(videoId)}/distribute`, {
   label: 'schedule multi-platform distribution',

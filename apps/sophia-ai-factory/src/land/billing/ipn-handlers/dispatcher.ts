@@ -21,7 +21,11 @@ import type { NowPaymentsIpnPayload } from './types';
 
 export async function processNowPaymentsIpn(
   ipn: NowPaymentsIpnPayload,
-): Promise<{ success: boolean; message: string }> {
+): Promise<{
+  success: boolean;
+  message: string;
+  shouldRunPostPaymentSideEffects?: boolean;
+}> {
   const { payment_id, payment_status } = ipn;
   const eventId = `nowpayments_${payment_id}_${payment_status}`;
   const db = getDb();
@@ -55,7 +59,11 @@ export async function processNowPaymentsIpn(
         await recordNowPaymentsRefundBarrier(db, payment_id);
       } else if (await hasNowPaymentsRefundBarrier(db, payment_id)) {
         await markTerminalIpnProcessed(db, ipn, 'refunded');
-        return { success: true, message: 'Ignored finished event after refund' };
+        return {
+          success: true,
+          message: 'Ignored finished event after refund',
+          shouldRunPostPaymentSideEffects: false,
+        };
       }
     } catch (error) {
       await releaseTerminalIpnLock(db, payment_id);

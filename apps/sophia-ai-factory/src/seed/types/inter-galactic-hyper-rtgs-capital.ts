@@ -21,28 +21,15 @@ export const GATE_28_SCALE_TARGETS = {
 } as const;
 
 export type InterGalacticCurrency =
-  | 'USD'
-  | 'EUR'
-  | 'SGD'
-  | 'JPY'
-  | 'GBP'
-  | 'sSDR_V10'
-  | 'USDT'
-  | 'INTER_GALACTIC_CREDIT'
-  | 'ZERO_POINT_ENERGY'
-  | 'SUB_PLANCK_FOAM_CREDIT';
+  | 'USD' | 'EUR' | 'SGD' | 'JPY' | 'GBP' | 'sSDR_V10' | 'USDT'
+  | 'INTER_GALACTIC_CREDIT' | 'ZERO_POINT_ENERGY' | 'SUB_PLANCK_FOAM_CREDIT';
 
 export type InterGalacticPriorityTier =
-  | 'INTER_GALACTIC_SINGULARITY'
-  | 'INTER_GALACTIC_EXPEDITE'
-  | 'MULTIVERSE_INSTITUTIONAL'
-  | 'STANDARD_MULTIVERSE';
+  | 'INTER_GALACTIC_SINGULARITY' | 'INTER_GALACTIC_EXPEDITE'
+  | 'MULTIVERSE_INSTITUTIONAL' | 'STANDARD_MULTIVERSE';
 
 export type InterGalacticSettlementStatus =
-  | 'QUEUED'
-  | 'EARMARKED_RESERVE'
-  | 'FINALIZED_IRREVOCABLE'
-  | 'REJECTED_LIQUIDITY';
+  | 'QUEUED' | 'EARMARKED_RESERVE' | 'FINALIZED_IRREVOCABLE' | 'REJECTED_LIQUIDITY';
 
 export interface InterGalacticRtgsPaymentSession {
   id?: string;
@@ -82,10 +69,8 @@ export interface InterGalacticNettingBatch {
 }
 
 export type BaselXviiiSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
+  | 'SOLVENT_AND_CAPITALIZED' | 'CAPITAL_BUFFER_BREACH'
+  | 'LIQUIDITY_RUN_DEFICIT' | 'SUPERVISORY_INTERVENTION';
 
 export interface BaselXviiiSolvencyAudit {
   id?: string;
@@ -108,21 +93,12 @@ export interface BaselXviiiSolvencyAudit {
 }
 
 export type InterGalacticCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V10_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'MULTIVERSE_CREDITS'
-  | 'INTER_GALACTIC_SUB_PLANCK_FOAM';
+  | 'SOVEREIGN_BONDS' | 'PHYSICAL_GOLD' | 'SSDR_V10_BASKET'
+  | 'TIER_1_EQUITIES' | 'MULTIVERSE_CREDITS' | 'INTER_GALACTIC_SUB_PLANCK_FOAM';
 
 export type InterGalacticVaultSector =
-  | 'INTER_GALACTIC_CORE'
-  | 'OMNI_COSMIC_HUB'
-  | 'TRANS_GALACTIC_VAULT'
-  | 'VIRGO_SUPERCLUSTER_APEX'
-  | 'SUB_PLANCK_FOAM_VAULT'
-  | 'ZERO_POINT_CONTINUUM_HUB'
-  | 'ETERNAL_SOVEREIGN_GATEWAY';
+  | 'INTER_GALACTIC_CORE' | 'OMNI_COSMIC_HUB' | 'TRANS_GALACTIC_VAULT' | 'VIRGO_SUPERCLUSTER_APEX'
+  | 'SUB_PLANCK_FOAM_VAULT' | 'ZERO_POINT_CONTINUUM_HUB' | 'ETERNAL_SOVEREIGN_GATEWAY';
 
 export interface InterGalacticCollateralReserve {
   id?: string;

@@ -12,6 +12,9 @@ import { useTranslations } from 'next-intl';
 import { Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/stitch';
 import type { RegisterFormState } from './types';
+import { RegisterInputField, type RegisterInputFieldProps } from './register-input-field';
+
+export { RegisterInputField, type RegisterInputFieldProps };
 
 interface RegisterFormProps {
   formState: RegisterFormState;
@@ -30,80 +33,48 @@ export function RegisterForm({
 
   return (
     <form className="space-y-4" onSubmit={onSubmit} noValidate>
-      {/* Company Name */}
-      <div>
-        <label htmlFor="company" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-          {t('companyLabel')}
-        </label>
-        <div className="relative">
-          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            id="company"
-            type="text"
-            placeholder={t('companyPlaceholder')}
-            value={formState.companyName}
-            onChange={(e) => setFormState((p) => ({ ...p, companyName: e.target.value }))}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
-          />
-        </div>
-      </div>
+      <RegisterInputField
+        id="company"
+        type="text"
+        label={t('companyLabel')}
+        placeholder={t('companyPlaceholder')}
+        value={formState.companyName}
+        onChange={(val) => setFormState((p) => ({ ...p, companyName: val }))}
+        icon={User}
+      />
 
-      {/* Email */}
-      <div>
-        <label htmlFor="email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-          {t('emailLabel')}
-        </label>
-        <div className="relative">
-          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            id="email"
-            type="email"
-            placeholder={t('emailPlaceholder')}
-            value={formState.email}
-            onChange={(e) => setFormState((p) => ({ ...p, email: e.target.value }))}
-            required
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
-          />
-        </div>
-      </div>
+      <RegisterInputField
+        id="email"
+        type="email"
+        label={t('emailLabel')}
+        placeholder={t('emailPlaceholder')}
+        value={formState.email}
+        onChange={(val) => setFormState((p) => ({ ...p, email: val }))}
+        required
+        icon={Mail}
+      />
 
-      {/* Password */}
-      <div>
-        <label htmlFor="password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-          {t('passwordLabel')}
-        </label>
-        <div className="relative">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            id="password"
-            type="password"
-            placeholder={t('passwordPlaceholder')}
-            value={formState.password}
-            onChange={(e) => setFormState((p) => ({ ...p, password: e.target.value }))}
-            required
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
-          />
-        </div>
-      </div>
+      <RegisterInputField
+        id="password"
+        type="password"
+        label={t('passwordLabel')}
+        placeholder={t('passwordPlaceholder')}
+        value={formState.password}
+        onChange={(val) => setFormState((p) => ({ ...p, password: val }))}
+        required
+        icon={Lock}
+      />
 
-      {/* Confirm Password */}
-      <div>
-        <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-          {t('confirmPasswordLabel')}
-        </label>
-        <div className="relative">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            id="confirmPassword"
-            type="password"
-            placeholder={t('confirmPasswordPlaceholder')}
-            value={formState.confirmPassword}
-            onChange={(e) => setFormState((p) => ({ ...p, confirmPassword: e.target.value }))}
-            required
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#090A10] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#4338CA]/40 dark:focus:ring-indigo-500/40 focus:border-[#4338CA] dark:focus:border-indigo-500 transition-all"
-          />
-        </div>
-      </div>
+      <RegisterInputField
+        id="confirmPassword"
+        type="password"
+        label={t('confirmPasswordLabel')}
+        placeholder={t('confirmPasswordPlaceholder')}
+        value={formState.confirmPassword}
+        onChange={(val) => setFormState((p) => ({ ...p, confirmPassword: val }))}
+        required
+        icon={Lock}
+      />
 
       {/* Terms Checkbox */}
       <div className="flex items-start pt-1">

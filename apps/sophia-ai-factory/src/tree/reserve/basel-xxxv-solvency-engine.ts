@@ -4,11 +4,10 @@
  * @description Pure domain engine for Basel XXXV Ducenti-Quinquaginta-Millia-Quadrillion Solvency & $25,000.0 Quadrillion Sovereign Reserve Singularity.
  */
 
-import { createHash } from 'node:crypto';
 import {
   calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
 } from './basel-solvency-domain-engine';
+import { evaluateTransCosmicBaselSolvency } from './basel-trans-cosmic-solvency-helper';
 
 import {
   GATE_45_SCALE_TARGETS,
@@ -70,69 +69,21 @@ export function calculateDucentiquinquagintamilliaquadrillionCollateralValue(
  * Evaluates extreme capital adequacy and solvency under Basel XXXV standards.
  */
 export function evaluateBaselXxxvSolvency(input: BaselXxxvSolvencyInput): BaselXxxvSolvencyOutput {
-  const violations: string[] = [];
-
-  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
-    calculateBaselSolvencyRatios(input);
-
-  if (cet1RatioBps < GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_CET1_BPS) {
-    violations.push(
-      `CET1 Ratio ${cet1RatioBps} bps is below Basel XXXV requirement of ${GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_CET1_BPS} bps (99.85%)`
-    );
-  }
-
-  if (liquidityCoverageRatioBps < GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_LCR_BPS) {
-    violations.push(
-      `Liquidity Coverage Ratio ${liquidityCoverageRatioBps} bps is below Basel XXXV requirement of ${GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_LCR_BPS} bps (60000.00%)`
-    );
-  }
-
-  if (netStableFundingRatioBps < GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_NSFR_BPS) {
-    violations.push(
-      `Net Stable Funding Ratio ${netStableFundingRatioBps} bps is below Basel XXXV requirement of ${GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_NSFR_BPS} bps (12000.00%)`
-    );
-  }
-
-  const targetBufferCents = GATE_45_SCALE_TARGETS.SOVEREIGN_RESERVE_SINGULARITY_USD * 100;
-  if (input.sovereignCapitalBufferCents < targetBufferCents) {
-    violations.push(
-      `Sovereign capital buffer ${input.sovereignCapitalBufferCents} cents is below $25,000.0Q requirement (${targetBufferCents} cents)`
-    );
-  }
-
-  if (input.stressTestSurvivalDays < 12500000) {
-    violations.push(
-      `Stress test survival horizon ${input.stressTestSurvivalDays} days is below 34,246-year requirement (12,500,000 days)`
-    );
-  }
-
-  let solvencyStatus: BaselXxxvSolvencyStatus = 'SOLVENT_AND_CAPITALIZED';
-  if (violations.length > 0) {
-    if (input.sovereignCapitalBufferCents < targetBufferCents) {
-      solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-    } else if (liquidityCoverageRatioBps < GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_LCR_BPS) {
-      solvencyStatus = 'LIQUIDITY_RUN_DEFICIT';
-    } else {
-      solvencyStatus = 'SUPERVISORY_INTERVENTION';
-    }
-  }
-
-  const isSolvent = violations.length === 0;
-  const supervisorySignature = createHash('sha256')
-    .update(
-      `BASEL_XXXV:${isSolvent}:${solvencyStatus}:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${input.sovereignCapitalBufferCents}:${input.stressTestSurvivalDays}`
-    )
-    .digest('hex');
-
-  return {
-    isSolvent,
-    solvencyStatus,
-    cet1RatioBps,
-    liquidityCoverageRatioBps,
-    netStableFundingRatioBps,
-    sovereignCapitalBufferCents: input.sovereignCapitalBufferCents,
-    stressTestSurvivalDays: input.stressTestSurvivalDays,
-    violations,
-    supervisorySignature,
-  };
+  return evaluateTransCosmicBaselSolvency<BaselXxxvSolvencyStatus>(input, {
+    tierName: 'Basel XXXV',
+    minCet1Bps: GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_CET1_BPS,
+    cet1PctLabel: '99.85%',
+    minLcrBps: GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_LCR_BPS,
+    lcrPctLabel: '60000.00%',
+    minNsfrBps: GATE_45_SCALE_TARGETS.BASEL_XXXV_MIN_NSFR_BPS,
+    nsfrPctLabel: '12000.00%',
+    targetBufferCents: GATE_45_SCALE_TARGETS.SOVEREIGN_RESERVE_SINGULARITY_USD * 100,
+    bufferViolationMessage: (actual, target) =>
+      `Sovereign capital buffer ${actual} cents is below $25,000.0Q requirement (${target} cents)`,
+    minSurvivalDays: 12500000,
+    survivalViolationMessage: (actual) =>
+      `Stress test survival horizon ${actual} days is below 34,246-year requirement (12,500,000 days)`,
+    buildSignaturePayload: (ctx) =>
+      `BASEL_XXXV:${ctx.isSolvent}:${ctx.solvencyStatus}:${ctx.cet1RatioBps}:${ctx.liquidityCoverageRatioBps}:${ctx.netStableFundingRatioBps}:${ctx.sovereignCapitalBufferCents}:${ctx.stressTestSurvivalDays}`,
+  });
 }

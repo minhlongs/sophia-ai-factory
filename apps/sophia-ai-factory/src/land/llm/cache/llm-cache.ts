@@ -21,6 +21,7 @@ import {
   isCacheEnabled,
   readTtlSeconds,
   hashCacheKey,
+  incrementHitCount,
   type CacheKey,
   type CacheEntry,
   type CacheMessage,
@@ -43,7 +44,6 @@ export {
  */
 export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
   if (!isCacheEnabled()) return null;
-  // Defense-in-depth: empty orgId could match unscoped rows — reject early
   if (!key.orgId) return null;
   try {
     const hash = await hashCacheKey(key);
@@ -76,18 +76,6 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
 }
 
 /**
- * Fire-and-forget hit_count increment via D1 RPC. Never throws.
- */
-async function incrementHitCount(hash: string, orgId: string): Promise<void> {
-  try {
-    const db = createServerClient();
-    await db.rpc('increment_llm_cache_hit', { p_hash: hash, p_org_id: orgId });
-  } catch {
-    // Swallow
-  }
-}
-
-/**
  * Write a cache entry. Upsert — hot keys get TTL bumped on each write.
  */
 export async function writeCache(
@@ -96,7 +84,6 @@ export async function writeCache(
   ttlSeconds: number = readTtlSeconds(),
 ): Promise<void> {
   if (!isCacheEnabled()) return;
-  // Defense-in-depth: never write unscoped rows
   if (!key.orgId) return;
   try {
     const hash = await hashCacheKey(key);
