@@ -7,10 +7,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isMp4Brand, isMp4FormatName } from './live-proof/media.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MINIMUM_WINDOW_MS = 28 * DAY_MS;
+const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const SUCCESS_JOB_STATUSES = new Set(['live', 'published', 'completed', 'succeeded']);
 
 function usage() {
@@ -102,6 +104,7 @@ function assertObservedWindow(startValue, endValue, label) {
   const end = Date.parse(endValue);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) fail(`${label} window is invalid`);
   if (end - start < MINIMUM_WINDOW_MS) fail(`${label} window must cover at least 28 days`);
+  if (end > Date.now() + MAX_CLOCK_SKEW_MS) fail(`${label} observed window cannot end in the future`);
   return { start, end };
 }
 
@@ -121,11 +124,19 @@ function validateVideoProof(video) {
   ];
   for (const step of required) if (events.get(step)?.status !== 'passed') fail(`video proof step did not pass: ${step}`);
   const artifact = events.get('video-full-decode')?.data;
-  if (artifact?.status !== 200 || artifact?.fullDecode !== true || !(artifact.totalBytes > 0)) {
+  if (artifact?.status !== 200 || artifact?.fullDecode !== true || !Number.isSafeInteger(artifact.totalBytes) || artifact.totalBytes <= 0) {
     fail('video proof does not establish a complete download and full decode');
   }
   assertSha(artifact.sha256, 'video artifact');
-  if (typeof artifact.formatName !== 'string' || !(artifact.durationSec > 0) || !Array.isArray(artifact.videoStreams) || artifact.videoStreams.length === 0) {
+  if (
+    !isMp4FormatName(artifact.formatName) ||
+    typeof artifact.majorBrand !== 'string' || artifact.majorBrand.length !== 4 ||
+    !isMp4Brand(artifact.compatibleMp4Brand) ||
+    typeof artifact.durationSec !== 'number' || !Number.isFinite(artifact.durationSec) || artifact.durationSec <= 0 ||
+    !Array.isArray(artifact.videoStreams) || artifact.videoStreams.length === 0 ||
+    !artifact.videoStreams.every((stream) => typeof stream?.codec === 'string' && stream.codec.length > 0) ||
+    !Array.isArray(artifact.audioStreams)
+  ) {
     fail('video proof is missing decoded container, duration, or video stream metadata');
   }
   const channels = context.channelProviders;

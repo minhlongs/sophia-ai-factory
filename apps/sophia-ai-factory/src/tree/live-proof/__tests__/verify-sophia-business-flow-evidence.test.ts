@@ -26,6 +26,8 @@ function makeVideoProof() {
       fullDecode: true,
       totalBytes: 1024,
       sha256: 'c'.repeat(64),
+      majorBrand: 'isom',
+      compatibleMp4Brand: 'mp42',
       formatName: 'mp4',
       durationSec: 12,
       videoStreams: [{ codec: 'h264', width: 720, height: 1280 }],
@@ -257,6 +259,39 @@ describe('verify-sophia-business-flow-evidence', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('must fall inside the observed economics window');
+  });
+
+  it('rejects production evidence windows that end in the future', () => {
+    const futureEnd = '2030-01-01T00:00:00.000Z';
+    const { result } = runAggregator({
+      economics: makeEconomics({ windowEnd: futureEnd }),
+      slo: makeSlo({ windowEnd: futureEnd }),
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('observed window cannot end in the future');
+  });
+
+  it('rejects malformed video artifact values despite a full-decode flag', () => {
+    const video = makeVideoProof();
+    const artifact = video.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.totalBytes = '1024';
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('complete download and full decode');
+  });
+
+  it('rejects a full-decode claim when container metadata is not MP4', () => {
+    const video = makeVideoProof();
+    const artifact = video.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.formatName = 'matroska,webm';
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('missing decoded container');
   });
 
   it('rejects benchmark economics and non-positive contribution margin', () => {

@@ -34,6 +34,8 @@ function makeEvidence(overrides: Record<string, unknown> = {}) {
       status: 200,
       totalBytes: 1024,
       sha256: 'a'.repeat(64),
+      majorBrand: 'isom',
+      compatibleMp4Brand: 'mp42',
       formatName: 'mov,mp4,m4a,3gp,3g2,mj2',
       durationSec: 12,
       videoStreams: [{ codec: 'h264', width: 720, height: 1280 }],
@@ -84,7 +86,7 @@ describe('verify-user-video-flow-live-evidence', () => {
     const result = runValidator(writeEvidenceFile(makeEvidence()));
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('LIVE VIDEO EVIDENCE PASS');
+    expect(result.stdout).toContain('LIVE VIDEO EVIDENCE STRUCTURE PASS');
   });
 
   it('rejects artifacts that are not passed', () => {
@@ -92,6 +94,13 @@ describe('verify-user-video-flow-live-evidence', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('evidence status is not passed');
+  });
+
+  it('rejects legacy evidence that cannot prove full download and decoding', () => {
+    const result = runValidator(writeEvidenceFile(makeEvidence({ schema: 'sophia-live-user-video-flow-proof-v3' })));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('only v4 full-download/full-decode evidence can pass');
   });
 
   it('rejects publish jobs that did not reach a successful status', () => {
@@ -118,13 +127,38 @@ describe('verify-user-video-flow-live-evidence', () => {
 
   it('rejects a video artifact whose decode did not complete', () => {
     const evidence = makeEvidence();
-    const artifact = evidence.events.find((event) => event.step === 'video-full-decode');
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
     artifact!.data.fullDecode = false;
 
     const result = runValidator(writeEvidenceFile(evidence));
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('did not prove a full audio/video decode');
+  });
+
+  it('rejects a non-MP4-compatible container brand', () => {
+    const evidence = makeEvidence();
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.compatibleMp4Brand = 'qt  ';
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('does not prove an MP4-compatible brand');
+  });
+
+  it('rejects evidence whose decoder metadata names a non-MP4 container', () => {
+    const evidence = makeEvidence();
+    const artifact = evidence.events.find((event) => event.step === 'video-full-decode') as
+      { data: Record<string, unknown> } | undefined;
+    artifact!.data.formatName = 'matroska,webm';
+
+    const result = runValidator(writeEvidenceFile(evidence));
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('container metadata does not identify MP4');
   });
 
   it('accepts a preflight proof artifact only in preflight mode', () => {

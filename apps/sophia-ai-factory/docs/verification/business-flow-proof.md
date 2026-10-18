@@ -15,13 +15,15 @@ The first command runs mock-provider video tests, checkout/IPN lifecycle tests, 
 
 ## 2. Live video proof
 
-Run `npm run verify:user-video-flow:live` against staging with a dedicated non-customer test tenant and test channels. The script calls real providers, writes BYOK/HeyGen credentials to that account, spends provider credits, and publishes content. Set `SOPHIA_LIVE_CONFIRM=run-real-provider-flow` and `SOPHIA_LIVE_TEST_TENANT=1`; a production hostname additionally requires `SOPHIA_LIVE_ALLOW_PRODUCTION=1`. The runner also requires `SOPHIA_VERSION_INTROSPECT_TOKEN` to read the full commit SHA from the protected `/api/version` response. Install `ffprobe` and `ffmpeg` on the machine running the proof. Save evidence outside tracked source files and use non-customer credentials. The v4 evidence proves a complete HTTP download up to 512 MiB, a valid video/container stream and duration from `ffprobe`, and full audio/video stream decoding by `ffmpeg`; it records the artifact SHA-256 and sanitized stream metadata. Download and each decoder step have finite time limits. The live media request accepts only the exact `files2.heygen.ai` host and manually follows at most three redirects that remain on that allowlist. A successful decode proves technical decodability; it does not rate visual/audio quality or prove human approval.
+Run `npm run verify:user-video-flow:live` against staging with a dedicated non-customer test tenant and test channels. The script calls real providers, writes BYOK/HeyGen credentials to that account, spends provider credits, and publishes content. Set `SOPHIA_LIVE_CONFIRM=run-real-provider-flow` and `SOPHIA_LIVE_TEST_TENANT=1`; a production hostname additionally requires `SOPHIA_LIVE_ALLOW_PRODUCTION=1`. The runner also requires `SOPHIA_VERSION_INTROSPECT_TOKEN` to read the full commit SHA from the protected `/api/version` response. Install `ffprobe` and `ffmpeg` on the machine running the proof. Save evidence outside tracked source files and use non-customer credentials. The v4 evidence proves a complete HTTP download up to 512 MiB, an ISO BMFF MP4 `ftyp` box with an accepted MP4-compatible brand, compatible media type, valid stream/container metadata and duration from `ffprobe`, and full audio/video stream decoding by `ffmpeg`; it records the artifact SHA-256 and sanitized stream metadata. Download and each decoder step have finite time limits; the helper has a 2 GiB hard maximum. The live media request accepts only the exact `files2.heygen.ai` host and manually follows at most three redirects that remain on that allowlist. A successful decode proves technical decodability; it does not rate visual/audio quality or prove human approval.
 
 Validate the saved report with:
 
 ```bash
 npm run verify:user-video-flow:live-evidence -- plans/reports/live-video-proof.json
 ```
+
+The evidence validator accepts only v4 full-decode artifacts. Its “structure pass” checks the unsigned local JSON fields; it does not cryptographically authenticate that file or attest that an operator preserved it unchanged. Legacy v1-v3 reports remain historical evidence and cannot pass the current full-decode gate.
 
 ## 3. NOWPayments USDT checkout proof
 
@@ -90,5 +92,6 @@ The output report hashes provider/resource references and source files; raw evid
 - The payout proof establishes provider confirmation recorded by Sophia, not independent on-chain transaction finality.
 - The v4 video proof downloads and fully decodes the artifact, but does not rate visual/audio quality or test playback in a user's browser.
 - Legacy v1-v3 video evidence does not prove a complete download or full decode.
+- A live video evidence structure pass does not authenticate the unsigned JSON report's origin or integrity.
 - Operator-provided SLO/economics summaries are bound to raw source hashes but are not independently recalculated by the verifier.
 - A production-window pass applies only to its recorded SHA, window, inputs, and measured SLO targets.

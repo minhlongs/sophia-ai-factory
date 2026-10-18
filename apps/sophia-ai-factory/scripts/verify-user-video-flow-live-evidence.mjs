@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
+import { isMp4Brand, isMp4FormatName } from './live-proof/media.mjs';
 
 const SUCCESS_JOB_STATUSES = new Set(['live', 'published', 'completed', 'succeeded']);
 const CURRENT_SCHEMA = 'sophia-live-user-video-flow-proof-v4';
-const LEGACY_SCHEMAS = new Set([
-  'sophia-live-user-video-flow-proof-v1',
-  'sophia-live-user-video-flow-proof-v2',
-  'sophia-live-user-video-flow-proof-v3',
-]);
 const REQUIRED_PASSED_STEPS = [
   'deployment-version',
   'sign-in',
@@ -68,7 +64,7 @@ try {
   fail(`could not read evidence JSON: ${err instanceof Error ? err.message : String(err)}`);
 }
 
-assert(evidence.schema === CURRENT_SCHEMA || LEGACY_SCHEMAS.has(evidence.schema), 'unexpected evidence schema');
+assert(evidence.schema === CURRENT_SCHEMA, 'only v4 full-download/full-decode evidence can pass this validator');
 const expectedStatus = preflightMode ? 'preflight-passed' : 'passed';
 assert(evidence.status === expectedStatus, `evidence status is not ${expectedStatus}: ${evidence.status ?? 'missing'}`);
 assert(Array.isArray(evidence.events), 'events must be an array');
@@ -77,20 +73,12 @@ assert(evidence.context && typeof evidence.context === 'object', 'context must b
 const context = evidence.context;
 assert(typeof context.baseUrl === 'string' && context.baseUrl.startsWith('https://'), 'baseUrl missing or not https');
 assert(typeof context.deployment?.shortSha === 'string' || typeof context.deployment?.sha === 'string', 'deployment SHA missing');
-if (evidence.schema === CURRENT_SCHEMA) {
-  assert(typeof context.runId === 'string' && context.runId.length > 0, 'runId missing');
-  assert(/^[a-f0-9]{40,64}$/i.test(context.deployment?.sha ?? ''), 'full deployment commit SHA missing');
-  assert(context.deployment.sha.slice(0, 8).toLowerCase() === context.deployment.shortSha?.toLowerCase(), 'full and short deployment SHAs do not match');
-}
+assert(typeof context.runId === 'string' && context.runId.length > 0, 'runId missing');
+assert(/^[a-f0-9]{40,64}$/i.test(context.deployment?.sha ?? ''), 'full deployment commit SHA missing');
+assert(context.deployment.sha.slice(0, 8).toLowerCase() === context.deployment.shortSha?.toLowerCase(), 'full and short deployment SHAs do not match');
 assert(Array.isArray(context.channelProviders) && context.channelProviders.length >= 2, 'need at least 2 channelProviders');
 const byStep = new Map(evidence.events.map((event) => [event.step, event]));
-const requiredSteps = preflightMode
-  ? PREFLIGHT_PASSED_STEPS
-  : evidence.schema === CURRENT_SCHEMA
-    ? [...REQUIRED_PASSED_STEPS, 'video-full-decode']
-    : evidence.schema === 'sophia-live-user-video-flow-proof-v3'
-      ? [...REQUIRED_PASSED_STEPS, 'video-range-mp4-header']
-    : REQUIRED_PASSED_STEPS;
+const requiredSteps = preflightMode ? PREFLIGHT_PASSED_STEPS : [...REQUIRED_PASSED_STEPS, 'video-full-decode'];
 for (const step of requiredSteps) {
   assert(byStep.get(step)?.status === 'passed', `required step not passed: ${step}`);
 }
@@ -124,21 +112,18 @@ assert(heygen?.status === 'completed' && heygen.videoUrlPresent === true, 'HeyGe
 const videoRow = byStep.get('video-row')?.data;
 assert(videoRow?.status === 'completed' && videoRow.videoUrlPresent === true, 'video row did not prove completed MP4 URL');
 
-if (evidence.schema === CURRENT_SCHEMA && !preflightMode) {
+if (!preflightMode) {
   const artifact = byStep.get('video-full-decode')?.data;
   assert(artifact?.status === 200, 'video artifact did not prove a complete HTTP download');
   assert(artifact?.fullDecode === true, 'video artifact did not prove a full audio/video decode');
   assert(Number.isSafeInteger(artifact?.totalBytes) && artifact.totalBytes > 0, 'video artifact size is missing');
   assert(/^[a-f0-9]{64}$/i.test(artifact?.sha256 ?? ''), 'video artifact SHA-256 is missing');
-  assert(typeof artifact?.formatName === 'string' && artifact.formatName.length > 0, 'video container metadata is missing');
+  assert(typeof artifact?.majorBrand === 'string' && artifact.majorBrand.length === 4, 'video MP4 major brand is missing');
+  assert(isMp4Brand(artifact?.compatibleMp4Brand), 'video artifact does not prove an MP4-compatible brand');
+  assert(isMp4FormatName(artifact?.formatName), 'video container metadata does not identify MP4');
   assert(Number.isFinite(artifact?.durationSec) && artifact.durationSec > 0, 'video duration is missing');
   assert(Array.isArray(artifact?.videoStreams) && artifact.videoStreams.length > 0, 'decoded video stream metadata is missing');
   assert(Array.isArray(artifact?.audioStreams), 'audio stream metadata is missing');
-} else if (evidence.schema === 'sophia-live-user-video-flow-proof-v3' && !preflightMode) {
-  const artifact = byStep.get('video-range-mp4-header')?.data;
-  assert(artifact?.status === 206, 'video artifact did not prove byte-range support');
-  assert(artifact?.mp4Brand === 'ftyp', 'video artifact did not prove a valid MP4 header');
-  assert(Number.isFinite(artifact?.totalBytes) && artifact.totalBytes > 0, 'video artifact size is missing');
 }
 
 const publish = byStep.get('publish-jobs-live')?.data;
@@ -149,11 +134,8 @@ for (const job of publish.jobs) {
   assert(SUCCESS_JOB_STATUSES.has(job.status), `publish job ${job.id ?? 'unknown'} status not successful: ${job.status}`);
 }
 
-const isLegacy = LEGACY_SCHEMAS.has(evidence.schema);
-console.log(`${isLegacy ? 'LEGACY LIVE VIDEO EVIDENCE PASS' : 'LIVE VIDEO EVIDENCE PASS'}: ${evidencePath}`);
+console.log(`LIVE VIDEO EVIDENCE STRUCTURE PASS (UNSIGNED LOCAL JSON): ${evidencePath}`);
 console.log(`Deployment: ${context.deployment?.shortSha ?? context.deployment?.sha}`);
 console.log(`Video: ${context.videoId}`);
 console.log(`Publish jobs: ${publish.jobs.length}`);
-if (isLegacy) {
-  console.log('Legacy video evidence does not prove a full media download or decode.');
-}
+console.log('This validator checks evidence structure and values; it does not cryptographically authenticate the local file.');

@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { verifyMp4Playback } from '../../../../scripts/live-proof/media.mjs';
 
 const tempRoots: string[] = [];
-const mp4Bytes = new Uint8Array([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d]);
+const mp4Bytes = new Uint8Array([
+  0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70,
+  0x69, 0x73, 0x6f, 0x6d, 0, 0, 2, 0,
+  0x69, 0x73, 0x6f, 0x6d, 0x6d, 0x70, 0x34, 0x32,
+]);
 const metadata = {
   streams: [
     { codec_type: 'video', codec_name: 'h264', width: 320, height: 240 },
@@ -29,12 +33,12 @@ function createTool(root: string, name: string, body: string) {
   return file;
 }
 
-function createSuccessfulTools(root: string) {
+function createSuccessfulTools(root: string, probeMetadata = metadata) {
   const ffprobePath = createTool(root, 'ffprobe', `
     const fs = require('node:fs');
     const input = process.argv.at(-1);
     if (!fs.existsSync(input) || fs.statSync(input).size === 0) process.exit(2);
-    process.stdout.write(${JSON.stringify(JSON.stringify(metadata))});
+    process.stdout.write(${JSON.stringify(JSON.stringify(probeMetadata))});
   `);
   const ffmpegPath = createTool(root, 'ffmpeg', `
     const fs = require('node:fs');
@@ -45,7 +49,8 @@ function createSuccessfulTools(root: string) {
 }
 
 function mediaResponse(body: Uint8Array = mp4Bytes, headers: Record<string, string> = {}) {
-  return new Response(body, {
+  const responseBody = Uint8Array.from(body).buffer as ArrayBuffer;
+  return new Response(responseBody, {
     status: 200,
     headers: {
       'content-length': String(body.byteLength),
@@ -80,6 +85,8 @@ describe('verifyMp4Playback', () => {
       status: 200,
       contentType: 'video/mp4',
       totalBytes: mp4Bytes.byteLength,
+      majorBrand: 'isom',
+      compatibleMp4Brand: 'isom',
       formatName: metadata.format.format_name,
       durationSec: 1.25,
       videoStreams: [{ codec: 'h264', width: 320, height: 240 }],
@@ -111,6 +118,55 @@ describe('verifyMp4Playback', () => {
     expect(leftoverDownloads(root)).toEqual([]);
   });
 
+  it('rejects a non-MP4 ISO BMFF brand even when ffprobe can decode it', async () => {
+    const root = createTempRoot();
+    const quickTimeBytes = Uint8Array.from(mp4Bytes);
+    quickTimeBytes.set([0x71, 0x74, 0x20, 0x20], 8);
+    quickTimeBytes.set([0x71, 0x74, 0x20, 0x20], 16);
+    quickTimeBytes.set([0x71, 0x74, 0x20, 0x20], 20);
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse(quickTimeBytes));
+    const tools = createSuccessfulTools(root);
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ...tools,
+    })).rejects.toThrow('does not declare a recognized MP4 brand');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('rejects an explicit non-MP4 content type', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse(mp4Bytes, { 'content-type': 'video/webm' }));
+    const tools = createSuccessfulTools(root);
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ...tools,
+    })).rejects.toThrow('content type is not MP4-compatible');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('rejects ffprobe output that identifies a non-MP4 container', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse());
+    const tools = createSuccessfulTools(root, {
+      streams: metadata.streams,
+      format: { format_name: 'matroska,webm', duration: '1.25' },
+    });
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ...tools,
+    })).rejects.toThrow('ffprobe did not identify an MP4 container');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
   it('rejects redirects to untrusted hosts', async () => {
     const root = createTempRoot();
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, {
@@ -138,6 +194,26 @@ describe('verifyMp4Playback', () => {
       fetchImpl: fetchMock,
       tempRoot: root,
       maxBytes: 12,
+      ...tools,
+    })).rejects.toThrow('exceeds the configured download size limit');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('enforces the byte limit while streaming when content length is absent', async () => {
+    const root = createTempRoot();
+    const oversized = new Uint8Array(25);
+    oversized.set(mp4Bytes);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(Uint8Array.from(oversized).buffer as ArrayBuffer, {
+      status: 200,
+      headers: { 'content-type': 'video/mp4' },
+    }));
+    const tools = createSuccessfulTools(root);
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      maxBytes: 24,
       ...tools,
     })).rejects.toThrow('exceeds the configured download size limit');
 
@@ -192,5 +268,61 @@ describe('verifyMp4Playback', () => {
     })).rejects.toThrow('ffmpeg full decode failed (exit 1)');
 
     expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('rejects invalid timeout overrides instead of allowing unbounded work', async () => {
+    const root = createTempRoot();
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      tempRoot: root,
+      downloadTimeoutMs: 0,
+    })).rejects.toThrow('downloadTimeoutMs must be between');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('aborts a stalled full download within its configured timeout', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn((_url: URL, init: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    }));
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      downloadTimeoutMs: 25,
+    })).rejects.toThrow('full media download exceeded its time limit');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('kills a decoder that exceeds its configured timeout', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse());
+    const ffprobePath = createSuccessfulTools(root).ffprobePath;
+    const ffmpegPath = createTool(root, 'ffmpeg', 'setTimeout(() => {}, 10000);');
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      ffprobePath,
+      ffmpegPath,
+      decodeTimeoutMs: 50,
+    })).rejects.toThrow('ffmpeg full decode timed out');
+
+    expect(leftoverDownloads(root)).toEqual([]);
+  });
+
+  it('fails the proof when temporary-file cleanup fails', async () => {
+    const root = createTempRoot();
+    const fetchMock = vi.fn().mockResolvedValue(mediaResponse());
+    const tools = createSuccessfulTools(root);
+
+    await expect(verifyMp4Playback('https://files2.heygen.ai/video.mp4', {
+      fetchImpl: fetchMock,
+      tempRoot: root,
+      removeTempDirectory: async () => { throw new Error('simulated file system failure'); },
+      ...tools,
+    })).rejects.toThrow('temporary media cleanup failed');
   });
 });
