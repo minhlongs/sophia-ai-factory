@@ -1,11 +1,11 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { ExternalLink } from 'lucide-react';
 import type { ListingDetailProps } from './types';
 import { StatusBadge } from './stat-components';
 import { ListingActionsClient } from './listing-actions-client';
 import { ListingBasicInfoCard, ListingStatsGrid } from './listing-detail-sections';
+import { loadCreatorListingOrThrow } from './listing-detail-loader';
 import { CREATOR_MARKETPLACE_V2_ENABLED } from '@/land/sop-marketplace/availability';
 import { MarketplaceUnavailableNotice } from '@/components/sop-marketplace/marketplace-unavailable-notice';
 
@@ -14,14 +14,13 @@ export async function ListingDetail({ locale, listingId, userId }: ListingDetail
     return <main className="min-h-screen bg-background p-8"><MarketplaceUnavailableNotice /></main>;
   }
 
-  const t = await getTranslations({ locale, namespace: 'sop.creator' });
-  const tStatus = await getTranslations({ locale, namespace: 'sop.status' });
+  const [t, tStatus, loadResult] = await Promise.all([
+    getTranslations({ locale, namespace: 'sop.creator' }),
+    getTranslations({ locale, namespace: 'sop.status' }),
+    loadCreatorListingOrThrow(listingId, userId),
+  ]);
 
-  const { getD1 } = await import('@/seed/db/client');
-  const { getSopListing } = await import('@/seed/db/marketplace-ops');
-
-  const d1 = await getD1();
-  if (!d1) {
+  if (!loadResult.d1Available) {
     return (
       <main className="min-h-screen bg-background p-8">
         <div className="max-w-3xl mx-auto text-center">
@@ -31,21 +30,7 @@ export async function ListingDetail({ locale, listingId, userId }: ListingDetail
     );
   }
 
-  const listing = await getSopListing(d1, listingId);
-  if (!listing) {
-    notFound();
-  }
-
-  const { getCreatorProfile } = await import('@/seed/db/marketplace-ops');
-  const { requireOrgMembership } = await import('@/seed/db/org-membership');
-  const orgResult = await requireOrgMembership(userId);
-  const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-  const profile = await getCreatorProfile(d1, userId, tenantId);
-
-  if (!profile || listing.creator_id !== profile.id) {
-    notFound();
-  }
-
+  const { listing } = loadResult;
   const statusLabels: Record<string, string> = {
     draft: tStatus('draft'),
     published: tStatus('published'),

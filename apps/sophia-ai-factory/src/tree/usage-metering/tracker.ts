@@ -5,20 +5,24 @@
  * Re-exports DB helpers and credit utilities; orchestrates trackUsage.
  */
 
-import { sha256 } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { UsageEventInput, IngestionResult } from './types';
-import { CREDIT_RULES } from './constants';
 import { generateIdempotencyKey } from './idempotency';
 import {
   resolveExternalCustomerId,
   checkIdempotencyKey,
   insertUsageEvent,
 } from './tracker-db-helpers';
+import {
+  calculateCredits,
+  hashLicenseKey,
+  startTimer,
+} from './tracker-credit-calculator';
 
-// Re-export DB helpers for consumers that import them from tracker
+// Re-export DB helpers and credit utilities for consumers that import them from tracker
 export { resolveExternalCustomerId, checkIdempotencyKey, insertUsageEvent } from './tracker-db-helpers';
+export { calculateCredits, hashLicenseKey, startTimer };
 
 /**
  * Track a usage event with idempotency protection
@@ -82,60 +86,4 @@ export async function trackUsage(event: UsageEventInput): Promise<IngestionResul
       error: getErrorMessage(error),
     };
   }
-}
-
-/**
- * Calculate credits based on service rules
- */
-export function calculateCredits(
-  service: string,
-  action: string,
-  tokensTotal?: number,
-  tier: string = 'BASIC'
-): number {
-  const rules = CREDIT_RULES[service];
-  if (!rules) return 1;
-
-  const rule = rules[action] || rules.default;
-
-  let baseCredits: number;
-
-  if (rule.type === 'per-call') {
-    baseCredits = rule.credits ?? 1;
-  } else if (rule.type === 'per-1k-tokens' && tokensTotal) {
-    baseCredits = Math.ceil(tokensTotal / 1000) * (rule.creditsPer1k ?? 1);
-  } else {
-    baseCredits = 1;
-  }
-
-  const tierMultiplier = getTierMultiplier(tier);
-  return Math.ceil(baseCredits / tierMultiplier);
-}
-
-/**
- * Get tier rate multiplier
- */
-function getTierMultiplier(tier: string): number {
-  const multipliers: Record<string, number> = {
-    BASIC: 1.0,
-    PREMIUM: 0.8,
-    ENTERPRISE: 0.6,
-    MASTER: 0.5,
-  };
-  return multipliers[tier] ?? 1.0;
-}
-
-/**
- * Generate license key hash
- */
-export function hashLicenseKey(key: string): string {
-  return sha256(key);
-}
-
-/**
- * Start a timer for response time tracking
- */
-export function startTimer(): () => number {
-  const start = Date.now();
-  return () => Date.now() - start;
 }

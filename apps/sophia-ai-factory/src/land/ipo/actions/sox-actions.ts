@@ -20,7 +20,6 @@ import {
   validateManualAdjustment,
   recordQuarantineEventInDb,
   evaluateAllControls,
-  generateCryptographicAttestation,
 } from '@/tree/ipo/sox404-control-ledger';
 import {
   type ActionResult,
@@ -28,6 +27,7 @@ import {
   resolveDb,
   normalizeErrorArg,
 } from './common';
+import { executeSoxFilingCertification } from './sox-certification-helper';
 
 /**
  * Runs automated evaluation across all 6 SOX 404 ICFR internal controls.
@@ -95,45 +95,7 @@ export async function certifyIpoFilingAction(
   const db = dbRes.value;
 
   try {
-    const summary = await evaluateAllControls(db);
-    if (summary.overallStatus !== 'certified_clean') {
-      return failure({
-        code: 'SOX_DEFICIENCY',
-        message: `Cannot certify period ${periodKey}: SOX status is '${summary.overallStatus}' with ${summary.deficienciesCount} deficiencies.`,
-      });
-    }
-
-    const certificate = await generateCryptographicAttestation(
-      summary,
-      authRes.value.userId,
-      'CFO / Principal Financial Officer',
-      periodKey
-    );
-
-    const timestamp = Date.now();
-    await db
-      .prepare(
-        `UPDATE ipo_filing_periods SET
-          status = 'sox_certified',
-          sox_404_status = 'certified_clean',
-          merkle_root_hash = ?,
-          sec_filing_signature = ?,
-          certified_by = ?,
-          certified_at = ?,
-          updated_at = ?
-        WHERE period_key = ?`
-      )
-      .bind(
-        certificate.merkleRootHash,
-        certificate.digitalSignature,
-        authRes.value.userId,
-        timestamp,
-        timestamp,
-        periodKey
-      )
-      .run();
-
-    return success(certificate);
+    return await executeSoxFilingCertification(db, authRes.value.userId, periodKey);
   } catch (err) {
     logger.error('Failed to certify IPO filing period', normalizeErrorArg(err));
     return failure({ code: 'CERTIFICATION_ERROR', message: `Certification error: ${String(err)}` });

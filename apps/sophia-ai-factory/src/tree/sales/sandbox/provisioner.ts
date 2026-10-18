@@ -8,7 +8,6 @@ import type { SandboxProvisionResult } from '@/seed/types/enterprise-deal'
 import { logger } from '@/seed/utils/logger-utility'
 import {
   createSubaccount,
-  getSubaccountById,
   slugify,
 } from '@/tree/organizations/subaccount-repo'
 import {
@@ -24,6 +23,7 @@ import {
 } from './types'
 import { generateSandboxToken } from './crypto-tokens'
 import { resolveHostAgencyOrg } from './host-org-resolver'
+import { tryReuseExistingSandbox } from './sandbox-reuse-helper'
 
 /**
  * 1-Click activation of an isolated, 1,000 MCU sandboxed demo workspace for a deal.
@@ -47,35 +47,15 @@ export async function provisionDemoSandbox(
   const agencyOrgId = await resolveHostAgencyOrg(db, options.hostAgencyOrgId)
 
   // If already provisioned, reuse or re-activate
-  if (deal.sandboxSubaccountId) {
-    const existingSubaccount = await getSubaccountById(db, deal.sandboxSubaccountId)
-    if (existingSubaccount) {
-      const token = await generateSandboxToken(
-        { dealId, subaccountId: existingSubaccount.id, expiresAt },
-        secret
-      )
-      const demoMagicUrl = `${baseUrl}/sandbox/${token}`
-
-      await updateEnterpriseDeal(db, dealId, {
-        sandboxStatus: 'active',
-        sandboxToken: token,
-        sandboxExpiresAt: expiresAt,
-        dealStage: deal.dealStage === 'new_lead' || deal.dealStage === 'qualified' ? 'demo_active' : deal.dealStage,
-      })
-
-      return {
-        dealId,
-        subaccountId: existingSubaccount.id,
-        subaccountName: existingSubaccount.name,
-        slug: existingSubaccount.slug,
-        allocatedMcu: demoMcu,
-        expiresAt,
-        sandboxToken: token,
-        demoMagicUrl,
-        watermarkEnabled: true,
-      }
-    }
-  }
+  const reused = await tryReuseExistingSandbox({
+    db,
+    deal,
+    demoMcu,
+    expiresAt,
+    secret,
+    baseUrl,
+  })
+  if (reused) return reused
 
   // Generate unique subaccount slug
   const baseSlug = slugify(deal.companyName)

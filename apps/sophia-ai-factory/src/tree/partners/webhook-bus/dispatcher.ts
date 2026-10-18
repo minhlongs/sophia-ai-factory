@@ -12,16 +12,16 @@ import {
   type PartnerWebhookEventType,
   type DispatchPartnerWebhookOptions,
   type PartnerWebhookDeliveryResult,
-  SIGNATURE_HEADER_NAME,
   MAX_DELIVERY_ATTEMPTS,
 } from './types';
 import { signPartnerWebhookPayload } from './signature-verifier';
-import { calculateBackoffDelayMs, isRetryableHttpStatus } from './backoff-strategy';
+import { calculateBackoffDelayMs } from './backoff-strategy';
 import {
   generateWebhookEventId,
   resolvePartnerWebhookSubscription,
   recordWebhookDeliveryLog,
 } from './webhook-delivery-persistence';
+import { executeWebhookDeliveryAttempts } from './delivery-attempt-runner';
 
 /**
  * Dispatches a partner webhook event with Web Crypto HMAC-SHA256 signing
@@ -76,54 +76,17 @@ export async function dispatchPartnerQuotaWebhook(
   const payloadJson = JSON.stringify(fullEnvelope);
   const { headerValue } = await signPartnerWebhookPayload(secretKey, payloadJson, now);
 
-  const fetcher = options?.fetchFn ?? fetch;
   const maxAttempts = options?.maxAttempts ?? MAX_DELIVERY_ATTEMPTS;
 
-  let attempts = 0;
-  let delivered = false;
-  let lastStatus: number | undefined;
-  let lastError: string | undefined;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    attempts = attempt;
-
-    try {
-      const response = await fetcher(endpointUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          [SIGNATURE_HEADER_NAME]: headerValue,
-          'X-Sophia-Event-Type': eventType,
-          'X-Sophia-Event-Id': eventId,
-          'X-Sophia-Delivery-Attempt': String(attempt),
-        },
-        body: payloadJson,
-      });
-
-      lastStatus = response.status;
-
-      if (response.ok) {
-        delivered = true;
-        break;
-      }
-
-      if (!isRetryableHttpStatus(response.status)) {
-        lastError = `Non-retryable HTTP ${response.status}`;
-        break;
-      }
-
-      lastError = `HTTP ${response.status}`;
-    } catch (err: unknown) {
-      lastError = err instanceof Error ? err.message : String(err);
-    }
-
-    if (attempt < maxAttempts) {
-      const delay = calculateBackoffDelayMs(attempt + 1, false);
-      if (options?.fetchFn && delay === 0) {
-        // Immediate mock in test execution
-      }
-    }
-  }
+  const { attempts, delivered, lastStatus, lastError } = await executeWebhookDeliveryAttempts({
+    endpointUrl,
+    eventId,
+    eventType,
+    payloadJson,
+    headerValue,
+    maxAttempts,
+    fetchFn: options?.fetchFn,
+  });
 
   const deliveryLogId = await recordWebhookDeliveryLog({
     db, partnerId, eventType, payloadJson, headerValue, lastStatus, delivered, attempts,

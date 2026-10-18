@@ -2,38 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardFooter, CardHeader } from '@/seed/components/ui/card';
+import { Card, CardFooter, CardHeader } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
 import { CampaignStatusBadge } from './campaign-status-badge';
-import { CampaignProgressBar } from './campaign-progress-bar';
+import { CampaignCardBody, getCampaignStatusIcon } from './campaign-card-body';
 import { cn } from '@/seed/utils/cn';
-import { CampaignStatus } from '@/seed/types';
-import { useTranslations } from 'next-intl';
-import { useFormatter } from 'next-intl';
-import {
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  FileText,
-  Loader2,
-  PlayCircle,
-} from 'lucide-react';
+import { useTranslations, useFormatter } from 'next-intl';
+import { PlayCircle } from 'lucide-react';
 import { CampaignCardProps } from './types';
-
-function getStatusIcon(status: CampaignStatus) {
-  switch (status) {
-    case 'completed':
-      return <CheckCircle2 className="w-5 h-5 text-green-500" aria-hidden="true" />;
-    case 'failed':
-      return <AlertCircle className="w-5 h-5 text-destructive" aria-hidden="true" />;
-    case 'queued':
-      return <Clock className="w-5 h-5 text-muted-foreground" aria-hidden="true" />;
-    case 'draft':
-      return <FileText className="w-5 h-5 text-muted-foreground" aria-hidden="true" />;
-    default:
-      return <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" aria-hidden="true" />;
-  }
-}
 
 export function CampaignCard({
   campaign,
@@ -73,7 +49,7 @@ export function CampaignCard({
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-            {getStatusIcon(campaign.status)}
+            {getCampaignStatusIcon(campaign.status)}
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-foreground truncate" title={campaign.title || campaign.topic || ''}>
@@ -91,29 +67,11 @@ export function CampaignCard({
         <CampaignStatusBadge status={campaign.status} className="ml-2 shrink-0" />
       </CardHeader>
 
-      <CardContent className="flex-1 pb-4">
-        {campaign.audience && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-            {campaign.audience}
-          </p>
-        )}
-
-        {(campaign.status?.includes('processing') || campaign.status === 'queued') && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{t('progress')}</span>
-              <span className="font-medium text-foreground">{progress}%</span>
-            </div>
-            <CampaignProgressBar progress={progress} status={campaign.status} />
-          </div>
-        )}
-
-        {campaign.error_message && (
-          <p className="text-xs text-destructive mt-2 line-clamp-2">
-            {campaign.error_message}
-          </p>
-        )}
-      </CardContent>
+      <CampaignCardBody
+        campaign={campaign}
+        progress={progress}
+        progressLabel={t('progress')}
+      />
 
       <CardFooter className="flex items-center justify-between pt-4 border-t border-outline-variant mt-auto">
         <div className="flex items-center gap-2">

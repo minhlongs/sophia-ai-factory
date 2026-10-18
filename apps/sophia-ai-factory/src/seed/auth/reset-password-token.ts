@@ -8,64 +8,18 @@
  * Compatible with Cloudflare Workers (Web Crypto only, no Node crypto).
  */
 
-const TOKEN_TTL_SECONDS = 3600; // 1 hour
-const ENC = new TextEncoder();
+import {
+  TOKEN_TTL_SECONDS,
+  type ResetTokenPayload,
+  type D1Binding,
+  getSecret,
+  toBase64Url,
+  fromBase64Url,
+  hmacSign,
+  hmacVerify,
+} from './reset-password-crypto';
 
-function getSecret(): string {
-  const s = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
-  if (!s) throw new Error('BETTER_AUTH_SECRET must be set');
-  return s;
-}
-
-function toBase64Url(str: string): string {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-function fromBase64Url(str: string): string {
-  const pad = str.length % 4 === 0 ? '' : '='.repeat(4 - (str.length % 4));
-  return atob(str.replace(/-/g, '+').replace(/_/g, '/') + pad);
-}
-
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function hmacSign(payload: string, secret: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    ENC.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, ENC.encode(payload));
-  return bytesToHex(new Uint8Array(sig));
-}
-
-async function hmacVerify(payload: string, hex: string, secret: string): Promise<boolean> {
-  const expected = await hmacSign(payload, secret);
-  if (expected.length !== hex.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= expected.charCodeAt(i) ^ hex.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
-export interface ResetTokenPayload {
-  userId: string;
-  jti: string;
-  exp: number; // Unix epoch seconds
-}
-
-/** Minimal D1 binding interface for token operations */
-interface D1Binding {
-  prepare(query: string): {
-    bind(...args: unknown[]): {
-      run(): Promise<{ meta?: { changes?: number } }>;
-    };
-  };
-}
+export type { ResetTokenPayload, D1Binding };
 
 /**
  * Generate a signed one-time reset token. Inserts jti into DB before returning.

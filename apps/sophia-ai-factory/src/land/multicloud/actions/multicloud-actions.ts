@@ -7,16 +7,9 @@
  * @module land/multicloud/actions/multicloud-actions
  */
 
-import { success, failure, type Result } from '@/seed/types/result';
-import {
-  getMulticloudTopology,
-  resolveOptimalEdgeRoute,
-  executeSub30msFailover,
-} from '@/tree/multicloud/multicloud-router';
-import {
-  getZeroEgressFabricStatus,
-  resolveZeroEgressAssetUrl,
-} from '@/tree/multicloud/zero-egress-mesh';
+import { success, type Result } from '@/seed/types/result';
+import { getMulticloudTopology } from '@/tree/multicloud/multicloud-router';
+import { getZeroEgressFabricStatus } from '@/tree/multicloud/zero-egress-mesh';
 import type {
   MulticloudMeshTopology, RouteRequestInput, RouteDecisionResult, TriggerFailoverInput,
   FailoverExecutionResult, CloudFailoverAuditLog, ZeroEgressFabricStatus,
@@ -28,6 +21,11 @@ import {
 } from './provider-health-checker';
 import { executeAuditLogsQuery, executeReplicationSync } from './failover-orchestrator';
 import { multicloudActionFailure } from './multicloud-action-helpers';
+import {
+  executeValidatedRouteTraffic,
+  executeValidatedAutonomousFailover,
+  executeValidatedZeroEgressAssetRoute,
+} from './multicloud-routing-helpers';
 
 export async function getMulticloudTopologyAction(): Promise<Result<MulticloudMeshTopology, MulticloudActionError>> {
   try {
@@ -43,11 +41,7 @@ export async function routeTrafficRequestAction(
   input: RouteRequestInput,
 ): Promise<Result<RouteDecisionResult, MulticloudActionError>> {
   try {
-    const db = await getRequiredD1();
-    if (!input.geographicZone || !input.workloadType) {
-      return failure({ code: 'VALIDATION_ERROR', message: 'geographicZone and workloadType are required parameters.' });
-    }
-    return success(await resolveOptimalEdgeRoute(db, input));
+    return await executeValidatedRouteTraffic(input);
   } catch (err) {
     return multicloudActionFailure('routeTrafficRequestAction', 'ROUTING_ERROR', err);
   }
@@ -57,12 +51,7 @@ export async function triggerAutonomousFailoverAction(
   input: TriggerFailoverInput,
 ): Promise<Result<FailoverExecutionResult, MulticloudActionError>> {
   try {
-    await requireAuth();
-    const db = await getRequiredD1();
-    if (!input.originRegionId || !input.triggerReason) {
-      return failure({ code: 'VALIDATION_ERROR', message: 'originRegionId and triggerReason are required.' });
-    }
-    return success(await executeSub30msFailover(db, input));
+    return await executeValidatedAutonomousFailover(input);
   } catch (err) {
     return multicloudActionFailure('triggerAutonomousFailoverAction', 'FAILOVER_EXECUTION_ERROR', err);
   }
@@ -95,11 +84,7 @@ export async function routeZeroEgressAssetAction(
   input: ZeroEgressAssetRoutingInput,
 ): Promise<Result<ZeroEgressRouteResult, MulticloudActionError>> {
   try {
-    const db = await getRequiredD1();
-    if (!input.assetKey) {
-      return failure({ code: 'VALIDATION_ERROR', message: 'assetKey is required.' });
-    }
-    return success(await resolveZeroEgressAssetUrl(db, input));
+    return await executeValidatedZeroEgressAssetRoute(input);
   } catch (err) {
     return multicloudActionFailure('routeZeroEgressAssetAction', 'ASSET_ROUTING_ERROR', err);
   }

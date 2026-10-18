@@ -4,28 +4,16 @@
  */
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { recordLearning } from '@/tree/creative-memory';
 import type { StrategyRecommendation } from '@/seed/types/performance-feedback';
+import {
+  GetFeedbackSchema,
+  PostFeedbackSchema,
+  type PostFeedbackInput,
+} from './strategy-feedback-schemas';
 
-export const GetFeedbackSchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  applied: z.enum(['true', 'false']).optional(),
-  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
-});
-
-export const PostFeedbackSchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  recommendationId: z.string().optional(),
-  applied: z.boolean().optional(),
-  recommendation: z.string().optional(),
-  reasoning: z.string().optional(),
-  confidence: z.enum(['high', 'medium', 'low']).optional(),
-  category: z.string().optional(),
-  signalSummary: z.string().optional(),
-  signalCount: z.number().int().nonnegative().optional(),
-});
+export { GetFeedbackSchema, PostFeedbackSchema };
 
 interface MemoryRow {
   id: string;
@@ -34,6 +22,23 @@ interface MemoryRow {
   confidence: string;
   updated_at: number;
   created_at: number;
+}
+
+function parseRecommendationRow(
+  row: MemoryRow,
+  appliedFilter: 'true' | 'false' | undefined,
+): StrategyRecommendation | null {
+  try {
+    const val = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+    if (!val || typeof val !== 'object') return null;
+    const item = val as StrategyRecommendation;
+    if (appliedFilter !== undefined && item.applied !== (appliedFilter === 'true')) {
+      return null;
+    }
+    return item;
+  } catch {
+    return null;
+  }
 }
 
 export async function queryStrategyFeedback(
@@ -54,87 +59,72 @@ export async function queryStrategyFeedback(
 
   const recommendations: StrategyRecommendation[] = [];
   for (const row of result.results ?? []) {
-    try {
-      const val = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
-      if (val && typeof val === 'object') {
-        const item = val as StrategyRecommendation;
-        if (applied === undefined || item.applied === (applied === 'true')) {
-          recommendations.push(item);
-        }
-      }
-    } catch {
-      /* skip corrupted values */
-    }
+    const item = parseRecommendationRow(row, applied);
+    if (item) recommendations.push(item);
   }
   return recommendations;
 }
 
-export async function upsertStrategyFeedback(
-  data: z.infer<typeof PostFeedbackSchema>,
+async function updateExistingRecommendation(
+  data: PostFeedbackInput,
+  recommendationId: string,
+  now: number,
 ): Promise<NextResponse> {
-  const {
-    workspaceId,
-    recommendationId,
-    applied,
-    recommendation,
-    reasoning,
-    confidence,
-    category,
-    signalSummary,
-    signalCount,
-  } = data;
-
   const d1 = createServerClient();
-  const now = Date.now();
+  const key = `strategy:${recommendationId}:recommendation`;
+  const existingRow = await d1
+    .prepare(`SELECT id, value FROM creative_memory WHERE workspace_id = ? AND key = ? AND is_deleted = 0`)
+    .bind(data.workspaceId, key)
+    .first<{ id: string; value: string }>();
 
-  if (recommendationId) {
-    const key = `strategy:${recommendationId}:recommendation`;
-    const existingRow = await d1
-      .prepare(`SELECT id, value FROM creative_memory WHERE workspace_id = ? AND key = ? AND is_deleted = 0`)
-      .bind(workspaceId, key)
-      .first<{ id: string; value: string }>();
+  if (!existingRow) return NextResponse.json({ error: 'Recommendation not found' }, { status: 404 });
 
-    if (!existingRow) return NextResponse.json({ error: 'Recommendation not found' }, { status: 404 });
-
-    let current: StrategyRecommendation;
-    try {
-      current = JSON.parse(existingRow.value) as StrategyRecommendation;
-    } catch {
-      return NextResponse.json({ error: 'Corrupted recommendation payload' }, { status: 500 });
-    }
-
-    if (applied !== undefined) {
-      current.applied = applied;
-      current.appliedAt = applied ? now : undefined;
-    }
-    if (recommendation) current.recommendation = recommendation;
-    if (reasoning) current.reasoning = reasoning;
-    if (confidence) current.confidence = confidence;
-
-    await d1
-      .prepare(`UPDATE creative_memory SET value = ?, updated_at = ? WHERE id = ?`)
-      .bind(JSON.stringify(current), Math.floor(now / 1000), existingRow.id)
-      .run();
-
-    return NextResponse.json({ recommendation: current });
+  let current: StrategyRecommendation;
+  try {
+    current = JSON.parse(existingRow.value) as StrategyRecommendation;
+  } catch {
+    return NextResponse.json({ error: 'Corrupted recommendation payload' }, { status: 500 });
   }
 
-  if (!recommendation) {
+  if (data.applied !== undefined) {
+    current.applied = data.applied;
+    current.appliedAt = data.applied ? now : undefined;
+  }
+  if (data.recommendation) current.recommendation = data.recommendation;
+  if (data.reasoning) current.reasoning = data.reasoning;
+  if (data.confidence) current.confidence = data.confidence;
+
+  await d1
+    .prepare(`UPDATE creative_memory SET value = ?, updated_at = ? WHERE id = ?`)
+    .bind(JSON.stringify(current), Math.floor(now / 1000), existingRow.id)
+    .run();
+
+  return NextResponse.json({ recommendation: current });
+}
+
+export async function upsertStrategyFeedback(
+  data: PostFeedbackInput,
+): Promise<NextResponse> {
+  const now = Date.now();
+  if (data.recommendationId) {
+    return updateExistingRecommendation(data, data.recommendationId, now);
+  }
+  if (!data.recommendation) {
     return NextResponse.json({ error: 'recommendation is required when creating' }, { status: 400 });
   }
 
-  const recId = `strat_${now}_${workspaceId.slice(0, 8)}`;
+  const recId = `strat_${now}_${data.workspaceId.slice(0, 8)}`;
   const newRec: StrategyRecommendation = {
-    id: recId, workspaceId, signalCount: signalCount ?? 1,
-    signalSummary: signalSummary ?? 'manual_entry', recommendation,
-    reasoning: reasoning ?? '', confidence: confidence ?? 'medium',
-    category: category ?? 'general', applied: applied ?? false,
-    appliedAt: applied ? now : undefined, createdAt: now,
+    id: recId, workspaceId: data.workspaceId, signalCount: data.signalCount ?? 1,
+    signalSummary: data.signalSummary ?? 'manual_entry', recommendation: data.recommendation,
+    reasoning: data.reasoning ?? '', confidence: data.confidence ?? 'medium',
+    category: data.category ?? 'general', applied: data.applied ?? false,
+    appliedAt: data.applied ? now : undefined, createdAt: now,
   };
 
   await recordLearning(
-    workspaceId, 'performance', `strategy:${recId}:recommendation`,
-    newRec, JSON.stringify([signalSummary ?? 'manual']), 'global',
+    data.workspaceId, 'performance', `strategy:${recId}:recommendation`,
+    newRec, JSON.stringify([data.signalSummary ?? 'manual']), 'global',
   );
 
   return NextResponse.json({ recommendation: newRec }, { status: 201 });

@@ -5,38 +5,19 @@ import type {
   ControlDeckScreenId,
   StitchScreenSpec,
 } from '@/seed/types/stitch-control-deck';
+import {
+  FALLBACK_ROUTE_BY_SCREEN,
+  resolveCleanHtmlFile,
+  synchronizeStitchIframeDom,
+  VIEWPORT_WIDTH_CLASS,
+  type ViewportPreset,
+} from './stitch-screen-live-canvas-helpers';
 
 export interface StitchScreenLiveCanvasProps {
   readonly activeScreen: StitchScreenSpec;
   readonly lang: 'en' | 'vi';
   readonly screens: readonly StitchScreenSpec[];
   readonly onSelectScreen: (id: ControlDeckScreenId) => void;
-}
-
-type ViewportPreset = 'full' | 'desktop' | 'tablet' | 'mobile';
-
-const VIEWPORT_WIDTH_CLASS: Record<ViewportPreset, string> = {
-  full: 'w-full',
-  desktop: 'w-full max-w-[1440px] mx-auto',
-  tablet: 'w-full max-w-[768px] mx-auto',
-  mobile: 'w-full max-w-[390px] mx-auto',
-};
-
-const FALLBACK_ROUTE_BY_SCREEN: Partial<Record<ControlDeckScreenId, string>> = {
-  dashboard: '/dashboard',
-  'ask-advisors': '/dashboard/control-deck',
-  'video-studio': '/dashboard/missions',
-  'billing-revenue': '/dashboard/affiliate',
-  'setup-wizard': '/setup-wizard',
-  'agency-portal': '/partner',
-  'mobile-companion': '/dashboard/approvals',
-  pricing: '/pricing',
-  'style-guide': '/dashboard/control-deck',
-};
-
-function resolveCleanHtmlFile(spec: StitchScreenSpec): string {
-  const raw = spec.htmlFile ?? spec.routeHtml;
-  return raw.replace(/^\/+/, '');
 }
 
 export function StitchScreenLiveCanvas({
@@ -55,45 +36,13 @@ export function StitchScreenLiveCanvas({
   const syncIframeDocument = useCallback(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
-    try {
-      const win = iframe.contentWindow as
-        | (Window & { setLang?: (locale: 'en' | 'vi') => void })
-        | null;
-      const doc = iframe.contentDocument;
-      if (!doc) return;
-
-      if (typeof win?.setLang === 'function') {
-        win.setLang(lang);
-      } else {
-        doc.documentElement.lang = lang;
-        doc.querySelectorAll<HTMLElement>('[data-en][data-vi]').forEach((el) => {
-          const nextText = el.getAttribute(`data-${lang}`);
-          if (nextText) el.textContent = nextText;
-        });
-      }
-
-      const topNav = doc.querySelector('body > nav');
-      if (topNav instanceof HTMLElement) {
-        topNav.style.display = 'none';
-      }
-
-      doc.querySelectorAll<HTMLAnchorElement>('a[href$=".html"]').forEach((anchor) => {
-        const rawHref = anchor.getAttribute('href') || '';
-        const cleanFile = rawHref.split('/').pop()?.split('?')[0] || '';
-        const matched = screens.find((item) => resolveCleanHtmlFile(item) === cleanFile);
-        if (matched) {
-          anchor.onclick = (event: MouseEvent) => {
-            event.preventDefault();
-            onSelectScreen(matched.id);
-          };
-        }
-      });
-
-      const measured = doc.body?.scrollHeight || doc.documentElement?.scrollHeight || 860;
-      setCanvasHeight(Math.max(780, Math.min(2400, measured + 24)));
-    } catch {
-      // Graceful fallback during initial iframe load
-    }
+    synchronizeStitchIframeDom({
+      iframe,
+      lang,
+      screens,
+      onSelectScreen,
+      onMeasureHeight: setCanvasHeight,
+    });
   }, [lang, onSelectScreen, screens]);
 
   useEffect(() => {
