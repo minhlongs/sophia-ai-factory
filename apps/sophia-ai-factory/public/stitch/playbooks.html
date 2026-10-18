@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Sophia AI Factory — 12. Autonomous Playbooks &amp; Schedule Matrix (/dashboard/playbooks)</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            obsidian: "#0B0E14",
+            panel: "#121722",
+            "panel-high": "#1A2130",
+            outline: "#263044",
+            amber: { 400: "#F59E0B", 500: "#D97706" },
+            emerald: { 400: "#10B981", 500: "#059669" },
+            indigo: { 400: "#6366F1", 500: "#4F46E5" }
+          },
+          fontFamily: {
+            display: ["Space Grotesk", "sans-serif"],
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .specular-card {
+      background: linear-gradient(180deg, rgba(26,33,48,0.85) 0%, rgba(18,23,34,0.96) 100%);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+    }
+    .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.25); }
+  </style>
+</head>
+<body class="bg-[#0B0E14] text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-amber-400 selection:text-slate-950">
+  <!-- LEFT SIDEBAR -->
+  <aside class="fixed left-0 top-0 h-screen w-64 bg-[#121722] border-r border-[#263044] z-40 hidden lg:flex flex-col justify-between p-4 select-none">
+    <div>
+      <div class="flex items-center gap-3 pb-4 mb-4 border-b border-[#263044]">
+        <div class="w-10 h-10 rounded-xl bg-[#1A2130] border border-amber-400/40 flex items-center justify-center text-amber-400 glow-amber">
+          <span class="material-symbols-outlined">schema</span>
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-base text-white tracking-tight">Sophia AI Factory</h1>
+          <span class="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">Stitch v4.2 Deck</span>
+        </div>
+      </div>
+      <nav aria-label="Control Deck Navigation" class="space-y-1 text-sm">
+        <a href="index.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">dashboard</span><span>1. Command Deck</span>
+        </a>
+        <a href="creative-economy.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">bolt</span><span>10. Creative Hook Lab</span>
+        </a>
+        <a href="youtube-automation.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">smart_display</span><span>11. YouTube Automation</span>
+        </a>
+        <a href="playbooks.html" aria-current="page" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg bg-amber-400/15 text-amber-400 border-l-2 border-amber-400 font-semibold">
+          <span class="material-symbols-outlined text-lg">schema</span><span data-en="12. Playbooks Matrix" data-vi="12. Ma Trận Playbook">12. Ma Trận Playbook</span>
+        </a>
+        <a href="publish-queue.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">schedule_send</span><span>13. Publish Queue</span>
+        </a>
+        <a href="marketplace.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">storefront</span><span>14. SOP Marketplace</span>
+        </a>
+        <a href="my-sops.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">inventory_2</span><span>15. My SOPs Studio</span>
+        </a>
+        <a href="challenges.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">emoji_events</span><span>16. Growth Challenges</span>
+        </a>
+        <a href="handover-runbooks.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">menu_book</span><span>17. Handover Runbooks</span>
+        </a>
+        <a href="system-health.html" class="flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-slate-300 hover:bg-[#1A2130] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-lg">monitor_heart</span><span>18. System Health</span>
+        </a>
+      </nav>
+    </div>
+    <div class="pt-4 border-t border-[#263044]">
+      <div class="px-3 py-2 rounded-lg bg-[#0B0E14] border border-[#263044] flex items-center justify-between text-xs font-mono">
+        <span class="text-slate-400">Route:</span>
+        <span class="text-amber-400">/dashboard/playbooks</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TOP HEADER -->
+  <header class="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-[#121722]/95 backdrop-blur-md border-b border-[#263044] z-30 flex items-center justify-between px-4 sm:px-6">
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="px-2.5 py-1 rounded-md font-mono text-xs bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 shrink-0">SCREEN #12</span>
+      <h2 class="font-display font-bold text-base sm:text-lg text-white truncate" data-en="Autonomous Playbooks &amp; Schedule Matrix" data-vi="Kịch Bản Tự Hành (Playbooks) &amp; Ma Trận Lịch Chạy">Kịch Bản Tự Hành (Playbooks) &amp; Ma Trận Lịch Chạy</h2>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center bg-[#0B0E14] rounded-lg p-1 border border-[#263044]" role="group" aria-label="Language Switcher">
+        <button id="btn-vi" onclick="setLang('vi')" class="px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950">VI</button>
+        <button id="btn-en" onclick="setLang('en')" class="px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white">EN</button>
+      </div>
+      <button class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold text-xs glow-amber">
+        <span class="material-symbols-outlined text-base">play_circle</span>
+        <span data-en="Trigger All Active DAGs" data-vi="Kích Hoạt Toàn Bộ DAG">Kích Hoạt Toàn Bộ DAG</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="lg:ml-64 pt-20 pb-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+    <section class="specular-card rounded-2xl p-6 border border-[#263044] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping motion-reduce:animate-none"></span>
+          <span class="font-mono text-xs uppercase tracking-wider text-emerald-400" data-en="INNGEST DURABLE CRON ORCHESTRATOR • ZERO-TOUCH PIPELINES" data-vi="ĐIỀU PHỐI INNGEST CRON BỀN VỮNG • VẬN HÀNH KHÔNG CHẠM">ĐIỀU PHỐI INNGEST CRON BỀN VỮNG • VẬN HÀNH KHÔNG CHẠM</span>
+        </div>
+        <h3 class="font-display text-2xl sm:text-3xl font-bold text-white" data-en="End-to-End Autonomous Growth Playbooks" data-vi="Chuỗi Playbook Tăng Trưởng Tự Hành Đầu-Cuối">Chuỗi Playbook Tăng Trưởng Tự Hành Đầu-Cuối</h3>
+        <p class="text-slate-400 text-sm max-w-3xl" data-en="Chain trend scraping, 4-Advisor debate, script synthesis, ElevenLabs voiceover, HeyGen 4K rendering, and multi-channel distribution on deterministic cron schedules." data-vi="Kết nối tự động từ quét xu hướng, hội ý 4 Cố vấn AI, viết kịch bản, lồng tiếng ElevenLabs, render HeyGen 4K đến đăng đa kênh theo lịch Cron cố định.">Kết nối tự động từ quét xu hướng, hội ý 4 Cố vấn AI, viết kịch bản, lồng tiếng ElevenLabs, render HeyGen 4K đến đăng đa kênh theo lịch Cron cố định.</p>
+      </div>
+      <div class="flex gap-3 shrink-0 font-mono text-xs">
+        <div class="px-3.5 py-2 rounded-xl bg-[#0B0E14] border border-[#263044]">
+          <span class="text-slate-400 block">Inngest Workers</span>
+          <span class="text-emerald-400 font-bold text-sm">16 / 16 Healthy</span>
+        </div>
+        <div class="px-3.5 py-2 rounded-xl bg-[#0B0E14] border border-[#263044]">
+          <span class="text-slate-400 block">Next Dispatch</span>
+          <span class="text-amber-400 font-bold text-sm">00:14:22 ICT</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Playbook Cards Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-5" aria-label="Active Autonomous Playbooks">
+      <div class="specular-card rounded-2xl p-5 border border-emerald-400/40 flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded font-mono text-[10px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">PB-01 • RUNNING</span>
+            <span class="font-mono text-xs text-slate-400">Cron: 0 7,19 * * *</span>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mt-3" data-en="TikTok Affiliate Cash-Cow 2x/Day" data-vi="Cỗ Máy Affiliate TikTok 2 Video/Ngày">Cỗ Máy Affiliate TikTok 2 Video/Ngày</h4>
+          <p class="text-xs text-slate-400 mt-1" data-en="Scrapes top 10 Vietnam/US SaaS trends → Generates 45s Hook-Story-Offer → Publishes with pinned affiliate link." data-vi="Quét Top 10 xu hướng SaaS VN/Mỹ → Tạo video 45s Hook-Story-Offer → Đăng kèm link Affiliate ghim bình luận.">Quét Top 10 xu hướng SaaS VN/Mỹ → Tạo video 45s Hook-Story-Offer → Đăng kèm link Affiliate ghim bình luận.</p>
+          <div class="mt-4 space-y-1.5 font-mono text-xs text-slate-300">
+            <div class="flex justify-between"><span>Step 1: Trend Radar</span><span class="text-emerald-400">DONE (1.2s)</span></div>
+            <div class="flex justify-between"><span>Step 2: 4-Advisor Script</span><span class="text-emerald-400">DONE (3.8s)</span></div>
+            <div class="flex justify-between"><span>Step 3: HeyGen + ElevenLabs</span><span class="text-amber-400">RENDERING 82%</span></div>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-[#263044] flex items-center justify-between">
+          <span class="font-mono text-xs text-amber-400">Cost: 18 MCU / run</span>
+          <button class="px-3 py-1.5 min-h-[38px] rounded-lg bg-[#1A2130] hover:bg-amber-400 hover:text-slate-950 text-xs font-mono transition-colors">Inspect DAG</button>
+        </div>
+      </div>
+
+      <div class="specular-card rounded-2xl p-5 border border-[#263044] flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded font-mono text-[10px] bg-indigo-400/15 text-indigo-400 border border-indigo-400/30">PB-02 • SCHEDULED</span>
+            <span class="font-mono text-xs text-slate-400">Cron: 0 21 * * 1,3,5</span>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mt-3" data-en="YouTube Long-Form + 5 Shorts Slicer" data-vi="Phim Tài Liệu YouTube + Cắt 5 Shorts">Phim Tài Liệu YouTube + Cắt 5 Shorts</h4>
+          <p class="text-xs text-slate-400 mt-1" data-en="Produces 12-minute 4K faceless documentary and automatically slices 5 high-retention vertical Shorts." data-vi="Sản xuất video tài liệu 4K dài 12 phút và tự động cắt thành 5 video dọc Shorts tại các điểm giữ chân cao nhất.">Sản xuất video tài liệu 4K dài 12 phút và tự động cắt thành 5 video dọc Shorts tại các điểm giữ chân cao nhất.</p>
+          <div class="mt-4 space-y-1.5 font-mono text-xs text-slate-300">
+            <div class="flex justify-between"><span>Last Run ROAS:</span><span class="text-emerald-400 font-bold">5.8x ($3,410)</span></div>
+            <div class="flex justify-between"><span>Reliability (30d):</span><span class="text-white">100% (12/12)</span></div>
+            <div class="flex justify-between"><span>Half-Kelly Budget:</span><span class="text-amber-400">35.0% Pool</span></div>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-[#263044] flex items-center justify-between">
+          <span class="font-mono text-xs text-amber-400">Cost: 65 MCU / run</span>
+          <button class="px-3 py-1.5 min-h-[38px] rounded-lg bg-[#1A2130] hover:bg-amber-400 hover:text-slate-950 text-xs font-mono transition-colors">Inspect DAG</button>
+        </div>
+      </div>
+
+      <div class="specular-card rounded-2xl p-5 border border-[#263044] flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded font-mono text-[10px] bg-amber-400/15 text-amber-400 border border-amber-400/30">PB-03 • AUTO-GUARD</span>
+            <span class="font-mono text-xs text-slate-400">Hourly Bandit Check</span>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mt-3" data-en="Thompson Sampling Kill-Switch &amp; Boost" data-vi="Cầu Dao Cắt Lỗ &amp; Đẩy Ngân Sách MAB">Cầu Dao Cắt Lỗ &amp; Đẩy Ngân Sách MAB</h4>
+          <p class="text-xs text-slate-400 mt-1" data-en="Pauses creatives with Posterior Win &lt; 15% after 500 views and reallocates MCU quota to top winners." data-vi="Tự động dừng các video có tỷ lệ thắng hậu nghiệm &lt; 15% sau 500 lượt xem và dồn hạn mức MCU cho biến thể dẫn đầu.">Tự động dừng các video có tỷ lệ thắng hậu nghiệm &lt; 15% sau 500 lượt xem và dồn hạn mức MCU cho biến thể dẫn đầu.</p>
+          <div class="mt-4 space-y-1.5 font-mono text-xs text-slate-300">
+            <div class="flex justify-between"><span>Pruned Creatives (7d):</span><span class="text-rose-400">19 Underperformers</span></div>
+            <div class="flex justify-between"><span>Saved Quota:</span><span class="text-emerald-400">+4,200 MCU</span></div>
+            <div class="flex justify-between"><span>Telegram Alerts:</span><span class="text-indigo-400">@Sophia_Bbot Active</span></div>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-[#263044] flex items-center justify-between">
+          <span class="font-mono text-xs text-emerald-400">Cost: 2 MCU / sweep</span>
+          <button class="px-3 py-1.5 min-h-[38px] rounded-lg bg-[#1A2130] hover:bg-amber-400 hover:text-slate-950 text-xs font-mono transition-colors">Configure Rules</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 24-Hour Golden-Hour Schedule Matrix -->
+    <section class="specular-card rounded-2xl p-6 border border-[#263044] space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#263044] pb-3">
+        <div>
+          <h4 class="font-display font-bold text-base text-white" data-en="Weekly Golden-Hour Autonomous Dispatch Matrix (ICT / UTC+7)" data-vi="Ma Trận Giờ Vàng Phát Sóng Tự Động Trong Tuần (ICT / UTC+7)">Ma Trận Giờ Vàng Phát Sóng Tự Động Trong Tuần (ICT / UTC+7)</h4>
+          <p class="text-xs text-slate-400" data-en="Synchronized across TikTok, YouTube Shorts, Instagram Reels, and X" data-vi="Đồng bộ hóa tự động trên TikTok, YouTube Shorts, Instagram Reels và X">Đồng bộ hóa tự động trên TikTok, YouTube Shorts, Instagram Reels và X</p>
+        </div>
+        <span class="font-mono text-xs px-2.5 py-1 rounded bg-emerald-400/15 text-emerald-400">Zero Collision Lock Enabled</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 font-mono text-xs">
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">MON • THỨ 2</span>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">07:30 • TikTok HK-01</div>
+          <div class="p-2 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">19:30 • YT Doc 4K</div>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">TUE • THỨ 3</span>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">11:45 • Reels + Shorts</div>
+          <div class="p-2 rounded bg-indigo-400/15 text-indigo-400 border border-indigo-400/30">20:15 • TikTok HK-04</div>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">WED • THỨ 4</span>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">07:30 • TikTok HK-02</div>
+          <div class="p-2 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">21:00 • YT Doc 4K</div>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">THU • THỨ 5</span>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">12:00 • 3x Shorts Cut</div>
+          <div class="p-2 rounded bg-indigo-400/15 text-indigo-400 border border-indigo-400/30">19:45 • Affiliate Drop</div>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">FRI • THỨ 6</span>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">08:00 • TikTok HK-09</div>
+          <div class="p-2 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">21:00 • YT Doc 4K</div>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">SAT • THỨ 7</span>
+          <div class="p-2 rounded bg-indigo-400/15 text-indigo-400 border border-indigo-400/30">10:30 • Weekend Mega</div>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">20:00 • MAB Rebalance</div>
+        </div>
+        <div class="p-3 rounded-xl bg-[#0B0E14] border border-[#263044] space-y-2">
+          <span class="text-slate-400 font-bold block">SUN • CHỦ NHẬT</span>
+          <div class="p-2 rounded bg-amber-400/15 text-amber-400 border border-amber-400/30">14:00 • Weekly Digest</div>
+          <div class="p-2 rounded bg-emerald-400/15 text-emerald-400 border border-emerald-400/30">22:00 • Next Week Seed</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Unified 18-Screen Stitch-Loop Navigation Ribbon -->
+  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-[96vw] overflow-x-auto bg-[#0B0E14]/95 backdrop-blur-md border border-[#263044] rounded-full px-4 py-1.5 flex items-center gap-2 text-xs font-mono whitespace-nowrap shadow-2xl">
+    <span class="text-amber-400 font-bold pr-2 border-r border-[#263044]">Stitch 18/18</span>
+    <a href="index.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">1.Deck</a>
+    <a href="ask-advisors.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">2.Advisors</a>
+    <a href="video-studio.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">3.Studio</a>
+    <a href="billing-revenue.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">4.Billing</a>
+    <a href="setup-wizard.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">5.BYOK</a>
+    <a href="agency-portal.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">6.Agency</a>
+    <a href="mobile-companion.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">7.Mobile</a>
+    <a href="pricing.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">8.Pricing</a>
+    <a href="style-guide.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">9.Style</a>
+    <a href="creative-economy.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">10.Hooks</a>
+    <a href="youtube-automation.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">11.YouTube</a>
+    <a href="playbooks.html" class="px-2 py-1 rounded bg-amber-400 text-slate-950 font-bold">12.Playbooks</a>
+    <a href="publish-queue.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">13.Queue</a>
+    <a href="marketplace.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">14.Market</a>
+    <a href="my-sops.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">15.MySOPs</a>
+    <a href="challenges.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">16.Challenges</a>
+    <a href="handover-runbooks.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">17.Runbooks</a>
+    <a href="system-health.html" class="px-2 py-1 rounded hover:bg-[#1A2130] text-slate-300">18.Health</a>
+  </div>
+
+  <script>
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-' + lang + ']').forEach(function(el) {
+        el.textContent = el.getAttribute('data-' + lang);
+      });
+      var btnVi = document.getElementById('btn-vi');
+      var btnEn = document.getElementById('btn-en');
+      if (lang === 'vi') {
+        btnVi.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950';
+        btnEn.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white';
+      } else {
+        btnEn.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono font-bold bg-amber-400 text-slate-950';
+        btnVi.className = 'px-2.5 py-1 min-h-[36px] rounded text-xs font-mono text-slate-400 hover:text-white';
+      }
+    }
+  </script>
+</body>
+</html>

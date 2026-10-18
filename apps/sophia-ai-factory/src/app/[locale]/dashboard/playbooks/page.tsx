@@ -19,7 +19,7 @@ export default async function PlaybooksDashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
-      <StitchWave2RouteBanner routeKey="playbooks" className="" />
+      <StitchWave2RouteBanner routeKey="playbooks" defaultShowCanvas={true} className="" />
       <PlaybookPage
         userId={user?.id ?? ''}
         workspaceId={workspaceId}

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory - /ask 4-Advisor Spatial Council</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-variant": "#34343b",
+            "on-background": "#e3e1eb",
+            "primary-fixed-dim": "#c0c1ff",
+            "tertiary-container": "#ca8100",
+            "inverse-primary": "#494bd6",
+            "error-container": "#93000a",
+            "surface-container-low": "#1a1b22",
+            "primary": "#c0c1ff",
+            "on-secondary-fixed-variant": "#6900b3",
+            "surface-container-high": "#292930",
+            "background": "#121319",
+            "primary-container": "#8083ff",
+            "surface-dim": "#121319",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-secondary-container": "#d6a9ff",
+            "on-error": "#690005",
+            "inverse-surface": "#e3e1eb",
+            "on-tertiary-fixed": "#2a1700",
+            "surface": "#121319",
+            "outline": "#908fa0",
+            "on-surface": "#e3e1eb",
+            "on-secondary": "#490080",
+            "inverse-on-surface": "#2f3037",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-container-lowest": "#0d0e14",
+            "surface-bright": "#383940",
+            "error": "#ffb4ab",
+            "secondary-fixed-dim": "#ddb7ff",
+            "secondary": "#ddb7ff",
+            "on-primary-fixed": "#07006c",
+            "on-primary": "#1000a9",
+            "on-tertiary-container": "#3e2400",
+            "secondary-container": "#6f00be",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "primary-fixed": "#e1e0ff",
+            "on-secondary-fixed": "#2c0051",
+            "on-primary-container": "#0d0096",
+            "surface-tint": "#c0c1ff",
+            "on-error-container": "#ffdad6",
+            "surface-container-highest": "#34343b",
+            "surface-container": "#1e1f26",
+            "outline-variant": "#464554",
+            "tertiary-fixed": "#ffddb8",
+            "secondary-fixed": "#f0dbff",
+            "on-tertiary": "#472a00",
+            "tertiary": "#ffb95f",
+            "on-surface-variant": "#c7c4d7"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "gutter": "1rem",
+            "margin-desktop": "2rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "gutter-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "telemetry-md": ["JetBrains Mono"],
+            "telemetry-lg": ["JetBrains Mono"],
+            "caption": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Space Grotesk"],
+            "telemetry-sm": ["JetBrains Mono"],
+            "headline-xl-mobile": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "timecode": ["JetBrains Mono"],
+            "headline-md": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "body-sm": ["Inter"],
+            "headline-xl": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "telemetry-md": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "telemetry-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "caption": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "telemetry-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "timecode": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Physical specular edge highlights mimicking obsidian rack hardware */
+    .specular-card {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+    .specular-modal {
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 12px 32px -4px rgba(0, 0, 0, 0.7);
+    }
+    .photon-primary {
+      box-shadow: 0 0 16px rgba(192, 193, 255, 0.25);
+    }
+    .photon-secondary {
+      box-shadow: 0 0 16px rgba(221, 183, 255, 0.25);
+    }
+    .photon-amber {
+      box-shadow: 0 0 16px rgba(255, 185, 95, 0.2);
+    }
+    
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0e14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #292930;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #464554;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- ==================== SHARED SHELL: FIXED LEFT SIDEBAR ==================== -->
+<aside class="fixed left-0 top-0 h-screen w-60 flex flex-col justify-between py-4 px-3 z-40 bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant shadow-none">
+<!-- Top Header & Brand -->
+<div class="flex flex-col gap-5">
+<div class="flex items-center gap-3 px-2">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary relative">
+<span class="material-symbols-outlined text-xl">auto_awesome</span>
+<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-surface tracking-tight">Sophia AI</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-telemetry-sm font-bold tracking-widest bg-secondary-container text-secondary-fixed">ENTERPRISE</span>
+</div>
+<span class="text-[10px] font-telemetry-sm text-outline">Executive Operator Vault</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-1">
+<!-- 1. Command Deck -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Command Deck</span>
+</a>
+<!-- 2. Video Studio -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">movie_creation</span>
+<span>Video Studio</span>
+</a>
+<!-- 3. /ask 4-Advisor (ACTIVE TAB) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-primary dark:text-primary-fixed border-l-2 border-primary bg-surface-container-high dark:bg-surface-container font-semibold transition-colors duration-150 active:scale-[0.99] photon-primary" href="#">
+<span class="material-symbols-outlined text-lg">psychology</span>
+<span>/ask 4-Advisor</span>
+</a>
+<!-- 4. Revenue & Webhooks -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+<span>Revenue &amp; Webhooks</span>
+</a>
+<!-- 5. BYOK Setup -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">vpn_key</span>
+<span>BYOK Setup</span>
+</a>
+<!-- 6. Agency Portal -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">corporate_fare</span>
+<span>Agency Portal</span>
+</a>
+<!-- 7. Style Guide -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-md font-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-inverse-surface hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">palette</span>
+<span>Style Guide</span>
+</a>
+</nav>
+</div>
+<!-- Bottom Operator Badge & Actions -->
+<div class="flex flex-col gap-2 pt-3 border-t border-outline-variant">
+<!-- Circuit Health Status -->
+<div class="flex items-center justify-between px-3 py-1.5 rounded bg-surface-container-lowest border border-outline-variant/60 text-telemetry-sm font-telemetry-sm">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+<span class="text-on-surface-variant">Circuit Health: 8/8 Active</span>
+</div>
+<span class="material-symbols-outlined text-sm text-tertiary">verified_user</span>
+</div>
+<!-- Lock Vault CTA -->
+<button class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface transition-all duration-150">
+<span class="material-symbols-outlined text-base">lock</span>
+<span>Lock Vault</span>
+</button>
+<!-- Executive Profile Snapshot -->
+<div class="flex items-center gap-2.5 px-2 pt-1">
+<div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container font-telemetry-sm font-bold flex items-center justify-center text-xs">
+          VN
+        </div>
+<div class="flex flex-col">
+<span class="text-caption font-caption text-on-surface font-medium truncate w-36">0x9942...f08a</span>
+<span class="text-[10px] font-telemetry-sm text-outline">Cluster Operator: Saigon</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- ==================== SHARED SHELL: TOP COMMAND BAR ==================== -->
+<header class="fixed top-0 right-0 left-60 h-16 flex items-center justify-between px-6 z-30 bg-surface-container-low dark:bg-surface-container-lowest border-b border-outline-variant shadow-sm backdrop-blur-md">
+<!-- Left: Title & Quick Search -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-headline-sm font-headline-sm font-semibold text-on-surface dark:text-inverse-surface">Acme Media Vietnam - Production</span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</div>
+<!-- Quick Search Command Trigger -->
+<div class="hidden lg:flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-1.5 text-on-surface-variant hover:border-primary/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-sm">search</span>
+<span class="text-body-sm font-body-sm">Tìm kiếm chỉ thị, kịch bản, agent...</span>
+<kbd class="px-1.5 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container-high text-outline border border-outline-variant">Cmd+K</kbd>
+</div>
+</div>
+<!-- Center/Right Telemetry & Links -->
+<div class="flex items-center gap-5">
+<!-- VI | EN Toggle -->
+<button class="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container text-body-sm font-body-sm text-on-surface border border-outline-variant hover:border-outline">
+<span class="text-primary font-bold">VI</span>
+<span class="text-outline-variant">|</span>
+<span class="text-on-surface-variant">EN</span>
+</button>
+<!-- Pipeline Telemetry Pills -->
+<div class="hidden xl:flex items-center gap-3">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-lowest border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim"></span>
+<span>Inngest: 14 Active</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-lowest border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>@Sophia_Bbot: Live</span>
+</div>
+</div>
+<!-- Action Icons -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="p-2 rounded-lg hover:bg-surface-container hover:text-on-surface transition-colors" title="Notifications">
+<span class="material-symbols-outlined text-lg">notifications</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-surface-container hover:text-on-surface transition-colors" title="Cluster Terminal">
+<span class="material-symbols-outlined text-lg">terminal</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-surface-container hover:text-on-surface transition-colors" title="Sync Nodes">
+<span class="material-symbols-outlined text-lg">sync</span>
+</button>
+</div>
+<!-- Trailing Primary Action CTA -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary font-body-sm font-body-sm font-semibold transition-all shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-base">add_circle</span>
+<span>New Campaign</span>
+</button>
+<!-- Profile Avatar -->
+<div class="w-8 h-8 rounded-full border border-outline-variant bg-surface-container-high flex items-center justify-center font-telemetry-sm text-xs text-primary font-semibold">
+        AO
+      </div>
+</div>
+</header>
+<!-- ==================== MAIN CONTENT CANVAS ==================== -->
+<main class="ml-60 pt-16 min-h-screen p-6 bg-surface-container-lowest flex flex-col gap-6">
+<!-- 1. HEADER SECTION: BILINGUAL TITLE & CONTROL BAR -->
+<section class="flex flex-col gap-4">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-outline-variant/60 pb-5">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-3">
+<h1 class="text-headline-lg font-headline-lg tracking-tight text-on-surface">
+              Hội Đồng Cố Vấn Chiến Lược <span class="text-outline">/ 4-Advisor Spatial Council</span>
+</h1>
+<span class="px-2.5 py-0.5 rounded-full text-telemetry-sm font-telemetry-sm bg-primary/10 border border-primary/30 text-primary">
+              Multi-Agent Synthesis v3.1
+            </span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-4xl">
+            Điều phối đa tác nhân AI thời gian thực (Multi-Agent Synthesis): Claude 3.7 Sonnet, GPT-4o, DeepSeek-R1 &amp; Gemini 2.0 Pro phân tích kịch bản, MAB ROAS &amp; chiến lược phân bổ vốn rủi ro Half-Kelly.
+          </p>
+</div>
+<!-- Run 4-Way Deliberation Main CTA -->
+<div class="flex items-center gap-3 flex-shrink-0">
+<button class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container border border-outline-variant hover:border-outline text-body-sm font-body-sm text-on-surface transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Export Synthesis Transcript</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-sm font-semibold hover:bg-primary-fixed transition-all photon-primary active:scale-98">
+<span class="material-symbols-outlined text-base">forum</span>
+<span>Run 4-Way Deliberation</span>
+</button>
+</div>
+</div>
+<!-- Telemetry Control Strip -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-surface-container-low border border-outline-variant rounded-xl p-3 specular-card">
+<div class="flex items-center gap-3 px-2">
+<span class="material-symbols-outlined text-primary text-xl">hub</span>
+<div class="flex flex-col">
+<span class="text-[10px] font-telemetry-sm uppercase text-outline">Synthesis Mode</span>
+<span class="text-telemetry-sm font-telemetry-sm text-on-surface font-semibold">Consensus Engine v3.1 (Auto-Tiebreaker)</span>
+</div>
+</div>
+<div class="flex items-center gap-3 px-2 border-l border-outline-variant/60">
+<span class="material-symbols-outlined text-tertiary text-xl">fingerprint</span>
+<div class="flex flex-col">
+<span class="text-[10px] font-telemetry-sm uppercase text-outline">Session Hash</span>
+<span class="text-telemetry-sm font-telemetry-sm text-tertiary font-semibold">#ADV-9942-SOPHIA</span>
+</div>
+</div>
+<div class="flex items-center gap-3 px-2 border-l border-outline-variant/60">
+<span class="material-symbols-outlined text-secondary text-xl">memory</span>
+<div class="flex flex-col">
+<span class="text-[10px] font-telemetry-sm uppercase text-outline">Context Window</span>
+<span class="text-telemetry-sm font-telemetry-sm text-on-surface">84.2k tokens / 128k AES-GCM</span>
+</div>
+</div>
+<div class="flex items-center gap-3 px-2 border-l border-outline-variant/60">
+<span class="material-symbols-outlined text-primary text-xl">security</span>
+<div class="flex flex-col">
+<span class="text-[10px] font-telemetry-sm uppercase text-outline">Merkle Verification</span>
+<span class="text-telemetry-sm font-telemetry-sm text-on-surface">Cloudflare D1 Validated</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. UPPER QUADRANT: 4-ADVISOR SPATIAL MATRIX (4 Column Grid) -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+<!-- ADVISOR 1: Sophia Lead Director -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/60 rounded-xl p-4 flex flex-col justify-between specular-card transition-all duration-200">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-primary/40 flex items-center justify-center text-primary font-bold text-sm photon-primary">
+<span class="material-symbols-outlined text-xl">movie_edit</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Sophia Lead Director</span>
+<span class="text-caption font-caption text-outline">Claude 3.7 Sonnet • Temp 0.3</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm font-bold bg-primary-container/30 text-primary-fixed border border-primary/30">
+              LEAD SYNTHESIZER
+            </span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">Creative Direction</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">Narrative Arc</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">VN Cultural Tone</span>
+</div>
+<div class="bg-surface-container-lowest/80 border border-outline-variant/60 rounded-lg p-2.5 mb-3">
+<p class="text-body-sm font-body-sm text-on-surface-variant italic">
+              "Cắt 3.5 giây mở bài thừa. Hook phải đập ngay vào nỗi đau chi phí render GPU của agency Việt Nam."
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/60 text-telemetry-sm font-telemetry-sm">
+<span class="flex items-center gap-1.5 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+            Synthesizing (98ms)
+          </span>
+<span class="text-outline">1,420 tps</span>
+</div>
+</div>
+<!-- ADVISOR 2: Dr. Thao MAB Quant -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-tertiary/60 rounded-xl p-4 flex flex-col justify-between specular-card transition-all duration-200">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-tertiary/40 flex items-center justify-center text-tertiary font-bold text-sm photon-amber">
+<span class="material-symbols-outlined text-xl">query_stats</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Dr. Thao MAB Quant</span>
+<span class="text-caption font-caption text-outline">DeepSeek-R1 CoT • Temp 0.1</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm font-bold bg-tertiary-container/30 text-tertiary-fixed border border-tertiary/30">
+              BAYESIAN MAB
+            </span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">Thompson Sampling</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">Half-Kelly f*</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">ROAS Projection</span>
+</div>
+<div class="bg-surface-container-lowest/80 border border-outline-variant/60 rounded-lg p-2.5 mb-3">
+<div class="flex items-center justify-between mb-1">
+<span class="text-telemetry-sm font-telemetry-sm text-tertiary font-bold">f* = 0.425 (Half-Kelly)</span>
+<span class="text-caption font-caption text-outline">P(ROAS &gt; 3.2x) = 91.4%</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+              Khuyến nghị tăng ngân sách test biến thể B lên 42.5% tổng vốn ngày đầu.
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/60 text-telemetry-sm font-telemetry-sm">
+<span class="flex items-center gap-1.5 text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            Validated (112ms)
+          </span>
+<span class="text-outline">CoT Depth: 18 steps</span>
+</div>
+</div>
+<!-- ADVISOR 3: Alex Growth Architect -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/60 rounded-xl p-4 flex flex-col justify-between specular-card transition-all duration-200">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-secondary/40 flex items-center justify-center text-secondary font-bold text-sm photon-secondary">
+<span class="material-symbols-outlined text-xl">trending_up</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Alex Growth Architect</span>
+<span class="text-caption font-caption text-outline">GPT-4o Omnimodal • Temp 0.5</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm font-bold bg-secondary-container/30 text-secondary-fixed border border-secondary/30">
+              ALGO VELOCITY
+            </span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">TikTok FYP Curve</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">Shorts Velocity</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">Viral Hooks</span>
+</div>
+<div class="bg-surface-container-lowest/80 border border-outline-variant/60 rounded-lg p-2.5 mb-3">
+<div class="flex items-center justify-between mb-1">
+<span class="text-telemetry-sm font-telemetry-sm text-secondary font-bold">Virality Score: 8.9 / 10</span>
+<span class="text-caption font-caption text-outline">Estimated 3s Ret: 72%</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+              Tần suất chuyển cảnh (Pacing) đạt chuẩn TikTok FYP khi rút ngắn còn 14.5 giây.
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/60 text-telemetry-sm font-telemetry-sm">
+<span class="flex items-center gap-1.5 text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Ready (84ms)
+          </span>
+<span class="text-outline">Audio Match: 100%</span>
+</div>
+</div>
+<!-- ADVISOR 4: Minh Compliance & BYOK Guardian -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary-fixed/60 rounded-xl p-4 flex flex-col justify-between specular-card transition-all duration-200">
+<div>
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline flex items-center justify-center text-primary-fixed font-bold text-sm">
+<span class="material-symbols-outlined text-xl">gavel</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Minh Guardian</span>
+<span class="text-caption font-caption text-outline">Gemini 2.0 Pro Flash • Temp 0.0</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm font-bold bg-surface-container-high text-on-surface-variant border border-outline-variant">
+              COMPLIANCE &amp; BYOK
+            </span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">TikTok Ad Policy</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">VN Trademark</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm bg-surface-container border border-outline-variant text-on-surface-variant">BYOK Data Leak Free</span>
+</div>
+<div class="bg-surface-container-lowest/80 border border-outline-variant/60 rounded-lg p-2.5 mb-3">
+<div class="flex items-center justify-between mb-1">
+<span class="text-telemetry-sm font-telemetry-sm text-primary font-bold">0 Violations Detected</span>
+<span class="text-caption font-caption text-outline">Clean Pass</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+              Không có từ khóa cấm theo Nghị định 72 &amp; Bộ luật Quảng cáo Việt Nam 2024.
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/60 text-telemetry-sm font-telemetry-sm">
+<span class="flex items-center gap-1.5 text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></span>
+            Approved (62ms)
+          </span>
+<span class="text-outline">BYOK Vault: Intact</span>
+</div>
+</div>
+</section>
+<!-- 3. LOWER SECTION: SPLIT CONSULTATION WORKSPACE (60% Deliberation Stream / 40% Vector Memory & Tuning) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- LEFT COLUMN (60% = 7 cols on lg): Live Deliberation & Multi-Turn Consensus Feed -->
+<div class="lg:col-span-7 flex flex-col gap-4">
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-5 specular-card flex flex-col gap-4">
+<!-- Stream Header -->
+<div class="flex items-center justify-between border-b border-outline-variant/60 pb-3">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-xl">record_voice_over</span>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Live Deliberation &amp; Multi-Turn Consensus Feed</h2>
+<span class="text-caption font-caption text-outline">Luồng tranh luận trực tiếp 4 tác nhân • Turn 3/4 • Sync Status: Synchronized</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-ping"></span>
+<span class="text-telemetry-sm font-telemetry-sm text-tertiary">Live Engine Audio-Synthesis</span>
+</div>
+</div>
+<!-- Deliberation Stream Messages -->
+<div class="flex flex-col gap-4 max-h-[640px] overflow-y-auto pr-1">
+<!-- User Directive Card -->
+<div class="bg-surface-container-high/60 border border-outline-variant rounded-lg p-3.5 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary">person</span>
+<span class="text-body-sm font-body-sm font-semibold text-on-surface">Operator Directive (Saigon Desk)</span>
+</div>
+<span class="text-caption font-caption text-outline">14:02:11 GMT+7</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+<strong class="text-primary">Prompt:</strong> "Tối ưu hóa Hook Variant B (<em class="text-tertiary">3 Sai Lầm Khi Dùng AI Video</em>) cho thị trường SaaS Việt Nam Q2/2025. Yêu cầu giữ ngân sách thử nghiệm MAB dưới $200/ngày, bảo đảm CTR &gt; 3.8% và tuân thủ quy chuẩn TikTok Shop Affiliate."
+              </p>
+</div>
+<!-- Agent Trace 1: Sophia Critique -->
+<div class="bg-surface-container border-l-4 border-primary border-t border-r border-b border-outline-variant/70 rounded-r-lg p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">S</span>
+<span class="text-body-sm font-body-sm font-semibold text-primary">Sophia Lead Director</span>
+<span class="text-caption font-caption text-outline">• Critique &amp; Narrative Structuring</span>
+</div>
+<span class="text-caption font-caption text-outline">Latency: 98ms</span>
+</div>
+<!-- Collapsible CoT Accordion -->
+<details class="group bg-surface-container-lowest/60 rounded border border-outline-variant/50 p-2 text-telemetry-sm font-telemetry-sm">
+<summary class="cursor-pointer text-outline hover:text-on-surface flex items-center justify-between">
+<span>[Chain-of-Thought]: Hook Resonance &amp; Audience Pacing Logic</span>
+<span class="material-symbols-outlined text-sm group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-2 pt-2 border-t border-outline-variant/40 text-on-surface-variant flex flex-col gap-1 leading-relaxed">
+<p>1. Target viewer: Freelancer, Growth Marketer tại Hà Nội &amp; TP.HCM đang quá tải chi phí render Runway Gen-3.</p>
+<p>2. Bản thảo hiện tại dài 18.0 giây: 0-3s giới thiệu logo là 'tử huyệt' khiến 68% lướt qua ngay.</p>
+<p>3. Giải pháp: Đảo ngữ trực diện: 'Đừng bấm Render AI Video nếu chưa biết 3 cái bẫy này...'</p>
+</div>
+</details>
+<p class="text-body-md font-body-md text-on-surface leading-relaxed">
+                "Tôi đề xuất cắt gọt kịch bản từ <strong>18s xuống 14.5s</strong>. 3 giây đầu tiên loại bỏ toàn bộ lời chào xã giao, chèn ngay visual split-screen hiển thị hóa đơn Cloud GPU vs kết quả của Sophia Pipeline. Giọng đọc miền Nam ấm áp nhưng đanh thép (Model Voice: VN-Nam-04)."
+              </p>
+</div>
+<!-- Agent Trace 2: Dr. Thao Quantitative Math & Sizing -->
+<div class="bg-surface-container border-l-4 border-tertiary border-t border-r border-b border-outline-variant/70 rounded-r-lg p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-tertiary/20 text-tertiary flex items-center justify-center font-bold text-xs">T</span>
+<span class="text-body-sm font-body-sm font-semibold text-tertiary">Dr. Thao MAB Quant</span>
+<span class="text-caption font-caption text-outline">• Mathematical Validation</span>
+</div>
+<span class="text-caption font-caption text-outline">Confidence: 97.2%</span>
+</div>
+<!-- Collapsible CoT Accordion -->
+<details class="group bg-surface-container-lowest/60 rounded border border-outline-variant/50 p-2 text-telemetry-sm font-telemetry-sm">
+<summary class="cursor-pointer text-outline hover:text-on-surface flex items-center justify-between">
+<span>[Chain-of-Thought]: Thompson Sampling Posterior Update &amp; Kelly Ratio</span>
+<span class="material-symbols-outlined text-sm group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-2 pt-2 border-t border-outline-variant/40 text-on-surface-variant flex flex-col gap-1 leading-relaxed">
+<p>• Prior: Beta(α=14, β=380) → Expected CTR: 3.55%</p>
+<p>• Shortening to 14.5s shifts retention expectation to α'=22, β'=350 → Posterior mean CTR: 5.91%.</p>
+<p>• Half-Kelly fraction f* = (bp - q) / 2b = (2.4 * 0.914 - 0.086) / (2 * 2.4) = 0.425 → $85/ngày phân bổ.</p>
+</div>
+</details>
+<div class="text-body-md font-body-md text-on-surface leading-relaxed flex flex-col gap-1">
+<span>"Đồng ý với Sophia. Dữ liệu Thompson Sampling xác nhận: kịch bản 14.5s nâng xác suất vượt ngưỡng CTR 3.8% từ 61% lên <strong>91.4%</strong>. Với trần ngân sách $200/ngày, tôi khóa tỷ lệ phân bổ Half-Kelly ở mức <code class="px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary font-telemetry-sm font-semibold">f* = 0.425 ($85.00 USD/ngày)</code> cho Variant B1."</span>
+</div>
+</div>
+<!-- Agent Trace 3: Alex Growth & Minh Compliance Consensus Check -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<div class="bg-surface-container border border-outline-variant rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded bg-secondary/20 text-secondary flex items-center justify-center font-bold text-xs">A</span>
+<span class="text-body-sm font-body-sm font-semibold text-secondary">Alex Growth</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+                  "Thuật toán TikTok đang ưu tiên audio trend remix 'Sài Gòn Đêm Nay'. Đã lồng sound layer nền ở mức -18dB để tránh át voice."
+                </p>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded bg-primary-fixed/20 text-primary-fixed flex items-center justify-center font-bold text-xs">M</span>
+<span class="text-body-sm font-body-sm font-semibold text-primary-fixed">Minh Guardian</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+                  "Đã quét 42 nhãn hiệu SaaS đối thủ. Không vi phạm bản quyền hay điều khoản so sánh ác ý theo luật cạnh tranh VN."
+                </p>
+</div>
+</div>
+<!-- Consensus Output Box (Final Blueprint) -->
+<div class="bg-surface-container-high border-2 border-primary/50 rounded-xl p-4 flex flex-col gap-3 photon-primary">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">fact_check</span>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Synthesized Actionable Blueprint (Consensus Reached)</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-telemetry-sm font-bold bg-primary text-on-primary">READY FOR PRODUCTION</span>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-3 border border-outline-variant text-telemetry-sm font-telemetry-sm text-on-surface-variant flex flex-col gap-1.5">
+<div class="text-on-surface font-semibold flex items-center justify-between">
+<span>Script ID: SC-VN-2025-Q2-B1_OPTIMIZED</span>
+<span class="text-tertiary">Duration: 14.5s | 46 Words</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface font-mono">
+                  [0.0-2.8s] "Đừng vội mua tool AI video nếu chưa né được 3 cái bẫy này..." (Visual: Glitch alert)<br/>
+                  [2.8-8.5s] Bẫy 1: Tốn tiền GPU vô ích. Bẫy 2: Giọng đọc robot khô khan làm tụt 80% view.<br/>
+                  [8.5-12.0s] Giải pháp: Chạy pipeline tự động của Sophia AI Factory Saigon node.<br/>
+                  [12.0-14.5s] CTA: "Bấm bio nhận bộ prompt tiếng Việt độc quyền!" (PayOS affiliate link).
+                </p>
+</div>
+<!-- Dispatch Action Buttons -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2 text-caption font-caption text-outline">
+<span class="material-symbols-outlined text-sm">lock_clock</span>
+<span>Locked in Merkle Tree @ 14:02:44</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant hover:border-outline text-body-sm font-body-sm text-on-surface transition-colors">
+                    Lưu Biến Thể B1
+                  </button>
+<button class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary font-headline-sm text-sm font-semibold transition-all">
+<span class="material-symbols-outlined text-base">movie_creation</span>
+<span>Chuyển Kịch Bản Sang Video Studio</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Directive Input Box -->
+<div class="pt-2 border-t border-outline-variant/60 flex flex-col gap-2.5">
+<!-- Model Tag Selectors -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 text-telemetry-sm font-telemetry-sm">
+<span class="text-outline text-caption font-caption">Direct Tag:</span>
+<button class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant hover:border-primary text-primary transition-colors">@Sophia</button>
+<button class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant hover:border-tertiary text-tertiary transition-colors">@DrThao</button>
+<button class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant hover:border-secondary text-secondary transition-colors">@Alex</button>
+<button class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant hover:border-outline text-on-surface transition-colors">@Minh</button>
+<span class="text-outline-variant">|</span>
+<button class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant hover:bg-surface-container text-on-surface-variant text-[11px]">Kiểm tra ROAS</button>
+<button class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant hover:bg-surface-container text-on-surface-variant text-[11px]">Rút ngắn Hook 15s</button>
+<button class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant hover:bg-surface-container text-on-surface-variant text-[11px]">Thêm CTA PayOS</button>
+</div>
+<!-- Input Basin -->
+<div class="flex items-center gap-2">
+<div class="relative flex-grow">
+<input class="w-full h-11 bg-surface-container-lowest border border-outline-variant rounded-lg px-4 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder-outline/50" placeholder="Gõ chỉ thị mới cho hội đồng 4 cố vấn (ví dụ: @DrThao mô phỏng Monte Carlo 1,000 runs)..." type="text"/>
+<div class="absolute right-3 top-3 flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-base">mic</span>
+<span class="material-symbols-outlined text-base">attach_file</span>
+</div>
+</div>
+<button class="h-11 px-5 rounded-lg bg-primary text-on-primary font-headline-sm font-semibold flex items-center justify-center hover:bg-primary-fixed transition-colors photon-primary">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN (40% = 5 cols on lg): Agent Vector Memory & Strategy Matrix -->
+<div class="lg:col-span-5 flex flex-col gap-4">
+<!-- CARD 1: Consensus Confidence Radar & Agreement Gauge -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-4 specular-card flex flex-col gap-3">
+<div class="flex items-center justify-between border-b border-outline-variant/60 pb-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-lg">donut_large</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-semibold">Consensus Harmony Index</span>
+</div>
+<span class="text-telemetry-lg font-telemetry-lg text-tertiary font-bold">96.4%</span>
+</div>
+<!-- Multi-Bar Harmony Breakdown -->
+<div class="flex flex-col gap-2 pt-1 text-telemetry-sm font-telemetry-sm">
+<div>
+<div class="flex justify-between text-caption font-caption text-on-surface-variant mb-1">
+<span>Narrative Resonance (Claude × GPT-4o)</span>
+<span class="text-on-surface font-bold">98.0%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 98%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-caption font-caption text-on-surface-variant mb-1">
+<span>Capital Risk vs ROAS (DeepSeek × Kelly)</span>
+<span class="text-on-surface font-bold">94.8%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 94.8%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-caption font-caption text-on-surface-variant mb-1">
+<span>Legal &amp; Policy Alignment (Gemini 2.0 Pro)</span>
+<span class="text-on-surface font-bold">100.0%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between bg-surface-container-lowest rounded-lg p-2.5 border border-outline-variant/60 text-telemetry-sm font-telemetry-sm">
+<span class="text-on-surface-variant">Discrepancy Conflicts:</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary font-bold">0 Active Ties</span>
+</div>
+</div>
+<!-- CARD 2: Parameter Tuning & BYOK Model Routing -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-4 specular-card flex flex-col gap-3">
+<div class="flex items-center justify-between border-b border-outline-variant/60 pb-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">tune</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-semibold">BYOK Model Routing &amp; Burn</span>
+</div>
+<span class="text-telemetry-sm font-telemetry-sm text-tertiary font-bold">$0.142 USD / session</span>
+</div>
+<!-- Routing Hierarchy List -->
+<div class="flex flex-col gap-2 text-body-sm font-body-sm">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/50">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-medium text-on-surface">Claude 3.7 Sonnet</span>
+</div>
+<span class="text-telemetry-sm font-telemetry-sm text-outline">Anthropic Direct API</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/50">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-medium text-on-surface">DeepSeek-R1 CoT</span>
+</div>
+<span class="text-telemetry-sm font-telemetry-sm text-outline">OpenRouter Primary</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/50">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-medium text-on-surface">GPT-4o Omnimodal</span>
+</div>
+<span class="text-telemetry-sm font-telemetry-sm text-outline">Azure OpenAI VN Node</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/50">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-on-surface"></span>
+<span class="font-medium text-on-surface">Gemini 2.0 Flash</span>
+</div>
+<span class="text-telemetry-sm font-telemetry-sm text-outline">Google Vertex BYOK</span>
+</div>
+</div>
+<!-- Fallback Toggle -->
+<div class="flex items-center justify-between pt-1 text-telemetry-sm font-telemetry-sm text-on-surface-variant">
+<span>Deterministic Fallback Chain:</span>
+<span class="text-primary font-medium">Automatic on &gt;180ms</span>
+</div>
+</div>
+<!-- CARD 3: Semantic Memory Retrieval Drawer -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-4 specular-card flex flex-col gap-3">
+<div class="flex items-center justify-between border-b border-outline-variant/60 pb-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-lg">database</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-semibold">Semantic Vector Memory</span>
+</div>
+<span class="text-caption font-caption text-outline">Cloudflare Vectorize (1,536-dim)</span>
+</div>
+<p class="text-caption font-caption text-on-surface-variant">
+            Bộ nhớ ngữ cảnh được trích xuất từ các chiến dịch video thành công nhất tại Việt Nam:
+          </p>
+<!-- Retrieved Vector Chunks -->
+<div class="flex flex-col gap-2">
+<!-- Chunk 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-lg p-2.5 flex flex-col gap-1 hover:border-secondary/50 transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-telemetry-sm font-telemetry-sm font-bold text-secondary">Q1 TikTok Top 5% Retainers</span>
+<span class="text-[10px] font-telemetry-sm text-outline">Cosine: 0.941</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-snug">
+                "Clip công nghệ B2B có thời lượng từ 13s-15s với hook phủ định có tỷ lệ chuyển đổi form cao hơn 44% so với video giải thích tính năng."
+              </p>
+</div>
+<!-- Chunk 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-lg p-2.5 flex flex-col gap-1 hover:border-secondary/50 transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-telemetry-sm font-telemetry-sm font-bold text-tertiary">VN Consumer Price Sensitivity</span>
+<span class="text-[10px] font-telemetry-sm text-outline">Cosine: 0.887</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-snug">
+                "Khán giả trẻ từ chối đăng ký gói năm trả trước; CTA cần nhấn mạnh 'Thử nghiệm 0đ / Không cần thẻ tín dụng'."
+              </p>
+</div>
+</div>
+<!-- Add Knowledge Snippet Action -->
+<button class="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-surface-container-high hover:bg-surface-container text-body-sm font-body-sm text-on-surface border border-outline-variant transition-colors">
+<span class="material-symbols-outlined text-sm">post_add</span>
+<span>Nạp Thêm Dữ Liệu Ngữ Cảnh (.txt / .jsonl)</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Inline Micro-Interactions Script -->
+<script>
+    // Micro-interaction: Keyboard shortcut Cmd+K / Ctrl+K focus
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[type="text"]');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    });
+  </script>
+
+
+
+
+<!-- Stitch-Loop Unified Navigation Ribbon -->
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(9,10,16,0.92);backdrop-filter:blur(12px);border:1px solid #1E2235;border-radius:9999px;padding:6px 14px;display:flex;gap:10px;align-items:center;font-family:'Inter',sans-serif;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+  <span style="color:#F59E0B;font-weight:700;padding-right:6px;border-right:1px solid #1E2235;">Sophia Stitch-Loop</span>
+  <a href="index.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">1. Dashboard</a>
+  <a href="ask-advisors.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">2. /ask Advisors</a>
+  <a href="video-studio.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">3. Video Studio</a>
+  <a href="billing-revenue.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">4. USDT Billing</a>
+  <a href="setup-wizard.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">5. BYOK Wizard</a>
+  <a href="agency-portal.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">6. Agency</a>
+  <a href="mobile-companion.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">7. Mobile</a>
+  <a href="pricing.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">8. Pricing</a>
+  <a href="style-guide.html" style="color:#F8FAFC;text-decoration:none;padding:4px 8px;border-radius:6px;">9. Style Guide</a>
+</div>
+</body></html>

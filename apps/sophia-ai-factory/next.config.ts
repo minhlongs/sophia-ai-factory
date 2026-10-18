@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   // Replace @upstash/redis with stub to avoid uncrypto bundling issues on Cloudflare
   // (Redis not used in production on Sophia — features disabled via env)
   webpack: (config: Configuration) => {
-    (config.resolve!.alias as Record<string, string>)['@upstash/redis'] = path.resolve(__dirname, 'src/lib/redis-stub.ts');
+    (config.resolve!.alias as Record<string, string>)['@upstash/redis'] = path.resolve(__dirname, 'src/seed/db/redis-stub.ts');
     return config;
   },
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
@@ -186,6 +186,15 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()'
           }
         ]
+      },
+      {
+        source: '/stitch/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
       }
     ];
   },

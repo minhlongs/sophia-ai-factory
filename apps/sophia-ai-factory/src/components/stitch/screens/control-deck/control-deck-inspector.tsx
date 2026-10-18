@@ -19,7 +19,7 @@ export function ControlDeckInspector({
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-amber-400">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
-              {lang === 'vi' ? 'MÀN HÌNH' : 'SCREEN'} 0{activeScreen.index} · STITCH ID {activeScreen.stitchScreenId}
+              {lang === 'vi' ? 'MÀN HÌNH' : 'SCREEN'} {String(activeScreen.index).padStart(2, '0')} · STITCH ID {activeScreen.stitchScreenId}
             </span>
             <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2.5 py-0.5 font-mono text-[11px] text-indigo-300">
               {activeScreen.statusBadge[lang]}

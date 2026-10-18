@@ -5,7 +5,6 @@
  * Server component: fetches data from D1.
  */
 
-import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Target, Flame } from 'lucide-react';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
@@ -20,7 +19,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function ChallengesPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  if (!user) {
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <StitchWave2RouteBanner routeKey="challenges" defaultShowCanvas={true} className="" />
+      </div>
+    );
+  }
 
   const jar = await cookies();
   const locale = jar.get('NEXT_LOCALE')?.value === 'en' ? 'en' : 'vi';

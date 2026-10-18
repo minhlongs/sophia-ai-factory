@@ -31,7 +31,8 @@ export default async function YoutubeOverviewPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-rose-600">{t('loading')}</p>
+        <StitchWave2RouteBanner routeKey="youtube" defaultShowCanvas={true} />
+        <p className="text-sm text-rose-400">{t('loading')}</p>
       </div>
     );
   }
