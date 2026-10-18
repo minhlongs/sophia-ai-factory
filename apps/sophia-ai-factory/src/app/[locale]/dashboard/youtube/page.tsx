@@ -14,6 +14,7 @@ import {
   listRecentCalendarEntries,
   listUpcomingCalendarEntries,
 } from './data';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('youtube');
@@ -45,6 +46,7 @@ export default async function YoutubeOverviewPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <StitchWave2RouteBanner routeKey="youtube" />
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[hsl(240,12%,12%)]">{t('overviewTitle')}</h1>
         <p className="mt-1 text-sm text-[hsl(240,12%,45%)]">{t('overviewDescription')}</p>

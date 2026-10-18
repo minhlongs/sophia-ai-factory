@@ -1,23 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
-import { Card, Button, Input } from '@/components/stitch/ui';
 import { DashboardLayout } from '@/components/stitch/layouts';
 import { IpGraphTable } from '@/components/stitch/screens/ip/ip-graph-table';
+import {
+  IpEntityCreateCard,
+  type IpEntity,
+  type IpEntityFormState,
+} from './ip-entity-create-card';
 
-interface IpEntity {
-  id: string;
-  workspaceId: string;
-  type: string;
-  name: string;
-  description: string;
-  status: string;
-  parentId: string | null;
-  createdAt: number;
-  updatedAt: number;
-}
+export {
+  IpEntityCreateCard,
+  type IpEntity,
+  type IpEntityFormState,
+  type IpEntityCreateCardProps,
+} from './ip-entity-create-card';
 
 export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations('dashboard.ip');
@@ -26,14 +24,14 @@ export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<IpEntityFormState>({
     type: 'universe',
     name: '',
     description: '',
     parentId: '',
   });
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!workspaceId) return;
     setLoading(true);
     try {
@@ -48,12 +46,11 @@ export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
     } finally {
       setLoading(false);
     }
-  }
-
-  React.useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, typeFilter]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function createEntity(e: React.FormEvent) {
     e.preventDefault();
@@ -106,66 +103,13 @@ export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
         t={t}
       />
 
-      <Card padding="lg" className="mt-6">
-        <h2 className="text-title-lg">{t('create.title')}</h2>
-        <p className="mt-1 text-body-sm text-on-surface-variant">{t('create.subtitle')}</p>
-        <form className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={createEntity}>
-          <div>
-            <label className="mb-1 block text-label-sm text-on-surface-variant">
-              {t('create.type')}
-            </label>
-            <select
-              className="w-full rounded-lg border border-outline bg-surface px-3 py-2 text-body-sm"
-              value={form.type}
-              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-            >
-              <option value="universe">{t('type.universe')}</option>
-              <option value="world">{t('type.world')}</option>
-              <option value="series">{t('type.series')}</option>
-              <option value="character">{t('type.character')}</option>
-              <option value="theme">{t('type.theme')}</option>
-              <option value="brand">{t('type.brand')}</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-label-sm text-on-surface-variant">
-              {t('create.name')}
-            </label>
-            <Input
-              placeholder={t('create.namePlaceholder')}
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-label-sm text-on-surface-variant">
-              {t('create.description')}
-            </label>
-            <Input
-              placeholder={t('create.descriptionPlaceholder')}
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-label-sm text-on-surface-variant">
-              {t('create.parent')}
-            </label>
-            <Input
-              placeholder={t('create.parentPlaceholder')}
-              value={form.parentId}
-              onChange={(e) => setForm((f) => ({ ...f, parentId: e.target.value }))}
-            />
-          </div>
-          <div className="flex items-end">
-            <Button type="submit" variant="primary" loading={creating}>
-              <Plus className="h-4 w-4" />
-              {t('create.submit')}
-            </Button>
-          </div>
-        </form>
-      </Card>
+      <IpEntityCreateCard
+        form={form}
+        setForm={setForm}
+        creating={creating}
+        onSubmit={createEntity}
+        t={t}
+      />
     </DashboardLayout>
   );
 }

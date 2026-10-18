@@ -27,6 +27,20 @@ export function ControlDeckScreenNav({ screens, activeId, lang, onSelect }: Cont
 
   return (
     <nav aria-label={lang === 'vi' ? 'Màn hình xem trước' : 'Preview screens'} className="mt-5 min-w-0">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1 font-mono text-xs text-[#94A3B8]">
+        <span>
+          {lang === 'vi'
+            ? 'MA TRẬN ĐIỀU HƯỚNG 18 MÀN HÌNH STITCH V4.2'
+            : 'STITCH V4.2 18-SCREEN NAVIGATION MATRIX'}
+        </span>
+        <span
+          data-testid="control-deck-screen-count-badge"
+          className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+          {screens.length}/18 {lang === 'vi' ? 'MÀN HÌNH' : 'SCREENS'}
+        </span>
+      </div>
       <div
         role="tablist"
         aria-orientation="horizontal"
@@ -34,6 +48,7 @@ export function ControlDeckScreenNav({ screens, activeId, lang, onSelect }: Cont
       >
         {screens.map((screen, index) => {
           const selected = screen.id === activeId;
+          const paddedIndex = String(screen.index).padStart(2, '0');
           return (
             <button
               key={screen.id}
@@ -61,7 +76,7 @@ export function ControlDeckScreenNav({ screens, activeId, lang, onSelect }: Cont
                 aria-hidden="true"
                 className={`h-1.5 w-1.5 shrink-0 rounded-full ${selected ? 'bg-amber-400' : 'bg-[#475569]'}`}
               />
-              <span className="opacity-80">0{screen.index}.</span>
+              <span className="opacity-80">{paddedIndex}.</span>
               <span>{screen.navLabel[lang]}</span>
             </button>
           );

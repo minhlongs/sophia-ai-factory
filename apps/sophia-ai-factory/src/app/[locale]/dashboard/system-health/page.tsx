@@ -29,6 +29,7 @@ import { KpiCards } from '@/components/production-monitoring/kpi-cards';
 import { PendingApprovalsList } from '@/components/production-monitoring/pending-approvals-list';
 import { QueryProvider } from '@/forest/components/providers/query-provider';
 import { HarnessHealthCard } from './components/harness-health-card';
+import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('productionMonitoring');
@@ -108,6 +109,7 @@ export default async function SystemHealthPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <StitchWave2RouteBanner routeKey="system-health" />
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
