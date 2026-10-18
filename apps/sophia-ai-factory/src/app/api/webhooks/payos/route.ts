@@ -1,11 +1,10 @@
 /**
  * PayOS IPN Webhook Route
- * Verifies x-checksum header with HMAC-SHA256, activates tier on successful payment.
+ * Verifies the PayOS webhook body signature and activates the matching paid order.
  * Gated by FEATURE_PAYOS — returns 503 when flag is off.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { parseUserIdFromPayOsDescription } from '@/land/payments/payos';
 import { logger } from '@/seed/utils/logger-utility';
 import { createServerClient } from '@/seed/db/client';
 import type { Tier } from '@/seed/types';
@@ -27,13 +26,16 @@ export async function POST(request: NextRequest) {
 
   const { ipn, sanitizedBody } = verification.data;
 
-  if (!ipn.success || ipn.code !== '00') {
-    logger.info('[PayOS Webhook] Non-success payment event', { code: ipn.code, desc: ipn.desc });
+  if (ipn.data.code !== '00') {
+    logger.info('[PayOS Webhook] Non-success payment event', {
+      dataCode: ipn.data.code,
+      dataDesc: ipn.data.desc,
+    });
     return NextResponse.json({ received: true });
   }
 
   const db = createServerClient();
-  const { orderCode, amount, description, paymentLinkId } = ipn.data;
+  const { orderCode, amount, paymentLinkId } = ipn.data;
 
   // Idempotency: INSERT-first with UNIQUE constraint check
   const idempotency = await checkAndRecordPaymentIdempotency({
@@ -46,18 +48,13 @@ export async function POST(request: NextRequest) {
     return idempotency.response ?? NextResponse.json({ received: true });
   }
 
-  const userId = parseUserIdFromPayOsDescription(description);
-  if (!userId) {
-    logger.warn('[PayOS Webhook] Cannot parse userId from description', { description, orderCode });
-    return NextResponse.json({ error: 'Cannot resolve user' }, { status: 422 });
-  }
-
   // Reserve the order and validate expected amount
   const validation = await validatePendingPayOsOrder({
     db,
     paymentLinkId,
     orderCode,
     amount,
+    lockCreatedAt: idempotency.lockCreatedAt,
   });
 
   if (!validation.ok) {
@@ -65,6 +62,28 @@ export async function POST(request: NextRequest) {
   }
 
   const { order } = validation;
+  const userId = order.user_id;
+  if (!userId) {
+    logger.error('[PayOS Webhook] Pending order has no user owner', new Error('Missing user_id'), {
+      orderId: order.order_id,
+      paymentLinkId,
+    });
+    try {
+      await db
+        .from('payment_events')
+        .delete()
+        .eq('event_id', `payos_${paymentLinkId}`)
+        .eq('created_at', idempotency.lockCreatedAt)
+        .eq('processed', 0);
+    } catch (error) {
+      logger.warn('[PayOS Webhook] Failed to release lock for ownerless order', {
+        paymentLinkId,
+        error: String(error),
+      });
+    }
+    return NextResponse.json({ error: 'Order owner unavailable' }, { status: 500 });
+  }
+
   const tier = order.tier as Tier;
 
   try {
@@ -74,6 +93,7 @@ export async function POST(request: NextRequest) {
       tier,
       order,
       paymentLinkId,
+      lockCreatedAt: idempotency.lockCreatedAt,
     });
 
     await processPayOsPostFulfillment({
@@ -94,7 +114,12 @@ export async function POST(request: NextRequest) {
     logger.error('[PayOS Webhook] Activation failed', new Error(msg), { userId, tier });
     // Release lock on failure to enable retry
     try {
-      await db.from('payment_events').delete().eq('event_id', `payos_${paymentLinkId}`);
+      await db
+        .from('payment_events')
+        .delete()
+        .eq('event_id', `payos_${paymentLinkId}`)
+        .eq('created_at', idempotency.lockCreatedAt)
+        .eq('processed', 0);
     } catch (delErr) {
       logger.warn('[PayOS Webhook] Failed to release lock on failure', { paymentLinkId, error: String(delErr) });
     }

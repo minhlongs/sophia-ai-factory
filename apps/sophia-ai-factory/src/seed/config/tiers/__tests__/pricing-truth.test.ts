@@ -70,6 +70,22 @@ describe('Pricing Truth & Single Source of Truth', () => {
     }
   });
 
+  it('verifies PayOS annual prices derive from UNIFIED_TIERS', () => {
+    process.env.USD_TO_VND = '25000';
+    try {
+      for (const tier of TIERS.filter((tier) => UNIFIED_TIERS[tier].yearlyPrice > 0)) {
+        const payosConfig = getPayOsTierConfig(tier, 'yearly');
+        expect(payosConfig.usdAmount).toBe(UNIFIED_TIERS[tier].yearlyPrice);
+        expect(payosConfig.vndAmount).toBe(
+          Math.round((UNIFIED_TIERS[tier].yearlyPrice * 25000) / 1000) * 1000
+        );
+      }
+      expect(() => getPayOsTierConfig('MASTER', 'yearly')).toThrow();
+    } finally {
+      delete process.env.USD_TO_VND;
+    }
+  });
+
   it('verifies Admin MRR calculation uses canonical prices in cents', () => {
     // 4 customers distributed across 4 tiers (BASIC, PREMIUM, ENTERPRISE, MASTER)
     const dunningCustomers = [

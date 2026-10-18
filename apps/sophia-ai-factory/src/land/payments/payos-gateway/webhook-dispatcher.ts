@@ -22,8 +22,13 @@ const TIER_USD_PRICES: Record<Tier, number> = {
   MASTER: UNIFIED_TIERS.MASTER.price,
 };
 
-export function getPayOsTierConfig(tier: Tier): PayOsTierConfig {
-  const usd = TIER_USD_PRICES[tier];
+export type PayOsBillingPeriod = 'monthly' | 'yearly' | 'lifetime';
+
+export function getPayOsTierConfig(tier: Tier, period: PayOsBillingPeriod = 'monthly'): PayOsTierConfig {
+  const usd = period === 'yearly' ? UNIFIED_TIERS[tier].yearlyPrice : TIER_USD_PRICES[tier];
+  if (!Number.isFinite(usd) || usd <= 0) {
+    throw new Error(`PayOS does not support ${period} billing for ${tier}`);
+  }
   const usdToVnd = getUsdToVnd();
   const vnd = Math.round((usd * usdToVnd) / 1000) * 1000; // round to 1000 VND
   return { tier, vndAmount: vnd, usdAmount: usd };

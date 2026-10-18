@@ -11,7 +11,16 @@ export function payOsCanonicalize(rawBody: string): string {
   const dataObj = parsed.data ?? (parsed as Record<string, unknown>);
   return Object.keys(dataObj)
     .sort()
-    .map((k) => `${k}=${dataObj[k]}`)
+    .map((k) => {
+      const value = dataObj[k];
+      const normalized =
+        value === null || value === undefined || value === 'null' || value === 'undefined'
+          ? ''
+          : typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value);
+      return `${k}=${normalized}`;
+    })
     .join('&');
 }
 

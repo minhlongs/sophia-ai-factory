@@ -22,6 +22,20 @@ describe('getPayOsTierConfig', () => {
     // 199 * 25000 = 4,975,000 → round to 1000 → 4,975,000
     expect(config.vndAmount).toBe(4975000)
   })
+
+  it('uses the canonical annual price for yearly billing', () => {
+    process.env.USD_TO_VND = '25000'
+    const config = getPayOsTierConfig('BASIC', 'yearly')
+    expect(config.usdAmount).toBe(1990)
+    expect(config.vndAmount).toBe(49750000)
+    delete process.env.USD_TO_VND
+  })
+
+  it('rejects annual billing for the lifetime-only MASTER tier', () => {
+    expect(() => getPayOsTierConfig('MASTER', 'yearly')).toThrow(
+      'PayOS does not support yearly billing for MASTER',
+    )
+  })
 })
 
 

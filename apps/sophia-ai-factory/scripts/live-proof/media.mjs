@@ -1,4 +1,4 @@
-import { execFile as execFileCallback } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import { mkdtemp, open, rm, stat } from 'node:fs/promises';
@@ -6,9 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { promisify } from 'node:util';
 
-const execFile = promisify(execFileCallback);
 const ALLOWED_MEDIA_HOSTS = new Set(['files2.heygen.ai']);
 const MAX_REDIRECTS = 3;
 const DEFAULT_MAX_BYTES = 512 * 1024 * 1024;
@@ -18,14 +16,17 @@ const DEFAULT_PROBE_TIMEOUT_MS = 30 * 1000;
 const DEFAULT_DECODE_TIMEOUT_MS = 5 * 60 * 1000;
 const MAX_TOOL_TIMEOUT_MS = 15 * 60 * 1000;
 const PROCESS_MAX_BUFFER_BYTES = 1024 * 1024;
+const PROCESS_KILL_GRACE_MS = 1000;
+const MAX_FTYP_BOX_BYTES = 64 * 1024;
 const ALLOWED_MP4_MIME_TYPES = new Set(['video/mp4', 'application/mp4', 'application/octet-stream', 'binary/octet-stream']);
 const ALLOWED_MP4_BRANDS = new Set([
-  'isom', 'mp41', 'mp42', 'avc1', 'M4V ', 'M4VH', 'M4VP', 'M4A ', 'M4B ', 'M4P ', 'M4S ',
+  'isom', 'iso2', 'iso3', 'iso4', 'iso5', 'iso6', 'iso7', 'iso8', 'iso9',
+  'mp41', 'mp42', 'avc1', 'M4V ', 'M4VH', 'M4VP', 'M4A ', 'M4B ', 'M4P ', 'M4S ',
   'M4T ', 'dash', 'MSNV', 'F4V ', 'F4P ', 'F4A ', 'F4B ',
 ]);
 
 export function isMp4Brand(brand) {
-  return ALLOWED_MP4_BRANDS.has(brand) || /^iso[2-9a-z]$/.test(brand);
+  return ALLOWED_MP4_BRANDS.has(brand);
 }
 
 export function isMp4FormatName(formatName) {
@@ -65,19 +66,69 @@ async function requestFullMedia(initialUrl, signal, fetchImpl) {
 }
 
 async function runTool(binary, args, timeoutMs, label) {
-  try {
-    return await execFile(binary, args, {
-      timeout: timeoutMs,
-      maxBuffer: PROCESS_MAX_BUFFER_BYTES,
-      windowsHide: true,
-      encoding: 'utf8',
+  return new Promise((resolve, reject) => {
+    let child;
+    try {
+      child = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    } catch {
+      reject(new Error(`${label} could not run`));
+      return;
+    }
+
+    const stdoutChunks = [];
+    let stdoutBytes = 0;
+    let outputExceeded = false;
+    let timedOut = false;
+    let settled = false;
+    let terminating = false;
+    let killTimer;
+    let timeoutTimer;
+
+    const clearTimers = () => {
+      clearTimeout(timeoutTimer);
+      if (killTimer) clearTimeout(killTimer);
+    };
+    const settle = (error, stdout) => {
+      if (settled) return;
+      settled = true;
+      clearTimers();
+      if (error) reject(error);
+      else resolve({ stdout });
+    };
+    const terminate = (timeout = false) => {
+      if (timeout) timedOut = true;
+      if (terminating) return;
+      terminating = true;
+      child.kill('SIGTERM');
+      killTimer = setTimeout(() => child.kill('SIGKILL'), PROCESS_KILL_GRACE_MS);
+      killTimer.unref?.();
+    };
+    timeoutTimer = setTimeout(() => terminate(true), timeoutMs);
+    timeoutTimer.unref?.();
+
+    child.stdout.on('data', (chunk) => {
+      if (stdoutBytes + chunk.length > PROCESS_MAX_BUFFER_BYTES) {
+        outputExceeded = true;
+        terminate();
+        return;
+      }
+      stdoutBytes += chunk.length;
+      stdoutChunks.push(chunk);
     });
-  } catch (error) {
-    const code = typeof error?.code === 'number' ? ` (exit ${error.code})` : '';
-    if (error?.killed === true) throw new Error(`${label} timed out`);
-    if (typeof error?.code === 'number') throw new Error(`${label} failed${code}`);
-    throw new Error(`${label} could not run`);
-  }
+    child.stderr.resume();
+    child.once('error', () => settle(new Error(`${label} could not run`)));
+    child.once('close', (code) => {
+      if (timedOut) {
+        settle(new Error(`${label} timed out`));
+      } else if (outputExceeded) {
+        settle(new Error(`${label} output exceeded the configured limit`));
+      } else if (code !== 0) {
+        settle(new Error(`${label} failed${typeof code === 'number' ? ` (exit ${code})` : ''}`));
+      } else {
+        settle(null, Buffer.concat(stdoutChunks).toString('utf8'));
+      }
+    });
+  });
 }
 
 function validatePositiveTimeout(value, label) {
@@ -101,14 +152,21 @@ async function verifyMp4FileType(filePath, fileSize) {
     const compatibleOffset = majorOffset + 8;
     if (bytesRead < compatibleOffset) throw new Error('media ftyp box is truncated');
     const boxSize = extended ? Number(header.readBigUInt64BE(8)) : shortSize;
-    if (!Number.isSafeInteger(boxSize) || boxSize < compatibleOffset || boxSize > fileSize) {
+    if (!Number.isSafeInteger(boxSize) || boxSize < compatibleOffset || boxSize > fileSize || boxSize > MAX_FTYP_BOX_BYTES) {
       throw new Error('media ftyp box size is invalid');
     }
 
-    const brands = [header.toString('ascii', majorOffset, majorOffset + 4)];
-    for (let offset = compatibleOffset; offset + 4 <= Math.min(bytesRead, boxSize); offset += 4) {
-      brands.push(header.toString('ascii', offset, offset + 4));
+    const ftyp = Buffer.alloc(boxSize);
+    let readBytes = 0;
+    while (readBytes < boxSize) {
+      const result = await handle.read(ftyp, readBytes, boxSize - readBytes, readBytes);
+      if (result.bytesRead === 0) break;
+      readBytes += result.bytesRead;
     }
+    if (readBytes !== boxSize || (boxSize - compatibleOffset) % 4 !== 0) throw new Error('media ftyp box is truncated or malformed');
+
+    const brands = [ftyp.toString('ascii', majorOffset, majorOffset + 4)];
+    for (let offset = compatibleOffset; offset + 4 <= boxSize; offset += 4) brands.push(ftyp.toString('ascii', offset, offset + 4));
     const mp4Brand = brands.find(isMp4Brand);
     if (!mp4Brand) throw new Error('media artifact does not declare a recognized MP4 brand');
     return { majorBrand: brands[0], compatibleMp4Brand: mp4Brand };

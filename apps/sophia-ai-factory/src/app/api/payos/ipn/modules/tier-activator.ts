@@ -53,6 +53,8 @@ export async function activatePayOsTier({
     order_id: string;
     user_id: string;
     tier: string;
+    period?: string;
+    amount_vnd?: number | null;
     invoice_url: string | null;
   }> | null;
   const matchOrder = orders?.find(
@@ -66,7 +68,8 @@ export async function activatePayOsTier({
   }
 
   const tier = matchOrder.tier as Tier;
-  const expectedVndAmount = getPayOsTierConfig(tier).vndAmount;
+  const orderPeriod = matchOrder.period;
+  const expectedVndAmount = matchOrder.amount_vnd ?? getPayOsTierConfig(tier, orderPeriod as 'monthly' | 'yearly' | 'lifetime').vndAmount;
   if (amount !== expectedVndAmount) {
     logger.error('[PayOS IPN] Amount mismatch', {
       orderCode,
@@ -80,7 +83,6 @@ export async function activatePayOsTier({
 
   const userId = matchOrder.user_id;
   const orderId = matchOrder.order_id;
-  const orderPeriod = (matchOrder as Record<string, unknown> | undefined)?.period as string | undefined;
   const now = new Date().toISOString();
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime';
   const billingPeriod = isLifetime ? 'lifetime' : orderPeriod === 'yearly' ? 'yearly' : 'monthly';

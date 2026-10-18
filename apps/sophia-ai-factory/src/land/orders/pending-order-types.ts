@@ -17,6 +17,7 @@ export interface PendingOrder {
   period: PendingOrderPeriod
   payment_method: PaymentMethod
   amount_usd_cents: number
+  amount_vnd?: number | null
   promo_code: string | null
   customer_email: string | null
   invoice_url: string | null
@@ -34,6 +35,7 @@ export const pendingOrderInputSchema = z.object({
   period: z.enum(['monthly', 'yearly', 'lifetime']).default('monthly'),
   payment_method: z.enum(['nowpayments', 'payos', 'offline', 'cash']).default('nowpayments'),
   amount_usd_cents: z.number().int().positive(),
+  amount_vnd: z.number().int().positive().optional(),
   promo_code: z.string().optional(),
   customer_email: z.string().email().optional(),
   invoice_url: z.string().url().optional(),
