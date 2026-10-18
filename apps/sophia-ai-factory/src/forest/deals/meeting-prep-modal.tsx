@@ -49,16 +49,13 @@ export function MeetingPrepModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="relative w-full max-w-4xl max-h-[90vh] bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl flex flex-col overflow-hidden text-zinc-100">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4 bg-zinc-950">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
-                Executive Sales Dossier & Demo Prep
-              </h2>
+              <h2 className="text-lg font-semibold text-white">Executive Sales Dossier & Demo Prep</h2>
               <p className="text-xs text-zinc-400">
                 {deal.companyName} ({deal.companyDomain}) • BANT Score: {deal.bantScore}/100
               </p>
@@ -70,24 +67,16 @@ export function MeetingPrepModal({
                 onClick={handleCopy}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition"
               >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'Copied' : 'Copy Dossier'}
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition"
-            >
+            <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {!dossier ? (
             <div className="text-center py-12 space-y-4">
@@ -119,13 +108,9 @@ export function MeetingPrepModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between border-t border-zinc-800 px-6 py-3 bg-zinc-950 text-xs text-zinc-400">
           <span>Sophia Autonomous Sales Fleet • Model: GPT-4o Mini / Resilient Edge</span>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
-          >
+          <button onClick={onClose} className="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">
             Close
           </button>
         </div>

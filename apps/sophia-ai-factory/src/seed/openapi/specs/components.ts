@@ -1,6 +1,5 @@
 /**
  * OpenAPI Security Schemes and Reusable Schemas
- *
  * Layer: seed/openapi
  */
 
@@ -26,10 +25,7 @@ export const SCHEMAS = {
     properties: {
       id: { type: 'string' },
       command: { type: 'string' },
-      status: {
-        type: 'string',
-        enum: ['pending', 'running', 'completed', 'failed', 'cancelled'],
-      },
+      status: { type: 'string', enum: ['pending', 'running', 'completed', 'failed', 'cancelled'] },
       credits_used: { type: 'integer' },
       result: { type: ['object', 'null'] },
       error: { type: ['string', 'null'] },
@@ -76,12 +72,9 @@ export const SCHEMAS = {
   VoicePreset: {
     type: 'object',
     properties: {
-      id: { type: 'string' },
-      displayName: { type: 'string' },
-      language: { type: 'string' },
+      id: { type: 'string' }, displayName: { type: 'string' }, language: { type: 'string' },
       gender: { type: 'string', enum: ['male', 'female', 'neutral'] },
-      vibe: { type: 'string' },
-      samplePath: { type: 'string' },
+      vibe: { type: 'string' }, samplePath: { type: 'string' },
       minTier: { type: 'string', enum: ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] },
     },
     required: ['id', 'displayName', 'language', 'minTier'],
@@ -89,23 +82,17 @@ export const SCHEMAS = {
   VideoTemplate: {
     type: 'object',
     properties: {
-      id: { type: 'string' },
-      displayName: { type: 'string' },
+      id: { type: 'string' }, displayName: { type: 'string' },
       category: { type: 'string', enum: ['educational', 'marketing', 'social', 'brand'] },
       aspectRatio: { type: 'string', enum: ['16:9', '9:16', '1:1', '4:5'] },
-      durationSec: { type: 'integer' },
-      vibe: { type: 'string' },
-      samplePath: { type: 'string' },
+      durationSec: { type: 'integer' }, vibe: { type: 'string' }, samplePath: { type: 'string' },
       minTier: { type: 'string', enum: ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] },
     },
     required: ['id', 'displayName', 'category', 'minTier'],
   },
   ErrorEnvelope: {
     type: 'object',
-    properties: {
-      error: { type: 'string' },
-      details: { type: 'object', additionalProperties: true },
-    },
+    properties: { error: { type: 'string' }, details: { type: 'object', additionalProperties: true } },
     required: ['error'],
   },
 } as const;
@@ -116,19 +103,11 @@ export const OPENAPI_COMPONENTS = {
   responses: {
     Unauthorized: {
       description: 'Missing or invalid credentials',
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' },
-        },
-      },
+      content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } },
     },
     ValidationError: {
       description: 'Request body or query failed validation',
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' },
-        },
-      },
+      content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } },
     },
   },
 };

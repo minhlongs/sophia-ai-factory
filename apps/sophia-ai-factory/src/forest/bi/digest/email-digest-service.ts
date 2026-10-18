@@ -46,7 +46,6 @@ export async function sendEmailExecutiveDigest(
   const agencyName = branding?.agencyName ?? 'Sophia AI Factory';
   const cadenceLabel = options?.cadence === 'weekly' ? 'Weekly' : 'Monthly';
   const subject = `${agencyName} — ${cadenceLabel} Executive BI Digest`;
-
   const effectiveApiKey = resendApiKey || process.env.RESEND_API_KEY;
 
   if (!effectiveApiKey) {
@@ -54,12 +53,7 @@ export async function sendEmailExecutiveDigest(
       recipient,
       agencyName,
     });
-    return {
-      success: false,
-      recipientCount: 1,
-      provider: 'dry-run',
-      error: 'RESEND_API_KEY not configured',
-    };
+    return { success: false, recipientCount: 1, provider: 'dry-run', error: 'RESEND_API_KEY not configured' };
   }
 
   try {
@@ -79,16 +73,8 @@ export async function sendEmailExecutiveDigest(
     };
   } catch (err) {
     const errMsg = getErrorMessage(err);
-    logger.error('[email-digest-sender] Failed sending email digest', {
-      recipient,
-      error: errMsg,
-    });
-    return {
-      success: false,
-      recipientCount: 0,
-      provider: 'resend',
-      error: errMsg,
-    };
+    logger.error('[email-digest-sender] Failed sending email digest', { recipient, error: errMsg });
+    return { success: false, recipientCount: 0, provider: 'resend', error: errMsg };
   }
 }
 
@@ -109,13 +95,7 @@ export async function sendEmailDigest(
   let lastError: string | undefined;
 
   for (const r of recipients) {
-    const res = await sendEmailExecutiveDigest(
-      process.env.RESEND_API_KEY,
-      r,
-      metrics,
-      options.branding,
-      options,
-    );
+    const res = await sendEmailExecutiveDigest(process.env.RESEND_API_KEY, r, metrics, options.branding, options);
     if (res.success) {
       successCount++;
       lastMessageId = res.messageId;

@@ -1,6 +1,5 @@
 /**
- * Campaign Template System
- * Predefined templates for common campaign types
+ * Campaign Template System — Predefined templates for common campaign types
  */
 
 import { VIETNAM_HOLIDAY_TEMPLATES } from './vietnam-holiday-templates';
@@ -13,20 +12,17 @@ export interface CampaignTemplate {
   name: string;
   description: string;
   category: CampaignCategory;
-  icon: string; // Emoji or icon identifier
+  icon: string;
   is_predefined?: boolean;
   defaults: {
     title: string;
     audience: string;
     tone: CampaignTone;
-    suggestedDuration: number; // in seconds
+    suggestedDuration: number;
     keywords: string[];
   };
 }
 
-/**
- * Predefined campaign templates
- */
 export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
   {
     id: "welcome",
@@ -40,8 +36,8 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
       audience: "New subscribers and customers",
       tone: "friendly",
       suggestedDuration: 20,
-      keywords: ["welcome", "introduction", "getting started", "onboarding"]
-    }
+      keywords: ["welcome", "introduction", "getting started", "onboarding"],
+    },
   },
   {
     id: "product-launch",
@@ -55,8 +51,8 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
       audience: "Existing customers and product enthusiasts",
       tone: "enthusiastic",
       suggestedDuration: 25,
-      keywords: ["new product", "launch", "innovation", "features"]
-    }
+      keywords: ["new product", "launch", "innovation", "features"],
+    },
   },
   {
     id: "seasonal",
@@ -70,8 +66,8 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
       audience: "All customers",
       tone: "enthusiastic",
       suggestedDuration: 20,
-      keywords: ["seasonal", "limited time", "holiday", "celebration"]
-    }
+      keywords: ["seasonal", "limited time", "holiday", "celebration"],
+    },
   },
   {
     id: "flash-sale",
@@ -85,8 +81,8 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
       audience: "Active customers and deal seekers",
       tone: "urgent",
       suggestedDuration: 15,
-      keywords: ["flash sale", "limited time", "urgent", "discount"]
-    }
+      keywords: ["flash sale", "limited time", "urgent", "discount"],
+    },
   },
   {
     id: "viral-content",
@@ -100,35 +96,23 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
       audience: "Social media followers and viral content consumers",
       tone: "casual",
       suggestedDuration: 15,
-      keywords: ["viral", "trending", "must-see", "share-worthy"]
-    }
+      keywords: ["viral", "trending", "must-see", "share-worthy"],
+    },
   },
-  ...VIETNAM_HOLIDAY_TEMPLATES
+  ...VIETNAM_HOLIDAY_TEMPLATES,
 ];
 
-/**
- * Get template by ID
- */
 export function getTemplateById(id: string): CampaignTemplate | undefined {
-  return CAMPAIGN_TEMPLATES.find(t => t.id === id);
+  return CAMPAIGN_TEMPLATES.find((t) => t.id === id);
 }
 
-/**
- * Get templates by category
- */
 export function getTemplatesByCategory(category: CampaignCategory): CampaignTemplate[] {
-  return CAMPAIGN_TEMPLATES.filter(t => t.category === category);
+  return CAMPAIGN_TEMPLATES.filter((t) => t.category === category);
 }
 
-/**
- * Apply template defaults to campaign data while allowing customization
- */
 export function applyTemplateDefaults(
   template: CampaignTemplate,
   customizations?: Partial<CampaignTemplate['defaults']>
 ): CampaignTemplate['defaults'] {
-  return {
-    ...template.defaults,
-    ...customizations
-  };
+  return { ...template.defaults, ...customizations };
 }

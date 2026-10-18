@@ -23,13 +23,7 @@ interface PayoutTableProps {
 }
 
 export function PayoutTable({
-  items,
-  loading,
-  minPayout,
-  cursor,
-  onOpenModal,
-  onFirstPage,
-  onNextPage,
+  items, loading, minPayout, cursor, onOpenModal, onFirstPage, onNextPage,
 }: PayoutTableProps): React.JSX.Element {
   const t = useTranslations('admin.payouts');
 
@@ -57,12 +51,7 @@ export function PayoutTable({
             ) : items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-0">
-                  <EmptyState
-                    icon={Wallet}
-                    title={t('emptyTitle')}
-                    description={t('emptyDesc')}
-                    className="border-0 rounded-none bg-transparent py-12"
-                  />
+                  <EmptyState icon={Wallet} title={t('emptyTitle')} description={t('emptyDesc')} className="border-0 rounded-none bg-transparent py-12" />
                 </td>
               </tr>
             ) : (
@@ -71,9 +60,7 @@ export function PayoutTable({
                 return (
                   <tr key={item.user_id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
-                        {item.user_id.slice(0, 10)}...
-                      </code>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{item.user_id.slice(0, 10)}...</code>
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-medium text-emerald-400">
                       {fmtCurrency(item.balance_available, item.currency)}
@@ -83,22 +70,20 @@ export function PayoutTable({
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{item.currency}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{fmtTime(item.last_rebuilt_at)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end">
-                        <button
-                          onClick={() => onOpenModal(item)}
-                          disabled={!canPay}
-                          title={!canPay ? `Below minimum ($${minPayout})` : 'Mark as paid'}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            canPay
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                              : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Mark paid
-                        </button>
-                      </div>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => onOpenModal(item)}
+                        disabled={!canPay}
+                        title={!canPay ? `Below minimum ($${minPayout})` : 'Mark as paid'}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          canPay
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                            : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Mark paid
+                      </button>
                     </td>
                   </tr>
                 );
@@ -112,10 +97,7 @@ export function PayoutTable({
         <div className="flex items-center justify-between px-4 py-3 border-t border-border">
           <span className="text-xs text-muted-foreground">Showing {items.length} users</span>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onFirstPage}
-              className="px-2 py-1 rounded border border-border bg-card text-xs hover:bg-muted transition-colors"
-            >
+            <button onClick={onFirstPage} className="px-2 py-1 rounded border border-border bg-card text-xs hover:bg-muted transition-colors">
               First
             </button>
             <button

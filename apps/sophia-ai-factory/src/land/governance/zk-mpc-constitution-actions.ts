@@ -34,29 +34,16 @@ export async function verifyZkMpcSessionAction(
   try {
     const quorum = verifyZkMpcQuorum(params.session, params.commitments);
     const db = await getD1();
-
     if (db) {
       const state = quorum.isQuorumSatisfied ? 'RECONSTRUCTED_READY' : 'COMMITMENT_PHASE';
+      const s = params.session;
       await db
         .prepare(
           `INSERT INTO zk_mpc_threshold_sessions (id, session_id, protocol_type, total_participants, threshold_quorum, session_state, aggregated_public_key_hex, state_proof_merkle_root, execution_latency_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET session_state = ?, state_proof_merkle_root = ?`
         )
-        .bind(
-          `mpc_${params.session.sessionId}`,
-          params.session.sessionId,
-          params.session.protocolType,
-          params.session.totalParticipants,
-          params.session.thresholdQuorum,
-          state,
-          params.session.aggregatedPublicKeyHex,
-          quorum.stateProofMerkleRoot,
-          params.session.executionLatencyMs,
-          state,
-          quorum.stateProofMerkleRoot
-        )
+        .bind(`mpc_${s.sessionId}`, s.sessionId, s.protocolType, s.totalParticipants, s.thresholdQuorum, state, s.aggregatedPublicKeyHex, quorum.stateProofMerkleRoot, s.executionLatencyMs, state, quorum.stateProofMerkleRoot)
         .run();
     }
-
     return {
       success: true,
       isQuorumSatisfied: quorum.isQuorumSatisfied,
@@ -87,40 +74,18 @@ export async function submitConstitutionalAmendmentAction(
   params: SubmitAmendmentActionParams
 ): Promise<SubmitAmendmentActionResult> {
   try {
-    const evalResult = evaluateConstitutionalAmendment(
-      params.proposal,
-      params.affirmativeWeight,
-      params.dissentingWeight
-    );
-
+    const evalResult = evaluateConstitutionalAmendment(params.proposal, params.affirmativeWeight, params.dissentingWeight);
     const db = await getD1();
     if (db) {
-      const timelock = evalResult.timelockEnactmentAt ?? params.proposal.timelockEnactmentAt;
+      const p = params.proposal;
+      const timelock = evalResult.timelockEnactmentAt ?? p.timelockEnactmentAt;
       await db
         .prepare(
           `INSERT INTO constitutional_amendment_proposals (id, article_reference, title, proposed_diff_json, sponsoring_sovereign_entity, supermajority_requirement_bps, affirmative_voting_power_weight, dissenting_voting_power_weight, formal_verification_passed, anti_takeover_guardrail_intact, ratification_status, timelock_enactment_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(article_reference) DO UPDATE SET affirmative_voting_power_weight = ?, dissenting_voting_power_weight = ?, ratification_status = ?, timelock_enactment_at = ?`
         )
-        .bind(
-          `const_${params.proposal.articleReference}`,
-          params.proposal.articleReference,
-          params.proposal.title,
-          params.proposal.proposedDiffJson,
-          params.proposal.sponsoringSovereignEntity,
-          params.proposal.supermajorityRequirementBps,
-          params.affirmativeWeight,
-          params.dissentingWeight,
-          params.proposal.formalVerificationPassed ? 1 : 0,
-          evalResult.antiTakeoverGuardrailIntact ? 1 : 0,
-          evalResult.ratificationStatus,
-          timelock,
-          params.affirmativeWeight,
-          params.dissentingWeight,
-          evalResult.ratificationStatus,
-          timelock
-        )
+        .bind(`const_${p.articleReference}`, p.articleReference, p.title, p.proposedDiffJson, p.sponsoringSovereignEntity, p.supermajorityRequirementBps, params.affirmativeWeight, params.dissentingWeight, p.formalVerificationPassed ? 1 : 0, evalResult.antiTakeoverGuardrailIntact ? 1 : 0, evalResult.ratificationStatus, timelock, params.affirmativeWeight, params.dissentingWeight, evalResult.ratificationStatus, timelock)
         .run();
     }
-
     return {
       success: evalResult.ratificationStatus === 'RATIFIED_INTO_LAW',
       status: evalResult.ratificationStatus,
@@ -129,7 +94,6 @@ export async function submitConstitutionalAmendmentAction(
       error: evalResult.rejectionReason,
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

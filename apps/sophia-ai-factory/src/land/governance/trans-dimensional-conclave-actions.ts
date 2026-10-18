@@ -68,32 +68,18 @@ const DEFAULT_CONSTITUTIONAL_INVARIANTS: TransDimensionalConstitutionalInvariant
   },
 ];
 
-/**
- * Server Action to arbitrate disputes via Trans-Dimensional Conclave with 99% supermajority and 70% slashing.
- */
 export async function arbitrateTransDimensionalDisputeAction(
   input: TransDimensionalDisputeInput
 ): Promise<TransDimensionalDisputeActionResult> {
   try {
     const data = arbitrateTransDimensionalDispute(input);
-    await recordContinuumConclaveArbitration(
-      'trans_dimensional_conclave_arbitrations',
-      input,
-      data,
-      99.0
-    );
+    await recordContinuumConclaveArbitration('trans_dimensional_conclave_arbitrations', input, data, 99.0);
     return { success: true, data };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to arbitrate trans-dimensional dispute',
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to arbitrate trans-dimensional dispute' };
   }
 }
 
-/**
- * Server Action to verify proposed amendments against immutable constitutional invariants.
- */
 export async function verifyTransDimensionalInvariantAction(
   proposedArticleCode: string,
   invariants: TransDimensionalConstitutionalInvariant[] = DEFAULT_CONSTITUTIONAL_INVARIANTS
@@ -102,16 +88,10 @@ export async function verifyTransDimensionalInvariantAction(
     const data = verifyTransDimensionalConstitutionalInvariants(invariants, proposedArticleCode);
     return { success: data.allowed, data };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to verify trans-dimensional invariant',
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to verify trans-dimensional invariant' };
   }
 }
 
-/**
- * Server Action to compact transactions into 64-byte Non-Euclidean STARK state root and persist proof.
- */
 export async function compactNonEuclideanStarkStateAction(
   previousStateRoot: string,
   transactions: ContinuumTransaction[],
@@ -119,16 +99,9 @@ export async function compactNonEuclideanStarkStateAction(
 ): Promise<NonEuclideanStarkCompactionActionResult> {
   try {
     const data = compactStateWithNonEuclideanStark(previousStateRoot, transactions, circuitIdentifier);
-    await recordContinuumStarkCompactionProof(
-      'non_euclidean_stark_compaction_proofs',
-      'STARK-PROOF',
-      data
-    );
+    await recordContinuumStarkCompactionProof('non_euclidean_stark_compaction_proofs', 'STARK-PROOF', data);
     return { success: data.isMathematicallySound, data };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to compact Non-Euclidean STARK state',
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to compact Non-Euclidean STARK state' };
   }
 }

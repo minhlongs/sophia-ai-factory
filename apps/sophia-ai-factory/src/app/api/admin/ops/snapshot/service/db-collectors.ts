@@ -11,9 +11,7 @@ export async function fetchCronRuns(db: D1Database): Promise<CronRunRow[]> {
   const result = await db
     .prepare(
       `SELECT cron_name, last_run_at, last_status, last_error, run_count
-       FROM cron_run_log
-       ORDER BY last_run_at DESC
-       LIMIT 20`,
+       FROM cron_run_log ORDER BY last_run_at DESC LIMIT 20`,
     )
     .all<CronRunRow>();
   return result.results ?? [];
@@ -26,10 +24,8 @@ export async function fetchActiveQueue(db: D1Database): Promise<{
 }> {
   const result = await db
     .prepare(
-      `SELECT status, COUNT(*) AS cnt
-       FROM videos
-       WHERE status IN ('queued', 'processing')
-       GROUP BY status`,
+      `SELECT status, COUNT(*) AS cnt FROM videos
+       WHERE status IN ('queued', 'processing') GROUP BY status`,
     )
     .all<QueueRow>();
 
@@ -39,11 +35,7 @@ export async function fetchActiveQueue(db: D1Database): Promise<{
   }
   const queued = queueMap['queued'] ?? 0;
   const processing = queueMap['processing'] ?? 0;
-  return {
-    queued,
-    processing,
-    total: queued + processing,
-  };
+  return { queued, processing, total: queued + processing };
 }
 
 export async function fetchFailedPermanent24h(
@@ -52,21 +44,15 @@ export async function fetchFailedPermanent24h(
 ): Promise<{ count: number; samples: FailedVideoRow[] }> {
   const failedResult = await db
     .prepare(
-      `SELECT id, purchase_id, last_error, created_at
-       FROM videos
-       WHERE status = 'failed_permanent'
-         AND created_at >= ?1
-       ORDER BY created_at DESC
-       LIMIT 10`,
+      `SELECT id, purchase_id, last_error, created_at FROM videos
+       WHERE status = 'failed_permanent' AND created_at >= ?1
+       ORDER BY created_at DESC LIMIT 10`,
     )
     .bind(since24h)
     .all<FailedVideoRow>();
 
   const failedCountRow = await db
-    .prepare(
-      `SELECT COUNT(*) AS cnt FROM videos
-       WHERE status = 'failed_permanent' AND created_at >= ?1`,
-    )
+    .prepare(`SELECT COUNT(*) AS cnt FROM videos WHERE status = 'failed_permanent' AND created_at >= ?1`)
     .bind(since24h)
     .first<FailedCountRow>();
 
@@ -88,14 +74,11 @@ export async function fetchReconcile24h(
 }> {
   const reconcileResult = await db
     .prepare(
-      `SELECT
-         COUNT(*) AS paid,
-         SUM(CASE WHEN v.status = 'completed' THEN 1 ELSE 0 END) AS delivered
+      `SELECT COUNT(*) AS paid,
+              SUM(CASE WHEN v.status = 'completed' THEN 1 ELSE 0 END) AS delivered
        FROM user_purchases up
        LEFT JOIN videos v ON v.purchase_id = up.id AND v.status = 'completed'
-       WHERE up.kind = 'one_time'
-         AND up.status = 'paid'
-         AND up.paid_at >= ?1
+       WHERE up.kind = 'one_time' AND up.status = 'paid' AND up.paid_at >= ?1
          AND up.payment_id NOT LIKE 'SYNTHETIC_%'
          AND up.payment_id NOT LIKE 'ADMIN_SYNTHETIC_%'`,
     )
@@ -104,12 +87,7 @@ export async function fetchReconcile24h(
 
   const paid = reconcileResult?.paid ?? 0;
   const delivered = reconcileResult?.delivered ?? 0;
-  return {
-    paid,
-    delivered,
-    mismatch: paid - delivered,
-    failedPermanent: failedPermanentCount,
-  };
+  return { paid, delivered, mismatch: paid - delivered, failedPermanent: failedPermanentCount };
 }
 
 export async function fetchOutageNotifications(

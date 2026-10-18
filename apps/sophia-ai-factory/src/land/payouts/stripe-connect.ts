@@ -1,7 +1,5 @@
 /**
  * Stripe Connect Express — onboarding, status sync, fiat transfer helpers.
- *
- * Domain: land/payouts (business workflow).
  * @module land/payouts/stripe-connect
  */
 
@@ -47,10 +45,7 @@ export function __setStripeClientForTesting(client: Stripe | null): void {
   stripeSingleton = client;
 }
 
-/**
- * Create (or reuse) a Stripe Connect Express account and return an Account Link
- * URL the user can navigate to in order to complete KYC.
- */
+/** Create (or reuse) a Stripe Connect Express account and return an Account Link URL. */
 export async function createOnboardLink(
   input: CreateOnboardLinkInput,
 ): Promise<CreateOnboardLinkResult> {
@@ -62,9 +57,7 @@ export async function createOnboardLink(
       type: 'express',
       country: input.country ?? 'US',
       email: input.email,
-      capabilities: {
-        transfers: { requested: true },
-      },
+      capabilities: { transfers: { requested: true } },
       metadata: { user_id: input.userId },
     });
     accountId = account.id;
@@ -78,16 +71,10 @@ export async function createOnboardLink(
     type: 'account_onboarding',
   });
 
-  return {
-    accountId,
-    url: link.url,
-    expiresAt: link.expires_at,
-  };
+  return { accountId, url: link.url, expiresAt: link.expires_at };
 }
 
-/**
- * Send a fiat USD payout to a connected affiliate.
- */
+/** Send a fiat USD payout to a connected affiliate. */
 export async function transferToConnectedAccount(args: {
   destinationAccountId: string;
   amountCents: number;
@@ -114,9 +101,7 @@ export async function transferToConnectedAccount(args: {
   return { transferId: transfer.id, created: transfer.created };
 }
 
-/**
- * Verify Stripe webhook signature.
- */
+/** Verify Stripe webhook signature. */
 export function verifyWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
@@ -124,8 +109,7 @@ export function verifyWebhookSignature(
 ): Stripe.Event | null {
   if (!signatureHeader) return null;
   try {
-    const stripe = getStripeClient();
-    return stripe.webhooks.constructEvent(rawBody, signatureHeader, webhookSecret);
+    return getStripeClient().webhooks.constructEvent(rawBody, signatureHeader, webhookSecret);
   } catch (err) {
     logger.warn('[stripe-connect] webhook signature verification failed', {
       error: err instanceof Error ? err.message : String(err),

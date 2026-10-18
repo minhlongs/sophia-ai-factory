@@ -35,19 +35,26 @@ function parseSseChunk(raw: string): SseEvent[] {
     .filter((e): e is SseEvent => e !== null);
 }
 
+function appendLastAssistantField(
+  prev: ChatMessage[],
+  field: 'content' | 'reasoning',
+  delta: string,
+): ChatMessage[] {
+  const next = [...prev];
+  const last = next[next.length - 1];
+  if (last?.role === 'assistant') {
+    next[next.length - 1] = { ...last, [field]: (last[field] ?? '') + delta };
+  }
+  return next;
+}
+
 export function useAgentChat(): UseAgentChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Abort any in-flight stream on unmount to prevent HTTP connection leak
-  // that would keep the document `load` event from firing.
-  useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, []);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const sendMessage = useCallback(async (content: string, currentPage?: string) => {
     if (!content.trim() || sending) return;
@@ -57,9 +64,7 @@ export function useAgentChat(): UseAgentChatReturn {
 
     const userMsg: ChatMessage = { role: 'user', content: content.trim() };
     const assistantMsg: ChatMessage = { role: 'assistant', content: '', reasoning: undefined };
-
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
-
     abortRef.current = new AbortController();
 
     try {
@@ -89,35 +94,16 @@ export function useAgentChat(): UseAgentChatReturn {
 
         for (const event of lines.flatMap(parseSseChunk)) {
           if (event.type === 'token') {
-            setMessages((prev) => {
-              const next = [...prev];
-              const last = next[next.length - 1];
-              if (last?.role === 'assistant') {
-                next[next.length - 1] = { ...last, content: last.content + event.data };
-              }
-              return next;
-            });
+            setMessages((prev) => appendLastAssistantField(prev, 'content', event.data));
           } else if (event.type === 'reasoning') {
-            setMessages((prev) => {
-              const next = [...prev];
-              const last = next[next.length - 1];
-              if (last?.role === 'assistant') {
-                next[next.length - 1] = {
-                  ...last,
-                  reasoning: (last.reasoning ?? '') + event.data,
-                };
-              }
-              return next;
-            });
+            setMessages((prev) => appendLastAssistantField(prev, 'reasoning', event.data));
           } else if (event.type === 'error') {
             setError(event.message);
           }
         }
       }
     } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        setError(err.message);
-      }
+      if (err instanceof Error && err.name !== 'AbortError') setError(err.message);
     } finally {
       setSending(false);
       abortRef.current = null;

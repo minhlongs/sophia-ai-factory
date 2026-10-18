@@ -42,11 +42,9 @@ export async function installSop(listingId: string): Promise<InstallResult> {
     if (!listing) {
       return failure({ code: 'LISTING_NOT_FOUND', message: 'SOP listing not found' });
     }
-
     if (listing.status !== 'published') {
       return failure({ code: 'LISTING_NOT_PUBLISHED', message: 'SOP listing is not published' });
     }
-
     if (typeof listing.price_cents !== 'number' || listing.price_cents !== 0) {
       return failure({
         code: 'PAYMENT_REQUIRED',
@@ -55,28 +53,18 @@ export async function installSop(listingId: string): Promise<InstallResult> {
     }
 
     const existingRow = await d1
-      .prepare(
-        `SELECT COUNT(*) as count FROM sop_installs
-         WHERE user_id = ? AND listing_id = ? AND status = 'active'`
-      )
+      .prepare(`SELECT COUNT(*) as count FROM sop_installs WHERE user_id = ? AND listing_id = ? AND status = 'active'`)
       .bind(user.id, listingId)
       .first<{ count: number }>();
 
     if (existingRow && existingRow.count > 0) {
-      return failure({
-        code: 'ALREADY_INSTALLED',
-        message: 'You have already installed this SOP',
-      });
+      return failure({ code: 'ALREADY_INSTALLED', message: 'You have already installed this SOP' });
     }
 
     const tier = await resolveUserTier(user.id);
     const limit = getSopInstallLimit(tier);
-
     const activeCountRow = await d1
-      .prepare(
-        `SELECT COUNT(*) as count FROM sop_installs
-         WHERE user_id = ? AND status = 'active'`
-      )
+      .prepare(`SELECT COUNT(*) as count FROM sop_installs WHERE user_id = ? AND status = 'active'`)
       .bind(user.id)
       .first<{ count: number }>();
 
@@ -90,46 +78,27 @@ export async function installSop(listingId: string): Promise<InstallResult> {
 
     const orgResult = await requireOrgMembership(user.id);
     const tenantId = orgResult.authorized ? orgResult.orgId : 'default';
-
     const licenseId = crypto.randomUUID();
 
     try {
       await dbCreateSopInstall(
         d1,
-        {
-          listing_id: listing.id,
-          user_id: user.id,
-          license_id: licenseId,
-          price_cents: listing.price_cents,
-          commission_id: null,
-        },
+        { listing_id: listing.id, user_id: user.id, license_id: licenseId, price_cents: listing.price_cents, commission_id: null },
         tenantId
       );
     } catch (createErr) {
       const errStr = createErr instanceof Error ? createErr.message : String(createErr);
       if (errStr.includes('UNIQUE constraint failed') || errStr.includes('constraint')) {
-        return failure({
-          code: 'ALREADY_INSTALLED',
-          message: 'You have already installed this SOP',
-        });
+        return failure({ code: 'ALREADY_INSTALLED', message: 'You have already installed this SOP' });
       }
       throw createErr;
     }
 
     captureSopInstalled({ distinctId: user.id, listingId: listing.id });
-
-    logger.info('[InstallSop] SOP installed', {
-      userId: user.id,
-      listingId: listing.id,
-      licenseId,
-    });
-
+    logger.info('[InstallSop] SOP installed', { userId: user.id, listingId: listing.id, licenseId });
     return success({ licenseId });
   } catch (err) {
-    logger.error(
-      '[InstallSop] Unexpected error',
-      err instanceof Error ? err : new Error(String(err))
-    );
+    logger.error('[InstallSop] Unexpected error', err instanceof Error ? err : new Error(String(err)));
     return failure({ code: 'DB_ERROR', message: 'An unexpected error occurred' });
   }
 }

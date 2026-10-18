@@ -1,7 +1,5 @@
 /**
  * YouTube channel configuration CRUD (D1).
- * Stores per-channel objective, audience, content pillars, cadence, guardrails.
- * BYOK: one config per (user, channel) — customer-controlled.
  * @module land/youtube/channel-config
  */
 
@@ -19,11 +17,7 @@ import {
   rowToConfig,
 } from './channel-config-types';
 
-export {
-  getChannelConfig,
-  getChannelConfigById,
-  listChannelConfigs,
-} from './channel-config-queries';
+export { getChannelConfig, getChannelConfigById, listChannelConfigs } from './channel-config-queries';
 
 /** Create a new channel config. Returns failure if (user, channel) already exists. */
 export async function createChannelConfig(
@@ -36,38 +30,21 @@ export async function createChannelConfig(
       .prepare(`SELECT id FROM youtube_channel_configs WHERE user_id = ?1 AND channel_id = ?2 LIMIT 1`)
       .bind(input.userId, input.channelId)
       .first<{ id: string }>();
-    if (existing) {
-      return { success: false, error: 'Channel config already exists for this user and channel' };
-    }
+    if (existing) return { success: false, error: 'Channel config already exists for this user and channel' };
+
     const id = genId();
     const postsPerWeek = postsPerWeekForCadence(input.cadence, input.postsPerWeek);
     await db
       .prepare(
-        `INSERT INTO youtube_channel_configs
-         (id, user_id, channel_id, channel_title, objective, audience, content_pillars,
-          cadence, posts_per_week, guardrails, content_buffer_days, autonomy_level, metadata)
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)`,
+        `INSERT INTO youtube_channel_configs (id, user_id, channel_id, channel_title, objective, audience, content_pillars, cadence, posts_per_week, guardrails, content_buffer_days, autonomy_level, metadata) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)`,
       )
       .bind(
-        id,
-        input.userId,
-        input.channelId,
-        input.channelTitle ?? null,
-        input.objective,
-        input.audience,
-        stringifyList(input.contentPillars),
-        input.cadence,
-        postsPerWeek,
-        input.guardrails ?? null,
-        input.contentBufferDays ?? 3,
-        input.autonomyLevel ?? 2,
-        input.metadata ? JSON.stringify(input.metadata) : null,
+        id, input.userId, input.channelId, input.channelTitle ?? null, input.objective, input.audience,
+        stringifyList(input.contentPillars), input.cadence, postsPerWeek, input.guardrails ?? null,
+        input.contentBufferDays ?? 3, input.autonomyLevel ?? 2, input.metadata ? JSON.stringify(input.metadata) : null,
       )
       .run();
-    const row = await db
-      .prepare(`SELECT * FROM youtube_channel_configs WHERE id = ?1 LIMIT 1`)
-      .bind(id)
-      .first<Record<string, unknown>>();
+    const row = await db.prepare(`SELECT * FROM youtube_channel_configs WHERE id = ?1 LIMIT 1`).bind(id).first<Record<string, unknown>>();
     if (!row) return { success: false, error: 'Failed to read back created config' };
     return { success: true, config: rowToConfig(row) };
   } catch (err) {

@@ -1,10 +1,5 @@
 /**
  * Server Action: Get ranked investment advice for a workspace.
- *
- * Composes roi-modeling aggregation (performance_events, MILLISECONDS) with
- * the learning_velocity table (precomputed by the daily cron) and ranks each
- * (entityType, entityId, channel) investment by composite score.
- *
  * @module land/creative-economy/investment-advisor
  */
 
@@ -52,10 +47,6 @@ interface VelocityRow {
   velocity_score: number;
 }
 
-/**
- * Get ranked investment advice: ROI per entity joined with learning velocity,
- * scored and ordered deterministically.
- */
 export async function getInvestmentAdvice(
   input: z.input<typeof schema>
 ): Promise<DashboardResult<InvestmentAdviceRow[]>> {
@@ -69,11 +60,8 @@ export async function getInvestmentAdvice(
     }
 
     const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
-    }
+    if (!user) return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
 
-    // Phase 4 feature gate: investment advisor requires ENTERPRISE+
     const tier = await resolveUserTier(user.id);
     const gate: FeatureGateResult = canUsePhase4Feature(tier, 'enable_investment_advisor');
     if (!gate.allowed) {
@@ -81,41 +69,27 @@ export async function getInvestmentAdvice(
     }
 
     const db = createServerClient();
-
-    // Verify workspace membership (IDOR prevention)
     const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, db);
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
-    const nowMs = Date.now();
-    const { startMs, endMs } = windowBoundsMs(nowMs, parsed.data.windowDays);
-
+    const { startMs, endMs } = windowBoundsMs(Date.now(), parsed.data.windowDays);
     const eventTypes = [...REVENUE_EVENT_TYPES, COST_EVENT_TYPE];
     const placeholders = eventTypes.map((_, i) => `?${i + 4}`).join(', ');
 
     const events = await db
       .prepare(
-        `SELECT entity_type, entity_id, channel, event_type, value_cents
-         FROM performance_events
-         WHERE workspace_id = ?1
-           AND recorded_at >= ?2
-           AND recorded_at <= ?3
-           AND event_type IN (${placeholders})`,
+        `SELECT entity_type, entity_id, channel, event_type, value_cents FROM performance_events
+         WHERE workspace_id = ?1 AND recorded_at >= ?2 AND recorded_at <= ?3 AND event_type IN (${placeholders})`,
       )
       .bind(parsed.data.workspaceId, startMs, endMs, ...eventTypes)
       .all<RawEventRow>();
 
     const roiRows = aggregateRoiByEntity(toPerfEvents(events.results ?? []));
 
-    // Latest velocity per (entity_type, channel) — table may be empty.
     const velocityRows = await db
-      .prepare(
-        `SELECT entity_type, channel, velocity_score
-         FROM learning_velocity
-         WHERE workspace_id = ?1
-         ORDER BY window_end_ms DESC`,
-      )
+      .prepare(`SELECT entity_type, channel, velocity_score FROM learning_velocity WHERE workspace_id = ?1 ORDER BY window_end_ms DESC`)
       .bind(parsed.data.workspaceId)
       .all<VelocityRow>();
 

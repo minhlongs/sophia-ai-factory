@@ -3,7 +3,6 @@
 /**
  * help-tooltip.tsx
  * "?" icon that opens a modal with route-specific intro text + optional video link.
- * All user-facing strings use useTranslations('help').
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -31,29 +30,22 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
   const t = useTranslations("help");
   const modalRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeModal = () => { setOpen(false); triggerRef.current?.focus(); };
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
   useEffect(() => {
-    if (open) {
-      const el = modalRef.current?.querySelector<HTMLElement>(
-        "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
-      );
-      el?.focus();
-    }
+    if (!open) return;
+    modalRef.current?.querySelector<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")?.focus();
   }, [open]);
 
   const intro = locale.startsWith("vi") ? content.introVi : content.introEn;
   const videoTitle = locale.startsWith("vi") ? content.videoTitleVi : content.videoTitleEn;
-  const hasVideo = !!content.videoSlug;
-  const isPublished = content.videoPublished === true;
 
   return (
     <>
@@ -74,29 +66,23 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
           aria-modal="true"
           aria-label={t("dialog_label")}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) { setOpen(false); triggerRef.current?.focus(); } }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
         >
-          <div
-            ref={modalRef}
-            className="relative w-full max-w-md rounded-2xl border border-border bg-background shadow-2xl p-6 space-y-4"
-          >
+          <div ref={modalRef} className="relative w-full max-w-md rounded-2xl border border-border bg-background shadow-2xl p-6 space-y-4">
             <button
               type="button"
-              onClick={() => { setOpen(false); triggerRef.current?.focus(); }}
+              onClick={closeModal}
               className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
               aria-label={t("close")}
             >
               <X className="w-4 h-4" />
             </button>
-
             <div className="flex items-center gap-2 pr-8">
               <HelpCircle className="w-5 h-5 text-primary-400 shrink-0" aria-hidden="true" />
               <h2 className="text-sm font-semibold text-foreground">{t("header")}</h2>
             </div>
-
             <p className="text-sm text-muted-foreground leading-relaxed">{intro}</p>
-
-            {hasVideo && (
+            {!!content.videoSlug && (
               <div className="rounded-xl border border-primary-800/40 bg-primary-950/20 p-4 flex items-start gap-3">
                 <div className="shrink-0 w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center">
                   <Play className="w-4 h-4 text-primary-400" aria-hidden="true" />
@@ -104,7 +90,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-primary-300 mb-1">{t("tutorial_video")}</p>
                   {videoTitle && <p className="text-xs text-muted-foreground mb-2 truncate">{videoTitle}</p>}
-                  {isPublished ? (
+                  {content.videoPublished === true ? (
                     <a
                       href={`/dashboard/help#video-${content.videoSlug}`}
                       className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 hover:underline"
@@ -119,12 +105,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                 </div>
               </div>
             )}
-
-            <Link
-              href="/dashboard/help"
-              className="block text-xs text-center text-muted-foreground hover:text-primary-400 transition-colors"
-              onClick={() => setOpen(false)}
-            >
+            <Link href="/dashboard/help" className="block text-xs text-center text-muted-foreground hover:text-primary-400 transition-colors" onClick={() => setOpen(false)}>
               {t("help_center")} {" →"}
             </Link>
           </div>

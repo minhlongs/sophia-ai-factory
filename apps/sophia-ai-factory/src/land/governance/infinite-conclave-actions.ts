@@ -68,32 +68,18 @@ const DEFAULT_CONSTITUTIONAL_INVARIANTS: InfiniteConstitutionalInvariant[] = [
   },
 ];
 
-/**
- * Server Action to arbitrate disputes via Infinite Conclave with 99.5% supermajority and 80% slashing.
- */
 export async function arbitrateInfiniteDisputeAction(
   input: InfiniteDisputeInput
 ): Promise<InfiniteDisputeActionResult> {
   try {
     const data = arbitrateInfiniteConclaveDispute(input);
-    await recordContinuumConclaveArbitration(
-      'infinite_conclave_arbitrations',
-      input,
-      data,
-      99.5
-    );
+    await recordContinuumConclaveArbitration('infinite_conclave_arbitrations', input, data, 99.5);
     return { success: true, data };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to arbitrate infinite conclave dispute',
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to arbitrate infinite conclave dispute' };
   }
 }
 
-/**
- * Server Action to verify proposed amendments against immutable constitutional invariants.
- */
 export async function verifyInfiniteInvariantAction(
   proposedArticleCode: string,
   invariants: InfiniteConstitutionalInvariant[] = DEFAULT_CONSTITUTIONAL_INVARIANTS
@@ -102,16 +88,10 @@ export async function verifyInfiniteInvariantAction(
     const data = verifyInfiniteConstitutionalInvariants(invariants, proposedArticleCode);
     return { success: data.allowed, data };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to verify infinite constitutional invariant',
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to verify infinite constitutional invariant' };
   }
 }
 
-/**
- * Server Action to compact transactions into 64-byte Non-Archimedean STARK state root and persist proof.
- */
 export async function compactNonArchimedeanStarkStateAction(
   previousStateRoot: string,
   transactions: MultiverseTransaction[],
@@ -119,16 +99,9 @@ export async function compactNonArchimedeanStarkStateAction(
 ): Promise<NonArchimedeanStarkCompactionActionResult> {
   try {
     const data = compactStateWithNonArchimedeanStark(previousStateRoot, transactions, circuitIdentifier);
-    await recordContinuumStarkCompactionProof(
-      'non_archimedean_stark_compaction_proofs',
-      'NA-STARK',
-      data
-    );
+    await recordContinuumStarkCompactionProof('non_archimedean_stark_compaction_proofs', 'NA-STARK', data);
     return { success: data.isMathematicallySound, data };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to compact Non-Archimedean STARK state',
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to compact Non-Archimedean STARK state' };
   }
 }

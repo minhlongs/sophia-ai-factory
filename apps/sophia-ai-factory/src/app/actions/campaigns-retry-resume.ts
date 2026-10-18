@@ -23,36 +23,20 @@ import {
 export async function retryCampaign(campaignId: string) {
   try {
     const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: "Unauthorized" };
-    }
+    if (!currentUser) return { success: false, message: "Unauthorized" };
 
     const db = createServerClient();
-    const loaded = await loadFailedCampaignWithTier(
-      db,
-      campaignId,
-      currentUser.id,
-      "retried",
-    );
-    if (!loaded.ok) {
-      return { success: false, message: loaded.message };
-    }
+    const loaded = await loadFailedCampaignWithTier(db, campaignId, currentUser.id, "retried");
+    if (!loaded.ok) return { success: false, message: loaded.message };
 
     const { campaign: c, tier } = loaded;
-
     const { error: updateError } = await db
       .from("campaigns")
-      .update({
-        status: "queued",
-        progress: 0,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ status: "queued", progress: 0, updated_at: new Date().toISOString() })
       .eq("id", campaignId)
       .eq("user_id", currentUser.id);
 
-    if (updateError) {
-      return { success: false, message: "Failed to reset campaign" };
-    }
+    if (updateError) return { success: false, message: "Failed to reset campaign" };
 
     await sendCampaignCreatedEvent({
       campaignId: c.id,
@@ -65,10 +49,7 @@ export async function retryCampaign(campaignId: string) {
     revalidatePath("/dashboard/campaigns");
     return { success: true, message: "Campaign retry initiated" };
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unknown error",
-    };
+    return { success: false, message: error instanceof Error ? error.message : "Unknown error" };
   }
 }
 
@@ -78,37 +59,22 @@ export async function retryCampaign(campaignId: string) {
 export async function resumeCampaign(campaignId: string) {
   try {
     const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: "Unauthorized" };
-    }
+    if (!currentUser) return { success: false, message: "Unauthorized" };
 
     const db = createServerClient();
-    const loaded = await loadFailedCampaignWithTier(
-      db,
-      campaignId,
-      currentUser.id,
-      "resumed",
-    );
-    if (!loaded.ok) {
-      return { success: false, message: loaded.message };
-    }
+    const loaded = await loadFailedCampaignWithTier(db, campaignId, currentUser.id, "resumed");
+    if (!loaded.ok) return { success: false, message: loaded.message };
 
     const { campaign: c, tier } = loaded;
     const { resumeStatus, resumeProgress, resumeFrom } = resolveResumeStep(c);
 
     const { error: updateError } = await db
       .from("campaigns")
-      .update({
-        status: resumeStatus,
-        progress: resumeProgress,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ status: resumeStatus, progress: resumeProgress, updated_at: new Date().toISOString() })
       .eq("id", campaignId)
       .eq("user_id", currentUser.id);
 
-    if (updateError) {
-      return { success: false, message: "Failed to update campaign" };
-    }
+    if (updateError) return { success: false, message: "Failed to update campaign" };
 
     await sendCampaignCreatedEvent({
       campaignId: c.id,
@@ -121,14 +87,8 @@ export async function resumeCampaign(campaignId: string) {
     });
 
     revalidatePath("/dashboard/campaigns");
-    return {
-      success: true,
-      message: `Campaign resumed from ${resumeFrom} step`,
-    };
+    return { success: true, message: `Campaign resumed from ${resumeFrom} step` };
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unknown error",
-    };
+    return { success: false, message: error instanceof Error ? error.message : "Unknown error" };
   }
 }

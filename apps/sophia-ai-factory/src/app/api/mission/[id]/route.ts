@@ -22,32 +22,37 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteContext) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id } = await params;
-  const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get('workspaceId');
-  if (!workspaceId) {
-    return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
-  }
-
-  const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
-  if (!hasAccess) {
+function mapMissionRouteError(err: unknown) {
+  const message = getErrorMessage(err);
+  const isForbiddenCode =
+    err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN';
+  if (message.includes('does not belong to workspace') || isForbiddenCode) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+  if (message.includes('not found')) {
+    return NextResponse.json({ error: message }, { status: 404 });
+  }
+  if (message.includes('not allowed') || message.includes('INVALID_TRANSITION')) {
+    return NextResponse.json({ error: message }, { status: 409 });
+  }
+  return NextResponse.json({ error: message }, { status: 500 });
+}
+
+export async function GET(request: Request, { params }: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id } = await params;
+  const workspaceId = new URL(request.url).searchParams.get('workspaceId');
+  if (!workspaceId) return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
+
+  const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
+  if (!hasAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   try {
     const mission = await getMissionWithGoals(id);
-    if (!mission) {
-      return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
-    }
-    if (mission.workspaceId !== workspaceId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    if (!mission) return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
+    if (mission.workspaceId !== workspaceId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     return NextResponse.json(mission);
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
@@ -56,9 +61,7 @@ export async function GET(request: Request, { params }: RouteContext) {
 
 export async function PATCH(request: Request, { params }: RouteContext) {
   const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
   let body: Record<string, unknown>;
@@ -70,65 +73,36 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
   const parsed = StatusSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parsed.error.issues },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'Validation failed', details: parsed.error.issues }, { status: 400 });
   }
 
   const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id);
-  if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  if (!hasAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   try {
     const mission = await updateMissionStatus(id, parsed.data.status, parsed.data.currentPhase, parsed.data.workspaceId);
     return NextResponse.json(mission);
   } catch (err) {
-    const message = getErrorMessage(err);
-    if (message.includes('does not belong to workspace') || (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (message.includes('not found')) {
-      return NextResponse.json({ error: message }, { status: 404 });
-    }
-    if (message.includes('not allowed') || message.includes('INVALID_TRANSITION')) {
-      return NextResponse.json({ error: message }, { status: 409 });
-    }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return mapMissionRouteError(err);
   }
 }
 
 export async function DELETE(request: Request, { params }: RouteContext) {
   const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
-  const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get('workspaceId');
-  if (!workspaceId) {
-    return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
-  }
+  const workspaceId = new URL(request.url).searchParams.get('workspaceId');
+  if (!workspaceId) return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
 
   const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
-  if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  if (!hasAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   try {
     await deleteMission(id, workspaceId);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = getErrorMessage(err);
-    if (message.includes('does not belong to workspace') || (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (message.includes('not found')) {
-      return NextResponse.json({ error: message }, { status: 404 });
-    }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return mapMissionRouteError(err);
   }
 }
 

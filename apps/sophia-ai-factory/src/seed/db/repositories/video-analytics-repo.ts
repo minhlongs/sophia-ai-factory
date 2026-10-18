@@ -1,24 +1,16 @@
 /**
  * Video analytics repository — per-video daily snapshot store.
- * Supports upsert of daily metrics and range queries.
- *
  * @module seed/db/repositories/video-analytics-repo
  */
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
-  AnalyticsSummary,
-  DateRange,
-  UpsertVideoAnalyticsInput,
-  VideoAnalyticsRow,
+  AnalyticsSummary, DateRange, UpsertVideoAnalyticsInput, VideoAnalyticsRow,
 } from './video-analytics-types';
 
 export type {
-  AnalyticsSummary,
-  DateRange,
-  UpsertVideoAnalyticsInput,
-  VideoAnalyticsRow,
+  AnalyticsSummary, DateRange, UpsertVideoAnalyticsInput, VideoAnalyticsRow,
 } from './video-analytics-types';
 
 export async function upsertVideoAnalytics(data: UpsertVideoAnalyticsInput): Promise<void> {
@@ -33,14 +25,10 @@ export async function upsertVideoAnalytics(data: UpsertVideoAnalyticsInput): Pro
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(video_id, platform, date)
        DO UPDATE SET
-         views = excluded.views,
-         watch_time_sec = excluded.watch_time_sec,
-         completion_rate = excluded.completion_rate,
-         impressions = excluded.impressions,
-         clicks = excluded.clicks,
-         likes = excluded.likes,
-         comments = excluded.comments,
-         shares = excluded.shares,
+         views = excluded.views, watch_time_sec = excluded.watch_time_sec,
+         completion_rate = excluded.completion_rate, impressions = excluded.impressions,
+         clicks = excluded.clicks, likes = excluded.likes,
+         comments = excluded.comments, shares = excluded.shares,
          synced_at = CURRENT_TIMESTAMP`,
     )
     .bind(
@@ -64,14 +52,9 @@ export async function getVideoAnalytics(
   if (!db) throw new Error('D1 database binding not available');
   let sql = 'SELECT * FROM video_analytics WHERE user_id = ? AND video_id = ?';
   const params: unknown[] = [userId, videoId];
-
   if (platform) { sql += ' AND platform = ?'; params.push(platform); }
-  if (dateRange) {
-    sql += ' AND date >= ? AND date <= ?';
-    params.push(dateRange.start, dateRange.end);
-  }
+  if (dateRange) { sql += ' AND date >= ? AND date <= ?'; params.push(dateRange.start, dateRange.end); }
   sql += ' ORDER BY date ASC';
-
   const { results } = await db.prepare(sql).bind(...params).all<VideoAnalyticsRow>();
   return results ?? [];
 }
@@ -88,14 +71,9 @@ export async function getTopVideos(
     ? 'CASE WHEN SUM(impressions) > 0 THEN CAST(SUM(clicks) AS REAL) / SUM(impressions) ELSE 0 END'
     : metric === 'watch_time' ? 'SUM(watch_time_sec)' : 'SUM(views)';
 
-  let sql = `SELECT video_id, platform_video_id, platform, (${col}) AS total
-             FROM video_analytics WHERE user_id = ?`;
+  let sql = `SELECT video_id, platform_video_id, platform, (${col}) AS total FROM video_analytics WHERE user_id = ?`;
   const params: unknown[] = [userId];
-
-  if (dateRange) {
-    sql += ' AND date >= ? AND date <= ?';
-    params.push(dateRange.start, dateRange.end);
-  }
+  if (dateRange) { sql += ' AND date >= ? AND date <= ?'; params.push(dateRange.start, dateRange.end); }
   sql += ' GROUP BY video_id, platform ORDER BY total DESC LIMIT ?';
   params.push(limit);
 
@@ -103,8 +81,7 @@ export async function getTopVideos(
     video_id: string; platform_video_id: string; platform: string; total: number;
   }>();
   return (results ?? []).map(r => ({
-    videoId: r.video_id, platformVideoId: r.platform_video_id,
-    platform: r.platform, total: r.total,
+    videoId: r.video_id, platformVideoId: r.platform_video_id, platform: r.platform, total: r.total,
   }));
 }
 

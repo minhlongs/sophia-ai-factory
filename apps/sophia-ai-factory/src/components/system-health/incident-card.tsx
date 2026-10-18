@@ -8,16 +8,9 @@
  */
 
 import React from 'react';
-import {
-  RefreshCw,
-  MessageSquare,
-  ArrowRight,
-} from 'lucide-react';
+import { RefreshCw, MessageSquare, ArrowRight } from 'lucide-react';
 import type { CustomerIncident } from '@/land/production-monitoring/customer-health-summary';
-import {
-  CATEGORY_META,
-  type IncidentCategoryMetaItem,
-} from './incident-category-meta';
+import { CATEGORY_META, type IncidentCategoryMetaItem } from './incident-category-meta';
 
 export { CATEGORY_META, type IncidentCategoryMetaItem };
 
@@ -45,17 +38,15 @@ export function IncidentCard({
   const whatYouCanDo = isVi ? incident.whatYouCanDoVi : incident.whatYouCanDo;
 
   const handleRetry = () => {
-    if (onRetry) {
-      void onRetry(incident.id);
-    } else if (incident.retryActionUrl && typeof window !== 'undefined') {
+    if (onRetry) void onRetry(incident.id);
+    else if (incident.retryActionUrl && typeof window !== 'undefined') {
       window.location.href = incident.retryActionUrl;
     }
   };
 
   const handleSupport = () => {
-    if (onContactSupport) {
-      onContactSupport(incident);
-    } else if (incident.supportUrl && typeof window !== 'undefined') {
+    if (onContactSupport) onContactSupport(incident);
+    else if (incident.supportUrl && typeof window !== 'undefined') {
       window.location.href = incident.supportUrl;
     }
   };
@@ -67,22 +58,16 @@ export function IncidentCard({
       role="region"
       aria-label={isVi ? 'Thẻ thông báo sự cố' : 'Incident notification card'}
     >
-      {/* Header: Service + Category Badge */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
         <div className="flex items-center gap-2">
           <CategoryIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-          <span className="font-semibold text-foreground text-sm sm:text-base">
-            {incident.service}
-          </span>
+          <span className="font-semibold text-foreground text-sm sm:text-base">{incident.service}</span>
         </div>
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${meta.badgeCls}`}
-        >
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${meta.badgeCls}`}>
           {isVi ? meta.labelVi : meta.labelEn}
         </span>
       </div>
 
-      {/* 3 Standard Action Zones */}
       <div className="mt-4 space-y-4 text-sm">
         <div className="rounded-lg bg-muted/40 p-3" data-testid="zone-what-happened">
           <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
@@ -105,7 +90,6 @@ export function IncidentCard({
           <p className="mt-1 text-foreground/90 leading-relaxed">{whatYouCanDo}</p>
         </div>
 
-        {/* Zones 4 & 5: Actions (TRY AGAIN & CONTACT SUPPORT) */}
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
             type="button"

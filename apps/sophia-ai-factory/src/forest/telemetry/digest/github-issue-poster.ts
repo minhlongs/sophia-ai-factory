@@ -33,10 +33,7 @@ export {
   type UpsertIssueResult,
 }
 
-/**
- * Find existing open issue by label + title prefix.
- * Returns the first match or null.
- */
+/** Find existing open issue by label + title prefix. Returns first match or null. */
 export async function findExistingIssue(
   repo: string,
   title: string,
@@ -57,8 +54,7 @@ export async function findExistingIssue(
     }
 
     recordSuccess('github')
-    const raw = await res.json()
-    const parsed = GhIssueListSchema.safeParse(raw)
+    const parsed = GhIssueListSchema.safeParse(await res.json())
     if (!parsed.success) {
       logger.warn('[digest/gh] issue list parse error', { error: parsed.error.message })
       return null
@@ -73,10 +69,7 @@ export async function findExistingIssue(
   }
 }
 
-/**
- * Idempotent upsert: search by title → PATCH body if exists, POST new if not.
- * Returns issue URL + action taken.
- */
+/** Idempotent upsert: search by title -> PATCH body if exists, POST new if not. */
 export async function upsertGithubIssue(
   params: UpsertIssueParams,
 ): Promise<UpsertIssueResult | null> {
@@ -96,37 +89,25 @@ export async function upsertGithubIssue(
 
   try {
     const existing = await findExistingIssue(repo, title, token)
-    if (existing) {
-      const res = await fetch(`https://api.github.com/repos/${repo}/issues/${existing.number}`, {
-        method: 'PATCH',
-        headers: ghHeaders(token),
-        body: JSON.stringify({ body }),
-      })
-      if (!res.ok) {
-        recordFailure('github', classifyError(new Error(`HTTP ${res.status}`)))
-        logger.warn('[digest/gh] PATCH issue non-OK', { status: res.status })
-        return null
-      }
-      recordSuccess('github')
-      const updated = GhIssueSchema.parse(await res.json())
-      logger.info('[digest/gh] issue updated', { number: updated.number })
-      return { url: updated.html_url, action: 'updated', issueNumber: updated.number }
-    }
-
-    const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
-      method: 'POST',
+    const isUpdate = Boolean(existing)
+    const url = existing
+      ? `https://api.github.com/repos/${repo}/issues/${existing.number}`
+      : `https://api.github.com/repos/${repo}/issues`
+    const res = await fetch(url, {
+      method: isUpdate ? 'PATCH' : 'POST',
       headers: ghHeaders(token),
-      body: JSON.stringify({ title, body, labels }),
+      body: JSON.stringify(isUpdate ? { body } : { title, body, labels }),
     })
     if (!res.ok) {
       recordFailure('github', classifyError(new Error(`HTTP ${res.status}`)))
-      logger.warn('[digest/gh] POST issue non-OK', { status: res.status })
+      logger.warn(`[digest/gh] ${isUpdate ? 'PATCH' : 'POST'} issue non-OK`, { status: res.status })
       return null
     }
     recordSuccess('github')
-    const created = GhIssueSchema.parse(await res.json())
-    logger.info('[digest/gh] issue created', { number: created.number })
-    return { url: created.html_url, action: 'created', issueNumber: created.number }
+    const issue = GhIssueSchema.parse(await res.json())
+    const action = isUpdate ? 'updated' : 'created'
+    logger.info(`[digest/gh] issue ${action}`, { number: issue.number })
+    return { url: issue.html_url, action, issueNumber: issue.number }
   } catch (err) {
     recordFailure('github', classifyError(err))
     logger.warn('[digest/gh] upsert failed', { error: getErrorMessage(err) })

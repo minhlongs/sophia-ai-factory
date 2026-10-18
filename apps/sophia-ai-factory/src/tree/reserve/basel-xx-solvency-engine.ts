@@ -4,11 +4,8 @@
  * @description Pure domain engine for Basel XX Omnipresent Solvency & $250.0 Trillion Sovereign Reserve Singularity.
  */
 
-import { createHash } from 'node:crypto';
-import {
-  calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
-} from './basel-solvency-domain-engine';
+import { calculateParameterizedCollateralValue } from './basel-solvency-domain-engine';
+import { evaluateTransCosmicBaselSolvency } from './basel-trans-cosmic-solvency-helper';
 
 import {
   GATE_30_SCALE_TARGETS,
@@ -67,69 +64,21 @@ export function calculateMetaverseCollateralValue(
  * Evaluates extreme capital adequacy and solvency under Basel XX standards.
  */
 export function evaluateBaselXxSolvency(input: BaselXxSolvencyInput): BaselXxSolvencyOutput {
-  const violations: string[] = [];
-
-  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
-    calculateBaselSolvencyRatios(input);
-
-  if (cet1RatioBps < GATE_30_SCALE_TARGETS.BASEL_XX_MIN_CET1_BPS) {
-    violations.push(
-      `CET1 Ratio ${cet1RatioBps} bps is below Basel XX requirement of ${GATE_30_SCALE_TARGETS.BASEL_XX_MIN_CET1_BPS} bps (65.00%)`
-    );
-  }
-
-  if (liquidityCoverageRatioBps < GATE_30_SCALE_TARGETS.BASEL_XX_MIN_LCR_BPS) {
-    violations.push(
-      `Liquidity Coverage Ratio ${liquidityCoverageRatioBps} bps is below Basel XX requirement of ${GATE_30_SCALE_TARGETS.BASEL_XX_MIN_LCR_BPS} bps (3500.00%)`
-    );
-  }
-
-  if (netStableFundingRatioBps < GATE_30_SCALE_TARGETS.BASEL_XX_MIN_NSFR_BPS) {
-    violations.push(
-      `Net Stable Funding Ratio ${netStableFundingRatioBps} bps is below Basel XX requirement of ${GATE_30_SCALE_TARGETS.BASEL_XX_MIN_NSFR_BPS} bps (900.00%)`
-    );
-  }
-
-  const targetBufferCents = GATE_30_SCALE_TARGETS.SOVEREIGN_RESERVE_SINGULARITY_USD * 100;
-  if (input.sovereignCapitalBufferCents < targetBufferCents) {
-    violations.push(
-      `Sovereign capital buffer ${input.sovereignCapitalBufferCents} cents is below $250.0T requirement (${targetBufferCents} cents)`
-    );
-  }
-
-  if (input.stressTestSurvivalDays < 109500) {
-    violations.push(
-      `Stress test survival horizon ${input.stressTestSurvivalDays} days is below 300-year minimum (109,500 days)`
-    );
-  }
-
-  let solvencyStatus: BaselXxSolvencyStatus = 'SOLVENT_AND_CAPITALIZED';
-  if (violations.length > 0) {
-    if (input.sovereignCapitalBufferCents < targetBufferCents) {
-      solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-    } else if (liquidityCoverageRatioBps < GATE_30_SCALE_TARGETS.BASEL_XX_MIN_LCR_BPS) {
-      solvencyStatus = 'LIQUIDITY_RUN_DEFICIT';
-    } else {
-      solvencyStatus = 'SUPERVISORY_INTERVENTION';
-    }
-  }
-
-  const isSolvent = violations.length === 0;
-  const supervisorySignature = createHash('sha256')
-    .update(
-      `BASEL_XX_SOLVENCY:${isSolvent}:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${input.sovereignCapitalBufferCents}:${input.stressTestSurvivalDays}`
-    )
-    .digest('hex');
-
-  return {
-    isSolvent,
-    solvencyStatus,
-    cet1RatioBps,
-    liquidityCoverageRatioBps,
-    netStableFundingRatioBps,
-    sovereignCapitalBufferCents: input.sovereignCapitalBufferCents,
-    stressTestSurvivalDays: input.stressTestSurvivalDays,
-    violations,
-    supervisorySignature,
-  };
+  return evaluateTransCosmicBaselSolvency<BaselXxSolvencyStatus>(input, {
+    tierName: 'Basel XX',
+    minCet1Bps: GATE_30_SCALE_TARGETS.BASEL_XX_MIN_CET1_BPS,
+    cet1PctLabel: '65.00%',
+    minLcrBps: GATE_30_SCALE_TARGETS.BASEL_XX_MIN_LCR_BPS,
+    lcrPctLabel: '3500.00%',
+    minNsfrBps: GATE_30_SCALE_TARGETS.BASEL_XX_MIN_NSFR_BPS,
+    nsfrPctLabel: '900.00%',
+    targetBufferCents: GATE_30_SCALE_TARGETS.SOVEREIGN_RESERVE_SINGULARITY_USD * 100,
+    bufferViolationMessage: (actual, target) =>
+      `Sovereign capital buffer ${actual} cents is below $250.0T requirement (${target} cents)`,
+    minSurvivalDays: 109500,
+    survivalViolationMessage: (actual) =>
+      `Stress test survival horizon ${actual} days is below 300-year minimum (109,500 days)`,
+    buildSignaturePayload: (ctx) =>
+      `BASEL_XX_SOLVENCY:${ctx.isSolvent}:${ctx.cet1RatioBps}:${ctx.liquidityCoverageRatioBps}:${ctx.netStableFundingRatioBps}:${ctx.sovereignCapitalBufferCents}:${ctx.stressTestSurvivalDays}`,
+  });
 }

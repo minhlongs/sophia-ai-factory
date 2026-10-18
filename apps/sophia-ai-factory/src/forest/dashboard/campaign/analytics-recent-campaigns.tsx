@@ -43,9 +43,7 @@ export function AnalyticsRecentCampaigns({
   );
 
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-50" />;
-    }
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-50" />;
     return sortDir === 'asc'
       ? <ArrowUp className="h-3 w-3 ml-1 inline" />
       : <ArrowDown className="h-3 w-3 ml-1 inline" />;
@@ -62,20 +60,16 @@ export function AnalyticsRecentCampaigns({
           <thead className="bg-muted/30">
             <tr>
               <th className={thClass} onClick={() => handleSort('name')}>
-                {t('recent_name') || 'Name'}
-                {renderSortIcon('name')}
+                {t('recent_name') || 'Name'}{renderSortIcon('name')}
               </th>
               <th className={thClass} onClick={() => handleSort('status')}>
-                {t('recent_status') || 'Status'}
-                {renderSortIcon('status')}
+                {t('recent_status') || 'Status'}{renderSortIcon('status')}
               </th>
               <th className={thClass} onClick={() => handleSort('createdAt')}>
-                {t('recent_created') || 'Created'}
-                {renderSortIcon('createdAt')}
+                {t('recent_created') || 'Created'}{renderSortIcon('createdAt')}
               </th>
               <th className={thClass} onClick={() => handleSort('completedAt')}>
-                {t('recent_completed') || 'Completed'}
-                {renderSortIcon('completedAt')}
+                {t('recent_completed') || 'Completed'}{renderSortIcon('completedAt')}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <span className="sr-only">{t('recent_actions') || 'Actions'}</span>
@@ -84,10 +78,7 @@ export function AnalyticsRecentCampaigns({
           </thead>
           <tbody className="divide-y divide-border/30 bg-card">
             {sorted.map((campaign) => (
-              <tr
-                key={campaign.id}
-                className="hover:bg-muted/20 transition-colors"
-              >
+              <tr key={campaign.id} className="hover:bg-muted/20 transition-colors">
                 <td className={cn(tdClass, 'font-medium text-foreground max-w-[200px] truncate')}>
                   {campaign.name}
                 </td>
@@ -96,12 +87,8 @@ export function AnalyticsRecentCampaigns({
                     {getStatusLabel(campaign.status)}
                   </span>
                 </td>
-                <td className={tdClass + ' text-muted-foreground'}>
-                  {formatDate(campaign.createdAt)}
-                </td>
-                <td className={tdClass + ' text-muted-foreground'}>
-                  {formatDate(campaign.completedAt)}
-                </td>
+                <td className={tdClass + ' text-muted-foreground'}>{formatDate(campaign.createdAt)}</td>
+                <td className={tdClass + ' text-muted-foreground'}>{formatDate(campaign.completedAt)}</td>
                 <td className={cn(tdClass, 'text-right')}>
                   <Link
                     href={`/dashboard/campaigns/${campaign.id}`}
@@ -116,10 +103,7 @@ export function AnalyticsRecentCampaigns({
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-muted-foreground"
-                >
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
                   {t('recent_empty') || 'No campaigns found'}
                 </td>
               </tr>

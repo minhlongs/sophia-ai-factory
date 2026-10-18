@@ -13,11 +13,7 @@ import { useSearchParams } from 'next/navigation';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
 import { Crown, ArrowUp, Loader2 } from 'lucide-react';
-import {
-	TIER_ORDER,
-	formatPeriodEndDisplay,
-	triggerTierCheckout,
-} from './plan-upgrade-helpers';
+import { TIER_ORDER, formatPeriodEndDisplay, triggerTierCheckout } from './plan-upgrade-helpers';
 
 interface Props {
 	currentTier: Tier;
@@ -31,13 +27,11 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 	const handoverId = params!.get('handover');
 	const [loading, setLoading] = useState<Tier | null>(null);
 
-	// FREE100 handover: if ?handover=<id> is in URL, treat as MASTER active
 	const effectiveTier = handoverId ? 'MASTER' : currentTier;
 	const current = UNIFIED_TIERS[effectiveTier];
 	const currentIdx = TIER_ORDER.indexOf(effectiveTier);
 	const upgradeTiers = TIER_ORDER.filter((_, i) => i > currentIdx);
 
-	// Clear handover param from URL after detecting it (clean state)
 	useEffect(() => {
 		if (handoverId) {
 			const url = new URL(window.location.href);
@@ -64,12 +58,8 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 					<Crown className="w-5 h-5 text-amber-400" aria-hidden="true" />
 					<span className="font-semibold text-foreground">Gói {current.name} — Cao Nhất</span>
 				</div>
-				<p className="text-sm text-muted-foreground mt-1">
-					Bạn đang sử dụng gói cao nhất. Cảm ơn bạn!
-				</p>
-				{periodEndDisplay && (
-					<p className="text-xs text-muted-foreground mt-2">{periodEndDisplay}</p>
-				)}
+				<p className="text-sm text-muted-foreground mt-1">Bạn đang sử dụng gói cao nhất. Cảm ơn bạn!</p>
+				{periodEndDisplay && <p className="text-xs text-muted-foreground mt-2">{periodEndDisplay}</p>}
 			</div>
 		);
 	}
@@ -86,9 +76,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 				<p className="text-sm text-muted-foreground mt-1">
 					${current.price}/{billingLabel} — {current.mcuMonthly.toLocaleString()} MCU/tháng
 				</p>
-				{periodEndDisplay && (
-					<p className="text-xs text-muted-foreground mt-1">{periodEndDisplay}</p>
-				)}
+				{periodEndDisplay && <p className="text-xs text-muted-foreground mt-1">{periodEndDisplay}</p>}
 			</div>
 
 			<div className="grid gap-2">
@@ -105,9 +93,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 						>
 							<div>
 								<span className="font-medium text-foreground">{t.name}</span>
-								<span className="text-sm text-muted-foreground ml-2">
-									${t.price}/{tierBillingLabel}
-								</span>
+								<span className="text-sm text-muted-foreground ml-2">${t.price}/{tierBillingLabel}</span>
 							</div>
 							{isLoading ? (
 								<Loader2 className="w-4 h-4 text-primary motion-safe:animate-spin" aria-hidden="true" />
@@ -121,10 +107,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 
 			{showHistoryLink && (
 				<p className="text-xs text-muted-foreground">
-					<Link
-						href="/dashboard/orders"
-						className="text-primary hover:text-primary/80 underline"
-					>
+					<Link href="/dashboard/orders" className="text-primary hover:text-primary/80 underline">
 						View past orders
 					</Link>
 				</p>

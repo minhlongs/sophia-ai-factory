@@ -6,11 +6,7 @@
 
 import type { Tier } from '@/seed/types';
 import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
-import {
-  getTask,
-  getAgentById,
-  updateTaskResult,
-} from './repository';
+import { getTask, getAgentById, updateTaskResult } from './repository';
 import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import {
   resolveAgentVariantConfig,
@@ -22,32 +18,17 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 /**
  * Executes an agent task
- * @param taskId - The task ID to execute
- * @param orgId - The organization ID (for auth)
- * @param userTier - The user's subscription tier
- * @returns Promise resolving to the agent output
  */
-export async function runAgent(
-  taskId: string,
-  orgId: string,
-  userTier: string
-): Promise<string> {
-  // Validate tier allows this agent role
+export async function runAgent(taskId: string, orgId: string, userTier: string): Promise<string> {
   const task = await getTask(taskId, orgId);
-  if (!task) {
-    throw new Error(`Task ${taskId} not found`);
-  }
+  if (!task) throw new Error(`Task ${taskId} not found`);
 
   const agent = await getAgentById(task.agentId);
-  if (!agent) {
-    throw new Error(`Agent ${task.agentId} not found`);
-  }
+  if (!agent) throw new Error(`Agent ${task.agentId} not found`);
 
-  // Check tier permission
   try {
     assertTierAllowsAgent(userTier as Tier, agent.role);
   } catch (err) {
-    // Gate failed - record and throw
     await updateTaskResult(taskId, orgId, {
       status: 'failed',
       output: '',
@@ -56,7 +37,6 @@ export async function runAgent(
     throw err;
   }
 
-  // Check API key
   if (!OPENROUTER_API_KEY) {
     await updateTaskResult(taskId, orgId, {
       status: 'failed',
@@ -66,7 +46,6 @@ export async function runAgent(
     throw new Error('OPENROUTER_API_KEY environment variable is required');
   }
 
-  // Build OpenRouter request
   const messages = [
     { role: 'system', content: agent.systemPrompt },
     { role: 'user', content: task.input },
@@ -78,7 +57,6 @@ export async function runAgent(
     orgId,
   );
 
-  // Circuit breaker: check if OpenRouter is available
   if (!shouldAllowRequest('openrouter')) {
     throw new Error('Circuit breaker open for OpenRouter — too many failures');
   }
@@ -92,20 +70,14 @@ export async function runAgent(
         'HTTP-Referer': process.env.APP_URL || 'https://sophia.agencyos.network',
         'X-Title': 'Sophia AI Factory',
       },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature,
-        stream: false,
-      }),
+      body: JSON.stringify({ model, messages, temperature, stream: false }),
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`OpenRouter error ${response.status}: ${errorBody}`);
+      throw new Error(`OpenRouter error ${response.status}: ${await response.text()}`);
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       choices?: { message?: { content: string } }[];
       usage?: { completion_tokens: number; prompt_tokens: number; cost?: number };
     };
@@ -124,11 +96,6 @@ export async function runAgent(
 
     return output;
   } catch (err) {
-    return recordAgentRunFailure({
-      err,
-      taskId,
-      orgId,
-      agentRole: agent.role,
-    });
+    return recordAgentRunFailure({ err, taskId, orgId, agentRole: agent.role });
   }
 }

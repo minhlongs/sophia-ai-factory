@@ -47,35 +47,11 @@ export const EDGE_APAC_VOICES: readonly EdgeTtsVoice[] = [
     dialect: 'ja-JP-tokyo',
   },
   // Korean
-  {
-    name: 'ko-KR-SunHiNeural',
-    shortName: 'SunHi',
-    locale: 'ko',
-    gender: 'female',
-    description: 'Melodic and gentle Seoul female voice',
-  },
-  {
-    name: 'ko-KR-InJoonNeural',
-    shortName: 'InJoon',
-    locale: 'ko',
-    gender: 'male',
-    description: 'Confident and clear Seoul tech male voice',
-  },
+  { name: 'ko-KR-SunHiNeural', shortName: 'SunHi', locale: 'ko', gender: 'female', description: 'Melodic and gentle Seoul female voice' },
+  { name: 'ko-KR-InJoonNeural', shortName: 'InJoon', locale: 'ko', gender: 'male', description: 'Confident and clear Seoul tech male voice' },
   // Thai
-  {
-    name: 'th-TH-PremwadeeNeural',
-    shortName: 'Premwadee',
-    locale: 'th',
-    gender: 'female',
-    description: 'Smooth and engaging Bangkok female narrator',
-  },
-  {
-    name: 'th-TH-NiwatNeural',
-    shortName: 'Niwat',
-    locale: 'th',
-    gender: 'male',
-    description: 'Crisp and energetic Bangkok male voice',
-  },
+  { name: 'th-TH-PremwadeeNeural', shortName: 'Premwadee', locale: 'th', gender: 'female', description: 'Smooth and engaging Bangkok female narrator' },
+  { name: 'th-TH-NiwatNeural', shortName: 'Niwat', locale: 'th', gender: 'male', description: 'Crisp and energetic Bangkok male voice' },
   // English (US)
   {
     name: 'en-US-JennyNeural',

@@ -1,8 +1,5 @@
 /**
  * Customer Activity & Job Telemetry Resolvers.
- *
- * Layer: land/growth/retention
- *
  * @module land/growth/retention/activity-resolvers
  */
 
@@ -35,9 +32,7 @@ export async function resolveLastActiveTimestamp(
 
   try {
     const sessionRow = await db
-      .prepare(
-        'SELECT updatedAt, createdAt FROM "session" WHERE userId = ? ORDER BY createdAt DESC LIMIT 1',
-      )
+      .prepare('SELECT updatedAt, createdAt FROM "session" WHERE userId = ? ORDER BY createdAt DESC LIMIT 1')
       .bind(userId)
       .first<D1SessionRow>();
 
@@ -52,18 +47,13 @@ export async function resolveLastActiveTimestamp(
 
   try {
     const streakRow = await db
-      .prepare(
-        'SELECT last_activity_date, updated_at FROM user_streaks WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
-      )
+      .prepare('SELECT last_activity_date, updated_at FROM user_streaks WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1')
       .bind(userId)
       .first<D1StreakRow>();
 
     if (streakRow?.last_activity_date) {
       const streakTime = new Date(streakRow.last_activity_date).getTime();
-      if (
-        !Number.isNaN(streakTime) &&
-        (!lastActiveMs || streakTime > lastActiveMs)
-      ) {
+      if (!Number.isNaN(streakTime) && (!lastActiveMs || streakTime > lastActiveMs)) {
         lastActiveMs = streakTime;
       }
     }
@@ -88,23 +78,15 @@ export async function resolveRenderJobCounts(
 
   try {
     const videoJobsRows = await db
-      .prepare(
-        'SELECT status, COUNT(*) as cnt FROM video_jobs WHERE user_id = ? GROUP BY status',
-      )
+      .prepare('SELECT status, COUNT(*) as cnt FROM video_jobs WHERE user_id = ? GROUP BY status')
       .bind(userId)
       .all<D1JobStatusRow>();
 
-    if (videoJobsRows.results && videoJobsRows.results.length > 0) {
-      for (const row of videoJobsRows.results) {
-        if (
-          row.status === 'published' ||
-          row.status === 'uploaded' ||
-          row.status === 'completed'
-        ) {
-          completedJobs += row.cnt;
-        } else if (row.status === 'failed') {
-          failedJobs += row.cnt;
-        }
+    for (const row of videoJobsRows.results ?? []) {
+      if (row.status === 'published' || row.status === 'uploaded' || row.status === 'completed') {
+        completedJobs += row.cnt;
+      } else if (row.status === 'failed') {
+        failedJobs += row.cnt;
       }
     }
   } catch {
@@ -114,17 +96,13 @@ export async function resolveRenderJobCounts(
   if (completedJobs === 0 && failedJobs === 0) {
     try {
       const videosRows = await db
-        .prepare(
-          'SELECT status, COUNT(*) as cnt FROM videos WHERE user_id = ? GROUP BY status',
-        )
+        .prepare('SELECT status, COUNT(*) as cnt FROM videos WHERE user_id = ? GROUP BY status')
         .bind(userId)
         .all<D1JobStatusRow>();
 
-      if (videosRows.results) {
-        for (const row of videosRows.results) {
-          if (row.status === 'completed') completedJobs += row.cnt;
-          if (row.status === 'failed') failedJobs += row.cnt;
-        }
+      for (const row of videosRows.results ?? []) {
+        if (row.status === 'completed') completedJobs += row.cnt;
+        if (row.status === 'failed') failedJobs += row.cnt;
       }
     } catch {
       // Non-fatal

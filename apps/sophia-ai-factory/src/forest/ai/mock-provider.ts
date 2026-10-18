@@ -24,27 +24,17 @@ export {
 
 /** Mock provider configuration for deterministic test scenarios. */
 export interface MockProviderConfig {
-  /** Provider identifier (must be a valid ProviderId). */
   id: ProviderId;
-  /** Human-readable label. */
   label: string;
-  /** Fixed response content for all chat calls. */
   fixedResponse?: string;
-  /** Fixed usage tokens. */
   fixedUsage?: { inputTokens: number; outputTokens: number };
-  /** Fixed latency in milliseconds. */
   fixedLatencyMs?: number;
-  /** Fixed model name. */
   fixedModel?: string;
-  /** Whether to simulate failures. */
   shouldFail?: boolean;
-  /** Error message when shouldFail is true. */
   errorMessage?: string;
-  /** Seed for deterministic behavior (not used in mock but kept for API compatibility). */
   seed?: number;
 }
 
-/** Default mock configuration. */
 const DEFAULT_CONFIG: MockProviderConfig = {
   id: 'openrouter',
   label: 'Mock Provider',
@@ -54,23 +44,20 @@ const DEFAULT_CONFIG: MockProviderConfig = {
   fixedModel: 'mock-model-v1',
 };
 
+const DEFAULT_CAPABILITIES: ProviderCapabilities = {
+  streaming: false,
+  systemRole: true,
+  maxOutputTokens: 4096,
+  maxInputTokens: 32768,
+  functionCalling: false,
+  vision: false,
+};
+
 /**
  * Create a mock provider with deterministic behavior.
- *
- * @param config - Configuration for the mock provider
- * @returns Provider implementation suitable for testing
  */
 export function createMockProvider(config: Partial<MockProviderConfig> = {}): Provider {
   const cfg = { ...DEFAULT_CONFIG, ...config };
-
-  const capabilities: ProviderCapabilities = {
-    streaming: false,
-    systemRole: true,
-    maxOutputTokens: 4096,
-    maxInputTokens: 32768,
-    functionCalling: false,
-    vision: false,
-  };
 
   return {
     id: cfg.id,
@@ -83,7 +70,7 @@ export function createMockProvider(config: Partial<MockProviderConfig> = {}): Pr
         throw error;
       }
 
-      const response: ChatResponse = {
+      return {
         content: cfg.fixedResponse ?? 'Mock response',
         model: cfg.fixedModel ?? options.model,
         provider: cfg.id,
@@ -92,32 +79,26 @@ export function createMockProvider(config: Partial<MockProviderConfig> = {}): Pr
         latencyMs: cfg.fixedLatencyMs ?? 10,
         raw: { mock: true, messagesCount: messages.length },
       };
-
-      return response;
     },
 
     async *stream(_messages: ChatMessage[], _options: ChatOptions): AsyncGenerator<StreamChunk, void, unknown> {
       if (cfg.shouldFail) {
-        const errorChunk: StreamChunk = {
+        yield {
           type: 'text_delta',
           delta: `Error: ${cfg.errorMessage ?? 'Mock provider configured to fail'}`,
           done: true,
         };
-        yield errorChunk;
         return;
       }
 
-      const content = cfg.fixedResponse ?? 'Mock response';
-      const chunk: StreamChunk = {
+      yield {
         type: 'text_delta',
-        delta: content,
+        delta: cfg.fixedResponse ?? 'Mock response',
         done: true,
       };
-      yield chunk;
     },
 
     countTokens(messages: ChatMessage[], _model: string): number {
-      // Deterministic token count: 4 chars per token approximation
       const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0);
       return Math.ceil(totalChars / 4);
     },
@@ -125,12 +106,11 @@ export function createMockProvider(config: Partial<MockProviderConfig> = {}): Pr
     estimateCost(messages: ChatMessage[], model: string, options?: ChatOptions): number {
       const inputTokens = this.countTokens(messages, model);
       const outputTokens = options?.maxTokens ?? 500;
-      // Mock pricing: $0.001 per 1K tokens
       return (inputTokens + outputTokens) * 0.000001;
     },
 
     getCapabilities(_model: string): ProviderCapabilities {
-      return capabilities;
+      return DEFAULT_CAPABILITIES;
     },
   };
 }

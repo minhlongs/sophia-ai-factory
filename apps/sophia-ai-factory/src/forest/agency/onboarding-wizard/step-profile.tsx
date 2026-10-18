@@ -1,8 +1,6 @@
 /**
  * Agency Onboarding Wizard Step 1: Profile.
- *
  * Layer: forest/agency (Presentation & Client Component)
- *
  * @module forest/agency/onboarding-wizard/step-profile
  */
 
@@ -16,18 +14,14 @@ interface StepProfileProps {
   isVi: boolean;
 }
 
-export function StepProfile({
-  profile,
-  setProfile,
-  onClientNameChange,
-  isVi,
-}: StepProfileProps) {
+export function StepProfile({ profile, setProfile, onClientNameChange, isVi }: StepProfileProps) {
+  const inputCls =
+    'w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-foreground">
-          {isVi ? '1. Hồ Sơ Khách Hàng' : '1. Client Profile'}
-        </h3>
+        <h3 className="text-xl font-bold text-foreground">{isVi ? '1. Hồ Sơ Khách Hàng' : '1. Client Profile'}</h3>
         <p className="text-sm text-muted-foreground mt-1">
           {isVi
             ? 'Khai báo thông tin cơ bản của doanh nghiệp khách hàng để thiết lập không gian riêng biệt.'
@@ -46,7 +40,7 @@ export function StepProfile({
             placeholder={isVi ? 'Ví dụ: Tập Đoàn Truyền Thông Á Châu' : 'e.g. Acme Media Group'}
             value={profile.clientName}
             onChange={(e) => onClientNameChange(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className={inputCls}
           />
         </div>
 
@@ -60,17 +54,12 @@ export function StepProfile({
             placeholder="acme-media"
             value={profile.agencySlug}
             onChange={(e) =>
-              setProfile((prev) => ({
-                ...prev,
-                agencySlug: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ''),
-              }))
+              setProfile((prev) => ({ ...prev, agencySlug: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '') }))
             }
-            className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className={`${inputCls} font-mono`}
           />
           <p className="text-xs text-muted-foreground">
-            {isVi
-              ? 'Đường dẫn cổng thông tin: agencyos.network/portal/[slug]'
-              : 'Portal address: agencyos.network/portal/[slug]'}
+            {isVi ? 'Đường dẫn cổng thông tin: agencyos.network/portal/[slug]' : 'Portal address: agencyos.network/portal/[slug]'}
           </p>
         </div>
 
@@ -84,7 +73,7 @@ export function StepProfile({
             placeholder="contact@client.com"
             value={profile.contactEmail}
             onChange={(e) => setProfile((prev) => ({ ...prev, contactEmail: e.target.value }))}
-            className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className={inputCls}
           />
         </div>
 
@@ -95,7 +84,7 @@ export function StepProfile({
           <select
             value={profile.industryTag}
             onChange={(e) => setProfile((prev) => ({ ...prev, industryTag: e.target.value }))}
-            className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className={inputCls}
           >
             <option value="ecommerce">{isVi ? 'Thương Mại Điện Tử' : 'E-Commerce'}</option>
             <option value="marketing_agency">{isVi ? 'Đại Lý Tiếp Thị / Agency' : 'Marketing Agency'}</option>
@@ -114,13 +103,8 @@ export function StepProfile({
             min="50"
             step="50"
             value={profile.initialMcuBudget}
-            onChange={(e) =>
-              setProfile((prev) => ({
-                ...prev,
-                initialMcuBudget: parseInt(e.target.value, 10) || 0,
-              }))
-            }
-            className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            onChange={(e) => setProfile((prev) => ({ ...prev, initialMcuBudget: parseInt(e.target.value, 10) || 0 }))}
+            className={inputCls}
           />
           <p className="text-xs text-muted-foreground">
             {isVi

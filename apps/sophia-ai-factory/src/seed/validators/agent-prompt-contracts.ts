@@ -1,19 +1,11 @@
 /**
  * agent-prompt-contracts.ts — Zod schemas for typed prompt contracts per AgentRole.
- *
  * Layer: seed (foundational — no business logic, no side effects)
- * Phase 03: Typed Prompt Contracts
- *
  * Each AgentRole has a dedicated schema extending the common base.
- * validatePromptContract() is the single entry-point for fleet spawner validation.
  */
 
 import { z } from 'zod';
 import type { SOPAgentRole } from '@/seed/types/multi-agent';
-
-// ---------------------------------------------------------------------------
-// Base schema — fields common to all roles
-// ---------------------------------------------------------------------------
 
 const promptContractBase = z.object({
   objective: z.string().min(1, 'objective is required').max(2000, 'objective must be at most 2000 characters'),
@@ -21,10 +13,6 @@ const promptContractBase = z.object({
   maxTokens: z.number().int().positive().max(100_000).optional(),
   escalationRules: z.array(z.string()).max(10).optional(),
 });
-
-// ---------------------------------------------------------------------------
-// Role-specific schemas
-// ---------------------------------------------------------------------------
 
 export const scriptWriterSchema = promptContractBase.extend({
   topic: z.string().min(1, 'topic is required').max(500),
@@ -52,32 +40,16 @@ export const publisherSchema = promptContractBase.extend({
 
 export const analystSchema = promptContractBase.extend({
   metrics: z.array(z.string()).min(1, 'at least one metric is required').max(50),
-  timeRange: z.object({
-    start: z.string().datetime(),
-    end: z.string().datetime(),
-  }),
+  timeRange: z.object({ start: z.string().datetime(), end: z.string().datetime() }),
   compareWith: z.string().optional(),
 });
 
 export const supervisorSchema = promptContractBase.extend({
   pipeline: z
-    .array(
-      z.enum([
-        'supervisor',
-        'script_writer',
-        'voice_generator',
-        'video_producer',
-        'publisher',
-        'analyst',
-      ]),
-    )
+    .array(z.enum(['supervisor', 'script_writer', 'voice_generator', 'video_producer', 'publisher', 'analyst']))
     .min(1, 'pipeline must have at least one role'),
   config: z.record(z.string(), z.unknown()).optional(),
 });
-
-// ---------------------------------------------------------------------------
-// Role → schema lookup map
-// ---------------------------------------------------------------------------
 
 const ROLE_SCHEMAS: Record<SOPAgentRole, z.ZodTypeAny> = {
   supervisor: supervisorSchema,
@@ -88,38 +60,22 @@ const ROLE_SCHEMAS: Record<SOPAgentRole, z.ZodTypeAny> = {
   analyst: analystSchema,
 };
 
-// ---------------------------------------------------------------------------
-// Error class
-// ---------------------------------------------------------------------------
-
 /**
  * Thrown when a prompt contract fails Zod validation.
- * Carries the role and the full ZodIssue list for actionable error messages.
  */
 export class PromptContractError extends Error {
   constructor(
     public readonly role: SOPAgentRole,
     public readonly issues: z.ZodIssue[],
   ) {
-    const summary = issues
-      .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
-      .join('; ');
+    const summary = issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
     super(`Prompt contract validation failed for role '${role}': ${summary}`);
     this.name = 'PromptContractError';
   }
 }
 
-// ---------------------------------------------------------------------------
-// Validate function — single entry-point
-// ---------------------------------------------------------------------------
-
 /**
  * Validate a prompt contract against its role's Zod schema.
- *
- * @param role     The agent role — determines which schema to apply
- * @param contract Untyped input (typically from AgentTask.promptContract)
- * @returns        Parsed, type-safe contract data on success
- * @throws         PromptContractError with field-level details on failure
  */
 export function validatePromptContract(
   role: SOPAgentRole,

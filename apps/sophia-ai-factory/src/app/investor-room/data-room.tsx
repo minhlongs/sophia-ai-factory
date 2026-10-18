@@ -7,8 +7,7 @@ type DocumentCategory = "corporate" | "financial" | "legal" | "team" | "product"
 
 const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; docs: { name: string; description: string; path: string; access: "restricted" | "nda" | "public" }[] }> = {
   corporate: {
-    label: "Corporate",
-    icon: "🏢",
+    label: "Corporate", icon: "🏢",
     docs: [
       { name: "Business Plan", description: "Full strategic plan and milestones", path: "/docs/investors/business-plan.pdf", access: "restricted" },
       { name: "Cap Table", description: "Current cap table with shareholder breakdown", path: "/docs/investors/cap-table.pdf", access: "restricted" },
@@ -17,8 +16,7 @@ const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; d
     ],
   },
   financial: {
-    label: "Financial",
-    icon: "📊",
+    label: "Financial", icon: "📊",
     docs: [
       { name: "P&L Statement (last 12 mo)", description: "Income statement summary", path: "/docs/investors/pnl.pdf", access: "restricted" },
       { name: "Balance Sheet", description: "Assets, liabilities, equity", path: "/docs/investors/balance-sheet.pdf", access: "restricted" },
@@ -27,8 +25,7 @@ const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; d
     ],
   },
   legal: {
-    label: "Legal",
-    icon: "⚖️",
+    label: "Legal", icon: "⚖️",
     docs: [
       { name: "Certificate of Incorporation", description: "Entity registration", path: "/docs/investors/certificate-of-incorporation.pdf", access: "restricted" },
       { name: "IP Assignment Agreements", description: "Founder and employee IP assignments", path: "/docs/investors/ip-assignments.pdf", access: "restricted" },
@@ -37,8 +34,7 @@ const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; d
     ],
   },
   team: {
-    label: "Team",
-    icon: "👥",
+    label: "Team", icon: "👥",
     docs: [
       { name: "Org Chart", description: "Current organizational structure", path: "/docs/investors/org-chart.pdf", access: "public" },
       { name: "Founder Bios", description: "Background of founding team", path: "/docs/investors/founder-bios.pdf", access: "nda" },
@@ -46,8 +42,7 @@ const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; d
     ],
   },
   product: {
-    label: "Product",
-    icon: "📦",
+    label: "Product", icon: "📦",
     docs: [
       { name: "Product Roadmap", description: "Next 12-month roadmap", path: "/docs/investors/product-roadmap.pdf", access: "nda" },
       { name: "Technical Architecture", description: "System overview and tech stack", path: "/docs/investors/tech-architecture.pdf", access: "restricted" },
@@ -56,8 +51,7 @@ const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; d
     ],
   },
   market: {
-    label: "Market",
-    icon: "🌏",
+    label: "Market", icon: "🌏",
     docs: [
       { name: "TAM/SAM/SOM Analysis", description: "Total addressable market sizing", path: "/docs/investors/tam-sam-som.pdf", access: "nda" },
       { name: "Multi-language Expansion Plan", description: "ES/TH market entry strategy", path: "/docs/investors/multi-lang-expansion.pdf", access: "nda" },
@@ -68,14 +62,9 @@ const DOCUMENT_GROUPS: Record<DocumentCategory, { label: string; icon: string; d
 
 type TabKey = DocumentCategory;
 
-const TABS: { key: TabKey; label: string; icon: string }[] = [
-  { key: "corporate", label: "Corporate", icon: "🏢" },
-  { key: "financial", label: "Financial", icon: "📊" },
-  { key: "legal", label: "Legal", icon: "⚖️" },
-  { key: "team", label: "Team", icon: "👥" },
-  { key: "product", label: "Product", icon: "📦" },
-  { key: "market", label: "Market", icon: "🌏" },
-];
+const TABS = (Object.keys(DOCUMENT_GROUPS) as TabKey[]).map((key) => ({
+  key, label: DOCUMENT_GROUPS[key].label, icon: DOCUMENT_GROUPS[key].icon,
+}));
 
 export default function DataRoom() {
   const [activeTab, setActiveTab] = useState<TabKey>("corporate");
@@ -86,14 +75,9 @@ export default function DataRoom() {
     const q = searchQuery.toLowerCase();
     return TABS.filter((t) => {
       const group = DOCUMENT_GROUPS[t.key];
-      return (
-        t.label.toLowerCase().includes(q) ||
-        group.docs.some((d) => d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q))
-      );
+      return t.label.toLowerCase().includes(q) || group.docs.some((d) => d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q));
     });
   }, [searchQuery]);
-
-  const activeGroup = DOCUMENT_GROUPS[activeTab];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -119,9 +103,7 @@ export default function DataRoom() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? "bg-blue-600 text-white"
-                : "bg-muted-100 text-muted-foreground-700 hover:bg-muted-200"
+              activeTab === tab.key ? "bg-blue-600 text-white" : "bg-muted-100 text-muted-foreground-700 hover:bg-muted-200"
             }`}
           >
             <span className="mr-1">{tab.icon}</span>
@@ -129,7 +111,7 @@ export default function DataRoom() {
           </button>
         ))}
       </div>
-      <DocumentSection group={activeGroup} />
+      <DocumentSection group={DOCUMENT_GROUPS[activeTab]} />
     </div>
   );
 }

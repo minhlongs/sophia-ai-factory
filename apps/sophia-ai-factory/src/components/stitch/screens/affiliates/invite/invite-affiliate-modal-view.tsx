@@ -25,27 +25,11 @@ export function InviteAffiliateModalView({
 }: InviteAffiliateModalProps) {
   const t = useTranslations('stitch.affiliates.inviteModal');
   const {
-    partnerName,
-    setPartnerName,
-    email,
-    setEmail,
-    customRate,
-    setCustomRate,
-    welcomeMessage,
-    setWelcomeMessage,
-    selectedAssetKits,
-    toggleAssetKit,
-    isSubmitting,
-    errorMessage,
-    successResult,
-    copiedLink,
-    initialInputRef,
-    handleCopyLink,
-    handleSubmit,
-  } = useInviteAffiliate({
-    isOpen,
-    onInviteSuccess,
-  });
+    partnerName, setPartnerName, email, setEmail, customRate, setCustomRate,
+    welcomeMessage, setWelcomeMessage, selectedAssetKits, toggleAssetKit,
+    isSubmitting, errorMessage, successResult, copiedLink,
+    initialInputRef, handleCopyLink, handleSubmit,
+  } = useInviteAffiliate({ isOpen, onInviteSuccess });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -108,12 +92,7 @@ export function InviteAffiliateModalView({
             />
 
             <DialogFooter className="pt-4 flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isSubmitting}
-                onClick={onClose}
-              >
+              <Button type="button" variant="outline" disabled={isSubmitting} onClick={onClose}>
                 {t('cancel')}
               </Button>
               <Button

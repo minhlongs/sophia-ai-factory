@@ -3,18 +3,7 @@
  * @module components/stitch/screens/affiliate/affiliate-dashboard-types
  */
 
-import {
-  Share2,
-  Users,
-  UserCheck,
-  DollarSign,
-  Clock,
-  Globe,
-  GitBranch,
-  Rocket,
-} from 'lucide-react';
-
-/* ── Types ───────────────────────────────────────────────────────────────── */
+import { Share2, Users, UserCheck, DollarSign, Clock, Globe, GitBranch, Rocket } from 'lucide-react';
 
 export interface KpiMetric {
   id: string;
@@ -52,8 +41,6 @@ export interface AffiliateDashboardPageProps {
   walletBalance?: string;
 }
 
-/* ── Constants ───────────────────────────────────────────────────────────── */
-
 export const STATUS_STYLES: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-800 dark:text-amber-400 border border-amber-500/20',
   approved: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
@@ -87,8 +74,6 @@ export const SOCIAL_PLATFORMS: SocialPlatform[] = [
     path: 'M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.303.48-.429-.012-1.253-.245-1.865-.444-.753-.245-1.353-.375-1.3-.79.029-.215.325-.437.888-.667 3.5-1.523 5.837-2.525 7.013-3.007 3.34-1.37 4.034-1.608 4.487-1.616z',
   },
 ];
-
-/* ── Default data ────────────────────────────────────────────────────────── */
 
 export const DEFAULT_METRICS: KpiMetric[] = [
   { id: 'totalClicks', value: '12,847', icon: Share2, subtext: '+18.2% this month', subtextColor: 'text-emerald-500' },

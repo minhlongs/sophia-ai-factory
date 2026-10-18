@@ -14,16 +14,11 @@ import type { ApiResult, QueueItem, PayoutMethod } from './types';
 
 export { PayoutsQueueSummary } from './payouts-queue-summary';
 
-export function PayoutsClientView({
-  initialData,
-}: {
-  initialData?: ApiResult;
-}): React.JSX.Element {
+export function PayoutsClientView({ initialData }: { initialData?: ApiResult }): React.JSX.Element {
   const [data, setData] = useState<ApiResult | null>(initialData ?? null);
   const [loading, setLoading] = useState(!initialData?.items?.length);
   const [error, setError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [modalUserId, setModalUserId] = useState<string>('');
   const [modalAmount, setModalAmount] = useState<number>(0);
@@ -38,9 +33,7 @@ export function PayoutsClientView({
     try {
       const params = new URLSearchParams({ limit: '50' });
       if (c) params.set('cursor', c);
-      const res = await fetch(`/api/admin/payouts/queue?${params}`, {
-        cache: 'no-store',
-      });
+      const res = await fetch(`/api/admin/payouts/queue?${params}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: ApiResult = await res.json();
       setData(json);
@@ -97,14 +90,7 @@ export function PayoutsClientView({
 
   return (
     <div className="space-y-4">
-      <PayoutsQueueSummary
-        data={data}
-        loading={loading}
-        minPayout={minPayout}
-        error={error}
-        onRefresh={() => fetchQueue(cursor)}
-      />
-
+      <PayoutsQueueSummary data={data} loading={loading} minPayout={minPayout} error={error} onRefresh={() => fetchQueue(cursor)} />
       <PayoutTable
         items={data?.items ?? []}
         loading={loading}
@@ -114,7 +100,6 @@ export function PayoutsClientView({
         onFirstPage={() => fetchQueue(null)}
         onNextPage={() => fetchQueue(cursor)}
       />
-
       <MarkPaidModal
         isOpen={modalOpen}
         userId={modalUserId}

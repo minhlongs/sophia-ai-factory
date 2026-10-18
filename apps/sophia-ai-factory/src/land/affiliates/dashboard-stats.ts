@@ -1,25 +1,15 @@
 /**
- * Affiliate Dashboard Stats
- *
- * Aggregate primitives backing /dashboard/affiliate page:
- * - getAffiliateClickStats: total clicks + conversions + commission + EPC over a date range
- * - getRecentConversions: paginated conversion feed scoped to affiliate
- *
+ * Affiliate Dashboard Stats — aggregate primitives backing /dashboard/affiliate page.
  * Tenant-scoped via JOIN on affiliate_links.user_id = affiliateId.
- *
  * @module land/affiliates/dashboard-stats
  */
 
 import { getD1 } from '@/seed/db/client';
 
 export interface AffiliateClickStats {
-  /** Total click_events rows scoped to (tenantId, affiliateId) within window. */
   totalClicks: number;
-  /** Total approved+paid+pending conversion_events for the affiliate's links. */
   totalConversions: number;
-  /** Sum of commission_usd across conversion_events (approved + paid only). */
   totalCommissionUsd: number;
-  /** Earnings per click = totalCommissionUsd / totalClicks (0 if no clicks). */
   epc: number;
 }
 
@@ -34,13 +24,6 @@ export interface ConversionFeedRow {
   attributedAt: number;
 }
 
-/**
- * Aggregate clicks + conversions + commission + EPC for an affiliate.
- *
- * Uses two parallel queries:
- *   1. click_events JOIN affiliate_links to count clicks owned by user.
- *   2. conversion_events JOIN affiliate_links to sum approved/paid commissions.
- */
 export async function getAffiliateClickStats(
   tenantId: string,
   affiliateId: string,
@@ -52,12 +35,9 @@ export async function getAffiliateClickStats(
 
   const clickRow = await db
     .prepare(
-      `SELECT COUNT(*) AS total_clicks
-       FROM click_events ce
+      `SELECT COUNT(*) AS total_clicks FROM click_events ce
        JOIN affiliate_links al ON al.id = ce.link_id
-       WHERE ce.tenant_id = ?
-         AND al.user_id = ?
-         AND ce.clicked_at >= ? AND ce.clicked_at <= ?`,
+       WHERE ce.tenant_id = ? AND al.user_id = ? AND ce.clicked_at >= ? AND ce.clicked_at <= ?`,
     )
     .bind(tenantId, affiliateId, fromTs, toTs)
     .first<{ total_clicks: number }>();
@@ -65,13 +45,10 @@ export async function getAffiliateClickStats(
   const convRow = await db
     .prepare(
       `SELECT COUNT(*) AS total_conversions,
-              COALESCE(SUM(CASE WHEN cv.status IN ('approved','paid')
-                                THEN cv.commission_usd ELSE 0 END), 0) AS total_commission
+              COALESCE(SUM(CASE WHEN cv.status IN ('approved','paid') THEN cv.commission_usd ELSE 0 END), 0) AS total_commission
        FROM conversion_events cv
        JOIN affiliate_links al ON al.id = cv.link_id
-       WHERE cv.tenant_id = ?
-         AND al.user_id = ?
-         AND cv.attributed_at >= ? AND cv.attributed_at <= ?`,
+       WHERE cv.tenant_id = ? AND al.user_id = ? AND cv.attributed_at >= ? AND cv.attributed_at <= ?`,
     )
     .bind(tenantId, affiliateId, fromTs, toTs)
     .first<{ total_conversions: number; total_commission: number }>();
@@ -84,10 +61,6 @@ export async function getAffiliateClickStats(
   return { totalClicks, totalConversions, totalCommissionUsd, epc };
 }
 
-/**
- * Recent conversions for an affiliate, newest first.
- * `limit` is clamped to [1, 200]; `offset` clamped to >= 0.
- */
 export async function getRecentConversions(
   tenantId: string,
   affiliateId: string,
@@ -105,10 +78,8 @@ export async function getRecentConversions(
               cv.gross_amount_usd, cv.commission_usd, cv.status, cv.attributed_at
        FROM conversion_events cv
        JOIN affiliate_links al ON al.id = cv.link_id
-       WHERE cv.tenant_id = ?
-         AND al.user_id = ?
-       ORDER BY cv.attributed_at DESC
-       LIMIT ? OFFSET ?`,
+       WHERE cv.tenant_id = ? AND al.user_id = ?
+       ORDER BY cv.attributed_at DESC LIMIT ? OFFSET ?`,
     )
     .bind(tenantId, affiliateId, safeLimit, safeOffset)
     .all<{

@@ -1,12 +1,11 @@
 'use client';
+
 /**
  * Usage Meter Component
  * Composition root: real-time quota utilization with progress meters
  *
  * @module components/license/usage-meter
  */
-
-'use client';
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchJson } from '@/seed/utils/fetch-json';
@@ -42,9 +41,7 @@ export function UsageMeter({ licenseNonce, compact = false, showRateLimit = true
         </CardHeader>
         <CardContent>
           <div className="motion-safe:animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-muted rounded" />
-            ))}
+            {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-muted rounded" />)}
           </div>
         </CardContent>
       </Card>
@@ -61,9 +58,7 @@ export function UsageMeter({ licenseNonce, compact = false, showRateLimit = true
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Failed to load usage data. Please try again later.
-          </p>
+          <p className="text-sm text-muted-foreground">Failed to load usage data. Please try again later.</p>
         </CardContent>
       </Card>
     );
@@ -91,11 +86,7 @@ export function UsageMeter({ licenseNonce, compact = false, showRateLimit = true
                     {formatNumber(meter.data.used)} / {formatNumber(meter.data.limit)}
                   </span>
                 </div>
-                <Progress
-                  value={meter.data.percentage}
-                  indicatorClassName={getStatusColor(meter.data.status)}
-                  className="h-2"
-                />
+                <Progress value={meter.data.percentage} indicatorClassName={getStatusColor(meter.data.status)} className="h-2" />
               </div>
             ))}
           </div>
@@ -118,15 +109,8 @@ export function UsageMeter({ licenseNonce, compact = false, showRateLimit = true
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <UsageMeterMetersList
-          hourly={usage.hourly}
-          daily={usage.daily}
-          monthly={usage.monthly}
-        />
-
-        {showRateLimit && (
-          <UsageMeterRateLimitSection rateLimit={usage.rateLimit} />
-        )}
+        <UsageMeterMetersList hourly={usage.hourly} daily={usage.daily} monthly={usage.monthly} />
+        {showRateLimit && <UsageMeterRateLimitSection rateLimit={usage.rateLimit} />}
       </CardContent>
     </Card>
   );
