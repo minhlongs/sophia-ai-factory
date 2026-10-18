@@ -11,12 +11,11 @@ import {
   MIN_PAYOUT_THRESHOLD_CENTS,
   type PayoutRequestInput,
   type PayoutRequestResult,
-  type PartnerDashboardData,
-  type PartnerCommission,
 } from '@/tree/partners/types';
-import { calculateNextTierProgress } from './commission-math';
 import { getPartnerById } from './partner-profile';
-import { getWhitelabelConfigByPartnerId } from './whitelabel-config';
+import { getPartnerDashboardData } from './partner-dashboard-query';
+
+export { getPartnerDashboardData };
 
 /**
  * Request commission payout for partner pending earnings.
@@ -135,41 +134,3 @@ export async function requestCommissionPayout(
  * Alias for requestCommissionPayout to support partner payout operations.
  */
 export const requestPartnerPayout = requestCommissionPayout;
-
-/**
- * Aggregates complete partner dashboard metrics, commissions, and progress.
- */
-export async function getPartnerDashboardData(
-  db: D1Database,
-  partnerId: string,
-): Promise<PartnerDashboardData> {
-  const profile = await getPartnerById(db, partnerId);
-  if (!profile) {
-    throw new Error(`Partner not found: ${partnerId}`);
-  }
-
-  const whitelabelConfig = await getWhitelabelConfigByPartnerId(db, partnerId);
-
-  const commissionsResult = await db
-    .prepare(
-      `SELECT * FROM partner_commissions
-       WHERE partner_id = ?1
-       ORDER BY created_at DESC
-       LIMIT 50`
-    )
-    .bind(partnerId)
-    .all<PartnerCommission>();
-
-  const nextTier = calculateNextTierProgress(
-    profile.tier,
-    profile.total_referred_customers,
-    profile.total_mrr_cents,
-  );
-
-  return {
-    profile,
-    whitelabelConfig,
-    recentCommissions: commissionsResult.results ?? [],
-    nextTier,
-  };
-}

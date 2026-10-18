@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ControlDeckHub } from '../control-deck-hub';
+import { ControlDeckSkeleton } from '../control-deck-skeleton';
 import { STITCH_CONTROL_DECK_DATASET } from '@/tree/control-deck';
 
 describe('ControlDeckHub (Stitch Director’s Control Deck)', () => {
@@ -55,5 +56,25 @@ describe('ControlDeckHub (Stitch Director’s Control Deck)', () => {
     expect(document.activeElement).toBe(tabs[1]);
     expect(tabs[1]?.textContent).toMatch(/Tham vấn/i);
     expect(screen.getByRole('note').textContent).toMatch(/minh họa/i);
+  });
+
+  it('renders ControlDeckSkeleton with role="status", aria-busy="true", bilingual labels, and motion-reduce:animate-none', () => {
+    const { unmount, container } = render(<ControlDeckSkeleton isVi={false} />);
+    const statusRegion = screen.getByRole('status');
+    expect(statusRegion.getAttribute('data-testid')).toBe('control-deck-skeleton');
+    expect(statusRegion.getAttribute('aria-busy')).toBe('true');
+    expect(statusRegion.getAttribute('aria-label')).toMatch(/Loading Stitch v4\.2/i);
+
+    const pulsingBlocks = container.querySelectorAll('.animate-pulse');
+    expect(pulsingBlocks.length).toBeGreaterThan(0);
+    pulsingBlocks.forEach((node) => {
+      expect(node.className).toContain('motion-reduce:animate-none');
+    });
+    unmount();
+
+    render(<ControlDeckSkeleton isVi={true} />);
+    expect(screen.getByRole('status').getAttribute('aria-label')).toMatch(
+      /Đang tải Bàn Chỉ Huy Đạo Diễn/i,
+    );
   });
 });

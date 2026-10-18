@@ -1,7 +1,7 @@
 /**
  * Forest Layer: Live Telemetry Orchestrator for Stitch Director's Control Deck
  * Bridges Seed Auth + Tree Readiness + Forest Dashboard Metrics into ControlDeckDataset.
- * Layer: forest/control-deck | Max LOC: < 180 | Zero :any | Zero console.log
+ * Layer: forest/control-deck | Max LOC: < 180 | Strict TypeScript | Zero Raw Console
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';

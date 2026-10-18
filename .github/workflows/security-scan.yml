@@ -22,9 +22,8 @@ jobs:
         with:
           fetch-depth: 0  # full history for trufflehog
 
-      # RED-TEAM #1: prior SHA-pin (1d0ff46…) was invalid → unblocked via tag.
-      # Re-pin to a verified v4.x SHA in follow-up.
-      - uses: actions/setup-node@v4
+      # RED-TEAM #1: pinned to the verified setup-node v4.4.0 release commit.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -36,14 +35,15 @@ jobs:
       - name: Gate 2a — npm audit (high + critical only)
         run: npm audit --audit-level=high --omit=dev
 
-      - name: Gate 2b — TruffleHog secret scan (full history)
-        # RED-TEAM #1: SHA-pinned (trufflesecurity/trufflehog v3.88.19)
-        uses: trufflesecurity/trufflehog@main
+      - name: Gate 2b — TruffleHog secret scan (PR commit range)
+        # Pull request checkouts use detached HEAD; use the fetched remote-tracking base ref.
+        uses: trufflesecurity/trufflehog@e76dff8a7e57d6df0c60ad8cbf5d5cba505a8fc9 # v3.99.2
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
+          base: origin/${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --only-verified
+          version: v3.99.2
 
       - name: Gate 2c — CSP evaluator (no polar.sh, no unsafe-inline)
         run: |

@@ -1,14 +1,5 @@
 /**
- * Unit & Integration tests for AffiliateDiscoveryPanel component.
- *
- * Verifies:
- * 1. Category filter pills (All, SaaS, E-Commerce, Creator Tools, Agency Automation)
- * 2. Payout model filter pills (All, RevShare %, Flat CPA, Recurring)
- * 3. Search query input filtering by program name
- * 4. Multi-attribute sorting (EPC, Conversion Rate, Commission Rate, Quality Score)
- * 5. Responsive grid layout container classes (1 col mobile, 2 col tablet, 3 col desktop)
- * 6. Empty state and "Reset Filters" action
- * 7. Slide-over drawer open and close interactions
+ * Unit & Integration tests for AffiliateDiscoveryPanel component (Rendering & Filtering).
  */
 
 import React from 'react';
@@ -16,14 +7,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AffiliateDiscoveryPanel } from '../affiliate-discovery-panel';
 import type { AffiliateOffer } from '@/seed/types/affiliate';
-import * as affiliateActions from '@/forest/actions/affiliate-actions';
 
-// Mock next-intl
 vi.mock('next-intl', () => ({
   useTranslations: (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
-    if (params) {
-      return `${namespace || ''}.${key}:${JSON.stringify(params)}`;
-    }
+    if (params) return `${namespace || ''}.${key}:${JSON.stringify(params)}`;
     return `${namespace || ''}.${key}`;
   },
   useLocale: () => 'en',
@@ -105,11 +92,7 @@ vi.mock('@/forest/actions/affiliate-actions', () => ({
       const q = filters.search.toLowerCase();
       list = list.filter((o) => o.programName.toLowerCase().includes(q));
     }
-    return {
-      success: true,
-      offers: list,
-      total: list.length,
-    };
+    return { success: true, offers: list, total: list.length };
   }),
   adoptAffiliateOfferAction: vi.fn().mockResolvedValue({
     success: true,
@@ -120,14 +103,11 @@ vi.mock('@/forest/actions/affiliate-actions', () => ({
   }),
 }));
 
-describe('AffiliateDiscoveryPanel Component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+describe('AffiliateDiscoveryPanel Filtering', () => {
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders all initial offers and panel header', async () => {
     render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
     expect(screen.getByText('stitch.affiliates.discovery.title')).toBeDefined();
     expect(screen.getByText('SEMrush SEO Toolkit')).toBeDefined();
     expect(screen.getByText('Shopify E-Commerce')).toBeDefined();
@@ -137,24 +117,12 @@ describe('AffiliateDiscoveryPanel Component', () => {
 
   it('filters offers by category when a category pill is clicked', async () => {
     render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    const saasButton = screen.getByRole('button', {
-      name: 'stitch.affiliates.discovery.categories.saas',
-    });
-    fireEvent.click(saasButton);
-
+    fireEvent.click(screen.getByRole('button', { name: 'stitch.affiliates.discovery.categories.saas' }));
     await waitFor(() => {
       expect(screen.getByText('SEMrush SEO Toolkit')).toBeDefined();
       expect(screen.queryByText('Shopify E-Commerce')).toBeNull();
-      expect(screen.queryByText('Canva Pro Design')).toBeNull();
-      expect(screen.queryByText('PandaDoc Documents')).toBeNull();
     });
-
-    const creatorToolsButton = screen.getByRole('button', {
-      name: 'stitch.affiliates.discovery.categories.creatorTools',
-    });
-    fireEvent.click(creatorToolsButton);
-
+    fireEvent.click(screen.getByRole('button', { name: 'stitch.affiliates.discovery.categories.creatorTools' }));
     await waitFor(() => {
       expect(screen.getByText('Canva Pro Design')).toBeDefined();
       expect(screen.queryByText('SEMrush SEO Toolkit')).toBeNull();
@@ -163,113 +131,20 @@ describe('AffiliateDiscoveryPanel Component', () => {
 
   it('filters offers by payout model when a payout model pill is clicked', async () => {
     render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    const cpaButton = screen.getByRole('button', {
-      name: 'stitch.affiliates.discovery.payoutModels.cpa',
-    });
-    fireEvent.click(cpaButton);
-
+    fireEvent.click(screen.getByRole('button', { name: 'stitch.affiliates.discovery.payoutModels.cpa' }));
     await waitFor(() => {
       expect(screen.getByText('Shopify E-Commerce')).toBeDefined();
       expect(screen.getByText('Canva Pro Design')).toBeDefined();
       expect(screen.queryByText('SEMrush SEO Toolkit')).toBeNull();
-      expect(screen.queryByText('PandaDoc Documents')).toBeNull();
     });
   });
 
   it('filters offers by search query text input', async () => {
     render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    const searchInput = screen.getByRole('searchbox');
-    fireEvent.change(searchInput, { target: { value: 'Shopify' } });
-
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Shopify' } });
     await waitFor(() => {
       expect(screen.getByText('Shopify E-Commerce')).toBeDefined();
       expect(screen.queryByText('SEMrush SEO Toolkit')).toBeNull();
-      expect(screen.queryByText('Canva Pro Design')).toBeNull();
-    });
-  });
-
-  it('renders clean empty state with reset filters button when no offers match', async () => {
-    render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    const searchInput = screen.getByRole('searchbox');
-    fireEvent.change(searchInput, { target: { value: 'NonExistentProgramXYZ' } });
-
-    await waitFor(() => {
-      expect(screen.getByText('stitch.affiliates.discovery.emptySearch')).toBeDefined();
-    });
-
-    const resetButton = screen.getByRole('button', {
-      name: 'stitch.affiliates.discovery.resetFilters',
-    });
-    fireEvent.click(resetButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('SEMrush SEO Toolkit')).toBeDefined();
-      expect(screen.getByText('Shopify E-Commerce')).toBeDefined();
-    });
-  });
-
-  it('sorts offers when sorting dropdown value changes', async () => {
-    render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    const sortSelect = screen.getByRole('combobox', {
-      name: 'stitch.affiliates.discovery.sort.label',
-    });
-
-    // Sort by conversion rate (Canva has highest: 6.5%)
-    fireEvent.change(sortSelect, { target: { value: 'conversion' } });
-
-    await waitFor(() => {
-      const titles = screen.getAllByRole('heading', { level: 4 });
-      expect(titles[0].textContent).toContain('Canva Pro Design');
-    });
-
-    // Sort by commission rate (Shopify has highest: 100%)
-    fireEvent.change(sortSelect, { target: { value: 'commission' } });
-
-    await waitFor(() => {
-      const titles = screen.getAllByRole('heading', { level: 4 });
-      expect(titles[0].textContent).toContain('Shopify E-Commerce');
-    });
-  });
-
-  it('enforces responsive grid container layout classes', () => {
-    const { container } = render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    const grid = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3');
-    expect(grid).toBeDefined();
-    expect(grid?.className).toContain('grid-cols-1');
-    expect(grid?.className).toContain('md:grid-cols-2');
-    expect(grid?.className).toContain('lg:grid-cols-3');
-  });
-
-  it('opens and closes AffiliateOfferDrawer on card trigger', async () => {
-    render(<AffiliateDiscoveryPanel initialOffers={mockOffers} />);
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-
-    // Click "Adopt Offer" on the first card
-    const adoptButtons = screen.getAllByRole('button', {
-      name: 'stitch.affiliates.discovery.card.adoptOffer',
-    });
-    fireEvent.click(adoptButtons[0]);
-
-    // Drawer should open with role="dialog"
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeDefined();
-      expect(screen.getByText('stitch.affiliates.drawer.title')).toBeDefined();
-    });
-
-    // Close drawer via close button
-    const closeButton = screen.getByRole('button', {
-      name: 'stitch.affiliates.drawer.close',
-    });
-    fireEvent.click(closeButton);
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 });

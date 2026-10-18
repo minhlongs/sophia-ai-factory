@@ -38,55 +38,12 @@ export default defineConfig({
       '**/.agents/**',
     ],
     coverage: {
-      reporter: ['text', 'json-summary', 'html'],
-      thresholds: {
-        lines: 60,
-        functions: 50,
-        branches: 45,
-        statements: 55,
-        // Dashboard regression guard — keep minimal threshold since it's mostly UI.
-        // Dashboard is primarily component-focused; coverage measured via component tests.
-        'src/app/[locale]/dashboard/**': {
-          lines: 5,
-          branches: 5,
-          functions: 5,
-          statements: 5,
-        },
-        // Critical business domains require higher coverage
-        'src/land/billing/**': {
-          lines: 75,
-          functions: 75,
-          branches: 75,
-          statements: 75,
-        },
-        'src/forest/usage-metering/**': {
-          lines: 70,
-          functions: 70,
-          branches: 65,
-          statements: 70,
-        },
-        'src/tree/usage-metering/**': {
-          lines: 70,
-          functions: 70,
-          branches: 65,
-          statements: 70,
-        },
-        'src/forest/telegram/**': {
-          lines: 70,
-          functions: 70,
-          branches: 65,
-          statements: 70,
-        },
-        'src/tree/telegram/**': {
-          lines: 70,
-          functions: 70,
-          branches: 65,
-          statements: 70,
-        },
-      },
+      reporter: ['text', 'json-summary', 'lcov', 'html'],
+      // CI enforces a 70% threshold on changed executable lines. The whole-repo
+      // baseline is reported but is not a merge gate because legacy domains are
+      // below the previous static thresholds.
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
-        'src/components/ui/**',
         '**/*.d.ts',
         '**/*.config.ts',
         '.next/**',

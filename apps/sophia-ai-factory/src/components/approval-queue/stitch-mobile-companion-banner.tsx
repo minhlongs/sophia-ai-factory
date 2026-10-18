@@ -2,43 +2,41 @@ import React from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/navigation';
 import { Smartphone, ArrowUpRight } from 'lucide-react';
+import { resolveRouteBannerCopy } from '@/tree/control-deck';
 
 export function StitchMobileCompanionBanner() {
-  const isVi = useLocale() === 'vi';
+  const copy = resolveRouteBannerCopy('approvals', useLocale() === 'vi');
 
   return (
     <section
-      aria-label={isVi ? 'Bản xem trước trải nghiệm di động' : 'Mobile workflow design preview'}
+      role="region"
+      aria-label={copy.ariaLabel}
       data-testid="stitch-mobile-companion-banner"
-      className="mb-6 rounded-xl border border-[#A855F7]/40 bg-[#11131F] p-4 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]"
+      className="mb-6 overflow-x-hidden rounded-2xl border border-indigo-400/35 bg-gradient-to-br from-[#121722] via-[#11131F] to-[#0B0E14] p-4 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] sm:p-5"
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#A855F7]/50 bg-[#A855F7]/15 text-[#D6A9FF]">
+        <div className="flex min-w-0 items-start gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-indigo-400/40 bg-indigo-500/15 text-indigo-300 shadow-[inset_0_1px_0_0_rgba(99,102,241,0.2)]">
             <Smartphone className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-              <span className="font-semibold text-[#D6A9FF]">
-                {isVi ? 'TRẢI NGHIỆM DI ĐỘNG · BẢN XEM TRƯỚC' : 'MOBILE WORKFLOW · DESIGN PREVIEW'}
-              </span>
-              <span className="rounded-full border border-[#10B981]/40 bg-[#10B981]/10 px-2 py-0.5 text-[10px] font-semibold text-[#10B981]">
-                {isVi ? 'Ý TƯỞNG GIAO DIỆN' : 'UI CONCEPT'}
+              <span className="font-semibold text-indigo-300">{copy.badge}</span>
+              <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                {copy.pill}
               </span>
             </div>
-            <h2 className="mt-1 font-sans text-sm font-semibold text-[#F8FAFC]">
-              {isVi
-                ? 'Phác thảo quy trình duyệt video và nhận thông báo thanh toán trên di động.'
-                : 'A concept for mobile video approvals and payment notifications.'}
+            <h2 className="mt-1 font-sans text-sm font-semibold tracking-tight text-[#F8FAFC]">
+              {copy.title}
             </h2>
           </div>
         </div>
 
         <Link
-          href="/dashboard/control-deck"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#1E2235] bg-[#1A1C28] px-3.5 py-2 font-mono text-xs font-semibold text-primary-200 transition-colors hover:border-primary hover:text-[#F8FAFC]"
+          href={copy.ctaHref}
+          className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-400/40 bg-[#121722] px-4 py-2.5 font-mono text-xs font-semibold text-amber-300 transition-colors hover:border-amber-400 hover:bg-amber-400/15 hover:text-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none"
         >
-          <span>{isVi ? 'Bàn Điều Khiển Di Động' : 'Mobile Deck'}</span>
+          <span>{copy.ctaLabel}</span>
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>

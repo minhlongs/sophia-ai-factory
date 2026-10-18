@@ -7,6 +7,7 @@ import type {
   VideoTimelineTrack,
 } from '@/seed/types/stitch-control-deck';
 import { dispatchAdvisorCouncilMissionAction } from '@/land/control-deck';
+import { VideoTimelineSection } from './control-deck-subcards';
 
 export interface AdvisorTimelinePanelProps {
   readonly advisors: readonly AdvisorNodeTelemetry[];
@@ -38,22 +39,22 @@ export function AdvisorTimelinePanel({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+    <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
       {/* Screen 2: Bilingual /ask 4-Advisor Consultation Deck */}
       <section
         aria-labelledby="advisors-heading"
-        className="rounded-xl border border-[#1E2235] bg-[#11131F] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]"
+        className="min-w-0 rounded-xl border border-[#1E2638] bg-[#121722] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
       >
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1E2235] pb-3">
-          <div>
-            <span className="font-mono text-xs text-[#A855F7]">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1E2638] pb-3.5">
+          <div className="min-w-0 flex-1">
+            <span className="font-mono text-xs text-indigo-400">
               {lang === 'vi'
                 ? 'MÀN HÌNH 02 · HỘI ĐỒNG 4 CỐ VẤN'
                 : 'SCREEN 02 · /ASK 4-ADVISOR COUNCIL'}
             </span>
             <h2
               id="advisors-heading"
-              className="mt-1 font-sans text-lg font-semibold text-[#F8FAFC]"
+              className="mt-1 break-words font-sans text-lg font-semibold text-[#F8FAFC]"
             >
               {lang === 'vi'
                 ? 'Hội Đồng Tham Vấn 4 Cố Vấn Chiến Lược'
@@ -65,11 +66,17 @@ export function AdvisorTimelinePanel({
             disabled={isDispatching}
             onClick={handleDispatchCouncil}
             data-testid="dispatch-advisor-council-btn"
-            className="rounded-lg border border-primary bg-primary px-3 py-1.5 font-mono text-xs font-semibold text-[#F8FAFC] transition-colors hover:bg-primary/90 disabled:opacity-60"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-amber-400/70 bg-indigo-600 px-4 py-2 font-mono text-xs font-semibold text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] transition-colors motion-reduce:transition-none hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 disabled:opacity-60"
           >
-            {lang === 'vi'
-              ? 'Phê Duyệt & Điều Phối 1 Chạm'
-              : '1-Click Approve & Dispatch'}
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 rounded-full ${isDispatching ? 'animate-ping bg-amber-300 motion-reduce:animate-none' : 'bg-emerald-400'}`}
+            />
+            <span>
+              {lang === 'vi'
+                ? 'Phê Duyệt & Điều Phối 1 Chạm'
+                : '1-Click Approve & Dispatch'}
+            </span>
           </button>
         </header>
 
@@ -77,9 +84,10 @@ export function AdvisorTimelinePanel({
           <div
             role="status"
             data-testid="dispatch-advisor-council-receipt"
-            className="mt-3 rounded-lg border border-[#10B981]/40 bg-[#10B981]/10 px-3 py-2 font-mono text-xs text-[#10B981]"
+            className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-400/10 px-3.5 py-2.5 font-mono text-xs text-emerald-400"
           >
-            {dispatchStatus[lang]}
+            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" aria-hidden="true" />
+            <span className="min-w-0 flex-1 break-words">{dispatchStatus[lang]}</span>
           </div>
         )}
 
@@ -87,20 +95,26 @@ export function AdvisorTimelinePanel({
           {advisors.map((adv) => (
             <article
               key={adv.advisorId}
-              className="rounded-lg border border-[#1E2235] bg-[#1A1C28]/90 p-3.5"
+              className="min-w-0 rounded-xl border border-[#1E2638] bg-[#0B0E14]/90 p-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
             >
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-sans text-sm font-semibold text-[#F8FAFC]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="min-w-0 break-words font-sans text-sm font-semibold text-[#F8FAFC]">
                   {adv.personaTitle[lang]}
                 </h3>
-                <span className="font-mono text-xs font-semibold text-[#F59E0B]">
+                <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-amber-400">
                   {adv.confidenceScorePct}%
                 </span>
               </div>
-              <div className="mt-0.5 font-mono text-[11px] text-[#C0C1FF]">
+              <div className="mt-1 font-mono text-[11px] text-indigo-300">
                 {adv.domainFocus[lang]}
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-[#94A3B8]">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#1A2130]">
+                <div
+                  className="h-full rounded-full bg-amber-400 transition-all duration-300 motion-reduce:transition-none"
+                  style={{ width: `${adv.confidenceScorePct}%` }}
+                />
+              </div>
+              <p className="mt-2 break-words text-xs leading-relaxed text-[#94A3B8]">
                 {adv.verdictSummary[lang]}
               </p>
             </article>
@@ -108,68 +122,7 @@ export function AdvisorTimelinePanel({
         </div>
       </section>
 
-      {/* Screen 3: AI Video Production Studio Multi-Track Timeline */}
-      <section
-        aria-labelledby="timeline-heading"
-        className="rounded-xl border border-[#1E2235] bg-[#11131F] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]"
-      >
-        <header className="flex items-center justify-between border-b border-[#1E2235] pb-3">
-          <div>
-            <span className="font-mono text-xs text-primary">
-              {lang === 'vi'
-                ? 'MÀN HÌNH 03 · MÃ THỜI GIAN 00:01:24:18'
-                : 'SCREEN 03 · TIMECODE 00:01:24:18'}
-            </span>
-            <h2
-              id="timeline-heading"
-              className="mt-1 font-sans text-lg font-semibold text-[#F8FAFC]"
-            >
-              {lang === 'vi'
-                ? 'Timeline Đa Làn & Xưởng Kết Xuất Video AI'
-                : 'Multi-Track NLE Timeline & AI Render Stage'}
-            </h2>
-          </div>
-          <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs text-[#C0C1FF]">
-            16:9 + 9:16 SYNC
-          </span>
-        </header>
-
-        <div
-          className="mt-4 space-y-3"
-          role="list"
-          aria-label={
-            lang === 'vi' ? 'Các làn timeline video' : 'Video timeline tracks'
-          }
-        >
-          {timelineTracks.map((track) => (
-            <div
-              key={track.trackId}
-              role="listitem"
-              className="rounded-lg border border-[#1E2235] bg-[#090A10] p-3"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex h-6 w-9 items-center justify-center rounded bg-[#1A1C28] font-mono text-xs font-bold text-[#C0C1FF]">
-                    {track.trackCode}
-                  </span>
-                  <span className="font-sans text-sm font-medium text-[#F8FAFC]">
-                    {track.label[lang]}
-                  </span>
-                </div>
-                <span className="font-mono text-xs text-[#94A3B8]">
-                  {track.modelBadge} · {track.durationTimecode}
-                </span>
-              </div>
-              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-[#1A1C28]">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300 motion-reduce:transition-none"
-                  style={{ width: `${track.progressPct}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <VideoTimelineSection timelineTracks={timelineTracks} lang={lang} />
     </div>
   );
 }

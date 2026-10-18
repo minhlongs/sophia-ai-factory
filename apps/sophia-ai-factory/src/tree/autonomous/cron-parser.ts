@@ -9,6 +9,8 @@
 
 import type { CronFieldMatchRules } from '@/seed/types/autonomous-engine';
 
+const MAX_CRON_EXPRESSION_LENGTH = 256;
+
 function parseStepBounds(rangePart: string, fieldStr: string, min: number, max: number): [number, number] {
   if (rangePart === '*') return [min, max];
   if (rangePart.includes('-')) {
@@ -134,6 +136,9 @@ export function parseField(
 export function parseCronExpression(expression: string): CronFieldMatchRules {
   if (!expression || typeof expression !== 'string') {
     throw new Error('Cron expression must be a non-empty string');
+  }
+  if (expression.length > MAX_CRON_EXPRESSION_LENGTH) {
+    throw new Error(`Cron expression exceeds the ${MAX_CRON_EXPRESSION_LENGTH}-character limit`);
   }
 
   const fields = expression.trim().split(/\s+/);
