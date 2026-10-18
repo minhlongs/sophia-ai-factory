@@ -21,6 +21,7 @@ import {
 } from '@/seed/types/dual-listing';
 import { DualListingEngine } from '@/tree/listing/dual-listing-engine';
 import { FcpaComplianceLedger, type FcpaScreeningInput } from '@/tree/listing/fcpa-compliance-ledger';
+import { assembleAndPersistDualListingPackage } from './dual-listing-action-helpers';
 
 export interface ActionResponse<T> {
   success: boolean;
@@ -41,23 +42,7 @@ export async function generateDualListingPackageAction(
       return { success: false, error: 'Unauthorized: authentication required' };
     }
 
-    const db = await getD1();
-    const period = DualListingEngine.createGate11FilingPeriod(fiscalYear, filingType);
-
-    // Default canonical Gate 11 entities (US, SG, VN, IE)
-    const bepsInputs: BepsComputationInput[] = [
-      { jurisdictionCode: 'US', coveredTaxesCents: 15_000_000_00, globeIncomeCents: 75_000_000_00 }, // 20% ETR
-      { jurisdictionCode: 'SG', coveredTaxesCents: 2_500_000_00, globeIncomeCents: 25_000_000_00 }, // 10% ETR -> triggers 5% top-up
-      { jurisdictionCode: 'VN', coveredTaxesCents: 3_000_000_00, globeIncomeCents: 15_000_000_00 }, // 20% ETR
-      { jurisdictionCode: 'IE', coveredTaxesCents: 625_000_00, globeIncomeCents: 5_000_000_00 }, // 12.5% ETR -> triggers 2.5% top-up
-    ];
-
-    const pkg = DualListingEngine.assembleConsolidatedPackage(period, bepsInputs);
-
-    if (db) {
-      await DualListingEngine.persistFilingPeriod(db, period);
-    }
-
+    const pkg = await assembleAndPersistDualListingPackage(fiscalYear, filingType);
     return { success: true, data: pkg };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to generate dual listing package';

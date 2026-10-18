@@ -11,13 +11,9 @@
 import React from 'react';
 import type { AdaptiveVideoPlayerProps } from './player-types';
 import { useVideoPlayback } from './use-video-playback';
-import { PlayerWatermarkOverlay } from './player-watermark-overlay';
 import { PlayerControlsBar } from './player-controls-bar';
-import {
-  PlayerCenterPlayOverlay,
-  usePlayerKeyboardAndFullscreen,
-  VideoSubtitleTracks,
-} from './player-keyboard-subtitles';
+import { usePlayerKeyboardAndFullscreen } from './player-keyboard-subtitles';
+import { AdaptiveVideoStage } from './adaptive-video-stage';
 
 export function AdaptiveVideoPlayerView({
   videoId,
@@ -38,31 +34,12 @@ export function AdaptiveVideoPlayerView({
   const {
     videoRef,
     containerRef,
-    isPlaying,
-    isMuted,
-    isFullscreen,
-    volume,
-    currentTime,
-    duration,
-    showControls,
-    selectedQuality,
-    selectedSubtitle,
-    showQualityMenu,
-    showSubtitleMenu,
     manifestUrl,
     watermark,
     setVolume,
     setIsFullscreen,
     setShowControls,
-    setShowQualityMenu,
-    setShowSubtitleMenu,
-    togglePlay,
-    toggleMute,
-    toggleFullscreen,
-    handleSeek,
-    handleVolumeChange,
-    handleQualitySelect,
-    handleSubtitleSelect,
+    ...controlsProps
   } = useVideoPlayback({
     videoId,
     src,
@@ -77,9 +54,9 @@ export function AdaptiveVideoPlayerView({
 
   usePlayerKeyboardAndFullscreen({
     videoRef,
-    togglePlay,
-    toggleMute,
-    toggleFullscreen,
+    togglePlay: controlsProps.togglePlay,
+    toggleMute: controlsProps.toggleMute,
+    toggleFullscreen: controlsProps.toggleFullscreen,
     setVolume,
     setIsFullscreen,
   });
@@ -90,53 +67,26 @@ export function AdaptiveVideoPlayerView({
       className={`group relative overflow-hidden rounded-2xl bg-black text-white shadow-2xl ${className}`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => {
-        if (isPlaying) setShowControls(false);
+        if (controlsProps.isPlaying) setShowControls(false);
       }}
       role="region"
       aria-label={title || 'Adaptive HLS Video Player'}
     >
-      <video
-        ref={videoRef}
-        src={manifestUrl}
+      <AdaptiveVideoStage
+        videoRef={videoRef}
+        videoId={videoId}
+        manifestUrl={manifestUrl}
         poster={poster}
         autoPlay={autoPlay}
-        playsInline
-        className="h-full w-full object-contain cursor-pointer"
-        onClick={togglePlay}
-        aria-label={title || 'Video playback'}
-      >
-        <VideoSubtitleTracks videoId={videoId} selectedSubtitle={selectedSubtitle} />
-      </video>
-
-      <PlayerWatermarkOverlay
+        title={title}
+        isPlaying={controlsProps.isPlaying}
+        selectedSubtitle={controlsProps.selectedSubtitle}
         watermark={watermark}
         enableForensicWatermark={enableForensicWatermark}
+        togglePlay={controlsProps.togglePlay}
       />
 
-      <PlayerCenterPlayOverlay isPlaying={isPlaying} />
-
-      <PlayerControlsBar
-        isPlaying={isPlaying}
-        isMuted={isMuted}
-        isFullscreen={isFullscreen}
-        volume={volume}
-        currentTime={currentTime}
-        duration={duration}
-        showControls={showControls}
-        selectedQuality={selectedQuality}
-        selectedSubtitle={selectedSubtitle}
-        showQualityMenu={showQualityMenu}
-        showSubtitleMenu={showSubtitleMenu}
-        setShowQualityMenu={setShowQualityMenu}
-        setShowSubtitleMenu={setShowSubtitleMenu}
-        togglePlay={togglePlay}
-        toggleMute={toggleMute}
-        toggleFullscreen={toggleFullscreen}
-        handleSeek={handleSeek}
-        handleVolumeChange={handleVolumeChange}
-        handleQualitySelect={handleQualitySelect}
-        handleSubtitleSelect={handleSubtitleSelect}
-      />
+      <PlayerControlsBar {...controlsProps} />
     </div>
   );
 }

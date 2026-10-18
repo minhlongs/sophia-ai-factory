@@ -4,27 +4,16 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import type {
-  OnboardingMilestone,
-  OnboardingProgress,
-  OnboardingStatus,
-} from './types';
-import {
-  calculateProgressPct,
-  daysBetween,
-  determinePhase,
-  evaluateMilestoneStatus,
-  evaluateAtRiskFlags,
-} from './milestone-evaluator';
+import type { OnboardingMilestone, OnboardingProgress } from './types';
 import {
   upsertMilestone,
-  fetchMilestoneRecords,
   fetchActiveTenantIds,
-  updateTenantRecord,
-  isTenantPaused,
-  countRecentActivity,
   setTenantPauseState,
 } from './onboarding-queries';
+import {
+  buildTenantOnboardingProgress,
+  syncTenantOnboardingStatus,
+} from './onboarding-progress-builder';
 
 export class OnboardingTracker {
   private db = createServerClient();
@@ -47,33 +36,7 @@ export class OnboardingTracker {
 
   /** Get full onboarding progress for a tenant */
   async getProgress(tenantId: string): Promise<OnboardingProgress | null> {
-    try {
-      const records = await fetchMilestoneRecords(this.db, tenantId);
-      if (records.length === 0) return null;
-
-      const startedAt = records[0]?.achievedAt ?? new Date().toISOString();
-      const completedAt = records.find((r) => r.milestone === 'retro_completed')?.achievedAt;
-      const tenantPaused = await isTenantPaused(this.db, tenantId);
-      const status = evaluateMilestoneStatus(records, startedAt, tenantPaused, completedAt);
-      const currentPhase = determinePhase(records);
-      const daysElapsed = daysBetween(startedAt, new Date().toISOString());
-      const loginCount = await countRecentActivity(this.db, tenantId);
-      const atRiskFlags = evaluateAtRiskFlags(records, daysElapsed, loginCount);
-
-      return {
-        tenantId,
-        status,
-        startedAt,
-        completedAt,
-        milestones: records,
-        currentPhase,
-        daysElapsed,
-        daysRemaining: Math.max(0, 14 - daysElapsed),
-        atRiskFlags,
-      };
-    } catch {
-      return null;
-    }
+    return buildTenantOnboardingProgress(this.db, tenantId);
   }
 
   /** Get all tenants currently in onboarding */
@@ -113,22 +76,7 @@ export class OnboardingTracker {
 
   private async updateTenantStatus(tenantId: string): Promise<void> {
     const progress = await this.getProgress(tenantId);
-    if (!progress) return;
-
-    const statusMap: Record<OnboardingStatus, string> = {
-      not_started: 'not_started',
-      in_progress: 'in_progress',
-      at_risk: 'at_risk',
-      completed: 'completed',
-      paused: 'paused',
-    };
-
-    await updateTenantRecord(
-      this.db,
-      tenantId,
-      statusMap[progress.status],
-      calculateProgressPct(progress.milestones),
-    );
+    await syncTenantOnboardingStatus(this.db, progress, tenantId);
   }
 }
 

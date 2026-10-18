@@ -9,8 +9,7 @@
 import { useState, useCallback } from 'react'
 import { Play, Loader2, Download } from 'lucide-react'
 import { Button } from '@/seed/components/ui/button'
-import { AuditScoreCard } from './audit-score-card'
-import { AuditCheckRow } from './audit-check-row'
+import { AuditRunnerResults } from './audit-runner-results'
 import type { CheckResult } from '@/tree/audit/zero-gap-types'
 import {
   consumeAuditSseStream,
@@ -95,47 +94,13 @@ export function AuditRunnerButton() {
         )}
       </div>
 
-      {/* Progress bar */}
-      {state === 'running' && (
-        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-
-      {/* Error */}
-      {state === 'error' && errorMsg && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          <strong>Audit failed:</strong> {errorMsg}
-        </div>
-      )}
-
-      {/* Score card (shown after done) */}
-      {state === 'done' && summary && (
-        <AuditScoreCard
-          score={summary.totalScore}
-          passed={summary.passed}
-          warned={summary.warned}
-          failed={summary.failed}
-          totalChecks={summary.totalChecks}
-        />
-      )}
-
-      {/* Real-time checks list */}
-      {checks.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Checks ({checks.length})
-          </h3>
-          <div className="space-y-2">
-            {checks.map((c) => (
-              <AuditCheckRow key={c.id} check={c} />
-            ))}
-          </div>
-        </div>
-      )}
+      <AuditRunnerResults
+        state={state}
+        progress={progress}
+        errorMsg={errorMsg}
+        summary={summary}
+        checks={checks}
+      />
     </div>
   )
 }

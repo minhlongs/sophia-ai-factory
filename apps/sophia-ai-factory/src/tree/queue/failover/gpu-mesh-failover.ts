@@ -12,7 +12,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import {
   type ProviderAttemptRecord,
   type MeshExecutionResult,
-  DEFAULT_PROVIDER_CHAIN,
   DEFAULT_CIRCUIT_BREAKER_CONFIG,
 } from './types';
 import {
@@ -20,6 +19,10 @@ import {
   globalGpuCircuitBreaker,
 } from './heartbeat-monitor';
 import { AllProvidersFailedError } from './task-reallocator';
+import {
+  resolveProviderExecutionOrder,
+  executeProviderWithTimeout,
+} from './mesh-execution-helpers';
 
 /**
  * Execute a render job across the GPU provider mesh with automatic failover and circuit breaker protection
@@ -36,27 +39,7 @@ export async function executeWithMeshFailover<T>(
   const circuitBreaker = options?.circuitBreaker || globalGpuCircuitBreaker;
   const timeoutMs = options?.timeoutMs || DEFAULT_CIRCUIT_BREAKER_CONFIG.executionTimeoutMs || 120_000;
 
-  // Build provider order: preferred order first, falling back to default chain
-  const baseOrder =
-    preferredProviderOrder && preferredProviderOrder.length > 0
-      ? preferredProviderOrder
-      : DEFAULT_PROVIDER_CHAIN;
-
-  // Deduplicate and filter to providers with an available executor
-  const executionOrder: GpuProvider[] = [];
-  for (const p of baseOrder) {
-    if (providerExecutors[p] && !executionOrder.includes(p)) {
-      executionOrder.push(p);
-    }
-  }
-
-  // Also append any remaining providers from default chain if they have executors
-  for (const p of DEFAULT_PROVIDER_CHAIN) {
-    if (providerExecutors[p] && !executionOrder.includes(p)) {
-      executionOrder.push(p);
-    }
-  }
-
+  const executionOrder = resolveProviderExecutionOrder(providerExecutors, preferredProviderOrder);
   if (executionOrder.length === 0) {
     throw new Error(`No GPU provider executors supplied for job ${job.id}`);
   }
@@ -84,15 +67,7 @@ export async function executeWithMeshFailover<T>(
     try {
       logger.info(`[gpu-mesh-failover] Attempting job ${job.id} on provider ${provider}`);
 
-      // Execute with timeout wrapper
-      const executionPromise = executor(job);
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(`Execution timed out after ${timeoutMs}ms on provider ${provider}`));
-        }, timeoutMs);
-      });
-
-      const result = await Promise.race([executionPromise, timeoutPromise]);
+      const result = await executeProviderWithTimeout(executor, job, provider, timeoutMs);
       const durationMs = Date.now() - attemptStart;
 
       circuitBreaker.recordSuccess(provider, durationMs);

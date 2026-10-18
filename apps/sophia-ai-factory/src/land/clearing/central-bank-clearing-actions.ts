@@ -16,6 +16,10 @@ import {
   type InterbankObligation,
 } from '@/tree/clearing/rtgs-settlement-vault';
 import type { CentralBankClearingNode } from '@/seed/types/central-bank-clearing';
+import {
+  insertPacs009MessageRow,
+  insertRtgsSettlementBatchRow,
+} from './central-bank-clearing-persistence';
 
 export interface SubmitPacs009ActionParams {
   endToEndId: string;
@@ -50,30 +54,19 @@ export async function submitPacs009PaymentAction(
 
     if (db) {
       const messageId = `msg_${params.endToEndId}`;
-      await db
-        .prepare(
-          `INSERT INTO iso20022_pacs_messages (
-            id, message_definition_id, end_to_end_id, uetr, instructing_agent_bic,
-            instructed_agent_bic, settlement_currency, interbank_settlement_amount_cents,
-            settlement_date, charge_bearer, raw_xml_payload, signature_digest_hex, verification_status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(
-          messageId,
-          parsed.messageType,
-          params.endToEndId,
-          params.uetr,
-          params.instructingBic,
-          params.instructedBic,
-          params.currency,
-          params.amountCents,
-          params.settlementDate,
-          'SHAR',
-          rawXml,
-          digest,
-          'SETTLED',
-        )
-        .run();
+      await insertPacs009MessageRow(db, {
+        messageId,
+        messageType: parsed.messageType,
+        endToEndId: params.endToEndId,
+        uetr: params.uetr,
+        instructingBic: params.instructingBic,
+        instructedBic: params.instructedBic,
+        currency: params.currency,
+        amountCents: params.amountCents,
+        settlementDate: params.settlementDate,
+        rawXml,
+        digest,
+      });
 
       return {
         success: true,
@@ -105,27 +98,14 @@ export async function executeRtgsNettingBatchAction(
 
     if (db && nettingResult.settlementFeasible) {
       const batchRef = `BATCH_${Date.now()}`;
-      await db
-        .prepare(
-          `INSERT INTO rtgs_settlement_batches (
-            id, batch_reference, cycle_number, total_gross_volume_cents,
-            total_net_volume_cents, compression_ratio_percentage,
-            settled_transactions_count, batch_status, merkle_root_hex, executed_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(
-          `rtgs_${batchRef}`,
-          batchRef,
-          1,
-          nettingResult.grossVolumeCents,
-          nettingResult.netVolumeCents,
-          nettingResult.compressionRatioPercentage,
-          obligations.length,
-          'COMPLETED',
-          '0x_netting_merkle_root',
-          new Date().toISOString(),
-        )
-        .run();
+      await insertRtgsSettlementBatchRow(
+        db,
+        batchRef,
+        nettingResult.grossVolumeCents,
+        nettingResult.netVolumeCents,
+        nettingResult.compressionRatioPercentage,
+        obligations.length,
+      );
     }
 
     return {

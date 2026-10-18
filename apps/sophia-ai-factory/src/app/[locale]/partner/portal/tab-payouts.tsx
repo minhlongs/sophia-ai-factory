@@ -2,8 +2,9 @@
 
 import React from 'react';
 import type { PartnerProfile, PayoutRail } from '@/tree/partners/types';
+import { PayoutRailSelector } from './tab-payouts-rail-selector';
 
-interface TabPayoutsProps {
+export interface TabPayoutsProps {
   profile: PartnerProfile;
   isVi: boolean;
   payoutAmount: string;
@@ -32,6 +33,16 @@ export function TabPayouts({
   isPending,
   onRequestPayout,
 }: TabPayoutsProps) {
+  const balanceFormatted = (profile.pending_payout_cents / 100).toFixed(2);
+  const destLabel =
+    payoutRail === 'USDT'
+      ? isVi
+        ? 'Địa Chỉ Ví USDT'
+        : 'USDT Wallet Address'
+      : isVi
+        ? 'Ngân Hàng / Số Tài Khoản / Tên Chủ TK'
+        : 'Bank Name / Account Number / Account Name';
+
   return (
     <div className="max-w-xl mx-auto p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-6">
       <div className="space-y-1">
@@ -40,8 +51,8 @@ export function TabPayouts({
         </h3>
         <p className="text-xs text-zinc-400">
           {isVi
-            ? `Số dư khả dụng hiện tại: $${(profile.pending_payout_cents / 100).toFixed(2)}`
-            : `Available pending balance: $${(profile.pending_payout_cents / 100).toFixed(2)}`}
+            ? `Số dư khả dụng hiện tại: $${balanceFormatted}`
+            : `Available pending balance: $${balanceFormatted}`}
         </p>
       </div>
 
@@ -57,35 +68,7 @@ export function TabPayouts({
       )}
 
       <form onSubmit={onRequestPayout} className="space-y-4">
-        <div>
-          <label className="block text-xs font-semibold text-zinc-400 uppercase mb-1">
-            {isVi ? 'Kênh Thanh Toán' : 'Payout Rail'}
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setPayoutRail('USDT')}
-              className={`p-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
-                payoutRail === 'USDT'
-                  ? 'border-cyan-500 bg-cyan-500/10 text-cyan-300'
-                  : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              USDT (TRC20 / ERC20)
-            </button>
-            <button
-              type="button"
-              onClick={() => setPayoutRail('VIETQR')}
-              className={`p-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
-                payoutRail === 'VIETQR'
-                  ? 'border-cyan-500 bg-cyan-500/10 text-cyan-300'
-                  : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              VietQR (NAPAS Bank)
-            </button>
-          </div>
-        </div>
+        <PayoutRailSelector isVi={isVi} payoutRail={payoutRail} setPayoutRail={setPayoutRail} />
 
         <div>
           <label className="block text-xs font-semibold text-zinc-400 uppercase mb-1">
@@ -104,13 +87,7 @@ export function TabPayouts({
 
         <div>
           <label className="block text-xs font-semibold text-zinc-400 uppercase mb-1">
-            {payoutRail === 'USDT'
-              ? isVi
-                ? 'Địa Chỉ Ví USDT'
-                : 'USDT Wallet Address'
-              : isVi
-              ? 'Ngân Hàng / Số Tài Khoản / Tên Chủ TK'
-              : 'Bank Name / Account Number / Account Name'}
+            {destLabel}
           </label>
           <input
             type="text"

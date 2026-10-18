@@ -11,29 +11,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
-import type { CohortRetentionMatrix, CohortRow } from '@/seed/types/analytics-cohort';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Map a retention percentage (0–100) to a Tailwind bg class */
-function retentionColor(pct: number): string {
-  if (pct >= 90) return 'bg-green-700 text-white';
-  if (pct >= 75) return 'bg-green-500 text-white';
-  if (pct >= 60) return 'bg-green-400 text-foreground';
-  if (pct >= 40) return 'bg-green-300 text-foreground';
-  if (pct >= 20) return 'bg-green-200 text-foreground';
-  if (pct > 0)   return 'bg-green-100 text-foreground';
-  return 'bg-muted text-muted-foreground';
-}
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+import type { CohortRetentionMatrix } from '@/seed/types/analytics-cohort';
+import { CohortRetentionTable } from './cohort-retention-table';
 
 export interface CohortRetentionChartProps {
   /** Months to display (default 12) */
   months?: number;
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function CohortRetentionChart({ months = 12 }: CohortRetentionChartProps) {
   const [data, setData] = useState<CohortRetentionMatrix | null>(null);
@@ -88,51 +72,7 @@ export function CohortRetentionChart({ months = 12 }: CohortRetentionChartProps)
         )}
 
         {data && !loading && (
-          <div className="overflow-x-auto">
-            <table className="text-xs border-separate border-spacing-0.5 min-w-max">
-              <thead>
-                <tr>
-                  <th className="text-left pr-2 font-medium text-muted-foreground whitespace-nowrap">
-                    Cohort
-                  </th>
-                  <th className="px-1 font-medium text-muted-foreground">Users</th>
-                  {colHeaders.map(col => (
-                    <th key={col} className="px-1 font-medium text-muted-foreground min-w-[3rem]">
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.cohorts.map((row: CohortRow) => (
-                  <tr key={row.cohortMonth}>
-                    <td className="pr-2 text-foreground font-medium whitespace-nowrap">
-                      {row.cohortMonth}
-                    </td>
-                    <td className="px-1 text-center text-muted-foreground">
-                      {row.usersAtStart}
-                    </td>
-                    {row.retentionByMonth.map((pct, idx) => (
-                      <td
-                        key={idx}
-                        className={`px-1 text-center rounded ${retentionColor(pct)}`}
-                        title={`${row.cohortMonth} — Month ${idx}: ${pct}%`}
-                      >
-                        {pct > 0 ? `${pct}%` : '—'}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {data.cohorts.length === 0 && (
-                  <tr>
-                    <td colSpan={colHeaders.length + 2} className="text-center text-muted-foreground py-4">
-                      No cohort data available
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <CohortRetentionTable cohorts={data.cohorts} colHeaders={colHeaders} />
         )}
       </CardContent>
     </Card>

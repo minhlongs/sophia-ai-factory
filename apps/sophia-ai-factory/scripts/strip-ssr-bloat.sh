@@ -114,4 +114,9 @@ strip_sentry() {
 }
 # strip_sentry
 
+# Strip all .map files from .next and .open-next to stay under Cloudflare Worker 15MB limit (code: 10021)
+echo "Stripping sourcemaps from build artifacts..."
+find .next .open-next -name "*.map" -type f -delete 2>/dev/null || true
+
 echo "Done."
+

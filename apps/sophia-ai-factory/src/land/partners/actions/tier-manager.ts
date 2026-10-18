@@ -1,7 +1,5 @@
 'use server';
 
-import { getD1 } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -11,12 +9,12 @@ import {
   calculateCascadeOverride,
 } from '@/tree/partners/reseller-hierarchy';
 import type {
-  PartnerProfile,
   PartnerSubReseller,
   CascadeOverrideResult,
   ResellerHierarchyTreeResult,
 } from '@/tree/partners/types';
 import type { ResellerActionError, BindSubResellerActionInput } from './reseller-types';
+import { verifyMasterPartnerOwnership } from './tier-manager-helpers';
 
 /**
  * Binds a Sub-Agency to an authenticated Master Agency.
@@ -25,37 +23,19 @@ export async function bindSubResellerAction(
   input: BindSubResellerActionInput,
 ): Promise<Result<PartnerSubReseller, ResellerActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to manage reseller hierarchy' });
-    }
-
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const masterPartnerId = input.masterPartnerId?.trim();
     const subPartnerId = input.subPartnerId?.trim();
+    const verified = await verifyMasterPartnerOwnership(
+      subPartnerId ? input.masterPartnerId : undefined,
+      {
+        unauthorizedMessage: 'Authentication required to manage reseller hierarchy',
+        invalidInputMessage: 'Master partner ID and Sub partner ID are required',
+        forbiddenMessage: 'Only the master agency owner can bind sub-agencies',
+      },
+    );
+    if (!verified.ok) return verified;
 
-    if (!masterPartnerId || !subPartnerId) {
-      return failure({ code: 'INVALID_INPUT', message: 'Master partner ID and Sub partner ID are required' });
-    }
-
-    const master = await db
-      .prepare('SELECT id, user_id FROM partner_profiles WHERE id = ?')
-      .bind(masterPartnerId)
-      .first<PartnerProfile>();
-
-    if (!master) {
-      return failure({ code: 'NOT_FOUND', message: 'Master partner profile not found' });
-    }
-
-    if (master.user_id !== user.id) {
-      return failure({ code: 'FORBIDDEN', message: 'Only the master agency owner can bind sub-agencies' });
-    }
-
-    const bindResult = await bindSubReseller(db, masterPartnerId, subPartnerId, input.agreementRef);
+    const { db, masterPartnerId } = verified.value;
+    const bindResult = await bindSubReseller(db, masterPartnerId, subPartnerId!, input.agreementRef);
 
     if (!bindResult.success || !bindResult.binding) {
       return failure({
@@ -85,35 +65,14 @@ export async function getResellerHierarchyTreeAction(
   masterPartnerId: string,
 ): Promise<Result<ResellerHierarchyTreeResult, ResellerActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to view hierarchy' });
-    }
+    const verified = await verifyMasterPartnerOwnership(masterPartnerId, {
+      unauthorizedMessage: 'Authentication required to view hierarchy',
+      invalidInputMessage: 'Master partner ID is required',
+      forbiddenMessage: 'Access denied to master partner hierarchy',
+    });
+    if (!verified.ok) return verified;
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const trimmedId = masterPartnerId?.trim();
-    if (!trimmedId) {
-      return failure({ code: 'INVALID_INPUT', message: 'Master partner ID is required' });
-    }
-
-    const master = await db
-      .prepare('SELECT id, user_id FROM partner_profiles WHERE id = ?')
-      .bind(trimmedId)
-      .first<PartnerProfile>();
-
-    if (!master) {
-      return failure({ code: 'NOT_FOUND', message: 'Master partner profile not found' });
-    }
-
-    if (master.user_id !== user.id) {
-      return failure({ code: 'FORBIDDEN', message: 'Access denied to master partner hierarchy' });
-    }
-
-    const tree = await getResellerHierarchyTree(db, trimmedId);
+    const tree = await getResellerHierarchyTree(verified.value.db, verified.value.masterPartnerId);
     return success(tree);
   } catch (rawError) {
     const err = toError(rawError);

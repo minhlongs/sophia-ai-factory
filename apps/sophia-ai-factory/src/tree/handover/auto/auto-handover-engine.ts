@@ -5,10 +5,9 @@
 
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
-import { upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup'
+import { upsertUserTier } from '@/tree/handover/handover-account-setup'
 import type { AutoHandoverOptions, AutoHandoverResult } from './types'
 import {
-  getStarterSops,
   handoverExistsForPayment,
   getExistingHandoverId,
   countUserPurchases,
@@ -16,8 +15,8 @@ import {
 import {
   resolveOrCreateHandoverUser,
   notifyTierUpgradeSafe,
-  dispatchHandoverWelcomeNotification,
 } from './handover-notification-helper'
+import { executeFirstTimeHandover } from './first-time-handover-runner'
 
 /**
  * Trigger auto-handover from payment IPN.
@@ -91,50 +90,15 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   }
 
   // First handover — install SOPs + create record + magic link + welcome email
-  const sopSlugs = getStarterSops(tier, agencyType)
-  const installedSops = await preInstallSops(db, userId, sopSlugs)
-
-  let handoverId: string | null = null
-  try {
-    handoverId = await createHandoverRecord(db, {
-      userId,
-      agencyName: fullName,
-      agencyType,
-      tier,
-      installedSops,
-      adminId: 'SYSTEM_AUTO',
-      source: 'auto_payment',
-      triggerPaymentId: paymentId,
-    })
-  } catch (err) {
-    logger.error('[AutoHandover] createHandoverRecord failed', err instanceof Error ? err : undefined)
-    return { handoverId: null, isNewCustomer, magicLink: null, sopsInstalled: installedSops, skipped: true, skipReason: 'record_create_failed' }
-  }
-
-  const { magicLink, magicLinkError } = await dispatchHandoverWelcomeNotification(db, {
-    handoverId,
+  return executeFirstTimeHandover({
+    db,
+    userId,
+    isNewCustomer,
     paymentId,
     email,
     fullName,
     tier,
+    agencyType,
     locale,
   })
-
-  logger.info('[AutoHandover] Handover complete', {
-    handoverId,
-    userId,
-    tier,
-    isNewCustomer,
-    sopsInstalled: installedSops.length,
-    paymentId,
-  })
-
-  return {
-    handoverId,
-    isNewCustomer,
-    magicLink,
-    sopsInstalled: installedSops,
-    skipped: false,
-    error: magicLinkError,
-  }
 }
