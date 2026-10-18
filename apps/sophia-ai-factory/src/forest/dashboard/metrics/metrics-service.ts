@@ -10,8 +10,6 @@ import type {
   DashboardResult,
   DashboardData,
   DashboardFetchParams,
-  DashboardMetric,
-  RecentActivity,
   DashboardTimeframe,
 } from './types';
 import {
@@ -23,6 +21,10 @@ import {
   fetchRevenueData,
   fetchTopAffiliates,
 } from './revenue-metrics-aggregator';
+import {
+  buildDashboardSummaryMetrics,
+  mergeRecentActivities,
+} from './metrics-formatter';
 
 /**
  * Fetch all dashboard data for a user
@@ -52,57 +54,19 @@ export async function fetchDashboardData(
     if (!transactionsResult.ok) return transactionsResult;
     if (!affiliatesResult.ok) return affiliatesResult;
 
-    const metrics: DashboardMetric[] = [
-      {
-        id: 'total_campaigns',
-        value: campaignMetricsResult.data.totalCampaigns.toString(),
-        trend: 'neutral',
-        icon: 'Megaphone',
-      },
-      {
-        id: 'active_campaigns',
-        value: campaignMetricsResult.data.activeCampaigns.toString(),
-        trend: campaignMetricsResult.data.activeCampaigns > 0 ? 'up' : 'neutral',
-        icon: 'Play',
-      },
-      {
-        id: 'videos_generated',
-        value: campaignMetricsResult.data.totalVideosGenerated.toString(),
-        trend: 'up',
-        icon: 'Video',
-      },
-      {
-        id: 'success_rate',
-        value: `${campaignMetricsResult.data.successRate.toFixed(1)}%`,
-        trend: campaignMetricsResult.data.successRate >= 80 ? 'up' : 'down',
-        icon: 'TrendingUp',
-      },
-    ];
-
-    const recentActivities: RecentActivity[] = [
-      ...recentCampaignsResult.data.map(c => ({
-        id: c.id,
-        type: 'campaign' as const,
-        date: c.created_at,
-        description: `Campaign: ${c.title}`,
-        status: c.status,
-      })),
-      ...transactionsResult.data.map(t => ({
-        id: t.id,
-        type: 'payment' as const,
-        date: t.date,
-        description: t.customer,
-        amount: t.amount,
-        status: t.status,
-      })),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const metrics = buildDashboardSummaryMetrics(campaignMetricsResult.data);
+    const recentActivities = mergeRecentActivities(
+      recentCampaignsResult.data,
+      transactionsResult.data,
+      limit,
+    );
 
     return {
       ok: true,
       data: {
         metrics,
         campaignMetrics: campaignMetricsResult.data,
-        recentActivities: recentActivities.slice(0, limit),
+        recentActivities,
         topAffiliates: affiliatesResult.data,
         revenueData: revenueResult.ok ? revenueResult.data : [],
         timeframe,

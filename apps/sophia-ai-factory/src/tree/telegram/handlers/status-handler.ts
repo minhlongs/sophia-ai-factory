@@ -1,6 +1,11 @@
 import { tryCreateServerClientSync, D1Client } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  type CampaignRow,
+  formatSingleCampaignStatus,
+  formatActiveCampaignsList,
+} from './status-message-formatter';
 
 let _statusDb: D1Client | null = null;
 export function resetStatusDb() { _statusDb = null; }
@@ -9,18 +14,7 @@ function getStatusDb(): D1Client | null {
   return _statusDb;
 }
 
-const MAX_FIELD_LENGTH = 120;
 const MAX_LIST_ROWS = 10;
-const TRUNCATION_SUFFIX = '…';
-
-function truncate(value: string | null | undefined, max = MAX_FIELD_LENGTH): string {
-  const base = value ?? '';
-  return base.length > max ? `${base.slice(0, max)}${TRUNCATION_SUFFIX}` : base;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 interface ProfileRow {
   user_id: string;
@@ -36,15 +30,6 @@ async function resolveUserId(chatId: string): Promise<string | null> {
     .maybeSingle();
   if (!data) return null;
   return (data as unknown as ProfileRow).user_id;
-}
-
-interface CampaignRow {
-  id: string;
-  title: string;
-  status: string | null;
-  progress: number | null;
-  created_at: string;
-  updated_at: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -70,14 +55,13 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
     }
 
     let message: string;
-    let headerEmoji: string;
 
     if (campaignId) {
-      // Single campaign status lookup
       const { data } = await db
         .from('campaigns')
         .select('id, title, status, progress, created_at, updated_at')
         .eq('id', campaignId)
+        .eq('user_id', userId)
         .maybeSingle();
 
       const row = data as unknown as CampaignRow | null;
@@ -88,25 +72,8 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
         return;
       }
 
-      headerEmoji =
-        row.status === 'completed'
-          ? '✅'
-          : row.status === 'failed'
-            ? '❌'
-            : row.status === 'queued'
-              ? '⏳'
-              : '⚙️';
-
-      const statusHuman = row.status?.replace(/_/g, ' ') ?? 'unknown';
-      const title = truncate(row.title);
-      message = `${headerEmoji} *Trạng thái / Status: ${title}*\n\n`;
-      message += ` ID: \`${row.id.slice(0, 8)}\`\n`;
-      message += ` Trạng thái / Status: ${statusHuman}\n`;
-      message += ` Tiến độ / Progress: ${row.progress ?? 0}%\n`;
-      message += ` Tạo lúc / Created: ${new Date(row.created_at).toLocaleDateString()}\n`;
-      message += ` Cập nhật / Updated: ${new Date(row.updated_at).toLocaleDateString()}\n`;
+      message = formatSingleCampaignStatus(row);
     } else {
-      // List all non-draft / non-completed campaigns (active work)
       const { data: rows } = await db
         .from<CampaignRow>('campaigns')
         .select('id, title, status, progress, created_at, updated_at')
@@ -116,35 +83,7 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
         .limit(MAX_LIST_ROWS);
 
       const campaigns = (rows as CampaignRow[] | null) ?? [];
-
-      headerEmoji = '📊';
-      if (campaigns.length === 0) {
-        message =
-          `${headerEmoji} *Không có chiến dịch đang hoạt động / No Active Campaigns*\n\n` +
-          `Tạo chiến dịch mới với /campaign <chủ đề>.\n\n` +
-          `_Create a new one with \`/campaign <topic>\`._`;
-        await sendMessage(chatId, message);
-        return;
-      }
-
-      const statusEmoji = (s: string | null | undefined) => {
-        if (s === 'queued') return '⏳';
-        if (s?.startsWith('processing_')) return '⚙️';
-        if (s === 'completed') return '✅';
-        if (s === 'failed') return '❌';
-        return '•';
-      };
-
-      message = `${headerEmoji} *Chiến dịch đang chạy / Active Campaigns:*\n\n`;
-      campaigns.forEach((c, idx) => {
-        const emoji = statusEmoji(c.status);
-        const statusHuman = (c.status ?? 'unknown').replace(/_/g, ' ');
-        const title = truncate(c.title);
-        message += `${idx + 1}. ${emoji} *${title}*\n`;
-        message += ` ID: \`${c.id.slice(0, 8)}\`\n`;
-        message += ` TT / Status: ${statusHuman} (${c.progress ?? 0}%)\n`;
-        message += ` Tạo / Created: ${new Date(c.created_at).toLocaleDateString()}\n\n`;
-      });
+      message = formatActiveCampaignsList(campaigns);
     }
 
     await sendMessage(chatId, message);

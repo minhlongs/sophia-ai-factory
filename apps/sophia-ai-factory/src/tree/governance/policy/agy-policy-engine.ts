@@ -14,11 +14,7 @@ import {
   generatePolicyEvaluationDigest,
   generatePolicyEvaluationDigestSync,
 } from './policy-evaluator';
-import {
-  checkPermissionViolation,
-  checkAutonomyViolation,
-  checkComputeViolation,
-} from './violation-enforcer';
+import { evaluateAgyPolicySteps } from './agy-policy-steps';
 
 /**
  * Synchronous core evaluation logic.
@@ -28,59 +24,14 @@ export function evaluateAgyPolicySync(
   request: PolicyEvaluationRequest,
   requiredAutonomyForAction: AutonomyLevel = 'L1',
 ): PolicyEvaluationVerdict {
-  // 1 & 2: Permission check (Deny precedence over Allow)
-  const permCheck = checkPermissionViolation(config, request.action);
-  if (permCheck.violated) {
-    const reason = permCheck.reason ?? 'ACTION_NOT_PERMITTED';
-    const evaluationSha256 = generatePolicyEvaluationDigestSync(request, false, reason);
-    return {
-      allowed: false,
-      reason,
-      requiredAutonomy: requiredAutonomyForAction,
-      escalationTriggered: Boolean(permCheck.escalationTriggered),
-      evaluationSha256,
-    };
-  }
-
-  // 3: Autonomy hierarchy check
-  const autoCheck = checkAutonomyViolation(
-    config.agent.maxAutonomyLevel,
-    request.requestedAutonomy,
-    requiredAutonomyForAction
+  const outcome = evaluateAgyPolicySteps(config, request, requiredAutonomyForAction);
+  const evaluationSha256 = generatePolicyEvaluationDigestSync(
+    request,
+    outcome.allowed,
+    outcome.reason,
   );
-  if (autoCheck.violated) {
-    const reason = autoCheck.reason ?? 'AUTONOMY_LEVEL_EXCEEDED';
-    const evaluationSha256 = generatePolicyEvaluationDigestSync(request, false, reason);
-    return {
-      allowed: false,
-      reason,
-      requiredAutonomy: requiredAutonomyForAction,
-      escalationTriggered: Boolean(autoCheck.escalationTriggered),
-      evaluationSha256,
-    };
-  }
-
-  // 4: Compute limit check
-  const compCheck = checkComputeViolation(config, request);
-  if (compCheck.violated) {
-    const reason = compCheck.reason ?? 'COMPUTE_LIMIT_EXCEEDED';
-    const evaluationSha256 = generatePolicyEvaluationDigestSync(request, false, reason);
-    return {
-      allowed: false,
-      reason,
-      requiredAutonomy: requiredAutonomyForAction,
-      escalationTriggered: Boolean(compCheck.escalationTriggered),
-      evaluationSha256,
-    };
-  }
-
-  // 5: Approved verdict
-  const evaluationSha256 = generatePolicyEvaluationDigestSync(request, true, 'POLICY_APPROVED');
   return {
-    allowed: true,
-    reason: 'POLICY_APPROVED',
-    requiredAutonomy: requiredAutonomyForAction,
-    escalationTriggered: false,
+    ...outcome,
     evaluationSha256,
   };
 }
@@ -95,59 +46,14 @@ export async function evaluateAgyPolicy(
   request: PolicyEvaluationRequest,
   requiredAutonomyForAction: AutonomyLevel = 'L1',
 ): Promise<PolicyEvaluationVerdict> {
-  // 1 & 2: Permission check (Deny precedence over Allow)
-  const permCheck = checkPermissionViolation(config, request.action);
-  if (permCheck.violated) {
-    const reason = permCheck.reason ?? 'ACTION_NOT_PERMITTED';
-    const evaluationSha256 = await generatePolicyEvaluationDigest(request, false, reason);
-    return {
-      allowed: false,
-      reason,
-      requiredAutonomy: requiredAutonomyForAction,
-      escalationTriggered: Boolean(permCheck.escalationTriggered),
-      evaluationSha256,
-    };
-  }
-
-  // 3: Autonomy hierarchy check
-  const autoCheck = checkAutonomyViolation(
-    config.agent.maxAutonomyLevel,
-    request.requestedAutonomy,
-    requiredAutonomyForAction
+  const outcome = evaluateAgyPolicySteps(config, request, requiredAutonomyForAction);
+  const evaluationSha256 = await generatePolicyEvaluationDigest(
+    request,
+    outcome.allowed,
+    outcome.reason,
   );
-  if (autoCheck.violated) {
-    const reason = autoCheck.reason ?? 'AUTONOMY_LEVEL_EXCEEDED';
-    const evaluationSha256 = await generatePolicyEvaluationDigest(request, false, reason);
-    return {
-      allowed: false,
-      reason,
-      requiredAutonomy: requiredAutonomyForAction,
-      escalationTriggered: Boolean(autoCheck.escalationTriggered),
-      evaluationSha256,
-    };
-  }
-
-  // 4: Compute limit check
-  const compCheck = checkComputeViolation(config, request);
-  if (compCheck.violated) {
-    const reason = compCheck.reason ?? 'COMPUTE_LIMIT_EXCEEDED';
-    const evaluationSha256 = await generatePolicyEvaluationDigest(request, false, reason);
-    return {
-      allowed: false,
-      reason,
-      requiredAutonomy: requiredAutonomyForAction,
-      escalationTriggered: Boolean(compCheck.escalationTriggered),
-      evaluationSha256,
-    };
-  }
-
-  // 5: Approved verdict
-  const evaluationSha256 = await generatePolicyEvaluationDigest(request, true, 'POLICY_APPROVED');
   return {
-    allowed: true,
-    reason: 'POLICY_APPROVED',
-    requiredAutonomy: requiredAutonomyForAction,
-    escalationTriggered: false,
+    ...outcome,
     evaluationSha256,
   };
 }

@@ -9,9 +9,10 @@ import { toError } from '@/seed/utils/to-error';
 import type {
   DashboardResult,
   RevenueDataPoint,
-  AffiliateStats,
   DashboardTimeframe,
 } from './types';
+
+export { fetchTopAffiliates } from './affiliate-metrics-aggregator';
 
 /**
  * Fetch recent payment transactions
@@ -104,50 +105,6 @@ export async function fetchRevenueData(
     return { ok: true, data: points };
   } catch (error) {
     logger.warn('[dashboard] Could not fetch revenue data', toError(error));
-    return { ok: true, data: [] };
-  }
-}
-
-/**
- * Fetch top affiliate partners by commission
- */
-export async function fetchTopAffiliates(
-  userId: string,
-  limit: number = 5
-): Promise<DashboardResult<AffiliateStats[]>> {
-  try {
-    const db = createServerClient();
-
-    const result = await db
-      .from('affiliates')
-      .select('id, name, initials, avatar_url, stats, total_commission')
-      .eq('user_id', userId)
-      .order('total_commission', { ascending: false })
-      .limit(limit);
-
-    if (result.error || !result.data) {
-      return { ok: true, data: [] };
-    }
-
-    const affiliates = (result.data as Array<{
-      id: string;
-      name: string;
-      initials: string;
-      avatar_url: string | null;
-      stats: string;
-      total_commission: number;
-    }>).map(aff => ({
-      id: aff.id,
-      name: aff.name,
-      initials: aff.initials,
-      avatar: aff.avatar_url,
-      stats: aff.stats,
-      commission: `+$${aff.total_commission.toFixed(0)}`,
-    }));
-
-    return { ok: true, data: affiliates };
-  } catch (error) {
-    logger.warn('[dashboard] Could not fetch affiliates', toError(error));
     return { ok: true, data: [] };
   }
 }

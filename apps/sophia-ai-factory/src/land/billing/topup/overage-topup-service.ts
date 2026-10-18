@@ -10,18 +10,18 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import {
   type TopupIpnPayload,
-  TOPUP_PRICE_PER_MCU,
-  UNDERPAYMENT_THRESHOLD,
   type ProcessTopupResult,
 } from './types';
+import { acquireTopupEventLock } from './overage-topup-helpers';
+import { executeLockedTopupFulfillment } from './overage-topup-fulfillment';
 import {
-  parseUserIdFromOrderId,
-  grantUserCredits,
-} from './topup-calculator';
-import {
-  acquireTopupEventLock,
-  finalizeOverageEventsAndCache,
-} from './overage-topup-helpers';
+  acquireTerminalIpnLock,
+  hasNowPaymentsRefundBarrier,
+  markTerminalIpnProcessed,
+  recordNowPaymentsRefundBarrier,
+  releaseTerminalIpnLock,
+} from '../ipn-handlers/terminal-lock-manager';
+import { mapNonAcquiredLockResponse } from '../ipn-handlers/status-dispatcher';
 
 /**
  * Process a top-up IPN (Instant Payment Notification).
@@ -33,7 +33,7 @@ import {
 export async function processTopupIpn(
   ipn: TopupIpnPayload,
 ): Promise<ProcessTopupResult> {
-  const { payment_id, payment_status, order_id, price_amount } = ipn;
+  const { payment_id, payment_status, order_id } = ipn;
 
   if (!order_id.startsWith('topup_')) {
     return { success: false, message: 'Not a top-up order' };
@@ -42,95 +42,61 @@ export async function processTopupIpn(
   const eventId = `topup_${payment_id}_${payment_status}`;
   const db = createServerClient();
   const now = new Date().toISOString();
+  const terminalStatus = payment_status === 'finished' || payment_status === 'refunded'
+    ? payment_status
+    : null;
+  let terminalLockAcquired = false;
 
-  // 1. Atomic lock via INSERT ON CONFLICT DO NOTHING
-  const lockOutcome = await acquireTopupEventLock(db, eventId, ipn, now);
+  if (terminalStatus) {
+    const terminalLock = await acquireTerminalIpnLock(db, ipn, now);
+    if (terminalLock.status !== 'acquired') return mapNonAcquiredLockResponse(terminalLock.status);
+    terminalLockAcquired = true;
+    try {
+      if (payment_status === 'refunded') {
+        await recordNowPaymentsRefundBarrier(db, payment_id);
+      } else if (await hasNowPaymentsRefundBarrier(db, payment_id)) {
+        await markTerminalIpnProcessed(db, ipn, 'refunded');
+        return { success: true, message: 'Ignored finished event after refund' };
+      }
+    } catch (error) {
+      await releaseTerminalIpnLock(db, payment_id);
+      return { success: false, message: error instanceof Error ? error.message : 'Terminal payment guard failed' };
+    }
+  }
+
+  let lockOutcome: Awaited<ReturnType<typeof acquireTopupEventLock>>;
+  try {
+    lockOutcome = await acquireTopupEventLock(db, eventId, ipn, now);
+  } catch (error) {
+    if (terminalLockAcquired) await releaseTerminalIpnLock(db, payment_id);
+    return { success: false, message: error instanceof Error ? error.message : 'Database query failure' };
+  }
   if (!lockOutcome.acquired) {
+    if (terminalLockAcquired) {
+      if (lockOutcome.response.message === 'Already processed' && terminalStatus) {
+        await markTerminalIpnProcessed(db, ipn, terminalStatus);
+      } else {
+        await releaseTerminalIpnLock(db, payment_id);
+      }
+    }
     return lockOutcome.response;
   }
 
-  // 2. Lock owned — process the top-up
   try {
-    if (payment_status !== 'finished') {
-      await db
-        .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
-        .bind(eventId)
-        .run();
-      return { success: true, message: `Top-up ${payment_status} recorded` };
-    }
-
-    // 3. Underpayment guard
-    const actuallyPaid = ipn.actually_paid;
-    const required = price_amount * UNDERPAYMENT_THRESHOLD;
-    if (actuallyPaid !== undefined && actuallyPaid !== null && actuallyPaid < required) {
-      await db
-        .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
-        .bind(eventId)
-        .run();
-
-      logger.warn('[OverageTopup] Underpayment detected — no credits granted', {
-        payment_id,
-        priceAmount: price_amount,
-        actuallyPaid,
-        required,
-      });
-      return { success: false, message: 'Underpayment detected — insufficient funds' };
-    }
-
-    // 4. Resolve user & pending topup
-    const userId = parseUserIdFromOrderId(order_id);
-    if (!userId) {
-      await db
-        .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
-        .bind(eventId)
-        .run();
-      return { success: false, message: 'Could not parse user ID from order' };
-    }
-
-    const ipnInvoiceId = ipn.invoice_id;
-    const pendingTopupId = `topup_${ipnInvoiceId ?? payment_id}`;
-    const pendingTopup = await db
-      .prepare('SELECT id, user_id, mcu_amount, price_cents, status FROM pending_topups WHERE id = ?1')
-      .bind(pendingTopupId)
-      .first<{ id: string; user_id: string; mcu_amount: number; price_cents: number; status: string }>();
-
-    if (!pendingTopup) {
-      await db
-        .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
-        .bind(eventId)
-        .run();
-      logger.warn('[OverageTopup] Pending top-up not found, creating credit directly', {
-        payment_id,
-        userId,
-      });
-    }
-
-    const mcuAmount = pendingTopup?.mcu_amount ?? Math.round(price_amount / TOPUP_PRICE_PER_MCU);
-
-    // 5. Grant credits atomically
-    await grantUserCredits(db, userId, mcuAmount);
-
-    // 6. Mark pending top-up completed
-    if (pendingTopup) {
-      await db
-        .prepare('UPDATE pending_topups SET status = ?1 WHERE id = ?2')
-        .bind('completed', pendingTopup.id)
-        .run();
-    }
-
-    // 7 & 8. Mark overage events billable and invalidate quota cache
-    await finalizeOverageEventsAndCache(userId);
-
-    // 9. Mark event processed
-    await db.prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1').bind(eventId).run();
-    logger.info('[OverageTopup] Top-up processed successfully', { userId, payment_id, mcuAmount });
-    return { success: true, message: 'Top-up processed' };
+    return await executeLockedTopupFulfillment(db, ipn, eventId, terminalStatus);
   } catch (error) {
     logger.error('[OverageTopup] Processing failed', toError(error));
     try {
       await db.prepare('DELETE FROM payment_events WHERE event_id = ?1').bind(eventId).run();
     } catch {
       // Non-fatal — lock release best-effort
+    }
+    if (terminalLockAcquired) {
+      try {
+        await releaseTerminalIpnLock(db, payment_id);
+      } catch {
+        // Terminal lock release is best-effort; the refund barrier remains durable.
+      }
     }
     return { success: false, message: error instanceof Error ? error.message : 'Processing failed' };
   }

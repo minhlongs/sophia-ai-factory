@@ -10,55 +10,17 @@
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
+import {
+  generateRollbackId,
+  mapRollbackRow,
+  toErrorCode,
+  type RollbackInput,
+  type RollbackRecord,
+  type RollbackRepoError,
+  type RollbackRow,
+} from './rollback-repo-types';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface RollbackRecord {
-  id: string;
-  workspaceId: string;
-  missionId: string | null;
-  agentRunId: string | null;
-  reason: string;
-  fromStatus: string;
-  toStatus: string;
-  triggeredBy: string;
-  rolledBackAt: number;
-}
-
-export interface RollbackInput {
-  workspaceId: string;
-  missionId?: string;
-  agentRunId?: string;
-  reason: string;
-  fromStatus: string;
-  toStatus: string;
-  triggeredBy: string;
-}
-
-export type RollbackRepoError =
-  | { code: 'DB_UNAVAILABLE'; message: string }
-  | { code: 'DB_ERROR'; message: string };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function toErrorCode(err: unknown): RollbackRepoError {
-  const message = err instanceof Error ? err.message : String(err);
-  return { code: 'DB_ERROR', message };
-}
-
-function generateId(): string {
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substring(2, 8);
-  return `rb_${timestamp}_${randomPart}`;
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+export type { RollbackRecord, RollbackInput, RollbackRepoError };
 
 /**
  * Insert a rollback record into D1.
@@ -72,7 +34,7 @@ export async function logRollback(
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database binding not available' });
     }
 
-    const id = generateId();
+    const id = generateRollbackId();
     const now = Math.floor(Date.now() / 1000);
 
     await d1
@@ -136,29 +98,9 @@ export async function getRollbackHistory(
           'FROM rollback_logs WHERE mission_id = ?1 ORDER BY rolled_back_at DESC',
       )
       .bind(missionId)
-      .all<{
-        id: string;
-        workspace_id: string;
-        mission_id: string | null;
-        agent_run_id: string | null;
-        reason: string;
-        from_status: string;
-        to_status: string;
-        triggered_by: string;
-        rolled_back_at: number;
-      }>();
+      .all<RollbackRow>();
 
-    const records: RollbackRecord[] = (rows.results ?? []).map((row) => ({
-      id: row.id,
-      workspaceId: row.workspace_id,
-      missionId: row.mission_id,
-      agentRunId: row.agent_run_id,
-      reason: row.reason,
-      fromStatus: row.from_status,
-      toStatus: row.to_status,
-      triggeredBy: row.triggered_by,
-      rolledBackAt: row.rolled_back_at,
-    }));
+    const records: RollbackRecord[] = (rows.results ?? []).map(mapRollbackRow);
 
     return success(records);
   } catch (err) {

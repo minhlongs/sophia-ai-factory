@@ -15,7 +15,11 @@ import { success, failure, type Result } from '@/seed/types/result'
 import {
   mapCommissionDlqRow,
   COMMISSION_DLQ_SCHEMA,
+  UPSERT_COMMISSION_DLQ_SQL,
+  SELECT_STALE_COMMISSION_DLQ_SQL,
+  RESOLVE_COMMISSION_DLQ_SQL,
   type CommissionDlqEntry,
+  type RawD1QueryHandle,
 } from './commission-dlq-schema'
 
 export { COMMISSION_DLQ_SCHEMA, type CommissionDlqEntry }
@@ -41,16 +45,7 @@ export async function enqueueCommissionDlq(
 
   try {
     await db
-      .prepare(
-        `INSERT INTO commission_dead_letter
-         (event_id, receipt, transaction_type, amount, payload,
-          failure_reason, retry_count, first_failed_at, last_attempted_at, resolved)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)
-         ON CONFLICT(event_id) DO UPDATE SET
-           retry_count = retry_count + 1,
-           failure_reason = ?6,
-           last_attempted_at = ?9`,
-      )
+      .prepare(UPSERT_COMMISSION_DLQ_SQL)
       .bind(
         eventId,
         receipt,
@@ -95,21 +90,9 @@ export async function getStaleCommissionEntries(
   const cutoff = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000).toISOString()
 
   try {
-    const rawDb = db as unknown as {
-      prepare: (sql: string) => {
-        bind: (...args: unknown[]) => {
-          all: <T>() => Promise<{ results: T[] }>
-        }
-      }
-    }
-
+    const rawDb = db as unknown as RawD1QueryHandle
     const result = await rawDb
-      .prepare(
-        `SELECT * FROM commission_dead_letter
-         WHERE resolved = 0 AND last_attempted_at < ?1
-         ORDER BY first_failed_at ASC
-         LIMIT ?2`,
-      )
+      .prepare(SELECT_STALE_COMMISSION_DLQ_SQL)
       .bind(cutoff, limit)
       .all<Record<string, unknown>>()
 
@@ -130,11 +113,7 @@ export async function resolveCommissionDlqEntry(eventId: string): Promise<void> 
   const now = new Date().toISOString()
   try {
     await db
-      .prepare(
-        `UPDATE commission_dead_letter
-         SET resolved = 1, resolved_at = ?1
-         WHERE event_id = ?2`,
-      )
+      .prepare(RESOLVE_COMMISSION_DLQ_SQL)
       .bind(now, eventId)
       .run()
   } catch (err) {

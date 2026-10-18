@@ -9,13 +9,13 @@ import type {
   CrmSyncEvent,
   CrmSyncEventRow,
   RecordCrmSyncEventInput,
-  CrmSyncStatus,
 } from '../types';
 import { mapCrmSyncEventRow } from '../types';
-
-function generateId(prefix: string): string {
-  return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-}
+import {
+  generateSyncEventId,
+  buildCrmSyncEventUpdateSql,
+  type CrmSyncEventUpdates,
+} from './event-repo-helpers';
 
 /**
  * Records a CRM sync event (inbound or outbound).
@@ -24,7 +24,7 @@ export async function recordCrmSyncEvent(
   db: D1Database,
   input: RecordCrmSyncEventInput
 ): Promise<CrmSyncEvent> {
-  const id = input.id || generateId('sync');
+  const id = input.id || generateSyncEventId('sync');
   const now = Date.now();
   const status = input.status || 'pending';
   const payloadJson = JSON.stringify(input.payload || {});
@@ -79,51 +79,12 @@ export async function recordCrmSyncEvent(
 export async function updateCrmSyncEvent(
   db: D1Database,
   id: string,
-  updates: {
-    status?: CrmSyncStatus;
-    externalId?: string | null;
-    errorMessage?: string | null;
-    retryCount?: number;
-    nextRetryAt?: number | null;
-    syncedAt?: number | null;
-  }
+  updates: CrmSyncEventUpdates
 ): Promise<CrmSyncEvent | null> {
-  const parts: string[] = [];
-  const bindings: unknown[] = [];
-  const now = Date.now();
-
-  if (updates.status !== undefined) {
-    parts.push('status = ?');
-    bindings.push(updates.status);
-  }
-  if (updates.externalId !== undefined) {
-    parts.push('external_id = ?');
-    bindings.push(updates.externalId);
-  }
-  if (updates.errorMessage !== undefined) {
-    parts.push('error_message = ?');
-    bindings.push(updates.errorMessage);
-  }
-  if (updates.retryCount !== undefined) {
-    parts.push('retry_count = ?');
-    bindings.push(updates.retryCount);
-  }
-  if (updates.nextRetryAt !== undefined) {
-    parts.push('next_retry_at = ?');
-    bindings.push(updates.nextRetryAt);
-  }
-  if (updates.syncedAt !== undefined) {
-    parts.push('synced_at = ?');
-    bindings.push(updates.syncedAt);
-  }
-
-  parts.push('updated_at = ?');
-  bindings.push(now);
-
-  bindings.push(id);
+  const { sql, bindings } = buildCrmSyncEventUpdateSql(id, updates, Date.now());
 
   await db
-    .prepare(`UPDATE crm_sync_events SET ${parts.join(', ')} WHERE id = ?`)
+    .prepare(sql)
     .bind(...bindings)
     .run();
 

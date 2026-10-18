@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Clock, AlertTriangle } from 'lucide-react';
 import type { Approval, ApprovalQueueProps } from './types';
 import { ApprovalCard } from './card';
+import { fetchWorkspaceApprovals, submitApprovalResolution } from './queue-view-api';
 
 export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
   const t = useTranslations('approvals');
@@ -18,37 +19,7 @@ export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ workspaceId, limit: '50', offset: '0' });
-      const res = await fetch(`/api/approvals?${params.toString()}`, {
-        credentials: 'include',
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-        throw new Error((body.error as string) || `HTTP ${res.status}`);
-      }
-
-      const data = (await res.json()) as {
-        approvals: Array<{
-          id: string;
-          agentId: string;
-          actionId: string;
-          actionType: string;
-          actionSummary: string;
-          estimatedCostCents?: number | null;
-          status: string;
-          createdAt: number;
-          timeoutAt: number;
-          missionId?: string | null;
-          workspaceId?: string;
-        }>;
-      };
-      const mapped: Approval[] = data.approvals.map((a) => ({
-        ...a,
-        workspaceId: a.workspaceId ?? workspaceId,
-      }));
-
+      const mapped = await fetchWorkspaceApprovals(workspaceId);
       setApprovals(mapped);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -73,18 +44,7 @@ export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
     const reason = reasonInput?.value?.trim() || undefined;
 
     try {
-      const res = await fetch(`/api/approvals/${approvalId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ approved, reason }),
-      });
-
-      const body = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) {
-        throw new Error((body.error as string) || (body.details as string) || `HTTP ${res.status}`);
-      }
-
+      await submitApprovalResolution(approvalId, approved, reason);
       setApprovals((prev) => prev.filter((a) => a.id !== approvalId));
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));

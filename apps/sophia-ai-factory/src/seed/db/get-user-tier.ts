@@ -10,91 +10,30 @@
  */
 
 import { Tier } from '@/seed/types';
-import { DB_TIER_MAPPING } from '@/seed/config/tiers';
 import { getD1 } from '@/seed/db/client';
+import {
+  getKvBinding,
+  getFromL1Cache,
+  getFromKvCache,
+  cacheAndReturnTier,
+  invalidateUserTierCache,
+  clearUserTierCache,
+  normalizePlanToTier,
+} from './user-tier-cache';
 
-interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
-}
-
-const USER_TIER_CACHE = new Map<string, CacheEntry<Tier>>();
-const CACHE_TTL_MS = 60_000;
-const KV_TTL_SECONDS = 60;
-const MAX_CACHE_SIZE = 1000;
-
-function getKvBinding(): KVNamespace | null {
-  if (typeof globalThis !== 'undefined') {
-    const g = globalThis as Record<string, unknown>;
-    if (g.KV_KV) return g.KV_KV as KVNamespace;
-    const env = (g as Record<string, Record<string, unknown>>).__env__;
-    if (env?.KV_KV) return env.KV_KV as KVNamespace;
-  }
-  return null;
-}
-
-function setInL1Cache(userId: string, tier: Tier, ttlMs = CACHE_TTL_MS): void {
-  if (USER_TIER_CACHE.size >= MAX_CACHE_SIZE) {
-    const oldestKey = USER_TIER_CACHE.keys().next().value;
-    if (oldestKey) USER_TIER_CACHE.delete(oldestKey);
-  }
-  USER_TIER_CACHE.set(userId, {
-    value: tier,
-    expiresAt: Date.now() + ttlMs,
-  });
-}
-
-export function invalidateUserTierCache(userId: string): void {
-  USER_TIER_CACHE.delete(userId);
-  const kv = getKvBinding();
-  if (kv) {
-    kv.delete(`user_tier:${userId}`).catch(() => {});
-  }
-}
-
-export function clearUserTierCache(): void {
-  USER_TIER_CACHE.clear();
-}
-
-/**
- * Normalize either a DB tier value (uppercase, e.g. 'MASTER') or a plan alias
- * (lowercase, e.g. 'master', 'pro') to the canonical Tier enum.
- * Unknown or null → 'BASIC'.
- */
-export function normalizePlanToTier(plan: string | null | undefined): Tier {
-  if (!plan) return 'BASIC' as Tier;
-  // Direct uppercase match first (tier column stores uppercase enum)
-  const upper = plan.toUpperCase() as Tier;
-  if (upper === 'BASIC' || upper === 'PREMIUM' || upper === 'ENTERPRISE' || upper === 'MASTER') {
-    return upper;
-  }
-  // Fallback: lowercase alias map ('pro' → 'PREMIUM', 'master' → 'MASTER', etc.)
-  return DB_TIER_MAPPING[plan.toLowerCase()] ?? ('BASIC' as Tier);
-}
+export { invalidateUserTierCache, clearUserTierCache, normalizePlanToTier };
 
 export async function getUserTier(userId: string): Promise<Tier> {
   if (!userId) return 'BASIC' as Tier;
 
   // 1. L1 In-memory cache
-  const cached = USER_TIER_CACHE.get(userId);
-  if (cached && Date.now() < cached.expiresAt) {
-    return cached.value;
-  }
+  const l1Cached = getFromL1Cache(userId);
+  if (l1Cached) return l1Cached;
 
   // 2. L2 KV cache
   const kv = getKvBinding();
-  if (kv) {
-    try {
-      const kvVal = await kv.get(`user_tier:${userId}`);
-      if (kvVal) {
-        const tier = normalizePlanToTier(kvVal);
-        setInL1Cache(userId, tier);
-        return tier;
-      }
-    } catch {
-      // KV non-fatal, fallback to D1
-    }
-  }
+  const kvCached = await getFromKvCache(userId, kv);
+  if (kvCached) return kvCached;
 
   try {
     const d1 = await getD1();
@@ -110,17 +49,9 @@ export async function getUserTier(userId: string): Promise<Tier> {
       .bind(userId)
       .first<{ tier: string | null; plan: string | null }>();
 
-    if (userSub) {
-      // tier column (uppercase) takes precedence over plan (lowercase alias)
-      const raw = userSub.tier ?? userSub.plan;
-      if (raw) {
-        const tier = normalizePlanToTier(raw);
-        setInL1Cache(userId, tier);
-        if (kv) {
-          kv.put(`user_tier:${userId}`, tier, { expirationTtl: KV_TTL_SECONDS }).catch(() => {});
-        }
-        return tier;
-      }
+    const rawUserTier = userSub?.tier ?? userSub?.plan;
+    if (rawUserTier) {
+      return cacheAndReturnTier(userId, normalizePlanToTier(rawUserTier), kv);
     }
 
     // Fallback: org-based lookup (BC for org-scoped customers)
@@ -129,11 +60,7 @@ export async function getUserTier(userId: string): Promise<Tier> {
       .bind(userId)
       .first<{ org_id: string }>();
     if (!member) {
-      setInL1Cache(userId, 'BASIC' as Tier);
-      if (kv) {
-        kv.put(`user_tier:${userId}`, 'BASIC', { expirationTtl: KV_TTL_SECONDS }).catch(() => {});
-      }
-      return 'BASIC' as Tier;
+      return cacheAndReturnTier(userId, 'BASIC' as Tier, kv);
     }
 
     const orgSub = await d1
@@ -141,12 +68,7 @@ export async function getUserTier(userId: string): Promise<Tier> {
       .bind(member.org_id)
       .first<{ plan: string }>();
 
-    const tier = normalizePlanToTier(orgSub?.plan);
-    setInL1Cache(userId, tier);
-    if (kv) {
-      kv.put(`user_tier:${userId}`, tier, { expirationTtl: KV_TTL_SECONDS }).catch(() => {});
-    }
-    return tier;
+    return cacheAndReturnTier(userId, normalizePlanToTier(orgSub?.plan), kv);
   } catch {
     return 'BASIC' as Tier;
   }

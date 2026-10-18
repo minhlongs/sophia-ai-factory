@@ -9,52 +9,13 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import type { ChurnEvent, ChurnTimeline, ChurnTimelinePoint } from '@/seed/types/analytics-cohort';
-
-// ── Tier rank for downgrade detection ────────────────────────────────────────
-
-const TIER_RANK: Record<string, number> = {
-  BASIC: 1,
-  PREMIUM: 2,
-  ENTERPRISE: 3,
-  MASTER: 4,
-};
-
-function isDowngrade(fromTier: string | null, toTier: string | null): boolean {
-  if (!fromTier || !toTier) return false;
-  const from = TIER_RANK[fromTier.toUpperCase()] ?? 0;
-  const to = TIER_RANK[toTier.toUpperCase()] ?? 0;
-  return to < from && to > 0;
-}
-
-// ── D1 row types ─────────────────────────────────────────────────────────────
-
-interface TierChangeRow {
-  user_id: string;
-  from_tier: string | null;
-  to_tier: string | null;
-  event_type: string;
-  created_at: string;
-}
-
-interface LicenseCountRow {
-  active_count: number;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Group events by YYYY-MM-DD date string */
-function groupByDate(events: ChurnEvent[]): Map<string, ChurnEvent[]> {
-  const map = new Map<string, ChurnEvent[]>();
-  for (const e of events) {
-    const day = e.eventDate.slice(0, 10);
-    if (!map.has(day)) map.set(day, []);
-    map.get(day)!.push(e);
-  }
-  return map;
-}
-
-// ── Core function ─────────────────────────────────────────────────────────────
+import type { ChurnTimeline } from '@/seed/types/analytics-cohort';
+import {
+  buildChurnTimelinePoints,
+  classifyTierChangeRows,
+  type LicenseCountRow,
+  type TierChangeRow,
+} from './churn-calculator-helpers';
 
 /**
  * Fetch churn timeline from D1 tier_change_events table.
@@ -83,24 +44,7 @@ export async function fetchChurnTimeline(
   const rows = eventsResult.results ?? [];
 
   // ── Step 2: classify events ──
-  const cancellations: ChurnEvent[] = [];
-  const downgrades: ChurnEvent[] = [];
-
-  for (const row of rows) {
-    const event: ChurnEvent = {
-      userId: row.user_id,
-      fromTier: row.from_tier,
-      toTier: row.to_tier,
-      eventDate: row.created_at,
-      eventType: row.event_type as ChurnEvent['eventType'],
-    };
-
-    if (row.event_type === 'cancel' || row.to_tier === null) {
-      cancellations.push(event);
-    } else if (row.event_type === 'downgrade' || isDowngrade(row.from_tier, row.to_tier)) {
-      downgrades.push(event);
-    }
-  }
+  const { cancellations, downgrades } = classifyTierChangeRows(rows);
 
   // ── Step 3: count active licenses at start of window ──
   const licenseResult = await db
@@ -115,33 +59,11 @@ export async function fetchChurnTimeline(
   const baseActiveCount = licenseResult?.active_count ?? 0;
 
   // ── Step 4: build timeline points (monthly buckets) ──
-  const allEvents = [...cancellations, ...downgrades];
-  const byDate = groupByDate(allEvents);
-  const cancelsByDate = groupByDate(cancellations);
-  const downgradesByDate = groupByDate(downgrades);
-
-  const points: ChurnTimelinePoint[] = [];
-  let runningActive = baseActiveCount;
-
-  const sortedDates = Array.from(
-    new Set(Array.from(byDate.keys())),
-  ).sort();
-
-  for (const date of sortedDates) {
-    const churnedCount = cancelsByDate.get(date)?.length ?? 0;
-    const downgradedCount = downgradesByDate.get(date)?.length ?? 0;
-    const activeAtStart = Math.max(runningActive, 0);
-    const churnRate = activeAtStart > 0
-      ? Math.round((churnedCount / activeAtStart) * 10_000) / 100
-      : 0;
-
-    points.push({ date, churnedCount, downgradedCount, activeAtStart, churnRate });
-    runningActive = Math.max(runningActive - churnedCount, 0);
-  }
-
-  const avgMonthlyChurnRate = points.length > 0
-    ? Math.round((points.reduce((s, p) => s + p.churnRate, 0) / points.length) * 100) / 100
-    : 0;
+  const { points, avgMonthlyChurnRate } = buildChurnTimelinePoints(
+    cancellations,
+    downgrades,
+    baseActiveCount,
+  );
 
   logger.info('[ChurnCalculator] Built churn timeline', {
     events: rows.length,

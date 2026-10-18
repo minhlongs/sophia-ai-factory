@@ -14,37 +14,23 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
-import type { VideoRenderProviderInput, VideoRenderProviderResult } from './video-render-provider';
+import type { VideoRenderProviderResult } from './video-render-provider';
+import {
+  buildWav2LipRequestPayload,
+  Wav2LipProviderError,
+  type Wav2LipApiResponse,
+  type Wav2LipConfig,
+  type Wav2LipInput,
+  type Wav2LipVideoOptions,
+} from './wav2lip-provider-helpers';
 
-export interface Wav2LipConfig {
-  /** Fully qualified URL of the self-hosted Wav2Lip instance (e.g. https://wav2lip.example.com) */
-  apiUrl: string;
-}
-
-/**
- * Additional parameters Wav2Lip accepts beyond the standard input.
- */
-export interface Wav2LipVideoOptions {
-  /** URL or base64 of the target video for lip-sync. If absent, provider uses avatar_id. */
-  targetVideoUrl?: string;
-  /** URL or base64 of the audio source. If absent, provider uses voice_id to generate. */
-  audioUrl?: string;
-  /** Padding of the face detection box [top, bottom, left, right] */
-  pad?: [number, number, number, number];
-  /** Resize factor for the face detection (0 = no resize) */
-  resizeFactor?: number;
-  /** Whether to use the more accurate Wav2Lip GAN model */
-  useGan?: boolean;
-}
-
-export type Wav2LipInput = VideoRenderProviderInput & Wav2LipVideoOptions;
-
-export interface Wav2LipApiResponse {
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  job_id: string;
-  video_url?: string;
-  error?: string;
-}
+export {
+  Wav2LipProviderError,
+  type Wav2LipApiResponse,
+  type Wav2LipConfig,
+  type Wav2LipInput,
+  type Wav2LipVideoOptions,
+};
 
 /**
  * Submit a lip-sync video job to a self-hosted Wav2Lip pipeline.
@@ -62,21 +48,7 @@ export async function renderWithWav2Lip(
 ): Promise<VideoRenderProviderResult> {
   const { apiUrl } = config;
   const endpoint = `${apiUrl.replace(/\/+$/, '')}/process`;
-
-  const body: Record<string, unknown> = {
-    script: input.script,
-    title: input.title ?? undefined,
-    voice_id: input.voiceId ?? undefined,
-    avatar_id: input.avatarId ?? undefined,
-    callback_url: input.callbackUrl ?? undefined,
-  };
-
-  // Pass through Wav2Lip-specific options
-  if (input.targetVideoUrl) body.target_video_url = input.targetVideoUrl;
-  if (input.audioUrl) body.audio_url = input.audioUrl;
-  if (input.pad) body.pad = input.pad;
-  if (input.resizeFactor !== undefined) body.resize_factor = input.resizeFactor;
-  if (input.useGan !== undefined) body.use_gan = input.useGan;
+  const body = buildWav2LipRequestPayload(input);
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -93,7 +65,7 @@ export async function renderWithWav2Lip(
       method: 'POST',
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30_000), // 30s timeout for submission
+      signal: AbortSignal.timeout(30_000),
     });
     recordSuccess('wav2lip');
   } catch (err) {
@@ -146,14 +118,4 @@ export async function renderWithWav2Lip(
     provider: 'wav2lip',
     videoUrl: data.video_url,
   };
-}
-
-export class Wav2LipProviderError extends Error {
-  code: 'CONNECTION_FAILED' | 'INVALID_RESPONSE' | 'SUBMIT_FAILED';
-
-  constructor(code: Wav2LipProviderError['code'], message: string) {
-    super(message);
-    this.name = 'Wav2LipProviderError';
-    this.code = code;
-  }
 }

@@ -13,60 +13,19 @@ import {
 } from 'recharts';
 import { useTranslations } from 'next-intl';
 import type { ServiceBreakdown } from '@/land/analytics/types';
-import type { TooltipProps } from 'recharts';
-import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import {
+  SERVICE_COLORS,
+  CustomTooltip,
+  type CustomTooltipProps,
+} from './service-breakdown-tooltip';
+
+export { SERVICE_COLORS, CustomTooltip, type CustomTooltipProps };
 
 export interface ServiceBreakdownChartProps {
   data: ServiceBreakdown[] | null;
   loading?: boolean;
   title?: string;
   onSelectService?: (service: string) => void;
-}
-
-// Service colors - consistent with the design system
-const SERVICE_COLORS: Record<string, string> = {
-  heygen: '#3b82f6',
-  elevenlabs: '#8b5cf6',
-  openrouter: '#10b981',
-  default: '#f59e0b',
-};
-
-type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
-  payload?: Array<{ payload: ServiceBreakdown }>;
-};
-
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload as ServiceBreakdown;
-    return (
-      <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-        <p className="text-sm font-medium text-foreground capitalize mb-2">
-          {data.service}
-        </p>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs text-muted-foreground">Requests:</span>
-            <span className="text-xs font-medium text-foreground">
-              {data.requests.toLocaleString()}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs text-muted-foreground">Credits:</span>
-            <span className="text-xs font-medium text-foreground">
-              {data.credits.toLocaleString()}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs text-muted-foreground">Share:</span>
-            <span className="text-xs font-medium text-foreground">
-              {data.percentage.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
 }
 
 export function ServiceBreakdownChart({

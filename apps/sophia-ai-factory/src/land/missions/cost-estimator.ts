@@ -7,78 +7,29 @@
 
 import { type TemplateId, getTemplateById, getDefaultTemplate } from './first-run-template';
 import { VIDEO_MCU_COSTS } from '@/land/billing/video-mcu-cost-config';
+import {
+  FAL_AI_COST_PER_IMAGE_USD,
+  ELEVENLABS_COST_PER_1K_CHARS_USD,
+  OPENROUTER_SCRIPT_COST_USD,
+  CHARS_PER_WORD_RATIO,
+  STANDARD_STAGES,
+  type CostBreakdownItem,
+  type StageLatencyEstimate,
+  type MissionPreflightEstimate,
+} from './cost-estimator-config';
 
-// ── Rate Constants (Live AI Provider Pricing) ──────────────────────────────
-export const FAL_AI_COST_PER_IMAGE_USD = 0.025;
-export const ELEVENLABS_COST_PER_1K_CHARS_USD = 0.015;
-export const OPENROUTER_SCRIPT_COST_USD = 0.005;
-export const CHARS_PER_WORD_RATIO = 5.5;
+export {
+  FAL_AI_COST_PER_IMAGE_USD,
+  ELEVENLABS_COST_PER_1K_CHARS_USD,
+  OPENROUTER_SCRIPT_COST_USD,
+  CHARS_PER_WORD_RATIO,
+};
 
-export interface CostBreakdownItem {
-  service: 'fal.ai' | 'ElevenLabs' | 'OpenRouter';
-  category: 'visual' | 'voice' | 'script';
-  unitMetric: string;
-  estimatedUsd: number;
-}
-
-export interface StageLatencyEstimate {
-  stageId: string;
-  labelEn: string;
-  labelVi: string;
-  minSeconds: number;
-  maxSeconds: number;
-}
-
-export interface MissionPreflightEstimate {
-  totalUsd: number;
-  totalMcu: number;
-  durationRangeSeconds: {
-    min: number;
-    max: number;
-  };
-  breakdown: CostBreakdownItem[];
-  stages: StageLatencyEstimate[];
-  isZeroHiddenFees: true;
-}
-
-/** Stage latency breakdown representing standard pipeline benchmarks */
-const STANDARD_STAGES: StageLatencyEstimate[] = [
-  {
-    stageId: 'SCRIPT_GENERATION',
-    labelEn: 'Script Generation',
-    labelVi: 'Soạn kịch bản SEO',
-    minSeconds: 5,
-    maxSeconds: 10,
-  },
-  {
-    stageId: 'VOICE_SYNTHESIS',
-    labelEn: 'Voice Synthesis',
-    labelVi: 'Lồng tiếng AI',
-    minSeconds: 8,
-    maxSeconds: 15,
-  },
-  {
-    stageId: 'VISUAL_GENERATION',
-    labelEn: 'Visual Generation',
-    labelVi: 'Tạo hình ảnh AI',
-    minSeconds: 15,
-    maxSeconds: 35,
-  },
-  {
-    stageId: 'VIDEO_COMPOSITING',
-    labelEn: 'Video Compositing',
-    labelVi: 'Ghép video & phụ đề',
-    minSeconds: 17,
-    maxSeconds: 30,
-  },
-  {
-    stageId: 'READY_FOR_REVIEW',
-    labelEn: 'Ready for Review',
-    labelVi: 'Sẵn sàng duyệt',
-    minSeconds: 0,
-    maxSeconds: 0,
-  },
-];
+export type {
+  CostBreakdownItem,
+  StageLatencyEstimate,
+  MissionPreflightEstimate,
+};
 
 /**
  * Calculate MCU credits scaled by video duration.

@@ -15,7 +15,6 @@
  */
 
 import React, { useState } from 'react';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
 import {
   type IntegrationsPortalClientProps,
   type IntegrationTab,
@@ -27,6 +26,7 @@ import {
   DeliveryLogsTable,
   PoliciesSecurityTab,
 } from './components';
+import { IntegrationsStatusBanner } from './integrations-status-banner';
 
 export function IntegrationsPortalClient({
   initialConfigs,
@@ -39,35 +39,7 @@ export function IntegrationsPortalClient({
   const isVi = locale === 'vi';
   const [activeTab, setActiveTab] = useState<IntegrationTab>('crm');
 
-  const {
-    configs,
-    syncEvents,
-    subscriptions,
-    deliveryLogs,
-    isPending,
-    statusMessage,
-    newSubUrl,
-    setNewSubUrl,
-    newSubSecret,
-    setNewSubSecret,
-    newSubDesc,
-    setNewSubDesc,
-    selectedEvents,
-    setSelectedEvents,
-    selectedProvider,
-    setSelectedProvider,
-    crmEndpoint,
-    setCrmEndpoint,
-    crmClientId,
-    setCrmClientId,
-    syncDirection,
-    setSyncDirection,
-    testResult,
-    handleTestPing,
-    handleSaveCrmConfig,
-    handleTriggerSync,
-    handleCreateSubscription,
-  } = useIntegrationsPortal({
+  const portal = useIntegrationsPortal({
     initialConfigs,
     initialSyncEvents,
     initialSubscriptions,
@@ -80,71 +52,56 @@ export function IntegrationsPortalClient({
     <div className="space-y-6">
       <PortalHeader isVi={isVi} />
 
-      {statusMessage && (
-        <div
-          className={`flex items-center gap-2 rounded-lg p-3 text-sm border ${
-            statusMessage.type === 'success'
-              ? 'bg-emerald-950/50 border-emerald-800 text-emerald-200'
-              : 'bg-red-950/50 border-red-800 text-red-200'
-          }`}
-        >
-          {statusMessage.type === 'success' ? (
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-          ) : (
-            <AlertCircle className="h-4 w-4 text-red-400" />
-          )}
-          <span>{statusMessage.text}</span>
-        </div>
-      )}
+      <IntegrationsStatusBanner statusMessage={portal.statusMessage} />
 
       <TabNavigation
         isVi={isVi}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        subscriptionsCount={subscriptions.length}
-        deliveryLogsCount={deliveryLogs.length}
+        subscriptionsCount={portal.subscriptions.length}
+        deliveryLogsCount={portal.deliveryLogs.length}
       />
 
       {activeTab === 'crm' && (
         <CrmTabContent
           isVi={isVi}
-          isPending={isPending}
-          configs={configs}
-          syncEvents={syncEvents}
-          selectedProvider={selectedProvider}
-          setSelectedProvider={setSelectedProvider}
-          crmEndpoint={crmEndpoint}
-          setCrmEndpoint={setCrmEndpoint}
-          crmClientId={crmClientId}
-          setCrmClientId={setCrmClientId}
-          syncDirection={syncDirection}
-          setSyncDirection={setSyncDirection}
-          onTriggerSync={handleTriggerSync}
-          onSaveConfig={handleSaveCrmConfig}
+          isPending={portal.isPending}
+          configs={portal.configs}
+          syncEvents={portal.syncEvents}
+          selectedProvider={portal.selectedProvider}
+          setSelectedProvider={portal.setSelectedProvider}
+          crmEndpoint={portal.crmEndpoint}
+          setCrmEndpoint={portal.setCrmEndpoint}
+          crmClientId={portal.crmClientId}
+          setCrmClientId={portal.setCrmClientId}
+          syncDirection={portal.syncDirection}
+          setSyncDirection={portal.setSyncDirection}
+          onTriggerSync={portal.handleTriggerSync}
+          onSaveConfig={portal.handleSaveCrmConfig}
         />
       )}
 
       {activeTab === 'webhooks' && (
         <WebhooksTabContent
           isVi={isVi}
-          isPending={isPending}
-          subscriptions={subscriptions}
-          newSubUrl={newSubUrl}
-          setNewSubUrl={setNewSubUrl}
-          newSubSecret={newSubSecret}
-          setNewSubSecret={setNewSubSecret}
-          newSubDesc={newSubDesc}
-          setNewSubDesc={setNewSubDesc}
-          selectedEvents={selectedEvents}
-          setSelectedEvents={setSelectedEvents}
-          testResult={testResult}
-          onTestPing={handleTestPing}
-          onCreateSubscription={handleCreateSubscription}
+          isPending={portal.isPending}
+          subscriptions={portal.subscriptions}
+          newSubUrl={portal.newSubUrl}
+          setNewSubUrl={portal.setNewSubUrl}
+          newSubSecret={portal.newSubSecret}
+          setNewSubSecret={portal.setNewSubSecret}
+          newSubDesc={portal.newSubDesc}
+          setNewSubDesc={portal.setNewSubDesc}
+          selectedEvents={portal.selectedEvents}
+          setSelectedEvents={portal.setSelectedEvents}
+          testResult={portal.testResult}
+          onTestPing={portal.handleTestPing}
+          onCreateSubscription={portal.handleCreateSubscription}
         />
       )}
 
       {activeTab === 'logs' && (
-        <DeliveryLogsTable isVi={isVi} deliveryLogs={deliveryLogs} />
+        <DeliveryLogsTable isVi={isVi} deliveryLogs={portal.deliveryLogs} />
       )}
 
       {activeTab === 'policy' && <PoliciesSecurityTab isVi={isVi} />}

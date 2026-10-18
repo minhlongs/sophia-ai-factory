@@ -9,23 +9,14 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
-
-const GRAPH_API_VERSION = 'v21.0';
-const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-
-function isMockMode(): boolean {
-  return !process.env.FACEBOOK_APP_ID;
-}
-
-interface FBVideoResponse {
-  id?: string;
-  status?: { video_status?: string };
-  error?: { message?: string };
-}
-
-interface FBInsightsResponse {
-  data?: Array<{ name: string; values?: Array<{ value: number | Record<string, number> }> }>;
-}
+import {
+  GRAPH_BASE,
+  isMockMode,
+  buildFacebookReelDescription,
+  parseFacebookInsights,
+  type FBVideoResponse,
+  type FBInsightsResponse,
+} from './facebook-publisher-helpers';
 
 export class FacebookPublisher implements Publisher {
   constructor(
@@ -44,16 +35,14 @@ export class FacebookPublisher implements Publisher {
     }
 
     try {
-      const hashtags = meta.hashtags.map((h: string) => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-      const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-      const description = `${adCaption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
+      const description = buildFacebookReelDescription(meta);
 
       const res = await fetch(`${GRAPH_BASE}/${this.pageId}/video_reels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           video_url: videoUrl,
-          description: description.slice(0, 2200),
+          description,
           video_state: 'PUBLISHED',
           access_token: this.pageAccessToken,
         }),
@@ -117,29 +106,15 @@ export class FacebookPublisher implements Publisher {
       if (!res.ok) return { views: 0, likes: 0, comments: 0 };
 
       const data = (await res.json()) as FBInsightsResponse;
-      const findNum = (name: string): number => {
-        const v = data.data?.find(m => m.name === name)?.values?.[0]?.value;
-        return typeof v === 'number' ? v : 0;
-      };
-      const findReactionTotal = (name: string): number => {
-        const v = data.data?.find(m => m.name === name)?.values?.[0]?.value;
-        if (typeof v !== 'object' || v === null) return 0;
-        return Object.values(v).reduce((sum: number, n) => sum + (typeof n === 'number' ? n : 0), 0);
-      };
-
-      return {
-        views: findNum('total_video_views') || findNum('total_video_impressions'),
-        reach: findNum('total_video_impressions'),
-        likes: findReactionTotal('post_video_likes_by_reaction_type'),
-        comments: 0,
-      };
+      return parseFacebookInsights(data);
     } catch (error) {
       recordFailure('facebook', classifyError(error));
       return { views: 0, likes: 0, comments: 0 };
     }
   }
 
-async delete(_postId: string): Promise<void> {
-  // Platform-specific deletion not implemented
-  logger.warn("[facebook-publisher.ts] delete not implemented");
-}}
+  async delete(_postId: string): Promise<void> {
+    // Platform-specific deletion not implemented
+    logger.warn('[facebook-publisher.ts] delete not implemented');
+  }
+}

@@ -8,10 +8,18 @@ import type {
   ChannelAdOptimizationReport,
   DurationCategory,
   FormatYieldSummary,
-  RevenueProjection,
   VideoAdMetrics,
 } from './types';
 import { calculateRpm, classifyDuration } from './video-yield';
+import {
+  OPTIMAL_DURATION_RANGES,
+  selectTopFormat,
+  selectPeakHour,
+  buildActionableInsights,
+  projectAdRevenue,
+} from './revenue-projector';
+
+export { projectAdRevenue };
 
 export function generateChannelOptimizationReport(
   videos: readonly VideoAdMetrics[],
@@ -34,7 +42,6 @@ export function generateChannelOptimizationReport(
   let totalViews = 0;
   let totalRevenue = 0;
   const hourViews: Record<number, number> = {};
-
   const breakdown = {
     short: { count: 0, views: 0, revenueUsd: 0 },
     mid: { count: 0, views: 0, revenueUsd: 0 },
@@ -45,7 +52,6 @@ export function generateChannelOptimizationReport(
     const views = Math.max(0, v.views);
     const rev = Math.max(0, v.estimatedRevenueUsd);
     const cat = classifyDuration(v.durationSeconds);
-
     totalViews += views;
     totalRevenue += rev;
     breakdown[cat].count += 1;
@@ -57,92 +63,32 @@ export function generateChannelOptimizationReport(
     }
   }
 
-  const formatSummary = (cat: DurationCategory): FormatYieldSummary => {
-    const data = breakdown[cat];
-    return {
-      count: data.count,
-      views: data.views,
-      revenueUsd: Math.round(data.revenueUsd * 100) / 100,
-      avgRpm: calculateRpm(data.revenueUsd, data.views),
-    };
-  };
+  const formatSummary = (cat: DurationCategory): FormatYieldSummary => ({
+    count: breakdown[cat].count,
+    views: breakdown[cat].views,
+    revenueUsd: Math.round(breakdown[cat].revenueUsd * 100) / 100,
+    avgRpm: calculateRpm(breakdown[cat].revenueUsd, breakdown[cat].views),
+  });
 
   const formatBreakdown = {
     short: formatSummary('short'),
     mid: formatSummary('mid'),
     long: formatSummary('long'),
   };
-
-  let topFormat: DurationCategory = 'mid';
-  let highestRpm = -1;
-  for (const cat of ['short', 'mid', 'long'] as const) {
-    if (formatBreakdown[cat].count > 0 && formatBreakdown[cat].avgRpm > highestRpm) {
-      highestRpm = formatBreakdown[cat].avgRpm;
-      topFormat = cat;
-    }
-  }
-
-  let peakHour: number | null = null;
-  let maxHourViews = -1;
-  for (const [hourStr, views] of Object.entries(hourViews)) {
-    if (views > maxHourViews) {
-      maxHourViews = views;
-      peakHour = Number(hourStr);
-    }
-  }
-
-  const optimalRanges: Record<DurationCategory, { minSeconds: number; maxSeconds: number }> = {
-    short: { minSeconds: 30, maxSeconds: 55 },
-    mid: { minSeconds: 180, maxSeconds: 420 },
-    long: { minSeconds: 485, maxSeconds: 900 },
-  };
-
+  const topFormat = selectTopFormat(formatBreakdown);
+  const peakHour = selectPeakHour(hourViews);
   const avgRpm = calculateRpm(totalRevenue, totalViews);
   const healthScore = Math.min(100, Math.max(10, Math.round(avgRpm * 25 + (totalViews > 10000 ? 25 : 10))));
-
-  const actionableInsights: string[] = [];
-  actionableInsights.push(`Highest yield format: ${topFormat.toUpperCase()} with $${formatBreakdown[topFormat].avgRpm} RPM`);
-  if (peakHour !== null) {
-    actionableInsights.push(`Peak audience activity occurs around ${peakHour}:00 UTC — schedule uploads 2h prior`);
-  }
-  if (formatBreakdown.long.count === 0 && avgRpm < 2.0) {
-    actionableInsights.push('Consider producing 8m+ deep-dive videos to capture mid-roll ad inventory');
-  }
 
   return {
     totalViews,
     totalRevenueUsd: Math.round(totalRevenue * 100) / 100,
     averageRpm: avgRpm,
     topPerformingFormat: topFormat,
-    optimalDurationRange: optimalRanges[topFormat],
+    optimalDurationRange: OPTIMAL_DURATION_RANGES[topFormat],
     peakPublishHourUtc: peakHour,
     monetizationHealthScore: healthScore,
     formatBreakdown,
-    actionableInsights,
-  };
-}
-
-export function projectAdRevenue(
-  targetViews: number,
-  targetDurationSeconds: number,
-  baselineRpm: number,
-): RevenueProjection {
-  const views = Math.max(0, targetViews);
-  const duration = Math.max(1, targetDurationSeconds);
-  const baseRpm = Math.max(0.1, baselineRpm);
-
-  let multiplier = 1.0;
-  if (duration > 480) multiplier = 1.6;
-  else if (duration <= 60) multiplier = 0.4;
-
-  const effectiveRpm = baseRpm * multiplier;
-  const estimatedRevenue = Math.round((views / 1000) * effectiveRpm * 100) / 100;
-  const minRevenue = Math.round(estimatedRevenue * 0.75 * 100) / 100;
-  const maxRevenue = Math.round(estimatedRevenue * 1.35 * 100) / 100;
-
-  return {
-    estimatedRevenueUsd: estimatedRevenue,
-    confidenceMinUsd: minRevenue,
-    confidenceMaxUsd: maxRevenue,
+    actionableInsights: buildActionableInsights(topFormat, formatBreakdown, peakHour, avgRpm),
   };
 }

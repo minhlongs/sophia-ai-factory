@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Infinite Sub-Planck Singularity Mesh dispatching, Net-Zero power verification, and Forty-Five-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planInfiniteSubPlanckBatchDispatch,
   type InfiniteSubPlanckDispatchPlan,
@@ -20,6 +19,12 @@ import {
   type InfiniteSubPlanckPowerValidationOutput,
 } from '@/tree/energy/infinite-sub-planck-energy-engine';
 import type { InfiniteSubPlanckMesh } from '@/seed/types/infinite-sub-planck-mesh-nexus';
+import {
+  randomRefSuffix,
+  recordStandardDispatchD1,
+  recordStandardPowerD1,
+  recordStandardSlaD1,
+} from './quantum-vacuum-d1-recorder';
 
 export interface InfiniteSubPlanckDispatchActionResult {
   success: boolean;
@@ -39,9 +44,6 @@ export interface FortyFiveNinesSlaActionResult {
   error?: string;
 }
 
-/**
- * Server Action to plan and record 200,000,000,000 workload dispatch to Infinite Sub-Planck Singularity Mesh.
- */
 export async function dispatchInfiniteSubPlanckBatchAction(
   meshes: InfiniteSubPlanckMesh[],
   workloads: number = 200_000_000_000,
@@ -49,32 +51,17 @@ export async function dispatchInfiniteSubPlanckBatchAction(
 ): Promise<InfiniteSubPlanckDispatchActionResult> {
   try {
     const data = planInfiniteSubPlanckBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO infinite_sub_planck_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `INF-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `TOKEN-INF-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.000015,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS',
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordStandardDispatchD1({
+      table: 'infinite_sub_planck_dispatches',
+      targetCol: 'mesh_ref',
+      dispatchRef: `INF-DISPATCH-${Date.now()}-${randomRefSuffix()}`,
+      sessionToken: `TOKEN-INF-${Date.now()}`,
+      targetRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.000015,
+      driftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (error) {
     return {
@@ -84,37 +71,20 @@ export async function dispatchInfiniteSubPlanckBatchAction(
   }
 }
 
-/**
- * Server Action to validate and persist Infinite Sub-Planck harvest power allocation.
- */
 export async function allocateInfiniteSubPlanckPowerAction(
   params: InfiniteSubPlanckPowerInput
 ): Promise<InfiniteSubPlanckPowerActionResult> {
   try {
     const data = validateInfiniteSubPlanckPower(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO infinite_sub_planck_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified, allocated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `INF-PWR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          params.powerSourceType,
-          params.allocatedMegawatts,
-          params.carbonIntensityGPerKwh,
-          params.boseEinsteinCop,
-          params.isNetZeroCertified ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordStandardPowerD1({
+      table: 'infinite_sub_planck_power_allocations',
+      allocationRef: `INF-PWR-${Date.now()}-${randomRefSuffix()}`,
+      powerSourceType: params.powerSourceType,
+      allocatedMegawatts: params.allocatedMegawatts,
+      carbonIntensityGPerKwh: params.carbonIntensityGPerKwh,
+      copValue: params.boseEinsteinCop,
+      isCompliant: Boolean(params.isNetZeroCertified),
+    });
     return { success: data.isCompliant, data };
   } catch (error) {
     return {
@@ -124,42 +94,25 @@ export async function allocateInfiniteSubPlanckPowerAction(
   }
 }
 
-/**
- * Server Action to evaluate and record continuous Forty-Five-Nines SLA compliance.
- */
 export async function auditFortyFiveNinesSlaAction(
   input: FortyFiveNinesSlaInput,
   periodMonth: string = '2026-09'
 ): Promise<FortyFiveNinesSlaActionResult> {
   try {
     const data = evaluateFortyFiveNinesSla(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO forty_five_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_forty_five_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-45NINES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          periodMonth,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'FORTY_FIVE_NINES_CERTIFIED' ? 1 : 0,
-          4194304,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return { success: data.slaVerdict === 'FORTY_FIVE_NINES_CERTIFIED', data };
+    const isMet = data.slaVerdict === 'FORTY_FIVE_NINES_CERTIFIED';
+    await recordStandardSlaD1({
+      table: 'forty_five_nines_sla_audits',
+      metCol: 'is_forty_five_nines_met',
+      auditRef: `SLA-45NINES-${Date.now()}-${randomRefSuffix()}`,
+      evaluationPeriodMonth: periodMonth,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isMet,
+      bftConsensusNodes: 4194304,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isMet, data };
   } catch (error) {
     return {
       success: false,

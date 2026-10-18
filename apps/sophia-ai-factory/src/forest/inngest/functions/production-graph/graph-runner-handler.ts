@@ -16,11 +16,9 @@ import {
   type EmitStep,
   type RunnerContext,
 } from './types';
-import { handleCancellation } from './emitter-helpers';
-import { checkCancellation } from './execution-helpers';
 import { initializeGraphRun } from './init-helpers';
-import { executeSingleNode } from './node-executor';
 import { completeGraphRun } from './completion-helpers';
+import { runTopologicalNodes } from './graph-node-loop';
 
 export interface GraphRunnerInput {
   event: {
@@ -103,49 +101,21 @@ export async function handleGraphRunner(
     graphRunId,
   };
 
-  for (const nodeId of validated.topologicalOrder) {
-    const cancelCheck = await checkCancellation(runnerContext);
-    if (cancelCheck.cancelled) {
-      await handleCancellation(
-        step,
-        logCtx,
-        cancelCheck.reason ?? 'Cancelled by user',
-        retryCount,
-        totals.totalCostCents,
-        totals.totalTokens,
-      );
-      return { ok: false, code: 'CANCELLED' };
-    }
+  const loopResult = await runTopologicalNodes({
+    topologicalOrder: validated.topologicalOrder,
+    states,
+    step,
+    logCtx,
+    retryCount,
+    mission,
+    policy,
+    providerRegistry: providerResult.registry,
+    runnerContext,
+    totals,
+  });
 
-    const nodeOutcome = await executeSingleNode({
-      nodeId,
-      states,
-      step,
-      logCtx,
-      retryCount,
-      mission,
-      policy,
-      providerRegistry: providerResult.registry,
-      runnerContext,
-      totals,
-    });
-
-    if (!nodeOutcome.ok) {
-      return nodeOutcome;
-    }
-  }
-
-  const finalCancelCheck = await checkCancellation(runnerContext);
-  if (finalCancelCheck.cancelled) {
-    await handleCancellation(
-      step,
-      logCtx,
-      finalCancelCheck.reason ?? 'Cancelled by user',
-      retryCount,
-      totals.totalCostCents,
-      totals.totalTokens,
-    );
-    return { ok: false, code: 'CANCELLED' };
+  if (!loopResult.ok) {
+    return loopResult;
   }
 
   await completeGraphRun({

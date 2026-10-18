@@ -19,15 +19,14 @@ import type {
 } from '@/seed/types/creative-economy';
 import { success, failure, type Result } from '@/seed/types/result';
 import { createCreativeMemoryEntryId } from '@/seed/types/creative-economy';
-import { getD1 } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
 import {
   upsertMemory,
   deleteMemory,
   newMemoryId,
-  memoryRowToDomain,
   CreativeMemoryError,
 } from './types';
+import { fetchMemoryById, executeMemoryQuery } from './creative-memory-queries';
 
 const DEFAULT_QUERY_LIMIT = 50;
 const CHARS_PER_TOKEN = 4;
@@ -35,7 +34,7 @@ const CHARS_PER_TOKEN = 4;
 export class CreativeMemoryStore implements ICreativeMemoryStore {
   async get(id: CreativeMemoryEntryId): Promise<Result<CreativeMemory, Error>> {
     try {
-      const entry = await this.getMemoryById(id);
+      const entry = await fetchMemoryById(id);
       if (!entry) {
         return failure(new CreativeMemoryError('NOT_FOUND', `Memory not found: ${id}`));
       }
@@ -47,7 +46,7 @@ export class CreativeMemoryStore implements ICreativeMemoryStore {
 
   async query(query: MemoryQuery): Promise<Result<MemorySummary, Error>> {
     try {
-      const entries = await this.queryMemory(query);
+      const entries = await executeMemoryQuery(query);
       return success({ entries, total: entries.length });
     } catch (err) {
       return failure(toError(err));
@@ -74,7 +73,7 @@ export class CreativeMemoryStore implements ICreativeMemoryStore {
 
   async delete(id: CreativeMemoryEntryId): Promise<Result<boolean, Error>> {
     try {
-      const existing = await this.getMemoryById(id);
+      const existing = await fetchMemoryById(id);
       if (!existing) return success(false);
       await deleteMemory(id);
       return success(true);
@@ -85,7 +84,10 @@ export class CreativeMemoryStore implements ICreativeMemoryStore {
 
   async summarize(query: MemoryQuery, maxTokens: number): Promise<Result<string, Error>> {
     try {
-      const entries = await this.queryMemory({ ...query, limit: query.limit ?? DEFAULT_QUERY_LIMIT });
+      const entries = await executeMemoryQuery({
+        ...query,
+        limit: query.limit ?? DEFAULT_QUERY_LIMIT,
+      });
       const lines = entries.map((e) => {
         const scopePart = e.scopeId ? ` ${e.scope}(${e.scopeId})` : ` ${e.scope}`;
         return `[${e.category}/${e.key}]${scopePart}: ${JSON.stringify(e.value)}`;
@@ -98,57 +100,6 @@ export class CreativeMemoryStore implements ICreativeMemoryStore {
     } catch (err) {
       return failure(toError(err));
     }
-  }
-
-  private async getMemoryById(id: string): Promise<CreativeMemory | null> {
-    const db = await getD1();
-    if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
-    const row = await db
-      .prepare(
-        `SELECT id, workspace_id, category, key, value, confidence, source,
-                evidence, scope, scope_id, version, is_deleted,
-                created_at, updated_at, expires_at
-         FROM creative_memory
-         WHERE id = ?1 AND is_deleted = 0`,
-      )
-      .bind(id)
-      .first<Parameters<typeof memoryRowToDomain>[0]>();
-    if (!row) return null;
-    return memoryRowToDomain(row);
-  }
-
-  private async queryMemory(query: MemoryQuery): Promise<CreativeMemory[]> {
-    const db = await getD1();
-    if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
-    const now = Math.floor(Date.now() / 1000);
-    const params: unknown[] = [query.workspaceId, now];
-    let sql =
-      `SELECT * FROM creative_memory` +
-      ` WHERE workspace_id = ?1 AND is_deleted = 0` +
-      ` AND (expires_at IS NULL OR expires_at > ?2)`;
-    if (query.category) {
-      sql += ` AND category = ?${params.length + 1}`;
-      params.push(query.category);
-    }
-    if (query.key) {
-      sql += ` AND key = ?${params.length + 1}`;
-      params.push(query.key);
-    }
-    sql += ` AND (scope = ?${params.length + 1} OR (?${params.length + 1} IS NULL))`;
-    params.push(query.scope ?? null);
-    sql +=
-      ` AND (scope_id = ?${params.length + 1} OR (scope_id IS NULL AND ?${params.length + 1} IS NULL))`;
-    params.push(query.scopeId ?? null);
-    sql += ` ORDER BY updated_at DESC, id DESC`;
-    if (query.limit) {
-      sql += ` LIMIT ?${params.length + 1}`;
-      params.push(query.limit);
-    }
-    const result = await db
-      .prepare(sql)
-      .bind(...params)
-      .all<Parameters<typeof memoryRowToDomain>[0]>();
-    return (result.results ?? []).map(memoryRowToDomain);
   }
 }
 

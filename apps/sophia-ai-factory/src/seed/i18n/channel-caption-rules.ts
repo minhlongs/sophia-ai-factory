@@ -13,6 +13,7 @@
  */
 
 import { z } from 'zod'
+import { CHANNEL_RULES_MAP } from './channel-caption-rules-data'
 
 export type ChannelProvider =
   | 'tiktok'
@@ -43,93 +44,6 @@ export interface ChannelCaptionRule {
   charCap: number
   /** Hashtag style for this channel. */
   hashtagStyle: HashtagStyle
-}
-
-// ---------------------------------------------------------------------------
-// Defaults map
-// ---------------------------------------------------------------------------
-
-/**
- * Per-channel caption rules.
- * Order: Vietnam → SEA → Global West → Professional → Long-form
- */
-const CHANNEL_RULES_MAP: Record<ChannelProvider, ChannelCaptionRule> = {
-  // Vietnam / SEA — translate to Vietnamese, casual + mixed hashtags
-  zalo: {
-    targetLocale: 'vi',
-    charCap: 1000,
-    hashtagStyle: 'mixed_vi_en',
-  },
-  telegram: {
-    targetLocale: 'vi',
-    charCap: 4096,
-    hashtagStyle: 'mixed_vi_en',
-  },
-  facebook: {
-    targetLocale: 'vi',
-    charCap: 63206,
-    hashtagStyle: 'mixed_vi_en',
-  },
-  tiktok: {
-    targetLocale: 'vi',
-    charCap: 2200,
-    hashtagStyle: 'mixed_vi_en',
-  },
-
-  // East Asia
-  // (weibo not in ChannelProvider yet — future extension point)
-
-  // Japan
-  // (line not in ChannelProvider yet — future extension point)
-
-  // Global English — short + formal
-  twitter: {
-    targetLocale: 'en',
-    charCap: 280,
-    hashtagStyle: 'formal_en',
-  },
-  threads: {
-    targetLocale: 'en',
-    charCap: 500,
-    hashtagStyle: 'formal_en',
-  },
-  instagram: {
-    targetLocale: 'en',
-    charCap: 2200,
-    hashtagStyle: 'formal_en',
-  },
-  youtube: {
-    targetLocale: 'en',
-    charCap: 5000,
-    hashtagStyle: 'formal_en',
-  },
-  pinterest: {
-    targetLocale: 'en',
-    charCap: 500,
-    hashtagStyle: 'formal_en',
-  },
-  reddit: {
-    targetLocale: 'en',
-    charCap: 40000,
-    hashtagStyle: 'none',
-  },
-  bluesky: {
-    targetLocale: 'en',
-    charCap: 300,
-    hashtagStyle: 'minimal',
-  },
-  mastodon: {
-    targetLocale: 'en',
-    charCap: 500,
-    hashtagStyle: 'minimal',
-  },
-
-  // Professional
-  linkedin: {
-    targetLocale: 'en',
-    charCap: 3000,
-    hashtagStyle: 'formal_en',
-  },
 }
 
 // ---------------------------------------------------------------------------

@@ -13,59 +13,10 @@ import { processAffiliateWebhook } from '@/tree/affiliate/webhook-processor';
 import { getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
-import type { AffiliateNetwork } from '@/tree/affiliate/attribution-parser';
-
-interface NetworkConfig {
-  network: AffiliateNetwork;
-  secretEnv: string;
-  sigHeaders: string[];
-  algorithm: 'SHA-256' | 'SHA-1' | 'SHA-512';
-}
-
-const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
-  tiktok_shop: {
-    network: 'tiktok_shop',
-    secretEnv: 'TIKTOK_SHOP_WEBHOOK_SECRET',
-    sigHeaders: ['x-tts-signature', 'x-signature'],
-    algorithm: 'SHA-256',
-  },
-  'tiktok-shop': {
-    network: 'tiktok_shop',
-    secretEnv: 'TIKTOK_SHOP_WEBHOOK_SECRET',
-    sigHeaders: ['x-tts-signature', 'x-signature'],
-    algorithm: 'SHA-256',
-  },
-  amazon_associates: {
-    network: 'amazon_associates',
-    secretEnv: 'AMAZON_WEBHOOK_SECRET',
-    sigHeaders: ['x-amazon-signature', 'x-amz-signature', 'x-signature'],
-    algorithm: 'SHA-256',
-  },
-  amazon: {
-    network: 'amazon_associates',
-    secretEnv: 'AMAZON_WEBHOOK_SECRET',
-    sigHeaders: ['x-amazon-signature', 'x-amz-signature', 'x-signature'],
-    algorithm: 'SHA-256',
-  },
-  clickbank: {
-    network: 'clickbank',
-    secretEnv: 'CLICKBANK_INS_SECRET',
-    sigHeaders: ['x-clickbank-signature', 'authorization', 'x-signature'],
-    algorithm: 'SHA-1',
-  },
-  accesstrade: {
-    network: 'accesstrade',
-    secretEnv: 'ACCESSTRADE_WEBHOOK_SECRET',
-    sigHeaders: ['x-accesstrade-signature', 'x-signature'],
-    algorithm: 'SHA-256',
-  },
-  awin: {
-    network: 'awin',
-    secretEnv: 'AWIN_WEBHOOK_SECRET',
-    sigHeaders: ['x-awin-signature', 'x-signature'],
-    algorithm: 'SHA-256',
-  },
-};
+import {
+  NETWORK_CONFIGS,
+  extractAffiliateSignature,
+} from './affiliate-network-configs';
 
 export async function POST(
   request: NextRequest,
@@ -88,15 +39,7 @@ export async function POST(
     return NextResponse.json({ ok: true, skipped: 'config' }, { status: 200 });
   }
 
-  // Extract signature from candidate headers
-  let signature = '';
-  for (const h of config.sigHeaders) {
-    const val = request.headers.get(h);
-    if (val) {
-      signature = val;
-      break;
-    }
-  }
+  const signature = extractAffiliateSignature(request, config.sigHeaders);
 
   if (!signature) {
     return NextResponse.json(
@@ -131,7 +74,6 @@ export async function POST(
     return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
   }
 
-  // Emit Inngest conversion.created event
   try {
     await inngest.send({
       name: 'conversion.created',

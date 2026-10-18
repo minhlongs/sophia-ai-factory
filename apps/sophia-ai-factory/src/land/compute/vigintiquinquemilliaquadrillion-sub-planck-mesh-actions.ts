@@ -6,7 +6,11 @@
  * @description Land layer Server Actions for Viginti-Quinque-Millia-Quadrillion Sub-Planck Singularity Mesh dispatching, Net-Zero power verification, and Ninety-Six-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
+import {
+  recordMilliaquadrillionSubPlanckDispatchD1,
+  recordMilliaquadrillionSubPlanckPowerD1,
+  recordMilliaquadrillionSubPlanckSlaAuditD1,
+} from './milliaquadrillion-sub-planck-d1-recorder';
 import {
   planVigintiquinquemilliaquadrillionSubPlanckBatchDispatch,
   type VigintiquinquemilliaquadrillionSubPlanckDispatchPlan,
@@ -49,30 +53,16 @@ export async function dispatchVigintiquinquemilliaquadrillionSubPlanckBatchActio
 ): Promise<VigintiquinquemilliaquadrillionSubPlanckDispatchActionResult> {
   try {
     const data = planVigintiquinquemilliaquadrillionSubPlanckBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO vigintiquinquemilliaquadrillion_sub_planck_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETED_SYNCHRONOUS', datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `DISPATCH-VIGINTI-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `TOKEN-VIGINTI-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.0000000000002,
-          data.relativisticDriftFs
-        )
-        .run();
-    }
-
+    await recordMilliaquadrillionSubPlanckDispatchD1({
+      table: 'vigintiquinquemilliaquadrillion_sub_planck_dispatches',
+      refPrefix: 'DISPATCH-VIGINTI',
+      tokenPrefix: 'TOKEN-VIGINTI',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.0000000000002,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown sub-planck dispatch error';
@@ -88,29 +78,15 @@ export async function validateVigintiquinquemilliaquadrillionPowerAction(
 ): Promise<VigintiquinquemilliaquadrillionSubPlanckPowerActionResult> {
   try {
     const data = validateVigintiquinquemilliaquadrillionSubPlanckPower(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO vigintiquinquemilliaquadrillion_sub_planck_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbonIntensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified,
-             allocated_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PWR-VIGINTI-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.powerSourceType,
-          input.allocatedMegawatts,
-          input.carbonIntensityGPerKwh,
-          input.boseEinsteinCop,
-          input.isNetZeroCertified ? 1 : 0
-        )
-        .run();
-    }
-
+    await recordMilliaquadrillionSubPlanckPowerD1({
+      table: 'vigintiquinquemilliaquadrillion_sub_planck_power_allocations',
+      refPrefix: 'PWR-VIGINTI',
+      powerSourceType: input.powerSourceType,
+      allocatedMegawatts: input.allocatedMegawatts,
+      carbonIntensityGPerKwh: input.carbonIntensityGPerKwh,
+      boseEinsteinCop: input.boseEinsteinCop,
+      isNetZeroCertified: input.isNetZeroCertified,
+    });
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown power validation error';
@@ -126,28 +102,16 @@ export async function auditNinetySixNinesSlaAction(
 ): Promise<NinetySixNinesSlaActionResult> {
   try {
     const data = evaluateNinetySixNinesSla(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO ninety_six_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_ninety_six_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at, created_at
-           ) VALUES (?, ?, strftime('%Y-%m', 'now'), 2592000, ?, ?, ?, 549755813888, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-96NINES-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'NINETY_SIX_NINES_CERTIFIED' ? 1 : 0,
-          data.auditSignature
-        )
-        .run();
-    }
-
+    await recordMilliaquadrillionSubPlanckSlaAuditD1({
+      table: 'ninety_six_nines_sla_audits',
+      metColumn: 'is_ninety_six_nines_met',
+      refPrefix: 'SLA-96NINES',
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet: data.slaVerdict === 'NINETY_SIX_NINES_CERTIFIED',
+      bftConsensusNodes: 549755813888,
+      auditSignature: data.auditSignature,
+    });
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown SLA audit error';

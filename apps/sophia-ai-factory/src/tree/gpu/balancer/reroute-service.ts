@@ -20,8 +20,8 @@ import {
   mapRowToGpuComputeNode,
   mapRowToVideoRenderDispatch,
 } from '@/seed/types/edge-gpu-mesh';
-import { executeBatchStatements } from './batch-executor';
 import { selectOptimalComputeNode } from './node-selector';
+import { executeFailoverStateUpdates } from './reroute-batch-updates';
 
 /**
  * Executes sub-20ms failover rerouting for an in-flight video render task.
@@ -88,48 +88,15 @@ export async function rerouteInFlightJob(
 
   const updatedHistory = [...dispatch.failoverHistory, failoverEvent];
 
-  // 3. Atomic batch:
-  // - Mark failed node degraded / unhealthy
-  // - Reassign dispatch to optimal node and record failover
-  // - Decrement load on failed node, increment on optimal node
-  const isolateFailedNodeStmt = db
-    .prepare(
-      `UPDATE gpu_compute_nodes
-       SET status = 'degraded',
-           is_healthy = 0,
-           health_score = 0.2,
-           active_render_jobs = MAX(0, active_render_jobs - 1),
-           updated_at = ?
-       WHERE node_id = ?`,
-    )
-    .bind(now, failedNodeId);
-
-  const updateDispatchStmt = db
-    .prepare(
-      `UPDATE video_render_dispatches
-       SET node_id = ?,
-           status = 'rerouted',
-           reroute_count = reroute_count + 1,
-           failover_history_json = ?,
-           updated_at = ?
-       WHERE dispatch_id = ?`,
-    )
-    .bind(optimalNode.nodeId, JSON.stringify(updatedHistory), now, dispatchId);
-
-  const incrementNewNodeStmt = db
-    .prepare(
-      `UPDATE gpu_compute_nodes
-       SET active_render_jobs = active_render_jobs + 1,
-           updated_at = ?
-       WHERE node_id = ?`,
-    )
-    .bind(now, optimalNode.nodeId);
-
-  await executeBatchStatements(db, [
-    isolateFailedNodeStmt,
-    updateDispatchStmt,
-    incrementNewNodeStmt,
-  ]);
+  // 3. Atomic batch state updates
+  await executeFailoverStateUpdates({
+    db,
+    dispatchId,
+    failedNodeId,
+    optimalNodeId: optimalNode.nodeId,
+    updatedHistory,
+    now,
+  });
 
   return {
     success: true,

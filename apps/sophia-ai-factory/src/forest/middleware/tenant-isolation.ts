@@ -4,7 +4,7 @@
  * Validates agency-specific access control to prevent cross-tenant data leakage.
  *
  * Sub-modules:
- *   tenant-isolation-types.ts             — TenantIsolationResult
+ *   tenant-isolation-types.ts             — TenantIsolationResult & route/response helpers
  *   tenant-isolation-agency-extractor.ts  — sanitizeInput, extractAgencyId
  *   tenant-isolation-resource-resolver.ts — extractResourceInfo
  *   tenant-isolation-access-validator.ts  — validateResourceAccess
@@ -15,32 +15,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { logValidationWithReceipt } from '@/tree/audit/audit-logger';
-import type { TenantIsolationResult } from './tenant-isolation-types';
+import {
+  type TenantIsolationResult,
+  isBypassedTenantRoute,
+  buildForbiddenTenantResponse,
+  extractAuditMetadata,
+} from './tenant-isolation-types';
 import { extractAgencyId } from './tenant-isolation-agency-extractor';
 import { extractResourceInfo } from './tenant-isolation-resource-resolver';
 import { validateResourceAccess } from './tenant-isolation-access-validator';
 
 export type { TenantIsolationResult } from './tenant-isolation-types';
 
-const PUBLIC_ROUTES = [
-  '/api/health',
-  '/api/setup',
-  '/api/webhooks/nowpayments',
-  '/api/webhooks/telegram',
-  '/api/auth',
-  '/api/discovery',
-  '/api/sophia-index',
-  '/api/login',
-  '/auth/callback',
-];
-
 /** Main tenant isolation validation. Returns allowed/denied with reason. */
 export async function validateTenantIsolation(request: NextRequest): Promise<TenantIsolationResult> {
   const { pathname } = request.nextUrl;
-
-  if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) return { allowed: true };
-  if (!pathname.startsWith('/api')) return { allowed: true };
-  if (pathname.startsWith('/_next') || pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/)) return { allowed: true };
+  if (isBypassedTenantRoute(pathname)) return { allowed: true };
 
   try {
     const agencyId = await extractAgencyId(request);
@@ -56,15 +46,7 @@ export async function validateTenantIsolation(request: NextRequest): Promise<Ten
     }
 
     const resourceInfo = extractResourceInfo(pathname, request.method, request);
-
-    await logValidationWithReceipt({
-      nonce: `isolation_check_${Date.now()}`,
-      isValid: true,
-      userId: agencyId,
-      ipAddress: request.headers.get('x-forwarded-for') || undefined,
-      userAgent: request.headers.get('user-agent') || undefined,
-      tier: 'MULTI_TENANT_ISO',
-    });
+    await logValidationWithReceipt(extractAuditMetadata(request, agencyId, true, 'isolation_check'));
 
     if (!resourceInfo.resourceId) {
       logger.debug('[Tenant Isolation] Collection-level access granted', { resourceType: resourceInfo.resourceType, agencyId });
@@ -108,29 +90,10 @@ export async function tenantIsolationMiddleware(request: NextRequest): Promise<N
   const validationResult = await validateTenantIsolation(request);
 
   if (!validationResult.allowed) {
-    await logValidationWithReceipt({
-      nonce: `isolation_denied_${Date.now()}`,
-      isValid: false,
-      userId: validationResult.agencyId || 'unknown',
-      ipAddress: request.headers.get('x-forwarded-for') || undefined,
-      userAgent: request.headers.get('user-agent') || undefined,
-      tier: 'MULTI_TENANT_ISO',
-    });
-
-    return NextResponse.json(
-      {
-        error: 'Forbidden',
-        message: validationResult.reason || 'Access denied due to tenant isolation',
-        code: validationResult.errorCode || 'FORBIDDEN',
-      },
-      {
-        status: 403,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-Isolation-Reason': validationResult.errorCode || 'unknown',
-        },
-      }
+    await logValidationWithReceipt(
+      extractAuditMetadata(request, validationResult.agencyId || 'unknown', false, 'isolation_denied'),
     );
+    return buildForbiddenTenantResponse(validationResult);
   }
 
   if (validationResult.agencyId) {

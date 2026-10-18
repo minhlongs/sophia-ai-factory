@@ -320,6 +320,13 @@ describe('markRefunded — refund purchase + zero credits', () => {
       })
     )
   })
+
+  it('throws when the database rejects the refund update', async () => {
+    const { queryBuilder } = mockDbClient()
+    queryBuilder.update().eq.mockResolvedValue({ data: null, error: new Error('write failed') })
+
+    await expect(markRefunded('pay_123')).rejects.toThrow('Failed to mark purchase pay_123 as refunded')
+  })
 })
 
 describe('decrementCredits — use 1 credit (for 1 video)', () => {

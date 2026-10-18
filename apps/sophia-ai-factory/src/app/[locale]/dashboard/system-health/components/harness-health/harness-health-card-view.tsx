@@ -10,15 +10,15 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Shield,
   AlertCircle,
-  Clock,
   Play,
   Wifi,
   WifiOff,
 } from 'lucide-react';
 import { Button } from '@/seed/components/ui/button';
 import { HarnessStatusResponse } from './types';
-import { TestIcon, TEST_DISPLAY_NAME } from './test-helpers';
-import { JobStatusBadge } from './job-status-badge';
+import { HarnessJobDetails } from './harness-job-details';
+
+export { HarnessJobDetails } from './harness-job-details';
 
 export function HarnessHealthCard() {
   const { data, isLoading, isError } = useQuery<HarnessStatusResponse>({
@@ -101,70 +101,7 @@ export function HarnessHealthCard() {
         )}
 
         {data?.latestJob && (
-          <div className="space-y-4">
-            {/* Job header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <JobStatusBadge status={data.latestJob.status} />
-                <span className="text-xs text-muted-foreground font-mono">
-                  {data.latestJob.id.substring(0, 8)}…
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" aria-hidden="true" />
-                {new Date(data.latestJob.created_at).toLocaleString()}
-                <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">
-                  {data.latestJob.triggered_by}
-                </span>
-              </div>
-            </div>
-
-            {/* Results grid */}
-            {data.latestJob.results.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {data.latestJob.results.map((result) => (
-                  <div
-                    key={result.test_name}
-                    className={`flex items-start gap-3 p-3 rounded-lg border ${
-                      result.status === 'success'
-                        ? 'border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-900/10'
-                        : 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/10'
-                    }`}
-                  >
-                    <div className={`mt-0.5 ${
-                      result.status === 'success'
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    }`}>
-                      <TestIcon name={result.test_name} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">
-                          {TEST_DISPLAY_NAME[result.test_name] || result.test_name}
-                        </span>
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {result.duration_ms}ms
-                        </span>
-                      </div>
-                      {result.error_message && (
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-1 truncate" title={result.error_message}>
-                          {result.error_message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Daemon last poll */}
-            {data.daemon.last_poll && (
-              <p className="text-xs text-muted-foreground text-right">
-                Daemon poll cuối: {new Date(data.daemon.last_poll).toLocaleString()}
-              </p>
-            )}
-          </div>
+          <HarnessJobDetails job={data.latestJob} lastPoll={data.daemon.last_poll} />
         )}
       </div>
     </section>

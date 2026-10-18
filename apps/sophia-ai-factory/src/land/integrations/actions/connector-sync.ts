@@ -14,7 +14,6 @@ import type {
   CrmProvider,
   CrmEntityType,
   CrmSyncEvent,
-  SophiaDealSnapshot,
   ActionResult,
 } from './types';
 import {
@@ -22,12 +21,10 @@ import {
   recordCrmSyncEvent,
   updateCrmSyncEvent,
   listCrmSyncEvents,
-  transformSophiaToSalesforce,
-  transformSophiaToHubSpot,
 } from '@/tree/integrations/crm-sync-engine';
 import { testWebhookEndpoint } from '@/tree/integrations/webhook-dispatcher';
-import { getEnterpriseDealById } from '@/tree/sales/enterprise-deal-repo';
 import { assertAdminSession } from './admin-guard';
+import { buildCrmEntityPayload } from './connector-sync-helpers';
 
 /**
  * Triggers a CRM sync operation for an entity (e.g. deal).
@@ -48,36 +45,7 @@ export async function triggerCrmSync(
       throw new Error(`CRM configuration not found for provider '${provider}' on tenant '${tenantId}'`);
     }
 
-    let payload: Record<string, unknown> = {};
-
-    if (entityType === 'deal') {
-      const deal = await getEnterpriseDealById(db, entityId);
-      if (!deal) {
-        throw new Error(`Enterprise deal not found with ID '${entityId}'`);
-      }
-
-      const snapshot: SophiaDealSnapshot = {
-        id: deal.id,
-        leadName: deal.leadName,
-        leadEmail: deal.leadEmail,
-        leadPhone: deal.leadPhone,
-        companyName: deal.companyName,
-        companyDomain: deal.companyDomain,
-        dealStage: deal.dealStage,
-        dealValueEstimateCents: deal.dealValueEstimateCents,
-        currency: deal.currency,
-        notes: deal.notes,
-        updatedAt: deal.updatedAt,
-      };
-
-      if (provider === 'salesforce') {
-        payload = transformSophiaToSalesforce(snapshot) as unknown as Record<string, unknown>;
-      } else if (provider === 'hubspot') {
-        payload = transformSophiaToHubSpot(snapshot) as unknown as Record<string, unknown>;
-      } else {
-        payload = snapshot as unknown as Record<string, unknown>;
-      }
-    }
+    const payload = await buildCrmEntityPayload(db, provider, entityType, entityId);
 
     const event = await recordCrmSyncEvent(db, {
       tenantId,

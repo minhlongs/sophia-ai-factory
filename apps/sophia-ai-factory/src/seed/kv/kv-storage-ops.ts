@@ -10,35 +10,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-
-// ---------------------------------------------------------------------------
-// Accessors
-// ---------------------------------------------------------------------------
-
-function getKvBinding(): KVNamespace | null {
-  const g = globalThis as Record<string, unknown>
-  if (g.KV_KV && typeof (g.KV_KV as KVNamespace).get === 'function') {
-    return g.KV_KV as KVNamespace
-  }
-  if (g.EXPERIMENT_KV && typeof (g.EXPERIMENT_KV as KVNamespace).get === 'function') {
-    return g.EXPERIMENT_KV as KVNamespace
-  }
-  return null
-}
-
-/** D1 check — only reads the binding (no "await" — CREATE_SERVER_CLIENT IS SYNC). */
-function getD1Database(): D1Database | null {
-  const g = globalThis as Record<string, unknown>
-  const db = g.DB
-  if (db && typeof (db as D1Database).prepare === 'function') {
-    return db as D1Database
-  }
-  return null
-}
-
-// ---------------------------------------------------------------------------
-// Public helpers — KV-first, D1-fallback
-// ---------------------------------------------------------------------------
+import { getKvBinding, getD1Database } from './kv-storage-bindings'
 
 export async function storageGet(key: string): Promise<string | null> {
   const kv = getKvBinding()
@@ -147,6 +119,5 @@ export async function storageDelete(key: string): Promise<void> {
 }
 
 export function storageExists(key: string): boolean | Promise<boolean> {
-  // Nur async version — SSD VERSION remains if needed separately
   return storageGet(key).then((v) => v !== null)
 }

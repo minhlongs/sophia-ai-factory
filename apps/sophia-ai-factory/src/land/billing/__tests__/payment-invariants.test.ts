@@ -235,7 +235,9 @@ describe('Phase 6: Payment Invariant & Customer Journey Security', () => {
       payment_status: 'finished',
       price_amount: 399,
       price_currency: 'usd',
-      actually_paid: 200, // < 95% threshold of 399
+      pay_amount: 399,
+      pay_currency: 'USDT',
+      actually_paid: 200, // below 99% of pay_amount
       order_id: 'usr_valid_order',
       invoice_id: 'inv_premium',
     };

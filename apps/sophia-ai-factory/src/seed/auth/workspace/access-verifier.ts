@@ -5,14 +5,15 @@
  */
 
 import type { D1Client, D1Database } from '@/seed/db/client';
-import { logger } from '@/seed/utils/logger-utility';
-import {
-  hasMinimumRole,
-  InsufficientWorkspaceRoleError,
-  WorkspaceAccessDeniedError,
-  type WorkspaceRole,
-} from './roles';
+import { hasMinimumRole, type WorkspaceRole } from './roles';
 import { getWorkspaceMembership } from './tenant-resolver';
+import {
+  logWorkspaceAccessDenied,
+  requireWorkspaceAccess,
+  requireWorkspaceRole,
+} from './workspace-role-guards';
+
+export { requireWorkspaceAccess, requireWorkspaceRole };
 
 /**
  * Checks whether a user has access to a workspace (any membership role).
@@ -21,26 +22,16 @@ import { getWorkspaceMembership } from './tenant-resolver';
 export async function verifyWorkspaceAccess(
   workspaceId: string,
   userId: string,
-  db?: D1Client | D1Database
+  db?: D1Client | D1Database,
 ): Promise<boolean> {
   if (!workspaceId || !userId) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId: workspaceId || '',
-      userId: userId || '',
-      reason: 'missing_parameters',
-      timestamp: new Date().toISOString(),
-    });
+    logWorkspaceAccessDenied(workspaceId, userId, 'missing_parameters');
     return false;
   }
 
   const membership = await getWorkspaceMembership(workspaceId, userId, db);
   if (!membership) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId,
-      userId,
-      reason: 'not_a_member',
-      timestamp: new Date().toISOString(),
-    });
+    logWorkspaceAccessDenied(workspaceId, userId, 'not_a_member');
     return false;
   }
 
@@ -54,39 +45,27 @@ export async function verifyWorkspaceRole(
   workspaceId: string,
   userId: string,
   requiredRole: WorkspaceRole,
-  db?: D1Client | D1Database
+  db?: D1Client | D1Database,
 ): Promise<boolean> {
   if (!workspaceId || !userId) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId: workspaceId || '',
-      userId: userId || '',
+    logWorkspaceAccessDenied(workspaceId, userId, 'missing_parameters', {
       requiredRole,
-      reason: 'missing_parameters',
-      timestamp: new Date().toISOString(),
     });
     return false;
   }
 
   const membership = await getWorkspaceMembership(workspaceId, userId, db);
   if (!membership) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId,
-      userId,
+    logWorkspaceAccessDenied(workspaceId, userId, 'not_a_member', {
       requiredRole,
-      reason: 'not_a_member',
-      timestamp: new Date().toISOString(),
     });
     return false;
   }
 
   if (!hasMinimumRole(membership.role, requiredRole)) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId,
-      userId,
+    logWorkspaceAccessDenied(workspaceId, userId, 'insufficient_role', {
       requiredRole,
       actualRole: membership.role,
-      reason: 'insufficient_role',
-      timestamp: new Date().toISOString(),
     });
     return false;
   }
@@ -98,74 +77,3 @@ export async function verifyWorkspaceRole(
  * Alias for verifyWorkspaceRole for semantic role verification.
  */
 export const hasWorkspaceRole = verifyWorkspaceRole;
-
-/**
- * Throws WorkspaceAccessDeniedError if user does not have membership in workspace.
- */
-export async function requireWorkspaceAccess(
-  workspaceId: string,
-  userId: string,
-  db?: D1Client | D1Database
-): Promise<{ role: WorkspaceRole }> {
-  if (!workspaceId || !userId) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId: workspaceId || '',
-      userId: userId || '',
-      reason: 'missing_parameters',
-      timestamp: new Date().toISOString(),
-    });
-    throw new WorkspaceAccessDeniedError(
-      'Workspace access denied: missing workspaceId or userId',
-      workspaceId || '',
-      userId || ''
-    );
-  }
-
-  const membership = await getWorkspaceMembership(workspaceId, userId, db);
-  if (!membership) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId,
-      userId,
-      reason: 'not_a_member',
-      timestamp: new Date().toISOString(),
-    });
-    throw new WorkspaceAccessDeniedError(
-      `Workspace access denied for user ${userId} in workspace ${workspaceId}`,
-      workspaceId,
-      userId
-    );
-  }
-
-  return membership;
-}
-
-/**
- * Throws InsufficientWorkspaceRoleError if user role is below requiredRole.
- */
-export async function requireWorkspaceRole(
-  workspaceId: string,
-  userId: string,
-  requiredRole: WorkspaceRole,
-  db?: D1Client | D1Database
-): Promise<{ role: WorkspaceRole }> {
-  const membership = await requireWorkspaceAccess(workspaceId, userId, db);
-  if (!hasMinimumRole(membership.role, requiredRole)) {
-    logger.warn('[security] workspace_access_denied', {
-      workspaceId,
-      userId,
-      requiredRole,
-      actualRole: membership.role,
-      reason: 'insufficient_role',
-      timestamp: new Date().toISOString(),
-    });
-    throw new InsufficientWorkspaceRoleError(
-      `User ${userId} has role ${membership.role}, but role ${requiredRole} is required for workspace ${workspaceId}`,
-      workspaceId,
-      requiredRole,
-      membership.role,
-      userId
-    );
-  }
-
-  return membership;
-}

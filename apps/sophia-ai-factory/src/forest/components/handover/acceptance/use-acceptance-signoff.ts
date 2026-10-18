@@ -8,27 +8,16 @@
 import { useState } from 'react';
 import type {
   CustomerHandoverRecord,
-  HandoverAcceptanceInput,
   HandoverCertificate,
 } from '@/seed/handover/handover-types';
-import type { Result } from '@/seed/types/result';
-import { CANONICAL_ACCEPTANCE_STATEMENTS } from '@/tree/handover/handover-certificate-engine';
 import { createCertificateExportHandlers } from './acceptance-certificate-actions';
+import {
+  executeSignAcceptance,
+  type UseAcceptanceSignoffParams,
+} from './acceptance-signoff-submit';
 
 export { downloadBlob } from './acceptance-certificate-actions';
-
-interface UseAcceptanceSignoffParams {
-  handover: CustomerHandoverRecord;
-  initialCertificate: HandoverCertificate | null;
-  onSignAction?: (
-    input: HandoverAcceptanceInput,
-  ) => Promise<
-    Result<
-      { certificate: HandoverCertificate; record: CustomerHandoverRecord },
-      { code: string; message: string }
-    >
-  >;
-}
+export type { UseAcceptanceSignoffParams, SignAcceptanceAction } from './acceptance-signoff-submit';
 
 export function useAcceptanceSignoff({
   handover,
@@ -81,37 +70,18 @@ export function useAcceptanceSignoff({
     setSignError(null);
 
     try {
-      if (onSignAction) {
-        const res = await onSignAction({
-          handoverId: currentHandover.id,
-          signerName: signerName.trim(),
-          signerEmail: signerEmail.trim(),
-          signerRole: signerRole.trim(),
-          acceptanceStatements: CANONICAL_ACCEPTANCE_STATEMENTS,
-        });
-
-        if (res.ok) {
-          setCertificate(res.value.certificate);
-          setCurrentHandover(res.value.record);
-        } else {
-          setSignError(res.error.message || 'Failed to sign acceptance certificate.');
-        }
-      } else {
-        const res = await fetch('/api/admin/handover/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ handoverId: currentHandover.id, persist: true }),
-        });
-        if (!res.ok) {
-          throw new Error(`Verification endpoint failed with status ${res.status}`);
-        }
-      }
-    } catch (err) {
-      setSignError(
-        err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred during sign-off.',
-      );
+      await executeSignAcceptance({
+        handoverId: currentHandover.id,
+        signerName,
+        signerEmail,
+        signerRole,
+        onSignAction,
+        onSuccess: (nextCertificate, nextRecord) => {
+          setCertificate(nextCertificate);
+          setCurrentHandover(nextRecord);
+        },
+        onError: setSignError,
+      });
     } finally {
       setIsSigning(false);
     }

@@ -9,38 +9,13 @@
  * Layer: tree/social/publisher (Domain Logic)
  */
 
-export type SocialPlatform = 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+import { sliceByteRanges, type ChunkByteRange } from './tiktok-v2-adapter';
 
-export interface ChunkByteRange {
-  readonly index: number;
-  readonly start: number;
-  readonly end: number;
-  readonly size: number;
-  readonly contentRangeHeader: string;
-}
+export type SocialPlatform = 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
+export type { ChunkByteRange } from './tiktok-v2-adapter';
 
 export const YOUTUBE_CHUNK_UNIT_BYTES = 256 * 1024; // 262,144 bytes
 export const YOUTUBE_DEFAULT_CHUNK_SIZE = 20 * YOUTUBE_CHUNK_UNIT_BYTES; // 5,242,880 bytes (5 MiB)
-export const TIKTOK_MIN_CHUNK_BYTES = 5 * 1024 * 1024; // 5,242,880 bytes (5 MB)
-export const TIKTOK_MAX_CHUNK_BYTES = 64 * 1024 * 1024; // 67,108,864 bytes (64 MB)
-
-function sliceByteRanges(totalSize: number, chunkSize: number): ChunkByteRange[] {
-  const chunks: ChunkByteRange[] = [];
-  let start = 0;
-  let index = 0;
-  while (start < totalSize) {
-    const end = Math.min(start + chunkSize - 1, totalSize - 1);
-    chunks.push({
-      index: index++,
-      start,
-      end,
-      size: end - start + 1,
-      contentRangeHeader: `bytes ${start}-${end}/${totalSize}`,
-    });
-    start = end + 1;
-  }
-  return chunks;
-}
 
 export function calculateYouTubeChunks(
   totalSizeBytes: number,
@@ -80,77 +55,15 @@ export function buildYouTubeInitRequest(input: YouTubeInitInput) {
   };
 }
 
-export function calculateTikTokChunks(
-  totalSizeBytes: number,
-  preferredChunkSize: number = TIKTOK_MIN_CHUNK_BYTES,
-): { totalChunks: number; chunks: ChunkByteRange[]; chunkSize: number } {
-  if (totalSizeBytes <= 0) throw new Error('totalSizeBytes must be greater than 0');
-  const clampedSize = Math.max(TIKTOK_MIN_CHUNK_BYTES, Math.min(preferredChunkSize, TIKTOK_MAX_CHUNK_BYTES));
-  const effectiveSize = totalSizeBytes <= TIKTOK_MIN_CHUNK_BYTES ? totalSizeBytes : clampedSize;
-  const chunks = sliceByteRanges(totalSizeBytes, effectiveSize);
-  return { totalChunks: chunks.length, chunks, chunkSize: effectiveSize };
-}
-
-export interface TikTokInitInput {
-  readonly title: string;
-  readonly totalSizeBytes: number;
-  readonly chunkSizeBytes?: number;
-  readonly postMode?: 'DIRECT_POST' | 'CREATOR_INBOX';
-  readonly privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
-  readonly disableDuet?: boolean;
-  readonly disableComment?: boolean;
-  readonly disableStitch?: boolean;
-}
-
-export function buildTikTokInitPayload(input: TikTokInitInput) {
-  const chunkInfo = calculateTikTokChunks(input.totalSizeBytes, input.chunkSizeBytes);
-  return {
-    endpoint: 'https://open.tiktokapis.com/v2/post/publish/video/init/',
-    body: {
-      post_mode: input.postMode ?? 'DIRECT_POST',
-      post_info: {
-        title: input.title,
-        privacy_level: input.privacyLevel ?? 'PUBLIC_TO_EVERYONE',
-        disable_duet: input.disableDuet ?? false,
-        disable_comment: input.disableComment ?? false,
-        disable_stitch: input.disableStitch ?? false,
-      },
-      source_info: {
-        source: 'FILE_UPLOAD' as const,
-        video_size: input.totalSizeBytes,
-        chunk_size: chunkInfo.chunkSize,
-        total_chunk_count: chunkInfo.totalChunks,
-      },
-    },
-    chunks: chunkInfo.chunks,
-  };
-}
-
-export function buildTikTokStatusPollingRequest(publishId: string) {
-  return {
-    endpoint: 'https://open.tiktokapis.com/v2/post/publish/status/fetch/',
-    body: { publish_id: publishId },
-  };
-}
-
-export function parseTikTokPublishStatus(response: unknown): {
-  status: 'SUCCESS_PUBLISH' | 'PROCESSING_UPLOAD' | 'PROCESSING_DOWNLOAD' | 'FAILED' | 'UNKNOWN';
-  isTerminal: boolean;
-  failReason?: string;
-} {
-  if (typeof response !== 'object' || response === null) return { status: 'UNKNOWN', isTerminal: false };
-  const data = (response as Record<string, unknown>).data;
-  if (typeof data !== 'object' || data === null) return { status: 'UNKNOWN', isTerminal: false };
-  const raw = String((data as Record<string, unknown>).status ?? '');
-  const failReason = typeof (data as Record<string, unknown>).fail_reason === 'string'
-    ? ((data as Record<string, unknown>).fail_reason as string)
-    : undefined;
-
-  if (raw === 'SUCCESS_PUBLISH' || raw === 'PUBLISH_COMPLETE') return { status: 'SUCCESS_PUBLISH', isTerminal: true };
-  if (raw === 'FAILED') return { status: 'FAILED', isTerminal: true, failReason };
-  if (raw === 'PROCESSING_UPLOAD' || raw === 'PROCESSING_DOWNLOAD') return { status: raw, isTerminal: false };
-  return { status: 'UNKNOWN', isTerminal: false };
-}
+export {
+  TIKTOK_MIN_CHUNK_BYTES,
+  TIKTOK_MAX_CHUNK_BYTES,
+  calculateTikTokChunks,
+  buildTikTokInitPayload,
+  buildTikTokStatusPollingRequest,
+  parseTikTokPublishStatus,
+  type TikTokInitInput,
+} from './tiktok-v2-adapter';
 
 export {
   buildInstagramContainerInit,

@@ -4,79 +4,30 @@
  * Obsidian Cyber-Glass KPI Metrics Grid
  * Layer: forest/dashboard (Infrastructure Orchestrators & UI; imports from @/seed)
  *
- * Implements:
- * 1. 4 Obsidian glass cards (#12141F / bg-card/85) with letterpress border glow
- * 2. 4 distinct tinted icon pills:
- *    - Total Campaigns: Electric Indigo
- *    - Active Jobs: Emerald
- *    - Videos Generated: Radiant Violet
- *    - Success Rate: Cyber Amber
- * 3. Trend badges with dynamic directional indicators
- * 4. High-contrast typography and tabular figures
- *
  * @module forest/dashboard/dashboard-metrics-grid
  */
 
 import React from "react";
-import {
-  Megaphone,
-  Play,
-  Video,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus,
-  DollarSign,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/seed/utils/cn";
 import type { DashboardMetric } from "@/forest/dashboard/types";
+import {
+  ZERO_METRICS,
+  getMetricPillConfig,
+} from "./dashboard-metrics-config";
+
+export {
+  ZERO_METRICS,
+  METRIC_CONFIGS,
+  getMetricPillConfig,
+  type MetricPillConfig,
+} from "./dashboard-metrics-config";
 
 export interface DashboardMetricsGridProps {
   metrics?: DashboardMetric[];
   className?: string;
 }
-
-interface MetricPillConfig {
-  icon: LucideIcon;
-  pillClass: string;
-  defaultLabel: string;
-}
-
-const METRIC_CONFIGS: Record<string, MetricPillConfig> = {
-  total_campaigns: {
-    icon: Megaphone,
-    pillClass:
-      "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.15)]",
-    defaultLabel: "Total Campaigns",
-  },
-  active_campaigns: {
-    icon: Play,
-    pillClass:
-      "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.15)]",
-    defaultLabel: "Active Jobs",
-  },
-  videos_generated: {
-    icon: Video,
-    pillClass:
-      "bg-violet-500/10 text-violet-400 border border-violet-500/20 shadow-[0_0_12px_rgba(168,85,247,0.15)]",
-    defaultLabel: "Videos Generated",
-  },
-  success_rate: {
-    icon: TrendingUp,
-    pillClass:
-      "bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.15)]",
-    defaultLabel: "Success Rate",
-  },
-};
-
-export const ZERO_METRICS: DashboardMetric[] = [
-  { id: "total_campaigns", value: "0", change: "0%", trend: "neutral", icon: "Megaphone" },
-  { id: "active_campaigns", value: "0", change: "0", trend: "neutral", icon: "Play" },
-  { id: "videos_generated", value: "0", change: "0%", trend: "neutral", icon: "Video" },
-  { id: "success_rate", value: "0.0%", change: "neutral", trend: "neutral", icon: "TrendingUp" },
-];
 
 export function DashboardMetricsGrid({ metrics, className }: DashboardMetricsGridProps) {
   let t: (key: string) => string;
@@ -98,11 +49,7 @@ export function DashboardMetricsGrid({ metrics, className }: DashboardMetricsGri
       data-testid="dashboard-metrics-grid"
     >
       {items.map((metric) => {
-        const config = METRIC_CONFIGS[metric.id] || {
-          icon: DollarSign,
-          pillClass: "bg-muted dark:bg-white/[0.05] text-foreground dark:text-white border border-border dark:border-white/10",
-          defaultLabel: metric.id,
-        };
+        const config = getMetricPillConfig(metric.id);
         const IconComponent = config.icon;
 
         let label = config.defaultLabel;

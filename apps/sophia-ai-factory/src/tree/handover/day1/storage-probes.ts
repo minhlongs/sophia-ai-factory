@@ -7,7 +7,9 @@
 
 import type { D1Database } from '@/seed/db/client';
 import { getD1 } from '@/seed/db/client';
-import type { CheckpointResult, CheckpointStatus } from '@/seed/handover/handover-types';
+import type { CheckpointResult } from '@/seed/handover/handover-types';
+
+export { probeR2Bindings } from './r2-storage-probe';
 
 /**
  * 3. Checkpoint: D1 CRUD / Read-After-Write Consistency
@@ -31,7 +33,10 @@ export async function probeD1CrudConsistency(dbOverride?: D1Database): Promise<C
     }
 
     const nonce = `probe_${Date.now()}`;
-    const row = await db.prepare(`SELECT 1 as alive, ?1 as nonce`).bind(nonce).first<{ alive: number; nonce: string }>();
+    const row = await db
+      .prepare(`SELECT 1 as alive, ?1 as nonce`)
+      .bind(nonce)
+      .first<{ alive: number; nonce: string }>();
 
     const latency = Date.now() - start;
     if (row && row.alive === 1 && row.nonce === nonce) {
@@ -66,88 +71,6 @@ export async function probeD1CrudConsistency(dbOverride?: D1Database): Promise<C
       status: 'FAIL',
       latencyMs: Date.now() - start,
       details: `D1 probe failed: ${err instanceof Error ? err.message : String(err)}`,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
-}
-
-/**
- * 4. Checkpoint: R2 Storage Bindings (VIDEO_BUCKET & BACKUPS_BUCKET)
- */
-export async function probeR2Bindings(envOverride?: Record<string, unknown>): Promise<CheckpointResult> {
-  const start = Date.now();
-  try {
-    const g = globalThis as unknown as {
-      __env__?: { VIDEO_BUCKET?: unknown; BACKUPS_BUCKET?: unknown };
-      __env?: { VIDEO_BUCKET?: unknown; BACKUPS_BUCKET?: unknown };
-      VIDEO_BUCKET?: unknown;
-      BACKUPS_BUCKET?: unknown;
-    };
-
-    const hasVideo = !!(
-      envOverride?.VIDEO_BUCKET ||
-      g.__env__?.VIDEO_BUCKET ||
-      g.__env?.VIDEO_BUCKET ||
-      g.VIDEO_BUCKET
-    );
-
-    const hasBackups = !!(
-      envOverride?.BACKUPS_BUCKET ||
-      g.__env__?.BACKUPS_BUCKET ||
-      g.__env?.BACKUPS_BUCKET ||
-      g.BACKUPS_BUCKET
-    );
-
-    const latency = Date.now() - start;
-
-    // Both buckets bound and verified
-    if (hasVideo && hasBackups) {
-      return {
-        checkpointId: 'r2_video_bucket',
-        name: 'Cloudflare R2 Storage Vault Bindings',
-        nameVi: 'Liên Kết Kho Lưu Trữ Đa Phương Tiện R2',
-        category: 'storage',
-        status: 'PASS',
-        latencyMs: latency,
-        details: 'VIDEO_BUCKET & BACKUPS_BUCKET bindings active and connected',
-        expected: 'VIDEO_BUCKET & BACKUPS_BUCKET bound',
-        actual: 'Both bound',
-        diagnosticData: { hasVideo: true, hasBackups: true },
-      };
-    }
-
-    // Partial or completely missing bindings
-    const isPartial = hasVideo || hasBackups;
-    const isProd = process.env.NODE_ENV === 'production';
-    // In production, missing all bindings is a fatal FAIL; missing one or dev is WARN
-    const status: CheckpointStatus = !isPartial && isProd ? 'FAIL' : 'WARN';
-    const actualText = isPartial
-      ? (hasVideo ? 'VIDEO_BUCKET only' : 'BACKUPS_BUCKET only')
-      : 'Unbound (missing bindings)';
-
-    return {
-      checkpointId: 'r2_video_bucket',
-      name: 'Cloudflare R2 Storage Vault Bindings',
-      nameVi: 'Liên Kết Kho Lưu Trữ Đa Phương Tiện R2',
-      category: 'storage',
-      status,
-      latencyMs: latency,
-      details: isPartial
-        ? `Partial R2 binding: ${hasVideo ? 'BACKUPS_BUCKET unbound' : 'VIDEO_BUCKET unbound'} in runtime context`
-        : 'R2 storage bindings missing in runtime context (VIDEO_BUCKET and BACKUPS_BUCKET unbound)',
-      expected: 'VIDEO_BUCKET & BACKUPS_BUCKET bound',
-      actual: actualText,
-      diagnosticData: { hasVideo, hasBackups },
-    };
-  } catch (err) {
-    return {
-      checkpointId: 'r2_video_bucket',
-      name: 'Cloudflare R2 Storage Vault Bindings',
-      nameVi: 'Liên Kết Kho Lưu Trữ Đa Phương Tiện R2',
-      category: 'storage',
-      status: 'WARN',
-      latencyMs: Date.now() - start,
-      details: `R2 check warning: ${err instanceof Error ? err.message : String(err)}`,
       error: err instanceof Error ? err.message : String(err),
     };
   }

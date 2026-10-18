@@ -161,6 +161,8 @@ describe('Tier transition matrix (16 cases)', () => {
           payment_status: 'finished' as const,
           price_amount: TIER_PRICES[toTier],
           price_currency: 'USD',
+          pay_amount: TIER_PRICES[toTier],
+          pay_currency: 'USDT',
           invoice_id: TIER_INVOICE_MAP[toTier],
           order_id: orderId,
           actually_paid: TIER_PRICES[toTier],

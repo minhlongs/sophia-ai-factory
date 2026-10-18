@@ -15,11 +15,13 @@ import { getOrDefault } from '@/seed/tenant-settings/registry';
 import { DEFAULT_BRANDING } from '@/seed/tenant-settings/defaults';
 import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
-import {
-  formatWhiteLabelEmail,
-  escapeHtml,
-} from '@/tree/branding/email-styler';
-import type { WhiteLabelEmailBranding } from '@/tree/branding/email-styler';
+
+export {
+  toWhiteLabelBranding,
+  formatTenantEmail,
+  appendEmailFooter,
+  buildLogoImgTag,
+} from './tenant-branding-formatter';
 
 export interface ResolvedEmailBranding {
   fromName: string | null;
@@ -65,7 +67,6 @@ export async function resolveEmailBranding(tenantOrOrgId: string): Promise<Resol
   }
 
   try {
-    // 1. Try org_branding table
     const orgBranding = await db
       .prepare(
         `SELECT agency_name, logo_url, primary_color
@@ -76,7 +77,6 @@ export async function resolveEmailBranding(tenantOrOrgId: string): Promise<Resol
       .bind(tenantOrOrgId)
       .first<{ agency_name: string | null; logo_url: string | null; primary_color: string | null }>();
 
-    // 2. Try tenant_settings namespace 'branding'
     const settings = await getOrDefault<BrandingSettings>(
       db,
       tenantOrOrgId,
@@ -109,52 +109,4 @@ export async function resolveEmailBranding(tenantOrOrgId: string): Promise<Resol
     });
     return { fromName: null, footerMarkdown: null, logoUrl: null };
   }
-}
-
-/**
- * Converts ResolvedEmailBranding to WhiteLabelEmailBranding for email-styler.
- */
-export function toWhiteLabelBranding(branding: ResolvedEmailBranding): WhiteLabelEmailBranding {
-  return {
-    agencyName: branding.agencyName,
-    logoUrl: branding.logoUrl,
-    primaryColor: branding.primaryColor,
-    accentColor: branding.accentColor,
-    customDomain: branding.customDomain,
-    supportEmail: branding.supportEmail,
-    legalDisclaimer: branding.legalDisclaimer,
-    unsubscribeUrl: branding.unsubscribeUrl,
-    emailFooter: branding.footerMarkdown,
-    emailFromName: branding.fromName,
-    poweredBySophia: !branding.isWhiteLabel,
-  };
-}
-
-/**
- * Format email with white-label layout using resolved tenant branding.
- */
-export function formatTenantEmail(html: string, branding: ResolvedEmailBranding): string {
-  return formatWhiteLabelEmail(html, toWhiteLabelBranding(branding));
-}
-
-/**
- * Append tenant email footer to an HTML body.
- * Escapes the footer markdown as plain text inside a styled block.
- * No-op if footerMarkdown is null.
- */
-export function appendEmailFooter(html: string, footerMarkdown: string | null): string {
-  if (!footerMarkdown) return html;
-  const escaped = escapeHtml(footerMarkdown);
-  const footerHtml = `<div style="margin-top:32px;padding-top:16px;border-top:1px solid #374151;font-size:12px;color:#6b7280;white-space:pre-wrap;">${escaped}</div>`;
-  return html.includes('</body>')
-    ? html.replace('</body>', () => `${footerHtml}</body>`)
-    : html + footerHtml;
-}
-
-/**
- * Build logo img tag for email header. No-op if logoUrl is null.
- */
-export function buildLogoImgTag(logoUrl: string | null): string {
-  if (!logoUrl) return '';
-  return `<img src="${escapeHtml(logoUrl)}" alt="logo" style="max-height:40px;max-width:160px;display:block;margin-bottom:16px;" />`;
 }

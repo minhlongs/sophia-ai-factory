@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Planck Quantum Foam dispatching, Net-Zero power verification, and Sixteen-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planPlanckFoamBatchDispatch,
   type PlanckFoamDispatchPlan,
@@ -20,6 +19,11 @@ import {
   type SixteenNinesSlaInput,
 } from '@/tree/energy/quantum-foam-energy-engine';
 import type { PlanckQuantumFoamLattice } from '@/seed/types/planck-quantum-foam-nexus';
+import {
+  recordPlanckFoamDispatchD1,
+  recordPlanckFoamPowerAllocationD1,
+  recordPlanckFoamSlaAuditD1,
+} from './planck-foam-d1-recorder';
 
 export interface PlanckFoamDispatchActionResult {
   success: boolean;
@@ -49,32 +53,16 @@ export async function dispatchPlanckFoamBatchAction(
 ): Promise<PlanckFoamDispatchActionResult> {
   try {
     const data = planPlanckFoamBatchDispatch(lattices, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO continuum_pipeline_dispatches (
-             id, dispatch_ref, session_token, lattice_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `DISP-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          data.dispatchHash,
-          data.targetLatticeRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.28,
-          data.planckDriftFs,
-          'COMPLETED_SYNCHRONOUS',
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordPlanckFoamDispatchD1({
+      tableName: 'continuum_pipeline_dispatches',
+      dispatchRefPrefix: 'DISP',
+      dispatchHash: data.dispatchHash,
+      targetLatticeRef: data.targetLatticeRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      dispatchLatencyNanos: 0.28,
+      planckDriftFs: data.planckDriftFs,
+    });
     return { success: true, data };
   } catch (error) {
     return {
@@ -92,30 +80,15 @@ export async function validateQuantumFoamPowerAction(
 ): Promise<QuantumFoamPowerActionResult> {
   try {
     const data = validateQuantumFoamPower(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO quantum_foam_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified,
-             allocated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PWR-ALLOC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          'ZERO_POINT_FOAM_TAP',
-          input.allocatedMegawatts,
-          input.carbonIntensityGPerKwh,
-          input.boseEinsteinCop,
-          data.isCompliant ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordPlanckFoamPowerAllocationD1({
+      tableName: 'quantum_foam_power_allocations',
+      allocationRefPrefix: 'PWR-ALLOC',
+      powerSourceType: 'ZERO_POINT_FOAM_TAP',
+      allocatedMegawatts: input.allocatedMegawatts,
+      carbonIntensityGPerKwh: input.carbonIntensityGPerKwh,
+      boseEinsteinCop: input.boseEinsteinCop,
+      isCompliant: data.isCompliant,
+    });
     return { success: data.isCompliant, data };
   } catch (error) {
     return {
@@ -134,33 +107,19 @@ export async function auditSixteenNinesSlaAction(
 ): Promise<SixteenNinesSlaActionResult> {
   try {
     const data = evaluateSixteenNinesSla(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO sixteen_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_sixteen_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          month,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'SIXTEEN_NINES_CERTIFIED' ? 1 : 0,
-          4096,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return { success: data.slaVerdict === 'SIXTEEN_NINES_CERTIFIED', data };
+    const isMet = data.slaVerdict === 'SIXTEEN_NINES_CERTIFIED';
+    await recordPlanckFoamSlaAuditD1({
+      tableName: 'sixteen_nines_sla_audits',
+      auditRefPrefix: 'SLA-AUDIT',
+      metColumnName: 'is_sixteen_nines_met',
+      month,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isMet,
+      bftConsensusNodes: 4096,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isMet, data };
   } catch (error) {
     return {
       success: false,

@@ -15,8 +15,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { sha256Hex } from '@/seed/security/invitation-token';
 import { acceptOrgInvitation } from '@/tree/organizations/invitation-service';
+import {
+  extractInvitationToken,
+  lookupInvitationByToken,
+  resolveAcceptanceErrorStatus,
+} from './invitation-accept-helpers';
 
 export const runtime = 'edge';
 
@@ -30,15 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    let token = '';
-    try {
-      const body = (await request.json()) as { token?: string } | null;
-      token = (body?.token || '').trim();
-    } catch {
-      // Fallback to query parameter
-      token = (request.nextUrl.searchParams.get('token') || '').trim();
-    }
-
+    const token = await extractInvitationToken(request);
     if (!token) {
       return NextResponse.json(
         { error: 'INVALID_REQUEST', message: 'Invitation token is required' },
@@ -71,18 +67,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn('[API:Invitations] Acceptance failed', { error: message });
 
-    let status = 400;
-    if (message.includes('INVALID_INVITATION_TOKEN')) {
-      status = 404;
-    } else if (message.includes('SEAT_QUOTA_EXCEEDED')) {
-      status = 409;
-    } else if (message.includes('INVITATION_ALREADY_USED') || message.includes('INVITATION_EXPIRED')) {
-      status = 410;
-    }
-
     return NextResponse.json(
       { error: 'ACCEPT_FAILED', message },
-      { status },
+      { status: resolveAcceptanceErrorStatus(message) },
     );
   }
 }
@@ -105,43 +92,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const tokenHash = await sha256Hex(token);
-    const now = Date.now();
-
-    let invitation = await db
-      .prepare(
-        `SELECT id, org_id, email, role, status, expires_at 
-         FROM org_invitations 
-         WHERE token_hash = ?1 LIMIT 1`
-      )
-      .bind(tokenHash)
-      .first<{
-        id: string;
-        org_id: string;
-        email: string;
-        role: string;
-        status: string;
-        expires_at: number;
-      }>();
-
-    if (!invitation) {
-      invitation = await db
-        .prepare(
-          `SELECT id, org_id, email, role, status, expires_at 
-           FROM organization_invitations 
-           WHERE token_hash = ?1 LIMIT 1`
-        )
-        .bind(tokenHash)
-        .first<{
-          id: string;
-          org_id: string;
-          email: string;
-          role: string;
-          status: string;
-          expires_at: number;
-        }>();
-    }
-
+    const invitation = await lookupInvitationByToken(db, token);
     if (!invitation) {
       return NextResponse.json(
         { valid: false, error: 'INVALID_INVITATION_TOKEN', message: 'Invitation token not found' },
@@ -149,7 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const isExpired = now > invitation.expires_at;
+    const isExpired = Date.now() > invitation.expires_at;
     const isValid = invitation.status === 'pending' && !isExpired;
 
     return NextResponse.json({

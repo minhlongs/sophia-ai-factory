@@ -11,37 +11,18 @@ import {
   ShieldCheck,
   Terminal,
   Activity,
-  type LucideIcon,
 } from "lucide-react";
+import type {
+  DashboardNavModule,
+  DashboardUserProps,
+  DashboardSidebarNavProps,
+} from "./dashboard-nav-types";
 
-export interface DashboardNavModule {
-  id: string;
-  labelKey: string;
-  fallbackLabel: string;
-  href: string;
-  icon: LucideIcon;
-  badge?: string;
-}
-
-export interface DashboardUserProps {
-  name: string;
-  email: string;
-  avatarUrl?: string | null;
-  tier?: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE' | 'MASTER' | string;
-  quotaUsagePercent?: number;
-  quotaUsed?: number;
-  quotaTotal?: number;
-}
-
-export interface DashboardSidebarNavProps {
-  currentPath?: string;
-  isAdmin?: boolean;
-  isVi?: boolean;
-  user?: DashboardUserProps;
-  isMobileOpen?: boolean;
-  onCloseMobile?: () => void;
-  className?: string;
-}
+export type {
+  DashboardNavModule,
+  DashboardUserProps,
+  DashboardSidebarNavProps,
+};
 
 /**
  * 14 Canonical Sophia AI Factory Navigation Modules

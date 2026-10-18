@@ -9,67 +9,22 @@
  * migrate to `executeAgent()`.
  * Removal permitted after 2026-09-16. Tracked in
  * `@/seed/types/deprecation-markers` (DEPRECATION_REGISTRY).
- *
- * Constraints:
- *  - tenantId REQUIRED — throws OpenclawTenantMissingError if missing
- *  - Each task gets isolated context (tenantId injected)
- *  - Audit row written per spawn + per result
- *  - Falls back to local executor if Anthropic Agent SDK unavailable
- *  - Each task wrapped in withRetry + withBreaker for resilience
  */
 
 import { audit } from "./audit";
-import type { SOPAgentRole, IterationLimits } from "@/seed/types/multi-agent";
 import { DEFAULT_ITERATION_LIMITS } from "@/seed/types/multi-agent";
 import { checkIterationBudget } from "@/tree/sop/multi-agent-coordinator-helpers";
 import { logger } from "@/seed/utils/logger-utility";
 import { runTask, runWithConcurrency } from "./spawn-agent-fleet-executor";
+import {
+  OpenclawTenantMissingError,
+  type AgentTask,
+  type AgentResult,
+  type SpawnFleetOptions,
+} from "./spawn-agent-fleet-types";
 
-export class OpenclawTenantMissingError extends Error {
-  constructor() {
-    super("OpenClaw: tenantId is required for spawnAgentFleet");
-    this.name = "OpenclawTenantMissingError";
-  }
-}
-
-export interface AgentTask {
-  /** Unique identifier for this task within the fleet */
-  id: string;
-  /** Human-readable description / prompt for the agent */
-  prompt: string;
-  /** Optional context data injected into the task */
-  context?: Record<string, unknown>;
-  /** LLM tier for this task. Defaults to 'standard' */
-  tier?: "lite" | "standard" | "max";
-  /**
-   * Typed prompt contract — validated against role schema before dispatch.
-   * Opt-in: validation only fires when BOTH promptContract AND agentRole are present.
-   */
-  promptContract?: Record<string, unknown>;
-  /** Agent role used for prompt contract schema lookup */
-  agentRole?: SOPAgentRole;
-}
-
-export interface AgentResult {
-  taskId: string;
-  success: boolean;
-  output?: unknown;
-  error?: string;
-  durationMs: number;
-  /** How many retries were attempted before success or final failure */
-  retryCount?: number;
-}
-
-export interface SpawnFleetOptions {
-  tenantId: string;
-  actor?: string;
-  /** Run tasks in parallel (true) or sequentially (false). Default: true */
-  parallel?: boolean;
-  /** Max concurrent tasks when parallel=true. Default: 5 */
-  maxConcurrency?: number;
-  /** Iteration limits to prevent runaway agents. Uses defaults if omitted. */
-  iterationLimits?: IterationLimits;
-}
+export { OpenclawTenantMissingError };
+export type { AgentTask, AgentResult, SpawnFleetOptions };
 
 /**
  * Spawn a fleet of agents for a given tenant.
@@ -94,7 +49,6 @@ export async function spawnAgentFleet(
     iterationLimits = DEFAULT_ITERATION_LIMITS,
   } = opts;
 
-  // Bounded iteration guard — check fleet-level limit before starting
   const fleetBudget = checkIterationBudget(0, tasks.length, iterationLimits);
   if (!fleetBudget.canProceed) {
     logger.warn("[spawnAgentFleet] Fleet iteration limit prevents dispatch", {
@@ -111,7 +65,6 @@ export async function spawnAgentFleet(
     }));
   }
 
-  // Audit: fleet spawn
   await audit({
     tenantId,
     actor,
@@ -128,7 +81,6 @@ export async function spawnAgentFleet(
   let results: AgentResult[];
 
   if (!parallel) {
-    // Sequential execution
     results = [];
     for (const task of tasks) {
       results.push(await runTask(task, tenantId));
@@ -137,7 +89,6 @@ export async function spawnAgentFleet(
     results = await runWithConcurrency(tasks, tenantId, maxConcurrency);
   }
 
-  // Audit: fleet complete
   await audit({
     tenantId,
     actor,

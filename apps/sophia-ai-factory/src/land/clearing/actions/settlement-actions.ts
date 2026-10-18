@@ -17,19 +17,18 @@ import type {
   ClearingActionError,
   ClearingBatchStatus,
 } from '@/seed/types/multi-asset-clearing';
-import { success, failure, type Result } from '@/seed/types/result';
-import { logger } from '@/seed/utils/logger-utility';
+import { success, type Result } from '@/seed/types/result';
 import {
   listLiquidityPools,
-  getLiquidityPoolByAsset,
-  calculateSwapQuote,
-  executeRtgsBatch,
-  reconcileBatchWithBankStatement,
-  executePoolRebalance,
   listClearingBatches,
 } from '@/tree/clearing/multi-asset-clearing-engine';
-import { getRequiredD1 } from './common';
 import { runAuthenticatedSettlementAction } from './settlement-action-helpers';
+import {
+  handleQuoteClearingSwap,
+  handleExecuteCrossBorderClearing,
+  handleReconcileClearingBatch,
+  handleTriggerPoolRebalance,
+} from './settlement-batch-helpers';
 
 /**
  * 1. Get Clearing Liquidity Pools Action
@@ -52,23 +51,7 @@ export async function getClearingLiquidityPoolsAction(): Promise<
 export async function quoteClearingSwapAction(
   input: SwapQuoteInput,
 ): Promise<Result<SwapQuoteResult, ClearingActionError>> {
-  try {
-    const db = await getRequiredD1();
-    const pool = await getLiquidityPoolByAsset(db, input.targetAsset);
-
-    if (!pool) {
-      return failure({
-        code: 'TARGET_POOL_NOT_FOUND',
-        message: `No active liquidity pool found for target asset ${input.targetAsset}`,
-      });
-    }
-
-    return success(calculateSwapQuote(pool, input));
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to calculate swap quote', { error: message, input });
-    return failure({ code: 'QUOTE_SWAP_FAILED', message });
-  }
+  return handleQuoteClearingSwap(input);
 }
 
 /**
@@ -82,16 +65,7 @@ export async function executeCrossBorderClearingAction(
     errorCode: 'EXECUTE_CLEARING_FAILED',
     logLabel: 'Failed to execute cross-border clearing batch',
     context: { input },
-    handler: async (db) => {
-      const result = await executeRtgsBatch(db, input);
-      if (!result.success) {
-        return failure({
-          code: 'CLEARING_EXECUTION_REJECTED',
-          message: result.error ?? 'Clearing batch execution was rejected',
-        });
-      }
-      return success(result);
-    },
+    handler: (db) => handleExecuteCrossBorderClearing(db, input),
   });
 }
 
@@ -106,16 +80,7 @@ export async function reconcileClearingBatchAction(
     errorCode: 'RECONCILE_BATCH_FAILED',
     logLabel: 'Failed to reconcile clearing batch',
     context: { input },
-    handler: async (db) => {
-      const result = await reconcileBatchWithBankStatement(db, input);
-      if (!result.success) {
-        return failure({
-          code: 'RECONCILIATION_MISMATCH',
-          message: result.error ?? 'Statement reconciliation mismatch',
-        });
-      }
-      return success(result);
-    },
+    handler: (db) => handleReconcileClearingBatch(db, input),
   });
 }
 
@@ -132,16 +97,7 @@ export async function triggerPoolRebalanceAction(input: {
     errorCode: 'TRIGGER_REBALANCE_FAILED',
     logLabel: 'Failed to trigger pool rebalance',
     context: { input },
-    handler: async (db) => {
-      const result = await executePoolRebalance(db, input.sourcePoolId, input.targetPoolId, input.amount);
-      if (!result.success) {
-        return failure({
-          code: 'POOL_REBALANCE_FAILED',
-          message: result.error ?? 'Pool rebalance failed',
-        });
-      }
-      return success(result);
-    },
+    handler: (db) => handleTriggerPoolRebalance(db, input),
   });
 }
 

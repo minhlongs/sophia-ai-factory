@@ -1317,16 +1317,16 @@ describe('Auto-Creative Playbook & Campaign Intelligence E2E — Phase 5', () =>
       expect(applied.success).toBe(true);
       if (!applied.success) return;
 
-      const toggleOff = await toggleAutoApply(applied.installationId, false);
+      const toggleOff = await toggleAutoApply(applied.installationId, false, USER_ID);
       expect(toggleOff.success).toBe(true);
 
-      const cfgOff = await getPlaybookConfig(applied.installationId);
+      const cfgOff = await getPlaybookConfig(applied.installationId, USER_ID);
       expect(cfgOff?.autoApply).toBe(false);
 
-      const toggleOn = await toggleAutoApply(applied.installationId, true);
+      const toggleOn = await toggleAutoApply(applied.installationId, true, USER_ID);
       expect(toggleOn.success).toBe(true);
 
-      const cfgOn = await getPlaybookConfig(applied.installationId);
+      const cfgOn = await getPlaybookConfig(applied.installationId, USER_ID);
       expect(cfgOn?.autoApply).toBe(true);
     });
 
@@ -1336,7 +1336,7 @@ describe('Auto-Creative Playbook & Campaign Intelligence E2E — Phase 5', () =>
          VALUES ('inst_manual', ?, 'tpl_manual', '{"source":"manual","autoApply":false}')`,
       ).run(USER_ID);
 
-      const config = await getPlaybookConfig('inst_manual');
+      const config = await getPlaybookConfig('inst_manual', USER_ID);
       expect(config).toBeNull();
     });
 
@@ -1742,7 +1742,7 @@ describe('Auto-Creative Playbook & Campaign Intelligence E2E — Phase 5', () =>
       expect(result.success).toBe(true);
       if (!result.success) return;
 
-      const config = await getPlaybookConfig(result.installationId);
+      const config = await getPlaybookConfig(result.installationId, USER_ID);
       expect(config?.ruleId).toBe(rule.id);
       expect(config?.autoApply).toBe(true);
       expect(config?.platform).toBe('youtube_shorts');

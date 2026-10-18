@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod'
+import type { NowPaymentsIpnPayload } from './ipn-handlers/types'
 
 /** Top-up invoice created by createTopupInvoice */
 export interface TopupInvoice {
@@ -21,10 +22,12 @@ export interface TopupInvoice {
 /** IPN payload for a top-up payment */
 export interface TopupIpnPayload {
   payment_id: string
-  payment_status: string
+  payment_status: NowPaymentsIpnPayload['payment_status']
   order_id: string
   price_amount: number
   price_currency: string
+  pay_amount?: number
+  pay_currency?: string
   invoice_id?: string
   actually_paid?: number
 }
@@ -39,6 +42,8 @@ export const topupIpnPayloadSchema = z.object({
   order_id: z.string().min(1),
   price_amount: z.number().positive(),
   price_currency: z.string().min(1),
+  pay_amount: z.number().positive().optional(),
+  pay_currency: z.string().min(1).optional(),
   invoice_id: z.string().optional(),
   actually_paid: z.number().optional(),
 })

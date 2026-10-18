@@ -5,14 +5,16 @@ import type {
   AgentDecision,
   AgentAction,
 } from '@/seed/types/creative-domain';
-import { recordProvenance } from '@/tree/provenance/index';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { resolveModelForCapability } from '../builtin-agents';
-import { getModelPricing, estimateCost } from '@/seed/ai/cost-estimator';
 import { ExecutorError, type AgentExecutionResult } from './types';
 import { buildAgentMessages } from './prompt-builder';
 import { isGateAllowed, verifyAgentPermissions } from './gate-verifier';
+import {
+  recordAgentExecutionProvenance,
+  buildAgentExecutionResult,
+} from './executor-provenance-helper';
 
 export async function executeAgent(
   definition: AgentDefinition,
@@ -100,63 +102,25 @@ export async function executeAgent(
     return failure(new ExecutorError('PROVIDER_ERROR', message));
   }
 
-  // ── 6. Provenance ─────────────────────────────────────────────────────
-  let provenanceRecordId: string | undefined;
-  try {
-    const prov = await recordProvenance({
-      id: '',
-      workspaceId: context.workspaceId,
-      assetId: `agent-run:${definition.id}`,
-      agentRunId: correlationId,
-      action: 'generated',
-      actorType: 'agent',
-      actorId: definition.id,
-      model: response.model,
-      metadata: {
-        provider: response.provider,
-        inputTokens: response.usage.inputTokens,
-        outputTokens: response.usage.outputTokens,
-        latencyMs: response.latencyMs,
-        decision: decision.type,
-        actions: actions.map((a) => a.tool),
-      },
-      createdAt: 0,
-    });
-    provenanceRecordId = prov.id;
-  } catch (err) {
-    logger.warn('[AgentExecutor] provenance record failed (non-fatal)', {
-      correlationId,
-      error: err instanceof Error ? err.message : 'unknown',
-    });
-  }
-
-  // ── 7. Result ─────────────────────────────────────────────────────────
-  const durationMs = Date.now() - startedAt;
-  const pricing = getModelPricing(resolvedModel, response.provider);
-  let costCents: number;
-  if (pricing) {
-    const costUsd = estimateCost(
-      messages,
-      resolvedModel,
-      { maxTokens: 2048, providerId: response.provider },
-    );
-    costCents = Math.round(costUsd * 100);
-  } else {
-    const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
-    costCents = Math.ceil(totalTokens * 0.001 * 100);
-    logger.warn('[AgentExecutor] model not in pricing table, used fallback', { model: resolvedModel });
-  }
-
-  const result: AgentExecutionResult = {
-    success: true,
-    output: response.content,
-    artifacts: [provenanceRecordId ?? `agent-run:${definition.id}`],
-    costCents,
-    durationMs,
-    provenanceRecordId,
-    totalTokens: response.usage.inputTokens + response.usage.outputTokens,
+  // ── 6. Provenance & Result ────────────────────────────────────────────
+  const provenanceRecordId = await recordAgentExecutionProvenance({
+    definition,
+    context,
+    response,
     decision,
-  };
+    actions,
+  });
+
+  const durationMs = Date.now() - startedAt;
+  const result = buildAgentExecutionResult({
+    definition,
+    resolvedModel,
+    messages,
+    response,
+    decision,
+    provenanceRecordId,
+    durationMs,
+  });
 
   logger.info('[AgentExecutor] agent completed', {
     correlationId,

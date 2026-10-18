@@ -7,19 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import {
-  upsertMemory,
-  listMemoryKeys,
-  deleteMemory,
-  newMemoryId,
-} from '@/tree/creative-memory';
+import { upsertMemory, listMemoryKeys } from '@/tree/creative-memory';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import type { MemoryCategory, MemoryConfidence, CreativeMemory } from '@/seed/types/creative-domain';
+import { createMemorySchema, deleteMemorySchema } from './memory-route-helpers';
 import {
-  createMemorySchema,
-  deleteMemorySchema,
-  getMemoryWorkspaceId,
-} from './memory-route-helpers';
+  buildCreativeMemoryEntry,
+  authorizeAndDeleteMemory,
+} from './creative-memory-handlers';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,31 +38,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { workspaceId, category, key, value, scope, scopeId, confidence } = parsed.data;
-
-  const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
+  const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id);
   if (!hasAccess) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    const entry: CreativeMemory = {
-      id: newMemoryId(),
-      workspaceId,
-      category: category as MemoryCategory,
-      key,
-      value,
-      confidence: (confidence ?? 'medium') as MemoryConfidence,
-      source: 'human_edit',
-      evidence: JSON.stringify([]),
-      scope: (scope ?? 'global') as CreativeMemory['scope'],
-      scopeId,
-      version: 0,
-      isDeleted: false,
-      createdAt: 0,
-      updatedAt: 0,
-    };
-
+    const entry = buildCreativeMemoryEntry(parsed.data);
     const result = await upsertMemory(entry);
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
@@ -133,18 +109,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const workspaceId = await getMemoryWorkspaceId(parsed.data.id);
-    if (!workspaceId) {
-      return NextResponse.json({ error: 'Memory not found' }, { status: 404 });
-    }
-
-    const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    await deleteMemory(parsed.data.id);
-    return NextResponse.json({ deleted: true });
+    return await authorizeAndDeleteMemory(parsed.data.id, user.id);
   } catch (err) {
     return NextResponse.json(
       { error: getErrorMessage(err) },

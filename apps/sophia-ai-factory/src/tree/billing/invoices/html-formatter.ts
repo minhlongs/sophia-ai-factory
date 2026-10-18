@@ -9,6 +9,7 @@ import { formatCurrency } from '../fx-converter';
 import { escapeHtml } from './escape-html';
 import { getInvoiceCss } from './html-styles';
 import { EN_LABELS, resolveTaxFormNote, VI_LABELS } from './html-labels';
+import { renderEntityGridHtml, renderLineItemsAndTotalsHtml } from './html-body-sections';
 
 /**
  * Generate clean, responsive, print-optimized HTML invoice document
@@ -33,11 +34,17 @@ export function generateInvoiceHtml(invoice: EInvoice, locale: 'en' | 'vi' = 'vi
   const statusColor = { draft: '#64748b', issued: '#0284c7', paid: '#16a34a', void: '#dc2626' }[invoice.status];
   const vatPercentText = (invoice.vatRate * 100).toFixed(0);
   const vatRowLabel = isVi ? `Thuế GTGT (VAT ${vatPercentText}%)` : `VAT (${vatPercentText}%)`;
-  const customerTaxIdText = escapeHtml(invoice.taxId) || L.naText;
-  const subaccountHtml = invoice.subaccountId
-    ? `<div class="entity-detail">${L.subaccountLabel}: ${escapeHtml(invoice.subaccountId)}</div>`
-    : '';
   const taxNoteBody = resolveTaxFormNote(invoice.taxFormType, isVi);
+
+  const entityGridHtml = renderEntityGridHtml(invoice, L);
+  const itemsAndTotalsHtml = renderLineItemsAndTotalsHtml(
+    invoice,
+    L,
+    subtotalFormatted,
+    vatRowLabel,
+    vatFormatted,
+    totalFormatted,
+  );
 
   return `<!DOCTYPE html>
 <html lang="${locale}">
@@ -71,24 +78,7 @@ export function generateInvoiceHtml(invoice: EInvoice, locale: 'en' | 'vi' = 'vi
       </div>
     </div>
 
-    <div class="entity-grid">
-      <div class="entity-col">
-        <h4>${L.sellerHeading}</h4>
-        <div class="entity-name">Sophia AI Factory Co., Ltd</div>
-        <div class="entity-detail">${L.sellerTaxIdLabel}: 0317894562</div>
-        <div class="entity-detail">Bitexco Financial Tower, District 1, Ho Chi Minh City, Vietnam</div>
-        <div class="entity-detail">support@sophia.agencyos.network</div>
-      </div>
-
-      <div class="entity-col">
-        <h4>${L.customerHeading}</h4>
-        <div class="entity-name">${escapeHtml(invoice.legalName)}</div>
-        <div class="entity-detail">${L.customerTaxIdLabel}: ${customerTaxIdText}</div>
-        <div class="entity-detail">${L.taxFormLabel}: ${escapeHtml(invoice.taxFormType)}</div>
-        <div class="entity-detail">${escapeHtml(invoice.billingAddress)}</div>
-        ${subaccountHtml}
-      </div>
-    </div>
+    ${entityGridHtml}
 
     <div class="meta-box">
       <div class="meta-item">
@@ -105,44 +95,7 @@ export function generateInvoiceHtml(invoice: EInvoice, locale: 'en' | 'vi' = 'vi
       </div>
     </div>
 
-    <table class="line-items">
-      <thead>
-        <tr>
-          <th>${L.descCol}</th>
-          <th style="width: 100px;">${L.qtyCol}</th>
-          <th class="text-right" style="width: 140px;">${L.unitPriceCol}</th>
-          <th class="text-right" style="width: 140px;">${L.totalCol}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <strong>Sophia AI Factory — Gói ${escapeHtml(invoice.tier)} (${escapeHtml(invoice.billingCycle)})</strong>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-              ${L.lineItemDesc}
-            </div>
-          </td>
-          <td>1</td>
-          <td class="text-right">${subtotalFormatted}</td>
-          <td class="text-right">${subtotalFormatted}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="totals-box">
-      <div class="total-row">
-        <span>${L.subtotalLabel}:</span>
-        <strong>${subtotalFormatted}</strong>
-      </div>
-      <div class="total-row">
-        <span>${vatRowLabel}:</span>
-        <strong>${vatFormatted}</strong>
-      </div>
-      <div class="total-row grand-total">
-        <span>${L.grandTotalLabel}:</span>
-        <span>${totalFormatted}</span>
-      </div>
-    </div>
+    ${itemsAndTotalsHtml}
 
     <div class="footer-note">
       <p><strong>${L.legalNoteHeading}:</strong></p>

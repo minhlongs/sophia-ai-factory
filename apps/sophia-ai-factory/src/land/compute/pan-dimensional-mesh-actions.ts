@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Pan-Dimensional Quantum Foam Singularity Mesh dispatching, Net-Zero power verification, and Thirty-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planPanDimensionalBatchDispatch,
   type PanDimensionalDispatchPlan,
@@ -20,6 +19,11 @@ import {
   type PanDimensionalPowerValidationOutput,
 } from '@/tree/energy/pan-dimensional-energy-engine';
 import type { PanDimensionalQuantumSingularityMesh } from '@/seed/types/pan-dimensional-quantum-mesh-nexus';
+import {
+  recordMeshBatchDispatchD1,
+  recordMeshPowerAllocationD1,
+  recordMeshSlaAuditD1,
+} from './mesh-actions-d1-recorder';
 
 export interface PanDimensionalDispatchActionResult {
   success: boolean;
@@ -49,32 +53,16 @@ export async function dispatchPanDimensionalBatchAction(
 ): Promise<PanDimensionalDispatchActionResult> {
   try {
     const data = planPanDimensionalBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pan_dimensional_pipeline_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PAN-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `TOKEN-PAN-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.0008,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS',
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordMeshBatchDispatchD1({
+      table: 'pan_dimensional_pipeline_dispatches',
+      refPrefix: 'PAN-DISPATCH',
+      tokenPrefix: 'TOKEN-PAN',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.0008,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (error) {
     return {
@@ -92,29 +80,15 @@ export async function allocatePanDimensionalPowerAction(
 ): Promise<PanDimensionalPowerActionResult> {
   try {
     const data = validatePanDimensionalPower(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pan_dimensional_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified, allocated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PAN-PWR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          'PAN_DIMENSIONAL_ZERO_POINT_HARVESTER',
-          params.allocatedMegawatts,
-          params.carbonIntensityGPerKwh,
-          params.boseEinsteinCop,
-          data.isCompliant ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordMeshPowerAllocationD1({
+      table: 'pan_dimensional_power_allocations',
+      refPrefix: 'PAN-PWR',
+      powerSourceType: 'PAN_DIMENSIONAL_ZERO_POINT_HARVESTER',
+      allocatedMegawatts: params.allocatedMegawatts,
+      carbonIntensityGPerKwh: params.carbonIntensityGPerKwh,
+      boseEinsteinCop: params.boseEinsteinCop,
+      isCompliant: data.isCompliant,
+    });
     return { success: data.isCompliant, data };
   } catch (error) {
     return {
@@ -133,36 +107,19 @@ export async function auditThirtyNinesSlaAction(
 ): Promise<ThirtyNinesSlaActionResult> {
   try {
     const data = evaluateThirtyNinesSla(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO thirty_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_thirty_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-30N-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          evaluationPeriodMonth,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'THIRTY_NINES_CERTIFIED' ? 1 : 0,
-          131072,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: data.slaVerdict === 'THIRTY_NINES_CERTIFIED',
-      data,
-    };
+    const isSlaMet = data.slaVerdict === 'THIRTY_NINES_CERTIFIED';
+    await recordMeshSlaAuditD1({
+      table: 'thirty_nines_sla_audits',
+      metColumn: 'is_thirty_nines_met',
+      refPrefix: 'SLA-30N',
+      evaluationPeriodMonth,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet,
+      bftConsensusNodes: 131072,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isSlaMet, data };
   } catch (error) {
     return {
       success: false,

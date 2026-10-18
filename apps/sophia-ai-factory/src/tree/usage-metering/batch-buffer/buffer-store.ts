@@ -1,9 +1,8 @@
 import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
-import type { UsageEventInput, IngestionResult } from '../types';
+import type { UsageEventInput } from '../types';
 import { generateIdempotencyKey } from '../idempotency';
-import { trackUsage } from '../tracker';
 import type { BufferStats } from './types';
+import { flushBufferedEvents } from './buffer-flusher';
 
 /**
  * In-memory buffer for batch ingestion
@@ -82,33 +81,7 @@ export class UsageBatchBuffer {
     this.buffer.clear();
 
     try {
-      logger.info('[UsageBuffer] Flushing events', { count: events.length });
-
-      const results: IngestionResult[] = [];
-
-      for (const event of events) {
-        try {
-          await trackUsage(event);
-          results.push({ index: results.length, success: true });
-        } catch (error) {
-          logger.error(
-            '[UsageBuffer] Failed to track event',
-            error instanceof Error ? error : new Error(String(error)),
-          );
-          results.push({
-            index: results.length,
-            success: false,
-            error: getErrorMessage(error),
-          });
-        }
-      }
-
-      const successCount = results.filter(r => r.success).length;
-      logger.info('[UsageBuffer] Flush complete', {
-        total: events.length,
-        success: successCount,
-        failed: events.length - successCount,
-      });
+      await flushBufferedEvents(events);
     } catch (error) {
       logger.error(
         '[UsageBuffer] Critical error during flush',

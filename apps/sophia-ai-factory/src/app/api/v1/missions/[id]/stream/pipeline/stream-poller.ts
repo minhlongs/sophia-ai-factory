@@ -11,10 +11,11 @@ import {
   POLL_INTERVAL_MS,
   MAX_DURATION_MS,
   HEARTBEAT_INTERVAL_MS,
-  TERMINAL_STATUSES,
-  type MissionRow,
 } from './types';
-import { safeParseResult, sseMessage, sseHeartbeat } from './formatters';
+import { sseMessage, sseHeartbeat } from './formatters';
+import { executeMissionPollStep } from './stream-poll-step';
+
+export { executeMissionPollStep } from './stream-poll-step';
 
 export interface CreateMissionStreamOptions {
   id: string;
@@ -72,82 +73,17 @@ export function createMissionStream({
             lastHeartbeatTs = now;
           }
 
-          try {
-            const { data } = (await db
-              .from('engine_missions')
-              .select('id, command, status, result, error, credits_used, updated_at, completed_at')
-              .eq('id', id)
-              .eq('user_id', userId)
-              .single()) as { data: MissionRow | null; error: unknown };
-
-            if (!data) {
-              controller.enqueue(
-                encoder.encode(
-                  sseMessage('error', { code: 'not_found', message: 'Mission not found' }, null)
-                )
-              );
-              break;
-            }
-
-            const dbCursor = data.updated_at ?? 0;
-            const isUnchanged = dbCursor > 0 && dbCursor <= eventCursor;
-            if (isUnchanged && TERMINAL_STATUSES.has(data.status)) {
-              controller.enqueue(
-                encoder.encode(sseMessage('done', { status: data.status }, dbCursor))
-              );
-              break;
-            }
-            if (isUnchanged) {
-              continue;
-            }
-
-            eventCursor = dbCursor > 0 ? dbCursor : now;
-
-            controller.enqueue(
-              encoder.encode(
-                sseMessage(
-                  'status',
-                  {
-                    id: data.id,
-                    command: data.command,
-                    status: data.status,
-                    result: safeParseResult(data.result),
-                    error: data.error,
-                    credits_used: data.credits_used,
-                    updated_at: data.updated_at,
-                    completed_at: data.completed_at,
-                  },
-                  eventCursor
-                )
-              )
-            );
-
-            if (TERMINAL_STATUSES.has(data.status)) {
-              controller.enqueue(
-                encoder.encode(sseMessage('done', { status: data.status }, eventCursor))
-              );
-              break;
-            }
-          } catch (err) {
-            Sentry.addBreadcrumb({
-              category: 'sse',
-              message: `SSE db error mission=${id}`,
-              data: { mission_id: id, error: err instanceof Error ? err.message : String(err) },
-              level: 'error',
-            });
-            controller.enqueue(
-              encoder.encode(
-                sseMessage(
-                  'error',
-                  {
-                    code: 'db_transient',
-                    message: 'A temporary error occurred. Please try again.',
-                  },
-                  null
-                )
-              )
-            );
-          }
+          const stepOutcome = await executeMissionPollStep({
+            db,
+            controller,
+            encoder,
+            id,
+            userId,
+            eventCursor,
+            now,
+          });
+          eventCursor = stepOutcome.nextCursor;
+          if (stepOutcome.shouldBreak) break;
         }
 
         if (Date.now() - startTime >= MAX_DURATION_MS) {

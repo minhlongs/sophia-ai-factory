@@ -10,44 +10,19 @@
  */
 
 import type { ProviderReliabilityMetrics } from './media-job-economics-query';
+import {
+  DEFAULT_HEALTH_POLICY,
+  type ProviderHealthStatus,
+  type ProviderHealthAssessment,
+  type HealthPolicyConfig,
+} from './provider-health-policy-types';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export type ProviderHealthStatus =
-  | 'HEALTHY'
-  | 'DEGRADED'
-  | 'UNHEALTHY'
-  | 'INSUFFICIENT_DATA';
-
-export interface ProviderHealthAssessment {
-  provider: string;
-  status: ProviderHealthStatus;
-  reasons: string[];
-  metrics: ProviderReliabilityMetrics;
-  assessedAt: number;
-}
-
-export interface HealthPolicyConfig {
-  minSampleSize: number;
-  unhealthySuccessRate: number;
-  unhealthyP95LatencyMs: number;
-  degradedSuccessRate: number;
-  degradedP95LatencyMs: number;
-  degradedFailureRate: number;
-}
-
-// ── Defaults ─────────────────────────────────────────────────────────────────
-
-export const DEFAULT_HEALTH_POLICY: HealthPolicyConfig = {
-  minSampleSize: 10,
-  unhealthySuccessRate: 70,
-  unhealthyP95LatencyMs: 30000,
-  degradedSuccessRate: 90,
-  degradedP95LatencyMs: 15000,
-  degradedFailureRate: 5,
+export {
+  DEFAULT_HEALTH_POLICY,
+  type ProviderHealthStatus,
+  type ProviderHealthAssessment,
+  type HealthPolicyConfig,
 };
-
-// ── Policy ───────────────────────────────────────────────────────────────────
 
 /**
  * Assess provider health from reliability metrics.

@@ -1,13 +1,7 @@
 /**
  * Webhook Delivery Dispatcher Engine
  *
- * Implements:
- * - HTTP POST dispatch with HMAC-SHA256 signing headers.
- * - Delivery log audit recording in D1.
- * - Automatic exponential backoff scheduling upon retryable errors.
- *
  * Layer: tree/integrations (Pure domain engine — imports only from @/seed and @/tree/)
- *
  * @module tree/integrations/dispatcher/delivery-dispatcher
  */
 
@@ -18,12 +12,12 @@ import type {
   WebhookDispatchResult,
 } from '../types';
 import { SIGNATURE_HEADER_NAME, signWebhookPayload } from './crypto-verifier';
-import {
-  MAX_DELIVERY_ATTEMPTS,
-  calculateNextBackoffDelayMs,
-  isRetryableHttpStatus,
-} from './backoff-scheduler';
 import { recordWebhookDeliveryLog } from './delivery-logger';
+import {
+  recordSubscriptionSuccess,
+  recordSubscriptionFailure,
+  resolveRetryOutcome,
+} from './delivery-state-helper';
 
 export interface DispatchWebhookOptions {
   fetcher?: typeof fetch;
@@ -34,8 +28,6 @@ export interface DispatchWebhookOptions {
 
 /**
  * Dispatches a webhook event to a subscription endpoint.
- * Signs payload with HMAC-SHA256, executes HTTP POST, records delivery log,
- * and schedules exponential backoff retry on retryable failure.
  */
 export async function dispatchWebhookEvent(
   db: D1Database,
@@ -48,7 +40,6 @@ export async function dispatchWebhookEvent(
   const attempt = options.attemptNumber ?? 1;
   const payloadJson = JSON.stringify(payload);
 
-  // 1. Sign payload with HMAC-SHA256
   const signResult = await signWebhookPayload(
     subscription.secretKey,
     payloadJson,
@@ -75,70 +66,41 @@ export async function dispatchWebhookEvent(
         'X-Sophia-Attempt': String(attempt),
       },
       body: payloadJson,
-      signal: AbortSignal.timeout(10_000), // 10s timeout
+      signal: AbortSignal.timeout(10_000),
     });
 
     durationMs = Date.now() - startTime;
     httpStatus = res.status;
-
-    try {
-      responseBody = (await res.text()).slice(0, 2048);
-    } catch {
-      responseBody = null;
-    }
+    responseBody = await res.text().then((t) => t.slice(0, 2048)).catch(() => null);
 
     if (res.ok) {
-      // HTTP 2xx Success
       deliveryStatus = 'success';
-      nextRetryAt = null;
-
-      // Update subscription stats: reset failure count, set last delivery
-      await db
-        .prepare('UPDATE webhook_subscriptions SET failure_count = 0, last_delivery_at = ? WHERE id = ?')
-        .bind(Date.now(), subscription.id)
-        .run();
+      await recordSubscriptionSuccess(db, subscription.id);
     } else {
-      // HTTP Error
-      if (isRetryableHttpStatus(res.status) && attempt < MAX_DELIVERY_ATTEMPTS) {
-        deliveryStatus = 'retrying';
-        const delayMs = calculateNextBackoffDelayMs(attempt + 1, {
-          enableJitter: options.enableJitter ?? true,
-        });
-        nextRetryAt = Date.now() + delayMs;
-      } else {
-        // Fatal non-retryable 4xx or reached max attempts
-        deliveryStatus = 'failed';
-        nextRetryAt = null;
-      }
-
-      await db
-        .prepare('UPDATE webhook_subscriptions SET failure_count = failure_count + 1 WHERE id = ?')
-        .bind(subscription.id)
-        .run();
+      const outcome = resolveRetryOutcome({
+        attempt,
+        httpStatus: res.status,
+        isNetworkError: false,
+        enableJitter: options.enableJitter,
+      });
+      deliveryStatus = outcome.deliveryStatus;
+      nextRetryAt = outcome.nextRetryAt;
+      await recordSubscriptionFailure(db, subscription.id);
     }
   } catch (err: unknown) {
     durationMs = Date.now() - startTime;
     errorMessage = err instanceof Error ? err.message : String(err);
 
-    // Network / timeout error is retryable
-    if (attempt < MAX_DELIVERY_ATTEMPTS) {
-      deliveryStatus = 'retrying';
-      const delayMs = calculateNextBackoffDelayMs(attempt + 1, {
-        enableJitter: options.enableJitter ?? true,
-      });
-      nextRetryAt = Date.now() + delayMs;
-    } else {
-      deliveryStatus = 'failed';
-      nextRetryAt = null;
-    }
-
-    await db
-      .prepare('UPDATE webhook_subscriptions SET failure_count = failure_count + 1 WHERE id = ?')
-      .bind(subscription.id)
-      .run();
+    const outcome = resolveRetryOutcome({
+      attempt,
+      isNetworkError: true,
+      enableJitter: options.enableJitter,
+    });
+    deliveryStatus = outcome.deliveryStatus;
+    nextRetryAt = outcome.nextRetryAt;
+    await recordSubscriptionFailure(db, subscription.id);
   }
 
-  // Record delivery log
   const log = await recordWebhookDeliveryLog(db, {
     subscriptionId: subscription.id,
     eventType,

@@ -16,12 +16,8 @@ import {
   type BudgetSnapshot,
   type BudgetTrackerOptions,
 } from './budget-types';
-import {
-  round4,
-  newBudgetEntryId,
-  nowIso,
-  persistBudgetEntryToD1,
-} from './budget-tracker-persistence';
+import { round4, newBudgetEntryId, nowIso, persistBudgetEntryToD1 } from './budget-tracker-persistence';
+import { enforceReservePolicy } from './budget-reserve-policy';
 
 export { EntryStatus, type BudgetEntry, type BudgetSnapshot, type BudgetTrackerOptions } from './budget-types';
 export { BudgetExceededError, ApprovalRequiredError, KeyError } from './budget-errors';
@@ -80,27 +76,13 @@ export class BudgetTracker {
 
   reserve(entryId: string): void {
     const entry = this.find(entryId);
-    const est = entry.estimatedUsd;
-
-    if (est > this.singleActionApprovalUsd && this.mode !== BudgetMode.OBSERVE) {
-      throw new ApprovalRequiredError(
-        `Action costs $${est.toFixed(2)}, exceeds single-action threshold $${this.singleActionApprovalUsd.toFixed(2)}`,
-      );
-    }
-    if (this.requireApprovalForNewPaidTool && est > 0 && !this.approvedTools.has(entry.tool) && this.mode !== BudgetMode.OBSERVE) {
-      throw new ApprovalRequiredError(`First paid use of tool '${entry.tool}' requires approval`);
-    }
-    if (est > this.usableBudgetUsd) {
-      if (this.mode === BudgetMode.CAP) {
-        throw new BudgetExceededError(`Reservation $${est.toFixed(2)} exceeds usable budget $${this.usableBudgetUsd.toFixed(2)}`);
-      }
-      if (this.mode === BudgetMode.WARN) {
-        logger.warn('[BudgetTracker] Budget overrun', { entryId, tool: entry.tool, usableBudgetUsd: this.usableBudgetUsd });
-      }
-    }
-
+    enforceReservePolicy({
+      entry, singleActionApprovalUsd: this.singleActionApprovalUsd,
+      requireApprovalForNewPaidTool: this.requireApprovalForNewPaidTool,
+      approvedTools: this.approvedTools, usableBudgetUsd: this.usableBudgetUsd, mode: this.mode,
+    });
     entry.status = EntryStatus.RESERVED;
-    entry.reservedUsd = est;
+    entry.reservedUsd = entry.estimatedUsd;
     entry.timestamp = nowIso();
     persistBudgetEntryToD1(this.tenantId, entry);
     logger.info('[BudgetTracker] Reserved', { entryId, tool: entry.tool, reservedUsd: entry.reservedUsd });

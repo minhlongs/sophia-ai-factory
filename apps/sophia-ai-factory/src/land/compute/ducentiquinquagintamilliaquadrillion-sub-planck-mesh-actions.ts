@@ -6,7 +6,11 @@
  * @description Land layer Server Actions for Ducenti-Quinquaginta-Millia-Quadrillion Sub-Planck Singularity Mesh dispatching, Net-Zero power verification, and Eighty-Seven-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
+import {
+  recordQuadrillionSubPlanckDispatchD1,
+  recordQuadrillionSubPlanckPowerD1,
+  recordQuadrillionSubPlanckSlaAuditD1,
+} from '@/land/compute/quadrillion-sub-planck-d1-recorder';
 import {
   planDucentiquinquagintamilliaquadrillionSubPlanckBatchDispatch,
   type DucentiquinquagintamilliaquadrillionSubPlanckDispatchPlan,
@@ -39,9 +43,6 @@ export interface EightySevenNinesSlaActionResult {
   error?: string;
 }
 
-/**
- * Server Action to plan and record 10,000,000,000,000,000 workload dispatch to Ducenti-Quinquaginta-Millia-Quadrillion Sub-Planck Singularity Mesh.
- */
 export async function dispatchDucentiquinquagintamilliaquadrillionSubPlanckBatchAction(
   meshes: DucentiquinquagintamilliaquadrillionSubPlanckMesh[],
   workloads: number = 10_000_000_000_000_000,
@@ -49,79 +50,41 @@ export async function dispatchDucentiquinquagintamilliaquadrillionSubPlanckBatch
 ): Promise<DucentiquinquagintamilliaquadrillionSubPlanckDispatchActionResult> {
   try {
     const data = planDucentiquinquagintamilliaquadrillionSubPlanckBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO ducentiquinquagintamilliaquadrillion_sub_planck_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `DUCENTI-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `SESSION-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.000000000002,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS'
-        )
-        .run();
-    }
-
+    await recordQuadrillionSubPlanckDispatchD1({
+      table: 'ducentiquinquagintamilliaquadrillion_sub_planck_dispatches',
+      refPrefix: 'DUCENTI-DISPATCH',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.000000000002,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { success: false, error };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
-/**
- * Server Action to validate Ducenti-Quinquaginta-Millia-Quadrillion Net-Zero harvest power and extreme Bose-Einstein Condensate cooling (COP >= 1000.0).
- */
 export async function validateDucentiquinquagintamilliaquadrillionPowerAction(
   input: DucentiquinquagintamilliaquadrillionSubPlanckPowerInput
 ): Promise<DucentiquinquagintamilliaquadrillionSubPlanckPowerActionResult> {
   try {
     const data = validateDucentiquinquagintamilliaquadrillionSubPlanckPower(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO ducentiquinquagintamilliaquadrillion_sub_planck_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified,
-             allocated_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `DUCENTI-POWER-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.powerSourceType,
-          input.allocatedMegawatts,
-          input.carbonIntensityGPerKwh,
-          input.boseEinsteinCop,
-          input.isNetZeroCertified ? 1 : 0
-        )
-        .run();
-    }
-
+    await recordQuadrillionSubPlanckPowerD1({
+      table: 'ducentiquinquagintamilliaquadrillion_sub_planck_power_allocations',
+      refPrefix: 'DUCENTI-POWER',
+      powerSourceType: input.powerSourceType,
+      allocatedMegawatts: input.allocatedMegawatts,
+      carbonIntensityGPerKwh: input.carbonIntensityGPerKwh,
+      boseEinsteinCop: input.boseEinsteinCop,
+      isNetZeroCertified: input.isNetZeroCertified,
+    });
     return { success: data.isCompliant, data };
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { success: false, error };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
-/**
- * Server Action to audit and certify Eighty-Seven-Nines SLA continuous availability.
- */
 export async function auditEightySevenNinesSlaAction(
   auditRef: string,
   evaluationPeriodMonth: string,
@@ -129,34 +92,21 @@ export async function auditEightySevenNinesSlaAction(
 ): Promise<EightySevenNinesSlaActionResult> {
   try {
     const data = evaluateEightySevenNinesSla(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO eighty_seven_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_eighty_seven_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          auditRef,
-          evaluationPeriodMonth,
-          input.totalWindowNanoseconds ?? 2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'EIGHTY_SEVEN_NINES_CERTIFIED' ? 1 : 0,
-          68719476736,
-          data.auditSignature
-        )
-        .run();
-    }
-
-    return { success: data.slaVerdict === 'EIGHTY_SEVEN_NINES_CERTIFIED', data };
+    const isMet = data.slaVerdict === 'EIGHTY_SEVEN_NINES_CERTIFIED';
+    await recordQuadrillionSubPlanckSlaAuditD1({
+      table: 'eighty_seven_nines_sla_audits',
+      metColumn: 'is_eighty_seven_nines_met',
+      auditRef,
+      evaluationPeriodMonth,
+      totalEvalSeconds: input.totalWindowNanoseconds ?? 2592000,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet: isMet,
+      bftConsensusNodes: 68719476736,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isMet, data };
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { success: false, error };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

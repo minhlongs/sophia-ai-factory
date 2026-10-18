@@ -1,60 +1,20 @@
 import type { D1Database } from '@/seed/db/client';
 import type {
   EnterpriseGpuReservation,
-  EnterpriseGpuReservationRow,
   SlaDegradationIncident,
   CompensationRail,
   SliMeasurement,
 } from '@/seed/types/gpu-mesh';
-import { mapRowToReservation, isCompensationRail } from '@/seed/types/gpu-mesh';
+import { isCompensationRail } from '@/seed/types/gpu-mesh';
 import { GPU_MESH_SLA_CONFIG } from '@/seed/config/gpu-mesh';
 import { logger } from '@/seed/utils/logger-utility';
 import type { EvaluateSlaOptions } from './types';
 import { calculateSlaCompensation } from './penalty-formula';
 import { measureReservationSli } from './window-aggregator';
-
-function generateIncidentId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `sdi_${crypto.randomUUID().replace(/-/g, '')}`;
-  }
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substring(2, 10);
-  return `sdi_${timestamp}${randomPart}`;
-}
-
-async function fetchReservationsForEvaluation(
-  db: D1Database,
-  reservationId: string | undefined,
-  now: number,
-): Promise<EnterpriseGpuReservation[]> {
-  try {
-    if (reservationId) {
-      const row = await db
-        .prepare('SELECT * FROM enterprise_gpu_reservations WHERE id = ?1 LIMIT 1')
-        .bind(reservationId)
-        .first<EnterpriseGpuReservationRow>();
-
-      return row ? [mapRowToReservation(row)] : [];
-    }
-
-    const { results } = await db
-      .prepare(
-        `SELECT * FROM enterprise_gpu_reservations
-         WHERE status IN ('active', 'degraded')
-           AND active_from <= ?1
-           AND active_until > ?1`,
-      )
-      .bind(now)
-      .all<EnterpriseGpuReservationRow>();
-
-    return (results ?? []).map(mapRowToReservation);
-  } catch (error) {
-    logger.error('[sla-calculator] Error fetching active reservations', {
-      error: String(error),
-    });
-    return [];
-  }
-}
+import {
+  generateIncidentId,
+  fetchReservationsForEvaluation,
+} from './reservation-fetcher';
 
 function createBreachIncidents(
   reservation: EnterpriseGpuReservation,

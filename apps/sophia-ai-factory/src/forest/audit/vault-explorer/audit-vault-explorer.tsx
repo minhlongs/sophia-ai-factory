@@ -7,121 +7,42 @@
 
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { HeaderBanner } from './header-banner';
 import { FilterToolbar } from './filter-toolbar';
 import { EventsTable } from './events-table';
 import { DetailModal } from './detail-modal';
-import type {
-  EnterpriseAuditEvent,
-  ChainVerificationResult,
-  AuditVaultExplorerProps,
-} from './types';
-import {
-  buildAuditFilterOptions,
-  formatAuditEventTimestamp,
-} from './vault-explorer-helpers';
+import type { AuditVaultExplorerProps } from './types';
+import { formatAuditEventTimestamp } from './vault-explorer-helpers';
+import { useAuditVaultState } from './use-audit-vault-state';
 
-export function AuditVaultExplorer({
-  orgId,
-  initialEvents,
-  initialTotal,
-  initialVerification,
-  actions,
-}: AuditVaultExplorerProps) {
+export function AuditVaultExplorer(props: AuditVaultExplorerProps) {
   const t = useTranslations('auditVault');
-
-  // Core state
-  const [events, setEvents] = useState<EnterpriseAuditEvent[]>(initialEvents);
-  const [total, setTotal] = useState<number>(initialTotal);
-  const [verification, setVerification] =
-    useState<ChainVerificationResult | null>(initialVerification ?? null);
-  const [isVerifying, startVerifyTransition] = useTransition();
-  const [isFiltering, startFilterTransition] = useTransition();
-
-  // Filters state
-  const [selectedAction, setSelectedAction] = useState<string>('all');
-  const [actorQuery, setActorQuery] = useState<string>('');
-  const [fromDate, setFromDate] = useState<string>('');
-  const [toDate, setToDate] = useState<string>('');
-  const [page, setPage] = useState<number>(0);
-  const pageSize = 20;
-
-  // Selected event & copy state
-  const [selectedEvent, setSelectedEvent] =
-    useState<EnterpriseAuditEvent | null>(null);
-  const [copiedHash, setCopiedHash] = useState<string | null>(null);
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedHash(text);
-    setTimeout(() => setCopiedHash(null), 2000);
-  };
-
-  const handleVerifyChain = () => {
-    if (!actions?.verifyChain) return;
-
-    startVerifyTransition(async () => {
-      try {
-        const result = await actions.verifyChain!(orgId);
-        if (result.ok) {
-          setVerification(result.value);
-        }
-      } catch {
-        // Handled via UI state
-      }
-    });
-  };
-
-  const applyFilters = (newPage = 0) => {
-    if (!actions?.queryEvents) return;
-
-    startFilterTransition(async () => {
-      try {
-        const filters = buildAuditFilterOptions({
-          orgId,
-          selectedAction,
-          actorQuery,
-          fromDate,
-          toDate,
-          pageSize,
-          newPage,
-        });
-
-        const result = await actions.queryEvents!(filters);
-        if (result.ok) {
-          setEvents(result.value.events);
-          setTotal(result.value.total);
-          setPage(newPage);
-        }
-      } catch {
-        // Keep current state
-      }
-    });
-  };
-
-  const handleResetFilters = () => {
-    setSelectedAction('all');
-    setActorQuery('');
-    setFromDate('');
-    setToDate('');
-    setPage(0);
-
-    if (actions?.queryEvents) {
-      startFilterTransition(async () => {
-        const result = await actions.queryEvents!({
-          orgId,
-          limit: pageSize,
-          offset: 0,
-        });
-        if (result.ok) {
-          setEvents(result.value.events);
-          setTotal(result.value.total);
-        }
-      });
-    }
-  };
+  const {
+    events,
+    total,
+    verification,
+    isVerifying,
+    isFiltering,
+    selectedAction,
+    setSelectedAction,
+    actorQuery,
+    setActorQuery,
+    fromDate,
+    setFromDate,
+    toDate,
+    setToDate,
+    page,
+    pageSize,
+    selectedEvent,
+    setSelectedEvent,
+    copiedHash,
+    copyToClipboard,
+    handleVerifyChain,
+    applyFilters,
+    handleResetFilters,
+  } = useAuditVaultState(props);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-8">

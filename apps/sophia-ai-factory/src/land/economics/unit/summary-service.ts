@@ -8,20 +8,10 @@
 import { getD1 } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
 import type { D1Database } from '@cloudflare/workers-types';
-import type {
-  LtvCacMetrics,
-  UnitEconomicsSummary,
-} from '@/seed/types/unit-economics-types';
+import type { LtvCacMetrics, UnitEconomicsSummary } from '@/seed/types/unit-economics-types';
 import { BENCHMARK_UNIT_ECONOMICS } from './benchmarks';
-import {
-  calculateGrossMarginPct,
-  calculateCogsPerVideo,
-  calculateLtvCac,
-} from './calculators';
-import {
-  buildProviderBreakdown,
-  buildProviderCosts,
-} from './provider-cost-aggregator';
+import { calculateGrossMarginPct, calculateCogsPerVideo, calculateLtvCac } from './calculators';
+import { buildProviderBreakdown, buildProviderCosts } from './provider-cost-aggregator';
 import { buildTierEconomics } from './tier-economics-builder';
 import {
   queryMediaJobs,
@@ -32,7 +22,6 @@ import {
 } from './d1-queries';
 
 const logger = createLogger('land/economics/unit/summary-service');
-
 const TIER_PRICES = { BASIC: 199, PREMIUM: 399, ENTERPRISE: 799, MASTER: 4999 };
 
 /**
@@ -49,28 +38,21 @@ export async function getUnitEconomicsSummary(
     return { ...BENCHMARK_UNIT_ECONOMICS, timeframeDays };
   }
 
-  const windowStartMs = Date.now() - timeframeDays * 24 * 60 * 60 * 1000;
-  const windowStartSec = Math.floor(windowStartMs / 1000);
+  const windowStartSec = Math.floor((Date.now() - timeframeDays * 24 * 60 * 60 * 1000) / 1000);
 
   try {
-    const [
-      mediaJobsResult,
-      licensesResult,
-      settledRevenueUsd,
-      totalCommissionsUsd,
-      activeEdgeNodes,
-    ] = await Promise.all([
-      queryMediaJobs(db, windowStartSec),
-      queryLicenses(db),
-      querySettledRevenue(db),
-      queryAffiliateCommissions(db),
-      queryActiveEdgeNodes(db),
-    ]);
+    const [mediaJobsResult, licensesResult, settledRevenueUsd, totalCommissionsUsd, activeEdgeNodes] =
+      await Promise.all([
+        queryMediaJobs(db, windowStartSec),
+        queryLicenses(db),
+        querySettledRevenue(db),
+        queryAffiliateCommissions(db),
+        queryActiveEdgeNodes(db),
+      ]);
 
     const { totalVideos, totalMediaJobsCogsCents, providerCounts } = mediaJobsResult;
     const { tierCounts, activeLicenseCount } = licensesResult;
 
-    // If D1 is completely empty (fresh environment), fall back to benchmark
     if (totalVideos === 0 && activeLicenseCount === 0 && settledRevenueUsd === 0) {
       return { ...BENCHMARK_UNIT_ECONOMICS, timeframeDays };
     }
@@ -89,7 +71,7 @@ export async function getUnitEconomicsSummary(
     const activePayingCustomers = Math.max(1, activeLicenseCount);
     const arpuUsd = Number((totalRevenueUsd / activePayingCustomers).toFixed(2));
 
-    const churnPct = 5.0; // 5% monthly churn baseline
+    const churnPct = 5.0;
     const totalAcqSpend = Math.max(totalCommissionsUsd, totalRevenueUsd * 0.15);
     const { ltvUsd, cacUsd, ltvCacRatio, paybackMonths } = calculateLtvCac({
       arpuUsd,
@@ -101,10 +83,7 @@ export async function getUnitEconomicsSummary(
 
     const breakdownByProvider = buildProviderBreakdown(providerCounts, totalMediaJobsCogsCents);
     const providerCosts = buildProviderCosts(providerCounts, totalMediaJobsCogsCents);
-
-    // Mekong edge savings: number of edge jobs * cloud baseline cost ($0.112)
     const edgeNodeSavingsUsd = Number((providerCounts.mekong.success * 0.112).toFixed(2));
-
     const tierEconomics = buildTierEconomics(tierCounts, cogsPerVideoUsd);
 
     const ltvCacMetrics: LtvCacMetrics = {

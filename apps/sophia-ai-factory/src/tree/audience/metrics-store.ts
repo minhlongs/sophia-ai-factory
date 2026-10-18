@@ -15,45 +15,15 @@ import { createServerClient } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type { AudienceMetrics, AudiencePlatform, Demographics } from './types';
+import type { AudienceMetrics } from './types';
+import {
+  newMetricsId,
+  parseMetricsRow,
+  type AudienceMetricsRow,
+  type MetricsStoreError,
+} from './metrics-store-row';
 
-export interface MetricsStoreError {
-  code: 'INVALID_INPUT' | 'INSERT_FAILED' | 'QUERY_FAILED';
-  message: string;
-}
-
-/** D1 row shape for audience_metrics. */
-export interface AudienceMetricsRow {
-  id: string;
-  workspace_id: string;
-  platform: string;
-  followers: number;
-  engagement_rate: number;
-  demographics: string; // JSON
-  window_start_ms: number;
-  window_end_ms: number;
-  created_at: number;
-}
-
-function newMetricsId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return `am_${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
-}
-
-function parseMetricsRow(row: AudienceMetricsRow): AudienceMetrics {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    platform: row.platform as AudiencePlatform,
-    followers: row.followers,
-    engagementRate: row.engagement_rate,
-    demographics: JSON.parse(row.demographics) as Demographics,
-    windowStartMs: row.window_start_ms,
-    windowEndMs: row.window_end_ms,
-    createdAt: row.created_at,
-  };
-}
+export type { AudienceMetricsRow, MetricsStoreError } from './metrics-store-row';
 
 /**
  * Upsert one metrics snapshot for (workspace, platform, windowStartMs).

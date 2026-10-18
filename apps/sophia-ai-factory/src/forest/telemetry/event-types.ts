@@ -3,7 +3,27 @@
  * RED-TEAM #11: financial events marked _serverOnly: true — client capture refused
  */
 
-import { z } from 'zod'
+import type { z } from 'zod'
+import {
+  ByokConfiguredSchema,
+  CampaignCreatedSchema,
+  CampaignPublishedSchema,
+  ChurnSignalSchema,
+  CtaClickSchema,
+  ExperimentAssignedSchema,
+  FirstVideoCompletedSchema,
+  FirstVideoStartedSchema,
+  FreeQuotaExhaustionSchema,
+  PageviewSchema,
+  PaymentSucceededSchema,
+  ReferralSignupSchema,
+  SignupSchema,
+  SopInstalledSchema,
+  TierUpgradedSchema,
+  VideoRenderedSchema,
+  WizardCompletedSchema,
+  WizardStepSchema,
+} from './event-property-schemas'
 
 // ---- Event name enum ----
 export const Events = {
@@ -40,102 +60,6 @@ export const SERVER_ONLY_EVENTS = new Set<EventName>([
   Events.CHURN_SIGNAL,
   Events.FREE_QUOTA_EXHAUSTION,
 ])
-
-// ---- Per-event property schemas (whitelist — blocks PII injection) ----
-
-const SignupSchema = z.object({
-  plan: z.string().optional(),
-  locale: z.string().optional(),
-  referrer: z.string().optional(),
-  niche: z.string().optional(),
-})
-
-const PageviewSchema = z.object({
-  path: z.string(),
-  locale: z.string().optional(),
-})
-
-const CtaClickSchema = z.object({
-  element: z.string(),
-  page: z.string().optional(),
-})
-
-const WizardStepSchema = z.object({
-  step: z.number().int().min(1),
-  step_name: z.string(),
-})
-
-const WizardCompletedSchema = z.object({
-  duration_ms: z.number().optional(),
-})
-
-const ByokConfiguredSchema = z.object({
-  service: z.enum(['openrouter', 'elevenlabs', 'did', 'heygen']),
-})
-
-const CampaignCreatedSchema = z.object({
-  campaign_type: z.string().optional(),
-})
-
-const CampaignPublishedSchema = z.object({
-  campaign_type: z.string().optional(),
-  channels: z.string().optional(),
-})
-
-const FirstVideoStartedSchema = z.object({
-  campaign_id: z.string().optional(),
-  tier: z.string().optional(),
-})
-
-const FirstVideoCompletedSchema = z.object({
-  campaign_id: z.string().optional(),
-  duration_s: z.number().optional(),
-  tier: z.string().optional(),
-})
-
-const ExperimentAssignedSchema = z.object({
-  experiment: z.string(),
-  variant: z.string(),
-})
-
-const FreeQuotaExhaustionSchema = z.object({
-  tier: z.string(),
-  used: z.number(),
-  limit: z.number(),
-})
-
-const VideoRenderedSchema = z.object({
-  duration_s: z.number().optional(),
-  resolution: z.string().optional(),
-})
-
-const TierUpgradedSchema = z.object({
-  tier: z.string(),
-  amount: z.number(),
-  currency: z.string(),
-})
-
-const PaymentSucceededSchema = z.object({
-  amount: z.number(),
-  currency: z.string(),
-})
-
-const ChurnSignalSchema = z.object({
-  reason: z.string().optional(),
-  tier: z.string().optional(),
-})
-
-const SopInstalledSchema = z.object({
-  sop_id: z.string(),
-  sop_name: z.string().optional(),
-  sop_author: z.string().optional(),
-})
-
-const ReferralSignupSchema = z.object({
-  referrer: z.string(),
-  referred_user_id: z.string().optional(),
-  source: z.string().optional(),
-})
 
 // ---- Schema registry ----
 export const EVENT_SCHEMAS: Record<EventName, z.ZodTypeAny> = {

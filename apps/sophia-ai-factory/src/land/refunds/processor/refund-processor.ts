@@ -10,6 +10,9 @@ import type { Tier } from '@/seed/types';
 import { getMcuMonthlyLimit } from '@/seed/config/tiers/unified-limits';
 import { getRefundById, processRefundStatus, createRefundLedgerEntry } from '../refund-repo';
 import {
+  DELETE_REFUND_LOCK_SQL,
+  RELEASE_REFUND_LOCK_SQL,
+  acquireRefundEventLock,
   type RefundProcessInput,
   type RefundProcessResult,
   type RefundError,
@@ -30,54 +33,29 @@ export async function processRefund(
   const now = new Date().toISOString();
 
   // 1. Atomic lock: Single INSERT determines lock ownership atomically
-  const lockResult = await db
-    .prepare(
-      `INSERT INTO refund_events (event_id, refund_request_id, refund_type, payload, processed, created_at)
-       VALUES (?1, ?2, 'manual', ?3, 0, ?4)
-       ON CONFLICT(event_id) DO NOTHING`,
-    )
-    .bind(eventId, input.refundRequestId, JSON.stringify(input), now)
-    .run();
-
-  if (!lockResult.meta?.changes) {
-    const existing = await db
-      .prepare('SELECT processed FROM refund_events WHERE event_id = ?1')
-      .bind(eventId)
-      .first<{ processed: number }>();
-
-    if (!existing) {
-      return failure({ code: 'INTERNAL_ERROR', message: 'Database query failure on lock check' });
-    }
-
-    if (existing.processed === 1) {
-      return failure({ code: 'DUPLICATE_REFUND', message: 'Refund already processed' });
-    }
-
-    return failure({ code: 'INTERNAL_ERROR', message: 'Refund is currently being processed by another request' });
+  const lockOutcome = await acquireRefundEventLock(db, eventId, input, now);
+  if (!lockOutcome.ok) {
+    return failure(lockOutcome.error);
   }
 
   try {
     // 2. Look up refund request
     const refund = await getRefundById(input.refundRequestId);
     if (!refund) {
-      await db.prepare('DELETE FROM refund_events WHERE event_id = ?1').bind(eventId).run();
+      await db.prepare(DELETE_REFUND_LOCK_SQL).bind(eventId).run();
       return failure({ code: 'NOT_FOUND', message: `Refund request ${input.refundRequestId} not found` });
     }
 
     // 3. Resolve current tier and MCU baseline
     const tierBefore = await resolveCurrentTier(refund.user_id, db);
     const tierAfter: Tier = 'BASIC';
-    const mcuBefore = getMcuMonthlyLimit(tierBefore);
-    const mcuAfter = getMcuMonthlyLimit(tierAfter);
-    const mcuClawedBack = Math.max(0, mcuBefore - mcuAfter);
+    const mcuClawedBack = Math.max(0, getMcuMonthlyLimit(tierBefore) - getMcuMonthlyLimit(tierAfter));
 
-    // 4. Call NOWPayments refund API (crypto)
+    // 4. Call NOWPayments refund API (crypto) & roll back tier to BASIC
     await callNowPaymentsRefund(refund.payment_id, refund.customer_wallet_address);
-
-    // 5. Roll back subscription tier to BASIC
     await rollbackTier(refund.user_id, tierAfter, db);
 
-    // 6. Write refund_ledger entry
+    // 5. Write refund_ledger entry & mark refund_request as refunded
     const ledgerEntryId = await createRefundLedgerEntry({
       refundRequestId: refund.id,
       userId: refund.user_id,
@@ -90,7 +68,6 @@ export async function processRefund(
       txHash: input.txHash,
     });
 
-    // 7. Mark refund_request as refunded
     await processRefundStatus({
       id: refund.id,
       reviewedByUserId: input.reviewedByUserId,
@@ -98,11 +75,8 @@ export async function processRefund(
       refundTxHash: input.txHash,
     });
 
-    // 8. Release lock
-    await db
-      .prepare('UPDATE refund_events SET processed = 1, processed_at = ?1 WHERE event_id = ?2')
-      .bind(now, eventId)
-      .run();
+    // 6. Release lock
+    await db.prepare(RELEASE_REFUND_LOCK_SQL).bind(now, eventId).run();
 
     logger.info('[RefundProcessor] Refund processed', {
       refundRequestId: refund.id,
@@ -122,7 +96,7 @@ export async function processRefund(
       transactionHash: input.txHash,
     });
   } catch (err) {
-    await db.prepare('DELETE FROM refund_events WHERE event_id = ?1').bind(eventId).run().catch(() => {});
+    await db.prepare(DELETE_REFUND_LOCK_SQL).bind(eventId).run().catch(() => {});
 
     if (err instanceof RefundProcessError) {
       logger.warn('[RefundProcessor] Refund processing failed', {

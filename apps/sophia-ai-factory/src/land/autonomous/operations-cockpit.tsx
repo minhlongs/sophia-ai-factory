@@ -11,7 +11,6 @@
  */
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
 import type {
   AutonomousLoopStateRow,
   AutonomousScheduleTaskRow,
@@ -19,8 +18,7 @@ import type {
   AutonomousCycleRunRow,
 } from '@/seed/types/autonomous-engine';
 import { useAutonomousCockpit } from './use-autonomous-cockpit';
-import { CockpitStateBadge } from './cockpit-state-badge';
-import { CockpitControls } from './cockpit-controls';
+import { CockpitHeaderBanner } from './cockpit-header-banner';
 import { CockpitMetrics } from './cockpit-metrics';
 import { CockpitTasksTable } from './cockpit-tasks-table';
 import { CockpitRecentRuns } from './cockpit-recent-runs';
@@ -41,7 +39,6 @@ export function OperationsCockpit({
   initialDlqTasks,
   tenantId = 'default',
 }: OperationsCockpitProps) {
-  const t = useTranslations('autonomous');
   const {
     state,
     tasks,
@@ -66,68 +63,22 @@ export function OperationsCockpit({
     tenantId,
   });
 
-  const getStateLabel = (st: string) => {
-    switch (st) {
-      case 'RUNNING':
-        return t('status.running');
-      case 'PAUSED':
-        return t('status.paused');
-      case 'RECOVERING':
-        return t('status.recovering');
-      case 'CIRCUIT_BROKEN':
-        return t('status.circuitBroken');
-      case 'IDLE':
-      default:
-        return t('status.idle');
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* 1. Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-card border border-border rounded-xl shadow-sm">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('title')}</h1>
-            <CockpitStateBadge
-              state={state.state}
-              label={getStateLabel(state.state)}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-        </div>
-
-        <CockpitControls
-          state={state.state}
-          isPending={isPending}
-          onStart={handleStart}
-          onPause={handlePause}
-          onResume={handleResume}
-          onForceCycle={handleForceCycle}
-          onResetCircuit={handleResetCircuit}
-          onEmergencyHalt={handleEmergencyHalt}
-          onRefresh={refreshData}
-        />
-      </div>
-
-      {/* Status Alert Banner */}
-      {statusMessage && (
-        <div
-          className={`p-4 rounded-lg flex items-center justify-between text-sm ${
-            statusMessage.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-              : 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-          }`}
-        >
-          <span>{statusMessage.text}</span>
-          <button
-            onClick={() => setStatusMessage(null)}
-            className="text-xs font-semibold uppercase hover:underline"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {/* 1. Header & Status Alert Banner */}
+      <CockpitHeaderBanner
+        state={state.state}
+        isPending={isPending}
+        statusMessage={statusMessage}
+        onDismissStatus={() => setStatusMessage(null)}
+        onStart={handleStart}
+        onPause={handlePause}
+        onResume={handleResume}
+        onForceCycle={handleForceCycle}
+        onResetCircuit={handleResetCircuit}
+        onEmergencyHalt={handleEmergencyHalt}
+        onRefresh={refreshData}
+      />
 
       {/* 2. Key Telemetry Metric Cards */}
       <CockpitMetrics state={state} tasks={tasks} recentRuns={recentRuns} />

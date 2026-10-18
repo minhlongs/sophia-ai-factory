@@ -10,31 +10,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/seed/db/client';
-import { transitionDunningState } from '@/land/billing/dunning/dunning-state-machine';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   startCronCheckIn,
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
-import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { getD1 } from '@/seed/db/client';
+import { runDunningAdvanceBatch } from './dunning-advance-processor';
 
 const CRON_NAME = 'dunning-advance';
 /** Daily — skip if ran within last 12 hours */
 const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
-
-interface DunningSettingsRow {
-  id: string;
-  user_id: string;
-  license_nonce: string;
-  dunning_state: string;
-  dunning_state_changed_at: string;
-  grace_period_days: number;
-}
 
 export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request);
@@ -48,100 +37,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ status: 'ok', idempotent: true, skipped: 'recent_run' });
   }
 
-  let advanced = 0;
-  let errors = 0;
-
   try {
     const db = createServerClient();
-    const now = new Date();
-
-    const { data: pastDueRows } = await db
-      .from('dunning_settings')
-      .select('id, user_id, license_nonce, dunning_state, dunning_state_changed_at, grace_period_days')
-      .eq('dunning_state', 'past_due') as { data: DunningSettingsRow[] | null };
-
-    // Process past_due rows in parallel
-    const pastDuePromises = (pastDueRows ?? []).map(async (row) => {
-      try {
-        const stateChangedAt = new Date(row.dunning_state_changed_at);
-        const graceEndsAt = new Date(
-          stateChangedAt.getTime() + row.grace_period_days * 24 * 60 * 60 * 1000
-        );
-
-        if (graceEndsAt > now) return;
-
-        logger.info('[DunningAdvance] Advancing past_due → suspended', {
-          licenseNonce: row.license_nonce.slice(0, 8),
-          graceExpiredAt: graceEndsAt.toISOString(),
-        });
-
-        await transitionDunningState(row.license_nonce, row.user_id, 'suspended');
-
-        await db.from('billing_events').insert({
-          user_id: row.user_id,
-          license_nonce: row.license_nonce,
-          event_type: 'suspension_started',
-          event_category: 'dunning',
-          event_data: { reason: 'grace_period_expired', automated: true },
-        } as Record<string, unknown>);
-
-        advanced++;
-      } catch (innerErr) {
-        errors++;
-        logger.error('[DunningAdvance] Error advancing past_due row', toError(innerErr), {
-          license_nonce: row.license_nonce.slice(0, 8),
-        });
-      }
-    });
-    await Promise.all(pastDuePromises);
-
-    const { data: delinquentRows } = await db
-      .from('dunning_settings')
-      .select('id, user_id, license_nonce, dunning_state, dunning_state_changed_at, grace_period_days')
-      .eq('dunning_state', 'delinquent') as { data: DunningSettingsRow[] | null };
-
-    // Process delinquent rows in parallel
-    const delinquentPromises = (delinquentRows ?? []).map(async (row) => {
-      try {
-        const { data: pendingRetry } = await db
-          .from('dunning_attempts')
-          .select('next_retry_at')
-          .eq('license_nonce', row.license_nonce)
-          .eq('success', false)
-          .gt('next_retry_at', now.toISOString())
-          .limit(1);
-
-        if (pendingRetry?.length) return;
-
-        const stateChangedAt = new Date(row.dunning_state_changed_at);
-        const delinquentFor = (now.getTime() - stateChangedAt.getTime()) / (1000 * 60 * 60 * 24);
-
-        if (delinquentFor < row.grace_period_days) return;
-
-        logger.info('[DunningAdvance] Advancing delinquent → suspended', {
-          licenseNonce: row.license_nonce.slice(0, 8),
-          delinquentDays: Math.floor(delinquentFor),
-        });
-
-        await transitionDunningState(row.license_nonce, row.user_id, 'suspended');
-
-        await db.from('billing_events').insert({
-          user_id: row.user_id,
-          license_nonce: row.license_nonce,
-          event_type: 'suspension_started',
-          event_category: 'dunning',
-          event_data: { reason: 'delinquent_max_retries_exceeded', automated: true },
-        } as Record<string, unknown>);
-
-        advanced++;
-      } catch (innerErr) {
-        errors++;
-        logger.error('[DunningAdvance] Error advancing delinquent row', toError(innerErr), {
-          license_nonce: row.license_nonce.slice(0, 8),
-        });
-      }
-    });
-    await Promise.all(delinquentPromises);
+    const { advanced, errors } = await runDunningAdvanceBatch(db, new Date());
 
     logger.info('[DunningAdvance] Cron complete', { advanced, errors });
     if (d1) await recordCronRun(d1, CRON_NAME, 'success');

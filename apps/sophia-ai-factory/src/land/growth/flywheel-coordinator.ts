@@ -10,9 +10,10 @@ import { logger } from '@/seed/utils/logger-utility';
 import { acquireCasLock, releaseCasLock } from '@/seed/db/atomic-cas-lock';
 import type {
   ReseedJobStatus,
-  FlywheelSummaryStats,
   VideoViralityClass,
 } from '@/seed/types/growth-triad-v12';
+
+export { getFlywheelSummaryStats } from './flywheel-summary-stats';
 
 export interface CreateReseedJobInput {
   id: string;
@@ -101,61 +102,5 @@ export async function updateReseedJobStatus(
   } catch (err) {
     logger.error('Failed to update reseed job status', { jobId, error: err });
     return false;
-  }
-}
-
-export async function getFlywheelSummaryStats(userId: string): Promise<FlywheelSummaryStats> {
-  const db = await getD1();
-  if (!db) {
-    logger.warn('D1 database unavailable for getFlywheelSummaryStats');
-    return {
-      totalReseedJobs: 0,
-      alphaViralDetected: 0,
-      reseededCount: 0,
-      totalAttributedRevenueUsd: 0,
-      totalCommissionUsd: 0,
-    };
-  }
-
-  try {
-    const jobStats = await db
-      .prepare(
-        `SELECT
-          COUNT(*) as totalJobs,
-          SUM(CASE WHEN classification = 'ALPHA_VIRAL' THEN 1 ELSE 0 END) as alphaCount,
-          SUM(CASE WHEN status = 'RESEEDED' THEN 1 ELSE 0 END) as reseededCount
-         FROM flywheel_reseed_jobs
-         WHERE user_id = ?`,
-      )
-      .bind(userId)
-      .first<{ totalJobs: number; alphaCount: number; reseededCount: number }>();
-
-    const attrStats = await db
-      .prepare(
-        `SELECT
-          COALESCE(SUM(gross_amount_usd), 0) as totalGross,
-          COALESCE(SUM(commission_amount_usd), 0) as totalCommission
-         FROM conversion_attributions
-         WHERE user_id = ?`,
-      )
-      .bind(userId)
-      .first<{ totalGross: number; totalCommission: number }>();
-
-    return {
-      totalReseedJobs: jobStats?.totalJobs ?? 0,
-      alphaViralDetected: jobStats?.alphaCount ?? 0,
-      reseededCount: jobStats?.reseededCount ?? 0,
-      totalAttributedRevenueUsd: attrStats?.totalGross ?? 0,
-      totalCommissionUsd: attrStats?.totalCommission ?? 0,
-    };
-  } catch (err) {
-    logger.error('Failed to aggregate flywheel summary stats', { userId, error: err });
-    return {
-      totalReseedJobs: 0,
-      alphaViralDetected: 0,
-      reseededCount: 0,
-      totalAttributedRevenueUsd: 0,
-      totalCommissionUsd: 0,
-    };
   }
 }

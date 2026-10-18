@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import type { RunbookMetadata } from '@/seed/handover/handover-types';
 import type { SupportedLocale } from './types';
 
@@ -28,6 +28,58 @@ export function printRunbookHtmlContent(content: string | null) {
     printWindow.focus();
     setTimeout(() => printWindow.print(), 350);
   }
+}
+
+export function filterRunbooksByQuery(
+  runbooks: RunbookMetadata[],
+  activeLocale: SupportedLocale,
+  searchQuery: string,
+): RunbookMetadata[] {
+  const q = searchQuery.toLowerCase().trim();
+  if (!q) return runbooks;
+  return runbooks.filter((r) => {
+    const title = activeLocale === 'vi' ? r.titleVi : r.titleEn;
+    const summary = activeLocale === 'vi' ? r.summaryVi : r.summaryEn;
+    return title.toLowerCase().includes(q) || summary.toLowerCase().includes(q) || r.number.includes(q) || r.category.toLowerCase().includes(q);
+  });
+}
+
+export function RunbookReaderHeader({
+  title,
+  subtitle,
+  downloadMasterLabel,
+  onDownloadMaster,
+}: {
+  title: string;
+  subtitle: string;
+  downloadMasterLabel: string;
+  onDownloadMaster: () => void;
+}) {
+  return (
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border/40 pb-6">
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+            <BookOpen className="w-3.5 h-3.5" />
+            Sovereign Operations
+          </span>
+          <span className="text-xs font-medium text-muted-foreground">10 Complete Operational SOPs</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+        <p className="text-sm text-muted-foreground mt-1 max-w-3xl">{subtitle}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onDownloadMaster}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all"
+        >
+          <Download className="w-3.5 h-3.5" />
+          {downloadMasterLabel}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function RunbookPaginationFooter({
@@ -56,9 +108,7 @@ export function RunbookPaginationFooter({
             </span>
           </div>
         </Link>
-      ) : (
-        <div />
-      )}
+      ) : <div />}
 
       {nextRunbook ? (
         <Link
@@ -73,9 +123,7 @@ export function RunbookPaginationFooter({
           </div>
           <ChevronRight className="w-4 h-4 text-primary" />
         </Link>
-      ) : (
-        <div />
-      )}
+      ) : <div />}
     </div>
   );
 }

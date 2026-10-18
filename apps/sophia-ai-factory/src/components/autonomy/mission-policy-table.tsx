@@ -9,6 +9,10 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { setMissionTypePolicyAction } from '@/land/autonomy/actions';
 import { MissionTypePolicyRow } from './types';
+import {
+  MissionPolicyRowItem,
+  NewMissionPolicyRowInput,
+} from './mission-policy-row-items';
 
 export function MissionTypePolicyTable({
   initialPolicies,
@@ -72,71 +76,32 @@ export function MissionTypePolicyTable({
 
       <div className="space-y-2">
         {policies.map((policy) => (
-          <div
+          <MissionPolicyRowItem
             key={policy.missionType}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3"
-          >
-            <span className="min-w-24 font-medium text-foreground">{policy.missionType}</span>
-            <select
-              value={policy.autonomyTier}
-              onChange={(e) => updatePolicy(policy.missionType, { autonomyTier: Number(e.target.value) })}
-              disabled={savingType !== null}
-              className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
-            >
-              {[0, 1, 2, 3].map((tier) => (
-                <option key={tier} value={tier}>{t(`policyTiers.tier${tier}` as 'policyTiers.tier0')}</option>
-              ))}
-            </select>
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={policy.requirePublishApproval}
-                onChange={(e) => updatePolicy(policy.missionType, { requirePublishApproval: e.target.checked })}
-                disabled={savingType !== null}
-              />
-              {t('approveBeforePublish')}
-            </label>
-            <button
-              type="button"
-              onClick={() => handleSavePolicy(policy)}
-              disabled={savingType !== null}
-              className="ml-auto rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground disabled:opacity-50"
-            >
-              {savingType === policy.missionType
-                ? savingLabel
-                : t('save')}
-            </button>
-          </div>
+            policy={policy}
+            savingType={savingType}
+            savingLabel={savingLabel}
+            onUpdate={updatePolicy}
+            onSave={(p) => {
+              void handleSavePolicy(p);
+            }}
+          />
         ))}
 
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-border p-3">
-          <input
-            type="text"
-            value={newMissionType}
-            onChange={(e) => setNewMissionType(e.target.value)}
-            placeholder={t('newMissionPlaceholder')}
-            disabled={savingType !== null}
-            className="min-w-40 flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const trimmed = newMissionType.trim();
-              if (!trimmed) return;
-              void handleSavePolicy({
-                missionType: trimmed,
-                autonomyTier: 2,
-                requirePublishApproval: true,
-                maxCostCentsPerRun: null,
-                maxAutoRetries: 3,
-              });
-            }}
-            disabled={savingType !== null || newMissionType.trim().length === 0}
-            className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground disabled:opacity-50"
-          >
-            {t('addDefaultL2')}
-          </button>
-        </div>
+        <NewMissionPolicyRowInput
+          newMissionType={newMissionType}
+          savingType={savingType}
+          onChange={setNewMissionType}
+          onAddDefault={(trimmed) => {
+            void handleSavePolicy({
+              missionType: trimmed,
+              autonomyTier: 2,
+              requirePublishApproval: true,
+              maxCostCentsPerRun: null,
+              maxAutoRetries: 3,
+            });
+          }}
+        />
       </div>
     </div>
   );

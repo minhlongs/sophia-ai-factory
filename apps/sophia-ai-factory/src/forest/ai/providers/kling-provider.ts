@@ -11,6 +11,7 @@ import {
 } from '@/seed/ai/multimodal-provider-interface';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
+import { pollKlingJobStatus, resolveKlingRenderParams } from './kling-status-poller';
 
 export { KlingVideoAdapter } from './kling-video-adapter';
 
@@ -83,60 +84,19 @@ export class KlingVideoClient implements IVideoRenderingProvider {
       throw new Error(`[Kling] Circuit breaker open for kling (${effectiveKeyRef})`);
     }
 
-    const prompt =
-      input.script ||
-      (input.options?.topic as string) ||
-      (input.options?.scenes as Array<{ prompt?: string }>)?.[0]?.prompt ||
-      'Cinematic high-definition video scene';
-    const duration = typeof input.options?.duration === 'number' ? input.options.duration : 5;
-    const aspectRatio = (input.options?.aspectRatio as string) || '16:9';
-
+    const { prompt, duration, aspectRatio } = resolveKlingRenderParams(input);
     const result = await this.generateVideo({ prompt, duration, aspectRatio });
     return { jobId: result.jobId };
   }
 
   async checkStatus(jobId: string, keyRefOverride?: string): Promise<VideoRenderStatus> {
     const effectiveKeyRef = keyRefOverride || this.keyRef;
-    if (!shouldAllowRequest('kling', effectiveKeyRef)) {
-      throw new Error(`[Kling] Circuit breaker open for kling (${effectiveKeyRef})`);
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/requests/${jobId}/status`, {
-        headers: { Authorization: `Key ${this.apiKey}` },
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        recordFailure('kling', classifyHttpStatus(response.status), effectiveKeyRef);
-        throw new Error(`Kling checkStatus failed: ${response.status} - ${errText}`);
-      }
-
-      const statusResult = (await response.json()) as { status: string; error?: string };
-      recordSuccess('kling', effectiveKeyRef);
-
-      if (statusResult.status === 'COMPLETED') {
-        const resResponse = await fetch(`${this.baseUrl}/requests/${jobId}`, {
-          headers: { Authorization: `Key ${this.apiKey}` },
-        });
-        if (resResponse.ok) {
-          const resData = (await resResponse.json()) as { video?: { url?: string } };
-          return { status: 'completed', videoUrl: resData.video?.url };
-        }
-        return { status: 'completed' };
-      }
-
-      if (statusResult.status === 'FAILED') {
-        return { status: 'failed', error: statusResult.error || 'Kling video generation failed' };
-      }
-
-      return { status: statusResult.status === 'IN_PROGRESS' ? 'processing' : 'pending' };
-    } catch (err) {
-      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
-        recordFailure('kling', classifyError(err), effectiveKeyRef);
-      }
-      throw err;
-    }
+    return pollKlingJobStatus({
+      baseUrl: this.baseUrl,
+      apiKey: this.apiKey,
+      jobId,
+      effectiveKeyRef,
+    });
   }
 
   async health(keyRefOverride?: string): Promise<{ healthy: boolean; latencyMs?: number; error?: string }> {

@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Penta-Quadrillion Sub-Planck Singularity Mesh dispatching, Net-Zero power verification, and Fifty-Four-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planPentaquadrillionSubPlanckBatchDispatch,
   type PentaquadrillionSubPlanckDispatchPlan,
@@ -20,6 +19,11 @@ import {
   type PentaquadrillionSubPlanckPowerValidationOutput,
 } from '@/tree/energy/pentaquadrillion-sub-planck-energy-engine';
 import type { PentaquadrillionSubPlanckMesh } from '@/seed/types/pentaquadrillion-sub-planck-mesh-nexus';
+import {
+  recordSubPlanckDispatchD1,
+  recordSubPlanckPowerAllocationD1,
+  recordSubPlanckSlaAuditD1,
+} from './sub-planck-mesh-d1-recorder';
 
 export interface PentaquadrillionSubPlanckDispatchActionResult {
   success: boolean;
@@ -49,31 +53,15 @@ export async function dispatchPentaquadrillionSubPlanckBatchAction(
 ): Promise<PentaquadrillionSubPlanckDispatchActionResult> {
   try {
     const data = planPentaquadrillionSubPlanckBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pentaquadrillion_sub_planck_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PENTA-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `SESSION-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.00000008,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS'
-        )
-        .run();
-    }
-
+    await recordSubPlanckDispatchD1({
+      table: 'pentaquadrillion_sub_planck_dispatches',
+      refPrefix: 'PENTA-DISPATCH',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.00000008,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
@@ -89,29 +77,15 @@ export async function validatePentaquadrillionPowerAction(
 ): Promise<PentaquadrillionSubPlanckPowerActionResult> {
   try {
     const data = validatePentaquadrillionSubPlanckPower(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pentaquadrillion_sub_planck_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified,
-             allocated_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PENTA-POWER-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          input.powerSourceType,
-          input.allocatedMegawatts,
-          input.carbonIntensityGPerKwh,
-          input.boseEinsteinCop,
-          input.isNetZeroCertified ? 1 : 0
-        )
-        .run();
-    }
-
+    await recordSubPlanckPowerAllocationD1({
+      table: 'pentaquadrillion_sub_planck_power_allocations',
+      refPrefix: 'PENTA-POWER',
+      powerSourceType: input.powerSourceType,
+      allocatedMegawatts: input.allocatedMegawatts,
+      carbonIntensityGPerKwh: input.carbonIntensityGPerKwh,
+      boseEinsteinCop: input.boseEinsteinCop,
+      isNetZeroCertified: input.isNetZeroCertified,
+    });
     return { success: data.isCompliant, data };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
@@ -128,36 +102,19 @@ export async function auditFiftyFourNinesSlaAction(
 ): Promise<FiftyFourNinesSlaActionResult> {
   try {
     const data = evaluateFiftyFourNinesSla(input);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO fifty_four_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_fifty_four_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at, created_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PENTA-SLA-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          evaluationPeriodMonth,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'FIFTY_FOUR_NINES_CERTIFIED' ? 1 : 0,
-          33554432,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: data.slaVerdict === 'FIFTY_FOUR_NINES_CERTIFIED',
-      data,
-    };
+    const isSlaMet = data.slaVerdict === 'FIFTY_FOUR_NINES_CERTIFIED';
+    await recordSubPlanckSlaAuditD1({
+      table: 'fifty_four_nines_sla_audits',
+      metColumn: 'is_fifty_four_nines_met',
+      refPrefix: 'PENTA-SLA',
+      evaluationPeriodMonth,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet,
+      bftConsensusNodes: 33554432,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isSlaMet, data };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : String(err);
     return { success: false, error };

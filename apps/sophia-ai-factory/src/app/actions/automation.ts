@@ -1,26 +1,22 @@
 "use server";
 
-import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { createServerClient } from "@/seed/db/client";
 import { Tier } from "@/seed/types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/seed/utils/logger-utility";
 import { toError } from "@/seed/utils/to-error";
-
-async function getUser() {
-  try {
-    return await getCurrentUser();
-  } catch {
-    return null;
-  }
-}
+import {
+  getAuthenticatedUser,
+  triggerGenerateScriptWebhook,
+  triggerRenderVideoWebhook,
+} from "./automation-helpers";
 
 /**
  * Trigger Script Generation Workflow
  * Calls the n8n webhook
  */
 export async function generateScript(formData: FormData) {
-  const user = await getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, message: "Unauthorized: Please log in" };
@@ -33,7 +29,6 @@ export async function generateScript(formData: FormData) {
     return { success: false, message: "Topic and audience are required" };
   }
 
-  // Get actual user tier from D1
   const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
   const userTier: Tier = await resolveUserTier(user.id);
 
@@ -46,7 +41,7 @@ export async function generateScript(formData: FormData) {
         audience,
         title: topic,
         status: "draft",
-        user_id: user.id
+        user_id: user.id,
       })
       .select()
       .single();
@@ -58,22 +53,13 @@ export async function generateScript(formData: FormData) {
 
     const campaignData = campaign as Record<string, string>;
 
-    // Call n8n Webhook
-    const webhookUrl = process.env.N8N_WEBHOOK_GENERATE_SCRIPT;
-
-    if (webhookUrl) {
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scriptId: campaignData.id,
-          topic,
-          audience,
-          userId: user.id,
-          tier: userTier
-        }),
-      });
-    }
+    await triggerGenerateScriptWebhook({
+      scriptId: campaignData.id,
+      topic,
+      audience,
+      userId: user.id,
+      tier: userTier,
+    });
 
     revalidatePath("/dashboard");
     return { success: true, message: "Script generation started", scriptId: campaignData.id };
@@ -87,7 +73,7 @@ export async function generateScript(formData: FormData) {
  * Trigger Video Rendering Workflow
  */
 export async function renderVideo(scriptId: string) {
-  const user = await getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, message: "Unauthorized" };
@@ -108,21 +94,7 @@ export async function renderVideo(scriptId: string) {
       return { success: false, message: "Failed to update status" };
     }
 
-    // Call n8n Webhook for Video
-    const webhookUrl = process.env.N8N_WEBHOOK_RENDER_VIDEO;
-
-    if (webhookUrl) {
-      fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scriptId,
-          userId: user.id,
-        }),
-      }).catch((err) => {
-        logger.error("Video render webhook failed", err instanceof Error ? err : undefined, { scriptId, webhookUrl });
-      });
-    }
+    triggerRenderVideoWebhook({ scriptId, userId: user.id });
 
     revalidatePath("/dashboard");
     return { success: true, message: "Video rendering started" };
@@ -136,7 +108,7 @@ export async function renderVideo(scriptId: string) {
  * Fetch user's projects (scripts/videos)
  */
 export async function getUserProjects() {
-  const user = await getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 

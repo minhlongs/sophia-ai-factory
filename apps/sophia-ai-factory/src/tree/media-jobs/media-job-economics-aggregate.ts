@@ -9,33 +9,14 @@
  */
 
 import { CostClassification } from '@/seed/types/creative-job-economics';
+import {
+  buildEmptyEconomicMetrics,
+  computeDataConfidence,
+  type MediaJobEconomicRow,
+  type ProviderEconomicMetrics,
+} from './media-job-economics-types';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface MediaJobEconomicRow {
-  status: string;
-  provider_cost: number | null;
-  cost_classification: string | null;
-  revenue_attribution: number | null;
-  gross_margin: number | null;
-}
-
-export interface ProviderEconomicMetrics {
-  provider: string;
-  totalJobs: number;
-  successfulJobs: number;
-  failedJobs: number;
-  knownCostJobs: number;
-  unknownCostJobs: number;
-  totalKnownProviderCost: number | null;
-  averageKnownCostPerJob: number | null;
-  revenueAttributed: number | null;
-  knownGrossMarginPercent: number | null;
-  attributionProvenanceCount: number;
-  dataConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
-}
-
-// ── Aggregation ──────────────────────────────────────────────────────────────
+export type { MediaJobEconomicRow, ProviderEconomicMetrics } from './media-job-economics-types';
 
 /**
  * Aggregate economic metrics from raw media_jobs rows.
@@ -52,20 +33,7 @@ export function aggregateEconomicMetrics(
   const totalJobs = rows.length;
 
   if (totalJobs === 0) {
-    return {
-      provider,
-      totalJobs: 0,
-      successfulJobs: 0,
-      failedJobs: 0,
-      knownCostJobs: 0,
-      unknownCostJobs: 0,
-      totalKnownProviderCost: null,
-      averageKnownCostPerJob: null,
-      revenueAttributed: null,
-      knownGrossMarginPercent: null,
-      attributionProvenanceCount: 0,
-      dataConfidence: 'LOW',
-    };
+    return buildEmptyEconomicMetrics(provider);
   }
 
   const successfulJobs = rows.filter((r) => r.status === 'completed').length;
@@ -110,8 +78,6 @@ export function aggregateEconomicMetrics(
       : null;
 
   // Gross margin — only when computable from aggregated data
-  // Requires both totalKnownProviderCost and revenueAttributed to be non-null
-  // and revenueAttributed > 0
   let knownGrossMarginPercent: number | null = null;
   if (
     totalKnownProviderCost !== null &&
@@ -122,20 +88,7 @@ export function aggregateEconomicMetrics(
       Math.round(((revenueAttributed - totalKnownProviderCost) / revenueAttributed) * 100 * 100) / 100;
   }
 
-  // Data confidence based on proportion of known-cost jobs
-  const knownRatio = knownCostJobs / totalJobs;
-  let dataConfidence: ProviderEconomicMetrics['dataConfidence'];
-  if (totalJobs >= 50 && knownRatio >= 0.8) {
-    dataConfidence = 'HIGH';
-  } else if (totalJobs >= 20 && knownRatio >= 0.5) {
-    dataConfidence = 'MEDIUM';
-  } else {
-    dataConfidence = 'LOW';
-  }
-
-  // Attribution provenance count — number of jobs with a provenance row.
-  // Derived from revenue_attribution presence as a proxy (provenance write
-  // always precedes revenue_attribution update in the attribution cron).
+  const dataConfidence = computeDataConfidence(totalJobs, knownCostJobs);
   const attributionProvenanceCount = revenueRows.length;
 
   return {

@@ -20,62 +20,22 @@ import { toError, getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
 import { getD1 } from '@/seed/db/client';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/land/status/status-store';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
-import { evaluateIncidentAction } from '@/land/status/incident-state-machine';
 import {
   startCronCheckIn,
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
+import {
+  CRON_NAME,
+  IDEMPOTENCY_WINDOW_MS,
+  HEALTH_URL,
+  LATENCY_WARN_MS,
+  alertAdmin,
+  recordHealthStatusAndEvaluateIncident,
+  recordUnreachableStatusAndIncident,
+} from './uptime-check-helpers';
 
 export const dynamic = 'force-dynamic';
-
-const CRON_NAME = 'uptime-check';
-/** Every 5 min — skip if ran within last 2 minutes */
-const IDEMPOTENCY_WINDOW_MS = 2 * 60 * 1000;
-
-const HEALTH_URL = process.env.PROD_URL
-  ? `${process.env.PROD_URL}/api/health`
-  : 'https://sophia.agencyos.network/api/health';
-
-const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const LATENCY_WARN_MS = 5000;
-const SERVICE_NAME = 'telegram-uptime-alert';
-
-/** Send a Telegram message to the admin chat. Best-effort — never throws. */
-async function alertAdmin(message: string): Promise<void> {
-  if (!ADMIN_TELEGRAM_CHAT_ID || !TELEGRAM_BOT_TOKEN) {
-    logger.warn('[uptime-check] No admin Telegram config — alert skipped');
-    return;
-  }
-  try {
-    if (!shouldAllowRequest(SERVICE_NAME)) {
-      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
-    }
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: ADMIN_TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML',
-      }),
-    });
-    if (res.ok) {
-      recordSuccess(SERVICE_NAME);
-    } else {
-      const kind = classifyHttpStatus(res.status);
-      recordFailure(SERVICE_NAME, kind);
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
-    const kind = classifyError(err)
-    recordFailure(SERVICE_NAME, kind)
-  }
-}
 
 export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
@@ -101,22 +61,7 @@ export async function GET(req: NextRequest) {
       : latency > LATENCY_WARN_MS ? 'degraded' : 'ok';
 
     if (db) {
-      try {
-        await recordCheck(db, { ts: Math.floor(Date.now() / 1000), status: checkStatus, latencyMs: latency });
-        const recentChecks = await getRecentChecks(db);
-        const activeIncident = await getActiveIncident(db);
-        const typedChecks = recentChecks.map(c => ({ status: c.status as import('@/land/status/incident-state-machine').CheckStatus }));
-        const action = evaluateIncidentAction(typedChecks, activeIncident?.id ?? null);
-        if (action === 'open') {
-          await openIncident(db, 'Service disruption detected', 'minor');
-          await alertAdmin(`⚠️ INCIDENT OPENED\nSophia appears to be down.\nHTTP ${res.status}`);
-        } else if (action === 'close' && activeIncident) {
-          await closeIncident(db, activeIncident.id);
-          await alertAdmin('✅ INCIDENT RESOLVED\nSophia is back to normal.');
-        }
-      } catch (statusErr) {
-        logger.warn('[uptime-check] Status record failed (non-fatal)', { error: getErrorMessage(statusErr) });
-      }
+      await recordHealthStatusAndEvaluateIncident(db, checkStatus, latency, res.status);
     }
 
     if (checkStatus === 'down') {
@@ -141,14 +86,7 @@ export async function GET(req: NextRequest) {
     await alertAdmin(`🔴 SOPHIA UNREACHABLE\nError: ${msg}`);
     logger.error('[uptime-check] Health check failed', toError(e));
     if (db) {
-      try {
-        await recordCheck(db, { ts: Math.floor(Date.now() / 1000), status: 'down', latencyMs: null, error: msg });
-        const recentChecks = await getRecentChecks(db);
-        const activeIncident = await getActiveIncident(db);
-        const typedChecks2 = recentChecks.map(c => ({ status: c.status as import('@/land/status/incident-state-machine').CheckStatus }));
-        const action = evaluateIncidentAction(typedChecks2, activeIncident?.id ?? null);
-        if (action === 'open') await openIncident(db, 'Service unreachable', 'major');
-      } catch { /* non-fatal */ }
+      await recordUnreachableStatusAndIncident(db, msg);
       await recordCronRun(db, CRON_NAME, 'failure', msg);
     }
     failCronCheckIn(cronCtx, CRON_NAME, e);

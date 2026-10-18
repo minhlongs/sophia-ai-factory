@@ -27,6 +27,7 @@ import type {
 } from './types';
 import { seededRandom, generateEvidencePoints } from './velocity-scorer';
 import { deriveHashtags, buildCandidateTopics } from './cluster-matcher';
+import { persistTrendSignalToD1 } from './trend-scout-persistence';
 
 export async function scoutTrendingSignals(
   platform: TrendingPlatform,
@@ -99,54 +100,18 @@ export async function scoutTrendingSignals(
 
     signals.push(signal);
 
-    // Persist to D1 when available
     if (db) {
-      try {
-        const signalStmt = db.prepare(
-          `INSERT OR IGNORE INTO market_signals
-           (id, workspace_id, type, source, title, summary, data, confidence, relevance_score, expires_at, consumed, created_at)
-           VALUES (?, ?, 'trend', ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
-        );
-
-        await signalStmt
-          .bind(
-            signal.id,
-            workspaceId,
-            platform,
-            signal.title,
-            `Viral hook style: ${hookEvaluation.detectedHookStyle}, Momentum: ${signal.momentumScore}`,
-            JSON.stringify(signal.rawData),
-            hookEvaluation.viralScore,
-            Math.min(1.0, Math.max(0.1, signal.momentumScore / 10.0)),
-            nowMs + 7 * 86_400_000,
-            nowMs,
-          )
-          .run();
-
-        const detectionStmt = db.prepare(
-          `INSERT OR REPLACE INTO trend_detections
-           (id, workspace_id, topic, channel, momentum, forecast, evidence_ids, detected_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        );
-
-        await detectionStmt
-          .bind(
-            `tdet_${signal.id}`,
-            workspaceId,
-            signal.topic,
-            platform,
-            signal.momentumScore,
-            JSON.stringify(forecast),
-            JSON.stringify(evidence.slice(0, 10).map((e) => e.id)),
-            nowMs,
-          )
-          .run();
-      } catch (err) {
-        logger.warn('[TrendScout] Failed to persist signal to D1', {
-          signalId: signal.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
+      await persistTrendSignalToD1({
+        db,
+        workspaceId,
+        platform,
+        signal,
+        detectedHookStyle: hookEvaluation.detectedHookStyle,
+        viralScore: hookEvaluation.viralScore,
+        forecast,
+        evidenceIds: evidence.slice(0, 10).map((e) => e.id),
+        nowMs,
+      });
     }
   }
 

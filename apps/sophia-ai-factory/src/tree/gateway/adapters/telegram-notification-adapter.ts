@@ -9,56 +9,11 @@ import type {
   ChannelStatus,
   PublishResult,
 } from "@/tree/gateway/gateway-types";
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
-
-const CHANNEL_ID = "telegram";
-const SERVICE_NAME = 'telegram-gateway-notify'
-
-/**
- * Sends a Telegram message using the bot token from env.
- * Lightweight wrapper to avoid importing the full Telegram bot module.
- */
-async function sendNotification(
-  chatId: string,
-  text: string,
-): Promise<boolean> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  if (!botToken) {
-    return false;
-  }
-
-  try {
-    if (!shouldAllowRequest(SERVICE_NAME)) {
-      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
-    }
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          parse_mode: "Markdown",
-        }),
-      },
-    );
-
-    if (response.ok) {
-      recordSuccess(SERVICE_NAME)
-      return true
-    }
-    const kind = classifyHttpStatus(response.status)
-    recordFailure(SERVICE_NAME, kind)
-    return false
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
-    const kind = classifyError(err)
-    recordFailure(SERVICE_NAME, kind)
-    return false
-  }
-}
+import {
+  CHANNEL_ID,
+  sendNotification,
+  checkTelegramBotHealth,
+} from "./telegram-notification-transport";
 
 export class TelegramNotificationAdapter implements ChannelAdapter {
   private chatId: string;
@@ -119,26 +74,6 @@ export class TelegramNotificationAdapter implements ChannelAdapter {
 
   /** Check if the Telegram bot connection is healthy */
   async healthCheck(): Promise<boolean> {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) return false;
-
-    try {
-      if (!shouldAllowRequest(SERVICE_NAME)) {
-        throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
-      }
-      const response = await fetch(
-        `https://api.telegram.org/bot${botToken}/getMe`,
-      );
-      if (response.ok) {
-        recordSuccess(SERVICE_NAME)
-        return true
-      }
-      return false
-    } catch (err) {
-      if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
-      const kind = classifyError(err)
-      recordFailure(SERVICE_NAME, kind)
-      return false
-    }
+    return checkTelegramBotHealth();
   }
 }

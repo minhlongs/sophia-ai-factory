@@ -10,6 +10,12 @@ import {
   CRYPTO_DISCLAIMER_REGISTRY,
 } from '@/seed/config/crypto-disclaimer-registry';
 import type { VideoNiche } from '@/seed/config/video-blueprints/blueprint-types';
+import {
+  EU_MICA_DISCLAIMERS,
+  FTC_ONLY_DISCLAIMERS,
+  GLOBAL_DEFAULT_DISCLAIMERS,
+  US_CRYPTO_DISCLAIMERS,
+} from './jurisdiction-disclaimer-presets';
 
 export interface ComplianceGuardResult {
   isAllowed: boolean;
@@ -39,53 +45,30 @@ export function evaluateJurisdictionCompliance(
       isAllowed: true,
       jurisdiction: normalized,
       niche,
-      requiredDisclaimers: {
-        requiresFtcDisclosure: true,
-        requiresCftcDisclaimer: false,
-        requiresMicaNotice: false,
-        requiresPersistentBanner: false,
-        requiresEndCard15s: false,
-        paidPartnershipTag: true,
-      },
+      requiredDisclaimers: { ...FTC_ONLY_DISCLAIMERS },
     };
   }
 
   // 2. Crypto Global Niche Compliance: Hard Geo-Fencing Checks
   if (normalized === 'VN') {
-    const vnConfig = CRYPTO_DISCLAIMER_REGISTRY.VN;
     return {
       isAllowed: false,
       jurisdiction: 'VN',
       niche,
       reason: 'VIETNAM_PROMOTIONAL_BAN',
-      regulatoryRef: vnConfig.regulatoryRef,
-      requiredDisclaimers: {
-        requiresFtcDisclosure: true,
-        requiresCftcDisclaimer: false,
-        requiresMicaNotice: false,
-        requiresPersistentBanner: false,
-        requiresEndCard15s: false,
-        paidPartnershipTag: true,
-      },
+      regulatoryRef: CRYPTO_DISCLAIMER_REGISTRY.VN.regulatoryRef,
+      requiredDisclaimers: { ...FTC_ONLY_DISCLAIMERS },
     };
   }
 
   if (normalized === 'SG') {
-    const sgConfig = CRYPTO_DISCLAIMER_REGISTRY.SG;
     return {
       isAllowed: false,
       jurisdiction: 'SG',
       niche,
       reason: 'SINGAPORE_MAS_PSN08_RETAIL_BAN',
-      regulatoryRef: sgConfig.regulatoryRef,
-      requiredDisclaimers: {
-        requiresFtcDisclosure: true,
-        requiresCftcDisclaimer: false,
-        requiresMicaNotice: false,
-        requiresPersistentBanner: false,
-        requiresEndCard15s: false,
-        paidPartnershipTag: true,
-      },
+      regulatoryRef: CRYPTO_DISCLAIMER_REGISTRY.SG.regulatoryRef,
+      requiredDisclaimers: { ...FTC_ONLY_DISCLAIMERS },
     };
   }
 
@@ -96,14 +79,7 @@ export function evaluateJurisdictionCompliance(
       jurisdiction: 'US',
       niche,
       regulatoryRef: 'FTC 16 C.F.R. § 255.5 / CFTC Rule 4.41',
-      requiredDisclaimers: {
-        requiresFtcDisclosure: true,
-        requiresCftcDisclaimer: true,
-        requiresMicaNotice: false,
-        requiresPersistentBanner: true,
-        requiresEndCard15s: true,
-        paidPartnershipTag: true,
-      },
+      requiredDisclaimers: { ...US_CRYPTO_DISCLAIMERS },
     };
   }
 
@@ -114,14 +90,7 @@ export function evaluateJurisdictionCompliance(
       jurisdiction: 'EU',
       niche,
       regulatoryRef: 'EU MiCA Regulation (EU 2023/1114) Art. 7 & 53',
-      requiredDisclaimers: {
-        requiresFtcDisclosure: true,
-        requiresCftcDisclaimer: false,
-        requiresMicaNotice: true,
-        requiresPersistentBanner: true,
-        requiresEndCard15s: true,
-        paidPartnershipTag: true,
-      },
+      requiredDisclaimers: { ...EU_MICA_DISCLAIMERS },
     };
   }
 
@@ -131,13 +100,6 @@ export function evaluateJurisdictionCompliance(
     jurisdiction: normalized,
     niche,
     regulatoryRef: 'Global Standard (FTC Endorsement Guide)',
-    requiredDisclaimers: {
-      requiresFtcDisclosure: true,
-      requiresCftcDisclaimer: true,
-      requiresMicaNotice: true,
-      requiresPersistentBanner: true,
-      requiresEndCard15s: true,
-      paidPartnershipTag: true,
-    },
+    requiredDisclaimers: { ...GLOBAL_DEFAULT_DISCLAIMERS },
   };
 }

@@ -2,13 +2,22 @@ import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import {
-  MIN_PAYOUT_THRESHOLD_CENTS,
   type PayoutRail,
   type PayoutBatchResult,
-  type PayableCommissionRow,
 } from './types';
 import { executeRailPayout } from './batch-collector';
 import { createBatchRecord, rollbackBatch } from './payout-state-machine';
+import {
+  queryPayableCommissions,
+  claimPayableRows,
+  type ClaimedCommissionsSummary,
+} from './payout-batcher-claims';
+
+export {
+  queryPayableCommissions,
+  claimPayableRows,
+  type ClaimedCommissionsSummary,
+};
 
 /**
  * Programmatic batch payout processor.
@@ -22,25 +31,15 @@ export async function processPayoutBatch(
 ): Promise<PayoutBatchResult> {
   const batchId = `batch_${rail}_${nowMs}`;
 
-  let payableRows: PayableCommissionRow[] = [];
-  try {
-    const result = await db
-      .prepare(
-        `SELECT id, affiliate_id, commission_cents
-         FROM commission_ledger
-         WHERE status = 'payable' AND payout_batch_id IS NULL`,
-      )
-      .all<PayableCommissionRow>();
-    payableRows = result.results ?? [];
-  } catch (err) {
-    logger.error('[PayoutBatcher] Failed to query payable rows', err instanceof Error ? err : new Error(String(err)));
+  const { rows: payableRows, error: queryError } = await queryPayableCommissions(db);
+  if (queryError) {
     return {
       success: false,
       batchId,
       totalAmountCents: 0,
       recipientCount: 0,
       claimedRowIds: [],
-      error: err instanceof Error ? err.message : String(err),
+      error: queryError,
     };
   }
 
@@ -54,32 +53,11 @@ export async function processPayoutBatch(
     };
   }
 
-  const claimedRowIds: string[] = [];
-  let totalAmountCents = 0;
-  const uniqueRecipients = new Set<string>();
-
-  for (const row of payableRows) {
-    if (row.commission_cents >= MIN_PAYOUT_THRESHOLD_CENTS) {
-      try {
-        const claimResult = await db
-          .prepare(
-            `UPDATE commission_ledger
-             SET status = 'paying', payout_batch_id = ?
-             WHERE id = ? AND status = 'payable' AND payout_batch_id IS NULL`,
-          )
-          .bind(batchId, row.id)
-          .run();
-
-        if ((claimResult.meta?.changes ?? 0) > 0) {
-          claimedRowIds.push(row.id);
-          totalAmountCents += row.commission_cents;
-          uniqueRecipients.add(row.affiliate_id);
-        }
-      } catch (claimErr) {
-        logger.warn('[PayoutBatcher] CAS claim error on row', { rowId: row.id, error: String(claimErr) });
-      }
-    }
-  }
+  const { claimedRowIds, totalAmountCents, recipientCount } = await claimPayableRows(
+    db,
+    batchId,
+    payableRows,
+  );
 
   if (claimedRowIds.length === 0) {
     return {
@@ -91,7 +69,7 @@ export async function processPayoutBatch(
     };
   }
 
-  await createBatchRecord(db, batchId, rail, totalAmountCents, uniqueRecipients.size, nowMs);
+  await createBatchRecord(db, batchId, rail, totalAmountCents, recipientCount, nowMs);
 
   try {
     const dispatch = await executeRailPayout(batchId, totalAmountCents, rail);
@@ -100,7 +78,7 @@ export async function processPayoutBatch(
       success: true,
       batchId,
       totalAmountCents,
-      recipientCount: uniqueRecipients.size,
+      recipientCount,
       claimedRowIds,
       externalPaymentId: dispatch.externalPaymentId,
     };
@@ -117,7 +95,7 @@ export async function processPayoutBatch(
       success: false,
       batchId,
       totalAmountCents,
-      recipientCount: uniqueRecipients.size,
+      recipientCount,
       claimedRowIds,
       error: dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr),
     };

@@ -38,6 +38,7 @@ import { POST } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserCredential } from '@/tree/credentials/user-credentials-repo';
 import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar';
+import { markOnboardingCompleteAndWelcome } from './save-credentials-helpers';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockSetUserCredential = vi.mocked(setUserCredential);
@@ -120,5 +121,13 @@ describe('POST /api/setup-wizard/save-credentials', () => {
     expect(res.status).toBe(200);
     expect(mockSetUserCredential).toHaveBeenCalledWith('user-1', 'heygen', 'hg_live_user_key');
     expect(mockSetUserCredential).toHaveBeenCalledWith('user-1', 'resend', 're_testkey');
+  });
+
+  it('binds onboarding timestamp, routing strategy, and user ID to their matching SQL slots', async () => {
+    await markOnboardingCompleteAndWelcome({ id: 'user-1' }, 'leastUsed');
+
+    expect(mockPrepare).toHaveBeenCalledWith(expect.stringContaining('onboarding_completed_at = ?1'));
+    expect(mockPrepare).toHaveBeenCalledWith(expect.stringContaining("'$.routing_strategy', ?2) WHERE user_id = ?3"));
+    expect(mockBind).toHaveBeenCalledWith(expect.any(Number), 'leastUsed', 'user-1');
   });
 });

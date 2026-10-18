@@ -12,41 +12,9 @@ import type {
   CreatorChannelAccount,
   ProxyNode,
   DispatchEligibilityResult,
-  BrowserFingerprint,
 } from './anti-detection-types';
 
-/**
- * Generates a consistent, deterministic browser fingerprint per channel.
- */
-export function generateConsistentFingerprint(
-  seed: string,
-  countryCode = 'US',
-): BrowserFingerprint {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash << 5) - hash + seed.charCodeAt(i);
-    hash |= 0;
-  }
-  const positiveHash = Math.abs(hash);
-
-  const viewports = [
-    { width: 390, height: 844, dpr: 3 }, // iPhone 14 / 15
-    { width: 412, height: 915, dpr: 2.625 }, // Pixel 7
-    { width: 393, height: 852, dpr: 3 }, // iPhone 15 Pro
-  ];
-  const vp = viewports[positiveHash % viewports.length];
-
-  return {
-    userAgent: `Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 SophiaCreator/${positiveHash % 100}`,
-    viewportWidth: vp.width,
-    viewportHeight: vp.height,
-    devicePixelRatio: vp.dpr,
-    platform: 'iPhone',
-    canvasNoiseSeed: positiveHash % 999983,
-    webglVendor: 'Apple Inc. (Apple GPU)',
-    locale: countryCode.toLowerCase() === 'vn' ? 'vi-VN' : 'en-US',
-  };
-}
+export { generateConsistentFingerprint } from './fingerprint-generator';
 
 /**
  * Evaluates whether a channel is eligible to dispatch a new video upload.
@@ -56,16 +24,14 @@ export function evaluateChannelUploadEligibility(
   currentTimeMs: number,
   proxyPool: ProxyNode[],
 ): DispatchEligibilityResult {
-  // Check daily upload cap
   if (account.dailyUploadCount >= account.maxDailyUploads) {
     return {
       allowed: false,
       reason: `Đã chạm ngưỡng upload tối đa trong ngày (${account.dailyUploadCount}/${account.maxDailyUploads})`,
-      nextAvailableTimeMs: currentTimeMs + 12 * 3600 * 1000, // available next cycle
+      nextAvailableTimeMs: currentTimeMs + 12 * 3600 * 1000,
     };
   }
 
-  // Check minimum spacing interval
   const minIntervalMs = account.minIntervalHours * 3600 * 1000;
   const timeSinceLastUpload = currentTimeMs - account.lastUploadTimestampMs;
   if (account.lastUploadTimestampMs > 0 && timeSinceLastUpload < minIntervalMs) {
@@ -77,13 +43,11 @@ export function evaluateChannelUploadEligibility(
     };
   }
 
-  // Find a healthy proxy for the channel
   let selectedProxy = proxyPool.find(
     (p) => p.id === account.assignedProxyId && p.status === 'HEALTHY',
   );
 
   if (!selectedProxy) {
-    // Select the least recently used healthy proxy
     const healthyProxies = proxyPool.filter((p) => p.status === 'HEALTHY');
     if (healthyProxies.length === 0) {
       return {

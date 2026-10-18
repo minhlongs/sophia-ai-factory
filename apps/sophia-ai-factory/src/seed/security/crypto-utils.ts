@@ -11,34 +11,19 @@
  * @module seed/security/crypto-utils
  */
 
+import {
+  type AuditLogEntry,
+  type HashChainVerificationResult,
+  computeContentHash,
+} from './crypto-audit-hash'
+
+export type { AuditLogEntry, HashChainVerificationResult }
+export { computeContentHash }
+
 /**
  * Salt for hash computation (from environment variable)
  */
 const AUDIT_HASH_SALT = process.env.AUDIT_HASH_SALT || ''
-
-/**
- * Audit log entry interface for content hashing
- */
-export interface AuditLogEntry {
-  action: string
-  license_nonce: string
-  user_id: string
-  ip_address: string
-  created_at: number
-  details?: Record<string, unknown>
-}
-
-/**
- * Result of hash chain verification
- */
-export interface HashChainVerificationResult {
-  /** Whether the entire chain is valid */
-  valid: boolean
-  /** Index of first invalid entry (undefined if valid) */
-  firstInvalidIndex?: number
-  /** Reason for invalidity (if applicable) */
-  reason?: string
-}
 
 /**
  * Compute SHA-256 hash of a string
@@ -130,30 +115,4 @@ export function timingSafeEqual(a: string | null | undefined, b: string | null |
     result |= a.charCodeAt(i) ^ b.charCodeAt(i)
   }
   return result === 0
-}
-
-/**
- * Compute content hash for an audit log entry
- *
- * Deterministic hash from entry fields + previous hash in chain.
- * Format: action|license_nonce|user_id|ip_address|timestamp|previousHash
- *
- * @param entry - Audit log entry data
- * @param previousHash - Hash of previous log entry (null for first entry)
- * @returns 64-character hexadecimal string
- */
-export function computeContentHash(
-  entry: AuditLogEntry,
-  previousHash: string | null
-): string {
-  const content = [
-    entry.action,
-    entry.license_nonce,
-    entry.user_id,
-    entry.ip_address,
-    entry.created_at.toString(),
-    previousHash || '',
-  ].join('|')
-
-  return sha256(content)
 }

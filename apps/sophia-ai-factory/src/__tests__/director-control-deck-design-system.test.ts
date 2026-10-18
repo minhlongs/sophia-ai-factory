@@ -55,6 +55,7 @@ describe("Director's Control Deck Design System Verification", () => {
 
   it('Phase 1: upgrades core Stitch UI primitives and Navigation Shells to adaptive Light/Dark', () => {
     const buttonTsx = readSrcFile('components/stitch/ui/button.tsx');
+    const buttonStylesTs = readSrcFile('components/stitch/ui/button-styles.ts');
     const cardTsx = readSrcFile('components/stitch/ui/card.tsx');
     const statCardTsx = readSrcFile('components/stitch/ui/stat-card.tsx');
     const inputTsx = readSrcFile('components/stitch/ui/input.tsx');
@@ -62,7 +63,7 @@ describe("Director's Control Deck Design System Verification", () => {
     const dashboardShellTsx = readSrcFile('forest/dashboard/dashboard-shell.tsx');
     const marketingNavTsx = readSrcFile('components/stitch/layouts/marketing-nav.tsx');
 
-    expect(buttonTsx).toContain('bg-primary text-primary-foreground');
+    expect(buttonStylesTs).toContain('bg-primary text-primary-foreground');
     expect(buttonTsx).not.toContain('via-indigo-500 to-violet-600');
     expect(cardTsx).toContain('dark:bg-[#11131F]');
     expect(statCardTsx).toContain('JetBrains Mono');
@@ -102,14 +103,16 @@ describe("Director's Control Deck Design System Verification", () => {
   it('Phase 4: upgrades Dashboard, Video Studio, Campaigns, and Settings to Director Control Deck', () => {
     const dashboardPage = readSrcFile('components/stitch/screens/dashboard/dashboard-page.tsx');
     const videoPreview = readSrcFile('components/stitch/screens/video-creation/video-preview-sidebar.tsx');
+    const videoPreviewSections = readSrcFile('components/stitch/screens/video-creation/video-preview-sections.tsx');
     const campaignCard = readSrcFile('components/stitch/screens/campaigns/campaign-card.tsx');
+    const campaignCardDetails = readSrcFile('components/stitch/screens/campaigns/campaign-card-details.tsx');
     const settingsPage = readSrcFile('components/stitch/screens/settings/settings-page.tsx');
 
     expect(dashboardPage).toContain('text-foreground dark:text-white');
-    expect(videoPreview).toContain('camera-rec');
-    expect(videoPreview).toContain('film-strip');
+    expect(videoPreviewSections).toContain('camera-rec');
+    expect(videoPreviewSections).toContain('film-strip');
     expect(campaignCard).toContain('dark:bg-[#11131F]');
-    expect(campaignCard).toContain('font-mono');
+    expect(campaignCardDetails).toContain('font-mono');
     expect(settingsPage).toContain('dark:bg-[#11131F]');
   });
 });

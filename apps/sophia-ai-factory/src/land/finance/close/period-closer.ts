@@ -8,9 +8,7 @@ import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   FinancialClosePeriod,
-  IntercompanyTransfer,
   PeriodType,
-  RecordTransferInput,
   FinalizePeriodResult,
 } from '@/seed/types/financial-close';
 import {
@@ -19,10 +17,10 @@ import {
   lockPeriod,
   reopenPeriod,
   getPeriodStatus,
-  recordIntercompanyTransfer,
-  reconcileIntercompanyTransfer,
 } from '@/tree/finance/financial-close-orchestrator';
 import { type FinancialCloseActionError, normalizeErrorArg } from './types';
+
+export { executeRecordTransfer, executeReconcileTransfer } from './period-transfer-ops';
 
 export async function executeInitiatePeriodClose(
   db: D1Database,
@@ -103,41 +101,6 @@ export async function executeReopenPeriod(
     return failure({
       code: 'REOPEN_PERIOD_FAILED',
       message: err instanceof Error ? err.message : 'Failed to reopen financial period',
-    });
-  }
-}
-
-export async function executeRecordTransfer(
-  db: D1Database,
-  input: RecordTransferInput,
-  userId: string,
-): Promise<Result<IntercompanyTransfer, FinancialCloseActionError>> {
-  try {
-    const transfer = await recordIntercompanyTransfer(db, input, userId);
-    return success(transfer);
-  } catch (err) {
-    logger.error('Failed to record intercompany transfer', normalizeErrorArg(err));
-    return failure({
-      code: 'RECORD_TRANSFER_FAILED',
-      message: err instanceof Error ? err.message : 'Failed to record intercompany transfer',
-    });
-  }
-}
-
-export async function executeReconcileTransfer(
-  db: D1Database,
-  transferId: string,
-  userId: string,
-  notes?: string,
-): Promise<Result<IntercompanyTransfer, FinancialCloseActionError>> {
-  try {
-    const transfer = await reconcileIntercompanyTransfer(db, transferId, userId, notes);
-    return success(transfer);
-  } catch (err) {
-    logger.error(`Failed to reconcile intercompany transfer ${transferId}`, normalizeErrorArg(err));
-    return failure({
-      code: 'RECONCILE_TRANSFER_FAILED',
-      message: err instanceof Error ? err.message : 'Failed to reconcile intercompany transfer',
     });
   }
 }

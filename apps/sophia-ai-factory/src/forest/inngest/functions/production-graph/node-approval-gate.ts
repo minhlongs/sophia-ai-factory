@@ -9,28 +9,15 @@
 import { PUBLISH_CONTENT_TOOL } from '@/tree/agent-protocol/graph-agents';
 import { updateRunStatus } from '@/tree/production-graph/repo';
 import type { GraphNodeRuntimeState } from '@/tree/production-graph/types';
+import { emitApprovalApproved } from '@/tree/performance/loop-emitters-runner';
 import {
-  emitApprovalApproved,
-} from '@/tree/performance/loop-emitters-runner';
-import { requestApprovalAndAwait } from '../agent-approval-gate';
-import {
-  APPROVAL_TIMEOUT_MS,
   PUBLISHING_PHASE,
   type EmitStep,
   type RunnerContext,
   type RunnerLogContext,
 } from './types';
-import {
-  resolveApprovalRow,
-} from './emitter-helpers';
-import {
-  handleApprovalDecision,
-  toApprovalGateStep,
-} from './execution-helpers';
-import {
-  emitNodeApprovalRequestedSafe,
-  handleRejectedOrTimedOutApproval,
-} from './node-approval-helpers';
+import { handleRejectedOrTimedOutApproval } from './node-approval-helpers';
+import { awaitNodeApprovalOutcome } from './node-approval-await';
 
 export interface HandleApprovalParams {
   nodeId: string;
@@ -86,23 +73,13 @@ export async function handleNodeApproval(
     ),
   );
 
-  const decision = await requestApprovalAndAwait(
-    {
-      runId: graphRunId,
-      missionId,
-      actionId: PUBLISH_CONTENT_TOOL,
-      actionType: PUBLISH_CONTENT_TOOL,
-      actionSummary: `Publish node "${state.node.name ?? nodeId}" via agent ${state.node.agentSlug}`,
-      timeoutMs: APPROVAL_TIMEOUT_MS,
-    },
-    { step: toApprovalGateStep(step) },
-  );
-
-  await emitNodeApprovalRequestedSafe({ logCtx, nodeId, runnerContext });
-
-  const gateOutcome = handleApprovalDecision(decision, graphRunId);
-  const approvalRow = await resolveApprovalRow(graphRunId);
-  const approvalIdForEvent = approvalRow?.id ?? '';
+  const { gateOutcome, approvalIdForEvent } = await awaitNodeApprovalOutcome({
+    nodeId,
+    state,
+    step,
+    logCtx,
+    runnerContext,
+  });
 
   if (gateOutcome === 'approved') {
     await emitApprovalApproved({

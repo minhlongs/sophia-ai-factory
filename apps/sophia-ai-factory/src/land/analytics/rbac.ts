@@ -9,22 +9,12 @@
 import { Tier } from '@/seed/types';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { verifyLicenseAccess, getUserLicenseNonce } from './rbac-license';
+import {
+  resolveAnalyticsAccessMatrix,
+  type AnalyticsFeatureAccess,
+} from './rbac-tier-matrix';
 
-export { verifyLicenseAccess, getUserLicenseNonce };
-
-/**
- * Analytics feature access levels
- */
-export interface AnalyticsFeatureAccess {
-  canViewCustomDateRange: boolean;
-  canViewTimeSeries: boolean;
-  canViewTierBreakdown: boolean;
-  canViewCustomerTable: boolean;
-  canViewRevenue: boolean;
-  canExport: boolean;
-  canAutoRefresh: boolean;
-  canViewRoi: boolean;
-}
+export { verifyLicenseAccess, getUserLicenseNonce, type AnalyticsFeatureAccess };
 
 /**
  * Get analytics feature access based on user tier and admin status
@@ -33,73 +23,7 @@ export function getAnalyticsAccess(
   tier: Tier,
   isAdmin: boolean
 ): AnalyticsFeatureAccess {
-  // Admin gets everything + customer table
-  if (isAdmin) {
-    return {
-      canViewCustomDateRange: true,
-      canViewTimeSeries: true,
-      canViewTierBreakdown: true,
-      canViewCustomerTable: true,
-      canViewRevenue: true,
-      canExport: true,
-      canAutoRefresh: true,
-      canViewRoi: true,
-    };
-  }
-
-  // MASTER tier gets everything (except customer table which is admin-only)
-  if (tier === 'MASTER') {
-    return {
-      canViewCustomDateRange: true,
-      canViewTimeSeries: true,
-      canViewTierBreakdown: true,
-      canViewCustomerTable: false,
-      canViewRevenue: true,
-      canExport: true,
-      canAutoRefresh: true,
-      canViewRoi: true,
-    };
-  }
-
-  // ENTERPRISE tier
-  if (tier === 'ENTERPRISE') {
-    return {
-      canViewCustomDateRange: true,
-      canViewTimeSeries: true,
-      canViewTierBreakdown: true,
-      canViewCustomerTable: false,
-      canViewRevenue: true,
-      canExport: true,
-      canAutoRefresh: true,
-      canViewRoi: true,
-    };
-  }
-
-  // PREMIUM tier
-  if (tier === 'PREMIUM') {
-    return {
-      canViewCustomDateRange: true,
-      canViewTimeSeries: true,
-      canViewTierBreakdown: false,
-      canViewCustomerTable: false,
-      canViewRevenue: false,
-      canExport: true,
-      canAutoRefresh: false,
-      canViewRoi: false,
-    };
-  }
-
-  // BASIC tier (default)
-  return {
-    canViewCustomDateRange: false,
-    canViewTimeSeries: true, // Basic chart only
-    canViewTierBreakdown: false,
-    canViewCustomerTable: false,
-    canViewRevenue: false,
-    canExport: false,
-    canAutoRefresh: false,
-    canViewRoi: false,
-  };
+  return resolveAnalyticsAccessMatrix(tier, isAdmin);
 }
 
 /**

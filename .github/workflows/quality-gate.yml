@@ -45,11 +45,11 @@ jobs:
         run: npm run check:boundaries
 
       - name: Gate 1d — Vitest with coverage
-        run: npm test -- --coverage --reporter=junit --outputFile=test-results.xml
+        run: npm test -- --coverage --maxWorkers=2 --reporter=junit --outputFile=test-results.xml
         env:
           CI: true
 
-      - name: Gate 3a — Changed executable lines coverage >= 70%
+      - name: Gate 3a — Changed executable lines and branches coverage >= 70%
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/check-diff-coverage.mjs

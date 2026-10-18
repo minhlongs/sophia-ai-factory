@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Absolute Vacuum Singularity Mesh dispatching, Net-Zero power verification, and Nineteen-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planAbsoluteVacuumBatchDispatch,
   type AbsoluteVacuumDispatchPlan,
@@ -20,6 +19,11 @@ import {
   type AbsoluteVacuumPowerValidationOutput,
 } from '@/tree/energy/absolute-vacuum-energy-engine';
 import type { AbsoluteVacuumSingularityMesh } from '@/seed/types/absolute-vacuum-singularity-nexus';
+import {
+  recordMeshBatchDispatchD1,
+  recordMeshPowerAllocationD1,
+  recordMeshSlaAuditD1,
+} from './mesh-actions-d1-recorder';
 
 export interface AbsoluteVacuumDispatchActionResult {
   success: boolean;
@@ -49,32 +53,16 @@ export async function dispatchAbsoluteVacuumBatchAction(
 ): Promise<AbsoluteVacuumDispatchActionResult> {
   try {
     const data = planAbsoluteVacuumBatchDispatch(meshes, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO pan_galactic_pipeline_dispatches (
-             id, dispatch_ref, session_token, mesh_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PG-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `TOKEN-PG-${Date.now()}`,
-          data.targetMeshRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.015,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS',
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordMeshBatchDispatchD1({
+      table: 'pan_galactic_pipeline_dispatches',
+      refPrefix: 'PG-DISPATCH',
+      tokenPrefix: 'TOKEN-PG',
+      targetMeshRef: data.targetMeshRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.015,
+      relativisticDriftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (error) {
     return {
@@ -92,29 +80,15 @@ export async function allocateAbsoluteVacuumPowerAction(
 ): Promise<AbsoluteVacuumPowerActionResult> {
   try {
     const data = validateAbsoluteVacuumPower(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO singularity_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified, allocated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `PG-PWR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          'ABSOLUTE_ZERO_POINT_HARVESTER',
-          params.allocatedMegawatts,
-          params.carbonIntensityGPerKwh,
-          params.boseEinsteinCop,
-          data.isCompliant ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordMeshPowerAllocationD1({
+      table: 'singularity_power_allocations',
+      refPrefix: 'PG-PWR',
+      powerSourceType: 'ABSOLUTE_ZERO_POINT_HARVESTER',
+      allocatedMegawatts: params.allocatedMegawatts,
+      carbonIntensityGPerKwh: params.carbonIntensityGPerKwh,
+      boseEinsteinCop: params.boseEinsteinCop,
+      isCompliant: data.isCompliant,
+    });
     return { success: data.isCompliant, data };
   } catch (error) {
     return {
@@ -133,36 +107,19 @@ export async function auditNineteenNinesSlaAction(
 ): Promise<NineteenNinesSlaActionResult> {
   try {
     const data = evaluateNineteenNinesSla(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO nineteen_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_nineteen_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-19N-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          evaluationPeriodMonth,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'NINETEEN_NINES_CERTIFIED' ? 1 : 0,
-          32768,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return {
-      success: data.slaVerdict === 'NINETEEN_NINES_CERTIFIED',
-      data,
-    };
+    const isSlaMet = data.slaVerdict === 'NINETEEN_NINES_CERTIFIED';
+    await recordMeshSlaAuditD1({
+      table: 'nineteen_nines_sla_audits',
+      metColumn: 'is_nineteen_nines_met',
+      refPrefix: 'SLA-19N',
+      evaluationPeriodMonth,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isSlaMet,
+      bftConsensusNodes: 32768,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isSlaMet, data };
   } catch (error) {
     return {
       success: false,

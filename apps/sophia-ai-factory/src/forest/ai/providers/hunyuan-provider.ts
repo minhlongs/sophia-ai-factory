@@ -10,8 +10,8 @@ import {
   type VideoRenderInput,
   type VideoRenderStatus,
 } from '@/seed/ai/multimodal-provider-interface';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
+import { executeRunpodRender, executeRunpodStatusCheck } from './hunyuan-runpod-http';
 
 export { HunyuanVideoAdapter } from './hunyuan-video-adapter';
 
@@ -58,91 +58,27 @@ export class HunyuanVideoClient implements IVideoRenderingProvider {
   }
 
   async renderVideo(input: VideoRenderInput, keyRefOverride?: string): Promise<{ jobId: string }> {
-    const effectiveKeyRef = keyRefOverride || this.keyRef;
-    if (!shouldAllowRequest('runpod', effectiveKeyRef)) {
-      throw new Error(`[HunyuanVideo] Circuit breaker open for runpod (${effectiveKeyRef})`);
-    }
-
-    const prompt =
-      input.script ||
-      (input.options?.topic as string) ||
-      (input.options?.scenes as Array<{ prompt?: string }>)?.[0]?.prompt ||
-      'Cinematic photorealistic video';
-    const duration = typeof input.options?.duration === 'number' ? input.options.duration : 30;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/${this.endpointId}/run`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          input: {
-            prompt,
-            duration,
-            face_url: input.faceUrl,
-            audio_url: input.audioUrl,
-            fps: 30,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        recordFailure('runpod', classifyHttpStatus(response.status), effectiveKeyRef);
-        throw new Error(`Runpod HunyuanVideo failed: ${response.status} - ${errText}`);
-      }
-
-      const result = (await response.json()) as { id: string };
-      recordSuccess('runpod', effectiveKeyRef);
-      return { jobId: result.id };
-    } catch (err) {
-      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
-        recordFailure('runpod', classifyError(err), effectiveKeyRef);
-      }
-      throw err;
-    }
+    return executeRunpodRender(
+      {
+        apiKey: this.apiKey,
+        endpointId: this.endpointId,
+        baseUrl: this.baseUrl,
+        effectiveKeyRef: keyRefOverride || this.keyRef,
+      },
+      input,
+    );
   }
 
   async checkStatus(jobId: string, keyRefOverride?: string): Promise<VideoRenderStatus> {
-    const effectiveKeyRef = keyRefOverride || this.keyRef;
-    if (!shouldAllowRequest('runpod', effectiveKeyRef)) {
-      throw new Error(`[HunyuanVideo] Circuit breaker open for runpod (${effectiveKeyRef})`);
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/${this.endpointId}/status/${jobId}`, {
-        headers: { Authorization: `Bearer ${this.apiKey}` },
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        recordFailure('runpod', classifyHttpStatus(response.status), effectiveKeyRef);
-        throw new Error(`Runpod checkStatus failed: ${response.status} - ${errText}`);
-      }
-
-      const result = (await response.json()) as {
-        status: 'IN_QUEUE' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-        output?: { download_url?: string };
-        error?: string;
-      };
-
-      recordSuccess('runpod', effectiveKeyRef);
-
-      if (result.status === 'COMPLETED') {
-        return { status: 'completed', videoUrl: result.output?.download_url };
-      }
-      if (result.status === 'FAILED' || result.status === 'CANCELLED') {
-        return { status: 'failed', error: result.error || `Runpod job status: ${result.status}` };
-      }
-      return { status: result.status === 'IN_PROGRESS' ? 'processing' : 'pending' };
-    } catch (err) {
-      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
-        recordFailure('runpod', classifyError(err), effectiveKeyRef);
-      }
-      throw err;
-    }
+    return executeRunpodStatusCheck(
+      {
+        apiKey: this.apiKey,
+        endpointId: this.endpointId,
+        baseUrl: this.baseUrl,
+        effectiveKeyRef: keyRefOverride || this.keyRef,
+      },
+      jobId,
+    );
   }
 
   async health(keyRefOverride?: string): Promise<{ healthy: boolean; latencyMs?: number; error?: string }> {

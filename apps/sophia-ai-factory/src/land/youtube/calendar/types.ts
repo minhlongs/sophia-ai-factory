@@ -65,3 +65,47 @@ export function rowToEntry(row: Record<string, unknown>): CalendarEntry {
     updatedAt: String(row.updated_at),
   };
 }
+
+export type CalendarEntryPatch = Partial<
+  Pick<
+    CalendarEntry,
+    | 'status'
+    | 'strategyId'
+    | 'scriptId'
+    | 'seoId'
+    | 'productionId'
+    | 'publishedVideoId'
+    | 'notes'
+    | 'scheduledAt'
+  >
+>;
+
+export const INSERT_CALENDAR_ENTRY_SQL = `INSERT INTO youtube_content_calendar
+  (id, user_id, channel_config_id, title, topic, content_type, status, scheduled_at,
+   strategy_id, script_id, seo_id, production_id, notes)
+  VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)`;
+
+export function buildCalendarUpdateParts(patch: CalendarEntryPatch): {
+  fields: string[];
+  values: unknown[];
+} {
+  const fields: string[] = [];
+  const values: unknown[] = [];
+  const map: Array<[keyof CalendarEntryPatch, string]> = [
+    ['status', 'status = ?'],
+    ['strategyId', 'strategy_id = ?'],
+    ['scriptId', 'script_id = ?'],
+    ['seoId', 'seo_id = ?'],
+    ['productionId', 'production_id = ?'],
+    ['publishedVideoId', 'published_video_id = ?'],
+    ['notes', 'notes = ?'],
+    ['scheduledAt', 'scheduled_at = ?'],
+  ];
+  for (const [key, clause] of map) {
+    if (patch[key] !== undefined) {
+      fields.push(clause);
+      values.push(patch[key]);
+    }
+  }
+  return { fields, values };
+}

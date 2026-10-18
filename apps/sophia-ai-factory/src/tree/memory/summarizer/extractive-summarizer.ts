@@ -6,10 +6,6 @@
 
 import type { ChatMessage } from '@/seed/ai/provider-interface';
 import {
-  TOPIC_KEYWORDS,
-  DECISION_PATTERNS,
-  PREFERENCE_PATTERNS,
-  ACTION_PATTERNS,
   MAX_TOPICS,
   MAX_DECISIONS,
   MAX_PREFERENCES,
@@ -18,72 +14,21 @@ import {
   truncate,
   truncateToTokenBudget,
 } from './types';
+import {
+  deduplicate,
+  extractTopics,
+  extractDecisions,
+  extractPreferences,
+  extractActions,
+} from './key-point-matchers';
 
-export function deduplicate(items: string[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const item of items) {
-    const normalized = item.toLowerCase().trim();
-    if (!seen.has(normalized)) {
-      seen.add(normalized);
-      result.push(item);
-    }
-  }
-  return result;
-}
-
-export function extractTopics(text: string): string[] {
-  const found: string[] = [];
-  const lowerText = text.toLowerCase();
-  for (const kw of TOPIC_KEYWORDS) {
-    if (lowerText.includes(kw)) {
-      found.push(kw);
-    }
-  }
-  return found;
-}
-
-export function extractDecisions(text: string): string[] {
-  const found: string[] = [];
-  for (const pattern of DECISION_PATTERNS) {
-    const matches = text.match(pattern);
-    if (matches) {
-      const decision = matches[1]?.trim();
-      if (decision && decision.length > 2) {
-        found.push(decision);
-      }
-    }
-  }
-  return found;
-}
-
-export function extractPreferences(text: string): string[] {
-  const found: string[] = [];
-  for (const pattern of PREFERENCE_PATTERNS) {
-    const matches = text.match(pattern);
-    if (matches) {
-      const pref = matches[1]?.trim();
-      if (pref && pref.length > 2) {
-        found.push(pref);
-      }
-    }
-  }
-  return found;
-}
-
-export function extractActions(text: string): string[] {
-  const found: string[] = [];
-  for (const pattern of ACTION_PATTERNS) {
-    const matches = text.match(pattern);
-    if (matches) {
-      const action = matches[1]?.trim();
-      if (action && action.length > 2) {
-        found.push(action);
-      }
-    }
-  }
-  return found;
-}
+export {
+  deduplicate,
+  extractTopics,
+  extractDecisions,
+  extractPreferences,
+  extractActions,
+};
 
 export function extractKeyPoints(messages: ChatMessage[]): {
   topics: string[];

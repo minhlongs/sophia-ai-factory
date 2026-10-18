@@ -41,9 +41,7 @@ export async function executeSovereignSwapAction(
 ): Promise<SwapActionResult> {
   try {
     const validation = validateSwapLineDraw(params.swapLine, params.request.drawAmountCents);
-    if (!validation.valid) {
-      return { success: false, error: validation.reason };
-    }
+    if (!validation.valid) return { success: false, error: validation.reason };
 
     const result = calculateSwapExecution(
       params.swapLine,
@@ -55,19 +53,14 @@ export async function executeSovereignSwapAction(
     const db = await getD1();
     if (db) {
       await db
-        .prepare(
-          `UPDATE sovereign_swap_lines
-           SET drawn_amount_cents = drawn_amount_cents + ?
-           WHERE line_code = ?`
-        )
+        .prepare(`UPDATE sovereign_swap_lines SET drawn_amount_cents = drawn_amount_cents + ? WHERE line_code = ?`)
         .bind(params.request.drawAmountCents, params.swapLine.lineCode)
         .run();
     }
 
     return { success: true, result };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -110,11 +103,7 @@ export async function rebalanceSsdrReserveAction(
       const eventRef = `STABILIZE_${Date.now()}`;
       await db
         .prepare(
-          `INSERT INTO reserve_stabilization_events (
-             id, event_ref, operation_type, currency, amount_cents,
-             pre_stabilization_backing_bps, post_stabilization_backing_bps,
-             clearing_hash, status
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO reserve_stabilization_events (id, event_ref, operation_type, currency, amount_cents, pre_stabilization_backing_bps, post_stabilization_backing_bps, clearing_hash, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(
           `evt_${eventRef}`,
@@ -145,7 +134,6 @@ export async function rebalanceSsdrReserveAction(
       recommendedOperation: advice.requiredOperation,
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: errorMsg };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

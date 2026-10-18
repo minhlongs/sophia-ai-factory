@@ -3,10 +3,15 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
-import { encrypt } from '@/seed/security/encryption-aes-gcm';
 import { requireOrgMembership } from '@/seed/db/org-membership';
 import { UserProfileFormValues, userProfileFormSchema } from '@/land/schemas/settings';
 import { EncryptedApiKeys } from '@/seed/types/user';
+import {
+  buildDefaultUserProfileFormValues,
+  mapRecordToUserProfileFormValues,
+  mergeAndEncryptApiKeys,
+  parseEncryptedApiKeys,
+} from './settings-helpers';
 
 /**
  * Fetch the current user's profile, including settings and masked API keys.
@@ -34,57 +39,13 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
       .single();
 
     if (data) {
-      const profile = data as Record<string, unknown>;
-      const rawKeys = profile.api_keys;
-      const apiKeys = (typeof rawKeys === 'string' ? JSON.parse(rawKeys) : rawKeys || {}) as EncryptedApiKeys;
-      const rawSettings = profile.settings;
-      const settings = typeof rawSettings === 'string' ? JSON.parse(rawSettings) : rawSettings || {};
-
-      const maskedKeys = {
-        openai: apiKeys.openai ? '********' : '',
-        anthropic: apiKeys.anthropic ? '********' : '',
-        elevenlabs: apiKeys.elevenlabs ? '********' : '',
-      };
-
-      const theme = (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system')
-        ? settings.theme
-        : 'system';
-
-      return {
-        fullName: (user.full_name as string) || '',
-        email: user.email || '',
-        settings: {
-          theme,
-          notifications: {
-            email: {
-              marketing: settings.notifications?.email?.marketing ?? false,
-              security: settings.notifications?.email?.security ?? true,
-              updates: settings.notifications?.email?.updates ?? true,
-            },
-            telegram: {
-              enabled: settings.notifications?.telegram?.enabled ?? false,
-            },
-          },
-        },
-        apiKeys: maskedKeys,
-      };
+      return mapRecordToUserProfileFormValues(user, data as Record<string, unknown>);
     }
   } catch {
     // user_profiles table may not exist yet in D1
   }
 
-  return {
-    fullName: (user.full_name as string) || '',
-    email: user.email || '',
-    settings: {
-      theme: 'system',
-      notifications: {
-        email: { marketing: false, security: true, updates: true },
-        telegram: { enabled: false },
-      },
-    },
-    apiKeys: { openai: '', anthropic: '', elevenlabs: '' },
-  };
+  return buildDefaultUserProfileFormValues(user);
 }
 
 /**
@@ -125,33 +86,13 @@ export async function updateUserProfile(data: UserProfileFormValues) {
         .single();
 
       if (currentData) {
-        const row = currentData as Record<string, unknown>;
-        const rawKeys = row.api_keys;
-        currentKeys = (typeof rawKeys === 'string' ? JSON.parse(rawKeys) : rawKeys || {}) as EncryptedApiKeys;
+        currentKeys = parseEncryptedApiKeys((currentData as Record<string, unknown>).api_keys);
       }
     } catch {
       // profile may not exist yet
     }
 
-    const newEncryptedKeys: EncryptedApiKeys = { ...currentKeys };
-
-    if (apiKeys.openai && apiKeys.openai !== '********') {
-      newEncryptedKeys.openai = await encrypt(apiKeys.openai);
-    } else if (apiKeys.openai === '') {
-      delete newEncryptedKeys.openai;
-    }
-
-    if (apiKeys.anthropic && apiKeys.anthropic !== '********') {
-      newEncryptedKeys.anthropic = await encrypt(apiKeys.anthropic);
-    } else if (apiKeys.anthropic === '') {
-      delete newEncryptedKeys.anthropic;
-    }
-
-    if (apiKeys.elevenlabs && apiKeys.elevenlabs !== '********') {
-      newEncryptedKeys.elevenlabs = await encrypt(apiKeys.elevenlabs);
-    } else if (apiKeys.elevenlabs === '') {
-      delete newEncryptedKeys.elevenlabs;
-    }
+    const newEncryptedKeys = await mergeAndEncryptApiKeys(currentKeys, apiKeys);
 
     await db
       .from('user_profiles')

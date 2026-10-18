@@ -8,8 +8,6 @@
 
 'use server';
 
-import { getD1 } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -24,7 +22,7 @@ import type {
   PartnerCoOpClaim,
   CoOpClaimStatus,
 } from '@/tree/partners/types';
-import { verifyPartnerOwnership } from './ownership-verifier';
+import { authorizeCoOpQueryContext } from './co-op-query-guard';
 import type { CoOpActionError } from './types';
 
 /**
@@ -34,28 +32,13 @@ export async function getPartnerCoOpSummaryAction(
   partnerId: string,
 ): Promise<Result<PartnerCoOpSummary, CoOpActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to view Co-Op summary' });
-    }
+    const ctx = await authorizeCoOpQueryContext(
+      partnerId,
+      'Authentication required to view Co-Op summary',
+    );
+    if (!ctx.ok) return ctx.result;
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const trimmedPartnerId = partnerId?.trim();
-    if (!trimmedPartnerId) {
-      return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
-    }
-
-    // Enforce object ownership
-    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
-    if (!authCheck.ok) {
-      return failure(authCheck.error);
-    }
-
-    const summary = await getPartnerCoOpSummary(db, trimmedPartnerId);
+    const summary = await getPartnerCoOpSummary(ctx.db, ctx.trimmedPartnerId);
     if (!summary) {
       return failure({ code: 'PARTNER_NOT_FOUND', message: 'Partner not found' });
     }
@@ -75,28 +58,13 @@ export async function getPartnerCoOpAllocationsAction(
   partnerId: string,
 ): Promise<Result<CoOpBudgetAllocation[], CoOpActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to view Co-Op allocations' });
-    }
+    const ctx = await authorizeCoOpQueryContext(
+      partnerId,
+      'Authentication required to view Co-Op allocations',
+    );
+    if (!ctx.ok) return ctx.result;
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const trimmedPartnerId = partnerId?.trim();
-    if (!trimmedPartnerId) {
-      return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
-    }
-
-    // Enforce object ownership
-    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
-    if (!authCheck.ok) {
-      return failure(authCheck.error);
-    }
-
-    const allocations = await getPartnerCoOpAllocations(db, trimmedPartnerId);
+    const allocations = await getPartnerCoOpAllocations(ctx.db, ctx.trimmedPartnerId);
     return success(allocations);
   } catch (err: unknown) {
     const error = toError(err);
@@ -113,28 +81,13 @@ export async function getPartnerCoOpClaimsAction(
   status?: CoOpClaimStatus,
 ): Promise<Result<PartnerCoOpClaim[], CoOpActionError>> {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return failure({ code: 'UNAUTHORIZED', message: 'Authentication required to view Co-Op claims' });
-    }
+    const ctx = await authorizeCoOpQueryContext(
+      partnerId,
+      'Authentication required to view Co-Op claims',
+    );
+    if (!ctx.ok) return ctx.result;
 
-    const db = await getD1();
-    if (!db) {
-      return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
-    }
-
-    const trimmedPartnerId = partnerId?.trim();
-    if (!trimmedPartnerId) {
-      return failure({ code: 'INVALID_INPUT', message: 'partnerId is required' });
-    }
-
-    // Enforce object ownership
-    const authCheck = await verifyPartnerOwnership(db, trimmedPartnerId, user.id, user.role);
-    if (!authCheck.ok) {
-      return failure(authCheck.error);
-    }
-
-    const claims = await getPartnerCoOpClaims(db, trimmedPartnerId, status);
+    const claims = await getPartnerCoOpClaims(ctx.db, ctx.trimmedPartnerId, status);
     return success(claims);
   } catch (err: unknown) {
     const error = toError(err);

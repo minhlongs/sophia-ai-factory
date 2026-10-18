@@ -9,18 +9,16 @@
 
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { sendSeedEmail } from '@/seed/email/email-sender';
 import { checkD1RateLimit } from '@/seed/security/d1-rate-limiter';
-import { buildAffiliateInvitationEmail } from '@/tree/email/templates/affiliate-invitation';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import type { InviteAffiliateInput, InviteAffiliateResult } from './types';
+import { generateSecureInviteToken, getAppBaseUrl } from './utils';
 import {
-  clampCommissionRate,
-  generateSecureInviteToken,
-  getAppBaseUrl,
-  isValidEmail,
-} from './utils';
+  dispatchAffiliateInviteEmail,
+  insertAffiliateInviteRow,
+  validateInviteAffiliateInput,
+} from './invite-action-helpers';
 
 /**
  * Server Action: Invite Affiliate Partner
@@ -29,29 +27,18 @@ import {
  * and dispatches bilingual invitation email via registered IoC email sender.
  */
 export async function inviteAffiliateAction(
-  input: InviteAffiliateInput
+  input: InviteAffiliateInput,
 ): Promise<InviteAffiliateResult> {
   try {
     // 1. Input Sanitization & Validation
-    const partnerName = input.partnerName?.trim();
-    if (!partnerName || partnerName.length < 2) {
+    const validated = validateInviteAffiliateInput(input);
+    if (!validated.ok) {
       return {
         success: false,
-        error: 'Partner name is required (min 2 characters)',
+        error: validated.error,
       };
     }
-
-    const email = input.email?.trim().toLowerCase();
-    if (!email || !isValidEmail(email)) {
-      return {
-        success: false,
-        error: 'Please enter a valid email address',
-      };
-    }
-
-    const customRate = clampCommissionRate(input.customRateOverridePct);
-    const welcomeMessage = input.welcomeMessage?.trim();
-    const assetKits = Array.isArray(input.assetKitSelected) ? input.assetKitSelected : [];
+    const { partnerName, email, customRate, welcomeMessage, assetKits } = validated.data;
 
     // 2. Authentication & Rate Limiting
     const user = await getCurrentUser().catch(() => null);
@@ -89,61 +76,32 @@ export async function inviteAffiliateAction(
     const assetKitsJson = JSON.stringify(assetKits);
 
     // 5. Atomic Insertion into D1 affiliate_invites
-    await db
-      .prepare(
-        `INSERT INTO affiliate_invites (
-          id, inviter_user_id, partner_name, email, custom_commission_rate_pct,
-          welcome_message, asset_kit_urls, invite_token, status, expires_at, created_at, updated_at
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'pending', ?9, ?10, ?10)`
-      )
-      .bind(
-        inviteId,
-        inviterId,
-        partnerName,
-        email,
-        customRate,
-        welcomeMessage || null,
-        assetKitsJson,
-        token,
-        expiresAt,
-        now
-      )
-      .run();
+    await insertAffiliateInviteRow(db, {
+      inviteId,
+      inviterId,
+      partnerName,
+      email,
+      customRate,
+      welcomeMessage,
+      assetKitsJson,
+      token,
+      expiresAt,
+      now,
+    });
 
-    // 6. Generate Join URL & Render Bilingual Email Template
+    // 6-7. Generate Join URL & Dispatch Transactional Email via canonical IoC
     const baseUrl = getAppBaseUrl();
     const joinUrl = `${baseUrl}/affiliate/join?token=${token}`;
 
-    const { html, subject } = buildAffiliateInvitationEmail({
+    const emailDispatched = await dispatchAffiliateInviteEmail({
+      email,
       partnerName,
-      customCommissionRatePct: customRate,
+      customRate,
       joinUrl,
-      welcomeMessage: welcomeMessage || undefined,
+      welcomeMessage,
       assetKits,
       expiresInDays,
     });
-
-    // 7. Dispatch Transactional Email via canonical IoC
-    let emailDispatched = false;
-    try {
-      const emailResult = await sendSeedEmail({
-        to: email,
-        subject,
-        html,
-      });
-      emailDispatched = emailResult.success;
-      if (!emailResult.success) {
-        logger.warn('[affiliate-actions] Email dispatch warning', {
-          email,
-          error: emailResult.error,
-        });
-      }
-    } catch (emailErr) {
-      logger.warn('[affiliate-actions] Failed to dispatch invitation email', {
-        email,
-        error: toError(emailErr).message,
-      });
-    }
 
     logger.info('[affiliate-actions] Affiliate invitation created successfully', {
       inviteId,

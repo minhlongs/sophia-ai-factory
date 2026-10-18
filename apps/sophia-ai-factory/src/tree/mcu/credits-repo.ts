@@ -9,46 +9,10 @@
  * - addCredits always succeeds (INSERT OR REPLACE + UPDATE)
  */
 
-import { createServerClient, getD1 } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
-export interface McuBalance {
-  credits_remaining: number;
-  credits_total_purchased: number;
-  credits_total_used: number;
-}
-
-interface BalanceRow {
-  credits_remaining: number;
-  credits_total_purchased: number;
-  credits_total_used: number;
-}
-
-/**
- * Get current MCU balance for a user.
- * Returns zeroed balance if no row exists.
- */
-export async function getBalance(userId: string): Promise<McuBalance> {
-  const db = createServerClient();
-  try {
-    const { data } = await db
-      .from('user_mcu_balance')
-      .select('credits_remaining, credits_total_purchased, credits_total_used')
-      .eq('user_id', userId)
-      .single() as { data: BalanceRow | null; error: unknown };
-
-    if (!data) {
-      return { credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 };
-    }
-    return {
-      credits_remaining: data.credits_remaining,
-      credits_total_purchased: data.credits_total_purchased,
-      credits_total_used: data.credits_total_used,
-    };
-  } catch {
-    return { credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 };
-  }
-}
+export { getBalance, listTransactions, type McuBalance } from './credits-queries';
 
 /**
  * Atomically deduct credits from user balance.
@@ -64,9 +28,8 @@ export async function deductCredits(
   if (amount <= 0) return true;
 
   try {
-    const _db = await getD1();
-    if (!_db) throw new Error('D1 database binding not available');
-    const d1 = _db;
+    const d1 = await getD1();
+    if (!d1) throw new Error('D1 database binding not available');
 
     const stmt = d1.prepare(
       `UPDATE user_mcu_balance
@@ -82,10 +45,13 @@ export async function deductCredits(
       return false;
     }
 
-    await d1.prepare(
-      `INSERT INTO mcu_transactions (user_id, delta, reason, mission_id, metadata)
-       VALUES (?, ?, ?, ?, ?)`
-    ).bind(userId, -amount, reason, missionId, JSON.stringify({ auto: true })).run();
+    await d1
+      .prepare(
+        `INSERT INTO mcu_transactions (user_id, delta, reason, mission_id, metadata)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .bind(userId, -amount, reason, missionId, JSON.stringify({ auto: true }))
+      .run();
 
     return true;
   } catch (err) {
@@ -107,48 +73,31 @@ export async function addCredits(
   if (amount <= 0) return true;
 
   try {
-    const _db = await getD1();
-    if (!_db) throw new Error('D1 database binding not available');
-    const d1 = _db;
+    const d1 = await getD1();
+    if (!d1) throw new Error('D1 database binding not available');
 
-    // Upsert balance row
-    await d1.prepare(
-      `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
-       VALUES (?, ?, ?, strftime('%s','now'))
-       ON CONFLICT(user_id) DO UPDATE SET
-         credits_remaining = credits_remaining + excluded.credits_remaining,
-         credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
-         updated_at = strftime('%s','now')`
-    ).bind(userId, amount, amount).run();
+    await d1
+      .prepare(
+        `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
+         VALUES (?, ?, ?, strftime('%s','now'))
+         ON CONFLICT(user_id) DO UPDATE SET
+           credits_remaining = credits_remaining + excluded.credits_remaining,
+           credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
+           updated_at = strftime('%s','now')`
+      )
+      .bind(userId, amount, amount)
+      .run();
 
-    await d1.prepare(
-      `INSERT INTO mcu_transactions (user_id, delta, reason, metadata)
-       VALUES (?, ?, ?, ?)`
-    ).bind(userId, amount, reason, metadata ? JSON.stringify(metadata) : null).run();
+    await d1
+      .prepare(
+        `INSERT INTO mcu_transactions (user_id, delta, reason, metadata)
+         VALUES (?, ?, ?, ?)`
+      )
+      .bind(userId, amount, reason, metadata ? JSON.stringify(metadata) : null)
+      .run();
     return true;
   } catch (err) {
     logger.error('[MCU] addCredits error', err instanceof Error ? err : new Error(String(err)));
     return false;
-  }
-}
-
-/**
- * List recent MCU transactions for a user.
- */
-export async function listTransactions(
-  userId: string,
-  limit = 20,
-): Promise<Array<{ id: string; delta: number; reason: string; mission_id: string | null; created_at: number }>> {
-  const db = createServerClient();
-  try {
-    const { data } = await db
-      .from('mcu_transactions')
-      .select('id, delta, reason, mission_id, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit) as { data: Array<{ id: string; delta: number; reason: string; mission_id: string | null; created_at: number }> | null; error: unknown };
-    return data ?? [];
-  } catch {
-    return [];
   }
 }

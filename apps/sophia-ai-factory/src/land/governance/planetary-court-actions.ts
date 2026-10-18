@@ -22,6 +22,7 @@ import type {
   CompactedTransaction,
   ConstitutionalInvariant,
 } from '@/seed/types/post-quantum-constitution';
+import { recordCourtCompactionProof } from './cosmic-court-d1-recorder';
 
 export interface ZkCompactActionResult {
   success: boolean;
@@ -51,30 +52,19 @@ export async function compactZkStateAction(
 ): Promise<ZkCompactActionResult> {
   try {
     const data = compactStateWithZkSnark(previousStateRoot, transactions);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO zk_state_compaction_proofs (
-             id, proof_ref, batch_transaction_count, previous_state_root,
-             new_state_root, snark_proof_bytes_length, verification_time_micros,
-             verifier_circuit_identifier, is_mathematically_sound
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          `zk_${Date.now()}`,
-          proofRef,
-          data.batchTransactionCount,
-          data.previousStateRoot,
-          data.newStateRoot,
-          data.snarkProofBytesLength,
-          data.verificationTimeMicros,
-          data.verifierCircuitIdentifier,
-          data.isMathematicallySound ? 1 : 0
-        )
-        .run();
-    }
+    await recordCourtCompactionProof({
+      tableName: 'zk_state_compaction_proofs',
+      id: `zk_${Date.now()}`,
+      proofRef,
+      proofLengthColumn: 'snark_proof_bytes_length',
+      batchTransactionCount: data.batchTransactionCount,
+      previousStateRoot: data.previousStateRoot,
+      newStateRoot: data.newStateRoot,
+      proofBytesLength: data.snarkProofBytesLength,
+      verificationTimeMicros: data.verificationTimeMicros,
+      verifierCircuitIdentifier: data.verifierCircuitIdentifier,
+      isMathematicallySound: data.isMathematicallySound,
+    });
 
     return { success: data.isMathematicallySound, data };
   } catch (err: unknown) {
@@ -98,12 +88,7 @@ export async function arbitratePlanetaryDisputeAction(
     if (db) {
       await db
         .prepare(
-          `INSERT INTO planetary_court_arbitrations (
-             id, dispute_case_ref, claimant_participant_id, respondent_participant_id,
-             dispute_value_cents, contract_merkle_root, evidence_sha256,
-             juror_count, supermajority_threshold_pct, verdict,
-             jurors_slashed_count, executed_remedy_cents, resolved_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO planetary_court_arbitrations (id, dispute_case_ref, claimant_participant_id, respondent_participant_id, dispute_value_cents, contract_merkle_root, evidence_sha256, juror_count, supermajority_threshold_pct, verdict, jurors_slashed_count, executed_remedy_cents, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(
           `court_${Date.now()}`,

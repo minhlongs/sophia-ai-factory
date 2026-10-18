@@ -26,6 +26,11 @@ import type {
   EnterpriseLeadEnrichmentRow,
 } from './deal-entities';
 
+export type {
+  QueryEnterpriseDealsFilters,
+  QueryEnterpriseDealsResult,
+} from './deal-query-contracts';
+
 export function mapDealRowToDeal(row: EnterpriseDealRow): EnterpriseDeal {
   let parsedAnalysis: BantAnalysis;
   try {
@@ -124,22 +129,4 @@ export function mapEnrichmentRowToEnrichment(
     createdAt: Number(row.created_at || 0),
     updatedAt: Number(row.updated_at || 0),
   };
-}
-
-export interface QueryEnterpriseDealsFilters {
-  stage?: DealStage;
-  pipelineTier?: PipelineTier;
-  search?: string;
-  limit?: number;
-  offset?: number;
-  orderBy?: 'created_at' | 'bant_score' | 'deal_value_estimate_cents';
-  orderDirection?: 'asc' | 'desc';
-}
-
-export interface QueryEnterpriseDealsResult {
-  deals: EnterpriseDeal[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
 }

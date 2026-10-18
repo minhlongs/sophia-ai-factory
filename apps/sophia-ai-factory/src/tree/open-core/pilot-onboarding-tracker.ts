@@ -10,56 +10,25 @@
 
 import { computeHmacHex } from '@/seed/security/signature-primitives';
 import { success, failure, type Result } from '@/seed/types/result';
+import {
+  MANDATORY_PILOT_STEPS,
+  type PilotStepKey,
+  type PilotPaymentProvider,
+  type CanonicalPilotTier,
+  type PilotStepRecord,
+  type PilotJourneyState,
+  type PilotReadinessReport,
+} from './pilot-onboarding-types';
 
-export type PilotStepKey =
-  | 'landing_locale_verified'
-  | 'byok_wizard_completed'
-  | 'telegram_bot_linked'
-  | 'payment_webhook_confirmed'
-  | 'd1_tier_activated'
-  | 'social_publishing_scheduled';
-
-export type PilotPaymentProvider = 'nowpayments' | 'payos';
-export type CanonicalPilotTier = 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
-
-export interface PilotStepRecord {
-  readonly stepKey: PilotStepKey;
-  readonly status: 'passed' | 'failed' | 'skipped';
-  readonly completedAt?: string;
-  readonly defectIssueUrl?: string;
-  readonly notes?: string;
-}
-
-export interface PilotJourneyState {
-  readonly customerId: string;
-  readonly liveEdgeShortSha: string;
-  readonly paymentProvider: string;
-  readonly activatedTier: CanonicalPilotTier;
-  readonly byokEncryptedInD1: boolean;
-  readonly configuredProviders: readonly string[];
-  readonly steps: readonly PilotStepRecord[];
-}
-
-export interface PilotReadinessReport {
-  readonly customerId: string;
-  readonly liveEdgeShortSha: string;
-  readonly paymentProvider: PilotPaymentProvider;
-  readonly activatedTier: CanonicalPilotTier;
-  readonly completionPercentage: number;
-  readonly passedSteps: readonly PilotStepKey[];
-  readonly failedSteps: readonly PilotStepKey[];
-  readonly zeroDefectVerified: boolean;
-  readonly attestationSignatureHex: string;
-}
-
-export const MANDATORY_PILOT_STEPS: readonly PilotStepKey[] = [
-  'landing_locale_verified',
-  'byok_wizard_completed',
-  'telegram_bot_linked',
-  'payment_webhook_confirmed',
-  'd1_tier_activated',
-  'social_publishing_scheduled',
-];
+export {
+  MANDATORY_PILOT_STEPS,
+  type PilotStepKey,
+  type PilotPaymentProvider,
+  type CanonicalPilotTier,
+  type PilotStepRecord,
+  type PilotJourneyState,
+  type PilotReadinessReport,
+};
 
 const BANNED_PROVIDERS: ReadonlySet<string> = new Set(['polar', 'paypal']);
 const ALLOWED_PROVIDERS: ReadonlySet<string> = new Set(['nowpayments', 'payos']);

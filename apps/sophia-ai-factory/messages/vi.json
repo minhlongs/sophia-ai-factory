@@ -440,7 +440,22 @@
       "vietQrCheckout": "Thanh toán VietQR Nội địa (PayOS)",
       "vietQrDesc": "Chuyển khoản ngân hàng Việt Nam tự động kích hoạt trong 30 giây.",
       "enterpriseNotice": "Cần giải pháp chuyên biệt? Liên hệ gói Doanh nghiệp không giới hạn.",
-      "continue": "Tiếp Tục"
+      "continue": "Tiếp Tục",
+      "planPrice": "Giá gói",
+      "monthlyPrice": "{amount} USDT mỗi tháng",
+      "oneTimePrice": "{amount} USDT thanh toán một lần",
+      "billingCycle": "Chu kỳ thanh toán",
+      "monthlyBilling": "Gia hạn tự động hàng tháng",
+      "oneTimeBilling": "Thanh toán một lần, quyền truy cập trọn đời",
+      "nextPayment": "Kỳ thanh toán tiếp theo",
+      "renewalDatePending": "Chưa có ngày gia hạn",
+      "noRenewal": "Không gia hạn",
+      "estimatedProduction": "Sản lượng ước tính",
+      "variesByWorkflow": "Tùy quy trình sử dụng",
+      "planBaseQuota": "Hạn mức cơ bản của gói",
+      "monthlyMcuQuota": "{mcu} MCU mỗi tháng",
+      "providerCosts": "Chi phí nhà cung cấp AI",
+      "directProviderBilling": "Thanh toán trực tiếp cho nhà cung cấp AI"
     },
     "firstMission": {
       "title": "Kế Hoạch Video Đầu Tiên (Mission Blueprint)",

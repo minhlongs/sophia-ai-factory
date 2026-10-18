@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { CouponInputProps, FreeModalState, PromoValidateResponse } from "./types";
 import { FreeRedemptionModal } from "./free-redemption-modal";
+import { CouponCodeForm } from "./coupon-code-form";
 
 export function CouponInputView({ onDiscountApplied, onDiscountCleared, userId }: CouponInputProps) {
   const t = useTranslations("pricing.coupon");
@@ -93,61 +94,21 @@ export function CouponInputView({ onDiscountApplied, onDiscountCleared, userId }
 
   return (
     <>
-      <div className="mx-auto max-w-md mb-10">
-        <label htmlFor="coupon-code-input" className="block text-sm font-medium text-muted-foreground mb-2 text-center">
-          {t("label")}
-        </label>
-
-        <div className="flex gap-2">
-          <input
-            id="coupon-code-input"
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === "Enter" && !isApplied && handleApply()}
-            placeholder={tPromo("placeholder")}
-            disabled={isApplied || status === "loading"}
-            maxLength={32}
-            aria-invalid={status === "error" ? true : undefined}
-            aria-describedby={message ? "coupon-message" : undefined}
-            className="flex-1 rounded-lg border border-border bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 uppercase tracking-widest"
-          />
-
-          {isApplied ? (
-            <button
-              onClick={handleClear}
-              className="rounded-lg border border-border bg-muted px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-colors"
-            >
-              {t("clear")}
-            </button>
-          ) : (
-            <button
-              onClick={handleApply}
-              disabled={!code.trim() || status === "loading"}
-              className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {status === "loading" ? t("applying") : t("apply")}
-            </button>
-          )}
-        </div>
-
-        {message && (
-          <p
-            id="coupon-message"
-            role={status === "error" ? "alert" : "status"}
-            className={`mt-2 text-center text-xs font-medium ${
-              status === "error" ? "text-red-400" : "text-emerald-400"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-
-        {/* Help text — surfaces FREE100 partner guidance for non-tech users */}
-        <p className="mt-2 text-center text-[11px] text-muted-foreground/70">
-          {tPromo("help_text")}
-        </p>
-      </div>
+      <CouponCodeForm
+        code={code}
+        onCodeChange={setCode}
+        onApply={handleApply}
+        onClear={handleClear}
+        isApplied={isApplied}
+        status={status}
+        message={message}
+        labelText={t("label")}
+        placeholderText={tPromo("placeholder")}
+        applyText={t("apply")}
+        applyingText={t("applying")}
+        clearText={t("clear")}
+        helpText={tPromo("help_text")}
+      />
 
       {freeModal.open && (
         <FreeRedemptionModal

@@ -10,7 +10,11 @@
 
 import React, { useState } from 'react';
 import type { StoredPublishJob } from '@/land/social/publish-job-store';
-import { CheckCircle2, Play, Loader2, Sparkles, Youtube, Video, Instagram } from 'lucide-react';
+import { Play } from 'lucide-react';
+import {
+  DraftApproveButton,
+  DraftPlatformBadge,
+} from './draft-approval-card-parts';
 
 export interface DraftApprovalCardProps {
   draft: StoredPublishJob;
@@ -33,31 +37,6 @@ export function DraftApprovalCard({ draft, onApprove, onPreview }: DraftApproval
     }
   };
 
-  const getPlatformBadge = () => {
-    switch (draft.platform) {
-      case 'YOUTUBE_SHORTS':
-        return (
-          <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex items-center gap-1">
-            <Youtube className="w-3 h-3" /> YouTube Shorts
-          </span>
-        );
-      case 'TIKTOK_V2':
-        return (
-          <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center gap-1">
-            <Video className="w-3 h-3" /> TikTok v2
-          </span>
-        );
-      case 'INSTAGRAM_REELS':
-        return (
-          <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20 flex items-center gap-1">
-            <Instagram className="w-3 h-3" /> Reels
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
   const formattedDate = new Date(draft.createdAt).toLocaleDateString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -69,7 +48,7 @@ export function DraftApprovalCard({ draft, onApprove, onPreview }: DraftApproval
     <div className="p-4 rounded-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          {getPlatformBadge()}
+          <DraftPlatformBadge platform={draft.platform} />
           <span className="text-[11px] text-slate-400 font-mono">{formattedDate}</span>
         </div>
 
@@ -109,33 +88,13 @@ export function DraftApprovalCard({ draft, onApprove, onPreview }: DraftApproval
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={handleApprove}
-          disabled={approving || approved}
-          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all ${
-            approved
-              ? 'bg-[#10B981] text-white cursor-default'
-              : 'bg-[#4F46E5] hover:bg-[#4338CA] text-white disabled:opacity-50'
-          }`}
-        >
-          {approving ? (
-            <>
-              <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Đang duyệt...</span>
-            </>
-          ) : approved ? (
-            <>
-              <CheckCircle2 className="w-3 h-3" />
-              <span>Đã duyệt (Pending)</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-3 h-3 text-[#F59E0B]" />
-              <span>1-Click Duyệt</span>
-            </>
-          )}
-        </button>
+        <DraftApproveButton
+          approving={approving}
+          approved={approved}
+          onClick={() => {
+            void handleApprove();
+          }}
+        />
       </div>
     </div>
   );

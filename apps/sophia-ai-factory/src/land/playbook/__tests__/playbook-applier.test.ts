@@ -22,6 +22,10 @@ const fakeDb = {
   bind: vi.fn().mockReturnThis(),
   first: vi.fn(async () => {
     if (currentSql.includes('sop_listings')) return null
+    if (
+      currentSql.includes('SELECT config_values FROM user_sop_installations') &&
+      fakeDb.bind.mock.calls.at(-1)?.[1] !== 'user-001'
+    ) return null
     return mockRow
   }),
   run: vi.fn(async () => ({ success: true, meta: { changes: 1 } })),
@@ -116,8 +120,10 @@ describe('toggleAutoApply — round-trip', () => {
   })
 
   it('flips autoApply from true to false', async () => {
-    const result = await toggleAutoApply('inst-001', false)
+    const result = await toggleAutoApply('inst-001', false, 'user-001')
     expect(result.success).toBe(true)
+    expect(fakeDb.prepare.mock.calls[0]?.[0]).toContain('AND user_id = ?2')
+    expect(fakeDb.prepare.mock.calls[1]?.[0]).toContain('AND user_id = ?3')
     const bindCalls = fakeDb.bind.mock.calls
     const updatedJson = bindCalls.find((c: unknown[]) =>
       typeof c[0] === 'string' && c[0].includes('"autoApply":false'),
@@ -129,10 +135,21 @@ describe('toggleAutoApply — round-trip', () => {
     vi.clearAllMocks()
     mockRow.config_values = null
     fakeDb.first.mockResolvedValueOnce(null as unknown as { id: string; config_values: string | null })
-    const result = await toggleAutoApply('missing-id', true)
+    const result = await toggleAutoApply('missing-id', true, 'user-001')
     expect(result.success).toBe(false)
     if (result.success) return
     expect(result.code).toBe('NOT_FOUND')
+  })
+
+  it('does not toggle another user’s installation', async () => {
+    const result = await toggleAutoApply('inst-001', false, 'user-002')
+
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.code).toBe('NOT_FOUND')
+    expect(fakeDb.prepare.mock.calls[0]?.[0]).toContain('AND user_id = ?2')
+    expect(fakeDb.bind.mock.calls[0]).toEqual(['inst-001', 'user-002'])
+    expect(fakeDb.run).not.toHaveBeenCalled()
   })
 })
 
@@ -147,7 +164,7 @@ describe('getPlaybookConfig — filter', () => {
   it('returns null for non-playbook installations', async () => {
     mockRow.config_values = JSON.stringify({ source: 'manual', autoApply: false })
     fakeDb.first.mockResolvedValueOnce({ id: 'inst-001', config_values: mockRow.config_values })
-    const config = await getPlaybookConfig('inst-001')
+    const config = await getPlaybookConfig('inst-001', 'user-001')
     expect(config).toBeNull()
   })
 
@@ -162,7 +179,7 @@ describe('getPlaybookConfig — filter', () => {
     }
     mockRow.config_values = JSON.stringify(cfg)
     fakeDb.first.mockResolvedValueOnce({ id: 'inst-001', config_values: mockRow.config_values })
-    const config = await getPlaybookConfig('inst-001')
+    const config = await getPlaybookConfig('inst-001', 'user-001')
     expect(config).toEqual(cfg)
   })
 })

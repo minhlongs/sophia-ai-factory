@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/seed/components/ui/card";
 import { Button } from "@/seed/components/ui/button";
-import { Loader2, Download, AlertCircle } from "lucide-react";
+import { Download } from "lucide-react";
 import { useCampaignStream } from "@/forest/hooks/use-campaign-stream";
-import { StepIndicator } from "@/forest/components/progress/step-indicator";
 import { createLogger } from "@/seed/utils/logger-utility";
 import type { VideoPreviewProps } from "./types";
-import { PIPELINE_STEPS } from "./types";
 import {
   statusToStepIndex,
   deriveStatus,
@@ -14,6 +12,10 @@ import {
   deriveStatusMessage,
 } from "./status-helpers";
 import { PlayerViewport } from "./player-viewport";
+import {
+  VideoPreviewFailedCard,
+  VideoPreviewLoadingOverlay,
+} from "./video-preview-overlays";
 
 const logger = createLogger('forest/components/video-preview');
 
@@ -69,22 +71,7 @@ export function VideoPreviewView({
   // Failed state — show error card
   if (isFailed) {
     const displayError = streamError || errorMessage || 'An error occurred while generating your video.';
-    return (
-      <Card className="w-full max-w-2xl mx-auto border-destructive/50">
-        <CardHeader>
-          <CardTitle className="flex items-center text-destructive">
-            <AlertCircle className="w-5 h-5 mr-2" aria-hidden="true" />
-            Generation Failed
-          </CardTitle>
-          <CardDescription>{displayError}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" className="w-full" onClick={() => window.location.reload()}>
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    return <VideoPreviewFailedCard displayError={displayError} />;
   }
 
   return (
@@ -101,27 +88,12 @@ export function VideoPreviewView({
       <CardContent className="p-0 relative aspect-video bg-black/5 group">
         {/* Loading overlay with step indicators */}
         {isStreaming ? (
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center bg-muted/20 backdrop-blur-sm z-10"
-            role="status"
-            aria-live="polite"
-          >
-            <Loader2 className="w-10 h-10 motion-safe:animate-spin text-primary mb-4" aria-hidden="true" />
-            <p className="text-sm text-muted-foreground font-medium mb-4">
-              {statusMessage || 'Generating your video...'}
-            </p>
-
-            {/* Inline step indicators while loading */}
-            <div className="w-full max-w-xs px-4">
-              <StepIndicator
-                steps={PIPELINE_STEPS}
-                activeStep={activeStepIndex}
-                status={streamedStatus}
-                progress={streamedProgress}
-                className="border-0 shadow-none bg-transparent"
-              />
-            </div>
-          </div>
+          <VideoPreviewLoadingOverlay
+            statusMessage={statusMessage}
+            activeStepIndex={activeStepIndex}
+            streamedStatus={streamedStatus}
+            streamedProgress={streamedProgress}
+          />
         ) : null}
 
         {/* Video or thumbnail */}

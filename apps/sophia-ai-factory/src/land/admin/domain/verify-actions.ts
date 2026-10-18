@@ -11,13 +11,14 @@ import type {
 import {
   fetchCloudflareCustomHostname,
   deleteCloudflareCustomHostname,
-  parseOwnershipVerification,
-  parseSslDcvVerification,
-  evaluateStatusTransitions,
   getCustomDomainById,
 } from '@/tree/custom-domains/verification-service';
 import { invalidateTenantBrandingCache } from '@/tree/branding/org-branding-repo';
 import { assertMasterTierAndOrgAccess } from './domain-access';
+import {
+  persistVerifiedDomainState,
+  removeCustomDomainRow,
+} from './verify-domain-db';
 
 /**
  * Triggers status re-check against Cloudflare and updates D1.
@@ -47,60 +48,21 @@ export async function verifyCustomDomainStatusAction(
     const cfResult = await fetchCloudflareCustomHostname(domain.cf_custom_hostname_id, domain.hostname);
     if (!cfResult.ok) return cfResult;
 
-    const cfData = cfResult.value;
-    const ownership = parseOwnershipVerification(cfData);
-    const sslDcv = parseSslDcvVerification(cfData);
-    const { sslStatus, verificationStatus, cnameVerified, active, errors } = evaluateStatusTransitions(cfData);
-
-    const now = Math.floor(Date.now() / 1000);
-
-    await db
-      .prepare(
-        `UPDATE custom_domains SET
-          ssl_status = ?1,
-          verification_status = ?2,
-          verification_errors = ?3,
-          ownership_verification = ?4,
-          ssl_verification = ?5,
-          cname_verified = ?6,
-          active = ?7,
-          updated_at = ?8
-        WHERE id = ?9 AND org_id = ?10`
-      )
-      .bind(
-        sslStatus,
-        verificationStatus,
-        JSON.stringify(errors),
-        JSON.stringify(ownership ?? {}),
-        JSON.stringify(sslDcv ?? {}),
-        cnameVerified ? 1 : 0,
-        active ? 1 : 0,
-        now,
-        domainId,
-        orgId,
-      )
-      .run();
+    const verificationResult = await persistVerifiedDomainState(
+      db,
+      orgId,
+      domainId,
+      domain,
+      cfResult.value,
+    );
 
     invalidateTenantBrandingCache(domain.hostname, orgId);
-
-    const verificationResult: DomainVerificationResult = {
-      domainId,
-      hostname: domain.hostname,
-      sslStatus,
-      verificationStatus,
-      cnameVerified,
-      active,
-      ownershipVerification: ownership,
-      sslVerification: sslDcv,
-      errors,
-      cnameTarget: domain.cname_target,
-    };
 
     logger.info('[CustomDomain] Status verified', {
       domainId,
       hostname: domain.hostname,
-      sslStatus,
-      active,
+      sslStatus: verificationResult.sslStatus,
+      active: verificationResult.active,
     });
 
     return success(verificationResult);
@@ -142,11 +104,7 @@ export async function deleteCustomDomainAction(
       }
     }
 
-    await db
-      .prepare('DELETE FROM custom_domains WHERE id = ?1 AND org_id = ?2')
-      .bind(domainId, orgId)
-      .run();
-
+    await removeCustomDomainRow(db, domainId, orgId);
     invalidateTenantBrandingCache(domain.hostname, orgId);
 
     logger.info('[CustomDomain] Successfully deleted custom domain', { domainId, orgId });

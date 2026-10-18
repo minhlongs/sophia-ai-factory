@@ -11,16 +11,13 @@ import type {
   HandoverCertificate,
   VerificationRunReport,
 } from '@/seed/handover/handover-types';
-import {
-  computeHandoverCertificateHash,
-  generateCertificateMarkdown,
-} from '@/tree/handover/handover-certificate-engine';
 import { getCustomerHandover } from './migration-verifier';
+import { upsertHandoverCertificate } from './credential-packager';
 import {
-  getHandoverCertificate,
-  upsertHandoverCertificate,
-  createFallbackCertificate,
-} from './credential-packager';
+  buildAcceptanceCertificate,
+  resolveDeployedSha,
+  resolveExistingAcceptedHandover,
+} from './handover-acceptance-helpers';
 
 /**
  * Records customer digital acceptance sign-off, hashes the certificate,
@@ -40,65 +37,26 @@ export async function recordHandoverAcceptance(
   // IMMUTABILITY & IDEMPOTENCY GUARD:
   // If the handover has already been accepted, re-signing is prohibited.
   if (existing.acceptance_status === 'accepted') {
-    const existingCert = await getHandoverCertificate(db, existing.id);
-    if (existingCert) {
-      logger.warn('[customer-handover-service] Handover already accepted; returning existing immutable certificate', {
-        handoverId: existing.id,
-        certificateHash: existingCert.certificateSha256,
-        signedAt: existing.signed_at,
-      });
-      return { certificate: existingCert, record: existing };
-    }
-
-    logger.warn('[customer-handover-service] Handover already accepted; certificate row missing, reconstructing from immutable handover record', {
-      handoverId: existing.id,
-    });
-    const deployedSha = (process.env.COMMIT_SHA || process.env.NEXT_PUBLIC_COMMIT_SHA || 'production-verified').slice(0, 12);
-    const fallbackCert = createFallbackCertificate(existing, input, deployedSha);
-    return { certificate: fallbackCert, record: existing };
+    return resolveExistingAcceptedHandover(db, existing, input);
   }
 
-  const deployedSha = (process.env.COMMIT_SHA || process.env.NEXT_PUBLIC_COMMIT_SHA || 'production-verified').slice(0, 12);
+  const deployedSha = resolveDeployedSha();
   const nowMs = Date.now();
 
-  // 1. Calculate cryptographic SHA-256 certificate digest
-  const certificateHash = await computeHandoverCertificateHash(
+  const {
+    certData,
+    certificateHash,
+    verificationJson,
+    verificationPassedAt,
+  } = await buildAcceptanceCertificate({
     existing,
     input,
     deployedSha,
     nowMs,
-  );
+    verificationReport,
+  });
 
-  const verificationJson = verificationReport ? JSON.stringify(verificationReport) : existing.verification_results;
-  const verificationPassedAt = verificationReport?.overallVerdict === 'PASS' ? nowMs : existing.verification_passed_at;
-
-  // 2. Generate Markdown certificate
-  const certId = `cert_${existing.id.slice(0, 12)}_${nowMs}`;
-  const certData: HandoverCertificate = {
-    id: certId,
-    handoverId: existing.id,
-    tenantId: existing.tenant_id,
-    customerName: existing.agency_name,
-    customerEmail: input.signerEmail,
-    signerName: input.signerName,
-    signerEmail: input.signerEmail,
-    signerRole: input.signerRole,
-    tier: existing.tier,
-    deployedSha,
-    certificateSha256: certificateHash,
-    verificationResults: verificationJson,
-    contentMarkdown: '',
-    metadataJson: JSON.stringify({
-      notes: input.notes ?? null,
-      acceptanceStatements: input.acceptanceStatements ?? null,
-      verificationReportId: verificationReport?.runId ?? null,
-    }),
-    createdAt: nowMs,
-  };
-
-  certData.contentMarkdown = generateCertificateMarkdown(certData, verificationReport);
-
-  // 3. Atomically update customer_handovers in D1
+  // Atomically update customer_handovers in D1
   await db
     .prepare(`
       UPDATE customer_handovers
@@ -127,10 +85,8 @@ export async function recordHandoverAcceptance(
     )
     .run();
 
-  // 4. Upsert into handover_certificates table
   await upsertHandoverCertificate(db, certData);
 
-  // 5. Reload updated record
   const updatedRecord = await getCustomerHandover(db, existing.id);
   if (!updatedRecord) {
     throw new Error(`Failed to reload updated customer handover record`);

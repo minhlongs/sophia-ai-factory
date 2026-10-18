@@ -13,29 +13,13 @@ import { ExternalLink } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { UserProfileFormValues } from '@/land/schemas/settings';
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
+import { KEY_CONFIGS, verifyApiKeyRequest } from './api-keys-config';
 
 interface ApiKeysSectionProps {
   form: UseFormReturn<UserProfileFormValues>;
   isPending: boolean;
   defaultValues: UserProfileFormValues;
 }
-
-interface KeyConfig {
-  id: keyof UserProfileFormValues['apiKeys'];
-  label: string;
-  descKey: string;
-  helpKey: string;
-  placeholder: string;
-  helpUrl: string;
-}
-
-const KEY_CONFIGS: KeyConfig[] = [
-  { id: 'openai',     label: 'OpenAI / OpenRouter', descKey: 'openaiDesc',     helpKey: 'openaiHelp',     placeholder: 'sk-...',     helpUrl: 'https://openrouter.ai/keys' },
-  { id: 'anthropic',  label: 'Anthropic (Claude)',  descKey: 'anthropicDesc',  helpKey: 'anthropicHelp',  placeholder: 'sk-ant-...', helpUrl: 'https://console.anthropic.com/settings/keys' },
-  { id: 'elevenlabs', label: 'ElevenLabs',           descKey: 'elevenlabsDesc', helpKey: 'elevenlabsHelp', placeholder: 'xi-...',     helpUrl: 'https://elevenlabs.io/subscription' },
-  { id: 'heygen',     label: 'HeyGen',               descKey: 'heygenDesc',     helpKey: 'heygenHelp',     placeholder: 'hg-...',     helpUrl: 'https://app.heygen.com/settings/api-keys' },
-  { id: 'muapi',      label: 'MuAPI (Media AI)',     descKey: 'muapiDesc',      helpKey: 'muapiHelp',      placeholder: 'mu-...',     helpUrl: 'https://muapi.ai/dashboard' },
-];
 
 export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
   const t = useTranslations('settings.apiKeys');
@@ -53,37 +37,15 @@ export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
     if (!keyValue) return;
     setStatus((prev) => ({ ...prev, [keyId]: 'validating' }));
     setErrors((prev) => ({ ...prev, [keyId]: '' }));
-    const startTime = performance.now();
 
     try {
-      let res;
-      if (keyId === 'heygen') {
-        res = await fetch('/api/setup-wizard/test-heygen', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: keyValue }),
-        });
-      } else {
-        const service = keyId === 'openai' ? 'openrouter' : keyId;
-        res = await fetch('/api/setup/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ service, key: keyValue }),
-        });
-      }
-
-      const endTime = performance.now();
-      const duration = Math.round(endTime - startTime);
-
-      const data = (await res.json()) as { valid?: boolean; ok?: boolean; message?: string };
-      const isValid = data.valid === true || data.ok === true;
-
-      if (isValid) {
+      const outcome = await verifyApiKeyRequest(keyId, keyValue);
+      if (outcome.isValid) {
         setStatus((prev) => ({ ...prev, [keyId]: 'valid' }));
-        setLatencies((prev) => ({ ...prev, [keyId]: duration }));
+        setLatencies((prev) => ({ ...prev, [keyId]: outcome.durationMs }));
       } else {
         setStatus((prev) => ({ ...prev, [keyId]: 'invalid' }));
-        setErrors((prev) => ({ ...prev, [keyId]: data.message || 'Verification failed' }));
+        setErrors((prev) => ({ ...prev, [keyId]: outcome.errorMessage || 'Verification failed' }));
       }
     } catch {
       setStatus((prev) => ({ ...prev, [keyId]: 'invalid' }));

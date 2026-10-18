@@ -10,19 +10,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getD1 } from '@/seed/db/client'
 import { encryptSecret } from '@/tree/crypto/encrypt-secret'
 import { validateUsdtAddress, type UsdtMethod } from '@/land/payouts/usdt-addr-validator'
 import { logger } from '@/seed/utils/logger-utility'
-
-const PostSchema = z.object({
-  method: z.enum(['usdt_trc20', 'usdt_erc20', 'bank_account']),
-  recipient_addr: z.string().min(1).max(200),
-  displayLabel: z.string().max(100).optional(),
-  setDefault: z.boolean().optional().default(false),
-})
+import {
+  PostSchema,
+  insertPayoutMethod,
+  listPayoutMethods,
+} from './payout-method-helpers'
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
@@ -44,7 +41,6 @@ export async function POST(request: NextRequest) {
 
   const { method, recipient_addr, displayLabel, setDefault } = parsed.data
 
-  // Validate USDT address checksum (only for usdt_* methods)
   if (method === 'usdt_trc20' || method === 'usdt_erc20') {
     const isValid = await validateUsdtAddress(recipient_addr, method as UsdtMethod)
     if (!isValid) {
@@ -58,34 +54,26 @@ export async function POST(request: NextRequest) {
   const encKey = process.env.PAYOUT_ENC_KEY
   const encrypted = await encryptSecret(recipient_addr, encKey)
 
-  const tenantId = user.id
-  const affiliateId = user.id
-  const _db = await getD1();
-  if (!_db) {
-    logger.error('[Affiliate/PayoutMethod] D1 unavailable');
-    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  const db = await getD1()
+  if (!db) {
+    logger.error('[Affiliate/PayoutMethod] D1 unavailable')
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 })
   }
-  const db = _db;
-  const id = `pm_${tenantId}_${Date.now()}`
+
+  const id = `pm_${user.id}_${Date.now()}`
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    if (setDefault) {
-      await db
-        .prepare(`UPDATE payout_methods SET is_default = 0 WHERE tenant_id = ? AND affiliate_id = ?`)
-        .bind(tenantId, affiliateId)
-        .run()
-    }
-
-    await db
-      .prepare(
-        `INSERT INTO payout_methods
-         (id, tenant_id, affiliate_id, method, recipient_addr_encrypted,
-          display_label, is_default, verified, created_at)
-         VALUES (?,?,?,?,?,?,?,0,?)`,
-      )
-      .bind(id, tenantId, affiliateId, method, encrypted, displayLabel ?? null, setDefault ? 1 : 0, now)
-      .run()
+    await insertPayoutMethod(db, {
+      id,
+      tenantId: user.id,
+      affiliateId: user.id,
+      method,
+      encrypted,
+      displayLabel,
+      setDefault,
+      now,
+    })
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     if (errMsg.includes('UNIQUE')) {
@@ -103,33 +91,14 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const tenantId = user.id
-  const affiliateId = user.id
-  const _db = await getD1();
-  if (!_db) {
-    logger.error('[Affiliate/PayoutMethod/GET] D1 unavailable');
-    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  const db = await getD1()
+  if (!db) {
+    logger.error('[Affiliate/PayoutMethod/GET] D1 unavailable')
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 })
   }
-  const db = _db;
 
-  const result = await db
-    .prepare(
-      `SELECT id, method, display_label, is_default, verified, created_at
-       FROM payout_methods
-       WHERE tenant_id = ? AND affiliate_id = ?
-       ORDER BY is_default DESC, created_at DESC`,
-    )
-    .bind(tenantId, affiliateId)
-    .all<{
-      id: string
-      method: string
-      display_label: string | null
-      is_default: number
-      verified: number
-      created_at: number
-    }>()
-
-  return NextResponse.json({ methods: result.results ?? [] })
+  const methods = await listPayoutMethods(db, user.id, user.id)
+  return NextResponse.json({ methods })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -144,21 +113,15 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Missing id parameter' }, { status: 400 })
   }
 
-  const tenantId = user.id
-  const affiliateId = user.id
-  const _db = await getD1();
-  if (!_db) {
-    logger.error('[Affiliate/PayoutMethod/DELETE] D1 unavailable');
-    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  const db = await getD1()
+  if (!db) {
+    logger.error('[Affiliate/PayoutMethod/DELETE] D1 unavailable')
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 })
   }
-  const db = _db;
 
   const result = await db
-    .prepare(
-      `DELETE FROM payout_methods
-       WHERE id = ? AND tenant_id = ? AND affiliate_id = ?`,
-    )
-    .bind(id, tenantId, affiliateId)
+    .prepare(`DELETE FROM payout_methods WHERE id = ? AND tenant_id = ? AND affiliate_id = ?`)
+    .bind(id, user.id, user.id)
     .run()
 
   if ((result.meta?.changes ?? 0) === 0) {

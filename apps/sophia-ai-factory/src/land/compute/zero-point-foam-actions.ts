@@ -6,7 +6,6 @@
  * @description Land layer Server Actions for Zero-Point Super-Lattice dispatching, Net-Zero power verification, and Eighteen-Nines SLA audits.
  */
 
-import { getD1 } from '@/seed/db/client';
 import {
   planZeroPointBatchDispatch,
   type ZeroPointDispatchPlan,
@@ -20,6 +19,12 @@ import {
   type ZeroPointPowerValidationOutput,
 } from '@/tree/energy/zero-point-energy-engine';
 import type { ZeroPointSuperLattice } from '@/seed/types/zero-point-vacuum-nexus';
+import {
+  randomRefSuffix,
+  recordStandardDispatchD1,
+  recordStandardPowerD1,
+  recordStandardSlaD1,
+} from './quantum-vacuum-d1-recorder';
 
 export interface ZeroPointDispatchActionResult {
   success: boolean;
@@ -39,9 +44,6 @@ export interface EighteenNinesSlaActionResult {
   error?: string;
 }
 
-/**
- * Server Action to plan and record 400,000,000 workload dispatch to Zero-Point Quantum Vacuum Super-Lattice.
- */
 export async function dispatchZeroPointFoamBatchAction(
   lattices: ZeroPointSuperLattice[],
   workloads: number = 400_000_000,
@@ -49,32 +51,17 @@ export async function dispatchZeroPointFoamBatchAction(
 ): Promise<ZeroPointDispatchActionResult> {
   try {
     const data = planZeroPointBatchDispatch(lattices, workloads, measuredDriftFs);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO trans_cosmic_pipeline_dispatches (
-             id, dispatch_ref, session_token, lattice_ref,
-             pipeline_job_count, data_volume_petabytes, dispatch_latency_nanos,
-             drift_compensation_fs, dispatch_status, dispatched_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `TC-DISPATCH-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          `TOKEN-TC-${Date.now()}`,
-          data.targetLatticeRef,
-          data.assignedWorkloads,
-          data.totalBandwidthPetabytes,
-          0.05,
-          data.relativisticDriftFs,
-          'COMPLETED_SYNCHRONOUS',
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordStandardDispatchD1({
+      table: 'trans_cosmic_pipeline_dispatches',
+      targetCol: 'lattice_ref',
+      dispatchRef: `TC-DISPATCH-${Date.now()}-${randomRefSuffix()}`,
+      sessionToken: `TOKEN-TC-${Date.now()}`,
+      targetRef: data.targetLatticeRef,
+      assignedWorkloads: data.assignedWorkloads,
+      totalBandwidthPetabytes: data.totalBandwidthPetabytes,
+      latencyNanos: 0.05,
+      driftFs: data.relativisticDriftFs,
+    });
     return { success: true, data };
   } catch (error) {
     return {
@@ -84,37 +71,20 @@ export async function dispatchZeroPointFoamBatchAction(
   }
 }
 
-/**
- * Server Action to validate and persist Zero-Point harvest power allocation.
- */
 export async function allocateZeroPointPowerAction(
   params: ZeroPointPowerInput
 ): Promise<ZeroPointPowerActionResult> {
   try {
     const data = validateZeroPointPower(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO zero_point_power_allocations (
-             id, allocation_ref, power_source_type, megawatts_allocated,
-             carbon_intensity_g_per_kwh, bose_einstein_cop, is_net_zero_certified, allocated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `ZP-PWR-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          'ZERO_POINT_VACUUM_HARVESTER',
-          params.allocatedMegawatts,
-          params.carbonIntensityGPerKwh,
-          params.boseEinsteinCop,
-          data.isCompliant ? 1 : 0,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
+    await recordStandardPowerD1({
+      table: 'zero_point_power_allocations',
+      allocationRef: `ZP-PWR-${Date.now()}-${randomRefSuffix()}`,
+      powerSourceType: 'ZERO_POINT_VACUUM_HARVESTER',
+      allocatedMegawatts: params.allocatedMegawatts,
+      carbonIntensityGPerKwh: params.carbonIntensityGPerKwh,
+      copValue: params.boseEinsteinCop,
+      isCompliant: data.isCompliant,
+    });
     return { success: data.isCompliant, data };
   } catch (error) {
     return {
@@ -124,42 +94,25 @@ export async function allocateZeroPointPowerAction(
   }
 }
 
-/**
- * Server Action to evaluate and persist continuous Eighteen-Nines (99.9999999999999999%) SLA audit.
- */
 export async function auditEighteenNinesSlaAction(
   params: EighteenNinesSlaInput,
   evaluationMonth: string = new Date().toISOString().substring(0, 7)
 ): Promise<EighteenNinesSlaActionResult> {
   try {
     const data = evaluateEighteenNinesSla(params);
-    const db = await getD1();
-
-    if (db) {
-      await db
-        .prepare(
-          `INSERT INTO eighteen_nines_sla_audits (
-             id, audit_ref, evaluation_period_month, total_eval_seconds,
-             downtime_nanoseconds, achieved_availability_pct, is_eighteen_nines_met,
-             bft_consensus_nodes, auditor_hash, audited_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          crypto.randomUUID(),
-          `SLA-18N-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          evaluationMonth,
-          2592000,
-          data.actualDowntimeNanoseconds,
-          data.effectiveAvailabilityPct,
-          data.slaVerdict === 'EIGHTEEN_NINES_CERTIFIED' ? 1 : 0,
-          16384,
-          data.auditSignature,
-          new Date().toISOString()
-        )
-        .run();
-    }
-
-    return { success: data.slaVerdict === 'EIGHTEEN_NINES_CERTIFIED', data };
+    const isMet = data.slaVerdict === 'EIGHTEEN_NINES_CERTIFIED';
+    await recordStandardSlaD1({
+      table: 'eighteen_nines_sla_audits',
+      metCol: 'is_eighteen_nines_met',
+      auditRef: `SLA-18N-${Date.now()}-${randomRefSuffix()}`,
+      evaluationPeriodMonth: evaluationMonth,
+      actualDowntimeNanoseconds: data.actualDowntimeNanoseconds,
+      effectiveAvailabilityPct: data.effectiveAvailabilityPct,
+      isMet,
+      bftConsensusNodes: 16384,
+      auditSignature: data.auditSignature,
+    });
+    return { success: isMet, data };
   } catch (error) {
     return {
       success: false,

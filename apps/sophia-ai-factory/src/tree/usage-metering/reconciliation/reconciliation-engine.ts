@@ -4,76 +4,19 @@
  * @module tree/usage-metering/reconciliation/reconciliation-engine
  */
 
-import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getKvClient } from '@/seed/utils/redis-client';
+import { dailyWindowKey } from './discrepancy-detector';
 import {
-  dailyWindowKey,
-  handlerCounterKey,
-  queryUsageEventCount,
-  scanTenantIds,
-} from './discrepancy-detector';
+  resolveTenantList,
+  fetchKvHandlerCounts,
+  fetchDbEventCounts,
+} from './reconciliation-fetchers';
 import {
   DEFAULT_DISCREPANCY_THRESHOLD,
   type ReconcileOptions,
   type ReconciliationResult,
 } from './types';
-
-async function resolveTenantList(
-  tenantIds: string[] | undefined,
-  window: string,
-  kv: ReturnType<typeof getKvClient>,
-): Promise<string[] | null> {
-  if (tenantIds && tenantIds.length > 0) {
-    return tenantIds;
-  }
-  if (!kv) {
-    logger.warn('[Usage Reconciliation] KV unavailable — cannot scan for tenants');
-    return null;
-  }
-  return await scanTenantIds(kv, window);
-}
-
-async function fetchKvHandlerCounts(
-  kv: NonNullable<ReturnType<typeof getKvClient>>,
-  tenants: string[],
-  window: string,
-): Promise<{ tenantId: string; count: number }[]> {
-  const kvReads: Promise<{ tenantId: string; count: number }>[] = [];
-  for (const tenantId of tenants) {
-    const key = handlerCounterKey(tenantId, window);
-    kvReads.push(
-      kv
-        .hget(key, 'handler_invocations')
-        .then((val) => ({
-          tenantId,
-          count: typeof val === 'number' ? val : parseInt(String(val ?? '0'), 10),
-        }))
-        .catch(() => ({ tenantId, count: 0 })),
-    );
-  }
-  return await Promise.all(kvReads);
-}
-
-async function fetchDbEventCounts(
-  kvCounts: { tenantId: string }[],
-  window: string,
-): Promise<Map<string, number>> {
-  const db = createServerClient();
-  const eventCounts: Map<string, number> = new Map();
-  if (db) {
-    const queries = kvCounts.map(({ tenantId }) =>
-      queryUsageEventCount(db, tenantId, window)
-        .then((count) => ({ tenantId, count }))
-        .catch(() => ({ tenantId, count: 0 })),
-    );
-    const dbResults = await Promise.all(queries);
-    for (const r of dbResults) {
-      eventCounts.set(r.tenantId, r.count);
-    }
-  }
-  return eventCounts;
-}
 
 /**
  * Reconcile usage handler invocations against usage_events inserts.

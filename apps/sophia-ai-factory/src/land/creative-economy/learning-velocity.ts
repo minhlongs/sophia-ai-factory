@@ -22,7 +22,7 @@ import { createServerClient } from '@/seed/db/client';
 import { success, failure } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { avgMetrics, computeVelocityScore, type EventRow } from './velocity-math';
+import { computeFreshLearningVelocityFallback } from './learning-velocity-fallback';
 import type { VelocityPoint, DashboardResult } from './types';
 
 const schema = z.object({
@@ -93,48 +93,11 @@ export async function getLearningVelocity(
       return success(precomputed);
     }
 
-    // Fallback: table empty → compute fresh 7d velocity inline.
-    const nowMs = Date.now();
-    const windowStartMs = nowMs - LOOKBACK_MS;
-
-    const combos = await db
-      .prepare(
-        `SELECT DISTINCT entity_type, channel FROM performance_events
-         WHERE workspace_id = ?1 AND recorded_at >= ?2 AND recorded_at <= ?3`,
-      )
-      .bind(parsed.data.workspaceId, windowStartMs, nowMs)
-      .all<{ entity_type: string; channel: string }>();
-
-    const points: VelocityPoint[] = [];
-
-    for (const combo of combos.results ?? []) {
-      const all = await db
-        .prepare(
-          `SELECT metrics_json FROM performance_events
-           WHERE workspace_id = ?1 AND entity_type = ?2 AND channel = ?3
-             AND recorded_at >= ?4 AND recorded_at <= ?5
-           ORDER BY recorded_at ASC`,
-        )
-        .bind(parsed.data.workspaceId, combo.entity_type, combo.channel, windowStartMs, nowMs)
-        .all<EventRow>();
-
-      const events = all.results ?? [];
-      if (events.length < MIN_EVENTS) continue;
-
-      const splitIdx = Math.floor(events.length * EARLY_RATIO);
-      const early = events.slice(0, splitIdx);
-      const late = events.slice(splitIdx);
-      if (early.length === 0 || late.length === 0) continue;
-
-      points.push({
-        entityType: combo.entity_type,
-        channel: combo.channel,
-        velocityScore: computeVelocityScore(avgMetrics(early), avgMetrics(late)),
-        eventCount: events.length,
-        windowStartMs,
-        windowEndMs: nowMs,
-      });
-    }
+    const points = await computeFreshLearningVelocityFallback(db, parsed.data.workspaceId, {
+      lookbackMs: LOOKBACK_MS,
+      earlyRatio: EARLY_RATIO,
+      minEvents: MIN_EVENTS,
+    });
 
     return success(points);
   } catch (err) {

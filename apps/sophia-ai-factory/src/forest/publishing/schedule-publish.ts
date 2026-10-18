@@ -6,23 +6,13 @@
  *   video_job_id in Wave 20 Phase 05 — see migration 0101). publishExecute resolves
  *   the canonical R2 URL via getCanonicalVideoUrl(videoId, userId) from
  *   `src/lib/video/get-canonical-video-url.ts`.
- *   HeyGen→R2 mirror: complete-video-from-webhook.ts.
- *   FREE100→R2 propagation: video-generate.ts step 7b (Wave 17 Phase 01).
- *
- * Idempotency: caller passes through; let publishExecute CAS handle
- * duplicate jobs (KISS — no new unique-key migration).
- *
- * Cooldown enforcement (Phase 10):
- *   checkCooldown() is called before insert. If violated, scheduledAt is
- *   deferred to deferUntil. The job is always created — never silently dropped.
  *
  * @module forest/publishing/schedule-publish
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { checkCooldown } from '@/tree/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
-import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
+import { resolvePublishCooldown } from './schedule-publish-cooldown';
 
 export interface SchedulePublishInput {
   /**
@@ -68,55 +58,14 @@ export async function schedulePublish(
   const now = Math.floor(Date.now() / 1000);
   const requested = scheduledAt ?? now;
 
-  // Cooldown + burst check — defer instead of reject (Phase 10)
-  let scheduled = requested;
-  let deferredUntil: number | undefined;
-  let deferReason: 'cooldown' | 'burst' | undefined;
+  const { scheduled, deferredUntil, deferReason } = await resolvePublishCooldown({
+    tenantId,
+    channelId,
+    provider,
+    requested,
+    now,
+  });
 
-  // Only check cooldown when provider is a known ChannelProvider
-  const KNOWN_PROVIDERS: ChannelProvider[] = [
-    'tiktok', 'youtube', 'instagram', 'pinterest', 'linkedin', 'zalo',
-    'facebook', 'twitter', 'threads', 'reddit', 'bluesky', 'mastodon', 'telegram',
-  ];
-  const typedProvider = KNOWN_PROVIDERS.includes(provider as ChannelProvider)
-    ? (provider as ChannelProvider)
-    : null;
-
-  if (typedProvider !== null) {
-    try {
-      const cooldown = await checkCooldown(tenantId, channelId, typedProvider, now);
-      if (!cooldown.allowed && cooldown.deferUntil !== undefined) {
-        scheduled = Math.max(requested, cooldown.deferUntil);
-        deferredUntil = scheduled;
-        deferReason = cooldown.reason;
-        logger.info('[schedulePublish] Cooldown deferred', {
-          channelId,
-          provider,
-          reason: cooldown.reason,
-          requested,
-          deferredUntil: scheduled,
-          deferSeconds: cooldown.deferSeconds,
-        });
-      }
-    } catch (cooldownErr) {
-      // Cooldown check failure is non-fatal — proceed with original scheduledAt
-      logger.warn('[schedulePublish] Cooldown check error (non-fatal)', {
-        channelId,
-        provider,
-        err: cooldownErr instanceof Error ? cooldownErr.message : String(cooldownErr),
-      });
-    }
-  }
-
-  // Insert publishing_jobs row
-  // Columns from 20260503_publishing.sql + migration 0099 (provider) + 0101 (video_id rename):
-  //   id, tenant_id, video_id, channel_id, provider, status, caption,
-  //   hashtags_json, product_link, scheduled_at, started_at, finished_at,
-  //   retry_count, error, created_at
-  // provider='telegram' enables publishExecute to bypass publishing_channels lookup.
-  //
-  // NOTE: D1 throws on constraint violations — it does NOT return a .error field on
-  // the D1Result object. The try/catch below is the correct D1 contract (Wave 17 Batch 1 C2).
   try {
     await db
       .prepare(
@@ -133,7 +82,6 @@ export async function schedulePublish(
     throw new Error(`[schedulePublish] Insert failed: ${msg}`);
   }
 
-  // Emit Inngest event — matches publish.scheduled schema in inngest client
   await inngest.send({
     name: 'publish.scheduled',
     data: { jobId, tenantId, userId },

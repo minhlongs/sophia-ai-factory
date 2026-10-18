@@ -1,51 +1,26 @@
-import { Tier } from "@/seed/types";
-import { getErrorMessage } from '@/seed/utils/to-error';
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 import {
   generateMockScript,
   buildScriptUserPrompt,
   SCRIPT_SYSTEM_PROMPT,
-  type AffiliateOfferCta,
   type ScriptOutput,
 } from '@/seed/ai/script-prompt-builders';
-import type { PriorScriptSteering } from '@/seed/types/growth-triad-v16';
+import {
+  selectModelForTier,
+  resolveScriptApiKey,
+  validateParsedScriptStructure,
+  rethrowMappedProviderError,
+  type GenerateScriptInput,
+  type ApiKeyResolver,
+  type ScriptGenDeps,
+} from './script-generator-helpers';
 
 export type { ScriptOutput } from './script-prompt-builders';
-
-export function selectModelForTier(tier: Tier): string {
-  return tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
-}
-
-export interface GenerateScriptInput {
-  topic: string;
-  audience: string;
-  tier: Tier;
-  userId?: string;
-  licenseKey?: string;
-  licenseNonce?: string;
-  orgId?: string;
-  affiliateOffer?: AffiliateOfferCta;
-  steering?: PriorScriptSteering;
-}
-
-export type ApiKeyResolver = (
-  userId: string | null,
-  provider: string,
-  fallback?: string,
-) => Promise<string | null>;
+export { selectModelForTier, type GenerateScriptInput, type ApiKeyResolver } from './script-generator-helpers';
 
 let globalApiKeyResolver: ApiKeyResolver | null = null;
 
 export function registerApiKeyResolver(resolver: ApiKeyResolver | null): void {
   globalApiKeyResolver = resolver;
-}
-
-interface ScriptGenDeps {
-  resolveUserApiKey?: ApiKeyResolver;
-  trackUsage?: (data: Record<string, unknown>) => Promise<void>;
-  hashLicenseKey?: (key: string) => string;
-  startTimer?: () => () => number;
-  getUsageContext?: () => { userId?: string; licenseNonce?: string };
 }
 
 /**
@@ -66,17 +41,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
 
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
   const resolveKey = deps?.resolveUserApiKey ?? globalApiKeyResolver;
-  let apiKey: string | null = null;
-  if (resolveKey) {
-    try {
-      apiKey = await resolveKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY);
-    } catch {
-      apiKey = null;
-    }
-  }
-  if (!apiKey) {
-    apiKey = process.env.OPENROUTER_API_KEY || null;
-  }
+  const apiKey = await resolveScriptApiKey(resolvedUserId, resolveKey);
 
   if (!apiKey) {
     const mockResult = generateMockScript(topic, audience);
@@ -111,7 +76,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
         anthropicKey: undefined,
         enableFallback: false,
         model,
-      }
+      },
     );
 
     const responseTime = stopTimer?.() ?? 0;
@@ -152,20 +117,8 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
       });
     }
 
-    const validated = parsed as unknown as { title: string; scenes: Array<{ narration: string }> };
-    if (!validated.title || !Array.isArray(validated.scenes) || validated.scenes.length === 0) {
-      throw new Error('Invalid script structure from LLM');
-    }
-
-    return parsed;
+    return validateParsedScriptStructure(parsed);
   } catch (error) {
-    const errorMsg = getErrorMessage(error);
-    if (errorMsg.includes('quota') || errorMsg.includes('credits') || errorMsg.includes('insufficient')) {
-      throw new ProviderQuotaExceededError('openrouter', errorMsg);
-    }
-    if (errorMsg.includes('api key') || errorMsg.includes('invalid key') || errorMsg.includes('unauthorized') || errorMsg.includes('401')) {
-      throw new ProviderInvalidKeyError('openrouter', errorMsg);
-    }
-    throw error;
+    rethrowMappedProviderError(error);
   }
 }

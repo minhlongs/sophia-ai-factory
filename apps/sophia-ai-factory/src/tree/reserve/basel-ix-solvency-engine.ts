@@ -4,12 +4,8 @@
  * @description Pure domain engine for Basel IX Trans-Universal Solvency & $50.0B Multi-Dimensional Capital Buffer.
  */
 
-import { createHash } from 'node:crypto';
-import {
-  calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
-} from './basel-solvency-domain-engine';
-
+import { calculateParameterizedCollateralValue } from './basel-solvency-domain-engine';
+import { evaluateTieredBaselSolvency } from './basel-tiered-solvency-evaluator';
 import {
   GATE_19_SCALE_TARGETS,
   type BaselIxSolvencyStatus,
@@ -53,13 +49,13 @@ export const MULTIDIMENSIONAL_COLLATERAL_HAIRCUTS: Record<MultidimensionalCollat
  */
 export function calculateMultidimensionalCollateralValue(
   pledgedAmountCents: number,
-  assetType: MultidimensionalCollateralAsset
+  assetType: MultidimensionalCollateralAsset,
 ): { netValuationCents: number; haircutFactor: number } {
   return calculateParameterizedCollateralValue(
     pledgedAmountCents,
     assetType,
     MULTIDIMENSIONAL_COLLATERAL_HAIRCUTS,
-    1.5
+    1.5,
   );
 }
 
@@ -67,77 +63,20 @@ export function calculateMultidimensionalCollateralValue(
  * Evaluates extreme capital adequacy and solvency under Basel IX standards.
  */
 export function evaluateBaselIxSolvency(
-  input: BaselIxSolvencyInput
+  input: BaselIxSolvencyInput,
 ): BaselIxSolvencyOutput {
-  const violations: string[] = [];
-
-  const { cet1RatioBps, liquidityCoverageRatioBps, netStableFundingRatioBps } =
-    calculateBaselSolvencyRatios(input);
-
-  if (cet1RatioBps < GATE_19_SCALE_TARGETS.BASEL_IX_MIN_CET1_BPS) {
-    violations.push(
-      `CET1 ratio ${cet1RatioBps} bps breaches Basel IX minimum ${GATE_19_SCALE_TARGETS.BASEL_IX_MIN_CET1_BPS} bps (28.00%)`
-    );
-  }
-
-  if (liquidityCoverageRatioBps < GATE_19_SCALE_TARGETS.BASEL_IX_MIN_LCR_BPS) {
-    violations.push(
-      `LCR ${liquidityCoverageRatioBps} bps breaches Basel IX minimum ${GATE_19_SCALE_TARGETS.BASEL_IX_MIN_LCR_BPS} bps (500.00%)`
-    );
-  }
-
-  if (netStableFundingRatioBps < GATE_19_SCALE_TARGETS.BASEL_IX_MIN_NSFR_BPS) {
-    violations.push(
-      `NSFR ${netStableFundingRatioBps} bps breaches Basel IX minimum ${GATE_19_SCALE_TARGETS.BASEL_IX_MIN_NSFR_BPS} bps (200.00%)`
-    );
-  }
-
-  const targetBufferCents = GATE_19_SCALE_TARGETS.SOVEREIGN_BUFFER_TARGET_USD * 100;
-  if (input.totalLiquidityBufferCents < targetBufferCents) {
-    violations.push(
-      `Total liquidity buffer $${(input.totalLiquidityBufferCents / 100).toLocaleString()} below $50.0B requirement`
-    );
-  }
-
-  if (input.stressTestSurvivalDays < 730) {
-    violations.push(
-      `Stress test survival duration ${input.stressTestSurvivalDays} days is below 730-day (2-year) Basel IX requirement`
-    );
-  }
-
-  const isSolvent = violations.length === 0;
-  let solvencyStatus: BaselIxSolvencyStatus = 'SOLVENT_AND_CAPITALIZED';
-
-  if (!isSolvent) {
-    if (
-      cet1RatioBps < GATE_19_SCALE_TARGETS.BASEL_IX_MIN_CET1_BPS ||
-      input.totalLiquidityBufferCents < targetBufferCents
-    ) {
-      solvencyStatus = 'CAPITAL_BUFFER_BREACH';
-    } else if (
-      liquidityCoverageRatioBps < GATE_19_SCALE_TARGETS.BASEL_IX_MIN_LCR_BPS
-    ) {
-      solvencyStatus = 'LIQUIDITY_RUN_RISK';
-    } else {
-      solvencyStatus = 'REGULATORY_HALT';
-    }
-  }
-
-  const supervisorySignature = createHash('sha256')
-    .update(
-      `BASEL_IX:${cet1RatioBps}:${liquidityCoverageRatioBps}:${netStableFundingRatioBps}:${input.totalLiquidityBufferCents}:${isSolvent}:${solvencyStatus}`
-    )
-    .digest('hex');
-
-  return {
-    isSolvent,
-    solvencyStatus,
-    cet1RatioBps,
-    liquidityCoverageRatioBps,
-    netStableFundingRatioBps,
-    totalLiquidityBufferCents: input.totalLiquidityBufferCents,
-    stressTestSurvivalDays: input.stressTestSurvivalDays,
-    violations,
-    supervisorySignature,
-  };
+  return evaluateTieredBaselSolvency(input, {
+    standardLabel: 'Basel IX',
+    signaturePrefix: 'BASEL_IX',
+    minCet1Bps: GATE_19_SCALE_TARGETS.BASEL_IX_MIN_CET1_BPS,
+    cet1Label: '28.00%',
+    minLcrBps: GATE_19_SCALE_TARGETS.BASEL_IX_MIN_LCR_BPS,
+    lcrLabel: '500.00%',
+    minNsfrBps: GATE_19_SCALE_TARGETS.BASEL_IX_MIN_NSFR_BPS,
+    nsfrLabel: '200.00%',
+    targetBufferCents: GATE_19_SCALE_TARGETS.SOVEREIGN_BUFFER_TARGET_USD * 100,
+    bufferLabel: '$50.0B',
+    minSurvivalDays: 730,
+    survivalLabel: '730-day (2-year)',
+  });
 }

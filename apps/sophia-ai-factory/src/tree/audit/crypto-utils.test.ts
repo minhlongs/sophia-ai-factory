@@ -5,17 +5,17 @@
  */
 
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
-import {
+const ORIGINAL_SALT = process.env.AUDIT_HASH_SALT
+process.env.AUDIT_HASH_SALT = 'test-salt-for-unit-tests-only'
+
+const {
   sha256,
   hmacSha256,
   timingSafeEqual,
   computeContentHash,
   verifyHashChain,
   merkleRoot
-} from '@/tree/audit/crypto-utils'
-
-// Save original env vars
-const ORIGINAL_SALT = process.env.AUDIT_HASH_SALT
+} = await import('@/tree/audit/crypto-utils')
 
 describe('crypto-utils', () => {
   beforeEach(() => {
@@ -29,6 +29,12 @@ describe('crypto-utils', () => {
   })
 
   describe('sha256', () => {
+    it('preserves the legacy hash output used by persisted API keys and audit records', () => {
+      expect(sha256('test-data')).toBe(
+        '3cd6f80e5db2126e89b80998b8ce95c5f9824083e93878c6233cd19b121cb197'
+      )
+    })
+
     it('should return 64-character hexadecimal string', () => {
       const hash = sha256('test-data')
       expect(hash).toMatch(/^[a-f0-9]{64}$/)
@@ -64,6 +70,12 @@ describe('crypto-utils', () => {
   })
 
   describe('hmacSha256', () => {
+    it('preserves the legacy signature output for existing integrations', () => {
+      expect(hmacSha256('test-data', 'secret-key')).toBe(
+        'd13e27c6e20183cf81212ab8048fdf4adbdf5b2a33d0546b609a7023489b3ce0'
+      )
+    })
+
     it('should return 64-character hexadecimal string', () => {
       const hmac = hmacSha256('test-data', 'secret-key')
       expect(hmac).toMatch(/^[a-f0-9]{64}$/)

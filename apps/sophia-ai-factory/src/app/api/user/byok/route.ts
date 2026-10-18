@@ -11,44 +11,24 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import {
-  setUserApiKey,
-  clearUserApiKey,
-  listUserApiKeyProviders,
-  type ByokProvider,
-} from '@/tree/byok/user-api-key-store'
-import { track } from '@/tree/signals/track'
-import { D1Events } from '@/tree/signals/d1-event-types'
-import { logger } from '@/seed/utils/logger-utility'
-import { getErrorMessage } from '@/seed/utils/to-error'
+import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
-import { validateProviderKey, sanitizeCredential, type ValidatorProvider } from '@/tree/byok/key-format-validators'
-import { probeProviderApiKey } from '@/tree/byok/provider-probe'
-
-const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter', 'fal-ai', 'replicate'] as const
-
-const PostSchema = z.object({
-  provider:     z.enum(PROVIDERS),
-  key:          z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().min(10).max(500)),
-  validateLive: z.boolean().optional(),
-}).superRefine((data, ctx) => {
-  const validation = validateProviderKey(data.provider as ValidatorProvider, data.key)
-  if (!validation.ok) {
-    ctx.addIssue({ code: 'custom', path: ['key'], message: `Invalid ${data.provider} key format` })
-  }
-})
-
-const DeleteSchema = z.object({
-  provider: z.enum(PROVIDERS),
-})
+import {
+  DeleteSchema,
+  PostSchema,
+  removeUserByokKey,
+  upsertVerifiedByokKey,
+} from './byok-route-helpers'
 
 export async function GET(): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const rl = globalRateLimiter.checkLimit(`byok:read:${user.id}`, { intervalMs: 60_000, maxRequests: 60 })
+  const rl = globalRateLimiter.checkLimit(`byok:read:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 60,
+  })
   if (!rl.allowed) return createRateLimitResponse(rl)
 
   const providers = await listUserApiKeyProviders(user.id)
@@ -59,7 +39,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const rl = globalRateLimiter.checkLimit(`byok:write:${user.id}`, { intervalMs: 60_000, maxRequests: 20 })
+  const rl = globalRateLimiter.checkLimit(`byok:write:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 20,
+  })
   if (!rl.allowed) return createRateLimitResponse(rl)
 
   let body: unknown
@@ -72,49 +55,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const parsed = PostSchema.safeParse(body)
   if (!parsed.success) {
     const flat = parsed.error.flatten()
-    const fieldError = flat.fieldErrors.key?.[0] ?? flat.fieldErrors.provider?.[0] ?? 'Invalid request'
+    const fieldError =
+      flat.fieldErrors.key?.[0] ?? flat.fieldErrors.provider?.[0] ?? 'Invalid request'
     return NextResponse.json({ error: fieldError, details: flat }, { status: 400 })
   }
 
   const { provider, key, validateLive } = parsed.data
-
-  const validation = validateProviderKey(provider as ValidatorProvider, key)
-  const finalKey = validation.ok && validation.autoEncoded ? validation.autoEncoded : key
-
-  if (validateLive) {
-    const probe = await probeProviderApiKey(provider, finalKey)
-    if (!probe.valid && (probe.status === 'INVALID' || probe.httpStatus === 401 || probe.httpStatus === 403)) {
-      return NextResponse.json({
-        error: probe.message,
-        error_vi: probe.message_vi,
-        provider,
-        status: probe.status,
-      }, { status: 422 })
-    }
-  }
-
-  try {
-    await setUserApiKey(user.id, provider as ByokProvider, finalKey)
-  } catch (err) {
-    logger.warn('[byok-admin] setUserApiKey failed', {
-      userId:   user.id,
-      provider,
-      error:    getErrorMessage(err),
-    })
-    return NextResponse.json({ error: 'Failed to store key' }, { status: 500 })
-  }
-
-  // Audit: provider only — never log plaintext key material.
-  track(D1Events.BYOK_KEY_SET, user.id, { provider })
-
-  return NextResponse.json({ ok: true })
+  return upsertVerifiedByokKey(user.id, provider, key, validateLive)
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const rl = globalRateLimiter.checkLimit(`byok:delete:${user.id}`, { intervalMs: 60_000, maxRequests: 10 })
+  const rl = globalRateLimiter.checkLimit(`byok:delete:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 10,
+  })
   if (!rl.allowed) return createRateLimitResponse(rl)
 
   let body: unknown
@@ -131,20 +88,5 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: fieldError, details: flat }, { status: 400 })
   }
 
-  const { provider } = parsed.data
-
-  try {
-    await clearUserApiKey(user.id, provider as ByokProvider)
-  } catch (err) {
-    logger.warn('[byok-admin] clearUserApiKey failed', {
-      userId:   user.id,
-      provider,
-      error:    getErrorMessage(err),
-    })
-    return NextResponse.json({ error: 'Failed to clear key' }, { status: 500 })
-  }
-
-  track(D1Events.BYOK_KEY_CLEARED, user.id, { provider })
-
-  return NextResponse.json({ ok: true })
+  return removeUserByokKey(user.id, parsed.data.provider)
 }

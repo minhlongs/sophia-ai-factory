@@ -7,55 +7,19 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import type {
+  AnalyticsSummary,
+  DateRange,
+  UpsertVideoAnalyticsInput,
+  VideoAnalyticsRow,
+} from './video-analytics-types';
 
-export interface VideoAnalyticsRow {
-  id: string;
-  user_id: string;
-  video_id: string;
-  platform: string;
-  platform_video_id: string;
-  date: string;
-  views: number;
-  watch_time_sec: number;
-  completion_rate: number;
-  impressions: number;
-  clicks: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  synced_at: string;
-}
-
-export interface UpsertVideoAnalyticsInput {
-  userId: string;
-  videoId: string;
-  platform: string;
-  platformVideoId: string;
-  date: string;
-  views?: number;
-  watchTimeSec?: number;
-  completionRate?: number;
-  impressions?: number;
-  clicks?: number;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-}
-
-export interface DateRange {
-  start: string;
-  end: string;
-}
-
-export interface AnalyticsSummary {
-  totalViews: number;
-  totalWatchTimeSec: number;
-  totalImpressions: number;
-  totalClicks: number;
-  totalLikes: number;
-  avgCompletionRate: number;
-  avgCtr: number;
-}
+export type {
+  AnalyticsSummary,
+  DateRange,
+  UpsertVideoAnalyticsInput,
+  VideoAnalyticsRow,
+} from './video-analytics-types';
 
 export async function upsertVideoAnalytics(data: UpsertVideoAnalyticsInput): Promise<void> {
   const db = await getD1();
@@ -156,10 +120,7 @@ export async function getAnalyticsSummary(userId: string, dateRange: DateRange):
        FROM video_analytics WHERE user_id = ? AND date >= ? AND date <= ?`,
     )
     .bind(userId, dateRange.start, dateRange.end)
-    .first<{
-      totalViews: number; totalWatchTimeSec: number; totalImpressions: number;
-      totalClicks: number; totalLikes: number; avgCompletionRate: number; avgCtr: number;
-    }>();
+    .first<AnalyticsSummary>();
 
   return {
     totalViews: row?.totalViews ?? 0,

@@ -13,13 +13,17 @@ import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import { updateCreatorProfile } from '@/land/sop-marketplace';
 import type { CreatorProfileView } from '@/land/sop-marketplace';
+import {
+  CreatorSettingsFields,
+  type CreatorSettingsInitValues,
+} from './settings-form-fields';
 
 type FormState = (
   | { ok: true; value: { profileId: string } }
   | { ok: false; error: { code: string; message: string } }
 ) | null;
 
-function initialState(profile: CreatorProfileView) {
+function initialState(profile: CreatorProfileView): CreatorSettingsInitValues {
   return {
     displayName: profile.displayName,
     bio: profile.bio ?? '',
@@ -42,7 +46,6 @@ export default function CreatorSettingsForm({
       const payoutMethodRaw = formData.get('payoutMethod') as string;
       const payoutAddress = (formData.get('payoutAddress') as string) || undefined;
 
-      // Only send payoutMethod if a value was selected (not the empty placeholder)
       const payoutMethod = payoutMethodRaw
         ? (payoutMethodRaw as 'nowpayments' | 'stripe_connect' | 'usdt')
         : undefined;
@@ -72,83 +75,8 @@ export default function CreatorSettingsForm({
         </div>
       )}
 
-      {/* Display Name */}
-      <div>
-        <label
-          htmlFor="displayName"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('displayName')}
-        </label>
-        <input
-          id="displayName"
-          name="displayName"
-          type="text"
-          required
-          defaultValue={init.displayName}
-          placeholder={t('displayNamePlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
+      <CreatorSettingsFields init={init} />
 
-      {/* Bio */}
-      <div>
-        <label
-          htmlFor="bio"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('bio')}
-        </label>
-        <textarea
-          id="bio"
-          name="bio"
-          rows={3}
-          defaultValue={init.bio}
-          placeholder={t('bioPlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      {/* Payout Method */}
-      <div>
-        <label
-          htmlFor="payoutMethod"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('payoutMethod')}
-        </label>
-        <select
-          id="payoutMethod"
-          name="payoutMethod"
-          defaultValue={init.payoutMethod}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">{t('payoutMethodPlaceholder')}</option>
-          <option value="nowpayments">NOWPayments</option>
-          <option value="stripe_connect">Stripe Connect</option>
-          <option value="usdt">USDT</option>
-        </select>
-      </div>
-
-      {/* Payout Address */}
-      <div>
-        <label
-          htmlFor="payoutAddress"
-          className="mb-1 block text-sm font-medium text-foreground"
-        >
-          {t('payoutAddress')}
-        </label>
-        <input
-          id="payoutAddress"
-          name="payoutAddress"
-          type="text"
-          defaultValue={init.payoutAddress}
-          placeholder={t('payoutAddressPlaceholder')}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      {/* Submit */}
       <button
         type="submit"
         disabled={isPending}

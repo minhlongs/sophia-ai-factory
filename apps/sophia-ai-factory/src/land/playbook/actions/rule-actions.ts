@@ -15,6 +15,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import type { ActionResult } from './types';
 import { getDbAccess } from './db-access';
 import { executeRuleCasUpdate, fetchCurrentRuleUpdatedAt } from './rule-db-helper';
+import { executeRuleRollbackUpdate } from './rule-rollback-helper';
 
 export async function toggleRuleAutoApplyAction(
   ruleId: string,
@@ -91,35 +92,10 @@ export async function rollbackRuleAction(
     }
 
     const now = Date.now();
-    let changes = 0;
-
-    if (d1) {
-      const updateRes = await d1
-        .prepare(`UPDATE playbook_rules SET auto_apply = 0, rollback_count = rollback_count + 1, updated_at = ? WHERE id = ?`)
-        .bind(now, ruleId).run();
-      changes = updateRes.meta?.changes ?? 0;
-    } else if (client) {
-      const updateRes = await client.execute(
-        `UPDATE playbook_rules SET auto_apply = 0, rollback_count = rollback_count + 1, updated_at = ? WHERE id = ?`,
-        [now, ruleId],
-      );
-      changes = updateRes.meta?.changes ?? 0;
-    }
+    const { changes, rollbackCount } = await executeRuleRollbackUpdate(d1, client, ruleId, now);
 
     if (changes === 0) {
       return { success: false, error: 'Rule not found', code: 'NOT_FOUND' };
-    }
-
-    let rollbackCount = 1;
-    if (d1) {
-      const row = await d1
-        .prepare(`SELECT rollback_count FROM playbook_rules WHERE id = ?`)
-        .bind(ruleId).first<{ rollback_count: number }>();
-      if (row) rollbackCount = row.rollback_count;
-    } else if (client) {
-      const res = await client.execute(`SELECT rollback_count FROM playbook_rules WHERE id = ?`, [ruleId]);
-      const row = res.results?.[0] as { rollback_count?: number } | undefined;
-      if (row?.rollback_count !== undefined) rollbackCount = row.rollback_count;
     }
 
     logger.info('[rollbackRuleAction] Rule successfully rolled back', { ruleId, rollbackCount });

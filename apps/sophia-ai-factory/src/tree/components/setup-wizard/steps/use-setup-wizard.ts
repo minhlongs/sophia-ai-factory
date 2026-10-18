@@ -9,6 +9,11 @@ import {
   bootstrapSetupWizardState,
   type WizardKeyConfig,
 } from './use-setup-wizard-helpers';
+import {
+  requestKeyValidation,
+  requestProviderRevoke,
+  requestProviderKeySave,
+} from './use-setup-wizard-actions';
 
 export { KEY_TO_PROVIDER };
 
@@ -54,23 +59,14 @@ export function useSetupWizard() {
     setStatus(prev => ({ ...prev, [keyName]: 'validating' }));
     setErrors(prev => ({ ...prev, [keyName]: '' }));
     try {
-      const start = Date.now();
-      const res = await fetch('/api/setup-wizard/validate-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: service, api_key: keyValue }),
-      });
-      const data = await res.json() as { valid?: boolean; message?: string; message_vi?: string; latencyMs?: number };
-      const latency = data.latencyMs ?? (Date.now() - start);
-      if (res.ok && data.valid) {
+      const result = await requestKeyValidation(service, keyValue, t('errors.verificationFailed'));
+      setLatencies(prev => ({ ...prev, [keyName]: result.latencyMs }));
+      if (result.valid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
-        setLatencies(prev => ({ ...prev, [keyName]: latency }));
         return true;
       }
-      const errMsg = data.message_vi || data.message || t('errors.verificationFailed');
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
-      setErrors(prev => ({ ...prev, [keyName]: errMsg }));
-      setLatencies(prev => ({ ...prev, [keyName]: latency }));
+      setErrors(prev => ({ ...prev, [keyName]: result.errorMessage || t('errors.verificationFailed') }));
       return false;
     } catch {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
@@ -82,12 +78,8 @@ export function useSetupWizard() {
   const handleRevokeProvider = useCallback(async (provider: string, keyName: string) => {
     setRevokingProvider(provider);
     try {
-      const res = await fetch('/api/user/byok', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider }),
-      });
-      if (res.ok) {
+      const ok = await requestProviderRevoke(provider);
+      if (ok) {
         setSavedProviders(prev => prev.filter(p => p !== provider));
         setConfig(prev => ({ ...prev, [keyName]: '' }));
         setStatus(prev => ({ ...prev, [keyName]: 'idle' }));
@@ -117,15 +109,7 @@ export function useSetupWizard() {
 
       for (const [k, v] of entries) {
         const provider = KEY_TO_PROVIDER[k];
-        const res = await fetch('/api/user/byok', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, key: v }),
-        });
-        if (!res.ok) {
-          const d = await res.json() as { error?: string };
-          throw new Error(d.error || t('errors.saveFailed'));
-        }
+        await requestProviderKeySave(provider, v, t('errors.saveFailed'));
         newlySaved.push(provider);
       }
       if (newlySaved.length > 0) {

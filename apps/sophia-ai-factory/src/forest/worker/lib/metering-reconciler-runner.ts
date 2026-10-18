@@ -4,13 +4,6 @@
  * Scheduled Cloudflare Worker task that reconciles usage metering logs
  * from KV with the billing system.
  *
- * Sub-modules:
- *   metering-reconciler-types.ts            — AggregatedUsage, LicenseValidationResult, CRON_RECONCILIATION_CONFIG
- *   metering-reconciler-error-logger.ts     — logErrorToSentry, logErrorToKv
- *   metering-reconciler-license-validator.ts — validateLicense, validateAllLicenses
- *   metering-reconciler-aggregator.ts       — aggregateByLicenseAndFeature, getMeteringLogsFromKv, markReconciledLogs
- *   metering-reconciler-steps.ts            — individual step executors (Steps 1-7)
- *
  * Schedule: Daily at 02:00 UTC (0 2 * * *)
  *
  * @module worker/metering-reconciler-runner
@@ -22,9 +15,7 @@ import type {
   ReconciliationResult,
 } from '@/seed/types/billing-contracts';
 import { logger } from '@/seed/utils/logger-utility';
-import { toError } from '@/seed/utils/to-error';
 import { CRON_RECONCILIATION_CONFIG } from './metering-reconciler-types';
-import { logErrorToSentry, logErrorToKv } from './metering-reconciler-error-logger';
 import {
   runSyncStep,
   runScanStep,
@@ -37,6 +28,7 @@ import {
   createInitialReconciliationReport,
   finalizeReconciliationRun,
 } from './metering-reconciler-finalize';
+import { handleReconciliationFailure } from './metering-reconciler-failure';
 
 // Re-exports for consumers of this module
 export { CRON_RECONCILIATION_CONFIG } from './metering-reconciler-types';
@@ -51,19 +43,6 @@ export {
 
 /**
  * Main reconciliation runner for cron trigger.
- *
- * Flow:
- * 1. Sync usage events to KV
- * 2. Scan KV metering-logs namespace for time range
- * 3. Aggregate usage by license + feature
- * 4. Validate licenses via RaaS Gateway
- * 5. Billing reconciliation skipped (NOWPayments IPN handles payments)
- * 6. Mark processed logs as reconciled
- * 7. Detect discrepancies between KV and DB
- * 8. Emit alerts for discrepancies
- * 9. Store report in R2
- * 10. Emit completion alert
- * 11. Cleanup old reports (retention policy)
  */
 export async function runMeteringReconciliation(
   env: Env,
@@ -81,7 +60,6 @@ export async function runMeteringReconciliation(
       timeRangeHours: config.timeRangeHours,
     });
 
-    // Steps 1–7: delegated to metering-reconciler-steps.ts
     await runSyncStep(stepCtx);
     const meteringLogs = await runScanStep(stepCtx);
     const aggregated = runAggregateStep(meteringLogs);
@@ -123,31 +101,13 @@ export async function runMeteringReconciliation(
       retriesPerformed,
     };
   } catch (error) {
-    const err = toError(error);
-    logger.error('[Reconciliation Runner] Reconciliation failed', err);
-
-    report.errors.push({
-      type: 'scanning',
-      message: `Reconciliation failed: ${err.message}`,
-      details: { stack: err.stack },
-      retryable: true,
-      timestamp: Date.now(),
-    });
-
-    ctx.waitUntil(
-      logErrorToSentry(err, { operation: 'metering_reconciliation' })
-    );
-
-    await logErrorToKv(err, {
-      operation: 'reconciliation_runner',
-      timestamp: Date.now(),
-    }, env.KV_KV);
-
-    return {
-      success: false,
+    return handleReconciliationFailure({
+      error,
       report,
       alertsEmitted,
       retriesPerformed,
-    };
+      env,
+      ctx,
+    });
   }
 }

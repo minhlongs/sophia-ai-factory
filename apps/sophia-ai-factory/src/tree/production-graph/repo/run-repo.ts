@@ -7,7 +7,6 @@
 import { createServerClient } from '@/seed/db/client';
 import { failure, success, type Result } from '@/seed/types/result';
 import type {
-  ProductionGraphNodeState,
   ProductionGraphRun,
   ProductionGraphRunPhase,
   ProductionGraphRunStatus,
@@ -15,6 +14,7 @@ import type {
 import { logger } from '@/seed/utils/logger-utility';
 import { RUN_COLUMNS, toErrorCode, toRun } from './mappers';
 import type { CreateRunInput, GraphRepoError, RunRow } from './types';
+export { getNodeStates, setNodeStates } from './run-node-states-repo';
 
 /**
  * Create a run row in 'queued'/'planning' state.
@@ -110,40 +110,4 @@ export async function updateRunStatus(
     logger.error('[GraphRepo] updateRunStatus failed', { error: message, runId, nextStatus });
     return failure({ code, message });
   }
-}
-
-/**
- * Persist the per-node checkpoint states for resume.
- */
-export async function setNodeStates(
-  runId: string,
-  states: readonly ProductionGraphNodeState[],
-): Promise<Result<void, GraphRepoError>> {
-  try {
-    const d1 = createServerClient();
-    await d1
-      .prepare('UPDATE production_graph_runs SET node_states_json = ?1 WHERE id = ?2')
-      .bind(JSON.stringify(states), runId)
-      .run();
-    return success(undefined);
-  } catch (err) {
-    const { code, message } = toErrorCode(err);
-    logger.error('[GraphRepo] setNodeStates failed', { error: message, runId });
-    return failure({ code, message });
-  }
-}
-
-/**
- * Read the persisted per-node checkpoint states. Returns success(null) when
- * the run has no checkpoint yet.
- */
-export async function getNodeStates(
-  runId: string,
-): Promise<Result<ProductionGraphNodeState[] | null, GraphRepoError>> {
-  const run = await getRun(runId);
-  if (!run.ok) return failure(run.error);
-  if (!run.value) {
-    return failure({ code: 'NOT_FOUND', message: `Run ${runId} not found` });
-  }
-  return success(run.value.nodeStates);
 }

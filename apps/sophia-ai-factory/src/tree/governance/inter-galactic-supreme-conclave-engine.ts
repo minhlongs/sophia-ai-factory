@@ -4,10 +4,10 @@
  * @description Pure domain engine for Omni-Cosmic Supreme Conclave Arbitration (99.99999% Supermajority, 99.95% Slashing).
  */
 
-import { createHash } from 'node:crypto';
 import {
-  arbitrateParameterizedConclaveDispute,
-} from './sovereign-conclave-domain-engine';
+  executeQuadrillionConclaveArbitration,
+  verifyQuadrillionConstitutionalInvariant,
+} from './sovereign-conclave-shared-math';
 import {
   verifyParameterizedConstitutionalInvariants,
 } from './conclave';
@@ -59,32 +59,12 @@ export interface InterGalacticInvariantCheckOutput {
 export function arbitrateInterGalacticConclaveDispute(
   input: InterGalacticDisputeInput
 ): InterGalacticDisputeRuling {
-  const result = arbitrateParameterizedConclaveDispute(input, {
+  return executeQuadrillionConclaveArbitration<InterGalacticDisputeRuling>(input, {
+    conclavePrefix: 'INTER_GALACTIC_CONCLAVE',
     defaultSupermajorityThresholdPct: 99.99999,
     slashingPenaltyPct: 99.95,
     slashingMultiplier: 0.9995,
-    emptyVerdict: 'PENDING_EVIDENCE',
-    emptyRulingHashFn: (_input) => createHash('sha256').update('NO_VOTES').digest('hex'),
-    rulingHashFn: (ctx) =>
-      createHash('sha256')
-        .update(`INTER_GALACTIC_CONCLAVE:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.totalJurors}:${ctx.claimantVotes}:${ctx.respondentVotes}:${ctx.jurorsSlashedCount}:${ctx.totalSlashedStakeCents}:${ctx.executedRemedyCents}`)
-        .digest('hex'),
   });
-
-  return {
-    disputeCaseRef: result.disputeCaseRef,
-    verdict: result.verdict as unknown as string,
-    totalJurors: result.totalJurors, totalSenators: result.totalSenators, totalDirectors: result.totalDirectors,
-    claimantVotes: result.claimantVotes, respondentVotes: result.respondentVotes,
-    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
-    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
-    jurorsSlashedCount: result.jurorsSlashedCount,
-    senatorsSlashedCount: result.senatorsSlashedCount,
-    directorsSlashedCount: result.directorsSlashedCount,
-    totalSlashedStakeCents: result.totalSlashedStakeCents,
-    executedRemedyCents: result.executedRemedyCents,
-    rulingHash: result.rulingHash,
-  } as unknown as InterGalacticDisputeRuling;
 }
 
 /**
@@ -94,19 +74,7 @@ export function verifyInterGalacticConstitutionalInvariant(
   invariant: InterGalacticConstitutionalInvariant,
   proposedAction: string
 ): InterGalacticInvariantCheckOutput {
-  const isStrictlyImmutable = invariant.isStrictlyImmutable;
-
-  if (isStrictlyImmutable && proposedAction.toUpperCase().includes('OVERRIDE_CONSTITUTIONAL')) {
-    const rejectHash = createHash('sha256').update(`CONSTITUTIONAL_BREACH_REJECTED:${invariant.articleCode}`).digest('hex');
-    return {
-      allowed: false, articleCode: invariant.articleCode, isStrictlyImmutable,
-      reason: `Action violates strictly immutable Omni-Cosmic constitutional article ${invariant.articleCode}: ${invariant.articleTitle}`,
-      verificationHash: rejectHash,
-    };
-  }
-
-  const allowHash = createHash('sha256').update(`CONSTITUTIONAL_ACTION_PERMITTED:${invariant.articleCode}:${proposedAction}`).digest('hex');
-  return { allowed: true, articleCode: invariant.articleCode, isStrictlyImmutable, verificationHash: allowHash };
+  return verifyQuadrillionConstitutionalInvariant(invariant, proposedAction, 'Omni-Cosmic');
 }
 
 /**
@@ -141,4 +109,3 @@ export function verifyInterGalacticConstitutionalInvariants(
     verificationHash: result.verificationHash ?? '',
   };
 }
-

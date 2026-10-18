@@ -64,12 +64,10 @@ export function selectBestStageCandidate(params: {
     return a.cost - b.cost;
   });
 
-  const chosen = evaluatedCandidates[0] ?? {
-    candidate: candidates[candidates.length - 1],
-    cost: estimateStageCost(stage, candidates[candidates.length - 1], spec),
-    isHealthy: true,
-    circuitState: 'CLOSED' as const,
-  };
+  const chosen = evaluatedCandidates[0];
+  if (!chosen) {
+    throw new Error(`No eligible providers for ${stage} stage`);
+  }
 
   return {
     selection: {

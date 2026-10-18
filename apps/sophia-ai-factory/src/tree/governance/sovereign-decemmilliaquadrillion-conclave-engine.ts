@@ -6,8 +6,9 @@
 
 import { createHash } from 'node:crypto';
 import {
-  arbitrateParameterizedConclaveDispute,
-} from './sovereign-conclave-domain-engine';
+  executeQuadrillionConclaveArbitration,
+  verifyQuadrillionConstitutionalInvariant,
+} from './sovereign-conclave-shared-math';
 
 import type {
   SovereignDecemmilliaquadrillionConclaveVerdict,
@@ -46,77 +47,26 @@ export interface DecemmilliaquadrillionInvariantCheckOutput {
   verificationHash: string;
 }
 
-/**
- * Arbitrates commercial, contract, and multiverse disputes via Sovereign Decem-Millia-Quadrillion Conclave of Sovereign AI.
- * Requires 99.999999999999999999999999% supermajority consensus; penalizes dissenting rogue jurors with 99.99999999999999999% stake slashing.
- */
 export function arbitrateSovereignDecemmilliaquadrillionConclaveDispute(
   input: DecemmilliaquadrillionDisputeInput
 ): DecemmilliaquadrillionDisputeRuling {
-  const result = arbitrateParameterizedConclaveDispute(input, {
+  return executeQuadrillionConclaveArbitration<DecemmilliaquadrillionDisputeRuling>(input, {
+    conclavePrefix: 'DECEMMILLIAQUADRILLION_CONCLAVE',
     defaultSupermajorityThresholdPct: 99.999999999999999999999999,
     slashingPenaltyPct: 100.0,
     slashingMultiplier: 0.99999999999999999,
-    emptyVerdict: 'PENDING_EVIDENCE',
-    emptyRulingHashFn: (_input) => createHash('sha256').update('NO_VOTES').digest('hex'),
-    rulingHashFn: (ctx) =>
-      createHash('sha256')
-        .update(`DECEMMILLIAQUADRILLION_CONCLAVE:${ctx.disputeCaseRef}:${ctx.verdict}:${ctx.totalJurors}:${ctx.claimantVotes}:${ctx.respondentVotes}:${ctx.jurorsSlashedCount}:${ctx.totalSlashedStakeCents}:${ctx.executedRemedyCents}`)
-        .digest('hex'),
   });
-
-  return {
-    disputeCaseRef: result.disputeCaseRef,
-    verdict: result.verdict as unknown as string,
-    totalJurors: result.totalJurors,
-    totalSenators: result.totalSenators,
-    totalDirectors: result.totalDirectors,
-    claimantVotes: result.claimantVotes,
-    respondentVotes: result.respondentVotes,
-    effectiveSupermajorityPct: result.effectiveSupermajorityPct ?? 0,
-    achievedSupermajorityPct: result.achievedSupermajorityPct ?? 0,
-    jurorsSlashedCount: result.jurorsSlashedCount,
-    senatorsSlashedCount: result.senatorsSlashedCount,
-    directorsSlashedCount: result.directorsSlashedCount,
-    totalSlashedStakeCents: result.totalSlashedStakeCents,
-    executedRemedyCents: result.executedRemedyCents,
-    rulingHash: result.rulingHash,
-  } as unknown as DecemmilliaquadrillionDisputeRuling;
 }
 
-/**
- * Validates invariant preservation against the Decem-Millia-Quadrillion Empire Constitutional Charter.
- */
 export function verifyDecemmilliaquadrillionEmpireConstitutionalInvariant(
   invariant: DecemmilliaquadrillionEmpireConstitutionalInvariant,
   proposedAction: string
 ): DecemmilliaquadrillionInvariantCheckOutput {
-  const isStrictlyImmutable = invariant.isStrictlyImmutable;
-
-  if (isStrictlyImmutable && proposedAction.toUpperCase().includes('OVERRIDE_CONSTITUTIONAL')) {
-    const rejectHash = createHash('sha256')
-      .update(`CONSTITUTIONAL_BREACH_REJECTED:${invariant.articleCode}`)
-      .digest('hex');
-
-    return {
-      allowed: false,
-      articleCode: invariant.articleCode,
-      isStrictlyImmutable,
-      reason: `Action violates strictly immutable Decem-Millia-Quadrillion constitutional article ${invariant.articleCode}: ${invariant.articleTitle}`,
-      verificationHash: rejectHash,
-    };
-  }
-
-  const allowHash = createHash('sha256')
-    .update(`CONSTITUTIONAL_ACTION_PERMITTED:${invariant.articleCode}:${proposedAction}`)
-    .digest('hex');
-
-  return {
-    allowed: true,
-    articleCode: invariant.articleCode,
-    isStrictlyImmutable,
-    verificationHash: allowHash,
-  };
+  return verifyQuadrillionConstitutionalInvariant(
+    invariant,
+    proposedAction,
+    'Decem-Millia-Quadrillion',
+  );
 }
 
 export const CANONICAL_DECEMMILLIAQUADRILLION_EMPIRE_CONSTITUTIONAL_INVARIANTS: DecemmilliaquadrillionEmpireConstitutionalInvariant[] = [

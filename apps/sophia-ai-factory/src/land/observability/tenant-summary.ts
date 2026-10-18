@@ -9,6 +9,10 @@
  */
 
 import { getD1 } from '@/seed/db/client';
+import {
+  fetchTenantSnapshotRows,
+  fetchTenantUserRow,
+} from './tenant-summary-queries';
 
 export interface TenantUserInfo {
   id: string;
@@ -49,30 +53,6 @@ export interface TenantSummary {
   recentAudit: TenantRecentAudit[];
 }
 
-interface RawUser {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-  createdAt: string;
-}
-interface RawStorage {
-  total_bytes: number;
-  video_count: number;
-  last_calculated_at: number;
-}
-interface RawApiKeys {
-  active: number;
-  total: number;
-}
-interface RawCount { n: number }
-interface RawAudit {
-  id: number;
-  action: string;
-  resource: string | null;
-  ts: number;
-}
-
 /**
  * Build the cross-table summary for one tenant. Returns null if user not found.
  */
@@ -81,13 +61,7 @@ export async function getTenantSummary(tenantId: string): Promise<TenantSummary 
   const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
-  const user = await db
-    .prepare(
-      `SELECT id, email, name, role, createdAt
-       FROM "user" WHERE id = ?1 LIMIT 1`,
-    )
-    .bind(tenantId)
-    .first<RawUser>();
+  const user = await fetchTenantUserRow(db, tenantId);
   if (!user) return null;
 
   const [
@@ -97,47 +71,7 @@ export async function getTenantSummary(tenantId: string): Promise<TenantSummary 
     referralRow,
     auditCountRow,
     recentAuditRes,
-  ] = await Promise.all([
-    db
-      .prepare(
-        `SELECT total_bytes, video_count, last_calculated_at
-         FROM tenant_storage_usage WHERE tenant_id = ?1 LIMIT 1`,
-      )
-      .bind(tenantId)
-      .first<RawStorage>(),
-    db
-      .prepare(
-        `SELECT
-           SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active,
-           COUNT(*) AS total
-         FROM raas_api_keys
-         WHERE org_id = ?1`,
-      )
-      .bind(tenantId)
-      .first<RawApiKeys>(),
-    db
-      .prepare(`SELECT COUNT(*) AS n FROM video_jobs WHERE tenant_id = ?1`)
-      .bind(tenantId)
-      .first<RawCount>(),
-    db
-      .prepare(`SELECT COUNT(*) AS n FROM referral_codes WHERE user_id = ?1`)
-      .bind(tenantId)
-      .first<RawCount>(),
-    db
-      .prepare(`SELECT COUNT(*) AS n FROM audit_log WHERE tenant_id = ?1`)
-      .bind(tenantId)
-      .first<RawCount>(),
-    db
-      .prepare(
-        `SELECT id, action, resource, ts
-         FROM audit_log
-         WHERE tenant_id = ?1
-         ORDER BY ts DESC
-         LIMIT 10`,
-      )
-      .bind(tenantId)
-      .all<RawAudit>(),
-  ]);
+  ] = await fetchTenantSnapshotRows(db, tenantId);
 
   return {
     user: {

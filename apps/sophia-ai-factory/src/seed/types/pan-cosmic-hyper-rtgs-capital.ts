@@ -6,6 +6,15 @@
  * Pan-Cosmic Hyper-RTGS, Netting 12.0 & $10.0 Trillion Treasury Singularity.
  */
 
+export {
+  ALL_PAN_COSMIC_VAULT_HUBS,
+  type BaselXviSolvencyStatus,
+  type BaselXviSolvencySnapshot,
+  type PanCosmicVaultHub,
+  type PanCosmicCollateralAsset,
+  type PanCosmicTreasuryReserve,
+} from './pan-cosmic-hyper-rtgs-reserves';
+
 export const GATE_26_SCALE_TARGETS = {
   MRR_TARGET_USD: 1_000_000_000_000,
   ARR_TARGET_USD: 12_000_000_000_000,
@@ -86,69 +95,5 @@ export interface PanCosmicNettingBatch {
   nettingStatus: PanCosmicNettingStatus;
   multiverseSolutionHash: string;
   executedAt?: string;
-  createdAt?: string;
-}
-
-export type BaselXviSolvencyStatus =
-  | 'SOLVENT_AND_CAPITALIZED'
-  | 'CAPITAL_BUFFER_BREACH'
-  | 'LIQUIDITY_RUN_DEFICIT'
-  | 'SUPERVISORY_INTERVENTION';
-
-export interface BaselXviSolvencySnapshot {
-  id?: string;
-  snapshotRef: string;
-  commonEquityTier1Cents: number;
-  totalRiskExposureCents: number;
-  cet1RatioBps: number;
-  highQualityLiquidAssetsCents: number;
-  netCashOutflows30dCents: number;
-  liquidityCoverageRatioBps: number;
-  availableStableFundingCents: number;
-  requiredStableFundingCents: number;
-  netStableFundingRatioBps: number;
-  sovereignCapitalBufferCents: number;
-  stressTestSurvivalDays: number;
-  isBaselXviCompliant: boolean;
-  supervisorySignature: string;
-  createdAt?: string;
-}
-
-export type PanCosmicVaultHub =
-  | 'OMNIVERSE_CORE'
-  | 'PAN_COSMIC_SINGULARITY_HUB'
-  | 'TRANS_DIMENSIONAL_TREASURY_VAULT'
-  | 'VIRGO_HYPER_MATRIX'
-  | 'SUB_PLANCK_QUANTUM_VAULT'
-  | 'ZERO_POINT_CONTINUUM_NEXUS'
-  | 'ABSOLUTE_SINGULARITY_GATEWAY';
-
-export const ALL_PAN_COSMIC_VAULT_HUBS: PanCosmicVaultHub[] = [
-  'OMNIVERSE_CORE',
-  'PAN_COSMIC_SINGULARITY_HUB',
-  'TRANS_DIMENSIONAL_TREASURY_VAULT',
-  'VIRGO_HYPER_MATRIX',
-  'SUB_PLANCK_QUANTUM_VAULT',
-  'ZERO_POINT_CONTINUUM_NEXUS',
-  'ABSOLUTE_SINGULARITY_GATEWAY',
-];
-
-export type PanCosmicCollateralAsset =
-  | 'SOVEREIGN_BONDS'
-  | 'PHYSICAL_GOLD'
-  | 'SSDR_V8_BASKET'
-  | 'TIER_1_EQUITIES'
-  | 'MULTIVERSE_CREDITS'
-  | 'PAN_DIMENSIONAL_QUANTUM_FOAM';
-
-export interface PanCosmicTreasuryReserve {
-  id?: string;
-  vaultHubId: PanCosmicVaultHub;
-  assetType: PanCosmicCollateralAsset;
-  parValueCents: number;
-  haircutPct: number;
-  eligibleCollateralValueCents: number;
-  isUnencumbered: boolean;
-  lastAuditEpoch: string;
   createdAt?: string;
 }

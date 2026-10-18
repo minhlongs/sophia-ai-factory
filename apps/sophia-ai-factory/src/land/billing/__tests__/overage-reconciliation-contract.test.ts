@@ -44,12 +44,15 @@ vi.mock('@/seed/db/client', () => ({
         }),
       }),
     }),
-    prepare: () => ({
+    prepare: (sql: string) => ({
       bind: () => ({
         run: () => Promise.resolve({ meta: { changes: 1 } }),
-        first: () => Promise.resolve(null),
+        first: () => Promise.resolve(sql.includes('pending_topups')
+          ? { id: 'topup_recon_inv_001', user_id: 'user1', mcu_amount: 100, status: 'pending' }
+          : null),
       }),
     }),
+    batch: (statements: unknown[]) => Promise.resolve(statements.map(() => ({ meta: { changes: 1 } }))),
   })),
   getD1: vi.fn(() => ({
     prepare: () => ({
@@ -58,6 +61,7 @@ vi.mock('@/seed/db/client', () => ({
         first: () => Promise.resolve(null),
       }),
     }),
+    batch: (statements: unknown[]) => Promise.resolve(statements.map(() => ({ meta: { changes: 1 } }))),
   })),
 }))
 
@@ -70,6 +74,8 @@ function makeTopupIpn(overrides: Record<string, unknown> = {}) {
     payment_status: 'finished' as const,
     price_amount: 10,
     price_currency: 'USD',
+    pay_amount: 10,
+    pay_currency: 'USDT',
     order_id: 'topup_user1_' + Date.now(),
     invoice_id: 'recon_inv_001',
     actually_paid: 10,

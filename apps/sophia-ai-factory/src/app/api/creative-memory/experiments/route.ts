@@ -3,44 +3,21 @@
  * POST /api/creative-memory/experiments — create new experiment
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import {
   createExperiment,
   listExperiments,
-  newExperimentId,
 } from '@/tree/performance/experiment';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import type { Experiment, ExperimentStatus, ExperimentVariant } from '@/seed/types/creative-domain';
+import type { ExperimentStatus } from '@/seed/types/creative-domain';
+import {
+  CreateExperimentSchema,
+  GetExperimentsSchema,
+  buildExperimentRecord,
+} from './experiments-route-helpers';
 
 export const dynamic = 'force-dynamic';
-
-const EXPERIMENT_STATUSES = ['draft', 'running', 'completed', 'cancelled'] as const;
-
-const GetExperimentsSchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  projectId: z.string().optional(),
-  status: z.enum(EXPERIMENT_STATUSES).optional(),
-});
-
-const VariantInputSchema = z.object({
-  name: z.string().min(1, 'variant name is required'),
-  description: z.string().optional().default(''),
-  assetId: z.string().optional(),
-  trafficPercent: z.number().min(0).max(100),
-});
-
-const CreateExperimentSchema = z.object({
-  workspaceId: z.string().min(1, 'workspaceId is required'),
-  projectId: z.string().optional().default(''),
-  hypothesis: z.string().optional().default(''),
-  metric: z.string().optional().default('ctr'),
-  audience: z.string().optional().default(''),
-  channel: z.string().optional().default(''),
-  status: z.enum(EXPERIMENT_STATUSES).optional().default('draft'),
-  variants: z.array(VariantInputSchema).optional().default([]),
-});
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -102,39 +79,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { workspaceId, projectId, hypothesis, metric, audience, channel, status, variants } = parsed.data;
-
-  const hasOperator = await verifyWorkspaceRole(workspaceId, user.id, 'OPERATOR');
+  const hasOperator = await verifyWorkspaceRole(parsed.data.workspaceId, user.id, 'OPERATOR');
   if (!hasOperator) {
     return NextResponse.json({ error: 'Forbidden', message: 'Insufficient workspace role' }, { status: 403 });
   }
 
   try {
-    const experimentId = newExperimentId();
-    const domainVariants: ExperimentVariant[] = variants.map((v, idx) => ({
-      id: `var_${experimentId.slice(4)}_${idx + 1}`,
-      experimentId,
-      name: v.name,
-      description: v.description,
-      assetId: v.assetId,
-      trafficPercent: v.trafficPercent,
-    }));
-
-    const now = Math.floor(Date.now() / 1000);
-    const experiment: Experiment = {
-      id: experimentId,
-      workspaceId,
-      projectId,
-      hypothesis,
-      metric,
-      audience,
-      channel,
-      status: status as ExperimentStatus,
-      variants: domainVariants,
-      createdAt: now,
-      updatedAt: now,
-    };
-
+    const experiment = buildExperimentRecord(parsed.data);
     await createExperiment(experiment);
     return NextResponse.json({ experiment }, { status: 201 });
   } catch (err) {

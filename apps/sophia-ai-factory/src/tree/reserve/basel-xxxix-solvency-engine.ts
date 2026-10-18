@@ -5,16 +5,16 @@
  */
 
 import { createHash } from 'node:crypto';
-import {
-  calculateParameterizedCollateralValue,
-  calculateBaselSolvencyRatios,
-} from './basel-solvency-domain-engine';
-
+import { calculateBaselSolvencyRatios } from './basel-solvency-domain-engine';
 import {
   BASEL_XXXIX_CONSTRAINTS,
   type BaselXxxixSolvencyStatus,
-  type QuinquagintamilliaquadrillionCollateralAssetType,
 } from '@/seed/types/quinquagintamilliaquadrillion-trans-cosmic-hyper-rtgs-capital';
+
+export {
+  calculateQuinquagintamilliaquadrillionCollateralValue,
+  type QuinquagintamilliaquadrillionCollateralValuationResult,
+} from './basel-xxxix-collateral-valuation';
 
 export interface BaselXxxixSolvencyInput {
   commonEquityTier1Cents: number;
@@ -36,44 +36,6 @@ export interface BaselXxxixSolvencyOutput {
   solvencyStatus: BaselXxxixSolvencyStatus;
   supervisorySignature: string;
   violations: string[];
-}
-
-export interface QuinquagintamilliaquadrillionCollateralValuationResult {
-  assetType: QuinquagintamilliaquadrillionCollateralAssetType;
-  nominalValueCents: number;
-  haircutFactor: number;
-  netValuationCents: number;
-}
-
-const QUINQUAGINTAMILLIAQUADRILLION_HAIRCUTS: Record<string, number> = {
-  SOVEREIGN_BONDS: 1.000,
-  PHYSICAL_GOLD: 1.010,
-  SSDR_V29_BASKET: 1.015,
-  TIER_1_EQUITIES: 1.050,
-  QUINQUAGINTAMILLIAQUADRILLION_CREDITS: 1.025,
-  QUINQUAGINTAMILLIAQUADRILLION_SUB_PLANCK_FOAM: 1.035,
-};
-
-/**
- * Calculates net collateral value applying Basel XXXIX asset haircut tables.
- */
-export function calculateQuinquagintamilliaquadrillionCollateralValue(
-  nominalValueCents: number,
-  assetType: QuinquagintamilliaquadrillionCollateralAssetType
-): QuinquagintamilliaquadrillionCollateralValuationResult {
-  const result = calculateParameterizedCollateralValue(
-    nominalValueCents,
-    assetType,
-    QUINQUAGINTAMILLIAQUADRILLION_HAIRCUTS,
-    1.035
-  );
-
-  return {
-    assetType,
-    nominalValueCents: result.nominalValueCents,
-    haircutFactor: result.haircutFactor,
-    netValuationCents: result.netValuationCents,
-  };
 }
 
 /**

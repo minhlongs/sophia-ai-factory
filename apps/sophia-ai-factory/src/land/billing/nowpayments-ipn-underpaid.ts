@@ -28,12 +28,15 @@ export async function markUnderpaid(
   userId: string,
   sku: OneTimeSku,
   actuallyPaid: number,
+  expectedPayAmount: number,
+  payCurrency: string,
 ): Promise<Result<void, IPNError>> {
   try {
     const _d1 = await getD1();
     if (!_d1) return failure(new IPNError('D1_BINDING_UNAVAILABLE'));
     const d1 = _d1;
-    const amountCents = Math.round(actuallyPaid * 100)
+    // amount_cents is the fiat invoice value; actuallyPaid is crypto-denominated.
+    const amountCents = Math.round(sku.priceUsd * 100)
     const now = Math.floor(Date.now() / 1000)
 
     await d1
@@ -56,8 +59,9 @@ export async function markUnderpaid(
       after: {
         status: 'underpaid',
         sku: sku.id,
-        actuallyPaid,
-        expectedMin: sku.priceUsd * UNDERPAYMENT_THRESHOLD,
+        actuallyPaidCrypto: actuallyPaid,
+        expectedMinimumCrypto: expectedPayAmount * UNDERPAYMENT_THRESHOLD,
+        payCurrency,
         paymentId,
       },
     })
@@ -66,6 +70,7 @@ export async function markUnderpaid(
       userId,
       paymentId,
       actuallyPaid,
+      payCurrency,
       skuId: sku.id,
     })
     return success(undefined)

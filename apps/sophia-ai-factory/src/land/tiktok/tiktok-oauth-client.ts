@@ -10,6 +10,17 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { registerTikTokOAuthClient } from '@/tree/types/oauth-client-types';
+import {
+  TIKTOK_PUBLISH_INIT_URL,
+  TIKTOK_PUBLISH_STATUS_URL,
+  TIKTOK_USER_INFO_URL,
+  buildTikTokPublishPayload,
+  buildTikTokJsonHeaders,
+  type TikTokPublishParams,
+  type TikTokPublishStatus,
+  type TikTokUserInfo,
+  type TikTokApiEnvelope,
+} from './tiktok-oauth-helpers';
 
 export type {
   TikTokTokenResponse,
@@ -22,26 +33,7 @@ export {
   refreshAccessToken,
 } from '@/tree/publishing/tiktok/tiktok-token-manager';
 
-const TIKTOK_PUBLISH_INIT_URL = 'https://open.tiktokapis.com/v2/post/publish/video/init/';
-const TIKTOK_PUBLISH_STATUS_URL = 'https://open.tiktokapis.com/v2/post/publish/status/fetch/';
-const TIKTOK_USER_INFO_URL = 'https://open.tiktokapis.com/v2/user/info/';
-
-export interface TikTokPublishParams {
-  accessToken: string;
-  videoUrl: string;
-  title: string;
-}
-
-export interface TikTokPublishStatus {
-  status: string;
-  publicUrl?: string;
-}
-
-export interface TikTokUserInfo {
-  open_id: string;
-  display_name: string;
-  avatar_url: string;
-}
+export type { TikTokPublishParams, TikTokPublishStatus, TikTokUserInfo };
 
 /** Initiate a video publish — TikTok downloads from videoUrl — returns publish_id */
 export async function publishVideo(params: TikTokPublishParams): Promise<string> {
@@ -49,29 +41,11 @@ export async function publishVideo(params: TikTokPublishParams): Promise<string>
 
   const response = await fetch(TIKTOK_PUBLISH_INIT_URL, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: JSON.stringify({
-      post_info: {
-        title,
-        privacy_level: 'SELF_ONLY',
-        disable_duet: false,
-        disable_comment: false,
-        disable_stitch: false,
-      },
-      source_info: {
-        source: 'PULL_FROM_URL',
-        video_url: videoUrl,
-      },
-    }),
+    headers: buildTikTokJsonHeaders(accessToken),
+    body: buildTikTokPublishPayload(title, videoUrl),
   });
 
-  const data = (await response.json()) as {
-    data?: { publish_id: string };
-    error?: { message: string; code: string };
-  };
+  const data = (await response.json()) as TikTokApiEnvelope<{ publish_id: string }>;
 
   if (!response.ok || data.error?.code) {
     const msg = data.error?.message ?? 'Video publish init failed';
@@ -90,17 +64,14 @@ export async function checkPublishStatus(
 ): Promise<TikTokPublishStatus> {
   const response = await fetch(TIKTOK_PUBLISH_STATUS_URL, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+    headers: buildTikTokJsonHeaders(accessToken),
     body: JSON.stringify({ publish_id: publishId }),
   });
 
-  const data = (await response.json()) as {
-    data?: { status: string; publicaly_available_post_id?: string[] };
-    error?: { message: string; code: string };
-  };
+  const data = (await response.json()) as TikTokApiEnvelope<{
+    status: string;
+    publicaly_available_post_id?: string[];
+  }>;
 
   if (!response.ok || data.error?.code) {
     const msg = data.error?.message ?? 'Publish status check failed';
@@ -124,10 +95,7 @@ export async function getUserInfo(accessToken: string): Promise<TikTokUserInfo> 
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  const data = (await response.json()) as {
-    data?: { user?: TikTokUserInfo };
-    error?: { message: string; code: string };
-  };
+  const data = (await response.json()) as TikTokApiEnvelope<{ user?: TikTokUserInfo }>;
 
   if (!response.ok || data.error?.code) {
     const msg = data.error?.message ?? 'Failed to fetch user info';

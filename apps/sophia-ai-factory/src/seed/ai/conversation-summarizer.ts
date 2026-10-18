@@ -15,7 +15,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import type { ConversationSummary } from './conversation-summarizer-types';
 import type { KeyPoints } from './conversation-summarizer-extractors';
 import { extractKeyPoints } from './conversation-summarizer-extractors';
-import { estimateTokens, truncateToTokenBudget, compressMessages } from './conversation-summarizer-helpers';
+import { buildConversationSummary } from './conversation-summarizer-builder';
 
 // ── Re-exports (sub-modules) ──────────────────────────────────────────────────
 
@@ -98,50 +98,6 @@ export class ConversationSummarizer {
   summarize(messages: ChatMessage[], maxTokens?: number): ConversationSummary {
     const effectiveMax = maxTokens ?? this.maxSummaryTokens;
     const keyPoints = this.extractKeyPoints(messages);
-
-    // Build the summary text in system-message style.
-    const parts: string[] = [];
-
-    if (keyPoints.topics.length > 0) {
-      parts.push(`Topics discussed: ${keyPoints.topics.join(', ')}.`);
-    }
-
-    if (keyPoints.decisions.length > 0) {
-      parts.push(
-        `Key decisions: ${keyPoints.decisions.map((d) => `- ${d}`).join(' ')}`,
-      );
-    }
-
-    if (keyPoints.userPreferences.length > 0) {
-      parts.push(
-        `User preferences: ${keyPoints.userPreferences.map((p) => `- ${p}`).join(' ')}`,
-      );
-    }
-
-    if (keyPoints.actionItems.length > 0) {
-      parts.push(
-        `Action items: ${keyPoints.actionItems.map((a) => `- ${a}`).join(' ')}`,
-      );
-    }
-
-    // Fallback: if no structured points found, compress the last few messages.
-    let summaryText: string;
-    if (parts.length === 0) {
-      summaryText = compressMessages(messages, effectiveMax);
-    } else {
-      summaryText = parts.join(' ');
-      // Truncate if over budget.
-      summaryText = truncateToTokenBudget(summaryText, effectiveMax);
-    }
-
-    return {
-      summary: summaryText,
-      topics: keyPoints.topics,
-      decisions: keyPoints.decisions,
-      userPreferences: keyPoints.userPreferences,
-      actionItems: keyPoints.actionItems,
-      estimatedTokens: estimateTokens(summaryText),
-      messagesSummarized: messages.length,
-    };
+    return buildConversationSummary(messages, keyPoints, effectiveMax);
   }
 }

@@ -8,30 +8,13 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type { PartnerProfile, PartnerTier, CoOpBudgetAllocation } from '@/tree/partners/types';
-import { CO_OP_ACCRUAL_RATE_PCT, CO_OP_BUDGET_EXPIRY_MS } from './constants';
 import type { AccrueCoOpBudgetResult } from './types';
+import {
+  calculateMonthlyCoOpAccrual,
+  insertCoOpBudgetAllocation,
+} from './accrual-helpers';
 
-/**
- * Calculates monthly Co-Op marketing fund accrual with guaranteed zero penny leakage.
- *
- * Rules:
- * - GOLD (28%) & PLATINUM (35%) partners are eligible for 5% monthly Co-Op accrual.
- * - SILVER (20%) partners accrue 0%.
- * - Formula: Math.floor((mrrCents * 5) / 100).
- */
-export function calculateMonthlyCoOpAccrual(mrrCents: number, tier: PartnerTier): number {
-  if (mrrCents <= 0 || !Number.isFinite(mrrCents)) {
-    return 0;
-  }
-
-  // Only Gold and Platinum tiers receive Co-Op funds
-  if (tier !== 'GOLD' && tier !== 'PLATINUM') {
-    return 0;
-  }
-
-  const validMrr = Math.floor(mrrCents);
-  return Math.floor((validMrr * CO_OP_ACCRUAL_RATE_PCT) / 100);
-}
+export { calculateMonthlyCoOpAccrual };
 
 /**
  * Accrues monthly Co-Op marketing budget for an eligible partner.
@@ -96,48 +79,14 @@ export async function accrueMonthlyCoOpBudget(
   }
 
   const allocatedCents = calculateMonthlyCoOpAccrual(mrrCents, effectiveTier);
-  const now = Date.now();
-  const expiresAt = now + CO_OP_BUDGET_EXPIRY_MS;
-  const allocationId = `coop_${crypto.randomUUID().slice(0, 16)}`;
-
-  await db
-    .prepare(`
-      INSERT INTO co_op_budget_allocations (
-        id, partner_id, billing_cycle_month, tier_at_time, mrr_basis_cents,
-        accrual_rate_pct, allocated_cents, claimed_cents, remaining_cents,
-        expires_at, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'active', ?, ?)
-    `)
-    .bind(
-      allocationId,
-      partnerId,
-      trimmedCycle,
-      effectiveTier,
-      Math.floor(mrrCents),
-      CO_OP_ACCRUAL_RATE_PCT,
-      allocatedCents,
-      allocatedCents,
-      expiresAt,
-      now,
-      now,
-    )
-    .run();
-
-  const createdAllocation: CoOpBudgetAllocation = {
-    id: allocationId,
-    partner_id: partnerId,
-    billing_cycle_month: trimmedCycle,
-    tier_at_time: effectiveTier as 'GOLD' | 'PLATINUM',
-    mrr_basis_cents: Math.floor(mrrCents),
-    accrual_rate_pct: CO_OP_ACCRUAL_RATE_PCT,
-    allocated_cents: allocatedCents,
-    claimed_cents: 0,
-    remaining_cents: allocatedCents,
-    expires_at: expiresAt,
-    status: 'active',
-    created_at: now,
-    updated_at: now,
-  };
+  const createdAllocation = await insertCoOpBudgetAllocation({
+    db,
+    partnerId,
+    trimmedCycle,
+    effectiveTier,
+    mrrCents,
+    allocatedCents,
+  });
 
   return {
     success: true,

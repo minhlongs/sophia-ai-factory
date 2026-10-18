@@ -10,10 +10,7 @@
 import type { z } from 'zod';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import {
-  verifyWorkspaceAccess,
-  hasWorkspaceRole,
-} from '@/seed/auth/workspace-access';
+import { verifyWorkspaceAccess, hasWorkspaceRole } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -73,14 +70,10 @@ export async function executeMultiTrackMissionAction(
     }
 
     // 2. Verify creator ownership or workspace ADMIN/OWNER role
-    const isCreator = mission.creator_id === user.id;
-    if (!isCreator) {
+    if (mission.creator_id !== user.id) {
       const hasAdmin = await hasWorkspaceRole(mission.workspace_id, user.id, 'ADMIN', d1);
       if (!hasAdmin) {
-        return failure({
-          code: 'FORBIDDEN',
-          message: 'You do not have permission to execute this mission',
-        });
+        return failure({ code: 'FORBIDDEN', message: 'You do not have permission to execute this mission' });
       }
     }
 
@@ -102,9 +95,7 @@ export async function executeMultiTrackMissionAction(
       workspaceId: mission.workspace_id,
       requiredCapabilities: requiredCaps,
       estimatedCostCents: parsed.data.estimatedCostCents,
-      overrides: {
-        membershipVerified: true,
-      },
+      overrides: { membershipVerified: true },
     });
 
     if (!preflight.passed) {
@@ -121,7 +112,6 @@ export async function executeMultiTrackMissionAction(
 
     // 5. Delegate to Tree Service Bridge
     const { dispatchMultiTrackMission } = await import('@/tree/mission');
-
     const result = await dispatchMultiTrackMission(parsed.data.missionId, {
       userId: user.id,
       workspaceId: mission.workspace_id,
@@ -133,10 +123,7 @@ export async function executeMultiTrackMissionAction(
     });
 
     if (!result.success) {
-      return failure({
-        code: 'EXECUTION_FAILED',
-        message: result.error || 'Multi-track execution failed',
-      });
+      return failure({ code: 'EXECUTION_FAILED', message: result.error || 'Multi-track execution failed' });
     }
 
     revalidatePath('/dashboard/missions');

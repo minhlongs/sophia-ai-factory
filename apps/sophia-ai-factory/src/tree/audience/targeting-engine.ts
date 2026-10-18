@@ -5,13 +5,6 @@
  * EXPLAINABLE — the total is exactly the sum of named components, each with
  * an explicit maxContribution. There are no hidden/black-box weights.
  *
- * Component budget (sums to 1.0):
- *   platform_presence     0.30 — segment is active on the target platform
- *   content_fit           0.25 — segment targets the content type
- *   audience_size         0.20 — follower count, saturates at 100k
- *   engagement_quality    0.15 — engagement rate, saturates at 10%
- *   demographics_alignment 0.10 — overlap of segment age buckets with audience
- *
  * Layer: tree (domain-reusable). Imports seed only (types.ts is tree-local).
  *
  * @module tree/audience/targeting-engine
@@ -25,29 +18,20 @@ import type {
   RankedSegment,
   ScoreComponent,
 } from './types';
+import {
+  COMPONENT_WEIGHTS,
+  AUDIENCE_SIZE_SATURATION,
+  ENGAGEMENT_SATURATION,
+  round6,
+  clamp01,
+  demographicsAlignment,
+} from './targeting-weights';
 
-/** Explicit component weight budget — the only place weights live. */
-export const COMPONENT_WEIGHTS = {
-  platformPresence: 0.3,
-  contentFit: 0.25,
-  audienceSize: 0.2,
-  engagementQuality: 0.15,
-  demographicsAlignment: 0.1,
-} as const;
-
-/** Followers at which the audience_size component saturates. */
-export const AUDIENCE_SIZE_SATURATION = 100_000;
-
-/** Engagement rate at which the engagement_quality component saturates. */
-export const ENGAGEMENT_SATURATION = 0.1;
-
-function round6(value: number): number {
-  return Math.round(value * 1_000_000) / 1_000_000;
-}
-
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
+export {
+  COMPONENT_WEIGHTS,
+  AUDIENCE_SIZE_SATURATION,
+  ENGAGEMENT_SATURATION,
+} from './targeting-weights';
 
 /**
  * Score one segment for one platform + content type.
@@ -117,23 +101,6 @@ export function scoreSegment(
 
   const score = round6(components.reduce((sum, c) => sum + c.contribution, 0));
   return { segment, platform, contentType, score, components };
-}
-
-/**
- * Share of the platform audience that falls inside the segment's age buckets.
- * Returns 0 when either side has no age data.
- */
-function demographicsAlignment(
-  segment: AudienceSegment,
-  metrics?: AudienceMetrics,
-): number {
-  const ageBuckets = metrics?.demographics.ageBuckets;
-  if (segment.ageBuckets.length === 0 || !ageBuckets) return 0;
-  let share = 0;
-  for (const bucket of segment.ageBuckets) {
-    share += ageBuckets[bucket] ?? 0;
-  }
-  return clamp01(share);
 }
 
 /**

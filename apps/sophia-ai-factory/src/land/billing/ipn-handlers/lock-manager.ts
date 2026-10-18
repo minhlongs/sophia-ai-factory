@@ -8,6 +8,13 @@ import { logger } from '@/seed/utils/logger-utility';
 import { safeCatch } from '@/seed/utils/safe-catch';
 import { detectStaleLock, type StaleLockDatabase } from '@/seed/utils/stale-lock-recovery';
 import type { NowPaymentsIpnPayload } from './types';
+import {
+  acquireTerminalIpnLock,
+  markTerminalIpnProcessed,
+  releaseTerminalIpnLock,
+  recordNowPaymentsRefundBarrier,
+  hasNowPaymentsRefundBarrier,
+} from './terminal-lock-manager';
 
 export type IpnLockResult =
   | { status: 'acquired' }
@@ -17,7 +24,7 @@ export type IpnLockResult =
   | { status: 'stale_recovery_in_progress' }
   | { status: 'db_failure' };
 
-async function recoverStaleLock(
+export async function recoverStaleLock(
   db: D1Client,
   eventId: string,
   payment_id: string,
@@ -93,3 +100,11 @@ export async function acquireIpnLock(
 
   return recoverStaleLock(db, eventId, payment_id, payment_status);
 }
+
+export {
+  acquireTerminalIpnLock,
+  markTerminalIpnProcessed,
+  releaseTerminalIpnLock,
+  recordNowPaymentsRefundBarrier,
+  hasNowPaymentsRefundBarrier,
+};

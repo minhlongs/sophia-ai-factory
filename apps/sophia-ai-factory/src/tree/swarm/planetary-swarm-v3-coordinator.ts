@@ -7,7 +7,6 @@
  * and matches agentic spot compute auction orders.
  */
 
-import { createHash } from 'node:crypto';
 import type { D1Database } from '@cloudflare/workers-types';
 import {
   SWARM_V3_CONSTANTS,
@@ -22,6 +21,10 @@ import {
   getAllPlanetarySwarmNodes,
   recordPlanetarySpotAuction,
 } from './planetary-swarm-v3-persistence';
+import {
+  matchSpotComputeAuctionBatch,
+  healPlanetaryPartitionedNodes,
+} from './planetary-swarm-v3-auction';
 
 export interface PartitionHealthReport {
   totalNodes: number;
@@ -70,40 +73,7 @@ export class PlanetarySwarmV3Coordinator {
     bid: SpotBidRequest,
     batchId?: string
   ): SpotAuctionMatchResult {
-    // Eligible seller nodes must be ONLINE and have acceptable latency
-    const eligibleNodes = nodes
-      .filter((n) => n.status === 'ONLINE' && n.heartbeatLatencyMs <= SWARM_V3_CONSTANTS.SUB_10MS_PLANETARY_HEARTBEAT * 3)
-      .sort((a, b) => a.heartbeatLatencyMs - b.heartbeatLatencyMs);
-
-    if (eligibleNodes.length === 0) {
-      return {
-        auctionId: `spot_reject_${Date.now()}`, sellerNodeId: '',
-        clearingPriceMicros: 0, unitsAllocated: 0, totalCostUsdCents: 0,
-        status: 'DISPUTED', bidProofHash: '',
-      };
-    }
-
-    const selectedSeller = eligibleNodes[0];
-    // Clearing price determined by spot supply (discounted by 10% from buyer max if ample supply)
-    const discountFactor = eligibleNodes.length > 3 ? 0.9 : 1.0;
-    const clearingPriceMicros = Math.floor(bid.maxPriceMicros * discountFactor);
-
-    // Calculate total cost in USD cents: (priceMicros * units * durationSec) / (3600 * 10,000)
-    const costCents = Math.max(
-      1,
-      Math.floor((clearingPriceMicros * bid.unitsRequested * bid.durationSeconds) / (3600 * 10_000))
-    );
-
-    const bId = batchId || `batch_${Date.now()}`;
-    const proofPayload = `${bId}:${selectedSeller.id}:${bid.buyerAgentDid}:${clearingPriceMicros}:${bid.unitsRequested}`;
-    const bidProofHash = createHash('sha256').update(proofPayload).digest('hex');
-
-    return {
-      auctionId: `spot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      sellerNodeId: selectedSeller.id, clearingPriceMicros,
-      unitsAllocated: bid.unitsRequested, totalCostUsdCents: costCents,
-      status: 'SETTLED', bidProofHash,
-    };
+    return matchSpotComputeAuctionBatch(nodes, bid, batchId);
   }
 
   /**
@@ -111,17 +81,7 @@ export class PlanetarySwarmV3Coordinator {
    * when cross-continental telemetry links recover.
    */
   public static healPartitionedNodes(nodes: PlanetarySwarmNode[]): PlanetarySwarmNode[] {
-    return nodes.map((n) => {
-      if (n.status === 'PARTITIONED' || n.status === 'DEGRADED') {
-        return {
-          ...n,
-          status: 'ONLINE',
-          heartbeatLatencyMs: Math.min(n.heartbeatLatencyMs, SWARM_V3_CONSTANTS.SUB_10MS_PLANETARY_HEARTBEAT),
-          lastHeartbeatAt: new Date().toISOString(),
-        };
-      }
-      return n;
-    });
+    return healPlanetaryPartitionedNodes(nodes);
   }
 
   /**

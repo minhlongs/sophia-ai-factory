@@ -36,16 +36,10 @@ export async function verifyZkMpcSessionAction(
     const db = await getD1();
 
     if (db) {
+      const state = quorum.isQuorumSatisfied ? 'RECONSTRUCTED_READY' : 'COMMITMENT_PHASE';
       await db
         .prepare(
-          `INSERT INTO zk_mpc_threshold_sessions (
-             id, session_id, protocol_type, total_participants, threshold_quorum,
-             session_state, aggregated_public_key_hex, state_proof_merkle_root,
-             execution_latency_ms
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(session_id) DO UPDATE SET
-             session_state = ?,
-             state_proof_merkle_root = ?`
+          `INSERT INTO zk_mpc_threshold_sessions (id, session_id, protocol_type, total_participants, threshold_quorum, session_state, aggregated_public_key_hex, state_proof_merkle_root, execution_latency_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET session_state = ?, state_proof_merkle_root = ?`
         )
         .bind(
           `mpc_${params.session.sessionId}`,
@@ -53,11 +47,11 @@ export async function verifyZkMpcSessionAction(
           params.session.protocolType,
           params.session.totalParticipants,
           params.session.thresholdQuorum,
-          quorum.isQuorumSatisfied ? 'RECONSTRUCTED_READY' : 'COMMITMENT_PHASE',
+          state,
           params.session.aggregatedPublicKeyHex,
           quorum.stateProofMerkleRoot,
           params.session.executionLatencyMs,
-          quorum.isQuorumSatisfied ? 'RECONSTRUCTED_READY' : 'COMMITMENT_PHASE',
+          state,
           quorum.stateProofMerkleRoot
         )
         .run();
@@ -101,20 +95,10 @@ export async function submitConstitutionalAmendmentAction(
 
     const db = await getD1();
     if (db) {
+      const timelock = evalResult.timelockEnactmentAt ?? params.proposal.timelockEnactmentAt;
       await db
         .prepare(
-          `INSERT INTO constitutional_amendment_proposals (
-             id, article_reference, title, proposed_diff_json,
-             sponsoring_sovereign_entity, supermajority_requirement_bps,
-             affirmative_voting_power_weight, dissenting_voting_power_weight,
-             formal_verification_passed, anti_takeover_guardrail_intact,
-             ratification_status, timelock_enactment_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(article_reference) DO UPDATE SET
-             affirmative_voting_power_weight = ?,
-             dissenting_voting_power_weight = ?,
-             ratification_status = ?,
-             timelock_enactment_at = ?`
+          `INSERT INTO constitutional_amendment_proposals (id, article_reference, title, proposed_diff_json, sponsoring_sovereign_entity, supermajority_requirement_bps, affirmative_voting_power_weight, dissenting_voting_power_weight, formal_verification_passed, anti_takeover_guardrail_intact, ratification_status, timelock_enactment_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(article_reference) DO UPDATE SET affirmative_voting_power_weight = ?, dissenting_voting_power_weight = ?, ratification_status = ?, timelock_enactment_at = ?`
         )
         .bind(
           `const_${params.proposal.articleReference}`,
@@ -128,11 +112,11 @@ export async function submitConstitutionalAmendmentAction(
           params.proposal.formalVerificationPassed ? 1 : 0,
           evalResult.antiTakeoverGuardrailIntact ? 1 : 0,
           evalResult.ratificationStatus,
-          evalResult.timelockEnactmentAt ?? params.proposal.timelockEnactmentAt,
+          timelock,
           params.affirmativeWeight,
           params.dissentingWeight,
           evalResult.ratificationStatus,
-          evalResult.timelockEnactmentAt ?? params.proposal.timelockEnactmentAt
+          timelock
         )
         .run();
     }
