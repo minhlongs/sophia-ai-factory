@@ -119,9 +119,7 @@ describe('track()', () => {
     // Immediately after — D1 has NOT resolved yet
     expect(d1Resolved).toBe(false)
 
-    // Let the async work complete
-    await new Promise<void>((r) => setTimeout(r, 100))
-    expect(d1Resolved).toBe(true)
+    await vi.waitFor(() => expect(d1Resolved).toBe(true), { timeout: 1_000, interval: 10 })
   })
 
   it('stores orgId when provided', async () => {

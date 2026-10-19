@@ -2,6 +2,7 @@
 /** Run the deterministic core proof from a read-only temporary Git worktree. */
 import { spawnSync, execFileSync } from 'node:child_process';
 import {
+  appendFileSync,
   chmodSync,
   copyFileSync,
   cpSync,
@@ -44,14 +45,6 @@ function copyUntrackedFiles() {
 }
 
 function copyLocalTestInputs() {
-  const testEnv = resolve(appRoot, '.env.test');
-  if (existsSync(testEnv)) {
-    const target = resolve(snapshotRoot, relative(repoRoot, testEnv));
-    mkdirSync(dirname(target), { recursive: true });
-    copyFileSync(testEnv, target);
-    chmodSync(target, 0o400);
-  }
-
   for (const generatedTypes of ['.next/types', '.next/dev/types']) {
     const source = resolve(appRoot, generatedTypes);
     if (!existsSync(source)) continue;
@@ -64,6 +57,7 @@ function copyLocalTestInputs() {
     if (!existsSync(source)) continue;
     symlinkSync(source, resolve(snapshotRoot, dependencyPath), 'dir');
   }
+  appendFileSync(resolve(snapshotRoot, '.git/info/exclude'), '\nnode_modules\napps/sophia-ai-factory/node_modules\n');
 
   // TypeScript incremental metadata is disposable and ignored by Git.
   const tsBuildInfo = resolve(snapshotRoot, 'apps/sophia-ai-factory/tsconfig.tsbuildinfo');
@@ -89,7 +83,8 @@ function makeReadOnly(path) {
 function runProof() {
   const snapshotIdentity = captureSourceIdentity(snapshotRoot);
   if (!sourceIdentityMatchesAtBoundaries(originalIdentity, snapshotIdentity)) {
-    throw new Error('Snapshot source identity does not match the current repository state');
+    const status = spawnSync('git', ['status', '--porcelain=v1', '--untracked-files=all'], { cwd: snapshotRoot, encoding: 'utf8' }).stdout.trim();
+    throw new Error(`Snapshot identity mismatch (source ${originalIdentity.commitSha}/${originalIdentity.changedPathCount}/${originalIdentity.worktreeFingerprint}; snapshot ${snapshotIdentity.commitSha}/${snapshotIdentity.changedPathCount}/${snapshotIdentity.worktreeFingerprint}; paths: ${status})`);
   }
 
   makeReadOnly(snapshotRoot);

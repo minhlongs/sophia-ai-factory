@@ -648,8 +648,12 @@ describe('Multi-Track Tier 5 Orchestrator White-Box Adversarial Stress Test Suit
           };
         },
         onGenerateSpeech: async () => {
-          // Audio takes longer (60ms), and abort triggers at 30ms (after visual completed)
-          await new Promise((resolve) => setTimeout(resolve, 30));
+          // Abort only after the visual track's completed checkpoint is visible.
+          // Waiting on state avoids a timer race under slow CI or parallel test load.
+          await vi.waitFor(async () => {
+            const status = await getMissionTrackStatus(missionId);
+            expect(status.visual).toBe('completed');
+          }, { timeout: 5_000, interval: 1 });
           abortController.abort(new Error('User aborted after visual completed'));
           await new Promise((resolve) => setTimeout(resolve, 30));
           return {

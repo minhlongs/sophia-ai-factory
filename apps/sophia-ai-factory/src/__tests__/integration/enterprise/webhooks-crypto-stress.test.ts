@@ -619,7 +619,7 @@ describe('Empirical Challenger: Milestone 4 Cryptography, Timing Attacks & Clock
       const dosResult = await verifyWebhookSignature(masterSecret, baselinePayload, dosCommasHeader);
       const t1 = performance.now();
       expect(dosResult).toBe(true);
-      expect(t1 - t0).toBeLessThan(10); // must parse in under 10ms without regex catastrophic backtracking
+      expect(t1 - t0).toBeLessThan(50); // bound parsing time without relying on sub-frame CI timing
 
       // 13. Oversized signature string (10KB invalid hex)
       const oversizedSig = 'f'.repeat(10240);

@@ -32,7 +32,11 @@ vi.mock('@/seed/config/tiers', () => ({
 
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(() => ({
-    prepare: vi.fn(() => ({ bind: vi.fn(() => ({ first: vi.fn(), run: vi.fn() })) })),
+    prepare: vi.fn(() => ({ bind: vi.fn(() => ({
+      first: vi.fn(),
+      all: vi.fn().mockResolvedValue({ success: true, results: [] }),
+      run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 1 } }),
+    })) })),
     batch: vi.fn().mockResolvedValue([]),
   })),
   createServerClient: vi.fn(() => ({})),

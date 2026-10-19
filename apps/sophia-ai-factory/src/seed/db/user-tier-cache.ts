@@ -1,5 +1,7 @@
 /**
- * User Tier L1/L2 Cache and Normalization Helpers
+ * User tier invalidation and normalization helpers.
+ * Tier authorization reads are D1-backed; KV is retained for invalidating
+ * keys written by older deployments, but is not an entitlement source.
  * Layer: seed/db
  */
 
@@ -69,10 +71,19 @@ export function cacheAndReturnTier(userId: string, tier: Tier, kv: KVNamespace |
 }
 
 export function invalidateUserTierCache(userId: string): void {
+  void invalidateUserTierCacheAsync(userId).catch(() => {});
+}
+
+/**
+ * Invalidate both tier-cache layers and wait for KV deletion to finish.
+ * Callers that acknowledge entitlement changes should use this variant so
+ * other Worker isolates do not keep serving the old tier after success.
+ */
+export async function invalidateUserTierCacheAsync(userId: string): Promise<void> {
   USER_TIER_CACHE.delete(userId);
   const kv = getKvBinding();
   if (kv) {
-    kv.delete(`user_tier:${userId}`).catch(() => {});
+    await kv.delete(`user_tier:${userId}`);
   }
 }
 

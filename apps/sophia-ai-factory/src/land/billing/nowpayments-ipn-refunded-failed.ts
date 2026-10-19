@@ -6,7 +6,6 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { safeCatch } from '@/seed/utils/safe-catch'
 import { getD1 } from '@/seed/db/client'
 import type { Tier } from '@/seed/types'
 import type { D1Database } from '@cloudflare/workers-types'
@@ -16,6 +15,7 @@ import { markOrderFailed } from '@/land/orders/pending-order-repo'
 import { success, failure, type Result } from '@/seed/types/result'
 import { IPNError } from './nowpayments-ipn-errors'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
+import { invalidateUserTierCacheAsync } from '@/seed/db/get-user-tier'
 
 export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result<void, IPNError>> {
   try {
@@ -36,17 +36,33 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
     // The previous SELECT-based check here was redundant and introduced
     // its own TOCTOU window. Trust the atomic lock as the single source of truth.
 
-    // Single UPDATE with resolved orgId eliminates TOCTOU between
-    // SELECT org_id and UPDATE subscriptions. Falls back to subquery JOIN
-    // including organizations and user_id fallback if direct orgId resolution is null.
+    // Cancel the org subscription, then invalidate every member's cached tier.
+    // getUserTier caches both per-user and org-fallback results for 60 seconds.
     const orgId = await resolveOrgId(userId, d1)
+    let affectedUserIds = [userId]
+    let updateResult
     if (orgId) {
-      await d1.prepare(
+      const members = await d1.prepare(
+        'SELECT user_id FROM org_members WHERE org_id = ?1'
+      ).bind(orgId).all<{ user_id: string }>()
+      if (!members.success) throw new Error('Refund member lookup failed')
+      affectedUserIds = [...new Set([userId, ...members.results.map((member) => member.user_id)])]
+      updateResult = await d1.prepare(
         `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
          WHERE org_id = ?2`
       ).bind(new Date().toISOString(), orgId).run()
     } else {
-      await d1.prepare(
+      // Match the same membership/owner scope as the fallback UPDATE so a
+      // stale negative org cache cannot leave another member's tier cached.
+      const members = await d1.prepare(
+        `SELECT DISTINCT user_id FROM org_members WHERE org_id IN (
+           SELECT org_id FROM org_members WHERE user_id = ?1
+           UNION SELECT id FROM organizations WHERE user_id = ?1
+         )`
+      ).bind(userId).all<{ user_id: string }>()
+      if (!members.success) throw new Error('Refund member lookup failed')
+      affectedUserIds = [...new Set([userId, ...members.results.map((member) => member.user_id)])]
+      updateResult = await d1.prepare(
         `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
          WHERE org_id IN (
            SELECT org_id FROM org_members WHERE user_id = ?2
@@ -55,8 +71,9 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
          ) OR user_id = ?2`
       ).bind(new Date().toISOString(), userId).run()
     }
+    if (!updateResult.success) throw new Error('Refund subscription cancellation failed')
 
-    await invalidateLicenseCacheOnRefund(userId, d1)
+    await invalidateRefundEntitlementCaches(affectedUserIds, d1)
 
     logger.info('[NOWPayments] Payment refunded — subscription cancelled', { userId, paymentId: ipn.payment_id })
     return success(undefined)
@@ -65,17 +82,32 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
   }
 }
 
-async function invalidateLicenseCacheOnRefund(userId: string, d1: D1Database): Promise<void> {
-  try {
-    const lic = await d1
-      .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
-      .bind(userId)
-      .first<{ nonce: string }>()
-    if (lic?.nonce) {
-      const kv = globalThis.KV_KV as KVNamespace | undefined
-      await kv?.delete(`license:${lic.nonce}`).catch((e) => { safeCatch('KV license cache delete')(e) })
-    }
-  } catch (e) { safeCatch('License cache invalidation')(e) }
+async function invalidateRefundEntitlementCaches(userIds: string[], d1: D1Database): Promise<void> {
+  if (userIds.length === 0) return
+
+  const licenseRows: Array<{ user_id: string; nonce: string }> = []
+  for (let offset = 0; offset < userIds.length; offset += 90) {
+    const userBatch = userIds.slice(offset, offset + 90)
+    const placeholders = userBatch.map((_, index) => `?${index + 1}`).join(', ')
+    const licenses = await d1
+      .prepare(`SELECT user_id, nonce FROM raas_licenses WHERE user_id IN (${placeholders}) AND nonce IS NOT NULL`)
+      .bind(...userBatch)
+      .all<{ user_id: string; nonce: string }>()
+    if (!licenses.success) throw new Error('Refund license lookup failed')
+    licenseRows.push(...licenses.results)
+  }
+
+  const kv = globalThis.KV_KV as KVNamespace | undefined
+  const tasks = [
+    ...userIds.map((userId) => () => invalidateUserTierCacheAsync(userId)),
+    ...licenseRows.map((license) => async () => {
+      await kv?.delete(`license:${license.nonce}`)
+      await kv?.delete(`quota:${license.user_id}:${license.nonce}`)
+    }),
+  ]
+  for (let index = 0; index < tasks.length; index += 20) {
+    await Promise.all(tasks.slice(index, index + 20).map((task) => task()))
+  }
 }
 
 export async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<Result<void, IPNError>> {

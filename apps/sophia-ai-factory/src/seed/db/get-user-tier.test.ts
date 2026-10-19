@@ -8,7 +8,7 @@ vi.mock('@/seed/db/client', () => ({
 
 const mockGetD1 = vi.mocked(getD1);
 
-describe('getUserTier and cache layer', () => {
+describe('getUserTier authoritative subscription lookup', () => {
   beforeEach(() => {
     clearUserTierCache();
     vi.clearAllMocks();
@@ -20,27 +20,27 @@ describe('getUserTier and cache layer', () => {
     expect(mockGetD1).not.toHaveBeenCalled();
   });
 
-  it('fetches user tier from subscriptions and caches subsequent calls', async () => {
-    const firstFn = vi.fn().mockResolvedValue({ tier: 'ENTERPRISE', plan: 'enterprise' });
+  it('re-reads the active subscription so a refunded tier is not served from cache', async () => {
+    const firstFn = vi.fn()
+      .mockResolvedValueOnce({ raw_tier: 'PREMIUM' })
+      .mockResolvedValueOnce(null);
     const bindFn = vi.fn().mockReturnValue({ first: firstFn });
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn });
     const mockDb = { prepare: prepareFn } as unknown as D1Database;
 
     mockGetD1.mockResolvedValue(mockDb);
 
-    // Call 1: Misses cache, hits D1
     const res1 = await getUserTier('user-123');
-    expect(res1).toBe('ENTERPRISE');
+    expect(res1).toBe('PREMIUM');
     expect(prepareFn).toHaveBeenCalledTimes(1);
 
-    // Call 2: Hits L1 cache, does not hit D1
     const res2 = await getUserTier('user-123');
-    expect(res2).toBe('ENTERPRISE');
-    expect(prepareFn).toHaveBeenCalledTimes(1);
+    expect(res2).toBe('BASIC');
+    expect(prepareFn).toHaveBeenCalledTimes(2); // both requests read D1; the second bypasses any stale cache
   });
 
   it('normalizes lowercase plan aliases correctly', async () => {
-    const firstFn = vi.fn().mockResolvedValue({ tier: null, plan: 'pro' });
+    const firstFn = vi.fn().mockResolvedValue({ raw_tier: 'pro' });
     const bindFn = vi.fn().mockReturnValue({ first: firstFn });
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn });
     const mockDb = { prepare: prepareFn } as unknown as D1Database;
@@ -51,8 +51,8 @@ describe('getUserTier and cache layer', () => {
     expect(res).toBe('PREMIUM');
   });
 
-  it('invalidates cache via invalidateUserTierCache', async () => {
-    const firstFn = vi.fn().mockResolvedValue({ tier: 'MASTER', plan: 'master' });
+  it('refreshes subscription state after legacy cache invalidation', async () => {
+    const firstFn = vi.fn().mockResolvedValue({ raw_tier: 'MASTER' });
     const bindFn = vi.fn().mockReturnValue({ first: firstFn });
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn });
     const mockDb = { prepare: prepareFn } as unknown as D1Database;
@@ -70,8 +70,8 @@ describe('getUserTier and cache layer', () => {
     expect(prepareFn).toHaveBeenCalledTimes(2);
   });
 
-  it('clears all cached items via clearUserTierCache', async () => {
-    const firstFn = vi.fn().mockResolvedValue({ tier: 'PREMIUM', plan: 'pro' });
+  it('continues resolving current subscriptions after clearing legacy cache entries', async () => {
+    const firstFn = vi.fn().mockResolvedValue({ raw_tier: 'PREMIUM' });
     const bindFn = vi.fn().mockReturnValue({ first: firstFn });
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn });
     const mockDb = { prepare: prepareFn } as unknown as D1Database;
