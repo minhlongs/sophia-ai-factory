@@ -1,18 +1,13 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React from "react";
 import { useTranslations } from "next-intl";
-import {
-  type MarketplaceTemplate,
-  type SortKey,
-  type MarketplaceStitchSectionProps,
-  AMBER,
-  extractCategories,
-} from "./marketplace/types";
+import { AMBER } from "./marketplace/types";
 import { MarketplaceFilterControls } from "./marketplace/marketplace-filter-controls";
 import { MarketplaceCard } from "./marketplace/marketplace-card";
+import { useMarketplaceTemplates } from "./marketplace/use-marketplace-templates";
 
-export type { MarketplaceTemplate, SortKey, MarketplaceStitchSectionProps };
+import type { MarketplaceStitchSectionProps } from "./marketplace/types";
 
 export function MarketplaceStitchSection({
   initialTemplates,
@@ -21,60 +16,22 @@ export function MarketplaceStitchSection({
 }: MarketplaceStitchSectionProps) {
   const t = useTranslations("sop.marketplace");
 
-  const [templates, setTemplates] = useState<MarketplaceTemplate[]>(
-    initialTemplates ?? [],
-  );
-  const [loading, setLoading] = useState(!initialTemplates);
-  const [error, setError] = useState<string | null>(null);
-
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState(initialCategory ?? "all");
-  const [sort, setSort] = useState<SortKey>("popular");
-
-  useEffect(() => {
-    if (initialTemplates) return;
-    const url = fetchUrl ?? "/api/sop-marketplace?limit=100";
-
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<{ templates: MarketplaceTemplate[] }>;
-      })
-      .then((data) => {
-        setTemplates(data.templates ?? []);
-        setLoading(false);
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Failed to load");
-        setLoading(false);
-      });
-  }, [initialTemplates, fetchUrl]);
-
-  const allCategories = useMemo(
-    () => ["all", ...extractCategories(templates)],
-    [templates],
-  );
-
-  const filtered = useMemo(() => {
-    let list = templates;
-    if (category !== "all") {
-      list = list.filter((item) => item.category === category);
-    }
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      list = list.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          (item.tags ?? []).some((tag) => tag.toLowerCase().includes(q)),
-      );
-    }
-    if (sort === "popular") {
-      list = [...list].sort((a, b) => b.totalSales - a.totalSales);
-    } else if (sort === "rating") {
-      list = [...list].sort((a, b) => b.ratingAvg - a.ratingAvg);
-    }
-    return list;
-  }, [templates, category, query, sort]);
+  const {
+    loading,
+    error,
+    query,
+    setQuery,
+    category,
+    setCategory,
+    allCategories,
+    sort,
+    setSort,
+    filtered,
+  } = useMarketplaceTemplates({
+    initialTemplates,
+    initialCategory,
+    fetchUrl,
+  });
 
   return (
     <section
