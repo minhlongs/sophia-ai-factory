@@ -407,6 +407,20 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
     expect(subscriptionHandler.handleRefunded).not.toHaveBeenCalled();
   });
 
+  it('never routes a terminal contract refund through the subscription handler', async () => {
+    const payload = buildIpnPayload({ payment_id: 'contract-payment-1', invoice_id: 'provider-invoice-1',
+      order_id: 'sophia_contract_contract-1_abc', payment_status: 'refunded' });
+    const db = {
+      prepare: (sql: string) => ({ bind: () => ({ first: async () =>
+        sql.includes("status IN ('pending', 'expired', 'failed', 'completed')") ? null :
+          { order_id: 'sophia_contract_contract-1_abc' } }) }),
+    } as unknown as D1Client;
+    vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(null);
+
+    await expect(dispatchRefunded(payload, db)).rejects.toThrow(/could not be safely correlated/);
+    expect(subscriptionHandler.handleRefunded).not.toHaveBeenCalled();
+  });
+
   it('routes a refund for an expired contract order without invoking SaaS cancellation', async () => {
     const payload = buildIpnPayload({ payment_id: 'expired-payment', invoice_id: 'provider-invoice-1',
       order_id: 'contract-order-1', payment_status: 'refunded', price_amount: 3500, price_currency: 'USD' });
@@ -593,29 +607,29 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
     expect(subscriptionHandler.handleRefunded).not.toHaveBeenCalled()
   })
 
-  it('refund with no invoice_id → fall through to subscription handler', async () => {
+  it('refund with no invoice_id or order_id → return retryable failure', async () => {
     const payload = buildIpnPayload({
       invoice_id: undefined,
-      payment_status: 'refunded',
-    })
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
-
-    await dispatchRefunded(payload)
-
-    expect(subscriptionHandler.handleRefunded).toHaveBeenCalledWith(payload)
-  })
-
-  it('refund with unknown invoice_id → still fall through to subscription handler', async () => {
-    const payload = buildIpnPayload({
-      invoice_id: 'unknown_9999999999',
+      order_id: '',
       payment_status: 'refunded',
     })
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(null)
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
+    await expect(dispatchRefunded(payload)).rejects.toThrow(/missing invoice and order correlation/)
+    expect(subscriptionHandler.handleRefunded).not.toHaveBeenCalled()
+  })
 
-    await dispatchRefunded(payload)
+  it('refund with unknown invoice_id and no persisted order match → return retryable failure', async () => {
+    const payload = buildIpnPayload({
+      invoice_id: 'unknown_9999999999',
+      order_id: '',
+      payment_status: 'refunded',
+    })
+    vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(null)
+    const db = { prepare: () => ({ bind: () => ({ all: async () => ({ results: [] }), first: async () => null }) }) } as unknown as D1Client
 
-    expect(subscriptionHandler.handleRefunded).toHaveBeenCalledWith(payload)
+    await expect(dispatchRefunded(payload, db)).rejects.toThrow(/no persisted order correlation/)
+
+    expect(subscriptionHandler.handleRefunded).not.toHaveBeenCalled()
   })
 })
 

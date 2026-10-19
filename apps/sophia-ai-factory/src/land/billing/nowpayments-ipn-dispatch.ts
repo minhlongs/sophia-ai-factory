@@ -185,10 +185,21 @@ export async function dispatchRefunded(ipn: NowPaymentsIpnPayload, db?: D1Client
   if (db && contractOrderId && !ipn.invoice_id) {
     throw new Error('NOWPayments contract refund is missing provider invoice ID; retry after reconciliation');
   }
+  if (db && ipn.order_id) {
+    const contractOrder = await db.prepare(`SELECT order_id FROM pending_orders
+      WHERE order_id = ?1 AND purpose = 'contract' AND payment_method = 'nowpayments'`)
+      .bind(ipn.order_id).first<{ order_id: string }>();
+    if (contractOrder) {
+      throw new Error('NOWPayments contract refund could not be safely correlated; retry after reconciliation');
+    }
+  }
 
   const invoiceId = ipn.invoice_id
 
   if (!invoiceId) {
+    if (!ipn.order_id) {
+      throw new Error('NOWPayments refund is missing invoice and order correlation; retry after reconciliation');
+    }
     // No invoice_id on refund — fall through to subscription handler
     await throwOnError(handleRefunded(ipn))
     return
@@ -198,6 +209,9 @@ export async function dispatchRefunded(ipn: NowPaymentsIpnPayload, db?: D1Client
 
   if (!lookup) {
     logger.warn('[IPNDispatch] refunded: unknown invoice_id', { invoiceId, paymentId: ipn.payment_id })
+    if (!ipn.order_id && !contractOrderId) {
+      throw new Error('NOWPayments refund has no persisted order correlation; retry after reconciliation');
+    }
     // Still fall through — subscription handler is safe on unknown
     await throwOnError(handleRefunded(ipn))
     return
