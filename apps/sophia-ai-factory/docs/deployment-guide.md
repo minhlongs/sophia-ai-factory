@@ -281,19 +281,27 @@ This reverts to the previous Worker version. Then investigate and fix before red
 
 ## 5. Load Testing
 
-Basic load test utility:
+Load probes are for local development or explicitly approved staging only.
+The production origin is rejected. Remote HTTPS targets require the staging
+confirmation shown below.
 
 ```bash
-node scripts/load-test.mjs https://sophia.agencyos.network 10 100
-# 10 concurrent workers, 100 requests each = 1000 total
+node scripts/load-test.mjs http://localhost:3000 10 50
+SOPHIA_STAGING_LOAD_CONFIRM=run-staging-load \
+  node scripts/load-test.mjs https://staging.example.com 10 50
 ```
 
-For comprehensive load testing, use k6 scripts:
+The Node probe is bounded to 50 workers and 100 requests per worker. k6 profiles
+also validate the effective options after CLI/environment overrides and abort
+before sending route requests if the target, peak VUs, or run time exceed the
+configured limits. See `docs/load-testing-runbook.md` for profile details.
+
+For read-only public-route observations on local or approved staging, use k6:
 
 ```bash
 npm run test:load:steady   # baseline sustained load
 npm run test:load:spike    # spike test
-npm run test:load:soak     # soak test (duration)
+npm run test:load:soak     # bounded 20-minute observation
 ```
 
 

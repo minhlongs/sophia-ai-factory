@@ -2,7 +2,8 @@
 /** Validate a private proof emitted by verify-saas-payment-live.mjs. */
 import { readFileSync } from 'node:fs';
 
-const CURRENT_SCHEMA = 'sophia-live-saas-payment-proof-v2';
+const CURRENT_SCHEMA = 'sophia-live-saas-payment-proof-v4';
+const PREVIOUS_SCHEMA = 'sophia-live-saas-payment-proof-v3';
 const LEGACY_SCHEMA = 'sophia-live-saas-payment-proof-v1';
 const REQUIRED_STEPS = ['deployment-version', 'sign-in', 'checkout-created', 'payment-completed', 'tier-activated'];
 
@@ -24,7 +25,7 @@ try {
   fail(`could not read payment evidence: ${error instanceof Error ? error.message : String(error)}`);
 }
 
-if (![CURRENT_SCHEMA, LEGACY_SCHEMA].includes(evidence.schema)) fail('unexpected payment evidence schema');
+if (![CURRENT_SCHEMA, PREVIOUS_SCHEMA, LEGACY_SCHEMA].includes(evidence.schema)) fail('unexpected payment evidence schema');
 if (evidence.status !== 'passed') fail(`payment evidence status is not passed: ${evidence.status ?? 'missing'}`);
 if (!Array.isArray(evidence.events)) fail('payment evidence events must be an array');
 if (!evidence.context || typeof evidence.context !== 'object') fail('payment evidence context is missing');
@@ -36,16 +37,20 @@ if (!['monthly', 'yearly', 'lifetime'].includes(context.period)) fail('payment p
 if (typeof context.baseUrl !== 'string' || !context.baseUrl.startsWith('https://')) fail('payment target must use HTTPS');
 if (typeof context.runId !== 'string' || context.runId.length === 0) fail('payment runId is missing');
 if (typeof context.deployment?.shortSha !== 'string' || context.deployment.shortSha.length === 0) fail('deployment SHA is missing');
-if (evidence.schema === CURRENT_SCHEMA) {
+if (evidence.schema !== LEGACY_SCHEMA) {
   if (!/^[a-f0-9]{40,64}$/i.test(context.deployment.sha ?? '')) fail('full deployment commit SHA is missing');
   if (context.deployment.sha.slice(0, 8).toLowerCase() !== context.deployment.shortSha.toLowerCase()) fail('full and short deployment SHAs do not match');
 }
 if (!/^[a-f0-9]{64}$/i.test(context.orderRefHash ?? '')) fail('hashed order reference is missing');
 if (!/^[a-f0-9]{64}$/i.test(context.paymentRefHash ?? '')) fail('hashed payment reference is missing');
+if (evidence.schema !== LEGACY_SCHEMA && !/^[a-f0-9]{64}$/i.test(context.accountRefHash ?? '')) fail('authenticated account reference hash is missing');
 
 const byStep = new Map(evidence.events.map((event) => [event.step, event]));
-for (const step of REQUIRED_STEPS) {
+for (const step of [...REQUIRED_STEPS, ...(evidence.schema !== LEGACY_SCHEMA ? ['authenticated-principal'] : [])]) {
   if (byStep.get(step)?.status !== 'passed') fail(`required payment step not passed: ${step}`);
+}
+if (evidence.schema !== LEGACY_SCHEMA && byStep.get('authenticated-principal')?.data?.accountRefHash !== context.accountRefHash) {
+  fail('authenticated principal hash does not match payment context');
 }
 
 const checkout = byStep.get('checkout-created')?.data;
@@ -63,8 +68,9 @@ if (completed?.status !== 'completed' || completed?.tier !== context.tier || com
 }
 if (completed?.paymentRefHash !== context.paymentRefHash) fail('completed payment reference hash does not match context');
 if (byStep.get('tier-activated')?.data?.userTier !== context.tier) fail('activated tier does not match the paid tier');
+if (evidence.schema === CURRENT_SCHEMA && !Number.isFinite(Date.parse(context.serverPaymentCompletedAt ?? ''))) fail('server payment completion timestamp is missing');
 
-console.log(`${evidence.schema === LEGACY_SCHEMA ? 'LEGACY ' : ''}LIVE PAYMENT EVIDENCE PASS: ${evidencePath}`);
+console.log(`${evidence.schema === CURRENT_SCHEMA ? '' : 'LEGACY '}LIVE PAYMENT EVIDENCE PASS: ${evidencePath}`);
 console.log(`Deployment: ${context.deployment.shortSha}`);
 if (evidence.schema === LEGACY_SCHEMA) console.log('Legacy evidence contains only a short deployment SHA.');
 console.log(`Provider/tier: ${context.provider} / ${context.tier} (${context.period})`);

@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import type { Tier } from '@/seed/types';
 
+/** PayOS rejected the request before creating a payment link. */
+export class PayOsDefinitiveError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PayOsDefinitiveError';
+  }
+}
+
 export interface PayOsTierConfig {
   tier: Tier;
   vndAmount: number;
@@ -14,6 +22,7 @@ export interface PayOsCheckoutInput {
   orderId: string;
   customerEmail?: string;
   amountVndOverride?: number;
+  orderCodeOverride?: number;
 }
 
 export interface PayOsCheckoutResult {

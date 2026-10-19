@@ -85,6 +85,9 @@ Thumbs.db
 repomix-output.xml
 *.sql
 !apps/sophia-ai-factory/migrations/0188_add_amount_vnd_to_pending_orders.sql
+!apps/sophia-ai-factory/migrations/0475_nowpayments_refund_barriers.sql
+!apps/sophia-ai-factory/migrations/0476_subscriptions_org_status_idx.sql
+!apps/sophia-ai-factory/migrations/0477_payos_contract_fulfillment.sql
 backups/*.sql
 **/d1-*.sql
 

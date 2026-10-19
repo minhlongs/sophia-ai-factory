@@ -24,13 +24,14 @@ globalThis.fetch = async (input, init = {}) => {
     return response({ commitSha: 'abcdef1234567890abcdef1234567890abcdef12', shortSha: 'abcdef12', opennextVersion: '1.19.9' });
   }
   if (url.pathname === '/api/auth/sign-in/email') return response({ success: true }, { 'set-cookie': 'auth-session=test; Path=/; HttpOnly' });
+  if (url.pathname === '/api/auth/session') return response({ authenticated: true, user: { id: 'test-user' } });
   if (url.pathname === '/api/health') return response({ status: 'ok' }, { 'set-cookie': 'csrf-token=csrf-test; Path=/' });
   if (url.pathname === '/api/checkout' && method === 'POST') {
     if (new Headers(init.headers).get('x-csrf-token') !== 'csrf-test') return new Response('{"error":"missing csrf"}', { status: 403 });
     writeFileSync(process.env.SOPHIA_PAYMENT_TEST_CAPTURE_PATH, String(init.body ?? ''));
     return response({ url: process.env.SOPHIA_PAYMENT_TEST_INVOICE_URL ?? 'https://nowpayments.io/payment?iid=test-invoice', orderId });
   }
-  if (url.pathname === '/api/checkout/status') return response({ status: 'completed', tier: 'BASIC', period: 'monthly', paymentId });
+  if (url.pathname === '/api/checkout/status') return response({ status: 'completed', tier: 'BASIC', period: 'monthly', paymentId, completedAt: '2026-09-14T10:00:00.000Z' });
   if (url.pathname === '/api/open-core/status') return response({ userTier: 'BASIC' });
   return new Response('{"error":"not found"}', { status: 404 });
 };

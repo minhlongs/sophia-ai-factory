@@ -50,7 +50,7 @@ vi.mock('@/seed/db/client', () => {
             lastSubscriptionUpdate.plan = s._args[0] as string
           }
           if (s._sql.includes('UPDATE pending_orders')) {
-            pendingOrderUpdates[s._args[3] as string] = {
+            pendingOrderUpdates[s._args[2] as string] = {
               status: s._args[0] as string,
               payment_id: s._args[1] as string,
             }

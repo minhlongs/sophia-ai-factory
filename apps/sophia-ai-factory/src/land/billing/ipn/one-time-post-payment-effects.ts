@@ -29,8 +29,9 @@ export async function runOneTimePostPaymentEffects(
     const db = await getD1();
     if (db) {
       await db
-        .prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?')
-        .bind('completed', ipn.payment_id, Math.floor(Date.now() / 1000), ipn.order_id);
+        .prepare("UPDATE pending_orders SET status=?, payment_id=?, completed_at=CASE WHEN status='completed' THEN completed_at ELSE strftime('%Y-%m-%dT%H:%M:%fZ','now') END WHERE order_id=?")
+        .bind('completed', ipn.payment_id, ipn.order_id)
+        .run();
     }
   } catch (e) {
     safeCatch('One-time pending_orders mark complete')(e);

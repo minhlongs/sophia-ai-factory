@@ -11,3 +11,5 @@ export * from './contract-converter';
 export * from './contract-signer';
 export * from './payment-initiator';
 export * from './payment-fulfiller';
+export * from './payos-contract-fulfillment';
+export * from './nowpayments-contract-fulfillment';

@@ -53,8 +53,8 @@ export function buildSubscriptionUpdateStatements(
 
   if (ipn.order_id) {
     stmts.push(
-      d1.prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?')
-        .bind('completed', ipn.payment_id, now, ipn.order_id)
+      d1.prepare("UPDATE pending_orders SET status=?, payment_id=?, completed_at=CASE WHEN status='completed' THEN completed_at ELSE strftime('%Y-%m-%dT%H:%M:%fZ','now') END WHERE order_id=?")
+        .bind('completed', ipn.payment_id, ipn.order_id)
     )
   }
   if (userId) {

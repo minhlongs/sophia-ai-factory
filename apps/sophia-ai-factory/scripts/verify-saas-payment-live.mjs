@@ -13,7 +13,7 @@ const PERIODS = new Set(['monthly', 'yearly', 'lifetime']);
 const PRODUCTION_HOSTS = new Set(['sophia.agencyos.network', 'www.sophia.agencyos.network']);
 const NOWPAYMENTS_INVOICE_HOSTS = new Set(['nowpayments.io']);
 const evidence = createEvidenceRecorder(process.env.SOPHIA_PAYMENT_LIVE_EVIDENCE_PATH?.trim(), {
-  schema: 'sophia-live-saas-payment-proof-v2',
+  schema: 'sophia-live-saas-payment-proof-v4',
 });
 
 function fail(message) {
@@ -131,6 +131,12 @@ await request('/api/auth/sign-in/email', {
 });
 if (cookieCount() === 0) fail('sign in succeeded but produced no auth cookies');
 evidence.record('sign-in', 'passed', { cookieCount: cookieCount() });
+const authenticatedSession = await request('/api/auth/session', { label: 'verify authenticated principal' });
+if (authenticatedSession.authenticated !== true || typeof authenticatedSession.user?.id !== 'string') {
+  fail('authenticated session did not return a stable user identity');
+}
+evidence.context.accountRefHash = hashReference(authenticatedSession.user.id);
+evidence.record('authenticated-principal', 'passed', { accountRefHash: evidence.context.accountRefHash });
 await request('/api/health', { label: 'seed csrf token' });
 
 const checkout = await request('/api/checkout', {
@@ -188,12 +194,16 @@ const completedOrder = await poll(
 if (completedOrder.tier !== config.tier) fail(`paid order tier mismatch: expected ${config.tier}, received ${completedOrder.tier ?? 'missing'}`);
 if (completedOrder.period !== config.period) fail(`paid order period mismatch: expected ${config.period}, received ${completedOrder.period ?? 'missing'}`);
 if (typeof completedOrder.paymentId !== 'string' || completedOrder.paymentId.length === 0) fail('completed order has no paymentId');
+const serverPaymentCompletedAt = Date.parse(completedOrder.completedAt ?? '');
+if (!Number.isFinite(serverPaymentCompletedAt)) fail('completed order is missing a server completion timestamp');
+evidence.context.serverPaymentCompletedAt = new Date(serverPaymentCompletedAt).toISOString();
 evidence.context.paymentRefHash = hashReference(completedOrder.paymentId);
 evidence.record('payment-completed', 'passed', {
   status: completedOrder.status,
   tier: completedOrder.tier,
   period: completedOrder.period,
   paymentRefHash: evidence.context.paymentRefHash,
+  serverCompletedAt: evidence.context.serverPaymentCompletedAt,
   elapsedMs: Date.now() - startedAt,
 });
 

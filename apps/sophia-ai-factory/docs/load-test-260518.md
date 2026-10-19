@@ -1,5 +1,7 @@
 # Sophia Staging Load Test — 2026-05-18
 
+> Historical record only. These results predate the current load guard; the recorded 100-VU stress run is not an approved current profile or proof of present capacity. Current k6 scripts validate effective options and require `K6_STAGING_CONFIRM=run-staging-load` for remote targets. Use the bounded commands below only on an approved staging environment.
+
 ## Executive Summary
 k6 load tests + Playwright E2E executed against staging. **All E2E pass; k6 latency higher than prod SLOs but acceptable for staging environment.** Staging infrastructure identified as slower than prod (likely resource-limited).
 
@@ -67,19 +69,21 @@ Staging latency is known to be slower due to:
 - Verify prod /api/version SHA match after final deploy
 - Confirm prod HTTP 200 + latency meets requirements
 
-## Commands to Reproduce
+## Commands for Current Bounded Profiles
 
 ```bash
 cd apps/sophia-ai-factory
 
 # Steady profile
 K6_BASE_URL=https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev \
+K6_STAGING_CONFIRM=run-staging-load \
 K6_VUS=50 K6_DURATION=2m \
 k6 run tests/load/k6-steady.js --out json=/tmp/steady.json
 
-# Stress profile
+# Bounded stress observation (50 VU max; not the historical 100 VU run)
 K6_BASE_URL=https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev \
-K6_PEAK=100 \
+K6_STAGING_CONFIRM=run-staging-load \
+K6_PEAK=50 \
 k6 run tests/load/k6-stress.js --out json=/tmp/stress.json
 
 # E2E

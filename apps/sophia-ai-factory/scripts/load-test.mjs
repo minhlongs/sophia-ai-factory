@@ -1,21 +1,34 @@
 #!/usr/bin/env node
 /**
- * load-test.mjs — Basic load testing for production endpoints
+ * load-test.mjs — Basic GET load probe for local or explicitly approved staging targets
  * Usage: node scripts/load-test.mjs <url> [concurrency] [requestsPerWorker]
  *
- * Example: node scripts/load-test.mjs https://sophia.agencyos.network 10 100
+ * Example: node scripts/load-test.mjs http://localhost:3000 10 50
+ * Remote staging requires SOPHIA_STAGING_LOAD_CONFIRM=run-staging-load.
  */
+import { validateLoadTestTarget } from './load-test-target.mjs';
 
 const args = process.argv.slice(2);
 
-if (args.length < 1) {
-  console.error('Usage: load-test.mjs <url> [concurrency] [requestsPerWorker]');
+if (args.length < 1 || args.length > 3) {
+  console.error('Usage: node scripts/load-test.mjs <local-or-staging-origin> [concurrency 1-50] [requestsPerWorker 1-100]');
   process.exit(1);
 }
 
-const url = args[0];
-const concurrency = parseInt(args[1] || '10');
-const requestsPerWorker = parseInt(args[2] || '50');
+let url;
+try {
+  url = validateLoadTestTarget(args[0], process.env.SOPHIA_STAGING_LOAD_CONFIRM);
+} catch (error) {
+  console.error(`Load target rejected: ${error.message}`);
+  process.exit(1);
+}
+const concurrency = Number(args[1] || '10');
+const requestsPerWorker = Number(args[2] || '50');
+if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 50 ||
+    !Number.isInteger(requestsPerWorker) || requestsPerWorker < 1 || requestsPerWorker > 100) {
+  console.error('Load bounds rejected: concurrency must be 1-50 and requestsPerWorker must be 1-100.');
+  process.exit(1);
+}
 
 console.log(`Load test: ${url}`);
 console.log(`Concurrency: ${concurrency}, Requests per worker: ${requestsPerWorker}`);
@@ -28,7 +41,7 @@ const durations = [];
 
 function makeRequest() {
   const start = Date.now();
-  return fetch(url, { method: 'GET' })
+  return fetch(url, { method: 'GET', signal: AbortSignal.timeout(10_000) })
     .then(res => {
       const duration = Date.now() - start;
       durations.push(duration);

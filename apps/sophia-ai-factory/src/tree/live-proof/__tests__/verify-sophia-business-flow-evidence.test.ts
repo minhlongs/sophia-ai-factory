@@ -17,9 +17,29 @@ function makeVideoProof() {
   const channels = ['telegram', 'youtube'];
   const events: Array<{ step: string; status: string; data: Record<string, unknown> }> = [
     'deployment-version', 'sign-in', 'save-llm-byok', 'save-heygen-credential',
-    'channel-preflight', 'auto-video', 'heygen-completion', 'video-row',
-    'distribution-scheduled',
+    'channel-preflight', 'auto-video', 'heygen-completion', 'video-row', 'distribution-scheduled',
   ].map((step) => ({ step, status: 'passed', data: {} }));
+  const fixtureData: Record<string, Record<string, unknown>> = {
+    'channel-preflight': { activeProviders: channels },
+    'auto-video': {
+      missionId: 'mission-raw-id', videoId: 'video-raw-id',
+      heygenJobId: 'heygen-job-1', status: 'succeeded',
+    },
+    'heygen-completion': { heygenJobId: 'heygen-job-1', status: 'completed', videoUrlPresent: true },
+    'video-row': {
+      videoId: 'video-raw-id', status: 'completed', videoUrlPresent: true,
+      serverCreatedAt: '2026-09-15T10:02:00.000Z',
+    },
+    'distribution-scheduled': {
+      jobIds: ['provider-job-1', 'provider-job-2'],
+      expectedProviders: channels,
+      expectedJobs: [
+        { id: 'provider-job-1', provider: 'telegram' },
+        { id: 'provider-job-2', provider: 'youtube' },
+      ],
+    },
+  };
+  for (const event of events) event.data = fixtureData[event.step] ?? {};
   events.push(
     { step: 'video-full-decode', status: 'passed', data: {
       status: 200,
@@ -34,23 +54,32 @@ function makeVideoProof() {
       audioStreams: [{ codec: 'aac' }],
     } },
     { step: 'publish-jobs-live', status: 'passed', data: { jobs: [
-      { id: 'provider-job-1', provider: 'telegram', status: 'live' },
-      { id: 'provider-job-2', provider: 'youtube', status: 'published' },
+      { id: 'provider-job-1', channelId: 'telegram-chat-1', provider: 'telegram', status: 'live' },
+      { id: 'provider-job-2', channelId: 'youtube-channel-1', provider: 'youtube', status: 'published' },
     ] } },
   );
   return {
-    schema: 'sophia-live-user-video-flow-proof-v4',
+    schema: 'sophia-live-user-video-flow-proof-v8',
     status: 'passed',
     context: {
       runId: 'run-video-1',
+      accountRefHash: 'c'.repeat(64),
       baseUrl: 'https://staging.example.com',
+      expectedTier: 'BASIC',
       deployment: { sha: deploymentSha, shortSha },
       channelProviders: channels,
       missionId: 'mission-raw-id',
       videoId: 'video-raw-id',
+      heygenJobId: 'heygen-job-1',
+      distributionJobIds: ['provider-job-1', 'provider-job-2'],
+      serverMissionStartedAt: '2026-09-15T10:01:00.000Z',
+      serverVideoCreatedAt: '2026-09-15T10:02:00.000Z',
     },
     events: [
-      { step: 'start', status: 'running', at: '2026-09-15T10:00:00.000Z', data: {} },
+    { step: 'start', status: 'running', at: '2026-09-15T10:00:00.000Z', data: {} },
+      { step: 'authenticated-principal', status: 'passed', data: { accountRefHash: 'c'.repeat(64) } },
+      { step: 'paid-entitlement', status: 'passed', data: { userTier: 'BASIC', accountRefHash: 'c'.repeat(64) } },
+    { step: 'mission-start-row', status: 'passed', data: { missionId: 'mission-raw-id', command: 'auto-video', serverStartedAt: '2026-09-15T10:01:00.000Z' } },
       ...events,
     ],
   };
@@ -58,10 +87,11 @@ function makeVideoProof() {
 
 function makePaymentProof(overrides: Record<string, unknown> = {}) {
   return {
-    schema: 'sophia-live-saas-payment-proof-v2',
+    schema: 'sophia-live-saas-payment-proof-v4',
     status: 'passed',
     context: {
       runId: 'run-payment-1',
+      accountRefHash: 'c'.repeat(64),
       baseUrl: 'https://staging.example.com',
       provider: 'nowpayments',
       tier: 'BASIC',
@@ -70,12 +100,22 @@ function makePaymentProof(overrides: Record<string, unknown> = {}) {
       deployment: { sha: deploymentSha, shortSha },
       orderRefHash: 'a'.repeat(64),
       paymentRefHash: 'b'.repeat(64),
+      serverPaymentCompletedAt: '2026-09-14T10:00:00.000Z',
     },
     events: [
-      ['deployment-version', {}], ['sign-in', {}], ['payment-completed', {}],
+      ['deployment-version', {}], ['sign-in', {}],
+      ['authenticated-principal', { accountRefHash: 'c'.repeat(64) }],
+      ['payment-completed', { serverCompletedAt: '2026-09-14T10:00:00.000Z' }],
       ['tier-activated', { userTier: 'BASIC' }],
       ['checkout-created', { provider: 'nowpayments', tier: 'BASIC', period: 'monthly', newOrder: true }],
-    ].map(([step, data]) => ({ step, status: 'passed', data })),
+    ].map(([step, data]) => ({
+      step,
+      status: 'passed',
+      at: step === 'payment-completed'
+        ? '2026-09-14T10:00:00.000Z'
+        : step === 'tier-activated' ? '2026-09-14T10:01:00.000Z' : '2026-09-14T09:00:00.000Z',
+      data,
+    })),
     ...overrides,
   };
 }
@@ -228,6 +268,105 @@ describe('verify-sophia-business-flow-evidence', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('different deployed SHAs');
+  });
+
+  it('rejects video and payment proofs for different authenticated accounts', () => {
+    const payment = makePaymentProof();
+    (payment.context as { accountRefHash: string }).accountRefHash = 'd'.repeat(64);
+    const principal = (payment.events as Array<{ step: string; data: { accountRefHash?: string } }>)
+      .find((event) => event.step === 'authenticated-principal');
+    principal!.data.accountRefHash = 'd'.repeat(64);
+    const { result } = runAggregator({ payment });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('different authenticated accounts');
+  });
+
+  it('rejects when payment completion is not strictly before the D1-created mission start', () => {
+    const payment = makePaymentProof();
+    (payment.context as { serverPaymentCompletedAt: string }).serverPaymentCompletedAt = '2026-09-15T10:03:00.000Z';
+    (payment.events as Array<{ step: string; data: Record<string, unknown> }>)
+      .find((event) => event.step === 'payment-completed')!.data.serverCompletedAt = '2026-09-15T10:03:00.000Z';
+    const { result } = runAggregator({ payment });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('do not prove that NOWPayments payment completion preceded auto-video mission start');
+  });
+
+  it('fails closed when D1 timestamps are equal at the mission schema second precision', () => {
+    const payment = makePaymentProof();
+    (payment.context as { serverPaymentCompletedAt: string }).serverPaymentCompletedAt = '2026-09-15T10:01:00.000Z';
+    (payment.events as Array<{ step: string; data: Record<string, unknown> }>)
+      .find((event) => event.step === 'payment-completed')!.data.serverCompletedAt = '2026-09-15T10:01:00.000Z';
+    const { result } = runAggregator({ payment });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('do not prove that NOWPayments payment completion preceded auto-video mission start');
+  });
+
+  it('rejects inconsistent mission-start timestamps between context and event', () => {
+    const video = makeVideoProof();
+    const event = (video.events as Array<{ step: string; data: Record<string, unknown> }>)
+      .find((item) => item.step === 'mission-start-row');
+    event!.data.serverStartedAt = '2026-09-15T10:00:59.000Z';
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('mission start event timestamp does not match proof context');
+  });
+
+  it('rejects video proofs whose paid entitlement is not bound to the authenticated account', () => {
+    const video = makeVideoProof();
+    const entitlement = (video.events as Array<{ step: string; data: Record<string, unknown> }>)
+      .find((event) => event.step === 'paid-entitlement');
+    entitlement!.data.accountRefHash = 'd'.repeat(64);
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('did not bind the expected paid entitlement to the authenticated account');
+  });
+
+  it('rejects published video jobs whose provider does not match the scheduled job ID', () => {
+    const video = makeVideoProof();
+    const publish = (video.events as unknown as Array<{ step: string; data: { jobs: Array<{ id: string; provider: string }> } }>)
+      .find((event) => event.step === 'publish-jobs-live');
+    publish!.data.jobs[0].provider = 'youtube';
+    publish!.data.jobs[1].provider = 'telegram';
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('published job/provider pairs do not match scheduled distribution');
+  });
+
+  it('rejects auto-video response identities that differ from context', () => {
+    const video = makeVideoProof();
+    const autoVideo = (video.events as Array<{ step: string; data: Record<string, unknown> }>)
+      .find((event) => event.step === 'auto-video');
+    autoVideo!.data.missionId = 'other-mission';
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('auto-video response identities do not match proof context');
+  });
+
+  it('rejects a video proof with no HeyGen job identity', () => {
+    const video = makeVideoProof();
+    delete (video.context as { heygenJobId?: string }).heygenJobId;
+    const { result } = runAggregator({ video });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('video proof is missing run, deployment, mission, video, or HeyGen identity');
+  });
+
+  it('rejects inconsistent payment-completion timestamps between context and event', () => {
+    const payment = makePaymentProof();
+    const event = (payment.events as Array<{ step: string; data: Record<string, unknown> }>)
+      .find((item) => item.step === 'payment-completed');
+    event!.data.serverCompletedAt = '2026-09-14T10:00:01.000Z';
+    const { result } = runAggregator({ payment });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('payment completion event timestamp does not match proof context');
   });
 
   it('requires the operator-supplied release SHA to match every live proof', () => {

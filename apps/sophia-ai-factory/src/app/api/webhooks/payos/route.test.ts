@@ -8,10 +8,16 @@ const mocks = vi.hoisted(() => ({
   validatePendingPayOsOrder: vi.fn(),
   activatePayOsSubscription: vi.fn(),
   processPayOsPostFulfillment: vi.fn(),
+  getContractById: vi.fn(),
+  fulfillPayOsContractOrder: vi.fn(),
 }));
 
-vi.mock('@/seed/db/client', () => ({ createServerClient: () => ({}) }));
+vi.mock('@/seed/db/client', () => ({ createServerClient: () => ({ unwrap: () => ({}) }) }));
 vi.mock('./modules', () => mocks);
+vi.mock('@/land/contracts/quote-to-cash-workflow', () => ({
+  getContractById: mocks.getContractById,
+  fulfillPayOsContractOrder: mocks.fulfillPayOsContractOrder,
+}));
 
 import { POST } from './route';
 
@@ -31,6 +37,7 @@ const order: PendingOrder = {
   created_at: '2026-10-18T00:00:00.000Z',
   completed_at: null,
 };
+const contract = { id: 'contract-1', lastInvoiceId: 'invoice-1' };
 
 const ipn = {
   code: '00',
@@ -72,6 +79,8 @@ describe('POST /api/webhooks/payos', () => {
       isLifetime: false,
     });
     mocks.processPayOsPostFulfillment.mockResolvedValue(undefined);
+    mocks.getContractById.mockResolvedValue(contract);
+    mocks.fulfillPayOsContractOrder.mockResolvedValue(undefined);
   });
 
   it('validates the event, matches the invoice and activates the paid tier once', async () => {
@@ -146,6 +155,27 @@ describe('POST /api/webhooks/payos', () => {
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
+    expect(mocks.activatePayOsSubscription).not.toHaveBeenCalled();
+    expect(mocks.processPayOsPostFulfillment).not.toHaveBeenCalled();
+  });
+
+  it('fulfills contract orders without invoking SaaS tier or post-fulfillment effects', async () => {
+    const contractOrder: PendingOrder = {
+      ...order, tier: 'ENTERPRISE', purpose: 'contract', contract_id: 'contract-1',
+      invoice_id: 'invoice-1', provider_order_code: 123456, amount_vnd: 5_775_000,
+    };
+    mocks.validatePendingPayOsOrder.mockResolvedValue({
+      ok: true, order: contractOrder, expectedVndAmount: 5_775_000,
+    });
+
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    expect(mocks.fulfillPayOsContractOrder).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      contract, invoiceId: 'invoice-1', orderId: contractOrder.order_id,
+      paidByUserId: contractOrder.user_id, paymentReference: 'link-1',
+      providerOrderCode: 123456, amountVnd: 5_775_000,
+    }));
     expect(mocks.activatePayOsSubscription).not.toHaveBeenCalled();
     expect(mocks.processPayOsPostFulfillment).not.toHaveBeenCalled();
   });

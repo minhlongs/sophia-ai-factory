@@ -23,6 +23,7 @@ import {
   initiateContractPayment,
   fulfillContractPayment,
 } from '@/land/contracts/quote-to-cash-workflow';
+import { PayOsDefinitiveError } from '@/land/payments/payos-gateway/types';
 
 // Mock dependencies
 const mockCheckout = vi.fn().mockResolvedValue({
@@ -31,13 +32,13 @@ const mockCheckout = vi.fn().mockResolvedValue({
   invoiceId: 'nowp_inv_123',
 });
 
-const mockPayOsInvoice = vi.fn().mockResolvedValue({
+const mockPayOsInvoice = vi.fn().mockImplementation(async (input: { orderCodeOverride: number }) => ({
   checkoutUrl: 'https://payos.vn/gate/payos_order_123',
   qrUrl: 'https://img.vietqr.io/image/970422-0000-compact2.png',
   paymentLinkId: 'link_123',
-  orderCode: 123456789,
+  orderCode: input.orderCodeOverride,
   expiresAt: '2026-10-01T00:00:00Z',
-});
+}));
 
 vi.mock('@/tree/clients/nowpayments-client', () => ({
   createCheckout: (...args: unknown[]) => mockCheckout(...args),
@@ -161,8 +162,23 @@ function setupTestDatabase(): D1Database {
       delta INTEGER NOT NULL,
       reason TEXT NOT NULL,
       metadata TEXT,
+      payment_reference TEXT UNIQUE,
       created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
     );
+
+    CREATE TABLE IF NOT EXISTS pending_orders (
+      order_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, tier TEXT NOT NULL,
+      period TEXT NOT NULL, payment_method TEXT NOT NULL, amount_usd_cents INTEGER NOT NULL,
+      amount_vnd INTEGER, customer_email TEXT, invoice_url TEXT, provider_payment_id TEXT,
+      purpose TEXT NOT NULL DEFAULT 'subscription', contract_id TEXT, invoice_id TEXT,
+      provider_order_code INTEGER, status TEXT NOT NULL DEFAULT 'pending', payment_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')), completed_at TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pending_orders_provider_order_code
+      ON pending_orders(provider_order_code) WHERE provider_order_code IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pending_orders_one_pending_contract_checkout
+      ON pending_orders(contract_id)
+      WHERE purpose = 'contract' AND status = 'pending' AND contract_id IS NOT NULL;
 
     CREATE TABLE IF NOT EXISTS enterprise_deals (
       id TEXT PRIMARY KEY,
@@ -356,9 +372,16 @@ describe('Enterprise Quote-to-Cash Workflow', () => {
         expect.objectContaining({
           tierId: 'ENTERPRISE',
           userId: 'usr_globex_admin',
-          priceAmountOverride: 3500, // $3,500
+          priceAmountOverride: 3500, // Invoice total in USD.
         }),
       );
+      const pendingOrder = await db.prepare(`SELECT payment_method, purpose, contract_id,
+        invoice_id, amount_usd_cents FROM pending_orders WHERE order_id = ?1`)
+        .bind(payment.orderId).first<Record<string, unknown>>();
+      expect(pendingOrder).toMatchObject({
+        payment_method: 'nowpayments', purpose: 'contract', contract_id: contract.id,
+        invoice_id: payment.invoiceId, amount_usd_cents: 350_000,
+      });
 
       // Verify invoice was created in invoices table
       const updatedContract = await getContractById(db, contract.id);
@@ -389,11 +412,30 @@ describe('Enterprise Quote-to-Cash Workflow', () => {
       expect(payment.amountCents).toBe(200_000); // $2,000
       expect(payment.checkoutUrl).toBe('https://payos.vn/gate/payos_order_123');
       expect(payment.qrUrl).toBe('https://img.vietqr.io/image/970422-0000-compact2.png');
+      expect(payment.providerPaymentId).toBe('link_123');
+      expect(payment.providerOrderCode).toBeGreaterThan(100_000_000);
+      expect(payment.providerOrderCode).toBeLessThan(1_000_000_000);
+      expect(payment.amountVnd).toBeGreaterThan(payment.amountCents);
+      const invoiceRow = await db.prepare('SELECT currency, amount_cents, vat_amount_cents, total_amount_cents FROM invoices WHERE id = ?1')
+        .bind(payment.invoiceId).first<{ currency: string; amount_cents: number; vat_amount_cents: number; total_amount_cents: number }>();
+      expect(invoiceRow).toMatchObject({ currency: 'VND', vat_amount_cents: Math.round(invoiceRow!.amount_cents * 0.1) });
+      expect(invoiceRow?.total_amount_cents).toBe(invoiceRow!.amount_cents + invoiceRow!.vat_amount_cents);
+      expect(payment.amountVnd).toBe(invoiceRow?.total_amount_cents);
+      const pendingOrder = await db.prepare('SELECT * FROM pending_orders WHERE order_id = ?1')
+        .bind(payment.orderId).first<Record<string, unknown>>();
+      expect(pendingOrder).toMatchObject({
+        user_id: 'usr_globex_admin', tier: 'ENTERPRISE', payment_method: 'payos',
+        purpose: 'contract', contract_id: contract.id, invoice_id: payment.invoiceId,
+        provider_payment_id: 'link_123', provider_order_code: payment.providerOrderCode,
+        amount_vnd: payment.amountVnd,
+      });
       expect(mockPayOsInvoice).toHaveBeenCalledWith(
         expect.objectContaining({
           tier: 'ENTERPRISE',
           userId: 'usr_globex_admin',
-          amountVndOverride: expect.any(Number),
+          period: 'monthly',
+          amountVndOverride: payment.amountVnd,
+          orderCodeOverride: payment.providerOrderCode,
         }),
       );
     });
@@ -412,6 +454,63 @@ describe('Enterprise Quote-to-Cash Workflow', () => {
           userId: 'usr_1',
         }),
       ).rejects.toThrow(/Contract must be signed before initiating payment/);
+    });
+
+    it('does not return a fake checkout URL when PayOS invoice creation fails', async () => {
+      const quote = await createEnterpriseQuote(db, { orgId: 'org_globex', mcuCapacityMonthly: 50_000 });
+      const contract = await convertQuoteToContract(db, quote.id);
+      await executeContractSigning(db, contract.id, {
+        signerName: 'Alex Mercer', signerEmail: 'alex@globex.com', signerTitle: 'VP Infrastructure',
+      });
+      mockPayOsInvoice.mockRejectedValueOnce(new Error('provider unavailable'));
+
+      await expect(initiateContractPayment(db, {
+        contractId: contract.id, paymentRail: 'PAYOS', userId: 'usr_provider_failure',
+      })).rejects.toThrow('PayOS contract checkout failed: provider unavailable');
+
+      const recoverableOrder = await db.prepare("SELECT status, provider_order_code FROM pending_orders WHERE user_id = ?1 AND purpose = 'contract'")
+        .bind('usr_provider_failure').first<{ status: string; provider_order_code: number }>();
+      expect(recoverableOrder?.status).toBe('pending');
+      expect(recoverableOrder?.provider_order_code).toBeGreaterThan(100_000_000);
+    });
+
+    it('rejects a second PayOS checkout while the contract has a pending intent', async () => {
+      const quote = await createEnterpriseQuote(db, { orgId: 'org_globex', mcuCapacityMonthly: 50_000 });
+      const contract = await convertQuoteToContract(db, quote.id);
+      await executeContractSigning(db, contract.id, {
+        signerName: 'Alex Mercer', signerEmail: 'alex@globex.com', signerTitle: 'VP Infrastructure',
+      });
+
+      await initiateContractPayment(db, {
+        contractId: contract.id, paymentRail: 'PAYOS', userId: 'usr_globex_admin',
+      });
+      const providerCalls = mockPayOsInvoice.mock.calls.length;
+
+      await expect(initiateContractPayment(db, {
+        contractId: contract.id, paymentRail: 'PAYOS', userId: 'usr_globex_admin',
+      })).rejects.toThrow(/already pending/);
+
+      expect(mockPayOsInvoice).toHaveBeenCalledTimes(providerCalls);
+      const pending = await db.prepare("SELECT COUNT(*) AS count FROM pending_orders WHERE contract_id = ?1 AND status = 'pending'")
+        .bind(contract.id).first<{ count: number }>();
+      expect(pending?.count).toBe(1);
+    });
+
+    it('releases the intent after a definitive provider rejection', async () => {
+      const quote = await createEnterpriseQuote(db, { orgId: 'org_globex', mcuCapacityMonthly: 50_000 });
+      const contract = await convertQuoteToContract(db, quote.id);
+      await executeContractSigning(db, contract.id, {
+        signerName: 'Alex Mercer', signerEmail: 'alex@globex.com', signerTitle: 'VP Infrastructure',
+      });
+      mockPayOsInvoice.mockRejectedValueOnce(new PayOsDefinitiveError('PayOS feature flag disabled'));
+
+      await expect(initiateContractPayment(db, {
+        contractId: contract.id, paymentRail: 'PAYOS', userId: 'usr_definitive_failure',
+      })).rejects.toThrow(/PayOS feature flag disabled/);
+
+      const failedOrder = await db.prepare("SELECT status FROM pending_orders WHERE user_id = ?1 AND purpose = 'contract'")
+        .bind('usr_definitive_failure').first<{ status: string }>();
+      expect(failedOrder?.status).toBe('failed');
     });
   });
 

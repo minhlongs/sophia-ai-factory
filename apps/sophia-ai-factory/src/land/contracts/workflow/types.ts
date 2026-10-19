@@ -92,6 +92,9 @@ export interface ContractPaymentInitiationResult {
   checkoutUrl: string;
   qrUrl?: string;
   amountCents: number;
+  providerPaymentId?: string;
+  providerOrderCode?: number;
+  amountVnd?: number;
 }
 
 export interface FulfillPaymentInput {

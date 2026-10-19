@@ -176,6 +176,18 @@ function setupActionDatabase(): D1Database {
       created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
     );
 
+    CREATE TABLE IF NOT EXISTS pending_orders (
+      order_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, tier TEXT NOT NULL,
+      period TEXT NOT NULL, payment_method TEXT NOT NULL, amount_usd_cents INTEGER NOT NULL,
+      amount_vnd INTEGER, customer_email TEXT, invoice_url TEXT, provider_payment_id TEXT,
+      purpose TEXT NOT NULL DEFAULT 'subscription', contract_id TEXT, invoice_id TEXT,
+      provider_order_code INTEGER, status TEXT NOT NULL DEFAULT 'pending', payment_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')), completed_at TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pending_orders_one_pending_contract_checkout
+      ON pending_orders(contract_id)
+      WHERE purpose = 'contract' AND status = 'pending' AND contract_id IS NOT NULL;
+
     CREATE TABLE IF NOT EXISTS enterprise_deals (
       id TEXT PRIMARY KEY,
       deal_stage TEXT NOT NULL DEFAULT 'negotiation',

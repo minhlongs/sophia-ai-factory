@@ -58,7 +58,7 @@ vi.mock('@/seed/db/client', () => ({
       bind: (...args: unknown[]) => {
         batchStmtsSeen.push(sql)
         if (sql.includes('UPDATE pending_orders')) {
-          const orderId = args[3] as string
+          const orderId = args[2] as string
           pendingOrderUpdates[orderId] = { status: args[0] as string, payment_id: args[1] as string }
         }
         if (sql.includes('UPDATE subscriptions')) {
@@ -72,7 +72,7 @@ vi.mock('@/seed/db/client', () => ({
         batchStmtsSeen.push(s._sql)
         if (s._sql.includes('UPDATE subscriptions')) lastSubscriptionUpdate.plan = s._args[0] as string
         if (s._sql.includes('UPDATE pending_orders')) {
-          pendingOrderUpdates[s._args[3] as string] = { status: s._args[0] as string, payment_id: s._args[1] as string }
+          pendingOrderUpdates[s._args[2] as string] = { status: s._args[0] as string, payment_id: s._args[1] as string }
         }
       }
       return []

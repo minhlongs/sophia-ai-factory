@@ -9,6 +9,7 @@ import { z } from 'zod'
 export type PendingOrderStatus = 'pending' | 'completed' | 'failed' | 'expired'
 export type PaymentMethod = 'nowpayments' | 'payos' | 'offline' | 'cash'
 export type PendingOrderPeriod = 'monthly' | 'yearly' | 'lifetime'
+export type PendingOrderPurpose = 'subscription' | 'contract'
 
 export interface PendingOrder {
   order_id: string
@@ -26,6 +27,10 @@ export interface PendingOrder {
   created_at: string | null
   completed_at: string | null
   provider_payment_id?: string | null // For PayOS paymentLinkId direct lookup
+  purpose?: PendingOrderPurpose
+  contract_id?: string | null
+  invoice_id?: string | null
+  provider_order_code?: number | null
 }
 
 export const pendingOrderInputSchema = z.object({
@@ -41,6 +46,18 @@ export const pendingOrderInputSchema = z.object({
   invoice_url: z.string().url().optional(),
   provider_payment_id: z.string().optional(),
   status: z.enum(["pending", "completed", "failed", "expired"]).default("pending").optional(),
+  purpose: z.enum(['subscription', 'contract']).default('subscription').optional(),
+  contract_id: z.string().min(1).optional(),
+  invoice_id: z.string().min(1).optional(),
+  provider_order_code: z.number().int().positive().optional(),
+}).superRefine((order, context) => {
+  if (order.purpose === 'contract') {
+    for (const field of ['contract_id', 'invoice_id', 'provider_order_code', 'amount_vnd'] as const) {
+      if (order[field] == null) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: `Contract orders require ${field}` });
+      }
+    }
+  }
 })
 
 export type PendingOrderInput = z.infer<typeof pendingOrderInputSchema>

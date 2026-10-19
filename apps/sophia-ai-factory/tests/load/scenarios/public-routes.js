@@ -17,12 +17,17 @@
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import exec from 'k6/execution';
 import { Trend, Rate } from 'k6/metrics';
+import { validateK6EffectiveOptions, validateLoadTestTarget } from '../../../scripts/load-test-target.mjs';
 
 export const errorRate = new Rate('public_routes_errors');
 export const healthLatency = new Trend('health_latency_ms');
 
-const BASE_URL = __ENV.K6_BASE_URL || 'http://localhost:3000';
+const BASE_URL = validateLoadTestTarget(
+  __ENV.K6_BASE_URL || 'http://localhost:3000',
+  __ENV.K6_STAGING_CONFIRM,
+);
 
 const ROUTES = [
   { path: '/', name: 'homepage' },
@@ -59,3 +64,11 @@ export const sharedThresholds = {
   public_routes_errors: ['rate<0.01'],
   health_latency_ms: ['p(95)<100'],
 };
+
+export function validateEffectiveProfile(maximumVus, maximumDurationSeconds = 1800) {
+  try {
+    validateK6EffectiveOptions(exec.test.options.scenarios, maximumVus, maximumDurationSeconds);
+  } catch (error) {
+    exec.test.abort(error.message);
+  }
+}

@@ -169,6 +169,21 @@ describe('Automation Server Actions', () => {
         })
       );
     });
+
+    it('returns the database error without triggering the render webhook', async () => {
+      const mockUser = { id: 'user123', email: 'test@example.com', role: 'user' };
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      const failure = { data: null, error: new Error('write failed') };
+      mockQueryBuilder.then = (resolve) => {
+        resolve(failure);
+        return Promise.resolve(failure);
+      };
+
+      const result = await renderVideo('camp123');
+
+      expect(result).toEqual({ success: false, message: 'Failed to update status' });
+      expect(globalFetch).not.toHaveBeenCalled();
+    });
   });
 
   describe('getUserProjects', () => {

@@ -24,14 +24,13 @@ export function mapNonAcquiredLockResponse(
 export async function dispatchPaymentStatus(
   db: D1Client,
   ipn: NowPaymentsIpnPayload,
-): Promise<void> {
+): Promise<boolean> {
   const { payment_id, payment_status, order_id } = ipn;
   switch (payment_status) {
     case 'finished':
-      await dispatchFinished(ipn);
-      break;
+      return dispatchFinished(ipn, db);
     case 'refunded':
-      await dispatchRefunded(ipn);
+      await dispatchRefunded(ipn, db);
       break;
     case 'failed': {
       const failResult = await handleFailed(ipn);
@@ -51,7 +50,8 @@ export async function dispatchPaymentStatus(
       break;
     case 'expired':
       try {
-        await db.from('pending_orders').update({ status: 'expired' }).eq('order_id', order_id);
+        await db.from('pending_orders').update({ status: 'expired' })
+          .eq('order_id', order_id).eq('status', 'pending');
       } catch (e) { safeCatch('Expired order mark')(e); }
       logger.info('[NOWPayments] Payment expired', { payment_id, order_id });
       logger.info('[NOWPayments] Payment expired — marked pending_orders expired', { payment_id, order_id });
@@ -59,4 +59,5 @@ export async function dispatchPaymentStatus(
     default:
       logger.debug('[NOWPayments] Unhandled status', { payment_status, payment_id });
   }
+  return true;
 }

@@ -9,7 +9,7 @@
 import { createEvidenceRecorder } from './live-proof/evidence.mjs';
 import { createRequester, parseDeploymentVersion, parseLiveConfig, poll, redact, usage } from './live-proof/runtime.mjs';
 import { verifyMp4Playback } from './live-proof/media.mjs';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 const SUCCESS_JOB_STATUSES = new Set(['live', 'published', 'completed', 'succeeded']);
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -18,7 +18,7 @@ if (process.argv.includes('--help') || process.argv.includes('-h')) {
 }
 
 const evidence = createEvidenceRecorder(process.env.SOPHIA_LIVE_EVIDENCE_PATH?.trim(), {
-  schema: 'sophia-live-user-video-flow-proof-v4',
+  schema: 'sophia-live-user-video-flow-proof-v8',
 });
 
 function fail(message) {
@@ -28,6 +28,13 @@ function fail(message) {
   process.exit(1);
 }
 
+function parseDatabaseTimestamp(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value < 1_000_000_000_000 ? value * 1000 : value;
+  }
+  return typeof value === 'string' ? Date.parse(value) : Number.NaN;
+}
+
 const config = parseLiveConfig(process.env, fail);
 const { request, cookieCount } = createRequester(config.baseUrl, fail);
 Object.assign(evidence.context, {
@@ -35,6 +42,7 @@ Object.assign(evidence.context, {
   baseUrl: config.baseUrl.origin,
   channelProviders: config.channelProviders,
   topic: config.topic,
+  ...(config.expectedTier ? { expectedTier: config.expectedTier } : {}),
 });
 
 console.log(`==> Live proof target: ${config.baseUrl.origin}`);
@@ -61,7 +69,28 @@ if (cookieCount() === 0) fail('sign in succeeded but produced no auth cookies');
 evidence.record('sign-in', 'passed', { cookieCount: cookieCount() });
 console.log('PASS sign in');
 
+const authenticatedSession = await request('/api/auth/session', { label: 'verify authenticated principal' });
+if (authenticatedSession.authenticated !== true || typeof authenticatedSession.user?.id !== 'string') {
+  fail('authenticated session did not return a stable user identity');
+}
+evidence.context.accountRefHash = createHash('sha256').update(authenticatedSession.user.id).digest('hex');
+evidence.record('authenticated-principal', 'passed', { accountRefHash: evidence.context.accountRefHash });
+console.log('PASS authenticated principal');
+
 await request('/api/health', { label: 'seed csrf token' });
+
+if (!config.preflightOnly) {
+  if (!config.expectedTier) fail('paid video proof is missing its expected tier');
+  const entitlement = await request('/api/open-core/status', { label: 'verify paid entitlement before video use' });
+  if (entitlement.userTier !== config.expectedTier) {
+    fail(`paid entitlement mismatch: expected ${config.expectedTier}, received ${entitlement.userTier ?? 'missing'}`);
+  }
+  evidence.record('paid-entitlement', 'passed', {
+    userTier: entitlement.userTier,
+    accountRefHash: evidence.context.accountRefHash,
+  });
+  console.log(`PASS paid entitlement tier=${entitlement.userTier}`);
+}
 
 await request('/api/setup/save', {
   label: 'save LLM/BYOK keys',
@@ -145,12 +174,26 @@ Object.assign(evidence.context, { missionId: mission.missionId, videoId, heygenJ
 evidence.record('auto-video', 'passed', { missionId: mission.missionId, videoId, heygenJobId, status: mission.status });
 console.log(`PASS auto-video submitted videoId=${videoId}`);
 
+const missionRow = await request(`/api/v1/missions/${encodeURIComponent(mission.missionId)}`, { label: 'verify server mission start row' });
+const missionStartedAt = parseDatabaseTimestamp(missionRow.created_at);
+if (missionRow.id !== mission.missionId || missionRow.command !== 'auto-video' || !Number.isFinite(missionStartedAt)) {
+  fail('auto-video mission row is missing its D1 server start timestamp');
+}
+evidence.context.serverMissionStartedAt = new Date(missionStartedAt).toISOString();
+evidence.record('mission-start-row', 'passed', {
+  missionId: missionRow.id,
+  command: missionRow.command,
+  serverStartedAt: evidence.context.serverMissionStartedAt,
+});
+console.log('PASS server mission start timestamp');
+
 const completedHeygen = await poll('HeyGen completion', config.videoTimeoutMs, config.pollIntervalMs, async () => {
   const status = await request(`/api/heygen/status/${encodeURIComponent(heygenJobId)}`, { label: 'poll HeyGen status' });
   if (status.status === 'failed') fail(`HeyGen render failed: ${redact(status.error ?? 'unknown')}`);
   return { done: status.status === 'completed' && Boolean(status.video_url), value: status };
 }, fail);
 evidence.record('heygen-completion', 'passed', {
+  heygenJobId,
   status: completedHeygen.status,
   videoUrlPresent: Boolean(completedHeygen.video_url),
   durationSec: completedHeygen.duration_sec ?? null,
@@ -161,10 +204,14 @@ const detail = await request(`/api/videos/${encodeURIComponent(videoId)}`, { lab
 if (detail.video?.status !== 'completed' || !detail.video?.video_url) {
   fail(`video row is not completed with URL: ${redact(JSON.stringify(detail))}`);
 }
+const serverVideoCreatedAt = parseDatabaseTimestamp(detail.video.created_at);
+if (!Number.isFinite(serverVideoCreatedAt)) fail('video row is missing a server-created timestamp');
+evidence.context.serverVideoCreatedAt = new Date(serverVideoCreatedAt).toISOString();
 evidence.record('video-row', 'passed', {
   videoId: detail.video.id,
   status: detail.video.status,
   videoUrlPresent: Boolean(detail.video.video_url),
+  serverCreatedAt: evidence.context.serverVideoCreatedAt,
 });
 console.log('PASS completed video visible via API');
 
@@ -182,11 +229,16 @@ const distribute = await request(`/api/v1/videos/${encodeURIComponent(videoId)}/
   method: 'POST',
   body: { channelProviders: config.channelProviders, caption: `Sophia live proof ${videoId}` },
 });
-if (!Array.isArray(distribute.jobIds) || distribute.jobIds.length < config.channelProviders.length) {
+if (!Array.isArray(distribute.jobIds) || distribute.jobIds.length !== config.channelProviders.length) {
   fail(`distribution did not create all jobs: ${redact(JSON.stringify(distribute))}`);
 }
 evidence.context.distributionJobIds = distribute.jobIds;
-evidence.record('distribution-scheduled', 'passed', { jobIds: distribute.jobIds, expectedProviders: config.channelProviders });
+const expectedPublishJobs = distribute.jobIds.map((id, index) => ({ id, provider: config.channelProviders[index] }));
+evidence.record('distribution-scheduled', 'passed', {
+  jobIds: distribute.jobIds,
+  expectedProviders: config.channelProviders,
+  expectedJobs: expectedPublishJobs,
+});
 console.log(`PASS scheduled distribution jobs=${distribute.jobIds.length}`);
 
 const finalPublishState = await poll('publish jobs live', config.publishTimeoutMs, config.pollIntervalMs, async () => {
@@ -205,6 +257,7 @@ const finalPublishState = await poll('publish jobs live', config.publishTimeoutM
 evidence.record('publish-jobs-live', 'passed', {
   jobs: finalPublishState.relevant?.map((job) => ({
     id: job.id,
+    channelId: job.channelId,
     provider: job.provider,
     status: job.status,
     attempts: job.attempts,

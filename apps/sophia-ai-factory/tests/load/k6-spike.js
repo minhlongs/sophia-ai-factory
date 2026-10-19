@@ -1,19 +1,20 @@
 /**
  * k6 SPIKE profile — burst load to validate autoscale behavior.
  *
- * Profile: 0 → 500 VU in 30s, hold 1m, ramp down to 0 in 30s.
- * Goal: ensure CF Workers + D1 absorb traffic spike without elevated error rate.
+ * Profile: 0 → 10 VU in 30s, hold 1m, ramp down in 30s; peak capped at 50.
+ * Goal: observe bounded public-route behavior on local or approved staging.
  *
  * Run:
  *   K6_BASE_URL=http://localhost:3000 k6 run tests/load/k6-spike.js
- *   K6_BASE_URL=https://sophia.agencyos.network K6_PEAK=200 k6 run tests/load/k6-spike.js
+ *   K6_BASE_URL=https://staging.example.com K6_STAGING_CONFIRM=run-staging-load K6_PEAK=20 k6 run tests/load/k6-spike.js
  *
- * SLO: error rate < 2% during peak (looser than steady — spike acceptance tier).
+ * Production origins are rejected during module initialization.
  */
 
-import { publicRoutesScenario } from './scenarios/public-routes.js';
+import { publicRoutesScenario, validateEffectiveProfile } from './scenarios/public-routes.js';
+import { boundedLoadInteger } from '../../scripts/load-test-target.mjs';
 
-const PEAK = Number(__ENV.K6_PEAK) || 500;
+const PEAK = boundedLoadInteger(__ENV.K6_PEAK, 10, 1, 50, 'K6_PEAK');
 
 export const options = {
   stages: [
@@ -29,6 +30,11 @@ export const options = {
   tags: { profile: 'spike' },
 };
 
+export function setup() {
+  validateEffectiveProfile(50);
+}
+
 export default function () {
+  validateEffectiveProfile(50);
   publicRoutesScenario();
 }

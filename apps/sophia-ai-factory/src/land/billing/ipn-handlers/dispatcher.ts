@@ -83,13 +83,15 @@ export async function processNowPaymentsIpn(
   }
 
   try {
-    await dispatchPaymentStatus(db, ipn);
+    const shouldRunPostPaymentSideEffects = await dispatchPaymentStatus(db, ipn);
     await db
       .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
       .bind(eventId)
       .run();
     if (terminalLockAcquired && terminalStatus) await markTerminalIpnProcessed(db, ipn, terminalStatus);
-    return { success: true, message: `Processed ${payment_status}` };
+    return { success: true, message: `Processed ${payment_status}`,
+      ...(payment_status === 'finished' && !shouldRunPostPaymentSideEffects
+        ? { shouldRunPostPaymentSideEffects: false } : {}) };
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('[NOWPayments] IPN processing failed', err, { payment_id, payment_status });

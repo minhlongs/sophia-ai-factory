@@ -188,4 +188,18 @@ if (table === 'org_members') {
     expect(tierGuard.checkMultiChannelAccess).not.toHaveBeenCalled();
     expect(result.success).toBe(true);
   });
+
+  it('rejects campaign creation when the user is unauthenticated', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(null);
+
+    const formData = new FormData();
+    formData.append('title', 'Test Campaign');
+    formData.append('topic', 'Test Topic');
+    formData.append('audience', 'General');
+
+    const result = await createCampaign(formData);
+
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Vui lòng đăng nhập để tạo chiến dịch.');
+  });
 });

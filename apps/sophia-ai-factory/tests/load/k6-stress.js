@@ -1,22 +1,21 @@
 /**
- * k6 STRESS profile — ramp until breakpoint to find absolute limits.
+ * k6 bounded high-load observation profile for local or approved staging.
  *
- * Profile: ramp 0 → 2000 VU over 5m. NO error threshold (we're finding the cliff).
- * Goal: identify VU level where p95 latency exceeds 5s OR error rate > 10%.
+ * Profile: ramp to 25 VU by default (peak capped at 50), fixed 6m run.
+ * Goal: observe route behavior within this conservative limit only.
  *
  * Run:
  *   K6_BASE_URL=http://localhost:3000 k6 run tests/load/k6-stress.js
- *   K6_BASE_URL=https://staging-fork-url K6_PEAK=1000 k6 run tests/load/k6-stress.js
+ *   K6_BASE_URL=https://staging.example.com K6_STAGING_CONFIRM=run-staging-load K6_PEAK=40 k6 run tests/load/k6-stress.js
  *
- * ⚠️  DO NOT run against production. Use staging fork or local.
- *     Will produce real cost on Cloudflare Workers + D1 read units.
- *
- * Output: time-series chart of latency vs VU count → use for scaling decisions.
+ * Production origins are rejected during module initialization.
+ * This is not a breakpoint or production-capacity test.
  */
 
-import { publicRoutesScenario } from './scenarios/public-routes.js';
+import { publicRoutesScenario, validateEffectiveProfile } from './scenarios/public-routes.js';
+import { boundedLoadInteger } from '../../scripts/load-test-target.mjs';
 
-const PEAK = Number(__ENV.K6_PEAK) || 2000;
+const PEAK = boundedLoadInteger(__ENV.K6_PEAK, 25, 1, 50, 'K6_PEAK');
 
 export const options = {
   stages: [
@@ -25,7 +24,7 @@ export const options = {
     { duration: '2m', target: PEAK },
     { duration: '1m', target: 0 },
   ],
-  // No fail thresholds — observation-only run. Breakpoint identified post-hoc.
+  // Bounded observation profile; this is not a capacity-to-break test.
   thresholds: {
     http_req_duration: ['p(95)<5000'], // soft target
     http_req_failed: ['rate<0.10'],
@@ -33,6 +32,11 @@ export const options = {
   tags: { profile: 'stress' },
 };
 
+export function setup() {
+  validateEffectiveProfile(50);
+}
+
 export default function () {
+  validateEffectiveProfile(50);
   publicRoutesScenario();
 }

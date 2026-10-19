@@ -27,7 +27,10 @@ function usage() {
     [--out <redacted-report.json>]
 
 The economics and SLO inputs must be observed Cloudflare/ledger exports with
-their source SHA-256. Mock test evidence cannot satisfy the live proof inputs.`);
+their source SHA-256. Mock test evidence cannot satisfy the live proof inputs.
+Run and confirm the NOWPayments payment first, then run video proof with the same
+staging account and activated tier. The validator requires the same authenticated
+principal, matching tier and deployment SHA, and payment confirmation before video start.`);
 }
 
 function fail(message) {
@@ -109,20 +112,37 @@ function assertObservedWindow(startValue, endValue, label) {
 }
 
 function validateVideoProof(video) {
-  if (video.schema !== 'sophia-live-user-video-flow-proof-v4') fail('video proof must use the current v4 full-decode live schema');
+  if (video.schema !== 'sophia-live-user-video-flow-proof-v8') fail('video proof must use the current v8 account-bound, job/channel-correlated full-decode live schema');
   if (video.status !== 'passed') fail('video live proof did not pass');
   const context = video.context ?? {};
-  if (!context.runId || !context.deployment?.shortSha || !context.videoId || !context.missionId) {
-    fail('video proof is missing run, deployment, mission, or video identity');
+  if (!context.runId || !context.deployment?.shortSha || !context.videoId || !context.missionId ||
+      typeof context.heygenJobId !== 'string' || context.heygenJobId.length === 0) {
+    fail('video proof is missing run, deployment, mission, video, or HeyGen identity');
+  }
+  assertSha(context.accountRefHash, 'authenticated video account reference');
+  if (!['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'].includes(context.expectedTier)) {
+    fail('video proof is missing its expected paid tier');
   }
   assertDeployment(context.deployment, 'video');
   const events = new Map((video.events ?? []).map((event) => [event.step, event]));
   const required = [
-    'deployment-version', 'sign-in', 'save-llm-byok', 'save-heygen-credential',
-    'channel-preflight', 'auto-video', 'heygen-completion', 'video-row',
+    'deployment-version', 'sign-in', 'authenticated-principal', 'paid-entitlement', 'save-llm-byok', 'save-heygen-credential',
+    'channel-preflight', 'auto-video', 'mission-start-row', 'heygen-completion', 'video-row',
     'video-full-decode', 'distribution-scheduled', 'publish-jobs-live',
   ];
   for (const step of required) if (events.get(step)?.status !== 'passed') fail(`video proof step did not pass: ${step}`);
+  if (events.get('authenticated-principal')?.data?.accountRefHash !== context.accountRefHash) {
+    fail('video authenticated principal hash does not match context');
+  }
+  const channelPreflight = events.get('channel-preflight')?.data;
+  if (!Array.isArray(channelPreflight?.activeProviders) ||
+      !context.channelProviders.every((provider) => channelPreflight.activeProviders.includes(provider))) {
+    fail('video channel preflight does not prove every requested provider active');
+  }
+  if (events.get('paid-entitlement')?.data?.userTier !== context.expectedTier ||
+      events.get('paid-entitlement')?.data?.accountRefHash !== context.accountRefHash) {
+    fail('video proof did not bind the expected paid entitlement to the authenticated account');
+  }
   const artifact = events.get('video-full-decode')?.data;
   if (artifact?.status !== 200 || artifact?.fullDecode !== true || !Number.isSafeInteger(artifact.totalBytes) || artifact.totalBytes <= 0) {
     fail('video proof does not establish a complete download and full decode');
@@ -140,21 +160,74 @@ function validateVideoProof(video) {
     fail('video proof is missing decoded container, duration, or video stream metadata');
   }
   const channels = context.channelProviders;
-  if (!Array.isArray(channels) || channels.length < 2) fail('video proof requires at least two publish channels');
+  if (!Array.isArray(channels) || channels.length < 2 || new Set(channels).size !== channels.length ||
+      channels.some((provider) => typeof provider !== 'string' || provider.length === 0)) {
+    fail('video proof requires at least two distinct publish channels');
+  }
   const jobs = events.get('publish-jobs-live')?.data?.jobs;
   if (!Array.isArray(jobs) || jobs.length < channels.length || jobs.some((job) => !SUCCESS_JOB_STATUSES.has(job.status))) {
     fail('video proof has incomplete or failed publish jobs');
   }
-  return { context, events };
+  const distributionJobIds = context.distributionJobIds;
+  const scheduled = events.get('distribution-scheduled')?.data;
+  if (!Array.isArray(distributionJobIds) || distributionJobIds.length !== channels.length ||
+      distributionJobIds.some((jobId) => typeof jobId !== 'string' || jobId.length === 0) ||
+      new Set(distributionJobIds).size !== distributionJobIds.length ||
+      !Array.isArray(scheduled?.expectedJobs) || scheduled.expectedJobs.length !== distributionJobIds.length ||
+      !scheduled.expectedJobs.every((expected, index) => expected?.id === distributionJobIds[index] && expected?.provider === channels[index]) ||
+      !Array.isArray(scheduled?.jobIds) || scheduled.jobIds.length !== distributionJobIds.length ||
+      !distributionJobIds.every((jobId) => scheduled.jobIds.includes(jobId))) {
+    fail('video proof scheduled job/provider pairs do not match the requested distribution');
+  }
+  const publishedIds = jobs.map((job) => job?.id);
+  if (publishedIds.length !== distributionJobIds.length || new Set(publishedIds).size !== publishedIds.length ||
+      !distributionJobIds.every((jobId) => publishedIds.includes(jobId))) {
+    fail('video proof published job IDs do not match the scheduled jobs');
+  }
+  const publishedById = new Map(jobs.map((job) => [job?.id, job]));
+  if (!scheduled.expectedJobs.every((expected) => publishedById.get(expected.id)?.provider === expected.provider)) {
+    fail('video proof published job/provider pairs do not match scheduled distribution');
+  }
+  const channelIds = jobs.map((job) => job?.channelId);
+  if (channelIds.some((channelId) => typeof channelId !== 'string' || channelId.length === 0) ||
+      new Set(channelIds).size !== channelIds.length) {
+    fail('video proof publish channel IDs are missing or duplicated');
+  }
+  const heygen = events.get('heygen-completion')?.data;
+  if (heygen?.heygenJobId !== context.heygenJobId || heygen?.status !== 'completed' || heygen.videoUrlPresent !== true) {
+    fail('video proof HeyGen completion job does not match context');
+  }
+  const completedVideo = events.get('video-row')?.data;
+  if (completedVideo?.videoId !== context.videoId || completedVideo?.status !== 'completed' || completedVideo.videoUrlPresent !== true ||
+      Date.parse(completedVideo.serverCreatedAt ?? '') !== Date.parse(context.serverVideoCreatedAt ?? '')) {
+    fail('video proof completed video row does not match context identity and timestamp');
+  }
+  const serverMissionStartedAt = Date.parse(context.serverMissionStartedAt ?? '');
+  if (!Number.isFinite(serverMissionStartedAt)) fail('video proof server mission start timestamp is invalid');
+  const missionStart = events.get('mission-start-row')?.data;
+  if (missionStart?.missionId !== context.missionId || missionStart?.command !== 'auto-video') {
+    fail('video proof mission start row identity does not match context');
+  }
+  const missionEventStartedAt = Date.parse(missionStart?.serverStartedAt ?? '');
+  if (!Number.isFinite(missionEventStartedAt) || missionEventStartedAt !== serverMissionStartedAt) {
+    fail('mission start event timestamp does not match proof context');
+  }
+  const autoVideo = events.get('auto-video')?.data;
+  if (autoVideo?.missionId !== context.missionId || autoVideo?.videoId !== context.videoId ||
+      autoVideo?.heygenJobId !== context.heygenJobId) {
+    fail('auto-video response identities do not match proof context');
+  }
+  return { context, events, serverMissionStartedAt };
 }
 
 function validatePaymentProof(payment) {
-  if (payment.schema !== 'sophia-live-saas-payment-proof-v2') fail('payment proof schema is not supported');
+  if (payment.schema !== 'sophia-live-saas-payment-proof-v4') fail('payment proof must use the current v4 account-bound/server-timestamped schema');
   if (payment.status !== 'passed') fail('live payment proof did not pass');
   const context = payment.context ?? {};
   if (context.provider !== 'nowpayments' || !context.runId || !context.deployment?.shortSha) {
     fail('payment proof is missing provider, run, or deployment identity');
   }
+  assertSha(context.accountRefHash, 'authenticated payment account reference');
   assertDeployment(context.deployment, 'payment');
   if (!['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'].includes(context.tier)) fail('payment proof tier is invalid');
   if (!Number.isFinite(context.amountConfirmedUsd) || context.amountConfirmedUsd <= 0) fail('payment proof has no operator-confirmed invoice amount');
@@ -162,11 +235,20 @@ function validatePaymentProof(payment) {
     fail('payment proof must contain hashed order and payment references');
   }
   const events = new Map((payment.events ?? []).map((event) => [event.step, event]));
-  for (const step of ['deployment-version', 'sign-in', 'checkout-created', 'payment-completed', 'tier-activated']) {
+  for (const step of ['deployment-version', 'sign-in', 'authenticated-principal', 'checkout-created', 'payment-completed', 'tier-activated']) {
     if (events.get(step)?.status !== 'passed') fail(`payment proof step did not pass: ${step}`);
   }
+  if (events.get('authenticated-principal')?.data?.accountRefHash !== context.accountRefHash) {
+    fail('payment authenticated principal hash does not match context');
+  }
   if (events.get('tier-activated')?.data?.userTier !== context.tier) fail('payment proof does not show the purchased tier active');
-  return { context, events };
+  const completedAt = Date.parse(context.serverPaymentCompletedAt ?? '');
+  if (!Number.isFinite(completedAt)) fail('payment completion timestamp is invalid');
+  const paymentEventCompletedAt = Date.parse(events.get('payment-completed')?.data?.serverCompletedAt ?? '');
+  if (!Number.isFinite(paymentEventCompletedAt) || paymentEventCompletedAt !== completedAt) {
+    fail('payment completion event timestamp does not match proof context');
+  }
+  return { context, events, completedAt };
 }
 
 function validatePayoutProof(payout) {
@@ -282,6 +364,16 @@ function main() {
   const economics = validateEconomics(economicsFile.value);
   const slo = validateSlo(sloFile.value);
 
+  if (video.context.accountRefHash !== payment.context.accountRefHash) {
+    fail('video and payment proofs belong to different authenticated accounts');
+  }
+  if (video.context.expectedTier !== payment.context.tier) {
+    fail('video paid entitlement tier does not match the confirmed payment tier');
+  }
+  if (payment.completedAt >= video.serverMissionStartedAt) {
+    fail('D1 timestamps do not prove that NOWPayments payment completion preceded auto-video mission start');
+  }
+
   const deployedSha = video.context.deployment.sha;
   if (deployedSha.toLowerCase() !== expectedSha.toLowerCase()) fail('live deployment SHA does not match --expected-sha');
   if (payment.context.deployment.sha.toLowerCase() !== deployedSha.toLowerCase()) fail('video and payment proofs target different deployed SHAs');
@@ -331,6 +423,11 @@ function main() {
       amountConfirmedUsd: payment.context.amountConfirmedUsd,
       orderRefHash: payment.context.orderRefHash,
       paymentRefHash: payment.context.paymentRefHash,
+    },
+    paidVideoAccount: {
+      sameAuthenticatedPrincipal: true,
+      tierMatchesConfirmedPayment: true,
+      paymentConfirmedBeforeVideoRun: true,
     },
     cryptoPayout: {
       status: 'provider-confirmed-via-signed-ipn',

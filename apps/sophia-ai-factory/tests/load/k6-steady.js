@@ -1,20 +1,21 @@
 /**
  * k6 STEADY profile — baseline latency under sustained moderate load.
  *
- * Profile: 50 VU for 10 minutes (configurable via K6_DURATION).
- * Goal: confirm p95 latency stable under expected daily load.
+ * Profile: 10 VU for 30 seconds by default; capped at 50 VU and 30 minutes.
+ * Goal: observe public-route latency on local or approved staging.
  *
  * Run:
  *   K6_BASE_URL=http://localhost:3000 k6 run tests/load/k6-steady.js
- *   K6_BASE_URL=https://sophia.agencyos.network K6_VUS=20 k6 run tests/load/k6-steady.js
+ *   K6_BASE_URL=https://staging.example.com K6_STAGING_CONFIRM=run-staging-load K6_VUS=20 k6 run tests/load/k6-steady.js
  *
- * Note: do NOT run against production at full scale without staging-fork D1.
+ * Production origins are rejected during module initialization.
  */
 
-import { publicRoutesScenario, sharedThresholds } from './scenarios/public-routes.js';
+import { publicRoutesScenario, sharedThresholds, validateEffectiveProfile } from './scenarios/public-routes.js';
+import { boundedLoadDuration, boundedLoadInteger } from '../../scripts/load-test-target.mjs';
 
-const VUS = Number(__ENV.K6_VUS) || 50;
-const DURATION = __ENV.K6_DURATION || '10m';
+const VUS = boundedLoadInteger(__ENV.K6_VUS, 10, 1, 50, 'K6_VUS');
+const DURATION = boundedLoadDuration(__ENV.K6_DURATION, '30s', 1770, 'K6_DURATION');
 
 export const options = {
   vus: VUS,
@@ -23,6 +24,11 @@ export const options = {
   tags: { profile: 'steady' },
 };
 
+export function setup() {
+  validateEffectiveProfile(50);
+}
+
 export default function () {
+  validateEffectiveProfile(50);
   publicRoutesScenario();
 }

@@ -14,6 +14,7 @@ export function usage() {
   SOPHIA_LIVE_BASE_URL=https://sophia.agencyos.network \\
   SOPHIA_LIVE_EMAIL=user@example.com \\
   SOPHIA_LIVE_PASSWORD='...' \\
+  SOPHIA_LIVE_EXPECTED_TIER=BASIC \\
   SOPHIA_LIVE_OPENROUTER_API_KEY='...' \\
   SOPHIA_LIVE_HEYGEN_API_KEY='...' \\
   SOPHIA_LIVE_CHANNEL_PROVIDERS=telegram,youtube \\
@@ -29,6 +30,7 @@ Optional:
   SOPHIA_LIVE_EVIDENCE_PATH=plans/reports/live-video-proof.json
   SOPHIA_VERSION_INTROSPECT_TOKEN (required for full deployment SHA verification)
   SOPHIA_LIVE_PREFLIGHT_ONLY=1
+  (SOPHIA_LIVE_EXPECTED_TIER is required for a paid video run; choose the tier activated by the payment proof.)
   SOPHIA_LIVE_TOPIC
   SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS=900
   SOPHIA_LIVE_PUBLISH_TIMEOUT_SECONDS=600
@@ -107,6 +109,11 @@ export function parseLiveConfig(env, fail) {
   const password = optionalEnv(env, 'SOPHIA_LIVE_PASSWORD') || (preflightOnly ? (optionalEnv(env, 'E2E_TEST_USER_PASSWORD') || 'E2eTest#2026!') : undefined);
   if (!password) fail('missing required env SOPHIA_LIVE_PASSWORD');
 
+  const expectedTier = optionalEnv(env, 'SOPHIA_LIVE_EXPECTED_TIER')?.toUpperCase();
+  if (!preflightOnly && !['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'].includes(expectedTier)) {
+    fail('SOPHIA_LIVE_EXPECTED_TIER must be BASIC, PREMIUM, ENTERPRISE, or MASTER for a paid video proof');
+  }
+
   const heygenKey = optionalEnv(env, 'SOPHIA_LIVE_HEYGEN_API_KEY') || (preflightOnly ? 'mock-heygen-key-0123456789' : undefined);
   if (!heygenKey) fail('missing required env SOPHIA_LIVE_HEYGEN_API_KEY');
 
@@ -116,6 +123,7 @@ export function parseLiveConfig(env, fail) {
     baseUrl,
     email,
     password,
+    expectedTier,
     heygenKey,
     versionIntrospectToken,
     openrouterKey,

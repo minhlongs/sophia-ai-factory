@@ -58,13 +58,13 @@ const mockCheckout = vi.fn().mockResolvedValue({
   invoiceId: 'nowp_e2e_123',
 });
 
-const mockPayOsInvoice = vi.fn().mockResolvedValue({
+const mockPayOsInvoice = vi.fn().mockImplementation(async (input: { orderCodeOverride?: number }) => ({
   checkoutUrl: 'https://payos.vn/gate/payos_e2e_123',
   qrUrl: 'https://img.vietqr.io/image/970422-0000-compact2.png',
   paymentLinkId: 'link_e2e_123',
-  orderCode: 987654321,
+  orderCode: input.orderCodeOverride ?? 987654321,
   expiresAt: '2026-10-01T00:00:00Z',
-});
+}));
 
 vi.mock('@/tree/clients/nowpayments-client', () => ({
   createCheckout: (...args: unknown[]) => mockCheckout(...args),

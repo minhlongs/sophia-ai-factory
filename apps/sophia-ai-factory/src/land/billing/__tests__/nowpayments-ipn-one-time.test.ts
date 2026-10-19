@@ -12,6 +12,8 @@ import * as videosRepo from '@/seed/db/repositories/videos-repo'
 import * as fulfillment from '@/land/fulfillment/one-time-fulfillment'
 import * as auditLog from '@/seed/db/audit/audit-log'
 import { logger } from '@/seed/utils/logger-utility'
+import { getD1 } from '@/seed/db/client'
+import { runOneTimePostPaymentEffects } from '../ipn/one-time-post-payment-effects'
 import type { NowPaymentsIpnPayload } from '../nowpayments-ipn-handlers'
 import type { OneTimeSku } from '@/seed/types'
 
@@ -21,7 +23,15 @@ vi.mock('@/seed/db/repositories/videos-repo')
 vi.mock('@/land/fulfillment/one-time-fulfillment')
 vi.mock('@/seed/db/audit/audit-log')
 vi.mock('@/seed/db/client', () => ({
-  getD1: vi.fn(() => ({})),
+  getD1: vi.fn(() => ({
+    prepare: vi.fn((sql: string) => ({
+      bind: vi.fn((...args: unknown[]) => ({
+        run: vi.fn().mockResolvedValue({ success: true }),
+        sql,
+        args,
+      })),
+    })),
+  })),
 }))
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
@@ -54,6 +64,21 @@ const STARTER_SKU: OneTimeSku = {
   label_vi: 'Gói Khởi Đầu',
   label_en: 'Starter Bundle',
 }
+
+describe('one-time pending order completion timestamp', () => {
+  it('executes a D1-timestamped pending order completion update', async () => {
+    const ipn = buildIpnPayload()
+    await runOneTimePostPaymentEffects(ipn, STARTER_SKU, 'user1', 'purchase_123', 123)
+
+    const db = vi.mocked(getD1).mock.results[0]?.value as {
+      prepare: ReturnType<typeof vi.fn>
+    }
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("strftime('%Y-%m-%dT%H:%M:%fZ','now')"))
+    const bound = db.prepare.mock.results[0]?.value.bind.mock.results[0]?.value as { run: ReturnType<typeof vi.fn>; args: unknown[] }
+    expect(bound.args).toEqual(['completed', ipn.payment_id, ipn.order_id])
+    expect(bound.run).toHaveBeenCalledOnce()
+  })
+})
 
 describe('handleOneTimeFinished — purchase creation + fulfillment', () => {
   beforeEach(() => {

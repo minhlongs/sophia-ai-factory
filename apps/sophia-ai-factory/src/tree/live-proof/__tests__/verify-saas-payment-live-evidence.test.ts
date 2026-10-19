@@ -11,10 +11,11 @@ const paymentRefHash = 'b'.repeat(64);
 
 function makeProof(overrides: Record<string, unknown> = {}) {
   return {
-    schema: 'sophia-live-saas-payment-proof-v2',
+    schema: 'sophia-live-saas-payment-proof-v4',
     status: 'passed',
     context: {
       runId: 'run-payment-1',
+      accountRefHash: 'c'.repeat(64),
       baseUrl: 'https://staging.example.com',
       provider: 'nowpayments',
       tier: 'BASIC',
@@ -23,10 +24,12 @@ function makeProof(overrides: Record<string, unknown> = {}) {
       deployment: { sha: 'abcdef1234567890abcdef1234567890abcdef12', shortSha: 'abcdef12' },
       orderRefHash,
       paymentRefHash,
+      serverPaymentCompletedAt: '2026-09-14T10:00:00.000Z',
     },
     events: [
       ['deployment-version', { shortSha: 'abc1234' }],
       ['sign-in', { cookieCount: 2 }],
+      ['authenticated-principal', { accountRefHash: 'c'.repeat(64) }],
       ['checkout-created', {
         provider: 'nowpayments', tier: 'BASIC', period: 'monthly', newOrder: true,
         orderRefHash, invoiceHost: 'nowpayments.io', amountConfirmedUsd: 199,
@@ -78,5 +81,15 @@ describe('verify-saas-payment-live-evidence', () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('reused an existing order');
+  });
+
+  it('rejects a payment proof without a verified authenticated principal', () => {
+    const proof = makeProof();
+    delete (proof.context as { accountRefHash?: string }).accountRefHash;
+
+    const result = runValidator(proof);
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('authenticated account reference hash is missing');
   });
 });

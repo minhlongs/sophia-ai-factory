@@ -13,6 +13,7 @@ function baseEnv(overrides: Record<string, string> = {}) {
     SOPHIA_LIVE_HEYGEN_API_KEY: 'heygen-test-key',
     SOPHIA_LIVE_CHANNEL_PROVIDERS: 'telegram,youtube',
     SOPHIA_LIVE_TEST_TENANT: '1',
+    SOPHIA_LIVE_EXPECTED_TIER: 'BASIC',
     SOPHIA_VERSION_INTROSPECT_TOKEN: 'test-introspection-token',
     ...overrides,
   };
@@ -36,6 +37,16 @@ describe('live proof runtime', () => {
   it('requires the full SHA introspection credential', () => {
     expect(() => runConfig(baseEnv({ SOPHIA_VERSION_INTROSPECT_TOKEN: '' })))
       .toThrow('SOPHIA_VERSION_INTROSPECT_TOKEN');
+  });
+
+  it('requires an explicit activated tier for paid video runs', () => {
+    expect(() => runConfig(baseEnv({ SOPHIA_LIVE_EXPECTED_TIER: '' })))
+      .toThrow('SOPHIA_LIVE_EXPECTED_TIER');
+  });
+
+  it('allows preflight without a payment tier', () => {
+    expect(runConfig(baseEnv({ SOPHIA_LIVE_EXPECTED_TIER: '', SOPHIA_LIVE_PREFLIGHT_ONLY: '1' })).expectedTier)
+      .toBeUndefined();
   });
 
   it('accepts only a matching full deployment SHA and short prefix', () => {

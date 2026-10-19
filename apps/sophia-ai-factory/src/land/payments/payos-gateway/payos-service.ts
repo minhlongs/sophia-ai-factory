@@ -6,6 +6,7 @@ import type {
   PayOsCheckoutResult,
   PayOsCreatePaymentResponse,
 } from './types';
+import { PayOsDefinitiveError } from './types';
 import { getPayOsTierConfig } from './webhook-dispatcher';
 
 export { FEATURE_PAYOS };
@@ -17,7 +18,7 @@ export { FEATURE_PAYOS };
  */
 export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<PayOsCheckoutResult> {
   if (!FEATURE_PAYOS) {
-    throw new Error('PayOS feature flag disabled — set FEATURE_PAYOS=true to enable');
+    throw new PayOsDefinitiveError('PayOS feature flag disabled — set FEATURE_PAYOS=true to enable');
   }
 
   const clientId = process.env.PAYOS_CLIENT_ID;
@@ -25,7 +26,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
   const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
 
   if (!clientId || !apiKey || !checksumKey) {
-    throw new Error('PayOS env vars missing: PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY');
+    throw new PayOsDefinitiveError('PayOS env vars missing: PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY');
   }
 
   const { tier, userId: _userId, orderId, customerEmail } = input;
@@ -33,7 +34,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
 
   // PayOS orderCode must be a positive integer — use last 9 digits of timestamp
-  const orderCode = parseInt(Date.now().toString().slice(-9), 10);
+  const orderCode = input.orderCodeOverride ?? parseInt(Date.now().toString().slice(-9), 10);
   const description = `Sophia ${tier} - ${orderId.slice(-8)}`;
   const expiredAt = Math.floor((Date.now() + 30 * 60 * 1000) / 1000); // 30 min
 
@@ -81,7 +82,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
     .join('');
 
   if (!shouldAllowRequest('payos')) {
-    throw new Error('Circuit open for payos — too many recent failures');
+    throw new PayOsDefinitiveError('Circuit open for payos — too many recent failures');
   }
 
   try {
@@ -98,7 +99,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
     const result = (await response.json()) as PayOsCreatePaymentResponse;
 
     if (result.code !== '00' || !result.data) {
-      throw new Error(`PayOS API error: ${result.code} — ${result.desc}`);
+      throw new PayOsDefinitiveError(`PayOS API error: ${result.code} — ${result.desc}`);
     }
 
     recordSuccess('payos');

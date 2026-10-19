@@ -27,6 +27,10 @@ export async function writeOrder(input: PendingOrderInput): Promise<PendingOrder
     customer_email: input.customer_email ?? null,
     invoice_url: input.invoice_url ?? null,
     provider_payment_id: input.provider_payment_id ?? null,
+    purpose: input.purpose ?? 'subscription',
+    contract_id: input.contract_id ?? null,
+    invoice_id: input.invoice_id ?? null,
+    provider_order_code: input.provider_order_code ?? null,
     status: input.status ?? 'pending',
     payment_id: null,
     created_at: new Date().toISOString(),
@@ -74,11 +78,19 @@ export async function findPendingOrderByUserAndMethod(
 /** Flip status to completed and record payment_id. */
 export async function markOrderCompleted(orderId: string, paymentId: string): Promise<void> {
   const db = getDb()
-  const { error } = await db
-    .from('pending_orders')
-    .update({ status: 'completed', payment_id: paymentId, completed_at: new Date().toISOString() })
-    .eq('order_id', orderId)
-  if (error) throw new Error(`Pending order completion failed: ${error.message}`)
+  try {
+    await db.execute(
+      `UPDATE pending_orders
+       SET status = 'completed', payment_id = ?,
+           completed_at = CASE WHEN status = 'completed' THEN completed_at
+                               ELSE strftime('%Y-%m-%dT%H:%M:%fZ', 'now') END
+       WHERE order_id = ?`,
+      [paymentId, orderId],
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Pending order completion failed: ${message}`)
+  }
   logger.info('[PendingOrder] Completed', { order_id: orderId, payment_id: paymentId })
 }
 
@@ -89,6 +101,7 @@ export async function markOrderFailed(orderId: string, reason?: string): Promise
     .from('pending_orders')
     .update({ status: 'failed', completed_at: new Date().toISOString() })
     .eq('order_id', orderId)
+    .eq('status', 'pending')
   if (error) throw new Error(`Pending order failure update failed: ${error.message}`)
   logger.info('[PendingOrder] Failed', { order_id: orderId, reason })
 }

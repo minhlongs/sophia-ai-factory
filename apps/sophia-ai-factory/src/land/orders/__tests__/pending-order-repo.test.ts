@@ -35,6 +35,21 @@ const dbFailure = vi.hoisted(() => ({ message: null as string | null }))
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
   createServerClient: () => ({
+    execute: vi.fn(async (sql: string, params: unknown[] = []) => {
+      if (dbFailure.message) throw new Error(dbFailure.message)
+      if (!sql.includes("strftime('%Y-%m-%dT%H:%M:%fZ', 'now')")) {
+        throw new Error('Expected D1-generated completion timestamp')
+      }
+      const [paymentId, orderId] = params as [string, string]
+      const row = orderStore.get(orderId)
+      if (row) {
+        const completedAt = row.status === 'completed' && row.completed_at
+          ? row.completed_at
+          : '2026-10-19T01:00:00.000Z'
+        Object.assign(row, { status: 'completed', payment_id: paymentId, completed_at: completedAt })
+      }
+      return { success: true, meta: { changes: row ? 1 : 0 }, results: [] }
+    }),
     from: (table: string) => {
       if (table !== 'pending_orders') throw new Error(`Unexpected table: ${table}`)
       return {
@@ -58,11 +73,13 @@ vi.mock('@/seed/db/client', () => ({
           }),
         })),
         update: (updates: Partial<PendingOrder>) => ({
-          eq: vi.fn((_col: string, val: string) => {
-            const row = [...orderStore.values()].find(r => r.order_id === val)
-            if (row) Object.assign(row, updates)
-            return Promise.resolve({ data: null, error: dbFailure.message ? { message: dbFailure.message } : null })
-          }),
+          eq: vi.fn((_col: string, val: string) => ({
+            eq: async (_statusColumn: string, status: string) => {
+              const row = [...orderStore.values()].find(r => r.order_id === val)
+              if (row?.status === status) Object.assign(row, updates)
+              return { data: null, error: dbFailure.message ? { message: dbFailure.message } : null }
+            },
+          })),
         }),
       }
     },
@@ -121,6 +138,16 @@ describe('markOrderCompleted', () => {
     const order = await getOrderById(BASE_INPUT.order_id)
     expect(order!.status).toBe('completed')
     expect(order!.payment_id).toBe('pay_abc123')
+    expect(order!.completed_at).toBe('2026-10-19T01:00:00.000Z')
+  })
+
+  it('preserves the first D1 completion timestamp when a completed order is replayed', async () => {
+    await writeOrder(BASE_INPUT)
+    await markOrderCompleted(BASE_INPUT.order_id, 'pay_abc123')
+    const first = (await getOrderById(BASE_INPUT.order_id))!.completed_at
+    await markOrderCompleted(BASE_INPUT.order_id, 'pay_abc123')
+
+    expect((await getOrderById(BASE_INPUT.order_id))!.completed_at).toBe(first)
   })
 
   it('throws when D1 returns an order completion error', async () => {
@@ -138,6 +165,18 @@ describe('markOrderFailed', () => {
     await markOrderFailed(BASE_INPUT.order_id, 'underpayment')
     const order = await getOrderById(BASE_INPUT.order_id)
     expect(order!.status).toBe('failed')
+  })
+
+  it('does not downgrade a completed order when a delayed failure arrives', async () => {
+    await writeOrder(BASE_INPUT)
+    await markOrderCompleted(BASE_INPUT.order_id, 'pay_abc123')
+    const completedAt = (await getOrderById(BASE_INPUT.order_id))!.completed_at
+
+    await markOrderFailed(BASE_INPUT.order_id, 'late failure callback')
+
+    const order = (await getOrderById(BASE_INPUT.order_id))!
+    expect(order.status).toBe('completed')
+    expect(order.completed_at).toBe(completedAt)
   })
 })
 

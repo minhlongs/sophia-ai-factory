@@ -1,20 +1,21 @@
 /**
  * k6 SOAK profile — long-running steady load to detect memory leaks / drift.
  *
- * Profile: 100 VU for 2 hours (configurable). Default trimmed to 20m for CI.
- * Goal: latency p95 should not drift > 20% from start to end.
+ * Profile: 5 VU for 20 minutes by default; capped at 25 VU and 30 minutes.
+ * Goal: observe public-route latency drift on local or approved staging.
  *
  * Run:
  *   K6_BASE_URL=http://localhost:3000 K6_DURATION=20m k6 run tests/load/k6-soak.js
- *   Full soak (real 2h): K6_DURATION=2h K6_VUS=100 k6 run tests/load/k6-soak.js
+ *   Remote staging requires K6_STAGING_CONFIRM=run-staging-load.
  *
- * Detection method: track p95 in 5min windows; alarm if final window > start * 1.2.
+ * This bounded profile is not a multi-hour soak or a capacity claim.
  */
 
-import { publicRoutesScenario, sharedThresholds } from './scenarios/public-routes.js';
+import { publicRoutesScenario, sharedThresholds, validateEffectiveProfile } from './scenarios/public-routes.js';
+import { boundedLoadDuration, boundedLoadInteger } from '../../scripts/load-test-target.mjs';
 
-const VUS = Number(__ENV.K6_VUS) || 100;
-const DURATION = __ENV.K6_DURATION || '20m';
+const VUS = boundedLoadInteger(__ENV.K6_VUS, 5, 1, 25, 'K6_VUS');
+const DURATION = boundedLoadDuration(__ENV.K6_DURATION, '20m', 1770, 'K6_DURATION');
 
 export const options = {
   vus: VUS,
@@ -27,6 +28,11 @@ export const options = {
   tags: { profile: 'soak' },
 };
 
+export function setup() {
+  validateEffectiveProfile(25);
+}
+
 export default function () {
+  validateEffectiveProfile(25);
   publicRoutesScenario();
 }
