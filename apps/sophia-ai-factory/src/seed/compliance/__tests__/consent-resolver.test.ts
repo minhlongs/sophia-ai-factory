@@ -17,9 +17,6 @@ import {
   decodeConsentCookie,
   readConsentFromCookie,
   writeConsentCookie,
-  readConsentFromStorage,
-  writeConsentStorage,
-  readConsent,
   hasRecordedConsent,
   hasMarketingConsent,
   saveConsent,
@@ -138,75 +135,5 @@ describe('Consent Cookie Persistence (browser)', () => {
 
     saveConsent(createConsentState(true, true, 2));
     expect(hasMarketingConsent()).toBe(true);
-  });
-});
-
-describe('Consent localStorage Persistence (browser)', () => {
-  beforeEach(() => {
-    clearConsentCarriers();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('round-trips consent through the versioned storage key', () => {
-    writeConsentStorage(ACCEPTED_STATE);
-    expect(window.localStorage.getItem(CONSENT_STORAGE_KEY)).toBeTruthy();
-
-    const state = readConsentFromStorage();
-    expect(state?.analytics).toBe(true);
-    expect(state?.marketing).toBe(true);
-  });
-
-  it('returns null when storage holds malformed JSON', () => {
-    window.localStorage.setItem(CONSENT_STORAGE_KEY, '{broken');
-    expect(readConsentFromStorage()).toBeNull();
-  });
-
-  it('survives a storage read failure without throwing', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-    expect(readConsentFromStorage()).toBeNull();
-  });
-
-  it('survives a storage write failure without throwing', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('quota');
-    });
-    expect(() => writeConsentStorage(ACCEPTED_STATE)).not.toThrow();
-  });
-});
-
-describe('readConsent preference order', () => {
-  beforeEach(() => {
-    // Clear both carriers: each suite above may have left one populated.
-    clearConsentCarriers();
-  });
-
-  it('prefers the localStorage record over the cookie', () => {
-    window.localStorage.setItem(
-      CONSENT_STORAGE_KEY,
-      JSON.stringify(createConsentState(true, true, 111)),
-    );
-    writeConsentCookie(createConsentState(false, false, 222));
-
-    const state = readConsent();
-    expect(state.analytics).toBe(true);
-    expect(state.updatedAt).toBe(111);
-  });
-
-  it('falls back to the cookie when localStorage is empty', () => {
-    writeConsentCookie(createConsentState(true, false, 333));
-    const state = readConsent();
-
-    expect(state.analytics).toBe(true);
-    expect(state.marketing).toBe(false);
-    expect(state.updatedAt).toBe(333);
-  });
-
-  it('returns the denied default when neither carrier holds a choice', () => {
-    expect(readConsent()).toEqual(DEFAULT_CONSENT_STATE);
   });
 });

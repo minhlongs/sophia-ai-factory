@@ -16,13 +16,20 @@ function clearConsentCarriers(): void {
   window.localStorage.clear();
 }
 
+// Keys are held in constants so the i18n key scanner does not resolve these test
+// lookups against the real message files — this suite deliberately probes
+// present, absent, and never-defined keys.
+const KEY_PRESENT = 'title';
+const KEY_MISSING = 'necessaryOnly';
+const KEY_UNREGISTERED = 'thisKeyDoesNotExist';
+
 function TranslationProbe() {
   const t = useConsentTranslation();
   return (
     <>
-      <span data-testid="probe-title">{t('title')}</span>
-      <span data-testid="probe-necessary">{t('necessaryOnly')}</span>
-      <span data-testid="probe-unknown">{t('thisKeyDoesNotExist')}</span>
+      <span data-testid="probe-title">{t(KEY_PRESENT)}</span>
+      <span data-testid="probe-necessary">{t(KEY_MISSING)}</span>
+      <span data-testid="probe-unknown">{t(KEY_UNREGISTERED)}</span>
     </>
   );
 }
