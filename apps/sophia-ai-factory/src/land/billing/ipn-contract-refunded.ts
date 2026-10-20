@@ -83,18 +83,26 @@ export async function dispatchContractRefunded(
 }
 
 /**
- * A contract refund must never fall through to the subscription handler, and one
- * that carries no provider invoice ID must be retried after reconciliation.
+ * Barriers that keep a contract refund from being mishandled.
+ *
+ * A refund with a resolved contract order but no provider invoice ID is retried
+ * after reconciliation rather than falling through to another rail. A bare
+ * order_id that still identifies a contract order must never reach the
+ * subscription handler, even when its status prevented guarded settlement.
  */
 export async function assertContractRefundIsCorrelatable(
   ipn: NowPaymentsIpnPayload,
   db: D1Client,
+  contractOrderId: string,
 ): Promise<void> {
-  if (ipn.order_id) {
-    const isContractOrder = await findContractOrderByOrderId(db, ipn.order_id)
-    if (isContractOrder) {
-      throw new Error('NOWPayments contract refund could not be safely correlated; retry after reconciliation')
-    }
+  if (contractOrderId && !ipn.invoice_id) {
+    throw new Error('NOWPayments contract refund is missing provider invoice ID; retry after reconciliation')
+  }
+  if (!ipn.order_id) return
+
+  const isContractOrder = await findContractOrderByOrderId(db, ipn.order_id)
+  if (isContractOrder) {
+    throw new Error('NOWPayments contract refund could not be safely correlated; retry after reconciliation')
   }
 }
 

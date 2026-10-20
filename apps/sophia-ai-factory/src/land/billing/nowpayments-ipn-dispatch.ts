@@ -91,10 +91,7 @@ export async function dispatchRefunded(ipn: NowPaymentsIpnPayload, db?: D1Client
     const contractOutcome = await dispatchContractRefunded(ipn, db, contractOrderId)
     if (contractOutcome !== null) return
 
-    if (contractOrderId && !ipn.invoice_id) {
-      throw new Error('NOWPayments contract refund is missing provider invoice ID; retry after reconciliation');
-    }
-    await assertContractRefundIsCorrelatable({ ...ipn, order_id: ipn.order_id }, db)
+    await assertContractRefundIsCorrelatable(ipn, db, contractOrderId)
   }
 
   const invoiceId = ipn.invoice_id
