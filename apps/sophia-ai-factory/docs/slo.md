@@ -10,7 +10,7 @@ This document defines the production targets and the evidence required to claim 
 | API latency | p95 < 500 ms | Rolling 30 days |
 | API server errors | < 0.1% 5xx responses | Rolling 30 days |
 | Video completion rate | ≥ 90% of eligible video jobs reach a completed state | Rolling 30 days |
-| Video completion time | p95 ≤ 300 s from accepted job to first playable MP4 | Rolling 30 days |
+| Video completion time | p95 ≤ 600 s (render stage) | Rolling 30 days |
 
 Availability is `eligible successful requests / eligible requests`. Exclude static assets and explicitly list excluded routes. Define success as HTTP 2xx or 3xx; server errors are HTTP 5xx. The report must include denominators, route scope, time boundaries in UTC, and the full deployed SHA. A job accepted or queued is not a completed video job.
 
@@ -25,20 +25,50 @@ state *and* the resulting MP4 is retrievable and decodable — an accepted or qu
 provider `failed` job, and a `failed_permanent` row are all non-completions, and each is
 reported separately so a rising completion rate cannot hide a rising failure count.
 
-**Completion time** is measured from the moment the job was accepted to the timestamp of
-the first playable artifact, and is reported as a percentile over eligible jobs. The
-**p95 ≤ 300 s** number is anchored to two things that already exist in the system:
+**Completion time** is measured from `videos.created_at` to `videos.completed_at` and is
+reported as a percentile over eligible jobs. The **p95 ≤ 600 s** target is anchored to the
+customer copy, which breaks a "under 40 minutes" video into named steps:
 
-- the customer-facing copy states render depends on the provider but is "usually 2–5
-  minutes", so 300 s is the upper edge of the range we tell customers to expect;
-- `src/land/video/templates/heygen-helpers.ts` polls for up to
-  `maxWaitMs = 15 * 60_000`, and the live video proof uses
-  `SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS` defaulting to 900 s.
+| Copy step | Minutes |
+|---|---:|
+| Script generation | 5 |
+| **AI video generation** | **10** |
+| Voice-over | 3 |
+| Editing | 15 |
+| Upload | 5 |
+| **Whole flow** | **40** |
 
-That makes 300 s a *quality* target, distinct from the 900 s *operational* ceiling at which
-we declare the provider unresponsive. If p95 exceeds 300 s while still succeeding, the
-promise to customers is being broken even though nothing failed — which is exactly the case
-an API SLO cannot see.
+Only the 10-minute row is the render stage this SLI measures, so 600 s is the number the
+copy actually commits to for that step.
+
+### Two thresholds that must never be conflated
+
+The repository carries both numbers, and they mean different things:
+
+| Constant | Value | Meaning |
+|---|---:|---|
+| `RENDER_STAGE_THRESHOLD` (`video-render-benchmark-types.ts`) | 600 s | AI-video render step — the SLI target |
+| `PROMISE_THRESHOLD` (same file) | 2400 s | the whole-flow promise the customer copy makes |
+
+`PROMISE_THRESHOLD` is **intentionally 2400 s** and must not be changed to tighten the
+SLI: it encodes a public promise covering scripting, voice-over, editing, and upload.
+`percent_under_promise` answers "did we keep the whole-flow promise"; the new p95 target
+answers "did the render step stay inside its 10-minute share". A render that consumed the
+whole 40-minute budget would pass the first check and fail the second, which is why both
+exist.
+
+The 900 s provider ceiling (`SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS`, and `maxWaitMs = 15 min`
+in `heygen-helpers.ts`) is neither of these — it is the operational bound at which the
+provider is declared unresponsive. Three numbers, three purposes:
+
+- **600 s** — quality target for the render step.
+- **900 s / 15 min** — provider declared unresponsive.
+- **2400 s** — whole-flow promise to the customer.
+
+An earlier revision of this document declared a single `p95 ≤ 300 s` figure derived from
+provider render copy. That was wrong: it matched neither the render component of the
+customer promise nor any existing constant. It is corrected here rather than quietly
+changed.
 
 **Completing the measurement needs collection this repository does not yet have.** These are
 **targets, not results.** No measured value is claimed here, and none may be inferred from a
