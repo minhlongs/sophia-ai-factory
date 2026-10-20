@@ -952,8 +952,12 @@ guard_drop_rename() {
   for tbl in "${tables_to_check[@]}"; do
     where_clauses+=("(name = '${tbl}' AND type = 'table')")
   done
-  local combined_where
-  combined_where=$(IFS=' OR '; echo "${where_clauses[*]}")
+  local combined_where="" i
+  # IFS holds one character only, so join the clauses explicitly.
+  for ((i = 0; i < ${#where_clauses[@]}; i++)); do
+    [ "$i" -gt 0 ] && combined_where+=" OR "
+    combined_where+="${where_clauses[$i]}"
+  done
 
   local guard_sql="SELECT COUNT(*) AS cnt FROM sqlite_master WHERE ${combined_where};"
   local count
