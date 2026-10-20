@@ -12,7 +12,7 @@ import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-cli
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
 import type { AffiliateOfferResult } from './types';
-import { evaluateDistributionLegality } from '@/land/affiliates/distribution-compliance-gate';
+import { buildPublishDisclosure, evaluateDistributionLegality } from '@/land/affiliates/distribution-compliance-gate';
 import { resolveAudienceJurisdiction } from '@/land/affiliates/audience-jurisdiction';
 
 export function getD1ForWebhooks(): D1Database | null {
@@ -85,13 +85,15 @@ export interface DistributeStepParams {
   tenantId: string;
   /** Audience jurisdiction; regulated verticals must declare it or be blocked. */
   jurisdiction?: string | null;
+  /** Language for the disclosure wording; must match the audience. */
+  locale?: 'en' | 'vi';
 }
 
 export async function runDistributeStep(params: DistributeStepParams) {
   const { campaignId, videoUrl, thumbnailUrl, title, audience, tier, affiliateOffer } = params;
   const gateway = createGateway();
   const baseDesc = `AI-generated video content for ${audience || 'general audience'}`;
-  const description = affiliateOffer ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}` : baseDesc;
+  const rawDescription = affiliateOffer ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}` : baseDesc;
 
   const jurisdiction =
     params.jurisdiction !== undefined
@@ -124,6 +126,12 @@ export async function runDistributeStep(params: DistributeStepParams) {
       complianceDetail: verdict.detail,
     };
   }
+
+  // Regulated content is only permitted because a disclosure accompanies it:
+  // the description carries the mandated wording, since the ffmpeg-based video
+  // overlay cannot run in this runtime.
+  const disclosure = buildPublishDisclosure(verdict, jurisdiction, params.locale);
+  const description = disclosure ? `${rawDescription}\n\n${disclosure}` : rawDescription;
 
   const payload = {
     campaignId,

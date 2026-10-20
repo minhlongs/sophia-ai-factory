@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { evaluateDistributionLegality } from '../distribution-compliance-gate';
+import { evaluateDistributionLegality, buildPublishDisclosure } from '../distribution-compliance-gate';
 
 describe('non-regulated verticals pass through', () => {
   it('allows a SaaS offer with no jurisdiction check', () => {
@@ -177,3 +177,50 @@ describe('reason precedence', () => {
     expect(result.allowed).toBe(false);
   });
 });
+
+describe('buildPublishDisclosure', () => {
+  it('adds both affiliate and financial disclosure for US crypto', () => {
+    const verdict = evaluateDistributionLegality({
+      offerCategory: 'Crypto Exchange',
+      offerName: 'KuCoin',
+      jurisdiction: 'US',
+      hasAffiliateLink: true,
+    });
+    const text = buildPublishDisclosure(verdict, 'US', 'en');
+    expect(text).toContain('affiliate links');
+    expect(text).toContain('Not financial advice');
+  });
+
+  it('adds only the affiliate disclosure for an unregulated vertical', () => {
+    const verdict = evaluateDistributionLegality({
+      offerCategory: 'Workflow',
+      offerName: 'SmartSuite',
+      jurisdiction: null,
+      hasAffiliateLink: true,
+    });
+    const text = buildPublishDisclosure(verdict, null, 'en');
+    expect(text).toContain('affiliate links');
+    expect(text).not.toContain('Not financial advice');
+  });
+
+  it('returns nothing when nothing is required', () => {
+    const verdict = evaluateDistributionLegality({
+      offerCategory: null,
+      offerName: null,
+      jurisdiction: null,
+      hasAffiliateLink: false,
+    });
+    expect(buildPublishDisclosure(verdict, null, 'en')).toBe('');
+  });
+
+  it('falls back to the US wording for an unknown jurisdiction', () => {
+    const verdict = evaluateDistributionLegality({
+      offerCategory: 'Crypto',
+      jurisdiction: 'US',
+      hasAffiliateLink: true,
+    });
+    const text = buildPublishDisclosure(verdict, 'ZZ', 'en');
+    expect(text).toContain('affiliate links');
+    expect(text).toContain('Not financial advice');
+  });
+})

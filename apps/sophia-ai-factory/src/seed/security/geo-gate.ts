@@ -30,15 +30,27 @@ export interface GeoRule {
 // ---------------------------------------------------------------------------
 
 /**
- * Built-in geo rules derived from Q2 2026 regulatory landscape.
- * US/UK: SEC/FCA enforcement; SG: MAS; CN: PBoC ban.
+ * Built-in geo rules derived from the current regulatory landscape.
+ *
+ * The crypto rule lists only jurisdictions where the required disclosure is NOT
+ * sufficient on its own. Jurisdictions where promotion is lawful provided a
+ * disclaimer is shown (US, SG — see `seed/config/crypto-disclaimer-registry`,
+ * whose entries for both carry the mandated text) are intentionally absent:
+ * blocking them here would deny lawful coverage instead of conditioning it.
+ * The disclaimer obligation is enforced where publishing happens, in
+ * `land/affiliates/distribution-compliance-gate`.
+ *
+ * UK is retained: FCA s21 FSMA restricts financial promotion to authorised
+ * firms, which a disclosure overlay does not cure.
  */
 export const DEFAULT_GEO_RULES: GeoRule[] = [
   {
     category: 'crypto',
-    blockedCountries: ['US', 'UK', 'SG', 'CN', 'VN'],
+    blockedCountries: ['UK', 'CN', 'VN'],
     reason:
-      'Regulatory restrictions (SEC/FCA/MAS/PBoC); VN: promotion prohibited by Decree 52/2024/ND-CP',
+      'UK: FCA s21 FSMA financial promotion requires authorisation; ' +
+      'CN: PBoC prohibition; ' +
+      'VN: promotion prohibited by Decree 52/2024/ND-CP',
   },
 ];
 

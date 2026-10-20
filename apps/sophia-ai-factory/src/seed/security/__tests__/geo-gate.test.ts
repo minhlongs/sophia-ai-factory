@@ -35,16 +35,16 @@ function makeDb() {
 // ---------------------------------------------------------------------------
 
 describe('isCategoryAllowed', () => {
-  it('US user is blocked from crypto', () => {
-    expect(isCategoryAllowed('US', 'crypto')).toBe(false);
+  it('US user is allowed crypto when disclosure is applied downstream', () => {
+    expect(isCategoryAllowed('US', 'crypto')).toBe(true);
   });
 
-  it('UK user is blocked from crypto', () => {
+  it('SG user is allowed crypto when disclosure is applied downstream', () => {
+    expect(isCategoryAllowed('SG', 'crypto')).toBe(true);
+  });
+
+  it('UK user is blocked from crypto (FCA s21 FSMA requires authorisation)', () => {
     expect(isCategoryAllowed('UK', 'crypto')).toBe(false);
-  });
-
-  it('SG user is blocked from crypto', () => {
-    expect(isCategoryAllowed('SG', 'crypto')).toBe(false);
   });
 
   it('CN user is blocked from crypto', () => {
@@ -67,9 +67,9 @@ describe('isCategoryAllowed', () => {
 });
 
 describe('resolveAllowedCategories', () => {
-  it('US resolves allowed categories excluding crypto', () => {
+  it('US resolves allowed categories including crypto (disclosure required elsewhere)', () => {
     const allowed = resolveAllowedCategories('US');
-    expect(allowed).not.toContain('crypto');
+    expect(allowed).toContain('crypto');
   });
 
   it('VN does not have crypto in allowed categories', () => {
@@ -79,21 +79,21 @@ describe('resolveAllowedCategories', () => {
 });
 
 describe('enforceGeoGate', () => {
-  it('throws GeoBlockedError for US + crypto', () => {
-    expect(() => enforceGeoGate('US', 'crypto')).toThrow(GeoBlockedError);
+  it('does NOT throw for US + crypto (permitted with disclosure downstream)', () => {
+    expect(() => enforceGeoGate('US', 'crypto')).not.toThrow();
   });
 
   it('thrown error contains country, category, reason', () => {
     let caught: GeoBlockedError | null = null;
     try {
-      enforceGeoGate('SG', 'crypto');
+      enforceGeoGate('VN', 'crypto');
     } catch (e) {
       caught = e as GeoBlockedError;
     }
     expect(caught).not.toBeNull();
-    expect(caught!.country).toBe('SG');
+    expect(caught!.country).toBe('VN');
     expect(caught!.category).toBe('crypto');
-    expect(caught!.reason).toContain('MAS');
+    expect(caught!.reason).toContain('Decree 52/2024/ND-CP');
   });
 
   it('throws GeoBlockedError for VN + crypto (Decree 52/2024/ND-CP)', () => {
@@ -124,7 +124,7 @@ describe('custom rule override', () => {
 
   it('multi-rule lookup — default + custom combined', () => {
     const combined = [...DEFAULT_GEO_RULES, ...customRules];
-    expect(isCategoryAllowed('US', 'crypto', combined)).toBe(false);
+    expect(isCategoryAllowed('US', 'crypto', combined)).toBe(true);
     expect(isCategoryAllowed('AU', 'gambling', combined)).toBe(false);
     expect(isCategoryAllowed('VN', 'crypto', combined)).toBe(false);
   });
@@ -168,17 +168,15 @@ describe('resolveTenantRules', () => {
     const rules = await resolveTenantRules(makeDb(), 'tenant-3');
     const cryptoRule = rules.find((r) => r.category === 'crypto');
     expect(cryptoRule).toBeTruthy();
-    expect(cryptoRule!.blockedCountries).not.toContain('SG');
-    expect(cryptoRule!.blockedCountries).toContain('US'); // others remain
+    // SG is not blocked by default, so removing it leaves the rule unchanged.
+    expect(cryptoRule!.blockedCountries).toEqual(['UK', 'CN', 'VN']);
   });
 
   it('removedRules drops entire rule if all countries removed', async () => {
     mockGetOrDefault.mockResolvedValue({
       additionalRules: [],
       removedRules: [
-        { category: 'crypto', country: 'US' },
         { category: 'crypto', country: 'UK' },
-        { category: 'crypto', country: 'SG' },
         { category: 'crypto', country: 'CN' },
         { category: 'crypto', country: 'VN' },
       ],
@@ -193,18 +191,18 @@ describe('isCategoryAllowedForTenant', () => {
     vi.clearAllMocks();
   });
 
-  it('blocks US+crypto with default rules', async () => {
+  it('blocks UK+crypto with default rules', async () => {
     mockGetOrDefault.mockResolvedValue({ additionalRules: [], removedRules: [] });
-    const allowed = await isCategoryAllowedForTenant(makeDb(), 'tenant-1', 'US', 'crypto');
+    const allowed = await isCategoryAllowedForTenant(makeDb(), 'tenant-1', 'UK', 'crypto');
     expect(allowed).toBe(false);
   });
 
-  it('allows US+crypto after tenant removes US from crypto block', async () => {
+  it('allows UK+crypto after tenant removes UK from crypto block', async () => {
     mockGetOrDefault.mockResolvedValue({
       additionalRules: [],
-      removedRules: [{ category: 'crypto', country: 'US' }],
+      removedRules: [{ category: 'crypto', country: 'UK' }],
     });
-    const allowed = await isCategoryAllowedForTenant(makeDb(), 'tenant-1', 'US', 'crypto');
+    const allowed = await isCategoryAllowedForTenant(makeDb(), 'tenant-1', 'UK', 'crypto');
     expect(allowed).toBe(true);
   });
 

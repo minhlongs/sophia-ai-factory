@@ -183,8 +183,10 @@ describe('runAffiliateScout — per-tenant geo overrides', () => {
     const db = makeD1(1);
     const env: ScoutEnv = { DB: db };
 
-    // Pass threshold 0 so all affiliates qualify, then check geo suppression
-    await runAffiliateScout(env, 'tenant-1', { threshold: 0 }, 'US');
+    // Pass threshold 0 so all affiliates qualify, then check geo suppression.
+    // VN is used rather than US: US permits crypto promotion when a disclosure
+    // accompanies it, so crypto offers are legitimately served there.
+    await runAffiliateScout(env, 'tenant-1', { threshold: 0 }, 'VN');
 
     // emit is mocked globally via vi.mock — check call count is less than discovered
     // (geo-blocked affiliates are inserted but not emitted)

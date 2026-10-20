@@ -16,6 +16,7 @@
  */
 
 import {
+  getDisclaimerForJurisdiction,
   isCryptoBlockedInJurisdiction,
   type CryptoJurisdiction,
 } from '@/seed/config/crypto-disclaimer-registry';
@@ -133,4 +134,37 @@ export function evaluateDistributionLegality(
     requiresAffiliateDisclosure,
     requiresFinancialDisclaimer: true,
   };
+}
+
+/**
+ * Build the disclosure lines a published description must carry.
+ *
+ * The rendered disclaimer overlay lives in `land/video/assembly` and shells out
+ * to ffmpeg via Node APIs, so it cannot run inside the Workers runtime where
+ * the campaign pipeline executes. The channel description is the surface that
+ * *is* available in that runtime, so the mandated wording is enforced here.
+ *
+ * Pure: returns text only, performs no I/O.
+ */
+export function buildPublishDisclosure(
+  verdict: ComplianceGateResult,
+  jurisdiction: string | null | undefined,
+  locale: 'en' | 'vi' = 'en',
+): string {
+  const lines: string[] = [];
+
+  if (verdict.requiresAffiliateDisclosure) {
+    lines.push(
+      locale === 'vi'
+        ? 'Nội dung này có chứa liên kết affiliate — nếu bạn mua qua đường link đó, chúng tôi có thể nhận hoa hồng, không mất thêm chi phí gì ở bạn.'
+        : 'This content contains affiliate links and I may earn a commission at no cost to you.',
+    );
+  }
+
+  if (verdict.requiresFinancialDisclaimer && jurisdiction) {
+    const disclaimer = getDisclaimerForJurisdiction(jurisdiction);
+    lines.push(disclaimer.short[locale]);
+  }
+
+  return lines.join(locale === 'vi' ? ' — ' : ' — ');
 }
