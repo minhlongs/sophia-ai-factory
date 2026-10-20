@@ -16,6 +16,27 @@ export interface SLOMetricPoint {
   workerId?: string;
 }
 
+/**
+ * One terminal video job outcome.
+ *
+ * Kept separate from SLOMetricPoint because an API request's `status` is an HTTP
+ * code while a video job's outcome is a terminal state; folding them into one
+ * point would make `status` mean two different things in the same dataset.
+ */
+export interface VideoJobMetricPoint {
+  /** 'completed' | 'failed_permanent' — the terminal state the job reached. */
+  outcome: string;
+  /** Video job id. */
+  jobId: string;
+  /** Tenant that owns the job. */
+  tenantId: string;
+  /** Accepted-to-first-playable seconds; 0 when unknown. */
+  durationSeconds: number;
+  /** True when the job exceeded the render-stage budget. */
+  slow: boolean;
+  timestamp: number;
+}
+
 const _DATASET_NAME = 'sophia_slo_metrics';
 
 /**
@@ -53,6 +74,39 @@ export function writeToWAE(
   } catch (e) {
     // Never throw — metrics loss is acceptable, request failure is not
     console.debug('[WAE] write failed', e);
+  }
+}
+
+/**
+ * Write one terminal video job outcome to Analytics Engine.
+ *
+ * Indexes carry the low-cardinality dimensions an SLO query groups by. `jobId`
+ * is a blob rather than an index because it is high-cardinality and only ever
+ * needed for drilling into a single job, never for aggregation.
+ */
+export function writeVideoJobToWAE(
+  binding: AnalyticsEngineDataset | undefined,
+  point: VideoJobMetricPoint
+): void {
+  if (!binding) {
+    // WAE binding not available (local dev) — skip silently
+    return;
+  }
+
+  try {
+    binding.writeDataPoint({
+      indexes: [
+        point.outcome,                    // index 0: terminal outcome
+        point.slow ? 'over-budget' : 'within-budget', // index 1: budget class
+      ],
+      blobs: [point.jobId, point.tenantId],
+      doubles: [
+        point.durationSeconds,            // double 0: seconds to first playable
+        point.timestamp,                  // double 1: Unix timestamp
+      ],
+    });
+  } catch {
+    // Never throw — metrics loss is acceptable, job completion is not.
   }
 }
 

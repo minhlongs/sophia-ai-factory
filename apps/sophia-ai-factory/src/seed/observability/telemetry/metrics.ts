@@ -33,6 +33,11 @@ export function setWAEBinding(binding: AnalyticsEngineDataset | undefined): void
   waeBinding = binding;
 }
 
+/** The WAE binding resolved at startup, or undefined outside a Worker. */
+export function getWAEBindingForMetrics(): AnalyticsEngineDataset | undefined {
+  return waeBinding;
+}
+
 export function record(
   route: string,
   durationMs: number,

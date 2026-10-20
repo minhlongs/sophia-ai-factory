@@ -32,7 +32,8 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const origin = request.headers.get('origin');
   const startTime = Date.now();
 
-  initializeWAEBinding();
+  // Metrics wiring must never break request handling; failures are swallowed inside.
+  await initializeWAEBinding();
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
   const pathLocale = pathname.split('/')[1];

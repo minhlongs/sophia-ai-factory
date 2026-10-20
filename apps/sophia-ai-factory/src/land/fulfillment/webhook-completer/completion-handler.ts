@@ -5,6 +5,7 @@ import { recordHeyGenAttempt } from '@/seed/utils/circuit-breaker';
 import type { HeyGenSuccessData } from './types';
 import { transferVideoAssetToR2 } from './r2-asset-transfer';
 import { sendBundleReadyNotification } from './webhook-notification';
+import { recordVideoCompletionMetric } from './video-metric-emitter';
 
 export { failVideoFromWebhook } from './failure-handler';
 
@@ -71,6 +72,8 @@ export async function completeVideoFromWebhook(
 
   // Record HeyGen success so circuit breaker observes all outcomes
   try { await recordHeyGenAttempt(true); } catch { /* non-fatal */ }
+
+  recordVideoCompletionMetric(row.id, row.user_id, row.created_at, nowEpoch);
 
   logger.info('[WebhookComplete] Video marked completed', { videoId: row.id, heygenJobId });
 

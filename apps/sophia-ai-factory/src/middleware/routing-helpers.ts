@@ -14,20 +14,30 @@ export function applyErrorSecurityHeaders(response: NextResponse): NextResponse 
   return response;
 }
 
-let waeInitialized = false;
+let waeResolved = false;
 
-export function initializeWAEBinding(): void {
-  if (waeInitialized) return;
+/**
+ * Resolve the WAE binding from the Cloudflare context and hand it to the metrics module.
+ *
+ * Bindings are reached through `getCloudflareContext()`, not `globalThis.env` —
+ * `globalThis.env` is undefined in the OpenNext Worker runtime, so the previous
+ * implementation left the binding unset and every WAE write was silently skipped
+ * despite the code appearing wired. The async form returns the same global-scoped
+ * context the Worker entrypoint installs, so it resolves on the request path.
+ *
+ * The flag is set only after a successful resolve: a transient failure then retries
+ * on the next request instead of permanently disabling WAE.
+ */
+export async function initializeWAEBinding(): Promise<void> {
+  if (waeResolved) return;
   try {
-    // @ts-expect-error - Cloudflare Workers global bindings
-    const globalEnv = globalThis.env || globalThis;
-    if (globalEnv?.WAE) {
-      setWAEBinding(globalEnv.WAE as AnalyticsEngineDataset);
-    }
+    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    const { env } = await getCloudflareContext({ async: true });
+    setWAEBinding((env as { WAE?: AnalyticsEngineDataset }).WAE);
+    waeResolved = true;
   } catch {
-    // Ignore if not available
+    // Local dev and unit tests have no Worker context; metrics stay in-memory.
   }
-  waeInitialized = true;
 }
 
 export function isSupportedLocale(segment: string | undefined): boolean {

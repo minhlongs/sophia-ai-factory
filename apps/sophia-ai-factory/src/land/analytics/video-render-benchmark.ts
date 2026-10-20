@@ -13,6 +13,7 @@
 import {
   MIN_SAMPLES,
   PROMISE_THRESHOLD,
+  RENDER_STAGE_THRESHOLD,
   TERMINAL_STATUS,
   percentile,
   type BenchmarkParams,
@@ -47,13 +48,16 @@ export function summariseBenchmarkRows(
       durations_seconds: null,
       low_confidence: true,
       promise_threshold_seconds: PROMISE_THRESHOLD,
+      render_stage_threshold_seconds: RENDER_STAGE_THRESHOLD,
       percent_under_promise: null,
+      percent_under_render_stage: null,
     };
   }
 
   const sorted = rows.map((r) => r.duration_seconds).sort((a, b) => a - b);
   const sum = sorted.reduce((acc, n) => acc + n, 0);
   const underPromise = sorted.filter((d) => d <= PROMISE_THRESHOLD).length;
+  const underRenderStage = sorted.filter((d) => d <= RENDER_STAGE_THRESHOLD).length;
 
   return {
     sample_size: sampleSize,
@@ -69,7 +73,9 @@ export function summariseBenchmarkRows(
     },
     low_confidence: sampleSize < MIN_SAMPLES,
     promise_threshold_seconds: PROMISE_THRESHOLD,
+    render_stage_threshold_seconds: RENDER_STAGE_THRESHOLD,
     percent_under_promise: Math.round((underPromise / sampleSize) * 1000) / 10,
+    percent_under_render_stage: Math.round((underRenderStage / sampleSize) * 1000) / 10,
   };
 }
 

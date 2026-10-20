@@ -53,6 +53,17 @@ describe('summariseBenchmarkRows', () => {
     expect(summary.percent_under_promise).toBe(60)
   })
 
+  it('reports the render-stage threshold separately from the whole-flow promise', () => {
+    // 600s is inside both thresholds; 1800s is inside the 40-minute promise but
+    // outside the 10-minute render budget the customer copy commits to.
+    const rows = [{ duration_seconds: 600 }, { duration_seconds: 1800 }]
+    const summary = summariseBenchmarkRows(rows)
+    expect(summary.promise_threshold_seconds).toBe(2400)
+    expect(summary.render_stage_threshold_seconds).toBe(600)
+    expect(summary.percent_under_promise).toBe(100)
+    expect(summary.percent_under_render_stage).toBe(50)
+  })
+
   it('preserves window + tier filter metadata', () => {
     const summary = summariseBenchmarkRows([{ duration_seconds: 100 }], {
       windowSeconds: 86400,
