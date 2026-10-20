@@ -9,9 +9,40 @@ This document defines the production targets and the evidence required to claim 
 | API availability | ≥ 99.9% successful responses | Rolling 30 days |
 | API latency | p95 < 500 ms | Rolling 30 days |
 | API server errors | < 0.1% 5xx responses | Rolling 30 days |
-| Video generation | Use the declared completion-rate and completion-time targets in the production evidence report | Same window |
+| Video completion rate | ≥ 90% of eligible video jobs reach a completed state | Rolling 30 days |
+| Video completion time | p95 ≤ 300 s from accepted job to first playable MP4 | Rolling 30 days |
 
 Availability is `eligible successful requests / eligible requests`. Exclude static assets and explicitly list excluded routes. Define success as HTTP 2xx or 3xx; server errors are HTTP 5xx. The report must include denominators, route scope, time boundaries in UTC, and the full deployed SHA. A job accepted or queued is not a completed video job.
+
+### Why these two video numbers, and not the API numbers
+
+The API SLOs above say the control plane is healthy; they say nothing about whether a
+customer's video arrives. Video completion is the product promise, so it gets its own SLI.
+
+A video job is **eligible** when it was accepted with usable customer BYOK credentials and
+no provider-side rejection. It is **completed** when the job row reaches a terminal success
+state *and* the resulting MP4 is retrievable and decodable — an accepted or queued job, a
+provider `failed` job, and a `failed_permanent` row are all non-completions, and each is
+reported separately so a rising completion rate cannot hide a rising failure count.
+
+**Completion time** is measured from the moment the job was accepted to the timestamp of
+the first playable artifact, and is reported as a percentile over eligible jobs. The
+**p95 ≤ 300 s** number is anchored to two things that already exist in the system:
+
+- the customer-facing copy states render depends on the provider but is "usually 2–5
+  minutes", so 300 s is the upper edge of the range we tell customers to expect;
+- `src/land/video/templates/heygen-helpers.ts` polls for up to
+  `maxWaitMs = 15 * 60_000`, and the live video proof uses
+  `SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS` defaulting to 900 s.
+
+That makes 300 s a *quality* target, distinct from the 900 s *operational* ceiling at which
+we declare the provider unresponsive. If p95 exceeds 300 s while still succeeding, the
+promise to customers is being broken even though nothing failed — which is exactly the case
+an API SLO cannot see.
+
+**Completing the measurement needs collection this repository does not yet have.** These are
+**targets, not results.** No measured value is claimed here, and none may be inferred from a
+green CI run or a passing live proof — both exercise single jobs, not a 30-day distribution.
 
 ## Current evidence status
 
