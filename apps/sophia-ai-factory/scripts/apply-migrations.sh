@@ -892,8 +892,12 @@ guard_add_column() {
     return 0
   fi
 
-  local combined_where
-  combined_where=$(IFS=' OR '; echo "${checks[*]}")
+  local combined_where="" i
+  # IFS holds one character only, so join the clauses explicitly.
+  for ((i = 0; i < ${#checks[@]}; i++)); do
+    [ "$i" -gt 0 ] && combined_where+=" OR "
+    combined_where+="${checks[$i]}"
+  done
 
   local guard_sql="SELECT COUNT(*) AS cnt FROM pragma_table_info('${guard_tbl}') WHERE ${combined_where};"
   local count
