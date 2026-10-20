@@ -24,9 +24,12 @@ export interface AffiliateOfferSelectedRow {
   short_code: string;
   offer_name: string;
   affiliate_link: string;
+  network: string;
 }
 
 export interface AffiliateOfferResult {
   productName: string;
   shortUrl: string;
+  /** Catalog category, used to classify the compliance vertical. */
+  category?: string | null;
 }

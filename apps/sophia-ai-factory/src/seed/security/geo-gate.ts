@@ -36,8 +36,9 @@ export interface GeoRule {
 export const DEFAULT_GEO_RULES: GeoRule[] = [
   {
     category: 'crypto',
-    blockedCountries: ['US', 'UK', 'SG', 'CN'],
-    reason: 'Regulatory restrictions (SEC/FCA/MAS/PBoC)',
+    blockedCountries: ['US', 'UK', 'SG', 'CN', 'VN'],
+    reason:
+      'Regulatory restrictions (SEC/FCA/MAS/PBoC); VN: promotion prohibited by Decree 52/2024/ND-CP',
   },
 ];
 

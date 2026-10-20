@@ -36,13 +36,17 @@ export async function loadAffiliateOfferStep(step: Step, campaignId: string): Pr
       const db = createServerClient();
       const { data } = await db
         .from('affiliate_offers_selected')
-        .select('short_code, offer_name, affiliate_link')
+        .select('short_code, offer_name, affiliate_link, network')
         .eq('campaign_id', campaignId)
         .single();
       const row = data as AffiliateOfferSelectedRow | null;
       if (!row) return null;
       const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'}/r/${row.short_code}`;
-      return { productName: row.offer_name, shortUrl };
+      // `category` is not a column on affiliate_offers_selected yet, so the
+      // compliance vertical is derived from the offer name and network, which
+      // both exist today. The optional field lets a future migration sharpen
+      // classification without changing this call site again.
+      return { productName: row.offer_name, shortUrl, category: row.network };
     } catch (error) {
       logger.warn('[generate-campaign] failed to load affiliate offer for campaign', { campaignId, error: String(error) });
       return null;

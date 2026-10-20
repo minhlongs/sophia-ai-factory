@@ -90,7 +90,7 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
     const distributionResult = await runStepSafely('distribute-channels', async () => {
       const result = await runDistributeStep({
         campaignId, videoUrl: videoAssets.video_url, thumbnailUrl: videoAssets.thumbnail_url,
-        title: campaignTitle, audience, tier, affiliateOffer,
+        title: campaignTitle, audience, tier, affiliateOffer, tenantId: userId,
       });
       await resumeEngine.checkpoint(campaignId, 'distribute-channels', { allSucceeded: result.allSucceeded, channelCount: result.results.length });
       return result;

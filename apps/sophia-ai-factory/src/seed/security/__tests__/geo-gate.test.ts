@@ -51,8 +51,8 @@ describe('isCategoryAllowed', () => {
     expect(isCategoryAllowed('CN', 'crypto')).toBe(false);
   });
 
-  it('VN user is allowed crypto (not in block list)', () => {
-    expect(isCategoryAllowed('VN', 'crypto')).toBe(true);
+  it('VN user is blocked from crypto (Decree 52/2024/ND-CP promotion ban)', () => {
+    expect(isCategoryAllowed('VN', 'crypto')).toBe(false);
   });
 
   it('unknown country defaults to allowed (fail-open)', () => {
@@ -72,9 +72,9 @@ describe('resolveAllowedCategories', () => {
     expect(allowed).not.toContain('crypto');
   });
 
-  it('VN has crypto in allowed categories', () => {
+  it('VN does not have crypto in allowed categories', () => {
     const allowed = resolveAllowedCategories('VN');
-    expect(allowed).toContain('crypto');
+    expect(allowed).not.toContain('crypto');
   });
 });
 
@@ -96,8 +96,8 @@ describe('enforceGeoGate', () => {
     expect(caught!.reason).toContain('MAS');
   });
 
-  it('does NOT throw for VN + crypto', () => {
-    expect(() => enforceGeoGate('VN', 'crypto')).not.toThrow();
+  it('throws GeoBlockedError for VN + crypto (Decree 52/2024/ND-CP)', () => {
+    expect(() => enforceGeoGate('VN', 'crypto')).toThrow(GeoBlockedError);
   });
 
   it('does NOT throw for empty country (fail-open)', () => {
@@ -126,7 +126,7 @@ describe('custom rule override', () => {
     const combined = [...DEFAULT_GEO_RULES, ...customRules];
     expect(isCategoryAllowed('US', 'crypto', combined)).toBe(false);
     expect(isCategoryAllowed('AU', 'gambling', combined)).toBe(false);
-    expect(isCategoryAllowed('VN', 'crypto', combined)).toBe(true);
+    expect(isCategoryAllowed('VN', 'crypto', combined)).toBe(false);
   });
 
   it('isCategoryAllowed returns boolean type', () => {
@@ -180,6 +180,7 @@ describe('resolveTenantRules', () => {
         { category: 'crypto', country: 'UK' },
         { category: 'crypto', country: 'SG' },
         { category: 'crypto', country: 'CN' },
+        { category: 'crypto', country: 'VN' },
       ],
     });
     const rules = await resolveTenantRules(makeDb(), 'tenant-4');

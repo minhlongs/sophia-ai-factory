@@ -12,6 +12,8 @@ import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-cli
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
 import type { AffiliateOfferResult } from './types';
+import { evaluateDistributionLegality } from '@/land/affiliates/distribution-compliance-gate';
+import { resolveAudienceJurisdiction } from '@/land/affiliates/audience-jurisdiction';
 
 export function getD1ForWebhooks(): D1Database | null {
   try {
@@ -79,6 +81,10 @@ export interface DistributeStepParams {
   audience: string;
   tier: Tier;
   affiliateOffer: AffiliateOfferResult | null;
+  /** Owner of the campaign; used to resolve the tenant's declared jurisdiction. */
+  tenantId: string;
+  /** Audience jurisdiction; regulated verticals must declare it or be blocked. */
+  jurisdiction?: string | null;
 }
 
 export async function runDistributeStep(params: DistributeStepParams) {
@@ -86,6 +92,39 @@ export async function runDistributeStep(params: DistributeStepParams) {
   const gateway = createGateway();
   const baseDesc = `AI-generated video content for ${audience || 'general audience'}`;
   const description = affiliateOffer ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}` : baseDesc;
+
+  const jurisdiction =
+    params.jurisdiction !== undefined
+      ? params.jurisdiction
+      : await resolveAudienceJurisdiction(params.tenantId);
+
+  const verdict = evaluateDistributionLegality({
+    offerCategory: affiliateOffer?.category ?? null,
+    offerName: affiliateOffer?.productName ?? null,
+    jurisdiction,
+    hasAffiliateLink: Boolean(affiliateOffer),
+  });
+
+  // A blocked verdict is a legal refusal, not a transport failure. Skip the
+  // channel dispatch rather than throwing so the campaign completes with a
+  // clear per-channel record instead of dying mid-pipeline.
+  if (!verdict.allowed) {
+    logger.warn('[distribute] compliance gate blocked publishing', {
+      campaignId,
+      vertical: verdict.vertical,
+      reason: verdict.reason,
+      detail: verdict.detail,
+    });
+    return {
+      campaignId,
+      results: [],
+      allSucceeded: false,
+      skippedByCompliance: true,
+      complianceReason: verdict.reason,
+      complianceDetail: verdict.detail,
+    };
+  }
+
   const payload = {
     campaignId,
     videoUrl,
