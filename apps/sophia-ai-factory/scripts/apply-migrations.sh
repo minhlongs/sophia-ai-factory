@@ -873,43 +873,47 @@ guard_add_column() {
     return 0
   fi
 
-  local checks=()
-  local guard_tbl=""
+  local guard_tables=()
+  local guard_cols=()
   for line in "${add_col_lines[@]}"; do
     local tbl col
     tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
     col=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+([^;[:space:]]+).*/\2/p' | tr -d ';' | tr -d ' ' || true)
     if [ -n "$tbl" ] && [ -n "$col" ]; then
-      if [ -z "$guard_tbl" ]; then
-        guard_tbl="$tbl"
-      fi
-      # pragma_table_info has no table_name column; filter on name only.
-      checks+=("(name='${col}')")
+      guard_tables+=("$tbl")
+      guard_cols+=("$col")
     fi
   done
 
-  if [ "${#checks[@]}" -eq 0 ]; then
+  if [ "${#guard_cols[@]}" -eq 0 ]; then
     return 0
   fi
 
-  local combined_where="" i
-  # IFS holds one character only, so join the clauses explicitly.
-  for ((i = 0; i < ${#checks[@]}; i++)); do
-    [ "$i" -gt 0 ] && combined_where+=" OR "
-    combined_where+="${checks[$i]}"
+  # Each table is checked against its own pragma_table_info. Collecting the
+  # columns but binding them to a single table would make a column that belongs
+  # to table B look "already present" because table A happens to have that name,
+  # and the migration would then be skipped with its real columns missing.
+  local existing_count=0 total_checks=0 i
+  local -a found_cols=()
+  for ((i = 0; i < ${#guard_tables[@]}; i++)); do
+    total_checks=$((total_checks + 1))
+    local one_sql="SELECT COUNT(*) AS cnt FROM pragma_table_info('${guard_tables[$i]}') WHERE name='${guard_cols[$i]}';"
+    local one_count
+    if ! one_count=$(d1_query_scalar "$one_sql" "cnt"); then
+      echo "ERROR: Guard failed to inspect columns in pragma_table_info for ${guard_tables[$i]}" >&2
+      exit 1
+    fi
+    one_count=${one_count:-0}
+    if [ "$one_count" -gt 0 ]; then
+      existing_count=$((existing_count + 1))
+      found_cols+=("${guard_tables[$i]}.${guard_cols[$i]}")
+    fi
   done
 
-  local guard_sql="SELECT COUNT(*) AS cnt FROM pragma_table_info('${guard_tbl}') WHERE ${combined_where};"
-  local count
-  if ! count=$(d1_query_scalar "$guard_sql" "cnt"); then
-    echo "ERROR: Guard failed to inspect columns in pragma_table_info for ${guard_tbl}" >&2
-    exit 1
-  fi
-
-  if [ "${count:-0}" -gt 0 ]; then
+  if [ "${existing_count:-0}" -gt 0 ]; then
     echo "WARNING: Pre-flight guard: column(s) already exist in pragma_table_info."
-    echo "   Columns checked: ${checks[*]}"
-    echo "   Columns found:   ${count}"
+    echo "   Columns checked: ${total_checks}"
+    echo "   Already present: ${found_cols[*]}"
     echo "   -> Skipping migration (safe: column likely already added by prior run)."
     return 1
   fi
