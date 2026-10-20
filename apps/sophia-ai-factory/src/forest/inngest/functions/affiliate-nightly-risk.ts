@@ -17,7 +17,7 @@
  *   rather than accumulating anything. Partners with no clicks in the window are
  *   left untouched because there is nothing to score.
  *
- * Layer: forest (infrastructure orchestration). Imports seed + land only.
+ * Layer: forest (infrastructure orchestration). Imports seed + tree only.
  *
  * @module forest/inngest/functions/affiliate-nightly-risk
  */
@@ -62,7 +62,6 @@ export const affiliateNightlyRisk = inngest.createFunction(
         return {
           evaluated: 0,
           flagged: 0,
-          skipped: 0,
           errors: 0,
           outcomes: [],
         };
@@ -91,7 +90,6 @@ export const affiliateNightlyRisk = inngest.createFunction(
     return {
       evaluated: summary.evaluated,
       flagged: summary.flagged,
-      skipped: summary.skipped,
       errors: summary.errors,
     };
   },
