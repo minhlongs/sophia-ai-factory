@@ -28,7 +28,7 @@ import {
   type RuleSignal,
 } from './risk-score-types';
 
-export type { ClickSample, PartnerStatusLike, RiskVerdict, RuleSignal };
+export type { ClickSample, PartnerStatusLike, RiskVerdict, RuleReason, RuleSignal };
 export { RISK_THRESHOLDS, RISK_WEIGHTS };
 
 /**

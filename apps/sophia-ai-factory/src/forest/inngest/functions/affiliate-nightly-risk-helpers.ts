@@ -38,9 +38,11 @@ export interface PartnerRiskOutcome {
 
 /** Result of a whole run. */
 export interface RiskRunSummary {
+  /** Partners successfully scored and written. */
   evaluated: number;
+  /** Partners whose verdict reached the suspicious threshold. */
   flagged: number;
-  skipped: number;
+  /** Partners whose read or write failed; the run continued regardless. */
   errors: number;
   outcomes: PartnerRiskOutcome[];
 }
@@ -163,7 +165,6 @@ export async function scoreAllPartners(
   const summary: RiskRunSummary = {
     evaluated: 0,
     flagged: 0,
-    skipped: 0,
     errors: 0,
     outcomes: [],
   };
