@@ -1,3 +1,9 @@
+/**
+ * PayOS contract fulfillment integration tests. Runs against an in-memory SQLite
+ * database, which requires the Node environment.
+ *
+ * @vitest-environment node
+ */
 import { describe, expect, it } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
