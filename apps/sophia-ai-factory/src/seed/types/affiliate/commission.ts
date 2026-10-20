@@ -1,3 +1,5 @@
+import type { Tier } from '@/seed/types';
+
 export type ReferralStatus = 'pending' | 'converted' | 'expired';
 
 export interface AffiliateReferralRow {
@@ -53,6 +55,13 @@ export interface AttributionParams {
   grossAmountCents: number;
   currency?: string;
   partnerCodeOverride?: string;
+  /**
+   * Subscription tier of the referred customer. Commission rate follows the
+   * customer's tier, not the partner's. Optional: when omitted (or when the
+   * tier cannot be resolved), attribution falls back to the partner's own
+   * rate rather than failing the payment flow.
+   */
+  customerTier?: Tier;
   /**
    * Tracking code read from the `ref` query parameter of an affiliate link.
    * Cookie-free fallback used when the visitor declines marketing consent.

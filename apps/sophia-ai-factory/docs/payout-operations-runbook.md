@@ -179,6 +179,79 @@ See `src/land/payouts/clawback-handler.ts` for the programmatic path triggered b
 
 ---
 
+## 7. Partner tax hold (payout blocked on paperwork)
+
+`affiliate_partners` carries three tax columns written when the partner submits
+paperwork via the portal: `tax_form_type`, `tax_form_status`,
+`tax_country`. Only the form *type*, its *status* and the residency country are
+ever stored — never a tax identification number, passport number or address.
+
+**State machine** (`tax_form_status`):
+
+| Status | Meaning | Payout |
+|---|---|---|
+| `not_submitted` | no form on file | held |
+| `pending_verification` | uploaded, awaiting review | held |
+| `verified` | checked and accepted | **released** |
+| `rejected` | supplied but unacceptable (wrong type, expired, illegible) | held |
+| `expired` | validity window lapsed | held |
+
+**Required form by country** (`src/land/compliance/tax-form-rules.ts`): US → W-9,
+VN → local self-declaration, any other two-letter code → W-8BEN, missing/unknown
+country → no form can be determined and the payout is held until it is declared.
+
+**Finding affected partners:**
+```sql
+SELECT partner_code, tax_form_type, tax_form_status, tax_country,
+       pending_payout_cents
+  FROM affiliate_partners
+ WHERE tax_form_status IN ('not_submitted', 'pending_verification', 'rejected', 'expired')
+ ORDER BY pending_payout_cents DESC;
+```
+
+**Resolving:** the partner uploads the correct form in the portal tab; set
+`tax_form_status='verified'` and `tax_form_verified_at = strftime('%s','now')*1000`
+only after a human has checked it. Do not bulk-flip to `verified` — the column is
+the audit record that a payout was lawful.
+
+---
+
+## 8. Partner flagged by the nightly risk score
+
+`affiliate-nightly-risk` (Inngest cron `30 3 * * *`) recomputes a composite
+fraud score per partner every night from three rules in
+`src/land/affiliates/risk-scorer.ts`:
+
+| Rule | Signal | Weight |
+|---|---|---:|
+| Duplicate clicks | share of clicks collapsing to the same `(ip_hash, partner_code)` inside a 60s window | 0.4 |
+| Click velocity | clicks/hour over 20 while carrying fewer than 3 distinct user agents | 0.4 |
+| Bot user agent | share of clicks with an empty or automation user agent | 0.2 |
+
+`risk_score` is the weighted sum, clamped to `0..1`. **At `0.5` or above the
+partner is marked `is_suspicious=1` and moved to `status='under_review'`.**
+
+**The score never suspends and never deletes.** A flagged partner keeps earning
+and stays payable; `under_review` exists precisely so a human decides. It also
+never *lifts* a suspension a human applied — check `status` before assuming the
+job changed it. Manual suspension is a separate operator action.
+
+**Review queue:**
+```sql
+SELECT partner_code, risk_score, risk_checked_at, status, total_earnings_cents
+  FROM affiliate_partners
+ WHERE is_suspicious = 1
+ ORDER BY risk_score DESC;
+```
+
+**Common causes of a false positive:** a partner posting a link in a closed room or
+corporate network where many visitors share one NAT IP and a standardised UA, or a
+link embedded in an automated newsletter that sends non-browser UAs. Verify against
+the click window before acting, and clear `is_suspicious` / restore
+`status='active'` with a note once investigated.
+
+---
+
 ## Rollback procedures
 
 ### Roll back a deploy that broke payouts
@@ -253,6 +326,10 @@ npx wrangler secret list --name sophia-ai-factory | grep -E "STRIPE|NOWPAYMENTS|
 - `src/land/payouts/payout-batcher.ts` — weekly cron orchestrator
 - `src/land/payouts/stripe-connect.ts` — Stripe SDK wrappers
 - `src/land/payouts/nowpayments-mass-payout.ts` — NOWPayments client
+- `src/land/affiliates/risk-scorer.ts` — nightly fraud rules (pure)
+- `src/forest/inngest/functions/affiliate-nightly-risk.ts` — nightly risk cron
+- `src/land/compliance/tax-form-rules.ts` — required form by country (pure)
+- `migrations/0479-affiliate-partner-risk-and-summary.sql` — risk columns + summary view
 - `migrations/0105-affiliate-stripe-connect.sql` — Connect schema additions
 - `migrations/0106-revenue-split-tables.sql` — ledger/batches/methods tables
 - `docs/disaster-recovery.md` — broader DR procedures
