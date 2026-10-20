@@ -14,6 +14,8 @@ import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { getD1Raw } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
+import { decodeConsentCookie } from '@/seed/compliance/consent-resolver'
+import { CONSENT_COOKIE_NAME } from '@/seed/compliance/consent-types'
 import { ReferralLandingView } from './referral-landing-view'
 
 interface Props {
@@ -65,15 +67,31 @@ export default async function ReferralPage({ params }: Props) {
 
   if (!link) redirect('/')
 
-  // Set 30-day attribution cookie
+  // Attribution cookie is a non-essential (marketing) tracker: only set it once the
+  // visitor has granted marketing consent. Without consent, attribution still works
+  // via the `?ref=CODE` link parameter handled server-side.
   const cookieStore = await cookies()
-  cookieStore.set('ref', code, {
-    path: '/',
-    maxAge: 30 * 24 * 60 * 60,
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-  })
+  let marketingConsent = false
+  try {
+    const rawConsent = cookieStore.get(CONSENT_COOKIE_NAME)?.value
+    if (rawConsent) {
+      marketingConsent = decodeConsentCookie(rawConsent)?.marketing === true
+    }
+  } catch (err) {
+    logger.warn('[ref-page] consent cookie read failed', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  if (marketingConsent) {
+    cookieStore.set('ref', code, {
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+    })
+  }
 
   // Record click — non-critical, never blocks render
   try {

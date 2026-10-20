@@ -53,6 +53,11 @@ export interface AttributionParams {
   grossAmountCents: number;
   currency?: string;
   partnerCodeOverride?: string;
+  /**
+   * Tracking code read from the `ref` query parameter of an affiliate link.
+   * Cookie-free fallback used when the visitor declines marketing consent.
+   */
+  refParam?: string | null;
 }
 
 export interface AffiliateAttributionResult {

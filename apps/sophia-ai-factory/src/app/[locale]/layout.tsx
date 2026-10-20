@@ -14,6 +14,7 @@ import { WhiteLabelThemeStyle } from '@/forest/theme/white-label-theme-style';
 import { WhiteLabelBrandProvider } from '@/forest/theme/white-label-context';
 import type { ResolvedTenantBranding } from '@/seed/types/white-label-branding';
 import { extractHostname, isInternalOrCanonicalHostname } from '@/tree/custom-domains/hostname-resolver';
+import { CookieConsentBanner } from '@/app/components/compliance/cookie-consent-banner';
 
 const ga4Id = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
 
@@ -101,6 +102,7 @@ export default async function LocaleLayout({
           <WhiteLabelBrandProvider branding={branding}>
             <LocaleHtmlLang />
             {children}
+            <CookieConsentBanner />
           </WhiteLabelBrandProvider>
         </NextIntlClientProvider>
       </PostHogProvider>

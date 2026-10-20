@@ -5281,21 +5281,21 @@
     "earnings_premium": "Premium",
     "tier_multiplier_note": "Hệ số nhân áp dụng theo gói",
     "copy_link_cta": "Sao Chép Link Giới Thiệu",
-    "apply": "Apply",
+    "apply": "Đăng ký tham gia",
     "commission": "Commission",
     "epc": "EPC (Earnings Per Click)",
-    "preview_tier": "Preview tier",
-    "subtitle": "Subtitle",
-    "title": "Title",
+    "preview_tier": "Xem trước theo gói",
+    "subtitle": "Mô tả ngắn về chương trình liên kết",
+    "title": "Tiêu đề chương trình",
     "upgrade": {
-      "button": "Button",
-      "description": "Description"
+      "button": "Nâng cấp ngay",
+      "description": "Mô tả quyền lợi khi nâng cấp"
     },
     "affiliate": {
       "apply": "Áp dụng",
       "commission": "Hoa hồng",
       "epc": "EPC",
-      "preview_tier": "Preview tier",
+      "preview_tier": "Xem trước theo gói",
       "subtitle": "Phụ đề",
       "title": "Tiêu đề",
       "upgrade": {
@@ -5314,13 +5314,13 @@
     },
     "referral_link_title": "Referral link title",
     "copied": "Copied",
-    "copy_link": "Copy link",
+    "copy_link": "Sao chép liên kết",
     "share_link": "Share link",
     "referral_link_hint": "Referral link hint",
     "usdt_wallet": "Usdt wallet",
     "balance": "Balance",
     "wallet_address": "Wallet address",
-    "copy_address": "Copy address",
+    "copy_address": "Sao chép địa chỉ ví",
     "withdraw": "Withdraw",
     "dashboard_title": "Dashboard title",
     "dashboard_subtitle": "Dashboard subtitle",
@@ -6930,7 +6930,7 @@
       "conversions": "Conversions",
       "conversionRate": "Conv. Rate",
       "yourReferralLink": "Your Referral Link",
-      "copyLink": "Copy Link",
+      "copyLink": "Sao chép liên kết",
       "copied": "Copied!",
       "recentReferrals": "Recent Referrals",
       "noReferrals": "No referrals yet. Share your link to start earning!",
@@ -7121,9 +7121,9 @@
         "address": "Address"
       },
       "share": {
-        "title": "Title",
+        "title": "Chia sẻ liên kết giới thiệu",
         "referralLink": "Referral Link",
-        "copyLink": "Copy Link"
+        "copyLink": "Sao chép liên kết"
       }
     },
     "referral": {
@@ -9015,5 +9015,15 @@
   "controls": {
     "confirmHalt": "Confirm Halt",
     "confirmReset": "Confirm Reset"
+  },
+  "consentBanner": {
+    "title": "Tùy chọn cookie",
+    "description": "Chúng tôi dùng cookie để vận hành website, đo lường mức độ sử dụng và (nếu bạn đồng ý) ghi nhận giới thiệu liên kết. Bạn có thể thay đổi lựa chọn bất cứ lúc nào.",
+    "acceptAll": "Chấp nhận tất cả",
+    "necessaryOnly": "Chỉ cookie cần thiết",
+    "customize": "Tùy chỉnh",
+    "analytics": "Phân tích & đo lường",
+    "marketing": "Tiếp thị & ghi nhận giới thiệu",
+    "save": "Lưu tùy chọn"
   }
 }

@@ -9008,5 +9008,15 @@
   "controls": {
     "confirmHalt": "Confirm Halt",
     "confirmReset": "Confirm Reset"
+  },
+  "consentBanner": {
+    "title": "Cookie preferences",
+    "description": "We use cookies to run the site, measure usage and, with your permission, attribute referral links. You can change this choice at any time.",
+    "acceptAll": "Accept all",
+    "necessaryOnly": "Necessary only",
+    "customize": "Customize",
+    "analytics": "Analytics & measurement",
+    "marketing": "Marketing & referral attribution",
+    "save": "Save preferences"
   }
 }

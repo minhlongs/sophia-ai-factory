@@ -11,7 +11,7 @@ import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-cl
 import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client';
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
-import type { AffiliateOfferResult } from './types';
+import type { AffiliateOfferResult, DisclosureRecord } from './types';
 import { buildPublishDisclosure, evaluateDistributionLegality } from '@/land/affiliates/distribution-compliance-gate';
 import { resolveAudienceJurisdiction } from '@/land/affiliates/audience-jurisdiction';
 
@@ -100,10 +100,21 @@ export async function runDistributeStep(params: DistributeStepParams) {
       ? params.jurisdiction
       : await resolveAudienceJurisdiction(params.tenantId);
 
+  // A blank jurisdiction is not a jurisdiction. Callers may pass one explicitly
+  // ("   ", ""), and the gate's own test is trim-based while the disclosure
+  // builder's is truthiness-based, so a blank value would clear the gate and
+  // then silently drop the financial disclaimer line. Normalise here so both
+  // consumers see the same fact.
+  const resolvedJurisdiction =
+    typeof jurisdiction === 'string' && jurisdiction.trim().length > 0
+      ? jurisdiction.trim()
+      : null;
+  const locale = params.locale ?? 'en';
+
   const verdict = evaluateDistributionLegality({
     offerCategory: affiliateOffer?.category ?? null,
     offerName: affiliateOffer?.productName ?? null,
-    jurisdiction,
+    jurisdiction: resolvedJurisdiction,
     hasAffiliateLink: Boolean(affiliateOffer),
   });
 
@@ -127,11 +138,48 @@ export async function runDistributeStep(params: DistributeStepParams) {
     };
   }
 
-  // Regulated content is only permitted because a disclosure accompanies it:
-  // the description carries the mandated wording, since the ffmpeg-based video
-  // overlay cannot run in this runtime.
-  const disclosure = buildPublishDisclosure(verdict, jurisdiction, params.locale);
+  // Regulated content is only permitted because the mandated wording accompanies
+  // it: the description carries it, since the ffmpeg-based video overlay cannot
+  // run in this runtime.
+  const disclosure = buildPublishDisclosure(verdict, resolvedJurisdiction, locale);
   const description = disclosure ? `${rawDescription}\n\n${disclosure}` : rawDescription;
+
+  // An empty disclosure here means the gate allowed a publish whose mandated
+  // wording was never emitted — a silent compliance hole, not a transport error.
+  if (!disclosure && (verdict.requiresAffiliateDisclosure || verdict.requiresFinancialDisclaimer)) {
+    logger.error('[distribute] verdict requires disclosure but none was built', {
+      campaignId,
+      vertical: verdict.vertical,
+      requiresAffiliateDisclosure: verdict.requiresAffiliateDisclosure,
+      requiresFinancialDisclaimer: verdict.requiresFinancialDisclaimer,
+      jurisdiction: resolvedJurisdiction,
+    });
+    return {
+      campaignId,
+      results: [],
+      allSucceeded: false,
+      skippedByCompliance: true,
+      complianceReason: 'disclosure_required',
+      complianceDetail:
+        `The verdict for vertical "${verdict.vertical}" requires disclosure wording, ` +
+        'but none could be built for the resolved jurisdiction. Refusing to publish.',
+      disclosure: {
+        vertical: verdict.vertical,
+        jurisdiction: resolvedJurisdiction,
+        financialDisclaimerEmitted: false,
+        affiliateDisclosureEmitted: false,
+        locale,
+      } satisfies DisclosureRecord,
+    };
+  }
+
+  const disclosureRecord: DisclosureRecord = {
+    vertical: verdict.vertical,
+    jurisdiction: resolvedJurisdiction,
+    financialDisclaimerEmitted: verdict.requiresFinancialDisclaimer && disclosure.length > 0,
+    affiliateDisclosureEmitted: verdict.requiresAffiliateDisclosure && disclosure.length > 0,
+    locale,
+  };
 
   const payload = {
     campaignId,
@@ -144,7 +192,7 @@ export async function runDistributeStep(params: DistributeStepParams) {
   const result = await gateway.distribute(payload);
   if (!result.allSucceeded) {
     const healed = await gateway.selfHeal({ ...payload, description }, result);
-    return healed;
+    return { ...healed, disclosure: disclosureRecord };
   }
-  return result;
+  return { ...result, disclosure: disclosureRecord };
 }
