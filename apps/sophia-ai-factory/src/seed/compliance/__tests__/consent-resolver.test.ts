@@ -17,6 +17,7 @@ import {
   decodeConsentCookie,
   readConsentFromCookie,
   writeConsentCookie,
+  readConsent,
   hasRecordedConsent,
   hasMarketingConsent,
   saveConsent,
