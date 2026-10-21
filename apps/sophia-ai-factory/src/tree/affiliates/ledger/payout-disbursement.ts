@@ -31,7 +31,11 @@ export async function createPayoutDisbursement(
       .first<AffiliatePartnerRow>();
 
     if (!partner) return { success: false, error: 'PARTNER_NOT_FOUND' };
-    if (partner.status !== 'active') return { success: false, error: 'PARTNER_INACTIVE' };
+    // Only a human suspension stops money. `under_review` is advisory — it is
+    // set by the nightly risk scorer, which has no automatic recovery path, so
+    // treating it as a block would make one false positive freeze a partner's
+    // payouts indefinitely with nothing in the system able to clear it.
+    if (partner.status === 'suspended') return { success: false, error: 'PARTNER_SUSPENDED' };
     if (partner.pending_payout_cents < input.amountCents) {
       return { success: false, error: 'INSUFFICIENT_PENDING_BALANCE' };
     }

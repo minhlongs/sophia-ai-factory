@@ -745,7 +745,11 @@ describe('Milestone 1 Adversarial & Empirical Challenge Suite', () => {
       expect(resNeg.error).toBe('INVALID_AMOUNT');
     });
 
-    it('rejects payout disbursement on inactive / suspended partner', async () => {
+    it('rejects payout disbursement on a suspended partner', async () => {
+      // Only a human suspension stops money. `under_review` is advisory — the
+      // nightly risk scorer can set it with no automatic recovery path, so
+      // treating it as a block would let one false positive freeze a payout
+      // permanently.
       db.prepare(`UPDATE affiliate_partners SET status = 'suspended', pending_payout_cents = 50000 WHERE id = 'partner_alpha'`).run();
 
       const res = await createPayoutDisbursement({
@@ -757,7 +761,22 @@ describe('Milestone 1 Adversarial & Empirical Challenge Suite', () => {
       });
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('PARTNER_INACTIVE');
+      expect(res.error).toBe('PARTNER_SUSPENDED');
+    });
+
+    it('still pays a partner the risk scorer put under review', async () => {
+      db.prepare(`UPDATE affiliate_partners SET status = 'under_review', pending_payout_cents = 50000 WHERE id = 'partner_alpha'`).run();
+
+      const res = await createPayoutDisbursement({
+        partnerId: 'partner_alpha',
+        rail: 'USDT',
+        amountCents: 10000,
+        destinationEncrypted: 'enc_addr',
+        d1,
+      });
+
+      expect(res.success).toBe(true);
+      expect(res.error).toBeUndefined();
     });
 
     it('safely handles SQL injection attempts in affiliate offer discovery search', async () => {
