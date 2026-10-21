@@ -69,6 +69,14 @@ export interface CompletePayoutInput {
   d1?: D1Database;
 }
 
+export interface LinkCommissionsInput {
+  payoutId: string;
+  partnerId: string;
+  /** Only commissions matured at or before this instant are reserved. */
+  maturedBeforeMs: number;
+  d1?: D1Database;
+}
+
 export interface UpdateCommissionOccInput {
   commissionId: string;
   currentVersion: number;

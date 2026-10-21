@@ -13,6 +13,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const { mockCreatePayout } = vi.hoisted(() => ({ mockCreatePayout: vi.fn() }));
 const { mockApprovePayout } = vi.hoisted(() => ({ mockApprovePayout: vi.fn() }));
+const { mockLinkCommissions } = vi.hoisted(() => ({ mockLinkCommissions: vi.fn() }));
 const { mockLogger } = vi.hoisted(() => ({
   mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
@@ -22,6 +23,9 @@ vi.mock('@/tree/affiliates/ledger/payout-disbursement', () => ({
 }));
 vi.mock('@/tree/affiliates/ledger/payout-lifecycle', () => ({
   approvePayoutDisbursement: mockApprovePayout,
+}));
+vi.mock('@/tree/affiliates/ledger/commission-payout-linker', () => ({
+  linkCommissionsToPayout: mockLinkCommissions,
 }));
 vi.mock('@/seed/utils/logger-utility', () => ({ logger: mockLogger }));
 
@@ -51,6 +55,7 @@ function makeDb(rows: Array<{ partner_id: string; commission_count: number; tota
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockLinkCommissions.mockResolvedValue({ success: true, reservedCount: 1 });
 });
 
 describe('threshold constants', () => {
@@ -229,3 +234,76 @@ describe('runNet30PayoutJob — routing', () => {
     expect(sql).toContain('payable_at');
   });
 });
+
+describe('runNet30PayoutJob — commission reservation', () => {
+  beforeEach(() => {
+    mockCreatePayout.mockResolvedValue({ success: true, payoutId: 'po_1', payoutReference: 'PO_X' });
+  })
+
+  it('reserves every swept commission against the payout it paid from', async () => {
+    const db = makeDb([{ partner_id: 'p1', commission_count: 3, total_cents: 12_000 }]);
+
+    await runNet30PayoutJob(db as never);
+
+    expect(mockLinkCommissions).toHaveBeenCalledTimes(1);
+    expect(mockLinkCommissions).toHaveBeenCalledWith(
+      expect.objectContaining({ payoutId: 'po_1', partnerId: 'p1' }),
+    );
+  })
+
+  it('warns when fewer commissions were reserved than the run aggregated', async () => {
+    mockLinkCommissions.mockResolvedValue({ success: true, reservedCount: 2 });
+    const db = makeDb([{ partner_id: 'p1', commission_count: 3, total_cents: 12_000 }]);
+
+    await runNet30PayoutJob(db as never);
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Reserved fewer commissions'),
+      expect.objectContaining({ aggregated: 3, reserved: 2 }),
+    );
+  })
+
+  it('still approves the payout when the reservation fails, but reports it', async () => {
+    mockLinkCommissions.mockResolvedValue({ success: false, error: 'D1_TIME' })
+    const db = makeDb([{ partner_id: 'p1', commission_count: 3, total_cents: 12_000 }]);
+
+    const result = await runNet30PayoutJob(db as never);
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('commissions not reserved'),
+      expect.objectContaining({ reason: 'D1_TIME' }),
+    );
+    expect(result.autoApprovedCount).toBe(1);
+  })
+
+  it('reserves nothing when the payout could not be created', async () => {
+    mockCreatePayout.mockResolvedValue({ success: false, error: 'PARTNER_INACTIVE' })
+    const db = makeDb([{ partner_id: 'p1', commission_count: 3, total_cents: 12_000 }])
+
+    const result = await runNet30PayoutJob(db as never)
+
+    expect(mockLinkCommissions).not.toHaveBeenCalled()
+    expect(result.failedCount).toBe(1)
+  })
+
+  it('reserves before approving so a crash between the two still leaves a claim', async () => {
+    const order: string[] = []
+    mockCreatePayout.mockImplementation(async () => {
+      order.push('create')
+      return { success: true, payoutId: 'po_1', payoutReference: 'PO_X' }
+    })
+    mockLinkCommissions.mockImplementation(async () => {
+      order.push('reserve')
+      return { success: true, reservedCount: 3 }
+    })
+    mockApprovePayout.mockImplementation(async () => {
+      order.push('approve')
+      return { success: true }
+    })
+    const db = makeDb([{ partner_id: 'p1', commission_count: 3, total_cents: 12_000 }])
+
+    await runNet30PayoutJob(db as never)
+
+    expect(order).toEqual(['create', 'reserve', 'approve'])
+  })
+})

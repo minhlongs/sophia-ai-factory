@@ -4767,6 +4767,25 @@
       "cta": "Sao Chép Link",
       "copied": "Đã sao chép",
       "copy": "Sao chép"
+    },
+    "join": {
+      "eyebrow": "Chương trình đối tác",
+      "statTopRate": "30%",
+      "statTopRateLabel": "Hoa hồng định kỳ",
+      "ctaPrimary": "Đăng ký ngay",
+      "ctaSecondary": "Đăng nhập"
+    },
+    "commission": {
+      "title": "Hoa hồng theo gói",
+      "subtitle": "Mức hoa hồng của bạn theo gói của khách được giới thiệu. Tính theo từng gói, trả mỗi tháng khi họ tiếp tục sử dụng.",
+      "tier_col": "Gói",
+      "price_col": "Giá gói",
+      "rate_col": "Tỷ lệ",
+      "earn_col": "Bạn nhận",
+      "total_col": "Năm đầu",
+      "per_month": "tháng",
+      "one_time": "một lần",
+      "note": "Hoa hồng được tính trên doanh thu thuần sau thuế và phí thanh toán. Các con số trên chưa bao gồm hoàn tiền và giao dịch bị từ chối."
     }
   },
   "tour": {

@@ -4767,6 +4767,25 @@
       "cta": "Copy Link",
       "copied": "Copied",
       "copy": "Copy"
+    },
+    "join": {
+      "eyebrow": "Partner Program",
+      "statTopRate": "30%",
+      "statTopRateLabel": "Recurring commission",
+      "ctaPrimary": "Apply Now",
+      "ctaSecondary": "Sign In"
+    },
+    "commission": {
+      "title": "Commission by Tier",
+      "subtitle": "Your rate follows the referred customer's plan. Tier-based rates, paid every month they stay subscribed.",
+      "tier_col": "Tier",
+      "price_col": "Plan price",
+      "rate_col": "Rate",
+      "earn_col": "You earn",
+      "total_col": "Year 1",
+      "per_month": "month",
+      "one_time": "one-time",
+      "note": "Commissions are calculated on net revenue after tax and payment fees. Estimates exclude chargebacks and refunds."
     }
   },
   "tour": {

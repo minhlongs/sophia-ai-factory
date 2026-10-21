@@ -11,10 +11,11 @@
  *   - total > $500  → pending_approval, requiring admin sign-off in
  *                     `/admin/affiliate-payouts`
  *
- * Idempotency uses the payout rails' own OCC + balance guards: a partner
- * whose mature commissions were already swept has no remaining `payable`
- * rows with a null `payout_id`, so a re-run aggregates to nothing and cannot
- * create a second payout.
+ * Idempotency comes from reserving the swept commissions: the moment a payout is
+ * created, every commission it aggregated is stamped with that payout's id, so
+ * the next run's query — which requires `payout_id IS NULL` — sees nothing left
+ * to claim and cannot pay the same money twice. The reservation is released only
+ * if the payout is later cancelled.
  *
  * Layer: forest (infrastructure orchestrator)
  *
@@ -26,6 +27,7 @@ import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { createPayoutDisbursement } from '@/tree/affiliates/ledger/payout-disbursement';
+import { linkCommissionsToPayout } from '@/tree/affiliates/ledger/commission-payout-linker';
 import { approvePayoutDisbursement } from '@/tree/affiliates/ledger/payout-lifecycle';
 import {
   aggregateByPartner,
@@ -61,6 +63,7 @@ interface MatureCommissionRow {
 async function settlePartner(
   db: D1Database,
   plan: PartnerPayoutPlan,
+  nowMs: number,
 ): Promise<PartnerPayoutOutcome> {
   const created = await createPayoutDisbursement({
     d1: db,
@@ -78,6 +81,29 @@ async function settlePartner(
       reason: created.error,
     });
     return { ...plan, status: 'failed', reason: created.error ?? 'PAYOUT_NOT_CREATED' };
+  }
+
+  // Reserve what this payout was built from. Without this the commissions stay
+  // `payable` with a null payout_id and the next sweep pays them again.
+  const linked = await linkCommissionsToPayout({
+    d1: db,
+    payoutId: created.payoutId,
+    partnerId: plan.partnerId,
+    maturedBeforeMs: nowMs,
+  });
+  if (!linked.success) {
+    logger.warn('[Net30Payout] Payout created but commissions not reserved', {
+      payoutId: created.payoutId,
+      partnerId: plan.partnerId,
+      reason: linked.error,
+    });
+  } else if (linked.reservedCount !== plan.commissionCount) {
+    logger.warn('[Net30Payout] Reserved fewer commissions than the run aggregated', {
+      payoutId: created.payoutId,
+      partnerId: plan.partnerId,
+      aggregated: plan.commissionCount,
+      reserved: linked.reservedCount,
+    });
   }
 
   if (needsAdminApproval(plan.amountCents)) {
@@ -133,7 +159,7 @@ export async function runNet30PayoutJob(db: D1Database): Promise<Net30PayoutResu
     }
 
     try {
-      outcomes.push(await settlePartner(db, plan));
+      outcomes.push(await settlePartner(db, plan, nowMs));
     } catch (err) {
       logger.error('[Net30Payout] Unexpected payout error', {
         partnerId: plan.partnerId,
