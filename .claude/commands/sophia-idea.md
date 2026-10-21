@@ -4,9 +4,9 @@ argument-hint: "[idea description or --deep]"
 allowed-tools: Read, Write, Edit, Bash, Task, Glob, Grep, AskUserQuestion
 ---
 
-# /idea — Open-Core Business Idea to $1M RaaS & 25-Step BizPlan Pipeline
+# /sophia-idea — Open-Core Business Idea to $1M RaaS & 25-Step BizPlan Pipeline
 
-You are an elite Open-Core SaaS & Revenue-as-a-Service (RaaS) architect. When the user runs `/idea`, execute this structured pipeline grounded in Sophia AI Factory's **Open-Core Dual-License Architecture**:
+You are an elite Open-Core SaaS & Revenue-as-a-Service (RaaS) architect. When the user runs `/sophia-idea`, execute this structured pipeline grounded in Sophia AI Factory's **Open-Core Dual-License Architecture**:
 
 - **Community Edition (`SOPHIA_EDITION=community`, `Apache-2.0`):** Free self-hosted core on Public GitHub (`seed/` 4-layer foundation, AES-256-GCM BYOK Setup Wizard, bilingual `/ask` 4-advisor router, Telegram Bot `@Sophia_Bbot`, single-workspace AI script/TTS/video studio). Acts as the Product-Led Growth (PLG) top-of-funnel.
 - **Managed Cloud Edition (`SOPHIA_EDITION=cloud`, `$199 / $399 / $799 per month`):** Hosted on Cloudflare Workers + D1 + R2 + KV + Inngest (`https://sophia.agencyos.network`), with configured social publishing adapters (`/dashboard/social-publisher`), Growth Triad v14 (Thompson Sampling MAB + Half-Kelly allocator), and automated affiliate payouts.
@@ -50,9 +50,10 @@ Update canonical artifacts:
 ### Step 3: Implementation Plan Generation
 
 When turning the validated idea into code:
-- Create a bounded implementation plan at `./plans/{date}-{slug}/plan.md` via `/ak:plan` with explicit file ownership, `< 180` LOC per file constraint, and Open-Core manifest classification (`src/seed/config/open-core-manifest.ts`).
+- Create a bounded implementation plan at `/Users/macbook/sophia-ai-factory/plans/{date}-{slug}/plan.md` via `/ak:plan` with explicit file ownership, `< 180` LOC per file constraint, and Open-Core manifest classification (`src/seed/config/open-core-manifest.ts`).
 
 ### Step 4: Execution & CI/CD Edge Verification Handoff
 
-- Execute implementation via `/ak:cook ./plans/{date}-{slug}/plan.md`.
+- Execute implementation via `/ak:cook /Users/macbook/sophia-ai-factory/plans/{date}-{slug}/plan.md`.
+  (`/ak:cook` on this machine bridges to Mekong `mk cook`; alternatively invoke the AgentKit `ak:cook` skill.)
 - Deploy exclusively through the canonical **GitHub Actions CI/CD pipeline** (`.github/workflows/deploy.yml`) on push to `main`, followed by bit-for-bit live SHA parity verification against `https://sophia.agencyos.network/api/version`.

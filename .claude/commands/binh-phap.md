@@ -42,7 +42,7 @@ Reads/writes `.claude/state/binh-phap-state.json` before each phase.
 
 1. Sanitize `$ARGUMENTS` (see §Prompt Injection below)
 2. Spawn `planner` + 2x `researcher` **in parallel** via Task tool
-3. Write plan to `/Users/macbook/projects/sophia-ai-factory/plans/<YYMMDD>-<slug>/plan.md`
+3. Write plan to `/Users/macbook/sophia-ai-factory/plans/<YYMMDD>-<slug>/plan.md`
 4. Save state: `currentPhase=plan`, `status=completed`
 5. Present plan; await user approval before next phase
 
@@ -147,4 +147,4 @@ Default TTL: 24h. Re-request approval if expired.
 - **Always read `CLAUDE.md` first** for project context
 - **Absolute paths only** for plan files — never `./plans/`
 - **YAGNI/KISS** — keep each section minimal, use tables for mappings
-- **Reports →** `/Users/macbook/projects/sophia-ai-factory/plans/reports/`
+- **Reports →** `/Users/macbook/sophia-ai-factory/plans/reports/`
