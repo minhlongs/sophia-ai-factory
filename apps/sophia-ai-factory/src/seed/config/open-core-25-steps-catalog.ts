@@ -5,6 +5,11 @@
  * 25-step catalog and provides typed query helpers for the Tree Readiness Auditor,
  * Status API, and Settings UI.
  *
+ * Path base: every `verificationArtifact` and every `REQUIRED_GITHUB_COMMUNITY_FILES`
+ * entry resolves from the **git repository root**, not from `apps/sophia-ai-factory/`.
+ * The root is the public Apache-2.0 repo a self-hoster clones, so license and
+ * governance files live there while app code lives under the `apps/` prefix.
+ *
  * Layer: seed/config
  * @module seed/config/open-core-25-steps-catalog
  */
@@ -28,6 +33,13 @@ export {
 };
 
 export const TOTAL_OPEN_CORE_STEPS = 25 as const;
+
+/**
+ * The base every path in this catalog is written against. Recorded as data so a
+ * future existence check or a self-hoster reading the UI resolves against the
+ * same directory instead of guessing between the repo root and the app folder.
+ */
+export const ARTIFACT_RESOLUTION_BASE = 'repo-root' as const;
 
 export const OPEN_CORE_25_STEPS: readonly OpenCoreStepDefinition[] = [
   ...OPEN_CORE_STEPS_PART_1,
