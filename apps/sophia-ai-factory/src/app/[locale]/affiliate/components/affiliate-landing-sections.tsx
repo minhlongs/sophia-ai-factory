@@ -2,13 +2,20 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { StepCard } from './affiliate-cards';
+import { COMMISSION_ROWS } from '../join/view/commission-table';
 
-export const EARNINGS_ROWS = [
-  { tier: 'Starter', price: '$199/mo', cut: '20%–30% ($39.80 – $59.70/mo)' },
-  { tier: 'Growth',  price: '$399/mo', cut: '20%–30% ($79.80 – $119.70/mo)' },
-  { tier: 'Premium', price: '$799/mo', cut: '20%–30% ($159.80 – $239.70/mo)' },
-  { tier: 'Tier 2 (Sub-Affiliate)', price: 'All Plans', cut: '5% recurring override' },
-] as const;
+/**
+ * Derived from the same constants the attribution resolver applies, so the
+ * marketing page cannot drift from what partners are actually paid. Rates
+ * follow the referred customer's plan, and the programme pays a single level
+ * only — the earlier hardcoded copy advertised a "Tier 2 (Sub-Affiliate) 5%
+ * override" that the terms explicitly rule out.
+ */
+export const EARNINGS_ROWS = COMMISSION_ROWS.map((row) => ({
+  tier: row.tier,
+  price: row.price,
+  cut: `${row.rate}${row.recurring ? ' recurring' : ' one-time'} (${row.perReferral}${row.recurring ? '/mo' : ''})`,
+}));
 
 export function AffiliateEarningsSection({ t }: { t: (key: string) => string }) {
   return (

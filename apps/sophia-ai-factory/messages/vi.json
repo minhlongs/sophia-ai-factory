@@ -4707,7 +4707,7 @@
       "description": "Giới thiệu creator đến Sophia AI Factory và nhận 30% hoa hồng định kỳ. Thanh toán USDT hoặc fiat. Không yêu cầu tối thiểu."
     },
     "hero": {
-      "title": "Kiếm 30% Định Kỳ",
+      "title": "Kiếm Đến 30% Định Kỳ",
       "subtitle": "Giới thiệu creator và doanh nghiệp đến Sophia AI Factory. Nhận tiền mỗi tháng khi họ còn đăng ký.",
       "ctaPrimary": "Đăng Ký Affiliate",
       "ctaSecondary": "Cách Hoạt Động"
@@ -4742,7 +4742,9 @@
       "button": "Bắt Đầu Kiếm Tiền"
     },
     "footer": {
-      "disclaimer": "Tỷ lệ hoa hồng và điều khoản có thể thay đổi. Xem chi tiết trong thỏa thuận affiliate."
+      "disclaimer": "Tỷ lệ hoa hồng và điều khoản có thể thay đổi. Xem chi tiết trong thỏa thuận affiliate.",
+      "terms": "Điều khoản đối tác",
+      "disclosure": "Công bố affiliate"
     },
     "earnings": {
       "title": "Thu Nhập Của Bạn",
@@ -4773,7 +4775,49 @@
       "statTopRate": "30%",
       "statTopRateLabel": "Hoa hồng định kỳ",
       "ctaPrimary": "Đăng ký ngay",
-      "ctaSecondary": "Đăng nhập"
+      "ctaSecondary": "Đăng nhập",
+      "form": {
+        "termsPrefix": "Tôi đồng ý với",
+        "termsLink": "điều khoản chương trình đối tác",
+        "termsRequired": "Vui lòng đồng ý với điều khoản để tiếp tục.",
+        "submit": "Tạo tài khoản đối tác",
+        "signInFirst": "Đăng nhập để tiếp tục",
+        "signInRequired": "Bạn cần đăng nhập trước khi trở thành đối tác.",
+        "alreadyPartner": "Bạn đã là đối tác — mở portal để lấy link giới thiệu.",
+        "genericError": "Có lỗi xảy ra. Vui lòng thử lại.",
+        "successTitle": "Chào mừng bạn đến với chương trình đối tác",
+        "successBody": "Link giới thiệu của bạn đã sẵn sàng. Chia sẻ ở bất kỳ đâu; chúng tôi theo dõi mỗi lượt bấm trong 30 ngày.",
+        "privacyNote": "Mức hoa hồng của bạn theo gói mà người được giới thiệu mua và do chúng tôi đặt, không do bạn chọn.",
+        "applyTitle": "Trở thành đối tác",
+        "applyBody": "Tạo tài khoản đối tác và chúng tôi giao link giới thiệu ngay cho bạn. Bạn tự chọn nơi chia sẻ."
+      },
+      "faq": {
+        "title": "Câu hỏi thường gặp",
+        "rate": {
+          "q": "Tôi được hoa hồng bao nhiêu?",
+          "a": "Từ 10% đến 30%, tùy gói mà người được giới thiệu mua: BASIC 30%, PREMIUM 25%, ENTERPRISE 20%, MASTER 10% một lần. Gói theo tháng trả trong 12 tháng; MASTER trả một lần."
+        },
+        "window": {
+          "q": "Link của tôi có hiệu lực bao lâu?",
+          "a": "30 ngày, lần bấm cuối cùng được tính. Nếu cùng người đó bấm link của đối tác khác sau đó thì lần bấm sau được tính."
+        },
+        "threshold": {
+          "q": "Khi nào tôi rút được tiền?",
+          "a": "Khi số dư được duyệt đạt $50, thanh toán NET-30, sau khi mỗi khoản hoa hồng hết thời gian giữ chống gian lận 14 ngày."
+        },
+        "payout": {
+          "q": "Tôi nhận tiền bằng cách nào?",
+          "a": "USDT hoặc tiền mặt, ngay trong portal đối tác sau khi được duyệt."
+        },
+        "selfReferral": {
+          "q": "Tôi có thể giới thiệu chính mình không?",
+          "a": "Không. Tự đăng ký qua link của mình sẽ mất hoa hồng, và các đăng ký ảo hoặc bị hoàn tiền sẽ bị trừ lại."
+        },
+        "refund": {
+          "q": "Nếu người tôi giới thiệu yêu cầu hoàn tiền thì sao?",
+          "a": "Hoa hồng sẽ bị trừ lại cùng với khoản hoàn, kể cả phí chargeback nếu có."
+        }
+      }
     },
     "commission": {
       "title": "Hoa hồng theo gói",
