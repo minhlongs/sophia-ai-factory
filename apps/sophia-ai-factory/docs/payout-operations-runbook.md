@@ -231,10 +231,12 @@ fraud score per partner every night from three rules in
 `risk_score` is the weighted sum, clamped to `0..1`. **At `0.5` or above the
 partner is marked `is_suspicious=1` and moved to `status='under_review'`.**
 
-**The score never suspends and never deletes.** A flagged partner keeps earning
-and stays payable; `under_review` exists precisely so a human decides. It also
-never *lifts* a suspension a human applied — check `status` before assuming the
-job changed it. Manual suspension is a separate operator action.
+**The score never suspends and never deletes.** `under_review` is advisory: it
+exists precisely so a human decides, and it does **not** stop a payout. Only
+`status='suspended'`, set by an operator, blocks `createPayoutDisbursement`. Keep
+those two apart when triaging — a partner sitting in `under_review` is not a
+partner whose money is held. The flag also never *lifts* a suspension a human
+applied, so check `status` before assuming the nightly job changed it.
 
 **Review queue:**
 ```sql

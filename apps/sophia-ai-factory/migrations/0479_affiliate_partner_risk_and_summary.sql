@@ -21,14 +21,11 @@
 --   ALTER TABLE ADD COLUMN and CREATE VIEW IF NOT EXISTS only. Every added
 --   column carries a default, so existing rows stay valid with no backfill.
 --
--- Ordering constraint (apply-migrations.sh 'guard_add_column')
---   The pre-flight ADD COLUMN guard inspects only the table named by the FIRST
---   ALTER TABLE in a file, since SQLite has no ADD COLUMN IF NOT EXISTS. Keep
---   the affiliate_partners ALTERs above the affiliate_commissions one: the guard
---   then keys on affiliate_partners, where the risk columns are unique to this
---   migration. Reversing the order would make the guard look for the risk
---   columns on affiliate_commissions, find none, and re-run this file — which
---   would then fail on the duplicate customer_tier column.
+-- Ordering note (apply-migrations.sh 'guard_add_column')
+--   The pre-flight ADD COLUMN guard checks every (table, column) pair against
+--   that pair's own pragma_table_info, so this file's order does not affect the
+--   guard's verdict. SQLite has no ADD COLUMN IF NOT EXISTS, so a re-run of a
+--   partially-applied file still fails on the columns that already landed.
 
 -- =====================================================================
 -- 1. affiliate_partners: risk verdict columns

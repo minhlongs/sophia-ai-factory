@@ -107,6 +107,28 @@ export async function approvePayout(
   }
 }
 
+/** Releases the commissions a payout reserved, so they can be claimed again. */
+async function releaseReservedCommissions(
+  d1: D1Database,
+  payoutId: string,
+): Promise<number> {
+  const nowMs = Date.now();
+  // Only rows this payout owns and that are still unpaid are released, so a
+  // commission already settled by another payout can never be reopened.
+  const res = await d1
+    .prepare(
+      `UPDATE affiliate_commissions
+       SET payout_id = NULL,
+           version = version + 1,
+           updated_at = ?1
+       WHERE payout_id = ?2 AND status = 'payable'`,
+    )
+    .bind(nowMs, payoutId)
+    .run();
+
+  return res.meta?.changes ?? 0;
+}
+
 /** Rejects a payout, stamping the mandatory reason and advancing OCC. */
 export async function rejectPayout(
   input: AdminActionInput & { reason: string },
@@ -133,6 +155,17 @@ export async function rejectPayout(
       });
       return { ok: false, conflict: true, error: 'OCC_VERSION_CONFLICT' };
     }
+
+    // A rejected payout still holds its commissions' payout_id, and every claim
+    // path filters on `payout_id IS NULL`. Without releasing them here the
+    // partner's earned money would be invisible to every sweep and the manual
+    // request path for as long as the rejected row lives.
+    const released = await releaseReservedCommissions(input.d1, input.payoutId);
+    logger.info('[admin/affiliate-payouts] Rejected payout released commissions', {
+      payoutId: input.payoutId,
+      adminId: input.adminId,
+      releasedCount: released,
+    });
 
     return { ok: true };
   } catch (err) {
