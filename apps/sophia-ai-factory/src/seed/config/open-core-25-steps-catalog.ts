@@ -25,6 +25,15 @@ import { OPEN_CORE_STEPS_PART_1 } from './open-core-25-steps-data-p1';
 import { OPEN_CORE_STEPS_PART_2 } from './open-core-25-steps-data-p2';
 
 export {
+  BINH_PHAP_THIEN,
+  BINH_PHAP_STEP_MAPPING,
+  BINH_PHAP_TOTAL_THIEN,
+  getBinhPhapThienByNumber,
+  getBinhPhapThienForStep,
+  evaluateBinhPhapCoverage,
+} from './open-core-25-steps-binh-phap-map';
+
+export {
   OPEN_CORE_PHASES,
   type OpenCorePhaseId,
   type OpenCorePhaseMetadata,
