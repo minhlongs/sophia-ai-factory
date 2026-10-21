@@ -7,15 +7,56 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import { logger } from '@/seed/utils/logger-utility';
+import type { Tier } from '@/seed/types';
 import type {
   AffiliateAttributionResult,
   AttributionParams,
 } from '@/seed/types/affiliate';
-import { DEFAULT_COMMISSION_RATE_PCT } from './types';
 import { resolveD1 } from './d1-resolver';
 import { resolveReferrerPartner } from './cookie-parser';
 import { calculateCommissionCents } from './decay-calculator';
+import { resolveAttributionRate } from './tier-rate-resolver';
 import { persistValidatedCommission } from './attribution-execution-helpers';
+
+/**
+ * Reads the referred customer's subscription tier so the commission rate can
+ * follow the customer instead of the partner.
+ *
+ * Runs after subscription activation, so D1 already reflects the new tier.
+ * Returns null on any miss: a failed tier lookup must never abort a payment
+ * webhook, so the caller falls back to the partner's own default rate.
+ */
+async function resolveCustomerTier(
+  d1: D1Database,
+  customerId: string,
+): Promise<Tier | null> {
+  if (!customerId) return null;
+
+  try {
+    const row = await d1
+      .prepare(
+        `SELECT COALESCE(tier, plan) AS raw_tier
+         FROM subscriptions
+         WHERE user_id = ?1 AND status = 'active'
+         ORDER BY created_at DESC LIMIT 1`,
+      )
+      .bind(customerId)
+      .first<{ raw_tier: string | null }>();
+
+    const raw = row?.raw_tier?.toLowerCase();
+    if (raw === 'master') return 'MASTER' as Tier;
+    if (raw === 'enterprise') return 'ENTERPRISE' as Tier;
+    if (raw === 'premium') return 'PREMIUM' as Tier;
+    if (raw === 'basic') return 'BASIC' as Tier;
+    return null;
+  } catch (err) {
+    logger.warn('[AffiliateAttribution] Customer tier lookup failed; falling back to partner rate', {
+      customerId,
+      error: String(err),
+    });
+    return null;
+  }
+}
 
 /**
  * Executes idempotent commission attribution for a verified customer payment.
@@ -58,7 +99,8 @@ export async function recordAffiliateCommission(
       return { success: true, attributed: false, partnerId: partner.id, reason: 'SELF_REFERRAL_DISALLOWED' };
     }
 
-    const ratePct = partner.custom_rate_override_pct ?? partner.commission_rate_pct ?? DEFAULT_COMMISSION_RATE_PCT;
+    const customerTier = params.customerTier ?? (await resolveCustomerTier(d1, params.customerId));
+    const ratePct = resolveAttributionRate({ customerTier, partner }).ratePct;
     const commissionCents = calculateCommissionCents(params.grossAmountCents, ratePct);
 
     if (commissionCents <= 0) {

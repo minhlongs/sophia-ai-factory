@@ -8,6 +8,7 @@
 export * from './types';
 export * from './db-resolver';
 export * from './platform-stats';
+export * from './commission-payout-linker';
 export * from './partner-reader';
 export * from './payout-disbursement';
 export * from './payout-lifecycle';

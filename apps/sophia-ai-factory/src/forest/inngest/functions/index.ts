@@ -8,7 +8,9 @@ export * from './account-delete-finalize-cron';
 export * from './account-delete-finalize-email';
 export * from './analytics-sync';
 export * from './auto-discover-affiliates';
+export * from './affiliate-nightly-risk';
 export * from './audience-analysis-cron';
+export * from './affiliate-net30-payout';
 export * from './batch-video-fanout';
 export * from './distribution-fanout';
 // Phase 2: Market Signals ingestion

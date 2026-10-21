@@ -179,6 +179,141 @@ See `src/land/payouts/clawback-handler.ts` for the programmatic path triggered b
 
 ---
 
+## 7. Partner tax hold (payout blocked on paperwork)
+
+`affiliate_partners` carries three tax columns written when the partner submits
+paperwork via the portal: `tax_form_type`, `tax_form_status`,
+`tax_country`. Only the form *type*, its *status* and the residency country are
+ever stored — never a tax identification number, passport number or address.
+
+**State machine** (`tax_form_status`):
+
+| Status | Meaning | Payout |
+|---|---|---|
+| `not_submitted` | no form on file | held |
+| `pending_verification` | uploaded, awaiting review | held |
+| `verified` | checked and accepted | **released** |
+| `rejected` | supplied but unacceptable (wrong type, expired, illegible) | held |
+| `expired` | validity window lapsed | held |
+
+**Required form by country** (`src/land/compliance/tax-form-rules.ts`): US → W-9,
+VN → local self-declaration, any other two-letter code → W-8BEN, missing/unknown
+country → no form can be determined and the payout is held until it is declared.
+
+**Finding affected partners:**
+```sql
+SELECT partner_code, tax_form_type, tax_form_status, tax_country,
+       pending_payout_cents
+  FROM affiliate_partners
+ WHERE tax_form_status IN ('not_submitted', 'pending_verification', 'rejected', 'expired')
+ ORDER BY pending_payout_cents DESC;
+```
+
+**Resolving:** the partner uploads the correct form in the portal tab; set
+`tax_form_status='verified'` and `tax_form_verified_at = strftime('%s','now')*1000`
+only after a human has checked it. Do not bulk-flip to `verified` — the column is
+the audit record that a payout was lawful.
+
+---
+
+## 8. Partner flagged by the nightly risk score
+
+`affiliate-nightly-risk` (Inngest cron `30 3 * * *`) recomputes a composite
+fraud score per partner every night from three rules in
+`src/land/affiliates/risk-scorer.ts`:
+
+| Rule | Signal | Weight |
+|---|---|---:|
+| Duplicate clicks | share of clicks collapsing to the same `(ip_hash, partner_code)` inside a 60s window | 0.4 |
+| Click velocity | clicks/hour over 20 while carrying fewer than 3 distinct user agents | 0.4 |
+| Bot user agent | share of clicks with an empty or automation user agent | 0.2 |
+
+`risk_score` is the weighted sum, clamped to `0..1`. **At `0.5` or above the
+partner is marked `is_suspicious=1` and moved to `status='under_review'`.**
+
+**The score never suspends and never deletes.** `under_review` is advisory: it
+exists precisely so a human decides, and it does **not** stop a payout. Only
+`status='suspended'`, set by an operator, blocks `createPayoutDisbursement`. Keep
+those two apart when triaging — a partner sitting in `under_review` is not a
+partner whose money is held. The flag also never *lifts* a suspension a human
+applied, so check `status` before assuming the nightly job changed it.
+
+**Review queue:**
+```sql
+SELECT partner_code, risk_score, risk_checked_at, status, total_earnings_cents
+  FROM affiliate_partners
+ WHERE is_suspicious = 1
+ ORDER BY risk_score DESC;
+```
+
+**Common causes of a false positive:** a partner posting a link in a closed room or
+corporate network where many visitors share one NAT IP and a standardised UA, or a
+link embedded in an automated newsletter that sends non-browser UAs. Verify against
+the click window before acting, and clear `is_suspicious` / restore
+`status='active'` with a note once investigated.
+
+---
+
+## 9. What the batch claim actually protects (and how it is tested)
+
+**Live path:** `claimPayableRows` in
+`src/forest/jobs/payout-batcher/payout-batcher-claims.ts` — this is what
+`payout-batcher-weekly` runs. It claims one row at a time:
+
+```sql
+UPDATE commission_ledger
+SET status = 'paying', payout_batch_id = ?
+WHERE id = ? AND status = 'payable' AND payout_batch_id IS NULL
+```
+
+There is a second, **uncalled** copy of the same SQL in
+`src/land/payouts/commission-ledger-mutations.ts` (`claimLedgerRows`, claiming a set in
+one statement). Nothing in production invokes it. It exists as an exported module and is
+kept, but if you are auditing the money path, the `forest` file above is the one that
+spends.
+
+The return value is `meta.changes`, so "0 rows claimed" is the idempotent signal a retry
+should see — not an error, and not a failed payment.
+
+**Both WHERE clauses are load-bearing, in different states:**
+
+| Row state | Blocked by | Reachable via |
+|---|---|---|
+| `paying` + this batch id | `status = 'payable'` matches nothing | an Inngest retry re-running the same batch |
+| `payable` + a **stale** batch id | `payout_batch_id IS NULL` only | a run that dies after claiming but before its rollback clears the id |
+
+The second state is the one that costs money: without the second clause the row is
+claimable by a new batch while the original may still settle, paying the affiliate twice.
+Both paths are covered by `payout-batcher-claims.test.ts` and
+`commission-ledger-mutations.test.ts`, which run the SQL against a real in-memory
+SQLite database rather than a mock, because a mock would return whatever the test asked
+for and could not prove the clause works.
+
+**Do not "simplify" the second clause away.** Removing it leaves each suite failing on
+exactly one case — the payable-row-carries-a-stale-batch-id case — which is the check
+that earns its keep.
+
+---
+
+## 10. PayOS is not a live selling method
+
+`wrangler.toml:227` sets `FEATURE_PAYOS = "false"`. The PayOS gateway under
+`src/land/payments/payos-gateway/` is complete and tested, and its credentials are
+customer-entered BYOK, absent in production. So there is no live PayOS rail to verify
+from the operator side, and enabling the flag would advertise a payment method that
+cannot settle.
+
+**What is still reachable and was fixed:** the alternate IPN callback `/api/payos/ipn`
+authenticates by HMAC checksum, so it needs no session — but it was missing from the
+pinned public-route allowlist, meaning the blanket auth guard answered **401 before the
+signature check ran**. A provider callback that fails that way looks identical to "the
+provider never called". The route is now on the allowlist as one exact path, with
+`src/forest/middleware/guard/public-routes.payos-ipn.test.ts` pinning both that it is
+reachable and that neighbouring paths (`/api/payos`, `/api/webhooks/payos/anything`)
+stay guarded.
+
+## 11. Public route allowlist for provider callbacks
+
 ## Rollback procedures
 
 ### Roll back a deploy that broke payouts
@@ -253,6 +388,14 @@ npx wrangler secret list --name sophia-ai-factory | grep -E "STRIPE|NOWPAYMENTS|
 - `src/land/payouts/payout-batcher.ts` — weekly cron orchestrator
 - `src/land/payouts/stripe-connect.ts` — Stripe SDK wrappers
 - `src/land/payouts/nowpayments-mass-payout.ts` — NOWPayments client
+- `src/forest/jobs/payout-batcher/payout-batcher-claims.ts` — the live batch claim (section 9)
+- `src/forest/jobs/payout-batcher/payout-batcher-claims.test.ts` — its real-SQLite tests
+- `src/land/payouts/commission-ledger-mutations.ts` — the uncalled copy of the same claim
+- `src/forest/middleware/guard/public-routes.ts` — pinned public-route allowlist (section 11)
+- `src/land/affiliates/risk-scorer.ts` — nightly fraud rules (pure)
+- `src/forest/inngest/functions/affiliate-nightly-risk.ts` — nightly risk cron
+- `src/land/compliance/tax-form-rules.ts` — required form by country (pure)
+- `migrations/0479-affiliate-partner-risk-and-summary.sql` — risk columns + summary view
 - `migrations/0105-affiliate-stripe-connect.sql` — Connect schema additions
 - `migrations/0106-revenue-split-tables.sql` — ledger/batches/methods tables
 - `docs/disaster-recovery.md` — broader DR procedures
@@ -265,3 +408,9 @@ npx wrangler secret list --name sophia-ai-factory | grep -E "STRIPE|NOWPAYMENTS|
 - No automated reconciliation job comparing Stripe Dashboard transfers vs `payout_batches` — drift detected only on customer complaint.
 - USDT clawback flow requires manual affiliate cooperation; no smart-contract escrow yet.
 - VN PIT remittance to tax authority is not automated; `withheld_cents` accumulates in ledger but no monthly export job exists.
+- **No live PayOS proof exists, and cannot be produced from the operator side.** The gateway
+  is code-complete; the missing piece is customer-entered merchant credentials, which the
+  no-tech doctrine forbids the operator from supplying. Blocked on the customer, not on
+  engineering.
+- The single-payout `payout-processor.ts` whole-balance rail is tested; the batch path
+  above has no live end-to-end proof against a real NOWPayments mass-payout response.

@@ -4707,7 +4707,7 @@
       "description": "Refer creators to Sophia AI Factory and earn 30% recurring commission. USDT or fiat payouts. No minimum threshold."
     },
     "hero": {
-      "title": "Earn 30% Recurring",
+      "title": "Earn Up to 30% Recurring",
       "subtitle": "Refer creators and businesses to Sophia AI Factory. Get paid every month they stay subscribed.",
       "ctaPrimary": "Become an Affiliate",
       "ctaSecondary": "How It Works"
@@ -4742,7 +4742,9 @@
       "button": "Start Earning"
     },
     "footer": {
-      "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
+      "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details.",
+      "terms": "Affiliate terms",
+      "disclosure": "Affiliate disclosure"
     },
     "earnings": {
       "title": "Your Earnings",
@@ -4767,6 +4769,67 @@
       "cta": "Copy Link",
       "copied": "Copied",
       "copy": "Copy"
+    },
+    "join": {
+      "eyebrow": "Partner Program",
+      "statTopRate": "30%",
+      "statTopRateLabel": "Recurring commission",
+      "ctaPrimary": "Apply Now",
+      "ctaSecondary": "Sign In",
+      "form": {
+        "termsPrefix": "I accept the",
+        "termsLink": "affiliate program terms",
+        "termsRequired": "Please accept the affiliate terms to continue.",
+        "submit": "Create my partner account",
+        "signInFirst": "Sign in to continue",
+        "signInRequired": "You need to sign in before becoming a partner.",
+        "alreadyPartner": "You are already a partner — open your portal to get your link.",
+        "genericError": "Something went wrong. Please try again.",
+        "successTitle": "Welcome to the partner programme",
+        "successBody": "Your referral link is ready. Share it anywhere; we track every click for 30 days.",
+        "privacyNote": "Your rate follows the plan your referral buys and is set by us, not by you.",
+        "applyTitle": "Become a partner",
+        "applyBody": "Create your partner account and we hand you a referral link immediately. You choose where to share it."
+      },
+      "faq": {
+        "title": "Common questions",
+        "rate": {
+          "q": "How much do I earn?",
+          "a": "From 10% up to 30%, set by the plan your referral buys: BASIC 30%, PREMIUM 25%, ENTERPRISE 20%, and MASTER 10% as a one-off. Monthly plans pay for 12 months; MASTER pays once."
+        },
+        "window": {
+          "q": "How long does my link stay active?",
+          "a": "30 days, last click wins. If the same visitor clicks another partner link later, the later click is credited instead."
+        },
+        "threshold": {
+          "q": "When can I withdraw?",
+          "a": "Once your approved balance reaches $50, NET-30, after each commission clears its 14-day anti-fraud hold."
+        },
+        "payout": {
+          "q": "How do I get paid?",
+          "a": "USDT or fiat, straight from your partner portal after approval."
+        },
+        "selfReferral": {
+          "q": "Can I refer myself?",
+          "a": "No. Signing up through your own link voids the commission, and fake or refunded signups are reversed."
+        },
+        "refund": {
+          "q": "What if my referral asks for a refund?",
+          "a": "The commission is reversed with the refund, including the chargeback fee where one applies."
+        }
+      }
+    },
+    "commission": {
+      "title": "Commission by Tier",
+      "subtitle": "Your rate follows the referred customer's plan. Tier-based rates, paid every month they stay subscribed.",
+      "tier_col": "Tier",
+      "price_col": "Plan price",
+      "rate_col": "Rate",
+      "earn_col": "You earn",
+      "total_col": "Year 1",
+      "per_month": "month",
+      "one_time": "one-time",
+      "note": "Commissions are calculated on net revenue after tax and payment fees. Estimates exclude chargebacks and refunds."
     }
   },
   "tour": {
