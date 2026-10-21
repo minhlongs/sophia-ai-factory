@@ -310,7 +310,9 @@ provider never called". The route is now on the allowlist as one exact path, wit
 reachable and that neighbouring paths (`/api/payos`, `/api/webhooks/payos/anything`)
 stay guarded.
 
+## 11. Public route allowlist for provider callbacks
 
+## Rollback procedures
 
 ### Roll back a deploy that broke payouts
 
@@ -387,7 +389,7 @@ npx wrangler secret list --name sophia-ai-factory | grep -E "STRIPE|NOWPAYMENTS|
 - `src/forest/jobs/payout-batcher/payout-batcher-claims.ts` — the live batch claim (section 9)
 - `src/forest/jobs/payout-batcher/payout-batcher-claims.test.ts` — its real-SQLite tests
 - `src/land/payouts/commission-ledger-mutations.ts` — the uncalled copy of the same claim
-- `src/forest/middleware/guard/public-routes.ts` — pinned public-route allowlist (section 10)
+- `src/forest/middleware/guard/public-routes.ts` — pinned public-route allowlist (section 11)
 - `src/land/affiliates/risk-scorer.ts` — nightly fraud rules (pure)
 - `src/forest/inngest/functions/affiliate-nightly-risk.ts` — nightly risk cron
 - `src/land/compliance/tax-form-rules.ts` — required form by country (pure)
