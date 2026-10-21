@@ -252,7 +252,65 @@ the click window before acting, and clear `is_suspicious` / restore
 
 ---
 
-## Rollback procedures
+## 9. What the batch claim actually protects (and how it is tested)
+
+**Live path:** `claimPayableRows` in
+`src/forest/jobs/payout-batcher/payout-batcher-claims.ts` — this is what
+`payout-batcher-weekly` runs. It claims one row at a time:
+
+```sql
+UPDATE commission_ledger
+SET status = 'paying', payout_batch_id = ?
+WHERE id = ? AND status = 'payable' AND payout_batch_id IS NULL
+```
+
+There is a second, **uncalled** copy of the same SQL in
+`src/land/payouts/commission-ledger-mutations.ts` (`claimLedgerRows`, claiming a set in
+one statement). Nothing in production invokes it. It exists as an exported module and is
+kept, but if you are auditing the money path, the `forest` file above is the one that
+spends.
+
+The return value is `meta.changes`, so "0 rows claimed" is the idempotent signal a retry
+should see — not an error, and not a failed payment.
+
+**Both WHERE clauses are load-bearing, in different states:**
+
+| Row state | Blocked by | Reachable via |
+|---|---|---|
+| `paying` + this batch id | `status = 'payable'` matches nothing | an Inngest retry re-running the same batch |
+| `payable` + a **stale** batch id | `payout_batch_id IS NULL` only | a run that dies after claiming but before its rollback clears the id |
+
+The second state is the one that costs money: without the second clause the row is
+claimable by a new batch while the original may still settle, paying the affiliate twice.
+Both paths are covered by `payout-batcher-claims.test.ts` and
+`commission-ledger-mutations.test.ts`, which run the SQL against a real in-memory
+SQLite database rather than a mock, because a mock would return whatever the test asked
+for and could not prove the clause works.
+
+**Do not "simplify" the second clause away.** Removing it leaves each suite failing on
+exactly one case — the payable-row-carries-a-stale-batch-id case — which is the check
+that earns its keep.
+
+---
+
+## 10. PayOS is not a live selling method
+
+`wrangler.toml:227` sets `FEATURE_PAYOS = "false"`. The PayOS gateway under
+`src/land/payments/payos-gateway/` is complete and tested, and its credentials are
+customer-entered BYOK, absent in production. So there is no live PayOS rail to verify
+from the operator side, and enabling the flag would advertise a payment method that
+cannot settle.
+
+**What is still reachable and was fixed:** the alternate IPN callback `/api/payos/ipn`
+authenticates by HMAC checksum, so it needs no session — but it was missing from the
+pinned public-route allowlist, meaning the blanket auth guard answered **401 before the
+signature check ran**. A provider callback that fails that way looks identical to "the
+provider never called". The route is now on the allowlist as one exact path, with
+`src/forest/middleware/guard/public-routes.payos-ipn.test.ts` pinning both that it is
+reachable and that neighbouring paths (`/api/payos`, `/api/webhooks/payos/anything`)
+stay guarded.
+
+
 
 ### Roll back a deploy that broke payouts
 
@@ -326,6 +384,10 @@ npx wrangler secret list --name sophia-ai-factory | grep -E "STRIPE|NOWPAYMENTS|
 - `src/land/payouts/payout-batcher.ts` — weekly cron orchestrator
 - `src/land/payouts/stripe-connect.ts` — Stripe SDK wrappers
 - `src/land/payouts/nowpayments-mass-payout.ts` — NOWPayments client
+- `src/forest/jobs/payout-batcher/payout-batcher-claims.ts` — the live batch claim (section 9)
+- `src/forest/jobs/payout-batcher/payout-batcher-claims.test.ts` — its real-SQLite tests
+- `src/land/payouts/commission-ledger-mutations.ts` — the uncalled copy of the same claim
+- `src/forest/middleware/guard/public-routes.ts` — pinned public-route allowlist (section 10)
 - `src/land/affiliates/risk-scorer.ts` — nightly fraud rules (pure)
 - `src/forest/inngest/functions/affiliate-nightly-risk.ts` — nightly risk cron
 - `src/land/compliance/tax-form-rules.ts` — required form by country (pure)
@@ -342,3 +404,9 @@ npx wrangler secret list --name sophia-ai-factory | grep -E "STRIPE|NOWPAYMENTS|
 - No automated reconciliation job comparing Stripe Dashboard transfers vs `payout_batches` — drift detected only on customer complaint.
 - USDT clawback flow requires manual affiliate cooperation; no smart-contract escrow yet.
 - VN PIT remittance to tax authority is not automated; `withheld_cents` accumulates in ledger but no monthly export job exists.
+- **No live PayOS proof exists, and cannot be produced from the operator side.** The gateway
+  is code-complete; the missing piece is customer-entered merchant credentials, which the
+  no-tech doctrine forbids the operator from supplying. Blocked on the customer, not on
+  engineering.
+- The single-payout `payout-processor.ts` whole-balance rail is tested; the batch path
+  above has no live end-to-end proof against a real NOWPayments mass-payout response.

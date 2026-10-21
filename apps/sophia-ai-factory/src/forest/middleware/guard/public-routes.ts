@@ -47,6 +47,10 @@ export function isPublicApiRoute(pathname: string): boolean {
     '/api/webhooks/shopify',
     '/api/webhooks/stripe',
     '/api/webhooks/payos',
+    // Alternate PayOS IPN callback path (HMAC checksum, no session). Listed
+    // explicitly because the pinned-Set rule makes new subpaths private by
+    // default, and an unlisted webhook answers 401 before its signature check.
+    '/api/payos/ipn',
 
     // Internal scheduler (authenticated via INTERNAL_CRON_SECRET, not session)
     '/api/cron/email-drip',

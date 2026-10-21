@@ -11,7 +11,21 @@ import { getD1 } from '@/seed/db/client'
 
 /**
  * Atomic claim: flip payable rows → paying with batch_id (C3).
- * WHERE payout_batch_id IS NULL prevents double-claim on Inngest retry.
+ *
+ * Both WHERE clauses are load-bearing, in different states:
+ *
+ * - `status = 'payable'` makes an Inngest retry safe — an already-claimed row
+ *   is 'paying' and matches nothing.
+ * - `payout_batch_id IS NULL` blocks the opposite case — a row left 'payable'
+ *   while still carrying a batch id, which a run that dies after claiming but
+ *   before its rollback leaves behind. Without it that row is claimable by a
+ *   new batch while the original may still settle.
+ *
+ * The batch claim the payout cron actually runs is `claimPayableRows` in
+ * `src/forest/jobs/payout-batcher/payout-batcher-claims.ts`, which carries the
+ * identical guard and is the copy covered by
+ * `payout-batcher-claims.test.ts`. Nothing in production calls this function.
+ *
  * Returns number of rows actually claimed.
  */
 export async function claimLedgerRows(
