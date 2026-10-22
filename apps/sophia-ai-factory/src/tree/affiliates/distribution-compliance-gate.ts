@@ -8,7 +8,9 @@
  * Failure policy is asymmetric on purpose:
  *   - A compliance fact that is UNKNOWN resolves to BLOCKED. Publishing
  *     regulated content into an unknown jurisdiction is the one mistake that
- *     cannot be undone cheaply, so uncertainty must not pass.
+ *     cannot be undone cheaply, so uncertainty must not pass. This covers both
+ *     a jurisdiction the tenant never declared and one the registry has not
+ *     assessed — neither is evidence that promotion is permitted there.
  *   - A technical failure elsewhere (ffmpeg missing, network down) is the
  *     caller's concern and must not be represented as a compliance verdict.
  *
@@ -16,6 +18,7 @@
  */
 
 import {
+  CRYPTO_JURISDICTIONS,
   getDisclaimerForJurisdiction,
   isCryptoBlockedInJurisdiction,
   type CryptoJurisdiction,
@@ -38,6 +41,7 @@ export interface ComplianceGateInput {
 
 export type ComplianceBlockReason =
   | 'jurisdiction_unknown'
+  | 'jurisdiction_not_assessed'
   | 'crypto_prohibited_in_jurisdiction'
   | 'disclosure_required';
 
@@ -66,13 +70,28 @@ function isProhibitedFromJurisdiction(
 }
 
 /**
+ * True only when the registry has actually assessed this code.
+ *
+ * `getDisclaimerForJurisdiction` answers for an unassessed code too, by
+ * falling back to its US entry — which is permissive. Reading that answer as
+ * a verdict is what let a declared but unassessed jurisdiction publish
+ * regulated content, so the gate requires an explicit match and treats
+ * everything else as unresolved. Callers that need text rather than a
+ * verdict (overlays, captions) legitimately rely on the fallback.
+ */
+function isAssessedJurisdiction(jurisdiction: string): jurisdiction is CryptoJurisdiction {
+  return (CRYPTO_JURISDICTIONS as readonly string[]).includes(jurisdiction.toUpperCase());
+}
+
+/**
  * Evaluate whether the content may be published.
  *
  * Precedence of blocks (most severe first):
- *   1. regulated vertical + unknown jurisdiction  → blocked
- *   2. regulated vertical + prohibited jurisdiction → blocked
- *   3. regulated vertical + permitted jurisdiction → allowed, overlay required
- *   4. non-regulated vertical                      → allowed as before
+ *   1. regulated vertical + no jurisdiction declared → blocked
+ *   2. regulated vertical + jurisdiction never assessed → blocked
+ *   3. regulated vertical + prohibited jurisdiction → blocked
+ *   4. regulated vertical + permitted jurisdiction → allowed, overlay required
+ *   5. non-regulated vertical                      → allowed as before
  */
 export function evaluateDistributionLegality(
   input: ComplianceGateInput,
@@ -119,6 +138,25 @@ export function evaluateDistributionLegality(
       detail:
         `Promotion of "${vertical}" content is prohibited in ${code}. ` +
         'Publishing would create legal exposure for both the account owner and the platform.',
+      vertical,
+      requiresAffiliateDisclosure,
+      requiresFinancialDisclaimer: false,
+    };
+  }
+
+  // A declared jurisdiction the registry has not assessed is unresolved, not
+  // permitted. The registry answers for such a code by falling back to its
+  // permissive US entry, so consulting it here would green-light regulated
+  // content in a territory whose rules nobody has checked (e.g. 'CN').
+  if (!isAssessedJurisdiction(input.jurisdiction as string)) {
+    return {
+      allowed: false,
+      reason: 'jurisdiction_not_assessed',
+      detail:
+        `Vertical "${vertical}" is regulated, but jurisdiction ` +
+        `"${(input.jurisdiction as string).toUpperCase()}" has no assessed compliance rules. ` +
+        'Refusing to publish rather than assume it behaves like a jurisdiction that has ' +
+        'been assessed: an unassessed territory may prohibit promotion outright.',
       vertical,
       requiresAffiliateDisclosure,
       requiresFinancialDisclaimer: false,
