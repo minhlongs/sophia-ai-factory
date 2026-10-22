@@ -1,9 +1,36 @@
 # Sophia AI Factory Open-Core Company Blueprint
 
 **Prepared:** 2026-10-17  
+**Last synced:** 2026-10-21 (`/idea --deep`, see `plans/reports/261021-idea-step1-step2-verdict.md`)  
 **Planning horizon:** six months from approval (17 October 2026 – 17 April 2027)  
 **Company stage:** Zero → Problem-Solution Fit  
 **Business Architecture:** Open-Core Dual-License (`Apache-2.0` Community Core + `Sophia Commercial / FSL-1.1` Managed Cloud & Enterprise RaaS)  
+
+---
+
+## Active bet: Partner-Resell Kit (customer-side affiliate program)
+
+Verified 2026-10-21: the repo's largest subsystem (187 files in `src/land/affiliates` + dual-rail
+payouts) is pointed at the **operator**, not the paying customer, and `affiliate_links` /
+`click_events` / `conversion_events` are already `tenant_id`-scoped (migrations `0035`, `0079`).
+The bet is to re-point that engine so every Cloud customer recruits and pays their own partners.
+
+| Edition | Owns | Why there |
+|---|---|---|
+| Community (`Apache-2.0`) | `tenant_id`-scoped schema + attribution primitives (click recording, code generation, consent-gated capture, attribution resolver) | Nothing here leaks commercial value; it is what a self-hoster audits for trust |
+| Cloud (COMMERCIAL) | Partner-Resell Kit: multi-partner workspace program, dual-rail payout orchestration, anti-fraud risk scoring, payout batching | The customer's money leaves their account here — that is the paid boundary |
+| Enterprise (MASTER $4,999) | White-label partner portal per subaccount + custom domain | Agencies reselling to their own clients |
+
+**PLG ceiling that triggers the upgrade:** a self-hoster generates links and records clicks fine;
+paying out many partners (batching, VietQR/NAPAS export, risk scoring, clawback, Net-30) stops
+working. That is the ceiling `CommercialUpgradeModal` + `/api/open-core/portability` catch.
+
+**Pre-conditions (blockers, not nice-to-haves):**
+1. Feature gates must be **enforced**, not documented — `evaluateFeatureGate` is currently called only by `/api/open-core/status` and the 25-step auditor.
+2. Founder decides the affiliate payout rail: `payouts/resolve-payout-method.ts` prefers Stripe Connect, which a Vietnamese operator paying partners in VND cannot use.
+3. Market claims stay **hypothesis** until a customer pays; `company.json` records $0 MRR / 0 paying customers as of 2026-10-17.
+4. Founder decides whether the nightly risk scorer may **stop money** for partners the customer recruited. `payout-disbursement.ts` deliberately treats `under_review` as advisory (only `suspended` blocks) because the scorer has no automatic recovery path and one false positive froze a partner's payouts permanently. Partner-Resell Kit hands unknown partners to non-technical customers, where false positives are likelier — so the Cloud tier's "anti-fraud" promise is currently a notification, not a control.
+5. `affiliate_commissions`, `affiliate_payouts` and `affiliate_referrals` (migration `0452`) carry **no `tenant_id`**. A Phase 02 migration adds it; without it a customer's commission ledger is inseparable from Sophia's own.
 
 ---
 
@@ -60,6 +87,12 @@ Each step covers Business, Agentic, and Governance choices. The agentic roles pr
 | 13 | Email, lifecycle & upgrade sequences | Bilingual automated sequences: Setup Wizard completion, first video milestone, self-hosted security notices, and Community → Cloud upgrade nudges. | Lifecycle agent manages trigger conditions and message templates via Resend. | Strictly opt-in; respect unsubscribe requests; never include raw API keys, credentials, or sensitive tokens in emails. |
 | 14 | Sales process, PLG & protected flows | Two conversion paths: (A) Direct sales: discovery → demo → pilot → paid subscription. (B) PLG: GitHub self-host → signed Workspace Portability export (`/api/open-core/portability`) → Managed Cloud or Master license. | Sales/CS agents qualify leads and prepare demo instances; founder conducts discovery and closes deals. | Protect core customer flows: Setup Wizard, Telegram Bot (`@Sophia_Bbot`), and NOWPayments IPN webhook must never be broken. |
 | 15 | GTM experiments & Bullseye | Test 3 primary traction channels: (1) Direct agency outreach in Vietnam, (2) GitHub developer community & Open-Core launches, (3) Affiliate/agency partner referrals. | Growth agent tracks experiment metrics: acquisition channel, conversion rate, CAC, and retention. | Stop experiments that fail to generate qualified customer interest within the agreed evaluation period. |
+
+**2026-10-21 update — the affiliate engine serves the customer, not just the founder.** The
+built attribution + payout engine (`src/land/affiliates`, dual-rail VietQR/USDT) is being re-pointed
+as the customer-facing **Partner-Resell Kit**, so the paying customer's channel becomes Sophia's
+channel. This makes Step 15's third traction channel double as a product feature the $399 tier
+sells. See "Active bet" above and `plans/reports/261021-idea-step1-step2-verdict.md`.
 
 ### Phase 5 — Operations, Security & Readiness
 

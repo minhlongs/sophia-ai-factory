@@ -123,7 +123,9 @@ describe('/api/open-core/status & /portability routes', () => {
     });
     expect(json.mode).toBe('runtime_status');
     expect(json.edition).toBe('community');
-    expect(json.features.filter((f) => f.allowed).length).toBe(4);
+    // 4 open-core features plus the operator payout queue, which is Apache-2.0
+    // and not customer-payable — see operator_affiliate_payout_admin.
+    expect(json.features.filter((f) => f.allowed).length).toBe(5);
     expect(json.catalogAudit.totalSteps).toBe(25);
     expect(json.catalogAudit.documentedSteps).toBe(25);
     expect(json.catalogAudit.catalogCompletenessPercentage).toBe(100);

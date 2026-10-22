@@ -16,6 +16,7 @@ export type SophiaModuleFeatureId =
   | 'managed_social_oauth_relay'
   | 'growth_triad_bandit_kelly'
   | 'affiliate_attribution_payouts'
+  | 'operator_affiliate_payout_admin'
   | 'multi_tenant_saas_billing'
   | 'white_label_agency_portal'
   | 'custom_domain_provisioning'

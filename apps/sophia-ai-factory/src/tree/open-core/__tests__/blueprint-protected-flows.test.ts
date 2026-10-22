@@ -4,7 +4,7 @@
  * Open-Core Blueprint & Protected Flows Verification Suite (Lane 1)
  *
  * Validates:
- * 1. 12 SophiaModuleFeatureId specs in OPEN_CORE_FEATURES + 3 editions (community, cloud, enterprise)
+ * 1. every SophiaModuleFeatureId spec in OPEN_CORE_FEATURES + 3 editions (community, cloud, enterprise)
  * 2. Canonical pricing truth: BASIC $199, PREMIUM $399, ENTERPRISE $799, MASTER $4,999
  * 3. Workspace Portability (exportWorkspaceBundle -> importWorkspaceBundle) HMAC-SHA256 & 0 plaintext BYOK keys
  * 4. 3 Protected Flows contracts: Setup Wizard BYOK, Telegram Bot @Sophia_Bbot, NOWPayments Result<T, E>
@@ -36,27 +36,14 @@ import {
 } from '@/tree/telegram';
 import { success, failure, type Result } from '@/seed/types/result';
 
-const ALL_FEATURE_IDS: readonly SophiaModuleFeatureId[] = [
-  'byok_setup_wizard',
-  'bilingual_ask_router',
-  'single_channel_video_studio',
-  'telegram_bot_commands',
-  'managed_social_oauth_relay',
-  'growth_triad_bandit_kelly',
-  'affiliate_attribution_payouts',
-  'multi_tenant_saas_billing',
-  'white_label_agency_portal',
-  'custom_domain_provisioning',
-  'merkle_ipo_audit_vault',
-  'day1_master_handover_suite',
-];
-
 describe('Open-Core Blueprint & Protected Flows Suite (Lane 1)', () => {
-  describe('1. Open-Core 12-Feature Manifest & 3-Edition Resolver', () => {
-    it('classifies all 12 SophiaModuleFeatureId entries across COMMUNITY, CLOUD_SAAS, and ENTERPRISE_MASTER', () => {
+  describe('1. Open-Core Manifest & 3-Edition Resolver', () => {
+    it('classifies every SophiaModuleFeatureId entry across COMMUNITY, CLOUD_SAAS, and ENTERPRISE_MASTER', () => {
+      // Derived from the manifest rather than a hand-maintained list, so adding
+      // a feature cannot leave this suite asserting against a stale copy.
       const keys = Object.keys(OPEN_CORE_FEATURES) as SophiaModuleFeatureId[];
-      expect(keys).toHaveLength(12);
-      for (const id of ALL_FEATURE_IDS) {
+      expect(keys).toHaveLength(13);
+      for (const id of keys) {
         const spec = OPEN_CORE_FEATURES[id];
         expect(spec).toBeDefined();
         expect(spec.id).toBe(id);

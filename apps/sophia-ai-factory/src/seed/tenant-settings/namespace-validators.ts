@@ -71,6 +71,14 @@ export const ScoringSchema = z.object({
 });
 
 export const GeoSchema = z.object({
+  // ISO-3166-1 alpha-2 country code (or 'EU' as a bloc) the tenant publishes to.
+  // Optional and absent by default: the compliance gate treats an undeclared
+  // jurisdiction as unknown and blocks regulated verticals, which is the
+  // correct fail-closed behaviour until the tenant declares one.
+  targetJurisdiction: z
+    .string()
+    .regex(/^([A-Z]{2}|EU)$/, 'Must be a 2-letter ISO country code, e.g. US, VN, EU')
+    .optional(),
   // Tenant adds extra blocks beyond defaults
   additionalRules: z
     .array(

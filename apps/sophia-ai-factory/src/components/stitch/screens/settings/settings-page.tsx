@@ -9,6 +9,7 @@ import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { StorageSettingsForm } from '@/components/settings/storage-settings-form';
 import { AccountOwnershipView } from '@/components/settings/account-ownership-view';
 import { SettingsLocaleDangerSection } from '@/components/settings/settings-locale-danger';
+import { SettingsJurisdictionPicker } from '@/components/settings/settings-jurisdiction-picker';
 import { OpenCorePortabilityPanel } from '@/components/settings/open-core-portability-panel';
 
 interface SettingsPageProps {
@@ -107,7 +108,12 @@ export default function SettingsPage({
           )}
           {activeTab === 'team' && <AccountOwnershipView />}
           {activeTab === 'openCore' && <OpenCorePortabilityPanel />}
-          {activeTab === 'preferences' && <SettingsLocaleDangerSection />}
+          {activeTab === 'preferences' && (
+            <>
+              <SettingsJurisdictionPicker />
+              <SettingsLocaleDangerSection />
+            </>
+          )}
         </main>
       </div>
     </div>

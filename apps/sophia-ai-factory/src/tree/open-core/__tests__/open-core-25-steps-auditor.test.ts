@@ -73,10 +73,10 @@ describe('25-Step Open-Core Catalog Auditor', () => {
     expect(res.value.catalogComplete).toBe(true);
     expect(res.value.catalogStructureValid).toBe(true);
     expect(res.value.activeEdition).toBe('community');
-    expect(res.value.communityFeatureCount).toBe(4);
+    expect(res.value.communityFeatureCount).toBe(5);
     expect(res.value.cloudSaasFeatureCount).toBe(4);
     expect(res.value.enterpriseMasterFeatureCount).toBe(4);
-    expect(res.value.unlockedFeatureCount).toBe(4);
+    expect(res.value.unlockedFeatureCount).toBe(5);
     expect(res.value.protectedFlowDefinitionsCount).toBe(3);
     expect(res.value.catalogFingerprintHex).toMatch(/^[0-9a-f]{64}$/);
   });
@@ -93,7 +93,7 @@ describe('25-Step Open-Core Catalog Auditor', () => {
     if (!res.ok) return;
 
     expect(res.value.activeEdition).toBe('enterprise');
-    expect(res.value.unlockedFeatureCount).toBe(12);
+    expect(res.value.unlockedFeatureCount).toBe(13);
   });
 
   it('does not describe listed catalog metadata as deployed or completed product work', async () => {

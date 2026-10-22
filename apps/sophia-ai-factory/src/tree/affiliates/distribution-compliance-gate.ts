@@ -12,7 +12,7 @@
  *   - A technical failure elsewhere (ffmpeg missing, network down) is the
  *     caller's concern and must not be represented as a compliance verdict.
  *
- * @module land/affiliates/distribution-compliance-gate
+ * @module tree/affiliates/distribution-compliance-gate
  */
 
 import {

@@ -13,15 +13,15 @@ import {
 } from '../edition-config';
 
 describe('Open-Core Manifest & Edition Resolver', () => {
-  it('classifies all 12 canonical features across COMMUNITY, CLOUD_SAAS, and ENTERPRISE_MASTER', () => {
+  it('classifies all 13 canonical features across COMMUNITY, CLOUD_SAAS, and ENTERPRISE_MASTER', () => {
     const allFeatures = Object.values(OPEN_CORE_FEATURES);
-    expect(allFeatures.length).toBe(12);
+    expect(allFeatures.length).toBe(13);
 
     const community = allFeatures.filter((f) => f.scope === 'COMMUNITY');
     const cloud = allFeatures.filter((f) => f.scope === 'CLOUD_SAAS');
     const enterprise = allFeatures.filter((f) => f.scope === 'ENTERPRISE_MASTER');
 
-    expect(community.length).toBe(4);
+    expect(community.length).toBe(5);
     expect(cloud.length).toBe(4);
     expect(enterprise.length).toBe(4);
   });
@@ -127,5 +127,17 @@ describe('Open-Core Manifest & Edition Resolver', () => {
     });
     expect(masterAttempt.allowed).toBe(true);
     expect(masterAttempt.reasonCode).toBe('ENTERPRISE_LICENSE_VERIFIED');
+  });
+
+  it('keeps the operator payout queue open-core and the customer payout program commercial', () => {
+    const operatorQueue = OPEN_CORE_FEATURES.operator_affiliate_payout_admin;
+    expect(operatorQueue.scope).toBe('COMMUNITY');
+    expect(operatorQueue.licenseSpdx).toBe('Apache-2.0');
+    expect(operatorQueue.modulePaths).toContain('src/app/api/admin/affiliate-payouts');
+
+    const customerProgram = OPEN_CORE_FEATURES.affiliate_attribution_payouts;
+    expect(customerProgram.scope).toBe('CLOUD_SAAS');
+    expect(customerProgram.minPaidTier).toBe('BASIC');
+    expect(customerProgram.modulePaths).not.toContain('src/app/api/admin/affiliate-payouts');
   });
 });

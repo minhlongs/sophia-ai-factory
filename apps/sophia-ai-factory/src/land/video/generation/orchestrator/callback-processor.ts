@@ -12,8 +12,8 @@ import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-cli
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
 import type { AffiliateOfferResult, DisclosureRecord } from './types';
-import { buildPublishDisclosure, evaluateDistributionLegality } from '@/land/affiliates/distribution-compliance-gate';
-import { resolveAudienceJurisdiction } from '@/land/affiliates/audience-jurisdiction';
+import { buildPublishDisclosure, evaluateDistributionLegality } from '@/tree/affiliates/distribution-compliance-gate';
+import { resolveAudienceJurisdiction } from '@/tree/affiliates/audience-jurisdiction';
 
 export function getD1ForWebhooks(): D1Database | null {
   try {

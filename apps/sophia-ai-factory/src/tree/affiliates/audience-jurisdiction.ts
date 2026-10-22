@@ -11,7 +11,7 @@
  * data that does not exist. Unknown is a valid answer and callers treat it as
  * blocked rather than guessing.
  *
- * @module land/affiliates/audience-jurisdiction
+ * @module tree/affiliates/audience-jurisdiction
  */
 
 import { logger } from '@/seed/utils/logger-utility';
