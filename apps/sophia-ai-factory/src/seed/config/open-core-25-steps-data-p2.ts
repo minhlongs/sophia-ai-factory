@@ -37,7 +37,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
   {
     step: 16, phaseId: 'phase_5_operations_security_readiness', slug: 'aarrr-and-version-beacon-analytics', editionScope: 'HYBRID',
     titleVi: 'Phân tích phễu AARRR & Tín hiệu phiên bản (Version Beacon)', titleEn: 'AARRR Funnel & Privacy-Safe Version Beacon',
-    businessRule: 'Track GitHub stars, opt-in version beacon pings, BYOK completions, and weekly active videos.',
+    businessRule: 'Track GitHub stars, BYOK completions, and weekly active videos. The version beacon is opt-out (SOPHIA_DISABLE_VERSION_BEACON=true) and sends no instance identifier, so beacon fetches cannot feed AARRR counts.',
     agenticRole: 'Analytics agent aggregates privacy-safe telemetry from Cloudflare Workers and D1.',
     governanceGate: 'Respect SOPHIA_DISABLE_VERSION_BEACON=true opt-out and exclude internal test accounts.',
     verificationArtifact: 'apps/sophia-ai-factory/src/tree/open-core/version-beacon.ts',

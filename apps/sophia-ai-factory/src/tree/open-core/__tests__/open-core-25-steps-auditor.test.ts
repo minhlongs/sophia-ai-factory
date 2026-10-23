@@ -100,8 +100,43 @@ describe('25-Step Open-Core Catalog Auditor', () => {
     const res = await auditOpenCore25StepCatalog();
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.value).not.toHaveProperty('verifiedSteps');
     expect(res.value).not.toHaveProperty('readinessPercentage');
     expect(res.value).not.toHaveProperty('auditDigestHex');
+    expect(res.value).not.toHaveProperty('implementationPercentage');
+  });
+
+  it('states that artifact existence was not checked when no probe is supplied', async () => {
+    const res = await auditOpenCore25StepCatalog();
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verificationPerformed).toBe(false);
+    expect(res.value.verifiedArtifactsPercentage).toBeNull();
+    expect(res.value.verifiedGovernanceFilesCount).toBeNull();
+    expect(res.value.documentedSteps).toBe(TOTAL_OPEN_CORE_STEPS);
+  });
+
+  it('falls below a full score when an artifact does not resolve', async () => {
+    const res = await auditOpenCore25StepCatalog({ artifactExistenceProbe: () => false });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verificationPerformed).toBe(true);
+    expect(res.value.verifiedSteps).toBe(0);
+    expect(res.value.verifiedArtifactsPercentage).toBe(0);
+    expect(res.value.verifiedGovernanceFilesCount).toBe(0);
+    expect(res.value.missingVerificationArtifacts).toContainEqual(
+      OPEN_CORE_25_STEPS[0].verificationArtifact,
+    );
+    expect(res.value.missingGovernanceFiles).toContainEqual(REQUIRED_GITHUB_COMMUNITY_FILES[0]);
+  });
+
+  it('reports a full artifact score only when every artifact resolves', async () => {
+    const res = await auditOpenCore25StepCatalog({ artifactExistenceProbe: () => true });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verificationPerformed).toBe(true);
+    expect(res.value.verifiedSteps).toBe(TOTAL_OPEN_CORE_STEPS);
+    expect(res.value.verifiedArtifactsPercentage).toBe(100);
+    expect(res.value.verifiedGovernanceFilesCount).toBe(REQUIRED_GITHUB_COMMUNITY_FILES.length);
+    expect(res.value.missingVerificationArtifacts).toHaveLength(0);
   });
 });

@@ -45,18 +45,26 @@ export interface PortableWorkspaceConfig {
   readonly channelPresets: readonly PortableChannelPreset[];
 }
 
-export interface SignedWorkspaceBundle {
+/**
+ * A workspace bundle carrying an integrity checksum.
+ *
+ * The checksum detects accidental corruption and is compared in constant time
+ * on import. It is NOT a signature: the HMAC key is a published constant, so it
+ * authenticates nothing and provides no confidentiality. Never describe this
+ * bundle as "signed" or "encrypted".
+ */
+export interface IntegrityCheckedWorkspaceBundle {
   readonly config: PortableWorkspaceConfig;
   readonly checksumHex: string;
 }
 
 /**
- * Exports a workspace configuration into a tamper-evident JSON bundle
- * ready for 1-click import into Sophia Managed Cloud.
+ * Exports a workspace configuration into a JSON bundle carrying an integrity
+ * checksum, ready for import into Sophia Managed Cloud.
  */
 export async function exportWorkspaceBundle(
   config: Omit<PortableWorkspaceConfig, 'schemaVersion'>,
-): Promise<SignedWorkspaceBundle> {
+): Promise<IntegrityCheckedWorkspaceBundle> {
   const normalized = normalizePortableWorkspaceConfig(config);
   const canonical = JSON.stringify(normalized);
   const checksumHex = await computeHmacHex(canonical, BUNDLE_INTEGRITY_CONTEXT, 'SHA-256');

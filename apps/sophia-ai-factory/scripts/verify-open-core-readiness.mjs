@@ -108,7 +108,17 @@ if (fs.existsSync(pkgJsonPath) && fs.existsSync(selfHostingPath)) {
   }
 }
 
-for (const govFile of ['LICENSE', 'LICENSE-COMMERCIAL.md', 'README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODE_OF_CONDUCT.md']) {
+// The declared list is the single source of truth: parse it out of the catalog so
+// this script cannot drift from what the catalog promises to check.
+const catalogSource = fs.readFileSync(path.join(appRoot, 'src/seed/config/open-core-25-steps-catalog.ts'), 'utf8');
+const requiredCommunityFilesMatch = catalogSource.match(/REQUIRED_GITHUB_COMMUNITY_FILES[^=]*=\s*\[([\s\S]*?)\]/);
+const requiredCommunityFiles = requiredCommunityFilesMatch
+  ? [...requiredCommunityFilesMatch[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
+  : [];
+if (requiredCommunityFiles.length === 0) {
+  errors.push('Could not parse REQUIRED_GITHUB_COMMUNITY_FILES from the open-core catalog');
+}
+for (const govFile of requiredCommunityFiles) {
   if (!fs.existsSync(path.join(repoRoot, govFile))) {
     errors.push(`Missing GitHub Community Standards file at repo root: ${govFile}`);
   }

@@ -31,21 +31,44 @@ npm run dev # Open http://localhost:3000
 
 ## 3. 60-Second Cloud Portability / Di chuyển Lên Cloud trong 60 Giây
 
-Migrate workspaces seamlessly between self-hosted Community Core and Sophia Managed Cloud via `/api/open-core/portability` (zero plaintext secret leakage):
+Move your workspace settings (language, routing strategy, connected providers, channel presets) from a self-hosted Community instance to Sophia Managed Cloud at `/api/open-core/portability`.
+
+**What is exported — and what is never exported:** only non-sensitive settings above. **Raw API keys are never read and never leave your instance** (no BYOK key leakage).
+
+**Two honest limits of the bundle, stated up front:**
+- The `checksumHex` field protects against accidental corruption. It is **not a signature** — anyone can compute it, because the key is a published constant, not a secret. Do not treat a bundle as proof of origin.
+- No passphrase or encryption is applied to the bundle. It contains no secrets, but it is readable JSON; keep the file private until you import it.
+
+**Both steps require a signed-in session cookie.** There is no bearer token and no `action` or `passphrase` field — the earlier draft of this kit described those and the route never had them.
+
+Viết đơn giản cho CEO không kỹ thuật: hai lệnh dưới đây cần bạn đã đăng nhập bằng cookie phiên làm việc. Không có token, không có mật khẩu passphrase.
+
+**Step 1 — Export from your self-hosted instance** (GET, no body):
 
 ```bash
-# Export encrypted workspace bundle from self-hosted instance
-curl -s -X POST http://localhost:3000/api/open-core/portability \
-  -H "Authorization: Bearer $LOCAL_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"action":"export","passphrase":"$USER_SECURE_PASSPHRASE"}' > workspace-bundle.json
-
-# Import into Sophia Managed Cloud (https://sophia.agencyos.network)
-curl -s -X POST https://sophia.agencyos.network/api/open-core/portability \
-  -H "Authorization: Bearer $CLOUD_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"action\":\"import\",\"bundle\":$(cat workspace-bundle.json),\"passphrase\":\"$USER_SECURE_PASSPHRASE\"}"
+curl -s -c cookies.txt -b cookies.txt \
+  https://<your-instance>/api/open-core/portability \
+  > workspace-bundle.json
 ```
+
+You get `{ "success": true, "bundle": { "config": {...}, "checksumHex": "..." }, "settingsUrl": "..." }`. Save `bundle` — that object is what Step 2 needs.
+
+**Step 2 — Import into Sophia Managed Cloud** (POST, body = the bundle object):
+
+```bash
+BUNDLE=$(node -e "console.log(JSON.stringify(require('./workspace-bundle.json').bundle))")
+
+curl -s -c cookies.txt -b cookies.txt \
+  -X POST https://sophia.agencyos.network/api/open-core/portability \
+  -H "Content-Type: application/json" \
+  -d "$BUNDLE"
+```
+
+The body must be exactly the `bundle` object from Step 1, because the import re-computes `checksumHex` over its `config` and compares them. Wrapping it in `{"bundle": ...}` or dropping the checksum makes it fail validation.
+
+**Fail-closed by design:** GET and POST both return `401 Unauthorized` without a valid session, never an empty or partial export.
+
+**Lỗi hay gặp:** POST trả `422` nếu gói bị sửa (checksum lệch), `400` nếu thiếu `checksumHex` hoặc schema sai, `401` nếu cookie hết hạn.
 
 ---
 
