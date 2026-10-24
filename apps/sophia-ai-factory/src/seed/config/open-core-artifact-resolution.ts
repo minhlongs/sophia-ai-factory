@@ -27,11 +27,14 @@ export { ARTIFACT_RESOLUTION_BASE };
 export type ArtifactExistenceProbe = (absolutePath: string) => boolean;
 
 export interface ArtifactResolutionResult {
-  /** Steps whose artifact resolved. */
+  /** Steps whose artifact resolved. Zero when verification did not run. */
   readonly verifiedSteps: number;
   /**
-   * Paths that did not resolve. Reported verbatim so a failure names the file
-   * instead of only moving a percentage.
+   * Paths that were checked and did not resolve, reported verbatim so a failure
+   * names the file instead of only moving a percentage.
+   *
+   * Empty when verification was not performed: nothing was checked, so nothing
+   * is missing. This list is only ever evidence of *checked* absence.
    */
   readonly missingVerificationArtifacts: readonly string[];
   /**
@@ -48,53 +51,63 @@ export interface ArtifactResolutionResult {
 }
 
 /**
- * Where the probe is rooted. `ARTIFACT_RESOLUTION_BASE` in the catalog records
- * that paths are written against the **repository root**, so a probe must be
- * created with that directory as its root — a probe rooted elsewhere reports
- * false misses.
+ * The single base every catalog path is resolved against. `ARTIFACT_RESOLUTION_BASE`
+ * records that paths are written against the **repository root**, so the probe
+ * must be rooted there too.
+ *
+ * There is deliberately no app-folder fallback. `README.md` exists at BOTH the
+ * repository root and under `apps/sophia-ai-factory/`, so a fallback lets a
+ * deleted root file be "found" at its stale twin and reported as present. This
+ * is not hypothetical: the earlier dual-base build of this module scored 100%
+ * with the root `README.md` hidden, which is the exact false pass the module
+ * exists to prevent.
  */
-export const ARTIFACT_RESOLUTION_BASES: readonly string[] = ['.', 'apps/sophia-ai-factory'];
-
-const APP_DIRECTORY = 'apps/sophia-ai-factory';
+const ARTIFACT_RESOLUTION_BASES: readonly string[] = ['.'];
 
 const NOT_PERFORMED: Omit<ArtifactResolutionResult, 'verifiedSteps' | 'missingVerificationArtifacts'> =
   { verificationPerformed: false, verifiedArtifactsPercentage: null };
 
 /**
- * Candidates for one catalog path. The path is tried verbatim first (correct
- * for a probe rooted at the repo root), then with the app prefix, which only
- * resolves paths that genuinely live under the app folder.
+ * Candidates for one catalog path: exactly one, the path exactly as the catalog
+ * declares it.
+ *
+ * `bases` is still accepted so existing callers keep type-checking, but it
+ * cannot redirect a catalog path. Allowing it to would reintroduce the false
+ * pass this module prevents: a caller could route a repo-root path to a
+ * different tree and have a stale twin answer for it.
  */
 export function artifactPathCandidates(
   artifact: string,
-  bases: readonly string[] = ARTIFACT_RESOLUTION_BASES,
+  _bases: readonly string[] = ARTIFACT_RESOLUTION_BASES,
 ): readonly string[] {
-  if (artifact.startsWith(`${APP_DIRECTORY}/`)) {
-    return bases.includes(APP_DIRECTORY)
-      ? [artifact, artifact.slice(APP_DIRECTORY.length + 1)]
-      : [artifact];
-  }
-  return bases.map((base) => (base === '.' ? artifact : `${base}/${artifact}`));
+  return [artifact];
 }
 
+/**
+ * Resolves every path, or reports that verification was not performed.
+ *
+ * A probe that throws ends the evaluation whole. A filesystem error over mostly
+ * unknown paths is not evidence of absence, so reporting a confident partial
+ * score would be the lie this module prevents.
+ */
 function attemptResolution(
   artifacts: readonly string[],
   probe: ArtifactExistenceProbe | null,
   bases: readonly string[],
 ): ArtifactResolutionResult {
   if (!probe) {
-    return { verifiedSteps: 0, missingVerificationArtifacts: artifacts, ...NOT_PERFORMED };
+    return { verifiedSteps: 0, missingVerificationArtifacts: [], ...NOT_PERFORMED };
   }
   const missing: string[] = [];
   let verified = 0;
   for (const artifact of artifacts) {
-    const found = artifactPathCandidates(artifact, bases).some((candidate) => {
-      try {
-        return probe(candidate);
-      } catch {
-        return false;
-      }
-    });
+    const candidates = artifactPathCandidates(artifact, bases);
+    let found = false;
+    try {
+      found = candidates.some((candidate) => probe(candidate));
+    } catch {
+      return { verifiedSteps: 0, missingVerificationArtifacts: [], ...NOT_PERFORMED };
+    }
     if (found) verified += 1;
     else missing.push(artifact);
   }
