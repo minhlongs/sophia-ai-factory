@@ -9,6 +9,7 @@ import {
   isAeoMarkdownNegotiatedRequest,
   handleAeoMarkdownNegotiation,
 } from '@/middleware/aeo-negotiation';
+import { isPublicApiRoute } from '@/forest/middleware/guard/public-routes';
 
 describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
   it('GET /llms.txt returns text/plain with bilingual corpus index', async () => {
@@ -84,6 +85,7 @@ describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
     const reqSetup = new NextRequest('https://sophia.agencyos.network/api/aeo/markdown?path=/setup.md');
     const resSetup = await getAeoMarkdown(reqSetup);
     expect(resSetup.status).toBe(404);
+    expect(isPublicApiRoute('/api/aeo/markdown')).toBe(true);
   });
 });
 
