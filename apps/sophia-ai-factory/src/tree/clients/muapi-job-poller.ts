@@ -25,8 +25,8 @@ export async function getJobStatus(
   if (!shouldAllowRequest('muapi')) {
     return { success: false, error: 'Circuit breaker open for muapi' };
   }
-  const resolvedKey = apiKey || getMuApiKey();
   try {
+    const resolvedKey = apiKey || getMuApiKey();
     const res = await fetch(`${MUAPI_BASE}/jobs/${jobId}`, {
       headers: { Authorization: `Bearer ${resolvedKey}` },
       signal: AbortSignal.timeout(10_000),
