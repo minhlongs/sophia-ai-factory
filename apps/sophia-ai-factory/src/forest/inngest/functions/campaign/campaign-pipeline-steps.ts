@@ -39,18 +39,28 @@ export async function checkCampaignIdempotency(
 
 export async function loadCampaignAffiliateOffer(
   campaignId: string,
-): Promise<{ productName: string; shortUrl: string } | null> {
+): Promise<{
+  productName: string;
+  shortUrl: string;
+  category?: string | null;
+  network?: string | null;
+} | null> {
   try {
     const db = createServerClient();
     const { data } = await db
       .from('affiliate_offers_selected')
-      .select('short_code, offer_name, affiliate_link')
+      .select('short_code, offer_name, affiliate_link, network')
       .eq('campaign_id', campaignId)
       .single();
     const row = data as AffiliateOfferSelectedRow | null;
     if (!row) return null;
     const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'}/r/${row.short_code}`;
-    return { productName: row.offer_name, shortUrl };
+    return {
+      productName: row.offer_name,
+      shortUrl,
+      ...(row.category !== undefined ? { category: row.category } : {}),
+      ...(row.network !== undefined ? { network: row.network } : {}),
+    };
   } catch (error) {
     logger.warn('[generate-campaign] failed to load affiliate offer for campaign', {
       campaignId,

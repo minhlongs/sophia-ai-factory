@@ -25,6 +25,7 @@ export const PROVIDERS = [
   'anthropic',
   'elevenlabs',
   'd-id',
+  'heygen',
   'muapi',
   'apollo',
   'hunter',

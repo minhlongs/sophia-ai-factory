@@ -15,6 +15,7 @@ import { createServerClient } from '@/seed/db/client';
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter';
 import {
   HOMEPAGE_URL,
+  getSubIdParam,
   tryResolveOfferEngineRedirect,
   type AffiliateOfferRow,
 } from './redirect-helpers';
@@ -59,7 +60,7 @@ export async function GET(
   const db = createServerClient();
   const { data, error } = await db
     .from('affiliate_offers_selected')
-    .select('campaign_id, user_id, offer_id, affiliate_link')
+    .select('campaign_id, user_id, offer_id, affiliate_link, network')
     .eq('short_code', code)
     .single();
 
@@ -71,9 +72,10 @@ export async function GET(
 
   const clickId = crypto.randomUUID();
   const tid = clickId.replace(/-/g, '').slice(0, 24);
+  const subParam = getSubIdParam(offer.network || 'clickbank');
 
   const affiliateUrl = new URL(offer.affiliate_link);
-  affiliateUrl.searchParams.set('tid', tid);
+  affiliateUrl.searchParams.set(subParam, tid);
 
   logClick({
     clickId,

@@ -71,3 +71,28 @@ export function extractAffiliateSignature(
   }
   return '';
 }
+
+export interface AffiliateWebhookReadiness {
+  network: AffiliateNetwork;
+  secretEnv: string;
+  configured: boolean;
+}
+
+const CANONICAL_WEBHOOK_NETWORKS: readonly AffiliateNetwork[] = [
+  'tiktok_shop',
+  'amazon_associates',
+  'clickbank',
+  'accesstrade',
+  'awin',
+];
+
+export function getAffiliateWebhookReadiness(): AffiliateWebhookReadiness[] {
+  return CANONICAL_WEBHOOK_NETWORKS.map((net) => {
+    const cfg = NETWORK_CONFIGS[net];
+    return {
+      network: net,
+      secretEnv: cfg.secretEnv,
+      configured: Boolean(process.env[cfg.secretEnv]?.trim()),
+    };
+  });
+}

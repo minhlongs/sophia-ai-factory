@@ -169,11 +169,12 @@ describe('POST /api/user/byok', () => {
     expect(mockSet).toHaveBeenCalledWith(USER?.id, 'replicate', 'r8_abcdefghijklmnopqrstuvwxyz1234567890')
   })
 
-  it('400 when heygen provider is submitted (removed from enum)', async () => {
+  it('200 when heygen provider is submitted with valid key', async () => {
     mockGetCurrentUser.mockResolvedValue(USER)
-    const res = await POST(makeRequest('POST', { provider: 'heygen', key: 'some-heygen-key-1234567890' }))
-    expect(res.status).toBe(400)
-    expect(mockSet).not.toHaveBeenCalled()
+    mockSet.mockResolvedValue(undefined)
+    const res = await POST(makeRequest('POST', { provider: 'heygen', key: 'heygen_api_key_valid_1234567890' }))
+    expect(res.status).toBe(200)
+    expect(mockSet).toHaveBeenCalledWith(USER?.id, 'heygen', 'heygen_api_key_valid_1234567890')
   })
 
   it('500 when store throws — no audit emitted', async () => {

@@ -12,6 +12,7 @@ export type ValidatorProvider =
   | 'anthropic'
   | 'elevenlabs'
   | 'd-id'
+  | 'heygen'
   | 'muapi'
   | 'apollo'
   | 'hunter'

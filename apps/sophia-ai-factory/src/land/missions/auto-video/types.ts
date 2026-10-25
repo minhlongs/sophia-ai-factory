@@ -21,6 +21,12 @@ export interface AutoVideoMissionInput {
   nicheHint?: string;
   /** Caps the affiliate footer; defaults to 3 (max 5). */
   maxAffiliateLinks?: number;
+  /** TTS voice provider; Model A defaults to 'fish_speech' ($0.005/video). */
+  voiceProvider?: 'fish_speech' | 'elevenlabs';
+  /** Visual video provider; Model A defaults to 'wan' ($0.015/video). */
+  videoProvider?: 'wan' | 'heygen' | 'd-id';
+  /** Estimated pipeline unit cost in USD (e.g., $0.02 for fish_speech + wan). */
+  estimatedCostUsd?: number;
 }
 
 export interface AutoVideoMissionResult {

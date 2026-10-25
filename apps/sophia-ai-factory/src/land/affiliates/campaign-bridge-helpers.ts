@@ -1,6 +1,25 @@
 import { z } from 'zod'
-import type { AutoVideoMissionInput } from '@/land/missions/auto-video-mission'
+import type { AutoVideoMissionInput } from '@/land/missions/auto-video/types'
 import type { RankedDiscoveredOffer } from './discovery-wave'
+import { computeTtsCost, computeVisualCost } from '@/land/video/pipeline-pricing'
+
+export const MONTHLY_MODEL_A_BUDGET_USD = 200
+
+export function estimatePipelineCost(
+  voiceProvider: string = 'fish_speech',
+  videoProvider: string = 'wan',
+  durationSec: number = 30,
+): number {
+  return computeTtsCost(voiceProvider) + computeVisualCost(videoProvider, durationSec)
+}
+
+export function isWithinModelABudget(
+  videosPerMonth: number,
+  voiceProvider: string = 'fish_speech',
+  videoProvider: string = 'wan',
+): boolean {
+  return videosPerMonth * estimatePipelineCost(voiceProvider, videoProvider) <= MONTHLY_MODEL_A_BUDGET_USD
+}
 
 export const rankedDiscoveredOfferSchema = z.object({
   externalId: z.string().min(1),
@@ -61,6 +80,8 @@ export interface ConvertOfferOptions {
   maxAffiliateLinks?: number
   nicheHint?: string
   topicOverride?: string
+  voiceProvider?: 'fish_speech' | 'elevenlabs'
+  videoProvider?: 'wan' | 'heygen' | 'd-id'
 }
 
 export function buildTopicFromOffer(offer: RankedDiscoveredOffer): string {
@@ -69,25 +90,17 @@ export function buildTopicFromOffer(offer: RankedDiscoveredOffer): string {
 
 export function extractKeywordsFromOffer(offer: RankedDiscoveredOffer): string[] {
   const keywords = new Set<string>()
-  if (offer.niche?.trim()) {
-    keywords.add(offer.niche.trim().toLowerCase())
-  }
-  if (offer.network?.trim()) {
-    keywords.add(offer.network.trim().toLowerCase())
-  }
-
-  const combinedText = `${offer.title} ${offer.description || ''}`
-  const words = combinedText
+  if (offer.niche?.trim()) keywords.add(offer.niche.trim().toLowerCase())
+  if (offer.network?.trim()) keywords.add(offer.network.trim().toLowerCase())
+  const words = `${offer.title} ${offer.description || ''}`
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter((w) => w.length >= 4)
-
   for (const word of words) {
     if (keywords.size >= 8) break
     keywords.add(word)
   }
-
   return Array.from(keywords)
 }
 
@@ -95,21 +108,20 @@ export function mapOfferToMissionInput(
   offer: RankedDiscoveredOffer,
   options: ConvertOfferOptions,
 ): AutoVideoMissionInput {
-  const topic = options.topicOverride?.trim() || buildTopicFromOffer(offer)
-  const keywords = extractKeywordsFromOffer(offer)
-  const primaryLanguage =
-    options.primaryLanguage ?? (offer.language === 'vi' ? 'vi' : 'en')
-  const nicheHint = options.nicheHint?.trim() || offer.niche || 'general'
-
+  const voiceProvider = options.voiceProvider ?? 'fish_speech'
+  const videoProvider = options.videoProvider ?? 'wan'
   return {
     userId: options.userId,
-    topic,
-    keywords,
-    primaryLanguage,
+    topic: options.topicOverride?.trim() || buildTopicFromOffer(offer),
+    keywords: extractKeywordsFromOffer(offer),
+    primaryLanguage: options.primaryLanguage ?? (offer.language === 'vi' ? 'vi' : 'en'),
     secondaryLanguage: options.secondaryLanguage,
     channelId: options.channelId,
     scheduledAt: options.scheduledAt,
-    nicheHint,
+    nicheHint: options.nicheHint?.trim() || offer.niche || 'general',
     maxAffiliateLinks: options.maxAffiliateLinks ?? 3,
+    voiceProvider,
+    videoProvider,
+    estimatedCostUsd: estimatePipelineCost(voiceProvider, videoProvider),
   }
 }

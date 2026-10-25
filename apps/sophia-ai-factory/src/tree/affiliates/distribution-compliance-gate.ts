@@ -194,8 +194,8 @@ export function buildPublishDisclosure(
   if (verdict.requiresAffiliateDisclosure) {
     lines.push(
       locale === 'vi'
-        ? 'Nội dung này có chứa liên kết affiliate — nếu bạn mua qua đường link đó, chúng tôi có thể nhận hoa hồng, không mất thêm chi phí gì ở bạn.'
-        : 'This content contains affiliate links and I may earn a commission at no cost to you.',
+        ? '#QuảngCáo | Nội dung này có chứa liên kết affiliate — nếu bạn mua qua đường link đó, chúng tôi có thể nhận hoa hồng, không mất thêm chi phí gì ở bạn.'
+        : '#ad | This content contains affiliate links and I may earn a commission at no cost to you.',
     );
   }
 

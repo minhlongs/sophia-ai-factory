@@ -1,11 +1,5 @@
 /**
  * Campaign Creation Domain Service
- *
- * Encapsulates database operations for campaigns:
- * - Monthly quota verification
- * - Campaign persistence
- * - Affiliate offer association with retry resilience
- *
  * @module land/campaigns/campaign-creation-service
  */
 
@@ -31,16 +25,12 @@ export interface MonthlyLimitCheckResult {
   monthLimit: number;
 }
 
-/**
- * Check if the user has reached their monthly campaign creation limit.
- */
 export async function checkMonthlyCampaignLimit(
   userId: string,
   tier: Tier,
 ): Promise<MonthlyLimitCheckResult> {
   const db = createServerClient();
   const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
-
   if (monthLimit >= 999) {
     return { allowed: true, currentCount: 0, monthLimit };
   }
@@ -56,16 +46,9 @@ export async function checkMonthlyCampaignLimit(
     .gte('created_at', startOfMonth.toISOString());
 
   const currentCount = (countData as { id: string }[] | null)?.length ?? 0;
-  return {
-    allowed: currentCount < monthLimit,
-    currentCount,
-    monthLimit,
-  };
+  return { allowed: currentCount < monthLimit, currentCount, monthLimit };
 }
 
-/**
- * Insert a campaign record into D1 campaigns table.
- */
 export async function insertCampaignRecord(
   input: CampaignRecordInput,
 ): Promise<{ success: boolean; error?: string }> {
@@ -87,17 +70,14 @@ export async function insertCampaignRecord(
       error: `Failed to create campaign: ${error.message || JSON.stringify(error)}`,
     };
   }
-
   return { success: true };
 }
 
-/**
- * Link selected affiliate offer to the campaign with retry resilience.
- */
 export async function linkAffiliateOffer(
   campaignId: string,
   userId: string,
   offerId: string,
+  network: string = 'clickbank',
 ): Promise<boolean> {
   const program = getProgramById(offerId);
   if (!program) return false;
@@ -112,14 +92,27 @@ export async function linkAffiliateOffer(
       offer_name: program.name,
       affiliate_link: program.link,
       short_code: shortCode,
-      network: 'clickbank',
+      network,
       commission_rate: parseFloat(program.commission) / 100,
     });
-    if (!offerError) return true;
+    if (!offerError) {
+      try {
+        await db.from('affiliate_links').insert({
+          id: `link_${campaignId}_${attempt}`,
+          tenant_id: userId,
+          offer_id: program.id,
+          user_id: userId,
+          code: shortCode,
+          sub_id: `${userId.slice(0, 8)}-${campaignId.slice(0, 8)}`,
+        });
+      } catch {
+        // Non-blocking best-effort sync to affiliate_links
+      }
+      return true;
+    }
     if (attempt === 2) {
       logger.warn('affiliate_offer_insert_failed', { campaignId, offerId });
     }
   }
-
   return false;
 }

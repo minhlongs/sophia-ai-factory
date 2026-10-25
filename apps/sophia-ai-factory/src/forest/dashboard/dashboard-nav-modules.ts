@@ -1,12 +1,12 @@
 import {
   LayoutDashboard, PlusCircle, Film, Wand2, Youtube, BookOpen,
-  Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon,
+  Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon, DollarSign,
 } from "lucide-react";
 import type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps } from "./dashboard-nav-types";
 
 export type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps };
 
-/** 15 Canonical Sophia AI Factory Navigation Modules (including SOP system and challenges). */
+/** 16 Canonical Sophia AI Factory Navigation Modules (including Affiliate Hub, Image Studio, SOP system and challenges). */
 export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
   {
     id: "overview",
@@ -49,6 +49,13 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "YouTube Automation",
     href: "/dashboard/youtube",
     icon: Youtube,
+  },
+  {
+    id: "affiliate",
+    labelKey: "sidebar.affiliate",
+    fallbackLabel: "Affiliate Hub",
+    href: "/dashboard/affiliate",
+    icon: DollarSign,
   },
   {
     id: "playbooks",
