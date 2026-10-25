@@ -1,4 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { buildCorePagePayload } from '@/seed/aeo';
+import { normalizeAeoLocale } from '@/tree/aeo';
+import { DualReadPageSection } from '@/forest/components/aeo';
 import { AffiliateLandingView } from './components/affiliate-landing-view';
 import { generateAffiliateMetadata } from './components/affiliate-metadata';
 
@@ -12,5 +15,12 @@ export default async function AffiliateLandingPage({ params }: { params: Promise
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'affiliateProgram' });
-  return <AffiliateLandingView signupUrl={`/${locale}/login?ref=affiliate`} t={t} />;
+  const aeoPayload = buildCorePagePayload('affiliate', normalizeAeoLocale(locale));
+
+  return (
+    <>
+      <AffiliateLandingView signupUrl={`/${locale}/login?ref=affiliate`} t={t} />
+      <DualReadPageSection payload={aeoPayload} />
+    </>
+  );
 }

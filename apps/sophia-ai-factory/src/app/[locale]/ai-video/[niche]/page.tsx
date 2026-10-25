@@ -1,5 +1,5 @@
 /**
- * AI Video for [Niche] Landing Page — SSG with LLM fallback.
+ * AI Video for [Niche] Landing Page — SSG with Dual-Read AEO/GEO & Spatial Bento 2027.
  *
  * Route: /[locale]/ai-video/[niche]
  * @module app/[locale]/ai-video/[niche]/page
@@ -10,7 +10,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
-
+import { buildSingleNichePayload } from '@/seed/aeo';
+import { normalizeAeoLocale } from '@/tree/aeo';
+import { DualReadPageSection } from '@/forest/components/aeo';
 import type { PageParams } from '@/components/landing/niche-page/types';
 import { resolveNicheContent } from '@/components/landing/niche-page/content-resolver';
 import { HeroSection, FeaturesSection } from '@/components/landing/niche-page/landing-hero-features';
@@ -40,6 +42,7 @@ export default async function NicheLandingPage({
 }) {
   const { locale, niche } = await params;
   const isVi = locale === 'vi';
+  const aeoPayload = buildSingleNichePayload(niche, normalizeAeoLocale(locale));
 
   let content;
   try {
@@ -54,32 +57,15 @@ export default async function NicheLandingPage({
   }
 
   return (
-    <main className="min-h-screen">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Article',
-            headline: content.heroTitle,
-            description: content.heroSub,
-            inLanguage: locale,
-            about: { '@type': 'Thing', name: content.nicheLabel },
-            publisher: {
-              '@type': 'Organization',
-              name: 'Sophia AI Factory',
-              url: 'https://sophia.agencyos.network',
-            },
-          }).replace(/<\//g, '<\\/'),
-        }}
-      />
-
+    <main className="min-h-screen bg-background text-foreground">
       <HeroSection
         title={content.heroTitle}
         subtitle={content.heroSub}
         ctaText={isVi ? 'Bắt Đầu Miễn Phí' : 'Start Free'}
         signupUrl="/signup"
       />
+
+      <DualReadPageSection payload={aeoPayload} />
 
       <FeaturesSection
         features={content.features}
