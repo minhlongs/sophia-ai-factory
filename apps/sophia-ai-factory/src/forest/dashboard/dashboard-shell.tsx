@@ -17,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/seed/utils/cn";
 import { DashboardSidebarNav, type DashboardUserProps } from "./dashboard-sidebar-nav";
 import { DashboardTopBar } from "./dashboard-topbar";
+import { DashboardAgentHudBar } from "../components/dashboard-aeo";
 
 export interface DashboardShellProps {
   children: React.ReactNode;
@@ -73,6 +74,11 @@ export function DashboardShell({
           id="main-content"
           className="flex-1 pt-16 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto"
         >
+          <DashboardAgentHudBar
+            pathname={activePath}
+            isVi={isVi}
+            tier={user?.tier || "BASIC"}
+          />
           {children}
         </main>
       </div>

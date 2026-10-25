@@ -124,6 +124,8 @@ const nextConfig: NextConfig = {
     return [
       { source: '/r/:code', destination: '/api/r/:code', locale: false },
       { source: '/:locale(vi|en)/r/:code', destination: '/api/r/:code', locale: false },
+      { source: '/:locale(vi|en)/:slug*.md', destination: '/api/aeo/markdown?path=/:locale/:slug*&locale=:locale', locale: false },
+      { source: '/:slug*.md', destination: '/api/aeo/markdown?path=/:slug*', locale: false },
     ];
   },
   headers() {

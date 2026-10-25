@@ -1,6 +1,9 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/navigation';
+import { buildCorePagePayload } from '@/seed/aeo';
+import { normalizeAeoLocale } from '@/tree/aeo';
+import { DualReadPageSection } from '@/forest/components/aeo';
 import { GuideSections } from './guide-sections';
 
 export const dynamic = 'force-static';
@@ -25,6 +28,7 @@ export default async function GuidePage({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'guide' });
+  const aeoPayload = buildCorePagePayload('guide', normalizeAeoLocale(locale));
 
   return (
     <main className="min-h-screen bg-background text-foreground py-16 px-4">
@@ -38,7 +42,7 @@ export default async function GuidePage({
 
         {/* Hero */}
         <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold text-white mb-3">
+          <h1 className="text-3xl font-bold text-foreground mb-3">
             {t('gettingStarted.hero_title')}
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
@@ -48,6 +52,7 @@ export default async function GuidePage({
 
         <GuideSections t={t} />
       </div>
+      <DualReadPageSection payload={aeoPayload} />
     </main>
   );
 }

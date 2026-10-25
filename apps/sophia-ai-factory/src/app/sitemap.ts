@@ -1,10 +1,7 @@
 /**
- * Dynamic sitemap for SEO — sophia.agencyos.network
+ * Dynamic sitemap for SEO, AEO & GEO — sophia.agencyos.network
  * Next.js generates /sitemap.xml from this file.
  * Excludes auth-gated routes (dashboard, auth, onboarding, welcome, redeem, checkout, payment-success).
- * Blog posts (POSTS array in /blog/page.tsx) redirect via href to existing guide pages,
- * so no per-post canonical URLs to expose. Add per-post entries here only when a
- * standalone /blog/[slug] route exists.
  */
 
 import type { MetadataRoute } from 'next';
@@ -22,10 +19,8 @@ interface PageEntry {
 }
 
 const staticPages: PageEntry[] = [
-  // Core marketing — highest priority
   { path: '',                          priority: 1.0, changeFrequency: 'weekly'  },
   { path: '/pricing',                  priority: 0.9, changeFrequency: 'weekly'  },
-  // Guide hub + sub-pages
   { path: '/guide',                    priority: 0.8, changeFrequency: 'monthly' },
   { path: '/guide/faq',                priority: 0.8, changeFrequency: 'monthly' },
   { path: '/guide/how-it-works',       priority: 0.8, changeFrequency: 'monthly' },
@@ -33,26 +28,35 @@ const staticPages: PageEntry[] = [
   { path: '/guide/integrations',       priority: 0.8, changeFrequency: 'monthly' },
   { path: '/guide/telegram',           priority: 0.8, changeFrequency: 'monthly' },
   { path: '/guide/commands',           priority: 0.8, changeFrequency: 'monthly' },
-  // Blog & discovery
   { path: '/blog',                     priority: 0.8, changeFrequency: 'weekly'  },
   { path: '/affiliate-discovery',      priority: 0.7, changeFrequency: 'monthly' },
-  // Affiliate program landing
   { path: '/affiliate',                priority: 0.8, changeFrequency: 'monthly' },
-  // AI Video hub + niche pages
   { path: '/ai-video',                 priority: 0.9, changeFrequency: 'weekly'  },
-  // Auth entry (indexable login page is fine)
   { path: '/login',                    priority: 0.5, changeFrequency: 'monthly' },
-  // Legal & utility
   { path: '/privacy',                  priority: 0.5, changeFrequency: 'monthly' },
   { path: '/terms',                    priority: 0.5, changeFrequency: 'monthly' },
   { path: '/status',                   priority: 0.5, changeFrequency: 'weekly'  },
+];
+
+const aeoRootEndpoints: PageEntry[] = [
+  { path: '/llms.txt',                 priority: 0.9, changeFrequency: 'weekly'  },
+  { path: '/llms-full.txt',            priority: 0.9, changeFrequency: 'weekly'  },
+  { path: '/.well-known/agent.json',   priority: 0.8, changeFrequency: 'monthly' },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString();
   const entries: MetadataRoute.Sitemap = [];
 
-  // Static marketing pages
+  for (const endpoint of aeoRootEndpoints) {
+    entries.push({
+      url: `${BASE_URL}${endpoint.path}`,
+      lastModified: now,
+      changeFrequency: endpoint.changeFrequency,
+      priority: endpoint.priority,
+    });
+  }
+
   for (const page of staticPages) {
     for (const locale of LOCALES) {
       entries.push({
@@ -64,7 +68,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   }
 
-  // AI video niche landing pages — 25 niches × 2 locales
+  // AI video niche landing pages — 51 niches × 2 locales
   for (const niche of NICHE_SLUGS) {
     for (const locale of LOCALES) {
       entries.push({

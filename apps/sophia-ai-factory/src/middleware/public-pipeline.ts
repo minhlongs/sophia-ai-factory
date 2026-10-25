@@ -1,14 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { applyCorsHeaders } from './cors';
 import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config';
+import { handleAeoMarkdownNegotiation } from './aeo-negotiation';
 
-// Routes without [locale] segment — intlMiddleware would 307-redirect them,
-// breaking users and E2E tests. Detect locale-prefixed versions and strip the prefix
-// before passing to intlMiddleware so the request proceeds without any redirect.
-// NOTE: setup-wizard is intentionally NOT here. Its canonical route is
-// src/app/[locale]/setup-wizard/page.tsx (moved there in 8cb31b49 "wave 3").
-// Keeping it here rewrote /en/setup-wizard → /setup-wizard, a path that no longer
-// exists, producing a 404 instead of the wizard.
 const BARE_AUTH_APP_ROUTES = new Set([
   'reset-password',
   'dashboard', 'checkout', 'settings', 'products',
@@ -31,10 +25,6 @@ export async function handlePublicPipeline(
   nonce: string,
   needsCsrfSeed: boolean,
 ): Promise<NextResponse> {
-  // Explicit hard redirects: /dashboard/* bare auth routes → locale-prefixed versions.
-  // This follows the same pattern as the .orchestrate/260812-1045 plan and avoids
-  // adding these paths to BARE_AUTH_APP_ROUTES (which would cause intlMiddleware
-  // to loop by stripping the wrong path segment).
   const path = request.nextUrl.pathname;
   const BARE_REDIRECTS: Record<string, string> = {
     '/dashboard/login': '/login',
@@ -57,7 +47,12 @@ export async function handlePublicPipeline(
     return applyCorsHeaders(NextResponse.redirect(target), origin);
   }
 
-  // If request has a locale prefix on a bare route, rewrite to bare path first
+  // Dual-Read AEO/GEO Markdown negotiation (runs before next-intl 307 redirects)
+  const aeoRes = handleAeoMarkdownNegotiation(request, requestHeaders, nonce, needsCsrfSeed);
+  if (aeoRes) {
+    return aeoRes;
+  }
+
   const stripped = stripLocalePrefix(request.nextUrl.pathname);
   let localeForCookie: string | null = null;
   if (stripped) {
@@ -71,8 +66,6 @@ export async function handlePublicPipeline(
   const intlRes = intlMiddleware(request);
   const location = intlRes.headers.get('location');
 
-  // If intlMiddleware tries to redirect a bare route (no [locale] segment),
-  // bypass it — these routes are intentionally locale-agnostic.
   if (location) {
     const pathLocale = request.nextUrl.pathname.split('/')[1];
     if (BARE_AUTH_APP_ROUTES.has(pathLocale || '')) {

@@ -1,4 +1,4 @@
-export const PUBLIC_FILE_EXTENSIONS = /\.(.*)$/;
+export const PUBLIC_FILE_EXTENSIONS = /\.(?!md$)(.*)$/i;
 
 export function isInternalOrStatic(pathname: string): boolean {
   return (
