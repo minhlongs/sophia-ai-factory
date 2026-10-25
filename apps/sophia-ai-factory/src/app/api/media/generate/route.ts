@@ -1,9 +1,16 @@
 /**
  * POST /api/media/generate
  *
- * Submit a media generation job (image/video/audio).
- * Auth: RaaS license key required.
+ * Submit a media generation job (video/audio).
+ * Auth: session cookie required; PREMIUM tier or higher.
  * Backend: muapi.ai via muapi-media-client.
+ *
+ * Image generation is deliberately refused here. This route spends the
+ * platform's own MUAPI_API_KEY and records no provider cost and no credit
+ * deduction, so an unmetered image path would let a customer consume
+ * operator funds invisibly. Image has an equivalent metered provider (fal)
+ * behind /api/v1/creative-studio/images/generate, so no customer capability
+ * is lost. Video and audio have no metered replacement and stay open.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -58,6 +65,21 @@ export async function POST(req: NextRequest) {
 
     const { type, model } = parsed.data
 
+    if (type === 'image') {
+      // Refuse before any provider dispatch: this route would otherwise spend
+      // the platform's MUAPI_API_KEY unmetered, with no provider cost recorded
+      // and no credits deducted. See the module header for why video/audio stay.
+      return NextResponse.json(
+        {
+          error:
+            'Image generation is not available on this endpoint. ' +
+            'Use /api/v1/creative-studio/images/generate with a fal-ai model, ' +
+            `e.g. "fal-ai/flux-schnell" (requested model: "${model}").`,
+        },
+        { status: 403 },
+      )
+    }
+
     if (!isModelSupported(type as MediaType, model)) {
       return NextResponse.json(
         {
@@ -101,7 +123,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    models: SUPPORTED_MODELS,
+    models: {
+      video: SUPPORTED_MODELS.video,
+      audio: SUPPORTED_MODELS.audio,
+    },
     usage: 'POST with { type, model, prompt }',
+    image: 'not available here — use /api/v1/creative-studio/images/generate',
   })
 }
