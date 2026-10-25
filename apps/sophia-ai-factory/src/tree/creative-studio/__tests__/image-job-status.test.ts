@@ -10,7 +10,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   imageJobStage,
-  isImageJobInFlight,
   normalizeImageJobStatus,
 } from '../image-job-status';
 
@@ -47,15 +46,5 @@ describe('imageJobStage', () => {
     expect(imageJobStage('unknown')).toBe('unknown');
     expect(imageJobStage('unknown')).not.toBe('done');
     expect(imageJobStage('unknown')).not.toBe('failed');
-  });
-});
-
-describe('isImageJobInFlight', () => {
-  it('treats only queued and running as pollable', () => {
-    expect(isImageJobInFlight('pending')).toBe(true);
-    expect(isImageJobInFlight('processing')).toBe(true);
-    expect(isImageJobInFlight('completed')).toBe(false);
-    expect(isImageJobInFlight('failed')).toBe(false);
-    expect(isImageJobInFlight('unknown')).toBe(false);
   });
 });

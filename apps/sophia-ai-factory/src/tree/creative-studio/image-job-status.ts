@@ -41,11 +41,6 @@ export function imageJobStage(status: ImageJobStatus): ImageJobStage {
   }
 }
 
-/** True while the job may still change state and is safe to poll. */
-export function isImageJobInFlight(status: ImageJobStatus): boolean {
-  return status === 'pending' || status === 'processing';
-}
-
 /**
  * Jobs worth showing in the history strip with a state, newest first.
  * Failed jobs are kept: hiding them would let a new failure silently

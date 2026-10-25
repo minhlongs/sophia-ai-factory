@@ -15,7 +15,7 @@ import { ImagePreviewPanel } from '../image-preview-panel';
 import { ImageHistoryStrip } from '../image-history-strip';
 import { ImageStudioBriefPanel } from '../image-brief-panel';
 import { normaliseImageJobsForView } from '@/tree/creative-studio/image-job-view-model';
-import { isImageJobInFlight } from '@/tree/creative-studio/image-job-status';
+import { imageJobStage } from '@/tree/creative-studio/image-job-status';
 import type { ImageJobRow } from '@/tree/creative-studio/image-job-queries';
 
 function row(overrides: Partial<ImageJobRow>): ImageJobRow {
@@ -229,7 +229,12 @@ describe('unrecognised status', () => {
   });
 
   it('does not poll a stranded unknown job forever', () => {
-    expect(isImageJobInFlight('unknown')).toBe(false);
+    // The poll effect stops unless the stage is 'queued' or 'running'. An
+    // unrecognised status must land on neither, or a stranded job would be
+    // polled forever by a UI that has nothing left to wait for.
+    const stage = imageJobStage('unknown');
+    expect(stage).not.toBe('queued');
+    expect(stage).not.toBe('running');
   });
 
   it('does not inherit destructive styling for an unknown job in the history strip', () => {
