@@ -5,7 +5,7 @@
  * Layer: forest/dashboard (Infrastructure Orchestrators & UI)
  *
  * Implements the Obsidian Cyber-Glass dashboard navigation featuring:
- * 1. 14 canonical Sophia AI Factory modules (including SOPs & Challenges)
+ * 1. 15 canonical Sophia AI Factory modules (including SOPs & Challenges)
  * 2. MASTER-tier conditional SOP Creator navigation item
  * 3. Active route glows and electric indigo accent indicators
  * 4. User profile card with tier badge, quota bar, and upgrade CTA

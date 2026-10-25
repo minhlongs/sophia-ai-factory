@@ -55,16 +55,17 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
-  it('renders all 14 canonical Sophia AI modules with valid hrefs', () => {
+  it('renders all 15 canonical Sophia AI modules with valid hrefs', () => {
     render(<DashboardSidebarNav />);
 
-    expect(SOPHIA_NAV_MODULES).toHaveLength(14);
+    expect(SOPHIA_NAV_MODULES).toHaveLength(15);
 
     const expectedHrefs = [
       '/dashboard',
       '/dashboard/missions/new',
       '/dashboard/missions',
       '/dashboard/creative-economy',
+      '/dashboard/image-studio',
       '/dashboard/youtube',
       '/dashboard/playbooks',
       '/dashboard/publish/queue',
