@@ -10,6 +10,7 @@ export interface AffiliateOfferRow {
   user_id: string;
   offer_id: string;
   affiliate_link: string;
+  network?: string | null;
 }
 
 export interface AffiliateLinkRow {
@@ -33,6 +34,7 @@ export const HOMEPAGE_URL =
 export function getSubIdParam(networkId: string): string {
   switch (networkId) {
     case 'tiktok-shop':
+    case 'tiktok_shop':
       return 'aff_sub';
     case 'accesstrade':
       return 'utm_content';
@@ -41,6 +43,7 @@ export function getSubIdParam(networkId: string): string {
     case 'awin':
       return 'clickref';
     case 'amazon':
+    case 'amazon_associates':
       return 'tag';
     default:
       return 'sub_id';

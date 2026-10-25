@@ -15,6 +15,7 @@ export const PROVIDERS: ProviderConfig[] = [
   { id: 'elevenlabs', name: 'ElevenLabs (Voice Synthesis)', hint: 'xi-api-key...' },
   { id: 'fal-ai', name: 'fal.ai (Image & Diffusion)', hint: 'key-...' },
   { id: 'd-id', name: 'D-ID (Avatar Animation)', hint: 'Basic token or email:pass' },
+  { id: 'heygen', name: 'HeyGen (AI Avatar Video)', hint: 'X-Api-Key token...' },
 ];
 
 export interface ProviderKeyCardProps {

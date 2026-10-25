@@ -13,6 +13,7 @@ const MUAPI_RE = /^[A-Za-z0-9_-]{20,}$/;
 const APOLLO_RE = /^[A-Za-z0-9_-]{20,}$/;
 const HUNTER_RE = /^[A-Za-z0-9_-]{20,}$/;
 const REPLICATE_RE = /^r8_[A-Za-z0-9_-]{32,}$/;
+const HEYGEN_RE = /^[A-Za-z0-9+/=_-]{16,}$/;
 const DID_EMAIL_PASSWORD_RE = /^[^@\s]+@[^@\s:]+\.[^@\s:]+:[^@\s]+$/;
 const DID_BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
@@ -62,4 +63,8 @@ export function validateReplicate(key: string): ValidatorResult {
 
 export function validateFalAI(key: string): ValidatorResult {
   return testRegex(key, /^key-[A-Za-z0-9_-]+$/, 'byok.validate.falai.format');
+}
+
+export function validateHeyGen(key: string): ValidatorResult {
+  return testRegex(key, HEYGEN_RE, 'byok.validate.heygen.format');
 }

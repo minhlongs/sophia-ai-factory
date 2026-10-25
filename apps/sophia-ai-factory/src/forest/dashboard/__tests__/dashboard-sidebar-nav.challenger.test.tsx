@@ -66,9 +66,9 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
   /* =========================================================================
    * 1. EMPIRICAL ROUTE VERIFICATION: All 15 Canonical Modules
    * ========================================================================= */
-  describe('1. Canonical 15 Sophia AI Module Routes & Icons', () => {
-    it('declares exactly 15 canonical Sophia AI modules in SOPHIA_NAV_MODULES', () => {
-      expect(SOPHIA_NAV_MODULES).toHaveLength(15);
+  describe('1. Canonical 16 Sophia AI Module Routes & Icons', () => {
+    it('declares exactly 16 canonical Sophia AI modules in SOPHIA_NAV_MODULES', () => {
+      expect(SOPHIA_NAV_MODULES).toHaveLength(16);
     });
 
     const expectedModules: Array<{
@@ -81,8 +81,9 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       { id: 'create_mission', labelKey: 'sidebar.create_mission', fallbackLabel: 'Create Mission', href: '/dashboard/missions/new' },
       { id: 'missions', labelKey: 'sidebar.missions', fallbackLabel: 'AI Missions', href: '/dashboard/missions' },
       { id: 'creative_studio', labelKey: 'sidebar.creative_studio', fallbackLabel: 'Creative Studio', href: '/dashboard/creative-economy' },
-    { id: 'image_studio', labelKey: 'sidebar.image_studio', fallbackLabel: 'Image Studio', href: '/dashboard/image-studio' },
+      { id: 'image_studio', labelKey: 'sidebar.image_studio', fallbackLabel: 'Image Studio', href: '/dashboard/image-studio' },
       { id: 'youtube_automation', labelKey: 'sidebar.youtube_automation', fallbackLabel: 'YouTube Automation', href: '/dashboard/youtube' },
+      { id: 'affiliate', labelKey: 'sidebar.affiliate', fallbackLabel: 'Affiliate Hub', href: '/dashboard/affiliate' },
       { id: 'playbooks', labelKey: 'sidebar.playbook', fallbackLabel: 'Playbooks', href: '/dashboard/playbooks' },
       { id: 'publish_queue', labelKey: 'sidebar.publish_queue', fallbackLabel: 'Distribution Queue', href: '/dashboard/publish/queue' },
       { id: 'marketplace', labelKey: 'sidebar.marketplace', fallbackLabel: 'Creator Marketplace', href: '/marketplace' },
@@ -95,7 +96,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
     ];
 
     expectedModules.forEach((expected, idx) => {
-      it(`module [${idx + 1}/15] "${expected.id}" has valid configuration and renders with icon`, () => {
+      it(`module [${idx + 1}/16] "${expected.id}" has valid configuration and renders with icon`, () => {
         const item = SOPHIA_NAV_MODULES[idx];
         expect(item.id).toBe(expected.id);
         expect(item.labelKey).toBe(expected.labelKey);
@@ -401,7 +402,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       render(<DashboardSidebarNav isMobileOpen={true} onCloseMobile={onClose} />);
       const drawer = screen.getByTestId('mobile-drawer');
       const drawerLinks = within(drawer).getAllByRole('link');
-      expect(drawerLinks.length).toBeGreaterThanOrEqual(15);
+      expect(drawerLinks.length).toBeGreaterThanOrEqual(16);
 
       // Click the 3rd link (AI Missions)
       fireEvent.click(drawerLinks[2]);

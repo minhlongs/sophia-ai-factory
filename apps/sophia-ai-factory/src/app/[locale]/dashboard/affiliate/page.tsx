@@ -10,6 +10,7 @@ import {
 } from '@/land/affiliates/affiliate-partner-service';
 import { PartnerDashboardClient } from '@/app/components/affiliate/partner-dashboard-client';
 import { MerkleSettlementBanner } from '@/app/components/affiliate/dashboard/merkle-settlement-banner';
+import { AffiliateHubSupplementarySections } from './affiliate-hub-sections';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -96,6 +97,18 @@ export default async function AffiliateDashboardPage({ params }: PageProps) {
       <PartnerDashboardClient
         partner={partner}
         stats={stats}
+        locale={locale}
+      />
+      <AffiliateHubSupplementarySections
+        userId={user.id}
+        partnerCode={partner.partnerCode}
+        commissionRatePct={partner.commissionRatePct}
+        totalEarningsCents={stats.totalEarningsCents}
+        pendingPayoutCents={stats.pendingPayoutCents}
+        availablePayoutCents={stats.availablePayoutCents}
+        totalClicks={stats.totalClicks}
+        totalConversions={stats.totalConversions}
+        conversionRatePct={stats.conversionRatePct}
         locale={locale}
       />
     </>

@@ -120,6 +120,12 @@ const nextConfig: NextConfig = {
       // Locale prefix always present via next-intl localePrefix: 'always'.
     ];
   },
+  rewrites() {
+    return [
+      { source: '/r/:code', destination: '/api/r/:code', locale: false },
+      { source: '/:locale(vi|en)/r/:code', destination: '/api/r/:code', locale: false },
+    ];
+  },
   headers() {
     return [
       // Immutable cache for hashed static assets (CDN Layer 9)

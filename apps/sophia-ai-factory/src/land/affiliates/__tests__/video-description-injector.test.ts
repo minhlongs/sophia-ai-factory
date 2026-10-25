@@ -149,4 +149,32 @@ describe('buildVideoDescription', () => {
     const tooFew = await buildVideoDescription({ userId: 'u1', baseBody: '', maxLinks: 0 });
     expect(tooFew.affiliateCount).toBe(1);
   });
+
+  it('appends US FTC #ad disclosure for English locale and #QuảngCáo for Vietnamese locale', async () => {
+    stubLinks([
+      { code: 'US1', sub_id: null, affiliate_offers: { title: 'SaaS Tool', product_url: 'https://s.example.com', niche: 'saas' } },
+    ]);
+    const usRes = await buildVideoDescription({ userId: 'u1', baseBody: 'Intro', locale: 'en', jurisdiction: 'US' });
+    expect(usRes.description).toContain('#ad');
+    expect(usRes.affiliateDisclosureEmitted).toBe(true);
+
+    const vnRes = await buildVideoDescription({ userId: 'u1', baseBody: 'Giới thiệu', locale: 'vi', jurisdiction: 'VN' });
+    expect(vnRes.description).toContain('#QuảngCáo');
+    expect(vnRes.affiliateDisclosureEmitted).toBe(true);
+  });
+
+  it('omits prohibited crypto affiliate links when jurisdiction is VN', async () => {
+    stubLinks([
+      { code: 'CR1', sub_id: null, affiliate_offers: { title: 'Bitcoin Exchange', product_url: 'https://c.example.com', niche: 'crypto' } },
+    ]);
+    const vnCrypto = await buildVideoDescription({
+      userId: 'u1',
+      baseBody: 'Bản tin thị trường',
+      jurisdiction: 'VN',
+      locale: 'vi',
+    });
+    expect(vnCrypto.affiliateCount).toBe(0);
+    expect(vnCrypto.description).toBe('Bản tin thị trường');
+    expect(vnCrypto.description).not.toContain('CR1');
+  });
 });

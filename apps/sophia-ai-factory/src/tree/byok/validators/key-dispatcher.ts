@@ -15,6 +15,7 @@ import {
   validateHunter,
   validateReplicate,
   validateFalAI,
+  validateHeyGen,
 } from './provider-rules';
 
 /**
@@ -41,6 +42,8 @@ export function validateProviderKey(provider: ValidatorProvider, key: string): V
       return validateReplicate(key);
     case 'fal-ai':
       return validateFalAI(key);
+    case 'heygen':
+      return validateHeyGen(key);
     default: {
       const trimmed = sanitizeCredential(key);
       return trimmed.length >= MIN_LENGTH ? { ok: true } : shortFail();

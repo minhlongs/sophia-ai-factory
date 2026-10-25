@@ -16,8 +16,7 @@ export function getD1ForWebhooks(): D1Database | null {
     const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[
       Symbol.for('__cloudflare-context__')
     ];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
+    return (ctx?.env?.DB as D1Database) ?? null;
   } catch {
     return null;
   }
@@ -29,33 +28,14 @@ export async function createDistributionGateway(): Promise<OpenClawGateway> {
   const youtubeOAuthClient: YouTubeOAuthClient = { uploadVideo, refreshAccessToken };
   const tiktokOAuthClient: TikTokOAuthClient = { publishVideo, checkPublishStatus };
   const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 });
-  gateway.registerChannel({
-    id: 'youtube',
-    name: 'YouTube',
-    adapter: new YouTubeChannelAdapter(youtubeOAuthClient),
-    enabled: true,
-    rateLimitPerHour: 6,
-  });
-  gateway.registerChannel({
-    id: 'tiktok',
-    name: 'TikTok',
-    adapter: new TikTokChannelAdapter(tiktokOAuthClient),
-    enabled: true,
-    rateLimitPerHour: 10,
-  });
-  gateway.registerChannel({
-    id: 'telegram',
-    name: 'Telegram Notifications',
-    adapter: new TelegramNotificationAdapter(),
-    enabled: true,
-    rateLimitPerHour: 60,
-  });
+  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient), enabled: true, rateLimitPerHour: 6 });
+  gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(tiktokOAuthClient), enabled: true, rateLimitPerHour: 10 });
+  gateway.registerChannel({ id: 'telegram', name: 'Telegram Notifications', adapter: new TelegramNotificationAdapter(), enabled: true, rateLimitPerHour: 60 });
   return gateway;
 }
 
 export interface DistributeParams {
   campaignId: string;
-  /** Campaign owner; the tenant whose declared geo settings gate the publish. */
   userId: string;
   videoUrl: string;
   thumbnailUrl: string;
@@ -63,10 +43,10 @@ export interface DistributeParams {
   audience: string;
   tier: Tier;
   affiliateOffer: AffiliateOfferResult | null;
+  locale?: 'en' | 'vi';
 }
 
 export interface DistributionComplianceRecord {
-  /** False when the campaign was withheld from the channels on legal grounds. */
   published: boolean;
   reason?: string;
   detail: string;
@@ -77,27 +57,20 @@ export interface DistributionComplianceRecord {
 
 export async function runDistribution(
   params: DistributeParams,
-): Promise<
-  Awaited<ReturnType<OpenClawGateway['distribute']>> & {
-    compliance: DistributionComplianceRecord;
-  }
-> {
+): Promise<Awaited<ReturnType<OpenClawGateway['distribute']>> & { compliance: DistributionComplianceRecord }> {
   const { campaignId, userId, videoUrl, thumbnailUrl, title, audience, tier, affiliateOffer } = params;
   const baseDesc = `AI-generated video content for ${audience || 'general audience'}`;
-
   const jurisdiction = await resolveAudienceJurisdiction(userId);
+  const resolvedLocale: 'en' | 'vi' = params.locale ?? (jurisdiction?.toUpperCase() === 'VN' ? 'vi' : 'en');
   const decision = decidePublishCompliance({
     baseDescription: baseDesc,
     offer: affiliateOffer
-      ? { productName: affiliateOffer.productName, shortUrl: affiliateOffer.shortUrl }
+      ? { productName: affiliateOffer.productName, shortUrl: affiliateOffer.shortUrl, category: affiliateOffer.category ?? null }
       : null,
     jurisdiction,
-    locale: 'en',
+    locale: resolvedLocale,
   });
 
-  // A legal refusal is not a transport failure: the channels are never called,
-  // so the campaign completes with an explicit compliance record instead of
-  // dying mid-pipeline as though a provider had errored.
   if (!decision.mayPublish) {
     logger.warn('[distribute] compliance gate withheld publishing', {
       campaignId,

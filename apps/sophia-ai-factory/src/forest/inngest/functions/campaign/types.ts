@@ -16,11 +16,15 @@ export interface AffiliateOfferSelectedRow {
   short_code: string;
   offer_name: string;
   affiliate_link: string;
+  network?: string | null;
+  category?: string | null;
 }
 
 export interface AffiliateOfferResult {
   productName: string;
   shortUrl: string;
+  category?: string | null;
+  network?: string | null;
 }
 
 export interface VideoAssets {
