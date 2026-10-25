@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# not our package manager: CI runs `npm ci` against package-lock.json.
+# A stray pnpm lockfile would silently re-pin a stale dependency tree.
+pnpm-lock.yaml
+
 # env files (can opt-in for committing if needed)
 .env*
 

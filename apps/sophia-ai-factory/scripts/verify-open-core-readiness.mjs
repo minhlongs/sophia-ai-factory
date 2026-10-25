@@ -108,7 +108,17 @@ if (fs.existsSync(pkgJsonPath) && fs.existsSync(selfHostingPath)) {
   }
 }
 
-for (const govFile of ['LICENSE', 'LICENSE-COMMERCIAL.md', 'README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODE_OF_CONDUCT.md']) {
+// The declared list is the single source of truth: parse it out of the catalog so
+// this script cannot drift from what the catalog promises to check.
+const catalogSource = fs.readFileSync(path.join(appRoot, 'src/seed/config/open-core-25-steps-catalog.ts'), 'utf8');
+const requiredCommunityFilesMatch = catalogSource.match(/REQUIRED_GITHUB_COMMUNITY_FILES[^=]*=\s*\[([\s\S]*?)\]/);
+const requiredCommunityFiles = requiredCommunityFilesMatch
+  ? [...requiredCommunityFilesMatch[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
+  : [];
+if (requiredCommunityFiles.length === 0) {
+  errors.push('Could not parse REQUIRED_GITHUB_COMMUNITY_FILES from the open-core catalog');
+}
+for (const govFile of requiredCommunityFiles) {
   if (!fs.existsSync(path.join(repoRoot, govFile))) {
     errors.push(`Missing GitHub Community Standards file at repo root: ${govFile}`);
   }
@@ -138,7 +148,10 @@ if (!fs.existsSync(p1Path) || !fs.existsSync(p2Path) || !fs.existsSync(auditorPa
   const artifacts = [...combined.matchAll(/verificationArtifact:\s*'([^']+)'/g)].map((match) => match[1]);
   let missingArtifactCount = 0;
   for (const artifact of artifacts) {
-    const exists = [path.join(appRoot, artifact), path.join(repoRoot, artifact)].some((fullPath) => fs.existsSync(fullPath));
+    // Repo root only. Several catalog paths exist at BOTH the root and under the
+    // app folder, so an app-folder fallback would let a deleted root file be
+    // found at its twin and reported as present.
+    const exists = fs.existsSync(path.join(repoRoot, artifact));
     if (!exists) {
       missingArtifactCount++;
       errors.push(`Catalog reference does not exist: ${artifact}`);
@@ -157,10 +170,12 @@ const report = {
   errors,
 };
 
+// stdout carries the machine-readable report and nothing else, so a caller can
+// pipe it without the human verdict following the JSON and breaking the parse.
 process.stdout.write(JSON.stringify(report, null, 2) + '\n');
 if (errors.length > 0) {
   process.stderr.write(`Open-core catalog verification failed with ${errors.length} errors.\n`);
   process.exit(1);
 }
-process.stdout.write('Open-core catalog references and license boundaries verified successfully.\n');
+process.stderr.write('Open-core catalog references and license boundaries verified successfully.\n');
 process.exit(0);

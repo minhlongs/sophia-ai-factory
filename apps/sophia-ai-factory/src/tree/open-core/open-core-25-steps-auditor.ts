@@ -10,6 +10,11 @@
 
 import type { SophiaEdition } from '@/seed/config/open-core-manifest';
 import {
+  evaluateGovernanceFileResolution,
+  evaluateOpenCoreArtifactResolution,
+  type ArtifactExistenceProbe,
+} from '@/seed/config/open-core-artifact-resolution';
+import {
   OPEN_CORE_25_STEPS,
   OPEN_CORE_PHASES,
   PROTECTED_OPEN_CORE_FLOWS,
@@ -39,6 +44,11 @@ export interface PhaseCatalogSummary {
 
 export interface OpenCore25StepCatalogInput {
   readonly editionContext?: EditionContextInput;
+  /**
+   * Existence check for a catalog-relative path. Omit it and the report
+   * states that verification was not performed instead of implying coverage.
+   */
+  readonly artifactExistenceProbe?: ArtifactExistenceProbe | null;
 }
 
 export interface OpenCore25StepCatalogReport {
@@ -54,6 +64,23 @@ export interface OpenCore25StepCatalogReport {
   readonly unlockedFeatureCount: number;
   readonly protectedFlowDefinitionsCount: number;
   readonly requiredGovernanceFileDefinitionsCount: number;
+  /**
+   * Count of the required governance files that were confirmed to exist. The
+   * definitions count above records what the catalog promises; this records
+   * what was seen on disk, and is null when no probe was available.
+   */
+  readonly verifiedGovernanceFilesCount: number | null;
+  /**
+   * Artifacts confirmed to exist on disk. Distinct from `documentedSteps`,
+   * which only records that a path was written down. `verificationPerformed`
+   * is false when no existence probe was supplied, and the percentage is null
+   * in that case so an unchecked state is never rendered as a result.
+   */
+  readonly verifiedSteps: number;
+  readonly verificationPerformed: boolean;
+  readonly verifiedArtifactsPercentage: number | null;
+  readonly missingVerificationArtifacts: readonly string[];
+  readonly missingGovernanceFiles: readonly string[];
   readonly phases: readonly PhaseCatalogSummary[];
   readonly catalogFingerprintHex: string;
 }
@@ -94,6 +121,26 @@ export async function auditOpenCore25StepCatalog(
     unlockedFeatureCount,
     protectedFlowDefinitionsCount: PROTECTED_OPEN_CORE_FLOWS.length,
     requiredGovernanceFileDefinitionsCount: REQUIRED_GITHUB_COMMUNITY_FILES.length,
+    ...(() => {
+      const artifacts = evaluateOpenCoreArtifactResolution(
+        OPEN_CORE_25_STEPS,
+        input.artifactExistenceProbe ?? null,
+      );
+      const governance = evaluateGovernanceFileResolution(
+        REQUIRED_GITHUB_COMMUNITY_FILES,
+        input.artifactExistenceProbe ?? null,
+      );
+      return {
+        verifiedGovernanceFilesCount: governance.verificationPerformed
+          ? governance.verifiedSteps
+          : null,
+        verifiedSteps: artifacts.verifiedSteps,
+        verificationPerformed: artifacts.verificationPerformed,
+        verifiedArtifactsPercentage: artifacts.verifiedArtifactsPercentage,
+        missingVerificationArtifacts: artifacts.missingVerificationArtifacts,
+        missingGovernanceFiles: governance.missingVerificationArtifacts,
+      };
+    })(),
     phases,
     catalogFingerprintHex,
   });

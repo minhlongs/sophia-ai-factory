@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { BookOpen, ChevronDown, ChevronUp, GitBranch, Hash } from 'lucide-react';
 import type { OpenCore25StepCatalogReport } from '@/tree/open-core/open-core-25-steps-auditor';
+import { getBinhPhapThienForStep } from '@/seed/config/open-core-25-steps-binh-phap-map';
 
 export interface OpenCoreBlueprintMatrixProps {
   readonly audit: OpenCore25StepCatalogReport | null | undefined;
@@ -77,7 +78,9 @@ export function OpenCoreBlueprintMatrix({ audit }: OpenCoreBlueprintMatrixProps)
 
               {isOpen && (
                 <div id={detailsId} className="divide-y divide-border border-t border-border dark:divide-white/[0.06] dark:border-white/[0.06]">
-                  {phase.steps.map((step) => (
+                  {phase.steps.map((step) => {
+                    const thiên = getBinhPhapThienForStep(step);
+                    return (
                     <div key={step.step} className="flex items-start justify-between gap-3 px-4 py-2.5 text-xs">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5 font-semibold text-foreground dark:text-slate-100">
@@ -91,11 +94,24 @@ export function OpenCoreBlueprintMatrix({ audit }: OpenCoreBlueprintMatrixProps)
                           {isVietnamese ? 'Tài liệu tham chiếu:' : 'Reference:'} {step.verificationArtifact}
                         </p>
                       </div>
+                      <span
+                        className="shrink-0 rounded-md border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                        title={
+                          thiên
+                            ? isVietnamese
+                              ? `Binh Pháp thiên ${thiên.number} — ${thiên.titleVi}`
+                              : `Art of War chapter ${thiên.number} — ${thiên.titleEn}`
+                            : undefined
+                        }
+                      >
+                        {thiên ? `${thiên.hanzi}` : '—'}
+                      </span>
                       <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${SCOPE_BADGE_STYLES[step.editionScope] ?? SCOPE_BADGE_STYLES.HYBRID}`}>
                         {step.editionScope}
                       </span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

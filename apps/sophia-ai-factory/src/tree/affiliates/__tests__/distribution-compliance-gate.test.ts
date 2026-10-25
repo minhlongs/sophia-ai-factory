@@ -178,6 +178,66 @@ describe('reason precedence', () => {
   });
 });
 
+describe('a declared jurisdiction the registry never assessed is fail-closed', () => {
+  // The registry answers an unassessed code by falling back to its permissive
+  // US entry. Trusting that answer published regulated content into
+  // territories nobody had checked, so the gate now requires an explicit match.
+  it.each(['CN', 'BD', 'ID', 'BR', 'AU', 'KR'])('blocks %s instead of assuming US rules', (code) => {
+    const result = evaluateDistributionLegality({
+      offerCategory: 'Crypto',
+      offerName: 'Bitcoin course',
+      jurisdiction: code,
+      hasAffiliateLink: true,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('jurisdiction_not_assessed');
+    expect(result.detail).toContain(code);
+  });
+
+  it('still treats a nonsense code as unresolved', () => {
+    const result = evaluateDistributionLegality({
+      offerCategory: 'Crypto',
+      jurisdiction: 'ZZ',
+      hasAffiliateLink: true,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('jurisdiction_not_assessed');
+  });
+
+  it('recognises an assessed code regardless of case', () => {
+    const result = evaluateDistributionLegality({
+      offerCategory: 'Crypto',
+      jurisdiction: 'sg',
+      hasAffiliateLink: true,
+    });
+    expect(result.allowed).toBe(true);
+    expect(result.requiresFinancialDisclaimer).toBe(true);
+  });
+
+  it('still allows an unregulated vertical in an unassessed jurisdiction', () => {
+    const result = evaluateDistributionLegality({
+      offerCategory: 'Workflow',
+      offerName: 'SmartSuite',
+      jurisdiction: 'CN',
+      hasAffiliateLink: true,
+    });
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toBeUndefined();
+  });
+});
+
+describe('reason precedence', () => {
+  it('reports the prohibition reason over the disclaimer requirement', () => {
+    const result = evaluateDistributionLegality({
+      offerCategory: 'Crypto',
+      jurisdiction: 'VN',
+      hasAffiliateLink: true,
+    });
+    expect(result.reason).toBe('crypto_prohibited_in_jurisdiction');
+    expect(result.allowed).toBe(false);
+  });
+});
+
 describe('buildPublishDisclosure', () => {
   it('adds both affiliate and financial disclosure for US crypto', () => {
     const verdict = evaluateDistributionLegality({

@@ -79,11 +79,19 @@ export const OPEN_CORE_FEATURES: Readonly<Record<SophiaModuleFeatureId, OpenCore
   },
   affiliate_attribution_payouts: {
     id: 'affiliate_attribution_payouts', scope: 'CLOUD_SAAS', licenseSpdx: COMMERCIAL, minPaidTier: 'BASIC',
-    modulePaths: ['src/land/affiliates', 'src/land/payouts'],
+    modulePaths: ['src/land/affiliates', 'src/tree/affiliates'],
     titleVi: 'Đối soát hoa hồng Affiliate & Chi trả USDT tự động', titleEn: 'Multi-Network Affiliate Attribution & Automated USDT Payouts',
-    summaryVi: 'Theo dõi chuyển đổi ClickBank/Awin và tự động thanh toán hoa hồng đa tầng.',
-    summaryEn: 'Real-time postback attribution and automated crypto/fiat partner payouts.',
+    summaryVi: 'Tự tuyển đối tác, ghi nhận chuyển đổi và chi trả hoa hồng cho đối tác của chính bạn.',
+    summaryEn: 'Recruit your own partners, attribute conversions, and pay their commissions from your own workspace.',
     upgradeCtaUrl: `${PRICING_URL}?feature=affiliate-engine`,
+  },
+  operator_affiliate_payout_admin: {
+    id: 'operator_affiliate_payout_admin', scope: 'COMMUNITY', licenseSpdx: APACHE, minPaidTier: 'FREE',
+    modulePaths: ['src/app/api/admin/affiliate-payouts', 'src/land/payouts'],
+    titleVi: 'Duyệt chi trả hoa hồng (dành cho vận hành nền tảng)', titleEn: 'Platform Operator Payout Approval Queue',
+    summaryVi: 'Hàng chờ duyệt hoa hồng dành cho người vận hành Sophia, không phải tính năng khách hàng tự phục vụ.',
+    summaryEn: 'Sophia operator-side payout approval queue. Not a customer self-serve feature.',
+    upgradeCtaUrl: PRICING_URL,
   },
   multi_tenant_saas_billing: {
     id: 'multi_tenant_saas_billing', scope: 'CLOUD_SAAS', licenseSpdx: COMMERCIAL, minPaidTier: 'ENTERPRISE',

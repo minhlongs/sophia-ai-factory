@@ -42,6 +42,41 @@
     "conversion_funnel": {
       "portability": "Signed HMAC-SHA256 workspace portability bundle (/api/open-core/portability, src/tree/open-core/workspace-portability-store.ts). Allows self-hosted community users to export their channel configurations, script templates, and SOP workflows (excluding raw BYOK keys) and import them into Sophia Managed Cloud in under 60 seconds.",
       "telemetry_beacon": "Optional, privacy-preserving version beacon (/api/version) checking for security advisories and upgrade paths (opt-out available via SOPHIA_DISABLE_VERSION_BEACON=true)."
+    },
+    "active_bet": {
+      "name": "Partner-Resell Kit (customer-side affiliate program)",
+      "decided": "2026-10-21",
+      "status": "GO (conditional) — design complete, implementation not started",
+      "hypothesis": "Re-point the existing attribution + dual-rail payout engine so every paid Cloud customer can recruit and pay their own partners from inside their own workspace. Converts the repo's largest subsystem from an operator tool into a reason to pay $399/mo, and makes the customer's own acquisition channel also Sophia's.",
+      "edition_placement": {
+        "community": "tenant_id-scoped schema and attribution primitives only (click recording, code generation, consent-gated capture, attribution resolver) — no payout capability",
+        "cloud": "multi-partner workspace program, dual-rail payout orchestration (VietQR/NAPAS + USDT), anti-fraud risk scoring, payout batching",
+        "enterprise": "white-label partner portal per subaccount, custom domain on the partner portal"
+      },
+      "plg_upgrade_trigger": "A self-hoster can generate partner links and record clicks. Paying out many partners — batching, VietQR/NAPAS CSV export, risk scoring, refund clawback, Net-30 scheduling — stops working on the free core. That boundary is the CommercialUpgradeModal + /api/open-core/portability catch point.",
+      "verified_evidence": [
+        "src/land/affiliates holds 187 files; 12 of the last 19 commits touch affiliate/payout/commission files and 7 touch none, and payout logic lives in src/tree/affiliates/ledger/ rather than src/land/payouts",
+        "affiliate_links, click_events and conversion_events carry tenant_id from migration 0035; migration 0079 extends tenant_id to discovered_affiliates — so customer separation is a parameter rather than a rewrite",
+        "src/forest/actions/affiliate-self-signup.ts is a real server action returning /ref/<code>, and src/app/ref/[code]/page.tsx sets a consent-gated 30-day cookie and records clicks"
+      ],
+      "blockers": [
+        {
+          "id": "risk-scorer-authority",
+          "detail": "src/tree/affiliates/ledger/payout-disbursement.ts deliberately stopped blocking payouts on partner.status = 'under_review' (only 'suspended' blocks now), because the nightly risk scorer has no automatic recovery path and one false positive froze a partner's payouts permanently. Partner-Resell Kit hands unknown partners to non-technical customers, where false positives are likelier. Founder must decide whether the risk scorer stays advisory (a notification) or becomes a hard block, which would require building a recovery path first.",
+          "owner": "founder_ceo"
+        },
+        {
+          "id": "gate-enforcement",
+          "detail": "evaluateFeatureGate is called only by /api/open-core/status and the 25-step catalog auditor, so the manifest minimum tiers are documentation rather than enforcement. A free-core instance could otherwise reach real payouts.",
+          "owner": "cto_agent"
+        },
+        {
+          "id": "affiliate-payout-rail",
+          "detail": "payouts/resolve-payout-method.ts prefers Stripe Connect for affiliate payouts. The Stripe ban covers customer billing, not partner payouts, but a Vietnamese operator paying partners in VND cannot use it. Founder must choose between PayOS/VietQR and Stripe for the payout rail.",
+          "owner": "founder_ceo"
+        }
+      ],
+      "verdict_report": "plans/reports/261021-idea-step1-step2-verdict.md"
     }
   },
   "business_model": {
@@ -57,8 +92,15 @@
       "ENTERPRISE": "$799/month",
       "MASTER": "$4,999 one-time"
     },
-    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"],
-    "banned_payment_providers": ["Polar.sh", "PayPal", "Stripe for primary customer billing"],
+    "payment_providers": [
+      "NOWPayments (USDT crypto)",
+      "PayOS (Vietnam domestic)"
+    ],
+    "banned_payment_providers": [
+      "Polar.sh",
+      "PayPal",
+      "Stripe for primary customer billing"
+    ],
     "pricing_model": "Tiered subscription plus one-time MASTER handover; customer-paid AI provider usage under BYOK. Gross margin on platform subscription remains high because AI compute costs are paid directly by customer to AI vendors.",
     "unit_economics_hypotheses": {
       "target_gross_margin": "85-95% on subscription revenue (excluding founder support time)",
@@ -69,7 +111,14 @@
   "tech_stack": {
     "frontend": "Next.js 16 App Router, React 19, TypeScript strict mode (0 :any), Tailwind CSS 4",
     "backend": "Cloudflare Workers (OpenNext), Cloudflare D1 (SQLite), Cloudflare R2, Cloudflare KV, and Inngest",
-    "ai_services": ["OpenRouter (DeepSeek/Claude/GPT-4o)", "ElevenLabs", "HeyGen", "D-ID", "fal.ai", "Replicate; customer-configured via BYOK Setup Wizard"],
+    "ai_services": [
+      "OpenRouter (DeepSeek/Claude/GPT-4o)",
+      "ElevenLabs",
+      "HeyGen",
+      "D-ID",
+      "fal.ai",
+      "Replicate; customer-configured via BYOK Setup Wizard"
+    ],
     "auth": "Better Auth v1.6.2 with D1 Kysely adapter (emailAndPassword, magic links, org RBAC)",
     "email": "Resend",
     "bot": "Telegram (@Sophia_Bbot)",

@@ -1,7 +1,7 @@
 /**
  * Tests for the disclosure behaviour of `runDistributeStep`.
  *
- * The gate lives in `land/affiliates/distribution-compliance-gate` and is
+ * The gate lives in `tree/affiliates/distribution-compliance-gate` and is
  * covered there. What these tests pin is the caller's own duty on the live
  * path:
  *
@@ -43,7 +43,7 @@ vi.mock('@/tree/gateway/adapters/tiktok-channel-adapter', () => ({ TikTokChannel
 vi.mock('@/tree/gateway/adapters/telegram-notification-adapter', () => ({ TelegramNotificationAdapter: vi.fn() }));
 vi.mock('@/land/youtube/youtube-oauth-client', () => ({ uploadVideo: vi.fn(), refreshAccessToken: vi.fn() }));
 vi.mock('@/land/tiktok/tiktok-oauth-client', () => ({ publishVideo: vi.fn(), checkPublishStatus: vi.fn() }));
-vi.mock('@/land/affiliates/audience-jurisdiction', () => ({ resolveAudienceJurisdiction: hoisted.resolveAudienceJurisdiction }));
+vi.mock('@/tree/affiliates/audience-jurisdiction', () => ({ resolveAudienceJurisdiction: hoisted.resolveAudienceJurisdiction }));
 vi.mock('@/tree/signals/posthog-capture', () => ({ captureServer: hoisted.captureServer }));
 
 vi.mock('@/seed/db/client', () => ({ createServerClient: () => ({ from: () => ({}) }) }));

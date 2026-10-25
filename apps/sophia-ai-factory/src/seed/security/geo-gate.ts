@@ -38,7 +38,7 @@ export interface GeoRule {
  * whose entries for both carry the mandated text) are intentionally absent:
  * blocking them here would deny lawful coverage instead of conditioning it.
  * The disclaimer obligation is enforced where publishing happens, in
- * `land/affiliates/distribution-compliance-gate`.
+ * `tree/affiliates/distribution-compliance-gate`.
  *
  * UK is retained: FCA s21 FSMA restricts financial promotion to authorised
  * firms, which a disclosure overlay does not cure.

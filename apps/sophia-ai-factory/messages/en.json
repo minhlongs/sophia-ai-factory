@@ -4573,7 +4573,8 @@
     "sop_creator": "Sop creator",
     "templates": "Templates",
     "upgradePlan": "Upgrade Plan",
-    "voices": "Voices"
+    "voices": "Voices",
+    "image_studio": "Image Studio"
   },
   "privacy": {
     "meta_title": "Privacy Policy - Sophia AI Factory",
@@ -4917,6 +4918,14 @@
     "saving": "Saving...",
     "saved": "Saved!",
     "save": "Save Jurisdiction",
+    "description": "Declare the region you publish content to. This declaration decides which content is allowed to be released.",
+    "undeclaredWarning": "No region is declared, so the system is currently holding back ALL crypto and financial trading content. Other content is unaffected.",
+    "blockedWarning": "This region is blocked: the system will refuse to publish crypto promo content to a Vietnam audience. You may still save this truthful declaration.",
+    "loading": "Loading declared region...",
+    "loadError": "Could not load the declared region. You can still select and save one.",
+    "saveError": "Could not save. Please try again.",
+    "networkError": "Network error while saving. Please check your connection and try again.",
+    "currentRegion": "Current region",
     "disclaimerPreview": {
       "US": "#ad | Crypto is highly volatile. Past performance does not guarantee future results. Not financial advice.",
       "EU": "#ad | Crypto-assets are speculative. Capital is at risk. Not financial advice. (MiCA EU 2023/1114)",
@@ -9081,5 +9090,57 @@
     "analytics": "Analytics & measurement",
     "marketing": "Marketing & referral attribution",
     "save": "Save preferences"
+  },
+  "imageStudio": {
+    "title": "Image Studio",
+    "preview": {
+      "emptyTitle": "Your generated images will appear here. Enter a brief to create your first image.",
+      "generatedImageAlt": "Generated image",
+      "modelLabel": "Model",
+      "statusLabel": "Status",
+      "retryStatus": "Refresh status",
+      "retryLoad": "Try loading again",
+      "imageLoadFailedTitle": "The image was created but could not be displayed.",
+      "failedHint": "This generation did not complete. Your brief is safe — you can adjust it and try again.",
+      "unknownStateHint": "This job is in an unrecognised state. Nothing was discarded.",
+      "reviewSetup": "Review setup"
+    },
+    "history": {
+      "title": "Image history",
+      "empty": "No images yet.",
+      "untitled": "Untitled",
+      "loadFailed": "Your earlier images could not be loaded."
+    },
+    "brief": {
+      "title": "Brief and settings",
+      "promptLabel": "Image brief",
+      "promptPlaceholder": "Describe the image you want...",
+      "promptRequired": "Enter a short description to continue.",
+      "charsRemaining": "{count} characters left",
+      "modelLabel": "Model",
+      "noModelsAvailable": "No model available",
+      "noModelsAvailableHint": "No model is available on your current plan.",
+      "lockedModels": "Locked on your plan",
+      "upgradeToUnlock": "upgrade to unlock",
+      "currentTier": "Current plan: {tier}",
+      "aspectRatioLabel": "Aspect ratio",
+      "submit": "Generate image",
+      "submitting": "Submitting…",
+      "submitAccepted": "Request accepted. Your image is being created.",
+      "accepted": "Request accepted. Watch the preview for the result.",
+      "submitFailed": "Generation could not be started. Your brief is unchanged.",
+      "missingKey": "No image provider key is set up yet. Add one in setup to generate images.",
+      "dismiss": "Dismiss"
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Being created",
+      "done": "Completed",
+      "failed": "Not completed",
+      "unknown": "Unrecognised state",
+      "queuedHint": "Waiting in the queue. New images usually take a moment.",
+      "runningHint": "Being created. Keep this page open — the result appears automatically.",
+      "statusUnavailable": "Live status is unavailable. Showing the last known state."
+    }
   }
 }

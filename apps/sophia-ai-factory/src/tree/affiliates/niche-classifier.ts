@@ -5,7 +5,7 @@
  * It drives two downstream gates independently:
  *   1. whether the offer may be served to a tenant at all (`seed/security/geo-gate`)
  *   2. whether the finished video may be published in a jurisdiction
- *      (`land/affiliates/distribution-compliance-gate`)
+ *      (`tree/affiliates/distribution-compliance-gate`)
  *
  * Classification is deliberately conservative: anything ambiguous in a
  * financial-adjacent vertical resolves UP to `crypto` or `trading`, never down,
@@ -13,7 +13,7 @@
  *
  * Pure function, no I/O — edge-runtime safe.
  *
- * @module land/affiliates/niche-classifier
+ * @module tree/affiliates/niche-classifier
  */
 
 export type AffiliateVertical =

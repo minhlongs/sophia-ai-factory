@@ -72,7 +72,7 @@ export const generateCampaign = inngest.createFunction(
 
       const campaignTitle = await step.run('resolve-ab-title', async () => resolveCampaignAbTitle(abExperimentId, topic, campaignId));
       const distributionResult = await runStepSafely(step, 'distribute-channels', async () => {
-        const result = await runDistribution({ campaignId, videoUrl: videoAssets.video_url, thumbnailUrl: videoAssets.thumbnail_url, title: campaignTitle, audience, tier, affiliateOffer });
+        const result = await runDistribution({ campaignId, userId, videoUrl: videoAssets.video_url, thumbnailUrl: videoAssets.thumbnail_url, title: campaignTitle, audience, tier, affiliateOffer });
         await resumeEngine.checkpoint(campaignId, 'distribute-channels', { allSucceeded: result.allSucceeded, channelCount: result.results.length });
         return result;
       }, stepOpts);

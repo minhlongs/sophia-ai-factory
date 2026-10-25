@@ -14,7 +14,7 @@
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { SUPPORTED_MODELS } from '@/tree/clients/muapi-media-client';
+import { TIER_ALLOWED_FAL_MODELS } from '@/seed/config/tiers/image-model-access';
 import { executeImageGeneration } from '@/land/image';
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
@@ -32,22 +32,6 @@ export type ImageGenerateInput = z.infer<typeof imageGenerateSchema>;
 export type ImageGenerateResult =
   | { success: true; jobId: string }
   | { success: false; error: string; code?: string };
-
-// ─── Tier model access map ────────────────────────────────────────────────────
-
-const TIER_ALLOWED_FAL_MODELS: Record<string, string[]> = {
-  BASIC: ['fal-ai/flux-schnell'],
-  PREMIUM: ['fal-ai/flux-schnell'],
-  ENTERPRISE: ['fal-ai/flux-schnell', 'fal-ai/flux/dev', 'fal-ai/flux-pro'],
-  MASTER: ['fal-ai/flux-schnell', 'fal-ai/flux/dev', 'fal-ai/flux-pro'],
-};
-
-const TIER_ALLOWED_MODELS: Record<string, string[]> = {
-  BASIC: ['flux-schnell'],
-  PREMIUM: ['flux-schnell', 'flux-dev', 'hidream'],
-  ENTERPRISE: SUPPORTED_MODELS.image,
-  MASTER: SUPPORTED_MODELS.image,
-};
 
 function isFalModel(model: string): boolean {
   return model.startsWith('fal-ai/');
@@ -75,24 +59,24 @@ export async function generateImageAction(
   const { prompt, model, aspectRatio } = parsed.data;
   const tier = await resolveUserTier(user.id);
 
-  if (isFalModel(model)) {
-    const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC;
-    if (!allowedFalModels.includes(model)) {
-      return {
-        success: false,
-        error: `Model "${model}" is not available for your ${tier} plan.`,
-        code: 'TIER_GATE',
-      };
-    }
-  } else {
-    const allowedModels = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
-    if (!allowedModels.includes(model)) {
-      return {
-        success: false,
-        error: `Model "${model}" is not available for your ${tier} plan.`,
-        code: 'TIER_GATE',
-      };
-    }
+  if (!isFalModel(model)) {
+    // The non-fal branch spends the platform's own MuAPI key without recording
+    // a provider cost, so the action refuses those models outright instead of
+    // consulting the tier map. The tier map below still guards the fal branch.
+    return {
+      success: false,
+      error: `Model "${model}" is not supported. Choose a fal-ai/ model.`,
+      code: 'TIER_GATE',
+    };
+  }
+
+  const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC;
+  if (!allowedFalModels.includes(model)) {
+    return {
+      success: false,
+      error: `Model "${model}" is not available for your ${tier} plan.`,
+      code: 'TIER_GATE',
+    };
   }
 
   return executeImageGeneration({

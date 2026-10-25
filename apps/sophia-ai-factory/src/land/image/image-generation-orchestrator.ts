@@ -3,12 +3,10 @@
  *
  * Encapsulates the execution pipeline for image generation jobs:
  *  - fal-ai synchronous generation via FalImageProvider, R2 upload, and MCU metering
- *  - MuAPI media job submission and D1 tracking
  *
  * @module land/image/image-generation-orchestrator
  */
 
-import { submitMuApiImageJob } from './image-generation-helpers';
 import { executeFalImageGeneration } from './fal-image-generation-runner';
 
 export interface GenerateImageJobInput {
@@ -26,9 +24,18 @@ export type GenerateImageJobResult =
 export async function executeImageGeneration(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
-  if (input.model.startsWith('fal-ai/')) {
-    return executeFalImageGeneration(input);
+  if (!input.model.startsWith('fal-ai/')) {
+    // The non-fal branch submits against the platform's own MuAPI key and
+    // records no provider cost and no credit deduction, so the orchestrator
+    // refuses those models instead of dispatching them. Kept identical to the
+    // two server entry points so a caller cannot re-open the path by jumping
+    // straight to the domain layer.
+    return {
+      success: false,
+      error: `Model "${input.model}" is not supported. Choose a fal-ai/ model.`,
+      code: 'TIER_GATE',
+    };
   }
 
-  return submitMuApiImageJob(input);
+  return executeFalImageGeneration(input);
 }

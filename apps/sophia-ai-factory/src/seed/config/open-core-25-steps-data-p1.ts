@@ -16,7 +16,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Apache-2.0 Community Core on GitHub drives PLG adoption; Cloud ($199-$799/mo) & Master ($4,999) monetize scale.',
     agenticRole: 'Founder leads; CTO, CMO, Sales/CS, and COO/CFO agents execute domain tasks.',
     governanceGate: 'Enforce 4-layer boundaries (seed->tree->forest->land), open-core-manifest.ts, and <= 180 LOC per file.',
-    verificationArtifact: 'src/seed/config/open-core-manifest.ts', linkedFeatureId: 'byok_setup_wizard',
+    verificationArtifact: 'apps/sophia-ai-factory/src/seed/config/open-core-manifest.ts', linkedFeatureId: 'byok_setup_wizard',
   },
   {
     step: 2, phaseId: 'phase_1_foundation', slug: 'truthful-2026-plan-refresh', editionScope: 'HYBRID',
@@ -32,7 +32,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Solo founder leveraged by specialized AI agents under explicit human commercial approval.',
     agenticRole: 'CTO, CMO, Sales/CS, COO, and CFO agents operate within bounded scopes.',
     governanceGate: 'No agent modifies pricing, billing, credentials, or deploy gates without founder approval.',
-    verificationArtifact: 'src/tree/ask', linkedFeatureId: 'bilingual_ask_router',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/ask', linkedFeatureId: 'bilingual_ask_router',
   },
   {
     step: 4, phaseId: 'phase_1_foundation', slug: 'ipo-merkle-audit-baseline', editionScope: 'ENTERPRISE_MASTER',
@@ -40,7 +40,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Tamper-evident financial and operational audit trail for enterprise and institutional trust.',
     agenticRole: 'CFO/COO agents verify SHA-256 hash chain and HMAC signatures.',
     governanceGate: 'Comply with Vietnam PDPD 13/2023 and cybersecurity regulations.',
-    verificationArtifact: 'src/tree/finance/merkle', linkedFeatureId: 'merkle_ipo_audit_vault',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/finance/merkle', linkedFeatureId: 'merkle_ipo_audit_vault',
   },
   {
     step: 5, phaseId: 'phase_1_foundation', slug: 'gap-report-and-pilot-roadmap', editionScope: 'CLOUD_SAAS',
@@ -48,7 +48,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Prioritize closing first paid pilot via NOWPayments/PayOS and GitHub community traction.',
     agenticRole: 'Agents track 6-step pilot readiness and objection matrix.',
     governanceGate: 'Escalate payment, secret hygiene, or license isolation issues immediately.',
-    verificationArtifact: 'src/tree/open-core/pilot-onboarding-tracker.ts',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/open-core/pilot-onboarding-tracker.ts',
   },
   {
     step: 6, phaseId: 'phase_2_business_model', slug: 'open-core-unit-economics', editionScope: 'CLOUD_SAAS',
@@ -56,7 +56,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Customer BYOK shifts third-party AI compute costs to users, preserving 85-95% subscription margin.',
     agenticRole: 'CFO agent reconciles collected revenue, gateway fees, edge hosting, and founder support time.',
     governanceGate: 'NOWPayments (USDT) and PayOS only; Polar.sh and PayPal are strictly banned.',
-    verificationArtifact: 'src/tree/finance/pilot-unit-economics.ts', linkedFeatureId: 'multi_tenant_saas_billing',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/finance/pilot-unit-economics.ts', linkedFeatureId: 'multi_tenant_saas_billing',
   },
   {
     step: 7, phaseId: 'phase_2_business_model', slug: 'customer-and-developer-personas', editionScope: 'HYBRID',
@@ -64,7 +64,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Primary ICP: VN marketing agencies/SMBs ($199-$799/mo). Secondary PLG wedge: GitHub self-hosters.',
     agenticRole: 'Sales agent evaluates discovery interviews and synthesizes objection frequency.',
     governanceGate: 'Require explicit consent before recording interviews or publishing customer quotes.',
-    verificationArtifact: 'src/tree/open-core/discovery-interview-evaluator.ts',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/open-core/discovery-interview-evaluator.ts',
   },
   {
     step: 8, phaseId: 'phase_3_brand_github_community', slug: 'transparent-open-core-positioning', editionScope: 'COMMUNITY',
@@ -88,7 +88,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Connect GitHub self-hosters to Sophia Cloud via CommercialUpgradeModal and /pricing.',
     agenticRole: 'UX and CMO agents maintain clear Community vs Cloud vs Enterprise feature matrices.',
     governanceGate: 'Maintain unambiguous legal distinction between Apache-2.0 and Commercial FSL-1.1 terms.',
-    verificationArtifact: 'src/components/open-core/commercial-upgrade-modal.tsx',
+    verificationArtifact: 'apps/sophia-ai-factory/src/components/open-core/commercial-upgrade-modal.tsx',
   },
   {
     step: 11, phaseId: 'phase_3_brand_github_community', slug: 'creative-testing-bandit-allocation', editionScope: 'CLOUD_SAAS',
@@ -96,7 +96,7 @@ export const OPEN_CORE_STEPS_PART_1: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Automate A/B hook testing and capital allocation on Managed Cloud after organic baseline.',
     agenticRole: 'Growth agent executes Thompson Sampling MAB and Fractional Half-Kelly sizing.',
     governanceGate: 'Enforce strict budget caps and synthetic media disclosure policies.',
-    verificationArtifact: 'src/land/growth-v14', linkedFeatureId: 'growth_triad_bandit_kelly',
+    verificationArtifact: 'apps/sophia-ai-factory/src/land/growth-v14', linkedFeatureId: 'growth_triad_bandit_kelly',
   },
   {
     step: 12, phaseId: 'phase_3_brand_github_community', slug: 'verified-case-study-governance', editionScope: 'CLOUD_SAAS',

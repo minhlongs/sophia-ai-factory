@@ -133,3 +133,6 @@ broken-imports-report.json
 /temp/
 /queue/
 /next-prompt.md
+
+# Claude worktrees (generated operational artifacts)
+.claude/worktrees/

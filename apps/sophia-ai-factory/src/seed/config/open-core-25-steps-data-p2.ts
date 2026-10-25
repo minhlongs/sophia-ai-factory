@@ -16,7 +16,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Automated bilingual triggers for BYOK completion, first video milestone, and Cloud upgrades.',
     agenticRole: 'Lifecycle agent manages Resend templates and opt-in notification state.',
     governanceGate: 'Strictly opt-in; never include raw API keys or sensitive tokens in emails.',
-    verificationArtifact: 'src/seed/config/edition-messages.ts',
+    verificationArtifact: 'apps/sophia-ai-factory/src/seed/config/edition-messages.ts',
   },
   {
     step: 14, phaseId: 'phase_4_revenue_conversion_engine', slug: 'plg-portability-and-protected-flows', editionScope: 'HYBRID',
@@ -24,7 +24,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Self-hosters export signed HMAC bundle (/api/open-core/portability) and import to Cloud in < 60s.',
     agenticRole: 'Sales/CS and CTO agents guard Setup Wizard, @Sophia_Bbot, and NOWPayments IPN.',
     governanceGate: 'Raw BYOK keys never leave the AES-256-GCM vault during workspace export/import.',
-    verificationArtifact: 'src/tree/open-core/workspace-portability.ts', linkedFeatureId: 'telegram_bot_commands',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/open-core/workspace-portability.ts', linkedFeatureId: 'telegram_bot_commands',
   },
   {
     step: 15, phaseId: 'phase_4_revenue_conversion_engine', slug: 'bullseye-gtm-and-affiliate-engine', editionScope: 'CLOUD_SAAS',
@@ -32,15 +32,15 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: '3 traction channels: direct VN agency outreach, GitHub Open-Core launches, and affiliate partners.',
     agenticRole: 'Growth agent tracks postback conversions and automated USDT/VND partner payouts.',
     governanceGate: 'Halt acquisition channels that fail to produce qualified pilot interest.',
-    verificationArtifact: 'src/land/affiliates', linkedFeatureId: 'affiliate_attribution_payouts',
+    verificationArtifact: 'apps/sophia-ai-factory/src/land/affiliates', linkedFeatureId: 'affiliate_attribution_payouts',
   },
   {
     step: 16, phaseId: 'phase_5_operations_security_readiness', slug: 'aarrr-and-version-beacon-analytics', editionScope: 'HYBRID',
     titleVi: 'Phân tích phễu AARRR & Tín hiệu phiên bản (Version Beacon)', titleEn: 'AARRR Funnel & Privacy-Safe Version Beacon',
-    businessRule: 'Track GitHub stars, opt-in version beacon pings, BYOK completions, and weekly active videos.',
+    businessRule: 'Track GitHub stars, BYOK completions, and weekly active videos. The version beacon is opt-out (SOPHIA_DISABLE_VERSION_BEACON=true) and sends no instance identifier, so beacon fetches cannot feed AARRR counts.',
     agenticRole: 'Analytics agent aggregates privacy-safe telemetry from Cloudflare Workers and D1.',
     governanceGate: 'Respect SOPHIA_DISABLE_VERSION_BEACON=true opt-out and exclude internal test accounts.',
-    verificationArtifact: 'src/tree/open-core/version-beacon.ts',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/open-core/version-beacon.ts',
   },
   {
     step: 17, phaseId: 'phase_5_operations_security_readiness', slug: 'vc-narrative-and-white-label-scale', editionScope: 'ENTERPRISE_MASTER',
@@ -48,7 +48,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Combine Open-Core developer trust with high-margin BYOK SaaS and agency subaccount expansion.',
     agenticRole: 'Founder leads investor discussions; CTO/CFO agents maintain factual architecture exhibits.',
     governanceGate: 'Disclose stage honestly as Zero->PSF with $0 MRR baseline until paid pilots close.',
-    verificationArtifact: 'src/forest/admin/white-label', linkedFeatureId: 'white_label_agency_portal',
+    verificationArtifact: 'apps/sophia-ai-factory/src/forest/admin/white-label', linkedFeatureId: 'white_label_agency_portal',
   },
   {
     step: 18, phaseId: 'phase_5_operations_security_readiness', slug: 'dual-license-ip-and-secret-hygiene', editionScope: 'ENTERPRISE_MASTER',
@@ -56,7 +56,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Server-side HMAC-SHA256 RaaS license verification (SOPHIA-RAAS-v1) and zero-leak secretlint gate.',
     agenticRole: 'Security and CTO agents enforce secretlint, layer boundaries, and org-bound license checks.',
     governanceGate: 'COMMUNITY modules must never import commercial ENTERPRISE_MASTER modules.',
-    verificationArtifact: 'src/seed/security/raas-license-verifier.ts',
+    verificationArtifact: 'apps/sophia-ai-factory/src/seed/security/raas-license-verifier.ts',
   },
   {
     step: 19, phaseId: 'phase_5_operations_security_readiness', slug: 'solo-founder-agentic-org-design', editionScope: 'COMMUNITY',
@@ -72,7 +72,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Follow proven Open-Core patterns (Supabase, PostHog, Cal.com): free core, paid custom domains/scale.',
     agenticRole: 'Research and infra agents manage automated DNS TXT/CNAME verification.',
     governanceGate: 'Preserve full Apache-2.0 freedom on Community Core without artificial timebombs.',
-    verificationArtifact: 'src/tree/custom-domains', linkedFeatureId: 'custom_domain_provisioning',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/custom-domains', linkedFeatureId: 'custom_domain_provisioning',
   },
   {
     step: 21, phaseId: 'phase_5_operations_security_readiness', slug: 'evidence-backed-data-room-handover', editionScope: 'ENTERPRISE_MASTER',
@@ -80,7 +80,7 @@ export const OPEN_CORE_STEPS_PART_2: readonly OpenCoreStepDefinition[] = [
     businessRule: 'Turnkey 10-checkpoint sovereign infrastructure verification for $4,999 Master buyers.',
     agenticRole: 'CFO and CTO agents maintain live verification scripts and dual-license documentation.',
     governanceGate: 'Every data-room claim must link to a verifiable repository file or D1 ledger record.',
-    verificationArtifact: 'src/tree/handover', linkedFeatureId: 'day1_master_handover_suite',
+    verificationArtifact: 'apps/sophia-ai-factory/src/tree/handover', linkedFeatureId: 'day1_master_handover_suite',
   },
   {
     step: 22, phaseId: 'phase_6_execution_governance', slug: 'quarterly-okrs-and-execution-cadence', editionScope: 'HYBRID',

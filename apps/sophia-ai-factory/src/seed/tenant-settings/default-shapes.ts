@@ -34,6 +34,13 @@ export interface ScoringSettings {
 }
 
 export interface GeoSettings {
+  /**
+   * ISO-3166-1 alpha-2 country code (or 'EU') the tenant declares as the
+   * audience it publishes to. Optional by design — absent means "undeclared",
+   * which the compliance gate treats as unknown and therefore blocked for
+   * regulated verticals.
+   */
+  targetJurisdiction?: string;
   additionalRules: Array<{
     category: string;
     blockedCountries: string[];

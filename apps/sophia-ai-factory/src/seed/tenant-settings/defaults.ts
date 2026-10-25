@@ -61,6 +61,12 @@ export const DEFAULT_SCORING: ScoringSettings = {
   threshold: 0.7,
 };
 
+/**
+ * Geo defaults deliberately omit `targetJurisdiction`: an undeclared
+ * jurisdiction must resolve to "unknown" so the compliance gate blocks
+ * regulated verticals until the tenant declares one. Defaulting to a
+ * permissive country would silently authorize regulated publishing.
+ */
 export const DEFAULT_GEO: GeoSettings = {
   additionalRules: [],
   removedRules: [],

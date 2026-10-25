@@ -3,6 +3,8 @@
  * @module tree/clients/muapi-media-types
  */
 
+import { SUPPORTED_IMAGE_MODELS } from '@/seed/config/tiers/supported-image-models';
+
 export const MUAPI_BASE = 'https://api.muapi.ai/v1';
 
 export type MediaType = 'image' | 'video' | 'audio';
@@ -42,7 +44,7 @@ export interface MediaGenerationResult {
 
 /** Supported models per media type */
 export const SUPPORTED_MODELS: Record<MediaType, string[]> = {
-  image: ['midjourney-v7', 'flux-schnell', 'flux-dev', 'hidream', 'flux-kontext'],
+  image: [...SUPPORTED_IMAGE_MODELS],
   video: ['kling-3.0', 'seedance-2.0', 'veo3', 'kling-lip-sync'],
   audio: ['suno-v4', 'mmaudio'],
 };

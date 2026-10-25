@@ -201,6 +201,60 @@ describe('per-tenant geo overrides', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it('GeoSchema parses a row written before targetJurisdiction existed', () => {
+    const legacy = { additionalRules: [], removedRules: [] };
+    const result = GeoSchema.safeParse(legacy);
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.targetJurisdiction).toBeUndefined();
+  });
+
+  it('GeoSchema accepts a declared targetJurisdiction', () => {
+    const result = GeoSchema.safeParse({
+      targetJurisdiction: 'US',
+      additionalRules: [],
+      removedRules: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('GeoSchema accepts EU as a supranational bloc code', () => {
+    const result = GeoSchema.safeParse({ targetJurisdiction: 'EU', additionalRules: [], removedRules: [] });
+    expect(result.success).toBe(true);
+  });
+
+  it('GeoSchema rejects a free-form targetJurisdiction', () => {
+    const result = GeoSchema.safeParse({
+      targetJurisdiction: 'worldwide',
+      additionalRules: [],
+      removedRules: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('GeoSchema rejects a lowercase targetJurisdiction', () => {
+    const result = GeoSchema.safeParse({
+      targetJurisdiction: 'us',
+      additionalRules: [],
+      removedRules: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('set+get round-trips targetJurisdiction alongside the block rules', async () => {
+    const custom = {
+      targetJurisdiction: 'VN',
+      additionalRules: [{ category: 'gambling', blockedCountries: ['AU'], reason: 'Local law' }],
+      removedRules: [{ category: 'crypto', country: 'SG' }],
+    };
+    await set(db, 'tenant-4', 'geo', custom, (v) => GeoSchema.parse(v));
+    const stored = await get<typeof custom>(db, 'tenant-4', 'geo');
+    expect(stored).toEqual(custom);
+  });
+
+  it('DEFAULT_GEO leaves the jurisdiction undeclared so the gate stays fail-closed', () => {
+    expect(DEFAULT_GEO.targetJurisdiction).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------

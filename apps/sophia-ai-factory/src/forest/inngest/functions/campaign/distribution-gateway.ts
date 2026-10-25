@@ -4,6 +4,9 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter';
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
+import { logger } from '@/seed/utils/logger-utility';
+import { resolveAudienceJurisdiction } from '@/tree/affiliates/audience-jurisdiction';
+import { decidePublishCompliance } from '@/tree/affiliates/publish-compliance-decision';
 import type { AffiliateOfferResult } from './types';
 
 export function getD1ForWebhooks(): D1Database | null {
@@ -52,6 +55,8 @@ export async function createDistributionGateway(): Promise<OpenClawGateway> {
 
 export interface DistributeParams {
   campaignId: string;
+  /** Campaign owner; the tenant whose declared geo settings gate the publish. */
+  userId: string;
   videoUrl: string;
   thumbnailUrl: string;
   title: string;
@@ -60,23 +65,82 @@ export interface DistributeParams {
   affiliateOffer: AffiliateOfferResult | null;
 }
 
-export async function runDistribution(params: DistributeParams) {
-  const { campaignId, videoUrl, thumbnailUrl, title, audience, tier, affiliateOffer } = params;
-  const gateway = await createDistributionGateway();
+export interface DistributionComplianceRecord {
+  /** False when the campaign was withheld from the channels on legal grounds. */
+  published: boolean;
+  reason?: string;
+  detail: string;
+  vertical: string;
+  affiliateDisclosureEmitted: boolean;
+  financialDisclaimerEmitted: boolean;
+}
+
+export async function runDistribution(
+  params: DistributeParams,
+): Promise<
+  Awaited<ReturnType<OpenClawGateway['distribute']>> & {
+    compliance: DistributionComplianceRecord;
+  }
+> {
+  const { campaignId, userId, videoUrl, thumbnailUrl, title, audience, tier, affiliateOffer } = params;
   const baseDesc = `AI-generated video content for ${audience || 'general audience'}`;
-  const description = affiliateOffer ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}` : baseDesc;
+
+  const jurisdiction = await resolveAudienceJurisdiction(userId);
+  const decision = decidePublishCompliance({
+    baseDescription: baseDesc,
+    offer: affiliateOffer
+      ? { productName: affiliateOffer.productName, shortUrl: affiliateOffer.shortUrl }
+      : null,
+    jurisdiction,
+    locale: 'en',
+  });
+
+  // A legal refusal is not a transport failure: the channels are never called,
+  // so the campaign completes with an explicit compliance record instead of
+  // dying mid-pipeline as though a provider had errored.
+  if (!decision.mayPublish) {
+    logger.warn('[distribute] compliance gate withheld publishing', {
+      campaignId,
+      userId,
+      vertical: decision.vertical,
+      reason: decision.reason,
+      detail: decision.detail,
+    });
+    return {
+      campaignId,
+      results: [],
+      allSucceeded: false,
+      compliance: {
+        published: false,
+        reason: decision.reason,
+        detail: decision.detail,
+        vertical: decision.vertical,
+        affiliateDisclosureEmitted: false,
+        financialDisclaimerEmitted: false,
+      },
+    };
+  }
+
   const payload = {
     campaignId,
     videoUrl,
     thumbnailUrl: thumbnailUrl || undefined,
     title,
-    description,
+    description: decision.description,
     tags: ['sophia-ai', 'auto-generated', tier.toLowerCase()],
   };
+  const compliance: DistributionComplianceRecord = {
+    published: true,
+    detail: decision.detail,
+    vertical: decision.vertical,
+    affiliateDisclosureEmitted: decision.affiliateDisclosureEmitted,
+    financialDisclaimerEmitted: decision.financialDisclaimerEmitted,
+  };
+  const gateway = await createDistributionGateway();
   const result = await gateway.distribute(payload);
   if (!result.allSucceeded) {
-    const healed = await gateway.selfHeal({ ...payload, description }, result);
-    return healed;
+    const healed = await gateway.selfHeal(payload, result);
+    return { ...healed, compliance };
   }
-  return result;
+  return { ...result, compliance };
 }

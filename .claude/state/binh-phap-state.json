@@ -1,1 +1,19 @@
-{"currentPhase":"ship","lastAction":"verify passed: 23/23 SOP tests green, zero TS errors in changed files, no secrets leak","planPath":"/Users/macbook/sophia-ai-factory/plans/260722-1800-sophia-sop-dashboard-quality-sweep/plan.md","timestamp":"2026-07-22T18:16:00Z","status":"in_progress"}
+{
+  "currentPhase": "implement",
+  "lastAction": "3 commits landed on feat/open-core-25-steps-binh-phap-accuracy: (1) 25-step artifact paths resolved against the repo root, 16 corrected, all 25 resolve and tracked; (2) blueprint copies reconciled and app tasks.md force-added so step 22's artifact exists in the public repo; (3) Binh Phap mapping — 13 chapters as data + all 25 steps mapped with bilingual justification, coverage enforced by test. Full suite green: 18418 passed / 0 failed. Type-check, lint (0 errors), layer boundaries all clean.",
+  "planPath": "/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/plans/261021-2159-idea-25-steps-binh-phap-remap/plan.md",
+  "timestamp": "2026-10-22T00:35:00Z",
+  "status": "completed",
+  "error": null,
+  "branch": "feat/open-core-25-steps-binh-phap-accuracy",
+  "commits": [
+    "747ed991e",
+    "335a9539a",
+    "30b81f41c"
+  ],
+  "leftUncommitted": "Both .mekong/company.json (the other session's uncommitted active_bet block, restored after my git restore destroyed it, plus audit corrections 19/21) and all apps/sophia-ai-factory/plans/* (gitignored by apps/.gitignore:91).",
+  "needsFounderDecision": [
+    "payout-scope-regression blocker (audit item 27)",
+    "whether to fix public docs (audit items 31-35)"
+  ]
+}
