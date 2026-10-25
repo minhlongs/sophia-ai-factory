@@ -4573,7 +4573,8 @@
     "sop_creator": "Thiết Kế Quy Trình SOP",
     "templates": "Templates",
     "upgradePlan": "Nâng cấp gói dịch vụ",
-    "voices": "Voices"
+    "voices": "Voices",
+    "image_studio": "Xưởng Ảnh AI"
   },
   "privacy": {
     "meta_title": "Chính Sách Bảo Mật - Sophia AI Factory",
@@ -9096,5 +9097,57 @@
     "analytics": "Phân tích & đo lường",
     "marketing": "Tiếp thị & ghi nhận giới thiệu",
     "save": "Lưu tùy chọn"
+  },
+  "imageStudio": {
+    "title": "Xưởng Ảnh AI",
+    "preview": {
+      "emptyTitle": "Ảnh bạn tạo sẽ xuất hiện ở đây. Nhập mô tả để tạo ảnh đầu tiên.",
+      "generatedImageAlt": "Ảnh được tạo",
+      "modelLabel": "Mô hình",
+      "statusLabel": "Trạng thái",
+      "retryStatus": "Làm mới trạng thái",
+      "retryLoad": "Thử tải lại",
+      "imageLoadFailedTitle": "Ảnh đã được tạo nhưng không thể hiển thị.",
+      "failedHint": "Lượt tạo này chưa hoàn thành. Mô tả của bạn vẫn còn — bạn có thể chỉnh và thử lại.",
+      "unknownStateHint": "Công việc này ở trạng thái chưa nhận diện được. Không có gì bị mất.",
+      "reviewSetup": "Kiểm tra cấu hình"
+    },
+    "history": {
+      "title": "Lịch sử ảnh",
+      "empty": "Chưa có ảnh nào.",
+      "untitled": "Chưa đặt tên",
+      "loadFailed": "Không tải được ảnh trước đó của bạn."
+    },
+    "brief": {
+      "title": "Mô tả và cài đặt",
+      "promptLabel": "Mô tả ảnh",
+      "promptPlaceholder": "Mô tả ảnh bạn muốn tạo...",
+      "promptRequired": "Nhập mô tả ngắn để tiếp tục.",
+      "charsRemaining": "Còn {count} ký tự",
+      "modelLabel": "Mô hình",
+      "noModelsAvailable": "Không có mô hình khả dụng",
+      "noModelsAvailableHint": "Gói hiện tại của bạn chưa có mô hình khả dụng.",
+      "lockedModels": "Bị khóa trên gói của bạn",
+      "upgradeToUnlock": "nâng cấp để mở",
+      "currentTier": "Gói hiện tại: {tier}",
+      "aspectRatioLabel": "Tỷ lệ khung hình",
+      "submit": "Tạo ảnh",
+      "submitting": "Đang gửi…",
+      "submitAccepted": "Đã nhận yêu cầu. Ảnh của bạn đang được tạo.",
+      "accepted": "Đã nhận yêu cầu. Theo dõi kết quả ở khung xem trước.",
+      "submitFailed": "Không thể bắt đầu tạo ảnh. Mô tả của bạn vẫn giữ nguyên.",
+      "missingKey": "Chưa có khóa nhà cung cấp ảnh. Hãy thêm khóa trong phần cấu hình để tạo ảnh.",
+      "dismiss": "Đóng"
+    },
+    "status": {
+      "queued": "Đang chờ",
+      "running": "Đang được tạo",
+      "done": "Đã hoàn thành",
+      "failed": "Chưa hoàn thành",
+      "unknown": "Trạng thái chưa nhận diện được",
+      "queuedHint": "Đang chờ trong hàng. Ảnh mới thường cần một chút thời gian.",
+      "runningHint": "Đang được tạo. Hãy giữ trang này mở — kết quả sẽ tự hiện ra.",
+      "statusUnavailable": "Không lấy được trạng thái trực tiếp. Đang hiển thị trạng thái gần nhất."
+    }
   }
 }

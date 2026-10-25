@@ -1,3 +1,15 @@
+/**
+ * MuAPI submission handler for the image generate API route.
+ *
+ * Retained for its tier-map reference and documentation of the branch's shape,
+ * but unreachable from the route: the route refuses every non-fal model before
+ * dispatch. The branch submits against the platform's own MUAPI_API_KEY and
+ * records `cost_classification: 'UNKNOWN'` with no `provider_cost`, no credit
+ * deduction and no usage event, so no caller may reach it until a cost owner is
+ * decided. Re-enabling requires removing the route's non-fal rejection and the
+ * matching guards in the server action and the land orchestrator together.
+ */
+
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';

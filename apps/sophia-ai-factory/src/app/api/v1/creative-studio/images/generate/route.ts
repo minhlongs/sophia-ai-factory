@@ -6,6 +6,9 @@
  *
  * Body: { prompt: string, model: string, aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' }
  * Response: { jobId: string }
+ *
+ * Only fal-ai models are served; every other model id is refused before any
+ * handler is reached.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,7 +16,6 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { bodySchema, isFalModel } from './config';
 import { handleFalGeneration } from './fal-handler';
-import { handleMuapiGeneration } from './muapi-handler';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
@@ -39,9 +41,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { prompt, model, aspectRatio } = parsed.data;
   const tier = await resolveUserTier(user.id);
 
-  if (isFalModel(model)) {
-    return handleFalGeneration(user, tier, prompt, model, aspectRatio);
+  if (!isFalModel(model)) {
+    // Every non-fal model would route to the MuAPI branch, which submits against
+    // the platform's own MuAPI key and records no provider cost, so no caller may
+    // reach it. Refuse the request here rather than letting the provider gate
+    // inside the handler decide, so the two server entry points answer alike.
+    return NextResponse.json(
+      { message: `Model "${model}" is not supported. Choose a fal-ai/ model.` },
+      { status: 403 },
+    );
   }
 
-  return handleMuapiGeneration(user, tier, prompt, model, aspectRatio);
+  return handleFalGeneration(user, tier, prompt, model, aspectRatio);
 }

@@ -151,24 +151,13 @@ describe('fal-ai route integration', () => {
     expect(res.status).toBe(401);
   });
 
-  it('MuAPI models still work (non-breaking)', async () => {
+  it('refuses a non-fal model instead of dispatching it to MuAPI', async () => {
     vi.mocked(resolveUserTier).mockResolvedValue('PREMIUM');
     const { submitMediaJob } = await import('@/tree/clients/muapi-media-client');
-    vi.mocked(submitMediaJob).mockResolvedValue({
-      success: true,
-      job: {
-        id: 'muapi-job-123',
-        status: 'pending',
-        type: 'image',
-        model: 'flux-schnell',
-        createdAt: new Date().toISOString(),
-      },
-    });
 
     const res = await POST(createRequest({ prompt: 'A sunset', model: 'flux-schnell' }));
-    const body = (await res.json()) as { jobId: string };
 
-    expect(res.status).toBe(201);
-    expect(body.jobId).toBe('muapi-job-123');
+    expect(res.status).toBe(403);
+    expect(submitMediaJob).not.toHaveBeenCalled();
   });
 });

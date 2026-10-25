@@ -4573,7 +4573,8 @@
     "sop_creator": "Sop creator",
     "templates": "Templates",
     "upgradePlan": "Upgrade Plan",
-    "voices": "Voices"
+    "voices": "Voices",
+    "image_studio": "Image Studio"
   },
   "privacy": {
     "meta_title": "Privacy Policy - Sophia AI Factory",
@@ -9089,5 +9090,57 @@
     "analytics": "Analytics & measurement",
     "marketing": "Marketing & referral attribution",
     "save": "Save preferences"
+  },
+  "imageStudio": {
+    "title": "Image Studio",
+    "preview": {
+      "emptyTitle": "Your generated images will appear here. Enter a brief to create your first image.",
+      "generatedImageAlt": "Generated image",
+      "modelLabel": "Model",
+      "statusLabel": "Status",
+      "retryStatus": "Refresh status",
+      "retryLoad": "Try loading again",
+      "imageLoadFailedTitle": "The image was created but could not be displayed.",
+      "failedHint": "This generation did not complete. Your brief is safe — you can adjust it and try again.",
+      "unknownStateHint": "This job is in an unrecognised state. Nothing was discarded.",
+      "reviewSetup": "Review setup"
+    },
+    "history": {
+      "title": "Image history",
+      "empty": "No images yet.",
+      "untitled": "Untitled",
+      "loadFailed": "Your earlier images could not be loaded."
+    },
+    "brief": {
+      "title": "Brief and settings",
+      "promptLabel": "Image brief",
+      "promptPlaceholder": "Describe the image you want...",
+      "promptRequired": "Enter a short description to continue.",
+      "charsRemaining": "{count} characters left",
+      "modelLabel": "Model",
+      "noModelsAvailable": "No model available",
+      "noModelsAvailableHint": "No model is available on your current plan.",
+      "lockedModels": "Locked on your plan",
+      "upgradeToUnlock": "upgrade to unlock",
+      "currentTier": "Current plan: {tier}",
+      "aspectRatioLabel": "Aspect ratio",
+      "submit": "Generate image",
+      "submitting": "Submitting…",
+      "submitAccepted": "Request accepted. Your image is being created.",
+      "accepted": "Request accepted. Watch the preview for the result.",
+      "submitFailed": "Generation could not be started. Your brief is unchanged.",
+      "missingKey": "No image provider key is set up yet. Add one in setup to generate images.",
+      "dismiss": "Dismiss"
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Being created",
+      "done": "Completed",
+      "failed": "Not completed",
+      "unknown": "Unrecognised state",
+      "queuedHint": "Waiting in the queue. New images usually take a moment.",
+      "runningHint": "Being created. Keep this page open — the result appears automatically.",
+      "statusUnavailable": "Live status is unavailable. Showing the last known state."
+    }
   }
 }

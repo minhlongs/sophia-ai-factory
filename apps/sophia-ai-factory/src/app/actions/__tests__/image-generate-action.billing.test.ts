@@ -140,13 +140,14 @@ describe('generateImageAction — fal-ai billing', () => {
     expect(mockTrackUsage).not.toHaveBeenCalled();
   });
 
-  it('does not charge credits for MuAPI models (untouched path)', async () => {
+  it('refuses non-fal models without charging credits', async () => {
     const result = await generateImageAction({
       prompt: 'A dog',
       model: 'flux-schnell',
     });
 
-    // MuAPI path should not invoke fal-ai billing.
+    // The non-fal branch is refused, so no billing side effects are possible.
+    expect(result.success).toBe(false);
     expect(mockDeductCredits).not.toHaveBeenCalled();
     expect(mockTrackUsage).not.toHaveBeenCalled();
   });

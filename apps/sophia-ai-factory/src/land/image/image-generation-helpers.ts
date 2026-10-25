@@ -57,6 +57,19 @@ export async function recordFailedFalImageJob(params: {
   return { success: false, error: message, code };
 }
 
+/**
+ * Submits a MuAPI-hosted media job and records it in D1.
+ *
+ * Retained deliberately, but unreachable in production: this path spends the
+ * platform's own MUAPI_API_KEY while recording `cost_classification: 'UNKNOWN'`
+ * with no `provider_cost`, no credit deduction and no usage event, so nobody is
+ * recorded as paying for the generation. Every entry point — the API route, the
+ * image-generate server action and this orchestrator — refuses non-fal models
+ * before dispatch, so nothing calls this today. It is kept as-is rather than
+ * deleted so the branch can be restored, with a real cost owner attached, once
+ * that decision is made; re-enabling it requires re-opening all three doors on
+ * purpose, not just removing this comment.
+ */
 export async function submitMuApiImageJob(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {

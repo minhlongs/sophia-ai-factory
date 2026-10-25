@@ -10,18 +10,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { handleThrownError } from '@/seed/api';
-
-interface MediaJobRow {
-  id: string;
-  type: string;
-  model: string;
-  prompt: string | null;
-  status: string;
-  result_url: string | null;
-  thumbnail_url: string | null;
-  created_at: number;
-  completed_at: number | null;
-}
+import { listUserImageJobs } from '@/tree/creative-studio/image-job-queries';
 
 export async function GET(): Promise<NextResponse> {
   // Auth check
@@ -31,21 +20,8 @@ export async function GET(): Promise<NextResponse> {
   }
 
   try {
-    const db = createServerClient();
-    const { data: rows, error } = await db
-      .from('media_jobs')
-      .select('id, type, model, prompt, status, result_url, thumbnail_url, created_at, completed_at')
-      .eq('user_id', user.id)
-      .eq('type', 'image')
-      .order('created_at', { ascending: false })
-      .limit(50) as { data: MediaJobRow[] | null; error: { message: string } | null };
-
-    if (error) {
-      logger.error('[creative-studio/images] D1 query failed', new Error(error.message));
-      return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
-    }
-
-    return NextResponse.json({ images: rows ?? [] });
+    const rows = await listUserImageJobs(createServerClient(), user.id);
+    return NextResponse.json({ images: rows });
   } catch (err) {
     return handleThrownError(err, 'Internal server error', 'IMAGE_LIST_FAILED');
   }
