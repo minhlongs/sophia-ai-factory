@@ -34,19 +34,15 @@ export function allowedImageModelsForTier(tier: string): string[] {
   return [...muapi, ...fal];
 }
 
-/** Prefix shared by every provider-metered (cost-owned) image model. */
-const FAL_MODEL_PREFIX = 'fal-ai/';
-
 /**
- * Models a tier may actually be offered in the customer's picker.
+ * Models a tier is offered in the customer's picker.
  *
- * Deliberately narrower than {@link allowedImageModelsForTier}: the access map
- * records entitlement, while this records what the workspace offers. MuAPI ids
- * are excluded because that submission path spends real money with no cost
- * owner, so offering them lets a customer start work nobody pays for. The
- * excluded models stay in the access map, so the branch can be re-enabled by
- * changing this one filter once a cost owner is decided.
+ * Lists fal-ai models first (so the default selection is the synchronous fal
+ * model) followed by the tier's MuAPI models, which execute using the
+ * customer's own BYOK `'muapi'` key resolved without a platform fallback.
  */
 export function selectableImageModelsForTier(tier: string): string[] {
-  return allowedImageModelsForTier(tier).filter((id) => id.startsWith(FAL_MODEL_PREFIX));
+  const muapi = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
+  const fal = TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC;
+  return [...fal, ...muapi];
 }

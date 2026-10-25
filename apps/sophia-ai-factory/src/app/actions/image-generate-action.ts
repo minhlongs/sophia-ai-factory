@@ -14,7 +14,10 @@
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { TIER_ALLOWED_FAL_MODELS } from '@/seed/config/tiers/image-model-access';
+import {
+  TIER_ALLOWED_FAL_MODELS,
+  TIER_ALLOWED_MODELS,
+} from '@/seed/config/tiers/image-model-access';
 import { executeImageGeneration } from '@/land/image';
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
@@ -59,19 +62,11 @@ export async function generateImageAction(
   const { prompt, model, aspectRatio } = parsed.data;
   const tier = await resolveUserTier(user.id);
 
-  if (!isFalModel(model)) {
-    // The non-fal branch spends the platform's own MuAPI key without recording
-    // a provider cost, so the action refuses those models outright instead of
-    // consulting the tier map. The tier map below still guards the fal branch.
-    return {
-      success: false,
-      error: `Model "${model}" is not supported. Choose a fal-ai/ model.`,
-      code: 'TIER_GATE',
-    };
-  }
+  const allowedModels = isFalModel(model)
+    ? (TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC)
+    : (TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC);
 
-  const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC;
-  if (!allowedFalModels.includes(model)) {
+  if (!allowedModels.includes(model)) {
     return {
       success: false,
       error: `Model "${model}" is not available for your ${tier} plan.`,

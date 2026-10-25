@@ -39,16 +39,18 @@ export {
  */
 export async function submitMediaJob(
   req: MediaGenerationRequest,
+  apiKey?: string,
 ): Promise<MediaGenerationResult> {
   if (!shouldAllowRequest('muapi')) {
     return { success: false, error: 'Circuit breaker open for muapi' };
   }
+  const resolvedKey = apiKey || getMuApiKey();
   try {
     const res = await fetch(`${MUAPI_BASE}/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getMuApiKey()}`,
+        Authorization: `Bearer ${resolvedKey}`,
       },
       body: JSON.stringify({
         type: req.type, model: req.model, prompt: req.prompt,

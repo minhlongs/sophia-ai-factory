@@ -101,21 +101,19 @@ Commands run and their outcomes:
   because a number copied from here rather than measured is exactly the kind of
   claim this document exists to avoid.
 
-## The workspace is not yet reachable from the sidebar
+## Sidebar navigation and customer-BYOK MuAPI cost ownership
 
-The workspace route and all its modules are committed, but **no nav entry
-points at it**. `src/forest/dashboard/dashboard-nav-modules.ts` has no
-`image_studio` key at HEAD, so a customer cannot reach `/{locale}/dashboard/
-image-studio` from the UI today — only by typing the URL. Both nav suites
-(`dashboard-sidebar-nav.test.tsx` at 14 modules, and the independent challenger
-suite with its own hardcoded list) still assert the original 14 and pass, which
-is consistent with this record rather than contradicting it.
-
-Adding the entry is a one-line change plus the matching count bump in both
-suites, and is deliberately left out of this slice: it changes the sidebar every
-customer sees, which is a wider blast radius than an unreferenced route. An
-earlier draft of this document claimed the entry and the two test updates had
-already landed here; that was wrong and has been corrected.
+- `src/forest/dashboard/dashboard-nav-modules.ts` registers `image_studio`
+  (`/dashboard/image-studio`, label `sidebar.image_studio`) at position 5 right
+  after `creative_studio`, bringing the canonical sidebar module count to 15 in
+  both `dashboard-sidebar-nav.test.tsx` and
+  `dashboard-sidebar-nav.challenger.test.tsx`.
+- MuAPI image generation (`flux-schnell`, `flux-dev`, `hidream`, `midjourney`,
+  `ideogram`) is customer-paid via BYOK only: `submitMuApiImageJob` and the
+  status poller resolve `resolveUserApiKey(userId, 'muapi')` without a platform
+  environment fallback, so `process.env.MUAPI_API_KEY` is never spent on image
+  generation. Customers without a stored `'muapi'` key receive `NO_API_KEY`
+  before any provider call.
 
 ## Build
 

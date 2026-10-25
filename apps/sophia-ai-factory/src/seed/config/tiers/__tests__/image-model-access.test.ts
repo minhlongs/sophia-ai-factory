@@ -18,22 +18,20 @@ import {
 const TIERS = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 describe('selectableImageModelsForTier', () => {
-  it('offers the fal model a BASIC customer can use', () => {
-    expect(selectableImageModelsForTier('BASIC')).toContain('fal-ai/flux-schnell');
+  it('offers the fal model a BASIC customer can use first as the default', () => {
+    const basic = selectableImageModelsForTier('BASIC');
+    expect(basic[0]).toBe('fal-ai/flux-schnell');
+    expect(basic).toContain('flux-schnell');
   });
 
-  it('never offers a model without the fal-ai prefix, for any tier', () => {
+  it('places fal-ai models ahead of customer-BYOK MuAPI models for every tier', () => {
     for (const tier of TIERS) {
-      for (const id of selectableImageModelsForTier(tier)) {
-        expect(id, `${tier} offered ${id}`).toMatch(/^fal-ai\//);
-      }
+      const models = selectableImageModelsForTier(tier);
+      expect(models[0], `${tier} first model`).toMatch(/^fal-ai\//);
     }
   });
 
-  it('offers nothing for a tier whose allowed set is only MuAPI ids', () => {
-    // Defensive: the filter must not silently fall back to fal models when a
-    // tier maps to MuAPI-only ids, because that would offer a model the tier
-    // is not entitled to.
+  it('falls back to the BASIC set for an unknown tier', () => {
     expect(selectableImageModelsForTier('UNKNOWN_TIER')).toEqual(
       selectableImageModelsForTier('BASIC'),
     );
@@ -45,12 +43,11 @@ describe('selectableImageModelsForTier', () => {
     }
   });
 
-  it('is a strict subset of the access map', () => {
+  it('matches the entitlement set in allowedImageModelsForTier', () => {
     for (const tier of TIERS) {
       const allowed = allowedImageModelsForTier(tier);
-      for (const id of selectableImageModelsForTier(tier)) {
-        expect(allowed).toContain(id);
-      }
+      const selectable = selectableImageModelsForTier(tier);
+      expect(new Set(selectable)).toEqual(new Set(allowed));
     }
   });
 });

@@ -1,21 +1,22 @@
 /**
- * Door-closed tests for the non-fal image branch.
+ * Customer-BYOK cost-ownership tests for the MuAPI image branch.
  *
- * The MuAPI branch spends the platform's MUAPI_API_KEY while recording no
- * provider cost and deducting no credits, so no caller may reach it. These tests
- * pin that boundary at each of the three entry points:
+ * MuAPI image generation is customer-paid via BYOK only: the server resolves
+ * `resolveUserApiKey(userId, 'muapi')` with NO platform environment fallback,
+ * so `process.env.MUAPI_API_KEY` is never spent on image generation.
  *
+ * These tests pin that boundary across all three entry points:
  * 1. POST /api/v1/creative-studio/images/generate
  * 2. generateImageAction (server action)
  * 3. executeImageGeneration (land orchestrator)
  *
- * Each rejection must happen before any provider dispatch, which is asserted
- * by requiring submitMediaJob to have never been called. The same model
- * reaching the fal branch is asserted to still succeed, so the rejection is
- * about the provider and not about the tier or the request shape.
+ * - Without a customer BYOK `'muapi'` key (even if `process.env.MUAPI_API_KEY`
+ *   is set), every entry point refuses with `NO_API_KEY` before `submitMediaJob`.
+ * - With a customer BYOK `'muapi'` key, allowed models dispatch using the
+ *   customer's key and record `cost_classification: 'UNMETERED'`.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ─── Mocks (hoisted) ──────────────────────────────────────────────────────────
@@ -28,7 +29,11 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
   resolveUserTier: vi.fn(),
 }));
 
-const { mockSubmitMediaJob } = vi.hoisted(() => ({ mockSubmitMediaJob: vi.fn() }));
+const { mockSubmitMediaJob, mockInsert } = vi.hoisted(() => ({
+  mockSubmitMediaJob: vi.fn(),
+  mockInsert: vi.fn(() => ({ error: null })),
+}));
+
 vi.mock('@/tree/clients/muapi-media-client', () => ({
   submitMediaJob: mockSubmitMediaJob,
   SUPPORTED_MODELS: { image: ['flux-schnell', 'flux-dev', 'hidream'] },
@@ -39,7 +44,7 @@ vi.mock('@/tree/clients/muapi-media-client', () => ({
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => ({
     from: vi.fn(() => ({
-      insert: vi.fn(() => ({ error: null })),
+      insert: mockInsert,
     })),
   })),
 }));
@@ -49,7 +54,9 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }));
 
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
-  resolveUserApiKey: vi.fn(() => Promise.resolve('fal_test_key')),
+  resolveUserApiKey: vi.fn((_userId: string, provider: string) =>
+    Promise.resolve(provider === 'fal-ai' ? 'fal_test_key' : null),
+  ),
 }));
 
 vi.mock('@/seed/ai/providers/fal-image-provider', () => ({
@@ -91,6 +98,7 @@ vi.mock('@/tree/usage-metering', () => ({
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { POST } from '../route';
 import { generateImageAction } from '@/app/actions/image-generate-action';
 import { executeImageGeneration } from '@/land/image';
@@ -105,43 +113,58 @@ function createRequest(body: unknown): NextRequest {
   });
 }
 
-describe('non-fal image models are rejected before any provider dispatch', () => {
+describe('MuAPI image models require customer BYOK and never spend platform MUAPI_API_KEY', () => {
+  const originalEnvKey = process.env.MUAPI_API_KEY;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.MUAPI_API_KEY = 'platform_operator_secret_key';
     vi.mocked(getCurrentUser).mockResolvedValue({
       id: 'user-1',
       email: 'test@example.com',
     });
-    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+    vi.mocked(resolveUserTier).mockResolvedValue('ENTERPRISE');
+    vi.mocked(resolveUserApiKey).mockImplementation((_userId, provider) =>
+      Promise.resolve(provider === 'fal-ai' ? 'fal_test_key' : null),
+    );
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('[]', { status: 200 }),
     );
   });
 
-  describe.each(NON_FAL_MODELS)('model %s', (model) => {
-    it('is rejected by the API route without dispatching to MuAPI', async () => {
-      const res = await POST(createRequest({ prompt: 'A sunset', model }));
-      const body = (await res.json()) as { message: string };
+  afterEach(() => {
+    if (originalEnvKey === undefined) {
+      delete process.env.MUAPI_API_KEY;
+    } else {
+      process.env.MUAPI_API_KEY = originalEnvKey;
+    }
+  });
 
-      expect(res.status).toBe(403);
-      expect(body.message).toContain(model);
+  describe.each(NON_FAL_MODELS)('model %s without customer BYOK key', (model) => {
+    it('is refused by the API route with 422 NO_API_KEY without touching platform MUAPI_API_KEY', async () => {
+      const res = await POST(createRequest({ prompt: 'A sunset', model }));
+      const body = (await res.json()) as { message: string; code: string };
+
+      expect(res.status).toBe(422);
+      expect(body.code).toBe('NO_API_KEY');
+      expect(resolveUserApiKey).toHaveBeenCalledWith('user-1', 'muapi');
       expect(mockSubmitMediaJob).not.toHaveBeenCalled();
     });
 
-    it('is rejected by the server action with a typed code and a naming message', async () => {
+    it('is refused by the server action with NO_API_KEY before provider dispatch', async () => {
       const result = await generateImageAction({ prompt: 'A sunset', model, aspectRatio: '1:1' });
 
       expect(result.success).toBe(false);
       if (result.success) return;
-      expect(result.code).toBe('TIER_GATE');
-      expect(result.error).toContain(model);
+      expect(result.code).toBe('NO_API_KEY');
+      expect(resolveUserApiKey).toHaveBeenCalledWith('user-1', 'muapi');
       expect(mockSubmitMediaJob).not.toHaveBeenCalled();
     });
 
-    it('is rejected by the land orchestrator before provider dispatch', async () => {
+    it('is refused by the land orchestrator with NO_API_KEY before provider dispatch', async () => {
       const result = await executeImageGeneration({
         userId: 'user-1',
-        tier: 'BASIC',
+        tier: 'ENTERPRISE',
         prompt: 'A sunset',
         model,
         aspectRatio: '1:1',
@@ -149,20 +172,48 @@ describe('non-fal image models are rejected before any provider dispatch', () =>
 
       expect(result.success).toBe(false);
       if (result.success) return;
-      expect(result.code).toBe('TIER_GATE');
-      expect(result.error).toContain(model);
+      expect(result.code).toBe('NO_API_KEY');
+      expect(resolveUserApiKey).toHaveBeenCalledWith('user-1', 'muapi');
       expect(mockSubmitMediaJob).not.toHaveBeenCalled();
     });
   });
 
-  it('rejects a non-fal model even when the tier list would have allowed it', async () => {
-    // flux-schnell is listed in TIER_ALLOWED_MODELS for every tier, so the tier
-    // gate used to pass; the provider gate is what must now refuse it.
-    vi.mocked(resolveUserTier).mockResolvedValue('ENTERPRISE');
+  it('dispatches with the customer BYOK key when the customer has configured one', async () => {
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+    vi.mocked(resolveUserApiKey).mockImplementation((_userId, provider) =>
+      Promise.resolve(provider === 'muapi' ? 'customer_byok_muapi_key' : 'fal_test_key'),
+    );
+    mockSubmitMediaJob.mockResolvedValueOnce({
+      success: true,
+      job: { id: 'muapi_job_42', status: 'pending', type: 'image', model: 'flux-schnell', createdAt: '2026-10-25' },
+    });
 
     const res = await POST(createRequest({ prompt: 'A sunset', model: 'flux-schnell' }));
+    const body = (await res.json()) as { jobId: string };
+
+    expect(res.status).toBe(201);
+    expect(body.jobId).toBe('muapi_job_42');
+    expect(resolveUserApiKey).toHaveBeenCalledWith('user-1', 'muapi');
+    expect(mockSubmitMediaJob).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'image', model: 'flux-schnell', prompt: 'A sunset' }),
+      'customer_byok_muapi_key',
+    );
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'muapi_job_42',
+        provider: 'muapi',
+        cost_classification: 'UNMETERED',
+      }),
+    );
+  });
+
+  it('rejects a MuAPI model outside the customer tier with TIER_GATE before resolving keys', async () => {
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+
+    const res = await POST(createRequest({ prompt: 'A sunset', model: 'flux-dev' }));
 
     expect(res.status).toBe(403);
+    expect(resolveUserApiKey).not.toHaveBeenCalled();
     expect(mockSubmitMediaJob).not.toHaveBeenCalled();
   });
 
@@ -177,7 +228,7 @@ describe('non-fal image models are rejected before any provider dispatch', () =>
     expect(mockSubmitMediaJob).not.toHaveBeenCalled();
   });
 
-  it('still gates a fal model the tier does not allow with the same TIER_GATE code', async () => {
+  it('still gates a fal model the tier does not allow with 403', async () => {
     vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
 
     const res = await POST(createRequest({ prompt: 'A sunset', model: 'fal-ai/flux/dev' }));
