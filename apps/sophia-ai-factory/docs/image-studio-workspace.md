@@ -59,9 +59,6 @@ Changed modules:
   `src/seed/config/tiers/supported-image-models.ts`.
   `@/tree/clients/muapi-media-client` re-exports the same value through
   `SUPPORTED_MODELS.image`, so its public shape is unchanged.
-- `src/forest/dashboard/dashboard-nav-modules.ts` — new `image_studio` nav entry
-  so the workspace is reachable. The existing `creative_studio` entry still
-  points at `creative-economy`; nothing was repointed.
 
 ## Behaviour decisions worth knowing
 
@@ -97,29 +94,28 @@ Commands run and their outcomes:
 - Focused vitest run (`src/tree/creative-studio`,
   `src/app/[locale]/dashboard/image-studio`,
   `src/app/api/v1/creative-studio`) → 50 passed / 6 files.
-- `npm test` (full suite) → 18511 passed, 34 skipped, 10 todo across 1942
-  files, 0 failures, exit 0.
-- `npm run build` → recorded separately below under "Build".
+- The full-suite figures recorded here earlier (18511 passed / 34 skipped /
+  10 todo across 1942 files) were a run of an earlier tree and are not a
+  current measurement. The repository holds 1811 test files today. A full-suite
+  number is not re-stated in this document until it is re-run and captured,
+  because a number copied from here rather than measured is exactly the kind of
+  claim this document exists to avoid.
 
-## Nav module count
+## The workspace is not yet reachable from the sidebar
 
-Adding the workspace as the 15th nav module broke two nav suites that assert
-exactly 14 canonical modules: the length/count assertions in
-`dashboard-sidebar-nav.test.tsx`, and the index-by-index assertions in the
-independent challenger suite, which holds its own hardcoded list of the nav.
+The workspace route and all its modules are committed, but **no nav entry
+points at it**. `src/forest/dashboard/dashboard-nav-modules.ts` has no
+`image_studio` key at HEAD, so a customer cannot reach `/{locale}/dashboard/
+image-studio` from the UI today — only by typing the URL. Both nav suites
+(`dashboard-sidebar-nav.test.tsx` at 14 modules, and the independent challenger
+suite with its own hardcoded list) still assert the original 14 and pass, which
+is consistent with this record rather than contradicting it.
 
-Both were updated to 15 with `image_studio` in position 5, immediately after
-`creative_studio`. This is the honest reading of the challenger suite: it
-re-lists every module with label, href and icon precisely so that a real change
-to the nav has to be re-declared and re-verified there, rather than passing by
-silence. Updating a duplicated expectation list to match a deliberate change is
-maintaining the check, not weakening it. No assertion was relaxed, removed, or
-made conditional, and no nav entry was deleted to keep the count at 14.
-
-Re-pointing the existing `creative_studio` entry instead was rejected: that
-entry leads to `creative-economy`, a read-only analytics dashboard, so a single
-entry could not serve both without one of the two surfaces losing its only way
-in.
+Adding the entry is a one-line change plus the matching count bump in both
+suites, and is deliberately left out of this slice: it changes the sidebar every
+customer sees, which is a wider blast radius than an unreferenced route. An
+earlier draft of this document claimed the entry and the two test updates had
+already landed here; that was wrong and has been corrected.
 
 ## Build
 
@@ -197,8 +193,9 @@ are re-declared locally in `image-generate-action.ts` and
 `src/seed/config/tiers/image-model-access.ts`. Deleting the
 `src/app/[locale]/dashboard/image-studio/` directory and the
 `src/tree/creative-studio/` query modules removes the rest; the only other
-cleanup is the `image_studio` entry in `nav-modules` and the `imageStudio` /
-`sidebar.image_studio` keys in `messages/{vi,en}.json`.
+cleanup is the `imageStudio` / `sidebar.image_studio` keys in
+`messages/{vi,en}.json`. There is no nav entry to revert, because none was
+added.
 
 ## Risks
 
