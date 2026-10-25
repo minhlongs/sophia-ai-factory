@@ -12,6 +12,10 @@ import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
 import { storeFalImageInR2 } from '@/land/image/fal-image-r2-service';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import { trackUsage, calculateCredits, hashLicenseKey, resolveUserLicenseNonce } from '@/tree/usage-metering';
+import {
+  buildImageIdempotencyKey,
+  findRecentDuplicateImageJob,
+} from '@/tree/creative-studio/image-generation-idempotency';
 import { logger } from '@/seed/utils/logger-utility';
 import { classifyCost } from '@/seed/types/creative-job-economics';
 import { recordFailedFalImageJob } from './image-generation-helpers';
@@ -21,6 +25,21 @@ export async function executeFalImageGeneration(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
   const { userId, tier, prompt, model, aspectRatio } = input;
+
+  const db = createServerClient();
+  const duplicateJobId = await findRecentDuplicateImageJob(db, {
+    userId,
+    prompt,
+    model,
+  });
+  if (duplicateJobId) {
+    logger.info('[image-orchestrator] Returning deduplicated fal-ai image job', {
+      userId,
+      duplicateJobId,
+      model,
+    });
+    return { success: true, jobId: duplicateJobId };
+  }
 
   const apiKey = await resolveUserApiKey(userId, 'fal-ai', process.env.FAL_KEY);
   if (!apiKey) {
@@ -55,7 +74,6 @@ export async function executeFalImageGeneration(
       return { success: false, error: 'Failed to persist generated image', code: 'STORAGE_ERROR' };
     }
 
-    const db = createServerClient();
     const requestedAt = Math.floor(startTime / 1000);
     const { error: insertError } = await db.from('media_jobs').insert({
       id: jobId,
@@ -96,6 +114,7 @@ export async function executeFalImageGeneration(
     }
 
     if (licenseNonce) {
+      const idempotencyKey = buildImageIdempotencyKey({ userId, prompt, model, aspectRatio });
       await trackUsage({
         userId,
         licenseKeyHash: hashLicenseKey(licenseNonce),
@@ -105,6 +124,7 @@ export async function executeFalImageGeneration(
         action: 'imageGenerate',
         creditsUsed: creditsToCharge,
         requestId: jobId,
+        idempotencyKey,
         modelName: model,
         tierAtRequest: tier,
         statusCode: 200,

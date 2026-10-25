@@ -42,9 +42,14 @@ New modules:
 - `src/tree/creative-studio/image-job-status.ts` — status vocabulary and the
   stage mapping the UI dispatches on.
 - `src/tree/creative-studio/image-job-view-model.ts` — pure row → view model.
+- `src/tree/creative-studio/image-generation-idempotency.ts` — deterministic
+  SHA-256 idempotency key generation and short-window duplicate job detection.
+- `src/app/api/v1/creative-studio/images/[id]/download/route.ts` — secure,
+  authenticated image download endpoint with IDOR protection, streaming from
+  R2 or proxying provider CDNs with `Content-Disposition: attachment`.
 - `src/app/[locale]/dashboard/image-studio/` — server page plus
   `image-studio-view`, `image-brief-panel`, `image-preview-panel`,
-  `image-history-strip`, `use-image-studio-state`.
+  `image-preview-body`, `image-history-strip`, `use-image-studio-state`.
 
 Changed modules:
 
@@ -53,6 +58,11 @@ Changed modules:
 - `src/app/api/v1/creative-studio/images/generate/config.ts` and
   `src/app/actions/image-generate-action.ts` now import the tier maps from one
   place instead of each holding a copy.
+- `src/land/image/fal-image-generation-runner.ts` and
+  `src/land/image/image-generation-helpers.ts` now check for recent duplicate
+  in-flight jobs within a 60-second window before initiating new generations.
+- `src/app/[locale]/dashboard/image-studio/image-preview-panel.tsx` now offers
+  "Tải ảnh về" (Download) and "Dùng lại mô tả" (Remix / Use brief) buttons.
 - New `src/seed/config/tiers/image-model-access.ts` — single source of truth for
   tier → model access. It lives in `seed` because `seed` may not import `tree`,
   and the model list it needs was pulled up to
@@ -158,11 +168,11 @@ added.
 
 ## Risks
 
-- No server idempotency on image generation. A retry after a transport failure
-  creates a second, billable job rather than resolving the first. The client
-  guard prevents an obvious double click but not a client-side retry. Closing
-  this needs an idempotency key on the action and route, which is a backend
-  change beyond this slice.
+- Server-side deduplication checks for a recent non-failed job with identical
+  `(userId, model, prompt)` within a 60-second window and emits a deterministic
+  SHA-256 idempotency key for usage tracking. Because D1 does not support
+  distributed row locks across concurrent Worker isolates, two requests arriving
+  within the same millisecond before the first row is inserted can still race.
 - `media_jobs` has no `cost_classification` write on the MuAPI path, so the
   workspace shows no cost. Per the honesty rule it shows nothing rather than
   inventing a number.

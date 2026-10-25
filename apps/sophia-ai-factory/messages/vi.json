@@ -9111,7 +9111,9 @@
       "imageLoadFailedTitle": "Ảnh đã được tạo nhưng không thể hiển thị.",
       "failedHint": "Lượt tạo này chưa hoàn thành. Mô tả của bạn vẫn còn — bạn có thể chỉnh và thử lại.",
       "unknownStateHint": "Công việc này ở trạng thái chưa nhận diện được. Không có gì bị mất.",
-      "reviewSetup": "Kiểm tra cấu hình"
+      "reviewSetup": "Kiểm tra cấu hình",
+      "downloadImage": "Tải ảnh về",
+      "remixPrompt": "Dùng lại mô tả"
     },
     "history": {
       "title": "Lịch sử ảnh",

@@ -47,6 +47,7 @@ export function ImageStudioView({
           selectedStatus={state.selectedStatus}
           statusError={state.statusError}
           onRetryStatus={state.retryStatus}
+          onRemixJob={state.remixJob}
         />
       </section>
 

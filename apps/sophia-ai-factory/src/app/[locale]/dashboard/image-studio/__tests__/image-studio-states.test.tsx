@@ -157,6 +157,29 @@ describe('completed job', () => {
     expect(screen.getByText('preview.imageLoadFailedTitle')).toBeDefined();
     expect(screen.queryByText('preview.failedHint')).toBeNull();
   });
+
+  it('offers an authenticated download link and remix action for a completed artifact', () => {
+    const onRemix = vi.fn();
+    const completedJob = view({ id: 'job_dl_1', prompt: 'neon skyline' });
+    render(
+      <ImagePreviewPanel
+        job={completedJob}
+        selectedStatus={null}
+        statusError={null}
+        onRetryStatus={() => {}}
+        onRemixJob={onRemix}
+      />,
+    );
+
+    const downloadLink = screen.getByText('preview.downloadImage') as HTMLAnchorElement;
+    expect(downloadLink.getAttribute('href')).toBe(
+      '/api/v1/creative-studio/images/job_dl_1/download',
+    );
+
+    const remixBtn = screen.getByText('preview.remixPrompt');
+    fireEvent.click(remixBtn);
+    expect(onRemix).toHaveBeenCalledWith(completedJob);
+  });
 });
 
 describe('failed job', () => {
@@ -287,6 +310,7 @@ describe('brief panel', () => {
     selectedStatus: null,
     statusError: null,
     retryStatus: () => {},
+    remixJob: () => {},
     isPromptTooShort: false,
     remainingChars: 1980,
   };
