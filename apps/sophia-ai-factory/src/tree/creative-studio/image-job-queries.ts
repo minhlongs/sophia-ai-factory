@@ -22,13 +22,16 @@ export interface ImageJobRow {
   thumbnail_url: string | null;
   provider: string | null;
   error: string | null;
+  storage_key?: string | null;
+  mime?: string | null;
+  size?: number | null;
   created_at: number;
   completed_at: number | null;
 }
 
 /** Row set shared by list and single-job reads, in API response order. */
 const SELECT_COLUMNS =
-  'id, user_id, model, prompt, status, result_url, thumbnail_url, provider, error, created_at, completed_at';
+  'id, user_id, model, prompt, status, result_url, thumbnail_url, provider, error, storage_key, mime, size, created_at, completed_at';
 
 /** Narrow a raw D1 row to the typed shape, tolerating missing optional columns. */
 export function toImageJobRow(raw: Record<string, unknown>): ImageJobRow {
@@ -42,6 +45,9 @@ export function toImageJobRow(raw: Record<string, unknown>): ImageJobRow {
     thumbnail_url: typeof raw.thumbnail_url === 'string' ? raw.thumbnail_url : null,
     provider: typeof raw.provider === 'string' ? raw.provider : null,
     error: typeof raw.error === 'string' ? raw.error : null,
+    storage_key: typeof raw.storage_key === 'string' ? raw.storage_key : null,
+    mime: typeof raw.mime === 'string' ? raw.mime : null,
+    size: typeof raw.size === 'number' ? raw.size : null,
     created_at: Number(raw.created_at ?? 0),
     completed_at: typeof raw.completed_at === 'number' ? raw.completed_at : null,
   };

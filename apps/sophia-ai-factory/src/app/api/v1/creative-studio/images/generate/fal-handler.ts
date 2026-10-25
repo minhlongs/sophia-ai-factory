@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@/seed/db/client';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
 import { TIER_ALLOWED_FAL_MODELS } from './config';
 import {
@@ -23,6 +25,16 @@ export async function handleFalGeneration(
     );
   }
 
+  const db = createServerClient();
+  const duplicateJobId = await findRecentDuplicateImageJob(db, {
+    userId: user.id,
+    prompt,
+    model,
+  });
+  if (duplicateJobId) {
+    return NextResponse.json({ jobId: duplicateJobId }, { status: 201 });
+  }
+
   const apiKey = await resolveUserApiKey(user.id, 'fal-ai', process.env.FAL_KEY);
   if (!apiKey) {
     return NextResponse.json({ message: 'fal.ai API key not configured' }, { status: 502 });
@@ -33,7 +45,7 @@ export async function handleFalGeneration(
 
   try {
     const result = await falProvider.generate({ prompt, aspectRatio });
-    return await recordFalCompletedJob({ user, tier, prompt, model, startTime, result });
+    return await recordFalCompletedJob({ user, tier, prompt, model, aspectRatio, startTime, result });
   } catch (err) {
     return await recordFalFailedJob({ err, user, tier, prompt, model, startTime });
   }

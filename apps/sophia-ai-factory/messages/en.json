@@ -9104,7 +9104,9 @@
       "imageLoadFailedTitle": "The image was created but could not be displayed.",
       "failedHint": "This generation did not complete. Your brief is safe — you can adjust it and try again.",
       "unknownStateHint": "This job is in an unrecognised state. Nothing was discarded.",
-      "reviewSetup": "Review setup"
+      "reviewSetup": "Review setup",
+      "downloadImage": "Download image",
+      "remixPrompt": "Use brief"
     },
     "history": {
       "title": "Image history",

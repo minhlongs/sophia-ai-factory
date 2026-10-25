@@ -1,16 +1,7 @@
 'use client';
 
 /**
- * Image studio state: brief, submission, job polling, selection.
- *
- * Ownership rules:
- *  - The brief is the user's text; it is only cleared on an explicit reset.
- *  - Submission is disabled while a job is in flight, so a double click or a
- *    re-render cannot spend twice on one brief.
- *  - Each job id owns its own poll. Switching selection abandons the previous
- *    poll rather than letting it overwrite the newer selection.
- *  - A failed submission keeps the brief, and never removes an earlier
- *    successful artifact.
+ * Image studio state: brief, submission, job polling, selection, and remixing.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -43,15 +34,13 @@ export interface ImageStudioState {
   submission: SubmissionState;
   submit: () => void;
   resetSubmission: () => void;
-  /** Selected job in preview + history, or null for the empty workspace. */
   selectedJob: ImageJobView | null;
-  /** All jobs this user owns, newest first, for the history region. */
   jobs: ImageJobView[];
   selectJob: (id: string) => void;
-  /** Latest status for the selected job, refreshed by polling. */
   selectedStatus: { status: string; resultUrl: string | null } | null;
   statusError: string | null;
   retryStatus: () => void;
+  remixJob: (job: ImageJobView) => void;
   isPromptTooShort: boolean;
   remainingChars: number;
 }
@@ -75,14 +64,12 @@ export function useImageStudioState(
 
   const selectedJob = jobs.find((job) => job.id === selectedId) ?? null;
 
-  // ── Refresh the list after a state change ─────────────────────────────────
   const refreshJobs = useCallback(async () => {
     try {
       const response = await fetch('/api/v1/creative-studio/images');
       if (!response.ok) return;
       const body: unknown = await response.json();
-      const data = body as { images?: ImageJobView[] };
-      const incoming = data.images ?? [];
+      const incoming = (body as { images?: ImageJobView[] }).images ?? [];
       setJobs(incoming);
       setSelectedId((current) =>
         current && incoming.some((job) => job.id === current)
@@ -94,17 +81,10 @@ export function useImageStudioState(
     }
   }, []);
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-  // inFlightRef guards concurrent clicks and re-renders. The backend has no
-  // idempotency key on image generation, so this client-side guard is the
-  // only duplicate protection while a request is outstanding; it is not a
-  // guarantee once the request is in flight on the server.
   const inFlightRef = useRef(false);
 
   const submit = useCallback(() => {
-    if (inFlightRef.current) return;
-    if (prompt.trim().length === 0) return;
-    if (!model) return;
+    if (inFlightRef.current || prompt.trim().length === 0 || !model) return;
 
     inFlightRef.current = true;
     setSubmission({ kind: 'submitting' });
@@ -115,7 +95,6 @@ export function useImageStudioState(
         setSubmission({ kind: 'accepted', jobId: result.jobId });
         setSelectedId(result.jobId);
         setSelectedStatus({ status: 'pending', resultUrl: null });
-        // The action returns only an id; the row appears on the next read.
         refreshJobs();
       } else {
         setSubmission({
@@ -131,7 +110,6 @@ export function useImageStudioState(
     setSubmission({ kind: 'idle' });
   }, []);
 
-  // ── Poll the selected job's status ────────────────────────────────────────
   useEffect(() => {
     if (!selectedJob) return;
     if (selectedJob.stage !== 'queued' && selectedJob.stage !== 'running') return;
@@ -142,9 +120,7 @@ export function useImageStudioState(
 
     const poll = async (): Promise<void> => {
       try {
-        const response = await fetch(
-          `/api/v1/creative-studio/images/${jobId}/status`,
-        );
+        const response = await fetch(`/api/v1/creative-studio/images/${jobId}/status`);
         if (!response.ok) {
           if (!cancelled) setStatusError('statusUnavailable');
           return;
@@ -172,8 +148,6 @@ export function useImageStudioState(
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-    // selectedJob.id is the stable identity; including the whole object would
-    // restart polling on every unrelated re-render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedJob?.id, selectedJob?.stage, pollNonce]);
 
@@ -181,9 +155,16 @@ export function useImageStudioState(
     setPollNonce((n) => n + 1);
   }, []);
 
-  const trimmed = prompt.trim();
-  const isPromptTooShort = trimmed.length === 0;
-  const remainingChars = MAX_PROMPT_LENGTH - prompt.length;
+  const remixJob = useCallback(
+    (job: ImageJobView) => {
+      if (job.prompt) setPrompt(job.prompt);
+      if (job.model && models.some((m) => m.id === job.model && m.allowed)) {
+        setModel(job.model);
+      }
+      setSubmission({ kind: 'idle' });
+    },
+    [models],
+  );
 
   return {
     prompt,
@@ -201,7 +182,8 @@ export function useImageStudioState(
     selectedStatus,
     statusError,
     retryStatus,
-    isPromptTooShort,
-    remainingChars,
+    remixJob,
+    isPromptTooShort: prompt.trim().length === 0,
+    remainingChars: MAX_PROMPT_LENGTH - prompt.length,
   };
 }

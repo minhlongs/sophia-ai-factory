@@ -6,6 +6,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';
+import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
 import { ImageGenerationError } from '@/seed/ai/image-generation-provider';
 import { logger } from '@/seed/utils/logger-utility';
 import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-mapper';
@@ -71,6 +72,22 @@ export async function submitMuApiImageJob(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
   const { userId, prompt, model, aspectRatio } = input;
+
+  const db = createServerClient();
+  const duplicateJobId = await findRecentDuplicateImageJob(db, {
+    userId,
+    prompt,
+    model,
+  });
+  if (duplicateJobId) {
+    logger.info('[image-orchestrator] Returning deduplicated MuAPI image job', {
+      userId,
+      duplicateJobId,
+      model,
+    });
+    return { success: true, jobId: duplicateJobId };
+  }
+
   const apiKey = await resolveUserApiKey(userId, 'muapi');
   if (!apiKey) {
     return {
@@ -87,7 +104,6 @@ export async function submitMuApiImageJob(
   }
 
   const jobId = muResult.job.id;
-  const db = createServerClient();
   const { error: insertError } = (await db.from('media_jobs').insert({
     id: jobId,
     user_id: userId,

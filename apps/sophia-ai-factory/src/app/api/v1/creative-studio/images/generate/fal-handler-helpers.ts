@@ -6,6 +6,7 @@ import { trackUsage } from '@/forest/orchestration';
 import { classifyCost } from '@/seed/types/creative-job-economics';
 import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-mapper';
 import { FailureKind } from '@/seed/types/failure-kind';
+import { buildImageIdempotencyKey } from '@/tree/creative-studio/image-generation-idempotency';
 
 export interface FalUserContext {
   id: string;
@@ -17,10 +18,17 @@ export async function recordFalCompletedJob(params: {
   tier: string;
   prompt: string;
   model: string;
+  aspectRatio?: string;
   startTime: number;
   result: ImageGenerationResult;
 }): Promise<NextResponse> {
-  const { user, tier, prompt, model, startTime, result } = params;
+  const { user, tier, prompt, model, aspectRatio, startTime, result } = params;
+  const idempotencyKey = buildImageIdempotencyKey({
+    userId: user.id,
+    prompt,
+    model,
+    aspectRatio,
+  });
   await trackUsage({
     userId: user.id,
     licenseKeyHash: user.email || user.id || '',
@@ -32,7 +40,7 @@ export async function recordFalCompletedJob(params: {
     tokensOutput: undefined,
     creditsUsed: result.costCents || 0,
     tierAtRequest: tier,
-    idempotencyKey: `${user.id}-${Date.now()}`,
+    idempotencyKey,
     modelName: model,
     responseTimeMs: result.latencyMs,
   });
@@ -117,7 +125,11 @@ export async function recordFalFailedJob(params: {
     action: 'failed',
     creditsUsed: 0,
     tierAtRequest: tier,
-    idempotencyKey: `${user.id}-${Date.now()}`,
+    idempotencyKey: buildImageIdempotencyKey({
+      userId: user.id,
+      prompt,
+      model,
+    }),
     errorMessage: message,
     responseTimeMs: 0,
   });
