@@ -151,13 +151,14 @@ describe('fal-ai route integration', () => {
     expect(res.status).toBe(401);
   });
 
-  it('refuses a non-fal model instead of dispatching it to MuAPI', async () => {
+  it('refuses a MuAPI model with 422 NO_API_KEY when the customer has no BYOK muapi key', async () => {
     vi.mocked(resolveUserTier).mockResolvedValue('PREMIUM');
+    vi.mocked(resolveUserApiKey).mockResolvedValue(null);
     const { submitMediaJob } = await import('@/tree/clients/muapi-media-client');
 
     const res = await POST(createRequest({ prompt: 'A sunset', model: 'flux-schnell' }));
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(422);
     expect(submitMediaJob).not.toHaveBeenCalled();
   });
 });

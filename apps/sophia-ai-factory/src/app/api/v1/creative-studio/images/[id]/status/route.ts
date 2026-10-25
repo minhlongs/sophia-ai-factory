@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { getJobStatus } from '@/tree/clients/muapi-media-client';
 import { logger } from '@/seed/utils/logger-utility';
 import { errorResponse } from '@/seed/api';
@@ -64,10 +65,11 @@ export async function GET(
     });
   }
 
-  // If still in-flight, refresh from MuAPI
+  // If still in-flight, refresh from MuAPI using the customer's own BYOK key
   if (job.status === 'pending' || job.status === 'processing') {
     try {
-      const pollResult = await getJobStatus(id);
+      const apiKey = await resolveUserApiKey(user.id, 'muapi');
+      const pollResult = apiKey ? await getJobStatus(id, apiKey) : { success: false };
       if (pollResult.success && pollResult.job) {
         const remote = pollResult.job;
         const statusChanged = remote.status !== job.status;

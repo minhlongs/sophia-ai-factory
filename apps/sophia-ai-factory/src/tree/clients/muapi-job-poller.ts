@@ -18,13 +18,17 @@ import {
 /**
  * Poll job status from muapi.ai
  */
-export async function getJobStatus(jobId: string): Promise<MediaGenerationResult> {
+export async function getJobStatus(
+  jobId: string,
+  apiKey?: string,
+): Promise<MediaGenerationResult> {
   if (!shouldAllowRequest('muapi')) {
     return { success: false, error: 'Circuit breaker open for muapi' };
   }
+  const resolvedKey = apiKey || getMuApiKey();
   try {
     const res = await fetch(`${MUAPI_BASE}/jobs/${jobId}`, {
-      headers: { Authorization: `Bearer ${getMuApiKey()}` },
+      headers: { Authorization: `Bearer ${resolvedKey}` },
       signal: AbortSignal.timeout(10_000),
     });
 

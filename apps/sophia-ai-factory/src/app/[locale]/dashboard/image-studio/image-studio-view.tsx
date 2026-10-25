@@ -78,9 +78,8 @@ export function ImageStudioView({
 
 /** Model options for the current tier, gate state included. */
 function buildModelOptions(tier: string): StudioModel[] {
-  // Only cost-owned models are ever offered or advertised as upgrade targets.
-  // The MuAPI ids stay in the access map but reach no picker, so a customer is
-  // never invited to start work that nobody pays for.
+  // Offers both metered fal-ai models and customer-BYOK MuAPI models for the
+  // current tier, plus higher-tier models marked locked.
   const allowed = selectableImageModelsForTier(tier);
   const blocked = selectableImageModelsForTier('MASTER').filter((id) => !allowed.includes(id));
   return [

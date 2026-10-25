@@ -4,11 +4,13 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';
 import { ImageGenerationError } from '@/seed/ai/image-generation-provider';
 import { logger } from '@/seed/utils/logger-utility';
 import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-mapper';
 import { FailureKind } from '@/seed/types/failure-kind';
+import { CostClassification } from '@/seed/types/creative-job-economics';
 import type { GenerateImageJobInput, GenerateImageJobResult } from './image-generation-orchestrator';
 
 export async function recordFailedFalImageJob(params: {
@@ -58,23 +60,27 @@ export async function recordFailedFalImageJob(params: {
 }
 
 /**
- * Submits a MuAPI-hosted media job and records it in D1.
+ * Submits a customer-BYOK MuAPI image job and records it in D1.
  *
- * Retained deliberately, but unreachable in production: this path spends the
- * platform's own MUAPI_API_KEY while recording `cost_classification: 'UNKNOWN'`
- * with no `provider_cost`, no credit deduction and no usage event, so nobody is
- * recorded as paying for the generation. Every entry point — the API route, the
- * image-generate server action and this orchestrator — refuses non-fal models
- * before dispatch, so nothing calls this today. It is kept as-is rather than
- * deleted so the branch can be restored, with a real cost owner attached, once
- * that decision is made; re-enabling it requires re-opening all three doors on
- * purpose, not just removing this comment.
+ * Customer-paid BYOK only: resolves the customer's stored `'muapi'` key with NO
+ * platform environment fallback (`process.env.MUAPI_API_KEY` is never read). If
+ * the customer has not saved their own MuAPI key in the Setup Wizard, the job
+ * is refused before any provider call with `NO_API_KEY`.
  */
 export async function submitMuApiImageJob(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
   const { userId, prompt, model, aspectRatio } = input;
-  const muResult = await submitMediaJob({ type: 'image', model, prompt, aspectRatio });
+  const apiKey = await resolveUserApiKey(userId, 'muapi');
+  if (!apiKey) {
+    return {
+      success: false,
+      error: 'MuAPI API key not configured. Add your MuAPI key in the Setup Wizard.',
+      code: 'NO_API_KEY',
+    };
+  }
+
+  const muResult = await submitMediaJob({ type: 'image', model, prompt, aspectRatio }, apiKey);
   if (!muResult.success || !muResult.job) {
     logger.warn('[image-orchestrator] MuAPI submission failed', { error: muResult.error });
     return { success: false, error: muResult.error ?? 'Failed to submit job', code: 'MUAPI_ERROR' };
@@ -89,7 +95,8 @@ export async function submitMuApiImageJob(
     model,
     prompt,
     status: 'pending',
-    cost_classification: 'UNKNOWN',
+    provider: 'muapi',
+    cost_classification: CostClassification.UNMETERED,
     requested_at: Math.floor(Date.now() / 1000),
   })) as { error: { message: string } | null };
 
