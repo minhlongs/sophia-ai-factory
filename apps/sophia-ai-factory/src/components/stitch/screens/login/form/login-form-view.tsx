@@ -26,10 +26,19 @@ export function LoginFormView({ redirectTo }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setError(t('emailRequired'));
+      return;
+    }
+    if (!password) {
+      setError(t('invalidCredentials'));
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const result = await authClient.signIn.email({ email, password });
+      const result = await authClient.signIn.email({ email: cleanEmail, password });
       if (result.error) {
         setError(t('invalidCredentials'));
         setLoading(false);
@@ -45,14 +54,15 @@ export function LoginFormView({ redirectTo }: LoginFormProps) {
   };
 
   const handleMagicLink = async () => {
-    if (!email) {
-      setError(t('networkError'));
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setError(t('emailRequired'));
       return;
     }
     setMagicLinkLoading(true);
     setError(null);
     try {
-      const result = await authClient.signIn.magicLink({ email });
+      const result = await authClient.signIn.magicLink({ email: cleanEmail });
       if (result.error) {
         setError(result.error.message || t('networkError'));
       }

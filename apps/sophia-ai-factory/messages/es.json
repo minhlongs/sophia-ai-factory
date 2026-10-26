@@ -6333,7 +6333,8 @@
         "networkError": "Network error. Please try again.",
         "switchToVietnamese": "Switch To Vietnamese",
         "switchToEnglish": "Switch To English",
-        "magicLink": "Magic Link"
+        "magicLink": "Magic Link",
+        "emailRequired": "Por favor, introduce tu dirección de correo electrónico"
       },
       "register": {
         "title": "Create Your Account",
