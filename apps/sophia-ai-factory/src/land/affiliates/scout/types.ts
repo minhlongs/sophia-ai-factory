@@ -17,6 +17,7 @@ export type Network =
   | 'binance'
   | 'bybit'
   | 'bitget'
+  | 'okx'
   | 'coinbase';
 
 /** Normalised affiliate record */
@@ -91,6 +92,9 @@ export interface ScoutEnv {
   BITGET_API_KEY?: string;
   BITGET_API_SECRET?: string;
   BITGET_PASSPHRASE?: string;
+  OKX_API_KEY?: string;
+  OKX_API_SECRET?: string;
+  OKX_PASSPHRASE?: string;
   COINBASE_API_KEY?: string;
   COINBASE_API_SECRET?: string;
 }

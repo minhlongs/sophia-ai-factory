@@ -8,6 +8,7 @@ import type { BRollCue } from '@/tree/video/broll/broll-types';
 import type { ComplianceOverlaySpec } from '@/tree/video/compliance/compliance-types';
 import type { SubtitleTrackSpec } from '@/tree/video/subtitles/subtitle-types';
 import type { NicheSyndicationPackage } from '@/tree/video/syndication/niche-syndication-types';
+import type { HybridSceneGraph } from '@/seed/config/video-blueprints/scene-graph-types';
 
 export type PipelineNiche = 'saas_global' | 'crypto_global';
 
@@ -20,6 +21,8 @@ export interface AutonomousPipelineInput {
   targetDurationSeconds?: number;
   affiliateBaseUrl: string;
   targetPlatforms?: ('youtube_shorts' | 'tiktok' | 'instagram_reels')[];
+  targetJurisdiction?: string;
+  referralCode?: string;
 }
 
 export interface VideoRenderManifest {
@@ -36,6 +39,7 @@ export interface VideoRenderManifest {
   subtitles: SubtitleTrackSpec;
   complianceOverlay: ComplianceOverlaySpec;
   syndication: NicheSyndicationPackage;
+  sceneGraph?: HybridSceneGraph;
   generatedAt: string;
 }
 

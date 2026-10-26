@@ -60,3 +60,4 @@ export * from './growth/process-video-attribution';
 export * from './feedback-ingest-worker';
 export * from '@/forest/growth-v15';
 export * from './multi-track-video-pipeline';
+export * from './video-model-radar-cron';
