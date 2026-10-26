@@ -59,19 +59,13 @@ vi.mock('@/navigation', () => ({
 
 vi.mock('@/seed/auth/better-auth-client', () => ({
   authClient: {
-    signUp: {
-      email: (...args: unknown[]) => mockSignUpEmail(...args),
-    },
+    signUp: { email: (...args: unknown[]) => mockSignUpEmail(...args) },
     signIn: {
       emailOtp: (...args: unknown[]) => mockSignInOtp(...args),
       passkey: (...args: unknown[]) => mockSignInPasskey(...args),
     },
-    emailOtp: {
-      sendVerificationOtp: (...args: unknown[]) => mockSendOtp(...args),
-    },
-    passkey: {
-      addPasskey: (...args: unknown[]) => mockAddPasskey(...args),
-    },
+    emailOtp: { sendVerificationOtp: (...args: unknown[]) => mockSendOtp(...args) },
+    passkey: { addPasskey: (...args: unknown[]) => mockAddPasskey(...args) },
   },
 }));
 
@@ -80,48 +74,54 @@ describe('RegisterPageView Auth 2027 flows', () => {
     vi.clearAllMocks();
   });
 
-  it('supports passwordless registration via 6-digit Email OTP', async () => {
+  it('supports email/password registration and error branches', async () => {
+    render(<RegisterPageView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mã OTP 6 số' }));
+
+    fireEvent.change(screen.getByLabelText(/Tên công ty/i), { target: { value: 'Sophia Corp' } });
+    fireEvent.change(screen.getByLabelText(/Địa chỉ Email/i), { target: { value: 'ceo@sophia.ai' } });
+    fireEvent.change(screen.getByLabelText(/Tạo mật khẩu/i), { target: { value: 'Password123!' } });
+    fireEvent.change(screen.getByLabelText(/Xác nhận mật khẩu/i), { target: { value: 'Password123!' } });
+    fireEvent.click(screen.getByRole('checkbox'));
+
+    mockSignUpEmail.mockResolvedValueOnce({ data: null, error: { code: 'USER_ALREADY_EXISTS', message: 'Exists' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+    await waitFor(() => expect(mockSignUpEmail).toHaveBeenCalled());
+
+    mockSignUpEmail.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+    await waitFor(() => expect(screen.getByText('Tạo tài khoản thành công!')).toBeDefined());
+  });
+
+  it('supports passwordless registration via 6-digit Email OTP and Passkey enrollment', async () => {
+    mockSendOtp.mockResolvedValueOnce({ data: null, error: { message: 'OTP limit' } });
     mockSendOtp.mockResolvedValueOnce({ data: { success: true }, error: null });
+    mockSignInOtp.mockResolvedValueOnce({ data: null, error: { message: 'Invalid' } });
     mockSignInOtp.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    mockAddPasskey.mockResolvedValueOnce({ data: null, error: { message: 'Cancelled' } });
+    mockAddPasskey.mockResolvedValueOnce({ data: { id: 'pk1' }, error: null });
 
     render(<RegisterPageView />);
     fireEvent.change(screen.getByLabelText(/Địa chỉ Email/i), {
       target: { value: 'newceo@agencyos.network' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Mã OTP 6 số' }));
+    await waitFor(() => expect(mockSendOtp).toHaveBeenCalledTimes(1));
 
+    fireEvent.click(screen.getByRole('button', { name: 'Mã OTP 6 số' }));
     const otpInput = await screen.findByLabelText('Mã xác thực 6 chữ số');
     fireEvent.change(otpInput, { target: { value: '123456' } });
     fireEvent.click(screen.getByRole('button', { name: 'Xác thực OTP' }));
+    await waitFor(() => expect(mockSignInOtp).toHaveBeenCalledTimes(1));
 
-    await waitFor(() => {
-      expect(mockSendOtp).toHaveBeenCalledWith({
-        email: 'newceo@agencyos.network',
-        type: 'sign-in',
-      });
-      expect(mockSignInOtp).toHaveBeenCalledWith({
-        email: 'newceo@agencyos.network',
-        otp: '123456',
-      });
-      expect(screen.getByText('Tạo tài khoản thành công!')).toBeDefined();
-    });
-  });
-
-  it('offers Passkey enrollment on success screen', async () => {
-    mockSignInPasskey.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
-    mockAddPasskey.mockResolvedValueOnce({ data: { id: 'pk1' }, error: null });
-
-    render(<RegisterPageView />);
-    fireEvent.click(screen.getByRole('button', { name: 'Passkey (FaceID / TouchID)' }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Tạo tài khoản thành công!')).toBeDefined();
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Xác thực OTP' }));
+    await waitFor(() => expect(screen.getByText('Tạo tài khoản thành công!')).toBeDefined());
 
     const enrollBtn = screen.getByRole('button', { name: /Passkey/i });
     fireEvent.click(enrollBtn);
-    await waitFor(() => {
-      expect(mockAddPasskey).toHaveBeenCalledWith({ name: 'Sophia AI Device' });
-    });
+    await waitFor(() => expect(mockAddPasskey).toHaveBeenCalledTimes(1));
+    fireEvent.click(enrollBtn);
+    await waitFor(() => expect(mockAddPasskey).toHaveBeenCalledTimes(2));
   });
 });

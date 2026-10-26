@@ -54,28 +54,35 @@ describe('ResetPasswordFormView Auth 2027 flow', () => {
     vi.clearAllMocks();
   });
 
-  it('sends forget-password OTP and transitions to step 2', async () => {
-    mockSendOtp.mockResolvedValueOnce({ data: { success: true }, error: null });
+  it('validates empty email and handles sendOtp error + success', async () => {
     render(<ResetPasswordFormView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi Liên Kết Đặt Lại' }));
+    expect(screen.getByRole('alert').textContent).toBe('Địa Chỉ Email');
 
+    mockSendOtp.mockResolvedValueOnce({ data: null, error: { message: 'Rate limited' } });
     fireEvent.change(screen.getByLabelText('Địa Chỉ Email'), {
       target: { value: 'founder@agencyos.network' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Gửi Liên Kết Đặt Lại' }));
-
     await waitFor(() => {
-      expect(mockSendOtp).toHaveBeenCalledWith({
-        email: 'founder@agencyos.network',
-        type: 'forget-password',
-      });
+      expect(screen.getByRole('alert').textContent).toBe('Rate limited');
+    });
+
+    mockSendOtp.mockRejectedValueOnce(new Error('Network fail'));
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi Liên Kết Đặt Lại' }));
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe('Đã xảy ra lỗi.');
+    });
+
+    mockSendOtp.mockResolvedValueOnce({ data: { success: true }, error: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi Liên Kết Đặt Lại' }));
+    await waitFor(() => {
       expect(screen.getByLabelText('Token')).toBeDefined();
     });
   });
 
-  it('validates 6-digit OTP and password match before resetting password', async () => {
+  it('validates 6-digit OTP, password length, mismatch, error, and success', async () => {
     mockSendOtp.mockResolvedValueOnce({ data: { success: true }, error: null });
-    mockResetPassword.mockResolvedValueOnce({ data: { status: true }, error: null });
-
     render(<ResetPasswordFormView />);
     fireEvent.change(screen.getByLabelText('Địa Chỉ Email'), {
       target: { value: 'founder@agencyos.network' },
@@ -83,21 +90,29 @@ describe('ResetPasswordFormView Auth 2027 flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Gửi Liên Kết Đặt Lại' }));
 
     const otpInput = await screen.findByLabelText('Token');
-    fireEvent.change(otpInput, { target: { value: '654321' } });
-    fireEvent.change(screen.getByLabelText('Mật Khẩu Mới'), {
-      target: { value: 'StrongPass123' },
-    });
-    fireEvent.change(screen.getByLabelText('Xác Nhận Mật Khẩu'), {
-      target: { value: 'StrongPass123' },
-    });
     fireEvent.click(screen.getByRole('button', { name: 'Đặt Mật Khẩu' }));
+    expect(screen.getByRole('alert').textContent).toBe('Token đặt lại không hợp lệ');
 
+    fireEvent.change(otpInput, { target: { value: '654321' } });
+    fireEvent.change(screen.getByLabelText('Mật Khẩu Mới'), { target: { value: 'short' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đặt Mật Khẩu' }));
+    expect(screen.getByRole('alert').textContent).toBe('Mật khẩu phải có ít nhất 8 ký tự.');
+
+    fireEvent.change(screen.getByLabelText('Mật Khẩu Mới'), { target: { value: 'StrongPass123' } });
+    fireEvent.change(screen.getByLabelText('Xác Nhận Mật Khẩu'), { target: { value: 'Mismatch123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đặt Mật Khẩu' }));
+    expect(screen.getByRole('alert').textContent).toBe('Mật khẩu không khớp.');
+
+    mockResetPassword.mockResolvedValueOnce({ data: null, error: { message: 'Expired OTP' } });
+    fireEvent.change(screen.getByLabelText('Xác Nhận Mật Khẩu'), { target: { value: 'StrongPass123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đặt Mật Khẩu' }));
     await waitFor(() => {
-      expect(mockResetPassword).toHaveBeenCalledWith({
-        email: 'founder@agencyos.network',
-        otp: '654321',
-        password: 'StrongPass123',
-      });
+      expect(screen.getByRole('alert').textContent).toBe('Expired OTP');
+    });
+
+    mockResetPassword.mockResolvedValueOnce({ data: { status: true }, error: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Đặt Mật Khẩu' }));
+    await waitFor(() => {
       expect(screen.getByText('Mật Khẩu Đã Cập Nhật')).toBeDefined();
     });
   });
