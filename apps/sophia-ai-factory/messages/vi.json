@@ -550,7 +550,7 @@
         },
         "profit": {
           "title": "Theo Dõi Doanh Thu",
-          "description": "Theo dõi thu nhập từ các mạng affiliate (BYOK Apollo / PartnerStack / Impact)"
+          "description": "Theo dõi thu nhập từ 10 mạng affiliate (PartnerStack, Impact, Binance, Bybit, Bitget, OKX)"
         }
       },
       "badge": "QUY TRÌNH VẬN HÀNH",
@@ -569,7 +569,7 @@
         },
         "video_factory": {
           "title": "Nhà máy video",
-          "description": "Sản xuất video thu hút quy mô lớn. Kịch bản AI, giọng ElevenLabs, tự động xuất bản — tất cả trong một luồng.",
+          "description": "Sản xuất video Hybrid Scene-Graph (fal.ai/Replicate Hook + Edge SVG Data Cards 0% lỗi chữ + giọng ElevenLabs) — tất cả trong một luồng.",
           "badge": "Phổ Biến"
         },
         "credits": {

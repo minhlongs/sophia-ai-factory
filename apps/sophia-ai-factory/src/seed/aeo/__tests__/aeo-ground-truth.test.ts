@@ -38,10 +38,13 @@ describe('Wave 1: AEO/GEO Single Source of Ground Truth & Dual-Read Engine', () 
     expect(basicSummary.priceDisplay).toBe(TIER_CONFIGS.BASIC.priceDisplay);
   });
 
-  it('produces Agent Discovery Manifest (.well-known/agent.json) covering all 51 niches', () => {
+  it('produces Agent Discovery Manifest (.well-known/agent.json) covering all 51 niches and 10 affiliate networks', () => {
     const manifest = buildAgentDiscoveryManifest();
     expect(manifest.schemaVersion).toBe('2027.1');
     expect(manifest.supportedNicheCount).toBe(NICHE_SLUGS.length);
+    expect(manifest.affiliateNetworks).toHaveLength(10);
+    expect(manifest.affiliateNetworks).toContain('OKX');
+    expect(manifest.byokProviders).toEqual(expect.arrayContaining(['fal.ai', 'Replicate']));
     expect(manifest.dualReadProtocol.llmsIndexUrl).toContain('/llms.txt');
     expect(manifest.dualReadProtocol.llmsFullUrl).toContain('/llms-full.txt');
   });

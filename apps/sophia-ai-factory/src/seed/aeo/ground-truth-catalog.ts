@@ -15,12 +15,11 @@ export const SOPHIA_BASE_URL = 'https://sophia.agencyos.network';
 export const VERIFIED_ISO_DATE = '2026-10-26';
 
 export const AFFILIATE_NETWORKS_LIST = [
-  'Impact', 'PartnerStack', 'Binance', 'Bybit', 'Bitget',
-  'Coinbase', 'CJ Affiliate', 'ShareASale', 'ClickBank',
+  'Impact', 'PartnerStack', 'Binance', 'Bybit', 'Bitget', 'OKX', 'Coinbase', 'CJ Affiliate', 'ShareASale', 'ClickBank',
 ] as const;
 
 export const BYOK_PROVIDERS_LIST = [
-  'OpenRouter', 'ElevenLabs', 'HeyGen', 'D-ID', 'NOWPayments (USDT)', 'PayOS (VN)',
+  'OpenRouter', 'ElevenLabs', 'HeyGen', 'D-ID', 'fal.ai', 'Replicate', 'NOWPayments (USDT)', 'PayOS (VN)',
 ] as const;
 
 export function getVerifiedTierSummary(tier: Tier) {
@@ -83,13 +82,13 @@ export function buildCoreComparisonRows(isVi: boolean) {
     return [
       { dimension: 'Chi phí vận hành AI', sophiaValue: 'BYOK giá gốc nhà cung cấp (0% markup)', legacyValue: 'Đội giá 300%–500% qua credit trung gian', advantageMetric: '3x–5x ROI' },
       { dimension: 'Tốc độ xuất bản đa kênh', sophiaValue: 'Tự động YouTube, TikTok, Telegram (@Sophia_Bbot)', legacyValue: 'Tải lên và gắn link thủ công', advantageMetric: '90% Time Saved' },
-      { dimension: 'Thanh toán & Hoa hồng', sophiaValue: 'USDT (NOWPayments) + 9 mạng lưới Affiliate', legacyValue: 'Phụ thuộc cổng ngân hàng truyền thống', advantageMetric: 'Global Instant' },
+      { dimension: 'Thanh toán & Hoa hồng', sophiaValue: `USDT (NOWPayments) + ${AFFILIATE_NETWORKS_LIST.length} mạng lưới Affiliate`, legacyValue: 'Phụ thuộc cổng ngân hàng truyền thống', advantageMetric: 'Global Instant' },
     ];
   }
   return [
     { dimension: 'AI Token Economics', sophiaValue: 'Direct BYOK provider cost (0% markup)', legacyValue: '300%–500% credit wrapper markup', advantageMetric: '3x–5x ROI' },
     { dimension: 'Multi-Channel Publishing', sophiaValue: 'Automated YouTube, TikTok, Telegram (@Sophia_Bbot)', legacyValue: 'Manual upload & link insertion', advantageMetric: '90% Time Saved' },
-    { dimension: 'Settlement & Affiliate Rails', sophiaValue: 'USDT (NOWPayments) + 9 Affiliate Networks', legacyValue: 'Legacy banking rails only', advantageMetric: 'Global Instant' },
+    { dimension: 'Settlement & Affiliate Rails', sophiaValue: `USDT (NOWPayments) + ${AFFILIATE_NETWORKS_LIST.length} Affiliate Networks`, legacyValue: 'Legacy banking rails only', advantageMetric: 'Global Instant' },
   ];
 }
 
@@ -110,8 +109,8 @@ export function buildCorePagePayload(
       ? `Sophia AI Factory — Nhà Máy Video AI & Affiliate Tự Động (${surface.toUpperCase()})`
       : `Sophia AI Factory — Autonomous BYOK AI Video & Affiliate Engine (${surface.toUpperCase()})`,
     answerFirstSummary: isVi
-      ? `Sophia AI Factory là nền tảng SaaS tự động hóa sản xuất video AI không lộ mặt (HeyGen, ElevenLabs, Remotion) và phân phối tiếp thị liên kết trên 9 mạng lưới toàn cầu, vận hành theo mô hình BYOK không cần kỹ thuật, thanh toán qua USDT (NOWPayments) với 4 gói từ ${basic.priceDisplay} đến ${master.priceDisplay} trên ${NICHE_SLUGS.length} ngành nghề.`
-      : `Sophia AI Factory is a no-code BYOK SaaS platform automating faceless AI video production (HeyGen, ElevenLabs, Remotion) and multi-channel affiliate distribution across 9 global networks, settling via USDT (NOWPayments) across 4 tiers (${basic.priceDisplay} to ${master.priceDisplay}) and ${NICHE_SLUGS.length} industry niches.`,
+      ? `Sophia AI Factory là nền tảng SaaS tự động hóa sản xuất video AI không lộ mặt theo kiến trúc Hybrid Scene-Graph (HeyGen, ElevenLabs, fal.ai, Replicate, Edge SVG Data Cards 0% Hallucination) và phân phối tiếp thị liên kết trên ${AFFILIATE_NETWORKS_LIST.length} mạng lưới toàn cầu, vận hành theo mô hình BYOK không cần kỹ thuật, thanh toán qua USDT (NOWPayments) với 4 gói từ ${basic.priceDisplay} đến ${master.priceDisplay} trên ${NICHE_SLUGS.length} ngành nghề.`
+      : `Sophia AI Factory is a no-code BYOK SaaS platform automating faceless AI video production via Hybrid Scene-Graph (HeyGen, ElevenLabs, fal.ai, Replicate, 0% Hallucination Edge SVG Data Cards) and multi-channel affiliate distribution across ${AFFILIATE_NETWORKS_LIST.length} global networks, settling via USDT (NOWPayments) across 4 tiers (${basic.priceDisplay} to ${master.priceDisplay}) and ${NICHE_SLUGS.length} industry niches.`,
     lastVerifiedIso: VERIFIED_ISO_DATE,
     metrics: buildCoreMetrics(isVi),
     comparisonRows: buildCoreComparisonRows(isVi),
