@@ -29,4 +29,5 @@ export * from './actions/convert-offer-action';
 export * from './actions/toggle-kill-switch-action';
 export * from './affiliate-partner-service';
 export * from './affiliate-webhook-verifier';
+export * from './affiliate-live-metrics';
 export * from './dashboard';

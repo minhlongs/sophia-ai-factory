@@ -20,9 +20,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockDb: {
   rows: Map<string, Record<string, unknown>>;
   mfaRows: Map<string, Record<string, unknown>>;
+  userRows: Map<string, Record<string, unknown>>;
 } = {
-  rows: new Map(),   // mfa_pending_sessions
-  mfaRows: new Map(), // mfa_secrets
+  rows: new Map(),     // mfa_pending_sessions
+  mfaRows: new Map(),  // mfa_secrets
+  userRows: new Map(), // user
 };
 
 function makeDbStub() {
@@ -75,6 +77,9 @@ function makeDbStubV2() {
       select: (_cols: string) => ({
         eq: (_col: string, val: string) => ({
           single: async () => {
+            if (table === 'user') {
+              return { data: mockDb.userRows.get(val) ?? null };
+            }
             if (table === 'mfa_secrets') {
               return { data: mockDb.mfaRows.get(val) ?? null };
             }
@@ -115,6 +120,7 @@ import {
 beforeEach(() => {
   mockDb.rows.clear();
   mockDb.mfaRows.clear();
+  mockDb.userRows.clear();
 });
 
 // ---------------------------------------------------------------------------
@@ -134,6 +140,12 @@ describe('requireMfaIfEnabled', () => {
   it('returns required=true when totp_enabled=1', async () => {
     mockDb.mfaRows.set('user-enabled', { totp_enabled: 1 });
     const result = await requireMfaIfEnabled('user-enabled');
+    expect(result.required).toBe(true);
+  });
+
+  it('returns required=true when Better Auth user.twoFactorEnabled=1', async () => {
+    mockDb.userRows.set('user-ba-2fa', { twoFactorEnabled: 1 });
+    const result = await requireMfaIfEnabled('user-ba-2fa');
     expect(result.required).toBe(true);
   });
 });

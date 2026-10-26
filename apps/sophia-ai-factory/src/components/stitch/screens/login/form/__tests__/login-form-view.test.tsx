@@ -3,6 +3,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginFormView } from '../login-form-view';
+import { resolveRedirectTarget } from '../use-auth-2027-state';
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
@@ -141,5 +142,26 @@ describe('LoginFormView Auth 2027 flows', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Vui lòng nhập địa chỉ email');
     expect(mockSignInEmail).not.toHaveBeenCalled();
+  });
+
+  describe('resolveRedirectTarget open redirect defense', () => {
+    it('allows clean relative paths and strips leading locale segment', () => {
+      expect(resolveRedirectTarget('/vi/dashboard')).toBe('/dashboard');
+      expect(resolveRedirectTarget('/en/campaigns')).toBe('/campaigns');
+      expect(resolveRedirectTarget('/dashboard/settings')).toBe('/dashboard/settings');
+    });
+
+    it('rejects external protocol-relative URLs and falls back to /dashboard', () => {
+      expect(resolveRedirectTarget('//evil.com/phish')).toBe('/dashboard');
+      expect(resolveRedirectTarget('/\\evil.com/phish')).toBe('/dashboard');
+      expect(resolveRedirectTarget('https://evil.com')).toBe('/dashboard');
+      expect(resolveRedirectTarget('javascript:alert(1)')).toBe('/dashboard');
+    });
+
+    it('rejects /api/ internal routes and empty values', () => {
+      expect(resolveRedirectTarget('/api/auth/sign-out')).toBe('/dashboard');
+      expect(resolveRedirectTarget(undefined)).toBe('/dashboard');
+      expect(resolveRedirectTarget('')).toBe('/dashboard');
+    });
   });
 });

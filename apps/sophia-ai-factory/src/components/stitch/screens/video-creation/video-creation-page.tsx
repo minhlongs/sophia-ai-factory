@@ -48,16 +48,48 @@ export default function VideoCreationPage({
     [],
   );
 
-  const handleAIGenerate = useCallback(() => {
-    onAIGenerate?.(script);
+  const handleAIGenerate = useCallback(async () => {
+    if (onAIGenerate) {
+      onAIGenerate(script);
+      return;
+    }
+    try {
+      const { generateVideoScriptAction } = await import('@/app/actions/video-creation-actions');
+      const res = await generateVideoScriptAction(script);
+      if (res.success && res.scriptText) {
+        setScript(res.scriptText.slice(0, MAX_CHARS));
+      }
+    } catch {
+      // Non-fatal fallback
+    }
   }, [script, onAIGenerate]);
 
-  const handleContinue = useCallback(() => {
-    onContinue?.();
-  }, [onContinue]);
+  const handleContinue = useCallback(async () => {
+    if (onContinue) {
+      onContinue();
+      return;
+    }
+    try {
+      const { dispatchVideoCreationJobAction } = await import('@/app/actions/video-creation-actions');
+      const res = await dispatchVideoCreationJobAction({
+        script,
+        voice: selectedVoice,
+        style: selectedStyle,
+      });
+      if (res.success && typeof window !== 'undefined') {
+        window.location.href = '/dashboard/campaigns';
+      }
+    } catch {
+      // Non-fatal fallback
+    }
+  }, [onContinue, script, selectedVoice, selectedStyle]);
 
   const handleBack = useCallback(() => {
-    onBack?.();
+    if (onBack) {
+      onBack();
+    } else if (typeof window !== 'undefined') {
+      window.history.back();
+    }
   }, [onBack]);
 
   return (

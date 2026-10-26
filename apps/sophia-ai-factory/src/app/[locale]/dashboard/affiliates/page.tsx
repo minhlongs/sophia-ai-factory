@@ -8,6 +8,8 @@
  */
 
 import React from 'react';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { loadLiveAffiliateMetrics } from '@/land/affiliates/affiliate-live-metrics';
 import {
   AffiliateCockpitView,
   generateExecutiveCockpitSnapshot,
@@ -23,11 +25,27 @@ export default async function AffiliatesDashboardPage(props: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await props.params;
-  const metrics = DEFAULT_AFFILIATE_METRICS;
+  const user = await getCurrentUser();
+  const liveData = user ? await loadLiveAffiliateMetrics(user.id) : null;
+  const metrics = liveData?.isLive ? liveData.metrics : DEFAULT_AFFILIATE_METRICS;
+
+  const grossCents = Math.round(metrics.totalCommissionUsd * 100);
+  const holdbackCents = Math.round(grossCents * 0.1);
+  const netPayableCents = grossCents - holdbackCents;
+
+  const reconciliation = liveData?.isLive && grossCents > 0
+    ? {
+        ...DEFAULT_RECONCILIATION,
+        tenantId: user?.id ?? 'default',
+        totalGrossCommissionCents: grossCents,
+        totalHoldbackCents: holdbackCents,
+        totalNetPayableCents: netPayableCents,
+      }
+    : DEFAULT_RECONCILIATION;
 
   const cockpitSnapshot = generateExecutiveCockpitSnapshot({
-    tenantId: 'default',
-    reconciliation: DEFAULT_RECONCILIATION,
+    tenantId: user?.id ?? 'default',
+    reconciliation,
     scalingDecisions: DEFAULT_SCALING_DECISIONS,
     killSwitchActive: false,
   });

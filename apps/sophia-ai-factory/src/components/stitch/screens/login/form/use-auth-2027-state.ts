@@ -5,7 +5,13 @@ import { authClient } from '@/seed/auth/better-auth-client';
 import type { LoginFormProps } from './types';
 
 export function resolveRedirectTarget(redirectTo?: string): string {
-  const raw = redirectTo && !redirectTo.startsWith('/api/') ? redirectTo : '/dashboard';
+  const isSafeRelative =
+    typeof redirectTo === 'string' &&
+    redirectTo.startsWith('/') &&
+    !redirectTo.startsWith('//') &&
+    !redirectTo.startsWith('/\\') &&
+    !redirectTo.startsWith('/api/');
+  const raw = isSafeRelative ? redirectTo : '/dashboard';
   return raw.replace(/^\/(?:en|vi)(?=\/|$)/, '') || '/dashboard';
 }
 

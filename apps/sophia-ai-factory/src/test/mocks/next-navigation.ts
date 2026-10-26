@@ -15,3 +15,5 @@ export const redirect = (_url: string) => { throw new Error(`Redirect: ${_url}`)
 export const permanentRedirect = (_url: string) => { throw new Error(`Permanent Redirect: ${_url}`); };
 export const notFound = () => { throw new Error('Not Found'); };
 export const useParams = () => ({});
+export const unstable_rethrow = (_err: unknown) => {};
+
