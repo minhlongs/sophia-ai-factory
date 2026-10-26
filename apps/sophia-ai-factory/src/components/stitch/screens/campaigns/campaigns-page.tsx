@@ -43,6 +43,13 @@ export default function CampaignsPage({
   });
 
   const isEmpty = filtered.length === 0;
+  const handleCreateCampaign = () => {
+    if (onCreateCampaign) {
+      onCreateCampaign();
+    } else if (typeof window !== 'undefined') {
+      window.location.href = '/dashboard/campaigns/new';
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-full">
@@ -57,7 +64,7 @@ export default function CampaignsPage({
           </p>
         </div>
         <Button
-          onClick={onCreateCampaign}
+          onClick={handleCreateCampaign}
           variant="primary"
           className="bg-primary hover:bg-primary/90 shadow-sm text-white hover:text-white"
         >
@@ -79,7 +86,7 @@ export default function CampaignsPage({
 
       {/* Content */}
       {isEmpty ? (
-        <CampaignsEmptyState t={(k) => t(k)} onCreateCampaign={onCreateCampaign} />
+        <CampaignsEmptyState t={(k) => t(k)} onCreateCampaign={handleCreateCampaign} />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

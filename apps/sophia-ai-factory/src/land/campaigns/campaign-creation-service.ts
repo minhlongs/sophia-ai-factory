@@ -13,6 +13,7 @@ import type { Tier } from '@/seed/types';
 export interface CampaignRecordInput {
   campaignId: string;
   userId: string;
+  orgId?: string;
   title: string;
   topic?: string;
   audience?: string;
@@ -56,6 +57,7 @@ export async function insertCampaignRecord(
   const { error } = await db.from('campaigns').insert({
     id: input.campaignId,
     user_id: input.userId,
+    org_id: input.orgId || input.userId,
     title: input.title,
     topic: input.topic || '',
     audience: input.audience || '',

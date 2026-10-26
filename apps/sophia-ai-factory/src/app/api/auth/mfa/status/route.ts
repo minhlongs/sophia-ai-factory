@@ -16,6 +16,10 @@ interface MfaSecretsRow {
   totp_enabled: number | null;
 }
 
+interface UserTwoFactorRow {
+  twoFactorEnabled?: number | boolean | null;
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(request.headers);
   if (!user) {
@@ -24,6 +28,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const db = createServerClient();
+    const userRow = await db
+      .from('user')
+      .select('twoFactorEnabled')
+      .eq('id', user.id)
+      .single();
+    const baData = userRow?.data as UserTwoFactorRow | null;
+    if (baData?.twoFactorEnabled === 1 || baData?.twoFactorEnabled === true) {
+      return NextResponse.json({ enabled: true });
+    }
+
     const row = await db
       .from('mfa_secrets')
       .select('totp_enabled')

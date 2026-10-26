@@ -5,3 +5,4 @@
 export * from './create-campaign-core';
 export * from './validation';
 export * from './campaign-creation-service';
+export * from './campaign-loader';

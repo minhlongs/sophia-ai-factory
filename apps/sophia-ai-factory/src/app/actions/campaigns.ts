@@ -67,6 +67,7 @@ export async function createCampaign(formData: FormData) {
     const insertResult = await insertCampaignRecord({
       campaignId,
       userId,
+      orgId,
       title: title!,
       topic: topic || "",
       audience: audience || "",

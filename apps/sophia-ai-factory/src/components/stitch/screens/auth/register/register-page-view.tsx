@@ -1,22 +1,22 @@
 'use client';
 
 /**
- * RegisterPageView — stitch split-screen registration layout
+ * RegisterPageView — stitch split-screen registration layout (Auth 2027)
  *
  * Layer: components/stitch/screens/auth/register
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter, usePathname, Link } from '@/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Globe } from 'lucide-react';
-import { authClient } from '@/seed/auth/better-auth-client';
-import type { RegisterFormState, RegisterStep } from './types';
 import { RegisterSuccessView } from './register-success-view';
 import { RegisterHeader } from './register-header';
 import { RegisterForm } from './register-form';
 import { SocialAuthButtons } from './social-auth-buttons';
+import { EmailOtpPanel } from '@/components/stitch/screens/login/form/email-otp-panel';
 import { mapRegisterAuthError, validateRegisterForm } from './register-validation';
+import { useRegister2027State } from './use-register-2027-state';
 
 export { validateRegisterForm, mapRegisterAuthError };
 
@@ -25,59 +25,10 @@ export function RegisterPageView() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-
-  const [step, setStep] = useState<RegisterStep>('form');
-  const [formState, setFormState] = useState<RegisterFormState>({
-    companyName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    agreeTerms: false,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const state = useRegister2027State();
 
   const switchLocale = () => {
     router.replace(pathname, { locale: locale === 'en' ? 'vi' : 'en' });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    const validationError = validateRegisterForm(formState, t);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    const { password, companyName, email } = formState;
-    setLoading(true);
-    try {
-      const resolvedName = companyName.trim() || email.split('@')[0].trim() || 'user';
-      const result = await authClient.signUp.email({
-        name: resolvedName,
-        email,
-        password,
-        callbackURL: '/dashboard/onboarding',
-      });
-
-      if (result.error) {
-        setError(
-          mapRegisterAuthError(
-            result.error as { code?: string; message?: string; status?: number },
-            t,
-          ),
-        );
-        return;
-      }
-
-      setStep('success');
-    } catch {
-      setError(t('errorGeneric') || 'Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -101,18 +52,38 @@ export function RegisterPageView() {
       </div>
 
       <div className="w-full max-w-[460px] relative z-10">
-        {step === 'success' ? (
+        {state.step === 'success' ? (
           <RegisterSuccessView />
         ) : (
           <div className="rounded-2xl border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] p-8 md:p-10 shadow-xl dark:shadow-2xl transition-all duration-500">
-            <RegisterHeader error={error} />
-            <RegisterForm formState={formState} setFormState={setFormState} onSubmit={handleSubmit} loading={loading} />
+            <RegisterHeader error={state.error} />
+            {state.otpSent && (
+              <EmailOtpPanel
+                otpCode={state.otpCode}
+                setOtpCode={state.setOtpCode}
+                onVerifyOtp={state.handleVerifyOtp}
+                otpVerifying={state.otpVerifying}
+              />
+            )}
+            <RegisterForm
+              formState={state.formState}
+              setFormState={state.setFormState}
+              onSubmit={state.handleSubmit}
+              loading={state.loading}
+            />
             <div className="relative flex items-center my-6">
               <div className="flex-grow border-t border-[#E2E8F0] dark:border-white/[0.08]" />
-              <span className="flex-shrink mx-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('or')}</span>
+              <span className="flex-shrink mx-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                {t('or')}
+              </span>
               <div className="flex-grow border-t border-[#E2E8F0] dark:border-white/[0.08]" />
             </div>
-            <SocialAuthButtons />
+            <SocialAuthButtons
+              onPasskey={state.handlePasskey}
+              passkeyLoading={state.passkeyLoading}
+              onSendOtp={state.handleSendOtp}
+              otpSending={state.otpSending}
+            />
             <p className="text-center mt-6 text-xs text-slate-600 dark:text-slate-400">
               {t('hasAccount')}{' '}
               <Link href="/login" className="text-primary dark:text-primary-400 font-semibold hover:opacity-80 dark:hover:text-primary-300 transition-colors">

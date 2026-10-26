@@ -21,6 +21,11 @@ interface MfaSecretsRow {
   totp_enabled: number;
 }
 
+/** Shape of a row from Better Auth user table (Migration 0480). */
+interface UserTwoFactorRow {
+  twoFactorEnabled?: number | boolean | null;
+}
+
 /** Shape of a row from mfa_pending_sessions. */
 interface MfaPendingRow {
   session_id: string;
@@ -29,12 +34,27 @@ interface MfaPendingRow {
 
 /**
  * Returns whether the authenticated user has TOTP MFA enabled.
- * Used right after Better Auth signs the user in.
+ * Checks Better Auth 2027 "user".twoFactorEnabled and legacy mfa_secrets.
  */
 export async function requireMfaIfEnabled(
   userId: string,
 ): Promise<{ required: boolean }> {
   const db = createServerClient();
+
+  try {
+    const userResult = await db
+      .from('user')
+      .select('twoFactorEnabled')
+      .eq('id', userId)
+      .single();
+    const userRow = userResult?.data as UserTwoFactorRow | null;
+    if (userRow?.twoFactorEnabled === 1 || userRow?.twoFactorEnabled === true) {
+      return { required: true };
+    }
+  } catch {
+    // Fallback to mfa_secrets if user table query fails
+  }
+
   const result = await db
     .from('mfa_secrets')
     .select('totp_enabled')

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Key, BarChart3, Users, Languages, HardDrive, Shield } from 'lucide-react';
+import { User, Key, BarChart3, Users, Languages, HardDrive, Shield, Fingerprint } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
 import { Link } from '@/navigation';
 import { SettingsProfileSection } from '@/components/settings/settings-profile-section';
+import { SettingsSecuritySection } from '@/components/settings/settings-security-section';
 import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { StorageSettingsForm } from '@/components/settings/storage-settings-form';
 import { AccountOwnershipView } from '@/components/settings/account-ownership-view';
@@ -23,6 +24,7 @@ interface SettingsPageProps {
 
 const NAV_TABS = [
   { id: 'account', label: 'Profile', icon: User },
+  { id: 'security', label: 'Security (Passkeys & 2FA)', icon: Fingerprint },
   { id: 'apiKeys', label: 'API Keys (BYOK)', icon: Key },
   { id: 'storage', label: 'Storage (R2 BYOS)', icon: HardDrive },
   { id: 'usage', label: 'Live Metering', icon: BarChart3 },
@@ -47,7 +49,7 @@ export default function SettingsPage({
               Account & Workspace Settings
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Manage personal identity, live AI provider credentials, usage telemetry, and team ownership.
+              Manage personal identity, Passkeys, live AI provider credentials, usage telemetry, and team ownership.
             </p>
           </div>
           <Link
@@ -83,6 +85,7 @@ export default function SettingsPage({
 
         <main className="space-y-8">
           {activeTab === 'account' && <SettingsProfileSection initialName={userName} email={userEmail} />}
+          {activeTab === 'security' && <SettingsSecuritySection />}
           {activeTab === 'apiKeys' && <ApiKeysManager />}
           {activeTab === 'storage' && (
             <div className="bg-card dark:bg-[#11131F] rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-white/[0.08]">
