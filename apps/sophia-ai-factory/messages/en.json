@@ -550,7 +550,7 @@
         },
         "profit": {
           "title": "Track Revenue",
-          "description": "Track earnings from affiliate networks (BYOK Apollo / PartnerStack / Impact)"
+          "description": "Track earnings across 10 affiliate networks (PartnerStack, Impact, Binance, Bybit, Bitget, OKX)"
         }
       },
       "badge": "WORKFLOW ENGINE",
@@ -569,7 +569,7 @@
         },
         "video_factory": {
           "title": "Video Factory",
-          "description": "Produce scroll-stopping videos at scale. AI scripts, ElevenLabs voice, auto-publish — all in one flow.",
+          "description": "Produce Hybrid Scene-Graph videos at scale (fal.ai/Replicate Hook + Edge SVG Data Cards 0% text hallucination + ElevenLabs voice) — all in one flow.",
           "badge": "Popular"
         },
         "credits": {

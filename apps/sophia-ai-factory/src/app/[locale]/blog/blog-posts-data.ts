@@ -77,4 +77,22 @@ export const POSTS: BlogPost[] = [
     date: '2026-05-15',
     readTime: '6 min',
   },
+  {
+    slug: 'hybrid-scene-graph-zero-hallucination-video',
+    href: '/guide/how-it-works',
+    title: 'Hybrid Scene-Graph 2027: Video AI Sắc Nét 0% Sai Số Liệu (Edge SVG Data Cards)',
+    excerpt:
+      'Kết hợp Hook 3s điện ảnh (fal.ai/Replicate), bảng số liệu SVG sắc nét 0% lỗi chữ, Avatar thuyết trình và thẻ tuân thủ pháp lý tự động.',
+    date: '2026-10-26',
+    readTime: '6 min',
+  },
+  {
+    slug: '10-affiliate-networks-cex-saas-ltv-blueprint',
+    href: '/affiliate',
+    title: 'Chiến Lược 10 Mạng Affiliate: Ghép Cặp Hoa Hồng CEX (Binance, Bybit, OKX) & B2B SaaS MRR',
+    excerpt:
+      'Xây dựng nguồn thu nhập kép từ hoàn phí giao dịch CEX và hoa hồng phần mềm định kỳ hàng tháng trên 10 mạng lưới toàn cầu.',
+    date: '2026-10-26',
+    readTime: '7 min',
+  },
 ];

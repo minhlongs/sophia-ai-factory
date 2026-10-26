@@ -74,7 +74,7 @@ export function buildLlmsIndexText(): string {
   return [
     '# Sophia AI Factory (Dual-Read AEO/GEO Edition)',
     '',
-    `> Autonomous BYOK AI Video & Affiliate Revenue-as-a-Service (RaaS) platform on Cloudflare Workers. Supports ${NICHE_SLUGS.length} industry niches, 9 affiliate networks, and USDT settlement via NOWPayments.`,
+    `> Autonomous BYOK AI Video & Affiliate Revenue-as-a-Service (RaaS) platform on Cloudflare Workers. Supports ${NICHE_SLUGS.length} industry niches, ${AFFILIATE_NETWORKS_LIST.length} affiliate networks, and USDT settlement via NOWPayments.`,
     '',
     '## Canonical Machine Endpoints',
     `- Full Ground-Truth Corpus: ${SOPHIA_BASE_URL}/llms-full.txt`,
@@ -108,7 +108,7 @@ export function buildLlmsFullCorpusText(): string {
     '',
     '## BYOK Architecture & Protected Flows',
     `- **BYOK Providers:** ${BYOK_PROVIDERS_LIST.join(', ')}`,
-    `- **Affiliate Networks (9):** ${AFFILIATE_NETWORKS_LIST.join(', ')}`,
+    `- **Affiliate Networks (${AFFILIATE_NETWORKS_LIST.length}):** ${AFFILIATE_NETWORKS_LIST.join(', ')}`,
     '- **Protected Flows:** (1) Setup Wizard (`/vi/setup`, `/en/setup`), (2) Telegram Bot (`@Sophia_Bbot`), (3) NOWPayments IPN Webhook.',
     '',
     `## All ${NICHE_SLUGS.length} Supported AI Video Industry Niches`,
