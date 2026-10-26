@@ -5,6 +5,22 @@
 
 export type AeoLocale = 'vi' | 'en';
 
+export type AeoSecondarySurface =
+  | 'features'
+  | 'solutions'
+  | 'products'
+  | 'marketplace'
+  | 'sop-marketplace'
+  | 'benchmarks'
+  | 'operations'
+  | 'partner'
+  | 'blog'
+  | 'contact'
+  | 'terms'
+  | 'privacy'
+  | 'affiliate-disclosure'
+  | 'affiliate-terms';
+
 export type AeoPageSurface =
   | 'home'
   | 'pricing'
@@ -12,7 +28,8 @@ export type AeoPageSurface =
   | 'affiliate'
   | 'status'
   | 'ai-video-hub'
-  | 'ai-video-niche';
+  | 'ai-video-niche'
+  | AeoSecondarySurface;
 
 export interface AeoCitationMetric {
   readonly label: string;
@@ -38,6 +55,13 @@ export interface AeoHowToStep {
   readonly text: string;
 }
 
+export interface AeoTelemetryProof {
+  readonly deployedSha: string;
+  readonly verifiedIsoDate: string;
+  readonly activeNichesCount: number;
+  readonly byokZeroMarkup: boolean;
+}
+
 export interface DualReadPagePayload {
   readonly pageKey: string;
   readonly surface: AeoPageSurface;
@@ -51,6 +75,7 @@ export interface DualReadPagePayload {
   readonly faqs: readonly AeoFaqItem[];
   readonly howToSteps?: readonly AeoHowToStep[];
   readonly nicheSlug?: string;
+  readonly telemetryProof?: AeoTelemetryProof;
 }
 
 export interface AgentCapabilityEndpoint {
@@ -67,6 +92,8 @@ export interface AgentDiscoveryManifest {
   readonly canonicalUrl: string;
   readonly description: string;
   readonly locales: readonly AeoLocale[];
+  readonly openApiSpecUrl?: string;
+  readonly indexNowUrl?: string;
   readonly dualReadProtocol: {
     readonly acceptHeader: 'text/markdown';
     readonly markdownSuffix: '.md';

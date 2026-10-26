@@ -14,9 +14,8 @@ export default async function PricingRoute({
   const payload = buildCorePagePayload('pricing', normalizeAeoLocale(resolved.locale));
 
   return (
-    <>
-      <PricingPage />
-      <DualReadPageSection payload={payload} />
-    </>
+    <PricingPage
+      beforeFooterSlot={<DualReadPageSection payload={payload} />}
+    />
   );
 }

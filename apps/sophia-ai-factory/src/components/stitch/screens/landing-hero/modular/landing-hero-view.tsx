@@ -8,7 +8,11 @@ import { PipelineMockup } from './pipeline-mockup';
 import { WorkflowAndFeatures } from './workflow-and-features';
 import { FaqAndCta } from './faq-and-cta';
 
-export function LandingHeroView() {
+export interface LandingHeroViewProps {
+  readonly beforeFooterSlot?: React.ReactNode;
+}
+
+export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {}) {
   const t = useTranslations('stitch.landing');
   const tLanding = useTranslations('landing');
 
@@ -26,6 +30,7 @@ export function LandingHeroView() {
       <WorkflowAndFeatures tLanding={tLanding} t={t} />
       <FaqAndCta t={t} tLanding={tLanding} />
 
+      {beforeFooterSlot}
       <MarketingFooter />
     </div>
   );

@@ -2,12 +2,13 @@
 
 /**
  * AgentInspectorHud — Client component floating HUD toggle.
- * Provides "Copy LLM Context", view raw Markdown, and protocol status.
+ * Provides "Copy LLM Context", view raw Markdown, and One-Click AI Deep-Link Launchers.
  * Layer: forest/components/aeo
  */
 
 import { useState } from 'react';
 import type { AeoLocale } from '@/seed/aeo';
+import { AgentDeepLinkBar } from './agent-deep-link-bar';
 
 export interface AgentInspectorHudProps {
   readonly markdownContent: string;
@@ -40,8 +41,8 @@ export function AgentInspectorHud({
       className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2"
     >
       {isOpen && (
-        <div className="w-[320px] sm:w-[400px] max-h-[360px] overflow-y-auto rounded-xl border border-border bg-card/95 p-4 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-border/80 pb-2 mb-3">
+        <div className="w-[320px] sm:w-[400px] max-h-[400px] overflow-y-auto rounded-xl border border-border bg-card/95 p-4 shadow-2xl backdrop-blur-md space-y-2.5">
+          <div className="flex items-center justify-between border-b border-border/80 pb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">
               {isVi ? 'Bản Đọc Cho AI (Markdown Twin)' : 'Dual-Read Markdown Twin'}
             </span>
@@ -57,7 +58,8 @@ export function AgentInspectorHud({
             {markdownContent.slice(0, 1500)}
             {markdownContent.length > 1500 ? '\n\n... [truncated for HUD preview]' : ''}
           </pre>
-          <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+          <AgentDeepLinkBar canonicalUrl={canonicalUrl} isVi={isVi} />
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
             <a
               href={`${canonicalUrl}.md`}
               target="_blank"
@@ -84,7 +86,7 @@ export function AgentInspectorHud({
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground hover:text-primary transition"
         >
           <span className="h-2 w-2 rounded-full bg-accent animate-glow-pulse" />
-          <span>{copied ? (isVi ? '✓ Đã sao chép' : '✓ Copied') : (isVi ? 'Copy LLM Context' : 'Copy LLM Context')}</span>
+          <span>{copied ? (isVi ? '✓ Đã sao chép' : '✓ Copied') : 'Copy LLM Context'}</span>
         </button>
         <span className="text-muted-foreground/40">|</span>
         <button

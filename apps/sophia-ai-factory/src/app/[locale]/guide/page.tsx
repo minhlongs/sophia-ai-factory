@@ -51,8 +51,8 @@ export default async function GuidePage({
         </div>
 
         <GuideSections t={t} />
+        <DualReadPageSection payload={aeoPayload} />
       </div>
-      <DualReadPageSection payload={aeoPayload} />
     </main>
   );
 }

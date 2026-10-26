@@ -22,6 +22,7 @@ export function isPublicApiRoute(pathname: string): boolean {
     '/api/check-access',
     '/api/openapi.json',
     '/api/aeo/markdown',
+    '/api/aeo/indexnow',
 
     // Explicit Better Auth routes (must stay public — Better Auth handles its own auth)
     '/api/auth/sign-in/email',

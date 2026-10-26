@@ -6,6 +6,7 @@
 import { NICHE_SLUGS, NICHE_LABELS, type NicheSlug } from '@/seed/config/niche-list';
 import { TIER_CONFIGS } from '@/seed/config/tiers/tier-configs';
 import { SOPHIA_BASE_URL, VERIFIED_ISO_DATE, AFFILIATE_NETWORKS_LIST } from './ground-truth-catalog';
+import { buildEeatTelemetryProof } from './eeat-telemetry-proof';
 import type { AeoLocale, DualReadPagePayload } from './aeo-types';
 
 export function isKnownNicheSlug(slug: string): slug is NicheSlug {
@@ -39,6 +40,7 @@ export function buildNicheHubPayload(locale: AeoLocale): DualReadPagePayload {
     faqs: [
       { question: isVi ? 'Sophia hỗ trợ bao nhiêu ngành nghề làm video AI?' : 'How many AI video niches does Sophia support?', answer: isVi ? `Hệ thống hỗ trợ chính thức ${NICHE_SLUGS.length} ngành nghề song ngữ Việt-Anh.` : `Sophia officially supports ${NICHE_SLUGS.length} bilingual VI/EN industry niches.` },
     ],
+    telemetryProof: buildEeatTelemetryProof(),
   };
 }
 
@@ -103,5 +105,6 @@ export function buildSingleNichePayload(
       { question: isVi ? `Làm sao để bắt đầu tạo video AI ngành ${label}?` : `How do I launch an AI video channel for ${label}?`, answer: isVi ? `Chỉ cần đăng ký gói (${TIER_CONFIGS.BASIC.priceDisplay}–${TIER_CONFIGS.MASTER.priceDisplay}), nhập khóa BYOK tại Setup Wizard và chọn ngách ${label} hoặc ra lệnh qua @Sophia_Bbot.` : `Select a tier (${TIER_CONFIGS.BASIC.priceDisplay}–${TIER_CONFIGS.MASTER.priceDisplay}), enter your BYOK keys in the Setup Wizard, and launch a ${label} mission via dashboard or @Sophia_Bbot.` },
     ],
     howToSteps: buildNicheHowToSteps(isVi, label),
+    telemetryProof: buildEeatTelemetryProof(),
   };
 }

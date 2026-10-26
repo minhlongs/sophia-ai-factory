@@ -8,10 +8,11 @@ import { TIER_CONFIGS } from '@/seed/config/tiers/tier-configs';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 import { NICHE_SLUGS } from '@/seed/config/niche-list';
 import type { Tier } from '@/seed/types';
+import { buildEeatTelemetryProof } from './eeat-telemetry-proof';
 import type { AeoLocale, AgentDiscoveryManifest, DualReadPagePayload } from './aeo-types';
 
 export const SOPHIA_BASE_URL = 'https://sophia.agencyos.network';
-export const VERIFIED_ISO_DATE = '2026-10-25';
+export const VERIFIED_ISO_DATE = '2026-10-26';
 
 export const AFFILIATE_NETWORKS_LIST = [
   'Impact', 'PartnerStack', 'Binance', 'Bybit', 'Bitget',
@@ -26,20 +27,14 @@ export function getVerifiedTierSummary(tier: Tier) {
   const cfg = TIER_CONFIGS[tier];
   const unified = UNIFIED_TIERS[tier];
   return {
-    tier,
-    name: cfg.name,
-    priceUsd: cfg.price,
-    priceDisplay: cfg.priceDisplay,
-    monthlyMcu: unified.mcuMonthly,
-    youtubeChannels: cfg.limits.youtubeChannels,
-    videoTemplates: cfg.limits.videoTemplates,
-    supportMonths: cfg.limits.supportMonths,
+    tier, name: cfg.name, priceUsd: cfg.price, priceDisplay: cfg.priceDisplay,
+    monthlyMcu: unified.mcuMonthly, youtubeChannels: cfg.limits.youtubeChannels,
+    videoTemplates: cfg.limits.videoTemplates, supportMonths: cfg.limits.supportMonths,
   };
 }
 
 export function getAllVerifiedTiersSummary() {
-  const tiers: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
-  return tiers.map((t) => getVerifiedTierSummary(t));
+  return (['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] as Tier[]).map(getVerifiedTierSummary);
 }
 
 export function buildAgentDiscoveryManifest(): AgentDiscoveryManifest {
@@ -49,6 +44,8 @@ export function buildAgentDiscoveryManifest(): AgentDiscoveryManifest {
     canonicalUrl: SOPHIA_BASE_URL,
     description: 'Autonomous BYOK AI Video & Affiliate RaaS Factory on Cloudflare Workers with USDT settlement.',
     locales: ['vi', 'en'],
+    openApiSpecUrl: `${SOPHIA_BASE_URL}/api/openapi.json`,
+    indexNowUrl: `${SOPHIA_BASE_URL}/api/aeo/indexnow`,
     dualReadProtocol: {
       acceptHeader: 'text/markdown',
       markdownSuffix: '.md',
@@ -63,13 +60,15 @@ export function buildAgentDiscoveryManifest(): AgentDiscoveryManifest {
       { path: '/llms.txt', method: 'GET', contentType: 'text/plain; charset=utf-8', description: 'Concise LLM index of Sophia AI Factory', authRequired: false },
       { path: '/llms-full.txt', method: 'GET', contentType: 'text/markdown; charset=utf-8', description: 'Complete ground-truth documentation, tiers, and 51 niches', authRequired: false },
       { path: '/.well-known/agent.json', method: 'GET', contentType: 'application/json', description: 'Machine-readable agent capability manifest', authRequired: false },
+      { path: '/api/openapi.json', method: 'GET', contentType: 'application/json', description: 'OpenAPI 3.1 public agent action schema', authRequired: false },
       { path: '/api/aeo/markdown', method: 'GET', contentType: 'text/markdown; charset=utf-8', description: 'Dual-Read Markdown projection for any public route', authRequired: false },
+      { path: '/api/aeo/indexnow', method: 'GET', contentType: 'text/plain; charset=utf-8', description: 'Deterministic IndexNow key verification endpoint', authRequired: false },
       { path: '/api/version', method: 'GET', contentType: 'application/json', description: 'Edge deployment SHA verification endpoint', authRequired: false },
     ],
   };
 }
 
-function buildCoreMetrics(isVi: boolean) {
+export function buildCoreMetrics(isVi: boolean) {
   const { BASIC: basic, PREMIUM: premium, ENTERPRISE: enterprise } = TIER_CONFIGS;
   return [
     { label: isVi ? 'Gói khởi điểm (BASIC)' : 'Entry Tier (BASIC)', value: basic.priceDisplay, sourceNote: `${basic.limits.youtubeChannels} YouTube channels` },
@@ -79,7 +78,7 @@ function buildCoreMetrics(isVi: boolean) {
   ];
 }
 
-function buildCoreComparisonRows(isVi: boolean) {
+export function buildCoreComparisonRows(isVi: boolean) {
   if (isVi) {
     return [
       { dimension: 'Chi phí vận hành AI', sophiaValue: 'BYOK giá gốc nhà cung cấp (0% markup)', legacyValue: 'Đội giá 300%–500% qua credit trung gian', advantageMetric: '3x–5x ROI' },
@@ -125,5 +124,6 @@ export function buildCorePagePayload(
       { stepNumber: 2, name: isVi ? 'Chọn Ngách & Chiến Dịch Affiliate' : 'Select Niche & Affiliate Campaign', text: isVi ? 'Chọn từ 51 ngành nghề hoặc ra lệnh qua Telegram @Sophia_Bbot.' : 'Pick from 51 verticals or trigger `/campaign` via Telegram @Sophia_Bbot.' },
       { stepNumber: 3, name: isVi ? 'Xuất Bản Đa Kênh & Thu Hoa Hồng USDT' : 'Auto-Publish & Collect USDT Commissions', text: isVi ? 'Hệ thống tự động dựng video, gắn shortlink `/r/code` và đối soát NOWPayments.' : 'Sophia renders videos, injects `/r/code` shortlinks, and settles via NOWPayments.' },
     ],
+    telemetryProof: buildEeatTelemetryProof(),
   };
 }

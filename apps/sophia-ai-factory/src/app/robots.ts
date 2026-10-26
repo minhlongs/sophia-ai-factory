@@ -30,17 +30,27 @@ const AI_ANSWER_ENGINE_BOTS = [
   'Amazonbot',
 ];
 
+const PUBLIC_AEO_ENDPOINTS = [
+  '/',
+  '/llms.txt',
+  '/llms-full.txt',
+  '/.well-known/agent.json',
+  '/api/openapi.json',
+  '/api/aeo/markdown',
+  '/api/aeo/indexnow',
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: AI_ANSWER_ENGINE_BOTS,
-        allow: ['/', '/llms.txt', '/llms-full.txt', '/.well-known/agent.json', '/api/aeo/markdown'],
+        allow: PUBLIC_AEO_ENDPOINTS,
         disallow: PROTECTED_DISALLOW,
       },
       {
         userAgent: '*',
-        allow: ['/', '/llms.txt', '/llms-full.txt', '/.well-known/agent.json', '/api/aeo/markdown'],
+        allow: PUBLIC_AEO_ENDPOINTS,
         disallow: ['/api/', ...PROTECTED_DISALLOW],
       },
     ],

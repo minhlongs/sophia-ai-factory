@@ -1,4 +1,5 @@
 // i18n-namespace: affiliateProgram
+import type React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Coins, Wallet, Cookie } from 'lucide-react';
 import { CopyReferralLink } from '@/app/components/affiliate/copy-referral-link';
@@ -14,9 +15,10 @@ export { EARNINGS_ROWS };
 interface AffiliateViewProps {
   signupUrl: string;
   t: (key: string) => string;
+  beforeFooterSlot?: React.ReactNode;
 }
 
-export function AffiliateLandingView({ signupUrl, t }: AffiliateViewProps) {
+export function AffiliateLandingView({ signupUrl, t, beforeFooterSlot }: AffiliateViewProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 space-y-20">
       {/* Hero */}
@@ -94,6 +96,7 @@ export function AffiliateLandingView({ signupUrl, t }: AffiliateViewProps) {
         <CopyReferralLink />
       </section>
 
+      {beforeFooterSlot}
       <AffiliateFooterSections signupUrl={signupUrl} t={t} />
     </div>
   );
