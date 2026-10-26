@@ -37,8 +37,8 @@ export default async function YoutubeStrategyPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-[hsl(240,12%,12%)]">{t('strategyHistory')}</h1>
-        <p className="mt-1 text-sm text-[hsl(240,12%,45%)]">{t('overviewDescription')}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('strategyHistory')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('overviewDescription')}</p>
       </header>
 
       <section className="mb-6 rounded-lg border border-border bg-background p-4">

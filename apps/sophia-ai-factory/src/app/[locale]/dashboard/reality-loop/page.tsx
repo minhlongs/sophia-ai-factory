@@ -44,7 +44,7 @@ export default async function RealityLoopPage() {
   if (!workspaceId) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-[hsl(240,12%,45%)]">{t('noWorkspace')}</p>
+        <p className="text-sm text-muted-foreground">{t('noWorkspace')}</p>
       </div>
     );
   }
@@ -59,8 +59,8 @@ export default async function RealityLoopPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-[hsl(240,12%,12%)]">{t('pageTitle')}</h1>
-        <p className="mt-1 text-sm text-[hsl(240,12%,45%)]">{t('pageDescription')}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
       </header>
       <InsightPanels insights={insights} t={(k, v) => t(k, v)} />
     </div>

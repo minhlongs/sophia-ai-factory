@@ -22,13 +22,13 @@ function roiClass(roiPct: number | null): string {
 export function AssetTable({ rows, t }: AssetTableProps) {
   return (
     <section className="mt-6">
-      <h2 className="mb-3 text-lg font-semibold text-[hsl(240,12%,12%)]">{t('assetTitle')}</h2>
+      <h2 className="mb-3 text-lg font-semibold text-foreground">{t('assetTitle')}</h2>
       {rows.length === 0 ? (
-        <p className="text-sm text-[hsl(240,12%,45%)]">{t('noAssets')}</p>
+        <p className="text-sm text-muted-foreground">{t('noAssets')}</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-[hsl(35,30%,90%)]">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-[hsl(35,30%,95%)] text-[hsl(240,12%,12%)]">
+            <thead className="bg-muted text-foreground">
               <tr>
                 <th className="px-4 py-2 font-medium">{t('assetId')}</th>
                 <th className="px-4 py-2 font-medium">{t('channel')}</th>
@@ -40,7 +40,7 @@ export function AssetTable({ rows, t }: AssetTableProps) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.assetId} className="border-t border-[hsl(35,30%,90%)]">
+                <tr key={r.assetId} className="border-t border-border">
                   <td className="max-w-[180px] truncate px-4 py-2 font-medium" title={r.assetId}>
                     {r.assetId}
                   </td>

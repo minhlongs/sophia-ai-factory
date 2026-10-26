@@ -31,16 +31,16 @@ const RECOMMENDATION_BADGE: Record<string, string> = {
 export function InvestmentAdvice({ rows, t }: InvestmentAdviceProps) {
   return (
     <section className="mt-6" aria-labelledby="investment-heading">
-      <h2 id="investment-heading" className="text-lg font-semibold text-[hsl(240,12%,12%)]">
+      <h2 id="investment-heading" className="text-lg font-semibold text-foreground">
         {t('investmentTitle')}
       </h2>
-      <p className="mt-1 text-sm text-[hsl(240,12%,45%)]">{t('investmentDescription')}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{t('investmentDescription')}</p>
       {rows.length === 0 ? (
-        <p className="mt-3 text-sm text-[hsl(240,12%,45%)]">{t('noInvestments')}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{t('noInvestments')}</p>
       ) : (
-        <div className="mt-3 overflow-x-auto rounded-lg border border-[hsl(35,30%,90%)]">
+        <div className="mt-3 overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-[hsl(35,30%,95%)] text-[hsl(240,12%,12%)]">
+            <thead className="bg-muted text-foreground">
               <tr>
                 <th className="px-4 py-2 font-medium">{t('assetId')}</th>
                 <th className="px-4 py-2 font-medium">{t('channel')}</th>
@@ -54,7 +54,7 @@ export function InvestmentAdvice({ rows, t }: InvestmentAdviceProps) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={`${r.entityType}:${r.entityId}:${r.channel}`} className="border-t border-[hsl(35,30%,90%)]">
+                <tr key={`${r.entityType}:${r.entityId}:${r.channel}`} className="border-t border-border">
                   <td className="max-w-[180px] truncate px-4 py-2 font-medium" title={r.entityId}>
                     {r.entityId}
                   </td>
@@ -65,7 +65,7 @@ export function InvestmentAdvice({ rows, t }: InvestmentAdviceProps) {
                     >
                       {t(`recommendation_${r.recommendation}`)}
                     </span>
-                    <span className="ml-2 text-xs tabular-nums text-[hsl(240,12%,45%)]">
+                    <span className="ml-2 text-xs tabular-nums text-muted-foreground">
                       {r.compositeScore}
                     </span>
                   </td>
@@ -77,7 +77,7 @@ export function InvestmentAdvice({ rows, t }: InvestmentAdviceProps) {
                   <td className="px-4 py-2 text-right tabular-nums">
                     {r.velocityScore === null ? '—' : Math.round(r.velocityScore)}
                   </td>
-                  <td className="px-4 py-2 text-xs text-[hsl(240,12%,45%)]">
+                  <td className="px-4 py-2 text-xs text-muted-foreground">
                     {r.reasons.map((reason) => t(`reason_${reason}`)).join(', ')}
                   </td>
                 </tr>

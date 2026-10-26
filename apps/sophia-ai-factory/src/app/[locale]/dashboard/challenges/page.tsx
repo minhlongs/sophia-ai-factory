@@ -13,24 +13,22 @@ import { listActiveChallenges, getUserAllProgress } from '@/land/sop-marketplace
 import { cookies } from 'next/headers';
 import { getD1 } from '@/seed/db/get-d1';
 import { ChallengeCard, type ChallengeCardLabels } from './challenge-card';
-import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ChallengesPage() {
+  const t = await getTranslations('challenges');
   const user = await getCurrentUser();
   if (!user) {
     return (
       <div className="space-y-6 p-4 md:p-6">
-        <StitchWave2RouteBanner routeKey="challenges" defaultShowCanvas={true} className="" />
+        <p className="text-sm text-muted-foreground">{t('noChallenges')}</p>
       </div>
     );
   }
 
   const jar = await cookies();
   const locale = jar.get('NEXT_LOCALE')?.value === 'en' ? 'en' : 'vi';
-
-  const t = await getTranslations('challenges');
 
   const db = await getD1();
   const [challenges, allProgress] = db
@@ -55,7 +53,6 @@ export default async function ChallengesPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <StitchWave2RouteBanner routeKey="challenges" className="" />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-orange-500/10">

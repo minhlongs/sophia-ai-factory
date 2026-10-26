@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
  * Layer: app router (Next.js App Router; can import from all layers)
  *
  * Route: /dashboard/docs/runbooks & /vi/dashboard/docs/runbooks
- * Renders the full 10-SOP customer documentation catalog with default to SOP 01 Quickstart.
+ * Renders the full 10-SOP customer documentation catalog with live D1 telemetry.
  *
  * @module app/[locale]/dashboard/docs/runbooks/page
  */
@@ -17,7 +17,8 @@ import {
   RUNBOOK_CATALOG,
 } from '@/tree/handover/runbook-catalog-service';
 import { RunbookReaderClient } from '@/forest/components/runbooks/runbook-reader-client';
-import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
+import { RunbookSovereignStatusStrip } from '@/forest/components/runbooks/runbook-sovereign-status-strip';
+import { loadRunbookLiveTelemetry } from '@/forest/components/runbooks/load-runbook-telemetry';
 
 export default async function RunbooksOverviewPageRoute({
   params,
@@ -34,9 +35,18 @@ export default async function RunbooksOverviewPageRoute({
     notFound();
   }
 
+  const telemetry = await loadRunbookLiveTelemetry();
+
   return (
     <div className="space-y-6">
-      <StitchWave2RouteBanner routeKey="handover" defaultShowCanvas={true} />
+      <RunbookSovereignStatusStrip
+        isVi={activeLocale === 'vi'}
+        handoverStatus={telemetry.handoverStatus}
+        certificateHash={telemetry.certificateHash}
+        installedSopCount={telemetry.installedSopCount}
+        readinessScore={telemetry.readinessScore}
+        readyForMissions={telemetry.readyForMissions}
+      />
       <RunbookReaderClient
         runbooks={catalog}
         activeRunbook={defaultRunbook}

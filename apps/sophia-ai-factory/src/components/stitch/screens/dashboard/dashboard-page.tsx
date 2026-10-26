@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl';
 import type { DashboardData, DashboardMetric } from '@/forest/dashboard/types';
 import type { SystemReadiness } from '@/tree/readiness/readiness-checker';
 import { DashboardOnboardingBanner } from './dashboard-onboarding-banner';
-import { DashboardControlDeckBanner } from './dashboard-control-deck-banner';
 import { LocalEngineSetupGuide } from '@/components/dashboard/local-engine-setup-guide';
 import { DashboardMetricsGrid } from './dashboard-metrics-grid';
 import { DashboardRevenueChart } from './dashboard-revenue-chart';
@@ -72,9 +71,6 @@ export default function DashboardPage({ initialData, readiness }: DashboardPageP
 
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
-
-      {/* Stitch v4.2 Director's Control Deck 9-Screen Quick Launch */}
-      <DashboardControlDeckBanner />
 
       {/* Local Engine Setup Guide (Apple Silicon) */}
       <LocalEngineSetupGuide />

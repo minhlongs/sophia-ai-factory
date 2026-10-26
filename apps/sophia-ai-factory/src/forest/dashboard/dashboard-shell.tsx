@@ -40,14 +40,6 @@ export function DashboardShell({
   const pathnameFromHook = usePathname();
   const activePath = currentPath || pathnameFromHook || "";
 
-  if (activePath.includes("/dashboard/control-deck")) {
-    return (
-      <div className={cn("min-h-screen w-full bg-[#0B0E14] text-[#F8FAFC]", className)}>
-        {children}
-      </div>
-    );
-  }
-
   return (
     <div className={cn("min-h-screen bg-[#0B0E14] dark:bg-[#090A10] text-[#F8FAFC] flex", className)}>
       {/* Canonical Sidebar Navigation (Desktop & Mobile Drawer) */}

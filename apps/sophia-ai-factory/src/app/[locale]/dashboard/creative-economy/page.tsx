@@ -30,7 +30,6 @@ import {
   PlaybookSection,
   InvestmentSection,
 } from './dashboard-sections';
-import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export default async function CreativeEconomyPage() {
   const t = await getTranslations('creativeEconomy');
@@ -39,7 +38,6 @@ export default async function CreativeEconomyPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <StitchWave2RouteBanner routeKey="creative-economy" defaultShowCanvas={true} />
         <p className="text-sm text-rose-400">{t('notAuthenticated')}</p>
       </div>
     );
@@ -59,7 +57,7 @@ export default async function CreativeEconomyPage() {
   if (!workspaceId) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-[hsl(240,12%,45%)]">{t('noWorkspace')}</p>
+        <p className="text-sm text-muted-foreground">{t('noWorkspace')}</p>
       </div>
     );
   }
@@ -76,10 +74,9 @@ export default async function CreativeEconomyPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      <StitchWave2RouteBanner routeKey="creative-economy" />
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-[hsl(240,12%,12%)]">{t('pageTitle')}</h1>
-        <p className="mt-1 text-sm text-[hsl(240,12%,45%)]">{t('pageDescription')}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
       </header>
 
       <SummarySection result={summaryRes} t={(k, v) => t(k, v)} />

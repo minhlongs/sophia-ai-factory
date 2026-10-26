@@ -44,7 +44,7 @@ export function PublishQueueClient() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">{t('title') || 'Publish Queue'}</h1>
             <p className="text-muted-foreground mt-1">
-              {t('subtitle') || 'Monitor and manage your WhatsApp publish jobs'}
+              {t('subtitle') || 'Monitor and manage omnichannel publish jobs (YouTube, TikTok, Instagram, Facebook, LinkedIn)'}
             </p>
           </div>
           <Button variant="outline" onClick={fetchJobs} className="flex items-center gap-2">

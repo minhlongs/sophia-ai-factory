@@ -20,19 +20,19 @@ function scoreColor(score: number): string {
 export function VelocityChart({ points, t }: VelocityChartProps) {
   return (
     <section className="mt-6">
-      <h2 className="mb-3 text-lg font-semibold text-[hsl(240,12%,12%)]">{t('velocityTitle')}</h2>
+      <h2 className="mb-3 text-lg font-semibold text-foreground">{t('velocityTitle')}</h2>
       {points.length === 0 ? (
-        <p className="text-sm text-[hsl(240,12%,45%)]">{t('noVelocity')}</p>
+        <p className="text-sm text-muted-foreground">{t('noVelocity')}</p>
       ) : (
-        <ul className="space-y-3 rounded-lg border border-[hsl(35,30%,90%)] p-4">
+        <ul className="space-y-3 rounded-lg border border-border p-4">
           {points.map((p) => (
             <li key={`${p.entityType}-${p.channel}`}>
               <div className="mb-1 flex items-center justify-between gap-2 text-sm">
-                <span className="truncate font-medium text-[hsl(240,12%,12%)]">
+                <span className="truncate font-medium text-foreground">
                   {p.entityType}
-                  <span className="ml-1 text-xs text-[hsl(240,12%,45%)]">({p.channel})</span>
+                  <span className="ml-1 text-xs text-muted-foreground">({p.channel})</span>
                 </span>
-                <span className="whitespace-nowrap text-xs text-[hsl(240,12%,45%)]">
+                <span className="whitespace-nowrap text-xs text-muted-foreground">
                   {t('scoreLabel')}: {p.velocityScore.toFixed(0)} · {p.eventCount}{' '}
                   {t('eventsLabel')}
                 </span>

@@ -22,7 +22,6 @@ import {
 } from '@/tree/handover/customer-handover-service';
 import { signHandoverAcceptanceAction } from '@/land/actions/handover-actions';
 import { HandoverAcceptanceClient } from '@/forest/components/handover/handover-acceptance-client';
-import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 
 export default async function CustomerHandoverPageRoute({
   params,
@@ -35,7 +34,9 @@ export default async function CustomerHandoverPageRoute({
   if (!user) {
     return (
       <div className="space-y-6 p-4 md:p-6">
-        <StitchWave2RouteBanner routeKey="handover" defaultShowCanvas={true} className="" />
+        <p className="text-sm text-muted-foreground">
+          {locale === 'vi' ? 'Vui lòng đăng nhập để xem hồ sơ bàn giao.' : 'Please sign in to view your handover certificate.'}
+        </p>
       </div>
     );
   }
@@ -110,7 +111,6 @@ export default async function CustomerHandoverPageRoute({
 
   return (
     <div className="space-y-6">
-      <StitchWave2RouteBanner routeKey="handover" className="" />
       <HandoverAcceptanceClient
         handover={handover}
         initialCertificate={certificate}

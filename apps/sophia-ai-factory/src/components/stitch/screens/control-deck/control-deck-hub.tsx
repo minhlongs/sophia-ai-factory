@@ -7,7 +7,6 @@ import type {
 } from '@/seed/types/stitch-control-deck';
 import { ControlDeckDemoNotice } from './control-deck-demo-notice';
 import { ControlDeckScreenNav } from './control-deck-screen-nav';
-import { StitchScreenLiveCanvas } from './stitch-screen-live-canvas';
 import { ExecutiveMabPanel } from './executive-mab-panel';
 import { AdvisorTimelinePanel } from './advisor-timeline-panel';
 import { RevenuePortalsPanel } from './revenue-portals-panel';
@@ -87,12 +86,6 @@ export function ControlDeckHub({
           className="min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
         >
           <ControlDeckInspector activeScreen={activeScreen} lang={lang} />
-          <StitchScreenLiveCanvas
-            activeScreen={activeScreen}
-            lang={lang}
-            screens={dataset.screens}
-            onSelectScreen={setActiveId}
-          />
           <div className="mt-6 min-w-0 space-y-6">
             <ExecutiveMabPanel screen={activeScreen} mabArms={dataset.mabArms} lang={lang} />
             <AdvisorTimelinePanel advisors={dataset.advisors} timelineTracks={dataset.timelineTracks} lang={lang} />
