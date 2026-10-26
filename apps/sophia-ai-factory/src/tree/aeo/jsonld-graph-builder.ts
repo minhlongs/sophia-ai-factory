@@ -5,7 +5,7 @@
  */
 
 import { TIER_CONFIGS } from '@/seed/config/tiers/tier-configs';
-import { SOPHIA_BASE_URL, type DualReadPagePayload } from '@/seed/aeo';
+import { SOPHIA_BASE_URL, buildEeatTelemetryProof, type DualReadPagePayload } from '@/seed/aeo';
 
 export interface JsonLdGraphDocument {
   readonly '@context': 'https://schema.org';
@@ -16,6 +16,7 @@ export function buildJsonLdGraph(payload: DualReadPagePayload): JsonLdGraphDocum
   const orgId = `${SOPHIA_BASE_URL}/#organization`;
   const appId = `${SOPHIA_BASE_URL}/#software-application`;
   const pageId = `${payload.canonicalUrl}#webpage`;
+  const proof = payload.telemetryProof ?? buildEeatTelemetryProof();
 
   const offers = Object.entries(TIER_CONFIGS).map(([tierKey, cfg]) => ({
     '@type': 'Offer',
@@ -42,8 +43,15 @@ export function buildJsonLdGraph(payload: DualReadPagePayload): JsonLdGraphDocum
       name: 'Sophia AI Factory',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web, Cloudflare Workers Edge',
+      softwareVersion: proof.deployedSha,
       provider: { '@id': orgId },
       offers,
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'deployedSha', value: proof.deployedSha },
+        { '@type': 'PropertyValue', name: 'verifiedIsoDate', value: proof.verifiedIsoDate },
+        { '@type': 'PropertyValue', name: 'activeNichesCount', value: String(proof.activeNichesCount) },
+        { '@type': 'PropertyValue', name: 'byokZeroMarkup', value: String(proof.byokZeroMarkup) },
+      ],
     },
     {
       '@type': 'WebPage',
@@ -51,6 +59,7 @@ export function buildJsonLdGraph(payload: DualReadPagePayload): JsonLdGraphDocum
       url: payload.canonicalUrl,
       name: payload.title,
       inLanguage: payload.locale,
+      dateModified: proof.verifiedIsoDate,
       description: payload.answerFirstSummary,
       isPartOf: { '@id': appId },
       about: { '@id': orgId },
@@ -97,3 +106,8 @@ export function buildJsonLdGraph(payload: DualReadPagePayload): JsonLdGraphDocum
     '@graph': graph,
   };
 }
+
+export function serializeJsonLdSafe(doc: JsonLdGraphDocument): string {
+  return JSON.stringify(doc).replace(/</g, '\\u003c');
+}
+

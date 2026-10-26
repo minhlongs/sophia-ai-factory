@@ -8,6 +8,8 @@
  */
 
 import { useState } from 'react';
+import { SOPHIA_BASE_URL } from '@/seed/aeo';
+import { AgentDeepLinkBar } from '../aeo/agent-deep-link-bar';
 import {
   resolveDashboardModuleDescriptor,
   serializeSafeDashboardContext,
@@ -53,7 +55,7 @@ export function DashboardAgentHudBar({
   return (
     <section
       aria-label={isVi ? 'Thanh Điều Khiển AI An Toàn' : 'Authenticated-Safe AI Context Bar'}
-      className="mb-6 rounded-xl border border-border/80 bg-card/85 p-3.5 sm:p-4 shadow-sm backdrop-blur-md"
+      className="mb-6 rounded-xl border border-border/80 bg-card/85 p-3.5 sm:p-4 shadow-sm backdrop-blur-md space-y-2.5"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -88,13 +90,19 @@ export function DashboardAgentHudBar({
           >
             {copied
               ? (isVi ? '✓ Đã chép Context an toàn' : '✓ Safe Context Copied')
-              : (isVi ? 'Copy Safe LLM Context' : 'Copy Safe LLM Context')}
+              : 'Copy Safe LLM Context'}
           </button>
         </div>
       </div>
 
+      <AgentDeepLinkBar
+        canonicalUrl={`${SOPHIA_BASE_URL}/${isVi ? 'vi' : 'en'}/guide`}
+        isVi={isVi}
+        contextSnippet={safeMarkdown}
+      />
+
       {showPreview && (
-        <pre className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-border/60 bg-muted/60 p-3 text-[11px] font-mono leading-relaxed text-foreground/90 whitespace-pre-wrap">
+        <pre className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-border/60 bg-muted/60 p-3 text-[11px] font-mono leading-relaxed text-foreground/90 whitespace-pre-wrap">
           {safeMarkdown}
         </pre>
       )}

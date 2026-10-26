@@ -18,9 +18,10 @@ export default async function AffiliateLandingPage({ params }: { params: Promise
   const aeoPayload = buildCorePagePayload('affiliate', normalizeAeoLocale(locale));
 
   return (
-    <>
-      <AffiliateLandingView signupUrl={`/${locale}/login?ref=affiliate`} t={t} />
-      <DualReadPageSection payload={aeoPayload} />
-    </>
+    <AffiliateLandingView
+      signupUrl={`/${locale}/login?ref=affiliate`}
+      t={t}
+      beforeFooterSlot={<DualReadPageSection payload={aeoPayload} />}
+    />
   );
 }

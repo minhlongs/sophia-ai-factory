@@ -9,7 +9,11 @@ import { PricingCard } from './pricing-card';
 import { PricingRoiCalculator } from './pricing-roi-calculator';
 import { PricingFaq } from './pricing-faq';
 
-export function PricingPageView() {
+export interface PricingPageViewProps {
+  readonly beforeFooterSlot?: React.ReactNode;
+}
+
+export function PricingPageView({ beforeFooterSlot }: PricingPageViewProps = {}) {
   const t = useTranslations('stitch.pricingPage');
 
   const [billing, setBilling] = useState<BillingPeriod>('monthly');
@@ -55,6 +59,7 @@ export function PricingPageView() {
         <PricingFaq openFaq={openFaq} onToggleFaq={toggleFaq} t={t} />
       </main>
 
+      {beforeFooterSlot}
       <MarketingFooter />
     </div>
   );

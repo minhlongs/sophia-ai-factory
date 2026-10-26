@@ -34,9 +34,8 @@ export default async function Home({
   const aeoPayload = buildCorePagePayload('home', normalizeAeoLocale(locale));
 
   return (
-    <>
-      <LandingHero />
-      <DualReadPageSection payload={aeoPayload} />
-    </>
+    <LandingHero
+      beforeFooterSlot={<DualReadPageSection payload={aeoPayload} />}
+    />
   );
 }

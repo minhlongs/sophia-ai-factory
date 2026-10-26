@@ -6,8 +6,11 @@
 import {
   buildCorePagePayload,
   buildNicheHubPayload,
+  buildSecondaryPagePayload,
   buildSingleNichePayload,
+  SECONDARY_SURFACE_META,
   type AeoLocale,
+  type AeoSecondarySurface,
   type DualReadPagePayload,
 } from '@/seed/aeo';
 
@@ -30,6 +33,8 @@ const NON_NEGOTIABLE_HEADS = new Set([
   'signup',
   'reset-password',
 ]);
+
+const SECONDARY_SURFACE_SET = new Set<string>(Object.keys(SECONDARY_SURFACE_META));
 
 export function isNonNegotiableAeoPath(rawPath: string): boolean {
   const cleaned = rawPath.replace(/\.md$/i, '').replace(/^\/+|\/+$/g, '');
@@ -57,8 +62,8 @@ export function resolveAeoPayloadFromPath(
     routeSegments = segments.slice(1);
   }
 
-  const head = routeSegments[0] ?? '';
-  const second = routeSegments[1] ?? '';
+  const head = (routeSegments[0] ?? '').toLowerCase();
+  const second = (routeSegments[1] ?? '').toLowerCase();
 
   if (!head || head === 'home') {
     return buildCorePagePayload('home', locale);
@@ -66,7 +71,7 @@ export function resolveAeoPayloadFromPath(
   if (head === 'pricing') {
     return buildCorePagePayload('pricing', locale);
   }
-  if (head === 'guide' || head === 'blog') {
+  if (head === 'guide') {
     return buildCorePagePayload('guide', locale);
   }
   if (head === 'affiliate' || head === 'affiliate-discovery') {
@@ -75,8 +80,11 @@ export function resolveAeoPayloadFromPath(
   if (head === 'status') {
     return buildCorePagePayload('status', locale);
   }
+  if (SECONDARY_SURFACE_SET.has(head)) {
+    return buildSecondaryPagePayload(head as AeoSecondarySurface, locale);
+  }
   if (head === 'ai-video') {
-    if (second) {
+    if (second && /^[a-z0-9-]{1,64}$/.test(second)) {
       return buildSingleNichePayload(second, locale);
     }
     return buildNicheHubPayload(locale);
