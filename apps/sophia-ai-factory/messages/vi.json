@@ -6476,7 +6476,14 @@
         "switchToVietnamese": "Chuyển sang Tiếng Việt",
         "switchToEnglish": "Chuyển sang Tiếng Anh",
         "magicLink": "Liên kết đăng nhập",
-        "emailRequired": "Vui lòng nhập địa chỉ email"
+        "emailRequired": "Vui lòng nhập địa chỉ email",
+        "passkeySignIn": "Passkey (FaceID / TouchID)",
+        "emailOtpSend": "Mã OTP 6 số",
+        "emailOtpLabel": "Mã xác thực 6 chữ số",
+        "emailOtpPlaceholder": "Nhập 6 chữ số từ email",
+        "emailOtpVerify": "Xác thực OTP",
+        "emailOtpSentNotice": "Đã gửi mã 6 chữ số đến email của bạn.",
+        "invalidOtp": "Mã xác thực không hợp lệ hoặc đã hết hạn"
       },
       "register": {
         "title": "Tạo tài khoản của bạn",

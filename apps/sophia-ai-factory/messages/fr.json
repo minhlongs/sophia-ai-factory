@@ -6334,7 +6334,14 @@
         "switchToVietnamese": "Switch To Vietnamese",
         "switchToEnglish": "Switch To English",
         "magicLink": "Magic Link",
-        "emailRequired": "Veuillez saisir votre adresse e-mail"
+        "emailRequired": "Veuillez saisir votre adresse e-mail",
+        "passkeySignIn": "Passkey (FaceID / TouchID)",
+        "emailOtpSend": "6-Digit Email OTP",
+        "emailOtpLabel": "6-digit verification code",
+        "emailOtpPlaceholder": "Enter 6-digit code",
+        "emailOtpVerify": "Verify OTP",
+        "emailOtpSentNotice": "A 6-digit verification code has been sent to your email.",
+        "invalidOtp": "Invalid or expired verification code"
       },
       "register": {
         "title": "Create Your Account",

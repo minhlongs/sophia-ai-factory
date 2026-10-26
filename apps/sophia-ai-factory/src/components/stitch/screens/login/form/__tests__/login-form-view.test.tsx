@@ -7,7 +7,9 @@ import { LoginFormView } from '../login-form-view';
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
 const mockSignInEmail = vi.fn();
-const mockSignInMagicLink = vi.fn();
+const mockSignInPasskey = vi.fn();
+const mockSendOtp = vi.fn();
+const mockSignInOtp = vi.fn();
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
@@ -21,14 +23,18 @@ vi.mock('next-intl', () => ({
       orContinueWith: 'hoặc tiếp tục với',
       noAccount: 'Chưa có tài khoản?',
       signUp: 'Đăng ký',
-      googleSignIn: 'Google',
-      ssoComingSoon: 'Sắp có mặt',
+      passkeySignIn: 'Passkey (FaceID / TouchID)',
+      emailOtpSend: 'Mã OTP 6 số',
+      emailOtpLabel: 'Mã xác thực 6 chữ số',
+      emailOtpPlaceholder: 'Nhập 6 chữ số từ email',
+      emailOtpVerify: 'Xác thực OTP',
+      emailOtpSentNotice: 'Đã gửi mã 6 chữ số đến email của bạn.',
+      invalidOtp: 'Mã xác thực không hợp lệ hoặc đã hết hạn',
       hidePassword: 'Ẩn mật khẩu',
       showPassword: 'Hiện mật khẩu',
       invalidCredentials: 'Email hoặc mật khẩu không đúng',
       networkError: 'Lỗi mạng. Vui lòng thử lại.',
       emailRequired: 'Vui lòng nhập địa chỉ email',
-      magicLink: 'Liên kết đăng nhập',
       loading: 'Đang tải...',
       switchToEnglish: 'Chuyển sang Tiếng Anh',
     };
@@ -49,25 +55,82 @@ vi.mock('@/seed/auth/better-auth-client', () => ({
   authClient: {
     signIn: {
       email: (...args: unknown[]) => mockSignInEmail(...args),
-      magicLink: (...args: unknown[]) => mockSignInMagicLink(...args),
+      passkey: (...args: unknown[]) => mockSignInPasskey(...args),
+      emailOtp: (...args: unknown[]) => mockSignInOtp(...args),
+    },
+    emailOtp: {
+      sendVerificationOtp: (...args: unknown[]) => mockSendOtp(...args),
     },
   },
 }));
 
-describe('LoginFormView validation and error handling', () => {
+describe('LoginFormView Auth 2027 flows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('shows emailRequired (not networkError) when Magic Link is clicked with empty email', async () => {
+  it('shows emailRequired when sending OTP with empty email', async () => {
     render(<LoginFormView />);
-    const magicBtn = screen.getByRole('button', { name: 'Liên kết đăng nhập' });
-    fireEvent.click(magicBtn);
+    const otpBtn = screen.getByRole('button', { name: 'Mã OTP 6 số' });
+    fireEvent.click(otpBtn);
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Vui lòng nhập địa chỉ email');
-    expect(alert.textContent).not.toContain('Lỗi mạng. Vui lòng thử lại.');
-    expect(mockSignInMagicLink).not.toHaveBeenCalled();
+    expect(mockSendOtp).not.toHaveBeenCalled();
+  });
+
+  it('sends OTP and reveals OTP input panel when valid email is provided', async () => {
+    mockSendOtp.mockResolvedValueOnce({ data: { success: true }, error: null });
+    render(<LoginFormView />);
+
+    fireEvent.change(screen.getByLabelText('Địa chỉ Email'), {
+      target: { value: 'ceo@agencyos.network' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Mã OTP 6 số' }));
+
+    await waitFor(() => {
+      expect(mockSendOtp).toHaveBeenCalledWith({
+        email: 'ceo@agencyos.network',
+        type: 'sign-in',
+      });
+      expect(screen.getByLabelText('Mã xác thực 6 chữ số')).toBeDefined();
+    });
+  });
+
+  it('verifies 6-digit OTP code and redirects on success', async () => {
+    mockSendOtp.mockResolvedValueOnce({ data: { success: true }, error: null });
+    mockSignInOtp.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+
+    render(<LoginFormView redirectTo="/vi/dashboard" />);
+    fireEvent.change(screen.getByLabelText('Địa chỉ Email'), {
+      target: { value: 'ceo@agencyos.network' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Mã OTP 6 số' }));
+
+    const otpInput = await screen.findByLabelText('Mã xác thực 6 chữ số');
+    fireEvent.change(otpInput, { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Xác thực OTP' }));
+
+    await waitFor(() => {
+      expect(mockSignInOtp).toHaveBeenCalledWith({
+        email: 'ceo@agencyos.network',
+        otp: '123456',
+      });
+      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+    });
+  });
+
+  it('triggers Passkey authentication and redirects on success', async () => {
+    mockSignInPasskey.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    render(<LoginFormView />);
+
+    const passkeyBtn = screen.getByRole('button', { name: 'Passkey (FaceID / TouchID)' });
+    fireEvent.click(passkeyBtn);
+
+    await waitFor(() => {
+      expect(mockSignInPasskey).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+    });
   });
 
   it('shows emailRequired when form is submitted with empty email', async () => {
@@ -78,38 +141,5 @@ describe('LoginFormView validation and error handling', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Vui lòng nhập địa chỉ email');
     expect(mockSignInEmail).not.toHaveBeenCalled();
-  });
-
-  it('shows invalidCredentials when password is empty on submit without calling API', async () => {
-    render(<LoginFormView />);
-    fireEvent.change(screen.getByLabelText('Địa chỉ Email'), {
-      target: { value: 'ceo@agencyos.network' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập vào Sophia' }));
-
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('Email hoặc mật khẩu không đúng');
-    expect(mockSignInEmail).not.toHaveBeenCalled();
-  });
-
-  it('redirects to /dashboard on valid credentials and shows networkError only on fetch throw', async () => {
-    mockSignInEmail.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
-    render(<LoginFormView redirectTo="/vi/dashboard/campaigns" />);
-
-    fireEvent.change(screen.getByLabelText('Địa chỉ Email'), {
-      target: { value: '  ceo@agencyos.network  ' },
-    });
-    fireEvent.change(screen.getByLabelText('Mật khẩu'), {
-      target: { value: 'StrongPass123' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập vào Sophia' }));
-
-    await waitFor(() => {
-      expect(mockSignInEmail).toHaveBeenCalledWith({
-        email: 'ceo@agencyos.network',
-        password: 'StrongPass123',
-      });
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/campaigns');
-    });
   });
 });

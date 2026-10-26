@@ -4,6 +4,11 @@ import { hashPassword, verifyPassword } from '@/seed/security/password-hash';
 import type { AuthInstance } from './types';
 import { resolveBaseURL, resolveTrustedOrigins } from './d1-adapter-helpers';
 import { createMagicLinkPlugin } from './plugin-configs';
+import {
+  createPasskeyPlugin,
+  createEmailOtpPlugin,
+  createTwoFactorPlugin,
+} from './passkey-and-otp-plugins';
 import { authDatabaseHooks, validatePasswordStrength } from './auth-database-hooks';
 
 let _auth: AuthInstance | null = null;
@@ -59,7 +64,12 @@ export async function getAuth(): Promise<AuthInstance> {
         path: '/',
       },
     },
-    plugins: [createMagicLinkPlugin()],
+    plugins: [
+      createPasskeyPlugin(baseURL),
+      createEmailOtpPlugin(),
+      createTwoFactorPlugin(),
+      createMagicLinkPlugin(),
+    ],
     databaseHooks: authDatabaseHooks,
   }) as unknown as AuthInstance;
 

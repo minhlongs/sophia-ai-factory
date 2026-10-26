@@ -87,6 +87,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@better-auth/passkey": "1.6.29",
     "@hookform/resolvers": "^5.2.2",
     "@nowpaymentsio/nowpayments-sdk-nodejs": "^0.2.1",
     "@opentelemetry/api": "^1.9.1",
