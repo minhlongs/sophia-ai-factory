@@ -9,6 +9,7 @@ export * from './client-cj';
 export * from './client-coinbase';
 export * from './client-impact-radius';
 export * from './client-mock';
+export * from './client-okx';
 export * from './client-partnerstack';
 export * from './client-rakuten';
 export * from './client-shareasale';

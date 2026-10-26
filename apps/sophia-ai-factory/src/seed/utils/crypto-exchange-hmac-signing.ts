@@ -4,9 +4,6 @@
  * @module seed/utils/crypto-exchange-hmac-signing
  */
 
-/**
- * Compute HMAC-SHA256 and return hex digest.
- */
 export async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -22,9 +19,6 @@ export async function hmacSha256Hex(secret: string, message: string): Promise<st
     .join('');
 }
 
-/**
- * Compute HMAC-SHA256 and return Base64 digest.
- */
 export async function hmacSha256Base64(secret: string, message: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -38,10 +32,6 @@ export async function hmacSha256Base64(secret: string, message: string): Promise
   return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
 
-/**
- * Build Binance-signed query string params.
- * Appends timestamp and signature to provided params.
- */
 export async function buildBinanceSignedParams(
   apiSecret: string,
   params: Record<string, string>,
@@ -52,10 +42,6 @@ export async function buildBinanceSignedParams(
   return qs;
 }
 
-/**
- * Build Bybit V5 signed request headers.
- * Sign = HMAC(timestamp + apiKey + recvWindow + queryString).
- */
 export async function buildBybitSignedHeaders(
   apiKey: string,
   apiSecret: string,
@@ -73,11 +59,6 @@ export async function buildBybitSignedHeaders(
   };
 }
 
-/**
- * Build Bitget signed request headers.
- * Sign = base64(HMAC(timestamp + method + path + body)).
- * Passphrase itself must also be signed.
- */
 export async function buildBitgetSignedHeaders(
   apiKey: string,
   apiSecret: string,
@@ -99,10 +80,6 @@ export async function buildBitgetSignedHeaders(
   };
 }
 
-/**
- * Build Coinbase Advanced Trade signed request headers.
- * Sign = HMAC(timestamp + method + path + body).
- */
 export async function buildCoinbaseSignedHeaders(
   apiKey: string,
   apiSecret: string,
@@ -117,6 +94,26 @@ export async function buildCoinbaseSignedHeaders(
     'CB-ACCESS-KEY': apiKey,
     'CB-ACCESS-SIGN': signature,
     'CB-ACCESS-TIMESTAMP': timestamp,
+    'Content-Type': 'application/json',
+  };
+}
+
+export async function buildOkxSignedHeaders(
+  apiKey: string,
+  apiSecret: string,
+  passphrase: string,
+  method: string,
+  requestPath: string,
+  body = '',
+): Promise<Record<string, string>> {
+  const timestamp = new Date().toISOString();
+  const message = `${timestamp}${method.toUpperCase()}${requestPath}${body}`;
+  const signature = await hmacSha256Base64(apiSecret, message);
+  return {
+    'OK-ACCESS-KEY': apiKey,
+    'OK-ACCESS-SIGN': signature,
+    'OK-ACCESS-TIMESTAMP': timestamp,
+    'OK-ACCESS-PASSPHRASE': passphrase,
     'Content-Type': 'application/json',
   };
 }

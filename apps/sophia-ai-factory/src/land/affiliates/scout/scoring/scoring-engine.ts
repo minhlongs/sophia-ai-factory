@@ -23,6 +23,7 @@ import {
   scoreEpc,
 } from './epc-calculator';
 import { evaluateRisk } from './risk-evaluator';
+import { computeSaasRecurringBonus } from './saas-mrr-ltv-calculator';
 
 /**
  * Compute a composite quality score for an affiliate offer.
@@ -66,6 +67,7 @@ export function scoreAffiliate(
 
   const risk = evaluateRisk(affiliate, ctx);
   score = risk.applyCryptoPenalty(score);
+  score = Math.min(1, score + computeSaasRecurringBonus(affiliate));
 
   const finalScore = Math.round(score * 1000) / 1000;
   const passes = finalScore >= threshold && !risk.isScamBlocked;
