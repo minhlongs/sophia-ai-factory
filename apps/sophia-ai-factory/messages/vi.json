@@ -5214,12 +5214,12 @@
     "subtitle": "Xuất bản một-click đến YouTube, TikTok, Instagram và hơn nữa",
     "queue": {
       "title": "Hàng đợi Xuất bản",
-      "subtitle": "Theo dõi và quản lý công việc xuất bản WhatsApp",
+      "subtitle": "Theo dõi và quản lý lịch trình xuất bản đa kênh (YouTube, TikTok, Instagram, Facebook, LinkedIn)",
       "loading": "Đang tải hàng đợi...",
       "empty": {
         "title": "Chưa có Công việc Xuất bản",
-        "message": "Lên lịch xuất bản WhatsApp đầu tiên từ trình soạn thảo video hoặc thuật sắp xếp.",
-        "cta": "Tạo Mẫu WhatsApp"
+        "message": "Lên lịch xuất bản video đầu tiên từ Creator Studio hoặc thiết lập kênh phân phối tự động.",
+        "cta": "Mở Creator Studio"
       },
       "table": {
         "video": "Video",

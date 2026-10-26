@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from '@/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import {
-  TEST_ID_TO_STITCH_HTML,
   TONE_STYLES,
   type StitchRouteBannerTone,
 } from './stitch-route-banner-constants';
@@ -41,14 +40,10 @@ export function StitchRouteBanner({
   ctaLabel,
   secondaryHref,
   secondaryLabel,
-  stitchHtmlFile,
-  defaultShowCanvas = false,
   tone = 'amber',
   className = '',
 }: Readonly<StitchRouteBannerProps>) {
   const palette = TONE_STYLES[tone];
-  const resolvedHtml = stitchHtmlFile ?? TEST_ID_TO_STITCH_HTML[testId];
-  const [showCanvas, setShowCanvas] = useState<boolean>(defaultShowCanvas);
 
   return (
     <section
@@ -76,15 +71,6 @@ export function StitchRouteBanner({
           )}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2.5">
-          {resolvedHtml && (
-            <button
-              type="button"
-              onClick={() => setShowCanvas((prev) => !prev)}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-400/45 bg-emerald-400/10 px-3.5 py-2 font-mono text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none"
-            >
-              {showCanvas ? 'Ẩn Giao Diện Gốc / Hide Canvas' : 'Xem Giao Diện Gốc / Live Canvas'}
-            </button>
-          )}
           {secondaryHref && secondaryLabel && (
             <Link href={secondaryHref} className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#1E2638] bg-[#0B0E14]/90 px-3.5 py-2 font-mono text-xs font-medium text-[#94A3B8] transition-colors hover:border-amber-400/40 hover:text-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none">
               {secondaryLabel}
@@ -96,16 +82,6 @@ export function StitchRouteBanner({
           </Link>
         </div>
       </div>
-
-      {resolvedHtml && showCanvas && (
-        <div className="mt-4 overflow-hidden rounded-xl border border-[#1E2638] bg-[#0B0E14]">
-          <iframe
-            src={`/stitch/${resolvedHtml}`}
-            title={`${title} — Stitch v4.2`}
-            className="h-[780px] w-full border-0 bg-[#0B0E14]"
-          />
-        </div>
-      )}
     </section>
   );
 }

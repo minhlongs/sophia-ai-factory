@@ -34,8 +34,8 @@ export default async function YoutubeLearningsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-[hsl(240,12%,12%)]">{t('learningRecommendations')}</h1>
-        <p className="mt-1 text-sm text-[hsl(240,12%,45%)]">{t('overviewDescription')}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('learningRecommendations')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('overviewDescription')}</p>
       </header>
 
       <LearningsList recommendations={recommendations} />

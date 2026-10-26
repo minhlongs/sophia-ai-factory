@@ -20,13 +20,13 @@ export function ChannelTable({ topChannels, revenueAttribution, t }: ChannelTabl
     <section className="mt-6 space-y-6">
       {/* Top Channels */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-[hsl(240,12%,12%)]">{t('channelBreakdown')}</h2>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">{t('channelBreakdown')}</h2>
         {topChannels.length === 0 ? (
-          <p className="text-sm text-[hsl(240,12%,45%)]">{t('noData')}</p>
+          <p className="text-sm text-muted-foreground">{t('noData')}</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-[hsl(35,30%,90%)]">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-[hsl(35,30%,95%)] text-[hsl(240,12%,12%)]">
+              <thead className="bg-muted text-foreground">
                 <tr>
                   <th className="px-4 py-2 font-medium">{t('channel')}</th>
                   <th className="px-4 py-2 text-right font-medium">{t('revenue')}</th>
@@ -39,7 +39,7 @@ export function ChannelTable({ topChannels, revenueAttribution, t }: ChannelTabl
                 {topChannels.map((ch, idx) => (
                   <tr
                     key={`${ch.channel ?? 'direct'}-${idx}`}
-                    className="border-t border-[hsl(35,30%,90%)]"
+                    className="border-t border-border"
                   >
                     <td className="px-4 py-2 font-medium">{ch.channel ?? 'direct'}</td>
                     <td className="px-4 py-2 text-right">{formatCents(ch.totalRevenueCents)}</td>
@@ -56,13 +56,13 @@ export function ChannelTable({ topChannels, revenueAttribution, t }: ChannelTabl
 
       {/* Revenue Attribution */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-[hsl(240,12%,12%)]">{t('attribution')}</h2>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">{t('attribution')}</h2>
         {revenueAttribution.length === 0 ? (
-          <p className="text-sm text-[hsl(240,12%,45%)]">{t('noData')}</p>
+          <p className="text-sm text-muted-foreground">{t('noData')}</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-[hsl(35,30%,90%)]">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-[hsl(35,30%,95%)] text-[hsl(240,12%,12%)]">
+              <thead className="bg-muted text-foreground">
                 <tr>
                   <th className="px-4 py-2 font-medium">{t('channel')}</th>
                   <th className="px-4 py-2 text-right font-medium">{t('revenue')}</th>
@@ -74,11 +74,11 @@ export function ChannelTable({ topChannels, revenueAttribution, t }: ChannelTabl
                 {revenueAttribution.slice(0, 10).map((attr, idx) => (
                   <tr
                     key={`${attr.channel}-${attr.network}-${idx}`}
-                    className="border-t border-[hsl(35,30%,90%)]"
+                    className="border-t border-border"
                   >
                     <td className="px-4 py-2 font-medium">
                       {attr.channel}
-                      <span className="ml-1 text-xs text-[hsl(240,12%,45%)]">({attr.network})</span>
+                      <span className="ml-1 text-xs text-muted-foreground">({attr.network})</span>
                     </td>
                     <td className="px-4 py-2 text-right">{formatCents(attr.revenueCents)}</td>
                     <td className="px-4 py-2 text-right">{formatCents(attr.costCents)}</td>

@@ -15,7 +15,6 @@ import {
   MarketplaceSkeleton,
   CreatorTemplatesSection,
 } from '@/land/marketplace';
-import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
 import {
   parseMarketplaceSearchParams,
   loadMarketplacePageData,
@@ -57,42 +56,39 @@ export default async function MarketplacePage({ params, searchParams }: PageProp
     await loadMarketplacePageData(locale, filters);
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-[#F8FAFC]">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <StitchWave2RouteBanner routeKey="marketplace" defaultShowCanvas={true} />
-        {/* Hero Headline */}
-        <MarketplaceHeader />
+    <div className="space-y-6">
+      {/* Hero Headline */}
+      <MarketplaceHeader />
 
-        {/* Faceted Filter Bar */}
-        <MarketplaceFilterBar
-          initialFilters={{
-            niche,
-            platform,
-            minConversionRate,
-            royaltyRate,
-            search,
-            sort,
-            page,
-            pageSize,
-            locale: locale as 'en' | 'vi',
-          }}
+      {/* Faceted Filter Bar */}
+      <MarketplaceFilterBar
+        initialFilters={{
+          niche,
+          platform,
+          minConversionRate,
+          royaltyRate,
+          search,
+          sort,
+          page,
+          pageSize,
+          locale: locale as 'en' | 'vi',
+        }}
+      />
+
+      {/* Catalog Section with Loading Suspense */}
+      <Suspense fallback={<MarketplaceSkeleton />}>
+        <CreatorTemplatesSection
+          blueprints={blueprintsData.items}
+          totalBlueprints={blueprintsData.total}
+          templates={templatesData.items}
+          totalTemplates={templatesData.total}
+          page={page}
+          pageSize={pageSize}
+          totalPages={Math.max(blueprintsData.totalPages, templatesData.totalPages)}
+          currentUserId={currentUser?.id}
+          royaltyBalance={royaltyBalance}
         />
-
-        {/* Catalog Section with Loading Suspense */}
-        <Suspense fallback={<MarketplaceSkeleton />}>
-          <CreatorTemplatesSection
-            blueprints={blueprintsData.items}
-            totalBlueprints={blueprintsData.total}
-            templates={templatesData.items}
-            totalTemplates={templatesData.total}
-            page={page}
-            pageSize={pageSize}
-            totalPages={Math.max(blueprintsData.totalPages, templatesData.totalPages)}
-            currentUserId={currentUser?.id}
-            royaltyBalance={royaltyBalance}
-          />
-        </Suspense>
-      </div>
+      </Suspense>
     </div>
   );
 }

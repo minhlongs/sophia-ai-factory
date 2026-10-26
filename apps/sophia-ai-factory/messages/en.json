@@ -5214,12 +5214,12 @@
     "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more",
     "queue": {
       "title": "Publish Queue",
-      "subtitle": "Monitor and manage your WhatsApp publish jobs",
+      "subtitle": "Monitor and manage omnichannel publish jobs (YouTube, TikTok, Instagram, Facebook, LinkedIn)",
       "loading": "Loading publish queue...",
       "empty": {
         "title": "No Publish Jobs Yet",
-        "message": "Schedule your first WhatsApp publish from the video editor or setup wizard.",
-        "cta": "Create WhatsApp Template"
+        "message": "Schedule your first omnichannel publish from Creator Studio or configure automated distribution.",
+        "cta": "Open Creator Studio"
       },
       "table": {
         "video": "Video",

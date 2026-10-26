@@ -37,11 +37,11 @@ export function QueueTable({
         title={t('empty.title') || 'No Publish Jobs Yet'}
         description={
           t('empty.message') ||
-          'Schedule your first WhatsApp publish from the video editor or setup wizard.'
+          'Schedule your first omnichannel publish from Creator Studio or configure automated distribution.'
         }
         cta={{
-          label: t('empty.cta') || 'Create WhatsApp Template',
-          href: '/dashboard/setup/whatsapp-templates',
+          label: t('empty.cta') || 'Open Creator Studio',
+          href: '/dashboard/creator-studio',
         }}
         className="border-0 rounded-none bg-transparent py-12"
       />
