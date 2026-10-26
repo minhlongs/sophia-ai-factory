@@ -6,6 +6,7 @@
  * const user = await getCurrentUser();
  */
 
+import * as React from 'react';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import type { User } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -25,11 +26,7 @@ export {
   type RawSessionData,
 };
 
-/**
- * Get the full Better Auth session (user + session metadata).
- * Returns null if not authenticated.
- */
-export async function getSession() {
+async function resolveSessionUncached() {
   try {
     const { headers } = await import('next/headers');
     const requestHeaders = await headers();
@@ -43,12 +40,30 @@ export async function getSession() {
     return session;
   } catch (err) {
     unstable_rethrow(err);
-    logger.error('[better-auth-session] getSession failed', err instanceof Error ? err : new Error(String(err)), {
-      errorName: err instanceof Error ? err.constructor.name : typeof err,
-      errorMessage: err instanceof Error ? err.message : String(err),
-    });
+    logger.error(
+      '[better-auth-session] getSession failed',
+      err instanceof Error ? err : new Error(String(err)),
+      {
+        errorName: err instanceof Error ? err.constructor.name : typeof err,
+        errorMessage: err instanceof Error ? err.message : String(err),
+      },
+    );
     return null;
   }
+}
+
+const getCachedSession =
+  typeof React.cache === 'function'
+    ? React.cache(resolveSessionUncached)
+    : resolveSessionUncached;
+
+/**
+ * Get the full Better Auth session (user + session metadata).
+ * Request-memoized via React.cache() in RSC runtime.
+ * Returns null if not authenticated.
+ */
+export async function getSession() {
+  return getCachedSession();
 }
 
 /**

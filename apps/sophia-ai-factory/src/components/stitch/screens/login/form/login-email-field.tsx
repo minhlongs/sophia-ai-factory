@@ -52,7 +52,7 @@ export function LoginEmailField({
         <input
           id="email"
           type="email"
-          autoComplete="email"
+          autoComplete="username webauthn"
           placeholder={t('emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}

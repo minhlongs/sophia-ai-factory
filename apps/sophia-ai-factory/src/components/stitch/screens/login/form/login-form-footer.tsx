@@ -20,11 +20,15 @@ export function LoginErrorBanner({ error }: { error: string | null }) {
 }
 
 export function LoginFormFooter({
-  onMagicLink,
-  magicLinkLoading,
+  onPasskey,
+  passkeyLoading,
+  onSendOtp,
+  otpSending,
 }: {
-  onMagicLink: () => void;
-  magicLinkLoading: boolean;
+  onPasskey: () => void;
+  passkeyLoading: boolean;
+  onSendOtp: () => void;
+  otpSending: boolean;
 }) {
   const t = useTranslations('stitch.auth.login');
 
@@ -41,7 +45,12 @@ export function LoginFormFooter({
         </div>
       </div>
 
-      <SocialAuthButtons onMagicLink={onMagicLink} magicLinkLoading={magicLinkLoading} />
+      <SocialAuthButtons
+        onPasskey={onPasskey}
+        passkeyLoading={passkeyLoading}
+        onSendOtp={onSendOtp}
+        otpSending={otpSending}
+      />
 
       <p className="text-center text-sm text-slate-600 dark:text-zinc-400">
         {t('noAccount')}{' '}

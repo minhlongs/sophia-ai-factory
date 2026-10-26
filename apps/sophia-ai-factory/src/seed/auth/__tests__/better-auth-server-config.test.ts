@@ -27,6 +27,12 @@ vi.mock('better-auth', () => ({
 
 vi.mock('better-auth/plugins', () => ({
   magicLink: vi.fn(() => ({ id: 'magic-link' })),
+  emailOTP: vi.fn(() => ({ id: 'email-otp' })),
+  twoFactor: vi.fn(() => ({ id: 'two-factor' })),
+}));
+
+vi.mock('@better-auth/passkey', () => ({
+  passkey: vi.fn(() => ({ id: 'passkey' })),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
