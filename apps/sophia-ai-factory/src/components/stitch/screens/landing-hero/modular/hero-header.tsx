@@ -77,8 +77,8 @@ export function HeroHeader({ t }: HeroHeaderProps) {
               />
             </div>
           ))}
-          <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#11131F] flex items-center justify-center bg-[#4338CA] dark:bg-[#6366F1] text-white text-[11px] font-bold font-mono">
-            +10k
+          <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#11131F] flex items-center justify-center bg-[#4338CA] dark:bg-[#6366F1] text-white text-[10px] font-bold font-mono">
+            BYOK
           </div>
         </div>
 
@@ -90,7 +90,7 @@ export function HeroHeader({ t }: HeroHeaderProps) {
               <Star key={i} className="w-3.5 h-3.5 fill-current" />
             ))}
           </div>
-          <span className="text-xs font-bold font-mono text-[#0B0F19] dark:text-white">4.9/5</span>
+          <span className="text-xs font-bold font-mono text-[#0B0F19] dark:text-white">L1–L7</span>
         </div>
 
         <div className="hidden sm:block h-5 w-[1px] bg-[#E2E8F0] dark:bg-white/10" />

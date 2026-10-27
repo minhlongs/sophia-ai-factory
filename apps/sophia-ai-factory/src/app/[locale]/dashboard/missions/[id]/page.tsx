@@ -13,6 +13,8 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/navigation';
 import { getMission } from '@/land/creative-mission/actions';
 import { listAgentRunsForMission } from '@/tree/mission/agent-run-repo';
+import { buildVerifiedMissionWorkflowView } from '@/tree/mission/workflow-view-model';
+import { CreativeAssemblyLine } from '@/components/workflow-anatomy/creative-assembly-line';
 import { MissionReviewPanel } from '@/components/mission-review-panel';
 import {
   MISSION_BADGE_CLASSES,
@@ -44,6 +46,12 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
 
   const runsResult = await listAgentRunsForMission(missionId, mission.workspaceId, 10);
   const runs = runsResult.ok ? runsResult.value : [];
+  const workflowView = buildVerifiedMissionWorkflowView({
+    missionId: mission.id,
+    status: mission.status,
+    spentCents: mission.spentCents,
+    runs,
+  });
 
   const briefRows: Array<[string, string]> = [
     [t('brief.objective'), mission.objective],
@@ -83,6 +91,10 @@ export default async function MissionDetailPage({ params }: MissionDetailPagePro
           <MissionReviewPanel missionId={mission.id} />
         </div>
       )}
+
+      <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+        <CreativeAssemblyLine workflow={workflowView} />
+      </section>
 
       <section className="mt-6 rounded-lg border border-border bg-card p-5 shadow-sm">
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
