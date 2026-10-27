@@ -138,8 +138,26 @@ cannot modify labels). This is a permission limitation, not a skipped step; issu
 (see `plan.md`), so PR review was performed as a read-only independent `git diff` pass plus
 `gh pr` checks instead.
 
-**Authoritative CI:** see the PR's `Quality Gate (Gates 1 + 3)` run via `gh run list` /
-`gh pr checks`. Results observed during this session are recorded in the PR conversation.
+**Authoritative CI:** see the PR's `Quality Gate (Gates 1 + 3)`, `Security Scan (Gate 2)` and
+`Dependency (Gate 4)` runs via `gh run list` / `gh pr checks`. Results observed during this session
+are recorded in §8 below and in the PR conversation.
+
+## 8. CI iteration (first run → fixes)
+
+PR #63 first CI run (`40582716246` Gate 1, `40582716134` Gate 2, `40582716182` Gate 4):
+
+| Gate | First result | Cause | Fix |
+| --- | --- | --- | --- |
+| Gate 1a `tsc --noEmit` | FAIL (4 errors) | Four object literals in the **unchanged** `affiliate-cockpit-service.test.ts` lacked the new `contributionCents` / `costKnown` (`ScalingDecision`) and `adjustmentCents` (`DomainBCurrencySummary`) fields. The local scoped tsc only included changed files, so it could not see these downstream consumers. | Fixture fields added; a wider scoped program over **2,374 files that reference changed modules** was then run → 0 real errors (only 9 local `node:sqlite` type-resolution errors caused by this sandbox's `@types/node`). |
+| Gate 2a `npm audit --audit-level=high --omit=dev` | FAIL | Newly published advisory `GHSA-44jh-23m7-hpcf` (critical) covering `better-auth 1.3.8-beta.3 – 1.7.6` via `@better-auth/drizzle-adapter` / `@better-auth/kysely-adapter`. `package-lock.json` was untouched by this branch; earlier security runs on 2026-10-27 04:36 passed before the advisory appeared. | Minimal in-range security bump `better-auth ^1.6.14 → ^1.7.14` (installed 1.6.29 → 1.7.14). `npm audit --audit-level=high --omit=dev` now returns **0 vulnerabilities**; 36 auth/session/middleware tests still pass; wider scoped tsc still clean. No framework/provider/billing change. |
+| Gate 4 dependency | PASS | — | — |
+| Gate 1b–1d, 3a–3c | not reached (Gate 1a aborted the job) | — | re-run after the fixes |
+
+The `node:sqlite` TS2307 errors are local-only: CI's `npm install --legacy-peer-deps` resolves a
+`@types/node` that declares `node:sqlite`, while this sandbox's `--ignore-scripts` install does not.
+
+The `ready to cook → in progress` label issue and the missing `ak-vibe` skill remain as recorded in
+`plan.md`.
 
 ## 7. What is explicitly NOT verified
 

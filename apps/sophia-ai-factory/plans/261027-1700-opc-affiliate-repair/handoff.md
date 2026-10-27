@@ -105,6 +105,16 @@ server-resolved `tenantId`.
 - Demo content is labelled illustrative. No revenue, creator-count, star-rating, "zero
   hallucination" or "LIVE" claim is made.
 
+## 6b. Dependency note (CI Gate 2a)
+
+`better-auth` was bumped from `^1.6.14` (locked 1.6.29) to `^1.7.14` because advisory
+`GHSA-44jh-23m7-hpcf` (critical, PostgreSQL rate-limit bypass in the bundled drizzle/kysely
+adapters) made `npm audit --audit-level=high --omit=dev` fail on the first CI run. This was a
+newly published advisory, not a regression from this branch. The bump stays inside the existing
+semver range, changes only `package.json` + `package-lock.json`, keeps all canonical auth imports
+unchanged, and was validated with 36 auth/session/middleware tests plus the wider scoped tsc.
+`npm audit --omit=dev` now reports 0 vulnerabilities.
+
 ## 7. Issue / PR bookkeeping note
 
 Tracking issue: **#62** — "OPC Affiliate: repair execution truth + usable operator journey". It was
