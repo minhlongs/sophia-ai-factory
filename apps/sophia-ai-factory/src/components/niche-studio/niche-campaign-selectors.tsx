@@ -11,9 +11,9 @@ export const NICHE_BLUEPRINTS = {
     { id: 'saas_listicle_top3_stack', label: 'Fast Listicle: Top 3-5 AI SaaS Stack' },
   ],
   crypto_global: [
-    { id: 'crypto_fee_discount_signup_bonus', label: 'Exclusive Fee Rebate & Signup Tier Bonus' },
-    { id: 'crypto_trading_bot_grid_dca', label: 'Automated Trading Bot / DCA Walkthrough' },
-    { id: 'crypto_launchpool_staking_guide', label: 'Exchange Launchpool & Token Staking Guide' },
+    { id: 'crypto_fee_discount_signup_bonus', label: 'Exclusive Fee Rebate & Signup Tier Bonus (Non-Custodial)' },
+    { id: 'crypto_trading_bot_grid_dca', label: 'Evidence-Backed CEX Fee & Feature Comparison' },
+    { id: 'crypto_launchpool_staking_guide', label: 'Exchange Launchpool & Educational Referral Guide' },
   ],
 };
 
