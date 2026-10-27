@@ -50,7 +50,16 @@ export function SettingsSecuritySection() {
     try {
       const res = await authClient.twoFactor.enable({ password });
       if (res?.error) setNotice(res.error.message || 'Failed to enable 2FA');
-      else if (res?.data?.totpURI) setTotpUri(res.data.totpURI);
+      else {
+        // better-auth 1.7 models enable() as a discriminated union: only the
+        // `totp` method carries a provisioning URI and backup codes.
+        const data = res?.data;
+        if (data && 'totpURI' in data && typeof data.totpURI === 'string') {
+          setTotpUri(data.totpURI);
+        } else {
+          setNotice('2FA provider did not return a TOTP setup URI.');
+        }
+      }
     } finally { setLoading(false); }
   };
 

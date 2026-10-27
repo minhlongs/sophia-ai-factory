@@ -29,7 +29,7 @@ constraints rather than a mock database. GitHub's `quality-gate.yml` uses `npm i
 | 2 | `npm run check:boundaries` | **PASS** | "All layer boundaries clean (both static and dynamic imports verified)". |
 | 3 | `node scripts/check-production-source-guards.mjs` | **PASS** | no explicit `:any`, no prohibited production `console`. |
 | 4 | `eslint src --max-warnings=525` (CI `ci:lint`; `npm run lint` is the same with a larger heap) | **PASS** | **0 errors, 212 warnings** (all pre-existing `sonarjs/cognitive-complexity` / unused-var warnings), under the 525 gate. |
-| 5 | `npx tsc --noEmit` (`npm run type-check` / CI Gate 1a) | **NOT VERIFIED locally** | OOM in this 4 GB sandbox (`Ineffective mark-compacts near heap limit`). Workaround: scoped `NODE_OPTIONS=--max-old-space-size=3000 ./node_modules/.bin/tsc --noEmit --pretty false -p tsconfig.opc.json` over **all changed TS/TSX files + `src/seed/auth/jwt-nonce-kv.ts`** (the global `KV_KV` declaration the full program supplies) → **0 errors**. The scoped config is a local helper, deleted before commit; CI full `tsc` is authoritative. |
+| 5 | `npx tsc --noEmit` (`npm run type-check` / CI Gate 1a) | **NOT VERIFIED locally in one process** | Plain `tsc --noEmit` OOMs in this 4 GB sandbox (exit 137 at 3.3 GB heap). Workaround that **does** fit: generate a temporary `tsconfig.opc.json` with `extends: ./tsconfig.json`, `files: [ALL 3,900 src/**/*.ts(x) files + src/seed/auth/jwt-nonce-kv.ts]`, `include: []`, `incremental: false`, then `NODE_OPTIONS=--max-old-space-size=3000 tsc --noEmit -p tsconfig.opc.json`. Result after the fixes below: **0 real errors** (only 24 local `TS2307 Cannot find module 'node:sqlite'` caused by this sandbox's `@types/node`; CI's `npm install` resolves it). The helper config is deleted before commit; CI full `tsc` is authoritative. |
 | 6 | `vitest run --reporter=dot --maxWorkers=2` (full suite) | **PARTIAL** | 1,984 files: **1,977 passed / 6 failed / 1 skipped**; 18,774 tests: **18,661 passed / 69 failed / 34 skipped / 10 todo**. Five failing files are the pre-existing native-binding issue (§5); the sixth was a stale copy assertion in `affiliates/__tests__/page.test.tsx`, which was updated to the new honest UI and now passes. |
 | 7 | `npm test -- --coverage --maxWorkers=2 --reporter=dot` (CI Gate 1d shape) + `node scripts/check-diff-coverage.mjs` | see §6 | Coverage run executes the full suite with instrumentation; the diff-coverage gate requires ≥70 % of changed executable lines and branches. |
 | 8 | `npm run build` (`next build`) | see §6 | Not part of `quality-gate.yml`; attempted separately where the sandbox allowed. |
@@ -152,6 +152,13 @@ PR #63 first CI run (`40582716246` Gate 1, `40582716134` Gate 2, `40582716182` G
 | Gate 2a `npm audit --audit-level=high --omit=dev` | FAIL | Newly published advisory `GHSA-44jh-23m7-hpcf` (critical) covering `better-auth 1.3.8-beta.3 – 1.7.6` via `@better-auth/drizzle-adapter` / `@better-auth/kysely-adapter`. `package-lock.json` was untouched by this branch; earlier security runs on 2026-10-27 04:36 passed before the advisory appeared. | Minimal in-range security bump `better-auth ^1.6.14 → ^1.7.14` (installed 1.6.29 → 1.7.14). `npm audit --audit-level=high --omit=dev` now returns **0 vulnerabilities**; 36 auth/session/middleware tests still pass; wider scoped tsc still clean. No framework/provider/billing change. |
 | Gate 4 dependency | PASS | — | — |
 | Gate 1b–1d, 3a–3c | not reached (Gate 1a aborted the job) | — | re-run after the fixes |
+
+Second CI run (`40584197853` / `40584197740` / `40584197732`): Gate 2 **PASS**, Gate 4 **PASS**,
+Gate 1a still FAIL — `better-auth` 1.7 models `twoFactor.enable()` as a discriminated union, so
+`res.data.totpURI` in `settings-security-section.tsx` no longer type-checks (2 errors). Fixed by
+narrowing on `'totpURI' in data` with an explicit honest fallback notice. A full **src-only**
+scoped tsc program (3,900 files, see row 5) then reported 0 real errors. No file outside `src`
+imports any changed module, so this program covers every downstream consumer of this diff.
 
 The `node:sqlite` TS2307 errors are local-only: CI's `npm install --legacy-peer-deps` resolves a
 `@types/node` that declares `node:sqlite`, while this sandbox's `--ignore-scripts` install does not.

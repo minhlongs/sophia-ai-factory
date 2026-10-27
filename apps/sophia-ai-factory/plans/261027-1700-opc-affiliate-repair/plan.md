@@ -118,7 +118,7 @@ left in a "looks active" state.
 | P4 — Usable product | six primary nav groups + 16 preserved deep links; Refer Sophia separated; landing VI/EN headline & honest demo; CTA deep links; dashboard load states | 46+3 nav + 8 landing + 3 state + 2 page tests green; i18n parity green |
 | P5 — Independent review | read-only pass over full `git diff`; fixed durable `render_queued` transition, tenant-null offer fail-open, maturity fail-open, legacy fail-open kill switch in scaler | targeted tests re-run green |
 | P6 — Verification + PR | exact repo scripts, full vitest, coverage gate, scoped tsc (full tsc OOM locally), docs, force-add ignored artifacts, commit/push/PR | see `verification.md` |
-| P7 — CI iteration | first CI run exposed 4 downstream type errors in an unchanged auth-cockpit test and a newly published critical `better-auth` advisory. Fixed the fixtures, widened the scoped tsc program to 2,374 downstream files, and applied the minimal in-range `better-auth` security bump. Re-ran auth tests + scoped tsc + audit. | see `verification.md` §8 |
+| P7 — CI iteration | first CI run exposed 4 downstream type errors in an unchanged auth-cockpit test and a newly published critical `better-auth` advisory. Fixed the fixtures, applied the minimal in-range `better-auth` security bump, then fixed the 2FA discriminated-union type error the bump introduced. Widened the local scoped tsc to all 3,900 `src` files → 0 real errors; auth tests + audit green. | see `verification.md` §8 |
 
 ## 5. Acceptance criteria (what "done" means here)
 
