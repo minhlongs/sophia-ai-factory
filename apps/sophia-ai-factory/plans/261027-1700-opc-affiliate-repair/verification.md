@@ -30,7 +30,7 @@ constraints rather than a mock database. GitHub's `quality-gate.yml` uses `npm i
 | 3 | `node scripts/check-production-source-guards.mjs` | **PASS** | no explicit `:any`, no prohibited production `console`. |
 | 4 | `eslint src --max-warnings=525` (CI `ci:lint`; `npm run lint` is the same with a larger heap) | **PASS** | **0 errors, 212 warnings** (all pre-existing `sonarjs/cognitive-complexity` / unused-var warnings), under the 525 gate. |
 | 5 | `npx tsc --noEmit` (`npm run type-check` / CI Gate 1a) | **NOT VERIFIED locally in one process** | Plain `tsc --noEmit` OOMs in this 4 GB sandbox (exit 137 at 3.3 GB heap). Workaround that **does** fit: generate a temporary `tsconfig.opc.json` with `extends: ./tsconfig.json`, `files: [ALL 3,900 src/**/*.ts(x) files + src/seed/auth/jwt-nonce-kv.ts]`, `include: []`, `incremental: false`, then `NODE_OPTIONS=--max-old-space-size=3000 tsc --noEmit -p tsconfig.opc.json`. Result after the fixes below: **0 real errors** (only 24 local `TS2307 Cannot find module 'node:sqlite'` caused by this sandbox's `@types/node`; CI's `npm install` resolves it). The helper config is deleted before commit; CI full `tsc` is authoritative. |
-| 6 | `vitest run --reporter=dot --maxWorkers=2` (full suite) | **PARTIAL** | 1,984 files: **1,977 passed / 6 failed / 1 skipped**; 18,774 tests: **18,661 passed / 69 failed / 34 skipped / 10 todo**. Five failing files are the pre-existing native-binding issue (§5); the sixth was a stale copy assertion in `affiliates/__tests__/page.test.tsx`, which was updated to the new honest UI and now passes. |
+| 6 | `vitest run --reporter=dot --maxWorkers=2` (full suite) | **PARTIAL locally / PASS in CI** | Local: 1,984 files — **1,977 passed / 6 failed / 1 skipped**; 18,774 tests — **18,661 passed / 69 failed / 34 skipped / 10 todo**. Five failing files are the pre-existing native-binding issue (§5); the sixth was a stale copy assertion in `affiliates/__tests__/page.test.tsx`, updated to the new honest UI. A second local full run after the dependency bump is described in §8. **CI Gate 1d (full suite with coverage, native module available) PASSED** in `40593463776`. |
 | 7 | `npm test -- --coverage --maxWorkers=2 --reporter=dot` (CI Gate 1d shape) + `node scripts/check-diff-coverage.mjs` | see §6 | Coverage run executes the full suite with instrumentation; the diff-coverage gate requires ≥70 % of changed executable lines and branches. |
 | 8 | `npm run build` (`next build`) | see §6 | Not part of `quality-gate.yml`; attempted separately where the sandbox allowed. |
 | 9 | `npm run test:e2e` (Playwright) / any browser check | **NOT RUN — NOT DISABLED** | Forbidden by mandate. Visual / responsive / real render = **NOT VERIFIED**. |
@@ -124,8 +124,8 @@ PASS: changed-line and changed-branch coverage meet 70% thresholds
 ```
 
 Because the full suite executes strictly more tests than the subset, real CI coverage cannot be
-lower than this figure. `quality-gate.yml` Gate 3a is therefore expected to pass; the authoritative
-verdict is the PR's GitHub Actions run.
+lower than this figure. `quality-gate.yml` **Gate 3a passed in the final CI run** (`40593463776`),
+which is the authoritative verdict.
 
 **`npm run build`** (`next build`, Turbopack) was attempted with
 `NODE_OPTIONS=--max-old-space-size=3500`: it reached "Creating an optimized production build ..."
@@ -142,11 +142,25 @@ cannot modify labels). This is a permission limitation, not a skipped step; issu
 (see `plan.md`), so PR review was performed as a read-only independent `git diff` pass plus
 `gh pr` checks instead.
 
-**Authoritative CI:** see the PR's `Quality Gate (Gates 1 + 3)`, `Security Scan (Gate 2)` and
-`Dependency (Gate 4)` runs via `gh run list` / `gh pr checks`. Results observed during this session
-are recorded in §8 below and in the PR conversation.
+**Authoritative CI — FINAL RESULT (`gh pr checks 63`): ALL GREEN.**
 
-## 8. CI iteration (first run → fixes)
+| Check | Conclusion | Duration | Run |
+| --- | --- | --- | --- |
+| Gate 1 — Validation (1a tsc, 1b eslint, 1c boundaries, 1d vitest+coverage, 3a diff coverage, 3b source guards, 3c secret grep) | **PASS** | 26m51s | `40593463776` |
+| Gate 2 — Security (npm audit, TruffleHog, CSP) | **PASS** | 1m32s | `40593463737` |
+| Gate 4 — Dependency (outdated + license) | **PASS** | 50s | `40593464017` |
+
+This is the decisive evidence that CI's full `tsc --noEmit`, full suite with coverage (on a runner
+where `better-sqlite3` builds), and the ≥70 % changed-line/branch coverage gate all pass. Results of
+each intermediate run are recorded in §8 below and in the PR conversation.
+
+## 8. CI iteration (first run → final green)
+
+**Final (fourth) CI run** — `40593463776` / `40593463737` / `40593464017`: every step of Gate 1
+(1a → 1d → 3a → 3c) plus Gates 2 and 4 **PASS**. No browser check was enabled, no check was
+disabled, and no merge/deploy was performed. The PR is left OPEN at the reviewed-PR checkpoint.
+
+**Iteration history** (each failure is recorded rather than hidden):
 
 PR #63 first CI run (`40582716246` Gate 1, `40582716134` Gate 2, `40582716182` Gate 4):
 

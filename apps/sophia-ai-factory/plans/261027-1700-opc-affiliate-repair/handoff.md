@@ -125,5 +125,7 @@ manually. The PR references #62.
 
 ## 8. Scope boundary of this handoff
 
-Stop at a **reviewed PR with green checks**. No merge, no deploy, no remote migration. A founder
-must explicitly add `--ship` in a new run for any of those actions.
+Stop at a **reviewed PR with green checks** — reached: PR #63, `gh pr checks 63` reports
+Gate 1 / Gate 2 / Gate 4 **PASS** (`40593463776` / `40593463737` / `40593464017`). No merge, no
+deploy, no remote migration. A founder must explicitly add `--ship` in a new run for any of those
+actions.

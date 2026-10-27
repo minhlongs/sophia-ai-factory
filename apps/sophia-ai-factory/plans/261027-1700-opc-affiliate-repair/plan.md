@@ -2,7 +2,8 @@
 
 **Branch:** `arena/0c751328-sophia-ai-factory` (branched from `main@439635e1a2017c2643e013c0311631bd95409de4`)
 **Snapshot date:** 2026-10-28 (Asia/Ho_Chi_Minh)
-**Status:** implementation complete; PR opened; merge/deploy explicitly out of scope.
+**Status:** implementation complete; **PR #63 opened with all CI checks green** (Gate 1 / 2 / 4);
+merge/deploy explicitly out of scope.
 
 ## 1. Mandate and scope
 
