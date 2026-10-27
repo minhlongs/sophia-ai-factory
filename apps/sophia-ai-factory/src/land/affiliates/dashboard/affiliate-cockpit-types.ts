@@ -18,12 +18,17 @@ export interface CockpitSummaryMetrics {
   activeCampaignsCount: number;
   scaledWinnersCount: number;
   prunedHooksCount: number;
+  /** Multi-niche breakdown */
+  nicheBreakdown?: {
+    cryptoCexCommissionCents: number;
+    globalSaasCommissionCents: number;
+  };
 }
 
 export interface CockpitCampaignEntry {
   campaignId: string;
   hookName: string;
-  niche: string;
+  niche: 'saas_global' | 'crypto_global' | 'ecommerce_tiktok' | string;
   ctrPercent: number;
   cvrPercent: number;
   epcCents: number;

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Clock, AlertTriangle } from 'lucide-react';
 import type { Approval, ApprovalQueueProps } from './types';
 import { ApprovalCard } from './card';
+import { ApprovalExecutiveHeader } from './approval-executive-header';
 import { fetchWorkspaceApprovals, submitApprovalResolution } from './queue-view-api';
 
 export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
@@ -55,44 +56,54 @@ export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <span className="ml-3 text-sm">{t('emptyDescription')}</span>
+      <div className="space-y-4">
+        <ApprovalExecutiveHeader approvals={[]} />
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="ml-3 text-sm">{t('emptyDescription')}</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-        <div className="flex items-center gap-2 font-medium">
-          <AlertTriangle className="h-4 w-4" />
-          {t('actions.rejectSuccess')}
+      <div className="space-y-4">
+        <ApprovalExecutiveHeader approvals={[]} />
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <div className="flex items-center gap-2 font-medium">
+            <AlertTriangle className="h-4 w-4" />
+            {t('actions.rejectSuccess')}
+          </div>
+          <p className="mt-1">{error}</p>
+          <button
+            type="button"
+            onClick={loadApprovals}
+            className="mt-3 rounded-md border border-destructive/30 px-3 py-1.5 text-xs hover:bg-destructive/10"
+          >
+            {t('emptyTitle')}
+          </button>
         </div>
-        <p className="mt-1">{error}</p>
-        <button
-          type="button"
-          onClick={loadApprovals}
-          className="mt-3 rounded-md border border-destructive/30 px-3 py-1.5 text-xs hover:bg-destructive/10"
-        >
-          {t('emptyTitle')}
-        </button>
       </div>
     );
   }
 
   if (approvals.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-8 text-center">
-        <Clock className="mx-auto h-10 w-10 text-muted-foreground/50" />
-        <h3 className="mt-4 text-lg font-semibold text-foreground">{t('emptyTitle')}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{t('emptyDescription')}</p>
+      <div className="space-y-4">
+        <ApprovalExecutiveHeader approvals={[]} />
+        <div className="rounded-lg border border-border bg-card p-8 text-center">
+          <Clock className="mx-auto h-10 w-10 text-muted-foreground/50" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">{t('emptyTitle')}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{t('emptyDescription')}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <ApprovalExecutiveHeader approvals={approvals} />
       {approvals.map((approval) => (
         <ApprovalCard
           key={approval.id}

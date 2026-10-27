@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, X, Clock, User, MessageSquare, AlertTriangle } from 'lucide-react';
 import type { Approval } from './types';
+import { ApprovalGovernanceBadges } from './approval-governance-badges';
 
 interface ApprovalCardProps {
   approval: Approval;
@@ -24,12 +25,8 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
       minute: '2-digit',
     });
 
-  const isExpiring = (ts: number) => {
-    const remaining = ts - Math.floor(Date.now() / 1000);
-    return remaining > 0 && remaining < 3600;
-  };
-
-  const expiring = isExpiring(approval.timeoutAt);
+  const remaining = approval.timeoutAt - Math.floor(Date.now() / 1000);
+  const expiring = remaining > 0 && remaining < 3600;
 
   return (
     <div
@@ -52,6 +49,8 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
               )}
             </div>
 
+            <ApprovalGovernanceBadges approval={approval} />
+
             <p className="text-sm leading-relaxed text-foreground">
               {approval.actionSummary}
             </p>
@@ -69,7 +68,7 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
                 <div className="flex items-center gap-1.5">
                   <MessageSquare className="h-3 w-3" />
                   <span>
-                    {t('fields.cost')}: {(approval.estimatedCostCents / 100).toFixed(2)}
+                    {t('fields.cost')}: ${(approval.estimatedCostCents / 100).toFixed(2)}
                   </span>
                 </div>
               )}

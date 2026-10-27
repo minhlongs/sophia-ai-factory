@@ -8,6 +8,7 @@ import {
   getAffiliateCockpitCopy,
 } from './affiliate-cockpit-copy';
 import { AffiliateCockpitHookList } from './AffiliateCockpitHookList';
+import { AffiliateDomainBSummaryBar } from './AffiliateDomainBSummaryBar';
 
 interface AffiliateCockpitViewProps {
   snapshot: CockpitExecutiveSnapshot;
@@ -100,6 +101,8 @@ export function AffiliateCockpitView({
           )}
         </div>
       </div>
+
+      <AffiliateDomainBSummaryBar metrics={metrics} locale={locale} />
 
       <AffiliateCockpitHookList
         topHooksTitle={t.topHooksTitle}
