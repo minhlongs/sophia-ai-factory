@@ -7417,7 +7417,7 @@
       }
     },
     "landing": {
-      "badge": "⚡ Trusted by 10,000+ creators worldwide",
+      "badge": "⚡ BYOK Sovereign AI Architecture • 100% Non-Custodial",
       "headline": "Build Your AI-Powered Video ",
       "headlineHighlight": " Empire Without Hiring a Team",
       "subheading": "Sophia automates faceless YouTube channels, affiliate campaigns, and multi-platform publishing — all from one dashboard and your Telegram. No coding. No editors. No stress.",
@@ -7441,9 +7441,9 @@
         "readySubtitle": "Create your account in 30 seconds. Connect your BYOK keys and start generating unlimited videos today."
       },
       "trustBar": {
-        "label": "Creator community",
-        "creators": "10,000+ creators",
-        "videos": "1M+ videos generated"
+        "label": "Architecture Guarantee",
+        "creators": "7-Level Evidence Chain",
+        "videos": "SHA-256 CEO Approval • Domain B 0% Fee"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
@@ -7469,7 +7469,52 @@
       "guide": "Guide",
       "affiliates": "Affiliates",
       "logIn": "Log In",
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "assemblyLine": {
+        "title": "Sophia Creative Assembly Line",
+        "subtitleIllustration": "Interactive 5-station isometric architecture — click any station to inspect governance & telemetry",
+        "subtitleVerified": "Live server-verified execution pipeline for this creative mission",
+        "modeIllustration": "Illustrative Architecture",
+        "modeVerified": "Verified Mission Pipeline",
+        "inspectorLabel": "Selected Station Telemetry & Governance",
+        "mechanismLabel": "Core Mechanism",
+        "states": {
+          "not_started": "Not Started",
+          "queued": "Queued",
+          "running": "Running",
+          "needs_approval": "CEO Approval Needed",
+          "succeeded": "Verified",
+          "failed": "Attention Required",
+          "unknown": "Unknown"
+        },
+        "stations": {
+          "intake_brief": {
+            "title": "1. Brief & Jurisdiction",
+            "shortTitle": "Brief & Guard",
+            "summary": "Validates dual-niche offer parameters (CEX / Global SaaS) and enforces regional jurisdiction rules (FTC / MiCA / VN Decree 52) before script drafting."
+          },
+          "script_planning": {
+            "title": "2. AI Script & Storyboard",
+            "shortTitle": "Script & Hook",
+            "summary": "Synthesizes bilingual (VI/EN) hook angles, visual scene cues, and mandatory affiliate disclosure statements."
+          },
+          "ceo_approval_gate": {
+            "title": "3. CEO SHA-256 Gate",
+            "shortTitle": "CEO Gate",
+            "summary": "Cryptographically locks the script, affiliate URL, and render budget cap via SHA-256 payload digest. Blocks any unauthorized mutation."
+          },
+          "media_render": {
+            "title": "4. Multi-Track Render",
+            "shortTitle": "Media Render",
+            "summary": "Executes asynchronous Inngest background synthesis using your BYOK keys (ElevenLabs voiceover, visual scenes, and burned-in captions)."
+          },
+          "publish_ledger": {
+            "title": "5. Syndication & Ledger",
+            "shortTitle": "Publish & Ledger",
+            "summary": "Dispatches verified video to connected channels and reconciles S2S postbacks in the workspace Domain B ledger with 0% platform fee."
+          }
+        }
+      }
     },
     "settingsPage": {
       "pageTitle": "Settings",
