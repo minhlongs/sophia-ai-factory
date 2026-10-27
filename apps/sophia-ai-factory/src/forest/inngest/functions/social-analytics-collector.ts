@@ -80,6 +80,7 @@ export async function processSocialAnalyticsCollector({
       name: 'social.analytics.feedback_evaluated',
       data: {
         userId: data.userId,
+        tenantId: data.tenantId ?? data.userId,
         jobId: data.jobId,
         platform: data.platform,
         hookScore: normalized.hookScore,
@@ -87,6 +88,11 @@ export async function processSocialAnalyticsCollector({
         netRoiUsd: financials.netMarginUsd,
         conversions: financials.revenueUsd > 0 ? 1 : 0,
         revenueUsd: financials.revenueUsd,
+        impressions: raw.views,
+        costUsd: financials.totalCostUsd,
+        // Explicitly labelled: the upstream fetcher returns random fixtures.
+        // The feedback dispatcher refuses to persist these as observations.
+        isFixture: true,
       },
     });
     return { dispatched: true };

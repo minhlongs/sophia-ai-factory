@@ -31,6 +31,8 @@ describe('Executive Affiliate Cockpit Service', () => {
       recommendedDailyVideos: 4,
       action: 'SCALE_AGGRESSIVE',
       reason: 'Viral hook',
+      contributionCents: 120,
+      costKnown: true,
     },
     {
       campaignId: 'camp_2',
@@ -41,6 +43,8 @@ describe('Executive Affiliate Cockpit Service', () => {
       recommendedDailyVideos: 0,
       action: 'KILL_PRUNE',
       reason: 'Low CTR',
+      contributionCents: null,
+      costKnown: false,
     },
   ];
 
@@ -88,6 +92,7 @@ describe('Executive Affiliate Cockpit Service', () => {
       approvedUnpaidCents: 5000,
       reversedCents: 0,
       paidReceiptCents: 15000,
+      adjustmentCents: 0,
       totalGrossVolumeCents: 0,
       platformFeeCents: 0,
       effectiveCommissionCents: 20000,
@@ -98,6 +103,7 @@ describe('Executive Affiliate Cockpit Service', () => {
           approvedUnpaidCents: 5000,
           reversedCents: 0,
           paidReceiptCents: 0,
+          adjustmentCents: 0,
           totalGrossVolumeCents: 0,
           effectiveCommissionCents: 5000,
         },
@@ -107,6 +113,7 @@ describe('Executive Affiliate Cockpit Service', () => {
           approvedUnpaidCents: 0,
           reversedCents: 0,
           paidReceiptCents: 15000,
+          adjustmentCents: 0,
           totalGrossVolumeCents: 0,
           effectiveCommissionCents: 15000,
         },

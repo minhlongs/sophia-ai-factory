@@ -20,6 +20,10 @@ describe('Land v14: Predictive Render Server Actions', () => {
       scriptId: 'scr-1',
       deliberationScore: 80,
       availableMcuBudget: 500,
+      winProbability: 0.7,
+      projectedRoas: 3.0,
+      measuredSampleSize: 100,
+      evidenceSource: 'cohort:saas_us_30d',
     });
 
     expect(result.ok).toBe(false);
@@ -56,6 +60,8 @@ describe('Land v14: Predictive Render Server Actions', () => {
       availableMcuBudget: 500,
       winProbability: 0.7,
       projectedRoas: 3.0,
+      measuredSampleSize: 100,
+      evidenceSource: 'cohort:saas_us_30d',
     });
 
     expect(result.ok).toBe(true);
@@ -64,6 +70,27 @@ describe('Land v14: Predictive Render Server Actions', () => {
       expect(result.value.allocatedMcu).toBeGreaterThan(0);
     }
     expect(inngest.send).toHaveBeenCalled();
+  });
+
+  it('refuses fabricated / immature evidence and negative expectancy', async () => {
+    vi.spyOn(sessionModule, 'getCurrentUser').mockResolvedValue({
+      id: 'usr-1', email: 'founder@test.com', role: 'user',
+    } as unknown as User);
+
+    const immature = await schedulePredictiveRenderAction({
+      scriptId: 'scr-1', deliberationScore: 85, availableMcuBudget: 500,
+      winProbability: 0.7, projectedRoas: 3.0, measuredSampleSize: 3,
+      evidenceSource: 'fixture',
+    });
+    expect(immature.ok).toBe(false);
+
+    const negative = await schedulePredictiveRenderAction({
+      scriptId: 'scr-1', deliberationScore: 85, availableMcuBudget: 500,
+      winProbability: 0.1, projectedRoas: 1.1, measuredSampleSize: 100,
+      evidenceSource: 'cohort:saas_us_30d',
+    });
+    expect(negative.ok).toBe(false);
+    expect(vi.mocked(inngest.send)).not.toHaveBeenCalled();
   });
 
   it('getUserPredictiveJobsAction returns user jobs list', async () => {

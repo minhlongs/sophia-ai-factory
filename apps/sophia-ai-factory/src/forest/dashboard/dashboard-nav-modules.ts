@@ -121,3 +121,63 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     icon: Activity,
   },
 ];
+
+/**
+ * OPC primary work groups (max six). These are the ONLY primary navigation
+ * items; the 16 canonical modules remain available as deep links in the
+ * secondary "More tools" section so no existing route or permission is lost.
+ * Every href below resolves to an existing page in app/[locale]/dashboard.
+ */
+export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
+  {
+    id: "opc_today",
+    labelKey: "opcNav.today",
+    fallbackLabel: "Today",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    id: "opc_offers",
+    labelKey: "opcNav.offers",
+    fallbackLabel: "Offers",
+    href: "/dashboard/affiliate",
+    icon: DollarSign,
+  },
+  {
+    id: "opc_campaigns",
+    labelKey: "opcNav.campaigns",
+    fallbackLabel: "Campaigns",
+    href: "/dashboard/campaigns",
+    icon: Film,
+  },
+  {
+    id: "opc_approvals",
+    labelKey: "opcNav.approvals",
+    fallbackLabel: "Needs approval",
+    href: "/dashboard/approvals",
+    icon: ShieldCheck,
+  },
+  {
+    id: "opc_results",
+    labelKey: "opcNav.results",
+    fallbackLabel: "Results",
+    href: "/dashboard/affiliates",
+    icon: Activity,
+  },
+  {
+    id: "opc_connections",
+    labelKey: "opcNav.connections",
+    fallbackLabel: "Connections",
+    href: "/dashboard/settings",
+    icon: BookOpen,
+  },
+];
+
+/** Separate referral programme — never mixed with external affiliate earnings. */
+export const OPC_REFERRAL_NAV_ITEM: DashboardNavModule = {
+  id: "refer_sophia",
+  labelKey: "opcNav.referSophia",
+  fallbackLabel: "Refer Sophia",
+  href: "/partner",
+  icon: Target,
+};

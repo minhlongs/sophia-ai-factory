@@ -5,7 +5,12 @@
  * @module tree/growth-v14/kelly-allocator
  */
 
-import { KellyAllocationParams } from '@/seed/types/growth-triad-v14';
+import type { KellyAllocationParams } from '@/seed/types/growth-triad-v14';
+
+/** Exploration is optional at the call site; omission means zero spend. */
+type KellyRuntimeParams = Omit<KellyAllocationParams, 'approvedExplorationFraction'> & {
+  approvedExplorationFraction?: number;
+};
 
 export interface KellyAllocationResult {
   unconstrainedFraction: number;
@@ -24,10 +29,17 @@ export interface KellyAllocationResult {
  *   bounded = clamp(f_half, minFraction, maxFraction)
  */
 export function calculateKellyAllocation(
-  params: KellyAllocationParams,
+  params: KellyRuntimeParams,
   availableMcuBudget: number
 ): KellyAllocationResult {
-  const { winProbability, projectedRoas, halfKelly, minFraction, maxFraction } = params;
+  const {
+    winProbability,
+    projectedRoas,
+    halfKelly,
+    minFraction,
+    maxFraction,
+    approvedExplorationFraction = 0,
+  } = params;
 
   if (availableMcuBudget <= 0) {
     return {
@@ -53,10 +65,12 @@ export function calculateKellyAllocation(
     fraction *= 0.5;
   }
 
-  // Bound within allowed min/max fraction when positive, else clamp to min exploration
+  // NEGATIVE/UNKNOWN EXPECTANCY MUST ALLOCATE ZERO. The old code clamped to
+  // `minFraction` and spent real render budget on a losing bet. Exploration is
+  // only allowed through a separately approved `approvedExplorationFraction`.
   const rawBounded = isPositiveExpectancy
     ? Math.min(maxFraction, Math.max(minFraction, fraction))
-    : minFraction;
+    : Math.min(maxFraction, Math.max(0, approvedExplorationFraction));
   const boundedFraction = Number(rawBounded.toFixed(4));
 
   const allocatedMcu = Math.floor(availableMcuBudget * boundedFraction);

@@ -31,6 +31,8 @@ export interface RankedDiscoveredOffer {
   imageUrl: string;
   commissionPct: number | null;
   commissionFixedUsd: number | null;
+  /** Provenance of any EPC-like ranking input. */
+  epcProvenance?: 'measured' | 'commission_derived_estimate' | 'unknown';
   niche: string;
   language: string;
   region: string;
@@ -165,7 +167,12 @@ export function toAffiliate(offer: AffiliateOffer, network: Network, tenantId: s
     category: offer.niche,
     description: offer.description,
     discoveredAt: now,
+    // This is a commission-derived FORECAST, not measured EPC. Consumers must
+    // not treat it as observed performance (see scoreEpc and the offer list UI).
     epc,
+    epcProvenance: 'commission_derived_estimate',
+    epcUnit: 'usd_per_click_estimate',
+    epcSource: 'toAffiliate:commission-heuristic-v1',
     domain: extractDomain(offer.productUrl),
   };
 }

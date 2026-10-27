@@ -66,6 +66,49 @@ export async function markMissionFailed(
   }
 }
 
+/** A queued render is still in progress — never mark it succeeded. */
+export async function markMissionInProgress(
+  missionId: string,
+  result: AutoVideoMissionResult,
+): Promise<void> {
+  try {
+    const db = await getD1();
+    if (!db) throw new Error('D1 database binding not available');
+    await db
+      .prepare(
+        `UPDATE engine_missions
+         SET status='running', result=?, updated_at=strftime('%s','now')
+         WHERE id=?`,
+      )
+      .bind(JSON.stringify(result), missionId)
+      .run();
+  } catch (err) {
+    logger.error('[auto-video-mission] markMissionInProgress failed', toError(err), { missionId });
+  }
+}
+
+/** A blocked mission is a failure to complete, with an explicit reason. */
+export async function markMissionBlocked(
+  missionId: string,
+  reason: string,
+  result: AutoVideoMissionResult,
+): Promise<void> {
+  try {
+    const db = await getD1();
+    if (!db) throw new Error('D1 database binding not available');
+    await db
+      .prepare(
+        `UPDATE engine_missions
+         SET status='failed', error=?, result=?, updated_at=strftime('%s','now')
+         WHERE id=?`,
+      )
+      .bind(JSON.stringify({ code: 'BLOCKED', reason }), JSON.stringify(result), missionId)
+      .run();
+  } catch (err) {
+    logger.error('[auto-video-mission] markMissionBlocked failed', toError(err), { missionId });
+  }
+}
+
 export async function markMissionSucceeded(
   missionId: string,
   result: AutoVideoMissionResult,

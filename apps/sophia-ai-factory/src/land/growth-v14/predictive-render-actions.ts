@@ -26,8 +26,12 @@ export interface ScheduleRenderInput {
   scriptId: string;
   deliberationScore: number;
   availableMcuBudget: number;
-  projectedRoas?: number;
-  winProbability?: number;
+  /** Must come from persisted measured cohort data, never a hardcoded default. */
+  projectedRoas: number;
+  winProbability: number;
+  measuredSampleSize: number;
+  /** Cohort/window/report identifier that produced the two numbers above. */
+  evidenceSource: string;
   mabArmId?: string;
 }
 
@@ -45,11 +49,25 @@ export async function schedulePredictiveRenderAction(
   if (!input.scriptId || input.availableMcuBudget <= 0) {
     return failure({ code: 'VALIDATION_ERROR', message: 'Valid scriptId and budget required' });
   }
+  // No fabricated win rate / ROAS / cohort. An unmeasured input cannot justify
+  // spending render budget, nor can an immature sample be called a winner.
+  if (
+    !Number.isFinite(input.winProbability) ||
+    input.winProbability < 0 || input.winProbability > 1 ||
+    !Number.isFinite(input.projectedRoas) || input.projectedRoas <= 0 ||
+    !Number.isInteger(input.measuredSampleSize) || input.measuredSampleSize < 30 ||
+    !input.evidenceSource.trim()
+  ) {
+    return failure({
+      code: 'VALIDATION_ERROR',
+      message: 'Measured winProbability, projectedRoas, sampleSize >= 30 and evidenceSource are required',
+    });
+  }
 
   const kellyResult = calculateKellyAllocation(
     {
-      winProbability: input.winProbability ?? 0.65,
-      projectedRoas: input.projectedRoas ?? 2.5,
+      winProbability: input.winProbability,
+      projectedRoas: input.projectedRoas,
       halfKelly: true,
       minFraction: 0.05,
       maxFraction: 0.4,
@@ -57,7 +75,14 @@ export async function schedulePredictiveRenderAction(
     input.availableMcuBudget
   );
 
-  const jobId = `pred_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  if (kellyResult.allocatedMcu <= 0) {
+    return failure({
+      code: 'VALIDATION_ERROR',
+      message: 'No approved positive-expectancy budget; render not scheduled',
+    });
+  }
+
+  const jobId = `pred_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
 
   const job = await createPredictiveRenderJob({
     id: jobId,

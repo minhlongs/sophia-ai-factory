@@ -7,25 +7,20 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { processSaasCryptoPostback } from '../saas-crypto-postback-service';
 import { computeHmacSha256Hex } from '@/land/postback/hmac-verifier';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 
+// Exercise the REAL migration chain instead of an inline copy of the schema.
 function createPostbackTestD1() {
-  return createFakeD1([
-    `CREATE TABLE workspace_external_commissions (
-      id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT, network TEXT NOT NULL,
-      niche TEXT NOT NULL, external_tx_id TEXT NOT NULL, sub_id TEXT, event_type TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending', gross_amount_cents INTEGER NOT NULL DEFAULT 0,
-      commission_cents INTEGER NOT NULL, platform_fee_cents INTEGER NOT NULL DEFAULT 0,
-      currency TEXT NOT NULL DEFAULT 'USD', is_recurring INTEGER NOT NULL DEFAULT 0,
-      payout_receipt_ref TEXT, raw_payload TEXT, occurred_at INTEGER NOT NULL,
-      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-      updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
-    );`,
-    `CREATE UNIQUE INDEX idx_ws_ext_comm_dedup ON workspace_external_commissions(tenant_id, network, external_tx_id, status);`,
-    `CREATE TABLE commission_events (event_id TEXT PRIMARY KEY, event_type TEXT NOT NULL, payload TEXT, processed INTEGER NOT NULL DEFAULT 0);`,
-  ]);
+  const prior = readFileSync(resolve(process.cwd(), 'migrations/0206_commission_events.sql'), 'utf8');
+  const upgrade = readFileSync(
+    resolve(process.cwd(), 'migrations/0482_opc_affiliate_execution_truth.sql'),
+    'utf8',
+  );
+  return createFakeD1([prior, upgrade]);
 }
 
 describe('SaaS & Crypto Postback Service', () => {

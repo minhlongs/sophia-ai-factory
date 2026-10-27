@@ -23,9 +23,16 @@ export const createNicheVideoCampaignSchema = z.object({
   subId: z.string().nullable().optional(),
   vanityCoupon: z.string().nullable().optional(),
   locale: z.enum(['en', 'vi']).optional().default('en'),
+  /** Id of the persisted offer this campaign promotes. Verification is server-side. */
+  offerId: z.string().min(1).optional(),
+  /** Approved channel/account id; bound into the approval payload hash. */
+  targetAccount: z.string().min(1).optional(),
+  /** Approved render budget cap in cents; the server clamps this to the tier cap. */
+  maxRenderCostCents: z.number().int().min(0).max(5000).optional(),
 });
 
 export type CreateNicheVideoCampaignActionInput = z.input<typeof createNicheVideoCampaignSchema>;
+export type ValidatedNicheVideoActionInput = z.output<typeof createNicheVideoCampaignSchema>;
 
 export interface NicheVideoActionResponse<T = unknown> {
   success: boolean;
@@ -37,7 +44,7 @@ export interface NicheVideoActionResponse<T = unknown> {
 export function validateAndBuildNichePlan(
   rawInput: CreateNicheVideoCampaignActionInput,
 ):
-  | { ok: true; planInput: CreateNicheVideoCampaignInput; plan: NicheVideoCampaignPlan }
+  | { ok: true; planInput: CreateNicheVideoCampaignInput; input: ValidatedNicheVideoActionInput; plan: NicheVideoCampaignPlan }
   | { ok: false; response: NicheVideoActionResponse<never> } {
   const parsed = createNicheVideoCampaignSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -61,5 +68,5 @@ export function validateAndBuildNichePlan(
     };
   }
 
-  return { ok: true, planInput, plan: planResult.value };
+  return { ok: true, planInput, input: parsed.data, plan: planResult.value };
 }

@@ -16,7 +16,9 @@ import { buildMissionScript, buildMissionDescription } from './prompt-builder';
 import { submitMissionVideo, scheduleMissionPublish } from './mission-scheduler';
 import {
   insertMissionRow,
+  markMissionBlocked,
   markMissionFailed,
+  markMissionInProgress,
   markMissionSucceeded,
 } from './auto-video-persistence';
 
@@ -55,13 +57,27 @@ export async function runAutoVideoMission(
       missionId,
     );
 
-    // Step 5: Optional publish schedule
-    const publish = await scheduleMissionPublish(
-      input,
-      video,
-      script.primary.suggestedTitles[0] ?? input.topic,
-      missionId,
+    // Step 5: Optional publish schedule. Caption keeps the approved affiliate
+    // link from the description when one is present; a title alone is not a CTA.
+    const title = script.primary.suggestedTitles[0] ?? input.topic;
+    const caption = description.body.includes('http') ? `${title}\n\n${description.body}` : title;
+    const publish = await scheduleMissionPublish(input, video, caption, missionId);
+
+    const publishIncomplete = Boolean(
+      publish && ('skipped' in publish || 'failed' in publish),
     );
+    let status: AutoVideoMissionResult['status'] = 'succeeded';
+    let blockReason: AutoVideoMissionResult['blockReason'];
+    if (!video?.videoId) {
+      status = 'blocked';
+      blockReason = 'NO_BYOK';
+    } else if (publishIncomplete) {
+      status = 'blocked';
+      blockReason = 'PUBLISH_FAILED';
+    } else if (video.status !== 'completed') {
+      // A submitted HeyGen job is a queued render, not a finished video.
+      status = 'render_queued';
+    }
 
     const result: AutoVideoMissionResult = {
       missionId,
@@ -69,10 +85,17 @@ export async function runAutoVideoMission(
       description,
       video,
       publish,
-      status: 'succeeded',
+      status,
+      ...(blockReason ? { blockReason } : {}),
     };
 
-    await markMissionSucceeded(missionId, result);
+    if (status === 'succeeded') {
+      await markMissionSucceeded(missionId, result);
+    } else if (status === 'render_queued') {
+      await markMissionInProgress(missionId, result);
+    } else {
+      await markMissionBlocked(missionId, blockReason ?? 'UNKNOWN', result);
+    }
     return result;
   } catch (err) {
     if (err instanceof AutoVideoMissionError) {

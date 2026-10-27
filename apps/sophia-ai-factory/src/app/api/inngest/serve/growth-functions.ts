@@ -45,6 +45,7 @@ import {
   cultureInjectorJob,
   socialTelemetryIngestWorker,
   priorRecalibrationWorker,
+  flywheelFeedbackDispatcherJob,
 } from "@/forest/inngest/functions/index";
 
 export const GROWTH_INNGEST_FUNCTIONS = [
@@ -88,4 +89,5 @@ export const GROWTH_INNGEST_FUNCTIONS = [
   cultureInjectorJob,
   socialTelemetryIngestWorker,
   priorRecalibrationWorker,
+  flywheelFeedbackDispatcherJob,
 ];

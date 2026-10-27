@@ -14,6 +14,9 @@ describe('Auto Campaign Scaler & Frequency Manager', () => {
       clicks: 800, // 8% CTR
       conversions: 40, // 5% CVR
       totalEarningsCents: 80000, // EPC = 100 cents = $1.00
+      totalCostCents: 20000,
+      observedWindowHours: 72,
+      scalingPermissionGranted: true,
       publishedVideosCount: 2,
     };
 
@@ -23,6 +26,25 @@ describe('Auto Campaign Scaler & Frequency Manager', () => {
     expect(decision.recommendedDailyVideos).toBe(4);
     expect(decision.ctrPercent).toBe(8);
     expect(decision.cvrPercent).toBe(5);
+  });
+
+  it('does NOT scale a high-CTR hook with negative contribution or unknown cost', () => {
+    const highCtr: CampaignPerformanceMetrics = {
+      campaignId: 'camp_negative', hookName: 'Viral but loss-making', niche: 'saas_global',
+      impressions: 10000, clicks: 800, conversions: 40, totalEarningsCents: 80000,
+      totalCostCents: 120000, observedWindowHours: 72, scalingPermissionGranted: true,
+      publishedVideosCount: 2,
+    };
+    const negative = evaluateCampaignScaling(highCtr);
+    expect(negative.contributionCents).toBe(-40000);
+    expect(negative.action).toBe('MAINTAIN_STEADY');
+
+    const unknownCost = evaluateCampaignScaling({ ...highCtr, totalCostCents: undefined });
+    expect(unknownCost.costKnown).toBe(false);
+    expect(unknownCost.action).toBe('MAINTAIN_STEADY');
+
+    const noPermission = evaluateCampaignScaling({ ...highCtr, scalingPermissionGranted: false });
+    expect(noPermission.action).toBe('MAINTAIN_STEADY');
   });
 
   it('prunes poor performing hooks with no conversions', () => {

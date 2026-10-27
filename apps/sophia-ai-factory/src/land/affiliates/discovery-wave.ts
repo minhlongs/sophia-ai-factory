@@ -103,6 +103,7 @@ export async function runAgenticDiscoveryWave(
           imageUrl: offer.imageUrl,
           commissionPct: offer.commissionPct,
           commissionFixedUsd: offer.commissionFixedUsd,
+          epcProvenance: aff.epcProvenance ?? 'unknown',
           niche: offer.niche,
           language: offer.language,
           region: offer.region,

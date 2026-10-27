@@ -53,21 +53,28 @@ function getSceneContentByRole(role: SceneRole, isEn: boolean, productName: stri
   }
   if (role === 'solution') {
     return {
-      narration: isEn ? `Here is how ${productName} (${scene.name}) solves this in under 60 seconds with automated precision.` : `Đây là cách mà ${productName} (${scene.name}) giải quyết triệt để trong 60 giây hoàn toàn tự động.`,
+      // No speed/efficiency claim: none of those facts comes from the offer.
+      narration: isEn ? `Here is how ${productName} (${scene.name}) fits into that workflow.` : `Đây là cách ${productName} (${scene.name}) phù hợp với quy trình đó.`,
       visual: scene.visualPrompt ? `${scene.visualPrompt}, vertical 9:16` : `Sleek futuristic dashboard interface of ${productName}, high-tech glowing green numbers, 9:16 UI demo`,
-      overlay: scene.overlayText || (isEn ? 'Effortless Automation' : 'Tự động hóa hoàn hảo'),
+      overlay: scene.overlayText || (isEn ? 'See How It Works' : 'Xem Cách Hoạt Động'),
     };
   }
   return {
-    narration: isEn ? `Click the link in bio or pinned comment right now to claim your exclusive access bonus for ${productName}.` : `Bấm ngay vào link trong phần mô tả để nhận ưu đãi và quyền truy cập độc quyền ${productName}.`,
-    visual: scene.visualPrompt ? `${scene.visualPrompt}, vertical 9:16` : `Vibrant animated pointer arrow pointing to bottom screen, golden reward glow, 9:16`,
-    overlay: scene.overlayText || (isEn ? '👇 GET ACCESS NOW' : '👇 NHẬN ƯU ĐÃI NGAY'),
+    // No "exclusive bonus": an unsourced incentive is a false claim. The CTA
+    // points at the approved tracked link and states the affiliate disclosure.
+    narration: isEn ? `Learn more about ${productName} using the partner link in the description. We may earn a commission.` : `Tìm hiểu thêm về ${productName} qua liên kết đối tác trong phần mô tả. Chúng tôi có thể nhận hoa hồng.`,
+    visual: scene.visualPrompt ? `${scene.visualPrompt}, vertical 9:16` : `Clean link-in-description end card with affiliate disclosure, 9:16`,
+    overlay: scene.overlayText || (isEn ? '👇 PARTNER LINK IN DESCRIPTION' : '👇 LIÊN KẾT Ở MÔ TẢ'),
   };
 }
 
-export function synthesizeNicheScript(plan: NicheVideoCampaignPlan): SynthesizedCampaignScript {
+export function synthesizeNicheScript(
+  plan: NicheVideoCampaignPlan,
+  explicitLocale?: 'en' | 'vi',
+): SynthesizedCampaignScript {
   const { planId, storyboard, prompts } = plan;
-  const isEn = prompts.systemPrompt.includes('English');
+  const locale = explicitLocale ?? plan.locale ?? (prompts.systemPrompt.includes('Vietnamese') ? 'vi' : 'en');
+  const isEn = locale === 'en';
   const total = storyboard.scenes.length;
 
   const synthesizedScenes: SynthesizedSceneScript[] = storyboard.scenes.map((scene, idx) => {

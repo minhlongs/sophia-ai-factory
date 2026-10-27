@@ -8,11 +8,11 @@
 /**
  * Standard Box-Muller transform for generating standard normal random numbers.
  */
-function randomStandardNormal(): number {
+function randomStandardNormal(random: () => number): number {
   let u = 0;
   let v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
+  while (u === 0) u = random();
+  while (v === 0) v = random();
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
@@ -20,11 +20,11 @@ function randomStandardNormal(): number {
  * Generates a Gamma distributed random variate using Marsaglia and Tsang method (2000).
  * Handles shape parameter alpha >= 1, or alpha < 1 via Johnk's generator or boost factor.
  */
-export function sampleGamma(alpha: number, scale = 1): number {
+export function sampleGamma(alpha: number, scale = 1, random: () => number = Math.random): number {
   if (alpha < 1) {
     // Boost alpha by 1: Gamma(alpha) = Gamma(alpha + 1) * U^(1/alpha)
-    const boosted = sampleGamma(alpha + 1, scale);
-    const u = Math.random();
+    const boosted = sampleGamma(alpha + 1, scale, random);
+    const u = random();
     return boosted * Math.pow(u, 1 / alpha);
   }
 
@@ -32,15 +32,15 @@ export function sampleGamma(alpha: number, scale = 1): number {
   const c = 1.0 / Math.sqrt(9.0 * d);
 
   while (true) {
-    let z = randomStandardNormal();
+    let z = randomStandardNormal(random);
     let v = 1.0 + c * z;
     while (v <= 0) {
-      z = randomStandardNormal();
+      z = randomStandardNormal(random);
       v = 1.0 + c * z;
     }
 
     const vCubed = v * v * v;
-    const u = Math.random();
+    const u = random();
 
     // Squeeze test
     if (u < 1.0 - 0.0331 * (z * z) * (z * z)) {
@@ -58,17 +58,30 @@ export function sampleGamma(alpha: number, scale = 1): number {
  * Samples a random value from a Beta(alpha, beta) distribution.
  * Uses relationship: Beta(a, b) = Gamma(a) / (Gamma(a) + Gamma(b))
  */
-export function sampleBeta(alpha: number, beta: number): number {
+export function sampleBeta(alpha: number, beta: number, random: () => number = Math.random): number {
   if (alpha <= 0 || beta <= 0) {
     throw new Error('Beta distribution parameters alpha and beta must be positive');
   }
 
-  const gammaA = sampleGamma(alpha, 1);
-  const gammaB = sampleGamma(beta, 1);
+  const gammaA = sampleGamma(alpha, 1, random);
+  const gammaB = sampleGamma(beta, 1, random);
 
   if (gammaA + gammaB === 0) {
     return 0.5;
   }
 
   return gammaA / (gammaA + gammaB);
+}
+
+
+/** Deterministic PRNG (mulberry32) so a decision can be reproduced from its seed. */
+export function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }

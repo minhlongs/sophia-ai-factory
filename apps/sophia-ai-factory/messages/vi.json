@@ -1092,6 +1092,18 @@
     }
   },
   "dashboard": {
+    "opcNav": {
+      "today": "Hôm nay",
+      "offers": "Offers",
+      "campaigns": "Chiến dịch",
+      "approvals": "Cần duyệt",
+      "results": "Kết quả",
+      "connections": "Kết nối",
+      "referSophia": "Refer Sophia",
+      "workspace": "Không gian làm việc",
+      "moreTools": "Công cụ khác (liên kết đầy đủ)",
+      "referralProgramme": "Chương trình giới thiệu"
+    },
     "title": "Bảng Điều Khiển",
     "subtitle": "Quản lý các chiến dịch video tự động của bạn",
     "sidebar": {
@@ -7449,10 +7461,12 @@
       }
     },
     "landing": {
-      "badge": "⚡ Kiến Trúc AI Tự Chủ BYOK • 100% Phi Lưu Ký",
-      "headline": "Xây Dựng Đế Chế Video AI ",
-      "headlineHighlight": " Không Cần Thuê Đội Ngũ",
-      "subheading": "Sophia tự động hóa kênh YouTube faceless, chiến dịch affiliate, và đăng tải đa nền tảng — từ một dashboard và Telegram của bạn. Không cần code. Không cần editor. Không căng thẳng.",
+      "badge": "Khóa BYOK thuộc workspace • Phê duyệt trước khi chi tiêu",
+      "headline": "Một người điều hành. Nhiều chiến dịch affiliate.",
+      "headlineHighlight": "",
+      "subheading": "Chuẩn bị chiến dịch affiliate CEX và SaaS toàn cầu trong cùng một workspace: xác minh offer, soạn kịch bản, duyệt nội dung và ngân sách, theo dõi sản xuất/đăng tải, rồi đối soát hoa hồng.",
+      "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
+      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng.",
       "nav": {
         "features": "Tính năng",
         "pricing": "Bảng giá",
@@ -7466,16 +7480,18 @@
         "brand": "Brand"
       },
       "cta": {
-        "startFree": "Dùng Thử Miễn Phí",
-        "watchDemo": "Xem Demo",
+        "startFree": "Tạo workspace",
+        "watchDemo": "Xem quy trình minh họa",
         "viewPricing": "Xem Bảng Giá",
-        "readyTitle": "Sẵn Sàng Xây Dựng Đế Chế Video AI?",
-        "readySubtitle": "Khởi tạo tài khoản trong 30 giây. Kết nối chìa khóa BYOK và bắt đầu tạo video không giới hạn ngay hôm nay."
+        "readyTitle": "Bắt đầu với một offer đã xác minh",
+        "readySubtitle": "Tạo workspace, kết nối khóa provider của bạn và chuẩn bị chiến dịch để duyệt. Gói trả phí và chi phí provider được hiển thị trước khi bạn xác nhận."
       },
       "trustBar": {
-        "label": "Cam kết kiến trúc",
-        "creators": "Chuỗi Bằng Chứng 7 Cấp Độ",
-        "videos": "Khóa Phê Duyệt SHA-256 • Sổ Cái Domain B 0% Phí"
+        "label": "Workspace kiểm soát",
+        "controlContent": "Bạn duyệt nội dung và kênh đăng",
+        "controlCost": "Bạn đặt trần ngân sách render",
+        "creators": "Không hứa hẹn thu nhập",
+        "videos": "BYOK • cổng phê duyệt • sổ cái workspace"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. Tất cả quyền được bảo lưu.",
@@ -7505,7 +7521,7 @@
       "assemblyLine": {
         "title": "Dây Chuyền Sản Xuất Sáng Tạo Sophia",
         "subtitleIllustration": "Mô hình kiến trúc Isometric 5 trạm tương tác — chọn từng trạm để kiểm tra cơ chế quản trị & đối soát",
-        "subtitleVerified": "Trạng thái thực thi thực tế được xác thực từ máy chủ cho nhiệm vụ này",
+        "subtitleVerified": "Trạng thái nhiệm vụ được máy chủ ghi nhận (không phải trạng thái fleet trực tiếp)",
         "modeIllustration": "Mô Hình Minh Họa Kỹ Thuật",
         "modeVerified": "Tiến Trình Nhiệm Vụ Thực Tế",
         "inspectorLabel": "Chi Tiết Trạm & Cơ Chế Bảo Chứng",

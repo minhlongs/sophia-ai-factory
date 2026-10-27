@@ -29,6 +29,9 @@ export interface CockpitSummaryMetrics {
   domainBSummary?: DomainBReconciliationSummary;
   /** Whether the workspace has any recorded Domain B ledger entries or campaign hooks */
   hasData?: boolean;
+  /** False when a single headline figure would mix currencies; use byCurrency. */
+  financialsAvailable?: boolean;
+  currencies?: string[];
 }
 
 export interface CockpitCampaignEntry {

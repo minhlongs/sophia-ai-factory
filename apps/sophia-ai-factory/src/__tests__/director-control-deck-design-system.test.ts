@@ -82,7 +82,12 @@ describe("Director's Control Deck Design System Verification", () => {
     const registerView = readSrcFile('components/stitch/screens/auth/register/register-page-view.tsx');
 
     expect(landingView).toContain('bg-[#F8F9FC] dark:bg-[#090A10]');
-    expect(pipelineMockup).toContain('camera-rec');
+    // The landing preview is illustrative — no REC/LIVE decoration. The
+    // `camera-rec` utility still exists for real studio previews (Phase 4).
+    expect(pipelineMockup).not.toContain('camera-rec');
+    expect(
+      readSrcFile('components/stitch/screens/landing-hero/modular/pipeline-mockup-header.tsx'),
+    ).toContain('ILLUSTRATIVE PREVIEW');
     expect(pipelineMockup).toContain('film-strip');
     expect(pricingView).toContain('bg-[#F8F9FC] dark:bg-[#090A10]');
     expect(pricingCard).toContain('font-mono');

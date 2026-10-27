@@ -39,6 +39,8 @@ export const KellyAllocationParamsSchema = z.object({
   halfKelly: z.boolean().default(true),
   minFraction: z.number().min(0).max(1).default(0.05),
   maxFraction: z.number().min(0).max(1).default(0.40),
+  /** Separately approved exploration budget; never implied by minFraction. */
+  approvedExplorationFraction: z.number().min(0).max(1).default(0),
 });
 export type KellyAllocationParams = z.infer<typeof KellyAllocationParamsSchema>;
 
