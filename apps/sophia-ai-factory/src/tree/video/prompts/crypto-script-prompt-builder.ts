@@ -24,14 +24,23 @@ export function buildCryptoScriptPrompt(input: CryptoScriptPromptInput): ScriptP
   const {
     exchangeName,
     targetAudience = 'active crypto & futures volume traders',
-    feeDiscountPct = 20,
-    signupBonusUsd = 1000,
+    // No defaults: a discount or bonus may only be stated when the verified
+    // offer actually supplies it. Otherwise the fact is UNKNOWN.
+    feeDiscountPct,
+    signupBonusUsd,
     referralCode,
     blueprint,
     locale = 'en',
   } = input;
 
   const codeText = referralCode ? `using referral code "${referralCode}"` : '';
+  const offerFacts = [
+    feeDiscountPct !== undefined && feeDiscountPct > 0 ? `${feeDiscountPct}% fee discount (from verified offer terms)` : null,
+    signupBonusUsd !== undefined && signupBonusUsd > 0 ? `up to $${signupBonusUsd} signup bonus (from verified offer terms)` : null,
+  ].filter((part): part is string => part !== null);
+  const offerLine = offerFacts.length > 0
+    ? `Verified offer facts: ${offerFacts.join(' + ')} ${codeText}.`
+    : `Offer facts: UNKNOWN. Do NOT state any discount, bonus, reward, guaranteed return or eligibility claim. Use only the verified partner link ${codeText}.`;
 
   const systemPrompt = [
     'You are a premier Financial & Crypto Direct-Response Scriptwriter specializing in volume-trader affiliate conversion.',
@@ -44,10 +53,15 @@ export function buildCryptoScriptPrompt(input: CryptoScriptPromptInput): ScriptP
     `- Output language: ${locale === 'vi' ? 'Vietnamese' : 'English'}.`,
   ].join('\n');
 
+  // Blueprint overlay texts contain TEMPLATE numbers (e.g. "20% BACK"). They
+  // are not offer facts. When no verified facts were supplied, omit them so a
+  // generated script cannot inherit an unsourced financial claim.
   const sceneDirectives = blueprint.scenes
     .map(
       (s) =>
-        `- Scene ${s.sceneIndex + 1} (${s.name}, ${s.startSec}s-${s.endSec}s): ${s.pacingDesc}. Overlay text: "${s.overlayText || ''}".`,
+        offerFacts.length > 0
+          ? `- Scene ${s.sceneIndex + 1} (${s.name}, ${s.startSec}s-${s.endSec}s): ${s.pacingDesc}. Overlay text: "${s.overlayText || ''}" (template — only keep numbers present in the verified offer facts above).`
+          : `- Scene ${s.sceneIndex + 1} (${s.name}, ${s.startSec}s-${s.endSec}s): ${s.pacingDesc}. Overlay text: use a neutral, non-numeric line; no offer-specific claim is verified.`,
     )
     .join('\n');
 
@@ -55,13 +69,13 @@ export function buildCryptoScriptPrompt(input: CryptoScriptPromptInput): ScriptP
     `Create a 60-second high-converting & compliant video script for "${exchangeName}".`,
     `Niche: Crypto Global (Target: ${targetAudience}).`,
     `Blueprint: ${blueprint.name}.`,
-    `Offer: ${feeDiscountPct}% Lifetime Fee Kickback + up to $${signupBonusUsd} signup bonus ${codeText}.`,
+    offerLine,
     '',
     'BLUEPRINT SCENE SEQUENCE:',
     sceneDirectives,
     '',
     'Return your response in clean JSON format with keys:',
-    '- hookLine: The exact opening words (e.g. "Stop bleeding 30% into exchange fees...").',
+    '- hookLine: The exact opening words (neutral, no numeric financial claim).',
     '- scriptNarration: Full narration text scene by scene.',
     '- midRollRiskDisclaimer: The audio sentence spoken around 0:35 regarding risk.',
     '- endCardDisclosureText: The legal disclosure text for the final 15s screen.',

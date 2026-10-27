@@ -28,14 +28,17 @@ async function enforcePreSideEffectGuards(
       throw new AutoVideoMissionError('PERSIST_FAILED', 'D1 database binding not available for approval check', missionId);
     }
     const campaignId = input.campaignId ?? missionId;
-    const payload = input.approvalPayload ?? {
-      scriptBody: scriptText,
-      affiliateTargetUrl: '',
-      jurisdiction: input.jurisdiction ?? 'US',
-      disclosureText: '#ad',
-      maxRenderCostCents: Math.round((input.estimatedCostUsd ?? 0.02) * 100),
-      targetAccount: input.channelId,
-    };
+    // No implicit payload: an approval hash must bind the REAL link,
+    // jurisdiction, disclosure, account and budget. Inventing 'US' or an empty
+    // link would let a materially different payload pass verification.
+    if (!input.approvalPayload) {
+      throw new AutoVideoMissionError(
+        'APPROVAL_NOT_GRANTED',
+        'Explicit approval payload (script, link, jurisdiction, disclosure, account, budget) is required before a paid side effect',
+        missionId,
+      );
+    }
+    const payload = input.approvalPayload;
     const verification = await verifyAndEnforceCampaignApprovalD1(
       db,
       tenantId,
@@ -106,14 +109,13 @@ export async function scheduleMissionPublish(
   }
 
   const tenantId = input.tenantId ?? input.userId;
-  if (await isAffiliateKillSwitchActive(tenantId)) {
-    return { skipped: true, reason: 'kill_switch_active' };
-  }
+  // Re-check the halt and approval immediately before the publish side effect,
+  // not only at the start of the mission (a retry/sleep may have changed them).
+  await enforcePreSideEffectGuards(input, caption, missionId);
 
   const realVideoId = videoResult?.videoId;
   if (!realVideoId) {
-    // Soft-skip: no video row yet because HeyGen BYOK was not configured.
-    logger.info('[auto-video-mission] publish skipped — no video row (no BYOK key)', { missionId });
+    logger.info('[auto-video-mission] publish skipped — no real video row (no BYOK key)', { missionId });
     return { skipped: true, reason: 'no_byok' };
   }
 
@@ -129,11 +131,9 @@ export async function scheduleMissionPublish(
     });
     return { jobId: sch.jobId, scheduledAt: sch.scheduledAt };
   } catch (err) {
-    const isMissingVideo = err instanceof PublishConfigurationError && err.code === 'VIDEO_NOT_FOUND';
-    logger.warn('[auto-video-mission] schedule step failed', {
-      missionId,
-      reason: isMissingVideo ? 'video_row_not_created_yet' : 'unknown',
-    });
-    return undefined;
+    const code = err instanceof PublishConfigurationError ? err.code : 'UNKNOWN';
+    logger.warn('[auto-video-mission] schedule step failed', { missionId, reason: code });
+    // An unknown outcome is reported, never converted into a silent success.
+    return { failed: true, reason: `PUBLISH_${code}` };
   }
 }

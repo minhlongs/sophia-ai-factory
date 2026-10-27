@@ -44,6 +44,8 @@ export interface NicheVideoCampaignPlan {
   trackedUrl: string;
   caption: string;
   overlaySpec?: CryptoOverlaySpec;
+  /** Explicit campaign language; never inferred from prompt text downstream. */
+  locale?: 'en' | 'vi';
   createdAt: string;
 }
 

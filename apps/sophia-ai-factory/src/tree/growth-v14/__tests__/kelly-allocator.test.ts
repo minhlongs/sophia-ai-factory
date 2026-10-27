@@ -23,7 +23,7 @@ describe('Tree v14: Kelly Allocator', () => {
     expect(result.allocatedMcu).toBe(100);
   });
 
-  it('clamps to minFraction when expectancy is negative', () => {
+  it('allocates ZERO when expectancy is negative (no implied exploration spend)', () => {
     const result = calculateKellyAllocation(
       {
         winProbability: 0.2,
@@ -37,8 +37,8 @@ describe('Tree v14: Kelly Allocator', () => {
 
     // f* = (0.2 * 0.5 - 0.8) / 0.5 = -1.40
     expect(result.isPositiveExpectancy).toBe(false);
-    expect(result.boundedFraction).toBe(0.05);
-    expect(result.allocatedMcu).toBe(50);
+    expect(result.boundedFraction).toBe(0);
+    expect(result.allocatedMcu).toBe(0);
   });
 
   it('handles zero budget gracefully', () => {
@@ -57,3 +57,13 @@ describe('Tree v14: Kelly Allocator', () => {
     expect(result.boundedFraction).toBe(0);
   });
 });
+
+  it('only spends an explicitly approved, separate exploration fraction', () => {
+    const result = calculateKellyAllocation(
+      { winProbability: 0.2, projectedRoas: 1.5, halfKelly: true, minFraction: 0.05, maxFraction: 0.4, approvedExplorationFraction: 0.02 },
+      1000,
+    );
+    expect(result.isPositiveExpectancy).toBe(false);
+    expect(result.boundedFraction).toBe(0.02);
+    expect(result.allocatedMcu).toBe(20);
+  });

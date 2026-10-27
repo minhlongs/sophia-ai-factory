@@ -51,9 +51,19 @@ export interface AutoVideoMissionResult {
   /** Present when the user has a HeyGen BYOK key configured. Render is async (status='processing').
    * In proof/mock mode: status='completed' and videoUrl is set immediately. */
   video?: { videoId: string; heygenJobId: string; status: 'processing' | 'completed'; videoUrl?: string };
-  /** Scheduled publish job, or skip record when publish was not possible. */
-  publish?: { jobId: string; scheduledAt: number } | { skipped: true; reason: 'no_byok' | 'kill_switch_active' };
-  status: 'succeeded';
+  /** Scheduled publish job, or an honest skip/failure record. */
+  publish?:
+    | { jobId: string; scheduledAt: number }
+    | { skipped: true; reason: 'no_byok' | 'kill_switch_active' | 'no_channel' }
+    | { failed: true; reason: string };
+  /**
+   * `succeeded` requires a real video AND (when requested) a scheduled publish.
+   * A manifest/queued render is `render_queued`; a missing provider, failed
+   * publish or unclear outcome is `blocked` — never `succeeded`.
+   */
+  status: 'succeeded' | 'render_queued' | 'blocked' | 'failed';
+  /** Machine-readable reason when the mission is blocked. */
+  blockReason?: 'NO_BYOK' | 'PUBLISH_FAILED' | 'KILL_SWITCH_ACTIVE' | 'RENDER_INCOMPLETE' | 'UNCERTAIN_OUTCOME';
 }
 
 export class AutoVideoMissionError extends Error {

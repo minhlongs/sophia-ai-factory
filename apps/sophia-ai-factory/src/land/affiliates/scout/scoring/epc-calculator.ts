@@ -42,6 +42,11 @@ export function scoreProgramAge(months: number): number {
 
 export function scoreEpc(aff: Affiliate): number {
   if (aff.epc == null) return DEFAULT_EPC_SCORE;
+  // A commission-derived forecast is not an observed metric: score it neutral
+  // instead of letting a guessed number drive the quality ranking.
+  if (aff.epcProvenance === 'commission_derived_estimate' || aff.epcProvenance === 'unknown') {
+    return DEFAULT_EPC_SCORE;
+  }
   if (aff.epc <= 0) return 0;
   return Math.min(aff.epc / MAX_EPC_USD, 1.0);
 }

@@ -38,7 +38,7 @@ function resolveD1KillSwitchKey(tenantId: string): PlatformConfigKey {
   return `affiliate_kill_switch_active:${tenantId}`;
 }
 
-async function isSingleKillSwitchActive(tenantId: string): Promise<boolean> {
+async function isSingleKillSwitchActive(tenantId: string, strict = false): Promise<boolean> {
   const cacheKey = `kill_switch:${tenantId}`;
   const now = Date.now();
 
@@ -72,10 +72,39 @@ async function isSingleKillSwitchActive(tenantId: string): Promise<boolean> {
     inMemoryCache.set(cacheKey, { active: isActive, cachedAtMs: now });
     return isActive;
   } catch (err) {
-    logger.warn('[kill-switch-store] D1 read failed, defaulting to false', {
+    logger.warn('[kill-switch-store] D1 read failed', {
       error: err instanceof Error ? err.message : String(err),
     });
+    if (strict) throw err instanceof Error ? err : new Error(String(err));
+    // Legacy boolean helper keeps its historical fail-open behaviour. New
+    // gates MUST use getAffiliateKillSwitchState() instead.
     return false;
+  }
+}
+
+export interface KillSwitchState {
+  /** `true` also when the state could not be read — side effects fail closed. */
+  active: boolean;
+  /** `false` means the store/KV/D1 read failed; never present this as "off". */
+  known: boolean;
+  reason?: string;
+}
+
+/**
+ * State-aware kill switch read for gates and UI. Unlike the boolean helper
+ * below, a read error is surfaced as `{ active: true, known: false }` rather
+ * than being silently converted into "not active".
+ */
+export async function getAffiliateKillSwitchState(tenantId = 'default'): Promise<KillSwitchState> {
+  try {
+    const active = await isAffiliateKillSwitchActive(tenantId, true);
+    return { active, known: true };
+  } catch (err) {
+    return {
+      active: true,
+      known: false,
+      reason: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -84,16 +113,16 @@ async function isSingleKillSwitchActive(tenantId: string): Promise<boolean> {
  * Evaluates BOTH platform-wide ('default') AND tenant-specific switches.
  * If the platform-wide kill switch is engaged, all tenants are immediately frozen.
  */
-export async function isAffiliateKillSwitchActive(tenantId = 'default'): Promise<boolean> {
+export async function isAffiliateKillSwitchActive(tenantId = 'default', strict = false): Promise<boolean> {
   // 1. Always evaluate platform-wide switch first
-  const platformGlobalActive = await isSingleKillSwitchActive('default');
+  const platformGlobalActive = await isSingleKillSwitchActive('default', strict);
   if (platformGlobalActive) {
     return true;
   }
 
   // 2. If inspecting a specific tenant, evaluate their switch
   if (tenantId && tenantId !== 'default') {
-    return isSingleKillSwitchActive(tenantId);
+    return isSingleKillSwitchActive(tenantId, strict);
   }
 
   return false;

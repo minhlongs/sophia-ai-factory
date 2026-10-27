@@ -107,6 +107,7 @@ export function createNicheVideoCampaignPlan(
     trackedUrl,
     caption,
     overlaySpec,
+    locale,
     createdAt: new Date().toISOString(),
   });
 }

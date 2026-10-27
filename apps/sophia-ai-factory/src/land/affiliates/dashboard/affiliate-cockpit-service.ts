@@ -169,6 +169,8 @@ export function generateExecutiveCockpitSnapshot(
       nicheBreakdown: resolvedNicheBreakdown,
       domainBSummary,
       hasData,
+      financialsAvailable: domainBSummary?.totalsAvailable ?? true,
+      currencies: domainBSummary?.currencies ?? [],
     },
     topPerformingHooks: topHooks,
     killSwitchActive,

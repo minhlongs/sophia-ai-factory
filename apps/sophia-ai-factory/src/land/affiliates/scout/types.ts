@@ -46,6 +46,16 @@ export interface Affiliate {
    */
   epc?: number;
   /**
+   * How `epc` was obtained. `commission_derived_estimate` is a FORECAST from
+   * the commission rate — it is NOT an observed earnings-per-click and must
+   * never be presented or consumed as a measured metric.
+   */
+  epcProvenance?: 'measured' | 'commission_derived_estimate' | 'unknown';
+  /** Explicit unit, so a heuristic number cannot be mistaken for observed USD/click. */
+  epcUnit?: 'usd_per_click' | 'usd_per_click_estimate';
+  /** Human-readable source of the number (provider report id or heuristic name). */
+  epcSource?: string;
+  /**
    * 24h trading volume in USD for crypto exchange affiliates.
    * Absent → crypto volume factor skipped.
    */

@@ -1,8 +1,12 @@
 /**
- * Niche Video Dispatcher
+ * Niche Video Dispatcher — canonical render-queue producer.
  *
- * Inngest function orchestrating campaign plan resolution, compliance validation,
- * scene-by-scene script synthesis, voiceover audio generation, and render manifest assembly.
+ * This function produces a DRAFT or a RENDER QUEUE ENTRY. It does NOT produce
+ * media: scene descriptors and an ffmpeg filter string are not bytes. A run can
+ * only become `rendered` after `recordVerifiedArtifact` persists verified media
+ * metadata (see tree/affiliate/execution). Nothing here claims published,
+ * succeeded or revenue.
+ *
  * Layer: forest (reusable infrastructure orchestrator)
  * @module forest/inngest/functions/niche-video-dispatcher
  */
@@ -10,11 +14,19 @@
 import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { computeApprovalPayloadHash } from '@/seed/security/approval-payload-hash';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   createCampaignApproval,
   verifyAndEnforceCampaignApprovalD1,
 } from '@/tree/affiliate/approval/campaign-approval-repo';
+import {
+  beginExecutionRun,
+  evaluateRenderGate,
+  getExecutionRun,
+  transitionRun,
+  type ExecutionEvidence,
+} from '@/tree/affiliate/execution';
 import {
   createNicheVideoCampaignPlan,
   type NicheVideoCampaignPlan,
@@ -26,6 +38,50 @@ import {
   composeNicheRenderManifest,
 } from '@/tree/video/render';
 
+/** Extended event data. Only the server action may set identity/approval fields. */
+interface NicheVideoDispatchData {
+  userId: string;
+  tenantId?: string;
+  offerId?: string;
+  /** True only after the offer's terms/jurisdiction were verified server-side. */
+  termsVerified?: boolean;
+  approvalId?: string;
+  /** Stored SHA-256 hash of the approved payload, read from D1 by the producer. */
+  approvalHash?: string;
+  maxRenderCostCents?: number;
+  targetAccount?: string;
+  idempotencyKey?: string;
+  niche: 'saas_global' | 'crypto_global';
+  blueprintId: string;
+  productName: string;
+  productUrl: string;
+  targetAudience?: string;
+  jurisdiction?: string;
+  draftMode?: boolean;
+  affiliateCode?: string;
+  subId?: string | null;
+  vanityCoupon?: string | null;
+  locale?: 'en' | 'vi';
+  requiresApproval?: boolean;
+}
+
+const DEFAULT_MAX_RENDER_COST_CENTS = 50;
+
+function buildApprovalPayload(
+  data: NicheVideoDispatchData,
+  plan: NicheVideoCampaignPlan,
+  scriptBody: string,
+) {
+  return {
+    scriptBody,
+    affiliateTargetUrl: plan.trackedUrl || data.productUrl,
+    jurisdiction: plan.compliance.jurisdiction || data.jurisdiction || 'UNKNOWN',
+    disclosureText: plan.compliance.regulatoryRef || '#ad',
+    maxRenderCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
+    ...(data.targetAccount ? { targetAccount: data.targetAccount } : {}),
+  };
+}
+
 export const nicheVideoDispatcher = inngest.createFunction(
   {
     id: 'niche-video-dispatcher',
@@ -34,17 +90,21 @@ export const nicheVideoDispatcher = inngest.createFunction(
   },
   { event: 'niche.video.campaign.requested' },
   async ({ event, step }) => {
-    const data = event.data;
+    const data = event.data as NicheVideoDispatchData;
+    const tenantId = data.tenantId ?? '';
     logger.info('nicheVideoDispatcher: processing campaign request', {
       userId: data.userId,
+      tenantId: tenantId || 'MISSING',
       niche: data.niche,
       blueprintId: data.blueprintId,
-      productName: data.productName,
     });
 
-    // Step 1: Validate compliance & build campaign plan
+    // Step 1: Validate compliance & build campaign plan (no side effects yet).
     const campaignPlanResult = await step.run('evaluate-and-plan', async () => {
-      const { niche, blueprintId, productName, productUrl, targetAudience, jurisdiction, draftMode, affiliateCode, subId, vanityCoupon, locale } = data;
+      const {
+        niche, blueprintId, productName, productUrl, targetAudience, jurisdiction,
+        draftMode, affiliateCode, subId, vanityCoupon, locale,
+      } = data;
       const result = createNicheVideoCampaignPlan({
         niche, blueprintId, productName, productUrl, targetAudience,
         jurisdiction, draftMode, affiliateCode, subId, vanityCoupon, locale,
@@ -60,106 +120,169 @@ export const nicheVideoDispatcher = inngest.createFunction(
     });
 
     if (!campaignPlanResult.ok) {
-      return { status: 'REJECTED', error: campaignPlanResult.error };
+      return { status: 'REJECTED' as const, state: 'blocked' as const, reason: campaignPlanResult.error.code, error: campaignPlanResult.error };
     }
 
-    const plan = campaignPlanResult.plan as unknown as NicheVideoCampaignPlan;
+    const plan = campaignPlanResult.plan as NicheVideoCampaignPlan;
 
-    // Step 2: Stage video generation payload
-    const stageSummary = await step.run('stage-video-artifacts', async () => {
-      return {
-        planId: plan.planId,
-        blueprintId: plan.blueprint.id,
-        scenesCount: plan.storyboard.scenes.length,
-        durationMs: plan.storyboard.totalDurationMs,
-        trackedUrl: plan.trackedUrl,
-        isAllowed: plan.compliance.isAllowed,
-        jurisdiction: plan.compliance.jurisdiction,
-      };
-    });
+    const stageSummary = await step.run('stage-video-artifacts', async () => ({
+      planId: plan.planId,
+      blueprintId: plan.blueprint.id,
+      scenesCount: plan.storyboard.scenes.length,
+      durationMs: plan.storyboard.totalDurationMs,
+      trackedUrl: plan.trackedUrl,
+      isAllowed: plan.compliance.isAllowed,
+      jurisdiction: plan.compliance.jurisdiction,
+    }));
 
-    // Step 3: Synthesize detailed per-scene narration script
-    const script = await step.run('synthesize-script', async () => {
-      return synthesizeNicheScript(plan);
-    });
+    const script = await step.run('synthesize-script', async () => synthesizeNicheScript(plan));
+    const approvalPayload = buildApprovalPayload(data, plan, script.fullNarration);
+    const currentHash = await computeApprovalPayloadHash(approvalPayload);
 
-    // Draft-First + CEO Approval Gate: if jurisdiction is unassessed (e.g. 'GLOBAL' on crypto),
-    // stage the synthesized script as a draft awaiting explicit CEO jurisdiction selection & approval
-    // BEFORE spending ElevenLabs voiceover or video render budget.
-    if (plan.requiresCeoApproval || !plan.compliance.isAllowed) {
+    // Step 2: Draft-first. Unassessed/unknown jurisdiction and unverified terms
+    // are staged for CEO review BEFORE any provider spend.
+    const needsCeoApproval =
+      plan.requiresCeoApproval || !plan.compliance.isAllowed || data.termsVerified !== true;
+
+    if (needsCeoApproval) {
       await step.run('persist-ceo-approval-row', async () => {
+        if (!tenantId) return { persisted: false, reason: 'TENANT_REQUIRED' };
         const db = await getD1();
-        if (db) {
-          const tenantId = (data as { tenantId?: string }).tenantId ?? data.userId;
-          await createCampaignApproval(db, {
-            tenantId,
-            campaignId: plan.planId,
-            niche: data.niche,
-            jurisdiction: plan.compliance.jurisdiction || 'GLOBAL',
-            status: 'pending_ceo',
-            payload: {
-              scriptBody: script.fullNarration,
-              affiliateTargetUrl: plan.trackedUrl || data.productUrl,
-              jurisdiction: plan.compliance.jurisdiction || 'GLOBAL',
-              disclosureText: plan.compliance.regulatoryRef || '#ad',
-              maxRenderCostCents: 50,
-            },
+        if (!db) return { persisted: false, reason: 'DB_UNAVAILABLE' };
+        const created = await createCampaignApproval(db, {
+          tenantId,
+          campaignId: plan.planId,
+          niche: data.niche,
+          jurisdiction: approvalPayload.jurisdiction,
+          status: 'pending_ceo',
+          payload: approvalPayload,
+        });
+        if (!created.ok) {
+          logger.warn('nicheVideoDispatcher: approval row could not be persisted', {
+            error: created.error.message,
           });
+          return { persisted: false, reason: created.error.code };
         }
+        return { persisted: true, approvalId: created.value.id };
       });
 
       return {
-        status: 'DRAFT_PENDING_CEO_APPROVAL',
-        summary: {
-          ...stageSummary,
-          requiresCeoApproval: true,
-        },
+        status: 'DRAFT_PENDING_CEO_APPROVAL' as const,
+        state: 'approval_pending' as const,
+        summary: { ...stageSummary, requiresCeoApproval: true },
         plan,
         script,
+        approvalPayloadHash: currentHash,
+        mediaReady: false,
       };
     }
 
-    // Step 3b: Verify emergency kill switch and CEO approval integrity before expensive assets
-    await step.run('verify-approval-and-kill-switch', async () => {
-      const tenantId = (data as { tenantId?: string }).tenantId ?? data.userId;
-      const killSwitchActive = await isAffiliateKillSwitchActive(tenantId);
-      if (killSwitchActive) {
-        throw new Error(`Affiliate emergency kill switch active for tenant ${tenantId}`);
-      }
+    // Step 3: Side-effect gate. Re-checked here (not only at job start) so a
+    // retry after a sleep cannot bypass halt / budget / approval binding.
+    const gateResult = await step.run('verify-side-effect-gate', async () => {
+      // A failed kill-switch read is NOT "off": fail closed and report unknown.
+      const killState = tenantId
+        ? await getAffiliateKillSwitchState(tenantId)
+        : { active: true, known: false, reason: 'TENANT_REQUIRED' };
+      const killSwitchActive = killState.active || !killState.known;
+      let storedHash = data.approvalHash ?? '';
 
+      // When D1 is available, re-verify against the persisted approval rather
+      // than trusting the event's copy (covers revocation + status changes).
       const db = await getD1();
-      const needsApproval = Boolean((data as { requiresApproval?: boolean; approvalId?: string }).requiresApproval || (data as { approvalId?: string }).approvalId);
-      if (db && needsApproval) {
+      if (db && data.approvalId) {
         const verification = await verifyAndEnforceCampaignApprovalD1(
-          db,
-          tenantId,
-          plan.planId,
-          {
-            scriptBody: script.fullNarration,
-            affiliateTargetUrl: plan.trackedUrl || data.productUrl,
-            jurisdiction: plan.compliance.jurisdiction || 'GLOBAL',
-            disclosureText: plan.compliance.regulatoryRef || '#ad',
-            maxRenderCostCents: 50,
-          },
-          killSwitchActive,
+          db, tenantId, plan.planId, approvalPayload, killSwitchActive,
         );
         if (!verification.ok) {
-          throw new Error(`CEO approval verification failed: ${verification.error.message}`);
+          return { ok: false as const, reason: verification.error.code };
         }
+        storedHash = verification.value.verifiedHash;
       }
+
+      const evidence: ExecutionEvidence = {
+        tenantId,
+        state: 'approval_pending',
+        jurisdictionKnown: plan.compliance.isAllowed && Boolean(plan.compliance.jurisdiction),
+        termsVerified: data.termsVerified === true,
+        approval: {
+          status: storedHash ? 'approved' : 'pending_ceo',
+          currentHash,
+          storedHash,
+          nowMs: Date.now(),
+        },
+        killSwitchActive,
+        reservedCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
+        maxCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
+        credentialsConnected: true,
+        outcomeKnown: true,
+      };
+      const gate = evaluateRenderGate(evidence);
+      if (!gate.ok) return { ok: false as const, reason: gate.error };
+      return { ok: true as const, nextState: gate.value.nextState };
     });
 
-    // Step 4: Generate voiceover audio track via ElevenLabs BYOK
-    const voiceover = await step.run('generate-voiceover', async () => {
-      return await generateNicheCampaignVoiceover({
+    if (!gateResult.ok) {
+      return {
+        status: 'BLOCKED' as const,
+        state: 'blocked' as const,
+        reason: gateResult.reason,
+        plan,
+        script,
+        mediaReady: false,
+      };
+    }
+
+    // Step 4: Voiceover. A failed/mock TTS result is a FAILED run, never a
+    // manifest that looks like a finished video.
+    const voiceover = await step.run('generate-voiceover', async () =>
+      generateNicheCampaignVoiceover({
         planId: plan.planId,
         userId: data.userId,
         narrationText: script.fullNarration,
         locale: data.locale,
+      }),
+    );
+
+    if (!voiceover.success || (voiceover.provider === 'mock' && process.env.NODE_ENV !== 'test')) {
+      return {
+        status: 'FAILED' as const,
+        state: 'failed' as const,
+        reason: 'PROVIDER_UNAVAILABLE' as const,
+        detail: voiceover.error ?? 'Voiceover provider did not produce audio',
+        plan,
+        script,
+        mediaReady: false,
+      };
+    }
+
+    // Step 5: Durable run + render queue entry. This is a DESCRIPTOR, not media.
+    const run = await step.run('persist-render-queued-run', async () => {
+      const db = await getD1();
+      if (!db) return null;
+      const created = await beginExecutionRun(db, {
+        tenantId,
+        campaignId: plan.planId,
+        offerId: data.offerId ?? null,
+        approvalId: data.approvalId ?? null,
+        idempotencyKey: data.idempotencyKey ?? plan.planId,
+        locale: data.locale ?? 'en',
+        market: plan.compliance.jurisdiction || null,
+        reservedCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
       });
+      if (!created.ok) return null;
+
+      // Persist the queue acceptance. Without this the DB row would still say
+      // `approval_pending` while the response said `render_queued`.
+      const moved = await transitionRun(
+        db, tenantId, created.value.id, 'approval_pending', 'render_queued', {},
+      );
+      if (moved.ok) return moved.value;
+      // Replay after a later state (rendered/publish_queued/...): report the
+      // durable state instead of pretending the queue step just happened.
+      return (await getExecutionRun(db, tenantId, created.value.id)) ?? created.value;
     });
 
-    // Step 5: Assemble visual scenes and full render manifest
     const manifest = await step.run('assemble-render-manifest', async () => {
       const visualResult = generateSceneVisualAssets(plan.planId, script.scenes);
       return composeNicheRenderManifest({
@@ -170,13 +293,28 @@ export const nicheVideoDispatcher = inngest.createFunction(
       });
     });
 
+    // A replay that reaches a run already past `render_queued` must not be
+    // reported as a fresh queue acceptance.
+    const durableState = run?.state ?? gateResult.nextState;
+    const alreadyAdvanced = durableState !== 'render_queued';
     return {
-      status: 'RENDER_READY',
+      // Deliberately NOT "RENDER_READY": a manifest is not a rendered artifact.
+      status: (alreadyAdvanced ? 'RUN_ALREADY_ADVANCED' : 'RENDER_QUEUED') as
+        | 'RUN_ALREADY_ADVANCED'
+        | 'RENDER_QUEUED',
+      state: durableState,
+      runId: run?.id ?? null,
       summary: stageSummary,
       plan,
       script,
       voiceover,
       manifest,
+      manifestIsMedia: false,
+      mediaReady: Boolean(run?.artifactId),
+      artifactId: run?.artifactId ?? null,
+      nextAction: (alreadyAdvanced ? 'review_run' : 'render_worker') as
+        | 'review_run'
+        | 'render_worker',
     };
   },
 );

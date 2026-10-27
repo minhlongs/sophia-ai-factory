@@ -12,7 +12,7 @@
 
 import { sampleGamma, sampleBeta } from './beta-distribution-sampler';
 
-export { sampleGamma, sampleBeta } from './beta-distribution-sampler';
+export { sampleGamma, sampleBeta, seededRandom } from './beta-distribution-sampler';
 
 export interface ThompsonHookArm {
   id: string;
@@ -38,6 +38,7 @@ export interface ThompsonSelectionResult {
  */
 export function selectHookWithThompsonSampling(
   arms: ThompsonHookArm[],
+  random: () => number = Math.random,
 ): ThompsonSelectionResult {
   if (arms.length === 0) {
     throw new Error('Cannot select hook from empty arms list');
@@ -50,7 +51,7 @@ export function selectHookWithThompsonSampling(
     const alpha = (arm.priorAlpha ?? 1) + arm.conversions;
     const beta = (arm.priorBeta ?? 1) + Math.max(0, arm.impressions - arm.conversions);
 
-    const sample = sampleBeta(alpha, beta);
+    const sample = sampleBeta(alpha, beta, random);
 
     if (sample > maxSample) {
       maxSample = sample;
@@ -77,9 +78,14 @@ export function recordThompsonFeedback(
   arm: ThompsonHookArm,
   conversionsCount: number,
   rewardCents: number,
+  impressionsCount: number = 0,
 ): ThompsonHookArm {
+  // Beta failures are derived from impressions - conversions. Omitting
+  // impressionsCount (the old behaviour) made the posterior mathematically
+  // wrong; the caller must supply the observed cohort size.
   return {
     ...arm,
+    impressions: arm.impressions + impressionsCount,
     conversions: arm.conversions + conversionsCount,
     totalRewardCents: arm.totalRewardCents + rewardCents,
   };

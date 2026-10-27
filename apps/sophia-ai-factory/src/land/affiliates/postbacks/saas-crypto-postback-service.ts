@@ -1,7 +1,11 @@
 /**
  * SaaS & Crypto Postback Service (Domain B: 100% Workspace Revenue)
  *
- * Handles timing-safe HMAC validation, idempotency locks, and commission ledger recording.
+ * Handles timing-safe HMAC validation, tenant-scoped idempotency locks, and
+ * commission ledger recording. Replay-safe: the same provider event never
+ * produces two ledger rows, and a partial refund is recorded as an immutable
+ * adjustment rather than being swallowed by the lifecycle dedup key.
+ *
  * Layer: land/affiliates/postbacks (Business Workflow)
  * @module land/affiliates/postbacks/saas-crypto-postback-service
  */
@@ -10,9 +14,11 @@ import { verifyHmacSha256Hex, verifyHmacSha256Base64 } from '@/land/postback/hma
 import { parseSaasCryptoPostback } from './saas-crypto-postback-parser';
 import type { PostbackProcessingOutcome, SaasCryptoNetwork } from './saas-crypto-postback-types';
 import { logger } from '@/seed/utils/logger-utility';
+import { ADJUSTMENT_MARKER } from '@/land/affiliates/reconciliation/workspace-domain-b-reconciliation';
 
 export interface ProcessPostbackParams {
   db?: D1Database | null;
+  /** Server-resolved workspace id. Required whenever a ledger write occurs. */
   tenantId?: string;
   network: SaasCryptoNetwork;
   rawBody: string;
@@ -21,18 +27,39 @@ export interface ProcessPostbackParams {
   niche?: 'crypto_global' | 'saas_global' | 'ecommerce_vn';
 }
 
+function isPartialAdjustment(payload: Record<string, unknown>): boolean {
+  return (
+    payload.partial_refund === true ||
+    payload.is_partial_refund === true ||
+    typeof payload.adjustment_id === 'string' ||
+    typeof payload.adjustment_key === 'string'
+  );
+}
+
+async function digestHex(raw: string): Promise<string> {
+  const bytes = new TextEncoder().encode(raw);
+  const buffer = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export async function processSaasCryptoPostback(
   params: ProcessPostbackParams,
 ): Promise<PostbackProcessingOutcome> {
-  const { db, tenantId = 'default', network, rawBody, signature, secret, niche } = params;
+  const { db, network, rawBody, signature, secret, niche } = params;
+  const tenantId = params.tenantId ?? '';
+  const invalid = (error: string, eventId = 'unknown', commissionCents = 0): PostbackProcessingOutcome => ({
+    success: false, eventId, network, commissionCents, error,
+  });
 
-  // Strict signature validation per provider contract — no raw-secret bypass
+  // A webhook without a server-resolved workspace must never write to a shared
+  // 'default' tenant or create a global idempotency key.
+  if (db && !tenantId) return invalid('TENANT_REQUIRED');
+
+  // Strict signature validation per provider contract — no raw-secret bypass.
   let isValid = false;
-  if (network === 'partnerstack') {
-    isValid =
-      (await verifyHmacSha256Base64(secret, rawBody, signature)) ||
-      (await verifyHmacSha256Hex(secret, rawBody, signature));
-  } else if (network === 'rewardful') {
+  if (network === 'partnerstack' || network === 'rewardful') {
     isValid =
       (await verifyHmacSha256Base64(secret, rawBody, signature)) ||
       (await verifyHmacSha256Hex(secret, rawBody, signature));
@@ -40,97 +67,128 @@ export async function processSaasCryptoPostback(
     // binance, bybit
     isValid = await verifyHmacSha256Hex(secret, rawBody, signature);
   }
-
-  if (!isValid) {
-    return { success: false, eventId: 'unknown', network, commissionCents: 0, error: 'INVALID_SIGNATURE' };
-  }
+  if (!isValid) return invalid('INVALID_SIGNATURE');
 
   let payload: Record<string, unknown>;
   try {
     payload = JSON.parse(rawBody);
   } catch {
-    return { success: false, eventId: 'malformed', network, commissionCents: 0, error: 'MALFORMED_JSON' };
+    return invalid('MALFORMED_JSON', 'malformed');
   }
 
   const normalized = parseSaasCryptoPostback(network, payload);
   const isReversal = normalized.reconciliationStatus === 'reversed';
-
   if (!isReversal && normalized.commissionCents <= 0) {
-    return { success: false, eventId: normalized.eventId, network, commissionCents: 0, error: 'ZERO_COMMISSION' };
+    return invalid('ZERO_COMMISSION', normalized.eventId);
   }
 
   const effectiveCommissionCents = Math.abs(normalized.commissionCents);
-
   const resolvedNiche =
     niche ?? (network === 'binance' || network === 'bybit' ? 'crypto_global' : 'saas_global');
+  // `commission_events.event_id` is a GLOBAL primary key in migration 0206.
+  // Namespacing the value keeps tenant A's replay from suppressing tenant B.
+  const scopedEventId = tenantId ? `${tenantId}:${normalized.eventId}` : normalized.eventId;
 
-  if (db) {
-    try {
-      // 1. Write directly to Domain B immutable ledger (workspace_external_commissions)
-      // Dedup on (tenant_id, network, external_tx_id, status) per migration 0480
-      const ledgerRes = await db
-        .prepare(
-          `INSERT INTO workspace_external_commissions
-           (id, tenant_id, campaign_id, network, niche, external_tx_id, sub_id, event_type,
-            status, gross_amount_cents, commission_cents, platform_fee_cents, currency,
-            is_recurring, raw_payload, occurred_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
-           ON CONFLICT(tenant_id, network, external_tx_id, status) DO NOTHING`,
-        )
-        .bind(
-          crypto.randomUUID(),
-          tenantId,
-          normalized.campaignId,
-          normalized.network,
-          resolvedNiche,
-          normalized.externalTxnId,
-          normalized.subId,
-          normalized.eventType,
-          normalized.reconciliationStatus,
-          normalized.grossAmountCents,
-          effectiveCommissionCents,
-          normalized.currency,
-          normalized.isRecurring ? 1 : 0,
-          rawBody,
-          normalized.timestampMs,
-        )
-        .run();
+  if (!db) {
+    return {
+      success: true,
+      eventId: normalized.eventId,
+      network,
+      commissionCents: effectiveCommissionCents,
+      platformFeeCents: 0,
+      isIdempotentDuplicate: false,
+    };
+  }
 
-      const isDuplicate = Boolean(ledgerRes.meta && ledgerRes.meta.changes === 0);
-
-      // 2. Mark event recorded only after ledger write succeeds
-      await db
-        .prepare(
-          `INSERT INTO commission_events (event_id, event_type, payload, processed)
-           VALUES (?, ?, ?, 1)
-           ON CONFLICT(event_id) DO UPDATE SET processed = 1`,
-        )
-        .bind(normalized.eventId, normalized.eventType, rawBody)
-        .run();
-
+  try {
+    // 1. Tenant-scoped provider event lock. A duplicate callback is a no-op
+    //    BEFORE any ledger write, including partial-adjustment computation.
+    const prior = await db
+      .prepare('SELECT event_id FROM opc_postback_events WHERE tenant_id = ? AND event_id = ?')
+      .bind(tenantId, normalized.eventId)
+      .first<{ event_id: string }>();
+    if (prior) {
       return {
         success: true,
         eventId: normalized.eventId,
         network,
         commissionCents: effectiveCommissionCents,
         platformFeeCents: 0,
-        isIdempotentDuplicate: isDuplicate,
+        isIdempotentDuplicate: true,
       };
-    } catch (err) {
-      logger.error('[saas-crypto-postback] D1 write failed', {
-        eventId: normalized.eventId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return { success: false, eventId: normalized.eventId, network, commissionCents: 0, error: 'DB_WRITE_FAILED' };
     }
-  }
 
-  return {
-    success: true,
-    eventId: normalized.eventId,
-    network,
-    commissionCents: effectiveCommissionCents,
-    platformFeeCents: 0,
-    isIdempotentDuplicate: false,
-  };
+    // 2. Partial refunds/adjustments are distinct immutable rows. The suffix is
+    //    a hash of the exact provider payload, so replays stay deterministic.
+    const partial = isReversal && isPartialAdjustment(payload);
+    const digest = partial ? (await digestHex(rawBody)).slice(0, 16) : '';
+    const ledgerTxId = partial
+      ? `${normalized.externalTxnId}${ADJUSTMENT_MARKER}${digest}`
+      : normalized.externalTxnId;
+
+    const ledgerRes = await db
+      .prepare(
+        `INSERT INTO workspace_external_commissions
+         (id, tenant_id, campaign_id, network, niche, external_tx_id, sub_id, event_type,
+          status, gross_amount_cents, commission_cents, platform_fee_cents, currency,
+          is_recurring, raw_payload, occurred_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+         ON CONFLICT(tenant_id, network, external_tx_id, status) DO NOTHING`,
+      )
+      .bind(
+        crypto.randomUUID(),
+        tenantId,
+        normalized.campaignId,
+        normalized.network,
+        resolvedNiche,
+        ledgerTxId,
+        normalized.subId,
+        normalized.eventType,
+        normalized.reconciliationStatus,
+        normalized.grossAmountCents,
+        effectiveCommissionCents,
+        normalized.currency,
+        normalized.isRecurring ? 1 : 0,
+        rawBody,
+        normalized.timestampMs,
+      )
+      .run();
+
+    const isDuplicate = Boolean(ledgerRes.meta && ledgerRes.meta.changes === 0);
+
+    // 3. Mark the event recorded only after the ledger write succeeded.
+    await db
+      .prepare(
+        `INSERT INTO commission_events (event_id, event_type, payload, processed)
+         VALUES (?, ?, ?, 1)
+         ON CONFLICT(event_id) DO UPDATE SET processed = 1`,
+      )
+      .bind(scopedEventId, normalized.eventType, rawBody)
+      .run();
+
+    await db
+      .prepare(
+        `INSERT INTO opc_postback_events
+          (tenant_id, event_id, network, external_tx_id, provider_time_ms, ingest_seq, raw_hash)
+         VALUES (?, ?, ?, ?, ?, 0, ?)
+         ON CONFLICT(tenant_id, event_id) DO NOTHING`,
+      )
+      .bind(tenantId, normalized.eventId, network, ledgerTxId, normalized.timestampMs, digest || null)
+      .run();
+
+    return {
+      success: true,
+      eventId: normalized.eventId,
+      network,
+      commissionCents: effectiveCommissionCents,
+      platformFeeCents: 0,
+      isIdempotentDuplicate: isDuplicate,
+    };
+  } catch (err) {
+    logger.error('[saas-crypto-postback] D1 write failed', {
+      eventId: normalized.eventId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return invalid('DB_WRITE_FAILED', normalized.eventId);
+  }
 }

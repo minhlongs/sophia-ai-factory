@@ -145,3 +145,13 @@ describe('Inngest route registration', () => {
     expect(registered).toContain(barrel.keyRotationReencrypt);
   });
 });
+// ── Feedback runtime: the registered consumer must exist, and the fabricated
+// bandit worker must NOT be registered (it returns NOT_AVAILABLE by design). ──
+describe('OPC feedback runtime registration', () => {
+  it('registers flywheelFeedbackDispatcherJob (consumes observed feedback events)', async () => {
+    await import('@/app/api/inngest/route');
+    const registered = mocks.serve.mock.calls[0][0].functions;
+    expect(barrel.flywheelFeedbackDispatcherJob).toBeDefined();
+    expect(registered).toContain(barrel.flywheelFeedbackDispatcherJob);
+  });
+});

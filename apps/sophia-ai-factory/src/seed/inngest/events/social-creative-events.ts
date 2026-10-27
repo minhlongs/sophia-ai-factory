@@ -74,6 +74,16 @@ export type SocialAnalyticsFeedbackEvaluatedEvent = {
     netRoiUsd: number;
     conversions: number;
     revenueUsd: number;
+    /** Server-resolved workspace id for persisted learning state. */
+    tenantId?: string;
+    eventId?: string;
+    impressions?: number;
+    costUsd?: number;
+    observedAtMs?: number;
+    seed?: number;
+    candidateArmIds?: string[];
+    /** Mock/fixture metrics must never enter the production posterior. */
+    isFixture?: boolean;
   };
 };
 

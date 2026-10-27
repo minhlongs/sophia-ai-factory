@@ -33,6 +33,18 @@ export type NicheVideoCampaignRequestedEvent = {
   data: {
     campaignId?: string;
     userId: string;
+    /** Server-resolved workspace id. Jobs without it are blocked before spend. */
+    tenantId?: string;
+    /** Identity of the verified offer; facts/CTA must come from this offer. */
+    offerId?: string;
+    /** Set by the server only after offer terms + jurisdiction were verified. */
+    termsVerified?: boolean;
+    approvalId?: string;
+    /** SHA-256 of the approved payload as stored in D1 (not self-asserted). */
+    approvalHash?: string;
+    maxRenderCostCents?: number;
+    targetAccount?: string;
+    idempotencyKey?: string;
     niche: "saas_global" | "crypto_global";
     blueprintId: string;
     productName: string;
@@ -59,7 +71,24 @@ export type AutonomousCampaignScalingRequestedEvent = {
       conversions: number;
       totalEarningsCents: number;
       publishedVideosCount: number;
+      totalCostCents?: number;
+      observedWindowHours?: number;
+      scalingPermissionGranted?: boolean;
     }[];
+    /** Verified offer identity per campaign; scaling refuses to spend without it. */
+    offersByCampaign?: Record<string, {
+      offerId: string;
+      operatorUserId: string;
+      productName: string;
+      productUrl: string;
+      niche: "saas_global" | "crypto_global";
+      jurisdiction: string;
+      locale: "en" | "vi";
+      approvalId: string;
+      approvalHash: string;
+      termsVerified: boolean;
+      maxRenderCostCents: number;
+    }>;
   };
 };
 

@@ -17,11 +17,12 @@ import {
   type CampaignPerformanceMetrics,
   type ScalingDecision,
 } from '@/tree/affiliate/scaling/auto-campaign-scaler';
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   buildKillSwitchReport,
   dispatchWinningHookCampaign,
   type ScalingFlowExecutionReport,
+  type ScalingOfferIdentity,
 } from './autonomous-campaign-scaling-helpers';
 
 export type { ScalingFlowExecutionReport };
@@ -29,8 +30,11 @@ export type { ScalingFlowExecutionReport };
 export async function processAutonomousScaling(
   tenantId: string,
   metricsList: CampaignPerformanceMetrics[],
+  offersByCampaign: Record<string, ScalingOfferIdentity> = {},
 ): Promise<ScalingFlowExecutionReport> {
-  const killSwitchActive = await isAffiliateKillSwitchActive(tenantId);
+  // Fail closed: an unreadable halt state must not release a spending job.
+  const killState = await getAffiliateKillSwitchState(tenantId);
+  const killSwitchActive = killState.active || !killState.known;
   if (killSwitchActive) {
     logger.warn('processAutonomousScaling: Emergency Kill Switch active - pausing video scaling', {
       tenantId,
@@ -41,6 +45,8 @@ export async function processAutonomousScaling(
   let scaledCount = 0;
   let maintainedCount = 0;
   let prunedCount = 0;
+  let dispatchedCount = 0;
+  let notDispatchedReason: string | undefined;
   const decisions: ScalingDecision[] = [];
 
   for (const metrics of metricsList) {
@@ -55,7 +61,14 @@ export async function processAutonomousScaling(
         targetDailyVideos: decision.recommendedDailyVideos,
       });
 
-      await dispatchWinningHookCampaign(tenantId, metrics, decision);
+      const dispatch = await dispatchWinningHookCampaign(
+        tenantId,
+        metrics,
+        decision,
+        offersByCampaign[decision.campaignId],
+      );
+      if (dispatch.dispatched) dispatchedCount++;
+      else notDispatchedReason = dispatch.reason;
     } else if (decision.action === 'KILL_PRUNE') {
       prunedCount++;
       logger.info('processAutonomousScaling: pruned underperforming hook', {
@@ -76,6 +89,8 @@ export async function processAutonomousScaling(
     prunedCount,
     decisions,
     killSwitchActive: false,
+    dispatchedCount,
+    ...(notDispatchedReason ? { notDispatchedReason } : {}),
   };
 }
 
@@ -87,14 +102,16 @@ export const autonomousCampaignScalingFlow = inngest.createFunction(
   },
   { event: 'autonomous.campaign.scaling.requested' },
   async ({ event, step }) => {
-    const { tenantId, evaluatedMetrics } = event.data;
+    const { tenantId, evaluatedMetrics, offersByCampaign } = event.data;
 
     const report = await step.run('evaluate-and-scale-campaigns', async () => {
-      return await processAutonomousScaling(tenantId, evaluatedMetrics);
+      return await processAutonomousScaling(tenantId, evaluatedMetrics, offersByCampaign ?? {});
     });
 
+    // EVALUATED, not SUCCESS: a decision without a verified offer/approval
+    // emits no render event and must not be reported as a produced campaign.
     return {
-      status: 'SUCCESS',
+      status: 'EVALUATED',
       report,
     };
   },

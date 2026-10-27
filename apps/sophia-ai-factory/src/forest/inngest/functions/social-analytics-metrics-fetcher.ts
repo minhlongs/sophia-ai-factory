@@ -11,6 +11,8 @@ import type { PlatformRawMetrics } from '@/seed/types/video-analytics-types';
 
 export interface AnalyticsSyncPayload {
   userId: string;
+  /** Server-resolved workspace id; falls back to userId for legacy callers. */
+  tenantId?: string;
   jobId: string;
   channelId: string;
   platform: SocialPlatform;
@@ -20,6 +22,9 @@ export interface AnalyticsSyncPayload {
   byokCostUsd?: number;
   revenueUsd?: number;
 }
+
+/** This fetcher currently returns RANDOM FIXTURE metrics, not provider data. */
+export const ANALYTICS_METRICS_SOURCE = 'mock_fixture' as const;
 
 export async function fetchMockPlatformMetrics(
   platform: SocialPlatform,

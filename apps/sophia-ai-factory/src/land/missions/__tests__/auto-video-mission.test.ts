@@ -116,7 +116,9 @@ describe('runAutoVideoMission', () => {
       topic: 'fashion trends 2026',
     });
 
-    expect(result.status).toBe('succeeded');
+    // No BYOK key means no real video: blocked, never succeeded.
+    expect(result.status).toBe('blocked');
+    expect(result.blockReason).toBe('NO_BYOK');
     expect(result.missionId).toMatch(/^[0-9a-f]{32}$/);
     expect(result.script.primary.seoScore).toBe(82);
     expect(result.script.secondary).toBeUndefined();
@@ -228,7 +230,8 @@ describe('runAutoVideoMission', () => {
       channelId: 'ch',
     });
 
-    expect(result.status).toBe('succeeded');
+    expect(result.status).toBe('blocked');
+    expect(result.blockReason).toBe('NO_BYOK');
     // schedulePublish MUST NOT be called when there is no real videoId
     expect(mockedSchedulePublish).not.toHaveBeenCalled();
     // publish field surfaces the skip reason

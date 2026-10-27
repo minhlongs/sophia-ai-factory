@@ -1,13 +1,20 @@
 /**
- * Inngest Worker: Multi-Armed Bandit Traffic Reallocator
- * Layer: forest/growth-v13 | Max LOC: < 200 | Zero :any
+ * Growth v13 Bandit Traffic Worker — INACTIVE / fail-closed.
+ *
+ * This module used to synthesize two hardcoded arms (10/90 and 25/75) and
+ * "promote" a winner from those fabricated posteriors. It is deliberately NOT
+ * registered in the Inngest serve manifest: the trigger is emitted by
+ * `land/growth-v13/flywheel-v13-actions.ts`, but no worker should spend traffic
+ * on invented observations. Real decisions go through
+ * `tree/affiliate/optimization/feedback-repository.ts` (persisted posteriors).
+ *
+ * Layer: forest/growth-v13
  * @module forest/growth-v13/bandit-traffic-worker
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { evaluateBanditExperiment } from '@/tree/growth-v13/thompson-bandit';
-import { BanditArm } from '@/seed/types/growth-triad-v13';
 import { logger } from '@/seed/utils/logger-utility';
+import type { BanditArm } from '@/seed/types/growth-triad-v13';
 
 export interface BanditExperimentRecord {
   id: string;
@@ -17,66 +24,32 @@ export interface BanditExperimentRecord {
   arms: BanditArm[];
 }
 
+export interface BanditWorkerResult {
+  success: false;
+  status: 'NOT_AVAILABLE';
+  experimentId: string;
+  reason: 'PERSISTED_ARMS_REQUIRED';
+}
+
+/**
+ * Returns an honest NOT_AVAILABLE result. It never evaluates an experiment and
+ * never promotes a winner. Registering this function is not a fix: the fix is
+ * feeding persisted, observed arms into the decision boundary.
+ */
 export const banditTrafficWorker = inngest.createFunction(
   {
     id: 'growth-v13-bandit-traffic-worker',
-    name: 'Growth v13: Multi-Armed Bandit Traffic Reallocator',
+    name: 'Growth v13: Bandit worker (inactive — persisted arms required)',
   },
   { event: 'growth/v13.bandit.evaluate' },
-  async ({ event, step }) => {
-    const { experimentId, userId } = event.data;
-
-    const evaluation = await step.run('evaluate-thompson-distribution', async () => {
-      logger.info('Evaluating MAB experiment distribution', { experimentId, userId });
-
-      // Example fetch/hydrate step logic
-      const mockArms: BanditArm[] = [
-        {
-          id: `${experimentId}-arm-a`,
-          experimentId,
-          hookText: 'Control hook variant',
-          alphaSuccesses: 10,
-          betaFailures: 90,
-          pullCount: 100,
-          conversionCount: 10,
-          trafficWeight: 0.5,
-          status: 'ACTIVE',
-        },
-        {
-          id: `${experimentId}-arm-b`,
-          experimentId,
-          hookText: 'Experimental hook variant',
-          alphaSuccesses: 25,
-          betaFailures: 75,
-          pullCount: 100,
-          conversionCount: 25,
-          trafficWeight: 0.5,
-          status: 'ACTIVE',
-        },
-      ];
-
-      return evaluateBanditExperiment(experimentId, mockArms, 200);
-    });
-
-    if (evaluation.converged && evaluation.winningArmId) {
-      await step.run('promote-winning-arm', async () => {
-        logger.info('MAB experiment converged on winner', {
-          experimentId,
-          winningArmId: evaluation.winningArmId,
-        });
-        return {
-          promoted: true,
-          winningArmId: evaluation.winningArmId,
-        };
-      });
-    }
-
+  async ({ event }): Promise<BanditWorkerResult> => {
+    const experimentId = String((event.data as { experimentId?: string }).experimentId ?? 'unknown');
+    logger.warn('banditTrafficWorker: refusing to evaluate fabricated arms', { experimentId });
     return {
-      success: true,
+      success: false,
+      status: 'NOT_AVAILABLE',
       experimentId,
-      converged: evaluation.converged,
-      winningArmId: evaluation.winningArmId,
-      armCount: evaluation.evaluations.length,
+      reason: 'PERSISTED_ARMS_REQUIRED',
     };
-  }
+  },
 );

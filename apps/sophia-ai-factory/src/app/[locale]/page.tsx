@@ -3,6 +3,7 @@ import { LandingHero } from "@/components/stitch/screens/landing-hero";
 import { buildCorePagePayload } from "@/seed/aeo";
 import { normalizeAeoLocale } from "@/tree/aeo";
 import { DualReadPageSection } from "@/forest/components/aeo";
+import { buildSignupEntryHref } from "@/tree/affiliate/onboarding/entry-params";
 import { buildHomeMetadata } from "./home-metadata";
 
 // Marketing homepage — edge cache 60s
@@ -24,11 +25,9 @@ export default async function Home({
   const sp = await searchParams;
 
   if (typeof sp.tab === "string" && sp.tab === "signup") {
-    const query = new URLSearchParams({ tab: "signup" });
-    if (typeof sp.coupon === "string") query.set("coupon", sp.coupon);
-    if (typeof sp.tier === "string") query.set("tier", sp.tier);
-    if (typeof sp.redirect === "string") query.set("redirect", sp.redirect);
-    redirect({ href: `/login?${query.toString()}`, locale });
+    // Preserve offerId / locale / returnTo / selected tier through the real
+    // login route instead of dropping them or forwarding arbitrary params.
+    redirect({ href: buildSignupEntryHref(sp), locale });
   }
 
   const aeoPayload = buildCorePagePayload('home', normalizeAeoLocale(locale));

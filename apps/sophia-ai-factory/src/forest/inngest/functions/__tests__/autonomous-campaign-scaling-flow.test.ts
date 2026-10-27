@@ -7,6 +7,7 @@ import * as killSwitchStore from '@/tree/affiliate/kill-switch/kill-switch-store
 
 vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
   isAffiliateKillSwitchActive: vi.fn().mockResolvedValue(false),
+  getAffiliateKillSwitchState: vi.fn().mockResolvedValue({ active: false, known: true }),
 }));
 
 vi.mock('@/seed/inngest/client', () => ({
@@ -29,6 +30,9 @@ describe('Autonomous Campaign Scaling Inngest Flow', () => {
     clicks: 400, // 8% CTR
     conversions: 20, // 5% CVR
     totalEarningsCents: 40000, // EPC = 100 cents
+    totalCostCents: 10000,
+    observedWindowHours: 48,
+    scalingPermissionGranted: true,
     publishedVideosCount: 2,
   };
 
@@ -44,7 +48,7 @@ describe('Autonomous Campaign Scaling Inngest Flow', () => {
   };
 
   it('correctly processes winners, losers, and triggers scaling actions', async () => {
-    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(false);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
 
     const report = await processAutonomousScaling('tenant_test_123', [
       winnerMetrics,
@@ -71,7 +75,7 @@ describe('Autonomous Campaign Scaling Inngest Flow', () => {
   });
 
   it('aborts aggressive scaling immediately when kill switch is active', async () => {
-    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(true);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: true, known: true });
 
     const report = await processAutonomousScaling('tenant_test_123', [
       winnerMetrics,

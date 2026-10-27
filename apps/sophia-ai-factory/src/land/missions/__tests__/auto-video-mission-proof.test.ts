@@ -119,7 +119,7 @@ describe('auto-video-mission-proof', () => {
     ).rejects.toMatchObject({ code: 'EMPTY_TOPIC' });
   });
 
-  it('completes full mission with mock provider — produces completed video', async () => {
+  it('completes the content mission but reports a blocked render when no real video row exists', async () => {
     const result = await runAutoVideoMission({
       userId: 'proof-user-001',
       topic: 'fashion trends 2026',
@@ -127,7 +127,7 @@ describe('auto-video-mission-proof', () => {
       primaryLanguage: 'en',
     });
 
-    expect(result.status).toBe('succeeded');
+    expect(result.status).toBe('blocked');
     expect(result.missionId).toBeDefined();
     expect(result.script.primary.body.length).toBeGreaterThan(0);
     expect(result.script.primary.language).toBe('en');
@@ -165,7 +165,9 @@ describe('auto-video-mission-proof', () => {
       topic: 'test topic',
     });
 
-    expect(result.status).toBe('succeeded');
+    // A soft-skipped render is NOT a succeeded mission.
+    expect(result.status).toBe('blocked');
+    expect(result.blockReason).toBe('NO_BYOK');
     expect(result.script.primary.body.length).toBeGreaterThan(0);
     // Video is undefined when render fails with BYOK_REQUIRED (soft-skip)
     expect(result.video).toBeUndefined();
@@ -179,7 +181,7 @@ describe('auto-video-mission-proof', () => {
       secondaryLanguage: 'vi',
     });
 
-    expect(result.status).toBe('succeeded');
+    expect(result.status).toBe('blocked');
     expect(result.script.primary.language).toBe('en');
     expect(result.script.secondary).toBeDefined();
     expect(result.script.secondary!.language).toBe('vi');
@@ -194,7 +196,7 @@ describe('auto-video-mission-proof', () => {
       nicheHint: 'fitness',
     });
 
-    expect(result.status).toBe('succeeded');
+    expect(result.status).toBe('blocked');
     // Verify nicheHint was forwarded to buildVideoDescription mock
     expect(mockedBuildVideoDescription).toHaveBeenCalledWith(
       expect.objectContaining({ nicheHint: 'fitness' }),
@@ -208,9 +210,9 @@ describe('auto-video-mission-proof', () => {
       channelId: 'ch_001',
     });
 
-    expect(result.status).toBe('succeeded');
+    expect(result.status).toBe('blocked');
     expect(result.publish).toBeDefined();
-    if (result.publish && !('skipped' in result.publish)) {
+    if (result.publish && !('skipped' in result.publish) && !('failed' in result.publish)) {
       expect(result.publish.jobId).toBeDefined();
       expect(result.publish.scheduledAt).toBeGreaterThan(0);
     }

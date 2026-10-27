@@ -88,6 +88,7 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0475_nowpayments_refund_barriers.sql
 !apps/sophia-ai-factory/migrations/0476_subscriptions_org_status_idx.sql
 !apps/sophia-ai-factory/migrations/0477_payos_contract_fulfillment.sql
+!apps/sophia-ai-factory/migrations/0482_opc_affiliate_execution_truth.sql
 backups/*.sql
 **/d1-*.sql
 

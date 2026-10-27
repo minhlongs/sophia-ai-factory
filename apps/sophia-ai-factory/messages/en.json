@@ -1092,6 +1092,18 @@
     }
   },
   "dashboard": {
+    "opcNav": {
+      "today": "Today",
+      "offers": "Offers",
+      "campaigns": "Campaigns",
+      "approvals": "Needs approval",
+      "results": "Results",
+      "connections": "Connections",
+      "referSophia": "Refer Sophia",
+      "workspace": "Workspace",
+      "moreTools": "More tools (all deep links)",
+      "referralProgramme": "Referral programme"
+    },
     "title": "Dashboard",
     "subtitle": "Manage your automated video campaigns",
     "sidebar": {
@@ -7442,33 +7454,37 @@
       }
     },
     "landing": {
-      "badge": "⚡ BYOK Sovereign AI Architecture • 100% Non-Custodial",
-      "headline": "Build Your AI-Powered Video ",
-      "headlineHighlight": " Empire Without Hiring a Team",
-      "subheading": "Sophia automates faceless YouTube channels, affiliate campaigns, and multi-platform publishing — all from one dashboard and your Telegram. No coding. No editors. No stress.",
+      "badge": "Workspace-owned BYOK keys • CEO approval before spend",
+      "headline": "One operator. Multiple affiliate campaigns.",
+      "headlineHighlight": "",
+      "subheading": "Prepare CEX and global SaaS affiliate campaigns from one workspace: verify an offer, draft a script, approve the content and budget, follow production and publishing, then reconcile commission.",
+      "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
+      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue.",
       "nav": {
         "features": "Features",
         "pricing": "Pricing",
         "blog": "Blog",
         "affiliates": "Affiliates",
         "signIn": "Sign In",
-        "startFree": "Start Free",
+        "startFree": "Create your workspace",
         "getStarted": "Get Started",
         "guide": "Guide",
         "login": "Login",
         "brand": "Brand"
       },
       "cta": {
-        "startFree": "Start Free",
-        "watchDemo": "Watch Demo",
+        "startFree": "Create your workspace",
+        "watchDemo": "See the illustrative workflow",
         "viewPricing": "View Pricing",
-        "readyTitle": "Ready to Build Your AI Video Empire?",
-        "readySubtitle": "Create your account in 30 seconds. Connect your BYOK keys and start generating unlimited videos today."
+        "readyTitle": "Start with one verified offer",
+        "readySubtitle": "Create a workspace, connect your own provider keys, and prepare a campaign for approval. Paid plans and provider costs are shown before you commit."
       },
       "trustBar": {
-        "label": "Architecture Guarantee",
-        "creators": "7-Level Evidence Chain",
-        "videos": "SHA-256 CEO Approval • Domain B 0% Fee"
+        "label": "What the workspace controls",
+        "controlContent": "You approve content and channels",
+        "controlCost": "You set the render budget cap",
+        "creators": "No guaranteed earnings",
+        "videos": "BYOK • approval gate • workspace ledger"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
@@ -7498,7 +7514,7 @@
       "assemblyLine": {
         "title": "Sophia Creative Assembly Line",
         "subtitleIllustration": "Interactive 5-station isometric architecture — click any station to inspect governance & telemetry",
-        "subtitleVerified": "Live server-verified execution pipeline for this creative mission",
+        "subtitleVerified": "Server-recorded mission states for this run (not a live fleet status)",
         "modeIllustration": "Illustrative Architecture",
         "modeVerified": "Verified Mission Pipeline",
         "inspectorLabel": "Selected Station Telemetry & Governance",
