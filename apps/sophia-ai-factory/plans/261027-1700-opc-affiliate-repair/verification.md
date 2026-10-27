@@ -100,6 +100,10 @@ Gate 1 all green on GitHub-hosted runners with the native module built. These fi
 modified by this diff (except the unrelated `page.test.tsx`, which was fixed). No browser checks
 were substituted for them.
 
+A **sixth** local failure (`src/__tests__/director-control-deck-design-system.test.ts`) was caused
+by this diff on purpose: it asserted the removed `camera-rec` REC decoration. It was updated to the
+honest illustrative-preview contract (see §8) and passes 7/7; it is **not** an environment issue.
+
 ## 6. Coverage / build / CI
 
 **Full-suite coverage run:** `npm test -- --coverage --maxWorkers=2 --reporter=dot` completed in
@@ -152,6 +156,17 @@ PR #63 first CI run (`40582716246` Gate 1, `40582716134` Gate 2, `40582716182` G
 | Gate 2a `npm audit --audit-level=high --omit=dev` | FAIL | Newly published advisory `GHSA-44jh-23m7-hpcf` (critical) covering `better-auth 1.3.8-beta.3 – 1.7.6` via `@better-auth/drizzle-adapter` / `@better-auth/kysely-adapter`. `package-lock.json` was untouched by this branch; earlier security runs on 2026-10-27 04:36 passed before the advisory appeared. | Minimal in-range security bump `better-auth ^1.6.14 → ^1.7.14` (installed 1.6.29 → 1.7.14). `npm audit --audit-level=high --omit=dev` now returns **0 vulnerabilities**; 36 auth/session/middleware tests still pass; wider scoped tsc still clean. No framework/provider/billing change. |
 | Gate 4 dependency | PASS | — | — |
 | Gate 1b–1d, 3a–3c | not reached (Gate 1a aborted the job) | — | re-run after the fixes |
+
+Third CI run (`40586846658`): Gate 1a / 1b / 1c **PASS**; Gate 1d failed after 26m35s. The local
+full suite (re-run after the dependency bump) identified the cause: the unchanged
+`director-control-deck-design-system.test.ts` asserted that the landing
+`pipeline-mockup.tsx` still contained the `camera-rec` REC decoration, which this branch removed
+on purpose. The assertion was updated to require its absence on the illustrative landing preview
+and the presence of `ILLUSTRATIVE PREVIEW`, while keeping the `camera-rec` CSS utility assertion for
+real studio previews. Re-running that file: **7/7 tests pass**. The full-suite run that exposed it
+reported **1,977 passed / 6 failed / 1 skipped files** and **18,662 passed / 68 failed / 34 skipped /
+10 todo tests**; after the one-line assertion fix the only remaining local failures are the five
+pre-existing native-binding files (67 tests). CI re-run is authoritative.
 
 Second CI run (`40584197853` / `40584197740` / `40584197732`): Gate 2 **PASS**, Gate 4 **PASS**,
 Gate 1a still FAIL — `better-auth` 1.7 models `twoFactor.enable()` as a discriminated union, so
