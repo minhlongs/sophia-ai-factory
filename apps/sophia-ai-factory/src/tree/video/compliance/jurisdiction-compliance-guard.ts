@@ -2,6 +2,7 @@
  * Jurisdiction Compliance Guard
  *
  * Validates target country compliance and enforces geo-fencing for Crypto & SaaS campaigns.
+ * Fail-closed on unassessed or blocked jurisdictions for regulated crypto niches.
  * Layer: tree (domain compliance logic)
  * @module tree/video/compliance/jurisdiction-compliance-guard
  */
@@ -14,6 +15,7 @@ import {
   EU_MICA_DISCLAIMERS,
   FTC_ONLY_DISCLAIMERS,
   GLOBAL_DEFAULT_DISCLAIMERS,
+  JP_FSA_DISCLAIMERS,
   US_CRYPTO_DISCLAIMERS,
 } from './jurisdiction-disclaimer-presets';
 
@@ -43,7 +45,7 @@ export function evaluateJurisdictionCompliance(
   if (niche === 'saas_global') {
     return {
       isAllowed: true,
-      jurisdiction: normalized,
+      jurisdiction: normalized || 'GLOBAL',
       niche,
       requiredDisclaimers: { ...FTC_ONLY_DISCLAIMERS },
     };
@@ -94,12 +96,26 @@ export function evaluateJurisdictionCompliance(
     };
   }
 
-  // 5. Default Global Compliance Standard
+  // 5. Japan FSA Rules (Payment Services Act / FIEA registered crypto exchange)
+  if (normalized === 'JP') {
+    return {
+      isAllowed: true,
+      jurisdiction: 'JP',
+      niche,
+      regulatoryRef: CRYPTO_DISCLAIMER_REGISTRY.JP.regulatoryRef,
+      requiredDisclaimers: { ...JP_FSA_DISCLAIMERS },
+    };
+  }
+
+  // 6. Fail-closed on GLOBAL, unknown, empty, or unassessed jurisdictions for regulated crypto.
+  // GLOBAL is never an assessed crypto jurisdiction — regulated financial promotions require
+  // an explicit assessed market (US, EU, JP) before publication.
   return {
-    isAllowed: true,
-    jurisdiction: normalized,
+    isAllowed: false,
+    jurisdiction: normalized || 'UNKNOWN',
     niche,
-    regulatoryRef: 'Global Standard (FTC Endorsement Guide)',
+    reason: 'JURISDICTION_UNASSESSED_OR_BLOCKED',
+    regulatoryRef: 'Fail-Closed Regulated Crypto Policy (Unassessed Jurisdiction)',
     requiredDisclaimers: { ...GLOBAL_DEFAULT_DISCLAIMERS },
   };
 }

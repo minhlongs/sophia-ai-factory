@@ -22,14 +22,38 @@ import {
   type SasResponse,
 } from './shareasale-mappers'
 
+export interface ShareASaleProviderOptions {
+  apiToken?: string
+  affiliateId?: string
+  allowMockFallback?: boolean
+}
+
 export class ShareASaleProvider implements OfferProvider {
   readonly networkSlug = NETWORK_SLUG
+  private readonly customToken?: string
+  private readonly customAffiliateId?: string
+  private readonly allowMockFallback: boolean
 
-  private get token(): string | undefined { return process.env.SHAREASALE_TOKEN }
-  private get affiliateId(): string | undefined { return process.env.SHAREASALE_AFFILIATE_ID }
+  constructor(opts?: ShareASaleProviderOptions) {
+    this.customToken = opts?.apiToken
+    this.customAffiliateId = opts?.affiliateId
+    this.allowMockFallback = opts?.allowMockFallback ?? (process.env.NODE_ENV === 'test')
+  }
+
+  private get token(): string | undefined {
+    if (this.customToken !== undefined) return this.customToken || undefined
+    return this.allowMockFallback ? process.env.SHAREASALE_TOKEN : undefined
+  }
+  private get affiliateId(): string | undefined {
+    if (this.customAffiliateId !== undefined) return this.customAffiliateId || undefined
+    return this.allowMockFallback ? process.env.SHAREASALE_AFFILIATE_ID : undefined
+  }
 
   async listOffers(opts?: ListOffersOpts): Promise<AffiliateOffer[]> {
-    if (!this.token || !this.affiliateId) return mockOffers()
+    if (!this.token || !this.affiliateId) {
+      if (this.allowMockFallback) return mockOffers()
+      throw new Error('SHAREASALE_CREDENTIALS_MISSING: ShareASale BYOK credentials are not configured for this workspace')
+    }
     try {
       const ts = new Date().toUTCString()
       const sig = await buildSig(this.token, ts)
@@ -51,12 +75,17 @@ export class ShareASaleProvider implements OfferProvider {
           Accept: 'application/json',
         },
       })
-      if (!res.ok) return mockOffers()
+      if (!res.ok) {
+        if (this.allowMockFallback) return mockOffers()
+        throw new Error(`SHAREASALE_UPSTREAM_ERROR: HTTP ${res.status}`)
+      }
       const body = (await res.json()) as SasResponse | SasMerchant[]
       const list: SasMerchant[] = Array.isArray(body) ? body : (body.merchants ?? [])
-      return list.length > 0 ? list.map(mapMerchant) : mockOffers()
-    } catch {
-      return mockOffers()
+      if (list.length > 0) return list.map(mapMerchant)
+      return this.allowMockFallback ? mockOffers() : []
+    } catch (err) {
+      if (this.allowMockFallback) return mockOffers()
+      throw err instanceof Error ? err : new Error(String(err))
     }
   }
 

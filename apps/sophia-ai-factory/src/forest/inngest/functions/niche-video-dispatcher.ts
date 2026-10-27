@@ -8,10 +8,15 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import {
+  createCampaignApproval,
+  verifyAndEnforceCampaignApprovalD1,
+} from '@/tree/affiliate/approval/campaign-approval-repo';
 import {
   createNicheVideoCampaignPlan,
-  type CreateNicheVideoCampaignInput,
   type NicheVideoCampaignPlan,
 } from '@/tree/video/blueprints/niche-video-service';
 import {
@@ -39,42 +44,23 @@ export const nicheVideoDispatcher = inngest.createFunction(
 
     // Step 1: Validate compliance & build campaign plan
     const campaignPlanResult = await step.run('evaluate-and-plan', async () => {
-      const planInput: CreateNicheVideoCampaignInput = {
-        niche: data.niche,
-        blueprintId: data.blueprintId,
-        productName: data.productName,
-        productUrl: data.productUrl,
-        targetAudience: data.targetAudience,
-        jurisdiction: data.jurisdiction,
-        affiliateCode: data.affiliateCode,
-        subId: data.subId,
-        vanityCoupon: data.vanityCoupon,
-        locale: data.locale,
-      };
-
-      const result = createNicheVideoCampaignPlan(planInput);
+      const { niche, blueprintId, productName, productUrl, targetAudience, jurisdiction, draftMode, affiliateCode, subId, vanityCoupon, locale } = data;
+      const result = createNicheVideoCampaignPlan({
+        niche, blueprintId, productName, productUrl, targetAudience,
+        jurisdiction, draftMode, affiliateCode, subId, vanityCoupon, locale,
+      });
       if (!result.ok) {
         logger.warn('nicheVideoDispatcher: campaign plan rejected', {
           reason: result.error.code,
           message: result.error.message,
         });
-        return {
-          ok: false as const,
-          error: result.error,
-        };
+        return { ok: false as const, error: result.error };
       }
-
-      return {
-        ok: true as const,
-        plan: result.value,
-      };
+      return { ok: true as const, plan: result.value };
     });
 
     if (!campaignPlanResult.ok) {
-      return {
-        status: 'REJECTED',
-        error: campaignPlanResult.error,
-      };
+      return { status: 'REJECTED', error: campaignPlanResult.error };
     }
 
     const plan = campaignPlanResult.plan as unknown as NicheVideoCampaignPlan;
@@ -95,6 +81,72 @@ export const nicheVideoDispatcher = inngest.createFunction(
     // Step 3: Synthesize detailed per-scene narration script
     const script = await step.run('synthesize-script', async () => {
       return synthesizeNicheScript(plan);
+    });
+
+    // Draft-First + CEO Approval Gate: if jurisdiction is unassessed (e.g. 'GLOBAL' on crypto),
+    // stage the synthesized script as a draft awaiting explicit CEO jurisdiction selection & approval
+    // BEFORE spending ElevenLabs voiceover or video render budget.
+    if (plan.requiresCeoApproval || !plan.compliance.isAllowed) {
+      await step.run('persist-ceo-approval-row', async () => {
+        const db = await getD1();
+        if (db) {
+          const tenantId = (data as { tenantId?: string }).tenantId ?? data.userId;
+          await createCampaignApproval(db, {
+            tenantId,
+            campaignId: plan.planId,
+            niche: data.niche,
+            jurisdiction: plan.compliance.jurisdiction || 'GLOBAL',
+            status: 'pending_ceo',
+            payload: {
+              scriptBody: script.fullNarration,
+              affiliateTargetUrl: plan.trackedUrl || data.productUrl,
+              jurisdiction: plan.compliance.jurisdiction || 'GLOBAL',
+              disclosureText: plan.compliance.regulatoryRef || '#ad',
+              maxRenderCostCents: 50,
+            },
+          });
+        }
+      });
+
+      return {
+        status: 'DRAFT_PENDING_CEO_APPROVAL',
+        summary: {
+          ...stageSummary,
+          requiresCeoApproval: true,
+        },
+        plan,
+        script,
+      };
+    }
+
+    // Step 3b: Verify emergency kill switch and CEO approval integrity before expensive assets
+    await step.run('verify-approval-and-kill-switch', async () => {
+      const tenantId = (data as { tenantId?: string }).tenantId ?? data.userId;
+      const killSwitchActive = await isAffiliateKillSwitchActive(tenantId);
+      if (killSwitchActive) {
+        throw new Error(`Affiliate emergency kill switch active for tenant ${tenantId}`);
+      }
+
+      const db = await getD1();
+      const needsApproval = Boolean((data as { requiresApproval?: boolean; approvalId?: string }).requiresApproval || (data as { approvalId?: string }).approvalId);
+      if (db && needsApproval) {
+        const verification = await verifyAndEnforceCampaignApprovalD1(
+          db,
+          tenantId,
+          plan.planId,
+          {
+            scriptBody: script.fullNarration,
+            affiliateTargetUrl: plan.trackedUrl || data.productUrl,
+            jurisdiction: plan.compliance.jurisdiction || 'GLOBAL',
+            disclosureText: plan.compliance.regulatoryRef || '#ad',
+            maxRenderCostCents: 50,
+          },
+          killSwitchActive,
+        );
+        if (!verification.ok) {
+          throw new Error(`CEO approval verification failed: ${verification.error.message}`);
+        }
+      }
     });
 
     // Step 4: Generate voiceover audio track via ElevenLabs BYOK

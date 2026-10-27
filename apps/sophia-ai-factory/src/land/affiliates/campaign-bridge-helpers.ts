@@ -41,6 +41,9 @@ export const rankedDiscoveredOfferSchema = z.object({
 
 export const convertOfferInputSchema = z.object({
   offer: rankedDiscoveredOfferSchema,
+  campaignId: z.string().optional(),
+  jurisdiction: z.string().optional(),
+  requireCeoApproval: z.boolean().optional(),
   primaryLanguage: z.enum(['en', 'vi']).optional(),
   secondaryLanguage: z.enum(['en', 'vi']).optional(),
   channelId: z.string().optional(),
@@ -63,7 +66,11 @@ export type CampaignBridgeErrorCode =
   | 'VIDEO_RENDER_FAILED'
   | 'SCHEDULE_FAILED'
   | 'PERSIST_FAILED'
+  | 'KILL_SWITCH_ACTIVE'
   | 'CAMPAIGN_CREATION_FAILED'
+  | 'APPROVAL_NOT_GRANTED'
+  | 'APPROVAL_INVALIDATED_BY_MUTATION'
+  | 'APPROVAL_ABORTED_BY_KILL_SWITCH'
 
 export interface CampaignBridgeError {
   code: CampaignBridgeErrorCode
@@ -73,6 +80,10 @@ export interface CampaignBridgeError {
 
 export interface ConvertOfferOptions {
   userId: string
+  tenantId?: string
+  campaignId?: string
+  jurisdiction?: string
+  requireCeoApproval?: boolean
   primaryLanguage?: 'en' | 'vi'
   secondaryLanguage?: 'en' | 'vi'
   channelId?: string
@@ -112,6 +123,10 @@ export function mapOfferToMissionInput(
   const videoProvider = options.videoProvider ?? 'wan'
   return {
     userId: options.userId,
+    tenantId: options.tenantId ?? options.userId,
+    campaignId: options.campaignId,
+    jurisdiction: options.jurisdiction ?? offer.region ?? 'US',
+    requireCeoApproval: options.requireCeoApproval,
     topic: options.topicOverride?.trim() || buildTopicFromOffer(offer),
     keywords: extractKeywordsFromOffer(offer),
     primaryLanguage: options.primaryLanguage ?? (offer.language === 'vi' ? 'vi' : 'en'),

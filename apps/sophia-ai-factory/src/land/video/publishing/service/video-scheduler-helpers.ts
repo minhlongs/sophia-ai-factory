@@ -43,7 +43,9 @@ export async function validateVideoAndChannel(
   videoId: string,
   channelId: string,
   userId: string,
+  tenantId?: string,
 ): Promise<{ channel: ChannelRow }> {
+  const effectiveTenantId = tenantId ?? userId;
   const video = await db
     .prepare('SELECT id, user_id FROM videos WHERE id = ?1 LIMIT 1')
     .bind(videoId)
@@ -51,7 +53,7 @@ export async function validateVideoAndChannel(
   if (!video) {
     throw new PublishConfigurationError('VIDEO_NOT_FOUND', `video ${videoId} not found`);
   }
-  if (video.user_id !== userId) {
+  if (video.user_id !== userId && video.user_id !== effectiveTenantId) {
     throw new PublishConfigurationError('FORBIDDEN', 'video belongs to a different user');
   }
 
@@ -62,7 +64,11 @@ export async function validateVideoAndChannel(
   if (!channel) {
     throw new PublishConfigurationError('CHANNEL_NOT_FOUND', `channel ${channelId} not found`);
   }
-  const owns = channel.user_id === userId || channel.tenant_id === userId;
+  const owns =
+    channel.user_id === userId ||
+    channel.tenant_id === userId ||
+    channel.tenant_id === effectiveTenantId ||
+    channel.user_id === effectiveTenantId;
   if (!owns) {
     throw new PublishConfigurationError('FORBIDDEN', 'channel belongs to a different user');
   }

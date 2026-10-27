@@ -22,9 +22,11 @@ export interface RunCampaignWorkflowArgs {
 
 export interface AffiliateOfferSelectedRow {
   short_code: string;
+  offer_id?: string | null;
   offer_name: string;
   affiliate_link: string;
   network: string;
+  category?: string | null;
 }
 
 export interface AffiliateOfferResult {

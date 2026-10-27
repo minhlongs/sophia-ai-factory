@@ -40,6 +40,7 @@ describe('Hook Variant Generator', () => {
       blueprintId: 'crypto_fee_discount_signup_bonus',
       productName: 'BinanceBot',
       productUrl: 'https://binance.com',
+      jurisdiction: 'US',
       affiliateCode: 'vip_1',
       locale: 'en',
     });

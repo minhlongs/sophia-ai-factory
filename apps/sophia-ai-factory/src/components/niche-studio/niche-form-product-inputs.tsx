@@ -90,6 +90,7 @@ export function NicheFormProductInputs({ values, onChange, t }: NicheFormProduct
             <option value="US">United States (FTC & CFTC 4.41)</option>
             <option value="EU">European Union (MiCA Art. 7 & 53)</option>
             <option value="SG">Singapore (MAS PSN08)</option>
+            <option value="JP">Japan (FSA Crypto-Asset Rules)</option>
             <option value="VN">Vietnam (Nghị định 52/2024/NĐ-CP)</option>
           </select>
         </div>

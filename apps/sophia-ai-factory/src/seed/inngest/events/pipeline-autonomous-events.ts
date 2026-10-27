@@ -24,6 +24,7 @@ export type AutonomousVideoPipelineRequestedEvent = {
     productDescription: string;
     targetDurationSeconds?: number;
     affiliateBaseUrl: string;
+    jurisdiction?: string;
     targetPlatforms?: ("youtube_shorts" | "tiktok" | "instagram_reels")[];
   };
 };
@@ -38,6 +39,7 @@ export type NicheVideoCampaignRequestedEvent = {
     productUrl: string;
     targetAudience?: string;
     jurisdiction?: string;
+    draftMode?: boolean;
     affiliateCode?: string;
     subId?: string | null;
     vanityCoupon?: string | null;

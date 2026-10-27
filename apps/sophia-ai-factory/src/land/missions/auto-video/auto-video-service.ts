@@ -6,6 +6,7 @@
  * @module land/missions/auto-video/auto-video-service
  */
 
+import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   AutoVideoMissionError,
   type AutoVideoMissionInput,
@@ -25,6 +26,15 @@ export async function runAutoVideoMission(
 ): Promise<AutoVideoMissionResult> {
   if (!input.topic?.trim()) {
     throw new AutoVideoMissionError('EMPTY_TOPIC', 'topic is required');
+  }
+
+  const tenantId = input.tenantId ?? input.userId;
+
+  if (await isAffiliateKillSwitchActive(tenantId)) {
+    throw new AutoVideoMissionError(
+      'KILL_SWITCH_ACTIVE',
+      'Affiliate emergency kill switch is active for this workspace',
+    );
   }
 
   const missionId = await insertMissionRow(input.userId, input);

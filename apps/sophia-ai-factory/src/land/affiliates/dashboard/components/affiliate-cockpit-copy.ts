@@ -3,11 +3,16 @@
  * Layer: land/affiliates/dashboard/components
  */
 
-export function formatCockpitCurrency(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(cents / 100);
+export function formatCockpitCurrency(cents: number, currency = 'USD'): string {
+  const normalized = (currency || 'USD').toUpperCase();
+  const amount = (cents / 100).toFixed(2);
+  if (normalized === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
+  }
+  return `${amount} ${normalized}`;
 }
 
 export interface AffiliateCockpitCopy {
@@ -28,6 +33,9 @@ export interface AffiliateCockpitCopy {
   cadenceCol: string;
   actionCol: string;
   updating: string;
+  emptyLedgerText: string;
+  emptyHooksText: string;
+  currencyGroupTitle: string;
 }
 
 const COCKPIT_COPY_BY_LOCALE: Record<'en' | 'vi', AffiliateCockpitCopy> = {
@@ -49,6 +57,9 @@ const COCKPIT_COPY_BY_LOCALE: Record<'en' | 'vi', AffiliateCockpitCopy> = {
     cadenceCol: 'Tần Suất / Ngày',
     actionCol: 'Trạng Thái',
     updating: 'Đang cập nhật...',
+    emptyLedgerText: 'Chưa có dữ liệu hoa hồng Domain B được ghi nhận cho Workspace này.',
+    emptyHooksText: 'Chưa có dữ liệu chiến dịch hoặc video hook được ghi nhận.',
+    currencyGroupTitle: 'Sổ cái theo đơn vị tiền tệ / tài sản (Chưa quy đổi FX)',
   },
   en: {
     title: 'Affiliate Revenue & Risk Cockpit',
@@ -68,6 +79,9 @@ const COCKPIT_COPY_BY_LOCALE: Record<'en' | 'vi', AffiliateCockpitCopy> = {
     cadenceCol: 'Daily Pace',
     actionCol: 'Status',
     updating: 'Updating...',
+    emptyLedgerText: 'No Domain B commission records recorded for this workspace yet.',
+    emptyHooksText: 'No campaign or video hook performance data recorded yet.',
+    currencyGroupTitle: 'Ledger Breakdown by Currency / Asset (Unconverted)',
   },
 };
 

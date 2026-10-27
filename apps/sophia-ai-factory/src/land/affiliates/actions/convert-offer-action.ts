@@ -55,10 +55,15 @@ export async function convertOfferToCampaignAction(
 
   try {
     const db = createServerClient()
-    await resolveOrgId(user.id, db).catch(() => null)
+    const orgId = await resolveOrgId(user.id, db).catch(() => null)
+    const tenantId = orgId ?? user.id
 
     const bridgeResult = await convertOfferToCampaign(parsed.data.offer, {
       userId: user.id,
+      tenantId,
+      campaignId: parsed.data.campaignId,
+      jurisdiction: parsed.data.jurisdiction,
+      requireCeoApproval: parsed.data.requireCeoApproval,
       primaryLanguage: parsed.data.primaryLanguage,
       secondaryLanguage: parsed.data.secondaryLanguage,
       channelId: parsed.data.channelId,

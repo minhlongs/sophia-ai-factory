@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { generateExecutiveCockpitSnapshot } from '../affiliate-cockpit-service';
+import {
+  generateExecutiveCockpitSnapshot,
+  deriveNicheBreakdownFromDomainB,
+  mapDomainBToReconciliationSummary,
+} from '../affiliate-cockpit-service';
 import type { ReconciliationSummary } from '../../reconciliation/ecommerce-reconciliation-engine';
+import type { DomainBReconciliationSummary } from '../../reconciliation/workspace-domain-b-reconciliation';
 import type { ScalingDecision } from '@/tree/affiliate/scaling/auto-campaign-scaler';
 
 describe('Executive Affiliate Cockpit Service', () => {
@@ -19,6 +24,7 @@ describe('Executive Affiliate Cockpit Service', () => {
     {
       campaignId: 'camp_1',
       hookName: 'AI replaces Developers in 2026',
+      niche: 'saas_global',
       ctrPercent: 8.5,
       cvrPercent: 4.2,
       epcCents: 120,
@@ -38,11 +44,15 @@ describe('Executive Affiliate Cockpit Service', () => {
     },
   ];
 
-  it('generates an accurate high-level executive snapshot', () => {
+  it('generates an accurate high-level executive snapshot with multi-niche attribution', () => {
     const snapshot = generateExecutiveCockpitSnapshot({
       tenantId: 'tenant_ceo_1',
       reconciliation: mockReconciliation,
       scalingDecisions: mockDecisions,
+      nicheBreakdown: {
+        cryptoCexCommissionCents: 60000,
+        globalSaasCommissionCents: 40000,
+      },
     });
 
     expect(snapshot.tenantId).toBe('tenant_ceo_1');
@@ -52,7 +62,82 @@ describe('Executive Affiliate Cockpit Service', () => {
     expect(snapshot.metrics.scaledWinnersCount).toBe(1);
     expect(snapshot.metrics.prunedHooksCount).toBe(1);
     expect(snapshot.metrics.isRefundRiskAlert).toBe(false);
+    expect(snapshot.metrics.nicheBreakdown).toEqual({
+      cryptoCexCommissionCents: 60000,
+      globalSaasCommissionCents: 40000,
+    });
     expect(snapshot.topPerformingHooks[0].hookName).toBe('AI replaces Developers in 2026');
+    expect(snapshot.topPerformingHooks[0].niche).toBe('saas_global');
+  });
+
+  it('does NOT guess saas_global when a scaling decision has no niche; marks it unclassified', () => {
+    const snapshot = generateExecutiveCockpitSnapshot({
+      tenantId: 'tenant_ceo_1',
+      reconciliation: mockReconciliation,
+      scalingDecisions: mockDecisions,
+    });
+
+    const unclassifiedEntry = snapshot.topPerformingHooks.find((h) => h.campaignId === 'camp_2');
+    expect(unclassifiedEntry?.niche).toBe('unclassified');
+  });
+
+  it('derives nicheBreakdown and reconciliation metrics directly from DomainBReconciliationSummary', () => {
+    const domainBSummary: DomainBReconciliationSummary = {
+      workspaceId: 'ws_real_1',
+      pendingCents: 2000,
+      approvedUnpaidCents: 5000,
+      reversedCents: 0,
+      paidReceiptCents: 15000,
+      totalGrossVolumeCents: 0,
+      platformFeeCents: 0,
+      effectiveCommissionCents: 20000,
+      byCurrency: {
+        USD: {
+          currency: 'USD',
+          pendingCents: 0,
+          approvedUnpaidCents: 5000,
+          reversedCents: 0,
+          paidReceiptCents: 0,
+          totalGrossVolumeCents: 0,
+          effectiveCommissionCents: 5000,
+        },
+        USDT: {
+          currency: 'USDT',
+          pendingCents: 2000,
+          approvedUnpaidCents: 0,
+          reversedCents: 0,
+          paidReceiptCents: 15000,
+          totalGrossVolumeCents: 0,
+          effectiveCommissionCents: 15000,
+        },
+      },
+      byNetwork: {
+        partnerstack: { grossCents: 0, commissionCents: 5000, paidCents: 0, count: 1 },
+        bybit: { grossCents: 0, commissionCents: 17000, paidCents: 15000, count: 2 },
+      },
+    };
+
+    const nicheBreakdown = deriveNicheBreakdownFromDomainB(domainBSummary);
+    expect(nicheBreakdown).toEqual({
+      cryptoCexCommissionCents: 17000,
+      globalSaasCommissionCents: 5000,
+    });
+
+    const reconciliation = mapDomainBToReconciliationSummary(domainBSummary);
+    const snapshot = generateExecutiveCockpitSnapshot({
+      tenantId: 'ws_real_1',
+      reconciliation,
+      scalingDecisions: [],
+      domainBSummary,
+    });
+
+    expect(snapshot.metrics.hasData).toBe(true);
+    expect(snapshot.metrics.totalNetPayableCents).toBe(20000);
+    expect(snapshot.metrics.totalHoldbackReserveCents).toBe(2000);
+    expect(snapshot.metrics.nicheBreakdown).toEqual({
+      cryptoCexCommissionCents: 17000,
+      globalSaasCommissionCents: 5000,
+    });
   });
 
   it('forces daily video recommendations to 0 when kill switch is active', () => {

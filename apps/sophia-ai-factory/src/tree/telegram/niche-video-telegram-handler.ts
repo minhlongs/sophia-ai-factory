@@ -32,10 +32,18 @@ export async function handleNicheVideoTelegramCommand(
     return { ok: false, error: 'MISSING_ARGUMENTS' };
   }
 
-  const { niche, blueprintId, productName, productUrl } = parseNicheVideoCommand(command, args);
+  const { niche, blueprintId, productName, productUrl, jurisdiction } = parseNicheVideoCommand(
+    command,
+    args,
+  );
 
-  const compliance = evaluateJurisdictionCompliance(niche, 'GLOBAL');
-  if (!compliance.isAllowed) {
+  const compliance = evaluateJurisdictionCompliance(niche, jurisdiction);
+  // Hard geo-fenced bans (VN, SG) are immediately rejected; unassessed 'GLOBAL'
+  // crypto requests from Telegram are staged as drafts awaiting CEO jurisdiction & approval.
+  const canStageAsDraft =
+    !compliance.isAllowed && compliance.reason === 'JURISDICTION_UNASSESSED_OR_BLOCKED';
+
+  if (!compliance.isAllowed && !canStageAsDraft) {
     const errorMsg = `⚠️ Không thể tạo video: ${compliance.regulatoryRef || compliance.reason}`;
     await sendTelegramMessage(chatId, errorMsg);
     return { ok: false, error: compliance.reason };
@@ -46,6 +54,8 @@ export async function handleNicheVideoTelegramCommand(
     niche,
     productName,
     blueprintId,
+    jurisdiction,
+    draftPendingApproval: canStageAsDraft,
   });
 
   try {
@@ -57,7 +67,8 @@ export async function handleNicheVideoTelegramCommand(
         blueprintId,
         productName,
         productUrl,
-        jurisdiction: 'GLOBAL',
+        jurisdiction,
+        draftMode: canStageAsDraft,
         affiliateCode: 'SOPHIA_VIP',
         subId: `tg_${chatId}`,
         locale: 'vi',
@@ -66,10 +77,19 @@ export async function handleNicheVideoTelegramCommand(
 
     await sendTelegramMessage(
       chatId,
-      formatNicheDispatchedMessage(niche, productName, productUrl),
+      formatNicheDispatchedMessage(niche, productName, productUrl, {
+        draftPendingApproval: canStageAsDraft,
+        jurisdiction,
+      }),
     );
 
-    return { ok: true, niche, productName };
+    return {
+      ok: true,
+      niche,
+      productName,
+      jurisdiction,
+      draftPendingApproval: canStageAsDraft,
+    };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     logger.error('handleNicheVideoTelegramCommand: dispatch failed', { error: errorMsg });

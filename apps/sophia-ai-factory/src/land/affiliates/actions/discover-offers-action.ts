@@ -2,7 +2,7 @@
  * Discover Affiliate Offers Server Action
  *
  * Authenticated Server Action that triggers the agentic discovery wave
- * across ClickBank, Awin, and ShareASale with quality scoring and scam risk gating.
+ * across SaaS and Crypto/CEX affiliate networks with quality scoring and scam risk gating.
  *
  * Layer: land (business workflow)
  * @module affiliates/actions/discover-offers-action
@@ -18,12 +18,25 @@ import { runAgenticDiscoveryWave, type DiscoveryWaveResult } from '../discovery-
 import { success, failure, type Result } from '@/seed/types/result'
 import { logger } from '@/seed/utils/logger-utility'
 
+const SUPPORTED_DISCOVERY_NETWORKS = [
+  'clickbank',
+  'awin',
+  'shareasale',
+  'partnerstack',
+  'impact',
+  'cj',
+  'binance',
+  'bybit',
+  'bitget',
+  'coinbase',
+] as const
+
 const discoverOffersSchema = z.object({
   niche: z.string().min(1).max(100).default('saas'),
   minScore: z.number().min(0).max(1).default(0.5),
   limit: z.number().int().min(1).max(100).default(20),
   networks: z
-    .array(z.enum(['clickbank', 'awin', 'shareasale']))
+    .array(z.enum(SUPPORTED_DISCOVERY_NETWORKS))
     .min(1)
     .default(['clickbank', 'awin', 'shareasale']),
 })
@@ -58,6 +71,12 @@ export async function discoverAffiliateOffersAction(
     const db = createServerClient()
     const orgId = await resolveOrgId(user.id, db)
     const tenantId = orgId ?? user.id
+    const rawD1: D1Database | null =
+      typeof (db as { unwrap?: () => D1Database }).unwrap === 'function'
+        ? (db as { unwrap: () => D1Database }).unwrap()
+        : typeof (db as { prepare?: unknown }).prepare === 'function'
+          ? (db as unknown as D1Database)
+          : null
 
     const waveResult = await runAgenticDiscoveryWave({
       niche: parsed.data.niche,
@@ -65,6 +84,7 @@ export async function discoverAffiliateOffersAction(
       limit: parsed.data.limit,
       networks: parsed.data.networks,
       tenantId,
+      ...(rawD1 ? { db: rawD1 } : {}),
     })
 
     if (!waveResult.ok) {

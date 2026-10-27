@@ -8,6 +8,8 @@
  * @module land/affiliates/dashboard/affiliate-cockpit-types
  */
 
+import type { DomainBReconciliationSummary } from '../reconciliation/workspace-domain-b-reconciliation';
+
 export interface CockpitSummaryMetrics {
   totalGrossCommissionCents: number;
   totalHoldbackReserveCents: number;
@@ -23,12 +25,16 @@ export interface CockpitSummaryMetrics {
     cryptoCexCommissionCents: number;
     globalSaasCommissionCents: number;
   };
+  /** Domain B workspace-owned ledger reconciliation summary (multi-currency & lifecycle) */
+  domainBSummary?: DomainBReconciliationSummary;
+  /** Whether the workspace has any recorded Domain B ledger entries or campaign hooks */
+  hasData?: boolean;
 }
 
 export interface CockpitCampaignEntry {
   campaignId: string;
   hookName: string;
-  niche: 'saas_global' | 'crypto_global' | 'ecommerce_tiktok' | string;
+  niche: 'saas_global' | 'crypto_global' | 'ecommerce_tiktok' | 'unclassified' | string;
   ctrPercent: number;
   cvrPercent: number;
   epcCents: number;
