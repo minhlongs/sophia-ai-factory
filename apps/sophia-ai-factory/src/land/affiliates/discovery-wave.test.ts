@@ -7,6 +7,7 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { runAgenticDiscoveryWave } from './discovery-wave'
+import type { SupportedDiscoveryNetwork } from './discovery-wave-helpers'
 
 describe('runAgenticDiscoveryWave', () => {
   afterEach(() => {
@@ -31,14 +32,12 @@ describe('runAgenticDiscoveryWave', () => {
     expect(result.networkBreakdown.awin).toBeGreaterThan(0)
     expect(result.networkBreakdown.shareasale).toBeGreaterThan(0)
 
-    // Verify sorted in descending order of qualityScore
     for (let i = 0; i < result.topOffers.length - 1; i++) {
       expect(result.topOffers[i].qualityScore).toBeGreaterThanOrEqual(
         result.topOffers[i + 1].qualityScore
       )
     }
 
-    // Verify offer shape
     const first = result.topOffers[0]
     expect(first.externalId).toBeTruthy()
     expect(first.network).toMatch(/clickbank|awin|shareasale/)
@@ -60,6 +59,18 @@ describe('runAgenticDiscoveryWave', () => {
     expect(res.value.networkBreakdown.awin).toBeUndefined()
     expect(res.value.networkBreakdown.shareasale).toBeUndefined()
     expect(res.value.topOffers.every(o => o.network === 'clickbank')).toBe(true)
+  })
+
+  it('handles crypto CEX networks gracefully when no credentials configured (zero-mock)', async () => {
+    const res = await runAgenticDiscoveryWave({
+      networks: ['binance', 'bybit', 'bitget', 'coinbase'],
+      minScore: 0.3,
+    })
+
+    expect(res.ok).toBe(true)
+    if (!res.ok) return
+    expect(res.value.scannedCount).toBe(0)
+    expect(res.value.topOffers).toEqual([])
   })
 
   it('respects limit parameter', async () => {
@@ -86,7 +97,7 @@ describe('runAgenticDiscoveryWave', () => {
 
   it('returns failure when empty network list is provided', async () => {
     const res = await runAgenticDiscoveryWave({
-      networks: [] as unknown as ('clickbank' | 'awin' | 'shareasale')[],
+      networks: [] as unknown as SupportedDiscoveryNetwork[],
     })
 
     expect(res.ok).toBe(false)

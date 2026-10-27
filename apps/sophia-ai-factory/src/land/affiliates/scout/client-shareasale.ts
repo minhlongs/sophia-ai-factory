@@ -30,8 +30,8 @@ function map(m: SasMerchant): AffiliateRaw {
 export const shareasaleClient: NetworkClient = {
   network: 'shareasale',
   async fetch(env: ScoutEnv, _t: string, creds?: Record<string, string>): Promise<AffiliateRaw[]> {
-    const tok = creds?.['api_token'] ?? env.SHAREASALE_TOKEN;
-    const aid = creds?.['affiliate_id'] ?? env.SHAREASALE_AFFILIATE_ID;
+    const tok = creds !== undefined ? creds['api_token'] : env.SHAREASALE_TOKEN;
+    const aid = creds !== undefined ? creds['affiliate_id'] : env.SHAREASALE_AFFILIATE_ID;
     if (!tok || !aid) { logger.warn('[affiliate-scout] SHAREASALE credentials missing'); return []; }
     try {
       const ts = new Date().toUTCString();

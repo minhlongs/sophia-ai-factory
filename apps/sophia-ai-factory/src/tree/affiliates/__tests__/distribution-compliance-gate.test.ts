@@ -207,7 +207,7 @@ describe('a declared jurisdiction the registry never assessed is fail-closed', (
   it('recognises an assessed code regardless of case', () => {
     const result = evaluateDistributionLegality({
       offerCategory: 'Crypto',
-      jurisdiction: 'sg',
+      jurisdiction: 'jp',
       hasAffiliateLink: true,
     });
     expect(result.allowed).toBe(true);

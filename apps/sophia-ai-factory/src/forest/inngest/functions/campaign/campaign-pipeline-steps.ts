@@ -10,6 +10,7 @@ import { NonRetriableError } from 'inngest';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { TIER_RANK, type Tier } from '@/seed/types';
+import { getProgramById } from '@/tree/affiliates/affiliate-programs-data';
 import { getExperiment } from '@/forest/ab/experiment-store';
 import type { AffiliateOfferSelectedRow } from './types';
 
@@ -49,16 +50,28 @@ export async function loadCampaignAffiliateOffer(
     const db = createServerClient();
     const { data } = await db
       .from('affiliate_offers_selected')
-      .select('short_code, offer_name, affiliate_link, network')
+      .select('short_code, offer_id, offer_name, affiliate_link, network, category')
       .eq('campaign_id', campaignId)
       .single();
     const row = data as AffiliateOfferSelectedRow | null;
     if (!row) return null;
     const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'}/r/${row.short_code}`;
+    const explicitCategory =
+      typeof row.category === 'string' && row.category.trim().length > 0
+        ? row.category.trim()
+        : undefined;
+    const catalogCategory =
+      !explicitCategory && row.offer_id
+        ? getProgramById(row.offer_id)?.category
+        : undefined;
+    const resolvedCategory =
+      explicitCategory ??
+      catalogCategory ??
+      (row.category === null ? null : undefined);
     return {
       productName: row.offer_name,
       shortUrl,
-      ...(row.category !== undefined ? { category: row.category } : {}),
+      ...(resolvedCategory !== undefined ? { category: resolvedCategory } : {}),
       ...(row.network !== undefined ? { network: row.network } : {}),
     };
   } catch (error) {

@@ -32,7 +32,7 @@ export const DEFAULT_CRYPTO_FORM_VALUES: NicheProductFormValues = {
   affiliateCode: 'BINANCE20',
   subId: 'aff_crypto_01',
   vanityCoupon: 'BONUS500',
-  jurisdiction: 'GLOBAL',
+  jurisdiction: 'US',
 };
 
 export function NicheAndBlueprintSelector({

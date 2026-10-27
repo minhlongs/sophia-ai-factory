@@ -6,8 +6,20 @@
  * @module land/missions/auto-video/types
  */
 
+import type { CampaignApprovalPayload } from '@/seed/security/approval-payload-hash';
+
 export interface AutoVideoMissionInput {
   userId: string;
+  /** Authenticated workspace/organization tenant ID. Defaults to userId when absent. */
+  tenantId?: string;
+  /** Campaign ID for CEO approval integrity verification before render/publish. */
+  campaignId?: string;
+  /** Target regulatory jurisdiction (e.g. 'US', 'EU', 'JP'). */
+  jurisdiction?: string;
+  /** Whether CEO approval must be verified in D1 before paid video render & publication. */
+  requireCeoApproval?: boolean;
+  /** Optional explicit approval payload override for hash verification. */
+  approvalPayload?: CampaignApprovalPayload;
   topic: string;
   keywords?: string[];
   primaryLanguage?: 'en' | 'vi';
@@ -40,7 +52,7 @@ export interface AutoVideoMissionResult {
    * In proof/mock mode: status='completed' and videoUrl is set immediately. */
   video?: { videoId: string; heygenJobId: string; status: 'processing' | 'completed'; videoUrl?: string };
   /** Scheduled publish job, or skip record when publish was not possible. */
-  publish?: { jobId: string; scheduledAt: number } | { skipped: true; reason: 'no_byok' };
+  publish?: { jobId: string; scheduledAt: number } | { skipped: true; reason: 'no_byok' | 'kill_switch_active' };
   status: 'succeeded';
 }
 
@@ -53,7 +65,11 @@ export class AutoVideoMissionError extends Error {
     | 'DESCRIPTION_FAILED'
     | 'VIDEO_RENDER_FAILED'
     | 'SCHEDULE_FAILED'
-    | 'PERSIST_FAILED';
+    | 'PERSIST_FAILED'
+    | 'KILL_SWITCH_ACTIVE'
+    | 'APPROVAL_NOT_GRANTED'
+    | 'APPROVAL_INVALIDATED_BY_MUTATION'
+    | 'APPROVAL_ABORTED_BY_KILL_SWITCH';
   missionId?: string;
   constructor(code: AutoVideoMissionError['code'], message: string, missionId?: string) {
     super(message);

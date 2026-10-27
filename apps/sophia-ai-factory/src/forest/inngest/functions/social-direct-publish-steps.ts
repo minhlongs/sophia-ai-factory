@@ -20,6 +20,7 @@ export { evaluatePacingStepDecision, evaluateSafetyGuardsDecision } from './soci
 export interface SocialPublishDispatchedEventData {
   jobId: string;
   userId: string;
+  tenantId?: string;
   channelId: string;
   platform: SocialPlatform;
   videoUrl: string;

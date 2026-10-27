@@ -49,7 +49,14 @@ export async function scheduleVideoPublish(
   }
 
   const db = await resolvePublishDb(customDb);
-  const { channel } = await validateVideoAndChannel(db, input.videoId, input.channelId, input.userId);
+  const effectiveTenantId = input.tenantId ?? input.userId;
+  const { channel } = await validateVideoAndChannel(
+    db,
+    input.videoId,
+    input.channelId,
+    input.userId,
+    effectiveTenantId,
+  );
 
   const jobId = newJobId();
   try {
@@ -63,7 +70,7 @@ export async function scheduleVideoPublish(
       )
       .bind(
         jobId,
-        input.userId,
+        effectiveTenantId,
         input.videoId,
         input.channelId,
         input.caption ?? null,

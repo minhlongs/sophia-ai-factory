@@ -12,24 +12,102 @@
  */
 
 import type { ReconciliationSummary } from '../reconciliation/ecommerce-reconciliation-engine';
+import type { DomainBReconciliationSummary } from '../reconciliation/workspace-domain-b-reconciliation';
 import type { ScalingDecision } from '@/tree/affiliate/scaling/auto-campaign-scaler';
 import type {
   CockpitExecutiveSnapshot,
   CockpitCampaignEntry,
 } from './affiliate-cockpit-types';
 
+const CRYPTO_NETWORKS = new Set(['binance', 'bybit', 'bitget', 'okx', 'coinbase', 'mexc']);
+const SAAS_NETWORKS = new Set([
+  'partnerstack',
+  'rewardful',
+  'rakuten',
+  'impact',
+  'impact_radius',
+  'clickbank',
+  'shareasale',
+  'cj_affiliate',
+  'cj',
+  'awin',
+]);
+
 export interface CockpitAggregatorInput {
   tenantId: string;
   reconciliation: ReconciliationSummary;
   scalingDecisions: ScalingDecision[];
   killSwitchActive?: boolean;
+  nicheBreakdown?: {
+    cryptoCexCommissionCents: number;
+    globalSaasCommissionCents: number;
+  };
+  domainBSummary?: DomainBReconciliationSummary;
+}
+
+export function deriveNicheBreakdownFromDomainB(
+  domainBSummary: DomainBReconciliationSummary,
+): { cryptoCexCommissionCents: number; globalSaasCommissionCents: number } {
+  let cryptoCexCommissionCents = 0;
+  let globalSaasCommissionCents = 0;
+
+  for (const [network, stats] of Object.entries(domainBSummary.byNetwork)) {
+    const normalized = network.toLowerCase();
+    if (CRYPTO_NETWORKS.has(normalized)) {
+      cryptoCexCommissionCents += stats.commissionCents;
+    } else if (SAAS_NETWORKS.has(normalized)) {
+      globalSaasCommissionCents += stats.commissionCents;
+    }
+  }
+
+  return { cryptoCexCommissionCents, globalSaasCommissionCents };
+}
+
+export function mapDomainBToReconciliationSummary(
+  domainBSummary: DomainBReconciliationSummary,
+): ReconciliationSummary {
+  const totalCommission =
+    domainBSummary.pendingCents +
+    domainBSummary.approvedUnpaidCents +
+    domainBSummary.paidReceiptCents +
+    domainBSummary.reversedCents;
+  const countedOrders = Object.values(domainBSummary.byNetwork).reduce(
+    (sum, stats) => sum + ((stats as { count?: number }).count ?? 1),
+    0,
+  );
+  const totalOrdersProcessed =
+    countedOrders > 0
+      ? countedOrders
+      : Object.keys(domainBSummary.byNetwork).length > 0 && totalCommission > 0
+        ? 1
+        : 0;
+  const highRiskRefundRate =
+    totalCommission > 0 && domainBSummary.reversedCents / totalCommission > 0.15;
+
+  return {
+    tenantId: domainBSummary.workspaceId,
+    totalOrdersProcessed,
+    totalGrossCommissionCents: totalCommission,
+    totalHoldbackCents: domainBSummary.pendingCents,
+    totalNetPayableCents: domainBSummary.effectiveCommissionCents,
+    totalRefundedCents: domainBSummary.reversedCents,
+    highRiskRefundRate,
+    entries: [],
+  };
 }
 
 export function generateExecutiveCockpitSnapshot(
   input: CockpitAggregatorInput,
   currentTimestampMs = Date.now(),
 ): CockpitExecutiveSnapshot {
-  const { tenantId, reconciliation, scalingDecisions, killSwitchActive = false } = input;
+  const {
+    tenantId,
+    reconciliation,
+    scalingDecisions,
+    killSwitchActive = false,
+    nicheBreakdown,
+    domainBSummary,
+  } = input;
 
   const refundRatePercent =
     reconciliation.totalOrdersProcessed > 0
@@ -51,13 +129,29 @@ export function generateExecutiveCockpitSnapshot(
     .map((d) => ({
       campaignId: d.campaignId,
       hookName: d.hookName,
-      niche: 'saas_global',
+      niche: d.niche && d.niche.trim().length > 0 ? d.niche : 'unclassified',
       ctrPercent: d.ctrPercent,
       cvrPercent: d.cvrPercent,
       epcCents: d.epcCents,
       recommendedDailyVideos: killSwitchActive ? 0 : d.recommendedDailyVideos,
       action: killSwitchActive ? 'KILL_PRUNE' : d.action,
     }));
+
+  const resolvedNicheBreakdown =
+    nicheBreakdown ?? (domainBSummary ? deriveNicheBreakdownFromDomainB(domainBSummary) : undefined);
+
+  const hasDomainBData =
+    domainBSummary !== undefined &&
+    (Object.keys(domainBSummary.byCurrency).length > 0 ||
+      domainBSummary.pendingCents > 0 ||
+      domainBSummary.effectiveCommissionCents > 0 ||
+      domainBSummary.reversedCents > 0);
+
+  const hasData =
+    hasDomainBData ||
+    reconciliation.totalOrdersProcessed > 0 ||
+    reconciliation.totalGrossCommissionCents > 0 ||
+    scalingDecisions.length > 0;
 
   return {
     tenantId,
@@ -72,6 +166,9 @@ export function generateExecutiveCockpitSnapshot(
       activeCampaignsCount: scalingDecisions.length,
       scaledWinnersCount: scaledWinners.length,
       prunedHooksCount: prunedHooks.length,
+      nicheBreakdown: resolvedNicheBreakdown,
+      domainBSummary,
+      hasData,
     },
     topPerformingHooks: topHooks,
     killSwitchActive,

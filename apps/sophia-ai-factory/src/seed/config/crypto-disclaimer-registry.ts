@@ -71,15 +71,15 @@ export const CRYPTO_DISCLAIMER_REGISTRY: Record<CryptoJurisdiction, Jurisdiction
   },
   SG: {
     code: 'SG',
-    blocked: false,
-    regulatoryRef: 'MAS Notice PSN08 — Digital Payment Token (DPT) service risk warnings (effective 2022-01-28)',
+    blocked: true,
+    regulatoryRef: 'MAS Notice PSN08 — Digital Payment Token (DPT) retail promotion ban (effective 2022-01-28)',
     short: {
-      en: '#ad | DPT (crypto) is high-risk and may not suit retail investors. (MAS Notice PSN08)',
-      vi: '#ad | Tiền điện tử rủi ro cao, có thể không phù hợp với nhà đầu tư cá nhân. (MAS PSN08)',
+      en: '[BLOCKED: Public retail DPT (crypto) promotion is prohibited in Singapore under MAS Notice PSN08]',
+      vi: '[BỊ CHẶN: Quảng bá tiền điện tử (DPT) tới công chúng bị cấm tại Singapore theo MAS Notice PSN08]',
     },
     full: {
-      en: 'DISCLOSURE: This content contains affiliate links related to Digital Payment Token (DPT) services. DPTs are not legal tender in Singapore. The value of DPTs may fluctuate greatly and may be subject to regulatory restrictions. Please assess the risks carefully. This is not financial advice. (Monetary Authority of Singapore Notice PSN08)',
-      vi: 'CÔNG BỐ: Nội dung này có liên kết affiliate liên quan đến dịch vụ Mã thông báo thanh toán kỹ thuật số (DPT). DPT không phải là tiền hợp pháp tại Singapore. Giá trị DPT có thể biến động lớn. Vui lòng đánh giá rủi ro cẩn thận. Đây không phải tư vấn tài chính. (MAS Notice PSN08)',
+      en: 'This content cannot be published to Singapore-targeted retail channels. Public promotion or marketing of Digital Payment Token (DPT) services to retail consumers is prohibited under Monetary Authority of Singapore (MAS) Notice PSN08.',
+      vi: 'Nội dung này không thể được đăng lên các kênh nhắm mục tiêu tới nhà đầu tư cá nhân tại Singapore. Quảng bá công khai dịch vụ Mã thông báo thanh toán kỹ thuật số (DPT) bị cấm theo MAS Notice PSN08.',
     },
   },
   JP: {

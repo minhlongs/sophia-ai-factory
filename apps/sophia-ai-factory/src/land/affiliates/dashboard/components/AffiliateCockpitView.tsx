@@ -107,6 +107,7 @@ export function AffiliateCockpitView({
       <AffiliateCockpitHookList
         topHooksTitle={t.topHooksTitle}
         topPerformingHooks={topPerformingHooks}
+        emptyHooksText={t.emptyHooksText}
       />
     </div>
   );

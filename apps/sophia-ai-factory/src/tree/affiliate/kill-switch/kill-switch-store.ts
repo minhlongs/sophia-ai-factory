@@ -1,23 +1,26 @@
 /**
  * Affiliate Emergency Kill Switch Store
  *
- * Provides high-availability state management for immediately freezing
+ * Provides high-availability, tenant-isolated state management for immediately freezing
  * automated video production, syndication, and campaign scaling.
  *
  * Hierarchy:
  * 1. In-memory hot cache (instant response)
  * 2. Cloudflare KV namespace (edge replication)
- * 3. Encrypted Cloudflare D1 via platform-config-repo (durable persistence)
+ * 3. Encrypted Cloudflare D1 via platform-config-repo (durable tenant-scoped persistence)
  *
  * Layer: tree/affiliate/kill-switch (Domain Logic)
  * @module tree/affiliate/kill-switch/kill-switch-store
  */
 
 import type { KVNamespace } from '@cloudflare/workers-types';
-import { getPlatformConfig, setPlatformConfig } from '@/seed/db/platform-config-repo';
+import {
+  getPlatformConfig,
+  setPlatformConfig,
+  type PlatformConfigKey,
+} from '@/seed/db/platform-config-repo';
 import { logger } from '@/seed/utils/logger-utility';
 
-// In-memory hot cache per isolate
 const inMemoryCache = new Map<string, { active: boolean; cachedAtMs: number }>();
 const CACHE_TTL_MS = 10_000; // 10s local cache TTL
 
@@ -28,10 +31,14 @@ function getKv(): KVNamespace | null {
   return g ?? null;
 }
 
-/**
- * Checks if the Affiliate Kill Switch is currently active.
- */
-export async function isAffiliateKillSwitchActive(tenantId = 'default'): Promise<boolean> {
+function resolveD1KillSwitchKey(tenantId: string): PlatformConfigKey {
+  if (!tenantId || tenantId === 'default') {
+    return 'affiliate_kill_switch_active';
+  }
+  return `affiliate_kill_switch_active:${tenantId}`;
+}
+
+async function isSingleKillSwitchActive(tenantId: string): Promise<boolean> {
   const cacheKey = `kill_switch:${tenantId}`;
   const now = Date.now();
 
@@ -57,9 +64,10 @@ export async function isAffiliateKillSwitchActive(tenantId = 'default'): Promise
     }
   }
 
-  // 2. Check D1 platform configs
+  // 2. Check tenant-scoped D1 platform config
   try {
-    const configVal = await getPlatformConfig('affiliate_kill_switch_active');
+    const d1Key = resolveD1KillSwitchKey(tenantId);
+    const configVal = await getPlatformConfig(d1Key);
     const isActive = configVal === 'true';
     inMemoryCache.set(cacheKey, { active: isActive, cachedAtMs: now });
     return isActive;
@@ -69,6 +77,26 @@ export async function isAffiliateKillSwitchActive(tenantId = 'default'): Promise
     });
     return false;
   }
+}
+
+/**
+ * Checks if the Affiliate Kill Switch is currently active for the given tenant.
+ * Evaluates BOTH platform-wide ('default') AND tenant-specific switches.
+ * If the platform-wide kill switch is engaged, all tenants are immediately frozen.
+ */
+export async function isAffiliateKillSwitchActive(tenantId = 'default'): Promise<boolean> {
+  // 1. Always evaluate platform-wide switch first
+  const platformGlobalActive = await isSingleKillSwitchActive('default');
+  if (platformGlobalActive) {
+    return true;
+  }
+
+  // 2. If inspecting a specific tenant, evaluate their switch
+  if (tenantId && tenantId !== 'default') {
+    return isSingleKillSwitchActive(tenantId);
+  }
+
+  return false;
 }
 
 /**
@@ -82,10 +110,8 @@ export async function setAffiliateKillSwitch(
   const cacheKey = `kill_switch:${tenantId}`;
   const now = Date.now();
 
-  // 1. Update in-memory hot cache
   inMemoryCache.set(cacheKey, { active, cachedAtMs: now });
 
-  // 2. Replicate to Cloudflare KV (30-day retention)
   const kv = getKv();
   if (kv) {
     try {
@@ -99,13 +125,10 @@ export async function setAffiliateKillSwitch(
     }
   }
 
-  // 3. Persist to encrypted D1 platform config
   try {
-    await setPlatformConfig(
-      'affiliate_kill_switch_active',
-      active ? 'true' : 'false',
-      updatedBy,
-    );
+    const d1Key = resolveD1KillSwitchKey(tenantId);
+    await setPlatformConfig(d1Key, active ? 'true' : 'false', updatedBy);
+    inMemoryCache.set(cacheKey, { active, cachedAtMs: Date.now() });
   } catch (err) {
     logger.error('[kill-switch-store] D1 persist failed', {
       error: err instanceof Error ? err.message : String(err),

@@ -26,6 +26,7 @@ export interface CreateNicheVideoCampaignInput {
   productUrl: string;
   targetAudience?: string;
   jurisdiction?: string;
+  draftMode?: boolean;
   affiliateCode?: string;
   subId?: string | null;
   vanityCoupon?: string | null;
@@ -37,6 +38,7 @@ export interface NicheVideoCampaignPlan {
   productName: string;
   blueprint: VideoBlueprint;
   compliance: ComplianceGuardResult;
+  requiresCeoApproval?: boolean;
   storyboard: StoryboardPlan;
   prompts: ScriptPromptPair;
   trackedUrl: string;

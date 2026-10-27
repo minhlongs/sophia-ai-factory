@@ -15,16 +15,22 @@ import { getCredentials } from '@/land/affiliates/credentials';
 import type { AffiliateNetwork } from '@/land/affiliates/credentials';
 
 /** Maps postback URL network slug → D1 network enum value */
-const NETWORK_SLUG_TO_DB: Readonly<Record<string, AffiliateNetwork>> = {
+const NETWORK_SLUG_TO_DB: Readonly<Record<string, string>> = {
   'binance-link': 'binance',
   binance: 'binance',
   bybit: 'bybit',
   bitget: 'bitget',
+  okx: 'okx',
   partnerstack: 'partnerstack',
+  rewardful: 'rewardful',
   clickbank: 'clickbank',
   cj: 'cj',
   coinbase: 'coinbase',
   impact: 'impact_radius',
+  awin: 'awin',
+  shareasale: 'shareasale',
+  rakuten: 'rakuten',
+  tiktok_shop: 'tiktok_shop',
 } as const;
 
 /** D1 row shape for tracking_links (minimal, just what we need) */
@@ -57,8 +63,10 @@ export async function resolveNetworkSecret(
   if (!linkRow) return null;
 
   const tenantId = linkRow.tenant_id;
-  const creds = await getCredentials(db, tenantId, dbNetwork);
+  const creds = await getCredentials(db, tenantId, dbNetwork as AffiliateNetwork);
   if (!creds) return null;
+
+  const credsRecord = creds as unknown as Record<string, string | undefined>;
 
   // Extract the signing secret field per network
   switch (dbNetwork) {
@@ -66,20 +74,26 @@ export async function resolveNetworkSecret(
     case 'bybit':
     case 'bitget':
     case 'coinbase':
-      return (creds as { api_secret: string }).api_secret ?? null;
+    case 'okx':
+    case 'shareasale':
+    case 'tiktok_shop':
+      return credsRecord.api_secret ?? credsRecord.api_key ?? null;
 
     case 'partnerstack':
+    case 'rewardful':
     case 'cj':
-      return (creds as { api_key: string }).api_key ?? null;
+    case 'awin':
+    case 'rakuten':
+      return credsRecord.api_key ?? credsRecord.api_secret ?? credsRecord.oauth_token ?? null;
 
     case 'clickbank':
       // ClickBank uses clerk_key for webhook verification
-      return (creds as { clerk_key: string }).clerk_key ?? null;
+      return credsRecord.clerk_key ?? credsRecord.api_secret ?? null;
 
     case 'impact_radius':
-      return (creds as { client_secret: string }).client_secret ?? null;
+      return credsRecord.client_secret ?? credsRecord.api_secret ?? null;
 
     default:
-      return null;
+      return credsRecord.api_secret ?? credsRecord.api_key ?? null;
   }
 }

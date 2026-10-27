@@ -20,6 +20,7 @@ export interface AutonomousPipelineInput {
   productDescription: string;
   targetDurationSeconds?: number;
   affiliateBaseUrl: string;
+  jurisdiction?: string;
   targetPlatforms?: ('youtube_shorts' | 'tiktok' | 'instagram_reels')[];
   targetJurisdiction?: string;
   referralCode?: string;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { CockpitSummaryMetrics } from '../affiliate-cockpit-types';
-import { formatCockpitCurrency } from './affiliate-cockpit-copy';
+import { formatCockpitCurrency, getAffiliateCockpitCopy } from './affiliate-cockpit-copy';
 
 interface AffiliateDomainBSummaryBarProps {
   metrics: CockpitSummaryMetrics;
@@ -10,8 +10,10 @@ interface AffiliateDomainBSummaryBarProps {
 }
 
 export function AffiliateDomainBSummaryBar({ metrics, locale }: AffiliateDomainBSummaryBarProps) {
-  const cryptoCents = metrics.nicheBreakdown?.cryptoCexCommissionCents ?? Math.round(metrics.totalNetPayableCents * 0.52);
-  const saasCents = metrics.nicheBreakdown?.globalSaasCommissionCents ?? (metrics.totalNetPayableCents - cryptoCents);
+  const cryptoCents = metrics.nicheBreakdown?.cryptoCexCommissionCents ?? 0;
+  const saasCents = metrics.nicheBreakdown?.globalSaasCommissionCents ?? 0;
+  const currencyEntries = Object.values(metrics.domainBSummary?.byCurrency ?? {});
+  const t = getAffiliateCockpitCopy(locale);
 
   return (
     <div
@@ -35,6 +37,15 @@ export function AffiliateDomainBSummaryBar({ metrics, locale }: AffiliateDomainB
         </div>
       </div>
 
+      {metrics.hasData === false && currencyEntries.length === 0 && cryptoCents === 0 && saasCents === 0 ? (
+        <div
+          data-testid="domain-b-empty-state"
+          className="rounded-md border border-dashed border-border/60 bg-background/50 px-3 py-2 text-xs text-muted-foreground"
+        >
+          {t.emptyLedgerText}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         <div className="flex items-center justify-between rounded-md border border-border/60 bg-background/70 px-3 py-2">
           <span className="text-xs font-medium text-foreground">
@@ -53,6 +64,30 @@ export function AffiliateDomainBSummaryBar({ metrics, locale }: AffiliateDomainB
           </span>
         </div>
       </div>
+
+      {currencyEntries.length > 0 && (
+        <div className="space-y-1.5 pt-1" data-testid="domain-b-currency-breakdown">
+          <p className="text-[11px] font-medium text-muted-foreground">{t.currencyGroupTitle}</p>
+          <div className="flex flex-wrap gap-2">
+            {currencyEntries.map((curr) => (
+              <div
+                key={curr.currency}
+                className="inline-flex items-center gap-2 rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-xs font-mono"
+              >
+                <span className="font-bold text-foreground">{curr.currency}:</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {formatCockpitCurrency(curr.effectiveCommissionCents, curr.currency)}
+                </span>
+                {curr.pendingCents > 0 && (
+                  <span className="text-amber-600 dark:text-amber-400">
+                    (Pending: {formatCockpitCurrency(curr.pendingCents, curr.currency)})
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

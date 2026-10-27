@@ -33,6 +33,7 @@ describe('Autonomous Video Pipeline Orchestrator', () => {
     const summary = runAutonomousVideoPipeline({
       campaignId: 'camp-crypto-002',
       niche: 'crypto_global',
+      jurisdiction: 'US',
       productName: 'SolTrade Bot',
       productUrl: 'https://soltrade.xyz',
       productDescription: 'Algorithmic DEX sniper bot on Solana with automated profit taking.',
@@ -44,5 +45,19 @@ describe('Autonomous Video Pipeline Orchestrator', () => {
     expect(summary.manifest.niche).toBe('crypto_global');
     expect(summary.manifest.complianceOverlay.disclaimerText).toBeDefined();
     expect(summary.manifest.brollCues.some((c) => c.category === 'crypto_candlestick' || c.category === 'crypto_tokenomics')).toBe(true);
+  });
+
+  it('blocks Crypto Global niche when jurisdiction is omitted or unassessed (fail-closed)', () => {
+    expect(() =>
+      runAutonomousVideoPipeline({
+        campaignId: 'camp-crypto-003',
+        niche: 'crypto_global',
+        productName: 'SolTrade Bot',
+        productUrl: 'https://soltrade.xyz',
+        productDescription: 'Algorithmic DEX sniper bot.',
+        targetDurationSeconds: 20.0,
+        affiliateBaseUrl: 'https://soltrade.xyz/ref',
+      }),
+    ).toThrow(/JURISDICTION_UNASSESSED_OR_BLOCKED/);
   });
 });

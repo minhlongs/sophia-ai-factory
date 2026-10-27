@@ -26,13 +26,16 @@ export function runAutonomousVideoPipeline(input: AutonomousPipelineInput): Pipe
     productUrl,
     productDescription,
     targetDurationSeconds = 15.0,
-    targetJurisdiction = 'GLOBAL',
+    jurisdiction,
+    targetJurisdiction,
     referralCode = 'SOPHIA20',
   } = input;
 
+  const effectiveJurisdiction = jurisdiction ?? targetJurisdiction ?? 'GLOBAL';
+
   const complianceDecision = evaluatePreRenderCompliance({
     niche,
-    targetJurisdiction,
+    targetJurisdiction: effectiveJurisdiction,
     scriptText: `${productName} ${productDescription}`,
   });
   if (!complianceDecision.isAllowed) {

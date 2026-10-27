@@ -2,7 +2,7 @@
  * Jurisdiction Compliance Guard Vitest Suite
  *
  * Verifies regulatory compliance checks, hard geo-fencing (VN, SG bans for crypto),
- * and jurisdiction-specific disclaimer requirements (US FTC/CFTC, EU MiCA).
+ * fail-closed rejection on unassessed jurisdictions, and jurisdiction-specific disclaimers.
  *
  * @module tree/video/compliance/__tests__/jurisdiction-compliance-guard.test
  */
@@ -28,7 +28,7 @@ describe('Jurisdiction Compliance Guard', () => {
     });
   });
 
-  describe('Crypto Global Niche — Hard Geo-Fencing Gates', () => {
+  describe('Crypto Global Niche — Hard Geo-Fencing Gates & Fail-Closed', () => {
     it('strictly blocks crypto promotional campaigns targeting Vietnam (Nghị định 52/2024/NĐ-CP)', () => {
       const vnResult = evaluateJurisdictionCompliance('crypto_global', 'VN');
       expect(vnResult.isAllowed).toBe(false);
@@ -43,6 +43,14 @@ describe('Jurisdiction Compliance Guard', () => {
       expect(sgResult.jurisdiction).toBe('SG');
       expect(sgResult.reason).toBe('SINGAPORE_MAS_PSN08_RETAIL_BAN');
       expect(sgResult.regulatoryRef).toContain('MAS Notice PSN08');
+    });
+
+    it('fails closed for unassessed or unknown crypto jurisdictions (CN, UK, UNKNOWN, empty)', () => {
+      for (const code of ['CN', 'UK', 'UNKNOWN', '']) {
+        const res = evaluateJurisdictionCompliance('crypto_global', code);
+        expect(res.isAllowed).toBe(false);
+        expect(res.reason).toBe('JURISDICTION_UNASSESSED_OR_BLOCKED');
+      }
     });
   });
 
@@ -70,12 +78,18 @@ describe('Jurisdiction Compliance Guard', () => {
       expect(euResult.requiredDisclaimers.requiresCftcDisclaimer).toBe(false);
     });
 
-    it('falls back to default comprehensive protections for unspecified global crypto traffic', () => {
+    it('fails closed when GLOBAL is passed for regulated crypto_global (never promotes unassessed jurisdiction to approved)', () => {
       const globalResult = evaluateJurisdictionCompliance('crypto_global', 'GLOBAL');
-      expect(globalResult.isAllowed).toBe(true);
+      expect(globalResult.isAllowed).toBe(false);
       expect(globalResult.jurisdiction).toBe('GLOBAL');
-      expect(globalResult.requiredDisclaimers.requiresPersistentBanner).toBe(true);
-      expect(globalResult.requiredDisclaimers.requiresEndCard15s).toBe(true);
+      expect(globalResult.reason).toBe('JURISDICTION_UNASSESSED_OR_BLOCKED');
+    });
+
+    it('allows Japan (JP) with mandatory FSA Japan disclosures', () => {
+      const jpResult = evaluateJurisdictionCompliance('crypto_global', 'JP');
+      expect(jpResult.isAllowed).toBe(true);
+      expect(jpResult.jurisdiction).toBe('JP');
+      expect(jpResult.regulatoryRef).toContain('FSA Japan');
     });
   });
 });

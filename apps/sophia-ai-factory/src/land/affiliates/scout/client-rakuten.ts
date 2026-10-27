@@ -19,7 +19,7 @@ function map(a: RakAdv): AffiliateRaw {
 export const rakutenClient: NetworkClient = {
   network: 'rakuten',
   async fetch(env: ScoutEnv, _t: string, creds?: Record<string, string>): Promise<AffiliateRaw[]> {
-    const tok = creds?.['api_token'] ?? env.RAKUTEN_TOKEN;
+    const tok = creds !== undefined ? creds['api_token'] : env.RAKUTEN_TOKEN;
     if (!tok) { logger.warn('[affiliate-scout] RAKUTEN_TOKEN missing'); return []; }
     try {
       const url = `${API_BASE}/advrsearch/programs?${new URLSearchParams({ vertical: 'SaaS', pagesize: '50', pagenumber: '1', sort: 'seven_day_epc', sorttype: 'desc' })}`;

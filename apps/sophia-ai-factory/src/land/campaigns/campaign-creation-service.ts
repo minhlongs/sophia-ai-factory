@@ -95,6 +95,7 @@ export async function linkAffiliateOffer(
       affiliate_link: program.link,
       short_code: shortCode,
       network,
+      category: program.category ?? null,
       commission_rate: parseFloat(program.commission) / 100,
     });
     if (!offerError) {
