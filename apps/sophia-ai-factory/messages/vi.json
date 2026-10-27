@@ -7416,7 +7416,7 @@
       }
     },
     "landing": {
-      "badge": "⚡ Hơn 10.000 nhà sáng tạo đang sử dụng",
+      "badge": "⚡ Kiến Trúc AI Tự Chủ BYOK • 100% Phi Lưu Ký",
       "headline": "Xây Dựng Đế Chế Video AI ",
       "headlineHighlight": " Không Cần Thuê Đội Ngũ",
       "subheading": "Sophia tự động hóa kênh YouTube faceless, chiến dịch affiliate, và đăng tải đa nền tảng — từ một dashboard và Telegram của bạn. Không cần code. Không cần editor. Không căng thẳng.",
@@ -7440,9 +7440,9 @@
         "readySubtitle": "Khởi tạo tài khoản trong 30 giây. Kết nối chìa khóa BYOK và bắt đầu tạo video không giới hạn ngay hôm nay."
       },
       "trustBar": {
-        "label": "Cộng đồng sáng tạo",
-        "creators": "10.000+ nhà sáng tạo",
-        "videos": "1M+ video đã tạo"
+        "label": "Cam kết kiến trúc",
+        "creators": "Chuỗi Bằng Chứng 7 Cấp Độ",
+        "videos": "Khóa Phê Duyệt SHA-256 • Sổ Cái Domain B 0% Phí"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. Tất cả quyền được bảo lưu.",
@@ -7468,7 +7468,52 @@
       "guide": "Guide",
       "affiliates": "Affiliates",
       "logIn": "Log In",
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "assemblyLine": {
+        "title": "Dây Chuyền Sản Xuất Sáng Tạo Sophia",
+        "subtitleIllustration": "Mô hình kiến trúc Isometric 5 trạm tương tác — chọn từng trạm để kiểm tra cơ chế quản trị & đối soát",
+        "subtitleVerified": "Trạng thái thực thi thực tế được xác thực từ máy chủ cho nhiệm vụ này",
+        "modeIllustration": "Mô Hình Minh Họa Kỹ Thuật",
+        "modeVerified": "Tiến Trình Nhiệm Vụ Thực Tế",
+        "inspectorLabel": "Chi Tiết Trạm & Cơ Chế Bảo Chứng",
+        "mechanismLabel": "Cơ Chế Kỹ Thuật",
+        "states": {
+          "not_started": "Chưa chạy",
+          "queued": "Đang chờ",
+          "running": "Đang xử lý",
+          "needs_approval": "Chờ CEO duyệt",
+          "succeeded": "Đã xác thực",
+          "failed": "Cần kiểm tra",
+          "unknown": "Không xác định"
+        },
+        "stations": {
+          "intake_brief": {
+            "title": "1. Tiếp Nhận & Pháp Lý",
+            "shortTitle": "Tiếp Nhận",
+            "summary": "Kiểm tra thông số chiến dịch (CEX / Global SaaS) và áp đặt hàng rào pháp lý theo khu vực (FTC / MiCA / Nghị định 52) trước khi lên kịch bản."
+          },
+          "script_planning": {
+            "title": "2. Kịch Bản & Phân Cảnh",
+            "shortTitle": "Kịch Bản AI",
+            "summary": "Tổng hợp góc tiếp cận (hook) song ngữ Việt - Anh, phân cảnh hình ảnh và tự động gắn nhãn công bố liên kết tiếp thị."
+          },
+          "ceo_approval_gate": {
+            "title": "3. Khóa Phê Duyệt CEO",
+            "shortTitle": "Khóa SHA-256",
+            "summary": "Niêm phong kịch bản, liên kết affiliate và trần ngân sách bằng mã băm SHA-256. Tự động vô hiệu hóa nếu nội dung bị thay đổi trái phép."
+          },
+          "media_render": {
+            "title": "4. Sản Xuất Đa Luồng",
+            "shortTitle": "Dựng Video",
+            "summary": "Vận hành tiến trình ngầm Inngest bằng khóa BYOK của bạn (giọng đọc ElevenLabs, khung hình trực quan và phụ đề tự động)."
+          },
+          "publish_ledger": {
+            "title": "5. Phân Phối & Sổ Cái",
+            "shortTitle": "Sổ Cái 0% Phí",
+            "summary": "Đăng tải video đã duyệt lên các kênh phân phối và đối soát hoa hồng S2S vào sổ cái Domain B (100% thuộc Workspace, 0% phí nền tảng)."
+          }
+        }
+      }
     },
     "settingsPage": {
       "pageTitle": "Cài đặt",
