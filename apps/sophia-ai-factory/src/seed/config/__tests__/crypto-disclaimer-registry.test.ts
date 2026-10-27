@@ -28,11 +28,11 @@ describe('CRYPTO_DISCLAIMER_REGISTRY', () => {
     }
   });
 
-  it('VN is blocked, others are not', () => {
+  it('VN and SG are blocked, US/EU/JP are not', () => {
     expect(CRYPTO_DISCLAIMER_REGISTRY['VN'].blocked).toBe(true);
+    expect(CRYPTO_DISCLAIMER_REGISTRY['SG'].blocked).toBe(true);
     expect(CRYPTO_DISCLAIMER_REGISTRY['US'].blocked).toBe(false);
     expect(CRYPTO_DISCLAIMER_REGISTRY['EU'].blocked).toBe(false);
-    expect(CRYPTO_DISCLAIMER_REGISTRY['SG'].blocked).toBe(false);
     expect(CRYPTO_DISCLAIMER_REGISTRY['JP'].blocked).toBe(false);
   });
 });
@@ -56,15 +56,16 @@ describe('getDisclaimerForJurisdiction', () => {
 });
 
 describe('isCryptoBlockedInJurisdiction', () => {
-  it('returns true for VN', () => {
+  it('returns true for VN and SG', () => {
     expect(isCryptoBlockedInJurisdiction('VN')).toBe(true);
     expect(isCryptoBlockedInJurisdiction('vn')).toBe(true);
+    expect(isCryptoBlockedInJurisdiction('SG')).toBe(true);
+    expect(isCryptoBlockedInJurisdiction('sg')).toBe(true);
   });
 
-  it('returns false for US, EU, SG, JP', () => {
+  it('returns false for US, EU, JP', () => {
     expect(isCryptoBlockedInJurisdiction('US')).toBe(false);
     expect(isCryptoBlockedInJurisdiction('EU')).toBe(false);
-    expect(isCryptoBlockedInJurisdiction('SG')).toBe(false);
     expect(isCryptoBlockedInJurisdiction('JP')).toBe(false);
   });
 });

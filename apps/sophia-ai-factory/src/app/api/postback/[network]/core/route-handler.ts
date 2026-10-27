@@ -96,7 +96,7 @@ export async function handlePostbackRoute(
         .first<{ tenant_id: string }>()
     : null;
 
-  if (candidateLinkId && !linkRow && !explicitTenantId) {
+  if (candidateLinkId && !linkRow) {
     return NextResponse.json({ error: 'Tracking link not found' }, { status: 404 });
   }
 

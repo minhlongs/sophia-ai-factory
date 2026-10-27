@@ -90,13 +90,13 @@ describe('injectCryptoDisclaimer', () => {
     const firstResult = await injectCryptoDisclaimer({
       caption: 'Crypto deal',
       vertical: 'crypto',
-      targetJurisdiction: 'SG',
+      targetJurisdiction: 'JP',
       channelId: 'tiktok',
     });
     const secondResult = await injectCryptoDisclaimer({
       caption: firstResult.caption,
       vertical: 'crypto',
-      targetJurisdiction: 'SG',
+      targetJurisdiction: 'JP',
       channelId: 'tiktok',
     });
     expect(secondResult.injected).toBe(false);
@@ -105,15 +105,16 @@ describe('injectCryptoDisclaimer', () => {
     expect(occurrences).toBe(1);
   });
 
-  it('uses SG disclaimer for Singapore jurisdiction', async () => {
+  it('blocks crypto content for Singapore jurisdiction under MAS Notice PSN08', async () => {
     const result = await injectCryptoDisclaimer({
       caption: 'DPT trading offer',
       vertical: 'crypto',
       targetJurisdiction: 'SG',
       channelId: 'youtube',
     });
-    expect(result.caption).toContain('MAS');
-    expect(result.blocked).toBe(false);
+    expect(result.blocked).toBe(true);
+    expect(result.injected).toBe(false);
+    expect(result.blockReason).toContain('MAS Notice PSN08');
   });
 
   it('uses JP disclaimer for Japan jurisdiction', async () => {
