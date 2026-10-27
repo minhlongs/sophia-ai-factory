@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
+import { computeHmacSha256Hex } from '@/land/postback/hmac-verifier';
 
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn().mockResolvedValue(null),
@@ -79,11 +80,12 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
       partner_key: 'aff_saas_01',
       reward_amount_cents: 4500,
     });
+    const sig = await computeHmacSha256Hex('partnerstack_secret_123', rawPayload);
 
     const req = new NextRequest('http://localhost/api/webhooks/saas-crypto/partnerstack', {
       method: 'POST',
       headers: {
-        'x-partnerstack-signature': 'partnerstack_secret_123',
+        'x-partnerstack-signature': sig,
       },
       body: rawPayload,
     });
@@ -93,7 +95,7 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     const data = (await res.json()) as { ok: boolean; success: boolean; eventId: string; commissionCents: number };
     expect(data.success).toBe(true);
     expect(data.commissionCents).toBe(4500);
-    expect(data.eventId).toBe('partnerstack_txn_ps_001');
+    expect(data.eventId).toBe('partnerstack_txn_ps_001_approved');
     expect(inngest.send).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'conversion.created',
@@ -107,11 +109,12 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
       referralId: 'CRYPTO_VIP',
       rebateUsd: 15.5,
     });
+    const sig = await computeHmacSha256Hex('binance_secret_abc', rawPayload);
 
     const req = new NextRequest('http://localhost/api/webhooks/saas-crypto/binance', {
       method: 'POST',
       headers: {
-        authorization: 'Bearer binance_secret_abc',
+        authorization: `Bearer ${sig}`,
       },
       body: rawPayload,
     });
@@ -121,6 +124,6 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     const data = (await res.json()) as { ok: boolean; success: boolean; eventId: string; commissionCents: number };
     expect(data.success).toBe(true);
     expect(data.commissionCents).toBe(1550);
-    expect(data.eventId).toBe('binance_reb_binance_99');
+    expect(data.eventId).toBe('binance_reb_binance_99_approved');
   });
 });

@@ -85,13 +85,15 @@ describe('POST /api/affiliate-discovery (agentic wave)', () => {
     expect(json.qualifiedCount).toBe(15)
     expect(json.topOffers[0].externalId).toBe('cb-101')
 
-    expect(mockRunAgenticDiscoveryWave).toHaveBeenCalledWith({
-      niche: 'crypto',
-      minScore: 0.7,
-      limit: 10,
-      networks: ['clickbank', 'awin', 'shareasale'],
-      tenantId: 'usr_abc',
-    })
+    expect(mockRunAgenticDiscoveryWave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        niche: 'crypto',
+        minScore: 0.7,
+        limit: 10,
+        networks: ['clickbank', 'awin', 'shareasale'],
+        tenantId: 'usr_abc',
+      }),
+    )
   })
 
   it('400 when minScore is negative or above 1', async () => {

@@ -54,15 +54,15 @@ export async function resolveNetworkSecret(
   const dbNetwork = NETWORK_SLUG_TO_DB[networkSlug];
   if (!dbNetwork) return null;
 
-  // Look up tenant_id from tracking_links
+  // Look up tenant_id from tracking_links, falling back to linkId as an explicit tenantId
   const linkRow = await db
     .prepare('SELECT tenant_id FROM tracking_links WHERE id = ? LIMIT 1')
     .bind(linkId)
     .first<TrackingLinkRow>();
 
-  if (!linkRow) return null;
+  const tenantId = linkRow?.tenant_id ?? linkId;
+  if (!tenantId) return null;
 
-  const tenantId = linkRow.tenant_id;
   const creds = await getCredentials(db, tenantId, dbNetwork as AffiliateNetwork);
   if (!creds) return null;
 
