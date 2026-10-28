@@ -7,8 +7,6 @@
 import type { SocialPlatform, PublishJobStatus, SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { isSameUTCDay } from '@/tree/social/publisher/pacing-engine';
 import { executePlatformUpload } from '@/tree/social/publisher/upload-executor';
-import { recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
 
 export { evaluatePacingStepDecision, evaluateSafetyGuardsDecision } from './social-direct-publish-guards';
 
@@ -51,14 +49,17 @@ export interface ChannelCredentialSnapshot {
  * would never complete nor appear as retryable. After the grace window the
  * status is treated as stale and the delivery is allowed to proceed.
  */
-export const ALREADY_UPLOADED_STATUSES = new Set<PublishJobStatus>(['UPLOADING', 'PUBLISHED', 'FAILED']);
+export const ALREADY_UPLOADED_STATUSES = new Set<PublishJobStatus>(['UPLOADING', 'PUBLISHED']);
 
 /** How long a stranded UPLOADING row stays authoritative before a retry may resume it. */
 export const UPLOADING_STALE_AFTER_MS = 15 * 60 * 1000;
 
 /**
  * True when the job must not reach the provider on this delivery because a
- * previous delivery already did. A stale `UPLOADING` returns false so a
+ * previous delivery already did. `FAILED` is deliberately absent: a provider
+ * 401 or an unreadable response is not evidence that media reached the
+ * provider, and treating it as such would cancel the function's own retries
+ * plus any operator re-dispatch. A stale `UPLOADING` returns false so a
  * worker killed mid-upload leaves a resumable job rather than a dead one.
  */
 export function isPublishJobAlreadyAttempted(
@@ -80,22 +81,20 @@ export function isPublishJobAlreadyAttempted(
 export async function executePlatformUploadAdapter(
   data: SocialPublishDispatchedEventData,
 ): Promise<{ platformPostId: string; publishedUrl: string }> {
-  try {
-    return await executePlatformUpload({
-      platform: data.platform,
-      accessToken: data.accessToken,
-      videoUrl: data.videoUrl,
-      jobId: data.jobId,
-      channelId: data.channelId,
-      title: data.title,
-      description: data.description,
-      tags: data.tags,
-      totalSizeBytes: data.totalSizeBytes,
-    });
-  } catch (err: unknown) {
-    recordFailure(data.platform, classifyError(err), data.channelId);
-    throw err;
-  }
+  // No try/catch wrapper: executePlatformUpload already records a classified
+  // failure with the breaker before rethrowing. Catching here only to rethrow
+  // would be dead code; the caller's step writes FAILED and rethrows itself.
+  return executePlatformUpload({
+    platform: data.platform,
+    accessToken: data.accessToken,
+    videoUrl: data.videoUrl,
+    jobId: data.jobId,
+    channelId: data.channelId,
+    title: data.title,
+    description: data.description,
+    tags: data.tags,
+    totalSizeBytes: data.totalSizeBytes,
+  });
 }
 
 export function buildPublishedResult(

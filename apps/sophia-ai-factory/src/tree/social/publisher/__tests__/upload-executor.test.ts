@@ -66,7 +66,7 @@ describe('upload-executor (labelled fixtures)', () => {
 
       expect(result.platformPostId).toBe('provider_video_id_123');
       expect(result.publishedUrl).toBe('https://www.youtube.com/shorts/provider_video_id_123');
-      expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('YOUTUBE_SHORTS', 'chan_1');
+      expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:YOUTUBE_SHORTS');
     });
 
     it('throws when the resumable handshake yields no session Location header', async () => {
@@ -111,7 +111,7 @@ describe('upload-executor (labelled fixtures)', () => {
 
       expect(result.platformPostId).toBe('tt_publish_777');
       expect(result.publishedUrl).toContain('tt_publish_777');
-      expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('TIKTOK_V2', 'chan_1');
+      expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:TIKTOK_V2');
     });
 
     it('throws while the provider is still processing — an unconfirmed publish is not a success', async () => {
@@ -157,7 +157,7 @@ describe('upload-executor (labelled fixtures)', () => {
 
       expect(result.platformPostId).toBe('ig_media_999');
       expect(result.publishedUrl).toBe('https://www.instagram.com/reel/ig_media_999/');
-      expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('INSTAGRAM_REELS', 'chan_1');
+      expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:INSTAGRAM_REELS');
     });
 
     it('throws rather than presenting a container id as a published reel url', async () => {
@@ -199,7 +199,26 @@ describe('upload-executor (labelled fixtures)', () => {
 
       await executePlatformUpload({ ...baseInput, fetchImpl: fetchImpl as unknown as typeof fetch });
 
-      expect(circuitBreaker.shouldAllowRequest).toHaveBeenCalledWith('YOUTUBE_SHORTS', 'chan_1');
+      expect(circuitBreaker.shouldAllowRequest).toHaveBeenCalledWith('social_upload:YOUTUBE_SHORTS');
+    });
+
+    it('records the failure under the platform key, not the caller-supplied channel', async () => {
+      const channelA = vi.fn().mockResolvedValue(fixtureResponse({}, { ok: false, status: 500 }));
+      const channelB = vi.fn().mockResolvedValue(fixtureResponse({}, { ok: false, status: 500 }));
+
+      await expect(executePlatformUpload({ ...baseInput, channelId: 'chan_a', fetchImpl: channelA as unknown as typeof fetch }))
+        .rejects.toThrow('HTTP_500');
+      await expect(executePlatformUpload({ ...baseInput, channelId: 'chan_b', fetchImpl: channelB as unknown as typeof fetch }))
+        .rejects.toThrow('HTTP_500');
+
+      // Both failures must land on the same key. Keying on channelId would
+      // let a caller reset the breaker by supplying a new channel string.
+      expect(circuitBreaker.recordFailure).toHaveBeenNthCalledWith(
+        1, 'social_upload:YOUTUBE_SHORTS', expect.any(String),
+      );
+      expect(circuitBreaker.recordFailure).toHaveBeenNthCalledWith(
+        2, 'social_upload:YOUTUBE_SHORTS', expect.any(String),
+      );
     });
   });
 });

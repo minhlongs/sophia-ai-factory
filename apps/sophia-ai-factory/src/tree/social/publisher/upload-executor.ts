@@ -26,6 +26,19 @@ import {
   buildInstagramPublishRequest,
 } from './platform-adapters';
 
+/**
+ * Circuit-breaker key. Deliberately per platform, not per channel.
+ *
+ * `breakerKey` is unnormalized string concatenation and `shouldAllowRequest`
+ * returns `true` for an unknown key, so a per-channel key is defeated simply
+ * by varying the caller-supplied `channelId`: every new channel starts with a
+ * clean breaker and a source that has been visibly failing keeps being served.
+ * Platform-level keying makes a provider's repeated failures accumulate no
+ * matter which channel they arrived on. `channelId` stays in the logs for
+ * diagnosis.
+ */
+const BREAKER_KEY = (platform: SocialPlatform) => `social_upload:${platform}`;
+
 export interface UploadExecutionInput {
   platform: SocialPlatform;
   accessToken: string;
@@ -210,7 +223,7 @@ export async function executePlatformUpload(input: UploadExecutionInput): Promis
   const fetchImpl = input.fetchImpl ?? (globalThis.fetch as typeof fetch);
   const { platform, channelId, jobId } = input;
 
-  if (!shouldAllowRequest(platform, channelId)) {
+  if (!shouldAllowRequest(BREAKER_KEY(platform))) {
     throw new Error(`CIRCUIT_OPEN:${platform}`);
   }
 
@@ -221,7 +234,7 @@ export async function executePlatformUpload(input: UploadExecutionInput): Promis
         ? await uploadToTikTok(input, fetchImpl)
         : await uploadToInstagram(input, fetchImpl);
 
-    recordSuccess(platform, channelId);
+    recordSuccess(BREAKER_KEY(platform));
     logger.info('executePlatformUpload: provider confirmed post id', {
       jobId,
       platform,
@@ -230,7 +243,7 @@ export async function executePlatformUpload(input: UploadExecutionInput): Promis
     });
     return result;
   } catch (err: unknown) {
-    recordFailure(platform, classifyError(err), channelId);
+    recordFailure(BREAKER_KEY(platform), classifyError(err));
     logger.warn('executePlatformUpload: provider upload failed', {
       jobId,
       platform,

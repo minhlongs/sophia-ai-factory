@@ -107,7 +107,7 @@ describe('socialDirectPublishJob & Server Actions', () => {
     expect((ytRes as { publishedUrl: string }).publishedUrl).toBe(
       'https://www.youtube.com/shorts/provider_yt_video_1',
     );
-    expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('YOUTUBE_SHORTS', 'chan_yt_1');
+    expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:YOUTUBE_SHORTS');
     expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith('job_yt_1', 'UPLOADING');
 
     const ttRes = await processSocialDirectPublishJob({
@@ -151,7 +151,7 @@ describe('socialDirectPublishJob & Server Actions', () => {
       expect.objectContaining({ error: expect.stringContaining('PROVIDER_RESULT_UNVERIFIABLE') }),
     );
     expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
-    expect(circuitBreaker.recordFailure).toHaveBeenCalled();
+    expect(circuitBreaker.recordFailure).toHaveBeenCalledTimes(1);
   });
 
   it('publishes once — a re-delivered event for a terminal job does not upload again', async () => {
@@ -266,6 +266,39 @@ describe('socialDirectPublishJob & Server Actions', () => {
 
     expect(res.status).toBe('PUBLISHED');
     expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_resumed');
+  });
+
+  it('retries a job the previous delivery marked FAILED — a provider error is not an upload', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_retry'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_retry' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    // The previous attempt wrote FAILED on a 401 and rethrew. The function is
+    // configured with three retries, so this delivery must be allowed to reach
+    // the provider instead of being skipped as "already uploaded".
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'FAILED',
+      updatedAt: Date.now(),
+    } as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_failed_once',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Retry',
+          description: 'Retry',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+    expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_retry');
+    expect(fixtureFetch).toHaveBeenCalled();
   });
 
   it('does not fabricate a post id or url when the upload transport fails outright', async () => {
