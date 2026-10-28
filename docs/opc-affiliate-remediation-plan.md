@@ -363,3 +363,71 @@ after the above corrections:
 - No phase claims L3 or L4 evidence, and no phase edits another phase's files. The two
   `messages/*.json` files remain P5-owned, and P2's new error copy is routed through P5.
 - Unresolved contradictions: none.
+
+---
+
+### Session 2 — Red-team pass, re-baselined against HEAD
+
+Four adversarial lenses ran at `38b197301`: security adversary, assumption destroyer, failure
+mode analyst, and scope/complexity critic. Three independently identified the same root cause —
+the plan's pinned snapshot `439635e1` is an ancestor of HEAD, so its premises described work
+that has since landed. Each finding below was re-verified against source before being accepted;
+where a lens overstated its case, that is recorded too.
+
+**Corrected in this pass:**
+
+- **P1 must not author a DDL.** Confirmed: `migrations/0482_opc_affiliate_execution_truth.sql:30-55`
+  already creates `workspace_external_commissions` with the same tenant-leftmost dedup index, is
+  git-tracked, and enforces `CHECK (platform_fee_cents = 0)` plus a `niche` default the plan's
+  DDL lacked. Authoring `0482_workspace_external_commissions.sql` would reuse a taken migration
+  number and *downgrade* two real DB invariants. The plan's own DDL was verified correct in
+  column union; it was the premise that was wrong, not the shape.
+- **P3's own code had three real defects, now fixed on the branch.** The `FAILED` skip set
+  cancelled all three Inngest retries as well as operator re-dispatch (verified: `retries: 3`
+  on the function, `FAILED` written on first attempt before rethrow); the adapter
+  double-recorded one provider failure (verified by grep: `recordFailure` at both
+  `upload-executor.ts:246` and `steps.ts`); and the breaker key was the caller-supplied
+  `channelId`, which resets an unnormalized key that returns `true` when unknown (verified
+  against `circuit-breaker-ops.ts:38-45`). All three carry tests.
+- **P2 is narrowed to one live defect.** The silent-catch premise was replaced upstream by
+  `resolveDashboardViewState`; the real remnant is `page.tsx:213` rendering a bare `0` for
+  `totalBridgeClicks` in the error state, where the sibling earnings card at `:200` correctly
+  shows an unavailable marker. `totalVideosGenerated` is not rendered at all, so half the
+  original complaint was moot.
+- **P6's premise is gone.** Zero functional `RENDER_READY` remains — only a comment and a test
+  name. Terminal handling already returns a `RENDER_QUEUED` continuation.
+- **P4's count and ownership were both wrong.** The array has 41 entries, not 40, and
+  `flywheelFeedbackDispatcherJob` was already registered upstream. More importantly, the barrel
+  does not export the four target workers, so the ownership table had to grant
+  `forest/inngest/functions/index.ts` and `growth-triad-registry.ts` or the phase could not
+  compile under strict ownership.
+- **P5 gained a required backfill.** Aligning the write key from `user.id` to
+  `resolveOrgId(...) ?? user.id` would orphan every existing credential row, because storage
+  upserts on `(tenant_id, network)` and every read filters `tenant_id = ?`. The network would
+  render as unconfigured with no error. Verified against `route.ts:82`, `page.tsx:63-64`,
+  `storage.ts:26`, and the DDL's `UNIQUE(tenant_id, network)` in migration 0084.
+- **P3's "reach the DLQ and the operator" has no substrate.** Verified: no `onFailure` exists on
+  any `inngest.createFunction` in the repo; `dlq-reaper` is NOWPayments-IPN scoped only;
+  `land/affiliates/commission-dlq.ts` has no production caller. Restated as P7-scoped work with
+  a precondition instead of a footnote.
+
+**Verified rather than accepted:**
+
+- The security adversary found the tenant-crossing design sound (four independent layers, none
+  dependent on the DDL) and reported token handling clean across all seven sites. Its Instagram
+  fabricated-success finding (F6) was retracted mid-audit because the fallback had already been
+  removed on this branch.
+- The credential table does exist in tracked migrations (0084 and 0248) — a lens implied it might
+  not, and the repo says otherwise.
+- The migration-coverage guard's regex premise is character-exact, but the guard scans only
+  `src/**/*.sql` and finds zero files, so it passes trivially. That is exactly why P7 is now the
+  highest-value remaining phase.
+
+**[UNVERIFIED], carried forward deliberately:** the precise failure mode of two `0482_*` files
+under `apply-migrations.sh` (collision is real at filename level; behaviour inferred, not
+executed); whether Inngest memoizes the `evaluate-pacing` step on retry, which the fix above
+makes moot by not depending on it; and how often real uploads exceed the `UPLOADING` staleness
+window, which decides whether that window is generous or tight.
+
+Every phase's acceptance criterion still maps to a matrix row; no phase claims L3 or L4 evidence;
+no phase edits another phase's files.
