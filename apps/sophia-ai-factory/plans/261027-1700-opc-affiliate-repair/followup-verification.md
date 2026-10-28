@@ -68,7 +68,7 @@ areas. No browser. Verdict: **PARTIAL → fixed in scope**.
 
 | ID | Sev | Finding | Status |
 |---|---|---|---|
-| F1 | **P0** | `recordVerifiedArtifact` trusted the `VerifiedArtifact` TYPE and could persist a zero-byte/empty-checksum descriptor and mark run `rendered`; `evaluatePublishGate` only checked artifact PRESENCE, not bytes. `handoff.md` claimed both gates block unverified bytes. | **FIXED** C1 |
+| F1 | **P0 (latent / defense-in-depth)** | `recordVerifiedArtifact` trusted the `VerifiedArtifact` TYPE and could persist a zero-byte/empty-checksum descriptor and mark run `rendered`; `evaluatePublishGate` only checked artifact PRESENCE, not bytes. `handoff.md` claimed both gates block unverified bytes. **Honesty note:** neither function has a production caller yet (only tests + a dispatcher comment) — the real render/publish worker does not exist, consistent with `handoff.md`. So this is NOT an active production incident; it is a latent correctness hole that becomes live the moment a render worker is wired. Fixing it now makes the durable DB boundary correct by construction. | **FIXED** C1 |
 | F2 | **P1** | `deploy.yml` + `deploy-with-sha.sh` `--env health` calls target a non-existent env (root cause `wrangler.toml` `[[env]]` array-of-tables → only indexed envs `"0","1"`), swallowed by `\|\| true`/non-fatal. | **FIXED** C2 |
 | F3 | P2 | `handlePostbackRoute` accepts `tenant_id` from request body/query as a fallback tenant (client-controlled). HMAC + tracking-link verification mitigate, but policy for link-less postbacks is a business decision. | BACKLOG (not changed) |
 | F4 | Info | Reviewed and source-correct: tenant-scoped D1/KV/ledger, approval hash/expiry/revocation re-check, kill-switch strict fail-closed, Kelly zero on negative expectancy, scaler needs cost+maturity+permission, ledger reversal-after-paid / partial-refund / multi-currency, HMAC fail-closed, migration 0482 idempotent + `platform_fee_cents=0`. Protected flows (Setup Wizard / Telegram / NOWPayments IPN) NOT touched by this diff. | NO CHANGE |
@@ -150,3 +150,31 @@ Real provider render/publish correctness, Telegram bot entrypoint,
 browser/visual/responsive/a11y QA, commercial validation, independent code
 review, and the F3 tenant-resolution business decision. Deploy success does not
 upgrade any of these to PASS.
+
+## 7. Live baseline BEFORE merging PR #64 (2026-10-28T01:18:20Z UTC)
+Platform HTTP GET (no browser):
+- /api/version?preFollowup=… -> 200  {"shortSha":"00edba0a","deployedAt":"2026-10-28T00:13:57Z","opennextVersion":"1.19.11"}
+- /api/health?preFollowup=…  -> 200  {"status":"healthy","timestamp":"2026-10-28T01:18:20.821Z","environment":"production"}
+Live is still the PR #63 merge commit (8-char shortSha; endpoint does NOT expose
+the full 40-char SHA publicly). After PR #64 merges, the post-merge deploy must
+be verified with a NEW shortSha matching that merge commit's first 8 chars.
+
+## 8. CI iteration #1 (PR #64) — Gate 1d failure triage (2026-10-28T01:45Z)
+- Gate 2 PASS (`40614177340`), Gate 4 PASS (`40614177117`), Gate 1 FAILED
+  (`40614177303`): step 1a tsc / 1b eslint / 1c boundaries PASS, step 1d
+  "Vitest with coverage" FAILED (exit 1); downstream 3a/3b/3c SKIPPED.
+- `--reporter=junit` writes failures to test-results.xml (NOT uploaded, NOT on
+  stdout), so the CI log shows no failed test names.
+- Local full-suite reproduce (`npx vitest run --coverage --maxWorkers=2
+  --reporter=junit --reporter=default`): 1979 files passed / 5 files (67 tests)
+  failed, ALL with `Could not locate the bindings file … better-sqlite3` —
+  caused by this sandbox installing with `--ignore-scripts` (no native build),
+  NOT by PR #64 code. The changed execution tests and the new deploy-config
+  test all PASS in the full local suite.
+- Since PR #63's Gate 1 passed on the same runner image with a full native
+  `npm install`, the CI cause is still ambiguous. Added a diagnostics-only step
+  (`if: failure()`) to quality-gate.yml that prints failed junit testcase names
+  to the log, and hardened the new test's repo-root resolution to use
+  process.cwd() instead of `__dirname` (coverage can rewrite it). Both are
+  legitimate, non-bypassing changes. Awaiting CI iteration #2 for the actual
+  failing test names before any fix.

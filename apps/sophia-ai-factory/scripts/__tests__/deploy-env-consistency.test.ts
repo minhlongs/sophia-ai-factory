@@ -26,8 +26,24 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
-const APP_ROOT = resolve(__dirname, '../..');
-const REPO_ROOT = resolve(APP_ROOT, '../..');
+/**
+ * Resolve REAL repo/app roots without relying on `__dirname` (which Vite/Vitest
+ * can rewrite when coverage instrumentation is enabled). Walk up from the
+ * current working directory (vitest.config.ts chdir's to the app root) until
+ * `.github/workflows/deploy.yml` is found — then assert every required file is
+ * present so the dependency can never be silently skipped.
+ */
+function findRepoRoot(): string {
+  let dir = resolve(process.cwd());
+  for (let i = 0; i < 6; i += 1) {
+    if (existsSync(resolve(dir, '.github/workflows/deploy.yml'))) return dir;
+    dir = resolve(dir, '..');
+  }
+  throw new Error('Could not locate repo root containing .github/workflows/deploy.yml');
+}
+
+const REPO_ROOT = findRepoRoot();
+const APP_ROOT = resolve(REPO_ROOT, 'apps/sophia-ai-factory');
 
 const DEPLOY_YML = resolve(REPO_ROOT, '.github/workflows/deploy.yml');
 const FALLBACK_SH = resolve(APP_ROOT, 'scripts/deploy-with-sha.sh');
