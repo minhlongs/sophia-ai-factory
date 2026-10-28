@@ -166,13 +166,22 @@ jobs:
           DEPLOY_BRANCH="${{ github.ref_name }}"
 
           echo "==> Setting Worker secrets: SHA=${COMMIT_SHA:0:8} Branch=${DEPLOY_BRANCH} At=${DEPLOYED_AT}"
+          # These three are the version/health metadata contract read by
+          # /api/version (COMMIT_SHA/DEPLOYED_AT) and must FAIL LOUD on error.
+          # Do NOT append `|| true` — a silent failure deploys a stale SHA.
           echo "$COMMIT_SHA"    | npx wrangler secret put COMMIT_SHA    --name sophia-ai-factory
           echo "$DEPLOYED_AT"   | npx wrangler secret put DEPLOYED_AT   --name sophia-ai-factory
           echo "$DEPLOY_BRANCH" | npx wrangler secret put DEPLOY_BRANCH --name sophia-ai-factory
 
-          # Propagate to health environment
-          echo "$COMMIT_SHA"    | npx wrangler secret put COMMIT_SHA    --name sophia-ai-factory --env health || true
-          echo "$DEPLOYED_AT"   | npx wrangler secret put DEPLOYED_AT   --name sophia-ai-factory --env health || true
+          # NOTE: no `--env health` propagation. `wrangler.toml` declares its
+          # worker variants with `[[env]]` array-of-tables, so wrangler exposes
+          # only indexed environments ("0","1"); a named env `health` does not
+          # exist and the old `--env health || true` calls only hid a config
+          # error. `/api/health` is served by THIS worker as a self-contained
+          # route; the separate `sophia-ai-factory-health` worker
+          # (wrangler.health.toml) is not deployed by this pipeline and has no
+          # consumer here. Regression guard:
+          # scripts/__tests__/deploy-env-consistency.test.ts
 
   # =========================================================================
   # STAGE 4: Post-Deploy Automated Verification & Health Smoke Test

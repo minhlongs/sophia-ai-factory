@@ -579,15 +579,14 @@ retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler se
 retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
 retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
 
-# Also set for health worker (fix: propagate SHA to health environment)
-# Non-fatal: secret may already exist from previous deploy
-# Non-fatal: secret may already exist from previous deploy (already-set error is expected).
-if ! echo "$COMMIT_SHA" | npx wrangler secret put COMMIT_SHA --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
-  log_info "Health worker COMMIT_SHA may already be set (non-fatal — continuing)"
-fi
-if ! echo "$DEPLOYED_AT" | npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
-  log_info "Health worker DEPLOYED_AT may already be set (non-fatal — continuing)"
-fi
+# NOTE: no `--env health` propagation here either. `wrangler.toml` uses
+# `[[env]]` array-of-tables, so wrangler exposes only indexed environments
+# ("0","1"); a named env `health` does not exist. The old non-fatal `if ! ...`
+# block only masked that config error. `/api/health` is a self-contained route
+# on the main worker; the standalone `sophia-ai-factory-health` worker
+# (wrangler.health.toml) is not deployed by this script and has no consumer.
+# The three fail-loud `secret put` calls above remain the metadata contract.
+# Regression guard: scripts/__tests__/deploy-env-consistency.test.ts
 
 # ─── Step 5: Upload Sentry source maps (fail-fast) ───────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
