@@ -20,16 +20,6 @@ export function resolveNavLabel(
   return item.fallbackLabel;
 }
 
-export function resolveSopCreatorLabel(t: (key: string) => string): string {
-  try {
-    const tr = t("sidebar.sop_creator");
-    if (tr && !tr.includes("sidebar.sop_creator")) return tr;
-  } catch {
-    // fallback
-  }
-  return "SOP Creator";
-}
-
 interface DashboardNavLinkItemProps {
   href: string;
   active: boolean;

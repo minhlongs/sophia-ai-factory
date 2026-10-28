@@ -35,8 +35,11 @@ export function DashboardActivityTable({
     };
   }
 
-  // Support both activities and transactions props for backwards compatibility
-  const items: DashboardActivityItem[] = activities || transactions || [];
+  // Support both activities and transactions props for backwards compatibility.
+  // `undefined` from both means the activity data is unavailable, which is not
+  // the same as a verified empty account.
+  const resolved: DashboardActivityItem[] | undefined = activities ?? transactions;
+  const items: DashboardActivityItem[] = resolved ?? [];
 
   return (
     <div
@@ -66,7 +69,13 @@ export function DashboardActivityTable({
       </div>
 
       {/* Content */}
-      {items.length === 0 ? (
+      {resolved === undefined ? (
+        <div className="p-5" data-testid="dashboard-activity-unavailable" data-status="error">
+          <p className="text-sm text-muted-foreground">
+            {t("recentTransactions.unavailableTitle")}
+          </p>
+        </div>
+      ) : items.length === 0 ? (
         <ActivityTableEmpty
           emptyTitle={t("recentTransactions.emptyTitle")}
           emptyDesc={t("recentTransactions.emptyDesc")}

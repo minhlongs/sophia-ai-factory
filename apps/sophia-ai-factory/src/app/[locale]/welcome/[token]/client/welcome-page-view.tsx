@@ -5,10 +5,11 @@ import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { buildOnboardingSteps, StepCard, type WelcomeData } from '../welcome-onboarding-steps';
 import { generateTelegramPairingTokenAction } from '@/app/actions/generate-telegram-pairing-token';
+import { getTelegramPairingStatusAction } from '@/app/actions/get-telegram-pairing-status';
 import { WelcomeHero } from './welcome-hero';
 import { TelegramCta } from './telegram-cta';
 import { InvalidLinkView } from './invalid-link-view';
-import type { WelcomePageClientProps } from './types';
+import type { TelegramPairingState, WelcomePageClientProps } from './types';
 
 const BOT_USERNAME = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? 'Sophia_Bbot').replace(/^@/, '').trim();
 
@@ -18,8 +19,7 @@ export function WelcomePageClient({ token, locale }: WelcomePageClientProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
-  const [telegramLinking, setTelegramLinking] = useState(false);
-  const [telegramLinked, setTelegramLinked] = useState(false);
+  const [telegramPairingState, setTelegramPairingState] = useState<TelegramPairingState>('idle');
 
   useEffect(() => {
     void (async () => {
@@ -54,16 +54,25 @@ export function WelcomePageClient({ token, locale }: WelcomePageClientProps) {
   }
 
   async function handleConnectTelegram() {
-    setTelegramLinking(true);
+    setTelegramPairingState('linking');
     try {
       const { token: pairingToken } = await generateTelegramPairingTokenAction();
       const botUrl = `https://t.me/${BOT_USERNAME}?start=${pairingToken}`;
       window.open(botUrl, '_blank', 'noopener,noreferrer');
-      setTelegramLinked(true);
+      // The tab opening is not the pairing. Wait for the customer to send /start
+      // and let the server confirm it.
+      setTelegramPairingState('awaiting_pairing');
     } catch {
-      // Client-side: error silently swallowed; server-side logger unreachable from client component.
-    } finally {
-      setTelegramLinking(false);
+      setTelegramPairingState('idle');
+    }
+  }
+
+  async function handleCheckPairing() {
+    try {
+      const { paired } = await getTelegramPairingStatusAction();
+      setTelegramPairingState(paired ? 'linked' : 'awaiting_pairing');
+    } catch {
+      setTelegramPairingState('awaiting_pairing');
     }
   }
 
@@ -92,9 +101,9 @@ export function WelcomePageClient({ token, locale }: WelcomePageClientProps) {
       />
 
       <TelegramCta
-        telegramLinked={telegramLinked}
-        telegramLinking={telegramLinking}
+        telegramPairingState={telegramPairingState}
         onConnectTelegram={() => void handleConnectTelegram()}
+        onCheckPairing={() => void handleCheckPairing()}
       />
 
       <div className="max-w-2xl mx-auto px-6 pb-16">

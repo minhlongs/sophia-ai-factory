@@ -2,8 +2,10 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, X, Clock, User, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Check, X, Clock, User, MessageSquare, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Link } from '@/navigation';
 import type { Approval } from './types';
+import { ApprovalGovernanceBadges } from './approval-governance-badges';
 
 interface ApprovalCardProps {
   approval: Approval;
@@ -24,12 +26,8 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
       minute: '2-digit',
     });
 
-  const isExpiring = (ts: number) => {
-    const remaining = ts - Math.floor(Date.now() / 1000);
-    return remaining > 0 && remaining < 3600;
-  };
-
-  const expiring = isExpiring(approval.timeoutAt);
+  const remaining = approval.timeoutAt - Math.floor(Date.now() / 1000);
+  const expiring = remaining > 0 && remaining < 3600;
 
   return (
     <div
@@ -52,9 +50,44 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
               )}
             </div>
 
+            <ApprovalGovernanceBadges approval={approval} />
+
             <p className="text-sm leading-relaxed text-foreground">
               {approval.actionSummary}
             </p>
+
+            {/* What the customer is deciding, in their terms — not in agent terms. */}
+            <p
+              data-testid="approval-decision-impact"
+              className="text-xs leading-relaxed text-muted-foreground"
+            >
+              {t('decision.impactLabel')}:{' '}
+              {approval.complianceStatus === 'blocked'
+                ? t('decision.impactBlocked')
+                : t('decision.impactNormal')}
+              {approval.estimatedCostCents == null && (
+                <span className="ml-1 text-foreground">
+                  {t('decision.costUnknown')}
+                </span>
+              )}
+            </p>
+
+            {approval.complianceStatus === 'blocked' && (
+              <p className="rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive">
+                {t('decision.blockedReason')}
+              </p>
+            )}
+
+            {/* Real link to the work, only when the server gave us a reference. */}
+            {approval.missionId && (
+              <Link
+                href={`/dashboard/missions/${approval.missionId}`}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                {t('decision.openArtifact')}
+              </Link>
+            )}
 
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground md:grid-cols-4">
               <div className="flex items-center gap-1.5">
@@ -69,7 +102,7 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
                 <div className="flex items-center gap-1.5">
                   <MessageSquare className="h-3 w-3" />
                   <span>
-                    {t('fields.cost')}: {(approval.estimatedCostCents / 100).toFixed(2)}
+                    {t('fields.cost')}: ${(approval.estimatedCostCents / 100).toFixed(2)}
                   </span>
                 </div>
               )}
@@ -81,6 +114,16 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
           </div>
 
           <div className="flex flex-col gap-2 md:w-48">
+            {/* Honest capability: the server confirms the decision, it does not
+                return a publish receipt, so we do not promise one. */}
+            <p
+              data-testid="approval-after-approve-note"
+              className="text-[11px] leading-snug text-muted-foreground"
+            >
+              {approval.trackingPath
+                ? t('decision.afterApproveWithTracking')
+                : t('decision.afterApproveNoTracking')}
+            </p>
             <button
               type="button"
               disabled={busy}

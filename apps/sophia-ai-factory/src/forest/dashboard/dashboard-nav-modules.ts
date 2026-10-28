@@ -1,12 +1,12 @@
 import {
   LayoutDashboard, PlusCircle, Film, Wand2, Youtube, BookOpen,
-  Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon, DollarSign,
+  Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon, DollarSign, Megaphone,
 } from "lucide-react";
 import type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps } from "./dashboard-nav-types";
 
 export type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps };
 
-/** 16 Canonical Sophia AI Factory Navigation Modules (including Affiliate Hub, Image Studio, SOP system and challenges). */
+/** 18 Canonical Sophia AI Factory Navigation Modules (affiliate business, approvals, campaigns, image studio, SOP system and challenges). */
 export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
   {
     id: "overview",
@@ -30,6 +30,20 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     icon: Film,
   },
   {
+    id: "campaigns",
+    labelKey: "sidebar.campaigns",
+    fallbackLabel: "Affiliate Campaigns",
+    href: "/dashboard/campaigns",
+    icon: Megaphone,
+  },
+  {
+    id: "niche_studio",
+    labelKey: "sidebar.niche_studio",
+    fallbackLabel: "Niche Studio",
+    href: "/dashboard/niche-studio",
+    icon: Wand2,
+  },
+  {
     id: "creative_studio",
     labelKey: "sidebar.creative_studio",
     fallbackLabel: "Creative Studio",
@@ -51,11 +65,18 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     icon: Youtube,
   },
   {
-    id: "affiliate",
-    labelKey: "sidebar.affiliate",
-    fallbackLabel: "Affiliate Hub",
-    href: "/dashboard/affiliate",
+    id: "affiliates",
+    labelKey: "sidebar.affiliates",
+    fallbackLabel: "My Affiliate Business",
+    href: "/dashboard/affiliates",
     icon: DollarSign,
+  },
+  {
+    id: "approvals",
+    labelKey: "sidebar.approvals",
+    fallbackLabel: "Approvals Needed",
+    href: "/dashboard/approvals",
+    icon: ShieldCheck,
   },
   {
     id: "playbooks",
@@ -84,13 +105,6 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "My SOPs",
     href: "/dashboard/sops",
     icon: BookOpen,
-  },
-  {
-    id: "sop_marketplace",
-    labelKey: "sidebar.sop_marketplace",
-    fallbackLabel: "SOP Marketplace",
-    href: "/dashboard/sop-marketplace",
-    icon: ShoppingBag,
   },
   {
     id: "challenges",

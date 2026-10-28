@@ -56,7 +56,7 @@ describe('Dashboard KPI & Activity Components — Obsidian Cyber-Glass', () => {
   });
 
   describe('DashboardOnboardingBanner', () => {
-    it('links to canonical /dashboard/setup and /dashboard/system-health', () => {
+    it('links to canonical /setup-wizard and /dashboard/system-health', () => {
       render(
         <DashboardOnboardingBanner
           readiness={{
@@ -74,7 +74,7 @@ describe('Dashboard KPI & Activity Components — Obsidian Cyber-Glass', () => {
         />
       );
 
-      const setupLink = document.querySelector('a[href="/dashboard/setup"]');
+      const setupLink = document.querySelector('a[href="/setup-wizard"]');
       expect(setupLink).not.toBeNull();
 
       const healthLink = document.querySelector('a[href="/dashboard/system-health"]');

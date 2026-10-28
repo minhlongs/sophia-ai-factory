@@ -8,7 +8,6 @@ import {
   DollarSign,
   type LucideIcon,
 } from "lucide-react";
-import type { DashboardMetric } from "@/forest/dashboard/types";
 
 export interface MetricPillConfig {
   icon: LucideIcon;
@@ -53,10 +52,3 @@ export function getMetricPillConfig(metricId: string): MetricPillConfig {
     }
   );
 }
-
-export const ZERO_METRICS: DashboardMetric[] = [
-  { id: "total_campaigns", value: "0", change: "0%", trend: "neutral", icon: "Megaphone" },
-  { id: "active_campaigns", value: "0", change: "0", trend: "neutral", icon: "Play" },
-  { id: "videos_generated", value: "0", change: "0%", trend: "neutral", icon: "Video" },
-  { id: "success_rate", value: "0.0%", change: "neutral", trend: "neutral", icon: "TrendingUp" },
-];

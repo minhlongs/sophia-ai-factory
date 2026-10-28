@@ -300,15 +300,21 @@ describe('Empirical Challenger 2 — Revenue Chart & Dashboard Widgets Stress Ha
       expect(screen.getByText('neutral')).toBeDefined();
     });
 
-    it('falls back to default metrics when empty array is passed', () => {
+    it('reports an empty metric set as a verified empty account, not as zeros', () => {
       render(<DashboardMetricsGrid metrics={[]} />);
 
-      // Should render default 4 cards with zero counts
-      expect(screen.getByTestId('kpi-card-total_campaigns')).toBeDefined();
-      expect(screen.getByTestId('kpi-card-active_campaigns')).toBeDefined();
-      expect(screen.getByTestId('kpi-card-videos_generated')).toBeDefined();
-      expect(screen.getByTestId('kpi-card-success_rate')).toBeDefined();
-      expect(screen.getByText('0.0%')).toBeDefined();
+      // An empty array is a real answer from the server: the account has no
+      // data. Inventing four zero cards here would be a fabricated number.
+      expect(screen.getByTestId('dashboard-metrics-empty').getAttribute('data-status')).toBe('verified_empty');
+      expect(screen.queryByTestId('kpi-card-total_campaigns')).toBeNull();
+      expect(screen.queryByText('0.0%')).toBeNull();
+    });
+
+    it('reports unavailable metrics separately from an empty metric set', () => {
+      render(<DashboardMetricsGrid metrics={undefined} />);
+
+      expect(screen.getByTestId('dashboard-metrics-unavailable').getAttribute('data-status')).toBe('error');
+      expect(screen.queryByTestId('dashboard-metrics-empty')).toBeNull();
     });
 
     it('handles unrecognized metric IDs with fallback icon and label without crashing', () => {

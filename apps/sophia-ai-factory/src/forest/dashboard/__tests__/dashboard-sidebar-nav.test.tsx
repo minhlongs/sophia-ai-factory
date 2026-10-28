@@ -13,6 +13,9 @@ vi.mock('next-intl', () => ({
       'sidebar.overview': 'Overview',
       'sidebar.create_mission': 'Create Mission',
       'sidebar.missions': 'AI Missions',
+      'sidebar.campaigns': 'Affiliate Campaigns',
+      'sidebar.affiliates': 'My Affiliate Business',
+      'sidebar.approvals': 'Approvals Needed',
       'sidebar.creative_studio': 'Creative Studio',
       'sidebar.youtube_automation': 'YouTube Automation',
       'sidebar.playbook': 'Playbooks',
@@ -55,24 +58,26 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
-  it('renders all 16 canonical Sophia AI modules with valid hrefs', () => {
+  it('renders all 18 canonical Sophia AI modules with valid hrefs', () => {
     render(<DashboardSidebarNav />);
 
-    expect(SOPHIA_NAV_MODULES).toHaveLength(16);
+    expect(SOPHIA_NAV_MODULES).toHaveLength(18);
 
     const expectedHrefs = [
       '/dashboard',
       '/dashboard/missions/new',
       '/dashboard/missions',
+      '/dashboard/campaigns',
+      '/dashboard/affiliates',
+      '/dashboard/niche-studio',
       '/dashboard/creative-economy',
       '/dashboard/image-studio',
       '/dashboard/youtube',
-      '/dashboard/affiliate',
+      '/dashboard/approvals',
       '/dashboard/playbooks',
       '/dashboard/publish/queue',
       '/marketplace',
       '/dashboard/sops',
-      '/dashboard/sop-marketplace',
       '/dashboard/challenges',
       '/dashboard/handover',
       '/dashboard/docs/runbooks',
@@ -85,18 +90,18 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
     }
   });
 
-  it('renders SOP Creator link conditionally for MASTER tier users only', () => {
-    const { rerender } = render(
-      <DashboardSidebarNav user={{ name: 'Pro User', email: 'pro@sophia.ai', tier: 'PRO' }} />
-    );
-    expect(screen.queryByText('SOP Creator')).toBeNull();
-
-    rerender(
-      <DashboardSidebarNav user={{ name: 'Master User', email: 'master@sophia.ai', tier: 'MASTER' }} />
-    );
-    const creatorLink = screen.getByText('SOP Creator');
-    expect(creatorLink).toBeDefined();
-    expect(creatorLink.closest('a')?.getAttribute('href')).toBe('/dashboard/sop-creator');
+  it('offers no nav link to routes that have no page, for any tier', () => {
+    // /dashboard/sop-creator and /dashboard/sop-marketplace have no page, so a
+    // nav entry for them would be a dead CTA. MASTER must not get one either.
+    for (const tier of ['PRO', 'MASTER', 'BASIC', 'ENTERPRISE']) {
+      const { container, unmount } = render(
+        <DashboardSidebarNav user={{ name: 'User', email: 'user@sophia.ai', tier }} />
+      );
+      expect(container.querySelector('a[href="/dashboard/sop-creator"]')).toBeNull();
+      expect(container.querySelector('a[href="/dashboard/sop-marketplace"]')).toBeNull();
+      expect(screen.queryByText('SOP Creator')).toBeNull();
+      unmount();
+    }
   });
 
   it('highlights the active route with primary glow styling', () => {
