@@ -70,6 +70,9 @@ jobs:
       - name: Gate 1e — Vitest Unit & Integration Test Suite
         run: npm run test
 
+      - name: Gate 1f — D1 Migration Coverage (no CREATE TABLE outside migrations/)
+        run: bash scripts/check-migration-coverage.sh
+
   # =========================================================================
   # STAGE 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy
   # =========================================================================
