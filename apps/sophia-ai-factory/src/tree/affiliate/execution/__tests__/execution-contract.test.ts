@@ -7,6 +7,7 @@ import {
   evaluateArtifactGate,
   evaluatePublishGate,
   evaluateRenderGate,
+  hasVerifiedMedia,
   isTerminalState,
   transitionExecutionState,
   type ExecutionEvidence,
@@ -152,5 +153,32 @@ describe('execution state machine', () => {
     );
     expect(zeroBytes.ok).toBe(false);
     if (!zeroBytes.ok) expect(zeroBytes.error).toBe('MEDIA_NOT_VERIFIED');
+  });
+
+  // P0 regression: the publish side effect must re-verify byte-level media, not
+  // merely the existence of an artifact-shaped object. Without this, a render
+  // manifest (or a descriptor replayed from an earlier step) could be published.
+  it('publish gate rejects a present-but-unverified artifact (not just a missing one)', () => {
+    const badArtifacts: VerifiedArtifact[] = [
+      { ...artifact, byteSize: 0 },
+      { ...artifact, checksumSha256: '' },
+      { ...artifact, storageKey: '' },
+      { ...artifact, verifiedAtMs: 0 },
+      { ...artifact, verifiedAtMs: Number.NaN },
+    ];
+    for (const bad of badArtifacts) {
+      const res = evaluatePublishGate(evidence({ state: 'rendered', artifact: bad }));
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error).toBe('MEDIA_NOT_VERIFIED');
+    }
+    // A genuinely verified artifact still passes (no over-blocking).
+    expect(evaluatePublishGate(evidence({ state: 'rendered', artifact })).ok).toBe(true);
+  });
+
+  it('hasVerifiedMedia is a single predicate shared by artifact and publish gates', () => {
+    expect(hasVerifiedMedia(artifact)).toBe(true);
+    expect(hasVerifiedMedia(null)).toBe(false);
+    expect(hasVerifiedMedia(undefined)).toBe(false);
+    expect(hasVerifiedMedia({ ...artifact, byteSize: -1 })).toBe(false);
   });
 });

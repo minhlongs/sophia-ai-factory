@@ -184,4 +184,46 @@ describe('execution run repository', () => {
     expect(badTransition.ok).toBe(false);
     expect((await getExecutionRun(db, 'ws-a', run.value.id))?.state).toBe('render_queued');
   });
+
+  // P0 regression at the REAL durable boundary: recordVerifiedArtifact used to
+  // trust the `VerifiedArtifact` type and could persist a zero-byte descriptor
+  // and mark the run `rendered`. Prove it now refuses BEFORE any write.
+  it('recordVerifiedArtifact refuses unverified media: no artifact row, no rendered state', async () => {
+    const db = upgradedDb();
+    const run = await beginExecutionRun(db, {
+      tenantId: 'ws-a',
+      campaignId: 'camp-unverified',
+      idempotencyKey: 'event-unverified',
+      nowMs: 1000,
+    });
+    if (!run.ok) throw new Error(run.error);
+    await transitionRun(db, 'ws-a', run.value.id, 'approval_pending', 'render_queued', {}, 1001);
+
+    const badCases: VerifiedArtifact[] = [
+      { ...artifact, byteSize: 0 },
+      { ...artifact, checksumSha256: '' },
+      { ...artifact, storageKey: '' },
+      { ...artifact, verifiedAtMs: 0 },
+    ];
+    for (const bad of badCases) {
+      const res = await recordVerifiedArtifact(db, 'ws-a', run.value.id, bad, 1002);
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error).toBe('MEDIA_NOT_VERIFIED');
+    }
+
+    // No artifact row was written and the durable state is still queued.
+    const rows = await db
+      .prepare('SELECT id FROM affiliate_media_artifacts WHERE tenant_id = ? AND run_id = ?')
+      .bind('ws-a', run.value.id)
+      .all<{ id: string }>();
+    expect(rows.results).toHaveLength(0);
+    const current = await getExecutionRun(db, 'ws-a', run.value.id);
+    expect(current?.state).toBe('render_queued');
+    expect(current?.artifactId).toBeNull();
+
+    // A genuinely verified artifact still transitions to rendered (no over-block).
+    const good = await recordVerifiedArtifact(db, 'ws-a', run.value.id, artifact, 1003);
+    expect(good.ok).toBe(true);
+    expect((await getExecutionRun(db, 'ws-a', run.value.id))?.state).toBe('rendered');
+  });
 });
