@@ -246,9 +246,10 @@ export default async function AffiliatesDashboardPage(props: {
             {metricAvailability.totalVideosGenerated ? metrics.totalVideosGenerated : '—'}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            {isVi
-              ? 'Số video đã tạo. Queue chưa phải là media đã render'
-              : 'Videos produced. A queued job is not rendered media'}
+            {isVi ? 'Số video đã tạo' : 'Videos produced'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isVi ? 'Queue chưa phải là media đã render' : 'A queued job is not rendered media'}
           </p>
         </div>
       </div>
