@@ -88,6 +88,36 @@ export interface GateDecision {
   reason: ExecutionBlockReason | null;
 }
 
+/**
+ * Byte-level proof that an artifact is real media, not a manifest/descriptor.
+ *
+ * A TypeScript `VerifiedArtifact` type is only a compile-time claim: a caller
+ * (a render worker, a replay, a malformed provider callback) can still hand us
+ * an object with zero bytes or an empty checksum. This predicate is the single
+ * source of truth reused by BOTH the pure gates (artifact + publish) and the
+ * durable repository (`recordVerifiedArtifact`) so no boundary can report
+ * `rendered`/`publish_queued` on unverified media.
+ *
+ * `isFixture` stays allowed here only because the callers that persist media
+ * must set `is_fixture` and never present it to an operator as a real render;
+ * byte-level verification is independent of that flag.
+ */
+export function hasVerifiedMedia(
+  artifact: VerifiedArtifact | null | undefined,
+): boolean {
+  if (!artifact) return false;
+  return (
+    artifact.byteSize > 0 &&
+    typeof artifact.checksumSha256 === 'string' &&
+    artifact.checksumSha256.length > 0 &&
+    typeof artifact.storageKey === 'string' &&
+    artifact.storageKey.length > 0 &&
+    typeof artifact.verifiedAtMs === 'number' &&
+    Number.isFinite(artifact.verifiedAtMs) &&
+    artifact.verifiedAtMs > 0
+  );
+}
+
 const ALLOWED_TRANSITIONS: Record<ExecutionState, readonly ExecutionState[]> = {
   draft: ['approval_pending', 'blocked', 'cancelled'],
   approval_pending: ['render_queued', 'blocked', 'failed', 'cancelled'],
@@ -164,14 +194,7 @@ export function evaluateRenderGate(evidence: ExecutionEvidence): Result<GateDeci
 export function evaluateArtifactGate(evidence: ExecutionEvidence): Result<GateDecision, ExecutionBlockReason> {
   const common = commonGate(evidence);
   if (common) return failure(common);
-  const artifact = evidence.artifact;
-  if (
-    !artifact ||
-    !(artifact.byteSize > 0) ||
-    !artifact.checksumSha256 ||
-    !artifact.storageKey ||
-    !(artifact.verifiedAtMs > 0)
-  ) {
+  if (!hasVerifiedMedia(evidence.artifact)) {
     return failure('MEDIA_NOT_VERIFIED');
   }
   const transition = transitionExecutionState(evidence.state, 'rendered');
@@ -186,7 +209,10 @@ export function evaluateArtifactGate(evidence: ExecutionEvidence): Result<GateDe
 export function evaluatePublishGate(evidence: ExecutionEvidence): Result<GateDecision, ExecutionBlockReason> {
   const common = commonGate(evidence);
   if (common) return failure(common);
-  if (!evidence.artifact) return failure('MEDIA_NOT_VERIFIED');
+  // Re-verify byte-level media HERE, immediately before the publish side effect.
+  // A truthy manifest/descriptor object is not proof of rendered bytes, and the
+  // artifact gate may have run in an earlier step/retry of the job.
+  if (!hasVerifiedMedia(evidence.artifact)) return failure('MEDIA_NOT_VERIFIED');
   if (!evidence.affiliateTargetUrl || !evidence.targetAccount) return failure('LINK_OR_ACCOUNT_MISSING');
   const transition = transitionExecutionState(evidence.state, 'publish_queued');
   if (!transition.ok) return failure(transition.error);

@@ -49,6 +49,30 @@ jobs:
         env:
           CI: true
 
+      # Diagnostics only: the junit reporter hides failing test names from stdout,
+      # which makes a red Gate 1d hard to triage. Print failed testcases (names +
+      # messages, no payloads) when the job fails. Never changes the pass/fail
+      # result and never disables/skips any test.
+      - name: Diagnostics — print failed junit testcases
+        if: failure()
+        run: |
+          if [ ! -f test-results.xml ]; then echo "no junit report found"; exit 0; fi
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const s = readFileSync('test-results.xml', 'utf8');
+          const re = /<testcase\b([^>]*)>([\s\S]*?)<\/testcase>/g;
+          let m, n = 0;
+          while ((m = re.exec(s))) {
+            if (!/<failure|<error/.test(m[2])) continue;
+            const cls = (m[1].match(/classname="([^"]*)"/) || [])[1] || '';
+            const name = (m[1].match(/name="([^"]*)"/) || [])[1] || '';
+            const msg = (m[2].match(/message="([^"]*)"/) || [])[1] || '';
+            console.log(`FAIL ${cls} :: ${name} :: ${msg.slice(0, 200)}`);
+            n++;
+          }
+          console.log(`TOTAL FAILED TESTCASES: ${n}`);
+          NODE
+
       - name: Gate 3a — Changed executable lines and branches coverage >= 70%
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

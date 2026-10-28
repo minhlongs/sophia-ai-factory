@@ -11,6 +11,7 @@
 
 import { success, failure, type Result } from '@/seed/types/result';
 import {
+  hasVerifiedMedia,
   transitionExecutionState,
   type ExecutionBlockReason,
   type ExecutionState,
@@ -209,6 +210,13 @@ export async function recordVerifiedArtifact(
   artifact: VerifiedArtifact,
   nowMs: number = Date.now(),
 ): Promise<Result<ExecutionRunRecord, string>> {
+  // A `VerifiedArtifact`-typed object is only a compile-time claim. Reject
+  // zero-byte / empty-checksum / missing-storage descriptors BEFORE writing any
+  // row or advancing the state, so the durable DB can never say `rendered`
+  // without byte-level media proof. Same predicate as the pure gates.
+  if (!hasVerifiedMedia(artifact)) {
+    return failure('MEDIA_NOT_VERIFIED');
+  }
   try {
     await db
       .prepare(
