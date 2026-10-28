@@ -178,3 +178,20 @@ be verified with a NEW shortSha matching that merge commit's first 8 chars.
   process.cwd() instead of `__dirname` (coverage can rewrite it). Both are
   legitimate, non-bypassing changes. Awaiting CI iteration #2 for the actual
   failing test names before any fix.
+
+## 9. CI iteration #2 (PR #64) — ALL GREEN (2026-10-28T03:00:03Z)
+Head `4d52a946c`. `gh pr checks 64`:
+- Gate 1 PASS (`40621655779`, 26m18s): 1a tsc, 1b eslint, 1c boundaries,
+  1d Vitest-with-coverage, 3a diff-coverage, 3b source guards, 3c secret grep
+  ALL success. The diagnostics step was SKIPPED (1d passed -> no failures).
+- Gate 2 PASS (`40621655781`, 1m46s), Gate 4 PASS (`40621655955`, 1m22s).
+
+Root cause of iteration #1 resolved: the new deploy-env-consistency test used
+`__dirname` to locate the repo root; under Vitest coverage instrumentation in
+the full CI suite that resolves differently, so its real-file dependency checks
+failed. Replacing it with a `process.cwd()` walk-up (asserting the deploy.yml
+dependency exists) fixed it. This was a CODE issue in the new test, NOT the
+pre-existing `better-sqlite3` binding problem seen only in the local
+`--ignore-scripts` sandbox. No test disabled, no coverage threshold changed,
+no bypass. The diagnostics step (if: failure()) remains as a permanent,
+non-bypassing triage aid and correctly stayed skipped on a green run.
