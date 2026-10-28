@@ -1,10 +1,22 @@
 # Sophia OPC Affiliate — Remediation Plan
 
-Status: `validated-pending-red-team`
+Status: `partially-executed`
 Source audit: `docs/OPC_AFFILIATE_AUDIT_MATRIX_2026-10-27.md` (17 FAIL/BLOCKED of 18 groups)
-Branch: `feat/opc-affiliate-audit-repair`
-Pinned snapshot: `439635e1a2017c2643e013c0311631bd95409de4`
+Branch: `feat/opc-affiliate-real-<SECRET_0785f2a7>`
+Original snapshot: `439635e1a2017c2643e013c0311631bd95409de4`
 App root: `apps/sophia-ai-factory`
+
+Phase status as of 2026-10-28:
+
+| Phase | Status | How |
+|---|---|---|
+| P1 ledger table | `done` | migration 0482 landed via the upstream merge, unique dedup index present |
+| P3 real publish | `done` | real HTTP executor + duplicate-delivery guard, on this branch |
+| P2 error surfacing | `open` | dashboard still renders zeros over a failed reconciliation |
+| P4 learning loop | `open` | 2 of 3 workers registered upstream; remainder outstanding |
+| P5 credentials UI | `open` | route still accepts `z.record(z.string(), z.string())`, no UI |
+| P6 render continuation | `open` | |
+| P7 CI guards | `open` | `check-migration-coverage.sh` does not exist yet |
 
 ## Outcome
 
