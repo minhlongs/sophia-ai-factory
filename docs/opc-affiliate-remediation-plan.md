@@ -11,12 +11,12 @@ Phase status as of 2026-10-28 (post red-team, re-baselined against HEAD):
 | Phase | Status | How |
 |---|---|---|
 | P1 ledger table | `done` + `verify-only` | table and its unique dedup index already exist in `migrations/0482_opc_affiliate_execution_truth.sql:30-55`, git-tracked. Do NOT author a second DDL — it would reuse the taken number `0482` and weaken two shipped DB invariants (`CHECK (platform_fee_cents = 0)`, the `niche` default). |
-| P2 error surfacing | `mostly done` + 2 live defects | the silent catch is gone; `resolveDashboardViewState` returns an `error` state and `page.tsx:200` renders `earnings-unavailable`. Remnants: (a) `page.tsx:213` renders `metrics.totalBridgeClicks` as a bare `0` with no unavailable marker, in the error state; (b) the only module that actually reads video and click counts, `loadLiveAffiliateMetrics`, has zero production callers, so those cards are fed `EMPTY_AFFILIATE_METRICS` constants regardless of what the workspace holds. |
+| P2 error surfacing | `done` | the silent catch is gone and `resolveDashboardViewState` returns an `error` state. Both remnants fixed on this branch: bridge-clicks now carries its own readability instead of a bare `0`, and the production metrics module that reads `campaigns` and `affiliate_referral_clicks` has real callers again. |
 | P3 real publish | `done` | real HTTP executor + duplicate-delivery guard, on this branch. Three defects the red team found in the new code were fixed first (see below). |
 | P4 learning loop | `open` | array has 41 entries, not 40; four target workers are not exported from the barrel. See the ownership correction below. |
 | P5 credentials UI | `open` | route still accepts `z.record(z.string(), z.string())`, no UI. The only phase whose premise is fully live. |
 | P6 render continuation | `done` + `verify-only` | no functional `RENDER_READY` remains — only a comment and a test name. Terminal handling already emits a `RENDER_QUEUED` continuation. |
-| P7 CI guards | `open` — highest value | `check-migration-coverage.sh` exists but scans only `src/**/*.sql` and finds 0 files, so it passes trivially. The `createFunction` reachability check does not exist. |
+| P7 CI guards | `mostly done` | migration coverage guard fixed (it scanned a directory with 0 `.sql` files and mis-bound `|| true`, so it never compared anything) and wired into CI as Gate 1f. Still open: the `createFunction` reachability check, so an Inngest worker with no production caller still passes CI. |
 
 ### Red-team findings fixed before ship
 
