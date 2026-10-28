@@ -4,8 +4,9 @@
  * Distinguishes unauthenticated / unconnected / empty / loading-error / ready.
  * An error is never rendered as $0.00, a failed kill-switch read is never
  * rendered as "off", and a multi-currency ledger is never summed into one USD
- * figure. External affiliate earnings (Domain B) are separate from subscription
- * billing, Refer Sophia and partner payouts.
+ * figure. A video or click count that could not be read is rendered as
+ * unavailable, never as 0. External affiliate earnings (Domain B) are separate
+ * from subscription billing, Refer Sophia and partner payouts.
  *
  * Layer: app/[locale]/dashboard/affiliates (Presentation)
  */
@@ -31,16 +32,22 @@ import {
   type DomainBReconciliationSummary,
 } from '@/land/affiliates/reconciliation/workspace-domain-b-reconciliation';
 import {
-  EMPTY_AFFILIATE_METRICS,
   EMPTY_RECONCILIATION,
   AffiliateHookRankingTable,
   type AffiliateMetrics,
 } from './affiliates-dashboard-sections';
+import {
+  AFFILIATE_METRICS_UNAVAILABLE,
+  loadWorkspaceAffiliateMetrics,
+  type WorkspaceAffiliateMetrics,
+} from '@/land/affiliates/affiliate-live-metrics';
 
 export interface AffiliateDashboardData {
   tenantId: string;
   domainBSummary?: DomainBReconciliationSummary;
   metrics: AffiliateMetrics;
+  /** Which production figures could actually be read, so the UI never shows a zero it invented. */
+  metricAvailability: WorkspaceAffiliateMetrics['availability'];
   killSwitch: KillSwitchState;
   view: DashboardViewState;
 }
@@ -52,6 +59,7 @@ export async function loadWorkspaceAffiliateDashboardData(): Promise<AffiliateDa
   let dbAvailable = false;
   let queryOk = false;
   let summary: DomainBReconciliationSummary | undefined;
+  let workspaceMetrics = AFFILIATE_METRICS_UNAVAILABLE;
 
   try {
     const user = await getCurrentUser();
@@ -72,6 +80,9 @@ export async function loadWorkspaceAffiliateDashboardData(): Promise<AffiliateDa
 
         dbAvailable = rawD1 !== null;
         if (rawD1) {
+          // Video and bridge-click counts are keyed by user id: campaigns and
+          // affiliate_partners both carry user_id and no tenant column.
+          workspaceMetrics = await loadWorkspaceAffiliateMetrics(rawD1, user.id);
           const domainBRes = await fetchWorkspaceDomainBReconciliation(rawD1, tenantId);
           queryOk = domainBRes.ok;
           if (domainBRes.ok) summary = domainBRes.value;
@@ -108,7 +119,8 @@ export async function loadWorkspaceAffiliateDashboardData(): Promise<AffiliateDa
   return {
     tenantId,
     domainBSummary: summary,
-    metrics: { ...EMPTY_AFFILIATE_METRICS, totalCommissionUsd },
+    metrics: { ...workspaceMetrics.metrics, totalCommissionUsd },
+    metricAvailability: workspaceMetrics.availability,
     killSwitch,
     view,
   };
@@ -120,7 +132,7 @@ export default async function AffiliatesDashboardPage(props: {
   const { locale: rawLocale } = await props.params;
   const locale = rawLocale === 'vi' ? 'vi' : 'en';
   const isVi = locale === 'vi';
-  const { tenantId, domainBSummary, metrics, killSwitch, view } =
+  const { tenantId, domainBSummary, metrics, metricAvailability, killSwitch, view } =
     await loadWorkspaceAffiliateDashboardData();
 
   const reconciliation = domainBSummary
@@ -210,11 +222,19 @@ export default async function AffiliatesDashboardPage(props: {
           <p className="text-sm font-medium text-muted-foreground">
             {isVi ? 'Lượt Click Qua Bridge Page' : 'Bridge Page Clicks'}
           </p>
-          <h3 className="text-3xl font-bold mt-2">{metrics.totalBridgeClicks.toLocaleString()}</h3>
+          {metricAvailability.totalBridgeClicks ? (
+            <h3 className="text-3xl font-bold mt-2" data-testid="bridge-clicks-count">
+              {metrics.totalBridgeClicks.toLocaleString()}
+            </h3>
+          ) : (
+            <h3 className="text-xl font-semibold mt-2 text-muted-foreground" data-testid="bridge-clicks-unavailable">
+              {isVi ? 'Không có số liệu' : 'Not available'}
+            </h3>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
-            {view.state === 'ready'
+            {metricAvailability.totalBridgeClicks
               ? (isVi ? 'Dữ liệu workspace' : 'Workspace data')
-              : (isVi ? 'Chưa có dữ liệu' : 'No data yet')}
+              : (isVi ? 'Chưa đọc được số liệu' : 'Could not be read')}
           </p>
         </div>
 
@@ -223,10 +243,12 @@ export default async function AffiliatesDashboardPage(props: {
             {isVi ? 'Trạng Thái Sản Xuất' : 'Production State'}
           </p>
           <h3 className="text-xl font-semibold mt-2">
-            {view.state === 'ready' ? (isVi ? 'Đã ghi nhận' : 'Recorded') : stateCopy}
+            {metricAvailability.totalVideosGenerated ? metrics.totalVideosGenerated : '—'}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            {isVi ? 'Queue chưa phải là media đã render' : 'A queued job is not rendered media'}
+            {isVi
+              ? 'Số video đã tạo. Queue chưa phải là media đã render'
+              : 'Videos produced. A queued job is not rendered media'}
           </p>
         </div>
       </div>

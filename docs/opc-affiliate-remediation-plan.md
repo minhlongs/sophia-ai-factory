@@ -11,7 +11,7 @@ Phase status as of 2026-10-28 (post red-team, re-baselined against HEAD):
 | Phase | Status | How |
 |---|---|---|
 | P1 ledger table | `done` + `verify-only` | table and its unique dedup index already exist in `migrations/0482_opc_affiliate_execution_truth.sql:30-55`, git-tracked. Do NOT author a second DDL — it would reuse the taken number `0482` and weaken two shipped DB invariants (`CHECK (platform_fee_cents = 0)`, the `niche` default). |
-| P2 error surfacing | `mostly done` + 1 live defect | the silent catch is gone; `resolveDashboardViewState` returns an `error` state and `page.tsx:200` renders `earnings-unavailable`. Sole remnant: `page.tsx:213` renders `metrics.totalBridgeClicks` as a bare `0` with no unavailable marker, in the error state. |
+| P2 error surfacing | `mostly done` + 2 live defects | the silent catch is gone; `resolveDashboardViewState` returns an `error` state and `page.tsx:200` renders `earnings-unavailable`. Remnants: (a) `page.tsx:213` renders `metrics.totalBridgeClicks` as a bare `0` with no unavailable marker, in the error state; (b) the only module that actually reads video and click counts, `loadLiveAffiliateMetrics`, has zero production callers, so those cards are fed `EMPTY_AFFILIATE_METRICS` constants regardless of what the workspace holds. |
 | P3 real publish | `done` | real HTTP executor + duplicate-delivery guard, on this branch. Three defects the red team found in the new code were fixed first (see below). |
 | P4 learning loop | `open` | array has 41 entries, not 40; four target workers are not exported from the barrel. See the ownership correction below. |
 | P5 credentials UI | `open` | route still accepts `z.record(z.string(), z.string())`, no UI. The only phase whose premise is fully live. |
