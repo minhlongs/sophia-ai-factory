@@ -10,13 +10,14 @@ import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { decryptTokenVault } from '@/seed/security/oauth-token-vault';
 import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { getCredential, upsertCredential } from '@/land/social/platform-credentials-store';
-import { updatePublishJobStatus } from '@/land/social/publish-job-store';
+import { getPublishJob, updatePublishJobStatus } from '@/land/social/publish-job-store';
 import {
   evaluatePacingStepDecision,
   evaluateSafetyGuardsDecision,
   executePlatformUploadAdapter,
   buildPublishedResult,
   computeNextDailyPostCount,
+  isPublishJobAlreadyAttempted,
   type SocialPublishDispatchedEventData,
 } from './social-direct-publish-steps';
 
@@ -36,8 +37,16 @@ export async function processSocialDirectPublishJob({
 }): Promise<SocialPublishResult | { status: string; jobId: string; reason: string }> {
   const data = event.data as SocialPublishDispatchedEventData;
 
-  // Step 1: Pacing check
+  // Step 1: Pacing check + duplicate-delivery guard
   const pacingResult = await step.run('evaluate-pacing', async () => {
+    // A re-delivered event (Inngest retry, or a duplicate send) must never
+    // reach the provider twice. `UPLOADING` is written immediately before the
+    // provider call, so its presence means a previous delivery already tried.
+    const existing = await getPublishJob(data.jobId);
+    if (isPublishJobAlreadyAttempted(existing)) {
+      return { allowed: false, reason: 'ALREADY_UPLOADED', delayMs: 0 };
+    }
+
     const cred = await getCredential(data.userId, data.platform, data.channelId);
     const decision = evaluatePacingStepDecision(data, cred);
     if (decision.reason === 'DAILY_CAP_EXCEEDED') {
@@ -48,6 +57,9 @@ export async function processSocialDirectPublishJob({
     return decision;
   });
 
+  if (!pacingResult.allowed && pacingResult.reason === 'ALREADY_UPLOADED') {
+    return { status: 'SKIPPED_ALREADY_UPLOADED', jobId: data.jobId, reason: pacingResult.reason };
+  }
   if (!pacingResult.allowed && pacingResult.reason === 'DAILY_CAP_EXCEEDED') {
     return { status: 'HALTED_DAILY_CAP', jobId: data.jobId, reason: pacingResult.reason };
   }
@@ -73,7 +85,7 @@ export async function processSocialDirectPublishJob({
   if (!safetyCheck.allowed) return { status: 'ABORTED_SAFETY', jobId: data.jobId, reason: safetyCheck.reason };
 
   // Step 3: Vault decryption of access token
-  await step.run('decrypt-vault-token', async () => {
+  const vaultToken = await step.run('decrypt-vault-token', async () => {
     const cred = await getCredential(data.userId, data.platform, data.channelId);
     if (!cred) throw new Error('Missing channel credential during token retrieval');
     const tokens = await decryptTokenVault(cred.encryptedTokens, {
@@ -88,7 +100,7 @@ export async function processSocialDirectPublishJob({
   // Step 4: Dispatch upload chunk / container
   const uploadResult = await step.run('dispatch-platform-upload', async () => {
     try {
-      return executePlatformUploadAdapter(data);
+      return await executePlatformUploadAdapter({ ...data, accessToken: vaultToken.accessToken });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       await updatePublishJobStatus(data.jobId, 'FAILED', { error: msg });
