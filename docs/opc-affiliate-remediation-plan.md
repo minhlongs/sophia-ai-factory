@@ -6,17 +6,38 @@ Branch: `feat/opc-affiliate-real-<SECRET_0785f2a7>`
 Original snapshot: `439635e1a2017c2643e013c0311631bd95409de4`
 App root: `apps/sophia-ai-factory`
 
-Phase status as of 2026-10-28:
+Phase status as of 2026-10-28 (post red-team, re-baselined against HEAD):
 
 | Phase | Status | How |
 |---|---|---|
-| P1 ledger table | `done` | migration 0482 landed via the upstream merge, unique dedup index present |
-| P3 real publish | `done` | real HTTP executor + duplicate-delivery guard, on this branch |
-| P2 error surfacing | `open` | dashboard still renders zeros over a failed reconciliation |
-| P4 learning loop | `open` | 2 of 3 workers registered upstream; remainder outstanding |
-| P5 credentials UI | `open` | route still accepts `z.record(z.string(), z.string())`, no UI |
-| P6 render continuation | `open` | |
-| P7 CI guards | `open` | `check-migration-coverage.sh` does not exist yet |
+| P1 ledger table | `done` + `verify-only` | table and its unique dedup index already exist in `migrations/0482_opc_affiliate_execution_truth.sql:30-55`, git-tracked. Do NOT author a second DDL — it would reuse the taken number `0482` and weaken two shipped DB invariants (`CHECK (platform_fee_cents = 0)`, the `niche` default). |
+| P2 error surfacing | `mostly done` + 1 live defect | the silent catch is gone; `resolveDashboardViewState` returns an `error` state and `page.tsx:200` renders `earnings-unavailable`. Sole remnant: `page.tsx:213` renders `metrics.totalBridgeClicks` as a bare `0` with no unavailable marker, in the error state. |
+| P3 real publish | `done` | real HTTP executor + duplicate-delivery guard, on this branch. Three defects the red team found in the new code were fixed first (see below). |
+| P4 learning loop | `open` | array has 41 entries, not 40; four target workers are not exported from the barrel. See the ownership correction below. |
+| P5 credentials UI | `open` | route still accepts `z.record(z.string(), z.string())`, no UI. The only phase whose premise is fully live. |
+| P6 render continuation | `done` + `verify-only` | no functional `RENDER_READY` remains — only a comment and a test name. Terminal handling already emits a `RENDER_QUEUED` continuation. |
+| P7 CI guards | `open` — highest value | `check-migration-coverage.sh` exists but scans only `src/**/*.sql` and finds 0 files, so it passes trivially. The `createFunction` reachability check does not exist. |
+
+### Red-team findings fixed before ship
+
+Four lenses ran against this plan at `38b197301`. Three found real defects **in the code this
+branch authored**, all now fixed on the branch:
+
+1. `FAILED` was in the duplicate-delivery skip set, so a provider 401 or an unreadable
+   response made the job permanently un-retryable — and, because `retries: 3` sits on the
+   same function, silently cancelled all three Inngest retries. `FAILED` is now excluded from
+   `ALREADY_UPLOADED_STATUSES`; only `UPLOADING` (within the staleness window) and `PUBLISHED`
+   block a delivery.
+2. One provider failure was recorded against the circuit breaker twice — once in the
+   executor and again in the adapter that only rethrows — halving the effective open
+   threshold for rate-limit and server-error kinds. The redundant recording is gone.
+3. The breaker key was the caller-supplied `channelId`, and an unknown breaker key returns
+   `true`, so supplying a new channel string reset the accumulation. The key is now per
+   platform, with `channelId` retained in logs for diagnosis.
+
+Each fix has a test that asserts the new behaviour, including one that records the same
+failure twice under two different `channelId` values and asserts it lands on one key.
+
 
 ## Outcome
 
@@ -61,10 +82,10 @@ L3 (provider/production) and L4 (commercial) stay out of this plan by scope and 
 
 | Phase | Owns |
 |---|---|
-| P1 schema | `migrations/0482_workspace_external_commissions.sql`, `.gitignore` |
-| P2 error surfacing | `src/app/[locale]/dashboard/affiliates/page.tsx`, `affiliates-dashboard-sections.ts`, `affiliate-cockpit-service.ts` |
-| P3 publish | `src/forest/inngest/functions/social-direct-publish-steps.ts`, its `__tests__/` |
-| P4 registration | `src/app/api/inngest/serve/growth-functions.ts` |
+| P1 schema | no files — nothing to author. The table lives in `migrations/0482_opc_affiliate_execution_truth.sql`. If a genuine delta is ever required it must be numbered `0483_*` and must only add constraints. |
+| P2 error surfacing | `src/app/[locale]/dashboard/affiliates/page.tsx` (the file is `affiliates-dashboard-sections.tsx`, not `.ts`) |
+| P3 publish | `src/forest/inngest/functions/social-direct-publish-steps.ts`, `src/tree/social/publisher/upload-executor.ts`, their `__tests__/` |
+| P4 registration | `src/app/api/inngest/serve/growth-functions.ts`, `src/forest/inngest/functions/index.ts`, `src/forest/growth-triad-registry.ts` — the last two are required because the target workers are not barrel-exported today, so "only the array changes" will not compile |
 | P5 credentials UI | `src/app/api/v1/integrations/affiliate-networks/route.ts`, `src/app/[locale]/dashboard/affiliates/**` (NEW subroute — `dashboard/integrations/` does not exist today; the connections surface is added under the existing affiliates shell), `src/tree/affiliates/credentials/storage.ts`, `messages/vi.json`, `messages/en.json` |
 | P6 render continuation | `src/forest/inngest/functions/niche-video-dispatcher.ts` |
 | P7 CI guards | `.github/workflows/deploy.yml`, `scripts/check-migration-coverage.sh` |
@@ -132,49 +153,82 @@ Rollback: drop the two indexes and the table, or revert the commit before the de
 
 ### P2 — Surface reconciliation failures instead of zero metrics
 
-Files: `page.tsx`, `affiliates-dashboard-sections.ts`, `affiliate-cockpit-service.ts`.
+Files: `page.tsx` only.
 
-Replace the silent `catch { tenantId = user.id }` at `page.tsx:73-86` with an explicit
-failure result, and stop spreading `EMPTY_AFFILIATE_METRICS` over values that are never
-overridden (`affiliates-dashboard-sections.ts:15`) — that is what hardcodes
-`totalBridgeClicks` and `totalVideosGenerated` to 0 under labels promising real numbers.
-Add i18n keys for a ledger-unavailable state through P5 (do not edit the catalogues here).
+The headline defect is already fixed at HEAD: the silent `catch { tenantId = user.id }` is
+gone, the failure path captures the error, and `resolveDashboardViewState`
+(`land/affiliates/dashboard/dashboard-load-state.ts`) returns an `error` state that renders
+"Earnings are unavailable right now — this is not zero" with `data-testid="earnings-
+unavailable"` at `page.tsx:200` instead of `$0.00`.
 
-Acceptance: a forced SELECT failure renders an operator-visible error, not a zero KPI.
+The one live remnant is narrower than this phase originally described. `metrics.totalBridgeClicks`
+is spread from `EMPTY_AFFILIATE_METRICS` and never overridden, so `page.tsx:213` renders a
+`text-3xl font-bold` **0** under the label "Bridge Page Clicks" in *every* state — including
+`error`, where the sibling earnings card correctly refuses to show a number. So the error
+state is honest for the headline card and dishonest for this one.
 
-Risk: MEDIUM — this changes what a customer sees on failure, which is the point, but it
-touches a protected-by-doctrine dashboard. No route contract changes.
+Work: give the bridge-clicks figure the same unavailable treatment as the earnings card when
+the state is not `ready`. i18n keys route through P5; do not edit the catalogues here.
 
-### P3 — Make the publish adapter real
+Acceptance: when the dashboard state is `error`, the bridge-clicks card renders no numeric
+figure and carries the same unavailable marker as the earnings card.
 
-Files: `social-direct-publish-steps.ts` + `__tests__/`.
+Risk: LOW — one conditional render on an existing card. No route contract changes.
 
-Replace `executePlatformUploadAdapter`'s no-HTTP body: perform the upload through a labelled
-fixture adapter, return the provider's real post ID and URL, and return a classified failure
-(`@/seed/types/failure-kind`) when the call fails. Keep the circuit breaker
-(`shouldAllowRequest`/`recordSuccess`/`recordFailure`). A failure must reach the DLQ and the
-operator (links P6), never `recordSuccess`.
+Note for scope, not for this phase: a *tenant-key* mismatch between the credential writer and
+the reconciliation reader renders real commission rows as a legitimate-looking "no commission
+statements recorded yet." Nothing errors, so no amount of error-surfacing work catches it. That
+belongs to P5's key alignment and is documented there.
 
-Acceptance: adapter failure → failure recorded, no fabricated URL; duplicate delivery with
-the same idempotency key publishes once.
+### P3 — Make the publish adapter real — DONE, verify-only
+
+Files: `src/tree/social/publisher/upload-executor.ts` (new) and
+`src/forest/inngest/functions/social-direct-publish-steps.ts`, plus both `__tests__/`.
+
+`executePlatformUpload` performs the real HTTP exchange per platform, returns only a
+provider-supplied post id and URL, and throws `ProviderResultUnverifiableError` when the
+provider's response cannot yield a real id. The access token is threaded from a
+`decrypt-vault-token` step rather than being reachable from the event payload. Duplicate
+delivery is guarded so a re-delivered event does not reach the provider twice, with a
+staleness carve-out so a worker killed mid-upload leaves a resumable job.
+
+Three defects the red team found in this code are fixed on the branch and enumerated in the
+table above: `FAILED` blocking legitimate retries, a double-counted breaker failure, and a
+breaker key that a caller could reset by changing the channel string.
+
+Remaining work is verification, not implementation. This phase's original acceptance wording
+("a failure must reach the DLQ and the operator") has no substrate in the repo: there is no
+`onFailure` handler on any Inngest function, `dlq-reaper` is NOWPayments-IPN-scoped only, and
+`land/affiliates/commission-dlq.ts` has no production caller. A `FAILED` publishes row is
+written to `social_publish_jobs.error_message` and read by nothing — no UI surface and no
+cron reconciles that table. Making an operator visible failure real is therefore P7-scope
+work with a precondition, not a footnote here.
+
+Acceptance (met): an adapter failure records a classified failure exactly once and records no
+success, never fabricates a URL; a duplicate delivery for a terminal job does not upload
+again, while a stale `UPLOADING` and a previously `FAILED` job are both allowed to retry.
 
 Risk: HIGH — this is the row where fabricated success is most dangerous. It ships behind a
 labelled fixture at L2; no real YouTube credential is used.
 
-### P4 — Register the learning loop
+Files: `growth-functions.ts`, plus `src/forest/inngest/functions/index.ts` and
+`src/forest/growth-triad-registry.ts`, which the ownership table above now grants. The barrel
+grant is not optional: `banditTrafficWorker`, `creativeDeliberationWorker`,
+`predictiveRenderScheduleJob` and `predictiveRenderEvaluateJob` live under
+`forest/growth-v13/` and `forest/growth-v14/` and are not exported today, so adding them to
+the serve array alone will not compile.
 
-Files: `growth-functions.ts`.
+`flywheelFeedbackDispatcherJob` is already registered, so the live work is the two v13
+workers plus the v14 pair, not the three this phase originally listed.
 
-Add `banditTrafficWorker`, `creativeDeliberationWorker`, `flywheelFeedbackDispatcherJob` to
-the array (40 entries today; the barrel already `export *`s them, so only the array changes).
-Register `predictiveRenderScheduleJob` and `predictiveRenderEvaluateJob` in the same pass so
-the budget-validated write from A09 has a runtime.
-
-Acceptance: `src/app/api/inngest/serve/index.ts` serves 45 growth functions; a test asserts
-every `inngest.createFunction` export in `src/forest/` is reachable from the serve barrel.
+Acceptance: `src/app/api/inngest/serve/index.ts` serves every `inngest.createFunction` export
+in `src/forest/`; a test asserts that reachability over the real export list rather than a
+hand-counted number, because the count has already drifted once (40 → 41).
 
 Risk: MEDIUM — newly registered jobs start running. Each must be idempotent and derive its
-inputs from real rows, not `mockArms` (`bandit-traffic-worker.ts:33,58`).
+inputs from real rows, not `mockArms` (`bandit-traffic-worker.ts:33,58`). Open question for
+the founder: registering the whole v14 pair consumes render budget that A09 only budgeted for
+its own write, so it needs explicit intent before it is switched on.
 
 ### P5 — Customer-affecting credential surface + tenant key alignment
 
@@ -184,30 +238,47 @@ Files: `route.ts`, `src/app/[locale]/dashboard/affiliates/**` (new connections s
 than claiming a pre-existing one.
 
 Add a connections section that POSTs to `/api/v1/integrations/affiliate-networks`, replace
-the `z.record(z.string(), z.string())` payload at `route.ts:76-80` with a per-network
-discriminated schema (the `as unknown as NetworkCredentialPayload[typeof network]` cast is
-where all shape validation is currently skipped), and align the tenant key with
+the `z.record(z.string(), z.string())` payload at `route.ts:33` with a per-network
+discriminated schema (the `as unknown as NetworkCredentialPayload[typeof network]` cast at
+`:82` is where all shape validation is currently skipped), and align the tenant key with
 `resolveOrgId(user.id, db) ?? user.id` so credentials and reconciliation agree.
 
+**The alignment must ship with a migration, or it silently orphans every existing
+credential.** The writer keys rows on raw `user.id` (`route.ts:82`) while the reader resolves
+`orgId ?? user.id` (`page.tsx:63-64`). Storage upserts on `(tenant_id, network)`
+(`storage.ts:26`) and every read filters `tenant_id = ?`, so the moment the write side
+switches to the org key, a pre-existing row keyed on `user.id` becomes unreadable and the UI
+renders that network as unconfigured — with no error. The acceptance test cannot catch this
+because a fresh fixture is written and read under the new key and passes.
+
+So P5 must, in the same change: backfill `affiliate_network_credentials.tenant_id` from the
+old key to the resolved one, or read through both keys, and surface an operator-visible
+"credential exists but under a different key" state.
+
 Acceptance: a local fixture credential saves and is read back by the reconciliation path
-under the same tenant value; i18n keys added to both catalogues; `/login`, `/vi/login`,
-Setup Wizard, Telegram and NOWPayments IPN smoke unchanged.
+under the same tenant value; a *pre-existing* row under the old key is still reachable after
+the change; i18n keys added to both catalogues; `/login`, `/vi/login`, Setup Wizard,
+Telegram and NOWPayments IPN smoke unchanged.
 
-Risk: HIGH — touches the onboarding-gated surface and the i18n catalogues (Gate 1d goes red
-on any one-sided key).
+Risk: HIGH — touches the onboarding-gated surface, the i18n catalogues (Gate 1d goes red on
+any one-sided key), and a BYOK store where an orphaned row means the customer has to
+reconnect a network that is already connected.
 
-### P6 — Continue the chain after RENDER_READY
+### P6 — Continue the chain after RENDER_READY — DONE, verify-only
 
-Files: `niche-video-dispatcher.ts`.
+The premise no longer exists. `niche-video-dispatcher.ts` contains no functional `RENDER_READY`
+path — the two remaining occurrences are a comment and a test name. The terminal handling at
+`:300-318` returns `RENDER_QUEUED` with `nextAction: 'render_worker'` and `manifestIsMedia:
+false`, so a job that cannot proceed hands off to a render worker rather than stalling.
 
-After `RENDER_READY` (`:173-179`), either dispatch a render+ publish continuation or emit an
-explicit terminal failure, and register the resulting failure to the DLQ so P2 can show it.
+This phase's budget-gating risk note (gate the continuation on the approved content hash and the
+BYOK credential, not a default) is still the right principle, but it now belongs to whatever
+phase owns the render worker's credential resolution, not to a dispatcher that no longer
+terminates there.
 
-Acceptance: no job ends at `RENDER_READY` without either a continuation or a recorded
-failure; a stalled job is visible on the dashboard.
-
-Risk: MEDIUM — this consumes real render budget in a customer's account, so the continuation
-must be gated on the approved content hash and the BYOK credential, not on a default.
+Acceptance (met): no job ends at `RENDER_READY` without a continuation. A stalled job being
+*dashboard-visible* is not met and is tracked under P7, not here, because it needs the
+publish-job operator surface described in P3.
 
 ### P7 — CI guards that make the failure class impossible to repeat
 
