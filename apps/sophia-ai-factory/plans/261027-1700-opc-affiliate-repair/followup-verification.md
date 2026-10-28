@@ -195,3 +195,54 @@ pre-existing `better-sqlite3` binding problem seen only in the local
 `--ignore-scripts` sandbox. No test disabled, no coverage threshold changed,
 no bypass. The diagnostics step (if: failure()) remains as a permanent,
 non-bypassing triage aid and correctly stayed skipped on a green run.
+
+## 10. CI iteration #3 + merge + post-merge deploy (2026-10-28T03:23Z+)
+- Iteration #3 (head `47397f75d`, docs-only commit): Gate 1 PASS
+  (`40624281082`, 21m52s — all 1a-1d + 3a/3b/3c), Gate 2 PASS
+  (`40624281109`), Gate 4 PASS (`40624281081`). Diagnostics step SKIPPED
+  (green run). `mergeStateStatus: CLEAN`.
+- `gh pr merge 64 --merge` -> MERGED at `2026-10-28T03:24:02Z`, merge commit
+  `03f22ae8740ec9a09da192a577ab3598308a6288`; remote main advanced from
+  `00edba0a` to `03f22ae8`.
+- Post-merge `Production CI/CD Deploy` run `40626464036` triggered by push on
+  `main` at headSha `03f22ae8` (created 03:24:04Z). Being watched for
+  Stage 1 / 2a migration / 3a edge deploy / 3b secret metadata / 4 verify.
+  Expected Stage 2a: "No new migrations to apply" (0482 already applied in the
+  previous deploy; PR #64 adds no SQL). Expected Stage 3b: NO `--env health`
+  error this time (dead calls removed).
+
+## 11. FINAL post-merge CI/CD + live verification (2026-10-28T03:46-03:49Z)
+Deploy run `40626464036` on headSha `03f22ae8` -> conclusion SUCCESS
+(created 03:24:04Z, updated 03:46:32Z). ALL jobs/steps success:
+- Stage 1 (1a tsc, 1b eslint, 1c boundaries, 1d i18n, 1e vitest) success.
+- Stage 2a D1 delta migration: `Current live edge SHA: 00edba0a` ->
+  `No new migrations to apply.` — migration 0482 already applied in the PR #63
+  deploy; PR #64 adds no SQL. NO manual/remote migration by the agent.
+- Stage 2b `✓ Compiled successfully`, 2c packaging, Stage 3a edge deploy
+  success; Stage 3b secret metadata success.
+- **Deploy-config drift FIXED on production**: Stage 3b log now shows ONLY the
+  three top-level `wrangler secret put` commands -> `✨ Success! Uploaded secret
+  COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH`. The two `ERROR No environment
+  found ... "health"` lines from run 40605009064 are GONE. Remaining wrangler
+  WARNING "Multiple environments are defined ... no target environment" is
+  caused by the `[[env]]` array-of-tables (documented architectural blocker),
+  is non-fatal, and does not affect the main worker's secrets.
+- Stage 4a `✅ SUCCESS: Live edge shortSha (03f22ae8) matches commit SHA
+  (03f22ae8) on attempt 1!`; 4b `/api/health 200`, `/login 307`, `/vi/login
+  200`; 4c `Smoke Test Results: 4 passed, 0 failed`.
+
+Independent HTTP smoke (platform GET channel, no browser), 2026-10-28T03:49:07Z:
+- GET /api/version?finalShip=… -> 200
+  {"shortSha":"03f22ae8","deployedAt":"2026-10-28T03:45:35Z","opennextVersion":"1.19.11"}
+- GET /api/health?finalShip=… -> 200
+  {"status":"healthy","timestamp":"2026-10-28T03:49:07.593Z","environment":"production"}
+- GET /login?finalShip=… -> 200 EN "Welcome back / Sign in to your account"
+- GET /vi/login?finalShip=… -> 200 VI "Chào mừng trở lại / Đăng nhập vào tài khoản"
+SHA parity: expected = first 8 hex chars of merge commit
+`03f22ae8740ec9a09da192a577ab3598308a6288` = `03f22ae8`; live = `03f22ae8` ->
+MATCH. NOTE: this is 8-char parity per the public /api/version contract; the
+endpoint does NOT expose the full 40-char SHA to anonymous callers. Two
+independent vantage points (CI Stage 4a + this agent) agree.
+
+No SAS URLs committed (verified `git grep` on HEAD); temp SAS helper files
+removed. Evidence-only docs under ignored plans/ force-added.
