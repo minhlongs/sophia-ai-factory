@@ -160,15 +160,15 @@ describe('upload-executor (labelled fixtures)', () => {
       expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('INSTAGRAM_REELS', 'chan_1');
     });
 
-    it('falls back to the container creation id only when the provider returned it', async () => {
+    it('throws rather than presenting a container id as a published reel url', async () => {
       const fetchImpl = vi
         .fn()
         .mockResolvedValueOnce(fixtureResponse({ id: 'ig_container_555' }))
         .mockResolvedValueOnce(fixtureResponse({}));
 
-      const result = await executePlatformUpload({ ...igInput, fetchImpl: fetchImpl as unknown as typeof fetch });
-
-      expect(result.platformPostId).toBe('ig_container_555');
+      await expect(executePlatformUpload({ ...igInput, fetchImpl: fetchImpl as unknown as typeof fetch }))
+        .rejects.toThrow(/container id is not a live reel/);
+      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
     });
 
     it('throws when no container creation id is returned', async () => {

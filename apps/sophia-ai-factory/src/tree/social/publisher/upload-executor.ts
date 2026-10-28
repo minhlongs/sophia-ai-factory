@@ -188,7 +188,16 @@ async function uploadToInstagram(input: UploadExecutionInput, fetchImpl: typeof 
     fetchImpl,
   );
 
-  const mediaId = readString(publishPayload, ['id']) || creationId;
+  // The container id is NOT a published media id: it is the handle the
+  // container was created with, and a reel URL built from it points at an
+  // unpublished container. Only an id from the publish response counts.
+  const mediaId = readString(publishPayload, ['id']);
+  if (!mediaId) {
+    throw new ProviderResultUnverifiableError(
+      'INSTAGRAM_REELS',
+      'no published media id in provider response; the container id is not a live reel',
+    );
+  }
   return { platformPostId: mediaId, publishedUrl: `https://www.instagram.com/reel/${mediaId}/` };
 }
 

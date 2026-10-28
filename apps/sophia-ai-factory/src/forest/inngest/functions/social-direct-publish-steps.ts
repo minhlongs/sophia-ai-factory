@@ -42,21 +42,34 @@ export interface ChannelCredentialSnapshot {
  * `retries: 3`; without this guard a retry that died mid-upload re-sends the
  * same media to the provider and double-posts the channel.
  *
- * `UPLOADING` counts: it is only written immediately before the provider call,
- * so its presence proves a prior delivery reached the provider. `PACED` and
- * `PENDING` do not count — those are pre-upload states the retry may retake.
+ * `PUBLISHED` and `FAILED` count permanently — a terminal job is done, whether
+ * it succeeded or a provider rejected it.
+ *
+ * `UPLOADING` counts only while it is fresh. A worker can die between writing
+ * `UPLOADING` and writing a terminal status (deploy, timeout, crash), which
+ * would otherwise strand the job: every later delivery would skip it and it
+ * would never complete nor appear as retryable. After the grace window the
+ * status is treated as stale and the delivery is allowed to proceed.
  */
 export const ALREADY_UPLOADED_STATUSES = new Set<PublishJobStatus>(['UPLOADING', 'PUBLISHED', 'FAILED']);
 
+/** How long a stranded UPLOADING row stays authoritative before a retry may resume it. */
+export const UPLOADING_STALE_AFTER_MS = 15 * 60 * 1000;
+
 /**
- * True when the job already reached a post-attempt status, meaning a prior
- * delivery reached the provider and this delivery must be a no-op rather than
- * a second post.
+ * True when the job must not reach the provider on this delivery because a
+ * previous delivery already did. A stale `UPLOADING` returns false so a
+ * worker killed mid-upload leaves a resumable job rather than a dead one.
  */
 export function isPublishJobAlreadyAttempted(
-  job: { status: PublishJobStatus } | null | undefined,
+  job: { status: PublishJobStatus; updatedAt?: number | null } | null | undefined,
+  now: number = Date.now(),
 ): boolean {
-  return job ? ALREADY_UPLOADED_STATUSES.has(job.status) : false;
+  if (!job || !ALREADY_UPLOADED_STATUSES.has(job.status)) return false;
+  if (job.status !== 'UPLOADING') return true;
+  const updatedAt = typeof job.updatedAt === 'number' ? job.updatedAt : null;
+  if (updatedAt === null) return false;
+  return now - updatedAt < UPLOADING_STALE_AFTER_MS;
 }
 
 /**

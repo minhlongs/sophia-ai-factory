@@ -159,7 +159,11 @@ describe('socialDirectPublishJob & Server Actions', () => {
       .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_dup'))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_dup_1' }) });
     vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
-    vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'PUBLISHED' } as never);
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'PUBLISHED',
+      publishedUrl: 'https://www.youtube.com/shorts/provider_yt_dup_1',
+      updatedAt: Date.now(),
+    } as never);
 
     const event = {
       data: {
@@ -181,7 +185,12 @@ describe('socialDirectPublishJob & Server Actions', () => {
 
   it('publishes once — a retry that died mid-upload does not post the channel twice', async () => {
     vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
-    vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'UPLOADING' } as never);
+    // Fresh: a prior delivery reached the provider moments ago, so this
+    // retry must not send the same media a second time.
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'UPLOADING',
+      updatedAt: Date.now(),
+    } as never);
 
     const res = await processSocialDirectPublishJob({
       event: {
@@ -226,6 +235,37 @@ describe('socialDirectPublishJob & Server Actions', () => {
 
     expect(res.status).toBe('PUBLISHED');
     expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_from_paced');
+  });
+
+  it('resumes a job stranded in UPLOADING by a worker that died mid-upload', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_stranded'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_resumed' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    // Written 20 minutes ago, well past the grace window: the delivery that
+    // wrote it never reached a terminal status, so this one must proceed.
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'UPLOADING',
+      updatedAt: Date.now() - 20 * 60 * 1000,
+    } as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_stranded',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Stranded',
+          description: 'Stranded',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+    expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_resumed');
   });
 
   it('does not fabricate a post id or url when the upload transport fails outright', async () => {
