@@ -4,11 +4,14 @@ import { Link } from '@/navigation';
 import { buildCorePagePayload } from '@/seed/aeo';
 import { normalizeAeoLocale } from '@/tree/aeo';
 import { DualReadPageSection } from '@/forest/components/aeo';
-import { GuideVisualPipeline } from './guide-visual-pipeline';
-import { GuideBackendAtlas } from './guide-backend-atlas';
+import type { GuideActiveTarget } from '@/seed/guide';
 import { GuideSections } from './guide-sections';
+import { GuideWorkbench } from './guide-workbench';
 
 export const dynamic = 'force-static';
+
+/** Landing view: the first station of the pipeline, with no hash to read. */
+const GUIDE_INITIAL_TARGET: GuideActiveTarget = { mode: 'stage', step: 1 };
 
 export async function generateMetadata({
   params,
@@ -53,8 +56,8 @@ export default async function GuidePage({
           </p>
         </div>
 
-        <GuideVisualPipeline t={t} locale={normalizedLocale} />
-        <GuideBackendAtlas t={t} locale={normalizedLocale} />
+        <GuideWorkbench locale={normalizedLocale} initialTarget={GUIDE_INITIAL_TARGET} />
+
         <GuideSections t={t} />
         <DualReadPageSection payload={aeoPayload} />
       </div>

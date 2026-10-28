@@ -867,6 +867,44 @@ html {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Guide Interactive Workbench — circuit signal flow (pure CSS, no rAF)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes guide-signal-flow {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+.guide-signal-flow {
+  stroke: hsl(var(--primary));
+  stroke-dasharray: 22 78;
+  animation: guide-signal-flow 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-signal-flow {
+    animation: none;
+    stroke: hsl(var(--primary) / 0.45);
+    stroke-dasharray: none;
+  }
+}
+
+@keyframes guide-pulse-orb {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+.guide-pulse-orb {
+  transform-box: fill-box;
+  transform-origin: center;
+  fill: hsl(var(--accent));
+  animation: guide-pulse-orb 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-pulse-orb {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Reduced Motion
    ═══════════════════════════════════════════════════════════════════════════ */
 
