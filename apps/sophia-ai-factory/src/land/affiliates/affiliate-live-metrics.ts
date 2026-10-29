@@ -47,7 +47,12 @@ export const AFFILIATE_METRICS_UNAVAILABLE: WorkspaceAffiliateMetrics = {
   },
 };
 
-/** Reads one scalar count. Returns null when the statement itself could not run. */
+/**
+ * Reads one scalar count. Returns null whenever the figure was not actually
+ * read — the statement threw, it returned no row, or the value is not a number.
+ * A `COUNT(*)` that runs always returns exactly one row, so a missing row means
+ * the read did not produce a figure, and `availability` must be false.
+ */
 async function readCount(
   db: D1Database,
   sql: string,
@@ -55,8 +60,10 @@ async function readCount(
 ): Promise<number | null> {
   try {
     const row = await db.prepare(sql).bind(...bindings).first<{ count: number | string }>();
-    if (!row) return 0;
-    return typeof row.count === 'number' ? row.count : Number(row.count) || 0;
+    if (!row) return null;
+    if (typeof row.count === 'number') return Number.isFinite(row.count) ? row.count : null;
+    const parsed = Number(row.count);
+    return Number.isFinite(parsed) ? parsed : null;
   } catch {
     return null;
   }

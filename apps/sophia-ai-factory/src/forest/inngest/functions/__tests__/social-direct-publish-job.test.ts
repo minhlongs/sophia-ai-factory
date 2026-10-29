@@ -76,6 +76,9 @@ describe('socialDirectPublishJob & Server Actions', () => {
       expiresAt: Date.now() + 3600000,
     });
     vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'PENDING' } as never);
+    // The claim is the gate this delivery must win. Default it to won so the
+    // happy-path cases exercise the upload; the claim-lost cases override it.
+    vi.mocked(jobStore.claimPublishJobForUpload).mockResolvedValue({ status: 'UPLOADING' } as never);
   });
 
   it('orchestrates direct publish with the decrypted token threaded into the upload', async () => {
@@ -93,7 +96,6 @@ describe('socialDirectPublishJob & Server Actions', () => {
       data: {
         jobId: 'job_yt_1',
         userId: 'user_1',
-        accessToken: 'ignored_event_field',
         channelId: 'chan_yt_1',
         platform: 'YOUTUBE_SHORTS' as const,
         videoUrl: 'https://cdn.example.com/v.mp4',
@@ -108,7 +110,9 @@ describe('socialDirectPublishJob & Server Actions', () => {
       'https://www.youtube.com/shorts/provider_yt_video_1',
     );
     expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:YOUTUBE_SHORTS');
-    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith('job_yt_1', 'UPLOADING');
+    // Ownership is taken by the claim, not by an inline status write, so the
+    // provider is only reached after the guarded UPDATE actually won.
+    expect(jobStore.claimPublishJobForUpload).toHaveBeenCalledWith('job_yt_1');
 
     const ttRes = await processSocialDirectPublishJob({
       event: { data: { ...ytEvent.data, jobId: 'job_tt_1', platform: 'TIKTOK_V2' as const } },
@@ -235,6 +239,83 @@ describe('socialDirectPublishJob & Server Actions', () => {
 
     expect(res.status).toBe('PUBLISHED');
     expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_from_paced');
+  });
+
+  it('does not upload when another delivery won the claim on the same media', async () => {
+    // Both deliveries read the row as PENDING, so both pass the pre-flight
+    // guard. Only the guarded UPDATE decides the winner: this delivery loses it
+    // and must not reach the provider at all.
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'PENDING' } as never);
+    vi.mocked(jobStore.claimPublishJobForUpload).mockResolvedValue(null as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_claim_lost',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Claim Lost',
+          description: 'Claim Lost',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('SKIPPED_CLAIM_LOST');
+    expect(fixtureFetch).not.toHaveBeenCalled();
+    expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+    // A lost claim is not an error: the job must not be written FAILED, or the
+    // delivery that actually owns the upload would have its status overwritten.
+    expect(jobStore.updatePublishJobStatus).not.toHaveBeenCalledWith(
+      'job_claim_lost',
+      'FAILED',
+      expect.anything(),
+    );
+  });
+
+  it('sends the decrypted token to the provider, never the event payload field', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_tok'))
+      .mockResolvedValue({ ok: true, json: async () => ({ id: 'provider_yt_token_1' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
+    // A plaintext token is a credential. Whatever the event happens to carry,
+    // the provider must see the freshly decrypted vault token instead.
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_token_check',
+          userId: 'user_1',
+          accessToken: 'stale_token_that_must_not_be_sent',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Token Check',
+          description: 'Token Check',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+
+    const sentAuthHeaders = fixtureFetch.mock.calls
+      .map((call) => (call[1] as { headers?: Record<string, string> } | undefined)?.headers)
+      .filter(Boolean)
+      .flatMap((headers) => Object.entries(headers as Record<string, string>))
+      .filter(([key]) => /authoriz/i.test(key))
+      .map(([, value]) => String(value));
+
+    expect(sentAuthHeaders.length).toBeGreaterThan(0);
+    for (const header of sentAuthHeaders) {
+      expect(header).toContain(fixtureToken);
+      expect(header).not.toContain('stale_token_that_must_not_be_sent');
+    }
+    // The token is decrypted on every delivery rather than trusted from the event.
+    expect(vault.decryptTokenVault).toHaveBeenCalledTimes(1);
   });
 
   it('resumes a job stranded in UPLOADING by a worker that died mid-upload', async () => {

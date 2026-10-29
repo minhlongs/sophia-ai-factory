@@ -21,8 +21,6 @@ export interface SocialPublishDispatchedEventData {
   description: string;
   tags?: string[];
   totalSizeBytes?: number;
-  /** Decrypted channel access token, resolved by the orchestrator's credential step. */
-  accessToken: string;
 }
 
 export interface ChannelCredentialSnapshot {
@@ -77,16 +75,22 @@ export function isPublishJobAlreadyAttempted(
  * Uploads the media to the platform and returns the provider-confirmed post id
  * and URL. There is no fabricated-URL path: if the provider does not yield a
  * real id, this throws and the caller marks the job FAILED.
+ *
+ * The decrypted access token is an explicit argument, never a field on the
+ * event data. An Inngest event payload is durable, retried, and readable in
+ * the Inngest dashboard, so a plaintext provider token must not travel in it —
+ * it is decrypted fresh in the orchestrator's vault step on every delivery.
  */
 export async function executePlatformUploadAdapter(
   data: SocialPublishDispatchedEventData,
+  accessToken: string,
 ): Promise<{ platformPostId: string; publishedUrl: string }> {
   // No try/catch wrapper: executePlatformUpload already records a classified
   // failure with the breaker before rethrowing. Catching here only to rethrow
   // would be dead code; the caller's step writes FAILED and rethrows itself.
   return executePlatformUpload({
     platform: data.platform,
-    accessToken: data.accessToken,
+    accessToken,
     videoUrl: data.videoUrl,
     jobId: data.jobId,
     channelId: data.channelId,
