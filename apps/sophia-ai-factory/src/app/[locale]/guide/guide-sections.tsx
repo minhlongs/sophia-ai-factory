@@ -2,102 +2,80 @@ import { Link } from '@/navigation';
 
 // i18n-namespace: guide
 
-export interface Step {
-  num: number;
-  titleKey: string;
-  descKey: string;
-  calloutKey?: string;
-}
+const SUPPORT_ITEMS = [
+  {
+    key: 'support_telegram',
+    href: '#telegram',
+    emoji: '\u{1F4F1}',
+    external: false,
+  },
+  {
+    key: 'support_bot',
+    href: 'https://t.me/Sophia_Bbot',
+    emoji: '\u{1F4AC}',
+    external: true,
+  },
+  {
+    key: 'support_email',
+    href: 'mailto:support@mekongmind.com',
+    emoji: '✉️',
+    external: false,
+  },
+] as const;
 
-export const STEPS: Step[] = [
-  { num: 1, titleKey: 'step1_title', descKey: 'step1_desc', calloutKey: 'callout_no_account' },
-  { num: 2, titleKey: 'step2_title', descKey: 'step2_desc', calloutKey: 'callout_keys_info' },
-  { num: 3, titleKey: 'step3_title', descKey: 'step3_desc' },
-  { num: 4, titleKey: 'step4_title', descKey: 'step4_desc' },
-  { num: 5, titleKey: 'step5_title', descKey: 'step5_desc' },
-];
-
-export interface NextStep {
-  titleKey: string;
-  descKey: string;
-  href: string;
-  emoji: string;
-}
-
-export const NEXT_STEPS: NextStep[] = [
-  { titleKey: 'next_step_telegram', descKey: 'next_step_telegram_desc', href: '/dashboard', emoji: '\u{1F4F1}' },
-  { titleKey: 'next_step_how', descKey: 'next_step_how_desc', href: '/pricing', emoji: '⚙️' },
-  { titleKey: 'next_step_faq', descKey: 'next_step_faq_desc', href: '/pricing', emoji: '❓' },
-];
+const NEXT_ITEMS = [{ key: 'next_step_how', href: '/contact', emoji: '⚙️' }] as const;
 
 export function GuideSections({ t }: { t: (key: string) => string }) {
   return (
-    <>
-      <div className="mb-12">
-        <h2 className="text-xl font-bold text-white mb-6">
-          {t('gettingStarted.steps_title')}
-        </h2>
-        <div className="space-y-6">
-          {STEPS.map((step) => (
-            <div
-              key={step.num}
-              className="bg-card border border-border rounded-xl p-6 flex gap-4"
+    <div className="mb-12 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-3 text-lg font-bold text-foreground">{t('gettingStarted.step5_title')}</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {SUPPORT_ITEMS.map((item) => (
+            <a
+              key={item.key}
+              href={item.href}
+              {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              className="flex items-start gap-3 rounded-lg bg-muted/30 p-4 transition-colors hover:bg-muted/50"
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                {step.num}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white mb-1">
-                  {t(`gettingStarted.${step.titleKey}`)}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {t(`gettingStarted.${step.descKey}`)}
+              <span className="mt-0.5 text-xl">{item.emoji}</span>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {t(`gettingStarted.${item.key}`)}
                 </p>
-                {step.calloutKey && (
-                  <div className="mt-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 text-xs text-muted-foreground">
-                    {t(`gettingStarted.${step.calloutKey}`)}
-                  </div>
-                )}
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {t(`gettingStarted.${item.key}_desc`)}
+                </p>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6 mb-12">
-        <h2 className="text-lg font-bold text-white mb-2">
-          {t('gettingStarted.step5_title')}
-        </h2>
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          <span>{t('gettingStarted.step5_telegram')}</span>
-          <span>{t('gettingStarted.step5_email')}</span>
-        </div>
-      </div>
-
-      <div className="bg-card border border-border rounded-xl p-6">
-        <h2 className="text-lg font-bold text-white mb-4">
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-3 text-lg font-bold text-foreground">
           {t('gettingStarted.next_steps_title')}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {NEXT_STEPS.map((step) => (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {NEXT_ITEMS.map((item) => (
             <Link
-              key={step.titleKey}
-              href={step.href}
-              className="flex items-start gap-3 bg-muted/30 hover:bg-muted/50 rounded-lg p-4 transition-colors"
+              key={item.key}
+              href={item.href}
+              className="flex items-start gap-3 rounded-lg bg-muted/30 p-4 transition-colors hover:bg-muted/50"
             >
-              <span className="text-xl mt-0.5">{step.emoji}</span>
+              <span className="mt-0.5 text-xl">{item.emoji}</span>
               <div>
-                <p className="text-sm font-medium text-white">
-                  {t(`gettingStarted.${step.titleKey}`)}
+                <p className="text-sm font-medium text-foreground">
+                  {t(`gettingStarted.${item.key}`)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t(`gettingStarted.${step.descKey}`)}
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {t(`gettingStarted.${item.key}_desc`)}
                 </p>
               </div>
             </Link>
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }
