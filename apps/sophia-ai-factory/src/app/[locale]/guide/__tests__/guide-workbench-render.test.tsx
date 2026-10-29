@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import viMessages from '../../../../../messages/vi.json';
@@ -94,5 +94,32 @@ describe('guide workbench render', () => {
   it('exposes the canvas under a named group a screen reader can enter', () => {
     renderWorkbench();
     expect(screen.getByRole('group', { name: canvasLabel })).toBeDefined();
+  });
+
+  // The arrow keys are the only way to walk the pipeline without the mouse, and
+  // the handler is re-registered whenever the target changes. If it went stale,
+  // the second press would still read the first station.
+  it('walks forward and back through the stations with the arrow keys', () => {
+    renderWorkbench();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(screen.getByText('TRẠM 02 / 05')).toBeDefined();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(screen.getByText('TRẠM 03 / 05')).toBeDefined();
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    expect(screen.getByText('TRẠM 02 / 05')).toBeDefined();
+  });
+
+  it('clamps at the last station instead of wrapping to the first', () => {
+    setHash('/vi/guide#stage-5');
+    renderWorkbench();
+    expect(screen.getByText('TRẠM 05 / 05')).toBeDefined();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(screen.getByText('TRẠM 05 / 05')).toBeDefined();
+  });
+
+  it('pushes the new station into the hash so the deep link follows the user', () => {
+    renderWorkbench();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(window.location.hash).toBe('#stage-2');
   });
 });
