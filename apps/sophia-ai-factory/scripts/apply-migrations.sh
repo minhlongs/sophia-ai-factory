@@ -927,6 +927,133 @@ guard_add_column() {
 #
 # NOTE: macOS ships ugrep as `grep -P`, which rejects variable-length lookbehind
 # assertions. Parse with sed instead so the guard runs on the supported toolchain.
+#
+# Emits one logical SQL statement per line, with double-quoted identifiers
+# unquoted so that `user` and "user" classify identically. `--` comments are
+# stripped unless they sit inside a single-quoted literal, `;` terminates a
+# statement unless it is inside such a literal, and newlines are folded to spaces
+# so a statement wrapped across lines stays whole. Migration authors in this repo
+# wrap statements routinely — `ALTER TABLE account_deletion_requests` / newline /
+# `ADD COLUMN confirmation_token_hash TEXT` (0104), and 0480 writes the statement
+# whose loss broke signup as `ALTER TABLE "user" ADD COLUMN ...`. A per-line
+# matcher sees neither and reads such a file as rebuild-only, which is the exact
+# failure that dropped `twoFactorEnabled` from `user`.
+fold_sql_statements() {
+  node -e '
+    const fs = require("fs");
+    const SQUOTE = String.fromCharCode(39);
+    const DQUOTE = String.fromCharCode(34);
+    const raw = fs.readFileSync(process.argv[1], "utf8");
+    const statements = [];
+    let current = "";
+    let inLiteral = false;
+    const flush = () => {
+      const trimmed = current.replace(/\s+/g, " ").trim();
+      if (trimmed) statements.push(trimmed);
+      current = "";
+    };
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (inLiteral) {
+        if (ch === SQUOTE) {
+          // A doubled quote is an escaped quote inside the literal, not its end.
+          if (raw[i + 1] === SQUOTE) {
+            current += SQUOTE + SQUOTE;
+            i++;
+            continue;
+          }
+          inLiteral = false;
+        }
+        current += ch;
+        continue;
+      }
+      if (ch === SQUOTE) {
+        inLiteral = true;
+        current += ch;
+        continue;
+      }
+      if (ch === "-" && raw[i + 1] === "-") {
+        while (i < raw.length && raw[i] !== "\n") i++;
+        continue;
+      }
+      if (ch === ";") {
+        flush();
+        continue;
+      }
+      // Identifier quoting is not load-bearing for classification: strip it here
+      // so "user" and user match the same table-name pattern below.
+      if (ch === DQUOTE) {
+        if (raw[i + 1] === DQUOTE) {
+          i++;
+          continue;
+        }
+        continue;
+      }
+      current += ch;
+    }
+    flush();
+    console.log(statements.join("\n"));
+  ' "$1"
+}
+
+# Reports whether a migration changes schema shape additively: a new column, a
+# new table, or a new index. Rebuilding a table (DROP old, CREATE staging, RENAME
+# staging onto old) already owns its own shape, so the staging table and the
+# indexes recreated on it do not count — only objects that are NOT part of a
+# rebuild do. A staging table is one that some RENAME TO in the same file renames
+# onto another name; an index is rebuild-owned when it is created on a table that
+# is rebuilt in the same file.
+#
+# This deliberately answers "does it contain additive DDL", never "will it apply
+# cleanly". Calling a mixed migration additive when it is really a rebuild costs
+# one loud wrangler error; calling a mixed migration rebuild-only discards the
+# additive statements while the ledger records the file as applied.
+has_additive_ddl() {
+  local migration_file="$1"
+  local stmt name staged="" rebuilt=""
+
+  # Pass 1: learn which names this file rebuilds. This must finish before any
+  # CREATE is judged, because `CREATE TABLE campaigns_new` (line 51 of 0480)
+  # precedes the `RENAME TO campaigns` (line 83) that reveals it as staging.
+  #   DROP TABLE x              -> x is being rebuilt
+  #   ALTER TABLE y RENAME TO x -> y is staging, x is rebuilt
+  while IFS= read -r stmt; do
+    [ -z "$stmt" ] && continue
+    name=$(echo "$stmt" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]"]+)[[:space:]]+RENAME[[:space:]]+TO[[:space:]]+([^;[:space:]"]+).*/\1/p' | tr -d '"; ')
+    [ -n "$name" ] && staged+="${name} "
+    name=$(echo "$stmt" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]"]+)[[:space:]]+RENAME[[:space:]]+TO[[:space:]]+([^;[:space:]"]+).*/\2/p' | tr -d '"; ')
+    [ -n "$name" ] && rebuilt+="${name} "
+    name=$(echo "$stmt" | sed -nE 's/^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+(IF[[:space:]]+EXISTS[[:space:]]+)?([^;[:space:]"]+).*/\2/p' | tr -d '"; ')
+    [ -n "$name" ] && rebuilt+="${name} "
+  done < <(fold_sql_statements "$migration_file")
+
+  # Pass 2: classify every ADD COLUMN / CREATE TABLE / CREATE INDEX statement.
+  while IFS= read -r stmt; do
+    [ -z "$stmt" ] && continue
+    # A new column on an existing table is additive regardless of which table.
+    if echo "$stmt" | grep -qiE '^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]"]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+'; then
+      return 0
+    fi
+    if echo "$stmt" | grep -qiE '^[[:space:]]*CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX[[:space:]]+'; then
+      # An index is rebuild-owned when it is created on a table this file rebuilds.
+      local on
+      on=$(echo "$stmt" | sed -nE 's/^[[:space:]]*CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX[[:space:]]+(IF[[:space:]]+NOT[[:space:]]+EXISTS[[:space:]]+)?[^;[:space:]"]+[[:space:]]+ON[[:space:]]+([^;[:space:]"(]+).*/\3/p' | tr -d '"; ')
+      if [ -n "$on" ]; then
+        case " ${rebuilt} " in *" ${on} "*) continue ;; esac
+      fi
+      return 0
+    fi
+    if echo "$stmt" | grep -qiE '^[[:space:]]*CREATE[[:space:]]+TABLE[[:space:]]+'; then
+      name=$(echo "$stmt" | sed -nE 's/^[[:space:]]*CREATE[[:space:]]+TABLE[[:space:]]+(IF[[:space:]]+NOT[[:space:]]+EXISTS[[:space:]]+)?([^;[:space:]"]+).*/\2/p' | tr -d '"; ')
+      [ -z "$name" ] && continue
+      # The staging table of a rebuild is not a new object.
+      case " ${staged} " in *" ${name} "*) continue ;; esac
+      return 0
+    fi
+  done < <(fold_sql_statements "$migration_file")
+  return 1
+}
+
 guard_drop_rename() {
   local migration_file="$1"
 
@@ -972,6 +1099,25 @@ guard_drop_rename() {
 
   local expected=${#tables_to_check[@]}
   if [ "${count:-0}" -lt "$expected" ]; then
+    # A missing DROP/RENAME target is only safe to read as "already applied" when
+    # the file does nothing else. If the same file also carries additive DDL
+    # (ALTER TABLE ... ADD COLUMN, CREATE TABLE, CREATE INDEX), skipping it would
+    # discard those statements while the ledger still records the file as done —
+    # which is exactly how signup lost the twoFactorEnabled column for days.
+    #
+    # Let such a file run instead. The additive statements get their chance to
+    # apply, and if a rebuild target really is missing the DDL itself fails with
+    # a SQLite error naming the exact table — far more actionable than a silent
+    # skip that leaves the ledger lying. Note the guard counts staging tables
+    # (`<t>_new`), which never survive their own RENAME, so a short count here
+    # does not by itself prove the rebuild targets are gone.
+    if has_additive_ddl "$migration_file"; then
+      echo "WARNING: Pre-flight guard: ${expected} table(s) in DROP/RENAME not found, and ${migration_file} also contains additive DDL."
+      echo "   Tables checked: ${tables_to_check[*]}"
+      echo "   Tables found:   ${count}"
+      echo "   -> Running it anyway: skipping would silently drop the additive statements while still recording this file as applied."
+      return 0
+    fi
     echo "WARNING: Pre-flight guard: ${expected} table(s) in DROP/RENAME not found in sqlite_master."
     echo "   Tables checked: ${tables_to_check[*]}"
     echo "   Tables found:   ${count}"
