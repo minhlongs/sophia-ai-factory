@@ -1,27 +1,31 @@
 #!/usr/bin/env bash
 # check-migration-coverage.sh
 #
-# Guards against the INC-2026-01 root cause: SQL files in src/ that
-# declare CREATE TABLE but live OUTSIDE the canonical migrations/ folder
-# that `scripts/apply-migrations.sh` walks. Those tables never reach
-# production D1.
+# Guards against the INC-2026-01 root cause: SQL files that declare CREATE
+# TABLE but live OUTSIDE the canonical migrations/ folder that
+# `scripts/apply-migrations.sh` walks. Those tables never reach production D1.
+#
+# This guard used to scan only `src/**/*.sql`, a directory that holds zero .sql
+# files in this repo, so it reported "OK" after checking nothing. It now scans
+# every .sql file in the worktree except the two canonical locations, and fails
+# loudly when it has examined no file at all.
 #
 # How it works:
 #   1. Collect canonical D1 table names from migrations/*.sql
-#   2. For each .sql file under src/:
+#   2. For every other .sql file in the repo:
 #      a. If it contains Postgres-only syntax (JSONB, gen_random_uuid,
 #         CREATE POLICY, RETURNS TRIGGER $$, COMMENT ON, …) → treat as
 #         Supabase target, skip the check.
 #      b. Otherwise extract its CREATE TABLE statements; every table name
 #         must also appear in canonical migrations/.
-#   3. Exit 1 with a helpful message if any orphans found.
+#   3. Fail if any orphan table is found, or if no file was examined at all.
 #
 # Usage:
 #   bash scripts/check-migration-coverage.sh
 #
 # Exit codes:
 #   0  all D1 CREATE TABLE statements have canonical matches
-#   1  at least one orphan table found
+#   1  at least one orphan table found, or the scan covered no files
 
 set -euo pipefail
 
@@ -32,7 +36,7 @@ cd "$REPO_ROOT"
 # enough to classify the file as non-D1 and skip orphan detection.
 PG_MARKERS='JSONB|gen_random_uuid|TEXT\[\]|ROW LEVEL SECURITY|CREATE POLICY|TO authenticated|UUID PRIMARY|RETURNS TRIGGER|\$\$|COMMENT ON|TIMESTAMP WITH TIME ZONE'
 
-canonical_tables=$(grep -hioE 'CREATE TABLE (IF NOT EXISTS )?[a-zA-Z_]+' migrations/*.sql 2>/dev/null \
+canonical_tables=$(grep -hioE 'create table (if not exists )?[a-zA-Z_][a-zA-Z0-9_]*' migrations/*.sql 2>/dev/null \
   | awk '{print tolower($NF)}' \
   | sort -u)
 
@@ -52,9 +56,17 @@ while IFS= read -r sql_file; do
     continue
   fi
 
-  tables_in_file=$(grep -ioE 'CREATE TABLE (IF NOT EXISTS )?[a-zA-Z_]+' "$sql_file" 2>/dev/null || true \
+  # `|| true` must wrap the WHOLE pipeline, not just grep. Writing it as
+  # `grep ... || true | awk` binds it to grep alone, and because `||` has lower
+  # precedence than `|`, awk then only runs when grep FAILS — so every
+  # successfully extracted CREATE TABLE skipped the awk and was compared as the
+  # raw 'CREATE TABLE IF NOT EXISTS x' string, which never matches a table name.
+  # Every real table would have been reported as an orphan, and the guard would
+  # have been silenced rather than fixed. `sort -u` never fails, so this form is
+  # safe under `set -o pipefail`.
+  tables_in_file=$(grep -hioE 'create table (if not exists )?[a-zA-Z_][a-zA-Z0-9_]*' "$sql_file" 2>/dev/null \
     | awk '{print tolower($NF)}' \
-    | sort -u)
+    | sort -u) || tables_in_file=""
 
   [ -z "$tables_in_file" ] && continue
 
@@ -66,17 +78,38 @@ while IFS= read -r sql_file; do
       orphans_found=$((orphans_found + 1))
     fi
   done <<< "$tables_in_file"
-# Scan src/**/*.sql but exclude historical seed/db/migrations/ (already applied).
-# The canonical check is: every CREATE TABLE in src/ must also exist in migrations/.
-done < <(find src -name "*.sql" -type f \
-  -not -path "src/seed/db/migrations/*" \
-  2>/dev/null | sort)
+# Scan every .sql file in the repo except the two canonical locations. Scanning
+# only src/ was the defect that made this guard vacuous — see the header note.
+done < <(find . -name "*.sql" -type f \
+  -not -path "./node_modules/*" \
+  -not -path "./.git/*" \
+  -not -path "./.next/*" \
+  -not -path "./.open-next/*" \
+  -not -path "./migrations/*" \
+  -not -path "./src/seed/db/migrations/*" \
+  -not -path "./backups/*" \
+  2>/dev/null | sed 's|^\./||' | sort)
+
+# A guard that found no .sql file anywhere must not report success. This is how
+# the original defect hid: it scanned a directory containing zero .sql files,
+# found no orphans, and printed OK. Skipped-as-Postgres files still count as
+# examined — they prove the scan reached real files.
+total_scanned=$((checked + skipped_pg))
+if [ "$total_scanned" -eq 0 ]; then
+  echo >&2
+  echo "ERROR: this guard scanned 0 .sql files anywhere in the repo. Either every" >&2
+  echo ".sql file now lives in migrations/, which would make this guard obsolete," >&2
+  echo "or the scan path is wrong. Reporting OK would be dishonest — fix the path" >&2
+  echo "or retire this script rather than letting it pass silently." >&2
+  exit 1
+fi
 
 echo
 echo "Migration coverage check:"
 echo "  D1 files checked:       $checked"
 echo "  Postgres files skipped: $skipped_pg"
 echo "  Orphan tables:          $orphans_found"
+echo "  Total files examined:   $total_scanned"
 
 if [ "$orphans_found" -gt 0 ]; then
   cat >&2 <<EOF
@@ -96,4 +129,4 @@ EOF
   exit 1
 fi
 
-echo "OK — all D1 CREATE TABLE statements in src/**/*.sql have canonical migrations/ matches."
+echo "OK — all D1 CREATE TABLE statements outside migrations/ have canonical migrations/ matches."

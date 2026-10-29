@@ -22,6 +22,19 @@ vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn().mockResolvedValue({ ids: ['evt_1'] }), createFunction: vi.fn() },
 }));
 
+/**
+ * YouTube's resumable-upload handshake answers with the session URL in a
+ * Location header; the executor reads that header, then PUTs the media.
+ */
+function responseWithLocation(location: string): Response {
+  return {
+    ok: true,
+    status: 200,
+    headers: new Map([['location', location]]),
+    json: async () => ({}),
+  } as unknown as Response;
+}
+
 describe('socialDirectPublishJob & Server Actions', () => {
   const mockStep = {
     run: vi.fn().mockImplementation(async (_n: string, fn: () => Promise<unknown>) => fn()),
@@ -42,14 +55,43 @@ describe('socialDirectPublishJob & Server Actions', () => {
     updatedAt: Date.now(),
   };
 
+  /**
+   * Labelled provider fixture. Returns shape-copies of each platform's
+   * documented success response so the executor has to read a REAL id out of
+   * a REAL (simulated) body. The ids below are fixture values only — they are
+   * never derived from a job id, which is exactly what the old fabricated
+   * adapter did.
+   */
+  const fixtureFetch = vi.fn();
+  const fixtureToken = 'fixture_access_token';
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    fixtureFetch.mockReset();
     vi.mocked(circuitBreaker.shouldAllowRequest).mockReturnValue(true);
     vi.mocked(credStore.getCredential).mockResolvedValue(sampleCred);
-    vi.mocked(vault.decryptTokenVault).mockResolvedValue({ accessToken: 'valid_token', expiresAt: Date.now() + 3600000 });
+    vi.mocked(vault.decryptTokenVault).mockResolvedValue({
+      accessToken: fixtureToken,
+      expiresAt: Date.now() + 3600000,
+    });
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'PENDING' } as never);
+    // The claim is the gate this delivery must win. Default it to won so the
+    // happy-path cases exercise the upload; the claim-lost cases override it.
+    vi.mocked(jobStore.claimPublishJobForUpload).mockResolvedValue({ status: 'UPLOADING' } as never);
   });
 
-  it('orchestrates direct publish across platforms', async () => {
+  it('orchestrates direct publish with the decrypted token threaded into the upload', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_yt'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_video_1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { publish_id: 'provider_tt_publish_1' } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'SUCCESS_PUBLISH' } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_ig_media_1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_ig_media_1' }) });
+
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
     const ytEvent = {
       data: {
         jobId: 'job_yt_1',
@@ -63,21 +105,312 @@ describe('socialDirectPublishJob & Server Actions', () => {
     };
     const ytRes = await processSocialDirectPublishJob({ event: ytEvent, step: mockStep });
     expect(ytRes.status).toBe('PUBLISHED');
-    expect((ytRes as { platformPostId: string }).platformPostId).toBe('yt_job_yt_1');
-    expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('YOUTUBE_SHORTS', 'chan_yt_1');
-    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith('job_yt_1', 'UPLOADING');
+    expect((ytRes as { platformPostId: string }).platformPostId).toBe('provider_yt_video_1');
+    expect((ytRes as { publishedUrl: string }).publishedUrl).toBe(
+      'https://www.youtube.com/shorts/provider_yt_video_1',
+    );
+    expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:YOUTUBE_SHORTS');
+    // Ownership is taken by the claim, not by an inline status write, so the
+    // provider is only reached after the guarded UPDATE actually won.
+    expect(jobStore.claimPublishJobForUpload).toHaveBeenCalledWith('job_yt_1');
 
     const ttRes = await processSocialDirectPublishJob({
       event: { data: { ...ytEvent.data, jobId: 'job_tt_1', platform: 'TIKTOK_V2' as const } },
       step: mockStep,
     });
-    expect((ttRes as { platformPostId: string }).platformPostId).toBe('tt_job_tt_1');
+    expect((ttRes as { platformPostId: string }).platformPostId).toBe('provider_tt_publish_1');
 
     const igRes = await processSocialDirectPublishJob({
       event: { data: { ...ytEvent.data, jobId: 'job_ig_1', platform: 'INSTAGRAM_REELS' as const } },
       step: mockStep,
     });
-    expect((igRes as { platformPostId: string }).platformPostId).toBe('ig_job_ig_1');
+    expect((igRes as { platformPostId: string }).platformPostId).toBe('provider_ig_media_1');
+  });
+
+  it('marks the job FAILED and records a failure — never a success — when the provider yields no id', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_yt'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ error: 'quotaExceeded' }) });
+
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
+    await expect(processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_no_id',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'No Id',
+          description: 'No Id',
+        },
+      },
+      step: mockStep,
+    })).rejects.toThrow(/PROVIDER_RESULT_UNVERIFIABLE/);
+
+    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith(
+      'job_no_id',
+      'FAILED',
+      expect.objectContaining({ error: expect.stringContaining('PROVIDER_RESULT_UNVERIFIABLE') }),
+    );
+    expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+    expect(circuitBreaker.recordFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes once — a re-delivered event for a terminal job does not upload again', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_dup'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_dup_1' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'PUBLISHED',
+      publishedUrl: 'https://www.youtube.com/shorts/provider_yt_dup_1',
+      updatedAt: Date.now(),
+    } as never);
+
+    const event = {
+      data: {
+        jobId: 'job_already_published',
+        userId: 'user_1',
+        channelId: 'chan_yt_1',
+        platform: 'YOUTUBE_SHORTS' as const,
+        videoUrl: 'https://cdn.example.com/v.mp4',
+        title: 'Already Done',
+        description: 'Already Done',
+      },
+    };
+
+    const res = await processSocialDirectPublishJob({ event, step: mockStep });
+    expect(res.status).toBe('SKIPPED_ALREADY_UPLOADED');
+    expect(fixtureFetch).not.toHaveBeenCalled();
+    expect(jobStore.updatePublishJobStatus).not.toHaveBeenCalled();
+  });
+
+  it('publishes once — a retry that died mid-upload does not post the channel twice', async () => {
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    // Fresh: a prior delivery reached the provider moments ago, so this
+    // retry must not send the same media a second time.
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'UPLOADING',
+      updatedAt: Date.now(),
+    } as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_died_mid_upload',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Mid Upload',
+          description: 'Mid Upload',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('SKIPPED_ALREADY_UPLOADED');
+    expect(fixtureFetch).not.toHaveBeenCalled();
+  });
+
+  it('still publishes when the prior attempt only reached the pacing stage', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_paced'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_from_paced' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'PENDING' } as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_pending_retry',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Pending Retry',
+          description: 'Pending Retry',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+    expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_from_paced');
+  });
+
+  it('does not upload when another delivery won the claim on the same media', async () => {
+    // Both deliveries read the row as PENDING, so both pass the pre-flight
+    // guard. Only the guarded UPDATE decides the winner: this delivery loses it
+    // and must not reach the provider at all.
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({ status: 'PENDING' } as never);
+    vi.mocked(jobStore.claimPublishJobForUpload).mockResolvedValue(null as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_claim_lost',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Claim Lost',
+          description: 'Claim Lost',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('SKIPPED_CLAIM_LOST');
+    expect(fixtureFetch).not.toHaveBeenCalled();
+    expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+    // A lost claim is not an error: the job must not be written FAILED, or the
+    // delivery that actually owns the upload would have its status overwritten.
+    expect(jobStore.updatePublishJobStatus).not.toHaveBeenCalledWith(
+      'job_claim_lost',
+      'FAILED',
+      expect.anything(),
+    );
+  });
+
+  it('sends the decrypted token to the provider, never the event payload field', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_tok'))
+      .mockResolvedValue({ ok: true, json: async () => ({ id: 'provider_yt_token_1' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
+    // A plaintext token is a credential. Whatever the event happens to carry,
+    // the provider must see the freshly decrypted vault token instead.
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_token_check',
+          userId: 'user_1',
+          accessToken: 'stale_token_that_must_not_be_sent',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Token Check',
+          description: 'Token Check',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+
+    const sentAuthHeaders = fixtureFetch.mock.calls
+      .map((call) => (call[1] as { headers?: Record<string, string> } | undefined)?.headers)
+      .filter(Boolean)
+      .flatMap((headers) => Object.entries(headers as Record<string, string>))
+      .filter(([key]) => /authoriz/i.test(key))
+      .map(([, value]) => String(value));
+
+    expect(sentAuthHeaders.length).toBeGreaterThan(0);
+    for (const header of sentAuthHeaders) {
+      expect(header).toContain(fixtureToken);
+      expect(header).not.toContain('stale_token_that_must_not_be_sent');
+    }
+    // The token is decrypted on every delivery rather than trusted from the event.
+    expect(vault.decryptTokenVault).toHaveBeenCalledTimes(1);
+  });
+
+  it('resumes a job stranded in UPLOADING by a worker that died mid-upload', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_stranded'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_resumed' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    // Written 20 minutes ago, well past the grace window: the delivery that
+    // wrote it never reached a terminal status, so this one must proceed.
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'UPLOADING',
+      updatedAt: Date.now() - 20 * 60 * 1000,
+    } as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_stranded',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Stranded',
+          description: 'Stranded',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+    expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_resumed');
+  });
+
+  it('retries a job the previous delivery marked FAILED — a provider error is not an upload', async () => {
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_retry'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_retry' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    // The previous attempt wrote FAILED on a 401 and rethrew. The function is
+    // configured with three retries, so this delivery must be allowed to reach
+    // the provider instead of being skipped as "already uploaded".
+    vi.mocked(jobStore.getPublishJob).mockResolvedValue({
+      status: 'FAILED',
+      updatedAt: Date.now(),
+    } as never);
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_failed_once',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Retry',
+          description: 'Retry',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('PUBLISHED');
+    expect((res as { platformPostId: string }).platformPostId).toBe('provider_yt_retry');
+    expect(fixtureFetch).toHaveBeenCalled();
+  });
+
+  it('does not fabricate a post id or url when the upload transport fails outright', async () => {
+    fixtureFetch.mockResolvedValue({ ok: false, status: 401, statusText: 'Unauthorized' });
+
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
+    const result = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_http_401',
+          userId: 'user_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'HTTP Fail',
+          description: 'HTTP Fail',
+        },
+      },
+      step: mockStep,
+    }).catch((err: unknown) => ({ threw: err instanceof Error ? err.message : String(err) }));
+
+    const text = JSON.stringify(result);
+    expect(text).not.toContain('youtube.com/shorts/job_');
+    expect(text).not.toContain('yt_job_');
+    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith(
+      'job_http_401',
+      'FAILED',
+      expect.objectContaining({ error: 'HTTP_401' }),
+    );
+    expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
   });
 
   it('handles pacing cap, cooldown sleep, and safety guards', async () => {
@@ -89,11 +422,16 @@ describe('socialDirectPublishJob & Server Actions', () => {
     expect(capped.status).toBe('HALTED_DAILY_CAP');
 
     vi.mocked(credStore.getCredential).mockResolvedValue({ ...sampleCred, lastPublishedAt: Date.now() - 1000 });
-    await processSocialDirectPublishJob({
+    fixtureFetch
+      .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_pace'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_pace_1' }) });
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    const paced = await processSocialDirectPublishJob({
       event: { data: { jobId: 'j_pace', userId: 'u', channelId: 'c', platform: 'YOUTUBE_SHORTS' as const } },
       step: mockStep,
     });
     expect(mockStep.sleep).toHaveBeenCalled();
+    expect(paced.status).toBe('PUBLISHED');
 
     vi.mocked(credStore.getCredential).mockResolvedValue({ ...sampleCred, killSwitchActive: true });
     const killed = await processSocialDirectPublishJob({

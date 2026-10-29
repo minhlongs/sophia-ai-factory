@@ -10,13 +10,14 @@ import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { decryptTokenVault } from '@/seed/security/oauth-token-vault';
 import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { getCredential, upsertCredential } from '@/land/social/platform-credentials-store';
-import { updatePublishJobStatus } from '@/land/social/publish-job-store';
+import { claimPublishJobForUpload, getPublishJob, updatePublishJobStatus } from '@/land/social/publish-job-store';
 import {
   evaluatePacingStepDecision,
   evaluateSafetyGuardsDecision,
   executePlatformUploadAdapter,
   buildPublishedResult,
   computeNextDailyPostCount,
+  isPublishJobAlreadyAttempted,
   type SocialPublishDispatchedEventData,
 } from './social-direct-publish-steps';
 
@@ -35,6 +36,20 @@ export async function processSocialDirectPublishJob({
   step: InngestStepContext;
 }): Promise<SocialPublishResult | { status: string; jobId: string; reason: string }> {
   const data = event.data as SocialPublishDispatchedEventData;
+
+  // Duplicate-delivery guard. A re-delivered event (Inngest retry, or a
+  // duplicate send) must never reach the provider twice. `UPLOADING` is written
+  // immediately before the provider call, so its presence means a previous
+  // delivery already tried.
+  // Deliberately OUTSIDE step.run: a guard that must decide "has another
+  // delivery already uploaded this?" has to re-read D1 on every delivery and
+  // every replay. Inside a step, Inngest memoizes the return value and replays
+  // the cached answer, so the guard would see a snapshot of the row instead of
+  // its current truth — the opposite of what it is for.
+  const existingJob = await getPublishJob(data.jobId);
+  if (isPublishJobAlreadyAttempted(existingJob)) {
+    return { status: 'SKIPPED_ALREADY_UPLOADED', jobId: data.jobId, reason: 'ALREADY_UPLOADED' };
+  }
 
   // Step 1: Pacing check
   const pacingResult = await step.run('evaluate-pacing', async () => {
@@ -73,7 +88,7 @@ export async function processSocialDirectPublishJob({
   if (!safetyCheck.allowed) return { status: 'ABORTED_SAFETY', jobId: data.jobId, reason: safetyCheck.reason };
 
   // Step 3: Vault decryption of access token
-  await step.run('decrypt-vault-token', async () => {
+  const vaultToken = await step.run('decrypt-vault-token', async () => {
     const cred = await getCredential(data.userId, data.platform, data.channelId);
     if (!cred) throw new Error('Missing channel credential during token retrieval');
     const tokens = await decryptTokenVault(cred.encryptedTokens, {
@@ -81,14 +96,22 @@ export async function processSocialDirectPublishJob({
       platform: data.platform,
       channelId: data.channelId,
     });
-    await updatePublishJobStatus(data.jobId, 'UPLOADING');
     return { accessToken: tokens.accessToken, expiresAt: tokens.expiresAt };
   });
+
+  // Step 3b: Atomically claim the job before any media leaves this worker.
+  // The write is the claim: only the delivery whose guarded UPDATE wins
+  // proceeds, so a concurrent delivery of the same event cannot also reach the
+  // provider with the same media.
+  const claim = await step.run('claim-upload-ownership', () => claimPublishJobForUpload(data.jobId));
+  if (!claim) {
+    return { status: 'SKIPPED_CLAIM_LOST', jobId: data.jobId, reason: 'ALREADY_UPLOADED' };
+  }
 
   // Step 4: Dispatch upload chunk / container
   const uploadResult = await step.run('dispatch-platform-upload', async () => {
     try {
-      return executePlatformUploadAdapter(data);
+      return await executePlatformUploadAdapter(data, vaultToken.accessToken);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       await updatePublishJobStatus(data.jobId, 'FAILED', { error: msg });
@@ -125,7 +148,16 @@ export async function processSocialDirectPublishJob({
 }
 
 export const socialDirectPublishJob = inngest.createFunction(
-  { id: 'social-direct-publish-job', name: 'Social Direct Publish Job', retries: 3 },
+  {
+    id: 'social-direct-publish-job',
+    name: 'Social Direct Publish Job',
+    retries: 3,
+    // One delivery per job at a time. The guarded claim below is what actually
+    // proves ownership, but without this a re-delivered event could be two
+    // concurrent uploads of the same media to the same channel, and Inngest's
+    // retry would start before the first attempt finished rather than after.
+    concurrency: { key: 'event.data.jobId', limit: 1 },
+  },
   { event: 'social.publish.dispatched' },
   processSocialDirectPublishJob,
 );

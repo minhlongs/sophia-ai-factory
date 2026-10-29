@@ -87,6 +87,36 @@ export async function updatePublishJobStatus(
   return updated;
 }
 
+/** Statuses a delivery may still claim for upload. */
+const CLAIMABLE_STATUSES: readonly PublishJobStatus[] = ['PENDING', 'PACED'];
+
+/**
+ * Atomically claims a job for upload by moving it to `UPLOADING`.
+ *
+ * The claim is the only thing that stands between two concurrent deliveries of
+ * the same event and two posts on one channel, so it must be a
+ * compare-and-set, not a read-then-write. Two retries can both pass a status
+ * check because they read the row before either writes it; with a guarded
+ * UPDATE only the one that actually won the write proceeds, and `meta.changes`
+ * is the proof of ownership. D1 has no transactions, which is exactly why the
+ * ownership check is on the write itself.
+ *
+ * Returns null when the job was already claimed or is no longer claimable.
+ */
+export async function claimPublishJobForUpload(id: string, overrideDb?: D1Database): Promise<StoredPublishJob | null> {
+  const db = await resolvePublishJobsDb(overrideDb);
+  const placeholders = CLAIMABLE_STATUSES.map((_, i) => `?${i + 2}`).join(', ');
+  const res = await db.prepare(
+    `UPDATE ${PUBLISH_JOBS_TABLE} SET status = 'UPLOADING', updated_at = ?1
+     WHERE id = ?${CLAIMABLE_STATUSES.length + 2} AND status IN (${placeholders})`
+  )
+    .bind(Date.now(), ...CLAIMABLE_STATUSES, id)
+    .run();
+
+  if ((res.meta?.changes ?? 0) === 0) return null;
+  return getPublishJob(id, overrideDb);
+}
+
 export async function listChannelPublishJobs(channelId: string, limit = 20, overrideDb?: D1Database): Promise<StoredPublishJob[]> {
   const db = await resolvePublishJobsDb(overrideDb);
   const res = await db.prepare(
