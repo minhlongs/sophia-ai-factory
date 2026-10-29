@@ -1,12 +1,22 @@
 import {
   LayoutDashboard, PlusCircle, Film, Wand2, Youtube, BookOpen,
-  Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon, DollarSign,
+  Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon, DollarSign, Megaphone,
 } from "lucide-react";
 import type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps } from "./dashboard-nav-types";
 
 export type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps };
 
-/** 16 Canonical Sophia AI Factory Navigation Modules (including Affiliate Hub, Image Studio, SOP system and challenges). */
+// Re-exported so existing `from './dashboard-nav-modules'` imports keep working.
+export {
+  OPC_PRIMARY_NAV_GROUPS,
+  OPC_REFERRAL_NAV_ITEM,
+} from "./dashboard-opc-nav-items";
+
+/**
+ * Canonical Sophia AI Factory navigation modules. Every href resolves to an
+ * existing route under `src/app/[locale]`, so no entry can point a customer at
+ * a page that does not render.
+ */
 export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
   {
     id: "overview",
@@ -30,6 +40,20 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     icon: Film,
   },
   {
+    id: "campaigns",
+    labelKey: "sidebar.campaigns",
+    fallbackLabel: "Affiliate Campaigns",
+    href: "/dashboard/campaigns",
+    icon: Megaphone,
+  },
+  {
+    id: "niche_studio",
+    labelKey: "sidebar.niche_studio",
+    fallbackLabel: "Niche Studio",
+    href: "/dashboard/niche-studio",
+    icon: Wand2,
+  },
+  {
     id: "creative_studio",
     labelKey: "sidebar.creative_studio",
     fallbackLabel: "Creative Studio",
@@ -51,11 +75,18 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     icon: Youtube,
   },
   {
-    id: "affiliate",
-    labelKey: "sidebar.affiliate",
-    fallbackLabel: "Affiliate Hub",
-    href: "/dashboard/affiliate",
+    id: "affiliates",
+    labelKey: "sidebar.affiliates",
+    fallbackLabel: "My Affiliate Business",
+    href: "/dashboard/affiliates",
     icon: DollarSign,
+  },
+  {
+    id: "approvals",
+    labelKey: "sidebar.approvals",
+    fallbackLabel: "Approvals Needed",
+    href: "/dashboard/approvals",
+    icon: ShieldCheck,
   },
   {
     id: "playbooks",
@@ -84,13 +115,6 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "My SOPs",
     href: "/dashboard/sops",
     icon: BookOpen,
-  },
-  {
-    id: "sop_marketplace",
-    labelKey: "sidebar.sop_marketplace",
-    fallbackLabel: "SOP Marketplace",
-    href: "/dashboard/sop-marketplace",
-    icon: ShoppingBag,
   },
   {
     id: "challenges",
@@ -122,62 +146,3 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
   },
 ];
 
-/**
- * OPC primary work groups (max six). These are the ONLY primary navigation
- * items; the 16 canonical modules remain available as deep links in the
- * secondary "More tools" section so no existing route or permission is lost.
- * Every href below resolves to an existing page in app/[locale]/dashboard.
- */
-export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
-  {
-    id: "opc_today",
-    labelKey: "opcNav.today",
-    fallbackLabel: "Today",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    id: "opc_offers",
-    labelKey: "opcNav.offers",
-    fallbackLabel: "Offers",
-    href: "/dashboard/affiliate",
-    icon: DollarSign,
-  },
-  {
-    id: "opc_campaigns",
-    labelKey: "opcNav.campaigns",
-    fallbackLabel: "Campaigns",
-    href: "/dashboard/campaigns",
-    icon: Film,
-  },
-  {
-    id: "opc_approvals",
-    labelKey: "opcNav.approvals",
-    fallbackLabel: "Needs approval",
-    href: "/dashboard/approvals",
-    icon: ShieldCheck,
-  },
-  {
-    id: "opc_results",
-    labelKey: "opcNav.results",
-    fallbackLabel: "Results",
-    href: "/dashboard/affiliates",
-    icon: Activity,
-  },
-  {
-    id: "opc_connections",
-    labelKey: "opcNav.connections",
-    fallbackLabel: "Connections",
-    href: "/dashboard/settings",
-    icon: BookOpen,
-  },
-];
-
-/** Separate referral programme — never mixed with external affiliate earnings. */
-export const OPC_REFERRAL_NAV_ITEM: DashboardNavModule = {
-  id: "refer_sophia",
-  labelKey: "opcNav.referSophia",
-  fallbackLabel: "Refer Sophia",
-  href: "/partner",
-  icon: Target,
-};

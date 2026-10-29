@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { TrendingUp, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { AFFILIATE_TIER_CONFIGS } from '@/seed/types/affiliate-expansion-types';
 
@@ -92,7 +92,7 @@ export function TierProgressionCards({ isVi }: TierProgressionCardsProps) {
           </div>
           <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
             {isVi
-              ? 'Đối tác tại Việt Nam nhận thanh toán tức thì qua VietQR NAPAS 24/7 trực tiếp vào tài khoản ngân hàng nội địa. Đối tác quốc tế nhận USDT TRC-20 tự động.'
+              ? 'Đối tác tại Việt Nam nhận thanh toán qua VietQR NAPAS 24/7 trực tiếp vào tài khoản ngân hàng nội địa. Đối tác quốc tế nhận USDT TRC-20 tự động.'
               : 'Domestic Vietnamese partners receive instant payouts via VietQR NAPAS 247. International partners receive automated USDT TRC-20.'}
           </p>
         </div>

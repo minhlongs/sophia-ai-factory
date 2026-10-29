@@ -58,7 +58,13 @@ export function DashboardRevenueChart({
     { key: "ytd", label: t("revenueChart.periods.ytd") || "Year to Date" },
   ];
 
-  const chartData = data || (periodData ? periodData[activePeriod] : undefined) || [];
+  // `data` is undefined when the server could not report a figure, which is not
+  // the same as a real empty period. Coalescing it to [] here would print
+  // "Total: $0" beside a 0.0% badge, telling the customer their revenue is zero
+  // when we simply do not know it. Keep the two states separate.
+  const resolvedData = data ?? (periodData ? periodData[activePeriod] : undefined);
+  const chartData: RevenueDataPoint[] = resolvedData ?? [];
+  const hasRevenueData = resolvedData !== undefined;
   const totalRevenue = chartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
 
   const activeTrend = trend || (totalRevenue > 0 ? "up" : "neutral");
@@ -71,21 +77,28 @@ export function DashboardRevenueChart({
         className
       )}
       data-testid="revenue-chart-card"
+      data-revenue-state={hasRevenueData ? "available" : "error"}
     >
       <RevenueChartHeader
         title={t("revenueChart.title")}
         subtitle={t("revenueChart.subtitle")}
-        totalRevenue={totalRevenue}
-        activeTrend={activeTrend}
-        activeTrendPercentage={activeTrendPercentage}
+        totalRevenue={hasRevenueData ? totalRevenue : undefined}
+        activeTrend={hasRevenueData ? activeTrend : "neutral"}
+        activeTrendPercentage={hasRevenueData ? activeTrendPercentage : undefined}
         activePeriod={activePeriod}
         periodOptions={periodOptions}
         onPeriodChange={handlePeriodChange}
       />
       <ChartCanvas
         chartData={chartData}
+        unavailable={!hasRevenueData}
         emptyTitle={t("revenueChart.emptyTitle") || "No Revenue Recorded"}
         emptyDesc={t("revenueChart.emptyDesc") || "No transaction revenue recorded for this period."}
+        unavailableTitle={t("revenueChart.unavailableTitle") || "Revenue unavailable"}
+        unavailableDesc={
+          t("revenueChart.unavailableDesc") ||
+          "We could not load your revenue figures. Please reload the page or check your connection."
+        }
       />
     </div>
   );

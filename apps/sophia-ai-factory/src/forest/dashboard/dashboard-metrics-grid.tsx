@@ -13,18 +13,20 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/seed/utils/cn";
 import type { DashboardMetric } from "@/forest/dashboard/types";
 import {
-  ZERO_METRICS,
   getMetricPillConfig,
 } from "./dashboard-metrics-config";
 
 export {
-  ZERO_METRICS,
   METRIC_CONFIGS,
   getMetricPillConfig,
   type MetricPillConfig,
 } from "./dashboard-metrics-config";
 
 export interface DashboardMetricsGridProps {
+  /**
+   * `undefined` means the numbers are unavailable, which is different from an
+   * account that genuinely has none. See the status convention below.
+   */
   metrics?: DashboardMetric[];
   className?: string;
 }
@@ -38,8 +40,44 @@ export function DashboardMetricsGrid({ metrics, className }: DashboardMetricsGri
     t = (key: string) => key;
   }
 
-  const items = metrics && metrics.length > 0 ? metrics : ZERO_METRICS;
+  // No data at all: say the numbers are unavailable instead of showing zero,
+  // which a customer would read as "my account produced nothing".
+  if (metrics === undefined) {
+    return (
+      <div
+        className={cn(
+          "mb-6 rounded-xl border border-border bg-muted/30 p-5",
+          className
+        )}
+        data-testid="dashboard-metrics-unavailable"
+        data-status="error"
+      >
+        <p className="text-sm text-muted-foreground">
+          {t("metrics.unavailableHint")}
+        </p>
+      </div>
+    );
+  }
 
+  // A verified empty account is its own state — it is not an error.
+  if (metrics.length === 0) {
+    return (
+      <div
+        className={cn(
+          "mb-6 rounded-xl border border-border bg-muted/30 p-5",
+          className
+        )}
+        data-testid="dashboard-metrics-empty"
+        data-status="verified_empty"
+      >
+        <p className="text-sm text-muted-foreground">
+          {t("metrics.emptyHint")}
+        </p>
+      </div>
+    );
+  }
+
+  const items = metrics;
   return (
     <div
       className={cn(

@@ -15,6 +15,9 @@ vi.mock('next-intl', () => ({
       'revenueChart.periods.ytd': 'Year to Date',
       'revenueChart.emptyTitle': 'No Revenue Recorded',
       'revenueChart.emptyDesc': 'No transaction revenue recorded for this period.',
+      'revenueChart.unavailableTitle': 'Revenue unavailable',
+      'revenueChart.unavailableDesc':
+        'We could not load your revenue figures. Please reload the page or check your connection.',
     };
     return translations[key] || key;
   },
@@ -59,6 +62,41 @@ describe('DashboardRevenueChart — Bottom-Up Financial Visualization', () => {
     // Neutral trend badge
     const badge = screen.getByTestId('revenue-trend-badge');
     expect(badge.textContent).toContain('0.0%');
+  });
+
+  it('does not turn an unknown figure into a $0 total', () => {
+    // `undefined` means the server could not report revenue, which is not the
+    // same as a verified empty period. A $0 total and a 0.0% badge here would
+    // tell a non-technical customer their revenue is zero when we do not know.
+    render(<DashboardRevenueChart />);
+
+    const card = screen.getByTestId('revenue-chart-card');
+    expect(card.getAttribute('data-revenue-state')).toBe('error');
+
+    expect(screen.queryByTestId('revenue-trend-badge')).toBeNull();
+    expect(screen.queryByText('$0')).toBeNull();
+    expect(screen.getByTestId('chart-unavailable-state')).toBeDefined();
+    expect(screen.getByText('Revenue unavailable')).toBeDefined();
+
+    // The period selector stays, so the customer can still retry another range.
+    expect(screen.getByTestId('period-selector-7d')).toBeDefined();
+  });
+
+  it('keeps a verified empty period distinct from an unavailable one', () => {
+    render(<DashboardRevenueChart data={[]} />);
+
+    const card = screen.getByTestId('revenue-chart-card');
+    expect(card.getAttribute('data-revenue-state')).toBe('available');
+    expect(screen.getByTestId('chart-empty-state')).toBeDefined();
+    // A verified empty period legitimately reports a total of $0.
+    expect(screen.getByText('$0')).toBeDefined();
+  });
+
+  it('keeps a verified empty period distinct from an unavailable one', () => {
+    render(<DashboardRevenueChart data={[]} />);
+    // An empty array is a real, verified-empty period — it still renders the card.
+    expect(screen.getByTestId('revenue-chart-card')).toBeDefined();
+    expect(screen.getByTestId('chart-empty-state')).toBeDefined();
   });
 
   it('renders dynamic positive trend badge when revenue is present', () => {

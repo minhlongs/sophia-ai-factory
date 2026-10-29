@@ -14,6 +14,9 @@ vi.mock('next-intl', () => ({
       'sidebar.overview': 'Overview',
       'sidebar.create_mission': 'Create Mission',
       'sidebar.missions': 'AI Missions',
+      'sidebar.campaigns': 'Affiliate Campaigns',
+      'sidebar.affiliates': 'My Affiliate Business',
+      'sidebar.approvals': 'Approvals Needed',
       'sidebar.creative_studio': 'Creative Studio',
       'sidebar.youtube_automation': 'YouTube Automation',
       'sidebar.playbook': 'Playbooks',
@@ -66,9 +69,9 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
   /* =========================================================================
    * 1. EMPIRICAL ROUTE VERIFICATION: All 15 Canonical Modules
    * ========================================================================= */
-  describe('1. Canonical 16 Sophia AI Module Routes & Icons', () => {
-    it('declares exactly 16 canonical Sophia AI modules in SOPHIA_NAV_MODULES', () => {
-      expect(SOPHIA_NAV_MODULES).toHaveLength(16);
+  describe('1. Canonical 18 Sophia AI Module Routes & Icons', () => {
+    it('declares exactly 18 canonical Sophia AI modules in SOPHIA_NAV_MODULES', () => {
+      expect(SOPHIA_NAV_MODULES).toHaveLength(18);
     });
 
     const expectedModules: Array<{
@@ -80,15 +83,17 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       { id: 'overview', labelKey: 'sidebar.overview', fallbackLabel: 'Overview', href: '/dashboard' },
       { id: 'create_mission', labelKey: 'sidebar.create_mission', fallbackLabel: 'Create Mission', href: '/dashboard/missions/new' },
       { id: 'missions', labelKey: 'sidebar.missions', fallbackLabel: 'AI Missions', href: '/dashboard/missions' },
+      { id: 'campaigns', labelKey: 'sidebar.campaigns', fallbackLabel: 'Affiliate Campaigns', href: '/dashboard/campaigns' },
+      { id: 'niche_studio', labelKey: 'sidebar.niche_studio', fallbackLabel: 'Niche Studio', href: '/dashboard/niche-studio' },
       { id: 'creative_studio', labelKey: 'sidebar.creative_studio', fallbackLabel: 'Creative Studio', href: '/dashboard/creative-economy' },
       { id: 'image_studio', labelKey: 'sidebar.image_studio', fallbackLabel: 'Image Studio', href: '/dashboard/image-studio' },
       { id: 'youtube_automation', labelKey: 'sidebar.youtube_automation', fallbackLabel: 'YouTube Automation', href: '/dashboard/youtube' },
-      { id: 'affiliate', labelKey: 'sidebar.affiliate', fallbackLabel: 'Affiliate Hub', href: '/dashboard/affiliate' },
+      { id: 'affiliates', labelKey: 'sidebar.affiliates', fallbackLabel: 'My Affiliate Business', href: '/dashboard/affiliates' },
+      { id: 'approvals', labelKey: 'sidebar.approvals', fallbackLabel: 'Approvals Needed', href: '/dashboard/approvals' },
       { id: 'playbooks', labelKey: 'sidebar.playbook', fallbackLabel: 'Playbooks', href: '/dashboard/playbooks' },
       { id: 'publish_queue', labelKey: 'sidebar.publish_queue', fallbackLabel: 'Distribution Queue', href: '/dashboard/publish/queue' },
       { id: 'marketplace', labelKey: 'sidebar.marketplace', fallbackLabel: 'Creator Marketplace', href: '/marketplace' },
       { id: 'my_sops', labelKey: 'sidebar.my_sops', fallbackLabel: 'My SOPs', href: '/dashboard/sops' },
-      { id: 'sop_marketplace', labelKey: 'sidebar.sop_marketplace', fallbackLabel: 'SOP Marketplace', href: '/dashboard/sop-marketplace' },
       { id: 'challenges', labelKey: 'sidebar.challenges', fallbackLabel: 'Challenges', href: '/dashboard/challenges' },
       { id: 'handover', labelKey: 'sidebar.handover', fallbackLabel: 'Handover & Acceptance', href: '/dashboard/handover' },
       { id: 'runbooks', labelKey: 'sidebar.runbooks', fallbackLabel: 'Runbooks', href: '/dashboard/docs/runbooks' },
@@ -96,7 +101,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
     ];
 
     expectedModules.forEach((expected, idx) => {
-      it(`module [${idx + 1}/16] "${expected.id}" has valid configuration and renders with icon`, () => {
+      it(`module [${idx + 1}/18] "${expected.id}" has valid configuration and renders with icon`, () => {
         const item = SOPHIA_NAV_MODULES[idx];
         expect(item.id).toBe(expected.id);
         expect(item.labelKey).toBe(expected.labelKey);
@@ -106,8 +111,9 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
         expect(typeof item.icon).toBe('object'); // Lucide forwardRef icon
 
         const { container } = render(<DashboardSidebarNav currentPath="/some-other-path" />);
-        const link = container.querySelector(`a[href="${expected.href}"]`);
-        expect(link).not.toBeNull();
+        const links = Array.from(container.querySelectorAll(`a[href="${expected.href}"]`));
+        expect(links.length).toBeGreaterThan(0);
+        const link = links.find((l) => l.textContent?.includes(expected.fallbackLabel)) ?? links[0];
         expect(link?.textContent).toContain(expected.fallbackLabel);
 
         // Verify Lucide icon SVG renders inside link
@@ -139,7 +145,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       const overviewLink = container.querySelector('a[href="/dashboard"]');
       expect(overviewLink?.className).toContain('bg-primary/10');
 
-      // None of the other 13 routes should be active
+      // None of the other 15 routes should be active
       for (const mod of expectedModules) {
         if (mod.href !== '/dashboard') {
           const otherLink = container.querySelector(`a[href="${mod.href}"]`);
@@ -168,7 +174,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       expect(handoverLinkEn?.className).toContain('bg-primary/10');
     });
 
-    it('renders conditional SOP Creator navigation item strictly for MASTER tier users', () => {
+    it('offers no nav link to routes that have no page, strictly for MASTER tier users', () => {
       const { rerender } = render(
         <DashboardSidebarNav user={{ name: 'Standard User', email: 'std@sophia.ai', tier: 'PRO' }} />
       );
@@ -177,9 +183,9 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       rerender(
         <DashboardSidebarNav user={{ name: 'Master User', email: 'master@sophia.ai', tier: 'MASTER' }} />
       );
-      const sopCreator = screen.getByText('SOP Creator');
-      expect(sopCreator).toBeDefined();
-      expect(sopCreator.closest('a')?.getAttribute('href')).toBe('/dashboard/sop-creator');
+      // No page exists at /dashboard/sop-creator, so MASTER gets no dead link.
+      expect(screen.queryByText('SOP Creator')).toBeNull();
+      expect(document.querySelector('a[href="/dashboard/sop-creator"]')).toBeNull();
     });
   });
 

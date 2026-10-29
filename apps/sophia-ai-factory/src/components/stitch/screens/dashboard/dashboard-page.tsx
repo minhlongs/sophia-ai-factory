@@ -6,7 +6,9 @@ import { Button } from '@/components/stitch';
 import { useTranslations } from 'next-intl';
 import type { DashboardData, DashboardMetric } from '@/forest/dashboard/types';
 import type { SystemReadiness } from '@/tree/readiness/readiness-checker';
+import { DashboardNextStepBanner } from '@/forest/dashboard/dashboard-next-step-banner';
 import { DashboardOnboardingBanner } from './dashboard-onboarding-banner';
+import { DashboardControlDeckBanner } from './dashboard-control-deck-banner';
 import { LocalEngineSetupGuide } from '@/components/dashboard/local-engine-setup-guide';
 import { DashboardMetricsGrid } from './dashboard-metrics-grid';
 import { DashboardRevenueChart } from './dashboard-revenue-chart';
@@ -18,10 +20,16 @@ import {
 
 interface DashboardPageProps {
   initialData?: DashboardData;
+  /**
+   * True when the dashboard aggregator failed. Kept separate from
+   * `initialData` being absent because of a successful load of an account that
+   * simply has no data yet: a failed load must not render as zero KPIs.
+   */
+  loadFailed?: boolean;
   readiness?: SystemReadiness | null;
 }
 
-export default function DashboardPage({ initialData, readiness }: DashboardPageProps) {
+export default function DashboardPage({ initialData, loadFailed, readiness }: DashboardPageProps) {
   let t: (key: string) => string;
   try {
     const hookT = useTranslations('stitch.dashboard');
@@ -30,26 +38,26 @@ export default function DashboardPage({ initialData, readiness }: DashboardPageP
     t = (key: string) => key;
   }
 
-  // Fallback default empty metrics
-  const metrics: DashboardMetric[] = initialData?.metrics || [
-    { id: 'total_campaigns', value: '0', change: '0%', trend: 'neutral', icon: 'Megaphone' },
-    { id: 'active_campaigns', value: '0', change: '0%', trend: 'neutral', icon: 'Play' },
-    { id: 'videos_generated', value: '0', change: '0%', trend: 'neutral', icon: 'Video' },
-    { id: 'success_rate', value: '0%', change: '0%', trend: 'neutral', icon: 'TrendingUp' },
-  ];
+  // A failed load is not an empty account. Rendering the zero fallback here
+  // would tell a customer their numbers are zero when we simply do not know.
+  const metrics: DashboardMetric[] | undefined = loadFailed
+    ? undefined
+    : initialData?.metrics;
 
   // Zero-mock affiliates: empty if none provided
   const topAffiliates = initialData?.topAffiliates || [];
 
-  // Support all activities (campaigns/missions + transactions)
-  const recentTransactions: DashboardTransactionItem[] =
-    initialData?.recentActivities?.map((a) => ({
-      id: a.id,
-      date: a.date,
-      customer: a.description,
-      amount: a.amount || (a.type === 'campaign' ? 'AI Video Mission' : '$0.00'),
-      status: a.status,
-    })) || [];
+  // Same rule as the metrics: no recent activity data after a failed load is
+  // "unknown", not "nothing happened".
+  const recentTransactions: DashboardTransactionItem[] | undefined = loadFailed
+    ? undefined
+    : initialData?.recentActivities?.map((a) => ({
+        id: a.id,
+        date: a.date,
+        customer: a.description,
+        amount: a.amount || (a.type === 'campaign' ? 'AI Video Mission' : '$0.00'),
+        status: a.status,
+      }));
 
   return (
     <div className="space-y-6" data-testid="dashboard-overview-content">
@@ -69,23 +77,41 @@ export default function DashboardPage({ initialData, readiness }: DashboardPageP
         </div>
       </div>
 
+      {/* The one action that matches the customer's current state */}
+      <DashboardNextStepBanner readiness={readiness} initialData={initialData} />
+
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
 
-      {/* Local Engine Setup Guide (Apple Silicon) */}
-      <LocalEngineSetupGuide />
+      {/* Stitch v4.2 Director's Control Deck 9-Screen Quick Launch */}
+      <DashboardControlDeckBanner />
 
       {/* Metrics Grid */}
       <DashboardMetricsGrid metrics={metrics} />
 
       {/* Chart & Affiliates Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <DashboardRevenueChart data={initialData?.revenueData || []} />
+        <DashboardRevenueChart
+          // Keep "the server reported nothing" distinct from "the load failed":
+          // an empty array is a real verified-empty period, whereas `undefined`
+          // makes the chart say the figure is unavailable instead of $0.
+          data={loadFailed ? undefined : initialData?.revenueData}
+        />
         <DashboardAffiliatesCard affiliates={topAffiliates} />
       </div>
 
       {/* Recent Activity Table */}
       <DashboardTransactionsCard transactions={recentTransactions} />
+
+      {/* Optional local rendering engine, kept out of the primary work area. */}
+      <details className="rounded-2xl border border-border bg-muted/20 p-4">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
+          {t('advanced.localEngineLabel')}
+        </summary>
+        <div className="mt-4">
+          <LocalEngineSetupGuide />
+        </div>
+      </details>
     </div>
   );
 }

@@ -26,6 +26,7 @@ export default async function DashboardRoute() {
   return (
     <DashboardPage
       initialData={initialData.ok ? initialData.data : undefined}
+      loadFailed={!initialData.ok}
       readiness={readiness}
     />
   );

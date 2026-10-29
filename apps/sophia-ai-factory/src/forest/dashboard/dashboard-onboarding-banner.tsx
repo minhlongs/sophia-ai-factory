@@ -5,7 +5,7 @@
  * Layer: forest/dashboard (Infrastructure Orchestrators & UI; imports from @/seed)
  *
  * Implements:
- * 1. Verified routes to /dashboard/setup and /dashboard/system-health
+ * 1. Verified routes to /setup-wizard and /dashboard/system-health
  * 2. Obsidian glass aesthetics (bg-[#12141F]/90 with electric indigo glow)
  * 3. Bilingual support via next-intl
  * 4. Backward compatible translation keys for tests (ready, healthCheck, title, cta)
@@ -106,7 +106,7 @@ export function DashboardOnboardingBanner({
         </Link>
 
         <Link
-          href="/dashboard/setup"
+          href="/setup-wizard"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 shadow-sm transition-all"
         >
           <span>{t("cta")}</span>
