@@ -27,6 +27,7 @@ export type {
   CreativeMissionMultiTrackRequestedData,
   AutonomousVideoPipelineRequestedEvent,
   NicheVideoCampaignRequestedEvent,
+  ExecutionRenderRequestedEvent,
   AutonomousCampaignScalingRequestedEvent,
   VideoMultiTrackPipelineRequestedEvent,
 } from './pipeline-autonomous-events';

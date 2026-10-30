@@ -21,6 +21,7 @@ import type {
   CreativeMissionMultiTrackRequestedData,
   AutonomousVideoPipelineRequestedEvent,
   NicheVideoCampaignRequestedEvent,
+  ExecutionRenderRequestedEvent,
   AutonomousCampaignScalingRequestedEvent,
   VideoMultiTrackPipelineRequestedEvent,
 } from './pipeline-events';
@@ -110,6 +111,7 @@ export type CoreEvents = {
   "affiliate/conversion.reconciled": AffiliateConversionReconciledEvent;
   "affiliate/conversion.recorded": AffiliateConversionRecordedEvent;
   "niche.video.campaign.requested": NicheVideoCampaignRequestedEvent;
+  "execution.render.requested": ExecutionRenderRequestedEvent;
   "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
   "autonomous.campaign.scaling.requested": AutonomousCampaignScalingRequestedEvent;
   "video.multitrack.pipeline.requested": VideoMultiTrackPipelineRequestedEvent;

@@ -59,6 +59,15 @@ export type NicheVideoCampaignRequestedEvent = {
   };
 };
 
+export type ExecutionRenderRequestedEvent = {
+  data: {
+    /** Server-resolved workspace id. Must match the run's tenant. */
+    tenantId: string;
+    /** affiliate_execution_runs id in state `render_queued`. */
+    runId: string;
+  };
+};
+
 export type AutonomousCampaignScalingRequestedEvent = {
   data: {
     tenantId: string;

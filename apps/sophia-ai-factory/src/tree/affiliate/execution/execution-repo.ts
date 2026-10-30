@@ -33,6 +33,8 @@ export interface ExecutionRunRecord {
   reservedCostCents: number;
   actualCostCents: number | null;
   failureReason: string | null;
+  providerJobId: string | null;
+  renderAttempts: number;
   createdAtMs: number;
   updatedAtMs: number;
   /** True when the call found an existing row (duplicate/restart/replay). */
@@ -67,6 +69,8 @@ interface RunRow {
   reserved_cost_cents: number;
   actual_cost_cents: number | null;
   failure_reason: string | null;
+  provider_job_id: string | null;
+  render_attempts: number;
   created_at: number;
   updated_at: number;
 }
@@ -87,6 +91,8 @@ function toRecord(row: RunRow): ExecutionRunRecord {
     reservedCostCents: row.reserved_cost_cents,
     actualCostCents: row.actual_cost_cents,
     failureReason: row.failure_reason,
+    providerJobId: row.provider_job_id,
+    renderAttempts: row.render_attempts,
     createdAtMs: row.created_at,
     updatedAtMs: row.updated_at,
   };
@@ -94,7 +100,8 @@ function toRecord(row: RunRow): ExecutionRunRecord {
 
 const SELECT_COLUMNS = `id, tenant_id, campaign_id, offer_id, approval_id, idempotency_key,
   state, locale, market, artifact_id, channel_id, reserved_cost_cents,
-  actual_cost_cents, failure_reason, created_at, updated_at`;
+  actual_cost_cents, failure_reason, provider_job_id, render_attempts,
+  created_at, updated_at`;
 
 export async function beginExecutionRun(
   db: D1Database,
@@ -217,6 +224,38 @@ export async function transitionRun(
     if (current.state === to) return success({ ...current, replayed: true });
     return failure('CONCURRENT_STATE_CHANGE');
   }
+  return success({ ...current, replayed: false });
+}
+
+/**
+ * Binds the run to a provider job id exactly once. The worker calls this
+ * immediately after submit; a concurrent worker that finds providerJobId set
+ * must poll that job instead of submitting a second render.
+ */
+export async function recordRenderSubmission(
+  db: D1Database,
+  tenantId: string,
+  runId: string,
+  providerJobId: string,
+  nowMs: number = Date.now(),
+): Promise<Result<ExecutionRunRecord, string>> {
+  const res = await db
+    .prepare(
+      `UPDATE affiliate_execution_runs
+       SET provider_job_id = ?, render_attempts = render_attempts + 1, updated_at = ?
+       WHERE id = ? AND tenant_id = ? AND state = 'render_queued' AND provider_job_id IS NULL`,
+    )
+    .bind(providerJobId, nowMs, runId, tenantId)
+    .run();
+  if ((res.meta?.changes ?? 0) === 0) {
+    const current = await getExecutionRun(db, tenantId, runId);
+    if (current?.providerJobId) {
+      return success({ ...current, replayed: true });
+    }
+    return failure('RENDER_SUBMISSION_CONFLICT');
+  }
+  const current = await getExecutionRun(db, tenantId, runId);
+  if (!current) return failure('EXECUTION_RUN_NOT_FOUND');
   return success({ ...current, replayed: false });
 }
 

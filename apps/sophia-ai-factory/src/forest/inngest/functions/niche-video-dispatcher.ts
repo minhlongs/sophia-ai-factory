@@ -334,6 +334,18 @@ export const nicheVideoDispatcher = inngest.createFunction(
     // reported as a fresh queue acceptance.
     const durableState = run?.state ?? gateResult.nextState;
     const alreadyAdvanced = durableState !== 'render_queued';
+
+    // Hand every render_queued run to the render worker. This send is a durable
+    // step (memoized on retry), and the worker itself is idempotent
+    // (single provider_job_id binding + CAS transitions), so emitting on both
+    // fresh and replayed queue acceptances is safe AND self-healing: a crash
+    // between the queue commit and this step is repaired by the retry.
+    if (!alreadyAdvanced && run && tenantId) {
+      await step.sendEvent('request-execution-render', {
+        name: 'execution.render.requested',
+        data: { tenantId, runId: run.id },
+      });
+    }
     return {
       // Deliberately NOT "RENDER_READY": a manifest is not a rendered artifact.
       status: (alreadyAdvanced ? 'RUN_ALREADY_ADVANCED' : 'RENDER_QUEUED') as

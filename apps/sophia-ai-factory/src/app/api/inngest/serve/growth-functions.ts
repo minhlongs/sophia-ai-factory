@@ -7,6 +7,7 @@
 import {
   autonomousVideoPipelineJob,
   nicheVideoDispatcher,
+  executionRenderWorker,
   socialDirectPublishJob,
   creativeMutatorJob,
   viralAudioPairingJob,
@@ -51,6 +52,7 @@ import {
 export const GROWTH_INNGEST_FUNCTIONS = [
   autonomousVideoPipelineJob,
   nicheVideoDispatcher,
+  executionRenderWorker,
   socialDirectPublishJob,
   creativeMutatorJob,
   viralAudioPairingJob,
