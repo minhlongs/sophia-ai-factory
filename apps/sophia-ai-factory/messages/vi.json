@@ -7502,10 +7502,10 @@
       }
     },
     "landing": {
-      "badge": "⚡ Kiến Trúc AI Tự Chủ BYOK • 100% Phi Lưu Ký",
-      "headline": "Một người điều hành. ",
-      "headlineHighlight": " Nhiều chiến dịch affiliate.",
-      "subheading": "Chọn chương trình CEX hoặc SaaS, để agent chuẩn bị chiến dịch; bạn duyệt nội dung, chi phí và theo dõi hoa hồng có nguồn.",
+      "badge": "Khóa BYOK thuộc workspace • Phê duyệt trước khi chi tiêu",
+      "headline": "Một người điều hành. Nhiều chiến dịch affiliate.",
+      "headlineHighlight": "",
+      "subheading": "Chuẩn bị chiến dịch affiliate CEX và SaaS toàn cầu trong cùng một workspace: xác minh offer, soạn kịch bản, duyệt nội dung và ngân sách, theo dõi sản xuất/đăng tải, rồi đối soát hoa hồng.",
       "nav": {
         "features": "Tính năng",
         "pricing": "Bảng giá",
@@ -7602,8 +7602,8 @@
           }
         }
       },
-      "controlNote": "Control Note",
-      "demoNote": "Demo Note"
+      "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
+      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng."
     },
     "settingsPage": {
       "pageTitle": "Cài đặt",

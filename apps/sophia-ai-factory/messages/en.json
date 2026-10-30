@@ -7495,35 +7495,35 @@
       }
     },
     "landing": {
-      "badge": "⚡ BYOK Sovereign AI Architecture • 100% Non-Custodial",
-      "headline": "One operator. ",
-      "headlineHighlight": " Multiple affiliate campaigns.",
-      "subheading": "Choose a CEX or SaaS program, let agents prepare the campaign, and stay in control of content, costs, and attributable commissions.",
+      "badge": "Workspace-owned BYOK keys • CEO approval before spend",
+      "headline": "One operator. Multiple affiliate campaigns.",
+      "headlineHighlight": "",
+      "subheading": "Prepare CEX and global SaaS affiliate campaigns from one workspace: verify an offer, draft a script, approve the content and budget, follow production and publishing, then reconcile commission.",
       "nav": {
         "features": "Features",
         "pricing": "Pricing",
         "blog": "Blog",
         "affiliates": "Affiliates",
         "signIn": "Sign In",
-        "startFree": "Start Free",
+        "startFree": "Create your workspace",
         "getStarted": "Get Started",
         "guide": "Guide",
         "login": "Login",
         "brand": "Brand"
       },
       "cta": {
-        "startFree": "Plan your first campaign",
-        "watchDemo": "See what it does",
+        "startFree": "Create your workspace",
+        "watchDemo": "See the illustrative workflow",
         "viewPricing": "View Pricing",
-        "readyTitle": "Ready to Build Your AI Video Empire?",
-        "readySubtitle": "Create your account in 30 seconds. Connect your BYOK keys and start generating unlimited videos today."
+        "readyTitle": "Start with one verified offer",
+        "readySubtitle": "Create a workspace, connect your own provider keys, and prepare a campaign for approval. Paid plans and provider costs are shown before you commit."
       },
       "trustBar": {
-        "label": "Architecture Guarantee",
-        "creators": "7-Level Evidence Chain",
-        "videos": "SHA-256 CEO Approval • Domain B 0% Fee",
-        "controlContent": "Control Content",
-        "controlCost": "Control Cost"
+        "label": "What the workspace controls",
+        "creators": "No guaranteed earnings",
+        "videos": "BYOK • approval gate • workspace ledger",
+        "controlContent": "You approve content and channels",
+        "controlCost": "You set the render budget cap"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
@@ -7595,8 +7595,8 @@
           }
         }
       },
-      "controlNote": "Control Note",
-      "demoNote": "Demo Note"
+      "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
+      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue."
     },
     "settingsPage": {
       "pageTitle": "Settings",
