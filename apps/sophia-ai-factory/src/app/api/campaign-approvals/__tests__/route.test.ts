@@ -67,7 +67,8 @@ const SCHEMA = [
     state TEXT NOT NULL DEFAULT 'approval_pending', locale TEXT NOT NULL DEFAULT 'en',
     market TEXT, artifact_id TEXT, channel_id TEXT,
     reserved_cost_cents INTEGER NOT NULL DEFAULT 0, actual_cost_cents INTEGER,
-    failure_reason TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+    failure_reason TEXT, provider_job_id TEXT, render_attempts INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
   );`,
   `CREATE UNIQUE INDEX idx_runs_idem ON affiliate_execution_runs(tenant_id, idempotency_key);`,
 ];
@@ -301,5 +302,169 @@ describe('/api/campaign-approvals', () => {
       action: 'explode',
     }), { params: Promise.resolve({ id }) });
     expect(res.status).toBe(400);
+  });
+
+  it('GET requires authentication (401)', async () => {
+    mocks.mockGetCurrentUserFromHeaders.mockResolvedValue(null);
+    const res = await GET(makeReq('GET', 'http://localhost/api/campaign-approvals?workspaceId=ws_1'));
+    expect(res.status).toBe(401);
+  });
+
+  it('GET requires workspaceId (400) and a database (503)', async () => {
+    const missing = await GET(makeReq('GET', 'http://localhost/api/campaign-approvals'));
+    expect(missing.status).toBe(400);
+
+    mocks.mockGetD1.mockResolvedValue(null);
+    const noDb = await GET(makeReq('GET', 'http://localhost/api/campaign-approvals?workspaceId=ws_1'));
+    expect(noDb.status).toBe(503);
+  });
+
+  it('GET supports status filter', async () => {
+    await seedOffer();
+    const id = await seedPending();
+    await PATCH(makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, {
+      action: 'approve',
+    }), { params: Promise.resolve({ id }) });
+    const pending = await GET(
+      makeReq('GET', 'http://localhost/api/campaign-approvals?workspaceId=ws_1&status=pending_ceo'),
+    );
+    const pendingBody = (await pending.json()) as { approvals: unknown[] };
+    expect(pendingBody.approvals).toHaveLength(0);
+    const approved = await GET(
+      makeReq('GET', 'http://localhost/api/campaign-approvals?workspaceId=ws_1&status=approved'),
+    );
+    const approvedBody = (await approved.json()) as { approvals: unknown[] };
+    expect(approvedBody.approvals).toHaveLength(1);
+  });
+
+  it('PATCH requires authentication (401) and a database (503)', async () => {
+    const id = await seedPending();
+    mocks.mockGetCurrentUser.mockResolvedValue(null);
+    const anon = await PATCH(
+      makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, { action: 'approve' }),
+      { params: Promise.resolve({ id }) },
+    );
+    expect(anon.status).toBe(401);
+
+    mocks.mockGetCurrentUser.mockResolvedValue({ id: 'ceo_1', email: 'ceo@example.com' });
+    mocks.mockGetD1.mockResolvedValue(null);
+    const noDb = await PATCH(
+      makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, { action: 'approve' }),
+      { params: Promise.resolve({ id }) },
+    );
+    expect(noDb.status).toBe(503);
+  });
+
+  it('PATCH approve on an expired row returns 410', async () => {
+    const res = await createCampaignApproval(db, {
+      tenantId: 'ws_1',
+      campaignId: 'camp_1',
+      niche: 'saas_global',
+      jurisdiction: 'US',
+      payload: basePayload,
+      dispatch: {
+        userId: 'ceo_1',
+        niche: 'saas_global',
+        blueprintId: 'bp_saas_review',
+        productName: 'Acme SaaS',
+        productUrl: 'https://acme.example/signup',
+        locale: 'en',
+      },
+      expiresAtMs: Date.now() - 1000,
+    });
+    if (!res.ok) throw new Error('seed failed');
+    const patched = await PATCH(
+      makeReq('PATCH', `http://localhost/api/campaign-approvals/${res.value.id}`, {
+        action: 'approve',
+      }),
+      { params: Promise.resolve({ id: res.value.id }) },
+    );
+    expect(patched.status).toBe(410);
+  });
+
+  it('PATCH revoke on a pending row is a 409 conflict', async () => {
+    const id = await seedPending();
+    const res = await PATCH(makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, {
+      action: 'revoke',
+    }), { params: Promise.resolve({ id }) });
+    expect(res.status).toBe(409);
+  });
+
+  it('PATCH resume on an expired approval returns 410', async () => {
+    const created = await createCampaignApproval(db, {
+      tenantId: 'ws_1',
+      campaignId: 'camp_1',
+      niche: 'saas_global',
+      jurisdiction: 'US',
+      payload: basePayload,
+      dispatch: {
+        userId: 'ceo_1',
+        niche: 'saas_global',
+        blueprintId: 'bp_saas_review',
+        productName: 'Acme SaaS',
+        productUrl: 'https://acme.example/signup',
+        locale: 'en',
+      },
+      status: 'approved',
+      approvedBy: 'ceo_1',
+      expiresAtMs: Date.now() + 60_000,
+    });
+    if (!created.ok) throw new Error('seed failed');
+    // Expire after approval.
+    await db
+      .prepare(`UPDATE agent_campaign_approvals SET expires_at = ? WHERE id = ?`)
+      .bind(Date.now() - 1000, created.value.id)
+      .run();
+    const res = await PATCH(
+      makeReq('PATCH', `http://localhost/api/campaign-approvals/${created.value.id}`, {
+        action: 'resume',
+      }),
+      { params: Promise.resolve({ id: created.value.id }) },
+    );
+    expect(res.status).toBe(410);
+  });
+
+  it('PATCH resume with unverifiable terms returns 422 without sending', async () => {
+    const id = await seedPending();
+    const approved = await PATCH(
+      makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, { action: 'approve' }),
+      { params: Promise.resolve({ id }) },
+    );
+    expect(approved.status).toBe(202);
+    const resumed = await PATCH(
+      makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, { action: 'resume' }),
+      { params: Promise.resolve({ id }) },
+    );
+    expect(resumed.status).toBe(422);
+    expect(mocks.mockInngestSend).not.toHaveBeenCalled();
+  });
+
+  it('PATCH approve with corrupt dispatch context grants but cannot continue (202)', async () => {
+    const id = await seedPending();
+    await db
+      .prepare(`UPDATE agent_campaign_approvals SET dispatch_json = ? WHERE id = ?`)
+      .bind('{not-json', id)
+      .run();
+    const res = await PATCH(makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, {
+      action: 'approve',
+    }), { params: Promise.resolve({ id }) });
+    expect(res.status).toBe(202);
+    const body = (await res.json()) as { continuationCode: string };
+    expect(body.continuationCode).toBe('DISPATCH_CONTEXT_INVALID');
+    expect(mocks.mockInngestSend).not.toHaveBeenCalled();
+  });
+
+  it('PATCH approve with malformed dispatch fields cannot continue (202)', async () => {
+    const id = await seedPending();
+    await db
+      .prepare(`UPDATE agent_campaign_approvals SET dispatch_json = ? WHERE id = ?`)
+      .bind(JSON.stringify({ userId: 42 }), id)
+      .run();
+    const res = await PATCH(makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, {
+      action: 'approve',
+    }), { params: Promise.resolve({ id }) });
+    expect(res.status).toBe(202);
+    const body = (await res.json()) as { continuationCode: string };
+    expect(body.continuationCode).toBe('DISPATCH_CONTEXT_INVALID');
   });
 });

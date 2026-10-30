@@ -29,7 +29,7 @@ export function CampaignApprovalQueue({ workspaceId }: ApprovalQueueProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -67,7 +67,7 @@ export function CampaignApprovalQueue({ workspaceId }: ApprovalQueueProps) {
       }
       await load();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError({ id: approvalId, message: err instanceof Error ? err.message : String(err) });
     } finally {
       setActionId(null);
     }
@@ -126,7 +126,7 @@ export function CampaignApprovalQueue({ workspaceId }: ApprovalQueueProps) {
             key={item.id}
             item={item}
             busy={actionId === item.id}
-            actionError={actionId === item.id ? actionError : null}
+            actionError={actionError?.id === item.id ? actionError.message : null}
             onAction={handleAction}
           />
         ))}
