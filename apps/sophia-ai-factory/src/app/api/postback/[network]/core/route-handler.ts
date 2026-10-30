@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordConversion } from '@/land/tracking/edge-link';
+import { recordConversionIdempotent } from '@/land/tracking/edge-link';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { logInvalidSignature, verifyPostbackSignature } from './signature-verifier';
@@ -10,6 +10,25 @@ import { resolveNetworkSecret } from '@/land/postback/network-secret-resolver';
 import { getCredentials, type AffiliateNetwork } from '@/land/affiliates/credentials';
 
 const DOMAIN_B_NETWORKS = new Set<string>(['partnerstack', 'rewardful', 'binance', 'binance-link', 'bybit']);
+
+/** Allow-listed slugs with no signature-verifier branch yet: fail closed with guidance. */
+const UNSUPPORTED_VERIFIER_NETWORKS = new Set<string>(['impact', 'cj', 'generic']);
+
+const TENANT_GUIDANCE =
+  'Bind the postback to a workspace: pass a tracking link id (link_id/sub_id) ' +
+  'created in the workspace, or a tenant_id whose workspace stores this ' +
+  'network credential. See docs/postback-tenant-migration.md (VI/EN).';
+
+/** Domain B service error → HTTP status: permanent (4xx) vs transient (503) vs ack (200). */
+const DOMAIN_B_STATUS: Record<string, number> = {
+  ZERO_COMMISSION: 200,
+  INVALID_SIGNATURE: 401,
+  MALFORMED_JSON: 400,
+  INVALID_COMMISSION: 422,
+  TENANT_REQUIRED: 422,
+  SECRET_NOT_CONFIGURED: 503,
+  DB_WRITE_FAILED: 503,
+};
 
 function normalizeDomainBNetwork(net: string): SaasCryptoNetwork | null {
   if (net === 'binance-link' || net === 'binance') return 'binance';
@@ -51,6 +70,22 @@ export async function handlePostbackRoute(
 
   if (!KNOWN_NETWORKS.has(network)) {
     return NextResponse.json({ error: 'Unknown network' }, { status: 404 });
+  }
+
+  if (UNSUPPORTED_VERIFIER_NETWORKS.has(network)) {
+    // Fail closed with an actionable error instead of a misleading 401:
+    // no verifier branch exists for this slug yet, so no signature could pass.
+    return NextResponse.json(
+      {
+        error: 'network_not_supported',
+        network,
+        guidance:
+          `No signature verifier is configured for '${network}' yet. ` +
+          'Store the network credential in the workspace and use a supported ' +
+          `network slug. ${TENANT_GUIDANCE}`,
+      },
+      { status: 501 },
+    );
   }
 
   let rawBody: string;
@@ -100,7 +135,16 @@ export async function handlePostbackRoute(
     return NextResponse.json({ error: 'Tracking link not found' }, { status: 404 });
   }
 
-  const tenantId = linkRow?.tenant_id ?? explicitTenantId ?? 'default';
+  // No 'default'/global tenant fallback: without a verified link or an explicit
+  // tenant hint bound to that tenant's credential, the request cannot be
+  // attributed to any workspace and must fail closed.
+  const tenantId = linkRow?.tenant_id ?? explicitTenantId;
+  if (!tenantId) {
+    return NextResponse.json(
+      { error: 'tenant_unresolvable', guidance: TENANT_GUIDANCE },
+      { status: 422 },
+    );
+  }
   const route = `/api/postback/${network}`;
 
   try {
@@ -146,12 +190,7 @@ export async function handlePostbackRoute(
 
     if (!outcome.success) {
       const errCode = outcome.error ?? 'UNKNOWN';
-      const statusMap: Record<string, number> = {
-        ZERO_COMMISSION: 200,
-        INVALID_SIGNATURE: 401,
-        MALFORMED_JSON: 400,
-      };
-      const st = statusMap[errCode] ?? 500;
+      const st = DOMAIN_B_STATUS[errCode] ?? 500;
       return NextResponse.json(
         st === 200 ? { ok: true, skipped: 'ZERO_COMMISSION' } : { ok: false, error: errCode },
         { status: st },
@@ -170,15 +209,20 @@ export async function handlePostbackRoute(
 
   try {
     const linkId = String(body.link_id);
-    await recordConversion(linkId, network, {
+    const recorded = await recordConversionIdempotent(db, linkId, network, {
       externalConversionId: typeof body.external_id === 'string' ? body.external_id : undefined,
       amountUsd: typeof body.amount_usd === 'number' ? body.amount_usd : undefined,
       ...body,
     });
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return NextResponse.json(
+      { ok: true, conversionId: recorded.conversionId, duplicate: recorded.duplicate },
+      { status: 200 },
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn('[postback] Conversion failed to record', { network, error: message });
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    // A storage failure is transient from the provider's view: ask for a retry
+    // instead of recording a false success or a misleading validation error.
+    return NextResponse.json({ ok: false, error: 'db_write_failed' }, { status: 503 });
   }
 }

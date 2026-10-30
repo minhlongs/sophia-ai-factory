@@ -1,100 +1,142 @@
 /**
- * SaaS & Crypto Affiliate Webhook Edge Route Handler
+ * SaaS/Crypto Affiliate Postback Endpoint — LEGACY tenant-scoped delegate.
  *
- * Ingests real-time conversion postbacks from PartnerStack, Rewardful, Binance Link, and Bybit.
- * Verifies HMAC/secret token, performs idempotent D1 storage, and triggers conversion workflows.
+ * Historical contract preserved: networks (partnerstack/rewardful/binance/
+ * bybit), signature headers (x-partnerstack-signature, x-rewardful-signature,
+ * x-signature, authorization Bearer), response envelope, and the Domain B
+ * ledger service (normalizers, payouts, reconciliations) all unchanged.
  *
- * Layer: app/api/webhooks/saas-crypto/[network] (Interface Adapter / Edge Route)
+ * What changed: tenant + secret are server-resolved. The workspace comes from
+ * the request's attributable sub-id / tenant hint, the signing secret comes
+ * from that workspace's stored credential (BYOK), and the resolved tenantId
+ * is passed through to the ledger service — no global env secret, no
+ * 'sophia-global' tenant fallback in the Inngest fan-out.
+ *
+ * Canonical endpoint: /api/postback/{network}. No sunset is set on this URL.
+ *
+ * Layer: app/api/webhooks/saas-crypto
  * @module app/api/webhooks/saas-crypto/[network]/route
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { processSaasCryptoPostback } from '@/land/affiliates/postbacks/saas-crypto-postback-service';
 import type { SaasCryptoNetwork } from '@/land/affiliates/postbacks/saas-crypto-postback-types';
 import { getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  resolveLegacyTenantSecret,
+  LEGACY_MIGRATION_GUIDANCE,
+} from '@/land/postback/legacy-tenant-resolver';
 
-export const dynamic = 'force-dynamic';
-
-interface NetworkSecretConfig {
-  network: SaasCryptoNetwork;
-  secretEnv: string;
-  sigHeaders: string[];
+interface RouteParams {
+  network: string;
 }
 
-const SAAS_CRYPTO_NETWORKS: Record<string, NetworkSecretConfig> = {
-  partnerstack: {
-    network: 'partnerstack',
-    secretEnv: 'PARTNERSTACK_WEBHOOK_SECRET',
-    sigHeaders: ['x-partnerstack-signature', 'x-signature', 'x-webhook-signature', 'authorization'],
-  },
-  rewardful: {
-    network: 'rewardful',
-    secretEnv: 'REWARDFUL_WEBHOOK_SECRET',
-    sigHeaders: ['x-rewardful-signature', 'x-signature', 'x-webhook-signature', 'authorization'],
-  },
-  binance: {
-    network: 'binance',
-    secretEnv: 'BINANCE_AFFILIATE_WEBHOOK_SECRET',
-    sigHeaders: ['x-binance-signature', 'x-signature', 'authorization'],
-  },
-  bybit: {
-    network: 'bybit',
-    secretEnv: 'BYBIT_AFFILIATE_WEBHOOK_SECRET',
-    sigHeaders: ['x-bybit-signature', 'x-signature', 'authorization'],
-  },
+/**
+ * Historical per-network signature-header contract (unchanged).
+ * Header names are matched case-insensitively by the Headers API.
+ */
+const SUPPORTED_NETWORKS: Record<string, { network: SaasCryptoNetwork; sigHeaders: string[] }> = {
+  partnerstack: { network: 'partnerstack', sigHeaders: ['x-partnerstack-signature'] },
+  rewardful: { network: 'rewardful', sigHeaders: ['x-rewardful-signature', 'x-signature'] },
+  binance: { network: 'binance', sigHeaders: ['x-signature', 'authorization'] },
+  bybit: { network: 'bybit', sigHeaders: ['x-signature', 'authorization'] },
 };
+
+/**
+ * Domain B outcome -> HTTP status. Transient storage/config failures are 503
+ * (provider retries); everything else the service rejected is permanent for
+ * this exact payload and maps to 4xx so the provider does not retry-storm.
+ */
+function mapOutcomeStatus(error: string | undefined): number {
+  switch (error) {
+    case 'INVALID_SIGNATURE':
+      return 401;
+    case 'MALFORMED_JSON':
+      return 400;
+    case 'SECRET_NOT_CONFIGURED':
+    case 'DB_WRITE_FAILED':
+      return 503;
+    default:
+      return 422;
+  }
+}
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ network: string }> | { network: string } },
+  context: { params: Promise<RouteParams> | RouteParams },
 ): Promise<NextResponse> {
-  const resolvedParams = await Promise.resolve(context.params);
-  const rawNetwork = resolvedParams.network.toLowerCase();
-  const config = SAAS_CRYPTO_NETWORKS[rawNetwork];
-
+  const { network: networkParam } = await context.params;
+  const config = SUPPORTED_NETWORKS[networkParam];
   if (!config) {
-    return NextResponse.json({ error: 'Unsupported SaaS/Crypto affiliate network' }, { status: 404 });
+    return NextResponse.json({ ok: false, error: 'unsupported_network' }, { status: 404 });
   }
 
-  const secret = process.env[config.secretEnv];
-  if (!secret) {
-    // Fail LOUD: a 200 here would tell the provider "delivered" while the
-    // conversion is silently dropped. 503 asks for a retry once configured.
-    logger.warn(`[saas-crypto-webhook] Secret ${config.secretEnv} not configured`);
-    return NextResponse.json({ ok: false, error: 'secret_not_configured' }, { status: 503 });
+  const rawBody = await request.text();
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(rawBody) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ ok: false, error: 'MALFORMED_JSON' }, { status: 400 });
   }
 
-  let signature = '';
-  for (const headerName of config.sigHeaders) {
-    const val = request.headers.get(headerName);
-    if (val) {
-      signature = val.replace(/^Bearer\s+/i, '').trim();
-      break;
-    }
-  }
-
+  const signatureHeader =
+    config.sigHeaders.map((h) => request.headers.get(h)).find((v) => v) ?? '';
+  const signature = signatureHeader.replace(/^Bearer\s+/i, '').trim();
   if (!signature) {
     return NextResponse.json({ error: 'Missing signature or auth header' }, { status: 401 });
   }
 
-  const rawBody = await request.text();
   const db = await getD1();
+  if (!db) {
+    logger.error('[saas-crypto-webhook] D1 binding unavailable');
+    return NextResponse.json({ ok: false, error: 'db_unavailable' }, { status: 503 });
+  }
+
+  const subCandidates = [
+    payload['sub_id'],
+    payload['link_id'],
+    payload['click_ref'],
+    payload['partner_key'],
+    payload['referralId'],
+  ].filter((v): v is string => typeof v === 'string' && v.length > 0);
+  const explicitTenantId =
+    typeof payload['tenant_id'] === 'string' ? (payload['tenant_id'] as string) : undefined;
+
+  const resolution = await resolveLegacyTenantSecret({
+    db,
+    dbNetwork: config.network,
+    subIdCandidates: subCandidates,
+    explicitTenantId: explicitTenantId ?? null,
+  });
+  if (!resolution.ok) {
+    const status = resolution.error === 'secret_not_configured' ? 503 : 422;
+    return NextResponse.json(
+      {
+        ok: false,
+        error: resolution.error,
+        ...('tenantId' in resolution ? { tenantId: resolution.tenantId } : {}),
+        guidance: LEGACY_MIGRATION_GUIDANCE,
+      },
+      { status },
+    );
+  }
 
   const outcome = await processSaasCryptoPostback({
     db,
+    tenantId: resolution.tenantId,
     network: config.network,
     rawBody,
     signature,
-    secret,
+    secret: resolution.secret,
   });
 
   if (!outcome.success) {
-    if (outcome.error === 'INVALID_SIGNATURE') {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-    return NextResponse.json({ ok: false, error: outcome.error }, { status: 422 });
+    const status = mapOutcomeStatus(outcome.error);
+    return NextResponse.json({ ok: false, error: outcome.error }, { status });
   }
 
   if (!outcome.isIdempotentDuplicate) {
@@ -103,7 +145,7 @@ export async function POST(
         name: 'conversion.created',
         data: {
           conversionEventId: outcome.eventId,
-          tenantId: process.env.SOPHIA_TENANT_ID ?? 'sophia-global',
+          tenantId: resolution.tenantId,
         },
       });
     } catch (emitErr: unknown) {

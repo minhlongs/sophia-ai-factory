@@ -1,7 +1,12 @@
 import React from 'react';
 import { AffiliateCockpitView, type CockpitExecutiveSnapshot } from '@/land/affiliates/dashboard';
 import { AffiliatePortalView } from '@/components/affiliates/portal/affiliate-portal-view';
-import { getAffiliateWebhookReadiness } from '@/app/api/webhooks/affiliate/[network]/affiliate-network-configs';
+import {
+  getWorkspaceWebhookReadiness,
+  CANONICAL_WEBHOOK_NETWORK_LIST,
+  NETWORK_CONFIGS,
+} from '@/app/api/webhooks/affiliate/[network]/affiliate-network-configs';
+import { getD1 } from '@/seed/db/client';
 import type {
   PartnerLedgerKpiData,
   CommissionLedgerItem,
@@ -21,7 +26,7 @@ export interface AffiliateHubSupplementarySectionsProps {
   ledgerItems?: CommissionLedgerItem[];
 }
 
-export function AffiliateHubSupplementarySections({
+export async function AffiliateHubSupplementarySections({
   userId,
   partnerCode,
   commissionRatePct,
@@ -35,7 +40,16 @@ export function AffiliateHubSupplementarySections({
   ledgerItems = [],
 }: AffiliateHubSupplementarySectionsProps) {
   const isVi = locale === 'vi';
-  const webhookReadiness = getAffiliateWebhookReadiness();
+  const db = await getD1();
+  // Fail-closed display: without a database read we cannot prove any network
+  // is connected for this workspace, so every badge renders pending.
+  const webhookReadiness = db
+    ? await getWorkspaceWebhookReadiness(db, userId)
+    : CANONICAL_WEBHOOK_NETWORK_LIST.map((net) => ({
+        network: net,
+        secretEnv: NETWORK_CONFIGS[net].secretEnv,
+        configured: false,
+      }));
 
   const snapshot: CockpitExecutiveSnapshot = {
     tenantId: userId,

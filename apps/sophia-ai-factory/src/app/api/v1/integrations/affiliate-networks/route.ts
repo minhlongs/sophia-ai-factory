@@ -26,10 +26,11 @@ function getD1(): D1Database | null {
 const VALID_NETWORKS: AffiliateNetwork[] = [
   'impact_radius','partnerstack','cj','shareasale','clickbank',
   'binance','bybit','bitget','coinbase',
+  'rewardful','awin','tiktok_shop','okx','amazon','accesstrade',
 ];
 
 const UpsertSchema = z.object({
-  network: z.enum(['impact_radius','partnerstack','cj','shareasale','clickbank','binance','bybit','bitget','coinbase']),
+  network: z.enum(['impact_radius','partnerstack','cj','shareasale','clickbank','binance','bybit','bitget','coinbase','rewardful','awin','tiktok_shop','okx','amazon','accesstrade']),
   payload: z.record(z.string(), z.string()),
 });
 
