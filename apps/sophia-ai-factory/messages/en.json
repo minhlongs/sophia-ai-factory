@@ -7925,7 +7925,39 @@
     },
     "actionsLabel": "Actions",
     "navLabel": "Approvals",
-    "pageTitle": "Approval Queue"
+    "pageTitle": "Approval Queue",
+    "campaign": {
+      "title": "Campaign approvals",
+      "description": "CEO decisions for affiliate video campaigns. Approving re-verifies offer terms and resumes execution exactly once.",
+      "loading": "Loading campaign approvals…",
+      "loadFailed": "Could not load campaign approvals",
+      "retry": "Try again",
+      "emptyTitle": "No campaign approvals",
+      "emptyDescription": "Campaigns that need a CEO decision will appear here.",
+      "resume": "Resume",
+      "revoke": "Revoke",
+      "expires": "Expires",
+      "reasonLabel": "Reason",
+      "hashLabel": "Payload hash",
+      "continuationPending": "Approval granted, but execution could not resume automatically. Fix the reported issue, then press Resume.",
+      "resumed": "Execution resumed.",
+      "status": {
+        "pending_ceo": "Pending CEO",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "revoked": "Revoked",
+        "expired": "Expired",
+        "invalidated_by_mutation": "Invalidated",
+        "executed": "Executed",
+        "aborted_by_kill_switch": "Stopped"
+      },
+      "fields": {
+        "niche": "Niche",
+        "jurisdiction": "Jurisdiction",
+        "budget": "Render budget",
+        "target": "Affiliate link"
+      }
+    }
   },
   "autonomy": {
     "title": "Autonomy Level",

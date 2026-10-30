@@ -85,6 +85,7 @@ vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
 vi.mock('@/tree/affiliate/approval/campaign-approval-repo', () => ({
   createCampaignApproval: vi.fn(async () => ({ ok: true, value: { id: 'app_1' } })),
   verifyAndEnforceCampaignApprovalD1: vi.fn(async () => ({ ok: true, value: { verifiedHash: 'hash-v1' } })),
+  markApprovalExecuted: vi.fn(async () => ({ ok: true, value: { id: 'app_1', status: 'executed' } })),
 }));
 
 vi.mock('@/tree/video/render', async (importOriginal) => {

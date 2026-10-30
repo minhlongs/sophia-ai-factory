@@ -18,7 +18,9 @@ import { computeApprovalPayloadHash } from '@/seed/security/approval-payload-has
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   createCampaignApproval,
+  markApprovalExecuted,
   verifyAndEnforceCampaignApprovalD1,
+  type ApprovalDispatchContext,
 } from '@/tree/affiliate/approval/campaign-approval-repo';
 import {
   beginExecutionRun,
@@ -149,6 +151,23 @@ export const nicheVideoDispatcher = inngest.createFunction(
         if (!tenantId) return { persisted: false, reason: 'TENANT_REQUIRED' };
         const db = await getD1();
         if (!db) return { persisted: false, reason: 'DB_UNAVAILABLE' };
+        const dispatch: ApprovalDispatchContext = {
+          userId: data.userId,
+          offerId: data.offerId,
+          maxRenderCostCents: data.maxRenderCostCents,
+          targetAccount: data.targetAccount,
+          idempotencyKey: data.idempotencyKey,
+          niche: data.niche,
+          blueprintId: data.blueprintId,
+          productName: data.productName,
+          productUrl: data.productUrl,
+          targetAudience: data.targetAudience,
+          jurisdiction: data.jurisdiction,
+          affiliateCode: data.affiliateCode,
+          subId: data.subId,
+          vanityCoupon: data.vanityCoupon,
+          locale: data.locale,
+        };
         const created = await createCampaignApproval(db, {
           tenantId,
           campaignId: plan.planId,
@@ -156,6 +175,7 @@ export const nicheVideoDispatcher = inngest.createFunction(
           jurisdiction: approvalPayload.jurisdiction,
           status: 'pending_ceo',
           payload: approvalPayload,
+          dispatch,
         });
         if (!created.ok) {
           logger.warn('nicheVideoDispatcher: approval row could not be persisted', {
@@ -191,8 +211,11 @@ export const nicheVideoDispatcher = inngest.createFunction(
       // than trusting the event's copy (covers revocation + status changes).
       const db = await getD1();
       if (db && data.approvalId) {
+        // Verify THE row the continuation references — never the latest row
+        // for the campaign (a newer draft must not shadow a granted approval).
         const verification = await verifyAndEnforceCampaignApprovalD1(
           db, tenantId, plan.planId, approvalPayload, killSwitchActive,
+          { approvalId: data.approvalId },
         );
         if (!verification.ok) {
           return { ok: false as const, reason: verification.error.code };
@@ -277,7 +300,21 @@ export const nicheVideoDispatcher = inngest.createFunction(
       const moved = await transitionRun(
         db, tenantId, created.value.id, 'approval_pending', 'render_queued', {},
       );
-      if (moved.ok) return moved.value;
+      if (moved.ok) {
+        // Consume the approval exactly once it backs a queued run. Best-effort:
+        // a crash here leaves `approved`, and the resume path re-checks the run
+        // before re-sending, so the consumer stays idempotent either way.
+        if (data.approvalId) {
+          const consumed = await markApprovalExecuted(db, tenantId, data.approvalId);
+          if (!consumed.ok) {
+            logger.warn('nicheVideoDispatcher: approval could not be marked executed', {
+              approvalId: data.approvalId,
+              error: consumed.error.code,
+            });
+          }
+        }
+        return moved.value;
+      }
       // Replay after a later state (rendered/publish_queued/...): report the
       // durable state instead of pretending the queue step just happened.
       return (await getExecutionRun(db, tenantId, created.value.id)) ?? created.value;

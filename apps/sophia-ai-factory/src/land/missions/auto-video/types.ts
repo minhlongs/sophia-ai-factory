@@ -80,7 +80,11 @@ export class AutoVideoMissionError extends Error {
     | 'KILL_SWITCH_UNKNOWN'
     | 'APPROVAL_NOT_GRANTED'
     | 'APPROVAL_INVALIDATED_BY_MUTATION'
-    | 'APPROVAL_ABORTED_BY_KILL_SWITCH';
+    | 'APPROVAL_ABORTED_BY_KILL_SWITCH'
+    | 'APPROVAL_REJECTED'
+    | 'APPROVAL_REVOKED'
+    | 'APPROVAL_EXPIRED'
+    | 'APPROVAL_ALREADY_EXECUTED';
   missionId?: string;
   constructor(code: AutoVideoMissionError['code'], message: string, missionId?: string) {
     super(message);

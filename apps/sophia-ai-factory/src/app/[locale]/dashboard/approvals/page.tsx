@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
-import { ApprovalQueue } from '@/components/approval-queue';
+import { ApprovalQueue, CampaignApprovalQueue } from '@/components/approval-queue';
 import { StitchMobileCompanionBanner } from '@/components/approval-queue/stitch-mobile-companion-banner';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,9 +45,10 @@ export default async function ApprovalsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl space-y-10 px-4 py-8 md:px-6 lg:px-8">
       <StitchMobileCompanionBanner />
       <ApprovalQueue workspaceId={primaryWorkspaceId} />
+      <CampaignApprovalQueue workspaceId={primaryWorkspaceId} />
     </div>
   );
 }
