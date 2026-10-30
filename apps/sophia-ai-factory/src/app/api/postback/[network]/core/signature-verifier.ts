@@ -1,9 +1,5 @@
 import type { NextRequest } from 'next/server';
-import {
-  verifyHmacSha256Hex,
-  verifyHmacSha256Base64,
-  computeHmacSha256Hex,
-} from '@/land/postback/hmac-verifier';
+import { verifyHmacSha256Hex, verifyHmacSha256Base64 } from '@/land/postback/hmac-verifier';
 import { resolveNetworkSecret } from '@/land/postback/network-secret-resolver';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -15,7 +11,12 @@ export async function logInvalidSignature(
 ): Promise<void> {
   try {
     const msg = `[postback] Invalid signature from ${network}`;
-    const fingerprint = await computeHmacSha256Hex('', `${msg}:Error`);
+    // Plain SHA-256 (no HMAC key): WebCrypto rejects zero-length HMAC keys,
+    // which previously threw here and silently skipped the audit row.
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${msg}:Error`));
+    const fingerprint = Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
     await db
       .prepare(
         `INSERT INTO error_log (ts, level, msg, msg_class, fingerprint, ctx_json, route, status)
