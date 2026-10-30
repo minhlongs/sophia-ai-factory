@@ -47,3 +47,43 @@ export const kvMock = {
   R2: r2Mock,
   NEXT_INC_CACHE_R2_BUCKET: r2Mock,
 };
+
+// Polyfill Web Storage for Node 26+ jsdom environments where window.localStorage is undefined or incomplete
+if (
+  typeof window !== 'undefined' &&
+  (!window.localStorage || typeof window.localStorage.clear !== 'function')
+) {
+  class MemoryStorage implements Storage {
+    private _data = new Map<string, string>();
+    get length(): number {
+      return this._data.size;
+    }
+    clear(): void {
+      this._data.clear();
+    }
+    getItem(key: string): string | null {
+      return this._data.has(key) ? this._data.get(key)! : null;
+    }
+    key(index: number): string | null {
+      return Array.from(this._data.keys())[index] ?? null;
+    }
+    removeItem(key: string): void {
+      this._data.delete(key);
+    }
+    setItem(key: string, value: string): void {
+      this._data.set(key, String(value));
+    }
+  }
+  const storage = new MemoryStorage();
+  Object.defineProperty(window, 'localStorage', {
+    value: storage,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+    writable: true,
+  });
+}
+
