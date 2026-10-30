@@ -37,7 +37,7 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     expect(res.status).toBe(404);
   });
 
-  it('returns 200 skipped if secret is not configured in env', async () => {
+  it('returns 503 (fail loud, provider retries) if secret is not configured in env', async () => {
     delete process.env.PARTNERSTACK_WEBHOOK_SECRET;
 
     const req = new NextRequest('http://localhost/api/webhooks/saas-crypto/partnerstack', {
@@ -46,9 +46,10 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     });
 
     const res = await POST(req, { params: { network: 'partnerstack' } });
-    expect(res.status).toBe(200);
-    const data = (await res.json()) as { ok: boolean; skipped: string };
-    expect(data.skipped).toBe('secret_not_configured');
+    expect(res.status).toBe(503);
+    const data = (await res.json()) as { ok: boolean; error: string };
+    expect(data.ok).toBe(false);
+    expect(data.error).toBe('secret_not_configured');
   });
 
   it('returns 401 if signature header is missing', async () => {

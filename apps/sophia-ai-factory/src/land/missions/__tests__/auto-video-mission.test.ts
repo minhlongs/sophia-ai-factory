@@ -66,6 +66,12 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(() => ({ prepare: mockPrepare })),
 }));
 
+// The mission entrypoint fails closed when the halt state is unreadable.
+// Default it to off-and-known; the unknown-state case below overrides it.
+vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
+  getAffiliateKillSwitchState: vi.fn(async () => ({ active: false, known: true })),
+}));
+
 import { generateSeoScript, SeoScriptConfigurationError } from '@/land/scripts/generate-seo-script';
 import { translateScript } from '@/land/i18n/translate-script';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
@@ -75,6 +81,7 @@ import {
   runAutoVideoMission,
   AutoVideoMissionError,
 } from '@/land/missions/auto-video-mission';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 
 const mockedGenerateSeoScript = vi.mocked(generateSeoScript);
 const mockedTranslateScript = vi.mocked(translateScript);
@@ -85,6 +92,8 @@ const mockedSubmitByokVideo = vi.mocked(submitByokVideo);
 describe('runAutoVideoMission', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // resetAllMocks wipes the mock factory default — restore halt-off-known.
+    vi.mocked(getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
     mockRun.mockResolvedValue({});
     mockBind.mockImplementation(() => ({ run: mockRun }));
     mockPrepare.mockImplementation(() => ({ bind: mockBind }));
@@ -332,5 +341,27 @@ describe('runAutoVideoMission', () => {
     await expect(
       runAutoVideoMission({ userId: 'u', topic: 't' }),
     ).rejects.toMatchObject({ code: 'VIDEO_RENDER_FAILED' });
+  });
+
+  it('refuses to queue a mission when the kill-switch state is unreadable', async () => {
+    vi.mocked(getAffiliateKillSwitchState).mockResolvedValue({
+      active: false,
+      known: false,
+      reason: 'D1 read failed',
+    });
+
+    await expect(
+      runAutoVideoMission({ userId: 'u', topic: 't' }),
+    ).rejects.toMatchObject({ code: 'KILL_SWITCH_UNKNOWN' });
+    expect(mockedGenerateSeoScript).not.toHaveBeenCalled();
+  });
+
+  it('refuses to queue a mission when the kill-switch is actively engaged', async () => {
+    vi.mocked(getAffiliateKillSwitchState).mockResolvedValue({ active: true, known: true });
+
+    await expect(
+      runAutoVideoMission({ userId: 'u', topic: 't' }),
+    ).rejects.toMatchObject({ code: 'KILL_SWITCH_ACTIVE' });
+    expect(mockedGenerateSeoScript).not.toHaveBeenCalled();
   });
 });

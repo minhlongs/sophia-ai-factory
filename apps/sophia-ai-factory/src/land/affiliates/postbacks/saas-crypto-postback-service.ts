@@ -57,6 +57,11 @@ export async function processSaasCryptoPostback(
   // 'default' tenant or create a global idempotency key.
   if (db && !tenantId) return invalid('TENANT_REQUIRED');
 
+  // An empty signing secret makes HMAC verification meaningless: HMAC with an
+  // empty key is computable by anyone, so accepting it would let an attacker
+  // self-sign any payload. Fail closed before any crypto runs.
+  if (!secret) return invalid('SECRET_NOT_CONFIGURED');
+
   // Strict signature validation per provider contract — no raw-secret bypass.
   let isValid = false;
   if (network === 'partnerstack' || network === 'rewardful') {
@@ -77,6 +82,13 @@ export async function processSaasCryptoPostback(
   }
 
   const normalized = parseSaasCryptoPostback(network, payload);
+  // Provider garbage (e.g. a non-numeric amount) normalizes to NaN/Infinity,
+  // which would sail past the `<= 0` check below (all NaN comparisons are
+  // false) and reach the ledger bind. Reject loudly instead of relying on the
+  // database driver to fail the write.
+  if (!Number.isFinite(normalized.commissionCents)) {
+    return invalid('INVALID_COMMISSION', normalized.eventId);
+  }
   const isReversal = normalized.reconciliationStatus === 'reversed';
   if (!isReversal && normalized.commissionCents <= 0) {
     return invalid('ZERO_COMMISSION', normalized.eventId);

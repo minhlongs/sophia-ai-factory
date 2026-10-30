@@ -10,7 +10,7 @@ import { schedulePublish, PublishConfigurationError } from '@/land/publish/sched
 import { submitByokVideo, RenderByokVideoError } from '@/land/video/generation/render-byok-video';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { verifyAndEnforceCampaignApprovalD1 } from '@/tree/affiliate/approval/campaign-approval-guard';
 import { AutoVideoMissionError, type AutoVideoMissionInput, type AutoVideoMissionResult } from './types';
 
@@ -20,7 +20,9 @@ async function enforcePreSideEffectGuards(
   missionId: string,
 ): Promise<void> {
   const tenantId = input.tenantId ?? input.userId;
-  const killSwitchActive = await isAffiliateKillSwitchActive(tenantId);
+  // Fail closed: an unreadable halt state blocks the side effect.
+  const killState = await getAffiliateKillSwitchState(tenantId);
+  const killSwitchActive = killState.active || !killState.known;
 
   if (input.requireCeoApproval || input.campaignId || input.approvalPayload) {
     const db = await getD1();
@@ -55,8 +57,10 @@ async function enforcePreSideEffectGuards(
     }
   } else if (killSwitchActive) {
     throw new AutoVideoMissionError(
-      'KILL_SWITCH_ACTIVE',
-      'Affiliate emergency kill switch is active for this workspace',
+      killState.known ? 'KILL_SWITCH_ACTIVE' : 'KILL_SWITCH_UNKNOWN',
+      killState.known
+        ? 'Affiliate emergency kill switch is active for this workspace'
+        : 'Affiliate emergency kill switch state unreadable — failing closed',
       missionId,
     );
   }

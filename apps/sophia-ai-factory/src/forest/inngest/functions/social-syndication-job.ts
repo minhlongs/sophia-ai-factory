@@ -10,7 +10,7 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { evaluateSyndicationPacing } from '@/tree/social/syndication/social-syndication-pacer';
 import type { ChannelPublishState } from '@/tree/social/syndication/syndication-pacing-types';
 import { generateConsistentFingerprint } from '@/tree/affiliate/proxy/anti-detection-rotator';
@@ -35,11 +35,15 @@ export const socialSyndicationJob = inngest.createFunction(
 
     // Step 1: Emergency Kill Switch Safety Gate
     const killSwitchHalt = await step.run('check-kill-switch', async () => {
-      const isHalted = await isAffiliateKillSwitchActive(tenantId);
+      // Fail closed: an unreadable halt state halts syndication. The legacy
+      // boolean helper fails OPEN on read errors.
+      const killState = await getAffiliateKillSwitchState(tenantId);
+      const isHalted = killState.active || !killState.known;
       if (isHalted) {
-        logger.warn('[socialSyndicationJob] Execution aborted by active Affiliate Kill Switch', {
+        logger.warn('[socialSyndicationJob] Execution aborted by Affiliate Kill Switch (active or unreadable)', {
           jobId,
           tenantId,
+          known: killState.known,
         });
       }
       return isHalted;
