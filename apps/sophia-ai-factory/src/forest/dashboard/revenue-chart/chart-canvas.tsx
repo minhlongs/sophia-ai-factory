@@ -12,14 +12,24 @@ import type { RevenueDataPoint } from "../types";
 
 export interface ChartCanvasProps {
   chartData: RevenueDataPoint[];
+  /**
+   * True when the server could not report figures at all. Distinct from an
+   * empty array, which is a verified-empty period.
+   */
+  unavailable?: boolean;
   emptyTitle?: string;
   emptyDesc?: string;
+  unavailableTitle?: string;
+  unavailableDesc?: string;
 }
 
 export function ChartCanvas({
   chartData,
+  unavailable = false,
   emptyTitle = "No Revenue Recorded",
   emptyDesc = "No transaction revenue recorded for this period.",
+  unavailableTitle = "Revenue unavailable",
+  unavailableDesc = "We could not load your revenue figures. Please reload the page or check your connection.",
 }: ChartCanvasProps) {
   return (
     <div className="relative pt-6">
@@ -34,16 +44,17 @@ export function ChartCanvas({
       {chartData.length === 0 ? (
         <div
           className="h-56 flex flex-col items-center justify-center text-center p-6 relative z-10"
-          data-testid="chart-empty-state"
+          data-testid={unavailable ? "chart-unavailable-state" : "chart-empty-state"}
+          data-status={unavailable ? "error" : "verified_empty"}
         >
           <div className="w-10 h-10 rounded-xl bg-muted dark:bg-white/[0.04] border border-border dark:border-white/[0.08] flex items-center justify-center mb-2.5 text-muted-foreground dark:text-slate-400">
             <TrendingUp className="w-5 h-5 opacity-40" />
           </div>
           <p className="text-xs font-semibold text-foreground dark:text-slate-300">
-            {emptyTitle}
+            {unavailable ? unavailableTitle : emptyTitle}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5 max-w-xs">
-            {emptyDesc}
+            {unavailable ? unavailableDesc : emptyDesc}
           </p>
         </div>
       ) : (

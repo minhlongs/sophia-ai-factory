@@ -550,7 +550,7 @@
         },
         "profit": {
           "title": "Track Revenue",
-          "description": "Track earnings across 10 affiliate networks (PartnerStack, Impact, Binance, Bybit, Bitget, OKX)"
+          "description": "Track earnings from affiliate networks (BYOK Apollo / PartnerStack / Impact)"
         }
       },
       "badge": "WORKFLOW ENGINE",
@@ -569,7 +569,7 @@
         },
         "video_factory": {
           "title": "Video Factory",
-          "description": "Produce Hybrid Scene-Graph videos at scale (fal.ai/Replicate Hook + Edge SVG Data Cards 0% text hallucination + ElevenLabs voice) — all in one flow.",
+          "description": "Produce scroll-stopping videos at scale. AI scripts, ElevenLabs voice, auto-publish — all in one flow.",
           "badge": "Popular"
         },
         "credits": {
@@ -1152,7 +1152,10 @@
       "affiliate": "Affiliate Hub",
       "publish_queue": "Distribution Queue",
       "marketplace": "Creator Marketplace",
-      "system_health": "System Health"
+      "system_health": "System Health",
+      "affiliates": "My Affiliate Business",
+      "approvals": "Approvals Needed",
+      "niche_studio": "Niche Studio"
     },
     "notFound": {
       "title": "Page Not Found",
@@ -4875,7 +4878,9 @@
       "title": "Connect Telegram",
       "description": "Get notifications + quick commands on Telegram. Type /campaign to create videos anytime.",
       "connectButton": "Open Telegram and connect",
-      "openedHint": "✅ Telegram opened — type /start to complete linking"
+      "pairedHint": "✅ Telegram connected — you can use /campaign right now",
+      "awaitingPairingHint": "Telegram is open. Press Start in the bot chat, then select “Check connection”. It is not connected until the system confirms it.",
+      "checkPairingButton": "Check connection"
     },
     "steps": {
       "accountCreated": {
@@ -5226,12 +5231,12 @@
     "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more",
     "queue": {
       "title": "Publish Queue",
-      "subtitle": "Monitor and manage omnichannel publish jobs (YouTube, TikTok, Instagram, Facebook, LinkedIn)",
+      "subtitle": "Monitor and manage your WhatsApp publish jobs",
       "loading": "Loading publish queue...",
       "empty": {
         "title": "No Publish Jobs Yet",
-        "message": "Schedule your first omnichannel publish from Creator Studio or configure automated distribution.",
-        "cta": "Open Creator Studio"
+        "message": "Schedule your first WhatsApp publish from the video editor or setup wizard.",
+        "cta": "Create WhatsApp Template"
       },
       "table": {
         "video": "Video",
@@ -6417,6 +6422,29 @@
       "failed": "Failed"
     },
     "dashboard": {
+      "nextStep": {
+        "title": "Your next step",
+        "steps": {
+          "setup": {
+            "eyebrow": "Get started",
+            "title": "Connect your API keys to start producing",
+            "body": "You enter your own API keys (BYOK) in the Setup Wizard. Sophia only uses your keys and never stores them for you.",
+            "cta": "Open Setup Wizard"
+          },
+          "offer": {
+            "eyebrow": "Pick an offer",
+            "title": "Choose an affiliate program to build a campaign",
+            "body": "Browse the connected Crypto/CEX and Global SaaS programs, then pick the offer that fits your niche.",
+            "cta": "Browse offers"
+          },
+          "campaign": {
+            "eyebrow": "Operating",
+            "title": "Track the campaigns you approved",
+            "body": "See the current step, the latest update and the results of the campaigns you approved.",
+            "cta": "Open campaigns"
+          }
+        }
+      },
       "title": "Dashboard",
       "subtitle": "Welcome back. Here's what's happening with your workspace today.",
       "onboardingBanner": {
@@ -6435,7 +6463,9 @@
         "total_campaigns": "Total Campaigns",
         "active_campaigns": "Active Campaigns",
         "videos_generated": "Videos Generated",
-        "success_rate": "Success Rate"
+        "success_rate": "Success Rate",
+        "unavailableHint": "We could not load your numbers. Please reload the page or check your connection.",
+        "emptyHint": "Your account has no data for this period yet."
       },
       "revenueChart": {
         "title": "Revenue Over Time",
@@ -6443,6 +6473,8 @@
         "period": "Last 30 Days",
         "emptyTitle": "No Revenue Recorded",
         "emptyDesc": "No transaction revenue recorded for this period.",
+        "unavailableTitle": "Revenue unavailable",
+        "unavailableDesc": "We could not load your revenue figures. Please reload the page or check your connection.",
         "periods": {
           "7d": "Last 7 Days",
           "30d": "Last 30 Days",
@@ -6471,11 +6503,15 @@
           "amount": "Amount",
           "status": "Status",
           "action": "Action"
-        }
+        },
+        "unavailableTitle": "We could not load your activity history. Please reload the page."
       },
       "actions": {
         "exportData": "Export Data",
         "addProduct": "Add Product"
+      },
+      "advanced": {
+        "localEngineLabel": "Advanced (optional): Install the rendering engine on your machine (not required to start)"
       }
     },
     "auth": {
@@ -6504,14 +6540,14 @@
         "switchToVietnamese": "Switch To Vietnamese",
         "switchToEnglish": "Switch To English",
         "magicLink": "Magic Link",
-        "emailRequired": "Please enter your email address",
-        "passkeySignIn": "Passkey (FaceID / TouchID)",
-        "emailOtpSend": "6-Digit Email OTP",
-        "emailOtpLabel": "6-digit verification code",
-        "emailOtpPlaceholder": "Enter 6-digit code",
-        "emailOtpVerify": "Verify OTP",
-        "emailOtpSentNotice": "A 6-digit verification code has been sent to your email.",
-        "invalidOtp": "Invalid or expired verification code"
+        "passkeySignIn": "Passkey Sign In",
+        "emailOtpSend": "Email Otp Send",
+        "emailOtpSentNotice": "Email Otp Sent Notice",
+        "emailOtpPlaceholder": "Email Otp Placeholder",
+        "emailOtpLabel": "Email Otp Label",
+        "emailOtpVerify": "Email Otp Verify",
+        "emailRequired": "Email Required",
+        "invalidOtp": "Invalid Otp"
       },
       "register": {
         "title": "Create Your Account",
@@ -6837,9 +6873,16 @@
       "playbooks": "Playbooks",
       "distributionQueue": "Distribution Queue",
       "creatorMarketplace": "Creator Marketplace",
+      "mySops": "My SOPs",
+      "challenges": "Challenges",
       "handoverAcceptance": "Handover & Acceptance",
       "runbooks": "Runbooks",
-      "systemHealth": "System Health"
+      "systemHealth": "System Health",
+      "campaigns": "Affiliate Campaigns",
+      "nicheStudio": "Niche Studio",
+      "imageStudio": "Image Studio",
+      "affiliates": "My Affiliate Business",
+      "approvals": "Approvals Needed"
     },
     "settings": {
       "title": "Settings",
@@ -7456,8 +7499,6 @@
       "headline": "One operator. Multiple affiliate campaigns.",
       "headlineHighlight": "",
       "subheading": "Prepare CEX and global SaaS affiliate campaigns from one workspace: verify an offer, draft a script, approve the content and budget, follow production and publishing, then reconcile commission.",
-      "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
-      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue.",
       "nav": {
         "features": "Features",
         "pricing": "Pricing",
@@ -7479,10 +7520,10 @@
       },
       "trustBar": {
         "label": "What the workspace controls",
-        "controlContent": "You approve content and channels",
-        "controlCost": "You set the render budget cap",
         "creators": "No guaranteed earnings",
-        "videos": "BYOK • approval gate • workspace ledger"
+        "videos": "BYOK • approval gate • workspace ledger",
+        "controlContent": "You approve content and channels",
+        "controlCost": "You set the render budget cap"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
@@ -7512,7 +7553,7 @@
       "assemblyLine": {
         "title": "Sophia Creative Assembly Line",
         "subtitleIllustration": "Interactive 5-station isometric architecture — click any station to inspect governance & telemetry",
-        "subtitleVerified": "Server-recorded mission states for this run (not a live fleet status)",
+        "subtitleVerified": "Live server-verified execution pipeline for this creative mission",
         "modeIllustration": "Illustrative Architecture",
         "modeVerified": "Verified Mission Pipeline",
         "inspectorLabel": "Selected Station Telemetry & Governance",
@@ -7553,7 +7594,9 @@
             "summary": "Dispatches verified video to connected channels and reconciles S2S postbacks in the workspace Domain B ledger with 0% platform fee."
           }
         }
-      }
+      },
+      "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
+      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue."
     },
     "settingsPage": {
       "pageTitle": "Settings",
@@ -7957,7 +8000,35 @@
         "budget": "Render budget",
         "target": "Affiliate link"
       }
-    }
+    },
+    "badges": {
+      "complianceVerified": "Compliance check: passed",
+      "changeNeedsApproval": "Content changes will need re-approval",
+      "payloadHashHint": "If the content changes after this draft, you will be asked to approve it again."
+    },    "header": {
+      "eyebrow": "Campaign approval desk",
+      "title": "Affiliate campaigns waiting for your approval (Crypto/CEX & Global SaaS)",
+      "controlNote": "You keep the final decision",
+      "pending": "Waiting for approval today",
+      "budget": "Estimated production cost",
+      "blocked": "Blocked by compliance",
+      "reapproval": "When content changes",
+      "reapprovalNote": "The new version needs your approval again before it runs.",
+      "unavailableNote": "We could not read the list waiting for your decision. Please try again.",
+      "costPartiallyUnknown": "Some items have no cost quote yet, so this total is incomplete."
+    },
+    "decision": {
+      "impactLabel": "If you approve",
+      "impactNormal": "The campaign continues into the production step you just approved.",
+      "impactBlocked": "The campaign is blocked at the compliance check for your market.",
+      "costUnknown": "Cost is not yet confirmed — please confirm it before approving.",
+      "blockedReason": "Blocked: the content has not passed the compliance check for this market. Approving will not start production.",
+      "openArtifact": "Open the related work",
+      "afterApproveWithTracking": "Once you approve, you can follow the progress at the link below.",
+      "afterApproveNoTracking": "Once you approve, the system records your decision. Production progress will appear in your campaign list once updated."
+    },
+    "loadErrorTitle": "We could not load your approval list",
+    "retryButton": "Retry"
   },
   "autonomy": {
     "title": "Autonomy Level",
@@ -9116,6 +9187,11 @@
     "vanityCoupon": "Vanity Coupon",
     "jurisdiction": "Compliance Jurisdiction",
     "btnGenerate": "🚀 Generate Plan & Dispatch Render",
+    "btnPrepareDraft": "🧾 Prepare Campaign Draft",
+    "btnPreparingDraft": "🧾 Preparing draft…",
+    "btnSubmitForApproval": "✅ Submit for Approval & Start Production",
+    "btnSubmitting": "⏳ Submitting…",
+    "draftPreparedNote": "Draft ready. Review the scenes and the tracking link, then submit for approval. Nothing has been sent for production yet.",
     "btnGenerating": "Analyzing & Dispatching...",
     "copied": "Copied!",
     "copyLink": "Copy Link",
@@ -9125,6 +9201,7 @@
     "playerEmptyDesc": "Enter product details and click 'Generate Plan' to preview video with regulatory compliance overlay.",
     "dispatchedTitle": "Automated Render Dispatch",
     "storyboardEmpty": "No plan generated yet. Fill in product details on the left to generate a 5-scene blueprint.",
+    "adoptedCampaignContext": "Continuing the campaign from this offer:",
     "syndicationEmpty": "No syndication package to display.",
     "syndicationTitle": "Multi-Platform Syndication",
     "syndicationSubtitle": "Metadata & Pinned Comment Preview",
@@ -9143,6 +9220,8 @@
     "statsTitle": "Conversion Analytics",
     "statsSubtitle": "Real-time Telemetry & Attribution",
     "liveTelemetry": "Live Telemetry",
+    "demoBadge": "Example figures",
+    "demoNote": "These are illustrative numbers, not your results. Real views, clicks and commissions appear here once your published campaigns start reporting.",
     "metricViews": "Views",
     "metricClicks": "Clicks",
     "metricConversions": "Conversions",

@@ -550,7 +550,7 @@
         },
         "profit": {
           "title": "Theo Dõi Doanh Thu",
-          "description": "Theo dõi thu nhập từ 10 mạng affiliate (PartnerStack, Impact, Binance, Bybit, Bitget, OKX)"
+          "description": "Theo dõi thu nhập từ các mạng affiliate (BYOK Apollo / PartnerStack / Impact)"
         }
       },
       "badge": "QUY TRÌNH VẬN HÀNH",
@@ -569,7 +569,7 @@
         },
         "video_factory": {
           "title": "Nhà máy video",
-          "description": "Sản xuất video Hybrid Scene-Graph (fal.ai/Replicate Hook + Edge SVG Data Cards 0% lỗi chữ + giọng ElevenLabs) — tất cả trong một luồng.",
+          "description": "Sản xuất video thu hút quy mô lớn. Kịch bản AI, giọng ElevenLabs, tự động xuất bản — tất cả trong một luồng.",
           "badge": "Phổ Biến"
         },
         "credits": {
@@ -1152,7 +1152,10 @@
       "affiliate": "Trung Tâm Affiliate",
       "publish_queue": "Hàng Đợi Xuất Bản",
       "marketplace": "Chợ Sáng Tạo",
-      "system_health": "Sức Khỏe Hệ Thống"
+      "system_health": "Sức Khỏe Hệ Thống",
+      "affiliates": "Doanh Nghiệp Affiliate Của Tôi",
+      "approvals": "Cần Duyệt",
+      "niche_studio": "Studio Ngách"
     },
     "notFound": {
       "title": "Không tìm thấy trang",
@@ -4875,7 +4878,9 @@
       "title": "Kết nối Telegram",
       "description": "Nhận thông báo + lệnh nhanh ngay trên Telegram. Gõ /campaign để tạo video bất cứ lúc nào.",
       "connectButton": "Mở Telegram và kết nối",
-      "openedHint": "✅ Đã mở Telegram — gõ /start để hoàn tất kết nối"
+      "pairedHint": "✅ Đã kết nối Telegram — bạn có thể dùng /campaign ngay bây giờ",
+      "awaitingPairingHint": "Đã mở Telegram. Hãy nhấn Start trong cuộc trò chuyện với bot, sau đó bấm “Kiểm tra kết nối”. Chưa kết nối xong cho tới khi hệ thống xác nhận.",
+      "checkPairingButton": "Kiểm tra kết nối"
     },
     "steps": {
       "accountCreated": {
@@ -5226,12 +5231,12 @@
     "subtitle": "Xuất bản một-click đến YouTube, TikTok, Instagram và hơn nữa",
     "queue": {
       "title": "Hàng đợi Xuất bản",
-      "subtitle": "Theo dõi và quản lý lịch trình xuất bản đa kênh (YouTube, TikTok, Instagram, Facebook, LinkedIn)",
+      "subtitle": "Theo dõi và quản lý công việc xuất bản WhatsApp",
       "loading": "Đang tải hàng đợi...",
       "empty": {
         "title": "Chưa có Công việc Xuất bản",
-        "message": "Lên lịch xuất bản video đầu tiên từ Creator Studio hoặc thiết lập kênh phân phối tự động.",
-        "cta": "Mở Creator Studio"
+        "message": "Lên lịch xuất bản WhatsApp đầu tiên từ trình soạn thảo video hoặc thuật sắp xếp.",
+        "cta": "Tạo Mẫu WhatsApp"
       },
       "table": {
         "video": "Video",
@@ -6424,6 +6429,29 @@
       "failed": "Failed"
     },
     "dashboard": {
+      "nextStep": {
+        "title": "Bước tiếp theo của bạn",
+        "steps": {
+          "setup": {
+            "eyebrow": "Bắt đầu",
+            "title": "Kết nối khóa API để bắt đầu sản xuất",
+            "body": "Bạn tự nhập khóa API (BYOK) trong Setup Wizard. Sophia chỉ dùng khóa của bạn và không giữ khóa thay bạn.",
+            "cta": "Mở Setup Wizard"
+          },
+          "offer": {
+            "eyebrow": "Chọn offer",
+            "title": "Chọn một chương trình affiliate để lập chiến dịch",
+            "body": "Duyệt các chương trình Crypto/CEX và Global SaaS đã kết nối, rồi chọn offer phù hợp với ngách của bạn.",
+            "cta": "Xem danh sách offer"
+          },
+          "campaign": {
+            "eyebrow": "Vận hành",
+            "title": "Theo dõi chiến dịch đang chạy",
+            "body": "Xem bước hiện tại, lần cập nhật gần nhất và kết quả của các chiến dịch bạn đã duyệt.",
+            "cta": "Mở chiến dịch"
+          }
+        }
+      },
       "title": "Tổng quan",
       "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
       "onboardingBanner": {
@@ -6442,7 +6470,9 @@
         "total_campaigns": "Tổng Chiến Dịch",
         "active_campaigns": "Chiến Dịch Đang Chạy",
         "videos_generated": "Video Đã Tạo",
-        "success_rate": "Tỷ Lệ Thành Công"
+        "success_rate": "Tỷ Lệ Thành Công",
+        "unavailableHint": "Chưa tải được số liệu. Vui lòng tải lại trang hoặc kiểm tra kết nối.",
+        "emptyHint": "Tài khoản của bạn chưa có dữ liệu trong giai đoạn này."
       },
       "revenueChart": {
         "title": "Doanh thu theo thời gian",
@@ -6450,6 +6480,8 @@
         "period": "30 ngày qua",
         "emptyTitle": "Chưa Có Doanh Thu",
         "emptyDesc": "Chưa ghi nhận doanh thu giao dịch trong khoảng thời gian này.",
+        "unavailableTitle": "Chưa xem được doanh thu",
+        "unavailableDesc": "Chúng tôi không tải được số liệu doanh thu của bạn. Hãy tải lại trang hoặc kiểm tra kết nối mạng.",
         "periods": {
           "7d": "7 ngày qua",
           "30d": "30 ngày qua",
@@ -6478,11 +6510,15 @@
           "amount": "Số tiền",
           "status": "Trạng thái",
           "action": "Hành động"
-        }
+        },
+        "unavailableTitle": "Chưa tải được lịch sử hoạt động. Vui lòng tải lại trang."
       },
       "actions": {
         "exportData": "Xuất dữ liệu",
         "addProduct": "Thêm sản phẩm"
+      },
+      "advanced": {
+        "localEngineLabel": "Tùy chọn nâng cao: Cài engine render trên máy của bạn (không bắt buộc để bắt đầu)"
       }
     },
     "auth": {
@@ -6511,14 +6547,14 @@
         "switchToVietnamese": "Chuyển sang Tiếng Việt",
         "switchToEnglish": "Chuyển sang Tiếng Anh",
         "magicLink": "Liên kết đăng nhập",
-        "emailRequired": "Vui lòng nhập địa chỉ email",
-        "passkeySignIn": "Passkey (FaceID / TouchID)",
-        "emailOtpSend": "Mã OTP 6 số",
-        "emailOtpLabel": "Mã xác thực 6 chữ số",
-        "emailOtpPlaceholder": "Nhập 6 chữ số từ email",
-        "emailOtpVerify": "Xác thực OTP",
-        "emailOtpSentNotice": "Đã gửi mã 6 chữ số đến email của bạn.",
-        "invalidOtp": "Mã xác thực không hợp lệ hoặc đã hết hạn"
+        "passkeySignIn": "Passkey Sign In",
+        "emailOtpSend": "Email Otp Send",
+        "emailOtpSentNotice": "Email Otp Sent Notice",
+        "emailOtpPlaceholder": "Email Otp Placeholder",
+        "emailOtpLabel": "Email Otp Label",
+        "emailOtpVerify": "Email Otp Verify",
+        "emailRequired": "Email Required",
+        "invalidOtp": "Invalid Otp"
       },
       "register": {
         "title": "Tạo tài khoản của bạn",
@@ -6844,9 +6880,16 @@
       "playbooks": "Cẩm nang",
       "distributionQueue": "Hàng đợi phân phối",
       "creatorMarketplace": "Thị trường sáng tạo",
+      "mySops": "SOP Của Tôi",
+      "challenges": "Thử Thách",
       "handoverAcceptance": "Bàn giao & Nghiệm thu",
       "runbooks": "Cẩm nang vận hành",
-      "systemHealth": "Sức khỏe hệ thống"
+      "systemHealth": "Sức khỏe hệ thống",
+      "campaigns": "Chiến dịch Affiliate",
+      "nicheStudio": "Xưởng Ngách",
+      "imageStudio": "Xưởng Ảnh",
+      "affiliates": "Doanh nghiệp Affiliate của tôi",
+      "approvals": "Cần Duyệt"
     },
     "settings": {
       "title": "Settings",
@@ -7463,8 +7506,6 @@
       "headline": "Một người điều hành. Nhiều chiến dịch affiliate.",
       "headlineHighlight": "",
       "subheading": "Chuẩn bị chiến dịch affiliate CEX và SaaS toàn cầu trong cùng một workspace: xác minh offer, soạn kịch bản, duyệt nội dung và ngân sách, theo dõi sản xuất/đăng tải, rồi đối soát hoa hồng.",
-      "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
-      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng.",
       "nav": {
         "features": "Tính năng",
         "pricing": "Bảng giá",
@@ -7478,18 +7519,18 @@
         "brand": "Brand"
       },
       "cta": {
-        "startFree": "Tạo workspace",
-        "watchDemo": "Xem quy trình minh họa",
+        "startFree": "Lập chiến dịch đầu tiên",
+        "watchDemo": "Xem các tính năng",
         "viewPricing": "Xem Bảng Giá",
-        "readyTitle": "Bắt đầu với một offer đã xác minh",
-        "readySubtitle": "Tạo workspace, kết nối khóa provider của bạn và chuẩn bị chiến dịch để duyệt. Gói trả phí và chi phí provider được hiển thị trước khi bạn xác nhận."
+        "readyTitle": "Sẵn Sàng Xây Dựng Đế Chế Video AI?",
+        "readySubtitle": "Khởi tạo tài khoản trong 30 giây. Kết nối chìa khóa BYOK và bắt đầu tạo video không giới hạn ngay hôm nay."
       },
       "trustBar": {
-        "label": "Workspace kiểm soát",
-        "controlContent": "Bạn duyệt nội dung và kênh đăng",
-        "controlCost": "Bạn đặt trần ngân sách render",
-        "creators": "Không hứa hẹn thu nhập",
-        "videos": "BYOK • cổng phê duyệt • sổ cái workspace"
+        "label": "Cam kết kiến trúc",
+        "creators": "Chuỗi Bằng Chứng 7 Cấp Độ",
+        "videos": "Khóa Phê Duyệt SHA-256 • Sổ Cái Domain B 0% Phí",
+        "controlContent": "Control Content",
+        "controlCost": "Control Cost"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. Tất cả quyền được bảo lưu.",
@@ -7519,7 +7560,7 @@
       "assemblyLine": {
         "title": "Dây Chuyền Sản Xuất Sáng Tạo Sophia",
         "subtitleIllustration": "Mô hình kiến trúc Isometric 5 trạm tương tác — chọn từng trạm để kiểm tra cơ chế quản trị & đối soát",
-        "subtitleVerified": "Trạng thái nhiệm vụ được máy chủ ghi nhận (không phải trạng thái fleet trực tiếp)",
+        "subtitleVerified": "Trạng thái thực thi thực tế được xác thực từ máy chủ cho nhiệm vụ này",
         "modeIllustration": "Mô Hình Minh Họa Kỹ Thuật",
         "modeVerified": "Tiến Trình Nhiệm Vụ Thực Tế",
         "inspectorLabel": "Chi Tiết Trạm & Cơ Chế Bảo Chứng",
@@ -7560,7 +7601,9 @@
             "summary": "Đăng tải video đã duyệt lên các kênh phân phối và đối soát hoa hồng S2S vào sổ cái Domain B (100% thuộc Workspace, 0% phí nền tảng)."
           }
         }
-      }
+      },
+      "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
+      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng."
     },
     "settingsPage": {
       "pageTitle": "Cài đặt",
@@ -7964,7 +8007,35 @@
         "budget": "Ngân sách render",
         "target": "Link affiliate"
       }
-    }
+    },
+    "badges": {
+      "complianceVerified": "Kiểm tra quy định: đạt",
+      "changeNeedsApproval": "Nội dung thay đổi sẽ cần duyệt lại",
+      "payloadHashHint": "Nếu nội dung thay đổi sau bản nháp này, bạn sẽ được yêu cầu duyệt lại."
+    },    "header": {
+      "eyebrow": "Bảng duyệt chiến dịch",
+      "title": "Chiến dịch affiliate đang chờ bạn duyệt (Crypto/CEX & SaaS toàn cầu)",
+      "controlNote": "Bạn giữ quyền quyết định cuối",
+      "pending": "Chờ duyệt hôm nay",
+      "budget": "Chi phí sản xuất dự kiến",
+      "blocked": "Bị chặn do quy định",
+      "reapproval": "Khi nội dung thay đổi",
+      "reapprovalNote": "Bản mới sẽ cần bạn duyệt lại trước khi chạy.",
+      "unavailableNote": "Chưa tải được danh sách chờ bạn quyết định. Vui lòng thử lại.",
+      "costPartiallyUnknown": "Một số hạng mục chưa có báo giá nên tổng này chưa đầy đủ."
+    },
+    "decision": {
+      "impactLabel": "Nếu bạn duyệt",
+      "impactNormal": "Chiến dịch sẽ tiếp tục sang bước sản xuất đã được phê duyệt.",
+      "impactBlocked": "Chiến dịch đang bị chặn ở bước kiểm tra tuân thủ cho thị trường của bạn.",
+      "costUnknown": "Chi phí chưa xác định — hãy xác nhận trước khi duyệt.",
+      "blockedReason": "Bị chặn: nội dung chưa vượt kiểm tra tuân thủ cho thị trường này. Duyệt sẽ không khởi chạy sản xuất.",
+      "openArtifact": "Mở công việc liên quan",
+      "afterApproveWithTracking": "Sau khi duyệt, bạn có thể theo dõi tiến độ tại đường dẫn bên dưới.",
+      "afterApproveNoTracking": "Sau khi duyệt, hệ thống ghi nhận quyết định của bạn. Tiến độ sản xuất sẽ hiện trong danh sách chiến dịch khi có cập nhật."
+    },
+    "loadErrorTitle": "Không tải được danh sách phê duyệt",
+    "retryButton": "Thử lại"
   },
   "autonomy": {
     "title": "Cấp độ tự chủ",
@@ -9123,6 +9194,11 @@
     "vanityCoupon": "Mã Giảm Giá (Vanity Coupon)",
     "jurisdiction": "Khu Vực Pháp Lý & Tuân Thủ",
     "btnGenerate": "🚀 Tạo Kịch Bản & Khởi Chạy Render",
+    "btnPrepareDraft": "🧾 Chuẩn Bị Bản Nháp",
+    "btnPreparingDraft": "🧾 Đang chuẩn bị bản nháp…",
+    "btnSubmitForApproval": "✅ Gửi Duyệt & Bắt Đầu Sản Xuất",
+    "btnSubmitting": "⏳ Đang gửi duyệt…",
+    "draftPreparedNote": "Bản nháp đã sẵn. Hãy xem lại các cảnh và link tracking, sau đó gửi duyệt. Chưa có gì được gửi đi sản xuất.",
     "btnGenerating": "Đang Phân Tích & Khởi Chạy...",
     "copied": "Đã Sao Chép!",
     "copyLink": "Sao Chép Link",
@@ -9132,6 +9208,7 @@
     "playerEmptyDesc": "Nhập thông tin sản phẩm và nhấn 'Tạo Kịch Bản' để xem trước video cùng overlay cảnh báo rủi ro.",
     "dispatchedTitle": "Tiến Trình Render Tự Động",
     "storyboardEmpty": "Chưa có kịch bản. Điền thông tin bên trái để tạo kịch bản 5 cảnh chuyển đổi cao.",
+    "adoptedCampaignContext": "Đang tiếp tục chiến dịch từ offer:",
     "syndicationEmpty": "Chưa có gói phân phối để hiển thị.",
     "syndicationTitle": "Phân phối Đa nền tảng",
     "syndicationSubtitle": "Bản xem trước Metadata & Pinned Comment",
@@ -9150,6 +9227,8 @@
     "statsTitle": "Chỉ số Chuyển đổi",
     "statsSubtitle": "Telemetry thời gian thực",
     "liveTelemetry": "Dữ liệu thực",
+    "demoBadge": "Số minh họa",
+    "demoNote": "Đây là các con số ví dụ, không phải kết quả của bạn. Lượt xem, click và hoa hồng thật sẽ hiện ở đây khi chiến dịch đã đăng bắt đầu báo cáo.",
     "metricViews": "Lượt xem",
     "metricClicks": "Lượt click",
     "metricConversions": "Chuyển đổi",

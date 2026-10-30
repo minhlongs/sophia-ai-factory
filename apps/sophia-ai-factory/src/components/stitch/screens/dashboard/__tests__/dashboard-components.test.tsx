@@ -148,7 +148,9 @@ describe('Dashboard Subcomponents', () => {
     });
 
     it('renders revenue chart container', () => {
-      render(<DashboardRevenueChart />);
+      // Verified-empty data, not an unknown load: the chart card and its title
+      // are the contract under test here.
+      render(<DashboardRevenueChart data={[]} />);
       expect(screen.getByText('revenueChart.title')).toBeDefined();
     });
   });

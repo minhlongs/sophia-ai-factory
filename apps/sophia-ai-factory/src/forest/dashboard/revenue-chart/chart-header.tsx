@@ -14,9 +14,13 @@ import type { ChartPeriod } from "../types";
 export interface RevenueChartHeaderProps {
   title: string;
   subtitle: string;
-  totalRevenue: number;
+  /**
+   * `undefined` means the server did not report a total, which must not be
+   * rendered as the number zero.
+   */
+  totalRevenue?: number;
   activeTrend: "up" | "down" | "neutral";
-  activeTrendPercentage: string;
+  activeTrendPercentage?: string;
   activePeriod: ChartPeriod;
   periodOptions: Array<{ key: ChartPeriod; label: string }>;
   onPeriodChange: (period: ChartPeriod) => void;
@@ -39,7 +43,7 @@ export function RevenueChartHeader({
           <h4 className="text-base font-bold text-foreground dark:text-white tracking-tight">
             {title}
           </h4>
-          {activeTrend === "up" && (
+          {activeTrend === "up" && activeTrendPercentage && (
             <span
               className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
               data-testid="revenue-trend-badge"
@@ -48,7 +52,7 @@ export function RevenueChartHeader({
               {activeTrendPercentage}
             </span>
           )}
-          {activeTrend === "down" && (
+          {activeTrend === "down" && activeTrendPercentage && (
             <span
               className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
               data-testid="revenue-trend-badge"
@@ -57,7 +61,7 @@ export function RevenueChartHeader({
               {activeTrendPercentage}
             </span>
           )}
-          {activeTrend === "neutral" && (
+          {activeTrend === "neutral" && activeTrendPercentage && (
             <span
               className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-muted dark:bg-white/[0.05] text-muted-foreground dark:text-slate-400 border border-border dark:border-white/[0.08]"
               data-testid="revenue-trend-badge"
@@ -67,11 +71,18 @@ export function RevenueChartHeader({
             </span>
           )}
         </div>
+        {/* No total when the server did not report one — "$0" would read as a
+            real zero to a customer whose figure simply failed to load. */}
         <p className="text-xs text-muted-foreground mt-0.5">
-          {subtitle} • Total:{" "}
-          <span className="text-foreground dark:text-white font-mono font-semibold">
-            ${totalRevenue.toLocaleString()}
-          </span>
+          {subtitle}
+          {typeof totalRevenue === "number" && (
+            <>
+              {" • Total: "}
+              <span className="text-foreground dark:text-white font-mono font-semibold">
+                ${totalRevenue.toLocaleString()}
+              </span>
+            </>
+          )}
         </p>
       </div>
 
