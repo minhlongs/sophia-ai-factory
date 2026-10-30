@@ -92,6 +92,9 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0483_better_auth_two_factor_user_column.sql
 !apps/sophia-ai-factory/migrations/0484_better_auth_passkey_and_two_factor_tables.sql
 !apps/sophia-ai-factory/migrations/0485_better_auth_account_token_columns.sql
+!apps/sophia-ai-factory/migrations/0487_postback_receipt_idempotency.sql
+!apps/sophia-ai-factory/migrations/0488_extend_credential_networks_postback.sql
+!apps/sophia-ai-factory/migrations/0489_postback_dead_letter.sql
 backups/*.sql
 **/d1-*.sql
 

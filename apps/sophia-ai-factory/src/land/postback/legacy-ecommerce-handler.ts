@@ -33,13 +33,17 @@ import {
   resolveLegacyTenantSecret,
   LEGACY_MIGRATION_GUIDANCE,
 } from './legacy-tenant-resolver';
+import { enqueuePostbackDlq } from './postback-dead-letter';
 import { recordLegacyEcommerceConversion } from './legacy-ecommerce-recorder';
 
 /** Minimal request surface (keeps this module free of Next.js types). */
 export interface LegacyPostbackRequest {
   text(): Promise<string>;
   url: string;
-  headers: { get(name: string): string | null };
+  headers: {
+    get(name: string): string | null;
+    entries?(): IterableIterator<[string, string]>;
+  };
 }
 
 export interface LegacyEcommerceContract {
@@ -96,6 +100,21 @@ function extractSignature(request: LegacyPostbackRequest, sigHeaders: string[]):
     if (val) return val;
   }
   return '';
+}
+
+function serializeHeaders(
+  request: LegacyPostbackRequest,
+  sigHeaders: string[],
+): string {
+  if (typeof request.headers.entries === 'function') {
+    return JSON.stringify(Object.fromEntries(request.headers.entries()));
+  }
+  const captured: Record<string, string> = {};
+  for (const h of [...sigHeaders, 'cf-connecting-ip', 'x-forwarded-for', 'user-agent']) {
+    const val = request.headers.get(h);
+    if (val) captured[h] = val;
+  }
+  return JSON.stringify(captured);
 }
 
 function asNumber(v: unknown): number {
@@ -155,6 +174,16 @@ export async function processLegacyEcommercePostback(
     explicitTenantId: extractExplicitTenantId(request, payload),
   });
   if (!resolution.ok) {
+    await enqueuePostbackDlq({
+      network: contract.slug,
+      endpoint: request.url,
+      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
+      headersJson: serializeHeaders(request, contract.sigHeaders),
+      rawBody,
+      failureReason: resolution.error,
+      tenantHint: 'tenantId' in resolution ? resolution.tenantId : extractExplicitTenantId(request, payload),
+    });
+
     if (resolution.error === 'tenant_unresolvable') {
       return {
         status: 422,
@@ -184,7 +213,16 @@ export async function processLegacyEcommercePostback(
 
   if (!resolution.linkId) {
     // Verified tenant but no attributable link: recording would create an
-    // orphan row no dashboard can attribute. Fail closed with guidance.
+    // orphan row no dashboard can attribute. Capture to DLQ and fail closed.
+    await enqueuePostbackDlq({
+      network: contract.slug,
+      endpoint: request.url,
+      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
+      headersJson: serializeHeaders(request, contract.sigHeaders),
+      rawBody,
+      failureReason: 'link_unattributed',
+      tenantHint: resolution.tenantId,
+    });
     return {
       status: 422,
       body: {

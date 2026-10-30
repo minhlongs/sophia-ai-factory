@@ -71,9 +71,14 @@ function mockCreds(secrets: Record<string, Record<string, string>>) {
   });
 }
 
-function makeRequest(rawBody: string, signature: string | null): LegacyPostbackRequest {
+function makeRequest(rawBody: string, signature: string | null, customHeaders?: Record<string, string>): LegacyPostbackRequest {
   const headers = new Headers();
   if (signature !== null) headers.set('x-accesstrade-signature', signature);
+  if (customHeaders) {
+    for (const [k, v] of Object.entries(customHeaders)) {
+      headers.set(k, v);
+    }
+  }
   return {
     text: async () => rawBody,
     url: 'http://localhost/api/webhooks/accesstrade',
@@ -294,5 +299,31 @@ describe('processLegacyEcommercePostback', () => {
       .prepare('SELECT COUNT(*) AS n FROM conversion_events')
       .first<{ n: number }>();
     expect(count?.n).toBe(0);
+  });
+
+  it('serializes fallback headers when headers.entries is not present', async () => {
+    const db = createLegacyD1();
+    mockCreds({});
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+
+    const rawBody = JSON.stringify({ ...BODY, sub_id: 'ghost' });
+    const sig = await generateAffiliateHmac(rawBody, 'whatever');
+
+    const pseudoReq: LegacyPostbackRequest = {
+      text: async () => rawBody,
+      url: 'http://localhost/api/webhooks/accesstrade',
+      headers: {
+        get: (name: string) => {
+          if (name === 'x-accesstrade-signature') return sig;
+          if (name === 'cf-connecting-ip') return '9.9.9.9';
+          if (name === 'user-agent') return 'test-agent';
+          return null;
+        },
+      },
+    };
+
+    const res = await processLegacyEcommercePostback(pseudoReq, ACCESSTRADE_CONTRACT);
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({ ok: false, error: 'tenant_unresolvable' });
   });
 });

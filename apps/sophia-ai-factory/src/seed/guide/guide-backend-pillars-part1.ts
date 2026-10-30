@@ -106,8 +106,8 @@ export const GUIDE_BACKEND_PILLARS_PART1: readonly BackendPillar[] = [
     ],
     representativeRoutes: [
       '/api/affiliate-discovery',
-      '/api/postback/[network]',
-      '/api/webhooks/saas-crypto/[network]',
+      '/api/postback/[network] (Canonical)',
+      '/api/webhooks/saas-crypto/[network] (Legacy Compat)',
       '/api/r/[code]',
     ],
     representativeJobs: [

@@ -29,6 +29,7 @@ import {
   resolveLegacyTenantSecret,
   LEGACY_MIGRATION_GUIDANCE,
 } from '@/land/postback/legacy-tenant-resolver';
+import { enqueuePostbackDlq } from '@/land/postback/postback-dead-letter';
 
 interface RouteParams {
   network: string;
@@ -113,6 +114,16 @@ export async function POST(
     explicitTenantId: explicitTenantId ?? null,
   });
   if (!resolution.ok) {
+    await enqueuePostbackDlq({
+      network: config.network,
+      endpoint: request.url,
+      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
+      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
+      rawBody,
+      failureReason: resolution.error,
+      tenantHint: 'tenantId' in resolution ? resolution.tenantId : (explicitTenantId ?? null),
+    });
+
     const status = resolution.error === 'secret_not_configured' ? 503 : 422;
     return NextResponse.json(
       {
