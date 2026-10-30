@@ -129,6 +129,7 @@ const EXPECTED_EVENT_KEYS = [
   'growth/v15.telemetry.poll',
   'growth/v15.prior.recalibrate',
   'video.multitrack.pipeline.requested',
+  'execution.render.requested',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -163,9 +164,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 102 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(102);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(102);
+    it('expected key list holds exactly 103 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(103);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(103);
     });
 
     it('Events record key set exactly matches the expected keys', () => {
