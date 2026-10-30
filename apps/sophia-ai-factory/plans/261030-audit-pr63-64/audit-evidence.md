@@ -149,3 +149,20 @@ conversion. Tests updated/added.
 - No browser, no paid providers, no real publishes, no remote D1 writes, no
   secret values printed. Full-suite local run NOT attempted (OOM risk);
   required checks run on the PR.
+
+## H. Post-merge (addendum, session branch only)
+
+- PR: `https://github.com/minhlongs/sophia-ai-factory/pull/72` — MERGED.
+- CI iteration #1 failed at Gate 1a: `campaign-bridge.ts:67` forwards
+  `err.code` into `CampaignBridgeError`, whose union lacked the new
+  `KILL_SWITCH_UNKNOWN` (diagnosed via check-run annotations; CI logs
+  unfetchable from sandbox). Fixed by adding the member to
+  `CampaignBridgeErrorCode` (commit `9650b717`); downstream status mapping
+  defaults to 500. Iteration #2: all gates green (run `40995429850`:
+  1a/1b/1c/1d + 3a/3b/3c success; Gates 2, 4 success).
+- Merge commit (main): `e9147a1b980fa911682afa33ea0efe6aeee78093`.
+- Post-merge deploy run `40998215398`: success (Stage 1, Stage 2&3, Stage 4).
+- Live smoke 2026-10-30 ~04:04Z: `/api/version` →
+  `{"shortSha":"e9147a1b","deployedAt":"2026-10-30T04:01:20Z"}` (8-char prefix
+  matches merge commit; full 40-char SHA not exposed publicly);
+  `/api/health` → healthy; `/vi/login` → VI login page 200.
