@@ -59,6 +59,17 @@ the postback carries an attributable sub-id. Global env secrets are NOT read.
    send the sub-id (`sub_id`, `click_ref`, `tag`, `cvendthru`, … per provider).
 3. Point the provider at the canonical URL (preferred) or keep the legacy URL.
 
+### Dead-Letter Queue (DLQ) for unprocessable postbacks
+
+All unmapped, unattributed, or unconfigured requests sent to legacy endpoints
+(`/api/webhooks/saas-crypto/[network]`, `/api/webhooks/affiliate/[network]`,
+`/api/webhooks/{network}`) are captured into the `postback_dead_letter` table
+(migration `0489`). This guarantees:
+- **Zero data loss:** Payloads that fail closed (422/503) are preserved for
+  inspection, manual reconciliation, and replay.
+- **Auditability:** Headers, source IP, failure reason, and tenant hints are
+  indexed by network and resolution state.
+
 ### Error reference
 
 | Code | HTTP | Meaning | Fix |
@@ -113,6 +124,16 @@ Env secret global KHÔNG còn được đọc. Chi tiết từng URL xem bảng 
    `{ network, payload: { api_secret, ... } }` (đã đăng nhập).
 2. Tạo tracking link/sub trong workspace và cấu hình provider gửi sub-id.
 3. Trỏ provider sang URL chuẩn (khuyến nghị) hoặc giữ URL legacy.
+
+### Hàng đợi Dead-Letter (DLQ) cho postback không xử lý được
+
+Mọi request không thể map tenant, không gắn được link, hoặc thiếu cấu hình
+gửi đến endpoint legacy đều được ghi vào bảng `postback_dead_letter` (migration
+`0489`). Cơ chế này đảm bảo:
+- **Không mất mát dữ liệu:** Payload bị từ chối fail closed (422/503) vẫn được
+  lưu vết đầy đủ để tra soát và replay.
+- **Minh bạch kiểm toán:** Lưu đầy đủ header, IP nguồn, lý do lỗi và gợi ý
+  tenant, có index theo network và trạng thái resolved.
 
 ### Bảng lỗi và cách xử lý: xem bảng EN ở trên.
 

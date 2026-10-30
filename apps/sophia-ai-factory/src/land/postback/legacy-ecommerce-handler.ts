@@ -33,6 +33,7 @@ import {
   resolveLegacyTenantSecret,
   LEGACY_MIGRATION_GUIDANCE,
 } from './legacy-tenant-resolver';
+import { enqueuePostbackDlq } from './postback-dead-letter';
 import { recordLegacyEcommerceConversion } from './legacy-ecommerce-recorder';
 
 /** Minimal request surface (keeps this module free of Next.js types). */
@@ -155,6 +156,16 @@ export async function processLegacyEcommercePostback(
     explicitTenantId: extractExplicitTenantId(request, payload),
   });
   if (!resolution.ok) {
+    await enqueuePostbackDlq({
+      network: contract.slug,
+      endpoint: request.url,
+      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
+      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
+      rawBody,
+      failureReason: resolution.error,
+      tenantHint: 'tenantId' in resolution ? resolution.tenantId : extractExplicitTenantId(request, payload),
+    });
+
     if (resolution.error === 'tenant_unresolvable') {
       return {
         status: 422,
@@ -184,7 +195,16 @@ export async function processLegacyEcommercePostback(
 
   if (!resolution.linkId) {
     // Verified tenant but no attributable link: recording would create an
-    // orphan row no dashboard can attribute. Fail closed with guidance.
+    // orphan row no dashboard can attribute. Capture to DLQ and fail closed.
+    await enqueuePostbackDlq({
+      network: contract.slug,
+      endpoint: request.url,
+      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
+      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
+      rawBody,
+      failureReason: 'link_unattributed',
+      tenantHint: resolution.tenantId,
+    });
     return {
       status: 422,
       body: {
