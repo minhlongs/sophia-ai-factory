@@ -17,7 +17,7 @@ describe('campaign-queue-api', () => {
 
   it('fetches the workspace list', async () => {
     const approvals = [{ id: 'app_1', status: 'pending_ceo' }];
-    const fetchMock = vi.fn(async () => Response.json({ approvals }));
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => Response.json({ approvals }));
     vi.stubGlobal('fetch', fetchMock);
     const result = await fetchCampaignApprovals('ws_1');
     expect(result).toEqual(approvals);
@@ -37,7 +37,7 @@ describe('campaign-queue-api', () => {
   });
 
   it('submits actions and returns continuation metadata', async () => {
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
       Response.json({ status: 'approved', continuation: 'sent', resumed: false }),
     );
     vi.stubGlobal('fetch', fetchMock);
