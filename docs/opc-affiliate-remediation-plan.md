@@ -1,20 +1,21 @@
 # Sophia OPC Affiliate — Remediation Plan
 
-Status: `partially-executed`
+Status: `shipped-stable`
+Shipped: PR #66, merge commit `9e6ed63b`, live edge SHA `9e6ed63b` (2026-10-29T10:18:40Z)
 Source audit: `docs/OPC_AFFILIATE_AUDIT_MATRIX_2026-10-27.md` (17 FAIL/BLOCKED of 18 groups)
 Branch: `feat/opc-affiliate-real-<SECRET_0785f2a7>`
 Original snapshot: `439635e1a2017c2643e013c0311631bd95409de4`
 App root: `apps/sophia-ai-factory`
 
-Phase status as of 2026-10-28 (post red-team, re-baselined against HEAD):
+Phase status as of 2026-10-29 (post-merge, verified against `origin/main` and live edge):
 
 | Phase | Status | How |
 |---|---|---|
 | P1 ledger table | `done` + `verify-only` | table and its unique dedup index already exist in `migrations/0482_opc_affiliate_execution_truth.sql:30-55`, git-tracked. Do NOT author a second DDL — it would reuse the taken number `0482` and weaken two shipped DB invariants (`CHECK (platform_fee_cents = 0)`, the `niche` default). |
 | P2 error surfacing | `done` | the silent catch is gone and `resolveDashboardViewState` returns an `error` state. Both remnants fixed on this branch: bridge-clicks now carries its own readability instead of a bare `0`, and the production metrics module that reads `campaigns` and `affiliate_referral_clicks` has real callers again. |
 | P3 real publish | `done` | real HTTP executor + duplicate-delivery guard, on this branch. Three defects the red team found in the new code were fixed first (see below). |
-| P4 learning loop | `open` | array has 41 entries, not 40; four target workers are not exported from the barrel. See the ownership correction below. |
-| P5 credentials UI | `open` | route still accepts `z.record(z.string(), z.string())`, no UI. The only phase whose premise is fully live. |
+| P4 learning loop | `done` | `socialDirectPublishJob` is imported by `app/api/inngest/serve/growth-functions.ts:8-10` and listed in `GROWTH_INNGEST_FUNCTIONS` (line 54), so it has a live production caller. The earlier "not exported from the barrel" note was stale: the Inngest serve route registers workers directly rather than through the `forest/inngest` barrel. |
+| P5 credentials UI | `open` | `POST /api/v1/integrations/affiliate-networks` already upserts credentials and is live, but the request body still validates as `payload: z.record(z.string(), z.string())` (`app/api/v1/integrations/affiliate-networks/route.ts:33`) and there is no per-network form yet. Remaining work is the credentials UI, not the write path. |
 | P6 render continuation | `done` + `verify-only` | no functional `RENDER_READY` remains — only a comment and a test name. Terminal handling already emits a `RENDER_QUEUED` continuation. |
 | P7 CI guards | `mostly done` | migration coverage guard fixed (it scanned a directory with 0 `.sql` files and mis-bound `|| true`, so it never compared anything) and wired into CI as Gate 1f. Still open: the `createFunction` reachability check, so an Inngest worker with no production caller still passes CI. |
 
