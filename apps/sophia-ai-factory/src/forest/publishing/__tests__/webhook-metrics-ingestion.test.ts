@@ -28,6 +28,10 @@ vi.mock('@/land/analytics/tiktok-revenue-ingestion', () => ({
   writeConversionRevenueEvent: mocks.mockWriteConversionRevenueEvent,
 }));
 
+vi.mock('@/land/affiliates/credentials', () => ({
+  getCredentials: vi.fn(),
+}));
+
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -35,6 +39,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 import { POST as youtubeNotificationPOST } from '@/app/api/webhooks/youtube-notification/route';
 import { POST as tiktokNotificationPOST } from '@/app/api/webhooks/tiktok-notification/route';
 import { POST as tiktokShopPOST } from '@/app/api/webhooks/tiktok-shop/route';
+import { getCredentials } from '@/land/affiliates/credentials';
 
 describe('Webhook Viral Performance Metrics Ingestion', () => {
   beforeEach(() => {
@@ -165,7 +170,15 @@ describe('Webhook Viral Performance Metrics Ingestion', () => {
 
   describe('tiktok-shop webhook', () => {
     it('inserts into conversion_events and writes conversion revenue event', async () => {
-      process.env.TIKTOK_SHOP_WEBHOOK_SECRET = 'test-secret';
+      // Tenant-scoped verification: the signing secret comes from the
+      // workspace credential store. The global env secret is a decoy here —
+      // the request is signed with the workspace secret and must still pass,
+      // proving the global fallback is not read.
+      process.env.TIKTOK_SHOP_WEBHOOK_SECRET = 'decoy-global-secret-that-must-be-ignored';
+      vi.mocked(getCredentials).mockResolvedValue({
+        network: 'tiktok_shop',
+        api_secret: 'test-secret',
+      } as unknown as Awaited<ReturnType<typeof getCredentials>>);
       const orderPayload = JSON.stringify({
         order_id: 'ord-12345',
         settlement_amount: 150.0,
@@ -221,7 +234,14 @@ describe('Webhook Viral Performance Metrics Ingestion', () => {
 
       const res = await tiktokShopPOST(req as any);
       const json = await res.json();
-      expect(json).toEqual({ ok: true });
+      expect(json).toEqual({
+        ok: true,
+        network: 'tiktok_shop',
+        transactionId: 'ord-12345',
+        tenantId: 'tenant-shop-1',
+        commissionUsd: 22.5,
+        status: 'pending',
+      });
 
       // writeConversionRevenueEvent verified
       expect(mocks.mockWriteConversionRevenueEvent).toHaveBeenCalledWith(
