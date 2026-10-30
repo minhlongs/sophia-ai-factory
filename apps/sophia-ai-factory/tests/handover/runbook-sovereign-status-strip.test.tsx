@@ -68,10 +68,10 @@ describe('RunbookSovereignStatusStrip & Clean UI Architecture', () => {
     expect(container.querySelector('iframe')).toBeNull();
   });
 
-  it('keeps all 16 SOPHIA_NAV_MODULES pointing to valid app routes', () => {
-    expect(SOPHIA_NAV_MODULES.length).toBe(16);
+  it('keeps all 18 SOPHIA_NAV_MODULES pointing to valid app routes', () => {
+    expect(SOPHIA_NAV_MODULES.length).toBe(18);
     const routes = SOPHIA_NAV_MODULES.map((m) => m.href);
-    expect(routes).toContain('/dashboard/sop-marketplace');
+    expect(routes).toContain('/dashboard/sops');
     expect(routes).toContain('/marketplace');
     expect(routes).toContain('/dashboard/handover');
     expect(routes).toContain('/dashboard/docs/runbooks');
