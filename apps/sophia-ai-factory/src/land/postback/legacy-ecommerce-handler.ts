@@ -40,7 +40,10 @@ import { recordLegacyEcommerceConversion } from './legacy-ecommerce-recorder';
 export interface LegacyPostbackRequest {
   text(): Promise<string>;
   url: string;
-  headers: { get(name: string): string | null };
+  headers: {
+    get(name: string): string | null;
+    entries?(): IterableIterator<[string, string]>;
+  };
 }
 
 export interface LegacyEcommerceContract {
@@ -97,6 +100,21 @@ function extractSignature(request: LegacyPostbackRequest, sigHeaders: string[]):
     if (val) return val;
   }
   return '';
+}
+
+function serializeHeaders(
+  request: LegacyPostbackRequest,
+  sigHeaders: string[],
+): string {
+  if (typeof request.headers.entries === 'function') {
+    return JSON.stringify(Object.fromEntries(request.headers.entries()));
+  }
+  const captured: Record<string, string> = {};
+  for (const h of [...sigHeaders, 'cf-connecting-ip', 'x-forwarded-for', 'user-agent']) {
+    const val = request.headers.get(h);
+    if (val) captured[h] = val;
+  }
+  return JSON.stringify(captured);
 }
 
 function asNumber(v: unknown): number {
@@ -160,7 +178,7 @@ export async function processLegacyEcommercePostback(
       network: contract.slug,
       endpoint: request.url,
       sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
-      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
+      headersJson: serializeHeaders(request, contract.sigHeaders),
       rawBody,
       failureReason: resolution.error,
       tenantHint: 'tenantId' in resolution ? resolution.tenantId : extractExplicitTenantId(request, payload),
@@ -200,7 +218,7 @@ export async function processLegacyEcommercePostback(
       network: contract.slug,
       endpoint: request.url,
       sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
-      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
+      headersJson: serializeHeaders(request, contract.sigHeaders),
       rawBody,
       failureReason: 'link_unattributed',
       tenantHint: resolution.tenantId,
