@@ -229,7 +229,7 @@ describe('Postback Dead-Letter Queue', () => {
     expect(inMemoryDb[0].resolved_at).toBeDefined();
   });
 
-  it('fails gracefully when D1 is unavailable', async () => {
+  it('fails gracefully when D1 is unavailable across all operations', async () => {
     vi.mocked(getD1).mockResolvedValue(null as unknown as D1Database);
     const id = await enqueuePostbackDlq({
       network: 'bybit',
@@ -241,5 +241,51 @@ describe('Postback Dead-Letter Queue', () => {
       tenantHint: null,
     });
     expect(id).toBeNull();
+
+    const unresolved = await listUnresolvedPostbackDlq();
+    expect(unresolved).toEqual([]);
+
+    const counts = await getPostbackDlqCounts();
+    expect(counts).toEqual([]);
+
+    await expect(resolvePostbackDlqEntry('some-id')).resolves.not.toThrow();
+  });
+
+  it('handles database errors gracefully across query operations', async () => {
+    const errorD1 = {
+      prepare: () => ({
+        bind: () => ({
+          run: async () => {
+            throw new Error('D1 write error');
+          },
+          all: async () => {
+            throw new Error('D1 read error');
+          },
+        }),
+        all: async () => {
+          throw new Error('D1 aggregation error');
+        },
+      }),
+    };
+    vi.mocked(getD1).mockResolvedValue(errorD1 as unknown as D1Database);
+
+    const id = await enqueuePostbackDlq({
+      network: 'binance',
+      endpoint: '/api/webhooks/saas-crypto/binance',
+      sourceIp: null,
+      headersJson: '{}',
+      rawBody: '{}',
+      failureReason: 'error_test',
+      tenantHint: null,
+    });
+    expect(id).toBeNull();
+
+    const unresolved = await listUnresolvedPostbackDlq();
+    expect(unresolved).toEqual([]);
+
+    const counts = await getPostbackDlqCounts();
+    expect(counts).toEqual([]);
+
+    await expect(resolvePostbackDlqEntry('some-id')).resolves.not.toThrow();
   });
 });
