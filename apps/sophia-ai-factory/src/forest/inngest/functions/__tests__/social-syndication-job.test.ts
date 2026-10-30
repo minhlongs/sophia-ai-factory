@@ -3,7 +3,7 @@ import { socialSyndicationJob } from '../social-syndication-job';
 import * as killSwitchStore from '@/tree/affiliate/kill-switch/kill-switch-store';
 
 vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
-  isAffiliateKillSwitchActive: vi.fn(),
+  getAffiliateKillSwitchState: vi.fn(),
 }));
 
 interface SyndicationJobResult {
@@ -30,7 +30,7 @@ describe('socialSyndicationJob', () => {
   });
 
   it('halts immediately if Affiliate Kill Switch is active', async () => {
-    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(true);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: true, known: true });
 
     const mockStep = {
       run: vi.fn().mockImplementation(async (name, fn) => fn()),
@@ -64,7 +64,7 @@ describe('socialSyndicationJob', () => {
   });
 
   it('pauses if daily quota is exceeded', async () => {
-    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(false);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
 
     const mockStep = {
       run: vi.fn().mockImplementation(async (name, fn) => fn()),
@@ -95,7 +95,7 @@ describe('socialSyndicationJob', () => {
   });
 
   it('sleeps for organic delay and publishes when eligible', async () => {
-    vi.mocked(killSwitchStore.isAffiliateKillSwitchActive).mockResolvedValue(false);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
 
     const mockStep = {
       run: vi.fn().mockImplementation(async (name, fn) => fn()),
@@ -124,5 +124,42 @@ describe('socialSyndicationJob', () => {
     expect(result.status).toBe('PUBLISHED_SUCCESSFULLY');
     expect(result.result?.published).toBe(true);
     expect(result.result?.channelId).toBe('chan_x_1');
+  });
+
+  it('halts when the kill-switch state is unreadable — unknown never releases a side effect', async () => {
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({
+      active: false,
+      known: false,
+      reason: 'KV read failed; D1 read failed',
+    });
+
+    const mockStep = {
+      run: vi.fn().mockImplementation(async (name, fn) => fn()),
+      sleep: vi.fn(),
+    };
+
+    const event = {
+      data: {
+        jobId: 'job_unknown_halt',
+        tenantId: 'tenant_abc',
+        videoUrl: 'https://cdn.example.com/video.mp4',
+        caption: 'Unknown Halt #shorts',
+        channel: {
+          channelId: 'chan_x_1',
+          platform: 'x',
+          todayPublishedCount: 0,
+          lastPublishedAtMs: null,
+        },
+      },
+    };
+
+    const handler = (socialSyndicationJob as unknown as { fn: InngestHandler }).fn;
+    const result = await handler({ event, step: mockStep });
+
+    expect(result).toEqual({
+      status: 'HALTED_BY_KILL_SWITCH',
+      jobId: 'job_unknown_halt',
+    });
+    expect(mockStep.sleep).not.toHaveBeenCalled();
   });
 });

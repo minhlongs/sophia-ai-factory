@@ -60,8 +60,10 @@ export async function POST(
 
   const secret = process.env[config.secretEnv];
   if (!secret) {
+    // Fail LOUD: a 200 here would tell the provider "delivered" while the
+    // conversion is silently dropped. 503 asks for a retry once configured.
     logger.warn(`[saas-crypto-webhook] Secret ${config.secretEnv} not configured`);
-    return NextResponse.json({ ok: true, skipped: 'secret_not_configured' }, { status: 200 });
+    return NextResponse.json({ ok: false, error: 'secret_not_configured' }, { status: 503 });
   }
 
   let signature = '';

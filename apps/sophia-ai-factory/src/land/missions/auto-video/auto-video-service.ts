@@ -6,7 +6,7 @@
  * @module land/missions/auto-video/auto-video-service
  */
 
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   AutoVideoMissionError,
   type AutoVideoMissionInput,
@@ -32,10 +32,14 @@ export async function runAutoVideoMission(
 
   const tenantId = input.tenantId ?? input.userId;
 
-  if (await isAffiliateKillSwitchActive(tenantId)) {
+  // Fail closed: an unreadable halt state must not queue a mission.
+  const killState = await getAffiliateKillSwitchState(tenantId);
+  if (killState.active || !killState.known) {
     throw new AutoVideoMissionError(
-      'KILL_SWITCH_ACTIVE',
-      'Affiliate emergency kill switch is active for this workspace',
+      killState.known ? 'KILL_SWITCH_ACTIVE' : 'KILL_SWITCH_UNKNOWN',
+      killState.known
+        ? 'Affiliate emergency kill switch is active for this workspace'
+        : 'Affiliate emergency kill switch state unreadable — failing closed',
     );
   }
 

@@ -8,7 +8,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import type { ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
 import { findJobById, checkAndMarkMaxRetries, atomicClaimJob } from './publish-claim';
 import { handleTelegramFlow } from './publish-telegram-flow';
@@ -47,16 +47,25 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     await step.sleep(`wait-for-slot-${jobId}`, `${delaySec}s`);
   }
 
-  // Re-evaluate workspace & platform-wide emergency kill switch immediately before claim/upload
+  // Re-evaluate workspace & platform-wide emergency kill switch immediately before claim/upload.
+  // Fail closed: an unreadable halt state aborts the publish, it never releases it.
   const effectiveTenant = tenantId || job.tenant_id || userId;
-  if (await isAffiliateKillSwitchActive(effectiveTenant)) {
-    logger.warn('[publishExecute] Aborted scheduled publish due to active kill switch', {
+  const killState = await getAffiliateKillSwitchState(effectiveTenant);
+  if (killState.active || !killState.known) {
+    const error = killState.known ? 'KILL_SWITCH_ACTIVE' : 'KILL_SWITCH_UNKNOWN';
+    logger.warn('[publishExecute] Aborted scheduled publish due to kill switch (active or unreadable)', {
       jobId,
       tenantId: effectiveTenant,
+      known: killState.known,
     });
     await db
       .from('publishing_jobs')
-      .update({ status: 'failed', error_message: 'Aborted by emergency kill switch' })
+      .update({
+        status: 'failed',
+        error_message: killState.known
+          ? 'Aborted by emergency kill switch'
+          : 'Aborted: emergency kill switch state unreadable',
+      })
       .eq('id', jobId);
     return {
       skipped: false,
@@ -64,7 +73,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
       status: 'failed',
       externalPostId: '',
       provider: '',
-      error: 'KILL_SWITCH_ACTIVE',
+      error,
     };
   }
 

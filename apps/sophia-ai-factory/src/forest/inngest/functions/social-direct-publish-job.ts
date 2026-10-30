@@ -8,7 +8,7 @@
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { decryptTokenVault } from '@/seed/security/oauth-token-vault';
-import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { getCredential, upsertCredential } from '@/land/social/platform-credentials-store';
 import { claimPublishJobForUpload, getPublishJob, updatePublishJobStatus } from '@/land/social/publish-job-store';
 import {
@@ -73,9 +73,17 @@ export async function processSocialDirectPublishJob({
   // Step 2: Emergency kill-switch and circuit-breaker check
   const safetyCheck = await step.run('check-safety-guards', async () => {
     const effectiveTenant = data.tenantId ?? data.userId;
-    if (await isAffiliateKillSwitchActive(effectiveTenant)) {
-      await updatePublishJobStatus(data.jobId, 'FAILED', { error: 'Workspace emergency kill switch active' });
-      return { allowed: false, reason: 'KILL_SWITCH_ACTIVE' };
+    // Fail closed: an unreadable halt state must abort the upload, not release
+    // it. The legacy boolean helper fails OPEN on read errors.
+    const killState = await getAffiliateKillSwitchState(effectiveTenant);
+    if (killState.active || !killState.known) {
+      const reason = killState.known ? 'KILL_SWITCH_ACTIVE' : 'KILL_SWITCH_UNKNOWN';
+      await updatePublishJobStatus(data.jobId, 'FAILED', {
+        error: killState.known
+          ? 'Workspace emergency kill switch active'
+          : 'Workspace emergency kill switch state unreadable — failing closed',
+      });
+      return { allowed: false, reason };
     }
     const cred = await getCredential(data.userId, data.platform, data.channelId);
     const guard = evaluateSafetyGuardsDecision(data, cred);

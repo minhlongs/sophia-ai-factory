@@ -15,6 +15,11 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(() => ({ prepare: mockPrepare })),
 }));
 
+// The mission entrypoint fails closed when the halt state is unreadable.
+vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
+  getAffiliateKillSwitchState: vi.fn(async () => ({ active: false, known: true })),
+}));
+
 // --- Provider mock ----------------------------------------------------------
 vi.mock('@/land/video/generation/video-render-provider', () => ({
   submitVideoRender: vi.fn(),

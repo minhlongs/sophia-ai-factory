@@ -6,6 +6,7 @@ import * as credStore from '@/land/social/platform-credentials-store';
 import * as jobStore from '@/land/social/publish-job-store';
 import * as circuitBreaker from '@/seed/security/circuit-breaker';
 import * as authSession from '@/seed/auth/better-auth-session';
+import * as killSwitchStore from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   dispatchSocialPublishAction,
   listConnectedChannelsAction,
@@ -18,6 +19,9 @@ vi.mock('@/land/social/platform-credentials-store');
 vi.mock('@/land/social/publish-job-store');
 vi.mock('@/seed/security/circuit-breaker');
 vi.mock('@/seed/auth/better-auth-session');
+vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
+  getAffiliateKillSwitchState: vi.fn(),
+}));
 vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn().mockResolvedValue({ ids: ['evt_1'] }), createFunction: vi.fn() },
 }));
@@ -79,6 +83,7 @@ describe('socialDirectPublishJob & Server Actions', () => {
     // The claim is the gate this delivery must win. Default it to won so the
     // happy-path cases exercise the upload; the claim-lost cases override it.
     vi.mocked(jobStore.claimPublishJobForUpload).mockResolvedValue({ status: 'UPLOADING' } as never);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
   });
 
   it('orchestrates direct publish with the decrypted token threaded into the upload', async () => {
@@ -483,5 +488,64 @@ describe('socialDirectPublishJob & Server Actions', () => {
       platform: 'YOUTUBE_SHORTS', channelId: 'c', channelName: 'Chan', accessToken: 'token_1', tokenExpiresAt: Date.now() + 3600000,
     });
     expect(update.success).toBe(true);
+  });
+
+  it('aborts the upload — never releases it — when the kill-switch state is unreadable', async () => {
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({
+      active: false,
+      known: false,
+      reason: 'KV read failed; D1 read failed',
+    });
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_kill_unknown',
+          userId: 'user_1',
+          tenantId: 'ws_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Unknown Halt',
+          description: 'Unknown Halt',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('ABORTED_SAFETY');
+    expect((res as { reason: string }).reason).toBe('KILL_SWITCH_UNKNOWN');
+    expect(fixtureFetch).not.toHaveBeenCalled();
+    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith(
+      'job_kill_unknown',
+      'FAILED',
+      expect.objectContaining({ error: expect.stringContaining('unreadable') }),
+    );
+  });
+
+  it('aborts the upload when the kill-switch is actively engaged', async () => {
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+    vi.mocked(killSwitchStore.getAffiliateKillSwitchState).mockResolvedValue({ active: true, known: true });
+
+    const res = await processSocialDirectPublishJob({
+      event: {
+        data: {
+          jobId: 'job_kill_active',
+          userId: 'user_1',
+          tenantId: 'ws_1',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS' as const,
+          videoUrl: 'https://cdn.example.com/v.mp4',
+          title: 'Active Halt',
+          description: 'Active Halt',
+        },
+      },
+      step: mockStep,
+    });
+
+    expect(res.status).toBe('ABORTED_SAFETY');
+    expect((res as { reason: string }).reason).toBe('KILL_SWITCH_ACTIVE');
+    expect(fixtureFetch).not.toHaveBeenCalled();
   });
 });

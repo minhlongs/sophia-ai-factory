@@ -131,6 +131,56 @@ describe('SaaS & Crypto Postback Service', () => {
     expect(res.error).toBe('MALFORMED_JSON');
   });
 
+  it('rejects an empty signing secret even when the attacker self-signs with the empty key', async () => {
+    const fakeDb = createPostbackTestD1();
+    const rawBody = JSON.stringify({
+      id: 'txn_empty_secret',
+      partner_key: 'aff_1',
+      reward_amount_cents: 9999,
+    });
+    // Any signature must be rejected: with no key there is nothing to verify
+    // against. (Node's WebCrypto refuses to even import a zero-length HMAC
+    // key, but edge runtimes differ — the service must not depend on that.)
+    const signature = '0'.repeat(64);
+
+    const res = await processSaasCryptoPostback({
+      db: fakeDb as unknown as D1Database,
+      tenantId: 'ws_test_tenant',
+      network: 'partnerstack',
+      rawBody,
+      signature,
+      secret: '',
+    });
+
+    expect(res.success).toBe(false);
+    expect(res.error).toBe('SECRET_NOT_CONFIGURED');
+
+    const countRows = await fakeDb
+      .prepare('SELECT COUNT(*) as cnt FROM workspace_external_commissions WHERE tenant_id = ?')
+      .bind('ws_test_tenant')
+      .first<{ cnt: number }>();
+    expect(countRows?.cnt).toBe(0);
+  });
+
+  it('rejects non-finite commission values instead of letting NaN pass the zero gate', async () => {
+    const rawBody = JSON.stringify({
+      id: 'txn_nan',
+      partner_key: 'aff_1',
+      reward_amount_cents: 'not-a-number',
+    });
+    const signature = await computeHmacSha256Hex(secret, rawBody);
+
+    const res = await processSaasCryptoPostback({
+      network: 'partnerstack',
+      rawBody,
+      signature,
+      secret,
+    });
+
+    expect(res.success).toBe(false);
+    expect(res.error).toBe('INVALID_COMMISSION');
+  });
+
   it('rejects zero or negative commission payloads when signature matches', async () => {
     const rawBody = JSON.stringify({
       id: 'txn_zero',
