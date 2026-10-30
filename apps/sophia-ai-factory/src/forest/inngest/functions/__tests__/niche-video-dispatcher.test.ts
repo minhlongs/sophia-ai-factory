@@ -111,6 +111,10 @@ function getHandler(): InngestHandler {
 
 const mockStep = {
   run: (async <T>(_name: string, fn: () => Promise<T>): Promise<T> => await fn()) as StepRunFn,
+  sendEvent: (async () => ({ ids: ['evt_test_1'] })) as (
+    _name: string,
+    _event: unknown,
+  ) => Promise<{ ids: string[] }>,
 };
 
 function saasEvent(overrides: Partial<EventData> = {}): { data: EventData } {

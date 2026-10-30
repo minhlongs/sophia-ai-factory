@@ -25,13 +25,20 @@ const MIGRATION_0482 = readFileSync(
   resolve(process.cwd(), 'migrations/0482_opc_affiliate_execution_truth.sql'),
   'utf8',
 );
+const MIGRATION_0486 = readFileSync(
+  resolve(process.cwd(), 'migrations/0486_execution_render_tracking.sql'),
+  'utf8',
+);
 
 function upgradedDb() {
   // Simulate the pre-0482 database: commission_events already exists from 0206,
   // but the OPC tables do not. Apply 0482 twice to prove the upgrade is rerunnable.
+  // 0486 is an additive ALTER (single-apply via the wrangler journal, matching
+  // the repo's 0477 convention); it is applied once.
   const fake = createFakeD1([MIGRATION_0206]);
   fake._db.exec(MIGRATION_0482);
   fake._db.exec(MIGRATION_0482);
+  fake._db.exec(MIGRATION_0486);
   return fake as unknown as D1Database;
 }
 
