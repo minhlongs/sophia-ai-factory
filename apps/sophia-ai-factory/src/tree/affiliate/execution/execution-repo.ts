@@ -154,6 +154,27 @@ export async function getExecutionRun(
 }
 
 /**
+ * Latest run consumed from an approval. The approve→continuation resume path
+ * must call this before re-sending: a run already exists means the approval
+ * was consumed and must be marked executed, never re-sent blindly.
+ */
+export async function getExecutionRunByApprovalId(
+  db: D1Database,
+  tenantId: string,
+  approvalId: string,
+): Promise<ExecutionRunRecord | null> {
+  const row = await db
+    .prepare(
+      `SELECT ${SELECT_COLUMNS} FROM affiliate_execution_runs
+       WHERE tenant_id = ? AND approval_id = ?
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .bind(tenantId, approvalId)
+    .first<RunRow>();
+  return row ? toRecord(row) : null;
+}
+
+/**
  * Compare-and-swap state change. On a duplicate/retry that already reached the
  * target state, returns the current record with `replayed: true` instead of
  * applying side effects twice.

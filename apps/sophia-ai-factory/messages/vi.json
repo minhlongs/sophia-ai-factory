@@ -7932,7 +7932,39 @@
     },
     "actionsLabel": "Hành động",
     "navLabel": "Phê duyệt",
-    "pageTitle": "Hàng Chờ Phê Duyệt"
+    "pageTitle": "Hàng Chờ Phê Duyệt",
+    "campaign": {
+      "title": "Phê duyệt chiến dịch",
+      "description": "Quyết định của CEO cho các chiến dịch video affiliate. Phê duyệt sẽ kiểm tra lại điều khoản offer và tiếp tục thực thi đúng một lần.",
+      "loading": "Đang tải phê duyệt chiến dịch…",
+      "loadFailed": "Không tải được phê duyệt chiến dịch",
+      "retry": "Thử lại",
+      "emptyTitle": "Chưa có phê duyệt chiến dịch",
+      "emptyDescription": "Chiến dịch cần quyết định của CEO sẽ hiện ở đây.",
+      "resume": "Tiếp tục",
+      "revoke": "Thu hồi",
+      "expires": "Hết hạn",
+      "reasonLabel": "Lý do",
+      "hashLabel": "Mã băm nội dung",
+      "continuationPending": "Đã phê duyệt nhưng chưa thể tự tiếp tục thực thi. Hãy xử lý lỗi đã báo rồi bấm Tiếp tục.",
+      "resumed": "Đã tiếp tục thực thi.",
+      "status": {
+        "pending_ceo": "Chờ CEO",
+        "approved": "Đã phê duyệt",
+        "rejected": "Đã từ chối",
+        "revoked": "Đã thu hồi",
+        "expired": "Hết hạn",
+        "invalidated_by_mutation": "Vô hiệu",
+        "executed": "Đã thực thi",
+        "aborted_by_kill_switch": "Đã dừng"
+      },
+      "fields": {
+        "niche": "Ngách",
+        "jurisdiction": "Khu vực pháp lý",
+        "budget": "Ngân sách render",
+        "target": "Link affiliate"
+      }
+    }
   },
   "autonomy": {
     "title": "Cấp độ tự chủ",

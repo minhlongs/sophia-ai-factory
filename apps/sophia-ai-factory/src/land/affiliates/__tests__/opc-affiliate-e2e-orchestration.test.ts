@@ -40,6 +40,8 @@ function createE2ED1() {
       niche TEXT NOT NULL, jurisdiction TEXT NOT NULL, approval_payload_hash TEXT NOT NULL,
       estimated_render_cost_cents INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'pending_ceo',
       approved_by TEXT, approved_at INTEGER, invalidated_reason TEXT,
+      payload_json TEXT, dispatch_json TEXT, expires_at INTEGER,
+      revoked_by TEXT, revoked_at INTEGER, executed_at INTEGER, rejection_reason TEXT,
       created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
     );`,
     `CREATE INDEX idx_agent_approvals_tenant_campaign ON agent_campaign_approvals(tenant_id, campaign_id, status);`,
