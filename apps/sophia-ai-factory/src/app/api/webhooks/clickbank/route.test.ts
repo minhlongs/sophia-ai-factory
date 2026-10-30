@@ -1,10 +1,17 @@
 /**
- * Tests for ClickBank INS webhook route
+ * Tests for ClickBank INS webhook route (tenant-scoped).
+ *
+ * Provider contract preserved: SHA1 signature header, INS parsing, click
+ * attribution, 70/30 commission economics, affiliate_conversions persistence.
+ * Tenant safety changed: the signing secret comes from the attributed
+ * workspace's stored credential — no global CLICKBANK_INS_SECRET fallback;
+ * unattributed callbacks, missing credentials, and storage failures fail
+ * closed instead of recording orphan rows or false-acking 200.
  */
 
+// Mock all dependencies before imports
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock all dependencies before imports
 vi.mock('@/land/affiliates/clickbank-signature-verifier', () => ({
   verifyClickBankSignature: vi.fn(),
 }))
@@ -25,6 +32,10 @@ vi.mock('@/land/affiliates/conversion-notifier', () => ({
   notifyConversionEarned: vi.fn(),
 }))
 
+vi.mock('@/land/affiliates/credentials', () => ({
+  getCredentials: vi.fn(),
+}))
+
 vi.mock('@/tree/telegram/sql-rate-limiter', () => ({
   checkRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
 }))
@@ -39,6 +50,7 @@ import { parsePostback } from '@/land/affiliates/clickbank-postback-parser'
 import { attributeClick } from '@/land/affiliates/conversion-attributor'
 import { calcCommission } from '@/land/affiliates/commission-calculator'
 import { notifyConversionEarned } from '@/land/affiliates/conversion-notifier'
+import { getCredentials } from '@/land/affiliates/credentials'
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { NextRequest } from 'next/server'
 
@@ -67,9 +79,11 @@ const basePostback = {
   affiliate: undefined,
 }
 
+const TENANT_SECRET = 'tenant_clickbank_clerk_key'
+
 beforeEach(() => {
   vi.clearAllMocks()
-  process.env.CLICKBANK_INS_SECRET = 'test-secret'
+  delete process.env.CLICKBANK_INS_SECRET
   ;(globalThis as unknown as { __env: Record<string, unknown> }).__env = { DB: mockDb }
 
   vi.mocked(verifyClickBankSignature).mockResolvedValue(true)
@@ -81,6 +95,10 @@ beforeEach(() => {
     offerId: 'phenq',
   })
   vi.mocked(calcCommission).mockReturnValue({ user: 70, sophia: 30 })
+  vi.mocked(getCredentials).mockResolvedValue({
+    network: 'clickbank',
+    clerk_key: TENANT_SECRET,
+  } as unknown as Awaited<ReturnType<typeof getCredentials>>)
   mockFirst.mockResolvedValue(null)  // no duplicate by default
   mockRun.mockResolvedValue({ success: true })
 })
@@ -91,6 +109,23 @@ describe('POST /api/webhooks/clickbank', () => {
 
     const res = await POST(makeRequest('body', 'bad-sig'))
     expect(res.status).toBe(401)
+  })
+
+  it('verifies against the attributed workspace secret (never a global env secret)', async () => {
+    process.env.CLICKBANK_INS_SECRET = 'global_secret_that_must_be_ignored'
+
+    const res = await POST(makeRequest('receipt=REC123&transactionType=SALE&amount=100'))
+    expect(res.status).toBe(200)
+    expect(getCredentials).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'clickbank',
+    )
+    expect(verifyClickBankSignature).toHaveBeenCalledWith(
+      expect.any(String),
+      'valid-sig',
+      TENANT_SECRET,
+    )
   })
 
   it('returns 200 and inserts row for valid SALE', async () => {
@@ -113,28 +148,34 @@ describe('POST /api/webhooks/clickbank', () => {
     expect(mockPrepare).not.toHaveBeenCalledWith(expect.stringContaining('INSERT INTO affiliate_conversions'))
   })
 
-  it('records payout_status=unattributed when cvendthru not found', async () => {
+  it('fails 422 link_unattributed (no orphan row) when cvendthru is not found', async () => {
     vi.mocked(attributeClick).mockResolvedValue(null)
 
     const res = await POST(makeRequest())
-    expect(res.status).toBe(200)
-    // payout_status='unattributed' passed to bind
-    expect(mockBind).toHaveBeenCalledWith(
-      expect.any(String), // id
-      'REC123',            // receipt
-      null,                // click_id
-      null,                // campaign_id
-      null,                // user_id
-      null,                // offer_id
-      'SALE',
-      100,
-      'USD',
-      70,
-      30,
-      'unattributed',
-      null,
-      expect.any(String),
-    )
+    expect(res.status).toBe(422)
+    const json = await res.json() as Record<string, unknown>
+    expect(json).toMatchObject({ ok: false, error: 'link_unattributed' })
+    expect(mockPrepare).not.toHaveBeenCalledWith(expect.stringContaining('INSERT INTO affiliate_conversions'))
+  })
+
+  it('fails 503 secret_not_configured when the workspace has no credential', async () => {
+    vi.mocked(getCredentials).mockResolvedValue(null)
+
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(503)
+    const json = await res.json() as Record<string, unknown>
+    expect(json).toMatchObject({ ok: false, error: 'secret_not_configured', tenantId: 'user-1' })
+    expect(verifyClickBankSignature).not.toHaveBeenCalled()
+    expect(mockPrepare).not.toHaveBeenCalledWith(expect.stringContaining('INSERT INTO affiliate_conversions'))
+  })
+
+  it('fails 503 db_unavailable when the D1 binding is missing', async () => {
+    ;(globalThis as unknown as { __env: Record<string, unknown> }).__env = {}
+
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(503)
+    const json = await res.json() as Record<string, unknown>
+    expect(json).toMatchObject({ ok: false, error: 'db_unavailable' })
   })
 
   it('notifies user on attributed SALE', async () => {
@@ -168,13 +209,6 @@ describe('POST /api/webhooks/clickbank', () => {
 
     await POST(makeRequest())
     expect(calcCommission).toHaveBeenCalledWith(-50)
-  })
-
-  it('returns 200 when CLICKBANK_INS_SECRET not configured', async () => {
-    delete process.env.CLICKBANK_INS_SECRET
-
-    const res = await POST(makeRequest())
-    expect(res.status).toBe(200)
   })
 
   // C1: TEST events must NOT get +60d clearance window
@@ -241,13 +275,13 @@ describe('POST /api/webhooks/clickbank', () => {
     expect(json.skipped).toBe('duplicate_race')
   })
 
-  // H3: non-constraint error → skipped: insert_error
-  it('non-constraint insert failure → skipped: insert_error with 200', async () => {
+  // Storage failures fail LOUD so ClickBank retries: no silent 200 ack.
+  it('non-constraint insert failure → 503 db_write_failed', async () => {
     mockRun.mockRejectedValueOnce(new Error('D1_ERROR: disk full'))
 
     const res = await POST(makeRequest())
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(503)
     const json = await res.json() as Record<string, unknown>
-    expect(json.skipped).toBe('insert_error')
+    expect(json).toMatchObject({ ok: false, error: 'db_write_failed' })
   })
 })

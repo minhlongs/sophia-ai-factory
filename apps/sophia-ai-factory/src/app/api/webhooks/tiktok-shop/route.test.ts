@@ -1,24 +1,56 @@
 /**
- * Tests for TikTok Shop webhook handler
+ * Tests for the TikTok Shop webhook delegate.
  *
- * Covers: HMAC valid/invalid, idempotency, missing config
+ * Same integration harness as the AccessTrade delegate: real SQLite-backed
+ * fake D1 from the REAL migrations, real tenant resolution, real HMAC.
+ * Pins the unchanged TikTok contract (x-tts-signature, order_id/sub_id/
+ * settlement_amount/commission_amount fields, always-pending receipts) plus
+ * tenant-scoped fixes. The legacy revenue-ingestion side effect stays
+ * non-fatal when its table is unavailable.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { NextRequest } from 'next/server'
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite'
+import { generateAffiliateHmac } from '@/tree/affiliate/hmac-verifier'
+
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+}))
+
+vi.mock('@/land/affiliates/credentials', () => ({
+  getCredentials: vi.fn(),
+}))
+
+import { getD1 } from '@/seed/db/client'
+import { getCredentials } from '@/land/affiliates/credentials'
 import { POST } from './route'
 
-async function hmacSha256Hex(body: string, secret: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  )
-  const buf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body))
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+type FakeD1 = ReturnType<typeof createFakeD1>
+type Creds = Awaited<ReturnType<typeof getCredentials>>
+
+function createLegacyD1(): FakeD1 {
+  const tracking = readFileSync(resolve(process.cwd(), 'migrations/0082-edge-tracking.sql'), 'utf8')
+  const engine = readFileSync(resolve(process.cwd(), 'migrations/0035-affiliate-engine.sql'), 'utf8')
+  return createFakeD1([tracking, engine])
 }
 
-const WEBHOOK_SECRET = 'tiktok-test-secret'
-const ORDER_PAYLOAD = JSON.stringify({ order_id: 'TT-ORDER-001', settlement_amount: 50, commission_amount: 6 })
+function mockCreds(secrets: Record<string, Record<string, string>>) {
+  vi.mocked(getCredentials).mockImplementation(async (_db, tenantId, network) => {
+    const secret = secrets[tenantId]?.[network]
+    if (!secret) return null
+    return { network, api_secret: secret } as unknown as Creds
+  })
+}
+
+const PAYLOAD = {
+  order_id: 'TT-ORDER-001',
+  sub_id: 'link_A1',
+  settlement_amount: 50,
+  commission_amount: 6,
+}
 
 function makeRequest(body: string, sig: string): NextRequest {
   return new NextRequest('http://localhost/api/webhooks/tiktok-shop', {
@@ -28,63 +60,77 @@ function makeRequest(body: string, sig: string): NextRequest {
   })
 }
 
-type D1Mock = {
-  prepare: ReturnType<typeof vi.fn>
-  _mockRun?: ReturnType<typeof vi.fn>
-  _mockFirst?: ReturnType<typeof vi.fn>
-}
-
-function setD1Mock({ isDuplicate = false }: { isDuplicate?: boolean } = {}) {
-  // rows_written=0 means INSERT OR IGNORE hit a duplicate constraint
-  const mockRun = vi.fn().mockResolvedValue({
-    success: true,
-    meta: { rows_written: isDuplicate ? 0 : 1 },
-  })
-  const mockFirst = vi.fn().mockResolvedValue(null)
-  const mockBind = vi.fn().mockReturnValue({ run: mockRun, first: mockFirst })
-  const d1Mock: D1Mock = { prepare: vi.fn().mockReturnValue({ bind: mockBind }), _mockRun: mockRun, _mockFirst: mockFirst }
-  ;(globalThis as unknown as { __env: Record<string, unknown> }).__env.DB = d1Mock
-  return { mockRun, mockFirst }
-}
-
 describe('POST /api/webhooks/tiktok-shop', () => {
   beforeEach(() => {
-    vi.stubEnv('TIKTOK_SHOP_WEBHOOK_SECRET', WEBHOOK_SECRET)
-    vi.stubEnv('SOPHIA_TENANT_ID', 'sophia-global')
-    setD1Mock()
+    vi.clearAllMocks()
   })
 
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
+  it('returns 200 and records a pending tenant-owned receipt for a valid signature', async () => {
+    const db = createLegacyD1()
+    await db
+      .prepare('INSERT INTO tracking_links (id, tenant_id, destination_url) VALUES (?, ?, ?)')
+      .bind('link_A1', 'tenant-a', 'https://example.com/offer')
+      .run()
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database)
+    mockCreds({ 'tenant-a': { tiktok_shop: 'tts_secret_A' } })
 
-  it('returns 200 for valid HMAC signature', async () => {
-    const sig = await hmacSha256Hex(ORDER_PAYLOAD, WEBHOOK_SECRET)
-    const res = await POST(makeRequest(ORDER_PAYLOAD, sig))
+    const raw = JSON.stringify(PAYLOAD)
+    const sig = await generateAffiliateHmac(raw, 'tts_secret_A')
+    const res = await POST(makeRequest(raw, sig))
+
     expect(res.status).toBe(200)
+    const body = (await res.json()) as Record<string, unknown>
+    expect(body).toMatchObject({
+      ok: true,
+      network: 'tiktok_shop',
+      transactionId: 'TT-ORDER-001',
+      tenantId: 'tenant-a',
+      commissionUsd: 6,
+      status: 'pending',
+    })
+    const stored = await db
+      .prepare('SELECT tenant_id, network_transaction_id, status FROM conversion_events')
+      .first<{ tenant_id: string; network_transaction_id: string; status: string }>()
+    expect(stored).toMatchObject({
+      tenant_id: 'tenant-a',
+      network_transaction_id: 'tiktok_shop:TT-ORDER-001',
+      status: 'pending',
+    })
   })
 
-  it('returns 401 for invalid HMAC signature', async () => {
-    const res = await POST(makeRequest(ORDER_PAYLOAD, 'bad-signature'))
+  it('returns 401 for invalid signature and records nothing', async () => {
+    const db = createLegacyD1()
+    await db
+      .prepare('INSERT INTO tracking_links (id, tenant_id, destination_url) VALUES (?, ?, ?)')
+      .bind('link_A1', 'tenant-a', 'https://example.com/offer')
+      .run()
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database)
+    mockCreds({ 'tenant-a': { tiktok_shop: 'tts_secret_A' } })
+
+    const res = await POST(makeRequest(JSON.stringify(PAYLOAD), 'wrong'))
     expect(res.status).toBe(401)
+    const count = await db
+      .prepare('SELECT COUNT(*) AS n FROM conversion_events')
+      .first<{ n: number }>()
+    expect(count?.n).toBe(0)
   })
 
-  it('returns 200 with skipped:config when secret missing', async () => {
-    vi.unstubAllEnvs()
-    const res = await POST(makeRequest(ORDER_PAYLOAD, 'anything'))
-    expect(res.status).toBe(200)
-    const body = await res.json() as { ok: boolean; skipped?: string }
-    expect(body.skipped).toBe('config')
-  })
+  it('is idempotent: returns 200 skipped:duplicate for replay', async () => {
+    const db = createLegacyD1()
+    await db
+      .prepare('INSERT INTO tracking_links (id, tenant_id, destination_url) VALUES (?, ?, ?)')
+      .bind('link_A1', 'tenant-a', 'https://example.com/offer')
+      .run()
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database)
+    mockCreds({ 'tenant-a': { tiktok_shop: 'tts_secret_A' } })
 
-  it('returns 200 with skipped:duplicate for replay', async () => {
-    const { mockRun } = setD1Mock({ isDuplicate: true })
-    const sig = await hmacSha256Hex(ORDER_PAYLOAD, WEBHOOK_SECRET)
-    const res = await POST(makeRequest(ORDER_PAYLOAD, sig))
-    expect(res.status).toBe(200)
-    const body = await res.json() as { ok: boolean; skipped?: string }
-    expect(body.skipped).toBe('duplicate')
-    // INSERT OR IGNORE is still called — dedup via rows_written=0
-    expect(mockRun).toHaveBeenCalled()
+    const raw = JSON.stringify(PAYLOAD)
+    const sig = await generateAffiliateHmac(raw, 'tts_secret_A')
+    await POST(makeRequest(raw, sig))
+    const replay = await POST(makeRequest(raw, sig))
+
+    expect(replay.status).toBe(200)
+    const body = (await replay.json()) as { ok: boolean; skipped?: string }
+    expect(body).toMatchObject({ ok: true, skipped: 'duplicate' })
   })
 })

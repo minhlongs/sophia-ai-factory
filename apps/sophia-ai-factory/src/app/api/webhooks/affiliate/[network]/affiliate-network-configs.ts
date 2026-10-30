@@ -86,6 +86,24 @@ const CANONICAL_WEBHOOK_NETWORKS: readonly AffiliateNetwork[] = [
   'awin',
 ];
 
+/** Canonical network slugs for fail-closed display when the DB is unreadable. */
+export const CANONICAL_WEBHOOK_NETWORK_LIST: readonly AffiliateNetwork[] =
+  CANONICAL_WEBHOOK_NETWORKS;
+
+/** Canonical network → credential-store value for readiness lookups. */
+const READINESS_DB_NETWORK: Record<string, string> = {
+  tiktok_shop: 'tiktok_shop',
+  amazon_associates: 'amazon',
+  clickbank: 'clickbank',
+  accesstrade: 'accesstrade',
+  awin: 'awin',
+};
+
+/**
+ * @deprecated Global env secrets are no longer accepted for affiliate webhooks;
+ * readiness must come from the workspace credential store. Kept for the
+ * canonical network-list contract; new code uses getWorkspaceWebhookReadiness.
+ */
 export function getAffiliateWebhookReadiness(): AffiliateWebhookReadiness[] {
   return CANONICAL_WEBHOOK_NETWORKS.map((net) => {
     const cfg = NETWORK_CONFIGS[net];
@@ -95,4 +113,27 @@ export function getAffiliateWebhookReadiness(): AffiliateWebhookReadiness[] {
       configured: Boolean(process.env[cfg.secretEnv]?.trim()),
     };
   });
+}
+
+/**
+ * Per-workspace webhook readiness from the credential store: a network shows
+ * connected only when THIS workspace holds an active credential for it.
+ */
+export async function getWorkspaceWebhookReadiness(
+  db: D1Database,
+  tenantId: string,
+): Promise<AffiliateWebhookReadiness[]> {
+  const rows = await db
+    .prepare(
+      `SELECT network FROM affiliate_network_credentials
+       WHERE tenant_id = ? AND status = 'active'`,
+    )
+    .bind(tenantId)
+    .all<{ network: string }>();
+  const active = new Set((rows.results ?? []).map((r) => r.network));
+  return CANONICAL_WEBHOOK_NETWORKS.map((net) => ({
+    network: net,
+    secretEnv: NETWORK_CONFIGS[net].secretEnv,
+    configured: active.has(READINESS_DB_NETWORK[net] ?? net),
+  }));
 }

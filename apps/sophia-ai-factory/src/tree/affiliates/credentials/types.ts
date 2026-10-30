@@ -1,4 +1,9 @@
-/** All supported affiliate/exchange networks */
+/**
+ * All supported affiliate/exchange networks.
+ * Must stay within the CHECK allow-list on affiliate_network_credentials
+ * (migration 0488; the ad-network values live in land/adsense/types).
+ * Postback verification only trusts credentials stored under these exact values.
+ */
 export type AffiliateNetwork =
   | 'impact_radius'
   | 'partnerstack'
@@ -8,7 +13,13 @@ export type AffiliateNetwork =
   | 'binance'
   | 'bybit'
   | 'bitget'
-  | 'coinbase';
+  | 'coinbase'
+  | 'rewardful'
+  | 'awin'
+  | 'tiktok_shop'
+  | 'okx'
+  | 'amazon'
+  | 'accesstrade';
 
 /** Credential payload shape per network */
 export interface NetworkCredentialPayload {
@@ -21,6 +32,12 @@ export interface NetworkCredentialPayload {
   bybit: { api_key: string; api_secret: string };
   bitget: { api_key: string; api_secret: string; passphrase: string };
   coinbase: { api_key: string; api_secret: string };
+  rewardful: { api_key: string; api_secret?: string };
+  awin: { api_key: string; api_secret?: string };
+  tiktok_shop: { api_key?: string; api_secret: string };
+  okx: { api_key: string; api_secret: string; passphrase?: string };
+  amazon: { api_key?: string; api_secret: string };
+  accesstrade: { api_key?: string; api_secret: string };
 }
 
 export interface CredentialRow {

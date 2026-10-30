@@ -1,22 +1,88 @@
 /**
- * Multi-Network Affiliate Webhook Edge Route Handler
+ * Multi-Network Affiliate Webhook Edge Route Handler (legacy compat delegate).
  *
- * Receives conversion events from TikTok Shop, Amazon, ClickBank, AccessTrade, Awin.
- * Verifies HMAC, writes pending commission to commission_ledger,
- * and emits Inngest conversion.created event.
+ * Receives conversion events from TikTok Shop, Amazon, AccessTrade, Awin.
+ * Delegates to the shared tenant-scoped ecommerce core, preserving this
+ * endpoint's signature headers and HMAC algorithm per network.
+ *
+ * ClickBank is served by its dedicated flow at /api/webhooks/clickbank.
  *
  * @module app/api/webhooks/affiliate/[network]/route
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { processAffiliateWebhook } from '@/tree/affiliate/webhook-processor';
-import { getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import {
-  NETWORK_CONFIGS,
-  extractAffiliateSignature,
-} from './affiliate-network-configs';
+  processLegacyEcommercePostback,
+  type LegacyEcommerceContract,
+} from '@/land/postback/legacy-ecommerce-handler';
+import { LEGACY_MIGRATION_GUIDANCE } from '@/land/postback/legacy-tenant-resolver';
+import { NETWORK_CONFIGS } from './affiliate-network-configs';
+
+type EcommerceSlug = 'accesstrade' | 'amazon' | 'awin' | 'tiktok_shop';
+
+const SLUG_MAP: Record<string, EcommerceSlug | 'clickbank'> = {
+  tiktok_shop: 'tiktok_shop',
+  'tiktok-shop': 'tiktok_shop',
+  amazon_associates: 'amazon',
+  amazon: 'amazon',
+  clickbank: 'clickbank',
+  accesstrade: 'accesstrade',
+  awin: 'awin',
+};
+
+const CONTRACT_FIELDS: Record<
+  EcommerceSlug,
+  Pick<
+    LegacyEcommerceContract,
+    'txnIdFields' | 'subIdFields' | 'clickIdField' | 'grossField' | 'commissionField' | 'approvedStatus' | 'missingTxnSkipCode'
+  >
+> = {
+  accesstrade: {
+    txnIdFields: ['conversion_id'],
+    subIdFields: ['sub_id'],
+    clickIdField: 'click_id',
+    grossField: 'order_value',
+    commissionField: 'commission',
+    approvedStatus: 'approved',
+    missingTxnSkipCode: 'no_conversion_id',
+  },
+  amazon: {
+    txnIdFields: ['order_id'],
+    subIdFields: ['tag'],
+    clickIdField: null,
+    grossField: 'revenue',
+    commissionField: 'commission',
+    approvedStatus: 'shipped',
+    missingTxnSkipCode: 'no_order_id',
+  },
+  awin: {
+    txnIdFields: ['id'],
+    subIdFields: ['click_ref'],
+    clickIdField: null,
+    grossField: 'sale_amount',
+    commissionField: 'commission_amount',
+    approvedStatus: 'approved',
+    missingTxnSkipCode: 'no_transaction_id',
+  },
+  tiktok_shop: {
+    txnIdFields: ['order_id'],
+    subIdFields: ['sub_id'],
+    clickIdField: null,
+    grossField: 'settlement_amount',
+    commissionField: 'commission_amount',
+    approvedStatus: null,
+    missingTxnSkipCode: 'no_order_id',
+  },
+};
+
+const DB_NETWORK: Record<EcommerceSlug, string> = {
+  accesstrade: 'accesstrade',
+  amazon: 'amazon',
+  awin: 'awin',
+  tiktok_shop: 'tiktok_shop',
+};
 
 export async function POST(
   request: NextRequest,
@@ -25,80 +91,73 @@ export async function POST(
   const resolvedParams = await Promise.resolve(context.params);
   const networkParam = resolvedParams.network.toLowerCase();
   const config = NETWORK_CONFIGS[networkParam];
+  const slug = SLUG_MAP[networkParam];
 
-  if (!config) {
+  if (!config || !slug) {
     return NextResponse.json(
       { error: 'Unsupported affiliate network' },
       { status: 404 },
     );
   }
 
-  const secret = process.env[config.secretEnv];
-  if (!secret) {
-    // Fail LOUD: a 200 here would tell the provider "delivered" while the
-    // conversion is silently dropped. 503 asks for a retry once configured.
-    logger.warn(`[affiliate-webhook] Secret ${config.secretEnv} not configured`);
-    return NextResponse.json({ ok: false, error: 'secret_not_configured' }, { status: 503 });
-  }
-
-  const signature = extractAffiliateSignature(request, config.sigHeaders);
-
-  if (!signature) {
+  if (slug === 'clickbank') {
+    // ClickBank Instant Notifications are served by the dedicated flow with
+    // attribution and reversal handling; this generic path never supported it.
     return NextResponse.json(
-      { error: 'Missing signature header' },
-      { status: 401 },
+      {
+        ok: false,
+        error: 'network_moved',
+        canonical: '/api/webhooks/clickbank',
+        guidance: LEGACY_MIGRATION_GUIDANCE,
+      },
+      { status: 501 },
     );
   }
 
-  const rawBody = await request.text();
-  const db = await getD1();
-  if (!db) {
-    // Fail LOUD: without storage the conversion cannot be recorded, so a 200
-    // would lose it silently. 503 asks the provider to retry.
-    logger.warn('[affiliate-webhook] D1 database unavailable');
-    return NextResponse.json(
-      { ok: false, error: 'db_unavailable' },
-      { status: 503 },
-    );
-  }
-
-  const result = await processAffiliateWebhook({
-    db,
-    network: config.network,
-    rawBody,
-    signature,
-    secret,
+  const outcome = await processLegacyEcommercePostback(request, {
+    slug,
+    dbNetwork: DB_NETWORK[slug],
+    sigHeaders: config.sigHeaders,
     algorithm: config.algorithm,
+    logTag: 'affiliate-webhook',
+    ...CONTRACT_FIELDS[slug],
   });
 
-  if (!result.success) {
-    if (result.error === 'INVALID_HMAC_SIGNATURE') {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-    return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
+  if (outcome.status !== 200 || outcome.body.skipped) {
+    return NextResponse.json(outcome.body, { status: outcome.status });
   }
 
-  try {
-    await inngest.send({
-      name: 'conversion.created',
-      data: {
-        conversionEventId: result.conversionId!,
-        tenantId: process.env.SOPHIA_TENANT_ID ?? 'sophia-global',
-      },
-    });
-  } catch (emitErr) {
-    logger.warn('[affiliate-webhook] Inngest event emission failed (non-fatal)', {
-      conversionId: result.conversionId,
-      error: emitErr instanceof Error ? emitErr.message : String(emitErr),
-    });
-  }
-
-  return NextResponse.json({
+  // Fresh receipt: preserve this endpoint's informative envelope.
+  const commissionCents = Math.round(Number(outcome.body.commissionUsd ?? 0) * 100);
+  const envelope = {
     ok: true,
     success: true,
-    conversionId: result.conversionId,
-    commissionCents: result.commissionCents,
-    payableAt: result.payableAt,
-    network: result.network,
-  });
+    conversionId: outcome.body.transactionId,
+    commissionCents,
+    payableAt: Date.now() + 14 * 86400 * 1000,
+    network: slug,
+  };
+
+  const tenantId =
+    typeof outcome.body.tenantId === 'string' ? outcome.body.tenantId : null;
+  const transactionId =
+    typeof outcome.body.transactionId === 'string' ? outcome.body.transactionId : null;
+  if (tenantId && transactionId) {
+    try {
+      await inngest.send({
+        name: 'conversion.created',
+        data: {
+          conversionEventId: transactionId,
+          tenantId,
+        },
+      });
+    } catch (emitErr) {
+      logger.warn('[affiliate-webhook] Inngest event emission failed (non-fatal)', {
+        conversionId: outcome.body.transactionId,
+        error: emitErr instanceof Error ? emitErr.message : String(emitErr),
+      });
+    }
+  }
+
+  return NextResponse.json(envelope);
 }

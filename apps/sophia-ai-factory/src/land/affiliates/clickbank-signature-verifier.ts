@@ -50,7 +50,8 @@ function bufferToHex(buf: ArrayBuffer): string {
  *
  * @param body - Raw request body string (URL-encoded)
  * @param signature - Value from X-ClickBank-Signature header
- * @param secret - CLICKBANK_INS_SECRET env var
+ * @param secret - Attributed workspace's stored ClickBank secret (clerk_key);
+ * global env secrets are never accepted on this path
  * @returns true if signature is valid
  */
 export async function verifyClickBankSignature(

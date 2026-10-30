@@ -31,6 +31,10 @@ const NETWORK_SLUG_TO_DB: Readonly<Record<string, string>> = {
   shareasale: 'shareasale',
   rakuten: 'rakuten',
   tiktok_shop: 'tiktok_shop',
+  'tiktok-shop': 'tiktok_shop',
+  amazon: 'amazon',
+  amazon_associates: 'amazon',
+  accesstrade: 'accesstrade',
 } as const;
 
 /** D1 row shape for tracking_links (minimal, just what we need) */
@@ -66,9 +70,20 @@ export async function resolveNetworkSecret(
   const creds = await getCredentials(db, tenantId, dbNetwork as AffiliateNetwork);
   if (!creds) return null;
 
+  return pickCredentialSecret(dbNetwork, creds);
+}
+
+/**
+ * Extract the webhook-signing secret field for a network from its stored
+ * credential payload. Shared by the canonical core (link-bound lookup above)
+ * and the legacy delegation layer (tenant pre-resolved from payload hints).
+ */
+export function pickCredentialSecret(
+  dbNetwork: string,
+  creds: unknown,
+): string | null {
   const credsRecord = creds as unknown as Record<string, string | undefined>;
 
-  // Extract the signing secret field per network
   switch (dbNetwork) {
     case 'binance':
     case 'bybit':
@@ -77,6 +92,8 @@ export async function resolveNetworkSecret(
     case 'okx':
     case 'shareasale':
     case 'tiktok_shop':
+    case 'amazon':
+    case 'accesstrade':
       return credsRecord.api_secret ?? credsRecord.api_key ?? null;
 
     case 'partnerstack':
