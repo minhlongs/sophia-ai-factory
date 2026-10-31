@@ -8,11 +8,15 @@ import { resolve } from 'node:path';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import { getPersistedArm } from '@/tree/affiliate/optimization/feedback-repository';
 
-const migration = readFileSync(
+const migration0482 = readFileSync(
   resolve(process.cwd(), 'migrations/0482_opc_affiliate_execution_truth.sql'),
   'utf8',
 );
-const db = createFakeD1([migration]) as unknown as D1Database;
+const migration0490 = readFileSync(
+  resolve(process.cwd(), 'migrations/0490_opc_arm_applied_events.sql'),
+  'utf8',
+);
+const db = createFakeD1([migration0482, migration0490]) as unknown as D1Database;
 
 vi.mock('@/tree/creative-memory', () => ({
   recordLearning: vi.fn().mockResolvedValue({ id: 'mem_observed_1' }),
@@ -124,5 +128,86 @@ describe('flywheel feedback dispatcher (registered runtime boundary)', () => {
     expect(arm?.pulls).toBe(200);
     expect(arm?.conversions).toBe(48);
     expect(second.nextArmId).toBeTruthy();
+  });
+
+  it('handles lifecycle transitions end-to-end: pending -> settlement -> reversal', async () => {
+    const armId = 'arm_YOUTUBE_SHORTS_lifecycle_cohort';
+    const candidateArmIds = [armId, 'arm_YOUTUBE_SHORTS_alt'];
+
+    // 1. Initial pending observation: 100 impressions, $2 cost, conversions held
+    const pendingResult = await processFlywheelFeedbackDispatcher({
+      event: observedEvent({
+        eventId: 'evt_cohort_101:pending',
+        armId,
+        candidateArmIds,
+        impressions: 100,
+        conversions: 5,
+        revenueUsd: 50,
+        costUsd: 2,
+        isMatured: false,
+        lifecycleStage: 'initial',
+      }),
+      step,
+    });
+    expect(pendingResult.processed).toBe(true);
+    expect(pendingResult.applied).toBe(true);
+
+    let arm = await getPersistedArm(db, 'ws_a', armId);
+    expect(arm?.pulls).toBe(100);
+    expect(arm?.costCents).toBe(200);
+    expect(arm?.conversions).toBe(0); // Held during pending
+    expect(arm?.rewardCents).toBe(0);
+    expect(arm?.alpha).toBe(1);
+    expect(arm?.beta).toBe(1);
+
+    // 2. Settlement event arrives: 5 conversions confirmed, $50 revenue credited
+    const settledResult = await processFlywheelFeedbackDispatcher({
+      event: observedEvent({
+        eventId: 'evt_cohort_101:settled',
+        armId,
+        candidateArmIds,
+        impressions: 100,
+        conversions: 5,
+        revenueUsd: 50,
+        costUsd: 0,
+        isMatured: true,
+        lifecycleStage: 'settlement',
+      }),
+      step,
+    });
+    expect(settledResult.processed).toBe(true);
+    expect(settledResult.applied).toBe(true);
+
+    arm = await getPersistedArm(db, 'ws_a', armId);
+    expect(arm?.pulls).toBe(100); // Pulls NOT duplicated!
+    expect(arm?.costCents).toBe(200); // Cost NOT duplicated!
+    expect(arm?.conversions).toBe(5);
+    expect(arm?.rewardCents).toBe(5000);
+    expect(arm?.alpha).toBe(6);
+    expect(arm?.beta).toBe(96);
+
+    // 3. Reversal event arrives (1 chargeback refund)
+    const reversedResult = await processFlywheelFeedbackDispatcher({
+      event: observedEvent({
+        eventId: 'evt_cohort_101:reversal',
+        armId,
+        candidateArmIds,
+        impressions: 0,
+        conversions: 1,
+        revenueUsd: 10,
+        costUsd: 0,
+        isMatured: true,
+        lifecycleStage: 'reversal',
+      }),
+      step,
+    });
+    expect(reversedResult.processed).toBe(true);
+    expect(reversedResult.applied).toBe(true);
+
+    arm = await getPersistedArm(db, 'ws_a', armId);
+    expect(arm?.pulls).toBe(100);
+    expect(arm?.conversions).toBe(4); // 5 - 1 = 4
+    expect(arm?.rewardCents).toBe(4000); // 5000 - 1000 = 4000
+    expect(arm?.alpha).toBe(5); // 1 + 4 = 5
   });
 });

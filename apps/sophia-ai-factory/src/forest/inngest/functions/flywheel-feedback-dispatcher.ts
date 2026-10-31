@@ -49,10 +49,23 @@ export interface EvaluatedFeedbackEventData {
    * conversions and rewards are held until settlement. Defaults to true if omitted.
    */
   isMatured?: boolean;
+  /**
+   * Explicit lifecycle transition:
+   * - 'initial': First observation of impressions, clicks, costs, and tentative/settled conversions.
+   * - 'settlement': Subsequent maturation of previously pending conversions; pulls & costs already counted.
+   * - 'reversal': Subsequent cancellation / chargeback of previously credited conversions.
+   */
+  lifecycleStage?: 'initial' | 'settlement' | 'reversal';
   /** Optional composite persona arm attributes for Video Gender 2027 */
   personaArm?: PersonaArmSpec;
   /** Optional armId override */
   armId?: string;
+  /** Cohort / Invoice lineage identifier */
+  cohortId?: string;
+  /** Provider identifier */
+  provider?: string;
+  /** Logical adjustment identifier */
+  adjustmentId?: string;
 }
 
 export interface FlywheelResult {
@@ -96,15 +109,21 @@ export async function processFlywheelFeedbackDispatcher({
   const rewardCents = Math.round(data.revenueUsd * 100);
   const costCents = Math.round((data.costUsd ?? 0) * 100);
   const seed = data.seed ?? hashSeed(eventId);
+  const isReversal = data.lifecycleStage === 'reversal';
+  const conversions = isReversal ? data.conversions : Math.min(data.conversions, impressions);
   const feedback: FeedbackEvent = {
     eventId,
     armId,
     impressions,
-    conversions: Math.min(data.conversions, impressions),
+    conversions,
     rewardCents,
     costCents,
     observedAtMs,
     ...(data.isMatured !== undefined ? { isMatured: data.isMatured } : {}),
+    ...(data.lifecycleStage ? { lifecycleStage: data.lifecycleStage } : {}),
+    ...(data.cohortId ? { cohortId: data.cohortId } : {}),
+    ...(data.provider ? { provider: data.provider } : {}),
+    ...(data.adjustmentId ? { adjustmentId: data.adjustmentId } : {}),
   };
 
   const persisted = await step.run('update-thompson-posterior', async () =>

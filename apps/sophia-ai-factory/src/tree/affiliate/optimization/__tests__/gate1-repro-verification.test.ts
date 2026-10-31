@@ -19,10 +19,15 @@ const MIGRATION_0482 = readFileSync(
   resolve(process.cwd(), 'migrations/0482_opc_affiliate_execution_truth.sql'),
   'utf8',
 );
+const MIGRATION_0490 = readFileSync(
+  resolve(process.cwd(), 'migrations/0490_opc_arm_applied_events.sql'),
+  'utf8',
+);
 
 function createTestD1() {
   const fake = createFakeD1([]);
   fake._db.exec(MIGRATION_0482);
+  fake._db.exec(MIGRATION_0490);
   return fake as unknown as D1Database;
 }
 

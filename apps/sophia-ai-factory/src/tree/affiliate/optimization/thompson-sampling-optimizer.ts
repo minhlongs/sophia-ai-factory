@@ -36,7 +36,27 @@ export interface ThompsonSelectionResult {
   sampledProbability: number;
   estimatedConversionRate: number;
   expectedNetContributionCents?: number;
+  /**
+   * Logging policy selection probability or empirical win fraction estimate.
+   * Note: This is strictly the logging propensity P(arm = argmax | history).
+   * It MUST NOT be used for off-policy evaluation (IPS/DR) claims without verified
+   * common support across the target policy.
+   */
   propensity?: number;
+  /** True when propensity is estimated via Monte Carlo simulation rather than exact analytical calculation */
+  isEstimatedPropensity?: boolean;
+  /** Number of Monte Carlo draws used for estimation */
+  monteCarloSampleSize?: number;
+  /**
+   * Explicit guard: OPE (IPS/DR) requires unbiased support and full target-policy overlap.
+   * Single-arm deterministic choices (support = 0 for other arms) and floored multi-arm Monte Carlo
+   * estimates are strictly marked false because they cannot support unbiased off-policy evaluation.
+   */
+  opeUnbiasedCertified: false;
+  /** Exact selection probability when known analytically under logging policy (e.g. single candidate arm = 1.0) */
+  exactPolicyProbability?: number;
+  /** Diagnostic flag when the selected arm has negative expected unit contribution */
+  isMarginNegative?: boolean;
 }
 
 export interface OptimalPersonaArmResult extends ThompsonSelectionResult {
@@ -138,8 +158,26 @@ export function selectHookWithThompsonSampling(
     ? bestArm.conversions / bestArm.impressions
     : 0;
 
-  // Mathematically honest Thompson Sampling propensity via Monte Carlo simulation under current posterior
-  // M = 100 draws to estimate P(arm_i = argmax).
+  // If only 1 arm exists, exact analytical selection probability under logging policy is 1.0.
+  // However, opeUnbiasedCertified MUST REMAIN FALSE because a single-arm logging policy has ZERO support
+  // for any alternative counterfactual arm, making off-policy evaluation (IPS/DR) mathematically undefined/biased.
+  if (arms.length === 1) {
+    return {
+      selectedArmId: bestArm.id,
+      armName: bestArm.name,
+      sampledProbability: maxScore,
+      estimatedConversionRate: estimatedRate,
+      expectedNetContributionCents: bestNetContributionCents,
+      propensity: 1.0,
+      exactPolicyProbability: 1.0,
+      isEstimatedPropensity: false,
+      monteCarloSampleSize: 0,
+      opeUnbiasedCertified: false,
+      isMarginNegative: bestNetContributionCents < 0,
+    };
+  }
+
+  // Multi-arm policy: Monte Carlo simulation to estimate empirical win probability P(arm_i = argmax).
   const MC_DRAWS = 100;
   const winCounts = new Map<string, number>();
   for (const arm of arms) {
@@ -162,7 +200,8 @@ export function selectHookWithThompsonSampling(
     winCounts.set(drawWinningArmId, (winCounts.get(drawWinningArmId) ?? 0) + 1);
   }
 
-  // Clopper-Pearson / Laplace smoothing with epsilon floor so propensity > 0 for IPS/DR
+  // Empirical win fraction. Note: clipping [0.01, 0.99] is a numerical heuristic for IPS denominator stability;
+  // it is NOT Laplace smoothing or a Clopper-Pearson interval. Any clipped estimate is marked opeUnbiasedCertified: false!
   const rawPropensity = (winCounts.get(bestArm.id) ?? 0) / MC_DRAWS;
   const propensity = Math.max(0.01, Math.min(0.99, rawPropensity));
 
@@ -173,6 +212,10 @@ export function selectHookWithThompsonSampling(
     estimatedConversionRate: estimatedRate,
     expectedNetContributionCents: bestNetContributionCents,
     propensity,
+    isEstimatedPropensity: true,
+    monteCarloSampleSize: MC_DRAWS,
+    opeUnbiasedCertified: false, // Explicitly tagged: clipped MC cannot claim unbiased OPE
+    isMarginNegative: bestNetContributionCents < 0,
   };
 }
 
