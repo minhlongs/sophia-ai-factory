@@ -9,6 +9,8 @@ export * from './pairing';
 // sql-rate-limiter: only export types (checkRateLimit via telegram-rate-limit-middleware)
 export type { TelegramRateLimitResult } from './sql-rate-limiter';
 // telegram-auth-middleware: linkTelegramUser excluded (canonical: ./user-mappings-service)
+// telegram-campaign-approval-handler: CEO approval via Telegram inline keyboard
+export * from './telegram-campaign-approval-handler';
 export { checkSubscriptionAuth, invalidateAuthCache } from './telegram-auth-middleware';
 export * from './telegram-bot-campaign-fsm-confirm';
 export * from './telegram-bot-campaign-fsm-helpers';

@@ -93,6 +93,23 @@ export function buildExportFormatKeyboard(): InlineKeyboard {
 }
 
 /**
+ * Build CEO Campaign Approval Inline Keyboard (Bilingual VN/EN)
+ */
+export function buildCampaignApprovalKeyboard(
+  approvalId: string,
+  locale: 'vi' | 'en' = 'vi',
+): InlineKeyboard {
+  const approveText = locale === 'vi' ? '✅ Phê duyệt / Approve' : '✅ Approve';
+  const rejectText = locale === 'vi' ? '❌ Từ chối / Reject' : '❌ Reject';
+  return [
+    [
+      { text: approveText, callback_data: `capprove:${approvalId}` },
+      { text: rejectText, callback_data: `creject:${approvalId}` },
+    ],
+  ];
+}
+
+/**
  * Convert InlineKeyboard to Telegram reply_markup format
  */
 export function toReplyMarkup(keyboard: InlineKeyboard): InlineKeyboardMarkup {

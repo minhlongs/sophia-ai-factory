@@ -5,9 +5,12 @@
  * Inserts a video_jobs row and fires the initial Inngest event.
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
+import type { CampaignApprovalPayload } from '@/seed/security/approval-payload-hash';
+import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { verifyAndEnforceCampaignApprovalD1 } from '@/tree/affiliate/approval/campaign-approval-repo';
 import { checkVideoBudget, type RenderPath } from '../templates/cost-guardrail';
 
 export interface CreateVideoJobInput {
@@ -20,6 +23,13 @@ export interface CreateVideoJobInput {
    * who don't yet declare the path get a reasonable lower-bound check.
    */
   path?: RenderPath;
+  /**
+   * Optional affiliate campaign ID. When provided, or when requireCeoApproval
+   * is true, this job enforces CEO approval integrity before queuing.
+   */
+  campaignId?: string;
+  approvalPayload?: CampaignApprovalPayload;
+  requireCeoApproval?: boolean;
 }
 
 export interface CreateVideoJobResult {
@@ -39,6 +49,17 @@ export class InsufficientCreditsError extends Error {
   }
 }
 
+/** Thrown when a campaign video job lacks CEO approval or has an invalid/mutated payload. */
+export class CampaignApprovalRequiredError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'CampaignApprovalRequiredError';
+  }
+}
+
 /**
  * Insert video_jobs row + fire video.requested Inngest event.
  * Returns { jobId, status: 'queued' }.
@@ -46,7 +67,7 @@ export class InsufficientCreditsError extends Error {
 export async function createVideoJob(
   input: CreateVideoJobInput,
 ): Promise<CreateVideoJobResult> {
-  const { tenantId, userId, prompt, tier, path = 'path-a' } = input;
+  const { tenantId, userId, prompt, tier, path = 'path-a', campaignId, approvalPayload, requireCeoApproval } = input;
 
   // Cost guardrail: deny BEFORE any upstream call (HeyGen, fly, etc.)
   // so we never bill an unfunded user. Soft-fail balance lookup → deny.
@@ -60,6 +81,48 @@ export async function createVideoJob(
       budget.creditsRemaining,
       budget.hint ?? 'Insufficient credits.',
     );
+  }
+
+  // Zero-bypass render guard: any affiliate-tagged job must carry a valid,
+  // unmutated CEO approval before it can be queued (fail-closed).
+  if (campaignId || requireCeoApproval) {
+    if (!campaignId) {
+      throw new CampaignApprovalRequiredError(
+        'APPROVAL_CAMPAIGN_ID_REQUIRED',
+        'campaignId is required when requireCeoApproval is set.',
+      );
+    }
+    if (!approvalPayload) {
+      throw new CampaignApprovalRequiredError(
+        'APPROVAL_PAYLOAD_REQUIRED',
+        'An explicit approval payload (script, link, jurisdiction, disclosure, account, budget) is required for campaign renders.',
+      );
+    }
+
+    const d1 = await getD1();
+    if (!d1) {
+      throw new CampaignApprovalRequiredError(
+        'PERSIST_FAILED',
+        'D1 database binding not available for approval verification.',
+      );
+    }
+
+    const killState = await getAffiliateKillSwitchState(tenantId);
+    const killSwitchActive = killState.active || !killState.known;
+
+    const verification = await verifyAndEnforceCampaignApprovalD1(
+      d1,
+      tenantId,
+      campaignId,
+      approvalPayload,
+      killSwitchActive,
+    );
+    if (!verification.ok) {
+      throw new CampaignApprovalRequiredError(
+        verification.error.code,
+        verification.error.message,
+      );
+    }
   }
 
   const jobId = crypto.randomUUID();
