@@ -43,6 +43,9 @@ export interface CockpitCampaignEntry {
   epcCents: number;
   recommendedDailyVideos: number;
   action: 'SCALE_AGGRESSIVE' | 'MAINTAIN_STEADY' | 'KILL_PRUNE';
+  /** Optional MAB persona details for Video Gender 2027 */
+  personaGender?: 'male' | 'female' | string;
+  voiceDialect?: string;
 }
 
 export interface CockpitExecutiveSnapshot {

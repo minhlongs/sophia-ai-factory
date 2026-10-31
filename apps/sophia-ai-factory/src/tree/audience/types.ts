@@ -46,6 +46,10 @@ export interface AudienceSegment {
   ageBuckets: AgeBucket[];
   /** Preferred country codes (ISO alpha-2). Empty = all countries. */
   countries: string[];
+  /** Target audience genders (subset of 'male' | 'female' | 'other'). Optional. */
+  targetGenders?: ReadonlyArray<'male' | 'female' | 'other'>;
+  /** Custom weights for gender matching. Optional. */
+  genderWeights?: Partial<Record<'male' | 'female' | 'other', number>>;
   createdAt: number;
   updatedAt: number;
 }

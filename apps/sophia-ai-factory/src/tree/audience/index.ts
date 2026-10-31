@@ -10,3 +10,4 @@ export * from './audience-segments';
 export * from './targeting-engine';
 export * from './metrics-store';
 export * from './metrics-fetcher';
+export * from './persona-gender-resolver';

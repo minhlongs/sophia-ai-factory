@@ -35,7 +35,7 @@ export function clamp01(value: number): number {
  * Share of the platform audience that falls inside the segment's age buckets.
  * Returns 0 when either side has no age data.
  */
-export function demographicsAlignment(
+function ageAlignment(
   segment: AudienceSegment,
   metrics?: AudienceMetrics,
 ): number {
@@ -46,4 +46,56 @@ export function demographicsAlignment(
     share += ageBuckets[bucket] ?? 0;
   }
   return clamp01(share);
+}
+
+/**
+ * Share of the platform audience that falls inside the segment's target genders.
+ *
+ * Uses the segment's `genderWeights` to score only the declared targets: an
+ * audience whose share sits on an unlisted gender earns no weight. Returns 0
+ * when the segment declares no target gender or the metrics carry no gender data.
+ */
+export function genderAlignment(
+  segment: AudienceSegment,
+  metrics?: AudienceMetrics,
+): number {
+  const targetGenders = segment.targetGenders;
+  const metricGenders = metrics?.demographics.genders;
+  if (!targetGenders || targetGenders.length === 0) return 0;
+  if (!metricGenders) return 0;
+
+  const weights = segment.genderWeights;
+  const sumWeights = weights
+    ? targetGenders.reduce((sum, gender) => sum + (weights[gender] ?? 1), 0)
+    : targetGenders.length;
+
+  let alignment = 0;
+  for (const gender of targetGenders) {
+    const weight = weights ? (weights[gender] ?? 1) : 1;
+    alignment += (metricGenders[gender] ?? 0) * weight;
+  }
+
+  return sumWeights > 0 ? clamp01(alignment / sumWeights) : 0;
+}
+
+/**
+ * Demographics alignment combining age and gender fit.
+ *
+ * Blends 60% age alignment with 40% gender alignment only when the segment
+ * declares a target gender AND the metrics carry gender data. Every other
+ * combination falls back to the pre-existing age-only behavior so historical
+ * segments and their tests keep their exact scores.
+ */
+export function demographicsAlignment(
+  segment: AudienceSegment,
+  metrics?: AudienceMetrics,
+): number {
+  const hasGenderTarget =
+    segment.targetGenders != null && segment.targetGenders.length > 0;
+  const hasGenderMetrics = metrics?.demographics.genders != null;
+  if (!hasGenderTarget || !hasGenderMetrics) {
+    return ageAlignment(segment, metrics);
+  }
+
+  return clamp01(0.6 * ageAlignment(segment, metrics) + 0.4 * genderAlignment(segment, metrics));
 }
