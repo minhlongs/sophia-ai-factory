@@ -169,43 +169,83 @@ export async function recordFeedbackOnce(
   try {
     // Check conflict: Has this eventId already been recorded?
     // Check both arm_id binding AND payload_hash integrity at precheck.
-    let existingEvent: { arm_id: string; payload_hash?: string | null; status?: string } | null = null;
+    let existingEvent: {
+      arm_id: string;
+      payload_hash?: string | null;
+      status?: string;
+      conversions?: number;
+      reward_cents?: number;
+      cost_cents?: number;
+    } | null = null;
     try {
       existingEvent = await db
-        .prepare('SELECT arm_id, payload_hash, status FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?')
+        .prepare(
+          'SELECT arm_id, payload_hash, status, conversions, reward_cents, cost_cents FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?',
+        )
         .bind(tenantId, event.eventId)
-        .first<{ arm_id: string; payload_hash: string | null; status?: string }>();
+        .first<{
+          arm_id: string;
+          payload_hash: string | null;
+          status?: string;
+          conversions?: number;
+          reward_cents?: number;
+          cost_cents?: number;
+        }>();
     } catch {
       // Fallback for pre-0491 schemas without payload_hash column
       existingEvent = await db
-        .prepare('SELECT arm_id FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?')
+        .prepare('SELECT arm_id, conversions, reward_cents, cost_cents FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?')
         .bind(tenantId, event.eventId)
-        .first<{ arm_id: string }>();
+        .first<{
+          arm_id: string;
+          conversions?: number;
+          reward_cents?: number;
+          cost_cents?: number;
+        }>();
     }
 
     if (existingEvent) {
       if (existingEvent.arm_id !== event.armId) {
         return failure('EVENT_ID_ALREADY_BOUND_TO_DIFFERENT_ARM');
       }
-      if (existingEvent.payload_hash && existingEvent.payload_hash !== currentPayloadHash) {
-        return failure('ACCOUNTING_PAYLOAD_MISMATCH_ON_EVENT_ID');
+      if (existingEvent.payload_hash !== undefined && existingEvent.payload_hash !== null) {
+        if (existingEvent.payload_hash !== currentPayloadHash) {
+          return failure('ACCOUNTING_PAYLOAD_MISMATCH_ON_EVENT_ID');
+        }
+      } else {
+        // Historical policy for NULL payload_hash: verify stored monetary/accounting quantities match
+        if (
+          (existingEvent.conversions !== undefined && existingEvent.conversions !== event.conversions) ||
+          (existingEvent.reward_cents !== undefined && existingEvent.reward_cents !== event.rewardCents) ||
+          (existingEvent.cost_cents !== undefined && existingEvent.cost_cents !== event.costCents)
+        ) {
+          return failure('ACCOUNTING_PAYLOAD_MISMATCH_ON_EVENT_ID');
+        }
       }
+
       // If previously recorded as applied, return idempotent duplicate
-      return success({
-        applied: false,
-        status: 'duplicate',
-        arm: await getPersistedArm(db, tenantId, event.armId),
-      });
+      if (existingEvent.status === 'applied' || !existingEvent.status) {
+        return success({
+          applied: false,
+          status: 'duplicate',
+          arm: await getPersistedArm(db, tenantId, event.armId),
+        });
+      }
+      // If status === 'deferred', proceed to attempt resumption
     }
 
     // Logical adjustment reconciliation: if adjustmentId is provided, guarantee it has not been applied yet
     if (event.adjustmentId) {
       const existingAdj = await db
-        .prepare('SELECT adjustment_id FROM opc_logical_adjustments WHERE tenant_id = ? AND adjustment_id = ?')
+        .prepare('SELECT adjustment_id, arm_id FROM opc_logical_adjustments WHERE tenant_id = ? AND adjustment_id = ?')
         .bind(tenantId, event.adjustmentId)
-        .first<{ adjustment_id: string }>();
+        .first<{ adjustment_id: string; arm_id: string }>();
       if (existingAdj) {
-        return success({ applied: false, arm: await getPersistedArm(db, tenantId, event.armId) });
+        return success({
+          applied: false,
+          status: 'duplicate',
+          arm: await getPersistedArm(db, tenantId, event.armId),
+        });
       }
     }
 
@@ -323,7 +363,9 @@ export async function recordFeedbackOnce(
     }
 
     const stmts: D1PreparedStatement[] = [];
+    let adjStmtIndex = -1;
     if (event.adjustmentId) {
+      adjStmtIndex = stmts.length;
       stmts.push(
         db.prepare(
           `INSERT INTO opc_logical_adjustments
@@ -355,58 +397,116 @@ export async function recordFeedbackOnce(
       hasPayloadHash = false;
     }
 
-    // Statement 1: Record the event in opc_feedback_events.
-    // Conditional Claim: gated by cohort balance so insufficient balance does NOT lock the eventId!
-    // Payload hash stored to detect concurrent payload tampering at SQL boundary.
-    const eventStmt = hasPayloadHash
-      ? db
-          .prepare(
-            `INSERT INTO opc_feedback_events
-              (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at, payload_hash, status)
-             SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, 'applied'
-             WHERE 1 = 1${cohortGuardCondition}
-             ON CONFLICT(tenant_id, event_id) DO NOTHING`,
-          )
-          .bind(
-            tenantId,
-            event.eventId,
-            event.armId,
-            event.conversions,
-            event.rewardCents,
-            event.costCents,
-            event.observedAtMs,
-            now,
-            currentPayloadHash,
-            ...cohortGuardBinds,
-          )
-      : db
-          .prepare(
-            `INSERT INTO opc_feedback_events
-              (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at)
-             SELECT ?, ?, ?, ?, ?, ?, ?, ?
-             WHERE 1 = 1${cohortGuardCondition}
-             ON CONFLICT(tenant_id, event_id) DO NOTHING`,
-          )
-          .bind(
-            tenantId,
-            event.eventId,
-            event.armId,
-            event.conversions,
-            event.rewardCents,
-            event.costCents,
-            event.observedAtMs,
-            now,
-            ...cohortGuardBinds,
-          );
-    stmts.push(eventStmt);
+    // Adjustment ownership guard for subsequent statements in the batch:
+    // If adjustmentId was passed, caller MUST own the adjustment claim_token!
+    let adjOwnershipCondition = '';
+    const adjOwnershipBinds: (string | number)[] = [];
+    if (event.adjustmentId) {
+      adjOwnershipCondition = ` AND EXISTS (
+        SELECT 1 FROM opc_logical_adjustments
+        WHERE tenant_id = ? AND adjustment_id = ? AND claim_token = ?
+      )`;
+      adjOwnershipBinds.push(tenantId, event.adjustmentId, claimToken);
+    }
+
+    // Statement 1: Record or update event in opc_feedback_events.
+    // If the event was previously 'deferred', update it to 'applied' with applied_at = now.
+    // Otherwise insert new record with status = 'applied'.
+    // Gated by cohort balance and adjustment ownership so failing callers don't leave rogue rows.
+    let eventStmtIndex = -1;
+    if (existingEvent?.status === 'deferred') {
+      eventStmtIndex = stmts.length;
+      stmts.push(
+        db.prepare(
+          `UPDATE opc_feedback_events
+           SET status = 'applied', applied_at = ?
+           WHERE tenant_id = ? AND event_id = ? AND status = 'deferred' AND arm_id = ?
+             AND (payload_hash = ? OR payload_hash IS NULL)${cohortGuardCondition}${adjOwnershipCondition}`,
+        ).bind(
+          now,
+          tenantId,
+          event.eventId,
+          event.armId,
+          currentPayloadHash,
+          ...cohortGuardBinds,
+          ...adjOwnershipBinds,
+        ),
+      );
+    } else {
+      eventStmtIndex = stmts.length;
+      const eventStmt = hasPayloadHash
+        ? db
+            .prepare(
+              `INSERT INTO opc_feedback_events
+                (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at, payload_hash, status)
+               SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, 'applied'
+               WHERE 1 = 1${cohortGuardCondition}${adjOwnershipCondition}
+               ON CONFLICT(tenant_id, event_id) DO NOTHING`,
+            )
+            .bind(
+              tenantId,
+              event.eventId,
+              event.armId,
+              event.conversions,
+              event.rewardCents,
+              event.costCents,
+              event.observedAtMs,
+              now,
+              currentPayloadHash,
+              ...cohortGuardBinds,
+              ...adjOwnershipBinds,
+            )
+        : db
+            .prepare(
+              `INSERT INTO opc_feedback_events
+                (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at)
+               SELECT ?, ?, ?, ?, ?, ?, ?, ?
+               WHERE 1 = 1${cohortGuardCondition}${adjOwnershipCondition}
+               ON CONFLICT(tenant_id, event_id) DO NOTHING`,
+            )
+            .bind(
+              tenantId,
+              event.eventId,
+              event.armId,
+              event.conversions,
+              event.rewardCents,
+              event.costCents,
+              event.observedAtMs,
+              now,
+              ...cohortGuardBinds,
+              ...adjOwnershipBinds,
+            );
+      stmts.push(eventStmt);
+    }
 
     // Statement 2: Record atomic event application to this specific arm in opc_arm_applied_events.
-    // Gated by cohort balance and Statement 1 success.
+    // MUST be strictly conditional on:
+    // 1. Cohort balance condition (if cohort provided)
+    // 2. Adjustment ownership condition (if adjustment provided)
+    // 3. CANONICAL EVENT IDENTITY: opc_feedback_events must exist with matching arm_id and payload_hash!
+    const applyLockStmtIndex = stmts.length;
+    let eventIdentityCondition = '';
+    const eventIdentityBinds: (string | number)[] = [];
+    if (hasPayloadHash) {
+      eventIdentityCondition = ` AND EXISTS (
+        SELECT 1 FROM opc_feedback_events
+        WHERE tenant_id = ? AND event_id = ? AND arm_id = ?
+          AND (payload_hash = ? OR payload_hash IS NULL)
+      )`;
+      eventIdentityBinds.push(tenantId, event.eventId, event.armId, currentPayloadHash);
+    } else {
+      eventIdentityCondition = ` AND EXISTS (
+        SELECT 1 FROM opc_feedback_events
+        WHERE tenant_id = ? AND event_id = ? AND arm_id = ?
+      )`;
+      eventIdentityBinds.push(tenantId, event.eventId, event.armId);
+    }
+
     const applyLockStmt = db
       .prepare(
         `INSERT INTO opc_arm_applied_events (tenant_id, arm_id, event_id, claim_token, applied_at)
          SELECT ?, ?, ?, ?, ?
-         WHERE 1 = 1${cohortGuardCondition}
+         WHERE 1 = 1${cohortGuardCondition}${adjOwnershipCondition}${eventIdentityCondition}
          ON CONFLICT(tenant_id, arm_id, event_id) DO NOTHING`,
       )
       .bind(
@@ -416,6 +516,8 @@ export async function recordFeedbackOnce(
         claimToken,
         now,
         ...cohortGuardBinds,
+        ...adjOwnershipBinds,
+        ...eventIdentityBinds,
       );
     stmts.push(applyLockStmt);
 
@@ -450,6 +552,7 @@ export async function recordFeedbackOnce(
       armCohortBinds.push(tenantId, event.cohortId, event.conversions, event.rewardCents);
     }
 
+    const armStmtIndex = stmts.length;
     const armStmt = db
       .prepare(
         `INSERT INTO opc_bandit_arms
@@ -611,11 +714,10 @@ export async function recordFeedbackOnce(
 
     // Atomic D1 batch execution prevents partial state on crash / network glitch
     const results = await db.batch(stmts);
-    const adjChanges = event.adjustmentId ? (results[0]?.meta?.changes ?? 0) : 1;
-    const lockOffset = event.adjustmentId ? 2 : 1;
-    const armOffset = event.adjustmentId ? 3 : 2;
-    const lockChanges = results[lockOffset]?.meta?.changes ?? 0;
-    const armChanges = results[armOffset]?.meta?.changes ?? 0;
+    const adjChanges = adjStmtIndex >= 0 ? (results[adjStmtIndex]?.meta?.changes ?? 0) : 1;
+    const eventChanges = eventStmtIndex >= 0 ? (results[eventStmtIndex]?.meta?.changes ?? 0) : 0;
+    const lockChanges = results[applyLockStmtIndex]?.meta?.changes ?? 0;
+    const armChanges = results[armStmtIndex]?.meta?.changes ?? 0;
 
     let cohortMatched = true;
     if (cohortStmtIndex !== -1 && (isSettlement || isReversal)) {
@@ -625,17 +727,120 @@ export async function recordFeedbackOnce(
       }
     }
 
-    if (adjChanges === 0 || lockChanges === 0 || armChanges === 0 || !cohortMatched) {
+    // Check if the current caller successfully applied the feedback event
+    if (adjChanges > 0 && lockChanges > 0 && armChanges > 0 && cohortMatched) {
       return success({
-        applied: false,
-        status: 'deferred',
+        applied: true,
+        status: 'applied',
         arm: await getPersistedArm(db, tenantId, event.armId),
       });
     }
 
+    // If application failed or was deferred, inspect database state to classify outcome accurately
+    const postCheckEvent = await db
+      .prepare(
+        'SELECT arm_id, payload_hash, status, conversions, reward_cents, cost_cents FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?',
+      )
+      .bind(tenantId, event.eventId)
+      .first<{
+        arm_id: string;
+        payload_hash: string | null;
+        status?: string;
+        conversions?: number;
+        reward_cents?: number;
+        cost_cents?: number;
+      }>();
+
+    if (postCheckEvent) {
+      if (postCheckEvent.arm_id !== event.armId) {
+        return failure('EVENT_ID_ALREADY_BOUND_TO_DIFFERENT_ARM');
+      }
+      if (postCheckEvent.payload_hash !== null && postCheckEvent.payload_hash !== undefined) {
+        if (postCheckEvent.payload_hash !== currentPayloadHash) {
+          return failure('ACCOUNTING_PAYLOAD_MISMATCH_ON_EVENT_ID');
+        }
+      } else {
+        if (
+          (postCheckEvent.conversions !== undefined && postCheckEvent.conversions !== event.conversions) ||
+          (postCheckEvent.reward_cents !== undefined && postCheckEvent.reward_cents !== event.rewardCents) ||
+          (postCheckEvent.cost_cents !== undefined && postCheckEvent.cost_cents !== event.costCents)
+        ) {
+          return failure('ACCOUNTING_PAYLOAD_MISMATCH_ON_EVENT_ID');
+        }
+      }
+
+      if (postCheckEvent.status === 'applied') {
+        return success({
+          applied: false,
+          status: 'duplicate',
+          arm: await getPersistedArm(db, tenantId, event.armId),
+        });
+      }
+    }
+
+    // If logical adjustment was provided and was lost to a winning caller
+    if (event.adjustmentId && adjChanges === 0) {
+      const existingAdj = await db
+        .prepare('SELECT adjustment_id, claim_token FROM opc_logical_adjustments WHERE tenant_id = ? AND adjustment_id = ?')
+        .bind(tenantId, event.adjustmentId)
+        .first<{ adjustment_id: string; claim_token: string }>();
+      if (existingAdj && existingAdj.claim_token !== claimToken) {
+        return success({
+          applied: false,
+          status: 'duplicate',
+          arm: await getPersistedArm(db, tenantId, event.armId),
+        });
+      }
+    }
+
+    // If event was not applied due to cohort balance insufficiency (or CAS condition),
+    // bind and persist immutable deferred identity if not already present.
+    // applied_at is set to 0 to record that accounting has not been applied (safe for NOT NULL column).
+    if (!postCheckEvent) {
+      try {
+        await db
+          .prepare(
+            `INSERT INTO opc_feedback_events
+              (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at, payload_hash, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 'deferred')
+             ON CONFLICT(tenant_id, event_id) DO NOTHING`,
+          )
+          .bind(
+            tenantId,
+            event.eventId,
+            event.armId,
+            event.conversions,
+            event.rewardCents,
+            event.costCents,
+            event.observedAtMs,
+            currentPayloadHash,
+          )
+          .run();
+      } catch {
+        // Fallback for pre-0491 schemas without payload_hash column
+        await db
+          .prepare(
+            `INSERT INTO opc_feedback_events
+              (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+             ON CONFLICT(tenant_id, event_id) DO NOTHING`,
+          )
+          .bind(
+            tenantId,
+            event.eventId,
+            event.armId,
+            event.conversions,
+            event.rewardCents,
+            event.costCents,
+            event.observedAtMs,
+          )
+          .run();
+      }
+    }
+
     return success({
-      applied: true,
-      status: 'applied',
+      applied: false,
+      status: 'deferred',
       arm: await getPersistedArm(db, tenantId, event.armId),
     });
   } catch (err) {

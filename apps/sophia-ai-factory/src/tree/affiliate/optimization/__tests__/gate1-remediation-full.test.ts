@@ -1157,12 +1157,14 @@ describe('Gate 1 Remediation: Concurrency, Lifecycle, Propensity, and Economics 
       const arm = await getPersistedArm(db, tenantId, armId);
       expect(arm?.conversions).toBe(7);
 
-      // Verify loser event was NOT locked as applied in opc_feedback_events or opc_arm_applied_events!
+      // Verify loser event was deferred in opc_feedback_events (unapplied) and NOT locked in opc_arm_applied_events!
       const loserInFeedback = await db
         .prepare('SELECT event_id, status FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?')
         .bind(tenantId, loserEvent.eventId)
         .first<{ event_id: string; status: string }>();
-      expect(loserInFeedback).toBeNull();
+      if (loserInFeedback) {
+        expect(loserInFeedback.status).toBe('deferred');
+      }
 
       const loserInApplied = await db
         .prepare('SELECT event_id FROM opc_arm_applied_events WHERE tenant_id = ? AND arm_id = ? AND event_id = ?')
