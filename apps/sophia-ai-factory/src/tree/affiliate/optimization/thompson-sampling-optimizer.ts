@@ -10,7 +10,11 @@
  * @module tree/affiliate/optimization/thompson-sampling-optimizer
  */
 
-import { sampleGamma, sampleBeta } from './beta-distribution-sampler';
+import { sampleBeta } from './beta-distribution-sampler';
+import {
+  decodePersonaArmKey,
+  type PersonaArmGender,
+} from './persona-arm-codec';
 
 export { sampleGamma, sampleBeta, seededRandom } from './beta-distribution-sampler';
 
@@ -30,6 +34,31 @@ export interface ThompsonSelectionResult {
   armName: string;
   sampledProbability: number;
   estimatedConversionRate: number;
+}
+
+export interface OptimalPersonaArmResult extends ThompsonSelectionResult {
+  hookAngle: string;
+  personaGender: PersonaArmGender;
+  voiceDialect: string;
+}
+
+/**
+ * Selects the optimal composite persona arm (hook angle, persona gender, voice dialect)
+ * using Bayesian Bernoulli Thompson Sampling.
+ */
+export function selectOptimalPersonaGenderArm(
+  arms: ThompsonHookArm[],
+  random: () => number = Math.random,
+): OptimalPersonaArmResult {
+  const result = selectHookWithThompsonSampling(arms, random);
+  const decoded = decodePersonaArmKey(result.selectedArmId);
+
+  return {
+    ...result,
+    hookAngle: decoded?.hookAngle ?? result.armName,
+    personaGender: decoded?.personaGender ?? 'female',
+    voiceDialect: decoded?.voiceDialect ?? 'en-US',
+  };
 }
 
 /**

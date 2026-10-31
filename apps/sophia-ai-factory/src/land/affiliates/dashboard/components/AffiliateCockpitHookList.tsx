@@ -38,6 +38,12 @@ export function AffiliateCockpitHookList({
                 <p className="text-xs text-muted-foreground">
                   CTR: {hook.ctrPercent}% | CVR: {hook.cvrPercent}% | EPC: $
                   {(hook.epcCents / 100).toFixed(2)} | Niche: {hook.niche}
+                  {hook.personaGender && (
+                    <span className="ml-1 inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.2 text-[10px] font-medium text-primary">
+                      {hook.personaGender === 'male' ? '♂ Nam' : '♀ Nữ'}
+                      {hook.voiceDialect ? ` (${hook.voiceDialect})` : ''}
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-3">

@@ -11,6 +11,7 @@ import {
   type ContentProducerInput,
   type ContentProducerOutput,
 } from './swarm-content-scoring';
+import { resolveVideoPersona } from '@/tree/audience/persona-gender-resolver';
 
 export {
   calculateHookScore,
@@ -49,6 +50,16 @@ No on-camera appearance required, zero complex software. Click the link in the d
   // Estimated duration at 135 words/minute
   const estimatedDurationSeconds = Math.round((wordCount / 135) * 60);
 
+  const niche =
+    input.niche ||
+    (input.offer?.category ? `${input.offer.category.toLowerCase()}_global` : 'saas_global');
+  const persona = resolveVideoPersona({
+    niche,
+    dialect: input.dialect,
+    genders: input.genders,
+    mabPreferredGender: input.preferredGender,
+  });
+
   const qualityGatesPassed =
     hookScore >= 70 &&
     wordCount >= 100 &&
@@ -68,17 +79,20 @@ No on-camera appearance required, zero complex software. Click the link in the d
     scriptEn,
     voiceoverConfig: {
       provider: 'ElevenLabs',
-      voiceId: '21m00Tcm4TlvDq8ikWAM',
-      voiceName: 'Sophia Vietnamese Studio Female',
-      gender: 'female',
+      voiceId: persona.voiceProfile.edgeVoiceName || '21m00Tcm4TlvDq8ikWAM',
+      voiceName: persona.voiceProfile.displayName,
+      gender: persona.gender,
       stability: 0.85,
+      dialect: persona.voiceProfile.dialect,
     },
     avatarConfig: {
       provider: 'D-ID',
       aspectRatio: '9:16',
-      avatarId: 'sophia-presenter-v2',
+      avatarId: persona.gender === 'male' ? 'sophia-presenter-male-v1' : 'sophia-presenter-v2',
       bRollPrompt: 'Modern futuristic agency studio with holographic charts and high tech lighting',
+      style: persona.avatarStyle,
     },
+    persona,
     stagingUrl: `r2://sophia-media/drafts/video-${Date.now().toString(36)}.mp4`,
   };
 

@@ -4,6 +4,9 @@
  */
 
 import type { AffiliateOffer } from './swarm-affiliate-scout';
+import type { Gender } from '@/seed/voices/preset-catalog/types';
+import type { RegionalDialect } from '@/seed/types/cultural-adaptation-dialect-subtitle';
+import type { ResolvedVideoPersona } from '@/tree/audience/persona-gender-resolver';
 
 export interface ViralScriptOutput {
   title: string;
@@ -19,15 +22,18 @@ export interface ViralScriptOutput {
     provider: 'ElevenLabs';
     voiceId: string;
     voiceName: string;
-    gender: 'female';
+    gender: Gender;
     stability: number;
+    dialect?: string;
   };
   avatarConfig: {
     provider: 'D-ID';
     aspectRatio: '16:9' | '9:16';
     avatarId: string;
     bRollPrompt: string;
+    style?: string;
   };
+  persona?: ResolvedVideoPersona;
   stagingUrl: string; // Cloudflare R2 path
 }
 
@@ -35,6 +41,10 @@ export interface ContentProducerInput {
   topic?: string;
   offer?: Partial<AffiliateOffer>;
   language?: 'vi' | 'en' | 'bilingual';
+  niche?: string;
+  dialect?: RegionalDialect;
+  genders?: Partial<Record<'male' | 'female' | 'other', number>>;
+  preferredGender?: Gender;
 }
 
 export interface ContentProducerOutput {
