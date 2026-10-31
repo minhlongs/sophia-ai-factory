@@ -95,9 +95,10 @@ export async function getPersistedArm(
 }
 
 /**
- * Atomic-ish exactly-once application: the event insert is the lock; the arm
- * update happens only for the winner of that insert. A replay returns the
- * current arm with `applied: false` and performs no second update.
+ * Atomic exactly-once application using Cloudflare D1 batch transaction:
+ * The event insert acts as the lock; if the event already exists, the arm
+ * update is not applied. Both statements execute in a single atomic batch
+ * so no intermediate failure can persist the event lock without the arm update.
  */
 export async function recordFeedbackOnce(
   db: D1Database,
@@ -110,26 +111,35 @@ export async function recordFeedbackOnce(
 
   const now = Date.now();
   try {
-    const lock = await db
+    // Check if event was already applied (deduplication)
+    const existing = await db
+      .prepare('SELECT event_id FROM opc_feedback_events WHERE tenant_id = ? AND event_id = ?')
+      .bind(tenantId, event.eventId)
+      .first<{ event_id: string }>();
+
+    if (existing) {
+      return success({ applied: false, arm: await getPersistedArm(db, tenantId, event.armId) });
+    }
+
+    // If event explicitly marks settlementStatus as immature (isMatured === false),
+    // we observe impressions and costs, but do NOT increment beta failures or credit conversion/reward alpha!
+    // Immature cohort clicks are held until settlement to avoid corrupting conversion rates with pending conversions.
+    const isImmature = event.isMatured === false;
+    const effectiveConversions = isImmature ? 0 : event.conversions;
+    const effectiveRewardCents = isImmature ? 0 : event.rewardCents;
+    const effectiveFailures = isImmature ? 0 : Math.max(0, event.impressions - event.conversions);
+    const effectivePulls = event.impressions;
+
+    const eventStmt = db
       .prepare(
         `INSERT INTO opc_feedback_events
           (tenant_id, event_id, arm_id, conversions, reward_cents, cost_cents, observed_at, applied_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(tenant_id, event_id) DO NOTHING`,
       )
-      .bind(tenantId, event.eventId, event.armId, event.conversions, event.rewardCents, event.costCents, event.observedAtMs, now)
-      .run();
-    if ((lock.meta?.changes ?? 0) === 0) {
-      return success({ applied: false, arm: await getPersistedArm(db, tenantId, event.armId) });
-    }
+      .bind(tenantId, event.eventId, event.armId, event.conversions, event.rewardCents, event.costCents, event.observedAtMs, now);
 
-    // If event explicitly marks settlementStatus as immature (isMatured === false),
-    // we observe impressions and costs, but defer conversion / reward alpha credit.
-    const effectiveConversions = event.isMatured === false ? 0 : event.conversions;
-    const effectiveRewardCents = event.isMatured === false ? 0 : event.rewardCents;
-    const failures = Math.max(0, event.impressions - effectiveConversions);
-
-    await db
+    const armStmt = db
       .prepare(
         `INSERT INTO opc_bandit_arms
           (tenant_id, arm_id, alpha, beta, pulls, conversions, reward_cents, cost_cents, last_event_id, updated_at)
@@ -148,15 +158,21 @@ export async function recordFeedbackOnce(
         tenantId,
         event.armId,
         effectiveConversions,
-        failures,
-        event.impressions,
+        effectiveFailures,
+        effectivePulls,
         effectiveConversions,
         effectiveRewardCents,
         event.costCents,
         event.eventId,
         now,
-      )
-      .run();
+      );
+
+    // Atomic D1 batch execution prevents partial state on crash / network glitch
+    const results = await db.batch([eventStmt, armStmt]);
+    const eventChanges = results[0]?.meta?.changes ?? 0;
+    if (eventChanges === 0) {
+      return success({ applied: false, arm: await getPersistedArm(db, tenantId, event.armId) });
+    }
 
     return success({ applied: true, arm: await getPersistedArm(db, tenantId, event.armId) });
   } catch (err) {
