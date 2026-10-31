@@ -131,7 +131,7 @@ export function mapOfferToMissionInput(
     tenantId: options.tenantId ?? options.userId,
     campaignId: options.campaignId,
     jurisdiction: options.jurisdiction ?? offer.region ?? 'US',
-    requireCeoApproval: options.requireCeoApproval,
+    requireCeoApproval: options.requireCeoApproval ?? true,
     topic: options.topicOverride?.trim() || buildTopicFromOffer(offer),
     keywords: extractKeywordsFromOffer(offer),
     primaryLanguage: options.primaryLanguage ?? (offer.language === 'vi' ? 'vi' : 'en'),

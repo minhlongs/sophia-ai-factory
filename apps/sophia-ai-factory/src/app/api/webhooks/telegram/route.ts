@@ -6,11 +6,33 @@ import {
   withMiddleware,
 } from '@/tree/telegram/telegram-command-handlers';
 import { handleOfferCallback } from '@/tree/telegram/telegram-bot-campaign-handlers';
+import { handleTelegramCampaignApprovalCallback } from '@/tree/telegram/telegram-campaign-approval-handler';
 import { handleQualificationCallback } from '@/land/telegram-sales/qualification-service';
 import {
   type TelegramUpdate,
   processTelegramMessage,
 } from './modules';
+
+/**
+ * Routes a CEO campaign-approval inline callback (`capprove:` / `creject:`)
+ * to the tenant-scoped handler, logging any rejected decision without
+ * surfacing internal error detail to the chat.
+ */
+async function dispatchCampaignApprovalCallback(
+  chatId: string,
+  callbackData: string,
+): Promise<void> {
+  const { logger } = await import('@/seed/utils/logger-utility');
+  const result = await handleTelegramCampaignApprovalCallback(chatId, callbackData);
+  if (!result.ok) {
+    logger.warn('[telegram-webhook] Campaign approval callback rejected', {
+      chatId,
+      action: result.action,
+      approvalId: result.approvalId,
+      reason: result.reason,
+    });
+  }
+}
 
 export async function POST(request: NextRequest) {
   if (!process.env.TELEGRAM_BOT_TOKEN) {
@@ -55,6 +77,15 @@ export async function POST(request: NextRequest) {
           await handleOfferCallback(chatId, callbackData);
           return NextResponse.json({ ok: true });
         }
+
+        if (
+          callbackData.startsWith('capprove:') ||
+          callbackData.startsWith('creject:')
+        ) {
+          await dispatchCampaignApprovalCallback(chatId, callbackData);
+          return NextResponse.json({ ok: true });
+        }
+
         await withMiddleware(chatId, () => handleCallbackQuery(chatId, callbackData));
       }
       return NextResponse.json({ ok: true });
