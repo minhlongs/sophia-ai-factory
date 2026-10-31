@@ -44,6 +44,11 @@ export interface EvaluatedFeedbackEventData {
   candidateArmIds?: string[];
   /** True for mock/fixture metrics — never persisted as real observations. */
   isFixture?: boolean;
+  /**
+   * 2027 Maturity guard: if commission is pending validation / hold period,
+   * conversions and rewards are held until settlement. Defaults to true if omitted.
+   */
+  isMatured?: boolean;
   /** Optional composite persona arm attributes for Video Gender 2027 */
   personaArm?: PersonaArmSpec;
   /** Optional armId override */
@@ -99,6 +104,7 @@ export async function processFlywheelFeedbackDispatcher({
     rewardCents,
     costCents,
     observedAtMs,
+    ...(data.isMatured !== undefined ? { isMatured: data.isMatured } : {}),
   };
 
   const persisted = await step.run('update-thompson-posterior', async () =>

@@ -57,6 +57,7 @@ interface PortableDatabase {
 
 export interface FakeD1 {
   prepare(sql: string): FakeD1Statement;
+  batch<T = unknown>(statements: FakeD1Statement[]): Promise<FakeD1RunResult[]>;
   _db: PortableDatabase;
   /** Which SQLite driver backs this instance — useful in verification logs. */
   _driver: 'better-sqlite3' | 'node:sqlite';
@@ -97,7 +98,9 @@ export function createFakeD1(schemaStatements: string[] = []): FakeD1 {
   }
 
   function makeStatement(sql: string, boundArgs: unknown[] = []): FakeD1Statement {
-    const stmt: FakeD1Statement = {
+    const stmt: FakeD1Statement & { _sql?: string; _args?: unknown[] } = {
+      _sql: sql,
+      _args: boundArgs,
       bind(...args: unknown[]): FakeD1Statement {
         return makeStatement(sql, [...boundArgs, ...args]);
       },
@@ -132,6 +135,33 @@ export function createFakeD1(schemaStatements: string[] = []): FakeD1 {
   return {
     prepare(sql: string): FakeD1Statement {
       return makeStatement(sql);
+    },
+    async batch<T = unknown>(statements: FakeD1Statement[]): Promise<FakeD1RunResult[]> {
+      db.exec('BEGIN TRANSACTION;');
+      try {
+        const batchResults: FakeD1RunResult[] = [];
+        for (const s of statements) {
+          // @ts-expect-error accessing internal bound args
+          const { _sql, _args } = s;
+          const compiled = db.prepare(_sql);
+          const info = compiled.run(..._args);
+          batchResults.push({
+            success: true,
+            meta: {
+              changes: info.changes,
+              last_row_id: Number(info.lastInsertRowid),
+              rows_read: 0,
+              rows_written: info.changes,
+              duration: 0,
+            },
+          });
+        }
+        db.exec('COMMIT;');
+        return batchResults;
+      } catch (err) {
+        db.exec('ROLLBACK;');
+        throw err;
+      }
     },
     _db: db,
     _driver: driver,
