@@ -18,6 +18,10 @@ import {
   recordFeedbackOnce,
   type FeedbackEvent,
 } from '@/tree/affiliate/optimization/feedback-repository';
+import {
+  encodePersonaArmKey,
+  type PersonaArmSpec,
+} from '@/tree/affiliate/optimization/persona-arm-codec';
 
 export interface EvaluatedFeedbackEventData {
   userId: string;
@@ -40,6 +44,10 @@ export interface EvaluatedFeedbackEventData {
   candidateArmIds?: string[];
   /** True for mock/fixture metrics — never persisted as real observations. */
   isFixture?: boolean;
+  /** Optional composite persona arm attributes for Video Gender 2027 */
+  personaArm?: PersonaArmSpec;
+  /** Optional armId override */
+  armId?: string;
 }
 
 export interface FlywheelResult {
@@ -63,7 +71,9 @@ export async function processFlywheelFeedbackDispatcher({
   step: InngestStepContext;
 }): Promise<FlywheelResult> {
   const data = event.data as EvaluatedFeedbackEventData;
-  const armId = `arm_${data.platform}_${data.jobId.slice(0, 8)}`;
+  const armId =
+    data.armId ||
+    (data.personaArm ? encodePersonaArmKey(data.personaArm) : `arm_${data.platform}_${data.jobId.slice(0, 8)}`);
   const notProcessed = (reason: string): FlywheelResult => ({ processed: false, promoted: false, armId, reason });
 
   if (data.isFixture === true) return notProcessed('FIXTURE_METRICS_NOT_OBSERVED');

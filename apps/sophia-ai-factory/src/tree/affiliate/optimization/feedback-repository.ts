@@ -12,7 +12,14 @@
 
 import { success, failure, type Result } from '@/seed/types/result';
 import { seededRandom } from './beta-distribution-sampler';
-import { selectHookWithThompsonSampling, type ThompsonHookArm, type ThompsonSelectionResult } from './thompson-sampling-optimizer';
+import {
+  selectHookWithThompsonSampling,
+  selectOptimalPersonaGenderArm,
+  type ThompsonHookArm,
+  type ThompsonSelectionResult,
+  type OptimalPersonaArmResult,
+} from './thompson-sampling-optimizer';
+import { decodePersonaArmKey } from './persona-arm-codec';
 
 export interface FeedbackEvent {
   eventId: string;
@@ -23,6 +30,11 @@ export interface FeedbackEvent {
   rewardCents: number;
   costCents: number;
   observedAtMs: number;
+  /**
+   * 2027 Maturity guard: if commission is pending validation / hold period,
+   * conversions and rewards are held until settlement.
+   */
+  isMatured?: boolean;
 }
 
 export interface PersistedArm {
@@ -111,7 +123,12 @@ export async function recordFeedbackOnce(
       return success({ applied: false, arm: await getPersistedArm(db, tenantId, event.armId) });
     }
 
-    const failures = Math.max(0, event.impressions - event.conversions);
+    // If event explicitly marks settlementStatus as immature (isMatured === false),
+    // we observe impressions and costs, but defer conversion / reward alpha credit.
+    const effectiveConversions = event.isMatured === false ? 0 : event.conversions;
+    const effectiveRewardCents = event.isMatured === false ? 0 : event.rewardCents;
+    const failures = Math.max(0, event.impressions - effectiveConversions);
+
     await db
       .prepare(
         `INSERT INTO opc_bandit_arms
@@ -130,11 +147,11 @@ export async function recordFeedbackOnce(
       .bind(
         tenantId,
         event.armId,
-        event.conversions,
+        effectiveConversions,
         failures,
         event.impressions,
-        event.conversions,
-        event.rewardCents,
+        effectiveConversions,
+        effectiveRewardCents,
         event.costCents,
         event.eventId,
         now,
@@ -153,11 +170,16 @@ export async function chooseNextArm(
   tenantId: string,
   armIds: string[],
   seed: number,
-): Promise<ThompsonSelectionResult | null> {
+): Promise<(ThompsonSelectionResult & Partial<OptimalPersonaArmResult>) | null> {
   if (armIds.length === 0) return null;
   const arms: ThompsonHookArm[] = [];
+  let isComposite = false;
+
   for (const armId of armIds) {
     const row = await getPersistedArm(db, tenantId, armId);
+    if (decodePersonaArmKey(armId)) {
+      isComposite = true;
+    }
     // Missing posterior = fresh prior, never fabricated observed impressions.
     arms.push({
       id: armId,
@@ -166,9 +188,15 @@ export async function chooseNextArm(
       impressions: row?.pulls ?? 0,
       conversions: row?.conversions ?? 0,
       totalRewardCents: row?.rewardCents ?? 0,
+      totalCostCents: row?.costCents ?? 0,
       priorAlpha: row?.alpha ?? 1,
       priorBeta: row?.beta ?? 1,
     });
   }
-  return selectHookWithThompsonSampling(arms, seededRandom(seed));
+
+  const rng = seededRandom(seed);
+  if (isComposite) {
+    return selectOptimalPersonaGenderArm(arms, rng);
+  }
+  return selectHookWithThompsonSampling(arms, rng);
 }
