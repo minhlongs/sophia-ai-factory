@@ -54,6 +54,10 @@ const MIGRATION_0486 = readFileSync(
   resolve(process.cwd(), 'migrations/0486_execution_render_tracking.sql'),
   'utf8',
 );
+const MIGRATION_0490 = readFileSync(
+  resolve(process.cwd(), 'migrations/0490_opc_arm_applied_events.sql'),
+  'utf8',
+);
 
 function createFullOPCD1() {
   const fake = createFakeD1([
@@ -67,6 +71,7 @@ function createFullOPCD1() {
   fake._db.exec(MIGRATION_0482);
   fake._db.exec(MIGRATION_0485);
   fake._db.exec(MIGRATION_0486);
+  fake._db.exec(MIGRATION_0490);
   return fake as unknown as D1Database;
 }
 

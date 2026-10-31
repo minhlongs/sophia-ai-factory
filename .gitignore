@@ -95,6 +95,9 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0487_postback_receipt_idempotency.sql
 !apps/sophia-ai-factory/migrations/0488_extend_credential_networks_postback.sql
 !apps/sophia-ai-factory/migrations/0489_postback_dead_letter.sql
+!apps/sophia-ai-factory/migrations/0490_opc_arm_applied_events.sql
+!apps/sophia-ai-factory/migrations/0491_opc_lifecycle_cohort_ledger.sql
+!apps/sophia-ai-factory/migrations/0492_opc_deferred_event_binding.sql
 backups/*.sql
 **/d1-*.sql
 
