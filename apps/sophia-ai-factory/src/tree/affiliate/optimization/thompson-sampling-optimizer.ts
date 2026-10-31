@@ -25,6 +25,7 @@ export interface ThompsonHookArm {
   impressions: number;
   conversions: number;
   totalRewardCents: number;
+  totalCostCents?: number;
   priorAlpha?: number;
   priorBeta?: number;
 }
@@ -34,6 +35,8 @@ export interface ThompsonSelectionResult {
   armName: string;
   sampledProbability: number;
   estimatedConversionRate: number;
+  expectedNetContributionCents?: number;
+  propensity?: number;
 }
 
 export interface OptimalPersonaArmResult extends ThompsonSelectionResult {
@@ -44,7 +47,7 @@ export interface OptimalPersonaArmResult extends ThompsonSelectionResult {
 
 /**
  * Selects the optimal composite persona arm (hook angle, persona gender, voice dialect)
- * using Bayesian Bernoulli Thompson Sampling.
+ * using Bayesian Bernoulli Thompson Sampling combined with expected net contribution.
  */
 export function selectOptimalPersonaGenderArm(
   arms: ThompsonHookArm[],
@@ -63,7 +66,8 @@ export function selectOptimalPersonaGenderArm(
 
 /**
  * Selects the optimal hook arm using Thompson Sampling.
- * Balances exploitation and exploration seamlessly by sampling each arm's posterior distribution.
+ * Balances exploitation and exploration seamlessly by sampling each arm's posterior distribution,
+ * weighted by expected net contribution (reward - cost) and providing propensity scores.
  */
 export function selectHookWithThompsonSampling(
   arms: ThompsonHookArm[],
@@ -74,16 +78,32 @@ export function selectHookWithThompsonSampling(
   }
 
   let bestArm = arms[0];
-  let maxSample = -1;
+  let maxScore = -Infinity;
+  const samples: { arm: ThompsonHookArm; score: number }[] = [];
 
   for (const arm of arms) {
     const alpha = (arm.priorAlpha ?? 1) + arm.conversions;
     const beta = (arm.priorBeta ?? 1) + Math.max(0, arm.impressions - arm.conversions);
 
-    const sample = sampleBeta(alpha, beta, random);
+    const conversionSample = sampleBeta(alpha, beta, random);
 
-    if (sample > maxSample) {
-      maxSample = sample;
+    // 2027 Net Contribution Weighting:
+    // If costs and rewards are tracked, weight the sampled probability by average net contribution per conversion
+    const totalCost = arm.totalCostCents ?? 0;
+    const netReward = arm.totalRewardCents - totalCost;
+    const avgNetPerConversion = arm.conversions > 0
+      ? Math.max(1, netReward / arm.conversions)
+      : Math.max(1, netReward > 0 ? netReward : 100);
+
+    // Score is sample probability scaled by net reward factor (or conversionSample if rewards are neutral)
+    const score = arm.totalRewardCents > 0 || totalCost > 0
+      ? conversionSample * (avgNetPerConversion / 100)
+      : conversionSample;
+
+    samples.push({ arm, score });
+
+    if (score > maxScore) {
+      maxScore = score;
       bestArm = arm;
     }
   }
@@ -92,11 +112,24 @@ export function selectHookWithThompsonSampling(
     ? bestArm.conversions / bestArm.impressions
     : 0;
 
+  const totalCost = bestArm.totalCostCents ?? 0;
+  const expectedNetContributionCents = bestArm.conversions > 0
+    ? Math.round((bestArm.totalRewardCents - totalCost) / bestArm.conversions)
+    : Math.round(bestArm.totalRewardCents - totalCost);
+
+  // Propensity estimation using softmax temperature over scores for off-policy evaluation
+  const expScores = samples.map(s => Math.exp(Math.min(20, Math.max(-20, s.score))));
+  const sumExp = expScores.reduce((a, b) => a + b, 0);
+  const bestIndex = samples.findIndex(s => s.arm.id === bestArm.id);
+  const propensity = sumExp > 0 && bestIndex >= 0 ? expScores[bestIndex] / sumExp : 1 / arms.length;
+
   return {
     selectedArmId: bestArm.id,
     armName: bestArm.name,
-    sampledProbability: maxSample,
+    sampledProbability: maxScore,
     estimatedConversionRate: estimatedRate,
+    expectedNetContributionCents,
+    propensity,
   };
 }
 

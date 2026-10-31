@@ -14,13 +14,14 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
+import { getUserWorkspaceIds, hasWorkspaceRole } from '@/seed/auth/workspace-access';
 import { getUserByChatId } from '@/tree/telegram/user-mappings-service';
 import {
   approveCampaignApprovalCAS,
   rejectCampaignApproval,
   type StoredCampaignApproval,
 } from '@/tree/affiliate/approval/campaign-approval-repo';
+import { sendApprovalContinuation } from '@/tree/affiliate/approval/approval-continuation';
 import { sendMessage, sendMessageWithKeyboard } from '@/tree/telegram/handlers/utils';
 import {
   buildCampaignApprovalKeyboard,
@@ -137,6 +138,21 @@ async function executeApprovalDecision(
       return { ok: false, action, approvalId, reason: result.error.message };
     }
 
+    const continuation = await sendApprovalContinuation(db, row.tenant_id, result.value);
+    if (!continuation.ok) {
+      logger.warn('[TelegramApproval] Continuation send was blocked or deferred', {
+        approvalId,
+        tenantId: row.tenant_id,
+        code: continuation.code,
+        message: continuation.message,
+      });
+      await sendMessage(
+        chatId,
+        `⚠️ *ĐÃ GHI NHẬN PHÊ DUYỆT NHƯNG CHƯA THỂ KÍCH HOẠT TỰ ĐỘNG*\n\nLý do: ${continuation.message}\nVui lòng kiểm tra lại điều khoản chiến dịch trên Web dashboard.`,
+      );
+      return { ok: true, action, approvalId, reason: continuation.message };
+    }
+
     await sendMessage(
       chatId,
       `✅ *ĐÃ PHÊ DUYỆT THÀNH CÔNG!*\n\nChiến dịch \`${row.campaign_id}\` đã được phê duyệt bởi CEO. Hệ thống Sophia AI Factory đang tiến hành sản xuất video tự động.\n\n_Campaign approved successfully. Agents are initiating video render._`,
@@ -205,20 +221,26 @@ export async function handleTelegramCampaignApprovalCallback(
     return { ok: false, action, approvalId, reason: 'Approval not found' };
   }
 
-  // IDOR Protection: verify user belongs to the approval tenant
+  // IDOR & RBAC Protection: verify user belongs to workspace AND has ADMIN role
   const userWorkspaces = await getUserWorkspaceIds(userId, db);
-  const isAuthorized = userWorkspaces.includes(row.tenant_id) || row.tenant_id === userId;
+  const isMember = userWorkspaces.includes(row.tenant_id) || row.tenant_id === userId;
+  const isAdmin = isMember && (await hasWorkspaceRole(row.tenant_id, userId, 'ADMIN', db));
 
-  if (!isAuthorized) {
-    logger.warn('[TelegramApproval] Cross-tenant access attempt blocked', {
+  if (!isMember || !isAdmin) {
+    logger.warn('[TelegramApproval] Cross-tenant or non-admin access attempt blocked', {
       chatId,
       userId,
       approvalId,
       targetTenantId: row.tenant_id,
       userWorkspaces,
+      isMember,
+      isAdmin,
     });
-    await sendMessage(chatId, '⛔ Bạn không có quyền phê duyệt chiến dịch của workspace này.');
-    return { ok: false, action, approvalId, reason: 'Cross-tenant access forbidden' };
+    await sendMessage(
+      chatId,
+      '⛔ Bạn không có quyền quản trị viên (ADMIN) để phê duyệt chiến dịch của workspace này.',
+    );
+    return { ok: false, action, approvalId, reason: 'Cross-tenant access or non-admin forbidden' };
   }
 
   return executeApprovalDecision({ db, chatId, isApprove, approvalId, row, userId });

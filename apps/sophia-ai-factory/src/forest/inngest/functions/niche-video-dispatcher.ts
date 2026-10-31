@@ -34,6 +34,10 @@ import {
   type NicheVideoCampaignPlan,
 } from '@/tree/video/blueprints/niche-video-service';
 import {
+  sendCampaignApprovalNotification,
+} from '@/tree/telegram/telegram-campaign-approval-handler';
+import { getChatIdByUserId } from '@/tree/telegram/user-mappings-service';
+import {
   synthesizeNicheScript,
   generateNicheCampaignVoiceover,
   generateSceneVisualAssets,
@@ -183,6 +187,27 @@ export const nicheVideoDispatcher = inngest.createFunction(
           });
           return { persisted: false, reason: created.error.code };
         }
+
+        // Notify the campaign owner's linked Telegram chat so the approval
+        // request reaches the CEO/Admin who can tap Approve/Reject.
+        try {
+          const chatId = await getChatIdByUserId(data.userId);
+          if (chatId) {
+            await sendCampaignApprovalNotification({
+              chatId,
+              approval: created.value,
+              productName: data.productName,
+              affiliateUrl: data.productUrl,
+              budgetUsd: (data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS) / 100,
+              locale: data.locale === 'vi' ? 'vi' : 'en',
+            });
+          }
+        } catch (error) {
+          logger.warn('nicheVideoDispatcher: approval telegram notify failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+
         return { persisted: true, approvalId: created.value.id };
       });
 
@@ -264,6 +289,7 @@ export const nicheVideoDispatcher = inngest.createFunction(
         userId: data.userId,
         narrationText: script.fullNarration,
         locale: data.locale,
+        niche: data.niche,
       }),
     );
 

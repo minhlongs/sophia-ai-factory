@@ -6,6 +6,7 @@ import {
 import * as utils from '../handlers/utils';
 import * as userMappings from '../user-mappings-service';
 import * as approvalRepo from '@/tree/affiliate/approval/campaign-approval-repo';
+import * as approvalContinuation from '@/tree/affiliate/approval/approval-continuation';
 import * as workspaceAccess from '@/seed/auth/workspace-access';
 import * as dbClient from '@/seed/db/client';
 
@@ -89,14 +90,44 @@ describe('Telegram Campaign Approval Handler', () => {
     const result = await handleTelegramCampaignApprovalCallback('chat_hacker', 'capprove:appr_victim');
 
     expect(result.ok).toBe(false);
-    expect(result.reason).toBe('Cross-tenant access forbidden');
+    expect(result.reason).toBe('Cross-tenant access or non-admin forbidden');
     expect(sendMsgSpy).toHaveBeenCalledWith(
       'chat_hacker',
-      expect.stringContaining('Bạn không có quyền phê duyệt'),
+      expect.stringContaining('Bạn không có quyền quản trị viên'),
     );
   });
 
-  it('handleTelegramCampaignApprovalCallback successfully approves campaign via CAS', async () => {
+  it('handleTelegramCampaignApprovalCallback blocks tenant member without ADMIN role (F-01)', async () => {
+    vi.spyOn(userMappings, 'getUserByChatId').mockResolvedValueOnce('user_member');
+
+    const mockDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockResolvedValue({
+            tenant_id: 'target_tenant',
+            campaign_id: 'camp_01',
+            status: 'pending_ceo',
+          }),
+        }),
+      }),
+    };
+    vi.spyOn(dbClient, 'getD1').mockResolvedValue(mockDb as unknown as D1Database);
+    vi.spyOn(workspaceAccess, 'getUserWorkspaceIds').mockResolvedValueOnce(['target_tenant']);
+    // Member exists, but role is MEMBER, not ADMIN
+    vi.spyOn(workspaceAccess, 'hasWorkspaceRole').mockResolvedValueOnce(false);
+    const sendMsgSpy = vi.spyOn(utils, 'sendMessage').mockResolvedValueOnce();
+
+    const result = await handleTelegramCampaignApprovalCallback('chat_member', 'capprove:appr_01');
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('Cross-tenant access or non-admin forbidden');
+    expect(sendMsgSpy).toHaveBeenCalledWith(
+      'chat_member',
+      expect.stringContaining('Bạn không có quyền quản trị viên (ADMIN)'),
+    );
+  });
+
+  it('handleTelegramCampaignApprovalCallback successfully approves and triggers continuation (F-02)', async () => {
     vi.spyOn(userMappings, 'getUserByChatId').mockResolvedValueOnce('user_ceo');
 
     const mockDb = {
@@ -112,6 +143,7 @@ describe('Telegram Campaign Approval Handler', () => {
     };
     vi.spyOn(dbClient, 'getD1').mockResolvedValue(mockDb as unknown as D1Database);
     vi.spyOn(workspaceAccess, 'getUserWorkspaceIds').mockResolvedValueOnce(['my_tenant']);
+    vi.spyOn(workspaceAccess, 'hasWorkspaceRole').mockResolvedValueOnce(true);
 
     const casSpy = vi.spyOn(approvalRepo, 'approveCampaignApprovalCAS').mockResolvedValueOnce({
       ok: true,
@@ -126,6 +158,10 @@ describe('Telegram Campaign Approval Handler', () => {
       },
     });
 
+    const continuationSpy = vi
+      .spyOn(approvalContinuation, 'sendApprovalContinuation')
+      .mockResolvedValueOnce({ ok: true });
+
     const sendMsgSpy = vi.spyOn(utils, 'sendMessage').mockResolvedValueOnce();
 
     const result = await handleTelegramCampaignApprovalCallback('chat_ceo', 'capprove:appr_valid');
@@ -137,6 +173,11 @@ describe('Telegram Campaign Approval Handler', () => {
         tenantId: 'my_tenant',
         approvalId: 'appr_valid',
       }),
+    );
+    expect(continuationSpy).toHaveBeenCalledWith(
+      mockDb,
+      'my_tenant',
+      expect.objectContaining({ id: 'appr_valid' }),
     );
     expect(sendMsgSpy).toHaveBeenCalledWith(
       'chat_ceo',
@@ -160,6 +201,7 @@ describe('Telegram Campaign Approval Handler', () => {
     };
     vi.spyOn(dbClient, 'getD1').mockResolvedValue(mockDb as unknown as D1Database);
     vi.spyOn(workspaceAccess, 'getUserWorkspaceIds').mockResolvedValueOnce(['my_tenant']);
+    vi.spyOn(workspaceAccess, 'hasWorkspaceRole').mockResolvedValueOnce(true);
 
     vi.spyOn(approvalRepo, 'approveCampaignApprovalCAS').mockResolvedValueOnce({
       ok: false,
