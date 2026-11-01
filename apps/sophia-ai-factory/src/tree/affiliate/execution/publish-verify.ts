@@ -46,10 +46,34 @@ interface ChannelRow {
   access_token: string | null;
 }
 
-function parseJsonObject<T>(raw: string | null | undefined): T | null {
+function parseApprovalPayload(raw: string | null | undefined): CampaignApprovalPayload | null {
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as T;
+    const parsed = JSON.parse(raw) as Partial<CampaignApprovalPayload>;
+    if (
+      typeof parsed.scriptBody !== 'string' ||
+      typeof parsed.affiliateTargetUrl !== 'string' ||
+      typeof parsed.jurisdiction !== 'string' ||
+      typeof parsed.disclosureText !== 'string' ||
+      typeof parsed.maxRenderCostCents !== 'number'
+    ) {
+      return null;
+    }
+    return parsed as CampaignApprovalPayload;
+  } catch {
+    return null;
+  }
+}
+
+function parseDispatch(raw: string | null | undefined): { userId: string; productName?: string } | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { userId?: unknown; productName?: unknown };
+    if (typeof parsed.userId !== 'string' || !parsed.userId) return null;
+    return {
+      userId: parsed.userId,
+      productName: typeof parsed.productName === 'string' ? parsed.productName : undefined,
+    };
   } catch {
     return null;
   }
@@ -65,8 +89,7 @@ async function resolveYoutubeChannel(db: D1Database, tenantId: string, targetAcc
     .all<ChannelRow>();
   const list = rows.results ?? [];
   if (targetAccount) {
-    const matched = list.find((ch) => ch.id === targetAccount || ch.external_account_id === targetAccount);
-    if (matched) return matched;
+    return list.find((ch) => ch.id === targetAccount || ch.external_account_id === targetAccount) ?? null;
   }
   return list[0] ?? null;
 }
@@ -79,7 +102,10 @@ export async function verifyPublishReady(deps: {
 }): Promise<PublishVerifyResult> {
   const { db, tenantId, run } = deps;
   const now = deps.nowMs ?? Date.now();
-  if (run.state !== 'rendered') {
+  if (run.tenantId !== tenantId) {
+    return { ok: false, reason: 'TENANT_REQUIRED', message: 'Run does not belong to this workspace' };
+  }
+  if (run.state !== 'rendered' && run.state !== 'publish_queued') {
     return { ok: false, reason: 'RUN_NOT_RENDERED', message: `Run is ${run.state}, not rendered` };
   }
   if (!run.approvalId) {
@@ -89,9 +115,9 @@ export async function verifyPublishReady(deps: {
   if (!approval) {
     return { ok: false, reason: 'APPROVAL_MISSING', message: `Approval ${run.approvalId} missing` };
   }
-  const payload = parseJsonObject<CampaignApprovalPayload>(approval.payloadJson);
-  const dispatch = parseJsonObject<{ userId?: string; productName?: string }>(approval.dispatchJson);
-  if (!payload || !dispatch?.userId) {
+  const payload = parseApprovalPayload(approval.payloadJson);
+  const dispatch = parseDispatch(approval.dispatchJson);
+  if (!payload || !dispatch) {
     return { ok: false, reason: 'APPROVAL_INVALIDATED', message: 'Approval payload or dispatch corrupt' };
   }
   const currentHash = await computeApprovalPayloadHash(payload);
@@ -115,7 +141,7 @@ export async function verifyPublishReady(deps: {
   const gate = evaluatePublishGate({
     tenantId, state: run.state,
     jurisdictionKnown: Boolean(payload.jurisdiction && payload.jurisdiction !== 'UNKNOWN'),
-    termsVerified: true,
+    termsVerified: Boolean(run.offerId),
     approval: {
       status: approval.status, currentHash, storedHash: approval.approvalPayloadHash,
       approvedAtMs: approval.approvedAtMs, expiresAtMs: approval.expiresAtMs,
@@ -126,7 +152,7 @@ export async function verifyPublishReady(deps: {
     maxCostCents: Math.max(0, Math.round(payload.maxRenderCostCents)),
     credentialsConnected: Boolean(channel?.access_token),
     artifact, affiliateTargetUrl: payload.affiliateTargetUrl,
-    targetAccount: payload.targetAccount ?? channel?.id, outcomeKnown: true,
+    targetAccount: channel?.id, outcomeKnown: true,
   });
   if (!gate.ok || !channel || !artifact) {
     const reason = !gate.ok ? gate.error : 'CREDENTIALS_MISSING';

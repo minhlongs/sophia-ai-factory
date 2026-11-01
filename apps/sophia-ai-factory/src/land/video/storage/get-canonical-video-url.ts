@@ -55,14 +55,10 @@ interface ArtifactStorageRow {
 async function resolveStorageRow(
   db: D1Database,
   videoId: string,
+  userId: string,
 ): Promise<{ ownerId: string; r2Key: string | null } | null> {
   const row = await db
-    .prepare(
-      `SELECT id, user_id, r2_key
-       FROM videos
-       WHERE id = ?1
-       LIMIT 1`,
-    )
+    .prepare(`SELECT id, user_id, r2_key FROM videos WHERE id = ?1 LIMIT 1`)
     .bind(videoId)
     .first<VideoR2Row>();
   if (row) {
@@ -73,10 +69,11 @@ async function resolveStorageRow(
     .prepare(
       `SELECT id, tenant_id, storage_key
        FROM affiliate_media_artifacts
-       WHERE id = ?1 OR run_id = ?1
+       WHERE (id = ?1 OR run_id = ?1) AND is_fixture = 0
+       ORDER BY CASE WHEN tenant_id = ?2 THEN 0 ELSE 1 END
        LIMIT 1`,
     )
-    .bind(videoId)
+    .bind(videoId, userId)
     .first<ArtifactStorageRow>();
   if (!artifact) return null;
   return { ownerId: artifact.tenant_id, r2Key: artifact.storage_key };
@@ -105,7 +102,7 @@ export async function getCanonicalVideoUrl(
   const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
-  const resolved = await resolveStorageRow(db, videoId);
+  const resolved = await resolveStorageRow(db, videoId, userId);
   if (!resolved) {
     logger.warn('[getCanonicalVideoUrl] Video row not found', { videoId });
     throw new VideoNotFoundError(videoId);
