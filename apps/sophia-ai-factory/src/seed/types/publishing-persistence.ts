@@ -6,7 +6,7 @@
  * them without cross-layer dependency violations.
  */
 
-import type { ChannelProvider, PublishStatus, ChannelStatus } from './channel-provider';
+import type { ChannelProvider, PublishStatus, ChannelStatus, VideoPrivacyStatus } from './channel-provider';
 
 /** D1 row for publishing_channels table */
 export interface PublishingChannel {
@@ -38,6 +38,7 @@ export interface PublishingJob {
   hashtags_json: string | null;
   title: string | null;
   product_link: string | null;
+  privacy_status?: VideoPrivacyStatus | null;
   scheduled_at: number | null;
   retry_count: number;
   created_at: number;

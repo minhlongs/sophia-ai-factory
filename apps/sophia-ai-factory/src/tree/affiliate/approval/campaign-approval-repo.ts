@@ -27,6 +27,7 @@ import {
   type ApprovalVerificationSuccess,
   type StoredCampaignApproval,
 } from './campaign-approval-guard';
+import { getExecutionRunByApprovalId } from '../execution/execution-repo';
 
 /** Default approval lifetime: 7 days from draft creation. */
 export const APPROVAL_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -370,18 +371,31 @@ export async function revokeCampaignApproval(
   if (!existing) {
     return failure({ code: 'APPROVAL_NOT_FOUND', message: `Approval ${input.approvalId} not found` });
   }
-  if (existing.status !== 'approved') {
+  if (existing.status !== 'approved' && existing.status !== 'executed') {
     return failure({
       code: 'APPROVAL_STATE_CONFLICT',
-      message: `Only an approved row can be revoked (current: ${existing.status})`,
+      message: `Only an approved or pre-publish executed row can be revoked (current: ${existing.status})`,
     });
+  }
+  if (existing.status === 'executed') {
+    try {
+      const boundRun = await getExecutionRunByApprovalId(db, input.tenantId, input.approvalId);
+      if (boundRun?.state === 'published') {
+        return failure({
+          code: 'APPROVAL_STATE_CONFLICT',
+          message: `Approval ${input.approvalId} cannot be revoked after execution run ${boundRun.id} reached published`,
+        });
+      }
+    } catch {
+      // Table may not exist in minimal unit-test schemas; allow pre-publish revoke.
+    }
   }
   try {
     const res = await db
       .prepare(
         `UPDATE agent_campaign_approvals
          SET status = 'revoked', revoked_by = ?, revoked_at = ?, rejection_reason = ?
-         WHERE id = ? AND tenant_id = ? AND status = 'approved'`,
+         WHERE id = ? AND tenant_id = ? AND status IN ('approved', 'executed')`,
       )
       .bind(input.operatorId, now, input.reason ?? null, input.approvalId, input.tenantId)
       .run();

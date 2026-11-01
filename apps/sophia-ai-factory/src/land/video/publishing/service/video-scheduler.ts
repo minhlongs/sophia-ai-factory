@@ -64,9 +64,9 @@ export async function scheduleVideoPublish(
       .prepare(
         `INSERT INTO publishing_jobs (
            id, tenant_id, video_id, channel_id, status, caption,
-           hashtags_json, product_link, scheduled_at, retry_count,
+           hashtags_json, product_link, privacy_status, scheduled_at, retry_count,
            created_at, provider
-         ) VALUES (?1, ?2, ?3, ?4, 'scheduled', ?5, ?6, ?7, ?8, 0, ?9, ?10)`,
+         ) VALUES (?1, ?2, ?3, ?4, 'scheduled', ?5, ?6, ?7, ?8, ?9, 0, ?10, ?11)`,
       )
       .bind(
         jobId,
@@ -76,6 +76,7 @@ export async function scheduleVideoPublish(
         input.caption ?? null,
         input.hashtags && input.hashtags.length > 0 ? JSON.stringify(input.hashtags) : null,
         input.productLink ?? null,
+        input.privacyStatus ?? 'public',
         input.scheduledAt,
         nowSec,
         input.provider || channel.provider || 'youtube',

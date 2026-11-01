@@ -196,7 +196,7 @@ function CampaignApprovalCard({
         </p>
       )}
 
-      {(item.status === 'pending_ceo' || item.status === 'approved') && (
+      {(item.status === 'pending_ceo' || item.status === 'approved' || item.status === 'executed') && (
         <div className="mt-3 space-y-2">
           <textarea
             id={`campaign-reason-${item.id}`}
@@ -226,24 +226,24 @@ function CampaignApprovalCard({
               </>
             )}
             {item.status === 'approved' && (
-              <>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onAction(item.id, 'resume')}
-                  className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
-                >
-                  {t('campaign.resume')}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onAction(item.id, 'revoke')}
-                  className="rounded-md border border-destructive/40 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                >
-                  {t('campaign.revoke')}
-                </button>
-              </>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(item.id, 'resume')}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
+              >
+                {t('campaign.resume')}
+              </button>
+            )}
+            {(item.status === 'approved' || item.status === 'executed') && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(item.id, 'revoke')}
+                className="rounded-md border border-destructive/40 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+              >
+                {t('campaign.revoke')}
+              </button>
             )}
           </div>
         </div>

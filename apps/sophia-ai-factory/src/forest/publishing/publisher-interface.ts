@@ -4,9 +4,9 @@
  * Base types: @/seed/types/channel-provider
  * D1 row types: defined here (forest-specific persistence shapes).
  */
-import type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher } from '@/seed/types/channel-provider';
+import type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher, VideoPrivacyStatus } from '@/seed/types/channel-provider';
 
-export { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher };
+export { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher, VideoPrivacyStatus };
 
 /** D1 row for publishing_channels table */
 export interface PublishingChannel {
@@ -38,6 +38,7 @@ export interface PublishingJob {
   hashtags_json: string | null;
   title: string | null;
   product_link: string | null;
+  privacy_status?: VideoPrivacyStatus | null;
   scheduled_at: number | null;
   retry_count: number;
   created_at: number;

@@ -104,6 +104,7 @@ vi.mock('@/tree/video/render', async (importOriginal) => {
 import { nicheVideoDispatcher } from '../niche-video-dispatcher';
 import { generateNicheCampaignVoiceover } from '@/tree/video/render';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { computeApprovalPayloadHash } from '@/seed/security/approval-payload-hash';
 
 function getHandler(): InngestHandler {
   return (nicheVideoDispatcher as unknown as { _handler: InngestHandler })._handler;
@@ -267,5 +268,12 @@ describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () =>
     expect(result.manifest?.audio.backgroundMusicDuckingDb).toBe(-18);
     expect(result.manifest?.ffmpegFilter).toContain('drawtext');
     expect(result.mediaReady).toBe(false);
+  });
+
+  it('defaults maxRenderCostCents to 250 ($2.50 per video) when omitted', async () => {
+    await getHandler()({ event: saasEvent(), step: mockStep });
+    expect(computeApprovalPayloadHash).toHaveBeenCalledWith(
+      expect.objectContaining({ maxRenderCostCents: 250 }),
+    );
   });
 });

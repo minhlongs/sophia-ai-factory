@@ -30,6 +30,7 @@ export interface SchedulePublishInput {
   caption?: string;
   hashtags?: string[];
   productLink?: string;
+  privacyStatus?: 'public' | 'unlisted' | 'private';
   tenantId?: string;
   provider?: string;
 }

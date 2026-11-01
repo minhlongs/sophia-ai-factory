@@ -27,6 +27,7 @@ export interface SchedulePublishInput {
   tenantId: string;
   userId: string;
   caption?: string;
+  privacyStatus?: 'public' | 'unlisted' | 'private';
   scheduledAt?: number; // Unix epoch seconds; defaults to now
   /**
    * Provider string stored in publishing_jobs.provider (migration 0099).
@@ -53,7 +54,7 @@ export async function schedulePublish(
   db: D1Database,
   input: SchedulePublishInput,
 ): Promise<SchedulePublishResult> {
-  const { channelId, videoId, tenantId, userId, caption, scheduledAt, provider = '' } = input;
+  const { channelId, videoId, tenantId, userId, caption, privacyStatus, scheduledAt, provider = '' } = input;
   const jobId = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
   const requested = scheduledAt ?? now;
@@ -71,10 +72,10 @@ export async function schedulePublish(
       .prepare(
         `INSERT INTO publishing_jobs
            (id, tenant_id, video_id, channel_id, provider, status, caption,
-            hashtags_json, product_link, scheduled_at, retry_count, created_at)
-         VALUES (?, ?, ?, ?, ?, 'scheduled', ?, NULL, NULL, ?, 0, ?)`,
+            hashtags_json, product_link, scheduled_at, retry_count, created_at, privacy_status)
+         VALUES (?, ?, ?, ?, ?, 'scheduled', ?, NULL, NULL, ?, 0, ?, ?)`,
       )
-      .bind(jobId, tenantId, videoId, channelId, provider, caption ?? null, scheduled, now)
+      .bind(jobId, tenantId, videoId, channelId, provider, caption ?? null, scheduled, now, privacyStatus ?? 'public')
       .run();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
