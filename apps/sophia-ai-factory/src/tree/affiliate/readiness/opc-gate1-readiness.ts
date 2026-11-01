@@ -79,7 +79,9 @@ export async function evaluateOpcGate1Readiness(deps: {
   userId: string;
 }): Promise<OpcGate1ReadinessReport> {
   const { db, workspaceId, userId } = deps;
-  const adminAuthorized = await hasWorkspaceRole(workspaceId, userId, 'ADMIN', db);
+  const isPersonalOwnerWorkspace = Boolean(workspaceId && userId && workspaceId === userId);
+  const adminAuthorized =
+    isPersonalOwnerWorkspace || (await hasWorkspaceRole(workspaceId, userId, 'ADMIN', db));
   if (!adminAuthorized) {
     return {
       workspaceId, userId, adminAuthorized: false, killSwitchReady: false,

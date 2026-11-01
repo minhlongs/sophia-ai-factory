@@ -11,6 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   previewNicheVideoPlanAction,
   dispatchNicheVideoCampaignAction,
+  getOpcGate1ReadinessAction,
   type CreateNicheVideoCampaignActionInput,
 } from '../niche-video-actions';
 import * as authSession from '@/seed/auth/better-auth-session';
@@ -22,6 +23,7 @@ import { buildWorkspaceOfferId } from '@/tree/affiliate/offers/workspace-offer-u
 vi.mock('@/seed/auth/better-auth-session');
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
+  createServerClient: vi.fn(() => ({})),
 }));
 vi.mock('@/seed/inngest/client', () => ({
   inngest: {
@@ -194,6 +196,44 @@ describe('Niche Video Server Actions', () => {
           }),
         }),
       );
+    });
+
+    it('rejects dispatch when maxRenderCostCents exceeds the proposed Gate 1 vertical ceiling of 2500 cents ($25.00)', async () => {
+      const payload: CreateNicheVideoCampaignActionInput = {
+        niche: 'saas_global',
+        blueprintId: 'saas_problem_agitation_solution',
+        productName: 'Linear App',
+        productUrl: 'https://linear.app',
+        maxRenderCostCents: 2600,
+      };
+
+      const result = await dispatchNicheVideoCampaignAction(payload);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe('BUDGET_CAP_EXCEEDED');
+      expect(inngest.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getOpcGate1ReadinessAction', () => {
+    it('rejects unauthenticated requests with UNAUTHORIZED', async () => {
+      vi.mocked(authSession.getCurrentUser).mockResolvedValue(null);
+      const res = await getOpcGate1ReadinessAction();
+      expect(res.success).toBe(false);
+      expect(res.code).toBe('UNAUTHORIZED');
+    });
+
+    it('evaluates personal owner workspace readiness with zero secret exposure', async () => {
+      const db = createFakeD1([
+        `CREATE TABLE org_members (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, user_id TEXT NOT NULL, role TEXT NOT NULL);`,
+        `CREATE TABLE publishing_channels (id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, provider TEXT NOT NULL, access_token TEXT, status TEXT NOT NULL);`,
+        `CREATE TABLE affiliate_offers (id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, status TEXT NOT NULL, product_url TEXT, destination_url TEXT, commission_terms TEXT, niche TEXT, region TEXT, category TEXT);`,
+      ]) as unknown as D1Database;
+      vi.mocked(dbClient.getD1).mockResolvedValue(db);
+
+      const res = await getOpcGate1ReadinessAction();
+      expect(res.success).toBe(true);
+      expect(res.data?.workspaceId).toBe('usr_growth_agency_99');
+      expect(res.data?.adminAuthorized).toBe(true);
     });
   });
 });

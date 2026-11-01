@@ -152,4 +152,15 @@ describe('evaluateOpcGate1Readiness', () => {
     expect(report.eligibleCryptoOfferIds).toHaveLength(1);
     expect(JSON.stringify(report)).not.toContain('SECRET_OAUTH_TOKEN_DO_NOT_LEAK');
   });
+
+  it('authorizes personal owner workspace (workspaceId === userId) without requiring an org_members row', async () => {
+    const report = await evaluateOpcGate1Readiness({
+      db,
+      workspaceId: 'usr_solo_ceo_1',
+      userId: 'usr_solo_ceo_1',
+    });
+
+    expect(report.adminAuthorized).toBe(true);
+    expect(report.blockers).not.toContain('WORKSPACE_ADMIN_REQUIRED');
+  });
 });

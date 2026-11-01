@@ -9233,7 +9233,23 @@
     "metricClicks": "Lượt click",
     "metricConversions": "Chuyển đổi",
     "metricMrr": "Doanh thu",
-    "metricRebates": "Rebates"
+    "metricRebates": "Rebates",
+    "commissionTerms": "Điều Khoản Hoa Hồng (Tự Đăng Ký Offer)",
+    "maxRenderCostCents": "Trần Chi Phí Render (Xu USD)",
+    "readinessTitle": "Kiểm Tra Sẵn Sàng OPC Gate 1 ($0.00)",
+    "readinessSubtitle": "Kiểm tra an toàn chỉ đọc trước khi xuất bản YouTube unlisted",
+    "readinessBadgeReady": "SẴN SÀNG GATE 1",
+    "readinessBadgeDraftOnly": "BẢN NHÁP / CHỜ DUYỆT",
+    "readinessRefresh": "Kiểm tra lại",
+    "readinessAdmin": "Quyền Chủ Sở Hữu / Admin",
+    "readinessKillSwitch": "Công Tắc An Toàn Đã Mở",
+    "readinessVoiceByok": "Khóa Giọng Đọc ElevenLabs",
+    "readinessVideoByok": "Khóa Video HeyGen / D-ID",
+    "readinessYoutube": "Kênh YouTube Đang Hoạt Động",
+    "readinessOffers": "Offer SaaS & Crypto Hợp Lệ",
+    "readinessBudgetNotice": "Trần ngân sách đề xuất Gate 1 (Chưa duyệt): tối đa $25.00/ngách, $50.00 tổng • Mặc định $2.50/chiến dịch (0% phí nền tảng)",
+    "budgetCapExceededWarning": "Ngân sách render vượt trần đề xuất của Gate 1 cho mỗi ngách ($25.00 / 2500 xu).",
+    "dispatchBlockedBySafetyGate": "Đã chặn gửi chiến dịch: Cần quyền quản trị Workspace và mở công tắc an toàn Kill Switch."
   },
   "legend": {
     "title": "Title"

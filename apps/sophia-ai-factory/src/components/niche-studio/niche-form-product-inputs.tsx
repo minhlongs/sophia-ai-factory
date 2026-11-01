@@ -1,7 +1,8 @@
 /**
  * Niche Form Product & Tracking Inputs Subcomponent
  *
- * Captures product metadata, affiliate identifiers, vanity coupons, and jurisdiction.
+ * Captures product metadata, affiliate identifiers, vanity coupons,
+ * compliance jurisdiction, commission terms, and per-campaign render budget cap.
  * @module components/niche-studio/niche-form-product-inputs
  */
 
@@ -9,6 +10,10 @@
 'use client';
 
 import React from 'react';
+import {
+  DEFAULT_MAX_RENDER_COST_CENTS,
+  PROPOSED_GATE1_VERTICAL_CAP_CENTS,
+} from '@/seed/config/affiliate-budget-defaults';
 
 export interface NicheProductFormValues {
   productName: string;
@@ -30,7 +35,13 @@ interface NicheFormProductInputsProps {
   t: (key: string) => string;
 }
 
+const INPUT_CLASS =
+  'mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500';
+
 export function NicheFormProductInputs({ values, onChange, t }: NicheFormProductInputsProps) {
+  const budgetCents = values.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS;
+  const budgetUsd = (budgetCents / 100).toFixed(2);
+
   return (
     <div className="space-y-3 pt-2 border-t border-zinc-800/80">
       <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">
@@ -39,58 +50,27 @@ export function NicheFormProductInputs({ values, onChange, t }: NicheFormProduct
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <span className="text-[11px] text-zinc-400">{t('productName')}</span>
-          <input
-            type="text"
-            required
-            value={values.productName}
-            onChange={(e) => onChange('productName', e.target.value)}
-            className="mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
+          <input type="text" required value={values.productName} onChange={(e) => onChange('productName', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
           <span className="text-[11px] text-zinc-400">{t('productUrl')}</span>
-          <input
-            type="url"
-            required
-            value={values.productUrl}
-            onChange={(e) => onChange('productUrl', e.target.value)}
-            className="mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
+          <input type="url" required value={values.productUrl} onChange={(e) => onChange('productUrl', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
           <span className="text-[11px] text-zinc-400">{t('affiliateCode')}</span>
-          <input
-            type="text"
-            value={values.affiliateCode}
-            onChange={(e) => onChange('affiliateCode', e.target.value)}
-            className="mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
+          <input type="text" value={values.affiliateCode} onChange={(e) => onChange('affiliateCode', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
           <span className="text-[11px] text-zinc-400">{t('subId')}</span>
-          <input
-            type="text"
-            value={values.subId}
-            onChange={(e) => onChange('subId', e.target.value)}
-            className="mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
+          <input type="text" value={values.subId} onChange={(e) => onChange('subId', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
           <span className="text-[11px] text-zinc-400">{t('vanityCoupon')}</span>
-          <input
-            type="text"
-            value={values.vanityCoupon}
-            onChange={(e) => onChange('vanityCoupon', e.target.value)}
-            className="mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
+          <input type="text" value={values.vanityCoupon} onChange={(e) => onChange('vanityCoupon', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
           <span className="text-[11px] text-zinc-400">{t('jurisdiction')}</span>
-          <select
-            value={values.jurisdiction}
-            onChange={(e) => onChange('jurisdiction', e.target.value)}
-            className="mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          >
+          <select value={values.jurisdiction} onChange={(e) => onChange('jurisdiction', e.target.value)} className={INPUT_CLASS}>
             <option value="GLOBAL">Global (Default)</option>
             <option value="US">United States (FTC & CFTC 4.41)</option>
             <option value="EU">European Union (MiCA Art. 7 & 53)</option>
@@ -98,6 +78,32 @@ export function NicheFormProductInputs({ values, onChange, t }: NicheFormProduct
             <option value="JP">Japan (FSA Crypto-Asset Rules)</option>
             <option value="VN">Vietnam (Nghị định 52/2024/NĐ-CP)</option>
           </select>
+        </div>
+        <div>
+          <span className="text-[11px] text-zinc-400">{t('commissionTerms')}</span>
+          <input
+            type="text"
+            maxLength={300}
+            aria-label={t('commissionTerms')}
+            value={values.commissionTerms ?? ''}
+            onChange={(e) => onChange('commissionTerms', e.target.value)}
+            className={INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <span className="text-[11px] text-zinc-400">
+            {t('maxRenderCostCents')} (${budgetUsd} USD)
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={PROPOSED_GATE1_VERTICAL_CAP_CENTS}
+            step={10}
+            aria-label={t('maxRenderCostCents')}
+            value={budgetCents}
+            onChange={(e) => onChange('maxRenderCostCents', Number(e.target.value))}
+            className={INPUT_CLASS}
+          />
         </div>
       </div>
     </div>

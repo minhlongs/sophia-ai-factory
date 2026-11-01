@@ -10,6 +10,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
+import { PROPOSED_GATE1_VERTICAL_CAP_CENTS } from '@/seed/config/affiliate-budget-defaults';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -23,10 +24,8 @@ import {
   type NicheVideoActionResponse,
 } from './niche-video-action-helpers';
 
-export type {
-  CreateNicheVideoCampaignActionInput,
-  NicheVideoActionResponse,
-} from './niche-video-action-helpers';
+export type { CreateNicheVideoCampaignActionInput, NicheVideoActionResponse } from './niche-video-action-helpers';
+export { getOpcGate1ReadinessAction, type OpcGate1ReadinessReport } from './opc-readiness-actions';
 
 export async function previewNicheVideoPlanAction(
   rawInput: CreateNicheVideoCampaignActionInput,
@@ -58,6 +57,14 @@ export async function dispatchNicheVideoCampaignAction(
     const built = validateAndBuildNichePlan(rawInput);
     if (!built.ok) return built.response;
     const { planInput, input, plan } = built;
+
+    if (input.maxRenderCostCents !== undefined && input.maxRenderCostCents > PROPOSED_GATE1_VERTICAL_CAP_CENTS) {
+      return {
+        success: false,
+        error: `Render budget (${input.maxRenderCostCents} cents) exceeds the proposed Gate 1 vertical ceiling of ${PROPOSED_GATE1_VERTICAL_CAP_CENTS} cents ($25.00)`,
+        code: 'BUDGET_CAP_EXCEEDED',
+      };
+    }
 
     let tenantId = user.id;
     try {
