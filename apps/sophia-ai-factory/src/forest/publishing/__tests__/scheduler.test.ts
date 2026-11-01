@@ -99,8 +99,37 @@ describe('scheduler - schedulePublish', () => {
     expect(calls).toHaveLength(2);
     expect(calls[0][0].channel_id).toBe('ch1');
     expect(calls[0][0].scheduled_at).toBe(scheduledAt);
+    expect(calls[0][0].privacy_status).toBe('public');
     expect(calls[1][0].channel_id).toBe('ch2');
     expect(calls[1][0].scheduled_at).toBe(scheduledAt + 300);
+    expect(calls[1][0].privacy_status).toBe('public');
+  });
+
+  it('persists explicit privacyStatus (unlisted) into publishing_jobs rows', async () => {
+    mocks.mockDb.in.mockResolvedValueOnce({
+      data: [{ id: 'ch1', tenant_id: 't1', provider: 'youtube', status: 'active' }],
+    });
+    mocks.mockDb.lte.mockResolvedValue({ data: [] });
+
+    const scheduledAt = Date.UTC(2026, 4, 25, 10, 0, 0) / 1000;
+
+    const res = await schedulePublish({
+      videoJobId: 'v1',
+      tenantId: 't1',
+      userId: 'u1',
+      channelIds: ['ch1'],
+      caption: 'Unlisted proof video',
+      hashtags: ['ad'],
+      privacyStatus: 'unlisted',
+      scheduledAt,
+    });
+    expect(res.jobIds).toHaveLength(1);
+    expect(mocks.mockDb.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel_id: 'ch1',
+        privacy_status: 'unlisted',
+      }),
+    );
   });
 
   it('handles database conflicts by shifting forward in 5-minute steps', async () => {

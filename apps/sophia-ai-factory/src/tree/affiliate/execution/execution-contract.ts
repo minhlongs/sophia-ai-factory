@@ -151,7 +151,7 @@ function approvalFailure(approval: ApprovalEvidence): ExecutionBlockReason | nul
   if (approval.expiresAtMs !== null && approval.expiresAtMs !== undefined && approval.nowMs > approval.expiresAtMs) {
     return 'APPROVAL_INVALIDATED';
   }
-  if (approval.status !== 'approved') return 'APPROVAL_REQUIRED';
+  if (approval.status !== 'approved' && approval.status !== 'executed') return 'APPROVAL_REQUIRED';
   if (approval.currentHash !== approval.storedHash) return 'APPROVAL_INVALIDATED';
   return null;
 }

@@ -23,6 +23,7 @@ const scheduleBodySchema = z.object({
     .url()
     .refine((u) => /^https?:\/\//.test(u), { message: 'productLink must be https:// or http://' })
     .optional(),
+  privacyStatus: z.enum(['public', 'unlisted', 'private']).optional(),
   scheduledAt: z.number().int().positive().optional(),
 });
 
@@ -41,7 +42,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { videoJobId, channels, caption, hashtags, productLink, scheduledAt } = parsed.data;
+    const { videoJobId, channels, caption, hashtags, productLink, privacyStatus, scheduledAt } = parsed.data;
 
     // tenantId = userId (Phase 11 introduces org tenants)
     const tenantId = userId;
@@ -55,6 +56,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       caption,
       hashtags,
       productLink,
+      privacyStatus,
       scheduledAt: scheduledAt ?? now,
     });
 

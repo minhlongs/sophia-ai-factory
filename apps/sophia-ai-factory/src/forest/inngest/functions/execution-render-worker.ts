@@ -334,6 +334,17 @@ export function createExecutionRenderWorker(adapter: RenderAdapter = heyGenRende
         runId,
         byteSize: stored.byteSize,
       });
+      const maybeSendEvent = (
+        step as unknown as {
+          sendEvent?: (id: string, payload: { name: string; data: { tenantId: string; runId: string } }) => Promise<unknown>;
+        }
+      ).sendEvent;
+      if (typeof maybeSendEvent === 'function' && tenantId && runId) {
+        await maybeSendEvent('request-execution-publish', {
+          name: 'execution.publish.requested',
+          data: { tenantId, runId },
+        });
+      }
       return { status: 'RENDERED' as const, ...stored };
     },
   );

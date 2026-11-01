@@ -22,6 +22,7 @@ import type {
   AutonomousVideoPipelineRequestedEvent,
   NicheVideoCampaignRequestedEvent,
   ExecutionRenderRequestedEvent,
+  ExecutionPublishRequestedEvent,
   AutonomousCampaignScalingRequestedEvent,
   VideoMultiTrackPipelineRequestedEvent,
 } from './pipeline-events';
@@ -112,6 +113,7 @@ export type CoreEvents = {
   "affiliate/conversion.recorded": AffiliateConversionRecordedEvent;
   "niche.video.campaign.requested": NicheVideoCampaignRequestedEvent;
   "execution.render.requested": ExecutionRenderRequestedEvent;
+  "execution.publish.requested": ExecutionPublishRequestedEvent;
   "autonomous.video.pipeline.requested": AutonomousVideoPipelineRequestedEvent;
   "autonomous.campaign.scaling.requested": AutonomousCampaignScalingRequestedEvent;
   "video.multitrack.pipeline.requested": VideoMultiTrackPipelineRequestedEvent;

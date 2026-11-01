@@ -120,6 +120,20 @@ describe('execution state machine', () => {
       approval: { ...publishBase.approval, revokedAtMs: NOW - 1 },
     });
     expect(evaluatePublishGate(revoked).ok).toBe(false);
+
+    const executedApproval = evidence({
+      state: 'rendered',
+      artifact,
+      approval: { ...publishBase.approval, status: 'executed' },
+    });
+    expect(evaluatePublishGate(executedApproval).ok).toBe(true);
+
+    const revokedStatus = evidence({
+      state: 'rendered',
+      artifact,
+      approval: { ...publishBase.approval, status: 'revoked' },
+    });
+    expect(evaluatePublishGate(revokedStatus).ok).toBe(false);
   });
 
   it('re-checks halt, budget, credentials and uncertain outcome after a retry', () => {

@@ -27,11 +27,16 @@ import { getD1 } from '@/seed/db/client';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeD1(row: Record<string, unknown> | null) {
+function makeD1(
+  videoRow: Record<string, unknown> | null,
+  artifactRow: Record<string, unknown> | null = null,
+) {
   return {
-    prepare: () => ({
+    prepare: (sql: string) => ({
       bind: () => ({
-        first: vi.fn().mockResolvedValue(row),
+        first: vi.fn().mockResolvedValue(
+          sql.includes('affiliate_media_artifacts') ? artifactRow : videoRow,
+        ),
       }),
     }),
   } as unknown as D1Database;
@@ -102,6 +107,47 @@ describe('getCanonicalVideoUrl', () => {
 
     await expect(getCanonicalVideoUrl(VIDEO_ID, USER_ID)).rejects.toThrow(
       'R2_PUBLIC_HOSTNAME env var not configured',
+    );
+  });
+
+  it('falls back to affiliate_media_artifacts when videos table has no matching row', async () => {
+    vi.mocked(getD1).mockResolvedValue(
+      makeD1(null, {
+        id: 'art_run_1',
+        tenant_id: USER_ID,
+        storage_key: 'tenants/user-abc/videos/run_1/final.mp4',
+      }),
+    );
+
+    const url = await getCanonicalVideoUrl('art_run_1', USER_ID);
+    expect(url).toBe(`https://${R2_HOST}/tenants/user-abc/videos/run_1/final.mp4`);
+  });
+
+  it('throws VideoUnauthorizedError when affiliate_media_artifacts tenant_id mismatches', async () => {
+    vi.mocked(getD1).mockResolvedValue(
+      makeD1(null, {
+        id: 'art_run_1',
+        tenant_id: 'foreign-tenant',
+        storage_key: 'tenants/foreign-tenant/videos/run_1/final.mp4',
+      }),
+    );
+
+    await expect(getCanonicalVideoUrl('art_run_1', USER_ID)).rejects.toThrow(
+      VideoUnauthorizedError,
+    );
+  });
+
+  it('throws VideoNotMirroredError when affiliate_media_artifacts storage_key is empty', async () => {
+    vi.mocked(getD1).mockResolvedValue(
+      makeD1(null, {
+        id: 'art_run_1',
+        tenant_id: USER_ID,
+        storage_key: '',
+      }),
+    );
+
+    await expect(getCanonicalVideoUrl('art_run_1', USER_ID)).rejects.toThrow(
+      VideoNotMirroredError,
     );
   });
 });

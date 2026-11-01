@@ -28,6 +28,7 @@ export type {
   AutonomousVideoPipelineRequestedEvent,
   NicheVideoCampaignRequestedEvent,
   ExecutionRenderRequestedEvent,
+  ExecutionPublishRequestedEvent,
   AutonomousCampaignScalingRequestedEvent,
   VideoMultiTrackPipelineRequestedEvent,
 } from './pipeline-autonomous-events';

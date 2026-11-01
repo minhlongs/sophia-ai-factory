@@ -7,6 +7,7 @@
 export * from './autonomous-video-pipeline-job';
 export * from './niche-video-dispatcher';
 export * from './execution-render-worker';
+export * from './execution-publish-worker';
 export * from './commerce-catalog-sync';
 export * from './commerce-video-dispatcher';
 export * from './social-syndication-job';

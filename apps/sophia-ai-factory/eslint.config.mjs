@@ -339,6 +339,7 @@ const eslintConfig = defineConfig([
 "src/forest/inngest/functions/video-publish.ts",
 "src/forest/inngest/functions/video-scripting.ts",
 "src/forest/inngest/functions/execution-render-worker.ts",
+"src/forest/inngest/functions/execution-publish-worker.ts",
 "src/forest/inngest/functions/video-tts.ts",
 "src/forest/inngest/functions/video-upload.ts",
 "src/forest/inngest/functions/video-visual.ts",
