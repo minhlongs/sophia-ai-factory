@@ -34,6 +34,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
     caption,
     hashtags,
     productLink,
+    privacyStatus,
     scheduledAt,
     audienceTimezone,
     optimizeSchedule,
@@ -100,6 +101,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
       caption,
       hashtagsJson,
       productLink,
+      privacyStatus,
       scheduledAt: finalScheduledAt,
       nowSec: now,
     });

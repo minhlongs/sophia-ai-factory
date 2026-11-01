@@ -5,6 +5,7 @@
 
 import { randomUUID } from 'crypto';
 import type { D1Client } from '@/seed/db/client';
+import type { VideoPrivacyStatus } from '@/seed/types/channel-provider';
 import { logger } from '@/seed/utils/logger-utility';
 
 /**
@@ -66,6 +67,7 @@ export async function insertPublishingJobRow(
     caption: string;
     hashtagsJson: string;
     productLink?: string;
+    privacyStatus?: VideoPrivacyStatus;
     scheduledAt: number;
     nowSec: number;
   },
@@ -80,6 +82,7 @@ export async function insertPublishingJobRow(
     caption: params.caption,
     hashtags_json: params.hashtagsJson,
     product_link: params.productLink ?? null,
+    privacy_status: params.privacyStatus ?? 'public',
     scheduled_at: params.scheduledAt,
     started_at: null,
     finished_at: null,

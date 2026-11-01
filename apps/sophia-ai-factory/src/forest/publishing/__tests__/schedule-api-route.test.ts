@@ -18,7 +18,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({ getCurrentUserFromHeaders: m
 
 import { POST } from '@/app/api/publish/schedule/route';
 
-const VALID_JOB_ID = '00000000-0000-0000-0000-000000000001';
+const VALID_JOB_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 function makeRequest(body: unknown): Request {
   return new Request('http://localhost/api/publish/schedule', {
@@ -83,5 +83,33 @@ describe('POST /api/publish/schedule — auth & validation', () => {
       productLink: 'not-a-url',
     }));
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for invalid privacyStatus value', async () => {
+    const res = await POST(makeRequest({
+      videoJobId: VALID_JOB_ID,
+      channels: ['ch1'],
+      caption: 'cap',
+      hashtags: [],
+      privacyStatus: 'friends_only',
+    }));
+    expect(res.status).toBe(400);
+  });
+
+  it('forwards privacyStatus to schedulePublish when valid (unlisted)', async () => {
+    const res = await POST(makeRequest({
+      videoJobId: VALID_JOB_ID,
+      channels: ['ch1'],
+      caption: 'cap',
+      hashtags: ['ad'],
+      privacyStatus: 'unlisted',
+    }));
+    expect(res.status).toBe(201);
+    expect(mocks.schedulePublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoJobId: VALID_JOB_ID,
+        privacyStatus: 'unlisted',
+      }),
+    );
   });
 });

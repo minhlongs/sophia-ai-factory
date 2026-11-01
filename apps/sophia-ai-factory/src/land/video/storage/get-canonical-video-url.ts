@@ -46,29 +46,16 @@ interface VideoR2Row {
   r2_key: string | null;
 }
 
-// ── Implementation ─────────────────────────────────────────────────────────────
+interface ArtifactStorageRow {
+  id: string;
+  tenant_id: string;
+  storage_key: string | null;
+}
 
-/**
- * Returns `https://{R2_PUBLIC_HOSTNAME}/{r2_key}` for a video row.
- *
- * Enforces:
- *   1. Row exists in `videos` table.
- *   2. `videos.user_id === userId` (ownership check).
- *   3. `videos.r2_key IS NOT NULL` (mirrored to R2).
- *
- * Throws:
- *   - `VideoNotFoundError`    — row not in DB
- *   - `VideoUnauthorizedError` — user_id mismatch
- *   - `VideoNotMirroredError`  — r2_key is null
- *   - `Error`                  — R2_PUBLIC_HOSTNAME not configured
- */
-export async function getCanonicalVideoUrl(
+async function resolveStorageRow(
+  db: D1Database,
   videoId: string,
-  userId: string,
-): Promise<string> {
-  const db = await getD1()
-  if (!db) throw new Error('D1 database binding not available');
-
+): Promise<{ ownerId: string; r2Key: string | null } | null> {
   const row = await db
     .prepare(
       `SELECT id, user_id, r2_key
@@ -78,22 +65,62 @@ export async function getCanonicalVideoUrl(
     )
     .bind(videoId)
     .first<VideoR2Row>();
+  if (row) {
+    return { ownerId: row.user_id, r2Key: row.r2_key };
+  }
 
-  if (!row) {
+  const artifact = await db
+    .prepare(
+      `SELECT id, tenant_id, storage_key
+       FROM affiliate_media_artifacts
+       WHERE id = ?1 OR run_id = ?1
+       LIMIT 1`,
+    )
+    .bind(videoId)
+    .first<ArtifactStorageRow>();
+  if (!artifact) return null;
+  return { ownerId: artifact.tenant_id, r2Key: artifact.storage_key };
+}
+
+// ── Implementation ─────────────────────────────────────────────────────────────
+
+/**
+ * Returns `https://{R2_PUBLIC_HOSTNAME}/{r2_key}` for a video row or OPC artifact.
+ *
+ * Enforces:
+ *   1. Row exists in `videos` or `affiliate_media_artifacts` table.
+ *   2. `videos.user_id === userId` or `affiliate_media_artifacts.tenant_id === userId`.
+ *   3. `r2_key` / `storage_key` IS NOT NULL (mirrored to R2).
+ *
+ * Throws:
+ *   - `VideoNotFoundError`    — row not in DB
+ *   - `VideoUnauthorizedError` — owner mismatch
+ *   - `VideoNotMirroredError`  — key is null/empty
+ *   - `Error`                  — R2_PUBLIC_HOSTNAME not configured
+ */
+export async function getCanonicalVideoUrl(
+  videoId: string,
+  userId: string,
+): Promise<string> {
+  const db = await getD1();
+  if (!db) throw new Error('D1 database binding not available');
+
+  const resolved = await resolveStorageRow(db, videoId);
+  if (!resolved) {
     logger.warn('[getCanonicalVideoUrl] Video row not found', { videoId });
     throw new VideoNotFoundError(videoId);
   }
 
-  if (row.user_id !== userId) {
+  if (resolved.ownerId !== userId) {
     logger.warn('[getCanonicalVideoUrl] Ownership mismatch', {
       videoId,
       requestedBy: userId,
-      owner: row.user_id,
+      owner: resolved.ownerId,
     });
     throw new VideoUnauthorizedError(videoId);
   }
 
-  if (!row.r2_key) {
+  if (!resolved.r2Key) {
     logger.info('[getCanonicalVideoUrl] r2_key is null — video not yet mirrored', {
       videoId,
     });
@@ -105,5 +132,5 @@ export async function getCanonicalVideoUrl(
     throw new Error('[getCanonicalVideoUrl] R2_PUBLIC_HOSTNAME env var not configured');
   }
 
-  return `https://${r2Host}/${row.r2_key}`;
+  return `https://${r2Host}/${resolved.r2Key}`;
 }

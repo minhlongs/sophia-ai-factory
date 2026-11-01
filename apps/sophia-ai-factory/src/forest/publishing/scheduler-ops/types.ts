@@ -4,6 +4,7 @@
  */
 
 import type { ApacMarket } from '@/seed/types/apac-syndication';
+import type { VideoPrivacyStatus } from '@/seed/types/channel-provider';
 
 export interface SchedulePublishInput {
   videoJobId: string;
@@ -13,6 +14,7 @@ export interface SchedulePublishInput {
   caption: string;
   hashtags: string[];
   productLink?: string;
+  privacyStatus?: VideoPrivacyStatus;
   scheduledAt: number; // Unix seconds
   audienceTimezone?: string;
   optimizeSchedule?: boolean;
