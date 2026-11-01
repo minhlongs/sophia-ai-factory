@@ -1,9 +1,6 @@
 /**
  * Server Actions for Niche Video Campaign Generation
  *
- * Validates requests with Zod, checks session authorization,
- * calculates storyboard plans, and dispatches background Inngest jobs.
- *
  * Layer: forest (Server Actions)
  * @module forest/actions/niche-video-actions
  */
@@ -17,6 +14,7 @@ import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { verifyOfferEligibility } from '@/tree/affiliate/offers/offer-eligibility';
+import { upsertWorkspaceVerifiedOffer } from '@/tree/affiliate/offers/workspace-offer-upsert';
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
 import {
   validateAndBuildNichePlan,
@@ -37,16 +35,9 @@ export async function previewNicheVideoPlanAction(
     if (!user) {
       return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
     }
-
     const built = validateAndBuildNichePlan(rawInput);
-    if (!built.ok) {
-      return built.response;
-    }
-
-    return {
-      success: true,
-      data: built.plan,
-    };
+    if (!built.ok) return built.response;
+    return { success: true, data: built.plan };
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('previewNicheVideoPlanAction failed', { error: error.message });
@@ -64,46 +55,48 @@ export async function dispatchNicheVideoCampaignAction(
     }
 
     const built = validateAndBuildNichePlan(rawInput);
-    if (!built.ok) {
-      return built.response;
-    }
-
+    if (!built.ok) return built.response;
     const { planInput, input, plan } = built;
 
-    // Tenant is resolved on the server, never accepted from the client.
     let tenantId = user.id;
     try {
       const orgId = await resolveOrgId(user.id, createServerClient());
       if (orgId) tenantId = orgId;
     } catch {
-      // Fall back to the user-scoped workspace; the job still fails closed if
-      // no tenant can be established.
+      // Fall back to user-scoped workspace
     }
 
-    // Offer identity / terms / jurisdiction are verified server-side. A missing
-    // or unknown offer is dispatched as an unverified draft (no spend).
+    let resolvedOfferId = input.offerId;
     let termsVerified = false;
-    if (input.offerId) {
-      try {
-        const eligibility = await verifyOfferEligibility(await getD1(), {
+    try {
+      const db = await getD1();
+      if (db && input.commissionTerms?.trim()) {
+        const upserted = await upsertWorkspaceVerifiedOffer(db, {
           tenantId,
           offerId: input.offerId,
+          networkId: input.networkId,
+          programName: planInput.productName,
+          productUrl: planInput.productUrl,
+          commissionTerms: input.commissionTerms,
+          niche: input.niche,
+          jurisdiction: planInput.jurisdiction,
+        });
+        if (upserted.ok) resolvedOfferId = upserted.value.offerId;
+      }
+      if (db && resolvedOfferId) {
+        const eligibility = await verifyOfferEligibility(db, {
+          tenantId,
+          offerId: resolvedOfferId,
           productUrl: planInput.productUrl,
           niche: input.niche,
           jurisdiction: planInput.jurisdiction,
         });
         termsVerified = eligibility.ok;
-        if (!eligibility.ok) {
-          logger.info('dispatchNicheVideoCampaignAction: offer not verified; staging draft', {
-            offerId: input.offerId,
-            reason: eligibility.error,
-          });
-        }
-      } catch (err) {
-        logger.warn('dispatchNicheVideoCampaignAction: offer verification unavailable', {
-          error: err instanceof Error ? err.message : String(err),
-        });
       }
+    } catch (err) {
+      logger.warn('dispatchNicheVideoCampaignAction: offer verification unavailable', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
 
     await inngest.send({
@@ -111,12 +104,10 @@ export async function dispatchNicheVideoCampaignAction(
       data: {
         userId: user.id,
         tenantId,
-        offerId: input.offerId,
+        offerId: resolvedOfferId,
         termsVerified,
         ...(input.targetAccount ? { targetAccount: input.targetAccount } : {}),
-        ...(input.maxRenderCostCents !== undefined
-          ? { maxRenderCostCents: input.maxRenderCostCents }
-          : {}),
+        ...(input.maxRenderCostCents !== undefined ? { maxRenderCostCents: input.maxRenderCostCents } : {}),
         idempotencyKey: `${tenantId}:${plan.planId}`,
         niche: planInput.niche,
         blueprintId: planInput.blueprintId,
@@ -131,19 +122,7 @@ export async function dispatchNicheVideoCampaignAction(
       },
     });
 
-    logger.info('dispatchNicheVideoCampaignAction: event sent to Inngest', {
-      userId: user.id,
-      planId: plan.planId,
-      blueprintId: plan.blueprint.id,
-    });
-
-    return {
-      success: true,
-      data: {
-        planId: plan.planId,
-        dispatched: true,
-      },
-    };
+    return { success: true, data: { planId: plan.planId, dispatched: true } };
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('dispatchNicheVideoCampaignAction failed', { error: error.message });

@@ -19,6 +19,8 @@ import {
 import { NicheConversionStatsCard } from '../niche-conversion-stats-card';
 import { NicheSyndicationPreviewCard } from '../niche-syndication-preview-card';
 import { NicheHookVariantsCard } from '../niche-hook-variants-card';
+import { NICHE_BLUEPRINTS } from '../niche-campaign-selectors';
+import { getBlueprintById } from '@/seed/config/video-blueprints';
 
 const mockT = (key: string) => `trans_${key}`;
 
@@ -151,6 +153,18 @@ describe('Niche Studio Components', () => {
         />,
       );
       expect(screen.getByText('trans_hooksEmpty')).toBeDefined();
+    });
+  });
+
+  describe('NICHE_BLUEPRINTS canonical registry parity', () => {
+    it('resolves every UI blueprint option in getBlueprintById without BLUEPRINT_NOT_FOUND', () => {
+      for (const option of [
+        ...NICHE_BLUEPRINTS.saas_global,
+        ...NICHE_BLUEPRINTS.crypto_global,
+      ]) {
+        const bp = getBlueprintById(option.id);
+        expect(bp, `Expected blueprint ${option.id} to exist in registry`).toBeDefined();
+      }
     });
   });
 });

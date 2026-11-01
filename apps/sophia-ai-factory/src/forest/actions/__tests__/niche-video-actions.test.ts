@@ -14,9 +14,14 @@ import {
   type CreateNicheVideoCampaignActionInput,
 } from '../niche-video-actions';
 import * as authSession from '@/seed/auth/better-auth-session';
+import * as dbClient from '@/seed/db/client';
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import { inngest } from '@/seed/inngest/client';
 
 vi.mock('@/seed/auth/better-auth-session');
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+}));
 vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     send: vi.fn().mockResolvedValue({ ids: ['evt_test_123'] }),
@@ -132,6 +137,55 @@ describe('Niche Video Server Actions', () => {
             niche: 'crypto_global',
             blueprintId: 'crypto_fee_discount_signup_bonus',
             productName: 'Binance',
+          }),
+        }),
+      );
+    });
+
+    it('self-registers verified workspace offer and binds offerId + termsVerified=true when commissionTerms is provided', async () => {
+      const db = createFakeD1([
+        `CREATE TABLE affiliate_offers (
+          id TEXT PRIMARY KEY,
+          tenant_id TEXT NOT NULL DEFAULT 'system',
+          network_id TEXT NOT NULL DEFAULT 'direct',
+          external_id TEXT,
+          program_name TEXT,
+          title TEXT,
+          category TEXT,
+          product_url TEXT,
+          destination_url TEXT,
+          status TEXT NOT NULL DEFAULT 'active',
+          commission_terms TEXT,
+          niche TEXT,
+          region TEXT,
+          language TEXT,
+          created_at INTEGER NOT NULL DEFAULT 1000,
+          updated_at INTEGER NOT NULL DEFAULT 1000
+        );`,
+      ]) as unknown as D1Database;
+      vi.mocked(dbClient.getD1).mockResolvedValue(db);
+
+      const payload: CreateNicheVideoCampaignActionInput = {
+        niche: 'crypto_global',
+        blueprintId: 'crypto_trading_bot_copy_trading',
+        productName: 'Binance Global',
+        productUrl: 'https://accounts.binance.com/register',
+        commissionTerms: '20% Spot & Futures Fee Rebate Share',
+        jurisdiction: 'US',
+        affiliateCode: 'DISCOUNT20',
+        subId: 'reels_us_01',
+        locale: 'en',
+      };
+
+      const result = await dispatchNicheVideoCampaignAction(payload);
+      expect(result.success).toBe(true);
+      expect(inngest.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'niche.video.campaign.requested',
+          data: expect.objectContaining({
+            userId: 'usr_growth_agency_99',
+            offerId: 'off_usr_growth_agency_99_cex_accounts_binance_com',
+            termsVerified: true,
           }),
         }),
       );

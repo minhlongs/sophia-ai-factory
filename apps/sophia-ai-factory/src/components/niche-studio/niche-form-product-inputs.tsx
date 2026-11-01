@@ -17,6 +17,11 @@ export interface NicheProductFormValues {
   subId: string;
   vanityCoupon: string;
   jurisdiction: string;
+  offerId?: string;
+  commissionTerms?: string;
+  targetAccount?: string;
+  maxRenderCostCents?: number;
+  locale?: 'en' | 'vi';
 }
 
 interface NicheFormProductInputsProps {
