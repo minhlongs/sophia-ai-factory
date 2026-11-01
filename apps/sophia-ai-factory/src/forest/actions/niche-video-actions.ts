@@ -25,7 +25,6 @@ import {
 } from './niche-video-action-helpers';
 
 export type { CreateNicheVideoCampaignActionInput, NicheVideoActionResponse } from './niche-video-action-helpers';
-export { getOpcGate1ReadinessAction, type OpcGate1ReadinessReport } from './opc-readiness-actions';
 
 export async function previewNicheVideoPlanAction(
   rawInput: CreateNicheVideoCampaignActionInput,
@@ -60,34 +59,40 @@ export async function dispatchNicheVideoCampaignAction(
 
     if (input.maxRenderCostCents !== undefined && input.maxRenderCostCents > PROPOSED_GATE1_VERTICAL_CAP_CENTS) {
       return {
-        success: false,
+        success: false, code: 'BUDGET_CAP_EXCEEDED',
         error: `Render budget (${input.maxRenderCostCents} cents) exceeds the proposed Gate 1 vertical ceiling of ${PROPOSED_GATE1_VERTICAL_CAP_CENTS} cents ($25.00)`,
-        code: 'BUDGET_CAP_EXCEEDED',
       };
     }
 
+    let db: D1Database | null = null;
+    try {
+      db = await getD1();
+    } catch {
+      db = null;
+    }
     let tenantId = user.id;
     try {
-      const orgId = await resolveOrgId(user.id, createServerClient());
+      const orgId = await resolveOrgId(user.id, db ?? createServerClient());
       if (orgId) tenantId = orgId;
     } catch {
-      // Fall back to user-scoped workspace
+      // Fall back to user-scoped personal workspace
+    }
+
+    const isAdmin = tenantId === user.id || (db ? await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db) : false);
+    if (!isAdmin) {
+      return { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' };
     }
 
     let resolvedOfferId = input.offerId;
     let termsVerified = false;
     try {
-      const db = await getD1();
       if (db && input.commissionTerms?.trim()) {
-        const canRegister = tenantId === user.id || (await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db));
-        if (canRegister) {
-          const upserted = await upsertWorkspaceVerifiedOffer(db, {
-            tenantId, offerId: input.offerId, networkId: input.networkId,
-            programName: planInput.productName, productUrl: planInput.productUrl,
-            commissionTerms: input.commissionTerms, niche: input.niche, jurisdiction: planInput.jurisdiction,
-          });
-          if (upserted.ok) resolvedOfferId = upserted.value.offerId;
-        }
+        const upserted = await upsertWorkspaceVerifiedOffer(db, {
+          tenantId, offerId: input.offerId, networkId: input.networkId,
+          programName: planInput.productName, productUrl: planInput.productUrl,
+          commissionTerms: input.commissionTerms, niche: input.niche, jurisdiction: planInput.jurisdiction,
+        });
+        if (upserted.ok) resolvedOfferId = upserted.value.offerId;
       }
       if (db && resolvedOfferId) {
         const eligibility = await verifyOfferEligibility(db, {

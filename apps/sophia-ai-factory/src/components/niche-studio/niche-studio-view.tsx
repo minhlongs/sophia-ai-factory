@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl';
 import {
   getOpcGate1ReadinessAction,
   type OpcGate1ReadinessReport,
-} from '@/forest/actions/niche-video-actions';
+} from '@/forest/actions/opc-readiness-actions';
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
 import { buildNicheSyndicationPackage } from '@/tree/video/syndication/niche-syndication-builder';
 import { generateHookVariants } from '@/tree/video/ab-testing/niche-hook-variant-generator';
