@@ -11,9 +11,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   previewNicheVideoPlanAction,
   dispatchNicheVideoCampaignAction,
-  getOpcGate1ReadinessAction,
   type CreateNicheVideoCampaignActionInput,
 } from '../niche-video-actions';
+import { getOpcGate1ReadinessAction } from '../opc-readiness-actions';
 import * as authSession from '@/seed/auth/better-auth-session';
 import * as dbClient from '@/seed/db/client';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';

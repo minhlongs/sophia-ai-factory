@@ -13,7 +13,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
-import { createServerClient, getD1 } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import {
@@ -37,14 +37,6 @@ export async function getOpcGate1ReadinessAction(): Promise<
       };
     }
 
-    let workspaceId = user.id;
-    try {
-      const orgId = await resolveOrgId(user.id, createServerClient());
-      if (orgId) workspaceId = orgId;
-    } catch {
-      // Fall back to user-scoped personal workspace
-    }
-
     const db = await getD1();
     if (!db) {
       return {
@@ -53,6 +45,9 @@ export async function getOpcGate1ReadinessAction(): Promise<
         code: 'DB_UNAVAILABLE',
       };
     }
+
+    const orgId = await resolveOrgId(user.id, db);
+    const workspaceId = orgId ?? user.id;
 
     const report = await evaluateOpcGate1Readiness({
       db,
