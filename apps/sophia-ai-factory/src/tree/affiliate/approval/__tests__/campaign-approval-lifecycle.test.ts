@@ -25,6 +25,7 @@ import {
   verifyAndEnforceCampaignApprovalD1,
   type ApprovalDispatchContext,
 } from '../campaign-approval-repo';
+import { beginExecutionRun, transitionRun } from '../../execution/execution-repo';
 import {
   verifyCampaignApprovalIntegrity,
   type StoredCampaignApproval,
@@ -38,6 +39,16 @@ const APPROVALS_TABLE = `CREATE TABLE agent_campaign_approvals (
   payload_json TEXT, dispatch_json TEXT, expires_at INTEGER,
   revoked_by TEXT, revoked_at INTEGER, executed_at INTEGER, rejection_reason TEXT,
   created_at INTEGER NOT NULL
+);`;
+
+const EXECUTION_RUNS_TABLE = `CREATE TABLE affiliate_execution_runs (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+  offer_id TEXT, approval_id TEXT, idempotency_key TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'approval_pending', locale TEXT DEFAULT 'en', market TEXT,
+  artifact_id TEXT, channel_id TEXT, reserved_cost_cents INTEGER DEFAULT 0,
+  actual_cost_cents INTEGER, failure_reason TEXT, provider_job_id TEXT,
+  render_attempts INTEGER DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+  UNIQUE(tenant_id, idempotency_key)
 );`;
 
 const basePayload: CampaignApprovalPayload = {
@@ -60,7 +71,7 @@ const baseDispatch: ApprovalDispatchContext = {
 };
 
 function testDb(): D1Database {
-  return createFakeD1([APPROVALS_TABLE]) as unknown as D1Database;
+  return createFakeD1([APPROVALS_TABLE, EXECUTION_RUNS_TABLE]) as unknown as D1Database;
 }
 
 describe('campaign-approval lifecycle', () => {
@@ -201,6 +212,67 @@ describe('campaign-approval lifecycle', () => {
     expect(revoked.value.status).toBe('revoked');
     expect(revoked.value.revokedBy).toBe('ceo_1');
     expect(revoked.value.revokedAtMs).not.toBeNull();
+  });
+
+  it('revokes an executed row while its bound execution run is pre-published (render_queued), but blocks if published', async () => {
+    const created = await createCampaignApproval(db, {
+      tenantId: 'ws_1', campaignId: 'camp_inflight', niche: 'saas_global',
+      jurisdiction: 'US', payload: basePayload, dispatch: baseDispatch,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const id = created.value.id;
+
+    await approveCampaignApprovalCAS(db, { tenantId: 'ws_1', approvalId: id, operatorId: 'ceo_1' });
+    const run = await beginExecutionRun(db, {
+      tenantId: 'ws_1',
+      campaignId: 'camp_inflight',
+      approvalId: id,
+      idempotencyKey: 'ws_1:camp_inflight',
+    });
+    expect(run.ok).toBe(true);
+    if (!run.ok) return;
+    await transitionRun(db, 'ws_1', run.value.id, 'approval_pending', 'render_queued', {});
+    await markApprovalExecuted(db, 'ws_1', id);
+
+    const revoked = await revokeCampaignApproval(db, {
+      tenantId: 'ws_1',
+      approvalId: id,
+      operatorId: 'ceo_1',
+      reason: 'Stop pre-publish render_queued campaign',
+    });
+    expect(revoked.ok).toBe(true);
+    if (!revoked.ok) return;
+    expect(revoked.value.status).toBe('revoked');
+
+    // Second campaign that already reached 'published' cannot be revoked.
+    const pubCreated = await createCampaignApproval(db, {
+      tenantId: 'ws_1', campaignId: 'camp_published', niche: 'saas_global',
+      jurisdiction: 'US', payload: { ...basePayload, scriptBody: 'Published campaign script' }, dispatch: baseDispatch,
+    });
+    expect(pubCreated.ok).toBe(true);
+    if (!pubCreated.ok) return;
+    const pubApprovalId = pubCreated.value.id;
+    await approveCampaignApprovalCAS(db, { tenantId: 'ws_1', approvalId: pubApprovalId, operatorId: 'ceo_1' });
+    await markApprovalExecuted(db, 'ws_1', pubApprovalId);
+    await db
+      .prepare(
+        `INSERT INTO affiliate_execution_runs
+         (id, tenant_id, campaign_id, approval_id, idempotency_key, state, created_at, updated_at)
+         VALUES ('run_pub_1', 'ws_1', 'camp_published', ?, 'ws_1:camp_published', 'published', 1, 1)`,
+      )
+      .bind(pubApprovalId)
+      .run();
+
+    const lateRevoke = await revokeCampaignApproval(db, {
+      tenantId: 'ws_1',
+      approvalId: pubApprovalId,
+      operatorId: 'ceo_1',
+      reason: 'Too late after publish',
+    });
+    expect(lateRevoke.ok).toBe(false);
+    if (lateRevoke.ok) return;
+    expect(lateRevoke.error.code).toBe('APPROVAL_STATE_CONFLICT');
   });
 
   it('marks executed idempotently; refuses non-approved rows', async () => {

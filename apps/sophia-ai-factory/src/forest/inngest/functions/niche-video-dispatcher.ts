@@ -71,7 +71,7 @@ interface NicheVideoDispatchData {
   requiresApproval?: boolean;
 }
 
-const DEFAULT_MAX_RENDER_COST_CENTS = 50;
+const DEFAULT_MAX_RENDER_COST_CENTS = 250;
 
 function buildApprovalPayload(
   data: NicheVideoDispatchData,

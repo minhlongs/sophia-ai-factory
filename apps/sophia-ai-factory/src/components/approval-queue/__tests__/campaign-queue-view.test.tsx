@@ -254,6 +254,25 @@ describe('CampaignApprovalQueue', () => {
     await waitFor(() => expect(screen.getByText('Revoked')).toBeDefined());
   });
 
+  it('revokes an executed (in-flight pre-publish) item', async () => {
+    const executedItem: CampaignApprovalItem = {
+      ...APPROVED_ITEM,
+      id: 'app_exec_1',
+      status: 'executed',
+      executedAt: Date.now() - 500,
+    };
+    mockFetchSequence([
+      listResponse([executedItem]),
+      () => Response.json({ status: 'revoked', approvalId: 'app_exec_1' }),
+      listResponse([{ ...executedItem, status: 'revoked' }]),
+    ]);
+    renderQueue();
+    await waitFor(() => expect(screen.getByText('Executed')).toBeDefined());
+    expect(screen.queryByRole('button', { name: 'Resume' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
+    await waitFor(() => expect(screen.getByText('Revoked')).toBeDefined());
+  });
+
   it('shows the rejection reason on terminal items without action buttons', async () => {
     mockFetchSequence([listResponse([REJECTED_ITEM])]);
     renderQueue();

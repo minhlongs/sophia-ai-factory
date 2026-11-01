@@ -34,7 +34,7 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
       tags: meta.hashtags.slice(0, 500),
       categoryId: '22',
     },
-    status: { privacyStatus: 'public', selfDeclaredMadeForKids: false },
+    status: { privacyStatus: meta.privacyStatus ?? 'public', selfDeclaredMadeForKids: false },
   };
 }
 

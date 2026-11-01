@@ -18,6 +18,9 @@ export async function uploadToProvider(
     const externalPostId = await pub.upload(videoUrl, {
       caption: job.caption ?? '',
       hashtags: job.hashtags_json ? JSON.parse(job.hashtags_json) : [],
+      ...(job.title ? { title: job.title } : {}),
+      ...(job.product_link ? { productLink: job.product_link } : {}),
+      ...(job.privacy_status ? { privacyStatus: job.privacy_status } : {}),
     });
     return { externalPostId, shouldRetry: false };
   } catch (uploadErr) {

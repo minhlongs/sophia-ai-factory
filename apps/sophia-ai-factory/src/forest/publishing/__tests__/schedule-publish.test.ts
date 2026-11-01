@@ -154,4 +154,28 @@ describe('schedulePublish', () => {
     const scheduledAt = args[6] as number;
     expect(scheduledAt).toBe(futureTs);
   });
+
+  it('binds privacyStatus (defaults to public, forwards unlisted)', async () => {
+    const dbDefault = makeD1();
+    await schedulePublish(dbDefault, {
+      channelId: 'ch-abc',
+      videoId: 'vid-001',
+      tenantId: 'tenant-001',
+      userId: 'user-001',
+    });
+    type PrepMock = { mock: { results: Array<{ value: { bind: { mock: { calls: unknown[][] } } } }> } };
+    const defaultArgs = (dbDefault.prepare as unknown as PrepMock).mock.results[0].value.bind.mock.calls[0];
+    expect(defaultArgs[8]).toBe('public');
+
+    const dbUnlisted = makeD1();
+    await schedulePublish(dbUnlisted, {
+      channelId: 'ch-abc',
+      videoId: 'vid-001',
+      tenantId: 'tenant-001',
+      userId: 'user-001',
+      privacyStatus: 'unlisted',
+    });
+    const unlistedArgs = (dbUnlisted.prepare as unknown as PrepMock).mock.results[0].value.bind.mock.calls[0];
+    expect(unlistedArgs[8]).toBe('unlisted');
+  });
 });
