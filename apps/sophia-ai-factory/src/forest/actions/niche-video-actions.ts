@@ -9,6 +9,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -71,25 +72,20 @@ export async function dispatchNicheVideoCampaignAction(
     try {
       const db = await getD1();
       if (db && input.commissionTerms?.trim()) {
-        const upserted = await upsertWorkspaceVerifiedOffer(db, {
-          tenantId,
-          offerId: input.offerId,
-          networkId: input.networkId,
-          programName: planInput.productName,
-          productUrl: planInput.productUrl,
-          commissionTerms: input.commissionTerms,
-          niche: input.niche,
-          jurisdiction: planInput.jurisdiction,
-        });
-        if (upserted.ok) resolvedOfferId = upserted.value.offerId;
+        const canRegister = tenantId === user.id || (await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db));
+        if (canRegister) {
+          const upserted = await upsertWorkspaceVerifiedOffer(db, {
+            tenantId, offerId: input.offerId, networkId: input.networkId,
+            programName: planInput.productName, productUrl: planInput.productUrl,
+            commissionTerms: input.commissionTerms, niche: input.niche, jurisdiction: planInput.jurisdiction,
+          });
+          if (upserted.ok) resolvedOfferId = upserted.value.offerId;
+        }
       }
       if (db && resolvedOfferId) {
         const eligibility = await verifyOfferEligibility(db, {
-          tenantId,
-          offerId: resolvedOfferId,
-          productUrl: planInput.productUrl,
-          niche: input.niche,
-          jurisdiction: planInput.jurisdiction,
+          tenantId, offerId: resolvedOfferId, productUrl: planInput.productUrl,
+          niche: input.niche, jurisdiction: planInput.jurisdiction,
         });
         termsVerified = eligibility.ok;
       }
@@ -102,23 +98,15 @@ export async function dispatchNicheVideoCampaignAction(
     await inngest.send({
       name: 'niche.video.campaign.requested',
       data: {
-        userId: user.id,
-        tenantId,
-        offerId: resolvedOfferId,
-        termsVerified,
+        userId: user.id, tenantId, offerId: resolvedOfferId, termsVerified,
         ...(input.targetAccount ? { targetAccount: input.targetAccount } : {}),
         ...(input.maxRenderCostCents !== undefined ? { maxRenderCostCents: input.maxRenderCostCents } : {}),
         idempotencyKey: `${tenantId}:${plan.planId}`,
-        niche: planInput.niche,
-        blueprintId: planInput.blueprintId,
-        productName: planInput.productName,
-        productUrl: planInput.productUrl,
-        targetAudience: planInput.targetAudience,
-        jurisdiction: planInput.jurisdiction,
-        affiliateCode: planInput.affiliateCode,
-        subId: planInput.subId,
-        vanityCoupon: planInput.vanityCoupon,
-        locale: planInput.locale,
+        niche: planInput.niche, blueprintId: planInput.blueprintId,
+        productName: planInput.productName, productUrl: planInput.productUrl,
+        targetAudience: planInput.targetAudience, jurisdiction: planInput.jurisdiction,
+        affiliateCode: planInput.affiliateCode, subId: planInput.subId,
+        vanityCoupon: planInput.vanityCoupon, locale: planInput.locale,
       },
     });
 

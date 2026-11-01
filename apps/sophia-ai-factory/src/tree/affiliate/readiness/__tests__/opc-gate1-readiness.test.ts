@@ -71,7 +71,26 @@ describe('evaluateOpcGate1Readiness', () => {
     db = createFakeD1(SCHEMA) as unknown as D1Database;
   });
 
-  it('reports all blockers when workspace lacks ADMIN role, BYOK keys, channel, and offers', async () => {
+  it('returns early with WORKSPACE_ADMIN_REQUIRED and zero workspace metadata disclosure when caller lacks ADMIN role', async () => {
+    const report = await evaluateOpcGate1Readiness({
+      db,
+      workspaceId: 'ws_1',
+      userId: 'usr_unprivileged',
+    });
+
+    expect(report.gate1ReadyForLiveProof).toBe(false);
+    expect(report.adminAuthorized).toBe(false);
+    expect(report.blockers).toEqual(['WORKSPACE_ADMIN_REQUIRED']);
+    expect(report.youtubeChannelId).toBeNull();
+    expect(report.eligibleSaasOfferIds).toEqual([]);
+    expect(report.eligibleCryptoOfferIds).toEqual([]);
+    expect(mocks.mockGetKillState).not.toHaveBeenCalled();
+  });
+
+  it('reports all downstream blockers when ADMIN caller lacks BYOK keys, channel, and offers', async () => {
+    await db
+      .prepare(`INSERT INTO org_members (id, org_id, user_id, role) VALUES ('m1', 'ws_1', 'usr_1', 'ADMIN')`)
+      .run();
     mocks.mockListProviders.mockResolvedValue([]);
     mocks.mockGetKillState.mockResolvedValue({ active: true, known: true });
 
@@ -83,7 +102,6 @@ describe('evaluateOpcGate1Readiness', () => {
 
     expect(report.gate1ReadyForLiveProof).toBe(false);
     expect(report.blockers).toEqual([
-      'WORKSPACE_ADMIN_REQUIRED',
       'KILL_SWITCH_ACTIVE_OR_UNKNOWN',
       'BYOK_VOICE_MISSING',
       'BYOK_VIDEO_MISSING',

@@ -6,7 +6,9 @@
  * @module tree/affiliate/offers/workspace-offer-upsert
  */
 
+import { createHash } from 'node:crypto';
 import { failure, type Result } from '@/seed/types/result';
+import { evaluateJurisdictionCompliance } from '@/tree/video/compliance/jurisdiction-compliance-guard';
 import {
   evaluateOfferRow,
   type OfferBlockReason,
@@ -25,25 +27,26 @@ export interface UpsertWorkspaceOfferInput {
   jurisdiction?: string;
 }
 
-function sanitizeSlug(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 32);
+function isHttpOrHttpsUrl(raw: string): boolean {
+  try {
+    const parsed = new URL(raw);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
 }
 
-function buildDeterministicOfferId(tenantId: string, niche: string, productUrl: string): string {
-  let host = 'offer';
-  try {
-    host = sanitizeSlug(new URL(productUrl).hostname) || 'offer';
-  } catch {
-    host = 'offer';
-  }
-  const tenantPart = sanitizeSlug(tenantId) || 'ws';
+export function buildWorkspaceOfferId(
+  tenantId: string,
+  niche: 'saas_global' | 'crypto_global',
+  productUrl: string,
+  customOfferId?: string,
+): string {
+  const tenantDigest = createHash('sha256').update(tenantId).digest('hex').slice(0, 12);
   const nichePart = niche === 'crypto_global' ? 'cex' : 'saas';
-  return `off_${tenantPart}_${nichePart}_${host}`;
+  const rawKey = customOfferId?.trim() || new URL(productUrl).hostname.toLowerCase();
+  const keyDigest = createHash('sha256').update(`${tenantId}:${niche}:${rawKey}`).digest('hex').slice(0, 16);
+  return `off_${tenantDigest}_${nichePart}_${keyDigest}`;
 }
 
 const UPSERT_OFFER_SQL = `INSERT INTO affiliate_offers
@@ -73,11 +76,18 @@ export async function upsertWorkspaceVerifiedOffer(
   if (!db || !input.tenantId || input.tenantId === 'system') {
     return failure('DB_UNAVAILABLE');
   }
+  if (!isHttpOrHttpsUrl(input.productUrl)) {
+    return failure('OFFER_LINK_MISMATCH');
+  }
 
-  const offerId = input.offerId?.trim() || buildDeterministicOfferId(input.tenantId, input.niche, input.productUrl);
+  const region = (input.jurisdiction ?? (input.niche === 'saas_global' ? 'GLOBAL' : '')).trim().toUpperCase();
+  if (!evaluateJurisdictionCompliance(input.niche, region).isAllowed) {
+    return failure('JURISDICTION_UNKNOWN');
+  }
+
+  const offerId = buildWorkspaceOfferId(input.tenantId, input.niche, input.productUrl, input.offerId);
   const networkId = (input.networkId ?? 'direct').trim().toLowerCase() || 'direct';
   const externalId = (input.externalId ?? offerId).trim() || offerId;
-  const region = (input.jurisdiction ?? (input.niche === 'saas_global' ? 'GLOBAL' : '')).trim().toUpperCase();
   const category = input.niche === 'crypto_global' ? 'Crypto' : 'SaaS';
 
   const precheck = evaluateOfferRow(
