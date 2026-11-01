@@ -139,7 +139,7 @@ export async function verifyPublishReady(deps: {
   let killState = { active: true, known: false };
   try { killState = await getAffiliateKillSwitchState(tenantId); } catch { killState = { active: true, known: false }; }
   const gate = evaluatePublishGate({
-    tenantId, state: run.state,
+    tenantId, state: run.state === 'publish_queued' ? 'rendered' : run.state,
     jurisdictionKnown: Boolean(payload.jurisdiction && payload.jurisdiction !== 'UNKNOWN'),
     termsVerified: Boolean(run.offerId),
     approval: {
