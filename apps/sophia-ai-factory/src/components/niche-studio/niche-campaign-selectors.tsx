@@ -7,13 +7,13 @@ import type { NicheProductFormValues } from './niche-form-product-inputs';
 export const NICHE_BLUEPRINTS = {
   saas_global: [
     { id: 'saas_problem_agitation_solution', label: 'Problem - Agitation - Solution (SOP Fix)' },
-    { id: 'saas_battle_direct_vs', label: 'Tool Battle / Direct VS Showdown' },
-    { id: 'saas_listicle_top3_stack', label: 'Fast Listicle: Top 3-5 AI SaaS Stack' },
+    { id: 'saas_tool_battle_vs', label: 'Tool Battle / Direct VS Showdown' },
+    { id: 'saas_fast_listicle_top_tools', label: 'Fast Listicle: Top 3-5 AI SaaS Stack' },
   ],
   crypto_global: [
     { id: 'crypto_fee_discount_signup_bonus', label: 'Exclusive Fee Rebate & Signup Tier Bonus (Non-Custodial)' },
-    { id: 'crypto_trading_bot_grid_dca', label: 'Evidence-Backed CEX Fee & Feature Comparison' },
-    { id: 'crypto_launchpool_staking_guide', label: 'Exchange Launchpool & Educational Referral Guide' },
+    { id: 'crypto_trading_bot_copy_trading', label: 'Evidence-Backed CEX Fee & Feature Comparison' },
+    { id: 'crypto_exchange_launchpool', label: 'Exchange Launchpool & Educational Referral Guide' },
   ],
 };
 
@@ -24,6 +24,9 @@ export const DEFAULT_SAAS_FORM_VALUES: NicheProductFormValues = {
   subId: 'aff_short_01',
   vanityCoupon: 'SAVE30',
   jurisdiction: 'GLOBAL',
+  commissionTerms: '30% Recurring MRR for 12 months (PartnerStack)',
+  maxRenderCostCents: 250,
+  locale: 'en',
 };
 
 export const DEFAULT_CRYPTO_FORM_VALUES: NicheProductFormValues = {
@@ -33,6 +36,9 @@ export const DEFAULT_CRYPTO_FORM_VALUES: NicheProductFormValues = {
   subId: 'aff_crypto_01',
   vanityCoupon: 'BONUS500',
   jurisdiction: 'US',
+  commissionTerms: '20% Spot & Futures Fee Rebate Share (Non-Custodial)',
+  maxRenderCostCents: 250,
+  locale: 'en',
 };
 
 export function NicheAndBlueprintSelector({

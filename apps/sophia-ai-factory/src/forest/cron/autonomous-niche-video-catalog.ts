@@ -35,7 +35,7 @@ export const AUTONOMOUS_DEAL_CATALOG: AutonomousNicheDeal[] = [
   },
   {
     niche: 'saas_global',
-    blueprintId: 'saas_listicle_top3_stack',
+    blueprintId: 'saas_fast_listicle_top_tools',
     productName: 'DataPulse Cloud',
     productUrl: 'https://datapulse.io/stack',
     targetAudience: 'Growth Marketers & Data Analysts',

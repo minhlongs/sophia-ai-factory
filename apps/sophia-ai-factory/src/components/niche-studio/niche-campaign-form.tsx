@@ -62,7 +62,7 @@ export function NicheCampaignForm({ onPlanGenerated, onDispatched, t }: NicheCam
       blueprintId,
       ...formValues,
       targetAudience: niche === 'saas_global' ? 'Software Engineers & Agency Owners' : 'Crypto Traders & Investors',
-      locale: 'vi' as const,
+      locale: formValues.locale ?? ('en' as const),
     };
 
     const previewRes = await previewNicheVideoPlanAction(payload);

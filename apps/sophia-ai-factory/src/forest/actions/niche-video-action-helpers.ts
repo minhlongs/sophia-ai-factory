@@ -25,6 +25,10 @@ export const createNicheVideoCampaignSchema = z.object({
   locale: z.enum(['en', 'vi']).optional().default('en'),
   /** Id of the persisted offer this campaign promotes. Verification is server-side. */
   offerId: z.string().min(1).optional(),
+  /** Sourced commission terms for self-serve workspace offer registration. */
+  commissionTerms: z.string().min(1).max(300).optional(),
+  /** Affiliate network slug (e.g. 'direct', 'partnerstack', 'impact'). */
+  networkId: z.string().min(1).max(64).optional(),
   /** Approved channel/account id; bound into the approval payload hash. */
   targetAccount: z.string().min(1).optional(),
   /** Approved render budget cap in cents; the server clamps this to the tier cap. */
