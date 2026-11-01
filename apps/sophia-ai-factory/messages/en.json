@@ -9226,7 +9226,23 @@
     "metricClicks": "Clicks",
     "metricConversions": "Conversions",
     "metricMrr": "MRR Revenue",
-    "metricRebates": "Fee Rebates"
+    "metricRebates": "Fee Rebates",
+    "commissionTerms": "Commission Terms (Self-Serve Offer)",
+    "maxRenderCostCents": "Render Budget Cap (Cents)",
+    "readinessTitle": "OPC Gate 1 Pre-Flight Readiness ($0.00)",
+    "readinessSubtitle": "Read-only safety check before live YouTube unlisted publication",
+    "readinessBadgeReady": "GATE 1 READY",
+    "readinessBadgeDraftOnly": "DRAFT / PENDING",
+    "readinessRefresh": "Re-check",
+    "readinessAdmin": "Workspace Owner / Admin",
+    "readinessKillSwitch": "Kill Switch Disarmed",
+    "readinessVoiceByok": "ElevenLabs Voice BYOK",
+    "readinessVideoByok": "HeyGen / D-ID Video BYOK",
+    "readinessYoutube": "Active YouTube Channel",
+    "readinessOffers": "Verified SaaS & Crypto Offers",
+    "readinessBudgetNotice": "Unapproved Gate 1 budget proposal: max $25.00/vertical, $50.00 total • Default $2.50/campaign (0% platform fee)",
+    "budgetCapExceededWarning": "Render budget exceeds the proposed Gate 1 vertical ceiling ($25.00 / 2500 cents).",
+    "dispatchBlockedBySafetyGate": "Campaign dispatch blocked: Workspace Admin authorization and disarmed Kill Switch are required."
   },
   "legend": {
     "title": "Title"
