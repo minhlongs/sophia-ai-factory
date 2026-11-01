@@ -34,20 +34,21 @@ async function ensureClaimedUnlistedPublishingJob(
   tenantId: string,
   runId: string,
   ctx: PublishReadyContext,
-): Promise<string> {
+): Promise<{ jobId: string; claimed: boolean }> {
   const jobId = `pub_${runId}`;
   const nowSec = Math.floor(Date.now() / 1000);
-  await db
+  const res = await db
     .prepare(
       `INSERT INTO publishing_jobs
          (id, tenant_id, video_id, channel_id, provider, status, title, caption,
           hashtags_json, product_link, privacy_status, scheduled_at, retry_count, created_at)
-       VALUES (?, ?, ?, ?, 'youtube', 'uploading', ?, ?, '["ad","affiliate"]', ?, 'unlisted', ?, 0, ?)
-       ON CONFLICT(id) DO UPDATE SET status = 'uploading' WHERE publishing_jobs.status != 'live'`,
+       VALUES (?, ?, ?, ?, 'youtube', 'uploading', ?, ?, '["ad","affiliate"]', ?, 'unlisted', ?, 4, ?)
+       ON CONFLICT(id) DO UPDATE SET status = 'uploading', retry_count = 4
+       WHERE publishing_jobs.status NOT IN ('live', 'uploading', 'processing')`,
     )
     .bind(jobId, tenantId, ctx.artifactId, ctx.channelId, ctx.title, ctx.caption, ctx.productLink, nowSec, nowSec)
     .run();
-  return jobId;
+  return { jobId, claimed: (res.meta?.changes ?? 0) > 0 };
 }
 
 export function createExecutionPublishWorker(runPublish: PublishExecutorFn = executePublishWorkflow) {
@@ -87,7 +88,10 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
             return { kind: 'blocked' as const, reason: String(queued.error) };
           }
         }
-        const jobId = await ensureClaimedUnlistedPublishingJob(db, tenantId, runId, verified);
+        const { jobId, claimed } = await ensureClaimedUnlistedPublishingJob(db, tenantId, runId, verified);
+        if (!claimed) {
+          return { kind: 'blocked' as const, reason: 'ALREADY_IN_FLIGHT' };
+        }
         return { kind: 'ready' as const, jobId, userId: verified.userId, channelId: verified.channelId };
       });
 
