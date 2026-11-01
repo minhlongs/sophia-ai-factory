@@ -219,6 +219,49 @@ describe('executionPublishWorker', () => {
     expect(lateRevoke.ok).toBe(false);
   });
 
+  it('marks publishing_jobs as failed and blocks on replay when upload fails or approval is revoked mid-queue', async () => {
+    const { approvalId, runId } = await seedRenderedRun();
+    const failExecutor = vi.fn<PublishExecutorFn>(async ({ jobId }) => ({
+      skipped: false,
+      jobId,
+      status: 'failed',
+      externalPostId: '',
+      provider: '',
+      error: 'UPLOAD_QUOTA_EXCEEDED',
+    }));
+
+    const worker = createExecutionPublishWorker(failExecutor) as unknown as { _handler: Handler };
+    const res = await worker._handler({
+      event: { data: { tenantId: 'ws_1', runId } },
+      step: mockStep,
+    });
+    expect(res.status).toBe('FAILED');
+
+    const jobRow = await db
+      .prepare(`SELECT status FROM publishing_jobs WHERE id = ?`)
+      .bind(`pub_${runId}`)
+      .first<{ status: string }>();
+    expect(jobRow?.status).toBe('failed');
+
+    // Also verify targetAccount strictness: if approval specifies a non-matching channel, block with 0 uploads.
+    await db
+      .prepare(`UPDATE publishing_channels SET id = 'ch_other', external_account_id = 'UC_other' WHERE id = 'ch_yt_1'`)
+      .run();
+    await db
+      .prepare(`UPDATE affiliate_execution_runs SET state = 'rendered' WHERE id = ?`)
+      .bind(runId)
+      .run();
+    const mismatchExecutor = vi.fn<PublishExecutorFn>();
+    const mismatchWorker = createExecutionPublishWorker(mismatchExecutor) as unknown as { _handler: Handler };
+    const mismatchRes = await mismatchWorker._handler({
+      event: { data: { tenantId: 'ws_1', runId } },
+      step: mockStep,
+    });
+    expect(mismatchRes.status).toBe('BLOCKED');
+    expect(mismatchExecutor).not.toHaveBeenCalled();
+    expect(approvalId).toBeTruthy();
+  });
+
   it('blocks rendered -> blocked with 0 uploads when the approval was revoked before publish', async () => {
     const { approvalId, runId } = await seedRenderedRun();
     const revoked = await revokeCampaignApproval(db, {

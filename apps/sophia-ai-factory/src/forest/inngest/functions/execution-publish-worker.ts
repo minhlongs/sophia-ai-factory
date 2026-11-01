@@ -29,7 +29,7 @@ import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 
 export type PublishExecutorFn = (args: ExecutePublishWorkflowArgs) => Promise<ClaimResult>;
 
-async function ensureUnlistedPublishingJob(
+async function ensureClaimedUnlistedPublishingJob(
   db: D1Database,
   tenantId: string,
   runId: string,
@@ -42,8 +42,8 @@ async function ensureUnlistedPublishingJob(
       `INSERT INTO publishing_jobs
          (id, tenant_id, video_id, channel_id, provider, status, title, caption,
           hashtags_json, product_link, privacy_status, scheduled_at, retry_count, created_at)
-       VALUES (?, ?, ?, ?, 'youtube', 'scheduled', ?, ?, '["ad","affiliate"]', ?, 'unlisted', ?, 0, ?)
-       ON CONFLICT(id) DO NOTHING`,
+       VALUES (?, ?, ?, ?, 'youtube', 'uploading', ?, ?, '["ad","affiliate"]', ?, 'unlisted', ?, 0, ?)
+       ON CONFLICT(id) DO UPDATE SET status = 'uploading' WHERE publishing_jobs.status != 'live'`,
     )
     .bind(jobId, tenantId, ctx.artifactId, ctx.channelId, ctx.title, ctx.caption, ctx.productLink, nowSec, nowSec)
     .run();
@@ -68,20 +68,26 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
         if (run.state === 'published') return { kind: 'converged' as const };
         const verified = await verifyPublishReady({ db, tenantId, run });
         if (!verified.ok) {
-          if (run.state === 'rendered') {
-            await transitionRun(db, tenantId, runId, 'rendered', 'blocked', {
+          if (run.state === 'rendered' || run.state === 'publish_queued') {
+            await db
+              .prepare(`UPDATE publishing_jobs SET status = 'failed' WHERE id = ? AND tenant_id = ?`)
+              .bind(`pub_${runId}`, tenantId)
+              .run();
+            await transitionRun(db, tenantId, runId, run.state, 'blocked', {
               failureReason: `${verified.reason}: ${verified.message}`,
             });
           }
           return { kind: 'blocked' as const, reason: verified.reason };
         }
-        const queued = await transitionRun(db, tenantId, runId, 'rendered', 'publish_queued', {
-          channelId: verified.channelId,
-        });
-        if (!queued.ok) {
-          return { kind: 'blocked' as const, reason: String(queued.error) };
+        if (run.state === 'rendered') {
+          const queued = await transitionRun(db, tenantId, runId, 'rendered', 'publish_queued', {
+            channelId: verified.channelId,
+          });
+          if (!queued.ok) {
+            return { kind: 'blocked' as const, reason: String(queued.error) };
+          }
         }
-        const jobId = await ensureUnlistedPublishingJob(db, tenantId, runId, verified);
+        const jobId = await ensureClaimedUnlistedPublishingJob(db, tenantId, runId, verified);
         return { kind: 'ready' as const, jobId, userId: verified.userId, channelId: verified.channelId };
       });
 
@@ -97,6 +103,7 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
         jobId: gate.jobId,
         tenantId,
         userId: gate.userId,
+        alreadyClaimed: true,
         step: publishStep,
         scheduleRetry: async () => {},
         refreshToken: refreshChannelToken,
@@ -117,6 +124,10 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
           return { status: 'PUBLISHED' as const, jobId: gate.jobId, externalPostId: outcome.externalPostId };
         }
         const reason = ('error' in outcome && outcome.error) || `PUBLISH_${outcome.status.toUpperCase()}`;
+        await db
+          .prepare(`UPDATE publishing_jobs SET status = 'failed' WHERE id = ? AND tenant_id = ?`)
+          .bind(gate.jobId, tenantId)
+          .run();
         await transitionRun(db, tenantId, runId, 'publish_queued', 'failed', { failureReason: reason });
         return { status: 'FAILED' as const, reason, jobId: gate.jobId };
       });
