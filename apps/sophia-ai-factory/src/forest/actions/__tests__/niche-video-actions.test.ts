@@ -17,6 +17,7 @@ import * as authSession from '@/seed/auth/better-auth-session';
 import * as dbClient from '@/seed/db/client';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import { inngest } from '@/seed/inngest/client';
+import { buildWorkspaceOfferId } from '@/tree/affiliate/offers/workspace-offer-upsert';
 
 vi.mock('@/seed/auth/better-auth-session');
 vi.mock('@/seed/db/client', () => ({
@@ -184,7 +185,11 @@ describe('Niche Video Server Actions', () => {
           name: 'niche.video.campaign.requested',
           data: expect.objectContaining({
             userId: 'usr_growth_agency_99',
-            offerId: 'off_usr_growth_agency_99_cex_accounts_binance_com',
+            offerId: buildWorkspaceOfferId(
+              'usr_growth_agency_99',
+              'crypto_global',
+              'https://accounts.binance.com/register',
+            ),
             termsVerified: true,
           }),
         }),

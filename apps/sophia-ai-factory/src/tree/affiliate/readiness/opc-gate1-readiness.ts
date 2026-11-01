@@ -2,7 +2,8 @@
  * OPC Gate 1 Pre-Flight Readiness Evaluator (Read-Only, $0.00 Spend).
  *
  * Inspects all Gate 1 prerequisites for a workspace without invoking any
- * external paid API or exposing any secret/token value.
+ * external paid API or exposing any secret/token value. Fails closed prior to
+ * reading workspace tables when the caller lacks ADMIN/OWNER authorization.
  *
  * Layer: tree/affiliate/readiness
  * @module tree/affiliate/readiness/opc-gate1-readiness
@@ -12,6 +13,7 @@ import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
 import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { evaluateOfferRow } from '@/tree/affiliate/offers/offer-eligibility';
+import { evaluateJurisdictionCompliance } from '@/tree/video/compliance/jurisdiction-compliance-guard';
 
 export interface OpcGate1ReadinessReport {
   workspaceId: string;
@@ -60,13 +62,9 @@ async function listEligibleOffersByNiche(db: D1Database, workspaceId: string) {
       const url = row.product_url || row.destination_url || '';
       const isCrypto = row.niche === 'crypto_global' || (row.category ?? '').toLowerCase().includes('crypto');
       const targetNiche = isCrypto ? 'crypto_global' : 'saas_global';
-      const checked = evaluateOfferRow(row, {
-        tenantId: workspaceId,
-        offerId: row.id,
-        productUrl: url,
-        niche: targetNiche,
-        jurisdiction: row.region ?? (targetNiche === 'saas_global' ? 'GLOBAL' : undefined),
-      });
+      const jurisdiction = row.region ?? (targetNiche === 'saas_global' ? 'GLOBAL' : '');
+      if (!evaluateJurisdictionCompliance(targetNiche, jurisdiction).isAllowed) continue;
+      const checked = evaluateOfferRow(row, { tenantId: workspaceId, offerId: row.id, productUrl: url, niche: targetNiche, jurisdiction });
       if (checked.ok) (targetNiche === 'crypto_global' ? crypto : saas).push(row.id);
     }
   } catch {
@@ -81,11 +79,18 @@ export async function evaluateOpcGate1Readiness(deps: {
   userId: string;
 }): Promise<OpcGate1ReadinessReport> {
   const { db, workspaceId, userId } = deps;
-  const blockers: string[] = [];
-
   const adminAuthorized = await hasWorkspaceRole(workspaceId, userId, 'ADMIN', db);
-  if (!adminAuthorized) blockers.push('WORKSPACE_ADMIN_REQUIRED');
+  if (!adminAuthorized) {
+    return {
+      workspaceId, userId, adminAuthorized: false, killSwitchReady: false,
+      killSwitchState: { active: true, known: false }, byokProviders: [],
+      voiceByokReady: false, videoByokReady: false, youtubeChannelReady: false,
+      youtubeChannelId: null, eligibleSaasOfferIds: [], eligibleCryptoOfferIds: [],
+      gate1ReadyForLiveProof: false, blockers: ['WORKSPACE_ADMIN_REQUIRED'],
+    };
+  }
 
+  const blockers: string[] = [];
   const killSwitchState = await getAffiliateKillSwitchState(workspaceId).catch(() => ({ active: true, known: false }));
   const killSwitchReady = !killSwitchState.active && killSwitchState.known;
   if (!killSwitchReady) blockers.push('KILL_SWITCH_ACTIVE_OR_UNKNOWN');
@@ -114,10 +119,8 @@ export async function evaluateOpcGate1Readiness(deps: {
   if (eligibleCryptoOfferIds.length === 0) blockers.push('CRYPTO_OFFER_MISSING');
 
   return {
-    workspaceId, userId, adminAuthorized, killSwitchReady, killSwitchState,
+    workspaceId, userId, adminAuthorized: true, killSwitchReady, killSwitchState,
     byokProviders, voiceByokReady, videoByokReady, youtubeChannelReady, youtubeChannelId,
-    eligibleSaasOfferIds, eligibleCryptoOfferIds,
-    gate1ReadyForLiveProof: blockers.length === 0,
-    blockers,
+    eligibleSaasOfferIds, eligibleCryptoOfferIds, gate1ReadyForLiveProof: blockers.length === 0, blockers,
   };
 }

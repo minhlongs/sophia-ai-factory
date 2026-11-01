@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import { verifyOfferEligibility } from '../offer-eligibility';
-import { upsertWorkspaceVerifiedOffer } from '../workspace-offer-upsert';
+import { buildWorkspaceOfferId, upsertWorkspaceVerifiedOffer } from '../workspace-offer-upsert';
 
 const SCHEMA = [
   `CREATE TABLE affiliate_offers (
@@ -50,7 +50,9 @@ describe('upsertWorkspaceVerifiedOffer', () => {
 
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.value.offerId).toBe('off_ws_ceo_1_cex_accounts_binance_com');
+    expect(res.value.offerId).toBe(
+      buildWorkspaceOfferId('ws_ceo_1', 'crypto_global', 'https://accounts.binance.com/register'),
+    );
 
     const check = await verifyOfferEligibility(db, {
       tenantId: 'ws_ceo_1',
@@ -62,8 +64,8 @@ describe('upsertWorkspaceVerifiedOffer', () => {
     expect(check.ok).toBe(true);
   });
 
-  it('rejects crypto CEX offer with GLOBAL/unknown jurisdiction', async () => {
-    const res = await upsertWorkspaceVerifiedOffer(db, {
+  it('rejects crypto CEX offer with GLOBAL/unknown or banned (VN/SG) jurisdiction and non-http(s) URLs', async () => {
+    const globalRes = await upsertWorkspaceVerifiedOffer(db, {
       tenantId: 'ws_ceo_1',
       programName: 'Bybit Global',
       productUrl: 'https://bybit.com/register',
@@ -71,14 +73,32 @@ describe('upsertWorkspaceVerifiedOffer', () => {
       niche: 'crypto_global',
       jurisdiction: 'GLOBAL',
     });
+    expect(globalRes.ok).toBe(false);
+    if (!globalRes.ok) expect(globalRes.error).toBe('JURISDICTION_UNKNOWN');
 
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.error).toBe('JURISDICTION_UNKNOWN');
-    }
+    const vnRes = await upsertWorkspaceVerifiedOffer(db, {
+      tenantId: 'ws_ceo_1',
+      programName: 'Bybit VN',
+      productUrl: 'https://bybit.com/register',
+      commissionTerms: '20% Fee Rebate',
+      niche: 'crypto_global',
+      jurisdiction: 'VN',
+    });
+    expect(vnRes.ok).toBe(false);
+    if (!vnRes.ok) expect(vnRes.error).toBe('JURISDICTION_UNKNOWN');
+
+    const badProtocol = await upsertWorkspaceVerifiedOffer(db, {
+      tenantId: 'ws_ceo_1',
+      programName: 'Bad Scheme',
+      productUrl: 'javascript:alert(1)',
+      commissionTerms: '20% Fee Rebate',
+      niche: 'saas_global',
+    });
+    expect(badProtocol.ok).toBe(false);
+    if (!badProtocol.ok) expect(badProtocol.error).toBe('OFFER_LINK_MISMATCH');
   });
 
-  it('rejects placeholder commission terms and blocks cross-tenant overwrite', async () => {
+  it('rejects placeholder commission terms and isolates tenant namespaces without collision', async () => {
     const badTerms = await upsertWorkspaceVerifiedOffer(db, {
       tenantId: 'ws_ceo_1',
       programName: 'Linear App',
@@ -99,15 +119,17 @@ describe('upsertWorkspaceVerifiedOffer', () => {
     });
     expect(first.ok).toBe(true);
 
-    const hijack = await upsertWorkspaceVerifiedOffer(db, {
-      tenantId: 'ws_attacker_2',
+    const secondTenant = await upsertWorkspaceVerifiedOffer(db, {
+      tenantId: 'ws_ceo_2',
       offerId: 'custom_offer_1',
-      programName: 'Attacker App',
+      programName: 'Other Tenant App',
       productUrl: 'https://linear.app',
-      commissionTerms: '90% Fake Terms',
+      commissionTerms: '40% Recurring MRR',
       niche: 'saas_global',
     });
-    expect(hijack.ok).toBe(false);
-    if (!hijack.ok) expect(hijack.error).toBe('OFFER_TENANT_MISMATCH');
+    expect(secondTenant.ok).toBe(true);
+    if (first.ok && secondTenant.ok) {
+      expect(first.value.offerId).not.toBe(secondTenant.value.offerId);
+    }
   });
 });
