@@ -12,6 +12,7 @@ export const KEY_TO_PROVIDER: Record<string, string> = {
   ANTHROPIC_API_KEY: 'anthropic',
   ELEVENLABS_API_KEY: 'elevenlabs',
   DID_API_KEY: 'd-id',
+  HEYGEN_API_KEY: 'heygen',
   MUAPI_API_KEY: 'muapi',
   REPLICATE_API_KEY: 'replicate',
   FAL_API_KEY: 'fal-ai',
@@ -22,6 +23,7 @@ export type WizardKeyConfig = {
   ANTHROPIC_API_KEY: string;
   ELEVENLABS_API_KEY: string;
   DID_API_KEY: string;
+  HEYGEN_API_KEY: string;
   MUAPI_API_KEY: string;
   REPLICATE_API_KEY: string;
   FAL_API_KEY: string;
@@ -32,6 +34,7 @@ export const INITIAL_WIZARD_CONFIG: WizardKeyConfig = {
   ANTHROPIC_API_KEY: '',
   ELEVENLABS_API_KEY: '',
   DID_API_KEY: '',
+  HEYGEN_API_KEY: '',
   MUAPI_API_KEY: '',
   REPLICATE_API_KEY: '',
   FAL_API_KEY: '',

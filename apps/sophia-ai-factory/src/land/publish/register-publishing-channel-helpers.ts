@@ -16,6 +16,7 @@ export type PublishProvider = (typeof SUPPORTED_PROVIDERS)[number];
 
 export interface RegisterChannelInput {
   userId: string;
+  tenantId?: string;
   provider: PublishProvider;
   externalAccountId: string;
   accessToken: string;
@@ -89,6 +90,7 @@ export async function insertNewPublishingChannel(
   encryptedRefreshToken: string | null,
   nowSec: number,
 ): Promise<void> {
+  const tenantId = input.tenantId?.trim() || input.userId;
   try {
     await db
       .prepare(
@@ -96,17 +98,18 @@ export async function insertNewPublishingChannel(
            id, tenant_id, user_id, provider, external_account_id,
            display_name, access_token, refresh_token, expires_at,
            status, created_at, updated_at
-         ) VALUES (?1, ?2, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'active', ?9, ?9)`,
+         ) VALUES (?1, ?2, ?10, ?3, ?4, ?5, ?6, ?7, ?8, 'active', ?9, ?9)`,
       )
       .bind(
-        channelId, input.userId, input.provider, input.externalAccountId,
+        channelId, tenantId, input.provider, input.externalAccountId,
         input.displayName ?? null, encryptedAccessToken, encryptedRefreshToken,
-        input.expiresAt ?? null, nowSec,
+        input.expiresAt ?? null, nowSec, input.userId,
       )
       .run();
   } catch (err) {
     logger.error('[register-publishing-channel] insert failed', toError(err), {
       userId: input.userId,
+      tenantId,
       provider: input.provider,
     });
     throw new RegisterChannelError('INSERT_FAILED', err instanceof Error ? err.message : 'unknown');

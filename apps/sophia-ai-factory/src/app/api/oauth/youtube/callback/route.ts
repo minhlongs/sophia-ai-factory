@@ -7,7 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { exchangeCodeForTokens, getChannelInfo } from '@/land/youtube/youtube-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -50,9 +52,11 @@ export async function GET(request: NextRequest) {
   const stateParam = searchParams.get('state');
   const errorParam = searchParams.get('error');
 
+  const appOrigin = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+
   if (errorParam) {
     logger.warn('[oauth/youtube/callback] OAuth error', { error: errorParam });
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/channels?error=oauth_denied`);
+    return NextResponse.redirect(`${appOrigin}/dashboard/niche-studio?error=oauth_denied`);
   }
 
   if (!code || !stateParam) {
@@ -78,7 +82,7 @@ export async function GET(request: NextRequest) {
     channelInfo = await getChannelInfo(tokens.access_token);
   } catch (err) {
     logger.error('[oauth/youtube/callback] Token exchange or channel info fetch failed', err instanceof Error ? err : undefined);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=connection_failed`);
+    return NextResponse.redirect(`${appOrigin}/dashboard/niche-studio?error=connection_failed`);
   }
 
   const encryptedAccess = await encryptToken(tokens.access_token);
@@ -87,7 +91,17 @@ export async function GET(request: NextRequest) {
   const expiresAt = now + tokens.expires_in;
 
   const db = createServerClient();
-  const tenantId = user.id;
+  let tenantId = user.id;
+  try {
+    const orgId = await resolveOrgId(user.id, db);
+    if (orgId) {
+      const d1 = await getD1().catch(() => null);
+      const isAdmin = d1 ? await hasWorkspaceRole(orgId, user.id, 'ADMIN', d1) : false;
+      if (isAdmin) tenantId = orgId;
+    }
+  } catch {
+    tenantId = user.id;
+  }
 
   const { data: existing } = await db
     .from('publishing_channels')
@@ -126,6 +140,6 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  logger.info('[oauth/youtube/callback] Channel connected', { userId: user.id, channelId: channelInfo.channelId });
-  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/channels?connected=youtube`);
+  logger.info('[oauth/youtube/callback] Channel connected', { userId: user.id, tenantId, channelId: channelInfo.channelId });
+  return NextResponse.redirect(`${appOrigin}/dashboard/niche-studio?connected=youtube`);
 }

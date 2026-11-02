@@ -30,6 +30,11 @@ export async function GET(request: Request): Promise<NextResponse> {
     const user = await getCurrentUserFromHeaders(request.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    if (!process.env.OAUTH_STATE_SECRET || !process.env.GOOGLE_CLIENT_ID) {
+      const origin = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+      return NextResponse.redirect(`${origin}/dashboard/niche-studio?youtube=byok_fallback`);
+    }
+
     const state = await buildSignedState(user.id);
     const authUrl = getAuthorizationUrl(state);
 
