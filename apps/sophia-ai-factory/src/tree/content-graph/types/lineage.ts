@@ -49,7 +49,7 @@ export async function getContentLineage(
 
   const derivativeResult = await db
     .prepare(
-      `SELECT * FROM derivative_assets WHERE workspace_id = ?2 AND parent_asset_id IN (SELECT id FROM content_assets WHERE project_id = ?1) ORDER BY created_at ASC`,
+      `SELECT * FROM derivative_assets WHERE workspace_id = ?2 AND parent_asset_id IN (SELECT id FROM content_assets WHERE project_id = ?1 AND workspace_id = ?2) ORDER BY created_at ASC`,
     )
     .bind(projectId, tenantWs)
     .all<DerivativeRow>();

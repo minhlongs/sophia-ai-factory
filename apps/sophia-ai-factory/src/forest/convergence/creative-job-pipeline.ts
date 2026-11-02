@@ -95,7 +95,7 @@ export function runCreativeJobVerticalSlice(
     if (st.stageId === 'ceo_approval_gate' && input.ceoDecision === 'reject') {
       const rej = repo.transitionCas({
         jobId: current.jobId, workspaceId: current.workspaceId, expectedVersion: current.version, leaseToken,
-        lifecycleStage: 'ceo_approval_gate', actualCostUsd, retryCostUsd, artifactManifest: manifest,
+        lifecycleStage: 'ceo_approval_gate', mekongJobId: ticketId, actualCostUsd, retryCostUsd, artifactManifest: manifest,
         axes: { executionOutcome: 'cancelled', businessOutcome: 'rejected' },
       });
       return rej.ok ? finalizeSliceOutput(repo, rej.value, ticketId, false) : failure(rej.error);
@@ -105,7 +105,7 @@ export function runCreativeJobVerticalSlice(
   const verificationReport = verifyMediaArtifactManifest(manifest);
   const finalStep = repo.transitionCas({
     jobId: current.jobId, workspaceId: current.workspaceId, expectedVersion: current.version, leaseToken,
-    lifecycleStage: 'converged_terminal', actualCostUsd, retryCostUsd,
+    lifecycleStage: 'converged_terminal', mekongJobId: ticketId, actualCostUsd, retryCostUsd,
     attemptNo: input.simulateCrashOnAttempt1 ? 2 : 1, artifactManifest: manifest, verificationReport,
     axes: {
       executionOutcome: 'succeeded',

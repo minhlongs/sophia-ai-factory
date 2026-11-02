@@ -16,21 +16,11 @@ export async function loadAuthorizedContentLineage(
     return auth;
   }
 
-  const lineage = await getContentLineage(auth.data.projectId);
+  const lineage = await getContentLineage(auth.data.projectId, auth.data.workspaceId);
   if (!lineage) {
     return {
       ok: false,
       response: NextResponse.json({ error: 'Content project not found' }, { status: 404 }),
-    };
-  }
-
-  if (lineage.project.workspaceId !== auth.data.workspaceId) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: 'Project does not belong to this workspace' },
-        { status: 403 },
-      ),
     };
   }
 
@@ -58,7 +48,10 @@ export async function handleContentPerformance(
     return lineage.response;
   }
 
-  const performance = await getContentPerformance(lineage.data.project.id);
+  const performance = await getContentPerformance(
+    lineage.data.project.id,
+    lineage.data.project.workspaceId,
+  );
 
   return NextResponse.json({ ok: true, data: { performance } });
 }

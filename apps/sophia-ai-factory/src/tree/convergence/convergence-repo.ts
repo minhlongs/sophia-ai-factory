@@ -93,6 +93,7 @@ export class ConvergenceLedgerRepo {
       businessOutcome: input.axes?.businessOutcome ?? current.businessOutcome,
       executionMode: input.executionMode ?? current.executionMode,
       attemptNo: input.attemptNo ?? current.attemptNo,
+      mekongJobId: input.mekongJobId !== undefined ? input.mekongJobId : current.mekongJobId,
       sideEffectUncertain: input.sideEffectUncertain ?? current.sideEffectUncertain,
       crashPreservedPath: input.crashPreservedPath !== undefined ? input.crashPreservedPath : current.crashPreservedPath,
       actualCostUsd: input.actualCostUsd ?? current.actualCostUsd,

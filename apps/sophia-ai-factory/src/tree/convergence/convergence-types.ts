@@ -111,6 +111,7 @@ export interface CasTransitionInput {
   axes?: Partial<ConvergenceAxes>;
   executionMode?: ExecutionModeBadge;
   attemptNo?: number;
+  mekongJobId?: string | null;
   sideEffectUncertain?: boolean;
   crashPreservedPath?: string | null;
   actualCostUsd?: number;
