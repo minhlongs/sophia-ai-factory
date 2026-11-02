@@ -52,7 +52,22 @@ export async function editCreativeArtifact(
   if (!hasAccess) return failure({ code: 'FORBIDDEN', message: 'Access denied to workspace' });
 
   const now = Math.floor(Date.now() / 1000);
-  await persistArtifactChanges(d1, data.assetId, user.id, data.editCount, data.changes, now);
+  const updated = await persistArtifactChanges(
+    d1,
+    data.assetId,
+    data.workspaceId,
+    user.id,
+    data.editCount,
+    data.changes,
+    now
+  );
+  if (!updated) {
+    return failure({
+      code: 'FORBIDDEN',
+      message: 'Artifact not found or does not belong to workspace',
+    });
+  }
+
   await recordAuditAndLearning(data, user.id, now);
   await emitTelemetrySafe(data);
   revalidateMissionCaches(data.missionId);

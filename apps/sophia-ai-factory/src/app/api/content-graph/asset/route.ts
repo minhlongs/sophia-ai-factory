@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import { createAsset, listAssets, newAssetId } from '@/tree/content-graph';
+import { createAsset, getAsset, getProject, listAssets, newAssetId } from '@/tree/content-graph';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { ContentStatus, ContentAsset } from '@/seed/types/creative-domain';
 
@@ -49,6 +49,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const project = await getProject(projectId, workspaceId);
+    if (!project || project.workspaceId !== workspaceId) {
+      return NextResponse.json({ error: 'Forbidden: project not found in this workspace' }, { status: 403 });
+    }
     const now = Math.floor(Date.now() / 1000);
     const asset = await createAsset({
       id: newAssetId(),
@@ -73,8 +77,9 @@ export async function GET(request: NextRequest) {
   const sp = new URL(request.url).searchParams;
   const workspaceId = sp.get('workspaceId');
   const projectId = sp.get('projectId');
-  if (!workspaceId || !projectId) {
-    return NextResponse.json({ error: 'workspaceId and projectId are required' }, { status: 400 });
+  const assetId = sp.get('id');
+  if (!workspaceId || (!projectId && !assetId)) {
+    return NextResponse.json({ error: 'workspaceId and projectId (or id) are required' }, { status: 400 });
   }
 
   if (!(await verifyWorkspaceAccess(workspaceId, user.id))) {
@@ -82,7 +87,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const assets = await listAssets(projectId);
+    if (assetId) {
+      const asset = await getAsset(assetId, workspaceId);
+      if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return NextResponse.json({ asset });
+    }
+    const project = await getProject(projectId!, workspaceId);
+    if (!project || project.workspaceId !== workspaceId) {
+      return NextResponse.json({ error: 'Forbidden: project not found in this workspace' }, { status: 403 });
+    }
+    const assets = await listAssets(projectId!, workspaceId);
     return NextResponse.json({ assets });
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });

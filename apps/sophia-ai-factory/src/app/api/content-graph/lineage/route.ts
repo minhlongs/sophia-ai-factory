@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const lineage = await getContentLineage(projectId);
+    const lineage = await getContentLineage(projectId, workspaceId);
     if (!lineage) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     return NextResponse.json(lineage);
   } catch (err) {

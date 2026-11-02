@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import { createDerivative, newAssetId } from '@/tree/content-graph';
+import { createDerivative, getAsset, newAssetId } from '@/tree/content-graph';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +43,15 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const sourceAsset = await getAsset(sourceAssetId, workspaceId);
+    if (!sourceAsset) {
+      return NextResponse.json({ error: 'Forbidden: source asset not in this workspace' }, { status: 403 });
+    }
+    const parentAsset = await getAsset(derivativeAssetId, workspaceId);
+    if (!parentAsset) {
+      return NextResponse.json({ error: 'Forbidden: derivative asset not in this workspace' }, { status: 403 });
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const derivative = await createDerivative({
       id: newAssetId(),

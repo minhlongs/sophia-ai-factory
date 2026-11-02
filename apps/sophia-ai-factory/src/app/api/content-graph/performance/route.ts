@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const performance = await getContentPerformance(projectId);
+    const performance = await getContentPerformance(projectId, workspaceId);
     return NextResponse.json({ performance });
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });

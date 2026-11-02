@@ -30,28 +30,35 @@ export interface ContentLineage {
  * Full lifecycle trace for a content project: project → assets →
  * derivatives → performance events. Used by the dashboard to show
  * what was produced and how it performed.
+ *
+ * When `workspaceId` is supplied the whole trace fails closed against
+ * cross-tenant reads: a project owned by another workspace yields null.
  */
-export async function getContentLineage(projectId: string): Promise<ContentLineage | null> {
+export async function getContentLineage(
+  projectId: string,
+  workspaceId?: string
+): Promise<ContentLineage | null> {
   const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
-  const project = await getProject(projectId);
+  const project = await getProject(projectId, workspaceId);
   if (!project) return null;
 
-  const assets = await listAssets(projectId);
+  const tenantWs = workspaceId ?? project.workspaceId;
+  const assets = await listAssets(projectId, tenantWs);
 
   const derivativeResult = await db
     .prepare(
-      `SELECT * FROM derivative_assets WHERE parent_asset_id IN (SELECT id FROM content_assets WHERE project_id = ?1) ORDER BY created_at ASC`,
+      `SELECT * FROM derivative_assets WHERE workspace_id = ?2 AND parent_asset_id IN (SELECT id FROM content_assets WHERE project_id = ?1) ORDER BY created_at ASC`,
     )
-    .bind(projectId)
+    .bind(projectId, tenantWs)
     .all<DerivativeRow>();
 
   const perfResult = await db
     .prepare(
-      `SELECT id, channel, event_type, count, value_cents, recorded_at FROM performance_events WHERE project_id = ?1 ORDER BY recorded_at DESC`,
+      `SELECT id, channel, event_type, count, value_cents, recorded_at FROM performance_events WHERE workspace_id = ?2 AND project_id = ?1 ORDER BY recorded_at DESC`,
     )
-    .bind(projectId)
+    .bind(projectId, tenantWs)
     .all<{
       id: string;
       channel: string;
@@ -79,7 +86,12 @@ export async function getContentLineage(projectId: string): Promise<ContentLinea
 /**
  * Join content performance events with the project they reference.
  */
-export async function getContentPerformance(projectId: string): Promise<
+/**
+ * Join content performance events with the project they reference.
+ * Scoped by `workspaceId` so a cross-tenant projectId yields an empty
+ * result instead of another tenant's performance data.
+ */
+export async function getContentPerformance(projectId: string, workspaceId?: string): Promise<
   Array<{
     id: string;
     channel: string;
@@ -89,7 +101,7 @@ export async function getContentPerformance(projectId: string): Promise<
     recordedAt: number;
   }>
 > {
-  const lineage = await getContentLineage(projectId);
+  const lineage = await getContentLineage(projectId, workspaceId);
   if (!lineage) return [];
   return lineage.performance;
 }

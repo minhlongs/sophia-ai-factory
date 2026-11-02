@@ -48,14 +48,26 @@ export async function createProject(project: ContentProject): Promise<ContentPro
   return project;
 }
 
-export async function getProject(id: string): Promise<ContentProject | null> {
+/**
+ * Fetch a content project by id.
+ *
+ * When `workspaceId` is supplied the lookup itself is tenant-scoped, so a
+ * cross-tenant projectId resolves to null instead of loading another
+ * workspace's project.
+ */
+export async function getProject(id: string, workspaceId?: string): Promise<ContentProject | null> {
   const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
-  const row = await db
-    .prepare(`SELECT * FROM content_projects WHERE id = ?1 LIMIT 1`)
-    .bind(id)
-    .first<ProjectRow>();
+  const row = workspaceId
+    ? await db
+        .prepare(`SELECT * FROM content_projects WHERE id = ?1 AND workspace_id = ?2 LIMIT 1`)
+        .bind(id, workspaceId)
+        .first<ProjectRow>()
+    : await db
+        .prepare(`SELECT * FROM content_projects WHERE id = ?1 LIMIT 1`)
+        .bind(id)
+        .first<ProjectRow>();
   return row ? projectRowToDomain(row) : null;
 }
 
