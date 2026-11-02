@@ -24,6 +24,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import {
   registerPublishingChannel,
   RegisterChannelError,
@@ -75,7 +78,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const result = await registerPublishingChannel({ userId: user.id, ...parsed.data });
+    let tenantId = user.id;
+    let db: D1Database | null = null;
+    try {
+      db = await getD1();
+      const orgId = await resolveOrgId(user.id, db ?? createServerClient());
+      if (orgId) tenantId = orgId;
+    } catch {
+      // Fall back to personal workspace user.id
+    }
+    const isAdmin =
+      tenantId === user.id || (db ? await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db) : false);
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
+    }
+    const result = await registerPublishingChannel({ userId: user.id, tenantId, ...parsed.data });
     return NextResponse.json(result, { status: result.alreadyExisted ? 200 : 201 });
   } catch (err) {
     if (err instanceof RegisterChannelError) {

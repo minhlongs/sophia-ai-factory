@@ -50,15 +50,16 @@ export async function registerPublishingChannel(
   const encryptedAccessToken = await encryptToken(input.accessToken);
   const encryptedRefreshToken = input.refreshToken ? await encryptToken(input.refreshToken) : null;
 
-  // Idempotency: re-register against the same (user, provider, accountId)
+  // Idempotency: re-register against the same (tenant, provider, accountId)
   // returns the existing row id instead of inserting a duplicate.
+  const tenantId = input.tenantId?.trim() || input.userId;
   const existing = await db
     .prepare(
       `SELECT id FROM publishing_channels
        WHERE tenant_id = ?1 AND provider = ?2 AND external_account_id = ?3
        LIMIT 1`,
     )
-    .bind(input.userId, input.provider, input.externalAccountId)
+    .bind(tenantId, input.provider, input.externalAccountId)
     .first<ExistingRow>();
 
   if (existing) {

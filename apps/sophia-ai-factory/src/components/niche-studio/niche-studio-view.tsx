@@ -78,11 +78,13 @@ export function NicheStudioView() {
             report={readinessReport}
             isLoading={isReadinessLoading}
             onRefresh={refreshReadiness}
+            onReportUpdated={setReadinessReport}
             t={t}
           />
           <NicheCampaignForm
             onPlanGenerated={handlePlanGenerated}
             onDispatched={handleDispatched}
+            onOfferSaved={setReadinessReport}
             readinessReport={readinessReport}
             t={t}
           />
