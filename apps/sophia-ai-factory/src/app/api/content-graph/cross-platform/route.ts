@@ -11,6 +11,7 @@ import {
   GetCrossPlatformSchema,
   PostCrossPlatformSchema,
   mapDistAssetRow,
+  verifyCrossPlatformOwnership,
   type DistAssetRow,
 } from './cross-platform-route-helpers';
 
@@ -94,34 +95,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const d1 = createServerClient();
+    if (!(await verifyCrossPlatformOwnership(d1, workspaceId, planId, assetId))) {
+      return NextResponse.json({ error: 'Forbidden: plan or asset outside workspace' }, { status: 403 });
+    }
     const now = Math.floor(Date.now() / 1000);
     const id = `dast_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
     const scheduleTime = scheduledAt ?? now;
 
     await d1
       .prepare(
-        `INSERT INTO distribution_assets (
-          id, workspace_id, plan_id, asset_id,
-          channel, platform_post_id, status, scheduled_at,
-          analytics, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO distribution_assets (id, workspace_id, plan_id, asset_id, channel, platform_post_id, status, scheduled_at, analytics, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(id, workspaceId, planId, assetId, channel, platformPostId ?? null, status, scheduleTime, JSON.stringify(analytics), now)
       .run();
 
     return NextResponse.json(
-      {
-        id,
-        workspaceId,
-        planId,
-        assetId,
-        channel,
-        platformPostId: platformPostId ?? null,
-        status,
-        scheduledAt: scheduleTime,
-        analytics,
-        createdAt: now,
-      },
+      { id, workspaceId, planId, assetId, channel, platformPostId: platformPostId ?? null, status, scheduledAt: scheduleTime, analytics, createdAt: now },
       { status: 201 }
     );
   } catch (err) {

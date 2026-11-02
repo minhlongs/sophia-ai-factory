@@ -9,6 +9,10 @@
 
 import type { CreativeMissionStatus } from '@/seed/types/creative-economy';
 import type { AgentRunRecord } from './agent-repo/types';
+import { buildDefaultWorkflowConvergenceView, type WorkflowConvergenceView } from './workflow-convergence-enricher';
+
+export type { WorkflowConvergenceView };
+export { buildDefaultWorkflowConvergenceView, enrichWorkflowConvergenceFromRecord } from './workflow-convergence-enricher';
 
 export type WorkflowMode = 'illustration' | 'verified-job';
 
@@ -53,6 +57,7 @@ export interface WorkflowView {
   ];
   totalCostCents: number;
   totalTokens: number;
+  convergence?: WorkflowConvergenceView;
 }
 
 export interface BuildVerifiedWorkflowInput {
@@ -117,5 +122,6 @@ export function buildIllustrativeWorkflowView(): WorkflowView {
     stations,
     totalCostCents: 0,
     totalTokens: 0,
+    convergence: buildDefaultWorkflowConvergenceView('LOCAL_DETERMINISTIC'),
   };
 }

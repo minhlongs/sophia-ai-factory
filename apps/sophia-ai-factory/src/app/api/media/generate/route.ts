@@ -15,7 +15,6 @@ import {
   type MediaType,
 } from '@/tree/clients/muapi-media-client'
 import { toError } from '@/seed/utils/to-error'
-import { logger } from '@/seed/utils/logger-utility'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { getD1 } from '@/seed/db/client'
@@ -97,17 +96,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    try {
-      const d1 = await getD1()
-      if (d1) {
-        const nowSec = Math.floor(Date.now() / 1000)
-        await d1
-          .prepare('INSERT OR IGNORE INTO media_jobs (id, user_id, type, model, prompt, status, created_at, requested_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
-          .bind(result.job!.id, user.id, result.job!.type, result.job!.model, parsed.data.prompt, result.job!.status, nowSec, nowSec)
-          .run()
-      }
-    } catch (err) {
-      logger.error('[media/generate] failed to persist media_jobs ownership row', toError(err))
+    const d1 = await getD1()
+    if (d1) {
+      const nowSec = Math.floor(Date.now() / 1000)
+      await d1
+        .prepare('INSERT OR IGNORE INTO media_jobs (id, user_id, type, model, prompt, status, created_at, requested_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
+        .bind(result.job!.id, user.id, result.job!.type, result.job!.model, parsed.data.prompt, result.job!.status, nowSec, nowSec)
+        .run()
     }
 
     return NextResponse.json({

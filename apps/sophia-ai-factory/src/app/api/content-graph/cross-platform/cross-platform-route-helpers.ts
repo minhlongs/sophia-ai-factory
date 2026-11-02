@@ -60,3 +60,21 @@ export function mapDistAssetRow(row: DistAssetRow) {
     createdAt: row.created_at,
   };
 }
+
+export async function verifyCrossPlatformOwnership(
+  d1: { prepare: (sql: string) => { bind: (...args: unknown[]) => { first: <T>() => Promise<T | null> } } },
+  workspaceId: string,
+  planId: string,
+  assetId: string,
+): Promise<boolean> {
+  const plan = await d1
+    .prepare('SELECT id FROM distribution_plans WHERE id = ?1 AND workspace_id = ?2')
+    .bind(planId, workspaceId)
+    .first<{ id: string }>();
+  if (!plan) return false;
+  const asset = await d1
+    .prepare('SELECT id FROM content_assets WHERE id = ?1 AND workspace_id = ?2')
+    .bind(assetId, workspaceId)
+    .first<{ id: string }>();
+  return Boolean(asset);
+}

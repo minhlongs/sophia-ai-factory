@@ -415,6 +415,8 @@ add_verify "0473_sop_installs_active_unique_index" \
   "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_sop_installs_user_listing_active'"
 add_verify "0474_reconcile_sop_marketplace_schema" \
   "SELECT name FROM sqlite_master WHERE type='table' AND name='sop_installs'"
+add_verify "0494_authoritative_job_convergence_ledger" \
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='authoritative_job_convergence_ledger'"
 
 is_critical_migration() {
   local name="$1"

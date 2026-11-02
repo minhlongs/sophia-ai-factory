@@ -3,9 +3,7 @@
 /**
  * MissionReviewPanel — the human decision surface for missions parked in
  * 'review'. Approve → completed | Request another round → iterating.
- * These are the only two legal transitions out of 'review'; the tree layer
- * remains the sole transition authority and rejects anything else
- * server-side (surfaced here as an inline error + router resync).
+ * Surfaces optional 4-axis convergence truth & HUMAN_REVIEW_REQUIRED crash alerts.
  */
 
 import React, { useState } from 'react';
@@ -13,10 +11,18 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Check, RotateCcw, ShieldCheck } from 'lucide-react';
 import { updateMissionStatus } from '@/land/creative-mission/actions';
+import type { WorkflowConvergenceView } from '@/tree/mission/workflow-convergence-enricher';
+import { ConvergenceOutcomeStrip } from './workflow-anatomy/convergence-outcome-strip';
 
 type ReviewDecision = 'completed' | 'iterating';
 
-export function MissionReviewPanel({ missionId }: { missionId: string }) {
+export function MissionReviewPanel({
+  missionId,
+  convergence,
+}: {
+  missionId: string;
+  convergence?: WorkflowConvergenceView;
+}) {
   const t = useTranslations('missionConsole');
   const router = useRouter();
   const [pendingDecision, setPendingDecision] = useState<ReviewDecision | null>(null);
@@ -35,8 +41,6 @@ export function MissionReviewPanel({ missionId }: { missionId: string }) {
           t(decision === 'completed' ? 'review.approveSuccess' : 'review.iterateSuccess')
         );
       } else {
-        // Includes INVALID_TRANSITION (another admin already decided) and
-        // FORBIDDEN — refresh resyncs the panel with server truth.
         setError(result.error.code);
       }
       router.refresh();
@@ -49,25 +53,27 @@ export function MissionReviewPanel({ missionId }: { missionId: string }) {
   };
 
   return (
-    <section className="rounded-lg border border-primary/40 bg-primary/5 p-5 shadow-sm">
+    <section className="rounded-lg border border-primary/40 bg-primary/5 p-5 shadow-sm space-y-3">
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold text-foreground">{t('review.title')}</h2>
       </div>
-      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{t('review.humanNote')}</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">{t('review.humanNote')}</p>
+
+      {convergence && <ConvergenceOutcomeStrip convergence={convergence} />}
 
       {successMessage && (
-        <div className="mt-3 rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-400">
+        <div className="rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-400">
           {successMessage}
         </div>
       )}
       {error && (
-        <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
           {t('review.actionFailed', { code: error })}
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           disabled={pendingDecision !== null}
