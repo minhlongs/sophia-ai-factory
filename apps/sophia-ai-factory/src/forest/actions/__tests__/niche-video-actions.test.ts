@@ -40,6 +40,7 @@ describe('Niche Video Server Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(dbClient.getD1).mockResolvedValue(null as unknown as D1Database);
     vi.mocked(authSession.getCurrentUser).mockResolvedValue(
       mockUser as unknown as Awaited<ReturnType<typeof authSession.getCurrentUser>>,
     );
@@ -210,6 +211,41 @@ describe('Niche Video Server Actions', () => {
       const result = await dispatchNicheVideoCampaignAction(payload);
       expect(result.success).toBe(false);
       expect(result.code).toBe('BUDGET_CAP_EXCEEDED');
+      expect(inngest.send).not.toHaveBeenCalled();
+    });
+
+    it('rejects dispatch when cumulative vertical reservations in D1 + new request exceed 2500 cents ($25.00)', async () => {
+      const db = createFakeD1([
+        `CREATE TABLE affiliate_execution_runs (
+          id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+          offer_id TEXT, approval_id TEXT, idempotency_key TEXT NOT NULL,
+          state TEXT NOT NULL DEFAULT 'render_queued', locale TEXT NOT NULL DEFAULT 'en',
+          market TEXT, artifact_id TEXT, channel_id TEXT,
+          reserved_cost_cents INTEGER NOT NULL DEFAULT 0, actual_cost_cents INTEGER,
+          failure_reason TEXT, provider_job_id TEXT, render_attempts INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL DEFAULT 1000, updated_at INTEGER NOT NULL DEFAULT 1000
+        );`,
+      ]) as unknown as D1Database;
+      await db
+        .prepare(
+          `INSERT INTO affiliate_execution_runs (id, tenant_id, campaign_id, idempotency_key, state, market, reserved_cost_cents)
+           VALUES ('run_prev_1', 'usr_growth_agency_99', 'camp_saas_1', 'idem_1', 'render_queued', 'saas_global:GLOBAL', 2400)`,
+        )
+        .run();
+      vi.mocked(dbClient.getD1).mockResolvedValue(db);
+
+      const payload: CreateNicheVideoCampaignActionInput = {
+        niche: 'saas_global',
+        blueprintId: 'saas_problem_agitation_solution',
+        productName: 'Linear App',
+        productUrl: 'https://linear.app',
+        maxRenderCostCents: 250,
+      };
+
+      const result = await dispatchNicheVideoCampaignAction(payload);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe('BUDGET_CAP_EXCEEDED');
+      expect(result.error).toContain('Cumulative saas_global budget');
       expect(inngest.send).not.toHaveBeenCalled();
     });
   });

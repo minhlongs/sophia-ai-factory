@@ -1,9 +1,9 @@
 /**
- * OPC Gate 1 Pre-Flight Readiness Card ($0.00 Read-Only Check)
+ * OPC Gate 1 Pre-Flight Config Presence Card ($0.00 Read-Only Check)
  *
- * Displays the 6 Gate 1 prerequisites (Workspace Admin, Kill Switch, Voice BYOK,
- * Video BYOK, YouTube Channel, Eligible SaaS/Crypto Offers) and the unapproved
- * proposed Gate 1 budget ceiling ($25/vertical, $50 total; $2.50/campaign default).
+ * Displays whether the 6 Gate 1 database prerequisites (Workspace Admin, Kill Switch,
+ * Voice BYOK row, Video BYOK row, YouTube Channel row, Eligible SaaS/Crypto Offers)
+ * are present at $0.00 cost, without claiming live provider auth or CEO budget sign-off.
  * @module components/niche-studio/niche-gate1-readiness-card
  */
 
@@ -26,7 +26,7 @@ export function NicheGate1ReadinessCard({
   onRefresh,
   t,
 }: NicheGate1ReadinessCardProps) {
-  const ready = Boolean(report?.gate1ReadyForLiveProof);
+  const ready = Boolean(report?.configPresentForGate1 ?? report?.gate1ReadyForLiveProof);
   const offersReady = Boolean(
     report && report.eligibleSaasOfferIds.length > 0 && report.eligibleCryptoOfferIds.length > 0,
   );

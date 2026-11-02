@@ -145,7 +145,12 @@ describe('evaluateOpcGate1Readiness', () => {
       userId: 'usr_1',
     });
 
+    expect(report.configPresentForGate1).toBe(true);
     expect(report.gate1ReadyForLiveProof).toBe(true);
+    expect(report.verificationDepth).toBe('config_presence_only');
+    expect(report.credentialsLiveVerified).toBe(false);
+    expect(report.budgetApprovedByCeo).toBe(false);
+    expect(report.readinessCheckCostCents).toBe(0);
     expect(report.blockers).toEqual([]);
     expect(report.youtubeChannelId).toBe('ch_yt_owner');
     expect(report.eligibleSaasOfferIds).toHaveLength(1);

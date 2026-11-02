@@ -28,7 +28,13 @@ export interface OpcGate1ReadinessReport {
   youtubeChannelId: string | null;
   eligibleSaasOfferIds: string[];
   eligibleCryptoOfferIds: string[];
+  /** True only when all required DB rows exist; does NOT imply live provider auth or CEO budget sign-off. */
+  configPresentForGate1: boolean;
   gate1ReadyForLiveProof: boolean;
+  verificationDepth: 'config_presence_only';
+  credentialsLiveVerified: false;
+  budgetApprovedByCeo: false;
+  readinessCheckCostCents: 0;
   blockers: string[];
 }
 
@@ -88,7 +94,10 @@ export async function evaluateOpcGate1Readiness(deps: {
       killSwitchState: { active: true, known: false }, byokProviders: [],
       voiceByokReady: false, videoByokReady: false, youtubeChannelReady: false,
       youtubeChannelId: null, eligibleSaasOfferIds: [], eligibleCryptoOfferIds: [],
-      gate1ReadyForLiveProof: false, blockers: ['WORKSPACE_ADMIN_REQUIRED'],
+      configPresentForGate1: false, gate1ReadyForLiveProof: false,
+      verificationDepth: 'config_presence_only', credentialsLiveVerified: false,
+      budgetApprovedByCeo: false, readinessCheckCostCents: 0,
+      blockers: ['WORKSPACE_ADMIN_REQUIRED'],
     };
   }
 
@@ -120,9 +129,14 @@ export async function evaluateOpcGate1Readiness(deps: {
   if (eligibleSaasOfferIds.length === 0) blockers.push('SAAS_OFFER_MISSING');
   if (eligibleCryptoOfferIds.length === 0) blockers.push('CRYPTO_OFFER_MISSING');
 
+  const configPresentForGate1 = blockers.length === 0;
   return {
     workspaceId, userId, adminAuthorized: true, killSwitchReady, killSwitchState,
     byokProviders, voiceByokReady, videoByokReady, youtubeChannelReady, youtubeChannelId,
-    eligibleSaasOfferIds, eligibleCryptoOfferIds, gate1ReadyForLiveProof: blockers.length === 0, blockers,
+    eligibleSaasOfferIds, eligibleCryptoOfferIds,
+    configPresentForGate1, gate1ReadyForLiveProof: configPresentForGate1,
+    verificationDepth: 'config_presence_only', credentialsLiveVerified: false,
+    budgetApprovedByCeo: false, readinessCheckCostCents: 0,
+    blockers,
   };
 }

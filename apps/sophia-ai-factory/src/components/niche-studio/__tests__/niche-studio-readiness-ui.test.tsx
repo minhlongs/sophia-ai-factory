@@ -49,7 +49,7 @@ describe('NicheFormProductInputs financial & offer fields', () => {
 });
 
 describe('NicheGate1ReadinessCard', () => {
-  it('renders GATE 1 READY badge and truncated YouTube channel ID when all 6 checks pass', () => {
+  it('renders readinessBadgeReady and truncated YouTube channel ID when all 6 config presence checks pass', () => {
     const onRefresh = vi.fn();
     const report: OpcGate1ReadinessReport = {
       workspaceId: 'ws_1',
@@ -64,7 +64,12 @@ describe('NicheGate1ReadinessCard', () => {
       youtubeChannelId: 'ch_youtube_owner_999999',
       eligibleSaasOfferIds: ['off_saas_1'],
       eligibleCryptoOfferIds: ['off_crypto_1'],
+      configPresentForGate1: true,
       gate1ReadyForLiveProof: true,
+      verificationDepth: 'config_presence_only',
+      credentialsLiveVerified: false,
+      budgetApprovedByCeo: false,
+      readinessCheckCostCents: 0,
       blockers: [],
     };
 

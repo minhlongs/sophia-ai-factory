@@ -9,6 +9,10 @@
  * @module tree/affiliate/execution/execution-repo
  */
 
+import {
+  PROPOSED_GATE1_TOTAL_CAP_CENTS,
+  PROPOSED_GATE1_VERTICAL_CAP_CENTS,
+} from '@/seed/config/affiliate-budget-defaults';
 import { success, failure, type Result } from '@/seed/types/result';
 import {
   hasVerifiedMedia,
@@ -17,6 +21,25 @@ import {
   type ExecutionState,
   type VerifiedArtifact,
 } from './execution-contract';
+import {
+  decodeExecutionMarket,
+  encodeExecutionMarket,
+  evaluateCumulativePilotBudget,
+  getWorkspacePilotBudgetSummary,
+  SQL_CLASSIFY_RUN_NICHE,
+  SQL_COMMITTED_RUN_PREDICATE,
+  type PilotVerticalNiche,
+  type WorkspacePilotBudgetSummary,
+} from './execution-budget-ledger';
+
+export {
+  decodeExecutionMarket,
+  encodeExecutionMarket,
+  evaluateCumulativePilotBudget,
+  getWorkspacePilotBudgetSummary,
+  type PilotVerticalNiche,
+  type WorkspacePilotBudgetSummary,
+};
 
 export interface ExecutionRunRecord {
   id: string;
@@ -28,6 +51,7 @@ export interface ExecutionRunRecord {
   state: ExecutionState;
   locale: string;
   market: string | null;
+  niche?: PilotVerticalNiche | null;
   artifactId: string | null;
   channelId: string | null;
   reservedCostCents: number;
@@ -50,6 +74,7 @@ export interface BeginRunInput {
   idempotencyKey: string;
   locale?: 'en' | 'vi';
   market?: string | null;
+  niche?: PilotVerticalNiche | null;
   reservedCostCents?: number;
   nowMs?: number;
 }
@@ -76,6 +101,7 @@ interface RunRow {
 }
 
 function toRecord(row: RunRow): ExecutionRunRecord {
+  const decoded = decodeExecutionMarket(row.market);
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -85,7 +111,8 @@ function toRecord(row: RunRow): ExecutionRunRecord {
     idempotencyKey: row.idempotency_key,
     state: row.state,
     locale: row.locale,
-    market: row.market,
+    market: decoded.market,
+    niche: decoded.niche,
     artifactId: row.artifact_id,
     channelId: row.channel_id,
     reservedCostCents: row.reserved_cost_cents,
@@ -110,8 +137,27 @@ export async function beginExecutionRun(
   if (!input.tenantId || !input.campaignId || !input.idempotencyKey) {
     return failure('TENANT_CAMPAIGN_AND_IDEMPOTENCY_KEY_REQUIRED');
   }
+  const reservedCostCents = input.reservedCostCents ?? 0;
+  if (!Number.isFinite(reservedCostCents) || reservedCostCents < 0) {
+    return failure('INVALID_RESERVED_COST');
+  }
+
   const now = input.nowMs ?? Date.now();
   const id = input.id ?? `run_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
+  const resolvedNiche: PilotVerticalNiche | null =
+    input.niche ??
+    (input.offerId?.includes('_cex_') || input.campaignId.includes('crypto')
+      ? 'crypto_global'
+      : input.offerId?.includes('_saas_') || input.campaignId.includes('saas')
+        ? 'saas_global'
+        : null);
+  const applicableCapCents = resolvedNiche
+    ? PROPOSED_GATE1_VERTICAL_CAP_CENTS
+    : PROPOSED_GATE1_TOTAL_CAP_CENTS;
+  if (reservedCostCents > applicableCapCents) {
+    return failure('BUDGET_CAP_EXCEEDED');
+  }
+  const encodedMarket = encodeExecutionMarket(input.market, resolvedNiche);
 
   try {
     await db
@@ -119,7 +165,22 @@ export async function beginExecutionRun(
         `INSERT INTO affiliate_execution_runs
           (id, tenant_id, campaign_id, offer_id, approval_id, idempotency_key, state,
            locale, market, reserved_cost_cents, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'approval_pending', ?, ?, ?, ?, ?)
+         SELECT ?, ?, ?, ?, ?, ?, 'approval_pending', ?, ?, ?, ?, ?
+         WHERE (
+           SELECT COALESCE(SUM(COALESCE(actual_cost_cents, reserved_cost_cents)), 0)
+             FROM affiliate_execution_runs
+            WHERE tenant_id = ?
+              AND ${SQL_COMMITTED_RUN_PREDICATE}
+         ) + ? <= ?
+         AND (
+           ? IS NULL OR (
+             SELECT COALESCE(SUM(COALESCE(actual_cost_cents, reserved_cost_cents)), 0)
+               FROM affiliate_execution_runs
+              WHERE tenant_id = ?
+                AND ${SQL_COMMITTED_RUN_PREDICATE}
+                AND ${SQL_CLASSIFY_RUN_NICHE} = ?
+           ) + ? <= ?
+         )
          ON CONFLICT(tenant_id, idempotency_key) DO NOTHING`,
       )
       .bind(
@@ -130,10 +191,18 @@ export async function beginExecutionRun(
         input.approvalId ?? null,
         input.idempotencyKey,
         input.locale ?? 'en',
-        input.market ?? null,
-        input.reservedCostCents ?? 0,
+        encodedMarket,
+        reservedCostCents,
         now,
         now,
+        input.tenantId,
+        reservedCostCents,
+        PROPOSED_GATE1_TOTAL_CAP_CENTS,
+        resolvedNiche,
+        input.tenantId,
+        resolvedNiche,
+        reservedCostCents,
+        PROPOSED_GATE1_VERTICAL_CAP_CENTS,
       )
       .run();
 
@@ -141,7 +210,7 @@ export async function beginExecutionRun(
       .prepare(`SELECT ${SELECT_COLUMNS} FROM affiliate_execution_runs WHERE tenant_id = ? AND idempotency_key = ?`)
       .bind(input.tenantId, input.idempotencyKey)
       .first<RunRow>();
-    if (!row) return failure('EXECUTION_RUN_READ_BACK_FAILED');
+    if (!row) return failure('BUDGET_CAP_EXCEEDED');
     return success({ ...toRecord(row), replayed: row.id !== id });
   } catch (err) {
     return failure(err instanceof Error ? err.message : String(err));

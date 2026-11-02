@@ -10,11 +10,15 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
-import { PROPOSED_GATE1_VERTICAL_CAP_CENTS } from '@/seed/config/affiliate-budget-defaults';
+import {
+  DEFAULT_MAX_RENDER_COST_CENTS,
+  PROPOSED_GATE1_VERTICAL_CAP_CENTS,
+} from '@/seed/config/affiliate-budget-defaults';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { evaluateCumulativePilotBudget } from '@/tree/affiliate/execution/execution-budget-ledger';
 import { verifyOfferEligibility } from '@/tree/affiliate/offers/offer-eligibility';
 import { upsertWorkspaceVerifiedOffer } from '@/tree/affiliate/offers/workspace-offer-upsert';
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
@@ -81,6 +85,22 @@ export async function dispatchNicheVideoCampaignAction(
     const isAdmin = tenantId === user.id || (db ? await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db) : false);
     if (!isAdmin) {
       return { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' };
+    }
+
+    if (db) {
+      const requestedCostCents = input.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS;
+      const budgetCheck = await evaluateCumulativePilotBudget(db, {
+        tenantId,
+        niche: planInput.niche,
+        requestedCostCents,
+      });
+      if (!budgetCheck.ok && budgetCheck.error.code === 'BUDGET_CAP_EXCEEDED') {
+        return {
+          success: false,
+          code: 'BUDGET_CAP_EXCEEDED',
+          error: budgetCheck.error.message,
+        };
+      }
     }
 
     let resolvedOfferId = input.offerId;
