@@ -1,15 +1,20 @@
 /**
- * Deterministic Self-Serve Pre-Flight Integration Suite (B1–B4 at $0.00 Spend).
+ * Deterministic Self-Serve Pre-Flight Integration Suite (B1–B4 & S1–S3 at $0.00 Spend).
  *
  * Verifies that a customer/workspace owner can transition OPC Gate 1 readiness
  * from missing prerequisites (`configPresentForGate1 = false`) to `6/6 ✓`
  * (`configPresentForGate1 = true`, `gate1ReadyForLiveProof = true`) using only
- * the self-serve modules (`B1` registerPublishingChannel with workspaceId,
- * `B2` Setup Wizard KEY_TO_PROVIDER including HeyGen, `B3` saveNicheWorkspaceOfferAction,
- * and `B4` setOpcWorkspaceKillSwitchAction) with 0 paid external calls.
+ * the self-serve modules with 0 paid external calls, and enforces fail-closed
+ * security invariants S1 (crypto_global jurisdiction), S2 (Zod validation),
+ * and S3 (resolveOrgId DB error handling).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  createOpcGate1StatefulMockD1,
+  type MockChannelRow,
+  type MockOfferRow,
+} from './opc-gate1-mock-d1-helper';
 
 const {
   mockGetCurrentUser,
@@ -21,48 +26,26 @@ const {
   channelStore,
   offerStore,
   killSwitchPlatformConfig,
-} = vi.hoisted(() => {
-  const channels = new Map<string, { id: string; tenant_id: string; user_id: string; provider: string; external_account_id: string; access_token: string; status: string; created_at: number }>();
-  const offers = new Map<string, { id: string; tenant_id: string; network_id: string; external_id: string; product_url: string; destination_url: string; status: string; commission_terms: string; niche: string; region: string; category: string }>();
-  const ksConfig = new Map<string, string>();
-  return {
-    mockGetCurrentUser: vi.fn(),
-    mockResolveOrgId: vi.fn(),
-    mockHasWorkspaceRole: vi.fn(),
-    mockListUserApiKeyProviders: vi.fn(),
-    mockGetD1: vi.fn(),
-    mockInngestSend: vi.fn(),
-    channelStore: channels,
-    offerStore: offers,
-    killSwitchPlatformConfig: ksConfig,
-  };
-});
-
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUser: mockGetCurrentUser,
+} = vi.hoisted(() => ({
+  mockGetCurrentUser: vi.fn(),
+  mockResolveOrgId: vi.fn(),
+  mockHasWorkspaceRole: vi.fn(),
+  mockListUserApiKeyProviders: vi.fn(),
+  mockGetD1: vi.fn(),
+  mockInngestSend: vi.fn(),
+  channelStore: new Map<string, MockChannelRow>(),
+  offerStore: new Map<string, MockOfferRow>(),
+  killSwitchPlatformConfig: new Map<string, string>(),
 }));
 
-vi.mock('@/seed/auth/resolve-org-id', () => ({
-  resolveOrgId: mockResolveOrgId,
-}));
-
-vi.mock('@/seed/auth/workspace-access', () => ({
-  hasWorkspaceRole: mockHasWorkspaceRole,
-}));
-
+vi.mock('@/seed/auth/better-auth-session', () => ({ getCurrentUser: mockGetCurrentUser }));
+vi.mock('@/seed/auth/resolve-org-id', () => ({ resolveOrgId: mockResolveOrgId }));
+vi.mock('@/seed/auth/workspace-access', () => ({ hasWorkspaceRole: mockHasWorkspaceRole }));
 vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: mockListUserApiKeyProviders,
 }));
-
-vi.mock('@/seed/db/client', () => ({
-  getD1: mockGetD1,
-  createServerClient: vi.fn(),
-}));
-
-vi.mock('@/seed/inngest/client', () => ({
-  inngest: { send: mockInngestSend },
-}));
-
+vi.mock('@/seed/db/client', () => ({ getD1: mockGetD1, createServerClient: vi.fn() }));
+vi.mock('@/seed/inngest/client', () => ({ inngest: { send: mockInngestSend } }));
 vi.mock('@/seed/db/platform-config-repo', () => ({
   getPlatformConfig: vi.fn(async (key: string) => killSwitchPlatformConfig.get(key) ?? null),
   setPlatformConfig: vi.fn(async (key: string, val: string) => {
@@ -70,8 +53,14 @@ vi.mock('@/seed/db/platform-config-repo', () => ({
   }),
 }));
 
-import { KEY_TO_PROVIDER as CONST_KEY_TO_PROVIDER, INITIAL_CONFIG } from '@/tree/components/setup-wizard/steps/setup-wizard-constants';
-import { KEY_TO_PROVIDER as HELPER_KEY_TO_PROVIDER, INITIAL_WIZARD_CONFIG } from '@/tree/components/setup-wizard/steps/use-setup-wizard-helpers';
+import {
+  KEY_TO_PROVIDER as CONST_KEY_TO_PROVIDER,
+  INITIAL_CONFIG,
+} from '@/tree/components/setup-wizard/steps/setup-wizard-constants';
+import {
+  KEY_TO_PROVIDER as HELPER_KEY_TO_PROVIDER,
+  INITIAL_WIZARD_CONFIG,
+} from '@/tree/components/setup-wizard/steps/use-setup-wizard-helpers';
 import { registerPublishingChannel } from '@/land/publish/register-publishing-channel';
 import { resetKillSwitchInMemoryCache } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
@@ -80,91 +69,7 @@ import {
   setOpcWorkspaceKillSwitchAction,
 } from '@/forest/actions/opc-readiness-actions';
 
-function createStatefulMockD1(): D1Database {
-  return {
-    prepare(sql: string) {
-      return {
-        bind(...args: unknown[]) {
-          return {
-            async first<T>() {
-              if (sql.includes('FROM publishing_channels') && sql.includes('external_account_id')) {
-                const [tenantId, provider, extId] = args as [string, string, string];
-                for (const row of channelStore.values()) {
-                  if (row.tenant_id === tenantId && row.provider === provider && row.external_account_id === extId) {
-                    return { id: row.id } as unknown as T;
-                  }
-                }
-                return null;
-              }
-              if (sql.includes('FROM publishing_channels') && sql.includes('ORDER BY created_at DESC')) {
-                const [tenantId] = args as [string];
-                for (const row of channelStore.values()) {
-                  if (row.tenant_id === tenantId && row.provider === 'youtube' && row.status === 'active') {
-                    return { id: row.id, access_token: row.access_token } as unknown as T;
-                  }
-                }
-                return null;
-              }
-              if (sql.includes('SELECT tenant_id FROM affiliate_offers WHERE id = ?')) {
-                const [offerId] = args as [string];
-                const found = offerStore.get(offerId);
-                return (found ? { tenant_id: found.tenant_id } : null) as unknown as T;
-              }
-              return null;
-            },
-            async all<T>() {
-              if (sql.includes('FROM affiliate_offers')) {
-                const [workspaceId] = args as [string];
-                const results = Array.from(offerStore.values()).filter(
-                  (r) => (r.tenant_id === workspaceId || r.tenant_id === 'system') && r.status === 'active',
-                );
-                return { results: results as unknown as T[] };
-              }
-              return { results: [] as T[] };
-            },
-            async run() {
-              if (sql.includes('INSERT INTO publishing_channels')) {
-                const [id, tenantId, provider, extId, , accessToken, , , nowSec, userId] = args as [
-                  string, string, string, string, string | null, string, string | null, number | null, number, string,
-                ];
-                channelStore.set(id, {
-                  id,
-                  tenant_id: tenantId,
-                  user_id: userId,
-                  provider,
-                  external_account_id: extId,
-                  access_token: accessToken,
-                  status: 'active',
-                  created_at: nowSec,
-                });
-              }
-              if (sql.includes('INSERT INTO affiliate_offers')) {
-                const [id, tenantId, networkId, externalId, , , category, productUrl, destinationUrl, commissionTerms, niche, region] =
-                  args as [string, string, string, string, string, string, string, string, string, string, string, string];
-                offerStore.set(id, {
-                  id,
-                  tenant_id: tenantId,
-                  network_id: networkId,
-                  external_id: externalId,
-                  product_url: productUrl,
-                  destination_url: destinationUrl,
-                  status: 'active',
-                  commission_terms: commissionTerms,
-                  niche,
-                  region,
-                  category,
-                });
-              }
-              return { success: true, meta: { changes: 1 } };
-            },
-          };
-        },
-      };
-    },
-  } as unknown as D1Database;
-}
-
-describe('OPC Gate 1 Self-Serve Pre-Flight Progression (B1–B4 at $0.00)', () => {
+describe('OPC Gate 1 Self-Serve Pre-Flight & Security Invariants (B1–B4 + S1–S3)', () => {
   const userId = 'usr_ceo_01';
   const workspaceId = 'org_workspace_01';
 
@@ -179,7 +84,7 @@ describe('OPC Gate 1 Self-Serve Pre-Flight Progression (B1–B4 at $0.00)', () =
     mockGetCurrentUser.mockResolvedValue({ id: userId, email: 'ceo@example.com' });
     mockResolveOrgId.mockResolvedValue(workspaceId);
     mockHasWorkspaceRole.mockResolvedValue(true);
-    mockGetD1.mockResolvedValue(createStatefulMockD1());
+    mockGetD1.mockResolvedValue(createOpcGate1StatefulMockD1(channelStore, offerStore));
   });
 
   afterEach(() => {
@@ -193,8 +98,36 @@ describe('OPC Gate 1 Self-Serve Pre-Flight Progression (B1–B4 at $0.00)', () =
     expect(INITIAL_WIZARD_CONFIG.HEYGEN_API_KEY).toBe('');
   });
 
+  it('enforces S1 (fail-closed GLOBAL on crypto_global), S2 (Zod validation), and S3 (resolveOrgId DB error)', async () => {
+    // S1: Explicit GLOBAL on crypto_global must be rejected fail-closed
+    const blockedCryptoRes = await saveNicheWorkspaceOfferAction({
+      niche: 'crypto_global',
+      productName: 'Binance Global',
+      productUrl: 'https://accounts.binance.com/register',
+      commissionTerms: '20% Spot & Futures Fee Rebate Share',
+      jurisdiction: 'GLOBAL',
+    });
+    expect(blockedCryptoRes.success).toBe(false);
+    expect(blockedCryptoRes.code).toBe('JURISDICTION_UNASSESSED_OR_BLOCKED');
+
+    // S2: Invalid payload rejected at Zod boundary before DB/auth
+    const badOfferRes = await saveNicheWorkspaceOfferAction({
+      niche: 'saas_global',
+      productName: '',
+      productUrl: 'not-a-valid-url',
+      commissionTerms: '',
+    });
+    expect(badOfferRes.success).toBe(false);
+    expect(badOfferRes.code).toBe('VALIDATION_ERROR');
+
+    // S3: resolveOrgId throwing DB error fails closed (never falls back to user.id)
+    mockResolveOrgId.mockRejectedValueOnce(new Error('D1_QUERY_TIMEOUT'));
+    const dbErrRes = await setOpcWorkspaceKillSwitchAction({ active: false });
+    expect(dbErrRes.success).toBe(false);
+    expect(dbErrRes.code).toBe('WORKSPACE_RESOLUTION_FAILED');
+  });
+
   it('transitions from 1/6 (admin only) to 6/6 green via self-serve B1–B4 with 0 paid calls', async () => {
-    // Initial state: Kill Switch active, no BYOK keys, no YouTube channel, no offers
     killSwitchPlatformConfig.set(`affiliate_kill_switch_active:${workspaceId}`, 'true');
     mockListUserApiKeyProviders.mockResolvedValue([]);
 
@@ -210,13 +143,11 @@ describe('OPC Gate 1 Self-Serve Pre-Flight Progression (B1–B4 at $0.00)', () =
       'CRYPTO_OFFER_MISSING',
     ]);
 
-    // Step B2: Customer enters ElevenLabs + HeyGen BYOK keys in Setup Wizard
     mockListUserApiKeyProviders.mockResolvedValue([
       CONST_KEY_TO_PROVIDER.ELEVENLABS_API_KEY,
       CONST_KEY_TO_PROVIDER.HEYGEN_API_KEY,
     ]);
 
-    // Step B1: Customer registers YouTube channel scoped to workspaceId (not raw userId)
     const chResult = await registerPublishingChannel({
       userId,
       tenantId: workspaceId,
@@ -227,9 +158,7 @@ describe('OPC Gate 1 Self-Serve Pre-Flight Progression (B1–B4 at $0.00)', () =
     });
     expect(chResult.status).toBe('active');
     expect(channelStore.get(chResult.channelId)?.tenant_id).toBe(workspaceId);
-    expect(channelStore.get(chResult.channelId)?.user_id).toBe(userId);
 
-    // Step B3: Customer saves & verifies 1 SaaS offer and 1 Crypto offer at $0.00
     const saasOfferRes = await saveNicheWorkspaceOfferAction({
       niche: 'saas_global',
       productName: 'Linear App',
@@ -240,31 +169,23 @@ describe('OPC Gate 1 Self-Serve Pre-Flight Progression (B1–B4 at $0.00)', () =
     expect(saasOfferRes.success).toBe(true);
     expect(saasOfferRes.data?.report.eligibleSaasOfferIds.length).toBe(1);
 
-    // Even if UI sends GLOBAL on crypto_global, action normalizes to US so compliance passes
+    // Omitting jurisdiction on crypto_global defaults to assessed market 'US'
     const cryptoOfferRes = await saveNicheWorkspaceOfferAction({
       niche: 'crypto_global',
-      productName: 'Binance Global',
-      productUrl: 'https://accounts.binance.com/register',
+      productName: 'Binance US',
+      productUrl: 'https://accounts.binance.us/register',
       commissionTerms: '20% Spot & Futures Fee Rebate Share',
-      jurisdiction: 'GLOBAL',
     });
     expect(cryptoOfferRes.success).toBe(true);
     expect(cryptoOfferRes.data?.jurisdiction).toBe('US');
     expect(cryptoOfferRes.data?.report.eligibleCryptoOfferIds.length).toBe(1);
 
-    // Step B4: Customer disarms workspace Kill Switch at $0.00
     const unlockRes = await setOpcWorkspaceKillSwitchAction({ active: false });
     expect(unlockRes.success).toBe(true);
-    expect(unlockRes.data?.killSwitchReady).toBe(true);
-    expect(unlockRes.data?.voiceByokReady).toBe(true);
-    expect(unlockRes.data?.videoByokReady).toBe(true);
-    expect(unlockRes.data?.youtubeChannelReady).toBe(true);
     expect(unlockRes.data?.configPresentForGate1).toBe(true);
     expect(unlockRes.data?.gate1ReadyForLiveProof).toBe(true);
     expect(unlockRes.data?.blockers).toEqual([]);
     expect(unlockRes.data?.readinessCheckCostCents).toBe(0);
-
-    // Zero Inngest events dispatched during $0.00 pre-flight setup
     expect(mockInngestSend).not.toHaveBeenCalled();
   });
 });

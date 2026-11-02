@@ -29,6 +29,7 @@ import { VideoCompliancePreviewPlayer } from './video-compliance-preview-player'
 import { NicheSyndicationPreviewCard } from './niche-syndication-preview-card';
 import { NicheHookVariantsCard } from './niche-hook-variants-card';
 import { NicheConversionStatsCard } from './niche-conversion-stats-card';
+import { CampaignApprovalQueue } from '@/components/approval-queue/campaign-queue-view';
 
 export function NicheStudioView() {
   const t = useTranslations('nicheStudio');
@@ -115,6 +116,14 @@ export function NicheStudioView() {
             selectedHookId={selectedHookId}
             onSelectHook={setSelectedHookId}
             t={t}
+          />
+        </div>
+      )}
+      {readinessReport?.workspaceId && (
+        <div className="pt-4 border-t border-border/40">
+          <CampaignApprovalQueue
+            key={`${readinessReport.workspaceId}:${dispatchedPlanId ?? 'initial'}`}
+            workspaceId={readinessReport.workspaceId}
           />
         </div>
       )}

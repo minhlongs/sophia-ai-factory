@@ -4,8 +4,8 @@
  * PATCH  — approve / reject / revoke / resume a campaign approval.
  *
  * Auth: session-based; only workspace owner/admin may resolve. The tenant is
- * the approval row's own tenant_id (verified against the caller's membership),
- * never a client-supplied value.
+ * the approval row's own tenant_id (verified against the caller's solo
+ * workspace or organization ADMIN membership), never a client-supplied value.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,13 +17,15 @@ import { getErrorMessage } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   approveCampaignApprovalCAS,
-  getCampaignApprovalById,
-  markApprovalExecuted,
   rejectCampaignApproval,
   revokeCampaignApproval,
 } from '@/tree/affiliate/approval/campaign-approval-repo';
-import { getExecutionRunByApprovalId } from '@/tree/affiliate/execution/execution-repo';
 import { sendApprovalContinuation } from '../continuation';
+import {
+  locateTenantApproval,
+  resolveApprovalError,
+  resumeContinuation,
+} from './approval-resolution-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,7 +67,8 @@ export async function PATCH(
     }
     const { tenantId } = located;
 
-    const isAuthorized = await hasWorkspaceRole(tenantId, user.id, 'ADMIN');
+    const isAuthorized =
+      tenantId === user.id || (await hasWorkspaceRole(tenantId, user.id, 'ADMIN', d1));
     if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Only workspace owner or admin can resolve approvals' },
@@ -80,7 +83,7 @@ export async function PATCH(
         operatorId: user.id,
         reason,
       });
-      if (!result.ok) return resolveError(result.error.code, result.error.message);
+      if (!result.ok) return resolveApprovalError(result.error.code, result.error.message);
       logger.info('[api/campaign-approvals] Approval rejected', { approvalId: id, tenantId });
       return NextResponse.json({ status: result.value.status, approvalId: id });
     }
@@ -92,7 +95,7 @@ export async function PATCH(
         operatorId: user.id,
         reason,
       });
-      if (!result.ok) return resolveError(result.error.code, result.error.message);
+      if (!result.ok) return resolveApprovalError(result.error.code, result.error.message);
       logger.info('[api/campaign-approvals] Approval revoked', { approvalId: id, tenantId });
       return NextResponse.json({ status: result.value.status, approvalId: id });
     }
@@ -107,14 +110,10 @@ export async function PATCH(
       approvalId: id,
       operatorId: user.id,
     });
-    if (!approved.ok) return resolveError(approved.error.code, approved.error.message);
+    if (!approved.ok) return resolveApprovalError(approved.error.code, approved.error.message);
 
     const sent = await sendApprovalContinuation(d1, tenantId, approved.value);
     if (!sent.ok) {
-      // The approval is durably granted; the continuation failed safely (no
-      // send on unverified terms). The operator can Resume after fixing terms.
-      // Roll the row back to pending ONLY when terms were never verifiable?
-      // No: the grant is a deliberate operator decision; keep it and report.
       logger.warn('[api/campaign-approvals] Approval granted but continuation not sent', {
         approvalId: id,
         tenantId,
@@ -143,82 +142,4 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
-
-/**
- * Loads the approval only through workspaces the caller belongs to. Tenant
- * comes from the row itself — a client-supplied tenant is never trusted, and
- * rows in foreign workspaces are indistinguishable from missing rows.
- */
-async function locateTenantApproval(
-  db: D1Database,
-  userId: string,
-  approvalId: string,
-): Promise<{ tenantId: string } | null> {
-  const { getUserWorkspaceIds } = await import('@/seed/auth/workspace-access');
-  const workspaceIds = await getUserWorkspaceIds(userId, db);
-  for (const wid of workspaceIds) {
-    const row = await getCampaignApprovalById(db, wid, approvalId);
-    if (row) return { tenantId: wid };
-  }
-  return null;
-}
-
-/**
- * Recovery path for approvals granted but never consumed (crash between the
- * approve-CAS and the continuation send, or a lost event). Re-checks the run
- * table before re-sending so a consumed approval is marked executed instead.
- */
-async function resumeContinuation(
-  db: D1Database,
-  tenantId: string,
-  approvalId: string,
-): Promise<Response> {
-  const approval = await getCampaignApprovalById(db, tenantId, approvalId);
-  if (!approval) {
-    return NextResponse.json({ error: 'Approval not found' }, { status: 404 });
-  }
-  if (approval.status !== 'approved') {
-    return NextResponse.json(
-      { error: `Only an approved row can be resumed (current: ${approval.status})` },
-      { status: 409 },
-    );
-  }
-  if (approval.expiresAtMs != null && Date.now() >= approval.expiresAtMs) {
-    return NextResponse.json({ error: 'Approval expired' }, { status: 410 });
-  }
-
-  const existingRun = await getExecutionRunByApprovalId(db, tenantId, approvalId);
-  if (existingRun) {
-    await markApprovalExecuted(db, tenantId, approvalId);
-    return NextResponse.json({
-      status: 'executed',
-      approvalId,
-      runId: existingRun.id,
-      runState: existingRun.state,
-      resumed: false,
-    });
-  }
-
-  const sent = await sendApprovalContinuation(db, tenantId, approval);
-  if (!sent.ok) {
-    return NextResponse.json(
-      { error: sent.message, code: sent.code, approvalId },
-      { status: sent.code === 'TERMS_UNVERIFIED' ? 422 : 502 },
-    );
-  }
-  logger.info('[api/campaign-approvals] Stuck approval resumed', { approvalId, tenantId });
-  return NextResponse.json({ status: 'approved', approvalId, resumed: true });
-}
-
-function resolveError(code: string, message: string): Response {
-  const status =
-    code === 'APPROVAL_NOT_FOUND'
-      ? 404
-      : code === 'APPROVAL_STATE_CONFLICT'
-        ? 409
-        : code === 'APPROVAL_EXPIRED'
-          ? 410
-          : 500;
-  return NextResponse.json({ error: message, code }, { status });
 }
