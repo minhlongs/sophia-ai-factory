@@ -81,8 +81,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const db = await getD1();
     const orgId = await resolveOrgId(user.id, db ?? createServerClient());
     const tenantId = orgId ?? user.id;
+    if (tenantId !== user.id && !db) {
+      return NextResponse.json(
+        { error: 'DATABASE_UNAVAILABLE', message: 'Database not available for workspace role check' },
+        { status: 503 },
+      );
+    }
     const isAdmin =
-      tenantId === user.id || (db ? await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db) : false);
+      tenantId === user.id || (await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db!));
     if (!isAdmin) {
       return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
     }

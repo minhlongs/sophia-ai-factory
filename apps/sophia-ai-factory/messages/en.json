@@ -7975,6 +7975,7 @@
       "loading": "Loading campaign approvals…",
       "loadFailed": "Could not load campaign approvals",
       "retry": "Try again",
+      "refresh": "Refresh",
       "emptyTitle": "No campaign approvals",
       "emptyDescription": "Campaigns that need a CEO decision will appear here.",
       "resume": "Resume",

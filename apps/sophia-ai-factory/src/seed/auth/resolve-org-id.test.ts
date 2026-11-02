@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { resolveOrgId, resolveOrgOwnerUserId, clearOrgIdCache, invalidateOrgIdCache } from '@/seed/auth/resolve-org-id'
+import { getFromL1OrgCache } from '@/seed/auth/org-resolver/session-org-cache'
 
 function mockD1(row: { org_id: string } | null): D1Database {
   return {
@@ -11,11 +12,11 @@ function mockD1(row: { org_id: string } | null): D1Database {
   } as unknown as D1Database
 }
 
-function throwingD1(): D1Database {
+function throwingD1(message = 'D1 down'): D1Database {
   return {
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnValue({
-        first: vi.fn().mockRejectedValue(new Error('D1 down')),
+        first: vi.fn().mockRejectedValue(new Error(message)),
       }),
     }),
   } as unknown as D1Database
@@ -45,8 +46,27 @@ describe('resolveOrgId', () => {
     expect(db.prepare).not.toHaveBeenCalled()
   })
 
-  it('returns null when D1 throws', async () => {
-    await expect(resolveOrgId('user-1', throwingD1())).resolves.toBeNull()
+  it('rethrows real D1 errors and does not poison L1 cache with null (R1)', async () => {
+    await expect(resolveOrgId('user-1', throwingD1('D1 down'))).rejects.toThrow('D1 down')
+    expect(getFromL1OrgCache('user-1')).toBeUndefined()
+  })
+
+  it('falls back across tables when D1 reports missing table in minimal test schema (R1)', async () => {
+    const prepare = vi.fn((sql: string) => ({
+      bind: vi.fn(() => ({
+        first: vi.fn(async () => {
+          if (sql.includes('org_members')) {
+            throw new Error('D1_ERROR: no such table: org_members')
+          }
+          if (sql.includes('organizations')) {
+            return { id: 'org-fallback-77' }
+          }
+          return null
+        }),
+      })),
+    }))
+    const db = { prepare } as unknown as D1Database
+    await expect(resolveOrgId('user-1', db)).resolves.toBe('org-fallback-77')
   })
 
   it('returns null when no D1 binding is available', async () => {
@@ -122,15 +142,8 @@ describe('resolveOrgOwnerUserId', () => {
     expect(db.prepare).not.toHaveBeenCalled()
   })
 
-  it('returns null when D1 throws', async () => {
-    const db = {
-      prepare: vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnValue({
-          first: vi.fn().mockRejectedValue(new Error('D1 down')),
-        }),
-      }),
-    } as unknown as D1Database
-    await expect(resolveOrgOwnerUserId('org-1', db)).resolves.toBeNull()
+  it('rethrows real D1 errors when resolving org owner (R1)', async () => {
+    await expect(resolveOrgOwnerUserId('org-1', throwingD1('D1 down'))).rejects.toThrow('D1 down')
   })
 
   it('query orders by created_at ASC + LIMIT 1 (earliest joiner is owner)', async () => {

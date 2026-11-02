@@ -185,7 +185,31 @@ describe('campaign-approval lifecycle', () => {
     expect(lateApprove.ok).toBe(false);
   });
 
-  it('revokes an approved row; revoke of a pending row is a conflict', async () => {
+  it('revokes a pending_ceo or approved row at $0.00; second revoke is a conflict (R3)', async () => {
+    const pendingCreated = await createCampaignApproval(db, {
+      tenantId: 'ws_1', campaignId: 'camp_pending_revoke', niche: 'saas_global',
+      jurisdiction: 'US', payload: basePayload, dispatch: baseDispatch,
+    });
+    expect(pendingCreated.ok).toBe(true);
+    if (!pendingCreated.ok) return;
+
+    const pendingRevoke = await revokeCampaignApproval(db, {
+      tenantId: 'ws_1', approvalId: pendingCreated.value.id, operatorId: 'ceo_1', reason: '$0.00 revoke from pending',
+    });
+    expect(pendingRevoke.ok).toBe(true);
+    if (!pendingRevoke.ok) return;
+    expect(pendingRevoke.value.status).toBe('revoked');
+    expect(pendingRevoke.value.revokedBy).toBe('ceo_1');
+    expect(pendingRevoke.value.rejectionReason).toBe('$0.00 revoke from pending');
+
+    const duplicateRevoke = await revokeCampaignApproval(db, {
+      tenantId: 'ws_1', approvalId: pendingCreated.value.id, operatorId: 'ceo_1',
+    });
+    expect(duplicateRevoke.ok).toBe(false);
+    if (!duplicateRevoke.ok) {
+      expect(duplicateRevoke.error.code).toBe('APPROVAL_STATE_CONFLICT');
+    }
+
     const created = await createCampaignApproval(db, {
       tenantId: 'ws_1', campaignId: 'camp_1', niche: 'saas_global',
       jurisdiction: 'US', payload: basePayload, dispatch: baseDispatch,
@@ -193,11 +217,6 @@ describe('campaign-approval lifecycle', () => {
     expect(created.ok).toBe(true);
     if (!created.ok) return;
     const id = created.value.id;
-
-    const earlyRevoke = await revokeCampaignApproval(db, {
-      tenantId: 'ws_1', approvalId: id, operatorId: 'ceo_1',
-    });
-    expect(earlyRevoke.ok).toBe(false);
 
     const approved = await approveCampaignApprovalCAS(db, {
       tenantId: 'ws_1', approvalId: id, operatorId: 'ceo_1',

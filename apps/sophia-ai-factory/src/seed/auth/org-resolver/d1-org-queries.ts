@@ -4,6 +4,17 @@ export async function getD1Raw(): Promise<D1Database | null> {
   return getD1();
 }
 
+export function isMissingTableError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /no such table|does not exist/i.test(msg);
+}
+
+export function rethrowUnlessMissingTable(err: unknown): void {
+  if (!isMissingTableError(err)) {
+    throw err instanceof Error ? err : new Error(String(err));
+  }
+}
+
 export async function queryFirst<T>(stmt: ReturnType<D1Database['prepare']>): Promise<T | null> {
   if (typeof stmt.first === 'function') {
     const row = await stmt.first<T>();
@@ -23,8 +34,8 @@ export async function queryOrgIdFromD1(d1: D1Database, userId: string): Promise<
       .bind(userId);
     const row = await queryFirst<{ org_id: string }>(stmt);
     if (row?.org_id) return row.org_id;
-  } catch {
-    // Continue to fallback
+  } catch (err) {
+    rethrowUnlessMissingTable(err);
   }
 
   try {
@@ -33,8 +44,8 @@ export async function queryOrgIdFromD1(d1: D1Database, userId: string): Promise<
       .bind(userId);
     const orgRow = await queryFirst<{ id: string }>(stmt);
     if (orgRow?.id) return orgRow.id;
-  } catch {
-    // Continue to user table fallback
+  } catch (err) {
+    rethrowUnlessMissingTable(err);
   }
 
   try {
@@ -43,10 +54,10 @@ export async function queryOrgIdFromD1(d1: D1Database, userId: string): Promise<
       .bind(userId);
     const userRow = await queryFirst<{ org_id: string }>(stmt);
     if (userRow?.org_id) return userRow.org_id;
-    return null;
-  } catch {
-    return null;
+  } catch (err) {
+    rethrowUnlessMissingTable(err);
   }
+  return null;
 }
 
 export async function queryOrgOwnerFromD1(d1: D1Database, orgId: string): Promise<string | null> {
@@ -61,8 +72,8 @@ export async function queryOrgOwnerFromD1(d1: D1Database, orgId: string): Promis
       .bind(orgId);
     const row = await queryFirst<{ user_id: string }>(stmt);
     if (row?.user_id) return row.user_id;
-  } catch {
-    // Continue to fallback
+  } catch (err) {
+    rethrowUnlessMissingTable(err);
   }
 
   try {
@@ -71,8 +82,8 @@ export async function queryOrgOwnerFromD1(d1: D1Database, orgId: string): Promis
       .bind(orgId);
     const orgRow = await queryFirst<{ user_id: string }>(stmt);
     if (orgRow?.user_id) return orgRow.user_id;
-    return null;
-  } catch {
-    return null;
+  } catch (err) {
+    rethrowUnlessMissingTable(err);
   }
+  return null;
 }
