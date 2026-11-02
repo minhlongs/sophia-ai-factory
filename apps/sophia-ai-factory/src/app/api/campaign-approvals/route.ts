@@ -43,7 +43,8 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
 
     const workspaceIds = await getUserWorkspaceIds(user.id, d1);
-    if (!workspaceIds.includes(workspaceId)) {
+    const isAuthorizedWorkspace = workspaceId === user.id || workspaceIds.includes(workspaceId);
+    if (!isAuthorizedWorkspace) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -51,8 +52,10 @@ export async function GET(request: NextRequest): Promise<Response> {
     const status = statusParam && (VALID_STATUSES as string[]).includes(statusParam)
       ? (statusParam as ApprovalStatus)
       : undefined;
-    const limit = Math.min(parseInt(request.nextUrl.searchParams.get('limit') || '50', 10), 100);
-    const offset = parseInt(request.nextUrl.searchParams.get('offset') || '0', 10);
+    const rawLimit = Number.parseInt(request.nextUrl.searchParams.get('limit') || '50', 10);
+    const rawOffset = Number.parseInt(request.nextUrl.searchParams.get('offset') || '0', 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 50;
+    const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
 
     const approvals = await listTenantApprovals(d1, workspaceId, { status, limit, offset });
 

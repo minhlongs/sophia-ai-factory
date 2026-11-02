@@ -21,14 +21,116 @@ import { toError } from '@/seed/utils/to-error';
 import { evaluateCumulativePilotBudget } from '@/tree/affiliate/execution/execution-budget-ledger';
 import { verifyOfferEligibility } from '@/tree/affiliate/offers/offer-eligibility';
 import { upsertWorkspaceVerifiedOffer } from '@/tree/affiliate/offers/workspace-offer-upsert';
-import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
+import type {
+  CreateNicheVideoCampaignInput,
+  NicheVideoCampaignPlan,
+} from '@/tree/video/blueprints/niche-video-service';
 import {
   validateAndBuildNichePlan,
   type CreateNicheVideoCampaignActionInput,
   type NicheVideoActionResponse,
+  type ValidatedNicheVideoActionInput,
 } from './niche-video-action-helpers';
 
 export type { CreateNicheVideoCampaignActionInput, NicheVideoActionResponse } from './niche-video-action-helpers';
+
+async function resolveDispatchContext(
+  userId: string,
+  niche: 'saas_global' | 'crypto_global',
+  maxRenderCostCents: number | undefined,
+): Promise<
+  | { ok: true; db: D1Database | null; tenantId: string }
+  | { ok: false; response: NicheVideoActionResponse<never> }
+> {
+  if (maxRenderCostCents !== undefined && maxRenderCostCents > PROPOSED_GATE1_VERTICAL_CAP_CENTS) {
+    return {
+      ok: false,
+      response: {
+        success: false,
+        code: 'BUDGET_CAP_EXCEEDED',
+        error: `Render budget (${maxRenderCostCents} cents) exceeds the proposed Gate 1 vertical ceiling of ${PROPOSED_GATE1_VERTICAL_CAP_CENTS} cents ($25.00)`,
+      },
+    };
+  }
+  const db = await getD1().catch(() => null);
+  let orgId: string | null;
+  try {
+    orgId = await resolveOrgId(userId, db ?? createServerClient());
+  } catch (err: unknown) {
+    logger.error('resolveOrgId failed in dispatchNicheVideoCampaignAction', { error: toError(err).message });
+    return {
+      ok: false,
+      response: {
+        success: false,
+        error: 'Workspace resolution failed due to database error',
+        code: 'WORKSPACE_RESOLUTION_FAILED',
+      },
+    };
+  }
+  const tenantId = orgId ?? userId;
+  const isAdmin = tenantId === userId || (db ? await hasWorkspaceRole(tenantId, userId, 'ADMIN', db) : false);
+  if (!isAdmin) {
+    return {
+      ok: false,
+      response: { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' },
+    };
+  }
+  if (db) {
+    const budgetCheck = await evaluateCumulativePilotBudget(db, {
+      tenantId,
+      niche,
+      requestedCostCents: maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
+    });
+    if (!budgetCheck.ok && budgetCheck.error.code === 'BUDGET_CAP_EXCEEDED') {
+      return {
+        ok: false,
+        response: { success: false, code: 'BUDGET_CAP_EXCEEDED', error: budgetCheck.error.message },
+      };
+    }
+  }
+  return { ok: true, db, tenantId };
+}
+
+async function resolveOfferForDispatch(
+  db: D1Database | null,
+  tenantId: string,
+  input: ValidatedNicheVideoActionInput,
+  planInput: CreateNicheVideoCampaignInput,
+): Promise<{ resolvedOfferId: string | undefined; termsVerified: boolean }> {
+  let resolvedOfferId = input.offerId;
+  let termsVerified = false;
+  if (!db) return { resolvedOfferId, termsVerified };
+  try {
+    if (input.commissionTerms?.trim()) {
+      const upserted = await upsertWorkspaceVerifiedOffer(db, {
+        tenantId,
+        offerId: input.offerId,
+        networkId: input.networkId,
+        programName: planInput.productName,
+        productUrl: planInput.productUrl,
+        commissionTerms: input.commissionTerms,
+        niche: input.niche,
+        jurisdiction: planInput.jurisdiction,
+      });
+      if (upserted.ok) resolvedOfferId = upserted.value.offerId;
+    }
+    if (resolvedOfferId) {
+      const eligibility = await verifyOfferEligibility(db, {
+        tenantId,
+        offerId: resolvedOfferId,
+        productUrl: planInput.productUrl,
+        niche: input.niche,
+        jurisdiction: planInput.jurisdiction,
+      });
+      termsVerified = eligibility.ok;
+    }
+  } catch (err) {
+    logger.warn('dispatchNicheVideoCampaignAction: offer verification unavailable', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+  return { resolvedOfferId, termsVerified };
+}
 
 export async function previewNicheVideoPlanAction(
   rawInput: CreateNicheVideoCampaignActionInput,
@@ -61,71 +163,11 @@ export async function dispatchNicheVideoCampaignAction(
     if (!built.ok) return built.response;
     const { planInput, input, plan } = built;
 
-    if (input.maxRenderCostCents !== undefined && input.maxRenderCostCents > PROPOSED_GATE1_VERTICAL_CAP_CENTS) {
-      return {
-        success: false, code: 'BUDGET_CAP_EXCEEDED',
-        error: `Render budget (${input.maxRenderCostCents} cents) exceeds the proposed Gate 1 vertical ceiling of ${PROPOSED_GATE1_VERTICAL_CAP_CENTS} cents ($25.00)`,
-      };
-    }
+    const ctx = await resolveDispatchContext(user.id, planInput.niche, input.maxRenderCostCents);
+    if (!ctx.ok) return ctx.response;
+    const { db, tenantId } = ctx;
 
-    let db: D1Database | null = null;
-    try {
-      db = await getD1();
-    } catch {
-      db = null;
-    }
-    let tenantId = user.id;
-    try {
-      const orgId = await resolveOrgId(user.id, db ?? createServerClient());
-      if (orgId) tenantId = orgId;
-    } catch {
-      // Fall back to user-scoped personal workspace
-    }
-
-    const isAdmin = tenantId === user.id || (db ? await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db) : false);
-    if (!isAdmin) {
-      return { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' };
-    }
-
-    if (db) {
-      const requestedCostCents = input.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS;
-      const budgetCheck = await evaluateCumulativePilotBudget(db, {
-        tenantId,
-        niche: planInput.niche,
-        requestedCostCents,
-      });
-      if (!budgetCheck.ok && budgetCheck.error.code === 'BUDGET_CAP_EXCEEDED') {
-        return {
-          success: false,
-          code: 'BUDGET_CAP_EXCEEDED',
-          error: budgetCheck.error.message,
-        };
-      }
-    }
-
-    let resolvedOfferId = input.offerId;
-    let termsVerified = false;
-    try {
-      if (db && input.commissionTerms?.trim()) {
-        const upserted = await upsertWorkspaceVerifiedOffer(db, {
-          tenantId, offerId: input.offerId, networkId: input.networkId,
-          programName: planInput.productName, productUrl: planInput.productUrl,
-          commissionTerms: input.commissionTerms, niche: input.niche, jurisdiction: planInput.jurisdiction,
-        });
-        if (upserted.ok) resolvedOfferId = upserted.value.offerId;
-      }
-      if (db && resolvedOfferId) {
-        const eligibility = await verifyOfferEligibility(db, {
-          tenantId, offerId: resolvedOfferId, productUrl: planInput.productUrl,
-          niche: input.niche, jurisdiction: planInput.jurisdiction,
-        });
-        termsVerified = eligibility.ok;
-      }
-    } catch (err) {
-      logger.warn('dispatchNicheVideoCampaignAction: offer verification unavailable', {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
+    const { resolvedOfferId, termsVerified } = await resolveOfferForDispatch(db, tenantId, input, planInput);
 
     await inngest.send({
       name: 'niche.video.campaign.requested',

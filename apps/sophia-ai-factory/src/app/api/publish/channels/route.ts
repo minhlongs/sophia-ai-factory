@@ -78,15 +78,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    let tenantId = user.id;
-    let db: D1Database | null = null;
-    try {
-      db = await getD1();
-      const orgId = await resolveOrgId(user.id, db ?? createServerClient());
-      if (orgId) tenantId = orgId;
-    } catch {
-      // Fall back to personal workspace user.id
-    }
+    const db = await getD1();
+    const orgId = await resolveOrgId(user.id, db ?? createServerClient());
+    const tenantId = orgId ?? user.id;
     const isAdmin =
       tenantId === user.id || (db ? await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db) : false);
     if (!isAdmin) {

@@ -2,7 +2,6 @@
  * GET /api/oauth/youtube/callback
  * YouTube / Google OAuth2 callback — exchanges code for tokens and upserts
  * a publishing_channels row with encrypted credentials.
- * Mirrors the Instagram callback flow.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -46,12 +45,34 @@ async function verifyState(state: string): Promise<{ userId: string }> {
   return { userId };
 }
 
+async function resolveOauthTenantId(
+  userId: string,
+  db: ReturnType<typeof createServerClient>,
+): Promise<
+  | { ok: true; tenantId: string }
+  | { ok: false; errorCode: 'workspace_forbidden' | 'workspace_resolution_failed' }
+> {
+  try {
+    const orgId = await resolveOrgId(userId, db);
+    if (!orgId) return { ok: true, tenantId: userId };
+    const d1 = await getD1();
+    const isAdmin = d1 ? await hasWorkspaceRole(orgId, userId, 'ADMIN', d1) : false;
+    if (!isAdmin) {
+      logger.warn('[oauth/youtube/callback] Non-admin workspace member blocked', { userId, orgId });
+      return { ok: false, errorCode: 'workspace_forbidden' };
+    }
+    return { ok: true, tenantId: orgId };
+  } catch (err) {
+    logger.error('[oauth/youtube/callback] Workspace resolution failed', err instanceof Error ? err : undefined);
+    return { ok: false, errorCode: 'workspace_resolution_failed' };
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const stateParam = searchParams.get('state');
   const errorParam = searchParams.get('error');
-
   const appOrigin = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
   if (errorParam) {
@@ -75,6 +96,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const db = createServerClient();
+  const resolved = await resolveOauthTenantId(user.id, db);
+  if (!resolved.ok) {
+    return NextResponse.redirect(`${appOrigin}/dashboard/niche-studio?error=${resolved.errorCode}`);
+  }
+  const { tenantId } = resolved;
+
   let tokens: Awaited<ReturnType<typeof exchangeCodeForTokens>>;
   let channelInfo: Awaited<ReturnType<typeof getChannelInfo>>;
   try {
@@ -89,19 +117,6 @@ export async function GET(request: NextRequest) {
   const encryptedRefresh = await encryptToken(tokens.refresh_token);
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + tokens.expires_in;
-
-  const db = createServerClient();
-  let tenantId = user.id;
-  try {
-    const orgId = await resolveOrgId(user.id, db);
-    if (orgId) {
-      const d1 = await getD1().catch(() => null);
-      const isAdmin = d1 ? await hasWorkspaceRole(orgId, user.id, 'ADMIN', d1) : false;
-      if (isAdmin) tenantId = orgId;
-    }
-  } catch {
-    tenantId = user.id;
-  }
 
   const { data: existing } = await db
     .from('publishing_channels')
