@@ -101,5 +101,11 @@ export async function generateElevenLabsVoiceover(
   });
   const estimatedDuration = Math.max(1, Math.floor(text.length / 15));
 
-  return { audio_url: audioUrl, duration: estimatedDuration, audio_buffer: audioBuffer };
+  return {
+    audio_url: audioUrl,
+    duration: estimatedDuration,
+    audio_buffer: audioBuffer,
+    provider: 'elevenlabs',
+    isMock: false,
+  };
 }

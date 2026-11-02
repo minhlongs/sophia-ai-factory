@@ -109,6 +109,7 @@ export async function sendApprovalContinuation(
         termsVerified: true,
         approvalId: approval.id,
         approvalHash: approval.approvalPayloadHash,
+        campaignId: approval.campaignId,
         ...(dispatch.targetAccount ? { targetAccount: dispatch.targetAccount } : {}),
         ...(dispatch.maxRenderCostCents !== undefined
           ? { maxRenderCostCents: dispatch.maxRenderCostCents }

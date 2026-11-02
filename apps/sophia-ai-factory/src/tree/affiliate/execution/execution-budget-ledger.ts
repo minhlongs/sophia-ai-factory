@@ -5,17 +5,19 @@
  * - Per-vertical ceiling (`saas_global` or `crypto_global`): 2500 cents ($25.00)
  * - Total pilot ceiling across all verticals: 5000 cents ($50.00)
  *
- * Reservations remain locked for active runs and for any run that has already
- * submitted a provider job (`provider_job_id IS NOT NULL`) or entered `blocked`
- * (`UNCERTAIN_OUTCOME`), and are released only when a run is `cancelled` or
- * `failed` prior to provider job submission (`provider_job_id IS NULL` and
- * `actual_cost_cents IS NULL`).
+ * Cost & Liability State Machine (5 states):
+ * 1. Pre-TTS (`state IN ('cancelled','failed')`, `provider_job_id IS NULL`, `actual_cost_cents IS NULL`, `render_attempts = 0`): 0 cents committed.
+ * 2. TTS Dispatched / Uncertain (`state = 'blocked'` / `UNCERTAIN_OUTCOME`): full `reserved_cost_cents` stays locked until reconciled.
+ * 3. TTS Completed, Render Pre-Submit Failed (`state = 'failed'`, `provider_job_id IS NULL`, `actual_cost_cents IS NOT NULL`): `actual_cost_cents` (incurred TTS cost) stays committed; unused render reserve is released.
+ * 4. Render Attempted / Uncertain (`render_attempts > 0` or `provider_job_id IS NOT NULL` or `state = 'blocked'`): full `COALESCE(actual_cost_cents, reserved_cost_cents)` stays locked.
+ * 5. Settled (`actual_cost_cents IS NOT NULL` on terminal/reconciled run): `actual_cost_cents` is committed once without double-counting `reserved_cost_cents`.
  *
  * Layer: tree/affiliate/execution
  * @module tree/affiliate/execution/execution-budget-ledger
  */
 
 import {
+  DEFAULT_TTS_RESERVE_CENTS,
   PROPOSED_GATE1_TOTAL_CAP_CENTS,
   PROPOSED_GATE1_VERTICAL_CAP_CENTS,
 } from '@/seed/config/affiliate-budget-defaults';
@@ -47,6 +49,11 @@ export interface BudgetLedgerError {
   message: string;
 }
 
+export function computeTtsReserveCents(reservedCostCents: number): number {
+  if (!Number.isFinite(reservedCostCents) || reservedCostCents <= 0) return 0;
+  return Math.min(Math.round(reservedCostCents), DEFAULT_TTS_RESERVE_CENTS);
+}
+
 export function encodeExecutionMarket(
   market: string | null | undefined,
   niche?: PilotVerticalNiche | null,
@@ -76,7 +83,7 @@ export function decodeExecutionMarket(rawMarket: string | null | undefined): {
   return { market: rawMarket, niche: null };
 }
 
-export const SQL_COMMITTED_RUN_PREDICATE = `(state NOT IN ('cancelled', 'failed') OR provider_job_id IS NOT NULL OR actual_cost_cents IS NOT NULL)`;
+export const SQL_COMMITTED_RUN_PREDICATE = `(state NOT IN ('cancelled', 'failed') OR provider_job_id IS NOT NULL OR actual_cost_cents IS NOT NULL OR COALESCE(render_attempts, 0) > 0)`;
 
 export const SQL_CLASSIFY_RUN_NICHE = `(
   CASE

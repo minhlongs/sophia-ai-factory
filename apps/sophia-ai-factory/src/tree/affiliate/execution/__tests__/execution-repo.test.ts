@@ -11,10 +11,13 @@ import { resolve } from 'node:path';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import {
   beginExecutionRun,
+  claimRenderSubmissionAttempt,
+  computeTtsReserveCents,
   getExecutionRun,
   getWorkspacePilotBudgetSummary,
   recordRenderSubmission,
   recordVerifiedArtifact,
+  settleExecutionRunCost,
   transitionRun,
 } from '../execution-repo';
 import type { VerifiedArtifact } from '../execution-contract';
@@ -329,5 +332,117 @@ describe('execution run repository', () => {
     });
     expect(cryptoOverflow.ok).toBe(false);
     if (!cryptoOverflow.ok) expect(cryptoOverflow.error).toBe('BUDGET_CAP_EXCEEDED');
+  });
+
+  it('rejects idempotency key collisions when campaignId, approvalId, or reservedCostCents differ', async () => {
+    const db = upgradedDb();
+    const first = await beginExecutionRun(db, {
+      tenantId: 'ws-idem',
+      campaignId: 'camp-original',
+      approvalId: 'app-1',
+      idempotencyKey: 'idem-shared',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+    expect(first.ok).toBe(true);
+
+    const diffCampaign = await beginExecutionRun(db, {
+      tenantId: 'ws-idem',
+      campaignId: 'camp-different',
+      approvalId: 'app-1',
+      idempotencyKey: 'idem-shared',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+    expect(diffCampaign.ok).toBe(false);
+    if (!diffCampaign.ok) expect(diffCampaign.error).toBe('IDEMPOTENCY_KEY_CAMPAIGN_MISMATCH');
+
+    const diffApproval = await beginExecutionRun(db, {
+      tenantId: 'ws-idem',
+      campaignId: 'camp-original',
+      approvalId: 'app-2',
+      idempotencyKey: 'idem-shared',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+    expect(diffApproval.ok).toBe(false);
+    if (!diffApproval.ok) expect(diffApproval.error).toBe('IDEMPOTENCY_KEY_APPROVAL_MISMATCH');
+
+    const diffCost = await beginExecutionRun(db, {
+      tenantId: 'ws-idem',
+      campaignId: 'camp-original',
+      approvalId: 'app-1',
+      idempotencyKey: 'idem-shared',
+      niche: 'saas_global',
+      reservedCostCents: 500,
+    });
+    expect(diffCost.ok).toBe(false);
+    if (!diffCost.ok) expect(diffCost.error).toBe('IDEMPOTENCY_KEY_COST_MISMATCH');
+  });
+
+  it('enforces the 5-state cost & liability machine and idempotent actual_cost_cents settlement without double-counting', async () => {
+    const db = upgradedDb();
+
+    // State 3: TTS succeeded (50c incurred), render pre-submit failed -> 50c stays committed, 200c render reserve released
+    const runTtsOnly = await beginExecutionRun(db, {
+      tenantId: 'ws-5state',
+      campaignId: 'camp-tts-only',
+      idempotencyKey: 'idem-tts-only',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+    if (!runTtsOnly.ok) throw new Error(runTtsOnly.error);
+    await transitionRun(db, 'ws-5state', runTtsOnly.value.id, 'approval_pending', 'render_queued');
+    await transitionRun(db, 'ws-5state', runTtsOnly.value.id, 'render_queued', 'failed', {
+      failureReason: 'CREDENTIALS_MISSING: HeyGen key missing after TTS succeeded',
+      actualCostCents: computeTtsReserveCents(runTtsOnly.value.reservedCostCents),
+    });
+
+    const summaryAfterTtsOnly = await getWorkspacePilotBudgetSummary(db, 'ws-5state');
+    expect(summaryAfterTtsOnly.ok).toBe(true);
+    if (summaryAfterTtsOnly.ok) {
+      expect(summaryAfterTtsOnly.value.saasCommittedCents).toBe(50);
+    }
+
+    // State 4: Pre-submit claim increments render_attempts = 1 before provider_job_id is bound;
+    // even if marked failed before settlement, full reserved_cost_cents (250c) stays locked.
+    const runUncertainSubmit = await beginExecutionRun(db, {
+      tenantId: 'ws-5state',
+      campaignId: 'camp-uncertain-submit',
+      idempotencyKey: 'idem-uncertain-submit',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+    if (!runUncertainSubmit.ok) throw new Error(runUncertainSubmit.error);
+    await transitionRun(db, 'ws-5state', runUncertainSubmit.value.id, 'approval_pending', 'render_queued');
+    const claimed = await claimRenderSubmissionAttempt(db, 'ws-5state', runUncertainSubmit.value.id);
+    expect(claimed.ok).toBe(true);
+    if (claimed.ok) expect(claimed.value.renderAttempts).toBe(1);
+
+    // Second claim while provider_job_id IS NULL fails with UNCERTAIN_PRIOR_SUBMIT
+    const secondClaim = await claimRenderSubmissionAttempt(db, 'ws-5state', runUncertainSubmit.value.id);
+    expect(secondClaim.ok).toBe(false);
+    if (!secondClaim.ok) expect(secondClaim.error).toBe('UNCERTAIN_PRIOR_SUBMIT');
+
+    const summaryWithAttempt = await getWorkspacePilotBudgetSummary(db, 'ws-5state');
+    expect(summaryWithAttempt.ok).toBe(true);
+    if (summaryWithAttempt.ok) {
+      expect(summaryWithAttempt.value.saasCommittedCents).toBe(50 + 250);
+    }
+
+    // State 5: Settle actual_cost_cents (e.g. 180c actual vs 250c reserved) -> replaces 250c with 180c once (no double count)
+    const settled1 = await settleExecutionRunCost(db, 'ws-5state', runUncertainSubmit.value.id, 180);
+    expect(settled1.ok).toBe(true);
+    if (settled1.ok) expect(settled1.value.replayed).toBe(false);
+
+    const settled2 = await settleExecutionRunCost(db, 'ws-5state', runUncertainSubmit.value.id, 180);
+    expect(settled2.ok).toBe(true);
+    if (settled2.ok) expect(settled2.value.replayed).toBe(true);
+
+    const summaryAfterSettle = await getWorkspacePilotBudgetSummary(db, 'ws-5state');
+    expect(summaryAfterSettle.ok).toBe(true);
+    if (summaryAfterSettle.ok) {
+      expect(summaryAfterSettle.value.saasCommittedCents).toBe(50 + 180);
+    }
   });
 });

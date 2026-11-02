@@ -22,6 +22,7 @@ import {
   type VerifiedArtifact,
 } from './execution-contract';
 import {
+  computeTtsReserveCents,
   decodeExecutionMarket,
   encodeExecutionMarket,
   evaluateCumulativePilotBudget,
@@ -33,6 +34,7 @@ import {
 } from './execution-budget-ledger';
 
 export {
+  computeTtsReserveCents,
   decodeExecutionMarket,
   encodeExecutionMarket,
   evaluateCumulativePilotBudget,
@@ -211,7 +213,20 @@ export async function beginExecutionRun(
       .bind(input.tenantId, input.idempotencyKey)
       .first<RunRow>();
     if (!row) return failure('BUDGET_CAP_EXCEEDED');
-    return success({ ...toRecord(row), replayed: row.id !== id });
+    const record = toRecord(row);
+    const replayed = row.id !== id;
+    if (replayed) {
+      if (record.campaignId !== input.campaignId) {
+        return failure('IDEMPOTENCY_KEY_CAMPAIGN_MISMATCH');
+      }
+      if ((input.approvalId ?? null) !== (record.approvalId ?? null) && input.approvalId !== undefined) {
+        return failure('IDEMPOTENCY_KEY_APPROVAL_MISMATCH');
+      }
+      if (input.reservedCostCents !== undefined && record.reservedCostCents !== reservedCostCents) {
+        return failure('IDEMPOTENCY_KEY_COST_MISMATCH');
+      }
+    }
+    return success({ ...record, replayed });
   } catch (err) {
     return failure(err instanceof Error ? err.message : String(err));
   }
@@ -297,6 +312,42 @@ export async function transitionRun(
 }
 
 /**
+ * Pre-submit claim for external render submission. Increments `render_attempts`
+ * from 0 to 1 BEFORE calling the external render API so that a crash or network
+ * timeout after the HTTP POST cannot cause a retry to submit a duplicate paid
+ * render job. If `render_attempts > 0` and `provider_job_id IS NULL`, a prior
+ * attempt had an uncertain outcome and must be reconciled before retrying.
+ */
+export async function claimRenderSubmissionAttempt(
+  db: D1Database,
+  tenantId: string,
+  runId: string,
+  nowMs: number = Date.now(),
+): Promise<Result<ExecutionRunRecord, 'UNCERTAIN_PRIOR_SUBMIT' | 'RENDER_SUBMISSION_CONFLICT' | 'EXECUTION_RUN_NOT_FOUND'>> {
+  const res = await db
+    .prepare(
+      `UPDATE affiliate_execution_runs
+       SET render_attempts = render_attempts + 1, updated_at = ?
+       WHERE id = ? AND tenant_id = ? AND state = 'render_queued'
+         AND provider_job_id IS NULL AND COALESCE(render_attempts, 0) = 0`,
+    )
+    .bind(nowMs, runId, tenantId)
+    .run();
+  const current = await getExecutionRun(db, tenantId, runId);
+  if (!current) return failure('EXECUTION_RUN_NOT_FOUND');
+  if ((res.meta?.changes ?? 0) === 0) {
+    if (current.providerJobId) {
+      return success({ ...current, replayed: true });
+    }
+    if (current.renderAttempts > 0) {
+      return failure('UNCERTAIN_PRIOR_SUBMIT');
+    }
+    return failure('RENDER_SUBMISSION_CONFLICT');
+  }
+  return success({ ...current, replayed: false });
+}
+
+/**
  * Binds the run to a provider job id exactly once. The worker calls this
  * immediately after submit; a concurrent worker that finds providerJobId set
  * must poll that job instead of submitting a second render.
@@ -311,7 +362,9 @@ export async function recordRenderSubmission(
   const res = await db
     .prepare(
       `UPDATE affiliate_execution_runs
-       SET provider_job_id = ?, render_attempts = render_attempts + 1, updated_at = ?
+       SET provider_job_id = ?,
+           render_attempts = CASE WHEN COALESCE(render_attempts, 0) = 0 THEN 1 ELSE render_attempts END,
+           updated_at = ?
        WHERE id = ? AND tenant_id = ? AND state = 'render_queued' AND provider_job_id IS NULL`,
     )
     .bind(providerJobId, nowMs, runId, tenantId)
@@ -326,6 +379,40 @@ export async function recordRenderSubmission(
   const current = await getExecutionRun(db, tenantId, runId);
   if (!current) return failure('EXECUTION_RUN_NOT_FOUND');
   return success({ ...current, replayed: false });
+}
+
+/**
+ * Settles a run's actual incurred cost in cents (idempotent). Once settled,
+ * the budget ledger uses `actual_cost_cents` instead of `reserved_cost_cents`
+ * so unused reservation is released without double-counting.
+ */
+export async function settleExecutionRunCost(
+  db: D1Database,
+  tenantId: string,
+  runId: string,
+  actualCostCents: number,
+  nowMs: number = Date.now(),
+): Promise<Result<ExecutionRunRecord, string>> {
+  if (!Number.isFinite(actualCostCents) || actualCostCents < 0) {
+    return failure('INVALID_ACTUAL_COST');
+  }
+  const rounded = Math.round(actualCostCents);
+  const current = await getExecutionRun(db, tenantId, runId);
+  if (!current) return failure('EXECUTION_RUN_NOT_FOUND');
+  if (current.actualCostCents === rounded) {
+    return success({ ...current, replayed: true });
+  }
+  await db
+    .prepare(
+      `UPDATE affiliate_execution_runs
+       SET actual_cost_cents = ?, updated_at = ?
+       WHERE id = ? AND tenant_id = ?`,
+    )
+    .bind(rounded, nowMs, runId, tenantId)
+    .run();
+  const updated = await getExecutionRun(db, tenantId, runId);
+  if (!updated) return failure('EXECUTION_RUN_NOT_FOUND');
+  return success({ ...updated, replayed: false });
 }
 
 /**

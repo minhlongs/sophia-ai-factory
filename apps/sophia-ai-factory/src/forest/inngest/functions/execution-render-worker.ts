@@ -21,6 +21,8 @@ import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import {
+  claimRenderSubmissionAttempt,
+  computeTtsReserveCents,
   getExecutionRun,
   recordRenderSubmission,
   recordVerifiedArtifact,
@@ -54,9 +56,19 @@ async function failRun(
   tenantId: string,
   runId: string,
   reason: string,
+  options: { preservePreRenderTtsLiability?: boolean } = {},
 ): Promise<void> {
+  let actualCostCents: number | undefined;
+  if (options.preservePreRenderTtsLiability) {
+    const current = await getExecutionRun(db, tenantId, runId);
+    if (current && current.providerJobId === null && current.actualCostCents === null) {
+      const ttsCost = computeTtsReserveCents(current.reservedCostCents);
+      if (ttsCost > 0) actualCostCents = ttsCost;
+    }
+  }
   const res = await transitionRun(db, tenantId, runId, 'render_queued', 'failed', {
     failureReason: reason,
+    ...(actualCostCents !== undefined ? { actualCostCents } : {}),
   });
   if (!res.ok) {
     logger.warn('executionRenderWorker: could not record run failure', {
@@ -123,7 +135,11 @@ async function recordPreconditionFailure(
   }
   if (recordable) {
     const db = await getD1();
-    if (db) await failRun(db, tenantId, runId, `${verified.code}: ${verified.message}`);
+    if (db) {
+      await failRun(db, tenantId, runId, `${verified.code}: ${verified.message}`, {
+        preservePreRenderTtsLiability: true,
+      });
+    }
   }
   return { status: 'FAILED', reason: verified.code };
 }
@@ -142,16 +158,22 @@ async function recordTerminalAndThrow(
     if (!res.ok) logger.warn('executionRenderWorker: could not record run block', { runId });
     throw new Error(`RENDER_BLOCKED: ${message}`);
   }
-  await failRun(db, tenantId, runId, `${code}: ${message}`);
+  await failRun(db, tenantId, runId, `${code}: ${message}`, {
+    preservePreRenderTtsLiability: true,
+  });
   throw new Error(`${code}: ${message}`);
 }
+
+type SubmitStepResult =
+  | { kind: 'submitted'; providerJobId: string; replayed: boolean }
+  | { kind: 'blocked_uncertain'; reason: 'UNCERTAIN_OUTCOME' };
 
 async function submitRenderStep(
   adapter: RenderAdapter,
   tenantId: string,
   runId: string,
   existingJobId: string | null,
-): Promise<{ providerJobId: string; replayed: boolean }> {
+): Promise<SubmitStepResult> {
   const db = await getD1();
   if (!db) throw new Error('DB_UNAVAILABLE');
   // TOCTOU re-read: the run must still be queued, and a job bound by a
@@ -162,12 +184,31 @@ async function submitRenderStep(
   }
   const boundJobId = run.providerJobId ?? existingJobId;
   if (boundJobId) {
-    return { providerJobId: boundJobId, replayed: true };
+    return { kind: 'submitted', providerJobId: boundJobId, replayed: true };
   }
   const ready = await verifyRenderReady({ db, tenantId, run, resolveApiKey: resolveByokKey });
   if (!ready.ok) {
     throw await recordTerminalAndThrow(db, tenantId, runId, ready.code, ready.message);
   }
+
+  // Pre-submit atomic claim: increment `render_attempts` from 0 -> 1 BEFORE
+  // calling the external paid render API. If a prior attempt crashed after
+  // claiming (`render_attempts > 0` while `provider_job_id IS NULL`), block the
+  // run as `UNCERTAIN_OUTCOME` instead of submitting a duplicate paid job.
+  const claimed = await claimRenderSubmissionAttempt(db, tenantId, runId);
+  if (!claimed.ok) {
+    if (claimed.error === 'UNCERTAIN_PRIOR_SUBMIT') {
+      await transitionRun(db, tenantId, runId, 'render_queued', 'blocked', {
+        failureReason: 'UNCERTAIN_OUTCOME: prior render submission attempt did not record provider_job_id',
+      });
+      return { kind: 'blocked_uncertain', reason: 'UNCERTAIN_OUTCOME' };
+    }
+    throw new Error(claimed.error);
+  }
+  if (claimed.value.replayed && claimed.value.providerJobId) {
+    return { kind: 'submitted', providerJobId: claimed.value.providerJobId, replayed: true };
+  }
+
   const { providerJobId } = await adapter.submit({
     scriptBody: ready.scriptBody,
     title: run.campaignId,
@@ -176,6 +217,7 @@ async function submitRenderStep(
   const recorded = await recordRenderSubmission(db, tenantId, runId, providerJobId);
   if (!recorded.ok) throw new Error(recorded.error);
   return {
+    kind: 'submitted',
     providerJobId: recorded.value.providerJobId ?? providerJobId,
     replayed: recorded.value.replayed ?? false,
   };
@@ -303,6 +345,9 @@ export function createExecutionRenderWorker(adapter: RenderAdapter = heyGenRende
       const submitted = await step.run('submit-render', async () =>
         submitRenderStep(adapter, tenantId, runId, verified.existingJobId),
       );
+      if (submitted.kind === 'blocked_uncertain') {
+        return { status: 'BLOCKED' as const, reason: 'UNCERTAIN_OUTCOME' as const };
+      }
 
       // Adapt the real Inngest step tools to the minimal RenderStep seam.
       // The cast is sound: every step result here is JSON-safe, so the

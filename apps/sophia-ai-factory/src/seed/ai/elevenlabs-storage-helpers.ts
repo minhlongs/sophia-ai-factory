@@ -11,6 +11,8 @@ export interface VoiceoverOutput {
   audio_url: string;
   duration: number;
   audio_buffer?: ArrayBuffer;
+  provider?: 'elevenlabs' | 'mock';
+  isMock?: boolean;
 }
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
@@ -65,5 +67,10 @@ export async function generateMockVoiceover(text: string, tier: Tier): Promise<V
       ];
 
   const selectedUrl = mockAudioUrls[Math.floor(Math.random() * mockAudioUrls.length)];
-  return { audio_url: selectedUrl, duration: Math.max(1, Math.floor(text.length / 15)) };
+  return {
+    audio_url: selectedUrl,
+    duration: Math.max(1, Math.floor(text.length / 15)),
+    provider: 'mock',
+    isMock: true,
+  };
 }

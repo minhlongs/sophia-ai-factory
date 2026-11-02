@@ -147,7 +147,19 @@ function saasEvent(overrides: Partial<EventData> = {}): { data: EventData } {
 describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getD1).mockResolvedValue(null);
+    const defaultDb = createFakeD1([
+      `CREATE TABLE affiliate_execution_runs (
+        id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+        offer_id TEXT, approval_id TEXT, idempotency_key TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'approval_pending', locale TEXT NOT NULL DEFAULT 'en',
+        market TEXT, artifact_id TEXT, channel_id TEXT,
+        reserved_cost_cents INTEGER NOT NULL DEFAULT 0, actual_cost_cents INTEGER,
+        failure_reason TEXT, provider_job_id TEXT, render_attempts INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+      );`,
+      `CREATE UNIQUE INDEX idx_runs_idem ON affiliate_execution_runs(tenant_id, idempotency_key);`,
+    ]) as unknown as D1Database;
+    vi.mocked(getD1).mockResolvedValue(defaultDb);
     vi.mocked(getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
     vi.mocked(generateNicheCampaignVoiceover).mockResolvedValue({
       success: true,
@@ -348,5 +360,87 @@ describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () =>
       const checkRun = await getExecutionRun(db, 'ws_a', row.id);
       expect(checkRun?.failureReason).toContain('PROVIDER_UNAVAILABLE');
     }
+  });
+
+  it('fails closed with DB_UNAVAILABLE before calling TTS when getD1() returns null', async () => {
+    vi.mocked(getD1).mockResolvedValue(null);
+
+    const result = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:no_db' }),
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.state).toBe('blocked');
+    expect(result.reason).toBe('DB_UNAVAILABLE');
+    expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with RESERVATION_FAILED before calling TTS when D1 reservation throws or mismatches idempotency key', async () => {
+    const db = (await getD1())!;
+    await beginExecutionRun(db, {
+      tenantId: 'ws_a',
+      campaignId: 'camp_other_campaign',
+      idempotencyKey: 'ws_a:collision_key',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+
+    const result = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:collision_key' }),
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.state).toBe('blocked');
+    expect(result.reason).toBe('RESERVATION_FAILED');
+    expect(result.detail).toBe('IDEMPOTENCY_KEY_CAMPAIGN_MISMATCH');
+    expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
+  });
+
+  it('skips generateNicheCampaignVoiceover on idempotent replay when the run already advanced past approval_pending', async () => {
+    const first = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:replay_key' }),
+      step: mockStep,
+    });
+    expect(first.status).toBe('RENDER_QUEUED');
+    expect(generateNicheCampaignVoiceover).toHaveBeenCalledTimes(1);
+
+    vi.mocked(generateNicheCampaignVoiceover).mockClear();
+
+    const replay = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:replay_key' }),
+      step: mockStep,
+    });
+    expect(replay.status).toBe('RUN_ALREADY_ADVANCED');
+    expect(replay.state).toBe('render_queued');
+    expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
+  });
+
+  it('transitions run to blocked (UNCERTAIN_OUTCOME) and keeps reservation locked when TTS times out after dispatch', async () => {
+    const db = (await getD1())!;
+    vi.mocked(generateNicheCampaignVoiceover).mockResolvedValue({
+      success: false,
+      provider: 'mock',
+      error: 'PROVIDER_TIMEOUT: Request timed out after 15000ms',
+      errorCode: 'PROVIDER_TIMEOUT',
+      providerRequestDispatched: true,
+      outcomeUncertain: true,
+    });
+
+    const result = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:tts_uncertain_1' }),
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.state).toBe('blocked');
+    expect(result.reason).toBe('UNCERTAIN_OUTCOME');
+
+    const row = await db
+      .prepare(`SELECT id, state, reserved_cost_cents FROM affiliate_execution_runs WHERE tenant_id = 'ws_a' AND idempotency_key = 'ws_a:tts_uncertain_1'`)
+      .first<{ id: string; state: string; reserved_cost_cents: number }>();
+    expect(row?.state).toBe('blocked');
+    expect(row?.reserved_cost_cents).toBe(250);
   });
 });

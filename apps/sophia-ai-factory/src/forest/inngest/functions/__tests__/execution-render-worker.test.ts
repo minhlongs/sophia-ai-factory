@@ -221,7 +221,7 @@ describe('executionRenderWorker', () => {
     expect(mocks.mockPut).not.toHaveBeenCalled();
   });
 
-  it('fails truthfully when no BYOK key is connected', async () => {
+  it('fails truthfully when no BYOK key is connected and retains incurred TTS cost (actual_cost_cents) while releasing unused render reserve', async () => {
     mocks.mockGetHeyGenKey.mockResolvedValue(null);
     const { runId } = await seedQueuedRun();
     const result = await getHandler()({
@@ -233,6 +233,8 @@ describe('executionRenderWorker', () => {
     const run = await getExecutionRun(db, 'ws_1', runId);
     expect(run?.state).toBe('failed');
     expect(run?.failureReason).toContain('CREDENTIALS_MISSING');
+    // 50 cents TTS reserve remains committed; any unused render reserve is released
+    expect(run?.actualCostCents).toBe(50);
   });
 
   it('records provider failure with the provider message', async () => {
@@ -300,6 +302,34 @@ describe('executionRenderWorker', () => {
     const run = await getExecutionRun(db, 'ws_1', runId);
     expect(run?.state).toBe('blocked');
     expect(run?.providerJobId).toBe('fixture_job_success');
+    expect(run?.failureReason).toContain('UNCERTAIN_OUTCOME');
+  });
+
+  it('blocks as UNCERTAIN_OUTCOME without calling adapter.submit a second time if a prior attempt crashed after pre-submit claim (render_attempts > 0, provider_job_id IS NULL)', async () => {
+    const { runId } = await seedQueuedRun();
+    await db
+      .prepare(
+        `UPDATE affiliate_execution_runs SET render_attempts = 1, provider_job_id = NULL WHERE id = ?`,
+      )
+      .bind(runId)
+      .run();
+
+    const adapter = createFixtureRenderAdapter('success');
+    const submitSpy = vi.spyOn(adapter, 'submit');
+    const fn = createExecutionRenderWorker(adapter) as unknown as { _handler: Handler };
+    const result = await fn._handler({
+      event: { data: { tenantId: 'ws_1', runId } },
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.reason).toBe('UNCERTAIN_OUTCOME');
+    expect(submitSpy).not.toHaveBeenCalled();
+
+    const run = await getExecutionRun(db, 'ws_1', runId);
+    expect(run?.state).toBe('blocked');
+    expect(run?.renderAttempts).toBe(1);
+    expect(run?.providerJobId).toBeNull();
     expect(run?.failureReason).toContain('UNCERTAIN_OUTCOME');
   });
 });
