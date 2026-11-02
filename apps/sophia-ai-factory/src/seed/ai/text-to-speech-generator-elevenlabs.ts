@@ -27,6 +27,10 @@ interface UsageTrackingDeps {
   getUsageContext?: () => { userId?: string; licenseNonce?: string };
   withTimeout?: (url: string, options: RequestInit & { provider?: string }) => Promise<Response>;
   uploadToR2?: (data: ArrayBuffer, mime: string, key: string) => Promise<string>;
+  /** When false, never fall back to process.env.ELEVENLABS_API_KEY (strict BYOK). */
+  allowEnvFallback?: boolean;
+  /** When false, throw on missing key or provider failure instead of returning mock audio. */
+  allowMockFallback?: boolean;
 }
 
 /**
@@ -41,9 +45,10 @@ export async function generateVoiceover(
   const { text, tier, voiceId, userId, licenseKey, licenseNonce } = input;
   const context = deps?.getUsageContext?.();
   const finalUserId = userId || context?.userId || 'unknown';
+  const envFallback = deps?.allowEnvFallback === false ? undefined : process.env.ELEVENLABS_API_KEY;
   const apiKey = deps?.resolveApiKey
-    ? await deps.resolveApiKey(finalUserId, 'elevenlabs', process.env.ELEVENLABS_API_KEY)
-    : (process.env.ELEVENLABS_API_KEY || null);
+    ? await deps.resolveApiKey(finalUserId, 'elevenlabs', envFallback)
+    : (envFallback || null);
   const stopTimer = deps?.startTimer?.();
 
   const finalLicenseKey = licenseKey || '';
@@ -55,6 +60,7 @@ export async function generateVoiceover(
       const result = await generateElevenLabsVoiceover(text, tier, apiKey, voiceId, {
         withTimeout: deps?.withTimeout,
         uploadToR2: deps?.uploadToR2,
+        userId: finalUserId,
       });
       if (deps?.trackUsage) {
         await deps.trackUsage({
@@ -70,7 +76,7 @@ export async function generateVoiceover(
           responseTimeMs: stopTimer?.(),
         });
       }
-      return result;
+      return { ...result, provider: 'elevenlabs', isMock: false };
     } catch (error) {
       const errMsg = getErrorMessage(error);
       logger.warn('[ElevenLabs] API failed, falling back to mock', { error: errMsg });
@@ -89,7 +95,12 @@ export async function generateVoiceover(
           creditsUsed: 0,
         });
       }
+      if (deps?.allowMockFallback === false) {
+        throw error;
+      }
     }
+  } else if (deps?.allowMockFallback === false) {
+    throw new Error('BYOK_VOICE_KEY_MISSING: No ElevenLabs BYOK API key configured for this workspace');
   }
 
   const mockResult = await generateMockVoiceover(text, tier);
@@ -108,5 +119,5 @@ export async function generateVoiceover(
     });
   }
 
-  return mockResult;
+  return { ...mockResult, provider: 'mock', isMock: true };
 }

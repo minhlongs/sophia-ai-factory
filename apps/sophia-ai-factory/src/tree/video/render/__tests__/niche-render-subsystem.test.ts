@@ -97,15 +97,116 @@ describe('Niche Video Render Subsystem', () => {
     expect(manifest.trackedUrl).toContain('sub_id=aff_tiktok_01');
   });
 
-  it('handles voiceover generation with graceful fallback', async () => {
-    const voiceoverResult = await generateNicheCampaignVoiceover({
-      planId: testPlan.planId,
-      userId: 'usr_test_voice',
-      narrationText: 'Check out this software product today.',
-      locale: 'en',
-    });
+  it('fails closed with CREDENTIALS_MISSING when no workspace ElevenLabs BYOK key exists', async () => {
+    const voiceoverResult = await generateNicheCampaignVoiceover(
+      {
+        planId: testPlan.planId,
+        userId: 'usr_test_voice',
+        tenantId: 'ws_no_key',
+        narrationText: 'Check out this software product today.',
+        locale: 'en',
+      },
+      {
+        resolveByokKey: async () => null,
+      },
+    );
 
-    expect(voiceoverResult).toBeDefined();
-    expect(voiceoverResult.provider).toBeDefined();
+    expect(voiceoverResult.success).toBe(false);
+    expect(voiceoverResult.errorCode).toBe('CREDENTIALS_MISSING');
+    expect(voiceoverResult.providerRequestDispatched).toBe(false);
+    expect(voiceoverResult.outcomeUncertain).toBe(false);
+  });
+
+  it('resolves tenant/user BYOK key and never accepts mock audio as live ElevenLabs output', async () => {
+    const mockAttempt = await generateNicheCampaignVoiceover(
+      {
+        planId: testPlan.planId,
+        userId: 'usr_test_voice',
+        tenantId: 'ws_tenant_a',
+        narrationText: 'Check out this software product today.',
+        locale: 'en',
+      },
+      {
+        resolveByokKey: async (ownerId) => (ownerId === 'ws_tenant_a' ? 'el_byok_tenant_a' : null),
+        synthesize: async () => ({
+          audio_url: 'https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav',
+          duration: 5,
+          provider: 'mock',
+          isMock: true,
+        }),
+      },
+    );
+
+    expect(mockAttempt.success).toBe(false);
+    expect(mockAttempt.errorCode).toBe('MOCK_OUTPUT_REJECTED');
+    expect(mockAttempt.outcomeUncertain).toBe(false);
+
+    let capturedKey: string | null = null;
+    const liveSuccess = await generateNicheCampaignVoiceover(
+      {
+        planId: testPlan.planId,
+        userId: 'usr_without_personal_key',
+        tenantId: 'ws_tenant_a',
+        narrationText: 'Check out this software product today.',
+        locale: 'en',
+      },
+      {
+        resolveByokKey: async (ownerId) => (ownerId === 'ws_tenant_a' ? 'el_byok_tenant_a' : null),
+        synthesize: async (_input, synthDeps) => {
+          capturedKey = (await synthDeps?.resolveApiKey?.('ws_tenant_a', 'elevenlabs')) ?? null;
+          return {
+            audio_url: 'https://r2.sophia.local/tenants/ws_tenant_a/audio/vo_1.mp3',
+            duration: 14,
+            provider: 'elevenlabs',
+            isMock: false,
+          };
+        },
+      },
+    );
+
+    expect(capturedKey).toBe('el_byok_tenant_a');
+    expect(liveSuccess.success).toBe(true);
+    expect(liveSuccess.provider).toBe('elevenlabs');
+    expect(liveSuccess.audioUrl).toContain('ws_tenant_a');
+    expect(liveSuccess.outcomeUncertain).toBe(false);
+  });
+
+  it('classifies ElevenLabs timeout/network failure as outcomeUncertain=true and auth/quota failure as outcomeUncertain=false', async () => {
+    const timeoutRes = await generateNicheCampaignVoiceover(
+      {
+        planId: testPlan.planId,
+        userId: 'usr_test_voice',
+        tenantId: 'ws_tenant_a',
+        narrationText: 'Check out this software product today.',
+      },
+      {
+        resolveByokKey: async () => 'el_byok_tenant_a',
+        synthesize: async () => {
+          throw new Error('Request timed out after 15000ms');
+        },
+      },
+    );
+    expect(timeoutRes.success).toBe(false);
+    expect(timeoutRes.errorCode).toBe('PROVIDER_TIMEOUT');
+    expect(timeoutRes.providerRequestDispatched).toBe(true);
+    expect(timeoutRes.outcomeUncertain).toBe(true);
+
+    const authRes = await generateNicheCampaignVoiceover(
+      {
+        planId: testPlan.planId,
+        userId: 'usr_test_voice',
+        tenantId: 'ws_tenant_a',
+        narrationText: 'Check out this software product today.',
+      },
+      {
+        resolveByokKey: async () => 'el_byok_tenant_a',
+        synthesize: async () => {
+          throw new Error('ElevenLabs API failed: 401 - Unauthorized invalid key');
+        },
+      },
+    );
+    expect(authRes.success).toBe(false);
+    expect(authRes.errorCode).toBe('PROVIDER_AUTH_FAILED');
+    expect(authRes.outcomeUncertain).toBe(false);
   });
 });

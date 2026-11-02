@@ -132,7 +132,13 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
           .prepare(`UPDATE publishing_jobs SET status = 'failed' WHERE id = ? AND tenant_id = ?`)
           .bind(gate.jobId, tenantId)
           .run();
-        await transitionRun(db, tenantId, runId, 'publish_queued', 'failed', { failureReason: reason });
+        const currentRun = await getExecutionRun(db, tenantId, runId);
+        await transitionRun(db, tenantId, runId, 'publish_queued', 'failed', {
+          failureReason: reason,
+          ...(currentRun && currentRun.actualCostCents === null
+            ? { actualCostCents: currentRun.reservedCostCents }
+            : {}),
+        });
         return { status: 'FAILED' as const, reason, jobId: gate.jobId };
       });
     },

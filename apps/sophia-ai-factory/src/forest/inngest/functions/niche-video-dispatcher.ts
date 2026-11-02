@@ -58,6 +58,8 @@ interface NicheVideoDispatchData {
   approvalId?: string;
   /** Stored SHA-256 hash of the approved payload, read from D1 by the producer. */
   approvalHash?: string;
+  /** Stable campaignId from the draft/approval when resuming or replaying. */
+  campaignId?: string;
   maxRenderCostCents?: number;
   targetAccount?: string;
   idempotencyKey?: string;
@@ -132,6 +134,13 @@ export const nicheVideoDispatcher = inngest.createFunction(
     }
 
     const plan = campaignPlanResult.plan as NicheVideoCampaignPlan;
+    const stableCampaignId =
+      data.campaignId ??
+      (data.idempotencyKey
+        ? data.idempotencyKey.startsWith(`${tenantId}:`)
+          ? data.idempotencyKey.slice(tenantId.length + 1)
+          : data.idempotencyKey
+        : plan.planId);
 
     const stageSummary = await step.run('stage-video-artifacts', async () => ({
       planId: plan.planId,
@@ -176,7 +185,7 @@ export const nicheVideoDispatcher = inngest.createFunction(
         };
         const created = await createCampaignApproval(db, {
           tenantId,
-          campaignId: plan.planId,
+          campaignId: stableCampaignId,
           niche: data.niche,
           jurisdiction: approvalPayload.jurisdiction,
           status: 'pending_ceo',
@@ -241,7 +250,7 @@ export const nicheVideoDispatcher = inngest.createFunction(
         // Verify THE row the continuation references — never the latest row
         // for the campaign (a newer draft must not shadow a granted approval).
         const verification = await verifyAndEnforceCampaignApprovalD1(
-          db, tenantId, plan.planId, approvalPayload, killSwitchActive,
+          db, tenantId, stableCampaignId, approvalPayload, killSwitchActive,
           { approvalId: data.approvalId },
         );
         if (!verification.ok) {
@@ -284,17 +293,26 @@ export const nicheVideoDispatcher = inngest.createFunction(
     }
 
     // Step 4: Durable run + atomic cumulative budget reservation BEFORE any paid
-    // TTS / voiceover side effect. If the vertical ($25) or total ($50) pilot
-    // ceiling is exhausted, stop immediately without calling ElevenLabs/TTS.
+    // TTS / voiceover side effect. If D1 is missing, reservation fails for ANY
+    // reason, or the vertical ($25) / total ($50) pilot ceiling is exhausted,
+    // fail closed immediately without calling ElevenLabs/TTS.
     const queueReservation = await step.run('persist-render-queued-run', async () => {
       const db = await getD1();
-      if (!db) return { blockedReason: null, run: null };
+      if (!db) {
+        return {
+          ok: false as const,
+          blockedReason: 'DB_UNAVAILABLE' as const,
+          errorDetail: 'D1 database is unavailable for atomic budget reservation',
+          run: null,
+          alreadyAdvanced: false,
+        };
+      }
       const created = await beginExecutionRun(db, {
         tenantId,
-        campaignId: plan.planId,
+        campaignId: stableCampaignId,
         offerId: data.offerId ?? null,
         approvalId: data.approvalId ?? null,
-        idempotencyKey: data.idempotencyKey ?? plan.planId,
+        idempotencyKey: data.idempotencyKey ?? stableCampaignId,
         locale: data.locale ?? 'en',
         market: plan.compliance.jurisdiction || null,
         niche: data.niche,
@@ -302,9 +320,34 @@ export const nicheVideoDispatcher = inngest.createFunction(
       });
       if (!created.ok) {
         if (created.error === 'BUDGET_CAP_EXCEEDED') {
-          return { blockedReason: 'BUDGET_EXCEEDED' as const, run: null };
+          return {
+            ok: false as const,
+            blockedReason: 'BUDGET_EXCEEDED' as const,
+            errorDetail: 'Cumulative or single-run pilot budget ceiling exceeded',
+            run: null,
+            alreadyAdvanced: false,
+          };
         }
-        return { blockedReason: null, run: null };
+        return {
+          ok: false as const,
+          blockedReason: 'RESERVATION_FAILED' as const,
+          errorDetail: created.error,
+          run: null,
+          alreadyAdvanced: false,
+        };
+      }
+
+      // If this is an idempotent replay and the run already progressed past
+      // `approval_pending`, do NOT re-run TTS or re-consume the approval.
+      if (created.value.replayed && created.value.state !== 'approval_pending') {
+        const latest = (await getExecutionRun(db, tenantId, created.value.id)) ?? created.value;
+        return {
+          ok: true as const,
+          blockedReason: null,
+          errorDetail: null,
+          run: latest,
+          alreadyAdvanced: true,
+        };
       }
 
       // Persist the queue acceptance. Without this the DB row would still say
@@ -325,21 +368,41 @@ export const nicheVideoDispatcher = inngest.createFunction(
             });
           }
         }
-        return { blockedReason: null, run: moved.value };
+        return {
+          ok: true as const,
+          blockedReason: null,
+          errorDetail: null,
+          run: moved.value,
+          alreadyAdvanced: Boolean(moved.value.replayed),
+        };
       }
-      // Replay after a later state (rendered/publish_queued/...): report the
-      // durable state instead of pretending the queue step just happened.
+
+      const current = await getExecutionRun(db, tenantId, created.value.id);
+      if (current && current.state !== 'approval_pending') {
+        return {
+          ok: true as const,
+          blockedReason: null,
+          errorDetail: null,
+          run: current,
+          alreadyAdvanced: true,
+        };
+      }
+
       return {
-        blockedReason: null,
-        run: (await getExecutionRun(db, tenantId, created.value.id)) ?? created.value,
+        ok: false as const,
+        blockedReason: 'RESERVATION_TRANSITION_FAILED' as const,
+        errorDetail: String(moved.error),
+        run: null,
+        alreadyAdvanced: false,
       };
     });
 
-    if (queueReservation.blockedReason) {
+    if (!queueReservation.ok || !queueReservation.run) {
       return {
         status: 'BLOCKED' as const,
         state: 'blocked' as const,
-        reason: queueReservation.blockedReason,
+        reason: queueReservation.blockedReason ?? 'RESERVATION_FAILED',
+        detail: queueReservation.errorDetail ?? 'Could not persist durable budget reservation',
         plan,
         script,
         mediaReady: false,
@@ -348,39 +411,101 @@ export const nicheVideoDispatcher = inngest.createFunction(
 
     const run = queueReservation.run;
 
+    // If an idempotent replay found the run already advanced past `approval_pending`
+    // (e.g. `render_queued`, `rendered`, `published`, `blocked`, `failed`), do NOT
+    // call ElevenLabs TTS again. If it is still `render_queued`, re-emit the
+    // idempotent render worker event so a crash between step 4 and step 6 self-heals.
+    if (queueReservation.alreadyAdvanced) {
+      if (run.state === 'render_queued' && tenantId) {
+        await step.sendEvent('request-execution-render', {
+          name: 'execution.render.requested',
+          data: { tenantId, runId: run.id },
+        });
+      }
+      return {
+        status: 'RUN_ALREADY_ADVANCED' as const,
+        state: run.state,
+        runId: run.id,
+        summary: stageSummary,
+        plan,
+        script,
+        manifestIsMedia: false,
+        mediaReady: Boolean(run.artifactId),
+        artifactId: run.artifactId ?? null,
+        nextAction: (run.state === 'render_queued' ? 'render_worker' : 'review_run') as
+          | 'review_run'
+          | 'render_worker',
+      };
+    }
+
     // Step 5: Voiceover. Runs only AFTER durable budget reservation succeeds.
-    // A failed/mock TTS result transitions the pre-submit run to `failed` so its
-    // budget reservation is released cleanly (provider_job_id is still NULL).
+    // - If TTS failed BEFORE any provider charge (`outcomeUncertain !== true`),
+    //   transition the run to `failed` so its reservation is released cleanly.
+    // - If TTS failed AFTER dispatch with an uncertain outcome (timeout / network drop),
+    //   transition the run to `blocked` (`UNCERTAIN_OUTCOME`) so the reservation
+    //   remains locked until operator reconciliation.
     const voiceover = await step.run('generate-voiceover', async () =>
       generateNicheCampaignVoiceover({
         planId: plan.planId,
         userId: data.userId,
+        tenantId,
         narrationText: script.fullNarration,
         locale: data.locale,
         niche: data.niche,
       }),
     );
 
-    if (!voiceover.success || (voiceover.provider === 'mock' && process.env.NODE_ENV !== 'test')) {
-      if (run?.id && tenantId) {
+    if (!voiceover.success || voiceover.provider === 'mock') {
+      const uncertainTts = voiceover.outcomeUncertain === true;
+      if (run.id && tenantId) {
         await step.run('release-failed-voiceover-run', async () => {
           const db = await getD1();
           if (!db) return;
+          if (uncertainTts) {
+            await transitionRun(
+              db,
+              tenantId,
+              run.id,
+              'render_queued',
+              'blocked',
+              {
+                failureReason: `UNCERTAIN_OUTCOME: ${voiceover.error ?? 'TTS outcome uncertain after provider dispatch'}`,
+              },
+            );
+            return;
+          }
           await transitionRun(
             db,
             tenantId,
             run.id,
             'render_queued',
             'failed',
-            { failureReason: 'PROVIDER_UNAVAILABLE: voiceover failed before render submit' },
+            {
+              failureReason: `PROVIDER_UNAVAILABLE: ${voiceover.error ?? 'voiceover failed before render submit'}`,
+            },
           );
         });
+      }
+      if (uncertainTts) {
+        return {
+          status: 'BLOCKED' as const,
+          state: 'blocked' as const,
+          reason: 'UNCERTAIN_OUTCOME' as const,
+          detail: voiceover.error ?? 'Voiceover outcome uncertain after provider dispatch',
+          runId: run.id,
+          plan,
+          script,
+          mediaReady: false,
+        };
       }
       return {
         status: 'FAILED' as const,
         state: 'failed' as const,
-        reason: 'PROVIDER_UNAVAILABLE' as const,
+        reason: (voiceover.errorCode === 'CREDENTIALS_MISSING'
+          ? 'CREDENTIALS_MISSING'
+          : 'PROVIDER_UNAVAILABLE') as 'CREDENTIALS_MISSING' | 'PROVIDER_UNAVAILABLE',
         detail: voiceover.error ?? 'Voiceover provider did not produce audio',
+        runId: run.id,
         plan,
         script,
         mediaReady: false,
@@ -397,17 +522,10 @@ export const nicheVideoDispatcher = inngest.createFunction(
       });
     });
 
-    // A replay that reaches a run already past `render_queued` must not be
-    // reported as a fresh queue acceptance.
-    const durableState = run?.state ?? gateResult.nextState;
+    const durableState = run.state;
     const alreadyAdvanced = durableState !== 'render_queued';
 
-    // Hand every render_queued run to the render worker. This send is a durable
-    // step (memoized on retry), and the worker itself is idempotent
-    // (single provider_job_id binding + CAS transitions), so emitting on both
-    // fresh and replayed queue acceptances is safe AND self-healing: a crash
-    // between the queue commit and this step is repaired by the retry.
-    if (!alreadyAdvanced && run && tenantId) {
+    if (!alreadyAdvanced && tenantId) {
       await step.sendEvent('request-execution-render', {
         name: 'execution.render.requested',
         data: { tenantId, runId: run.id },
@@ -419,15 +537,15 @@ export const nicheVideoDispatcher = inngest.createFunction(
         | 'RUN_ALREADY_ADVANCED'
         | 'RENDER_QUEUED',
       state: durableState,
-      runId: run?.id ?? null,
+      runId: run.id,
       summary: stageSummary,
       plan,
       script,
       voiceover,
       manifest,
       manifestIsMedia: false,
-      mediaReady: Boolean(run?.artifactId),
-      artifactId: run?.artifactId ?? null,
+      mediaReady: Boolean(run.artifactId),
+      artifactId: run.artifactId ?? null,
       nextAction: (alreadyAdvanced ? 'review_run' : 'render_worker') as
         | 'review_run'
         | 'render_worker',
