@@ -382,12 +382,21 @@ describe('/api/campaign-approvals', () => {
     expect(patched.status).toBe(410);
   });
 
-  it('PATCH revoke on a pending row is a 409 conflict', async () => {
+  it('PATCH revoke on a pending row succeeds (200) at $0.00; second revoke is a 409 conflict (R3)', async () => {
     const id = await seedPending();
     const res = await PATCH(makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, {
       action: 'revoke',
+      reason: '$0.00 cancel before approve',
     }), { params: Promise.resolve({ id }) });
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string; approvalId: string };
+    expect(body.status).toBe('revoked');
+    expect(mocks.mockInngestSend).not.toHaveBeenCalled();
+
+    const conflict = await PATCH(makeReq('PATCH', `http://localhost/api/campaign-approvals/${id}`, {
+      action: 'revoke',
+    }), { params: Promise.resolve({ id }) });
+    expect(conflict.status).toBe(409);
   });
 
   it('PATCH resume on an expired approval returns 410', async () => {

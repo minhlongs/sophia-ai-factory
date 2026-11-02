@@ -105,7 +105,7 @@ export function CampaignApprovalCard({
                 {t('campaign.resume')}
               </button>
             )}
-            {(item.status === 'approved' || item.status === 'executed') && (
+            {(item.status === 'pending_ceo' || item.status === 'approved' || item.status === 'executed') && (
               <button
                 type="button"
                 disabled={busy}

@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { CampaignApprovalQueue } from '../index';
 import type { CampaignApprovalItem } from '../campaign-queue-api';
@@ -26,6 +26,7 @@ const TEST_MESSAGES = {
       loading: 'Loading campaign approvals…',
       loadFailed: 'Could not load campaign approvals',
       retry: 'Try again',
+      refresh: 'Refresh',
       emptyTitle: 'No campaign approvals',
       emptyDescription: 'Campaigns that need a CEO decision will appear here.',
       resume: 'Resume',
@@ -147,6 +148,8 @@ describe('CampaignApprovalQueue', () => {
     expect(screen.getByText(/Payload hash/)).toBeDefined();
     expect(screen.getByRole('button', { name: 'Approve' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Reject' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Revoke' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeDefined();
   });
 
   it('renders the empty state when there are no approvals', async () => {
@@ -252,6 +255,63 @@ describe('CampaignApprovalQueue', () => {
     await waitFor(() => expect(screen.getByText('Approved')).toBeDefined());
     fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
     await waitFor(() => expect(screen.getByText('Revoked')).toBeDefined());
+  });
+
+  it('revokes a pending_ceo item directly at $0.00 (R3)', async () => {
+    mockFetchSequence([
+      listResponse([PENDING_ITEM]),
+      () => Response.json({ status: 'revoked', approvalId: 'app_1' }),
+      listResponse([{ ...PENDING_ITEM, status: 'revoked' }]),
+    ]);
+    renderQueue();
+    await waitFor(() => expect(screen.getByText('Pending CEO')).toBeDefined());
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
+    await waitFor(() => expect(screen.getByText('Revoked')).toBeDefined());
+  });
+
+  it('triggers fast-poll burst at 1500ms and 4000ms and supports manual Refresh without losing textarea input (R2)', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchSpy = vi.fn(async () =>
+        Response.json({ approvals: [PENDING_ITEM], count: 1, limit: 50, offset: 0 }),
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+
+      let unmount!: () => void;
+      await act(async () => {
+        const rendered = renderQueue();
+        unmount = rendered.unmount;
+        await vi.advanceTimersByTimeAsync(10);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      const reason = document.getElementById('campaign-reason-app_1') as HTMLTextAreaElement;
+      expect(reason).not.toBeNull();
+      fireEvent.change(reason, { target: { value: 'Drafting CEO note' } });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect((document.getElementById('campaign-reason-app_1') as HTMLTextAreaElement).value).toBe(
+        'Drafting CEO note',
+      );
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2500);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+        await vi.advanceTimersByTimeAsync(10);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(4);
+
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('revokes an executed (in-flight pre-publish) item', async () => {

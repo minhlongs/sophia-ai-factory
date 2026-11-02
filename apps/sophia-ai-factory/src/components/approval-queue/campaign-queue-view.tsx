@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, Clock, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Clock, RefreshCw, ShieldCheck } from 'lucide-react';
 import type { ApprovalQueueProps } from './types';
 import {
   fetchCampaignApprovals,
@@ -39,9 +39,21 @@ export function CampaignApprovalQueue({
   }, [workspaceId]);
 
   useEffect(() => {
-    load();
-    const timer = setInterval(load, 30000);
-    return () => clearInterval(timer);
+    void load();
+    const fastTimer1 = setTimeout(() => {
+      void load();
+    }, 1500);
+    const fastTimer2 = setTimeout(() => {
+      void load();
+    }, 4000);
+    const intervalTimer = setInterval(() => {
+      void load();
+    }, 30000);
+    return () => {
+      clearTimeout(fastTimer1);
+      clearTimeout(fastTimer2);
+      clearInterval(intervalTimer);
+    };
   }, [load]);
 
   const handleAction = async (approvalId: string, action: CampaignApprovalAction) => {
@@ -69,9 +81,23 @@ export function CampaignApprovalQueue({
 
   return (
     <section aria-label={t('campaign.title')} className="space-y-4">
-      <div className="flex items-center gap-2">
-        <ShieldCheck className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold text-foreground">{t('campaign.title')}</h2>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">{t('campaign.title')}</h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            void load();
+          }}
+          disabled={loading}
+          aria-label={t('campaign.refresh')}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+          {t('campaign.refresh')}
+        </button>
       </div>
       <p className="text-sm text-muted-foreground">{t('campaign.description')}</p>
 
@@ -83,7 +109,7 @@ export function CampaignApprovalQueue({
         </div>
       )}
 
-      {loading && (
+      {loading && items.length === 0 && (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           <span className="ml-3 text-sm">{t('campaign.loading')}</span>
@@ -99,7 +125,9 @@ export function CampaignApprovalQueue({
           <p className="mt-1">{error}</p>
           <button
             type="button"
-            onClick={load}
+            onClick={() => {
+              void load();
+            }}
             className="mt-3 rounded-md border border-destructive/30 px-3 py-1.5 text-xs hover:bg-destructive/10"
           >
             {t('campaign.retry')}
@@ -115,8 +143,7 @@ export function CampaignApprovalQueue({
         </div>
       )}
 
-      {!loading &&
-        !error &&
+      {!error &&
         items.map((item) => (
           <CampaignApprovalCard
             key={item.id}

@@ -17,6 +17,7 @@ const {
   mockListTenantApprovals,
   mockGetCampaignApprovalById,
   mockRejectCampaignApproval,
+  mockRevokeCampaignApproval,
   mockExchangeCodeForTokens,
   mockGetChannelInfo,
 } = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ const {
   mockListTenantApprovals: vi.fn(),
   mockGetCampaignApprovalById: vi.fn(),
   mockRejectCampaignApproval: vi.fn(),
+  mockRevokeCampaignApproval: vi.fn(),
   mockExchangeCodeForTokens: vi.fn(),
   mockGetChannelInfo: vi.fn(),
 }));
@@ -56,7 +58,7 @@ vi.mock('@/tree/affiliate/approval/campaign-approval-repo', () => ({
   getCampaignApprovalById: mockGetCampaignApprovalById,
   rejectCampaignApproval: mockRejectCampaignApproval,
   approveCampaignApprovalCAS: vi.fn(),
-  revokeCampaignApproval: vi.fn(),
+  revokeCampaignApproval: mockRevokeCampaignApproval,
   markApprovalExecuted: vi.fn(),
 }));
 
@@ -141,6 +143,20 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     const patchBody = (await patchRes.json()) as { status: string };
     expect(patchBody.status).toBe('rejected');
     expect(mockHasWorkspaceRole).not.toHaveBeenCalled();
+
+    mockRevokeCampaignApproval.mockResolvedValue({
+      ok: true,
+      value: { id: 'apr_solo_01', status: 'revoked' },
+    });
+    const revokeRes = await resolveApprovalPATCH(
+      new NextRequest('https://sophia.agencyos.network/api/campaign-approvals/apr_solo_01', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'revoke', reason: '$0.00 revoke from pending_ceo' }),
+      }),
+      { params: Promise.resolve({ id: 'apr_solo_01' }) },
+    );
+    expect(revokeRes.status).toBe(200);
+    expect(((await revokeRes.json()) as { status: string }).status).toBe('revoked');
   });
 
   it('forwards d1 to hasWorkspaceRole for org approvals and blocks non-admin org members with 403 (W1)', async () => {
@@ -176,6 +192,20 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
       }),
     );
     expect(postRes.status).toBe(502);
+
+    mockGetD1.mockResolvedValueOnce(null);
+    mockResolveOrgId.mockResolvedValueOnce(orgId);
+    const noD1Res = await registerChannelPOST(
+      new NextRequest('https://sophia.agencyos.network/api/publish/channels', {
+        method: 'POST',
+        body: JSON.stringify({
+          provider: 'youtube',
+          externalAccountId: 'UC_TEST_123',
+          accessToken: 'ya29.test_token',
+        }),
+      }),
+    );
+    expect(noD1Res.status).toBe(503);
 
     const state = await buildSignedOauthState(soloUserId, process.env.OAUTH_STATE_SECRET!);
     mockResolveOrgId.mockResolvedValueOnce(orgId);

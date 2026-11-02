@@ -7982,6 +7982,7 @@
       "loading": "Đang tải phê duyệt chiến dịch…",
       "loadFailed": "Không tải được phê duyệt chiến dịch",
       "retry": "Thử lại",
+      "refresh": "Làm mới",
       "emptyTitle": "Chưa có phê duyệt chiến dịch",
       "emptyDescription": "Chiến dịch cần quyết định của CEO sẽ hiện ở đây.",
       "resume": "Tiếp tục",
