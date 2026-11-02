@@ -50,8 +50,9 @@ export async function getContentLineageAction(
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
-    // Fetch lineage
-    const lineage = await getContentLineage(parsed.data.projectId);
+    // Fetch lineage scoped to the caller's workspace so a cross-tenant
+    // projectId never loads another tenant's assets before the check below.
+    const lineage = await getContentLineage(parsed.data.projectId, parsed.data.workspaceId);
     if (!lineage) {
       return failure({ code: 'NOT_FOUND', message: 'Content project not found' });
     }

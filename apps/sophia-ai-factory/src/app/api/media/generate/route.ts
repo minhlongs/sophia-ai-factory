@@ -4,13 +4,6 @@
  * Submit a media generation job (video/audio).
  * Auth: session cookie required; PREMIUM tier or higher.
  * Backend: muapi.ai via muapi-media-client.
- *
- * Image generation is deliberately refused here. This route spends the
- * platform's own MUAPI_API_KEY and records no provider cost and no credit
- * deduction, so an unmetered image path would let a customer consume
- * operator funds invisibly. Image has an equivalent metered provider (fal)
- * behind /api/v1/creative-studio/images/generate, so no customer capability
- * is lost. Video and audio have no metered replacement and stay open.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -22,8 +15,10 @@ import {
   type MediaType,
 } from '@/tree/clients/muapi-media-client'
 import { toError } from '@/seed/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
+import { getD1 } from '@/seed/db/client'
 
 const generateSchema = z.object({
   type: z.enum(['image', 'video', 'audio']),
@@ -44,7 +39,6 @@ export async function POST(req: NextRequest) {
   }
 
   const tier = await resolveUserTier(user.id)
-  // FREE (BASIC) users cannot access paid media generation
   if (tier === 'BASIC') {
     return NextResponse.json(
       { error: 'Media generation requires PREMIUM or higher tier' },
@@ -66,9 +60,6 @@ export async function POST(req: NextRequest) {
     const { type, model } = parsed.data
 
     if (type === 'image') {
-      // Refuse before any provider dispatch: this route would otherwise spend
-      // the platform's MUAPI_API_KEY unmetered, with no provider cost recorded
-      // and no credits deducted. See the module header for why video/audio stay.
       return NextResponse.json(
         {
           error:
@@ -106,6 +97,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    try {
+      const d1 = await getD1()
+      if (d1) {
+        const nowSec = Math.floor(Date.now() / 1000)
+        await d1
+          .prepare('INSERT OR IGNORE INTO media_jobs (id, user_id, type, model, prompt, status, created_at, requested_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
+          .bind(result.job!.id, user.id, result.job!.type, result.job!.model, parsed.data.prompt, result.job!.status, nowSec, nowSec)
+          .run()
+      }
+    } catch (err) {
+      logger.error('[media/generate] failed to persist media_jobs ownership row', toError(err))
+    }
+
     return NextResponse.json({
       jobId: result.job!.id,
       status: result.job!.status,
@@ -114,19 +118,13 @@ export async function POST(req: NextRequest) {
       message: 'Job submitted. Poll /api/media/status?id=<jobId> for results.',
     })
   } catch (err) {
-    return NextResponse.json(
-      { error: toError(err).message },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: toError(err).message }, { status: 500 })
   }
 }
 
 export async function GET() {
   return NextResponse.json({
-    models: {
-      video: SUPPORTED_MODELS.video,
-      audio: SUPPORTED_MODELS.audio,
-    },
+    models: { video: SUPPORTED_MODELS.video, audio: SUPPORTED_MODELS.audio },
     usage: 'POST with { type, model, prompt }',
     image: 'not available here — use /api/v1/creative-studio/images/generate',
   })

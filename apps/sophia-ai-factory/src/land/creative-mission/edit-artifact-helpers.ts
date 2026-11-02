@@ -14,18 +14,19 @@ import type { EditCreativeArtifactInput } from './edit-artifact-schema';
 export async function persistArtifactChanges(
   d1: NonNullable<Awaited<ReturnType<typeof getD1>>>,
   assetId: string,
+  workspaceId: string,
   userId: string,
   editCount: number,
   changes: Record<string, unknown>,
   now: number
-): Promise<void> {
+): Promise<boolean> {
   try {
     const row = await d1
-      .prepare('SELECT metadata FROM content_assets WHERE id = ?1 LIMIT 1')
-      .bind(assetId)
-      .first<{ metadata: string }>();
+      .prepare('SELECT metadata, workspace_id FROM content_assets WHERE id = ?1 AND workspace_id = ?2 LIMIT 1')
+      .bind(assetId, workspaceId)
+      .first<{ metadata: string; workspace_id?: string }>();
+    if (!row || (row.workspace_id && row.workspace_id !== workspaceId)) return false;
 
-    if (!row) return;
     let existingMeta: Record<string, unknown> = {};
     try {
       existingMeta = JSON.parse(row.metadata || '{}') as Record<string, unknown>;
@@ -34,15 +35,21 @@ export async function persistArtifactChanges(
     }
 
     const mergedMeta = { ...existingMeta, ...changes, lastEditedBy: userId, editCount };
-    await d1
-      .prepare('UPDATE content_assets SET metadata = ?1, updated_at = ?2 WHERE id = ?3')
-      .bind(JSON.stringify(mergedMeta), now, assetId)
+    const res = await d1
+      .prepare('UPDATE content_assets SET metadata = ?1, updated_at = ?2 WHERE id = ?3 AND workspace_id = ?4')
+      .bind(JSON.stringify(mergedMeta), now, assetId, workspaceId)
       .run();
+
+    if (res && typeof res === 'object' && 'meta' in res && res.meta && typeof res.meta.changes === 'number') {
+      return res.meta.changes > 0;
+    }
+    return true;
   } catch (err) {
     logger.warn('[EditCreativeArtifact] Failed updating content_assets (non-fatal)', {
       assetId,
       error: err instanceof Error ? err.message : String(err),
     });
+    return false;
   }
 }
 
@@ -60,37 +67,17 @@ export async function recordAuditAndLearning(
       actorType: 'human',
       actorId: userId,
       humanEdits: JSON.stringify(data.changes),
-      metadata: {
-        reason: data.reason,
-        editCount: data.editCount,
-        missionId: data.missionId,
-        graphRunId: data.graphRunId,
-        nodeId: data.nodeId,
-      },
+      metadata: { reason: data.reason, editCount: data.editCount, missionId: data.missionId, graphRunId: data.graphRunId, nodeId: data.nodeId },
       createdAt: now,
     });
   } catch (err) {
-    logger.warn('[EditCreativeArtifact] Failed recording provenance (non-fatal)', {
-      assetId: data.assetId,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    logger.warn('[EditCreativeArtifact] Failed recording provenance (non-fatal)', { assetId: data.assetId, error: String(err) });
   }
 
   try {
-    await recordLearning(
-      data.workspaceId,
-      'creative',
-      `edit:${data.assetId}`,
-      data.changes,
-      data.reason ?? 'Human artifact edit before acceptance',
-      'project',
-      data.missionId
-    );
+    await recordLearning(data.workspaceId, 'creative', `edit:${data.assetId}`, data.changes, data.reason ?? 'Human artifact edit before acceptance', 'project', data.missionId);
   } catch (err) {
-    logger.warn('[EditCreativeArtifact] Failed recording creative memory (non-fatal)', {
-      assetId: data.assetId,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    logger.warn('[EditCreativeArtifact] Failed recording creative memory (non-fatal)', { assetId: data.assetId, error: String(err) });
   }
 }
 
@@ -107,10 +94,7 @@ export async function emitTelemetrySafe(data: EditCreativeArtifactInput): Promis
       recordedAt: Date.now(),
     });
   } catch (err) {
-    logger.warn('[EditCreativeArtifact] Failed emitting creative.edited (non-fatal)', {
-      assetId: data.assetId,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    logger.warn('[EditCreativeArtifact] Failed emitting creative.edited (non-fatal)', { assetId: data.assetId, error: String(err) });
   }
 }
 

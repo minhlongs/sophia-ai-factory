@@ -397,7 +397,7 @@ describe('land/graphs actions', () => {
         expect(result.value.derivatives).toHaveLength(1);
         expect(result.value.performance).toHaveLength(1);
       }
-      expect(mocks.getContentLineage).toHaveBeenCalledWith('prj_1');
+      expect(mocks.getContentLineage).toHaveBeenCalledWith('prj_1', WS_ID);
     });
 
     it('maps non-MissionError exceptions to INTERNAL', async () => {
