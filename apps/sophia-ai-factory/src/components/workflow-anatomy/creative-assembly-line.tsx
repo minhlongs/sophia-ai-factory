@@ -4,70 +4,14 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type {
   WorkflowStationId,
-  WorkflowStationState,
   WorkflowView,
 } from '@/tree/mission/workflow-view-model';
 import { AssemblyLineSvgCanvas, STATION_THEME } from './assembly-line-svg-canvas';
+import { getStationText, getStateText } from './assembly-line-copy';
+import { ConvergenceOutcomeStrip } from './convergence-outcome-strip';
 
 export interface CreativeAssemblyLineProps {
   workflow: WorkflowView;
-}
-
-function getStationText(
-  t: (k: string) => string,
-  id: WorkflowStationId,
-): { title: string; shortTitle: string; summary: string } {
-  switch (id) {
-    case 'intake_brief':
-      return {
-        title: t('assemblyLine.stations.intake_brief.title'),
-        shortTitle: t('assemblyLine.stations.intake_brief.shortTitle'),
-        summary: t('assemblyLine.stations.intake_brief.summary'),
-      };
-    case 'script_planning':
-      return {
-        title: t('assemblyLine.stations.script_planning.title'),
-        shortTitle: t('assemblyLine.stations.script_planning.shortTitle'),
-        summary: t('assemblyLine.stations.script_planning.summary'),
-      };
-    case 'ceo_approval_gate':
-      return {
-        title: t('assemblyLine.stations.ceo_approval_gate.title'),
-        shortTitle: t('assemblyLine.stations.ceo_approval_gate.shortTitle'),
-        summary: t('assemblyLine.stations.ceo_approval_gate.summary'),
-      };
-    case 'media_render':
-      return {
-        title: t('assemblyLine.stations.media_render.title'),
-        shortTitle: t('assemblyLine.stations.media_render.shortTitle'),
-        summary: t('assemblyLine.stations.media_render.summary'),
-      };
-    case 'publish_ledger':
-      return {
-        title: t('assemblyLine.stations.publish_ledger.title'),
-        shortTitle: t('assemblyLine.stations.publish_ledger.shortTitle'),
-        summary: t('assemblyLine.stations.publish_ledger.summary'),
-      };
-  }
-}
-
-function getStateText(t: (k: string) => string, state: WorkflowStationState): string {
-  switch (state) {
-    case 'not_started':
-      return t('assemblyLine.states.not_started');
-    case 'queued':
-      return t('assemblyLine.states.queued');
-    case 'running':
-      return t('assemblyLine.states.running');
-    case 'needs_approval':
-      return t('assemblyLine.states.needs_approval');
-    case 'succeeded':
-      return t('assemblyLine.states.succeeded');
-    case 'failed':
-      return t('assemblyLine.states.failed');
-    default:
-      return t('assemblyLine.states.unknown');
-  }
 }
 
 export function CreativeAssemblyLine({ workflow }: CreativeAssemblyLineProps) {
@@ -86,7 +30,6 @@ export function CreativeAssemblyLine({ workflow }: CreativeAssemblyLineProps) {
       data-workflow-mode={workflow.mode}
       className="w-full space-y-4 text-left"
     >
-      {/* Mode & Subtitle Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div>
           <h3 className="text-sm font-bold text-[#0B0F19] dark:text-white">
@@ -101,7 +44,6 @@ export function CreativeAssemblyLine({ workflow }: CreativeAssemblyLineProps) {
         </span>
       </div>
 
-      {/* Isometric 2D Pure SVG Canvas (Desktop/Tablet) */}
       <AssemblyLineSvgCanvas
         stations={workflow.stations}
         selectedId={selectedId}
@@ -110,7 +52,6 @@ export function CreativeAssemblyLine({ workflow }: CreativeAssemblyLineProps) {
         getStateLabel={(st) => getStateText(t, st)}
       />
 
-      {/* Accessible Interactive Station Selector Buttons (44px+ touch targets) */}
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-2" role="tablist">
         {workflow.stations.map((station) => {
           const copy = getStationText(t, station.id);
@@ -143,7 +84,6 @@ export function CreativeAssemblyLine({ workflow }: CreativeAssemblyLineProps) {
         })}
       </div>
 
-      {/* Active Station Inspector Drawer */}
       <div
         role="tabpanel"
         className="rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-[#F8F9FC] dark:bg-[#090A10]/80 p-4"
@@ -172,6 +112,10 @@ export function CreativeAssemblyLine({ workflow }: CreativeAssemblyLineProps) {
           )}
         </div>
       </div>
+
+      {workflow.convergence && (
+        <ConvergenceOutcomeStrip convergence={workflow.convergence} />
+      )}
     </div>
   );
 }

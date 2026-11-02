@@ -14,3 +14,7 @@ export * from './crypto';
 export * from './tunnel-client';
 export * from './health';
 export * from './hybrid-router';
+export * from './contract-v1/contract-types';
+export * from './contract-v1/contract-validator';
+export * from './contract-v1/crash-recovery-guard';
+export * from './contract-v1/contract-client';

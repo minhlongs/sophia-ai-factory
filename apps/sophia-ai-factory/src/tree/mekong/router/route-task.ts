@@ -19,6 +19,14 @@ import {
   queryTargetNode,
   validateEdgeNodeHealth,
 } from './node-health'
+import { buildAttemptScopedTaskId } from '../contract-v1/crash-recovery-guard'
+
+/**
+ * Resolves an attempt-isolated task correlation ID (`<= 64` chars) for Mekong Contract v1.
+ */
+export function resolveMekongAttemptTaskId(taskId: string, attemptNo = 1): string {
+  return buildAttemptScopedTaskId(taskId, attemptNo)
+}
 
 /**
  * Routes an inference task following the Mekong Hybrid Routing Policy.
