@@ -282,4 +282,24 @@ describe('executionRenderWorker', () => {
     expect(result.reason).toBe('RUN_NOT_RENDER_QUEUED');
     expect(mocks.mockPut).not.toHaveBeenCalled();
   });
+
+  it('transitions to blocked with UNCERTAIN_OUTCOME (not failed) when polling times out after provider submit', async () => {
+    const { runId } = await seedQueuedRun();
+    const timeoutAdapter = {
+      ...createFixtureRenderAdapter('success'),
+      fetchStatus: vi.fn(async () => ({ status: 'processing' as const })),
+    };
+    const fn = createExecutionRenderWorker(timeoutAdapter) as unknown as { _handler: Handler };
+    const result = await fn._handler({
+      event: { data: { tenantId: 'ws_1', runId } },
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.reason).toBe('UNCERTAIN_OUTCOME');
+    const run = await getExecutionRun(db, 'ws_1', runId);
+    expect(run?.state).toBe('blocked');
+    expect(run?.providerJobId).toBe('fixture_job_success');
+    expect(run?.failureReason).toContain('UNCERTAIN_OUTCOME');
+  });
 });

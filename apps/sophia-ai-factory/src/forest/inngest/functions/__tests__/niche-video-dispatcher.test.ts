@@ -105,6 +105,9 @@ import { nicheVideoDispatcher } from '../niche-video-dispatcher';
 import { generateNicheCampaignVoiceover } from '@/tree/video/render';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { computeApprovalPayloadHash } from '@/seed/security/approval-payload-hash';
+import { getD1 } from '@/seed/db/client';
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
+import { beginExecutionRun, getExecutionRun } from '@/tree/affiliate/execution';
 
 function getHandler(): InngestHandler {
   return (nicheVideoDispatcher as unknown as { _handler: InngestHandler })._handler;
@@ -144,6 +147,7 @@ function saasEvent(overrides: Partial<EventData> = {}): { data: EventData } {
 describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getD1).mockResolvedValue(null);
     vi.mocked(getAffiliateKillSwitchState).mockResolvedValue({ active: false, known: true });
     vi.mocked(generateNicheCampaignVoiceover).mockResolvedValue({
       success: true,
@@ -275,5 +279,74 @@ describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () =>
     expect(computeApprovalPayloadHash).toHaveBeenCalledWith(
       expect.objectContaining({ maxRenderCostCents: 250 }),
     );
+  });
+
+  it('blocks before calling paid voiceover TTS when cumulative $25 vertical budget is exhausted', async () => {
+    const db = createFakeD1([
+      `CREATE TABLE affiliate_execution_runs (
+        id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+        offer_id TEXT, approval_id TEXT, idempotency_key TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'approval_pending', locale TEXT NOT NULL DEFAULT 'en',
+        market TEXT, artifact_id TEXT, channel_id TEXT,
+        reserved_cost_cents INTEGER NOT NULL DEFAULT 0, actual_cost_cents INTEGER,
+        failure_reason TEXT, provider_job_id TEXT, render_attempts INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+      );`,
+      `CREATE UNIQUE INDEX idx_runs_idem ON affiliate_execution_runs(tenant_id, idempotency_key);`,
+    ]) as unknown as D1Database;
+    vi.mocked(getD1).mockResolvedValue(db);
+
+    await beginExecutionRun(db, {
+      tenantId: 'ws_a',
+      campaignId: 'camp_existing',
+      idempotencyKey: 'ws_a:existing',
+      niche: 'saas_global',
+      reservedCostCents: 2400,
+    });
+
+    const result = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:overflow_run' }),
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(result.reason).toBe('BUDGET_EXCEEDED');
+    expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
+  });
+
+  it('releases the pre-submit execution run reservation to failed if voiceover fails after reservation', async () => {
+    const db = createFakeD1([
+      `CREATE TABLE affiliate_execution_runs (
+        id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+        offer_id TEXT, approval_id TEXT, idempotency_key TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'approval_pending', locale TEXT NOT NULL DEFAULT 'en',
+        market TEXT, artifact_id TEXT, channel_id TEXT,
+        reserved_cost_cents INTEGER NOT NULL DEFAULT 0, actual_cost_cents INTEGER,
+        failure_reason TEXT, provider_job_id TEXT, render_attempts INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+      );`,
+      `CREATE UNIQUE INDEX idx_runs_idem ON affiliate_execution_runs(tenant_id, idempotency_key);`,
+    ]) as unknown as D1Database;
+    vi.mocked(getD1).mockResolvedValue(db);
+    vi.mocked(generateNicheCampaignVoiceover).mockResolvedValue({
+      success: false,
+      provider: 'mock',
+      error: 'ElevenLabs quota exceeded',
+    });
+
+    const result = await getHandler()({
+      event: saasEvent({ idempotencyKey: 'ws_a:tts_fail_1' }),
+      step: mockStep,
+    });
+
+    expect(result.status).toBe('FAILED');
+    const row = await db
+      .prepare(`SELECT id, state FROM affiliate_execution_runs WHERE tenant_id = 'ws_a' AND idempotency_key = 'ws_a:tts_fail_1'`)
+      .first<{ id: string; state: string }>();
+    expect(row?.state).toBe('failed');
+    if (row) {
+      const checkRun = await getExecutionRun(db, 'ws_a', row.id);
+      expect(checkRun?.failureReason).toContain('PROVIDER_UNAVAILABLE');
+    }
   });
 });

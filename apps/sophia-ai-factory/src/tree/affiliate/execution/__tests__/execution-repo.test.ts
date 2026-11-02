@@ -12,6 +12,8 @@ import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import {
   beginExecutionRun,
   getExecutionRun,
+  getWorkspacePilotBudgetSummary,
+  recordRenderSubmission,
   recordVerifiedArtifact,
   transitionRun,
 } from '../execution-repo';
@@ -232,5 +234,100 @@ describe('execution run repository', () => {
     const good = await recordVerifiedArtifact(db, 'ws-a', run.value.id, artifact, 1003);
     expect(good.ok).toBe(true);
     expect((await getExecutionRun(db, 'ws-a', run.value.id))?.state).toBe('rendered');
+  });
+
+  it('enforces atomic cumulative $25/vertical and $50 total pilot budget caps and locks uncertain outcomes', async () => {
+    const db = upgradedDb();
+
+    // Reserve $1,500 cents ($15.00) + $1,000 cents ($10.00) = $2,500 cents ($25.00) in saas_global
+    const saas1 = await beginExecutionRun(db, {
+      tenantId: 'ws-budget',
+      campaignId: 'camp-saas-1',
+      idempotencyKey: 'idem-saas-1',
+      niche: 'saas_global',
+      market: 'US',
+      reservedCostCents: 1500,
+    });
+    expect(saas1.ok).toBe(true);
+    if (saas1.ok) {
+      expect(saas1.value.market).toBe('US');
+      expect(saas1.value.niche).toBe('saas_global');
+    }
+
+    const saas2 = await beginExecutionRun(db, {
+      tenantId: 'ws-budget',
+      campaignId: 'camp-saas-2',
+      idempotencyKey: 'idem-saas-2',
+      niche: 'saas_global',
+      market: 'GLOBAL',
+      reservedCostCents: 1000,
+    });
+    expect(saas2.ok).toBe(true);
+
+    // A 3rd saas_global run of $2.50 (250 cents) exceeds $25.00 vertical cap -> blocked
+    const saasOverflow = await beginExecutionRun(db, {
+      tenantId: 'ws-budget',
+      campaignId: 'camp-saas-3',
+      idempotencyKey: 'idem-saas-3',
+      niche: 'saas_global',
+      reservedCostCents: 250,
+    });
+    expect(saasOverflow.ok).toBe(false);
+    if (!saasOverflow.ok) expect(saasOverflow.error).toBe('BUDGET_CAP_EXCEEDED');
+
+    // Idempotent replay of an existing run still succeeds even when vertical cap is full
+    const saas2Replay = await beginExecutionRun(db, {
+      tenantId: 'ws-budget',
+      campaignId: 'camp-saas-2',
+      idempotencyKey: 'idem-saas-2',
+      niche: 'saas_global',
+      reservedCostCents: 1000,
+    });
+    expect(saas2Replay.ok).toBe(true);
+    if (saas2Replay.ok) expect(saas2Replay.value.replayed).toBe(true);
+
+    // Meanwhile crypto_global has its own $25.00 vertical allowance up to $50.00 total
+    const crypto1 = await beginExecutionRun(db, {
+      tenantId: 'ws-budget',
+      campaignId: 'camp-crypto-1',
+      idempotencyKey: 'idem-crypto-1',
+      niche: 'crypto_global',
+      market: 'US',
+      reservedCostCents: 2000,
+    });
+    expect(crypto1.ok).toBe(true);
+
+    // Pre-submit failure (provider_job_id IS NULL) releases reservation
+    if (saas2.ok) {
+      await transitionRun(db, 'ws-budget', saas2.value.id, 'approval_pending', 'render_queued');
+      await transitionRun(db, 'ws-budget', saas2.value.id, 'render_queued', 'failed', {
+        failureReason: 'PROVIDER_UNAVAILABLE: TTS failed before submit',
+      });
+    }
+    const summaryAfterRelease = await getWorkspacePilotBudgetSummary(db, 'ws-budget');
+    expect(summaryAfterRelease.ok).toBe(true);
+    if (summaryAfterRelease.ok) {
+      expect(summaryAfterRelease.value.saasCommittedCents).toBe(1500);
+      expect(summaryAfterRelease.value.cryptoCommittedCents).toBe(2000);
+      expect(summaryAfterRelease.value.totalCommittedCents).toBe(3500);
+    }
+
+    // Post-submit timeout (provider_job_id IS NOT NULL -> blocked UNCERTAIN_OUTCOME) keeps reservation locked
+    if (crypto1.ok) {
+      await transitionRun(db, 'ws-budget', crypto1.value.id, 'approval_pending', 'render_queued');
+      await recordRenderSubmission(db, 'ws-budget', crypto1.value.id, 'job_heygen_99');
+      await transitionRun(db, 'ws-budget', crypto1.value.id, 'render_queued', 'blocked', {
+        failureReason: 'UNCERTAIN_OUTCOME: provider did not complete in time',
+      });
+    }
+    const cryptoOverflow = await beginExecutionRun(db, {
+      tenantId: 'ws-budget',
+      campaignId: 'camp-crypto-2',
+      idempotencyKey: 'idem-crypto-2',
+      niche: 'crypto_global',
+      reservedCostCents: 600,
+    });
+    expect(cryptoOverflow.ok).toBe(false);
+    if (!cryptoOverflow.ok) expect(cryptoOverflow.error).toBe('BUDGET_CAP_EXCEEDED');
   });
 });

@@ -11,6 +11,10 @@
  * @module forest/inngest/functions/niche-video-dispatcher
  */
 
+import {
+  DEFAULT_MAX_RENDER_COST_CENTS,
+  PROPOSED_GATE1_VERTICAL_CAP_CENTS,
+} from '@/seed/config/affiliate-budget-defaults';
 import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -70,8 +74,6 @@ interface NicheVideoDispatchData {
   locale?: 'en' | 'vi';
   requiresApproval?: boolean;
 }
-
-const DEFAULT_MAX_RENDER_COST_CENTS = 250;
 
 function buildApprovalPayload(
   data: NicheVideoDispatchData,
@@ -261,7 +263,7 @@ export const nicheVideoDispatcher = inngest.createFunction(
         },
         killSwitchActive,
         reservedCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
-        maxCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
+        maxCostCents: PROPOSED_GATE1_VERTICAL_CAP_CENTS,
         credentialsConnected: true,
         outcomeKnown: true,
       };
@@ -281,34 +283,12 @@ export const nicheVideoDispatcher = inngest.createFunction(
       };
     }
 
-    // Step 4: Voiceover. A failed/mock TTS result is a FAILED run, never a
-    // manifest that looks like a finished video.
-    const voiceover = await step.run('generate-voiceover', async () =>
-      generateNicheCampaignVoiceover({
-        planId: plan.planId,
-        userId: data.userId,
-        narrationText: script.fullNarration,
-        locale: data.locale,
-        niche: data.niche,
-      }),
-    );
-
-    if (!voiceover.success || (voiceover.provider === 'mock' && process.env.NODE_ENV !== 'test')) {
-      return {
-        status: 'FAILED' as const,
-        state: 'failed' as const,
-        reason: 'PROVIDER_UNAVAILABLE' as const,
-        detail: voiceover.error ?? 'Voiceover provider did not produce audio',
-        plan,
-        script,
-        mediaReady: false,
-      };
-    }
-
-    // Step 5: Durable run + render queue entry. This is a DESCRIPTOR, not media.
-    const run = await step.run('persist-render-queued-run', async () => {
+    // Step 4: Durable run + atomic cumulative budget reservation BEFORE any paid
+    // TTS / voiceover side effect. If the vertical ($25) or total ($50) pilot
+    // ceiling is exhausted, stop immediately without calling ElevenLabs/TTS.
+    const queueReservation = await step.run('persist-render-queued-run', async () => {
       const db = await getD1();
-      if (!db) return null;
+      if (!db) return { blockedReason: null, run: null };
       const created = await beginExecutionRun(db, {
         tenantId,
         campaignId: plan.planId,
@@ -317,9 +297,15 @@ export const nicheVideoDispatcher = inngest.createFunction(
         idempotencyKey: data.idempotencyKey ?? plan.planId,
         locale: data.locale ?? 'en',
         market: plan.compliance.jurisdiction || null,
+        niche: data.niche,
         reservedCostCents: data.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
       });
-      if (!created.ok) return null;
+      if (!created.ok) {
+        if (created.error === 'BUDGET_CAP_EXCEEDED') {
+          return { blockedReason: 'BUDGET_EXCEEDED' as const, run: null };
+        }
+        return { blockedReason: null, run: null };
+      }
 
       // Persist the queue acceptance. Without this the DB row would still say
       // `approval_pending` while the response said `render_queued`.
@@ -339,12 +325,67 @@ export const nicheVideoDispatcher = inngest.createFunction(
             });
           }
         }
-        return moved.value;
+        return { blockedReason: null, run: moved.value };
       }
       // Replay after a later state (rendered/publish_queued/...): report the
       // durable state instead of pretending the queue step just happened.
-      return (await getExecutionRun(db, tenantId, created.value.id)) ?? created.value;
+      return {
+        blockedReason: null,
+        run: (await getExecutionRun(db, tenantId, created.value.id)) ?? created.value,
+      };
     });
+
+    if (queueReservation.blockedReason) {
+      return {
+        status: 'BLOCKED' as const,
+        state: 'blocked' as const,
+        reason: queueReservation.blockedReason,
+        plan,
+        script,
+        mediaReady: false,
+      };
+    }
+
+    const run = queueReservation.run;
+
+    // Step 5: Voiceover. Runs only AFTER durable budget reservation succeeds.
+    // A failed/mock TTS result transitions the pre-submit run to `failed` so its
+    // budget reservation is released cleanly (provider_job_id is still NULL).
+    const voiceover = await step.run('generate-voiceover', async () =>
+      generateNicheCampaignVoiceover({
+        planId: plan.planId,
+        userId: data.userId,
+        narrationText: script.fullNarration,
+        locale: data.locale,
+        niche: data.niche,
+      }),
+    );
+
+    if (!voiceover.success || (voiceover.provider === 'mock' && process.env.NODE_ENV !== 'test')) {
+      if (run?.id && tenantId) {
+        await step.run('release-failed-voiceover-run', async () => {
+          const db = await getD1();
+          if (!db) return;
+          await transitionRun(
+            db,
+            tenantId,
+            run.id,
+            'render_queued',
+            'failed',
+            { failureReason: 'PROVIDER_UNAVAILABLE: voiceover failed before render submit' },
+          );
+        });
+      }
+      return {
+        status: 'FAILED' as const,
+        state: 'failed' as const,
+        reason: 'PROVIDER_UNAVAILABLE' as const,
+        detail: voiceover.error ?? 'Voiceover provider did not produce audio',
+        plan,
+        script,
+        mediaReady: false,
+      };
+    }
 
     const manifest = await step.run('assemble-render-manifest', async () => {
       const visualResult = generateSceneVisualAssets(plan.planId, script.scenes);

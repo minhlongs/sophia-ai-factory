@@ -323,8 +323,15 @@ export function createExecutionRenderWorker(adapter: RenderAdapter = heyGenRende
       }
       if (polled.kind === 'timeout') {
         const db = await getD1();
-        if (db) await failRun(db, tenantId, runId, 'RENDER_TIMEOUT: provider did not complete in time');
-        return { status: 'FAILED' as const, reason: 'RENDER_TIMEOUT' };
+        if (db) {
+          const res = await transitionRun(db, tenantId, runId, 'render_queued', 'blocked', {
+            failureReason: 'UNCERTAIN_OUTCOME: provider did not complete in time',
+          });
+          if (!res.ok) {
+            logger.warn('executionRenderWorker: could not record uncertain outcome block', { runId });
+          }
+        }
+        return { status: 'BLOCKED' as const, reason: 'UNCERTAIN_OUTCOME' as const };
       }
 
       const stored = await step.run('verify-and-store', async () =>
