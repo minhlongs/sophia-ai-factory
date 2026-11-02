@@ -9,4 +9,5 @@ export * from './convergence-repo';
 export * from './convergence-d1-mapper';
 export * from './convergence-d1-queries';
 export * from './convergence-d1-store';
+export * from './convergence-d1-actions';
 export * from './unit-economics-calculator';

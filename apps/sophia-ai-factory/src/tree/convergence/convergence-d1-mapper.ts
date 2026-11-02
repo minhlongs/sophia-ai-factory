@@ -9,6 +9,7 @@ import type {
   ArtifactManifestEntry,
   BusinessOutcome,
   ConvergenceLedgerRecord,
+  CostMeasurementStatus,
   CreativeJobStageId,
   DeliveryOutcome,
   ExecutionModeBadge,
@@ -75,6 +76,9 @@ export function parseVerificationReportJson(raw: string | null | undefined): Med
       passedCount: Number(parsed.passedCount ?? 0),
       checksumMatched: Boolean(parsed.checksumMatched),
       durationValid: Boolean(parsed.durationValid),
+      ...(parsed.verificationAttemptId ? { verificationAttemptId: String(parsed.verificationAttemptId) } : {}),
+      ...(parsed.costStatus ? { costStatus: parsed.costStatus as CostMeasurementStatus } : {}),
+      ...(parsed.retryBudget !== undefined ? { retryBudget: Number(parsed.retryBudget) } : {}),
       ...(parsed.failureReason ? { failureReason: String(parsed.failureReason) } : {}),
     };
   } catch {
@@ -83,6 +87,7 @@ export function parseVerificationReportJson(raw: string | null | undefined): Med
 }
 
 export function mapD1RowToConvergenceRecord(row: ConvergenceD1Row): ConvergenceLedgerRecord {
+  const report = parseVerificationReportJson(row.verification_report_json);
   return {
     jobId: row.job_id,
     workspaceId: row.workspace_id,
@@ -106,8 +111,10 @@ export function mapD1RowToConvergenceRecord(row: ConvergenceD1Row): ConvergenceL
     estimatedCostUsd: Number(row.estimated_cost_usd ?? 0),
     actualCostUsd: Number(row.actual_cost_usd ?? 0),
     retryCostUsd: Number(row.retry_cost_usd ?? 0),
+    costStatus: report.costStatus ?? 'measured',
+    retryBudget: report.retryBudget ?? 3,
     artifactManifest: parseArtifactManifestJson(row.artifact_manifest_json),
-    verificationReport: parseVerificationReportJson(row.verification_report_json),
+    verificationReport: report,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };

@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      authorize_production_release:
+        description: 'Explicit operator approval to deploy to Cloudflare Production Edge'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -105,6 +110,14 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Preflight — Verify Explicit Release Authorization Guard (Supreme #02.1 P5)
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          AUTHORIZE_PRODUCTION_RELEASE: ${{ inputs.authorize_production_release }}
+          SOPHIA_RELEASE_AUTHORIZED: ${{ vars.SOPHIA_RELEASE_AUTHORIZED }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: node scripts/verify-release-authorization.mjs
 
       - name: Preflight — Assert Cloudflare Credentials
         run: |

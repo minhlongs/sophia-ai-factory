@@ -1,22 +1,25 @@
 /**
- * 12-Stage Creative Job End-to-End Convergence Pipeline (Gate S5, Gate S6, Gate S8)
+ * 12-Stage Creative Job End-to-End Convergence Pipeline (Gate S5, Gate S6, Gate S8, Supreme #02.1 P3)
  * Layer: forest/convergence (imports seed and tree only — zero land imports)
  */
 
 import { success, failure, type Result } from '@/seed/types/result';
 import {
   ConvergenceLedgerRepo, calculateUnitEconomics, evaluateConvergedTruth,
-  type ArtifactManifestEntry, type ConvergenceLedgerRecord, type ConvergedTruthState, type UnitEconomicsSummary,
+  type ArtifactManifestEntry, type ConvergenceLedgerRecord, type ConvergedTruthState,
+  type CostMeasurementStatus, type UnitEconomicsSummary,
 } from '@/tree/convergence';
 import {
   MekongContractClient, evaluateCrashRetryGate, inspectAndPreserveCrashedAttempt, type MekongContractMode,
 } from '@/tree/mekong';
 import { CREATIVE_JOB_12_STAGES, buildDeterministicStageArtifact, verifyMediaArtifactManifest } from './creative-job-stages';
+import { materializeLocalStageArtifact } from './local-artifact-materializer';
 
 export interface RunCreativeJobSliceInput {
   jobId: string; workspaceId: string; userId: string; idempotencyKey: string; goal: string;
   contractMode?: MekongContractMode; sqliteDbPath?: string; worktreeRootDir?: string;
-  ceoDecision?: 'approve' | 'reject' | 'hold';
+  artifactRootDir?: string; ceoDecision?: 'approve' | 'reject' | 'hold';
+  costStatus?: CostMeasurementStatus; retryBudget?: number;
   simulateCorruptMedia?: boolean; simulateDeliveryFailure?: boolean;
   simulateCrashOnAttempt1?: { crashedWorktreeDir: string; quarantineRootDir: string; sideEffectUncertain: boolean };
 }
@@ -46,7 +49,8 @@ export function runCreativeJobVerticalSlice(
   });
   const created = repo.createOrGetIdempotent({
     jobId: input.jobId, workspaceId: input.workspaceId, userId: input.userId,
-    idempotencyKey: input.idempotencyKey, executionMode: client.getExecutionModeBadge(), estimatedCostUsd: 0.77,
+    idempotencyKey: input.idempotencyKey, executionMode: client.getExecutionModeBadge(),
+    estimatedCostUsd: 0.77, costStatus: input.costStatus, retryBudget: input.retryBudget,
   });
   if (!created.ok) return failure(created.error);
   if (created.value.deduplicated) return finalizeSliceOutput(repo, created.value.record, created.value.record.mekongJobId, true);
@@ -80,9 +84,10 @@ export function runCreativeJobVerticalSlice(
     }
   }
 
+  const attemptNo = input.simulateCrashOnAttempt1 ? 2 : 1;
   const submitRes = client.submitTask({
     source_id: 'sophia_creative_slice', event_id: input.idempotencyKey, goal: input.goal, workspace_id: input.workspaceId,
-  }, input.simulateCrashOnAttempt1 ? 2 : 1);
+  }, attemptNo);
   if (!submitRes.ok) return failure(submitRes.error);
   const ticketId = submitRes.value.ticket.ticket_id;
 
@@ -90,26 +95,33 @@ export function runCreativeJobVerticalSlice(
     if (st.stageId === 'crash_quarantine_recovery') continue;
     actualCostUsd += st.costUsd;
     if (st.producesArtifactKind) {
-      manifest.push(buildDeterministicStageArtifact(input.jobId, st.stageId, st.producesArtifactKind, input.simulateCorruptMedia));
+      manifest.push(
+        input.artifactRootDir
+          ? materializeLocalStageArtifact({
+              artifactRootDir: input.artifactRootDir, workspaceId: input.workspaceId, jobId: input.jobId,
+              stageId: st.stageId, kind: st.producesArtifactKind, goal: input.goal, corruptMedia: input.simulateCorruptMedia,
+            })
+          : buildDeterministicStageArtifact(input.jobId, st.stageId, st.producesArtifactKind, input.simulateCorruptMedia)
+      );
     }
     if (st.stageId === 'ceo_approval_gate' && input.ceoDecision === 'reject') {
       const rej = repo.transitionCas({
         jobId: current.jobId, workspaceId: current.workspaceId, expectedVersion: current.version, leaseToken,
-        lifecycleStage: 'ceo_approval_gate', mekongJobId: ticketId, actualCostUsd, retryCostUsd, artifactManifest: manifest,
+        lifecycleStage: 'ceo_approval_gate', mekongJobId: ticketId, actualCostUsd, retryCostUsd,
+        costStatus: input.costStatus, retryBudget: input.retryBudget, artifactManifest: manifest,
         axes: { executionOutcome: 'cancelled', businessOutcome: 'rejected' },
       });
       return rej.ok ? finalizeSliceOutput(repo, rej.value, ticketId, false) : failure(rej.error);
     }
   }
 
-  const verificationReport = verifyMediaArtifactManifest(manifest);
+  const verificationReport = verifyMediaArtifactManifest(manifest, `verif_${input.jobId}_att${attemptNo}`);
   const finalStep = repo.transitionCas({
     jobId: current.jobId, workspaceId: current.workspaceId, expectedVersion: current.version, leaseToken,
     lifecycleStage: 'converged_terminal', mekongJobId: ticketId, actualCostUsd, retryCostUsd,
-    attemptNo: input.simulateCrashOnAttempt1 ? 2 : 1, artifactManifest: manifest, verificationReport,
+    attemptNo, retryBudget: input.retryBudget, costStatus: input.costStatus, artifactManifest: manifest, verificationReport,
     axes: {
-      executionOutcome: 'succeeded',
-      verificationOutcome: verificationReport.hasVerifiedMedia ? 'verified' : 'failed',
+      executionOutcome: 'succeeded', verificationOutcome: verificationReport.hasVerifiedMedia ? 'verified' : 'failed',
       deliveryOutcome: input.simulateDeliveryFailure ? 'failed' : 'confirmed',
       businessOutcome: input.ceoDecision === 'hold' ? 'human_review_required' : 'accepted',
     },

@@ -1,37 +1,26 @@
 /**
- * Authoritative Job Convergence Types (Gate S1, Gate S3, Gate S8)
+ * Authoritative Job Convergence Types (Gate S1, Gate S3, Gate S8, Supreme #02.1 P2 & P6)
  *
  * Defines the 12 creative stages, 4 independent outcome axes, execution modes,
- * CAS transition inputs, and unit economics metrics.
+ * CAS transition inputs, cost measurement truth states, and unit economics metrics.
  *
  * Layer: tree/convergence (imports seed only)
  */
 
 export type CreativeJobStageId =
-  | 'creative_mission_intake'
-  | 'niche_video_plan'
-  | 'script_synthesis'
-  | 'visual_storyboard'
-  | 'ceo_approval_gate'
-  | 'media_render_dispatch'
-  | 'media_integrity_verification'
-  | 'channel_delivery_publish'
-  | 'delivery_receipt_reconcile'
-  | 'budget_credit_accounting'
-  | 'crash_quarantine_recovery'
-  | 'converged_terminal';
+  | 'creative_mission_intake' | 'niche_video_plan' | 'script_synthesis' | 'visual_storyboard'
+  | 'ceo_approval_gate' | 'media_render_dispatch' | 'media_integrity_verification'
+  | 'channel_delivery_publish' | 'delivery_receipt_reconcile' | 'budget_credit_accounting'
+  | 'crash_quarantine_recovery' | 'converged_terminal';
 
 export type ExecutionOutcome = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'crashed';
 export type VerificationOutcome = 'pending' | 'verified' | 'failed' | 'skipped';
 export type DeliveryOutcome = 'pending' | 'dispatched' | 'confirmed' | 'failed';
 export type BusinessOutcome = 'pending' | 'accepted' | 'rejected' | 'human_review_required';
+export type CostMeasurementStatus = 'measured' | 'estimated' | 'unknown';
 
 export type ExecutionModeBadge =
-  | 'LOCAL_DETERMINISTIC'
-  | 'SHADOW'
-  | 'LOCAL_TEST'
-  | 'MEKONG_ENABLED'
-  | 'CLOUD_FALLBACK';
+  | 'LOCAL_DETERMINISTIC' | 'SHADOW' | 'LOCAL_TEST' | 'MEKONG_ENABLED' | 'CLOUD_FALLBACK';
 
 export interface ConvergenceAxes {
   executionOutcome: ExecutionOutcome;
@@ -48,6 +37,8 @@ export interface ArtifactManifestEntry {
   sizeBytes: number;
   uri: string;
   verified: boolean;
+  localFilePath?: string;
+  mimeType?: string;
 }
 
 export interface MediaVerificationReport {
@@ -56,6 +47,9 @@ export interface MediaVerificationReport {
   passedCount: number;
   checksumMatched: boolean;
   durationValid: boolean;
+  verificationAttemptId?: string;
+  costStatus?: CostMeasurementStatus;
+  retryBudget?: number;
   failureReason?: string;
 }
 
@@ -82,6 +76,8 @@ export interface ConvergenceLedgerRecord {
   estimatedCostUsd: number;
   actualCostUsd: number;
   retryCostUsd: number;
+  costStatus?: CostMeasurementStatus;
+  retryBudget?: number;
   artifactManifest: ArtifactManifestEntry[];
   verificationReport: MediaVerificationReport;
   createdAt: number;
@@ -89,35 +85,19 @@ export interface ConvergenceLedgerRecord {
 }
 
 export interface CreateConvergenceJobInput {
-  jobId: string;
-  workspaceId: string;
-  userId: string;
-  idempotencyKey: string;
-  missionId?: string;
-  executionRunId?: string;
-  mekongJobId?: string;
-  executionMode?: ExecutionModeBadge;
-  estimatedCostUsd?: number;
-  nowMs?: number;
+  jobId: string; workspaceId: string; userId: string; idempotencyKey: string;
+  missionId?: string; executionRunId?: string; mekongJobId?: string;
+  executionMode?: ExecutionModeBadge; estimatedCostUsd?: number;
+  costStatus?: CostMeasurementStatus; retryBudget?: number; nowMs?: number;
 }
 
 export interface CasTransitionInput {
-  jobId: string;
-  workspaceId: string;
-  expectedVersion: number;
-  leaseToken: string;
-  nowMs?: number;
-  lifecycleStage?: CreativeJobStageId;
-  axes?: Partial<ConvergenceAxes>;
-  executionMode?: ExecutionModeBadge;
-  attemptNo?: number;
-  mekongJobId?: string | null;
-  sideEffectUncertain?: boolean;
-  crashPreservedPath?: string | null;
-  actualCostUsd?: number;
-  retryCostUsd?: number;
-  artifactManifest?: ArtifactManifestEntry[];
-  verificationReport?: MediaVerificationReport;
+  jobId: string; workspaceId: string; expectedVersion: number; leaseToken: string;
+  nowMs?: number; lifecycleStage?: CreativeJobStageId; axes?: Partial<ConvergenceAxes>;
+  executionMode?: ExecutionModeBadge; attemptNo?: number; retryBudget?: number;
+  mekongJobId?: string | null; sideEffectUncertain?: boolean; crashPreservedPath?: string | null;
+  actualCostUsd?: number; retryCostUsd?: number; costStatus?: CostMeasurementStatus;
+  artifactManifest?: ArtifactManifestEntry[]; verificationReport?: MediaVerificationReport;
 }
 
 export interface UnitEconomicsSummary {
@@ -126,4 +106,6 @@ export interface UnitEconomicsSummary {
   verificationYield: number;
   businessAcceptanceYield: number;
   retryOverhead: number;
+  unknownCostJobsCount?: number;
+  costStatus?: CostMeasurementStatus;
 }

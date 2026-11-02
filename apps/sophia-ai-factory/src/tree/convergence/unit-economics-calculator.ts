@@ -1,21 +1,25 @@
 /**
- * Unit Economics Calculator for Converged Factory Jobs (Gate S8)
+ * Unit Economics Calculator for Converged Factory Jobs (Gate S8, Supreme #02.1 P6)
  *
- * Computes the 5 required unit-economics metrics with zero-division safety:
- * 1. costPerVerifiedJob
- * 2. costPerAcceptedArtifact
- * 3. verificationYield
- * 4. businessAcceptanceYield
- * 5. retryOverhead
+ * Computes the 5 required unit-economics metrics with zero-division safety and
+ * explicit separation between `measured`, `estimated`, and `unknown` model costs.
+ * Never substitutes a fabricated cost of zero for an unknown cost.
  *
  * Layer: tree/convergence (pure domain calculator)
  */
 
-import type { ConvergenceLedgerRecord, UnitEconomicsSummary } from './convergence-types';
+import type { ConvergenceLedgerRecord, CostMeasurementStatus, UnitEconomicsSummary } from './convergence-types';
 
 function roundMetric(value: number): number {
   if (!Number.isFinite(value) || Number.isNaN(value)) return 0;
   return Math.round(value * 10000) / 10000;
+}
+
+export function resolveRecordCostStatus(rec: ConvergenceLedgerRecord): CostMeasurementStatus {
+  if (rec.costStatus === 'unknown' || rec.verificationReport?.costStatus === 'unknown') return 'unknown';
+  if (!Number.isFinite(rec.actualCostUsd) || Number.isNaN(rec.actualCostUsd) || rec.actualCostUsd < 0) return 'unknown';
+  if (rec.costStatus === 'estimated' || rec.verificationReport?.costStatus === 'estimated') return 'estimated';
+  return 'measured';
 }
 
 export function calculateUnitEconomics(records: ConvergenceLedgerRecord[]): UnitEconomicsSummary {
@@ -32,13 +36,21 @@ export function calculateUnitEconomics(records: ConvergenceLedgerRecord[]): Unit
   let totalActualCostUsd = 0;
   let totalRetryCostUsd = 0;
   let verifiedJobsCount = 0;
+  let knownCostVerifiedJobsCount = 0;
   let acceptedJobsCount = 0;
-  let acceptedArtifactsCount = 0;
+  let knownCostAcceptedArtifactsCount = 0;
   let executedJobsCount = 0;
+  let unknownCostJobsCount = 0;
+  let hasEstimatedCost = false;
 
   for (const rec of records) {
-    const actual = Math.max(0, rec.actualCostUsd || 0);
-    const retry = Math.max(0, rec.retryCostUsd || 0);
+    const status = resolveRecordCostStatus(rec);
+    const isUnknownCost = status === 'unknown';
+    if (isUnknownCost) unknownCostJobsCount += 1;
+    if (status === 'estimated') hasEstimatedCost = true;
+
+    const actual = isUnknownCost ? 0 : Math.max(0, rec.actualCostUsd || 0);
+    const retry = isUnknownCost ? 0 : Math.max(0, rec.retryCostUsd || 0);
     totalActualCostUsd += actual;
     totalRetryCostUsd += retry;
 
@@ -50,22 +62,25 @@ export function calculateUnitEconomics(records: ConvergenceLedgerRecord[]): Unit
       rec.verificationOutcome === 'verified' && rec.verificationReport.hasVerifiedMedia;
     if (isVerified) {
       verifiedJobsCount += 1;
+      if (!isUnknownCost) knownCostVerifiedJobsCount += 1;
     }
 
     if (isVerified && rec.businessOutcome === 'accepted') {
       acceptedJobsCount += 1;
-      const verifiedArtifacts = rec.artifactManifest.filter((a) => a.verified).length;
-      acceptedArtifactsCount += verifiedArtifacts > 0 ? verifiedArtifacts : 1;
+      if (!isUnknownCost) {
+        const verifiedArtifacts = rec.artifactManifest.filter((a) => a.verified).length;
+        knownCostAcceptedArtifactsCount += verifiedArtifacts > 0 ? verifiedArtifacts : 1;
+      }
     }
   }
 
   const totalSpendUsd = totalActualCostUsd + totalRetryCostUsd;
 
   const costPerVerifiedJob =
-    verifiedJobsCount > 0 ? roundMetric(totalSpendUsd / verifiedJobsCount) : 0;
+    knownCostVerifiedJobsCount > 0 ? roundMetric(totalSpendUsd / knownCostVerifiedJobsCount) : 0;
 
   const costPerAcceptedArtifact =
-    acceptedArtifactsCount > 0 ? roundMetric(totalSpendUsd / acceptedArtifactsCount) : 0;
+    knownCostAcceptedArtifactsCount > 0 ? roundMetric(totalSpendUsd / knownCostAcceptedArtifactsCount) : 0;
 
   const verificationYield =
     executedJobsCount > 0 ? roundMetric(verifiedJobsCount / executedJobsCount) : 0;
@@ -82,5 +97,10 @@ export function calculateUnitEconomics(records: ConvergenceLedgerRecord[]): Unit
     verificationYield,
     businessAcceptanceYield,
     retryOverhead,
+    ...(unknownCostJobsCount > 0
+      ? { unknownCostJobsCount, costStatus: 'unknown' as const }
+      : hasEstimatedCost
+        ? { costStatus: 'estimated' as const }
+        : {}),
   };
 }
