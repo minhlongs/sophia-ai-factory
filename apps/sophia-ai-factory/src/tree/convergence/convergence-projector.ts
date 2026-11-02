@@ -1,14 +1,9 @@
 /**
- * Authoritative 4-Axis Convergence Projector (Gate S1, Gate S5)
+ * Authoritative 4-Axis Convergence Projector (Gate S1, Gate S5, Supreme #02.1 P2)
  * Layer: tree/convergence (pure domain functions)
  */
 
-import type {
-  ConvergenceAxes,
-  ConvergenceLedgerRecord,
-  CreativeJobStageId,
-  ExecutionModeBadge,
-} from './convergence-types';
+import type { ConvergenceAxes, ConvergenceLedgerRecord, CreativeJobStageId, ExecutionModeBadge } from './convergence-types';
 
 const STAGE_ORDER: Record<CreativeJobStageId, number> = {
   creative_mission_intake: 1, niche_video_plan: 2, script_synthesis: 3, visual_storyboard: 4,
@@ -25,66 +20,66 @@ export interface ConvergedTruthState {
   summaryVi: string;
 }
 
+export function isTerminalConvergenceState(
+  record: Pick<ConvergenceLedgerRecord, 'lifecycleStage' | 'executionOutcome' | 'businessOutcome'>
+): boolean {
+  return (
+    record.lifecycleStage === 'converged_terminal' ||
+    record.executionOutcome === 'cancelled' ||
+    record.businessOutcome === 'rejected'
+  );
+}
+
 export function canAdvanceStage(from: CreativeJobStageId, to: CreativeJobStageId): boolean {
+  if (from === 'converged_terminal') return false;
   if (to === 'crash_quarantine_recovery') return true;
   if (from === 'crash_quarantine_recovery') return to === 'ceo_approval_gate' || to === 'media_render_dispatch';
   return STAGE_ORDER[to] >= STAGE_ORDER[from];
 }
 
 export function evaluateConvergedTruth(
-  axes: ConvergenceAxes,
-  sideEffectUncertain = false,
-  hasVerifiedMedia = axes.verificationOutcome === 'verified'
+  axes: ConvergenceAxes, sideEffectUncertain = false, hasVerifiedMedia = axes.verificationOutcome === 'verified'
 ): ConvergedTruthState {
   if (sideEffectUncertain || axes.businessOutcome === 'human_review_required') {
     return {
-      isTrulyComplete: false, isFakeGreenBlocked: true, requiresHumanReview: true,
-      overallStatus: 'human_review_required',
+      isTrulyComplete: false, isFakeGreenBlocked: true, requiresHumanReview: true, overallStatus: 'human_review_required',
       summaryEn: 'Human review required: uncertain side-effect or crash quarantine.',
       summaryVi: 'Cần duyệt thủ công: phát hiện crash hoặc tác vụ chưa rõ trạng thái.',
     };
   }
   if (axes.executionOutcome === 'failed' || axes.executionOutcome === 'cancelled' || axes.executionOutcome === 'crashed') {
     return {
-      isTrulyComplete: false, isFakeGreenBlocked: false, requiresHumanReview: false,
-      overallStatus: 'failed',
+      isTrulyComplete: false, isFakeGreenBlocked: false, requiresHumanReview: false, overallStatus: 'failed',
       summaryEn: `Execution ${axes.executionOutcome}.`,
       summaryVi: `Thực thi thất bại (${axes.executionOutcome}).`,
     };
   }
   if (axes.executionOutcome === 'succeeded' && (!hasVerifiedMedia || axes.verificationOutcome !== 'verified')) {
     return {
-      isTrulyComplete: false, isFakeGreenBlocked: true, requiresHumanReview: false,
-      overallStatus: 'blocked_verification',
+      isTrulyComplete: false, isFakeGreenBlocked: true, requiresHumanReview: false, overallStatus: 'blocked_verification',
       summaryEn: 'Blocked fake-green: worker succeeded but media integrity verification did not pass.',
       summaryVi: 'Chặn báo xanh giả: tiến trình chạy xong nhưng kiểm định media chưa đạt.',
     };
   }
   if (axes.businessOutcome === 'rejected' || axes.deliveryOutcome === 'failed') {
     return {
-      isTrulyComplete: false, isFakeGreenBlocked: axes.executionOutcome === 'succeeded', requiresHumanReview: false,
-      overallStatus: 'blocked_business',
+      isTrulyComplete: false, isFakeGreenBlocked: axes.executionOutcome === 'succeeded', requiresHumanReview: false, overallStatus: 'blocked_business',
       summaryEn: 'Blocked completion: artifact rejected or delivery failed.',
       summaryVi: 'Chặn hoàn tất: sản phẩm bị từ chối hoặc phân phối thất bại.',
     };
   }
-  const allFour =
-    axes.executionOutcome === 'succeeded' &&
-    axes.verificationOutcome === 'verified' &&
-    axes.deliveryOutcome === 'confirmed' &&
-    axes.businessOutcome === 'accepted' &&
-    hasVerifiedMedia;
-  if (allFour) {
+  if (
+    axes.executionOutcome === 'succeeded' && axes.verificationOutcome === 'verified' &&
+    axes.deliveryOutcome === 'confirmed' && axes.businessOutcome === 'accepted' && hasVerifiedMedia
+  ) {
     return {
-      isTrulyComplete: true, isFakeGreenBlocked: false, requiresHumanReview: false,
-      overallStatus: 'converged',
+      isTrulyComplete: true, isFakeGreenBlocked: false, requiresHumanReview: false, overallStatus: 'converged',
       summaryEn: 'All 4 outcome axes verified and converged.',
       summaryVi: 'Cả 4 trục kết quả đã xác thực và hội tụ hoàn tất.',
     };
   }
   return {
-    isTrulyComplete: false, isFakeGreenBlocked: false, requiresHumanReview: false,
-    overallStatus: 'in_progress',
+    isTrulyComplete: false, isFakeGreenBlocked: false, requiresHumanReview: false, overallStatus: 'in_progress',
     summaryEn: 'Pipeline in progress across convergence axes.',
     summaryVi: 'Tiến trình đang xử lý trên các trục hội tụ.',
   };

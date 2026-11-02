@@ -1,14 +1,16 @@
 /**
- * Authoritative Convergence Ledger Repository (Gate S1, Gate S3)
+ * Authoritative Convergence Ledger Repository (Gate S1, Gate S3, Supreme #02.1 P2 & P6)
  * Layer: tree/convergence
  */
 
 import { success, failure, type Result } from '@/seed/types/result';
-import { canAdvanceStage } from './convergence-projector';
+import { canAdvanceStage, isTerminalConvergenceState } from './convergence-projector';
 import type { CasTransitionInput, ConvergenceLedgerRecord, CreateConvergenceJobInput } from './convergence-types';
 
 export interface ConvergenceError {
-  code: 'IDEMPOTENCY_CONFLICT' | 'NOT_FOUND' | 'CAS_VERSION_CONFLICT' | 'LEASE_HELD' | 'INVALID_STAGE_TRANSITION' | 'TENANT_MISMATCH';
+  code:
+    | 'IDEMPOTENCY_CONFLICT' | 'NOT_FOUND' | 'CAS_VERSION_CONFLICT' | 'LEASE_HELD'
+    | 'INVALID_STAGE_TRANSITION' | 'TENANT_MISMATCH' | 'TERMINAL_STATE_IMMUTABLE' | 'RETRY_BUDGET_EXCEEDED';
   message: string;
 }
 
@@ -29,6 +31,8 @@ export class ConvergenceLedgerRepo {
       return failure({ code: 'IDEMPOTENCY_CONFLICT', message: `Job ${input.jobId} already exists` });
     }
     const now = input.nowMs ?? Date.now();
+    const costStatus = input.costStatus ?? 'measured';
+    const retryBudget = input.retryBudget ?? 3;
     const record: ConvergenceLedgerRecord = {
       jobId: input.jobId, workspaceId: input.workspaceId, userId: input.userId,
       missionId: input.missionId ?? null, executionRunId: input.executionRunId ?? null, mekongJobId: input.mekongJobId ?? null,
@@ -36,8 +40,11 @@ export class ConvergenceLedgerRepo {
       lifecycleStage: 'creative_mission_intake', executionOutcome: 'pending', verificationOutcome: 'pending',
       deliveryOutcome: 'pending', businessOutcome: 'pending', executionMode: input.executionMode ?? 'LOCAL_DETERMINISTIC',
       sideEffectUncertain: false, crashPreservedPath: null,
-      estimatedCostUsd: input.estimatedCostUsd ?? 0, actualCostUsd: 0, retryCostUsd: 0, artifactManifest: [],
-      verificationReport: { hasVerifiedMedia: false, checkedCount: 0, passedCount: 0, checksumMatched: false, durationValid: false },
+      estimatedCostUsd: input.estimatedCostUsd ?? 0, actualCostUsd: 0, retryCostUsd: 0,
+      costStatus, retryBudget, artifactManifest: [],
+      verificationReport: {
+        hasVerifiedMedia: false, checkedCount: 0, passedCount: 0, checksumMatched: false, durationValid: false, costStatus, retryBudget,
+      },
       createdAt: now, updatedAt: now,
     };
     this.byId.set(record.jobId, record);
@@ -58,6 +65,9 @@ export class ConvergenceLedgerRepo {
     const current = this.byId.get(jobId);
     if (!current) return failure({ code: 'NOT_FOUND', message: `Job ${jobId} not found` });
     if (current.workspaceId !== workspaceId) return failure({ code: 'TENANT_MISMATCH', message: 'Cross-tenant lease denied' });
+    if (isTerminalConvergenceState(current)) {
+      return failure({ code: 'TERMINAL_STATE_IMMUTABLE', message: `Job ${jobId} is in immutable terminal state` });
+    }
     if (current.leaseToken && current.leaseToken !== leaseToken && (current.leaseExpiresAt ?? 0) > nowMs) {
       return failure({ code: 'LEASE_HELD', message: `Active lease held until ${current.leaseExpiresAt}` });
     }
@@ -72,6 +82,9 @@ export class ConvergenceLedgerRepo {
     const current = this.byId.get(input.jobId);
     if (!current) return failure({ code: 'NOT_FOUND', message: `Job ${input.jobId} not found` });
     if (current.workspaceId !== input.workspaceId) return failure({ code: 'TENANT_MISMATCH', message: 'Cross-tenant transition denied' });
+    if (isTerminalConvergenceState(current)) {
+      return failure({ code: 'TERMINAL_STATE_IMMUTABLE', message: `Job ${input.jobId} is in immutable terminal state` });
+    }
     if (current.version !== input.expectedVersion) {
       return failure({ code: 'CAS_VERSION_CONFLICT', message: `Expected version ${input.expectedVersion}, found ${current.version}` });
     }
@@ -80,26 +93,32 @@ export class ConvergenceLedgerRepo {
     if (current.leaseToken !== input.leaseToken || leaseExpired) {
       return failure({ code: 'LEASE_HELD', message: leaseExpired ? 'Lease expired; re-acquire first' : 'Lease token mismatch' });
     }
+    const nextAttempt = input.attemptNo ?? current.attemptNo;
+    const maxAttempts = input.retryBudget ?? current.retryBudget ?? 3;
+    if (nextAttempt > maxAttempts) {
+      return failure({ code: 'RETRY_BUDGET_EXCEEDED', message: `Attempt ${nextAttempt} exceeds retryBudget ${maxAttempts}` });
+    }
     if (input.lifecycleStage && !canAdvanceStage(current.lifecycleStage, input.lifecycleStage)) {
       return failure({ code: 'INVALID_STAGE_TRANSITION', message: `Cannot transition backwards from ${current.lifecycleStage} to ${input.lifecycleStage}` });
     }
+    const nextCostStatus = input.costStatus ?? input.verificationReport?.costStatus ?? current.costStatus ?? 'measured';
+    const baseReport = input.verificationReport ?? current.verificationReport;
     const updated: ConvergenceLedgerRecord = {
-      ...current,
-      version: current.version + 1, leaseToken: input.leaseToken,
+      ...current, version: current.version + 1, leaseToken: input.leaseToken,
       lifecycleStage: input.lifecycleStage ?? current.lifecycleStage,
       executionOutcome: input.axes?.executionOutcome ?? current.executionOutcome,
       verificationOutcome: input.axes?.verificationOutcome ?? current.verificationOutcome,
       deliveryOutcome: input.axes?.deliveryOutcome ?? current.deliveryOutcome,
       businessOutcome: input.axes?.businessOutcome ?? current.businessOutcome,
       executionMode: input.executionMode ?? current.executionMode,
-      attemptNo: input.attemptNo ?? current.attemptNo,
+      attemptNo: nextAttempt, retryBudget: maxAttempts, costStatus: nextCostStatus,
       mekongJobId: input.mekongJobId !== undefined ? input.mekongJobId : current.mekongJobId,
       sideEffectUncertain: input.sideEffectUncertain ?? current.sideEffectUncertain,
       crashPreservedPath: input.crashPreservedPath !== undefined ? input.crashPreservedPath : current.crashPreservedPath,
       actualCostUsd: input.actualCostUsd ?? current.actualCostUsd,
       retryCostUsd: input.retryCostUsd ?? current.retryCostUsd,
       artifactManifest: input.artifactManifest ?? current.artifactManifest,
-      verificationReport: input.verificationReport ?? current.verificationReport,
+      verificationReport: { ...baseReport, costStatus: nextCostStatus, retryBudget: maxAttempts },
       updatedAt: now,
     };
     this.byId.set(input.jobId, updated);

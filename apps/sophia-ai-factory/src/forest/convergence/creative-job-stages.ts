@@ -1,5 +1,5 @@
 /**
- * 12-Stage Creative Job Stage Definitions & Deterministic Evaluators (Gate S5)
+ * 12-Stage Creative Job Stage Definitions & Deterministic Evaluators (Gate S5, Supreme #02.1 P3)
  *
  * Layer: forest/convergence (imports seed and tree only — zero land imports)
  */
@@ -9,6 +9,7 @@ import type {
   CreativeJobStageId,
   MediaVerificationReport,
 } from '@/tree/convergence';
+import { verifyDiskBackedArtifactManifest } from './local-artifact-materializer';
 
 export interface CreativeStageDefinition {
   stageId: CreativeJobStageId;
@@ -53,13 +54,18 @@ export function buildDeterministicStageArtifact(
     sha256,
     sizeBytes: corruptMedia && kind === 'video' ? 0 : 4096,
     uri: `r2://sophia-artifacts/${jobId}/${stageId}.${kind === 'video' ? 'mp4' : 'json'}`,
+    mimeType: kind === 'video' ? 'video/mp4' : 'application/json',
     verified: !corruptMedia || kind !== 'video',
   };
 }
 
 export function verifyMediaArtifactManifest(
-  manifest: ArtifactManifestEntry[]
+  manifest: ArtifactManifestEntry[],
+  verificationAttemptId = 'verif_att_1'
 ): MediaVerificationReport {
+  if (manifest.some((a) => Boolean(a.localFilePath))) {
+    return verifyDiskBackedArtifactManifest(manifest, verificationAttemptId);
+  }
   const videoEntries = manifest.filter((a) => a.kind === 'video');
   if (videoEntries.length === 0) {
     return {
@@ -68,6 +74,7 @@ export function verifyMediaArtifactManifest(
       passedCount: 0,
       checksumMatched: false,
       durationValid: false,
+      verificationAttemptId,
       failureReason: 'Missing rendered video artifact in manifest',
     };
   }
@@ -80,6 +87,7 @@ export function verifyMediaArtifactManifest(
     passedCount: passed.length,
     checksumMatched: allValid,
     durationValid: allValid,
+    verificationAttemptId,
     failureReason: allValid ? undefined : 'Rendered video failed SHA-256 or byte-length integrity check',
   };
 }
