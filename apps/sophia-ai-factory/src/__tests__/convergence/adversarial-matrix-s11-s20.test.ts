@@ -32,6 +32,17 @@ describe('Adversarial Convergence Matrix S11–S20 (Mekong Contract v1 & SIGKILL
       expect(client.getStatus(sub.value.ticket.ticket_id).ok).toBe(true);
       expect(client.getCostUsage(sub.value.ticket.ticket_id).ok).toBe(true);
     }
+    const ciFallback = new MekongContractClient({
+      mode: 'LOCAL_TEST',
+      sqliteDbPath: path.join(tmpDir, 'mekong_s12_ci.db'),
+      mekongRepoRoot: path.join(tmpDir, 'missing_mekong_repo_on_ci'),
+    });
+    const ciSub = ciFallback.submitTask({ source_id: 'sophia_ci', event_id: 'ev_s12_ci', goal: 'CI SQLite fallback', workspace_id: 'ws_s12' });
+    expect(ciSub.ok).toBe(true);
+    if (ciSub.ok) {
+      expect(ciFallback.getStatus(ciSub.value.ticket.ticket_id).ok).toBe(true);
+      expect(ciFallback.getCostUsage(ciSub.value.ticket.ticket_id).ok).toBe(true);
+    }
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
