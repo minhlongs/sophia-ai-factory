@@ -61,22 +61,19 @@ const completeSchema = z.object({
 
 export const workerPullSchema = z.discriminatedUnion('action', [claimSchema, completeSchema]);
 
-function workerErrorStatus(code: string): number {
-  if (code === 'TENANT_MISMATCH') return 403;
-  if (code === 'NOT_FOUND') return 404;
-  if (code === 'LEASE_HELD' || code === 'CAS_VERSION_CONFLICT' || code === 'TERMINAL_STATE_IMMUTABLE' || code === 'RETRY_BUDGET_EXCEEDED') {
-    return 409;
-  }
-  return 422;
-}
+const WORKER_ERROR_STATUS: Record<string, number> = {
+  TENANT_MISMATCH: 403,
+  NOT_FOUND: 404,
+  LEASE_HELD: 409,
+  CAS_VERSION_CONFLICT: 409,
+  TERMINAL_STATE_IMMUTABLE: 409,
+  RETRY_BUDGET_EXCEEDED: 409,
+};
 
 export function isWorkerPullActionRequest(request: NextRequest, body: unknown): boolean {
   if (request.headers.get(MEKONG_SIGNATURE_HEADER) || request.headers.get(MEKONG_TIMESTAMP_HEADER)) return true;
-  if (typeof body === 'object' && body !== null && 'action' in body) {
-    const act = (body as { action?: unknown }).action;
-    return act === 'claim_next_job' || act === 'complete_worker_attempt';
-  }
-  return false;
+  const act = typeof body === 'object' && body !== null ? (body as { action?: unknown }).action : undefined;
+  return act === 'claim_next_job' || act === 'complete_worker_attempt';
 }
 
 export async function handleMekongWorkerPullPost(
@@ -102,10 +99,10 @@ export async function handleMekongWorkerPullPost(
 
   if (parsed.data.action === 'claim_next_job') {
     const claimed = await claimNextConvergenceJobD1(d1, parsed.data);
-    if (!claimed.ok) return NextResponse.json({ error: claimed.error.message, code: claimed.error.code }, { status: workerErrorStatus(claimed.error.code) });
+    if (!claimed.ok) return NextResponse.json({ error: claimed.error.message, code: claimed.error.code }, { status: WORKER_ERROR_STATUS[claimed.error.code] ?? 422 });
     return NextResponse.json(claimed.value);
   }
   const completed = await completeWorkerAttemptD1(d1, parsed.data);
-  if (!completed.ok) return NextResponse.json({ error: completed.error.message, code: completed.error.code }, { status: workerErrorStatus(completed.error.code) });
+  if (!completed.ok) return NextResponse.json({ error: completed.error.message, code: completed.error.code }, { status: WORKER_ERROR_STATUS[completed.error.code] ?? 422 });
   return NextResponse.json(completed.value);
 }
