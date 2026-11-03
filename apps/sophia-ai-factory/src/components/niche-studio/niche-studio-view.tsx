@@ -10,7 +10,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   getOpcGate1ReadinessAction,
   type OpcGate1ReadinessReport,
@@ -33,6 +33,8 @@ import { CampaignApprovalQueue } from '@/components/approval-queue/campaign-queu
 
 export function NicheStudioView() {
   const t = useTranslations('nicheStudio');
+  const rawLocale = useLocale();
+  const activeLocale: 'en' | 'vi' = rawLocale === 'vi' ? 'vi' : 'en';
   const [readinessReport, setReadinessReport] = useState<OpcGate1ReadinessReport | null>(null);
   const [isReadinessLoading, setIsReadinessLoading] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<NicheVideoCampaignPlan | null>(null);
@@ -56,8 +58,8 @@ export function NicheStudioView() {
 
   const handlePlanGenerated = (plan: NicheVideoCampaignPlan) => {
     setCurrentPlan(plan);
-    setSyndication(buildNicheSyndicationPackage(plan, 'en'));
-    const hooks = generateHookVariants(plan, 'en');
+    setSyndication(buildNicheSyndicationPackage(plan, activeLocale));
+    const hooks = generateHookVariants(plan, activeLocale);
     setHookPackage(hooks);
     setSelectedHookId(hooks.recommendedVariantId);
   };
@@ -87,6 +89,7 @@ export function NicheStudioView() {
             onDispatched={handleDispatched}
             onOfferSaved={setReadinessReport}
             readinessReport={readinessReport}
+            defaultLocale={activeLocale}
             t={t}
           />
         </div>

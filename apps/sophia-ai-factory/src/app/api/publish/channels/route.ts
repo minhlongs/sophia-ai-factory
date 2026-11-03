@@ -87,8 +87,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 503 },
       );
     }
-    const isAdmin =
-      tenantId === user.id || (await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db!));
+    let isAdmin = tenantId === user.id;
+    if (!isAdmin) {
+      try {
+        isAdmin = await hasWorkspaceRole(tenantId, user.id, 'ADMIN', db!);
+      } catch (roleErr) {
+        return NextResponse.json(
+          {
+            error: 'DATABASE_UNAVAILABLE',
+            message: roleErr instanceof Error ? roleErr.message : 'Workspace role lookup failed',
+          },
+          { status: 503 },
+        );
+      }
+    }
     if (!isAdmin) {
       return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
     }

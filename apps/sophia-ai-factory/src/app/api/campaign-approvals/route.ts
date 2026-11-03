@@ -42,8 +42,23 @@ export async function GET(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }
 
-    const workspaceIds = await getUserWorkspaceIds(user.id, d1);
-    const isAuthorizedWorkspace = workspaceId === user.id || workspaceIds.includes(workspaceId);
+    let isAuthorizedWorkspace = workspaceId === user.id;
+    if (!isAuthorizedWorkspace) {
+      try {
+        const workspaceIds = await getUserWorkspaceIds(user.id, d1);
+        isAuthorizedWorkspace = workspaceIds.includes(workspaceId);
+      } catch (err) {
+        logger.error('[api/campaign-approvals] Workspace lookup failed', {
+          userId: user.id,
+          workspaceId,
+          error: toError(err).message,
+        });
+        return NextResponse.json(
+          { error: 'DATABASE_UNAVAILABLE', message: 'Workspace lookup failed' },
+          { status: 503 },
+        );
+      }
+    }
     if (!isAuthorizedWorkspace) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

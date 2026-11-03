@@ -177,9 +177,27 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     );
     expect(patchRes.status).toBe(403);
     expect(mockHasWorkspaceRole).toHaveBeenCalledWith(orgId, soloUserId, 'ADMIN', fakeD1);
+
+    mockHasWorkspaceRole.mockRejectedValueOnce(new Error('D1 connection timeout'));
+    const patchDbErrRes = await resolveApprovalPATCH(
+      new NextRequest('https://sophia.agencyos.network/api/campaign-approvals/apr_org_01', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'reject', reason: 'DB down' }),
+      }),
+      { params: Promise.resolve({ id: 'apr_org_01' }) },
+    );
+    expect(patchDbErrRes.status).toBe(503);
+    expect(((await patchDbErrRes.json()) as { error: string }).error).toBe('DATABASE_UNAVAILABLE');
+
+    mockGetUserWorkspaceIds.mockRejectedValueOnce(new Error('D1 unavailable'));
+    const getDbErrRes = await listApprovalsGET(
+      new NextRequest(`https://sophia.agencyos.network/api/campaign-approvals?workspaceId=${orgId}`),
+    );
+    expect(getDbErrRes.status).toBe(503);
+    expect(((await getDbErrRes.json()) as { error: string }).error).toBe('DATABASE_UNAVAILABLE');
   });
 
-  it('fails closed on POST /api/publish/channels and GET /api/oauth/youtube/callback (S3)', async () => {
+  it('fails closed on POST /api/publish/channels and GET /api/oauth/youtube/callback (S3 + D2)', async () => {
     mockResolveOrgId.mockRejectedValueOnce(new Error('D1_CONNECTION_LOST'));
     const postRes = await registerChannelPOST(
       new NextRequest('https://sophia.agencyos.network/api/publish/channels', {
@@ -192,6 +210,22 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
       }),
     );
     expect(postRes.status).toBe(502);
+
+    mockGetD1.mockResolvedValueOnce(fakeD1);
+    mockResolveOrgId.mockResolvedValueOnce(orgId);
+    mockHasWorkspaceRole.mockRejectedValueOnce(new Error('D1_ROLE_QUERY_TIMEOUT'));
+    const roleDbErrRes = await registerChannelPOST(
+      new NextRequest('https://sophia.agencyos.network/api/publish/channels', {
+        method: 'POST',
+        body: JSON.stringify({
+          provider: 'youtube',
+          externalAccountId: 'UC_TEST_123',
+          accessToken: 'ya29.test_token',
+        }),
+      }),
+    );
+    expect(roleDbErrRes.status).toBe(503);
+    expect(((await roleDbErrRes.json()) as { error: string }).error).toBe('DATABASE_UNAVAILABLE');
 
     mockGetD1.mockResolvedValueOnce(null);
     mockResolveOrgId.mockResolvedValueOnce(orgId);

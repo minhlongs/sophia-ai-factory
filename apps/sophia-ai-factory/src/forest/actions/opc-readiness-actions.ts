@@ -1,11 +1,5 @@
 /**
  * Server Actions for OPC Gate 1 Pre-Flight Readiness & Self-Serve Setup ($0.00 Spend).
- *
- * Authenticates the caller, resolves the active workspace (or personal owner
- * workspace fallback when resolveOrgId returns null, failing closed on DB errors),
- * and allows inspecting readiness, saving/verifying workspace affiliate offers,
- * and toggling the workspace Kill Switch at $0.00 without invoking Inngest or paid APIs.
- *
  * Layer: forest (Server Actions)
  * @module forest/actions/opc-readiness-actions
  */
@@ -80,11 +74,22 @@ async function resolveCallerWorkspace(requireAdmin: boolean): Promise<
       response: { success: false, error: 'Database binding unavailable for readiness check', code: 'DB_UNAVAILABLE' },
     };
   }
-  let orgId: string | null;
+  let workspaceId: string;
   try {
-    orgId = await resolveOrgId(user.id, db);
+    const orgId = await resolveOrgId(user.id, db);
+    workspaceId = orgId ?? user.id;
+    if (requireAdmin) {
+      const isAdmin =
+        workspaceId === user.id || (await hasWorkspaceRole(workspaceId, user.id, 'ADMIN', db));
+      if (!isAdmin) {
+        return {
+          ok: false,
+          response: { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' },
+        };
+      }
+    }
   } catch (err: unknown) {
-    logger.error('resolveOrgId failed in opc-readiness-actions', { error: toError(err).message });
+    logger.error('Workspace resolution failed in opc-readiness-actions', { error: toError(err).message });
     return {
       ok: false,
       response: {
@@ -93,16 +98,6 @@ async function resolveCallerWorkspace(requireAdmin: boolean): Promise<
         code: 'WORKSPACE_RESOLUTION_FAILED',
       },
     };
-  }
-  const workspaceId = orgId ?? user.id;
-  if (requireAdmin) {
-    const isAdmin = workspaceId === user.id || (await hasWorkspaceRole(workspaceId, user.id, 'ADMIN', db));
-    if (!isAdmin) {
-      return {
-        ok: false,
-        response: { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' },
-      };
-    }
   }
   return { ok: true, db, userId: user.id, workspaceId };
 }
@@ -118,7 +113,11 @@ export async function getOpcGate1ReadinessAction(): Promise<
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('getOpcGate1ReadinessAction failed', { error: error.message });
-    return { success: false, error: error.message, code: 'INTERNAL_ERROR' };
+    return {
+      success: false,
+      error: 'Workspace resolution failed due to database error',
+      code: 'WORKSPACE_RESOLUTION_FAILED',
+    };
   }
 }
 

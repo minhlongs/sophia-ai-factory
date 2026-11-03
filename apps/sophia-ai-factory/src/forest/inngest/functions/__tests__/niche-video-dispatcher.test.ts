@@ -128,6 +128,7 @@ function saasEvent(overrides: Partial<EventData> = {}): { data: EventData } {
       tenantId: 'ws_a',
       offerId: 'offer_1',
       termsVerified: true,
+      approvalId: 'app_1',
       approvalHash: 'hash-v1',
       idempotencyKey: 'ws_a:plan_1',
       niche: 'saas_global' as const,
@@ -190,6 +191,17 @@ describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () =>
     expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
   });
 
+  it('stages a campaign without approvalId as DRAFT_PENDING_CEO_APPROVAL ($0.00) even when termsVerified=true and compliance.isAllowed=true (D1)', async () => {
+    const withoutApprovalId = await getHandler()({
+      event: saasEvent({ approvalId: undefined, termsVerified: true }),
+      step: mockStep,
+    });
+    expect(withoutApprovalId.status).toBe('DRAFT_PENDING_CEO_APPROVAL');
+    expect(withoutApprovalId.state).toBe('approval_pending');
+    expect(withoutApprovalId.mediaReady).toBe(false);
+    expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
+  });
+
   it('stages an unverified offer / unknown jurisdiction as a draft without spending', async () => {
     const unknown = await getHandler()({ event: saasEvent({ termsVerified: false }), step: mockStep });
     expect(unknown.status).toBe('DRAFT_PENDING_CEO_APPROVAL');
@@ -221,9 +233,21 @@ describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () =>
   });
 
   it('blocks when the approved payload hash changed after approval', async () => {
+    const { verifyAndEnforceCampaignApprovalD1 } = await import(
+      '@/tree/affiliate/approval/campaign-approval-repo'
+    );
+    vi.mocked(verifyAndEnforceCampaignApprovalD1).mockResolvedValueOnce({
+      ok: false,
+      error: {
+        code: 'APPROVAL_INVALIDATED_BY_MUTATION',
+        message: 'Payload hash mismatch',
+        nextStatus: 'invalidated_by_mutation',
+        computedHash: 'hash-v1',
+      },
+    });
     const result = await getHandler()({ event: saasEvent({ approvalHash: 'hash-v2' }), step: mockStep });
     expect(result.status).toBe('BLOCKED');
-    expect(result.reason).toBe('APPROVAL_INVALIDATED');
+    expect(result.reason).toBe('APPROVAL_INVALIDATED_BY_MUTATION');
     expect(generateNicheCampaignVoiceover).not.toHaveBeenCalled();
   });
 
@@ -270,7 +294,7 @@ describe('nicheVideoDispatcher Inngest Function (canonical render queue)', () =>
       event: {
         data: {
           userId: 'usr_agency_3', tenantId: 'ws_a', offerId: 'offer_cex',
-          termsVerified: true, approvalHash: 'hash-v1',
+          termsVerified: true, approvalId: 'app_1', approvalHash: 'hash-v1',
           niche: 'crypto_global', blueprintId: 'crypto_fee_discount_signup_bonus',
           productName: 'Binance', productUrl: 'https://accounts.binance.com/register',
           jurisdiction: 'US', affiliateCode: 'BINANCE20', locale: 'en',

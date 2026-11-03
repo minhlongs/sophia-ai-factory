@@ -6,6 +6,7 @@
 
 import * as dbClientModule from '@/seed/db/client';
 import type { D1Client, D1Database } from '@/seed/db/client';
+import { rethrowUnlessMissingTable } from '@/seed/auth/org-resolver/d1-org-queries';
 import { logger } from '@/seed/utils/logger-utility';
 import { normalizeWorkspaceRole, type WorkspaceRole } from './roles';
 
@@ -59,6 +60,7 @@ export async function getWorkspaceMembership(
       error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString(),
     });
+    rethrowUnlessMissingTable(error);
     return null;
   }
 }
@@ -73,8 +75,8 @@ export async function getUserWorkspaceIds(
   db?: D1Client | D1Database | null
 ): Promise<string[]> {
   if (!userId) return [];
+  const client = resolveClient(db ?? undefined);
   try {
-    const client = resolveClient(db ?? undefined);
     if (typeof client.prepare === 'function') {
       const res = await client
         .prepare('SELECT org_id FROM org_members WHERE user_id = ? ORDER BY created_at ASC')
@@ -91,7 +93,15 @@ export async function getUserWorkspaceIds(
       const ids = (Array.isArray(rows) ? rows : [rows]).map((r) => r?.org_id).filter((id): id is string => Boolean(id));
       if (ids.length > 0) return ids;
     }
+  } catch (err) {
+    logger.warn('[security] get_user_workspaces_error', {
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    rethrowUnlessMissingTable(err);
+  }
 
+  try {
     if (typeof client.prepare === 'function') {
       const orgRes = await client
         .prepare('SELECT id FROM organizations WHERE user_id = ?')
@@ -106,6 +116,7 @@ export async function getUserWorkspaceIds(
       userId,
       error: err instanceof Error ? err.message : String(err),
     });
+    rethrowUnlessMissingTable(err);
     return [];
   }
 }
