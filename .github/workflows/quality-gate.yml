@@ -4,9 +4,6 @@ name: Quality Gate (Gates 1 + 3)
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
 
 permissions:
   contents: read

@@ -18,4 +18,5 @@ export * from './contract-v1/contract-types';
 export * from './contract-v1/contract-validator';
 export * from './contract-v1/crash-recovery-guard';
 export * from './contract-v1/contract-mock-engine';
+export * from './contract-v1/contract-d1-store';
 export * from './contract-v1/contract-client';

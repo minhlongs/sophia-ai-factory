@@ -8,3 +8,4 @@ export * from './errors';
 export * from './encoding';
 export * from './auth-token';
 export * from './cipher';
+export * from './worker-hmac';

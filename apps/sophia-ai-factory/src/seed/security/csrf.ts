@@ -20,56 +20,35 @@ export const CSRF_HEADER_NAME = 'x-csrf-token'
 
 /** Safe methods that never mutate state */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
-
 const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/csp-report']
 const CRON_PREFIX = '/api/cron/'
 
-/**
- * Verify that a cron request is authentic.
- */
+/** Verify that a cron request is authentic. */
 export function validateCronRequest(request: NextRequest): boolean {
   const pathname = new URL(request.url).pathname
-  if (!pathname.startsWith(CRON_PREFIX)) {
-    return false
-  }
-
-  if (request.headers.get('cf-cron-trigger')) {
-    return true
-  }
+  if (!pathname.startsWith(CRON_PREFIX)) return false
+  if (request.headers.get('cf-cron-trigger')) return true
 
   const authHeader = request.headers.get('authorization') ?? ''
   const cronSecret = process.env.CRON_SECRET
-  if (authHeader && cronSecret) {
-    const bearerPrefix = 'Bearer '
-    if (authHeader.startsWith(bearerPrefix)) {
-      const token = authHeader.slice(bearerPrefix.length)
-      if (timingSafeEqual(token, cronSecret)) {
-        return true
-      }
-    }
+  if (authHeader && cronSecret && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice('Bearer '.length)
+    if (timingSafeEqual(token, cronSecret)) return true
   }
 
   const internalCronSecret = request.headers.get('x-internal-cron-secret')
   const expectedInternalSecret = process.env.INTERNAL_CRON_SECRET
-  if (internalCronSecret && expectedInternalSecret && timingSafeEqual(internalCronSecret, expectedInternalSecret)) {
-    return true
-  }
-
-  return false
+  return Boolean(internalCronSecret && expectedInternalSecret && timingSafeEqual(internalCronSecret, expectedInternalSecret))
 }
 
-/**
- * Generate a 32-byte random hex token using Web Crypto (edge-compatible).
- */
+/** Generate a 32-byte random hex token using Web Crypto (edge-compatible). */
 export function generateCsrfToken(): string {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-/**
- * Attach a csrf-token cookie to the response.
- */
+/** Attach a csrf-token cookie to the response. */
 export function setCsrfCookie(response: NextResponse, token: string): void {
   const isProduction = process.env.NODE_ENV === 'production'
   const cookieOptions = [
@@ -80,47 +59,43 @@ export function setCsrfCookie(response: NextResponse, token: string): void {
   ]
     .filter(Boolean)
     .join('; ')
-
   response.headers.append('Set-Cookie', cookieOptions)
 }
 
-/**
- * Verify that the incoming request carries a valid CSRF token.
- */
+/** Verify that the incoming request carries a valid CSRF token. */
 export function verifyCsrfToken(request: NextRequest): boolean {
+  const cleanPath = pathnameWithoutLocale(new URL(request.url).pathname)
+  if (
+    cleanPath === '/api/convergence/vertical-slice' &&
+    Boolean(request.headers.get('x-mekong-signature')) &&
+    Boolean(request.headers.get('x-mekong-timestamp'))
+  ) {
+    return true
+  }
   let cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value
   if (!cookieToken) {
     const cookieHeader = request.headers.get('cookie') ?? ''
     cookieToken = cookieHeader ? parseCookieHeader(cookieHeader, CSRF_COOKIE_NAME) : undefined
   }
   const headerToken = request.headers.get(CSRF_HEADER_NAME)
-
   if (!cookieToken || !headerToken) return false
   return timingSafeEqual(cookieToken, headerToken)
 }
 
-/**
- * Determine whether a request needs CSRF validation.
- */
+/** Determine whether a request needs CSRF validation. */
 export function requiresCsrfCheck(pathname: string, method: string): boolean {
   if (SAFE_METHODS.has(method.toUpperCase())) return false
   const cleanPath = pathnameWithoutLocale(pathname)
   for (const prefix of CSRF_BYPASS_PREFIXES) {
     if (cleanPath.startsWith(prefix)) return false
   }
-  if (cleanPath.startsWith(CRON_PREFIX)) return false
-  return true
+  return !cleanPath.startsWith(CRON_PREFIX)
 }
 
-/**
- * Build a 403 JSON response for a CSRF token mismatch.
- */
+/** Build a 403 JSON response for a CSRF token mismatch. */
 export function csrfForbiddenResponse(): NextResponse {
   return new NextResponse(
     JSON.stringify({ error: 'csrf_token_invalid' }),
-    {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' },
-    }
+    { status: 403, headers: { 'Content-Type': 'application/json' } }
   )
 }

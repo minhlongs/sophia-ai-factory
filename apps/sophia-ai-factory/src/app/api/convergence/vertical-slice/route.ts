@@ -1,5 +1,6 @@
 /**
- * POST /api/convergence/vertical-slice — execute 12-stage Creative Job vertical slice or cancel/approval action with D1 Lease/CAS persistence
+ * POST /api/convergence/vertical-slice — execute 12-stage Creative Job vertical slice, cancel/approval action,
+ * or HMAC-authenticated External Mekong Pull-Worker (`claim_next_job` / `complete_worker_attempt`) with D1 Lease/CAS persistence
  * GET  /api/convergence/vertical-slice?workspaceId=X&jobId=Y&artifactId=Z — read converged job truth state, artifact, & unit economics
  */
 
@@ -13,19 +14,33 @@ import {
   handleConvergencePostAction,
   runSliceSchema,
 } from './route-handlers';
+import {
+  handleMekongWorkerPullPost,
+  isWorkerPullActionRequest,
+} from './worker-route-handler';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+  let rawBody = '';
   let body: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.text();
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+
+  if (isWorkerPullActionRequest(request, body)) {
+    try {
+      return await handleMekongWorkerPullPost(request, rawBody, body);
+    } catch (err) {
+      return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
+    }
+  }
+
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const parsed = runSliceSchema.safeParse(body);
   if (!parsed.success) {
