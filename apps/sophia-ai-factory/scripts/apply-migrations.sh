@@ -417,6 +417,8 @@ add_verify "0474_reconcile_sop_marketplace_schema" \
   "SELECT name FROM sqlite_master WHERE type='table' AND name='sop_installs'"
 add_verify "0494_authoritative_job_convergence_ledger" \
   "SELECT name FROM sqlite_master WHERE type='table' AND name='authoritative_job_convergence_ledger'"
+add_verify "0495_mekong_contract_tickets" \
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='mekong_contract_tickets'"
 
 is_critical_migration() {
   local name="$1"

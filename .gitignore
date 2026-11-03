@@ -100,6 +100,7 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0492_opc_deferred_event_binding.sql
 !apps/sophia-ai-factory/migrations/0493_publishing_jobs_privacy_status.sql
 !apps/sophia-ai-factory/migrations/0494_authoritative_job_convergence_ledger.sql
+!apps/sophia-ai-factory/migrations/0495_mekong_contract_tickets.sql
 backups/*.sql
 **/d1-*.sql
 

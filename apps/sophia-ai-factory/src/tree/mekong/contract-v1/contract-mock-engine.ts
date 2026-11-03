@@ -22,24 +22,28 @@ import {
 import { validateOutcomeEnvelope } from './contract-validator';
 
 export const MEKONG_REAL_EXECUTION_STATUS = 'NOT_VERIFIED' as const;
+export const MEKONG_D1_EXECUTION_STATUS = 'VERIFIED_D1_EDGE' as const;
 
 export interface MekongOperationCapabilityRow {
   operation: MekongContractOperation;
   implementedAsSchema: boolean;
   implementedAsMock: boolean;
   implementedThroughLocalBridge: boolean;
-  implementedThroughRealAuthorizedRuntime: false;
-  realRuntimeStatus: typeof MEKONG_REAL_EXECUTION_STATUS;
+  implementedThroughRealAuthorizedRuntime: boolean;
+  realRuntimeStatus: typeof MEKONG_REAL_EXECUTION_STATUS | typeof MEKONG_D1_EXECUTION_STATUS;
 }
 
-export function getMekongContractCapabilityMatrix(): readonly MekongOperationCapabilityRow[] {
+export function getMekongContractCapabilityMatrix(
+  options?: { d1Enabled?: boolean }
+): readonly MekongOperationCapabilityRow[] {
+  const d1Enabled = Boolean(options?.d1Enabled);
   return MEKONG_CONTRACT_OPERATIONS.map((operation) => ({
     operation,
     implementedAsSchema: true,
     implementedAsMock: true,
     implementedThroughLocalBridge: true,
-    implementedThroughRealAuthorizedRuntime: false,
-    realRuntimeStatus: MEKONG_REAL_EXECUTION_STATUS,
+    implementedThroughRealAuthorizedRuntime: d1Enabled,
+    realRuntimeStatus: d1Enabled ? MEKONG_D1_EXECUTION_STATUS : MEKONG_REAL_EXECUTION_STATUS,
   }));
 }
 

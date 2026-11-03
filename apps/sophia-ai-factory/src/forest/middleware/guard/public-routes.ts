@@ -53,6 +53,9 @@ export function isPublicApiRoute(pathname: string): boolean {
     // explicitly because the pinned-Set rule makes new subpaths private by
     // default, and an unlisted webhook answers 401 before its signature check.
     '/api/payos/ipn',
+    // Convergence vertical-slice endpoint enforces getCurrentUser() + verifyWorkspaceAccess()
+    // for session calls and HMAC-SHA256 (x-mekong-signature) for external pull-workers.
+    '/api/convergence/vertical-slice',
 
     // Internal scheduler (authenticated via INTERNAL_CRON_SECRET, not session)
     '/api/cron/email-drip',

@@ -1,19 +1,25 @@
 /**
- * D1-Backed 12-Stage Creative Job Runner & 10-Window Crash Recovery Engine (Supreme #02.1 P2 & P3)
+ * D1-Backed 12-Stage Creative Job Runner & 10-Window Crash Recovery Engine (Supreme #02.1 P2/P3 & #02.2 R2)
  * Layer: forest/convergence (imports seed and tree only — zero land imports)
  */
 
 import type { D1Database } from '@/seed/db/client';
-import { success, failure, type Result } from '@/seed/types/result';
+import { failure, type Result } from '@/seed/types/result';
 import {
-  acquireConvergenceLeaseD1, calculateUnitEconomics, createOrGetConvergenceJobD1,
-  evaluateConvergedTruth, listConvergenceJobsByWorkspaceD1, transitionConvergenceCasD1,
-  type ArtifactManifestEntry, type ConvergenceLedgerRecord,
+  acquireConvergenceLeaseD1,
+  createOrGetConvergenceJobD1,
+  transitionConvergenceCasD1,
+  type ArtifactManifestEntry,
 } from '@/tree/convergence';
 import { MekongContractClient } from '@/tree/mekong';
 import type { CreativeJobSliceOutput, RunCreativeJobSliceInput } from './creative-job-pipeline';
-import { CREATIVE_JOB_12_STAGES, buildDeterministicStageArtifact, verifyMediaArtifactManifest } from './creative-job-stages';
-import { materializeLocalStageArtifact } from './local-artifact-materializer';
+import { CREATIVE_JOB_12_STAGES, verifyMediaArtifactManifest } from './creative-job-stages';
+import {
+  applyMidPipelineCrashWindowD1,
+  buildOrMaterializeStageArtifact,
+  finalizeD1Slice,
+  isMidPipelineCrashWindow,
+} from './creative-job-d1-helpers';
 
 export type CrashWindowId =
   | 'W01_AFTER_INTAKE_BEFORE_LEASE'
@@ -34,24 +40,15 @@ export interface RunCreativeJobD1Input extends RunCreativeJobSliceInput {
   nowMs?: number;
 }
 
-async function finalizeD1Slice(
-  d1: D1Database, rec: ConvergenceLedgerRecord, mekongTicketId: string | null, deduplicated: boolean
-): Promise<Result<CreativeJobSliceOutput, { code: string; message: string }>> {
-  const all = await listConvergenceJobsByWorkspaceD1(d1, rec.workspaceId);
-  return success({
-    record: rec,
-    truthState: evaluateConvergedTruth(rec, rec.sideEffectUncertain, rec.verificationReport.hasVerifiedMedia),
-    unitEconomics: calculateUnitEconomics(all),
-    mekongTicketId,
-    deduplicated,
-  });
-}
-
 export async function runCreativeJobVerticalSliceD1(
-  d1: D1Database, input: RunCreativeJobD1Input
+  d1: D1Database,
+  input: RunCreativeJobD1Input
 ): Promise<Result<CreativeJobSliceOutput, { code: string; message: string }>> {
   const client = new MekongContractClient({
-    mode: input.contractMode ?? 'DISABLED', sqliteDbPath: input.sqliteDbPath, worktreeRootDir: input.worktreeRootDir,
+    mode: input.contractMode ?? 'DISABLED',
+    d1,
+    sqliteDbPath: input.sqliteDbPath,
+    worktreeRootDir: input.worktreeRootDir,
   });
   const created = await createOrGetConvergenceJobD1(d1, {
     jobId: input.jobId, workspaceId: input.workspaceId, userId: input.userId,
@@ -72,9 +69,10 @@ export async function runCreativeJobVerticalSliceD1(
   if (input.simulateCrashWindow === 'W02_AFTER_LEASE_BEFORE_MEKONG') return finalizeD1Slice(d1, cur, cur.mekongJobId, false);
 
   const attemptNo = input.simulateCrashWindow === 'W09_DURING_RETRY_SCHEDULING' ? cur.attemptNo + 1 : cur.attemptNo;
-  const sub = client.submitTask({
-    source_id: 'sophia_creative_slice', event_id: input.idempotencyKey, goal: input.goal, workspace_id: input.workspaceId,
-  }, attemptNo);
+  const sub = await client.submitTaskAsync(
+    { source_id: 'sophia_creative_slice', event_id: input.idempotencyKey, goal: input.goal, workspace_id: input.workspaceId },
+    attemptNo
+  );
   if (!sub.ok) return failure(sub.error);
   const ticketId = sub.value.ticket.ticket_id;
   if (input.simulateCrashWindow === 'W03_AFTER_MEKONG_BEFORE_RECORD') return finalizeD1Slice(d1, cur, ticketId, false);
@@ -85,14 +83,7 @@ export async function runCreativeJobVerticalSliceD1(
     if (st.stageId === 'crash_quarantine_recovery') continue;
     actualCostUsd += st.costUsd;
     if (st.producesArtifactKind && !manifest.some((m) => m.stageId === st.stageId)) {
-      manifest.push(
-        input.artifactRootDir
-          ? materializeLocalStageArtifact({
-              artifactRootDir: input.artifactRootDir, workspaceId: input.workspaceId, jobId: input.jobId,
-              stageId: st.stageId, kind: st.producesArtifactKind, goal: input.goal, corruptMedia: input.simulateCorruptMedia,
-            })
-          : buildDeterministicStageArtifact(input.jobId, st.stageId, st.producesArtifactKind, input.simulateCorruptMedia)
-      );
+      manifest.push(buildOrMaterializeStageArtifact(input, st.stageId, st.producesArtifactKind));
     }
     if (st.stageId === 'ceo_approval_gate' && input.ceoDecision === 'reject') {
       const rej = await transitionConvergenceCasD1(d1, {
@@ -104,16 +95,8 @@ export async function runCreativeJobVerticalSliceD1(
     }
   }
   const verificationReport = verifyMediaArtifactManifest(manifest, `verif_${input.jobId}_att${attemptNo}`);
-  const w = input.simulateCrashWindow;
-  if (w === 'W04_DURING_RENDER_BEFORE_ARTIFACT' || w === 'W05_AFTER_ARTIFACT_BEFORE_VERIFICATION' || w === 'W06_AFTER_VERIFICATION_BEFORE_DELIVERY' || w === 'W07_AFTER_EXTERNAL_PUBLISH_BEFORE_RECEIPT' || w === 'W08_AFTER_DELIVERY_BEFORE_COST') {
-    const partial = await transitionConvergenceCasD1(d1, {
-      jobId: cur.jobId, workspaceId: cur.workspaceId, expectedVersion: cur.version, leaseToken, nowMs: input.nowMs,
-      lifecycleStage: w === 'W07_AFTER_EXTERNAL_PUBLISH_BEFORE_RECEIPT' ? 'crash_quarantine_recovery' : 'media_integrity_verification',
-      mekongJobId: ticketId, sideEffectUncertain: w === 'W07_AFTER_EXTERNAL_PUBLISH_BEFORE_RECEIPT',
-      artifactManifest: w === 'W04_DURING_RENDER_BEFORE_ARTIFACT' ? manifest.filter((m) => m.kind !== 'video') : manifest,
-      verificationReport: w === 'W05_AFTER_ARTIFACT_BEFORE_VERIFICATION' ? undefined : verificationReport,
-      axes: w === 'W07_AFTER_EXTERNAL_PUBLISH_BEFORE_RECEIPT' ? { executionOutcome: 'crashed', verificationOutcome: 'verified', deliveryOutcome: 'pending', businessOutcome: 'human_review_required' } : undefined,
-    });
+  if (input.simulateCrashWindow && isMidPipelineCrashWindow(input.simulateCrashWindow)) {
+    const partial = await applyMidPipelineCrashWindowD1(d1, cur, leaseToken, ticketId, input.simulateCrashWindow, manifest, verificationReport, input.nowMs);
     return partial.ok ? finalizeD1Slice(d1, partial.value, ticketId, false) : failure(partial.error);
   }
   const fin = await transitionConvergenceCasD1(d1, {

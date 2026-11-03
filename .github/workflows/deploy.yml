@@ -84,6 +84,7 @@ jobs:
   stage-2-3-build-and-deploy:
     name: 'Stage 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy'
     needs: stage-1-quality-gate
+    environment: production
     runs-on: ubuntu-latest
     defaults:
       run:
