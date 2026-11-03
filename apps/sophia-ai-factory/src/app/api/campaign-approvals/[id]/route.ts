@@ -61,14 +61,42 @@ export async function PATCH(
     const { id } = await params;
     const { action, reason } = parsed.data;
 
-    const located = await locateTenantApproval(d1, user.id, id);
+    let located: { tenantId: string } | null;
+    try {
+      located = await locateTenantApproval(d1, user.id, id);
+    } catch (err) {
+      logger.error('[api/campaign-approvals] Tenant approval lookup failed', {
+        userId: user.id,
+        approvalId: id,
+        error: getErrorMessage(err),
+      });
+      return NextResponse.json(
+        { error: 'DATABASE_UNAVAILABLE', message: 'Workspace lookup failed' },
+        { status: 503 },
+      );
+    }
     if (!located) {
       return NextResponse.json({ error: 'Approval not found' }, { status: 404 });
     }
     const { tenantId } = located;
 
-    const isAuthorized =
-      tenantId === user.id || (await hasWorkspaceRole(tenantId, user.id, 'ADMIN', d1));
+    let isAuthorized = tenantId === user.id;
+    if (!isAuthorized) {
+      try {
+        isAuthorized = await hasWorkspaceRole(tenantId, user.id, 'ADMIN', d1);
+      } catch (err) {
+        logger.error('[api/campaign-approvals] Workspace role lookup failed', {
+          userId: user.id,
+          tenantId,
+          approvalId: id,
+          error: getErrorMessage(err),
+        });
+        return NextResponse.json(
+          { error: 'DATABASE_UNAVAILABLE', message: 'Workspace role check failed' },
+          { status: 503 },
+        );
+      }
+    }
     if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Only workspace owner or admin can resolve approvals' },

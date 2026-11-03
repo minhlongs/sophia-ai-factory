@@ -283,7 +283,7 @@ describe('workspace-access: Verification Functions', () => {
     ).rejects.toThrow(InsufficientWorkspaceRoleError);
   });
 
-  it('gracefully handles database errors during membership lookup', async () => {
+  it('fails closed on real D1 errors and returns false only on missing-table errors', async () => {
     const failingDb = {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnValue({
@@ -292,16 +292,27 @@ describe('workspace-access: Verification Functions', () => {
       }),
     };
 
-    const res = await verifyWorkspaceAccess('ws_1', 'u_1', failingDb as never);
-    expect(res).toBe(false);
+    await expect(verifyWorkspaceAccess('ws_1', 'u_1', failingDb as never)).rejects.toThrow(
+      'D1 connection timeout',
+    );
     expect(logger.warn).toHaveBeenCalledWith(
       '[security] workspace_membership_lookup_error',
       expect.objectContaining({
         workspaceId: 'ws_1',
         userId: 'u_1',
         error: 'D1 connection timeout',
-      })
+      }),
     );
+
+    const missingTableDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockRejectedValue(new Error('no such table: org_members')),
+        }),
+      }),
+    };
+    const res = await verifyWorkspaceAccess('ws_1', 'u_1', missingTableDb as never);
+    expect(res).toBe(false);
   });
 });
 
@@ -357,7 +368,7 @@ describe('workspace-access: getUserWorkspaceIds', () => {
     expect(callCount).toBe(2);
   });
 
-  it('handles database errors gracefully and logs security warning', async () => {
+  it('fails closed on real D1 errors and returns empty array only on missing-table errors', async () => {
     const failingDb = {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnValue({
@@ -366,14 +377,25 @@ describe('workspace-access: getUserWorkspaceIds', () => {
       }),
     };
 
-    const ids = await getUserWorkspaceIds('u_err', failingDb as never);
-    expect(ids).toEqual([]);
+    await expect(getUserWorkspaceIds('u_err', failingDb as never)).rejects.toThrow(
+      'D1 unavailable',
+    );
     expect(logger.warn).toHaveBeenCalledWith(
       '[security] get_user_workspaces_error',
       expect.objectContaining({
         userId: 'u_err',
         error: 'D1 unavailable',
-      })
+      }),
     );
+
+    const missingTableDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockRejectedValue(new Error('no such table: org_members')),
+        }),
+      }),
+    };
+    const ids = await getUserWorkspaceIds('u_err', missingTableDb as never);
+    expect(ids).toEqual([]);
   });
 });

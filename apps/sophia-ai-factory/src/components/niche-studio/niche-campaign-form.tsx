@@ -31,6 +31,7 @@ interface NicheCampaignFormProps {
   onDispatched: (planId: string) => void;
   onOfferSaved?: (report: OpcGate1ReadinessReport) => void;
   readinessReport?: OpcGate1ReadinessReport | null;
+  defaultLocale?: 'en' | 'vi';
   t: (key: string) => string;
 }
 
@@ -39,11 +40,15 @@ export function NicheCampaignForm({
   onDispatched,
   onOfferSaved,
   readinessReport,
+  defaultLocale = 'en',
   t,
 }: NicheCampaignFormProps) {
   const [niche, setNiche] = useState<'saas_global' | 'crypto_global'>('saas_global');
   const [blueprintId, setBlueprintId] = useState(NICHE_BLUEPRINTS.saas_global[0].id);
-  const [formValues, setFormValues] = useState<NicheProductFormValues>(DEFAULT_SAAS_FORM_VALUES);
+  const [formValues, setFormValues] = useState<NicheProductFormValues>(() => ({
+    ...DEFAULT_SAAS_FORM_VALUES,
+    locale: defaultLocale,
+  }));
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingOffer, setIsSavingOffer] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -65,7 +70,10 @@ export function NicheCampaignForm({
   const handleNicheSwitch = (newNiche: 'saas_global' | 'crypto_global') => {
     setNiche(newNiche);
     setBlueprintId(NICHE_BLUEPRINTS[newNiche][0].id);
-    setFormValues(newNiche === 'crypto_global' ? DEFAULT_CRYPTO_FORM_VALUES : DEFAULT_SAAS_FORM_VALUES);
+    setFormValues({
+      ...(newNiche === 'crypto_global' ? DEFAULT_CRYPTO_FORM_VALUES : DEFAULT_SAAS_FORM_VALUES),
+      locale: formValues.locale ?? defaultLocale,
+    });
     setErrorMsg(null);
     setStatusMsg(null);
   };
@@ -102,7 +110,7 @@ export function NicheCampaignForm({
       blueprintId,
       ...formValues,
       targetAudience: niche === 'saas_global' ? 'Software Engineers & Agency Owners' : 'Crypto Traders & Investors',
-      locale: formValues.locale ?? ('en' as const),
+      locale: formValues.locale ?? defaultLocale,
     };
 
     const previewRes = await previewNicheVideoPlanAction(payload);

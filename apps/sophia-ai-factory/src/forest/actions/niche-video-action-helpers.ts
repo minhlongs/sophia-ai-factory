@@ -1,16 +1,24 @@
 /**
- * Validation schema, types, and shared plan builder for Niche Video Server Actions
+ * Validation schema, types, shared plan builder, and synchronous $0.00 CEO
+ * approval draft staging for Niche Video Server Actions.
  *
  * Layer: forest (Server Actions helpers)
  * @module forest/actions/niche-video-action-helpers
  */
 
 import { z } from 'zod';
+import { DEFAULT_MAX_RENDER_COST_CENTS } from '@/seed/config/affiliate-budget-defaults';
+import { logger } from '@/seed/utils/logger-utility';
+import {
+  createCampaignApproval,
+  type ApprovalDispatchContext,
+} from '@/tree/affiliate/approval/campaign-approval-repo';
 import {
   createNicheVideoCampaignPlan,
   type CreateNicheVideoCampaignInput,
   type NicheVideoCampaignPlan,
 } from '@/tree/video/blueprints/niche-video-service';
+import { synthesizeNicheScript } from '@/tree/video/render/niche-script-synthesizer';
 
 export const createNicheVideoCampaignSchema = z.object({
   niche: z.enum(['saas_global', 'crypto_global']),
@@ -48,7 +56,12 @@ export interface NicheVideoActionResponse<T = unknown> {
 export function validateAndBuildNichePlan(
   rawInput: CreateNicheVideoCampaignActionInput,
 ):
-  | { ok: true; planInput: CreateNicheVideoCampaignInput; input: ValidatedNicheVideoActionInput; plan: NicheVideoCampaignPlan }
+  | {
+      ok: true;
+      planInput: CreateNicheVideoCampaignInput;
+      input: ValidatedNicheVideoActionInput;
+      plan: NicheVideoCampaignPlan;
+    }
   | { ok: false; response: NicheVideoActionResponse<never> } {
   const parsed = createNicheVideoCampaignSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -73,4 +86,70 @@ export function validateAndBuildNichePlan(
   }
 
   return { ok: true, planInput, input: parsed.data, plan: planResult.value };
+}
+
+/**
+ * Synchronously stages a `pending_ceo` row in `agent_campaign_approvals` ($0.00)
+ * when D1 is available, so the CEO Campaign Approval Queue displays the draft
+ * immediately after `dispatchNicheVideoCampaignAction` returns.
+ */
+export async function stagePendingApprovalOnDispatch(params: {
+  db: D1Database | null;
+  userId: string;
+  tenantId: string;
+  resolvedOfferId: string | undefined;
+  input: ValidatedNicheVideoActionInput;
+  planInput: CreateNicheVideoCampaignInput;
+  plan: NicheVideoCampaignPlan;
+}): Promise<string | undefined> {
+  const { db, userId, tenantId, resolvedOfferId, input, planInput, plan } = params;
+  if (!db) return undefined;
+
+  const script = synthesizeNicheScript(plan, planInput.locale);
+  const approvalPayload = {
+    scriptBody: script.fullNarration,
+    affiliateTargetUrl: plan.trackedUrl || planInput.productUrl,
+    jurisdiction: plan.compliance.jurisdiction || planInput.jurisdiction || 'UNKNOWN',
+    disclosureText: plan.compliance.regulatoryRef || '#ad',
+    maxRenderCostCents: input.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
+    ...(input.targetAccount ? { targetAccount: input.targetAccount } : {}),
+  };
+  const dispatch: ApprovalDispatchContext = {
+    userId,
+    offerId: resolvedOfferId,
+    maxRenderCostCents: input.maxRenderCostCents,
+    targetAccount: input.targetAccount,
+    idempotencyKey: `${tenantId}:${plan.planId}`,
+    niche: planInput.niche,
+    blueprintId: planInput.blueprintId,
+    productName: planInput.productName,
+    productUrl: planInput.productUrl,
+    targetAudience: planInput.targetAudience,
+    jurisdiction: planInput.jurisdiction,
+    affiliateCode: planInput.affiliateCode,
+    subId: planInput.subId ?? null,
+    vanityCoupon: planInput.vanityCoupon ?? null,
+    locale: planInput.locale,
+  };
+
+  try {
+    const created = await createCampaignApproval(db, {
+      tenantId,
+      campaignId: plan.planId,
+      niche: planInput.niche,
+      jurisdiction: approvalPayload.jurisdiction,
+      status: 'pending_ceo',
+      payload: approvalPayload,
+      dispatch,
+    });
+    if (created.ok) return created.value.id;
+    logger.warn('stagePendingApprovalOnDispatch: approval row not persisted', {
+      error: created.error.message,
+    });
+  } catch (err) {
+    logger.warn('stagePendingApprovalOnDispatch: D1 approval insert unavailable', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+  return undefined;
 }

@@ -15,6 +15,7 @@ import {
 } from '../niche-video-actions';
 import { getOpcGate1ReadinessAction } from '../opc-readiness-actions';
 import * as authSession from '@/seed/auth/better-auth-session';
+import { clearOrgIdCache } from '@/seed/auth/resolve-org-id';
 import * as dbClient from '@/seed/db/client';
 import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import { inngest } from '@/seed/inngest/client';
@@ -40,6 +41,7 @@ describe('Niche Video Server Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    clearOrgIdCache();
     vi.mocked(dbClient.getD1).mockResolvedValue(null as unknown as D1Database);
     vi.mocked(authSession.getCurrentUser).mockResolvedValue(
       mockUser as unknown as Awaited<ReturnType<typeof authSession.getCurrentUser>>,
@@ -146,7 +148,7 @@ describe('Niche Video Server Actions', () => {
       );
     });
 
-    it('self-registers verified workspace offer and binds offerId + termsVerified=true when commissionTerms is provided', async () => {
+    it('self-registers verified workspace offer, synchronously stages pending_ceo approval row in D1, and passes campaignId without approvalId to Inngest (D1)', async () => {
       const db = createFakeD1([
         `CREATE TABLE affiliate_offers (
           id TEXT PRIMARY KEY,
@@ -166,6 +168,15 @@ describe('Niche Video Server Actions', () => {
           created_at INTEGER NOT NULL DEFAULT 1000,
           updated_at INTEGER NOT NULL DEFAULT 1000
         );`,
+        `CREATE TABLE agent_campaign_approvals (
+          id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+          niche TEXT NOT NULL, jurisdiction TEXT NOT NULL, approval_payload_hash TEXT NOT NULL,
+          estimated_render_cost_cents INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'pending_ceo',
+          approved_by TEXT, approved_at INTEGER, invalidated_reason TEXT,
+          payload_json TEXT, dispatch_json TEXT, expires_at INTEGER,
+          revoked_by TEXT, revoked_at INTEGER, executed_at INTEGER, rejection_reason TEXT,
+          created_at INTEGER NOT NULL
+        );`,
       ]) as unknown as D1Database;
       vi.mocked(dbClient.getD1).mockResolvedValue(db);
 
@@ -183,11 +194,13 @@ describe('Niche Video Server Actions', () => {
 
       const result = await dispatchNicheVideoCampaignAction(payload);
       expect(result.success).toBe(true);
+      expect(result.data?.approvalId).toMatch(/^app_/);
       expect(inngest.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'niche.video.campaign.requested',
           data: expect.objectContaining({
             userId: 'usr_growth_agency_99',
+            campaignId: result.data?.planId,
             offerId: buildWorkspaceOfferId(
               'usr_growth_agency_99',
               'crypto_global',
@@ -197,6 +210,18 @@ describe('Niche Video Server Actions', () => {
           }),
         }),
       );
+      const sentEvent = vi.mocked(inngest.send).mock.calls[0]?.[0] as unknown as {
+        data: Record<string, unknown>;
+      };
+      expect(sentEvent.data.approvalId).toBeUndefined();
+
+      const approvalRow = await db
+        .prepare(`SELECT id, status, campaign_id FROM agent_campaign_approvals WHERE tenant_id = ?`)
+        .bind('usr_growth_agency_99')
+        .first<{ id: string; status: string; campaign_id: string }>();
+      expect(approvalRow?.id).toBe(result.data?.approvalId);
+      expect(approvalRow?.status).toBe('pending_ceo');
+      expect(approvalRow?.campaign_id).toBe(result.data?.planId);
     });
 
     it('rejects dispatch when maxRenderCostCents exceeds the proposed Gate 1 vertical ceiling of 2500 cents ($25.00)', async () => {
@@ -258,7 +283,7 @@ describe('Niche Video Server Actions', () => {
       expect(res.code).toBe('UNAUTHORIZED');
     });
 
-    it('evaluates personal owner workspace readiness with zero secret exposure', async () => {
+    it('evaluations personal owner workspace readiness with zero secret exposure', async () => {
       const db = createFakeD1([
         `CREATE TABLE org_members (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, user_id TEXT NOT NULL, role TEXT NOT NULL);`,
         `CREATE TABLE publishing_channels (id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, provider TEXT NOT NULL, access_token TEXT, status TEXT NOT NULL);`,
@@ -270,6 +295,32 @@ describe('Niche Video Server Actions', () => {
       expect(res.success).toBe(true);
       expect(res.data?.workspaceId).toBe('usr_growth_agency_99');
       expect(res.data?.adminAuthorized).toBe(true);
+    });
+
+    it('fails closed with WORKSPACE_RESOLUTION_FAILED when D1 org_members or workspace_members query throws a real error (D2)', async () => {
+      const brokenDb = {
+        prepare: () => ({
+          bind: () => ({
+            first: () => Promise.reject(new Error('D1_ERROR: SQLITE_IOERR: disk I/O error')),
+            all: () => Promise.reject(new Error('D1_ERROR: SQLITE_IOERR: disk I/O error')),
+          }),
+        }),
+      } as unknown as D1Database;
+      vi.mocked(dbClient.getD1).mockResolvedValue(brokenDb);
+
+      const readinessRes = await getOpcGate1ReadinessAction();
+      expect(readinessRes.success).toBe(false);
+      expect(readinessRes.code).toBe('WORKSPACE_RESOLUTION_FAILED');
+
+      const dispatchRes = await dispatchNicheVideoCampaignAction({
+        niche: 'saas_global',
+        blueprintId: 'saas_problem_agitation_solution',
+        productName: 'Linear App',
+        productUrl: 'https://linear.app',
+      });
+      expect(dispatchRes.success).toBe(false);
+      expect(dispatchRes.code).toBe('WORKSPACE_RESOLUTION_FAILED');
+      expect(inngest.send).not.toHaveBeenCalled();
     });
   });
 });

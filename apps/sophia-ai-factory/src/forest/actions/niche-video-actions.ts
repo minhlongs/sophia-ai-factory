@@ -1,6 +1,5 @@
 /**
  * Server Actions for Niche Video Campaign Generation
- *
  * Layer: forest (Server Actions)
  * @module forest/actions/niche-video-actions
  */
@@ -26,6 +25,7 @@ import type {
   NicheVideoCampaignPlan,
 } from '@/tree/video/blueprints/niche-video-service';
 import {
+  stagePendingApprovalOnDispatch,
   validateAndBuildNichePlan,
   type CreateNicheVideoCampaignActionInput,
   type NicheVideoActionResponse,
@@ -53,11 +53,20 @@ async function resolveDispatchContext(
     };
   }
   const db = await getD1().catch(() => null);
-  let orgId: string | null;
+  let tenantId: string;
   try {
-    orgId = await resolveOrgId(userId, db ?? createServerClient());
+    const orgId = await resolveOrgId(userId, db ?? createServerClient());
+    tenantId = orgId ?? userId;
+    const isAdmin =
+      tenantId === userId || (db ? await hasWorkspaceRole(tenantId, userId, 'ADMIN', db) : false);
+    if (!isAdmin) {
+      return {
+        ok: false,
+        response: { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' },
+      };
+    }
   } catch (err: unknown) {
-    logger.error('resolveOrgId failed in dispatchNicheVideoCampaignAction', { error: toError(err).message });
+    logger.error('Workspace resolution failed in dispatchNicheVideoCampaignAction', { error: toError(err).message });
     return {
       ok: false,
       response: {
@@ -65,14 +74,6 @@ async function resolveDispatchContext(
         error: 'Workspace resolution failed due to database error',
         code: 'WORKSPACE_RESOLUTION_FAILED',
       },
-    };
-  }
-  const tenantId = orgId ?? userId;
-  const isAdmin = tenantId === userId || (db ? await hasWorkspaceRole(tenantId, userId, 'ADMIN', db) : false);
-  if (!isAdmin) {
-    return {
-      ok: false,
-      response: { success: false, error: 'Forbidden: Workspace Admin authorization required', code: 'FORBIDDEN' },
     };
   }
   if (db) {
@@ -103,24 +104,16 @@ async function resolveOfferForDispatch(
   try {
     if (input.commissionTerms?.trim()) {
       const upserted = await upsertWorkspaceVerifiedOffer(db, {
-        tenantId,
-        offerId: input.offerId,
-        networkId: input.networkId,
-        programName: planInput.productName,
-        productUrl: planInput.productUrl,
-        commissionTerms: input.commissionTerms,
-        niche: input.niche,
-        jurisdiction: planInput.jurisdiction,
+        tenantId, offerId: input.offerId, networkId: input.networkId,
+        programName: planInput.productName, productUrl: planInput.productUrl,
+        commissionTerms: input.commissionTerms, niche: input.niche, jurisdiction: planInput.jurisdiction,
       });
       if (upserted.ok) resolvedOfferId = upserted.value.offerId;
     }
     if (resolvedOfferId) {
       const eligibility = await verifyOfferEligibility(db, {
-        tenantId,
-        offerId: resolvedOfferId,
-        productUrl: planInput.productUrl,
-        niche: input.niche,
-        jurisdiction: planInput.jurisdiction,
+        tenantId, offerId: resolvedOfferId, productUrl: planInput.productUrl,
+        niche: input.niche, jurisdiction: planInput.jurisdiction,
       });
       termsVerified = eligibility.ok;
     }
@@ -137,9 +130,7 @@ export async function previewNicheVideoPlanAction(
 ): Promise<NicheVideoActionResponse<NicheVideoCampaignPlan>> {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
-    }
+    if (!user) return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
     const built = validateAndBuildNichePlan(rawInput);
     if (!built.ok) return built.response;
     return { success: true, data: built.plan };
@@ -152,12 +143,10 @@ export async function previewNicheVideoPlanAction(
 
 export async function dispatchNicheVideoCampaignAction(
   rawInput: CreateNicheVideoCampaignActionInput,
-): Promise<NicheVideoActionResponse<{ planId: string; dispatched: boolean }>> {
+): Promise<NicheVideoActionResponse<{ planId: string; approvalId?: string; dispatched: boolean }>> {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
-    }
+    if (!user) return { success: false, error: 'Unauthorized: authentication required', code: 'UNAUTHORIZED' };
 
     const built = validateAndBuildNichePlan(rawInput);
     if (!built.ok) return built.response;
@@ -168,11 +157,14 @@ export async function dispatchNicheVideoCampaignAction(
     const { db, tenantId } = ctx;
 
     const { resolvedOfferId, termsVerified } = await resolveOfferForDispatch(db, tenantId, input, planInput);
+    const approvalId = await stagePendingApprovalOnDispatch({
+      db, userId: user.id, tenantId, resolvedOfferId, input, planInput, plan,
+    });
 
     await inngest.send({
       name: 'niche.video.campaign.requested',
       data: {
-        userId: user.id, tenantId, offerId: resolvedOfferId, termsVerified,
+        userId: user.id, tenantId, offerId: resolvedOfferId, termsVerified, campaignId: plan.planId,
         ...(input.targetAccount ? { targetAccount: input.targetAccount } : {}),
         ...(input.maxRenderCostCents !== undefined ? { maxRenderCostCents: input.maxRenderCostCents } : {}),
         idempotencyKey: `${tenantId}:${plan.planId}`,
@@ -184,7 +176,10 @@ export async function dispatchNicheVideoCampaignAction(
       },
     });
 
-    return { success: true, data: { planId: plan.planId, dispatched: true } };
+    return {
+      success: true,
+      data: { planId: plan.planId, ...(approvalId ? { approvalId } : {}), dispatched: true },
+    };
   } catch (err: unknown) {
     const error = toError(err);
     logger.error('dispatchNicheVideoCampaignAction failed', { error: error.message });
