@@ -37,23 +37,13 @@ export async function runSchedulerCron(options?: {
     return { processed: 0, dispatched: [], skipped: 0 };
   }
 
-  const { atomicClaimJob } = await import('@/land/video/publishing/publish-claim');
-
   const dispatched: string[] = [];
-  let skipped = 0;
+  const skipped = 0;
 
   for (const job of jobs) {
-    // Atomic OCC CAS claim: scheduled -> uploading
-    const { claimed } = await atomicClaimJob(db, job.id);
-    if (!claimed) {
-      skipped++;
-      logger.info('[SchedulerCron] Job already claimed concurrently — skipping', {
-        jobId: job.id,
-      });
-      continue;
-    }
-
-    // Dispatched to Inngest with alreadyClaimed=true
+    // Keep the durable row scheduled until the worker starts. If event dispatch
+    // fails, the next cron can discover it again; if duplicate events arrive,
+    // the worker's scheduled -> uploading CAS permits only one provider call.
     await inngest.send({
       id: `publish-${job.id}-due`,
       name: 'publish.scheduled',
@@ -61,12 +51,11 @@ export async function runSchedulerCron(options?: {
         jobId: job.id,
         tenantId: job.tenant_id,
         userId: job.tenant_id,
-        alreadyClaimed: true,
       },
     });
 
     dispatched.push(job.id);
-    logger.info('[SchedulerCron] Claimed and dispatched due job', {
+    logger.info('[SchedulerCron] Dispatched due job for worker claim', {
       jobId: job.id,
       channelId: job.channel_id,
       scheduledAt: job.scheduled_at,

@@ -17,13 +17,11 @@ export const publishExecute = inngest.createFunction(
   { event: 'publish.scheduled' },
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
-    const alreadyClaimed = (event.data as { alreadyClaimed?: boolean }).alreadyClaimed;
     return executePublishWorkflow({
       jobId,
       tenantId,
       userId,
       eventId: event.id,
-      alreadyClaimed: Boolean(alreadyClaimed),
       step,
       scheduleRetry: async (jobId, tenantId, userId, attempt, delayMs) => {
         const delaySeconds = getBackoffDelaySeconds(attempt, delayMs);
