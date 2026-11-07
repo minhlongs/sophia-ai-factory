@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>01. Landing .v3-core &amp; Live Agent Trace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..112,400..800&family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#6366f1}a:hover{color:#818cf8}
+</style>
+</helmet>
+<div style="max-width: 1280px; margin: 0 auto; box-sizing: border-box; padding: 56px 48px; background: #090a10; color: #f1f5f9; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: inline-flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: {{eyebrowColor}}">
+    <span style="width: 8px; height: 8px; border-radius: 999px; background: {{accent}}"></span>
+    <span>SOPHIA AI FACTORY • OPC V3.0 • ZERO-CUSTODY AFFILIATE ENGINE</span>
+  </div>
+  <h1 style="margin: 0; font-family: 'Archivo', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.045em; line-height: 0.96">
+    <span style="display: block; font-size: 26px; font-weight: 500; color: {{eyebrowColor}}; margin-bottom: 10px">Turn verified affiliate offers into governed campaigns —</span>
+    <span style="display: block; font-size: 72px; color: #f8fafc">One operator. Multiple affiliate campaigns.</span>
+  </h1>
+  <p style="margin: 0; max-width: 720px; font-size: 18px; line-height: 1.55; color: #94a3b8">
+    Prepare CEX and global SaaS affiliate campaigns from one workspace: verify an offer, draft a script at $0.00 cost, approve via SHA-256, and reconcile commission in the 0%-fee Domain B ledger.
+  </p>
+  <div style="padding: 20px 24px; border-radius: 16px; background: #11131f; border: 1px solid rgba(255,255,255,0.09); font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; flex-direction: column; gap: 10px">
+    <div style="color: {{eyebrowColor}}">$ /sophia launch --niche crypto_cex --offer binance-vip --gate sha256</div>
+    <div style="color: #e2e8f0">SOPHIA: ✓ Draft locked ($0.00 spend) → SHA-256 approval digest verified → queued for BYOK synthesis.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6366f1"},"eyebrowColor":{"editor":"color","default":"#f59e0b"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#6366f1',
+      eyebrowColor: this.props.eyebrowColor ?? '#f59e0b'
+    };
+  }
+}
+</script>
+</body>
+</html>

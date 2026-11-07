@@ -6531,6 +6531,16 @@
       },
       "advanced": {
         "localEngineLabel": "Tùy chọn nâng cao: Cài engine render trên máy của bạn (không bắt buộc để bắt đầu)"
+      },
+      "sourcesDrawer": {
+        "toggleBtn": "Truy vết nguồn (Sources)",
+        "eyebrow": "CHUẨN TRUY VẾT CLAUDE-DASHBOARD • ĐỘ TRUNG THỰC DỮ LIỆU OPC",
+        "title": "Bảng Truy Vết Nguồn Dữ Liệu KPI & Sổ Cái D1",
+        "subtitle": "Mọi con số trên Bàn Điều Hành đều đối chiếu thẳng về bảng dữ liệu Cloudflare D1 và bằng chứng mật mã — không bao giờ tự bịa số liệu hoặc ép về 0 khi lỗi mạng.",
+        "tableColMetric": "Chỉ số KPI",
+        "tableColSource": "Bảng Cloudflare D1 & Truy vấn",
+        "tableColProof": "Cơ chế xác thực & Chính sách phí",
+        "stateLabel": "Trạng thái dữ liệu hiện tại"
       }
     },
     "auth": {
@@ -9299,7 +9309,22 @@
     "offerSavedNotice": "Đã xác minh và lưu Offer vào Workspace ($0.00 chi phí).",
     "offerSaveError": "Không thể xác minh và lưu Offer",
     "budgetCapExceededWarning": "Ngân sách render vượt trần đề xuất của Gate 1 cho mỗi ngách ($25.00 / 2500 xu).",
-    "dispatchBlockedBySafetyGate": "Đã chặn gửi chiến dịch: Cần quyền quản trị Workspace và mở công tắc an toàn Kill Switch."
+    "dispatchBlockedBySafetyGate": "Đã chặn gửi chiến dịch: Cần quyền quản trị Workspace và mở công tắc an toàn Kill Switch.",
+    "baoyuCanvas": {
+      "eyebrow": "BÀN VẼ ARTIFACT BAOYU-DESIGN • ĐỐI CHIẾU ĐA KHUNG HÌNH",
+      "title": "Bàn Vẽ Đa Artboard Đặt Cạnh Nhau & Tinh Chỉnh Trực Tiếp",
+      "subtitle": "So sánh song song 3 khung hình 9:16 Shorts, 16:9 YouTube và 1:1 Social, kéo thanh Tweaks (data-props) và xử lý bình luận ghim trước khi khóa SHA-256.",
+      "tweaksTitle": "Tinh chỉnh (Tweaks data-props)",
+      "commentsTitle": "Ghim nhận xét (comments.json)",
+      "accentLabel": "Màu nhấn thương hiệu (OKLCH)",
+      "widthLabel": "Độ rộng chữ Archivo (wdth)",
+      "complianceToggle": "Hiển thị nhãn pháp lý FTC / MiCA / NĐ52",
+      "oklchPass": "Đạt chuẩn OKLCH",
+      "resolveBtn": "Đã xử lý",
+      "reopenBtn": "Mở lại",
+      "resolvedBadge": "Đã đóng",
+      "openBadge": "Đang mở"
+    }
   },
   "legend": {
     "title": "Title"

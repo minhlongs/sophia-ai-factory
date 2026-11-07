@@ -29,6 +29,7 @@ import { VideoCompliancePreviewPlayer } from './video-compliance-preview-player'
 import { NicheSyndicationPreviewCard } from './niche-syndication-preview-card';
 import { NicheHookVariantsCard } from './niche-hook-variants-card';
 import { NicheConversionStatsCard } from './niche-conversion-stats-card';
+import { SophiaArtifactCanvas } from './sophia-artifact-canvas';
 import { CampaignApprovalQueue } from '@/components/approval-queue/campaign-queue-view';
 
 export interface NicheStudioViewProps {
@@ -84,6 +85,7 @@ export function NicheStudioView({ adoptedContext }: NicheStudioViewProps = {}) {
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6">
       <NicheStudioHeader t={t} />
       <NicheConversionStatsCard niche={niche} t={t} />
+      <SophiaArtifactCanvas t={t} locale={activeLocale} />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-5 space-y-4">
           <NicheGate1ReadinessCard

@@ -13,6 +13,7 @@ import { LocalEngineSetupGuide } from '@/components/dashboard/local-engine-setup
 import { DashboardMetricsGrid } from './dashboard-metrics-grid';
 import { DashboardRevenueChart } from './dashboard-revenue-chart';
 import { DashboardAffiliatesCard } from './dashboard-affiliates-card';
+import { DashboardSourcesDrawer } from './dashboard-sources-drawer';
 import {
   DashboardTransactionsCard,
   type DashboardTransactionItem,
@@ -102,6 +103,20 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       <DataStateBoundary state="live" testId="dashboard-data-boundary">
         {/* Metrics Grid */}
         <DashboardMetricsGrid metrics={metrics} />
+
+        {/* Baoyu-Design (claude-dashboard) Sources & D1 Lineage Trace Drawer */}
+        <div className="mt-6">
+          <DashboardSourcesDrawer
+            t={t}
+            dataTruthState={
+              loadFailed
+                ? 'error'
+                : initialData?.metrics && initialData.metrics.length > 0
+                  ? 'live'
+                  : 'verified_empty'
+            }
+          />
+        </div>
 
         {/* Chart & Affiliates Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-6">
