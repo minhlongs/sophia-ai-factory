@@ -419,11 +419,17 @@ add_verify "0494_authoritative_job_convergence_ledger" \
   "SELECT name FROM sqlite_master WHERE type='table' AND name='authoritative_job_convergence_ledger'"
 add_verify "0495_mekong_contract_tickets" \
   "SELECT name FROM sqlite_master WHERE type='table' AND name='mekong_contract_tickets'"
+add_verify "0496_rebuild_platform_configs_without_legacy_user_fk" \
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='platform_configs' AND (SELECT COUNT(*) FROM pragma_foreign_key_list('platform_configs') WHERE \"table\"='users') = 0"
+add_verify "0497_rebuild_six_tables_without_legacy_user_fk" \
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='payouts' AND (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('payouts','user_wallets','affiliate_clicks','scheduled_campaigns','video_analytics','marketplace_templates')) = 6 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('payouts') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('user_wallets') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('affiliate_clicks') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('scheduled_campaigns') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('video_analytics') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('marketplace_templates') WHERE \"table\"='users') = 0"
+add_verify "0498_rebuild_sixteen_tables_without_legacy_user_fk" \
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='campaigns' AND (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('tier_change_events','campaigns','raas_licenses','raas_audit_logs','affiliate_offers_selected','affiliate_conversions','user_payout_settings','repurpose_jobs','thumbnail_variants','whatsapp_templates','whatsapp_message_log','localized_payment_transactions','financial_close_periods','revenue_schedules','intercompany_transfers','ipo_filing_periods')) = 16 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('campaigns') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('tier_change_events') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('raas_licenses') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('raas_audit_logs') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('affiliate_offers_selected') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('affiliate_conversions') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('user_payout_settings') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('repurpose_jobs') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('thumbnail_variants') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('whatsapp_templates') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('whatsapp_message_log') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('localized_payment_transactions') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('financial_close_periods') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('revenue_schedules') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('intercompany_transfers') WHERE \"table\"='users') = 0 AND (SELECT COUNT(*) FROM pragma_foreign_key_list('ipo_filing_periods') WHERE \"table\"='users') = 0"
 
 is_critical_migration() {
   local name="$1"
   case "$name" in
-    0214*|0215*|0216*|0473*|0474*|0116*|0126*|0059*)
+    0214*|0215*|0216*|0473*|0474*|0496*|0497*|0498*|0116*|0126*|0059*)
       return 0
       ;;
     *)
@@ -993,6 +999,12 @@ fold_sql_statements() {
         while (i < raw.length && raw[i] !== "\n") i++;
         continue;
       }
+      if (ch === "/" && raw[i + 1] === "*") {
+        i += 2;
+        while (i < raw.length && !(raw[i] === "*" && raw[i + 1] === "/")) i++;
+        i++;
+        continue;
+      }
       if (ch === ";") {
         flush();
         continue;
@@ -1071,26 +1083,91 @@ has_additive_ddl() {
   return 1
 }
 
+# Extract pre-existing table names targeted by destructive DROP TABLE (without IF EXISTS)
+# or ALTER TABLE <old> RENAME TO <new>, excluding staging/transient tables created
+# earlier in the same migration file via CREATE TABLE or RENAME TO, and deduplicating
+# the resulting list so COUNT(*) against sqlite_master matches 1-to-1.
+extract_drop_rename_targets() {
+  local migration_file="$1"
+  local transient=" "
+  local checked=" "
+  local targets=()
+  local stmt created dropped old_tbl new_tbl
+
+  while IFS= read -r stmt; do
+    created=$(printf '%s\n' "$stmt" | sed -nE \
+      's/^[[:space:]]*CREATE[[:space:]]+TABLE[[:space:]]+(IF[[:space:]]+NOT[[:space:]]+EXISTS[[:space:]]+)?[`"'\'']?([A-Za-z0-9_]+)[`"'\'']?.*/\2/ip')
+    if [ -n "$created" ]; then
+      case "$transient" in
+        *" $created "*) ;;
+        *) transient="${transient}${created} " ;;
+      esac
+      continue
+    fi
+
+    # Ignore DROP TABLE IF EXISTS <name>: IF EXISTS already guards missing tables in SQLite
+    # and is standard for idempotent staging cleanup (DROP TABLE IF EXISTS <tbl>_new).
+    if printf '%s\n' "$stmt" | grep -qiE '^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+IF[[:space:]]+EXISTS[[:space:]]+'; then
+      continue
+    fi
+
+    dropped=$(printf '%s\n' "$stmt" | sed -nE \
+      's/^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+[`"'\'']?([A-Za-z0-9_]+)[`"'\'']?.*/\1/ip')
+    if [ -n "$dropped" ]; then
+      case "$transient" in
+        *" $dropped "*) ;;
+        *)
+          case "$checked" in
+            *" $dropped "*) ;;
+            *)
+              checked="${checked}${dropped} "
+              targets+=("$dropped")
+              ;;
+          esac
+          ;;
+      esac
+      continue
+    fi
+
+    old_tbl=$(printf '%s\n' "$stmt" | sed -nE \
+      's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[`"'\'']?([A-Za-z0-9_]+)[`"'\'']?[[:space:]]+RENAME[[:space:]]+TO[[:space:]]+[`"'\'']?([A-Za-z0-9_]+)[`"'\'']?.*/\1/ip')
+    new_tbl=$(printf '%s\n' "$stmt" | sed -nE \
+      's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[`"'\'']?([A-Za-z0-9_]+)[`"'\'']?[[:space:]]+RENAME[[:space:]]+TO[[:space:]]+[`"'\'']?([A-Za-z0-9_]+)[`"'\'']?.*/\2/ip')
+    if [ -n "$old_tbl" ]; then
+      case "$transient" in
+        *" $old_tbl "*) ;;
+        *)
+          case "$checked" in
+            *" $old_tbl "*) ;;
+            *)
+              checked="${checked}${old_tbl} "
+              targets+=("$old_tbl")
+              ;;
+          esac
+          ;;
+      esac
+      if [ -n "$new_tbl" ]; then
+        case "$transient" in
+          *" $new_tbl "*) ;;
+          *) transient="${transient}${new_tbl} " ;;
+        esac
+      fi
+    fi
+  done < <(fold_sql_statements "$migration_file")
+
+  if [ "${#targets[@]}" -gt 0 ]; then
+    printf '%s\n' "${targets[@]}"
+  fi
+}
+
 guard_drop_rename() {
   local migration_file="$1"
 
   local tables_to_check=()
-  while IFS= read -r line; do
-    local tbl=""
-    # Match: DROP TABLE <name>;  (with or without IF EXISTS)
-    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+IF[[:space:]]+EXISTS[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
-    if [ -z "$tbl" ]; then
-      tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
-    fi
-    if [ -n "$tbl" ]; then
-      tables_to_check+=("$tbl")
-    fi
-    # Match: ALTER TABLE <old> RENAME TO <new>;
-    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+)[[:space:]]+RENAME[[:space:]]+TO.*/\1/p' | tr -d ';' | tr -d ' ' || true)
-    if [ -n "$tbl" ]; then
-      tables_to_check+=("$tbl")
-    fi
-  done < "$migration_file"
+  local tbl
+  while IFS= read -r tbl; do
+    [ -n "$tbl" ] && tables_to_check+=("$tbl")
+  done < <(extract_drop_rename_targets "$migration_file")
 
   if [ "${#tables_to_check[@]}" -eq 0 ]; then
     return 0
