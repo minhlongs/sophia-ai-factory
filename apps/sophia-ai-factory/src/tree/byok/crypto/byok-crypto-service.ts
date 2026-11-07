@@ -53,25 +53,35 @@ export async function importMasterKey(): Promise<CryptoKey> {
 }
 
 export async function loadKeyVersion(version: number): Promise<CryptoKey | null> {
-  const db = await getD1();
-  if (!db) return null;
+  let db;
+  try {
+    db = await getD1();
+  } catch {
+    throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
+  }
+  if (!db) throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
 
-  const row = await db
-    .prepare(
-      `SELECT version, encrypted_key, rotated_at, is_active
-       FROM key_versions
-       WHERE version = ?
-       LIMIT 1`,
-    )
-    .bind(version)
-    .first<KeyVersionRow>();
+  let row: KeyVersionRow | null;
+  try {
+    row = await db
+      .prepare(
+        `SELECT version, encrypted_key, rotated_at, is_active
+         FROM key_versions
+         WHERE version = ?
+         LIMIT 1`,
+      )
+      .bind(version)
+      .first<KeyVersionRow>();
+  } catch {
+    throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
+  }
 
   if (!row) return null;
 
   try {
     return await importKeyMaterial(base64ToBytes(row.encrypted_key));
   } catch {
-    return null;
+    throw new Error('BYOK_KEY_VERSION_MATERIAL_INVALID');
   }
 }
 
@@ -93,10 +103,10 @@ export async function getActiveKeyVersion(): Promise<number> {
 }
 
 export async function importKeyByVersion(version: number): Promise<CryptoKey> {
+  if (version === 1) return importMasterKey();
+
   const key = await loadKeyVersion(version);
   if (key) return key;
-
-  if (version === 1) return importMasterKey();
 
   throw new Error(`BYOK_DECRYPT_VERSION_UNSUPPORTED: version ${version} is outside the dual-decrypt window`);
 }

@@ -13,9 +13,17 @@
  *   - BYOK on, user has key → user's decrypted key
  *   - BYOK on, user missing → envFallback
  *   - BYOK on, no user      → envFallback (e.g. cron with no userId)
+ *
+ * A store or decryption failure also resolves to `envFallback` rather than
+ * throwing, because most callers here predate status-aware lookups and have no
+ * handler for one. Callers that must fail closed — or must never fall back to a
+ * platform key — should use `lookupUserApiKey` and inspect its status directly.
  */
 
-import { getUserApiKey, type ByokProvider } from '@/tree/byok/user-api-key-store'
+import {
+  lookupUserApiKey,
+  type ByokProvider,
+} from '@/tree/byok/user-api-key-store'
 import { registerApiKeyResolver } from '@/seed/ai/script-generator'
 
 export function isByokEnabled(): boolean {
@@ -32,8 +40,9 @@ export async function resolveUserApiKey(
   if (!isByokEnabled())       return fallback
   if (!userId)                return fallback
 
-  const userKey = await getUserApiKey(userId, provider)
-  return userKey ?? fallback
+  const result = await lookupUserApiKey(userId, provider)
+  if (result.status === 'FOUND') return result.key
+  return fallback
 }
 
 export type { ByokProvider } from './user-api-key-store'

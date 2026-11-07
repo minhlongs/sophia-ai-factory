@@ -8,18 +8,41 @@
 import { logger } from '@/seed/utils/logger-utility';
 import {
   listUserApiKeyProviders,
-  getUserApiKey,
+  lookupUserApiKey,
   type ByokProvider,
 } from '@/tree/byok/user-api-key-store';
 import type { MissionPreflightOptions, CredentialGateEvaluation } from './types';
 
-export async function isProviderKeyValid(userId: string, provider: ByokProvider): Promise<boolean> {
-  try {
-    const key = await getUserApiKey(userId, provider);
-    return Boolean(key && key.trim().length > 0);
-  } catch {
-    return false;
+/**
+ * Whether a stored credential is usable. An unreadable store is reported
+ * separately from an absent key: telling a customer to connect a key they
+ * already connected is a support failure, and starting a mission on a platform
+ * fallback while their own credential state is unknown is worse.
+ */
+export type ProviderKeyState =
+  | { usable: true }
+  | { usable: false; reason: 'NOT_CONFIGURED' }
+  | { usable: false; reason: 'STORE_UNAVAILABLE'; status: string };
+
+export async function checkProviderKeyState(
+  userId: string,
+  provider: ByokProvider,
+): Promise<ProviderKeyState> {
+  const lookup = await lookupUserApiKey(userId, provider);
+  if (lookup.status === 'FOUND') {
+    return lookup.key.trim().length > 0
+      ? { usable: true }
+      : { usable: false, reason: 'NOT_CONFIGURED' };
   }
+  if (lookup.status === 'NOT_CONFIGURED') {
+    return { usable: false, reason: 'NOT_CONFIGURED' };
+  }
+  return { usable: false, reason: 'STORE_UNAVAILABLE', status: lookup.status };
+}
+
+export async function isProviderKeyValid(userId: string, provider: ByokProvider): Promise<boolean> {
+  const state = await checkProviderKeyState(userId, provider);
+  return state.usable;
 }
 
 export async function getValidDecryptedProviders(userId: string, providers: ByokProvider[]): Promise<ByokProvider[]> {
@@ -47,15 +70,28 @@ export async function evaluateCredentialGate(
   }
 
   if (opts.requiredProvider) {
-    const specificKeyValid = await isProviderKeyValid(resolvedUserId, opts.requiredProvider);
-    if (!specificKeyValid) {
+    const keyState = await checkProviderKeyState(resolvedUserId, opts.requiredProvider);
+    if (!keyState.usable) {
+      // A store or decryption outage is not "key absent": the customer may
+      // already have connected it. Block the mission with a distinct code so
+      // they are never told to reconnect what they already provided.
+      const unreadable = keyState.reason === 'STORE_UNAVAILABLE';
+      if (unreadable) {
+        logger.warn('[MissionPreflight] Required provider credential could not be read', {
+          userId: resolvedUserId,
+          requiredProvider: opts.requiredProvider,
+          status: keyState.status,
+        });
+      }
       return {
         passed: false,
         configuredProviders,
         gate: {
           passed: false,
-          code: 'MISSING_PROVIDER_CREDENTIAL',
-          message: `Missing or invalid API key for required provider: ${opts.requiredProvider}`,
+          code: unreadable ? 'PROVIDER_CREDENTIAL_UNREADABLE' : 'MISSING_PROVIDER_CREDENTIAL',
+          message: unreadable
+            ? `Could not read the saved API key for ${opts.requiredProvider}. Please retry in a moment.`
+            : `Missing or invalid API key for required provider: ${opts.requiredProvider}`,
           details: { requiredProvider: opts.requiredProvider },
         },
       };

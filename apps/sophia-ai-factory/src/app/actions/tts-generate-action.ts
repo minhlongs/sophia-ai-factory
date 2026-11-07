@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { logger } from '@/seed/utils/logger-utility';
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
@@ -84,9 +84,21 @@ export async function generateTtsAction(
     };
   }
 
-  // Step 4: Resolve ElevenLabs API key (BYOK first, then env fallback)
-  const byokKey = await getUserApiKey(user.id, 'elevenlabs');
-  const apiKey = byokKey ?? process.env.ELEVENLABS_API_KEY;
+  // Step 4: Resolve ElevenLabs API key. A stored key that cannot be read is
+  // not an absent one, so it must not be reported as "add your key" — the
+  // customer may already have added it.
+  const byokLookup = await lookupUserApiKey(user.id, 'elevenlabs');
+  if (byokLookup.status !== 'FOUND' && byokLookup.status !== 'NOT_CONFIGURED') {
+    logger.warn('[tts-generate-action] ElevenLabs credential could not be read', {
+      status: byokLookup.status,
+    });
+    return {
+      success: false,
+      error: 'We could not read your saved ElevenLabs key. Please try again in a moment.',
+      code: 'API_KEY_UNREADABLE',
+    };
+  }
+  const apiKey = byokLookup.status === 'FOUND' ? byokLookup.key : process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     return {
       success: false,
