@@ -20,11 +20,11 @@ vi.mock('@/tree/quota/video-quota', () => ({
 }));
 
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
-  resolveUserApiKey: vi.fn().mockResolvedValue('resolved-key-abc'),
+  isByokEnabled: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock('@/tree/byok/user-api-key-store', () => ({
-  getUserApiKey: vi.fn(),
+  lookupUserApiKey: vi.fn(),
 }));
 
 vi.mock('@/forest/ai/provider-factory', () => ({
@@ -43,8 +43,8 @@ import {
   estimateTaskCost,
   buildProviderPool,
 } from '@/forest/quota/provider-pool';
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { isByokEnabled } from '@/tree/byok/resolve-user-api-key';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { getCircuitState } from '@/seed/utils/circuit-breaker';
 
 // ── Test data ──────────────────────────────────────────────────────────────
@@ -128,9 +128,9 @@ describe('buildProviderPool', () => {
     process.env.ELEVENLABS_API_KEY = 'platform-eleven-key';
     process.env.DID_API_KEY = 'platform-did-key';
     process.env.HEYGEN_API_KEY = 'platform-heygen-key';
-    vi.mocked(getUserApiKey).mockResolvedValue('user-byok-key');
+    vi.mocked(lookupUserApiKey).mockResolvedValue({ status: 'FOUND', key: 'user-byok-key' });
     vi.mocked(getCircuitState).mockResolvedValue({ state: 'closed', recentFailures: 0, recentSuccesses: 5 });
-    vi.mocked(resolveUserApiKey).mockResolvedValue('resolved-key-abc');
+    vi.mocked(isByokEnabled).mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -162,9 +162,9 @@ describe('buildProviderPool', () => {
   });
 
   it('excludes providers with no key available', async () => {
-    (resolveUserApiKey as ReturnType<typeof vi.fn>).mockImplementation(
+    (lookupUserApiKey as ReturnType<typeof vi.fn>).mockImplementation(
       (_userId: string, provider: string) =>
-        Promise.resolve(provider === 'openrouter' ? 'key' : null),
+        Promise.resolve(provider === 'openrouter' ? { status: 'FOUND', key: 'key' } : { status: 'NOT_CONFIGURED' }),
     );
 
     const pool = await buildProviderPool('user-123', {
@@ -176,7 +176,13 @@ describe('buildProviderPool', () => {
   });
 
   it('returns empty pool when no keys are available', async () => {
-    (resolveUserApiKey as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (lookupUserApiKey as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'NOT_CONFIGURED' });
+    // A user with no stored key falls back to the platform env var. To assert
+    // that a genuinely keyless pool is empty, the env fallback must be absent too.
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.ELEVENLABS_API_KEY;
+    delete process.env.DID_API_KEY;
+    delete process.env.HEYGEN_API_KEY;
 
     const pool = await buildProviderPool('user-123', {
       taskType: 'scripting',
@@ -187,7 +193,7 @@ describe('buildProviderPool', () => {
   });
 
   it('marks hasUserKey=true when user provides own key', async () => {
-    (getUserApiKey as ReturnType<typeof vi.fn>).mockResolvedValue('my-custom-key');
+    (lookupUserApiKey as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'FOUND', key: 'my-custom-key' });
 
     const pool = await buildProviderPool('user-123', {
       taskType: 'scripting',
@@ -199,8 +205,24 @@ describe('buildProviderPool', () => {
     }
   });
 
+  it('omits a provider whose credential store cannot be read', async () => {
+    (lookupUserApiKey as ReturnType<typeof vi.fn>).mockImplementation(
+      (_userId: string, provider: string) =>
+        Promise.resolve(provider === 'openrouter'
+          ? { status: 'STORE_UNAVAILABLE' } as const
+          : { status: 'FOUND', key: 'other-key' } as const),
+    );
+
+    const pool = await buildProviderPool('user-123', {
+      taskType: 'scripting',
+      estimatedInputTokens: 500,
+    });
+
+    expect(pool.every((c) => c.provider !== 'openrouter')).toBe(true);
+  });
+
   it('marks hasUserKey=false when using platform fallback', async () => {
-    (getUserApiKey as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (lookupUserApiKey as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'NOT_CONFIGURED' });
 
     const pool = await buildProviderPool('user-123', {
       taskType: 'tts',

@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserApiKey, type ByokProvider } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey, type ByokProvider } from '@/tree/byok/user-api-key-store';
 import { logger } from '@/seed/utils/logger-utility';
 import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
@@ -82,10 +82,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const provider = parsed.data.provider;
-  const stored = await getUserApiKey(user.id, provider).catch(() => null);
-  if (!stored) {
-    return NextResponse.json({ ok: false, error: 'No key stored for this provider' }, { status: 404 });
+  const lookup = await lookupUserApiKey(user.id, provider);
+  if (lookup.status === 'NOT_CONFIGURED') {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'Chưa lưu khóa cho nhà cung cấp này / No key stored for this provider',
+      },
+      { status: 404 },
+    );
   }
+  if (lookup.status !== 'FOUND') {
+    logger.error('[byok/test] Stored key could not be loaded', {
+      provider,
+      lookupStatus: lookup.status,
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'Tạm thời không thể đọc khóa đã lưu. Vui lòng thử lại. / Unable to load the stored key. Please retry.',
+        code: lookup.status,
+      },
+      { status: 503 },
+    );
+  }
+  const stored = lookup.key;
 
   const spec = TEST_ENDPOINT[provider];
   const t0 = Date.now();

@@ -62,7 +62,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
       .from('publishing_jobs')
       .update({
         status: 'failed',
-        error_message: killState.known
+        error: killState.known
           ? 'Aborted by emergency kill switch'
           : 'Aborted: emergency kill switch state unreadable',
       })

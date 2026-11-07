@@ -1617,8 +1617,7 @@
         "reasonLabel": "Lý do:",
         "current": {
           "title": "Tài Khoản Đang Hoạt Động",
-          "description": "Gói đăng ký của bạn đang hoạt động và đã thanh toán đầy đủ.",
-          "action": ""
+          "description": "Gói đăng ký của bạn đang hoạt động và đã thanh toán đầy đủ."
         },
         "past_due": {
           "title": "Thanh Toán Quá Hạn",
@@ -7504,7 +7503,7 @@
     "landing": {
       "badge": "Khóa BYOK thuộc workspace • Phê duyệt trước khi chi tiêu",
       "headline": "Một người điều hành. Nhiều chiến dịch affiliate.",
-      "headlineHighlight": "",
+      "headlineHighlight": "Hiệu quả của cả một đội.",
       "subheading": "Chuẩn bị chiến dịch affiliate CEX và SaaS toàn cầu trong cùng một workspace: xác minh offer, soạn kịch bản, duyệt nội dung và ngân sách, theo dõi sản xuất/đăng tải, rồi đối soát hoa hồng.",
       "nav": {
         "features": "Tính năng",

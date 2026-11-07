@@ -157,6 +157,7 @@ async function validate() {
 
   // Validate keys against translations
   const missingKeys = [];
+  const emptyKeys = [];
   const usedRootKeys = new Set();
 
   let totalKeys = 0;
@@ -164,10 +165,21 @@ async function validate() {
     totalKeys += locations.length;
 
     // Check if key exists in vi.json
-    const hasKey = getNestedValue(translations.vi, key) !== undefined;
-    if (!hasKey) {
+    const viValue = getNestedValue(translations.vi, key);
+    if (viValue === undefined) {
       missingKeys.push({ key, locations });
       continue;
+    }
+
+    // A key that resolves to an empty string renders nothing at the call site.
+    // This is how the landing hero silently lost its highlighted phrase, so
+    // treat an empty value in either locale as a translation failure.
+    const emptyLocales = LOCALES.filter((locale) => {
+      const value = getNestedValue(translations[locale], key);
+      return typeof value === 'string' && value.trim() === '';
+    });
+    if (emptyLocales.length > 0) {
+      emptyKeys.push({ key, locales: emptyLocales, locations });
     }
 
     // Track used root keys
@@ -201,6 +213,7 @@ async function validate() {
   console.log(`   Unique static keys: ${allKeys.size}`);
   console.log(`   Dynamic key prefixes: ${allDynamicPrefixes.size}`);
   console.log(`   Missing static keys: ${missingKeys.length}`);
+  console.log(`   Empty static values: ${emptyKeys.length}`);
   console.log(`   Unresolved dynamic prefixes: ${unresolvedPrefixes.length}`);
   console.log();
 
@@ -218,13 +231,32 @@ async function validate() {
     }
   }
 
-  if (missingKeys.length === 0 && unresolvedPrefixes.length === 0) {
+  if (emptyKeys.length > 0) {
+    console.error('⚠️  Empty translation values (key resolves but renders nothing):\n');
+    for (const { key, locales, locations } of emptyKeys) {
+      console.error(`   "${key}" is empty in ${locales.join(', ')}`);
+      for (const loc of locations.slice(0, 3)) {
+        console.error(`      used at ${loc.file}:${loc.line}`);
+      }
+      if (locations.length > 3) {
+        console.error(`      ... and ${locations.length - 3} more`);
+      }
+      console.error();
+    }
+  }
+
+  if (missingKeys.length === 0 && unresolvedPrefixes.length === 0 && emptyKeys.length === 0) {
     console.log('✅ All translation keys found!\n');
     process.exit(0);
   }
 
   if (missingKeys.length === 0 && unresolvedPrefixes.length > 0) {
     console.error('❌ Validation failed: unresolved dynamic prefixes detected.\n');
+    process.exit(1);
+  }
+
+  if (missingKeys.length === 0 && emptyKeys.length > 0) {
+    console.error('❌ Validation failed: empty translation values detected.\n');
     process.exit(1);
   }
 

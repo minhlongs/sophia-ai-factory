@@ -243,6 +243,10 @@ describe('executionPublishWorker', () => {
       .first<{ status: string }>();
     expect(jobRow?.status).toBe('failed');
 
+    const failedRun = await getExecutionRun(db, 'ws_1', runId);
+    expect(failedRun?.actualCostCents).toBeNull();
+    expect(failedRun?.reservedCostCents).toBe(250);
+
     // Also verify targetAccount strictness: if approval specifies a non-matching channel, block with 0 uploads.
     await db
       .prepare(`UPDATE publishing_channels SET id = 'ch_other', external_account_id = 'UC_other' WHERE id = 'ch_yt_1'`)

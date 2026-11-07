@@ -253,6 +253,14 @@ describe('Better Auth Server Configuration & Hardening', () => {
       const passedOptions = vi.mocked(betterAuth).mock.calls[0][0] as {
         trustedOrigins: string[];
         baseURL: string;
+        user?: {
+          additionalFields?: {
+            role?: {
+              defaultValue?: string;
+              input?: boolean;
+            };
+          };
+        };
         databaseHooks?: {
           user?: {
             create?: {
@@ -266,6 +274,10 @@ describe('Better Auth Server Configuration & Hardening', () => {
       expect(passedOptions.trustedOrigins).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
       expect(passedOptions.trustedOrigins).toContain('http://localhost:3000');
       expect(passedOptions.baseURL).toBe('https://sophia.agencyos.network');
+      expect(passedOptions.user?.additionalFields?.role).toMatchObject({
+        defaultValue: 'user',
+        input: false,
+      });
 
       // Test before hook passed to betterAuth
       const beforeHook = passedOptions.databaseHooks?.user?.create?.before;

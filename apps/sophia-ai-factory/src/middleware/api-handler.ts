@@ -12,6 +12,30 @@ import { D1Events } from '@/forest/telemetry/d1-event-types';
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation';
 import { agyTenantIsolationMiddleware } from '@/forest/middleware/agy-tenant-isolation';
 
+function authUnavailableResponse(
+  request: NextRequest,
+  startTime: number,
+  usageErrorMessage: string,
+): NextResponse {
+  const response = NextResponse.json(
+    {
+      error: 'Service unavailable',
+      detail: 'Authentication service temporarily unavailable. Please retry.',
+      retryAfter: 30,
+    },
+    { status: 503 },
+  );
+  response.headers.set('X-Response-Time-Ms', String(Date.now() - startTime));
+  emitUsageEvent(
+    request,
+    { status: 503, headers: response.headers },
+    { tier: 'BASIC' },
+  ).catch((error) => {
+    logger.error(usageErrorMessage, error);
+  });
+  return response;
+}
+
 // Returns a blocking response, or null to continue
 export async function handleApiRoute(request: NextRequest, pathname: string, startTime: number): Promise<NextResponse | null> {
   const isolationResult = await tenantIsolationMiddleware(request);
@@ -104,23 +128,18 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
       request.headers.set('x-user-tier', tier);
     } catch (err) {
       if (err instanceof AuthSystemError) {
-        const responseTimeMs = Date.now() - startTime;
-        const serviceUnavailableResponse = NextResponse.json(
-          {
-            error: 'Service unavailable',
-            detail: 'Authentication service temporarily unavailable. Please retry.',
-            retryAfter: 30,
-          },
-          { status: 503 }
+        return authUnavailableResponse(
+          request,
+          startTime,
+          '[Proxy] Failed to emit auth system error usage event',
         );
-        serviceUnavailableResponse.headers.set('X-Response-Time-Ms', String(responseTimeMs));
-        emitUsageEvent(request, { status: 503, headers: serviceUnavailableResponse.headers }, { tier: 'BASIC' }).catch(err => {
-          logger.error('[Proxy] Failed to emit auth system error usage event', err);
-        });
-        return serviceUnavailableResponse;
       }
       logger.error('[Proxy] Auth guard unexpected error', err instanceof Error ? err : new Error(String(err)));
-      request.headers.set('x-user-tier', 'BASIC');
+      return authUnavailableResponse(
+        request,
+        startTime,
+        '[Proxy] Failed to emit unexpected auth error usage event',
+      );
     }
   } else {
     // Public route — still propagate tier for usage metering

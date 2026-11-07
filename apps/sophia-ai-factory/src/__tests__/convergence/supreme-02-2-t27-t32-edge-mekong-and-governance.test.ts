@@ -116,9 +116,22 @@ describe('Supreme Command #02.2 — T27..T32: D1 Mekong Store, HMAC Pull-Worker 
     expect((await completeWorkerAttemptD1(d1, { jobId: 'missing', workspaceId: 'ws_alpha', workerId: 'wk_1', leaseToken: 'lt', expectedVersion: 1 })).ok).toBe(false);
   });
 
-  it('T32: enforces GitHub Server-Side Release Governance Level 1 payloads and workflow definitions', () => {
-    expect(buildProductionEnvironmentPayload().deployment_branch_policy.protected_branches).toBe(true);
-    expect(buildSoloFounderBranchProtectionPayload().required_status_checks.contexts).toHaveLength(3);
-    expect(verifyGovernanceWorkflowContracts(path.resolve(process.cwd(), '../..')).ok).toBe(true);
+  it('T32: enforces independent-approval governance payloads and a self-authorization-free workflow', () => {
+    const environmentPayload = buildProductionEnvironmentPayload();
+    // Independent approval is a release blocker: self-review must be prevented.
+    expect(environmentPayload.prevent_self_review).toBe(true);
+    expect(environmentPayload.deployment_branch_policy.protected_branches).toBe(true);
+
+    const branchProtection = buildSoloFounderBranchProtectionPayload();
+    expect(branchProtection.required_status_checks.contexts).toHaveLength(3);
+    // A stale branch behind the checks it must pass must not ship.
+    expect(branchProtection.required_status_checks.strict).toBe(true);
+    expect(branchProtection.required_pull_request_reviews.required_approving_review_count).toBeGreaterThanOrEqual(1);
+
+    const contracts = verifyGovernanceWorkflowContracts(path.resolve(process.cwd(), '../..'));
+    expect(contracts.ok).toBe(true);
+    // The workflow must not wire any author-controlled authorization source into the guard.
+    expect(contracts.guardsSelfAuthorization).toBe(false);
+    expect(contracts.hasReleaseApprovalInput).toBe(false);
   });
 });

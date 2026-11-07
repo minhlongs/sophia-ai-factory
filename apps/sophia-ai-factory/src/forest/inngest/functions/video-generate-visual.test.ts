@@ -24,7 +24,17 @@ describe('video-generate-visual — visual polling & circuit breaker hardening',
 
     it('returns null videoUrl if no API key is found for user', async () => {
       vi.spyOn(circuitBreaker, 'shouldAllowRequest').mockReturnValue(true);
-      vi.spyOn(userApiKeyStore, 'getUserApiKey').mockResolvedValue(null);
+      vi.spyOn(userApiKeyStore, 'lookupUserApiKey').mockResolvedValue({ status: 'NOT_CONFIGURED' });
+
+      const sleep = vi.fn().mockResolvedValue(undefined);
+      const res = await pollDidVideo('user-1', 'prompt', sleep);
+
+      expect(res).toEqual({ videoUrl: null, provider: 'd-id' });
+    });
+
+    it('returns null videoUrl when the credential store cannot be read', async () => {
+      vi.spyOn(circuitBreaker, 'shouldAllowRequest').mockReturnValue(true);
+      vi.spyOn(userApiKeyStore, 'lookupUserApiKey').mockResolvedValue({ status: 'STORE_UNAVAILABLE' });
 
       const sleep = vi.fn().mockResolvedValue(undefined);
       const res = await pollDidVideo('user-1', 'prompt', sleep);
@@ -34,7 +44,7 @@ describe('video-generate-visual — visual polling & circuit breaker hardening',
 
     it('polls and returns completed videoUrl when done', async () => {
       vi.spyOn(circuitBreaker, 'shouldAllowRequest').mockReturnValue(true);
-      vi.spyOn(userApiKeyStore, 'getUserApiKey').mockResolvedValue('test-did-key');
+      vi.spyOn(userApiKeyStore, 'lookupUserApiKey').mockResolvedValue({ status: 'FOUND', key: 'test-did-key' });
       vi.spyOn(didClient, 'createDidTalk').mockResolvedValue({ id: 'talk-123' } as never);
       const recordSuccessSpy = vi.spyOn(circuitBreaker, 'recordSuccess').mockReturnValue({} as never);
 
@@ -55,7 +65,7 @@ describe('video-generate-visual — visual polling & circuit breaker hardening',
 
     it('trips circuit breaker and breaks on non-ok HTTP responses', async () => {
       vi.spyOn(circuitBreaker, 'shouldAllowRequest').mockReturnValue(true);
-      vi.spyOn(userApiKeyStore, 'getUserApiKey').mockResolvedValue('test-did-key');
+      vi.spyOn(userApiKeyStore, 'lookupUserApiKey').mockResolvedValue({ status: 'FOUND', key: 'test-did-key' });
       vi.spyOn(didClient, 'createDidTalk').mockResolvedValue({ id: 'talk-123' } as never);
       const recordFailureSpy = vi.spyOn(circuitBreaker, 'recordFailure').mockReturnValue({} as never);
 

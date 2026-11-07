@@ -11,16 +11,11 @@ const mockMocks = vi.hoisted(() => ({
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
   },
-  mockAtomicClaimJob: vi.fn(),
 }));
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn().mockReturnValue(mockMocks.mockDb),
   getD1: vi.fn(),
-}));
-
-vi.mock('@/land/video/publishing/publish-claim', () => ({
-  atomicClaimJob: mockMocks.mockAtomicClaimJob,
 }));
 
 vi.mock('@/seed/inngest/client', () => ({
@@ -50,16 +45,14 @@ describe('runSchedulerCron', () => {
     const res = await runSchedulerCron({ nowSec: 1000 });
     expect(res).toEqual({ processed: 0, dispatched: [], skipped: 0 });
     expect(inngest.send).not.toHaveBeenCalled();
-    expect(mockMocks.mockAtomicClaimJob).not.toHaveBeenCalled();
   });
 
-  it('claims and dispatches due jobs with OCC CAS', async () => {
+  it('dispatches due jobs while leaving the worker to claim them', async () => {
     const dueJobs = [
       { id: 'job-1', tenant_id: 'tenant-1', channel_id: 'ch-1', scheduled_at: 900, status: 'scheduled' },
       { id: 'job-2', tenant_id: 'tenant-1', channel_id: 'ch-2', scheduled_at: 950, status: 'scheduled' },
     ];
     mockMocks.mockDb.limit.mockResolvedValueOnce({ data: dueJobs });
-    mockMocks.mockAtomicClaimJob.mockResolvedValue({ claimed: true, status: 'uploading' });
 
     const res = await runSchedulerCron({ nowSec: 1000 });
 
@@ -67,44 +60,42 @@ describe('runSchedulerCron', () => {
     expect(res.dispatched).toEqual(['job-1', 'job-2']);
     expect(res.skipped).toBe(0);
 
-    expect(mockMocks.mockAtomicClaimJob).toHaveBeenCalledTimes(2);
     expect(inngest.send).toHaveBeenCalledTimes(2);
     expect(inngest.send).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'publish-job-1-due',
         name: 'publish.scheduled',
-        data: expect.objectContaining({
+        data: {
           jobId: 'job-1',
           tenantId: 'tenant-1',
-          alreadyClaimed: true,
-        }),
+          userId: 'tenant-1',
+        },
       }),
     );
   });
 
-  it('skips duplicate dispatches when another worker claims concurrently (claimed: false)', async () => {
-    const dueJobs = [
-      { id: 'job-claimed', tenant_id: 'tenant-1', channel_id: 'ch-1', scheduled_at: 900, status: 'scheduled' },
-      { id: 'job-winner', tenant_id: 'tenant-1', channel_id: 'ch-2', scheduled_at: 950, status: 'scheduled' },
-    ];
-    mockMocks.mockDb.limit.mockResolvedValueOnce({ data: dueJobs });
+  it('leaves a job eligible for the next cron when event dispatch fails', async () => {
+    const dueJob = {
+      id: 'job-retryable',
+      tenant_id: 'tenant-1',
+      channel_id: 'ch-1',
+      scheduled_at: 900,
+      status: 'scheduled',
+    };
+    mockMocks.mockDb.limit.mockResolvedValue({ data: [dueJob] });
+    vi.mocked(inngest.send)
+      .mockRejectedValueOnce(new Error('dispatch unavailable'))
+      .mockResolvedValueOnce({} as Awaited<ReturnType<typeof inngest.send>>);
 
-    // First job fails CAS claim (claimed: false), second succeeds
-    mockMocks.mockAtomicClaimJob
-      .mockResolvedValueOnce({ claimed: false, status: 'uploading' })
-      .mockResolvedValueOnce({ claimed: true, status: 'uploading' });
+    await expect(runSchedulerCron({ nowSec: 1000 })).rejects.toThrow('dispatch unavailable');
+    const retried = await runSchedulerCron({ nowSec: 1000 });
 
-    const res = await runSchedulerCron({ nowSec: 1000 });
-
-    expect(res.processed).toBe(2);
-    expect(res.dispatched).toEqual(['job-winner']);
-    expect(res.skipped).toBe(1);
-
-    expect(inngest.send).toHaveBeenCalledTimes(1);
-    expect(inngest.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'publish-job-winner-due',
-      }),
+    expect(retried.dispatched).toEqual(['job-retryable']);
+    expect(mockMocks.mockDb.from).toHaveBeenCalledTimes(2);
+    expect(inngest.send).toHaveBeenCalledTimes(2);
+    expect(inngest.send).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ id: 'publish-job-retryable-due' }),
     );
   });
 });

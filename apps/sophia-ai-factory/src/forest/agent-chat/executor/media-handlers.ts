@@ -12,38 +12,48 @@ export async function executeListVideoModels(userId: string): Promise<AgentToolR
   const db = await getD1();
   if (!db) return toolError('Database not available');
 
+  // Reports only credentials this customer actually stored in the canonical
+  // `user_provider_credentials` table. An empty list means no key is
+  // configured, which is the honest answer — it never becomes a fabricated
+  // "openrouter default is active" entry, because the caller would then treat
+  // a key that does not exist as usable.
   const { results } = await db
-    .prepare(`SELECT provider_name, model_name, is_active FROM byok_credentials
-      WHERE user_id = ? AND service_type IN ('openrouter', 'anthropic') AND is_active = 1`)
+    .prepare(`SELECT provider, display_hint FROM user_provider_credentials
+      WHERE user_id = ?1 AND provider IN ('openrouter', 'anthropic') AND status = 'active'
+      ORDER BY provider ASC`)
     .bind(userId)
     .all();
 
   const models = (results as Array<Record<string, unknown>>).map((row) => ({
-    provider: row.provider_name,
-    model: row.model_name,
-    active: row.is_active,
+    provider: row.provider,
+    model: row.display_hint,
+    active: 1,
   }));
 
-  return toolOk(models.length > 0 ? models : [{ provider: 'openrouter', model: 'default', active: true }] as unknown[]);
+  return toolOk(models);
 }
 
 export async function executeListVoiceModels(userId: string): Promise<AgentToolResult> {
   const db = await getD1();
   if (!db) return toolError('Database not available');
 
+  // Same honesty rule as the video list: an empty result means no ElevenLabs
+  // voice credential is stored, and it is reported as empty rather than filled
+  // with a placeholder voice the customer never configured.
   const { results } = await db
-    .prepare(`SELECT provider_name, model_name, is_active FROM byok_credentials
-      WHERE user_id = ? AND service_type = 'elevenlabs' AND is_active = 1`)
+    .prepare(`SELECT provider, display_hint FROM user_provider_credentials
+      WHERE user_id = ?1 AND provider = 'elevenlabs' AND status = 'active'
+      ORDER BY provider ASC`)
     .bind(userId)
     .all();
 
   const models = (results as Array<Record<string, unknown>>).map((row) => ({
-    provider: row.provider_name,
-    voice: row.model_name,
-    active: row.is_active,
+    provider: row.provider,
+    voice: row.display_hint,
+    active: 1,
   }));
 
-  return toolOk(models.length > 0 ? models : [{ provider: 'elevenlabs', voice: 'default', active: false }] as unknown[]);
+  return toolOk(models);
 }
 
 export async function executeSearchMedia(

@@ -107,6 +107,7 @@ const mocks = vi.hoisted(() => ({
   mockDeductCredits: vi.fn(),
   mockListUserApiKeyProviders: vi.fn(),
   mockGetUserApiKey: vi.fn(),
+  mockLookupUserApiKey: vi.fn(),
   mockCreateMission: vi.fn(),
   mockDispatchMultiTrackMission: vi.fn(),
 }));
@@ -150,6 +151,7 @@ vi.mock('@/tree/mcu/credits-repo', () => ({
 vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: mocks.mockListUserApiKeyProviders,
   getUserApiKey: mocks.mockGetUserApiKey,
+  lookupUserApiKey: mocks.mockLookupUserApiKey,
 }));
 
 vi.mock('@/tree/mission/repository', () => ({
@@ -262,7 +264,7 @@ describe('Auto-Creative Playbook & Campaign Intelligence — Tier 5 Adversarial 
       'fal',
       'replicate',
     ]);
-    mocks.mockGetUserApiKey.mockResolvedValue('test_byok_key_12345');
+    mocks.mockLookupUserApiKey.mockResolvedValue({ status: 'FOUND', key: 'test_byok_key_12345' });
     mocks.mockDeductCredits.mockResolvedValue({ success: true, remaining: 49850 });
     mocks.mockCreateMission.mockImplementation(async (mission) => mission);
     mocks.mockDispatchMultiTrackMission.mockResolvedValue({ success: true });
@@ -730,7 +732,7 @@ describe('Auto-Creative Playbook & Campaign Intelligence — Tier 5 Adversarial 
 
     it('4.6 Gate 4 (credentials): fails closed when required provider key is missing or empty', async () => {
       mocks.mockListUserApiKeyProviders.mockResolvedValue(['openrouter']);
-      mocks.mockGetUserApiKey.mockResolvedValue(''); // Empty key
+      mocks.mockLookupUserApiKey.mockResolvedValue({ status: 'FOUND', key: '' }); // Empty key
 
       const res = await runMissionPreflightCheck({
         ...validOpts,
@@ -739,6 +741,20 @@ describe('Auto-Creative Playbook & Campaign Intelligence — Tier 5 Adversarial 
 
       expect(res.passed).toBe(false);
       expect(res.failureCode).toBe('MISSING_PROVIDER_CREDENTIAL');
+      expect(res.gates.credential.passed).toBe(false);
+    });
+
+    it('4.6b Gate 4 (credentials): does not ask a customer to reconnect a key that merely failed to read', async () => {
+      mocks.mockListUserApiKeyProviders.mockResolvedValue(['elevenlabs']);
+      mocks.mockLookupUserApiKey.mockResolvedValue({ status: 'STORE_UNAVAILABLE' });
+
+      const res = await runMissionPreflightCheck({
+        ...validOpts,
+        requiredProvider: 'elevenlabs',
+      });
+
+      expect(res.passed).toBe(false);
+      expect(res.failureCode).toBe('PROVIDER_CREDENTIAL_UNREADABLE');
       expect(res.gates.credential.passed).toBe(false);
     });
 

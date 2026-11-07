@@ -14,6 +14,7 @@ vi.mock('@cloudflare/d1', () => ({}));
 import {
   setUserApiKey,
   getUserApiKey,
+  lookupUserApiKey,
   clearUserApiKey,
   listUserApiKeyProviders,
 } from '@/tree/byok/user-api-key-store'
@@ -27,7 +28,7 @@ function makeD1() {
   const run = vi.fn().mockResolvedValue({ success: true })
   const bind = vi.fn().mockReturnValue({ first, all, run })
   const prepare = vi.fn().mockReturnValue({ bind, first })
-  return { d1: { prepare } as any, prepare, bind, first, all, run }
+  return { d1: { prepare } as unknown as D1Database, prepare, bind, first, all, run }
 }
 
 describe('user-api-key-store', () => {
@@ -84,10 +85,13 @@ describe('user-api-key-store', () => {
       expect(result).toBeNull()
     })
 
-    it('returns null when D1 unavailable', async () => {
+    it('classifies a missing D1 binding as store unavailable', async () => {
       vi.mocked(getD1).mockResolvedValue(null)
-      const result = await getUserApiKey('u-1', 'openrouter')
-      expect(result).toBeNull()
+      const result = await lookupUserApiKey('u-1', 'openrouter')
+      expect(result).toEqual({ status: 'STORE_UNAVAILABLE' })
+      // The compatibility reader must not throw: an un-migrated caller would
+      // crash on a transient D1 blip. It collapses the failure to null.
+      await expect(getUserApiKey('u-1', 'openrouter')).resolves.toBeNull()
     })
 
     it('round-trips (set → get returns original)', async () => {
@@ -98,11 +102,13 @@ describe('user-api-key-store', () => {
       const prepare = vi.fn().mockImplementation(() => {
         const sql = prepare.mock.calls[prepare.mock.calls.length - 1]?.[0] as string | undefined
 
-        // key_versions queries → return version 1
+        // Active-version lookup returns v1; material lookup has no rotated row,
+        // so v1 correctly falls back to the environment master key.
         if (sql?.includes('key_versions')) {
+          const isMaterialLookup = sql.includes('encrypted_key');
           return {
             bind: vi.fn().mockReturnThis(),
-            first: async () => ({ version: 1 }),
+            first: async () => (isMaterialLookup ? null : { version: 1 }),
             all: vi.fn().mockResolvedValue({ results: [] }),
             run: vi.fn().mockResolvedValue({ success: true }),
           }
@@ -131,31 +137,104 @@ describe('user-api-key-store', () => {
         }
       })
 
-      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
       const plain = 'sk-or-v1-roundtrip-xyz'
       await setUserApiKey('u-42', 'openrouter', plain)
       const got = await getUserApiKey('u-42', 'openrouter')
       expect(got).toBe(plain)
     })
 
-    it('returns null when decrypt fails (tamper / wrong key)', async () => {
-      // Make D1 return a garbage blob
+    it('classifies tampered ciphertext as decrypt failure', async () => {
       const prepare = vi.fn().mockReturnValue({
         bind: () => ({
           first: async () => ({ encrypted_key: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) }),
         }),
       })
-      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
 
-      const got = await getUserApiKey('u-tampered', 'anthropic')
-      expect(got).toBeNull()
+      const result = await lookupUserApiKey('u-tampered', 'anthropic')
+      expect(result).toEqual({ status: 'DECRYPT_FAILED' })
+      await expect(getUserApiKey('u-tampered', 'anthropic')).resolves.toBeNull()
     })
 
-    it('returns null when D1 throws', async () => {
+    it('classifies an unsupported key version separately', async () => {
+      const prepare = vi.fn().mockImplementation((sql: string) => {
+        if (sql.includes('user_api_keys')) {
+          return {
+            bind: () => ({
+              first: async () => ({
+                encrypted_key: new Uint8Array(40),
+                key_version: 9,
+              }),
+            }),
+          }
+        }
+        return {
+          bind: () => ({ first: async () => null }),
+        }
+      })
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
+
+      const result = await lookupUserApiKey('u-version', 'openrouter')
+      expect(result).toEqual({ status: 'KEY_VERSION_UNSUPPORTED' })
+    })
+
+    it('classifies a D1 query error as store unavailable', async () => {
       const prepare = vi.fn().mockImplementation(() => { throw new Error('D1 down') })
-      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
-      const got = await getUserApiKey('u-1', 'openrouter')
-      expect(got).toBeNull()
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
+      const result = await lookupUserApiKey('u-1', 'openrouter')
+      expect(result).toEqual({ status: 'STORE_UNAVAILABLE' })
+    })
+
+    it('classifies a key-version lookup error as store unavailable', async () => {
+      const prepare = vi.fn().mockImplementation((sql: string) => {
+        if (sql.includes('user_api_keys')) {
+          return {
+            bind: () => ({
+              first: async () => ({
+                encrypted_key: new Uint8Array(40),
+                key_version: 2,
+              }),
+            }),
+          }
+        }
+        return {
+          bind: () => ({ first: async () => { throw new Error('D1 down') } }),
+        }
+      })
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
+
+      const result = await lookupUserApiKey('u-version-store', 'openrouter')
+      expect(result).toEqual({ status: 'STORE_UNAVAILABLE' })
+    })
+
+    it('classifies corrupt key-version material as decryption failure', async () => {
+      const prepare = vi.fn().mockImplementation((sql: string) => {
+        if (sql.includes('user_api_keys')) {
+          return {
+            bind: () => ({
+              first: async () => ({
+                encrypted_key: new Uint8Array(40),
+                key_version: 2,
+              }),
+            }),
+          }
+        }
+        return {
+          bind: () => ({
+            first: async () => ({
+              version: 2,
+              encrypted_key: 'not-base64',
+              rotated_at: null,
+              is_active: 0,
+            }),
+          }),
+        }
+      })
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
+
+      const result = await lookupUserApiKey('u-version-corrupt', 'openrouter')
+      expect(result).toEqual({ status: 'DECRYPT_FAILED' })
     })
   })
 
@@ -180,7 +259,7 @@ describe('user-api-key-store', () => {
           all: async () => ({ results: [{ provider: 'anthropic' }, { provider: 'openrouter' }] }),
         }),
       })
-      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
 
       const result = await listUserApiKeyProviders('u-1')
       expect(result).toEqual(['anthropic', 'openrouter'])
@@ -188,7 +267,7 @@ describe('user-api-key-store', () => {
 
     it('returns [] on D1 throw', async () => {
       const prepare = vi.fn().mockImplementation(() => { throw new Error('boom') })
-      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as unknown as D1Database)
       const result = await listUserApiKeyProviders('u-1')
       expect(result).toEqual([])
     })

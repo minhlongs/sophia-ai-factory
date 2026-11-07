@@ -7,8 +7,8 @@ import {
 import * as platformConfigRepo from '@/seed/db/platform-config-repo';
 
 vi.mock('@/seed/db/platform-config-repo', () => ({
-  getPlatformConfig: vi.fn(),
-  setPlatformConfig: vi.fn().mockResolvedValue(undefined),
+  getPlatformConfigStrict: vi.fn(),
+  setPlatformConfig: vi.fn().mockResolvedValue(true),
 }));
 
 describe('kill-switch-store', () => {
@@ -18,17 +18,17 @@ describe('kill-switch-store', () => {
   });
 
   it('defaults to false when no KV or D1 config is found', async () => {
-    vi.mocked(platformConfigRepo.getPlatformConfig).mockResolvedValue(null);
+    vi.mocked(platformConfigRepo.getPlatformConfigStrict).mockResolvedValue(null);
 
     const active = await isAffiliateKillSwitchActive('tenant_1');
     expect(active).toBe(false);
-    expect(platformConfigRepo.getPlatformConfig).toHaveBeenCalledWith(
+    expect(platformConfigRepo.getPlatformConfigStrict).toHaveBeenCalledWith(
       'affiliate_kill_switch_active:tenant_1',
     );
   });
 
   it('reads true from tenant-scoped D1 platform config when present', async () => {
-    vi.mocked(platformConfigRepo.getPlatformConfig).mockImplementation(async (key) => {
+    vi.mocked(platformConfigRepo.getPlatformConfigStrict).mockImplementation(async (key) => {
       if (key === 'affiliate_kill_switch_active:tenant_1') return 'true';
       return null;
     });
@@ -38,7 +38,7 @@ describe('kill-switch-store', () => {
   });
 
   it('halts all tenants when platform-wide default kill switch is engaged', async () => {
-    vi.mocked(platformConfigRepo.getPlatformConfig).mockResolvedValue(null);
+    vi.mocked(platformConfigRepo.getPlatformConfigStrict).mockResolvedValue(null);
     await setAffiliateKillSwitch(false, 'tenant_X', 'admin_X');
     await setAffiliateKillSwitch(true, 'default', 'platform_operator');
 
@@ -57,6 +57,19 @@ describe('kill-switch-store', () => {
 
     const active = await isAffiliateKillSwitchActive('tenant_1');
     expect(active).toBe(true);
+  });
+
+  it('throws and clears the optimistic cache when durable persistence fails', async () => {
+    vi.mocked(platformConfigRepo.setPlatformConfig).mockRejectedValueOnce(
+      new Error('D1 unavailable'),
+    );
+    vi.mocked(platformConfigRepo.getPlatformConfigStrict).mockResolvedValue(null);
+
+    await expect(
+      setAffiliateKillSwitch(true, 'tenant_failed', 'admin_1'),
+    ).rejects.toThrow('D1 unavailable');
+
+    expect(await isAffiliateKillSwitchActive('tenant_failed')).toBe(false);
   });
 
   it('supports toggling off (false) with strict tenant isolation', async () => {

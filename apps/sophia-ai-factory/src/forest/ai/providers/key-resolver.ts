@@ -40,31 +40,24 @@ export async function resolveApiKey(
   const byokProvider = providerId as ByokProvider;
 
   if (userId && isByokEnabled()) {
-    try {
-      const lookupProvider =
-        providerId === 'kling' || providerId === 'kling-video'
-          ? 'fal-ai'
-          : providerId === 'hunyuan' || providerId === 'hunyuan-video'
-          ? 'replicate'
-          : BYOK_SUPPORTED.includes(byokProvider)
-          ? byokProvider
-          : null;
+    const lookupProvider =
+      providerId === 'kling' || providerId === 'kling-video'
+        ? 'fal-ai'
+        : providerId === 'hunyuan' || providerId === 'hunyuan-video'
+        ? 'replicate'
+        : BYOK_SUPPORTED.includes(byokProvider)
+        ? byokProvider
+        : null;
 
-      if (lookupProvider) {
-        const userKey = await resolveUserApiKey(userId, lookupProvider);
-        if (userKey) {
-          logger.debug('[ProviderFactory] Resolved BYOK key', undefined, {
-            providerId,
-            userId,
-          });
-          return userKey;
-        }
+    if (lookupProvider) {
+      const userKey = await resolveUserApiKey(userId, lookupProvider);
+      if (userKey) {
+        logger.debug('[ProviderFactory] Resolved BYOK key', undefined, {
+          providerId,
+          userId,
+        });
+        return userKey;
       }
-    } catch (err) {
-      logger.warn('[ProviderFactory] BYOK key resolution failed — using fallback', undefined, {
-        providerId,
-        error: err instanceof Error ? err.message : String(err),
-      });
     }
   }
 

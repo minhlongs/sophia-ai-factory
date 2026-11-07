@@ -855,39 +855,40 @@ run_verify() {
 }
 
 # ─── Pre-execution guard: column-existence check for ADD COLUMN ──────────────
-# For migrations using ALTER TABLE <t> ADD [COLUMN] <c>, verify the column does NOT
-# already exist in pragma_table_info before executing. If it exists, skip with
-# warning. This makes re-runs idempotent-safe without editing individual migration
-# files (SQLite has no ADD COLUMN IF NOT EXISTS).
+# For migrations using ALTER TABLE <t> ADD [COLUMN] <c>, inspect every target
+# column before executing. Skip only when the entire file consists of ADD COLUMN
+# statements whose columns all exist. Halt on partial or mixed state so a whole
+# migration is never discarded silently (SQLite has no ADD COLUMN IF NOT EXISTS).
 #
 # NOTE: macOS ships ugrep as `grep -P`, which rejects variable-length lookbehind
 # assertions. Parse with sed instead so the guard runs on the supported toolchain.
 guard_add_column() {
   local migration_file="$1"
 
-  local add_col_lines=()
-  while IFS= read -r line; do
-    # Match: ALTER TABLE <t> ADD [COLUMN] <c>
-    if echo "$line" | grep -qiE 'ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+[^;[:space:]]+'; then
-      add_col_lines+=("$line")
-    fi
-  done < "$migration_file"
-
-  if [ "${#add_col_lines[@]}" -eq 0 ]; then
-    return 0
-  fi
-
   local guard_tables=()
   local guard_cols=()
-  for line in "${add_col_lines[@]}"; do
+  local statement_count=0
+  local stmt
+  while IFS= read -r stmt; do
+    [ -z "$stmt" ] && continue
+    # Transaction wrappers do not change schema shape. Ignore them when deciding
+    # whether a fully reflected migration contains only ADD COLUMN statements.
+    if echo "$stmt" | grep -qiE '^[[:space:]]*(BEGIN([[:space:]]+(DEFERRED|IMMEDIATE|EXCLUSIVE|TRANSACTION))?|COMMIT|END([[:space:]]+TRANSACTION)?)[[:space:]]*$'; then
+      continue
+    fi
+    statement_count=$((statement_count + 1))
+    if ! echo "$stmt" | grep -qiE '^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+[^;[:space:]]+'; then
+      continue
+    fi
+
     local tbl col
-    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
-    col=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+([^;[:space:]]+).*/\2/p' | tr -d ';' | tr -d ' ' || true)
+    tbl=$(echo "$stmt" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
+    col=$(echo "$stmt" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+([^;[:space:]]+).*/\2/p' | tr -d ';' | tr -d ' ' || true)
     if [ -n "$tbl" ] && [ -n "$col" ]; then
       guard_tables+=("$tbl")
       guard_cols+=("$col")
     fi
-  done
+  done < <(fold_sql_statements "$migration_file")
 
   if [ "${#guard_cols[@]}" -eq 0 ]; then
     return 0
@@ -914,14 +915,26 @@ guard_add_column() {
     fi
   done
 
-  if [ "${existing_count:-0}" -gt 0 ]; then
-    echo "WARNING: Pre-flight guard: column(s) already exist in pragma_table_info."
-    echo "   Columns checked: ${total_checks}"
-    echo "   Already present: ${found_cols[*]}"
-    echo "   -> Skipping migration (safe: column likely already added by prior run)."
+  if [ "$existing_count" -eq 0 ]; then
+    return 0
+  fi
+
+  echo "WARNING: Pre-flight guard: column(s) already exist in pragma_table_info."
+  echo "   Columns checked: ${total_checks}"
+  echo "   Already present: ${found_cols[*]}"
+
+  # Skipping is safe only when every statement is an ADD COLUMN and every target
+  # column already exists. A partial schema, or a mixed migration with other SQL,
+  # must stop loudly: skipping the whole file would discard still-needed work
+  # while allowing a later ledger entry to claim the migration was complete.
+  if [ "$existing_count" -eq "$total_checks" ] && [ "$statement_count" -eq "$total_checks" ]; then
+    echo "   -> Skipping migration: every statement is already reflected in the schema."
     return 1
   fi
-  return 0
+
+  echo "ERROR: Refusing to skip a partially applied or mixed ADD COLUMN migration." >&2
+  echo "   Apply a reviewed forward-fix for the missing statements before retrying." >&2
+  return 2
 }
 
 # ─── Pre-execution guard: table-existence check for DROP/RENAME ──────────────
@@ -1318,10 +1331,19 @@ for m in "${REMAINING_MIGRATIONS[@]+"${REMAINING_MIGRATIONS[@]}"}"; do
   fi
 
   # Pre-flight guard for ADD COLUMN pattern migrations (idempotency)
-  if ! guard_add_column "$m"; then
-    echo "SKIPPED: ${MIGRATION_NAME} — column guard (column already exists)"
+  # Return 1 means the whole file is already reflected in the schema and may be
+  # skipped. Return 2 means partial/mixed state: stop instead of recording a lie.
+  add_column_guard_status=0
+  guard_add_column "$m" || add_column_guard_status=$?
+  if [ "$add_column_guard_status" -eq 1 ]; then
+    echo "SKIPPED: ${MIGRATION_NAME} — column guard (all statements already applied)"
     SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
     continue
+  fi
+  if [ "$add_column_guard_status" -ne 0 ]; then
+    echo "FATAL SCHEMA DRIFT: ${MIGRATION_NAME} is partially applied or mixes already-applied ADD COLUMN with pending SQL." >&2
+    echo "Refusing to skip or execute it automatically; prepare a reviewed forward-fix." >&2
+    exit 1
   fi
 
   echo "==> Applying ${MIGRATION_NAME} to ${DB_NAME}"

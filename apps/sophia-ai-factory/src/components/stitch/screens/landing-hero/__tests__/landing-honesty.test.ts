@@ -33,7 +33,7 @@ describe('landing headline (exact VI/EN copy)', () => {
   it('keeps the required new keys in both locales (VI/EN parity)', () => {
     for (const m of [en, vi]) {
       const l = m.stitch.landing;
-      for (const key of ['controlNote', 'demoNote'] as const) {
+      for (const key of ['controlNote', 'demoNote', 'headlineHighlight'] as const) {
         expect(l[key].length).toBeGreaterThan(20);
       }
       expect(l.trustBar.controlContent).toBeTruthy();

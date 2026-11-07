@@ -36,9 +36,9 @@ export async function authorizeTenantOperator(
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
   tenantId: string,
 ): Promise<boolean> {
-  // 1. Platform-level admin / operator bypass (DB role or session role)
+  // Platform privileges come from the database, not the session payload.
   const { isAdmin, dbRole } = await isUserAdminWithRole(user);
-  if (isAdmin || user.role === 'admin' || dbRole === 'operator' || user.role === 'operator') {
+  if (isAdmin || dbRole === 'operator') {
     return true;
   }
 

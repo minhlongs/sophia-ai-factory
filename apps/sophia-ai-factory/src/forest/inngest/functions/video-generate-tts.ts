@@ -9,7 +9,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { selectWithStrategy, NoProvidersAvailableError } from '@/forest/quota/routing-strategy';
 import type { RoutingContext } from '@/seed/config/routing-strategies';
 import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { buildProviderPool } from '@/forest/quota/provider-pool';
 import {
@@ -17,6 +17,21 @@ import {
   getFishSpeechClient, getVideoBucket,
   uploadBufferToR2, downloadToBuffer,
 } from './video-generate-helpers';
+
+/**
+ * Raised when a BYOK credential could not be read, so the workflow must not
+ * spend another provider. Carries the lookup status as a machine-readable
+ * code so the caller can tell a store outage from a decryption failure.
+ */
+export class ByokLookupFailedError extends Error {
+  readonly code: string;
+
+  constructor(provider: string, code: string) {
+    super(`[videoGenerate] ${provider} BYOK lookup failed: BYOK_${code}`);
+    this.name = 'ByokLookupFailedError';
+    this.code = `BYOK_${code}`;
+  }
+}
 
 /** Parameters needed to execute the TTS step. */
 export interface TtsStepParams {
@@ -65,9 +80,17 @@ export async function executeTtsStep(params: TtsStepParams): Promise<TtsStepResu
   // ElevenLabs (BYOK) — preferred if selected and key available
   const hasElevenLabsKey = ttsPool.find(c => c.provider === 'elevenlabs')?.hasUserKey;
   if (ttsDecision?.provider === 'elevenlabs' && hasElevenLabsKey) {
-    try {
-      const elevenLabsKey = await getUserApiKey(userId, 'elevenlabs');
-      if (elevenLabsKey) {
+    // Key-store and decryption failures must stop the workflow. Falling through
+    // would spend another provider after the selected BYOK credential became unknown.
+    const elevenLookup = await lookupUserApiKey(userId, 'elevenlabs');
+    if (elevenLookup.status !== 'FOUND' && elevenLookup.status !== 'NOT_CONFIGURED') {
+      // The credential state is unknown, so this workflow must stop. Falling
+      // through would spend Fish Speech after the BYOK key could not be read.
+      throw new ByokLookupFailedError('ElevenLabs', elevenLookup.status);
+    }
+    const elevenLabsKey = elevenLookup.status === 'FOUND' ? elevenLookup.key : null;
+    if (elevenLabsKey) {
+      try {
         const tier = await resolveUserTier(userId);
         // Upload directly to final audioR2Key and return full public URL
         const uploadToR2 = async (data: ArrayBuffer, mime: string, _key: string): Promise<string> => {
@@ -85,12 +108,12 @@ export async function executeTtsStep(params: TtsStepParams): Promise<TtsStepResu
         // Audio already uploaded to audioR2Key — no download/re-upload needed
         logger.info('[videoGenerate] ElevenLabs TTS complete', { audioR2Key, duration: elevenResult.duration, strategy: routingStrategy });
         return { durationSec: elevenResult.duration, ttsProvider: 'elevenlabs' };
+      } catch (err) {
+        logger.warn('[videoGenerate] ElevenLabs TTS failed, falling back to Fish Speech', {
+          strategy: routingStrategy,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
-    } catch (err) {
-      logger.warn('[videoGenerate] ElevenLabs TTS failed, falling back to Fish Speech', {
-        strategy: routingStrategy,
-        error: err instanceof Error ? err.message : String(err),
-      });
     }
   }
 

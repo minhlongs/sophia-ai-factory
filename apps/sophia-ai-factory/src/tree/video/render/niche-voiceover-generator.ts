@@ -13,7 +13,7 @@ import { generateVoiceover, type VoiceoverOutput } from '@/seed/ai/text-to-speec
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { resolveVideoPersona } from '@/tree/audience/persona-gender-resolver';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey, type UserApiKeyLookupResult } from '@/tree/byok/user-api-key-store';
 
 export interface GenerateNicheVoiceoverInput {
   planId: string;
@@ -49,6 +49,9 @@ export interface NicheVoiceoverResult {
 
 export interface NicheVoiceoverDeps {
   resolveByokKey?: (ownerId: string) => Promise<string | null>;
+  /** Status-aware resolver. When supplied it wins over `resolveByokKey`, so a
+   *  store failure can be told apart from a genuinely absent key. */
+  resolveByokKeyStatus?: (ownerId: string) => Promise<UserApiKeyLookupResult>;
   synthesize?: typeof generateVoiceover;
 }
 
@@ -57,21 +60,59 @@ const VOICE_PRESETS = {
   vi: 'ThT5KcBeYPX3keUQqHPh', // Dorothy / Vietnamese adapted neutral
 };
 
+type VoiceKeyResolution =
+  | { status: 'FOUND'; key: string }
+  | { status: 'MISSING' }
+  | { status: 'STORE_FAILED' };
+
+/**
+ * Resolve the workspace's ElevenLabs key.
+ *
+ * Prefers the status-aware resolver, which can tell a store or decryption
+ * failure from a genuinely absent key. The legacy `resolveByokKey` dep returns
+ * a bare key or null and cannot convey a failure, so it keeps its existing
+ * meaning: null is "no usable key".
+ */
 async function resolveTenantVoiceByokKey(
   userId: string,
   tenantId: string | undefined,
-  customResolver?: (ownerId: string) => Promise<string | null>,
-): Promise<string | null> {
-  const lookup = customResolver ?? ((ownerId: string) => getUserApiKey(ownerId, 'elevenlabs'));
-  if (userId) {
-    const userKey = await lookup(userId);
-    if (userKey && userKey.trim().length > 0) return userKey.trim();
+  deps?: NicheVoiceoverDeps,
+): Promise<VoiceKeyResolution> {
+  const statusResolver = deps?.resolveByokKeyStatus;
+  const keyResolver = deps?.resolveByokKey;
+  const owners = tenantId && tenantId !== userId ? [userId, tenantId] : [userId];
+
+  let storeFailed = false;
+  for (const owner of owners) {
+    if (statusResolver) {
+      const result = await statusResolver(owner);
+      if (result.status === 'FOUND') {
+        const key = result.key?.trim();
+        if (key) return { status: 'FOUND', key };
+        continue;
+      }
+      if (result.status !== 'NOT_CONFIGURED') storeFailed = true;
+      continue;
+    }
+
+    if (keyResolver) {
+      const legacyKey = await keyResolver(owner);
+      if (legacyKey && legacyKey.trim().length > 0) {
+        return { status: 'FOUND', key: legacyKey.trim() };
+      }
+      continue;
+    }
+
+    const lookup = await lookupUserApiKey(owner, 'elevenlabs');
+    if (lookup.status === 'FOUND') {
+      const key = lookup.key?.trim();
+      if (key) return { status: 'FOUND', key };
+    } else if (lookup.status !== 'NOT_CONFIGURED') {
+      storeFailed = true;
+    }
   }
-  if (tenantId && tenantId !== userId) {
-    const tenantKey = await lookup(tenantId);
-    if (tenantKey && tenantKey.trim().length > 0) return tenantKey.trim();
-  }
-  return null;
+
+  return storeFailed ? { status: 'STORE_FAILED' } : { status: 'MISSING' };
 }
 
 function classifyVoiceoverError(message: string): {
@@ -105,15 +146,20 @@ export async function generateNicheCampaignVoiceover(
     : null;
   const selectedVoice = voiceId || persona?.voiceProfile.id || VOICE_PRESETS[locale] || VOICE_PRESETS.en;
 
-  const byokKey = await resolveTenantVoiceByokKey(userId, tenantId, deps?.resolveByokKey);
-  if (!byokKey) {
-    logger.warn('generateNicheCampaignVoiceover: missing tenant BYOK voice key', {
-      planId, userId, tenantId: tenantId ?? null,
+  const voiceKey = await resolveTenantVoiceByokKey(userId, tenantId, deps);
+  if (voiceKey.status !== 'FOUND') {
+    // A store failure is not "no key connected": the caller must not read it
+    // as a prompt to ask the customer for credentials that may already exist.
+    const storeFailed = voiceKey.status === 'STORE_FAILED';
+    logger.warn('generateNicheCampaignVoiceover: no usable tenant BYOK voice key', {
+      planId, userId, tenantId: tenantId ?? null, storeFailed,
     });
     return {
       success: false,
       provider: 'mock',
-      error: 'CREDENTIALS_MISSING: No ElevenLabs BYOK API key connected for this workspace',
+      error: storeFailed
+        ? 'CREDENTIALS_MISSING: ElevenLabs BYOK key could not be loaded for this workspace'
+        : 'CREDENTIALS_MISSING: No ElevenLabs BYOK API key connected for this workspace',
       errorCode: 'CREDENTIALS_MISSING',
       providerRequestDispatched: false,
       outcomeUncertain: false,
@@ -128,7 +174,7 @@ export async function generateNicheCampaignVoiceover(
   try {
     const output: VoiceoverOutput = await synthesize(
       { text: narrationText, tier: 'PREMIUM', voiceId: selectedVoice, userId: tenantId || userId },
-      { resolveApiKey: async () => byokKey, allowEnvFallback: false, allowMockFallback: false },
+      { resolveApiKey: async () => voiceKey.key, allowEnvFallback: false, allowMockFallback: false },
     );
 
     const isMockOutput =

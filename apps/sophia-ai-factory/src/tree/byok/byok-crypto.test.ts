@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite'
 import {
   encryptApiKey,
   decryptApiKey,
@@ -30,9 +31,27 @@ vi.mock('@cloudflare/d1', () => ({}))
 // 32 bytes of `0x42` base64-encoded (well-known test key, never prod).
 const TEST_MASTER_KEY = 'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI='
 
+function createKeyVersionD1(): D1Database {
+  return createFakeD1([
+    `CREATE TABLE key_versions (
+      id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+      key_type TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      encrypted_key TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      rotated_at TEXT,
+      rotated_by TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      UNIQUE(key_type, version)
+    );`,
+  ]) as unknown as D1Database
+}
+
 describe('byok-crypto', () => {
   beforeEach(() => {
     delete process.env.BYOK_MASTER_KEY
+    mockGetD1.mockReset()
+    mockGetD1.mockResolvedValue(createKeyVersionD1())
   })
 
   describe('master key errors', () => {
@@ -122,8 +141,8 @@ describe('byok-crypto', () => {
 
     it('decryption throws when master key rotates mid-flight', async () => {
       const blob = await encryptApiKey('sk-test-key')
-      // Rotate master key — existing blob must refuse to decrypt.
       process.env.BYOK_MASTER_KEY = 'Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M='
+
       await expect(decryptApiKey(blob)).rejects.toBeDefined()
     })
   })

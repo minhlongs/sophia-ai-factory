@@ -47,7 +47,12 @@ export async function getAuth(): Promise<AuthInstance> {
     },
     user: {
       additionalFields: {
-        role: { type: 'string', required: false, defaultValue: 'user' },
+        role: {
+          type: 'string',
+          required: false,
+          defaultValue: 'user',
+          input: false,
+        },
       },
     },
     session: {

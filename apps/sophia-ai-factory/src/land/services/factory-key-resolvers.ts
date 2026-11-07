@@ -6,7 +6,7 @@
 import { MissingCredentialsError } from './errors';
 import { logger } from '@/seed/utils/logger-utility';
 import { resolveUserApiKey, isByokEnabled } from '@/tree/byok/resolve-user-api-key';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 
 export const isProd = process.env.NODE_ENV === 'production';
 export const isExplicitMock = process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true';
@@ -25,7 +25,10 @@ export function requireKey(name: string): boolean {
 
 /**
  * Async credential gate for ByokProvider-registered providers (openrouter, elevenlabs, etc.).
- * Resolves user key first; falls back to env. Returns null → mock.
+ * Resolves user key first; falls back to env. An unreadable stored key fails
+ * closed rather than being treated as absent, so the platform key is never
+ * spent while the customer's own credential state is unknown.
+ * Returns null → mock.
  */
 export async function resolveKey(
   envName: string,
@@ -40,10 +43,19 @@ export async function resolveKey(
     logger.warn(`[ServiceFactory] ${envName} not set — falling back to mock service (dev/staging only)`);
     return null;
   }
-  const key = await resolveUserApiKey(userId, provider, envKey);
+  const lookup = await lookupUserApiKey(userId, provider);
+  if (lookup.status !== 'FOUND' && lookup.status !== 'NOT_CONFIGURED') {
+    // Key-store failure: fail closed, log, return the caller's fallback as null.
+    logger.warn(`[ServiceFactory] ${envName} credential could not be read for user`, {
+      status: lookup.status,
+    });
+    return null;
+  }
+  const key = lookup.status === 'FOUND' ? lookup.key : envKey;
   if (!key) {
     if (isProd) throw new MissingCredentialsError(envName);
     logger.warn(`[ServiceFactory] ${envName} not resolvable for user — falling back to mock service (dev/staging only)`);
+    return null;
   }
   return key;
 }
@@ -61,8 +73,16 @@ export async function resolveHeygenKey(userId?: string): Promise<string | null> 
     return null;
   }
   if (isByokEnabled()) {
-    const userKey = await getUserApiKey(userId, 'heygen');
-    const key = userKey ?? envKey;
+    const lookup = await lookupUserApiKey(userId, 'heygen');
+    if (lookup.status !== 'FOUND' && lookup.status !== 'NOT_CONFIGURED') {
+      // An unreadable key is not an absent one: spending the env fallback here
+      // would bill us for a call the customer believes is running on their key.
+      logger.warn('[ServiceFactory] HEYGEN_API_KEY credential could not be read for user', {
+        status: lookup.status,
+      });
+      return null;
+    }
+    const key = lookup.status === 'FOUND' ? lookup.key : envKey;
     if (!key) {
       if (isProd) throw new MissingCredentialsError('HEYGEN_API_KEY');
       logger.warn('[ServiceFactory] HEYGEN_API_KEY not resolvable for user — falling back to mock service (dev/staging only)');
@@ -89,8 +109,14 @@ export async function resolveReplicateKey(userId?: string): Promise<string | nul
     return null;
   }
   if (isByokEnabled()) {
-    const userKey = await getUserApiKey(userId, 'replicate');
-    const key = userKey ?? envKey;
+    const lookup = await lookupUserApiKey(userId, 'replicate');
+    if (lookup.status !== 'FOUND' && lookup.status !== 'NOT_CONFIGURED') {
+      logger.warn('[ServiceFactory] REPLICATE_API_TOKEN credential could not be read for user', {
+        status: lookup.status,
+      });
+      return null;
+    }
+    const key = lookup.status === 'FOUND' ? lookup.key : envKey;
     if (!key) {
       if (isProd) throw new MissingCredentialsError('REPLICATE_API_TOKEN');
       logger.warn('[ServiceFactory] REPLICATE_API_TOKEN not resolvable for user — falling back to mock service (dev/staging only)');

@@ -24,8 +24,8 @@ import {
 } from '@/seed/config/routing-strategies';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkVideoQuota } from '@/tree/quota/video-quota';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
+import { isByokEnabled } from '@/tree/byok/resolve-user-api-key';
 import { getSharedRegistry } from '@/forest/ai/provider-factory';
 import { getCircuitState } from '@/seed/utils/circuit-breaker';
 
@@ -79,11 +79,28 @@ export async function buildProviderPool(
 
   for (const provider of PROVIDER_PRIORITY[context.taskType]) {
     const envKey = process.env[PROVIDER_ENV_FALLBACK[provider]];
-    const resolvedKey = await resolveUserApiKey(userId, provider, envKey);
+    // A store or decryption failure means this provider's credential state is
+    // unknown, so omit only that candidate instead of aborting the pool. An
+    // absent key is the only status that may resolve to the platform env var.
+    let resolvedKey: string | null = null;
+    const keyLookup = isByokEnabled() ? await lookupUserApiKey(userId, provider) : null;
+    if (keyLookup) {
+      if (keyLookup.status === 'FOUND') {
+        resolvedKey = keyLookup.key;
+      } else if (keyLookup.status === 'NOT_CONFIGURED') {
+        resolvedKey = envKey ?? null;
+      }
+      // STORE_UNAVAILABLE / DECRYPT_FAILED / KEY_VERSION_UNSUPPORTED leave
+      // resolvedKey null, so this candidate is omitted and the pool survives.
+    } else {
+      resolvedKey = envKey ?? null;
+    }
     if (!resolvedKey) continue;
 
     // Distinguish user-owned keys (BYOK) from platform fallback for audit.
-    const userKey = await getUserApiKey(userId, provider);
+    // A store or decryption failure here must not abort pool building: treat
+    // the ownership lookup as unknown and keep the candidate.
+    const userKey = keyLookup?.status === 'FOUND' ? keyLookup.key : null;
 
     // Get health score from circuit breaker (HeyGen) or provider registry (others)
     // HeyGen uses KV-backed circuit breaker: closed=1.0, half-open=0.5, open=0.1

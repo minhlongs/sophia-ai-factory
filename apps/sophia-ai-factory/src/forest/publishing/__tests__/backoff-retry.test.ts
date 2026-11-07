@@ -6,6 +6,7 @@ import {
 } from '@/forest/inngest/functions/publish-execute';
 import { extractRetryAfterMs } from '@/land/video/publishing/publish-upload';
 import { inngest } from '@/seed/inngest/client';
+import { executePublishWorkflow } from '@/land/video/publishing/execute';
 
 vi.mock('@/seed/inngest/client', () => ({
   inngest: {
@@ -109,6 +110,10 @@ describe('Exponential Backoff Retry Queue', () => {
 
       const handler = (publishExecute as unknown as { _handler: (...args: unknown[]) => unknown })._handler;
       await handler({ event, step });
+
+      expect(executePublishWorkflow).toHaveBeenCalledWith(
+        expect.not.objectContaining({ alreadyClaimed: true }),
+      );
 
       // Verification: step.sleep called with '30s' for attempt 1
       expect(stepSleep).toHaveBeenCalledWith('publish-job-backoff-1-backoff-1', '30s');

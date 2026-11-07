@@ -32,8 +32,23 @@ export type PlatformConfigKey =
  * Returns null if key doesn't exist.
  */
 export async function getPlatformConfig(key: PlatformConfigKey): Promise<string | null> {
+  try {
+    return await getPlatformConfigStrict(key);
+  } catch {
+    // Legacy config reads treat an unavailable or unreadable value as absent.
+    // Safety gates must use getPlatformConfigStrict() so they can fail closed.
+    return null;
+  }
+}
+
+/**
+ * Read a platform config without collapsing infrastructure or decryption
+ * failures into "not configured". Safety gates use this path so an unknown
+ * state cannot be reported as disabled.
+ */
+export async function getPlatformConfigStrict(key: PlatformConfigKey): Promise<string | null> {
   const db = await getD1();
-  if (!db) return null;
+  if (!db) throw new Error('PLATFORM_CONFIG_STORE_UNAVAILABLE');
 
   const row = await db
     .prepare('SELECT encrypted_value FROM platform_configs WHERE key = ? LIMIT 1')
@@ -41,13 +56,7 @@ export async function getPlatformConfig(key: PlatformConfigKey): Promise<string 
     .first<PlatformConfigRow>();
 
   if (!row?.encrypted_value) return null;
-
-  try {
-    return await decryptValue(row.encrypted_value);
-  } catch {
-    // If decryption fails (e.g. key rotated), return null
-    return null;
-  }
+  return decryptValue(row.encrypted_value);
 }
 
 /**
@@ -57,9 +66,9 @@ export async function setPlatformConfig(
   key: PlatformConfigKey,
   value: string,
   userId?: string,
-): Promise<void> {
+): Promise<boolean> {
   const db = await getD1();
-  if (!db) return;
+  if (!db) return false;
 
   const encrypted = await encryptValue(value);
   const now = Math.floor(Date.now() / 1000);
@@ -75,6 +84,7 @@ export async function setPlatformConfig(
     )
     .bind(key, encrypted, userId ?? null, now)
     .run();
+  return true;
 }
 
 /**

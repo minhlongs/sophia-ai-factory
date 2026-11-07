@@ -1617,8 +1617,7 @@
         "reasonLabel": "Reason:",
         "current": {
           "title": "Account in Good Standing",
-          "description": "Your subscription is active and up to date.",
-          "action": ""
+          "description": "Your subscription is active and up to date."
         },
         "past_due": {
           "title": "Payment Past Due",
@@ -7497,7 +7496,7 @@
     "landing": {
       "badge": "Workspace-owned BYOK keys • CEO approval before spend",
       "headline": "One operator. Multiple affiliate campaigns.",
-      "headlineHighlight": "",
+      "headlineHighlight": "The output of a full team.",
       "subheading": "Prepare CEX and global SaaS affiliate campaigns from one workspace: verify an offer, draft a script, approve the content and budget, follow production and publishing, then reconcile commission.",
       "nav": {
         "features": "Features",

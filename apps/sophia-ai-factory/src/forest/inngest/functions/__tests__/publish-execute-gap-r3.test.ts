@@ -97,6 +97,13 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
   createServerClient: mockCreateServerClient,
 }));
+// This suite covers retry counts and idempotent result PKs. The kill switch's
+// own fail-closed behaviour when the durable config store is unreadable is
+// proven in the integration suite; here it is stubbed so the publish flow under
+// test is reached at all.
+vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
+  getAffiliateKillSwitchState: vi.fn().mockResolvedValue({ active: false, known: true }),
+}));
 vi.mock('@/tree/telegram/dispatch-with-retry-hints', () => ({
   dispatchTelegramWithRetryHints: mockDispatchTelegram,
 }));

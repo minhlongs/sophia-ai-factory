@@ -1,96 +1,164 @@
 name: Canary Rollback
 
-# RED-TEAM #8: Triggered by Better Stack alert webhook (NOT CF Analytics GraphQL polling).
-# Better Stack alert rule: error_rate > 1%/5min on canary version
-#   → POST to https://api.github.com/repos/longtho638-jpg/sophia-ai-factory/actions/workflows/canary-rollback.yml/dispatches
-#   → Authorization: Bearer ${WEBHOOK_SECRET}
-# Backoff: max 1 rollback per 30 min (prevents flapping).
+# Rollback moves the production Worker back to its previous Cloudflare deployment.
+# It therefore runs with the Cloudflare API token, so every input it accepts is
+# treated as attacker-reachable text: nothing that arrives through this form or
+# through an alert webhook is ever interpolated into a shell command. Inputs
+# travel through `env:` and are validated by scripts/validate-rollback-request.mjs
+# before any wrangler or curl command runs.
+#
+# The workflow is registered on GitHub's default branch. Until this file is
+# pushed to the default branch, it exists only locally and no dispatch endpoint
+# is reachable — which is the intended fail-closed state.
+#
+# Trigger sources:
+#   Manual: workflow_dispatch from the Actions UI, by a human with write access.
+#   Automated: Better Stack alert webhook, error_rate > 1%/5min on the canary
+#     version, dispatched through the repository_dispatch-free workflow_dispatch
+#     endpoint using the repository's own token. Backoff of 30 minutes below
+#     prevents a flapping alert from issuing repeated rollbacks.
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Rollback reason (auto: BS alert ID, or manual)'
+        description: 'Rollback reason, plain text only'
         required: false
         default: 'manual'
       alert_id:
-        description: 'Better Stack alert ID (if auto-triggered)'
+        description: 'Identifier of the alert that requested this rollback'
         required: false
         default: ''
+      dry_run:
+        description: 'Validate and report the rollback without mutating the Worker'
+        required: false
+        type: boolean
+        default: false
 
+# Least privilege: read the repo to check out the code, read Actions history to
+# enforce the backoff window. No write scope is granted anywhere in this job.
 permissions:
   contents: read
   actions: read
 
+# A rollback must never overlap another rollback: two concurrent wrangler
+# rollback calls race on the same Worker and the second may restore a version
+# the first had already superseded. Queue instead of cancelling, so an alert
+# that arrives mid-rollback still executes once the first finishes.
+concurrency:
+  group: canary-rollback
+  cancel-in-progress: false
+
 jobs:
   rollback:
-    name: Auto-rollback — canary to stable
+    name: Rollback canary to previous production deployment
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/sophia-ai-factory
 
     steps:
-      # RED-TEAM #1: SHA-pinned (actions/checkout v4.2.2)
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      # RED-TEAM #1: prior SHA-pin (1d0ff46…) was invalid → unblocked via tag.
-      # Re-pin to a verified v4.x SHA in follow-up.
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
 
-      - name: Install root dependencies (wrangler)
-        run: npm install --legacy-peer-deps
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
 
-      # RED-TEAM #8: 30-min backoff — skip if rollback already ran in last 30 min
-      - name: Check rollback backoff (30 min)
-        id: backoff
+      # Reject any request whose text could escape into a shell, or whose target
+      # and environment are not this repository's own. This runs before the
+      # backoff check so a malformed request fails immediately rather than being
+      # recorded as a successful run that suppresses the next legitimate alert.
+      - name: Preflight — Validate Rollback Request
+        id: validate
+        env:
+          ROLLBACK_REASON: ${{ inputs.reason }}
+          ROLLBACK_ALERT_ID: ${{ inputs.alert_id }}
+          ROLLBACK_TARGET: sophia-ai-factory
+          ROLLBACK_ENVIRONMENT: production
+          ROLLBACK_DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          CUTOFF=$(date -u -d '30 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || \
-                   date -u -v-30M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || \
-                   python3 -c "from datetime import datetime, timedelta; print((datetime.utcnow()-timedelta(minutes=30)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
-          echo "Checking for rollbacks since: $CUTOFF"
+          set -euo pipefail
+          node scripts/validate-rollback-request.mjs | tee /tmp/rollback-request.json
+          {
+            echo "decision<<REQUEST_EOF"
+            cat /tmp/rollback-request.json
+            echo
+            echo "REQUEST_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "authorized=$(node -p 'JSON.parse(require("node:fs").readFileSync("/tmp/rollback-request.json","utf8")).ok')" >> "$GITHUB_OUTPUT"
+
+      # 30-minute backoff — skip if a rollback already succeeded in that window.
+      # Queried through gh, not a local clock comparison, so the window is the
+      # real run history rather than a timestamp this job can be tricked about.
+      - name: Check rollback backoff (30 minutes)
+        id: backoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          CUTOFF=$(date -u -d '30 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          echo "Checking for successful rollbacks since: $CUTOFF"
           RECENT=$(gh run list \
             --workflow=canary-rollback.yml \
             --status=success \
             --limit=5 \
             --json createdAt \
-            --jq "[.[] | select(.createdAt > \"$CUTOFF\")] | length" 2>/dev/null || echo "0")
-          echo "Recent rollbacks in last 30min: $RECENT"
+            --jq "[.[] | select(.createdAt > \"$CUTOFF\")] | length")
+          echo "Recent successful rollbacks in last 30min: $RECENT"
           if [ "$RECENT" -gt 0 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "BACKOFF: rollback already ran in last 30min — skipping to prevent flapping"
+            echo "BACKOFF: rollback already succeeded in last 30min — skipping to prevent flapping"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Execute wrangler rollback
-        if: steps.backoff.outputs.skip != 'true'
-        run: |
-          REASON="${{ github.event.inputs.reason }}"
-          ALERT_ID="${{ github.event.inputs.alert_id }}"
-          MSG="auto: BS alert ${ALERT_ID:-none} — ${REASON}"
-          echo "[rollback] Executing: npx wrangler rollback — $MSG"
-          npx wrangler rollback --name sophia-ai-factory --message "$MSG" --yes
-          echo "[rollback] Rollback complete."
+        if: steps.backoff.outputs.skip != 'true' && steps.validate.outputs.authorized == 'true' && !contains(steps.validate.outputs.decision, 'DRY_RUN_ONLY')
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          # Read from the validated decision only. The raw inputs are never
+          # referenced here, so no attacker-controlled string reaches argv.
+          MESSAGE=$(node -e '
+            const decision = JSON.parse(require("node:fs").readFileSync("/tmp/rollback-request.json", "utf8"));
+            const alert = decision.sanitized.alertId || "none";
+            process.stdout.write(`auto: alert ${alert} - ${decision.sanitized.reason}`);
+          ')
+          echo "[rollback] Executing: npx wrangler rollback --name sophia-ai-factory --message \"$MESSAGE\""
+          npx wrangler rollback --name sophia-ai-factory --message "$MESSAGE" --yes
+          echo "[rollback] Rollback complete."
 
       - name: Telegram rollback alert
-        if: steps.backoff.outputs.skip != 'true'
-        run: |
-          REASON="${{ github.event.inputs.reason }}"
-          ALERT_ID="${{ github.event.inputs.alert_id }}"
-          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          MSG="🚨 *Sophia Canary Rollback*%0A%0AReason: ${REASON}%0AAlert: ${ALERT_ID:-manual}%0ARun: ${RUN_URL}"
-          curl -sf "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" \
-            -d "text=${MSG}" \
-            -d "parse_mode=Markdown" || echo "WARNING: Telegram alert failed"
+        if: steps.backoff.outputs.skip != 'true' && steps.validate.outputs.authorized == 'true' && !contains(steps.validate.outputs.decision, 'DRY_RUN_ONLY')
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          MESSAGE=$(node -e '
+            const decision = JSON.parse(require("node:fs").readFileSync("/tmp/rollback-request.json", "utf8"));
+            const alert = decision.sanitized.alertId || "manual";
+            const run = process.env.GITHUB_SERVER_URL + "/" + process.env.GITHUB_REPOSITORY + "/actions/runs/" + process.env.GITHUB_RUN_ID;
+            process.stdout.write("Sophia Rollback\n\nReason: " + decision.sanitized.reason + "\nAlert: " + alert + "\nRun: " + run);
+          ')
+          curl -sf "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --get --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}" \
+            --data-urlencode "parse_mode=HTML" \
+            || echo "WARNING: Telegram alert failed"
+
+      - name: Dry-run notice
+        if: contains(steps.validate.outputs.decision, '"decision":"DRY_RUN_ONLY"')
+        run: echo "Dry run complete — rollback validated, production Worker untouched."
 
       - name: Skip notice
         if: steps.backoff.outputs.skip == 'true'
-        run: echo "Rollback skipped — backoff active (1 per 30 min). Check recent runs."
+        run: echo "Rollback skipped — backoff active (1 per 30 minutes). Check recent runs."
