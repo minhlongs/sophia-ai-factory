@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/v3-core.css";
 
 @plugin "tailwindcss-animate";
 

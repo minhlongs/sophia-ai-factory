@@ -7606,7 +7606,31 @@
         }
       },
       "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
-      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue."
+      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue.",
+      "v3Core": {
+        "eyebrow": "SOPHIA AI FACTORY • OPC v3.0 • ZERO-CUSTODY AFFILIATE ENGINE",
+        "headlineLead": "Turn verified affiliate offers into governed campaigns —",
+        "runtimesLabel": "INTEGRATES WITH YOUR STACK",
+        "whyKicker": "01 / WHY MANUAL CAMPAIGNS STALL",
+        "whyTitle": "Affiliate operators do not fail from lack of offers. They stall when compliance, spend, and attribution scatter.",
+        "pain1Title": "Unverified links & compliance drift.",
+        "pain1Desc": "Drafting CEX or SaaS scripts without jurisdiction disclosures risks channel strikes and rejected payouts.",
+        "pain2Title": "Uncapped render spend before approval.",
+        "pain2Desc": "Triggering ElevenLabs or video synthesis before locking the script burns provider credits on unapproved drafts.",
+        "pain3Title": "Detached postbacks & opaque fees.",
+        "pain3Desc": "Tracking clicks in spreadsheets without S2S postback reconciliation leaves net commission unverified.",
+        "whyTurn": "Sophia locks the sequence: $0.00 AI draft first, SHA-256 CEO approval second, BYOK media render third, and 0%-fee Domain B ledger reconciliation last.",
+        "howKicker": "02 / HOW SOPHIA EXECUTES",
+        "howTitle": "One operator command. Five governed assembly stations.",
+        "chatHeader": "sophia-opc — illustrative session trace",
+        "chatCommand": "/sophia launch --niche crypto_cex --offer binance-vip --gate sha256",
+        "chatYou1": "Draft a bilingual VI/EN campaign for our verified CEX & SaaS offers with a $15 render cap.",
+        "chatSophia1": "Checking offer registry & jurisdiction rules (MiCA / FTC / VN Decree 52)…",
+        "chatYou2": "Lock the script at $0.00 draft cost and require my SHA-256 signature before spending BYOK credits.",
+        "chatSophia2": "Draft locked ($0.00 spend) → SHA-256 approval digest verified → queued for ElevenLabs + HeyGen synthesis & Domain B 0%-fee ledger.",
+        "ecosystemKicker": "03 / 5-STATION ASSEMBLY & 7-LEVEL EVIDENCE",
+        "joinKicker": "04 / LAUNCH YOUR WORKSPACE"
+      }
     },
     "settingsPage": {
       "pageTitle": "Settings",

@@ -37,21 +37,25 @@ export default async function GuidePage({
   const aeoPayload = buildCorePagePayload('guide', normalizedLocale);
 
   return (
-    <main className="min-h-screen bg-background text-foreground py-12 sm:py-16 px-4">
+    <main className="v3-core min-h-screen bg-background text-foreground py-12 sm:py-16 px-4">
       <div className="max-w-5xl mx-auto">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+          className="btn btn-ghost mb-8"
         >
           ← {t('back_to_dashboard')}
         </Link>
 
-        {/* Hero */}
+        {/* .v3-core Telemetry Hero */}
         <div className="mb-12 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
+          <p className="eyebrow justify-center">
+            <span className="dot" aria-hidden="true" />
+            <span>SOPHIA AI FACTORY • OPC INTERACTIVE WORKBENCH</span>
+          </p>
+          <h1 className="h2 text-3xl sm:text-4xl font-bold text-foreground mb-3">
             {t('gettingStarted.hero_title')}
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="lead text-muted-foreground max-w-2xl mx-auto">
             {t('gettingStarted.hero_subtitle')}
           </p>
         </div>

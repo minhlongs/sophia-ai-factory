@@ -60,10 +60,14 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       }));
 
   return (
-    <div className="space-y-6" data-testid="dashboard-overview-content">
+    <div className="v3-core space-y-6" data-testid="dashboard-overview-content">
       {/* Dashboard Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <p className="eyebrow !mb-1.5">
+            <span className="dot" aria-hidden="true" />
+            <span>DIRECTOR&apos;S CONTROL DECK • OPC v3.0</span>
+          </p>
           <h1 className="text-2xl font-bold text-foreground dark:text-white tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>

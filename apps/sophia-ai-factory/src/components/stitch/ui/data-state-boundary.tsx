@@ -146,7 +146,7 @@ export function DataStateBoundary({
       data-testid={testId}
       data-status={state}
       role={state === 'error' ? 'alert' : 'status'}
-      className="rounded-xl border border-border dark:border-[#1E2235] bg-card dark:bg-[#11131F] p-6 text-center space-y-2"
+      className="v3-core rounded-xl border border-border dark:border-[#1E2235] bg-card dark:bg-[#11131F] p-6 text-center space-y-2"
     >
       <span
         className={`inline-flex items-center rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${

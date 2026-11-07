@@ -16,13 +16,14 @@ interface NicheStudioHeaderProps {
 
 export function NicheStudioHeader({ t }: NicheStudioHeaderProps) {
   return (
-    <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border dark:border-[#1E2235] pb-5 gap-4">
+    <header className="v3-core flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border dark:border-[#1E2235] pb-5 gap-4">
       <div>
         <div className="flex items-center gap-3">
-          <span className="px-2.5 py-0.5 text-xs font-semibold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 uppercase tracking-wider">
+          <span className="eyebrow !mb-0 px-2.5 py-0.5 text-xs font-semibold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 uppercase tracking-wider">
+            <span className="dot" aria-hidden="true" />
             {t('badge')}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground font-mono">
             {t('layer')}
           </span>
         </div>

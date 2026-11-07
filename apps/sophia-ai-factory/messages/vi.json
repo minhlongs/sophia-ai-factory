@@ -7613,7 +7613,31 @@
         }
       },
       "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
-      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng."
+      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng.",
+      "v3Core": {
+        "eyebrow": "SOPHIA AI FACTORY • OPC v3.0 • ĐỘNG CƠ AFFILIATE KHÔNG LƯU KÝ",
+        "headlineLead": "Biến offer affiliate đã xác minh thành chiến dịch có kiểm soát —",
+        "runtimesLabel": "TÍCH HỢP HỆ SINH THÁI CỦA BẠN",
+        "whyKicker": "01 / VÌ SAO CHIẾN DỊCH THỦ CÔNG DỄ TẮC NGHẼN",
+        "whyTitle": "Nhà vận hành affiliate không thiếu offer. Họ tắc nghẽn khi pháp lý, ngân sách render và đối soát hoa hồng bị phân mảnh.",
+        "pain1Title": "Link chưa xác minh & rủi ro pháp lý.",
+        "pain1Desc": "Soạn kịch bản CEX hoặc SaaS thiếu nhãn công bố theo khu vực dễ dẫn đến vi phạm kênh và từ chối thanh toán.",
+        "pain2Title": "Tốn phí render trước khi duyệt kịch bản.",
+        "pain2Desc": "Gọi ElevenLabs hoặc dựng video khi chưa khóa kịch bản làm tiêu hao credit BYOK vào các bản nháp chưa duyệt.",
+        "pain3Title": "Postback rời rạc & phí ẩn.",
+        "pain3Desc": "Theo dõi click thủ công không có đối soát S2S postback khiến hoa hồng thực nhận thiếu bằng chứng xác thực.",
+        "whyTurn": "Sophia khóa chặt trình tự: Soạn nháp AI $0.00 trước, CEO ký duyệt SHA-256 thứ hai, render bằng khóa BYOK thứ ba, và đối soát sổ cái Domain B (0% phí nền tảng) cuối cùng.",
+        "howKicker": "02 / CÁCH SOPHIA VẬN HÀNH",
+        "howTitle": "Một lệnh điều hành. Năm trạm lắp ráp có bảo chứng.",
+        "chatHeader": "sophia-opc — bản ghi phiên minh họa",
+        "chatCommand": "/sophia launch --niche crypto_cex --offer binance-vip --gate sha256",
+        "chatYou1": "Soạn chiến dịch song ngữ Việt/Anh cho offer CEX & SaaS đã xác minh với trần render $15.",
+        "chatSophia1": "Đang kiểm tra danh mục offer & quy tắc pháp lý khu vực (MiCA / FTC / Nghị định 52)…",
+        "chatYou2": "Khóa bản nháp ở mức phí $0.00 và yêu cầu chữ ký SHA-256 của tôi trước khi chi tiêu credit BYOK.",
+        "chatSophia2": "Đã khóa bản nháp ($0.00 phí) → Xác thực chữ ký SHA-256 → Đưa vào hàng đợi ElevenLabs + HeyGen & sổ cái Domain B 0% phí.",
+        "ecosystemKicker": "03 / DÂY CHUYỀN 5 TRẠM & CHUỖI BẰNG CHỨNG 7 CẤP ĐỘ",
+        "joinKicker": "04 / KHỞI TẠO WORKSPACE CỦA BẠN"
+      }
     },
     "settingsPage": {
       "pageTitle": "Cài đặt",
