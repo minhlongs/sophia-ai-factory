@@ -93,12 +93,37 @@ describe('migrations 0497 and 0498 — retire legacy users FKs across 22 tables'
     const db = d1._db;
 
     db.exec(`
-      INSERT INTO users (id) VALUES ('u_1'), ('admin_1');
+      INSERT INTO users (id) VALUES ('u_1'), ('admin_1'), ('1');
       INSERT INTO organizations (id) VALUES ('org_1');
       INSERT INTO org_members (id, org_id, user_id, role) VALUES ('om_1', 'org_1', 'u_1', 'owner');
+      INSERT INTO fx_exchange_rates (id) VALUES ('fx_1');
+
+      -- 6 tables rebuilt in 0497
       INSERT INTO payouts (id, user_id, amount, method, paid_by_admin) VALUES ('pay_1', 'u_1', 50.0, 'usdt_trc20', 'admin_1');
       INSERT INTO user_wallets (user_id, balance_available) VALUES ('u_1', 120.5);
       INSERT INTO campaigns (id, user_id, title, org_id) VALUES ('camp_1', 'u_1', 'Launch 1', 'org_1');
+      INSERT INTO affiliate_clicks (id, click_id, campaign_id, user_id, offer_id, short_code) VALUES ('ac_0', 'clk_0', 'camp_1', 'u_1', 'off_0', 'sc_0');
+      INSERT INTO scheduled_campaigns (id, user_id, topic, next_run_date) VALUES ('scamp_1', 'u_1', 'Weekly Topic', '2026-11-14');
+      INSERT INTO video_analytics (id, user_id, video_id, platform, platform_video_id, date) VALUES ('va_1', 'u_1', 'vid_1', 'youtube', 'yt_1', '2026-11-07');
+      INSERT INTO marketplace_templates (id, creator_id, title, template_config) VALUES ('mt_1', 'u_1', 'Starter SOP', '{}');
+
+      -- Remaining 15 tables rebuilt in 0498
+      INSERT INTO tier_change_events (id, user_id, org_id, from_tier, to_tier, event_type) VALUES ('tce_1', 'u_1', 'org_1', 'BASIC', 'PREMIUM', 'upgrade');
+      INSERT INTO raas_licenses (id, key_hash, tier, nonce, user_id, created_at) VALUES ('lic_1', 'kh_1', 'PREMIUM', 'nonce_1', 'u_1', 1700000000);
+      INSERT INTO raas_audit_logs (id, action, license_id, user_id, created_at) VALUES ('ral_0', 'VALIDATE', 'lic_1', 'u_1', 1700000000);
+      INSERT INTO affiliate_offers_selected (id, campaign_id, user_id, offer_id, offer_name, affiliate_link, short_code) VALUES ('aos_1', 'camp_1', 'u_1', 'off_1', 'Offer 1', 'https://example.com', 'sc_aos_1');
+      INSERT INTO affiliate_conversions (id, receipt, campaign_id, user_id, event_type, gross_amount, commission_user, commission_sophia) VALUES ('aconv_1', 'rcpt_1', 'camp_1', 'u_1', 'SALE', 100.0, 50.0, 10.0);
+      INSERT INTO user_payout_settings (user_id, preferred_method) VALUES ('u_1', 'usdt_trc20');
+      INSERT INTO repurpose_jobs (id, user_id, source_video_id) VALUES ('rj_1', 'u_1', 'vid_1');
+      INSERT INTO thumbnail_variants (id, video_id, user_id, variant_index, r2_key, strategy) VALUES ('tv_1', 'vid_1', 'u_1', 0, 'r2/tv_1.png', 'high_contrast');
+      INSERT INTO whatsapp_templates (id, user_id, phone_number_id, wa_token) VALUES (1, 1, 'pn_1', 'tok_1');
+      INSERT INTO whatsapp_message_log (id, template_id, user_id, recipient, channel, kind) VALUES (1, 1, 1, '+84900000000', 'whatsapp', 'send');
+      INSERT INTO localized_payment_transactions (id, org_id, user_id, tier, payment_rail, base_amount_cents, settlement_currency, settlement_amount, fx_rate_applied, fx_rate_id, subtotal_amount, total_amount, idempotency_key) VALUES ('lpt_1', 'org_1', 'u_1', 'PREMIUM', 'PAYOS_VIETQR', 4900, 'VND', 1250000, 25510.2, 'fx_1', 49.0, 49.0, 'idem_1');
+      INSERT INTO financial_close_periods (id, org_id, period_key, period_type, start_date, end_date, closed_by) VALUES ('fcp_1', 'org_1', '2026-10', 'monthly', '2026-10-01', '2026-10-31', 'admin_1');
+      INSERT INTO revenue_schedules (id, org_id, user_id, contract_id, tier, billing_cycle, total_contract_value_cents, deferred_revenue_cents, daily_recognition_rate_cents, start_date, end_date, term_days) VALUES ('rs_1', 'org_1', 'u_1', 'ct_1', 'PREMIUM', 'monthly', 4900, 4900, 163.33, '2026-11-01', '2026-11-30', 30);
+      INSERT INTO intercompany_transfers (id, transfer_reference, origin_entity, destination_entity, transfer_type, gross_amount_cents, withholding_tax_regime, net_settlement_cents, approved_by, transfer_date) VALUES ('ict_1', 'tref_1', 'SOPHIA_VN_CO_LTD', 'SOPHIA_SG_PTE_LTD', 'ip_license_royalty', 100000, 'SG_DTA_EXEMPT', 90000, 'admin_1', '2026-11-07');
+      INSERT INTO ipo_filing_periods (id, period_key, filing_type, certified_by) VALUES ('ipo_1', '2026-Q3', 'S-1', 'admin_1');
+
       PRAGMA foreign_keys = OFF;
       DROP TABLE users;
       PRAGMA foreign_keys = ON;
@@ -117,11 +142,25 @@ describe('migrations 0497 and 0498 — retire legacy users FKs across 22 tables'
     for (const tbl of [...SIX_TABLES, ...SIXTEEN_TABLES]) {
       const fks = db.prepare(`PRAGMA foreign_key_list('${tbl}')`).all() as Array<{ table: string }>;
       expect(fks.filter((fk) => fk.table === 'users')).toEqual([]);
+      const rowCount = db.prepare(`SELECT COUNT(*) AS cnt FROM ${tbl}`).get() as { cnt: number };
+      expect(rowCount.cnt).toBeGreaterThanOrEqual(1);
     }
 
-    // Non-users FKs remain intact
-    const clickFks = db.prepare(`PRAGMA foreign_key_list('affiliate_clicks')`).all() as Array<{ table: string }>;
-    expect(clickFks.map((f) => f.table)).toEqual(['campaigns']);
+    // All 8 non-users FK relationships remain intact
+    const expectedNonUserFks: Record<string, string[]> = {
+      affiliate_clicks: ['campaigns'],
+      raas_audit_logs: ['raas_licenses'],
+      affiliate_offers_selected: ['campaigns'],
+      affiliate_conversions: ['campaigns'],
+      whatsapp_message_log: ['whatsapp_templates'],
+      localized_payment_transactions: ['fx_exchange_rates', 'organizations'],
+      financial_close_periods: ['organizations'],
+      revenue_schedules: ['organizations'],
+    };
+    for (const [tbl, expectedTargets] of Object.entries(expectedNonUserFks)) {
+      const fks = db.prepare(`PRAGMA foreign_key_list('${tbl}')`).all() as Array<{ table: string }>;
+      expect(fks.map((f) => f.table).sort()).toEqual([...expectedTargets].sort());
+    }
 
     // Campaigns triggers recreated and auto-populate org_id from org_members
     const triggers = db
@@ -141,6 +180,36 @@ describe('migrations 0497 and 0498 — retire legacy users FKs across 22 tables'
       INSERT INTO affiliate_clicks (id, click_id, campaign_id, user_id, offer_id, short_code) VALUES ('ac_1', 'clk_1', 'camp_2', 'u_1', 'off_1', 'sc_1');
       INSERT INTO raas_audit_logs (id, action, user_id, created_at) VALUES ('ral_1', 'AUDIT_QUERY', 'u_1', 1700000000);
     `);
+
+    // The surviving refund-badge columns reconcile 0498 with 0227, which live D1
+    // never received (0227 landed after the 0447 baseline). They default-init for
+    // every pre-existing campaign row, so queries in
+    // src/land/billing/refund-badge-cap-queries.ts keep resolving after the rebuild.
+    const refundCols = db
+      .prepare(`SELECT name FROM pragma_table_info('campaigns') WHERE name IN ('refund_badge_cents','refund_badge_updated_at') ORDER BY name`)
+      .all() as Array<{ name: string }>;
+    expect(refundCols.map((c) => c.name)).toEqual([
+      'refund_badge_cents',
+      'refund_badge_updated_at',
+    ]);
+    const camp1Badge = db
+      .prepare(`SELECT refund_badge_cents, refund_badge_updated_at FROM campaigns WHERE id = 'camp_1'`)
+      .get() as { refund_badge_cents: number; refund_badge_updated_at: string | null };
+    expect(camp1Badge.refund_badge_cents).toBe(0);
+    expect(camp1Badge.refund_badge_updated_at).toBeNull();
+    // The column is writable, not just declared.
+    db.exec(`UPDATE campaigns SET refund_badge_cents = 500, refund_badge_updated_at = '2026-11-07T00:00:00Z' WHERE id = 'camp_1';`);
+    const camp1BadgeAfter = db
+      .prepare(`SELECT refund_badge_cents FROM campaigns WHERE id = 'camp_1'`)
+      .get() as { refund_badge_cents: number };
+    expect(camp1BadgeAfter.refund_badge_cents).toBe(500);
+
+    // The secondary conversion index from 0022 was dropped with the table; the
+    // rebuild recreates it so the payout query plan is unchanged.
+    const convIndexes = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='affiliate_conversions' ORDER BY name`)
+      .all() as Array<{ name: string }>;
+    expect(convIndexes.map((i) => i.name)).toContain('idx_conv_user_payout');
 
     // The org_id auto-populate trigger resolves camp_2's org from org_members
     // (SEC-03 invariant), proving the 3 campaigns triggers survived the rebuild.

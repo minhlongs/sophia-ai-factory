@@ -55,7 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_tce_user_id ON tier_change_events(user_id);
 CREATE INDEX IF NOT EXISTS idx_tce_created_at ON tier_change_events(created_at);
 CREATE INDEX IF NOT EXISTS idx_tce_event_type ON tier_change_events(event_type);
 
--- 2. campaigns (from 0005 + 0046 + 0107; drops user_id FK to users, preserves org_id triggers)
+-- 2. campaigns (from 0005 + 0046 + 0107 + 0227; drops user_id FK to users, preserves org_id triggers and refund_badge columns)
 DROP TABLE IF EXISTS campaigns_new;
 
 CREATE TABLE campaigns_new (
@@ -74,7 +74,9 @@ CREATE TABLE campaigns_new (
   error_message TEXT,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
-  org_id TEXT
+  org_id TEXT,
+  refund_badge_cents INTEGER NOT NULL DEFAULT 0,
+  refund_badge_updated_at TEXT
 );
 
 INSERT INTO campaigns_new (
@@ -301,6 +303,7 @@ CREATE INDEX IF NOT EXISTS idx_conv_user ON affiliate_conversions(user_id);
 CREATE INDEX IF NOT EXISTS idx_conv_campaign ON affiliate_conversions(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_conv_click ON affiliate_conversions(click_id);
 CREATE INDEX IF NOT EXISTS idx_conv_payout ON affiliate_conversions(payout_status, available_at);
+CREATE INDEX IF NOT EXISTS idx_conv_user_payout ON affiliate_conversions(user_id, payout_status);
 CREATE INDEX IF NOT EXISTS idx_conv_created ON affiliate_conversions(created_at DESC);
 
 -- 7. user_payout_settings (from 0031 + 0048; drops user_id FK to users)

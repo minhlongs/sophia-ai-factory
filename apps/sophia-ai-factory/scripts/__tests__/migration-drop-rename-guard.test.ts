@@ -116,6 +116,15 @@ describe('extract_drop_rename_targets', () => {
       ].join('\n');
       expect(dropRenameTargets(sql)).toEqual(['skus']);
     });
+
+    it('strips block comments before CREATE TABLE so staging tables stay transient', () => {
+      const sql = [
+        '/* rebuild invoices without legacy fk */ CREATE TABLE invoices_new (id TEXT PRIMARY KEY);',
+        'DROP TABLE invoices;',
+        'ALTER TABLE invoices_new RENAME TO invoices;',
+      ].join('\n');
+      expect(dropRenameTargets(sql)).toEqual(['invoices']);
+    });
   });
 
   describe('returns one entry per pre-existing table', () => {
