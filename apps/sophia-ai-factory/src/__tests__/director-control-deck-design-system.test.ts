@@ -21,23 +21,24 @@ function readSrcFile(relPath: string): string {
 describe("Director's Control Deck Design System Verification", () => {
   const globalsCss = readSrcFile('app/globals.css');
 
-  it('defines Executive Studio Light (:root) and Cinema Dark Room (.dark) tokens in globals.css', () => {
+  it('declares color tokens exactly once, in the dark block, because the app renders dark-only', () => {
     expect(globalsCss).toContain('"Director\'s Control Deck" Design System');
-    // Executive Studio Light (:root)
-    expect(globalsCss).toContain('--background: 220 27% 98%;');
-    expect(globalsCss).toContain('--foreground: 228 63% 8%;');
-    expect(globalsCss).toContain('--card: 0 0% 100%;');
-    expect(globalsCss).toContain('--primary: 243 75% 48%;');
-    expect(globalsCss).toContain('--accent: 37 91% 44%;');
-    expect(globalsCss).toContain('--border: 214 32% 91%;');
 
-    // Cinema Dark Room (.dark)
+    // Cinema Dark Room (.dark) is the single declaration site for color.
     expect(globalsCss).toContain('--background: 234 53% 4%;');
     expect(globalsCss).toContain('--card: 233 29% 9%;');
     expect(globalsCss).toContain('--primary: 239 84% 67%;');
     expect(globalsCss).toContain('--accent: 38 92% 50%;');
     expect(globalsCss).toContain('--glass-bg: rgba(17, 19, 31, 0.75);');
     expect(globalsCss).toContain('--glass-border: rgba(255, 255, 255, 0.08);');
+
+    // `:root` keeps geometry only. Redeclaring colors there produced 111 values that
+    // `.dark` always overrode, so no route could ever render them.
+    const rootBlock = globalsCss.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(rootBlock).toContain('--radius');
+    expect(rootBlock).not.toContain('--background');
+    expect(rootBlock).not.toContain('--primary');
+    expect(rootBlock).not.toContain('--card');
   });
 
   it('defines signature Director Control Deck utility classes (.radar, .film-strip, .camera-rec, .studio-glass)', () => {
@@ -65,10 +66,15 @@ describe("Director's Control Deck Design System Verification", () => {
 
     expect(buttonStylesTs).toContain('bg-primary text-primary-foreground');
     expect(buttonTsx).not.toContain('via-indigo-500 to-violet-600');
-    expect(cardTsx).toContain('dark:bg-[#11131F]');
+    // The surface comes from the `bg-card` token. A `dark:` literal override bypassed the
+    // token layer and made the primitive immune to any future theme change.
+    expect(cardTsx).toContain('bg-card');
+    expect(cardTsx).not.toContain('dark:bg-[#11131F]');
     expect(statCardTsx).toContain('JetBrains Mono');
-    expect(inputTsx).toContain('dark:bg-[#11131F]');
-    expect(tableTsx).toContain('dark:bg-[#11131F]');
+    expect(inputTsx).toContain('bg-card');
+    expect(inputTsx).not.toMatch(/#[0-9a-fA-F]{6}/);
+    expect(tableTsx).toContain('bg-card');
+    expect(tableTsx).not.toContain('dark:bg-[#11131F]');
     expect(dashboardShellTsx).toContain('dark:bg-[#090A10]');
     expect(marketingNavTsx).toContain('studio-glass');
   });
