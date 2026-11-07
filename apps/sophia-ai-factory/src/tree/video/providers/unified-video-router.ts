@@ -3,7 +3,7 @@
  * Unified BYOK Video Router with Circuit Breaker and automatic failover.
  */
 
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { rankModelsForTask } from '@/tree/video/radar/model-radar-scorer';
 import { submitFalVideoJob } from './fal-aggregator-client';
 import { submitReplicateVideoJob } from './replicate-aggregator-client';
@@ -18,8 +18,24 @@ export async function routeVideoGenerationJob(
     return failure({ code: 'NO_ACTIVE_MODELS', message: `No active models for ${request.sceneTask}` });
   }
 
-  const falKey = await getUserApiKey(request.userId, 'fal-ai');
-  const replicateKey = await getUserApiKey(request.userId, 'replicate');
+  // A store or decryption failure is reported distinctly from an absent key:
+  // the caller sees BYOK_STORE_UNAVAILABLE rather than BYOK_KEY_MISSING.
+  const [falLookup, replicateLookup] = await Promise.all([
+    lookupUserApiKey(request.userId, 'fal-ai'),
+    lookupUserApiKey(request.userId, 'replicate'),
+  ]);
+
+  for (const lookup of [falLookup, replicateLookup]) {
+    if (lookup.status !== 'FOUND' && lookup.status !== 'NOT_CONFIGURED') {
+      return failure({
+        code: `BYOK_${lookup.status}`,
+        message: 'Unable to load stored BYOK credentials',
+      });
+    }
+  }
+
+  const falKey = falLookup.status === 'FOUND' ? falLookup.key : null;
+  const replicateKey = replicateLookup.status === 'FOUND' ? replicateLookup.key : null;
 
   for (const candidate of ranked) {
     if (candidate.aggregator === 'fal-ai' && falKey) {

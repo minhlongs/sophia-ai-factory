@@ -9,8 +9,8 @@ import { buildHybridSceneGraph } from '@/tree/video/scene-graph/hybrid-scene-gra
 import { routeVideoGenerationJob } from '@/tree/video/providers/unified-video-router';
 import { runAutonomousVideoPipeline } from '@/forest/video/autonomous-video-orchestrator';
 
-vi.mock('@/tree/byok/user-api-key-store', () => ({ getUserApiKey: vi.fn() }));
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+vi.mock('@/tree/byok/user-api-key-store', () => ({ lookupUserApiKey: vi.fn() }));
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 
 describe('AI Video 2026-2027 Hybrid Scene-Graph Architecture', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -105,7 +105,7 @@ describe('AI Video 2026-2027 Hybrid Scene-Graph Architecture', () => {
   });
 
   it('routes video jobs via BYOK key and falls back cleanly when missing', async () => {
-    vi.mocked(getUserApiKey).mockResolvedValue(null);
+    vi.mocked(lookupUserApiKey).mockResolvedValue({ status: 'NOT_CONFIGURED' });
     const res = await routeVideoGenerationJob({
       userId: 'usr_no_keys',
       campaignId: 'camp_001',

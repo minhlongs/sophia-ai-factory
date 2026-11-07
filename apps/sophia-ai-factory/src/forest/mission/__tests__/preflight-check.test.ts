@@ -34,9 +34,18 @@ vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn(),
 }));
 
+const { mockGetUserApiKey } = vi.hoisted(() => ({ mockGetUserApiKey: vi.fn() }));
+
 vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: vi.fn(),
-  getUserApiKey: vi.fn(),
+  getUserApiKey: mockGetUserApiKey,
+  // The credential gate reads the status-aware lookup so it can tell a store
+  // outage from an absent key. Mirrors the real store: a configured key is
+  // FOUND; null or '' is NOT_CONFIGURED.
+  lookupUserApiKey: vi.fn(async (...args: Parameters<typeof mockGetUserApiKey>) => {
+    const key = await mockGetUserApiKey(...args);
+    return key ? { status: 'FOUND', key } : { status: 'NOT_CONFIGURED' };
+  }),
 }));
 
 vi.mock('@/tree/mcu/credits-repo', () => ({

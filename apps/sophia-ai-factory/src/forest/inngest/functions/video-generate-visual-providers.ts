@@ -5,7 +5,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
 import { createDidTalk } from '@/forest/did/did-client';
@@ -32,8 +32,17 @@ export async function pollDidVideo(
     return { videoUrl: null, provider: 'd-id' };
   }
 
-  const didKey = await getUserApiKey(userId, 'd-id');
-  if (!didKey) return { videoUrl: null, provider: 'd-id' };
+  // A store or decryption failure means the credential state is unknown, so
+  // this provider must not run and the caller falls back to Wan 2.1. An absent
+  // key is the same outcome here, but the reason is distinct for the log.
+  const didLookup = await lookupUserApiKey(userId, 'd-id');
+  if (didLookup.status !== 'FOUND') {
+    if (didLookup.status !== 'NOT_CONFIGURED') {
+      logger.warn('[videoGenerate] D-ID credential lookup failed', { status: didLookup.status });
+    }
+    return { videoUrl: null, provider: 'd-id' };
+  }
+  const didKey = didLookup.key;
 
   let talkId: string;
   try {

@@ -16,6 +16,7 @@ const {
   mockGetBalance,
   mockListUserApiKeyProviders,
   mockGetUserApiKey,
+  mockLookupUserApiKey,
 } = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
   mockVerifyWorkspaceAccess: vi.fn(),
@@ -24,6 +25,7 @@ const {
   mockGetBalance: vi.fn(),
   mockListUserApiKeyProviders: vi.fn(),
   mockGetUserApiKey: vi.fn(),
+  mockLookupUserApiKey: vi.fn(),
 }));
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
@@ -49,6 +51,16 @@ vi.mock('@/tree/mcu/credits-repo', () => ({
 vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: mockListUserApiKeyProviders,
   getUserApiKey: mockGetUserApiKey,
+  // The credential gate reads the status-aware lookup so it can tell a store
+  // outage from an absent key. Default behaviour mirrors the real store: a
+  // stored key is FOUND, null/'' is NOT_CONFIGURED. Individual tests override
+  // this with an explicit status to exercise store-outage handling.
+  lookupUserApiKey: mockLookupUserApiKey.mockImplementation(
+    async (...args: Parameters<typeof mockGetUserApiKey>) => {
+      const key = await mockGetUserApiKey(...args);
+      return key ? { status: 'FOUND', key } : { status: 'NOT_CONFIGURED' };
+    },
+  ),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -69,6 +81,15 @@ describe('tree/mission/preflight-check', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks resets implementations, so re-establish the default
+    // status-aware reader here: a configured key is FOUND, absence is
+    // NOT_CONFIGURED. Tests needing a store outage set their own status.
+    mockLookupUserApiKey.mockImplementation(
+      async (...args: Parameters<typeof mockGetUserApiKey>) => {
+        const key = await mockGetUserApiKey(...args);
+        return key ? { status: 'FOUND', key } : { status: 'NOT_CONFIGURED' };
+      },
+    );
     mockGetD1.mockResolvedValue(fakeD1);
     mockGetCurrentUser.mockResolvedValue({ id: fakeUserId, email: 'user@test.com' });
     mockVerifyWorkspaceAccess.mockResolvedValue(true);
@@ -203,6 +224,23 @@ describe('tree/mission/preflight-check', () => {
 
       expect(res.passed).toBe(false);
       expect(res.failureCode).toBe('MISSING_PROVIDER_CREDENTIAL');
+      expect(res.gates.credential.passed).toBe(false);
+    });
+
+    it('fails closed with a distinct code when the stored key cannot be read', async () => {
+      // A store or decryption outage is not an absent key. The customer may
+      // already have connected this provider, so the gate must block the
+      // mission instead of telling them to reconnect what they configured.
+      mockLookupUserApiKey.mockResolvedValue({ status: 'STORE_UNAVAILABLE' });
+
+      const res = await runMissionPreflightCheck({
+        userId: fakeUserId,
+        workspaceId: fakeWorkspaceId,
+        requiredProvider: 'elevenlabs',
+      });
+
+      expect(res.passed).toBe(false);
+      expect(res.failureCode).toBe('PROVIDER_CREDENTIAL_UNREADABLE');
       expect(res.gates.credential.passed).toBe(false);
     });
 
