@@ -23,7 +23,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         hover && [
           "transition-all duration-300 motion-reduce:transition-none",
           "hover:-translate-y-0.5",
-          "hover:shadow-[inset_0_1px_0_0_color-mix(in srgb, var(--primary) 30%, transparent),0_6px_20px_rgba(0,0,0,0.1)]",
+          "hover:shadow-[inset_0_1px_0_0_color-mix(in_srgb,_var(--primary)_30%,_transparent),0_6px_20px_rgba(0,0,0,0.1)]",
           "hover:border-primary/30",
         ],
         className
