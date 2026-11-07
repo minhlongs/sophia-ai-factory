@@ -47,9 +47,10 @@ vi.mock('@/tree/byok/user-api-key-store', () => ({
 vi.mock('@/seed/db/client', () => ({ getD1: mockGetD1, createServerClient: vi.fn() }));
 vi.mock('@/seed/inngest/client', () => ({ inngest: { send: mockInngestSend } }));
 vi.mock('@/seed/db/platform-config-repo', () => ({
-  getPlatformConfig: vi.fn(async (key: string) => killSwitchPlatformConfig.get(key) ?? null),
+  getPlatformConfigStrict: vi.fn(async (key: string) => killSwitchPlatformConfig.get(key) ?? null),
   setPlatformConfig: vi.fn(async (key: string, val: string) => {
     killSwitchPlatformConfig.set(key, val);
+    return true;
   }),
 }));
 

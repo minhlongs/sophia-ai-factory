@@ -51,10 +51,9 @@ function createE2ED1() {
       daily_render_budget_cents INTEGER NOT NULL DEFAULT 500, updated_by TEXT,
       updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
     );`,
-    `CREATE TABLE platform_config (
-      key TEXT PRIMARY KEY, value TEXT NOT NULL, description TEXT, is_secret INTEGER NOT NULL DEFAULT 0,
-      updated_by TEXT, created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-      updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+    `CREATE TABLE platform_configs (
+      key TEXT PRIMARY KEY, encrypted_value TEXT NOT NULL,
+      updated_by TEXT, updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
     );`,
   ]);
 }
@@ -62,8 +61,16 @@ function createE2ED1() {
 describe('OPC Affiliate End-to-End Multi-Tenant Orchestration & Integrity Test', () => {
   it('enforces multi-tenant isolation, state lifecycle, crash recovery, dual kill switch, and approval payload binding', async () => {
     const fakeD1 = createE2ED1() as unknown as D1Database;
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env!;
+    const prevDb = env.DB;
+    const prevMasterKey = process.env.CREDENTIALS_MASTER_KEY;
+    env.DB = fakeD1;
+    process.env.CREDENTIALS_MASTER_KEY =
+      '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     const tenantA = 'ws_saas_enterprise';
     const tenantB = 'ws_crypto_vip';
+
+    try {
 
     // 1. Dual-Fixture Ledger Ingestion: SaaS on Tenant A, CEX on Tenant B
     const saasRecord: DomainBCommissionRecord = {
@@ -139,10 +146,12 @@ describe('OPC Affiliate End-to-End Multi-Tenant Orchestration & Integrity Test',
     expect(await isAffiliateKillSwitchActive(tenantB)).toBe(false);
 
     await setAffiliateKillSwitch(true, tenantA, 'admin_sec');
+    resetKillSwitchInMemoryCache();
     expect(await isAffiliateKillSwitchActive(tenantA)).toBe(true);
     expect(await isAffiliateKillSwitchActive(tenantB)).toBe(false);
 
     await setAffiliateKillSwitch(true, 'default', 'platform_emergency');
+    resetKillSwitchInMemoryCache();
     expect(await isAffiliateKillSwitchActive(tenantA)).toBe(true);
     expect(await isAffiliateKillSwitchActive(tenantB)).toBe(true);
 
@@ -173,5 +182,14 @@ describe('OPC Affiliate End-to-End Multi-Tenant Orchestration & Integrity Test',
     });
     expect(pubDecision.mayPublish).toBe(true);
     expect(pubDecision.description).toContain('liên kết affiliate');
+    } finally {
+      env.DB = prevDb;
+      if (prevMasterKey === undefined) {
+        delete process.env.CREDENTIALS_MASTER_KEY;
+      } else {
+        process.env.CREDENTIALS_MASTER_KEY = prevMasterKey;
+      }
+      resetKillSwitchInMemoryCache();
+    }
   });
 });

@@ -310,6 +310,7 @@ const mocks = vi.hoisted(() => ({
   mockGetBalance: vi.fn(),
   mockListUserApiKeyProviders: vi.fn(),
   mockGetUserApiKey: vi.fn(),
+  mockLookupUserApiKey: vi.fn(),
 }));
 
 vi.mock('@/seed/db/client', () => ({
@@ -355,6 +356,7 @@ vi.mock('@/tree/mcu/credits-repo', () => ({
 vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: mocks.mockListUserApiKeyProviders,
   getUserApiKey: mocks.mockGetUserApiKey,
+  lookupUserApiKey: mocks.mockLookupUserApiKey,
 }));
 
 vi.mock('@/seed/auth/resolve-org-id', () => ({
@@ -757,7 +759,7 @@ describe('Auto-Creative Playbook & Campaign Intelligence E2E — Phase 5', () =>
       'fal-ai',
       'replicate',
     ]);
-    mocks.mockGetUserApiKey.mockResolvedValue('valid_api_key_secret');
+    mocks.mockLookupUserApiKey.mockResolvedValue({ status: 'FOUND', key: 'valid_api_key_secret' });
   });
 
   // ═════════════════════════════════════════════════════════════════════════════

@@ -129,9 +129,11 @@ describe('ServiceFactory — credential gate', () => {
     process.env.BYOK_ENABLED = '1'
     delete process.env.OPENROUTER_API_KEY // no env fallback
 
-    // Mock the BYOK resolver at module level
-    vi.doMock('@/tree/byok/resolve-user-api-key', () => ({
-      resolveUserApiKey: vi.fn().mockResolvedValue('byok-user-key-123'),
+    // The gate reads the status-aware lookup so it can tell a store outage from
+    // an absent key. FOUND means the customer's own key is usable.
+    vi.doMock('@/tree/byok/user-api-key-store', () => ({
+      lookupUserApiKey: vi.fn().mockResolvedValue({ status: 'FOUND', key: 'byok-user-key-123' }),
+      listUserApiKeyProviders: vi.fn().mockResolvedValue([]),
     }))
 
     const { ServiceFactory } = await import('./factory')
@@ -147,9 +149,11 @@ describe('ServiceFactory — credential gate', () => {
     process.env.BYOK_ENABLED = '1'
     process.env.OPENROUTER_API_KEY = 'env-fallback-key'
 
-    // Resolver returns env fallback (user has no stored key)
-    vi.doMock('@/tree/byok/resolve-user-api-key', () => ({
-      resolveUserApiKey: vi.fn().mockResolvedValue('env-fallback-key'),
+    // NOT_CONFIGURED is the one case where env is the intended payer: the
+    // customer never added a key, so spending platform credit is by design.
+    vi.doMock('@/tree/byok/user-api-key-store', () => ({
+      lookupUserApiKey: vi.fn().mockResolvedValue({ status: 'NOT_CONFIGURED' }),
+      listUserApiKeyProviders: vi.fn().mockResolvedValue([]),
     }))
 
     const { ServiceFactory } = await import('./factory')
@@ -165,9 +169,9 @@ describe('ServiceFactory — credential gate', () => {
     process.env.BYOK_ENABLED = '1'
     delete process.env.OPENROUTER_API_KEY
 
-    // Resolver returns null (no user key, no env fallback)
-    vi.doMock('@/tree/byok/resolve-user-api-key', () => ({
-      resolveUserApiKey: vi.fn().mockResolvedValue(null),
+    vi.doMock('@/tree/byok/user-api-key-store', () => ({
+      lookupUserApiKey: vi.fn().mockResolvedValue({ status: 'NOT_CONFIGURED' }),
+      listUserApiKeyProviders: vi.fn().mockResolvedValue([]),
     }))
 
     const { ServiceFactory } = await import('./factory')
