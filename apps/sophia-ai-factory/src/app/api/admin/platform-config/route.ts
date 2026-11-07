@@ -49,7 +49,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await setPlatformConfig(body.key, body.value, auth.user.id);
+    const persisted = await setPlatformConfig(body.key, body.value, auth.user.id);
+    if (!persisted) {
+      return NextResponse.json(
+        { error: 'Platform config store is unavailable' },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

@@ -67,6 +67,49 @@ describe('toggleAffiliateKillSwitchAction', () => {
     expect(killSwitchStore.setAffiliateKillSwitch).not.toHaveBeenCalled();
   });
 
+  it('rejects an admin role present only in the session payload', async () => {
+    vi.mocked(authSession.getCurrentUser).mockResolvedValue({
+      id: 'usr_untrusted_001',
+      email: 'user@example.com',
+      full_name: 'Untrusted Session Role',
+      role: 'admin',
+    });
+    vi.mocked(isUserAdminModule.isUserAdminWithRole).mockResolvedValue({
+      isAdmin: false,
+      dbRole: 'user',
+    });
+    vi.mocked(workspaceAccessModule.verifyWorkspaceRole).mockResolvedValue(false);
+
+    const result = await toggleAffiliateKillSwitchAction({
+      active: true,
+      tenantId: 'default',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(killSwitchStore.setAffiliateKillSwitch).not.toHaveBeenCalled();
+  });
+
+  it('rejects an operator role present only in the session payload', async () => {
+    vi.mocked(authSession.getCurrentUser).mockResolvedValue({
+      id: 'usr_untrusted_002',
+      email: 'user@example.com',
+      full_name: 'Untrusted Session Operator',
+      role: 'operator',
+    });
+    vi.mocked(isUserAdminModule.isUserAdminWithRole).mockResolvedValue({
+      isAdmin: false,
+      dbRole: 'user',
+    });
+
+    const result = await toggleAffiliateKillSwitchAction({
+      active: true,
+      tenantId: 'default',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(killSwitchStore.setAffiliateKillSwitch).not.toHaveBeenCalled();
+  });
+
   it('successfully updates kill switch when user is platform admin', async () => {
     vi.mocked(authSession.getCurrentUser).mockResolvedValue({
       id: 'usr_ceo_001',

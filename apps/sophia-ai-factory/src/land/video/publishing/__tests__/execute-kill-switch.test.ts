@@ -66,7 +66,7 @@ describe('executePublishWorkflow kill-switch gate', () => {
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'failed',
-        error_message: expect.stringContaining('unreadable'),
+        error: expect.stringContaining('unreadable'),
       }),
     );
     expect(atomicClaimJob).not.toHaveBeenCalled();

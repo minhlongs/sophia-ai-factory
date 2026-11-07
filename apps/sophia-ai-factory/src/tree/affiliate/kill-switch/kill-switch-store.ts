@@ -15,7 +15,7 @@
 
 import type { KVNamespace } from '@cloudflare/workers-types';
 import {
-  getPlatformConfig,
+  getPlatformConfigStrict,
   setPlatformConfig,
   type PlatformConfigKey,
 } from '@/seed/db/platform-config-repo';
@@ -67,7 +67,7 @@ async function isSingleKillSwitchActive(tenantId: string, strict = false): Promi
   // 2. Check tenant-scoped D1 platform config
   try {
     const d1Key = resolveD1KillSwitchKey(tenantId);
-    const configVal = await getPlatformConfig(d1Key);
+    const configVal = await getPlatformConfigStrict(d1Key);
     const isActive = configVal === 'true';
     inMemoryCache.set(cacheKey, { active: isActive, cachedAtMs: now });
     return isActive;
@@ -156,12 +156,17 @@ export async function setAffiliateKillSwitch(
 
   try {
     const d1Key = resolveD1KillSwitchKey(tenantId);
-    await setPlatformConfig(d1Key, active ? 'true' : 'false', updatedBy);
+    const persisted = await setPlatformConfig(d1Key, active ? 'true' : 'false', updatedBy);
+    if (persisted === false) {
+      throw new Error('KILL_SWITCH_DURABLE_STORE_UNAVAILABLE');
+    }
     inMemoryCache.set(cacheKey, { active, cachedAtMs: Date.now() });
   } catch (err) {
+    inMemoryCache.delete(cacheKey);
     logger.error('[kill-switch-store] D1 persist failed', {
       error: err instanceof Error ? err.message : String(err),
     });
+    throw err instanceof Error ? err : new Error(String(err));
   }
 
   return active;
