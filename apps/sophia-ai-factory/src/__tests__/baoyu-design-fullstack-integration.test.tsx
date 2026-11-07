@@ -16,6 +16,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  hexToOklch,
+  parseHexToSrgb,
   validatePaletteOklch,
   type BaoyuCanvasManifest,
   type BaoyuDesignSystemManifest,
@@ -107,14 +109,20 @@ describe('Tier C — OKLCH Dataviz Palette & Contrast Validator', () => {
     const amberOnDark = validatePaletteOklch('#f59e0b', '#090a10');
     expect(amberOnDark.wcagAA).toBe(true);
     expect(amberOnDark.colorBlindSafe).toBe(true);
+
+    // 3-digit shorthand hex, neutral achromatic gray (C < 0.0001), and invalid hex fallback
+    expect(parseHexToSrgb('#fff')).toEqual({ r: 1, g: 1, b: 1 });
+    expect(parseHexToSrgb('#zzz')).toEqual({ r: 0, g: 0, b: 0 });
+    expect(parseHexToSrgb('#zzzzzz')).toEqual({ r: 0, g: 0, b: 0 });
+    expect(hexToOklch('#000').h).toBe(0);
   });
 });
 
 describe('Tier A — Clean-Room React <SophiaArtifactCanvas /> & <DashboardSourcesDrawer />', () => {
   const mockT = (key: string) => key;
 
-  it('renders side-by-side 9:16, 16:9, and 1:1 artboards, updates Tweaks, and toggles Pin Comments', () => {
-    render(<SophiaArtifactCanvas t={mockT} locale="vi" />);
+  it('renders side-by-side 9:16, 16:9, and 1:1 artboards in vi and en locales, updates Tweaks, and toggles Pin Comments', () => {
+    const { rerender } = render(<SophiaArtifactCanvas t={mockT} />);
 
     expect(screen.getByTestId('sophia-artifact-canvas')).toBeDefined();
     expect(screen.getByTestId('baoyu-artboard-shorts_9_16')).toBeDefined();
@@ -126,7 +134,12 @@ describe('Tier A — Clean-Room React <SophiaArtifactCanvas /> & <DashboardSourc
     fireEvent.click(amberBtn);
     expect(amberBtn.getAttribute('aria-pressed')).toBe('true');
 
-    // Tweak 2: Toggle compliance badge off and back on
+    // Tweak 2: Adjust display width range slider
+    const widthSlider = screen.getByTestId('baoyu-tweak-width-slider');
+    fireEvent.change(widthSlider, { target: { value: '108' } });
+    expect(widthSlider.getAttribute('aria-valuetext')).toBe('108% width');
+
+    // Tweak 3: Toggle compliance badge off and back on
     const complianceCheckbox = screen.getByTestId('baoyu-tweak-compliance-checkbox');
     expect(screen.getByTestId('baoyu-compliance-pill-shorts_9_16')).toBeDefined();
     fireEvent.click(complianceCheckbox);
@@ -137,10 +150,16 @@ describe('Tier A — Clean-Room React <SophiaArtifactCanvas /> & <DashboardSourc
     expect(toggleCmt1.textContent).toBe('baoyuCanvas.resolveBtn');
     fireEvent.click(toggleCmt1);
     expect(toggleCmt1.textContent).toBe('baoyuCanvas.reopenBtn');
+
+    // Re-render in English locale to verify bilingual branches
+    rerender(<SophiaArtifactCanvas t={mockT} locale="en" />);
+    expect(screen.getByTestId('baoyu-artboard-shorts_9_16').textContent).toContain(
+      'Hidden CEX trading fees',
+    );
   });
 
-  it('renders DashboardSourcesDrawer and expands D1 table lineage on toggle', () => {
-    render(<DashboardSourcesDrawer t={mockT} dataTruthState="live" isVi={false} />);
+  it('renders DashboardSourcesDrawer in both locales and expands D1 table lineage on toggle', () => {
+    const { rerender } = render(<DashboardSourcesDrawer t={mockT} />);
 
     expect(screen.getByTestId('dashboard-sources-drawer')).toBeDefined();
     expect(screen.getByTestId('dashboard-sources-truth-state').textContent).toContain('LIVE');
@@ -151,6 +170,8 @@ describe('Tier A — Clean-Room React <SophiaArtifactCanvas /> & <DashboardSourc
     expect(screen.getByTestId('dashboard-source-row-src-revenue').textContent).toContain(
       'd1.affiliate_conversions',
     );
+
+    rerender(<DashboardSourcesDrawer t={mockT} dataTruthState="live" isVi={false} />);
     expect(screen.getByTestId('dashboard-source-row-src-campaigns').textContent).toContain(
       'd1.campaigns',
     );
