@@ -32,7 +32,19 @@ interface NicheCampaignFormProps {
   onOfferSaved?: (report: OpcGate1ReadinessReport) => void;
   readinessReport?: OpcGate1ReadinessReport | null;
   defaultLocale?: 'en' | 'vi';
+  locale?: 'en' | 'vi';
+  adoptedContext?: { offerId: string; campaignId: string };
   t: (key: string) => string;
+}
+
+export function resolveActiveLocale(explicitLocale?: 'vi' | 'en'): 'vi' | 'en' {
+  if (explicitLocale === 'en' || explicitLocale === 'vi') {
+    return explicitLocale;
+  }
+  if (typeof window !== 'undefined' && /^\/en(\/|$)/.test(window.location.pathname)) {
+    return 'en';
+  }
+  return 'vi';
 }
 
 export function NicheCampaignForm({
@@ -40,14 +52,17 @@ export function NicheCampaignForm({
   onDispatched,
   onOfferSaved,
   readinessReport,
-  defaultLocale = 'en',
+  defaultLocale,
+  locale,
+  adoptedContext,
   t,
 }: NicheCampaignFormProps) {
+  const effectiveDefaultLocale = locale ?? defaultLocale ?? resolveActiveLocale(undefined);
   const [niche, setNiche] = useState<'saas_global' | 'crypto_global'>('saas_global');
   const [blueprintId, setBlueprintId] = useState(NICHE_BLUEPRINTS.saas_global[0].id);
   const [formValues, setFormValues] = useState<NicheProductFormValues>(() => ({
     ...DEFAULT_SAAS_FORM_VALUES,
-    locale: defaultLocale,
+    locale: effectiveDefaultLocale,
   }));
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingOffer, setIsSavingOffer] = useState(false);
@@ -72,7 +87,7 @@ export function NicheCampaignForm({
     setBlueprintId(NICHE_BLUEPRINTS[newNiche][0].id);
     setFormValues({
       ...(newNiche === 'crypto_global' ? DEFAULT_CRYPTO_FORM_VALUES : DEFAULT_SAAS_FORM_VALUES),
-      locale: formValues.locale ?? defaultLocale,
+      locale: formValues.locale ?? effectiveDefaultLocale,
     });
     setErrorMsg(null);
     setStatusMsg(null);
@@ -88,7 +103,7 @@ export function NicheCampaignForm({
       productUrl: formValues.productUrl,
       commissionTerms: formValues.commissionTerms || '20% Verified Affiliate Commission',
       jurisdiction: formValues.jurisdiction,
-      offerId: formValues.offerId,
+      offerId: adoptedContext?.offerId ?? formValues.offerId,
     });
     setIsSavingOffer(false);
     if (!res.success || !res.data) {
@@ -109,8 +124,10 @@ export function NicheCampaignForm({
       niche,
       blueprintId,
       ...formValues,
+      offerId: adoptedContext?.offerId ?? formValues.offerId,
+      ...(adoptedContext?.campaignId ? { campaignId: adoptedContext.campaignId } : {}),
       targetAudience: niche === 'saas_global' ? 'Software Engineers & Agency Owners' : 'Crypto Traders & Investors',
-      locale: formValues.locale ?? defaultLocale,
+      locale: formValues.locale ?? effectiveDefaultLocale,
     };
 
     const previewRes = await previewNicheVideoPlanAction(payload);
@@ -142,7 +159,7 @@ export function NicheCampaignForm({
     <form
       id="niche-campaign-form"
       onSubmit={handleGenerate}
-      className="space-y-5 bg-zinc-900/60 p-5 rounded-xl border border-zinc-800"
+      className="space-y-5 bg-card dark:bg-[#11131F] p-5 rounded-xl border border-border dark:border-[#1E2235]"
     >
       <NicheAndBlueprintSelector
         niche={niche}
@@ -167,7 +184,7 @@ export function NicheCampaignForm({
           type="button"
           onClick={handleSaveOfferOnly}
           disabled={isSavingOffer || isLoading}
-          className="w-full py-2.5 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-semibold text-zinc-100 text-xs transition-all border border-zinc-700 disabled:opacity-50"
+          className="w-full py-2.5 px-3 rounded-lg bg-secondary dark:bg-[#1E2235] hover:bg-secondary/80 font-semibold text-foreground dark:text-zinc-100 text-xs transition-all border border-border dark:border-[#1E2235] disabled:opacity-50"
         >
           {isSavingOffer ? '...' : t('btnSaveOfferZeroCost')}
         </button>

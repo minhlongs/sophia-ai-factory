@@ -31,7 +31,16 @@ import { NicheHookVariantsCard } from './niche-hook-variants-card';
 import { NicheConversionStatsCard } from './niche-conversion-stats-card';
 import { CampaignApprovalQueue } from '@/components/approval-queue/campaign-queue-view';
 
-export function NicheStudioView() {
+export interface NicheStudioViewProps {
+  /**
+   * Campaign identity carried in from a verified offer the customer adopted, so
+   * re-submitting the form keeps the existing approval row instead of orphaning
+   * the pending draft the offer list is showing.
+   */
+  adoptedContext?: { offerId: string; campaignId: string };
+}
+
+export function NicheStudioView({ adoptedContext }: NicheStudioViewProps = {}) {
   const t = useTranslations('nicheStudio');
   const rawLocale = useLocale();
   const activeLocale: 'en' | 'vi' = rawLocale === 'vi' ? 'vi' : 'en';
@@ -90,6 +99,7 @@ export function NicheStudioView() {
             onOfferSaved={setReadinessReport}
             readinessReport={readinessReport}
             defaultLocale={activeLocale}
+            adoptedContext={adoptedContext}
             t={t}
           />
         </div>
@@ -97,9 +107,9 @@ export function NicheStudioView() {
           {currentPlan ? (
             <StoryboardPreviewCard plan={currentPlan} t={t} />
           ) : (
-            <div className="p-8 rounded-xl bg-zinc-900/30 border border-dashed border-zinc-800 text-center min-h-[380px] flex flex-col justify-center items-center">
+            <div className="p-8 rounded-xl bg-card/60 dark:bg-[#11131F]/60 border border-dashed border-border dark:border-[#1E2235] text-center min-h-[380px] flex flex-col justify-center items-center">
               <span className="text-3xl mb-2">🎬</span>
-              <p className="text-xs text-zinc-400 font-medium">{t('storyboardEmpty')}</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('storyboardEmpty')}</p>
             </div>
           )}
         </div>

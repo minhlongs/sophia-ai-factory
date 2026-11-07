@@ -97,7 +97,7 @@ export function ImagePreviewBody({
       </p>
       {job.status === 'failed' && (
         <Link
-          href="/dashboard/setup"
+          href="/setup"
           className="mt-3 inline-block rounded border border-border px-3 py-1.5 text-xs hover:bg-muted"
         >
           {t('preview.reviewSetup')}

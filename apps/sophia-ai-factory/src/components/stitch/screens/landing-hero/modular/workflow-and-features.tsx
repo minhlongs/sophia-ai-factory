@@ -6,6 +6,7 @@ import {
   type LandingFeaturesSectionProps,
 } from './landing-features-section';
 import { OpcArchitectureBanner } from './opc-architecture-banner';
+import { SophiaAgentChatReplay } from './sophia-agent-chat-replay';
 
 export { LandingFeaturesSection, type LandingFeaturesSectionProps };
 
@@ -42,20 +43,63 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
     },
   ];
 
+  const painPoints = [
+    {
+      num: '01',
+      title: t('v3Core.pain1Title'),
+      desc: t('v3Core.pain1Desc'),
+    },
+    {
+      num: '02',
+      title: t('v3Core.pain2Title'),
+      desc: t('v3Core.pain2Desc'),
+    },
+    {
+      num: '03',
+      title: t('v3Core.pain3Title'),
+      desc: t('v3Core.pain3Desc'),
+    },
+  ];
+
   return (
     <>
-      <section className="py-24 border-t border-[#E2E8F0] dark:border-white/[0.08] bg-slate-100/60 dark:bg-[#0E1017] relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4338CA] dark:text-indigo-400 mb-3">
-              {tLanding('workflow.badge')}
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-black text-[#0B0F19] dark:text-white tracking-tight mb-4 font-display">
-              {tLanding('workflow.title')}
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-base">
-              {tLanding('workflow.subtitle')}
-            </p>
+      {/* ════ CHAPTER 01: #why — Outlined Stroke Pain Numbers & Pivot Turn ════ */}
+      <section
+        id="why"
+        className="chapter border-t border-[#E2E8F0] dark:border-white/[0.08] bg-slate-100/60 dark:bg-[#0E1017]"
+      >
+        <div className="panel">
+          <p className="kicker">{t('v3Core.whyKicker')}</p>
+          <h2 className="h2">{t('v3Core.whyTitle')}</h2>
+
+          <ol className="pains">
+            {painPoints.map((pain) => (
+              <li key={pain.num}>
+                <span className="num">{pain.num}</span>
+                <div>
+                  <strong>{pain.title}</strong>
+                  <p>{pain.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <p className="turn">{t('v3Core.whyTurn')}</p>
+        </div>
+      </section>
+
+      {/* ════ CHAPTER 02: #how — Live Command & Chat Replay + 4-Step Pipeline ═ */}
+      <section
+        id="how"
+        className="chapter border-t border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]"
+      >
+        <div className="panel">
+          <p className="kicker">{t('v3Core.howKicker')}</p>
+          <h2 className="h2">{t('v3Core.howTitle')}</h2>
+          <p className="lead">{tLanding('workflow.subtitle')}</p>
+
+          <div className="mb-10">
+            <SophiaAgentChatReplay />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -74,17 +118,25 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
                       <Icon className="w-5 h-5" />
                     </div>
                   </div>
-                  <h4 className="text-lg font-bold text-[#0B0F19] dark:text-white mb-2">{item.title}</h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                  <h4 className="text-lg font-bold text-[#0B0F19] dark:text-white mb-2">
+                    {item.title}
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {item.desc}
+                  </p>
                 </div>
               );
             })}
           </div>
+
           <OpcArchitectureBanner />
         </div>
       </section>
 
-      <LandingFeaturesSection tLanding={tLanding} t={t} />
+      {/* ════ CHAPTER 03: #ecosystem — Feature Bento & RaaS Command Matrix ════ */}
+      <div id="ecosystem">
+        <LandingFeaturesSection tLanding={tLanding} t={t} />
+      </div>
     </>
   );
 }

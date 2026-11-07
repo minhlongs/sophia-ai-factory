@@ -224,6 +224,67 @@ describe('Niche Video Server Actions', () => {
       expect(approvalRow?.campaign_id).toBe(result.data?.planId);
     });
 
+    it('preserves adopted campaignId across approval staging, idempotencyKey, and Inngest dispatch', async () => {
+      const db = createFakeD1([
+        `CREATE TABLE affiliate_offers (
+          id TEXT PRIMARY KEY,
+          tenant_id TEXT NOT NULL DEFAULT 'system',
+          network_id TEXT NOT NULL DEFAULT 'direct',
+          external_id TEXT,
+          program_name TEXT,
+          title TEXT,
+          category TEXT,
+          product_url TEXT,
+          destination_url TEXT,
+          status TEXT NOT NULL DEFAULT 'active',
+          commission_terms TEXT,
+          niche TEXT,
+          region TEXT,
+          language TEXT,
+          created_at INTEGER NOT NULL DEFAULT 1000,
+          updated_at INTEGER NOT NULL DEFAULT 1000
+        );`,
+        `CREATE TABLE agent_campaign_approvals (
+          id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
+          niche TEXT NOT NULL, jurisdiction TEXT NOT NULL, approval_payload_hash TEXT NOT NULL,
+          estimated_render_cost_cents INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'pending_ceo',
+          approved_by TEXT, approved_at INTEGER, invalidated_reason TEXT,
+          payload_json TEXT, dispatch_json TEXT, expires_at INTEGER,
+          revoked_by TEXT, revoked_at INTEGER, executed_at INTEGER, rejection_reason TEXT,
+          created_at INTEGER NOT NULL
+        );`,
+      ]) as unknown as D1Database;
+      vi.mocked(dbClient.getD1).mockResolvedValue(db);
+
+      const result = await dispatchNicheVideoCampaignAction({
+        niche: 'crypto_global',
+        blueprintId: 'crypto_trading_bot_copy_trading',
+        productName: 'Binance Global',
+        productUrl: 'https://accounts.binance.com/register',
+        commissionTerms: '20% Spot & Futures Fee Rebate Share',
+        jurisdiction: 'US',
+        offerId: 'wvo_adopted_1',
+        campaignId: 'camp_adopted_wvo_1',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.planId).toBe('camp_adopted_wvo_1');
+      expect(inngest.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'niche.video.campaign.requested',
+          data: expect.objectContaining({
+            campaignId: 'camp_adopted_wvo_1',
+            idempotencyKey: 'usr_growth_agency_99:camp_adopted_wvo_1',
+          }),
+        }),
+      );
+      const approvalRow = await db
+        .prepare(`SELECT campaign_id FROM agent_campaign_approvals WHERE tenant_id = ?`)
+        .bind('usr_growth_agency_99')
+        .first<{ campaign_id: string }>();
+      expect(approvalRow?.campaign_id).toBe('camp_adopted_wvo_1');
+    });
+
     it('rejects dispatch when maxRenderCostCents exceeds the proposed Gate 1 vertical ceiling of 2500 cents ($25.00)', async () => {
       const payload: CreateNicheVideoCampaignActionInput = {
         niche: 'saas_global',

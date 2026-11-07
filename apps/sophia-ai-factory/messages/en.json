@@ -984,6 +984,7 @@
         "supportFaqLink": "Frequently Asked Questions"
       },
       "gettingStarted": {
+        "hero_eyebrow": "SOPHIA AI FACTORY • OPC INTERACTIVE WORKBENCH",
         "hero_title": "Getting Started with Sophia AI Factory",
         "hero_subtitle": "Follow these steps to set up your AI video generation workflow and start creating faceless YouTube videos at scale.",
         "next_step_telegram": "Telegram Bot",
@@ -1149,13 +1150,23 @@
       "runbooks": "CEO Runbooks",
       "create_mission": "Create Mission",
       "youtube_automation": "YouTube Automation",
-      "affiliate": "Affiliate Hub",
+      "affiliate": "Refer Sophia",
       "publish_queue": "Distribution Queue",
       "marketplace": "Creator Marketplace",
       "system_health": "System Health",
       "affiliates": "My Affiliate Business",
       "approvals": "Approvals Needed",
-      "niche_studio": "Niche Studio"
+      "niche_studio": "Niche Studio",
+      "image_studio": "Image Studio",
+      "groups": {
+        "today": "Today",
+        "offers": "Offers",
+        "campaigns": "Campaigns",
+        "approvals": "Approvals",
+        "results": "Results",
+        "connections": "Connections",
+        "advanced": "Advanced"
+      }
     },
     "notFound": {
       "title": "Page Not Found",
@@ -5660,6 +5671,7 @@
       "phaseOutput": "Returning result"
     },
     "gettingStarted": {
+      "hero_eyebrow": "SOPHIA AI FACTORY • OPC INTERACTIVE WORKBENCH",
       "hero_title": "Sophia AI Factory Operations Guide",
       "hero_subtitle": "The complete handbook for CEOs: Master faceless AI video production, 100% Domain B affiliate reconciliation, and mobile factory control via Telegram.",
       "step5_title": "Need Help?",
@@ -6444,6 +6456,7 @@
           }
         }
       },
+      "eyebrow": "DIRECTOR'S CONTROL DECK • OPC v3.0",
       "title": "Dashboard",
       "subtitle": "Welcome back. Here's what's happening with your workspace today.",
       "onboardingBanner": {
@@ -7595,7 +7608,31 @@
         }
       },
       "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
-      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue."
+      "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue.",
+      "v3Core": {
+        "eyebrow": "SOPHIA AI FACTORY • OPC v3.0 • ZERO-CUSTODY AFFILIATE ENGINE",
+        "headlineLead": "Turn verified affiliate offers into governed campaigns —",
+        "runtimesLabel": "INTEGRATES WITH YOUR STACK",
+        "whyKicker": "01 / WHY MANUAL CAMPAIGNS STALL",
+        "whyTitle": "Affiliate operators do not fail from lack of offers. They stall when compliance, spend, and attribution scatter.",
+        "pain1Title": "Unverified links & compliance drift.",
+        "pain1Desc": "Drafting CEX or SaaS scripts without jurisdiction disclosures risks channel strikes and rejected payouts.",
+        "pain2Title": "Uncapped render spend before approval.",
+        "pain2Desc": "Triggering ElevenLabs or video synthesis before locking the script burns provider credits on unapproved drafts.",
+        "pain3Title": "Detached postbacks & opaque fees.",
+        "pain3Desc": "Tracking clicks in spreadsheets without S2S postback reconciliation leaves net commission unverified.",
+        "whyTurn": "Sophia locks the sequence: $0.00 AI draft first, SHA-256 CEO approval second, BYOK media render third, and 0%-fee Domain B ledger reconciliation last.",
+        "howKicker": "02 / HOW SOPHIA EXECUTES",
+        "howTitle": "One operator command. Five governed assembly stations.",
+        "chatHeader": "sophia-opc — illustrative session trace",
+        "chatCommand": "/sophia launch --niche crypto_cex --offer binance-vip --gate sha256",
+        "chatYou1": "Draft a bilingual VI/EN campaign for our verified CEX & SaaS offers with a $15 render cap.",
+        "chatSophia1": "Checking offer registry & jurisdiction rules (MiCA / FTC / VN Decree 52)…",
+        "chatYou2": "Lock the script at $0.00 draft cost and require my SHA-256 signature before spending BYOK credits.",
+        "chatSophia2": "Draft locked ($0.00 spend) → SHA-256 approval digest verified → queued for ElevenLabs + HeyGen synthesis & Domain B 0%-fee ledger.",
+        "ecosystemKicker": "03 / 5-STATION ASSEMBLY & 7-LEVEL EVIDENCE",
+        "joinKicker": "04 / LAUNCH YOUR WORKSPACE"
+      }
     },
     "settingsPage": {
       "pageTitle": "Settings",
@@ -8005,7 +8042,8 @@
       "complianceVerified": "Compliance check: passed",
       "changeNeedsApproval": "Content changes will need re-approval",
       "payloadHashHint": "If the content changes after this draft, you will be asked to approve it again."
-    },    "header": {
+    },
+    "header": {
       "eyebrow": "Campaign approval desk",
       "title": "Affiliate campaigns waiting for your approval (Crypto/CEX & Global SaaS)",
       "controlNote": "You keep the final decision",

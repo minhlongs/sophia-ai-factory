@@ -12,6 +12,8 @@ export interface SidebarItem {
   icon: LucideIcon;
   /** Link destination */
   href: string;
+  /** Optional task group classification */
+  group?: 'today' | 'offers' | 'campaigns' | 'approvals' | 'results' | 'connections' | 'advanced';
   /** Whether item is active */
   active?: boolean;
   /** Badge content (e.g., notification count) */
@@ -66,9 +68,31 @@ export function Sidebar({
       />
 
       <nav className="flex flex-col gap-1 flex-1">
-        {items.map((item) => (
-          <SidebarNavItem key={item.id} item={item} collapsed={collapsed} />
-        ))}
+        {items
+          .filter((item) => item.group !== 'advanced')
+          .map((item) => (
+            <SidebarNavItem key={item.id} item={item} collapsed={collapsed} />
+          ))}
+        {items.some((item) => item.group === 'advanced') && (
+          <details
+            className="pt-2 group"
+            data-testid="sidebar-advanced-tools"
+            open={collapsed || items.some((item) => item.group === 'advanced' && item.active)}
+          >
+            {!collapsed && (
+              <summary className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer rounded focus:outline-none">
+                Advanced
+              </summary>
+            )}
+            <div className="flex flex-col gap-1 mt-1">
+              {items
+                .filter((item) => item.group === 'advanced')
+                .map((item) => (
+                  <SidebarNavItem key={item.id} item={item} collapsed={collapsed} />
+                ))}
+            </div>
+          </details>
+        )}
       </nav>
 
       {!collapsed && upgradeCard && <div className="mt-auto pt-2">{upgradeCard}</div>}

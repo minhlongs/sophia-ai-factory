@@ -1,88 +1,68 @@
 // i18n-namespace: stitch.landing
 import React from 'react';
+import { ArrowRight, Play, ShieldCheck } from 'lucide-react';
 import { Link } from '@/navigation';
-import { ArrowRight, Play } from 'lucide-react';
 
-interface HeroHeaderProps {
+export interface HeroHeaderProps {
   t: (key: string) => string;
 }
 
-/**
- * Honest hero: no fabricated creator counts, star ratings, "REC/LIVE" badges
- * or "free/unlimited" claims. The product preview is explicitly illustrative.
- */
 export function HeroHeader({ t }: HeroHeaderProps) {
   return (
-    <>
-      {/* Ambient studio lighting (decorative only) */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] pointer-events-none -z-10"
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-[#4338CA]/10 via-[#D97706]/5 to-transparent dark:from-[#6366F1]/18 dark:via-[#F59E0B]/8 dark:to-transparent blur-[140px] rounded-full" />
-      </div>
+    <div className="relative z-10 max-w-5xl mx-auto flex flex-col items-center">
+      {/* .v3-core Telemetry Eyebrow with Pulsing Dot */}
+      <p className="eyebrow">
+        <span className="dot" aria-hidden="true" />
+        <span>{t('v3Core.eyebrow')}</span>
+        <span className="hidden sm:inline opacity-75">• {t('badge')}</span>
+      </p>
 
-      {/* Capability badge — no LIVE/REC implication */}
-      <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] mb-8 shadow-sm">
-        <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />
-        <span className="text-xs font-bold uppercase tracking-wider text-[#4338CA] dark:text-indigo-300">
-          {t('badge')}
-        </span>
-      </div>
-
-      {/* Primary headline — exact VI/EN copy from messages */}
-      <h1 className="text-4xl sm:text-6xl md:text-7xl font-black leading-[1.08] tracking-tight max-w-5xl mb-6 text-[#0B0F19] dark:text-white font-display">
-        {t('headline')}
-        {t('headlineHighlight') ? (
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4338CA] via-indigo-500 to-[#D97706] dark:from-indigo-400 dark:via-indigo-300 dark:to-[#F59E0B]">
-            {t('headlineHighlight')}
-          </span>
-        ) : null}
+      {/* .v3-core Two-Tier Variable Display Headline (Archivo wdth 104) */}
+      <h1 className="h1 max-w-5xl mx-auto">
+        <span className="h1-a">{t('v3Core.headlineLead')}</span>
+        <span className="h1-b">{t('headline')}</span>
       </h1>
 
-      <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mb-4 leading-relaxed font-normal">
-        {t('subheading')}
-      </p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-3xl mb-10 leading-relaxed">
-        {t('controlNote')}
-      </p>
+      {/* Subheading */}
+      <p className="lead mx-auto mb-8">{t('subheading')}</p>
 
-      {/* Real CTAs — /register and /guide exist; the demo is labelled illustrative */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full sm:w-auto">
-        <Link
-          href="/register"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl text-base font-bold text-white bg-[#4338CA] hover:bg-indigo-600 dark:bg-[#6366F1] dark:hover:bg-indigo-500 shadow-lg shadow-[#4338CA]/20 border border-indigo-400/20 transition-all active:scale-[0.98] group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-        >
+      {/* .v3-core Pill CTAs with Diagonal Shimmer Sweep */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto mb-8">
+        <Link href="/register" className="btn btn-lg btn-primary w-full sm:w-auto">
           <span>{t('cta.startFree')}</span>
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+          <ArrowRight className="w-4 h-4" />
         </Link>
-
-        <Link
-          href="/guide"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl text-base font-bold text-[#0B0F19] dark:text-slate-200 bg-white hover:bg-slate-50 dark:bg-[#11131F] dark:hover:bg-white/[0.08] border border-[#E2E8F0] dark:border-white/[0.08] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-        >
-          <Play className="w-4 h-4 text-[#D97706]" aria-hidden="true" />
+        <Link href="/guide" className="btn btn-lg btn-ghost w-full sm:w-auto">
+          <Play className="w-4 h-4 text-amber-500" />
           <span>{t('cta.watchDemo')}</span>
         </Link>
       </div>
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-12">
-        {t('demoNote')}
-      </p>
 
-      {/* Capability strip — no avatars, stars, creator counts or "7-Level" claims */}
-      <div className="studio-glass flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3.5 px-6 rounded-2xl bg-white/90 dark:bg-[#11131F]/90 border border-[#E2E8F0] dark:border-white/[0.08] mb-20 shadow-lg dark:shadow-2xl">
-        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-          {t('trustBar.label')}
-        </span>
-        <span className="hidden sm:block h-5 w-[1px] bg-[#E2E8F0] dark:bg-white/10" aria-hidden="true" />
-        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+      {/* Plain-language control note: content, keys, spend cap, money */}
+      <div className="max-w-3xl rounded-xl border border-[#E2E8F0] dark:border-white/[0.08] bg-white/80 dark:bg-[#11131F]/80 px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4">
+        <div className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-[#4338CA] dark:text-indigo-300 mb-1">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <span>{t('trustBar.label')}</span>
+        </div>
+        <p className="leading-relaxed">{t('controlNote')}</p>
+      </div>
+
+      {/* Factual governance pills — no fake user counts or ratings */}
+      <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-600 dark:text-slate-400 mb-6 font-mono">
+        <span className="px-3 py-1 rounded-full border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F]">
           {t('trustBar.controlContent')}
         </span>
-        <span className="hidden sm:block h-5 w-[1px] bg-[#E2E8F0] dark:bg-white/10" aria-hidden="true" />
-        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <span className="px-3 py-1 rounded-full border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F]">
           {t('trustBar.controlCost')}
         </span>
+        <span className="px-3 py-1 rounded-full border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F]">
+          {t('trustBar.videos')}
+        </span>
       </div>
-    </>
+
+      <p className="mb-8 text-xs font-mono text-slate-500 dark:text-slate-400">
+        {t('demoNote')}
+      </p>
+    </div>
   );
 }

@@ -17,6 +17,7 @@ import {
   DashboardTransactionsCard,
   type DashboardTransactionItem,
 } from './dashboard-transactions-card';
+import { DataStateBoundary } from '@/components/stitch/ui/data-state-boundary';
 
 interface DashboardPageProps {
   initialData?: DashboardData;
@@ -60,18 +61,29 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       }));
 
   return (
-    <div className="space-y-6" data-testid="dashboard-overview-content">
+    <div className="v3-core space-y-6" data-testid="dashboard-overview-content">
       {/* Dashboard Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <p className="eyebrow !mb-1.5">
+            <span className="dot" aria-hidden="true" />
+            <span>{t('eyebrow')}</span>
+          </p>
           <h1 className="text-2xl font-bold text-foreground dark:text-white tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" iconLeft={<Download className="w-4 h-4" />}>
+          <Button
+            variant="outline"
+            href="/dashboard/campaigns"
+            iconLeft={<Download className="w-4 h-4" />}
+          >
             {t('actions.exportData')}
           </Button>
-          <Button iconLeft={<Plus className="w-4 h-4" />}>
+          <Button
+            href="/dashboard/affiliates"
+            iconLeft={<Plus className="w-4 h-4" />}
+          >
             {t('actions.addProduct')}
           </Button>
         </div>
@@ -83,32 +95,39 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
 
-      {/* Stitch v4.2 Director's Control Deck 9-Screen Quick Launch */}
-      <DashboardControlDeckBanner />
+      {loadFailed && (
+        <DataStateBoundary state="error" testId="dashboard-load-error-boundary" />
+      )}
 
-      {/* Metrics Grid */}
-      <DashboardMetricsGrid metrics={metrics} />
+      <DataStateBoundary state="live" testId="dashboard-data-boundary">
+        {/* Metrics Grid */}
+        <DashboardMetricsGrid metrics={metrics} />
 
-      {/* Chart & Affiliates Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <DashboardRevenueChart
-          // Keep "the server reported nothing" distinct from "the load failed":
-          // an empty array is a real verified-empty period, whereas `undefined`
-          // makes the chart say the figure is unavailable instead of $0.
-          data={loadFailed ? undefined : initialData?.revenueData}
-        />
-        <DashboardAffiliatesCard affiliates={topAffiliates} />
-      </div>
+        {/* Chart & Affiliates Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-6">
+          <DashboardRevenueChart
+            // Keep "the server reported nothing" distinct from "the load failed":
+            // an empty array is a real verified-empty period, whereas `undefined`
+            // makes the chart say the figure is unavailable instead of $0.
+            data={loadFailed ? undefined : initialData?.revenueData}
+          />
+          <DashboardAffiliatesCard affiliates={topAffiliates} />
+        </div>
 
-      {/* Recent Activity Table */}
-      <DashboardTransactionsCard transactions={recentTransactions} />
+        {/* Recent Activity Table */}
+        <DashboardTransactionsCard transactions={recentTransactions} />
+      </DataStateBoundary>
 
-      {/* Optional local rendering engine, kept out of the primary work area. */}
-      <details className="rounded-2xl border border-border bg-muted/20 p-4">
+      {/* Optional local rendering engine & Control Deck preview, kept out of the primary work area. */}
+      <details
+        data-testid="dashboard-advanced-tools"
+        className="rounded-2xl border border-border bg-muted/20 p-4"
+      >
         <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
           {t('advanced.localEngineLabel')}
         </summary>
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
+          <DashboardControlDeckBanner />
           <LocalEngineSetupGuide />
         </div>
       </details>

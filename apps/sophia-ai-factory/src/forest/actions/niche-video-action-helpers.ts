@@ -41,6 +41,12 @@ export const createNicheVideoCampaignSchema = z.object({
   targetAccount: z.string().min(1).optional(),
   /** Approved render budget cap in cents; the server clamps this to the tier cap. */
   maxRenderCostCents: z.number().int().min(0).max(5000).optional(),
+  /**
+   * Campaign identity carried over from an adopted offer list, so a re-render
+   * after editing an existing plan keeps its approval row and idempotency key
+   * instead of orphaning the earlier draft. Absent on a brand-new plan.
+   */
+  campaignId: z.string().min(1).optional(),
 });
 
 export type CreateNicheVideoCampaignActionInput = z.input<typeof createNicheVideoCampaignSchema>;
@@ -114,12 +120,13 @@ export async function stagePendingApprovalOnDispatch(params: {
     maxRenderCostCents: input.maxRenderCostCents ?? DEFAULT_MAX_RENDER_COST_CENTS,
     ...(input.targetAccount ? { targetAccount: input.targetAccount } : {}),
   };
+  const effectiveCampaignId = input.campaignId ?? plan.planId;
   const dispatch: ApprovalDispatchContext = {
     userId,
     offerId: resolvedOfferId,
     maxRenderCostCents: input.maxRenderCostCents,
     targetAccount: input.targetAccount,
-    idempotencyKey: `${tenantId}:${plan.planId}`,
+    idempotencyKey: `${tenantId}:${effectiveCampaignId}`,
     niche: planInput.niche,
     blueprintId: planInput.blueprintId,
     productName: planInput.productName,
@@ -135,7 +142,7 @@ export async function stagePendingApprovalOnDispatch(params: {
   try {
     const created = await createCampaignApproval(db, {
       tenantId,
-      campaignId: plan.planId,
+      campaignId: effectiveCampaignId,
       niche: planInput.niche,
       jurisdiction: approvalPayload.jurisdiction,
       status: 'pending_ceo',

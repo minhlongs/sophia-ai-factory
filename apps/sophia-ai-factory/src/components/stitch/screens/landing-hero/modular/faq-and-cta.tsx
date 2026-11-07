@@ -84,34 +84,26 @@ export function FaqAndCta({ t, tLanding }: FaqAndCtaProps) {
         </div>
       </section>
 
-      {/* ════ BOTTOM CALL TO ACTION BANNER ══════════════════════════════════ */}
-      <section className="py-24 border-t border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10] relative overflow-hidden">
-        <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-          <div className="studio-glass p-8 sm:p-14 rounded-3xl bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] shadow-xl dark:shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-[#D97706]/10 dark:bg-[#F59E0B]/15 flex items-center justify-center text-[#D97706] dark:text-[#F59E0B] mx-auto mb-6">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="text-3xl sm:text-5xl font-black text-[#0B0F19] dark:text-white tracking-tight mb-4 font-display">
-              {t('cta.readyTitle')}
-            </h3>
-            <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
-              {t('cta.readySubtitle')}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 rounded-xl text-base font-bold text-white bg-[#4338CA] hover:bg-indigo-600 dark:bg-[#6366F1] dark:hover:bg-indigo-500 shadow-lg shadow-[#4338CA]/20 dark:shadow-indigo-500/25 transition-all active:scale-[0.98]"
-              >
-                <span>{t('cta.startFree')}</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/pricing"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-[#0B0F19] dark:text-slate-300 hover:bg-slate-50 dark:hover:text-white bg-[#F8F9FC] dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-[#E2E8F0] dark:border-white/10 transition-all"
-              >
-                <span>{t('cta.viewPricing')}</span>
-              </Link>
-            </div>
+      {/* ════ CHAPTER 04: #join — .v3-core Final CTA Panel ══════════════════ */}
+      <section
+        id="join"
+        className="chapter border-t border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10] relative overflow-hidden"
+      >
+        <div className="panel studio-glass text-center relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-[#D97706]/10 dark:bg-[#F59E0B]/15 flex items-center justify-center text-[#D97706] dark:text-[#F59E0B] mx-auto mb-4">
+            <Zap className="w-6 h-6" />
+          </div>
+          <p className="kicker">{t('v3Core.joinKicker')}</p>
+          <h2 className="h2 h2-xl">{t('cta.readyTitle')}</h2>
+          <p className="lead mx-auto mb-8">{t('cta.readySubtitle')}</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/register" className="btn btn-lg btn-primary w-full sm:w-auto">
+              <span>{t('cta.startFree')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/pricing" className="btn btn-lg btn-outline w-full sm:w-auto">
+              <span>{t('cta.viewPricing')}</span>
+            </Link>
           </div>
         </div>
       </section>

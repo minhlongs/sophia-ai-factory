@@ -984,6 +984,7 @@
         "supportFaqLink": "Câu hỏi thường gặp"
       },
       "gettingStarted": {
+        "hero_eyebrow": "SOPHIA AI FACTORY • BÀN LÀM VIỆC OPC",
         "hero_title": "Bắt Đầu Với Sophia AI Factory",
         "hero_subtitle": "Làm theo các bước sau để thiết lập quy trình tạo video AI và bắt đầu tạo video YouTube không gương mặt quy mô lớn.",
         "next_step_telegram": "Bot Telegram",
@@ -1149,13 +1150,23 @@
       "runbooks": "Sổ Tay CEO",
       "create_mission": "Tạo Nhiệm Vụ",
       "youtube_automation": "Tự Động Hóa YouTube",
-      "affiliate": "Trung Tâm Affiliate",
+      "affiliate": "Giới Thiệu Sophia",
       "publish_queue": "Hàng Đợi Xuất Bản",
       "marketplace": "Chợ Sáng Tạo",
       "system_health": "Sức Khỏe Hệ Thống",
       "affiliates": "Doanh Nghiệp Affiliate Của Tôi",
       "approvals": "Cần Duyệt",
-      "niche_studio": "Studio Ngách"
+      "niche_studio": "Studio Ngách",
+      "image_studio": "Xưởng Ảnh",
+      "groups": {
+        "today": "Hôm Nay",
+        "offers": "Sản Phẩm",
+        "campaigns": "Chiến Dịch",
+        "approvals": "Duyệt Bài",
+        "results": "Kết Quả",
+        "connections": "Kết Nối",
+        "advanced": "Nâng Cao"
+      }
     },
     "notFound": {
       "title": "Không tìm thấy trang",
@@ -5660,6 +5671,7 @@
       "phaseOutput": "Đang trả kết quả"
     },
     "gettingStarted": {
+      "hero_eyebrow": "SOPHIA AI FACTORY • BÀN LÀM VIỆC OPC",
       "hero_title": "Hướng Dẫn Vận Hành Sophia AI Factory",
       "hero_subtitle": "Sổ tay hướng dẫn toàn diện dành cho CEO: Hiểu rõ dây chuyền sản xuất video AI không lộ mặt, đối soát hoa hồng 100% Domain B và kiểm soát nhà máy qua Telegram.",
       "step5_title": "Cần Hỗ Trợ?",
@@ -6451,6 +6463,7 @@
           }
         }
       },
+      "eyebrow": "BÀN ĐIỀU KHIỂN CỦA GIÁM ĐỐC • OPC v3.0",
       "title": "Tổng quan",
       "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
       "onboardingBanner": {
@@ -7602,7 +7615,31 @@
         }
       },
       "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
-      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng."
+      "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng.",
+      "v3Core": {
+        "eyebrow": "SOPHIA AI FACTORY • OPC v3.0 • ĐỘNG CƠ AFFILIATE KHÔNG LƯU KÝ",
+        "headlineLead": "Biến offer affiliate đã xác minh thành chiến dịch có kiểm soát —",
+        "runtimesLabel": "TÍCH HỢP HỆ SINH THÁI CỦA BẠN",
+        "whyKicker": "01 / VÌ SAO CHIẾN DỊCH THỦ CÔNG DỄ TẮC NGHẼN",
+        "whyTitle": "Nhà vận hành affiliate không thiếu offer. Họ tắc nghẽn khi pháp lý, ngân sách render và đối soát hoa hồng bị phân mảnh.",
+        "pain1Title": "Link chưa xác minh & rủi ro pháp lý.",
+        "pain1Desc": "Soạn kịch bản CEX hoặc SaaS thiếu nhãn công bố theo khu vực dễ dẫn đến vi phạm kênh và từ chối thanh toán.",
+        "pain2Title": "Tốn phí render trước khi duyệt kịch bản.",
+        "pain2Desc": "Gọi ElevenLabs hoặc dựng video khi chưa khóa kịch bản làm tiêu hao credit BYOK vào các bản nháp chưa duyệt.",
+        "pain3Title": "Postback rời rạc & phí ẩn.",
+        "pain3Desc": "Theo dõi click thủ công không có đối soát S2S postback khiến hoa hồng thực nhận thiếu bằng chứng xác thực.",
+        "whyTurn": "Sophia khóa chặt trình tự: Soạn nháp AI $0.00 trước, CEO ký duyệt SHA-256 thứ hai, render bằng khóa BYOK thứ ba, và đối soát sổ cái Domain B (0% phí nền tảng) cuối cùng.",
+        "howKicker": "02 / CÁCH SOPHIA VẬN HÀNH",
+        "howTitle": "Một lệnh điều hành. Năm trạm lắp ráp có bảo chứng.",
+        "chatHeader": "sophia-opc — bản ghi phiên minh họa",
+        "chatCommand": "/sophia launch --niche crypto_cex --offer binance-vip --gate sha256",
+        "chatYou1": "Soạn chiến dịch song ngữ Việt/Anh cho offer CEX & SaaS đã xác minh với trần render $15.",
+        "chatSophia1": "Đang kiểm tra danh mục offer & quy tắc pháp lý khu vực (MiCA / FTC / Nghị định 52)…",
+        "chatYou2": "Khóa bản nháp ở mức phí $0.00 và yêu cầu chữ ký SHA-256 của tôi trước khi chi tiêu credit BYOK.",
+        "chatSophia2": "Đã khóa bản nháp ($0.00 phí) → Xác thực chữ ký SHA-256 → Đưa vào hàng đợi ElevenLabs + HeyGen & sổ cái Domain B 0% phí.",
+        "ecosystemKicker": "03 / DÂY CHUYỀN 5 TRẠM & CHUỖI BẰNG CHỨNG 7 CẤP ĐỘ",
+        "joinKicker": "04 / KHỞI TẠO WORKSPACE CỦA BẠN"
+      }
     },
     "settingsPage": {
       "pageTitle": "Cài đặt",
@@ -8012,7 +8049,8 @@
       "complianceVerified": "Kiểm tra quy định: đạt",
       "changeNeedsApproval": "Nội dung thay đổi sẽ cần duyệt lại",
       "payloadHashHint": "Nếu nội dung thay đổi sau bản nháp này, bạn sẽ được yêu cầu duyệt lại."
-    },    "header": {
+    },
+    "header": {
       "eyebrow": "Bảng duyệt chiến dịch",
       "title": "Chiến dịch affiliate đang chờ bạn duyệt (Crypto/CEX & SaaS toàn cầu)",
       "controlNote": "Bạn giữ quyền quyết định cuối",

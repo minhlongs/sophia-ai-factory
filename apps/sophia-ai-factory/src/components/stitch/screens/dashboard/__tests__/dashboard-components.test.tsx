@@ -6,9 +6,11 @@ import { DashboardAffiliatesCard } from '../dashboard-affiliates-card';
 import { DashboardTransactionsCard } from '../dashboard-transactions-card';
 import { DashboardMetricsGrid } from '../dashboard-metrics-grid';
 import { DashboardRevenueChart } from '../dashboard-revenue-chart';
+import DashboardPage from '../dashboard-page';
 
 // Mock next-intl
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => (key: string, params?: Record<string, unknown>) => {
     if (params) return `${key}:${JSON.stringify(params)}`;
     return key;
@@ -152,6 +154,18 @@ describe('Dashboard Subcomponents', () => {
       // are the contract under test here.
       render(<DashboardRevenueChart data={[]} />);
       expect(screen.getByText('revenueChart.title')).toBeDefined();
+    });
+
+    it('wires DashboardPage header CTAs to real routes and houses control deck inside advanced tools', () => {
+      const { container } = render(<DashboardPage loadFailed={false} />);
+      const exportLink = screen.getByRole('link', { name: /actions\.exportData/i });
+      const addProductLink = screen.getByRole('link', { name: /actions\.addProduct/i });
+
+      expect(exportLink.getAttribute('href')).toBe('/dashboard/campaigns');
+      expect(addProductLink.getAttribute('href')).toBe('/dashboard/affiliates');
+
+      const advancedDetails = container.querySelector('details[data-testid="dashboard-advanced-tools"]');
+      expect(advancedDetails).not.toBeNull();
     });
   });
 });
