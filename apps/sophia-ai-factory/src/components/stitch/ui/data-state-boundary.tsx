@@ -128,7 +128,7 @@ export function DataStateBoundary({
       <div
         data-testid={testId}
         data-status="demo"
-        className="space-y-3 rounded-xl border border-amber-500/30 bg-card dark:bg-[#11131F] p-4"
+        className="space-y-3 rounded-xl border border-amber-500/30 bg-card p-4"
       >
         <div className="flex items-center justify-between gap-2">
           <span className="inline-flex items-center rounded bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-400">
@@ -146,7 +146,7 @@ export function DataStateBoundary({
       data-testid={testId}
       data-status={state}
       role={state === 'error' ? 'alert' : 'status'}
-      className="v3-core rounded-xl border border-border dark:border-[#1E2235] bg-card dark:bg-[#11131F] p-6 text-center space-y-2"
+      className="v3-core rounded-xl border border-border dark:border-[#1E2235] bg-card p-6 text-center space-y-2"
     >
       <span
         className={`inline-flex items-center rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${

@@ -55,11 +55,12 @@ describe('Stitch Table', () => {
     const td = container.querySelector('td') as HTMLElement;
     expect(th.className).toContain('sticky left-0');
     expect(th.className).toContain('bg-card');
-    expect(th.className).toContain('dark:bg-[#11131F]');
+    // The surface must come from the token, never a literal that ignores the token layer.
+    expect(th.className).not.toMatch(/#[0-9a-fA-F]{6}/);
     expect(th.className).toContain('dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]');
     expect(td.className).toContain('sticky left-0');
     expect(td.className).toContain('bg-card');
-    expect(td.className).toContain('dark:bg-[#11131F]');
+    expect(td.className).not.toMatch(/#[0-9a-fA-F]{6}/);
   });
 
   it('renders embedded variant without outer card border or backdrop background', () => {

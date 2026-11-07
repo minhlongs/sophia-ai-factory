@@ -71,7 +71,7 @@
     "check:boundaries": "bash scripts/check-layer-boundaries.sh",
     "check:migrations": "bash scripts/check-duplicate-migration-prefixes.sh",
     "ci:boundaries": "bash scripts/check-layer-boundaries.sh",
-    "ci": "npm run ci:typecheck && npm run ci:lint && npm run ci:boundaries && npm run ci:test && npm run ci:get-side-effects && npm run ci:secrets && npm run ci:audit",
+    "ci": "npm run ci:typecheck && npm run ci:lint && npm run ci:boundaries && npm run ci:test && npm run ci:get-side-effects && npm run ci:secrets && npm run ci:audit && npm run check:color-tokens",
     "ci:typecheck": "tsc --noEmit",
     "ci:lint": "eslint src --max-warnings=525",
     "ci:arch": "bash scripts/check-layer-boundaries.sh",
@@ -84,7 +84,8 @@
     "harness:deploy": "./scripts/harness.sh deploy",
     "harness:verify": "./scripts/harness.sh verify",
     "prepare": "husky",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "check:color-tokens": "node scripts/check-hardcoded-color.mjs"
   },
   "dependencies": {
     "@better-auth/passkey": "1.6.29",

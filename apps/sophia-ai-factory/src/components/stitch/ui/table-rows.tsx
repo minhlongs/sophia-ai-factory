@@ -72,7 +72,7 @@ export function TableBody<T>({
                 'px-3 sm:px-6 py-4 text-foreground dark:text-slate-200',
                 col.align === 'center' && 'text-center',
                 col.align === 'right' && 'text-right',
-                stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-card dark:bg-[#11131F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
+                stickyFirstColumn && colIndex === 0 && 'sticky left-0 bg-card z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
               )}
             >
               {col.cell(row, rowIndex)}
