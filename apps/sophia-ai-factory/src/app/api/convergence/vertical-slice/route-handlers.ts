@@ -9,11 +9,10 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { D1Database } from '@/seed/db/client';
 import {
-  ConvergenceLedgerRepo, calculateUnitEconomics, cancelConvergenceJobD1,
+  calculateUnitEconomics, cancelConvergenceJobD1,
   decideConvergenceApprovalD1, evaluateConvergedTruth, getConvergenceArtifactByIdD1,
   getConvergenceJobByIdD1, listConvergenceJobsByWorkspaceD1,
 } from '@/tree/convergence';
-import { runCreativeJobVerticalSlice } from '@/forest/convergence/creative-job-pipeline';
 import { runCreativeJobVerticalSliceD1 } from '@/forest/convergence/creative-job-d1-runner';
 
 export const runSliceSchema = z.object({
@@ -22,7 +21,12 @@ export const runSliceSchema = z.object({
   workspaceId: z.string().min(1).max(128),
   idempotencyKey: z.string().min(1).max(128).optional(),
   goal: z.string().min(1).max(2000).optional(),
-  contractMode: z.enum(['DISABLED', 'SHADOW', 'LOCAL_TEST', 'ENABLED']).optional(),
+  // Only the non-claiming modes are accepted over HTTP. `LOCAL_TEST` and
+  // `ENABLED` label the run as executed/verified, but this endpoint binds no
+  // Mekong runtime and no artifact root, so the artifacts it produces are
+  // synthesized rather than rendered. Accepting those modes would let a caller
+  // manufacture a VERIFIED_SUCCESS result with no media behind it.
+  contractMode: z.enum(['DISABLED', 'SHADOW']).optional(),
   ceoDecision: z.enum(['approve', 'reject', 'hold']).optional(),
   costStatus: z.enum(['measured', 'estimated', 'unknown']).optional(),
   retryBudget: z.number().int().min(1).max(10).optional(),
@@ -64,24 +68,18 @@ export async function handleConvergencePostAction(
 
   const idempotencyKey = data.idempotencyKey ?? `idem_${data.jobId}`;
   const goal = data.goal ?? 'Generate bilingual creative campaign video';
-  if (d1) {
-    const resD1 = await runCreativeJobVerticalSliceD1(d1, {
-      jobId: data.jobId, workspaceId: data.workspaceId, userId, idempotencyKey, goal,
-      contractMode: data.contractMode, ceoDecision: data.ceoDecision, costStatus: data.costStatus,
-      retryBudget: data.retryBudget, simulateCorruptMedia: data.simulateCorruptMedia, simulateDeliveryFailure: data.simulateDeliveryFailure,
-    });
-    if (!resD1.ok) return NextResponse.json({ error: resD1.error.message, code: resD1.error.code }, { status: statusFromErrorCode(resD1.error.code) });
-    return NextResponse.json(resD1.value);
-  }
+  // A run without durable storage has no idempotency, no lease, and nowhere to
+  // record the result, so a success response would describe a job that never
+  // existed. Fail closed like the cancel and approval branches above.
+  if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  const repo = new ConvergenceLedgerRepo();
-  const resMem = runCreativeJobVerticalSlice(repo, {
+  const resD1 = await runCreativeJobVerticalSliceD1(d1, {
     jobId: data.jobId, workspaceId: data.workspaceId, userId, idempotencyKey, goal,
     contractMode: data.contractMode, ceoDecision: data.ceoDecision, costStatus: data.costStatus,
     retryBudget: data.retryBudget, simulateCorruptMedia: data.simulateCorruptMedia, simulateDeliveryFailure: data.simulateDeliveryFailure,
   });
-  if (!resMem.ok) return NextResponse.json({ error: resMem.error.message, code: resMem.error.code }, { status: statusFromErrorCode(resMem.error.code) });
-  return NextResponse.json(resMem.value);
+  if (!resD1.ok) return NextResponse.json({ error: resD1.error.message, code: resD1.error.code }, { status: statusFromErrorCode(resD1.error.code) });
+  return NextResponse.json(resD1.value);
 }
 
 export async function handleConvergenceGetQuery(
