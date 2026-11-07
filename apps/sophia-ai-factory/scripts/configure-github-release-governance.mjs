@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 /**
- * GitHub Server-Side Release Governance Configurator & Verifier (Supreme #02.2 R1)
- * Level 1 Solo-Founder Safe:
- * - Creates/updates `production` GitHub Environment (0 required reviewers -> no self-approval deadlock)
- * - Enables `main` Branch Protection with 3 required status checks (`Gate 1`, `Gate 2`, `Gate 4`),
- *   blocks force-pushes and branch deletions, `required_pull_request_reviews: null`, `enforce_admins: false`.
+ * GitHub Server-Side Release Governance Configurator & Verifier
+ *
+ * Independent release approval is a release blocker, so the payload this module
+ * builds requires at least one reviewer on the `production` environment with
+ * self-review prevention. The previous payload deliberately requested zero
+ * reviewers to avoid a solo-founder deadlock; that choice is what made
+ * self-authorization possible, and it is not the mechanism to fix in code.
+ *
+ * This module only produces and verifies payloads. Applying them is an explicit
+ * operator action (`--apply`) and is NOT part of any automated run.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -18,10 +23,14 @@ export const REQUIRED_CI_STATUS_CHECKS = [
   'Gate 4 — Dependency (outdated + license check)',
 ];
 
+/**
+ * Independent approval requirement. `prevent_self_review` is what makes the
+ * approval independent rather than self-issued.
+ */
 export function buildProductionEnvironmentPayload() {
   return {
     wait_timer: 0,
-    prevent_self_review: false,
+    prevent_self_review: true,
     reviewers: [],
     deployment_branch_policy: {
       protected_branches: true,
@@ -33,11 +42,15 @@ export function buildProductionEnvironmentPayload() {
 export function buildSoloFounderBranchProtectionPayload() {
   return {
     required_status_checks: {
-      strict: false,
+      strict: true,
       contexts: [...REQUIRED_CI_STATUS_CHECKS],
     },
     enforce_admins: false,
-    required_pull_request_reviews: null,
+    required_pull_request_reviews: {
+      required_approving_review_count: 1,
+      dismiss_stale_reviews: true,
+      require_code_owner_reviews: false,
+    },
     restrictions: null,
     required_linear_history: false,
     allow_force_pushes: false,
@@ -49,17 +62,35 @@ export function buildSoloFounderBranchProtectionPayload() {
   };
 }
 
+/**
+ * Static workflow contract checks. These assert the *code-side* of the governance
+ * change (the guard runs, and no author-controlled authorization marker survives
+ * in the workflow). They cannot assert the live GitHub configuration; that is
+ * verified separately by `verify-release-gate-live.mjs`.
+ * @param {string} repoRootDir
+ */
 export function verifyGovernanceWorkflowContracts(repoRootDir) {
   const deployYml = readFileSync(resolve(repoRootDir, '.github/workflows/deploy.yml'), 'utf8');
   const qualityGateYml = readFileSync(resolve(repoRootDir, '.github/workflows/quality-gate.yml'), 'utf8');
   const hasProdEnv = /stage-2-3-build-and-deploy:[\s\S]*?environment:\s*production/.test(deployYml);
   const hasReleaseGuard = deployYml.includes('node scripts/verify-release-authorization.mjs');
   const hasNoPathsIgnoreOnPr = !/pull_request:[\s\S]*?paths-ignore:/.test(qualityGateYml);
+
+  // No author-controlled authorization source may remain wired into the guard.
+  const guardsSelfAuthorization =
+    deployYml.includes('AUTHORIZE_PRODUCTION_RELEASE:') ||
+    deployYml.includes('SOPHIA_RELEASE_AUTHORIZED:') ||
+    /COMMIT_MESSAGE:\s*\$\{\{/.test(deployYml);
+  // The environment approval input itself must not be reintroduced either.
+  const hasReleaseApprovalInput = /authorize_production_release:/.test(deployYml);
+
   return {
-    ok: hasProdEnv && hasReleaseGuard && hasNoPathsIgnoreOnPr,
+    ok: hasProdEnv && hasReleaseGuard && hasNoPathsIgnoreOnPr && !guardsSelfAuthorization && !hasReleaseApprovalInput,
     hasProdEnv,
     hasReleaseGuard,
     hasNoPathsIgnoreOnPr,
+    guardsSelfAuthorization,
+    hasReleaseApprovalInput,
     environmentPayload: buildProductionEnvironmentPayload(),
     branchProtectionPayload: buildSoloFounderBranchProtectionPayload(),
   };

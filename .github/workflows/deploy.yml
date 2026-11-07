@@ -20,12 +20,6 @@ on:
         required: false
         type: boolean
         default: false
-      authorize_production_release:
-        description: 'Explicit operator approval to deploy to Cloudflare Production Edge'
-        required: false
-        type: boolean
-        default: false
-
 permissions:
   contents: read
 
@@ -112,12 +106,26 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Preflight — Verify Explicit Release Authorization Guard (Supreme #02.1 P5)
+      - name: Preflight — Collect Live Release-Gate Evidence (production environment)
+        id: release-gate
+        env:
+          GATE_READ_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node scripts/collect-release-gate-evidence.mjs > /tmp/release-gate.json
+          cat /tmp/release-gate.json
+          {
+            echo "evidence<<GATE_EOF"
+            cat /tmp/release-gate.json
+            echo
+            echo "GATE_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Preflight — Verify Independent Environment Approval Authorizes This Revision
         env:
           DRY_RUN: ${{ inputs.dry_run }}
-          AUTHORIZE_PRODUCTION_RELEASE: ${{ inputs.authorize_production_release }}
-          SOPHIA_RELEASE_AUTHORIZED: ${{ vars.SOPHIA_RELEASE_AUTHORIZED }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          RELEASE_GATE_EVIDENCE: ${{ steps.release-gate.outputs.evidence }}
+          SOPHIA_PRODUCTION_READ_ONLY: ${{ vars.SOPHIA_PRODUCTION_READ_ONLY }}
         run: node scripts/verify-release-authorization.mjs
 
       - name: Preflight — Assert Cloudflare Credentials
