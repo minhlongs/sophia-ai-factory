@@ -142,7 +142,8 @@ html:not(.dark) .v3-core,
 }
 
 .v3-core .lead {
-  margin: 0 0 24px;
+  margin-top: 0;
+  margin-bottom: 24px;
   max-width: 60ch;
   font-size: clamp(16px, 1.45vw, 20px);
   line-height: 1.55;

@@ -17,6 +17,7 @@ import {
   DashboardTransactionsCard,
   type DashboardTransactionItem,
 } from './dashboard-transactions-card';
+import { DataStateBoundary } from '@/components/stitch/ui/data-state-boundary';
 
 interface DashboardPageProps {
   initialData?: DashboardData;
@@ -66,7 +67,7 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
         <div>
           <p className="eyebrow !mb-1.5">
             <span className="dot" aria-hidden="true" />
-            <span>DIRECTOR&apos;S CONTROL DECK • OPC v3.0</span>
+            <span>{t('eyebrow')}</span>
           </p>
           <h1 className="text-2xl font-bold text-foreground dark:text-white tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
@@ -94,22 +95,28 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
 
-      {/* Metrics Grid */}
-      <DashboardMetricsGrid metrics={metrics} />
+      {loadFailed && (
+        <DataStateBoundary state="error" testId="dashboard-load-error-boundary" />
+      )}
 
-      {/* Chart & Affiliates Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <DashboardRevenueChart
-          // Keep "the server reported nothing" distinct from "the load failed":
-          // an empty array is a real verified-empty period, whereas `undefined`
-          // makes the chart say the figure is unavailable instead of $0.
-          data={loadFailed ? undefined : initialData?.revenueData}
-        />
-        <DashboardAffiliatesCard affiliates={topAffiliates} />
-      </div>
+      <DataStateBoundary state="live" testId="dashboard-data-boundary">
+        {/* Metrics Grid */}
+        <DashboardMetricsGrid metrics={metrics} />
 
-      {/* Recent Activity Table */}
-      <DashboardTransactionsCard transactions={recentTransactions} />
+        {/* Chart & Affiliates Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-6">
+          <DashboardRevenueChart
+            // Keep "the server reported nothing" distinct from "the load failed":
+            // an empty array is a real verified-empty period, whereas `undefined`
+            // makes the chart say the figure is unavailable instead of $0.
+            data={loadFailed ? undefined : initialData?.revenueData}
+          />
+          <DashboardAffiliatesCard affiliates={topAffiliates} />
+        </div>
+
+        {/* Recent Activity Table */}
+        <DashboardTransactionsCard transactions={recentTransactions} />
+      </DataStateBoundary>
 
       {/* Optional local rendering engine & Control Deck preview, kept out of the primary work area. */}
       <details

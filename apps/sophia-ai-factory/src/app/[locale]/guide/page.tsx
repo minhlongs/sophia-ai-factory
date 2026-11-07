@@ -50,7 +50,7 @@ export default async function GuidePage({
         <div className="mb-12 text-center">
           <p className="eyebrow justify-center">
             <span className="dot" aria-hidden="true" />
-            <span>SOPHIA AI FACTORY • OPC INTERACTIVE WORKBENCH</span>
+            <span>{t('gettingStarted.hero_eyebrow')}</span>
           </p>
           <h1 className="h2 text-3xl sm:text-4xl font-bold text-foreground mb-3">
             {t('gettingStarted.hero_title')}

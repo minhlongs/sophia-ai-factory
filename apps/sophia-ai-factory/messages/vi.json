@@ -984,6 +984,7 @@
         "supportFaqLink": "Câu hỏi thường gặp"
       },
       "gettingStarted": {
+        "hero_eyebrow": "SOPHIA AI FACTORY • BÀN LÀM VIỆC OPC",
         "hero_title": "Bắt Đầu Với Sophia AI Factory",
         "hero_subtitle": "Làm theo các bước sau để thiết lập quy trình tạo video AI và bắt đầu tạo video YouTube không gương mặt quy mô lớn.",
         "next_step_telegram": "Bot Telegram",
@@ -5671,6 +5672,7 @@
       "phaseOutput": "Đang trả kết quả"
     },
     "gettingStarted": {
+      "hero_eyebrow": "SOPHIA AI FACTORY • BÀN LÀM VIỆC OPC",
       "hero_title": "Hướng Dẫn Vận Hành Sophia AI Factory",
       "hero_subtitle": "Sổ tay hướng dẫn toàn diện dành cho CEO: Hiểu rõ dây chuyền sản xuất video AI không lộ mặt, đối soát hoa hồng 100% Domain B và kiểm soát nhà máy qua Telegram.",
       "step5_title": "Cần Hỗ Trợ?",
@@ -6462,6 +6464,7 @@
           }
         }
       },
+      "eyebrow": "BÀN ĐIỀU KHIỂN CỦA GIÁM ĐỐC • OPC v3.0",
       "title": "Tổng quan",
       "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
       "onboardingBanner": {

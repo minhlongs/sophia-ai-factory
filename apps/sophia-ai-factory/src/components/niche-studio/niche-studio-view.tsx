@@ -31,7 +31,16 @@ import { NicheHookVariantsCard } from './niche-hook-variants-card';
 import { NicheConversionStatsCard } from './niche-conversion-stats-card';
 import { CampaignApprovalQueue } from '@/components/approval-queue/campaign-queue-view';
 
-export function NicheStudioView() {
+export interface NicheStudioViewProps {
+  /**
+   * Campaign identity carried in from a verified offer the customer adopted, so
+   * re-submitting the form keeps the existing approval row instead of orphaning
+   * the pending draft the offer list is showing.
+   */
+  adoptedContext?: { offerId: string; campaignId: string };
+}
+
+export function NicheStudioView({ adoptedContext }: NicheStudioViewProps = {}) {
   const t = useTranslations('nicheStudio');
   const rawLocale = useLocale();
   const activeLocale: 'en' | 'vi' = rawLocale === 'vi' ? 'vi' : 'en';
@@ -90,6 +99,7 @@ export function NicheStudioView() {
             onOfferSaved={setReadinessReport}
             readinessReport={readinessReport}
             defaultLocale={activeLocale}
+            adoptedContext={adoptedContext}
             t={t}
           />
         </div>

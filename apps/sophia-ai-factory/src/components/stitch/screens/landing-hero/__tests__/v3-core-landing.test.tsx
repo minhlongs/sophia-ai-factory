@@ -136,6 +136,8 @@ describe('Scrollytelling Chapters & Cross-Surface Harmonization (Landing, Guide,
     expect(guidePage).toContain('eyebrow');
     expect(dashboardPage).toContain('v3-core');
     expect(dashboardPage).toContain('eyebrow');
+    expect(dashboardPage).toContain('DataStateBoundary');
+    expect(dashboardPage).toContain('dashboard-data-boundary');
     expect(nicheHeader).toContain('v3-core');
     expect(dataBoundary).toContain('v3-core');
   });

@@ -157,6 +157,7 @@ export async function dispatchNicheVideoCampaignAction(
     const { db, tenantId } = ctx;
 
     const { resolvedOfferId, termsVerified } = await resolveOfferForDispatch(db, tenantId, input, planInput);
+    const effectiveCampaignId = input.campaignId ?? plan.planId;
     const approvalId = await stagePendingApprovalOnDispatch({
       db, userId: user.id, tenantId, resolvedOfferId, input, planInput, plan,
     });
@@ -164,10 +165,10 @@ export async function dispatchNicheVideoCampaignAction(
     await inngest.send({
       name: 'niche.video.campaign.requested',
       data: {
-        userId: user.id, tenantId, offerId: resolvedOfferId, termsVerified, campaignId: plan.planId,
+        userId: user.id, tenantId, offerId: resolvedOfferId, termsVerified, campaignId: effectiveCampaignId,
         ...(input.targetAccount ? { targetAccount: input.targetAccount } : {}),
         ...(input.maxRenderCostCents !== undefined ? { maxRenderCostCents: input.maxRenderCostCents } : {}),
-        idempotencyKey: `${tenantId}:${plan.planId}`,
+        idempotencyKey: `${tenantId}:${effectiveCampaignId}`,
         niche: planInput.niche, blueprintId: planInput.blueprintId,
         productName: planInput.productName, productUrl: planInput.productUrl,
         targetAudience: planInput.targetAudience, jurisdiction: planInput.jurisdiction,
@@ -178,7 +179,7 @@ export async function dispatchNicheVideoCampaignAction(
 
     return {
       success: true,
-      data: { planId: plan.planId, ...(approvalId ? { approvalId } : {}), dispatched: true },
+      data: { planId: effectiveCampaignId, ...(approvalId ? { approvalId } : {}), dispatched: true },
     };
   } catch (err: unknown) {
     const error = toError(err);

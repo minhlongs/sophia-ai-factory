@@ -3,9 +3,11 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import {
+  groupNavModules,
   OPC_PRIMARY_NAV_GROUPS,
   OPC_REFERRAL_NAV_ITEM,
   SOPHIA_NAV_MODULES,
+  type DashboardNavGroupConfig,
 } from "./dashboard-nav-modules";
 import { DashboardAdminNavLinks } from "./dashboard-admin-nav-links";
 import {
@@ -84,6 +86,18 @@ export function DashboardNavItems({
   };
 
   const primaryHeading = isVi ? "Nền Tảng AI" : "Platform Navigation";
+  const groupLabel = (group: DashboardNavGroupConfig): string => {
+    try {
+      const translated = t(group.labelKey);
+      if (translated && translated !== group.labelKey && !translated.startsWith("sidebar.groups.")) {
+        return translated;
+      }
+    } catch {
+      // fall through to local fallback
+    }
+    return isVi ? group.fallbackLabelVi : group.fallbackLabel;
+  };
+  const groupedModules = groupNavModules(SOPHIA_NAV_MODULES);
 
   return (
     <div className="space-y-1 px-3 py-2 flex-1 overflow-y-auto">
@@ -126,25 +140,34 @@ export function DashboardNavItems({
         </ul>
       </nav>
 
-      {/* Every canonical module stays reachable as a deep link, so no route that
-          used to be a top-level item becomes unreachable. */}
-      <details className="pt-3 group">
+      {/* Every canonical module stays reachable as a grouped deep link inside
+          the collapsible drawer, so no route becomes unreachable. */}
+      <details className="pt-3 group" data-testid="sidebar-more-tools">
         <summary className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
           {labelFor("moreTools")}
         </summary>
-        <ul className="space-y-1 mt-1">
-          {SOPHIA_NAV_MODULES.map((item) => (
-            <li key={item.id}>
-              <DashboardNavLinkItem
-                href={item.href}
-                active={isActive(item.href)}
-                icon={item.icon}
-                label={resolveNavLabel(t, item)}
-                onClick={onCloseMobile}
-              />
-            </li>
+        <div className="space-y-3 mt-1">
+          {groupedModules.map(({ group, items }) => (
+            <div key={group.id} data-testid={`nav-group-${group.id}`}>
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {groupLabel(group)}
+              </p>
+              <ul className="space-y-1">
+                {items.map((item) => (
+                  <li key={item.id}>
+                    <DashboardNavLinkItem
+                      href={item.href}
+                      active={isActive(item.href)}
+                      icon={item.icon}
+                      label={resolveNavLabel(t, item)}
+                      onClick={onCloseMobile}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </details>
 
       {isAdmin && (

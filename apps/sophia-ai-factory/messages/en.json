@@ -984,6 +984,7 @@
         "supportFaqLink": "Frequently Asked Questions"
       },
       "gettingStarted": {
+        "hero_eyebrow": "SOPHIA AI FACTORY • OPC INTERACTIVE WORKBENCH",
         "hero_title": "Getting Started with Sophia AI Factory",
         "hero_subtitle": "Follow these steps to set up your AI video generation workflow and start creating faceless YouTube videos at scale.",
         "next_step_telegram": "Telegram Bot",
@@ -5671,6 +5672,7 @@
       "phaseOutput": "Returning result"
     },
     "gettingStarted": {
+      "hero_eyebrow": "SOPHIA AI FACTORY • OPC INTERACTIVE WORKBENCH",
       "hero_title": "Sophia AI Factory Operations Guide",
       "hero_subtitle": "The complete handbook for CEOs: Master faceless AI video production, 100% Domain B affiliate reconciliation, and mobile factory control via Telegram.",
       "step5_title": "Need Help?",
@@ -6455,6 +6457,7 @@
           }
         }
       },
+      "eyebrow": "DIRECTOR'S CONTROL DECK • OPC v3.0",
       "title": "Dashboard",
       "subtitle": "Welcome back. Here's what's happening with your workspace today.",
       "onboardingBanner": {
