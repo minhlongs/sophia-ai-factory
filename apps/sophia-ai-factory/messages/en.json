@@ -6524,6 +6524,16 @@
       },
       "advanced": {
         "localEngineLabel": "Advanced (optional): Install the rendering engine on your machine (not required to start)"
+      },
+      "sourcesDrawer": {
+        "toggleBtn": "Sources & D1 Lineage",
+        "eyebrow": "CLAUDE-DASHBOARD SOURCES PATTERN • OPC DATA TRUTHFULNESS",
+        "title": "Verified KPI Data Sources & D1 Ledger Lineage",
+        "subtitle": "Every number on this Control Deck traces to a verified Cloudflare D1 table and cryptographic proof — never fabricated or silently zeroed on load failure.",
+        "tableColMetric": "Dashboard Metric",
+        "tableColSource": "Cloudflare D1 Source & Query",
+        "tableColProof": "Verification & Fee Policy",
+        "stateLabel": "Current Workspace Data State"
       }
     },
     "auth": {
@@ -9292,7 +9302,22 @@
     "offerSavedNotice": "Offer verified and saved to workspace ($0.00 spend).",
     "offerSaveError": "Failed to verify and save offer",
     "budgetCapExceededWarning": "Render budget exceeds the proposed Gate 1 vertical ceiling ($25.00 / 2500 cents).",
-    "dispatchBlockedBySafetyGate": "Campaign dispatch blocked: Workspace Admin authorization and disarmed Kill Switch are required."
+    "dispatchBlockedBySafetyGate": "Campaign dispatch blocked: Workspace Admin authorization and disarmed Kill Switch are required.",
+    "baoyuCanvas": {
+      "eyebrow": "BAOYU-DESIGN ARTIFACT CANVAS • MULTI-FORMAT PREVIEW",
+      "title": "Side-by-Side Campaign Artboards & Live Tweaks",
+      "subtitle": "Compare 9:16 Shorts, 16:9 YouTube, and 1:1 Social artboards side by side, tune data-props Tweaks, and resolve review comments before SHA-256 lock.",
+      "tweaksTitle": "Tweaks (data-props)",
+      "commentsTitle": "Pin Comments (comments.json)",
+      "accentLabel": "Accent Color (OKLCH)",
+      "widthLabel": "Archivo Display Width (wdth)",
+      "complianceToggle": "Show FTC / MiCA / VN Decree 52 Badge",
+      "oklchPass": "OKLCH Contrast PASS",
+      "resolveBtn": "Resolve",
+      "reopenBtn": "Reopen",
+      "resolvedBadge": "Resolved",
+      "openBadge": "Open"
+    }
   },
   "legend": {
     "title": "Title"
