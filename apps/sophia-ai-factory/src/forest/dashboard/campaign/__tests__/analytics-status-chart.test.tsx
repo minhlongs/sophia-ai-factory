@@ -77,7 +77,7 @@ describe('AnalyticsStatusChart', () => {
     );
 
     // completed -> green
-    expect(cellProps[0].fill).toBe('#10b981');
+    expect(cellProps[0].fill).toBe('var(--success)');
     // queued -> yellow
     expect(cellProps[1].fill).toBe('#f59e0b');
     // failed -> red

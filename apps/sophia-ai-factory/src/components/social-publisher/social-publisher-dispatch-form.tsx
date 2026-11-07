@@ -51,7 +51,7 @@ export function SocialPublisherDispatchForm({
         <Sparkles className="w-4 h-4 text-[#F59E0B]" /> Cấu Hình Bài Đăng / Dispatch Payload
       </h3>
       {alert && (
-        <div className={`p-3 rounded-lg text-xs flex items-center gap-2 border ${alert.type === 'ok' ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30' : 'bg-[#F43F5E]/10 text-[#F43F5E] border-[#F43F5E]/30'}`}>
+        <div className={`p-3 rounded-lg text-xs flex items-center gap-2 border ${alert.type === 'ok' ? 'bg-success/10 text-success border-success/30' : 'bg-[#F43F5E]/10 text-[#F43F5E] border-[#F43F5E]/30'}`}>
           {alert.type === 'ok' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span>{alert.text}</span>
         </div>

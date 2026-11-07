@@ -3,7 +3,7 @@
  *
  * Layer: Forest (infrastructure orchestrators)
  * Uses recharts PieChart with status-specific colors:
- *   completed -> green (#10b981)
+ *   completed -> green (var(--success))
  *   processing (queued, processing_script, processing_video) -> yellow (#f59e0b)
  *   failed -> red (#ef4444)
  *   video_timeout -> red (#ef4444)
@@ -28,7 +28,7 @@ import { cn } from '@/seed/utils/cn';
 import type { AnalyticsStatusChartProps } from './types';
 
 const STATUS_COLORS: Record<string, string> = {
-  completed: '#10b981',
+  completed: 'var(--success)',
   queued: '#f59e0b',
   processing_script: '#f59e0b',
   processing_video: '#f59e0b',

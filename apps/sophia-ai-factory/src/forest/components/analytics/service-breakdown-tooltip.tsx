@@ -15,7 +15,7 @@ export interface ServiceBreakdownTooltipItem {
 export const SERVICE_COLORS: Record<string, string> = {
   heygen: '#3b82f6',
   elevenlabs: '#8b5cf6',
-  openrouter: '#10b981',
+  openrouter: 'var(--success)',
   default: '#f59e0b',
 };
 

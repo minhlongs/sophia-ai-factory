@@ -25,10 +25,10 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(globalsCss).toContain('"Director\'s Control Deck" Design System');
 
     // Cinema Dark Room (.dark) is the single declaration site for color.
-    expect(globalsCss).toContain('--background: 234 53% 4%;');
-    expect(globalsCss).toContain('--card: 233 29% 9%;');
-    expect(globalsCss).toContain('--primary: 239 84% 67%;');
-    expect(globalsCss).toContain('--accent: 38 92% 50%;');
+    expect(globalsCss).toContain('--background: #090A10;');
+    expect(globalsCss).toContain('--card: #11131F;');
+    expect(globalsCss).toContain('--primary: #6366F1;');
+    expect(globalsCss).toContain('--accent: #F59E0B;');
     expect(globalsCss).toContain('--glass-bg: rgba(17, 19, 31, 0.75);');
     expect(globalsCss).toContain('--glass-border: rgba(255, 255, 255, 0.08);');
 

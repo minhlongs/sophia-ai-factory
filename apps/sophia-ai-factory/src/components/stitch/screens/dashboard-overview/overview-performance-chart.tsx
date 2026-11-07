@@ -33,14 +33,14 @@ export function OverviewPerformanceChart({ t }: { t: (key: string) => string }) 
         >
           <defs>
             <linearGradient id={CHART_GRADIENT_ID} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
             </linearGradient>
           </defs>
-          <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="20%" y2="20%" />
-          <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="40%" y2="40%" />
-          <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="60%" y2="60%" />
-          <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="80%" y2="80%" />
+          <line stroke="var(--muted)" strokeWidth="1" x1="0" x2="100%" y1="20%" y2="20%" />
+          <line stroke="var(--muted)" strokeWidth="1" x1="0" x2="100%" y1="40%" y2="40%" />
+          <line stroke="var(--muted)" strokeWidth="1" x1="0" x2="100%" y1="60%" y2="60%" />
+          <line stroke="var(--muted)" strokeWidth="1" x1="0" x2="100%" y1="80%" y2="80%" />
           <path
             d="M0 250 L50 220 L150 180 L250 240 L350 100 L450 160 L550 80 L650 120 L750 60 L850 110 L950 90 L1050 50 L1200 40 L1200 300 L0 300 Z"
             fill={`url(#${CHART_GRADIENT_ID})`}
@@ -48,7 +48,7 @@ export function OverviewPerformanceChart({ t }: { t: (key: string) => string }) 
           <path
             d="M0 250 L50 220 L150 180 L250 240 L350 100 L450 160 L550 80 L650 120 L750 60 L850 110 L950 90 L1050 50 L1200 40"
             fill="none"
-            stroke="hsl(var(--primary))"
+            stroke="var(--primary)"
             strokeLinecap="round"
             strokeWidth="3"
           />

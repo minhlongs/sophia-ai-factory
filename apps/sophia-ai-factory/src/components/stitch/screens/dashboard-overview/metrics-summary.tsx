@@ -67,7 +67,7 @@ export function MetricsSummary({ metrics }: MetricsSummaryProps) {
                     <path
                       d="M0 15 Q 10 5, 20 12 T 40 8 T 60 14 T 80 4 T 100 10"
                       fill="none"
-                      stroke="hsl(var(--primary))"
+                      stroke="var(--primary)"
                       strokeWidth="2"
                     />
                   </svg>

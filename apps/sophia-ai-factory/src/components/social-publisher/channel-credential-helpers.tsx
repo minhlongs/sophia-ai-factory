@@ -38,7 +38,7 @@ export function ChannelStatusBadge({ channel: ch }: { channel: ChannelCardData }
   }
   if (ch.status === 'HEALTHY') {
     return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30">
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/10 text-success border border-success/30">
         <CheckCircle2 className="w-2.5 h-2.5" /> Hoạt động / Ready
       </span>
     );

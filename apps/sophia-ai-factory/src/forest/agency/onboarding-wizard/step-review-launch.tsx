@@ -87,7 +87,7 @@ export function StepReviewLaunch({
               <span className="text-muted-foreground">{isVi ? 'Màu nhấn:' : 'Accent:'}</span>
               <span
                 className="w-3.5 h-3.5 rounded-full inline-block border border-border"
-                style={{ backgroundColor: branding.accentColor || '#10b981' }}
+                style={{ backgroundColor: branding.accentColor || 'var(--success)' }}
               />
               <span className="font-mono text-xs">{branding.accentColor}</span>
             </p>

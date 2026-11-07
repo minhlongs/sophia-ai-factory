@@ -138,7 +138,7 @@ function ConsentToggle({ label, checked, onChange, testId }: ConsentToggleProps)
     <label className="flex cursor-pointer items-center gap-3 text-sm text-foreground">
       <input
         type="checkbox"
-        className="h-4 w-4 accent-[hsl(var(--primary))]"
+        className="h-4 w-4 accent-[var(--primary)]"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
         data-testid={testId}
