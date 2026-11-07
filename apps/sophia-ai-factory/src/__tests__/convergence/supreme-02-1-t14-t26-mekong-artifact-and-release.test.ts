@@ -26,7 +26,29 @@ import {
 } from '@/tree/mekong';
 import { runCreativeJobVerticalSliceD1 } from '@/forest/convergence/creative-job-d1-runner';
 import { verifyDiskBackedArtifactManifest } from '@/forest/convergence/local-artifact-materializer';
-import { evaluateReleaseAuthorization } from '../../../scripts/verify-release-authorization.mjs';
+import { evaluateReleaseAuthorization, RELEASE_ENVIRONMENT } from '../../../scripts/verify-release-authorization.mjs';
+
+/**
+ * A release gate that GitHub actually enforces: an independent required reviewer,
+ * no self-approval, no admin bypass. Mirrors the live `production` environment only
+ * once the owner has configured those protection rules.
+ */
+function enforcedReleaseGate(overrides: Record<string, unknown> = {}) {
+  return {
+    checked: true,
+    repository: 'minhlongs/sophia-ai-factory',
+    environment: RELEASE_ENVIRONMENT,
+    runId: '41937755192',
+    runAttempt: '1',
+    sha: '6cbfade27bb8859f26db8b545695af947a2799d9',
+    requiresIndependentReview: true,
+    reviewerCount: 1,
+    preventSelfReview: true,
+    adminBypass: false,
+    actor: 'minhlongs',
+    ...overrides,
+  } as never;
+}
 
 const MIGRATION_0494_SQL = fs.readFileSync(
   path.resolve(process.cwd(), 'migrations/0494_authoritative_job_convergence_ledger.sql'),
@@ -169,24 +191,68 @@ describe('Supreme Command #02.1 — T14..T26: Mekong 10/10 Ops, Disk Artifacts, 
     expect(evaluateConvergedTruth(c2.value.record, false, false).isTrulyComplete).toBe(false);
   });
 
-  it('T23: release authorization guard blocks unapproved auto-deploys and allows explicit release tags or dry-run', () => {
+  it('T23: release authorization guard blocks unapproved auto-deploys and authorizes only a live-verified independent Environment approval', () => {
     const blocked = evaluateReleaseAuthorization({ DRY_RUN: 'false', COMMIT_MESSAGE: 'feat: ordinary merge commit' });
     expect(blocked.authorized).toBe(false);
-    expect(blocked.mode).toBe('BLOCKED_UNAUTHORIZED_AUTO_DEPLOY');
-
-    const readOnlyBlocked = evaluateReleaseAuthorization({
-      SOPHIA_PRODUCTION_READ_ONLY: '1',
-      AUTHORIZE_PRODUCTION_RELEASE: 'true',
-    });
+    expect(blocked.mode).toBe('BLOCKED_RELEASE_GATE_UNVERIFIED');
+    const readOnlyBlocked = evaluateReleaseAuthorization(
+      {
+        SOPHIA_PRODUCTION_READ_ONLY: '1',
+        AUTHORIZE_PRODUCTION_RELEASE: 'true',
+      },
+      enforcedReleaseGate()
+    );
     expect(readOnlyBlocked.authorized).toBe(false);
+    expect(readOnlyBlocked.mode).toBe('BLOCKED_READ_ONLY_MISSION');
 
-    const tagAllowed = evaluateReleaseAuthorization({
+    // A commit marker alone no longer authorizes anything: the gate is still unverified.
+    const tagNotAuthorizing = evaluateReleaseAuthorization({
       COMMIT_MESSAGE: 'feat(release): ship v1.2 [RELEASE-AUTHORIZED]',
     });
-    expect(tagAllowed.authorized).toBe(true);
-    expect(tagAllowed.mode).toBe('COMMIT_TAG_APPROVED');
+    expect(tagNotAuthorizing.authorized).toBe(false);
+    expect(tagNotAuthorizing.mode).toBe('BLOCKED_RELEASE_GATE_UNVERIFIED');
 
-    const dryRunAllowed = evaluateReleaseAuthorization({ DRY_RUN: 'true' });
+    // Revision binding: the gate must have been collected for the commit this run deploys.
+    const runContext = {
+      GITHUB_REPOSITORY: 'minhlongs/sophia-ai-factory',
+      GITHUB_RUN_ID: '41937755192',
+      GITHUB_RUN_ATTEMPT: '1',
+      GITHUB_SHA: '6cbfade27bb8859f26db8b545695af947a2799d9',
+    };
+
+    // With a live-verified gate bound to the run, the same marker still grants nothing extra.
+    const tagWithGate = evaluateReleaseAuthorization(
+      { ...runContext, COMMIT_MESSAGE: 'feat(release): ship v1.2 [RELEASE-AUTHORIZED]' },
+      enforcedReleaseGate()
+    );
+    expect(tagWithGate.authorized).toBe(true);
+    expect(tagWithGate.mode).toBe('ENVIRONMENT_APPROVAL_BOUND');
+    expect(tagWithGate.operatorIntent?.note).toContain('grants no authorization');
+
+    // The dispatch input and repository variable are likewise non-authorizing.
+    for (const intent of [
+      { ...runContext, AUTHORIZE_PRODUCTION_RELEASE: 'true' },
+      { ...runContext, SOPHIA_RELEASE_AUTHORIZED: '1' },
+    ]) {
+      expect(evaluateReleaseAuthorization(intent, null).authorized).toBe(false);
+      expect(evaluateReleaseAuthorization(intent, null).mode).toBe('BLOCKED_RELEASE_GATE_UNVERIFIED');
+    }
+
+    const liveGateBound = evaluateReleaseAuthorization(runContext, enforcedReleaseGate());
+    expect(liveGateBound.authorized).toBe(true);
+
+    const wrongSha = evaluateReleaseAuthorization(runContext, enforcedReleaseGate({ sha: 'b'.repeat(40) }));
+    expect(wrongSha.authorized).toBe(false);
+    expect(wrongSha.mode).toBe('BLOCKED_RELEASE_GATE_REVISION_MISMATCH');
+
+    const noReviewers = evaluateReleaseAuthorization(
+      runContext,
+      enforcedReleaseGate({ requiresIndependentReview: false, reviewerCount: 0 })
+    );
+    expect(noReviewers.authorized).toBe(false);
+    expect(noReviewers.mode).toBe('BLOCKED_RELEASE_GATE_NO_INDEPENDENT_REVIEWER');
+
+    const dryRunAllowed = evaluateReleaseAuthorization({ DRY_RUN: 'true' }, null);
     expect(dryRunAllowed.authorized).toBe(true);
     expect(dryRunAllowed.mode).toBe('DRY_RUN_ONLY');
   });
