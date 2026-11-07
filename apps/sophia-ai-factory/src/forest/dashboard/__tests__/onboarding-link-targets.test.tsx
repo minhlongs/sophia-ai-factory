@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const APP_ROOT = process.cwd();
@@ -42,5 +42,12 @@ describe('canonical Setup Wizard routes', () => {
   it('has no page behind /[locale]/dashboard/setup, so links must not target it', () => {
     expect(localeRouteExists('dashboard/setup')).toBe(true);
     expect(routeHasPage('/dashboard/setup')).toBe(false);
+
+    const imagePreviewSource = readFileSync(
+      join(APP_DIR, '[locale]/dashboard/image-studio/image-preview-body.tsx'),
+      'utf8',
+    );
+    expect(imagePreviewSource).not.toContain('href="/dashboard/setup"');
+    expect(imagePreviewSource).toContain('href="/setup"');
   });
 });

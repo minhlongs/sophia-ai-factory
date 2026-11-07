@@ -97,9 +97,9 @@ export function NicheStudioView() {
           {currentPlan ? (
             <StoryboardPreviewCard plan={currentPlan} t={t} />
           ) : (
-            <div className="p-8 rounded-xl bg-zinc-900/30 border border-dashed border-zinc-800 text-center min-h-[380px] flex flex-col justify-center items-center">
+            <div className="p-8 rounded-xl bg-card/60 dark:bg-[#11131F]/60 border border-dashed border-border dark:border-[#1E2235] text-center min-h-[380px] flex flex-col justify-center items-center">
               <span className="text-3xl mb-2">🎬</span>
-              <p className="text-xs text-zinc-400 font-medium">{t('storyboardEmpty')}</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('storyboardEmpty')}</p>
             </div>
           )}
         </div>

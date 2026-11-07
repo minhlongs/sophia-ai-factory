@@ -1149,13 +1149,23 @@
       "runbooks": "CEO Runbooks",
       "create_mission": "Create Mission",
       "youtube_automation": "YouTube Automation",
-      "affiliate": "Affiliate Hub",
+      "affiliate": "Refer Sophia",
       "publish_queue": "Distribution Queue",
       "marketplace": "Creator Marketplace",
       "system_health": "System Health",
       "affiliates": "My Affiliate Business",
       "approvals": "Approvals Needed",
-      "niche_studio": "Niche Studio"
+      "niche_studio": "Niche Studio",
+      "image_studio": "Image Studio",
+      "groups": {
+        "today": "Today",
+        "offers": "Offers",
+        "campaigns": "Campaigns",
+        "approvals": "Approvals",
+        "results": "Results",
+        "connections": "Connections",
+        "advanced": "Advanced"
+      }
     },
     "notFound": {
       "title": "Page Not Found",
@@ -8006,7 +8016,8 @@
       "complianceVerified": "Compliance check: passed",
       "changeNeedsApproval": "Content changes will need re-approval",
       "payloadHashHint": "If the content changes after this draft, you will be asked to approve it again."
-    },    "header": {
+    },
+    "header": {
       "eyebrow": "Campaign approval desk",
       "title": "Affiliate campaigns waiting for your approval (Crypto/CEX & Global SaaS)",
       "controlNote": "You keep the final decision",

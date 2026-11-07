@@ -17,6 +17,12 @@ import {
 import { NicheGate1ReadinessCard } from '../niche-gate1-readiness-card';
 import type { OpcGate1ReadinessReport } from '@/tree/affiliate/readiness/opc-gate1-readiness';
 
+vi.mock('@/forest/actions/opc-readiness-actions', () => ({
+  getOpcGate1ReadinessAction: vi.fn(),
+  saveNicheWorkspaceOfferAction: vi.fn(),
+  connectNicheYoutubeChannelAction: vi.fn(),
+}));
+
 const t = (key: string) => key;
 
 describe('NicheFormProductInputs financial & offer fields', () => {

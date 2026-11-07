@@ -19,6 +19,17 @@ import {
 import { NicheConversionStatsCard } from '../niche-conversion-stats-card';
 import { NicheSyndicationPreviewCard } from '../niche-syndication-preview-card';
 import { NicheHookVariantsCard } from '../niche-hook-variants-card';
+import { resolveActiveLocale } from '../niche-campaign-form';
+
+vi.mock('@/forest/actions/opc-readiness-actions', () => ({
+  getOpcGate1ReadinessAction: vi.fn(),
+  saveNicheWorkspaceOfferAction: vi.fn(),
+  connectNicheYoutubeChannelAction: vi.fn(),
+}));
+vi.mock('@/forest/actions/niche-video-actions', () => ({
+  previewNicheVideoPlanAction: vi.fn(),
+  dispatchNicheVideoCampaignAction: vi.fn(),
+}));
 import { NICHE_BLUEPRINTS } from '../niche-campaign-selectors';
 import { getBlueprintById } from '@/seed/config/video-blueprints';
 
@@ -165,6 +176,14 @@ describe('Niche Studio Components', () => {
         const bp = getBlueprintById(option.id);
         expect(bp, `Expected blueprint ${option.id} to exist in registry`).toBeDefined();
       }
+    });
+  });
+
+  describe('resolveActiveLocale', () => {
+    it('resolves explicit locale prop and falls back to pathname or vi', () => {
+      expect(resolveActiveLocale('en')).toBe('en');
+      expect(resolveActiveLocale('vi')).toBe('vi');
+      expect(resolveActiveLocale(undefined)).toBe('vi');
     });
   });
 });

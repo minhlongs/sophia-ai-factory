@@ -2,15 +2,37 @@ import {
   LayoutDashboard, PlusCircle, Film, Wand2, Youtube, BookOpen,
   Share2, ShoppingBag, Target, ShieldCheck, Terminal, Activity, Image as ImageIcon, DollarSign, Megaphone,
 } from "lucide-react";
-import type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps } from "./dashboard-nav-types";
+import type {
+  DashboardNavGroup,
+  DashboardNavGroupConfig,
+  DashboardNavModule,
+  DashboardUserProps,
+  DashboardSidebarNavProps,
+} from "./dashboard-nav-types";
 
-export type { DashboardNavModule, DashboardUserProps, DashboardSidebarNavProps };
+export type {
+  DashboardNavGroup,
+  DashboardNavGroupConfig,
+  DashboardNavModule,
+  DashboardUserProps,
+  DashboardSidebarNavProps,
+};
 
 // Re-exported so existing `from './dashboard-nav-modules'` imports keep working.
 export {
   OPC_PRIMARY_NAV_GROUPS,
   OPC_REFERRAL_NAV_ITEM,
 } from "./dashboard-opc-nav-items";
+
+export const TASK_NAV_GROUPS: DashboardNavGroupConfig[] = [
+  { id: "today", labelKey: "sidebar.groups.today", fallbackLabel: "Today", fallbackLabelVi: "Hôm Nay" },
+  { id: "offers", labelKey: "sidebar.groups.offers", fallbackLabel: "Offers", fallbackLabelVi: "Sản Phẩm" },
+  { id: "campaigns", labelKey: "sidebar.groups.campaigns", fallbackLabel: "Campaigns", fallbackLabelVi: "Chiến Dịch" },
+  { id: "approvals", labelKey: "sidebar.groups.approvals", fallbackLabel: "Approvals", fallbackLabelVi: "Duyệt Bài" },
+  { id: "results", labelKey: "sidebar.groups.results", fallbackLabel: "Results", fallbackLabelVi: "Kết Quả" },
+  { id: "connections", labelKey: "sidebar.groups.connections", fallbackLabel: "Connections", fallbackLabelVi: "Kết Nối" },
+  { id: "advanced", labelKey: "sidebar.groups.advanced", fallbackLabel: "Advanced", fallbackLabelVi: "Nâng Cao", collapsible: true },
+];
 
 /**
  * Canonical Sophia AI Factory navigation modules. Every href resolves to an
@@ -24,6 +46,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Overview",
     href: "/dashboard",
     icon: LayoutDashboard,
+    group: "today",
   },
   {
     id: "create_mission",
@@ -31,6 +54,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Create Mission",
     href: "/dashboard/missions/new",
     icon: PlusCircle,
+    group: "campaigns",
   },
   {
     id: "missions",
@@ -38,6 +62,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "AI Missions",
     href: "/dashboard/missions",
     icon: Film,
+    group: "results",
   },
   {
     id: "campaigns",
@@ -45,6 +70,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Affiliate Campaigns",
     href: "/dashboard/campaigns",
     icon: Megaphone,
+    group: "campaigns",
   },
   {
     id: "niche_studio",
@@ -52,6 +78,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Niche Studio",
     href: "/dashboard/niche-studio",
     icon: Wand2,
+    group: "campaigns",
   },
   {
     id: "creative_studio",
@@ -59,6 +86,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Creative Studio",
     href: "/dashboard/creative-economy",
     icon: Wand2,
+    group: "advanced",
   },
   {
     id: "image_studio",
@@ -66,6 +94,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Image Studio",
     href: "/dashboard/image-studio",
     icon: ImageIcon,
+    group: "campaigns",
   },
   {
     id: "youtube_automation",
@@ -73,6 +102,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "YouTube Automation",
     href: "/dashboard/youtube",
     icon: Youtube,
+    group: "connections",
   },
   {
     id: "affiliates",
@@ -80,6 +110,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "My Affiliate Business",
     href: "/dashboard/affiliates",
     icon: DollarSign,
+    group: "offers",
   },
   {
     id: "approvals",
@@ -87,6 +118,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Approvals Needed",
     href: "/dashboard/approvals",
     icon: ShieldCheck,
+    group: "approvals",
   },
   {
     id: "playbooks",
@@ -94,6 +126,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Playbooks",
     href: "/dashboard/playbooks",
     icon: BookOpen,
+    group: "offers",
   },
   {
     id: "publish_queue",
@@ -101,6 +134,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Distribution Queue",
     href: "/dashboard/publish/queue",
     icon: Share2,
+    group: "connections",
   },
   {
     id: "marketplace",
@@ -108,6 +142,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Creator Marketplace",
     href: "/marketplace",
     icon: ShoppingBag,
+    group: "advanced",
   },
   {
     id: "my_sops",
@@ -115,6 +150,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "My SOPs",
     href: "/dashboard/sops",
     icon: BookOpen,
+    group: "advanced",
   },
   {
     id: "challenges",
@@ -122,6 +158,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Challenges",
     href: "/dashboard/challenges",
     icon: Target,
+    group: "advanced",
   },
   {
     id: "handover",
@@ -129,6 +166,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Handover & Acceptance",
     href: "/dashboard/handover",
     icon: ShieldCheck,
+    group: "advanced",
   },
   {
     id: "runbooks",
@@ -136,6 +174,7 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "Runbooks",
     href: "/dashboard/docs/runbooks",
     icon: Terminal,
+    group: "advanced",
   },
   {
     id: "system_health",
@@ -143,6 +182,16 @@ export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
     fallbackLabel: "System Health",
     href: "/dashboard/system-health",
     icon: Activity,
+    group: "results",
   },
 ];
+
+export function groupNavModules(
+  modules: DashboardNavModule[] = SOPHIA_NAV_MODULES,
+): Array<{ group: DashboardNavGroupConfig; items: DashboardNavModule[] }> {
+  return TASK_NAV_GROUPS.map((group) => ({
+    group,
+    items: modules.filter((item) => item.group === group.id),
+  })).filter((entry) => entry.items.length > 0);
+}
 

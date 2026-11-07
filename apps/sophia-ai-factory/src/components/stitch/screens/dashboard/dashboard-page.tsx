@@ -68,10 +68,17 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" iconLeft={<Download className="w-4 h-4" />}>
+          <Button
+            variant="outline"
+            href="/dashboard/campaigns"
+            iconLeft={<Download className="w-4 h-4" />}
+          >
             {t('actions.exportData')}
           </Button>
-          <Button iconLeft={<Plus className="w-4 h-4" />}>
+          <Button
+            href="/dashboard/affiliates"
+            iconLeft={<Plus className="w-4 h-4" />}
+          >
             {t('actions.addProduct')}
           </Button>
         </div>
@@ -82,9 +89,6 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
 
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
-
-      {/* Stitch v4.2 Director's Control Deck 9-Screen Quick Launch */}
-      <DashboardControlDeckBanner />
 
       {/* Metrics Grid */}
       <DashboardMetricsGrid metrics={metrics} />
@@ -103,12 +107,16 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       {/* Recent Activity Table */}
       <DashboardTransactionsCard transactions={recentTransactions} />
 
-      {/* Optional local rendering engine, kept out of the primary work area. */}
-      <details className="rounded-2xl border border-border bg-muted/20 p-4">
+      {/* Optional local rendering engine & Control Deck preview, kept out of the primary work area. */}
+      <details
+        data-testid="dashboard-advanced-tools"
+        className="rounded-2xl border border-border bg-muted/20 p-4"
+      >
         <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
           {t('advanced.localEngineLabel')}
         </summary>
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
+          <DashboardControlDeckBanner />
           <LocalEngineSetupGuide />
         </div>
       </details>

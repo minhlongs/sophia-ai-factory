@@ -12,6 +12,8 @@ export interface SidebarItem {
   icon: LucideIcon;
   /** Link destination */
   href: string;
+  /** Optional task group classification */
+  group?: 'today' | 'offers' | 'campaigns' | 'approvals' | 'results' | 'connections' | 'advanced';
   /** Whether item is active */
   active?: boolean;
   /** Badge content (e.g., notification count) */
