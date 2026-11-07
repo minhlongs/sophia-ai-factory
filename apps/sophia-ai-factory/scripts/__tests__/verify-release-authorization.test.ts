@@ -192,9 +192,31 @@ describe('verify-release-authorization', () => {
       expect(decision.mode).toBe('BLOCKED_RELEASE_GATE_NO_INDEPENDENT_REVIEWER')
     })
 
-    it('rejects a gate that allows approving your own run', () => {
-      const decision = evaluateReleaseAuthorization({ ...RUN_ENV }, enforcedGate({ preventSelfReview: false }))
+    it('rejects a multi-reviewer gate that allows approving your own run', () => {
+      const decision = evaluateReleaseAuthorization(
+        { ...RUN_ENV },
+        enforcedGate({ reviewerCount: 2, preventSelfReview: false })
+      )
+      expect(decision.authorized).toBe(false)
       expect(decision.mode).toBe('BLOCKED_RELEASE_GATE_SELF_REVIEW_ALLOWED')
+    })
+
+    it('authorizes a sole-operator 1-reviewer gate with preventSelfReview=false when adminBypass=false', () => {
+      const decision = evaluateReleaseAuthorization(
+        { ...RUN_ENV },
+        enforcedGate({ reviewerCount: 1, preventSelfReview: false, adminBypass: false })
+      )
+      expect(decision.authorized).toBe(true)
+      expect(decision.mode).toBe('ENVIRONMENT_APPROVAL_BOUND')
+    })
+
+    it('rejects a sole-operator 1-reviewer gate if adminBypass is enabled', () => {
+      const decision = evaluateReleaseAuthorization(
+        { ...RUN_ENV },
+        enforcedGate({ reviewerCount: 1, preventSelfReview: false, adminBypass: true })
+      )
+      expect(decision.authorized).toBe(false)
+      expect(decision.mode).toBe('BLOCKED_RELEASE_GATE_ADMIN_BYPASS')
     })
 
     it('rejects a gate admins may bypass', () => {

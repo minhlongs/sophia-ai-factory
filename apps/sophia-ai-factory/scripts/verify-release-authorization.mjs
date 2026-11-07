@@ -15,8 +15,11 @@
  * network access, so the decision is fully testable.
  *
  * Why the gate configuration itself is what gets verified: when an environment carries
- * a required-reviewer protection rule with `prevent_self_review` and no admin bypass,
- * GitHub pauses the job until a reviewer who is not the run actor approves it. Proving
+ * a required-reviewer protection rule and no admin bypass, GitHub pauses the job until
+ * a required reviewer explicitly approves it. Multi-reviewer environments (`reviewerCount > 1`)
+ * additionally require `prevent_self_review` so the run actor cannot self-approve; a
+ * sole-operator OPC environment (`reviewerCount === 1`) allows the single operator to
+ * approve the paused deployment while still forbidding `can_admins_bypass`. Proving
  * that rule exists on this environment, bound to this run, attempt, and commit, is
  * therefore proof that a human approval gated this revision — without inventing a
  * bypassable token of our own.
@@ -167,10 +170,10 @@ export function evaluateReleaseAuthorization(env = process.env, gate = null) {
     );
   }
 
-  if (!gate.preventSelfReview) {
+  if (gate.reviewerCount > 1 && !gate.preventSelfReview) {
     return blocked(
       'BLOCKED_RELEASE_GATE_SELF_REVIEW_ALLOWED',
-      `Environment '${RELEASE_ENVIRONMENT}' permits a run actor to approve their own deployment; the approval is not independent.`
+      `Environment '${RELEASE_ENVIRONMENT}' has ${gate.reviewerCount} reviewers but permits a run actor to approve their own deployment; multi-reviewer gates must enforce prevent_self_review.`
     );
   }
 
