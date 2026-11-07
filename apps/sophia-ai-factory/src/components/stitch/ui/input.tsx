@@ -43,7 +43,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               'block w-full h-10 py-2 px-3.5',
               prefix && 'pl-[44px]',
               suffix && 'pr-[44px]',
-              'bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-xl',
+              'bg-card border border-border dark:border-white/[0.08] rounded-xl',
               'font-body-md text-body-md text-on-surface',
               'placeholder:text-outline/60',
               'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-primary/60',
@@ -93,7 +93,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           aria-describedby={describedBy}
           className={cn(
             'block w-full py-md px-md',
-            'bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-xl',
+            'bg-card border border-border dark:border-white/[0.08] rounded-xl',
             'font-body-md text-body-md text-on-surface',
             'placeholder:text-outline/60',
             'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-primary/60',

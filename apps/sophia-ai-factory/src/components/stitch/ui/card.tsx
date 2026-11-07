@@ -26,7 +26,7 @@ export function Card({
   ...props
 }: CardProps) {
   const baseStyles = cn(
-    'bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-2xl',
+    'bg-card border border-border dark:border-white/[0.08] rounded-2xl',
     'shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
     'transition-all duration-300'
   );
