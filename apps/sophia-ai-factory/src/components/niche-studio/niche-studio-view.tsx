@@ -10,6 +10,7 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
 import { buildNicheSyndicationPackage } from '@/tree/video/syndication/niche-syndication-builder';
 import { generateHookVariants } from '@/tree/video/ab-testing/niche-hook-variant-generator';
@@ -24,19 +25,31 @@ import { NicheSyndicationPreviewCard } from './niche-syndication-preview-card';
 import { NicheHookVariantsCard } from './niche-hook-variants-card';
 import { NicheConversionStatsCard } from './niche-conversion-stats-card';
 
-export function NicheStudioView() {
+export function NicheStudioView({ locale }: { locale?: 'vi' | 'en' } = {}) {
   const t = useTranslations('nicheStudio');
+  const searchParams = useSearchParams();
+  const adoptedCampaignId = searchParams.get('campaignId');
+  const adoptedOfferId = searchParams.get('offerId');
+  const adoptedOfferName = searchParams.get('offerName');
+  const adoptedContext =
+    adoptedCampaignId && adoptedOfferId
+      ? { offerId: adoptedOfferId, campaignId: adoptedCampaignId }
+      : undefined;
   const [currentPlan, setCurrentPlan] = useState<NicheVideoCampaignPlan | null>(null);
   const [dispatchedPlanId, setDispatchedPlanId] = useState<string | null>(null);
   const [syndication, setSyndication] = useState<NicheSyndicationPackage | null>(null);
   const [hookPackage, setHookPackage] = useState<HookVariantPackage | null>(null);
   const [selectedHookId, setSelectedHookId] = useState<string | null>(null);
 
+  const activeLocale: 'vi' | 'en' =
+    locale ??
+    (typeof window !== 'undefined' && /^\/en(\/|$)/.test(window.location.pathname) ? 'en' : 'vi');
+
   const handlePlanGenerated = (plan: NicheVideoCampaignPlan) => {
     setCurrentPlan(plan);
-    const syn = buildNicheSyndicationPackage(plan, 'en');
+    const syn = buildNicheSyndicationPackage(plan, activeLocale);
     setSyndication(syn);
-    const hooks = generateHookVariants(plan, 'en');
+    const hooks = generateHookVariants(plan, activeLocale);
     setHookPackage(hooks);
     setSelectedHookId(hooks.recommendedVariantId);
   };
@@ -49,6 +62,15 @@ export function NicheStudioView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      {adoptedCampaignId && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <span aria-hidden="true">🔗</span>
+          <span className="font-medium">{t('adoptedCampaignContext')}</span>
+          <span className="text-amber-100">{adoptedOfferName ?? adoptedCampaignId}</span>
+          <span className="text-amber-200/70">#{adoptedCampaignId}</span>
+        </div>
+      )}
+
       {/* 1. Header & Badges */}
       <NicheStudioHeader t={t} />
 
@@ -62,6 +84,8 @@ export function NicheStudioView() {
           <NicheCampaignForm
             onPlanGenerated={handlePlanGenerated}
             onDispatched={handleDispatched}
+            adoptedContext={adoptedContext}
+            locale={activeLocale}
             t={t}
           />
         </div>
@@ -71,9 +95,9 @@ export function NicheStudioView() {
           {currentPlan ? (
             <StoryboardPreviewCard plan={currentPlan} t={t} />
           ) : (
-            <div className="p-8 rounded-xl bg-zinc-900/30 border border-dashed border-zinc-800 text-center min-h-[380px] flex flex-col justify-center items-center">
+            <div className="p-8 rounded-xl bg-card/60 dark:bg-[#11131F]/60 border border-dashed border-border dark:border-[#1E2235] text-center min-h-[380px] flex flex-col justify-center items-center">
               <span className="text-3xl mb-2">🎬</span>
-              <p className="text-xs text-zinc-400 font-medium">{t('storyboardEmpty')}</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('storyboardEmpty')}</p>
             </div>
           )}
         </div>

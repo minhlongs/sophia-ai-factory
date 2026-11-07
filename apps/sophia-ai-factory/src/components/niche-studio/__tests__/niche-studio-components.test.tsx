@@ -19,6 +19,7 @@ import {
 import { NicheConversionStatsCard } from '../niche-conversion-stats-card';
 import { NicheSyndicationPreviewCard } from '../niche-syndication-preview-card';
 import { NicheHookVariantsCard } from '../niche-hook-variants-card';
+import { resolveActiveLocale } from '../niche-campaign-form';
 
 const mockT = (key: string) => `trans_${key}`;
 
@@ -151,6 +152,14 @@ describe('Niche Studio Components', () => {
         />,
       );
       expect(screen.getByText('trans_hooksEmpty')).toBeDefined();
+    });
+  });
+
+  describe('resolveActiveLocale', () => {
+    it('resolves explicit locale prop and falls back to pathname or vi', () => {
+      expect(resolveActiveLocale('en')).toBe('en');
+      expect(resolveActiveLocale('vi')).toBe('vi');
+      expect(resolveActiveLocale(undefined)).toBe('vi');
     });
   });
 });

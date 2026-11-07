@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { SOPHIA_NAV_MODULES } from "./dashboard-nav-modules";
+import { groupNavModules } from "./dashboard-nav-modules";
 import { DashboardAdminNavLinks } from "./dashboard-admin-nav-links";
 import {
   DashboardNavLinkItem,
@@ -41,25 +41,60 @@ export function DashboardNavItems({
     return cleanPath === cleanHref || cleanPath.startsWith(`${cleanHref}/`);
   };
 
+  const groupedSections = groupNavModules();
+
   return (
-    <div className="space-y-1 px-3 py-2 flex-1 overflow-y-auto">
-      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+    <div className="space-y-3 px-3 py-2 flex-1 overflow-y-auto">
+      <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
         {isVi ? "Nền Tảng AI" : "Platform Navigation"}
       </div>
 
-      {SOPHIA_NAV_MODULES.map((item) => {
-        const active = isActive(item.href);
-        const label = resolveNavLabel(t, item);
+      {groupedSections.map(({ group, items }) => {
+        const groupHeading = isVi ? group.fallbackLabelVi : group.fallbackLabelEn;
+
+        if (group.collapsible) {
+          return (
+            <details
+              key={group.id}
+              open
+              data-testid={`nav-group-${group.id}`}
+              className="pt-2 border-t border-border/50 dark:border-white/[0.06]"
+            >
+              <summary className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer select-none">
+                {groupHeading}
+              </summary>
+              <div className="space-y-1 mt-1">
+                {items.map((item) => (
+                  <DashboardNavLinkItem
+                    key={item.id}
+                    href={item.href}
+                    active={isActive(item.href)}
+                    icon={item.icon}
+                    label={resolveNavLabel(t, item)}
+                    onClick={onCloseMobile}
+                  />
+                ))}
+              </div>
+            </details>
+          );
+        }
 
         return (
-          <DashboardNavLinkItem
-            key={item.id}
-            href={item.href}
-            active={active}
-            icon={item.icon}
-            label={label}
-            onClick={onCloseMobile}
-          />
+          <div key={group.id} data-testid={`nav-group-${group.id}`} className="space-y-1">
+            <div className="px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              {groupHeading}
+            </div>
+            {items.map((item) => (
+              <DashboardNavLinkItem
+                key={item.id}
+                href={item.href}
+                active={isActive(item.href)}
+                icon={item.icon}
+                label={resolveNavLabel(t, item)}
+                onClick={onCloseMobile}
+              />
+            ))}
+          </div>
         );
       })}
 

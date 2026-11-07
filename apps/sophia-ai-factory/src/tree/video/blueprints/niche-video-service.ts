@@ -38,6 +38,7 @@ export function createNicheVideoCampaignPlan(
     productUrl,
     targetAudience,
     jurisdiction = 'GLOBAL',
+    draftMode = false,
     affiliateCode = 'sophia_partner',
     subId,
     vanityCoupon,
@@ -45,7 +46,12 @@ export function createNicheVideoCampaignPlan(
   } = input;
 
   const compliance = evaluateJurisdictionCompliance(niche, jurisdiction);
-  if (!compliance.isAllowed) {
+  const canStageAsUnassessedDraft =
+    draftMode &&
+    !compliance.isAllowed &&
+    compliance.reason === 'JURISDICTION_UNASSESSED_OR_BLOCKED';
+
+  if (!compliance.isAllowed && !canStageAsUnassessedDraft) {
     return failure({
       code: compliance.reason ?? 'JURISDICTION_BLOCKED',
       message: `Campaign rejected: ${compliance.regulatoryRef ?? 'Jurisdiction blocked by compliance law'}`,
@@ -95,6 +101,7 @@ export function createNicheVideoCampaignPlan(
     productName,
     blueprint,
     compliance,
+    requiresCeoApproval: !compliance.isAllowed || canStageAsUnassessedDraft,
     storyboard,
     prompts,
     trackedUrl,

@@ -81,6 +81,8 @@ export async function dispatchNicheVideoCampaignAction(
         subId: planInput.subId,
         vanityCoupon: planInput.vanityCoupon,
         locale: planInput.locale,
+        offerId: planInput.offerId,
+        campaignId: planInput.campaignId,
       },
     });
 
@@ -88,6 +90,7 @@ export async function dispatchNicheVideoCampaignAction(
       userId: user.id,
       planId: plan.planId,
       blueprintId: plan.blueprint.id,
+      campaignId: planInput.campaignId,
     });
 
     return {

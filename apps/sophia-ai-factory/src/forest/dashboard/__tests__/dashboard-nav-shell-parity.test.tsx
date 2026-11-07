@@ -12,6 +12,8 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { groupNavModules, SOPHIA_NAV_MODULES, TASK_NAV_GROUPS } from '../dashboard-nav-modules';
+import { getDefaultNavItems } from '@/components/stitch/layouts/dashboard/default-nav-items';
 
 const FOREST_MODULES_PATH = join(process.cwd(), 'src/forest/dashboard/dashboard-nav-modules.ts');
 const STITCH_NAV_PATH = join(
@@ -63,6 +65,17 @@ describe('dashboard navigation shell parity', () => {
     // Two sibling routes that must never be replaced by one another.
     expect(forestHrefs).toContain('/dashboard/affiliates');
     expect(stitchHrefs).toContain('/dashboard/affiliates');
+  });
+
+  it('organizes all 18 modules into task-driven groups across both shells', () => {
+    const grouped = groupNavModules(SOPHIA_NAV_MODULES);
+    expect(grouped.map((g) => g.group.id)).toEqual(TASK_NAV_GROUPS.map((g) => g.id));
+
+    const totalGroupedItems = grouped.reduce((sum, entry) => sum + entry.items.length, 0);
+    expect(totalGroupedItems).toBe(SOPHIA_NAV_MODULES.length);
+
+    const stitchItems = getDefaultNavItems((key) => key);
+    expect(stitchItems.map((item) => item.group)).toEqual(SOPHIA_NAV_MODULES.map((m) => m.group));
   });
 });
 

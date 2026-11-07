@@ -23,6 +23,10 @@ export const createNicheVideoCampaignSchema = z.object({
   subId: z.string().nullable().optional(),
   vanityCoupon: z.string().nullable().optional(),
   locale: z.enum(['en', 'vi']).optional().default('en'),
+  /** Offer this campaign was adopted from, so production stays attributable. */
+  offerId: z.string().optional(),
+  /** Campaign record the customer is continuing, resolved server-side downstream. */
+  campaignId: z.string().optional(),
 });
 
 export type CreateNicheVideoCampaignActionInput = z.input<typeof createNicheVideoCampaignSchema>;

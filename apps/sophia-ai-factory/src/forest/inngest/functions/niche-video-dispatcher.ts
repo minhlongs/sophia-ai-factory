@@ -46,6 +46,7 @@ export const nicheVideoDispatcher = inngest.createFunction(
         productUrl: data.productUrl,
         targetAudience: data.targetAudience,
         jurisdiction: data.jurisdiction,
+        draftMode: data.draftMode,
         affiliateCode: data.affiliateCode,
         subId: data.subId,
         vanityCoupon: data.vanityCoupon,
@@ -96,6 +97,21 @@ export const nicheVideoDispatcher = inngest.createFunction(
     const script = await step.run('synthesize-script', async () => {
       return synthesizeNicheScript(plan);
     });
+
+    // Draft-First + CEO Approval Gate: if jurisdiction is unassessed (e.g. 'GLOBAL' on crypto),
+    // stage the synthesized script as a draft awaiting explicit CEO jurisdiction selection & approval
+    // BEFORE spending ElevenLabs voiceover or video render budget.
+    if (plan.requiresCeoApproval || !plan.compliance.isAllowed) {
+      return {
+        status: 'DRAFT_PENDING_CEO_APPROVAL',
+        summary: {
+          ...stageSummary,
+          requiresCeoApproval: true,
+        },
+        plan,
+        script,
+      };
+    }
 
     // Step 4: Generate voiceover audio track via ElevenLabs BYOK
     const voiceover = await step.run('generate-voiceover', async () => {

@@ -26,10 +26,15 @@ export interface CreateNicheVideoCampaignInput {
   productUrl: string;
   targetAudience?: string;
   jurisdiction?: string;
+  draftMode?: boolean;
   affiliateCode?: string;
   subId?: string | null;
   vanityCoupon?: string | null;
   locale?: 'en' | 'vi';
+  /** Affiliate offer this campaign was adopted from, kept for attribution. */
+  offerId?: string;
+  /** Campaign the customer is continuing, kept for attribution. */
+  campaignId?: string;
 }
 
 export interface NicheVideoCampaignPlan {
@@ -37,6 +42,7 @@ export interface NicheVideoCampaignPlan {
   productName: string;
   blueprint: VideoBlueprint;
   compliance: ComplianceGuardResult;
+  requiresCeoApproval?: boolean;
   storyboard: StoryboardPlan;
   prompts: ScriptPromptPair;
   trackedUrl: string;

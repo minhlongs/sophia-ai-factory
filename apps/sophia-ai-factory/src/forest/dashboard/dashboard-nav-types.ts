@@ -1,11 +1,21 @@
 import type { LucideIcon } from "lucide-react";
 
+export type DashboardNavGroup =
+  | "today"
+  | "offers"
+  | "campaigns"
+  | "approvals"
+  | "results"
+  | "connections"
+  | "advanced";
+
 export interface DashboardNavModule {
   id: string;
   labelKey: string;
   fallbackLabel: string;
   href: string;
   icon: LucideIcon;
+  group: DashboardNavGroup;
   badge?: string;
 }
 

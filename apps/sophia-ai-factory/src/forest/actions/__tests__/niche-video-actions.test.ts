@@ -136,5 +136,46 @@ describe('Niche Video Server Actions', () => {
         }),
       );
     });
+
+    it('carries the adopted offer and campaign identity into the job event', async () => {
+      const payload: CreateNicheVideoCampaignActionInput = {
+        niche: 'saas_global',
+        blueprintId: 'saas_problem_agitation_solution',
+        productName: 'Linear App',
+        productUrl: 'https://linear.app',
+        offerId: 'semrush',
+        campaignId: 'camp_abc123',
+      };
+
+      const result = await dispatchNicheVideoCampaignAction(payload);
+      expect(result.success).toBe(true);
+
+      expect(inngest.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'niche.video.campaign.requested',
+          data: expect.objectContaining({
+            offerId: 'semrush',
+            campaignId: 'camp_abc123',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('draft preparation has no production side effect', () => {
+    it('previewNicheVideoPlanAction never dispatches a job', async () => {
+      const payload: CreateNicheVideoCampaignActionInput = {
+        niche: 'saas_global',
+        blueprintId: 'saas_problem_agitation_solution',
+        productName: 'FlowCraft AI',
+        productUrl: 'https://flowcraft.ai',
+        offerId: 'semrush',
+        campaignId: 'camp_abc123',
+      };
+
+      const result = await previewNicheVideoPlanAction(payload);
+      expect(result.success).toBe(true);
+      expect(inngest.send).not.toHaveBeenCalled();
+    });
   });
 });

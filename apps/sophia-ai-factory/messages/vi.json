@@ -1137,13 +1137,23 @@
       "runbooks": "Sổ Tay CEO",
       "create_mission": "Tạo Nhiệm Vụ",
       "youtube_automation": "Tự Động Hóa YouTube",
-      "affiliate": "Trung Tâm Affiliate",
+      "affiliate": "Giới Thiệu Sophia",
       "publish_queue": "Hàng Đợi Xuất Bản",
       "marketplace": "Chợ Sáng Tạo",
       "system_health": "Sức Khỏe Hệ Thống",
       "affiliates": "Doanh Nghiệp Affiliate Của Tôi",
       "approvals": "Cần Duyệt",
-      "niche_studio": "Studio Ngách"
+      "niche_studio": "Studio Ngách",
+      "image_studio": "Xưởng Ảnh",
+      "groups": {
+        "today": "Hôm Nay",
+        "offers": "Sản Phẩm",
+        "campaigns": "Chiến Dịch",
+        "approvals": "Duyệt Bài",
+        "results": "Kết Quả",
+        "connections": "Kết Nối",
+        "advanced": "Nâng Cao"
+      }
     },
     "notFound": {
       "title": "Không tìm thấy trang",
