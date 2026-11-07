@@ -78,7 +78,7 @@ export function StepBranding({
                 </div>
                 <div
                   className="px-2 py-0.5 rounded text-[10px] font-medium"
-                  style={{ backgroundColor: branding.accentColor || '#10b981', color: '#ffffff' }}
+                  style={{ backgroundColor: branding.accentColor || 'var(--success)', color: '#ffffff' }}
                 >
                   {isVi ? 'Cổng Khách' : 'Portal'}
                 </div>
@@ -92,7 +92,7 @@ export function StepBranding({
                 <div className="flex justify-end gap-2">
                   <div
                     className="px-3 py-1 rounded text-xs font-medium text-white shadow-sm"
-                    style={{ backgroundColor: branding.accentColor || '#10b981' }}
+                    style={{ backgroundColor: branding.accentColor || 'var(--success)' }}
                   >
                     {isVi ? 'Phê Duyệt Video' : 'Approve Draft'}
                   </div>

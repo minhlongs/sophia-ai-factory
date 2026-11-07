@@ -58,13 +58,13 @@ export function StepBrandingFormControls({
           <div className="flex items-center gap-2">
             <input
               type="color"
-              value={branding.accentColor || '#10b981'}
+              value={branding.accentColor || '#10B981'}
               onChange={(e) => setBranding((prev) => ({ ...prev, accentColor: e.target.value }))}
               className="w-9 h-9 p-0.5 rounded border border-border cursor-pointer bg-background"
             />
             <input
               type="text"
-              value={branding.accentColor || '#10b981'}
+              value={branding.accentColor || '#10B981'}
               onChange={(e) => setBranding((prev) => ({ ...prev, accentColor: e.target.value }))}
               className="w-full px-2.5 py-1.5 font-mono text-xs bg-background border border-input rounded text-foreground"
             />

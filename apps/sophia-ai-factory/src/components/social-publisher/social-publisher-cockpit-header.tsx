@@ -11,7 +11,7 @@ export function SocialPublisherCockpitHeader() {
           <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#4F46E5]/10 text-[#4F46E5] border border-[#4F46E5]/20 uppercase">
             Direct Publisher
           </span>
-          <span className="flex items-center gap-1 text-[11px] text-[#10B981] font-semibold">
+          <span className="flex items-center gap-1 text-[11px] text-success font-semibold">
             <Zap className="w-3 h-3" /> Pacing Engine Active
           </span>
         </div>

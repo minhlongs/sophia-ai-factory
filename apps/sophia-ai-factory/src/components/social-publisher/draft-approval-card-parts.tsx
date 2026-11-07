@@ -52,7 +52,7 @@ export function DraftApproveButton({
       disabled={approving || approved}
       className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all ${
         approved
-          ? 'bg-[#10B981] text-white cursor-default'
+          ? 'bg-success text-white cursor-default'
           : 'bg-[#4F46E5] hover:bg-[#4338CA] text-white disabled:opacity-50'
       }`}
     >

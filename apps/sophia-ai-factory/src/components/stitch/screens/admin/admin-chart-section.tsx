@@ -30,8 +30,8 @@ export function AdminChartSection({ growthRate = '0.0%' }: AdminChartSectionProp
         >
           <defs>
             <linearGradient id={CHART_GRADIENT_ID} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path
@@ -41,7 +41,7 @@ export function AdminChartSection({ growthRate = '0.0%' }: AdminChartSectionProp
           <path
             d="M0,180 Q80,160 160,170 T320,130 T480,100 T640,60 T800,20"
             fill="none"
-            stroke="hsl(var(--primary))"
+            stroke="var(--primary)"
             strokeWidth="3"
           />
         </svg>

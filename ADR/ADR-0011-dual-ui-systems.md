@@ -48,13 +48,15 @@ Record the split instead of merging it now.
   the ratchet prevents growth.
 - The `(app)` route tree stays outside the layer-boundary checker. Closing that gap is a separate
   decision about whether `src/components/stitch` should move into the four layers at all.
-- Token storage stays HSL-triplet for now. Triplet rounding shifts each token 1–6 units from its
-  intended hex (`--primary` renders `#6467F2`, not `#6366F1`), which makes hex→token mapping lossy.
-  Converting tokens to exact hex values is a separate, repo-wide color change.
+- Tokens are stored as exact hex as of the follow-up conversion. HSL triplets rounded every color
+  1–6 units away from its intended value, so the declared token could not be compared to a literal
+  without arithmetic. The bridge and utilities now use `var(--token)`, and alpha variants use
+  `color-mix(...)`. Eleven tokens adopted the value their own comment documented; the rest kept their
+  previously rendered value, and `--border`/`--input` adopted the documented hairline value.
 
 ## Evidence
 
 - `src/app/**` imports `@/components/stitch/screens/*` in 34 files.
 - `src/components/stitch/screens` holds 173 `.tsx` files.
 - `src/seed/components/ui` contains 0 `#rrggbb` literals; `src/components/stitch/ui` held 30.
-- `scripts/ui-color-baseline.json` records the frozen count: **198 files, 1,099 literals**.
+- `scripts/ui-color-baseline.json` records the frozen count: **198 files, 1,080 literals**.

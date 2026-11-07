@@ -75,7 +75,7 @@ export const STITCH_SETTLEMENTS: ControlDeckDataset['settlements'] = [
 export const STITCH_TOKEN_SWATCHES: ControlDeckDataset['tokenSwatches'] = [
   { name: 'Canvas Base', cssVar: '--color-canvas-base', colorValue: '#090A10', role: { en: 'Root non-reflective dark floor', vi: 'Nền gốc tối chống mỏi mắt' } },
   { name: 'Surface Elevation 1', cssVar: '--color-surface-elev-1', colorValue: '#11131F', role: { en: 'Docked inspector racks & KPI cards', vi: 'Khung bảng điều khiển & thẻ chỉ số' } },
-  { name: 'Director Indigo', cssVar: '--primary', colorValue: 'hsl(var(--primary))', role: { en: 'Primary transport actions & playhead', vi: 'Nút điều khiển chính & con trỏ phát' } },
+  { name: 'Director Indigo', cssVar: '--primary', colorValue: 'var(--primary)', role: { en: 'Primary transport actions & playhead', vi: 'Nút điều khiển chính & con trỏ phát' } },
   { name: 'Executive Amber', cssVar: '--color-executive-amber', colorValue: '#F59E0B', role: { en: 'Revenue velocity & Half-Kelly gauges', vi: 'Tốc độ doanh thu & đồng hồ Half-Kelly' } },
   { name: 'Telemetry Emerald', cssVar: '--color-telemetry-emerald', colorValue: '#10B981', role: { en: 'Sample status & circuit health', vi: 'Trạng thái mẫu & mức an toàn' } },
 ];

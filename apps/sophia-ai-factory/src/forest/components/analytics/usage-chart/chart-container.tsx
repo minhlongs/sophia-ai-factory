@@ -48,8 +48,8 @@ export function ChartContainer({ chartData }: ChartContainerProps) {
               <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--success)" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
@@ -97,7 +97,7 @@ export function ChartContainer({ chartData }: ChartContainerProps) {
           <Area
             type="monotone"
             dataKey="tokens"
-            stroke="#10b981"
+            stroke="var(--success)"
             strokeWidth={2}
             fillOpacity={1}
             fill="url(#colorTokens)"
