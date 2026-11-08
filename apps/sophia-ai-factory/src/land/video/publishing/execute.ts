@@ -107,6 +107,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     jobId,
     job,
     tenantId: effectiveTenant,
+    requesterId: userId || effectiveTenant,
     step,
     eventTools: args.eventTools,
   });

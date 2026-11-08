@@ -11,7 +11,7 @@
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { executeAgent } from '@/tree/agent-protocol';
-import { gateKeyForWorkflow, buildReceiptPayload } from '@/tree/byok';
+import { gateKeyForWorkflow, buildReceiptPayload, type KeyGateRefusal } from '@/tree/byok';
 import { updateAgentRun, type UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
 import { initAgentRun } from '../agent-context';
 import {
@@ -21,6 +21,17 @@ import {
   markRunFailed,
 } from './step-orchestrator';
 import { prepareAgentMissionExecution } from './agent-mission-prep';
+
+const BYOK_REFUSAL_MESSAGES: Record<KeyGateRefusal['kind'], string> = {
+  key_unreadable: 'Your AI key is not verified yet. Re-save it in the Setup Wizard. / Khóa AI của bạn chưa được xác minh. Vui lòng lưu lại trong Setup Wizard.',
+  capability_missing: 'Your AI key does not support tool calls. Update it in the Setup Wizard.',
+  cooldown_active: 'Your AI key is cooling down after repeated provider errors. Try again later.',
+  budget_exhausted: 'Your AI key has used its monthly budget. Raise it in the Setup Wizard.',
+};
+
+function formatByokRefusalReason(refusal?: KeyGateRefusal): string {
+  return refusal ? BYOK_REFUSAL_MESSAGES[refusal.kind] : BYOK_REFUSAL_MESSAGES.budget_exhausted;
+}
 
 export const agentMissionExecutor = inngest.createFunction(
   {
@@ -88,14 +99,7 @@ export const agentMissionExecutor = inngest.createFunction(
 
     if (!keyGate.allowed) {
       const refusal = keyGate.refusal;
-      const reason =
-        refusal?.kind === 'key_unreadable'
-          ? 'Your AI key is not verified yet. Re-save it in the Setup Wizard. / Khóa AI của bạn chưa được xác minh. Vui lòng lưu lại trong Setup Wizard.'
-          : refusal?.kind === 'capability_missing'
-            ? 'Your AI key does not support tool calls. Update it in the Setup Wizard.'
-            : refusal?.kind === 'cooldown_active'
-              ? 'Your AI key is cooling down after repeated provider errors. Try again later.'
-              : 'Your AI key has used its monthly budget. Raise it in the Setup Wizard.';
+      const reason = formatByokRefusalReason(refusal);
       await markRunFailed(runId, reason, {
         code: 'BYOK_KEY_REFUSED',
         kind: refusal?.kind ?? 'unknown',

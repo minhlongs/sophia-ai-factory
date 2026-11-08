@@ -47,6 +47,7 @@ export interface PublishApprovalGateArgs {
   jobId: string;
   job: PublishingJob;
   tenantId: string;
+  requesterId?: string;
   step: Step;
   eventTools?: StepEventTools;
   logTag?: string;
@@ -62,7 +63,7 @@ export interface PublishApprovalGateArgs {
  * decision instead of silently skipping the gate.
  */
 export async function runPublishApprovalGate(args: PublishApprovalGateArgs): Promise<PublishApprovalGateOutcome> {
-  const { db, jobId, job, tenantId, step, eventTools, logTag = 'publishExecute' } = args;
+  const { db, jobId, job, tenantId, requesterId, step, eventTools, logTag = 'publishExecute' } = args;
 
   let videoUrl: string;
   try {
@@ -85,7 +86,7 @@ export async function runPublishApprovalGate(args: PublishApprovalGateArgs): Pro
       platform: job.provider ?? '',
       mediaRef: videoUrl,
       requestedPrivacy: job.privacy_status ?? 'public',
-      requesterId: tenantId,
+      requesterId: requesterId || tenantId,
       approvalDisabled: false,
     },
     toApprovalStepContext(step, eventTools),

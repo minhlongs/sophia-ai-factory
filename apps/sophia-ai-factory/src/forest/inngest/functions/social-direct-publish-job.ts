@@ -130,7 +130,7 @@ export async function processSocialDirectPublishJob({
   // the upload claim proved ownership and before any media leaves the worker.
   // Direct social publishes default to `public`.
   const approval = await awaitPublishApproval(
-    { tenantId: data.tenantId ?? data.userId, channelId: data.channelId, platform: data.platform, mediaRef: data.videoUrl, requestedPrivacy: 'public' },
+    { tenantId: data.tenantId ?? data.userId, channelId: data.channelId, platform: data.platform, mediaRef: data.videoUrl, requestedPrivacy: 'public', requesterId: data.userId },
     step,
   );
   if (approval.state.outcome === 'blocked' || approval.state.outcome === 'needs_approval') {
