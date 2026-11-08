@@ -69,6 +69,17 @@ describe('socialDirectPublishJob & Server Actions', () => {
   const fixtureFetch = vi.fn();
   const fixtureToken = 'fixture_access_token';
 
+  /**
+   * TikTok's creator_info preflight answer for an app that has passed audit.
+   * Every TikTok upload runs it first, so a TikTok fixture list starts here.
+   */
+  const auditedTikTokCreator = () => ({
+    ok: true,
+    json: async () => ({
+      data: { privacy_level_options: ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY'] },
+    }),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
@@ -90,6 +101,7 @@ describe('socialDirectPublishJob & Server Actions', () => {
     fixtureFetch
       .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_yt'))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_video_1' }) })
+      .mockResolvedValueOnce(auditedTikTokCreator())
       .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { publish_id: 'provider_tt_publish_1' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'SUCCESS_PUBLISH' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_ig_media_1' }) })
