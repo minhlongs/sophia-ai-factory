@@ -13,19 +13,19 @@
 
 import { getD1, type D1Database } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { success, failure, type Result } from '@/seed/types/result';
 import { computePublishIdempotencyKey } from './idempotency-key';
 import type { PublishApprovalDecision, PublishApprovalSubject, PublishLedgerRecord } from './types';
 
 export const PUBLISH_LEDGER_TABLE = 'publish_ledger';
 
-interface LedgerRow {
+export interface LedgerRow {
   idempotency_key: string;
   tenant_id: string;
   channel_id: string;
   platform: string;
   media_ref: string;
   decision: string;
+  requester_id?: string | null;
   reviewer_id: string | null;
   comment: string | null;
   approved_at: number | null;
@@ -33,7 +33,7 @@ interface LedgerRow {
   created_at: number;
 }
 
-function mapLedgerRow(row: LedgerRow): PublishLedgerRecord {
+export function mapLedgerRow(row: LedgerRow): PublishLedgerRecord {
   return {
     idempotencyKey: row.idempotency_key,
     tenantId: row.tenant_id,
@@ -41,6 +41,7 @@ function mapLedgerRow(row: LedgerRow): PublishLedgerRecord {
     platform: row.platform,
     mediaRef: row.media_ref,
     decision: row.decision as PublishApprovalDecision,
+    requesterId: row.requester_id ?? undefined,
     reviewerId: row.reviewer_id ?? undefined,
     comment: row.comment ?? undefined,
     approvedAt: row.approved_at ?? undefined,
@@ -59,6 +60,7 @@ export async function ensurePublishLedgerTable(overrideDb?: D1Database): Promise
     platform TEXT NOT NULL,
     media_ref TEXT NOT NULL,
     decision TEXT NOT NULL DEFAULT 'pending',
+    requester_id TEXT,
     reviewer_id TEXT,
     comment TEXT,
     approved_at INTEGER,
@@ -84,8 +86,10 @@ export async function getPublishLedgerRecord(
     if (!db) return null;
     const key = await computePublishIdempotencyKey(subject);
     const row = await db
-      .prepare(`SELECT * FROM ${PUBLISH_LEDGER_TABLE} WHERE idempotency_key = ?1 LIMIT 1`)
-      .bind(key)
+      .prepare(
+        `SELECT * FROM ${PUBLISH_LEDGER_TABLE} WHERE idempotency_key = ?1 AND tenant_id = ?2 LIMIT 1`,
+      )
+      .bind(key, subject.tenantId)
       .first<LedgerRow>();
     return row ? mapLedgerRow(row) : null;
   } catch (err) {
@@ -156,69 +160,4 @@ export async function listPendingPublishApprovals(
   }
 }
 
-/**
- * Atomically records a `pending` approval request. The insert is the claim: a
- * second request for the same subject loses the write and learns it is not the
- * owner, so a duplicate delivery cannot enqueue a second human decision.
- */
-export async function claimPublishApprovalRequest(
-  input: PublishApprovalSubject & { expiresAt: number },
-  overrideDb?: D1Database,
-): Promise<{ claimed: boolean; key: string }> {
-  const db = overrideDb ?? (await getD1());
-  if (!db) throw new Error('D1 database binding not available');
-  const key = await computePublishIdempotencyKey(input);
-  const now = Math.floor(Date.now() / 1000);
-  const res = await db
-    .prepare(
-      `INSERT INTO ${PUBLISH_LEDGER_TABLE}
-         (idempotency_key, tenant_id, channel_id, platform, media_ref, decision, created_at, expires_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6, ?7)
-       ON CONFLICT (idempotency_key) DO NOTHING`,
-    )
-    .bind(key, input.tenantId, input.channelId, input.platform, input.mediaRef, now, input.expiresAt)
-    .run();
-  const changes = (res as { meta?: { changes?: number } })?.meta?.changes ?? 0;
-  return { claimed: changes === 1, key };
-}
-
-/**
- * Writes the human's terminal decision. Guarded on `pending`, so a late-arriving
- * duplicate resolution cannot overwrite a decision that already landed — the
- * first reviewer's answer is the one that counts.
- */
-export async function resolvePublishApproval(
-  input: { subject: PublishApprovalSubject; decision: PublishApprovalDecision; reviewerId: string; comment?: string },
-  overrideDb?: D1Database,
-): Promise<Result<PublishLedgerRecord, { code: string; message: string }>> {
-  try {
-    const db = overrideDb ?? (await getD1());
-    if (!db) return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
-    const key = await computePublishIdempotencyKey(input.subject);
-    const now = Math.floor(Date.now() / 1000);
-    const res = await db
-      .prepare(
-        `UPDATE ${PUBLISH_LEDGER_TABLE}
-            SET decision = ?1, reviewer_id = ?2, comment = ?3, approved_at = ?4
-          WHERE idempotency_key = ?5 AND decision = 'pending'`,
-      )
-      .bind(input.decision, input.reviewerId, input.comment ?? null, input.decision === 'approved' ? now : null, key)
-      .run();
-    const changes = (res as { meta?: { changes?: number } })?.meta?.changes ?? 0;
-    if (changes === 0) {
-      return failure({ code: 'ALREADY_RESOLVED', message: 'This publish approval was already resolved' });
-    }
-    const row = await db
-      .prepare(`SELECT * FROM ${PUBLISH_LEDGER_TABLE} WHERE idempotency_key = ?1 LIMIT 1`)
-      .bind(key)
-      .first<LedgerRow>();
-    if (!row) return failure({ code: 'NOT_FOUND', message: 'Publish approval row vanished' });
-    return success(mapLedgerRow(row));
-  } catch (err) {
-    logger.error('publishLedger: resolve failed', {
-      error: err instanceof Error ? err.message : String(err),
-      platform: input.subject.platform,
-    });
-    return failure({ code: 'DB_ERROR', message: err instanceof Error ? err.message : 'Unknown DB error' });
-  }
-}
+export { claimPublishApprovalRequest, resolvePublishApproval } from './ledger-store-mutations';

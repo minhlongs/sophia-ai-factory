@@ -89,11 +89,13 @@ export const agentMissionExecutor = inngest.createFunction(
     if (!keyGate.allowed) {
       const refusal = keyGate.refusal;
       const reason =
-        refusal?.kind === 'capability_missing'
-          ? 'Your AI key does not support tool calls. Update it in the Setup Wizard.'
-          : refusal?.kind === 'cooldown_active'
-            ? 'Your AI key is cooling down after repeated provider errors. Try again later.'
-            : 'Your AI key has used its monthly budget. Raise it in the Setup Wizard.';
+        refusal?.kind === 'key_unreadable'
+          ? 'Your AI key is not verified yet. Re-save it in the Setup Wizard. / Khóa AI của bạn chưa được xác minh. Vui lòng lưu lại trong Setup Wizard.'
+          : refusal?.kind === 'capability_missing'
+            ? 'Your AI key does not support tool calls. Update it in the Setup Wizard.'
+            : refusal?.kind === 'cooldown_active'
+              ? 'Your AI key is cooling down after repeated provider errors. Try again later.'
+              : 'Your AI key has used its monthly budget. Raise it in the Setup Wizard.';
       await markRunFailed(runId, reason, {
         code: 'BYOK_KEY_REFUSED',
         kind: refusal?.kind ?? 'unknown',

@@ -85,6 +85,8 @@ export async function runPublishApprovalGate(args: PublishApprovalGateArgs): Pro
       platform: job.provider ?? '',
       mediaRef: videoUrl,
       requestedPrivacy: job.privacy_status ?? 'public',
+      requesterId: tenantId,
+      approvalDisabled: false,
     },
     toApprovalStepContext(step, eventTools),
   );

@@ -55,9 +55,8 @@ export async function GET(request: NextRequest): Promise<Response> {
     logger.error('[api/publish-approvals] GET failed', {
       error: toError(error).message,
     });
-    return NextResponse.json(
-      { error: 'Failed to list publish approvals', details: toError(error).message },
-      { status: 500 },
-    );
+    // The detail is logged, never returned: D1 error text can carry SQL
+    // fragments and table names that a probing caller has no need to see.
+    return NextResponse.json({ error: 'Failed to list publish approvals' }, { status: 500 });
   }
 }

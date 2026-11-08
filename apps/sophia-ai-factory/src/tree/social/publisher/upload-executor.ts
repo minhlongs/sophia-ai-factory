@@ -33,87 +33,24 @@ import {
   CreatorInfoUnavailableError,
 } from './tiktok-creator-info';
 
-/**
- * Circuit-breaker key. Deliberately per platform, not per channel.
- *
- * `breakerKey` is unnormalized string concatenation and `shouldAllowRequest`
- * returns `true` for an unknown key, so a per-channel key is defeated simply
- * by varying the caller-supplied `channelId`: every new channel starts with a
- * clean breaker and a source that has been visibly failing keeps being served.
- * Platform-level keying makes a provider's repeated failures accumulate no
- * matter which channel they arrived on. `channelId` stays in the logs for
- * diagnosis.
- */
+import {
+  assertOkResponse,
+  postInstagramStep,
+  postJson,
+  readString,
+  ProviderResultUnverifiableError,
+  type UploadExecutionInput,
+  type UploadExecutionResult,
+} from './upload-executor-http';
+
+export {
+  ProviderResultUnverifiableError,
+  type UploadExecutionInput,
+  type UploadExecutionResult,
+};
+
+/** Circuit-breaker key per platform so varying `channelId` cannot reset a failing provider's breaker. */
 const BREAKER_KEY = (platform: SocialPlatform) => `social_upload:${platform}`;
-
-export interface UploadExecutionInput {
-  platform: SocialPlatform;
-  accessToken: string;
-  videoUrl: string;
-  jobId: string;
-  channelId: string;
-  title: string;
-  description: string;
-  tags?: string[];
-  totalSizeBytes?: number;
-  /**
-   * Video duration in seconds, when known. Compared against the maximum
-   * duration TikTok reports for this creator, so an over-long upload is
-   * refused before the bytes are spent.
-   */
-  durationSeconds?: number;
-  /** Injectable for tests; production uses the global fetch. */
-  fetchImpl?: typeof fetch;
-}
-
-export interface UploadExecutionResult {
-  platformPostId: string;
-  publishedUrl: string;
-}
-
-/**
- * Thrown when a provider accepts a request but the response cannot yield a
- * real post id. Distinct from an HTTP failure so callers can tell "provider
- * said no" apart from "we could not finish observing the provider".
- */
-export class ProviderResultUnverifiableError extends Error {
-  constructor(
-    public readonly platform: SocialPlatform,
-    public readonly reason: string,
-  ) {
-    super(`PROVIDER_RESULT_UNVERIFIABLE: ${platform} upload could not yield a real post id (${reason}).`);
-    this.name = 'ProviderResultUnverifiableError';
-  }
-}
-
-function assertOkResponse(res: Response): void {
-  if (res.ok) return;
-  throw new Error(`HTTP_${res.status}`);
-}
-
-async function postJson(
-  url: string,
-  body: unknown,
-  headers: Record<string, string>,
-  fetchImpl: typeof fetch,
-): Promise<unknown> {
-  const res = await fetchImpl(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8', ...headers },
-    body: JSON.stringify(body),
-  });
-  assertOkResponse(res);
-  return (await res.json()) as unknown;
-}
-
-function readString(source: unknown, path: readonly string[]): string {
-  let cursor: unknown = source;
-  for (const key of path) {
-    if (typeof cursor !== 'object' || cursor === null) return '';
-    cursor = (cursor as Record<string, unknown>)[key];
-  }
-  return typeof cursor === 'string' && cursor.length > 0 ? cursor : '';
-}
 
 async function uploadToYouTube(input: UploadExecutionInput, fetchImpl: typeof fetch): Promise<UploadExecutionResult> {
   const req = buildYouTubeInitRequest({
@@ -136,44 +73,28 @@ async function uploadToYouTube(input: UploadExecutionInput, fetchImpl: typeof fe
   });
   assertOkResponse(res);
 
-  // The resumable-session URL is the provider's own handle for this upload.
   const location = res.headers.get('Location') ?? res.headers.get('location') ?? '';
   if (!location) {
     throw new ProviderResultUnverifiableError('YOUTUBE_SHORTS', 'resumable session URL absent in response headers');
   }
 
-  // The media bytes live at a public URL; hand them to the session endpoint.
   const putRes = await fetchImpl(location, {
     method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${input.accessToken}`,
-      'Content-Type': 'video/*',
-    },
+    headers: { Authorization: `Bearer ${input.accessToken}`, 'Content-Type': 'video/*' },
     body: JSON.stringify({ sourceUrl: input.videoUrl }),
   });
   assertOkResponse(putRes);
   const payload = (await putRes.json().catch(() => null)) as unknown;
-
   const videoId = readString(payload, ['id']);
-  if (!videoId) {
-    throw new ProviderResultUnverifiableError('YOUTUBE_SHORTS', 'no id in provider response');
-  }
+  if (!videoId) throw new ProviderResultUnverifiableError('YOUTUBE_SHORTS', 'no id in provider response');
   return { platformPostId: videoId, publishedUrl: `https://www.youtube.com/shorts/${videoId}` };
 }
 
 async function uploadToTikTok(input: UploadExecutionInput, fetchImpl: typeof fetch): Promise<UploadExecutionResult> {
-  // TikTok answers an unaudited publish with HTTP 200 and a SELF_ONLY post, so
-  // the only way to know what this creator may actually do is to ask first.
+  // Query creator_info first because TikTok answers an unaudited publish with HTTP 200 + SELF_ONLY.
   const capabilities = await fetchTikTokCreatorInfo(input.accessToken, fetchImpl);
-
-  const plan = resolveTikTokPublishPlan({
-    capabilities,
-    requested: 'public',
-    onUnavailable: 'downgrade',
-  });
-  if (plan.downgraded) {
-    logPublishDowngrade({ channelId: input.channelId, jobId: input.jobId, plan });
-  }
+  const plan = resolveTikTokPublishPlan({ capabilities, requested: 'public', onUnavailable: 'downgrade' });
+  if (plan.downgraded) logPublishDowngrade({ channelId: input.channelId, jobId: input.jobId, plan });
 
   if (input.durationSeconds !== undefined && !isDurationAllowed(capabilities, input.durationSeconds)) {
     throw new CreatorInfoUnavailableError(
@@ -192,9 +113,7 @@ async function uploadToTikTok(input: UploadExecutionInput, fetchImpl: typeof fet
 
   const payload = await postJson(req.endpoint, req.body, { Authorization: `Bearer ${input.accessToken}` }, fetchImpl);
   const publishId = readString(payload, ['data', 'publish_id']);
-  if (!publishId) {
-    throw new ProviderResultUnverifiableError('TIKTOK_V2', 'no publish_id in provider response');
-  }
+  if (!publishId) throw new ProviderResultUnverifiableError('TIKTOK_V2', 'no publish_id in provider response');
 
   const poll = buildTikTokStatusPollingRequest(publishId);
   const statusPayload = await postJson(poll.endpoint, poll.body, { Authorization: `Bearer ${input.accessToken}` }, fetchImpl);
@@ -216,36 +135,21 @@ async function uploadToInstagram(input: UploadExecutionInput, fetchImpl: typeof 
     videoUrl: input.videoUrl,
     caption: input.description || input.title,
   });
-  const containerPayload = await postJson(
+  const creationId = await postInstagramStep(
     container.endpoint,
     container.body,
-    { Authorization: `Bearer ${input.accessToken}` },
+    input.accessToken,
     fetchImpl,
+    'no container creation id in provider response',
   );
-
-  const creationId = readString(containerPayload, ['id']);
-  if (!creationId) {
-    throw new ProviderResultUnverifiableError('INSTAGRAM_REELS', 'no container creation id in provider response');
-  }
-
   const publish = buildInstagramPublishRequest(input.channelId, creationId);
-  const publishPayload = await postJson(
+  const mediaId = await postInstagramStep(
     publish.endpoint,
     publish.body,
-    { Authorization: `Bearer ${input.accessToken}` },
+    input.accessToken,
     fetchImpl,
+    'no published media id in provider response; the container id is not a live reel',
   );
-
-  // The container id is NOT a published media id: it is the handle the
-  // container was created with, and a reel URL built from it points at an
-  // unpublished container. Only an id from the publish response counts.
-  const mediaId = readString(publishPayload, ['id']);
-  if (!mediaId) {
-    throw new ProviderResultUnverifiableError(
-      'INSTAGRAM_REELS',
-      'no published media id in provider response; the container id is not a live reel',
-    );
-  }
   return { platformPostId: mediaId, publishedUrl: `https://www.instagram.com/reel/${mediaId}/` };
 }
 

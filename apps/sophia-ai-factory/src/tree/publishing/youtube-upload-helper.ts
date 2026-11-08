@@ -2,6 +2,7 @@ import { shouldAllowRequest, recordFailure } from '@/seed/security/circuit-break
 import { classifyError } from '@/seed/types/failure-kind';
 import type { PublishParams, PublishResult } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
+import { resolveSyntheticMediaDisclosure } from './synthetic-media-disclosure';
 
 const YT_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 
@@ -13,6 +14,19 @@ export async function uploadYoutubeVideo(
     throw new Error('[youtube-adapter] Circuit breaker open for youtube');
   }
   try {
+    // YouTube withholds monetization when `containsSyntheticMedia` is missing,
+    // and an unresolved provenance claim is a strike risk rather than a
+    // warning, so the disclosure is decided here rather than by the caller.
+    const disclosure = resolveSyntheticMediaDisclosure({
+      provenance: params.provenance,
+      defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
+    });
+    if (disclosure.blocked) {
+      throw new Error(
+        `PROVENANCE_BLOCKED: ${disclosure.blockedReason} (${disclosure.blockedReasonVi})`,
+      );
+    }
+
     const metadata = {
       snippet: {
         title: params.title,
@@ -24,6 +38,7 @@ export async function uploadYoutubeVideo(
         privacyStatus: params.privacy ?? 'private',
         publishAt: params.scheduledAt ?? undefined,
         selfDeclaredMadeForKids: false,
+        containsSyntheticMedia: disclosure.containsSyntheticMedia,
       },
     };
 

@@ -57,24 +57,38 @@ function parseCapabilityMask(raw: string | null | undefined): KeyCapability[] | 
   return parsed.length > 0 ? parsed : undefined;
 }
 
-/** Reads the stored policy columns for one user+provider, or a safe default. */
-async function readKeyPolicyRow(userId: string, provider: string): Promise<KeyPolicyRow | null> {
+/**
+ * Outcome of the policy read. A missing row is distinct from a failed read: the
+ * caller can resolve a key row through the BYOK provider factory before the run
+ * starts, so a missing row means the resolved key was never written with a
+ * policy and the gate must refuse rather than fall back to the provider table,
+ * which would happily satisfy every capability requirement.
+ */
+export type KeyPolicyReadOutcome =
+  | { readonly status: 'found'; readonly row: KeyPolicyRow }
+  | { readonly status: 'absent' }
+  | { readonly status: 'unreadable' };
+
+/** Reads the stored policy columns for one user+provider. */
+async function readKeyPolicyRow(userId: string, provider: string): Promise<KeyPolicyReadOutcome> {
+  let db: Awaited<ReturnType<typeof getD1>>;
   try {
-    const db = await getD1();
-    if (!db) return null;
-    return await db
+    db = await getD1();
+    if (!db) return { status: 'unreadable' };
+    const row = await db
       .prepare(
         `SELECT capability_mask, monthly_budget_usd, cooldown_until
          FROM user_api_keys WHERE user_id = ? AND provider = ? LIMIT 1`,
       )
       .bind(userId, provider)
       .first<KeyPolicyRow>();
+    return row ? { status: 'found', row } : { status: 'absent' };
   } catch (err) {
     logger.debug('[receipt-payload] policy read unavailable', {
       provider,
       error: getErrorMessage(err),
     });
-    return null;
+    return { status: 'unreadable' };
   }
 }
 
@@ -91,6 +105,13 @@ function rowToBudgetState(row: KeyPolicyRow | null): KeyBudgetState {
  * Produces the receipt payload for a validated key. The receipt is returned
  * alongside it so a caller that needs the full verdict can act on it without
  * re-deriving the same data.
+ *
+ * A read that fails stays fail-open: the payload reports capabilities from the
+ * provider table and no cap, because a transport failure must not read as an
+ * exhausted budget and needlessly block a working key. A key that was never
+ * written with a policy row is the one case that refuses — treating it as
+ * unlimited would let a run proceed with no cap, no cooldown and no capability
+ * probe at all.
  */
 export async function buildReceiptPayload(args: {
   userId: string;
@@ -98,12 +119,14 @@ export async function buildReceiptPayload(args: {
   maskedKey: string;
   nowUnix: number;
 }): Promise<{ payload: ReceiptPayload; receipt: ValidationReceipt }> {
-  const row = await readKeyPolicyRow(args.userId, args.provider);
+  const read = await readKeyPolicyRow(args.userId, args.provider);
+  const row = read.status === 'found' ? read.row : null;
   const receipt = buildValidationReceipt({
     provider: args.provider,
     maskedKey: args.maskedKey,
     probedCapabilities: parseCapabilityMask(row?.capability_mask),
     budget: rowToBudgetState(row),
+    policyStatus: read.status,
     nowUnix: args.nowUnix,
   });
   return {

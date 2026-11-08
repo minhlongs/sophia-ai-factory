@@ -108,13 +108,27 @@ describe('canonicalizePublishSubject', () => {
     mediaRef: 'r2://bucket/clip-1.mp4',
   };
 
-  it('normalizes case and surrounding whitespace so a retry maps to the same key', () => {
+  it('trims surrounding whitespace and folds platform case so a retry maps to the same key', () => {
     expect(canonicalizePublishSubject(base)).toBe(canonicalizePublishSubject({
       ...base,
-      tenantId: '  ORG_1 ',
-      channelId: 'CHAN_1',
+      tenantId: '  org_1 ',
+      channelId: ' chan_1 ',
       platform: ' YouTube ',
-      mediaRef: 'R2://BUCKET/CLIP-1.MP4',
+      mediaRef: ' r2://bucket/clip-1.mp4 ',
+    }));
+  });
+
+  // Two workspaces whose ids differ only in case are two distinct tenants;
+  // folding case on identifiers would let one tenant's decision release or
+  // block the other's pending publish.
+  it('preserves case on tenantId, channelId, and mediaRef so case-distinct tenants never collide', () => {
+    expect(canonicalizePublishSubject(base)).not.toBe(canonicalizePublishSubject({
+      ...base,
+      tenantId: 'ORG_1',
+    }));
+    expect(canonicalizePublishSubject(base)).not.toBe(canonicalizePublishSubject({
+      ...base,
+      mediaRef: 'r2://bucket/CLIP-1.mp4',
     }));
   });
 

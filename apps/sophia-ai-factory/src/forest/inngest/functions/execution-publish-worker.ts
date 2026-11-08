@@ -26,6 +26,7 @@ import {
   type Step,
 } from '@/land/video/publishing/execute';
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
+import type { PublishApprovalStep } from '@/tree/publishing/approval';
 
 export type PublishExecutorFn = (args: ExecutePublishWorkflowArgs) => Promise<ClaimResult>;
 
@@ -109,6 +110,12 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
         userId: gate.userId,
         alreadyClaimed: true,
         step: publishStep,
+        // The job this worker creates is 'unlisted', which the approval gate
+        // treats as a public intent, so the gate needs to emit and wait.
+        // Handing it a step that only runs and sleeps makes every publish from
+        // this worker throw instead of publishing, so the runtime's own event
+        // tools are passed through exactly as publish-execute does.
+        eventTools: step as unknown as PublishApprovalStep,
         scheduleRetry: async () => {},
         refreshToken: refreshChannelToken,
       });

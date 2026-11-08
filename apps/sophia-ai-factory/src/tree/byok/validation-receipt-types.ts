@@ -49,6 +49,8 @@ export type BudgetVerdict =
   | { readonly outcome: 'budget_exhausted'; readonly remainingUsd: number }
   | { readonly outcome: 'cooldown_active'; readonly resumesAtUnix: number };
 
+export type KeyPolicyStatus = 'found' | 'absent' | 'unreadable';
+
 /**
  * The receipt a validation pass leaves behind: what the provider proved, what
  * the key can do, and what may be spent with it.
@@ -61,6 +63,8 @@ export interface ValidationReceipt {
   readonly capabilities: readonly KeyCapability[];
   readonly budget: KeyBudgetState;
   readonly verdict: BudgetVerdict;
+  /** Whether the key's stored policy row was found, absent, or unreadable. */
+  readonly policyStatus?: KeyPolicyStatus;
 }
 
 /** Capabilities each provider is known to serve, absent a live capability probe. */

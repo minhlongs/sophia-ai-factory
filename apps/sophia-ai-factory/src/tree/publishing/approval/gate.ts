@@ -31,6 +31,8 @@ export const PUBLISH_APPROVAL_TIMEOUT_MS = 72 * 60 * 60 * 1000;
 export interface PublishApprovalGateInput extends PublishApprovalSubject {
   readonly requestedPrivacy?: string;
   readonly approvalDisabled?: boolean;
+  /** Who triggered the publish, recorded so a reviewer can see whether they are approving their own work. */
+  readonly requesterId?: string;
   /** Injectable clock in epoch seconds, matching the ledger's stored unit. */
   readonly nowSeconds?: () => number;
   /** Retry attempt index, which keeps step ids unique across retries. */

@@ -16,11 +16,13 @@ import {
   budgetVerdictMessage,
   PROVIDER_CAPABILITIES,
   type KeyBudgetState,
+  type KeyPolicyStatus,
   type ValidationReceipt,
   type WorkflowCapabilityRequirement,
 } from '@/tree/byok/validation-receipt-types';
 
 export type KeyGateRefusal =
+  | { readonly kind: 'key_unreadable' }
   | { readonly kind: 'capability_missing'; readonly requirement: WorkflowCapabilityRequirement }
   | { readonly kind: 'budget_exhausted' }
   | { readonly kind: 'cooldown_active'; readonly resumesAtUnix: number };
@@ -43,6 +45,7 @@ export function buildValidationReceipt(args: {
   maskedKey: string;
   probedCapabilities?: readonly string[];
   budget: KeyBudgetState;
+  policyStatus?: KeyPolicyStatus;
   nowUnix: number;
 }): ValidationReceipt {
   const probed = args.probedCapabilities as
@@ -56,19 +59,26 @@ export function buildValidationReceipt(args: {
     capabilities,
     budget: args.budget,
     verdict: evaluateBudget(args.budget, args.nowUnix),
+    policyStatus: args.policyStatus,
   };
 }
 
 /**
  * Decides whether a key may be used for a workflow's model call. Both a missing
  * capability and an exhausted budget refuse, because either one fails the run
- * in the same way after the same sunk cost.
+ * in the same way after the same sunk cost. When `policyStatus === 'absent'`,
+ * the caller resolved a key whose policy row is missing in D1, so the gate
+ * refuses rather than falling back to the provider capability table with an
+ * unlimited budget.
  */
 export function evaluateKeyForWorkflow(
   receipt: ValidationReceipt,
   requirement: WorkflowCapabilityRequirement,
   nowUnix: number,
 ): KeyGateDecision {
+  if (receipt.policyStatus === 'absent') {
+    return { allowed: false, refusal: { kind: 'key_unreadable' } };
+  }
   if (!capabilitiesSatisfy(receipt.capabilities, requirement)) {
     return { allowed: false, refusal: { kind: 'capability_missing', requirement } };
   }
@@ -103,6 +113,13 @@ export function gateKeyForWorkflow(args: {
   }
   const refusal = decision.refusal;
   if (!refusal) {
+    return decision;
+  }
+  if (refusal.kind === 'key_unreadable') {
+    logger.warn(`[${args.logTag}] BYOK key refused: policy row absent`, {
+      userId: args.userId,
+      provider: args.provider,
+    });
     return decision;
   }
   if (refusal.kind === 'capability_missing') {

@@ -63,6 +63,7 @@ type LedgerRow = {
   platform: string;
   mediaRef: string;
   decision: 'pending' | 'approved' | 'rejected';
+  requesterId?: string;
   createdAt: number;
   expiresAt: number;
 };
@@ -255,5 +256,26 @@ describe('PATCH /api/publish-approvals/[id] — resolve', () => {
 
     expect(res.status).toBe(400);
     expect(resolveAndAnnouncePublishApproval).not.toHaveBeenCalled();
+  });
+
+  it('flags selfApproval when the sole admin resolves a publish they requested themselves', async () => {
+    vi.mocked(getPublishLedgerRecordByKey).mockResolvedValue(
+      pendingRow({ requesterId: 'user_test_001' }),
+    );
+    mockDbFirst.mockResolvedValue({ role: 'admin' });
+    vi.mocked(resolveAndAnnouncePublishApproval).mockResolvedValue({
+      resolved: true,
+      alreadyResolved: false,
+    });
+
+    const res = await PATCH(
+      makePatchReq('key_pending_001', { approved: true }),
+      { params: Promise.resolve({ id: 'key_pending_001' }) },
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { resolved: boolean; selfApproval: boolean };
+    expect(data.resolved).toBe(true);
+    expect(data.selfApproval).toBe(true);
   });
 });

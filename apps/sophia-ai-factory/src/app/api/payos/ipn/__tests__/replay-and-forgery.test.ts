@@ -11,45 +11,32 @@
  * @module app/api/payos/ipn/__tests__/replay-and-forgery
  */
 
-process.env.PAYOS_CHECKSUM_KEY = 'integration-checksum-key'
+const TEST_CHECKSUM_KEY = 'integration-checksum-key'
+process.env.PAYOS_CHECKSUM_KEY = TEST_CHECKSUM_KEY
 
+import { createHmac } from 'node:crypto'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import {
+  payOsCanonicalize,
+  payOsIpnSchema,
+  verifyPayOsWebhook,
+} from '@/land/payments/payos-gateway'
 
 /** event_id -> row mirroring the payos_events table. */
 const eventRows = new Map<string, { processed: number; amount: number; status: string }>()
 /** order_id -> tier, mirroring pending_orders. */
 const pendingOrderRows = new Map<string, { tier: string; invoice_url: string; user_id: string }>()
 
-let signatureVerification: 'accept' | 'reject' = 'accept'
-let schemaParsing: 'accept' | 'reject' = 'accept'
 const subscriptionCommits: Array<{ tier: string; orderId: string }> = []
 
 vi.mock('@/land/payments/payos', () => ({
   FEATURE_PAYOS: true,
-  verifyPayOsWebhook: vi.fn(async () => signatureVerification === 'accept'),
+  verifyPayOsWebhook: vi.fn((rawBody: string, signature: string, checksumKey: string) =>
+    verifyPayOsWebhook(rawBody, signature, checksumKey),
+  ),
   getPayOsTierConfig: vi.fn(() => ({ tier: 'BASIC', vndAmount: 4975000, usdAmount: 199 })),
-  payOsIpnSchema: {
-    safeParse: vi.fn((body: Record<string, unknown>) => {
-      if (schemaParsing === 'reject') {
-        return { success: false, error: { flatten: () => ({}) } }
-      }
-      const data = body.data as Record<string, unknown> | undefined
-      return {
-        success: true,
-        data: {
-          success: body.success !== false,
-          signature: 'any-signature',
-          data: {
-            orderCode: data?.orderCode ?? 0,
-            amount: data?.amount ?? 0,
-            description: data?.description ?? 'Sophia BASIC - monthly',
-            paymentLinkId: data?.paymentLinkId ?? '',
-          },
-        },
-      }
-    }),
-  },
+  payOsIpnSchema,
 }))
 
 vi.mock('@/seed/auth/workspace-access', () => ({
@@ -201,7 +188,20 @@ const { POST } = await import('../route')
 const ORDER_CODE = 778899
 const PAYMENT_LINK = 'link_integration_778899'
 
-function makeDelivery(options: { success?: boolean; staleAgeSeconds?: number } = {}): NextRequest {
+function signPayOsData(data: Record<string, unknown>, key = TEST_CHECKSUM_KEY): string {
+  const canonical = payOsCanonicalize(JSON.stringify({ data }))
+  return createHmac('sha256', key).update(canonical).digest('hex')
+}
+
+function makeDelivery(
+  options: {
+    success?: boolean
+    staleAgeSeconds?: number
+    signatureOverride?: string
+    rawBodyOverride?: string
+    tamperAmountAfterSign?: number
+  } = {},
+): NextRequest {
   const data: Record<string, unknown> = {
     orderCode: ORDER_CODE,
     amount: 4975000,
@@ -213,10 +213,23 @@ function makeDelivery(options: { success?: boolean; staleAgeSeconds?: number } =
   if (options.staleAgeSeconds !== undefined) {
     data.timestamp = Math.floor(Date.now() / 1000) - options.staleAgeSeconds
   }
+  const signature = options.signatureOverride ?? signPayOsData(data)
+  if (options.tamperAmountAfterSign !== undefined) {
+    data.amount = options.tamperAmountAfterSign
+  }
+  const body =
+    options.rawBodyOverride ??
+    JSON.stringify({
+      code: '00',
+      desc: 'success',
+      success: options.success ?? true,
+      data,
+      signature,
+    })
   return new NextRequest('http://localhost/api/payos/ipn', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: '00', desc: 'success', success: options.success ?? true, data, signature: 'sig' }),
+    body,
   })
 }
 
@@ -225,8 +238,6 @@ describe('POST /api/payos/ipn — duplicate delivery', () => {
     eventRows.clear()
     pendingOrderRows.clear()
     subscriptionCommits.length = 0
-    signatureVerification = 'accept'
-    schemaParsing = 'accept'
     vi.clearAllMocks()
     pendingOrderRows.set('sophia_ceo_778899', {
       tier: 'BASIC',
@@ -288,8 +299,6 @@ describe('POST /api/payos/ipn — forged and tampered signatures', () => {
     eventRows.clear()
     pendingOrderRows.clear()
     subscriptionCommits.length = 0
-    signatureVerification = 'accept'
-    schemaParsing = 'accept'
     vi.clearAllMocks()
     pendingOrderRows.set('sophia_ceo_778899', {
       tier: 'BASIC',
@@ -298,29 +307,52 @@ describe('POST /api/payos/ipn — forged and tampered signatures', () => {
     })
   })
 
-  it('rejects a forged signature with 401 and activates nothing', async () => {
-    signatureVerification = 'reject'
+  it('rejects a forged signature with 401 while accepting the real HMAC-SHA256 vector', async () => {
+    const forgedSig = signPayOsData(
+      {
+        orderCode: ORDER_CODE,
+        amount: 4975000,
+        description: 'Sophia BASIC - monthly',
+        paymentLinkId: PAYMENT_LINK,
+        code: '00',
+        desc: 'success',
+      },
+      'wrong-attacker-key',
+    )
 
-    const res = await POST(makeDelivery())
-    expect(res.status).toBe(401)
-    expect(await res.json()).toMatchObject({ error: 'Invalid signature' })
+    const forgedRes = await POST(makeDelivery({ signatureOverride: forgedSig }))
+    expect(forgedRes.status).toBe(401)
+    expect(await forgedRes.json()).toMatchObject({ error: 'Invalid signature' })
     expect(eventRows.size).toBe(0)
     expect(subscriptionCommits).toHaveLength(0)
+
+    const tamperedRes = await POST(makeDelivery({ tamperAmountAfterSign: 1000 }))
+    expect(tamperedRes.status).toBe(401)
+    expect(eventRows.size).toBe(0)
+
+    const validRes = await POST(makeDelivery())
+    expect(validRes.status).toBe(200)
+    expect(await validRes.json()).toMatchObject({ received: true })
+    expect(eventRows.get(`payos_${ORDER_CODE}`)?.processed).toBe(1)
   })
 
   it('rejects a malformed payload with 400 before the lock is taken', async () => {
-    schemaParsing = 'reject'
-
-    const res = await POST(makeDelivery())
+    const res = await POST(
+      makeDelivery({
+        rawBodyOverride: JSON.stringify({ code: '00', desc: 'bad', success: true, data: {} }),
+      }),
+    )
     expect(res.status).toBe(400)
     expect(eventRows.size).toBe(0)
     expect(subscriptionCommits).toHaveLength(0)
   })
 
   it('keeps rejecting a forged signature across repeated retries', async () => {
-    signatureVerification = 'reject'
+    const forgedHex = 'deadbeef'.repeat(8)
 
-    const responses = await Promise.all(Array.from({ length: 10 }, () => POST(makeDelivery())))
+    const responses = await Promise.all(
+      Array.from({ length: 10 }, () => POST(makeDelivery({ signatureOverride: forgedHex }))),
+    )
     for (const res of responses) {
       expect(res.status).toBe(401)
     }

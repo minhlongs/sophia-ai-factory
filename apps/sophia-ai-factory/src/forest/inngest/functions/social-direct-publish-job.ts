@@ -126,29 +126,16 @@ export async function processSocialDirectPublishJob({
     return { status: 'SKIPPED_CLAIM_LOST', jobId: data.jobId, reason: 'ALREADY_UPLOADED' };
   }
 
-  // Step 3c: A publish to a public channel is irreversible, so a human decides
-  // it here — after the upload claim proved this delivery owns the job, and
-  // before any media leaves the worker. Runs after the claim precisely so a
-  // duplicate delivery only ever produces one approval request.
-  // Direct social publishes carry no privacy field; `publishing_jobs.privacy_status`
-  // defaults to `public`, and neither dispatcher overrides it, so a direct
-  // publish is treated as public rather than reading the absence as "private".
+  // Step 3c: A public publish is irreversible, so a human decides here — after
+  // the upload claim proved ownership and before any media leaves the worker.
+  // Direct social publishes default to `public`.
   const approval = await awaitPublishApproval(
-    {
-      tenantId: data.tenantId ?? data.userId,
-      channelId: data.channelId,
-      platform: data.platform,
-      mediaRef: data.videoUrl,
-      requestedPrivacy: 'public',
-    },
+    { tenantId: data.tenantId ?? data.userId, channelId: data.channelId, platform: data.platform, mediaRef: data.videoUrl, requestedPrivacy: 'public' },
     step,
   );
-  if (approval.state.outcome === 'blocked') {
-    await updatePublishJobStatus(data.jobId, 'FAILED', { error: approval.state.reason });
-    return { status: 'AWAITING_APPROVAL', jobId: data.jobId, reason: approval.state.reason };
-  }
-  if (approval.state.outcome === 'needs_approval') {
-    await updatePublishJobStatus(data.jobId, 'AWAITING_APPROVAL', { error: approval.state.reason });
+  if (approval.state.outcome === 'blocked' || approval.state.outcome === 'needs_approval') {
+    const nextStatus = approval.state.outcome === 'blocked' ? 'FAILED' : 'AWAITING_APPROVAL';
+    await updatePublishJobStatus(data.jobId, nextStatus, { error: approval.state.reason });
     return { status: 'AWAITING_APPROVAL', jobId: data.jobId, reason: approval.state.reason };
   }
 

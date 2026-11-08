@@ -190,6 +190,22 @@ describe('evaluateKeyForWorkflow', () => {
     );
     expect(d.refusal?.kind).toBe('capability_missing');
   });
+
+  it('refuses with key_unreadable when the key policy row is absent in D1', () => {
+    const d = evaluateKeyForWorkflow(receipt({ policyStatus: 'absent' }), 'tool_call', NOW);
+    expect(d.allowed).toBe(false);
+    expect(d.refusal).toEqual({ kind: 'key_unreadable' });
+  });
+
+  it('stays fail-open when the policy read itself failed transiently (unreadable)', () => {
+    const d = evaluateKeyForWorkflow(receipt({ policyStatus: 'unreadable' }), 'tool_call', NOW);
+    expect(d).toEqual(ALLOWED);
+  });
+
+  it('evaluates capabilities and budget normally when the policy row is found', () => {
+    const d = evaluateKeyForWorkflow(receipt({ policyStatus: 'found' }), 'tool_call', NOW);
+    expect(d).toEqual(ALLOWED);
+  });
 });
 
 describe('gateKeyForWorkflow', () => {

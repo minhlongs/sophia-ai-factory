@@ -7,6 +7,11 @@ import {
   checkTikTokPublishStatus,
   refreshTikTokAccessToken,
 } from './tiktok-status-and-auth';
+import {
+  fetchTikTokCreatorInfo,
+  resolveTikTokPublishPlan,
+  logPublishDowngrade,
+} from '@/tree/social/publisher/tiktok-creator-info';
 
 export const tiktokAdapter: PlatformAdapter = {
   platform: 'tiktok',
@@ -20,6 +25,20 @@ export const tiktokAdapter: PlatformAdapter = {
       if (!videoRes.ok) throw new Error(`Failed to fetch video from ${params.videoUrl}`);
       const videoBuffer = await videoRes.arrayBuffer();
 
+      // TikTok answers an unaudited publish with HTTP 200 and a SELF_ONLY post,
+      // so mapping intent straight onto a privacy level reports a public
+      // publish that never happened. The creator's own capability report
+      // decides the level and the switches instead.
+      const capabilities = await fetchTikTokCreatorInfo(accessToken);
+      const plan = resolveTikTokPublishPlan({
+        capabilities,
+        requested: params.privacy === 'public' ? 'public' : 'private',
+        onUnavailable: 'downgrade',
+      });
+      if (plan.downgraded) {
+        logPublishDowngrade({ channelId: 'tiktok-adapter', plan });
+      }
+
       const initRes = await fetch(`${TT_API}/post/publish/video/init/`, {
         method: 'POST',
         headers: {
@@ -29,10 +48,10 @@ export const tiktokAdapter: PlatformAdapter = {
         body: JSON.stringify({
           post_info: {
             title: params.title,
-            privacy_level: params.privacy === 'public' ? 'PUBLIC_TO_EVERYONE' : 'SELF_ONLY',
-            disable_duet: false,
-            disable_comment: false,
-            disable_stitch: false,
+            privacy_level: plan.privacyLevel,
+            disable_duet: plan.disableDuet,
+            disable_comment: plan.disableComment,
+            disable_stitch: plan.disableStitch,
           },
           source_info: {
             source: 'FILE_UPLOAD',

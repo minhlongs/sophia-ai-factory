@@ -108,22 +108,28 @@ export async function PATCH(
       }, { status: 409 });
     }
 
+    const isSelfApproval = Boolean(record.requesterId && record.requesterId === user.id);
     logger.info('publishApproval: reviewer resolved a pending publish', {
       idempotencyKey: id,
       decision: parsed.data.approved ? 'approved' : 'rejected',
       reviewerId: user.id,
+      requesterId: record.requesterId,
+      selfApproval: isSelfApproval,
     });
 
     return NextResponse.json({
       resolved: true,
       alreadyResolved: false,
       decision: parsed.data.approved ? 'approved' : 'rejected',
+      selfApproval: isSelfApproval,
       id,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: 'internal_error', details: getErrorMessage(err) },
-      { status: 500 },
-    );
+    // Log the cause server-side and return a stable code: the raw D1 message
+    // can expose SQL fragments and schema names to the caller.
+    logger.error('publishApproval: resolution threw', {
+      error: getErrorMessage(err),
+    });
+    return NextResponse.json({ error: 'internal_error' }, { status: 500 });
   }
 }

@@ -7,7 +7,7 @@
  * provenance claim is a strike risk, so it must stop the publish rather than
  * warn about it.
  *
- * @module forest/publishing/__tests__/synthetic-media-disclosure
+ * @module tree/publishing/__tests__/synthetic-media-disclosure
  */
 
 import { describe, it, expect } from 'vitest';

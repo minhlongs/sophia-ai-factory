@@ -5,6 +5,7 @@
  */
 
 import type { PublishMeta } from './publisher-interface';
+import { resolveSyntheticMediaDisclosure } from '@/tree/publishing/synthetic-media-disclosure';
 
 export const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
@@ -27,6 +28,13 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
   const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
   const description = `${adCaption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
 
+  // YouTube withholds monetization when `containsSyntheticMedia` is missing,
+  // and Sophia generates every video it publishes, so the disclosure defaults
+  // to on rather than trusting whichever publisher built the metadata.
+  const disclosure = resolveSyntheticMediaDisclosure({
+    defaultContainsSyntheticMedia: meta.containsSyntheticMedia ?? true,
+  });
+
   return {
     snippet: {
       title: (meta.title ?? meta.caption).slice(0, 100),
@@ -34,7 +42,11 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
       tags: meta.hashtags.slice(0, 500),
       categoryId: '22',
     },
-    status: { privacyStatus: meta.privacyStatus ?? 'public', selfDeclaredMadeForKids: false },
+    status: {
+      privacyStatus: meta.privacyStatus ?? 'public',
+      selfDeclaredMadeForKids: false,
+      containsSyntheticMedia: disclosure.containsSyntheticMedia,
+    },
   };
 }
 

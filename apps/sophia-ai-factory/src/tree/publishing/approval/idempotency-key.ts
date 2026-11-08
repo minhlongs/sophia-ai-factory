@@ -17,21 +17,27 @@ import type { PublishApprovalSubject } from './types';
 /** Deterministic separator that cannot appear inside a normalized field. */
 const FIELD_SEPARATOR = '␟';
 
-function normalizeField(value: string): string {
+function normalizeIdentifier(value: string): string {
+  return value.trim();
+}
+
+function normalizePlatform(value: string): string {
   return value.trim().toLowerCase();
 }
 
 /**
- * Builds the canonical string the ledger hashes. Exported so the invariant —
- * that changing any subject field changes the key, and normalizing only case
- * and surrounding whitespace — is directly testable.
+ * Builds the canonical string the ledger hashes. Identifiers (`tenantId`,
+ * `channelId`, `mediaRef`) are trimmed only, never lowercased: folding case on
+ * `tenantId` would let two workspaces whose ids differ only in case share one
+ * ledger row, and folding case on `mediaRef` would collapse two distinct URL
+ * paths into one key. Only the platform name is case-folded.
  */
 export function canonicalizePublishSubject(subject: PublishApprovalSubject): string {
   return [
-    normalizeField(subject.tenantId),
-    normalizeField(subject.channelId),
-    normalizeField(subject.platform),
-    normalizeField(subject.mediaRef),
+    normalizeIdentifier(subject.tenantId),
+    normalizeIdentifier(subject.channelId),
+    normalizePlatform(subject.platform),
+    normalizeIdentifier(subject.mediaRef),
   ].join(FIELD_SEPARATOR);
 }
 

@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS publish_ledger (
   platform TEXT NOT NULL,
   media_ref TEXT NOT NULL,
   decision TEXT NOT NULL DEFAULT 'pending',
+  requester_id TEXT,
   reviewer_id TEXT,
   comment TEXT,
   approved_at INTEGER,

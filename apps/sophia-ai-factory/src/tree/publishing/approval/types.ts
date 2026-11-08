@@ -34,6 +34,7 @@ export interface PublishLedgerRecord {
   readonly platform: string;
   readonly mediaRef: string;
   readonly decision: PublishApprovalDecision;
+  readonly requesterId?: string;
   readonly reviewerId?: string;
   readonly comment?: string;
   readonly approvedAt?: number;
