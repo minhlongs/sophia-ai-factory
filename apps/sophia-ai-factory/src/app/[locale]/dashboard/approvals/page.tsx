@@ -7,7 +7,11 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
-import { ApprovalQueue, CampaignApprovalQueue } from '@/components/approval-queue';
+import {
+  ApprovalQueue,
+  CampaignApprovalQueue,
+  PublishLedgerApprovalQueue,
+} from '@/components/approval-queue';
 import { StitchMobileCompanionBanner } from '@/components/approval-queue/stitch-mobile-companion-banner';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -49,6 +53,7 @@ export default async function ApprovalsPage() {
       <StitchMobileCompanionBanner />
       <ApprovalQueue workspaceId={primaryWorkspaceId} />
       <CampaignApprovalQueue workspaceId={primaryWorkspaceId} />
+      <PublishLedgerApprovalQueue workspaceId={primaryWorkspaceId} />
     </div>
   );
 }

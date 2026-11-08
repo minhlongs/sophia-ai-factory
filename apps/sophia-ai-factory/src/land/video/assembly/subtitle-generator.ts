@@ -1,67 +1,50 @@
 /**
  * Subtitle Generator
  *
- * Transcribes audio from R2 via Cloudflare Workers AI Whisper binding.
- * Returns SRT-formatted subtitle string.
+ * Transcribes audio from R2 via Cloudflare Workers AI Whisper binding,
+ * normalizes word-level timestamps, and supports deterministic R2 alignment
+ * caching keyed on `sha256(voiceId + speed + normalizedText)`.
  * Falls back to empty SRT when AI binding is unavailable.
  */
 
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  alignAudioWithR2Cache,
+  alignedWordsToSrt,
+  normalizeWordTimestamps,
+  type RawTimestampedWord,
+} from '@/tree/video/subtitles/word-timestamp-aligner';
 
 export interface GenerateSubtitlesInput {
   audioR2Key: string;
   jobId: string;
+  voiceId?: string;
+  speed?: number;
+  text?: string;
+  durationSec?: number;
 }
 
 export interface GenerateSubtitlesResult {
   srt: string;
-}
-
-interface WhisperWord {
-  word: string;
-  start: number;
-  end: number;
+  cacheHit?: boolean;
 }
 
 interface WhisperResult {
   text?: string;
-  words?: WhisperWord[];
-}
-
-function formatSrtTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  const ms = Math.round((seconds % 1) * 1000);
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
-}
-
-function wordsToSrt(words: WhisperWord[]): string {
-  if (!words.length) return '';
-  const entries: string[] = [];
-  const chunkSize = 8;
-
-  for (let i = 0; i < words.length; i += chunkSize) {
-    const chunk = words.slice(i, i + chunkSize);
-    const text = chunk.map((w) => w.word).join(' ');
-    const start = formatSrtTime(chunk[0].start);
-    const end = formatSrtTime(chunk[chunk.length - 1].end);
-    entries.push(`${Math.floor(i / chunkSize) + 1}\n${start} --> ${end}\n${text}`);
-  }
-
-  return entries.join('\n\n');
+  words?: RawTimestampedWord[];
 }
 
 /**
  * Generate SRT subtitles from audio stored in R2.
- * Uses CF Workers AI @cf/openai/whisper binding via env.AI.
+ * Uses CF Workers AI @cf/openai/whisper binding via env.AI and normalizes
+ * word-level timestamps through `@/tree/video/subtitles/word-timestamp-aligner`.
  */
 export async function generateSubtitles(
   input: GenerateSubtitlesInput,
 ): Promise<GenerateSubtitlesResult> {
-  const { audioR2Key, jobId } = input;
+  const { audioR2Key, jobId, voiceId, speed = 1, text, durationSec } = input;
 
   try {
     const { env } = await getCloudflareContext({ async: true });
@@ -77,22 +60,50 @@ export async function generateSubtitles(
       return { srt: '' };
     }
 
-    const obj = await ref.bucket.get(audioR2Key);
-    if (!obj) {
+    let cachedWhisper: WhisperResult | null = null;
+    const runWhisperOnce = async (r2Key: string): Promise<WhisperResult | null> => {
+      if (cachedWhisper) return cachedWhisper;
+      const obj = await ref.bucket.get(r2Key);
+      if (!obj) return null;
+      const uint8 = new Uint8Array(await obj.arrayBuffer());
+      cachedWhisper = await ai.run('@cf/openai/whisper', { audio: Array.from(uint8) });
+      return cachedWhisper;
+    };
+
+    if (voiceId && text) {
+      const aligned = await alignAudioWithR2Cache(
+        {
+          voiceId,
+          speed,
+          text,
+          durationSec,
+          audioR2Key,
+          transcribe: async (r2Key) => (await runWhisperOnce(r2Key))?.words ?? [],
+        },
+        {
+          getBucket: async () => ref.bucket as unknown as {
+            get(key: string): Promise<{ json(): Promise<unknown> } | null>;
+            put(key: string, value: string, options?: Record<string, unknown>): Promise<unknown>;
+          },
+        },
+      );
+      if (aligned.srt) {
+        return { srt: aligned.srt, cacheHit: aligned.cacheHit };
+      }
+    }
+
+    const result = await runWhisperOnce(audioR2Key);
+    if (!result) {
       logger.warn('[SubtitleGenerator] Audio R2 object not found', { jobId, audioR2Key });
       return { srt: '' };
     }
 
-    const audioBuffer = await obj.arrayBuffer();
-    const uint8 = new Uint8Array(audioBuffer);
-    const result = await ai.run('@cf/openai/whisper', { audio: Array.from(uint8) });
-
     if (result.words && result.words.length > 0) {
-      return { srt: wordsToSrt(result.words) };
+      const normalized = normalizeWordTimestamps(result.words, durationSec);
+      return { srt: alignedWordsToSrt(normalized) };
     }
 
     if (result.text) {
-      // Fallback: single subtitle block for full text
       return {
         srt: `1\n00:00:00,000 --> 00:00:30,000\n${result.text}`,
       };
