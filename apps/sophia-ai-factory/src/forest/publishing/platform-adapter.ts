@@ -1,3 +1,5 @@
+import type { ProvenanceInput } from '@/tree/youtube-strategy/provenance-reviewer';
+
 export type Platform = 'youtube' | 'tiktok' | 'instagram';
 
 export interface PublishParams {
@@ -9,6 +11,19 @@ export interface PublishParams {
   privacy?: 'public' | 'unlisted' | 'private';
   scheduledAt?: string;
   thumbnailUrl?: string;
+  /** Channel identifier, used for logging a capability-driven downgrade. */
+  channelId?: string;
+  /** Duration in seconds, compared against the creator's reported maximum. */
+  durationSeconds?: number;
+  /**
+   * Whether this video is synthetic (AI-generated). YouTube requires the
+   * `containsSyntheticMedia` disclosure for altered content; TikTok and
+   * Instagram have no equivalent field, so this is consumed by the adapter
+   * that accepts it and ignored elsewhere.
+   */
+  containsSyntheticMedia?: boolean;
+  /** Provenance review input; drives the synthetic-media disclosure. */
+  provenance?: ProvenanceInput;
 }
 
 export interface PublishResult {

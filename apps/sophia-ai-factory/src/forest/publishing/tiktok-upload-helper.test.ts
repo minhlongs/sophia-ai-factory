@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   recordFailure: vi.fn(),
   classifyError: vi.fn(),
   loggerInfo: vi.fn(),
+  loggerWarn: vi.fn(),
 }));
 
 vi.mock('@/seed/security/circuit-breaker', () => ({
@@ -14,9 +15,26 @@ vi.mock('@/seed/security/circuit-breaker', () => ({
   recordFailure: mocks.recordFailure,
 }));
 vi.mock('@/seed/types/failure-kind', () => ({ classifyError: mocks.classifyError }));
-vi.mock('@/seed/utils/logger-utility', () => ({ logger: { info: mocks.loggerInfo } }));
+vi.mock('@/seed/utils/logger-utility', () => ({
+  logger: { info: mocks.loggerInfo, warn: mocks.loggerWarn },
+}));
 
-import { TT_API, uploadTikTokVideo } from './tiktok-upload-helper';
+import { TT_API, TIKTOK_CREATOR_INFO_ENDPOINT, uploadTikTokVideo } from './tiktok-upload-helper';
+
+/**
+ * The creator_info preflight runs before the video fetch, so every successful
+ * fixture list starts with the capability response TikTok returns for an app
+ * that has passed audit.
+ */
+function creatorInfoResponse(body: unknown): Response {
+  return new Response(JSON.stringify(body), { status: 200 });
+}
+
+const auditedCreator = () => creatorInfoResponse({
+  data: { privacy_level_options: ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY'] },
+});
+
+const unauditedCreator = () => creatorInfoResponse({ data: { privacy_level_options: ['SELF_ONLY'] } });
 
 const successfulResponses = (publishId = 'publish-1', uploadUrl = 'https://upload.example/video') => [
   new Response(new Uint8Array([1, 2, 3]), { status: 200 }),
@@ -33,6 +51,7 @@ describe('uploadTikTokVideo', () => {
 
   it('uploads one video chunk with public visibility and returns the processing ID', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(auditedCreator())
       .mockResolvedValueOnce(successfulResponses()[0])
       .mockResolvedValueOnce(successfulResponses()[1])
       .mockResolvedValueOnce(successfulResponses()[2]);
@@ -45,10 +64,11 @@ describe('uploadTikTokVideo', () => {
       privacy: 'public',
     })).resolves.toEqual({ platformVideoId: 'publish-1', status: 'processing' });
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://cdn.example/video.mp4');
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${TT_API}/post/publish/video/init/`);
-    const init = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(TIKTOK_CREATOR_INFO_ENDPOINT);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('https://cdn.example/video.mp4');
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(`${TT_API}/post/publish/video/init/`);
+    const init = fetchMock.mock.calls[2]?.[1] as RequestInit;
     expect(init.method).toBe('POST');
     expect(init.headers).toEqual({ Authorization: 'Bearer access-token', 'Content-Type': 'application/json' });
     expect(JSON.parse(String(init.body))).toEqual({
@@ -66,16 +86,17 @@ describe('uploadTikTokVideo', () => {
         total_chunk_count: 1,
       },
     });
-    expect(fetchMock.mock.calls[2]?.[0]).toBe('https://upload.example/video');
-    const upload = fetchMock.mock.calls[2]?.[1] as RequestInit;
+    expect(fetchMock.mock.calls[3]?.[0]).toBe('https://upload.example/video');
+    const upload = fetchMock.mock.calls[3]?.[1] as RequestInit;
     expect(upload.method).toBe('PUT');
     expect(upload.headers).toEqual({ 'Content-Type': 'video/mp4', 'Content-Range': 'bytes 0-2/3' });
-    expect(mocks.recordSuccess).toHaveBeenCalledExactlyOnceWith('tiktok');
+    expect(mocks.recordSuccess).toHaveBeenLastCalledWith('tiktok');
     expect(mocks.recordFailure).not.toHaveBeenCalled();
   });
 
   it('uses private visibility for non-public posts', async () => {
     const fetchMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(auditedCreator());
     for (const response of successfulResponses('publish-private')) fetchMock.mockResolvedValueOnce(response);
     vi.stubGlobal('fetch', fetchMock);
 
@@ -86,8 +107,40 @@ describe('uploadTikTokVideo', () => {
       privacy: 'unlisted',
     });
 
-    const init = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const init = fetchMock.mock.calls[2]?.[1] as RequestInit;
     expect(JSON.parse(String(init.body)).post_info.privacy_level).toBe('SELF_ONLY');
+  });
+
+  it('sends SELF_ONLY and records a downgrade when the creator cannot publish publicly', async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(unauditedCreator());
+    for (const response of successfulResponses('publish-private')) fetchMock.mockResolvedValueOnce(response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await uploadTikTokVideo('access-token', {
+      videoUrl: 'https://cdn.example/private.mp4',
+      title: 'Private video',
+      description: '',
+      privacy: 'public',
+      channelId: 'chan_9',
+    });
+
+    const init = fetchMock.mock.calls[2]?.[1] as RequestInit;
+    expect(JSON.parse(String(init.body)).post_info.privacy_level).toBe('SELF_ONLY');
+    expect(mocks.loggerWarn).toHaveBeenCalledOnce();
+  });
+
+  it('never reaches the video init when the creator_info preflight refuses the response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      creatorInfoResponse({ error: { code: 'access_token_invalid' } }),
+    ));
+
+    await expect(uploadTikTokVideo('token', {
+      videoUrl: 'https://cdn.example/video.mp4', title: 'Video', description: '', privacy: 'public',
+    })).rejects.toThrow(/CREATOR_INFO_UNAVAILABLE/);
+
+    expect(mocks.recordFailure).toHaveBeenCalled();
+    expect(mocks.recordSuccess).not.toHaveBeenCalled();
   });
 
   it('does not call TikTok while the circuit breaker is open', async () => {
@@ -104,7 +157,10 @@ describe('uploadTikTokVideo', () => {
   });
 
   it('records a failed source-video request once', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('missing', { status: 404 })));
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(auditedCreator())
+      .mockResolvedValueOnce(new Response('missing', { status: 404 }));
+    vi.stubGlobal('fetch', fetchMock);
 
     await expect(uploadTikTokVideo('token', {
       videoUrl: 'https://cdn.example/missing.mp4', title: 'Video', description: '',
@@ -116,6 +172,7 @@ describe('uploadTikTokVideo', () => {
 
   it('records TikTok init and upload HTTP failures exactly once', async () => {
     const initFailure = vi.fn()
+      .mockResolvedValueOnce(auditedCreator())
       .mockResolvedValueOnce(new Response(new Uint8Array([1]), { status: 200 }))
       .mockResolvedValueOnce(new Response('rate limited', { status: 429 }));
     vi.stubGlobal('fetch', initFailure);
@@ -129,6 +186,7 @@ describe('uploadTikTokVideo', () => {
     mocks.recordFailure.mockClear();
     mocks.classifyError.mockClear();
     const uploadFailure = vi.fn()
+      .mockResolvedValueOnce(auditedCreator())
       .mockResolvedValueOnce(new Response(new Uint8Array([1]), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({
         data: { publish_id: 'publish-2', upload_url: 'https://upload.example/video' },

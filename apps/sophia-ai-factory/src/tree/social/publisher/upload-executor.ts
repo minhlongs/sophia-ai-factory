@@ -25,6 +25,13 @@ import {
   buildInstagramContainerInit,
   buildInstagramPublishRequest,
 } from './platform-adapters';
+import {
+  fetchTikTokCreatorInfo,
+  isDurationAllowed,
+  resolveTikTokPublishPlan,
+  logPublishDowngrade,
+  CreatorInfoUnavailableError,
+} from './tiktok-creator-info';
 
 /**
  * Circuit-breaker key. Deliberately per platform, not per channel.
@@ -49,6 +56,12 @@ export interface UploadExecutionInput {
   description: string;
   tags?: string[];
   totalSizeBytes?: number;
+  /**
+   * Video duration in seconds, when known. Compared against the maximum
+   * duration TikTok reports for this creator, so an over-long upload is
+   * refused before the bytes are spent.
+   */
+  durationSeconds?: number;
   /** Injectable for tests; production uses the global fetch. */
   fetchImpl?: typeof fetch;
 }
@@ -149,9 +162,32 @@ async function uploadToYouTube(input: UploadExecutionInput, fetchImpl: typeof fe
 }
 
 async function uploadToTikTok(input: UploadExecutionInput, fetchImpl: typeof fetch): Promise<UploadExecutionResult> {
+  // TikTok answers an unaudited publish with HTTP 200 and a SELF_ONLY post, so
+  // the only way to know what this creator may actually do is to ask first.
+  const capabilities = await fetchTikTokCreatorInfo(input.accessToken, fetchImpl);
+
+  const plan = resolveTikTokPublishPlan({
+    capabilities,
+    requested: 'public',
+    onUnavailable: 'downgrade',
+  });
+  if (plan.downgraded) {
+    logPublishDowngrade({ channelId: input.channelId, jobId: input.jobId, plan });
+  }
+
+  if (input.durationSeconds !== undefined && !isDurationAllowed(capabilities, input.durationSeconds)) {
+    throw new CreatorInfoUnavailableError(
+      `video is ${input.durationSeconds}s but this creator may publish at most ${capabilities.maxVideoDurationSeconds}s`,
+    );
+  }
+
   const req = buildTikTokInitPayload({
     title: input.title,
     totalSizeBytes: input.totalSizeBytes ?? 10 * 1024 * 1024,
+    privacyLevel: plan.privacyLevel,
+    disableComment: plan.disableComment,
+    disableDuet: plan.disableDuet,
+    disableStitch: plan.disableStitch,
   });
 
   const payload = await postJson(req.endpoint, req.body, { Authorization: `Bearer ${input.accessToken}` }, fetchImpl);
@@ -172,7 +208,6 @@ async function uploadToTikTok(input: UploadExecutionInput, fetchImpl: typeof fet
       parsed.failReason ? `provider reported FAILED: ${parsed.failReason}` : 'provider reported FAILED',
     );
   }
-
   return { platformPostId: publishId, publishedUrl: `https://www.tiktok.com/@${input.channelId}/video/${publishId}` };
 }
 
