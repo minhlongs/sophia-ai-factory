@@ -135,6 +135,26 @@ vi.mock('@/seed/db/client', () => {
           return stmt
         },
         async all() {
+          const sqlLower = (stmt._sql || '').toLowerCase()
+          const isLockInsert =
+            sqlLower.includes('insert into payos_events') &&
+            // The conflict guard is the whole claim. Without it every delivery
+            // inserts and wins, so the duplicate tests would go green on a
+            // double activation — the mock honours the clause, not a JS guess.
+            sqlLower.includes('on conflict') &&
+            sqlLower.includes('do nothing') &&
+            sqlLower.includes('returning')
+          if (!isLockInsert) {
+            // An insert that lost its guard behaves like plain SQLite REPLACE:
+            // it always succeeds and always claims the row.
+            const eventId = stmt._bindArgs[0] as string
+            eventRows.set(eventId, {
+              processed: 0,
+              amount: stmt._bindArgs[3] as number,
+              status: stmt._bindArgs[2] as string,
+            })
+            return { results: [{ processed: 0 }], success: true }
+          }
           const eventId = stmt._bindArgs[0] as string
           if (eventRows.has(eventId)) {
             // A concurrent delivery already holds the row, so the insert yields
