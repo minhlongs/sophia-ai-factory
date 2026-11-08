@@ -4,14 +4,10 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import {
-  VideoNotFoundError,
-  VideoUnauthorizedError,
-} from '@/land/video/storage/get-canonical-video-url';
 import type { PublishingChannel, PublishingJob } from '@/seed/types';
 import type { Step, ClaimResult } from './publish-types';
 import { fetchChannelForJob, ensureFreshToken, uploadToProvider, pollStatusUntilFinal } from './publish-upload';
-import { resolveVideoUrlOrFail, assertSafeVideoUrl } from './publish-url-utils';
+import { assertSafeVideoUrl } from './publish-url-utils';
 import { finalizePublishResult } from './publish-finalize';
 
 export interface ProcessStandardProviderArgs {
@@ -22,25 +18,18 @@ export interface ProcessStandardProviderArgs {
   userId: string;
   step: Step;
   now: number;
+  /** Resolved and verified before the approval gate, so the media is known. */
+  videoUrl: string;
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
   refreshToken?: (channel: PublishingChannel) => Promise<number>;
 }
 
 export async function processStandardProvider(args: ProcessStandardProviderArgs): Promise<ClaimResult> {
-  const { db, jobId, job, tenantId, userId, step, now, scheduleRetry, refreshToken } = args;
+  const { db, jobId, job, tenantId, userId, step, now, scheduleRetry, videoUrl, refreshToken } = args;
 
   const channel = await fetchChannelForJob(db, job, tenantId);
   const accessToken = await ensureFreshToken(db, channel, now, refreshToken);
 
-  let videoUrl: string;
-  try {
-    videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute' });
-  } catch (urlErr) {
-    if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
-      return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
-    }
-    throw urlErr;
-  }
   assertSafeVideoUrl(videoUrl);
 
   const retryCount = job.retry_count + 1;

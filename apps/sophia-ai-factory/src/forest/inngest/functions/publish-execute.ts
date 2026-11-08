@@ -1,6 +1,7 @@
 import { inngest } from '@/seed/inngest/client';
 import { executePublishWorkflow } from '@/land/video/publishing/execute';
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
+import type { PublishApprovalStep } from '@/tree/publishing/approval';
 
 export const RETRY_BACKOFF_SCHEDULE_SECONDS = [30, 60, 300, 900, 3600] as const;
 
@@ -23,6 +24,14 @@ export const publishExecute = inngest.createFunction(
       userId,
       eventId: event.id,
       step,
+      // The publish approval gate suspends this job here for a human decision,
+      // so it needs the step's emit, await, and run. Inngest types the first
+      // two against its whole event map, while the gate names the two
+      // publish-approval events as plain strings; narrowing to the shape the
+      // gate consumes keeps that union mismatch in one place. Both event names
+      // are registered in the map, so the cast only drops compile-time checking
+      // of the names, not runtime behaviour.
+      eventTools: step as unknown as PublishApprovalStep,
       scheduleRetry: async (jobId, tenantId, userId, attempt, delayMs) => {
         const delaySeconds = getBackoffDelaySeconds(attempt, delayMs);
         await step.sleep(`publish-${jobId}-backoff-${attempt}`, `${delaySeconds}s`);

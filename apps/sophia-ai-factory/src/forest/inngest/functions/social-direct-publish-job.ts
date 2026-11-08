@@ -11,6 +11,7 @@ import { decryptTokenVault } from '@/seed/security/oauth-token-vault';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { getCredential, upsertCredential } from '@/land/social/platform-credentials-store';
 import { claimPublishJobForUpload, getPublishJob, updatePublishJobStatus } from '@/land/social/publish-job-store';
+import { awaitPublishApproval } from '@/tree/publishing/approval';
 import {
   evaluatePacingStepDecision,
   evaluateSafetyGuardsDecision,
@@ -26,6 +27,15 @@ export { type SocialPublishDispatchedEventData };
 export interface InngestStepContext {
   run: <T>(name: string, fn: () => Promise<T>) => Promise<T>;
   sleep: (id: string, duration: string | number) => Promise<void>;
+  /** Emitting and awaiting events lets a long job suspend for a human decision. */
+  sendEvent(
+    id: string,
+    payload: { name: string; data: Record<string, unknown> },
+  ): Promise<unknown>;
+  waitForEvent(
+    id: string,
+    opts: { event: string; timeout: number | string },
+  ): Promise<{ data: Record<string, unknown> } | null>;
 }
 
 export async function processSocialDirectPublishJob({
@@ -114,6 +124,32 @@ export async function processSocialDirectPublishJob({
   const claim = await step.run('claim-upload-ownership', () => claimPublishJobForUpload(data.jobId));
   if (!claim) {
     return { status: 'SKIPPED_CLAIM_LOST', jobId: data.jobId, reason: 'ALREADY_UPLOADED' };
+  }
+
+  // Step 3c: A publish to a public channel is irreversible, so a human decides
+  // it here — after the upload claim proved this delivery owns the job, and
+  // before any media leaves the worker. Runs after the claim precisely so a
+  // duplicate delivery only ever produces one approval request.
+  // Direct social publishes carry no privacy field; `publishing_jobs.privacy_status`
+  // defaults to `public`, and neither dispatcher overrides it, so a direct
+  // publish is treated as public rather than reading the absence as "private".
+  const approval = await awaitPublishApproval(
+    {
+      tenantId: data.tenantId ?? data.userId,
+      channelId: data.channelId,
+      platform: data.platform,
+      mediaRef: data.videoUrl,
+      requestedPrivacy: 'public',
+    },
+    step,
+  );
+  if (approval.state.outcome === 'blocked') {
+    await updatePublishJobStatus(data.jobId, 'FAILED', { error: approval.state.reason });
+    return { status: 'AWAITING_APPROVAL', jobId: data.jobId, reason: approval.state.reason };
+  }
+  if (approval.state.outcome === 'needs_approval') {
+    await updatePublishJobStatus(data.jobId, 'AWAITING_APPROVAL', { error: approval.state.reason });
+    return { status: 'AWAITING_APPROVAL', jobId: data.jobId, reason: approval.state.reason };
   }
 
   // Step 4: Dispatch upload chunk / container

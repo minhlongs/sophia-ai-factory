@@ -26,6 +26,13 @@ vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn().mockResolvedValue({ ids: ['evt_1'] }), createFunction: vi.fn() },
 }));
 
+// The publish approval gate sits between the upload claim and the provider
+// call. It is mocked here so these tests exercise the publishing job around it
+// rather than the human-decision ledger, which has its own coverage.
+vi.mock('@/tree/publishing/approval', () => ({
+  awaitPublishApproval: vi.fn().mockResolvedValue({ state: { outcome: 'allowed' } }),
+}));
+
 /**
  * YouTube's resumable-upload handshake answers with the session URL in a
  * Location header; the executor reads that header, then PUTs the media.
@@ -43,6 +50,10 @@ describe('socialDirectPublishJob & Server Actions', () => {
   const mockStep = {
     run: vi.fn().mockImplementation(async (_n: string, fn: () => Promise<unknown>) => fn()),
     sleep: vi.fn().mockResolvedValue(undefined),
+    // The publish approval gate suspends here for a human decision. These
+    // fixtures resolve an approved ledger row so the upload step is reached.
+    sendEvent: vi.fn().mockResolvedValue({ ids: ['evt_1'] }),
+    waitForEvent: vi.fn().mockResolvedValue({ data: { decision: 'approved', reviewerId: 'user_1' } }),
   };
 
   const sampleCred: PlatformCredentialRecord = {
