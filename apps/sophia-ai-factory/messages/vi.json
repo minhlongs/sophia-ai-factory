@@ -8055,6 +8055,29 @@
         "target": "Link affiliate"
       }
     },
+    "publish": {
+      "title": "Phê duyệt đăng video",
+      "description": "Các video đang chờ bạn quyết định trước khi công khai trên kênh của bạn.",
+      "pendingBadge": "Đang chờ bạn",
+      "pendingCount": "đang chờ",
+      "unknownPlatform": "Kênh chưa xác định",
+      "channelLabel": "Kênh",
+      "mediaLabel": "Video sẽ đăng",
+      "requestedAt": "Yêu cầu lúc",
+      "expiresAt": "Hết hạn lúc",
+      "approvePublish": "Duyệt & đăng",
+      "rejectPublish": "Từ chối",
+      "refresh": "Làm mới",
+      "loadError": "Không tải được danh sách phê duyệt đăng video",
+      "actionError": "Chưa ghi nhận được quyết định của bạn. Vui lòng thử lại.",
+      "errorLoading": "Chúng tôi chưa tải được danh sách chờ đăng",
+      "tryAgain": "Thử lại",
+      "emptyTitle": "Chưa có video nào chờ đăng",
+      "emptyDescription": "Video đã hoàn thành sẽ hiện ở đây để bạn duyệt trước khi công khai.",
+      "approvedNotice": "Đã duyệt. Video đang được đăng.",
+      "rejectedNotice": "Đã từ chối. Video sẽ không được đăng.",
+      "selfApprovedNotice": "Đã duyệt. Lưu ý: bạn vừa duyệt nội dung do chính bạn tạo."
+    },
     "badges": {
       "complianceVerified": "Kiểm tra quy định: đạt",
       "changeNeedsApproval": "Nội dung thay đổi sẽ cần duyệt lại",

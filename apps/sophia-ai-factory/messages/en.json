@@ -8048,6 +8048,29 @@
         "target": "Affiliate link"
       }
     },
+    "publish": {
+      "title": "Publish approvals",
+      "description": "Videos waiting for your decision before they go public on a channel you own.",
+      "pendingBadge": "Waiting for you",
+      "pendingCount": "waiting",
+      "unknownPlatform": "Unknown channel",
+      "channelLabel": "Channel",
+      "mediaLabel": "Video to publish",
+      "requestedAt": "Requested at",
+      "expiresAt": "Expires at",
+      "approvePublish": "Approve & publish",
+      "rejectPublish": "Reject",
+      "refresh": "Refresh",
+      "loadError": "Could not load publish approvals",
+      "actionError": "Could not record your decision. Please try again.",
+      "errorLoading": "We could not load the publish list",
+      "tryAgain": "Try again",
+      "emptyTitle": "No videos waiting to be published",
+      "emptyDescription": "Finished videos will appear here so you can approve them before they go public.",
+      "approvedNotice": "Approved. The video is being published now.",
+      "rejectedNotice": "Rejected. The video will not be published.",
+      "selfApprovedNotice": "Approved. Note: you approved content you created yourself."
+    },
     "badges": {
       "complianceVerified": "Compliance check: passed",
       "changeNeedsApproval": "Content changes will need re-approval",

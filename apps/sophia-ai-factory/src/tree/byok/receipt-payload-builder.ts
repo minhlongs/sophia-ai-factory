@@ -14,6 +14,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
+import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { buildValidationReceipt } from '@/tree/byok/key-capability-gate';
@@ -42,12 +43,6 @@ interface KeyPolicyRow {
 
 const CAPABILITY_VALUES = new Set<string>(['json_schema', 'tool_call', 'vision']);
 
-/**
- * Parses the stored capability mask, or returns undefined when there is none so
- * the provider table supplies the answer. An unreadable or unrecognised mask
- * yields undefined rather than a capability-less key: falling back to what the
- * provider is known to serve keeps a working key working.
- */
 function parseCapabilityMask(raw: string | null | undefined): KeyCapability[] | undefined {
   if (typeof raw !== 'string' || raw.trim().length === 0) return undefined;
   const parsed = raw
@@ -58,22 +53,72 @@ function parseCapabilityMask(raw: string | null | undefined): KeyCapability[] | 
 }
 
 /**
- * Outcome of the policy read. A missing row is distinct from a failed read: the
- * caller can resolve a key row through the BYOK provider factory before the run
- * starts, so a missing row means the resolved key was never written with a
- * policy and the gate must refuse rather than fall back to the provider table,
- * which would happily satisfy every capability requirement.
+ * Outcome of the policy read. A missing row is distinct from a failed read: a
+ * missing row means the resolved key was never written with a policy and the
+ * gate must refuse rather than fall back to the provider table.
  */
 export type KeyPolicyReadOutcome =
-  | { readonly status: 'found'; readonly row: KeyPolicyRow }
+  | { readonly status: 'found'; readonly row: KeyPolicyRow; readonly monthSpentUsd: number }
   | { readonly status: 'absent' }
   | { readonly status: 'unreadable' };
 
-/** Reads the stored policy columns for one user+provider. */
-async function readKeyPolicyRow(userId: string, provider: string): Promise<KeyPolicyReadOutcome> {
-  let db: Awaited<ReturnType<typeof getD1>>;
+/** Start of the UTC calendar month containing `nowUnix` (in Unix seconds). */
+export function computeUtcMonthStartUnix(nowUnix: number): number {
+  const d = new Date(nowUnix * 1000);
+  return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0) / 1000);
+}
+
+/**
+ * Sums month-to-date `total_cost_cents` from `agent_runs` across the user's
+ * workspaces (plus `userId` itself for direct personal runs) and converts to USD.
+ * Fails open to `0` if `agent_runs` or `org_members` is unavailable so a transient
+ * telemetry read failure never looks like an exhausted budget.
+ */
+export async function readMonthlySpendUsd(
+  db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
+  userId: string,
+  nowUnix: number,
+): Promise<number> {
   try {
-    db = await getD1();
+    let workspaceIds: string[] = [];
+    try {
+      workspaceIds = await getUserWorkspaceIds(userId, db);
+    } catch {
+      workspaceIds = [];
+    }
+    const scopeIds = Array.from(new Set([userId, ...workspaceIds].filter(Boolean)));
+    if (scopeIds.length === 0) return 0;
+
+    const monthStartUnix = computeUtcMonthStartUnix(nowUnix);
+    const placeholders = scopeIds.map(() => '?').join(', ');
+    const row = await db
+      .prepare(
+        `SELECT COALESCE(SUM(total_cost_cents), 0) AS total_cents
+         FROM agent_runs
+         WHERE workspace_id IN (${placeholders}) AND created_at >= ?`,
+      )
+      .bind(...scopeIds, monthStartUnix)
+      .first<{ total_cents?: number | string | null }>();
+
+    const rawCents = Number(row?.total_cents ?? 0);
+    if (!Number.isFinite(rawCents) || rawCents <= 0) return 0;
+    return Math.round(rawCents) / 100;
+  } catch (err) {
+    logger.debug('[receipt-payload] monthly spend read unavailable', {
+      error: getErrorMessage(err),
+    });
+    return 0;
+  }
+}
+
+/** Reads the stored policy columns and month-to-date spend for one user+provider. */
+async function readKeyPolicyRow(
+  userId: string,
+  provider: string,
+  nowUnix: number,
+): Promise<KeyPolicyReadOutcome> {
+  try {
+    const db = await getD1();
     if (!db) return { status: 'unreadable' };
     const row = await db
       .prepare(
@@ -82,7 +127,9 @@ async function readKeyPolicyRow(userId: string, provider: string): Promise<KeyPo
       )
       .bind(userId, provider)
       .first<KeyPolicyRow>();
-    return row ? { status: 'found', row } : { status: 'absent' };
+    if (!row) return { status: 'absent' };
+    const monthSpentUsd = await readMonthlySpendUsd(db, userId, nowUnix);
+    return { status: 'found', row, monthSpentUsd };
   } catch (err) {
     logger.debug('[receipt-payload] policy read unavailable', {
       provider,
@@ -92,40 +139,29 @@ async function readKeyPolicyRow(userId: string, provider: string): Promise<KeyPo
   }
 }
 
-function rowToBudgetState(row: KeyPolicyRow | null): KeyBudgetState {
+function rowToBudgetState(row: KeyPolicyRow | null, monthSpentUsd: number): KeyBudgetState {
   if (!row) return { monthlyBudgetUsd: null, monthSpentUsd: 0, cooldownUntil: null };
   return {
     monthlyBudgetUsd: typeof row.monthly_budget_usd === 'number' ? row.monthly_budget_usd : null,
-    monthSpentUsd: 0,
+    monthSpentUsd,
     cooldownUntil: typeof row.cooldown_until === 'number' ? row.cooldown_until : null,
   };
 }
 
-/**
- * Produces the receipt payload for a validated key. The receipt is returned
- * alongside it so a caller that needs the full verdict can act on it without
- * re-deriving the same data.
- *
- * A read that fails stays fail-open: the payload reports capabilities from the
- * provider table and no cap, because a transport failure must not read as an
- * exhausted budget and needlessly block a working key. A key that was never
- * written with a policy row is the one case that refuses — treating it as
- * unlimited would let a run proceed with no cap, no cooldown and no capability
- * probe at all.
- */
 export async function buildReceiptPayload(args: {
   userId: string;
   provider: string;
   maskedKey: string;
   nowUnix: number;
 }): Promise<{ payload: ReceiptPayload; receipt: ValidationReceipt }> {
-  const read = await readKeyPolicyRow(args.userId, args.provider);
+  const read = await readKeyPolicyRow(args.userId, args.provider, args.nowUnix);
   const row = read.status === 'found' ? read.row : null;
+  const monthSpentUsd = read.status === 'found' ? read.monthSpentUsd : 0;
   const receipt = buildValidationReceipt({
     provider: args.provider,
     maskedKey: args.maskedKey,
     probedCapabilities: parseCapabilityMask(row?.capability_mask),
-    budget: rowToBudgetState(row),
+    budget: rowToBudgetState(row, monthSpentUsd),
     policyStatus: read.status,
     nowUnix: args.nowUnix,
   });
