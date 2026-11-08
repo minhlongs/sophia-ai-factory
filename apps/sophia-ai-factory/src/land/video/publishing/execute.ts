@@ -13,12 +13,14 @@ import type { ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
 import { findJobById, checkAndMarkMaxRetries, atomicClaimJob } from './publish-claim';
 import { handleTelegramFlow } from './publish-telegram-flow';
 import { processStandardProvider } from './publish-standard-processor';
+import { runPublishApprovalGate } from './publish-approval-guard';
 
 // Re-export public API for external consumers
 export type { Step, ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
 export { sanitizeError, assertSafeVideoUrl, resolveVideoUrlOrFail, buildPostUrl } from './publish-url-utils';
 export { buildPublisher, uploadToProvider, pollStatusUntilFinal } from './publish-upload';
 export { processStandardProvider } from './publish-standard-processor';
+export { runPublishApprovalGate, type PublishApprovalGateOutcome } from './publish-approval-guard';
 
 export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): Promise<ClaimResult> {
   const { jobId, tenantId, userId, step, scheduleRetry, refreshToken } = args;
@@ -95,7 +97,25 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     return telegramResult;
   }
 
+  // A publish to a public channel cannot be taken back, so a human decides it
+  // here — after the claim proved this delivery owns the job, and before any
+  // media reaches a provider. The gate resolves and verifies the media too, so
+  // an untrusted or missing video fails before a human is asked about it and the
+  // upload receives the same URL the decision was made against.
+  const gate = await runPublishApprovalGate({
+    db,
+    jobId,
+    job,
+    tenantId: effectiveTenant,
+    requesterId: userId || effectiveTenant,
+    step,
+    eventTools: args.eventTools,
+  });
+  if (gate.kind === 'stop') {
+    return gate.result;
+  }
+
   return await processStandardProvider({
-    db, jobId, job, tenantId, userId, step, now, scheduleRetry, refreshToken,
+    db, jobId, job, tenantId, userId, step, now, videoUrl: gate.videoUrl, scheduleRetry, refreshToken,
   });
 }

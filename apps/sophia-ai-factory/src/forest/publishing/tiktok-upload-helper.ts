@@ -2,8 +2,15 @@ import type { PublishParams, PublishResult } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  fetchTikTokCreatorInfo,
+  resolveTikTokPublishPlan,
+  logPublishDowngrade,
+} from '@/tree/social/publisher/tiktok-creator-info';
 
 export const TT_API = 'https://open.tiktokapis.com/v2';
+
+export { TIKTOK_CREATOR_INFO_ENDPOINT } from '@/tree/social/publisher/tiktok-creator-info';
 
 export async function uploadTikTokVideo(
   accessToken: string,
@@ -13,6 +20,18 @@ export async function uploadTikTokVideo(
     throw new Error('[TikTok] Circuit breaker open for tiktok');
   }
   try {
+    // TikTok answers an unaudited publish with HTTP 200 and a SELF_ONLY post,
+    // so the creator's own capability report decides the privacy level.
+    const capabilities = await fetchTikTokCreatorInfo(accessToken);
+    const plan = resolveTikTokPublishPlan({
+      capabilities,
+      requested: params.privacy === 'public' ? 'public' : 'private',
+      onUnavailable: 'downgrade',
+    });
+    if (plan.downgraded) {
+      logPublishDowngrade({ channelId: params.channelId ?? 'unknown', plan });
+    }
+
     const videoRes = await fetch(params.videoUrl);
     if (!videoRes.ok) throw new Error(`Failed to fetch video from ${params.videoUrl}`);
     const videoBuffer = await videoRes.arrayBuffer();
@@ -26,10 +45,10 @@ export async function uploadTikTokVideo(
       body: JSON.stringify({
         post_info: {
           title: params.title,
-          privacy_level: params.privacy === 'public' ? 'PUBLIC_TO_EVERYONE' : 'SELF_ONLY',
-          disable_duet: false,
-          disable_comment: false,
-          disable_stitch: false,
+          privacy_level: plan.privacyLevel,
+          disable_duet: plan.disableDuet,
+          disable_comment: plan.disableComment,
+          disable_stitch: plan.disableStitch,
         },
         source_info: {
           source: 'FILE_UPLOAD',

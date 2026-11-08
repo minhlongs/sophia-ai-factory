@@ -7,6 +7,7 @@ import type { PublishParams, PublishResult, PublishStatus } from './platform-ada
 import { logger } from '@/seed/utils/logger-utility';
 import { recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyHttpStatus } from '@/seed/types/failure-kind';
+import { resolveSyntheticMediaDisclosure } from './synthetic-media-disclosure';
 
 export const YT_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 export const YT_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
@@ -16,6 +17,19 @@ export async function performYouTubeUpload(
   accessToken: string,
   params: PublishParams,
 ): Promise<PublishResult> {
+  // The disclosure is decided by the provenance review, not by the caller:
+  // a missing disclosure costs the channel owner monetization, and an
+  // unresolved claim review is a strike risk rather than a warning.
+  const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: params.provenance,
+    defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
+  });
+  if (disclosure.blocked) {
+    throw new Error(
+      `PROVENANCE_BLOCKED: ${disclosure.blockedReason} (${disclosure.blockedReasonVi})`,
+    );
+  }
+
   const metadata = {
     snippet: {
       title: params.title,
@@ -27,6 +41,7 @@ export async function performYouTubeUpload(
       privacyStatus: params.privacy ?? 'private',
       publishAt: params.scheduledAt ?? undefined,
       selfDeclaredMadeForKids: false,
+      containsSyntheticMedia: disclosure.containsSyntheticMedia,
     },
   };
 

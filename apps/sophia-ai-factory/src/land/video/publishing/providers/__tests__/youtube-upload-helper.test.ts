@@ -28,6 +28,7 @@ describe('buildYouTubeMetadata', () => {
     expect(meta.status).toEqual({
       privacyStatus: 'public',
       selfDeclaredMadeForKids: false,
+      containsSyntheticMedia: true,
     });
     expect(meta.snippet.title).toBe('Bybit Review 2026');
     expect(meta.snippet.description).toContain('#ad Honest review of Bybit vs Binance fees');
@@ -49,6 +50,22 @@ describe('buildYouTubeMetadata', () => {
       privacyStatus: 'private',
     });
     expect(priv.status.privacyStatus).toBe('private');
+  });
+
+  // YouTube withholds monetization for a video published without the
+  // disclosure, so the flag must be present even when no publisher passed it.
+  it('declares synthetic media by default', () => {
+    const meta = buildYouTubeMetadata({ caption: 'Clip', hashtags: ['tag1'] });
+    expect(meta.status.containsSyntheticMedia).toBe(true);
+  });
+
+  it('honors an explicit non-synthetic declaration', () => {
+    const meta = buildYouTubeMetadata({
+      caption: 'Hand-recorded walkthrough',
+      hashtags: [],
+      containsSyntheticMedia: false,
+    });
+    expect(meta.status.containsSyntheticMedia).toBe(false);
   });
 });
 

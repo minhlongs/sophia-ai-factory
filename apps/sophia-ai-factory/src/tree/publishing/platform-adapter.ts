@@ -1,3 +1,5 @@
+import type { ProvenanceInput } from '@/tree/youtube-strategy/provenance-reviewer';
+
 export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'x' | 'whatsapp' | 'blog';
 
 export interface PublishParams {
@@ -9,6 +11,15 @@ export interface PublishParams {
   privacy?: 'public' | 'unlisted' | 'private';
   scheduledAt?: string;
   thumbnailUrl?: string;
+  /**
+   * Whether this video is synthetic (AI-generated). YouTube requires the
+   * `containsSyntheticMedia` disclosure for altered content; other platforms
+   * have no equivalent field, so it is consumed by the adapter that accepts it
+   * and ignored elsewhere.
+   */
+  containsSyntheticMedia?: boolean;
+  /** Provenance review input; drives the YouTube synthetic-media disclosure. */
+  provenance?: ProvenanceInput;
 }
 
 export interface PublishResult {

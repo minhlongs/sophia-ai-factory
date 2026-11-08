@@ -35,6 +35,7 @@ export interface YouTubeInitInput {
   readonly privacyStatus?: 'public' | 'unlisted' | 'private';
   readonly totalSizeBytes: number;
   readonly categoryId?: string;
+  readonly containsSyntheticMedia?: boolean;
 }
 
 export function buildYouTubeInitRequest(input: YouTubeInitInput) {
@@ -50,7 +51,11 @@ export function buildYouTubeInitRequest(input: YouTubeInitInput) {
     },
     body: {
       snippet: { title: input.title, description, tags, categoryId: input.categoryId ?? '22' },
-      status: { privacyStatus: input.privacyStatus ?? 'public', selfDeclaredMadeForKids: false },
+      status: {
+        privacyStatus: input.privacyStatus ?? 'public',
+        selfDeclaredMadeForKids: false,
+        containsSyntheticMedia: input.containsSyntheticMedia ?? true,
+      },
     },
   };
 }

@@ -18,6 +18,7 @@ import {
   ProviderResultUnverifiableError,
   type UploadExecutionInput,
 } from '../upload-executor';
+import { CreatorInfoUnavailableError } from '../tiktok-creator-info';
 import * as circuitBreaker from '@/seed/security/circuit-breaker';
 
 vi.mock('@/seed/security/circuit-breaker');
@@ -101,11 +102,33 @@ describe('upload-executor (labelled fixtures)', () => {
   describe('TikTok v2', () => {
     const ttInput: UploadExecutionInput = { ...baseInput, platform: 'TIKTOK_V2' };
 
-    it('returns the provider publish_id once the provider reports SUCCESS_PUBLISH', async () => {
-      const fetchImpl = vi
+    /**
+     * The creator_info preflight always runs first, so every TikTok fixture
+     * below begins with a creator capability response. `publicLevels` is
+     * empty for an app that has not passed TikTok's audit.
+     */
+    function tiktokFetch(responses: Array<ReturnType<typeof fixtureResponse>>, publicLevels: boolean) {
+      return vi
         .fn()
-        .mockResolvedValueOnce(fixtureResponse({ data: { publish_id: 'tt_publish_777' } }))
-        .mockResolvedValueOnce(fixtureResponse({ data: { status: 'SUCCESS_PUBLISH' } }));
+        .mockResolvedValueOnce(
+          fixtureResponse({
+            data: {
+              privacy_level_options: publicLevels
+                ? ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY']
+                : ['SELF_ONLY'],
+            },
+          }),
+        )
+        .mockImplementation(async () => responses.shift() ?? fixtureResponse({}));
+    }
+
+    const ttFetch = (...responses: Array<ReturnType<typeof fixtureResponse>>) => tiktokFetch(responses, true);
+
+    it('returns the provider publish_id once the provider reports SUCCESS_PUBLISH', async () => {
+      const fetchImpl = ttFetch(
+        fixtureResponse({ data: { publish_id: 'tt_publish_777' } }),
+        fixtureResponse({ data: { status: 'SUCCESS_PUBLISH' } }),
+      );
 
       const result = await executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch });
 
@@ -114,30 +137,85 @@ describe('upload-executor (labelled fixtures)', () => {
       expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:TIKTOK_V2');
     });
 
-    it('throws while the provider is still processing — an unconfirmed publish is not a success', async () => {
+    it('sends SELF_ONLY to the provider when the creator is not allowed to go public', async () => {
+      const fetchImpl = tiktokFetch(
+        [
+          fixtureResponse({ data: { publish_id: 'tt_publish_777' } }),
+          fixtureResponse({ data: { status: 'SUCCESS_PUBLISH' } }),
+        ],
+        false,
+      );
+
+      await executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch });
+
+      const initCall = (fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>)[1];
+      const body = JSON.parse(String(initCall[1].body)) as { post_info: { privacy_level: string } };
+      expect(body.post_info.privacy_level).toBe('SELF_ONLY');
+    });
+
+    it('sends PUBLIC_TO_EVERYONE when the creator reported that level', async () => {
+      const fetchImpl = ttFetch(
+        fixtureResponse({ data: { publish_id: 'tt_publish_777' } }),
+        fixtureResponse({ data: { status: 'SUCCESS_PUBLISH' } }),
+      );
+
+      await executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch });
+
+      const initCall = (fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>)[1];
+      const body = JSON.parse(String(initCall[1].body)) as { post_info: { privacy_level: string } };
+      expect(body.post_info.privacy_level).toBe('PUBLIC_TO_EVERYONE');
+    });
+
+    it('never contacts the provider when the creator_info preflight fails', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue(fixtureResponse({ error: { code: 'access_token_invalid' } }));
+
+      await expect(executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch }))
+        .rejects.toThrow(CreatorInfoUnavailableError);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+    });
+
+    it('refuses an over-long video before spending the upload bytes', async () => {
       const fetchImpl = vi
         .fn()
-        .mockResolvedValueOnce(fixtureResponse({ data: { publish_id: 'tt_publish_777' } }))
-        .mockResolvedValueOnce(fixtureResponse({ data: { status: 'PROCESSING_UPLOAD' } }));
+        .mockResolvedValue(
+          fixtureResponse({ data: { privacy_level_options: ['SELF_ONLY'], max_video_post_duration_sec: 60 } }),
+        );
+
+      await expect(executePlatformUpload({
+        ...ttInput,
+        durationSeconds: 120,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      })).rejects.toThrow(CreatorInfoUnavailableError);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws while the provider is still processing — an unconfirmed publish is not a success', async () => {
+      const fetchImpl = ttFetch(
+        fixtureResponse({ data: { publish_id: 'tt_publish_777' } }),
+        fixtureResponse({ data: { status: 'PROCESSING_UPLOAD' } }),
+      );
 
       await expect(executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch }))
         .rejects.toThrow(ProviderResultUnverifiableError);
-      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+      // The preflight succeeded, but the publish never did: only the preflight
+      // key may be recorded, never the platform-scoped one.
+      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalledWith('social_upload:TIKTOK_V2');
     });
 
     it('throws with the provider fail reason when the provider reports FAILED', async () => {
-      const fetchImpl = vi
-        .fn()
-        .mockResolvedValueOnce(fixtureResponse({ data: { publish_id: 'tt_publish_777' } }))
-        .mockResolvedValueOnce(fixtureResponse({ data: { status: 'FAILED', fail_reason: 'picture size check failed' } }));
+      const fetchImpl = ttFetch(
+        fixtureResponse({ data: { publish_id: 'tt_publish_777' } }),
+        fixtureResponse({ data: { status: 'FAILED', fail_reason: 'picture size check failed' } }),
+      );
 
       await expect(executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch }))
         .rejects.toThrow(/picture size check failed/);
-      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalledWith('social_upload:TIKTOK_V2');
     });
 
     it('throws when the init response carries no publish_id', async () => {
-      const fetchImpl = vi.fn().mockResolvedValue(fixtureResponse({ data: {} }));
+      const fetchImpl = ttFetch(fixtureResponse({ data: {} }));
 
       await expect(executePlatformUpload({ ...ttInput, fetchImpl: fetchImpl as unknown as typeof fetch }))
         .rejects.toThrow(ProviderResultUnverifiableError);

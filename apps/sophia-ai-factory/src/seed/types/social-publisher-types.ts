@@ -7,7 +7,14 @@
 
 export type SocialPlatform = 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
 
-export type PublishJobStatus = 'PENDING' | 'PACED' | 'UPLOADING' | 'PUBLISHED' | 'FAILED' | 'DRAFT';
+export type PublishJobStatus =
+  | 'PENDING'
+  | 'PACED'
+  | 'AWAITING_APPROVAL'
+  | 'UPLOADING'
+  | 'PUBLISHED'
+  | 'FAILED'
+  | 'DRAFT';
 
 /**
  * Normalizes any raw platform string (e.g. from syndication or URL params)

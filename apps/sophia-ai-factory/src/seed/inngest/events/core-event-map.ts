@@ -47,6 +47,11 @@ import type {
 } from '../agent-event-types';
 
 import type {
+  PublishApprovalRequestedData,
+  PublishApprovalResolvedData,
+} from '../publish-approval-event-types';
+
+import type {
   ProductionGraphStartedEvent,
   ProductionGraphCompletedEvent,
   ProductionGraphFailedEvent,
@@ -99,6 +104,8 @@ export type CoreEvents = {
   "agent.mission.started": AgentMissionStartedData;
   "agent.approval.requested": AgentApprovalRequestedData;
   "agent.approval.resolved": AgentApprovalResolvedData;
+  "publish.approval.requested": PublishApprovalRequestedData;
+  "publish.approval.resolved": PublishApprovalResolvedData;
   "agent.mission.completed": AgentMissionCompletedData;
   "agent.mission.failed": AgentMissionFailedData;
   "production.graph.started": ProductionGraphStartedEvent;

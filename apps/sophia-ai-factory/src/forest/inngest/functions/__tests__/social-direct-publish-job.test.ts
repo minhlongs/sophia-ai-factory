@@ -26,6 +26,13 @@ vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn().mockResolvedValue({ ids: ['evt_1'] }), createFunction: vi.fn() },
 }));
 
+// The publish approval gate sits between the upload claim and the provider
+// call. It is mocked here so these tests exercise the publishing job around it
+// rather than the human-decision ledger, which has its own coverage.
+vi.mock('@/tree/publishing/approval', () => ({
+  awaitPublishApproval: vi.fn().mockResolvedValue({ state: { outcome: 'allowed' } }),
+}));
+
 /**
  * YouTube's resumable-upload handshake answers with the session URL in a
  * Location header; the executor reads that header, then PUTs the media.
@@ -43,6 +50,10 @@ describe('socialDirectPublishJob & Server Actions', () => {
   const mockStep = {
     run: vi.fn().mockImplementation(async (_n: string, fn: () => Promise<unknown>) => fn()),
     sleep: vi.fn().mockResolvedValue(undefined),
+    // The publish approval gate suspends here for a human decision. These
+    // fixtures resolve an approved ledger row so the upload step is reached.
+    sendEvent: vi.fn().mockResolvedValue({ ids: ['evt_1'] }),
+    waitForEvent: vi.fn().mockResolvedValue({ data: { decision: 'approved', reviewerId: 'user_1' } }),
   };
 
   const sampleCred: PlatformCredentialRecord = {
@@ -69,6 +80,17 @@ describe('socialDirectPublishJob & Server Actions', () => {
   const fixtureFetch = vi.fn();
   const fixtureToken = 'fixture_access_token';
 
+  /**
+   * TikTok's creator_info preflight answer for an app that has passed audit.
+   * Every TikTok upload runs it first, so a TikTok fixture list starts here.
+   */
+  const auditedTikTokCreator = () => ({
+    ok: true,
+    json: async () => ({
+      data: { privacy_level_options: ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY'] },
+    }),
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
@@ -90,6 +112,7 @@ describe('socialDirectPublishJob & Server Actions', () => {
     fixtureFetch
       .mockResolvedValueOnce(responseWithLocation('https://fixtures.googleapis.test/session_yt'))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_yt_video_1' }) })
+      .mockResolvedValueOnce(auditedTikTokCreator())
       .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { publish_id: 'provider_tt_publish_1' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'SUCCESS_PUBLISH' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'provider_ig_media_1' }) })

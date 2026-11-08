@@ -19,6 +19,7 @@ import {
   type ValidatorProvider,
 } from '@/tree/byok/key-format-validators'
 import { probeProviderApiKey } from '@/tree/byok/provider-probe'
+import { buildReceiptPayload } from '@/tree/byok/receipt-payload-builder'
 
 export const PROVIDERS = [
   'openrouter',
@@ -66,18 +67,29 @@ export async function upsertVerifiedByokKey(
   const validation = validateProviderKey(provider as ValidatorProvider, key)
   const finalKey = validation.ok && validation.autoEncoded ? validation.autoEncoded : key
 
+  let maskedKey: string | undefined
   if (validateLive) {
     const probe = await probeProviderApiKey(provider, finalKey)
+    maskedKey = probe.maskedKey
     if (
       !probe.valid &&
       (probe.status === 'INVALID' || probe.httpStatus === 401 || probe.httpStatus === 403)
     ) {
+      // A refused key still reports its capabilities and budget, so the customer
+      // learns what the key can spend before they retry with a different one.
+      const { payload: receipt } = await buildReceiptPayload({
+        userId,
+        provider,
+        maskedKey: probe.maskedKey,
+        nowUnix: Math.floor(Date.now() / 1000),
+      })
       return NextResponse.json(
         {
           error: probe.message,
           error_vi: probe.message_vi,
           provider,
           status: probe.status,
+          receipt,
         },
         { status: 422 },
       )
@@ -96,7 +108,13 @@ export async function upsertVerifiedByokKey(
   }
 
   track(D1Events.BYOK_KEY_SET, userId, { provider })
-  return NextResponse.json({ ok: true })
+  const receipt = await buildReceiptPayload({
+    userId,
+    provider,
+    maskedKey: maskedKey ?? '',
+    nowUnix: Math.floor(Date.now() / 1000),
+  })
+  return NextResponse.json({ ok: true, receipt: receipt.payload })
 }
 
 export async function removeUserByokKey(
