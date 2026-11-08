@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { probeProviderApiKey } from '@/tree/byok/provider-probe';
+import { buildReceiptPayload } from '@/tree/byok/receipt-payload-builder';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,14 +54,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { provider, api_key } = parsed.data;
   const result = await probeProviderApiKey(provider, api_key);
 
+  // The receipt is additive: every field the Setup Wizard already reads is
+  // preserved, so an older client keeps working while the wizard learns what
+  // the key can do and what it has left to spend.
+  const { payload: receipt } = await buildReceiptPayload({
+    userId: user.id,
+    provider,
+    maskedKey: result.maskedKey,
+    nowUnix: Math.floor(Date.now() / 1000),
+  });
+  const responseBody = { ...result, receipt };
+
   if (result.valid) {
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(responseBody, { status: 200 });
   }
 
   if (result.status === 'UNKNOWN' || result.httpStatus === 400) {
-    return NextResponse.json(result, { status: 400 });
+    return NextResponse.json(responseBody, { status: 400 });
   }
 
   const isAuthFail = result.httpStatus === 401 || result.httpStatus === 403;
-  return NextResponse.json(result, { status: isAuthFail ? 422 : 502 });
+  return NextResponse.json(responseBody, { status: isAuthFail ? 422 : 502 });
 }
