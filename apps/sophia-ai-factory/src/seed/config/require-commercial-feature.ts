@@ -22,8 +22,10 @@ import { success, failure, type Result } from '@/seed/types/result';
 export interface CommercialFeatureDenied {
   readonly featureId: SophiaModuleFeatureId;
   readonly reasonCode: FeatureGateDenial['reasonCode'];
+  readonly code: FeatureGateDenial['reasonCode'];
   readonly messageVi: string;
   readonly messageEn: string;
+  readonly message: string;
   readonly upgradeUrl: string;
 }
 
@@ -48,8 +50,10 @@ export function requireCommercialFeature(
   return failure({
     featureId,
     reasonCode: gate.reasonCode,
+    code: gate.reasonCode,
     messageVi: gate.messageVi,
     messageEn: gate.messageEn,
+    message: `${gate.messageVi} / ${gate.messageEn}`,
     upgradeUrl: gate.upgradeUrl,
   });
 }

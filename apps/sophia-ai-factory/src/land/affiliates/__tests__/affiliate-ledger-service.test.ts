@@ -174,6 +174,7 @@ function createMockD1Database() {
           if (normalizedSql.startsWith('INSERT INTO affiliate_payouts')) {
             const [
               id,
+              tenant_id,
               payout_reference,
               partner_id,
               rail,
@@ -186,6 +187,7 @@ function createMockD1Database() {
 
             payouts.set(id as string, {
               id: id as string,
+              tenant_id: (tenant_id as string) || 'default',
               payout_reference: payout_reference as string,
               partner_id: partner_id as string,
               rail: rail as any,
@@ -283,6 +285,7 @@ function createMockD1Database() {
             const isTier2 = normalizedSql.includes("'TIER2'");
             const [
               id,
+              tenant_id,
               event_key,
               partner_id,
               referral_id,
@@ -308,6 +311,7 @@ function createMockD1Database() {
 
             commissions.set(key, {
               id: id as string,
+              tenant_id: (tenant_id as string) || 'default',
               event_key: key,
               partner_id: partner_id as string,
               referral_id: referral_id as string | null,

@@ -21,6 +21,7 @@ export interface RecordCommissionWebhookParams {
   partnerCode: string;
   subId?: string;
   currency?: 'USD' | 'VND';
+  tenantId?: string;
 }
 
 export interface CommissionRecordResult {
@@ -61,22 +62,25 @@ export async function recordAtomicCommission(
     const now = Date.now();
     const payableAt = now + HOLD_DURATION_MS;
 
+    const tenantId = params.tenantId?.trim() || 'default';
     const metadata = JSON.stringify({
       subId: params.subId,
       orderId: params.orderId,
       grossAmountCents: params.grossAmountCents,
+      tenantId,
     });
 
     const result = await db
       .prepare(`INSERT INTO affiliate_commissions (
-        id, event_key, partner_id, payment_provider, payment_id, order_id,
+        id, tenant_id, event_key, partner_id, payment_provider, payment_id, order_id,
         customer_user_id, gross_amount_cents, commission_rate_pct, commission_cents,
         tier_level, currency, status, hold_days, payable_at, version,
         metadata_json, created_at, updated_at
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'TIER1', ?11, 'pending', 14, ?12, 1, ?13, ?14, ?14)
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'TIER1', ?12, 'pending', 14, ?13, 1, ?14, ?15, ?15)
       ON CONFLICT(event_key) DO NOTHING`)
       .bind(
         commissionId,
+        tenantId,
         eventKey,
         partner.id,
         params.paymentProvider,

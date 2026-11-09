@@ -4,6 +4,7 @@ export type ReferralStatus = 'pending' | 'converted' | 'expired';
 
 export interface AffiliateReferralRow {
   id: string;
+  tenant_id?: string;
   partner_id: string;
   partner_code: string;
   referred_user_id: string | null;
@@ -24,6 +25,7 @@ export type PaymentProvider = 'nowpayments' | 'payos' | 'manual';
 
 export interface AffiliateCommissionRow {
   id: string;
+  tenant_id?: string;
   event_key: string;
   partner_id: string;
   referral_id: string | null;
@@ -67,6 +69,10 @@ export interface AttributionParams {
    * Cookie-free fallback used when the visitor declines marketing consent.
    */
   refParam?: string | null;
+  /**
+   * Optional multi-tenant scope identifier (defaults to 'default').
+   */
+  tenantId?: string;
 }
 
 export interface AffiliateAttributionResult {

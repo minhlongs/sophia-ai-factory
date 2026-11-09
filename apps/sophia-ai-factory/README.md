@@ -8,8 +8,8 @@ Automated video production with BYOK (bring your own AI keys).
 | Item | Value |
 |---|---|
 | **URL** | https://sophia.agencyos.network |
-| **Current SHA** | `d86659bf` (verify: `curl -s https://sophia.agencyos.network/api/version \| jq .shortSha`) |
-| **Status** | Production (next.js 16 + D1 + R2 + Better Auth + NOWPayments) |
+| **Current SHA** | Verified dynamically via `/api/version` (`curl -s https://sophia.agencyos.network/api/version \| jq .shortSha`) |
+| **Status** | Production (Next.js 16 + D1 + R2 + Better Auth + NOWPayments, deployed via `.github/workflows/deploy.yml`) |
 
 ## Stack
 

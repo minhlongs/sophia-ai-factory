@@ -39,6 +39,7 @@ export interface PartnerLedgerStatsResult {
 
 export interface CreatePayoutInput {
   partnerId: string;
+  tenantId?: string;
   rail: PayoutRail;
   amountCents: number;
   currency?: string;
@@ -72,6 +73,7 @@ export interface CompletePayoutInput {
 export interface LinkCommissionsInput {
   payoutId: string;
   partnerId: string;
+  tenantId?: string;
   /** Only commissions matured at or before this instant are reserved. */
   maturedBeforeMs: number;
   d1?: D1Database;
