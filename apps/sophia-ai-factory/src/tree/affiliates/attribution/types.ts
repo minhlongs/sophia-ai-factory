@@ -37,6 +37,7 @@ export interface Tier2AttributionInput {
   payableAt: number;
   primaryEventKey: string;
   nowMs: number;
+  tenantId?: string;
 }
 
 export interface ReferrerResolution {

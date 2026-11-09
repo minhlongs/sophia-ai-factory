@@ -85,6 +85,7 @@ export async function persistValidatedCommission(
       payableAt,
       primaryEventKey,
       nowMs,
+      tenantId: params.tenantId?.trim() || referral?.tenant_id?.trim() || 'default',
     });
   }
 

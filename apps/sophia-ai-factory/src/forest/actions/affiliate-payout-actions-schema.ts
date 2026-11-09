@@ -19,6 +19,7 @@ export type UsdtNetwork = z.infer<typeof UsdtNetworkEnum>;
 export const requestDualRailPayoutSchema = z
   .object({
     partnerId: z.string().min(1, 'Partner ID is required'),
+    tenantId: z.string().min(1).optional(),
     rail: PayoutRailEnum,
     amountCents: z.number().int().min(5000, 'Minimum payout amount is $50.00 (5,000 cents)'),
     bankBin: z.string().regex(/^\d{6}$/, 'Bank BIN must be 6 digits').optional(),

@@ -46,16 +46,18 @@ export async function createPayoutDisbursement(
     const payoutReference = `PO_${datePart}_${randPart}`;
     const nowMs = Date.now();
     const currency = input.currency ?? (input.rail === 'VIETQR' ? 'VND' : 'USD');
+    const tenantId = input.tenantId?.trim() || 'default';
 
     await d1
       .prepare(
         `INSERT INTO affiliate_payouts (
-           id, payout_reference, partner_id, rail, amount_cents, currency,
+           id, tenant_id, payout_reference, partner_id, rail, amount_cents, currency,
            destination_encrypted, status, commission_count, version, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', 0, 1, ?, ?)`
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 1, ?, ?)`
       )
       .bind(
         payoutId,
+        tenantId,
         payoutReference,
         input.partnerId,
         input.rail,

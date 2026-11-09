@@ -34,19 +34,34 @@ export async function linkCommissionsToPayout(
 
   try {
     const nowMs = Date.now();
-    const result = await d1
-      .prepare(
-        `UPDATE affiliate_commissions
-         SET payout_id = ?1,
-             version = version + 1,
-             updated_at = ?2
-         WHERE partner_id = ?3
-           AND status = 'payable'
-           AND payout_id IS NULL
-           AND (payable_at IS NULL OR payable_at <= ?4)`
-      )
-      .bind(input.payoutId, nowMs, input.partnerId, input.maturedBeforeMs)
-      .run();
+    const result = input.tenantId
+      ? await d1
+          .prepare(
+            `UPDATE affiliate_commissions
+             SET payout_id = ?1,
+                 version = version + 1,
+                 updated_at = ?2
+             WHERE partner_id = ?3
+               AND tenant_id = ?4
+               AND status = 'payable'
+               AND payout_id IS NULL
+               AND (payable_at IS NULL OR payable_at <= ?5)`
+          )
+          .bind(input.payoutId, nowMs, input.partnerId, input.tenantId, input.maturedBeforeMs)
+          .run()
+      : await d1
+          .prepare(
+            `UPDATE affiliate_commissions
+             SET payout_id = ?1,
+                 version = version + 1,
+                 updated_at = ?2
+             WHERE partner_id = ?3
+               AND status = 'payable'
+               AND payout_id IS NULL
+               AND (payable_at IS NULL OR payable_at <= ?4)`
+          )
+          .bind(input.payoutId, nowMs, input.partnerId, input.maturedBeforeMs)
+          .run();
 
     const reservedCount = result.meta?.changes ?? 0;
     return { success: true, reservedCount };

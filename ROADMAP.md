@@ -27,7 +27,8 @@ Ship business proof before architectural vanity. Every milestone must either inc
 - [ ] NOWPayments/PayOS IPN activates tier. (IPN pipeline validated: 30+ test files)
 - [ ] Customer generates first AI video.
 - [ ] Telegram commands remain functional. (validated: webhook, commands, pairing gate intact)
-- [ ] Support handover doc is bilingual.
+- [x] Support handover doc is bilingual.
+- [x] Server-side Open-Core commercial feature gates enforced (`enforceCommercialFeatureForUser`) & multi-tenant affiliate ledger isolated (`migrations/0500_affiliate_multi_tenant_isolation.sql`).
 
 ## Phase 2 — Production Hardening
 

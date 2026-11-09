@@ -105,6 +105,7 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0497_rebuild_six_tables_without_legacy_user_fk.sql
 !apps/sophia-ai-factory/migrations/0498_rebuild_sixteen_tables_without_legacy_user_fk.sql
 !apps/sophia-ai-factory/migrations/0499_byok_key_policy_and_publish_ledger.sql
+!apps/sophia-ai-factory/migrations/0500_affiliate_multi_tenant_isolation.sql
 backups/*.sql
 **/d1-*.sql
 

@@ -15,6 +15,7 @@ import {
 /** One partner's aggregated mature commissions. */
 export interface PartnerPayoutPlan {
   partnerId: string;
+  tenantId?: string;
   amountCents: number;
   commissionCount: number;
 }
@@ -40,23 +41,27 @@ export interface Net30PayoutResult {
 
 interface MatureCommissionRow {
   partner_id: string;
+  tenant_id?: string | null;
   commission_count: number;
   total_cents: number | null;
 }
 
-/** Groups mature payable totals by partner. */
+/** Groups mature payable totals by partner (and tenant when present). */
 export function aggregateByPartner(rows: MatureCommissionRow[]): PartnerPayoutPlan[] {
   const totals = new Map<string, PartnerPayoutPlan>();
 
   for (const row of rows) {
-    const plan = totals.get(row.partner_id) ?? {
+    const tenantId = row.tenant_id?.trim() || undefined;
+    const key = tenantId ? `${tenantId}::${row.partner_id}` : row.partner_id;
+    const plan = totals.get(key) ?? {
       partnerId: row.partner_id,
+      ...(tenantId ? { tenantId } : {}),
       amountCents: 0,
       commissionCount: 0,
     };
     plan.amountCents += row.total_cents ?? 0;
     plan.commissionCount += row.commission_count ?? 0;
-    totals.set(row.partner_id, plan);
+    totals.set(key, plan);
   }
 
   return [...totals.values()];

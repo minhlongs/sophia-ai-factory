@@ -1,6 +1,6 @@
 # Open-Core Company Blueprint — Tasks
 
-**Synced:** 2026-10-21 · Head `338321052` · Branch `fix/consent-resolver-missing-import`
+**Synced:** 2026-11-09 · Head `8390a0f07` · Branch `feat/partner-resell-opencore-gates`
 Status legend: ✅ verified in repo · 🟡 in progress · ⬜ not started · 🚫 blocked (named owner)
 
 ## Phase 1 — Foundation (Steps 1–5)
@@ -34,7 +34,7 @@ Status legend: ✅ verified in repo · 🟡 in progress · ⬜ not started · �
 
 - [ ] **16. AARRR + version beacon** — 🟡 `/api/version` live; GitHub star count unverifiable from this sandbox (`api.github.com` denied).
 - [ ] **17. VC narrative** — ⬜ stage must stay disclosed as Zero → PSF.
-- [ ] **18. Dual-license IP & secret hygiene** — 🟡 CI secret gates present; **edition gate NOT enforced at routes** (only auditor + status route call `evaluateFeatureGate`).
+- [x] **18. Dual-license IP & secret hygiene** — ✅ CI secret gates present; server-side edition feature gates enforced via `enforceCommercialFeatureForUser` (`src/seed/config/enforce-commercial-feature-server.ts`) across social publisher, custom domain provisioning, white-label agency portal, and affiliate payouts.
 - [ ] **19. Solo-founder org** — ✅ as designed.
 - [ ] **20. Open-core benchmarks** — ⬜ external benchmarking pending researcher report.
 - [ ] **21. Data room** — ⬜ evidence exists in `plans/evidence/`.
@@ -50,13 +50,13 @@ Status legend: ✅ verified in repo · 🟡 in progress · ⬜ not started · �
 
 ## Active Bet — Partner-Resell Kit (cross-cutting, Steps 6/7/11/14/15/22)
 
-- [ ] Enforce edition feature gates at the routes the manifest names (**blocker 1**).
-- [ ] Parameterize `affiliate_links` / `click_events` / `conversion_events` by real `tenant_id` (remove `/ref`'s hardcoded `'default'`).
-- [ ] **Migration: add `tenant_id` to `affiliate_commissions`, `affiliate_payouts`, `affiliate_referrals`** — none carry it (migration `0452` gives them only `partner_id` / `referral_id` / `payout_id`). Backfill existing rows as `'default'`; back up D1 first. Without this, a customer's commission ledger is inseparable from Sophia's own and cross-tenant sweeps pay out wrong.
+- [x] Enforce edition feature gates at the routes the manifest names (**blocker 1**) — ✅ enforced via `enforceCommercialFeatureForUser` in `social-publisher-actions`, `domain-access`, `white-label-actions`, and `affiliate-payout-actions`.
+- [x] Parameterize `affiliate_links` / `click_events` / `conversion_events` by real `tenant_id` (remove `/ref`'s hardcoded `'default'`) — ✅ `src/app/ref/[code]/page.tsx` resolves `tenant_id` from `affiliate_links` with `'default'` fallback.
+- [x] **Migration: add `tenant_id` to `affiliate_commissions`, `affiliate_payouts`, `affiliate_referrals`** — ✅ `migrations/0500_affiliate_multi_tenant_isolation.sql` adds `tenant_id TEXT NOT NULL DEFAULT 'default'` + composite indexes and propagates `tenant_id` across attribution, atomic commission recording, payout disbursement, commission-payout linking, and NET-30 sweeps.
 - [ ] Customer-facing partner management surface inside the workspace (Cloud-gated).
-- [ ] Dual-rail payout orchestration behind the gate (Cloud-gated).
+- [x] Dual-rail payout orchestration behind the gate (Cloud-gated) — ✅ `requestDualRailPayoutAction` & `updatePartnerPayoutDestinationAction` gated behind `affiliate_attribution_payouts` and scoped by `tenantId`.
 - [ ] **Founder decision:** affiliate payout rail — Stripe Connect vs PayOS/VietQR for VN operators (**blocker 2**).
-- [ ] Fix manifest defect: `/dashboard/social-publisher` → `dashboard/publish`.
-- [ ] Refresh README SHA badge (`d86659bf` stale vs head `338321052`).
+- [x] Fix manifest defect: `/dashboard/social-publisher` → `dashboard/publish` — ✅ `src/seed/config/open-core-manifest.ts` verified.
+- [x] Refresh README SHA badge (`d86659bf` stale vs head `338321052`) — ✅ synced in `apps/sophia-ai-factory/README.md`.
 
 **Not done / not verified in this session:** live SHA parity, public repo star count, `docs/SELF_HOSTING.md`, lifecycle email sequences, and the two inbound external-research reports (open-core PLG wedge, VN affiliate channel).

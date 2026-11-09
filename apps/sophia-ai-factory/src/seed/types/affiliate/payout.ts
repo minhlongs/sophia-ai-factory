@@ -11,6 +11,7 @@ export type PayoutStatus =
 
 export interface AffiliatePayoutRow {
   id: string;
+  tenant_id?: string;
   payout_reference: string;
   partner_id: string;
   rail: PayoutRail;

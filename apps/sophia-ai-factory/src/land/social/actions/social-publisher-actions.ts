@@ -9,6 +9,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import type { SocialPlatform, SocialPublishResult } from '@/seed/types/social-publisher-types';
 import {
   listUserCredentials,
@@ -37,6 +38,10 @@ export async function dispatchSocialPublishAction(
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized: login required', code: 'UNAUTHORIZED' };
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return { success: false, error: gate.error.message, code: gate.error.code };
+    }
     return await executeDispatchSocialPublish(user.id, rawInput);
   } catch (err: unknown) {
     return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };

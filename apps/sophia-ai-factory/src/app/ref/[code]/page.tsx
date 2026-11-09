@@ -45,6 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 interface AffiliateLinkRow {
   id: string
+  tenant_id?: string | null
   offer_id: string
   user_id: string
 }
@@ -61,11 +62,12 @@ export default async function ReferralPage({ params }: Props) {
   }
 
   const link = await db
-    .prepare(`SELECT id, offer_id, user_id FROM affiliate_links WHERE code = ?1 LIMIT 1`)
+    .prepare(`SELECT id, tenant_id, offer_id, user_id FROM affiliate_links WHERE code = ?1 LIMIT 1`)
     .bind(code)
     .first<AffiliateLinkRow>()
 
   if (!link) redirect('/')
+  const resolvedTenantId = link.tenant_id?.trim() || 'default'
 
   // Attribution cookie is a non-essential (marketing) tracker: only set it once the
   // visitor has granted marketing consent. Without consent, attribution still works
@@ -99,9 +101,9 @@ export default async function ReferralPage({ params }: Props) {
       .prepare(
         `INSERT OR IGNORE INTO click_events
       (id, tenant_id, link_id, offer_id, ip_hash, ua, referrer, country, clicked_at)
-      VALUES (?1, 'default', ?2, ?3, NULL, NULL, NULL, NULL, ?4)`,
+      VALUES (?1, ?2, ?3, ?4, NULL, NULL, NULL, NULL, ?5)`,
       )
-      .bind(crypto.randomUUID(), link.id, link.offer_id, Math.floor(Date.now() / 1000))
+      .bind(crypto.randomUUID(), resolvedTenantId, link.id, link.offer_id, Math.floor(Date.now() / 1000))
       .run()
   } catch (err) {
     logger.warn('[ref-page] click_events insert failed', {

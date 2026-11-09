@@ -44,19 +44,21 @@ export async function processTier2Commission(p: Tier2AttributionInput): Promise<
 
   const tier2CommissionId = `comm_t2_${crypto.randomUUID().replace(/-/g, '')}`;
   const tier2EventKey = `${p.primaryEventKey}_tier2`;
+  const tenantId = p.tenantId?.trim() || 'default';
 
   const t2Res = await p.d1
     .prepare(
       `INSERT INTO affiliate_commissions (
-         id, event_key, partner_id, referral_id, payment_provider, payment_id,
+         id, tenant_id, event_key, partner_id, referral_id, payment_provider, payment_id,
          order_id, customer_user_id, gross_amount_cents, commission_rate_pct,
          commission_cents, tier_level, currency, status, hold_days, payable_at,
          version, metadata_json, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'TIER2', ?, 'pending', ?, ?, 1, ?, ?, ?)
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'TIER2', ?, 'pending', ?, ?, 1, ?, ?, ?)
        ON CONFLICT(event_key) DO NOTHING`
     )
     .bind(
       tier2CommissionId,
+      tenantId,
       tier2EventKey,
       parentPartner.id,
       p.referralId,

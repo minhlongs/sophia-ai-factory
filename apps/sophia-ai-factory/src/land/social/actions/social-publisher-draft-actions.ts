@@ -8,6 +8,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
 import {
@@ -39,6 +40,10 @@ export async function approveDraftPublishJobAction(
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' };
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return { success: false, error: gate.error.message, code: gate.error.code };
+    }
     if (!jobId) return { success: false, error: 'Job ID required', code: 'VALIDATION_ERROR' };
 
     const job = await transitionDraftToPending(jobId, user.id);

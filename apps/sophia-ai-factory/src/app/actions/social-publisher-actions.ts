@@ -8,6 +8,7 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import {
   listUserDraftJobs,
   transitionDraftToPending,
@@ -37,6 +38,11 @@ export async function dispatchSocialPublishAction(
   }
   if (!input.platforms || input.platforms.length === 0) {
     return { ok: false, message: 'Chọn ít nhất 1 nền tảng / Select at least 1 platform' };
+  }
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+  if (!gate.ok) {
+    return { ok: false, message: gate.error.message };
   }
 
   const { createdJobIds, errors } = await dispatchToSelectedPlatforms(user.id, input);
@@ -72,6 +78,9 @@ export async function toggleChannelKillSwitchAction(
 export async function approveDraftAction(jobId: string): Promise<boolean> {
   const user = await getCurrentUser();
   if (!user) return false;
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+  if (!gate.ok) return false;
 
   try {
     const job = await transitionDraftToPending(jobId, user.id);

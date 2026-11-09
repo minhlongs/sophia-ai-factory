@@ -48,7 +48,7 @@ export async function getWhiteLabelBrandingSettingsAction(
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database unavailable' });
     }
 
-    const auth = await assertMasterTierAndOrgAccess(db, orgId);
+    const auth = await assertMasterTierAndOrgAccess(db, orgId, 'white_label_agency_portal');
     if (!auth.ok) {
       return failure({ code: auth.error.code, message: auth.error.message });
     }
@@ -89,7 +89,7 @@ export async function saveWhiteLabelBrandingSettingsAction(
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database unavailable' });
     }
 
-    const auth = await assertMasterTierAndOrgAccess(db, orgId);
+    const auth = await assertMasterTierAndOrgAccess(db, orgId, 'white_label_agency_portal');
     if (!auth.ok) {
       return failure({ code: auth.error.code, message: auth.error.message });
     }
