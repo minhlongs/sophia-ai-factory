@@ -40,6 +40,7 @@ export type PaywallMabRecalibratedEvent = {
     winningArmId: string;
     priceUsd: number;
     expectedRevenue: number;
+    accountAgeDays?: number;
   };
 };
 

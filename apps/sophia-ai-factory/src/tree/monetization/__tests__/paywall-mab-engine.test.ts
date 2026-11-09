@@ -1,14 +1,15 @@
 /**
  * @file paywall-mab-engine.test.ts
- * @description Zero-mock unit tests for Paywall MAB & Price Elasticity Engine
+ * @description Zero-mock unit tests for Paywall MAB & Price Elasticity Engine with Track B Sparse-Data Guard
  * @layer tree
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   calculateElasticityEpsilon,
   calculateOptimalPriceWithMarginFloor,
   calculateRfmWtpScore,
+  evaluatePaywallArmsSparseDataGate,
   sampleBetaValue,
   selectPaywallArmThompson,
   updateArmPosterior,
@@ -17,14 +18,12 @@ import type { PaywallArm } from '@/seed/types/growth-triad-v5-types';
 
 describe('Paywall MAB & Elasticity Engine', () => {
   it('calculates price elasticity correctly', () => {
-    // Price rises from $100 to $120 (+20%), demand drops from 100 to 80 (-20%) -> eps = -1.0
     const eps = calculateElasticityEpsilon(100, 120, 100, 80);
     expect(eps).toBeCloseTo(-1.0, 2);
   });
 
   it('enforces margin floor in optimal price calculation', () => {
     const marginalCost = 20;
-    // 60% gross margin floor = 20 / (1 - 0.6) = $50
     const price = calculateOptimalPriceWithMarginFloor(marginalCost, -2.5, 0.60);
     expect(price).toBeGreaterThanOrEqual(50);
   });
@@ -46,7 +45,46 @@ describe('Paywall MAB & Elasticity Engine', () => {
     expect(val).toBeLessThan(1);
   });
 
-  it('selects highest expected revenue arm via Thompson sampling', () => {
+  it('enforces Track B sparse-data guard and selects deterministic baseline when conversions === 0', () => {
+    const arms: PaywallArm[] = [
+      {
+        id: 'arm-enterprise',
+        campaignId: 'camp-zero',
+        priceTier: 'ENTERPRISE',
+        priceUsd: 799,
+        alphaSuccess: 1,
+        betaFailure: 1,
+        impressions: 0,
+        conversions: 0,
+        revenueUsd: 0,
+        isActive: true,
+      },
+      {
+        id: 'arm-basic',
+        campaignId: 'camp-zero',
+        priceTier: 'BASIC',
+        priceUsd: 199,
+        alphaSuccess: 1,
+        betaFailure: 1,
+        impressions: 0,
+        conversions: 0,
+        revenueUsd: 0,
+        isActive: true,
+      },
+    ];
+
+    const gate = evaluatePaywallArmsSparseDataGate(arms);
+    expect(gate.mode).toBe('deterministic_rule_based');
+    expect(gate.allowThompsonSampling).toBe(false);
+
+    const randomSpy = vi.spyOn(Math, 'random');
+    const selected = selectPaywallArmThompson(arms, 0.9);
+    expect(selected.id).toBe('arm-basic');
+    expect(randomSpy).not.toHaveBeenCalled();
+    randomSpy.mockRestore();
+  });
+
+  it('selects highest empirical expected revenue arm deterministically under sparse traffic', () => {
     const arms: PaywallArm[] = [
       {
         id: 'arm-cheap',
@@ -75,8 +113,43 @@ describe('Paywall MAB & Elasticity Engine', () => {
     ];
 
     const selected = selectPaywallArmThompson(arms, 0.8);
-    expect(selected).toBeDefined();
     expect(selected.id).toBe('arm-premium');
+  });
+
+  it('unlocks Thompson Sampling when >=100 conversions and >=1,000 impressions per arm', () => {
+    const arms: PaywallArm[] = [
+      {
+        id: 'arm-basic',
+        campaignId: 'camp-dense',
+        priceTier: 'BASIC',
+        priceUsd: 199,
+        alphaSuccess: 30,
+        betaFailure: 1170,
+        impressions: 1200,
+        conversions: 30,
+        revenueUsd: 5970,
+        isActive: true,
+      },
+      {
+        id: 'arm-pro',
+        campaignId: 'camp-dense',
+        priceTier: 'PREMIUM',
+        priceUsd: 399,
+        alphaSuccess: 90,
+        betaFailure: 1110,
+        impressions: 1200,
+        conversions: 90,
+        revenueUsd: 35910,
+        isActive: true,
+      },
+    ];
+
+    const gate = evaluatePaywallArmsSparseDataGate(arms, 45);
+    expect(gate.mode).toBe('thompson_half_kelly');
+    expect(gate.allowThompsonSampling).toBe(true);
+
+    const selected = selectPaywallArmThompson(arms, 0.85, 45);
+    expect(selected.id).toBe('arm-pro');
   });
 
   it('updates arm posterior statistics immutably', () => {

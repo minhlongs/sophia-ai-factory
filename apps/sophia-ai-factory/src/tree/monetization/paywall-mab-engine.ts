@@ -5,6 +5,10 @@
  */
 
 import type { PaywallArm, RfmWtpInput } from '@/seed/types/growth-triad-v5-types';
+import {
+  evaluateSparseDataGrowthGate,
+  type SparseDataGateDecision,
+} from '@/tree/growth/sparse-data-growth-guard';
 
 export function calculateElasticityEpsilon(
   p0: number,
@@ -35,7 +39,6 @@ export function calculateRfmWtpScore(input: RfmWtpInput): number {
   const frequencyScore = Math.min(1.0, Math.log(1 + input.loginCount30d) / Math.log(31));
   const baseline = input.maxMcuBaseline > 0 ? input.maxMcuBaseline : 1000;
   const monetaryBurnScore = Math.min(1.0, input.mcuBurnRate30d / baseline);
-
   const rawScore = 0.35 * recencyDampener + 0.30 * frequencyScore + 0.35 * monetaryBurnScore;
   return Math.max(0.0, Math.min(1.0, rawScore));
 }
@@ -45,40 +48,67 @@ export function sampleBetaValue(alpha: number, beta: number): number {
   const mean = alpha / (alpha + beta);
   const variance = (alpha * beta) / (Math.pow(alpha + beta, 2) * (alpha + beta + 1));
   const std = Math.sqrt(variance);
-
-  // Box-Muller standard normal draw
   const u1 = Math.max(1e-6, Math.random());
   const u2 = Math.random();
   const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-
   const sample = mean + z0 * std;
   return Math.max(0.001, Math.min(0.999, sample));
 }
 
+export function evaluatePaywallArmsSparseDataGate(
+  arms: readonly PaywallArm[],
+  accountAgeDays?: number
+): SparseDataGateDecision {
+  const activeArms = arms.filter((a) => Boolean(a.isActive));
+  const monthlyVerifiedConversions = activeArms.reduce(
+    (sum, arm) => sum + Math.max(0, Math.floor(arm.conversions ?? 0)),
+    0
+  );
+  const variantImpressions = activeArms.map((arm) =>
+    Math.max(0, Math.floor(arm.impressions ?? 0))
+  );
+  return evaluateSparseDataGrowthGate({
+    monthlyVerifiedConversions,
+    variantImpressions,
+    accountAgeDays,
+  });
+}
+
 export function selectPaywallArmThompson(
   arms: PaywallArm[],
-  rfmWtpScore: number
+  rfmWtpScore: number,
+  accountAgeDays?: number
 ): PaywallArm {
-  const activeArms = arms.filter((a) => a.isActive);
+  const activeArms = arms.filter((a) => Boolean(a.isActive));
   if (activeArms.length === 0) {
     throw new Error('No active paywall arms available');
   }
 
+  const gate = evaluatePaywallArmsSparseDataGate(activeArms, accountAgeDays);
+  if (!gate.allowThompsonSampling) {
+    const totalConversions = gate.monthlyVerifiedConversions;
+    if (totalConversions === 0) {
+      return [...activeArms].sort((a, b) => a.priceUsd - b.priceUsd)[0];
+    }
+    return [...activeArms].sort((a, b) => {
+      const meanA = a.alphaSuccess / Math.max(1, a.alphaSuccess + a.betaFailure);
+      const meanB = b.alphaSuccess / Math.max(1, b.alphaSuccess + b.betaFailure);
+      const revDiff = meanB * b.priceUsd - meanA * a.priceUsd;
+      return Math.abs(revDiff) > 1e-9 ? revDiff : a.priceUsd - b.priceUsd;
+    })[0];
+  }
+
   let bestArm = activeArms[0];
   let maxExpectedRevenue = -1;
-
   for (const arm of activeArms) {
     const priorAdjustment = 1.0 + (rfmWtpScore - 0.5) * 0.2;
     const effectiveAlpha = Math.max(1.0, arm.alphaSuccess * priorAdjustment);
-    const sampledConversionProb = sampleBetaValue(effectiveAlpha, arm.betaFailure);
-    const expectedRevenue = sampledConversionProb * arm.priceUsd;
-
+    const expectedRevenue = sampleBetaValue(effectiveAlpha, arm.betaFailure) * arm.priceUsd;
     if (expectedRevenue > maxExpectedRevenue) {
       maxExpectedRevenue = expectedRevenue;
       bestArm = arm;
     }
   }
-
   return bestArm;
 }
 

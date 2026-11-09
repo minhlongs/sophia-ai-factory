@@ -10,6 +10,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import {
+  evaluatePaywallArmsSparseDataGate,
   selectPaywallArmThompson,
   updateArmPosterior,
   calculateRfmWtpScore,
@@ -44,12 +45,14 @@ export async function selectPaywallArmAction(params: {
   }
 
   const wtpModifier = params.rfmInput ? calculateRfmWtpScore(params.rfmInput) : 1.0;
+  const sparseDataGate = evaluatePaywallArmsSparseDataGate(arms);
   const selected = selectPaywallArmThompson(arms, wtpModifier);
 
   return {
     success: true as const,
     selectedArm: selected,
     wtpModifier,
+    sparseDataGate,
   };
 }
 
@@ -81,8 +84,8 @@ export async function recordPaywallConversionAction(params: {
     return { success: false as const, error: 'ARM_NOT_FOUND' };
   }
 
-  const wtpScore = params.rfmInput ? calculateRfmWtpScore(params.rfmInput) : 1.0;
-  const updated = updateArmPosterior(arm, params.converted, wtpScore);
+  const revenueIncrement = params.converted ? arm.priceUsd : 0;
+  const updated = updateArmPosterior(arm, params.converted, revenueIncrement);
   const now = Date.now();
 
   await db
