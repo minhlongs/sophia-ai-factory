@@ -10,6 +10,7 @@ import {
 import {
   fetchTikTokCreatorInfo,
   resolveTikTokPublishPlan,
+  isDurationAllowed,
   logPublishDowngrade,
 } from '@/tree/social/publisher/tiktok-creator-info';
 
@@ -30,6 +31,15 @@ export const tiktokAdapter: PlatformAdapter = {
       // publish that never happened. The creator's own capability report
       // decides the level and the switches instead.
       const capabilities = await fetchTikTokCreatorInfo(accessToken);
+      const effectiveDurationSec = params.durationSeconds ?? params.durationSec;
+      if (
+        typeof effectiveDurationSec === 'number' &&
+        !isDurationAllowed(capabilities, effectiveDurationSec)
+      ) {
+        throw new Error(
+          `[tiktok-adapter] Video duration (${effectiveDurationSec}s) exceeds creator max_video_post_duration_sec (${capabilities.maxVideoDurationSeconds}s)`,
+        );
+      }
       const plan = resolveTikTokPublishPlan({
         capabilities,
         requested: params.privacy === 'public' ? 'public' : 'private',

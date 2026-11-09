@@ -31,6 +31,8 @@ import { NicheHookVariantsCard } from './niche-hook-variants-card';
 import { NicheConversionStatsCard } from './niche-conversion-stats-card';
 import { SophiaArtifactCanvas } from './sophia-artifact-canvas';
 import { CampaignApprovalQueue } from '@/components/approval-queue/campaign-queue-view';
+import { TimelineBrowserPreview } from '@/components/video/timeline-browser-preview';
+import { nichePlanToVideoTimeline } from '@/tree/video/render/niche-plan-to-timeline';
 
 export interface NicheStudioViewProps {
   /**
@@ -124,15 +126,26 @@ export function NicheStudioView({ adoptedContext }: NicheStudioViewProps = {}) {
         </div>
       </div>
       {currentPlan && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-border/40">
-          <NicheSyndicationPreviewCard syndication={syndication} t={t} />
-          <NicheHookVariantsCard
-            hookPackage={hookPackage}
-            selectedHookId={selectedHookId}
-            onSelectHook={setSelectedHookId}
-            t={t}
-          />
-        </div>
+        <>
+          <div className="pt-4 border-t border-border/40">
+            <TimelineBrowserPreview
+              key={currentPlan.planId}
+              initialTimeline={nichePlanToVideoTimeline(
+                currentPlan,
+                readinessReport?.workspaceId ?? 'workspace_default',
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-border/40">
+            <NicheSyndicationPreviewCard syndication={syndication} t={t} />
+            <NicheHookVariantsCard
+              hookPackage={hookPackage}
+              selectedHookId={selectedHookId}
+              onSelectHook={setSelectedHookId}
+              t={t}
+            />
+          </div>
+        </>
       )}
       {readinessReport?.workspaceId && (
         <div className="pt-4 border-t border-border/40">

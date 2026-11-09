@@ -8,6 +8,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import type { ApacLocale, TranscriptWord } from '@/seed/types/dubbing';
+import { alignWordTimestamps } from '@/tree/video/subtitles/word-timestamp-aligner';
 import { CANONICAL_SCRIPTS } from './types';
 import { getAiBinding, getR2Bucket } from './binding-helper';
 
@@ -57,11 +58,16 @@ export async function transcribeAudioSample(
         };
 
         if (whisperResult?.words && whisperResult.words.length > 0) {
-          return whisperResult.words.map((w) => ({
-            word: w.word.trim(),
-            start: Math.max(0, Math.round(w.start * 100) / 100),
-            end: Math.max(w.start + 0.05, Math.round(w.end * 100) / 100),
-            confidence: typeof w.confidence === 'number' ? w.confidence : 0.95,
+          const validWords = whisperResult.words.filter((w) => typeof w?.word === 'string' && w.word.trim().length > 0);
+          const normalized = alignWordTimestamps(validWords, durationSec);
+          return normalized.map((w, idx) => ({
+            word: w.word,
+            start: w.start,
+            end: w.end,
+            confidence:
+              typeof validWords[idx]?.confidence === 'number'
+                ? validWords[idx].confidence
+                : 0.95,
           }));
         }
 

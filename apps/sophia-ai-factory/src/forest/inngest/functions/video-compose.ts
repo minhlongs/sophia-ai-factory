@@ -13,6 +13,8 @@ import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
 import { tenantScopedKey } from '@/land/video/storage/r2-binding';
+import { createVideoRenderer, type VideoRendererEngine } from '@/tree/video/render/video-renderer-port';
+import type { SophiaVideoTimeline } from '@/seed/types/video-timeline-schema';
 import { logger } from '@/seed/utils/logger-utility';
 import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 
@@ -89,6 +91,14 @@ export const videoCompose = inngest.createFunction(
     });
 
     await step.run('pass-through-compose', async () => {
+      const eventData = event.data as {
+        timeline?: SophiaVideoTimeline;
+        engine?: VideoRendererEngine;
+      };
+      if (eventData.timeline) {
+        const renderer = createVideoRenderer(eventData.engine ?? 'hyperframes');
+        await renderer.renderTimeline(eventData.timeline);
+      }
       // HeyGen outputs complete mp4 — pass visual_r2_key (URL) as final_r2_key
       const finalKey = job.visual_r2_key.startsWith('http')
         ? job.visual_r2_key

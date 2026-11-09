@@ -11,6 +11,10 @@ export interface PublishParams {
   privacy?: 'public' | 'unlisted' | 'private';
   scheduledAt?: string;
   thumbnailUrl?: string;
+  /** Duration of the video in seconds, validated against platform maxDuration limits (SEC-05). */
+  durationSec?: number;
+  /** Duration in seconds, compared against the creator's reported maximum (SEC-05). */
+  durationSeconds?: number;
   /**
    * Whether this video is synthetic (AI-generated). YouTube requires the
    * `containsSyntheticMedia` disclosure for altered content; other platforms

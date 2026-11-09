@@ -12,6 +12,7 @@ import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
 import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { buildProviderPool } from '@/forest/quota/provider-pool';
+import { synthesizeWithKokoroOrByok } from '@/tree/video/audio/kokoro-tts-adapter';
 import {
   emitProgress, writeStageCheckpoint,
   getFishSpeechClient, getVideoBucket,
@@ -114,6 +115,29 @@ export async function executeTtsStep(params: TtsStepParams): Promise<TtsStepResu
           error: err instanceof Error ? err.message : String(err),
         });
       }
+    }
+  }
+
+  // Kokoro-82M / BYOK hybrid voice adapter when routed to kokoro
+  if (ttsDecision?.provider === 'kokoro') {
+    const kokoroResult = await synthesizeWithKokoroOrByok({
+      planId: missionId,
+      userId,
+      tenantId,
+      text: voiceoverText,
+    });
+    if (kokoroResult.success && kokoroResult.audioBytes) {
+      const arrayBuf = kokoroResult.audioBytes.buffer.slice(
+        kokoroResult.audioBytes.byteOffset,
+        kokoroResult.audioBytes.byteOffset + kokoroResult.audioBytes.byteLength,
+      ) as ArrayBuffer;
+      await uploadBufferToR2(audioR2Key, arrayBuf, 'audio/mpeg');
+      return { durationSec: kokoroResult.durationSec ?? 1, ttsProvider: 'kokoro' };
+    }
+    if (kokoroResult.success && kokoroResult.audioUrl) {
+      const audioBuffer = await downloadToBuffer(kokoroResult.audioUrl);
+      await uploadBufferToR2(audioR2Key, audioBuffer, 'audio/mpeg');
+      return { durationSec: kokoroResult.durationSec ?? 1, ttsProvider: kokoroResult.provider };
     }
   }
 

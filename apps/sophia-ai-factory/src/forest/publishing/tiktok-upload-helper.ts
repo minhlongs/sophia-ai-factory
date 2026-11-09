@@ -5,6 +5,7 @@ import { classifyError } from '@/seed/types/failure-kind';
 import {
   fetchTikTokCreatorInfo,
   resolveTikTokPublishPlan,
+  isDurationAllowed,
   logPublishDowngrade,
 } from '@/tree/social/publisher/tiktok-creator-info';
 
@@ -23,6 +24,14 @@ export async function uploadTikTokVideo(
     // TikTok answers an unaudited publish with HTTP 200 and a SELF_ONLY post,
     // so the creator's own capability report decides the privacy level.
     const capabilities = await fetchTikTokCreatorInfo(accessToken);
+    if (
+      typeof params.durationSeconds === 'number' &&
+      !isDurationAllowed(capabilities, params.durationSeconds)
+    ) {
+      throw new Error(
+        `[tiktok-adapter] Video duration (${params.durationSeconds}s) exceeds creator max_video_post_duration_sec (${capabilities.maxVideoDurationSeconds}s)`,
+      );
+    }
     const plan = resolveTikTokPublishPlan({
       capabilities,
       requested: params.privacy === 'public' ? 'public' : 'private',

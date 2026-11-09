@@ -9,6 +9,7 @@
  */
 
 import { getD1 } from '@/seed/db/client'
+import { assertD1PayloadCompliance } from '@/seed/db/d1-payload-guard'
 import { toCents } from './commission-cents'
 import type { InsertLedgerInput } from './commission-ledger-types'
 
@@ -19,6 +20,10 @@ export type { LedgerStatus, LedgerRow, InsertLedgerInput } from './commission-le
  * Converts USD → cents. Idempotent via IGNORE on UNIQUE(conversion_event_id).
  */
 export async function insertPendingLedger(input: InsertLedgerInput): Promise<void> {
+  const compliance = assertD1PayloadCompliance(input);
+  if (!compliance.ok) {
+    throw new Error(`[SEC-08] ${compliance.error.message}`);
+  }
   const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;

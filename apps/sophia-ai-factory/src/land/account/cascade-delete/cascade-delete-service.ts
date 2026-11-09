@@ -1,4 +1,5 @@
 import type { R2Bucket, D1Database } from '@cloudflare/workers-types';
+import { purgeOrganizationData } from '@/tree/security/org-data-purge';
 import type { CascadeDeleteResult } from './types';
 import { collectTenantR2Keys, deleteR2Objects } from './r2-asset-purger';
 import {
@@ -23,6 +24,20 @@ export async function cascadeDeleteAccount(
 
   // Phase 2: D1 cascade delete (dependents-first order)
   const { total, byTable } = await executeD1Cascade(db, userId, tenantId, orgId);
+
+  // Phase 2b: SEC-09 supplemental org/data.purge for R2 orgs/{orgId}/ prefix when list() is available
+  if (
+    orgId &&
+    r2Bucket !== undefined &&
+    typeof (r2Bucket as { list?: unknown }).list === 'function'
+  ) {
+    await purgeOrganizationData({
+      orgId,
+      requestedByUserId: userId,
+      d1: db as unknown as Parameters<typeof purgeOrganizationData>[0]['d1'],
+      r2Bucket: r2Bucket as unknown as Parameters<typeof purgeOrganizationData>[0]['r2Bucket'],
+    }).catch(() => undefined);
+  }
 
   // Phase 3: R2 cleanup with retry and dead-letter queuing (non-fatal)
   let r2Deleted = 0;
