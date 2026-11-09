@@ -1,19 +1,7 @@
 #!/usr/bin/env node
 /**
- * Verify Open-Core catalog references & License Boundaries (Lane 2)
- *
- * Verifies:
- * 1. All modulePaths declared in OPEN_CORE_FEATURES exist on disk.
- * 2. COMMUNITY modules do not directly import commercial ENTERPRISE_MASTER modules.
- * 3. Truthful baseline in .mekong/company.json (mrr_usd: 0, paying_customers: 0).
- * 4. Payment providers only include NOWPayments and PayOS (Polar/PayPal banned).
- * 5. npm scripts in docs/SELF_HOSTING.md exist in apps/sophia-ai-factory/package.json.
- * 6. All 6 GitHub Community Standards files exist (including CODE_OF_CONDUCT.md).
- * 7. All 25 Open-Core catalog steps are unique and their reference paths exist.
- *
- * File size budget: <= 170 LOC. Uses process.stdout.write. Exits 0 on success.
+ * Verify Open-Core catalog references, Evidence Vault & License Boundaries (<= 170 LOC)
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +10,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const appRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(appRoot, '../..');
-
 const errors = [];
 
 // 1. Verify modulePaths in open-core-manifest.ts
@@ -31,8 +18,7 @@ if (!fs.existsSync(manifestFile)) {
   errors.push(`Manifest not found at ${manifestFile}`);
 } else {
   const manifestContent = fs.readFileSync(manifestFile, 'utf8');
-  const pathMatches = [...manifestContent.matchAll(/modulePaths:\s*\[([^\]]+)\]/g)];
-  for (const match of pathMatches) {
+  for (const match of manifestContent.matchAll(/modulePaths:\s*\[([^\]]+)\]/g)) {
     const rawPaths = match[1].split(',').map((p) => p.trim().replace(/['"]/g, '')).filter(Boolean);
     for (const p of rawPaths) {
       const full = path.join(appRoot, p);
@@ -44,26 +30,17 @@ if (!fs.existsSync(manifestFile)) {
 }
 
 // 2. Verify COMMUNITY modules do not import ENTERPRISE_MASTER modules
-const communityDirs = [
-  path.join(appRoot, 'src/tree/byok'),
-  path.join(appRoot, 'src/tree/credentials'),
-  path.join(appRoot, 'src/tree/ask'),
-  path.join(appRoot, 'src/tree/telegram'),
-  path.join(appRoot, 'src/seed/ai'),
-];
+const communityDirs = ['src/tree/byok', 'src/tree/credentials', 'src/tree/ask', 'src/tree/telegram', 'src/seed/ai']
+  .map((rel) => path.join(appRoot, rel));
 const bannedImports = ['@/tree/finance/merkle', '@/tree/handover', '@/forest/admin/white-label'];
-
 for (const dir of communityDirs) {
   if (!fs.existsSync(dir)) continue;
-  const files = fs.readdirSync(dir, { recursive: true }).filter((f) => String(f).endsWith('.ts'));
-  for (const file of files) {
+  for (const file of fs.readdirSync(dir, { recursive: true }).filter((f) => String(f).endsWith('.ts'))) {
     const full = path.join(dir, String(file));
     if (fs.statSync(full).isDirectory()) continue;
     const content = fs.readFileSync(full, 'utf8');
     for (const banned of bannedImports) {
-      if (content.includes(banned)) {
-        errors.push(`COMMUNITY file ${full} imports commercial ENTERPRISE_MASTER module: ${banned}`);
-      }
+      if (content.includes(banned)) errors.push(`COMMUNITY file ${full} imports commercial ENTERPRISE_MASTER module: ${banned}`);
     }
   }
 }
@@ -148,13 +125,20 @@ if (!fs.existsSync(p1Path) || !fs.existsSync(p2Path) || !fs.existsSync(auditorPa
   const artifacts = [...combined.matchAll(/verificationArtifact:\s*'([^']+)'/g)].map((match) => match[1]);
   let missingArtifactCount = 0;
   for (const artifact of artifacts) {
-    // Repo root only. Several catalog paths exist at BOTH the root and under the
-    // app folder, so an app-folder fallback would let a deleted root file be
-    // found at its twin and reported as present.
     const exists = fs.existsSync(path.join(repoRoot, artifact));
     if (!exists) {
       missingArtifactCount++;
       errors.push(`Catalog reference does not exist: ${artifact}`);
+    }
+  }
+  for (const ev of ['plans/evidence/01-zero-to-psf-vc-and-benchmarks.md', 'plans/evidence/02-pilot-reseller-okr-governance.md']) {
+    if (!fs.existsSync(path.join(repoRoot, ev))) errors.push(`Missing evidence vault file: ${ev}`);
+  }
+  for (const bp of ['plans/company-blueprint/plan.md', 'plans/company-blueprint/tasks.md']) {
+    const rootBp = path.join(repoRoot, bp);
+    const appBp = path.join(appRoot, bp);
+    if (fs.existsSync(rootBp) && fs.existsSync(appBp) && fs.readFileSync(rootBp, 'utf8') !== fs.readFileSync(appBp, 'utf8')) {
+      errors.push(`Blueprint drift between repo root and app copy: ${bp}`);
     }
   }
   catalogComplete = sequenceValid && artifacts.length === 25 && missingArtifactCount === 0;
