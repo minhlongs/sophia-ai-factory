@@ -13,20 +13,25 @@ import {
 } from './merkle';
 import {
   DEFAULT_FOUNDER_HOURLY_RATE_CENTS,
+  FOUNDER_SUPPORT_SLA_MAX_MINUTES_PER_MONTH,
   validateUnitEconomicsInput,
-  type PilotTier,
   type PilotUnitEconomicsInput,
   type PilotUnitEconomicsSummary,
   type PilotCloseLedgerResult,
   type UnitEconomicsErrorCode,
 } from './pilot-unit-economics-types';
 
-export type {
-  PilotTier,
-  PilotUnitEconomicsInput,
-  PilotUnitEconomicsSummary,
-  PilotCloseLedgerResult,
-  UnitEconomicsErrorCode,
+export {
+  FOUNDER_SUPPORT_SLA_MAX_MINUTES_PER_MONTH,
+  PAID_PILOT_14_DAY_PRICE_VND,
+  PAID_PILOT_14_DAY_PRICE_CENTS,
+  PAID_PILOT_14_DAY_GUARANTEED_VIDEOS,
+  PAID_PILOT_DURATION_DAYS,
+  type PilotTier,
+  type PilotUnitEconomicsInput,
+  type PilotUnitEconomicsSummary,
+  type PilotCloseLedgerResult,
+  type UnitEconomicsErrorCode,
 } from './pilot-unit-economics-types';
 
 export function calculatePilotUnitEconomics(
@@ -39,12 +44,15 @@ export function calculatePilotUnitEconomics(
   const totalDirectCostCents = input.paymentGatewayFeeCents + input.cloudflareEdgeCostCents + founderSupportCostCents;
   const netContributionCents = input.collectedSubscriptionCents - totalDirectCostCents;
   const unitMarginBasisPoints = Math.round((netContributionCents * 10000) / input.collectedSubscriptionCents);
+  const founderSupportSlaBreached =
+    input.founderSupportMinutes > FOUNDER_SUPPORT_SLA_MAX_MINUTES_PER_MONTH;
   return success({
     pilotId: input.pilotId.trim(), orgId: input.orgId.trim(), periodKey: input.periodKey, tier: input.tier,
     collectedSubscriptionCents: input.collectedSubscriptionCents, paymentGatewayFeeCents: input.paymentGatewayFeeCents,
     cloudflareEdgeCostCents: input.cloudflareEdgeCostCents, founderSupportMinutes: input.founderSupportMinutes,
     founderHourlyRateCents: hourlyRateCents, founderSupportCostCents, totalDirectCostCents, netContributionCents,
     unitMarginBasisPoints, unitMarginPercent: unitMarginBasisPoints / 100,
+    founderSupportSlaBreached, founderSupportSlaCeilingMinutes: FOUNDER_SUPPORT_SLA_MAX_MINUTES_PER_MONTH,
   });
 }
 

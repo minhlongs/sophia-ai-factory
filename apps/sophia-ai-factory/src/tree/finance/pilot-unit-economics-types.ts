@@ -36,6 +36,8 @@ export interface PilotUnitEconomicsSummary {
   netContributionCents: number;
   unitMarginBasisPoints: number;
   unitMarginPercent: number;
+  founderSupportSlaBreached?: boolean;
+  founderSupportSlaCeilingMinutes?: number;
 }
 
 export interface PilotCloseLedgerResult {
@@ -53,6 +55,11 @@ export type UnitEconomicsErrorCode =
 
 const PERIOD_KEY_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 export const DEFAULT_FOUNDER_HOURLY_RATE_CENTS = 5000; // $50.00/hour
+export const FOUNDER_SUPPORT_SLA_MAX_MINUTES_PER_MONTH = 90; // <= 1.5h/customer/month (REPORT 07 & REPORT 10)
+export const PAID_PILOT_14_DAY_PRICE_VND = 1990000; // 1,990,000 VND via PayOS
+export const PAID_PILOT_14_DAY_PRICE_CENTS = 7900; // $79.00 USD equivalent
+export const PAID_PILOT_14_DAY_GUARANTEED_VIDEOS = 10;
+export const PAID_PILOT_DURATION_DAYS = 14;
 const VALID_PILOT_TIERS: ReadonlySet<string> = new Set(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']);
 
 export function validateUnitEconomicsInput(

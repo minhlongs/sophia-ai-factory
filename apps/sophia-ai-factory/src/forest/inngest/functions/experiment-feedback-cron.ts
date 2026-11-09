@@ -16,11 +16,19 @@ import { getD1 } from '@/seed/db/client';
 import { recordLearning } from '@/tree/creative-memory';
 import {
   buildWinnerPayload,
+  evaluateExperimentRowGrowthGate,
+  pruneDecidedExperimentHooks,
   type DecidedExperimentRow,
   type FeedbackResult,
 } from './experiment-feedback-helpers';
 
-export { buildWinnerPayload, type DecidedExperimentRow, type FeedbackResult };
+export {
+  buildWinnerPayload,
+  evaluateExperimentRowGrowthGate,
+  pruneDecidedExperimentHooks,
+  type DecidedExperimentRow,
+  type FeedbackResult,
+};
 
 export const experimentFeedbackCron = inngest.createFunction(
   {
@@ -50,6 +58,7 @@ export const experimentFeedbackCron = inngest.createFunction(
       return { processed: 0, written: 0 };
     }
 
+    const hookPruneSummary = pruneDecidedExperimentHooks(decidedRows);
     let written = 0;
 
     // Step 2: For each decided experiment, write winner to creative_memory.
@@ -58,11 +67,14 @@ export const experimentFeedbackCron = inngest.createFunction(
       try {
         const memoryKey = `experiment:${row.id}:winner`;
         const payload = buildWinnerPayload(row);
+        const growthGate = evaluateExperimentRowGrowthGate(row);
         const evidence = JSON.stringify({
           experiment_id: row.id,
           video_id: row.video_id,
           decided_at: row.decided_at,
           winner: row.winner,
+          optimization_mode: growthGate.mode,
+          allow_thompson_sampling: growthGate.allowThompsonSampling,
         });
 
         await recordLearning(
@@ -86,6 +98,7 @@ export const experimentFeedbackCron = inngest.createFunction(
     logger.info('[experiment-feedback-cron] Completed', {
       processed: decidedRows.length,
       written,
+      prunedVariants: hookPruneSummary.prunedVariantIds.length,
     });
 
     return { processed: decidedRows.length, written } satisfies FeedbackResult;
