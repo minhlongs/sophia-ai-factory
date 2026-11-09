@@ -2,6 +2,7 @@ import { shouldAllowRequest, recordFailure } from '@/seed/security/circuit-break
 import { classifyError } from '@/seed/types/failure-kind';
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldThrottleInstagramPublish } from './instagram-rate-guard';
 
 const IG_API = 'https://graph.facebook.com/v19.0';
 const _MAX_DURATION_SEC = 90;
@@ -35,6 +36,16 @@ export const instagramAdapter: PlatformAdapter = {
     if (!containerRes.ok) {
       const err = await containerRes.text();
       throw new Error(`Instagram container creation failed: ${containerRes.status} ${err}`);
+    }
+
+    const bucHeader =
+      containerRes.headers?.get?.('x-business-use-case-usage') ??
+      containerRes.headers?.get?.('x-app-usage');
+    const bucDecision = shouldThrottleInstagramPublish(bucHeader);
+    if (bucDecision.shouldThrottle) {
+      throw new Error(
+        `[instagram-adapter] rate limit: BUC usage (${bucDecision.maxUtilizationPct}%) exceeded 80% threshold; throttling for ${bucDecision.recommendedBackoffSec}s`,
+      );
     }
 
     const container = await containerRes.json() as { id: string };

@@ -7,6 +7,7 @@
 
 import type { VideoBlueprint } from '@/seed/config/video-blueprints';
 import type { VideoNiche } from '@/seed/config/video-blueprints/blueprint-types';
+import { sanitizeUntrustedResearchInput } from '@/seed/security/indirect-prompt-guard';
 import type { ComplianceGuardResult } from '@/tree/video/compliance/jurisdiction-compliance-guard';
 import {
   buildSaasScriptPrompt,
@@ -74,11 +75,14 @@ export function buildNichePromptsAndOverlay(params: {
     jurisdiction,
     locale,
   } = params;
+  const safeTargetAudience = targetAudience
+    ? sanitizeUntrustedResearchInput(targetAudience).cleanText
+    : undefined;
 
   if (niche === 'crypto_global') {
     const prompts = buildCryptoScriptPrompt({
       exchangeName: productName,
-      targetAudience,
+      targetAudience: safeTargetAudience,
       referralCode: affiliateCode,
       vanityCoupon,
       blueprint,
@@ -94,7 +98,7 @@ export function buildNichePromptsAndOverlay(params: {
 
   const prompts = buildSaasScriptPrompt({
     productName,
-    targetAudience,
+    targetAudience: safeTargetAudience,
     blueprint,
     vanityCoupon,
     locale,

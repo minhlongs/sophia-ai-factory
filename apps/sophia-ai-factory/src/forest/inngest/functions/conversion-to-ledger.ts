@@ -13,6 +13,10 @@ import { calculateCommission } from '@/land/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/land/payouts/commission-ledger'
 import { toCents } from '@/land/payouts/commission-cents'
 import { writeConversionRevenueEvent } from '@/land/analytics/tiktok-revenue-ingestion'
+import {
+  detectSelfReferral,
+  evaluateCommissionEscrowEligibility,
+} from '@/tree/affiliate/fraud/affiliate-escrow-guard'
 import { logger } from '@/seed/utils/logger-utility'
 import {
   fetchConversionRow,
@@ -52,6 +56,26 @@ export const conversionToLedger = inngest.createFunction(
       return { skipped: true, reason: 'Conversion already rejected' }
     }
 
+    const rawEventData = event.data as Record<string, unknown>
+    const buyerUserId =
+      typeof rawEventData.buyerUserId === 'string' ? rawEventData.buyerUserId : ''
+    const selfRefCheck = detectSelfReferral({
+      affiliateUserId: conversion.affiliate_id,
+      buyerUserId,
+    })
+    if (selfRefCheck.isSelfReferral) {
+      logger.warn('[conversion-to-ledger] Self-referral blocked by SEC-07 guard', {
+        conversionEventId,
+        affiliateId: conversion.affiliate_id,
+        reason: selfRefCheck.reason,
+      })
+      return { skipped: true, reason: selfRefCheck.reason ?? 'SELF_REFERRAL_BLOCKED' }
+    }
+
+    const escrowCheck = evaluateCommissionEscrowEligibility({
+      conversionTimestampMs: conversion.attributed_at * 1000,
+    })
+
     const tenantTier = await step.run('fetch-tenant-tier', async () =>
       fetchTenantTierForAffiliate(conversion.affiliate_id),
     )
@@ -72,7 +96,11 @@ export const conversionToLedger = inngest.createFunction(
     const commissionCents = toCents(commissionUsd)
     const withheldCents = vnPitEnabled ? Math.floor(commissionCents * VN_PIT_RATE) : 0
 
-    const payableAt = conversion.attributed_at + CLAWBACK_WINDOW_DAYS * SECONDS_PER_DAY
+    const escrowReleaseSec = Math.floor(escrowCheck.releaseAtTimestampMs / 1000)
+    const payableAt =
+      rawEventData.enforceSec07EscrowHold === true
+        ? escrowReleaseSec
+        : conversion.attributed_at + CLAWBACK_WINDOW_DAYS * SECONDS_PER_DAY
     const ledgerId = `ldg_${conversionEventId}`
 
     await step.run('insert-ledger', async () => {
@@ -120,6 +148,7 @@ export const conversionToLedger = inngest.createFunction(
       commissionPct,
       withheldCents,
       payableAt,
+      escrowStatus: escrowCheck.status,
       revenueWritten,
     }
   },

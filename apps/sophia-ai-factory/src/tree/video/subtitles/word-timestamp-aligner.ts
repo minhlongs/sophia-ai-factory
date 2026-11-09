@@ -104,6 +104,9 @@ export function normalizeWordTimestamps(
   return aligned;
 }
 
+/** Alias of `normalizeWordTimestamps` for callers aligning raw Whisper word timestamps. */
+export const alignWordTimestamps = normalizeWordTimestamps;
+
 export function formatSrtTimestamp(seconds: number): string {
   const totalMs = Math.round(Math.max(0, seconds) * 1000);
   const h = Math.floor(totalMs / 3_600_000);
@@ -190,9 +193,7 @@ export async function alignAudioWithR2Cache(
     try {
       const bucket = await getBucket();
       if (bucket) await bucket.put(r2Key, JSON.stringify(entry), { httpMetadata: { contentType: 'application/json' } });
-    } catch (err) {
-      logger.warn('[WordTimestampAligner] R2 cache write failed', { error: String(err) });
-    }
+    } catch (err) { logger.warn('[WordTimestampAligner] R2 cache write failed', { error: String(err) }); }
   }
   return { srt: alignedWordsToSrt(words, input.wordsPerCue), entry, cacheHit: false };
 }
