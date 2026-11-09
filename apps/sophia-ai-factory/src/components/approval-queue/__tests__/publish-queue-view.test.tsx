@@ -1,7 +1,7 @@
 /**
  * Component tests for the public-publish ledger approval queue.
  * Covers list/empty/error states, approve/reject decisions with reason capture,
- * CSRF header echoing, self-approval notices, action errors, and fast-poll burst.
+ * TikTok/YouTube compliance controls, CSRF header echoing, and fast-poll burst.
  * @module components/approval-queue/__tests__/publish-queue-view.test
  */
 
@@ -27,6 +27,15 @@ const TEST_MESSAGES = {
       approvedNotice: 'Approved. The video is being published now.',
       rejectedNotice: 'Rejected. The video will not be published.',
       selfApprovedNotice: 'Approved. Note: you approved content you created yourself.',
+      privacyLevelLabel: 'TikTok privacy level (required)',
+      privacyLevelPlaceholder: 'Select privacy level before approving...',
+      privacyPublic: 'Public to everyone',
+      privacyFriends: 'Mutual follow friends',
+      privacySelfOnly: 'Private (Only me / Unaudited)',
+      brandOrganicLabel: 'Promotes your own brand',
+      brandContentLabel: 'Paid partnership',
+      selfOnlyWarning: 'Private (SELF_ONLY) mode: video is only visible to the uploader.',
+      youtubeSyntheticLabel: 'Disclose AI-generated or altered content on YouTube',
     },
   },
 };
@@ -166,6 +175,33 @@ describe('PublishLedgerApprovalQueue', () => {
       expect(screen.getByText('Approved. Note: you approved content you created yourself.')).toBeDefined(),
     );
     expect(seen[1]?.init?.body).toBe(JSON.stringify({ approved: true }));
+  });
+
+  it('enforces TikTok privacy_level selection before approve and shows SELF_ONLY warning', async () => {
+    const tiktokItem: PublishApprovalItem = { ...PENDING_ITEM, id: 'tt_1', platform: 'tiktok', channelId: 'tt_ch' };
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    mockFetchSequence([
+      listResponse([tiktokItem]),
+      (url, init) => {
+        seen.push({ url, init });
+        return Response.json({ resolved: true, decision: 'approved', selfApproval: false });
+      },
+      listResponse([]),
+    ]);
+    renderQueue();
+    await waitFor(() => expect(screen.getByText('tt_ch')).toBeDefined());
+
+    const approveBtn = screen.getByRole('button', { name: 'Approve & publish' }) as HTMLButtonElement;
+    expect(approveBtn.disabled).toBe(true);
+    fireEvent.change(screen.getByTestId('tiktok-privacy-select-tt_1'), { target: { value: 'SELF_ONLY' } });
+    expect(screen.getByTestId('tiktok-self-only-warning-tt_1')).toBeDefined();
+    expect(approveBtn.disabled).toBe(false);
+    fireEvent.click(screen.getByTestId('tiktok-brand-organic-tt_1'));
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => expect(seen.length).toBe(1));
+    expect(seen[0]?.init?.body).toContain('"privacyLevel":"SELF_ONLY"');
+    expect(seen[0]?.init?.body).toContain('"brandOrganicToggle":true');
   });
 
   it('surfaces a 403 without losing the list and runs fast-poll burst', async () => {

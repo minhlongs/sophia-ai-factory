@@ -15,6 +15,7 @@ import {
   fetchPublishApprovals,
   submitPublishApprovalDecision,
   type PublishApprovalItem,
+  type PublishComplianceMetadata,
 } from './publish-queue-api';
 
 export interface PublishLedgerApprovalQueueProps {
@@ -56,7 +57,11 @@ export function PublishLedgerApprovalQueue({
     };
   }, [load]);
 
-  const handleDecision = async (approvalId: string, approved: boolean) => {
+  const handleDecision = async (
+    approvalId: string,
+    approved: boolean,
+    compliance?: PublishComplianceMetadata,
+  ) => {
     setActionId(approvalId);
     setActionError(null);
     setNotice(null);
@@ -65,7 +70,7 @@ export function PublishLedgerApprovalQueue({
         `publish-reason-${approvalId}`,
       ) as HTMLTextAreaElement | null;
       const comment = reasonEl?.value?.trim() || undefined;
-      const result = await submitPublishApprovalDecision(approvalId, approved, comment);
+      const result = await submitPublishApprovalDecision(approvalId, approved, comment, compliance);
       if (approved && result.selfApproval) {
         setNotice(t('publish.selfApprovedNotice'));
       } else {
@@ -156,7 +161,7 @@ export function PublishLedgerApprovalQueue({
               key={item.id}
               item={item}
               busy={actionId === item.id}
-              onDecide={(id, approved) => void handleDecision(id, approved)}
+              onDecide={(id, approved, compliance) => void handleDecision(id, approved, compliance)}
             />
           ))}
         </div>

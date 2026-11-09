@@ -6,6 +6,18 @@
 
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/seed/security/csrf';
 
+export type TikTokPrivacyChoice =
+  | 'PUBLIC_TO_EVERYONE'
+  | 'MUTUAL_FOLLOW_FRIENDS'
+  | 'SELF_ONLY';
+
+export interface PublishComplianceMetadata {
+  privacyLevel?: TikTokPrivacyChoice;
+  brandOrganicToggle?: boolean;
+  brandContentToggle?: boolean;
+  containsSyntheticMedia?: boolean;
+}
+
 export interface PublishApprovalItem {
   id: string;
   tenantId: string;
@@ -14,6 +26,7 @@ export interface PublishApprovalItem {
   mediaRef: string;
   createdAt: number;
   expiresAt: number;
+  unauditedSelfOnly?: boolean;
 }
 
 export interface PublishApprovalResolutionResult {
@@ -22,6 +35,7 @@ export interface PublishApprovalResolutionResult {
   decision: string;
   selfApproval?: boolean;
   id: string;
+  compliance?: PublishComplianceMetadata;
 }
 
 export async function fetchPublishApprovals(limit = 50): Promise<PublishApprovalItem[]> {
@@ -49,6 +63,7 @@ export async function submitPublishApprovalDecision(
   approvalId: string,
   approved: boolean,
   comment?: string,
+  compliance?: PublishComplianceMetadata,
 ): Promise<PublishApprovalResolutionResult> {
   const res = await fetch(`/api/publish-approvals/${encodeURIComponent(approvalId)}`, {
     method: 'PATCH',
@@ -57,6 +72,7 @@ export async function submitPublishApprovalDecision(
     body: JSON.stringify({
       approved,
       ...(comment && comment.trim().length > 0 ? { comment: comment.trim() } : {}),
+      ...(compliance && Object.keys(compliance).length > 0 ? { compliance } : {}),
     }),
   });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;

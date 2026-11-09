@@ -8069,7 +8069,16 @@
       "emptyDescription": "Finished videos will appear here so you can approve them before they go public.",
       "approvedNotice": "Approved. The video is being published now.",
       "rejectedNotice": "Rejected. The video will not be published.",
-      "selfApprovedNotice": "Approved. Note: you approved content you created yourself."
+      "selfApprovedNotice": "Approved. Note: you approved content you created yourself.",
+      "privacyLevelLabel": "TikTok privacy level (required)",
+      "privacyLevelPlaceholder": "— Select privacy level —",
+      "privacyPublic": "Public to everyone (PUBLIC_TO_EVERYONE)",
+      "privacyFriends": "Mutual follow friends (MUTUAL_FOLLOW_FRIENDS)",
+      "privacySelfOnly": "Only me (SELF_ONLY)",
+      "brandOrganicLabel": "Promote your own brand (Your Brand)",
+      "brandContentLabel": "Paid partnership / Branded Content",
+      "selfOnlyWarning": "TikTok notice: While the app is unaudited or set to Only me, the post is restricted to private visibility (SELF_ONLY).",
+      "youtubeSyntheticLabel": "YouTube altered or synthetic media disclosure (containsSyntheticMedia)"
     },
     "badges": {
       "complianceVerified": "Compliance check: passed",

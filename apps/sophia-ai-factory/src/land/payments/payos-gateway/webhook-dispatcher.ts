@@ -44,3 +44,20 @@ export function parseUserIdFromPayOsDescription(description: string): string | n
   const match = description.match(/sophia_([^_]+)_\d+/);
   return match ? match[1] : null;
 }
+
+/**
+ * Detects PayOS merchant dashboard webhook verification test-ping payloads
+ * (e.g. orderCode 123 or description containing VQRIO123 / test_ping) so routes
+ * can return 200 OK without mutating production order/subscription tables.
+ */
+export function isPayOsTestPing(input: {
+  orderCode: number | string;
+  description?: string | null;
+}): boolean {
+  const numericOrderCode = Number(input.orderCode);
+  if (numericOrderCode === 123) {
+    return true;
+  }
+  const desc = (input.description ?? '').trim();
+  return /VQRIO123|test_ping/i.test(desc);
+}
