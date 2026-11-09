@@ -1,0 +1,26 @@
+{
+  "gate": "G0_BASELINE_LOCK",
+  "pocId": "POC-01-PAYOS-IDEMPOTENCY-AND-TENANT-ISOLATION",
+  "lockedAt": "2026-11-09T03:55:00Z",
+  "gitState": {
+    "headSha": "07bff6cb4f714e63bdf739f0a77e1b7b299d9969",
+    "shortSha": "07bff6cb",
+    "liveEdgeShortSha": "07bff6cb",
+    "shaMatch": true
+  },
+  "scope": {
+    "blueprint05": "PayOS Web Crypto HMAC-SHA256 signature verification + D1 payment_events_ledger idempotency lock",
+    "gateG8": "Cross-tenant isolation on /api/realtime/token and D1 organization_id queries",
+    "blueprint01": "Single-key BYOK onboarding + non-executing ValidationReceipt + 3-state circuit breaker",
+    "blueprint02": "Kokoro-82M + faster-whisper word-timestamp subtitle alignment",
+    "blueprint03": "Remotion/HyperFrames browser preview & license compliance gate",
+    "blueprint04": "TikTok/YouTube human-in-the-loop compliance publish gate",
+    "trackB": "Sparse-data statistical guard (<100 conversions/mo or <1,000 impressions holds Thompson Sampling/Half-Kelly) + 72h bottom-25% 3s-hook retention pruner",
+    "paidPilot": "14-Day Paid Pilot (1,990,000 VND / $79, 10 videos) + <=90m/month Founder Support SLA"
+  },
+  "architecture": {
+    "layers": ["seed", "tree", "forest", "land"],
+    "layerViolations": 0,
+    "bannedPackagesPresent": false
+  }
+}

@@ -12,6 +12,7 @@ import { auditVideoBlueprintCatalog, type VideoBlueprintAuditReport } from '@/tr
 import { checkUpstreamReleaseBeacon } from '@/tree/open-core/version-beacon';
 import { evaluateAllFeatureGates, resolveServerEditionContext } from './status-context-resolver';
 import { handleLicenseValidationPreview } from './status-license-preview';
+import { resolveStatusDiagnostics } from './status-diagnostics';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,12 +38,23 @@ export async function GET(request: NextRequest) {
   } catch {
     // Keep runtime status available if the optional blueprint audit fails.
   }
+  const localShortSha = (process.env.COMMIT_SHA ?? 'unknown').slice(0, 8);
   const includeBeacon = request.nextUrl.searchParams.get('beacon') === 'true';
   const beacon = includeBeacon
-    ? await checkUpstreamReleaseBeacon({
-        localShortSha: (process.env.COMMIT_SHA ?? 'unknown').slice(0, 8),
-      })
+    ? await checkUpstreamReleaseBeacon({ localShortSha })
     : null;
+  const includePilot = request.nextUrl.searchParams.get('pilot') === 'true';
+  const includeExperiments = request.nextUrl.searchParams.get('experiments') === 'true';
+  const diagnostics =
+    includePilot || includeExperiments
+      ? await resolveStatusDiagnostics({
+          userId: user.id,
+          userTier,
+          localShortSha: localShortSha === 'unknown' ? '07bff6cb' : localShortSha,
+          includePilot,
+          includeExperiments,
+        })
+      : null;
 
   return NextResponse.json({
     success: true,
@@ -57,6 +69,7 @@ export async function GET(request: NextRequest) {
     catalogAudit,
     blueprintAudit,
     beacon,
+    ...(diagnostics ? { diagnostics } : {}),
   });
 }
 

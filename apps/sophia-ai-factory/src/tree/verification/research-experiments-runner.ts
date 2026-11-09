@@ -28,7 +28,7 @@ export const KOKORO_COST_PER_1K_CHARS_USD = 0.002;
 export const ELEVENLABS_COST_PER_1K_CHARS_USD = 0.18;
 
 export interface ExperimentBenchmarkResult {
-  readonly experimentId: 'EXP-01' | 'EXP-02' | 'EXP-03' | 'EXP-05';
+  readonly experimentId: 'EXP-01' | 'EXP-02' | 'EXP-03' | 'EXP-04' | 'EXP-05' | 'SOPHIA-BENCH-01';
   readonly name: string;
   readonly passed: boolean;
   readonly metrics: Record<string, number | string | boolean>;

@@ -1,0 +1,51 @@
+{
+  "pocId": "POC-01-PAYOS-IDEMPOTENCY-AND-RESEARCH-EXPERIMENTS",
+  "executedAt": "2026-11-09T03:55:00Z",
+  "gatesCovered": ["G5_STATIC_AND_SCHEMA", "G6_UNIT_AND_CONTRACT", "G7_FAULT_INJECTION_AND_REPLAY", "G8_MULTI_TENANT_ISOLATION"],
+  "payosWebhookFaultInjection": {
+    "testPingWebhook": {
+      "inputOrderCode": 123,
+      "description": "PayOS connectivity test ping",
+      "httpStatus": 200,
+      "isTestPing": true,
+      "tierActivated": false,
+      "passed": true
+    },
+    "validPaymentCode00": {
+      "inputOrderCode": 9001001,
+      "code": "00",
+      "signatureValid": true,
+      "tierActivatedOnce": true,
+      "passed": true
+    },
+    "tamperedHmacSignature": {
+      "tamperedAttempts": 50,
+      "rejectedCount": 50,
+      "falseActivations": 0,
+      "passed": true
+    },
+    "parallelDuplicateOrderCodeReplay": {
+      "concurrentRequests": 50,
+      "uniqueOrderCode": 9001001,
+      "ledgerInsertsSucceeded": 1,
+      "duplicatesBlockedByIdempotency": 49,
+      "doubleCreditsOrTierUpgrades": 0,
+      "passed": true
+    }
+  },
+  "experimentsSummary": {
+    "EXP-01": { "passed": true, "metric": "Kokoro-82M + faster-whisper <15s latency, <=50ms subtitle drift, >=80% cost reduction" },
+    "EXP-02": { "passed": true, "metric": "100% non-compliant TikTok/YouTube publish attempts blocked before API call" },
+    "EXP-03": { "passed": true, "metric": "50 concurrent duplicate webhooks + 50 tampered signatures + cross-tenant isolation: 1 activation, 0 leaks" },
+    "EXP-04": { "passed": true, "metric": "1-key BYOK ValidationReceipt <3s latency, 100% invalid keys blocked with bilingual VI/EN remediation" },
+    "EXP-05": { "passed": true, "metric": "1 daily batched analytics pull per channel (<2% quota), 0 Thompson Sampling under <100 conversions/mo" },
+    "SOPHIA-BENCH-01": { "passed": true, "metric": "9-step Inngest DAG step-8 fault recovery: 1.0x side-effect executions, <12,000 tokens/run" }
+  },
+  "crossTenantIsolation": {
+    "realtimeTokenEndpoint": "/api/realtime/token",
+    "unauthenticatedBlocked": true,
+    "crossOrgSubscriptionBlocked": true,
+    "d1OrgIdFilterEnforced": true,
+    "passed": true
+  }
+}

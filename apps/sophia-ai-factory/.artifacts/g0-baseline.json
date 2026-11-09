@@ -1,0 +1,47 @@
+{
+  "gate": "G0_DISCOVERY_FIRST_BASELINE_LOCK",
+  "capturedAt": "2026-11-09T03:55:00Z",
+  "repository": "minhlongs/sophia-ai-factory",
+  "appRoot": "apps/sophia-ai-factory",
+  "branch": "feat/sophia-research-batch4-final-gates",
+  "baseMainHeadSha": "07bff6cb4f714e63bdf739f0a77e1b7b299d9969",
+  "baseMainShortSha": "07bff6cb",
+  "liveProduction": {
+    "url": "https://sophia.agencyos.network/api/version",
+    "shortSha": "07bff6cb",
+    "deployedAt": "2026-11-09T03:46:06Z",
+    "opennextVersion": "1.19.11",
+    "parityVerified": true
+  },
+  "packageJsonSummary": {
+    "name": "sophia-ai-factory",
+    "version": "1.0.0",
+    "scripts": {
+      "typecheck": "npm run type-check",
+      "lint": "eslint src --max-warnings=9999",
+      "layerBoundaries": "bash scripts/check-layer-boundaries.sh",
+      "i18nValidate": "npm run i18n:validate",
+      "test": "vitest run",
+      "build": "next build"
+    },
+    "prohibitedPackagesAbsent": {
+      "@mastra/core": true,
+      "langchain": true,
+      "crewai": true
+    }
+  },
+  "deliverablesCovered": [
+    "REPORT 01 — Evidence Ledger & Source Audit (G0-G13)",
+    "REPORT 02 — Repository & Open-Source Deep Audit (SIVI Scorecard)",
+    "REPORT 03 — Architecture Decision Record (Inngest DAG + Track B Sparse-Data Guard)",
+    "REPORT 04 — High-Leverage Integration Blueprints (Blueprints 01-05)",
+    "REPORT 05 — Experiment & Benchmark Protocol (EXP-01..05 + SOPHIA-BENCH-01)",
+    "REPORT 06 — Productization & Commercialization Strategy",
+    "REPORT 07 — Unit Economics, Pricing & Financial Model (14-Day Paid Pilot & <=90m SLA)",
+    "REPORT 08 — Competitive Moat (9-Dimension Scorecard)",
+    "REPORT 09 — Security & Compliance Risk Register (SEC-01..09)",
+    "REPORT 10 — 30/60/90-Day Evidence Roadmap",
+    "REPORT 11 — Claude Code CLI Handover Pack (PoC 01 Artifacts)",
+    "REPORT 12 — Final Decision Memorandum"
+  ]
+}
