@@ -18,10 +18,18 @@ import { resolvePublishApproval } from './ledger-store';
 import { PUBLISH_APPROVAL_RESOLVED_EVENT } from './gate';
 import type { PublishApprovalSubject } from './types';
 
+export interface PublishComplianceDecisionMetadata {
+  privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+  brandOrganicToggle?: boolean;
+  brandContentToggle?: boolean;
+  containsSyntheticMedia?: boolean;
+}
+
 export interface PublishApprovalResolutionInput extends PublishApprovalSubject {
   decision: 'approved' | 'rejected';
   reviewerId: string;
   comment?: string;
+  compliance?: PublishComplianceDecisionMetadata;
   db?: D1Database;
 }
 
@@ -43,7 +51,7 @@ export interface PublishApprovalResolutionOutcome {
 export async function resolveAndAnnouncePublishApproval(
   input: PublishApprovalResolutionInput,
 ): Promise<PublishApprovalResolutionOutcome> {
-  const { decision, reviewerId, comment, db } = input;
+  const { decision, reviewerId, comment, compliance, db } = input;
   const subject: PublishApprovalSubject = {
     tenantId: input.tenantId,
     channelId: input.channelId,
@@ -58,6 +66,7 @@ export async function resolveAndAnnouncePublishApproval(
       channelId: subject.channelId,
       decision,
       reviewerId,
+      ...(compliance ? { compliance } : {}),
     });
     await announcePublishApprovalResolved({
       idempotencyKey: write.value.idempotencyKey,
@@ -68,6 +77,7 @@ export async function resolveAndAnnouncePublishApproval(
       decision,
       reviewerId,
       comment,
+      compliance,
     });
     return { resolved: true, alreadyResolved: false };
   }
@@ -114,6 +124,7 @@ async function announcePublishApprovalResolved(payload: {
   decision: 'approved' | 'rejected';
   reviewerId: string;
   comment?: string;
+  compliance?: PublishComplianceDecisionMetadata;
 }): Promise<void> {
   try {
     await inngest.send({
@@ -126,6 +137,7 @@ async function announcePublishApprovalResolved(payload: {
         decision: payload.decision,
         reviewerId: payload.reviewerId,
         comment: payload.comment,
+        ...(payload.compliance ? { compliance: payload.compliance } : {}),
       },
     });
   } catch (err) {

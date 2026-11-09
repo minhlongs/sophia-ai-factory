@@ -8076,7 +8076,16 @@
       "emptyDescription": "Video đã hoàn thành sẽ hiện ở đây để bạn duyệt trước khi công khai.",
       "approvedNotice": "Đã duyệt. Video đang được đăng.",
       "rejectedNotice": "Đã từ chối. Video sẽ không được đăng.",
-      "selfApprovedNotice": "Đã duyệt. Lưu ý: bạn vừa duyệt nội dung do chính bạn tạo."
+      "selfApprovedNotice": "Đã duyệt. Lưu ý: bạn vừa duyệt nội dung do chính bạn tạo.",
+      "privacyLevelLabel": "Chế độ hiển thị TikTok (bắt buộc chọn)",
+      "privacyLevelPlaceholder": "— Chọn chế độ hiển thị —",
+      "privacyPublic": "Công khai cho mọi người (PUBLIC_TO_EVERYONE)",
+      "privacyFriends": "Bạn bè theo dõi nhau (MUTUAL_FOLLOW_FRIENDS)",
+      "privacySelfOnly": "Chỉ mình tôi (SELF_ONLY)",
+      "brandOrganicLabel": "Quảng bá thương hiệu của bạn (Your Brand)",
+      "brandContentLabel": "Nội dung tài trợ bên thứ ba (Branded Content)",
+      "selfOnlyWarning": "Lưu ý TikTok: Khi ứng dụng chưa hoàn tất kiểm duyệt hoặc chọn Chỉ mình tôi, video sẽ được đăng ở chế độ Riêng tư (SELF_ONLY).",
+      "youtubeSyntheticLabel": "Khai báo nội dung tạo bởi AI trên YouTube (containsSyntheticMedia)"
     },
     "badges": {
       "complianceVerified": "Kiểm tra quy định: đạt",

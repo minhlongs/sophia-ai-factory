@@ -1,34 +1,51 @@
 /**
  * Single public-publish approval card with channel, platform, media reference,
- * expiry timestamp, optional reviewer note, and Approve / Reject actions.
+ * TikTok/YouTube compliance controls, optional reviewer note, and Approve / Reject actions.
  * @module components/approval-queue/publish-approval-card
  */
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, X, Globe, Film, Clock } from 'lucide-react';
-import type { PublishApprovalItem } from './publish-queue-api';
+import { Check, X, Globe, Film, Clock, AlertTriangle } from 'lucide-react';
+import type {
+  PublishApprovalItem,
+  PublishComplianceMetadata,
+  TikTokPrivacyChoice,
+} from './publish-queue-api';
 
 interface PublishApprovalCardProps {
   item: PublishApprovalItem;
   busy: boolean;
-  onDecide: (approvalId: string, approved: boolean) => void;
+  onDecide: (approvalId: string, approved: boolean, compliance?: PublishComplianceMetadata) => void;
 }
 
 function formatUnixSeconds(unixSec: number, locale: string): string {
   if (!unixSec || Number.isNaN(unixSec)) return '—';
   const ms = unixSec < 1e12 ? unixSec * 1000 : unixSec;
-  return new Date(ms).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  return new Date(ms).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCardProps): React.ReactElement {
   const t = useTranslations('approvals');
   const locale = useLocale();
+  const normalizedPlatform = (item.platform || '').toLowerCase();
+  const isTikTok = normalizedPlatform === 'tiktok';
+  const isYouTube = normalizedPlatform === 'youtube';
+
+  const [privacyLevel, setPrivacyLevel] = useState<TikTokPrivacyChoice | ''>('');
+  const [brandOrganicToggle, setBrandOrganicToggle] = useState(false);
+  const [brandContentToggle, setBrandContentToggle] = useState(false);
+  const [containsSyntheticMedia, setContainsSyntheticMedia] = useState(true);
+  const [syntheticTouched, setSyntheticTouched] = useState(false);
+
+  const approveDisabled = busy || (isTikTok && privacyLevel === '');
+  const buildCompliancePayload = (): PublishComplianceMetadata | undefined => {
+    if (isTikTok && privacyLevel !== '') return { privacyLevel, brandOrganicToggle, brandContentToggle };
+    if (isYouTube && syntheticTouched) return { containsSyntheticMedia };
+    return undefined;
+  };
 
   return (
     <article
@@ -55,9 +72,7 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5 text-amber-500" />
-          <span>
-            {t('publish.expiresAt')}: {formatUnixSeconds(item.expiresAt, locale)}
-          </span>
+          <span>{t('publish.expiresAt')}: {formatUnixSeconds(item.expiresAt, locale)}</span>
         </div>
       </div>
 
@@ -69,11 +84,82 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
         <p className="break-all font-mono text-foreground">{item.mediaRef}</p>
       </div>
 
-      <div className="mb-4">
-        <label
-          htmlFor={`publish-reason-${item.id}`}
-          className="mb-1 block text-xs font-medium text-muted-foreground"
+      {isTikTok && (
+        <div
+          data-testid={`tiktok-compliance-controls-${item.id}`}
+          className="mb-4 space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5 text-xs"
         >
+          <div>
+            <label htmlFor={`tiktok-privacy-${item.id}`} className="mb-1 block font-semibold text-foreground">
+              {t('publish.privacyLevelLabel')}
+            </label>
+            <select
+              id={`tiktok-privacy-${item.id}`}
+              data-testid={`tiktok-privacy-select-${item.id}`}
+              value={privacyLevel}
+              onChange={(e) => setPrivacyLevel(e.target.value as TikTokPrivacyChoice | '')}
+              className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground"
+            >
+              <option value="">{t('publish.privacyLevelPlaceholder')}</option>
+              <option value="PUBLIC_TO_EVERYONE">{t('publish.privacyPublic')}</option>
+              <option value="MUTUAL_FOLLOW_FRIENDS">{t('publish.privacyFriends')}</option>
+              <option value="SELF_ONLY">{t('publish.privacySelfOnly')}</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:gap-4">
+            <label className="inline-flex items-center gap-2 text-muted-foreground">
+              <input
+                type="checkbox"
+                data-testid={`tiktok-brand-organic-${item.id}`}
+                checked={brandOrganicToggle}
+                onChange={(e) => setBrandOrganicToggle(e.target.checked)}
+              />
+              <span>{t('publish.brandOrganicLabel')}</span>
+            </label>
+            <label className="inline-flex items-center gap-2 text-muted-foreground">
+              <input
+                type="checkbox"
+                data-testid={`tiktok-brand-content-${item.id}`}
+                checked={brandContentToggle}
+                onChange={(e) => setBrandContentToggle(e.target.checked)}
+              />
+              <span>{t('publish.brandContentLabel')}</span>
+            </label>
+          </div>
+          {(privacyLevel === 'SELF_ONLY' || item.unauditedSelfOnly) && (
+            <div
+              data-testid={`tiktok-self-only-warning-${item.id}`}
+              className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-300"
+            >
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{t('publish.selfOnlyWarning')}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isYouTube && (
+        <div
+          data-testid={`youtube-compliance-controls-${item.id}`}
+          className="mb-4 rounded-lg border border-border bg-secondary/20 p-3 text-xs"
+        >
+          <label className="inline-flex items-center gap-2 font-medium text-foreground">
+            <input
+              type="checkbox"
+              data-testid={`youtube-synthetic-media-${item.id}`}
+              checked={containsSyntheticMedia}
+              onChange={(e) => {
+                setContainsSyntheticMedia(e.target.checked);
+                setSyntheticTouched(true);
+              }}
+            />
+            <span>{t('publish.youtubeSyntheticLabel')}</span>
+          </label>
+        </div>
+      )}
+
+      <div className="mb-4">
+        <label htmlFor={`publish-reason-${item.id}`} className="mb-1 block text-xs font-medium text-muted-foreground">
           {t('reason')}
         </label>
         <textarea
@@ -87,8 +173,8 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          disabled={busy}
-          onClick={() => onDecide(item.id, true)}
+          disabled={approveDisabled}
+          onClick={() => onDecide(item.id, true, buildCompliancePayload())}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
         >
           <Check className="h-4 w-4" />

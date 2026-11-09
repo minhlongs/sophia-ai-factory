@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { FEATURE_PAYOS } from '@/land/payments/payos';
+import { isPayOsTestPing } from '@/land/payments/payos-gateway';
 import { logger } from '@/seed/utils/logger-utility';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import {
@@ -34,6 +35,15 @@ export async function POST(request: NextRequest) {
 
   const { bodyJson, ipnData, success } = validation.data;
   const { orderCode, amount, paymentLinkId } = ipnData;
+
+  if (isPayOsTestPing(ipnData)) {
+    logger.info('[PayOS IPN] Ignored PayOS test ping', {
+      orderCode,
+      description: ipnData.description,
+    });
+    return NextResponse.json({ received: true, ignored: 'test_ping' });
+  }
+
   const eventId = `payos_${orderCode}`;
   const db = createServerClient();
   const d1 = await getD1();

@@ -23,9 +23,21 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+const complianceSchema = z
+  .object({
+    privacyLevel: z
+      .enum(['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY'])
+      .optional(),
+    brandOrganicToggle: z.boolean().optional(),
+    brandContentToggle: z.boolean().optional(),
+    containsSyntheticMedia: z.boolean().optional(),
+  })
+  .optional();
+
 const resolveSchema = z.object({
   approved: z.boolean(),
   comment: z.string().max(2000).optional(),
+  compliance: complianceSchema,
 });
 
 export async function PATCH(
@@ -81,6 +93,18 @@ export async function PATCH(
       );
     }
 
+    if (
+      parsed.data.approved &&
+      record.platform.toLowerCase() === 'tiktok' &&
+      parsed.data.compliance &&
+      !parsed.data.compliance.privacyLevel
+    ) {
+      return NextResponse.json(
+        { error: 'TikTok publish approval requires explicit privacyLevel selection' },
+        { status: 400 },
+      );
+    }
+
     const outcome = await resolveAndAnnouncePublishApproval({
       tenantId: record.tenantId,
       channelId: record.channelId,
@@ -89,6 +113,7 @@ export async function PATCH(
       decision: parsed.data.approved ? 'approved' : 'rejected',
       reviewerId: user.id,
       comment: parsed.data.comment,
+      compliance: parsed.data.compliance,
       db: d1,
     });
 
@@ -123,6 +148,7 @@ export async function PATCH(
       decision: parsed.data.approved ? 'approved' : 'rejected',
       selfApproval: isSelfApproval,
       id,
+      ...(parsed.data.compliance ? { compliance: parsed.data.compliance } : {}),
     });
   } catch (err) {
     // Log the cause server-side and return a stable code: the raw D1 message
