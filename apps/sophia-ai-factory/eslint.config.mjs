@@ -415,6 +415,8 @@ const eslintConfig = defineConfig([
 "src/forest/video/missions/video-create.ts",
 // youtube/missions — orchestrates land/youtube publisher (mekong-exempt)
 "src/forest/youtube/missions/youtube-publish.ts",
+      // actions/workspace-partner-network-actions — orchestrates land/payouts/dual-rail per cross-layer-orchestration.md
+      "src/forest/actions/workspace-partner-network-actions.ts",
       // Test files
       "src/forest/**/*.test.ts",
       "src/forest/**/*.test.tsx",

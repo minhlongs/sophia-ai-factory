@@ -1,12 +1,15 @@
 import React from 'react';
 import { AffiliateCockpitView, type CockpitExecutiveSnapshot } from '@/land/affiliates/dashboard';
 import { AffiliatePortalView } from '@/components/affiliates/portal/affiliate-portal-view';
+import { WorkspacePartnerNetworkCard } from '@/components/affiliates/workspace/workspace-partner-network-card';
 import {
   getWorkspaceWebhookReadiness,
   CANONICAL_WEBHOOK_NETWORK_LIST,
   NETWORK_CONFIGS,
 } from '@/app/api/webhooks/affiliate/[network]/affiliate-network-configs';
 import { getD1 } from '@/seed/db/client';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
+import { queryWorkspacePartners } from '@/forest/actions/workspace-partner-network-db-helpers';
 import type {
   PartnerLedgerKpiData,
   CommissionLedgerItem,
@@ -41,8 +44,6 @@ export async function AffiliateHubSupplementarySections({
 }: AffiliateHubSupplementarySectionsProps) {
   const isVi = locale === 'vi';
   const db = await getD1();
-  // Fail-closed display: without a database read we cannot prove any network
-  // is connected for this workspace, so every badge renders pending.
   const webhookReadiness = db
     ? await getWorkspaceWebhookReadiness(db, userId)
     : CANONICAL_WEBHOOK_NETWORK_LIST.map((net) => ({
@@ -50,6 +51,10 @@ export async function AffiliateHubSupplementarySections({
         secretEnv: NETWORK_CONFIGS[net].secretEnv,
         configured: false,
       }));
+
+  const cloudGate = await enforceCommercialFeatureForUser(userId, 'affiliate_attribution_payouts');
+  const workspacePartners =
+    cloudGate.ok && db ? await queryWorkspacePartners(db, userId).catch(() => []) : [];
 
   const snapshot: CockpitExecutiveSnapshot = {
     tenantId: userId,
@@ -88,23 +93,17 @@ export async function AffiliateHubSupplementarySections({
     <div className="mx-auto max-w-7xl space-y-8 px-4 pb-12 sm:px-6 lg:px-8">
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h3 className="text-sm font-bold text-foreground">
-          {isVi
-            ? 'Trạng thái Webhook Postback Mạng Affiliate (Model A & B)'
-            : 'Affiliate Network Postback Webhook Readiness (Model A & B)'}
+          {isVi ? 'Trạng thái Webhook Postback Mạng Affiliate (Model A & B)' : 'Affiliate Network Postback Webhook Readiness (Model A & B)'}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          {isVi
-            ? 'Tự động ghi nhận hoa hồng qua /api/webhooks/affiliate/[network] khi cấu hình secret.'
-            : 'Automatically records conversions via /api/webhooks/affiliate/[network] when secret is set.'}
+          {isVi ? 'Tự động ghi nhận hoa hồng qua /api/webhooks/affiliate/[network] khi cấu hình secret.' : 'Automatically records conversions via /api/webhooks/affiliate/[network] when secret is set.'}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {webhookReadiness.map((item) => (
             <span
               key={item.network}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
-                item.configured
-                  ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30'
-                  : 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                item.configured ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
               }`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${item.configured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
@@ -114,13 +113,9 @@ export async function AffiliateHubSupplementarySections({
         </div>
       </div>
 
+      <WorkspacePartnerNetworkCard initialPartners={workspacePartners} cloudGateAllowed={cloudGate.ok} locale={locale} />
       <AffiliateCockpitView snapshot={snapshot} locale={isVi ? 'vi' : 'en'} />
-
-      <AffiliatePortalView
-        partnerId={userId}
-        initialKpi={portalKpi}
-        initialItems={ledgerItems}
-      />
+      <AffiliatePortalView partnerId={userId} initialKpi={portalKpi} initialItems={ledgerItems} />
     </div>
   );
 }
