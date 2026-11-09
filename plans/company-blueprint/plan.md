@@ -26,11 +26,11 @@ paying out many partners (batching, VietQR/NAPAS export, risk scoring, clawback,
 working. That is the ceiling `CommercialUpgradeModal` + `/api/open-core/portability` catch.
 
 **Pre-conditions (blockers, not nice-to-haves):**
-1. Feature gates must be **enforced**, not documented — `evaluateFeatureGate` is currently called only by `/api/open-core/status` and the 25-step auditor.
-2. Founder decides the affiliate payout rail: `payouts/resolve-payout-method.ts` prefers Stripe Connect, which a Vietnamese operator paying partners in VND cannot use.
+1. ✅ **Resolved (2026-11-09):** Feature gates are enforced server-side via `enforceCommercialFeatureForUser` (`src/seed/config/enforce-commercial-feature-server.ts`) across social publishing, custom domains, white-label agency portal, affiliate payouts, and workspace partner management.
+2. ✅ **Resolved (2026-11-09):** `src/land/payouts/resolve-payout-method.ts` prioritizes `payout_methods` (`bank_account` VietQR NAPAS 247 + `usdt_trc20` / `usdt_erc20`) first, keeping Stripe Connect (`user_payout_settings.stripe_account_id`) as a secondary fallback.
 3. Market claims stay **hypothesis** until a customer pays; `company.json` records $0 MRR / 0 paying customers as of 2026-10-17.
-4. Founder decides whether the nightly risk scorer may **stop money** for partners the customer recruited. `payout-disbursement.ts` deliberately treats `under_review` as advisory (only `suspended` blocks) because the scorer has no automatic recovery path and one false positive froze a partner's payouts permanently. Partner-Resell Kit hands unknown partners to non-technical customers, where false positives are likelier — so the Cloud tier's "anti-fraud" promise is currently a notification, not a control.
-5. `affiliate_commissions`, `affiliate_payouts` and `affiliate_referrals` (migration `0452`) carry **no `tenant_id`**. A Phase 02 migration adds it; without it a customer's commission ledger is inseparable from Sophia's own.
+4. ✅ **Resolved (2026-11-09):** Dual-rail batch generation (`createDualRailPayoutBatch`) strictly requires `status = 'active'` and scopes by `tenant_id`, holding back `under_review` partners until the workspace owner approves or suspends them on `/[locale]/dashboard/affiliate` (`WorkspacePartnerNetworkCard`).
+5. ✅ **Resolved (2026-11-09):** Migrations `0500_affiliate_multi_tenant_isolation.sql` and `0501_affiliate_partners_tenant_isolation.sql` add `tenant_id` across `affiliate_commissions`, `affiliate_payouts`, `affiliate_referrals`, and `affiliate_partners`.
 
 ---
 

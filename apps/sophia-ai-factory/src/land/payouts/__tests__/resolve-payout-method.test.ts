@@ -21,14 +21,14 @@ interface FirstStub {
 }
 
 /**
- * Build a D1 mock whose prepare() returns Stripe row on first call and
- * crypto row on second call. Each `.first()` resolution is queued separately.
+ * Build a D1 mock whose prepare() returns payout_methods (VietQR/USDT) row on
+ * first call and Stripe Connect fallback row on second call.
  */
 function makeD1Mock(stub: FirstStub) {
   const firstFn = vi
     .fn()
-    .mockReturnValueOnce(stub.stripe ?? null)
     .mockReturnValueOnce(stub.crypto ?? null)
+    .mockReturnValueOnce(stub.stripe ?? null)
 
   const prepared = {
     bind: vi.fn().mockReturnThis(),
@@ -48,23 +48,35 @@ describe('resolvePayoutMethod', () => {
     vi.clearAllMocks()
   })
 
-  it('prefers Stripe when stripe_payout_enabled=1 and stripe_account_id set', async () => {
-    mockedGetD1.mockResolvedValue(
-      makeD1Mock({ stripe: { stripe_account_id: 'acct_abc' } }) as unknown as D1Database,
-    )
-    const result = await resolvePayoutMethod('tenant-1', 'aff-1')
-    expect(result).toEqual({ kind: 'stripe', stripeAccountId: 'acct_abc' })
-  })
-
-  it('falls back to USDT crypto when Stripe not enabled', async () => {
+  it('prefers VietQR bank_account over Stripe Connect when default payout_method exists', async () => {
     mockedGetD1.mockResolvedValue(
       makeD1Mock({
-        stripe: null,
+        crypto: {
+          method: 'bank_account',
+          recipient_addr_encrypted: 'enc:vietqr_970422_123456',
+          network: null,
+        },
+        stripe: { stripe_account_id: 'acct_abc' },
+      }) as unknown as D1Database,
+    )
+    const result = await resolvePayoutMethod('tenant-1', 'aff-vn')
+    expect(result).toEqual({
+      kind: 'usdt',
+      method: 'bank_account',
+      recipientAddrEncrypted: 'enc:vietqr_970422_123456',
+      network: 'VIETQR',
+    })
+  })
+
+  it('prefers USDT TRC20 over Stripe Connect when default payout_method exists', async () => {
+    mockedGetD1.mockResolvedValue(
+      makeD1Mock({
         crypto: {
           method: 'usdt_trc20',
           recipient_addr_encrypted: 'enc:abc123',
           network: 'TRC20',
         },
+        stripe: { stripe_account_id: 'acct_abc' },
       }) as unknown as D1Database,
     )
     const result = await resolvePayoutMethod('tenant-1', 'aff-2')
@@ -74,6 +86,17 @@ describe('resolvePayoutMethod', () => {
       recipientAddrEncrypted: 'enc:abc123',
       network: 'TRC20',
     })
+  })
+
+  it('falls back to Stripe Connect when no VietQR/USDT payout_method is configured', async () => {
+    mockedGetD1.mockResolvedValue(
+      makeD1Mock({
+        crypto: null,
+        stripe: { stripe_account_id: 'acct_abc' },
+      }) as unknown as D1Database,
+    )
+    const result = await resolvePayoutMethod('tenant-1', 'aff-1')
+    expect(result).toEqual({ kind: 'stripe', stripeAccountId: 'acct_abc' })
   })
 
   it('defaults network to TRC20 when crypto row has null network', async () => {
@@ -91,7 +114,7 @@ describe('resolvePayoutMethod', () => {
     expect(result).toMatchObject({ kind: 'usdt', network: 'TRC20' })
   })
 
-  it('returns null when neither Stripe nor crypto method is set', async () => {
+  it('returns null when neither VietQR/USDT nor Stripe method is set', async () => {
     mockedGetD1.mockResolvedValue(
       makeD1Mock({ stripe: null, crypto: null }) as unknown as D1Database,
     )
@@ -99,11 +122,10 @@ describe('resolvePayoutMethod', () => {
     expect(result).toBeNull()
   })
 
-  it('treats stripe row with null stripe_account_id as missing (SQL guard)', async () => {
-    // SQL filters this out, but defense-in-depth: even if row sneaks through, fall back
+  it('resolves ERC20 when configured as default payout method', async () => {
     mockedGetD1.mockResolvedValue(
       makeD1Mock({
-        stripe: null, // simulating the guarded SQL returning nothing
+        stripe: null,
         crypto: {
           method: 'usdt_erc20',
           recipient_addr_encrypted: 'enc:eth',

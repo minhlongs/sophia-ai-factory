@@ -23,7 +23,8 @@ export interface AffiliatePartnerPayoutRow {
 export function buildEligibleAffiliatePartnersQuery(
   minCents: number,
   targetRail: PayoutRail | 'COMBINED',
-  partnerIds?: string[]
+  partnerIds?: string[],
+  tenantId?: string
 ): { query: string; binds: (string | number)[] } {
   let query = `
     SELECT
@@ -40,6 +41,11 @@ export function buildEligibleAffiliatePartnersQuery(
       AND pending_payout_cents >= ?
   `;
   const binds: (string | number)[] = [minCents];
+
+  if (tenantId && tenantId.trim().length > 0) {
+    query += ` AND tenant_id = ?`;
+    binds.push(tenantId.trim());
+  }
 
   if (partnerIds && partnerIds.length > 0) {
     const placeholders = partnerIds.map(() => '?').join(',');

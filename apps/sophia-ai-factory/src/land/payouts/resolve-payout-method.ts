@@ -1,10 +1,10 @@
 /**
  * Resolve which payout rail an affiliate should use this batch.
  *
- * Precedence: Stripe Connect (fiat USD) → USDT crypto → null (skip).
- * Stripe wins when the affiliate has completed Connect KYC AND
- * `stripe_payout_enabled = 1`; otherwise fall back to the default row in
- * `payout_methods`.
+ * Precedence: VietQR / USDT (default row in `payout_methods`) → Stripe Connect fallback → null (skip).
+ * VietQR (`bank_account`, NAPAS 247 / PayOS) and USDT (`usdt_trc20` / `usdt_erc20`, NOWPayments)
+ * are primary rails for VN and global operators; Stripe Connect serves as an international fallback
+ * when no default `payout_methods` record exists.
  *
  * @module payouts/resolve-payout-method
  */
@@ -27,7 +27,7 @@ interface StripeRow {
 interface CryptoRow {
   method: 'usdt_trc20' | 'usdt_erc20' | 'bank_account'
   recipient_addr_encrypted: string
-  network: string | null
+  network?: string | null
 }
 
 export async function resolvePayoutMethod(
@@ -37,6 +37,31 @@ export async function resolvePayoutMethod(
   const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
+
+  const cryptoRow = await db
+    .prepare(
+      `SELECT method, recipient_addr_encrypted
+       FROM payout_methods
+       WHERE affiliate_id = ? AND tenant_id = ? AND is_default = 1
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .bind(affiliateId, tenantId)
+    .first<CryptoRow>()
+
+  if (cryptoRow) {
+    const defaultNetwork =
+      cryptoRow.method === 'bank_account'
+        ? 'VIETQR'
+        : cryptoRow.method === 'usdt_erc20'
+          ? 'ERC20'
+          : 'TRC20'
+    return {
+      kind: 'usdt',
+      method: cryptoRow.method,
+      recipientAddrEncrypted: cryptoRow.recipient_addr_encrypted,
+      network: cryptoRow.network ?? defaultNetwork,
+    }
+  }
 
   const stripeRow = await db
     .prepare(
@@ -52,25 +77,6 @@ export async function resolvePayoutMethod(
 
   if (stripeRow?.stripe_account_id) {
     return { kind: 'stripe', stripeAccountId: stripeRow.stripe_account_id }
-  }
-
-  const cryptoRow = await db
-    .prepare(
-      `SELECT method, recipient_addr_encrypted, network
-       FROM payout_methods
-       WHERE affiliate_id = ? AND tenant_id = ? AND is_default = 1
-       ORDER BY created_at DESC LIMIT 1`,
-    )
-    .bind(affiliateId, tenantId)
-    .first<CryptoRow>()
-
-  if (cryptoRow) {
-    return {
-      kind: 'usdt',
-      method: cryptoRow.method,
-      recipientAddrEncrypted: cryptoRow.recipient_addr_encrypted,
-      network: cryptoRow.network ?? 'TRC20',
-    }
   }
 
   return null

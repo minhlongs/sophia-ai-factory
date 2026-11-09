@@ -33,6 +33,7 @@ export async function createDualRailPayoutBatch(
     partnerIds?: string[];
     minPayoutCents?: number;
     rail?: PayoutRail | 'COMBINED';
+    tenantId?: string;
   }
 ): Promise<DualRailPayoutBatch> {
   const minCents = options?.minPayoutCents ?? DEFAULT_MIN_PAYOUT_CENTS;
@@ -42,7 +43,8 @@ export async function createDualRailPayoutBatch(
   const { query, binds } = buildEligibleAffiliatePartnersQuery(
     minCents,
     targetRail,
-    options?.partnerIds
+    options?.partnerIds,
+    options?.tenantId
   );
 
   const { results } = await d1
