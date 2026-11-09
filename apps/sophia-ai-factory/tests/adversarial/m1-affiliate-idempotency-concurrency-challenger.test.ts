@@ -110,6 +110,7 @@ function createRealSqliteD1(): { d1: D1Database; db: NativeSqliteDb } {
   db.exec(`
     CREATE TABLE affiliate_referrals (
       id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'default',
       partner_id TEXT NOT NULL,
       partner_code TEXT NOT NULL,
       referred_user_id TEXT,
@@ -129,6 +130,7 @@ function createRealSqliteD1(): { d1: D1Database; db: NativeSqliteDb } {
   db.exec(`
     CREATE TABLE affiliate_payouts (
       id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'default',
       payout_reference TEXT UNIQUE NOT NULL,
       partner_id TEXT NOT NULL,
       rail TEXT NOT NULL,
@@ -151,6 +153,7 @@ function createRealSqliteD1(): { d1: D1Database; db: NativeSqliteDb } {
   db.exec(`
     CREATE TABLE affiliate_commissions (
       id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'default',
       event_key TEXT UNIQUE NOT NULL,
       partner_id TEXT NOT NULL,
       referral_id TEXT,

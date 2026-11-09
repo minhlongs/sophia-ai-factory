@@ -36,6 +36,7 @@ type NativeSqliteDb = InstanceType<typeof DatabaseSync>;
 const SCHEMA = `
   CREATE TABLE affiliate_payouts (
     id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'default',
     payout_reference TEXT UNIQUE NOT NULL,
     partner_id TEXT NOT NULL,
     rail TEXT NOT NULL,
@@ -55,6 +56,7 @@ const SCHEMA = `
 
   CREATE TABLE affiliate_commissions (
     id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'default',
     event_key TEXT UNIQUE NOT NULL,
     partner_id TEXT NOT NULL,
     referral_id TEXT,
