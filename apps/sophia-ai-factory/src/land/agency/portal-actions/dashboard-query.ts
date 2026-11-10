@@ -14,7 +14,7 @@ import {
   buildRevenueAttribution,
   aggregateAgencyKpis,
 } from '@/tree/agency/attribution-engine';
-import { resolveDb } from './common';
+import { authorizeAgencyOrgAction } from './common';
 import {
   EMPTY_AGENCY_OVERVIEW_KPI,
   fetchAgencyClients,
@@ -29,7 +29,22 @@ export async function getAgencyAdminOverviewAction(
   agencyContext = { agencyId: agencyOrgId, agencyName: 'My Agency', agencySlug: 'my-agency' },
   dbOverride?: unknown
 ): Promise<AgencyAdminDashboardData> {
-  const db = resolveDb(dbOverride);
+  const emptyDashboard: AgencyAdminDashboardData = {
+    kpi: { ...EMPTY_AGENCY_OVERVIEW_KPI },
+    clients: [],
+    campaigns: [],
+    attribution: [],
+    agencyContext,
+  };
+
+  const orgAuth = await authorizeAgencyOrgAction(agencyOrgId, dbOverride, {
+    allowMemberRead: true,
+  });
+  if (!orgAuth.ok) {
+    return emptyDashboard;
+  }
+
+  const { db } = orgAuth;
 
   try {
     // 1. Fetch subaccounts scoped strictly to agency_org_id

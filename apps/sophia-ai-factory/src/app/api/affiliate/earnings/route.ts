@@ -10,12 +10,24 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server'
 import { getEarningsSummary } from '@/land/payouts/commission-ledger'
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'affiliate_attribution_payouts',
+  )
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    )
   }
 
   const { searchParams } = new URL(request.url)

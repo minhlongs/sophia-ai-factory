@@ -118,4 +118,25 @@ describe('GET /api/affiliate/payouts', () => {
     expect(body.batches[0].total_usd).toBe(100)
     expect(body.batches[0].finalized_at).toBeNull()
   })
+
+  it('returns 403 FEATURE_LOCKED on community edition and 503 when D1 is unavailable', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
+    process.env.SOPHIA_EDITION = 'community'
+    try {
+      const lockedResp = await GET(buildRequest())
+      expect(lockedResp.status).toBe(403)
+    } finally {
+      delete process.env.SOPHIA_EDITION
+    }
+
+    vi.mocked(getD1).mockResolvedValueOnce(null as unknown as D1Database)
+    const noDbResp = await GET(buildRequest({ limit: 'not-a-number' }))
+    expect(noDbResp.status).toBe(503)
+
+    vi.mocked(getD1).mockResolvedValueOnce({
+      prepare: () => ({ bind: () => ({ all: async () => { throw new Error('db boom') } }) }),
+    } as unknown as D1Database)
+    const errResp = await GET(buildRequest())
+    expect(errResp.status).toBe(500)
+  })
 })

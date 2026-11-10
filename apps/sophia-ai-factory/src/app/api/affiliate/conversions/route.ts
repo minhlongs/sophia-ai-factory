@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getRecentConversions } from '@/land/affiliates/dashboard-stats';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -17,6 +18,17 @@ export async function GET(request: NextRequest) {
   const user = await getCurrentUserOrOpenclawBearer(request.headers);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'affiliate_attribution_payouts',
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
   }
 
   const { searchParams } = new URL(request.url);

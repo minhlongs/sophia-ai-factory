@@ -1,13 +1,11 @@
 #!/usr/bin/env node
-/**
- * Verify Open-Core catalog references, Evidence Vault & License Boundaries (<= 170 LOC)
- */
+// Verify Open-Core catalog references, Edge SHA-256 Snapshot, Evidence Vault & License Boundaries (<= 170 LOC)
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(appRoot, '../..');
 const errors = [];
@@ -85,52 +83,65 @@ if (fs.existsSync(pkgJsonPath) && fs.existsSync(selfHostingPath)) {
   }
 }
 
-// The declared list is the single source of truth: parse it out of the catalog so
-// this script cannot drift from what the catalog promises to check.
 const catalogSource = fs.readFileSync(path.join(appRoot, 'src/seed/config/open-core-25-steps-catalog.ts'), 'utf8');
 const requiredCommunityFilesMatch = catalogSource.match(/REQUIRED_GITHUB_COMMUNITY_FILES[^=]*=\s*\[([\s\S]*?)\]/);
 const requiredCommunityFiles = requiredCommunityFilesMatch
   ? [...requiredCommunityFilesMatch[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
   : [];
-if (requiredCommunityFiles.length === 0) {
-  errors.push('Could not parse REQUIRED_GITHUB_COMMUNITY_FILES from the open-core catalog');
-}
+if (requiredCommunityFiles.length === 0) errors.push('Could not parse REQUIRED_GITHUB_COMMUNITY_FILES from the open-core catalog');
 for (const govFile of requiredCommunityFiles) {
-  if (!fs.existsSync(path.join(repoRoot, govFile))) {
-    errors.push(`Missing GitHub Community Standards file at repo root: ${govFile}`);
-  }
+  if (!fs.existsSync(path.join(repoRoot, govFile))) errors.push(`Missing GitHub Community Standards file at repo root: ${govFile}`);
 }
 
-// 5. Verify 25-Step Open-Core Catalog & Auditor
+// 5. Verify 25-Step Open-Core Catalog, Auditor & SHA-256 Edge Snapshot Parity
 const p1Path = path.join(appRoot, 'src/seed/config/open-core-25-steps-data-p1.ts');
 const p2Path = path.join(appRoot, 'src/seed/config/open-core-25-steps-data-p2.ts');
 const auditorPath = path.join(appRoot, 'src/tree/open-core/open-core-25-steps-auditor.ts');
+const snapshotPath = path.join(appRoot, 'src/seed/config/open-core-verified-artifacts-snapshot.ts');
 let catalogEntries = 0;
 let catalogCompletenessPercentage = 0;
 let catalogComplete = false;
-if (!fs.existsSync(p1Path) || !fs.existsSync(p2Path) || !fs.existsSync(auditorPath)) {
-  errors.push('Missing 25-step Open-Core catalog or auditor files');
+if (!fs.existsSync(p1Path) || !fs.existsSync(p2Path) || !fs.existsSync(auditorPath) || !fs.existsSync(snapshotPath)) {
+  errors.push('Missing 25-step Open-Core catalog, auditor, or verified snapshot files');
 } else {
   const combined = fs.readFileSync(p1Path, 'utf8') + '\n' + fs.readFileSync(p2Path, 'utf8');
   const steps = [...combined.matchAll(/\bstep:\s*(\d+)\b/g)].map((match) => Number(match[1]));
   const uniqueSteps = new Set(steps);
   catalogEntries = uniqueSteps.size;
-  catalogCompletenessPercentage = Math.round(
-    (Array.from(uniqueSteps).filter((step) => step >= 1 && step <= 25).length / 25) * 100,
-  );
+  catalogCompletenessPercentage = Math.round((Array.from(uniqueSteps).filter((s) => s >= 1 && s <= 25).length / 25) * 100);
   const sequenceValid = steps.length === 25 && uniqueSteps.size === 25 &&
-    Array.from({ length: 25 }, (_, index) => index + 1).every((step) => uniqueSteps.has(step));
+    Array.from({ length: 25 }, (_, i) => i + 1).every((step) => uniqueSteps.has(step));
   if (!sequenceValid) errors.push('25-Step Open-Core catalog must contain each step 1..25 exactly once');
 
   const artifacts = [...combined.matchAll(/verificationArtifact:\s*'([^']+)'/g)].map((match) => match[1]);
   let missingArtifactCount = 0;
   for (const artifact of artifacts) {
-    const exists = fs.existsSync(path.join(repoRoot, artifact));
-    if (!exists) {
+    if (!fs.existsSync(path.join(repoRoot, artifact))) {
       missingArtifactCount++;
       errors.push(`Catalog reference does not exist: ${artifact}`);
     }
   }
+
+  const snapshotSrc = fs.readFileSync(snapshotPath, 'utf8');
+  const snapListMatch = snapshotSrc.match(/VERIFIED_CATALOG_ARTIFACT_PATHS[^=]*=\s*\[([\s\S]*?)\]/);
+  const snapshotPaths = snapListMatch ? [...snapListMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : [];
+  const snapShaMatch = snapshotSrc.match(/VERIFIED_CATALOG_SHA256\s*=\s*'([0-9a-f]{64})'/);
+  const snapshotSha = snapShaMatch ? snapShaMatch[1] : '';
+  const expectedUnion = new Set([...artifacts, ...requiredCommunityFiles]);
+  const snapshotSet = new Set(snapshotPaths);
+  for (const p of snapshotPaths) {
+    if (!fs.existsSync(path.join(repoRoot, p))) errors.push(`Snapshot artifact does not exist on disk: ${p}`);
+    if (!expectedUnion.has(p)) errors.push(`Verified Edge snapshot contains unreferenced artifact: ${p}`);
+  }
+  for (const p of expectedUnion) {
+    if (!snapshotSet.has(p)) errors.push(`Verified Edge snapshot missing catalog/governance artifact: ${p}`);
+  }
+  const expectedSha = crypto.createHash('sha256').update(JSON.stringify({
+    steps: steps.map((step, idx) => ({ step, artifact: artifacts[idx] })),
+    governanceFiles: requiredCommunityFiles,
+  })).digest('hex');
+  if (snapshotSha !== expectedSha) errors.push(`Verified Edge snapshot SHA-256 drift: expected ${expectedSha}, found ${snapshotSha}`);
+
   for (const ev of ['plans/evidence/01-zero-to-psf-vc-and-benchmarks.md', 'plans/evidence/02-pilot-reseller-okr-governance.md']) {
     if (!fs.existsSync(path.join(repoRoot, ev))) errors.push(`Missing evidence vault file: ${ev}`);
   }
@@ -141,21 +152,14 @@ if (!fs.existsSync(p1Path) || !fs.existsSync(p2Path) || !fs.existsSync(auditorPa
       errors.push(`Blueprint drift between repo root and app copy: ${bp}`);
     }
   }
-  catalogComplete = sequenceValid && artifacts.length === 25 && missingArtifactCount === 0;
+  catalogComplete = sequenceValid && artifacts.length === 25 && missingArtifactCount === 0 &&
+    snapshotSha === expectedSha && errors.length === 0;
 }
 
 const report = {
-  timestamp: new Date().toISOString(),
-  passed: errors.length === 0,
-  catalogEntries,
-  catalogCompletenessPercentage,
-  catalogComplete,
-  errorCount: errors.length,
-  errors,
+  timestamp: new Date().toISOString(), passed: errors.length === 0, catalogEntries,
+  catalogCompletenessPercentage, catalogComplete, errorCount: errors.length, errors,
 };
-
-// stdout carries the machine-readable report and nothing else, so a caller can
-// pipe it without the human verdict following the JSON and breaking the parse.
 process.stdout.write(JSON.stringify(report, null, 2) + '\n');
 if (errors.length > 0) {
   process.stderr.write(`Open-core catalog verification failed with ${errors.length} errors.\n`);

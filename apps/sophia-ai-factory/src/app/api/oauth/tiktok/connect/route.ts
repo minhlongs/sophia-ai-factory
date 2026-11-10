@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getAuthorizationUrl } from '@/land/tiktok/tiktok-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -29,6 +30,14 @@ export async function GET(request: Request): Promise<NextResponse> {
     const user = await getCurrentUserFromHeaders(request.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: 'FEATURE_LOCKED', message: gate.error.message },
+        { status: 403 },
+      );
+    }
+
     const state = await buildSignedState(user.id);
     const authUrl = getAuthorizationUrl(state);
 
@@ -37,6 +46,6 @@ export async function GET(request: Request): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
     logger.error('[oauth/tiktok/connect] Error', err instanceof Error ? err : new Error(message));
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to initiate TikTok OAuth' }, { status: 500 });
   }
 }

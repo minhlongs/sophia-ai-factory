@@ -2,7 +2,7 @@
  * Server Actions for Social Direct Publishing
  * Provides user-authenticated endpoints for publishing dispatch,
  * channel credentials, and emergency kill-switch toggles.
- * Layer: land (Server Actions) | Max LOC: < 200 | Zero :any
+ * Layer: land (Server Actions) | Max LOC: < 130 | Strict TypeScript
  * @module land/social/actions/social-publisher-actions
  */
 
@@ -15,7 +15,6 @@ import {
   listUserCredentials,
   setChannelKillSwitch,
 } from '@/land/social/platform-credentials-store';
-import { toError } from '@/seed/utils/to-error';
 import type {
   DispatchSocialPublishInput,
   UpdateChannelCredentialsInput,
@@ -43,8 +42,8 @@ export async function dispatchSocialPublishAction(
       return { success: false, error: gate.error.message, code: gate.error.code };
     }
     return await executeDispatchSocialPublish(user.id, rawInput);
-  } catch (err: unknown) {
-    return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };
+  } catch {
+    return { success: false, error: 'Internal server error', code: 'INTERNAL_ERROR' };
   }
 }
 
@@ -56,6 +55,10 @@ export async function listConnectedChannelsAction(): Promise<SocialPublisherActi
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' };
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return { success: false, error: gate.error.message, code: gate.error.code };
+    }
 
     const creds = await listUserCredentials(user.id);
     const sanitized = creds.map((c) => ({
@@ -64,8 +67,8 @@ export async function listConnectedChannelsAction(): Promise<SocialPublisherActi
       lastPublishedAt: c.lastPublishedAt, killSwitchActive: c.killSwitchActive, updatedAt: c.updatedAt,
     }));
     return { success: true, data: sanitized };
-  } catch (err: unknown) {
-    return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };
+  } catch {
+    return { success: false, error: 'Internal server error', code: 'INTERNAL_ERROR' };
   }
 }
 
@@ -76,14 +79,18 @@ export async function toggleChannelKillSwitchAction(
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' };
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return { success: false, error: gate.error.message, code: gate.error.code };
+    }
     if (!channelId) return { success: false, error: 'Channel ID required', code: 'VALIDATION_ERROR' };
 
     const updated = await setChannelKillSwitch(user.id, channelId, isKilled);
     if (!updated) return { success: false, error: 'Channel not found', code: 'NOT_FOUND' };
 
     return { success: true, data: { channelId, killSwitchActive: isKilled } };
-  } catch (err: unknown) {
-    return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };
+  } catch {
+    return { success: false, error: 'Internal server error', code: 'INTERNAL_ERROR' };
   }
 }
 
@@ -97,8 +104,12 @@ export async function updateChannelCredentialsAction(
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' };
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return { success: false, error: gate.error.message, code: gate.error.code };
+    }
     return await executeUpdateChannelCredentials(user.id, rawInput);
-  } catch (err: unknown) {
-    return { success: false, error: toError(err).message, code: 'INTERNAL_ERROR' };
+  } catch {
+    return { success: false, error: 'Internal server error', code: 'INTERNAL_ERROR' };
   }
 }

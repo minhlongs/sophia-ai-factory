@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getInvoiceById, generateInvoiceHtml } from '@/tree/billing/invoice-generator';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -30,6 +31,20 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { isAdmin } = await isUserAdminWithRole(user);
+  const effectiveAdmin = isAdmin || user.role === 'admin';
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'multi_tenant_saas_billing',
+    effectiveAdmin ? { resolvedTier: 'ENTERPRISE' } : undefined,
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
+
   const db = await getD1();
   if (!db) {
     return NextResponse.json({ error: 'Database connection unavailable' }, { status: 500 });
@@ -41,8 +56,7 @@ export async function GET(
   }
 
   // Tenant authorization: verify user is platform admin or member of the invoice's organization
-  const { isAdmin } = await isUserAdminWithRole(user);
-  if (!isAdmin && user.role !== 'admin') {
+  if (!effectiveAdmin) {
     const isSoloOrg = invoice.orgId === `org-${user.id}`;
     if (!isSoloOrg) {
       const member = await db

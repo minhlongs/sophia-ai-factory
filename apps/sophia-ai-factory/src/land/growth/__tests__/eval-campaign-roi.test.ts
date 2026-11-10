@@ -26,10 +26,10 @@ describe('evalCampaignRoiAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect((result.error as any).code).toBe('UNAUTHORIZED');
+      expect(result.error.code).toBe('UNAUTHORIZED');
     }
   });
-  
+
   it('fails if date range is invalid', async () => {
     (getCurrentUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       id: 'u1',
@@ -43,11 +43,11 @@ describe('evalCampaignRoiAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect((result.error as any).code).toBe('VALIDATION_ERROR');
+      expect(result.error.code).toBe('VALIDATION_ERROR');
     }
   });
 
-  it('delegates to executeWinnerTakeAllBidding on success', async () => {
+  it('delegates to executeWinnerTakeAllBidding scoped to user.id when tenantId omitted', async () => {
     (getCurrentUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       id: 'u1',
       role: 'admin'
@@ -65,10 +65,36 @@ describe('evalCampaignRoiAction', () => {
 
     expect(result.ok).toBe(true);
     expect(executeWinnerTakeAllBidding).toHaveBeenCalledWith({
-      tenantId: 'default',
+      tenantId: 'u1',
       userId: 'u1',
       campaignDateRangeStart: 1000,
-      campaignDateRangeEnd: 2000
+      campaignDateRangeEnd: 2000,
+    });
+  });
+
+  it('forwards explicit tenantId when provided', async () => {
+    (getCurrentUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      id: 'u1',
+      role: 'admin',
+    });
+
+    (executeWinnerTakeAllBidding as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      value: { culledCount: 4, duplicatedCount: 1, batchId: 'b2' },
+    });
+
+    const result = await evalCampaignRoiAction({
+      campaignDateRangeStart: 1000,
+      campaignDateRangeEnd: 2000,
+      tenantId: 'org-enterprise-9',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(executeWinnerTakeAllBidding).toHaveBeenCalledWith({
+      tenantId: 'org-enterprise-9',
+      userId: 'u1',
+      campaignDateRangeStart: 1000,
+      campaignDateRangeEnd: 2000,
     });
   });
 });

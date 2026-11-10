@@ -9,7 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
@@ -20,6 +22,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserOrOpenclawBearer(request.headers);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const admin = await isUserAdmin(user);
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'day1_master_handover_suite',
+    admin ? { resolvedTier: 'MASTER' } : undefined,
+  );
+  if (!gate.ok) {
+    return NextResponse.json({ error: 'FEATURE_LOCKED', message: gate.error.message }, { status: 403 });
   }
 
   try {

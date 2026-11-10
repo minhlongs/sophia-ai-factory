@@ -38,7 +38,7 @@ describe('Growth Triad v8 Actions (Land Layer)', () => {
     });
 
     it('dispatches to inngest and returns success when authenticated', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: 'u1' } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: 'u1' } as never);
 
       const result = await dispatchAudioResonance('tr-123', 128, [1.0, 2.0]);
       expect(result.ok).toBe(true);
@@ -52,11 +52,41 @@ describe('Growth Triad v8 Actions (Land Layer)', () => {
         })
       );
     });
+
+    it('denies on community edition with FEATURE_LOCKED across all v8 actions', async () => {
+      process.env.SOPHIA_EDITION = 'community';
+      try {
+        vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as never);
+        const r1 = await dispatchAudioResonance('tr-123', 128, [1.0]);
+        const r2 = await dispatchCommunityBait('vid-1', 'Hook');
+        const r3 = await dispatchCohortLtvEvaluation('2026-10', 100);
+        expect(!r1.ok && r1.error.code).toBe('FEATURE_LOCKED');
+        expect(!r2.ok && r2.error.code).toBe('FEATURE_LOCKED');
+        expect(!r3.ok && r3.error.code).toBe('FEATURE_LOCKED');
+      } finally {
+        delete process.env.SOPHIA_EDITION;
+      }
+    });
+
+    it('returns sanitized error message on dispatch failure across all v8 actions', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as never);
+      vi.mocked(inngest.send).mockRejectedValueOnce(new Error('inngest down'));
+      const r1 = await dispatchAudioResonance('tr-123', 128, [1.0]);
+      expect(!r1.ok && r1.error.code).toBe('SERVER_ERROR');
+
+      vi.mocked(inngest.send).mockRejectedValueOnce('raw-err');
+      const r2 = await dispatchCommunityBait('vid-1', 'Hook');
+      expect(!r2.ok && r2.error.code).toBe('SERVER_ERROR');
+
+      vi.mocked(inngest.send).mockRejectedValueOnce(new Error('ltv err'));
+      const r3 = await dispatchCohortLtvEvaluation('2026-10', 100);
+      expect(!r3.ok && r3.error.code).toBe('SERVER_ERROR');
+    });
   });
 
   describe('dispatchCommunityBait', () => {
     it('dispatches bait generation successfully', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: 'u1' } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: 'u1' } as never);
 
       const result = await dispatchCommunityBait('vid-99', 'SaaS Marketing');
       expect(result.ok).toBe(true);
@@ -74,7 +104,7 @@ describe('Growth Triad v8 Actions (Land Layer)', () => {
 
   describe('dispatchCohortLtvEvaluation', () => {
     it('dispatches LTV evaluation successfully', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: 'u1' } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: 'u1' } as never);
 
       const result = await dispatchCohortLtvEvaluation('2026-10', 1500);
       expect(result.ok).toBe(true);

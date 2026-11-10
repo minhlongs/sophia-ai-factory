@@ -5,6 +5,8 @@
  */
 
 import { NextResponse } from 'next/server';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
+import { sha256Hex } from '@/seed/security/review-token';
 import {
   addReviewFeedback,
   submitReviewDecision,
@@ -20,19 +22,60 @@ export interface ClientReviewPostBody {
   feedbackNote?: string;
 }
 
+export async function guardAgencyReviewPortal(
+  db?: D1Database | null,
+  token?: string,
+): Promise<NextResponse | null> {
+  let ownerUserId: string | undefined;
+  if (db && token?.trim()) {
+    try {
+      const tokenHash = await sha256Hex(token.trim());
+      const row = await db
+        .prepare(
+          `SELECT om.user_id AS ownerUserId
+             FROM video_reviews vr
+             JOIN client_subaccounts cs ON cs.id = vr.subaccount_id
+             JOIN org_members om ON om.org_id = cs.agency_org_id
+            WHERE vr.token_hash = ?1
+              AND om.role IN ('owner', 'admin')
+            ORDER BY CASE WHEN om.role = 'owner' THEN 0 ELSE 1 END
+            LIMIT 1`,
+        )
+        .bind(tokenHash)
+        .first<{ ownerUserId: string }>();
+      ownerUserId = row?.ownerUserId;
+    } catch {
+      ownerUserId = undefined;
+    }
+  }
+
+  const gate = await enforceCommercialFeatureForUser(
+    ownerUserId ?? 'agency-review-portal',
+    'white_label_agency_portal',
+    ownerUserId ? undefined : { resolvedTier: 'ENTERPRISE' },
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
+  return null;
+}
+
 export function mapGetReviewError(err: unknown): Response {
-  const message = err instanceof Error ? err.message : String(err);
+  const message = err instanceof Error ? err.message : '';
   if (message.includes('REVIEW_NOT_FOUND')) {
     return NextResponse.json({ error: 'Review link not found or invalid' }, { status: 404 });
   }
-  if (message.includes('VALIDATION_ERROR') || message.includes('INVALID_TOKEN')) {
+  if (message.startsWith('VALIDATION_ERROR:') || message.startsWith('INVALID_TOKEN:')) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
-  return NextResponse.json({ error: message }, { status: 500 });
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 }
 
 export function mapPostReviewError(err: unknown): Response {
-  const message = err instanceof Error ? err.message : String(err);
+  const message = err instanceof Error ? err.message : '';
   if (message.includes('REVIEW_NOT_FOUND')) {
     return NextResponse.json({ error: 'Review not found' }, { status: 404 });
   }
@@ -45,10 +88,10 @@ export function mapPostReviewError(err: unknown): Response {
       { status: 409 },
     );
   }
-  if (message.includes('VALIDATION_ERROR') || message.includes('INVALID_TOKEN')) {
+  if (message.startsWith('VALIDATION_ERROR:') || message.startsWith('INVALID_TOKEN:')) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
-  return NextResponse.json({ error: message }, { status: 500 });
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 }
 
 export async function dispatchReviewPostAction(
@@ -60,14 +103,9 @@ export async function dispatchReviewPostAction(
     if (!body.comment?.trim()) {
       return NextResponse.json({ error: 'Comment text is required' }, { status: 400 });
     }
-
     const updatedComments = await addReviewFeedback(db, {
-      token,
-      comment: body.comment,
-      author: body.author,
-      timestampSec: body.timestampSec,
+      token, comment: body.comment, author: body.author, timestampSec: body.timestampSec,
     });
-
     return NextResponse.json({ success: true, comments: updatedComments });
   }
 
@@ -78,14 +116,9 @@ export async function dispatchReviewPostAction(
         { status: 400 },
       );
     }
-
     const result = await submitReviewDecision(db, {
-      token,
-      decision: body.decision,
-      feedbackNote: body.feedbackNote,
-      author: body.author,
+      token, decision: body.decision, feedbackNote: body.feedbackNote, author: body.author,
     });
-
     return NextResponse.json(result);
   }
 

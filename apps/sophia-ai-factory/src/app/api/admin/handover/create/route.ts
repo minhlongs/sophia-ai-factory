@@ -12,13 +12,13 @@ import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 import { getD1 } from '@/seed/db/client';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
 import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
 import { sendWelcomeEmail } from '@/tree/handover/handover-email-service';
 import { generateHandoverDoc } from '@/tree/handover/handover-doc-generator';
 import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup';
 import type { AgencyType } from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';
+import { guardHandoverCommercialFeature } from '../handover-edition-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,12 +39,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof Response) return auth;
   const { user: admin } = auth;
+  const gateError = await guardHandoverCommercialFeature(admin.id);
+  if (gateError) return gateError;
 
   let body: z.infer<typeof bodySchema>;
   try {
     body = bodySchema.parse(await request.json());
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid input', details: getErrorMessage(err) }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: 'Invalid input', details: 'Invalid request body' }, { status: 400 });
   }
 
   const db = await getD1();

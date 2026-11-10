@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { logger } from '@/seed/utils/logger-utility';
 
 const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v19.0/dialog/oauth';
@@ -37,6 +38,14 @@ export async function GET(request: Request): Promise<NextResponse> {
     const user = await getCurrentUserFromHeaders(request.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: 'FEATURE_LOCKED', message: gate.error.message },
+        { status: 403 },
+      );
+    }
+
     const appId = process.env.INSTAGRAM_APP_ID;
     const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
     if (!appId || !redirectUri) {
@@ -57,6 +66,6 @@ export async function GET(request: Request): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
     logger.error('[oauth/instagram/connect] Error', err instanceof Error ? err : new Error(message));
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to initiate Instagram OAuth' }, { status: 500 });
   }
 }

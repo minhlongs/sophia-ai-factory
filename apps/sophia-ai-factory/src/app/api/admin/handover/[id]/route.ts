@@ -11,7 +11,7 @@ import { requireAdmin, requireAdminWithRecentAuth } from '@/seed/auth/require-ad
 import { getD1 } from '@/seed/db/client';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
+import { guardHandoverCommercialFeature } from '../handover-edition-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +24,8 @@ const patchSchema = z.object({
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
+  const gateError = await guardHandoverCommercialFeature(auth.user.id);
+  if (gateError) return gateError;
 
   const { id } = await params;
 
@@ -50,14 +52,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
   const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof Response) return auth;
   const { user: admin } = auth;
+  const gateError = await guardHandoverCommercialFeature(admin.id);
+  if (gateError) return gateError;
 
   const { id } = await params;
 
   let body: z.infer<typeof patchSchema>;
   try {
     body = patchSchema.parse(await request.json());
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid input', details: getErrorMessage(err) }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: 'Invalid input', details: 'Invalid request body' }, { status: 400 });
   }
 
   try {

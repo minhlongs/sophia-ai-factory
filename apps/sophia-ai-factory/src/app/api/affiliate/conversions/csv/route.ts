@@ -9,6 +9,7 @@
 
 import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getRecentConversions } from '@/land/affiliates/dashboard-stats';
 
 const MAX_ROWS = 1000;
@@ -38,6 +39,20 @@ export async function GET(request: NextRequest) {
       status: 401,
       headers: { 'content-type': 'application/json' },
     });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'affiliate_attribution_payouts',
+  );
+  if (!gate.ok) {
+    return new Response(
+      JSON.stringify({ error: 'FEATURE_LOCKED', message: gate.error.message }),
+      {
+        status: 403,
+        headers: { 'content-type': 'application/json' },
+      },
+    );
   }
 
   const { searchParams } = new URL(request.url);

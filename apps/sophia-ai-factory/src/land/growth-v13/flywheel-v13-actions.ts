@@ -1,20 +1,21 @@
 /**
  * Land Layer: Growth Triad v13 Server Actions
  * Authenticated Server Actions for MAB experiments, deliberation requests, and Shapley telemetry.
- * Layer: land/growth-v13 | Max LOC: < 200 | Zero :any
+ * Layer: land/growth-v13
  * @module land/growth-v13/flywheel-v13-actions
  */
 
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { success, failure, type Result } from '@/seed/types/result';
 import { inngest } from '@/seed/inngest/client';
 import { createBanditExperiment } from './bandit-coordinator';
 import { BanditExperiment } from '@/seed/types/growth-triad-v13';
 
 export interface GrowthV13ActionError {
-  code: 'UNAUTHORIZED' | 'NOT_FOUND' | 'VALIDATION_ERROR' | 'INTERNAL_ERROR';
+  code: 'UNAUTHORIZED' | 'FEATURE_LOCKED' | 'NOT_FOUND' | 'VALIDATION_ERROR' | 'INTERNAL_ERROR';
   message: string;
 }
 
@@ -27,11 +28,16 @@ export async function createBanditExperimentAction(
     return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
   }
 
+  const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
+  }
+
   if (!experimentName || hooks.length < 2) {
     return failure({ code: 'VALIDATION_ERROR', message: 'At least 2 hooks required' });
   }
 
-  const experimentId = `exp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const experimentId = `exp_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
   const experiment: BanditExperiment = {
     id: experimentId,
     userId: user.id,
@@ -80,6 +86,11 @@ export async function requestCreativeDeliberationAction(
   const user = await getCurrentUser();
   if (!user?.id) {
     return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
   }
 
   try {

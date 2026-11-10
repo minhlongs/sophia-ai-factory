@@ -56,7 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         error: 'Export generation failed',
-        message: err instanceof Error ? err.message : String(err),
+        message: 'Failed to generate sanitized environment bundle',
       },
       { status: 500 },
     );

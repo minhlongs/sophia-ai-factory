@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminOrDeploy } from '@/seed/auth/require-admin';
 import type { VerificationRunReport } from '@/seed/handover/handover-types';
+import { guardHandoverCommercialFeature } from '../handover-edition-guard';
 
 /**
  * Validates request authentication via admin session, deploy guard token, or system bearer secret.
@@ -18,7 +19,8 @@ export async function checkVerificationAuth(request: NextRequest): Promise<true 
     const cronSecret = process.env.CRON_SECRET;
     const internalSecret = process.env.INTERNAL_API_SECRET;
     if ((cronSecret && token === cronSecret) || (internalSecret && token === internalSecret)) {
-      return true;
+      const gate = await guardHandoverCommercialFeature('system-handover-verify');
+      return gate ?? true;
     }
   }
 
@@ -26,7 +28,8 @@ export async function checkVerificationAuth(request: NextRequest): Promise<true 
   if (auth instanceof NextResponse) {
     return auth;
   }
-  return true;
+  const gate = await guardHandoverCommercialFeature(auth.userId);
+  return gate ?? true;
 }
 
 export function parseVerificationParams(request: NextRequest): {

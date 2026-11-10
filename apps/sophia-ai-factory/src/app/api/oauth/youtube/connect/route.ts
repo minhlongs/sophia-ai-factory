@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getAuthorizationUrl } from '@/land/youtube/youtube-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 import { handleThrownError } from '@/seed/api';
@@ -29,6 +30,14 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     const user = await getCurrentUserFromHeaders(request.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: 'FEATURE_LOCKED', message: gate.error.message },
+        { status: 403 },
+      );
+    }
 
     if (!process.env.OAUTH_STATE_SECRET || !process.env.GOOGLE_CLIENT_ID) {
       const origin = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;

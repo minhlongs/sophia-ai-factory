@@ -12,6 +12,7 @@ import type { SettingsNamespace } from '@/seed/tenant-settings/types';
 import { validatorFor } from '@/seed/tenant-settings/namespace-validators';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { enforceNamespaceGate } from '../[namespace]/namespace-route-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,11 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
       continue;
     }
     const namespace = ns as SettingsNamespace;
+    const locked = await enforceNamespaceGate(user.id, namespace);
+    if (locked) {
+      importErrors.push({ namespace, error: 'FEATURE_LOCKED — skipped' });
+      continue;
+    }
     try {
       await set(db, user.id, namespace, value, validatorFor(namespace));
       imported++;

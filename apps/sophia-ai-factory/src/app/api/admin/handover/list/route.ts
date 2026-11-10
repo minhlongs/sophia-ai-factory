@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { guardHandoverCommercialFeature } from '../handover-edition-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,8 @@ interface HandoverStats {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
+  const gateError = await guardHandoverCommercialFeature(auth.user.id);
+  if (gateError) return gateError;
 
   const url = new URL(request.url);
   const status = url.searchParams.get('status');

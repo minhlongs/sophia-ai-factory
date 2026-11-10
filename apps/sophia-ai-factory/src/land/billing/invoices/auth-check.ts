@@ -6,7 +6,9 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getUserTier } from '@/seed/db/get-user-tier';
+import type { Tier } from '@/seed/types';
 import { success, failure, type Result } from '@/seed/types/result';
 import {
   hasEnterprisePermission,
@@ -21,7 +23,8 @@ export interface BillingActionError {
 
 /**
  * Asserts that the current user has permission to manage or view billing for the org.
- * Enforces authentication, admin/role permission (canManageBilling), and tier gating.
+ * Enforces authentication, admin/role permission (canManageBilling), tier gating,
+ * and Open-Core `multi_tenant_saas_billing` commercial edition license.
  */
 export async function assertBillingAccess(
   db: D1Database,
@@ -34,10 +37,17 @@ export async function assertBillingAccess(
 
   const { isAdmin } = await isUserAdminWithRole(user);
   if (isAdmin || user.role === 'admin') {
+    const adminGate = await enforceCommercialFeatureForUser(
+      user.id,
+      'multi_tenant_saas_billing',
+      { resolvedTier: 'ENTERPRISE' },
+    );
+    if (!adminGate.ok) {
+      return failure({ code: 'FEATURE_LOCKED', message: adminGate.error.message });
+    }
     return success({ userId: user.id, isAdmin: true });
   }
 
-  // 1. Verify organization membership & role
   const isSoloOrg = orgId === `org-${user.id}`;
   let hasBillingRole = isSoloOrg;
 
@@ -70,14 +80,13 @@ export async function assertBillingAccess(
     });
   }
 
-  // 2. Tier gating check (Enterprise/Master or active paid subscription)
   const userTier = await getUserTier(user.id);
   const subRow = await db
     .prepare('SELECT plan, status FROM subscriptions WHERE org_id = ?1 LIMIT 1')
     .bind(orgId)
     .first<{ plan: string; status: string }>();
 
-  const eligiblePlans = ['enterprise', 'master', 'agency', 'pro', 'premium', 'growth', 'starter', 'basic'];
+  const eligiblePlans = ['enterprise', 'master', 'agency'];
   const orgPlan = (subRow?.plan || '').toLowerCase();
   const orgStatus = subRow?.status || '';
 
@@ -86,11 +95,23 @@ export async function assertBillingAccess(
     userTier === 'MASTER' ||
     (orgStatus === 'active' && eligiblePlans.includes(orgPlan));
 
-  if (!isTierEligible && !isSoloOrg) {
+  if (!isTierEligible) {
     return failure({
       code: 'TIER_REQUIRED',
-      message: 'Enterprise E-Invoicing requires an active paid tier or Enterprise/Master subscription.',
+      message: 'Enterprise E-Invoicing requires an active Enterprise or Master subscription.',
     });
+  }
+
+  const resolvedTier: Tier =
+    userTier === 'MASTER' || orgPlan === 'master' ? 'MASTER' : 'ENTERPRISE';
+
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'multi_tenant_saas_billing',
+    { resolvedTier },
+  );
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
   }
 
   return success({ userId: user.id, isAdmin: false });

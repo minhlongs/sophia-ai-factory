@@ -29,8 +29,10 @@ export async function runHandoverVerificationForAdmin(
   user: User,
   startTime: number,
   handoverId?: string,
+  precomputedIsAdmin?: boolean,
 ): Promise<Result<VerificationRunReport, ActionError>> {
-  if (!(await isUserAdmin(user))) {
+  const isAdmin = precomputedIsAdmin ?? (await isUserAdmin(user));
+  if (!isAdmin) {
     return failure({
       code: 'FORBIDDEN',
       message: 'Forbidden: Administrator privileges required to trigger verification suite',
@@ -51,6 +53,7 @@ export async function runHandoverVerificationForAdmin(
 export async function fetchAuthorizedHandoverDetails(
   user: User,
   handoverId: string,
+  precomputedIsAdmin?: boolean,
 ): Promise<Result<{ handover: CustomerHandoverRecord; certificate: HandoverCertificate | null }, ActionError>> {
   const db = await getD1();
   if (!db) return failure({ code: 'DB_UNAVAILABLE', message: 'Database binding unavailable' });
@@ -59,7 +62,7 @@ export async function fetchAuthorizedHandoverDetails(
   const handover = await getCustomerHandover(db, cleanId);
   if (!handover) return failure({ code: 'NOT_FOUND', message: `Handover not found: ${cleanId}` });
 
-  if (!(await isAuthorizedForHandover(user, handover))) {
+  if (!(await isAuthorizedForHandover(user, handover, precomputedIsAdmin))) {
     return failure({ code: 'FORBIDDEN', message: 'Unauthorized: you are not permitted to view this handover' });
   }
 

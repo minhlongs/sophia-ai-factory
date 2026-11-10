@@ -1,6 +1,8 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
+import { logger } from '@/seed/utils/logger-utility';
 import type {
   AbandonedCartCallRecord,
   ParasiteSeoArticle,
@@ -26,13 +28,16 @@ export async function triggerVoiceCartRecoveryAction(input: {
       return { success: false, error: 'UNAUTHORIZED' };
     }
 
+    const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+    if (!gate.ok) {
+      return { success: false, error: 'FEATURE_LOCKED' };
+    }
+
     const callRecord = await createAndDispatchVoiceCartRecovery(user.id, input);
     return { success: true, callRecord };
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'FAILED_TO_TRIGGER_VOICE_CLOSER',
-    };
+    logger.error('[triad-execution-actions] Voice cart recovery failed', err instanceof Error ? err : undefined);
+    return { success: false, error: 'FAILED_TO_TRIGGER_VOICE_CLOSER' };
   }
 }
 
@@ -53,12 +58,15 @@ export async function syndicateParasiteArticleAction(input: {
       return { success: false, error: 'UNAUTHORIZED' };
     }
 
+    const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+    if (!gate.ok) {
+      return { success: false, error: 'FEATURE_LOCKED' };
+    }
+
     const article = await createAndDispatchParasiteArticle(user.id, input);
     return { success: true, article };
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'FAILED_TO_SYNDICATE_ARTICLE',
-    };
+    logger.error('[triad-execution-actions] Syndicate parasite article failed', err instanceof Error ? err : undefined);
+    return { success: false, error: 'FAILED_TO_SYNDICATE_ARTICLE' };
   }
 }

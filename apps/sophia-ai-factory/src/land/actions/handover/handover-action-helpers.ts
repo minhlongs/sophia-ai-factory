@@ -29,8 +29,9 @@ export type HandoverAuthUser = NonNullable<Awaited<ReturnType<typeof getCurrentU
 export async function isAuthorizedForHandover(
   user: HandoverAuthUser,
   handover: CustomerHandoverRecord,
+  precomputedIsAdmin?: boolean,
 ): Promise<boolean> {
-  const isAdmin = await isUserAdmin(user);
+  const isAdmin = precomputedIsAdmin ?? (await isUserAdmin(user));
   const isOwner =
     user.id === handover.customer_user_id ||
     Boolean(handover.tenant_id && (user as { orgId?: string }).orgId === handover.tenant_id);
@@ -40,6 +41,7 @@ export async function isAuthorizedForHandover(
 export async function executeSignHandoverAcceptance(
   user: HandoverAuthUser,
   input: HandoverAcceptanceInput,
+  precomputedIsAdmin?: boolean,
 ): Promise<Result<{ certificate: HandoverCertificate; record: CustomerHandoverRecord }, ActionError>> {
   const validation = validateSignerInput(input);
   if (!validation.valid) {
@@ -64,7 +66,7 @@ export async function executeSignHandoverAcceptance(
     });
   }
 
-  if (!(await isAuthorizedForHandover(user, existing))) {
+  if (!(await isAuthorizedForHandover(user, existing, precomputedIsAdmin))) {
     return failure({ code: 'FORBIDDEN', message: 'Unauthorized: you are not permitted to sign acceptance for this handover' });
   }
 

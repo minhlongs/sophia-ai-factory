@@ -15,6 +15,7 @@ import { sendWelcomeEmail } from '@/tree/handover/handover-email-service';
 import { generateHandoverDoc } from '@/tree/handover/handover-doc-generator';
 import type { CustomerHandoverRow, AgencyType } from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';
+import { guardHandoverCommercialFeature } from '../../handover-edition-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,8 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
   const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
   const { user: admin } = auth;
+  const gate = await guardHandoverCommercialFeature(admin.id);
+  if (gate) return gate;
 
   const { id } = await params;
   const db = await getD1();

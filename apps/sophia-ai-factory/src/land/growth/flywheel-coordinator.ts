@@ -1,7 +1,7 @@
 /**
  * Land Layer: Flywheel Lifecycle Coordinator
  * Manages D1 persistence for autonomous reseed jobs and conversion attribution ledger.
- * Layer: land/growth | Max LOC: < 200 | Zero :any
+ * Layer: land/growth | Max LOC: < 200
  * @module land/growth/flywheel-coordinator
  */
 
@@ -80,6 +80,7 @@ export async function updateReseedJobStatus(
   jobId: string,
   status: ReseedJobStatus,
   reseededCampaignId?: string,
+  userId?: string,
 ): Promise<boolean> {
   const db = await getD1();
   if (!db) {
@@ -89,14 +90,22 @@ export async function updateReseedJobStatus(
   const now = Date.now();
 
   try {
-    const res = await db
-      .prepare(
-        `UPDATE flywheel_reseed_jobs
-         SET status = ?, reseeded_campaign_id = ?, updated_at = ?
-         WHERE id = ?`,
-      )
-      .bind(status, reseededCampaignId ?? null, now, jobId)
-      .run();
+    const stmt = userId
+      ? db
+          .prepare(
+            `UPDATE flywheel_reseed_jobs
+             SET status = ?, reseeded_campaign_id = ?, updated_at = ?
+             WHERE id = ? AND user_id = ?`,
+          )
+          .bind(status, reseededCampaignId ?? null, now, jobId, userId)
+      : db
+          .prepare(
+            `UPDATE flywheel_reseed_jobs
+             SET status = ?, reseeded_campaign_id = ?, updated_at = ?
+             WHERE id = ?`,
+          )
+          .bind(status, reseededCampaignId ?? null, now, jobId);
+    const res = await stmt.run();
 
     return (res.meta?.changes ?? 0) > 0;
   } catch (err) {

@@ -1,6 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import {
@@ -9,9 +10,7 @@ import {
 } from '@/seed/types/growth-triad-v2-types';
 import { evaluateCampaignArbitrage } from '@/tree/ads/ad-arbitrage-mab';
 
-/**
- * 2. Rebalance Ad Arbitrage budget using MAB Thompson Sampling
- */
+/** Rebalance Ad Arbitrage budget using MAB Thompson Sampling */
 export async function rebalanceAdArbitrageAction(input: {
   campaignId: string;
   campaignName: string;
@@ -25,9 +24,9 @@ export async function rebalanceAdArbitrageAction(input: {
 }): Promise<{ success: boolean; campaign?: AdArbitrageCampaign; error?: string }> {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'UNAUTHORIZED' };
-    }
+    if (!user) return { success: false, error: 'UNAUTHORIZED' };
+    const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+    if (!gate.ok) return { success: false, error: 'FEATURE_LOCKED' };
 
     const decision = evaluateCampaignArbitrage({
       campaignId: input.campaignId,
@@ -70,38 +69,20 @@ export async function rebalanceAdArbitrageAction(input: {
         last_rebalanced_at, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
-        daily_budget = excluded.daily_budget,
-        rolling_spend_24h = excluded.rolling_spend_24h,
-        rolling_gmv_24h = excluded.rolling_gmv_24h,
-        cpa = excluded.cpa,
-        roas = excluded.roas,
-        status = excluded.status,
-        recommended_action = excluded.recommended_action,
-        last_rebalanced_at = excluded.last_rebalanced_at,
-        updated_at = excluded.updated_at`,
+        daily_budget = excluded.daily_budget, rolling_spend_24h = excluded.rolling_spend_24h,
+        rolling_gmv_24h = excluded.rolling_gmv_24h, cpa = excluded.cpa, roas = excluded.roas,
+        status = excluded.status, recommended_action = excluded.recommended_action,
+        last_rebalanced_at = excluded.last_rebalanced_at, updated_at = excluded.updated_at`,
       [
-        campaignRecord.id,
-        campaignRecord.userId,
-        campaignRecord.platform,
-        campaignRecord.campaignExternalId,
-        campaignRecord.campaignName,
-        campaignRecord.dailyBudget,
-        campaignRecord.rollingSpend24h,
-        campaignRecord.rollingGmv24h,
-        campaignRecord.rollingClicks24h,
-        campaignRecord.rollingConversions24h,
-        campaignRecord.cpa,
-        campaignRecord.roas,
-        campaignRecord.epc,
-        campaignRecord.status,
-        campaignRecord.recommendedAction,
-        campaignRecord.lastRebalancedAt,
-        campaignRecord.createdAt,
-        campaignRecord.updatedAt,
+        campaignRecord.id, campaignRecord.userId, campaignRecord.platform,
+        campaignRecord.campaignExternalId, campaignRecord.campaignName, campaignRecord.dailyBudget,
+        campaignRecord.rollingSpend24h, campaignRecord.rollingGmv24h, campaignRecord.rollingClicks24h,
+        campaignRecord.rollingConversions24h, campaignRecord.cpa, campaignRecord.roas,
+        campaignRecord.epc, campaignRecord.status, campaignRecord.recommendedAction,
+        campaignRecord.lastRebalancedAt, campaignRecord.createdAt, campaignRecord.updatedAt,
       ],
     );
 
-    // Dispatch Inngest telemetry
     await inngest.send({
       name: 'ads.arbitrage.optimized',
       data: {
@@ -118,10 +99,7 @@ export async function rebalanceAdArbitrageAction(input: {
     });
 
     return { success: true, campaign: campaignRecord };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'FAILED_TO_REBALANCE_AD_ARBITRAGE',
-    };
+  } catch {
+    return { success: false, error: 'FAILED_TO_REBALANCE_AD_ARBITRAGE' };
   }
 }

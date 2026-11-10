@@ -72,6 +72,9 @@ jobs:
       - name: Gate 1f — D1 Migration Coverage (no CREATE TABLE outside migrations/)
         run: bash scripts/check-migration-coverage.sh
 
+      - name: Gate 1g — Open-Core Catalog & Edge SHA-256 Snapshot Parity
+        run: npm run verify:open-core
+
   # =========================================================================
   # STAGE 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy
   # =========================================================================
