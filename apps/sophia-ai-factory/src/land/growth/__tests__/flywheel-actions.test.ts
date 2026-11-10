@@ -113,5 +113,26 @@ describe('Flywheel Server Actions (Land Layer)', () => {
       }
       expect(mockInngestSend).not.toHaveBeenCalled();
     });
+
+    it('denies getFlywheelStatsAction and triggerManualReseedAction on community edition with FEATURE_LOCKED', async () => {
+      process.env.SOPHIA_EDITION = 'community';
+      try {
+        mockGetCurrentUser.mockResolvedValue({ id: 'user_active_1' });
+        const statsRes = await getFlywheelStatsAction();
+        expect(!statsRes.ok && statsRes.error.code).toBe('FEATURE_LOCKED');
+
+        const reseedRes = await triggerManualReseedAction({
+          jobId: 'reseed_101',
+          sourceJobId: 'src_999',
+          channelId: 'chan_yt_1',
+          platform: 'YOUTUBE_SHORTS',
+          originalHook: 'Hook',
+          mutatedHooks: ['Mutated'],
+        });
+        expect(!reseedRes.ok && reseedRes.error.code).toBe('FEATURE_LOCKED');
+      } finally {
+        delete process.env.SOPHIA_EDITION;
+      }
+    });
   });
 });

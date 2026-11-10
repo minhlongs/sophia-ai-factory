@@ -102,18 +102,13 @@ export async function assertBillingAccess(
     });
   }
 
-  const resolvedTier: Tier | undefined =
-    userTier === 'MASTER' || (orgStatus === 'active' && orgPlan === 'master')
-      ? 'MASTER'
-      : userTier === 'ENTERPRISE' ||
-          (orgStatus === 'active' && (orgPlan === 'enterprise' || orgPlan === 'agency'))
-        ? 'ENTERPRISE'
-        : undefined;
+  const resolvedTier: Tier =
+    userTier === 'MASTER' || orgPlan === 'master' ? 'MASTER' : 'ENTERPRISE';
 
   const gate = await enforceCommercialFeatureForUser(
     user.id,
     'multi_tenant_saas_billing',
-    resolvedTier ? { resolvedTier } : undefined,
+    { resolvedTier },
   );
   if (!gate.ok) {
     return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });

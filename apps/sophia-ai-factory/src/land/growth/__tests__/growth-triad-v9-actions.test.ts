@@ -32,7 +32,7 @@ describe("growth-triad-v9-actions", () => {
     });
 
     it("returns topology data if authorized", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_1" } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_1" } as never);
       const result = await getRoutingTopologyAction();
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -51,7 +51,7 @@ describe("growth-triad-v9-actions", () => {
     });
 
     it("returns shadowban data if authorized", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_2" } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_2" } as never);
       const result = await getShadowbanMatrixAction();
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -64,7 +64,7 @@ describe("growth-triad-v9-actions", () => {
   describe("requestCulturalScoresAction", () => {
     const validData: ScriptCultureIndexRequest = {
       scriptId: "script_abc",
-      regionalTarget: "SOUTH_AMERICA" as any, // Deliberately invalid based on schema which uses LATIN_AMERICA
+      regionalTarget: "SOUTH_AMERICA" as never, // Deliberately invalid based on schema which uses LATIN_AMERICA
       transcriptString: "Hello world",
     };
 
@@ -82,7 +82,7 @@ describe("growth-triad-v9-actions", () => {
     });
 
     it("fails on zod validation error", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_3" } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_3" } as never);
       const result = await requestCulturalScoresAction(validData);
       expect(result.ok).toBe(false);
       expect(!result.ok && result.error.message).toContain("Validation Error");
@@ -90,7 +90,7 @@ describe("growth-triad-v9-actions", () => {
     });
 
     it("dispatches to inngest and succeeds on valid request", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_3" } as any);
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_3" } as never);
       const result = await requestCulturalScoresAction(reallyValidData);
       expect(result.ok).toBe(true);
 
@@ -107,6 +107,28 @@ describe("growth-triad-v9-actions", () => {
         expect(result.value.status).toBe("success");
         expect(result.value.id).toBe("script_abc");
       }
+    });
+
+    it("denies all v9 actions with FEATURE_LOCKED on community edition", async () => {
+      process.env.SOPHIA_EDITION = "community";
+      try {
+        vi.mocked(getCurrentUser).mockResolvedValue({ id: "user_3" } as never);
+        const r1 = await getRoutingTopologyAction();
+        const r2 = await getShadowbanMatrixAction();
+        const r3 = await requestCulturalScoresAction(reallyValidData);
+        expect(r1.ok).toBe(false);
+        expect(r2.ok).toBe(false);
+        expect(r3.ok).toBe(false);
+      } finally {
+        delete process.env.SOPHIA_EDITION;
+      }
+    });
+
+    it("handles unexpected error in requestCulturalScoresAction", async () => {
+      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_3" } as never);
+      vi.mocked(inngest.send).mockRejectedValueOnce(new Error("send err"));
+      const r = await requestCulturalScoresAction(reallyValidData);
+      expect(r.ok).toBe(false);
     });
   });
 });

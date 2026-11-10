@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
+import { sha256Hex } from '@/seed/security/review-token';
 import {
   addReviewFeedback,
   submitReviewDecision,
@@ -28,18 +29,19 @@ export async function guardAgencyReviewPortal(
   let ownerUserId: string | undefined;
   if (db && token?.trim()) {
     try {
+      const tokenHash = await sha256Hex(token.trim());
       const row = await db
         .prepare(
           `SELECT om.user_id AS ownerUserId
              FROM video_reviews vr
              JOIN client_subaccounts cs ON cs.id = vr.subaccount_id
              JOIN org_members om ON om.org_id = cs.agency_org_id
-            WHERE vr.review_token = ?1
+            WHERE vr.token_hash = ?1
               AND om.role IN ('owner', 'admin')
             ORDER BY CASE WHEN om.role = 'owner' THEN 0 ELSE 1 END
             LIMIT 1`,
         )
-        .bind(token.trim())
+        .bind(tokenHash)
         .first<{ ownerUserId: string }>();
       ownerUserId = row?.ownerUserId;
     } catch {

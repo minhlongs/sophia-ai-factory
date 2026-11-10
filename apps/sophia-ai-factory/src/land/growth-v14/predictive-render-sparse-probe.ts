@@ -23,21 +23,11 @@ const FAIL_CLOSED_SPARSE_INPUT: SparseDataGateInput = {
 };
 
 function parseAccountAgeDays(rawCreatedAt: unknown, nowMs: number): number {
-  if (rawCreatedAt === null || rawCreatedAt === undefined) return 0;
-  let createdMs = Number.NaN;
-  if (typeof rawCreatedAt === 'number' && Number.isFinite(rawCreatedAt)) {
-    createdMs = rawCreatedAt < 1e12 ? rawCreatedAt * 1000 : rawCreatedAt;
-  } else if (typeof rawCreatedAt === 'string') {
-    const trimmed = rawCreatedAt.trim();
-    const asNumber = Number(trimmed);
-    if (trimmed.length > 0 && Number.isFinite(asNumber)) {
-      createdMs = asNumber < 1e12 ? asNumber * 1000 : asNumber;
-    } else {
-      createdMs = Date.parse(trimmed);
-    }
-  }
-  if (!Number.isFinite(createdMs) || createdMs <= 0) return 0;
-  return Math.max(0, Math.floor((nowMs - createdMs) / MS_PER_DAY));
+  const num = Number(rawCreatedAt);
+  const createdMs = Number.isFinite(num) && num > 0
+    ? (num < 1e12 ? num * 1000 : num)
+    : Date.parse(String(rawCreatedAt ?? ''));
+  return createdMs > 0 ? Math.max(0, Math.floor((nowMs - createdMs) / MS_PER_DAY)) : 0;
 }
 
 export async function probeUserSparseDataFromD1(
@@ -46,11 +36,7 @@ export async function probeUserSparseDataFromD1(
   tenantId?: string,
 ): Promise<SparseDataGateInput | undefined> {
   const hasAmbientTestDb = Boolean((globalThis as Record<string, unknown>).__D1_DB);
-  const isUnconfiguredTestEnv =
-    (process.env.VITEST === 'true' || process.env.NODE_ENV === 'test') &&
-    dbOverride === undefined &&
-    !hasAmbientTestDb;
-  if (isUnconfiguredTestEnv) {
+  if (dbOverride === undefined && !hasAmbientTestDb && process.env.VITEST === 'true') {
     return undefined;
   }
 
@@ -101,7 +87,7 @@ export async function probeUserSparseDataFromD1(
   } catch (err: unknown) {
     logger.warn('Failed to probe D1 sparse-data telemetry; failing closed', {
       userId,
-      errorMessage: err instanceof Error ? err.message : 'unknown_d1_error',
+      errorMessage: String(err),
     });
     return FAIL_CLOSED_SPARSE_INPUT;
   }
