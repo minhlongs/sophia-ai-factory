@@ -17,6 +17,7 @@
 
 import { NextRequest } from 'next/server';
 import { getD1 } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import { executeVerificationSuite } from '@/forest/handover/verification-orchestrator';
 import {
   checkVerificationAuth,
@@ -54,10 +55,11 @@ export async function GET(request: NextRequest) {
     const report = await runVerification(handoverId, persist, timeoutMs, baseUrl);
     return createVerificationResponse(report);
   } catch (err) {
+    logger.error('[api/admin/handover/verify] GET failed', err instanceof Error ? err : undefined);
     return createVerificationResponse(
       {
         error: 'Verification runner failed',
-        message: err instanceof Error ? err.message : String(err),
+        message: 'Handover verification suite failed',
         overallVerdict: 'FAIL',
         passedCount: 0,
         totalChecks: 0,
@@ -78,10 +80,11 @@ export async function POST(request: NextRequest) {
     const report = await runVerification(handoverId, persist, timeoutMs, baseUrl);
     return createVerificationResponse(report);
   } catch (err) {
+    logger.error('[api/admin/handover/verify] POST failed', err instanceof Error ? err : undefined);
     return createVerificationResponse(
       {
         error: 'Verification execution failed',
-        message: err instanceof Error ? err.message : String(err),
+        message: 'Handover verification suite failed',
         overallVerdict: 'FAIL',
         passedCount: 0,
         totalChecks: 0,

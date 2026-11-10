@@ -1,20 +1,21 @@
 /**
  * Land Layer: Growth Flywheel Server Actions
  * Authenticated Server Actions for managing autonomous hook reseeding and viewing telemetry.
- * Layer: land/growth | Max LOC: < 200 | Zero :any
+ * Layer: land/growth
  * @module land/growth/flywheel-actions
  */
 
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { success, failure, type Result } from '@/seed/types/result';
 import { inngest } from '@/seed/inngest/client';
 import { getFlywheelSummaryStats, updateReseedJobStatus } from './flywheel-coordinator';
 import type { FlywheelSummaryStats } from '@/seed/types/growth-triad-v12';
 
 export interface FlywheelActionError {
-  code: 'UNAUTHORIZED' | 'NOT_FOUND' | 'INTERNAL_ERROR';
+  code: 'UNAUTHORIZED' | 'FEATURE_LOCKED' | 'NOT_FOUND' | 'INTERNAL_ERROR';
   message: string;
 }
 
@@ -24,6 +25,11 @@ export async function getFlywheelStatsAction(): Promise<
   const user = await getCurrentUser();
   if (!user?.id) {
     return failure({ code: 'UNAUTHORIZED', message: 'User must be authenticated' });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
   }
 
   try {
@@ -51,8 +57,16 @@ export async function triggerManualReseedAction(
     return failure({ code: 'UNAUTHORIZED', message: 'User must be authenticated' });
   }
 
+  const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
+  }
+
   try {
-    await updateReseedJobStatus(input.jobId, 'PENDING');
+    const updated = await updateReseedJobStatus(input.jobId, 'PENDING', undefined, user.id);
+    if (!updated) {
+      return failure({ code: 'NOT_FOUND', message: 'Reseed job not found for user' });
+    }
 
     await inngest.send({
       name: 'growth/v12.reseed.trigger',

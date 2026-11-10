@@ -14,6 +14,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getD1Database } from "@/land/analytics/cohort-calculator";
 import { requireAdminWithRecentAuth } from "@/seed/auth/require-admin";
+import { enforceCommercialFeatureForUser } from "@/seed/config/enforce-commercial-feature-server";
+import { logger } from "@/seed/utils/logger-utility";
 import {
   requireInternal,
   parsePeriod,
@@ -28,6 +30,18 @@ export async function GET(req: NextRequest) {
   // Layer 2: internal secret (timing-safe, rejects when not configured)
   const unauthorized = requireInternal(req);
   if (unauthorized) return unauthorized;
+
+  const gate = await enforceCommercialFeatureForUser(
+    auth.user.id,
+    "merkle_ipo_audit_vault",
+    { resolvedTier: "ENTERPRISE" },
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: "FEATURE_LOCKED", message: gate.error.message },
+      { status: 403 },
+    );
+  }
 
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") || "monthly";
@@ -44,7 +58,10 @@ export async function GET(req: NextRequest) {
       headers: { "Cache-Control": "private, max-age=300" },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: "report_failed", message }, { status: 500 });
+    logger.error("[api/admin/finance/report] Report generation failed", err instanceof Error ? err : undefined);
+    return NextResponse.json(
+      { error: "report_failed", message: "Failed to generate financial report" },
+      { status: 500 },
+    );
   }
 }

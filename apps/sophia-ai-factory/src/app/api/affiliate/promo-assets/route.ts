@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listPromoAssetsForTier, type PromoLocale, type PromoNiche, type PromoTier } from '@/land/affiliates/promo-library';
 import { logger } from '@/seed/utils/logger-utility';
@@ -34,6 +35,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'affiliate_attribution_payouts',
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
   }
 
   let tier: PromoTier;

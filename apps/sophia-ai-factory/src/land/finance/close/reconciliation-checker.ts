@@ -7,6 +7,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import type { LedgerIntegrityResult, FormS1AuditPack } from '@/seed/types/financial-close';
@@ -14,7 +15,7 @@ import { verifyAuditLedgerChain, generateFormS1AuditPack } from '@/tree/finance/
 import { type AuthContext, type FinancialCloseActionError, normalizeErrorArg } from './types';
 
 /**
- * Authentication and administrative authorization gate for financial operations
+ * Authentication, administrative authorization, and commercial vault gate for financial operations
  */
 export async function assertFinanceAdminAccess(): Promise<Result<AuthContext, FinancialCloseActionError>> {
   try {
@@ -29,6 +30,13 @@ export async function assertFinanceAdminAccess(): Promise<Result<AuthContext, Fi
         code: 'FORBIDDEN',
         message: 'Financial close operations require CFO, Controller, or Platform Admin privileges.',
       });
+    }
+
+    const gate = await enforceCommercialFeatureForUser(user.id, 'merkle_ipo_audit_vault', {
+      resolvedTier: 'ENTERPRISE',
+    });
+    if (!gate.ok) {
+      return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
     }
 
     return success({ userId: user.id, userEmail: user.email, isAdmin: true });
@@ -60,7 +68,7 @@ export async function executeVerifyAuditVaultIntegrity(
     logger.error('Failed to verify audit vault integrity', normalizeErrorArg(err));
     return failure({
       code: 'VERIFY_INTEGRITY_FAILED',
-      message: err instanceof Error ? err.message : 'Audit vault integrity check failed',
+      message: 'Audit vault integrity check failed',
     });
   }
 }
@@ -76,7 +84,7 @@ export async function executeExportFormS1AuditReport(
     logger.error(`Failed to export Form S-1 audit pack for ${periodKey}`, normalizeErrorArg(err));
     return failure({
       code: 'AUDIT_PACK_EXPORT_FAILED',
-      message: err instanceof Error ? err.message : 'Failed to generate Form S-1 audit pack',
+      message: 'Failed to generate Form S-1 audit pack',
     });
   }
 }

@@ -36,13 +36,18 @@ echo_step "3. Running Unit Tests..."
 npm run test
 echo_success "Tests passed"
 
-# 4. Security Audit
-echo_step "4. Security Audit (Critical only)..."
+# 4. Open-Core Catalog & Edge Snapshot Verification
+echo_step "4. Verifying Open-Core Catalog & Edge SHA-256 Snapshot..."
+npm run verify:open-core
+echo_success "Open-core verification passed"
+
+# 5. Security Audit
+echo_step "5. Security Audit (Critical only)..."
 npm audit --audit-level=critical
 echo_success "Security audit completed"
 
-# 5. Production Build
-echo_step "5. Production Build Verification..."
+# 6. Production Build
+echo_step "6. Production Build Verification..."
 SKIP_SENTRY_BUILD=1 SKIP_SYMBOL_UPLOAD=1 npm run build
 echo_success "Build passed"
 

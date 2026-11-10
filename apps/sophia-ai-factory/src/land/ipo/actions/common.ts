@@ -10,6 +10,7 @@ import type { D1Database } from '@/seed/db/client';
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -47,6 +48,15 @@ export async function assertIpoAdminAccess(): Promise<Result<IpoAuthContext, Ipo
         code: 'FORBIDDEN',
         message: 'IPO filing and SOX 404 governance requires CFO, Controller, Auditor, or Admin privileges.',
       });
+    }
+
+    const gate = await enforceCommercialFeatureForUser(
+      user.id,
+      'merkle_ipo_audit_vault',
+      { resolvedTier: 'ENTERPRISE' },
+    );
+    if (!gate.ok) {
+      return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
     }
 
     return success({ userId: user.id, userEmail: user.email, isAdmin: true });

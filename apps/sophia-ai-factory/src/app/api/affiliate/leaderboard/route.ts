@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getMonthlyLeaderboard } from '@/land/affiliates/leaderboard-service';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -18,6 +19,17 @@ import { LEADERBOARD_BONUS_POOL } from '@/seed/types/affiliate-expansion-types';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const gate = await enforceCommercialFeatureForUser(
+    'affiliate-leaderboard',
+    'affiliate_attribution_payouts',
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const periodParam = searchParams.get('period');
 

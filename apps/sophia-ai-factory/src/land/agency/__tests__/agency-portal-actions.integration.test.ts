@@ -1,7 +1,25 @@
 /** @vitest-environment node */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
+const { mockGetCurrentUser, mockIsUserAdmin } = vi.hoisted(() => ({
+  mockGetCurrentUser: vi.fn(),
+  mockIsUserAdmin: vi.fn().mockResolvedValue(false),
+}));
+
+vi.mock('@/seed/auth/better-auth-session', () => ({
+  getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock('@/seed/auth/is-user-admin', () => ({
+  isUserAdmin: mockIsUserAdmin,
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: vi.fn().mockResolvedValue('ENTERPRISE'),
+}));
+
 import { NodeSqliteD1Database } from '@/seed/db/node-sqlite-d1';
 import type { AgencyOnboardingSubmission } from '@/seed/types';
 import {
@@ -20,11 +38,17 @@ describe('Agency Portal & Onboarding Server Actions (D1 Integration)', () => {
     db = new NodeSqliteD1Database(':memory:');
     db.exec('PRAGMA foreign_keys = OFF;');
 
-    // 2. Create prerequisite organizations table and seed test agencies
+    // 2. Create prerequisite organizations and org_members tables and seed test agencies
     db.exec(`
       CREATE TABLE IF NOT EXISTS organizations (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS org_members (
+        org_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        PRIMARY KEY (org_id, user_id)
       );
       INSERT INTO organizations (id, name) VALUES
         ('org_nexus_agency', 'Nexus Agency'),
@@ -32,7 +56,20 @@ describe('Agency Portal & Onboarding Server Actions (D1 Integration)', () => {
         ('agency_B', 'Agency B'),
         ('agency_target', 'Target Agency'),
         ('agency_attacker', 'Attacker Agency');
+      INSERT INTO org_members (org_id, user_id, role) VALUES
+        ('org_nexus_agency', 'usr_agency_owner', 'owner'),
+        ('agency_A', 'usr_agency_owner', 'owner'),
+        ('agency_B', 'usr_agency_owner', 'owner'),
+        ('agency_target', 'usr_agency_owner', 'owner'),
+        ('agency_attacker', 'usr_agency_owner', 'owner');
     `);
+
+    mockGetCurrentUser.mockResolvedValue({
+      id: 'usr_agency_owner',
+      email: 'owner@nexus.com',
+      role: 'user',
+    });
+    mockIsUserAdmin.mockResolvedValue(false);
 
     // 3. Load and execute migrations 0286 and 0436
     const m0286Path = path.resolve(

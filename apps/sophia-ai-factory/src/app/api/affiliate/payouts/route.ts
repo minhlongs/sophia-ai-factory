@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server'
 import { getD1 } from '@/seed/db/client'
 import { fromCents } from '@/land/payouts/commission-cents'
 
@@ -37,31 +38,49 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const gate = await enforceCommercialFeatureForUser(
+    user.id,
+    'affiliate_attribution_payouts',
+  )
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const limitParam = searchParams.get('limit') ?? '20'
-  const limit = Math.min(parseInt(limitParam, 10) || 20, 100)
+  const parsedLimit = parseInt(limitParam, 10)
+  const limit = Math.max(1, Math.min(Number.isFinite(parsedLimit) ? parsedLimit : 20, 100))
 
   const tenantId = user.id
   const affiliateId = user.id
   const db = await getD1()
-  if (!db) throw new Error('D1 database binding not available')
+  if (!db) {
+    return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
+  }
 
-  const result = await db
-    .prepare(
-      `SELECT id, total_cents, ledger_count, status, payment_method,
-              network, external_payment_id, created_at, finalized_at
-       FROM payout_batches
-       WHERE tenant_id = ? AND affiliate_id = ?
-       ORDER BY created_at DESC
-       LIMIT ?`,
-    )
-    .bind(tenantId, affiliateId, limit)
-    .all<BatchRow>()
+  try {
+    const result = await db
+      .prepare(
+        `SELECT id, total_cents, ledger_count, status, payment_method,
+                network, external_payment_id, created_at, finalized_at
+         FROM payout_batches
+         WHERE tenant_id = ? AND affiliate_id = ?
+         ORDER BY created_at DESC
+         LIMIT ?`,
+      )
+      .bind(tenantId, affiliateId, limit)
+      .all<BatchRow>()
 
-  const batches: PayoutBatchPublic[] = (result.results ?? []).map((r) => ({
-    ...r,
-    total_usd: fromCents(r.total_cents),
-  }))
+    const batches: PayoutBatchPublic[] = (result.results ?? []).map((r) => ({
+      ...r,
+      total_usd: fromCents(r.total_cents),
+    }))
 
-  return NextResponse.json({ affiliateId, batches })
+    return NextResponse.json({ affiliateId, batches })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load payout batches' }, { status: 500 })
+  }
 }

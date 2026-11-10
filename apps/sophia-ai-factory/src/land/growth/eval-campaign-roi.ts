@@ -1,10 +1,15 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { executeWinnerTakeAllBidding } from './winner-take-all-bidding';
+import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import { failure, type Result } from '@/seed/types/result';
+import { logger } from '@/seed/utils/logger-utility';
+import {
+  executeWinnerTakeAllBidding,
+  type WtaBiddingResult,
+} from './winner-take-all-bidding';
 
-export type ErrorResponse = { code: string; message: string; };
+export type ErrorResponse = { code: string; message: string };
 
 /**
  * Server Action wrapper to execute Winner-Take-All bidding evaluation.
@@ -13,10 +18,12 @@ export type ErrorResponse = { code: string; message: string; };
 export async function evalCampaignRoiAction(params: {
   campaignDateRangeStart: number;
   campaignDateRangeEnd: number;
-}): Promise<Result<{ culledCount: number, duplicatedCount: number, batchId: string }, ErrorResponse>> {
+  tenantId?: string;
+}): Promise<Result<WtaBiddingResult, ErrorResponse>> {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    const isAdmin = Boolean(user && (user.role === 'admin' || (await isUserAdmin(user))));
+    if (!user || !isAdmin) {
       return failure({
         code: 'UNAUTHORIZED',
         message: 'Must be logged in to evaluate campaign ROI',
@@ -24,26 +31,28 @@ export async function evalCampaignRoiAction(params: {
     }
 
     const { campaignDateRangeStart, campaignDateRangeEnd } = params;
-    
     if (campaignDateRangeStart >= campaignDateRangeEnd) {
       return failure({
         code: 'VALIDATION_ERROR',
-        message: 'Invalid date range'
+        message: 'Invalid date range',
       });
     }
 
-    // Delegate to the core logic handler (use root tenant mapping if not multi-tenant context)
+    const resolvedTenantId = params.tenantId?.trim() || user.id;
     return await executeWinnerTakeAllBidding({
-      tenantId: 'default', // Fallback as User type doesn't have tenantId directly
+      tenantId: resolvedTenantId,
       userId: user.id,
       campaignDateRangeStart,
-      campaignDateRangeEnd
+      campaignDateRangeEnd,
     });
-    
   } catch (err: unknown) {
+    logger.error(
+      '[eval-campaign-roi] Failed to evaluate campaign ROI',
+      err instanceof Error ? err : undefined,
+    );
     return failure({
       code: 'ROI_EVAL_ERROR',
-      message: err instanceof Error ? err.message : 'Unknown evaluation error',
+      message: 'Failed to evaluate campaign ROI',
     });
   }
 }

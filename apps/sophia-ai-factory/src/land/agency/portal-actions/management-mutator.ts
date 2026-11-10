@@ -9,7 +9,10 @@
 'use server';
 
 import { logger } from '@/seed/utils/logger-utility';
-import { resolveDb } from './common';
+import {
+  authenticateAgencyPortalUser,
+  authorizeAgencyOrgAction,
+} from './common';
 
 /**
  * Updates client subaccount status (active vs suspended) with compound tenant isolation.
@@ -20,11 +23,22 @@ export async function updateClientSubaccountStatusAction(
   status: 'active' | 'suspended',
   dbOverride?: unknown
 ): Promise<{ success: boolean; error?: string }> {
+  const auth = await authenticateAgencyPortalUser();
+  if (!auth.authorized || !auth.userId) {
+    return { success: false, error: auth.error ?? 'UNAUTHORIZED' };
+  }
   if (!subaccountId || typeof subaccountId !== 'string' || !agencyOrgId || typeof agencyOrgId !== 'string') {
     return { success: false, error: 'SUBACCOUNT_NOT_FOUND_OR_FORBIDDEN' };
   }
+  const orgAuth = await authorizeAgencyOrgAction(agencyOrgId, dbOverride);
+  if (!orgAuth.ok) {
+    return {
+      success: false,
+      error: orgAuth.error === 'FORBIDDEN' ? 'SUBACCOUNT_NOT_FOUND_OR_FORBIDDEN' : orgAuth.error,
+    };
+  }
 
-  const db = resolveDb(dbOverride);
+  const { db } = orgAuth;
   const now = new Date().toISOString();
 
   try {
@@ -61,15 +75,25 @@ export async function reallocateClientMcuQuotaAction(
   allocatedMcu: number,
   dbOverride?: unknown
 ): Promise<{ success: boolean; remainingMcu?: number; error?: string }> {
+  const auth = await authenticateAgencyPortalUser();
+  if (!auth.authorized || !auth.userId) {
+    return { success: false, error: auth.error ?? 'UNAUTHORIZED' };
+  }
   if (!subaccountId || typeof subaccountId !== 'string' || !agencyOrgId || typeof agencyOrgId !== 'string') {
     return { success: false, error: 'SUBACCOUNT_NOT_FOUND_OR_FORBIDDEN' };
   }
-
   if (!Number.isFinite(allocatedMcu) || allocatedMcu < 0) {
     return { success: false, error: 'INVALID_MCU_AMOUNT' };
   }
+  const orgAuth = await authorizeAgencyOrgAction(agencyOrgId, dbOverride);
+  if (!orgAuth.ok) {
+    return {
+      success: false,
+      error: orgAuth.error === 'FORBIDDEN' ? 'SUBACCOUNT_NOT_FOUND_OR_FORBIDDEN' : orgAuth.error,
+    };
+  }
 
-  const db = resolveDb(dbOverride);
+  const { db } = orgAuth;
   const now = new Date().toISOString();
 
   try {

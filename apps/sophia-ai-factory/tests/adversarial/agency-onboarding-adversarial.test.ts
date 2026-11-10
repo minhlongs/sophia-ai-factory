@@ -12,9 +12,27 @@
  * Role: Adversarial Critic
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
+const { mockGetCurrentUser, mockIsUserAdmin } = vi.hoisted(() => ({
+  mockGetCurrentUser: vi.fn(),
+  mockIsUserAdmin: vi.fn().mockResolvedValue(false),
+}));
+
+vi.mock('@/seed/auth/better-auth-session', () => ({
+  getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock('@/seed/auth/is-user-admin', () => ({
+  isUserAdmin: mockIsUserAdmin,
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: vi.fn().mockResolvedValue('ENTERPRISE'),
+}));
+
 import { NodeSqliteD1Database } from '@/seed/db/node-sqlite-d1';
 import {
   sanitizeCustomCss,
@@ -40,8 +58,23 @@ describe('Adversarial Stress Test: Agency Onboarding & Portal Security', () => {
     db = new NodeSqliteD1Database(':memory:');
     db.exec(`
       CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS org_members (
+        org_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        PRIMARY KEY (org_id, user_id)
+      );
       INSERT INTO organizations (id, name) VALUES ('org_agency_a', 'Agency A'), ('org_agency_b', 'Agency B');
+      INSERT INTO org_members (org_id, user_id, role) VALUES
+        ('org_agency_a', 'usr_agency_owner', 'owner'),
+        ('org_agency_b', 'usr_agency_owner', 'owner');
     `);
+    mockGetCurrentUser.mockResolvedValue({
+      id: 'usr_agency_owner',
+      email: 'owner@agency.com',
+      role: 'user',
+    });
+    mockIsUserAdmin.mockResolvedValue(false);
 
     const m0286Path = path.resolve(__dirname, '../../migrations/0286_agency_multitenancy_subaccounts.sql');
     db.exec(fs.readFileSync(m0286Path, 'utf8'));

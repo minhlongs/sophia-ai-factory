@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminOrDeploy } from '@/seed/auth/require-admin';
+import { guardHandoverCommercialFeature } from '../handover-edition-guard';
 
 export const CANONICAL_ENV_TEMPLATE = `
 # Phase 10: Multi-Channel Publisher — REQUIRED env vars
@@ -108,7 +109,8 @@ export async function checkExportAuth(request: NextRequest): Promise<boolean | N
     const cronSecret = process.env.CRON_SECRET;
     const internalSecret = process.env.INTERNAL_API_SECRET;
     if ((cronSecret && token === cronSecret) || (internalSecret && token === internalSecret)) {
-      return true;
+      const gate = await guardHandoverCommercialFeature('system-handover-export');
+      return gate ?? true;
     }
   }
 
@@ -116,5 +118,6 @@ export async function checkExportAuth(request: NextRequest): Promise<boolean | N
   if (auth instanceof NextResponse) {
     return auth;
   }
-  return true;
+  const gate = await guardHandoverCommercialFeature(auth.userId);
+  return gate ?? true;
 }

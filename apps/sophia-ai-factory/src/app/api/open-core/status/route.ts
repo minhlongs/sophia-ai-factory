@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { resolveSophiaEdition } from '@/seed/config/edition-config';
+import { createVerifiedCatalogArtifactProbe } from '@/seed/config/open-core-verified-artifacts-snapshot';
 import { auditOpenCore25StepCatalog } from '@/tree/open-core/open-core-25-steps-auditor';
 import { auditVideoBlueprintCatalog, type VideoBlueprintAuditReport } from '@/tree/open-core/video-blueprint-auditor';
 import { checkUpstreamReleaseBeacon } from '@/tree/open-core/version-beacon';
@@ -30,7 +31,11 @@ export async function GET(request: NextRequest) {
 
   const edition = resolveSophiaEdition(ctx);
   const features = evaluateAllFeatureGates(ctx);
-  const auditRes = await auditOpenCore25StepCatalog({ editionContext: ctx });
+  const artifactExistenceProbe = await createVerifiedCatalogArtifactProbe();
+  const auditRes = await auditOpenCore25StepCatalog({
+    editionContext: ctx,
+    artifactExistenceProbe,
+  });
   const catalogAudit = auditRes.ok ? auditRes.value : null;
   let blueprintAudit: VideoBlueprintAuditReport | null = null;
   try {
@@ -50,7 +55,7 @@ export async function GET(request: NextRequest) {
       ? await resolveStatusDiagnostics({
           userId: user.id,
           userTier,
-          localShortSha: localShortSha === 'unknown' ? '07bff6cb' : localShortSha,
+          localShortSha,
           includePilot,
           includeExperiments,
         })

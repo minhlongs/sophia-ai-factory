@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getUserOrganization } from '@/seed/db/auth';
 import { getD1 } from '@/seed/db/client';
 import { errorResponse, handleThrownError } from '@/seed/api';
@@ -22,6 +23,14 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(request.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'white_label_agency_portal');
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
 
   const org = await getUserOrganization(user.id);
   if (!org) return NextResponse.json({ branding: null });
@@ -50,6 +59,14 @@ const putSchema = z.object({
 export async function PUT(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(request.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'white_label_agency_portal');
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
 
   const org = await getUserOrganization(user.id);
   if (!org) return NextResponse.json({ error: 'No organization' }, { status: 404 });

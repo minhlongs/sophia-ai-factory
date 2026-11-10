@@ -84,6 +84,7 @@ export interface DomainVerificationResult {
 export type CustomDomainErrorCode =
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
+  | 'FEATURE_LOCKED'
   | 'INVALID_HOSTNAME'
   | 'CONFLICT'
   | 'NOT_FOUND'

@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { getOrDefault, merge } from '@/seed/tenant-settings/registry';
 import { DEFAULT_BRANDING } from '@/seed/tenant-settings/defaults';
 import { BrandingSchema } from '@/seed/tenant-settings/namespace-validators';
@@ -40,6 +41,14 @@ export const GET = withRateLimit(async function GET(req: NextRequest): Promise<N
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const gate = await enforceCommercialFeatureForUser(user.id, 'white_label_agency_portal');
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
+
   const db = await getD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
@@ -55,6 +64,14 @@ export const GET = withRateLimit(async function GET(req: NextRequest): Promise<N
 export const PATCH = withRateLimit(async function PATCH(req: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'white_label_agency_portal');
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
+  }
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -75,7 +92,10 @@ export const PATCH = withRateLimit(async function PATCH(req: NextRequest): Promi
     return NextResponse.json({ namespace: 'branding', value: merged });
   } catch (err) {
     if (err instanceof SettingsValidationError) {
-      return NextResponse.json({ error: 'Validation failed', message: err.message }, { status: 422 });
+      return NextResponse.json(
+        { error: 'Validation failed', message: 'Invalid branding settings payload' },
+        { status: 422 },
+      );
     }
     logger.error('[settings/branding] PATCH failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

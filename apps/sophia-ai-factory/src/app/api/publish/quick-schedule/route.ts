@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { schedulePublish, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
 
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserOrOpenclawBearer(req.headers);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'managed_social_oauth_relay');
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: 'FEATURE_LOCKED', message: gate.error.message },
+      { status: 403 },
+    );
   }
 
   let raw: unknown;
@@ -74,7 +83,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
     return NextResponse.json(
-      { error: 'UPSTREAM_FAILED', message: err instanceof Error ? err.message : 'unknown' },
+      { error: 'UPSTREAM_FAILED', message: 'Failed to schedule video publish' },
       { status: 502 },
     );
   }

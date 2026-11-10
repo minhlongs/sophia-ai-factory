@@ -1,6 +1,6 @@
 /**
  * Unit Tests for Growth Flywheel Server Actions
- * Layer: land/growth/__tests__ | Max LOC: < 200 | Zero :any
+ * Layer: land/growth/__tests__ | Max LOC: < 200
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -9,8 +9,9 @@ import {
   triggerManualReseedAction,
 } from '../flywheel-actions';
 
-const { mockGetCurrentUser, mockInngestSend, mockGetStats, mockUpdateStatus } = vi.hoisted(() => ({
+const { mockGetCurrentUser, mockGetUserTier, mockInngestSend, mockGetStats, mockUpdateStatus } = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
+  mockGetUserTier: vi.fn().mockResolvedValue('PREMIUM'),
   mockInngestSend: vi.fn().mockResolvedValue({}),
   mockGetStats: vi.fn(),
   mockUpdateStatus: vi.fn().mockResolvedValue(true),
@@ -18,6 +19,10 @@ const { mockGetCurrentUser, mockInngestSend, mockGetStats, mockUpdateStatus } = 
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: mockGetUserTier,
 }));
 
 vi.mock('@/seed/inngest/client', () => ({
@@ -69,6 +74,7 @@ describe('Flywheel Server Actions (Land Layer)', () => {
   describe('triggerManualReseedAction', () => {
     it('dispatches reseed event and marks status PENDING', async () => {
       mockGetCurrentUser.mockResolvedValueOnce({ id: 'user_active_1' });
+      mockUpdateStatus.mockResolvedValueOnce(true);
 
       const res = await triggerManualReseedAction({
         jobId: 'reseed_101',
@@ -80,12 +86,32 @@ describe('Flywheel Server Actions (Land Layer)', () => {
       });
 
       expect(res.ok).toBe(true);
-      expect(mockUpdateStatus).toHaveBeenCalledWith('reseed_101', 'PENDING');
+      expect(mockUpdateStatus).toHaveBeenCalledWith('reseed_101', 'PENDING', undefined, 'user_active_1');
       expect(mockInngestSend).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'growth/v12.reseed.trigger',
         }),
       );
+    });
+
+    it('returns NOT_FOUND without dispatching Inngest when job does not belong to caller', async () => {
+      mockGetCurrentUser.mockResolvedValueOnce({ id: 'user_attacker' });
+      mockUpdateStatus.mockResolvedValueOnce(false);
+
+      const res = await triggerManualReseedAction({
+        jobId: 'reseed_victim_101',
+        sourceJobId: 'src_999',
+        channelId: 'chan_yt_1',
+        platform: 'YOUTUBE_SHORTS',
+        originalHook: 'Top 3 AI passive models',
+        mutatedHooks: ['Hook'],
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error.code).toBe('NOT_FOUND');
+      }
+      expect(mockInngestSend).not.toHaveBeenCalled();
     });
   });
 });

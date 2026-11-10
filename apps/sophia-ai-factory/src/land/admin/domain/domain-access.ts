@@ -28,8 +28,17 @@ export async function assertMasterTierAndOrgAccess(
 
   const { isAdmin } = await isUserAdminWithRole(user);
 
-  // Platform admins bypass org check and tier requirements
+  // Platform admins bypass org check and tier requirements, but still enforce commercial edition/license
   if (isAdmin || user.role === 'admin') {
+    const adminGate = await enforceCommercialFeatureForUser(user.id, featureId, {
+      resolvedTier: 'MASTER',
+    });
+    if (!adminGate.ok) {
+      return failure({
+        code: 'FEATURE_LOCKED',
+        message: adminGate.error.message,
+      });
+    }
     return success({ userId: user.id, isAdmin: true });
   }
 
@@ -75,8 +84,8 @@ export async function assertMasterTierAndOrgAccess(
   });
   if (!gate.ok) {
     return failure({
-      code: 'FORBIDDEN',
-      message: gate.error.messageEn,
+      code: 'FEATURE_LOCKED',
+      message: gate.error.message,
     });
   }
 

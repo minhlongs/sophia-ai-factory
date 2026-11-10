@@ -14,7 +14,11 @@ import type {
   AgencyOnboardingResult,
 } from '@/seed/types';
 import { validateCompleteSubmission } from '@/tree/agency/onboarding-validator';
-import { resolveDb } from './common';
+import {
+  authenticateAgencyPortalUser,
+  resolveDb,
+  verifyAgencyOrgMembership,
+} from './common';
 import {
   insertSubaccountCoreRecords,
   deploySeedAgentsLedger,
@@ -27,6 +31,18 @@ export async function submitAgencyOnboardingAction(
   submission: AgencyOnboardingSubmission,
   dbOverride?: unknown
 ): Promise<AgencyOnboardingResult> {
+  const hasCustomDomain = Boolean(
+    submission &&
+      typeof submission === 'object' &&
+      submission.domain &&
+      typeof submission.domain.customDomain === 'string' &&
+      submission.domain.customDomain.trim().length > 0,
+  );
+  const auth = await authenticateAgencyPortalUser({ requireCustomDomain: hasCustomDomain });
+  if (!auth.authorized || !auth.userId) {
+    return { success: false, error: auth.error ?? 'UNAUTHORIZED' };
+  }
+
   const validation = validateCompleteSubmission(submission);
   if (!validation.valid) {
     return {
@@ -38,6 +54,10 @@ export async function submitAgencyOnboardingAction(
 
   const db = resolveDb(dbOverride);
   const { agencyOrgId, profile, seedAgents } = submission;
+  if (!(await verifyAgencyOrgMembership(db, agencyOrgId, auth.userId, Boolean(auth.isPlatformAdmin)))) {
+    return { success: false, error: 'FORBIDDEN' };
+  }
+
   const normalizedSlug = profile.agencySlug.trim().toLowerCase();
   const now = new Date().toISOString();
 
@@ -56,7 +76,7 @@ export async function submitAgencyOnboardingAction(
       };
     }
 
-    const subaccountId = `sub_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const subaccountId = `sub_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 
     // 2-4. Insert client subaccount, branding, and MCU quota allocation
     await insertSubaccountCoreRecords(db, submission, subaccountId, normalizedSlug, now);

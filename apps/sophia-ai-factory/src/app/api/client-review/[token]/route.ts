@@ -15,6 +15,7 @@ import { resolveReviewByToken } from '@/tree/organizations/review-service';
 import {
   type ClientReviewPostBody,
   dispatchReviewPostAction,
+  guardAgencyReviewPortal,
   mapGetReviewError,
   mapPostReviewError,
 } from './client-review-helpers';
@@ -31,8 +32,10 @@ export async function GET(
   _request: NextRequest,
   context: RouteContext,
 ): Promise<Response> {
-  const { token } = await context.params;
+  const editionLock = await guardAgencyReviewPortal();
+  if (editionLock) return editionLock;
 
+  const { token } = await context.params;
   if (!token || !token.trim()) {
     return NextResponse.json({ error: 'Token is required' }, { status: 400 });
   }
@@ -41,6 +44,9 @@ export async function GET(
   if (!db) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
   }
+
+  const orgLock = await guardAgencyReviewPortal(db, token);
+  if (orgLock) return orgLock;
 
   try {
     const payload = await resolveReviewByToken(db, token);
@@ -60,8 +66,10 @@ export async function POST(
   request: NextRequest,
   context: RouteContext,
 ): Promise<Response> {
-  const { token } = await context.params;
+  const editionLock = await guardAgencyReviewPortal();
+  if (editionLock) return editionLock;
 
+  const { token } = await context.params;
   if (!token || !token.trim()) {
     return NextResponse.json({ error: 'Token is required' }, { status: 400 });
   }
@@ -70,6 +78,9 @@ export async function POST(
   if (!db) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
   }
+
+  const orgLock = await guardAgencyReviewPortal(db, token);
+  if (orgLock) return orgLock;
 
   try {
     const body = (await request.json()) as ClientReviewPostBody;

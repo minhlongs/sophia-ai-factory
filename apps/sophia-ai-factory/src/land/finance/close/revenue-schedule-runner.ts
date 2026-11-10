@@ -39,7 +39,7 @@ export async function executeCreateRevenueSchedule(
     logger.error('Failed to create revenue schedule', normalizeErrorArg(err));
     return failure({
       code: 'SCHEDULE_CREATION_FAILED',
-      message: err instanceof Error ? err.message : 'Unknown revenue schedule creation error',
+      message: 'Failed to create revenue schedule',
     });
   }
 }
@@ -61,7 +61,7 @@ export async function executeRunDailyAccrual(
     logger.error('Failed to process daily accrual', normalizeErrorArg(err));
     return failure({
       code: 'DAILY_ACCRUAL_FAILED',
-      message: err instanceof Error ? err.message : 'Unknown accrual processing error',
+      message: 'Failed to process daily accrual',
     });
   }
 }

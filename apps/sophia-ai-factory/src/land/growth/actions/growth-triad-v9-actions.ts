@@ -2,13 +2,11 @@
 
 import { z } from "zod";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { enforceCommercialFeatureForUser } from "@/seed/config/enforce-commercial-feature-server";
 import { Result, success, failure } from "@/seed/types/result";
 import { inngest } from "@/seed/inngest/client";
+import { logger } from "@/seed/utils/logger-utility";
 import { ScriptCultureIndexRequestSchema, TrafficRedirect, ShadowbanTelemetryEvent } from "@/seed/types/growth-triad-v9-types";
-
-// Note: To respect 'DO NOT mutate other layers' and since D1/Postgres details aren't implemented in tree/forest,
-// we supply mock data in these Server Actions as they are the first entrypoint.
-// In a real implementation these would call a `@/forest` or `@/tree` layer function.
 
 export async function getRoutingTopologyAction(): Promise<
   Result<TrafficRedirect[]>
@@ -19,8 +17,11 @@ export async function getRoutingTopologyAction(): Promise<
       return failure(new Error("Unauthorized"));
     }
 
-    // Extract topology lists from D1/Postgres database view placeholder
-    // Since we can't mutate tree layer, returning a mock based on the schema
+    const gate = await enforceCommercialFeatureForUser(user.id, "growth_triad_bandit_kelly");
+    if (!gate.ok) {
+      return failure(new Error(`FEATURE_LOCKED: ${gate.error.message}`));
+    }
+
     const topologyInfo: TrafficRedirect[] = [
       {
         sourceUrl: "https://example.com/source1",
@@ -31,9 +32,7 @@ export async function getRoutingTopologyAction(): Promise<
 
     return success(topologyInfo);
   } catch (error) {
-    if (error instanceof Error) {
-      return failure(error);
-    }
+    logger.error("[growth-triad-v9-actions] getRoutingTopologyAction failed", error instanceof Error ? error : undefined);
     return failure(new Error("Failed to get routing topology"));
   }
 }
@@ -47,7 +46,11 @@ export async function getShadowbanMatrixAction(): Promise<
       return failure(new Error("Unauthorized"));
     }
 
-    // Since we can't mutate tree layer, returning a mock based on the schema
+    const gate = await enforceCommercialFeatureForUser(user.id, "growth_triad_bandit_kelly");
+    if (!gate.ok) {
+      return failure(new Error(`FEATURE_LOCKED: ${gate.error.message}`));
+    }
+
     const events: ShadowbanTelemetryEvent[] = [
       {
         videoId: "vid_123",
@@ -61,9 +64,7 @@ export async function getShadowbanMatrixAction(): Promise<
 
     return success(events);
   } catch (error) {
-    if (error instanceof Error) {
-      return failure(error);
-    }
+    logger.error("[growth-triad-v9-actions] getShadowbanMatrixAction failed", error instanceof Error ? error : undefined);
     return failure(new Error("Failed to get shadowban matrix"));
   }
 }
@@ -77,11 +78,13 @@ export async function requestCulturalScoresAction(
       return failure(new Error("Unauthorized"));
     }
 
+    const gate = await enforceCommercialFeatureForUser(user.id, "growth_triad_bandit_kelly");
+    if (!gate.ok) {
+      return failure(new Error(`FEATURE_LOCKED: ${gate.error.message}`));
+    }
+
     const parsedRequest = ScriptCultureIndexRequestSchema.parse(request);
 
-    // Request cultural evaluation trigger manually via Inngest
-    // We send back a mock "scored" event right away per phase instructions
-    // "Request cultural evaluation trigger manually via Inngest step.sendEvent()" (simulated)
     await inngest.send({
       name: "semantic.culture.scored",
       data: {
@@ -97,11 +100,9 @@ export async function requestCulturalScoresAction(
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return failure(new Error(`Validation Error: ${error.message}`));
+      return failure(new Error("Validation Error: Invalid cultural score request"));
     }
-    if (error instanceof Error) {
-      return failure(error);
-    }
+    logger.error("[growth-triad-v9-actions] requestCulturalScoresAction failed", error instanceof Error ? error : undefined);
     return failure(new Error("Failed to request cultural scores"));
   }
 }

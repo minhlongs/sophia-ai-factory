@@ -10,6 +10,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { schedulePublish } from '@/forest/publishing/scheduler';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -32,6 +33,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     const auth = await getCurrentUserOrOpenClaw(request, { requiredScope: 'publish:write' });
     if (isAuthError(auth)) return auth.toNextResponse();
     const userId = auth.userId;
+
+    const gate = await enforceCommercialFeatureForUser(userId, 'managed_social_oauth_relay');
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: 'FEATURE_LOCKED', message: gate.error.message },
+        { status: 403 },
+      );
+    }
 
     const body = await request.json().catch(() => null);
     const parsed = scheduleBodySchema.safeParse(body);
@@ -76,6 +85,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
     logger.error('[publish/schedule] Error', err instanceof Error ? err : new Error(message));
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

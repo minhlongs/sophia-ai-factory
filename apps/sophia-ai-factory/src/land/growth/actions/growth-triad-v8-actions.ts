@@ -7,8 +7,10 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { inngest } from '@/seed/inngest/client';
 import { failure, success, type Result } from '@/seed/types/result';
+import { logger } from '@/seed/utils/logger-utility';
 
 export async function dispatchAudioResonance(
   audioTrackId: string,
@@ -21,20 +23,25 @@ export async function dispatchAudioResonance(
       return failure({ code: 'UNAUTHORIZED', message: 'You must be logged in to dispatch audio resonance' });
     }
 
-    // Dispatch to Inngest for async processing
+    const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+    if (!gate.ok) {
+      return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
+    }
+
     await inngest.send({
       name: 'audio.resonance.synced',
       data: {
         audioTrackId,
         bpm,
-        resonanceScore: 0, // Placeholder, core logic in forest worker
+        resonanceScore: 0,
         syncQuality: 'PENDING',
-      }
+      },
     });
 
     return success({ dispatched: true });
   } catch (err: unknown) {
-    return failure({ code: 'SERVER_ERROR', message: err instanceof Error ? err.message : 'Failed to dispatch audio resonance sync' });
+    logger.error('[growth-triad-v8-actions] dispatchAudioResonance failed', err instanceof Error ? err : undefined);
+    return failure({ code: 'SERVER_ERROR', message: 'Failed to dispatch audio resonance sync' });
   }
 }
 
@@ -48,6 +55,11 @@ export async function dispatchCommunityBait(
       return failure({ code: 'UNAUTHORIZED', message: 'You must be logged in to generate viral bait' });
     }
 
+    const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+    if (!gate.ok) {
+      return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
+    }
+
     const campaignId = `cbait_${videoId}_${Date.now()}`;
 
     await inngest.send({
@@ -55,14 +67,15 @@ export async function dispatchCommunityBait(
       data: {
         videoId,
         campaignId,
-        primaryHookQuestion: campaignTopic, // Will be replaced by actual engine in forest
-        curiosityGapScore: 0 // Will be computed in the background
-      }
+        primaryHookQuestion: campaignTopic,
+        curiosityGapScore: 0,
+      },
     });
 
     return success({ dispatched: true });
   } catch (err: unknown) {
-    return failure({ code: 'SERVER_ERROR', message: err instanceof Error ? err.message : 'Failed to dispatch community bait generator' });
+    logger.error('[growth-triad-v8-actions] dispatchCommunityBait failed', err instanceof Error ? err : undefined);
+    return failure({ code: 'SERVER_ERROR', message: 'Failed to dispatch community bait generator' });
   }
 }
 
@@ -76,17 +89,23 @@ export async function dispatchCohortLtvEvaluation(
       return failure({ code: 'UNAUTHORIZED', message: 'You must be logged in to compute cohort LTV' });
     }
 
+    const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+    if (!gate.ok) {
+      return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
+    }
+
     await inngest.send({
       name: 'subscriber.cohort.evaluated',
       data: {
         cohortMonth,
-        cumulativeLtvUsd: 0, // Will be computed
-        hazardPeakMonth: 0   // Will be computed
-      }
+        cumulativeLtvUsd: 0,
+        hazardPeakMonth: 0,
+      },
     });
 
     return success({ dispatched: true });
   } catch (err: unknown) {
-    return failure({ code: 'SERVER_ERROR', message: err instanceof Error ? err.message : 'Failed to dispatch cohort LTV evaluation' });
+    logger.error('[growth-triad-v8-actions] dispatchCohortLtvEvaluation failed', err instanceof Error ? err : undefined);
+    return failure({ code: 'SERVER_ERROR', message: 'Failed to dispatch cohort LTV evaluation' });
   }
 }

@@ -211,7 +211,7 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
         email: 'alice@acme.com',
         name: 'Alice',
         role: 'user',
-      } as any);
+      } as never);
 
       const acceptedHandover: CustomerHandoverRecord = {
         id: 'handover_accepted_01',
@@ -308,7 +308,7 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
         email: 'regular@client.io',
         name: 'Regular Customer',
         role: 'user',
-      } as any);
+      } as never);
       mockedIsUserAdmin.mockResolvedValue(false);
 
       const exportRes = await exportSanitizedEnvAction();
@@ -324,7 +324,7 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
         email: 'regular@client.io',
         name: 'Regular Customer',
         role: 'user',
-      } as any);
+      } as never);
       mockedIsUserAdmin.mockResolvedValue(false);
 
       const verifyRes = await triggerHandoverVerificationAction('handover_01');
@@ -340,7 +340,7 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
         email: 'attacker@b.com',
         name: 'Attacker B',
         role: 'user',
-      } as any);
+      } as never);
       mockedIsUserAdmin.mockResolvedValue(false);
 
       const handoverTenantA: CustomerHandoverRecord = {
@@ -407,7 +407,7 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
         id: 'usr_admin',
         email: 'admin@sophia.io',
         role: 'admin',
-      } as any);
+      } as never);
       mockedIsUserAdmin.mockResolvedValue(true);
     });
 
@@ -843,7 +843,8 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
       expect(res.status).toBe(500);
       const json = await res.json() as Record<string, unknown>;
       expect(json.error).toBe('Verification runner failed');
-      expect(json.message).toContain('Fatal unhandled runtime segmentation fault simulation');
+      expect(json.message).toBe('Handover verification suite failed');
+      expect(String(json.message)).not.toContain('segmentation fault');
     });
   });
 });

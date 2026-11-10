@@ -1,87 +1,63 @@
 /**
  * Land Layer: Growth Triad v14 Authenticated Server Actions
  * Dispatches Kelly-budgeted predictive renders and provides telemetry queries.
- * Layer: land/growth-v14 | Max LOC: < 200 | Zero :any
+ * Layer: land/growth-v14
  * @module land/growth-v14/predictive-render-actions
  */
 
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { success, failure, type Result } from '@/seed/types/result';
 import { inngest } from '@/seed/inngest/client';
+import type { PredictiveRenderJob } from '@/seed/types/growth-triad-v14';
+import { logger } from '@/seed/utils/logger-utility';
 import {
   createPredictiveRenderJob,
   getJobsForUser,
+  updateJobStatusInD1,
 } from './predictive-render-coordinator';
-import { PredictiveRenderJob } from '@/seed/types/growth-triad-v14';
-import { calculateKellyAllocation } from '@/tree/growth-v14/kelly-allocator';
+import { probeUserSparseDataFromD1 } from './predictive-render-sparse-probe';
+import {
+  validateAndAllocatePredictiveRender,
+  type GrowthV14ActionError,
+  type ScheduleRenderInput,
+} from './predictive-render-validation';
+import { evaluateSparseDataGrowthGate } from '@/tree/growth/sparse-data-growth-guard';
 
-export interface GrowthV14ActionError {
-  code: 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'INTERNAL_ERROR';
-  message: string;
-}
-
-export interface ScheduleRenderInput {
-  scriptId: string;
-  deliberationScore: number;
-  availableMcuBudget: number;
-  /** Must come from persisted measured cohort data, never a hardcoded default. */
-  projectedRoas: number;
-  winProbability: number;
-  measuredSampleSize: number;
-  /** Cohort/window/report identifier that produced the two numbers above. */
-  evidenceSource: string;
-  mabArmId?: string;
-}
+export type { GrowthV14ActionError, ScheduleRenderInput };
 
 /**
  * Calculates Kelly budget allocation, persists the job, and enqueues Inngest worker.
  */
 export async function schedulePredictiveRenderAction(
-  input: ScheduleRenderInput
+  input: ScheduleRenderInput,
 ): Promise<Result<{ jobId: string; allocatedMcu: number }, GrowthV14ActionError>> {
   const user = await getCurrentUser();
   if (!user?.id) {
     return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
   }
 
-  if (!input.scriptId || input.availableMcuBudget <= 0) {
-    return failure({ code: 'VALIDATION_ERROR', message: 'Valid scriptId and budget required' });
-  }
-  // No fabricated win rate / ROAS / cohort. An unmeasured input cannot justify
-  // spending render budget, nor can an immature sample be called a winner.
-  if (
-    !Number.isFinite(input.winProbability) ||
-    input.winProbability < 0 || input.winProbability > 1 ||
-    !Number.isFinite(input.projectedRoas) || input.projectedRoas <= 0 ||
-    !Number.isInteger(input.measuredSampleSize) || input.measuredSampleSize < 30 ||
-    !input.evidenceSource.trim()
-  ) {
-    return failure({
-      code: 'VALIDATION_ERROR',
-      message: 'Measured winProbability, projectedRoas, sampleSize >= 30 and evidenceSource are required',
-    });
+  const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
   }
 
-  const kellyResult = calculateKellyAllocation(
-    {
-      winProbability: input.winProbability,
-      projectedRoas: input.projectedRoas,
-      halfKelly: true,
-      minFraction: 0.05,
-      maxFraction: 0.4,
-    },
-    input.availableMcuBudget
-  );
-
-  if (kellyResult.allocatedMcu <= 0) {
-    return failure({
-      code: 'VALIDATION_ERROR',
-      message: 'No approved positive-expectancy budget; render not scheduled',
-    });
+  const probedSparseData = await probeUserSparseDataFromD1(user.id);
+  if (probedSparseData) {
+    const probedDecision = evaluateSparseDataGrowthGate(probedSparseData);
+    if (!probedDecision.allowHalfKellyAllocation) {
+      return failure({ code: 'SPARSE_DATA_HOLD', message: probedDecision.reason });
+    }
   }
 
+  const allocation = validateAndAllocatePredictiveRender(input);
+  if (!allocation.ok) {
+    return allocation;
+  }
+
+  const kellyResult = allocation.value;
   const jobId = `pred_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
 
   const job = await createPredictiveRenderJob({
@@ -110,9 +86,14 @@ export async function schedulePredictiveRenderAction(
       },
     });
   } catch (error) {
+    await updateJobStatusInD1(jobId, 'FAILED', 0, undefined, 'inngest_dispatch_failed');
+    logger.error(
+      '[predictive-render-actions] Inngest dispatch failed',
+      error instanceof Error ? error : undefined,
+    );
     return failure({
       code: 'INTERNAL_ERROR',
-      message: error instanceof Error ? error.message : 'Inngest dispatch failed',
+      message: 'Inngest dispatch failed',
     });
   }
 
@@ -128,6 +109,11 @@ export async function getUserPredictiveJobsAction(): Promise<
   const user = await getCurrentUser();
   if (!user?.id) {
     return failure({ code: 'UNAUTHORIZED', message: 'Authentication required' });
+  }
+
+  const gate = await enforceCommercialFeatureForUser(user.id, 'growth_triad_bandit_kelly');
+  if (!gate.ok) {
+    return failure({ code: 'FEATURE_LOCKED', message: gate.error.message });
   }
 
   const jobs = await getJobsForUser(user.id, 20);

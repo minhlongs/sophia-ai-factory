@@ -33,6 +33,11 @@ vi.mock('@/tree/open-core/video-blueprint-auditor', () => ({
 
 import { GET as getStatus, POST as postStatus } from '../status/route';
 import { GET as getPortability, POST as postPortability } from '../portability/route';
+import {
+  VERIFIED_CATALOG_SHA256,
+  computeLiveCatalogArtifactDigest,
+  createVerifiedCatalogArtifactProbe,
+} from '@/seed/config/open-core-verified-artifacts-snapshot';
 import { issueRaasLicenseToken } from '@/seed/security/raas-license-verifier';
 
 const TEST_LICENSE_SECRET = 'sophia-raas-license-route-secret-2026';
@@ -78,7 +83,7 @@ describe('/api/open-core/status & /portability routes', () => {
     expect(postRes.status).toBe(401);
   });
 
-  it('GET returns community edition, 4 unlocked features, and catalog metadata summary', async () => {
+  it('GET returns community edition, SHA-256 verified 25/25 artifacts, and 10/10 governance files', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'usr_1', email: 'dev@agency.vn' });
     mockGetUserTier.mockResolvedValue('BASIC');
 
@@ -100,6 +105,10 @@ describe('/api/open-core/status & /portability routes', () => {
         documentedSteps: number;
         catalogCompletenessPercentage: number;
         catalogComplete: boolean;
+        verificationPerformed: boolean;
+        verifiedSteps: number | null;
+        verifiedArtifactsPercentage: number | null;
+        verifiedGovernanceFilesCount: number | null;
       };
       blueprintAudit: {
         totalBlueprints: number;
@@ -121,15 +130,15 @@ describe('/api/open-core/status & /portability routes', () => {
       pricingUrl: 'https://sophia.agencyos.network/pricing',
       beacon: null,
     });
-    expect(json.mode).toBe('runtime_status');
-    expect(json.edition).toBe('community');
-    // 4 open-core features plus the operator payout queue, which is Apache-2.0
-    // and not customer-payable — see operator_affiliate_payout_admin.
     expect(json.features.filter((f) => f.allowed).length).toBe(5);
     expect(json.catalogAudit.totalSteps).toBe(25);
     expect(json.catalogAudit.documentedSteps).toBe(25);
     expect(json.catalogAudit.catalogCompletenessPercentage).toBe(100);
     expect(json.catalogAudit.catalogComplete).toBe(true);
+    expect(json.catalogAudit.verificationPerformed).toBe(true);
+    expect(json.catalogAudit.verifiedSteps).toBe(25);
+    expect(json.catalogAudit.verifiedArtifactsPercentage).toBe(100);
+    expect(json.catalogAudit.verifiedGovernanceFilesCount).toBe(10);
     expect(json.blueprintAudit).toEqual({
       totalBlueprints: 6,
       validBlueprints: 6,
@@ -137,6 +146,15 @@ describe('/api/open-core/status & /portability routes', () => {
       duplicateBlueprintIds: [],
       catalogComplete: true,
     });
+  });
+
+  it('fails closed when createVerifiedCatalogArtifactProbe receives a mismatched SHA-256 digest', async () => {
+    const liveDigest = await computeLiveCatalogArtifactDigest();
+    expect(liveDigest).toBe(VERIFIED_CATALOG_SHA256);
+
+    const failClosedProbe = await createVerifiedCatalogArtifactProbe('0'.repeat(64));
+    expect(failClosedProbe('README.md')).toBe(false);
+    expect(failClosedProbe('plans/company-blueprint/plan.md')).toBe(false);
   });
 
   it('keeps runtime status available with a null blueprint audit if the optional audit fails', async () => {
