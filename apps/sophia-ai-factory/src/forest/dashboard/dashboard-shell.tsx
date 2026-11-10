@@ -41,7 +41,7 @@ export function DashboardShell({
   const activePath = currentPath || pathnameFromHook || "";
 
   return (
-    <div className={cn("min-h-screen bg-[#0B0E14] dark:bg-[#090A10] text-[#F8FAFC] flex", className)}>
+    <div className={cn("min-h-screen bg-background text-foreground flex", className)}>
       {/* Canonical Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebarNav
         currentPath={currentPath}

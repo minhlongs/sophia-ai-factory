@@ -33,15 +33,15 @@ export function DashboardSourcesDrawer({
   return (
     <div
       data-testid="dashboard-sources-drawer"
-      className="v3-core rounded-2xl border border-border dark:border-[#1E2235] bg-card dark:bg-[#11131F] p-4 transition-all"
+      className="v3-core rounded-2xl border border-border bg-card p-4 transition-all"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
             <Database className="w-4 h-4" />
           </div>
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-amber-400">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400">
               {t('sourcesDrawer.eyebrow')}
             </p>
             <h2 className="text-sm font-bold text-foreground dark:text-white">
@@ -53,7 +53,7 @@ export function DashboardSourcesDrawer({
         <div className="flex items-center gap-2.5">
           <span
             data-testid="dashboard-sources-truth-state"
-            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 font-mono text-[11px] text-emerald-400"
+            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:text-emerald-400"
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>
@@ -81,7 +81,7 @@ export function DashboardSourcesDrawer({
       {isOpen && (
         <div
           data-testid="dashboard-sources-table"
-          className="mt-4 pt-4 border-t border-border dark:border-[#1E2235] space-y-3"
+          className="mt-4 pt-4 border-t border-border space-y-3"
         >
           <p className="text-xs text-muted-foreground">
             {t('sourcesDrawer.subtitle')}
@@ -102,13 +102,13 @@ export function DashboardSourcesDrawer({
                     <td className="py-2.5 pr-4 font-semibold text-foreground dark:text-white">
                       {isVi ? row.metricLabelVi : row.metricLabelEn}
                     </td>
-                    <td className="py-2.5 pr-4 font-mono text-[11px] text-indigo-300">
+                    <td className="py-2.5 pr-4 font-mono text-[11px] text-indigo-600 dark:text-indigo-300">
                       <div>{row.d1Table}</div>
                       <div className="text-muted-foreground text-[10px]">
                         {row.queryColumn}
                       </div>
                     </td>
-                    <td className="py-2.5 font-mono text-[11px] text-emerald-400">
+                    <td className="py-2.5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
                       <div>{row.verificationMechanism}</div>
                       <div className="text-muted-foreground text-[10px]">
                         {row.platformFeePolicy}

@@ -21,20 +21,28 @@ import {
   validatePaletteOklch,
   type BaoyuCommentItem,
 } from '@/seed/baoyu-design';
+import { getZenSemanticColor } from '@/seed/design-tokens';
 
 export interface SophiaArtifactCanvasProps {
   t: (key: string) => string;
   locale?: 'vi' | 'en';
 }
 
-const DARK_CANVAS_BG = '#090a10';
+const DARK_CANVAS_BG = getZenSemanticColor('dark', 'surface');
+const DEFAULT_ACCENT_HEX = getZenSemanticColor('dark', 'primary').toLowerCase();
 
 export function SophiaArtifactCanvas({
   t,
   locale = 'vi',
 }: SophiaArtifactCanvasProps) {
   const isVi = locale === 'vi';
-  const [accentColor, setAccentColor] = useState<string>('#6366f1');
+  const accentOptions =
+    SOPHIA_STUDIO_TWEAK_PROPS.find((p) => p.key === 'accentColor')?.options ?? [
+      DEFAULT_ACCENT_HEX,
+    ];
+  const [accentColor, setAccentColor] = useState<string>(
+    accentOptions[0] ?? DEFAULT_ACCENT_HEX,
+  );
   const [displayWidth, setDisplayWidth] = useState<number>(104);
   const [showComplianceBadge, setShowComplianceBadge] = useState<boolean>(true);
   const [comments, setComments] = useState<readonly BaoyuCommentItem[]>(
@@ -54,20 +62,13 @@ export function SophiaArtifactCanvas({
     );
   };
 
-  const accentOptions =
-    SOPHIA_STUDIO_TWEAK_PROPS.find((p) => p.key === 'accentColor')?.options ?? [
-      '#6366f1',
-      '#f59e0b',
-      '#10b981',
-    ];
-
   return (
     <section
       data-testid="sophia-artifact-canvas"
-      className="v3-core rounded-2xl border border-border dark:border-[#1E2235] bg-card dark:bg-[#11131F] p-5 sm:p-6 space-y-5"
+      className="v3-core rounded-2xl border border-border bg-card p-5 sm:p-6 space-y-5"
     >
       {/* Header with OKLCH Contrast Telemetry */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-[#1E2235] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <p className="eyebrow !mb-1">
             <span className="dot" aria-hidden="true" />
@@ -83,7 +84,7 @@ export function SophiaArtifactCanvas({
 
         <div
           data-testid="baoyu-oklch-badge"
-          className="inline-flex items-center gap-2 self-start sm:self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-400"
+          className="inline-flex items-center gap-2 self-start sm:self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-600 dark:text-emerald-400"
         >
           <span>✓ {t('baoyuCanvas.oklchPass')}</span>
           <span>
@@ -93,7 +94,7 @@ export function SophiaArtifactCanvas({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Side-by-Side Artboard Frames (8 cols) */}
+        {/* Side-by-Side Artboard Frames (8 cols) — Dedicated Dark Stage */}
         <div
           data-testid="baoyu-artboard-grid"
           className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4"
@@ -102,8 +103,11 @@ export function SophiaArtifactCanvas({
             <div
               key={board.id}
               data-testid={`baoyu-artboard-${board.id}`}
-              style={{ borderColor: accentColor }}
-              className="rounded-xl border bg-[#090A10] p-4 flex flex-col justify-between min-h-[220px] shadow-md"
+              style={{
+                borderColor: accentColor,
+                backgroundColor: 'var(--studio-stage-bg)',
+              }}
+              className="rounded-xl border p-4 flex flex-col justify-between min-h-[220px] shadow-md"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between font-mono text-[10px] text-slate-400">
@@ -148,9 +152,9 @@ export function SophiaArtifactCanvas({
           {/* Tweaks Panel (data-props) */}
           <div
             data-testid="baoyu-tweaks-panel"
-            className="rounded-xl border border-border dark:border-[#1E2235] bg-background/60 dark:bg-[#090A10]/70 p-4 space-y-3"
+            className="rounded-xl border border-border bg-muted/40 p-4 space-y-3"
           >
-            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-amber-400">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
               {t('baoyuCanvas.tweaksTitle')}
             </h3>
 
@@ -169,8 +173,8 @@ export function SophiaArtifactCanvas({
                     aria-pressed={accentColor === colorHex}
                     className={`px-2.5 py-1 rounded-md font-mono text-xs border transition-all ${
                       accentColor === colorHex
-                        ? 'border-white bg-white/15 text-white font-bold'
-                        : 'border-white/10 text-slate-400 hover:text-white'
+                        ? 'border-primary bg-primary/15 text-foreground dark:text-white font-bold'
+                        : 'border-border text-muted-foreground hover:text-foreground dark:hover:text-white'
                     }`}
                   >
                     {colorHex}
@@ -186,7 +190,7 @@ export function SophiaArtifactCanvas({
                 className="flex items-center justify-between text-xs text-muted-foreground"
               >
                 <span>{t('baoyuCanvas.widthLabel')}</span>
-                <span className="font-mono text-indigo-400">{displayWidth}</span>
+                <span className="font-mono text-indigo-600 dark:text-indigo-400">{displayWidth}</span>
               </label>
               <input
                 id="baoyu-display-width-slider"
@@ -217,9 +221,9 @@ export function SophiaArtifactCanvas({
           {/* Pin Comments (comments.json) */}
           <div
             data-testid="baoyu-comments-panel"
-            className="rounded-xl border border-border dark:border-[#1E2235] bg-background/60 dark:bg-[#090A10]/70 p-4 space-y-2.5"
+            className="rounded-xl border border-border bg-muted/40 p-4 space-y-2.5"
           >
-            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-indigo-400">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
               {t('baoyuCanvas.commentsTitle')}
             </h3>
             <ul className="space-y-2">
@@ -230,12 +234,12 @@ export function SophiaArtifactCanvas({
                   className="rounded-lg border border-border/60 dark:border-white/10 p-2.5 text-xs space-y-1.5"
                 >
                   <div className="flex items-center justify-between font-mono text-[10px]">
-                    <span className="text-amber-400 font-semibold">{cmt.author}</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">{cmt.author}</span>
                     <button
                       type="button"
                       data-testid={`baoyu-comment-toggle-${cmt.id}`}
                       onClick={() => toggleCommentResolved(cmt.id)}
-                      className="underline text-indigo-400 hover:text-indigo-300"
+                      className="underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
                     >
                       {cmt.resolved
                         ? t('baoyuCanvas.reopenBtn')

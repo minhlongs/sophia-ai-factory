@@ -3,34 +3,205 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:where(.dark, .dark *));  /* ═══════════════════════════════════════════════════════════════════════════
-   "Director's Control Deck" Design System
-   Cinema Dark Room × Executive Studio Light — AI Director's Editing Suite
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ZEN DESIGN OS v1.0 — "Director's Control Deck" Design System
+   Cinema Dark Room (.dark, default) × Executive Studio Ivory (:root, light)
+   Canonical DTCG 2025.10 Source: src/seed/design-tokens/zen-design-tokens.dtcg.json
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Radius ───────────────────────────────────────────────────────────── */
-  --radius: 0.75rem;  /* 12px — sleek modern curves */
+  /* ── Geometry & Radius ────────────────────────────────────────────────── */
+  --radius: 0.75rem; /* 12px — sleek modern curves */
 
-  /* ── Dark-only by design ──────────────────────────────────────────────── */
-  /* `<html className="dark">` is unconditional in src/app/layout.tsx, so every color
-     token is declared exactly once below in the .dark block. The former light-mode
-     palette held 111 unreachable declarations and was removed; recover it
-     with `git show <sha>:src/app/globals.css` if light mode is ever productised. */
+  /* ── Zen Motion Governance (Founder Addendum #07.1) ───────────────────── */
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 240ms;
+  --motion-duration-deliberate: 400ms;
+  --motion-duration-cinematic: 600ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --motion-ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+
+  /* ── Dedicated Studio Dark Stage Invariant (16:9 / 9:16 Video Canvas) ── */
+  --studio-stage-bg: #090A10;
+  --studio-stage-panel: #11131F;
+  --studio-stage-fg: #F8FAFC;
+  --studio-stage-border: #1E2235;
+
+  /* ── Surface (Executive Studio Ivory — Light Mode) ────────────────────── */
+  --background: #F8F9FC;
+  --foreground: #0B0F19;
+  --background-secondary: #F3F5FA;
+  --surface: #F8F9FC;
+  --on-surface: #0B0F19;
+  --on-surface-variant: #475569;
+
+  --card: #FFFFFF;
+  --card-foreground: #0B0F19;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0B0F19;
+
+  --primary: #4338CA; /* M3 Indigo Tone 40 — WCAG AA 8.4:1 on white */
+  --primary-text: #4338CA;
+  --primary-solid: #4338CA;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #7E22CE; /* M3 Violet Tone 40 */
+  --secondary-foreground: #FFFFFF;
+  --on-secondary: #FFFFFF;
+
+  --muted: #F1F5F9;
+  --muted-foreground: #475569;
+
+  --accent: #B45309; /* M3 Amber Tone 35 — WCAG AA safe on ivory */
+  --accent-foreground: #FFFFFF;
+
+  /* ── Feedback (Light Mode WCAG 2.2 AA verified) ───────────────────────── */
+  --destructive: #BE123C;
+  --success: #047857;
+  --warning: #B45309;
+  --info: #0E7490;
+  --destructive-foreground: #FFFFFF;
+
+  /* ── Borders (Light Mode) ─────────────────────────────────────────────── */
+  --border: #E2E8F0;
+  --input: #CBD5E1;
+  --ring: #4338CA;
+
+  /* ── MD3 Tonal Surface Hierarchy (Light Mode) ─────────────────────────── */
+  --primary-container: #E0E7FF;
+  --on-primary-container: #1E1B4B;
+  --secondary-container: #F3E8FF;
+  --on-secondary-container: #3B0764;
+  --tertiary: #B45309;
+  --tertiary-container: #FEF3C7;
+  --on-tertiary: #FFFFFF;
+  --on-tertiary-container: #451A03;
+  --surface-container: #FFFFFF;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #F3F5FA;
+  --surface-container-high: #ECEFF6;
+  --surface-container-highest: #E2E7F1;
+  --surface-bright: #FFFFFF;
+  --surface-dim: #EEF1F7;
+  --surface-variant: #F1F5F9;
+  --inverse-surface: #090A10;
+  --inverse-on-surface: #F8FAFC;
+  --inverse-primary: #818CF8;
+  --outline: #64748B;
+  --outline-variant: #E2E8F0;
+  --error: #BE123C;
+  --error-container: #FFE4E6;
+  --on-error-container: #4C0519;
+
+  /* ── Primary scale (indigo) ───────────────────────────────────────────── */
+  --primary-50: #EEF2FF;
+  --primary-100: #E0E7FF;
+  --primary-200: #C7D2FE;
+  --primary-300: #A5B4FC;
+  --primary-400: #818CF8;
+  --primary-500: #6366F1;
+  --primary-600: #4F46E5;
+  --primary-700: #4338CA;
+  --primary-800: #3730A3;
+  --primary-900: #312E81;
+
+  /* ── Accent scale (amber) ─────────────────────────────────────────────── */
+  --accent-50: #FFFBEB;
+  --accent-100: #FEF3C7;
+  --accent-200: #FDE68A;
+  --accent-300: #FCD34D;
+  --accent-400: #FBBF24;
+  --accent-500: #F59E0B;
+  --accent-600: #D97706;
+  --accent-700: #B45309;
+  --accent-800: #92400E;
+  --accent-900: #78350F;
+
+  /* ── Violet scale ─────────────────────────────────────────────────────── */
+  --violet-50: #FAF5FF;
+  --violet-100: #F3E8FF;
+  --violet-200: #E9D5FF;
+  --violet-300: #D8B4FE;
+  --violet-400: #C084FC;
+  --violet-500: #A855F7;
+  --violet-600: #9333EA;
+  --violet-700: #7E22CE;
+  --violet-800: #6B21A8;
+  --violet-900: #581C87;
+  --violet-950: #3B0764;
+
+  /* ── Emerald scale ────────────────────────────────────────────────────── */
+  --emerald-50: #ECFDF5;
+  --emerald-100: #D1FAE5;
+  --emerald-200: #A7F3D0;
+  --emerald-300: #6EE7B7;
+  --emerald-400: #34D399;
+  --emerald-500: #10B981;
+  --emerald-600: #059669;
+  --emerald-700: #047857;
+  --emerald-800: #065F46;
+  --emerald-900: #064E3B;
+  --emerald-950: #022C22;
+
+  /* ── Amber scale ──────────────────────────────────────────────────────── */
+  --amber-50: #FFFBEB;
+  --amber-100: #FEF3C7;
+  --amber-200: #FDE68A;
+  --amber-300: #FCD34D;
+  --amber-400: #FBBF24;
+  --amber-500: #F59E0B;
+  --amber-600: #D97706;
+  --amber-700: #B45309;
+  --amber-800: #92400E;
+  --amber-900: #78350F;
+  --amber-950: #451A03;
+
+  /* ── Chart (Light Mode) ───────────────────────────────────────────────── */
+  --chart-1: #4338CA;
+  --chart-2: #7E22CE;
+  --chart-3: #D97706;
+  --chart-4: #059669;
+  --chart-5: #0E7490;
+
+  /* ── Legacy bridge ────────────────────────────────────────────────────── */
+  --neon-cyan: #0E7490;
+  --neon-cyan-hsl: #0891B2;
+  --neon-purple: #7E22CE;
+  --neon-purple-hsl: #7E22CE;
+  --neon-pink: #BE123C;
+  --neon-pink-hsl: #E11D48;
+
+  /* ── Atmosphere (Light Mode) ──────────────────────────────────────────── */
+  --gradient-space: radial-gradient(ellipse at 50% -20%, rgba(67, 56, 202, 0.08) 0%, rgba(126, 34, 206, 0.04) 50%, rgba(248, 249, 252, 0) 100%);
+  --gradient-neon: linear-gradient(135deg, #4338CA 0%, #7E22CE 50%, #D97706 100%);
+  --glass-bg: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(15, 23, 42, 0.08);
 }
 
 .dark {
-  /* ── Surface ─────────────────────────────────────────────────────────── */
-  --background: #090A10;  /* deep graphite */
+  /* ── Surface (Director's Control Deck — Dark Mode Default) ────────────── */
+  --background: #090A10; /* deep graphite */
   --foreground: #F8FAFC;
   --background-secondary: #0E1017;
-  --card: #11131F;  /* editing suite card */
+  --surface: #090A10;
+  --on-surface: #F8FAFC;
+  --on-surface-variant: #94A3B8;
+
+  --card: #11131F; /* editing suite card */
   --card-foreground: #F8FAFC;
 
   --popover: #11131F;
   --popover-foreground: #F8FAFC;
 
-  --primary: #6366F1;  /* director indigo */
+  --primary: #6366F1; /* director indigo */
+  --primary-text: #818CF8;
+  --primary-solid: #4F46E5;
   --primary-foreground: #FFFFFF;
 
   --secondary: #A855F7;
@@ -39,22 +210,30 @@
 
   --muted: #1A1C28;
   --muted-foreground: #94A3B8;
-  --accent: #F59E0B;  /* amber gold */
-  --accent-foreground: #FFFFFF;  /* ── Feedback ─────────────────────────────────────────────────────────── */
+  --accent: #F59E0B; /* amber gold */
+  --accent-foreground: #FFFFFF;
+
+  /* ── Feedback ─────────────────────────────────────────────────────────── */
   --destructive: #F43F5E;
   --success: #10B981;
-  --destructive-foreground: #FFFFFF;  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --warning: #F59E0B;
+  --info: #22D3EE;
+  --destructive-foreground: #FFFFFF;
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
   --border: #1E2235;
   --input: #1E2235;
-  --ring: #6366F1;  /* ── MD3 bridge ───────────────────────────────────────────────────────── */
+  --ring: #6366F1;
+
+  /* ── MD3 Tonal Surface Hierarchy (Dark Mode) ──────────────────────────── */
   --primary-container: #211966;
   --on-primary-container: #DAD6FF;
   --secondary-container: #352060;
   --on-secondary-container: #E4D6FF;
-  --tertiary: #12D1E2;
-  --tertiary-container: #144D52;
-  --on-tertiary: #FFFFFF;
-  --on-tertiary-container: #CCFBFF;
+  --tertiary: #F59E0B; /* Zen brand amber — matches zen-design-tokens.dtcg.json */
+  --tertiary-container: #3D2A08;
+  --on-tertiary: #090A10;
+  --on-tertiary-container: #FEF3C7;
   --surface-container: var(--card);
   --surface-container-lowest: #08080C;
   --surface-container-low: var(--muted);
@@ -64,11 +243,15 @@
   --surface-dim: var(--muted);
   --surface-variant: var(--muted);
   --inverse-surface: #F8FAFC;
+  --inverse-on-surface: #0B0F19;
   --inverse-primary: #685AED;
-  --outline: var(--border);
-  --outline-variant: #1F1F29;
-  --error-container: var(--destructive);
-  --on-error-container: var(--destructive-foreground);  /* ── Primary scale (indigo, dark mode) ────────────────────────────────── */
+  --outline: #64748B; /* >= 3:1 UI boundary vs #090A10 (WCAG 2.2 SC 1.4.11) */
+  --outline-variant: #1E2235;
+  --error: #FB7185;
+  --error-container: #4C0519;
+  --on-error-container: #FECDD3;
+
+  /* ── Primary scale (indigo, dark mode) ────────────────────────────────── */
   --primary-50: #F2F0FF;
   --primary-100: #E0DDFD;
   --primary-200: #BEB7FA;
@@ -78,7 +261,9 @@
   --primary-600: #2E19E6;
   --primary-700: #2514B8;
   --primary-800: #1A0E81;
-  --primary-900: #0F0849;  /* ── Accent scale (amber, dark mode) ──────────────────────────────────── */
+  --primary-900: #0F0849;
+
+  /* ── Accent scale (amber, dark mode) ──────────────────────────────────── */
   --accent-50: #FFF9F0;
   --accent-100: #FDEFD8;
   --accent-200: #F9DCA9;
@@ -88,7 +273,9 @@
   --accent-600: #CE8509;
   --accent-700: #9D6607;
   --accent-800: #6C4604;
-  --accent-900: #452C03;  /* ── Violet dark ──────────────────────────────────────────────────────── */
+  --accent-900: #452C03;
+
+  /* ── Violet dark ──────────────────────────────────────────────────────── */
   --violet-50: #F5F0FF;
   --violet-100: #E8DDFD;
   --violet-200: #CEB7FA;
@@ -99,7 +286,9 @@
   --violet-700: #4D19B3;
   --violet-800: #36127D;
   --violet-900: #1F0A47;
-  --violet-950: #13062D;  /* ── Emerald dark ─────────────────────────────────────────────────────── */
+  --violet-950: #13062D;
+
+  /* ── Emerald dark ─────────────────────────────────────────────────────── */
   --emerald-50: #ECFDF8;
   --emerald-100: #D1FAEC;
   --emerald-200: #9BF3D5;
@@ -110,7 +299,9 @@
   --emerald-700: #117453;
   --emerald-800: #0B5039;
   --emerald-900: #083626;
-  --emerald-950: #05241A;  /* ── Amber dark ───────────────────────────────────────────────────────── */
+  --emerald-950: #05241A;
+
+  /* ── Amber dark ───────────────────────────────────────────────────────── */
   --amber-50: #FEF7EB;
   --amber-100: #FCECCF;
   --amber-200: #F9D89F;
@@ -121,22 +312,42 @@
   --amber-700: #895906;
   --amber-800: #583904;
   --amber-900: #3B2602;
-  --amber-950: #271902;  /* ── Chart dark ───────────────────────────────────────────────────────── */
+  --amber-950: #271902;
+
+  /* ── Chart dark ───────────────────────────────────────────────────────── */
   --chart-1: #6366F1;
   --chart-2: #A855F7;
   --chart-3: #F59E0B;
   --chart-4: #10B981;
-  --chart-5: #06B6D4;  /* ── Legacy bridge ────────────────────────────────────────────────────── */
+  --chart-5: #06B6D4;
+
+  /* ── Legacy bridge ────────────────────────────────────────────────────── */
   --neon-cyan: #06B6D4;
   --neon-cyan-hsl: #12D1E2;
   --neon-purple: #8B5CF6;
   --neon-purple-hsl: #804CE6;
   --neon-pink: #EC4899;
-  --neon-pink-hsl: #EB4799;  /* ── Atmosphere dark ──────────────────────────────────────────────────── */
+  --neon-pink-hsl: #EB4799;
+
+  /* ── Atmosphere dark ──────────────────────────────────────────────────── */
   --gradient-space: radial-gradient(ellipse at 50% -20%, rgba(99, 102, 241, 0.18) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(8, 9, 13, 0) 100%);
   --gradient-neon: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #F59E0B 100%);
   --glass-bg: rgba(17, 19, 31, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* ── High-Contrast Accessibility Override (WCAG 2.2 AAA / prefers-contrast) */
+@media (prefers-contrast: more) {
+  :root {
+    --border: #475569;
+    --input: #334155;
+    --muted-foreground: #1E293B;
+  }
+  .dark {
+    --border: #475569;
+    --input: #475569;
+    --muted-foreground: #CBD5E1;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -171,7 +382,8 @@
 
   --color-neon-cyan: var(--neon-cyan-hsl);
   --color-neon-purple: var(--neon-purple-hsl);
-  --color-neon-pink: var(--neon-pink);  /* Primary */
+  --color-neon-pink: var(--neon-pink);
+  /* Primary */
   --color-primary-50: var(--primary-50);
   --color-primary-100: var(--primary-100);
   --color-primary-200: var(--primary-200);
@@ -181,7 +393,8 @@
   --color-primary-600: var(--primary-600);
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
-  --color-primary-900: var(--primary-900);  /* Accent */
+  --color-primary-900: var(--primary-900);
+  /* Accent */
   --color-accent-50: var(--accent-50);
   --color-accent-100: var(--accent-100);
   --color-accent-200: var(--accent-200);
@@ -191,7 +404,8 @@
   --color-accent-600: var(--accent-600);
   --color-accent-700: var(--accent-700);
   --color-accent-800: var(--accent-800);
-  --color-accent-900: var(--accent-900);  /* Violet */
+  --color-accent-900: var(--accent-900);
+  /* Violet */
   --color-violet-50: var(--violet-50);
   --color-violet-100: var(--violet-100);
   --color-violet-200: var(--violet-200);
@@ -204,7 +418,8 @@
   --color-violet-900: var(--violet-900);
   --color-violet-950: var(--violet-950);
   --color-secondary-400: var(--violet-400);
-  --color-secondary-700: var(--violet-700);  /* Emerald */
+  --color-secondary-700: var(--violet-700);
+  /* Emerald */
   --color-emerald-50: var(--emerald-50);
   --color-emerald-100: var(--emerald-100);
   --color-emerald-200: var(--emerald-200);
@@ -215,7 +430,8 @@
   --color-emerald-700: var(--emerald-700);
   --color-emerald-800: var(--emerald-800);
   --color-emerald-900: var(--emerald-900);
-  --color-emerald-950: var(--emerald-950);  /* Amber */
+  --color-emerald-950: var(--emerald-950);
+  /* Amber */
   --color-amber-50: var(--amber-50);
   --color-amber-100: var(--amber-100);
   --color-amber-200: var(--amber-200);
@@ -247,44 +463,47 @@ html {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Director's Control Deck Signature Utilities
+   Director's Control Deck Signature Utilities (Dual-Theme Adaptive)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Ultra-sleek glass panel */
 .glass-panel {
-  background: rgba(18, 20, 31, 0.75);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
 }
 
 .glass-panel-hover {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--motion-duration-normal, 0.24s) var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1));
 }
 .glass-panel-hover:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 12px 32px -8px rgba(99, 102, 241, 0.2);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--primary) 20%, transparent);
   transform: translateY(-2px);
 }
 
 /* Card glass / letterpress compatibility */
 .card-letterpress, .glass-card {
-  background: rgba(18, 20, 31, 0.75);
+  background: var(--glass-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+  transition: all var(--motion-duration-normal, 0.24s) var(--motion-ease-standard, ease);
+}
+.dark .card-letterpress, .dark .glass-card {
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
-  transition: all 0.3s ease;
 }
 .card-letterpress:hover, .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.35);
-  box-shadow: 0 8px 30px -4px rgba(99, 102, 241, 0.15);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow: 0 8px 30px -4px color-mix(in srgb, var(--primary) 15%, transparent);
   transform: translateY(-2px);
 }
 
 /* Modern glow accents */
 .glow-primary {
-  box-shadow: 0 0 32px -4px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 32px -4px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 .glow-amber {
   box-shadow: 0 0 32px -4px rgba(245, 158, 11, 0.3);
@@ -292,12 +511,17 @@ html {
 
 /* High-tech text gradients */
 .text-gradient {
+  background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dark .text-gradient {
   background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .text-gradient-primary {
-  background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #F59E0B 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -306,7 +530,7 @@ html {
 .divider-industrial {
   position: relative;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12) 50%, transparent);
+  background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
   margin: 2rem 0;
 }
 .divider-industrial::after {
@@ -322,7 +546,7 @@ html {
 }
 
 .bg-paper {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(color-mix(in srgb, var(--foreground) 6%, transparent) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -355,14 +579,14 @@ html {
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up {
-  animation: fade-in-up 0.5s ease-out both;
+  animation: fade-in-up var(--motion-duration-deliberate, 0.4s) var(--motion-ease-emphasized, ease-out) both;
 }
 
 /* Staggered list reveals */
 .stagger-reveal > * {
   opacity: 0;
   transform: translateY(12px);
-  animation: fade-in-up 0.4s ease-out forwards;
+  animation: fade-in-up var(--motion-duration-deliberate, 0.4s) var(--motion-ease-emphasized, ease-out) forwards;
 }
 .stagger-reveal > *:nth-child(1) { animation-delay: 0s; }
 .stagger-reveal > *:nth-child(2) { animation-delay: 0.1s; }
@@ -388,7 +612,8 @@ html {
 
 /* Card hover lift — subtle, no glow */
 .card-hover {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform var(--motion-duration-normal, 0.24s) var(--motion-ease-standard, ease),
+              box-shadow var(--motion-duration-normal, 0.24s) var(--motion-ease-standard, ease);
 }
 .card-hover:hover {
   transform: translateY(-2px);
@@ -397,16 +622,20 @@ html {
 
 /* Director's Control Deck signature cards */
 .glass-card-obsidian {
-  background: rgba(18, 20, 31, 0.85);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 20px rgba(15, 23, 42, 0.08);
+  transition: all var(--motion-duration-normal, 0.24s) var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.dark .glass-card-obsidian {
+  background: rgba(18, 20, 31, 0.85);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 20px rgba(0, 0, 0, 0.35);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-card-obsidian:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 30px rgba(99, 102, 241, 0.2);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 30px color-mix(in srgb, var(--primary) 18%, transparent);
   transform: translateY(-2px);
 }
 
@@ -520,7 +749,7 @@ html {
 }
 /* Industrial heavy: deliberate weight — section reveals, page enter */
 .ease-industrial {
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-timing-function: var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -537,7 +766,7 @@ html {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   background-color: rgba(244, 63, 94, 0.12);
-  color: #F43F5E;
+  color: var(--destructive);
   border: 1px solid rgba(244, 63, 94, 0.3);
 }
 .rec-indicator::before {
@@ -545,7 +774,7 @@ html {
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 9999px;
-  background-color: #F43F5E;
+  background-color: var(--destructive);
   animation: glow-pulse 1.5s ease-in-out infinite;
 }
 
@@ -556,6 +785,7 @@ html {
   background: radial-gradient(circle at 50% 50%, rgba(18, 20, 31, 0.95) 0%, rgba(8, 9, 13, 1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+  color: var(--studio-stage-fg);
 }
 
 .studio-crosshair {
@@ -614,14 +844,14 @@ html {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #F43F5E;
+  color: var(--destructive);
 }
 .camera-rec::before {
   content: '';
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background-color: #F43F5E;
+  background-color: var(--destructive);
   animation: glow-pulse 1.5s ease-in-out infinite;
 }
 
@@ -631,6 +861,11 @@ html {
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
   border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 24px -4px rgba(15, 23, 42, 0.08);
+}
+.dark .studio-glass {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 4px 24px -4px rgba(0, 0, 0, 0.25);
@@ -643,7 +878,7 @@ html {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Accessibility: Keyboard Focus Ring (WCAG 2.1 AA)
+   Accessibility: Keyboard Focus Ring (WCAG 2.2 AA)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :focus-visible {
@@ -679,8 +914,14 @@ html {
   border: 1px solid var(--border);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 30px -10px rgba(15, 23, 42, 0.08);
+  transition: border-color var(--motion-duration-normal, 0.24s) var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1)),
+              transform var(--motion-duration-normal, 0.24s) var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.dark .spatial-bento-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 10px 30px -10px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .spatial-bento-card:hover {
   border-color: color-mix(in srgb, var(--primary) 45%, transparent);
@@ -736,10 +977,20 @@ html {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Reduced Motion
+   Reduced Motion (WCAG 2.2 — prefers-reduced-motion: reduce)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-instant: 0ms;
+    --motion-duration-fast: 0ms;
+    --motion-duration-normal: 0ms;
+    --motion-duration-deliberate: 0ms;
+    --motion-duration-cinematic: 0ms;
+  }
+  html {
+    scroll-behavior: auto;
+  }
   .animate-gradient,
   .animate-conveyor,
   .animate-fade-in-up,
@@ -750,11 +1001,30 @@ html {
   .animate-blink,
   .animate-bounce-slow,
   .card-hover,
+  .glass-panel-hover,
+  .glass-card,
+  .glass-card-obsidian,
+  .spatial-bento-card,
   .stagger-reveal > * {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
-  .card-hover:hover { transform: none; }
+  .card-hover:hover,
+  .glass-panel-hover:hover,
+  .glass-card:hover,
+  .glass-card-obsidian:hover,
+  .spatial-bento-card:hover {
+    transform: none;
+  }
+  /* Pseudo-element keyframes are not covered by the class reset above, and
+     these run indefinitely (radar sweep, REC dot pulse) — they must stop. */
+  .radar::after,
+  .rec-indicator::before,
+  .camera-rec::before,
+  .film-strip::after {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }

@@ -21,10 +21,10 @@ function readSrcFile(relPath: string): string {
 describe("Director's Control Deck Design System Verification", () => {
   const globalsCss = readSrcFile('app/globals.css');
 
-  it('declares color tokens exactly once, in the dark block, because the app renders dark-only', () => {
+  it('declares Dual-Theme tokens across Executive Studio Ivory (:root) and Cinema Dark Room (.dark)', () => {
     expect(globalsCss).toContain('"Director\'s Control Deck" Design System');
 
-    // Cinema Dark Room (.dark) is the single declaration site for color.
+    // Cinema Dark Room (.dark) default tokens
     expect(globalsCss).toContain('--background: #090A10;');
     expect(globalsCss).toContain('--card: #11131F;');
     expect(globalsCss).toContain('--primary: #6366F1;');
@@ -32,13 +32,15 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(globalsCss).toContain('--glass-bg: rgba(17, 19, 31, 0.75);');
     expect(globalsCss).toContain('--glass-border: rgba(255, 255, 255, 0.08);');
 
-    // `:root` keeps geometry only. Redeclaring colors there produced 111 values that
-    // `.dark` always overrode, so no route could ever render them.
+    // Executive Studio Ivory (:root) light mode + Zen Motion Governance tokens
     const rootBlock = globalsCss.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
     expect(rootBlock).toContain('--radius');
-    expect(rootBlock).not.toContain('--background');
-    expect(rootBlock).not.toContain('--primary');
-    expect(rootBlock).not.toContain('--card');
+    expect(rootBlock).toContain('--background: #F8F9FC;');
+    expect(rootBlock).toContain('--primary: #4338CA;');
+    expect(rootBlock).toContain('--card: #FFFFFF;');
+    expect(rootBlock).toContain('--motion-duration-deliberate: 400ms;');
+    expect(rootBlock).toContain('--motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);');
+    expect(rootBlock).toContain('--studio-stage-bg: #090A10;');
   });
 
   it('defines signature Director Control Deck utility classes (.radar, .film-strip, .camera-rec, .studio-glass)', () => {
@@ -75,7 +77,12 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(inputTsx).not.toMatch(/#[0-9a-fA-F]{6}/);
     expect(tableTsx).toContain('bg-card');
     expect(tableTsx).not.toContain('dark:bg-[#11131F]');
-    expect(dashboardShellTsx).toContain('dark:bg-[#090A10]');
+    // The shell surface comes from the semantic token. `--background` in `.dark`
+    // already resolves to #090A10, so a `dark:bg-[#…]` literal would only freeze
+    // the component against a future theme change (same invariant as card/table).
+    expect(dashboardShellTsx).toContain('bg-background text-foreground');
+    expect(dashboardShellTsx).not.toMatch(/dark:bg-\[#[0-9a-fA-F]{6}\]/);
+    expect(dashboardShellTsx).not.toMatch(/dark:text-\[#[0-9a-fA-F]{6}\]/);
     expect(marketingNavTsx).toContain('studio-glass');
   });
 

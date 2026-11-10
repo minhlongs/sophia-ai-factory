@@ -16,10 +16,7 @@ interface ScrollRevealProps {
 
 /**
  * Wraps children with a fade-in-up reveal triggered when the element
- * scrolls into the viewport. Uses IntersectionObserver for performance.
- *
- * With staggerDelay: each direct child reveals sequentially with an
- * industrial "assembly line" feel — no JS animation library needed.
+ * scrolls into the viewport. Uses IntersectionObserver + Zen Motion Governance tokens.
  */
 export function ScrollReveal({
   children,
@@ -32,6 +29,15 @@ export function ScrollReveal({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -46,10 +52,9 @@ export function ScrollReveal({
     return () => observer.disconnect();
   }, [threshold]);
 
-  // Mechanical easing — deliberate weight, factory press feel
-  const easing = "cubic-bezier(0.16, 1, 0.3, 1)";
+  const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
+  const duration = "var(--motion-duration-cinematic, 600ms)";
 
-  // Stagger children: each child gets its own reveal
   if (staggerDelay && visible) {
     const childArray = Children.toArray(children);
     return (
@@ -62,7 +67,7 @@ export function ScrollReveal({
               ...existingStyle,
               opacity: 1,
               transform: "none",
-              transition: `opacity 0.6s ${easing} ${delay + i * staggerDelay}ms, transform 0.6s ${easing} ${delay + i * staggerDelay}ms`,
+              transition: `opacity ${duration} ${easing} ${delay + i * staggerDelay}ms, transform ${duration} ${easing} ${delay + i * staggerDelay}ms`,
             },
           } as { style: React.CSSProperties });
         })}
@@ -70,7 +75,6 @@ export function ScrollReveal({
     );
   }
 
-  // Stagger children — initial hidden state
   if (staggerDelay && !visible) {
     const childArray = Children.toArray(children);
     return (
@@ -83,7 +87,7 @@ export function ScrollReveal({
               ...existingStyle,
               opacity: 0,
               transform: "translateY(1.5rem)",
-              transition: `opacity 0.6s ${easing} ${delay + i * staggerDelay}ms, transform 0.6s ${easing} ${delay + i * staggerDelay}ms`,
+              transition: `opacity ${duration} ${easing} ${delay + i * staggerDelay}ms, transform ${duration} ${easing} ${delay + i * staggerDelay}ms`,
             },
           } as { style: React.CSSProperties });
         })}
@@ -98,7 +102,7 @@ export function ScrollReveal({
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "none" : "translateY(2rem)",
-        transition: `opacity 0.7s ${easing} ${delay}ms, transform 0.7s ${easing} ${delay}ms`,
+        transition: `opacity ${duration} ${easing} ${delay}ms, transform ${duration} ${easing} ${delay}ms`,
       }}
     >
       {children}

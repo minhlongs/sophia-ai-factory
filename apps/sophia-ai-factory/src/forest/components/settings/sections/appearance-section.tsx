@@ -1,6 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 import { Label } from '@/seed/components/ui/label';
 import {
   Card,
@@ -18,11 +20,22 @@ interface AppearanceSectionProps {
 
 export function AppearanceSection({ form }: AppearanceSectionProps) {
   const t = useTranslations('settings.appearance');
+  const { setTheme } = useTheme();
   const { watch, setValue } = form;
   const theme = watch('settings.theme');
 
+  const handleSelectTheme = (nextTheme: 'light' | 'dark' | 'system') => {
+    setValue('settings.theme', nextTheme, { shouldDirty: true });
+    if (nextTheme === 'system' && typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      setTheme(prefersLight ? 'light' : 'dark');
+      return;
+    }
+    setTheme(nextTheme === 'system' ? 'dark' : nextTheme);
+  };
+
   return (
-    <Card className="bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08]">
+    <Card className="bg-card border-border dark:border-white/[0.08]">
       <CardHeader>
         <CardTitle className="text-foreground dark:text-white">{t('title')}</CardTitle>
         <CardDescription>{t('subtitle')}</CardDescription>
@@ -35,17 +48,15 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               type="button"
               role="radio"
               aria-checked={theme === 'light'}
-              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
+              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-muted text-left w-full ${
                 theme === 'light'
                   ? 'border-primary bg-primary/5'
                   : 'border-border dark:border-white/[0.08]'
               }`}
-              onClick={() =>
-                setValue('settings.theme', 'light', { shouldDirty: true })
-              }
+              onClick={() => handleSelectTheme('light')}
             >
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border border-primary bg-[#F8F9FC]" aria-hidden="true" />
+                <div className="h-4 w-4 rounded-full border border-primary bg-slate-100" aria-hidden="true" />
                 <span className="font-medium text-foreground dark:text-white">{t('themeLight')}</span>
               </div>
             </button>
@@ -53,17 +64,15 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               type="button"
               role="radio"
               aria-checked={theme === 'dark'}
-              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
+              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-muted text-left w-full ${
                 theme === 'dark'
                   ? 'border-primary bg-primary/5'
                   : 'border-border dark:border-white/[0.08]'
               }`}
-              onClick={() =>
-                setValue('settings.theme', 'dark', { shouldDirty: true })
-              }
+              onClick={() => handleSelectTheme('dark')}
             >
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border border-primary bg-[#090A10]" aria-hidden="true" />
+                <div className="h-4 w-4 rounded-full border border-primary bg-slate-950" aria-hidden="true" />
                 <span className="font-medium text-foreground dark:text-white">{t('themeDark')}</span>
               </div>
             </button>
@@ -71,14 +80,12 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               type="button"
               role="radio"
               aria-checked={theme === 'system'}
-              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
+              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-muted text-left w-full ${
                 theme === 'system'
                   ? 'border-primary bg-primary/5'
                   : 'border-border dark:border-white/[0.08]'
               }`}
-              onClick={() =>
-                setValue('settings.theme', 'system', { shouldDirty: true })
-              }
+              onClick={() => handleSelectTheme('system')}
             >
               <div className="flex items-center gap-2">
                 <div className="flex h-4 w-4 items-center justify-center rounded-full border border-primary bg-transparent" aria-hidden="true">

@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Bell, Globe } from "lucide-react";
+import { ThemeToggle } from "@/forest/components/theme-toggle";
 
 export interface DashboardTopBarActionsProps {
   currentLocale: "vi" | "en";
@@ -32,7 +33,7 @@ export function DashboardTopBarActions({
       <button
         type="button"
         onClick={onToggleLocale}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] hover:bg-muted/70 dark:hover:bg-white/[0.08] border border-border dark:border-white/[0.08] hover:border-primary/30 transition-all"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card hover:bg-muted/70 border border-border hover:border-primary/30 transition-all"
         aria-label="Toggle language"
         data-testid="locale-switcher"
       >
@@ -41,6 +42,9 @@ export function DashboardTopBarActions({
           {currentLocale === "vi" ? "VI" : "EN"}
         </span>
       </button>
+
+      {/* ZEN DESIGN OS v1.0 — Dual-Theme Toggle (Dark default / Light Ivory) */}
+      <ThemeToggle />
 
       {/* Notification Bell with Unread Badge */}
       <button
@@ -52,7 +56,7 @@ export function DashboardTopBarActions({
         <Bell className="w-4 h-4" />
         {unreadNotificationCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-mono font-bold text-white shadow-sm ring-2 ring-background dark:ring-[#090A10]"
+            className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-mono font-bold text-white shadow-sm ring-2 ring-background"
             data-testid="unread-notification-badge"
           >
             {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}

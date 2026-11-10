@@ -47,8 +47,8 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                     isCompleted
                       ? 'bg-emerald-600 dark:bg-emerald-500 border-emerald-600 dark:border-emerald-500 text-white shadow-xs'
                       : isCurrent
-                        ? 'bg-[#4338CA] dark:bg-[#6366F1] border-[#4338CA] dark:border-[#6366F1] text-white ring-4 ring-[#4338CA]/15 dark:ring-[#6366F1]/20 font-bold shadow-xs'
-                        : 'bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08] text-muted-foreground'
+                        ? 'bg-primary border-primary text-primary-foreground ring-4 ring-primary/20 font-bold shadow-xs'
+                        : 'bg-card border-border text-muted-foreground'
                   )}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
@@ -64,9 +64,9 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                   className={cn(
                     'hidden sm:block text-[10px] md:text-xs font-semibold uppercase tracking-wider mt-2 text-center truncate max-w-[84px] transition-colors duration-300',
                     isCurrent
-                      ? 'text-[#4338CA] dark:text-[#6366F1] font-bold'
+                      ? 'text-primary font-bold'
                       : isCompleted
-                        ? 'text-emerald-700 dark:text-emerald-400'
+                        ? 'text-emerald-600 dark:text-emerald-400'
                         : 'text-muted-foreground/70'
                   )}
                   title={step}
@@ -81,7 +81,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
 
       {/* Mobile Active Step Indicator (320px–639px) */}
       <div className="sm:hidden text-center mt-3 px-2">
-        <span className="font-mono text-[11px] font-semibold text-[#4338CA] dark:text-[#6366F1] uppercase tracking-wider">
+        <span className="font-mono text-[11px] font-semibold text-primary uppercase tracking-wider">
           Step {currentStep} of {steps.length}:
         </span>{' '}
         <span className="text-xs font-bold text-foreground">

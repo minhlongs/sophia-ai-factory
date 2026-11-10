@@ -84,7 +84,7 @@ export function TimelineBrowserPreview({
       <div className="grid gap-5 md:grid-cols-2">
         <div
           data-testid="timeline-dom-stage"
-          style={{ backgroundColor: activeScene?.backgroundHex ?? '#0F172A' }}
+          style={{ backgroundColor: activeScene?.backgroundHex ?? 'var(--studio-stage-bg)' }}
           className="relative flex aspect-[9/16] max-h-[380px] flex-col justify-between overflow-hidden rounded-xl border border-amber-500/30 p-4 text-white shadow-inner"
         >
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-amber-300">

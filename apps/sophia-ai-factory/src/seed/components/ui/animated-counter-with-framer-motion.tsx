@@ -10,11 +10,24 @@ interface AnimatedCounterProps {
 /**
  * A lightweight animated counter that doesn't depend on framer-motion.
  * Optimized for performance as part of the Sophia AI Factory performance audit.
+ *
+ * Respects `prefers-reduced-motion: reduce` — when the operating system asks
+ * for reduced motion, the counter jumps straight to the final value without an
+ * animation loop.
  */
 export function AnimatedCounter({ value, duration = 1500 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
 
+  const reducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   useEffect(() => {
+    if (reducedMotion) {
+      setCount(value);
+      return;
+    }
+
     let startTimestamp: number | null = null;
     let animationFrameId: number;
 
@@ -34,7 +47,7 @@ export function AnimatedCounter({ value, duration = 1500 }: AnimatedCounterProps
 
     animationFrameId = window.requestAnimationFrame(step);
     return () => window.cancelAnimationFrame(animationFrameId);
-  }, [value, duration]);
+  }, [value, duration, reducedMotion]);
 
   return <span>{count.toLocaleString()}</span>;
 }

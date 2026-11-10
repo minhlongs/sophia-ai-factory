@@ -22,8 +22,8 @@ interface FadeInViewProps {
 }
 
 /**
- * Lightweight replacement for framer-motion's whileInView pattern.
- * Uses IntersectionObserver + CSS transitions instead of ~35KB JS library.
+ * Lightweight zero-dependency viewport entrance primitive.
+ * Governed by Zen Motion Governance (`--motion-ease-emphasized` + reduced-motion guard).
  */
 export function FadeInView({
   children,
@@ -31,7 +31,7 @@ export function FadeInView({
   delay = 0,
   direction = "up",
   distance = 20,
-  duration = 500,
+  duration = 400,
   once = true,
   rootMargin = "0px",
   as: tag = "div",
@@ -40,6 +40,15 @@ export function FadeInView({
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setIsVisible(true);
+      return;
+    }
+
     const element = ref.current;
     if (!element) return;
 
@@ -68,6 +77,7 @@ export function FadeInView({
   };
 
   const Tag = tag as React.ElementType;
+  const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
 
   return (
     <Tag
@@ -76,7 +86,7 @@ export function FadeInView({
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "none" : directions[direction],
-        transition: `opacity ${duration}ms cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform ${duration}ms cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+        transition: `opacity ${duration}ms ${easing} ${delay}ms, transform ${duration}ms ${easing} ${delay}ms`,
         willChange: "opacity, transform",
       }}
     >
