@@ -64,10 +64,10 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                   className={cn(
                     'hidden sm:block text-[10px] md:text-xs font-semibold uppercase tracking-wider mt-2 text-center truncate max-w-[84px] transition-colors duration-300',
                     isCurrent
-                      ? 'text-primary font-bold'
+                      ? 'text-primary-text font-bold'
                       : isCompleted
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-muted-foreground/70'
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : 'text-muted-foreground'
                   )}
                   title={step}
                 >
@@ -81,7 +81,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
 
       {/* Mobile Active Step Indicator (320px–639px) */}
       <div className="sm:hidden text-center mt-3 px-2">
-        <span className="font-mono text-[11px] font-semibold text-primary uppercase tracking-wider">
+        <span className="font-mono text-[11px] font-semibold text-primary-text uppercase tracking-wider">
           Step {currentStep} of {steps.length}:
         </span>{' '}
         <span className="text-xs font-bold text-foreground">

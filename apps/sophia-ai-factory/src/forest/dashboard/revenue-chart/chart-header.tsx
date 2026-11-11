@@ -95,7 +95,7 @@ export function RevenueChartHeader({
             className={cn(
               "px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all",
               activePeriod === opt.key
-                ? "bg-primary text-white shadow-sm font-bold"
+                ? "bg-primary-600 text-white shadow-sm font-bold dark:bg-primary-600"
                 : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-background/60 dark:hover:bg-white/[0.04]"
             )}
             data-testid={`period-selector-${opt.key}`}

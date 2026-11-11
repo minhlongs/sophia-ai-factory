@@ -84,7 +84,7 @@ export function SophiaArtifactCanvas({
 
         <div
           data-testid="baoyu-oklch-badge"
-          className="inline-flex items-center gap-2 self-start sm:self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-600 dark:text-emerald-400"
+          className="inline-flex items-center gap-2 self-start sm:self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-700 dark:text-emerald-300"
         >
           <span>✓ {t('baoyuCanvas.oklchPass')}</span>
           <span>
@@ -131,13 +131,22 @@ export function SophiaArtifactCanvas({
                 {showComplianceBadge && (
                   <span
                     data-testid={`baoyu-compliance-pill-${board.id}`}
-                    className="inline-block rounded px-2 py-0.5 font-mono text-[10px] bg-amber-500/15 text-amber-300"
+                    className="inline-block rounded px-2 py-0.5 font-mono text-[10px] bg-amber-500/15 text-amber-200"
                   >
                     FTC / MiCA / VN52
                   </span>
                 )}
                 <div
-                  style={{ backgroundColor: accentColor }}
+                  style={{
+                    backgroundColor:
+                      accentColor.toLowerCase() === DEFAULT_ACCENT_HEX
+                        ? 'var(--primary-600)'
+                        : accentColor,
+                    color:
+                      accentColor.toLowerCase() === DEFAULT_ACCENT_HEX
+                        ? 'var(--primary-foreground)'
+                        : DARK_CANVAS_BG,
+                  }}
                   className="rounded-full px-3 py-1.5 text-center font-mono text-[11px] font-semibold text-white"
                 >
                   {isVi ? board.ctaVi : board.ctaEn}
@@ -154,7 +163,7 @@ export function SophiaArtifactCanvas({
             data-testid="baoyu-tweaks-panel"
             className="rounded-xl border border-border bg-muted/40 p-4 space-y-3"
           >
-            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
               {t('baoyuCanvas.tweaksTitle')}
             </h3>
 
@@ -234,7 +243,7 @@ export function SophiaArtifactCanvas({
                   className="rounded-lg border border-border/60 dark:border-white/10 p-2.5 text-xs space-y-1.5"
                 >
                   <div className="flex items-center justify-between font-mono text-[10px]">
-                    <span className="text-amber-600 dark:text-amber-400 font-semibold">{cmt.author}</span>
+                    <span className="text-amber-800 dark:text-amber-300 font-semibold">{cmt.author}</span>
                     <button
                       type="button"
                       data-testid={`baoyu-comment-toggle-${cmt.id}`}

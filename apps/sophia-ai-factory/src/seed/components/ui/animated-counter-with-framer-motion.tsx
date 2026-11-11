@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { prefersReducedMotion } from "./fade-in-view";
 
 interface AnimatedCounterProps {
   value: number;
@@ -18,9 +19,7 @@ interface AnimatedCounterProps {
 export function AnimatedCounter({ value, duration = 1500 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
 
-  const reducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = prefersReducedMotion();
 
   useEffect(() => {
     if (reducedMotion) {
@@ -49,5 +48,12 @@ export function AnimatedCounter({ value, duration = 1500 }: AnimatedCounterProps
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [value, duration, reducedMotion]);
 
-  return <span>{count.toLocaleString()}</span>;
+  return (
+    <span
+      data-zen-motion="animated-counter"
+      data-zen-reduced={reducedMotion ? "true" : "false"}
+    >
+      {count.toLocaleString()}
+    </span>
+  );
 }

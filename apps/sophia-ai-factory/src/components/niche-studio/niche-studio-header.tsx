@@ -19,7 +19,7 @@ export function NicheStudioHeader({ t }: NicheStudioHeaderProps) {
     <header className="v3-core flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border dark:border-[#1E2235] pb-5 gap-4">
       <div>
         <div className="flex items-center gap-3">
-          <span className="eyebrow !mb-0 px-2.5 py-0.5 text-xs font-semibold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 uppercase tracking-wider">
+          <span className="eyebrow !mb-0 px-2.5 py-0.5 text-xs font-semibold rounded bg-amber-500/10 text-amber-800 dark:text-amber-200 border border-amber-500/20 uppercase tracking-wider">
             <span className="dot" aria-hidden="true" />
             {t('badge')}
           </span>
@@ -36,7 +36,7 @@ export function NicheStudioHeader({ t }: NicheStudioHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           {t('byokReady')}
         </span>

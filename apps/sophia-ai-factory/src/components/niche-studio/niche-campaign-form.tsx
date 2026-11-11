@@ -175,7 +175,7 @@ export function NicheCampaignForm({
         </div>
       )}
       {statusMsg && (
-        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-200">
           ✓ {statusMsg}
         </div>
       )}
@@ -184,7 +184,7 @@ export function NicheCampaignForm({
           type="button"
           onClick={handleSaveOfferOnly}
           disabled={isSavingOffer || isLoading}
-          className="w-full py-2.5 px-3 rounded-lg bg-secondary dark:bg-[#1E2235] hover:bg-secondary/80 font-semibold text-foreground dark:text-zinc-100 text-xs transition-all border border-border dark:border-[#1E2235] disabled:opacity-50"
+          className="w-full py-2.5 px-3 rounded-lg bg-muted dark:bg-[#1E2235] hover:bg-muted/80 font-semibold text-foreground dark:text-zinc-100 text-xs transition-all border border-border dark:border-[#1E2235] disabled:opacity-50"
         >
           {isSavingOffer ? '...' : t('btnSaveOfferZeroCost')}
         </button>

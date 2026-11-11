@@ -61,7 +61,7 @@ export function DashboardAgentHudBar({
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="h-2 w-2 shrink-0 rounded-full bg-accent animate-glow-pulse" />
           <div className="truncate">
-            <p className="text-xs font-bold uppercase tracking-wider text-primary truncate">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary-text truncate">
               {isVi ? descriptor.titleVi : descriptor.titleEn}
             </p>
             <p className="text-[11px] text-muted-foreground truncate">
@@ -71,7 +71,7 @@ export function DashboardAgentHudBar({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden sm:inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono font-semibold text-emerald-400">
+          <span className="hidden sm:inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono font-semibold text-emerald-700 dark:text-emerald-300">
             {isVi ? 'Bảo mật: Đã ẩn khóa BYOK' : 'PII & BYOK Scrubbed'}
           </span>
 
@@ -86,7 +86,7 @@ export function DashboardAgentHudBar({
           <button
             type="button"
             onClick={handleCopySafeContext}
-            className="rounded-lg bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition"
+            className="rounded-lg bg-primary-600 dark:bg-primary-600 px-3 py-1 text-xs font-semibold text-white hover:bg-primary-700 dark:hover:bg-primary-700 transition"
           >
             {copied
               ? (isVi ? '✓ Đã chép Context an toàn' : '✓ Safe Context Copied')

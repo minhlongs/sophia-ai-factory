@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/seed/security/rate-limiting-middleware';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, type RateLimitConfig } from '@/seed/security/rate-limiting-middleware';
 import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { isPublicApiRoute } from '@/forest/middleware/auth-guard';
@@ -64,10 +64,15 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
   // cost (agent-chat, missions POST, campaigns/create, factory/url-to-revenue) layer additional
   // `withRateLimit` above this baseline to cap per-tenant per-tier abuse.
   const identifier = getClientIdentifier(request);
-  let rateLimitConfig = RATE_LIMITS.api as typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook | typeof RATE_LIMITS.discovery;
+  let rateLimitConfig: RateLimitConfig = RATE_LIMITS.api;
 
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
+  if (pathname.startsWith('/api/auth')) {
     rateLimitConfig = RATE_LIMITS.auth;
+  } else if (pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
+    // BYOK key management and admin routes run far tighter loops than login:
+    // the Setup Wizard re-reads /api/user/byok on every step and refresh, so
+    // they must never share the 10/min auth bucket with /api/auth/*.
+    rateLimitConfig = RATE_LIMITS.admin;
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
   } else if (pathname.startsWith('/api/webhooks')) {

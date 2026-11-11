@@ -6181,8 +6181,6 @@
       "user_create_failed": "Could not create account. Email may already exist — try signing in."
     }
   },
-  "All settings reset to defaults.": "All settings reset to defaults.",
-  "Network error. Please try again.": "Network error. Please try again.",
   "error_magic_failed": "Error magic failed",
   "error_connection": "Error connection",
   "magic_link_description": "Magic link description",

@@ -70,7 +70,7 @@ export function NicheGate1ChannelInlineForm({
       className="p-3 rounded-lg bg-zinc-950/90 border border-amber-500/30 space-y-2.5 text-[11px]"
     >
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-amber-300">{t('channelByokFormTitle')}</span>
+        <span className="font-semibold text-amber-200">{t('channelByokFormTitle')}</span>
         <button
           type="button"
           onClick={onCancel}
@@ -83,6 +83,7 @@ export function NicheGate1ChannelInlineForm({
         <input
           type="text"
           required
+          aria-label={t('channelByokIdPlaceholder')}
           placeholder={t('channelByokIdPlaceholder')}
           value={externalAccountId}
           onChange={(e) => setExternalAccountId(e.target.value)}
@@ -90,6 +91,7 @@ export function NicheGate1ChannelInlineForm({
         />
         <input
           type="text"
+          aria-label={t('channelByokNamePlaceholder')}
           placeholder={t('channelByokNamePlaceholder')}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
@@ -98,6 +100,7 @@ export function NicheGate1ChannelInlineForm({
         <input
           type="password"
           required
+          aria-label={t('channelByokAccessTokenPlaceholder')}
           placeholder={t('channelByokAccessTokenPlaceholder')}
           value={accessToken}
           onChange={(e) => setAccessToken(e.target.value)}
@@ -105,6 +108,7 @@ export function NicheGate1ChannelInlineForm({
         />
         <input
           type="password"
+          aria-label={t('channelByokRefreshTokenPlaceholder')}
           placeholder={t('channelByokRefreshTokenPlaceholder')}
           value={refreshToken}
           onChange={(e) => setRefreshToken(e.target.value)}

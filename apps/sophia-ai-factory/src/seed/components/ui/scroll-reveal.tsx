@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, Children, isValidElement, cloneElement } from "react";
+import { prefersReducedMotion } from "./fade-in-view";
 
 interface ScrollRevealProps {
   children: React.ReactNode;
@@ -26,14 +27,12 @@ export function ScrollReveal({
   staggerDelay,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const reduced = prefersReducedMotion();
+  // Visible from the first frame under reduced motion — never a hidden start.
+  const [visible, setVisible] = useState(reduced);
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (prefersReducedMotion()) {
       setVisible(true);
       return;
     }
@@ -99,10 +98,12 @@ export function ScrollReveal({
     <div
       ref={ref}
       className={className}
+      data-zen-motion="scroll-reveal"
+      data-zen-revealed={visible ? "true" : "false"}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "none" : "translateY(2rem)",
-        transition: `opacity ${duration} ${easing} ${delay}ms, transform ${duration} ${easing} ${delay}ms`,
+        transition: reduced ? "none" : `opacity ${duration} ${easing} ${delay}ms, transform ${duration} ${easing} ${delay}ms`,
       }}
     >
       {children}

@@ -1,0 +1,69 @@
+{
+  "keyboardReport": [
+    {
+      "route": "/vi/setup-wizard",
+      "tabStopCount": 11,
+      "uniqueSelectors": 2,
+      "focusRingsVisible": 11,
+      "outlineHiddenCount": 0,
+      "dialogFocusTrapped": null
+    },
+    {
+      "route": "/vi/dashboard",
+      "tabStopCount": 20,
+      "uniqueSelectors": 20,
+      "focusRingsVisible": 20,
+      "outlineHiddenCount": 0,
+      "dialogFocusTrapped": null
+    },
+    {
+      "route": "/vi/dashboard/niche-studio",
+      "tabStopCount": 20,
+      "uniqueSelectors": 20,
+      "focusRingsVisible": 20,
+      "outlineHiddenCount": 0,
+      "dialogFocusTrapped": null
+    }
+  ],
+  "reflowCheck": {
+    "viewportWidth": 320,
+    "routes": [
+      {
+        "route": "/vi/setup-wizard",
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "requiresHorizontalScrolling": false
+      },
+      {
+        "route": "/vi/dashboard",
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "requiresHorizontalScrolling": false
+      },
+      {
+        "route": "/vi/dashboard/niche-studio",
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "requiresHorizontalScrolling": false
+      }
+    ],
+    "requiresHorizontalScrolling": false
+  },
+  "motionReport": {
+    "prefersReduce": true,
+    "instantAnimations": 0,
+    "pilotRoutes": {
+      "AnimatedCounter": null,
+      "FadeInView": null,
+      "PageTransition": null,
+      "ScrollReveal": null
+    },
+    "pricingRoute": {
+      "AnimatedCounter": null,
+      "FadeInView": null,
+      "PageTransition": null,
+      "ScrollReveal": null
+    }
+  },
+  "reducedMotion": "reduce"
+}

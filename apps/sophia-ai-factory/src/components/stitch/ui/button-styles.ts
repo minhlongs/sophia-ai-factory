@@ -11,8 +11,8 @@ export const BUTTON_BASE_STYLES = `
 
 export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: `
-    bg-primary text-primary-foreground
-    hover:bg-primary/90
+    bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white
+    hover:bg-primary/90 dark:hover:bg-primary-700
     shadow-md hover:shadow-lg
     border border-primary/20
   `,

@@ -6368,14 +6368,6 @@
     }
   },
   "missions": {},
-  "All settings reset to defaults": {
-    "": "TODO"
-  },
-  "Network error": {
-    " Please try again": {
-      "": "TODO"
-    }
-  },
   "error_magic_failed": "Error magic failed",
   "error_connection": "Error connection",
   "magic_link_description": "Magic link description",

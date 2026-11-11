@@ -27,10 +27,10 @@ export function VideoCompliancePreviewPlayer({
 
   if (!plan) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-zinc-900/40 rounded-xl border border-dashed border-zinc-800 text-center min-h-[460px]">
+      <div className="flex flex-col items-center justify-center p-8 bg-card dark:bg-zinc-900/40 rounded-xl border border-dashed border-border dark:border-zinc-800 text-center min-h-[460px]">
         <span className="text-3xl mb-3">📱</span>
-        <h3 className="text-sm font-semibold text-zinc-300">{t('playerEmptyTitle')}</h3>
-        <p className="text-xs text-zinc-500 mt-1 max-w-[260px]">
+        <h3 className="text-sm font-semibold text-foreground dark:text-zinc-300">{t('playerEmptyTitle')}</h3>
+        <p className="text-xs text-muted-foreground mt-1 max-w-[260px]">
           {t('playerEmptyDesc')}
         </p>
       </div>

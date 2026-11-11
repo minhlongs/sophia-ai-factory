@@ -48,7 +48,7 @@ export function ByokDoctrineBanner() {
           <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">{t('title')}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>
-        <span className="hidden sm:inline-flex items-center font-mono text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#D97706]/10 dark:bg-[#F59E0B]/10 text-[#D97706] dark:text-[#F59E0B] border border-[#D97706]/20 dark:border-[#F59E0B]/20 shrink-0">
+        <span className="hidden sm:inline-flex items-center font-mono text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/25 shrink-0">
           BYOK · AES-256-GCM
         </span>
       </header>

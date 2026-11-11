@@ -60,7 +60,7 @@ export function StoryboardPreviewCard({ plan, t }: StoryboardPreviewCardProps) {
       {/* Affiliate Link Bar */}
       <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-3">
         <div className="truncate text-xs text-zinc-300">
-          <span className="text-zinc-500 mr-1.5 font-mono">🔗</span>
+          <span className="text-muted-foreground mr-1.5 font-mono">🔗</span>
           <span className="font-mono text-amber-400">{plan.trackedUrl}</span>
         </div>
         <button
@@ -74,7 +74,7 @@ export function StoryboardPreviewCard({ plan, t }: StoryboardPreviewCardProps) {
 
       {/* 5-Scene Storyboard Breakdown */}
       <div className="space-y-2.5">
-        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {t('scenesTitle')} ({plan.storyboard.scenes.length})
         </h3>
         <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
@@ -87,15 +87,15 @@ export function StoryboardPreviewCard({ plan, t }: StoryboardPreviewCardProps) {
                 <span className="font-bold text-amber-400">
                   {idx + 1}. {scene.name}
                 </span>
-                <span className="font-mono text-[11px] text-zinc-500">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {Math.round(scene.durationMs / 1000)}s
                 </span>
               </div>
               <p className="text-xs text-zinc-300 italic mb-2">
                 &ldquo;{scene.narrationText}&rdquo;
               </p>
-              <div className="text-[11px] text-zinc-400 bg-zinc-900/80 p-2 rounded border border-zinc-800/50">
-                <span className="text-zinc-500 font-semibold block mb-0.5">🎨 Visual Prompt:</span>
+              <div className="text-[11px] text-muted-foreground bg-muted/60 p-2 rounded border border-border/60">
+                <span className="text-foreground font-semibold block mb-0.5">🎨 Visual Prompt:</span>
                 {scene.visualPrompt}
               </div>
             </div>
@@ -105,7 +105,7 @@ export function StoryboardPreviewCard({ plan, t }: StoryboardPreviewCardProps) {
 
       {/* Caption & Hashtags */}
       <div className="pt-3 border-t border-zinc-800/80 text-xs">
-        <span className="text-zinc-400 font-semibold block mb-1">{t('captionTitle')}</span>
+        <span className="text-muted-foreground font-semibold block mb-1">{t('captionTitle')}</span>
         <p className="text-zinc-300 bg-zinc-950 p-2.5 rounded border border-zinc-800/60 font-mono text-[11px]">
           {plan.caption}
         </p>

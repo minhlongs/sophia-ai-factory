@@ -76,11 +76,11 @@ export function DashboardTopBarActions({
           <p className="text-xs font-semibold text-foreground dark:text-white leading-tight">
             {userName}
           </p>
-          <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-wider text-primary px-1.5 py-0.2 bg-primary/10 rounded border border-primary/20">
+          <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-wider text-primary-text px-1.5 py-0.2 bg-primary/10 rounded border border-primary/20">
             {userRole}
           </span>
         </div>
-        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs ring-1 ring-border dark:ring-white/10 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary-text border border-primary/30 flex items-center justify-center font-bold text-xs ring-1 ring-border dark:ring-white/10 shrink-0">
           {userInitials}
         </div>
       </div>

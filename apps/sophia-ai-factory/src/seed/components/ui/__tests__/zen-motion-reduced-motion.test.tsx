@@ -1,0 +1,83 @@
+// @vitest-environment jsdom
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
+import { FadeInView } from '../fade-in-view';
+import { ScrollReveal } from '../scroll-reveal';
+import { PageTransition } from '../page-transition';
+import { AnimatedCounter } from '../animated-counter-with-framer-motion';
+
+function mockMatchMedia(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes('prefers-reduced-motion') ? matches : false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
+describe('Zen Motion Primitives — prefers-reduced-motion: reduce (WCAG 2.2 SC 2.3.3)', () => {
+  beforeEach(() => {
+    mockMatchMedia(true);
+  });
+
+  it('FadeInView renders immediately visible with transition: none under reduced motion', () => {
+    const { container } = render(
+      <FadeInView direction="up" distance={20} duration={400}>
+        <span>content</span>
+      </FadeInView>,
+    );
+    const root = container.querySelector<HTMLElement>('[data-zen-motion="fade-in-view"]');
+    expect(root).not.toBeNull();
+    expect(root?.dataset.zenRevealed).toBe('true');
+    expect(root?.style.opacity).toBe('1');
+    expect(root?.style.transform).toBe('none');
+    expect(root?.style.transition).toBe('none');
+  });
+
+  it('ScrollReveal renders immediately visible with transition: none under reduced motion', () => {
+    const { container } = render(
+      <ScrollReveal>
+        <span>revealed</span>
+      </ScrollReveal>,
+    );
+    const root = container.querySelector<HTMLElement>('[data-zen-motion="scroll-reveal"]');
+    expect(root).not.toBeNull();
+    expect(root?.dataset.zenRevealed).toBe('true');
+    expect(root?.style.opacity).toBe('1');
+    expect(root?.style.transform).toBe('none');
+    expect(root?.style.transition).toBe('none');
+  });
+
+  it('PageTransition renders immediately mounted with transition: none under reduced motion', () => {
+    const { container } = render(
+      <PageTransition>
+        <span>page</span>
+      </PageTransition>,
+    );
+    const root = container.querySelector<HTMLElement>('[data-zen-motion="page-transition"]');
+    expect(root).not.toBeNull();
+    expect(root?.dataset.zenRevealed).toBe('true');
+    expect(root?.style.opacity).toBe('1');
+    expect(root?.style.transform).toBe('none');
+    expect(root?.style.transition).toBe('none');
+  });
+
+  it('AnimatedCounter jumps directly to final value without rAF loop under reduced motion', () => {
+    const rafSpy = vi.spyOn(window, 'requestAnimationFrame');
+    const { container } = render(<AnimatedCounter value={12500} duration={1500} />);
+    const node = container.querySelector<HTMLElement>('[data-zen-motion="animated-counter"]');
+    expect(node).not.toBeNull();
+    expect(node?.dataset.zenReduced).toBe('true');
+    expect(node?.textContent).toBe((12500).toLocaleString());
+    expect(rafSpy).not.toHaveBeenCalled();
+    rafSpy.mockRestore();
+  });
+});

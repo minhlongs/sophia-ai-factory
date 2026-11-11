@@ -25,6 +25,14 @@ interface FadeInViewProps {
  * Lightweight zero-dependency viewport entrance primitive.
  * Governed by Zen Motion Governance (`--motion-ease-emphasized` + reduced-motion guard).
  */
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 export function FadeInView({
   children,
   className = "",
@@ -37,14 +45,13 @@ export function FadeInView({
   as: tag = "div",
 }: FadeInViewProps) {
   const ref = useRef<HTMLElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  // Read the preference in the initializer so a reduced-motion user never sees
+  // the hidden start frame at all — including the SSR pass, which renders the
+  // visible state for everyone and is corrected on the first client commit.
+  const [isVisible, setIsVisible] = useState(() => prefersReducedMotion());
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (prefersReducedMotion()) {
       setIsVisible(true);
       return;
     }
@@ -78,15 +85,20 @@ export function FadeInView({
 
   const Tag = tag as React.ElementType;
   const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
+  // A reduced-motion user gets no transition at all — an inline transition would
+  // otherwise animate the jump from the hidden frame to the visible one.
+  const motion = isVisible && prefersReducedMotion() ? "none" : undefined;
 
   return (
     <Tag
       ref={ref}
       className={className}
+      data-zen-motion="fade-in-view"
+      data-zen-revealed={isVisible ? "true" : "false"}
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "none" : directions[direction],
-        transition: `opacity ${duration}ms ${easing} ${delay}ms, transform ${duration}ms ${easing} ${delay}ms`,
+        transition: motion ?? `opacity ${duration}ms ${easing} ${delay}ms, transform ${duration}ms ${easing} ${delay}ms`,
         willChange: "opacity, transform",
       }}
     >

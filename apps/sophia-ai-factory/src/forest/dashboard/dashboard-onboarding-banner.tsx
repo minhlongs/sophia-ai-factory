@@ -58,7 +58,7 @@ export function DashboardOnboardingBanner({
         </div>
         <Link
           href="/dashboard/system-health"
-          className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1.5 transition-colors"
+          className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-300 hover:underline flex items-center gap-1.5 transition-colors"
         >
           <Activity className="w-4 h-4" />
           <span>{t("healthCheck")}</span>
@@ -70,14 +70,14 @@ export function DashboardOnboardingBanner({
   return (
     <div
       className={cn(
-        "mb-6 p-5 sm:p-6 rounded-xl bg-card dark:bg-[#11131F] backdrop-blur-xl border border-border dark:border-white/[0.08] shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4",
+        "mb-6 p-5 sm:p-6 rounded-xl bg-card dark:bg-[#11131F] backdrop-blur-xl border border-border dark:border-white/[0.08] shadow-sm flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4",
         className
       )}
       data-testid="onboarding-banner"
     >
-      <div className="space-y-1.5 max-w-2xl">
+      <div className="space-y-1.5 max-w-2xl min-w-0">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 shadow-sm">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary-text border border-primary/30 shadow-sm">
             <Sparkles className="w-3 h-3 mr-1" />
             Sophia Onboarding
           </span>
@@ -96,18 +96,18 @@ export function DashboardOnboardingBanner({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 self-start md:self-auto shrink-0">
+      <div className="flex flex-wrap items-center gap-3 self-start xl:self-auto shrink-0">
         <Link
           href="/dashboard/system-health"
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-white bg-muted/60 dark:bg-white/[0.05] hover:bg-muted dark:hover:bg-white/[0.1] border border-border dark:border-white/[0.1] transition-all"
         >
-          <Activity className="w-4 h-4 text-primary" />
+          <Activity className="w-4 h-4 text-primary-text" />
           <span>{t("healthCheck")}</span>
         </Link>
 
         <Link
           href="/setup-wizard"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 shadow-sm transition-all"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 shadow-sm transition-all"
         >
           <span>{t("cta")}</span>
           <ArrowRight className="w-4 h-4" />

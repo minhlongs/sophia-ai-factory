@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-11-10T23:43:44.948Z",
+  "csp": {
+    "request1ScriptSrc": "script-src 'self' 'unsafe-eval' 'nonce-db6523ac16b494e00d54dba9c987b575'",
+    "request1Nonce": "db6523ac16b494e00d54dba9c987b575",
+    "request1HeaderNonce": "db6523ac16b494e00d54dba9c987b575",
+    "request1CacheControl": "no-store",
+    "request2Nonce": "572952b68321ec03bea54ce2d9c0a057",
+    "noncesAreUniqueAcrossRequests": true,
+    "scriptSrcHasNoUnsafeInline": true,
+    "cspViolations": []
+  },
+  "initialDarkDefault": {
+    "htmlClass": "dark",
+    "colorScheme": "dark",
+    "storageValue": null,
+    "bodyBg": "rgb(9, 10, 16)",
+    "bodyColor": "rgb(248, 250, 252)",
+    "surfaceVar": "#090a10",
+    "primaryVar": "#6366f1",
+    "hasThemeScript": true,
+    "themeScriptNonceAttr": "",
+    "themeScriptNonceProp": "db6523ac16b494e00d54dba9c987b575"
+  },
+  "afterSwitchToLight": {
+    "htmlClass": "light",
+    "colorScheme": "light",
+    "storageValue": "light",
+    "bodyBg": "rgb(248, 249, 252)",
+    "bodyColor": "rgb(11, 15, 25)",
+    "surfaceVar": "#f8f9fc",
+    "primaryVar": "#4338ca"
+  },
+  "afterRefreshInLight": {
+    "domContentLoadedClass": "light",
+    "domContentLoadedBg": "rgb(248, 249, 252)",
+    "htmlClass": "light",
+    "colorScheme": "light",
+    "storageValue": "light",
+    "bodyBg": "rgb(248, 249, 252)",
+    "bodyColor": "rgb(11, 15, 25)",
+    "surfaceVar": "#f8f9fc",
+    "primaryVar": "#4338ca"
+  },
+  "afterNavigateToNicheStudio": {
+    "url": "http://localhost:3000/vi/dashboard/niche-studio",
+    "htmlClass": "light",
+    "storageValue": "light",
+    "bodyBg": "rgb(248, 249, 252)",
+    "bodyColor": "rgb(11, 15, 25)",
+    "surfaceVar": "#f8f9fc",
+    "primaryVar": "#4338ca"
+  },
+  "onSetupWizardInLight": {
+    "url": "http://localhost:3000/vi/setup",
+    "htmlClass": "light",
+    "storageValue": "light",
+    "bodyBg": "rgb(248, 249, 252)",
+    "wrapperBg": "rgb(248, 249, 252)",
+    "wrapperClasses": "min-h-screen bg-background text-foreground py-8 px-4 sm:px-6 lg:px-8 transition-colors"
+  },
+  "consoleErrors": [],
+  "hydrationWarnings": [],
+  "pageErrors": []
+}
