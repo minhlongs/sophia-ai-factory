@@ -62,16 +62,27 @@ the postback carries an attributable sub-id. Global env secrets are NOT read.
 
 ### Dead-Letter Queue (DLQ) for unprocessable postbacks
 
-All unmapped, unattributed, or unconfigured requests sent to legacy endpoints
+On the legacy endpoints
 (`/api/webhooks/saas-crypto/[network]`, `/api/webhooks/affiliate/[network]`,
-`/api/webhooks/{accesstrade,amazon,awin,tiktok-shop}`) are captured into the
-`postback_dead_letter` table (migration `0489`). This guarantees:
-- **Zero data loss on the legacy ecommerce path:** Payloads that fail closed
-  (422/503) and payloads that can never parse or carry no transaction id (acked
-  `200 + skipped`) are preserved for inspection, manual reconciliation, and
-  replay. On `/api/webhooks/saas-crypto/[network]` only a tenant-resolution
-  failure is captured; a body that is not JSON still returns `400` and a
-  post-signature service error still returns `422/503` without a queue row.
+`/api/webhooks/{accesstrade,amazon,awin,tiktok-shop}`), a request is captured
+into the `postback_dead_letter` table (migration `0489`) when:
+
+- the body is not JSON, or carries no transaction id — legacy ecommerce handler
+  only; captured first, then acked `200 + skipped`;
+- no tenant, no credential, or no trackable link could be resolved — the first
+  two on both routes, the link case on the legacy ecommerce handler only.
+
+Never captured, on any route: signature failures (`401`), storage failures
+(`503 db_unavailable` / `db_write_failed`), and the pre-parse `400` that
+`/api/webhooks/saas-crypto/[network]` returns for a non-JSON body — the caller
+is expected to fix and resend those. On that route a post-signature service
+error also returns `422/503` without a queue row.
+
+What capture guarantees:
+
+- **Payload retained:** the raw body, headers, source IP and failure reason stay
+  in the queue for inspection and manual reconciliation, whether the request was
+  acked `200 + skipped` or failed closed with `422` / `503 secret_not_configured`.
 - **Auditability:** Headers, source IP, failure reason, and tenant hints are
   indexed by network and resolution state.
 - **No write amplification:** the row id is derived from
@@ -141,15 +152,27 @@ Env secret global KHÔNG còn được đọc. Chi tiết từng URL xem bảng 
 
 ### Hàng đợi Dead-Letter (DLQ) cho postback không xử lý được
 
-Mọi request không thể map tenant, không gắn được link, hoặc thiếu cấu hình
-gửi đến endpoint legacy đều được ghi vào bảng `postback_dead_letter` (migration
-`0489`). Cơ chế này đảm bảo:
-- **Không mất mát dữ liệu trên luồng ecommerce legacy:** Payload bị từ chối
-  fail closed (422/503), payload không thể parse hoặc thiếu mã giao dịch (đã ack
-  `200 + skipped`) đều được lưu vết đầy đủ để tra soát và replay. Riêng
-  `/api/webhooks/saas-crypto/[network]` chỉ lưu vết khi không resolve được
-  tenant; body không phải JSON vẫn trả `400`, và lỗi service sau khi đã xác thực
-  chữ ký vẫn trả `422/503` mà không có bản ghi trong hàng đợi.
+Trên các endpoint legacy
+(`/api/webhooks/saas-crypto/[network]`, `/api/webhooks/affiliate/[network]`,
+`/api/webhooks/{accesstrade,amazon,awin,tiktok-shop}`), request được ghi vào
+bảng `postback_dead_letter` (migration `0489`) khi:
+
+- body không phải JSON, hoặc không có mã giao dịch — chỉ ở handler ecommerce
+  legacy; ghi vào hàng đợi trước, sau đó vẫn ack `200 + skipped`;
+- không resolve được tenant, credential, hoặc link có thể gắn — hai trường hợp
+  đầu xảy ra trên cả hai route, trường hợp link chỉ ở handler ecommerce legacy.
+
+KHÔNG BAO GIỜ ghi, trên mọi route: lỗi chữ ký (`401`), lỗi lưu trữ
+(`503 db_unavailable` / `db_write_failed`), và `400` trước bước parse mà
+`/api/webhooks/saas-crypto/[network]` trả về khi body không phải JSON — những
+trường hợp đó người gọi phải sửa rồi gửi lại. Trên route này, lỗi service sau
+khi đã xác thực chữ ký cũng trả `422/503` mà không có bản ghi trong hàng đợi.
+
+Cơ chế này đảm bảo:
+
+- **Giữ lại payload:** body gốc, header, IP nguồn và lý do lỗi vẫn nằm trong
+  hàng đợi để tra soát và đối chiếu thủ công, dù request đã ack `200 + skipped`
+  hay fail closed với `422` / `503 secret_not_configured`.
 - **Minh bạch kiểm toán:** Lưu đầy đủ header, IP nguồn, lý do lỗi và gợi ý
   tenant, có index theo network và trạng thái resolved.
 - **Không phình số dòng:** id của bản ghi sinh từ
