@@ -246,6 +246,27 @@ describe('processLegacyEcommercePostback', () => {
     expect(res.body).toMatchObject({ error: 'db_unavailable' });
   });
 
+  it('still acks 200 + skipped for permanent garbage when D1 is missing', async () => {
+    // A missing binding must not turn a permanently unprocessable body into a
+    // 503: providers read 503 as transient and would retry-storm a payload
+    // that can never succeed. Capture is best-effort, the ack is not.
+    vi.mocked(getD1).mockResolvedValue(null);
+
+    const parseRes = await processLegacyEcommercePostback(
+      makeRequest('not-json {{{', 'x'),
+      ACCESSTRADE_CONTRACT,
+    );
+    expect(parseRes.status).toBe(200);
+    expect(parseRes.body).toMatchObject({ ok: true, skipped: 'parse_error' });
+
+    const noTxnRes = await processLegacyEcommercePostback(
+      makeRequest(JSON.stringify({ order_value: 10 }), 'x'),
+      ACCESSTRADE_CONTRACT,
+    );
+    expect(noTxnRes.status).toBe(200);
+    expect(noTxnRes.body).toMatchObject({ ok: true, skipped: 'no_conversion_id' });
+  });
+
   it('captures unparseable bodies to the DLQ before acking 200 + skipped', async () => {
     const db = createLegacyD1();
     vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);

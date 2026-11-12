@@ -111,6 +111,19 @@ describe('Postback Dead-Letter Queue', () => {
     expect(after[0].retry_count).toBe(2);
   });
 
+  it('keeps a NULL hint distinct from an empty-string hint', async () => {
+    // An unattributed row must never be reachable by a query for tenant ''.
+    // Hashing NULL as '' would collide the two, and the second writer would
+    // make the unattributed evidence readable by the empty-string tenant.
+    await enqueuePostbackDlq({ ...BASE_INPUT, tenantHint: null });
+    await enqueuePostbackDlq({ ...BASE_INPUT, tenantHint: '' });
+
+    const rows = await allRows(db);
+    expect(rows.length).toBe(2);
+    expect(rows.map((r) => r.tenant_hint).sort()).toEqual(['', null].sort());
+    expect(await listUnresolvedPostbackDlq('')).toHaveLength(1);
+  });
+
   it('treats a different failure reason as a distinct row', async () => {
     await enqueuePostbackDlq(BASE_INPUT);
     await enqueuePostbackDlq({ ...BASE_INPUT, failureReason: 'secret_not_configured' });

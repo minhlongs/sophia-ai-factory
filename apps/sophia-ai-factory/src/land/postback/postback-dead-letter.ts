@@ -52,7 +52,13 @@ export interface EnqueuePostbackDlqInput {
  * for every redelivery of the same bad request, so retry_count could never
  * advance and a retry storm would write unbounded rows.
  *
- * NUL-separated so field boundaries cannot be forged by payload content.
+ * The fixed-string fields are NUL-separated; the payload follows as the last
+ * field. A raw body can itself contain a NUL, so this is not a formally
+ * unambiguous encoding — it is enough here because only the payload is
+ * attacker-controlled and nothing after it is hashed.
+ *
+ * A NULL hint is mapped to a sentinel no tenant id can equal, so an
+ * unattributed row can never collide with a row for the empty-string tenant.
  */
 async function deriveDlqId(input: EnqueuePostbackDlqInput): Promise<string> {
   return sha256Hex(
@@ -60,7 +66,7 @@ async function deriveDlqId(input: EnqueuePostbackDlqInput): Promise<string> {
       input.network,
       input.endpoint,
       input.failureReason,
-      input.tenantHint ?? '',
+      input.tenantHint === null ? '\u0001unattributed' : input.tenantHint,
       input.rawBody,
     ].join('\u0000'),
   )
@@ -87,9 +93,9 @@ export async function enqueuePostbackDlq(
   }
 
   const now = new Date().toISOString()
-  const id = await deriveDlqId(input)
 
   try {
+    const id = await deriveDlqId(input)
     await db
       .prepare(INSERT_POSTBACK_DLQ_SQL)
       .bind(

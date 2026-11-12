@@ -166,12 +166,6 @@ export async function processLegacyEcommercePostback(
     return { status: 401, body: { error: 'Missing signature header' } };
   }
 
-  const db = await getD1();
-  if (!db) {
-    logger.warn(`[${tag}] D1 unavailable`);
-    return { status: 503, body: { ok: false, error: 'db_unavailable' } };
-  }
-
   let payload: Record<string, unknown>;
   try {
     payload = JSON.parse(rawBody) as Record<string, unknown>;
@@ -189,6 +183,12 @@ export async function processLegacyEcommercePostback(
     // tenant hint is still unverified at this point and must not be trusted.
     await captureUnattributed(request, contract, rawBody, contract.missingTxnSkipCode);
     return { status: 200, body: { ok: true, skipped: contract.missingTxnSkipCode } };
+  }
+
+  const db = await getD1();
+  if (!db) {
+    logger.warn(`[${tag}] D1 unavailable`);
+    return { status: 503, body: { ok: false, error: 'db_unavailable' } };
   }
 
   const subIdCandidates = contract.subIdFields.map((f) => {
