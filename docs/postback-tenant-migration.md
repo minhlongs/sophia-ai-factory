@@ -17,8 +17,8 @@ Affiliate conversion postbacks are now attributed to exactly one workspace:
 - Unknown tenants, unknown links, and missing credentials fail closed with an
   actionable error. No conversion is ever recorded under a global tenant.
 - Storage/config failures return `503` (retry). Permanent garbage
-  (unparseable body, missing transaction id) keeps a `200 + skipped` ack so
-  providers do not retry-storm.
+  (unparseable body, missing transaction id) is captured to the dead-letter
+  queue and then acked `200 + skipped` so providers do not retry-storm.
 
 ### Canonical endpoint
 
@@ -65,10 +65,18 @@ All unmapped, unattributed, or unconfigured requests sent to legacy endpoints
 (`/api/webhooks/saas-crypto/[network]`, `/api/webhooks/affiliate/[network]`,
 `/api/webhooks/{network}`) are captured into the `postback_dead_letter` table
 (migration `0489`). This guarantees:
-- **Zero data loss:** Payloads that fail closed (422/503) are preserved for
+- **Zero data loss:** Payloads that fail closed (422/503) and payloads that can
+  never parse or carry no transaction id (acked 200 + skipped) are preserved for
   inspection, manual reconciliation, and replay.
 - **Auditability:** Headers, source IP, failure reason, and tenant hints are
   indexed by network and resolution state.
+- **No write amplification:** the row id is derived from
+  `(network, endpoint, failure reason, tenant hint, payload)`, so a provider
+  redelivering the same bad request increments `retry_count` on one row instead
+  of inserting a new one.
+- **Tenant isolation:** `tenant_hint` is `NULL` until the signature proves the
+  tenant. Queue reads and resolves require a `tenantId` and filter by it, so one
+  workspace never sees another's evidence.
 
 ### Error reference
 
@@ -80,7 +88,7 @@ All unmapped, unattributed, or unconfigured requests sent to legacy endpoints
 | `db_unavailable` / `db_write_failed` | 503 | Transient storage failure | Retry; provider backoff applies |
 | `network_not_supported` / `network_moved` | 501 | No verifier on this path | Follow `guidance`/`canonical` in the response |
 | `INVALID_SIGNATURE` / `Invalid signature` | 401 | HMAC mismatch or missing header | Check secret + header + raw body bytes |
-| `skipped: parse_error` | 200 | Body is not JSON | Fix provider payload; nothing recorded |
+| `skipped: parse_error` | 200 | Body is not JSON | Fix provider payload; captured to the DLQ, nothing recorded in the ledger |
 | `skipped: duplicate` | 200 | Replay of a stored receipt | No action; no double ledger row |
 
 ### Provider notes / unknowns
@@ -106,7 +114,8 @@ Postback hoa hồng affiliate giờ gắn với đúng một workspace:
 - Tenant/link/credential không xác định → fail closed kèm hướng dẫn, không bao
   giờ ghi ledger dưới tenant global.
 - Lỗi lưu trữ/cấu hình trả `503` (retry). Body rác vĩnh viễn (không phải JSON,
-  thiếu mã giao dịch) vẫn ack `200 + skipped` để provider không retry-storm.
+  thiếu mã giao dịch) được ghi vào dead-letter queue trước, sau đó vẫn ack
+  `200 + skipped` để provider không retry-storm.
 
 ### Endpoint chuẩn
 
@@ -130,10 +139,18 @@ Env secret global KHÔNG còn được đọc. Chi tiết từng URL xem bảng 
 Mọi request không thể map tenant, không gắn được link, hoặc thiếu cấu hình
 gửi đến endpoint legacy đều được ghi vào bảng `postback_dead_letter` (migration
 `0489`). Cơ chế này đảm bảo:
-- **Không mất mát dữ liệu:** Payload bị từ chối fail closed (422/503) vẫn được
+- **Không mất mát dữ liệu:** Payload bị từ chối fail closed (422/503), payload
+  không thể parse hoặc thiếu mã giao dịch (đã ack `200 + skipped`) đều được
   lưu vết đầy đủ để tra soát và replay.
 - **Minh bạch kiểm toán:** Lưu đầy đủ header, IP nguồn, lý do lỗi và gợi ý
   tenant, có index theo network và trạng thái resolved.
+- **Không phình số dòng:** id của bản ghi sinh từ
+  `(network, endpoint, lý do lỗi, tenant hint, payload)`, nên khi provider gửi
+  lại đúng request lỗi đó thì `retry_count` tăng trên cùng một dòng thay vì
+  thêm dòng mới.
+- **Cô lập theo tenant:** `tenant_hint` là `NULL` cho đến khi chữ ký chứng minh
+  được tenant. Mọi thao tác đọc và resolve hàng đợi đều bắt buộc `tenantId` và
+  lọc theo đó, nên workspace này không thấy dữ liệu của workspace khác.
 
 ### Bảng lỗi và cách xử lý: xem bảng EN ở trên.
 

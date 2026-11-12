@@ -1,13 +1,17 @@
 /**
  * Tests for Postback Dead-Letter Queue (DLQ)
  *
- * Covers enqueue, retrieval, count aggregation, and resolution of unmapped
- * or failed postbacks.
+ * Runs against a real SQLite-backed fake D1 seeded from the REAL migration, so
+ * the upsert, the retry counter and the tenant scope are exercised by the
+ * actual SQL rather than by a mock that reimplements it.
  *
  * @module land/postback/__tests__/postback-dead-letter.test
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import {
   enqueuePostbackDlq,
   listUnresolvedPostbackDlq,
@@ -20,235 +24,186 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
 }));
 
-interface StoredRow {
-  id: string;
-  network: string;
-  endpoint: string;
-  source_ip: string | null;
-  headers_json: string;
-  payload: string;
-  failure_reason: string;
-  tenant_hint: string | null;
-  retry_count: number;
-  resolved: number;
-  resolved_at: string | null;
-  created_at: string;
-  last_attempted_at: string;
+type FakeD1 = ReturnType<typeof createFakeD1>;
+
+const TENANT_A = 'tenant-a';
+const TENANT_B = 'tenant-b';
+
+const BASE_INPUT = {
+  network: 'partnerstack',
+  endpoint: 'https://sophia.agencyos.network/api/webhooks/saas-crypto/partnerstack',
+  sourceIp: '1.2.3.4',
+  headersJson: JSON.stringify({ 'x-partnerstack-signature': 'abc' }),
+  rawBody: JSON.stringify({ amount: 100 }),
+  failureReason: 'tenant_unresolvable',
+  tenantHint: TENANT_A,
+};
+
+function createDlqD1(): FakeD1 {
+  const schema = readFileSync(
+    resolve(process.cwd(), 'migrations/0489_postback_dead_letter.sql'),
+    'utf8',
+  );
+  return createFakeD1([schema]);
+}
+
+async function allRows(db: FakeD1) {
+  const res = await db.prepare('SELECT * FROM postback_dead_letter').all<
+    Record<string, unknown>
+  >();
+  return res.results;
+}
+
+function useDb(db: FakeD1) {
+  vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
 }
 
 describe('Postback Dead-Letter Queue', () => {
-  let inMemoryDb: StoredRow[] = [];
-
-  const mockD1 = {
-    prepare: (sql: string) => ({
-      bind: (...args: unknown[]) => ({
-        run: async () => {
-          if (sql.includes('INSERT INTO postback_dead_letter')) {
-            const [
-              id,
-              network,
-              endpoint,
-              sourceIp,
-              headersJson,
-              payload,
-              failureReason,
-              tenantHint,
-              retryCount,
-              createdAt,
-              lastAttemptedAt,
-            ] = args as [
-              string,
-              string,
-              string,
-              string | null,
-              string,
-              string,
-              string,
-              string | null,
-              number,
-              string,
-              string,
-            ];
-
-            const existingIndex = inMemoryDb.findIndex((r) => r.id === id);
-            if (existingIndex >= 0) {
-              const row = inMemoryDb[existingIndex];
-              row.retry_count += 1;
-              row.failure_reason = failureReason;
-              row.last_attempted_at = lastAttemptedAt;
-            } else {
-              inMemoryDb.push({
-                id,
-                network,
-                endpoint,
-                source_ip: sourceIp,
-                headers_json: headersJson,
-                payload,
-                failure_reason: failureReason,
-                tenant_hint: tenantHint,
-                retry_count: retryCount,
-                resolved: 0,
-                resolved_at: null,
-                created_at: createdAt,
-                last_attempted_at: lastAttemptedAt,
-              });
-            }
-          } else if (sql.includes('UPDATE postback_dead_letter')) {
-            const [resolvedAt, id] = args as [string, string];
-            const row = inMemoryDb.find((r) => r.id === id);
-            if (row) {
-              row.resolved = 1;
-              row.resolved_at = resolvedAt;
-            }
-          }
-          return { success: true };
-        },
-        all: async <T>() => {
-          if (sql.includes('SELECT * FROM postback_dead_letter')) {
-            const [limit] = args as [number];
-            const filtered = inMemoryDb.filter((r) => r.resolved === 0).slice(0, limit);
-            return { results: filtered as unknown as T[] };
-          }
-          return { results: [] };
-        },
-      }),
-      all: async <T>() => {
-        if (sql.includes('SELECT') && sql.includes('GROUP BY network')) {
-          const grouped: Record<string, { total: number; unresolved: number }> = {};
-          for (const row of inMemoryDb) {
-            if (!grouped[row.network]) {
-              grouped[row.network] = { total: 0, unresolved: 0 };
-            }
-            grouped[row.network].total += 1;
-            if (row.resolved === 0) {
-              grouped[row.network].unresolved += 1;
-            }
-          }
-          const results = Object.entries(grouped).map(([network, counts]) => ({
-            network,
-            total: counts.total,
-            unresolved: counts.unresolved,
-          }));
-          return { results: results as unknown as T[] };
-        }
-        return { results: [] };
-      },
-    }),
-  };
+  let db: FakeD1;
 
   beforeEach(() => {
-    inMemoryDb = [];
     vi.clearAllMocks();
-    vi.mocked(getD1).mockResolvedValue(mockD1 as unknown as D1Database);
+    db = createDlqD1();
+    useDb(db);
   });
 
   it('enqueues unmapped postback to dead-letter queue with correct fields', async () => {
-    const id = await enqueuePostbackDlq({
-      network: 'partnerstack',
-      endpoint: 'https://sophia.agencyos.network/api/webhooks/saas-crypto/partnerstack',
-      sourceIp: '1.2.3.4',
-      headersJson: JSON.stringify({ 'x-partnerstack-signature': 'abc' }),
-      rawBody: JSON.stringify({ amount: 100 }),
-      failureReason: 'tenant_unresolvable',
-      tenantHint: null,
-    });
+    const id = await enqueuePostbackDlq(BASE_INPUT);
 
-    expect(id).toBeDefined();
     expect(typeof id).toBe('string');
-    expect(inMemoryDb.length).toBe(1);
-
-    const stored = inMemoryDb[0];
-    expect(stored.network).toBe('partnerstack');
-    expect(stored.failure_reason).toBe('tenant_unresolvable');
-    expect(stored.resolved).toBe(0);
-    expect(stored.source_ip).toBe('1.2.3.4');
+    const rows = await allRows(db);
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({
+      network: 'partnerstack',
+      failure_reason: 'tenant_unresolvable',
+      resolved: 0,
+      source_ip: '1.2.3.4',
+      tenant_hint: TENANT_A,
+      retry_count: 1,
+    });
   });
 
-  it('lists unresolved dead-letter items', async () => {
-    await enqueuePostbackDlq({
-      network: 'amazon',
-      endpoint: '/api/webhooks/amazon',
-      sourceIp: null,
-      headersJson: '{}',
-      rawBody: '{}',
-      failureReason: 'secret_not_configured',
-      tenantHint: 'ws-123',
-    });
+  it('derives a stable id from the attribution key so redelivery is idempotent', async () => {
+    const first = await enqueuePostbackDlq(BASE_INPUT);
+    const second = await enqueuePostbackDlq(BASE_INPUT);
+    const third = await enqueuePostbackDlq(BASE_INPUT);
 
-    const unresolved = await listUnresolvedPostbackDlq();
+    expect(first).toBe(second);
+    expect(second).toBe(third);
+
+    const rows = await allRows(db);
+    expect(rows.length).toBe(1);
+    expect(rows[0].retry_count).toBe(3);
+  });
+
+  it('refreshes last_attempted_at on redelivery while pinning created_at', async () => {
+    const first = await enqueuePostbackDlq(BASE_INPUT);
+    const before = await allRows(db);
+
+    await new Promise((r) => setTimeout(r, 5));
+    await enqueuePostbackDlq(BASE_INPUT);
+
+    const after = await allRows(db);
+    expect(after.length).toBe(1);
+    expect(after[0].id).toBe(first);
+    expect(after[0].created_at).toBe(before[0].created_at);
+    expect(after[0].last_attempted_at).not.toBe(before[0].last_attempted_at);
+    expect(after[0].retry_count).toBe(2);
+  });
+
+  it('treats a different failure reason as a distinct row', async () => {
+    await enqueuePostbackDlq(BASE_INPUT);
+    await enqueuePostbackDlq({ ...BASE_INPUT, failureReason: 'secret_not_configured' });
+
+    const rows = await allRows(db);
+    expect(rows.length).toBe(2);
+  });
+
+  it('keeps distinct payloads and tenants as distinct rows', async () => {
+    await enqueuePostbackDlq(BASE_INPUT);
+    await enqueuePostbackDlq({ ...BASE_INPUT, rawBody: JSON.stringify({ amount: 200 }) });
+    await enqueuePostbackDlq({ ...BASE_INPUT, tenantHint: TENANT_B });
+    await enqueuePostbackDlq({ ...BASE_INPUT, endpoint: 'https://example.com/other' });
+
+    const rows = await allRows(db);
+    expect(rows.length).toBe(4);
+    expect(rows.every((r) => r.retry_count === 1)).toBe(true);
+  });
+
+  it('lists unresolved dead-letter items for the owning tenant', async () => {
+    await enqueuePostbackDlq(BASE_INPUT);
+
+    const unresolved = await listUnresolvedPostbackDlq(TENANT_A);
     expect(unresolved.length).toBe(1);
-    expect(unresolved[0].network).toBe('amazon');
-    expect(unresolved[0].tenant_hint).toBe('ws-123');
+    expect(unresolved[0].network).toBe('partnerstack');
+    expect(unresolved[0].tenant_hint).toBe(TENANT_A);
     expect(unresolved[0].resolved).toBe(false);
   });
 
-  it('aggregates counts by network', async () => {
-    await enqueuePostbackDlq({
-      network: 'partnerstack',
-      endpoint: '/api/webhooks/saas-crypto/partnerstack',
-      sourceIp: null,
-      headersJson: '{}',
-      rawBody: '{}',
-      failureReason: 'tenant_unresolvable',
-      tenantHint: null,
-    });
-    await enqueuePostbackDlq({
-      network: 'partnerstack',
-      endpoint: '/api/webhooks/saas-crypto/partnerstack',
-      sourceIp: null,
-      headersJson: '{}',
-      rawBody: '{}',
-      failureReason: 'secret_not_configured',
-      tenantHint: 'ws-456',
-    });
+  it('never lists another tenant\'s rows', async () => {
+    await enqueuePostbackDlq(BASE_INPUT);
+    await enqueuePostbackDlq({ ...BASE_INPUT, tenantHint: TENANT_B });
 
-    const counts = await getPostbackDlqCounts();
-    expect(counts.length).toBe(1);
-    expect(counts[0].network).toBe('partnerstack');
-    expect(counts[0].total).toBe(2);
-    expect(counts[0].unresolved).toBe(2);
+    expect((await listUnresolvedPostbackDlq(TENANT_A)).length).toBe(1);
+    expect((await listUnresolvedPostbackDlq(TENANT_B)).length).toBe(1);
+    expect(await listUnresolvedPostbackDlq('tenant-c')).toEqual([]);
   });
 
-  it('resolves a dead-letter entry', async () => {
-    const id = await enqueuePostbackDlq({
-      network: 'tiktok_shop',
-      endpoint: '/api/webhooks/tiktok-shop',
-      sourceIp: null,
-      headersJson: '{}',
-      rawBody: '{}',
-      failureReason: 'link_unattributed',
-      tenantHint: 'ws-789',
+  it('never lists rows captured before a tenant could be verified', async () => {
+    await enqueuePostbackDlq({ ...BASE_INPUT, tenantHint: null });
+
+    expect(await listUnresolvedPostbackDlq(TENANT_A)).toEqual([]);
+    expect(await listUnresolvedPostbackDlq('')).toEqual([]);
+  });
+
+  it('aggregates counts by network within the tenant scope', async () => {
+    await enqueuePostbackDlq(BASE_INPUT);
+    await enqueuePostbackDlq({ ...BASE_INPUT, failureReason: 'secret_not_configured' });
+    await enqueuePostbackDlq({
+      ...BASE_INPUT,
+      network: 'binance',
+      rawBody: JSON.stringify({ amount: 300 }),
     });
+    await enqueuePostbackDlq({ ...BASE_INPUT, network: 'binance', tenantHint: TENANT_B });
 
-    expect(id).not.toBeNull();
-    await resolvePostbackDlqEntry(id!);
+    const counts = await getPostbackDlqCounts(TENANT_A);
+    expect(counts.length).toBe(2);
+    const byNetwork = Object.fromEntries(counts.map((c) => [c.network, c]));
+    expect(byNetwork.partnerstack).toMatchObject({ total: 2, unresolved: 2 });
+    expect(byNetwork.binance).toMatchObject({ total: 1, unresolved: 1 });
 
-    const unresolved = await listUnresolvedPostbackDlq();
-    expect(unresolved.length).toBe(0);
-    expect(inMemoryDb[0].resolved).toBe(1);
-    expect(inMemoryDb[0].resolved_at).toBeDefined();
+    const other = await getPostbackDlqCounts(TENANT_B);
+    expect(other).toEqual([{ network: 'binance', total: 1, unresolved: 1 }]);
+  });
+
+  it('resolves a dead-letter entry for its owning tenant', async () => {
+    const id = await enqueuePostbackDlq(BASE_INPUT);
+
+    await resolvePostbackDlqEntry(TENANT_A, id!);
+
+    const rows = await allRows(db);
+    expect(rows[0].resolved).toBe(1);
+    expect(rows[0].resolved_at).not.toBeNull();
+    expect(await listUnresolvedPostbackDlq(TENANT_A)).toEqual([]);
+  });
+
+  it('refuses to resolve another tenant\'s entry', async () => {
+    const id = await enqueuePostbackDlq(BASE_INPUT);
+
+    await resolvePostbackDlqEntry(TENANT_B, id!);
+
+    const rows = await allRows(db);
+    expect(rows[0].resolved).toBe(0);
+    expect(rows[0].resolved_at).toBeNull();
   });
 
   it('fails gracefully when D1 is unavailable across all operations', async () => {
     vi.mocked(getD1).mockResolvedValue(null as unknown as D1Database);
-    const id = await enqueuePostbackDlq({
-      network: 'bybit',
-      endpoint: '/api/webhooks/saas-crypto/bybit',
-      sourceIp: null,
-      headersJson: '{}',
-      rawBody: '{}',
-      failureReason: 'db_unavailable',
-      tenantHint: null,
-    });
-    expect(id).toBeNull();
 
-    const unresolved = await listUnresolvedPostbackDlq();
-    expect(unresolved).toEqual([]);
-
-    const counts = await getPostbackDlqCounts();
-    expect(counts).toEqual([]);
-
-    await expect(resolvePostbackDlqEntry('some-id')).resolves.not.toThrow();
+    expect(await enqueuePostbackDlq(BASE_INPUT)).toBeNull();
+    expect(await listUnresolvedPostbackDlq(TENANT_A)).toEqual([]);
+    expect(await getPostbackDlqCounts(TENANT_A)).toEqual([]);
+    await expect(resolvePostbackDlqEntry(TENANT_A, 'some-id')).resolves.not.toThrow();
   });
 
   it('handles database errors gracefully across query operations', async () => {
@@ -269,23 +224,9 @@ describe('Postback Dead-Letter Queue', () => {
     };
     vi.mocked(getD1).mockResolvedValue(errorD1 as unknown as D1Database);
 
-    const id = await enqueuePostbackDlq({
-      network: 'binance',
-      endpoint: '/api/webhooks/saas-crypto/binance',
-      sourceIp: null,
-      headersJson: '{}',
-      rawBody: '{}',
-      failureReason: 'error_test',
-      tenantHint: null,
-    });
-    expect(id).toBeNull();
-
-    const unresolved = await listUnresolvedPostbackDlq();
-    expect(unresolved).toEqual([]);
-
-    const counts = await getPostbackDlqCounts();
-    expect(counts).toEqual([]);
-
-    await expect(resolvePostbackDlqEntry('some-id')).resolves.not.toThrow();
+    expect(await enqueuePostbackDlq(BASE_INPUT)).toBeNull();
+    expect(await listUnresolvedPostbackDlq(TENANT_A)).toEqual([]);
+    expect(await getPostbackDlqCounts(TENANT_A)).toEqual([]);
+    await expect(resolvePostbackDlqEntry(TENANT_A, 'some-id')).resolves.not.toThrow();
   });
 });

@@ -49,7 +49,15 @@ type Creds = Awaited<ReturnType<typeof getCredentials>>;
 function createLegacyD1(): FakeD1 {
   const tracking = readFileSync(resolve(process.cwd(), 'migrations/0082-edge-tracking.sql'), 'utf8');
   const engine = readFileSync(resolve(process.cwd(), 'migrations/0035-affiliate-engine.sql'), 'utf8');
-  return createFakeD1([tracking, engine]);
+  const dlq = readFileSync(resolve(process.cwd(), 'migrations/0489_postback_dead_letter.sql'), 'utf8');
+  return createFakeD1([tracking, engine, dlq]);
+}
+
+async function dlqRows(db: FakeD1) {
+  const res = await db
+    .prepare('SELECT * FROM postback_dead_letter ORDER BY created_at ASC')
+    .all<Record<string, unknown>>();
+  return res.results;
 }
 
 function mockCreds(secrets: Record<string, Record<string, string>>) {
@@ -130,6 +138,58 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     expect(res.status).toBe(422);
     expect(processSaasCryptoPostback).not.toHaveBeenCalled();
     expect(inngest.send).not.toHaveBeenCalled();
+  });
+
+  it('captures a failed resolution without storing the unverified tenant hint', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    // The hint names a workspace, but nothing has been verified: resolution
+    // stops at the missing credential, so the claim must not be persisted.
+    const raw = JSON.stringify({ tradeId: 'r1', tenant_id: 'tenant-victim' });
+    const res = await POST(post('binance', raw, { 'x-signature': 'x' }), {
+      params: { network: 'binance' },
+    });
+
+    expect(res.status).toBe(503);
+    const rows = await dlqRows(db);
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({
+      network: 'binance',
+      failure_reason: 'secret_not_configured',
+      payload: raw,
+      tenant_hint: null,
+    });
+  });
+
+  it('records cf-connecting-ip and ignores the client-controlled x-forwarded-for', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    const withEdge = await POST(
+      post('binance', JSON.stringify({ tradeId: 'r1' }), {
+        'x-signature': 'x',
+        'cf-connecting-ip': '9.9.9.9',
+        'x-forwarded-for': '1.1.1.1',
+      }),
+      { params: { network: 'binance' } },
+    );
+    expect(withEdge.status).toBe(422);
+    expect((await dlqRows(db))[0].source_ip).toBe('9.9.9.9');
+
+    const withoutEdge = await POST(
+      post('binance', JSON.stringify({ tradeId: 'r2' }), {
+        'x-signature': 'x',
+        'x-forwarded-for': '1.1.1.1',
+      }),
+      { params: { network: 'binance' } },
+    );
+    expect(withoutEdge.status).toBe(422);
+    const rows = await dlqRows(db);
+    expect(rows.length).toBe(2);
+    expect(rows[1].source_ip).toBeNull();
   });
 
   it('returns 503 secret_not_configured when the workspace has no credential', async () => {

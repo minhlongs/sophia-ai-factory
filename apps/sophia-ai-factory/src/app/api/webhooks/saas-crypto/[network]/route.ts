@@ -114,14 +114,17 @@ export async function POST(
     explicitTenantId: explicitTenantId ?? null,
   });
   if (!resolution.ok) {
+    // Nothing is verified on this path: resolution failed before any signature
+    // check, so a tenant hint taken from the payload is attacker-chosen. Store
+    // no attribution rather than a claim nobody has proven.
     await enqueuePostbackDlq({
       network: config.network,
       endpoint: request.url,
-      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
+      sourceIp: request.headers.get('cf-connecting-ip'),
       headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
       rawBody,
       failureReason: resolution.error,
-      tenantHint: 'tenantId' in resolution ? resolution.tenantId : (explicitTenantId ?? null),
+      tenantHint: null,
     });
 
     const status = resolution.error === 'secret_not_configured' ? 503 : 422;

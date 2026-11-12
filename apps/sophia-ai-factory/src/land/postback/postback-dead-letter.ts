@@ -13,6 +13,7 @@
  */
 
 import { getD1 } from '@/seed/db/client'
+import { sha256Hex } from '@/seed/security/token-hash'
 import { logger } from '@/seed/utils/logger-utility'
 import { safeCatch } from '@/seed/utils/safe-catch'
 import {
@@ -46,6 +47,26 @@ export interface EnqueuePostbackDlqInput {
 }
 
 /**
+ * Stable row identity for one piece of evidence. Hashing the attribution key
+ * is what makes the upsert below reachable: a random id would mint a fresh row
+ * for every redelivery of the same bad request, so retry_count could never
+ * advance and a retry storm would write unbounded rows.
+ *
+ * NUL-separated so field boundaries cannot be forged by payload content.
+ */
+async function deriveDlqId(input: EnqueuePostbackDlqInput): Promise<string> {
+  return sha256Hex(
+    [
+      input.network,
+      input.endpoint,
+      input.failureReason,
+      input.tenantHint ?? '',
+      input.rawBody,
+    ].join('\u0000'),
+  )
+}
+
+/**
  * Persist one unprocessable postback. Idempotent per (network, endpoint,
  * failure reason, tenant hint, payload): repeated deliveries of the same bad
  * request increment retry_count instead of creating duplicate rows.
@@ -66,7 +87,7 @@ export async function enqueuePostbackDlq(
   }
 
   const now = new Date().toISOString()
-  const id = crypto.randomUUID()
+  const id = await deriveDlqId(input)
 
   try {
     await db
@@ -99,8 +120,11 @@ export async function enqueuePostbackDlq(
 
 /**
  * Read unresolved dead-letter rows oldest-first, for operator inspection.
+ * Tenant scope is mandatory: operator tooling must never surface one
+ * workspace's unverified payloads to another.
  */
 export async function listUnresolvedPostbackDlq(
+  tenantId: string,
   limit = 50,
 ): Promise<PostbackDlqEntry[]> {
   const db = await getD1()
@@ -110,7 +134,7 @@ export async function listUnresolvedPostbackDlq(
     const rawDb = db as unknown as RawD1QueryHandle
     const result = await rawDb
       .prepare(SELECT_UNRESOLVED_POSTBACK_DLQ_SQL)
-      .bind(limit)
+      .bind(tenantId, limit)
       .all<Record<string, unknown>>()
     return (result.results ?? []).map(mapPostbackDlqRow)
   } catch (err) {
@@ -125,7 +149,9 @@ export interface PostbackDlqCounts {
   unresolved: number
 }
 
-export async function getPostbackDlqCounts(): Promise<PostbackDlqCounts[]> {
+export async function getPostbackDlqCounts(
+  tenantId: string,
+): Promise<PostbackDlqCounts[]> {
   const db = await getD1()
   if (!db) return []
 
@@ -133,6 +159,7 @@ export async function getPostbackDlqCounts(): Promise<PostbackDlqCounts[]> {
     const rawDb = db as unknown as RawD1QueryHandle
     const result = await rawDb
       .prepare(SELECT_POSTBACK_DLQ_COUNTS_SQL)
+      .bind(tenantId)
       .all<Record<string, unknown>>()
     return (result.results ?? []).map((r) => ({
       network: r.network as string,
@@ -145,14 +172,17 @@ export async function getPostbackDlqCounts(): Promise<PostbackDlqCounts[]> {
   }
 }
 
-export async function resolvePostbackDlqEntry(id: string): Promise<void> {
+export async function resolvePostbackDlqEntry(
+  tenantId: string,
+  id: string,
+): Promise<void> {
   const db = await getD1()
   if (!db) return
 
   try {
     await db
       .prepare(RESOLVE_POSTBACK_DLQ_SQL)
-      .bind(new Date().toISOString(), id)
+      .bind(new Date().toISOString(), id, tenantId)
       .run()
   } catch (err) {
     safeCatch('resolvePostbackDlqEntry')(err)
