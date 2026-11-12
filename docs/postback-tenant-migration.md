@@ -16,9 +16,10 @@ Affiliate conversion postbacks are now attributed to exactly one workspace:
   hint that is bound to that workspace's credential by the signature check.
 - Unknown tenants, unknown links, and missing credentials fail closed with an
   actionable error. No conversion is ever recorded under a global tenant.
-- Storage/config failures return `503` (retry). Permanent garbage
-  (unparseable body, missing transaction id) is captured to the dead-letter
-  queue and then acked `200 + skipped` so providers do not retry-storm.
+- Storage/config failures return `503` (retry). On the legacy ecommerce
+  endpoints, permanent garbage (unparseable body, missing transaction id) is
+  captured to the dead-letter queue and then acked `200 + skipped` so providers
+  do not retry-storm.
 
 ### Canonical endpoint
 
@@ -63,11 +64,14 @@ the postback carries an attributable sub-id. Global env secrets are NOT read.
 
 All unmapped, unattributed, or unconfigured requests sent to legacy endpoints
 (`/api/webhooks/saas-crypto/[network]`, `/api/webhooks/affiliate/[network]`,
-`/api/webhooks/{network}`) are captured into the `postback_dead_letter` table
-(migration `0489`). This guarantees:
-- **Zero data loss:** Payloads that fail closed (422/503) and payloads that can
-  never parse or carry no transaction id (acked 200 + skipped) are preserved for
-  inspection, manual reconciliation, and replay.
+`/api/webhooks/{accesstrade,amazon,awin,tiktok-shop}`) are captured into the
+`postback_dead_letter` table (migration `0489`). This guarantees:
+- **Zero data loss on the legacy ecommerce path:** Payloads that fail closed
+  (422/503) and payloads that can never parse or carry no transaction id (acked
+  `200 + skipped`) are preserved for inspection, manual reconciliation, and
+  replay. On `/api/webhooks/saas-crypto/[network]` only a tenant-resolution
+  failure is captured; a body that is not JSON still returns `400` and a
+  post-signature service error still returns `422/503` without a queue row.
 - **Auditability:** Headers, source IP, failure reason, and tenant hints are
   indexed by network and resolution state.
 - **No write amplification:** the row id is derived from
@@ -88,7 +92,7 @@ All unmapped, unattributed, or unconfigured requests sent to legacy endpoints
 | `db_unavailable` / `db_write_failed` | 503 | Transient storage failure | Retry; provider backoff applies |
 | `network_not_supported` / `network_moved` | 501 | No verifier on this path | Follow `guidance`/`canonical` in the response |
 | `INVALID_SIGNATURE` / `Invalid signature` | 401 | HMAC mismatch or missing header | Check secret + header + raw body bytes |
-| `skipped: parse_error` | 200 | Body is not JSON | Fix provider payload; captured to the DLQ, nothing recorded in the ledger |
+| `skipped: parse_error` | 200 | Body is not JSON | Fix provider payload; captured to the DLQ on the legacy ecommerce path, nothing recorded in the ledger (ClickBank acks without capture) |
 | `skipped: duplicate` | 200 | Replay of a stored receipt | No action; no double ledger row |
 
 ### Provider notes / unknowns
@@ -113,9 +117,10 @@ Postback hoa hồng affiliate giờ gắn với đúng một workspace:
   link của workspace, hoặc `tenant_id` đi kèm và được ràng buộc bằng chữ ký.
 - Tenant/link/credential không xác định → fail closed kèm hướng dẫn, không bao
   giờ ghi ledger dưới tenant global.
-- Lỗi lưu trữ/cấu hình trả `503` (retry). Body rác vĩnh viễn (không phải JSON,
-  thiếu mã giao dịch) được ghi vào dead-letter queue trước, sau đó vẫn ack
-  `200 + skipped` để provider không retry-storm.
+- Lỗi lưu trữ/cấu hình trả `503` (retry). Trên các endpoint ecommerce legacy,
+  body rác vĩnh viễn (không phải JSON, thiếu mã giao dịch) được ghi vào
+  dead-letter queue trước, sau đó vẫn ack `200 + skipped` để provider không
+  retry-storm.
 
 ### Endpoint chuẩn
 
@@ -139,9 +144,12 @@ Env secret global KHÔNG còn được đọc. Chi tiết từng URL xem bảng 
 Mọi request không thể map tenant, không gắn được link, hoặc thiếu cấu hình
 gửi đến endpoint legacy đều được ghi vào bảng `postback_dead_letter` (migration
 `0489`). Cơ chế này đảm bảo:
-- **Không mất mát dữ liệu:** Payload bị từ chối fail closed (422/503), payload
-  không thể parse hoặc thiếu mã giao dịch (đã ack `200 + skipped`) đều được
-  lưu vết đầy đủ để tra soát và replay.
+- **Không mất mát dữ liệu trên luồng ecommerce legacy:** Payload bị từ chối
+  fail closed (422/503), payload không thể parse hoặc thiếu mã giao dịch (đã ack
+  `200 + skipped`) đều được lưu vết đầy đủ để tra soát và replay. Riêng
+  `/api/webhooks/saas-crypto/[network]` chỉ lưu vết khi không resolve được
+  tenant; body không phải JSON vẫn trả `400`, và lỗi service sau khi đã xác thực
+  chữ ký vẫn trả `422/503` mà không có bản ghi trong hàng đợi.
 - **Minh bạch kiểm toán:** Lưu đầy đủ header, IP nguồn, lý do lỗi và gợi ý
   tenant, có index theo network và trạng thái resolved.
 - **Không phình số dòng:** id của bản ghi sinh từ
