@@ -4,6 +4,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { TIER_ALLOWED_MODELS } from '@/seed/config/tiers/image-model-access';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';
 import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
@@ -67,11 +68,23 @@ export async function recordFailedFalImageJob(params: {
  * platform environment fallback (`process.env.MUAPI_API_KEY` is never read). If
  * the customer has not saved their own MuAPI key in the Setup Wizard, the job
  * is refused before any provider call with `NO_API_KEY`.
+ *
+ * Tier entitlement is enforced HERE rather than only by callers, so the
+ * spending path cannot dispatch a model the caller forgot to pre-check.
  */
 export async function submitMuApiImageJob(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
-  const { userId, prompt, model, aspectRatio } = input;
+  const { userId, tier, prompt, model, aspectRatio } = input;
+
+  const allowedMuapiModels = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
+  if (!allowedMuapiModels.includes(model)) {
+    return {
+      success: false,
+      error: `Model "${model}" is not available for your ${tier} plan.`,
+      code: 'TIER_GATE',
+    };
+  }
 
   const db = createServerClient();
   const duplicateJobId = await findRecentDuplicateImageJob(db, {
