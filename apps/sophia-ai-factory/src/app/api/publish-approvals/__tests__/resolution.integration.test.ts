@@ -258,6 +258,52 @@ describe('PATCH /api/publish-approvals/[id] — resolve', () => {
     expect(resolveAndAnnouncePublishApproval).not.toHaveBeenCalled();
   });
 
+  it('marks the decision unattributed when the request recorded no requester', async () => {
+    vi.mocked(getPublishLedgerRecordByKey).mockResolvedValue(pendingRow());
+    mockDbFirst.mockResolvedValue({ role: 'admin' });
+    vi.mocked(resolveAndAnnouncePublishApproval).mockResolvedValue({
+      resolved: true,
+      alreadyResolved: false,
+    });
+
+    const res = await PATCH(
+      makePatchReq('key_pending_001', { approved: true }),
+      { params: Promise.resolve({ id: 'key_pending_001' }) },
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { selfApproval: boolean; attribution: string };
+    // Nothing to compare the reviewer against, so the answer is "unknown
+    // requester" rather than a confident "not self-approved".
+    expect(data.selfApproval).toBe(false);
+    expect(data.attribution).toBe('unattributed');
+  });
+
+  it('does not treat a legacy workspace id in the requester column as the reviewer', async () => {
+    // Rows written before the fix carry a workspace id in `requester_id`. In
+    // single-user tenancy the workspace id equals the owner's user id, so a
+    // "requesterId === tenantId means self-approval" shortcut would both fire
+    // on those rows and stay silent for a genuine second admin. The reviewer's
+    // own user id is the only thing compared.
+    vi.mocked(getPublishLedgerRecordByKey).mockResolvedValue(
+      pendingRow({ requesterId: 'ws_test_001' }),
+    );
+    mockDbFirst.mockResolvedValue({ role: 'admin' });
+    vi.mocked(resolveAndAnnouncePublishApproval).mockResolvedValue({
+      resolved: true,
+      alreadyResolved: false,
+    });
+
+    const res = await PATCH(
+      makePatchReq('key_pending_001', { approved: true }),
+      { params: Promise.resolve({ id: 'key_pending_001' }) },
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { selfApproval: boolean };
+    expect(data.selfApproval).toBe(false);
+  });
+
   it('flags selfApproval when the sole admin resolves a publish they requested themselves', async () => {
     vi.mocked(getPublishLedgerRecordByKey).mockResolvedValue(
       pendingRow({ requesterId: 'user_test_001' }),

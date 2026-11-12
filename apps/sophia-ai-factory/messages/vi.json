@@ -8077,6 +8077,7 @@
       "approvedNotice": "Đã duyệt. Video đang được đăng.",
       "rejectedNotice": "Đã từ chối. Video sẽ không được đăng.",
       "selfApprovedNotice": "Đã duyệt. Lưu ý: bạn vừa duyệt nội dung do chính bạn tạo.",
+      "unattributedNotice": "Đã duyệt. Video này do hệ thống tự động xếp lịch nên không ghi nhận người yêu cầu — quyết định của bạn là quyết định duy nhất.",
       "privacyLevelLabel": "Chế độ hiển thị TikTok (bắt buộc chọn)",
       "privacyLevelPlaceholder": "— Chọn chế độ hiển thị —",
       "privacyPublic": "Công khai cho mọi người (PUBLIC_TO_EVERYONE)",

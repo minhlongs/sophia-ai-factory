@@ -107,7 +107,10 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     jobId,
     job,
     tenantId: effectiveTenant,
-    requesterId: userId || effectiveTenant,
+    // The caller's user id, or nothing. Substituting the workspace here would
+    // hand the ledger a tenant in a column that names a person, which is what
+    // the reviewer's self-approval check compares against.
+    requesterId: userId,
     step,
     eventTools: args.eventTools,
   });

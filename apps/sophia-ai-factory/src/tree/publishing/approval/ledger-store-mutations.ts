@@ -11,6 +11,7 @@ import { getD1, type D1Database } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
 import { computePublishIdempotencyKey } from './idempotency-key';
+import { toRequesterId } from './requester-identity';
 import {
   PUBLISH_LEDGER_TABLE,
   ensurePublishLedgerTable,
@@ -46,7 +47,9 @@ export async function claimPublishApprovalRequest(
       input.channelId,
       input.platform,
       input.mediaRef,
-      input.requesterId ?? null,
+      // Applied at the write so every lane is covered, including one that
+      // forwards its own scheduled-lane identifier in the user slot.
+      toRequesterId(input.requesterId) ?? null,
       now,
       input.expiresAt,
     )

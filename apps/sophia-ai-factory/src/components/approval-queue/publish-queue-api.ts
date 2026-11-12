@@ -34,6 +34,8 @@ export interface PublishApprovalResolutionResult {
   alreadyResolved: boolean;
   decision: string;
   selfApproval?: boolean;
+  /** Whether the ledger recorded who asked for this publish at all. */
+  attribution?: 'attributed' | 'unattributed';
   id: string;
   compliance?: PublishComplianceMetadata;
 }

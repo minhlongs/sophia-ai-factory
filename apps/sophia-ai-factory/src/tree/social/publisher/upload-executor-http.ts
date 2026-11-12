@@ -22,6 +22,12 @@ export interface UploadExecutionInput {
    * refused before the bytes are spent.
    */
   durationSeconds?: number;
+  /**
+   * Caller's decision on whether the upload is synthetic or meaningfully
+   * altered, when the caller actually has one. Omitted means the platform
+   * adapters apply their own disclosure policy; it never means "no".
+   */
+  containsSyntheticMedia?: boolean;
   /** Injectable for tests; production uses the global fetch. */
   fetchImpl?: typeof fetch;
 }

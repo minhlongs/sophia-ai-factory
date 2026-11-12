@@ -58,6 +58,7 @@ async function uploadToYouTube(input: UploadExecutionInput, fetchImpl: typeof fe
     description: input.description,
     tags: input.tags,
     totalSizeBytes: input.totalSizeBytes ?? 10 * 1024 * 1024,
+    containsSyntheticMedia: input.containsSyntheticMedia,
   });
 
   const res = await fetchImpl(req.endpoint, {

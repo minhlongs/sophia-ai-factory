@@ -27,6 +27,7 @@ const TEST_MESSAGES = {
       approvedNotice: 'Approved. The video is being published now.',
       rejectedNotice: 'Rejected. The video will not be published.',
       selfApprovedNotice: 'Approved. Note: you approved content you created yourself.',
+      unattributedNotice: 'Approved. This video was scheduled automatically, so no requester was recorded.',
       privacyLevelLabel: 'TikTok privacy level (required)',
       privacyLevelPlaceholder: 'Select privacy level before approving...',
       privacyPublic: 'Public to everyone',
@@ -175,6 +176,34 @@ describe('PublishLedgerApprovalQueue', () => {
       expect(screen.getByText('Approved. Note: you approved content you created yourself.')).toBeDefined(),
     );
     expect(seen[1]?.init?.body).toBe(JSON.stringify({ approved: true }));
+  });
+
+  it('tells the reviewer when no requester was recorded, and prefers the self-approval notice', async () => {
+    mockFetchSequence([
+      listResponse([PENDING_ITEM]),
+      () => Response.json({ resolved: true, decision: 'approved', selfApproval: false, attribution: 'unattributed' }),
+      listResponse([PENDING_ITEM]),
+      () => Response.json({ resolved: true, decision: 'approved', selfApproval: true, attribution: 'attributed' }),
+      listResponse([]),
+    ]);
+    renderQueue();
+    await waitFor(() => expect(screen.getByText('yt_channel_primary')).toBeDefined());
+
+    // A scheduled publish has no requester, so `selfApproval` is false without
+    // meaning a second person reviewed it. Saying "approved" alone would imply
+    // oversight that did not happen.
+    fireEvent.click(screen.getByRole('button', { name: 'Approve & publish' }));
+    await waitFor(() =>
+      expect(screen.getByText(/no requester was recorded/)).toBeDefined(),
+    );
+    expect(screen.queryByText(/you approved content you created yourself/)).toBeNull();
+
+    // When both signals are present the reviewer is the requester, which is the
+    // stronger statement and must win over the unattributed wording.
+    fireEvent.click(screen.getByRole('button', { name: 'Approve & publish' }));
+    await waitFor(() =>
+      expect(screen.getByText('Approved. Note: you approved content you created yourself.')).toBeDefined(),
+    );
   });
 
   it('enforces TikTok privacy_level selection before approve and shows SELF_ONLY warning', async () => {

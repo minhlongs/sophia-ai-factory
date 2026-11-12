@@ -8070,6 +8070,7 @@
       "approvedNotice": "Approved. The video is being published now.",
       "rejectedNotice": "Rejected. The video will not be published.",
       "selfApprovedNotice": "Approved. Note: you approved content you created yourself.",
+      "unattributedNotice": "Approved. This video was scheduled automatically, so no requester was recorded — your decision is the only review it got.",
       "privacyLevelLabel": "TikTok privacy level (required)",
       "privacyLevelPlaceholder": "— Select privacy level —",
       "privacyPublic": "Public to everyone (PUBLIC_TO_EVERYONE)",

@@ -50,6 +50,25 @@ describe('platform-adapters', () => {
       expect(req.body.snippet.tags).toContain('Shorts');
       expect(req.body.status.selfDeclaredMadeForKids).toBe(false);
     });
+
+    it('discloses synthetic media when the caller says nothing', () => {
+      const req = buildYouTubeInitRequest({
+        title: 'Insane AI Workflow',
+        totalSizeBytes: 5242880,
+      });
+
+      expect(req.body.status.containsSyntheticMedia).toBe(true);
+    });
+
+    it('honours an explicit disclosure decision from the caller', () => {
+      const req = buildYouTubeInitRequest({
+        title: 'Filmed on location',
+        totalSizeBytes: 5242880,
+        containsSyntheticMedia: false,
+      });
+
+      expect(req.body.status.containsSyntheticMedia).toBe(false);
+    });
   });
 
   describe('TikTok Content Posting API v2', () => {
