@@ -133,13 +133,19 @@ export async function PATCH(
       }, { status: 409 });
     }
 
-    const isSelfApproval = Boolean(record.requesterId && record.requesterId === user.id);
+    // "Was this your own work?" needs a person to compare against. A row with no
+    // requester cannot answer it, so the answer is reported as unattributed
+    // rather than as a confident "not yours" that a reviewer would read as a
+    // second opinion.
+    const attribution = record.requesterId ? 'attributed' : 'unattributed';
+    const isSelfApproval = record.requesterId === user.id;
     logger.info('publishApproval: reviewer resolved a pending publish', {
       idempotencyKey: id,
       decision: parsed.data.approved ? 'approved' : 'rejected',
       reviewerId: user.id,
       requesterId: record.requesterId,
       selfApproval: isSelfApproval,
+      attribution,
     });
 
     return NextResponse.json({
@@ -147,6 +153,7 @@ export async function PATCH(
       alreadyResolved: false,
       decision: parsed.data.approved ? 'approved' : 'rejected',
       selfApproval: isSelfApproval,
+      attribution,
       id,
       ...(parsed.data.compliance ? { compliance: parsed.data.compliance } : {}),
     });

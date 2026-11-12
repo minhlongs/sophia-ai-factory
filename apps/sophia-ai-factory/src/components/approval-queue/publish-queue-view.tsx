@@ -71,8 +71,14 @@ export function PublishLedgerApprovalQueue({
       ) as HTMLTextAreaElement | null;
       const comment = reasonEl?.value?.trim() || undefined;
       const result = await submitPublishApprovalDecision(approvalId, approved, comment, compliance);
+      // Tell the reviewer when there is no second pair of eyes: either they
+      // wrote this themselves, or nobody is on record as having asked for it.
+      // Which notice applies changes what the decision means, so it is stated
+      // rather than folded into a generic "approved".
       if (approved && result.selfApproval) {
         setNotice(t('publish.selfApprovedNotice'));
+      } else if (approved && result.attribution === 'unattributed') {
+        setNotice(t('publish.unattributedNotice'));
       } else {
         setNotice(approved ? t('publish.approvedNotice') : t('publish.rejectedNotice'));
       }
