@@ -125,3 +125,61 @@ describe('submitMuApiImageJob tier entitlement', () => {
     expect(mockSubmitMediaJob).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * `tier` reaches this function as an unvalidated string. Only a canonical tier
+ * name may reach a model allowlist: an unrecognised value must not fall back to
+ * BASIC's models, and an inherited Object.prototype key must not resolve to a
+ * non-list that throws instead of returning a refusal.
+ */
+describe('submitMuApiImageJob rejects any tier outside the server allowlist', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockImplementation(() => ({
+      select: () => buildDedupeQuery(),
+      insert: mockInsert.mockResolvedValue({ error: null }),
+    }));
+    mockResolveUserApiKey.mockResolvedValue('customer_byok_muapi_key');
+    mockSubmitMediaJob.mockResolvedValue({
+      success: true,
+      job: { id: 'muapi_job_7', status: 'pending', type: 'image', model: 'flux-schnell' },
+    });
+  });
+
+  const rejectedTiers: Array<[string, unknown]> = [
+    ['an unrecognised plan name', 'ULTRAMAX'],
+    ['an empty string', ''],
+    ['null', null],
+    ['undefined', undefined],
+    ['a lowercase plan name', 'basic'],
+    ['a whitespace-padded plan name', ' BASIC '],
+    ['a numeric value', 1],
+    ['a non-array object', {}],
+    ['the inherited __proto__ key', '__proto__'],
+    ['the inherited constructor key', 'constructor'],
+    ['the inherited toString key', 'toString'],
+  ];
+
+  it.each(rejectedTiers)(
+    'refuses %s before resolving credentials or dispatching, even for a BASIC model',
+    async (_label, tier) => {
+      const result = await submitMuApiImageJob(
+        baseInput({ tier: tier as string, model: 'flux-schnell' }),
+      );
+
+      expect(result.success).toBe(false);
+      if (result.success) return;
+      expect(result.code).toBe('TIER_GATE');
+      expect(mockResolveUserApiKey).not.toHaveBeenCalled();
+      expect(mockSubmitMediaJob).not.toHaveBeenCalled();
+      expect(mockInsert).not.toHaveBeenCalled();
+    },
+  );
+
+  it('still admits a canonical tier with an entitled model', async () => {
+    const result = await submitMuApiImageJob(baseInput({ tier: 'PREMIUM', model: 'hidream' }));
+
+    expect(result).toEqual({ success: true, jobId: 'muapi_job_7' });
+    expect(mockSubmitMediaJob).toHaveBeenCalledTimes(1);
+  });
+});

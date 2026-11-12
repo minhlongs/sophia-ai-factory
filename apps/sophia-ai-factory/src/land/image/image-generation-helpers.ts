@@ -5,6 +5,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { TIER_ALLOWED_MODELS } from '@/seed/config/tiers/image-model-access';
+import { TIER_RANK } from '@/seed/types';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';
 import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
@@ -14,6 +15,15 @@ import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-
 import { FailureKind } from '@/seed/types/failure-kind';
 import { CostClassification } from '@/seed/types/creative-job-economics';
 import type { GenerateImageJobInput, GenerateImageJobResult } from './image-generation-orchestrator';
+
+/**
+ * True only for a canonical tier name, checked as an own property so inherited
+ * Object.prototype keys (`'constructor'`, `'toString'`, `'__proto__'`) and any
+ * unrecognised value are rejected instead of resolving to a tier's model list.
+ */
+function isKnownTier(tier: unknown): tier is string {
+  return typeof tier === 'string' && Object.hasOwn(TIER_RANK, tier);
+}
 
 export async function recordFailedFalImageJob(params: {
   jobId: string;
@@ -71,13 +81,27 @@ export async function recordFailedFalImageJob(params: {
  *
  * Tier entitlement is enforced HERE rather than only by callers, so the
  * spending path cannot dispatch a model the caller forgot to pre-check.
+ *
+ * `tier` arrives as a plain string from the caller, so it is validated against
+ * the server-controlled `TIER_RANK` allowlist by own-property lookup. Reading
+ * `TIER_ALLOWED_MODELS[tier]` directly would resolve inherited Object.prototype
+ * members for values such as `'constructor'` and would collapse every other
+ * unrecognised value onto BASIC, granting an unknown tier BASIC's models.
  */
 export async function submitMuApiImageJob(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
   const { userId, tier, prompt, model, aspectRatio } = input;
 
-  const allowedMuapiModels = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
+  if (!isKnownTier(tier)) {
+    return {
+      success: false,
+      error: `Unknown plan "${tier}". Image generation requires a recognised plan.`,
+      code: 'TIER_GATE',
+    };
+  }
+
+  const allowedMuapiModels = TIER_ALLOWED_MODELS[tier] ?? [];
   if (!allowedMuapiModels.includes(model)) {
     return {
       success: false,
