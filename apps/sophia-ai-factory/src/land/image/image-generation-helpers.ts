@@ -5,7 +5,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { TIER_ALLOWED_MODELS } from '@/seed/config/tiers/image-model-access';
-import { TIER_RANK } from '@/seed/types';
+import { TIER_RANK, type Tier } from '@/seed/types';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';
 import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
@@ -21,7 +21,7 @@ import type { GenerateImageJobInput, GenerateImageJobResult } from './image-gene
  * Object.prototype keys (`'constructor'`, `'toString'`, `'__proto__'`) and any
  * unrecognised value are rejected instead of resolving to a tier's model list.
  */
-function isKnownTier(tier: unknown): tier is string {
+function isKnownTier(tier: unknown): tier is Tier {
   return typeof tier === 'string' && Object.hasOwn(TIER_RANK, tier);
 }
 
@@ -96,7 +96,7 @@ export async function submitMuApiImageJob(
   if (!isKnownTier(tier)) {
     return {
       success: false,
-      error: `Unknown plan "${tier}". Image generation requires a recognised plan.`,
+      error: `Unknown plan "${String(tier)}". Image generation requires a recognised plan.`,
       code: 'TIER_GATE',
     };
   }

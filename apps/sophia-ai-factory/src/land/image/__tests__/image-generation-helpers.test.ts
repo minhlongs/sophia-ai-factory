@@ -155,6 +155,8 @@ describe('submitMuApiImageJob rejects any tier outside the server allowlist', ()
     ['a whitespace-padded plan name', ' BASIC '],
     ['a numeric value', 1],
     ['a non-array object', {}],
+    ['a Symbol', Symbol('BASIC')],
+    ['a BigInt', 1n],
     ['the inherited __proto__ key', '__proto__'],
     ['the inherited constructor key', 'constructor'],
     ['the inherited toString key', 'toString'],
@@ -176,10 +178,13 @@ describe('submitMuApiImageJob rejects any tier outside the server allowlist', ()
     },
   );
 
-  it('still admits a canonical tier with an entitled model', async () => {
-    const result = await submitMuApiImageJob(baseInput({ tier: 'PREMIUM', model: 'hidream' }));
+  it.each(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] as const)(
+    'still admits the canonical %s tier with an entitled model',
+    async (tier) => {
+      const result = await submitMuApiImageJob(baseInput({ tier, model: 'flux-schnell' }));
 
-    expect(result).toEqual({ success: true, jobId: 'muapi_job_7' });
-    expect(mockSubmitMediaJob).toHaveBeenCalledTimes(1);
-  });
+      expect(result).toEqual({ success: true, jobId: 'muapi_job_7' });
+      expect(mockSubmitMediaJob).toHaveBeenCalledTimes(1);
+    },
+  );
 });
