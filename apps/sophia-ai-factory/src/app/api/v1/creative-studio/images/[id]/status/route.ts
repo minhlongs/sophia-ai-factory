@@ -77,6 +77,8 @@ export async function GET(
 
         if (statusChanged || hasResult) {
           const now = Math.floor(Date.now() / 1000);
+          // Ownership predicate repeated on the write: the row was read under
+          // `.eq('user_id', user.id)`, and the update must not widen that scope.
           await db.from('media_jobs').update({
             status: remote.status,
             result_url: remote.resultUrl ?? null,
@@ -84,7 +86,7 @@ export async function GET(
             ...(remote.status === 'completed' || remote.status === 'failed'
               ? { completed_at: now }
               : {}),
-          }).eq('id', id);
+          }).eq('id', id).eq('user_id', user.id);
 
           return NextResponse.json({
             id,

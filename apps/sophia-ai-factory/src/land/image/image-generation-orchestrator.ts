@@ -8,7 +8,6 @@
  * @module land/image/image-generation-orchestrator
  */
 
-import { TIER_ALLOWED_MODELS } from '@/seed/config/tiers/image-model-access';
 import { executeFalImageGeneration } from './fal-image-generation-runner';
 import { submitMuApiImageJob } from './image-generation-helpers';
 
@@ -29,15 +28,6 @@ export async function executeImageGeneration(
 ): Promise<GenerateImageJobResult> {
   if (input.model.startsWith('fal-ai/')) {
     return executeFalImageGeneration(input);
-  }
-
-  const allowedMuapiModels = TIER_ALLOWED_MODELS[input.tier] ?? TIER_ALLOWED_MODELS.BASIC;
-  if (!allowedMuapiModels.includes(input.model)) {
-    return {
-      success: false,
-      error: `Model "${input.model}" is not available for your ${input.tier} plan.`,
-      code: 'TIER_GATE',
-    };
   }
 
   return submitMuApiImageJob(input);
