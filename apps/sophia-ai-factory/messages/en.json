@@ -3866,6 +3866,7 @@
       "submitting": "Installing...",
       "success": "SOP installed successfully!",
       "error": "Failed to install SOP. Please try again.",
+      "cancel": "Cancel",
       "setupTime": "Ready in {n} min",
       "advancedLabel": "Advanced — Edit Markdown directly",
       "advancedHelp": "For power users. Overrides the config form above. Use {{config.field}} to reference your form values.",

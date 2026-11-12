@@ -3867,6 +3867,7 @@
       "submitting": "Đang cài đặt...",
       "success": "Cài đặt SOP thành công!",
       "error": "Không thể cài đặt SOP. Vui lòng thử lại.",
+      "cancel": "Hủy",
       "advancedLabel": "Nâng Cao",
       "advancedHelp": "Ghi đè playbook Markdown để tùy chỉnh từng bước (không bắt buộc)",
       "customizationsPlaceholder": "# Playbook tùy chỉnh (Markdown)\n## Bước 1: ...",

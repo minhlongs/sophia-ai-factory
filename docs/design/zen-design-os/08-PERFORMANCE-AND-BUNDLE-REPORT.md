@@ -18,7 +18,7 @@
 ## 2. ĐẢM BẢO CHỈ SỐ CORE WEB VITALS (LCP, CLS, INP)
 
 1. **Cumulative Layout Shift (`CLS = 0.00`)**:
-   - **Font Loading**: Các bộ chữ `Plus Jakarta Sans`, `Be Vietnam Pro`, `Inter` và `JetBrains Mono` được nạp qua `next/font/google` với `display: 'swap'` và biến CSS ổn định.
+   - **Font Loading**: Các bộ chữ `Inter` (UI/Body) và `JetBrains Mono` (Code/Telemetry) được nạp qua Google Fonts (`<link>` trong `src/app/layout.tsx`) với `display: 'swap'`, subset `latin` + `vietnamese`; bề mặt landing `.v3-core` giữ `Archivo` (wdth) cho tiêu đề scrollytelling. Bỏ `Plus Jakarta Sans` và `Be Vietnam Pro` khỏi runtime UI (Quyết định Founder #07.3 Decision 2).
    - **Theme Toggle Placeholder**: Trong `src/forest/components/theme-toggle.tsx`, trước khi client hydration hoàn tất, một phần tử `<span className="inline-flex h-8 w-8" />` giữ đúng kích thước `32x32px` trên thanh TopBar để không gây xô lệch các nút bên cạnh.
    - **Tabular Numbers**: Toàn bộ bộ đếm tài chính, độ trễ API (`ms`) và mã bước (`WizardStepper`) sử dụng `font-mono` (`font-variant-numeric: tabular-nums`), ngăn chặn hiện tượng giật ngang khi con số thay đổi.
 2. **Interaction to Next Paint (`INP < 50ms`)**:

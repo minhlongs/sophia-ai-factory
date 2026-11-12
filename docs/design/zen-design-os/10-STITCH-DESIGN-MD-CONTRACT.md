@@ -25,7 +25,7 @@ Tệp `/DESIGN.md` tại thư mục gốc đã được cập nhật đầy đ�
 1. **System Identity & Philosophy**: Xác định rõ phong cách **Quiet Expressive Precision** (Director's Control Deck cho Dark Mode & Executive Studio Ivory cho Light Mode).
 2. **Dual-Theme Color Palette**: Liệt kê chính xác mã Hex và biến CSS của cả hai chế độ `:root` và `.dark`, kèm tỷ lệ tương phản WCAG 2.2 AA đã được kiểm chứng.
 3. **Dedicated Studio Dark Stage**: Quy định rõ vùng khung hình video (`--studio-stage-bg: #090A10`) luôn giữ nền tối.
-4. **Typography System (Bilingual VI + EN)**: Khóa bộ ba font chữ `Plus Jakarta Sans`, `Be Vietnam Pro` và `JetBrains Mono` (`tabular-nums`).
+4. **Typography System (Bilingual VI + EN)**: Khóa bộ đôi font chữ `Inter` (UI/Body) và `JetBrains Mono` (Code/Telemetry/`tabular-nums`) — cả hai với subset `latin` + `vietnamese`. `.v3-core` landing giữ `Archivo` (wdth) chỉ cho headline scrollytelling. Không dùng `Satoshi` / `Instrument Serif`.
 5. **Layout, Spacing & Radius**: Quy định lưới 12 cột, sidebar `280px`, chiều cao TopBar `64px` và thang bo góc `6px–16px`.
 6. **Zen Motion Governance**: Liệt kê các biến `--motion-duration-*` (`80ms–600ms`), đường cong `--motion-ease-emphasized` và danh sách các hiệu ứng bị cấm (WebGL, Parallax, Confetti, Magnetic Cursor).
 7. **Signature Visual Utilities**: Mô tả cách dùng đúng cho `.radar`, `.film-strip`, `.camera-rec` (chỉ dùng trên khung preview thật) và `.studio-glass`.

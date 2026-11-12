@@ -83,15 +83,19 @@ Video viewports (`9:16` Shorts, `16:9` YouTube, `1:1` Social artboards) and time
 
 ## 4. Typography & Vietnamese Diacritic Engineering
 
-Sophia enforces a strict **3-Font Bilingual Hierarchy** with generous vertical clearance for Vietnamese stacked diacritics (`ắ`, `ậ`, `ể`, `ỗ`, `ự`):
+Sophia enforces a strict **2-Font Bilingual Hierarchy** (Founder Decision — SUPREME COMMAND #07.3, Decision 2) with generous vertical clearance for Vietnamese stacked diacritics (`ắ`, `ậ`, `ể`, `ỗ`, `ự`):
 
-1. **Display (`--font-display`)**: `'Archivo'`, `'Be Vietnam Pro'`, sans-serif.
-   - Variable width axis (`font-variation-settings: "wdth" 104`) for cockpit headers and hero KPI figures.
-   - Never use `Inter` for display headlines.
-2. **UI & Body (`--font-sans`)**: `'Be Vietnam Pro'`, `'Plus Jakarta Sans'`, system-ui, sans-serif.
-   - Engineered specifically for Vietnamese legibility at 12px–16px alongside English SaaS terminology.
-3. **Telemetry & Monospace (`--font-mono`)**: `'JetBrains Mono'`, monospace.
-   - `font-variant-numeric: tabular-nums` mandatory on all financial figures, latency badges (`142ms`), frame counters, and masked API keys.
+1. **UI & Body (`--font-sans`)**: `'Inter'`, system-ui, sans-serif.
+   - Single authority for all interface text, headings, labels, and body copy (both Dark and Light modes, VI and EN).
+   - Loaded with both `latin` and `vietnamese` Google Fonts subsets so Vietnamese diacritics render natively at 12px–16px alongside English SaaS terminology.
+2. **Telemetry & Code (`--font-mono`)**: `'JetBrains Mono'`, monospace.
+   - `font-variant-numeric: tabular-nums` mandatory on all financial figures, latency badges (`142ms`), frame counters, masked API keys, and technical/code readouts.
+
+### Display Surface Exception (`.v3-core` Landing & Guide Scrollytelling)
+
+The `.v3-core` scrollytelling surfaces (landing hero, guide workbench) keep a third, **scoped** display family — `'Archivo'` with a variable width axis (`font-variation-settings: "wdth" 104` / `102`) — for the two-tier hero headline and section display headings only. It is declared as `--font-display` inside `.v3-core` in `src/styles/v3-core.css`, never as a global body font, and never an authority for UI text.
+
+**Explicitly not in this release:** `Satoshi` and `Instrument Serif` are not adopted anywhere — neither in `globals.css`, `DESIGN.md`, nor the DTCG token contract.
 
 ### Type Scale
 | Role | Token | Size | Line Height | Weight | Tracking |
@@ -155,7 +159,7 @@ SYSTEM: ZEN DESIGN OS v1.0 — SOPHIA AI FACTORY
 DIRECTION: Expressive AI-Native (Material 3 Tonal Hierarchy + Director's Control Deck)
 MODES: Dual-Theme (Dark Default #090A10 canvas / #11131F surface-container; Light Executive Studio Ivory #F8F9FC canvas / #FFFFFF surface-container)
 ACCENTS: Primary Electric Indigo (#6366F1 dark / #4338CA light), Secondary AI Violet (#A855F7 / #7E22CE), Tertiary Cinema Amber (#F59E0B / #D97706), Success Emerald (#10B981 / #059669), Error Rose (#F43F5E / #BE123C)
-TYPOGRAPHY: Display = Archivo (wdth 104, 700-800), UI/Body = Be Vietnam Pro (400-600, Vietnamese diacritic safe), Telemetry/Numbers = JetBrains Mono (tabular-nums)
+TYPOGRAPHY: UI/Body = Inter (400-800, Latin + Vietnamese subsets), Telemetry/Code/Numbers = JetBrains Mono (400-600, tabular-nums); Scoped Landing Display (.v3-core only) = Archivo (wdth 104, 700-800)
 GEOMETRY: Cards rounded-2xl (16px) with 1px subtle outline-variant border (#1E2235 dark / #E2E8F0 light); Buttons & Inputs rounded-xl (12px); Status Pills rounded-full
 UX DOCTRINE: Non-tech SME CEO persona. Clarity before decoration. Zero fabricated metrics (explicit Live / Verified Empty / Unavailable states). Progressive disclosure for BYOK keys and D1 SQL lineage. WCAG 2.2 AA contrast.
 ```

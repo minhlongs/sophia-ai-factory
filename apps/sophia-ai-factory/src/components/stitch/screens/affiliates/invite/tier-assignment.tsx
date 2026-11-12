@@ -47,7 +47,7 @@ export function TierAssignment({
           disabled={disabled}
           value={customRate}
           onChange={(e) => onCustomRateChange(parseFloat(e.target.value) || 0)}
-          className="w-full h-10 px-3.5 rounded-xl bg-black/20 dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all font-mono"
+          className="w-full h-10 px-3.5 rounded-xl bg-muted/50 dark:bg-white/[0.04] border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all font-mono"
         />
         <p className="text-[11px] text-muted-foreground">
           {t('commissionOverrideHelp')}
@@ -71,7 +71,7 @@ export function TierAssignment({
           placeholder={t('welcomeMessagePlaceholder')}
           value={welcomeMessage}
           onChange={(e) => onWelcomeMessageChange(e.target.value)}
-          className="w-full p-3 rounded-xl bg-black/20 dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all resize-none"
+          className="w-full p-3 rounded-xl bg-muted/50 dark:bg-white/[0.04] border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all resize-none"
         />
       </div>
 
@@ -93,14 +93,14 @@ export function TierAssignment({
                 className={`flex items-center gap-2 p-2.5 rounded-xl text-xs text-left border transition-all ${
                   isChecked
                     ? 'bg-primary/15 border-primary/40 text-primary font-medium'
-                    : 'bg-black/10 dark:bg-white/[0.02] border-border dark:border-white/[0.06] text-muted-foreground hover:bg-white/[0.04]'
+                    : 'bg-muted/40 dark:bg-white/[0.02] border-border text-muted-foreground hover:bg-muted/60'
                 }`}
               >
                 <div
                   className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
                     isChecked
                       ? 'bg-primary border-primary text-white'
-                      : 'border-white/20 bg-transparent'
+                      : 'border-border bg-transparent'
                   }`}
                 >
                   {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}

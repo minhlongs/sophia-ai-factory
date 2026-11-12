@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { lookupUserApiKey, type ByokProvider } from '@/tree/byok/user-api-key-store';
 import { logger } from '@/seed/utils/logger-utility';
-import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
+import { globalRateLimiter, getClientIpIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,8 +72,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const rl = globalRateLimiter.checkLimit(getClientIdentifier(request), { intervalMs: 60_000, maxRequests: 10 });
-  if (!rl.allowed) return createRateLimitResponse(rl);
+  const ipRl = globalRateLimiter.checkLimit(
+    `byok:test:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 10 },
+  );
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl);
+
+  const userRl = globalRateLimiter.checkLimit(`byok:test:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 10,
+  });
+  if (!userRl.allowed) return createRateLimitResponse(userRl);
 
   const body = await request.json().catch(() => null);
   const parsed = Body.safeParse(body);

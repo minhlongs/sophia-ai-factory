@@ -26,6 +26,17 @@ export interface ZenThemeProviderProps {
   nonce?: string;
 }
 
+/**
+ * Cloudflare Rocket Loader rewrites every `<script>` tag it sees to
+ * `type="text/rocketscript"` (deferring execution to its own bootstrapper)
+ * unless the tag carries `data-cfasync="false"`. The `next-themes` restore
+ * script is nonce-authorized and must run synchronously before first paint,
+ * so it is opted out explicitly. This does not weaken the CSP: `next-themes`
+ * spreads `scriptProps` before it applies `nonce`, so the per-request nonce
+ * still reaches the script and `script-src` stays nonce-strict.
+ */
+const ROCKET_LOADER_OPT_OUT = { 'data-cfasync': 'false' } as const;
+
 export function ZenThemeProvider({
   children,
   defaultTheme = 'dark',
@@ -40,6 +51,7 @@ export function ZenThemeProvider({
       disableTransitionOnChange
       storageKey="sophia-zen-theme"
       nonce={nonce}
+      scriptProps={ROCKET_LOADER_OPT_OUT}
     >
       {children}
     </NextThemesProvider>

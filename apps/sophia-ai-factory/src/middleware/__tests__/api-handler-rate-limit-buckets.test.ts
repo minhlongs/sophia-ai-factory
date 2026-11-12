@@ -1,9 +1,10 @@
 /**
- * Rate-limit bucket assignment for /api/* paths in handleApiRoute.
+ * Rate-limit bucket assignment and 429 telemetry for /api/* paths in handleApiRoute.
  *
- * BYOK and admin routes must not share the 10/min auth bucket with /api/auth/*:
- * the Setup Wizard re-reads /api/user/byok on every step and page refresh, so a
- * shared bucket turns normal onboarding reloads into 429 responses.
+ * BYOK & Setup Wizard routes receive a dedicated `byok` bucket (40/min) — isolated
+ * from both `/api/auth/*` (10/min) and `/api/admin/*` (50/min) — so normal Setup
+ * Wizard reloads never starve authentication or admin consoles while capping
+ * IP-level provider probing below the general `/api/*` baseline (100/min).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,20 +19,19 @@ vi.mock('@/forest/middleware/agy-tenant-isolation', () => ({
   agyTenantIsolationMiddleware: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock('@/seed/security/rate-limiting-middleware', () => ({
-  checkRateLimit: vi.fn().mockResolvedValue({
-    success: true,
-    reset: Date.now() + 60_000,
-  }),
-  getClientIdentifier: vi.fn().mockReturnValue('test-client'),
-  RATE_LIMITS: {
-    api: { maxRequests: 100, windowSeconds: 60, identifier: 'api' },
-    auth: { maxRequests: 10, windowSeconds: 60, identifier: 'auth' },
-    admin: { maxRequests: 50, windowSeconds: 60, identifier: 'admin' },
-    discovery: { maxRequests: 30, windowSeconds: 60, identifier: 'discovery' },
-    webhook: { maxRequests: 1000, windowSeconds: 60, identifier: 'webhook' },
-  },
-}));
+vi.mock('@/seed/security/rate-limiting-middleware', async () => {
+  const actual = await vi.importActual<typeof import('@/seed/security/sql-rate-limiter-queries')>(
+    '@/seed/security/sql-rate-limiter-queries',
+  );
+  return {
+    checkRateLimit: vi.fn().mockResolvedValue({
+      success: true,
+      reset: Date.now() + 60_000,
+    }),
+    getClientIdentifier: vi.fn().mockReturnValue('ip:203.0.113.7'),
+    RATE_LIMITS: actual.RATE_LIMITS,
+  };
+});
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   AuthSystemError: class extends Error {},
@@ -68,6 +68,9 @@ vi.mock('@/tree/signals/track', () => ({
 }));
 
 import { checkRateLimit, RATE_LIMITS } from '@/seed/security/rate-limiting-middleware';
+import { track } from '@/tree/signals/track';
+import { D1Events } from '@/forest/telemetry/d1-event-types';
+import { ApiRateLimitHitSchema } from '@/tree/signals/events/schemas-business';
 import { handleApiRoute } from '../api-handler';
 
 function requestFor(pathname: string): NextRequest {
@@ -81,7 +84,7 @@ describe('handleApiRoute rate-limit buckets', () => {
       success: true,
       reset: Date.now() + 60_000,
       remaining: 1,
-    } as ReturnType<typeof checkRateLimit> extends Promise<infer R> ? R : never);
+    });
   });
 
   it('routes /api/auth/* to the auth bucket', async () => {
@@ -90,16 +93,25 @@ describe('handleApiRoute rate-limit buckets', () => {
     expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(RATE_LIMITS.auth);
   });
 
-  it('keeps /api/user/byok out of the auth bucket', async () => {
+  it('routes /api/user/byok to a dedicated byok bucket distinct from auth and admin', async () => {
     await handleApiRoute(requestFor('/api/user/byok'), '/api/user/byok', Date.now());
 
-    expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(RATE_LIMITS.admin);
+    const bucket = vi.mocked(checkRateLimit).mock.calls[0]?.[1];
+    expect(bucket).toBe(RATE_LIMITS.byok);
+    expect(bucket).not.toBe(RATE_LIMITS.auth);
+    expect(bucket).not.toBe(RATE_LIMITS.admin);
   });
 
-  it('keeps /api/user/byok sub-routes in the admin bucket', async () => {
+  it('routes /api/user/byok/test and /api/setup-wizard/* to the dedicated byok bucket', async () => {
     await handleApiRoute(requestFor('/api/user/byok/test'), '/api/user/byok/test', Date.now());
+    await handleApiRoute(
+      requestFor('/api/setup-wizard/validate-key'),
+      '/api/setup-wizard/validate-key',
+      Date.now(),
+    );
 
-    expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(RATE_LIMITS.admin);
+    expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(RATE_LIMITS.byok);
+    expect(vi.mocked(checkRateLimit).mock.calls[1]?.[1]).toBe(RATE_LIMITS.byok);
   });
 
   it('routes /api/admin/* to the admin bucket', async () => {
@@ -108,10 +120,38 @@ describe('handleApiRoute rate-limit buckets', () => {
     expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(RATE_LIMITS.admin);
   });
 
-  it('gives BYOK a much larger budget than a single auth request', async () => {
-    const adminBucket = RATE_LIMITS.admin as { maxRequests: number };
-    const authBucket = RATE_LIMITS.auth as { maxRequests: number };
+  it('sizes RATE_LIMITS.byok strictly between auth (10/min) and api (100/min)', () => {
+    expect(RATE_LIMITS.byok.identifier).toBe('byok');
+    expect(RATE_LIMITS.byok.maxRequests).toBeGreaterThan(RATE_LIMITS.auth.maxRequests);
+    expect(RATE_LIMITS.byok.maxRequests).toBeLessThan(RATE_LIMITS.api.maxRequests);
+  });
 
-    expect(adminBucket.maxRequests).toBeGreaterThan(authBucket.maxRequests);
+  it('returns 429 with standard headers and schema-valid byok telemetry when breached', async () => {
+    const resetAt = Date.now() + 45_000;
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      success: false,
+      remaining: 0,
+      reset: resetAt,
+    });
+
+    const res = await handleApiRoute(
+      requestFor('/api/user/byok'),
+      '/api/user/byok',
+      Date.now(),
+    );
+
+    expect(res?.status).toBe(429);
+    expect(res?.headers.get('X-RateLimit-Limit')).toBe(String(RATE_LIMITS.byok.maxRequests));
+    expect(res?.headers.get('X-RateLimit-Remaining')).toBe('0');
+    expect(res?.headers.get('X-RateLimit-Reset')).toBe(String(resetAt));
+    expect(Number(res?.headers.get('Retry-After'))).toBeGreaterThan(0);
+
+    expect(track).toHaveBeenCalledWith(
+      D1Events.API_RATE_LIMIT_HIT,
+      'ip:203.0.113.7',
+      expect.objectContaining({ path: '/api/user/byok', limit_type: 'byok' }),
+    );
+    const payload = vi.mocked(track).mock.calls[0]?.[2];
+    expect(ApiRateLimitHitSchema.safeParse(payload).success).toBe(true);
   });
 });

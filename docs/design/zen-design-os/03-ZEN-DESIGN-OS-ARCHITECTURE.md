@@ -7,7 +7,7 @@
 ## 1. TRIẾT LÝ THIẾT KẾ CỐT LÕI (PRODUCT DESIGN PHILOSOPHY)
 
 **ZEN DESIGN OS v1.0** được định hình bởi 6 trụ cột:
-1. **PREMIUM (Cao cấp)**: Bề mặt phân lớp rõ ràng, chữ viết sắc nét (`Plus Jakarta Sans` + `Be Vietnam Pro` + `JetBrains Mono`), không dùng các mảng màu lòe loẹt hoặc hiệu ứng rẻ tiền.
+1. **PREMIUM (Cao cấp)**: Bề mặt phân lớp rõ ràng, chữ viết sắc nét (`Inter` + `JetBrains Mono`), không dùng các mảng màu lòe loẹt hoặc hiệu ứng rẻ tiền.
 2. **QUIET (Tĩnh tại)**: Ưu tiên sự rõ ràng của thông tin vận hành; chuyển động chỉ xuất hiện khi có sự thay đổi trạng thái thực sự.
 3. **EXPRESSIVE (Biểu cảm có kiểm soát)**: Áp dụng đường cong gia tốc chuẩn Material 3 Expressive (`cubic-bezier(0.16, 1, 0.3, 1)`) và hệ thống tín hiệu thị giác đặc trưng của đạo diễn (`.radar`, `.film-strip`, `.camera-rec`).
 4. **AI-NATIVE (Bản địa AI)**: Hiển thị trạng thái cộng tác liên tục của đội ngũ AI Agent thông qua thanh HUD gọn gàng, thẻ xác minh độ trễ API (`ms`) và khung vẽ kịch bản trực quan.

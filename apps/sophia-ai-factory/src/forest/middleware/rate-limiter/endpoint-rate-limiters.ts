@@ -6,19 +6,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkD1RateLimit } from '@/seed/security/d1-rate-limiter';
 
+export function getClientIpIdentifier(request: Request): string {
+  const cfConnectingIp = request.headers.get('cf-connecting-ip')?.trim();
+  if (cfConnectingIp) {
+    return `ip:${cfConnectingIp}`;
+  }
+
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    const ip = forwardedFor.split(',')[0].trim();
+    if (ip) {
+      return `ip:${ip}`;
+    }
+  }
+
+  return 'ip:anonymous';
+}
+
 export function getClientIdentifier(request: Request): string {
   const apiKey = request.headers.get('x-api-key');
   if (apiKey) {
     return `apikey:${apiKey}`;
   }
 
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    const ip = forwardedFor.split(',')[0].trim();
-    return `ip:${ip}`;
-  }
-
-  return 'ip:anonymous';
+  return getClientIpIdentifier(request);
 }
 
 const AUTH_ENDPOINT_PATTERNS = [

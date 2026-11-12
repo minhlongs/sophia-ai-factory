@@ -86,6 +86,16 @@ describe('ZEN DESIGN OS v1.0 — DTCG 2025.10 Token & WCAG 2.2 AA Contrast Suite
     }
   });
 
+  it('locks Typography Authority to Inter (UI/sans) and JetBrains Mono (code/mono) with zero Satoshi or Instrument Serif', () => {
+    expect(ZEN_DESIGN_TOKENS.typography.fontFamily.sans.$value[0]).toBe('Inter');
+    expect(ZEN_DESIGN_TOKENS.typography.fontFamily.display.$value[0]).toBe('Inter');
+    expect(ZEN_DESIGN_TOKENS.typography.fontFamily.mono.$value[0]).toBe('JetBrains Mono');
+
+    const serialized = JSON.stringify(ZEN_DESIGN_TOKENS.typography);
+    expect(serialized).not.toContain('Satoshi');
+    expect(serialized).not.toContain('Instrument Serif');
+  });
+
   it('resolves Zen Motion Governance durations and cubic-bezier curves', () => {
     expect(getZenMotionDuration('instant')).toBe('80ms');
     expect(getZenMotionDuration('fast')).toBe('150ms');

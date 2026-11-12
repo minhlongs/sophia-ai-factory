@@ -60,6 +60,9 @@ export async function handlePublicPipeline(
     const url = request.nextUrl.clone();
     url.pathname = stripped;
     request = new NextRequest(url.toString(), request);
+    // Forward the stripped locale so the (app) route group renders the requested
+    // language instead of falling back to the default locale.
+    requestHeaders.set('x-next-intl-locale', localeForCookie);
   }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });

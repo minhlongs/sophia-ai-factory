@@ -44,9 +44,9 @@ Các token này giữ nguyên giá trị tối ở cả hai chế độ Sáng v�
 ## 3. TOKEN CHỮ VIẾT, KHOẢNG CÁCH, BO GÓC & CHUYỂN ĐỘNG
 
 ### 3.1. Typography (`typography.fontFamily`)
-- **Display / Heading**: `'Plus Jakarta Sans', 'Be Vietnam Pro', 'Inter', -apple-system, sans-serif`
-- **Body (Bilingual VI + EN)**: `'Plus Jakarta Sans', 'Be Vietnam Pro', 'Inter', -apple-system, sans-serif`
-- **Monospace (Telemetry / API Keys / Financial Counters)**: `'JetBrains Mono', ui-monospace, SFMono-Regular, monospace` (kích hoạt `font-variant-numeric: tabular-nums`).
+- **UI & Heading (`fontFamily.display` / `fontFamily.sans`)**: `'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` (nạp đầy đủ subset `latin` + `vietnamese`).
+- **Monospace (Telemetry / API Keys / Financial Counters, `fontFamily.mono`)**: `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace` (kích hoạt `font-variant-numeric: tabular-nums`).
+- **Scoped Landing Display (`.v3-core` only)**: `'Archivo', 'Inter', system-ui, sans-serif` (`font-variation-settings: "wdth" 104` / `102` chỉ dùng cho tiêu đề scrollytelling trên Landing/Guide; không dùng cho UI ứng dụng; tuyệt đối không dùng `Satoshi` hay `Instrument Serif`).
 
 ### 3.2. Bo góc (`radius`)
 - `--radius-sm`: `0.375rem` (`6px`)

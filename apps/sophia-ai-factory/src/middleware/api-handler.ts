@@ -68,10 +68,15 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
 
   if (pathname.startsWith('/api/auth')) {
     rateLimitConfig = RATE_LIMITS.auth;
-  } else if (pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
-    // BYOK key management and admin routes run far tighter loops than login:
-    // the Setup Wizard re-reads /api/user/byok on every step and refresh, so
-    // they must never share the 10/min auth bucket with /api/auth/*.
+  } else if (
+    pathname.startsWith('/api/user/byok') ||
+    pathname.startsWith('/api/setup-wizard')
+  ) {
+    // Dedicated BYOK & Setup Wizard bucket: isolated from /api/auth/* (10/min)
+    // and /api/admin/* (50/min) so onboarding refreshes never starve login or
+    // admin consoles, while capping IP-level provider probing below /api/* (100/min).
+    rateLimitConfig = RATE_LIMITS.byok;
+  } else if (pathname.startsWith('/api/admin')) {
     rateLimitConfig = RATE_LIMITS.admin;
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
@@ -100,7 +105,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     track(D1Events.API_RATE_LIMIT_HIT, identifier, {
       path: pathname,
       identifier,
-      limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : rateLimitConfig === RATE_LIMITS.discovery ? 'discovery' : 'api',
+      limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : rateLimitConfig === RATE_LIMITS.discovery ? 'discovery' : rateLimitConfig === RATE_LIMITS.admin ? 'admin' : rateLimitConfig === RATE_LIMITS.byok ? 'byok' : 'api',
     });
     emitUsageEvent(request, { status: 429, headers: rateLimitResponse.headers }).catch(err => {
       logger.error('[Proxy] Failed to emit 429 usage event', err);

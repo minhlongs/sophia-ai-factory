@@ -13,7 +13,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store'
-import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter'
 import {
   DeleteSchema,
   PostSchema,
@@ -61,6 +65,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const { provider, key, validateLive } = parsed.data
+  if (validateLive) {
+    const ipProbeRl = globalRateLimiter.checkLimit(
+      `byok:probe:${getClientIpIdentifier(request)}`,
+      { intervalMs: 60_000, maxRequests: 12 },
+    )
+    if (!ipProbeRl.allowed) return createRateLimitResponse(ipProbeRl)
+
+    const probeRl = globalRateLimiter.checkLimit(`byok:probe:${user.id}`, {
+      intervalMs: 60_000,
+      maxRequests: 10,
+    })
+    if (!probeRl.allowed) return createRateLimitResponse(probeRl)
+  }
   return upsertVerifiedByokKey(user.id, provider, key, validateLive)
 }
 

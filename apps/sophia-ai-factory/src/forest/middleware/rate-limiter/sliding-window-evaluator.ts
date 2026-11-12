@@ -18,6 +18,7 @@ export function evaluateSlidingWindow(
         allowed: true,
         remaining: config.maxRequests - 1,
         resetAt: now + config.intervalMs,
+        limit: config.maxRequests,
       },
     };
   }
@@ -40,6 +41,7 @@ export function evaluateSlidingWindow(
         remaining: 0,
         resetAt,
         retryAfter,
+        limit: config.maxRequests,
       },
     };
   }
@@ -56,6 +58,7 @@ export function evaluateSlidingWindow(
       allowed: true,
       remaining: config.maxRequests - validTimestamps.length,
       resetAt: now + config.intervalMs,
+      limit: config.maxRequests,
     },
   };
 }

@@ -2,7 +2,7 @@
  * Automated Verification Suite for "Director's Control Deck" UI Design System
  * Verifies Executive Studio Light (:root), Cinema Dark Room (.dark),
  * signature utility classes (.radar, .film-strip, .camera-rec, .studio-glass),
- * typography (Plus Jakarta Sans, Be Vietnam Pro, JetBrains Mono),
+ * typography (Inter, JetBrains Mono),
  * and adaptive Light/Dark tokens across all 4 modernized screen groups.
  *
  * @module src/__tests__/director-control-deck-design-system
@@ -51,9 +51,13 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(globalsCss).toContain('.studio-glass {');
   });
 
-  it('includes Plus Jakarta Sans and Be Vietnam Pro in body font stack', () => {
-    expect(globalsCss).toContain("'Plus Jakarta Sans'");
-    expect(globalsCss).toContain("'Be Vietnam Pro'");
+  it('includes Inter for UI/body text and JetBrains Mono for code & telemetry (Founder Decision 2)', () => {
+    expect(globalsCss).toContain("font-family: 'Inter'");
+    expect(globalsCss).toContain("'JetBrains Mono'");
+    expect(globalsCss).not.toContain("'Plus Jakarta Sans'");
+    expect(globalsCss).not.toContain("'Be Vietnam Pro'");
+    expect(globalsCss).not.toContain('Satoshi');
+    expect(globalsCss).not.toContain('Instrument Serif');
   });
 
   it('Phase 1: upgrades core Stitch UI primitives and Navigation Shells to adaptive Light/Dark', () => {
