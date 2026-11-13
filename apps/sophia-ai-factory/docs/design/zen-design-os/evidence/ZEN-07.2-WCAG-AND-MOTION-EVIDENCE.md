@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD:** `VERIFIED_HEAD_SHA`
+**Verified HEAD (code & evidence):** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
 
@@ -213,7 +213,7 @@ requirement is violated (SC 2.3.3 applies to motion that is shown, and none is).
   via `var(...)` references rather than hardcoded literals.
 - The satisfy/prove command requires that **GSAP, Lenis and React Bits were not
   introduced** during this pass. Verified from the working tree:
-  `package.json` dependencies are unchanged relative to `4d23ddb38`; no
+  `package.json` dependencies are unchanged relative to the baseline `673ec911`; no
   `gsap`, `lenis` or `react-bits` entry exists in `dependencies` or
   `devDependencies`. `AnimatedCounter` is deliberately rAF-based
   (`animated-counter-with-framer-motion.tsx:33-48`) and the file already carries

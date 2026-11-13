@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD (design):** `VERIFIED_HEAD_SHA` (`BUILD_ID`: `i-DT5CkjJEXfOYAyJSbOO`)
+**Verified HEAD (code & evidence):** `cd068bd39917e560f8857d490e04790fc6b0a7bf` (`BUILD_ID`: `i-DT5CkjJEXfOYAyJSbOO`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f` (`BUILD_ID`: `yYKZRZ2DV0-uYPRbmC_9f`)
 **Machine Evidence:** [`g6/g6-runtime-perf.json`](./g6/g6-runtime-perf.json), [`g6/g6-runtime-perf.mjs`](./g6/g6-runtime-perf.mjs)
 
@@ -97,5 +97,5 @@ Every promised Zen Design OS deliverable was audited against source files, tests
 | Light / Dark Semantic Roles | `src/app/globals.css:14-305`, `src/forest/theme/zen-theme-provider.tsx` | **VISUALLY VERIFIED** | Verified in real Chrome across 36 base screenshots + `g2-audit.json` after remediating 4 Light/Dark contrast & token defects. |
 | Motion Policy & Primitives | `src/app/globals.css:19-27,980-1005`, `src/seed/components/ui/{fade-in-view,scroll-reveal,page-transition,animated-counter-with-framer-motion}.tsx` | **IMPLEMENTED & TESTED** | Zero new animation dependencies (no GSAP/Lenis/React Bits); 4/4 unit tests pass in `zen-motion-reduced-motion.test.tsx` + verified under Playwright `reducedMotion: 'reduce'`. |
 | Three Pilot Screens (`/vi/setup-wizard`, `/vi/dashboard`, `/vi/dashboard/niche-studio` + `/en/*`) | `src/app/[locale]/setup/page.tsx`, `src/app/[locale]/dashboard/page.tsx`, `src/app/[locale]/dashboard/niche-studio/page.tsx` | **VISUALLY VERIFIED** | All 36 locale × theme × viewport PNGs rendered in real Chrome and visually inspected (`ZEN-07.2-VISUAL-EVIDENCE.md`). |
-| A/B/C Design-Direction Comparison | `docs/design/zen-design-os/DIRECTION-COMPARISON-MATRIX.md` | **DOCUMENTED ONLY** | 88-line architectural comparison matrix (Option A Dark-Only vs Option B Dual-Theme vs Option C Warm Editorial) with weighted scorecard (Option B 9.45/10). |
-| Reusable Design Documentation | `docs/design/zen-design-os/{AESTHETIC-DIRECTION,BENCHMARK-EXTRACTION,COMPONENT-INVENTORY,MOTION-AND-INTERACTION-SPEC,PILOT-SCREENS-REDESIGN-SPEC,ROLLOUT-ROADMAP,TOKEN-SPEC,VISUAL-AUDIT-REPORT,ZEN-07.1-HANDOVER}.md` | **DOCUMENTED ONLY** | Complete 10-document suite present under `docs/design/zen-design-os/` plus the 6 independent verification reports in `docs/design/zen-design-os/evidence/`. |
+| A/B/C Design-Direction Comparison | `docs/design/zen-design-os/01-OFFICIAL-RESEARCH-LEDGER.md` & `03-ZEN-DESIGN-OS-ARCHITECTURE.md` (repo root) | **DOCUMENTED ONLY** | Architectural direction comparison (Dark-Only vs Dual-Theme Director's Control Deck / Executive Studio Ivory vs Warm Editorial) documented in the numbered Zen Design OS specification ledger at repo root. |
+| Reusable Design Documentation | `docs/design/zen-design-os/00-EXECUTIVE-SUMMARY.md` … `12-ROLLBACK-AND-RECOVERY.md` + `ZEN-MOTION-ADOPTION-MATRIX.md` (repo root, 14 files) | **DOCUMENTED ONLY** | Complete 14-document architecture & governance suite at repo root plus the 7 independent verification reports in `apps/sophia-ai-factory/docs/design/zen-design-os/evidence/`. |
