@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-11-10T23:43:44.948Z",
+  "timestamp": "2026-11-12T12:48:06.128Z",
   "csp": {
-    "request1ScriptSrc": "script-src 'self' 'unsafe-eval' 'nonce-db6523ac16b494e00d54dba9c987b575'",
-    "request1Nonce": "db6523ac16b494e00d54dba9c987b575",
-    "request1HeaderNonce": "db6523ac16b494e00d54dba9c987b575",
+    "request1ScriptSrc": "script-src 'self' 'unsafe-eval' 'nonce-f067726f5991a8fa9d21f1822692e67e'",
+    "request1Nonce": "f067726f5991a8fa9d21f1822692e67e",
+    "request1HeaderNonce": "f067726f5991a8fa9d21f1822692e67e",
     "request1CacheControl": "no-store",
-    "request2Nonce": "572952b68321ec03bea54ce2d9c0a057",
+    "request2Nonce": "c2f45ce2f0844a610c2bed327c4dc286",
     "noncesAreUniqueAcrossRequests": true,
     "scriptSrcHasNoUnsafeInline": true,
     "cspViolations": []
@@ -20,7 +20,7 @@
     "primaryVar": "#6366f1",
     "hasThemeScript": true,
     "themeScriptNonceAttr": "",
-    "themeScriptNonceProp": "db6523ac16b494e00d54dba9c987b575"
+    "themeScriptNonceProp": "f067726f5991a8fa9d21f1822692e67e"
   },
   "afterSwitchToLight": {
     "htmlClass": "light",

@@ -14,7 +14,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 77972
+      "bytes": 80609
     },
     {
       "id": "setup-wizard__vi__dark__768w",
@@ -29,7 +29,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 125003
+      "bytes": 127169
     },
     {
       "id": "setup-wizard__vi__dark__1440w",
@@ -44,7 +44,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 131665
+      "bytes": 135454
     },
     {
       "id": "dashboard__vi__dark__375w",
@@ -59,7 +59,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 82371
+      "bytes": 82657
     },
     {
       "id": "dashboard__vi__dark__768w",
@@ -74,7 +74,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 131908
+      "bytes": 132000
     },
     {
       "id": "dashboard__vi__dark__1440w",
@@ -89,7 +89,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 184683
+      "bytes": 181314
     },
     {
       "id": "niche-studio__vi__dark__375w",
@@ -104,7 +104,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 75759
+      "bytes": 76728
     },
     {
       "id": "niche-studio__vi__dark__768w",
@@ -119,7 +119,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 125084
+      "bytes": 125893
     },
     {
       "id": "niche-studio__vi__dark__1440w",
@@ -134,7 +134,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 194667
+      "bytes": 194275
     },
     {
       "id": "setup-wizard__vi__light__375w",
@@ -149,7 +149,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 79616
+      "bytes": 81819
     },
     {
       "id": "setup-wizard__vi__light__768w",
@@ -164,7 +164,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 127203
+      "bytes": 129223
     },
     {
       "id": "setup-wizard__vi__light__1440w",
@@ -179,7 +179,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 133797
+      "bytes": 137052
     },
     {
       "id": "dashboard__vi__light__375w",
@@ -194,7 +194,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 83371
+      "bytes": 83382
     },
     {
       "id": "dashboard__vi__light__768w",
@@ -209,7 +209,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 133734
+      "bytes": 133532
     },
     {
       "id": "dashboard__vi__light__1440w",
@@ -224,7 +224,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 185855
+      "bytes": 181439
     },
     {
       "id": "niche-studio__vi__light__375w",
@@ -239,7 +239,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 75585
+      "bytes": 76376
     },
     {
       "id": "niche-studio__vi__light__768w",
@@ -254,7 +254,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 126053
+      "bytes": 126874
     },
     {
       "id": "niche-studio__vi__light__1440w",
@@ -269,7 +269,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 196486
+      "bytes": 195722
     },
     {
       "id": "setup-wizard__en__dark__375w",
@@ -284,7 +284,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 74543
+      "bytes": 76518
     },
     {
       "id": "setup-wizard__en__dark__768w",
@@ -299,7 +299,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 121109
+      "bytes": 123852
     },
     {
       "id": "setup-wizard__en__dark__1440w",
@@ -314,7 +314,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 128711
+      "bytes": 131503
     },
     {
       "id": "dashboard__en__dark__375w",
@@ -329,7 +329,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 82378
+      "bytes": 80916
     },
     {
       "id": "dashboard__en__dark__768w",
@@ -344,7 +344,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 128945
+      "bytes": 129078
     },
     {
       "id": "dashboard__en__dark__1440w",
@@ -359,7 +359,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 177175
+      "bytes": 178066
     },
     {
       "id": "niche-studio__en__dark__375w",
@@ -374,7 +374,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 75082
+      "bytes": 77114
     },
     {
       "id": "niche-studio__en__dark__768w",
@@ -389,7 +389,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 124277
+      "bytes": 125880
     },
     {
       "id": "niche-studio__en__dark__1440w",
@@ -404,7 +404,7 @@
       "primaryToken": "#6366f1",
       "surfaceToken": "#090a10",
       "horizontalOverflowPx": 0,
-      "bytes": 190932
+      "bytes": 191720
     },
     {
       "id": "setup-wizard__en__light__375w",
@@ -419,7 +419,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 76220
+      "bytes": 77805
     },
     {
       "id": "setup-wizard__en__light__768w",
@@ -434,7 +434,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 122989
+      "bytes": 125789
     },
     {
       "id": "setup-wizard__en__light__1440w",
@@ -449,7 +449,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 130602
+      "bytes": 133075
     },
     {
       "id": "dashboard__en__light__375w",
@@ -464,7 +464,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 82729
+      "bytes": 81789
     },
     {
       "id": "dashboard__en__light__768w",
@@ -479,7 +479,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 131263
+      "bytes": 130484
     },
     {
       "id": "dashboard__en__light__1440w",
@@ -494,7 +494,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 178211
+      "bytes": 178376
     },
     {
       "id": "niche-studio__en__light__375w",
@@ -509,7 +509,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 75123
+      "bytes": 76632
     },
     {
       "id": "niche-studio__en__light__768w",
@@ -524,7 +524,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 125272
+      "bytes": 126852
     },
     {
       "id": "niche-studio__en__light__1440w",
@@ -539,7 +539,7 @@
       "primaryToken": "#4338ca",
       "surfaceToken": "#f8f9fc",
       "horizontalOverflowPx": 0,
-      "bytes": 193309
+      "bytes": 193407
     }
   ],
   "targeted": [

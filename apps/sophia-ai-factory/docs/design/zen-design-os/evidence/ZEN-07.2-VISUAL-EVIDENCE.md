@@ -2,11 +2,11 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD (design, with P0/P1 remediation applied in this pass):**
-`4d23ddb386f499b7627f2c828a1b80c81c6a3382` + P0/P1 fixes
+**Verified HEAD (design, with P0/P1 remediation and acceptance closure):**
+`VERIFIED_HEAD_SHA`
 **Baseline (main):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Worktree:** `/Users/macbook/.gemini/antigravity/scratch/sophia-zen-design-os-v1/apps/sophia-ai-factory`
-**Date:** 2026-11-11
+**Date:** 2026-11-12
 **Mode:** Isolated local verification; PRODUCTION NOT TOUCHED (no push, no merge, no deploy).
 
 ---
@@ -105,6 +105,17 @@ exercised through the live request paths recorded in
 (BYOK verification pending, rate-limit 429 removal, refresh-loop errors) rather
 than only as static screenshots.
 
+### 3.2.1 Dialogs (open state, not screenshot-only)
+
+Three real dialogs were driven through genuine user interaction in the same
+browser and both themes/locales: the harness `Dialog` (form modal with two
+focusable fields), the shipping `ByokRotationView` rotation dialog, and the
+shipping `CmdKPalette`. Focus placement, Tab/Shift+Tab containment,
+`Escape`-to-close, focus return targets, accessible name/description and
+background inertness were measured — not eyeballed — and are recorded in
+[`ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md`](./ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md)
+§2.1 and [`dialog-a11y-report.json`](./dialog-a11y-report.json).
+
 ### 3.3 Verdict
 
 **VISUALLY VERIFIED** — every one of the three pilot screens was opened as a
@@ -122,12 +133,14 @@ No route is promoted to "visually verified" on the strength of unit tests alone.
 | V3 | P1 | `src/components/stitch/ui/button-styles.ts:14` | Dark-mode primary button used `#6366F1` with white text → 4.47:1 (below AA) | `bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white` → 6.29:1 dark, 8.61:1 light |
 | V4 | P1 | `src/components/niche-studio/sophia-artifact-canvas.tsx:140-149` | 5 hardcoded `#rrggbb` literals regressed `npm run check:color-tokens` (baseline ratchet guard failed, exit 1) | `'var(--primary-600)'`, `'var(--primary-foreground)'`, `DARK_CANVAS_BG`, `DEFAULT_ACCENT_HEX` — identical rendering, 0 literals |
 | V5 | P1 | `src/forest/dashboard/dashboard-user-card.tsx:24` | `dark:text-violet-200` broke the PRO badge contract (test expected `violet-300`) and reduced contrast | restored `dark:text-violet-300` (~8.5:1 on `bg-violet-500/20`) |
-| V6 | P0 | `src/middleware/api-handler.ts:71` | `/api/user/byok` shared the 10 req/min `auth` bucket with `/api/auth/*` → Setup Wizard BYOK refresh loop hit **429 Too Many Requests** | `/api/admin` + `/api/user/byok` now route to the `admin` bucket (50 req/min), 5-test regression suite added |
+| V6 | P0 | `src/middleware/api-handler.ts:72-78` | `/api/user/byok` shared the 10 req/min `auth` bucket with `/api/auth/*` → Setup Wizard BYOK refresh loop hit **429 Too Many Requests** | dedicated `byok` bucket (40 req/min) declared at `src/seed/security/sql-rate-limiter-queries.ts:32`, applied to `/api/user/byok` + `/api/setup-wizard`; `/api/admin` separately restored to its pre-declared 50 req/min bucket; 6-test regression suite added |
 | V7 | P1 | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | `<label htmlFor>` added while `aria-label` was removed → accessible names lost (`niche-studio-readiness-ui.test.tsx:49` red) | restored both `aria-label` attributes |
 
 Every fix was followed by the narrowest test first, then the full sweep:
-39 test files / **294 tests passing** across all changed-file `vitest related`
-dependencies.
+`npm test` measured **2096 test files / 19,682 tests passing** (34 skipped,
+10 todo; 193.4s, exit 0) on the closing tree, and `npm run build` completed with
+exit 0 across 636 routes. Per-gate numbers live in
+[`ZEN-07.2-FUNCTIONAL-REGRESSION.md`](./ZEN-07.2-FUNCTIONAL-REGRESSION.md) §2.
 
 ---
 
@@ -138,5 +151,5 @@ dependencies.
 # 2. route load log
 node docs/design/zen-design-os/evidence/g6/g6-runtime-perf.mjs   # also re-verifies G6 numbers
 # 3. colour-token ratchet guard (must exit 0)
-npm run check:color-tokens        # → "✔ no new hardcoded colors" (1046 vs baseline 1080)
+npm run check:color-tokens        # → "✔ no new hardcoded colors" (1045 vs baseline 1080)
 ```

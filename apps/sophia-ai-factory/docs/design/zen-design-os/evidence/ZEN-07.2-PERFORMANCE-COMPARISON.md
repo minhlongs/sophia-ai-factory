@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD (design):** `4d23ddb386f499b7627f2c828a1b80c81c6a3382` + P0/P1 remediations (`BUILD_ID`: `i-DT5CkjJEXfOYAyJSbOO`)
+**Verified HEAD (design):** `VERIFIED_HEAD_SHA` (`BUILD_ID`: `i-DT5CkjJEXfOYAyJSbOO`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f` (`BUILD_ID`: `yYKZRZ2DV0-uYPRbmC_9f`)
 **Machine Evidence:** [`g6/g6-runtime-perf.json`](./g6/g6-runtime-perf.json), [`g6/g6-runtime-perf.mjs`](./g6/g6-runtime-perf.mjs)
 
@@ -14,7 +14,7 @@
 
 Both worktrees were built locally with `npm run build` (Next.js 16.4.2) and measured across all emitted files in `.next/static/chunks` and `.next/static/css`:
 
-| Metric | Baseline `main` (`673ec911b`) | Design Branch (`4d23ddb38` + fixes) | Delta | % Impact |
+| Metric | Baseline `main` (`673ec911b`) | Design branch tip at build time (`4d23ddb38` + acceptance fixes) | Delta | % Impact |
 |:--|--:|--:|--:|--:|
 | JS chunk file count | 220 | 220 | 0 | 0.00% |
 | Total JS (raw bytes) | 7,462,845 B | 7,477,048 B | **+14,203 B** | **+0.190%** |
@@ -63,8 +63,25 @@ Measured across 6 probes (3 pilot routes × 2 themes) at `1440×900` in system G
 
 ### Font Loading Truth Note
 - `document.fonts.status` resolved to `"loaded"` (`fontFaceCount: 70`).
-- `src/app/layout.tsx:2,8-18` loads `Inter` (`--font-inter`) and `JetBrains_Mono` (`--font-mono`) via `next/font/google`, while `body` (`src/app/layout.tsx:31`) uses Tailwind `font-sans` (`ui-sans-serif, system-ui, sans-serif...`).
-- **Honest Discrepancy Note:** `DESIGN.md` references `Satoshi` / `Archivo` / `Instrument Serif` as narrative display fonts, whereas the actual application runtime (`src/app/layout.tsx` and `.claude/rules/sophia-design-authority.md`) governs typography via `globals.css` and `next/font/google` (`Inter` + `JetBrains Mono` + system sans). Note that `document.fonts.check('16px Satoshi')` in Chromium returns `true` for uninstalled font family names by specification, so computed `fontFamily` (`ui-sans-serif, system-ui, sans-serif`) is the authoritative runtime truth.
+- **Loading mechanism (measured):** `src/app/layout.tsx:34` emits a single Google Fonts
+  css2 `<link>` — `family=Archivo:wdth,wght@100..112,400..800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap`
+  — with `preconnect` hints to `fonts.googleapis.com` / `fonts.gstatic.com` at
+  `src/app/layout.tsx:30-31`. The project does **not** use `next/font`; there is no
+  `next/font/google` import in the root layout.
+- **Token authority (measured):** `src/app/globals.css:386` declares
+  `--font-sans: 'Inter', system-ui, …` and `:387` declares
+  `--font-mono: 'JetBrains Mono', ui-monospace, …`. A third family is scoped, not
+  global: `src/styles/v3-core.css:28` declares `--font-display: 'Archivo', 'Inter', …`
+  inside `.v3-core` only.
+- **Alignment with `DESIGN.md`:** `DESIGN.md:88` (UI & body = Inter), `:91`
+  (telemetry & code = JetBrains Mono), `:96` (Archivo scoped to `.v3-core`, "never an
+  authority for UI text") and `:98` ("**Explicitly not in this release:** `Satoshi` and
+  `Instrument Serif` are not adopted anywhere") already state this contract. There is no
+  Satoshi/Instrument Serif divergence to record.
+- **Measurement caveat:** `document.fonts.check('16px Satoshi')` in Chromium returns
+  `true` for uninstalled family names by specification, so `document.fonts.check` is not
+  evidence of use. Computed `fontFamily` and the declared tokens above are the
+  authoritative runtime truth.
 
 ---
 
@@ -74,9 +91,9 @@ Every promised Zen Design OS deliverable was audited against source files, tests
 
 | Deliverable | Path | Classification | Verification Evidence |
 |:--|:--|:--:|:--|
-| Canonical `DESIGN.md` | `DESIGN.md` (repo root, 336 lines) | **DOCUMENTED ONLY** | Comprehensive dual-theme specification exists, but narrative font names (`Satoshi`, `Instrument Serif`) and legacy `--surface-void` prose partially diverge from `src/app/globals.css` (which is supreme per `.claude/rules/sophia-design-authority.md`). |
+| Canonical `DESIGN.md` | `DESIGN.md` (repo root, 336 lines) | **DOCUMENTED & ALIGNED** | Dual-theme specification exists and its typography section now matches the implementation: `:88` UI & body = Inter, `:91` telemetry & code = JetBrains Mono, `:96` Archivo scoped to `.v3-core` only ("never an authority for UI text"), `:98` "**Explicitly not in this release:** `Satoshi` and `Instrument Serif` are not adopted anywhere". Verified against `src/app/globals.css:386-387`, `src/styles/v3-core.css:28` and the single Google Fonts `<link>` at `src/app/layout.tsx:34`. Remaining divergence is confined to legacy `--surface-void` prose, which `src/app/globals.css` supersedes per `.claude/rules/sophia-design-authority.md`. |
 | DTCG JSON Tokens | `src/seed/design-tokens/zen-design-tokens.dtcg.json` | **IMPLEMENTED** | Valid W3C DTCG `$value`/`$type` schema covering primitive palette, Dark/Light semantic roles, typography, spacing, radius, and motion tokens; exported via `src/seed/design-tokens/index.ts`. |
-| Token Parity Checks | `src/seed/design-tokens/__tests__/zen-design-tokens.test.ts` | **TESTED ONLY** | 7/7 unit tests pass verifying DTCG parity and semantic getters; also guarded by `scripts/check-hardcoded-color.mjs` (`npm run check:color-tokens` → exit 0, 1046 vs 1080 baseline). |
+| Token Parity Checks | `src/seed/design-tokens/__tests__/zen-design-tokens.test.ts` | **TESTED ONLY** | 7/7 unit tests pass verifying DTCG parity and semantic getters; also guarded by `scripts/check-hardcoded-color.mjs` (`npm run check:color-tokens` → exit 0, 1045 vs 1080 baseline). |
 | Light / Dark Semantic Roles | `src/app/globals.css:14-305`, `src/forest/theme/zen-theme-provider.tsx` | **VISUALLY VERIFIED** | Verified in real Chrome across 36 base screenshots + `g2-audit.json` after remediating 4 Light/Dark contrast & token defects. |
 | Motion Policy & Primitives | `src/app/globals.css:19-27,980-1005`, `src/seed/components/ui/{fade-in-view,scroll-reveal,page-transition,animated-counter-with-framer-motion}.tsx` | **IMPLEMENTED & TESTED** | Zero new animation dependencies (no GSAP/Lenis/React Bits); 4/4 unit tests pass in `zen-motion-reduced-motion.test.tsx` + verified under Playwright `reducedMotion: 'reduce'`. |
 | Three Pilot Screens (`/vi/setup-wizard`, `/vi/dashboard`, `/vi/dashboard/niche-studio` + `/en/*`) | `src/app/[locale]/setup/page.tsx`, `src/app/[locale]/dashboard/page.tsx`, `src/app/[locale]/dashboard/niche-studio/page.tsx` | **VISUALLY VERIFIED** | All 36 locale × theme × viewport PNGs rendered in real Chrome and visually inspected (`ZEN-07.2-VISUAL-EVIDENCE.md`). |

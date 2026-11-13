@@ -50,7 +50,10 @@ export function DashboardSourcesDrawer({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* The toggle label is a .btn, which is white-space: nowrap, so the row
+            must be allowed to wrap rather than push the drawer past the viewport
+            at 320px (WCAG 2.2 SC 1.4.10 reflow). */}
+        <div className="flex flex-wrap items-center gap-2.5 min-w-0">
           <span
             data-testid="dashboard-sources-truth-state"
             className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 font-mono text-[11px] text-emerald-700 dark:text-emerald-300"

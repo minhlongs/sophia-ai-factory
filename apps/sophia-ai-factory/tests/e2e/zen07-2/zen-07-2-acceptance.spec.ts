@@ -735,7 +735,6 @@ base.describe('ZEN 07.2 — G1 / G2 / G3 / G4 Browser Acceptance', () => {
       uniqueSelectors: number;
       focusRingsVisible: number;
       outlineHiddenCount: number;
-      dialogFocusTrapped: boolean | null;
     }> = [];
 
     for (const routeDef of PILOT_ROUTES) {
@@ -785,9 +784,51 @@ base.describe('ZEN 07.2 — G1 / G2 / G3 / G4 Browser Acceptance', () => {
         uniqueSelectors: selectors.size,
         focusRingsVisible,
         outlineHiddenCount: outlineHidden,
-        dialogFocusTrapped: null,
       });
     }
+
+    // --- 1b. Dialog focus containment, measured rather than assumed ---
+    // The route tab-walk above never opens a dialog, so it cannot report on
+    // containment. Open the real dialog through a real click and record what
+    // the browser actually does with Tab and Shift+Tab.
+    resetLocalRateLimits();
+    await page.goto(`${urlBase}/vi/zen-a11y-harness`, { waitUntil: 'networkidle' });
+    await waitForStableRender(page);
+    const dialogTrigger = page.getByTestId('harness-dialog-trigger');
+    await dialogTrigger.click();
+    const dialogNode = page.locator('[role="dialog"]');
+    await expect(dialogNode).toBeVisible();
+
+    const withinDialog = () =>
+      page.evaluate(() => {
+        const node = document.querySelector('[role="dialog"]');
+        return !!node && !!document.activeElement && node.contains(document.activeElement);
+      });
+
+    const dialogFocusStartInside = await withinDialog();
+    let dialogTabContained = dialogFocusStartInside;
+    for (let i = 0; i < 12; i += 1) {
+      await page.keyboard.press('Tab');
+      if (!(await withinDialog())) dialogTabContained = false;
+    }
+    let dialogShiftTabContained = true;
+    for (let i = 0; i < 6; i += 1) {
+      await page.keyboard.press('Shift+Tab');
+      if (!(await withinDialog())) dialogShiftTabContained = false;
+    }
+    await page.keyboard.press('Escape');
+    await expect(dialogNode).toBeHidden({ timeout: 5000 });
+
+    const dialogFocusCheck = {
+      surface: 'harness-form-dialog',
+      locale: 'vi',
+      theme: 'dark',
+      openedBy: 'trigger-click',
+      initialFocusInsideDialog: dialogFocusStartInside,
+      tabContained: dialogTabContained,
+      shiftTabContained: dialogShiftTabContained,
+      escapeClosed: true,
+    };
 
     // --- 2. 320 CSS px reflow (WCAG 2.2 SC 1.4.10) across all 3 pilot routes ---
     await page.setViewportSize({ width: 320, height: 800 });
@@ -878,11 +919,17 @@ base.describe('ZEN 07.2 — G1 / G2 / G3 / G4 Browser Acceptance', () => {
     fs.writeFileSync(
       path.join(EVIDENCE_DIR, 'g4-manual-a11y.json'),
       JSON.stringify(
-        { keyboardReport, reflowCheck, motionReport, reducedMotion: 'reduce' },
+        { keyboardReport, dialogFocusCheck, reflowCheck, motionReport, reducedMotion: 'reduce' },
         null,
         2,
       ),
     );
+
+    // Dialog containment is asserted here, from the measurement above.
+    expect(dialogFocusCheck.initialFocusInsideDialog, 'initial focus must land in the dialog').toBe(true);
+    expect(dialogFocusCheck.tabContained, 'Tab must stay inside the dialog').toBe(true);
+    expect(dialogFocusCheck.shiftTabContained, 'Shift+Tab must stay inside the dialog').toBe(true);
+    expect(dialogFocusCheck.escapeClosed, 'Escape must close the dialog').toBe(true);
 
     // Reduced motion: no animation longer than a frame may remain running.
     expect(motionReport.prefersReduce).toBe(true);

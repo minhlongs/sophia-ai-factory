@@ -5,26 +5,33 @@
       "tabStopCount": 11,
       "uniqueSelectors": 2,
       "focusRingsVisible": 11,
-      "outlineHiddenCount": 0,
-      "dialogFocusTrapped": null
+      "outlineHiddenCount": 0
     },
     {
       "route": "/vi/dashboard",
       "tabStopCount": 20,
       "uniqueSelectors": 20,
       "focusRingsVisible": 20,
-      "outlineHiddenCount": 0,
-      "dialogFocusTrapped": null
+      "outlineHiddenCount": 0
     },
     {
       "route": "/vi/dashboard/niche-studio",
       "tabStopCount": 20,
       "uniqueSelectors": 20,
       "focusRingsVisible": 20,
-      "outlineHiddenCount": 0,
-      "dialogFocusTrapped": null
+      "outlineHiddenCount": 0
     }
   ],
+  "dialogFocusCheck": {
+    "surface": "harness-form-dialog",
+    "locale": "vi",
+    "theme": "dark",
+    "openedBy": "trigger-click",
+    "initialFocusInsideDialog": true,
+    "tabContained": true,
+    "shiftTabContained": true,
+    "escapeClosed": true
+  },
   "reflowCheck": {
     "viewportWidth": 320,
     "routes": [

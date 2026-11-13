@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD:** `4d23ddb386f499b7627f2c828a1b80c81c6a3382` + P0/P1 remediations
+**Verified HEAD:** `VERIFIED_HEAD_SHA`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
 
@@ -47,10 +47,87 @@ Machine record: `g4-manual-a11y.json` → `keyboardReport`.
   no modal dialog is mounted in the idle state of the pilot screens, so no trap
   needed to be measured. Dialogs observed in targeted capture
   `t04-setup-wizard-step-state-vi.png` were keyboard-closable with `Escape`
-  (Radix `Dialog` behaviour). **Not claimed as a full modal audit** — if the
-  Founder wants dialog focus management signed off, it must be re-run against a
-  state where a dialog is open (recorded as a follow-up, not a blocker for the
-  three pilot screens).
+  (Radix `Dialog` behaviour). The full modal audit this left open is now
+  recorded separately in **§2.1**.
+
+---
+
+## 2.1 Dialog accessibility — real-browser modal audit
+
+Machine record: [`dialog-a11y-report.json`](./dialog-a11y-report.json)
+(generated `2026-11-12T12:34:32.769Z`, 12 measurements).
+Spec: `tests/e2e/dialog-a11y/dialog-accessibility.spec.ts`.
+
+Playwright drives three dialogs through genuine user interaction on the real
+dev server — a trigger click, a production `<button>`, and `Meta+k` — across
+`vi`/`en` × `dark`/`light`. Nothing is opened by mounting a component in a
+test-only state; the two product surfaces are the shipping
+`ByokRotationView` and the shipping `CmdKPalette`.
+
+| Surface | Opened by | Initial focus | Tab stops | Tab / Shift+Tab contained | Escape closes | Focus returns to | `aria-hidden` outside | Body `pointer-events` |
+|:--|:--|:--|--:|:--:|:--:|:--|:--:|:--:|
+| Harness `Dialog` (all 4 combos) | trigger click | `input#harness-field-first` | 5 | `true` / `true` | `true` | `button[harness-dialog-trigger]` · "Open form dialog" | `true` | `none` |
+| Rotation dialog (all 4 combos) | production button | `input#rotation-reason` | 4 | `true` / `true` | `true` | `button` · "Xoay Khóa Ngay" / "Rotate Now" | `true` | `none` |
+| Command palette (all 4 combos) | `Meta+k` | `input#radix-_r_2_` | 2 | `true` / `true` | `true` | **`null`** — recorded target `body` | `true` | `none` |
+
+Accessible name and description are non-empty on every measurement:
+
+| Surface | `vi` name / description | `en` name / description | Close button |
+|:--|:--|:--|:--|
+| Harness | "Harness dialog title" / "A modal used to verify focus placement, keyboard containment and screen reader semantics." | same (test fixture is English-only by design) | "Cancel" |
+| Rotation | "Xác Nhận Xoay Khóa Master" / "Việc xoay khóa master sẽ tạo phiên bản mới và đưa tiến trình tái mã hóa thông tin xác thực vào hàng đợi nền. Khóa hiện tại vẫn hoạt động trong cửa sổ chuyển tiếp giải mã kép 7 ngày." | "Confirm Master Key Rotation" / "Rotating the master key generates a new version and queues background re-encryption of all stored credentials. The current key remains active during the 7-day dual-decrypt transition window." | "Hủy" / "Cancel" |
+| Command palette | "Quick actions" / "Search the list and run a command." | identical | "Close" |
+
+### 2.1.1 Three results recorded as measured, not as passes
+
+1. **`aria-modal` is `null` in all 12 measurements.** Radix does not emit the
+   attribute; it implements modality by aria-hiding everything outside the
+   dialog and setting `pointer-events: none` on `body`. Both of those effects
+   *were* measured and are `true` and `none` respectively in the table above —
+   so modality is evidenced by its actual mechanism rather than by asserting a
+   property the library never sets. The spec records `ariaModal` as evidence,
+   not as an assertion.
+2. **Command-palette focus return is `null`, and the spec asserts `null`.**
+   A `Meta+k` surface has no trigger element to return focus to, so exact
+   identity is not applicable. The observed target (`body`) is recorded in
+   `focusReturnTarget`, and the assertion is `expect(r.focusReturnedToTrigger).toBeNull()`
+   with the comment "No trigger exists, so this must stay unmeasured rather than
+   be reported as a pass." No null was promoted to a PASS.
+3. **The command palette's accessible name is English in both locales.** The
+   name comes from the `sr-only` fallback `{title ?? "Quick actions"}` at
+   `src/seed/components/ui/command.tsx:43`, which no caller overrides. The
+   Vietnamese string exists (`messages/vi.json:7328` — "Thao tác nhanh") but is
+   not wired to the palette. Recorded as a bilingual gap; **not remediated in
+   this pass**, because the palette is a shared `seed` component and the
+   acceptance scope forbids modifying unrelated business behaviour.
+
+### 2.1.2 The harness route
+
+`src/app/[locale]/zen-a11y-harness/` exists only so Playwright can open a
+representative form dialog with two focusable fields. It is gated by
+`if (process.env.NODE_ENV === 'production') notFound()` in
+`page.tsx:23`, so it returns 404 in any deployed build and is unreachable in
+production at runtime. Note the limit honestly: the route still appears in the
+production route table (`/[locale]/zen-a11y-harness`, dynamic `ƒ`), so the
+protection is the runtime `notFound()`, not build-time exclusion. It imports the shipping `Dialog`, `ByokRotationView` and
+`CmdKPalette` rather than stand-ins.
+
+### 2.1.3 Reproduce
+
+```bash
+# from apps/sophia-ai-factory/, with the dev server running on :3000 (§1 env
+# of ZEN-07.2-VISUAL-EVIDENCE.md)
+npx playwright test tests/e2e/dialog-a11y/dialog-accessibility.spec.ts
+# writes docs/design/zen-design-os/evidence/dialog-a11y-report.json
+```
+
+Measurements persist per test rather than once at the end, so a failing worker
+cannot leave an empty evidence file.
+
+**Still not claimed:** a VoiceOver/NVDA transcript pass. This is a real-browser
+keyboard and accessibility-tree measurement, which is strictly stronger than
+the idle-state check it replaces but is still not an assistive-technology
+transcript.
 
 ---
 
@@ -178,7 +255,14 @@ a semantic-structure and name-completeness check.
 
 ## 8. Verdict
 
-**WCAG 2.2 AA — VERIFIED for the three pilot screens, with two scoped limits
-stated above** (modal focus trap measured only in the idle state; reduced-motion
-preference changes require a remount; no SR transcript pass). No P0/P1
-accessibility defect remains open.
+**WCAG 2.2 AA — VERIFIED for the three pilot screens plus the three dialog
+surfaces measured in §2.1**, with two scoped limits stated above
+(reduced-motion preference changes require a remount; no SR transcript pass).
+No P0/P1 accessibility defect remains open.
+
+The dialog audit that §2 previously deferred is now complete: initial focus,
+Tab and Shift+Tab containment, Escape-to-close, focus return with a recorded
+target, non-empty accessible name and description, background inertness and
+`pointer-events` blocking were all measured in a real browser across both
+themes and both locales. One bilingual gap was found and recorded rather than
+silently fixed (command-palette accessible name, §2.1.1 item 3).
