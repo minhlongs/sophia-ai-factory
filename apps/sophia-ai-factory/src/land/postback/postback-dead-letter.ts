@@ -39,7 +39,13 @@ export interface EnqueuePostbackDlqInput {
   network: string
   endpoint: string
   sourceIp: string | null
-  /** Raw request headers as a JSON string (secrets are never stored). */
+  /**
+   * Request headers as a JSON string, produced only by `serializeDlqHeaders`.
+   * That serializer stores an allowlist of non-sensitive diagnostic headers
+   * plus a one-way `sigfp:` digest per declared signature header, so no
+   * credential value can reach this field through the supported call sites.
+   * Verified by the negative regression tests in `__tests__/postback-dlq-evidence.test.ts`.
+   */
   headersJson: string
   rawBody: string
   failureReason: string

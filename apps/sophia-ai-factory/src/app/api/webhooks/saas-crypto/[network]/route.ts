@@ -30,6 +30,11 @@ import {
   LEGACY_MIGRATION_GUIDANCE,
 } from '@/land/postback/legacy-tenant-resolver';
 import { enqueuePostbackDlq } from '@/land/postback/postback-dead-letter';
+import {
+  serializeDlqHeaders,
+  serializeDlqEndpoint,
+  serializeDlqBody,
+} from '@/land/postback/postback-dlq-evidence';
 
 interface RouteParams {
   network: string;
@@ -119,10 +124,10 @@ export async function POST(
     // no attribution rather than a claim nobody has proven.
     await enqueuePostbackDlq({
       network: config.network,
-      endpoint: request.url,
+      endpoint: serializeDlqEndpoint(request.url),
       sourceIp: request.headers.get('cf-connecting-ip'),
-      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
-      rawBody,
+      headersJson: await serializeDlqHeaders(request.headers, config.sigHeaders),
+      rawBody: serializeDlqBody(rawBody),
       failureReason: resolution.error,
       tenantHint: null,
     });

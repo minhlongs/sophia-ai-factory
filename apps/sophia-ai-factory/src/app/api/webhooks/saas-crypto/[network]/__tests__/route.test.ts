@@ -192,6 +192,55 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     expect(rows[1].source_ip).toBeNull();
   });
 
+  it('stores no credential header or query parameter on a captured request', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    // Binance treats `authorization: Bearer …` as the signature, so this is
+    // the path that would leak a live credential into the queue if the
+    // evidence serializer were a raw header dump.
+    const res = await POST(
+      new NextRequest(
+        'http://localhost/api/webhooks/saas-crypto/binance?access_token=query_token_probe&session=query_session_probe',
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer binance_live_signature_probe',
+            cookie: 'session=route-session-probe',
+            'x-custom-provider-api-key': 'pk_route_probe',
+            'user-agent': 'binance-connector/3.1',
+            'cf-connecting-ip': '9.9.9.9',
+          },
+          body: JSON.stringify({ tradeId: 'r1' }),
+        },
+      ),
+      { params: { network: 'binance' } },
+    );
+
+    expect(res.status).toBe(422);
+    const rows = await dlqRows(db);
+    expect(rows[0].endpoint).toBe('http://localhost/api/webhooks/saas-crypto/binance');
+    const storedHeaders = String(rows[0].headers_json);
+
+    for (const secret of [
+      'binance_live_signature_probe',
+      'route-session-probe',
+      'pk_route_probe',
+      'Bearer',
+    ]) {
+      expect(storedHeaders).not.toContain(secret);
+    }
+
+    const parsed = JSON.parse(storedHeaders) as Record<string, string>;
+    expect(parsed).toMatchObject({ 'user-agent': 'binance-connector/3.1' });
+    expect(parsed.authorization).toMatch(/^sigfp:[0-9a-f]{16}$/);
+    for (const key of Object.keys(parsed)) {
+      expect(['authorization', 'user-agent', 'content-type', 'content-length']).toContain(key);
+    }
+    expect(Object.keys(parsed)).toHaveLength(3);
+  });
+
   it('returns 503 secret_not_configured when the workspace has no credential', async () => {
     const db = createLegacyD1();
     await seedLink(db, 'link_A1', 'tenant-a');

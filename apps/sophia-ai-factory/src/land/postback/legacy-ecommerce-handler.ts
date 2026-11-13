@@ -35,6 +35,11 @@ import {
   LEGACY_MIGRATION_GUIDANCE,
 } from './legacy-tenant-resolver';
 import { enqueuePostbackDlq } from './postback-dead-letter';
+import {
+  serializeDlqHeaders,
+  serializeDlqEndpoint,
+  serializeDlqBody,
+} from './postback-dlq-evidence';
 import { recordLegacyEcommerceConversion } from './legacy-ecommerce-recorder';
 
 /** Minimal request surface (keeps this module free of Next.js types). */
@@ -43,7 +48,6 @@ export interface LegacyPostbackRequest {
   url: string;
   headers: {
     get(name: string): string | null;
-    entries?(): IterableIterator<[string, string]>;
   };
 }
 
@@ -103,45 +107,41 @@ function extractSignature(request: LegacyPostbackRequest, sigHeaders: string[]):
   return '';
 }
 
-function serializeHeaders(
-  request: LegacyPostbackRequest,
-  sigHeaders: string[],
-): string {
-  if (typeof request.headers.entries === 'function') {
-    return JSON.stringify(Object.fromEntries(request.headers.entries()));
-  }
-  const captured: Record<string, string> = {};
-  for (const h of [...sigHeaders, 'cf-connecting-ip', 'x-forwarded-for', 'user-agent']) {
-    const val = request.headers.get(h);
-    if (val) captured[h] = val;
-  }
-  return JSON.stringify(captured);
-}
-
 function asNumber(v: unknown): number {
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
 /**
- * Capture evidence for a request whose tenant has not been verified. The hint
- * is deliberately dropped: before the signature check it is attacker-chosen,
- * so storing it would let a caller plant attribution in someone else's queue.
+ * Capture sanitized DLQ evidence. Callers pass `tenantHint: null` whenever the
+ * tenant has not yet been bound by a passing signature check — before that
+ * point any hint is attacker-chosen and storing it would let a caller plant
+ * attribution in someone else's queue.
  */
-async function captureUnattributed(
+async function captureDlqEvidence(
+  request: LegacyPostbackRequest,
+  contract: LegacyEcommerceContract,
+  rawBody: string,
+  failureReason: string,
+  tenantHint: string | null,
+): Promise<void> {
+  await enqueuePostbackDlq({
+    network: contract.slug,
+    endpoint: serializeDlqEndpoint(request.url),
+    sourceIp: request.headers.get('cf-connecting-ip'),
+    headersJson: await serializeDlqHeaders(request.headers, contract.sigHeaders),
+    rawBody: serializeDlqBody(rawBody),
+    failureReason,
+    tenantHint,
+  });
+}
+
+function captureUnattributed(
   request: LegacyPostbackRequest,
   contract: LegacyEcommerceContract,
   rawBody: string,
   failureReason: string,
 ): Promise<void> {
-  await enqueuePostbackDlq({
-    network: contract.slug,
-    endpoint: request.url,
-    sourceIp: request.headers.get('cf-connecting-ip'),
-    headersJson: serializeHeaders(request, contract.sigHeaders),
-    rawBody,
-    failureReason,
-    tenantHint: null,
-  });
+  return captureDlqEvidence(request, contract, rawBody, failureReason, null);
 }
 
 /**
@@ -236,15 +236,7 @@ export async function processLegacyEcommercePostback(
   if (!resolution.linkId) {
     // Verified tenant but no attributable link: recording would create an
     // orphan row no dashboard can attribute. Capture to DLQ and fail closed.
-    await enqueuePostbackDlq({
-      network: contract.slug,
-      endpoint: request.url,
-      sourceIp: request.headers.get('cf-connecting-ip'),
-      headersJson: serializeHeaders(request, contract.sigHeaders),
-      rawBody,
-      failureReason: 'link_unattributed',
-      tenantHint: resolution.tenantId,
-    });
+    await captureDlqEvidence(request, contract, rawBody, 'link_unattributed', resolution.tenantId);
     return {
       status: 422,
       body: {

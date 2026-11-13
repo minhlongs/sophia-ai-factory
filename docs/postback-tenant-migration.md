@@ -45,11 +45,11 @@ sub-id. Supported slugs and verification:
 Legacy URLs keep working when the workspace stores the network credential and
 the postback carries an attributable sub-id. Global env secrets are NOT read.
 
-| Legacy URL | Networks | Notes |
+| Legacy URL | Networks | Notes (each row verified against its route source) |
 |---|---|---|
-| `/api/webhooks/saas-crypto/{network}` | partnerstack, rewardful, binance, bybit | Same headers; delegates to Domain B service |
-| `/api/webhooks/affiliate/{network}` | tiktok_shop, amazon(_associates), accesstrade, awin | Same headers/algorithm; `clickbank` → 501, use `/api/webhooks/clickbank` |
-| `/api/webhooks/{accesstrade,amazon,awin,tiktok-shop}` | singletons | Same contract; shared tenant-scoped core |
+| `/api/webhooks/saas-crypto/{network}` | partnerstack, rewardful, binance, bybit | Its own per-network header set, which is not the canonical one: `x-partnerstack-signature`; `x-rewardful-signature` then `x-signature` as fallback; `x-signature` then `authorization` as fallback for binance and bybit, with a leading `Bearer ` stripped. This route declares no algorithm — verification is delegated to the Domain B service. |
+| `/api/webhooks/affiliate/{network}` | tiktok_shop, amazon(_associates), accesstrade, awin | Its own per-network header set, HMAC-SHA256 on every network, each with a trailing `x-signature` fallback: `x-tts-signature` + `x-signature`; `x-amazon-signature` + `x-amz-signature` + `x-signature`; `x-accesstrade-signature` + `x-signature`; `x-awin-signature` + `x-signature`. `clickbank` is refused on this URL with `501 network_moved` — use `/api/webhooks/clickbank`. |
+| `/api/webhooks/{accesstrade,amazon,awin,tiktok-shop}` | singletons | One header each, HMAC-SHA256: `x-accesstrade-signature`, `x-amazon-signature`, `x-awin-signature`, `x-tts-signature`. Narrower than the affiliate URL above for the same networks, and it returns the handler's body verbatim instead of the affiliate URL's conversion envelope. |
 | `/api/webhooks/clickbank` | ClickBank INS | Same SHA1 header flow; requires attributed click + stored credential |
 
 ### Setup per workspace
@@ -80,18 +80,61 @@ error also returns `422/503` without a queue row.
 
 What capture guarantees:
 
-- **Payload retained:** the raw body, headers, source IP and failure reason stay
-  in the queue for inspection and manual reconciliation, whether the request was
-  acked `200 + skipped` or failed closed with `422` / `503 secret_not_configured`.
-- **Auditability:** Headers, source IP, failure reason, and tenant hints are
-  indexed by network and resolution state.
-- **No write amplification:** the row id is derived from
+- **Payload retained:** the request body, a bounded header set, the source IP and
+  the failure reason are written to the table, whether the request was acked
+  `200 + skipped` or failed closed with `422` / `503 secret_not_configured`.
+  Nothing reads this table yet — no admin screen, API or scheduled job calls the
+  queue helpers — so inspecting an entry today means querying D1 directly.
+- **Headers are captured by allowlist, not in full.** Only `user-agent`,
+  `content-type`, `content-length`, `cf-ray`, `cf-ipcountry` and `cdn-loop` are
+  stored. Every other header — `cookie`, `set-cookie`, `proxy-authorization`,
+  `x-forwarded-for`, any provider API key — is dropped rather than masked. The
+  one exception is `authorization`: on the binance and bybit routes it is the
+  declared signature header, so its key is kept and its value stored as the
+  `sigfp:` fingerprint below, never raw. The serializer fails closed: if reading
+  headers throws, the field is stored as `{}`.
+  See `src/land/postback/postback-dlq-evidence.ts`.
+- **Signatures are correlated, not stored.** Each signature header that the
+  route's contract declares is replaced with `sigfp:` plus the first 16 hex
+  characters of its SHA-256 digest. That is enough to tell "the same bad
+  request again" from "a different bad request", and it does not retain a value
+  that can be replayed.
+- **Endpoint identity is canonical:** `${origin}${pathname}` with the query
+  string removed, so a `?signature=` HMAC (Awin), a session id, or an email
+  address in the query never reaches the queue.
+- **Bodies are capped at 8192 characters.** A longer body is stored truncated
+  and ends with the visible marker `…[TRUNCATED]`, so a reader can tell the
+  evidence is incomplete instead of assuming the provider sent a short body.
+- **Auditability:** the canonical endpoint, source IP, failure reason, network
+  and tenant hint are stored columns; the table indexes
+  `(network, resolved, created_at DESC)` and
+  `(tenant_hint, resolved, created_at DESC)`, so queries per network or per
+  tenant resolve in index order. Endpoint, source IP and failure reason are
+  filterable columns, not indexes.
+- **Redeliveries share one row:** the row id is derived from
   `(network, endpoint, failure reason, tenant hint, payload)`, so a provider
   redelivering the same bad request increments `retry_count` on one row instead
-  of inserting a new one.
+  of inserting a new one. This bounds only identical requests: every distinct
+  body still inserts its own row, so a caller sending varied bodies can grow the
+  table one row per request. The only limit on that today is the application
+  webhook rate limit; there is no edge rate limit for these URLs.
 - **Tenant isolation:** `tenant_hint` is `NULL` until the signature proves the
-  tenant. Queue reads and resolves require a `tenantId` and filter by it, so one
-  workspace never sees another's evidence.
+  tenant. The queue read and resolve helpers require a `tenantId` and filter by
+  it, so they can never return another workspace's rows, and rows with a `NULL`
+  hint match no tenant at all. These helpers have no caller yet.
+
+Note on the dedup key: because the endpoint is now canonical, two requests to
+the same route that differ only in query string collapse onto one row. That is
+intentional — the query string is not part of the evidence identity, and
+keeping it would let an unauthenticated caller mint unlimited rows by varying
+one parameter. Bodies that differ still produce distinct rows, up to the
+8192-character cap.
+
+Retention is unbounded today: `0489` has no TTL column, D1 applies no
+per-table expiry, and the application has no code path that deletes rows from
+this table. Rows accumulate until someone removes them with a direct D1 query.
+Bounded retention needs a separately approved migration or scheduled cleanup —
+this document does not promise it.
 
 ### Error reference
 
@@ -142,6 +185,11 @@ Bảng slug và cách verify xem phần EN ở trên.
 
 URL legacy vẫn chạy khi workspace đã lưu credential và postback có sub-id.
 Env secret global KHÔNG còn được đọc. Chi tiết từng URL xem bảng EN ở trên.
+Lưu ý: mỗi URL legacy có bộ header chữ ký riêng, không giống endpoint chuẩn và
+cũng không giống nhau — `saas-crypto` dùng header riêng từng network (binance,
+bybit nhận cả `authorization` và bỏ tiền tố `Bearer `); `affiliate` dùng
+HMAC-SHA256 kèm header dự phòng `x-signature` và từ chối `clickbank` với
+`501 network_moved`; các route đơn lẻ chỉ nhận đúng một header mỗi network.
 
 ### Cài đặt cho mỗi workspace
 
@@ -170,18 +218,59 @@ khi đã xác thực chữ ký cũng trả `422/503` mà không có bản ghi tr
 
 Cơ chế này đảm bảo:
 
-- **Giữ lại payload:** body gốc, header, IP nguồn và lý do lỗi vẫn nằm trong
-  hàng đợi để tra soát và đối chiếu thủ công, dù request đã ack `200 + skipped`
-  hay fail closed với `422` / `503 secret_not_configured`.
-- **Minh bạch kiểm toán:** Lưu đầy đủ header, IP nguồn, lý do lỗi và gợi ý
-  tenant, có index theo network và trạng thái resolved.
-- **Không phình số dòng:** id của bản ghi sinh từ
+- **Giữ lại payload:** body của request, một bộ header giới hạn, IP nguồn và lý
+  do lỗi được ghi vào bảng, dù request đã ack `200 + skipped` hay fail closed
+  với `422` / `503 secret_not_configured`. Hiện chưa có gì đọc bảng này — không
+  màn hình admin, API hay job định kỳ nào gọi các hàm của hàng đợi — nên muốn
+  xem một bản ghi lúc này phải truy vấn D1 trực tiếp.
+- **Header chỉ lưu theo danh sách cho phép, không lưu toàn bộ.** Chỉ
+  `user-agent`, `content-type`, `content-length`, `cf-ray`, `cf-ipcountry` và
+  `cdn-loop` được lưu. Mọi header khác — `cookie`, `set-cookie`,
+  `proxy-authorization`, `x-forwarded-for`, API key của provider — bị bỏ hẳn,
+  không che bớt giá trị. Ngoại lệ duy nhất là `authorization`: trên route
+  binance và bybit, đây là header chữ ký được khai báo nên khóa vẫn được giữ và
+  giá trị lưu dưới dạng dấu vân tay `sigfp:` bên dưới, không bao giờ lưu giá trị
+  gốc. Nếu đọc header bị lỗi, trường này được ghi là `{}`.
+  Xem `src/land/postback/postback-dlq-evidence.ts`.
+- **Chữ ký chỉ dùng để đối chiếu, không lưu giá trị.** Mỗi header chữ ký mà
+  contract của route khai báo được thay bằng `sigfp:` cộng 16 ký tự hex đầu của
+  digest SHA-256. Như vậy vẫn phân biệt được "đúng request lỗi đó gửi lại" với
+  "một request lỗi khác", mà không giữ lại giá trị có thể bị dùng lại.
+- **Endpoint dùng dạng chuẩn tắc:** `${origin}${pathname}`, bỏ toàn bộ query
+  string, nên HMAC trong `?signature=` (Awin), session id hay email trong query
+  không bao giờ vào hàng đợi.
+- **Body bị giới hạn ở 8192 ký tự.** Body dài hơn sẽ được lưu ở dạng cắt bớt và
+  kết thúc bằng dấu hiệu nhìn thấy được `…[TRUNCATED]`, để người đọc biết bằng
+  chứng không đầy đủ thay vì tưởng provider gửi body ngắn.
+- **Minh bạch kiểm toán:** endpoint chuẩn tắc, IP nguồn, lý do lỗi, network và
+  gợi ý tenant đều là các cột trong bảng; bảng chỉ đánh index cho
+  `(network, resolved, created_at DESC)` và
+  `(tenant_hint, resolved, created_at DESC)`, nên truy vấn theo từng network
+  hoặc từng tenant chạy đúng thứ tự index. Endpoint, IP nguồn và lý do lỗi là cột
+  để lọc, không phải index.
+- **Gửi lại thì dùng chung một dòng:** id của bản ghi sinh từ
   `(network, endpoint, lý do lỗi, tenant hint, payload)`, nên khi provider gửi
   lại đúng request lỗi đó thì `retry_count` tăng trên cùng một dòng thay vì
-  thêm dòng mới.
+  thêm dòng mới. Điều này chỉ chặn request giống hệt nhau: mỗi body khác nhau
+  vẫn thêm một dòng riêng, nên một caller gửi body thay đổi liên tục có thể làm
+  bảng tăng mỗi request một dòng. Giới hạn duy nhất hiện nay là rate limit
+  webhook ở tầng ứng dụng; chưa có rate limit ở edge cho các URL này.
 - **Cô lập theo tenant:** `tenant_hint` là `NULL` cho đến khi chữ ký chứng minh
-  được tenant. Mọi thao tác đọc và resolve hàng đợi đều bắt buộc `tenantId` và
-  lọc theo đó, nên workspace này không thấy dữ liệu của workspace khác.
+  được tenant. Các hàm đọc và resolve hàng đợi bắt buộc `tenantId` và lọc theo
+  đó, nên không bao giờ trả về dòng của workspace khác, và dòng có hint `NULL`
+  không khớp với tenant nào. Các hàm này hiện chưa có nơi gọi.
+
+Lưu ý về khoá dedup: vì endpoint nay là dạng chuẩn tắc, hai request vào cùng
+route chỉ khác nhau ở query string sẽ gộp vào một dòng. Đây là chủ đích — query
+string không thuộc danh tính của bằng chứng, giữ nó lại thì một caller chưa xác
+thực có thể tạo vô hạn dòng chỉ bằng cách đổi một tham số. Body khác nhau vẫn
+cho ra dòng khác nhau, trong giới hạn 8192 ký tự.
+
+Hiện chưa có giới hạn thời gian lưu: bảng `0489` không có cột TTL, D1 không tự
+hết hạn theo bảng, và ứng dụng không có đoạn code nào xoá dòng khỏi bảng này.
+Số dòng chỉ tăng cho đến khi có người xoá bằng truy vấn D1 trực tiếp. Muốn giới
+hạn thời gian lưu cần một migration hoặc job dọn dẹp được duyệt riêng — tài
+liệu này không cam kết điều đó.
 
 ### Bảng lỗi và cách xử lý: xem bảng EN ở trên.
 

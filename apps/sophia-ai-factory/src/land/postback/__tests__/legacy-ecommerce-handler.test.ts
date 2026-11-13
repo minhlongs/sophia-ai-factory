@@ -383,21 +383,38 @@ describe('processLegacyEcommercePostback', () => {
     expect(rows[0].source_ip).toBeNull();
   });
 
-  it('attributes the DLQ row to the tenant once the signature verifies', async () => {
+  it('attributes the DLQ row to the tenant once the signature verifies, while still redacting headers and query string', async () => {
     const db = createLegacyD1();
     mockCreds({ 'tenant-b': { accesstrade: 'secret_B' } });
     vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
 
     const rawBody = JSON.stringify({ ...BODY, sub_id: 'ghost', tenant_id: 'tenant-b' });
     const sig = await generateAffiliateHmac(rawBody, 'secret_B');
-    const res = await processLegacyEcommercePostback(makeRequest(rawBody, sig), ACCESSTRADE_CONTRACT);
+    const req = makeRequest(rawBody, sig, {
+      cookie: 'session=post_hmac_session_probe',
+      'x-api-key': 'pk_post_hmac_probe',
+      'user-agent': 'accesstrade-webhook/1.0',
+    });
+    const res = await processLegacyEcommercePostback(
+      { ...req, url: 'http://localhost/api/webhooks/accesstrade?token=query_token_probe&email=ceo%40example.com' },
+      ACCESSTRADE_CONTRACT,
+    );
 
     expect(res.status).toBe(422);
     const rows = await dlqRows(db);
     expect(rows[0]).toMatchObject({
+      endpoint: 'http://localhost/api/webhooks/accesstrade',
       failure_reason: 'link_unattributed',
       tenant_hint: 'tenant-b',
     });
+    const storedHeaders = String(rows[0].headers_json);
+    expect(storedHeaders).not.toContain(sig);
+    expect(storedHeaders).not.toContain('post_hmac_session_probe');
+    expect(storedHeaders).not.toContain('pk_post_hmac_probe');
+    const parsed = JSON.parse(storedHeaders) as Record<string, string>;
+    expect(parsed['user-agent']).toBe('accesstrade-webhook/1.0');
+    expect(parsed['x-accesstrade-signature']).toMatch(/^sigfp:[0-9a-f]{16}$/);
+    expect(Object.keys(parsed).sort()).toEqual(['user-agent', 'x-accesstrade-signature']);
   });
 
   it('binds explicit tenant hints to the hint owner secret (cross-tenant hint fails 401)', async () => {
@@ -434,7 +451,7 @@ describe('processLegacyEcommercePostback', () => {
     expect(count?.n).toBe(0);
   });
 
-  it('serializes fallback headers when headers.entries is not present', async () => {
+  it('captures a request that exposes only get() without storing the signature', async () => {
     const db = createLegacyD1();
     mockCreds({});
     vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
@@ -442,6 +459,9 @@ describe('processLegacyEcommercePostback', () => {
     const rawBody = JSON.stringify({ ...BODY, sub_id: 'ghost' });
     const sig = await generateAffiliateHmac(rawBody, 'whatever');
 
+    // Deliberately no `entries`: the request surface Next.js hands a route
+    // handler has no enumerable header set here, and the serializer must not
+    // depend on one to be safe.
     const pseudoReq: LegacyPostbackRequest = {
       text: async () => rawBody,
       url: 'http://localhost/api/webhooks/accesstrade',
@@ -458,5 +478,85 @@ describe('processLegacyEcommercePostback', () => {
     const res = await processLegacyEcommercePostback(pseudoReq, ACCESSTRADE_CONTRACT);
     expect(res.status).toBe(422);
     expect(res.body).toMatchObject({ ok: false, error: 'tenant_unresolvable' });
+
+    const rows = await dlqRows(db);
+    expect(rows.length).toBe(1);
+    const storedHeaders = String(rows[0].headers_json);
+    const parsed = JSON.parse(storedHeaders) as Record<string, string>;
+
+    // Negative proof: the HMAC value itself never reaches the queue.
+    expect(storedHeaders).not.toContain(sig);
+    expect(parsed['user-agent']).toBe('test-agent');
+    expect(parsed['x-accesstrade-signature']).toMatch(/^sigfp:[0-9a-f]{16}$/);
+    expect(Object.keys(parsed).sort()).toEqual(['user-agent', 'x-accesstrade-signature']);
+  });
+
+  it('never stores credential headers the contract did not declare', async () => {
+    const db = createLegacyD1();
+    mockCreds({});
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+
+    const rawBody = JSON.stringify({ ...BODY, sub_id: 'ghost' });
+    const res = await processLegacyEcommercePostback(
+      makeRequest(rawBody, 'x', {
+        authorization: 'Bearer sk_live_dlq_leak_probe',
+        cookie: 'session=dlq-session-probe',
+        'x-custom-provider-api-key': 'pk_live_dlq_probe',
+        'user-agent': 'provider/2.0',
+      }),
+      ACCESSTRADE_CONTRACT,
+    );
+
+    // Unresolvable tenant fails closed 422; the payload was captured first.
+    expect(res.status).toBe(422);
+
+    const rows = await dlqRows(db);
+    const storedHeaders = String(rows[0].headers_json);
+
+    for (const secret of [
+      'sk_live_dlq_leak_probe',
+      'dlq-session-probe',
+      'pk_live_dlq_probe',
+      'Bearer',
+    ]) {
+      expect(storedHeaders).not.toContain(secret);
+    }
+    // The declared signature header survives only as a digest; nothing else
+    // the caller sent is retained.
+    const parsed = JSON.parse(storedHeaders) as Record<string, string>;
+    expect(parsed).toMatchObject({ 'user-agent': 'provider/2.0' });
+    expect(parsed['x-accesstrade-signature']).toMatch(/^sigfp:[0-9a-f]{16}$/);
+    expect(Object.keys(parsed).sort()).toEqual(['user-agent', 'x-accesstrade-signature']);
+  });
+
+  it('collapses redeliveries that differ only by query string onto one row', async () => {
+    const db = createLegacyD1();
+    mockCreds({});
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+
+    const rawBody = JSON.stringify({ ...BODY, sub_id: 'ghost' });
+    const withQuery = (query: string): LegacyPostbackRequest => ({
+      text: async () => rawBody,
+      url: `http://localhost/api/webhooks/accesstrade?${query}`,
+      headers: { get: (n: string) => (n === 'x-accesstrade-signature' ? 'x' : null) },
+    });
+
+    // Same route, different secret-bearing query strings: a provider that
+    // signs the URL would otherwise mint a fresh row per redelivery.
+    await processLegacyEcommercePostback(
+      withQuery('signature=first-query-hmac&email=user%40corp.com'),
+      ACCESSTRADE_CONTRACT,
+    );
+    await processLegacyEcommercePostback(
+      withQuery('signature=second-query-hmac&email=other%40corp.com'),
+      ACCESSTRADE_CONTRACT,
+    );
+
+    const rows = await dlqRows(db);
+    expect(rows.length).toBe(1);
+    expect(rows[0].retry_count).toBe(2);
+    expect(rows[0].endpoint).toBe('http://localhost/api/webhooks/accesstrade');
+    expect(String(rows[0].endpoint)).not.toContain('hmac');
+    expect(String(rows[0].endpoint)).not.toContain('corp.com');
   });
 });
