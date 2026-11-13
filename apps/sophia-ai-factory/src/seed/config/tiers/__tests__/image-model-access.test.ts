@@ -31,10 +31,8 @@ describe('selectableImageModelsForTier', () => {
     }
   });
 
-  it('falls back to the BASIC set for an unknown tier', () => {
-    expect(selectableImageModelsForTier('UNKNOWN_TIER')).toEqual(
-      selectableImageModelsForTier('BASIC'),
-    );
+  it('returns an empty list for an unknown tier instead of falling back to BASIC', () => {
+    expect(selectableImageModelsForTier('UNKNOWN_TIER')).toEqual([]);
   });
 
   it('returns a non-empty list for every known tier', () => {
@@ -59,10 +57,8 @@ describe('allowedImageModelsForTier (access map, unchanged)', () => {
     expect(allowedImageModelsForTier('BASIC')).toContain('flux-schnell');
   });
 
-  it('falls back to the BASIC set for an unknown tier', () => {
-    expect(allowedImageModelsForTier('UNKNOWN_TIER')).toEqual(
-      allowedImageModelsForTier('BASIC'),
-    );
+  it('returns an empty list for an unknown tier instead of falling back to BASIC', () => {
+    expect(allowedImageModelsForTier('UNKNOWN_TIER')).toEqual([]);
   });
 
   it('keeps the original MuAPI entitlement map values', () => {
