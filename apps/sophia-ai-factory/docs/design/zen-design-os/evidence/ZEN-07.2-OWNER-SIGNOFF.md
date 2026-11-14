@@ -6,7 +6,7 @@
 **Original Handover Commit:** `4d23ddb386f499b7627f2c828a1b80c81c6a3382`
 **Reported Checkpoint (#07.3 Brief):** `b3338a256408ef194cc63cb6fcbe6dcc27ca718c`
 **Browser-Evidence Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
-**Verified Code Commit (Round 7 Remediation):** `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`
+**Verified Code Commit (Round 9 Remediation):** `7e4d0283a54f995d0c18c3b414cc7220e573ec8b`
 **Verification Date:** `2026-11-14`
 **Release Review Verdict:** **`READY_FOR_DRAFT_PR`** *(Enum: `READY_FOR_DRAFT_PR` / `PARTIAL` / `BLOCKED` / `REJECTED`)*
 
@@ -33,7 +33,8 @@
 | **Review Round 4 Code Fix (`f6ebffc50`)** | `f6ebffc50821f92d355ab8454a313cf98856e5d3` | Vá vòng review độc lập 4: khóa xác thực bắt buộc + bucket `RATE_LIMITS.byok` + trần `12`/phút theo IP & User + `probeProviderApiKey` cô lập cho `POST /api/setup/verify`; bổ sung `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*` trong `x-middleware-override-headers` sau `intlMiddleware`; nâng tương phản dark mode `dark:bg-primary-600` cho `SettingsPage` & `WizardStepper`; chuyển `SettingsAppearanceThemeSection` và `SetupWizard` sang khóa tĩnh `next-intl` trên đủ 12 ngôn ngữ; tách `SophiaArtifactCanvasInspector` để mọi file `< 200` dòng. / Fourth isolated review code remediation commit. |
 | **Review Round 5 Code Fix (`f9220c3a2`)** | `f9220c3a2315bb1971c452d20da392a9ecb6ad0c` | Vá vòng review độc lập 5: chuẩn hóa tương phản WCAG 2.2 AA (`>= 4.5:1`) cho toàn bộ trạng thái động trên `Niche Studio`, `TimelineBrowserPreview`, `SettingsPage`, `InviteAffiliateModal` và các biến thể `seed/components/ui/button.tsx` (`8.76:1` Dark / `7.90:1` Light). / Fifth isolated review code remediation commit. |
 | **Review Round 6 Code Fix (`eb1c8d796`)** | `eb1c8d7960288b1dbe871ad998505c91f32346d7` | Vá vòng review độc lập 6: cô lập circuit breaker theo từng `user:${id}` trên `test-resend` và `heygen/auto-register` (không mở circuit khi khách gõ nhầm key Resend `401`/`403`); đặt `--accent-foreground: #090A10` ở Dark mode (`9.20:1` trên `#F59E0B`) và chuyển hover `outline`/`ghost` của `Button` + mục chọn `CommandItem` (`CmdKPalette`) sang `bg-muted text-foreground` (`> 16:1` AA); nâng tương phản AA cho `Badge`, `StatusBadge`, `WizardStepper`, `DashboardTopBarActions`, `RevenueChartHeader`, và `v3-core.css`. / Sixth isolated review code remediation commit. |
-| **Review Round 7 Code Fix (`d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`)** | `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430` | Vá vòng review độc lập 7: nâng tương phản Dark `.v3-core` `--btn-bg: #4F46E5` (`6.29:1` AA) và `.cmd-line code` / `.msg .ok` (`#818CF8`, `>= 6.02:1`), huy hiệu `MASTER` Light mode ở `DashboardUserCard` (`text-amber-900`, `6.74:1`–`8.14:1`), hover của `SophiaArtifactCanvasInspector` và `BUTTON_VARIANTS.destructive`, đồng thời đồng bộ `07-ACCESSIBILITY-REPORT.md` với `globals.css` (`2,101` file test / `19,710` bài test PASS). / Seventh isolated review code remediation commit. |
+| **Review Round 7 Code Fix (`d8a027539`)** | `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430` | Vá vòng review độc lập 7: nâng tương phản Dark `.v3-core` `--btn-bg: #4F46E5` (`6.29:1` AA) và `.cmd-line code` / `.msg .ok` (`#818CF8`, `>= 6.02:1`), huy hiệu `MASTER` Light mode ở `DashboardUserCard` (`text-amber-900`, `6.74:1`–`8.14:1`), hover của `SophiaArtifactCanvasInspector` và `BUTTON_VARIANTS.destructive`, đồng thời đồng bộ `07-ACCESSIBILITY-REPORT.md` với `globals.css`. / Seventh isolated review code remediation commit. |
+| **Review Round 9 Code Fix (`7e4d0283a54f995d0c18c3b414cc7220e573ec8b`)** | `7e4d0283a54f995d0c18c3b414cc7220e573ec8b` | Vá vòng review độc lập 9: bổ sung `.animate-pulse`, `.animate-ping`, `.animate-spin` vào khối `@media (prefers-reduced-motion: reduce)` trong `src/app/globals.css:1002-1026` (xác minh qua `@tailwindcss/postcss`), mở rộng phép đo hoạt ảnh lặp vô hạn trong `zen-07-2-acceptance.spec.ts` và khóa kiểm thử tại `director-control-deck-design-system.test.ts` (`2,101` file test / `19,710` bài test PASS). / Ninth isolated review code remediation commit. |
 
 ---
 
@@ -93,7 +94,7 @@
 
 ### 4.1 Tầng 1 — Cổng chặn D1 SQL toàn cục (`src/middleware/api-handler.ts:69-82`)
 
-| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`) | Đánh giá bảo mật / Security Assessment |
+| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`7e4d0283a54f995d0c18c3b414cc7220e573ec8b`) | Đánh giá bảo mật / Security Assessment |
 |:--|--:|--:|:--|
 | `/api/auth/*` | `auth` (`10`/phút) | `auth` (`10`/phút) | **Giữ nguyên** — chống dò mật khẩu đăng nhập; không bị lưu lượng BYOK làm nghẽn. / Unchanged login brute-force cap. |
 | `/api/user/byok*` | `auth` (`10`/phút — gây lỗi 429 P0) | **`byok` (`40`/phút, fail-closed)** | **Tách riêng an toàn** — đủ cho trang Setup Wizard tải trạng thái + lưu key, chặt hơn 2.5 lần so với mức `/api/*` chung (`100`/phút). / Dedicated fail-closed D1 bucket. |
@@ -103,7 +104,7 @@
 ### 4.2 Tầng 2 — Giới hạn chi tiết theo hành động & chống xoay tài khoản/IP ở từng Route (`globalRateLimiter`)
 
 > **Ghi chú kiến trúc lưu trữ giữa các Worker Isolate (Architectural Persistence Distinction):**
-> - **Tầng 1 (`RATE_LIMITS.byok` = `40` req/phút tại `src/middleware/api-handler.ts:72-80` → `checkRateLimit` / `sql-rate-limiter-queries.ts:32`)** lưu trạng thái trực tiếp trong bảng **Cloudflare D1 (`rate_limit_entries`)** và áp dụng chung xuyên suốt **mọi Cloudflare Worker isolate** ở trạng thái fail-closed. Đây là trần cứng toàn cục (`40` req/phút/IP) ngay cả khi lưu lượng phân tán qua nhiều isolate ở biên.
+> - **Tầng 1 (`RATE_LIMITS.byok` = `40` req/phút tại `src/middleware/api-handler.ts:72-80` → `checkRateLimit` / `sql-rate-limiter-queries.ts:32`)** lưu trạng thái trực tiếp trong bảng **Cloudflare D1 (`rate_limits` qua `increment_rate_limit` tại `src/seed/db/client-rpc/rpc-counters.ts:40`)** và áp dụng chung xuyên suốt **mọi Cloudflare Worker isolate** ở trạng thái fail-closed. Đây là trần cứng toàn cục (`40` req/phút/IP) ngay cả khi lưu lượng phân tán qua nhiều isolate ở biên.
 > - **Tầng 2 (`globalRateLimiter.checkLimit` tại `src/forest/middleware/rate-limiter/rate-limiter.ts:21-87`)** sử dụng bộ đếm cửa sổ trượt trong bộ nhớ theo từng Worker isolate (`TokenBucketStore`) để siết chặt hơn nữa theo từng thao tác (`5`–`20` req/phút theo `user.id` và `cf-connecting-ip`) bên trong mỗi isolate nóng mà không tốn thêm lượt ghi D1 cho từng nhánh phụ. Do bộ nhớ `TokenBucketStore` không chia sẻ giữa các isolate khác nhau, **Tầng 1 trên D1 (`40`/phút) đóng vai trò chốt chặn xuyên-isolate bắt buộc**, còn **Tầng 2 siết mịn theo hành động trên từng isolate**.
 
 | Endpoint & Hành động / Action | Giới hạn theo User / Per-User Cap | Giới hạn theo IP (`cf-connecting-ip`) / Per-IP Cap | Mã nguồn / Exact Source |
@@ -124,7 +125,7 @@
 - **Verify / Save / Replace / Delete độc lập:** Hết hạn mức `Verify` (`10`/phút) không làm khóa thao tác `Delete` (`10`/phút) hay `Save` không dò mạng (`20`/phút) còn trong ngưỡng.
 - **Tách biệt giữa các User / Tổ chức khác nhau:** Hai khách hàng độc lập ở hai IP khác nhau không làm cạn hạn mức của nhau; ngược lại, **1 user xoay nhiều IP** vẫn bị chặn ở mốc `10`/phút theo `user.id`, và **nhiều tài khoản xoay trên cùng 1 IP** bị chặn ở mốc `10`–`12`/phút theo IP.
 - **Chống giả mạo Header IP / API Key:** `getClientIpIdentifier` (`endpoint-rate-limiters.ts:9-23`) ưu tiên `cf-connecting-ip` do Cloudflare gắn ở biên và **bỏ qua hoàn toàn header `x-api-key`** khi định danh IP, chặn đứng trò đổi `x-api-key` hoặc `x-forwarded-for` giả để né giới hạn.
-- **Chịu tải đồng thời (`Promise.all` burst):** Bắn đồng thời 18 request song song chỉ cho phép đúng `10` request đi qua và trả `429` cho `8` request vượt ngưỡng.
+- **Chịu tải đồng thời (`Promise.all` burst):** Bắn đồng thời `16` request song song (`byok-rate-limit-security.test.ts:262-278`) chỉ cho phép đúng `10` request đi qua và trả `429` cho `6` request vượt ngưỡng.
 - **Nhập sai key liên tục (Repeated invalid keys):** Các lần trả `422` do key sai vẫn trừ vào ngân sách dò key; ngay khi chạm ngưỡng `429`, hàm gọi ra nhà cung cấp ngoài (`probeProviderApiKey` / `fetch`) **ngừng hoàn toàn (0 cuộc gọi phát sinh thêm)**.
 - **Chuẩn HTTP 429 & Bảo toàn Auth + CSRF:** Phản hồi `429` luôn trả đủ `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining: 0`, `X-RateLimit-Reset` và ghi sự kiện hợp lệ `limit_type: 'byok'` (`schemas-business.ts`). Request chưa đăng nhập bị chặn `401` **trước khi** tốn ngân sách rate-limit của người dùng thật; các lệnh ghi không có CSRF token hợp lệ vẫn bị chặn `403`.
 

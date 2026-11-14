@@ -18,8 +18,8 @@ Nút chuyển đổi nhanh giữa chế độ **Tối (Director's Control Deck)*
 - Có đầy đủ thuộc tính tiếp cận: `aria-label`, `aria-pressed`, `title`, và `data-testid="theme-toggle"`.
 - Trước và sau khi client mount (`mounted === false` → `true`), luôn render cùng một thẻ `<button className="inline-flex h-9 w-9 ...">` (`36x36px`, mặc định trạng thái `dark` trên SSR) để tránh dịch chuyển bố cục (`CLS = 0`).
 
-### 1.3. `AppearanceSection` (`src/forest/components/settings/sections/appearance-section.tsx`)
-Trang cài đặt giao diện cho phép người dùng chọn giữa **Light**, **Dark** và **System**; cập nhật `settings.theme` trong form đồng thời gọi trực tiếp `setTheme('light' | 'dark' | 'system')` của `ZenThemeProvider` để lưu bền vững vào `sophia-zen-theme` và duy trì lắng nghe `matchMedia` ở tầng gốc ngay cả khi rời trang `/settings`.
+### 1.3. `SettingsAppearanceThemeSection` & `AppearanceSection` (`src/components/settings/settings-appearance-theme.tsx`, `src/forest/components/settings/sections/appearance-section.tsx`)
+Trên trang `/[locale]/dashboard/settings` (`src/components/stitch/screens/settings/settings-page.tsx`), tab Preferences gắn trực tiếp `SettingsAppearanceThemeSection` (`role="radiogroup"` đa ngôn ngữ 12 locales), song hành cùng `AppearanceSection` trong tầng `forest`: cả hai cho phép người dùng chọn giữa **Light**, **Dark** và **System**, gọi trực tiếp `setTheme('light' | 'dark' | 'system')` của `ZenThemeProvider` để lưu bền vững vào `sophia-zen-theme` và duy trì lắng nghe `matchMedia` ở tầng gốc ngay cả khi rời trang `/settings`.
 
 ---
 

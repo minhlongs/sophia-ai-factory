@@ -28,6 +28,7 @@ Toàn bộ các thành phần của **ZEN DESIGN OS v1.0** tuân thủ nghiêm n
 │ - Pilot 1: /[locale]/setup (canonical; /[locale]/setup-wizard 307 → setup) │
 │ - Pilot 2: /[locale]/dashboard                                             │
 │ - Pilot 3: /[locale]/dashboard/niche-studio                                │
+│ - Settings: src/components/settings/settings-appearance-theme.tsx          │
 └───────────────────────────────┬────────────────────────────────────────────┘
                                 │ imports
                                 ▼
@@ -68,6 +69,6 @@ Toàn bộ các thành phần của **ZEN DESIGN OS v1.0** tuân thủ nghiêm n
 1. **Mặc định an toàn (`defaultTheme="dark"`)**:
    - Khi người dùng truy cập lần đầu tiên, `ZenThemeProvider` giữ nguyên giao diện **Director's Control Deck (`#090A10`)** để đảm bảo 100% tính liên tục của thương hiệu Sophia và không gây chớp sáng (FOUC).
 2. **Chuyển đổi tức thì sang Chế độ Sáng (`Executive Studio Ivory`)**:
-   - Khi CEO nhấn nút `<ThemeToggle />` trên thanh TopBar hoặc chọn thẻ **Light** trong trang Cài đặt (`AppearanceSection`), `next-themes` cập nhật thuộc tính class trên thẻ `<html>`, kích hoạt ngay lập tức bộ biến `:root` (`--background: #F8F9FC`, `--card: #FFFFFF`, `--primary: #4338CA`) mà không cần tải lại trang.
+   - Khi CEO nhấn nút `<ThemeToggle />` trên thanh TopBar hoặc chọn thẻ **Light** trong trang Cài đặt (`SettingsAppearanceThemeSection` tại `/[locale]/dashboard/settings` hoặc `AppearanceSection`), `next-themes` cập nhật thuộc tính class trên thẻ `<html>`, kích hoạt ngay lập tức bộ biến `:root` (`--background: #F8F9FC`, `--card: #FFFFFF`, `--primary: #4338CA`) mà không cần tải lại trang.
 3. **Sân khấu tối chuyên dụng cho Video (`Dedicated Dark Stage`)**:
    - Các thành phần dựng phim và xem trước video (`TimelineBrowserPreview`, vùng canvas video trong `SophiaArtifactCanvas`) sử dụng biến `--studio-stage-bg: #090A10` để khung hình video luôn có độ tương phản chuẩn điện ảnh bất kể giao diện xung quanh đang ở chế độ Sáng hay Tối.

@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`
+**Verified Code & Test HEAD:** `7e4d0283a54f995d0c18c3b414cc7220e573ec8b`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g2-audit.json`](./g2-audit.json)

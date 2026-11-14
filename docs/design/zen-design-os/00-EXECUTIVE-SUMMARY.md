@@ -24,8 +24,8 @@ Thay vì cài đặt một thư viện giao diện nặng nề hoặc sao chép 
 
 | Màn hình Pilot | Đường dẫn Route | Nâng cấp cốt lõi trong ZEN DESIGN OS v1.0 | Trạng thái Luồng Bảo Vệ (Protected Flow) |
 |---|---|---|---|
-| **Pilot 1: Setup Wizard (BYOK Onboarding)** | `/[locale]/setup-wizard` | Đồng bộ hóa `WizardStepper`, khung trang `SetupWizardPage`, và thẻ nhập khóa API sang token ngữ nghĩa Dual-Theme (`bg-background`, `bg-card`, `border-border`, `text-primary`); hiển thị rõ ràng tiến trình 6 bước trên cả Desktop và Mobile (`320px+`). | **An toàn 100%**: Giữ nguyên cơ chế mã hóa `AES-256-GCM`, kiểm tra khóa trực tiếp (`verifyKey`), thu hồi khóa (`handleRevokeProvider`) và nguyên tắc `FAIL-CLOSED`. |
-| **Pilot 2: Dashboard Command Center** | `/[locale]/dashboard` | Nâng cấp `DashboardShell` và `DashboardTopBarActions` sang hệ thống token thích ứng Sáng/Tối; tích hợp nút chuyển đổi giao diện tức thì (`<ThemeToggle />`) ngay trên thanh TopBar cạnh bộ chuyển đổi ngôn ngữ `VI/EN` và đồng bộ với trang Cài đặt (`AppearanceSection`). | **An toàn 100%**: Bảo toàn toàn bộ dữ liệu KPI, HUD trạng thái Agent, ngăn kéo nguồn dữ liệu (`DashboardSourcesDrawer`) và điều hướng đa ngôn ngữ. |
+| **Pilot 1: Setup Wizard (BYOK Onboarding)** | `/[locale]/setup` (`/[locale]/setup-wizard` chuyển hướng `307`) | Đồng bộ hóa `WizardStepper`, khung trang `SetupWizardPage`, và thẻ nhập khóa API sang token ngữ nghĩa Dual-Theme (`bg-background`, `bg-card`, `border-border`, `text-primary`); hiển thị rõ ràng tiến trình 6 bước trên cả Desktop và Mobile (`320px+`). | **An toàn 100%**: Giữ nguyên cơ chế mã hóa `AES-256-GCM`, kiểm tra khóa trực tiếp (`verifyKey`), thu hồi khóa (`handleRevokeProvider`) và nguyên tắc `FAIL-CLOSED`. |
+| **Pilot 2: Dashboard Command Center** | `/[locale]/dashboard` | Nâng cấp `DashboardShell` và `DashboardTopBarActions` sang hệ thống token thích ứng Sáng/Tối; tích hợp nút chuyển đổi giao diện tức thì (`<ThemeToggle />`) ngay trên thanh TopBar cạnh bộ chuyển đổi ngôn ngữ `VI/EN` và đồng bộ với trang Cài đặt (`SettingsAppearanceThemeSection` tại `/[locale]/dashboard/settings` và `AppearanceSection`). | **An toàn 100%**: Bảo toàn toàn bộ dữ liệu KPI, HUD trạng thái Agent, ngăn kéo nguồn dữ liệu (`DashboardSourcesDrawer`) và điều hướng đa ngôn ngữ. |
 | **Pilot 3: Niche Studio (AI Creative Workspace)** | `/[locale]/dashboard/niche-studio` | Chuyển đổi `SophiaArtifactCanvas` và `TimelineBrowserPreview` sang hệ thống token ngữ nghĩa kết hợp `--studio-stage-bg` cho vùng khung hình video; loại bỏ hoàn toàn các mã màu hex cứng vượt ngưỡng. | **An toàn 100%**: Không phát sinh lệnh gọi API trả phí, bảo toàn toàn bộ trạng thái kịch bản, phân cảnh và điều khiển phát thử. |
 
 ---
@@ -40,7 +40,7 @@ Thay vì cài đặt một thư viện giao diện nặng nề hoặc sao chép 
 | **Kiểm tra quy tắc mã nguồn ESLint** | `npm run lint` | **PASS** — `0` lỗi ESLint trên toàn bộ các tệp đã chỉnh sửa. |
 | **Kiến trúc 4 tầng (seed → tree → forest → land)** | `npm run check:boundaries` | **PASS** — `0` vi phạm ranh giới kiến trúc. |
 | **Đồng bộ đa ngôn ngữ (VI / EN)** | `npm run i18n:validate` | **PASS** — `100%` đồng bộ khóa ngôn ngữ Tiếng Việt và Tiếng Anh. |
-| **Kiểm tra rò rỉ bí mật (Secrets Gate)** | `npm run ci:secrets` | **PASS** — `0` khóa bí mật hoặc thông tin nhạy cảm trong mã nguồn. |
+| **Kiểm tra rò rỉ bí mật (Secrets Gate)** | `secretlint` trên toàn bộ diff PR | **PASS** — `0` khóa bí mật hoặc thông tin nhạy cảm trong mã nguồn. |
 
 ---
 

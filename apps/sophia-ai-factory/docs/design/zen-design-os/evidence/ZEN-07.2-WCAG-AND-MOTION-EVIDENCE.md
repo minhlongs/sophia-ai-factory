@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`
+**Verified Code & Test HEAD:** `7e4d0283a54f995d0c18c3b414cc7220e573ec8b`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
@@ -160,14 +160,14 @@ Source read directly, not inferred.
 
 | Primitive | File | Reduced-motion behaviour |
 |:--|:--|:--|
-| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-122` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1017-1023` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
+| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-122` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1020-1026` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
 | `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:32-54,78-90,121-127` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` and `[data-zen-motion-stagger] > *` CSS rules; `useEffect` immediately promotes `reduced` + `visible`, sets `transition: "none"` on both single and staggered children, and subscribes to `matchMedia` `'change'` |
 | `PageTransition` | `src/seed/components/ui/page-transition.tsx:20-41,53-61` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` CSS override; `useEffect` returns early before `requestAnimationFrame`, sets `transition: "none"`, and subscribes to `matchMedia` `'change'` |
 | `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:20-89` | Deterministic `useState(false)` on SSR + client hydration (`0` initial text on both server and client — zero React 19 hydration mismatches); `useEffect` checks `matchMedia('(prefers-reduced-motion: reduce)')` on mount to jump straight to `value` without starting `requestAnimationFrame`, and subscribes to `matchMedia` `'change'` to cancel any in-flight `rAF` loop and snap immediately to `value` |
 
 All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `AnimatedCounter`) keep deterministic initial state across SSR and hydration (`zen-motion-reduced-motion.test.tsx` verifies `renderToString` + `hydrateRoot` emits zero hydration errors when `prefers-reduced-motion: reduce` is active), while CSS `@media (prefers-reduced-motion: reduce)` reveals `[data-zen-motion]` and `[data-zen-motion-stagger] > *` from byte 0 of SSR.
 
-The CSS layer closes the loop at `src/app/globals.css:991-1040`:
+The CSS layer closes the loop at `src/app/globals.css:991-1043`:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -179,6 +179,7 @@ The CSS layer closes the loop at `src/app/globals.css:991-1040`:
     --motion-duration-cinematic: 0ms;
   }
   html { scroll-behavior: auto; }
+  .animate-pulse, .animate-ping, .animate-spin,
   .animate-gradient, .animate-conveyor, .animate-fade-in-up,
   .animate-shimmer, .animate-float, …
   [data-zen-motion], [data-zen-motion-stagger] > * {

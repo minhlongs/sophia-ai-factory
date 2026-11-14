@@ -25,7 +25,7 @@
    - Việc chuyển đổi giữa chế độ Sáng và Tối chỉ thay đổi một class trên thẻ `<html>`, trình duyệt tính toán lại bảng màu qua CSS Custom Properties trong `< 8ms` mà không cần re-render cây dữ liệu nghiệp vụ.
    - Không có bất kỳ trình lắng nghe sự kiện `scroll` hay `mousemove` toàn cục nào chạy trên luồng chính (Main Thread).
 3. **Largest Contentful Paint (`LCP`)**:
-   - Ở chế độ chuyển động tiêu chuẩn, các nguyên bản chuyển cảnh (`PageTransition`, `FadeInView`, `ScrollReveal`) khởi tạo deterministic `opacity: 0` trên SSR và chuyển sang `opacity: 1` ngay sau mount/hydration với thời lượng ngắn (`240ms–400ms`) mà không chặn streaming SSR của Next.js 16; khi người dùng bật `prefers-reduced-motion: reduce`, quy tắc CSS `[data-zen-motion]` (`src/app/globals.css:1017-1023`) ép `opacity: 1 !important; transform: none !important; transition: none !important;` ngay từ byte đầu tiên của SSR.
+   - Ở chế độ chuyển động tiêu chuẩn, các nguyên bản chuyển cảnh (`PageTransition`, `FadeInView`, `ScrollReveal`) khởi tạo deterministic `opacity: 0` trên SSR và chuyển sang `opacity: 1` ngay sau mount/hydration với thời lượng ngắn (`240ms–400ms`) mà không chặn streaming SSR của Next.js 16; khi người dùng bật `prefers-reduced-motion: reduce`, quy tắc CSS `[data-zen-motion]` (`src/app/globals.css:1020-1026`) ép `opacity: 1 !important; transform: none !important; transition: none !important;` ngay từ byte đầu tiên của SSR.
 
 ---
 

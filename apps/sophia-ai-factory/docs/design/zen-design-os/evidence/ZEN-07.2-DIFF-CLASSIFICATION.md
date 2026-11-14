@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`
+**Verified Code & Test HEAD:** `7e4d0283a54f995d0c18c3b414cc7220e573ec8b`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Reported Checkpoint:** `b3338a256` (handover base: `4d23ddb386f499b7627f2c828a1b80c81c6a3382`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
@@ -17,7 +17,7 @@ not match the working tree. Measured:
 | Set | Count |
 |:--|--:|
 | Baseline `673ec911` → pre-existing branch tip `4d23ddb38` | 36 files |
-| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50`, `f9220c3a2`, `eb1c8d796`, `d8a027539` + evidence sync) | 173 tracked |
+| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50`, `f9220c3a2`, `eb1c8d796`, `d8a027539`, `7e4d0283a` + evidence sync) | 173 tracked |
 | **Total under review (baseline → closing commit)** | **184** (88 `A`, 96 `M`) |
 | of which PNG screenshots (binary, listed but not diffed line-by-line) | 40 |
 | of which non-PNG files, classified in full below | 144 |
@@ -290,7 +290,7 @@ None. Section 3 records the borderline files that were checked and cleared.
 
 ---
 
-## 4. Quality gates on the closing tree (`d8a027539`)
+## 4. Quality gates on the closing tree (`7e4d0283a`)
 
 | Gate | Result | Detail |
 |:--|:--:|:--|
