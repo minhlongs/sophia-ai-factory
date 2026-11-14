@@ -1,15 +1,23 @@
 /**
- * Video Generation Step & Checkpoint Helpers (seed-only dependencies)
+ * Video Generation Step & Checkpoint Helpers
  *
  * Layer: forest/inngest/functions
  * @module forest/inngest/functions/video-generate-mux-step
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { SophiaVideoTimelineSchema, type SophiaVideoTimeline } from '@/seed/types/video-timeline-schema';
 import { logger } from '@/seed/utils/logger-utility';
 import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getUserRoutingStrategy, getDefaultStrategyForTier } from '@/seed/db/get-user-routing-strategy';
+import {
+  createInMemorySegmentCache,
+  createR2SegmentCache,
+  createVideoRenderer,
+  type R2LikeSegmentBucket,
+  type VideoRenderOutput,
+} from '@/tree/video/render/video-renderer-port';
 import {
   writeStageCheckpoint,
   getVideoBucket,
@@ -91,6 +99,53 @@ export async function resolveMuxContext(
   };
 }
 
+function isR2SegmentBucket(candidate: unknown): candidate is R2LikeSegmentBucket {
+  if (!candidate || typeof candidate !== 'object') return false;
+  const record = candidate as Partial<R2LikeSegmentBucket>;
+  return typeof record.get === 'function' && typeof record.put === 'function';
+}
+
+async function renderSegmentedTimelineManifest(params: {
+  missionId: string;
+  tenantId: string;
+  finalUrl: string;
+  durationMs: number;
+}): Promise<VideoRenderOutput | null> {
+  const { missionId, tenantId, finalUrl, durationMs } = params;
+  if (!tenantId?.trim()) return null;
+  try {
+    const bucketRef = await getVideoBucket();
+    const cacheStore = isR2SegmentBucket(bucketRef?.bucket)
+      ? createR2SegmentCache(bucketRef.bucket, tenantId)
+      : createInMemorySegmentCache();
+    const durationInFrames = Math.max(30, Math.round((Math.max(durationMs, 1000) / 1000) * 30));
+    const isHttpUrl = finalUrl.startsWith('http://') || finalUrl.startsWith('https://');
+    const timeline: SophiaVideoTimeline = SophiaVideoTimelineSchema.parse({
+      timelineId: missionId,
+      tenantId,
+      title: `Mission ${missionId}`.slice(0, 160),
+      scenes: [
+        {
+          sceneId: 'scene_primary',
+          kind: 'GENERATIVE_HOOK_BROLL',
+          headline: `Mission ${missionId}`.slice(0, 200),
+          startFrame: 0,
+          durationInFrames,
+          assetUrl: isHttpUrl ? finalUrl : undefined,
+        },
+      ],
+    });
+    const renderer = createVideoRenderer('hyperframes', { cacheStore });
+    return await renderer.renderTimeline(timeline);
+  } catch (err) {
+    logger.warn('[videoGenerate] Segmented timeline manifest skipped (non-fatal)', {
+      missionId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
 export async function writeMuxStageCheckpoint(params: {
   missionId: string;
   tenantId: string;
@@ -101,6 +156,13 @@ export async function writeMuxStageCheckpoint(params: {
   durationMs: number;
 }): Promise<void> {
   const { missionId, tenantId, audioR2Key, videoR2Key, muxOutputKey, finalUrl, durationMs } = params;
+  const timelineRender = await renderSegmentedTimelineManifest({
+    missionId,
+    tenantId,
+    finalUrl,
+    durationMs,
+  });
+
   await writeStageCheckpoint(missionId, 'mux_audio_video', 'completed', tenantId, {
     render_report: {
       finalR2Key: muxOutputKey,
@@ -108,6 +170,14 @@ export async function writeMuxStageCheckpoint(params: {
       durationMs,
       muxedAt: new Date().toISOString(),
       brandKitApplied: false,
+      ...(timelineRender
+        ? {
+            timelineEngine: timelineRender.engine,
+            timelineOutputKey: timelineRender.outputUrl,
+            cacheHitRatio: timelineRender.cacheHitRatio,
+            segments: timelineRender.segments,
+          }
+        : {}),
     },
     asset_manifest: {
       audioR2Key,

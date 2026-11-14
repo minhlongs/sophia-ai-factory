@@ -9,6 +9,8 @@ export class PayOsDefinitiveError extends Error {
   }
 }
 
+export type PayOsBillingPeriod = 'monthly' | 'yearly' | 'lifetime' | 'pilot_14d';
+
 export interface PayOsTierConfig {
   tier: Tier;
   vndAmount: number;
@@ -17,7 +19,7 @@ export interface PayOsTierConfig {
 
 export interface PayOsCheckoutInput {
   tier: Tier;
-  period: 'monthly' | 'yearly' | 'lifetime';
+  period: PayOsBillingPeriod;
   userId: string;
   orderId: string;
   customerEmail?: string;
