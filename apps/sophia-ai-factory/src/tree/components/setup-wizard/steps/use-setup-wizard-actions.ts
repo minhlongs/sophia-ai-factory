@@ -5,12 +5,14 @@
  * @module tree/components/setup-wizard/steps/use-setup-wizard-actions
  */
 
+import type { ValidationReceipt } from '@/tree/byok/validation-receipt-types';
 import { KEY_TO_PROVIDER, type WizardKeyConfig } from './use-setup-wizard-helpers';
 
 export interface ValidateKeyResponse {
   valid: boolean;
   latencyMs: number;
   errorMessage?: string;
+  receipt?: ValidationReceipt;
 }
 
 export async function requestKeyValidation(
@@ -29,13 +31,14 @@ export async function requestKeyValidation(
     message?: string;
     message_vi?: string;
     latencyMs?: number;
+    receipt?: ValidationReceipt;
   };
   const latencyMs = data.latencyMs ?? (Date.now() - start);
   if (res.ok && data.valid) {
-    return { valid: true, latencyMs };
+    return { valid: true, latencyMs, receipt: data.receipt };
   }
   const errorMessage = data.message_vi || data.message || fallbackError;
-  return { valid: false, latencyMs, errorMessage };
+  return { valid: false, latencyMs, errorMessage, receipt: data.receipt };
 }
 
 export async function requestProviderRevoke(provider: string): Promise<boolean> {
