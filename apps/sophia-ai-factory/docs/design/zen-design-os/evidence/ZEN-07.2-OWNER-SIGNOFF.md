@@ -6,7 +6,7 @@
 **Original Handover Commit:** `4d23ddb386f499b7627f2c828a1b80c81c6a3382`
 **Reported Checkpoint (#07.3 Brief):** `b3338a256408ef194cc63cb6fcbe6dcc27ca718c`
 **Browser-Evidence Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
-**Verified Code Commit (Round 6 Remediation):** `eb1c8d7960288b1dbe871ad998505c91f32346d7`
+**Verified Code Commit (Round 7 Remediation):** `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`
 **Verification Date:** `2026-11-14`
 **Release Review Verdict:** **`READY_FOR_DRAFT_PR`** *(Enum: `READY_FOR_DRAFT_PR` / `PARTIAL` / `BLOCKED` / `REJECTED`)*
 
@@ -32,7 +32,8 @@
 | **Review Round 3 Code Fix (`9204f8e37`)** | `9204f8e3738600f4ee5155e9dc00849e9420f90f` | Vá vòng review độc lập 3: gắn `SettingsAppearanceThemeSection` 3 chế độ (`light`/`dark`/`system`) trực tiếp vào `SettingsPage` đang chạy thật, bảo toàn `localStorage['sophia-zen-theme']` trong `AppearanceSection`, sửa hydration + `matchMedia` `'change'` cho `AnimatedCounter`, khóa đủ 12 locale ở `helpers.ts` / `public-pipeline.ts` / `dashboard-pipeline.ts` (kèm rewrite 15 cây route `(app)`-only và security headers cho mọi early 307), và đồng bộ `<html lang dir>` SSR/client ở `RootLayout` + `(app)/layout.tsx`. / Third isolated review code remediation commit. |
 | **Review Round 4 Code Fix (`f6ebffc50`)** | `f6ebffc50821f92d355ab8454a313cf98856e5d3` | Vá vòng review độc lập 4: khóa xác thực bắt buộc + bucket `RATE_LIMITS.byok` + trần `12`/phút theo IP & User + `probeProviderApiKey` cô lập cho `POST /api/setup/verify`; bổ sung `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*` trong `x-middleware-override-headers` sau `intlMiddleware`; nâng tương phản dark mode `dark:bg-primary-600` cho `SettingsPage` & `WizardStepper`; chuyển `SettingsAppearanceThemeSection` và `SetupWizard` sang khóa tĩnh `next-intl` trên đủ 12 ngôn ngữ; tách `SophiaArtifactCanvasInspector` để mọi file `< 200` dòng. / Fourth isolated review code remediation commit. |
 | **Review Round 5 Code Fix (`f9220c3a2`)** | `f9220c3a2315bb1971c452d20da392a9ecb6ad0c` | Vá vòng review độc lập 5: chuẩn hóa tương phản WCAG 2.2 AA (`>= 4.5:1`) cho toàn bộ trạng thái động trên `Niche Studio`, `TimelineBrowserPreview`, `SettingsPage`, `InviteAffiliateModal` và các biến thể `seed/components/ui/button.tsx` (`8.76:1` Dark / `7.90:1` Light). / Fifth isolated review code remediation commit. |
-| **Review Round 6 Code Fix (`eb1c8d7960288b1dbe871ad998505c91f32346d7`)** | `eb1c8d7960288b1dbe871ad998505c91f32346d7` | Vá vòng review độc lập 6: cô lập circuit breaker theo từng `user:${id}` trên `test-resend` và `heygen/auto-register` (không mở circuit khi khách gõ nhầm key Resend `401`/`403`); đặt `--accent-foreground: #090A10` ở Dark mode (`9.20:1` trên `#F59E0B`) và chuyển hover `outline`/`ghost` của `Button` + mục chọn `CommandItem` (`CmdKPalette`) sang `bg-muted text-foreground` (`> 16:1` AA); nâng tương phản AA cho `Badge`, `StatusBadge`, `WizardStepper`, `DashboardTopBarActions`, `RevenueChartHeader`, và `v3-core.css` (`2,101` file test / `19,710` bài test PASS). / Sixth isolated review code remediation commit. |
+| **Review Round 6 Code Fix (`eb1c8d796`)** | `eb1c8d7960288b1dbe871ad998505c91f32346d7` | Vá vòng review độc lập 6: cô lập circuit breaker theo từng `user:${id}` trên `test-resend` và `heygen/auto-register` (không mở circuit khi khách gõ nhầm key Resend `401`/`403`); đặt `--accent-foreground: #090A10` ở Dark mode (`9.20:1` trên `#F59E0B`) và chuyển hover `outline`/`ghost` của `Button` + mục chọn `CommandItem` (`CmdKPalette`) sang `bg-muted text-foreground` (`> 16:1` AA); nâng tương phản AA cho `Badge`, `StatusBadge`, `WizardStepper`, `DashboardTopBarActions`, `RevenueChartHeader`, và `v3-core.css`. / Sixth isolated review code remediation commit. |
+| **Review Round 7 Code Fix (`d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`)** | `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430` | Vá vòng review độc lập 7: nâng tương phản Dark `.v3-core` `--btn-bg: #4F46E5` (`6.29:1` AA) và `.cmd-line code` / `.msg .ok` (`#818CF8`, `>= 6.02:1`), huy hiệu `MASTER` Light mode ở `DashboardUserCard` (`text-amber-900`, `6.74:1`–`8.14:1`), hover của `SophiaArtifactCanvasInspector` và `BUTTON_VARIANTS.destructive`, đồng thời đồng bộ `07-ACCESSIBILITY-REPORT.md` với `globals.css` (`2,101` file test / `19,710` bài test PASS). / Seventh isolated review code remediation commit. |
 
 ---
 
@@ -92,7 +93,7 @@
 
 ### 4.1 Tầng 1 — Cổng chặn D1 SQL toàn cục (`src/middleware/api-handler.ts:69-82`)
 
-| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`eb1c8d7960288b1dbe871ad998505c91f32346d7`) | Đánh giá bảo mật / Security Assessment |
+| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`) | Đánh giá bảo mật / Security Assessment |
 |:--|--:|--:|:--|
 | `/api/auth/*` | `auth` (`10`/phút) | `auth` (`10`/phút) | **Giữ nguyên** — chống dò mật khẩu đăng nhập; không bị lưu lượng BYOK làm nghẽn. / Unchanged login brute-force cap. |
 | `/api/user/byok*` | `auth` (`10`/phút — gây lỗi 429 P0) | **`byok` (`40`/phút, fail-closed)** | **Tách riêng an toàn** — đủ cho trang Setup Wizard tải trạng thái + lưu key, chặt hơn 2.5 lần so với mức `/api/*` chung (`100`/phút). / Dedicated fail-closed D1 bucket. |
@@ -206,7 +207,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 
 ### 8.2 Tổng hợp kiểm toán 184 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
 
-*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các bản vá từ 6 vòng review độc lập cho ra chính xác **184 file** = `88` file thêm mới + `96` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `169` file trong `apps/sophia-ai-factory/`. Cả 184/184 file đã được phân loại đầy đủ.)*
+*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các bản vá từ 7 vòng review độc lập cho ra chính xác **184 file** = `88` file thêm mới + `96` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `169` file trong `apps/sophia-ai-factory/`. Cả 184/184 file đã được phân loại đầy đủ.)*
 
 | Nhóm phân loại / Classification Category | File phi nhị phân / Non-PNG | Ảnh PNG / Screenshots | Tổng / Total |
 |:--|--:|--:|--:|

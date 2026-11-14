@@ -2,11 +2,11 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `eb1c8d7960288b1dbe871ad998505c91f32346d7`
+**Verified Code & Test HEAD:** `d8a0275396392a7fc2691eb5da1ef6b7bf2c5430`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (main):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Worktree:** `/Users/macbook/.gemini/antigravity/scratch/sophia-zen-design-os-v1/apps/sophia-ai-factory`
-**Date:** 2026-11-12 (screenshots captured on `cd068bd39`; unit & regression suites re-verified on `eb1c8d796` on 2026-11-14)
+**Date:** 2026-11-12 (screenshots captured on `cd068bd39`; unit & regression suites re-verified on `d8a027539` on 2026-11-14)
 **Mode:** Isolated local verification; PRODUCTION NOT TOUCHED (no merge, no deploy, no live Cloudflare edits).
 
 ---
@@ -138,7 +138,7 @@ No route is promoted to "visually verified" on the strength of unit tests alone.
 
 Every fix was followed by the narrowest test first, then the full sweep:
 `npm test` measured **2101 test files / 19,710 tests passing** (34 skipped,
-10 todo; exit 0) on the closing code tree (`eb1c8d796`), and `npm run build` completed with
+10 todo; exit 0) on the closing code tree (`d8a027539`), and `npm run build` completed with
 exit 0 across 636 routes. Per-gate numbers live in
 [`ZEN-07.2-FUNCTIONAL-REGRESSION.md`](./ZEN-07.2-FUNCTIONAL-REGRESSION.md) §2.
 
