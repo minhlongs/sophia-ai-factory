@@ -19,6 +19,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }));
 
 import { uploadYoutubeVideo } from '../youtube-upload-helper';
+import * as circuitBreaker from '@/seed/security/circuit-breaker';
 
 const initResponse = () =>
   new Response(null, {
@@ -83,5 +84,7 @@ describe('uploadYoutubeVideo', () => {
     ).rejects.toThrow(/PROVENANCE_BLOCKED/);
 
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(circuitBreaker.shouldAllowRequest).not.toHaveBeenCalled();
+    expect(circuitBreaker.recordFailure).not.toHaveBeenCalled();
   });
 });

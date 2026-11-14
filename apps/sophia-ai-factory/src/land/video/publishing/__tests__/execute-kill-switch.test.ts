@@ -89,4 +89,44 @@ describe('executePublishWorkflow kill-switch gate', () => {
     expect(atomicClaimJob).toHaveBeenCalled();
     expect(res).toMatchObject({ skipped: true });
   });
+
+  it('fails fast with PROVENANCE_BLOCKED before claiming or asking human approval on YouTube jobs', async () => {
+    vi.mocked(findJobById).mockResolvedValue({
+      id: 'job_yt_blocked',
+      tenant_id: 'ws_1',
+      provider: 'youtube',
+      status: 'scheduled',
+    } as never);
+
+    const res = await executePublishWorkflow({
+      ...workflowArgs(),
+      jobId: 'job_yt_blocked',
+      provenance: {
+        claims: [
+          {
+            id: 'claim_1',
+            text: 'Unverified revenue claim',
+            riskLevel: 'high',
+            sourceIds: [],
+            status: 'unsupported',
+          },
+        ],
+      },
+    });
+
+    expect(res).toMatchObject({
+      skipped: false,
+      jobId: 'job_yt_blocked',
+      status: 'failed',
+      error: expect.stringMatching(/^PROVENANCE_BLOCKED:/),
+    });
+    expect(atomicClaimJob).not.toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'failed',
+        error: expect.stringMatching(/^PROVENANCE_BLOCKED:.*\)$/),
+        finished_at: expect.any(Number),
+      }),
+    );
+  });
 });

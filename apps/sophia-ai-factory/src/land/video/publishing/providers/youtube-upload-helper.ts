@@ -5,7 +5,10 @@
  */
 
 import type { PublishMeta } from './publisher-interface';
-import { resolveSyntheticMediaDisclosure } from '@/tree/publishing/synthetic-media-disclosure';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 
 export const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
@@ -30,10 +33,12 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
 
   // YouTube withholds monetization when `containsSyntheticMedia` is missing,
   // and Sophia generates every video it publishes, so the disclosure defaults
-  // to on rather than trusting whichever publisher built the metadata.
+  // to on and unresolved provenance claims stop the publish before upload.
   const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: meta.provenance,
     defaultContainsSyntheticMedia: meta.containsSyntheticMedia ?? true,
   });
+  assertYouTubeProvenanceAllowed(disclosure);
 
   return {
     snippet: {
@@ -50,17 +55,20 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
   };
 }
 
+export type YouTubeUploadMetadata = ReturnType<typeof buildYouTubeMetadata>;
+
 export async function performResumableYouTubeUpload(
   accessToken: string,
   videoUrl: string,
   meta: PublishMeta,
+  resolvedMetadata?: YouTubeUploadMetadata,
 ): Promise<string> {
+  const metadata = resolvedMetadata ?? buildYouTubeMetadata(meta);
+
   const videoRes = await fetch(videoUrl);
   if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
   const videoBlob = await videoRes.blob();
   const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
-
-  const metadata = buildYouTubeMetadata(meta);
 
   const initRes = await fetch(
     'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',

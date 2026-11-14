@@ -1,15 +1,7 @@
 /**
- * Platform Upload Executor
- *
- * Performs the actual HTTP upload for a social publish job. The request
- * builders in this folder produce the endpoint/headers/body; this module is
- * the only place that talks to a provider.
- *
- * Honesty contract: this module NEVER invents a platform post id or a
- * published URL. A post id and URL exist here only if the provider returned
- * them. Anything else is a thrown error, classified by failure kind.
- *
- * Layer: tree (domain reusable logic — imports seed only)
+ * Platform Upload Executor — performs HTTP uploads for social publish jobs.
+ * Never invents a platform post id or URL; only provider-returned IDs succeed.
+ * Layer: tree (domain reusable logic — imports seed/tree only)
  * @module tree/social/publisher/upload-executor
  */
 
@@ -17,6 +9,7 @@ import type { SocialPlatform } from '@/seed/types/social-publisher-types';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, FailureKind } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
+import { isProvenanceBlockedError } from '@/tree/publishing/synthetic-media-disclosure';
 import {
   buildYouTubeInitRequest,
   parseTikTokPublishStatus,
@@ -32,7 +25,6 @@ import {
   logPublishDowngrade,
   CreatorInfoUnavailableError,
 } from './tiktok-creator-info';
-
 import {
   assertOkResponse,
   postInstagramStep,
@@ -43,24 +35,16 @@ import {
   type UploadExecutionResult,
 } from './upload-executor-http';
 
-export {
-  ProviderResultUnverifiableError,
-  type UploadExecutionInput,
-  type UploadExecutionResult,
-};
+export { ProviderResultUnverifiableError, type UploadExecutionInput, type UploadExecutionResult };
 
 /** Circuit-breaker key per platform so varying `channelId` cannot reset a failing provider's breaker. */
 const BREAKER_KEY = (platform: SocialPlatform) => `social_upload:${platform}`;
 
-async function uploadToYouTube(input: UploadExecutionInput, fetchImpl: typeof fetch): Promise<UploadExecutionResult> {
-  const req = buildYouTubeInitRequest({
-    title: input.title,
-    description: input.description,
-    tags: input.tags,
-    totalSizeBytes: input.totalSizeBytes ?? 10 * 1024 * 1024,
-    containsSyntheticMedia: input.containsSyntheticMedia,
-  });
-
+async function uploadToYouTube(
+  input: UploadExecutionInput,
+  req: ReturnType<typeof buildYouTubeInitRequest>,
+  fetchImpl: typeof fetch,
+): Promise<UploadExecutionResult> {
   const res = await fetchImpl(req.endpoint, {
     method: 'POST',
     headers: {
@@ -163,32 +147,42 @@ export async function executePlatformUpload(input: UploadExecutionInput): Promis
   const fetchImpl = input.fetchImpl ?? (globalThis.fetch as typeof fetch);
   const { platform, channelId, jobId } = input;
 
+  // Validate YouTube provenance synchronously BEFORE touching the shared
+  // platform circuit breaker so one tenant's unverified claim never trips or
+  // advances the breaker state for other tenants.
+  const youtubeInitReq = platform === 'YOUTUBE_SHORTS'
+    ? buildYouTubeInitRequest({
+        title: input.title,
+        description: input.description,
+        tags: input.tags,
+        totalSizeBytes: input.totalSizeBytes ?? 10 * 1024 * 1024,
+        containsSyntheticMedia: input.containsSyntheticMedia,
+        provenance: input.provenance,
+      })
+    : null;
+
   if (!shouldAllowRequest(BREAKER_KEY(platform))) {
     throw new Error(`CIRCUIT_OPEN:${platform}`);
   }
 
   try {
-    const result = platform === 'YOUTUBE_SHORTS'
-      ? await uploadToYouTube(input, fetchImpl)
+    const result = youtubeInitReq
+      ? await uploadToYouTube(input, youtubeInitReq, fetchImpl)
       : platform === 'TIKTOK_V2'
         ? await uploadToTikTok(input, fetchImpl)
         : await uploadToInstagram(input, fetchImpl);
 
     recordSuccess(BREAKER_KEY(platform));
     logger.info('executePlatformUpload: provider confirmed post id', {
-      jobId,
-      platform,
-      channelId,
-      idLength: result.platformPostId.length,
+      jobId, platform, channelId, idLength: result.platformPostId.length,
     });
     return result;
   } catch (err: unknown) {
-    recordFailure(BREAKER_KEY(platform), classifyError(err));
+    if (!isProvenanceBlockedError(err)) {
+      recordFailure(BREAKER_KEY(platform), classifyError(err));
+    }
     logger.warn('executePlatformUpload: provider upload failed', {
-      jobId,
-      platform,
-      channelId,
-      error: err instanceof Error ? err.message : String(err),
+      jobId, platform, channelId, error: err instanceof Error ? err.message : String(err),
     });
     throw err;
   }

@@ -5,6 +5,7 @@
  */
 
 import type { Tier } from "@/seed/types";
+import type { ProvenanceInput } from "@/seed/types/provenance";
 
 export type CampaignCreatedEvent = {
   data: {
@@ -34,6 +35,7 @@ export type VideoJobPayload = {
     tenantId: string;
     userId: string;
     attempt?: number;
+    provenance?: ProvenanceInput;
   };
 };
 

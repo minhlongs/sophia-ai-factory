@@ -17,11 +17,12 @@ export const publishExecute = inngest.createFunction(
   { id: 'publish-execute', retries: 3 },
   { event: 'publish.scheduled' },
   async ({ event, step }) => {
-    const { jobId, tenantId, userId } = event.data;
+    const { jobId, tenantId, userId, provenance } = event.data;
     return executePublishWorkflow({
       jobId,
       tenantId,
       userId,
+      provenance,
       eventId: event.id,
       step,
       // The publish approval gate suspends this job here for a human decision,
@@ -38,7 +39,7 @@ export const publishExecute = inngest.createFunction(
         await inngest.send({
           id: `publish-${jobId}-retry-${attempt}`,
           name: 'publish.scheduled',
-          data: { jobId, tenantId, userId, attempt },
+          data: { jobId, tenantId, userId, attempt, ...(provenance ? { provenance } : {}) },
         });
       },
       refreshToken: refreshChannelToken,

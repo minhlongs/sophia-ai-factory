@@ -5,6 +5,7 @@
  */
 
 import type { SocialPlatform } from '@/seed/types/social-publisher-types';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 
 export interface UploadExecutionInput {
   platform: SocialPlatform;
@@ -28,6 +29,8 @@ export interface UploadExecutionInput {
    * adapters apply their own disclosure policy; it never means "no".
    */
   containsSyntheticMedia?: boolean;
+  /** Optional claim/source provenance payload checked before YouTube upload. */
+  provenance?: ProvenanceInput;
   /** Injectable for tests; production uses the global fetch. */
   fetchImpl?: typeof fetch;
 }

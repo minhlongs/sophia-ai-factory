@@ -8,8 +8,10 @@ import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publi
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import { isProvenanceBlockedError } from '@/tree/publishing/synthetic-media-disclosure';
 import {
   YOUTUBE_VIDEOS_URL,
+  buildYouTubeMetadata,
   isYouTubeMockMode,
   performResumableYouTubeUpload,
   type YouTubeVideoResource,
@@ -19,6 +21,11 @@ export class YouTubePublisher implements Publisher {
   constructor(private readonly accessToken: string) {}
 
   async upload(videoUrl: string, meta: PublishMeta): Promise<string> {
+    // Evaluate provenance synchronously before mock-mode shortcuts or the
+    // shared platform circuit breaker so blocked claims never bypass the gate
+    // or trip the breaker for other tenants.
+    const metadata = buildYouTubeMetadata(meta);
+
     if (isYouTubeMockMode()) {
       logger.warn('[YouTubePublisher] Mock mode — YOUTUBE_CLIENT_ID missing');
       return `mock_youtube_${Date.now()}`;
@@ -29,11 +36,18 @@ export class YouTubePublisher implements Publisher {
     }
 
     try {
-      const videoId = await performResumableYouTubeUpload(this.accessToken, videoUrl, meta);
+      const videoId = await performResumableYouTubeUpload(
+        this.accessToken,
+        videoUrl,
+        meta,
+        metadata,
+      );
       recordSuccess('youtube');
       return videoId;
     } catch (error) {
-      recordFailure('youtube', classifyError(error));
+      if (!isProvenanceBlockedError(error)) {
+        recordFailure('youtube', classifyError(error));
+      }
       throw error;
     }
   }

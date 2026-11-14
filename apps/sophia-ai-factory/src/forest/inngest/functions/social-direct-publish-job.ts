@@ -5,10 +5,12 @@
  * @module forest/inngest/functions/social-direct-publish-job
  */
 
+import { NonRetriableError } from 'inngest';
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { decryptTokenVault } from '@/seed/security/oauth-token-vault';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import { isProvenanceBlockedError } from '@/tree/publishing/synthetic-media-disclosure';
 import { getCredential, upsertCredential } from '@/land/social/platform-credentials-store';
 import { claimPublishJobForUpload, getPublishJob, updatePublishJobStatus } from '@/land/social/publish-job-store';
 import { awaitPublishApproval } from '@/tree/publishing/approval';
@@ -47,15 +49,8 @@ export async function processSocialDirectPublishJob({
 }): Promise<SocialPublishResult | { status: string; jobId: string; reason: string }> {
   const data = event.data as SocialPublishDispatchedEventData;
 
-  // Duplicate-delivery guard. A re-delivered event (Inngest retry, or a
-  // duplicate send) must never reach the provider twice. `UPLOADING` is written
-  // immediately before the provider call, so its presence means a previous
-  // delivery already tried.
-  // Deliberately OUTSIDE step.run: a guard that must decide "has another
-  // delivery already uploaded this?" has to re-read D1 on every delivery and
-  // every replay. Inside a step, Inngest memoizes the return value and replays
-  // the cached answer, so the guard would see a snapshot of the row instead of
-  // its current truth — the opposite of what it is for.
+  // Duplicate-delivery guard outside step.run so D1 is re-read on every replay
+  // rather than returning a memoized pre-upload snapshot.
   const existingJob = await getPublishJob(data.jobId);
   if (isPublishJobAlreadyAttempted(existingJob)) {
     return { status: 'SKIPPED_ALREADY_UPLOADED', jobId: data.jobId, reason: 'ALREADY_UPLOADED' };
@@ -99,6 +94,9 @@ export async function processSocialDirectPublishJob({
     const guard = evaluateSafetyGuardsDecision(data, cred);
     if (!guard.allowed && guard.errorMessage) {
       await updatePublishJobStatus(data.jobId, 'FAILED', { error: guard.errorMessage });
+    }
+    if (guard.reason === 'PROVENANCE_BLOCKED') {
+      throw new NonRetriableError(guard.errorMessage ?? guard.reason);
     }
     return { allowed: guard.allowed, reason: guard.reason };
   });
@@ -146,6 +144,9 @@ export async function processSocialDirectPublishJob({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       await updatePublishJobStatus(data.jobId, 'FAILED', { error: msg });
+      if (isProvenanceBlockedError(err)) {
+        throw new NonRetriableError(msg, { cause: err });
+      }
       throw err;
     }
   });

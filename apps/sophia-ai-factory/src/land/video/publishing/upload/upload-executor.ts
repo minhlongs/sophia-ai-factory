@@ -1,5 +1,6 @@
 import { createServerClient } from '@/seed/db/client';
 import { decryptToken } from '@/tree/crypto/token-crypto';
+import { isProvenanceBlockedError } from '@/tree/publishing/synthetic-media-disclosure';
 import type { PublishingChannel } from '@/seed/types';
 import { sanitizeError } from '../publish-url-utils';
 import { buildPublisher } from './publisher-factory';
@@ -11,7 +12,7 @@ const MAX_RETRIES = 5;
 export async function uploadToProvider(
   args: UploadToProviderArgs
 ): Promise<{ externalPostId: string; shouldRetry: boolean; error?: string }> {
-  const { channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId } = args;
+  const { channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId, provenance } = args;
   const pub = buildPublisher(channel, accessToken);
 
   try {
@@ -21,11 +22,13 @@ export async function uploadToProvider(
       ...(job.title ? { title: job.title } : {}),
       ...(job.product_link ? { productLink: job.product_link } : {}),
       ...(job.privacy_status ? { privacyStatus: job.privacy_status } : {}),
+      ...(provenance ? { provenance } : {}),
     });
     return { externalPostId, shouldRetry: false };
   } catch (uploadErr) {
     const errorMsg = sanitizeError(uploadErr);
-    const nextStatus = retryCount >= MAX_RETRIES ? 'failed' : 'scheduled';
+    const nonRetriable = isProvenanceBlockedError(uploadErr);
+    const nextStatus = nonRetriable || retryCount >= MAX_RETRIES ? 'failed' : 'scheduled';
 
     await db.from('publishing_jobs').update({
       status: nextStatus,

@@ -9,6 +9,10 @@
 export {
   resolveSyntheticMediaDisclosure,
   allowsYouTubePublish,
+  assertYouTubeProvenanceAllowed,
+  isProvenanceBlockedError,
+  ProvenanceBlockedError,
+  PROVENANCE_BLOCKED_PREFIX,
   type SyntheticMediaDisclosure,
   type SyntheticMediaDisclosureInput,
 } from '@/tree/publishing/synthetic-media-disclosure';
