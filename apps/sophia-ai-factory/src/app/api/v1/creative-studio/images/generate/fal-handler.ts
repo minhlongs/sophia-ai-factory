@@ -3,7 +3,7 @@ import { createServerClient } from '@/seed/db/client';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
-import { TIER_ALLOWED_FAL_MODELS } from './config';
+import { describeImageTier, isKnownImageTier, TIER_ALLOWED_FAL_MODELS } from './config';
 import {
   type FalUserContext,
   recordFalCompletedJob,
@@ -17,10 +17,24 @@ export async function handleFalGeneration(
   model: string,
   aspectRatio: '1:1' | '16:9' | '9:16' | '4:3',
 ): Promise<NextResponse> {
-  const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC;
-  if (!allowedFalModels.includes(model)) {
+  if (!isKnownImageTier(tier)) {
     return NextResponse.json(
-      { message: `Model "${model}" is not available for your ${tier} plan.` },
+      {
+        message: `Unknown plan "${describeImageTier(tier)}". Image generation requires a recognised plan.`,
+        code: 'TIER_GATE',
+      },
+      { status: 403 },
+    );
+  }
+
+  const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? [];
+  if (typeof model !== 'string' || !allowedFalModels.includes(model)) {
+    const modelLabel = typeof model === 'string' ? model.slice(0, 128) : typeof model;
+    return NextResponse.json(
+      {
+        message: `Model "${modelLabel}" is not available for your ${tier} plan.`,
+        code: 'TIER_GATE',
+      },
       { status: 403 },
     );
   }
