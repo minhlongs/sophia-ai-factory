@@ -24,14 +24,29 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
   const { watch, setValue } = form;
   const theme = watch('settings.theme');
 
-  const handleSelectTheme = (nextTheme: 'light' | 'dark' | 'system') => {
-    setValue('settings.theme', nextTheme, { shouldDirty: true });
-    if (nextTheme === 'system' && typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-      setTheme(prefersLight ? 'light' : 'dark');
+  const resolveSystemTheme = React.useCallback((): 'light' | 'dark' => {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    return 'dark';
+  }, []);
+
+  React.useEffect(() => {
+    if (theme !== 'system' || typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return;
     }
-    setTheme(nextTheme === 'system' ? 'dark' : nextTheme);
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+    const syncFromOs = (event: MediaQueryListEvent | MediaQueryList) => {
+      setTheme(event.matches ? 'light' : 'dark');
+    };
+    syncFromOs(mediaQuery);
+    mediaQuery.addEventListener('change', syncFromOs);
+    return () => mediaQuery.removeEventListener('change', syncFromOs);
+  }, [theme, setTheme]);
+
+  const handleSelectTheme = (nextTheme: 'light' | 'dark' | 'system') => {
+    setValue('settings.theme', nextTheme, { shouldDirty: true });
+    setTheme(nextTheme === 'system' ? resolveSystemTheme() : nextTheme);
   };
 
   return (

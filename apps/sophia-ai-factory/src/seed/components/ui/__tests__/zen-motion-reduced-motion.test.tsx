@@ -56,6 +56,23 @@ describe('Zen Motion Primitives — prefers-reduced-motion: reduce (WCAG 2.2 SC 
     expect(root?.style.transition).toBe('none');
   });
 
+  it('ScrollReveal with staggerDelay renders cloned children with transition: none under reduced motion', () => {
+    const { container } = render(
+      <ScrollReveal staggerDelay={80} delay={40}>
+        <span data-testid="child-a">first</span>
+        <span data-testid="child-b">second</span>
+      </ScrollReveal>,
+    );
+    const childA = container.querySelector<HTMLElement>('[data-testid="child-a"]');
+    const childB = container.querySelector<HTMLElement>('[data-testid="child-b"]');
+    expect(childA?.style.opacity).toBe('1');
+    expect(childA?.style.transform).toBe('none');
+    expect(childA?.style.transition).toBe('none');
+    expect(childB?.style.opacity).toBe('1');
+    expect(childB?.style.transform).toBe('none');
+    expect(childB?.style.transition).toBe('none');
+  });
+
   it('PageTransition renders immediately mounted with transition: none under reduced motion', () => {
     const { container } = render(
       <PageTransition>

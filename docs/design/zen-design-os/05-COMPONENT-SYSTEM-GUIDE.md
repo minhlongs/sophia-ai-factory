@@ -11,7 +11,7 @@
 - **Thuộc tính điều khiển**: `attribute="class"` trên thẻ `<html>`.
 - **Chế độ mặc định**: `defaultTheme="dark"` (**Director's Control Deck**).
 - **Danh sách chế độ hợp lệ**: `themes={['dark', 'light']}`.
-- **Chống chớp giao diện**: `disableTransitionOnChange={false}` kết hợp với `suppressHydrationWarning` trên `<html>` và `<body>`.
+- **Chống chớp giao diện & bảo vệ CSP/Rocket Loader**: `disableTransitionOnChange` (`true`), `scriptProps={{ 'data-cfasync': 'false' }}`, chuyển tiếp `nonce={nonce}` trên `<script>` khởi tạo và `suppressHydrationWarning` trên thẻ `<html>`.
 
 ### 1.2. `ThemeToggle` (`src/forest/components/theme-toggle.tsx`)
 Nút chuyển đổi nhanh giữa chế độ **Tối (Director's Control Deck)** và **Sáng (Executive Studio Ivory)** nằm ngay trên thanh TopBar của Dashboard (`src/forest/dashboard/dashboard-topbar-actions.tsx`):
@@ -19,7 +19,7 @@ Nút chuyển đổi nhanh giữa chế độ **Tối (Director's Control Deck)*
 - Trước khi client mount xong (`mounted === false`), hiển thị khung giữ chỗ có cùng kích thước để tránh dịch chuyển bố cục (`CLS = 0`).
 
 ### 1.3. `AppearanceSection` (`src/forest/components/settings/sections/appearance-section.tsx`)
-Trang cài đặt giao diện cho phép người dùng chọn giữa **Light**, **Dark** và **System**; gọi trực tiếp `setTheme()` từ `next-themes` và đồng bộ trạng thái hiển thị theo thời gian thực.
+Trang cài đặt giao diện cho phép người dùng chọn giữa **Light**, **Dark** và **System**; gọi trực tiếp `setTheme()` từ `next-themes` và lắng nghe sự kiện `change` trên `window.matchMedia('(prefers-color-scheme: light)')` khi đang chọn `system` để đồng bộ trạng thái hiển thị theo thời gian thực.
 
 ---
 

@@ -11,7 +11,7 @@
  * Nothing here is imported by product code; it exists so Playwright can drive
  * the shipping components rather than a stand-in.
  *
- * @module app/[locale]/__zen-a11y-harness/a11y-harness
+ * @module app/[locale]/zen-a11y-harness/a11y-harness
  */
 
 import * as React from 'react';
@@ -76,8 +76,6 @@ function HarnessFormDialog() {
 }
 
 export function A11yHarness({ locale }: A11yHarnessProps) {
-  const [reason, setReason] = React.useState('');
-
   return (
     <main className="min-h-screen bg-background py-16 px-4" data-testid="a11y-harness">
       <div className="max-w-6xl mx-auto space-y-12">

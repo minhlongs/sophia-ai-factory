@@ -6,7 +6,7 @@
  * of asserting on inert markup. Returns 404 in any production build, so the
  * route cannot reach a deployed environment.
  *
- * @module app/[locale]/__zen-a11y-harness/page
+ * @module app/[locale]/zen-a11y-harness/page
  */
 
 import { notFound } from 'next/navigation';

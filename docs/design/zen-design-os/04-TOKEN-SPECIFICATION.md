@@ -10,34 +10,42 @@
 
 | Biến CSS (`src/app/globals.css`) | Đường dẫn DTCG (`zen-design-tokens.dtcg.json`) | Chế độ Sáng (`:root` — Executive Studio Ivory) | Chế độ Tối (`.dark` — Director's Control Deck) | Vai trò ngữ nghĩa (Material 3 Role Mapping) |
 |---|---|---|---|---|
-| `--background` | `color.semantic.{light\|dark}.background` | `#F8F9FC` | `#090A10` | `surface` — Nền chính của toàn bộ khung nhìn ứng dụng |
-| `--foreground` | `color.semantic.{light\|dark}.foreground` | `#0B0F19` | `#F8FAFC` | `on-surface` — Màu chữ chính có độ tương phản cực cao |
-| `--card` | `color.semantic.{light\|dark}.card` | `#FFFFFF` | `#11131F` | `surface-container` — Bề mặt thẻ KPI, biểu mẫu BYOK và bảng dữ liệu |
-| `--card-foreground` | `color.semantic.{light\|dark}.card-foreground` | `#0B0F19` | `#F8FAFC` | `on-surface` — Màu chữ trên bề mặt thẻ |
-| `--popover` | `color.semantic.{light\|dark}.popover` | `#FFFFFF` | `#16192B` | `surface-container-high` — Menu thả xuống, hộp thoại, ngăn kéo |
-| `--primary` | `color.semantic.{light\|dark}.primary` | `#4338CA` | `#6366F1` | `primary` — Hành động chính, nút CTA, bước đang hoạt động |
-| `--primary-foreground` | `color.semantic.{light\|dark}.primary-foreground` | `#FFFFFF` | `#FFFFFF` | `on-primary` — Chữ trên nền nút chính |
-| `--secondary` | `color.semantic.{light\|dark}.secondary` | `#7E22CE` | `#A855F7` | `secondary` — Tác nhân AI (Agent Telemetry, AI Orchestration) |
-| `--accent` | `color.semantic.{light\|dark}.accent` | `#B45309` | `#F59E0B` | `tertiary` — Tín hiệu doanh thu, MCU Credits, cảnh báo chú ý |
+| `--surface` / `--background` | `color.semantic.{light\|dark}.surface` | `#F8F9FC` | `#090A10` | Nền chính của toàn bộ khung nhìn ứng dụng |
+| `--on-surface` / `--foreground` | `color.semantic.{light\|dark}.on-surface` | `#0B0F19` | `#F8FAFC` | Màu chữ chính có độ tương phản cao (`18.19:1` Light / `18.89:1` Dark) |
+| `--surface-container` / `--card` | `color.semantic.{light\|dark}.surface-container` | `#FFFFFF` | `#11131F` | Bề mặt thẻ KPI, biểu mẫu BYOK và bảng dữ liệu |
+| `--card-foreground` | *(CSS alias của `on-surface` trong `globals.css`)* | `#0B0F19` | `#F8FAFC` | Màu chữ trên bề mặt thẻ |
+| `--popover` | *(CSS alias của `--card` trong `globals.css`)* | `#FFFFFF` | `#11131F` | Menu thả xuống, hộp thoại, ngăn kéo |
+| `--surface-container-high` | `color.semantic.{light\|dark}.surface-container-high` | `#ECEFF6` | `#1F1F29` | Bề mặt nổi bậc cao (hover, active drawer) |
+| `--surface-container-highest` | `color.semantic.{light\|dark}.surface-container-highest` | `#E2E7F1` | `#23232F` | Chip đang chọn, thanh tiêu đề ghim, tooltip |
+| `--primary` | `color.semantic.{light\|dark}.primary` | `#4338CA` | `#6366F1` | Hành động chính, nút CTA, bước đang hoạt động |
+| `--primary-text` | `color.semantic.{light\|dark}.primary-text` | `#4338CA` | `#818CF8` | Chữ nhấn màu Indigo trên nền `surface-container` đạt chuẩn AA |
+| `--primary-solid` | `color.semantic.{light\|dark}.primary-solid` | `#4338CA` | `#4F46E5` | Nền nút đặc có tương phản AA với chữ trắng (`#FFFFFF`) |
+| `--on-primary` / `--primary-foreground` | `color.semantic.{light\|dark}.on-primary` | `#FFFFFF` | `#FFFFFF` | Chữ trên nền nút chính |
+| `--primary-container` | `color.semantic.{light\|dark}.primary-container` | `#E0E7FF` | `#211966` | Nền huy hiệu / điều hướng đang chọn (`on-primary-container`: `#1E1B4B` / `#DAD6FF`) |
+| `--secondary` | `color.semantic.{light\|dark}.secondary` | `#7E22CE` | `#A855F7` | Tác nhân AI (Agent Telemetry, AI Orchestration) |
+| `--tertiary` / `--accent` / `--warning` | `color.semantic.{light\|dark}.tertiary` (`warning`) | `#B45309` | `#F59E0B` | Tín hiệu doanh thu, MCU Credits, cảnh báo chú ý |
 | `--success` | `color.semantic.{light\|dark}.success` | `#047857` | `#10B981` | Trạng thái xác thực API Key thành công, hệ thống khỏe mạnh |
-| `--destructive` | `color.semantic.{light\|dark}.destructive` | `#BE123C` | `#F43F5E` | Lỗi xác thực, thu hồi khóa, cảnh báo dừng khẩn cấp |
-| `--muted` | `color.semantic.{light\|dark}.muted` | `#F1F5F9` | `#16192B` | `surface-variant` — Nền phụ, vùng tìm kiếm, thẻ không hoạt động |
-| `--muted-foreground` | `color.semantic.{light\|dark}.muted-foreground` | `#475569` | `#94A3B8` | `on-surface-variant` — Chữ phụ, nhãn hướng dẫn, chú thích |
-| `--border` | `color.semantic.{light\|dark}.border` | `#E2E8F0` | `#1E2235` | `outline-variant` — Đường viền phân tách thẻ và ô nhập liệu |
-| `--ring` | `color.semantic.{light\|dark}.ring` | `#4338CA` | `#6366F1` | Vòng focus bàn phím (`:focus-visible`) chuẩn WCAG 2.2 AA |
+| `--error` | `color.semantic.{light\|dark}.error` | `#BE123C` | `#FB7185` | Văn bản / nhãn lỗi đạt chuẩn tương phản trên nền thẻ tối |
+| `--destructive` | *(Biến CSS runtime trong `globals.css`)* | `#BE123C` | `#F43F5E` | Nút hành động xóa / thu hồi khóa / cảnh báo dừng khẩn cấp |
+| `--info` | `color.semantic.{light\|dark}.info` | `#0E7490` | `#22D3EE` | Nhãn telemetry, độ trễ và trạng thái thông tin |
+| `--muted` / `--surface-container-low` / `--surface-dim` | `color.semantic.{light\|dark}.surface-container-low` | `#F3F5FA` (`--muted`: `#F1F5F9`) | `#1A1C28` | Nền phụ, vùng tìm kiếm, thẻ không hoạt động |
+| `--on-surface-variant` / `--muted-foreground` | `color.semantic.{light\|dark}.on-surface-variant` | `#475569` | `#94A3B8` | Chữ phụ, nhãn hướng dẫn, chú thích |
+| `--outline` | `color.semantic.{light\|dark}.outline` | `#64748B` | `#64748B` | Đường viền điều khiển tương tác đạt chuẩn 3:1 (`4.52:1` Light / `4.15:1` Dark) |
+| `--outline-variant` / `--border` | `color.semantic.{light\|dark}.outline-variant` | `#E2E8F0` | `#1E2235` | Đường viền phân tách thẻ và bảng dữ liệu |
+| `--ring` | *(CSS alias của `--primary` trong `globals.css`)* | `#4338CA` | `#6366F1` | Vòng focus bàn phím (`:focus-visible`) chuẩn WCAG 2.2 AA |
 
 ---
 
 ## 2. TOKEN SÂN KHẤU VIDEO CHUYÊN DỤNG (DEDICATED STUDIO STAGE TOKENS)
 
-Các token này giữ nguyên giá trị tối ở cả hai chế độ Sáng và Tối để đảm bảo độ chính xác thị giác khi xem trước video:
+Các biến CSS runtime bất biến này được khai báo trực tiếp trong `:root` của `src/app/globals.css:30-33` (không nằm trong `zen-design-tokens.dtcg.json`) và giữ nguyên giá trị tối ở cả hai chế độ Sáng và Tối để đảm bảo độ chính xác thị giác khi xem trước video:
 
-| Biến CSS | Đường dẫn DTCG | Giá trị cố định | Mục đích sử dụng |
+| Biến CSS (`src/app/globals.css`) | Nguồn khai báo | Giá trị cố định | Mục đích sử dụng |
 |---|---|---|---|
-| `--studio-stage-bg` | `color.studio-stage.background` | `#090A10` | Nền khung hình video 9:16 / 16:9 (`TimelineBrowserPreview`, `SophiaArtifactCanvas`) |
-| `--studio-stage-panel` | `color.studio-stage.panel` | `#11131F` | Thanh điều khiển lớp phủ bên trong trình phát video |
-| `--studio-stage-fg` | `color.studio-stage.foreground` | `#F8FAFC` | Chữ và biểu tượng hiển thị đè lên khung video |
-| `--studio-stage-border` | `color.studio-stage.border` | `#1E2235` | Viền khung máy quay và thước phim (`.film-strip`) |
+| `--studio-stage-bg` | `:root` (`src/app/globals.css:30`) | `#090A10` | Nền khung hình video 9:16 / 16:9 (`TimelineBrowserPreview`, `SophiaArtifactCanvas`) |
+| `--studio-stage-panel` | `:root` (`src/app/globals.css:31`) | `#11131F` | Thanh điều khiển lớp phủ bên trong trình phát video |
+| `--studio-stage-fg` | `:root` (`src/app/globals.css:32`) | `#F8FAFC` | Chữ và biểu tượng hiển thị đè lên khung video |
+| `--studio-stage-border` | `:root` (`src/app/globals.css:33`) | `#1E2235` | Viền khung máy quay và thước phim (`.film-strip`) |
 
 ---
 
@@ -48,11 +56,12 @@ Các token này giữ nguyên giá trị tối ở cả hai chế độ Sáng v�
 - **Monospace (Telemetry / API Keys / Financial Counters, `fontFamily.mono`)**: `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace` (kích hoạt `font-variant-numeric: tabular-nums`).
 - **Scoped Landing Display (`.v3-core` only)**: `'Archivo', 'Inter', system-ui, sans-serif` (`font-variation-settings: "wdth" 104` / `102` chỉ dùng cho tiêu đề scrollytelling trên Landing/Guide; không dùng cho UI ứng dụng; tuyệt đối không dùng `Satoshi` hay `Instrument Serif`).
 
-### 3.2. Bo góc (`radius`)
-- `--radius-sm`: `0.375rem` (`6px`)
-- `--radius-md`: `0.5rem` (`8px`)
-- `--radius-lg`: `0.75rem` (`12px`)
-- `--radius-xl`: `1rem` (`16px`)
+### 3.2. Bo góc (`--radius` & `@theme inline` trong `src/app/globals.css`)
+- `--radius`: `0.75rem` (`12px` — khai báo trong `:root`)
+- `--radius-sm`: `calc(var(--radius) - 4px)` (`8px` — khai báo trong `@theme inline`)
+- `--radius-md`: `calc(var(--radius) - 2px)` (`10px` — khai báo trong `@theme inline`)
+- `--radius-lg`: `var(--radius)` (`12px` — khai báo trong `@theme inline`)
+- *(Bo góc `16px` trên thẻ chuẩn sử dụng lớp tiện ích Tailwind v4 mặc định `rounded-2xl`, không qua biến `--radius-xl` riêng.)*
 
 ### 3.3. Chuyển động (`motion`)
 - `--motion-duration-instant`: `80ms`
@@ -72,12 +81,18 @@ Các token này giữ nguyên giá trị tối ở cả hai chế độ Sáng v�
 ```typescript
 import {
   ZEN_DESIGN_TOKENS,
-  getSemanticColorMap,
-  getContrastRatio,
-  meetsWcagAA,
+  getZenSemanticColor,
+  getZenMotionDuration,
+  getZenMotionEasingCss,
+  getWcagContrastRatio,
+  auditZenThemeContrast,
 } from '@/seed/design-tokens';
 
-const lightColors = getSemanticColorMap('light'); // Trả về bảng màu Executive Studio Ivory
-const darkColors = getSemanticColorMap('dark');   // Trả về bảng màu Director's Control Deck
-const ratio = getContrastRatio(lightColors.foreground, lightColors.background); // 18.36
+const lightSurface = getZenSemanticColor('light', 'surface');      // '#F8F9FC' (Executive Studio Ivory)
+const lightText = getZenSemanticColor('light', 'on-surface');      // '#0B0F19'
+const darkSurface = getZenSemanticColor('dark', 'surface');        // '#090A10' (Director's Control Deck)
+const ratio = getWcagContrastRatio(lightText, lightSurface);       // 18.19
+const deliberateMs = getZenMotionDuration('deliberate');           // '400ms'
+const pressCurve = getZenMotionEasingCss('emphasized');            // 'cubic-bezier(0.16, 1, 0.3, 1)'
+const darkAuditRows = auditZenThemeContrast('dark');               // 12 cặp kiểm định chuẩn WCAG 2.2 AA
 ```

@@ -66,7 +66,9 @@ export function ScrollReveal({
               ...existingStyle,
               opacity: 1,
               transform: "none",
-              transition: `opacity ${duration} ${easing} ${delay + i * staggerDelay}ms, transform ${duration} ${easing} ${delay + i * staggerDelay}ms`,
+              transition: reduced
+                ? "none"
+                : `opacity ${duration} ${easing} ${delay + i * staggerDelay}ms, transform ${duration} ${easing} ${delay + i * staggerDelay}ms`,
             },
           } as { style: React.CSSProperties });
         })}

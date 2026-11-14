@@ -50,6 +50,7 @@
   --primary-text: #4338CA;
   --primary-solid: #4338CA;
   --primary-foreground: #FFFFFF;
+  --on-primary: #FFFFFF;
 
   --secondary: #7E22CE; /* M3 Violet Tone 40 */
   --secondary-foreground: #FFFFFF;
@@ -203,6 +204,7 @@
   --primary-text: #818CF8;
   --primary-solid: #4F46E5;
   --primary-foreground: #FFFFFF;
+  --on-primary: #FFFFFF;
 
   --secondary: #A855F7;
   --secondary-foreground: #FFFFFF;

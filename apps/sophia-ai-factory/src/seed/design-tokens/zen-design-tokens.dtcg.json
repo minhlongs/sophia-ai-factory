@@ -61,14 +61,14 @@
     },
     "semantic": {
       "dark": {
-        "surface-dim": { "$type": "color", "$value": "#06070B" },
+        "surface-dim": { "$type": "color", "$value": "#1A1C28" },
         "surface": { "$type": "color", "$value": "#090A10" },
-        "surface-bright": { "$type": "color", "$value": "#1E2235" },
-        "surface-container-lowest": { "$type": "color", "$value": "#07080D" },
-        "surface-container-low": { "$type": "color", "$value": "#0D0F18" },
+        "surface-bright": { "$type": "color", "$value": "#0E1017" },
+        "surface-container-lowest": { "$type": "color", "$value": "#08080C" },
+        "surface-container-low": { "$type": "color", "$value": "#1A1C28" },
         "surface-container": { "$type": "color", "$value": "#11131F" },
-        "surface-container-high": { "$type": "color", "$value": "#171A2B" },
-        "surface-container-highest": { "$type": "color", "$value": "#1E2235" },
+        "surface-container-high": { "$type": "color", "$value": "#1F1F29" },
+        "surface-container-highest": { "$type": "color", "$value": "#23232F" },
         "on-surface": { "$type": "color", "$value": "#F8FAFC" },
         "on-surface-variant": { "$type": "color", "$value": "#94A3B8" },
         "outline": { "$type": "color", "$value": "#64748B" },
@@ -77,8 +77,8 @@
         "primary-text": { "$type": "color", "$value": "#818CF8" },
         "primary-solid": { "$type": "color", "$value": "#4F46E5" },
         "on-primary": { "$type": "color", "$value": "#FFFFFF" },
-        "primary-container": { "$type": "color", "$value": "#1E1B4B" },
-        "on-primary-container": { "$type": "color", "$value": "#E0E7FF" },
+        "primary-container": { "$type": "color", "$value": "#211966" },
+        "on-primary-container": { "$type": "color", "$value": "#DAD6FF" },
         "secondary": { "$type": "color", "$value": "#A855F7" },
         "on-secondary": { "$type": "color", "$value": "#FFFFFF" },
         "tertiary": { "$type": "color", "$value": "#F59E0B" },
@@ -87,9 +87,9 @@
         "warning": { "$type": "color", "$value": "#F59E0B" },
         "error": { "$type": "color", "$value": "#FB7185" },
         "info": { "$type": "color", "$value": "#22D3EE" },
-        "inverse-surface": { "$type": "color", "$value": "#F8F9FC" },
+        "inverse-surface": { "$type": "color", "$value": "#F8FAFC" },
         "inverse-on-surface": { "$type": "color", "$value": "#0B0F19" },
-        "inverse-primary": { "$type": "color", "$value": "#4338CA" }
+        "inverse-primary": { "$type": "color", "$value": "#685AED" }
       },
       "light": {
         "surface-dim": { "$type": "color", "$value": "#EEF1F7" },

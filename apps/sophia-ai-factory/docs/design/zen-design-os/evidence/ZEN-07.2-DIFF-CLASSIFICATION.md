@@ -16,15 +16,15 @@ not match the working tree. Measured:
 | Set | Count |
 |:--|--:|
 | Baseline `673ec911` → pre-existing branch tip `4d23ddb38` | 36 files |
-| `4d23ddb38` → closure work (`b3338a256`, `9b6b78656`, `cd068bd39`) | 147 tracked + 1 untracked = 148 |
-| **Total under review (baseline → closing commit)** | **164** (80 `A`, 83 `M`, 1 untracked) |
+| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, review-fix commit) | 150 tracked |
+| **Total under review (baseline → closing commit)** | **166** (83 `A`, 83 `M`) |
 | of which PNG screenshots (binary, listed but not diffed line-by-line) | 40 |
-| of which non-PNG files, classified in full below | 124 |
+| of which non-PNG files, classified in full below | 126 |
 
 The two ranges above overlap — a file added in `4d23ddb38` and then edited by
 the closure commits is counted once in each row but only once in the total.
-**The authoritative inventory is the full 164**, and every one of them is
-classified here. No file was skipped. The 124 non-PNG files are enumerated
+**The authoritative inventory is the full 166**, and every one of them is
+classified here. No file was skipped. The 126 non-PNG files are enumerated
 individually; the 40 PNGs are grouped by directory.
 
 ---
@@ -33,12 +33,12 @@ individually; the 40 PNGs are grouped by directory.
 
 | Category | Non-PNG files | PNG files | Total |
 |:--|--:|--:|--:|
-| Design implementation | 55 | — | 55 |
+| Design implementation | 56 | — | 56 |
 | Documentation | 21 | — | 21 |
 | Security correction | 17 | — | 17 |
-| Functional regression correction | 19 | — | 19 |
+| Functional regression correction | 20 | — | 20 |
 | Browser evidence | 12 | 40 | 52 |
-| **Total under review** | **124** | **40** | **164** |
+| **Total under review** | **126** | **40** | **166** |
 | **Unexpected / out-of-scope** | **0** | **0** | **0** |
 
 **The out-of-scope count is zero.** No file in the delta changes business
@@ -47,11 +47,11 @@ calls are named transparently in §3 rather than quietly re-labelled.
 
 ---
 
-## 2. Full classification (164 files)
+## 2. Full classification (166 files)
 
 Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-factory/` except `DESIGN.md` and the 14 `docs/design/zen-design-os/*.md` architecture documents, which live at the monorepo root).
 
-### 2.1 Design implementation — 55 files
+### 2.1 Design implementation — 56 files
 
 | Status | Path |
 |:--:|:--|
@@ -85,6 +85,7 @@ Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-facto
 | M | `src/components/video/timeline-browser-preview.tsx` |
 | M | `src/forest/components/dashboard-aeo/dashboard-agent-hud-bar.tsx` |
 | M | `src/forest/components/settings/sections/appearance-section.tsx` |
+| A | `src/forest/components/settings/sections/__tests__/appearance-section.test.tsx` |
 | M | `src/forest/components/theme-toggle.tsx` |
 | M | `src/forest/dashboard/activity-table/activity-row.tsx` |
 | M | `src/forest/dashboard/activity-table/activity-table-empty.tsx` |
@@ -171,7 +172,7 @@ caps on every provider-probing endpoint, and the `byok` limit type added to
 the telemetry schema so 429s still validate. Full evidence:
 [ZEN-07.2-OWNER-SIGNOFF.md](./ZEN-07.2-OWNER-SIGNOFF.md) §4.
 
-### 2.4 Functional regression correction — 19 files
+### 2.4 Functional regression correction — 20 files
 
 | Status | Path |
 |:--:|:--|
@@ -187,6 +188,7 @@ the telemetry schema so 429s still validate. Full evidence:
 | M | `messages/th.json` |
 | M | `messages/vi.json` |
 | M | `messages/zh.json` |
+| A | `src/app/(app)/__tests__/app-layout-locale.test.tsx` |
 | M | `src/app/(app)/dashboard/admin/byok-rotation/components/rotation-dialog.tsx` |
 | M | `src/components/stitch/__tests__/stitch-screens-a11y.test.tsx` |
 | M | `src/components/stitch/layouts/dashboard/mobile-nav-drawer.tsx` |
@@ -271,12 +273,12 @@ None. Section 3 records the borderline files that were checked and cleared.
 | Gate | Result | Detail |
 |:--|:--:|:--|
 | `npm run type-check` | **PASS (0 errors)** | full `tsc --noEmit` across `src/` |
-| `npm run lint` | **PASS (0 errors / 247 warnings)** | exit 0; all warnings pre-existing and outside the design-system surface |
+| `npm run lint` | **PASS (0 errors / 245 warnings)** | exit 0; all warnings pre-existing and outside the design-system surface |
 | `bash scripts/check-layer-boundaries.sh` | **PASS (0 violations)** | seed → tree → forest → land intact, static and dynamic |
 | `npm run i18n:validate` | **PASS (0 missing keys)** | vi/en parity |
 | `npm run check:color-tokens` | **PASS (exit 0)** | 1045 literals against a 1080 baseline, −35 net, 8 files improved, none regressed |
 | `npm run build` | **PASS (636 routes)** | Next.js 16.4.2, exit 0 |
-| `npm test` | **PASS (2096 files / 19,682 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
+| `npm test` | **PASS (2098 files / 19,687 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
 | Secret scan (staged diff) | **PASS** | no key-shaped patterns, no dotenv or private-key file added |
 | Worktree | **clean** | `git status --porcelain` empty after the closing commit |
 

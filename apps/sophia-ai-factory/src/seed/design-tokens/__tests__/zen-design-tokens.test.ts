@@ -47,42 +47,51 @@ describe('ZEN DESIGN OS v1.0 — DTCG 2025.10 Token & WCAG 2.2 AA Contrast Suite
     }
   });
 
-  it('verifies runtime CSS parity between src/app/globals.css (:root / .dark) and zen-design-tokens.dtcg.json', () => {
+  it('verifies runtime CSS parity between src/app/globals.css (:root / .dark) and zen-design-tokens.dtcg.json across all 29 semantic roles', () => {
     const globalsCssPath = path.resolve(__dirname, '../../../app/globals.css');
     const globalsCss = fs.readFileSync(globalsCssPath, 'utf8');
     const rootBlock = globalsCss.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
     const darkBlock = globalsCss.match(/\.dark\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
 
-    const parityRoles = [
-      'surface',
-      'on-surface',
-      'on-surface-variant',
-      'outline',
-      'outline-variant',
-      'primary',
-      'primary-text',
-      'primary-solid',
-      'secondary',
-      'on-secondary',
-      'tertiary',
-      'on-tertiary',
-      'success',
-      'warning',
-      'error',
-      'info',
-    ] as const;
+    const parseCssBlock = (block: string): Map<string, string> => {
+      const raw = new Map<string, string>();
+      for (const match of block.matchAll(/--([a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
+        raw.set(match[1], match[2].trim());
+      }
+      const resolved = new Map<string, string>();
+      for (const [key, value] of raw.entries()) {
+        let current = value;
+        for (let depth = 0; depth < 5; depth++) {
+          const alias = current.match(/^var\(--([a-z0-9-]+)\)$/i);
+          if (!alias) break;
+          const next = raw.get(alias[1]);
+          if (!next) break;
+          current = next;
+        }
+        resolved.set(key, current.toUpperCase());
+      }
+      return resolved;
+    };
 
-    for (const role of parityRoles) {
-      const lightExpected = getZenSemanticColor('light', role);
-      const darkExpected = getZenSemanticColor('dark', role);
+    const rootVars = parseCssBlock(rootBlock);
+    const darkVars = parseCssBlock(darkBlock);
+
+    const allRoles = Object.keys(
+      ZEN_DESIGN_TOKENS.color.semantic.dark,
+    ) as Array<keyof typeof ZEN_DESIGN_TOKENS.color.semantic.dark>;
+    expect(allRoles).toHaveLength(29);
+
+    for (const role of allRoles) {
+      const lightExpected = getZenSemanticColor('light', role).toUpperCase();
+      const darkExpected = getZenSemanticColor('dark', role).toUpperCase();
       expect(
-        rootBlock,
-        `:root in globals.css must declare --${role}: ${lightExpected}`,
-      ).toContain(`--${role}: ${lightExpected}`);
+        rootVars.get(role),
+        `:root in globals.css must resolve --${role} to ${lightExpected}`,
+      ).toBe(lightExpected);
       expect(
-        darkBlock,
-        `.dark in globals.css must declare --${role}: ${darkExpected}`,
-      ).toContain(`--${role}: ${darkExpected}`);
+        darkVars.get(role),
+        `.dark in globals.css must resolve --${role} to ${darkExpected}`,
+      ).toBe(darkExpected);
     }
   });
 

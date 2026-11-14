@@ -1,8 +1,7 @@
 import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-
-const SUPPORTED_LOCALES = ['vi', 'en'];
+import { SUPPORTED_LOCALES } from '@/middleware/middleware-shared-config';
 
 export default async function AppLayout({
   children,
@@ -17,7 +16,8 @@ export default async function AppLayout({
 
   const locale = [routeLocale, forwardedLocale].find(
     (candidate): candidate is string =>
-      typeof candidate === 'string' && SUPPORTED_LOCALES.includes(candidate),
+      typeof candidate === 'string' &&
+      (SUPPORTED_LOCALES as readonly string[]).includes(candidate),
   ) ?? 'vi';
 
   const messages = await getMessages({ locale });

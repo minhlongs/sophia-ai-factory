@@ -51,30 +51,30 @@ Instead of heavy drop shadows or opaque borders, depth is communicated through f
 
 | Semantic Token | CSS Custom Property | Dark Mode (*Director's Control Deck*) | Light Mode (*Executive Studio Ivory*) | Usage |
 |---|---|---|---|---|
-| `surface-dim` | `--surface-dim` | `#06070B` | `#EEF1F7` | Deep recessed backdrop, modal underlays |
+| `surface-dim` | `--surface-dim` | `#1A1C28` (`var(--muted)`) | `#EEF1F7` | Recessed backdrop, muted regions |
 | `surface` / `background` | `--surface` / `--background` | `#090A10` | `#F8F9FC` | Primary application canvas |
-| `surface-bright` | `--surface-bright` | `#1E2235` | `#FFFFFF` | Highlighted interactive surface |
-| `surface-container-lowest` | `--surface-container-lowest` | `#07080D` | `#FFFFFF` | Input wells (Dark) / Elevated pure cards (Light) |
-| `surface-container-low` | `--surface-container-low` | `#0D0F18` | `#F3F5FA` | Secondary grouping regions, sidebar rail |
-| `surface-container` / `card` | `--surface-container` | `#11131F` | `#FFFFFF` | Standard cards, modules, Setup Wizard container |
-| `surface-container-high` | `--surface-container-high` | `#171A2B` | `#ECEFF6` | Hover states, active drawers, popovers |
-| `surface-container-highest` | `--surface-container-highest` | `#1E2235` | `#E2E7F1` | Selected chips, sticky headers, tooltips |
-| `on-surface` / `foreground` | `--on-surface` | `#F8FAFC` (18.9:1) | `#0B0F19` (18.1:1) | Primary body & display typography |
-| `on-surface-variant` | `--on-surface-variant` | `#94A3B8` (6.8:1) | `#475569` (7.2:1) | Secondary labels, captions, helper text |
-| `outline` | `--outline` | `#333852` (3.2:1) | `#94A3B8` (3.1:1) | Input borders, interactive control boundaries |
+| `surface-bright` | `--surface-bright` | `#0E1017` (`var(--background-secondary)`) | `#FFFFFF` | Highlighted secondary surface |
+| `surface-container-lowest` | `--surface-container-lowest` | `#08080C` | `#FFFFFF` | Input wells (Dark) / Elevated pure cards (Light) |
+| `surface-container-low` | `--surface-container-low` | `#1A1C28` (`var(--muted)`) | `#F3F5FA` | Secondary grouping regions, sidebar rail |
+| `surface-container` / `card` | `--surface-container` | `#11131F` (`var(--card)`) | `#FFFFFF` | Standard cards, modules, Setup Wizard container |
+| `surface-container-high` | `--surface-container-high` | `#1F1F29` | `#ECEFF6` | Hover states, active drawers, popovers |
+| `surface-container-highest` | `--surface-container-highest` | `#23232F` | `#E2E7F1` | Selected chips, sticky headers, tooltips |
+| `on-surface` / `foreground` | `--on-surface` | `#F8FAFC` (18.89:1) | `#0B0F19` (18.19:1) | Primary body & display typography |
+| `on-surface-variant` | `--on-surface-variant` | `#94A3B8` (7.71:1) | `#475569` (7.20:1) | Secondary labels, captions, helper text |
+| `outline` | `--outline` | `#64748B` (4.15:1) | `#64748B` (4.52:1) | Input borders, interactive control boundaries |
 | `outline-variant` | `--outline-variant` | `#1E2235` | `#E2E8F0` | Subtle structural dividers, table hairlines |
 
 ### 3.2 Brand & Semantic Accents
 
 | Role | CSS Token | Dark Mode Value | Light Mode Value | Meaning & Governance |
 |---|---|---|---|---|
-| **Primary (Electric Indigo)** | `--primary` | `#6366F1` (`on-primary`: `#FFFFFF`) | `#4338CA` (`on-primary`: `#FFFFFF`) | Primary CTAs, active navigation, focus rings, verified links |
-| **Primary Container** | `--primary-container` | `#1E1B4B` (`on`: `#E0E7FF`) | `#E0E7FF` (`on`: `#1E1B4B`) | Selected navigation pills, active step badges |
-| **Secondary (AI Violet)** | `--secondary-accent` | `#A855F7` | `#7E22CE` | AI synthesis, multi-agent reasoning, hook variants |
-| **Tertiary (Cinema Amber)** | `--tertiary` / `--warning` | `#F59E0B` | `#B45309` (text) / `#D97706` (icon) | Studio accents, quota pacing, pending human approval |
-| **Success (Emerald)** | `--success` | `#10B981` | `#047857` (text) / `#059669` (badge) | Verified BYOK keys, live D1 truth state, completed renders |
-| **Error (Crimson Rose)** | `--error` / `--destructive` | `#F43F5E` | `#BE123C` | Auth failure, invalid API key, kill-switch, failed job |
-| **Info (Cyan Telemetry)** | `--info` | `#06B6D4` | `#0E7490` | Latency readouts, webhook trace metadata |
+| **Primary (Electric Indigo)** | `--primary` | `#6366F1` (`--on-primary`: `#FFFFFF`) | `#4338CA` (`--on-primary`: `#FFFFFF`) | Primary CTAs, active navigation, focus rings, verified links |
+| **Primary Container** | `--primary-container` | `#211966` (`on`: `#DAD6FF`) | `#E0E7FF` (`on`: `#1E1B4B`) | Selected navigation pills, active step badges |
+| **Secondary (AI Violet)** | `--secondary` | `#A855F7` (`--on-secondary`: `#FFFFFF`) | `#7E22CE` (`--on-secondary`: `#FFFFFF`) | AI synthesis, multi-agent reasoning, hook variants |
+| **Tertiary (Cinema Amber)** | `--tertiary` / `--warning` | `#F59E0B` (`--on-tertiary`: `#090A10`) | `#B45309` (`--on-tertiary`: `#FFFFFF`) | Studio accents, quota pacing, pending human approval |
+| **Success (Emerald)** | `--success` | `#10B981` | `#047857` | Verified BYOK keys, live D1 truth state, completed renders |
+| **Error / Destructive (Rose)** | `--error` / `--destructive` | `#FB7185` (`--error`) / `#F43F5E` (`--destructive`) | `#BE123C` | Auth failure, invalid API key, kill-switch, failed job |
+| **Info (Cyan Telemetry)** | `--info` | `#22D3EE` | `#0E7490` | Latency readouts, webhook trace metadata |
 
 ### 3.3 Dedicated Dark Stage Invariant (Studio Media Preview)
 Video viewports (`9:16` Shorts, `16:9` YouTube, `1:1` Social artboards) and timeline frame stages represent physical cinema screens. They use `--studio-stage-bg: #090A10` and `--studio-stage-fg: #F8FAFC` so video previews maintain accurate color grading in both Dark and Light application themes, while surrounding inspector controls, forms, and headers adapt cleanly to the active theme.

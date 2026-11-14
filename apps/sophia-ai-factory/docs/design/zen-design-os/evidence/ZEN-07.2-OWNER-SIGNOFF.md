@@ -20,13 +20,14 @@
 
 | Milestone / Mốc | Full 40-char SHA | Summary |
 |:--|:--|:--|
-| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 164 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
+| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 166 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
 | **Handover v1.0** | `4d23ddb386f499b7627f2c828a1b80c81c6a3382` | Bản bàn giao Zen Design OS v1.0 ban đầu (36 file so với `main`). / Initial dual-theme token, motion, and 14-doc handover commit. |
 | **Reported Checkpoint** | `b3338a256408ef194cc63cb6fcbe6dcc27ca718c` | Mốc báo cáo trong lệnh #07.3 sau đợt vá 7 lỗi V1–V7 đầu tiên. / Checkpoint cited in #07.3 brief after initial V1–V7 remediation. |
 | **Security & Locale Seal** | `9b6b786565f5da77b3a0f9a312b8d97ba001c78c` | Khóa giới hạn BYOK theo từng route, sửa chuyển tiếp ngôn ngữ `/en/*` và focus dialog. / Per-route BYOK probing caps, `/en/*` locale header forwarding, dialog focus return. |
-| **Verified Code & Evidence (`cd068bd39`)** | `cd068bd39917e560f8857d490e04790fc6b0a7bf` | Đóng toàn bộ kiểm thử Playwright modal thật, bộ test bảo mật BYOK đối kháng, đồng bộ font `DESIGN.md` và vượt qua 8/8 cổng chất lượng (`2096` file test / `19,682` tests). / Final code, test, and machine-evidence tree verified across all quality gates. |
+| **Browser-Evidence Tree (`cd068bd39`)** | `cd068bd39917e560f8857d490e04790fc6b0a7bf` | Đóng toàn bộ kiểm thử Playwright modal thật, bộ test bảo mật BYOK đối kháng và đồng bộ font `DESIGN.md`. / Real-browser Playwright dialog, adversarial BYOK, and typography evidence tree. |
+| **Sign-Off Package (`fb0083e04`)** | `fb0083e04` *(parent of review-remediation HEAD)* | Đóng gói báo cáo nghiệm thu Founder và mở Draft PR #155 theo phê duyệt riêng. / Initial Draft PR #155 sign-off commit. |
 
-*(Commit đóng gói tài liệu cuối cùng ngay trên `cd068bd39` chỉ cập nhật 7 báo cáo `ZEN-07.2-*.md` trong thư mục `evidence/`, giữ nguyên 100% mã nguồn, test và bằng chứng máy đo tại `cd068bd39917e560f8857d490e04790fc6b0a7bf`.)*
+*(Commit hiện tại ngay trên `fb0083e04` xử lý triệt để các điểm P1/P2 từ vòng review độc lập trên Draft PR #155: mở rộng danh sách ngôn ngữ hợp lệ trong `(app)/layout.tsx` lên đủ 12 `SUPPORTED_LOCALES`, đồng bộ 29/29 vai trò màu ngữ nghĩa giữa `globals.css`, `zen-design-tokens.dtcg.json`, `DESIGN.md` và `04-TOKEN-SPECIFICATION.md`, tắt transition con trong `ScrollReveal` khi bật `prefers-reduced-motion`, lắng nghe `matchMedia` trực tiếp khi chọn `system` trong `AppearanceSection`, và vượt qua 8/8 cổng chất lượng với `2,098` file test / `19,687` bài test PASS.)*
 
 ---
 
@@ -176,36 +177,36 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 
 ---
 
-## 8. Gate 5 — Full Regression Status & Complete 164-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
+## 8. Gate 5 — Full Regression Status & Complete 166-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
 
-### 8.1 Kết quả toàn bộ cổng chất lượng trên cây code `cd068bd39`
+### 8.1 Kết quả toàn bộ cổng chất lượng trên cây code hiện tại
 
 | Cổng kiểm tra / Quality Gate | Kết quả / Status | Số liệu đo thực tế / Measured Output |
 |:--|--:|:--|
 | `npm run type-check` | **PASS** | `0` lỗi TypeScript trên toàn bộ `src/`. |
-| `npm run lint` | **PASS** | `0` lỗi ESLint (`247` cảnh báo cũ ngoài vùng thiết kế, thấp hơn trần CI `525`). |
+| `npm run lint` | **PASS** | `0` lỗi ESLint (`245` cảnh báo cũ ngoài vùng thiết kế, thấp hơn trần CI `525`). |
 | `bash scripts/check-layer-boundaries.sh` | **PASS** | `0` vi phạm kiến trúc 4 tầng (`seed → tree → forest → land`). |
 | `npm run i18n:validate` | **PASS** | `0` khóa dịch thiếu giữa `messages/vi.json` và `messages/en.json`. |
 | `npm run check:color-tokens` | **PASS** | `1045` mã màu cứng so với mốc `1080` (**giảm ròng `-35`**, `0` mã màu cứng mới). |
-| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,096` file test PASS / `19,682` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
+| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,098` file test PASS / `19,687` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
 | `npm run build` (Next.js 16.4.2) | **PASS** | Build production thành công `636` routes; độ lệch bundle chỉ **+3.86 KB gzip JS (+0.16%)** và **+1.23 KB gzip CSS (+2.46%)**. |
 | OpenNext Cloudflare Worker Build | **PASS** | `.open-next/worker.js` đóng gói **0 lỗi**, dung lượng nén **`9.46 MB` gzipped** (< ngưỡng cứng `10.00 MB`). |
 | Luồng bảo vệ (Protected Flows) | **PASS** | **Setup Wizard** (xác minh trực tiếp trên trình duyệt + 12 test BYOK), **Telegram Bot** (`@Sophia_Bbot` không bị chạm sửa), **NOWPayments IPN** (luồng thanh toán không bị chạm sửa; không có Polar/PayPal). |
 | Quét bí mật & Độ sạch Worktree | **PASS** | `0` API key thật, `0` file `.env` hay khóa riêng tư trong lịch sử diff; `git status --porcelain` sạch hoàn toàn sau commit đóng gói. |
 
-### 8.2 Tổng hợp kiểm toán 164 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
+### 8.2 Tổng hợp kiểm toán 166 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
 
-*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK và test hộp thoại cho ra chính xác **164 file** = `81` file thêm mới + `83` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `149` file trong `apps/sophia-ai-factory/`. Cả 164/164 file đã được phân loại đầy đủ.)*
+*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và 2 file test của vòng review độc lập cho ra chính xác **166 file** = `83` file thêm mới + `83` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `151` file trong `apps/sophia-ai-factory/`. Cả 166/166 file đã được phân loại đầy đủ.)*
 
 | Nhóm phân loại / Classification Category | File phi nhị phân / Non-PNG | Ảnh PNG / Screenshots | Tổng / Total |
 |:--|--:|--:|--:|
-| **Design implementation** (Token, Dual-Theme UI, Motion, `DESIGN.md`) | 55 | — | **55** |
+| **Design implementation** (Token, Dual-Theme UI, Motion, `DESIGN.md`) | 56 | — | **56** |
 | **Browser evidence** (JSON máy đo, Playwright specs, harness dev-only, PNGs) | 12 | 40 | **52** |
 | **Documentation** (14 tài liệu kiến trúc ở gốc repo + 7 báo cáo `ZEN-07.2-*.md`) | 21 | — | **21** |
-| **Functional regression correction** (Dialog focus, `/en/*` locale header, `messages/*.json`) | 19 | — | **19** |
+| **Functional regression correction** (Dialog focus, 12-locale `(app)/layout` & `/en/*` header, `messages/*.json`) | 20 | — | **20** |
 | **Security correction** (BYOK D1 bucket + route probing caps + 12 security tests) | 17 | — | **17** |
 | **Unexpected / out-of-scope change** (Thay đổi ngoài phạm vi / sửa nhầm nghiệp vụ) | **0** | **0** | **0** |
-| **TỔNG CỘNG / GRAND TOTAL** | **124** | **40** | **164** |
+| **TỔNG CỘNG / GRAND TOTAL** | **126** | **40** | **166** |
 
 ---
 
@@ -232,7 +233,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 ### 10.1 Đề xuất cấu trúc Draft PR (CHỈ MỞ KHI FOUNDER CHO PHÉP PUSH)
 - **Nhánh nguồn → Nhánh đích / Head → Base:** `design/sophia-zen-design-os-v1` → `main` (chế độ **Draft PR**).
 - **Tiêu đề đề xuất / Proposed Title:** `feat(design): Zen Design OS v1.0 dual-theme pilot, strict nonce CSP & BYOK rate-limit hardening`
-- **Phạm vi đưa vào Draft PR (164 file):**
+- **Phạm vi đưa vào Draft PR (166 file):**
   1. Hệ thống token giao diện kép **Dark (Director's Control Deck)** & **Light (Executive Studio Ivory)** trong `src/app/globals.css`, `zen-design-tokens.dtcg.json`, `ZenThemeProvider` (`data-cfasync="false"` + strict per-request CSP nonce) và 4 motion primitives tuân thủ `prefers-reduced-motion`.
   2. Áp dụng và sửa lỗi tương phản AA trên **3 màn hình Pilot** (`/setup`, `/dashboard`, `/dashboard/niche-studio`) ở cả Tiếng Việt & Tiếng Anh.
   3. Chuẩn hóa hệ chữ **Inter + JetBrains Mono** (Archivo giới hạn trong `.v3-core`) đồng bộ giữa `layout.tsx`, `globals.css`, DTCG JSON và `DESIGN.md`.
