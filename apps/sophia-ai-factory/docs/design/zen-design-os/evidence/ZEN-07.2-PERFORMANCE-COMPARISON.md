@@ -2,7 +2,8 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD (code & evidence):** `cd068bd39917e560f8857d490e04790fc6b0a7bf` (`BUILD_ID`: `i-DT5CkjJEXfOYAyJSbOO`)
+**Verified Code & Test HEAD:** `9204f8e3738600f4ee5155e9dc00849e9420f90f`
+**Browser-Evidence & Bundle-Benchmark Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf` (`BUILD_ID`: `i-DT5CkjJEXfOYAyJSbOO`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f` (`BUILD_ID`: `yYKZRZ2DV0-uYPRbmC_9f`)
 **Machine Evidence:** [`g6/g6-runtime-perf.json`](./g6/g6-runtime-perf.json), [`g6/g6-runtime-perf.mjs`](./g6/g6-runtime-perf.mjs)
 
@@ -63,10 +64,10 @@ Measured across 6 probes (3 pilot routes × 2 themes) at `1440×900` in system G
 
 ### Font Loading Truth Note
 - `document.fonts.status` resolved to `"loaded"` (`fontFaceCount: 70`).
-- **Loading mechanism (measured):** `src/app/layout.tsx:34` emits a single Google Fonts
+- **Loading mechanism (measured):** `src/app/layout.tsx:48` emits a single Google Fonts
   css2 `<link>` — `family=Archivo:wdth,wght@100..112,400..800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap`
   — with `preconnect` hints to `fonts.googleapis.com` / `fonts.gstatic.com` at
-  `src/app/layout.tsx:30-31`. The project does **not** use `next/font`; there is no
+  `src/app/layout.tsx:44-45`. The project does **not** use `next/font`; there is no
   `next/font/google` import in the root layout.
 - **Token authority (measured):** `src/app/globals.css:386` declares
   `--font-sans: 'Inter', system-ui, …` and `:387` declares
@@ -91,11 +92,11 @@ Every promised Zen Design OS deliverable was audited against source files, tests
 
 | Deliverable | Path | Classification | Verification Evidence |
 |:--|:--|:--:|:--|
-| Canonical `DESIGN.md` | `DESIGN.md` (repo root, 336 lines) | **DOCUMENTED & ALIGNED** | Dual-theme specification exists and its typography section now matches the implementation: `:88` UI & body = Inter, `:91` telemetry & code = JetBrains Mono, `:96` Archivo scoped to `.v3-core` only ("never an authority for UI text"), `:98` "**Explicitly not in this release:** `Satoshi` and `Instrument Serif` are not adopted anywhere". Verified against `src/app/globals.css:386-387`, `src/styles/v3-core.css:28` and the single Google Fonts `<link>` at `src/app/layout.tsx:34`. Remaining divergence is confined to legacy `--surface-void` prose, which `src/app/globals.css` supersedes per `.claude/rules/sophia-design-authority.md`. |
+| Canonical `DESIGN.md` | `DESIGN.md` (repo root, 336 lines) | **DOCUMENTED & ALIGNED** | Dual-theme specification exists and its typography section now matches the implementation: `:88` UI & body = Inter, `:91` telemetry & code = JetBrains Mono, `:96` Archivo scoped to `.v3-core` only ("never an authority for UI text"), `:98` "**Explicitly not in this release:** `Satoshi` and `Instrument Serif` are not adopted anywhere". Verified against `src/app/globals.css:386-387`, `src/styles/v3-core.css:28` and the single Google Fonts `<link>` at `src/app/layout.tsx:48`. `.claude/rules/sophia-design-authority.md` is reconciled to the same Dual-Theme Indigo/Amber and Inter + JetBrains Mono + `.v3-core` Archivo contract. |
 | DTCG JSON Tokens | `src/seed/design-tokens/zen-design-tokens.dtcg.json` | **IMPLEMENTED** | Valid W3C DTCG `$value`/`$type` schema covering primitive palette, Dark/Light semantic roles, typography, spacing, radius, and motion tokens; exported via `src/seed/design-tokens/index.ts`. |
-| Token Parity Checks | `src/seed/design-tokens/__tests__/zen-design-tokens.test.ts` | **TESTED ONLY** | 7/7 unit tests pass verifying DTCG parity and semantic getters; also guarded by `scripts/check-hardcoded-color.mjs` (`npm run check:color-tokens` → exit 0, 1045 vs 1080 baseline). |
-| Light / Dark Semantic Roles | `src/app/globals.css:14-305`, `src/forest/theme/zen-theme-provider.tsx` | **VISUALLY VERIFIED** | Verified in real Chrome across 36 base screenshots + `g2-audit.json` after remediating 4 Light/Dark contrast & token defects. |
-| Motion Policy & Primitives | `src/app/globals.css:19-27,980-1005`, `src/seed/components/ui/{fade-in-view,scroll-reveal,page-transition,animated-counter-with-framer-motion}.tsx` | **IMPLEMENTED & TESTED** | Zero new animation dependencies (no GSAP/Lenis/React Bits); 4/4 unit tests pass in `zen-motion-reduced-motion.test.tsx` + verified under Playwright `reducedMotion: 'reduce'`. |
+| Token Parity Checks | `src/seed/design-tokens/__tests__/zen-design-tokens.test.ts` | **TESTED ONLY** | 8/8 unit tests pass verifying 29-role CSS ↔ DTCG parity and semantic getters; also guarded by `scripts/check-hardcoded-color.mjs` (`npm run check:color-tokens` → exit 0, 1045 vs 1080 baseline). |
+| Light / Dark Semantic Roles | `src/app/globals.css:14-305`, `src/forest/theme/zen-theme-provider.tsx` | **VISUALLY VERIFIED** | Verified in real Chrome across 36 base screenshots + `g2-audit.json` after remediating 4 Light/Dark contrast & token defects, plus live 3-mode (`light`/`dark`/`system`) `SettingsAppearanceThemeSection` mounted in `SettingsPage`. |
+| Motion Policy & Primitives | `src/app/globals.css:19-27,990-1024`, `src/seed/components/ui/{fade-in-view,scroll-reveal,page-transition,animated-counter-with-framer-motion}.tsx` | **IMPLEMENTED & TESTED** | Zero new animation dependencies (no GSAP/Lenis/React Bits); 7/7 unit tests pass in `zen-motion-reduced-motion.test.tsx` (including React 19 `renderToString` + `hydrateRoot` and live `matchMedia` `'change'` cancellation across all 4 primitives) + verified under Playwright `reducedMotion: 'reduce'`. |
 | Three Pilot Screens (`/vi/setup-wizard`, `/vi/dashboard`, `/vi/dashboard/niche-studio` + `/en/*`) | `src/app/[locale]/setup/page.tsx`, `src/app/[locale]/dashboard/page.tsx`, `src/app/[locale]/dashboard/niche-studio/page.tsx` | **VISUALLY VERIFIED** | All 36 locale × theme × viewport PNGs rendered in real Chrome and visually inspected (`ZEN-07.2-VISUAL-EVIDENCE.md`). |
 | A/B/C Design-Direction Comparison | `docs/design/zen-design-os/01-OFFICIAL-RESEARCH-LEDGER.md` & `03-ZEN-DESIGN-OS-ARCHITECTURE.md` (repo root) | **DOCUMENTED ONLY** | Architectural direction comparison (Dark-Only vs Dual-Theme Director's Control Deck / Executive Studio Ivory vs Warm Editorial) documented in the numbered Zen Design OS specification ledger at repo root. |
 | Reusable Design Documentation | `docs/design/zen-design-os/00-EXECUTIVE-SUMMARY.md` … `12-ROLLBACK-AND-RECOVERY.md` + `ZEN-MOTION-ADOPTION-MATRIX.md` (repo root, 14 files) | **DOCUMENTED ONLY** | Complete 14-document architecture & governance suite at repo root plus the 7 independent verification reports in `apps/sophia-ai-factory/docs/design/zen-design-os/evidence/`. |

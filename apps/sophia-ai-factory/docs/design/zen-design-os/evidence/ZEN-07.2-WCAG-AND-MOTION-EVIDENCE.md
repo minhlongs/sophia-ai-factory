@@ -2,7 +2,8 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified HEAD (code & evidence):** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
+**Verified Code & Test HEAD:** `9204f8e3738600f4ee5155e9dc00849e9420f90f`
+**Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
 
@@ -161,9 +162,9 @@ Source read directly, not inferred.
 | `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-121` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1017-1023` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
 | `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:32-54,78-90,121-126` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` and `[data-zen-motion-stagger] > *` CSS rules; `useEffect` immediately promotes `reduced` + `visible`, sets `transition: "none"` on both single and staggered children, and subscribes to `matchMedia` `'change'` |
 | `PageTransition` | `src/seed/components/ui/page-transition.tsx:20-41,53-60` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` CSS override; `useEffect` returns early before `requestAnimationFrame`, sets `transition: "none"`, and subscribes to `matchMedia` `'change'` |
-| `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:22,24-27` | `setCount(value)` and early `return` — **`requestAnimationFrame` loop is never started** |
+| `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:20-78` | Deterministic `useState(false)` on SSR + client hydration (`0` initial text on both server and client — zero React 19 hydration mismatches); `useEffect` checks `matchMedia('(prefers-reduced-motion: reduce)')` on mount to jump straight to `value` without starting `requestAnimationFrame`, and subscribes to `matchMedia` `'change'` to cancel any in-flight `rAF` loop and snap immediately to `value` |
 
-`FadeInView`, `ScrollReveal`, and `PageTransition` keep deterministic initial state across SSR and hydration (`zen-motion-reduced-motion.test.tsx` verifies `renderToString` + `hydrateRoot` emits zero hydration errors when `prefers-reduced-motion: reduce` is active), while CSS `@media (prefers-reduced-motion: reduce)` reveals `[data-zen-motion]` and `[data-zen-motion-stagger] > *` from byte 0 of SSR.
+All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `AnimatedCounter`) keep deterministic initial state across SSR and hydration (`zen-motion-reduced-motion.test.tsx` verifies `renderToString` + `hydrateRoot` emits zero hydration errors when `prefers-reduced-motion: reduce` is active), while CSS `@media (prefers-reduced-motion: reduce)` reveals `[data-zen-motion]` and `[data-zen-motion-stagger] > *` from byte 0 of SSR.
 
 The CSS layer closes the loop at `src/app/globals.css:990-1024`:
 
@@ -197,7 +198,7 @@ is conditional on the same media query.
 
 ### 4.1 Live OS reduced-motion toggle note
 
-`FadeInView`, `ScrollReveal`, and `PageTransition` subscribe to `window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', ...)` so live OS toggles update mounted state immediately; `AnimatedCounter` evaluates `prefersReducedMotion()` when `value` changes (an already-settled static number has no running animation to cancel).
+All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `AnimatedCounter`) subscribe to `window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', ...)` so live OS toggles update mounted state immediately and cancel any active `AnimatedCounter` `requestAnimationFrame` loop mid-animation (`zen-motion-reduced-motion.test.tsx`).
 
 ---
 
@@ -206,14 +207,14 @@ is conditional on the same media query.
 - Duration/easing values come from Zen tokens: `--motion-duration-deliberate`
   (400ms) and `--motion-ease-emphasized` (`cubic-bezier(0.16, 1, 0.3, 1)`),
   declared at `src/app/globals.css:19-27` and consumed by
-  `page-transition.tsx:39`, `scroll-reveal.tsx:54-55`, `fade-in-view.tsx:87`
+  `page-transition.tsx:58`, `scroll-reveal.tsx:82-83`, `fade-in-view.tsx:118`
   via `var(...)` references rather than hardcoded literals.
 - The satisfy/prove command requires that **GSAP, Lenis and React Bits were not
   introduced** during this pass. Verified from the working tree:
   `package.json` dependencies are unchanged relative to the baseline `673ec911`; no
   `gsap`, `lenis` or `react-bits` entry exists in `dependencies` or
   `devDependencies`. `AnimatedCounter` is deliberately rAF-based
-  (`animated-counter-with-framer-motion.tsx:33-48`) and the file already carries
+  (`animated-counter-with-framer-motion.tsx:64-78`) and the file already carries
   the note that it does not depend on framer-motion.
 
 ---
