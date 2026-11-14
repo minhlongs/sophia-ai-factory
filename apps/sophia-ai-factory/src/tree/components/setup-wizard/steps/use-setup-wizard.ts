@@ -55,6 +55,7 @@ export function useSetupWizard() {
   const updateConfig = useCallback((key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
     setStatus(prev => (prev[key] && prev[key] !== 'idle' ? { ...prev, [key]: 'idle' } : prev));
+    setErrors(prev => (prev[key] ? { ...prev, [key]: '' } : prev));
     clearReceiptForKey(key);
   }, [clearReceiptForKey]);
 

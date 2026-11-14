@@ -26,7 +26,7 @@ export interface LlmCallOptions {
   }>;
   toolChoice?: ToolChoiceValue;
   userId: string;
-  llmRoute: { baseUrl: string; apiKey: string; model: string };
+  llmRoute: { baseUrl: string; apiKey: string; model: string; provider?: string };
   capabilities?: readonly KeyCapability[];
   taskKind?: ByokTaskComplexity;
   allowToolStrip?: boolean;
@@ -41,40 +41,54 @@ export type LlmCallResult = {
   routeSelection?: TieredByokRouteSelection;
 };
 
+function inferRouteProvider(baseUrl: string, explicitProvider?: string): { provider: string; isOpenRouter: boolean } {
+  const lower = baseUrl.toLowerCase();
+  if (lower.includes('openrouter.ai')) return { provider: explicitProvider ?? 'openrouter', isOpenRouter: true };
+  if (explicitProvider) return { provider: explicitProvider, isOpenRouter: false };
+  if (lower.includes('deepseek.com')) return { provider: 'deepseek', isOpenRouter: false };
+  if (lower.includes('anthropic.com')) return { provider: 'anthropic', isOpenRouter: false };
+  if (lower.includes('openai.com')) return { provider: 'openai', isOpenRouter: false };
+  return { provider: 'llm-upstream', isOpenRouter: false };
+}
+
 function resolveEffectiveRoute(options: LlmCallOptions): {
   effectiveModel: string;
+  provider: string;
+  isOpenRouter: boolean;
   routeSelection?: TieredByokRouteSelection;
 } {
+  const { provider, isOpenRouter } = inferRouteProvider(options.llmRoute.baseUrl, options.llmRoute.provider);
   if (!options.taskKind) {
-    return { effectiveModel: options.llmRoute.model };
+    return { effectiveModel: options.llmRoute.model, provider, isOpenRouter };
   }
   const routeSelection = selectTieredByokRoute({
     taskKind: options.taskKind,
     baselineModel: options.llmRoute.model,
+    provider,
     keyRef: options.userId,
     budget: options.budget,
-    systemPromptCacheable: options.systemPromptCacheable,
+    systemPromptCacheable: isOpenRouter ? options.systemPromptCacheable : false,
   });
   if (!routeSelection.resilientAllowed) {
     throw new Error(`BYOK_ROUTE_BLOCKED: ${routeSelection.reason}`);
   }
-  const isOpenRouterUrl = options.llmRoute.baseUrl.toLowerCase().includes('openrouter.ai');
   const effectiveModel =
-    isOpenRouterUrl || routeSelection.model === options.llmRoute.model
+    isOpenRouter || routeSelection.model === options.llmRoute.model
       ? routeSelection.model
       : options.llmRoute.model;
-  return { effectiveModel, routeSelection };
+  return { effectiveModel, provider, isOpenRouter, routeSelection };
 }
 
 async function executeUpstreamCompletion(params: {
   baseUrl: string;
   apiKey: string;
+  provider: string;
   userId: string;
   effectiveModel: string;
   routeSelection?: TieredByokRouteSelection;
   requestBody: Record<string, unknown>;
 }): Promise<Response> {
-  const { baseUrl, apiKey, userId, effectiveModel, routeSelection, requestBody } = params;
+  const { baseUrl, apiKey, provider, userId, effectiveModel, routeSelection, requestBody } = params;
   let response: Response;
   try {
     response = await fetch(`${baseUrl}/chat/completions`, {
@@ -84,7 +98,7 @@ async function executeUpstreamCompletion(params: {
     });
   } catch (err) {
     if (routeSelection) {
-      recordTieredRouteOutcome({ keyRef: userId, model: effectiveModel, ok: false, failureKind: classifyError(err) });
+      recordTieredRouteOutcome({ provider, keyRef: userId, model: effectiveModel, ok: false, failureKind: classifyError(err) });
     }
     throw err;
   }
@@ -92,6 +106,7 @@ async function executeUpstreamCompletion(params: {
   if (!response.ok || !response.body) {
     if (routeSelection) {
       recordTieredRouteOutcome({
+        provider,
         keyRef: userId,
         model: effectiveModel,
         ok: false,
@@ -103,15 +118,11 @@ async function executeUpstreamCompletion(params: {
   }
 
   if (routeSelection) {
-    recordTieredRouteOutcome({ keyRef: userId, model: effectiveModel, ok: true });
+    recordTieredRouteOutcome({ provider, keyRef: userId, model: effectiveModel, ok: true });
   }
   return response;
 }
 
-/**
- * Call the LLM provider and return the raw response + parsed events.
- * Supports both OpenAI-compatible and Anthropic-style streaming.
- */
 export async function callLlmWithTools(options: LlmCallOptions): Promise<LlmCallResult> {
   const { messages, tools, toolChoice, userId, llmRoute } = options;
 
@@ -125,13 +136,13 @@ export async function callLlmWithTools(options: LlmCallOptions): Promise<LlmCall
     throw new Error(`${toolCheck.error.code}: ${toolCheck.error.message}`);
   }
 
-  const { effectiveModel, routeSelection } = resolveEffectiveRoute(options);
+  const { effectiveModel, provider, isOpenRouter, routeSelection } = resolveEffectiveRoute(options);
   const requestBody: Record<string, unknown> = {
     model: effectiveModel,
     messages,
     max_tokens: 4096,
     temperature: 0.7,
-    ...(routeSelection?.cacheControl ? { cache_control: { type: routeSelection.cacheControl } } : {}),
+    ...(isOpenRouter && routeSelection?.cacheControl ? { cache_control: { type: routeSelection.cacheControl } } : {}),
   };
   if (toolCheck.value.tools && toolCheck.value.tools.length > 0) {
     requestBody.tools = toolCheck.value.tools;
@@ -141,6 +152,7 @@ export async function callLlmWithTools(options: LlmCallOptions): Promise<LlmCall
   const response = await executeUpstreamCompletion({
     baseUrl: llmRoute.baseUrl,
     apiKey: llmRoute.apiKey,
+    provider,
     userId,
     effectiveModel,
     routeSelection,

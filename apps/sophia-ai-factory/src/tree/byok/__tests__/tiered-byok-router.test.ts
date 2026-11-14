@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { reset as resetCircuitBreaker } from '@/seed/security/circuit-breaker';
+import { reset as resetCircuitBreaker, shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import { FailureKind } from '@/seed/types/failure-kind';
 import { callLlmWithTools } from '@/app/api/v1/agent-chat/agent-chat-llm-caller';
 import {
@@ -31,6 +31,7 @@ describe('Tiered BYOK Model Router', () => {
     delete process.env.ENABLE_TIERED_BYOK_ROUTER;
     clearModelLockouts();
     resetCircuitBreaker('openrouter', 'tenant-1');
+    resetCircuitBreaker('deepseek', 'tenant-1');
   });
 
   afterEach(() => {
@@ -191,5 +192,21 @@ describe('Tiered BYOK Model Router', () => {
       }),
     ).rejects.toThrow(/timed out/);
     expect(isModelLockedOut(COMPACT_PRIMARY_MODEL, 'tenant-1')).toBe(true);
+
+    fetchSpy.mockResolvedValueOnce(new Response('unauthorized', { status: 401 }));
+    await expect(
+      callLlmWithTools({
+        messages: [{ role: 'user', content: 'Chat' }],
+        userId: 'tenant-1',
+        llmRoute: { baseUrl: 'https://api.deepseek.com/v1', apiKey: 'ds-bad', model: 'deepseek-reasoner' },
+        taskKind: 'tool_agent',
+        systemPromptCacheable: true,
+      }),
+    ).rejects.toThrow(/LLM upstream error/);
+    const dsBody = JSON.parse(String(fetchSpy.mock.calls.at(-1)?.[1]?.body)) as Record<string, unknown>;
+    expect(dsBody.model).toBe('deepseek-reasoner');
+    expect(dsBody.cache_control).toBeUndefined();
+    expect(shouldAllowRequest('deepseek', 'tenant-1')).toBe(false);
+    expect(shouldAllowRequest('openrouter', 'tenant-1')).toBe(true);
   });
 });
