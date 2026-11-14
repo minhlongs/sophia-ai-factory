@@ -134,6 +134,33 @@ describe('upload-executor (labelled fixtures)', () => {
       expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
       expect(circuitBreaker.recordFailure).toHaveBeenCalled();
     });
+
+    it('blocks on an unresolved provenance claim before touching the circuit breaker or network', async () => {
+      const fetchImpl = vi.fn();
+
+      await expect(
+        executePlatformUpload({
+          ...baseInput,
+          provenance: {
+            claims: [
+              {
+                id: 'claim_1',
+                text: 'Unverified return claim',
+                riskLevel: 'high',
+                sourceIds: [],
+                status: 'unsupported',
+              },
+            ],
+          },
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+        }),
+      ).rejects.toThrow(/PROVENANCE_BLOCKED/);
+
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(circuitBreaker.shouldAllowRequest).not.toHaveBeenCalled();
+      expect(circuitBreaker.recordFailure).not.toHaveBeenCalled();
+      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+    });
   });
 
   describe('TikTok v2', () => {

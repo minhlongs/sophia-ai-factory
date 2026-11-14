@@ -69,6 +69,50 @@ describe('platform-adapters', () => {
 
       expect(req.body.status.containsSyntheticMedia).toBe(false);
     });
+
+    it('throws PROVENANCE_BLOCKED with bilingual reason when provenance leaves a claim unresolved', () => {
+      expect(() =>
+        buildYouTubeInitRequest({
+          title: 'Unverified claim Short',
+          totalSizeBytes: 5242880,
+          provenance: {
+            sources: [{ status: 'verified', id: 'src_1', url: 'https://example.test/a' }],
+            claims: [
+              {
+                id: 'claim_1',
+                text: 'Guaranteed 50% yield',
+                riskLevel: 'high',
+                sourceIds: [],
+                status: 'unsupported',
+              },
+            ],
+          },
+        }),
+      ).toThrow(
+        /PROVENANCE_BLOCKED: The content review left claims without a verified source.*Bộ kiểm tra nội dung còn có khẳng định chưa xác minh được nguồn/,
+      );
+    });
+
+    it('builds YouTube session init payload when every provenance claim is supported by a verified source', () => {
+      const req = buildYouTubeInitRequest({
+        title: 'Verified claim Short',
+        totalSizeBytes: 5242880,
+        provenance: {
+          sources: [{ status: 'verified', id: 'src_1', url: 'https://example.test/a' }],
+          claims: [
+            {
+              id: 'claim_1',
+              text: 'Backed by official docs',
+              riskLevel: 'standard',
+              sourceIds: ['src_1'],
+              status: 'supported',
+            },
+          ],
+        },
+      });
+
+      expect(req.body.status.containsSyntheticMedia).toBe(true);
+    });
   });
 
   describe('TikTok Content Posting API v2', () => {

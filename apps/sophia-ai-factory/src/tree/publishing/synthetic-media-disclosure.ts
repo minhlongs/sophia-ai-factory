@@ -18,11 +18,34 @@
  * @module tree/publishing/synthetic-media-disclosure
  */
 
+import { logger } from '@/seed/utils/logger-utility';
 import {
   buildProvenance,
   type ProvenanceInput,
   type ProvenanceRecord,
 } from '@/tree/youtube-strategy/provenance-reviewer';
+
+/** Prefix attached to deterministic YouTube provenance-gate rejections. */
+export const PROVENANCE_BLOCKED_PREFIX = 'PROVENANCE_BLOCKED:';
+
+const INVALID_PROVENANCE_VI_SUFFIX = '(Hồ sơ nguồn xác minh không hợp lệ)';
+const MAX_PERSISTED_ERROR_LENGTH = 200;
+
+/**
+ * Typed error raised when a YouTube upload is rejected by the provenance gate.
+ * Preserves the `PROVENANCE_BLOCKED:` message prefix for serialized boundaries
+ * while allowing `instanceof` checks in in-memory callers.
+ */
+export class ProvenanceBlockedError extends Error {
+  constructor(message: string) {
+    super(
+      message.startsWith(PROVENANCE_BLOCKED_PREFIX)
+        ? message
+        : `${PROVENANCE_BLOCKED_PREFIX} ${message}`,
+    );
+    this.name = 'ProvenanceBlockedError';
+  }
+}
 
 export interface SyntheticMediaDisclosureInput {
   /** The provenance record to build, when the caller has one. */
@@ -44,6 +67,24 @@ export interface SyntheticMediaDisclosure {
   readonly unresolvedClaimCount: number;
 }
 
+function formatStructuralProvenanceError(raw: string): string {
+  if (raw.startsWith(PROVENANCE_BLOCKED_PREFIX)) {
+    return raw.length <= MAX_PERSISTED_ERROR_LENGTH
+      ? raw
+      : `${raw.slice(0, MAX_PERSISTED_ERROR_LENGTH - 3)}...`;
+  }
+  // Keep total message <= 200 chars so downstream sanitizeError never truncates
+  // the trailing Vietnamese translation when source URLs or IDs are long.
+  const maxRawLength =
+    MAX_PERSISTED_ERROR_LENGTH -
+    PROVENANCE_BLOCKED_PREFIX.length -
+    INVALID_PROVENANCE_VI_SUFFIX.length -
+    2;
+  const boundedRaw =
+    raw.length <= maxRawLength ? raw : `${raw.slice(0, maxRawLength - 3)}...`;
+  return `${PROVENANCE_BLOCKED_PREFIX} ${boundedRaw} ${INVALID_PROVENANCE_VI_SUFFIX}`;
+}
+
 /**
  * Runs the provenance review and reduces it to the disclosure a YouTube upload
  * must carry.
@@ -57,14 +98,24 @@ export function resolveSyntheticMediaDisclosure(
 ): SyntheticMediaDisclosure {
   const defaultContainsSyntheticMedia = input.defaultContainsSyntheticMedia ?? true;
   // `buildProvenance` defaults an absent flag to `false`, which is exactly the
-  // missing-disclosure risk this module exists to prevent. The default is
-  // resolved here, at the boundary, so the record carries the intended value.
+  // missing-disclosure risk this module exists to prevent. Resolve after spread
+  // so an explicit `{ containsSyntheticMedia: undefined }` cannot erase `true`.
   const provenanceInput: ProvenanceInput = {
-    containsSyntheticMedia: defaultContainsSyntheticMedia,
     ...(input.provenance ?? {}),
+    containsSyntheticMedia:
+      input.provenance?.containsSyntheticMedia ?? defaultContainsSyntheticMedia,
   };
 
-  const record: ProvenanceRecord = buildProvenance(provenanceInput);
+  let record: ProvenanceRecord;
+  try {
+    record = buildProvenance(provenanceInput);
+  } catch (err: unknown) {
+    const raw = err instanceof Error ? err.message : String(err);
+    logger.warn('[SyntheticMediaDisclosure] Structural provenance validation failed', {
+      reason: raw.slice(0, 160),
+    });
+    throw new ProvenanceBlockedError(formatStructuralProvenanceError(raw));
+  }
   const blocked = record.status === 'blocked';
 
   return {
@@ -72,10 +123,10 @@ export function resolveSyntheticMediaDisclosure(
     provenanceStatus: record.status,
     blocked,
     blockedReason: blocked
-      ? 'The content review left claims without a verified source, so the video was not published.'
+      ? 'The content review left claims without a verified source, so the video was not published'
       : undefined,
     blockedReasonVi: blocked
-      ? 'Bộ kiểm tra nội dung còn có khẳng định chưa xác minh được nguồn nên video chưa được đăng.'
+      ? 'Bộ kiểm tra nội dung còn có khẳng định chưa xác minh được nguồn nên video chưa được đăng'
       : undefined,
     unresolvedClaimCount: record.summary.unresolvedClaims,
   };
@@ -84,4 +135,24 @@ export function resolveSyntheticMediaDisclosure(
 /** Whether a disclosure result still permits the upload to proceed. */
 export function allowsYouTubePublish(disclosure: SyntheticMediaDisclosure): boolean {
   return !disclosure.blocked;
+}
+
+/**
+ * Throws a deterministic bilingual `PROVENANCE_BLOCKED` error when the
+ * provenance review left claims unresolved. Callers run this synchronously
+ * before touching shared circuit breakers or provider HTTP endpoints.
+ */
+export function assertYouTubeProvenanceAllowed(disclosure: SyntheticMediaDisclosure): void {
+  if (!allowsYouTubePublish(disclosure)) {
+    throw new ProvenanceBlockedError(
+      `${PROVENANCE_BLOCKED_PREFIX} ${disclosure.blockedReason} (${disclosure.blockedReasonVi})`,
+    );
+  }
+}
+
+/** True when an error originated from a deterministic provenance-gate rejection. */
+export function isProvenanceBlockedError(err: unknown): boolean {
+  if (err instanceof ProvenanceBlockedError) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.startsWith(PROVENANCE_BLOCKED_PREFIX);
 }

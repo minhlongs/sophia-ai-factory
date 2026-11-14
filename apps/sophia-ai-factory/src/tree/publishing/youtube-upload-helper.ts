@@ -2,7 +2,11 @@ import { shouldAllowRequest, recordFailure } from '@/seed/security/circuit-break
 import { classifyError } from '@/seed/types/failure-kind';
 import type { PublishParams, PublishResult } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
-import { resolveSyntheticMediaDisclosure } from './synthetic-media-disclosure';
+import {
+  assertYouTubeProvenanceAllowed,
+  isProvenanceBlockedError,
+  resolveSyntheticMediaDisclosure,
+} from './synthetic-media-disclosure';
 
 const YT_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 
@@ -10,23 +14,20 @@ export async function uploadYoutubeVideo(
   accessToken: string,
   params: PublishParams,
 ): Promise<PublishResult> {
+  // YouTube withholds monetization when `containsSyntheticMedia` is missing,
+  // and an unresolved provenance claim is a strike risk rather than a
+  // warning, so the disclosure is decided here before touching the shared
+  // circuit breaker or calling YouTube.
+  const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: params.provenance,
+    defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
+  });
+  assertYouTubeProvenanceAllowed(disclosure);
+
   if (!shouldAllowRequest('youtube')) {
     throw new Error('[youtube-adapter] Circuit breaker open for youtube');
   }
   try {
-    // YouTube withholds monetization when `containsSyntheticMedia` is missing,
-    // and an unresolved provenance claim is a strike risk rather than a
-    // warning, so the disclosure is decided here rather than by the caller.
-    const disclosure = resolveSyntheticMediaDisclosure({
-      provenance: params.provenance,
-      defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
-    });
-    if (disclosure.blocked) {
-      throw new Error(
-        `PROVENANCE_BLOCKED: ${disclosure.blockedReason} (${disclosure.blockedReasonVi})`,
-      );
-    }
-
     const metadata = {
       snippet: {
         title: params.title,
@@ -96,8 +97,9 @@ export async function uploadYoutubeVideo(
       url: `https://www.youtube.com/watch?v=${result.id}`,
     };
   } catch (err) {
-    const kind = classifyError(err);
-    recordFailure('youtube', kind);
+    if (!isProvenanceBlockedError(err)) {
+      recordFailure('youtube', classifyError(err));
+    }
     throw err;
   }
 }

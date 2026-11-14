@@ -5,6 +5,7 @@
  */
 
 import type { SocialPlatform, PublishJobStatus, SocialPublishResult } from '@/seed/types/social-publisher-types';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import { isSameUTCDay } from '@/tree/social/publisher/pacing-engine';
 import { executePlatformUpload } from '@/tree/social/publisher/upload-executor';
 
@@ -21,6 +22,7 @@ export interface SocialPublishDispatchedEventData {
   description: string;
   tags?: string[];
   totalSizeBytes?: number;
+  provenance?: ProvenanceInput;
 }
 
 export interface ChannelCredentialSnapshot {
@@ -98,6 +100,7 @@ export async function executePlatformUploadAdapter(
     description: data.description,
     tags: data.tags,
     totalSizeBytes: data.totalSizeBytes,
+    provenance: data.provenance,
   });
 }
 

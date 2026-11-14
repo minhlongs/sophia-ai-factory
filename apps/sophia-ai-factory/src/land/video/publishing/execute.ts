@@ -9,11 +9,16 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 import type { ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
 import { findJobById, checkAndMarkMaxRetries, atomicClaimJob } from './publish-claim';
 import { handleTelegramFlow } from './publish-telegram-flow';
 import { processStandardProvider } from './publish-standard-processor';
 import { runPublishApprovalGate } from './publish-approval-guard';
+import { sanitizeError } from './publish-url-utils';
 
 // Re-export public API for external consumers
 export type { Step, ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
@@ -21,6 +26,27 @@ export { sanitizeError, assertSafeVideoUrl, resolveVideoUrlOrFail, buildPostUrl 
 export { buildPublisher, uploadToProvider, pollStatusUntilFinal } from './publish-upload';
 export { processStandardProvider } from './publish-standard-processor';
 export { runPublishApprovalGate, type PublishApprovalGateOutcome } from './publish-approval-guard';
+
+async function failIfYouTubeProvenanceBlocked(
+  db: ReturnType<typeof createServerClient>,
+  jobId: string,
+  jobProvider: string,
+  provenance: ExecutePublishWorkflowArgs['provenance'],
+  now: number,
+): Promise<ClaimResult | null> {
+  if (jobProvider !== 'youtube') return null;
+  try {
+    assertYouTubeProvenanceAllowed(resolveSyntheticMediaDisclosure({ provenance }));
+    return null;
+  } catch (provErr) {
+    const errorMsg = sanitizeError(provErr);
+    await db
+      .from('publishing_jobs')
+      .update({ status: 'failed', error: errorMsg, finished_at: now })
+      .eq('id', jobId);
+    return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '', error: errorMsg };
+  }
+}
 
 export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): Promise<ClaimResult> {
   const { jobId, tenantId, userId, step, scheduleRetry, refreshToken } = args;
@@ -79,6 +105,16 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     };
   }
 
+  const jobProvider = job.provider ?? '';
+  const provenanceFailure = await failIfYouTubeProvenanceBlocked(
+    db,
+    jobId,
+    jobProvider,
+    args.provenance,
+    now,
+  );
+  if (provenanceFailure) return provenanceFailure;
+
   const alreadyClaimed = args.alreadyClaimed === true;
   let isClaimed = alreadyClaimed;
   if (!alreadyClaimed) {
@@ -91,7 +127,6 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
   }
 
-  const jobProvider = job.provider ?? '';
   if (jobProvider === 'telegram') {
     const telegramResult = await handleTelegramFlow({ db, job, jobId, tenantId, step, eventId: args.eventId });
     return telegramResult;
@@ -119,6 +154,16 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
   }
 
   return await processStandardProvider({
-    db, jobId, job, tenantId, userId, step, now, videoUrl: gate.videoUrl, scheduleRetry, refreshToken,
+    db,
+    jobId,
+    job,
+    tenantId,
+    userId,
+    step,
+    now,
+    videoUrl: gate.videoUrl,
+    provenance: args.provenance,
+    scheduleRetry,
+    refreshToken,
   });
 }

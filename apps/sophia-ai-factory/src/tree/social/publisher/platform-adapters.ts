@@ -10,7 +10,11 @@
  */
 
 import { sliceByteRanges, type ChunkByteRange } from './tiktok-v2-adapter';
-import { resolveSyntheticMediaDisclosure } from '@/tree/publishing/synthetic-media-disclosure';
+import type { ProvenanceInput } from '@/seed/types/provenance';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 
 export type SocialPlatform = 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
 export type { ChunkByteRange } from './tiktok-v2-adapter';
@@ -37,6 +41,7 @@ export interface YouTubeInitInput {
   readonly totalSizeBytes: number;
   readonly categoryId?: string;
   readonly containsSyntheticMedia?: boolean;
+  readonly provenance?: ProvenanceInput;
 }
 
 export function buildYouTubeInitRequest(input: YouTubeInitInput) {
@@ -46,10 +51,12 @@ export function buildYouTubeInitRequest(input: YouTubeInitInput) {
   // Sophia generates every video it publishes, so the disclosure defaults to on
   // rather than being whatever a caller happened to pass. Resolving it through
   // the shared policy keeps this lane from disagreeing with the other YouTube
-  // uploaders about the flag a video must carry.
+  // uploaders about both the flag and the unresolved-claim block.
   const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: input.provenance,
     defaultContainsSyntheticMedia: input.containsSyntheticMedia ?? true,
   });
+  assertYouTubeProvenanceAllowed(disclosure);
   return {
     endpoint: 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
     headers: {

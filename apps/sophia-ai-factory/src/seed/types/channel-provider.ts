@@ -1,4 +1,6 @@
 /** Channel provider types — canonical source for cross-layer access */
+import type { ProvenanceInput } from './provenance';
+
 export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo' | 'facebook' | 'twitter' | 'threads' | 'reddit' | 'bluesky' | 'mastodon' | 'telegram' | 'whatsapp';
 
 /** Platform subset for publishing integrations (Youtube, TikTok, Instagram) */
@@ -16,4 +18,6 @@ export type PublishStatus = 'scheduled' | 'uploading' | 'processing' | 'live' | 
    * that field ignore it.
    */
   containsSyntheticMedia?: boolean;
+  /** Optional claim/source provenance payload evaluated before YouTube publish. */
+  provenance?: ProvenanceInput;
 } export interface MetricsJson { views: number; likes: number; comments?: number; shares?: number; reach?: number; [key: string]: number | string | undefined; } export interface Publisher { upload(videoUrl: string, meta: PublishMeta): Promise<string>; pollStatus(externalPostId: string): Promise<PublishStatus>; getMetrics(externalPostId: string): Promise<MetricsJson>; }

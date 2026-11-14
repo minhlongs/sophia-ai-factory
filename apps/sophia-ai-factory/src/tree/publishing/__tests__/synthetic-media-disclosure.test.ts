@@ -10,10 +10,14 @@
  * @module tree/publishing/__tests__/synthetic-media-disclosure
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { logger } from '@/seed/utils/logger-utility';
 import {
   resolveSyntheticMediaDisclosure,
   allowsYouTubePublish,
+  assertYouTubeProvenanceAllowed,
+  isProvenanceBlockedError,
+  ProvenanceBlockedError,
 } from '../synthetic-media-disclosure';
 
 const verifiedSource = {
@@ -48,6 +52,19 @@ describe('resolveSyntheticMediaDisclosure', () => {
 
     // The provenance record has no declaration of its own, so the default
     // disclosure for generated content applies.
+    expect(disclosure.containsSyntheticMedia).toBe(true);
+    expect(disclosure.provenanceStatus).toBe('verified');
+  });
+
+  it('preserves default disclosure when containsSyntheticMedia is explicitly undefined on provenance', () => {
+    const disclosure = resolveSyntheticMediaDisclosure({
+      provenance: {
+        sources: [verifiedSource],
+        claims: [supportedClaim],
+        containsSyntheticMedia: undefined,
+      },
+    });
+
     expect(disclosure.containsSyntheticMedia).toBe(true);
     expect(disclosure.provenanceStatus).toBe('verified');
   });
@@ -97,13 +114,75 @@ describe('resolveSyntheticMediaDisclosure', () => {
     expect(disclosure.blockedReason).toBeUndefined();
   });
 
-  it('surfaces the provenance validity rule instead of inventing a supported claim', () => {
-    expect(() => resolveSyntheticMediaDisclosure({
+  it('surfaces the provenance validity rule as a PROVENANCE_BLOCKED error instead of inventing a supported claim', () => {
+    let thrown: unknown;
+    try {
+      resolveSyntheticMediaDisclosure({
+        provenance: {
+          sources: [{ ...verifiedSource, status: 'pending' }],
+          claims: [supportedClaim],
+        },
+      });
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(ProvenanceBlockedError);
+    expect((thrown as Error).message).toMatch(/verified source/);
+    expect(isProvenanceBlockedError(thrown)).toBe(true);
+  });
+
+  it('logs a warning and keeps wrapped structural provenance errors within 200 characters without clipping Vietnamese text', () => {
+    const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const longUrl = `https://example.gov/reports/${'segment-'.repeat(30)}final`;
+
+    let thrown: unknown;
+    try {
+      resolveSyntheticMediaDisclosure({
+        provenance: {
+          sources: [
+            { ...verifiedSource, id: 'src_dup_1', url: longUrl },
+            { ...verifiedSource, id: 'src_dup_2', url: longUrl },
+          ],
+          claims: [],
+        },
+      });
+    } catch (err) {
+      thrown = err;
+    } finally {
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      warnSpy.mockRestore();
+    }
+
+    expect(thrown).toBeInstanceOf(ProvenanceBlockedError);
+    const msg = (thrown as Error).message;
+    expect(isProvenanceBlockedError(thrown)).toBe(true);
+    expect(msg.length).toBeLessThanOrEqual(200);
+    expect(msg).toMatch(/Duplicate source URL/);
+    expect(msg).toMatch(/\(Hồ sơ nguồn xác minh không hợp lệ\)$/);
+  });
+
+  it('keeps the bilingual PROVENANCE_BLOCKED message within 200 characters so error sanitizers never clip it', () => {
+    const disclosure = resolveSyntheticMediaDisclosure({
       provenance: {
-        sources: [{ ...verifiedSource, status: 'pending' }],
-        claims: [supportedClaim],
+        sources: [verifiedSource],
+        claims: [{ ...supportedClaim, id: 'claim_2', status: 'unsupported', sourceIds: [] }],
       },
-    })).toThrow(/verified source/);
+    });
+
+    let thrown: unknown;
+    try {
+      assertYouTubeProvenanceAllowed(disclosure);
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(ProvenanceBlockedError);
+    const msg = (thrown as Error).message;
+    expect(isProvenanceBlockedError(thrown)).toBe(true);
+    expect(msg.length).toBeLessThanOrEqual(200);
+    expect(msg).toMatch(/without a verified source/);
+    expect(msg).toMatch(/chưa xác minh được nguồn.*\)$/);
   });
 });
 

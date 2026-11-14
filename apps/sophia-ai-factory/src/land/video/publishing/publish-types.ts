@@ -3,7 +3,7 @@
  * @module land/video/publishing/publish-types
  */
 
-import type { PublishingChannel, PublishingJob } from '@/seed/types';
+import type { PublishingChannel, PublishingJob, ProvenanceInput } from '@/seed/types';
 import type { PublishApprovalStep } from '@/tree/publishing/approval';
 
 export interface Step {
@@ -28,6 +28,7 @@ export interface ExecutePublishWorkflowArgs {
   step: Step;
   eventId?: string;
   alreadyClaimed?: boolean;
+  provenance?: ProvenanceInput;
   /** Required when a public publish must wait for a human decision. */
   eventTools?: StepEventTools;
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
