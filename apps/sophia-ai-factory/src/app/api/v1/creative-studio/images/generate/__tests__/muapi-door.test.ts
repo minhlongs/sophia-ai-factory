@@ -29,24 +29,38 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
   resolveUserTier: vi.fn(),
 }));
 
-const { mockSubmitMediaJob, mockInsert } = vi.hoisted(() => ({
+const { mockSubmitMediaJob, mockGetJobStatus, mockInsert, mockMaybeSingle, mockUpdateEq } = vi.hoisted(() => ({
   mockSubmitMediaJob: vi.fn(),
+  mockGetJobStatus: vi.fn(),
   mockInsert: vi.fn(() => ({ error: null })),
+  mockMaybeSingle: vi.fn(),
+  mockUpdateEq: vi.fn(() => Promise.resolve({ error: null })),
 }));
 
 vi.mock('@/tree/clients/muapi-media-client', () => ({
   submitMediaJob: mockSubmitMediaJob,
   SUPPORTED_MODELS: { image: ['flux-schnell', 'flux-dev', 'hidream'] },
   isModelSupported: vi.fn(() => true),
-  getJobStatus: vi.fn(),
+  getJobStatus: mockGetJobStatus,
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  createServerClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      insert: mockInsert,
-    })),
-  })),
+  createServerClient: vi.fn(() => {
+    const selectChain = {
+      eq: vi.fn(() => selectChain),
+      maybeSingle: mockMaybeSingle,
+    };
+    const updateChain = {
+      eq: mockUpdateEq,
+    };
+    return {
+      from: vi.fn(() => ({
+        insert: mockInsert,
+        select: vi.fn(() => selectChain),
+        update: vi.fn(() => updateChain),
+      })),
+    };
+  }),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -100,6 +114,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { POST } from '../route';
+import { GET as getImageStatus } from '../../[id]/status/route';
 import { generateImageAction } from '@/app/actions/image-generate-action';
 import { executeImageGeneration } from '@/land/image';
 
@@ -196,7 +211,7 @@ describe('MuAPI image models require customer BYOK and never spend platform MUAP
     expect(resolveUserApiKey).toHaveBeenCalledWith('user-1', 'muapi');
     expect(mockSubmitMediaJob).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'image', model: 'flux-schnell', prompt: 'A sunset' }),
-      'customer_byok_muapi_key',
+      { fund: 'byok', apiKey: 'customer_byok_muapi_key' },
     );
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -235,5 +250,53 @@ describe('MuAPI image models require customer BYOK and never spend platform MUAP
 
     expect(res.status).toBe(403);
     expect(mockSubmitMediaJob).not.toHaveBeenCalled();
+  });
+
+  it('polls in-flight MuAPI image status with { fund: "byok", apiKey } and skips polling without customer BYOK key', async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        id: 'muapi_job_42',
+        status: 'pending',
+        result_url: null,
+        thumbnail_url: null,
+        provider: 'muapi',
+      },
+      error: null,
+    });
+
+    // Without customer BYOK key (even though MUAPI_API_KEY is set): returns cached pending row without calling getJobStatus
+    const unkeyedRes = await getImageStatus(
+      new NextRequest('http://localhost/api/v1/creative-studio/images/muapi_job_42/status'),
+      { params: Promise.resolve({ id: 'muapi_job_42' }) },
+    );
+    expect(unkeyedRes.status).toBe(200);
+    expect(mockGetJobStatus).not.toHaveBeenCalled();
+
+    // With customer BYOK key: passes explicit { fund: 'byok', apiKey } funding
+    vi.mocked(resolveUserApiKey).mockImplementation((_userId, provider) =>
+      Promise.resolve(provider === 'muapi' ? 'customer_byok_muapi_key' : 'fal_test_key'),
+    );
+    mockGetJobStatus.mockResolvedValueOnce({
+      success: true,
+      job: {
+        id: 'muapi_job_42',
+        status: 'completed',
+        type: 'image',
+        model: 'flux-schnell',
+        resultUrl: 'https://cdn.example.com/out.png',
+        thumbnailUrl: 'https://cdn.example.com/thumb.png',
+        createdAt: '2026-10-25',
+      },
+    });
+
+    const keyedRes = await getImageStatus(
+      new NextRequest('http://localhost/api/v1/creative-studio/images/muapi_job_42/status'),
+      { params: Promise.resolve({ id: 'muapi_job_42' }) },
+    );
+    expect(keyedRes.status).toBe(200);
+    expect(mockGetJobStatus).toHaveBeenCalledWith('muapi_job_42', {
+      fund: 'byok',
+      apiKey: 'customer_byok_muapi_key',
+    });
   });
 });
