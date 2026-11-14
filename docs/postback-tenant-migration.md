@@ -99,9 +99,10 @@ What capture guarantees:
   characters of its SHA-256 digest. That is enough to tell "the same bad
   request again" from "a different bad request", and it does not retain a value
   that can be replayed.
-- **Endpoint identity is canonical:** `${origin}${pathname}` with the query
-  string removed, so a `?signature=` HMAC (Awin), a session id, or an email
-  address in the query never reaches the queue.
+- **Endpoint identity is canonical:** `${origin}${pathname}` (capped at 512
+  characters; `source_ip` is capped at 64 characters) with the query string
+  removed, so a `?signature=` HMAC (Awin), a session id, or an email address in
+  the query never reaches the queue.
 - **Bodies are capped at 8192 characters.** A longer body is stored truncated
   and ends with the visible marker `…[TRUNCATED]`, so a reader can tell the
   evidence is incomplete instead of assuming the provider sent a short body.
@@ -151,7 +152,7 @@ this document does not promise it.
 |---|---|---|---|
 | `tenant_unresolvable` | 422 | No workspace link or tenant hint | Add a workspace sub-id or `tenant_id` |
 | `link_unattributed` | 422 | Tenant verified but no link matched | Create the link/sub in the workspace first |
-| `secret_not_configured` | 503 | Workspace has no credential for the network | Store it via the integrations API |
+| `secret_not_configured` | 503 | Workspace has no credential for the network (response omits `tenantId` before HMAC verification) | Store it via the integrations API |
 | `db_unavailable` / `db_write_failed` | 503 | Transient storage failure | Retry; provider backoff applies |
 | `network_not_supported` / `network_moved` | 501 | No verifier on this path | Follow `guidance`/`canonical` in the response |
 | `INVALID_SIGNATURE` / `Invalid signature` | 401 | HMAC mismatch or missing header | Check secret + header + raw body bytes |
@@ -245,9 +246,10 @@ Cơ chế này đảm bảo:
   contract của route khai báo được thay bằng `sigfp:` cộng 16 ký tự hex đầu của
   digest SHA-256. Như vậy vẫn phân biệt được "đúng request lỗi đó gửi lại" với
   "một request lỗi khác", mà không giữ lại giá trị có thể bị dùng lại.
-- **Endpoint dùng dạng chuẩn tắc:** `${origin}${pathname}`, bỏ toàn bộ query
-  string, nên HMAC trong `?signature=` (Awin), session id hay email trong query
-  không bao giờ vào hàng đợi.
+- **Endpoint dùng dạng chuẩn tắc:** `${origin}${pathname}` (giới hạn 512 ký tự;
+  `source_ip` giới hạn 64 ký tự), bỏ toàn bộ query string, nên HMAC trong
+  `?signature=` (Awin), session id hay email trong query không bao giờ vào hàng
+  đợi.
 - **Body bị giới hạn ở 8192 ký tự.** Body dài hơn sẽ được lưu ở dạng cắt bớt và
   kết thúc bằng dấu hiệu nhìn thấy được `…[TRUNCATED]`, để người đọc biết bằng
   chứng không đầy đủ thay vì tưởng provider gửi body ngắn.

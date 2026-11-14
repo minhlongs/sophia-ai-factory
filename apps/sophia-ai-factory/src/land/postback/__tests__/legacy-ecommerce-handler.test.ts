@@ -231,7 +231,8 @@ describe('processLegacyEcommercePostback', () => {
     const res = await processLegacyEcommercePostback(makeRequest(rawBody, sig), ACCESSTRADE_CONTRACT);
 
     expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ ok: false, error: 'secret_not_configured', tenantId: 'tenant-a' });
+    expect(res.body).toMatchObject({ ok: false, error: 'secret_not_configured' });
+    expect(res.body).not.toHaveProperty('tenantId');
   });
 
   it('fails 503 db_unavailable when D1 is missing', async () => {

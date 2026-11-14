@@ -38,6 +38,7 @@ import { enqueuePostbackDlq } from './postback-dead-letter';
 import {
   serializeDlqHeaders,
   serializeDlqEndpoint,
+  serializeDlqSourceIp,
   serializeDlqBody,
 } from './postback-dlq-evidence';
 import { recordLegacyEcommerceConversion } from './legacy-ecommerce-recorder';
@@ -127,7 +128,7 @@ async function captureDlqEvidence(
   await enqueuePostbackDlq({
     network: contract.slug,
     endpoint: serializeDlqEndpoint(request.url),
-    sourceIp: request.headers.get('cf-connecting-ip'),
+    sourceIp: serializeDlqSourceIp(request.headers.get('cf-connecting-ip')),
     headersJson: await serializeDlqHeaders(request.headers, contract.sigHeaders),
     rawBody: serializeDlqBody(rawBody),
     failureReason,
@@ -221,7 +222,6 @@ export async function processLegacyEcommercePostback(
       body: {
         ok: false,
         error: 'secret_not_configured',
-        tenantId: resolution.tenantId,
         guidance: LEGACY_MIGRATION_GUIDANCE,
       },
     };

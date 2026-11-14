@@ -15,6 +15,7 @@ import { sha256Hex } from '@/seed/security/token-hash'
 import {
   serializeDlqHeaders,
   serializeDlqEndpoint,
+  serializeDlqSourceIp,
   serializeDlqBody,
   DLQ_EVIDENCE_POLICY,
 } from '../postback-dlq-evidence'
@@ -231,6 +232,38 @@ describe('serializeDlqEndpoint — canonical identity', () => {
     expect(serializeDlqEndpoint('')).toBe('')
     expect(serializeDlqEndpoint('urn:ietf:params:oauth:token-type:jwt')).toBe('')
     expect(serializeDlqEndpoint('mailto:billing@corp.example?token=secret')).toBe('')
+  })
+
+  it('bounds an oversized pathname and marks the truncation visibly', () => {
+    const hugePath = `/api/webhooks/awin/${'p'.repeat(DLQ_EVIDENCE_POLICY.maxEndpointLength)}`
+    const stored = serializeDlqEndpoint(`https://sophia.agencyos.network${hugePath}`)
+
+    expect(stored).toHaveLength(
+      DLQ_EVIDENCE_POLICY.maxEndpointLength + DLQ_EVIDENCE_POLICY.truncatedSuffix.length,
+    )
+    expect(stored.endsWith(DLQ_EVIDENCE_POLICY.truncatedSuffix)).toBe(true)
+  })
+})
+
+describe('serializeDlqSourceIp — bounded edge IP retention', () => {
+  it('returns null when absent and retains normal IPv4/IPv6 strings verbatim', () => {
+    expect(serializeDlqSourceIp(null)).toBeNull()
+    expect(serializeDlqSourceIp(undefined)).toBeNull()
+    expect(serializeDlqSourceIp('')).toBeNull()
+    expect(serializeDlqSourceIp('203.0.113.42')).toBe('203.0.113.42')
+    expect(serializeDlqSourceIp('2001:db8:85a3::8a2e:370:7334')).toBe(
+      '2001:db8:85a3::8a2e:370:7334',
+    )
+  })
+
+  it('bounds an oversized source IP string and marks the truncation visibly', () => {
+    const oversized = '9'.repeat(DLQ_EVIDENCE_POLICY.maxSourceIpLength + 50)
+    const stored = serializeDlqSourceIp(oversized)
+
+    expect(stored).toHaveLength(
+      DLQ_EVIDENCE_POLICY.maxSourceIpLength + DLQ_EVIDENCE_POLICY.truncatedSuffix.length,
+    )
+    expect(stored?.endsWith(DLQ_EVIDENCE_POLICY.truncatedSuffix)).toBe(true)
   })
 })
 

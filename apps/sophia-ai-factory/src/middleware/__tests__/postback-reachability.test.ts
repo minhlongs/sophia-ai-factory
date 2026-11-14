@@ -81,15 +81,15 @@ describe('middleware postback & webhook reachability (real CSRF + public-route g
 
   it.each([
     ['/api/postback/partnerstack', { 'pstack-signature': 'hmac_hex' }],
-    ['/api/postback/binance-link', { authorization: 'Bearer raw_binance_hmac_hex' }],
-    ['/api/postback/tiktok_shop', { 'x-tts-signature': 'hmac_hex' }],
+    ['/api/postback/binance-link', { 'x-signature': 'hmac_hex' }],
+    ['/api/postback/tiktok_shop', { 'x-tiktok-signature': 'hmac_hex' }],
     ['/api/webhooks/saas-crypto/binance', { authorization: 'Bearer raw_binance_hmac_hex' }],
     ['/api/webhooks/saas-crypto/partnerstack', { 'x-partnerstack-signature': 'hmac_hex' }],
     ['/api/webhooks/affiliate/tiktok_shop', { 'x-tts-signature': 'hmac_hex' }],
     ['/api/webhooks/affiliate/amazon_associates', { 'x-amz-signature': 'hmac_hex' }],
     ['/api/webhooks/accesstrade', { 'x-accesstrade-signature': 'hmac_hex' }],
-    ['/api/webhooks/amazon', { 'x-amz-signature': 'hmac_hex' }],
-    ['/api/webhooks/awin', {}],
+    ['/api/webhooks/amazon', { 'x-amazon-signature': 'hmac_hex' }],
+    ['/api/webhooks/awin', { 'x-awin-signature': 'hmac_hex' }],
     ['/api/webhooks/tiktok-shop', { 'x-tts-signature': 'hmac_hex' }],
   ])('lets unauthenticated provider POST %s pass middleware without CSRF cookie or user session', async (pathname, headers) => {
     const res = await proxy(providerPost(pathname, headers));

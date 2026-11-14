@@ -33,6 +33,7 @@ import { enqueuePostbackDlq } from '@/land/postback/postback-dead-letter';
 import {
   serializeDlqHeaders,
   serializeDlqEndpoint,
+  serializeDlqSourceIp,
   serializeDlqBody,
 } from '@/land/postback/postback-dlq-evidence';
 
@@ -125,7 +126,7 @@ export async function POST(
     await enqueuePostbackDlq({
       network: config.network,
       endpoint: serializeDlqEndpoint(request.url),
-      sourceIp: request.headers.get('cf-connecting-ip'),
+      sourceIp: serializeDlqSourceIp(request.headers.get('cf-connecting-ip')),
       headersJson: await serializeDlqHeaders(request.headers, config.sigHeaders),
       rawBody: serializeDlqBody(rawBody),
       failureReason: resolution.error,
@@ -137,7 +138,6 @@ export async function POST(
       {
         ok: false,
         error: resolution.error,
-        ...('tenantId' in resolution ? { tenantId: resolution.tenantId } : {}),
         guidance: LEGACY_MIGRATION_GUIDANCE,
       },
       { status },

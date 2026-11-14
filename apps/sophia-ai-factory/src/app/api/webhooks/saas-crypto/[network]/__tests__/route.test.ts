@@ -279,9 +279,9 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
       { params: { network: 'partnerstack' } },
     );
     expect(res.status).toBe(503);
-    const data = (await res.json()) as { ok: boolean; error: string; tenantId: string };
+    const data = (await res.json()) as { ok: boolean; error: string; tenantId?: string };
     expect(data.error).toBe('secret_not_configured');
-    expect(data.tenantId).toBe('tenant-a');
+    expect(data.tenantId).toBeUndefined();
     expect(processSaasCryptoPostback).not.toHaveBeenCalled();
   });
 

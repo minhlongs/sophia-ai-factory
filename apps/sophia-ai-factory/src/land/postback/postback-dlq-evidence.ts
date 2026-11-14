@@ -53,6 +53,12 @@ const MAX_HEADER_ENTRIES = 12
 /** Bound on a retained header value. */
 const MAX_HEADER_VALUE_LENGTH = 256
 
+/** Bound on the retained canonical endpoint (`${origin}${pathname}`). */
+const MAX_ENDPOINT_LENGTH = 512
+
+/** Bound on the retained edge source IP string. */
+const MAX_SOURCE_IP_LENGTH = 64
+
 /** Bound on the retained raw body. */
 const MAX_BODY_LENGTH = 8192
 
@@ -63,10 +69,14 @@ export interface DlqHeaderSource {
   get(name: string): string | null
 }
 
-function clipValue(value: string): string {
-  return value.length > MAX_HEADER_VALUE_LENGTH
-    ? `${value.slice(0, MAX_HEADER_VALUE_LENGTH)}${TRUNCATED_SUFFIX}`
+function clipLength(value: string, maxLength: number): string {
+  return value.length > maxLength
+    ? `${value.slice(0, maxLength)}${TRUNCATED_SUFFIX}`
     : value
+}
+
+function clipValue(value: string): string {
+  return clipLength(value, MAX_HEADER_VALUE_LENGTH)
 }
 
 /**
@@ -132,10 +142,19 @@ export function serializeDlqEndpoint(rawUrl: string): string {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return ''
     }
-    return `${parsed.origin}${parsed.pathname}`
+    return clipLength(`${parsed.origin}${parsed.pathname}`, MAX_ENDPOINT_LENGTH)
   } catch {
     return ''
   }
+}
+
+/**
+ * Bound the retained edge source IP string so non-Cloudflare or test callers
+ * cannot store an oversized value in `source_ip`.
+ */
+export function serializeDlqSourceIp(sourceIp: string | null | undefined): string | null {
+  if (!sourceIp) return null
+  return clipLength(sourceIp, MAX_SOURCE_IP_LENGTH)
 }
 
 /**
@@ -145,9 +164,7 @@ export function serializeDlqEndpoint(rawUrl: string): string {
  * instead of silently shortening the evidence.
  */
 export function serializeDlqBody(rawBody: string): string {
-  return rawBody.length > MAX_BODY_LENGTH
-    ? `${rawBody.slice(0, MAX_BODY_LENGTH)}${TRUNCATED_SUFFIX}`
-    : rawBody
+  return clipLength(rawBody, MAX_BODY_LENGTH)
 }
 
 /** Test-facing view of the retention policy; not read by production paths. */
@@ -157,6 +174,8 @@ export const DLQ_EVIDENCE_POLICY = {
   fingerprintLength: FINGERPRINT_LENGTH,
   maxHeaderEntries: MAX_HEADER_ENTRIES,
   maxHeaderValueLength: MAX_HEADER_VALUE_LENGTH,
+  maxEndpointLength: MAX_ENDPOINT_LENGTH,
+  maxSourceIpLength: MAX_SOURCE_IP_LENGTH,
   maxBodyLength: MAX_BODY_LENGTH,
   truncatedSuffix: TRUNCATED_SUFFIX,
 } as const

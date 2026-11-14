@@ -165,11 +165,11 @@ describe('POST /api/webhooks/accesstrade', () => {
     const res = await POST(makeRequest(raw, 'x'))
 
     expect(res.status).toBe(503)
-    const body = (await res.json()) as { ok: boolean; error: string; tenantId: string }
+    const body = (await res.json()) as Record<string, unknown>
     expect(body).toMatchObject({
       ok: false,
       error: 'secret_not_configured',
-      tenantId: 'tenant-a',
     })
+    expect(body).not.toHaveProperty('tenantId')
   })
 })
