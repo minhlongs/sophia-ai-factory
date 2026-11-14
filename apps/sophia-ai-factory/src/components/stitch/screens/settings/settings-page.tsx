@@ -9,6 +9,7 @@ import { SettingsSecuritySection } from '@/components/settings/settings-security
 import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { StorageSettingsForm } from '@/components/settings/storage-settings-form';
 import { AccountOwnershipView } from '@/components/settings/account-ownership-view';
+import { SettingsAppearanceThemeSection } from '@/components/settings/settings-appearance-theme';
 import { SettingsLocaleDangerSection } from '@/components/settings/settings-locale-danger';
 import { SettingsJurisdictionPicker } from '@/components/settings/settings-jurisdiction-picker';
 import { OpenCorePortabilityPanel } from '@/components/settings/open-core-portability-panel';
@@ -54,7 +55,7 @@ export default function SettingsPage({
           </div>
           <Link
             href="/settings/usage"
-            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary-text border border-primary/30 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
           >
             <BarChart3 className="w-4 h-4" />
             View Billing Metering
@@ -72,7 +73,7 @@ export default function SettingsPage({
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
                   isActive
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/[0.06]',
                 )}
               >
@@ -103,7 +104,7 @@ export default function SettingsPage({
               </div>
               <Link
                 href="/settings/usage"
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-mono font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-primary-600 dark:hover:bg-primary-500 dark:text-white text-xs font-mono font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"
               >
                 Open Real-Time Metering Portal
               </Link>
@@ -113,6 +114,7 @@ export default function SettingsPage({
           {activeTab === 'openCore' && <OpenCorePortabilityPanel />}
           {activeTab === 'preferences' && (
             <>
+              <SettingsAppearanceThemeSection />
               <SettingsJurisdictionPicker />
               <SettingsLocaleDangerSection />
             </>

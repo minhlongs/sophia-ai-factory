@@ -75,20 +75,20 @@ export function NicheGate1ReadinessCard({
   ];
 
   return (
-    <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
+    <div className="p-4 rounded-xl bg-card dark:bg-zinc-900/70 border border-border dark:border-zinc-800 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-foreground dark:text-white uppercase tracking-wider">
             🛡️ {t('readinessTitle')}
           </h3>
-          <p className="text-[11px] text-zinc-400 mt-0.5">{t('readinessSubtitle')}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{t('readinessSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <span
             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
               ready
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40'
+                : 'bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/40'
             }`}
           >
             {ready ? t('readinessBadgeReady') : t('readinessBadgeDraftOnly')}
@@ -97,7 +97,7 @@ export function NicheGate1ReadinessCard({
             type="button"
             onClick={onRefresh}
             disabled={isLoading}
-            className="text-[11px] px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 disabled:opacity-50"
+            className="text-[11px] px-2.5 py-1 rounded bg-muted hover:bg-muted/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-foreground dark:text-zinc-200 border border-border dark:border-transparent disabled:opacity-50"
           >
             {isLoading ? '...' : t('readinessRefresh')}
           </button>
@@ -108,14 +108,14 @@ export function NicheGate1ReadinessCard({
         {items.map((item) => (
           <div
             key={item.key}
-            className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-950/70 border border-zinc-800/80 text-[11px]"
+            className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/60 dark:bg-zinc-950/70 border border-border dark:border-zinc-800/80 text-[11px]"
           >
-            <span className="text-zinc-300 truncate">{item.label}</span>
+            <span className="text-foreground dark:text-zinc-300 truncate">{item.label}</span>
             <div className="flex items-center gap-1.5 shrink-0">
               {!item.ok && (item.key === 'voice' || item.key === 'video') && (
                 <Link
                   href="/dashboard/setup-wizard"
-                  className="text-[10px] text-amber-400 hover:underline font-medium"
+                  className="text-[10px] text-amber-800 dark:text-amber-300 hover:underline font-medium"
                 >
                   {t('readinessSetupByokCta')}
                 </Link>
@@ -125,7 +125,7 @@ export function NicheGate1ReadinessCard({
                   type="button"
                   disabled={isTogglingKillSwitch}
                   onClick={handleUnlockKillSwitch}
-                  className="text-[10px] text-amber-400 hover:underline font-medium disabled:opacity-50"
+                  className="text-[10px] text-amber-800 dark:text-amber-300 hover:underline font-medium disabled:opacity-50"
                 >
                   {t('readinessUnlockKillSwitchCta')}
                 </button>
@@ -137,20 +137,20 @@ export function NicheGate1ReadinessCard({
                     onClick={() => {
                       window.location.assign('/api/oauth/youtube/connect');
                     }}
-                    className="text-[10px] text-amber-400 hover:underline font-medium"
+                    className="text-[10px] text-amber-800 dark:text-amber-300 hover:underline font-medium"
                   >
                     OAuth
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowByokChannelForm((prev) => !prev)}
-                    className="text-[10px] text-indigo-400 hover:underline font-medium"
+                    className="text-[10px] text-primary-text hover:underline font-medium"
                   >
                     BYOK
                   </button>
                 </>
               )}
-              <span className={item.ok ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}>
+              <span className={item.ok ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-amber-800 dark:text-amber-300 font-semibold'}>
                 {item.ok ? '✓' : '•'}
               </span>
             </div>
@@ -169,7 +169,7 @@ export function NicheGate1ReadinessCard({
         />
       )}
 
-      <p className="text-[11px] text-zinc-400 border-t border-zinc-800/80 pt-2">
+      <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
         💰 {t('readinessBudgetNotice')}
       </p>
     </div>

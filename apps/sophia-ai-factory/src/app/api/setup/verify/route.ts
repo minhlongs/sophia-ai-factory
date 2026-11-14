@@ -1,84 +1,105 @@
-import { NextResponse } from 'next/server';
-import {
-  validateOpenRouter,
-  validateElevenLabs,
-  validateDID,
-} from '@/land/validation/services';
+/**
+ * POST /api/setup/verify
+ *
+ * Authenticated BYOK credential verification endpoint used by the Settings API Keys panel.
+ * Protected by two-layer rate limiting (D1 `RATE_LIMITS.byok` at middleware + per-isolate
+ * per-IP and per-user `globalRateLimiter` probing caps) and `probeProviderApiKey` so
+ * customer `401`/`403` errors never trip the shared Worker circuit breaker.
+ *
+ * @module app/api/setup/verify/route
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { probeProviderApiKey } from '@/tree/byok/provider-probe';
+import { sanitizeCredential } from '@/tree/byok/key-format-validators';
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter';
 
-interface SetupVerifyPayload {
-  service?: string;
-  apiKey?: string;
-  key?: string;
-}
+export const dynamic = 'force-dynamic';
 
-// POST /api/setup/verify
-// Body: { service: 'openrouter' | 'heygen' | 'elevenlabs' | 'd-id', apiKey?: string, key?: string }
-// Response: { valid: boolean, error?: string, info?: { name: string } }
-export async function POST(request: Request) {
-  try {
-    // Guard: reject if app is already configured (prevent API key probing)
-    const isConfigured =
-      process.env.NEXT_PUBLIC_IS_CONFIGURED === "true" ||
-      process.env.IS_CONFIGURED === "true";
-    if (isConfigured) {
-      const user = await getCurrentUser().catch(() => null);
-      if (!user) {
-        return NextResponse.json(
-          { valid: false, message: "App is already configured" },
-          { status: 403 }
-        );
-      }
-    }
+const SUPPORTED_SERVICES = [
+  'openrouter',
+  'elevenlabs',
+  'd-id',
+  'heygen',
+  'anthropic',
+  'muapi',
+  'fal-ai',
+  'replicate',
+] as const;
 
-    const body = (await request.json().catch(() => ({}))) as SetupVerifyPayload;
-    const { service, apiKey, key } = body;
-    // Support both 'apiKey' (new RaaS spec) and 'key' (legacy setup wizard)
-    const resolvedKey = apiKey ?? key;
+const SetupVerifySchema = z
+  .object({
+    service: z.string().trim().min(1),
+    apiKey: z.string().optional(),
+    key: z.string().optional(),
+  })
+  .transform((val) => ({
+    service: val.service.toLowerCase(),
+    resolvedKey: sanitizeCredential(val.apiKey ?? val.key ?? ''),
+  }));
 
-    if (!service || !resolvedKey) {
-      return NextResponse.json({ valid: false, message: "Missing service or apiKey" }, { status: 400 });
-    }
-
-    let result;
-
-    switch (service) {
-      case 'openrouter':
-        result = await validateOpenRouter(resolvedKey);
-        break;
-      case 'elevenlabs':
-        result = await validateElevenLabs(resolvedKey);
-        break;
-      case 'd-id':
-        result = await validateDID(resolvedKey);
-        break;
-      case 'anthropic':
-        // Basic format check: Anthropic keys start with "sk-ant-"
-        if (resolvedKey.startsWith('sk-ant-')) {
-          result = { valid: true, message: 'Format valid' };
-        } else {
-          result = { valid: false, message: 'Anthropic keys must start with sk-ant-' };
-        }
-        break;
-      case 'muapi':
-        // MuAPI keys are JWT-like; no public test endpoint — format-check only
-        result = { valid: true, verified: false, message: 'Format-checked only (MuAPI has no public ping endpoint)' };
-        break;
-      case 'replicate':
-        // Replicate keys start with 'r8_'; format-check only (no public ping endpoint)
-        if (resolvedKey.startsWith('r8_')) {
-          result = { valid: true, verified: false, message: 'Format valid' };
-        } else {
-          result = { valid: false, message: 'Replicate keys must start with r8_' };
-        }
-        break;
-      default:
-        return NextResponse.json({ valid: false, message: "Unknown service" }, { status: 400 });
-    }
-
-    return NextResponse.json(result);
-
-  } catch {
-    return NextResponse.json({ valid: false, message: "Internal server error" }, { status: 500 });
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, valid: false, message: 'Unauthorized' },
+      { status: 401 },
+    );
   }
+
+  const ipRl = globalRateLimiter.checkLimit(
+    `setup:verify:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 12 },
+  );
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl);
+
+  const userRl = globalRateLimiter.checkLimit(`setup:verify:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 12,
+  });
+  if (!userRl.allowed) return createRateLimitResponse(userRl);
+
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, valid: false, message: 'Invalid JSON' },
+      { status: 400 },
+    );
+  }
+
+  const parsed = SetupVerifySchema.safeParse(rawBody);
+  if (!parsed.success || !parsed.data.resolvedKey) {
+    return NextResponse.json(
+      { ok: false, valid: false, message: 'Missing service or apiKey' },
+      { status: 400 },
+    );
+  }
+
+  const { service, resolvedKey } = parsed.data;
+  if (!(SUPPORTED_SERVICES as readonly string[]).includes(service)) {
+    return NextResponse.json(
+      { ok: false, valid: false, message: 'Unknown service' },
+      { status: 400 },
+    );
+  }
+
+  const probe = await probeProviderApiKey(service, resolvedKey);
+  return NextResponse.json({
+    ok: probe.ok,
+    valid: probe.valid,
+    status: probe.status,
+    provider: probe.provider,
+    maskedKey: probe.maskedKey,
+    latencyMs: probe.latencyMs,
+    message: probe.message,
+    message_vi: probe.message_vi,
+  });
 }

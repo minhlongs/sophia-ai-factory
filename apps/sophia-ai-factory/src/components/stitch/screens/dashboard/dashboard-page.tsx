@@ -64,8 +64,8 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
   return (
     <div className="v3-core space-y-6" data-testid="dashboard-overview-content">
       {/* Dashboard Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
           <p className="eyebrow !mb-1.5">
             <span className="dot" aria-hidden="true" />
             <span>{t('eyebrow')}</span>
@@ -73,17 +73,19 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
           <h1 className="text-2xl font-bold text-foreground dark:text-white tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           <Button
             variant="outline"
             href="/dashboard/campaigns"
-            iconLeft={<Download className="w-4 h-4" />}
+            iconLeft={<Download className="w-4 h-4 shrink-0" />}
+            className="whitespace-nowrap"
           >
             {t('actions.exportData')}
           </Button>
           <Button
             href="/dashboard/affiliates"
-            iconLeft={<Plus className="w-4 h-4" />}
+            iconLeft={<Plus className="w-4 h-4 shrink-0" />}
+            className="whitespace-nowrap"
           >
             {t('actions.addProduct')}
           </Button>

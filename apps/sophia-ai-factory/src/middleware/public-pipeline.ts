@@ -1,7 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { applyCorsHeaders } from './cors';
-import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config';
+import {
+  intlMiddleware,
+  applySecurityHeaders,
+  mergeIntlResponseHeaders,
+  SUPPORTED_LOCALES,
+} from './middleware-shared-config';
 import { handleAeoMarkdownNegotiation } from './aeo-negotiation';
+
+const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 
 const BARE_AUTH_APP_ROUTES = new Set([
   'reset-password',
@@ -12,7 +19,11 @@ const BARE_AUTH_APP_ROUTES = new Set([
 
 function stripLocalePrefix(pathname: string) {
   const parts = pathname.split('/');
-  if (parts.length >= 2 && BARE_AUTH_APP_ROUTES.has(parts[2])) {
+  if (
+    parts.length >= 3 &&
+    SUPPORTED_LOCALE_SET.has(parts[1]) &&
+    BARE_AUTH_APP_ROUTES.has(parts[2])
+  ) {
     return pathname.replace(/^\/[^/]+/, '');
   }
   return null;
@@ -32,19 +43,25 @@ export async function handlePublicPipeline(
   };
   if (BARE_REDIRECTS[path]) {
     const target = new URL(BARE_REDIRECTS[path], request.url);
-    return applyCorsHeaders(NextResponse.redirect(target), origin);
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(target), origin);
+    applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
+    return redirectRes;
   }
 
   // Canonical onboarding redirect: /setup-wizard → /[locale]/setup
   if (path === '/setup-wizard' || path === '/setup-wizard/') {
     const target = new URL('/vi/setup', request.url);
-    return applyCorsHeaders(NextResponse.redirect(target), origin);
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(target), origin);
+    applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
+    return redirectRes;
   }
-  const setupWizardMatch = path.match(/^\/(en|vi|ja|ko|th)\/setup-wizard\/?$/);
-  if (setupWizardMatch) {
+  const setupWizardMatch = path.match(/^\/([^/]+)\/setup-wizard\/?$/);
+  if (setupWizardMatch && SUPPORTED_LOCALE_SET.has(setupWizardMatch[1])) {
     const locale = setupWizardMatch[1];
     const target = new URL(`/${locale}/setup`, request.url);
-    return applyCorsHeaders(NextResponse.redirect(target), origin);
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(target), origin);
+    applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
+    return redirectRes;
   }
 
   // Dual-Read AEO/GEO Markdown negotiation (runs before next-intl 307 redirects)
@@ -60,10 +77,17 @@ export async function handlePublicPipeline(
     const url = request.nextUrl.clone();
     url.pathname = stripped;
     request = new NextRequest(url.toString(), request);
+    // Forward the stripped locale so the (app) route group renders the requested
+    // language instead of falling back to the default locale.
+    requestHeaders.set('x-next-intl-locale', localeForCookie);
   }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  const intlRes = intlMiddleware(request);
+  const intlRequest = new NextRequest(request.url, {
+    headers: requestHeaders,
+    method: request.method,
+  });
+  const intlRes = intlMiddleware(intlRequest);
   const location = intlRes.headers.get('location');
 
   if (location) {
@@ -80,12 +104,12 @@ export async function handlePublicPipeline(
 
   if (location) {
     const redirectRes = applyCorsHeaders(NextResponse.redirect(new URL(location, request.url)), origin);
-    intlRes.headers.forEach((v, k) => { if (k.toLowerCase() !== 'location') redirectRes.headers.set(k, v); });
+    mergeIntlResponseHeaders(redirectRes, intlRes, { skipLocation: true });
     applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
     return redirectRes;
   }
 
-  intlRes.headers.forEach((v, k) => response.headers.set(k, v));
+  mergeIntlResponseHeaders(response, intlRes);
   applySecurityHeaders(response, nonce, needsCsrfSeed);
   return response;
 }

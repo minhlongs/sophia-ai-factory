@@ -27,6 +27,9 @@ export const RATE_LIMITS = {
   webhook: { maxRequests: 1000, windowSeconds: 60, identifier: 'webhook' },
   auth: { maxRequests: 10, windowSeconds: 60, identifier: 'auth' },
   admin: { maxRequests: 50, windowSeconds: 60, identifier: 'admin' },
+  // byok: dedicated BYOK & Setup Wizard bucket — isolated from auth (10/min) and admin (50/min),
+  // generous enough for onboarding refreshes yet bounded against IP-level credential probing.
+  byok: { maxRequests: 40, windowSeconds: 60, identifier: 'byok' },
   // discovery: stricter than api (100/min) — OpenRouter cost exposure
   discovery: { maxRequests: 30, windowSeconds: 60, identifier: 'discovery' },
 } as const
@@ -70,8 +73,12 @@ export function getClientIdentifier(
   if (userId) {
     return `user:${userId}`
   }
+  const cfIp = request.headers.get('cf-connecting-ip')?.trim()
+  if (cfIp) {
+    return `ip:${cfIp}`
+  }
   const forwarded = request.headers.get('x-forwarded-for')
-  const ip = forwarded?.split(',')[0] || 'unknown'
+  const ip = forwarded?.split(',')[0]?.trim() || 'unknown'
   return `ip:${ip}`
 }
 

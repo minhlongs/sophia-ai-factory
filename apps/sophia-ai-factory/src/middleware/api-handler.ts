@@ -71,10 +71,21 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
   // cost (agent-chat, missions POST, campaigns/create, factory/url-to-revenue) layer additional
   // `withRateLimit` above this baseline to cap per-tenant per-tier abuse.
   const identifier = getClientIdentifier(request);
-  let rateLimitConfig = RATE_LIMITS.api as typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook | typeof RATE_LIMITS.discovery;
+  let rateLimitConfig: (typeof RATE_LIMITS)[keyof typeof RATE_LIMITS] = RATE_LIMITS.api;
 
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
+  if (pathname.startsWith('/api/auth')) {
     rateLimitConfig = RATE_LIMITS.auth;
+  } else if (
+    pathname.startsWith('/api/user/byok') ||
+    pathname.startsWith('/api/setup-wizard') ||
+    pathname.startsWith('/api/setup/verify')
+  ) {
+    // Dedicated BYOK & Setup Wizard bucket: isolated from /api/auth/* (10/min)
+    // and /api/admin/* (50/min) so onboarding refreshes never starve login or
+    // admin consoles, while capping IP-level provider probing below /api/* (100/min).
+    rateLimitConfig = RATE_LIMITS.byok;
+  } else if (pathname.startsWith('/api/admin')) {
+    rateLimitConfig = RATE_LIMITS.admin;
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
   } else if (
@@ -108,7 +119,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     track(D1Events.API_RATE_LIMIT_HIT, identifier, {
       path: pathname,
       identifier,
-      limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : rateLimitConfig === RATE_LIMITS.discovery ? 'discovery' : 'api',
+      limit_type: rateLimitConfig.identifier,
     });
     emitUsageEvent(request, { status: 429, headers: rateLimitResponse.headers }).catch(err => {
       logger.error('[Proxy] Failed to emit 429 usage event', err);

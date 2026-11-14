@@ -2,7 +2,7 @@
  * Automated Verification Suite for "Director's Control Deck" UI Design System
  * Verifies Executive Studio Light (:root), Cinema Dark Room (.dark),
  * signature utility classes (.radar, .film-strip, .camera-rec, .studio-glass),
- * typography (Plus Jakarta Sans, Be Vietnam Pro, JetBrains Mono),
+ * typography (Inter, JetBrains Mono),
  * and adaptive Light/Dark tokens across all 4 modernized screen groups.
  *
  * @module src/__tests__/director-control-deck-design-system
@@ -21,10 +21,10 @@ function readSrcFile(relPath: string): string {
 describe("Director's Control Deck Design System Verification", () => {
   const globalsCss = readSrcFile('app/globals.css');
 
-  it('declares color tokens exactly once, in the dark block, because the app renders dark-only', () => {
+  it('declares Dual-Theme tokens across Executive Studio Ivory (:root) and Cinema Dark Room (.dark)', () => {
     expect(globalsCss).toContain('"Director\'s Control Deck" Design System');
 
-    // Cinema Dark Room (.dark) is the single declaration site for color.
+    // Cinema Dark Room (.dark) default tokens
     expect(globalsCss).toContain('--background: #090A10;');
     expect(globalsCss).toContain('--card: #11131F;');
     expect(globalsCss).toContain('--primary: #6366F1;');
@@ -32,13 +32,15 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(globalsCss).toContain('--glass-bg: rgba(17, 19, 31, 0.75);');
     expect(globalsCss).toContain('--glass-border: rgba(255, 255, 255, 0.08);');
 
-    // `:root` keeps geometry only. Redeclaring colors there produced 111 values that
-    // `.dark` always overrode, so no route could ever render them.
+    // Executive Studio Ivory (:root) light mode + Zen Motion Governance tokens
     const rootBlock = globalsCss.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
     expect(rootBlock).toContain('--radius');
-    expect(rootBlock).not.toContain('--background');
-    expect(rootBlock).not.toContain('--primary');
-    expect(rootBlock).not.toContain('--card');
+    expect(rootBlock).toContain('--background: #F8F9FC;');
+    expect(rootBlock).toContain('--primary: #4338CA;');
+    expect(rootBlock).toContain('--card: #FFFFFF;');
+    expect(rootBlock).toContain('--motion-duration-deliberate: 400ms;');
+    expect(rootBlock).toContain('--motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);');
+    expect(rootBlock).toContain('--studio-stage-bg: #090A10;');
   });
 
   it('defines signature Director Control Deck utility classes (.radar, .film-strip, .camera-rec, .studio-glass)', () => {
@@ -49,9 +51,13 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(globalsCss).toContain('.studio-glass {');
   });
 
-  it('includes Plus Jakarta Sans and Be Vietnam Pro in body font stack', () => {
-    expect(globalsCss).toContain("'Plus Jakarta Sans'");
-    expect(globalsCss).toContain("'Be Vietnam Pro'");
+  it('includes Inter for UI/body text and JetBrains Mono for code & telemetry (Founder Decision 2)', () => {
+    expect(globalsCss).toContain("font-family: 'Inter'");
+    expect(globalsCss).toContain("'JetBrains Mono'");
+    expect(globalsCss).not.toContain("'Plus Jakarta Sans'");
+    expect(globalsCss).not.toContain("'Be Vietnam Pro'");
+    expect(globalsCss).not.toContain('Satoshi');
+    expect(globalsCss).not.toContain('Instrument Serif');
   });
 
   it('Phase 1: upgrades core Stitch UI primitives and Navigation Shells to adaptive Light/Dark', () => {
@@ -75,7 +81,12 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(inputTsx).not.toMatch(/#[0-9a-fA-F]{6}/);
     expect(tableTsx).toContain('bg-card');
     expect(tableTsx).not.toContain('dark:bg-[#11131F]');
-    expect(dashboardShellTsx).toContain('dark:bg-[#090A10]');
+    // The shell surface comes from the semantic token. `--background` in `.dark`
+    // already resolves to #090A10, so a `dark:bg-[#…]` literal would only freeze
+    // the component against a future theme change (same invariant as card/table).
+    expect(dashboardShellTsx).toContain('bg-background text-foreground');
+    expect(dashboardShellTsx).not.toMatch(/dark:bg-\[#[0-9a-fA-F]{6}\]/);
+    expect(dashboardShellTsx).not.toMatch(/dark:text-\[#[0-9a-fA-F]{6}\]/);
     expect(marketingNavTsx).toContain('studio-glass');
   });
 
@@ -107,6 +118,7 @@ describe("Director's Control Deck Design System Verification", () => {
     const byokBanner = readSrcFile('tree/components/setup-wizard/byok-doctrine-banner.tsx');
 
     expect(wizardStepper).toContain('font-mono');
+    expect(wizardStepper).toContain('dark:bg-primary-600');
     expect(apiKeyInput).toContain('dark:bg-[#11131F]');
     expect(byokBanner).toContain('AES-256-GCM');
   });
@@ -120,10 +132,62 @@ describe("Director's Control Deck Design System Verification", () => {
     const settingsPage = readSrcFile('components/stitch/screens/settings/settings-page.tsx');
 
     expect(dashboardPage).toContain('text-foreground dark:text-white');
+    expect(videoPreview).toBeDefined();
     expect(videoPreviewSections).toContain('camera-rec');
     expect(videoPreviewSections).toContain('film-strip');
     expect(campaignCard).toContain('dark:bg-[#11131F]');
     expect(campaignCardDetails).toContain('font-mono');
     expect(settingsPage).toContain('dark:bg-[#11131F]');
+    expect(settingsPage).toContain('dark:bg-primary-600');
+    expect(settingsPage).toContain('text-primary-text');
+  });
+
+  it('enforces >= 4.5:1 WCAG AA dual-theme contrast on shared Button variants, Timeline preview, and Niche Studio states', () => {
+    const seedButton = readSrcFile('seed/components/ui/button.tsx');
+    const timelinePreview = readSrcFile('components/video/timeline-browser-preview.tsx');
+    const storyboardCard = readSrcFile('components/niche-studio/storyboard-preview-card.tsx');
+    const nicheForm = readSrcFile('components/niche-studio/niche-campaign-form.tsx');
+    const compliancePlayer = readSrcFile('components/niche-studio/video-compliance-preview-player.tsx');
+    const tierAssignment = readSrcFile('components/stitch/screens/affiliates/invite/tier-assignment.tsx');
+    const inviteSuccess = readSrcFile('components/stitch/screens/affiliates/invite/invite-success-view.tsx');
+
+    expect(seedButton).toContain('dark:bg-primary-600');
+    expect(seedButton).toContain('dark:bg-secondary-700');
+    expect(seedButton).toContain('hover:bg-muted hover:text-foreground');
+    expect(globalsCss).toContain('--accent-foreground: #090A10;');
+    expect(readSrcFile('seed/components/ui/command-items.tsx')).toContain(
+      'data-[selected=true]:bg-muted data-[selected=true]:text-foreground',
+    );
+    expect(readSrcFile('forest/dashboard/activity-table/status-badge.tsx')).toContain(
+      'text-amber-800 dark:text-amber-300',
+    );
+    expect(readSrcFile('forest/dashboard/dashboard-topbar-actions.tsx')).toContain(
+      'dark:bg-rose-700',
+    );
+    expect(readSrcFile('forest/dashboard/revenue-chart/chart-header.tsx')).toContain(
+      'text-emerald-700 dark:text-emerald-300',
+    );
+    expect(readSrcFile('styles/v3-core.css')).toContain('--accent-2: #92400E;');
+    expect(readSrcFile('styles/v3-core.css')).toContain('--btn-bg: #4F46E5;');
+    expect(readSrcFile('forest/dashboard/dashboard-user-card.tsx')).toContain(
+      'text-amber-900 dark:text-amber-300',
+    );
+    expect(readSrcFile('components/niche-studio/sophia-artifact-canvas-inspector.tsx')).toContain(
+      'underline text-primary-text hover:text-foreground dark:hover:text-white',
+    );
+    expect(readSrcFile('components/stitch/ui/button-styles.ts')).toContain(
+      'bg-destructive text-destructive-foreground dark:bg-rose-700',
+    );
+    expect(timelinePreview).toContain('bg-muted text-muted-foreground');
+    expect(timelinePreview).not.toContain('bg-secondary text-muted-foreground');
+    expect(storyboardCard).toContain('bg-card dark:bg-zinc-900/60');
+    expect(nicheForm).toContain('text-emerald-800 dark:text-emerald-200');
+    expect(nicheForm).toContain('text-rose-700 dark:text-rose-300');
+    expect(compliancePlayer).toContain('text-emerald-800 dark:text-emerald-300');
+    expect(tierAssignment).toContain('text-primary-text');
+    expect(inviteSuccess).toContain('text-emerald-700 dark:text-emerald-300');
+    expect(globalsCss).toContain('.animate-pulse,');
+    expect(globalsCss).toContain('.animate-ping,');
+    expect(globalsCss).toContain('.animate-spin,');
   });
 });

@@ -40,7 +40,7 @@ export function NicheHookVariantsCard({
           </h3>
           <p className="text-xs text-muted-foreground">{t('hooksSubtitle')}</p>
         </div>
-        <span className="px-2.5 py-1 bg-primary/10 text-primary font-medium text-xs rounded-full">
+        <span className="px-2.5 py-1 bg-primary/10 text-primary-text font-medium text-xs rounded-full">
           {hookPackage.variants.length} {t('variants')}
         </span>
       </div>
@@ -64,12 +64,12 @@ export function NicheHookVariantsCard({
                 <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
                   {v.headline}
                   {isRec && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold rounded">
+                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold rounded">
                       ★ {t('recommendedBadge')}
                     </span>
                   )}
                 </span>
-                <span className="text-[11px] font-mono text-primary font-semibold">
+                <span className="text-[11px] font-mono text-primary-text font-semibold">
                   {v.estimatedRetentionScore}% {t('retention')}
                 </span>
               </div>
@@ -80,7 +80,7 @@ export function NicheHookVariantsCard({
 
               <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
                 <span className="truncate max-w-[180px]">📺 {v.overlayText}</span>
-                <span className="text-primary font-medium">
+                <span className="text-primary-text font-medium">
                   {isSelected ? `✓ ${t('selected')}` : t('select')}
                 </span>
               </div>

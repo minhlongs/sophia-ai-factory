@@ -4,6 +4,7 @@ import { TokenBucketStore } from './token-bucket-store';
 import { evaluateSlidingWindow } from './sliding-window-evaluator';
 import {
   getClientIdentifier,
+  getClientIpIdentifier,
   checkAuthRateLimit,
   ADMIN_RATE_LIMIT_CONFIG,
   checkAdminRateLimit,
@@ -11,6 +12,7 @@ import {
 
 export {
   getClientIdentifier,
+  getClientIpIdentifier,
   checkAuthRateLimit,
   ADMIN_RATE_LIMIT_CONFIG,
   checkAdminRateLimit,
@@ -31,6 +33,7 @@ export class RateLimiter {
         allowed: true,
         remaining: config.maxRequests,
         resetAt: now + config.intervalMs,
+        limit: config.maxRequests,
       };
     }
 
@@ -51,8 +54,9 @@ export class RateLimiter {
 }
 
 export function createRateLimitHeaders(result: RateLimitResult): Record<string, string> {
+  const limitValue = result.limit ?? result.remaining + (result.allowed ? 0 : 1);
   const headers: Record<string, string> = {
-    'X-RateLimit-Limit': String(result.remaining + (result.allowed ? 0 : 1)),
+    'X-RateLimit-Limit': String(limitValue),
     'X-RateLimit-Remaining': String(result.remaining),
     'X-RateLimit-Reset': String(result.resetAt),
   };

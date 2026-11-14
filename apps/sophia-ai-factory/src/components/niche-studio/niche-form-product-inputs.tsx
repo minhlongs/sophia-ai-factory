@@ -49,28 +49,40 @@ export function NicheFormProductInputs({ values, onChange, t }: NicheFormProduct
       </label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('productName')}</span>
-          <input type="text" required value={values.productName} onChange={(e) => onChange('productName', e.target.value)} className={INPUT_CLASS} />
+          <label htmlFor="niche-product-name" className="block text-[11px] text-muted-foreground">
+            {t('productName')}
+          </label>
+          <input id="niche-product-name" type="text" required value={values.productName} onChange={(e) => onChange('productName', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('productUrl')}</span>
-          <input type="url" required value={values.productUrl} onChange={(e) => onChange('productUrl', e.target.value)} className={INPUT_CLASS} />
+          <label htmlFor="niche-product-url" className="block text-[11px] text-muted-foreground">
+            {t('productUrl')}
+          </label>
+          <input id="niche-product-url" type="url" required value={values.productUrl} onChange={(e) => onChange('productUrl', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('affiliateCode')}</span>
-          <input type="text" value={values.affiliateCode} onChange={(e) => onChange('affiliateCode', e.target.value)} className={INPUT_CLASS} />
+          <label htmlFor="niche-affiliate-code" className="block text-[11px] text-muted-foreground">
+            {t('affiliateCode')}
+          </label>
+          <input id="niche-affiliate-code" type="text" value={values.affiliateCode} onChange={(e) => onChange('affiliateCode', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('subId')}</span>
-          <input type="text" value={values.subId} onChange={(e) => onChange('subId', e.target.value)} className={INPUT_CLASS} />
+          <label htmlFor="niche-sub-id" className="block text-[11px] text-muted-foreground">
+            {t('subId')}
+          </label>
+          <input id="niche-sub-id" type="text" value={values.subId} onChange={(e) => onChange('subId', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('vanityCoupon')}</span>
-          <input type="text" value={values.vanityCoupon} onChange={(e) => onChange('vanityCoupon', e.target.value)} className={INPUT_CLASS} />
+          <label htmlFor="niche-vanity-coupon" className="block text-[11px] text-muted-foreground">
+            {t('vanityCoupon')}
+          </label>
+          <input id="niche-vanity-coupon" type="text" value={values.vanityCoupon} onChange={(e) => onChange('vanityCoupon', e.target.value)} className={INPUT_CLASS} />
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('jurisdiction')}</span>
-          <select value={values.jurisdiction} onChange={(e) => onChange('jurisdiction', e.target.value)} className={INPUT_CLASS}>
+          <label htmlFor="niche-jurisdiction" className="block text-[11px] text-muted-foreground">
+            {t('jurisdiction')}
+          </label>
+          <select id="niche-jurisdiction" value={values.jurisdiction} onChange={(e) => onChange('jurisdiction', e.target.value)} className={INPUT_CLASS}>
             <option value="GLOBAL">Global (Default)</option>
             <option value="US">United States (FTC & CFTC 4.41)</option>
             <option value="EU">European Union (MiCA Art. 7 & 53)</option>
@@ -80,8 +92,11 @@ export function NicheFormProductInputs({ values, onChange, t }: NicheFormProduct
           </select>
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">{t('commissionTerms')}</span>
+          <label htmlFor="niche-commission-terms" className="block text-[11px] text-muted-foreground">
+            {t('commissionTerms')}
+          </label>
           <input
+            id="niche-commission-terms"
             type="text"
             maxLength={300}
             aria-label={t('commissionTerms')}
@@ -91,10 +106,11 @@ export function NicheFormProductInputs({ values, onChange, t }: NicheFormProduct
           />
         </div>
         <div>
-          <span className="text-[11px] text-muted-foreground">
+          <label htmlFor="niche-max-render-cost" className="block text-[11px] text-muted-foreground">
             {t('maxRenderCostCents')} (${budgetUsd} USD)
-          </span>
+          </label>
           <input
+            id="niche-max-render-cost"
             type="number"
             min={0}
             max={PROPOSED_GATE1_VERTICAL_CAP_CENTS}

@@ -44,7 +44,7 @@ export const CheckoutStartedSchema = z.object({
 export const ApiRateLimitHitSchema = z.object({
   path:         z.string(),
   identifier:   z.string(),   // hashed IP / API key prefix — no raw values
-  limit_type:   z.enum(['api', 'auth', 'webhook', 'discovery']),
+  limit_type:   z.enum(['api', 'auth', 'admin', 'byok', 'webhook', 'discovery']),
 });
 
 /** prompt_injection_detected — fired when guard flags prompt at LLM ingress */

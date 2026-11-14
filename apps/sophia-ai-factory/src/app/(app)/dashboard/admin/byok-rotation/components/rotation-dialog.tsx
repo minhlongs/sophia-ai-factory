@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
@@ -28,10 +29,28 @@ export function RotationDialog({
   isRotating,
 }: RotationDialogProps) {
   const t = useTranslations('admin.keyRotation');
+  // This dialog is opened by parent state rather than a DialogTrigger, so Radix
+  // has no trigger element to return focus to and would drop focus onto <body>.
+  // Capture the element that held focus just before the dialog opened and
+  // restore it on close, so keyboard users resume where they left off.
+  const openerRef = useRef<HTMLElement | null>(null);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        onOpenAutoFocus={() => {
+          openerRef.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          const opener = openerRef.current;
+          openerRef.current = null;
+          if (opener && opener.isConnected) {
+            event.preventDefault();
+            opener.focus();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t('dialogTitle')}</DialogTitle>
           <DialogDescription>{t('dialogDescription')}</DialogDescription>

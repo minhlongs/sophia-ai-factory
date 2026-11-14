@@ -29,7 +29,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center space-y-2.5">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D97706]/10 dark:bg-[#F59E0B]/10 text-[#D97706] dark:text-[#F59E0B] border border-[#D97706]/20 dark:border-[#F59E0B]/20 font-mono text-xs font-semibold">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/25 font-mono text-xs font-semibold">
           <Clock className="w-3.5 h-3.5" />
           ~5 Minutes Setup / Thiết lập trong ~5 phút
         </div>
@@ -85,7 +85,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         <button
           type="button"
           onClick={onNext}
-          className="bg-[#4338CA] dark:bg-[#6366F1] hover:opacity-95 text-white px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-xs"
+          className="bg-[#4338CA] dark:bg-[#4F46E5] hover:opacity-95 text-white px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-xs"
         >
           Bắt đầu thiết lập / Get Started
           <ArrowRight className="w-4 h-4" />

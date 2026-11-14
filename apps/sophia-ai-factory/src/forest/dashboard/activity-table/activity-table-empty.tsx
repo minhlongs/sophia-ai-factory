@@ -28,7 +28,7 @@ export function ActivityTableEmpty({
       </p>
       <Link
         href="/dashboard/missions/new"
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 transition-all shadow-sm"
       >
         <Sparkles className="w-3.5 h-3.5" />
         <span>{buttonLabel}</span>

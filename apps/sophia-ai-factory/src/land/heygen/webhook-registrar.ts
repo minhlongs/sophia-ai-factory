@@ -31,8 +31,9 @@ const HEYGEN_EVENTS = ['avatar_video.success', 'avatar_video.fail']
 export async function registerHeyGenWebhook(
   apiKey: string,
   callbackUrl: string,
+  keyRef?: string,
 ): Promise<RegisterResult> {
-  if (!shouldAllowRequest('heygen')) {
+  if (!shouldAllowRequest('heygen', keyRef)) {
     return { success: false, error: 'Circuit breaker open for HeyGen — too many failures' }
   }
   try {
@@ -58,12 +59,12 @@ export async function registerHeyGenWebhook(
     const endpointId = String(data.endpoint_id ?? data.endpointId ?? '')
     const signingSecret = data.secret ? String(data.secret) : undefined
 
-    recordSuccess('heygen')
+    recordSuccess('heygen', keyRef)
     return { success: true, endpointId, signingSecret }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     const kind = classifyError(err)
-    recordFailure('heygen', kind)
+    recordFailure('heygen', kind, keyRef)
     logger.error('[HeyGen] registerWebhook exception', err instanceof Error ? err : undefined)
     return { success: false, error: msg }
   }

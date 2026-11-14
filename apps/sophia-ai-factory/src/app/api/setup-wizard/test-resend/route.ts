@@ -10,6 +10,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter';
 import { testResendSchema, sendResendTestEmail } from './test-resend-helpers';
 
 export async function POST(request: NextRequest) {
@@ -22,6 +27,18 @@ export async function POST(request: NextRequest) {
       message_vi: 'Chưa xác thực',
     }, { status: 401 });
   }
+
+  const ipRl = globalRateLimiter.checkLimit(
+    `setup:test-resend:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 5 },
+  );
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl);
+
+  const userRl = globalRateLimiter.checkLimit(`setup:test-resend:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 5,
+  });
+  if (!userRl.allowed) return createRateLimitResponse(userRl);
 
   let body: unknown;
   try {
@@ -59,5 +76,5 @@ export async function POST(request: NextRequest) {
     }, { status: 422 });
   }
 
-  return sendResendTestEmail(api_key, toEmail);
+  return sendResendTestEmail(api_key, toEmail, `user:${user.id}`);
 }

@@ -27,7 +27,7 @@ export function NicheConversionStatsCard({ niche, t }: NicheConversionStatsCardP
           </h3>
           <p className="text-xs text-muted-foreground">{t('statsSubtitle')}</p>
         </div>
-        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs rounded-full flex items-center gap-1.5">
+        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold text-xs rounded-full flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           {t('liveTelemetry')}
         </span>
@@ -37,29 +37,29 @@ export function NicheConversionStatsCard({ niche, t }: NicheConversionStatsCardP
         <div className="p-3.5 bg-muted/20 border border-border/40 rounded-xl space-y-1">
           <span className="text-xs text-muted-foreground">{t('metricViews')}</span>
           <p className="text-lg font-bold font-mono text-foreground">14.2K</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">↑ +38% hook watch</span>
+          <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">↑ +38% hook watch</span>
         </div>
 
         <div className="p-3.5 bg-muted/20 border border-border/40 rounded-xl space-y-1">
           <span className="text-xs text-muted-foreground">{t('metricClicks')}</span>
           <p className="text-lg font-bold font-mono text-foreground">842</p>
-          <span className="text-[10px] text-primary font-medium">5.9% CTR</span>
+          <span className="text-[10px] text-primary-text font-medium">5.9% CTR</span>
         </div>
 
         <div className="p-3.5 bg-muted/20 border border-border/40 rounded-xl space-y-1">
           <span className="text-xs text-muted-foreground">{t('metricConversions')}</span>
           <p className="text-lg font-bold font-mono text-foreground">63</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">7.4% conv</span>
+          <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">7.4% conv</span>
         </div>
 
         <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl space-y-1">
-          <span className="text-xs text-primary font-medium">
+          <span className="text-xs text-primary-text font-medium">
             {isCrypto ? t('metricRebates') : t('metricMrr')}
           </span>
-          <p className="text-lg font-bold font-mono text-primary">
+          <p className="text-lg font-bold font-mono text-primary-text">
             {isCrypto ? '$1,480.50' : '$2,240/mo'}
           </p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+          <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">
             {isCrypto ? '20-30% rebate tier' : '30% recurring MRR'}
           </span>
         </div>

@@ -1,0 +1,149 @@
+{
+  "$schema": "https://www.designtokens.org/TR/2025.10/format/",
+  "meta": {
+    "system": "ZEN DESIGN OS",
+    "version": "1.0.0",
+    "application": "Sophia AI Factory",
+    "direction": "Direction B — Expressive AI-Native (Modified Progressive Dual-Theme)",
+    "defaultMode": "dark"
+  },
+  "color": {
+    "tonal": {
+      "indigo": {
+        "10": { "$type": "color", "$value": "#1E1B4B", "$description": "M3 Indigo Tone 10" },
+        "20": { "$type": "color", "$value": "#312E81", "$description": "M3 Indigo Tone 20" },
+        "30": { "$type": "color", "$value": "#3730A3", "$description": "M3 Indigo Tone 30" },
+        "40": { "$type": "color", "$value": "#4338CA", "$description": "M3 Indigo Tone 40 (Light Primary)" },
+        "50": { "$type": "color", "$value": "#4F46E5", "$description": "M3 Indigo Tone 50" },
+        "60": { "$type": "color", "$value": "#6366F1", "$description": "M3 Indigo Tone 60 (Dark Primary)" },
+        "80": { "$type": "color", "$value": "#A5B4FC", "$description": "M3 Indigo Tone 80" },
+        "90": { "$type": "color", "$value": "#E0E7FF", "$description": "M3 Indigo Tone 90" }
+      },
+      "violet": {
+        "20": { "$type": "color", "$value": "#3B0764", "$description": "M3 Violet Tone 20" },
+        "40": { "$type": "color", "$value": "#7E22CE", "$description": "M3 Violet Tone 40 (Light Secondary)" },
+        "60": { "$type": "color", "$value": "#A855F7", "$description": "M3 Violet Tone 60 (Dark Secondary)" },
+        "90": { "$type": "color", "$value": "#F3E8FF", "$description": "M3 Violet Tone 90" }
+      },
+      "amber": {
+        "20": { "$type": "color", "$value": "#451A03", "$description": "M3 Amber Tone 20" },
+        "35": { "$type": "color", "$value": "#B45309", "$description": "M3 Amber Tone 35 (Light Text Safe)" },
+        "40": { "$type": "color", "$value": "#D97706", "$description": "M3 Amber Tone 40 (Light Tertiary)" },
+        "60": { "$type": "color", "$value": "#F59E0B", "$description": "M3 Amber Tone 60 (Dark Tertiary)" },
+        "90": { "$type": "color", "$value": "#FEF3C7", "$description": "M3 Amber Tone 90" }
+      },
+      "emerald": {
+        "20": { "$type": "color", "$value": "#064E3B", "$description": "M3 Emerald Tone 20" },
+        "35": { "$type": "color", "$value": "#047857", "$description": "M3 Emerald Tone 35 (Light Text Safe)" },
+        "40": { "$type": "color", "$value": "#059669", "$description": "M3 Emerald Tone 40 (Light Success)" },
+        "60": { "$type": "color", "$value": "#10B981", "$description": "M3 Emerald Tone 60 (Dark Success)" },
+        "90": { "$type": "color", "$value": "#D1FAE5", "$description": "M3 Emerald Tone 90" }
+      },
+      "rose": {
+        "20": { "$type": "color", "$value": "#4C0519", "$description": "M3 Rose Tone 20" },
+        "40": { "$type": "color", "$value": "#BE123C", "$description": "M3 Rose Tone 40 (Light Error)" },
+        "60": { "$type": "color", "$value": "#F43F5E", "$description": "M3 Rose Tone 60 (Dark Error)" },
+        "90": { "$type": "color", "$value": "#FFE4E6", "$description": "M3 Rose Tone 90" }
+      },
+      "neutral": {
+        "4": { "$type": "color", "$value": "#06070B", "$description": "Obsidian Dim" },
+        "6": { "$type": "color", "$value": "#090A10", "$description": "Obsidian Canvas" },
+        "10": { "$type": "color", "$value": "#0D0F18", "$description": "Obsidian Container Low" },
+        "12": { "$type": "color", "$value": "#11131F", "$description": "Obsidian Card Container" },
+        "17": { "$type": "color", "$value": "#171A2B", "$description": "Obsidian Container High" },
+        "22": { "$type": "color", "$value": "#1E2235", "$description": "Obsidian Container Highest / Hairline" },
+        "92": { "$type": "color", "$value": "#E2E7F1", "$description": "Ivory Container Highest" },
+        "94": { "$type": "color", "$value": "#ECEFF6", "$description": "Ivory Container High" },
+        "96": { "$type": "color", "$value": "#F3F5FA", "$description": "Ivory Container Low" },
+        "98": { "$type": "color", "$value": "#F8F9FC", "$description": "Ivory Canvas" },
+        "100": { "$type": "color", "$value": "#FFFFFF", "$description": "Pure Surface Card" }
+      }
+    },
+    "semantic": {
+      "dark": {
+        "surface-dim": { "$type": "color", "$value": "#1A1C28" },
+        "surface": { "$type": "color", "$value": "#090A10" },
+        "surface-bright": { "$type": "color", "$value": "#0E1017" },
+        "surface-container-lowest": { "$type": "color", "$value": "#08080C" },
+        "surface-container-low": { "$type": "color", "$value": "#1A1C28" },
+        "surface-container": { "$type": "color", "$value": "#11131F" },
+        "surface-container-high": { "$type": "color", "$value": "#1F1F29" },
+        "surface-container-highest": { "$type": "color", "$value": "#23232F" },
+        "on-surface": { "$type": "color", "$value": "#F8FAFC" },
+        "on-surface-variant": { "$type": "color", "$value": "#94A3B8" },
+        "outline": { "$type": "color", "$value": "#64748B" },
+        "outline-variant": { "$type": "color", "$value": "#1E2235" },
+        "primary": { "$type": "color", "$value": "#6366F1" },
+        "primary-text": { "$type": "color", "$value": "#818CF8" },
+        "primary-solid": { "$type": "color", "$value": "#4F46E5" },
+        "on-primary": { "$type": "color", "$value": "#FFFFFF" },
+        "primary-container": { "$type": "color", "$value": "#211966" },
+        "on-primary-container": { "$type": "color", "$value": "#DAD6FF" },
+        "secondary": { "$type": "color", "$value": "#A855F7" },
+        "on-secondary": { "$type": "color", "$value": "#FFFFFF" },
+        "tertiary": { "$type": "color", "$value": "#F59E0B" },
+        "on-tertiary": { "$type": "color", "$value": "#090A10" },
+        "success": { "$type": "color", "$value": "#10B981" },
+        "warning": { "$type": "color", "$value": "#F59E0B" },
+        "error": { "$type": "color", "$value": "#FB7185" },
+        "info": { "$type": "color", "$value": "#22D3EE" },
+        "inverse-surface": { "$type": "color", "$value": "#F8FAFC" },
+        "inverse-on-surface": { "$type": "color", "$value": "#0B0F19" },
+        "inverse-primary": { "$type": "color", "$value": "#685AED" }
+      },
+      "light": {
+        "surface-dim": { "$type": "color", "$value": "#EEF1F7" },
+        "surface": { "$type": "color", "$value": "#F8F9FC" },
+        "surface-bright": { "$type": "color", "$value": "#FFFFFF" },
+        "surface-container-lowest": { "$type": "color", "$value": "#FFFFFF" },
+        "surface-container-low": { "$type": "color", "$value": "#F3F5FA" },
+        "surface-container": { "$type": "color", "$value": "#FFFFFF" },
+        "surface-container-high": { "$type": "color", "$value": "#ECEFF6" },
+        "surface-container-highest": { "$type": "color", "$value": "#E2E7F1" },
+        "on-surface": { "$type": "color", "$value": "#0B0F19" },
+        "on-surface-variant": { "$type": "color", "$value": "#475569" },
+        "outline": { "$type": "color", "$value": "#64748B" },
+        "outline-variant": { "$type": "color", "$value": "#E2E8F0" },
+        "primary": { "$type": "color", "$value": "#4338CA" },
+        "primary-text": { "$type": "color", "$value": "#4338CA" },
+        "primary-solid": { "$type": "color", "$value": "#4338CA" },
+        "on-primary": { "$type": "color", "$value": "#FFFFFF" },
+        "primary-container": { "$type": "color", "$value": "#E0E7FF" },
+        "on-primary-container": { "$type": "color", "$value": "#1E1B4B" },
+        "secondary": { "$type": "color", "$value": "#7E22CE" },
+        "on-secondary": { "$type": "color", "$value": "#FFFFFF" },
+        "tertiary": { "$type": "color", "$value": "#B45309" },
+        "on-tertiary": { "$type": "color", "$value": "#FFFFFF" },
+        "success": { "$type": "color", "$value": "#047857" },
+        "warning": { "$type": "color", "$value": "#B45309" },
+        "error": { "$type": "color", "$value": "#BE123C" },
+        "info": { "$type": "color", "$value": "#0E7490" },
+        "inverse-surface": { "$type": "color", "$value": "#090A10" },
+        "inverse-on-surface": { "$type": "color", "$value": "#F8FAFC" },
+        "inverse-primary": { "$type": "color", "$value": "#818CF8" }
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "display": { "$type": "fontFamily", "$value": ["Inter", "system-ui", "sans-serif"] },
+      "sans": { "$type": "fontFamily", "$value": ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"] },
+      "mono": { "$type": "fontFamily", "$value": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"] }
+    }
+  },
+  "motion": {
+    "duration": {
+      "instant": { "$type": "duration", "$value": "80ms", "$description": "Micro-press and focus ring" },
+      "fast": { "$type": "duration", "$value": "150ms", "$description": "Hover and badge transitions" },
+      "normal": { "$type": "duration", "$value": "240ms", "$description": "Drawer, tab, and surface elevation" },
+      "deliberate": { "$type": "duration", "$value": "400ms", "$description": "PageTransition and wizard step" },
+      "cinematic": { "$type": "duration", "$value": "600ms", "$description": "ScrollReveal and onboarding milestone" }
+    },
+    "easing": {
+      "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1], "$description": "Material 3 standard spatial curve" },
+      "emphasized": { "$type": "cubicBezier", "$value": [0.16, 1, 0.3, 1], "$description": "Sophia industrial press curve" },
+      "decelerate": { "$type": "cubicBezier", "$value": [0, 0, 0, 1], "$description": "Entering elements" },
+      "accelerate": { "$type": "cubicBezier", "$value": [0.3, 0, 1, 1], "$description": "Exiting elements" }
+    }
+  }
+}

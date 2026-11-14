@@ -5,10 +5,16 @@ import { SetupWizardPage } from './index';
 
 // Mock next-intl useTranslations
 vi.mock('next-intl', () => ({
-  useTranslations: (ns?: string) => (key: string) => {
+  useTranslations: (ns?: string) => (key: string, values?: Record<string, string | number>) => {
     const fullKey = ns ? `${ns}.${key}` : key;
     const translations: Record<string, string> = {
       'setupWizard.stepper.welcome': 'Welcome',
+      'setupWizard.stepper.account': 'Account',
+      'setupWizard.stepper.aiKeys': 'AI Keys',
+      'setupWizard.stepper.billing': 'Billing',
+      'setupWizard.stepper.blueprint': 'Blueprint',
+      'setupWizard.stepper.ready': 'Ready',
+      'setupWizard.stepper.mobileStepOf': `Step ${values?.current ?? ''} of ${values?.total ?? ''}:`,
       'setupWizard.stepper.credentials': 'Credentials',
       'setupWizard.stepper.systemCheck': 'System Check',
       'setupWizard.stepper.review': 'Review',

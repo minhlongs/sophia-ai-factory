@@ -11,6 +11,11 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { probeProviderApiKey } from '@/tree/byok/provider-probe';
 import { buildReceiptPayload } from '@/tree/byok/receipt-payload-builder';
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +32,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 401 },
     );
   }
+
+  const ipRl = globalRateLimiter.checkLimit(
+    `setup:validate-key:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 12 },
+  );
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl);
+
+  const userRl = globalRateLimiter.checkLimit(`setup:validate-key:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 12,
+  });
+  if (!userRl.allowed) return createRateLimitResponse(userRl);
 
   let body: unknown;
   try {

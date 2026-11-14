@@ -37,9 +37,11 @@ export function MobileNavDrawer({ isOpen, onClose, items }: MobileNavDrawerProps
       )}
 
       <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('openMobileNav')}
+        role={isOpen ? 'dialog' : undefined}
+        aria-modal={isOpen ? 'true' : undefined}
+        aria-label={isOpen ? t('openMobileNav') : undefined}
+        aria-hidden={isOpen ? undefined : 'true'}
+        inert={isOpen ? undefined : true}
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-[#08090D] border-r border-[#222536] flex flex-col h-full shadow-2xl transition-transform duration-300 md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"

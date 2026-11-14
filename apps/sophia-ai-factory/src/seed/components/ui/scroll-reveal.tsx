@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, Children, isValidElement, cloneElement } from "react";
+import { prefersReducedMotion } from "./fade-in-view";
 
 interface ScrollRevealProps {
   children: React.ReactNode;
@@ -16,10 +17,7 @@ interface ScrollRevealProps {
 
 /**
  * Wraps children with a fade-in-up reveal triggered when the element
- * scrolls into the viewport. Uses IntersectionObserver for performance.
- *
- * With staggerDelay: each direct child reveals sequentially with an
- * industrial "assembly line" feel — no JS animation library needed.
+ * scrolls into the viewport. Uses IntersectionObserver + Zen Motion Governance tokens.
  */
 export function ScrollReveal({
   children,
@@ -29,9 +27,31 @@ export function ScrollReveal({
   staggerDelay,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
+  // Deterministic SSR + hydration initial state; CSS `@media (prefers-reduced-motion: reduce)`
+  // on `[data-zen-motion]` and `[data-zen-motion-stagger] > *` guarantees visible SSR paint.
   const [visible, setVisible] = useState(false);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
+    const syncReduced = () => {
+      const nextReduced = prefersReducedMotion();
+      setReduced(nextReduced);
+      if (nextReduced) {
+        setVisible(true);
+      }
+      return nextReduced;
+    };
+
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    mql?.addEventListener?.("change", syncReduced);
+
+    if (syncReduced()) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -43,17 +63,19 @@ export function ScrollReveal({
     );
 
     if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      mql?.removeEventListener?.("change", syncReduced);
+    };
   }, [threshold]);
 
-  // Mechanical easing — deliberate weight, factory press feel
-  const easing = "cubic-bezier(0.16, 1, 0.3, 1)";
+  const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
+  const duration = "var(--motion-duration-cinematic, 600ms)";
 
-  // Stagger children: each child gets its own reveal
   if (staggerDelay && visible) {
     const childArray = Children.toArray(children);
     return (
-      <div ref={ref} className={className}>
+      <div ref={ref} className={className} data-zen-motion-stagger="" data-zen-revealed="true">
         {childArray.map((child, i) => {
           if (!isValidElement(child)) return child;
           const existingStyle = (child.props as { style?: React.CSSProperties }).style ?? {};
@@ -62,7 +84,9 @@ export function ScrollReveal({
               ...existingStyle,
               opacity: 1,
               transform: "none",
-              transition: `opacity 0.6s ${easing} ${delay + i * staggerDelay}ms, transform 0.6s ${easing} ${delay + i * staggerDelay}ms`,
+              transition: reduced
+                ? "none"
+                : `opacity ${duration} ${easing} ${delay + i * staggerDelay}ms, transform ${duration} ${easing} ${delay + i * staggerDelay}ms`,
             },
           } as { style: React.CSSProperties });
         })}
@@ -70,11 +94,10 @@ export function ScrollReveal({
     );
   }
 
-  // Stagger children — initial hidden state
   if (staggerDelay && !visible) {
     const childArray = Children.toArray(children);
     return (
-      <div ref={ref} className={className}>
+      <div ref={ref} className={className} data-zen-motion-stagger="" data-zen-revealed="false">
         {childArray.map((child, i) => {
           if (!isValidElement(child)) return child;
           const existingStyle = (child.props as { style?: React.CSSProperties }).style ?? {};
@@ -83,7 +106,7 @@ export function ScrollReveal({
               ...existingStyle,
               opacity: 0,
               transform: "translateY(1.5rem)",
-              transition: `opacity 0.6s ${easing} ${delay + i * staggerDelay}ms, transform 0.6s ${easing} ${delay + i * staggerDelay}ms`,
+              transition: `opacity ${duration} ${easing} ${delay + i * staggerDelay}ms, transform ${duration} ${easing} ${delay + i * staggerDelay}ms`,
             },
           } as { style: React.CSSProperties });
         })}
@@ -95,10 +118,12 @@ export function ScrollReveal({
     <div
       ref={ref}
       className={className}
+      data-zen-motion="scroll-reveal"
+      data-zen-revealed={visible ? "true" : "false"}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "none" : "translateY(2rem)",
-        transition: `opacity 0.7s ${easing} ${delay}ms, transform 0.7s ${easing} ${delay}ms`,
+        transition: reduced ? "none" : `opacity ${duration} ${easing} ${delay}ms, transform ${duration} ${easing} ${delay}ms`,
       }}
     >
       {children}

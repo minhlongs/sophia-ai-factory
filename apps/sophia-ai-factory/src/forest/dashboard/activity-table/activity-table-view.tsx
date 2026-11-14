@@ -61,7 +61,7 @@ export function DashboardActivityTable({
         </div>
         <Link
           href="/dashboard/missions"
-          className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-colors"
+          className="text-xs font-semibold text-primary-text hover:underline flex items-center gap-1 transition-colors"
         >
           <span>View All</span>
           <ArrowRight className="w-3.5 h-3.5" />

@@ -10,16 +10,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getUserCredential, setUserCredential } from '@/tree/credentials/user-credentials-repo'
-;import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar'
+import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter'
 
 const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
 
-export async function POST(_request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
+
+  const ipRl = globalRateLimiter.checkLimit(
+    `setup:heygen-register:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 5 },
+  )
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl)
+
+  const userRl = globalRateLimiter.checkLimit(`setup:heygen-register:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 5,
+  })
+  if (!userRl.allowed) return createRateLimitResponse(userRl)
 
   const apiKey = await getUserCredential(user.id, 'heygen')
   if (!apiKey) {
@@ -29,7 +46,11 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
     )
   }
 
-  const result = await registerHeyGenWebhook(apiKey, SOPHIA_HEYGEN_WEBHOOK_URL)
+  const result = await registerHeyGenWebhook(
+    apiKey,
+    SOPHIA_HEYGEN_WEBHOOK_URL,
+    `user:${user.id}`,
+  )
 
   if (result.success && result.signingSecret) {
     try {

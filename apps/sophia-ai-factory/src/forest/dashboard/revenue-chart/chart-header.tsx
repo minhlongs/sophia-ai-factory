@@ -45,7 +45,7 @@ export function RevenueChartHeader({
           </h4>
           {activeTrend === "up" && activeTrendPercentage && (
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
               data-testid="revenue-trend-badge"
             >
               <ArrowUpRight className="w-3 h-3 mr-0.5" />
@@ -54,7 +54,7 @@ export function RevenueChartHeader({
           )}
           {activeTrend === "down" && activeTrendPercentage && (
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
               data-testid="revenue-trend-badge"
             >
               <ArrowDownRight className="w-3 h-3 mr-0.5" />
@@ -95,7 +95,7 @@ export function RevenueChartHeader({
             className={cn(
               "px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all",
               activePeriod === opt.key
-                ? "bg-primary text-white shadow-sm font-bold"
+                ? "bg-primary-600 text-white shadow-sm font-bold dark:bg-primary-600"
                 : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-background/60 dark:hover:bg-white/[0.04]"
             )}
             data-testid={`period-selector-${opt.key}`}
