@@ -1,12 +1,8 @@
 /**
  * Telegram Webhook Route Security & Dispatcher Test Suite
  *
- * Requirements:
- * - Enforce X-Telegram-Bot-Api-Secret-Token header matching TELEGRAM_WEBHOOK_SECRET
- * - Fail closed with HTTP 401 for missing or tampered tokens
- * - Return HTTP 500 when TELEGRAM_WEBHOOK_SECRET is unconfigured
- * - Return HTTP 200 in dormant mode when TELEGRAM_BOT_TOKEN is unset
- * - Successfully process authorized incoming updates when valid secret token is provided
+ * Verifies X-Telegram-Bot-Api-Secret-Token enforcement before body parsing,
+ * dormant bot handling, fail-closed 401/500 responses, and authorized dispatch.
  *
  * @module app/api/webhooks/telegram/route.test
  */
@@ -17,7 +13,6 @@ import { NextRequest } from 'next/server'
 const TEST_SECRET = 'telegram_webhook_secret_xyz123'
 const TEST_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
 
-// Mock downstream handlers to isolate route security & dispatcher logic
 vi.mock('@/tree/telegram/telegram-command-handlers', () => ({
   handleStart: vi.fn().mockResolvedValue(undefined),
   handleHelp: vi.fn().mockResolvedValue(undefined),
@@ -72,12 +67,7 @@ vi.mock('@/seed/r2/bucket-ops', () => ({
 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 function createTelegramRequest(
@@ -88,7 +78,6 @@ function createTelegramRequest(
   if (secretTokenHeader !== undefined && secretTokenHeader !== null) {
     headers['x-telegram-bot-api-secret-token'] = secretTokenHeader
   }
-
   return new NextRequest('http://localhost/api/webhooks/telegram', {
     method: 'POST',
     headers,
@@ -107,98 +96,85 @@ describe('Telegram Webhook Route Security (POST /api/webhooks/telegram)', () => 
   it('returns HTTP 200 in dormant mode when TELEGRAM_BOT_TOKEN is unset', async () => {
     vi.stubEnv('TELEGRAM_BOT_TOKEN', '')
     const { POST } = await import('./route')
-    const req = createTelegramRequest({ update_id: 1 })
-    const res = await POST(req)
+    const res = await POST(createTelegramRequest({ update_id: 1 }))
 
     expect(res.status).toBe(200)
-    const json = await res.json()
-    expect(json).toEqual({ ok: true })
+    await expect(res.json()).resolves.toEqual({ ok: true })
   })
 
   it('returns HTTP 500 when TELEGRAM_WEBHOOK_SECRET is missing', async () => {
     vi.stubEnv('TELEGRAM_WEBHOOK_SECRET', '')
     const { POST } = await import('./route')
-    const req = createTelegramRequest({ update_id: 2 }, TEST_SECRET)
+    const res = await POST(createTelegramRequest({ update_id: 2 }, TEST_SECRET))
+
+    expect(res.status).toBe(500)
+    await expect(res.json()).resolves.toEqual({ error: 'Webhook secret not configured' })
+  })
+
+  it.each([
+    ['missing header', null],
+    ['forged signature', 'forged_fake_secret_token_123'],
+    ['case-mismatched token', TEST_SECRET.toUpperCase()],
+  ])('rejects with HTTP 401 on %s', async (_label, token) => {
+    const { POST } = await import('./route')
+    const res = await POST(createTelegramRequest({ update_id: 3 }, token))
+
+    expect(res.status).toBe(401)
+    await expect(res.json()).resolves.toEqual({ error: 'Unauthorized' })
+  })
+
+  it('verifies X-Telegram-Bot-Api-Secret-Token BEFORE reading or parsing request JSON body', async () => {
+    const { POST } = await import('./route')
+    const req = createTelegramRequest({ update_id: 6 }, 'forged_secret_token')
+    const jsonSpy = vi.spyOn(req, 'json')
+
+    const res = await POST(req)
+
+    expect(res.status).toBe(401)
+    expect(jsonSpy).not.toHaveBeenCalled()
+  })
+
+  it('checks TELEGRAM_WEBHOOK_SECRET configuration BEFORE reading request JSON body', async () => {
+    vi.stubEnv('TELEGRAM_WEBHOOK_SECRET', '')
+    const { POST } = await import('./route')
+    const req = createTelegramRequest({ update_id: 7 }, TEST_SECRET)
+    const jsonSpy = vi.spyOn(req, 'json')
+
     const res = await POST(req)
 
     expect(res.status).toBe(500)
-    const json = await res.json()
-    expect(json).toEqual({ error: 'Webhook secret not configured' })
-  })
-
-  it('rejects with HTTP 401 when X-Telegram-Bot-Api-Secret-Token header is missing', async () => {
-    const { POST } = await import('./route')
-    const req = createTelegramRequest({ update_id: 3 }, null)
-    const res = await POST(req)
-
-    expect(res.status).toBe(401)
-    const json = await res.json()
-    expect(json).toEqual({ error: 'Unauthorized' })
-  })
-
-  it('rejects with HTTP 401 when secret token does not match (forged signature)', async () => {
-    const { POST } = await import('./route')
-    const req = createTelegramRequest({ update_id: 4 }, 'forged_fake_secret_token_123')
-    const res = await POST(req)
-
-    expect(res.status).toBe(401)
-    const json = await res.json()
-    expect(json).toEqual({ error: 'Unauthorized' })
-  })
-
-  it('rejects with HTTP 401 on partial or case-mismatched token', async () => {
-    const { POST } = await import('./route')
-    const req = createTelegramRequest({ update_id: 5 }, TEST_SECRET.toUpperCase())
-    const res = await POST(req)
-
-    expect(res.status).toBe(401)
-    const json = await res.json()
-    expect(json).toEqual({ error: 'Unauthorized' })
+    expect(jsonSpy).not.toHaveBeenCalled()
   })
 
   it('accepts and returns HTTP 200 when authentic secret token is provided with empty update', async () => {
     const { POST } = await import('./route')
-    const req = createTelegramRequest({}, TEST_SECRET)
-    const res = await POST(req)
+    const res = await POST(createTelegramRequest({}, TEST_SECRET))
 
     expect(res.status).toBe(200)
-    const json = await res.json()
-    expect(json).toEqual({ ok: true })
+    await expect(res.json()).resolves.toEqual({ ok: true })
   })
 
   it('accepts and routes callback_query with authentic secret token', async () => {
     const { POST } = await import('./route')
     const req = createTelegramRequest(
-      {
-        callback_query: {
-          data: 'help_info',
-          message: { chat: { id: 12345678 } },
-        },
-      },
+      { callback_query: { data: 'help_info', message: { chat: { id: 12345678 } } } },
       TEST_SECRET,
     )
     const res = await POST(req)
 
     expect(res.status).toBe(200)
-    const json = await res.json()
-    expect(json).toEqual({ ok: true })
+    await expect(res.json()).resolves.toEqual({ ok: true })
   })
 
   it('accepts and processes text message with authentic secret token', async () => {
     const { POST } = await import('./route')
     const req = createTelegramRequest(
-      {
-        message: {
-          text: '/help',
-          chat: { id: 12345678, first_name: 'SophiaTester' },
-        },
-      },
+      { message: { text: '/help', chat: { id: 12345678, first_name: 'SophiaTester' } } },
       TEST_SECRET,
     )
     const res = await POST(req)
 
     expect(res.status).toBe(200)
-    const json = await res.json()
-    expect(json).toEqual({ ok: true })
+    await expect(res.json()).resolves.toEqual({ ok: true })
   })
 })

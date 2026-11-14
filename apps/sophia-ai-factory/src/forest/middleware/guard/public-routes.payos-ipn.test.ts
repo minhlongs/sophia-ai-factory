@@ -21,6 +21,7 @@ describe('isPublicApiRoute — signature-authenticated webhooks', () => {
   it.each([
     '/api/webhooks/nowpayments',
     '/api/webhooks/payos',
+    '/api/webhooks/telegram',
     '/api/webhooks/clickbank',
     '/api/webhooks/shopify',
     '/api/webhooks/stripe',
@@ -50,5 +51,6 @@ describe('isPublicApiRoute — routes that must stay guarded', () => {
     // The pinned-Set rule from the security audit: a new subpath is private by
     // default, so adding a route must be an explicit edit.
     expect(isPublicApiRoute('/api/webhooks/payos/anything')).toBe(false)
+    expect(isPublicApiRoute('/api/webhooks/telegram/anything')).toBe(false)
   })
 })
