@@ -46,7 +46,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
   }
 
-  const result = await registerHeyGenWebhook(apiKey, SOPHIA_HEYGEN_WEBHOOK_URL)
+  const result = await registerHeyGenWebhook(
+    apiKey,
+    SOPHIA_HEYGEN_WEBHOOK_URL,
+    `user:${user.id}`,
+  )
 
   if (result.success && result.signingSecret) {
     try {

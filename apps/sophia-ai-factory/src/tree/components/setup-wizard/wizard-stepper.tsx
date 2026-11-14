@@ -47,7 +47,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                   className={cn(
                     'w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ease-in-out shrink-0',
                     isCompleted
-                      ? 'bg-emerald-600 dark:bg-emerald-500 border-emerald-600 dark:border-emerald-500 text-white shadow-xs'
+                      ? 'bg-emerald-600 dark:bg-emerald-700 border-emerald-600 dark:border-emerald-600 text-white shadow-xs'
                       : isCurrent
                         ? 'bg-primary border-primary text-primary-foreground dark:bg-primary-600 dark:border-primary-600 dark:text-white ring-4 ring-primary/20 font-bold shadow-xs'
                         : 'bg-card border-border text-muted-foreground'

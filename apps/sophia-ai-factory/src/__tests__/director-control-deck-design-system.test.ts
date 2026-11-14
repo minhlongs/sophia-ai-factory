@@ -153,6 +153,21 @@ describe("Director's Control Deck Design System Verification", () => {
 
     expect(seedButton).toContain('dark:bg-primary-600');
     expect(seedButton).toContain('dark:bg-secondary-700');
+    expect(seedButton).toContain('hover:bg-muted hover:text-foreground');
+    expect(globalsCss).toContain('--accent-foreground: #090A10;');
+    expect(readSrcFile('seed/components/ui/command-items.tsx')).toContain(
+      'data-[selected=true]:bg-muted data-[selected=true]:text-foreground',
+    );
+    expect(readSrcFile('forest/dashboard/activity-table/status-badge.tsx')).toContain(
+      'text-amber-800 dark:text-amber-300',
+    );
+    expect(readSrcFile('forest/dashboard/dashboard-topbar-actions.tsx')).toContain(
+      'dark:bg-rose-700',
+    );
+    expect(readSrcFile('forest/dashboard/revenue-chart/chart-header.tsx')).toContain(
+      'text-emerald-700 dark:text-emerald-300',
+    );
+    expect(readSrcFile('styles/v3-core.css')).toContain('--accent-2: #92400E;');
     expect(timelinePreview).toContain('bg-muted text-muted-foreground');
     expect(timelinePreview).not.toContain('bg-secondary text-muted-foreground');
     expect(storyboardCard).toContain('bg-card dark:bg-zinc-900/60');

@@ -76,5 +76,5 @@ export async function POST(request: NextRequest) {
     }, { status: 422 });
   }
 
-  return sendResendTestEmail(api_key, toEmail);
+  return sendResendTestEmail(api_key, toEmail, `user:${user.id}`);
 }

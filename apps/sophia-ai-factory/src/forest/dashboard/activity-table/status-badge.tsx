@@ -23,7 +23,7 @@ export function StatusBadge({ status }: { status: string }) {
   if (s === "processing" || s === "running" || s === "queued" || s === "pending") {
     return (
       <span
-        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25"
+        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/25"
         data-testid={`status-pill-${status}`}
       >
         <span className="relative flex h-1.5 w-1.5">
@@ -36,7 +36,7 @@ export function StatusBadge({ status }: { status: string }) {
   }
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/25"
+      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25"
       data-testid={`status-pill-${status}`}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
