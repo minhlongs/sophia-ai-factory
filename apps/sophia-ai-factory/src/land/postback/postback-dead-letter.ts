@@ -2,11 +2,8 @@
  * Postback Dead-Letter Queue
  *
  * Captures legacy/canonical postback requests that cannot be attributed or
- * verified, so operators can inspect and replay them instead of losing the
- * conversion payload. A postback fails closed loudly (4xx/5xx), but the
- * evidence is durably recorded here before the response is returned.
- *
- * Same row-mapping + SQL-constants pattern as commission-dlq-schema.ts.
+ * verified, so operators can inspect and replay them without losing conversion
+ * evidence. Same row-mapping + SQL-constants pattern as commission-dlq-schema.ts.
  *
  * Layer: land/postback (Business Workflow)
  * @module land/postback/postback-dead-letter
@@ -40,11 +37,8 @@ export interface EnqueuePostbackDlqInput {
   endpoint: string
   sourceIp: string | null
   /**
-   * Request headers as a JSON string, produced only by `serializeDlqHeaders`.
-   * That serializer stores an allowlist of non-sensitive diagnostic headers
-   * plus a one-way `sigfp:` digest per declared signature header, so no
-   * credential value can reach this field through the supported call sites.
-   * Verified by the negative regression tests in `__tests__/postback-dlq-evidence.test.ts`.
+   * Request headers serialized by `serializeDlqHeaders`: allowlisted diagnostic
+   * headers plus `sigfp:` digests for contract-declared signature headers only.
    */
   headersJson: string
   rawBody: string
@@ -53,38 +47,40 @@ export interface EnqueuePostbackDlqInput {
 }
 
 /**
- * Stable row identity for one piece of evidence. Hashing the attribution key
- * is what makes the upsert below reachable: a random id would mint a fresh row
- * for every redelivery of the same bad request, so retry_count could never
- * advance and a retry storm would write unbounded rows.
- *
- * The fixed-string fields are NUL-separated; the payload follows as the last
- * field. A raw body can itself contain a NUL, so this is not a formally
- * unambiguous encoding — it is enough here because only the payload is
- * attacker-controlled and nothing after it is hashed.
- *
- * A NULL hint is mapped to a sentinel no tenant id can equal, so an
- * unattributed row can never collide with a row for the empty-string tenant.
+ * 15-minute aggregation window for unattributed (`tenantHint === null`) rows.
+ * Caps unauthenticated floods varying `rawBody` to one row per
+ * `(network, endpoint, failureReason)` per 15 minutes via `retry_count`.
  */
-async function deriveDlqId(input: EnqueuePostbackDlqInput): Promise<string> {
+export const UNATTRIBUTED_DLQ_WINDOW_MS = 15 * 60 * 1000
+
+async function deriveDlqId(
+  input: EnqueuePostbackDlqInput,
+  nowMs: number,
+): Promise<string> {
+  if (input.tenantHint === null) {
+    const bucket = String(Math.floor(nowMs / UNATTRIBUTED_DLQ_WINDOW_MS))
+    return sha256Hex(
+      ['unattributed', input.network, input.endpoint, input.failureReason, bucket].join(
+        '\u0000',
+      ),
+    )
+  }
   return sha256Hex(
     [
+      'attributed',
       input.network,
       input.endpoint,
       input.failureReason,
-      input.tenantHint === null ? '\u0001unattributed' : input.tenantHint,
+      input.tenantHint,
       input.rawBody,
     ].join('\u0000'),
   )
 }
 
 /**
- * Persist one unprocessable postback. Idempotent per (network, endpoint,
- * failure reason, tenant hint, payload): repeated deliveries of the same bad
- * request increment retry_count instead of creating duplicate rows.
- *
- * Returns the dead-letter id, or null when D1 is unavailable — callers must
- * still fail the request closed; this is evidence capture, not acceptance.
+ * Persist one unprocessable postback. Attributed rows deduplicate per exact
+ * payload; unattributed rows aggregate per 15-minute window via `retry_count`.
+ * Returns the dead-letter id, or null when D1 is unavailable.
  */
 export async function enqueuePostbackDlq(
   input: EnqueuePostbackDlqInput,
@@ -98,10 +94,11 @@ export async function enqueuePostbackDlq(
     return null
   }
 
-  const now = new Date().toISOString()
+  const nowMs = Date.now()
+  const now = new Date(nowMs).toISOString()
 
   try {
-    const id = await deriveDlqId(input)
+    const id = await deriveDlqId(input, nowMs)
     await db
       .prepare(INSERT_POSTBACK_DLQ_SQL)
       .bind(

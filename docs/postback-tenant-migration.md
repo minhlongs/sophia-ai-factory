@@ -111,13 +111,21 @@ What capture guarantees:
   `(tenant_hint, resolved, created_at DESC)`, so queries per network or per
   tenant resolve in index order. Endpoint, source IP and failure reason are
   filterable columns, not indexes.
-- **Redeliveries share one row:** the row id is derived from
-  `(network, endpoint, failure reason, tenant hint, payload)`, so a provider
-  redelivering the same bad request increments `retry_count` on one row instead
-  of inserting a new one. This bounds only identical requests: every distinct
-  body still inserts its own row, so a caller sending varied bodies can grow the
-  table one row per request. The only limit on that today is the application
-  webhook rate limit; there is no edge rate limit for these URLs.
+- **Redeliveries and unattributed floods are bounded differently:**
+  - **Attributed rows (`tenant_hint` verified by HMAC):** the row id hashes
+    `('attributed', network, endpoint, failure reason, tenant hint, payload)`, so
+    a provider redelivering the same bad request increments `retry_count` on one
+    row while distinct conversion bodies for a verified workspace remain distinct
+    rows.
+  - **Unattributed rows (`tenant_hint IS NULL`, pre-HMAC):** the row id hashes
+    `('unattributed', network, endpoint, failure reason, 15-minute window bucket)`
+    (`UNATTRIBUTED_DLQ_WINDOW_MS = 900_000`) and omits `payload`. An
+    unauthenticated flood varying the request body collapses onto at most one
+    row per `(network, endpoint, failure reason)` per 15-minute window, keeping
+    the first sample payload of that window and counting every subsequent hit in
+    `retry_count` + `last_attempted_at`. The leading domain tag guarantees the
+    two id spaces are disjoint. There is still no Cloudflare edge WAF rate-limit
+    rule dedicated to these URLs outside the application webhook limiter.
 - **Tenant isolation:** `tenant_hint` is `NULL` until the signature proves the
   tenant. The queue read and resolve helpers require a `tenantId` and filter by
   it, so they can never return another workspace's rows, and rows with a `NULL`
@@ -127,8 +135,9 @@ Note on the dedup key: because the endpoint is now canonical, two requests to
 the same route that differ only in query string collapse onto one row. That is
 intentional — the query string is not part of the evidence identity, and
 keeping it would let an unauthenticated caller mint unlimited rows by varying
-one parameter. Bodies that differ still produce distinct rows, up to the
-8192-character cap.
+one parameter. Attributed rows with distinct bodies still produce distinct rows
+(up to the 8192-character cap); unattributed rows share one row per 15-minute
+window regardless of body variation.
 
 Retention is unbounded today: `0489` has no TTL column, D1 applies no
 per-table expiry, and the application has no code path that deletes rows from
@@ -248,13 +257,21 @@ Cơ chế này đảm bảo:
   `(tenant_hint, resolved, created_at DESC)`, nên truy vấn theo từng network
   hoặc từng tenant chạy đúng thứ tự index. Endpoint, IP nguồn và lý do lỗi là cột
   để lọc, không phải index.
-- **Gửi lại thì dùng chung một dòng:** id của bản ghi sinh từ
-  `(network, endpoint, lý do lỗi, tenant hint, payload)`, nên khi provider gửi
-  lại đúng request lỗi đó thì `retry_count` tăng trên cùng một dòng thay vì
-  thêm dòng mới. Điều này chỉ chặn request giống hệt nhau: mỗi body khác nhau
-  vẫn thêm một dòng riêng, nên một caller gửi body thay đổi liên tục có thể làm
-  bảng tăng mỗi request một dòng. Giới hạn duy nhất hiện nay là rate limit
-  webhook ở tầng ứng dụng; chưa có rate limit ở edge cho các URL này.
+- **Gửi lại và flood chưa xác thực được giới hạn theo hai cơ chế riêng:**
+  - **Dòng đã gắn tenant (`tenant_hint` đã được chữ ký HMAC chứng minh):** id
+    của bản ghi băm từ `('attributed', network, endpoint, lý do lỗi, tenant hint,
+    payload)`, nên khi provider gửi lại đúng request lỗi đó thì `retry_count`
+    tăng trên cùng một dòng, còn các body giao dịch khác nhau của cùng workspace
+    vẫn giữ dòng riêng.
+  - **Dòng chưa xác thực (`tenant_hint IS NULL`, trước bước HMAC):** id của bản
+    ghi băm từ `('unattributed', network, endpoint, lý do lỗi, khung 15 phút)`
+    (`UNATTRIBUTED_DLQ_WINDOW_MS = 900_000`) và không đưa `payload` vào khoá.
+    Một caller chưa xác thực gửi body thay đổi liên tục chỉ tạo tối đa 1 dòng
+    mỗi `(network, endpoint, lý do lỗi)` trong mỗi khung 15 phút — giữ lại mẫu
+    payload đầu tiên của khung đó và đếm mọi lần gửi tiếp theo vào `retry_count`
+    kèm `last_attempted_at`. Nhãn miền id ở đầu khoá đảm bảo hai không gian id
+    này không thể giao nhau. Hiện vẫn chưa có rule rate limit riêng ở tầng
+    Cloudflare edge WAF ngoài bộ giới hạn webhook ở tầng ứng dụng.
 - **Cô lập theo tenant:** `tenant_hint` là `NULL` cho đến khi chữ ký chứng minh
   được tenant. Các hàm đọc và resolve hàng đợi bắt buộc `tenantId` và lọc theo
   đó, nên không bao giờ trả về dòng của workspace khác, và dòng có hint `NULL`
@@ -263,8 +280,10 @@ Cơ chế này đảm bảo:
 Lưu ý về khoá dedup: vì endpoint nay là dạng chuẩn tắc, hai request vào cùng
 route chỉ khác nhau ở query string sẽ gộp vào một dòng. Đây là chủ đích — query
 string không thuộc danh tính của bằng chứng, giữ nó lại thì một caller chưa xác
-thực có thể tạo vô hạn dòng chỉ bằng cách đổi một tham số. Body khác nhau vẫn
-cho ra dòng khác nhau, trong giới hạn 8192 ký tự.
+thực có thể tạo vô hạn dòng chỉ bằng cách đổi một tham số. Với các dòng đã gắn
+tenant, body khác nhau vẫn cho ra dòng khác nhau (trong giới hạn 8192 ký tự);
+với các dòng chưa xác thực (`tenant_hint IS NULL`), mọi biến thể body trong cùng
+khung 15 phút dùng chung một dòng.
 
 Hiện chưa có giới hạn thời gian lưu: bảng `0489` không có cột TTL, D1 không tự
 hết hạn theo bảng, và ứng dụng không có đoạn code nào xoá dòng khỏi bảng này.

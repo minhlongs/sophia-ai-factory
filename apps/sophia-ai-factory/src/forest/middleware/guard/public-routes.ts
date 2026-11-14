@@ -49,6 +49,37 @@ export function isPublicApiRoute(pathname: string): boolean {
     '/api/webhooks/shopify',
     '/api/webhooks/stripe',
     '/api/webhooks/payos',
+    '/api/webhooks/accesstrade',
+    '/api/webhooks/amazon',
+    '/api/webhooks/awin',
+    '/api/webhooks/tiktok-shop',
+    // Legacy SaaS & crypto postback delegates (per-workspace HMAC, no session)
+    '/api/webhooks/saas-crypto/partnerstack',
+    '/api/webhooks/saas-crypto/rewardful',
+    '/api/webhooks/saas-crypto/binance',
+    '/api/webhooks/saas-crypto/bybit',
+    // Legacy affiliate postback delegates (per-workspace HMAC, no session)
+    '/api/webhooks/affiliate/tiktok_shop',
+    '/api/webhooks/affiliate/tiktok-shop',
+    '/api/webhooks/affiliate/amazon_associates',
+    '/api/webhooks/affiliate/amazon',
+    '/api/webhooks/affiliate/clickbank',
+    '/api/webhooks/affiliate/accesstrade',
+    '/api/webhooks/affiliate/awin',
+    // Canonical multi-tenant postback callbacks (per-workspace signature, no session)
+    '/api/postback/binance-link',
+    '/api/postback/binance',
+    '/api/postback/bybit',
+    '/api/postback/bitget',
+    '/api/postback/okx',
+    '/api/postback/partnerstack',
+    '/api/postback/rewardful',
+    '/api/postback/impact',
+    '/api/postback/cj',
+    '/api/postback/awin',
+    '/api/postback/clickbank',
+    '/api/postback/tiktok_shop',
+    '/api/postback/generic',
     // Alternate PayOS IPN callback path (HMAC checksum, no session). Listed
     // explicitly because the pinned-Set rule makes new subpaths private by
     // default, and an unlisted webhook answers 401 before its signature check.
@@ -90,6 +121,7 @@ export function isPublicApiRoute(pathname: string): boolean {
   // Better Auth owns its own auth for ALL /api/auth/* paths (catch-all route).
   if (pathname.startsWith('/api/auth/')) return true;
   if (pathname.startsWith('/api/webhooks/')) return false; // default deny
+  if (pathname.startsWith('/api/postback/')) return false; // default deny
   if (pathname.startsWith('/api/cron/')) return false; // default deny
 
   return false;

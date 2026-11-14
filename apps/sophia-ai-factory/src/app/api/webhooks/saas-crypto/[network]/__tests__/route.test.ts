@@ -164,8 +164,8 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
   });
 
   it('records cf-connecting-ip and ignores the client-controlled x-forwarded-for', async () => {
-    const db = createLegacyD1();
-    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    const edgeDb = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(edgeDb as unknown as D1Database);
     mockCreds({});
 
     const withEdge = await POST(
@@ -177,7 +177,10 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
       { params: { network: 'binance' } },
     );
     expect(withEdge.status).toBe(422);
-    expect((await dlqRows(db))[0].source_ip).toBe('9.9.9.9');
+    expect((await dlqRows(edgeDb))[0].source_ip).toBe('9.9.9.9');
+
+    const noEdgeDb = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(noEdgeDb as unknown as D1Database);
 
     const withoutEdge = await POST(
       post('binance', JSON.stringify({ tradeId: 'r2' }), {
@@ -187,9 +190,33 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
       { params: { network: 'binance' } },
     );
     expect(withoutEdge.status).toBe(422);
+    const rows = await dlqRows(noEdgeDb);
+    expect(rows.length).toBe(1);
+    expect(rows[0].source_ip).toBeNull();
+  });
+
+  it('bounds unauthenticated varied-body invalid postbacks to one DLQ row per 15-minute window', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    for (const tradeId of ['flood-1', 'flood-2', 'flood-3']) {
+      const res = await POST(
+        post('binance', JSON.stringify({ tradeId }), { 'x-signature': 'x' }),
+        { params: { network: 'binance' } },
+      );
+      expect(res.status).toBe(422);
+    }
+
     const rows = await dlqRows(db);
-    expect(rows.length).toBe(2);
-    expect(rows[1].source_ip).toBeNull();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      network: 'binance',
+      failure_reason: 'tenant_unresolvable',
+      tenant_hint: null,
+      retry_count: 3,
+      payload: JSON.stringify({ tradeId: 'flood-1' }),
+    });
   });
 
   it('stores no credential header or query parameter on a captured request', async () => {

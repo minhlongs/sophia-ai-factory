@@ -17,6 +17,7 @@ import {
   listUnresolvedPostbackDlq,
   getPostbackDlqCounts,
   resolvePostbackDlqEntry,
+  UNATTRIBUTED_DLQ_WINDOW_MS,
 } from '../postback-dead-letter';
 import { getD1 } from '@/seed/db/client';
 
@@ -167,6 +168,127 @@ describe('Postback Dead-Letter Queue', () => {
 
     expect(await listUnresolvedPostbackDlq(TENANT_A)).toEqual([]);
     expect(await listUnresolvedPostbackDlq('')).toEqual([]);
+  });
+
+  it('aggregates varied-body unattributed postbacks within a 15-minute window onto one row', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-13T12:00:00.000Z'));
+
+      const first = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: null,
+        rawBody: JSON.stringify({ attempt: 1, nonce: 'alpha' }),
+      });
+      vi.setSystemTime(new Date('2026-11-13T12:07:30.000Z'));
+      const second = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: null,
+        rawBody: JSON.stringify({ attempt: 2, nonce: 'bravo' }),
+      });
+      vi.setSystemTime(new Date('2026-11-13T12:14:59.999Z'));
+      const third = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: null,
+        rawBody: JSON.stringify({ attempt: 3, nonce: 'charlie' }),
+      });
+
+      expect(first).toBe(second);
+      expect(second).toBe(third);
+
+      const rows = await allRows(db);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        tenant_hint: null,
+        retry_count: 3,
+        payload: JSON.stringify({ attempt: 1, nonce: 'alpha' }),
+        created_at: '2026-11-13T12:00:00.000Z',
+        last_attempted_at: '2026-11-13T12:14:59.999Z',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('mints a fresh unattributed row once the 15-minute window rolls over', async () => {
+    vi.useFakeTimers();
+    try {
+      const windowStartMs = Date.UTC(2026, 10, 13, 12, 0, 0);
+      vi.setSystemTime(windowStartMs);
+      const first = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: null,
+        rawBody: JSON.stringify({ seq: 1 }),
+      });
+
+      vi.setSystemTime(windowStartMs + UNATTRIBUTED_DLQ_WINDOW_MS);
+      const second = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: null,
+        rawBody: JSON.stringify({ seq: 2 }),
+      });
+
+      expect(first).not.toBe(second);
+      const rows = await allRows(db);
+      expect(rows).toHaveLength(2);
+      expect(rows.every((r) => r.retry_count === 1)).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('still retains distinct rows for attributed postbacks with different bodies in the same window', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-13T12:00:00.000Z'));
+      await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: TENANT_A,
+        rawBody: JSON.stringify({ order: 'ord-1' }),
+      });
+      await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: TENANT_A,
+        rawBody: JSON.stringify({ order: 'ord-2' }),
+      });
+
+      const rows = await allRows(db);
+      expect(rows).toHaveLength(2);
+      expect(rows.every((r) => r.retry_count === 1)).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps attributed and unattributed id domains disjoint even under a crafted tenantHint and rawBody', async () => {
+    vi.useFakeTimers();
+    try {
+      const nowMs = Date.UTC(2026, 10, 13, 12, 0, 0);
+      vi.setSystemTime(nowMs);
+      const bucket = String(Math.floor(nowMs / UNATTRIBUTED_DLQ_WINDOW_MS));
+
+      const unattributedId = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: null,
+        rawBody: JSON.stringify({ real: 'payload' }),
+      });
+      // An attributed caller that mirrors the unattributed tuple exactly, using
+      // the marker as its tenant hint and the bucket number as its payload, must
+      // still land in a different row: one domain cannot be reached by crafting
+      // a value inside the other.
+      const craftedAttributedId = await enqueuePostbackDlq({
+        ...BASE_INPUT,
+        tenantHint: '\u0001unattributed',
+        rawBody: bucket,
+      });
+
+      expect(unattributedId).not.toBe(craftedAttributedId);
+      const rows = await allRows(db);
+      expect(rows).toHaveLength(2);
+      expect(rows.map((r) => r.tenant_hint).sort()).toEqual([null, '\u0001unattributed'].sort());
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('aggregates counts by network within the tenant scope', async () => {

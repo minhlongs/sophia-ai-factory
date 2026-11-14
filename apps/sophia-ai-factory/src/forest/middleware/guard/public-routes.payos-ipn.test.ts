@@ -34,6 +34,39 @@ describe('isPublicApiRoute — signature-authenticated webhooks', () => {
     // callback cannot carry.
     expect(isPublicApiRoute('/api/payos/ipn')).toBe(true)
   })
+
+  it.each([
+    '/api/webhooks/accesstrade',
+    '/api/webhooks/amazon',
+    '/api/webhooks/awin',
+    '/api/webhooks/tiktok-shop',
+    '/api/webhooks/saas-crypto/partnerstack',
+    '/api/webhooks/saas-crypto/rewardful',
+    '/api/webhooks/saas-crypto/binance',
+    '/api/webhooks/saas-crypto/bybit',
+    '/api/webhooks/affiliate/tiktok_shop',
+    '/api/webhooks/affiliate/tiktok-shop',
+    '/api/webhooks/affiliate/amazon_associates',
+    '/api/webhooks/affiliate/amazon',
+    '/api/webhooks/affiliate/clickbank',
+    '/api/webhooks/affiliate/accesstrade',
+    '/api/webhooks/affiliate/awin',
+    '/api/postback/binance-link',
+    '/api/postback/binance',
+    '/api/postback/bybit',
+    '/api/postback/bitget',
+    '/api/postback/okx',
+    '/api/postback/partnerstack',
+    '/api/postback/rewardful',
+    '/api/postback/impact',
+    '/api/postback/cj',
+    '/api/postback/awin',
+    '/api/postback/clickbank',
+    '/api/postback/tiktok_shop',
+    '/api/postback/generic',
+  ])('allows signature-verified postback route %s without a browser session', (path) => {
+    expect(isPublicApiRoute(path)).toBe(true)
+  })
 })
 
 describe('isPublicApiRoute — routes that must stay guarded', () => {
@@ -42,6 +75,10 @@ describe('isPublicApiRoute — routes that must stay guarded', () => {
     '/api/admin/payouts',
     '/api/user/byok',
     '/api/webhooks/nowpayments-payout',
+    '/api/webhooks/saas-crypto/unknown',
+    '/api/webhooks/affiliate/unknown',
+    '/api/postback/unknown',
+    '/api/postback',
   ])('does not make %s public without a session', (path) => {
     expect(isPublicApiRoute(path)).toBe(false)
   })
