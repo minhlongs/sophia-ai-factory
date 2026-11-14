@@ -54,7 +54,8 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     pathname.startsWith('/api/webhooks/nowpayments') ||
     pathname.startsWith('/api/webhooks/payos') ||
     pathname.startsWith('/api/webhooks/telegram') ||
-    pathname === '/api/payos/ipn'
+    pathname === '/api/payos/ipn' ||
+    pathname === '/api/inngest'
   ) {
     const versionKey = request.headers.get('Cloudflare-Workers-Version-Key');
     if (versionKey && versionKey !== 'stable') {
@@ -76,7 +77,11 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     rateLimitConfig = RATE_LIMITS.auth;
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
-  } else if (pathname.startsWith('/api/webhooks') || pathname === '/api/payos/ipn') {
+  } else if (
+    pathname.startsWith('/api/webhooks') ||
+    pathname === '/api/payos/ipn' ||
+    pathname === '/api/inngest'
+  ) {
     rateLimitConfig = RATE_LIMITS.webhook;
   }
 
