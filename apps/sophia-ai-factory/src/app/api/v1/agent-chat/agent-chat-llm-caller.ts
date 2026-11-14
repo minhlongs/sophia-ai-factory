@@ -5,6 +5,18 @@
 
 import { formatStream, openAiStreamToChunks } from '@/forest/agent-chat/stream-formatter';
 import type { SseEvent } from '@/forest/agent-chat/types';
+import { classifyHttpStatus } from '@/seed/types/failure-kind';
+import {
+  PROVIDER_CAPABILITIES,
+  recordTieredRouteOutcome,
+  sanitizeToolChoiceForRoute,
+  selectTieredByokRoute,
+  type ByokTaskComplexity,
+  type KeyBudgetState,
+  type KeyCapability,
+  type TieredByokRouteSelection,
+  type ToolChoiceValue,
+} from '@/tree/byok';
 
 export interface LlmCallOptions {
   messages: Array<{ role: string; content: string | Array<unknown> }>;
@@ -12,15 +24,21 @@ export interface LlmCallOptions {
     type: string;
     function: { name: string; description: string; parameters: Record<string, unknown> };
   }>;
-  toolChoice?: string | { type: string };
+  toolChoice?: ToolChoiceValue;
   userId: string;
   llmRoute: { baseUrl: string; apiKey: string; model: string };
+  capabilities?: readonly KeyCapability[];
+  taskKind?: ByokTaskComplexity;
+  allowToolStrip?: boolean;
+  budget?: KeyBudgetState;
+  systemPromptCacheable?: boolean;
 }
 
 export type LlmCallResult = {
   response: Response;
   events: SseEvent[];
   stopReason: string | undefined;
+  routeSelection?: TieredByokRouteSelection;
 };
 
 /**
@@ -28,18 +46,39 @@ export type LlmCallResult = {
  * Supports both OpenAI-compatible and Anthropic-style streaming.
  */
 export async function callLlmWithTools(options: LlmCallOptions): Promise<LlmCallResult> {
-  const { messages, tools, toolChoice, userId: _userId, llmRoute } = options;
+  const { messages, tools, toolChoice, userId, llmRoute } = options;
+
+  const toolCheck = sanitizeToolChoiceForRoute({
+    tools,
+    toolChoice,
+    capabilities: options.capabilities ?? PROVIDER_CAPABILITIES.openrouter,
+    allowToolStrip: options.allowToolStrip,
+  });
+  if (!toolCheck.ok) {
+    throw new Error(`${toolCheck.error.code}: ${toolCheck.error.message}`);
+  }
+
+  const routeSelection = options.taskKind
+    ? selectTieredByokRoute({
+        taskKind: options.taskKind,
+        baselineModel: llmRoute.model,
+        keyRef: userId,
+        budget: options.budget,
+        systemPromptCacheable: options.systemPromptCacheable,
+      })
+    : undefined;
+  const effectiveModel = routeSelection ? routeSelection.model : llmRoute.model;
 
   const requestBody: Record<string, unknown> = {
-    model: llmRoute.model,
+    model: effectiveModel,
     messages,
     max_tokens: 4096,
     temperature: 0.7,
   };
 
-  if (tools && tools.length > 0) {
-    requestBody.tools = tools;
-    requestBody.tool_choice = toolChoice ?? 'auto';
+  if (toolCheck.value.tools && toolCheck.value.tools.length > 0) {
+    requestBody.tools = toolCheck.value.tools;
+    requestBody.tool_choice = toolCheck.value.toolChoice ?? 'auto';
   }
 
   const response = await fetch(`${llmRoute.baseUrl}/chat/completions`, {
@@ -52,8 +91,20 @@ export async function callLlmWithTools(options: LlmCallOptions): Promise<LlmCall
   });
 
   if (!response.ok || !response.body) {
+    if (routeSelection) {
+      recordTieredRouteOutcome({
+        keyRef: userId,
+        model: effectiveModel,
+        ok: false,
+        failureKind: classifyHttpStatus(response.status),
+      });
+    }
     const errText = await response.text().catch(() => 'upstream error');
     throw new Error(`LLM upstream error: ${errText}`);
+  }
+
+  if (routeSelection) {
+    recordTieredRouteOutcome({ keyRef: userId, model: effectiveModel, ok: true });
   }
 
   const chunks = openAiStreamToChunks(response.body);
@@ -67,5 +118,10 @@ export async function callLlmWithTools(options: LlmCallOptions): Promise<LlmCall
     ? (lastContentEvent.data as string).match(/"stop_reason"\s*:\s*"([^"]+)"/)?.[1]
     : undefined;
 
-  return { response, events, stopReason };
+  return {
+    response,
+    events,
+    stopReason,
+    ...(routeSelection ? { routeSelection } : {}),
+  };
 }
