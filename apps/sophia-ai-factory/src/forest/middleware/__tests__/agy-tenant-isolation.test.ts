@@ -306,5 +306,44 @@ describe('AGY Tenant Isolation Edge Middleware', () => {
       expect(blockedRes?.headers.get('X-Agency-RateLimit-Remaining')).toBe('0');
       expect(blockedRes?.headers.get('X-Tenant-Isolation-Reason')).toBe('AGENCY_RATE_LIMIT_EXCEEDED');
     });
+
+    it('exempts public webhook/callback endpoints without agency headers from the shared global_agency bucket', async () => {
+      const rpsLimit = 2;
+
+      // Exhaust the global_agency bucket via non-exempt API probes without agency headers
+      for (let i = 0; i < rpsLimit; i++) {
+        const probe = new NextRequest('https://sophia.agencyos.network/api/v1/ping');
+        expect(await agyTenantIsolationMiddleware(probe, { defaultRpsLimit: rpsLimit, secret: TEST_SECRET })).toBeNull();
+      }
+      const saturatedProbe = new NextRequest('https://sophia.agencyos.network/api/v1/ping');
+      const saturatedRes = await agyTenantIsolationMiddleware(saturatedProbe, {
+        defaultRpsLimit: rpsLimit,
+        secret: TEST_SECRET,
+      });
+      expect(saturatedRes?.status).toBe(429);
+
+      // External provider callbacks on exact public routes must NOT be starved by global_agency saturation
+      for (const path of ['/api/webhooks/telegram', '/api/payos/ipn', '/api/inngest']) {
+        const webhookReq = new NextRequest(`https://sophia.agencyos.network${path}`, { method: 'POST' });
+        const webhookRes = await agyTenantIsolationMiddleware(webhookReq, {
+          defaultRpsLimit: rpsLimit,
+          secret: TEST_SECRET,
+        });
+        expect(webhookRes).toBeNull();
+      }
+
+      // Forged tenant tokens on public webhook routes must still be rejected before the bucket exemption
+      const forgedTokenReq = new NextRequest('https://sophia.agencyos.network/api/webhooks/telegram', {
+        method: 'POST',
+        headers: {
+          'x-tenant-token': 'agy_tok_forged.0000000000000000000000000000000000000000000000000000000000000000',
+        },
+      });
+      const forgedRes = await agyTenantIsolationMiddleware(forgedTokenReq, {
+        defaultRpsLimit: rpsLimit,
+        secret: TEST_SECRET,
+      });
+      expect(forgedRes?.status).toBe(403);
+    });
   });
 });
