@@ -49,9 +49,19 @@ export async function GET(request: NextRequest): Promise<Response> {
     const workspaceIds = await getUserWorkspaceIds(user.id, d1);
     const approvals = await listPendingPublishApprovals(workspaceIds, limit, d1);
 
+    const channelCache = new Map<string, Promise<{ creatorNickname: string } | undefined>>();
+    const getCachedCreatorInfo = (tenantId: string, channelId: string) => {
+      const cacheKey = `${tenantId}::${channelId}`;
+      const cached = channelCache.get(cacheKey);
+      if (cached) return cached;
+      const pending = lookupChannelCreatorInfo(d1, tenantId, channelId);
+      channelCache.set(cacheKey, pending);
+      return pending;
+    };
+
     const enrichedApprovals = await Promise.all(
       approvals.map(async (row) => {
-        const creatorInfo = await lookupChannelCreatorInfo(d1, row.tenantId, row.channelId);
+        const creatorInfo = await getCachedCreatorInfo(row.tenantId, row.channelId);
         return {
           id: row.idempotencyKey,
           tenantId: row.tenantId,

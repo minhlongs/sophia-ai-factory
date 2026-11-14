@@ -55,6 +55,8 @@ export async function runToolUseLoop(
         tools: registry.getOpenAITools(),
         userId,
         llmRoute,
+        taskKind: 'tool_agent',
+        systemPromptCacheable: true,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'LLM call failed';

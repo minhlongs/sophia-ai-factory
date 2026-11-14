@@ -43,10 +43,6 @@ export function useSetupWizard() {
     });
   }, []);
 
-  const updateConfig = useCallback((key: string, value: string) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
-  }, []);
-
   const clearReceiptForKey = useCallback((keyName: string) => {
     setReceipts(prev => {
       if (!(keyName in prev)) return prev;
@@ -55,6 +51,12 @@ export function useSetupWizard() {
       return next;
     });
   }, []);
+
+  const updateConfig = useCallback((key: string, value: string) => {
+    setConfig(prev => ({ ...prev, [key]: value }));
+    setStatus(prev => (prev[key] && prev[key] !== 'idle' ? { ...prev, [key]: 'idle' } : prev));
+    clearReceiptForKey(key);
+  }, [clearReceiptForKey]);
 
   const verifyKey = useCallback(async (service: string, keyName: string, keyValue: string) => {
     if (!keyValue.trim()) {

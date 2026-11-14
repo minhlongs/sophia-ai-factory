@@ -170,4 +170,26 @@ describe('Tiered BYOK Model Router', () => {
     expect(sentPayload.model).toBe(COMPACT_PRIMARY_MODEL);
     expect(sentPayload.tools).toBeUndefined();
   });
+
+  it('blocks upstream fetch when resilientAllowed is false and locks out model on network timeout', async () => {
+    const llmRoute = { baseUrl: 'https://openrouter.ai/api/v1', apiKey: 'sk-or-test', model: 'm1' };
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(
+      callLlmWithTools({
+        messages: [{ role: 'user', content: 'Score' }], userId: 'tenant-1', llmRoute,
+        taskKind: 'json_extraction',
+        budget: { monthlyBudgetUsd: 25, monthSpentUsd: 3, cooldownUntil: Math.floor(Date.now() / 1000) + 300 },
+      }),
+    ).rejects.toThrow(/BYOK_ROUTE_BLOCKED: key_cooldown_active/);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRejectedValueOnce(new Error('upstream request timed out'));
+    await expect(
+      callLlmWithTools({
+        messages: [{ role: 'user', content: 'Score' }], userId: 'tenant-1', llmRoute, taskKind: 'json_extraction',
+      }),
+    ).rejects.toThrow(/timed out/);
+    expect(isModelLockedOut(COMPACT_PRIMARY_MODEL, 'tenant-1')).toBe(true);
+  });
 });

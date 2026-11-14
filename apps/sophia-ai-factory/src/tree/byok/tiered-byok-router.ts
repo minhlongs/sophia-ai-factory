@@ -83,7 +83,12 @@ export function recordTieredRouteOutcome(args: {
   }
   const kind = args.failureKind ?? FailureKind.SERVER_ERROR;
   recordFailure(provider, kind, args.keyRef);
-  if (kind === FailureKind.RATE_LIMIT || kind === FailureKind.SERVER_ERROR || kind === FailureKind.TIMEOUT) {
+  if (
+    kind === FailureKind.RATE_LIMIT ||
+    kind === FailureKind.SERVER_ERROR ||
+    kind === FailureKind.TIMEOUT ||
+    kind === FailureKind.NETWORK
+  ) {
     recordModelLockout(args.model, args.lockoutMs ?? DEFAULT_MODEL_LOCKOUT_MS, args.keyRef);
   }
 }
