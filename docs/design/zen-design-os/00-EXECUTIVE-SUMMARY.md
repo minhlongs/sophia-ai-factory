@@ -15,7 +15,7 @@ Thay vì cài đặt một thư viện giao diện nặng nề hoặc sao chép 
 2. **Chuẩn W3C DTCG Design Tokens Format 2025.10** (`src/seed/design-tokens/zen-design-tokens.dtcg.json`) làm nguồn chân lý duy nhất cho màu sắc, chữ viết, khoảng cách, bo góc và chuyển động.
 3. **Kiến trúc Progressive Dual-Theme (Phương án 1 đã được Founder phê duyệt)**:
    - **Dark Mode Default (`Director's Control Deck` — `.dark`)**: Không gian điều khiển mặc định mang bản sắc riêng của Sophia với nền Obsidian (`#090A10`), bề mặt thẻ (`#11131F`), điểm nhấn Indigo (`#6366F1`) và Amber (`#F59E0B`).
-   - **High-Trust Light Mode (`Executive Studio Ivory` — `:root`)**: Chế độ sáng cao cấp với nền giấy ngà (`#F8F9FC`), bề mặt thẻ trắng tinh khiết (`#FFFFFF`), chữ sắc nét (`#0B0F19`, tương phản `18.36:1`) và nút chính Indigo đậm (`#4338CA`, tương phản `8.66:1`), phục vụ các CEO làm việc ban ngày trên các biểu mẫu cấu hình API key (BYOK), thanh toán và kiểm duyệt nội dung.
+   - **High-Trust Light Mode (`Executive Studio Ivory` — `:root`)**: Chế độ sáng cao cấp với nền giấy ngà (`#F8F9FC`), bề mặt thẻ trắng tinh khiết (`#FFFFFF`), chữ sắc nét (`#0B0F19`, tương phản `18.19:1`) và nút chính Indigo đậm (`#4338CA`, tương phản `7.90:1`), phục vụ các CEO làm việc ban ngày trên các biểu mẫu cấu hình API key (BYOK), thanh toán và kiểm duyệt nội dung.
    - **Dedicated Dark Stage (`--studio-stage-*`)**: Giữ nguyên nền tối chuyên dụng (`#090A10`) cho khung xem trước video 9:16/16:9 và timeline dựng phim ngay cả khi ứng dụng đang ở chế độ Sáng.
 
 ---
@@ -34,8 +34,8 @@ Thay vì cài đặt một thư viện giao diện nặng nề hoặc sao chép 
 
 | Hạng mục Kiểm định | Lệnh xác minh | Kết quả thực tế |
 |---|---|---|
-| **Kiểm soát mã màu cứng (Color Token Ratchet)** | `npm run check:color-tokens` | **PASS** — Giảm từ `1097` (vi phạm) xuống còn **`1077`** (thấp hơn ngưỡng baseline `1080`). |
-| **Độ tương phản WCAG 2.2 AA** | `npx vitest run src/seed/design-tokens/__tests__/zen-design-tokens.test.ts` | **PASS (6/6 tests)** — Mọi cặp màu chữ/nền ở cả Light Mode và Dark Mode đều vượt chuẩn `4.5:1` (từ `4.64:1` đến `19.16:1`). |
+| **Kiểm soát mã màu cứng (Color Token Ratchet)** | `npm run check:color-tokens` | **PASS** — Giảm từ `1097` (vi phạm) xuống còn **`1045`** (thấp hơn ngưỡng baseline `1080` tới `-35` vị trí). |
+| **Độ tương phản WCAG 2.2 AA** | `npx vitest run src/seed/design-tokens/__tests__/zen-design-tokens.test.ts` | **PASS (8/8 tests)** — Mọi cặp màu chữ/nền ở cả Light Mode và Dark Mode đều vượt chuẩn `4.5:1` (lên tới `19.15:1`). |
 | **Kiểm tra kiểu tĩnh TypeScript** | `npm run type-check` | **PASS** — `0` lỗi biên dịch TypeScript, `0` kiểu `:any` mới. |
 | **Kiểm tra quy tắc mã nguồn ESLint** | `npm run lint` | **PASS** — `0` lỗi ESLint trên toàn bộ các tệp đã chỉnh sửa. |
 | **Kiến trúc 4 tầng (seed → tree → forest → land)** | `npm run check:boundaries` | **PASS** — `0` vi phạm ranh giới kiến trúc. |

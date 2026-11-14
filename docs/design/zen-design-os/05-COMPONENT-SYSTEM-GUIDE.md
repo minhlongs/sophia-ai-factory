@@ -16,7 +16,7 @@
 ### 1.2. `ThemeToggle` (`src/forest/components/theme-toggle.tsx`)
 Nút chuyển đổi nhanh giữa chế độ **Tối (Director's Control Deck)** và **Sáng (Executive Studio Ivory)** nằm ngay trên thanh TopBar của Dashboard (`src/forest/dashboard/dashboard-topbar-actions.tsx`):
 - Có đầy đủ thuộc tính tiếp cận: `aria-label`, `aria-pressed`, `title`, và `data-testid="theme-toggle"`.
-- Trước khi client mount xong (`mounted === false`), hiển thị khung giữ chỗ có cùng kích thước để tránh dịch chuyển bố cục (`CLS = 0`).
+- Trước và sau khi client mount (`mounted === false` → `true`), luôn render cùng một thẻ `<button className="inline-flex h-9 w-9 ...">` (`36x36px`, mặc định trạng thái `dark` trên SSR) để tránh dịch chuyển bố cục (`CLS = 0`).
 
 ### 1.3. `AppearanceSection` (`src/forest/components/settings/sections/appearance-section.tsx`)
 Trang cài đặt giao diện cho phép người dùng chọn giữa **Light**, **Dark** và **System**; cập nhật `settings.theme` trong form đồng thời gọi trực tiếp `setTheme('light' | 'dark' | 'system')` của `ZenThemeProvider` để lưu bền vững vào `sophia-zen-theme` và duy trì lắng nghe `matchMedia` ở tầng gốc ngay cả khi rời trang `/settings`.
@@ -32,6 +32,7 @@ Tất cả các component chuyển động trong `src/seed/components/ui/` đề
 | **`PageTransition`** | `src/seed/components/ui/page-transition.tsx` | Bọc quanh nội dung màn hình hoặc bước chuyển tiếp (`translateY(12px)`, `var(--motion-duration-deliberate, 400ms)`). | Hiển thị ngay từ byte SSR đầu tiên qua CSS `@media` và đặt `transition: none`, `opacity: 1`, `transform: none` ngay khi mount. |
 | **`ScrollReveal`** | `src/seed/components/ui/scroll-reveal.tsx` | Bọc quanh các khối nội dung dài; dùng `IntersectionObserver` với `translateY(2rem)` (`translateY(1.5rem)` khi bật `staggerDelay`) và `var(--motion-duration-cinematic, 600ms)`. | Bỏ qua `IntersectionObserver`, hiển thị toàn bộ nội dung ngay từ đầu với `transition: none` (kể cả các phần tử con `staggerDelay`). |
 | **`FadeInView`** | `src/seed/components/ui/fade-in-view.tsx` | Tạo hiệu ứng xuất hiện nhẹ theo hướng chọn trước (`distance` mặc định `20px`, `duration` mặc định `400ms`, `delay` truyền qua CSS transition; quy ước ngân sách caller `<= 180ms` cho cụm thẻ KPI theo `ZEN-MOTION-ADOPTION-MATRIX.md`). | Bỏ qua `IntersectionObserver`, đặt `isVisible = true` và `transition: none` tức thì. |
+| **`AnimatedCounter`** | `src/seed/components/ui/animated-counter-with-framer-motion.tsx` | Bộ đếm số liệu nhẹ chạy bằng `requestAnimationFrame` + `easeOutExpo` (không phụ thuộc `framer-motion`). | Hủy vòng lặp `requestAnimationFrame` và gán thẳng giá trị đích (`setCount(value)`). |
 
 ---
 

@@ -11,7 +11,7 @@
 2. **QUIET (Tĩnh tại)**: Ưu tiên sự rõ ràng của thông tin vận hành; chuyển động chỉ xuất hiện khi có sự thay đổi trạng thái thực sự.
 3. **EXPRESSIVE (Biểu cảm có kiểm soát)**: Áp dụng đường cong gia tốc chuẩn Material 3 Expressive (`cubic-bezier(0.16, 1, 0.3, 1)`) và hệ thống tín hiệu thị giác đặc trưng của đạo diễn (`.radar`, `.film-strip`, `.camera-rec`).
 4. **AI-NATIVE (Bản địa AI)**: Hiển thị trạng thái cộng tác liên tục của đội ngũ AI Agent thông qua thanh HUD gọn gàng, thẻ xác minh độ trễ API (`ms`) và khung vẽ kịch bản trực quan.
-5. **HIGH-TRUST (Độ tin cậy cao)**: Hỗ trợ chế độ Sáng **Executive Studio Ivory** với độ tương phản chữ `18.36:1` cho các tác vụ tài chính, cấu hình khóa bảo mật `AES-256-GCM` và kiểm duyệt nội dung.
+5. **HIGH-TRUST (Độ tin cậy cao)**: Hỗ trợ chế độ Sáng **Executive Studio Ivory** với độ tương phản chữ `18.19:1` cho các tác vụ tài chính, cấu hình khóa bảo mật `AES-256-GCM` và kiểm duyệt nội dung.
 6. **ACCESSIBLE (Tiếp cận toàn diện)**: Đạt chuẩn WCAG 2.2 AA về độ tương phản, điều hướng bàn phím, nhãn ARIA và tôn trọng chế độ giảm chuyển động (`prefers-reduced-motion`).
 
 ---
@@ -25,7 +25,7 @@ Toàn bộ các thành phần của **ZEN DESIGN OS v1.0** tuân thủ nghiêm n
 │ TẦNG APP / ROUTES (src/app/[locale]/* & src/components/*)                  │
 │ - src/app/layout.tsx (Root Layout bọc ZenThemeProvider)                    │
 │ - src/app/globals.css (Nguồn chân lý CSS Runtime: :root & .dark)           │
-│ - Pilot 1: /[locale]/setup-wizard                                          │
+│ - Pilot 1: /[locale]/setup (canonical; /[locale]/setup-wizard 307 → setup) │
 │ - Pilot 2: /[locale]/dashboard                                             │
 │ - Pilot 3: /[locale]/dashboard/niche-studio                                │
 └───────────────────────────────┬────────────────────────────────────────────┘
@@ -57,6 +57,7 @@ Toàn bộ các thành phần của **ZEN DESIGN OS v1.0** tuân thủ nghiêm n
 │ - src/seed/components/ui/page-transition.tsx (Zen Motion PageTransition)   │
 │ - src/seed/components/ui/scroll-reveal.tsx (Zen Motion ScrollReveal)       │
 │ - src/seed/components/ui/fade-in-view.tsx (Zen Motion FadeInView)          │
+│ - src/seed/components/ui/animated-counter-with-framer-motion.tsx (Counter) │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 

@@ -4,10 +4,10 @@
 
 ---
 
-## 1. PILOT 1: SETUP WIZARD — BYOK ONBOARDING (`/[locale]/setup-wizard`)
+## 1. PILOT 1: SETUP WIZARD — BYOK ONBOARDING (`/[locale]/setup`)
 
 ### 1.1. Tệp nguồn liên quan
-- Route Entry: `src/app/[locale]/setup-wizard/page.tsx`
+- Route Entry: `src/app/[locale]/setup/page.tsx` (canonical; `src/app/[locale]/setup-wizard/page.tsx` và middleware chuyển hướng `307` từ `/[locale]/setup-wizard` về `/[locale]/setup`)
 - Orchestrator: `src/tree/components/setup-wizard/steps/index.tsx`
 - Stepper: `src/tree/components/setup-wizard/wizard-stepper.tsx`
 - BYOK Input & Security Banner: `src/tree/components/setup-wizard/api-key-input.tsx`, `src/tree/components/setup-wizard/byok-doctrine-banner.tsx`
@@ -15,7 +15,7 @@
 ### 1.2. Cải tiến UX & Thị giác trong ZEN DESIGN OS v1.0
 - **Thanh tiến trình 6 bước (`WizardStepper`)**:
   - Chuyển đổi từ màu tối cố định sang hệ thống token ngữ nghĩa (`bg-card`, `border-border`, `bg-primary`, `text-primary-foreground`, `ring-primary/20`).
-  - Bước đã hoàn thành hiển thị màu xanh lục bảo (`bg-emerald-600 dark:bg-emerald-500`) kèm biểu tượng Checkmark sắc nét; bước hiện tại nổi bật với vòng sáng `ring-4 ring-primary/20` và số thứ tự in bằng font `JetBrains Mono`.
+  - Bước đã hoàn thành hiển thị màu xanh lục bảo (`bg-emerald-600 dark:bg-emerald-700`) kèm biểu tượng Checkmark sắc nét; bước hiện tại nổi bật với vòng sáng `ring-4 ring-primary/20` (`dark:bg-primary-600`) và số thứ tự in bằng font `JetBrains Mono`.
   - Hỗ trợ hiển thị rút gọn thông minh trên màn hình di động (`320px–639px`): `Step X of 6: [Tên bước]`.
 - **Khung biểu mẫu chính (`SetupWizardPage`)**:
   - Sử dụng nền `bg-background text-foreground` và khung thẻ `bg-card border border-border rounded-2xl shadow-xs`, giúp các CEO làm việc ban ngày ở chế độ Sáng (**Executive Studio Ivory**) đọc rõ từng hướng dẫn lấy API key mà không bị mỏi mắt.
@@ -36,9 +36,9 @@
 ### 2.2. Cải tiến UX & Thị giác trong ZEN DESIGN OS v1.0
 - **Thanh công cụ TopBar (`DashboardTopBarActions`)**:
   - Tích hợp nút chuyển đổi giao diện `<ThemeToggle />` ngay cạnh bộ chuyển đổi ngôn ngữ `VI / EN` và chuông thông báo.
-  - Chuẩn hóa toàn bộ nút bấm và huy hiệu hồ sơ người dùng (`userRole`, `userInitials`) sang token ngữ nghĩa (`bg-card`, `border-border`, `text-foreground`, `bg-primary/10`, `text-primary`).
+  - Chuẩn hóa toàn bộ nút bấm và huy hiệu hồ sơ người dùng (`userRole`, `userInitials`) sang token ngữ nghĩa (`bg-card`, `border-border`, `text-foreground`, `bg-primary/10`, `text-primary-text`).
 - **Ngăn kéo Nguồn dữ liệu (`DashboardSourcesDrawer`)**:
-  - Thay thế toàn bộ các mã màu hex cứng (`#090A10`, `#11131F`, `#F8FAFC`) bằng hệ thống token thích ứng (`bg-card/95`, `bg-background`, `text-foreground`, `border-border`), giúp ngăn kéo hiển thị đồng bộ ở cả chế độ Sáng và Tối.
+  - Thay thế toàn bộ các mã màu hex cứng (`#090A10`, `#11131F`, `#F8FAFC`) bằng hệ thống token thích ứng (`bg-card`, `bg-muted`, `text-foreground`, `border-border`), giúp ngăn kéo hiển thị đồng bộ ở cả chế độ Sáng và Tối.
 
 ---
 
@@ -51,6 +51,6 @@
 
 ### 3.2. Cải tiến UX & Thị giác trong ZEN DESIGN OS v1.0
 - **Khung vẽ Kịch bản & Phân cảnh (`SophiaArtifactCanvas`)**:
-  - Chuyển đổi khung bao ngoài sang `bg-background/95` và các thẻ phân cảnh sang `bg-card/90`, cho phép người dùng đọc kịch bản dễ dàng ở cả chế độ Sáng và Tối.
+  - Chuyển đổi khung bao ngoài sang `bg-card border-border` kết hợp vùng artboard tối và thanh công cụ kiểm tra `SophiaArtifactCanvasInspector` (`bg-muted/40`), cho phép người dùng đọc kịch bản và bình luận ghim dễ dàng ở cả chế độ Sáng và Tối.
 - **Sân khấu Xem trước Video (`TimelineBrowserPreview`)**:
-  - Áp dụng kiến trúc **Dedicated Dark Stage**: vùng khung hình video sử dụng `bg-[var(--studio-stage-bg)]` (`#090A10`) trong khi thanh điều khiển bên dưới thích ứng với `bg-card/90` và `border-border`. Nhờ đó, màu sắc và phụ đề trên video luôn giữ được độ tương phản chuẩn điện ảnh ngay cả khi người dùng bật chế độ Sáng.
+  - Áp dụng kiến trúc **Dedicated Dark Stage**: vùng khung hình video sử dụng `var(--studio-stage-bg)` (`#090A10`) trong khi thẻ bao ngoài và thanh điều khiển bên cạnh thích ứng với `bg-card`, `bg-muted` và `border-border`. Nhờ đó, màu sắc và phụ đề trên video luôn giữ được độ tương phản chuẩn điện ảnh ngay cả khi người dùng bật chế độ Sáng.
