@@ -55,7 +55,7 @@ export default function SettingsPage({
           </div>
           <Link
             href="/settings/usage"
-            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary-text border border-primary/30 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
           >
             <BarChart3 className="w-4 h-4" />
             View Billing Metering

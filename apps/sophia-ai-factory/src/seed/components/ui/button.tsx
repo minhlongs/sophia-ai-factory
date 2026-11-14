@@ -9,17 +9,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white shadow hover:bg-primary/90 dark:hover:bg-primary-500",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground dark:bg-rose-700 dark:text-white shadow-sm hover:bg-destructive/90 dark:hover:bg-rose-600",
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground dark:bg-secondary-700 dark:text-white shadow-sm hover:bg-secondary/80 dark:hover:bg-violet-600",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        primary: "bg-primary text-primary-foreground shadow-[inset_0_1px_0_0_color-mix(in_srgb,_var(--primary-foreground)_20%,_transparent),0_2px_8px_rgba(0,0,0,0.15)] hover:bg-primary/90 active:scale-[0.98] border-0",
-        glow: "bg-primary text-primary-foreground shadow-[0_0_20px_color-mix(in_srgb,_var(--primary)_40%,_transparent)] hover:shadow-[0_0_35px_color-mix(in_srgb,_var(--primary)_60%,_transparent)] hover:scale-105 active:scale-[0.98] border-0 transition-all",
+        link: "text-primary-text underline-offset-4 hover:underline",
+        primary: "bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white shadow-[inset_0_1px_0_0_color-mix(in_srgb,_var(--primary-foreground)_20%,_transparent),0_2px_8px_rgba(0,0,0,0.15)] hover:bg-primary/90 dark:hover:bg-primary-500 active:scale-[0.98] border-0",
+        glow: "bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white shadow-[0_0_20px_color-mix(in_srgb,_var(--primary)_40%,_transparent)] hover:shadow-[0_0_35px_color-mix(in_srgb,_var(--primary)_60%,_transparent)] hover:scale-105 active:scale-[0.98] border-0 transition-all",
         glass: "bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-lg text-foreground hover:bg-muted",
       },
       size: {

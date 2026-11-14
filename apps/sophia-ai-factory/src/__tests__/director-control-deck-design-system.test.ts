@@ -139,5 +139,27 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(campaignCardDetails).toContain('font-mono');
     expect(settingsPage).toContain('dark:bg-[#11131F]');
     expect(settingsPage).toContain('dark:bg-primary-600');
+    expect(settingsPage).toContain('text-primary-text');
+  });
+
+  it('enforces >= 4.5:1 WCAG AA dual-theme contrast on shared Button variants, Timeline preview, and Niche Studio states', () => {
+    const seedButton = readSrcFile('seed/components/ui/button.tsx');
+    const timelinePreview = readSrcFile('components/video/timeline-browser-preview.tsx');
+    const storyboardCard = readSrcFile('components/niche-studio/storyboard-preview-card.tsx');
+    const nicheForm = readSrcFile('components/niche-studio/niche-campaign-form.tsx');
+    const compliancePlayer = readSrcFile('components/niche-studio/video-compliance-preview-player.tsx');
+    const tierAssignment = readSrcFile('components/stitch/screens/affiliates/invite/tier-assignment.tsx');
+    const inviteSuccess = readSrcFile('components/stitch/screens/affiliates/invite/invite-success-view.tsx');
+
+    expect(seedButton).toContain('dark:bg-primary-600');
+    expect(seedButton).toContain('dark:bg-secondary-700');
+    expect(timelinePreview).toContain('bg-muted text-muted-foreground');
+    expect(timelinePreview).not.toContain('bg-secondary text-muted-foreground');
+    expect(storyboardCard).toContain('bg-card dark:bg-zinc-900/60');
+    expect(nicheForm).toContain('text-emerald-800 dark:text-emerald-200');
+    expect(nicheForm).toContain('text-rose-700 dark:text-rose-300');
+    expect(compliancePlayer).toContain('text-emerald-800 dark:text-emerald-300');
+    expect(tierAssignment).toContain('text-primary-text');
+    expect(inviteSuccess).toContain('text-emerald-700 dark:text-emerald-300');
   });
 });

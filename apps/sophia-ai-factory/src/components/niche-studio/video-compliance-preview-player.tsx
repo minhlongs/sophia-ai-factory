@@ -91,12 +91,12 @@ export function VideoCompliancePreviewPlayer({
 
       {/* Inngest Dispatch Telemetry */}
       {dispatchedPlanId && (
-        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 space-y-1">
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 space-y-1">
           <div className="flex items-center justify-between font-semibold">
             <span>⚡ {t('dispatchedTitle')}</span>
             <span className="font-mono text-[10px]">Inngest Active</span>
           </div>
-          <p className="text-[11px] text-zinc-400 font-mono truncate">
+          <p className="text-[11px] text-muted-foreground font-mono truncate">
             Plan ID: {dispatchedPlanId}
           </p>
         </div>

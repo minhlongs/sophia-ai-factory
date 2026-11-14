@@ -26,7 +26,7 @@ export function InviteSuccessView({
 
   return (
     <div className="py-6 space-y-5">
-      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-start gap-3">
+      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
         <Check className="w-5 h-5 mt-0.5 shrink-0" />
         <div>
           <p className="font-semibold text-sm">

@@ -124,8 +124,8 @@ export function TimelineBrowserPreview({
                   onClick={() => setSelectedSceneIndex(idx)}
                   className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
                     idx === selectedSceneIndex
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      ? 'bg-amber-500 text-zinc-950 font-bold'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <Play className="h-3 w-3" />#{idx + 1}
@@ -175,7 +175,7 @@ export function TimelineBrowserPreview({
             type="button"
             data-testid="trigger-mp4-render-btn"
             onClick={() => onTriggerRender?.(timeline, engine)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
           >
             <Sparkles className="h-4 w-4" />
             <span>Render 1080x1920 MP4 ({engine})</span>

@@ -162,12 +162,12 @@ export function NicheCampaignForm({
       />
       <NicheFormProductInputs values={formValues} onChange={handleInputChange} t={t} />
       {errorMsg && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300">
           ⚠️ {errorMsg}
         </div>
       )}
       {statusMsg && (
-        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-200">
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-200">
           ✓ {statusMsg}
         </div>
       )}

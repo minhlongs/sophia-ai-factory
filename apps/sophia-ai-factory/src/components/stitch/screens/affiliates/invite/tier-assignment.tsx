@@ -92,14 +92,14 @@ export function TierAssignment({
                 onClick={() => onToggleAssetKit(kit.id)}
                 className={`flex items-center gap-2 p-2.5 rounded-xl text-xs text-left border transition-all ${
                   isChecked
-                    ? 'bg-primary/15 border-primary/40 text-primary font-medium'
+                    ? 'bg-primary/15 border-primary/40 text-primary-text font-medium'
                     : 'bg-muted/40 dark:bg-white/[0.02] border-border text-muted-foreground hover:bg-muted/60'
                 }`}
               >
                 <div
                   className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
                     isChecked
-                      ? 'bg-primary border-primary text-white'
+                      ? 'bg-primary dark:bg-primary-600 border-primary dark:border-primary-600 text-white'
                       : 'border-border bg-transparent'
                   }`}
                 >
