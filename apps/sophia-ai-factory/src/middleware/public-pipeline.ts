@@ -14,7 +14,11 @@ const BARE_AUTH_APP_ROUTES = new Set([
 
 function stripLocalePrefix(pathname: string) {
   const parts = pathname.split('/');
-  if (parts.length >= 2 && BARE_AUTH_APP_ROUTES.has(parts[2])) {
+  if (
+    parts.length >= 3 &&
+    SUPPORTED_LOCALE_SET.has(parts[1]) &&
+    BARE_AUTH_APP_ROUTES.has(parts[2])
+  ) {
     return pathname.replace(/^\/[^/]+/, '');
   }
   return null;
@@ -34,19 +38,25 @@ export async function handlePublicPipeline(
   };
   if (BARE_REDIRECTS[path]) {
     const target = new URL(BARE_REDIRECTS[path], request.url);
-    return applyCorsHeaders(NextResponse.redirect(target), origin);
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(target), origin);
+    applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
+    return redirectRes;
   }
 
   // Canonical onboarding redirect: /setup-wizard → /[locale]/setup
   if (path === '/setup-wizard' || path === '/setup-wizard/') {
     const target = new URL('/vi/setup', request.url);
-    return applyCorsHeaders(NextResponse.redirect(target), origin);
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(target), origin);
+    applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
+    return redirectRes;
   }
   const setupWizardMatch = path.match(/^\/([^/]+)\/setup-wizard\/?$/);
   if (setupWizardMatch && SUPPORTED_LOCALE_SET.has(setupWizardMatch[1])) {
     const locale = setupWizardMatch[1];
     const target = new URL(`/${locale}/setup`, request.url);
-    return applyCorsHeaders(NextResponse.redirect(target), origin);
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(target), origin);
+    applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
+    return redirectRes;
   }
 
   // Dual-Read AEO/GEO Markdown negotiation (runs before next-intl 307 redirects)

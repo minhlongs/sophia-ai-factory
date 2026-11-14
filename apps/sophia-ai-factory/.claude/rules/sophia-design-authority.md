@@ -16,7 +16,7 @@
 
 ## Prohibited Operations
 
-- **`--design-system` flag in `ui-ux-pro-max`** — generates arbitrary palettes keyed on query wording. Forbidden in this repo. Sophia brand is amber (light default) + indigo accents, defined in `globals.css`.
+- **`--design-system` flag in `ui-ux-pro-max`** — generates arbitrary palettes keyed on query wording. Forbidden in this repo. Sophia brand uses the Zen Design OS Dual-Theme contract defined in `src/app/globals.css`: Indigo primary (`#6366F1` in `.dark` Director's Control Deck, `#4338CA` in `:root` Executive Studio Ivory) + Amber revenue/highlight accents (`#F59E0B` dark / `#B45309` light).
 - **`--persist` flag in `ui-ux-pro-max`** — writes `MASTER.md` and can duplicate orphan directories. Forbidden.
 - **New `design-system/` directories outside the app source** — any new design artifact must live in `src/app/` or `docs/`.
 - **`MASTER.md` authorship for color or font values** — if `MASTER.md` quotes a value not present in `globals.css`, do not paste it; reconcile against (1) first.
@@ -24,14 +24,14 @@
 ## Pre-Design Checklist
 
 Before any frontend design agent run in this repo:
-1. grep `globals.css` for the tokens you intend to use — confirm amber primary, indigo accent, Inter body, no display Inter.
-2. grep `docs/design-guidelines.md` for any conflicting claim (Geist, zinc, dark-default). If conflict found, treat doc as stale.
+1. grep `src/app/globals.css` for the tokens you intend to use — confirm Dual-Theme Indigo `--primary` (`#4338CA` light / `#6366F1` dark), Amber `--accent` (`#B45309` light / `#F59E0B` dark), `Inter` (`--font-sans`) for UI & body text, `JetBrains Mono` (`--font-mono`) for code & telemetry, and `Archivo` (`--font-display`) strictly scoped inside `.v3-core` (`src/styles/v3-core.css`). Never introduce `Satoshi` or `Instrument Serif`.
+2. grep `DESIGN.md` and `docs/design/zen-design-os/` for any conflicting claim. If conflict found, `src/app/globals.css` wins and the doc must be reconciled.
 3. If agent proposes a new palette or font family, confirm it derives from a `globals.css` token extension or is explicitly scoped as a one-off product variant.
 
 ## Reconciliation Rule
 
-If `globals.css:26` declares `--primary: 35 80% 44%` (amber) and another design doc says `indigo` is primary, the amber token wins and the doc must be updated — not the token.
+`src/app/globals.css` is always canonical: `:root` declares `--primary: #4338CA` (Executive Studio Ivory) and `.dark` declares `--primary: #6366F1` (Director's Control Deck), with first-visit runtime default `defaultTheme="dark"` via `ZenThemeProvider`. If any design document or rule quotes a stale value (e.g. legacy HSL amber `--primary`), `globals.css` wins and the document must be updated — never the token.
 
 ---
 
-Effective: 2026-08-15.
+Effective: 2026-11-14 (Zen Design OS v1.0 reconciliation).

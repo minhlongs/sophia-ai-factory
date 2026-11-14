@@ -8,6 +8,38 @@ import { requireAuth } from './auth';
 import { enforceMfaGate } from './mfa';
 import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';
 
+const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
+
+// Dashboard route trees mounted exclusively under `src/app/(app)/dashboard/*`
+// (and NOT duplicated under `src/app/[locale]/dashboard/*`). Localized requests
+// such as `/en/dashboard/admin/byok-rotation` must run through the full auth +
+// MFA + admin gates first, then rewrite to `cleanPath` with `x-next-intl-locale`
+// forwarded so `(app)/layout.tsx` renders in the requested locale without 404ing.
+const APP_ONLY_DASHBOARD_PREFIXES = [
+  '/dashboard/admin/byok-rotation',
+  '/dashboard/admin/monitoring',
+  '/dashboard/admin/sop-reviews',
+  '/dashboard/analytics-roi',
+  '/dashboard/analytics/cross-platform',
+  '/dashboard/ceo-agent',
+  '/dashboard/creative-mutator',
+  '/dashboard/ip',
+  '/dashboard/live-commerce-growth',
+  '/dashboard/provenance',
+  '/dashboard/publish/schedule',
+  '/dashboard/repurpose',
+  '/dashboard/social-publisher',
+  '/dashboard/sop-creator',
+  '/dashboard/viral-expansion',
+] as const;
+
+function isAppOnlyDashboardRoute(cleanPath: string): boolean {
+  const normalized = cleanPath.length > 1 ? cleanPath.replace(/\/+$/, '') : cleanPath;
+  return APP_ONLY_DASHBOARD_PREFIXES.some(
+    (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
+  );
+}
+
 export async function handleDashboardPipeline(
   request: NextRequest,
   pathLocale: string | undefined,
@@ -77,6 +109,21 @@ export async function handleDashboardPipeline(
         return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));
       }
     }
+  }
+
+  // Localized requests targeting `(app)`-only dashboard pages (e.g. `/en/dashboard/admin/byok-rotation`)
+  // have no matching `[locale]/dashboard/...` segment and would 404 on `NextResponse.next()`.
+  // Rewrite to `cleanPath` while forwarding `x-next-intl-locale` for `(app)/layout.tsx`.
+  if (pathLocale && SUPPORTED_LOCALE_SET.has(pathLocale) && isAppOnlyDashboardRoute(cleanPath)) {
+    requestHeaders.set('x-next-intl-locale', locale);
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = cleanPath;
+    const rewriteRes = NextResponse.rewrite(rewriteUrl, {
+      request: { headers: requestHeaders },
+    });
+    rewriteRes.cookies.set('NEXT_LOCALE', locale, { path: '/', maxAge: 31536000 });
+    applySecurityHeaders(rewriteRes, nonce, needsCsrfSeed);
+    return rewriteRes;
   }
 
   // Build dashboard response with intl + CSP

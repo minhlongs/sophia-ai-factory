@@ -118,6 +118,7 @@ describe('Zen Motion Primitives — prefers-reduced-motion: reduce (WCAG 2.2 SC 
         <PageTransition>
           <span>page</span>
         </PageTransition>
+        <AnimatedCounter value={12500} duration={1500} />
       </div>
     );
 
@@ -145,6 +146,9 @@ describe('Zen Motion Primitives — prefers-reduced-motion: reduce (WCAG 2.2 SC 
       expect(host.querySelector<HTMLElement>('[data-zen-motion="scroll-reveal"]')?.dataset.zenRevealed).toBe('true');
       expect(host.querySelector<HTMLElement>('[data-zen-motion="page-transition"]')?.dataset.zenRevealed).toBe('true');
       expect(host.querySelector<HTMLElement>('[data-zen-motion-stagger]')?.dataset.zenRevealed).toBe('true');
+      const counter = host.querySelector<HTMLElement>('[data-zen-motion="animated-counter"]');
+      expect(counter?.dataset.zenReduced).toBe('true');
+      expect(counter?.textContent).toBe((12500).toLocaleString());
     } finally {
       act(() => {
         root?.unmount();
@@ -152,5 +156,40 @@ describe('Zen Motion Primitives — prefers-reduced-motion: reduce (WCAG 2.2 SC 
       host.remove();
       errorSpy.mockRestore();
     }
+  });
+
+  it('AnimatedCounter cancels an in-flight rAF loop and jumps to target value when OS toggles reduced motion on mid-animation', () => {
+    const changeListeners: Array<(e: MediaQueryListEvent) => void> = [];
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn((event: string, cb: (e: MediaQueryListEvent) => void) => {
+          if (event === 'change' && query.includes('prefers-reduced-motion')) changeListeners.push(cb);
+        }),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(42);
+    const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    const { container } = render(<AnimatedCounter value={9800} duration={2000} />);
+    const node = container.querySelector<HTMLElement>('[data-zen-motion="animated-counter"]');
+    expect(node?.dataset.zenReduced).toBe('false');
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      changeListeners.forEach((cb) => cb({ matches: true } as MediaQueryListEvent));
+    });
+    expect(cancelSpy).toHaveBeenCalledWith(42);
+    expect(node?.dataset.zenReduced).toBe('true');
+    expect(node?.textContent).toBe((9800).toLocaleString());
+    rafSpy.mockRestore();
+    cancelSpy.mockRestore();
   });
 });

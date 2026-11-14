@@ -9,6 +9,7 @@ import { SettingsSecuritySection } from '@/components/settings/settings-security
 import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { StorageSettingsForm } from '@/components/settings/storage-settings-form';
 import { AccountOwnershipView } from '@/components/settings/account-ownership-view';
+import { SettingsAppearanceThemeSection } from '@/components/settings/settings-appearance-theme';
 import { SettingsLocaleDangerSection } from '@/components/settings/settings-locale-danger';
 import { SettingsJurisdictionPicker } from '@/components/settings/settings-jurisdiction-picker';
 import { OpenCorePortabilityPanel } from '@/components/settings/open-core-portability-panel';
@@ -113,6 +114,7 @@ export default function SettingsPage({
           {activeTab === 'openCore' && <OpenCorePortabilityPanel />}
           {activeTab === 'preferences' && (
             <>
+              <SettingsAppearanceThemeSection />
               <SettingsJurisdictionPicker />
               <SettingsLocaleDangerSection />
             </>

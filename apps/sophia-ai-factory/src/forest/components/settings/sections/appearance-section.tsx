@@ -24,18 +24,26 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
   const { watch, setValue } = form;
   const theme = watch('settings.theme');
 
-  // Reconcile initial saved DB preference into ZenThemeProvider on first mount
-  // if no explicit runtime selection overrides it yet, while delegating cross-route
-  // `'system'` persistence and OS `matchMedia` tracking to ZenThemeProvider.
+  // Reconcile initial saved preference on first mount without clobbering an
+  // explicit runtime selection already stored in `sophia-zen-theme`.
+  const didInitRef = React.useRef(false);
   React.useEffect(() => {
-    if (!theme) return;
-    if (activeTheme !== theme) {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    const stored =
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('sophia-zen-theme')
+        : null;
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      if (theme !== stored) {
+        setValue('settings.theme', stored, { shouldDirty: false });
+      }
+      return;
+    }
+    if (theme && activeTheme !== theme) {
       setTheme(theme);
     }
-    // Intentionally run once on mount so DB-backed form default aligns runtime theme
-    // without overwriting subsequent topbar toggles while editing other fields.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTheme, setTheme, setValue, theme]);
 
   const handleSelectTheme = (nextTheme: 'light' | 'dark' | 'system') => {
     setValue('settings.theme', nextTheme, { shouldDirty: true });

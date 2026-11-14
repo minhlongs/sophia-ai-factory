@@ -15,7 +15,10 @@ vi.mock('next-intl/server', () => ({
   getMessages: (opts: { locale?: string }) => mockGetMessages(opts),
 }));
 
+let activeMockLocale = 'vi';
+
 vi.mock('next-intl', () => ({
+  useLocale: () => activeMockLocale,
   NextIntlClientProvider: ({
     locale,
     messages,
@@ -25,12 +28,18 @@ vi.mock('next-intl', () => ({
     messages?: unknown;
     children: React.ReactNode;
   }) => {
+    activeMockLocale = locale ?? 'vi';
     capturedProviderProps.push({ locale, messages });
     return <div data-testid="intl-provider" data-locale={locale}>{children}</div>;
   },
 }));
 
+vi.mock('@/seed/security/get-csp-nonce', () => ({
+  getCspNonce: async () => 'test-nonce',
+}));
+
 import AppLayout from '../layout';
+import RootLayout from '../../layout';
 
 describe('AppLayout ((app)/layout.tsx) — 12-locale resolution', () => {
   beforeEach(() => {
@@ -56,6 +65,8 @@ describe('AppLayout ((app)/layout.tsx) — 12-locale resolution', () => {
       expect(screen.getByTestId('intl-provider').getAttribute('data-locale')).toBe(
         expectedLocale,
       );
+      expect(document.documentElement.lang).toBe(expectedLocale);
+      expect(document.documentElement.dir).toBe(expectedLocale === 'ar' ? 'rtl' : 'ltr');
       unmount();
     }
   });
@@ -82,5 +93,22 @@ describe('AppLayout ((app)/layout.tsx) — 12-locale resolution', () => {
     const r2 = render(fallback);
     expect(screen.getByTestId('intl-provider').getAttribute('data-locale')).toBe('vi');
     r2.unmount();
+  });
+
+  it('renders SSR <html lang and dir> from x-next-intl-locale in RootLayout with safe vi/ltr fallback', async () => {
+    mockHeaders.mockResolvedValueOnce(new Headers({ 'x-next-intl-locale': 'en' }));
+    const enHtml = await RootLayout({ children: <span>en-body</span> });
+    expect(enHtml.props.lang).toBe('en');
+    expect(enHtml.props.dir).toBe('ltr');
+
+    mockHeaders.mockResolvedValueOnce(new Headers({ 'x-next-intl-locale': 'ar' }));
+    const arHtml = await RootLayout({ children: <span>ar-body</span> });
+    expect(arHtml.props.lang).toBe('ar');
+    expect(arHtml.props.dir).toBe('rtl');
+
+    mockHeaders.mockRejectedValueOnce(new Error('outside request scope'));
+    const fallbackHtml = await RootLayout({ children: <span>static-body</span> });
+    expect(fallbackHtml.props.lang).toBe('vi');
+    expect(fallbackHtml.props.dir).toBe('ltr');
   });
 });

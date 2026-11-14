@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { SkipNav } from '@/components/skip-nav';
 import { ZenThemeProvider } from '@/forest/theme/zen-theme-provider';
+import { SUPPORTED_LOCALES } from '@/middleware/middleware-shared-config';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
+import { isRtlLocale } from '@/seed/types/edge-mesh';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -23,9 +26,23 @@ export default async function RootLayout({
   // inline script before paint, so the same nonce must reach it — otherwise the
   // script is blocked and a light-mode user flashes the dark default on load.
   const nonce = await getCspNonce();
+  let locale = 'vi';
+  try {
+    const headerList = await headers();
+    const candidate = headerList.get('x-next-intl-locale');
+    if (
+      candidate &&
+      (SUPPORTED_LOCALES as readonly string[]).includes(candidate)
+    ) {
+      locale = candidate;
+    }
+  } catch {
+    // Non-request build-time prerender contexts fall back safely to 'vi'.
+  }
+  const dir = isRtlLocale(locale) ? 'rtl' : 'ltr';
 
   return (
-    <html lang="vi" dir="ltr" className="dark" suppressHydrationWarning>
+    <html lang={locale} dir={dir} className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

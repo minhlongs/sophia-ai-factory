@@ -5,9 +5,26 @@ import type { UseFormReturn } from 'react-hook-form';
 import type { UserProfileFormValues } from '@/land/schemas/settings';
 import { ZenThemeProvider } from '@/forest/theme/zen-theme-provider';
 import { AppearanceSection } from '../appearance-section';
+import SettingsPage from '@/components/stitch/screens/settings/settings-page';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => 'vi',
+}));
+
+vi.mock('@/navigation', () => ({
+  Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+    <a href={href} className={className}>{children}</a>
+  ),
+  usePathname: () => '/settings',
+}));
+
+vi.mock('@/components/settings/settings-jurisdiction-picker', () => ({
+  SettingsJurisdictionPicker: () => <div data-testid="stub-jurisdiction" />,
+}));
+
+vi.mock('@/components/settings/settings-locale-danger', () => ({
+  SettingsLocaleDangerSection: () => <div data-testid="stub-locale-danger" />,
 }));
 
 describe('AppearanceSection — cross-route system theme persistence via ZenThemeProvider', () => {
@@ -109,6 +126,51 @@ describe('AppearanceSection — cross-route system theme persistence via ZenThem
 
     expect(setValue).toHaveBeenCalledWith('settings.theme', 'system', { shouldDirty: true });
     expect(window.localStorage.getItem('sophia-zen-theme')).toBe('system');
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+  });
+
+  it('preserves an existing runtime sophia-zen-theme preference on mount instead of clobbering it with form default', () => {
+    window.localStorage.setItem('sophia-zen-theme', 'light');
+    const { form, setValue } = buildStubForm('dark');
+
+    render(
+      <ZenThemeProvider defaultTheme="dark">
+        <AppearanceSection form={form} />
+      </ZenThemeProvider>,
+    );
+
+    expect(window.localStorage.getItem('sophia-zen-theme')).toBe('light');
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+    expect(setValue).toHaveBeenCalledWith('settings.theme', 'light', { shouldDirty: false });
+  });
+
+  it('exposes live 3-mode (light / dark / system) theme selection on the mounted SettingsPage preferences tab', () => {
+    prefersDark = false; // OS prefers light
+    render(
+      <ZenThemeProvider defaultTheme="dark">
+        <SettingsPage initialTab="preferences" />
+      </ZenThemeProvider>,
+    );
+
+    const systemRadio = screen.getByTestId('settings-theme-system');
+    fireEvent.click(systemRadio);
+
+    expect(window.localStorage.getItem('sophia-zen-theme')).toBe('system');
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+
+    // Live OS toggle to dark updates html class while keeping sophia-zen-theme="system"
+    act(() => {
+      prefersDark = true;
+      for (const cb of [...changeListeners]) {
+        cb({ matches: true } as MediaQueryListEvent);
+      }
+    });
+    expect(window.localStorage.getItem('sophia-zen-theme')).toBe('system');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+
+    // Explicit Light mode selection
+    fireEvent.click(screen.getByTestId('settings-theme-light'));
+    expect(window.localStorage.getItem('sophia-zen-theme')).toBe('light');
     expect(document.documentElement.classList.contains('light')).toBe(true);
   });
 });

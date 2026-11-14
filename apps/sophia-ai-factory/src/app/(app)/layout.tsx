@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { LocaleHtmlLang } from '@/components/locale-html-lang';
 import { SUPPORTED_LOCALES } from '@/middleware/middleware-shared-config';
 
 export default async function AppLayout({
@@ -24,6 +25,7 @@ export default async function AppLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <LocaleHtmlLang />
       {children}
     </NextIntlClientProvider>
   );
