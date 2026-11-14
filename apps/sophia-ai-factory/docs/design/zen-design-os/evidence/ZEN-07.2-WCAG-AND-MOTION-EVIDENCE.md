@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
+**Verified Code & Test HEAD:** `eb1c8d7960288b1dbe871ad998505c91f32346d7`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
@@ -44,12 +44,13 @@ Machine record: `g4-manual-a11y.json` → `keyboardReport`.
   three pilot screens.
 - **Focus visibility** — `outline-hiddenCount: 0` at every stop. Focus styling is
   the browser default ring plus Tailwind `focus-visible:ring` on the Zen button.
-- **Dialog focus management** — `dialogFocusTrapped: null` on all three routes:
-  no modal dialog is mounted in the idle state of the pilot screens, so no trap
-  needed to be measured. Dialogs observed in targeted capture
-  `t04-setup-wizard-step-state-vi.png` were keyboard-closable with `Escape`
-  (Radix `Dialog` behaviour). The full modal audit this left open is now
-  recorded separately in **§2.1**.
+- **Dialog focus management** — no modal dialog is mounted in the idle state of
+  the three pilot screens; `g4-manual-a11y.json` → `dialogFocusCheck` records
+  an initial smoke check on `harness-form-dialog` (`initialFocusInsideDialog: true`,
+  `tabContained: true`, `shiftTabContained: true`, `escapeClosed: true`), and
+  dialogs observed in targeted capture `t04-setup-wizard-step-state-vi.png` were
+  keyboard-closable with `Escape` (Radix `Dialog` behaviour). The full 12-measurement
+  modal audit across all three dialog surfaces is recorded separately in **§2.1**.
 
 ---
 

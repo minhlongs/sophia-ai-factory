@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
+**Verified Code & Test HEAD:** `eb1c8d7960288b1dbe871ad998505c91f32346d7`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Reported Checkpoint:** `b3338a256` (handover base: `4d23ddb386f499b7627f2c828a1b80c81c6a3382`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
@@ -17,15 +17,15 @@ not match the working tree. Measured:
 | Set | Count |
 |:--|--:|
 | Baseline `673ec911` → pre-existing branch tip `4d23ddb38` | 36 files |
-| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50`, `f9220c3a2` + evidence sync) | 168 tracked |
-| **Total under review (baseline → closing commit)** | **179** (87 `A`, 92 `M`) |
+| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50`, `f9220c3a2`, `eb1c8d796` + evidence sync) | 173 tracked |
+| **Total under review (baseline → closing commit)** | **184** (88 `A`, 96 `M`) |
 | of which PNG screenshots (binary, listed but not diffed line-by-line) | 40 |
-| of which non-PNG files, classified in full below | 139 |
+| of which non-PNG files, classified in full below | 144 |
 
 The two ranges above overlap — a file added in `4d23ddb38` and then edited by
 the closure commits is counted once in each row but only once in the total.
-**The authoritative inventory is the full 179**, and every one of them is
-classified here. No file was skipped. The 139 non-PNG files are enumerated
+**The authoritative inventory is the full 184**, and every one of them is
+classified here. No file was skipped. The 144 non-PNG files are enumerated
 individually; the 40 PNGs are grouped by directory.
 
 ---
@@ -34,12 +34,12 @@ individually; the 40 PNGs are grouped by directory.
 
 | Category | Non-PNG files | PNG files | Total |
 |:--|--:|--:|--:|
-| Design implementation | 61 | — | 61 |
+| Design implementation | 63 | — | 63 |
 | Documentation | 22 | — | 22 |
-| Security correction | 19 | — | 19 |
+| Security correction | 22 | — | 22 |
 | Functional regression correction | 25 | — | 25 |
 | Browser evidence | 12 | 40 | 52 |
-| **Total under review** | **139** | **40** | **179** |
+| **Total under review** | **144** | **40** | **184** |
 | **Unexpected / out-of-scope** | **0** | **0** | **0** |
 
 **The out-of-scope count is zero.** No file in the delta changes business
@@ -48,11 +48,11 @@ calls are named transparently in §3 rather than quietly re-labelled.
 
 ---
 
-## 2. Full classification (179 files)
+## 2. Full classification (184 files)
 
 Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-factory/` except `DESIGN.md` and the 14 `docs/design/zen-design-os/*.md` architecture documents, which live at the monorepo root).
 
-### 2.1 Design implementation — 61 files
+### 2.1 Design implementation — 63 files
 
 | Status | Path |
 |:--:|:--|
@@ -108,7 +108,9 @@ Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-facto
 | M | `src/forest/theme/index.ts` |
 | M | `src/seed/components/ui/animated-counter-with-framer-motion.tsx` |
 | A | `src/seed/components/ui/__tests__/zen-motion-reduced-motion.test.tsx` |
+| M | `src/seed/components/ui/badge.tsx` |
 | M | `src/seed/components/ui/button.tsx` |
+| M | `src/seed/components/ui/command-items.tsx` |
 | M | `src/seed/components/ui/fade-in-view.tsx` |
 | M | `src/seed/components/ui/page-transition.tsx` |
 | M | `src/seed/components/ui/scroll-reveal.tsx` |
@@ -151,7 +153,7 @@ notFound()` at `src/app/[locale]/zen-a11y-harness/page.tsx:23`, so it returns
 404 in any deployed build. Its reachable-in-build-table limitation is recorded
 in [ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md](./ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md) §2.1.2.
 
-### 2.3 Security correction — 19 files
+### 2.3 Security correction — 22 files
 
 | Status | Path |
 |:--:|:--|
@@ -164,16 +166,19 @@ in [ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md](./ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md
 | M | `src/forest/middleware/rate-limiter/sliding-window-evaluator.ts` |
 | M | `src/forest/middleware/rate-limiter/types.ts` |
 | M | `src/tree/signals/events/schemas-business.ts` |
+| M | `src/land/heygen/webhook-registrar.ts` |
 | M | `src/app/api/user/byok/route.ts` |
 | M | `src/app/api/user/byok/test/route.ts` |
 | M | `src/app/api/setup-wizard/heygen/auto-register/route.ts` |
 | M | `src/app/api/setup-wizard/test-heygen/route.ts` |
 | M | `src/app/api/setup-wizard/test-resend/route.ts` |
+| M | `src/app/api/setup-wizard/test-resend/test-resend-helpers.ts` |
 | M | `src/app/api/setup-wizard/validate-key/route.ts` |
 | M | `src/app/api/setup/verify/route.ts` |
 | A | `src/middleware/__tests__/api-handler-rate-limit-buckets.test.ts` |
 | A | `src/app/api/user/byok/__tests__/byok-rate-limit-security.test.ts` |
 | A | `src/app/api/setup/verify/__tests__/verify-rate-limit-security.test.ts` |
+| A | `src/app/api/setup-wizard/test-resend/__tests__/test-resend-circuit-isolation.test.ts` |
 
 This is the P0 finding and its closure: a dedicated `byok` bucket, per-route
 caps on every provider-probing endpoint (including `/api/setup/verify` hardened
@@ -285,7 +290,7 @@ None. Section 3 records the borderline files that were checked and cleared.
 
 ---
 
-## 4. Quality gates on the closing tree (`f9220c3a2`)
+## 4. Quality gates on the closing tree (`eb1c8d796`)
 
 | Gate | Result | Detail |
 |:--|:--:|:--|
@@ -295,7 +300,7 @@ None. Section 3 records the borderline files that were checked and cleared.
 | `npm run i18n:validate` | **PASS (0 missing keys)** | 5,702 `t()` calls, 0 missing static keys, 0 empty static values across vi/en + 12-locale parity |
 | `npm run check:color-tokens` | **PASS (exit 0)** | 1045 literals against a 1080 baseline, −35 net, 8 files improved, none regressed |
 | `npm run build` | **PASS (636 routes)** | Next.js 16.4.2, exit 0 |
-| `npm test` | **PASS (2100 files / 19,707 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
+| `npm test` | **PASS (2101 files / 19,710 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
 | Secret scan (staged diff) | **PASS** | no key-shaped patterns, no dotenv or private-key file added |
 | Worktree | **clean** | `git status --porcelain` empty after the closing commit |
 
