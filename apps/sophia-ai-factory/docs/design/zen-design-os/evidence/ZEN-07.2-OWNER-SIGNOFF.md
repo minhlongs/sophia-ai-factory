@@ -252,9 +252,9 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
   5. Trọn bộ **bằng chứng kiểm định độc lập** (`7` báo cáo `ZEN-07.2-*.md`, `8` file JSON/script máy đo, `40` ảnh chụp Chrome thật, và `2` bộ Playwright E2E specs).
 - **Phạm vi loại trừ rõ ràng (Excluded from PR):** Không thêm thư viện hoạt ảnh mới (không GSAP / Lenis / React Bits), không đưa Satoshi hay Instrument Serif vào hệ thống, không thay đổi luồng Telegram Bot hay thanh toán NOWPayments, không thay đổi migration D1.
 
-### 10.2 Bảng Ký Duyệt Dành Riêng Cho Founder (Để Trống Theo Quy Định — No Self-Signoff)
+### 10.2 Bảng Ký Duyệt Của Founder (Đã Được Founder Phê Duyệt Trực Tiếp — 2026-11-14)
 
-- [ ] **1. Duyệt Hình Ảnh & Giao Diện Kép (Visual & Dual-Theme Approval):** Founder đã xem và đồng ý với 36 ảnh chụp chuẩn + 4 ảnh chuyên biệt tại `apps/sophia-ai-factory/docs/design/zen-design-os/evidence/screenshots/` và `targeted/`.
-- [ ] **2. Duyệt Chữ Viết & Trợ Năng Hộp Thoại (Typography & Dialog A11y Approval):** Founder xác nhận chuẩn font `Inter` + `JetBrains Mono` (`DESIGN.md`) và kết quả kiểm thử hộp thoại thật (`ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md` §2.1).
-- [ ] **3. Duyệt Bảo Mật BYOK & Chính Sách Rocket Loader (Security & Edge Governance Approval):** Founder đồng ý với cơ chế giới hạn tốc độ BYOK 2 tầng (Mục 4) và hướng dẫn khóa Rocket Loader theo hostname `sophia.agencyos.network` (Mục 5).
-- [ ] **4. Cấp Quyền Push Nhánh & Mở Draft PR (Authorization to Push & Open Draft PR):** Founder cho phép push nhánh `design/sophia-zen-design-os-v1` lên GitHub và tạo **Draft PR** vào `main` *(chưa merge / chưa deploy production cho tới khi có lệnh phát hành riêng)*.
+- [x] **1. Duyệt Hình Ảnh & Giao Diện Kép (Visual & Dual-Theme Approval):** Founder đã xem và đồng ý với 36 ảnh chụp chuẩn + 4 ảnh chuyên biệt tại `apps/sophia-ai-factory/docs/design/zen-design-os/evidence/screenshots/` và `targeted/`.
+- [x] **2. Duyệt Chữ Viết & Trợ Năng Hộp Thoại (Typography & Dialog A11y Approval):** Founder xác nhận chuẩn font `Inter` + `JetBrains Mono` (`DESIGN.md`) và kết quả kiểm thử hộp thoại thật (`ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md` §2.1).
+- [x] **3. Duyệt Bảo Mật BYOK & Chính Sách Rocket Loader (Security & Edge Governance Approval):** Founder đồng ý với cơ chế giới hạn tốc độ BYOK 2 tầng (Mục 4) và hướng dẫn khóa Rocket Loader theo hostname `sophia.agencyos.network` (Mục 5).
+- [x] **4. Cấp Quyền Push Nhánh, Chuyển Ready & Merge Phát Hành (Authorization to Ready, Merge & Deploy):** Founder đã phê duyệt chính thức chuyển PR #155 sang Ready, merge vào `main` và triển khai qua pipeline CI/CD chuẩn (2026-11-14).
