@@ -186,5 +186,8 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(compliancePlayer).toContain('text-emerald-800 dark:text-emerald-300');
     expect(tierAssignment).toContain('text-primary-text');
     expect(inviteSuccess).toContain('text-emerald-700 dark:text-emerald-300');
+    expect(globalsCss).toContain('.animate-pulse,');
+    expect(globalsCss).toContain('.animate-ping,');
+    expect(globalsCss).toContain('.animate-spin,');
   });
 });

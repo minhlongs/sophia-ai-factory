@@ -889,18 +889,35 @@ base.describe('ZEN 07.2 — G1 / G2 / G3 / G4 Browser Acceptance', () => {
       });
 
     const pilotMotion = await scanMotion();
-    const instantAnimations = await page.evaluate(
-      () =>
-        Array.from(document.querySelectorAll('*')).filter((el) => {
-          const style = window.getComputedStyle(el as HTMLElement);
-          if (style.animationName === 'none' || style.animationDuration === '0s') return false;
-          const durationParts = style.animationDuration.split(',').map((d) => d.trim());
-          return durationParts.every((d) => {
+    const { instantAnimations, runningInfiniteAnimations } = await page.evaluate(() => {
+      const elements = Array.from(document.querySelectorAll('*'));
+      let instant = 0;
+      let infinite = 0;
+      for (const el of elements) {
+        const style = window.getComputedStyle(el as HTMLElement);
+        if (style.animationName === 'none' || style.animationDuration === '0s') continue;
+        const durationParts = style.animationDuration.split(',').map((d) => d.trim());
+        const iterationParts = style.animationIterationCount.split(',').map((c) => c.trim());
+        if (
+          durationParts.every((d) => {
             const seconds = Number.parseFloat(d);
             return Number.isFinite(seconds) && seconds <= 0.01;
-          });
-        }).length,
-    );
+          })
+        ) {
+          instant += 1;
+        }
+        if (
+          iterationParts.some((c) => c === 'infinite') &&
+          durationParts.some((d) => {
+            const seconds = Number.parseFloat(d);
+            return Number.isFinite(seconds) && seconds > 0;
+          })
+        ) {
+          infinite += 1;
+        }
+      }
+      return { instantAnimations: instant, runningInfiniteAnimations: infinite };
+    });
 
     // The three pilot routes do not import the Zen motion primitives, so their
     // reduced-motion behaviour is verified on the pricing screen, which does.
@@ -912,6 +929,7 @@ base.describe('ZEN 07.2 — G1 / G2 / G3 / G4 Browser Acceptance', () => {
     const motionReport = {
       prefersReduce: true,
       instantAnimations,
+      runningInfiniteAnimations,
       pilotRoutes: pilotMotion,
       pricingRoute: pricingMotion,
     };
@@ -931,9 +949,10 @@ base.describe('ZEN 07.2 — G1 / G2 / G3 / G4 Browser Acceptance', () => {
     expect(dialogFocusCheck.shiftTabContained, 'Shift+Tab must stay inside the dialog').toBe(true);
     expect(dialogFocusCheck.escapeClosed, 'Escape must close the dialog').toBe(true);
 
-    // Reduced motion: no animation longer than a frame may remain running.
+    // Reduced motion: no instant 0.01ms anti-pattern and no infinite keyframe loop may remain running.
     expect(motionReport.prefersReduce).toBe(true);
     expect(motionReport.instantAnimations).toBe(0);
+    expect(motionReport.runningInfiniteAnimations).toBe(0);
     expect(reflowCheck.requiresHorizontalScrolling).toBe(false);
     // Every Zen motion primitive that renders must be revealed with no transition.
     for (const [name, state] of Object.entries({ ...pilotMotion, ...pricingMotion })) {

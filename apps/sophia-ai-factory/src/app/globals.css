@@ -999,6 +999,9 @@ html {
   html {
     scroll-behavior: auto;
   }
+  .animate-pulse,
+  .animate-ping,
+  .animate-spin,
   .animate-gradient,
   .animate-conveyor,
   .animate-fade-in-up,
