@@ -139,4 +139,32 @@ describe('PaidPilotBanner', () => {
       expect(screen.getByRole('alert').textContent).toBe(TRANSLATIONS['paidPilot.errorNotice']);
     });
   });
+
+  it('rejects untrusted redirect hosts and open-redirect login paths', async () => {
+    const onRedirect = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ redirectTo: '//evil.example/phish' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://evil.example/checkout' }),
+      });
+
+    render(<PaidPilotBanner onRedirect={onRedirect} />);
+    fireEvent.click(screen.getByRole('button', { name: TRANSLATIONS['paidPilot.cta'] }));
+    await waitFor(() => {
+      expect(onRedirect).toHaveBeenCalledWith('/vi/login?next=%2Fvi%2Fpricing');
+    });
+
+    onRedirect.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: TRANSLATIONS['paidPilot.cta'] }));
+    await waitFor(() => {
+      expect(onRedirect).not.toHaveBeenCalled();
+      expect(screen.getByRole('alert').textContent).toBe(TRANSLATIONS['paidPilot.errorNotice']);
+    });
+  });
 });

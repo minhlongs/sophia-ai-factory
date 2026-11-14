@@ -15,6 +15,9 @@ export interface SubscriptionActivationResult {
 }
 
 export function calculatePayOsPeriodEnd(tier: Tier, orderPeriod?: string): { isLifetime: boolean; periodEnd: string } {
+  if (orderPeriod === 'pilot_14d' && tier !== 'BASIC') {
+    throw new Error('14-day Paid Pilot billing is only valid for BASIC tier');
+  }
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime';
   const periodEnd = isLifetime
     ? new Date('2099-12-31T23:59:59Z').toISOString()

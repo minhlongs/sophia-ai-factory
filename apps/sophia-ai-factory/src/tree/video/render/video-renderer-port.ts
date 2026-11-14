@@ -85,7 +85,7 @@ export function createR2SegmentCache(bucket: R2LikeSegmentBucket, tenantId: stri
       if (!obj) return null;
       try {
         const parsed = JSON.parse(await obj.text()) as { segmentUrl?: unknown; tenantId?: unknown };
-        if (parsed.tenantId && parsed.tenantId !== normalizedTenantId) return null;
+        if (parsed.tenantId !== normalizedTenantId) return null;
         return typeof parsed.segmentUrl === 'string' && parsed.segmentUrl.length > 0 ? parsed.segmentUrl : null;
       } catch {
         return null;
@@ -132,7 +132,7 @@ async function executeSegmentedRender(
       continue;
     }
 
-    const defaultSegmentKey = `${timelinePrefix}/${engine}-${scene.sceneId}-${cacheKey.slice(0, 12)}.mp4`;
+    const defaultSegmentKey = `${timelinePrefix}/${engine}-${encodeURIComponent(scene.sceneId)}-${cacheKey.slice(0, 12)}.mp4`;
     const rendered = options?.renderSceneSegment
       ? await options.renderSceneSegment(scene, cacheKey, engine)
       : {

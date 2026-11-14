@@ -26,6 +26,22 @@ export interface PaidPilotBannerProps {
   readonly onRedirect?: (url: string) => void;
 }
 
+const ALLOWED_PAYMENT_HOSTS = new Set(['pay.payos.vn', 'checkout.payos.vn', 'sophia.agencyos.network']);
+
+function isSafeRelativePath(candidate: string | undefined): candidate is string {
+  return typeof candidate === 'string' && candidate.startsWith('/') && !candidate.startsWith('//');
+}
+
+function isAllowedCheckoutUrl(candidate: string | undefined): candidate is string {
+  if (!candidate) return false;
+  try {
+    const parsed = new URL(candidate);
+    return parsed.protocol === 'https:' && ALLOWED_PAYMENT_HOSTS.has(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function defaultRedirect(url: string): void {
   window.location.href = url;
 }
@@ -52,7 +68,7 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
       const data = (await res.json().catch(() => ({}))) as PaidPilotCheckoutResponse;
 
       if (res.status === 401) {
-        onRedirect(data.redirectTo || '/vi/login?next=%2Fvi%2Fpricing');
+        onRedirect(isSafeRelativePath(data.redirectTo) ? data.redirectTo : '/vi/login?next=%2Fvi%2Fpricing');
         return;
       }
       if (!res.ok) {
@@ -63,7 +79,7 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
         setFallbackActive(true);
         return;
       }
-      if (data.url) {
+      if (isAllowedCheckoutUrl(data.url)) {
         onRedirect(data.url);
         return;
       }
