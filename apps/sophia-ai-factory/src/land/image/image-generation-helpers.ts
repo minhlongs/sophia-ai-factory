@@ -97,7 +97,7 @@ export async function submitMuApiImageJob(
     };
   }
 
-  const muResult = await submitMediaJob({ type: 'image', model, prompt, aspectRatio }, apiKey);
+  const muResult = await submitMediaJob({ type: 'image', model, prompt, aspectRatio }, { fund: 'byok', apiKey });
   if (!muResult.success || !muResult.job) {
     logger.warn('[image-orchestrator] MuAPI submission failed', { error: muResult.error });
     return { success: false, error: muResult.error ?? 'Failed to submit job', code: 'MUAPI_ERROR' };
