@@ -49,7 +49,15 @@ type Creds = Awaited<ReturnType<typeof getCredentials>>;
 function createLegacyD1(): FakeD1 {
   const tracking = readFileSync(resolve(process.cwd(), 'migrations/0082-edge-tracking.sql'), 'utf8');
   const engine = readFileSync(resolve(process.cwd(), 'migrations/0035-affiliate-engine.sql'), 'utf8');
-  return createFakeD1([tracking, engine]);
+  const dlq = readFileSync(resolve(process.cwd(), 'migrations/0489_postback_dead_letter.sql'), 'utf8');
+  return createFakeD1([tracking, engine, dlq]);
+}
+
+async function dlqRows(db: FakeD1) {
+  const res = await db
+    .prepare('SELECT * FROM postback_dead_letter ORDER BY created_at ASC')
+    .all<Record<string, unknown>>();
+  return res.results;
 }
 
 function mockCreds(secrets: Record<string, Record<string, string>>) {
@@ -132,6 +140,134 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
     expect(inngest.send).not.toHaveBeenCalled();
   });
 
+  it('captures a failed resolution without storing the unverified tenant hint', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    // The hint names a workspace, but nothing has been verified: resolution
+    // stops at the missing credential, so the claim must not be persisted.
+    const raw = JSON.stringify({ tradeId: 'r1', tenant_id: 'tenant-victim' });
+    const res = await POST(post('binance', raw, { 'x-signature': 'x' }), {
+      params: { network: 'binance' },
+    });
+
+    expect(res.status).toBe(503);
+    const rows = await dlqRows(db);
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({
+      network: 'binance',
+      failure_reason: 'secret_not_configured',
+      payload: raw,
+      tenant_hint: null,
+    });
+  });
+
+  it('records cf-connecting-ip and ignores the client-controlled x-forwarded-for', async () => {
+    const edgeDb = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(edgeDb as unknown as D1Database);
+    mockCreds({});
+
+    const withEdge = await POST(
+      post('binance', JSON.stringify({ tradeId: 'r1' }), {
+        'x-signature': 'x',
+        'cf-connecting-ip': '9.9.9.9',
+        'x-forwarded-for': '1.1.1.1',
+      }),
+      { params: { network: 'binance' } },
+    );
+    expect(withEdge.status).toBe(422);
+    expect((await dlqRows(edgeDb))[0].source_ip).toBe('9.9.9.9');
+
+    const noEdgeDb = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(noEdgeDb as unknown as D1Database);
+
+    const withoutEdge = await POST(
+      post('binance', JSON.stringify({ tradeId: 'r2' }), {
+        'x-signature': 'x',
+        'x-forwarded-for': '1.1.1.1',
+      }),
+      { params: { network: 'binance' } },
+    );
+    expect(withoutEdge.status).toBe(422);
+    const rows = await dlqRows(noEdgeDb);
+    expect(rows.length).toBe(1);
+    expect(rows[0].source_ip).toBeNull();
+  });
+
+  it('bounds unauthenticated varied-body invalid postbacks to one DLQ row per 15-minute window', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    for (const tradeId of ['flood-1', 'flood-2', 'flood-3']) {
+      const res = await POST(
+        post('binance', JSON.stringify({ tradeId }), { 'x-signature': 'x' }),
+        { params: { network: 'binance' } },
+      );
+      expect(res.status).toBe(422);
+    }
+
+    const rows = await dlqRows(db);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      network: 'binance',
+      failure_reason: 'tenant_unresolvable',
+      tenant_hint: null,
+      retry_count: 3,
+      payload: JSON.stringify({ tradeId: 'flood-1' }),
+    });
+  });
+
+  it('stores no credential header or query parameter on a captured request', async () => {
+    const db = createLegacyD1();
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({});
+
+    // Binance treats `authorization: Bearer …` as the signature, so this is
+    // the path that would leak a live credential into the queue if the
+    // evidence serializer were a raw header dump.
+    const res = await POST(
+      new NextRequest(
+        'http://localhost/api/webhooks/saas-crypto/binance?access_token=query_token_probe&session=query_session_probe',
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer binance_live_signature_probe',
+            cookie: 'session=route-session-probe',
+            'x-custom-provider-api-key': 'pk_route_probe',
+            'user-agent': 'binance-connector/3.1',
+            'cf-connecting-ip': '9.9.9.9',
+          },
+          body: JSON.stringify({ tradeId: 'r1' }),
+        },
+      ),
+      { params: { network: 'binance' } },
+    );
+
+    expect(res.status).toBe(422);
+    const rows = await dlqRows(db);
+    expect(rows[0].endpoint).toBe('http://localhost/api/webhooks/saas-crypto/binance');
+    const storedHeaders = String(rows[0].headers_json);
+
+    for (const secret of [
+      'binance_live_signature_probe',
+      'route-session-probe',
+      'pk_route_probe',
+      'Bearer',
+    ]) {
+      expect(storedHeaders).not.toContain(secret);
+    }
+
+    const parsed = JSON.parse(storedHeaders) as Record<string, string>;
+    expect(parsed).toMatchObject({ 'user-agent': 'binance-connector/3.1' });
+    expect(parsed.authorization).toMatch(/^sigfp:[0-9a-f]{16}$/);
+    for (const key of Object.keys(parsed)) {
+      expect(['authorization', 'user-agent', 'content-type', 'content-length']).toContain(key);
+    }
+    expect(Object.keys(parsed)).toHaveLength(3);
+  });
+
   it('returns 503 secret_not_configured when the workspace has no credential', async () => {
     const db = createLegacyD1();
     await seedLink(db, 'link_A1', 'tenant-a');
@@ -143,9 +279,9 @@ describe('POST /api/webhooks/saas-crypto/[network]', () => {
       { params: { network: 'partnerstack' } },
     );
     expect(res.status).toBe(503);
-    const data = (await res.json()) as { ok: boolean; error: string; tenantId: string };
+    const data = (await res.json()) as { ok: boolean; error: string; tenantId?: string };
     expect(data.error).toBe('secret_not_configured');
-    expect(data.tenantId).toBe('tenant-a');
+    expect(data.tenantId).toBeUndefined();
     expect(processSaasCryptoPostback).not.toHaveBeenCalled();
   });
 

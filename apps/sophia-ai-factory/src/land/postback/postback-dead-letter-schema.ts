@@ -60,27 +60,34 @@ CREATE TABLE IF NOT EXISTS postback_dead_letter (
 export const INSERT_POSTBACK_DLQ_SQL = `INSERT INTO postback_dead_letter
   (id, network, endpoint, source_ip, headers_json, payload,
    failure_reason, tenant_hint, retry_count, resolved, created_at, last_attempted_at)
-  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0, ?10, ?11)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
   ON CONFLICT(id) DO UPDATE SET
     retry_count = retry_count + 1,
-    failure_reason = ?7,
-    last_attempted_at = ?11`
+    failure_reason = excluded.failure_reason,
+    last_attempted_at = excluded.last_attempted_at`
 
+/**
+ * Dead-letter rows are tenant-owned. Every read and resolve carries the
+ * tenant scope so one workspace can never see or close another's evidence.
+ * Rows captured before a tenant could be verified carry a NULL hint and are
+ * therefore invisible here by construction.
+ */
 export const SELECT_UNRESOLVED_POSTBACK_DLQ_SQL = `SELECT * FROM postback_dead_letter
-  WHERE resolved = 0
+  WHERE resolved = 0 AND tenant_hint = ?
   ORDER BY created_at ASC
-  LIMIT ?1`
+  LIMIT ?`
 
 export const SELECT_POSTBACK_DLQ_COUNTS_SQL = `SELECT
     network,
     COUNT(*) AS total,
     SUM(CASE WHEN resolved = 0 THEN 1 ELSE 0 END) AS unresolved
   FROM postback_dead_letter
+  WHERE tenant_hint = ?
   GROUP BY network`
 
 export const RESOLVE_POSTBACK_DLQ_SQL = `UPDATE postback_dead_letter
-  SET resolved = 1, resolved_at = ?1
-  WHERE id = ?2`
+  SET resolved = 1, resolved_at = ?
+  WHERE id = ? AND tenant_hint = ?`
 
 export interface RawD1QueryHandle {
   prepare: (sql: string) => {

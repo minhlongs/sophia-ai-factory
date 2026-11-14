@@ -16,8 +16,9 @@
  *   - unknown tenant/link fails closed (422 + migration guidance) instead of
  *     recording under a global tenant or link 'unknown';
  *   - storage/config failures return 503 (retry) instead of a false 200 ack.
- *   - permanent garbage (unparseable body, missing transaction id) keeps the
- *     legacy 200 + skipped code so providers do not retry storms.
+ *   - permanent garbage (unparseable body, missing transaction id) is captured
+ *     to the dead-letter queue and then acked 200 + skipped code, so providers
+ *     do not retry-storm a payload that can never succeed.
  *
  * Layer: land/postback (Business Workflow)
  * @module land/postback/legacy-ecommerce-handler
@@ -34,6 +35,12 @@ import {
   LEGACY_MIGRATION_GUIDANCE,
 } from './legacy-tenant-resolver';
 import { enqueuePostbackDlq } from './postback-dead-letter';
+import {
+  serializeDlqHeaders,
+  serializeDlqEndpoint,
+  serializeDlqSourceIp,
+  serializeDlqBody,
+} from './postback-dlq-evidence';
 import { recordLegacyEcommerceConversion } from './legacy-ecommerce-recorder';
 
 /** Minimal request surface (keeps this module free of Next.js types). */
@@ -42,7 +49,6 @@ export interface LegacyPostbackRequest {
   url: string;
   headers: {
     get(name: string): string | null;
-    entries?(): IterableIterator<[string, string]>;
   };
 }
 
@@ -102,23 +108,41 @@ function extractSignature(request: LegacyPostbackRequest, sigHeaders: string[]):
   return '';
 }
 
-function serializeHeaders(
-  request: LegacyPostbackRequest,
-  sigHeaders: string[],
-): string {
-  if (typeof request.headers.entries === 'function') {
-    return JSON.stringify(Object.fromEntries(request.headers.entries()));
-  }
-  const captured: Record<string, string> = {};
-  for (const h of [...sigHeaders, 'cf-connecting-ip', 'x-forwarded-for', 'user-agent']) {
-    const val = request.headers.get(h);
-    if (val) captured[h] = val;
-  }
-  return JSON.stringify(captured);
-}
-
 function asNumber(v: unknown): number {
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
+/**
+ * Capture sanitized DLQ evidence. Callers pass `tenantHint: null` whenever the
+ * tenant has not yet been bound by a passing signature check — before that
+ * point any hint is attacker-chosen and storing it would let a caller plant
+ * attribution in someone else's queue.
+ */
+async function captureDlqEvidence(
+  request: LegacyPostbackRequest,
+  contract: LegacyEcommerceContract,
+  rawBody: string,
+  failureReason: string,
+  tenantHint: string | null,
+): Promise<void> {
+  await enqueuePostbackDlq({
+    network: contract.slug,
+    endpoint: serializeDlqEndpoint(request.url),
+    sourceIp: serializeDlqSourceIp(request.headers.get('cf-connecting-ip')),
+    headersJson: await serializeDlqHeaders(request.headers, contract.sigHeaders),
+    rawBody: serializeDlqBody(rawBody),
+    failureReason,
+    tenantHint,
+  });
+}
+
+function captureUnattributed(
+  request: LegacyPostbackRequest,
+  contract: LegacyEcommerceContract,
+  rawBody: string,
+  failureReason: string,
+): Promise<void> {
+  return captureDlqEvidence(request, contract, rawBody, failureReason, null);
 }
 
 /**
@@ -148,12 +172,17 @@ export async function processLegacyEcommercePostback(
     payload = JSON.parse(rawBody) as Record<string, unknown>;
   } catch {
     // Permanent garbage: ack so the provider does not retry-storm a body that
-    // can never parse. Nothing is recorded.
+    // can never parse. The evidence is captured first so the payload is not
+    // silently lost.
+    await captureUnattributed(request, contract, rawBody, 'parse_error');
     return { status: 200, body: { ok: true, skipped: 'parse_error' } };
   }
 
   const providerTxnId = firstNonEmpty(payload, contract.txnIdFields);
   if (!providerTxnId) {
+    // Same reasoning: permanently unprocessable, so capture and ack. The
+    // tenant hint is still unverified at this point and must not be trusted.
+    await captureUnattributed(request, contract, rawBody, contract.missingTxnSkipCode);
     return { status: 200, body: { ok: true, skipped: contract.missingTxnSkipCode } };
   }
 
@@ -174,15 +203,9 @@ export async function processLegacyEcommercePostback(
     explicitTenantId: extractExplicitTenantId(request, payload),
   });
   if (!resolution.ok) {
-    await enqueuePostbackDlq({
-      network: contract.slug,
-      endpoint: request.url,
-      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
-      headersJson: serializeHeaders(request, contract.sigHeaders),
-      rawBody,
-      failureReason: resolution.error,
-      tenantHint: 'tenantId' in resolution ? resolution.tenantId : extractExplicitTenantId(request, payload),
-    });
+    // Nothing here is verified yet: resolution failed and no signature check
+    // has run, so any tenant hint is attacker-chosen.
+    await captureUnattributed(request, contract, rawBody, resolution.error);
 
     if (resolution.error === 'tenant_unresolvable') {
       return {
@@ -199,7 +222,6 @@ export async function processLegacyEcommercePostback(
       body: {
         ok: false,
         error: 'secret_not_configured',
-        tenantId: resolution.tenantId,
         guidance: LEGACY_MIGRATION_GUIDANCE,
       },
     };
@@ -214,15 +236,7 @@ export async function processLegacyEcommercePostback(
   if (!resolution.linkId) {
     // Verified tenant but no attributable link: recording would create an
     // orphan row no dashboard can attribute. Capture to DLQ and fail closed.
-    await enqueuePostbackDlq({
-      network: contract.slug,
-      endpoint: request.url,
-      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
-      headersJson: serializeHeaders(request, contract.sigHeaders),
-      rawBody,
-      failureReason: 'link_unattributed',
-      tenantHint: resolution.tenantId,
-    });
+    await captureDlqEvidence(request, contract, rawBody, 'link_unattributed', resolution.tenantId);
     return {
       status: 422,
       body: {

@@ -400,11 +400,12 @@ describe('postback tenant-scope local e2e (real migrations + real vault + real H
       ) as never,
     );
     expect(res.status).toBe(503);
-    expect(await res.json()).toMatchObject({
+    const errBody = (await res.json()) as Record<string, unknown>;
+    expect(errBody).toMatchObject({
       ok: false,
       error: 'secret_not_configured',
-      tenantId: TENANT_C,
     });
+    expect(errBody).not.toHaveProperty('tenantId');
     expect(await count(mocks.db, 'conversion_events')).toBe(before);
   });
 

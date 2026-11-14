@@ -2,17 +2,15 @@
  * Postback Dead-Letter Queue
  *
  * Captures legacy/canonical postback requests that cannot be attributed or
- * verified, so operators can inspect and replay them instead of losing the
- * conversion payload. A postback fails closed loudly (4xx/5xx), but the
- * evidence is durably recorded here before the response is returned.
- *
- * Same row-mapping + SQL-constants pattern as commission-dlq-schema.ts.
+ * verified, so operators can inspect and replay them without losing conversion
+ * evidence. Same row-mapping + SQL-constants pattern as commission-dlq-schema.ts.
  *
  * Layer: land/postback (Business Workflow)
  * @module land/postback/postback-dead-letter
  */
 
 import { getD1 } from '@/seed/db/client'
+import { sha256Hex } from '@/seed/security/token-hash'
 import { logger } from '@/seed/utils/logger-utility'
 import { safeCatch } from '@/seed/utils/safe-catch'
 import {
@@ -38,7 +36,10 @@ export interface EnqueuePostbackDlqInput {
   network: string
   endpoint: string
   sourceIp: string | null
-  /** Raw request headers as a JSON string (secrets are never stored). */
+  /**
+   * Request headers serialized by `serializeDlqHeaders`: allowlisted diagnostic
+   * headers plus `sigfp:` digests for contract-declared signature headers only.
+   */
   headersJson: string
   rawBody: string
   failureReason: string
@@ -46,12 +47,40 @@ export interface EnqueuePostbackDlqInput {
 }
 
 /**
- * Persist one unprocessable postback. Idempotent per (network, endpoint,
- * failure reason, tenant hint, payload): repeated deliveries of the same bad
- * request increment retry_count instead of creating duplicate rows.
- *
- * Returns the dead-letter id, or null when D1 is unavailable — callers must
- * still fail the request closed; this is evidence capture, not acceptance.
+ * 15-minute aggregation window for unattributed (`tenantHint === null`) rows.
+ * Caps unauthenticated floods varying `rawBody` to one row per
+ * `(network, endpoint, failureReason)` per 15 minutes via `retry_count`.
+ */
+export const UNATTRIBUTED_DLQ_WINDOW_MS = 15 * 60 * 1000
+
+async function deriveDlqId(
+  input: EnqueuePostbackDlqInput,
+  nowMs: number,
+): Promise<string> {
+  if (input.tenantHint === null) {
+    const bucket = String(Math.floor(nowMs / UNATTRIBUTED_DLQ_WINDOW_MS))
+    return sha256Hex(
+      ['unattributed', input.network, input.endpoint, input.failureReason, bucket].join(
+        '\u0000',
+      ),
+    )
+  }
+  return sha256Hex(
+    [
+      'attributed',
+      input.network,
+      input.endpoint,
+      input.failureReason,
+      input.tenantHint,
+      input.rawBody,
+    ].join('\u0000'),
+  )
+}
+
+/**
+ * Persist one unprocessable postback. Attributed rows deduplicate per exact
+ * payload; unattributed rows aggregate per 15-minute window via `retry_count`.
+ * Returns the dead-letter id, or null when D1 is unavailable.
  */
 export async function enqueuePostbackDlq(
   input: EnqueuePostbackDlqInput,
@@ -65,10 +94,11 @@ export async function enqueuePostbackDlq(
     return null
   }
 
-  const now = new Date().toISOString()
-  const id = crypto.randomUUID()
+  const nowMs = Date.now()
+  const now = new Date(nowMs).toISOString()
 
   try {
+    const id = await deriveDlqId(input, nowMs)
     await db
       .prepare(INSERT_POSTBACK_DLQ_SQL)
       .bind(
@@ -99,8 +129,11 @@ export async function enqueuePostbackDlq(
 
 /**
  * Read unresolved dead-letter rows oldest-first, for operator inspection.
+ * Tenant scope is mandatory: operator tooling must never surface one
+ * workspace's unverified payloads to another.
  */
 export async function listUnresolvedPostbackDlq(
+  tenantId: string,
   limit = 50,
 ): Promise<PostbackDlqEntry[]> {
   const db = await getD1()
@@ -110,7 +143,7 @@ export async function listUnresolvedPostbackDlq(
     const rawDb = db as unknown as RawD1QueryHandle
     const result = await rawDb
       .prepare(SELECT_UNRESOLVED_POSTBACK_DLQ_SQL)
-      .bind(limit)
+      .bind(tenantId, limit)
       .all<Record<string, unknown>>()
     return (result.results ?? []).map(mapPostbackDlqRow)
   } catch (err) {
@@ -125,7 +158,9 @@ export interface PostbackDlqCounts {
   unresolved: number
 }
 
-export async function getPostbackDlqCounts(): Promise<PostbackDlqCounts[]> {
+export async function getPostbackDlqCounts(
+  tenantId: string,
+): Promise<PostbackDlqCounts[]> {
   const db = await getD1()
   if (!db) return []
 
@@ -133,6 +168,7 @@ export async function getPostbackDlqCounts(): Promise<PostbackDlqCounts[]> {
     const rawDb = db as unknown as RawD1QueryHandle
     const result = await rawDb
       .prepare(SELECT_POSTBACK_DLQ_COUNTS_SQL)
+      .bind(tenantId)
       .all<Record<string, unknown>>()
     return (result.results ?? []).map((r) => ({
       network: r.network as string,
@@ -145,14 +181,17 @@ export async function getPostbackDlqCounts(): Promise<PostbackDlqCounts[]> {
   }
 }
 
-export async function resolvePostbackDlqEntry(id: string): Promise<void> {
+export async function resolvePostbackDlqEntry(
+  tenantId: string,
+  id: string,
+): Promise<void> {
   const db = await getD1()
   if (!db) return
 
   try {
     await db
       .prepare(RESOLVE_POSTBACK_DLQ_SQL)
-      .bind(new Date().toISOString(), id)
+      .bind(new Date().toISOString(), id, tenantId)
       .run()
   } catch (err) {
     safeCatch('resolvePostbackDlqEntry')(err)

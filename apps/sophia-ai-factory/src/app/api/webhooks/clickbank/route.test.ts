@@ -164,7 +164,8 @@ describe('POST /api/webhooks/clickbank', () => {
     const res = await POST(makeRequest())
     expect(res.status).toBe(503)
     const json = await res.json() as Record<string, unknown>
-    expect(json).toMatchObject({ ok: false, error: 'secret_not_configured', tenantId: 'user-1' })
+    expect(json).toMatchObject({ ok: false, error: 'secret_not_configured' })
+    expect(json).not.toHaveProperty('tenantId')
     expect(verifyClickBankSignature).not.toHaveBeenCalled()
     expect(mockPrepare).not.toHaveBeenCalledWith(expect.stringContaining('INSERT INTO affiliate_conversions'))
   })

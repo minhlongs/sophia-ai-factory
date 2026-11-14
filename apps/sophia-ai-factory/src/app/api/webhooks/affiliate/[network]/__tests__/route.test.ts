@@ -130,9 +130,9 @@ describe('POST /api/webhooks/affiliate/[network]', () => {
       params: { network: 'awin' },
     });
     expect(res.status).toBe(503);
-    const data = (await res.json()) as { ok: boolean; error: string; tenantId: string };
+    const data = (await res.json()) as { ok: boolean; error: string; tenantId?: string };
     expect(data.error).toBe('secret_not_configured');
-    expect(data.tenantId).toBe('tenant-a');
+    expect(data.tenantId).toBeUndefined();
     expect(inngest.send).not.toHaveBeenCalled();
   });
 
