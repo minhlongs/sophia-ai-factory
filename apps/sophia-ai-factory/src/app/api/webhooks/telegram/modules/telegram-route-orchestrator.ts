@@ -16,14 +16,25 @@ export async function processTelegramMessage(
   body: TelegramUpdate,
   adminChatId?: string,
 ): Promise<NextResponse> {
-  const message = body.message;
-  if (!message?.text || !message?.chat?.id) {
+  const message =
+    body.message && typeof body.message === 'object' ? body.message : undefined;
+  if (!message) {
+    return NextResponse.json({ ok: true });
+  }
+  const rawChatId = message.chat?.id;
+  const hasPrimitiveChatId =
+    typeof rawChatId === 'number' ||
+    (typeof rawChatId === 'string' && rawChatId.length > 0);
+  const trimmedText =
+    typeof message.text === 'string' ? message.text.trim() : '';
+  if (!trimmedText || !hasPrimitiveChatId) {
     return NextResponse.json({ ok: true });
   }
 
-  const chatId = message.chat.id.toString();
-  const firstName = message.chat.first_name ?? '';
-  const text = message.text.trim();
+  const chatId = String(rawChatId);
+  const firstName =
+    typeof message.chat?.first_name === 'string' ? message.chat.first_name : '';
+  const text = trimmedText;
 
   if (adminChatId && chatId === adminChatId) {
     const adminResponse = await handleAdminPairing(chatId, text, body);

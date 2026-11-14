@@ -5,6 +5,7 @@
 
 import type { NextResponse, NextRequest } from 'next/server';
 import { checkRateLimitWindow } from '@/tree/agy/agency-quota-engine';
+import { isPublicApiRoute } from '../guard/public-routes';
 import type { AgyIsolationOptions, AgyTenantIsolationResult } from './types';
 import {
   extractTenantToken,
@@ -73,7 +74,19 @@ export async function validateAgyTenantIsolation(
   }
 
   // 4. Sliding-window rate-limiting per agency
-  const effectiveAgency = targetAgencyId || headerAgencySlug || 'global_agency';
+  // Public API / external webhook routes arriving without agency credentials are
+  // rate-limited per caller IP downstream (RATE_LIMITS.webhook / RATE_LIMITS.api)
+  // and must not contend on a single shared 100 RPS 'global_agency' bucket.
+  const explicitAgency = targetAgencyId || headerAgencySlug || null;
+  if (!explicitAgency && isPublicApiRoute(pathname)) {
+    return {
+      allowed: true,
+      status: 200,
+      context: { rateLimitRps: defaultRpsLimit },
+    };
+  }
+
+  const effectiveAgency = explicitAgency || 'global_agency';
   const timestamps = RATE_LIMIT_CACHE.get(effectiveAgency) || [];
   const windowResult = checkRateLimitWindow({ timestamps, nowMs, windowMs: 1000, maxRequests: defaultRpsLimit });
 

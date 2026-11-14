@@ -78,9 +78,11 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
   } else if (
-    pathname.startsWith('/api/webhooks') ||
-    pathname === '/api/payos/ipn' ||
-    pathname === '/api/inngest'
+    isPublicApiRoute(pathname) &&
+    (pathname.startsWith('/api/webhooks/') ||
+      pathname.startsWith('/api/postback/') ||
+      pathname === '/api/payos/ipn' ||
+      pathname === '/api/inngest')
   ) {
     rateLimitConfig = RATE_LIMITS.webhook;
   }

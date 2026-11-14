@@ -56,6 +56,7 @@ vi.mock('@/tree/audit/audit-logger', () => ({
   logValidationWithReceipt: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { checkRateLimit, RATE_LIMITS } from '@/seed/security/rate-limiting-middleware';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { proxy } from '@/middleware';
 
@@ -96,6 +97,7 @@ describe('middleware double-gate reachability for PayOS IPN and Telegram webhook
     expect(res.status).toBe(200);
     expect(res.headers.get('X-Response-Time-Ms')).not.toBeNull();
     expect(getCurrentUserFromHeaders).not.toHaveBeenCalled();
+    expect(checkRateLimit).toHaveBeenCalledWith('provider-edge-ip', RATE_LIMITS.webhook);
   });
 
   it.each([
@@ -151,15 +153,26 @@ describe('middleware double-gate reachability for PayOS IPN and Telegram webhook
     nextSpy.mockRestore();
   });
 
-  it('still rejects unlisted webhook subpath /api/webhooks/telegram/extra at Gate 2 with 401', async () => {
-    const res = await proxy(
+  it('still rejects unlisted webhook subpath /api/webhooks/telegram/extra with 403 tenant isolation when REQUIRE_AGENCY_ID=true and 401 when unset', async () => {
+    const strictRes = await proxy(
       externalPost('/api/webhooks/telegram/extra', {
         'x-telegram-bot-api-secret-token': 'provider-secret',
       }),
     );
 
-    expect(res.status).toBe(401);
+    expect(strictRes.status).toBe(403);
+    await expect(strictRes.json()).resolves.toMatchObject({ code: 'MISSING_AGENCY_ID' });
+    expect(getCurrentUserFromHeaders).not.toHaveBeenCalled();
+
+    vi.stubEnv('REQUIRE_AGENCY_ID', 'false');
+    const gate2Res = await proxy(
+      externalPost('/api/webhooks/telegram/extra', {
+        'x-telegram-bot-api-secret-token': 'provider-secret',
+      }),
+    );
+    expect(gate2Res.status).toBe(401);
     expect(getCurrentUserFromHeaders).toHaveBeenCalledTimes(1);
+    expect(checkRateLimit).toHaveBeenLastCalledWith('provider-edge-ip', RATE_LIMITS.api);
   });
 
   it('rejects unlisted /api/webhooks/unlisted-bot with 403 tenant isolation when REQUIRE_AGENCY_ID=true and 401 when unset', async () => {

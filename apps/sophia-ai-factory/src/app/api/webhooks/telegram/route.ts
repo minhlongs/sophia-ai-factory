@@ -53,12 +53,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as TelegramUpdate;
+  const rawBody: unknown = await request.json().catch(() => null);
+  const body = (
+    rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)
+      ? rawBody
+      : {}
+  ) as TelegramUpdate;
 
   try {
-    if (body.callback_query) {
-      const chatId = body.callback_query.message?.chat?.id?.toString();
-      const callbackData = body.callback_query.data;
+    if (body.callback_query && typeof body.callback_query === 'object') {
+      const rawChatId = body.callback_query.message?.chat?.id;
+      const chatId =
+        typeof rawChatId === 'number' || typeof rawChatId === 'string'
+          ? String(rawChatId)
+          : undefined;
+      const callbackData =
+        typeof body.callback_query.data === 'string'
+          ? body.callback_query.data
+          : undefined;
 
       if (chatId && callbackData) {
         if (

@@ -177,4 +177,36 @@ describe('Telegram Webhook Route Security (POST /api/webhooks/telegram)', () => 
     expect(res.status).toBe(200)
     await expect(res.json()).resolves.toEqual({ ok: true })
   })
+
+  it('gracefully returns HTTP 200 without throwing 500 on JSON literal null or non-string message.text', async () => {
+    const { POST } = await import('./route')
+
+    const nullReq = new NextRequest('http://localhost/api/webhooks/telegram', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': TEST_SECRET,
+      },
+      body: 'null',
+    })
+    const nullRes = await POST(nullReq)
+    expect(nullRes.status).toBe(200)
+    await expect(nullRes.json()).resolves.toEqual({ ok: true })
+
+    const nonStringTextReq = createTelegramRequest(
+      { message: { text: 12345, chat: { id: 12345678, first_name: 'SophiaTester' } } },
+      TEST_SECRET,
+    )
+    const nonStringTextRes = await POST(nonStringTextReq)
+    expect(nonStringTextRes.status).toBe(200)
+    await expect(nonStringTextRes.json()).resolves.toEqual({ ok: true })
+
+    const nonPrimitiveChatReq = createTelegramRequest(
+      { message: { text: '/help', chat: { id: { toString: null } } } },
+      TEST_SECRET,
+    )
+    const nonPrimitiveChatRes = await POST(nonPrimitiveChatReq)
+    expect(nonPrimitiveChatRes.status).toBe(200)
+    await expect(nonPrimitiveChatRes.json()).resolves.toEqual({ ok: true })
+  })
 })
