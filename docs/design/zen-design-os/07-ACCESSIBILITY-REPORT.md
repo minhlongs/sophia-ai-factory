@@ -30,7 +30,7 @@ Tất cả các cặp màu ngữ nghĩa trong **ZEN DESIGN OS v1.0** đã đư�
 | **Chữ chính trên Bề mặt thẻ** (`card-foreground` / `card`) | `#F8FAFC` trên `#11131F` | **`17.44 : 1`** | `>= 4.5 : 1` (AAA `>= 7:1`) | **PASS (AAA)** |
 | **Chữ phụ trên Nền trang** (`muted-foreground` / `background`) | `#94A3B8` trên `#090A10` | **`7.58 : 1`** | `>= 4.5 : 1` (AAA `>= 7:1`) | **PASS (AAA)** |
 | **Chữ phụ trên Bề mặt thẻ** (`muted-foreground` / `card`) | `#94A3B8` trên `#11131F` | **`6.99 : 1`** | `>= 4.5 : 1` | **PASS (AA+)** |
-| **Nút hành động chính** (`button-styles.ts:14` `dark:bg-primary-600` / token `--primary`) | `#FFFFFF` trên `#4F46E5` (`dark:bg-primary-600`; token `--primary` là `#6366F1`) | **`6.29 : 1`** (trên `#4F46E5`; `4.47:1` nếu dùng `#6366F1` thô nên nút chính dùng `--primary-600`) | `>= 4.5 : 1` | **PASS (AA)** |
+| **Nút hành động chính** (`button-styles.ts:14` `dark:bg-primary-600` / token `--primary`) | `#FFFFFF` trên `#2E19E6` (`dark:bg-primary-600` tại `src/app/globals.css:263`; token `--primary` là `#6366F1`) | **`8.76 : 1`** (trên `#2E19E6`; `4.47:1` nếu dùng `#6366F1` thô nên nút chính dùng `--primary-600`) | `>= 4.5 : 1` (AAA `>= 7:1`) | **PASS (AAA)** |
 
 ---
 
@@ -43,7 +43,7 @@ Tất cả các cặp màu ngữ nghĩa trong **ZEN DESIGN OS v1.0** đã đư�
 3. **Nhãn ngữ nghĩa ARIA (`SC 4.1.2 Name, Role, Value`)**:
    - `WizardStepper` đánh dấu bước hiện tại bằng `aria-current="step"`.
    - `ThemeToggle` cung cấp `aria-label`, `aria-pressed` và `data-testid="theme-toggle"`; trang Cài đặt (`SettingsAppearanceThemeSection`) cung cấp `role="radiogroup"` / `role="radio"` cho 3 chế độ `light` / `dark` / `system`.
-   - `TimelineBrowserPreview` cung cấp `role="region"` và `aria-label` cho từng nút điều khiển phát/tạm dừng/âm thanh.
+   - `TimelineBrowserPreview` sử dụng thẻ ngữ nghĩa `<section>` kèm `<label htmlFor>` cho bộ chọn engine (`#video-renderer-engine-select`), tiêu đề cảnh (`#scene-headline-input-*`), cùng các nút chọn cảnh và nút xuất MP4 có tương phản chuẩn AA.
 4. **Hỗ trợ `prefers-contrast: more` & `prefers-reduced-motion: reduce`**:
-   - Khi người dùng bật chế độ tương phản cao trên hệ điều hành, `@media (prefers-contrast: more)` tự động tăng độ đậm của viền (`--border: #94A3B8` ở Light Mode và `--border: #475569` ở Dark Mode).
-   - Khi người dùng bật chế độ giảm chuyển động (`src/app/globals.css:990-1024`), toàn bộ biến thời lượng `--motion-duration-*` được đưa về **`0ms`**, đồng thời các phần tử `[data-zen-motion]` và `[data-zen-motion-stagger] > *` được áp cứng `animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;`.
+   - Khi người dùng bật chế độ tương phản cao trên hệ điều hành, `@media (prefers-contrast: more)` (`src/app/globals.css:342-353`) tự động tăng độ đậm của viền và chữ phụ (`--border: #475569` ở cả Light Mode và Dark Mode; `--muted-foreground: #1E293B` ở Light Mode và `#CBD5E1` ở Dark Mode).
+   - Khi người dùng bật chế độ giảm chuyển động (`src/app/globals.css:991-1040`), toàn bộ biến thời lượng `--motion-duration-*` được đưa về **`0ms`**, đồng thời các phần tử `[data-zen-motion]` và `[data-zen-motion-stagger] > *` được áp cứng `animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;`.

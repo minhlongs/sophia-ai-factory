@@ -18,7 +18,7 @@
   --accent-2: #F59E0B;      /* Sophia Cinema Amber */
   --accent-bg: rgba(99, 102, 241, 0.12);
   --accent-line: rgba(99, 102, 241, 0.34);
-  --btn-bg: #6366F1;
+  --btn-bg: #4F46E5;
   --btn-fg: #FFFFFF;
   --glow: rgba(99, 102, 241, 0.28);
   --shadow: rgba(0, 0, 0, 0.55);
@@ -338,8 +338,13 @@ html:not(.dark) .v3-core .eyebrow,
 }
 
 .v3-core .cmd-line code {
-  color: var(--accent);
+  color: var(--primary-text, #818CF8);
   font-weight: 600;
+}
+
+html:not(.dark) .v3-core .cmd-line code,
+.v3-core[data-theme="light"] .cmd-line code {
+  color: var(--accent);
 }
 
 .v3-core .chat {
@@ -415,9 +420,14 @@ html:not(.dark) .v3-core .chat {
 }
 
 .v3-core .msg .ok {
-  color: var(--accent);
+  color: var(--primary-text, #818CF8);
   margin-right: 6px;
   font-weight: 700;
+}
+
+html:not(.dark) .v3-core .msg .ok,
+.v3-core[data-theme="light"] .msg .ok {
+  color: var(--accent);
 }
 
 /* Bottom Runtime & Provider Ticker */

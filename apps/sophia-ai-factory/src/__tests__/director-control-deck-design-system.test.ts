@@ -168,6 +168,16 @@ describe("Director's Control Deck Design System Verification", () => {
       'text-emerald-700 dark:text-emerald-300',
     );
     expect(readSrcFile('styles/v3-core.css')).toContain('--accent-2: #92400E;');
+    expect(readSrcFile('styles/v3-core.css')).toContain('--btn-bg: #4F46E5;');
+    expect(readSrcFile('forest/dashboard/dashboard-user-card.tsx')).toContain(
+      'text-amber-900 dark:text-amber-300',
+    );
+    expect(readSrcFile('components/niche-studio/sophia-artifact-canvas-inspector.tsx')).toContain(
+      'underline text-primary-text hover:text-foreground dark:hover:text-white',
+    );
+    expect(readSrcFile('components/stitch/ui/button-styles.ts')).toContain(
+      'bg-destructive text-destructive-foreground dark:bg-rose-700',
+    );
     expect(timelinePreview).toContain('bg-muted text-muted-foreground');
     expect(timelinePreview).not.toContain('bg-secondary text-muted-foreground');
     expect(storyboardCard).toContain('bg-card dark:bg-zinc-900/60');

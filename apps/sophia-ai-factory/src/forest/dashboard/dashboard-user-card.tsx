@@ -15,7 +15,7 @@ export interface DashboardUserCardProps {
 export function getTierBadgeClass(tier: string) {
   const normalized = tier.toUpperCase();
   if (normalized === "MASTER") {
-    return "bg-gradient-to-r from-amber-500/20 to-primary/20 text-amber-700 dark:text-amber-300 border border-amber-500/30";
+    return "bg-gradient-to-r from-amber-500/20 to-primary/20 text-amber-900 dark:text-amber-300 border border-amber-500/30";
   }
   if (normalized === "ENTERPRISE") {
     return "bg-primary/20 text-primary-text border border-primary/30";

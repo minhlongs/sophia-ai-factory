@@ -115,7 +115,7 @@ export function SophiaArtifactCanvasInspector({
         data-testid="baoyu-comments-panel"
         className="rounded-xl border border-border bg-muted/40 p-4 space-y-2.5"
       >
-        <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-primary-text">
           {t('baoyuCanvas.commentsTitle')}
         </h3>
         <ul className="space-y-2">
@@ -133,7 +133,7 @@ export function SophiaArtifactCanvasInspector({
                   type="button"
                   data-testid={`baoyu-comment-toggle-${cmt.id}`}
                   onClick={() => onToggleCommentResolved(cmt.id)}
-                  className="underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                  className="underline text-primary-text hover:text-foreground dark:hover:text-white"
                 >
                   {cmt.resolved ? t('baoyuCanvas.reopenBtn') : t('baoyuCanvas.resolveBtn')}
                 </button>

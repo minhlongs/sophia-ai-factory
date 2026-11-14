@@ -29,8 +29,8 @@ export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
     hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white
   `,
   destructive: `
-    bg-rose-600 text-white
-    hover:bg-rose-500 shadow-md shadow-rose-600/25
+    bg-destructive text-destructive-foreground dark:bg-rose-700 dark:text-white
+    hover:bg-destructive/90 dark:hover:bg-rose-600 shadow-md shadow-rose-600/25
   `,
 };
 
