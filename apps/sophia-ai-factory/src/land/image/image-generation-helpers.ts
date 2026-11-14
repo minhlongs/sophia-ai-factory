@@ -4,6 +4,8 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { TIER_ALLOWED_MODELS } from '@/seed/config/tiers/image-model-access';
+import { TIER_RANK, type Tier } from '@/seed/types';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { submitMediaJob } from '@/tree/clients/muapi-media-client';
 import { findRecentDuplicateImageJob } from '@/tree/creative-studio/image-generation-idempotency';
@@ -13,6 +15,15 @@ import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-
 import { FailureKind } from '@/seed/types/failure-kind';
 import { CostClassification } from '@/seed/types/creative-job-economics';
 import type { GenerateImageJobInput, GenerateImageJobResult } from './image-generation-orchestrator';
+
+/**
+ * True only for a canonical tier name, checked as an own property so inherited
+ * Object.prototype keys (`'constructor'`, `'toString'`, `'__proto__'`) and any
+ * unrecognised value are rejected instead of resolving to a tier's model list.
+ */
+function isKnownTier(tier: unknown): tier is Tier {
+  return typeof tier === 'string' && Object.hasOwn(TIER_RANK, tier);
+}
 
 export async function recordFailedFalImageJob(params: {
   jobId: string;
@@ -67,11 +78,37 @@ export async function recordFailedFalImageJob(params: {
  * platform environment fallback (`process.env.MUAPI_API_KEY` is never read). If
  * the customer has not saved their own MuAPI key in the Setup Wizard, the job
  * is refused before any provider call with `NO_API_KEY`.
+ *
+ * Tier entitlement is enforced HERE rather than only by callers, so the
+ * spending path cannot dispatch a model the caller forgot to pre-check.
+ *
+ * `tier` arrives as a plain string from the caller, so it is validated against
+ * the server-controlled `TIER_RANK` allowlist by own-property lookup. Reading
+ * `TIER_ALLOWED_MODELS[tier]` directly would resolve inherited Object.prototype
+ * members for values such as `'constructor'` and would collapse every other
+ * unrecognised value onto BASIC, granting an unknown tier BASIC's models.
  */
 export async function submitMuApiImageJob(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
-  const { userId, prompt, model, aspectRatio } = input;
+  const { userId, tier, prompt, model, aspectRatio } = input;
+
+  if (!isKnownTier(tier)) {
+    return {
+      success: false,
+      error: `Unknown plan "${String(tier)}". Image generation requires a recognised plan.`,
+      code: 'TIER_GATE',
+    };
+  }
+
+  const allowedMuapiModels = TIER_ALLOWED_MODELS[tier] ?? [];
+  if (!allowedMuapiModels.includes(model)) {
+    return {
+      success: false,
+      error: `Model "${model}" is not available for your ${tier} plan.`,
+      code: 'TIER_GATE',
+    };
+  }
 
   const db = createServerClient();
   const duplicateJobId = await findRecentDuplicateImageJob(db, {
