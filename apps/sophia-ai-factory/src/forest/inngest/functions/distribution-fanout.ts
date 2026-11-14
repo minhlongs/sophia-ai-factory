@@ -21,7 +21,6 @@ import {
 } from '@/land/publish/distribution-plan';
 import { executePublish } from '@/tree/publishing/distribution-registry';
 import type { Platform } from '@/tree/publishing/platform-adapter';
-import type { ProvenanceInput } from '@/seed/types/provenance';
 import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
@@ -106,19 +105,10 @@ export const distributionFanout = inngest.createFunction(
           typeof meta.description === 'string' ? meta.description : '';
         const resolvedScript =
           typeof meta.scriptText === 'string' ? meta.scriptText : undefined;
-        const resolvedSources = Array.isArray(meta.sources)
-          ? (meta.sources as Record<string, unknown>[])
-          : undefined;
-        const resolvedProvenance =
-          meta.provenance && typeof meta.provenance === 'object' && !Array.isArray(meta.provenance)
-            ? (meta.provenance as ProvenanceInput)
-            : undefined;
         const provenance = producePublishProvenance({
           title: resolvedTitle,
           description: resolvedDescription,
           scriptText: resolvedScript,
-          sources: resolvedSources,
-          provenance: resolvedProvenance,
         });
 
         const result = await executePublish(platform, token, {

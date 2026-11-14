@@ -40,8 +40,6 @@ export async function executeDispatchSocialPublish(
   const provenance = producePublishProvenance({
     title: parsed.data.title,
     description,
-    sources: parsed.data.sources,
-    provenance: parsed.data.provenance,
   });
 
   const job = await createPublishJob({

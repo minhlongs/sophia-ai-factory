@@ -72,8 +72,6 @@ export async function publishVideo(
     const provenance = producePublishProvenance({
       title: input.title,
       description: input.description,
-      sources: input.sources,
-      provenance: input.provenance,
     });
 
     const result = await adapter.uploadVideo(accessToken, {

@@ -200,12 +200,13 @@ function resolveSourcesState(rawSources: unknown): {
 
 /**
  * Build a cross-layer `ProvenanceInput` payload for YouTube/social dispatchers.
- * Never throws on malformed caller `sources`/`claims`; always merges uncovered
- * high-risk claims extracted from the text corpus so empty `claims: []` cannot bypass review.
+ *
+ * `containsSyntheticMedia` defaults to `true` and only honors an explicit
+ * `input.containsSyntheticMedia === false` (never an untrusted nested
+ * `input.provenance.containsSyntheticMedia` override).
  */
 export function producePublishProvenance(input: ProducePublishProvenanceInput = {}): ProvenanceInput {
-  const containsSyntheticMedia =
-    input.provenance?.containsSyntheticMedia ?? input.containsSyntheticMedia ?? true;
+  const containsSyntheticMedia = input.containsSyntheticMedia ?? true;
 
   if (input.provenance?.claims !== undefined && !Array.isArray(input.provenance.claims)) {
     return { ...input.provenance, containsSyntheticMedia };

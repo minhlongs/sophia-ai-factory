@@ -3,8 +3,6 @@
  * Layer: land/video/publishing
  */
 
-import type { ProvenanceInput } from '@/seed/types/provenance';
-
 export type VideoPublishInput = {
   videoId: string;
   videoUrl: string;
@@ -14,8 +12,6 @@ export type VideoPublishInput = {
   tags?: string[];
   privacy?: 'public' | 'unlisted' | 'private';
   scheduledAt?: string;
-  sources?: readonly Record<string, unknown>[];
-  provenance?: ProvenanceInput;
 };
 
 export type VideoPublishResult =

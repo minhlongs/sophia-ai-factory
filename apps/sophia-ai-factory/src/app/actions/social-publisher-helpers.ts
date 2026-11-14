@@ -18,8 +18,6 @@ export interface PublishDispatchInput {
   videoUrl: string;
   platforms: SocialPlatform[];
   useJitter: boolean;
-  sources?: readonly Record<string, unknown>[];
-  provenance?: ProvenanceInput;
 }
 
 export interface PublishActionResult {
@@ -103,10 +101,7 @@ export async function dispatchToSelectedPlatforms(
       });
 
       createdJobIds.push(job.id);
-      await sendSocialPublishDispatchedEvent(job, userId, {
-        sources: input.sources,
-        provenance: input.provenance,
-      });
+      await sendSocialPublishDispatchedEvent(job, userId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${platform}: ${msg}`);
