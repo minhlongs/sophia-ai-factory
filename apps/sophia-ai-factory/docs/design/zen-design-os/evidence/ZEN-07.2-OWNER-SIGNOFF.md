@@ -6,7 +6,7 @@
 **Original Handover Commit:** `4d23ddb386f499b7627f2c828a1b80c81c6a3382`
 **Reported Checkpoint (#07.3 Brief):** `b3338a256408ef194cc63cb6fcbe6dcc27ca718c`
 **Browser-Evidence Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
-**Verified Code Commit (Round 3 Remediation):** `9204f8e3738600f4ee5155e9dc00849e9420f90f`
+**Verified Code Commit (Round 4 Remediation):** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
 **Verification Date:** `2026-11-14`
 **Release Review Verdict:** **`READY_FOR_DRAFT_PR`** *(Enum: `READY_FOR_DRAFT_PR` / `PARTIAL` / `BLOCKED` / `REJECTED`)*
 
@@ -21,7 +21,7 @@
 
 | Milestone / Mốc | Full 40-char SHA | Summary |
 |:--|:--|:--|
-| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 172 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
+| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 178 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
 | **Handover v1.0** | `4d23ddb386f499b7627f2c828a1b80c81c6a3382` | Bản bàn giao Zen Design OS v1.0 ban đầu (36 file so với `main`). / Initial dual-theme token, motion, and 14-doc handover commit. |
 | **Reported Checkpoint** | `b3338a256408ef194cc63cb6fcbe6dcc27ca718c` | Mốc báo cáo trong lệnh #07.3 sau đợt vá 7 lỗi V1–V7 đầu tiên. / Checkpoint cited in #07.3 brief after initial V1–V7 remediation. |
 | **Security & Locale Seal** | `9b6b786565f5da77b3a0f9a312b8d97ba001c78c` | Khóa giới hạn BYOK theo từng route, sửa chuyển tiếp ngôn ngữ `/en/*` và focus dialog. / Per-route BYOK probing caps, `/en/*` locale header forwarding, dialog focus return. |
@@ -29,7 +29,8 @@
 | **Sign-Off Package (`fb0083e04`)** | `fb0083e0498c56f92039d66ca58f583a2d293d31` | Đóng gói báo cáo nghiệm thu Founder và mở Draft PR #155 theo phê duyệt riêng. / Initial Draft PR #155 sign-off commit. |
 | **Review Round 1 Fix (`59c9a1ca6`)** | `59c9a1ca65c595d44d1c71e1b99a234959fccf11` | Vá vòng review độc lập 1: 12-locale `(app)/layout.tsx`, đồng bộ 29 vai trò DTCG ↔ CSS, `ScrollReveal` stagger reduced-motion. / First isolated review remediation commit. |
 | **Review Round 2 Fix (`42dc54485`)** | `42dc54485006f7aee6c166f5b2506b8586a490ad` | Vá vòng review độc lập 2: bật `enableSystem` trong `ZenThemeProvider`, SSR-safe + `matchMedia` `'change'` cho motion primitives, 12-locale `/setup-wizard` redirect. / Second isolated review remediation commit. |
-| **Review Round 3 Code Fix (`9204f8e3738600f4ee5155e9dc00849e9420f90f`)** | `9204f8e3738600f4ee5155e9dc00849e9420f90f` | Vá vòng review độc lập 3: gắn `SettingsAppearanceThemeSection` 3 chế độ (`light`/`dark`/`system`) trực tiếp vào `SettingsPage` đang chạy thật, bảo toàn `localStorage['sophia-zen-theme']` trong `AppearanceSection`, sửa hydration + `matchMedia` `'change'` cho `AnimatedCounter`, khóa đủ 12 locale ở `helpers.ts` / `public-pipeline.ts` / `dashboard-pipeline.ts` (kèm rewrite 15 cây route `(app)`-only và security headers cho mọi early 307), và đồng bộ `<html lang dir>` SSR/client ở `RootLayout` + `(app)/layout.tsx` (`2,098` file test / `19,699` bài test PASS). / Third isolated review code remediation commit. |
+| **Review Round 3 Code Fix (`9204f8e37`)** | `9204f8e3738600f4ee5155e9dc00849e9420f90f` | Vá vòng review độc lập 3: gắn `SettingsAppearanceThemeSection` 3 chế độ (`light`/`dark`/`system`) trực tiếp vào `SettingsPage` đang chạy thật, bảo toàn `localStorage['sophia-zen-theme']` trong `AppearanceSection`, sửa hydration + `matchMedia` `'change'` cho `AnimatedCounter`, khóa đủ 12 locale ở `helpers.ts` / `public-pipeline.ts` / `dashboard-pipeline.ts` (kèm rewrite 15 cây route `(app)`-only và security headers cho mọi early 307), và đồng bộ `<html lang dir>` SSR/client ở `RootLayout` + `(app)/layout.tsx`. / Third isolated review code remediation commit. |
+| **Review Round 4 Code Fix (`f6ebffc50821f92d355ab8454a313cf98856e5d3`)** | `f6ebffc50821f92d355ab8454a313cf98856e5d3` | Vá vòng review độc lập 4: khóa xác thực bắt buộc + bucket `RATE_LIMITS.byok` + trần `12`/phút theo IP & User + `probeProviderApiKey` cô lập (không làm nổ circuit breaker dùng chung) cho `POST /api/setup/verify`; bổ sung `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*` trong `x-middleware-override-headers` sau `intlMiddleware`; nâng tương phản dark mode `dark:bg-primary-600` (`6.29:1` AA) cho `SettingsPage` & `WizardStepper`; chuyển `SettingsAppearanceThemeSection` và `SetupWizard` sang khóa tĩnh `next-intl` trên đủ 12 ngôn ngữ; tách `SophiaArtifactCanvasInspector` để mọi file `< 200` dòng (`2,100` file test / `19,706` bài test PASS). / Fourth isolated review code remediation commit. |
 
 ---
 
@@ -45,7 +46,7 @@
 | **V3** | **P1** | `src/components/stitch/ui/button-styles.ts:14` | **VN:** Nút chính ở Dark mode (`#6366F1` + chữ trắng) chỉ đạt 4.47:1 (< 4.5:1 AA). Đã áp dụng `bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white` (**6.29:1** Dark, **8.61:1** Light).<br>**EN:** Raised Dark-mode primary button contrast from 4.47:1 to 6.29:1 (Light: 8.61:1). | **CLOSED** (`director-control-deck-design-system.test.ts`) |
 | **V4** | **P1** | `src/components/niche-studio/sophia-artifact-canvas.tsx:140-149` | **VN:** 5 mã màu `#rrggbb` cứng làm đỏ cổng `npm run check:color-tokens`. Đã thay bằng `var(--primary-600)`, `var(--primary-foreground)` và hằng token.<br>**EN:** Removed 5 hardcoded hex literals; `check:color-tokens` passes at `1045` vs `1080` baseline (`-35` net). | **CLOSED** (`check:color-tokens` exit 0) |
 | **V5** | **P1** | `src/forest/dashboard/dashboard-user-card.tsx:24` | **VN:** Khôi phục `dark:text-violet-300` (~8.5:1 trên nền tối) cho huy hiệu PRO để vừa đạt chuẩn AA vừa khớp test contract.<br>**EN:** Restored `dark:text-violet-300` (~8.5:1 contrast) preserving the PRO badge test contract. | **CLOSED** (`npm test` green) |
-| **V6** | **P0** | `src/middleware/api-handler.ts:72-78`<br>`src/seed/security/sql-rate-limiter-queries.ts:32` | **VN:** Tách `/api/user/byok` và `/api/setup-wizard` khỏi nhóm đăng nhập `auth` (10 lần/phút) sang nhóm riêng `byok` (**40 lần/phút**), kết hợp giới hạn chống dò key ở từng route (xem Mục 4).<br>**EN:** Isolated BYOK & Setup Wizard into a dedicated `byok` D1 bucket (40 req/min) distinct from `auth` (10/min) and `admin` (50/min), backed by route-level probing caps (§4). | **CLOSED** (12/12 BYOK security tests) |
+| **V6** | **P0** | `src/middleware/api-handler.ts:71-80`<br>`src/seed/security/sql-rate-limiter-queries.ts:32` | **VN:** Tách `/api/user/byok`, `/api/setup-wizard` và `/api/setup/verify` khỏi nhóm đăng nhập `auth` (10 lần/phút) sang nhóm riêng `byok` (**40 lần/phút**), kết hợp giới hạn chống dò key ở từng route (xem Mục 4).<br>**EN:** Isolated BYOK & Setup Wizard (including `/api/setup/verify`) into a dedicated `byok` D1 bucket (40 req/min) distinct from `auth` (10/min) and `admin` (50/min), backed by route-level probing caps (§4). | **CLOSED** (17/17 BYOK security tests) |
 | **V7** | **P1** | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | **VN:** Khôi phục `aria-label` cho 2 ô nhập URL sản phẩm và bằng chứng xã hội để trình đọc màn hình nhận diện đầy đủ.<br>**EN:** Restored `aria-label` attributes alongside `<label htmlFor>` on product URL and social proof inputs. | **CLOSED** (`niche-studio-readiness-ui.test.tsx`) |
 
 **Các sửa lỗi bổ sung trong vòng đóng nghiệm thu #07.3 / Additional #07.3 Closure Corrections:**
@@ -81,19 +82,19 @@
 
 ## 4. Gate 4 — BYOK Rate-Limit Security Audit (Kiểm Toán Bảo Mật Giới Hạn Tốc Độ BYOK)
 
-- **Mã nguồn kiểm toán / Audited Files:** `src/middleware/api-handler.ts:69-114`, `src/seed/security/sql-rate-limiter-queries.ts:25-36`, `src/forest/middleware/rate-limiter/endpoint-rate-limiters.ts:9-33`, và 6 route BYOK / Setup Wizard.
-- **Bộ test xác minh / Automated Suites:** `src/middleware/__tests__/api-handler-rate-limit-buckets.test.ts` (**6/6 PASS**) & `src/app/api/user/byok/__tests__/byok-rate-limit-security.test.ts` (**6/6 PASS**).
+- **Mã nguồn kiểm toán / Audited Files:** `src/middleware/api-handler.ts:69-116`, `src/seed/security/sql-rate-limiter-queries.ts:25-36`, `src/forest/middleware/rate-limiter/endpoint-rate-limiters.ts:9-33`, và 7 route BYOK / Setup Wizard (bao gồm `/api/setup/verify`).
+- **Bộ test xác minh / Automated Suites:** `src/middleware/__tests__/api-handler-rate-limit-buckets.test.ts` (**6/6 PASS**), `src/app/api/user/byok/__tests__/byok-rate-limit-security.test.ts` (**6/6 PASS**) & `src/app/api/setup/verify/__tests__/verify-rate-limit-security.test.ts` (**5/5 PASS** — tổng **17/17 PASS**).
 
 **[VN]** Kiến trúc bảo vệ gồm **2 tầng độc lập**, đảm bảo khách hàng CEO nhập/kiểm tra API key mượt mà ở Setup Wizard mà **không tạo ra bất kỳ khe hở dò quét API key không giới hạn nào**:
 **[EN]** A **two-layer defense-in-depth rate-limit architecture** separates onboarding from login while strictly bounding upstream provider probing by both IP and authenticated user:
 
-### 4.1 Tầng 1 — Cổng chặn D1 SQL toàn cục (`src/middleware/api-handler.ts:69-80`)
+### 4.1 Tầng 1 — Cổng chặn D1 SQL toàn cục (`src/middleware/api-handler.ts:69-82`)
 
-| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`9204f8e3738600f4ee5155e9dc00849e9420f90f`) | Đánh giá bảo mật / Security Assessment |
+| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`f6ebffc50821f92d355ab8454a313cf98856e5d3`) | Đánh giá bảo mật / Security Assessment |
 |:--|--:|--:|:--|
 | `/api/auth/*` | `auth` (`10`/phút) | `auth` (`10`/phút) | **Giữ nguyên** — chống dò mật khẩu đăng nhập; không bị lưu lượng BYOK làm nghẽn. / Unchanged login brute-force cap. |
 | `/api/user/byok*` | `auth` (`10`/phút — gây lỗi 429 P0) | **`byok` (`40`/phút, fail-closed)** | **Tách riêng an toàn** — đủ cho trang Setup Wizard tải trạng thái + lưu key, chặt hơn 2.5 lần so với mức `/api/*` chung (`100`/phút). / Dedicated fail-closed D1 bucket. |
-| `/api/setup-wizard*` | `api` (`100`/phút) | **`byok` (`40`/phút, fail-closed)** | **Chặt hơn baseline 60%** (`100 → 40`/phút). / Tighter than `main` by 60%. |
+| `/api/setup-wizard*` & `/api/setup/verify` | `api` (`100`/phút) | **`byok` (`40`/phút, fail-closed)** | **Chặt hơn baseline 60%** (`100 → 40`/phút). / Tighter than `main` by 60%. |
 | `/api/admin/*` | rơi nhầm vào `auth` (`10`/phút) | `admin` (`50`/phút) | Khôi phục đúng cấu hình `RATE_LIMITS.admin` đã khai báo sẵn. / Restored pre-declared admin bucket. |
 
 ### 4.2 Tầng 2 — Giới hạn chi tiết theo hành động & chống xoay tài khoản/IP ở từng Route (`globalRateLimiter`)
@@ -110,6 +111,7 @@
 | `DELETE /api/user/byok` — **Delete key** | **`10` / phút** (`byok:delete:${user.id}`) | `40` / phút (Tầng 1 `byok`) | `src/app/api/user/byok/route.ts:88-92` |
 | `POST /api/user/byok/test` — **Verify stored/input key** | **`10` / phút** (`byok:test:${user.id}`) | **`10` / phút** (`byok:test:${ip}`) | `src/app/api/user/byok/test/route.ts:75-86` |
 | `POST /api/setup-wizard/validate-key` — **Onboarding key probe** | **`12` / phút** (`setup:validate-key:${user.id}`) | **`12` / phút** (`setup:validate-key:${ip}`) | `src/app/api/setup-wizard/validate-key/route.ts:36-47` |
+| `POST /api/setup/verify` — **Settings API Keys verify probe** | **`12` / phút** (`setup:verify:user:${user.id}`) | **`12` / phút** (`setup:verify:${ip}`) | `src/app/api/setup/verify/route.ts:48-66` |
 | `POST /api/setup-wizard/test-heygen` — **HeyGen probe** | **`10` / phút** (`setup:test-heygen:${user.id}`) | **`10` / phút** (`setup:test-heygen:${ip}`) | `src/app/api/setup-wizard/test-heygen/route.ts:38-49` |
 | `POST /api/setup-wizard/test-resend` — **Resend email probe** | **`5` / phút** (`setup:test-resend:${user.id}`) | **`5` / phút** (`setup:test-resend:${ip}`) | `src/app/api/setup-wizard/test-resend/route.ts:31-42` |
 | `POST /api/setup-wizard/heygen/auto-register` — **Webhook register** | **`5` / phút** (`setup:heygen-register:${user.id}`) | **`5` / phút** (`setup:heygen-register:${ip}`) | `src/app/api/setup-wizard/heygen/auto-register/route.ts:29-40` |
@@ -155,7 +157,7 @@
 1. **Giao diện & Nội dung chính (`--font-sans`):** **`Inter`** (`src/app/globals.css:386`, trọng lượng `400;500;600;700;800`), hỗ trợ đầy đủ dấu tiếng Việt chồng tầng (`ắ`, `ậ`, `ể`, `ỗ`, `ự`), đã kiểm tra hiển thị thực tế ở 375px / 768px / 1440px (`targeted/t02-*`, `targeted/t03-*`).
 2. **Số liệu kỹ thuật & Mã (`--font-mono`):** **`JetBrains Mono`** (`src/app/globals.css:387`, trọng lượng `400;500;600`, `tabular-nums`) dùng cho số liệu tài chính, độ trễ, mã API key che một phần và thông số kỹ thuật.
 3. **Ngoại lệ hiển thị có phạm vi hẹp (`.v3-core`):** **`Archivo`** chỉ được khai báo cục bộ cho `--font-display` bên trong lớp `.v3-core` (`src/styles/v3-core.css:28`), không bao giờ áp dụng làm font giao diện chung.
-4. **Cơ chế tải font thực tế:** Tải qua thẻ `<link rel="stylesheet">` Google Fonts CSS2 kèm `preconnect` tại `src/app/layout.tsx:30-35` (`document.fonts.status === "loaded"`, CLS phòng thí nghiệm `0.0000`–`0.0005`).
+4. **Cơ chế tải font thực tế:** Tải qua thẻ `<link rel="stylesheet">` Google Fonts CSS2 kèm `preconnect` tại `src/app/layout.tsx:47-53` (`document.fonts.status === "loaded"`, CLS phòng thí nghiệm `0.0000`–`0.0005`).
 5. **Đồng bộ tài liệu & Loại trừ triệt để:** `DESIGN.md:88-98` và `src/seed/design-tokens/zen-design-tokens.dtcg.json:128-132` đã khớp 100% với mã nguồn. **`Satoshi` và `Instrument Serif` hoàn toàn không được đưa vào bản phát hành này.**
 
 ---
@@ -183,36 +185,36 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 
 ---
 
-## 8. Gate 5 — Full Regression Status & Complete 172-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
+## 8. Gate 5 — Full Regression Status & Complete 178-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
 
 ### 8.1 Kết quả toàn bộ cổng chất lượng trên cây code hiện tại
 
 | Cổng kiểm tra / Quality Gate | Kết quả / Status | Số liệu đo thực tế / Measured Output |
 |:--|--:|:--|
 | `npm run type-check` | **PASS** | `0` lỗi TypeScript trên toàn bộ `src/`. |
-| `npm run lint` | **PASS** | `0` lỗi ESLint (`245` cảnh báo cũ ngoài vùng thiết kế, thấp hơn trần CI `525`). |
+| `npm run lint` | **PASS** | `0` lỗi ESLint (`244` cảnh báo cũ ngoài vùng thiết kế, thấp hơn trần CI `525`). |
 | `bash scripts/check-layer-boundaries.sh` | **PASS** | `0` vi phạm kiến trúc 4 tầng (`seed → tree → forest → land`). |
-| `npm run i18n:validate` | **PASS** | `0` khóa dịch thiếu giữa `messages/vi.json` và `messages/en.json`. |
+| `npm run i18n:validate` | **PASS** | `5,702` lời gọi `t()`, `0` khóa dịch thiếu và `0` giá trị rỗng giữa `messages/vi.json` và `messages/en.json` (+ đồng bộ đủ 12 ngôn ngữ). |
 | `npm run check:color-tokens` | **PASS** | `1045` mã màu cứng so với mốc `1080` (**giảm ròng `-35`**, `0` mã màu cứng mới). |
-| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,098` file test PASS / `19,699` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
+| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,100` file test PASS / `19,706` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
 | `npm run build` (Next.js 16.4.2) | **PASS** | Build production thành công `636` routes; độ lệch bundle từ baseline `main` ở mức ~**+3.86 KB gzip JS (+0.16%)** và **+1.23 KB gzip CSS (+2.46%)** (xem `ZEN-07.2-PERFORMANCE-COMPARISON.md` §1). |
 | OpenNext Cloudflare Worker Build | **PASS** | `.open-next/worker.js` đóng gói **0 lỗi**, dung lượng nén **`9.46 MB` gzipped** (< ngưỡng cứng `10.00 MB`). |
-| Luồng bảo vệ (Protected Flows) | **PASS** | **Setup Wizard** (xác minh trực tiếp trên trình duyệt + 12 test BYOK + redirect đủ 12 ngôn ngữ), **Telegram Bot** (`@Sophia_Bbot` không bị chạm sửa), **NOWPayments IPN** (luồng thanh toán không bị chạm sửa; không có Polar/PayPal). |
+| Luồng bảo vệ (Protected Flows) | **PASS** | **Setup Wizard** (xác minh trực tiếp trên trình duyệt + 17 test BYOK + redirect đủ 12 ngôn ngữ), **Telegram Bot** (`@Sophia_Bbot` không bị chạm sửa), **NOWPayments IPN** (luồng thanh toán không bị chạm sửa; không có Polar/PayPal). |
 | Quét bí mật & Độ sạch Worktree | **PASS** | `0` API key thật, `0` file `.env` hay khóa riêng tư trong lịch sử diff; `git status --porcelain` sạch hoàn toàn sau commit đóng gói. |
 
-### 8.2 Tổng hợp kiểm toán 172 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
+### 8.2 Tổng hợp kiểm toán 178 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
 
-*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các bản vá từ 3 vòng review độc lập cho ra chính xác **172 file** = `84` file thêm mới + `88` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `157` file trong `apps/sophia-ai-factory/`. Cả 172/172 file đã được phân loại đầy đủ.)*
+*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các bản vá từ 4 vòng review độc lập cho ra chính xác **178 file** = `87` file thêm mới + `91` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `163` file trong `apps/sophia-ai-factory/`. Cả 178/178 file đã được phân loại đầy đủ.)*
 
 | Nhóm phân loại / Classification Category | File phi nhị phân / Non-PNG | Ảnh PNG / Screenshots | Tổng / Total |
 |:--|--:|--:|--:|
-| **Design implementation** (Token, Dual-Theme UI, Live Settings Theme Selector, Motion, `DESIGN.md`) | 58 | — | **58** |
+| **Design implementation** (Token, Dual-Theme UI, Live Settings Theme Selector, Motion, `DESIGN.md`) | 60 | — | **60** |
 | **Browser evidence** (JSON máy đo, Playwright specs, harness dev-only, PNGs) | 12 | 40 | **52** |
 | **Documentation** (14 tài liệu kiến trúc ở gốc repo + 7 báo cáo `ZEN-07.2-*.md` + `sophia-design-authority.md`) | 22 | — | **22** |
-| **Functional regression correction** (Dialog focus, 12-locale `RootLayout` + `(app)/layout` + `helpers` + `dashboard-pipeline` `(app)`-only rewrites, `/en/*` header, 12-locale `/setup-wizard` redirect, `messages/*.json`) | 23 | — | **23** |
-| **Security correction** (BYOK D1 bucket + route probing caps + 12 security tests) | 17 | — | **17** |
+| **Functional regression correction** (Dialog focus, 12-locale `RootLayout` + `(app)/layout` + `helpers` + `dashboard-pipeline` `(app)`-only rewrites, `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*`, `/en/*` header, 12-locale `/setup-wizard` redirect, `messages/*.json`) | 25 | — | **25** |
+| **Security correction** (BYOK D1 bucket + route probing caps trên cả `/api/setup/verify` + 17 security tests) | 19 | — | **19** |
 | **Unexpected / out-of-scope change** (Thay đổi ngoài phạm vi / sửa nhầm nghiệp vụ) | **0** | **0** | **0** |
-| **TỔNG CỘNG / GRAND TOTAL** | **132** | **40** | **172** |
+| **TỔNG CỘNG / GRAND TOTAL** | **138** | **40** | **178** |
 
 ---
 
@@ -238,11 +240,11 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 ### 10.1 Đề xuất cấu trúc Draft PR (CHỈ MỞ KHI FOUNDER CHO PHÉP PUSH)
 - **Nhánh nguồn → Nhánh đích / Head → Base:** `design/sophia-zen-design-os-v1` → `main` (chế độ **Draft PR**).
 - **Tiêu đề đề xuất / Proposed Title:** `feat(design): Zen Design OS v1.0 dual-theme pilot, strict nonce CSP & BYOK rate-limit hardening`
-- **Phạm vi đưa vào Draft PR (172 file):**
+- **Phạm vi đưa vào Draft PR (178 file):**
   1. Hệ thống token giao diện kép **Dark (Director's Control Deck)** & **Light (Executive Studio Ivory)** trong `src/app/globals.css`, `zen-design-tokens.dtcg.json`, `ZenThemeProvider` (`data-cfasync="false"` + strict per-request CSP nonce + `enableSystem`), bộ chọn 3 chế độ `light`/`dark`/`system` trực tiếp tại `SettingsPage` (`SettingsAppearanceThemeSection`), và 4 motion primitives tuân thủ `prefers-reduced-motion` (0 lỗi SSR hydration trên React 19).
   2. Áp dụng và sửa lỗi tương phản AA trên **3 màn hình Pilot** (`/setup`, `/dashboard`, `/dashboard/niche-studio`) ở cả Tiếng Việt & Tiếng Anh.
   3. Chuẩn hóa hệ chữ **Inter + JetBrains Mono** (Archivo giới hạn trong `.v3-core`) đồng bộ giữa `layout.tsx`, `globals.css`, DTCG JSON và `DESIGN.md`.
-  4. Gia cố bảo mật **BYOK & Setup Wizard 2 tầng** (bucket D1 `byok` 40/phút + giới hạn chống dò key theo IP & User ở từng route + 12 bài test bảo mật).
+  4. Gia cố bảo mật **BYOK & Setup Wizard 2 tầng** (bucket D1 `byok` 40/phút + giới hạn chống dò key theo IP & User trên mọi route kể cả `/api/setup/verify` + 17 bài test bảo mật).
   5. Trọn bộ **bằng chứng kiểm định độc lập** (`7` báo cáo `ZEN-07.2-*.md`, `8` file JSON/script máy đo, `40` ảnh chụp Chrome thật, và `2` bộ Playwright E2E specs).
 - **Phạm vi loại trừ rõ ràng (Excluded from PR):** Không thêm thư viện hoạt ảnh mới (không GSAP / Lenis / React Bits), không đưa Satoshi hay Instrument Serif vào hệ thống, không thay đổi luồng Telegram Bot hay thanh toán NOWPayments, không thay đổi migration D1.
 

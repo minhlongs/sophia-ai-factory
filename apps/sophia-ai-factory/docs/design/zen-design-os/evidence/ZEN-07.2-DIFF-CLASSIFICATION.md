@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `9204f8e3738600f4ee5155e9dc00849e9420f90f`
+**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Reported Checkpoint:** `b3338a256` (handover base: `4d23ddb386f499b7627f2c828a1b80c81c6a3382`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
@@ -17,15 +17,15 @@ not match the working tree. Measured:
 | Set | Count |
 |:--|--:|
 | Baseline `673ec911` → pre-existing branch tip `4d23ddb38` | 36 files |
-| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37` + evidence sync) | 159 tracked |
-| **Total under review (baseline → closing commit)** | **172** (84 `A`, 88 `M`) |
+| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50` + evidence sync) | 166 tracked |
+| **Total under review (baseline → closing commit)** | **178** (87 `A`, 91 `M`) |
 | of which PNG screenshots (binary, listed but not diffed line-by-line) | 40 |
-| of which non-PNG files, classified in full below | 132 |
+| of which non-PNG files, classified in full below | 138 |
 
 The two ranges above overlap — a file added in `4d23ddb38` and then edited by
 the closure commits is counted once in each row but only once in the total.
-**The authoritative inventory is the full 172**, and every one of them is
-classified here. No file was skipped. The 132 non-PNG files are enumerated
+**The authoritative inventory is the full 178**, and every one of them is
+classified here. No file was skipped. The 138 non-PNG files are enumerated
 individually; the 40 PNGs are grouped by directory.
 
 ---
@@ -34,12 +34,12 @@ individually; the 40 PNGs are grouped by directory.
 
 | Category | Non-PNG files | PNG files | Total |
 |:--|--:|--:|--:|
-| Design implementation | 58 | — | 58 |
+| Design implementation | 60 | — | 60 |
 | Documentation | 22 | — | 22 |
-| Security correction | 17 | — | 17 |
-| Functional regression correction | 23 | — | 23 |
+| Security correction | 19 | — | 19 |
+| Functional regression correction | 25 | — | 25 |
 | Browser evidence | 12 | 40 | 52 |
-| **Total under review** | **132** | **40** | **172** |
+| **Total under review** | **138** | **40** | **178** |
 | **Unexpected / out-of-scope** | **0** | **0** | **0** |
 
 **The out-of-scope count is zero.** No file in the delta changes business
@@ -48,11 +48,11 @@ calls are named transparently in §3 rather than quietly re-labelled.
 
 ---
 
-## 2. Full classification (172 files)
+## 2. Full classification (178 files)
 
 Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-factory/` except `DESIGN.md` and the 14 `docs/design/zen-design-os/*.md` architecture documents, which live at the monorepo root).
 
-### 2.1 Design implementation — 58 files
+### 2.1 Design implementation — 60 files
 
 | Status | Path |
 |:--:|:--|
@@ -74,6 +74,7 @@ Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-facto
 | M | `src/components/niche-studio/niche-studio-header.tsx` |
 | M | `src/components/niche-studio/niche-syndication-preview-card.tsx` |
 | M | `src/components/niche-studio/sophia-artifact-canvas.tsx` |
+| A | `src/components/niche-studio/sophia-artifact-canvas-inspector.tsx` |
 | M | `src/components/niche-studio/storyboard-preview-card.tsx` |
 | M | `src/components/niche-studio/video-compliance-preview-player.tsx` |
 | M | `src/components/stitch/screens/affiliates/invite/email-input.tsx` |
@@ -112,6 +113,7 @@ Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-facto
 | M | `src/seed/components/ui/scroll-reveal.tsx` |
 | M | `src/tree/components/setup-wizard/byok-doctrine-banner.tsx` |
 | M | `src/tree/components/setup-wizard/steps/index.tsx` |
+| M | `src/tree/components/setup-wizard/steps/setup-wizard-flow.test.tsx` |
 | M | `src/tree/components/setup-wizard/steps/welcome-step.tsx` |
 | M | `src/tree/components/setup-wizard/wizard-stepper.tsx` |
 
@@ -148,7 +150,7 @@ notFound()` at `src/app/[locale]/zen-a11y-harness/page.tsx:23`, so it returns
 404 in any deployed build. Its reachable-in-build-table limitation is recorded
 in [ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md](./ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md) §2.1.2.
 
-### 2.3 Security correction — 17 files
+### 2.3 Security correction — 19 files
 
 | Status | Path |
 |:--:|:--|
@@ -167,15 +169,19 @@ in [ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md](./ZEN-07.2-WCAG-AND-MOTION-EVIDENCE.md
 | M | `src/app/api/setup-wizard/test-heygen/route.ts` |
 | M | `src/app/api/setup-wizard/test-resend/route.ts` |
 | M | `src/app/api/setup-wizard/validate-key/route.ts` |
+| M | `src/app/api/setup/verify/route.ts` |
 | A | `src/middleware/__tests__/api-handler-rate-limit-buckets.test.ts` |
 | A | `src/app/api/user/byok/__tests__/byok-rate-limit-security.test.ts` |
+| A | `src/app/api/setup/verify/__tests__/verify-rate-limit-security.test.ts` |
 
 This is the P0 finding and its closure: a dedicated `byok` bucket, per-route
-caps on every provider-probing endpoint, and the `byok` limit type added to
-the telemetry schema so 429s still validate. Full evidence:
-[ZEN-07.2-OWNER-SIGNOFF.md](./ZEN-07.2-OWNER-SIGNOFF.md) §4.
+caps on every provider-probing endpoint (including `/api/setup/verify` hardened
+with unconditional authentication, 12/min per-IP + per-user caps, and isolated
+`probeProviderApiKey` probing without shared circuit-breaker poisoning), and the
+`byok` limit type added to the telemetry schema so 429s still validate. Full
+evidence: [ZEN-07.2-OWNER-SIGNOFF.md](./ZEN-07.2-OWNER-SIGNOFF.md) §4.
 
-### 2.4 Functional regression correction — 23 files
+### 2.4 Functional regression correction — 25 files
 
 | Status | Path |
 |:--:|:--|
@@ -196,9 +202,11 @@ the telemetry schema so 429s still validate. Full evidence:
 | M | `src/components/stitch/__tests__/stitch-screens-a11y.test.tsx` |
 | M | `src/components/stitch/layouts/dashboard/mobile-nav-drawer.tsx` |
 | M | `src/components/stitch/screens/dashboard/dashboard-sources-drawer.tsx` |
+| A | `src/middleware/__tests__/pipeline-header-forwarding.test.ts` |
 | M | `src/middleware/__tests__/redirect.test.ts` |
 | M | `src/middleware/dashboard-pipeline.ts` |
 | M | `src/middleware/helpers.ts` |
+| M | `src/middleware/middleware-shared-config.ts` |
 | M | `src/middleware/public-pipeline.ts` |
 | M | `src/seed/components/ui/command.tsx` |
 | M | `src/seed/types/node-sqlite.d.ts` |
@@ -276,17 +284,17 @@ None. Section 3 records the borderline files that were checked and cleared.
 
 ---
 
-## 4. Quality gates on the closing tree (`9204f8e37`)
+## 4. Quality gates on the closing tree (`f6ebffc50`)
 
 | Gate | Result | Detail |
 |:--|:--:|:--|
 | `npm run type-check` | **PASS (0 errors)** | full `tsc --noEmit` across `src/` |
-| `npm run lint` | **PASS (0 errors / 245 warnings)** | exit 0; all warnings pre-existing and outside the design-system surface |
+| `npm run lint` | **PASS (0 errors / 244 warnings)** | exit 0; all warnings pre-existing and outside the design-system surface |
 | `bash scripts/check-layer-boundaries.sh` | **PASS (0 violations)** | seed → tree → forest → land intact, static and dynamic |
-| `npm run i18n:validate` | **PASS (0 missing keys)** | vi/en parity |
+| `npm run i18n:validate` | **PASS (0 missing keys)** | 5,702 `t()` calls, 0 missing static keys, 0 empty static values across vi/en + 12-locale parity |
 | `npm run check:color-tokens` | **PASS (exit 0)** | 1045 literals against a 1080 baseline, −35 net, 8 files improved, none regressed |
 | `npm run build` | **PASS (636 routes)** | Next.js 16.4.2, exit 0 |
-| `npm test` | **PASS (2098 files / 19,699 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
+| `npm test` | **PASS (2100 files / 19,706 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
 | Secret scan (staged diff) | **PASS** | no key-shaped patterns, no dotenv or private-key file added |
 | Worktree | **clean** | `git status --porcelain` empty after the closing commit |
 

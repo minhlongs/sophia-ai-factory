@@ -2,11 +2,11 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `9204f8e3738600f4ee5155e9dc00849e9420f90f`
+**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (main):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Worktree:** `/Users/macbook/.gemini/antigravity/scratch/sophia-zen-design-os-v1/apps/sophia-ai-factory`
-**Date:** 2026-11-12 (screenshots captured on `cd068bd39`; unit & regression suites re-verified on `9204f8e37` on 2026-11-14)
+**Date:** 2026-11-12 (screenshots captured on `cd068bd39`; unit & regression suites re-verified on `f6ebffc50` on 2026-11-14)
 **Mode:** Isolated local verification; PRODUCTION NOT TOUCHED (no merge, no deploy, no live Cloudflare edits).
 
 ---
@@ -137,8 +137,8 @@ No route is promoted to "visually verified" on the strength of unit tests alone.
 | V7 | P1 | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | `<label htmlFor>` added while `aria-label` was removed → accessible names lost (`niche-studio-readiness-ui.test.tsx:49` red) | restored both `aria-label` attributes |
 
 Every fix was followed by the narrowest test first, then the full sweep:
-`npm test` measured **2098 test files / 19,699 tests passing** (34 skipped,
-10 todo; exit 0) on the closing code tree (`9204f8e37`), and `npm run build` completed with
+`npm test` measured **2100 test files / 19,706 tests passing** (34 skipped,
+10 todo; exit 0) on the closing code tree (`f6ebffc50`), and `npm run build` completed with
 exit 0 across 636 routes. Per-gate numbers live in
 [`ZEN-07.2-FUNCTIONAL-REGRESSION.md`](./ZEN-07.2-FUNCTIONAL-REGRESSION.md) §2.
 

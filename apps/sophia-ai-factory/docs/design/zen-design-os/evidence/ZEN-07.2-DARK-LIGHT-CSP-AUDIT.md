@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `9204f8e3738600f4ee5155e9dc00849e9420f90f`
+**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g2-audit.json`](./g2-audit.json)
@@ -14,7 +14,7 @@
 | Component / Responsibility | Exact File & Line | Verified Implementation |
 |:--|:--|:--|
 | Per-request CSP nonce generation | `src/middleware.ts:55-57` | `const nonce = generateNonce(); requestHeaders.set(CSP_NONCE_HEADER, nonce);` |
-| CSP & HSTS header injection | `src/middleware/middleware-shared-config.ts:35-44` | `response.headers.set('Content-Security-Policy', buildCSPHeader(nonce)); response.headers.set(CSP_NONCE_HEADER, nonce);` |
+| CSP, HSTS & `x-middleware-override-headers` preservation | `src/middleware/middleware-shared-config.ts:35-77` | `applySecurityHeaders` sets `Content-Security-Policy` (`buildCSPHeader(nonce)`), `x-csp-nonce`, and `Strict-Transport-Security`; `mergeIntlResponseHeaders` merges `x-middleware-override-headers` so `next-intl` never clobbers upstream `x-csp-nonce` or `x-tenant-*` request headers (`pipeline-header-forwarding.test.ts`). |
 | Nonce-strict `script-src` policy | `src/seed/security/content-security-policy-configuration.ts:57-60` | When `nonce` is supplied, `script-src` adds `'nonce-${nonce}'` and **omits** `'unsafe-inline'`. |
 | Server-side nonce reader | `src/seed/security/get-csp-nonce.ts:10-20` | Reads `x-csp-nonce` from Next.js `await headers()` on every dynamic request. |
 | Root layout SSR Dark default, locale `lang`/`dir` & nonce wiring | `src/app/layout.tsx:24-56` | `const nonce = await getCspNonce();` + `x-next-intl-locale` reader → `<html lang={locale} dir={dir} className="dark" suppressHydrationWarning>` → `<ZenThemeProvider defaultTheme="dark" nonce={nonce}>`. |
