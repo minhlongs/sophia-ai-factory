@@ -11,7 +11,9 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import { logger } from '@/seed/utils/logger-utility';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import { resolvePublishCooldown } from './schedule-publish-cooldown';
 
 export interface SchedulePublishInput {
@@ -35,6 +37,8 @@ export interface SchedulePublishInput {
    * lookup when provider='telegram'). Defaults to '' for legacy callers.
    */
   provider?: string;
+  sources?: readonly Record<string, unknown>[];
+  provenance?: ProvenanceInput;
 }
 
 export interface SchedulePublishResult {
@@ -67,6 +71,12 @@ export async function schedulePublish(
     now,
   });
 
+  const provenance = producePublishProvenance({
+    caption,
+    sources: input.sources,
+    provenance: input.provenance,
+  });
+
   try {
     await db
       .prepare(
@@ -85,7 +95,7 @@ export async function schedulePublish(
 
   await inngest.send({
     name: 'publish.scheduled',
-    data: { jobId, tenantId, userId },
+    data: { jobId, tenantId, userId, provenance },
   });
 
   logger.info('[schedulePublish] Job inserted and event emitted', {

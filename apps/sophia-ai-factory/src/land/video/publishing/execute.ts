@@ -9,10 +9,12 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getAffiliateKillSwitchState } from '@/tree/affiliate/kill-switch/kill-switch-store';
+import type { PublishingJob } from '@/seed/types';
 import {
   assertYouTubeProvenanceAllowed,
   resolveSyntheticMediaDisclosure,
 } from '@/tree/publishing/synthetic-media-disclosure';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import type { ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
 import { findJobById, checkAndMarkMaxRetries, atomicClaimJob } from './publish-claim';
 import { handleTelegramFlow } from './publish-telegram-flow';
@@ -106,14 +108,11 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
   }
 
   const jobProvider = job.provider ?? '';
-  const provenanceFailure = await failIfYouTubeProvenanceBlocked(
-    db,
-    jobId,
-    jobProvider,
-    args.provenance,
-    now,
-  );
-  if (provenanceFailure) return provenanceFailure;
+  const effectiveProvenance = producePublishProvenance({
+    title: (job as PublishingJob).title ?? undefined,
+    caption: (job as PublishingJob).caption ?? undefined,
+    provenance: args.provenance,
+  });
 
   const alreadyClaimed = args.alreadyClaimed === true;
   let isClaimed = alreadyClaimed;
@@ -126,6 +125,15 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });
     return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
   }
+
+  const provenanceFailure = await failIfYouTubeProvenanceBlocked(
+    db,
+    jobId,
+    jobProvider,
+    effectiveProvenance,
+    now,
+  );
+  if (provenanceFailure) return provenanceFailure;
 
   if (jobProvider === 'telegram') {
     const telegramResult = await handleTelegramFlow({ db, job, jobId, tenantId, step, eventId: args.eventId });
@@ -162,7 +170,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     step,
     now,
     videoUrl: gate.videoUrl,
-    provenance: args.provenance,
+    provenance: effectiveProvenance,
     scheduleRetry,
     refreshToken,
   });

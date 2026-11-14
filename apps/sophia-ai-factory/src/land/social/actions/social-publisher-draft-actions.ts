@@ -11,6 +11,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import {
   listUserDraftJobs,
   transitionDraftToPending,
@@ -47,6 +48,10 @@ export async function approveDraftPublishJobAction(
     if (!jobId) return { success: false, error: 'Job ID required', code: 'VALIDATION_ERROR' };
 
     const job = await transitionDraftToPending(jobId, user.id);
+    const provenance = producePublishProvenance({
+      title: job.title,
+      description: job.description,
+    });
     await inngest.send({
       name: 'social.publish.dispatched',
       data: {
@@ -58,6 +63,7 @@ export async function approveDraftPublishJobAction(
         title: job.title,
         description: job.description,
         tags: job.tags ?? [],
+        provenance,
       },
     });
 

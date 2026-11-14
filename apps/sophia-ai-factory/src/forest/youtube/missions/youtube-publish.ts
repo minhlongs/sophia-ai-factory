@@ -9,6 +9,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { YouTubePublisher } from '@/land/video/publishing/providers/youtube-publisher';
 import { logger } from '@/seed/utils/logger-utility';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import type { PublishingChannel } from '@/forest/publishing/publisher-interface';
 import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
 import { resolveYoutubeAccessToken, sanitizeYoutubeError } from './youtube-publish-helper';
@@ -53,11 +54,16 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   if (!tokenResult.ok) return tokenResult.result;
 
   const publisher = new YouTubePublisher(tokenResult.accessToken);
+  const provenance = producePublishProvenance({
+    title,
+    description,
+  });
   try {
     const externalPostId = await publisher.upload(videoUrl, {
       caption: description || title,
       hashtags,
       title,
+      provenance,
     });
     return {
       ok: true,

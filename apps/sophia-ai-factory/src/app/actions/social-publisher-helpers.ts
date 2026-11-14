@@ -5,10 +5,12 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import type { SocialPlatform } from '@/seed/types/social-publisher-types';
 import { createPublishJob, type StoredPublishJob } from '@/land/social/publish-job-store';
 import { listUserCredentials } from '@/land/social/platform-credentials-store';
 import { evaluateChannelPacing } from '@/tree/social/publisher/pacing-engine';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 
 export interface PublishDispatchInput {
   title: string;
@@ -30,7 +32,17 @@ export async function sendSocialPublishDispatchedEvent(
     'id' | 'channelId' | 'platform' | 'videoUrl' | 'title' | 'description'
   >,
   userId: string,
+  options?: {
+    readonly sources?: readonly Record<string, unknown>[];
+    readonly provenance?: ProvenanceInput;
+  },
 ): Promise<void> {
+  const provenance = producePublishProvenance({
+    title: job.title,
+    description: job.description,
+    sources: options?.sources,
+    provenance: options?.provenance,
+  });
   await inngest.send({
     name: 'social.publish.dispatched',
     data: {
@@ -41,6 +53,7 @@ export async function sendSocialPublishDispatchedEvent(
       videoUrl: job.videoUrl,
       title: job.title,
       description: job.description,
+      provenance,
     },
   });
 }

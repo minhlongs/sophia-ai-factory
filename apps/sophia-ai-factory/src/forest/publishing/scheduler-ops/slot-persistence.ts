@@ -64,6 +64,7 @@ export async function insertPublishingJobRow(
     tenantId: string;
     videoJobId: string;
     channelId: string;
+    provider?: string;
     caption: string;
     hashtagsJson: string;
     productLink?: string;
@@ -78,6 +79,7 @@ export async function insertPublishingJobRow(
     tenant_id: params.tenantId,
     video_id: params.videoJobId,
     channel_id: params.channelId,
+    provider: params.provider ?? '',
     status: 'scheduled',
     caption: params.caption,
     hashtags_json: params.hashtagsJson,

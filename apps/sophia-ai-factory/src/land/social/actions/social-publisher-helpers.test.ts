@@ -102,6 +102,7 @@ describe('social direct publishing execution helpers', () => {
           jobId: 'job-1', userId: 'user-1', channelId: 'channel-1', platform: 'YOUTUBE_SHORTS',
           videoUrl: 'https://cdn.example.test/video.mp4', title: 'A short video',
           description: '', tags: ['demo', 'ai'],
+          provenance: { containsSyntheticMedia: true },
         },
       });
     });

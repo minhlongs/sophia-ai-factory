@@ -70,6 +70,7 @@ describe('runSchedulerCron', () => {
           jobId: 'job-1',
           tenantId: 'tenant-1',
           userId: SYSTEM_REQUESTER_SENTINEL,
+          provenance: { containsSyntheticMedia: true },
         },
       }),
     );

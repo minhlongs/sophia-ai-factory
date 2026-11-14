@@ -4,11 +4,22 @@ import {
   recordFailure,
 } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
+import {
+  assertYouTubeProvenanceAllowed,
+  isProvenanceBlockedError,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 import { YOUTUBE_UPLOAD_URL, type UploadVideoParams } from './types';
 import { assertOk } from './credentials';
 
 /** Upload a video via resumable upload and return the YouTube watch URL */
 export async function uploadVideo(params: UploadVideoParams): Promise<string> {
+  const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: params.provenance,
+    defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
+  });
+  assertYouTubeProvenanceAllowed(disclosure);
+
   if (!shouldAllowRequest('youtube')) {
     throw new Error('Circuit open for youtube — upload blocked');
   }
@@ -22,7 +33,10 @@ export async function uploadVideo(params: UploadVideoParams): Promise<string> {
 
     const metadata = {
       snippet: { title, description, tags, categoryId: '22' },
-      status: { privacyStatus: 'public' },
+      status: {
+        privacyStatus: 'public',
+        containsSyntheticMedia: disclosure.containsSyntheticMedia,
+      },
     };
 
     const initRes = await fetch(
@@ -57,7 +71,9 @@ export async function uploadVideo(params: UploadVideoParams): Promise<string> {
     recordSuccess('youtube');
     return `https://www.youtube.com/watch?v=${result.id}`;
   } catch (error) {
-    recordFailure('youtube', classifyError(error));
+    if (!isProvenanceBlockedError(error)) {
+      recordFailure('youtube', classifyError(error));
+    }
     throw error;
   }
 }
