@@ -9,8 +9,8 @@
 ### 1.1. `ZenThemeProvider` (`src/forest/theme/zen-theme-provider.tsx`)
 Được tích hợp tại `src/app/layout.tsx`, cung cấp ngữ cảnh theme cho toàn bộ ứng dụng mà không phá vỡ cấu trúc Server Component của Next.js 16:
 - **Thuộc tính điều khiển**: `attribute="class"` trên thẻ `<html>`.
-- **Chế độ mặc định**: `defaultTheme="dark"` (**Director's Control Deck**).
-- **Danh sách chế độ hợp lệ**: `themes={['dark', 'light']}`.
+- **Chế độ mặc định**: `defaultTheme="dark"` (**Director's Control Deck**) cho người dùng lần đầu truy cập (`localStorage['sophia-zen-theme']` rỗng sẽ giữ `dark`, không tự bị ép theo hệ điều hành).
+- **Danh sách chế độ & đồng bộ hệ thống**: `themes={['dark', 'light']}` kết hợp `enableSystem` (`true`) để khi người dùng chủ động chọn **System** trong Settings, giá trị `'system'` được lưu bền vững vào `localStorage['sophia-zen-theme']` và tự động đồng bộ `prefers-color-scheme` xuyên suốt mọi route.
 - **Chống chớp giao diện & bảo vệ CSP/Rocket Loader**: `disableTransitionOnChange` (`true`), `scriptProps={{ 'data-cfasync': 'false' }}`, chuyển tiếp `nonce={nonce}` trên `<script>` khởi tạo và `suppressHydrationWarning` trên thẻ `<html>`.
 
 ### 1.2. `ThemeToggle` (`src/forest/components/theme-toggle.tsx`)
@@ -19,19 +19,19 @@ Nút chuyển đổi nhanh giữa chế độ **Tối (Director's Control Deck)*
 - Trước khi client mount xong (`mounted === false`), hiển thị khung giữ chỗ có cùng kích thước để tránh dịch chuyển bố cục (`CLS = 0`).
 
 ### 1.3. `AppearanceSection` (`src/forest/components/settings/sections/appearance-section.tsx`)
-Trang cài đặt giao diện cho phép người dùng chọn giữa **Light**, **Dark** và **System**; gọi trực tiếp `setTheme()` từ `next-themes` và lắng nghe sự kiện `change` trên `window.matchMedia('(prefers-color-scheme: light)')` khi đang chọn `system` để đồng bộ trạng thái hiển thị theo thời gian thực.
+Trang cài đặt giao diện cho phép người dùng chọn giữa **Light**, **Dark** và **System**; cập nhật `settings.theme` trong form đồng thời gọi trực tiếp `setTheme('light' | 'dark' | 'system')` của `ZenThemeProvider` để lưu bền vững vào `sophia-zen-theme` và duy trì lắng nghe `matchMedia` ở tầng gốc ngay cả khi rời trang `/settings`.
 
 ---
 
 ## 2. CÁC NGUYÊN BẢN CHUYỂN ĐỘNG (`ZEN MOTION PRIMITIVES`)
 
-Tất cả các component chuyển động trong `src/seed/components/ui/` đã được nâng cấp để đọc trực tiếp biến CSS `--motion-duration-*` và `--motion-ease-emphasized`, đồng thời tự động tắt hiệu ứng khi hệ điều hành bật `prefers-reduced-motion: reduce`:
+Tất cả các component chuyển động trong `src/seed/components/ui/` đều đọc trực tiếp biến CSS `--motion-duration-*` và `--motion-ease-emphasized`, khởi tạo trạng thái SSR/hydration đồng nhất để tránh lỗi hydration mismatch trên React 19, đồng thời kết hợp quy tắc CSS `@media (prefers-reduced-motion: reduce)` trên `[data-zen-motion]` / `[data-zen-motion-stagger] > *` trong `src/app/globals.css`:
 
 | Component | Đường dẫn | Cách sử dụng chuẩn | Hành vi khi bật `prefers-reduced-motion` |
 |---|---|---|---|
-| **`PageTransition`** | `src/seed/components/ui/page-transition.tsx` | Bọc quanh nội dung màn hình hoặc bước chuyển tiếp để tạo hiệu ứng xuất hiện mượt mà (`var(--motion-duration-deliberate, 400ms)`). | Hiển thị tức thì (`opacity: 1`, không dùng `translateY`). |
-| **`ScrollReveal`** | `src/seed/components/ui/scroll-reveal.tsx` | Bọc quanh các khối nội dung trên trang giới thiệu/báo cáo dài; sử dụng `IntersectionObserver` với độ dịch chuyển giới hạn `16px`. | Bỏ qua `IntersectionObserver`, hiển thị toàn bộ nội dung ngay từ đầu. |
-| **`FadeInView`** | `src/seed/components/ui/fade-in-view.tsx` | Tạo nhịp điệu xuất hiện tuần tự cho cụm 3–4 thẻ KPI đầu trang với `delay` tự động giới hạn tối đa `180ms`. | Bỏ qua `setTimeout` và hiển thị tức thì. |
+| **`PageTransition`** | `src/seed/components/ui/page-transition.tsx` | Bọc quanh nội dung màn hình hoặc bước chuyển tiếp (`translateY(12px)`, `var(--motion-duration-deliberate, 400ms)`). | Hiển thị ngay từ byte SSR đầu tiên qua CSS `@media` và đặt `transition: none`, `opacity: 1`, `transform: none` ngay khi mount. |
+| **`ScrollReveal`** | `src/seed/components/ui/scroll-reveal.tsx` | Bọc quanh các khối nội dung dài; dùng `IntersectionObserver` với `translateY(2rem)` (`translateY(1.5rem)` khi bật `staggerDelay`) và `var(--motion-duration-cinematic, 600ms)`. | Bỏ qua `IntersectionObserver`, hiển thị toàn bộ nội dung ngay từ đầu với `transition: none` (kể cả các phần tử con `staggerDelay`). |
+| **`FadeInView`** | `src/seed/components/ui/fade-in-view.tsx` | Tạo hiệu ứng xuất hiện nhẹ theo hướng chọn trước (`distance` mặc định `20px`, `duration` mặc định `400ms`, `delay` truyền qua CSS transition; quy ước ngân sách caller `<= 180ms` cho cụm thẻ KPI theo `ZEN-MOTION-ADOPTION-MATRIX.md`). | Bỏ qua `IntersectionObserver`, đặt `isVisible = true` và `transition: none` tức thì. |
 
 ---
 

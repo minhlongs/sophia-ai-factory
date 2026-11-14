@@ -1013,7 +1013,9 @@ html {
   .glass-card,
   .glass-card-obsidian,
   .spatial-bento-card,
-  .stagger-reveal > * {
+  .stagger-reveal > *,
+  [data-zen-motion],
+  [data-zen-motion-stagger] > * {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;

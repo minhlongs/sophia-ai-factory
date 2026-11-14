@@ -158,16 +158,14 @@ Source read directly, not inferred.
 
 | Primitive | File | Reduced-motion behaviour |
 |:--|:--|:--|
-| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:51,54,90,99-101` | `useState(() => prefersReducedMotion())` → visible on the very first frame (no hidden start frame even in SSR); `motion = isVisible && prefersReducedMotion() ? "none" : undefined` removes the inline transition |
-| `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:30,32,35,106` | `useState(reduced)`; effect returns early; `transition: reduced ? "none" : ...` |
-| `PageTransition` | `src/seed/components/ui/page-transition.tsx:17,18,21,37-38` | `useState(reduced)`; effect returns early before `requestAnimationFrame`; `transition: reduced ? "none" : ...` |
+| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-121` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1017-1023` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
+| `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:32-54,78-90,121-126` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` and `[data-zen-motion-stagger] > *` CSS rules; `useEffect` immediately promotes `reduced` + `visible`, sets `transition: "none"` on both single and staggered children, and subscribes to `matchMedia` `'change'` |
+| `PageTransition` | `src/seed/components/ui/page-transition.tsx:20-41,53-60` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` CSS override; `useEffect` returns early before `requestAnimationFrame`, sets `transition: "none"`, and subscribes to `matchMedia` `'change'` |
 | `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:22,24-27` | `setCount(value)` and early `return` — **`requestAnimationFrame` loop is never started** |
 
-Every one of the four reads the preference at render/effect time via the shared
-`prefersReducedMotion()` helper (`fade-in-view.tsx:28-34`), so there is no
-client/server divergence and no hydration mismatch.
+`FadeInView`, `ScrollReveal`, and `PageTransition` keep deterministic initial state across SSR and hydration (`zen-motion-reduced-motion.test.tsx` verifies `renderToString` + `hydrateRoot` emits zero hydration errors when `prefers-reduced-motion: reduce` is active), while CSS `@media (prefers-reduced-motion: reduce)` reveals `[data-zen-motion]` and `[data-zen-motion-stagger] > *` from byte 0 of SSR.
 
-The CSS layer closes the loop at `src/app/globals.css:980-996`:
+The CSS layer closes the loop at `src/app/globals.css:990-1024`:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -180,7 +178,13 @@ The CSS layer closes the loop at `src/app/globals.css:980-996`:
   }
   html { scroll-behavior: auto; }
   .animate-gradient, .animate-conveyor, .animate-fade-in-up,
-  .animate-shimmer, .animate-float, … { /* zeroed */ }
+  .animate-shimmer, .animate-float, …
+  [data-zen-motion], [data-zen-motion-stagger] > * {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 ```
 
@@ -191,16 +195,9 @@ reduced motion rather than merely shortening duration.
 The `run-status-badge.test.tsx:60` comment confirms the motion-safe pulse class
 is conditional on the same media query.
 
-### 4.1 Rate-limit note
+### 4.1 Live OS reduced-motion toggle note
 
-All four components read the preference through `window.matchMedia` at render
-time, and **do not subscribe** to `addListener`/`addEventListener('change')`.
-A user who toggles the OS reduced-motion setting while a page is already mounted
-will get the correct behaviour only after the next mount. This is a known
-limitation of the existing implementation; it is **documented, not remediated**,
-because fixing it is feature work outside the acceptance scope
-("Isolated local verification and minimal defect remediation") and no WCAG
-requirement is violated (SC 2.3.3 applies to motion that is shown, and none is).
+`FadeInView`, `ScrollReveal`, and `PageTransition` subscribe to `window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', ...)` so live OS toggles update mounted state immediately; `AnimatedCounter` evaluates `prefersReducedMotion()` when `value` changes (an already-settled static number has no running animation to cancel).
 
 ---
 
@@ -256,8 +253,8 @@ a semantic-structure and name-completeness check.
 ## 8. Verdict
 
 **WCAG 2.2 AA — VERIFIED for the three pilot screens plus the three dialog
-surfaces measured in §2.1**, with two scoped limits stated above
-(reduced-motion preference changes require a remount; no SR transcript pass).
+surfaces measured in §2.1**, with the scoped limit stated above
+(no assistive-technology VoiceOver/NVDA transcript pass).
 No P0/P1 accessibility defect remains open.
 
 The dialog audit that §2 previously deferred is now complete: initial focus,

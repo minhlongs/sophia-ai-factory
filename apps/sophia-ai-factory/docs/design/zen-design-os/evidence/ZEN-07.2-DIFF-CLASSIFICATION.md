@@ -16,15 +16,15 @@ not match the working tree. Measured:
 | Set | Count |
 |:--|--:|
 | Baseline `673ec911` → pre-existing branch tip `4d23ddb38` | 36 files |
-| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, review-fix commit) | 150 tracked |
-| **Total under review (baseline → closing commit)** | **166** (83 `A`, 83 `M`) |
+| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, review-fix round 2) | 151 tracked |
+| **Total under review (baseline → closing commit)** | **167** (83 `A`, 84 `M`) |
 | of which PNG screenshots (binary, listed but not diffed line-by-line) | 40 |
-| of which non-PNG files, classified in full below | 126 |
+| of which non-PNG files, classified in full below | 127 |
 
 The two ranges above overlap — a file added in `4d23ddb38` and then edited by
 the closure commits is counted once in each row but only once in the total.
-**The authoritative inventory is the full 166**, and every one of them is
-classified here. No file was skipped. The 126 non-PNG files are enumerated
+**The authoritative inventory is the full 167**, and every one of them is
+classified here. No file was skipped. The 127 non-PNG files are enumerated
 individually; the 40 PNGs are grouped by directory.
 
 ---
@@ -36,9 +36,9 @@ individually; the 40 PNGs are grouped by directory.
 | Design implementation | 56 | — | 56 |
 | Documentation | 21 | — | 21 |
 | Security correction | 17 | — | 17 |
-| Functional regression correction | 20 | — | 20 |
+| Functional regression correction | 21 | — | 21 |
 | Browser evidence | 12 | 40 | 52 |
-| **Total under review** | **126** | **40** | **166** |
+| **Total under review** | **127** | **40** | **167** |
 | **Unexpected / out-of-scope** | **0** | **0** | **0** |
 
 **The out-of-scope count is zero.** No file in the delta changes business
@@ -47,7 +47,7 @@ calls are named transparently in §3 rather than quietly re-labelled.
 
 ---
 
-## 2. Full classification (166 files)
+## 2. Full classification (167 files)
 
 Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-factory/` except `DESIGN.md` and the 14 `docs/design/zen-design-os/*.md` architecture documents, which live at the monorepo root).
 
@@ -172,7 +172,7 @@ caps on every provider-probing endpoint, and the `byok` limit type added to
 the telemetry schema so 429s still validate. Full evidence:
 [ZEN-07.2-OWNER-SIGNOFF.md](./ZEN-07.2-OWNER-SIGNOFF.md) §4.
 
-### 2.4 Functional regression correction — 20 files
+### 2.4 Functional regression correction — 21 files
 
 | Status | Path |
 |:--:|:--|
@@ -193,6 +193,7 @@ the telemetry schema so 429s still validate. Full evidence:
 | M | `src/components/stitch/__tests__/stitch-screens-a11y.test.tsx` |
 | M | `src/components/stitch/layouts/dashboard/mobile-nav-drawer.tsx` |
 | M | `src/components/stitch/screens/dashboard/dashboard-sources-drawer.tsx` |
+| M | `src/middleware/__tests__/redirect.test.ts` |
 | M | `src/middleware/public-pipeline.ts` |
 | M | `src/seed/components/ui/command.tsx` |
 | M | `src/seed/types/node-sqlite.d.ts` |
@@ -241,12 +242,10 @@ None. Section 3 records the borderline files that were checked and cleared.
 
 ## 3. The four closest calls, cleared explicitly
 
-1. **`src/middleware/public-pipeline.ts`** — a live middleware behaviour change
-   (forwarding the stripped locale via `x-next-intl-locale`), so it looked
-   out-of-scope on a passing glance. It is a **functional regression
-   correction**: without it every `/en/*` pilot route renders Vietnamese, so
-   the bilingual acceptance evidence in the brief could not be produced. It
-   touches one header on the public pipeline and does not alter auth, CSRF,
+1. **`src/middleware/public-pipeline.ts` & `src/middleware/__tests__/redirect.test.ts`** — live middleware behaviour changes
+   (forwarding the stripped locale via `x-next-intl-locale` and matching `/[locale]/setup-wizard` across all 12 `SUPPORTED_LOCALES`), so they looked
+   out-of-scope on a passing glance. Both are **functional regression
+   corrections**: without header forwarding every `/en/*` pilot route renders Vietnamese, and without `SUPPORTED_LOCALES` parity 7 of the 12 supported locales fall through on `/[locale]/setup-wizard` instead of redirecting to `/[locale]/setup`. Neither alters auth, CSRF,
    rate limiting or any protected flow.
 2. **`src/seed/types/node-sqlite.d.ts`** — a `.d.ts` change looked like dead
    cleanup. It is **test support**: five test helpers in `src/land/*` and
@@ -278,7 +277,7 @@ None. Section 3 records the borderline files that were checked and cleared.
 | `npm run i18n:validate` | **PASS (0 missing keys)** | vi/en parity |
 | `npm run check:color-tokens` | **PASS (exit 0)** | 1045 literals against a 1080 baseline, −35 net, 8 files improved, none regressed |
 | `npm run build` | **PASS (636 routes)** | Next.js 16.4.2, exit 0 |
-| `npm test` | **PASS (2098 files / 19,687 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
+| `npm test` | **PASS (2098 files / 19,691 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
 | Secret scan (staged diff) | **PASS** | no key-shaped patterns, no dotenv or private-key file added |
 | Worktree | **clean** | `git status --porcelain` empty after the closing commit |
 

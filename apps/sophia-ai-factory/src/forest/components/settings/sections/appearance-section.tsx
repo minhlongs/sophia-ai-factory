@@ -20,33 +20,26 @@ interface AppearanceSectionProps {
 
 export function AppearanceSection({ form }: AppearanceSectionProps) {
   const t = useTranslations('settings.appearance');
-  const { setTheme } = useTheme();
+  const { theme: activeTheme, setTheme } = useTheme();
   const { watch, setValue } = form;
   const theme = watch('settings.theme');
 
-  const resolveSystemTheme = React.useCallback((): 'light' | 'dark' => {
-    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    }
-    return 'dark';
-  }, []);
-
+  // Reconcile initial saved DB preference into ZenThemeProvider on first mount
+  // if no explicit runtime selection overrides it yet, while delegating cross-route
+  // `'system'` persistence and OS `matchMedia` tracking to ZenThemeProvider.
   React.useEffect(() => {
-    if (theme !== 'system' || typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
+    if (!theme) return;
+    if (activeTheme !== theme) {
+      setTheme(theme);
     }
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-    const syncFromOs = (event: MediaQueryListEvent | MediaQueryList) => {
-      setTheme(event.matches ? 'light' : 'dark');
-    };
-    syncFromOs(mediaQuery);
-    mediaQuery.addEventListener('change', syncFromOs);
-    return () => mediaQuery.removeEventListener('change', syncFromOs);
-  }, [theme, setTheme]);
+    // Intentionally run once on mount so DB-backed form default aligns runtime theme
+    // without overwriting subsequent topbar toggles while editing other fields.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectTheme = (nextTheme: 'light' | 'dark' | 'system') => {
     setValue('settings.theme', nextTheme, { shouldDirty: true });
-    setTheme(nextTheme === 'system' ? resolveSystemTheme() : nextTheme);
+    setTheme(nextTheme);
   };
 
   return (

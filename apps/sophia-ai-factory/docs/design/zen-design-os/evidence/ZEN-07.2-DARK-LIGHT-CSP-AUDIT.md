@@ -17,7 +17,7 @@
 | Nonce-strict `script-src` policy | `src/seed/security/content-security-policy-configuration.ts:57-60` | When `nonce` is supplied, `script-src` adds `'nonce-${nonce}'` and **omits** `'unsafe-inline'`. |
 | Server-side nonce reader | `src/seed/security/get-csp-nonce.ts:10-20` | Reads `x-csp-nonce` from Next.js `await headers()` on every dynamic request. |
 | Root layout SSR Dark default & nonce wiring | `src/app/layout.tsx:25-39` | `const nonce = await getCspNonce();` → `<html lang="vi" ... className="dark" suppressHydrationWarning>` → `<ZenThemeProvider defaultTheme="dark" nonce={nonce}>`. |
-| `ZenThemeProvider` (`next-themes` wrapper) | `src/forest/theme/zen-theme-provider.tsx:40-58` | `attribute="class"`, `defaultTheme="dark"`, `themes={['dark', 'light']}`, `enableSystem={false}`, `disableTransitionOnChange` (`true`), `storageKey="sophia-zen-theme"`, `nonce={nonce}`, `scriptProps={{ 'data-cfasync': 'false' }}`. |
+| `ZenThemeProvider` (`next-themes` wrapper) | `src/forest/theme/zen-theme-provider.tsx:41-60` | `attribute="class"`, `defaultTheme="dark"` (first-time visitors still land on Dark), `themes={['dark', 'light']}`, `enableSystem` (`true` — persists explicit `'system'` selection across all routes), `disableTransitionOnChange` (`true`), `storageKey="sophia-zen-theme"`, `nonce={nonce}`, `scriptProps={{ 'data-cfasync': 'false' }}`. |
 | Dual-theme semantic CSS variables | `src/app/globals.css:14-185` (`:root` Light) & `187-305` (`.dark` Dark) | `:root` defines Executive Studio Ivory (`--background: #F8F9FC`, `--card: #FFFFFF`, `--primary: #4338CA`); `.dark` defines Director's Control Deck (`--background: #090A10`, `--card: #11131F`, `--primary: #6366F1`). |
 
 ---

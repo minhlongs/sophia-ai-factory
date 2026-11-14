@@ -14,16 +14,37 @@ interface PageTransitionProps {
  * and respects `prefers-reduced-motion: reduce`.
  */
 export function PageTransition({ children, className }: PageTransitionProps) {
-  const reduced = prefersReducedMotion();
-  const [mounted, setMounted] = useState(reduced);
+  // Deterministic SSR + hydration initial state (`false`) avoids React 19 hydration
+  // mismatch when OS `prefers-reduced-motion: reduce` is enabled; CSS `@media` rule
+  // on `[data-zen-motion]` keeps SSR markup visually revealed from byte 0.
+  const [mounted, setMounted] = useState(false);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      setMounted(true);
-      return;
+    const syncReduced = () => {
+      const nextReduced = prefersReducedMotion();
+      setReduced(nextReduced);
+      if (nextReduced) {
+        setMounted(true);
+      }
+      return nextReduced;
+    };
+
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    mql?.addEventListener?.("change", syncReduced);
+
+    if (syncReduced()) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
     }
+
     const frame = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      mql?.removeEventListener?.("change", syncReduced);
+    };
   }, []);
 
   return (

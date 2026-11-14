@@ -20,14 +20,15 @@
 
 | Milestone / Mốc | Full 40-char SHA | Summary |
 |:--|:--|:--|
-| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 166 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
+| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 167 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
 | **Handover v1.0** | `4d23ddb386f499b7627f2c828a1b80c81c6a3382` | Bản bàn giao Zen Design OS v1.0 ban đầu (36 file so với `main`). / Initial dual-theme token, motion, and 14-doc handover commit. |
 | **Reported Checkpoint** | `b3338a256408ef194cc63cb6fcbe6dcc27ca718c` | Mốc báo cáo trong lệnh #07.3 sau đợt vá 7 lỗi V1–V7 đầu tiên. / Checkpoint cited in #07.3 brief after initial V1–V7 remediation. |
 | **Security & Locale Seal** | `9b6b786565f5da77b3a0f9a312b8d97ba001c78c` | Khóa giới hạn BYOK theo từng route, sửa chuyển tiếp ngôn ngữ `/en/*` và focus dialog. / Per-route BYOK probing caps, `/en/*` locale header forwarding, dialog focus return. |
 | **Browser-Evidence Tree (`cd068bd39`)** | `cd068bd39917e560f8857d490e04790fc6b0a7bf` | Đóng toàn bộ kiểm thử Playwright modal thật, bộ test bảo mật BYOK đối kháng và đồng bộ font `DESIGN.md`. / Real-browser Playwright dialog, adversarial BYOK, and typography evidence tree. |
-| **Sign-Off Package (`fb0083e04`)** | `fb0083e04` *(parent of review-remediation HEAD)* | Đóng gói báo cáo nghiệm thu Founder và mở Draft PR #155 theo phê duyệt riêng. / Initial Draft PR #155 sign-off commit. |
+| **Sign-Off Package (`fb0083e04`)** | `fb0083e0498c56f92039d66ca58f583a2d293d31` | Đóng gói báo cáo nghiệm thu Founder và mở Draft PR #155 theo phê duyệt riêng. / Initial Draft PR #155 sign-off commit. |
+| **Review Round 1 Fix (`59c9a1ca6`)** | `59c9a1ca65c595d44d1c71e1b99a234959fccf11` | Vá vòng review độc lập 1: 12-locale `(app)/layout.tsx`, đồng bộ 29 vai trò DTCG ↔ CSS, `ScrollReveal` stagger reduced-motion. / First isolated review remediation commit. |
 
-*(Commit hiện tại ngay trên `fb0083e04` xử lý triệt để các điểm P1/P2 từ vòng review độc lập trên Draft PR #155: mở rộng danh sách ngôn ngữ hợp lệ trong `(app)/layout.tsx` lên đủ 12 `SUPPORTED_LOCALES`, đồng bộ 29/29 vai trò màu ngữ nghĩa giữa `globals.css`, `zen-design-tokens.dtcg.json`, `DESIGN.md` và `04-TOKEN-SPECIFICATION.md`, tắt transition con trong `ScrollReveal` khi bật `prefers-reduced-motion`, lắng nghe `matchMedia` trực tiếp khi chọn `system` trong `AppearanceSection`, và vượt qua 8/8 cổng chất lượng với `2,098` file test / `19,687` bài test PASS.)*
+*(Commit đóng gói hiện tại ngay trên `59c9a1ca6` hoàn tất nốt 4 điểm P1/P2 từ vòng review độc lập 2 trên Draft PR #155: bật `enableSystem` trong `ZenThemeProvider` giữ nguyên `defaultTheme="dark"` cho khách truy cập mới nhưng lưu bền vững chế độ `'system'` xuyên mọi route, khởi tạo SSR-safe + lắng nghe `matchMedia` `'change'` cho `FadeInView`/`ScrollReveal`/`PageTransition` kèm CSS `[data-zen-motion]` (0 lỗi hydration trên React 19), đồng bộ tuyệt đối tài liệu `04-TOKEN-SPECIFICATION.md` / `05-COMPONENT-SYSTEM-GUIDE.md` / `DESIGN.md`, mở rộng redirect `/[locale]/setup-wizard` → `/[locale]/setup` cho đủ 12 `SUPPORTED_LOCALES`, và vượt qua 8/8 cổng chất lượng với `2,098` file test / `19,691` bài test PASS.)*
 
 ---
 
@@ -126,7 +127,7 @@
 1. **Trạng thái thực tế trên `sophia.agencyos.network` (Đã đo trực tiếp, không suy đoán):**
    - Kiểm tra phản hồi thật `GET https://sophia.agencyos.network/vi/login` (HTTP 200) ghi nhận **0 dấu hiệu của Rocket Loader** (`type="text/rocketscript"`: 0, `rocket-loader`: 0, `data-cf-settings`: 0, `/cdn-cgi/`: 0). Toàn bộ **22/22 thẻ `<script>`** đều giữ nguyên `nonce` theo từng request với chính sách `script-src 'self' 'nonce-...'` nghiêm ngặt (không có `'unsafe-inline'`). **Hiện tại Rocket Loader đang TẮT trên phản hồi của Sophia.**
 2. **Bảo vệ sẵn trong mã nguồn (`next-themes` + Strict Nonce CSP):**
-   - `ZenThemeProvider` (`src/forest/theme/zen-theme-provider.tsx:38,54`) truyền `scriptProps={{ 'data-cfasync': 'false' }}` vào `next-themes@0.4.6`. Đã kiểm tra trực tiếp mã biên dịch của `next-themes@0.4.6`: `scriptProps` được trải (`spread`) **trước** khi gán `nonce`, nên thuộc tính `data-cfasync="false"` **không bao giờ ghi đè CSP nonce**.
+   - `ZenThemeProvider` (`src/forest/theme/zen-theme-provider.tsx:39,55`) truyền `scriptProps={{ 'data-cfasync': 'false' }}` vào `next-themes@0.4.6`. Đã kiểm tra trực tiếp mã biên dịch của `next-themes@0.4.6`: `scriptProps` được trải (`spread`) **trước** khi gán `nonce`, nên thuộc tính `data-cfasync="false"` **không bao giờ ghi đè CSP nonce**.
    - CSP nghiêm ngặt với `nonce` theo từng request được **giữ nguyên 100%**, không nới lỏng `'unsafe-inline'`. Đã kiểm thử khởi tạo giao diện Sáng/Tối không nháy màu (0 FOUC) trên trình duyệt và xác minh tương thích với bản build Cloudflare Worker (`.open-next/worker.js`).
 3. **Cấu hình an toàn nhỏ nhất đề xuất cho Founder (Chỉ áp dụng riêng cho tên miền phụ `sophia.agencyos.network` — ĐỂ CHỜ DUYỆT, CHƯA THỰC THI):**
    - **[VN]** Dù hiện tại Rocket Loader đang tắt và code đã có `data-cfasync="false"`, để phòng ngừa trường hợp sau này ai đó bật Rocket Loader cho toàn bộ tên miền `agencyos.network`, Founder có thể khóa riêng cho `sophia.agencyos.network` (không ảnh hưởng các trang khác trong cùng zone) theo 6 bước đơn giản sau:
@@ -177,7 +178,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 
 ---
 
-## 8. Gate 5 — Full Regression Status & Complete 166-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
+## 8. Gate 5 — Full Regression Status & Complete 167-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
 
 ### 8.1 Kết quả toàn bộ cổng chất lượng trên cây code hiện tại
 
@@ -188,25 +189,25 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 | `bash scripts/check-layer-boundaries.sh` | **PASS** | `0` vi phạm kiến trúc 4 tầng (`seed → tree → forest → land`). |
 | `npm run i18n:validate` | **PASS** | `0` khóa dịch thiếu giữa `messages/vi.json` và `messages/en.json`. |
 | `npm run check:color-tokens` | **PASS** | `1045` mã màu cứng so với mốc `1080` (**giảm ròng `-35`**, `0` mã màu cứng mới). |
-| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,098` file test PASS / `19,687` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
+| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,098` file test PASS / `19,691` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
 | `npm run build` (Next.js 16.4.2) | **PASS** | Build production thành công `636` routes; độ lệch bundle chỉ **+3.86 KB gzip JS (+0.16%)** và **+1.23 KB gzip CSS (+2.46%)**. |
 | OpenNext Cloudflare Worker Build | **PASS** | `.open-next/worker.js` đóng gói **0 lỗi**, dung lượng nén **`9.46 MB` gzipped** (< ngưỡng cứng `10.00 MB`). |
-| Luồng bảo vệ (Protected Flows) | **PASS** | **Setup Wizard** (xác minh trực tiếp trên trình duyệt + 12 test BYOK), **Telegram Bot** (`@Sophia_Bbot` không bị chạm sửa), **NOWPayments IPN** (luồng thanh toán không bị chạm sửa; không có Polar/PayPal). |
+| Luồng bảo vệ (Protected Flows) | **PASS** | **Setup Wizard** (xác minh trực tiếp trên trình duyệt + 12 test BYOK + redirect đủ 12 ngôn ngữ), **Telegram Bot** (`@Sophia_Bbot` không bị chạm sửa), **NOWPayments IPN** (luồng thanh toán không bị chạm sửa; không có Polar/PayPal). |
 | Quét bí mật & Độ sạch Worktree | **PASS** | `0` API key thật, `0` file `.env` hay khóa riêng tư trong lịch sử diff; `git status --porcelain` sạch hoàn toàn sau commit đóng gói. |
 
-### 8.2 Tổng hợp kiểm toán 166 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
+### 8.2 Tổng hợp kiểm toán 167 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
 
-*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và 2 file test của vòng review độc lập cho ra chính xác **166 file** = `83` file thêm mới + `83` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `151` file trong `apps/sophia-ai-factory/`. Cả 166/166 file đã được phân loại đầy đủ.)*
+*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các file test của 2 vòng review độc lập cho ra chính xác **167 file** = `83` file thêm mới + `84` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `152` file trong `apps/sophia-ai-factory/`. Cả 167/167 file đã được phân loại đầy đủ.)*
 
 | Nhóm phân loại / Classification Category | File phi nhị phân / Non-PNG | Ảnh PNG / Screenshots | Tổng / Total |
 |:--|--:|--:|--:|
 | **Design implementation** (Token, Dual-Theme UI, Motion, `DESIGN.md`) | 56 | — | **56** |
 | **Browser evidence** (JSON máy đo, Playwright specs, harness dev-only, PNGs) | 12 | 40 | **52** |
 | **Documentation** (14 tài liệu kiến trúc ở gốc repo + 7 báo cáo `ZEN-07.2-*.md`) | 21 | — | **21** |
-| **Functional regression correction** (Dialog focus, 12-locale `(app)/layout` & `/en/*` header, `messages/*.json`) | 20 | — | **20** |
+| **Functional regression correction** (Dialog focus, 12-locale `(app)/layout`, `/en/*` header, 12-locale `/setup-wizard` redirect, `messages/*.json`) | 21 | — | **21** |
 | **Security correction** (BYOK D1 bucket + route probing caps + 12 security tests) | 17 | — | **17** |
 | **Unexpected / out-of-scope change** (Thay đổi ngoài phạm vi / sửa nhầm nghiệp vụ) | **0** | **0** | **0** |
-| **TỔNG CỘNG / GRAND TOTAL** | **126** | **40** | **166** |
+| **TỔNG CỘNG / GRAND TOTAL** | **127** | **40** | **167** |
 
 ---
 
@@ -218,13 +219,12 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 ### 9.2 Thao tác cấu hình tùy chọn phía Founder (Không chặn Draft PR / Non-Blocking Owner Governance)
 - **Quy tắc Cloudflare Configuration Rule theo tên miền phụ (`sophia.agencyos.network`):** Hiện Rocket Loader đang tắt trên thực tế; Founder có thể chủ động bật quy tắc khóa `Rocket Loader = Off` riêng cho `sophia.agencyos.network` theo 6 bước ở **Mục 5** bất cứ lúc nào để phòng ngừa rủi ro về sau.
 
-### 9.3 Sáu ghi nhận minh bạch không chặn phát hành (Non-Blocking Follow-Ups for Future Cleanup)
+### 9.3 Năm ghi nhận minh bạch không chặn phát hành (Non-Blocking Follow-Ups for Future Cleanup)
 1. **Nhãn `sr-only` tiếng Việt cho `CmdKPalette` (`src/seed/components/ui/command.tsx:43`):** Đang đọc `"Quick actions"` ở cả VI và EN; có thể nối khóa `messages/vi.json:7328` (`"Thao tác nhanh"`) trong một PR dọn dẹp nhỏ riêng cho thành phần dùng chung.
 2. **Route kiểm thử `/[locale]/zen-a11y-harness` (`src/app/[locale]/zen-a11y-harness/page.tsx:23`):** Trả về `404` ngay lập tức ở môi trường production nhờ chốt `if (process.env.NODE_ENV === 'production') notFound()`, nhưng vẫn xuất hiện dưới dạng route động (`ƒ`) trong bảng build của Next.js.
-3. **Lắng nghe sự kiện đổi `prefers-reduced-motion` trực tiếp:** 4 motion primitives đọc cấu hình giảm chuyển động ngay khi tải trang (và CSS `@media (prefers-reduced-motion: reduce)` tắt chuyển động tức thì), nhưng state JS chưa đăng ký listener `change` nếu người dùng bật/tắt cài đặt hệ điều hành ngay giữa phiên mà không chuyển trang.
-4. **Phạm vi kiểm thử trình đọc màn hình:** Đã xác minh cây trợ năng (accessibility tree), nhãn ARIA và điều hướng bàn phím trên trình duyệt thật, chưa bao gồm bản ghi âm đọc thực tế bằng phần mềm VoiceOver/NVDA.
-5. **Mật khẩu giả lập cục bộ trong bài test E2E (`tests/e2e/zen07-2/zen-07-2-acceptance.spec.ts:75`):** Chỉ dùng cho tài khoản ảo `zen-07-2@sophia.test` trên SQLite local khi chạy Playwright, không liên quan đến bất kỳ hệ thống thật nào.
-6. **Chuỗi tiếng Anh tồn đọng từ trước (`sop.install.cancel`):** Nằm ngoài 3 màn hình pilot của Zen Design OS, không sửa để giữ đúng kỷ luật không chạm ngoài phạm vi.
+3. **Phạm vi kiểm thử trình đọc màn hình:** Đã xác minh cây trợ năng (accessibility tree), nhãn ARIA và điều hướng bàn phím trên trình duyệt thật, chưa bao gồm bản ghi âm đọc thực tế bằng phần mềm VoiceOver/NVDA.
+4. **Mật khẩu giả lập cục bộ trong bài test E2E (`tests/e2e/zen07-2/zen-07-2-acceptance.spec.ts:75`):** Chỉ dùng cho tài khoản ảo `zen-07-2@sophia.test` trên SQLite local khi chạy Playwright, không liên quan đến bất kỳ hệ thống thật nào.
+5. **Chuỗi tiếng Anh tồn đọng từ trước (`sop.install.cancel`):** Nằm ngoài 3 màn hình pilot của Zen Design OS, không sửa để giữ đúng kỷ luật không chạm ngoài phạm vi.
 
 ---
 
@@ -233,7 +233,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 ### 10.1 Đề xuất cấu trúc Draft PR (CHỈ MỞ KHI FOUNDER CHO PHÉP PUSH)
 - **Nhánh nguồn → Nhánh đích / Head → Base:** `design/sophia-zen-design-os-v1` → `main` (chế độ **Draft PR**).
 - **Tiêu đề đề xuất / Proposed Title:** `feat(design): Zen Design OS v1.0 dual-theme pilot, strict nonce CSP & BYOK rate-limit hardening`
-- **Phạm vi đưa vào Draft PR (166 file):**
+- **Phạm vi đưa vào Draft PR (167 file):**
   1. Hệ thống token giao diện kép **Dark (Director's Control Deck)** & **Light (Executive Studio Ivory)** trong `src/app/globals.css`, `zen-design-tokens.dtcg.json`, `ZenThemeProvider` (`data-cfasync="false"` + strict per-request CSP nonce) và 4 motion primitives tuân thủ `prefers-reduced-motion`.
   2. Áp dụng và sửa lỗi tương phản AA trên **3 màn hình Pilot** (`/setup`, `/dashboard`, `/dashboard/niche-studio`) ở cả Tiếng Việt & Tiếng Anh.
   3. Chuẩn hóa hệ chữ **Inter + JetBrains Mono** (Archivo giới hạn trong `.v3-core`) đồng bộ giữa `layout.tsx`, `globals.css`, DTCG JSON và `DESIGN.md`.

@@ -45,19 +45,37 @@ export function FadeInView({
   as: tag = "div",
 }: FadeInViewProps) {
   const ref = useRef<HTMLElement>(null);
-  // Read the preference in the initializer so a reduced-motion user never sees
-  // the hidden start frame at all — including the SSR pass, which renders the
-  // visible state for everyone and is corrected on the first client commit.
-  const [isVisible, setIsVisible] = useState(() => prefersReducedMotion());
+  // Deterministic initial state (`false`) on both SSR and client hydration pass
+  // prevents React 19 hydration mismatches; `@media (prefers-reduced-motion: reduce)`
+  // in `globals.css` guarantees `[data-zen-motion]` stays `opacity: 1; transform: none`
+  // from byte 0 of SSR, and `useEffect` immediately promotes `reduced` + `isVisible`.
+  const [isVisible, setIsVisible] = useState(false);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      setIsVisible(true);
-      return;
+    const syncReduced = () => {
+      const nextReduced = prefersReducedMotion();
+      setReduced(nextReduced);
+      if (nextReduced) {
+        setIsVisible(true);
+      }
+      return nextReduced;
+    };
+
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    mql?.addEventListener?.("change", syncReduced);
+
+    if (syncReduced()) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
     }
 
     const element = ref.current;
-    if (!element) return;
+    if (!element) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -72,7 +90,10 @@ export function FadeInView({
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      mql?.removeEventListener?.("change", syncReduced);
+    };
   }, [once, rootMargin]);
 
   const directions = {
@@ -85,9 +106,6 @@ export function FadeInView({
 
   const Tag = tag as React.ElementType;
   const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
-  // A reduced-motion user gets no transition at all — an inline transition would
-  // otherwise animate the jump from the hidden frame to the visible one.
-  const motion = isVisible && prefersReducedMotion() ? "none" : undefined;
 
   return (
     <Tag
@@ -98,7 +116,9 @@ export function FadeInView({
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "none" : directions[direction],
-        transition: motion ?? `opacity ${duration}ms ${easing} ${delay}ms, transform ${duration}ms ${easing} ${delay}ms`,
+        transition: reduced
+          ? "none"
+          : `opacity ${duration}ms ${easing} ${delay}ms, transform ${duration}ms ${easing} ${delay}ms`,
         willChange: "opacity, transform",
       }}
     >

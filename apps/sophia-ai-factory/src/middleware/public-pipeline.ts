@@ -1,7 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { applyCorsHeaders } from './cors';
-import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config';
+import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';
 import { handleAeoMarkdownNegotiation } from './aeo-negotiation';
+
+const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 
 const BARE_AUTH_APP_ROUTES = new Set([
   'reset-password',
@@ -40,8 +42,8 @@ export async function handlePublicPipeline(
     const target = new URL('/vi/setup', request.url);
     return applyCorsHeaders(NextResponse.redirect(target), origin);
   }
-  const setupWizardMatch = path.match(/^\/(en|vi|ja|ko|th)\/setup-wizard\/?$/);
-  if (setupWizardMatch) {
+  const setupWizardMatch = path.match(/^\/([^/]+)\/setup-wizard\/?$/);
+  if (setupWizardMatch && SUPPORTED_LOCALE_SET.has(setupWizardMatch[1])) {
     const locale = setupWizardMatch[1];
     const target = new URL(`/${locale}/setup`, request.url);
     return applyCorsHeaders(NextResponse.redirect(target), origin);

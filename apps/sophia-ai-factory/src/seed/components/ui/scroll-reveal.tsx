@@ -27,14 +27,29 @@ export function ScrollReveal({
   staggerDelay,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduced = prefersReducedMotion();
-  // Visible from the first frame under reduced motion — never a hidden start.
-  const [visible, setVisible] = useState(reduced);
+  // Deterministic SSR + hydration initial state; CSS `@media (prefers-reduced-motion: reduce)`
+  // on `[data-zen-motion]` and `[data-zen-motion-stagger] > *` guarantees visible SSR paint.
+  const [visible, setVisible] = useState(false);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      setVisible(true);
-      return;
+    const syncReduced = () => {
+      const nextReduced = prefersReducedMotion();
+      setReduced(nextReduced);
+      if (nextReduced) {
+        setVisible(true);
+      }
+      return nextReduced;
+    };
+
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    mql?.addEventListener?.("change", syncReduced);
+
+    if (syncReduced()) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
     }
 
     const observer = new IntersectionObserver(
@@ -48,7 +63,10 @@ export function ScrollReveal({
     );
 
     if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      mql?.removeEventListener?.("change", syncReduced);
+    };
   }, [threshold]);
 
   const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
@@ -57,7 +75,7 @@ export function ScrollReveal({
   if (staggerDelay && visible) {
     const childArray = Children.toArray(children);
     return (
-      <div ref={ref} className={className}>
+      <div ref={ref} className={className} data-zen-motion-stagger="" data-zen-revealed="true">
         {childArray.map((child, i) => {
           if (!isValidElement(child)) return child;
           const existingStyle = (child.props as { style?: React.CSSProperties }).style ?? {};
@@ -79,7 +97,7 @@ export function ScrollReveal({
   if (staggerDelay && !visible) {
     const childArray = Children.toArray(children);
     return (
-      <div ref={ref} className={className}>
+      <div ref={ref} className={className} data-zen-motion-stagger="" data-zen-revealed="false">
         {childArray.map((child, i) => {
           if (!isValidElement(child)) return child;
           const existingStyle = (child.props as { style?: React.CSSProperties }).style ?? {};

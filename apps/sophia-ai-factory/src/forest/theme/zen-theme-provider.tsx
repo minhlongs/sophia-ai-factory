@@ -5,10 +5,11 @@
  * Layer: forest (Application shell & theme orchestration)
  *
  * Wraps `next-themes` with Sophia's locked Dual-Theme contract:
- * - Default mode: `dark` (Director's Control Deck)
- * - Optional mode: `light` (Executive Studio Ivory)
- * - Explicit manual selection (`enableSystem={false}`) so first-time Founders
- *   always land on the signature Director's Control Deck unless they switch.
+ * - Default mode: `dark` (Director's Control Deck) for first-time visitors
+ *   (`defaultTheme="dark"`, so empty storage never falls back to OS scheme)
+ * - Optional modes: `light` (Executive Studio Ivory) and explicit `system`
+ *   (`enableSystem` keeps live OS `prefers-color-scheme` sync across all routes
+ *   whenever a user explicitly selects `system` in Settings)
  */
 
 import * as React from 'react';
@@ -16,7 +17,7 @@ import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 export interface ZenThemeProviderProps {
   children: React.ReactNode;
-  defaultTheme?: 'dark' | 'light';
+  defaultTheme?: 'dark' | 'light' | 'system';
   /**
    * Per-request CSP nonce forwarded to `next-themes`' pre-hydration inline
    * script. Middleware sets `script-src 'nonce-{nonce}'` without
@@ -47,7 +48,7 @@ export function ZenThemeProvider({
       attribute="class"
       defaultTheme={defaultTheme}
       themes={['dark', 'light']}
-      enableSystem={false}
+      enableSystem
       disableTransitionOnChange
       storageKey="sophia-zen-theme"
       nonce={nonce}

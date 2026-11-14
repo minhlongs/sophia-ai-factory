@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { describe, expect, it } from 'vitest';
 import { handlePublicPipeline } from '../public-pipeline';
+import { SUPPORTED_LOCALES } from '../middleware-shared-config';
 
 describe('middleware redirect behavior', () => {
   it('produces a 307 redirect to /login', () => {
@@ -78,5 +79,28 @@ describe('middleware /dashboard/login redirect', () => {
     );
     // Should not be a 307 redirect (locale guard breaks loop by redirecting to /login first)
     expect(res.status).not.toBe(307);
+  });
+});
+
+describe('middleware /setup-wizard canonical onboarding redirect across all 12 locales', () => {
+  it('redirects bare /setup-wizard and /setup-wizard/ to /vi/setup', async () => {
+    for (const rawPath of ['/setup-wizard', '/setup-wizard/']) {
+      const req = new NextRequest(`http://localhost${rawPath}`);
+      const res = await handlePublicPipeline(req, null, new Headers(), 'nonce', false);
+      expect(res.status).toBe(307);
+      expect(res.headers.get('location')).toBe('http://localhost/vi/setup');
+    }
+  });
+
+  it('redirects /[locale]/setup-wizard and /[locale]/setup-wizard/ to /[locale]/setup for every SUPPORTED_LOCALES entry', async () => {
+    expect(SUPPORTED_LOCALES).toHaveLength(12);
+    for (const locale of SUPPORTED_LOCALES) {
+      for (const suffix of ['/setup-wizard', '/setup-wizard/']) {
+        const req = new NextRequest(`http://localhost/${locale}${suffix}`);
+        const res = await handlePublicPipeline(req, null, new Headers(), 'nonce', false);
+        expect(res.status).toBe(307);
+        expect(res.headers.get('location')).toBe(`http://localhost/${locale}/setup`);
+      }
+    }
   });
 });

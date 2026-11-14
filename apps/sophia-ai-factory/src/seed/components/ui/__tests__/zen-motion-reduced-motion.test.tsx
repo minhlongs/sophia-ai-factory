@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
+import { hydrateRoot } from 'react-dom/client';
 import { FadeInView } from '../fade-in-view';
 import { ScrollReveal } from '../scroll-reveal';
 import { PageTransition } from '../page-transition';
@@ -96,5 +98,59 @@ describe('Zen Motion Primitives — prefers-reduced-motion: reduce (WCAG 2.2 SC 
     expect(node?.textContent).toBe((12500).toLocaleString());
     expect(rafSpy).not.toHaveBeenCalled();
     rafSpy.mockRestore();
+  });
+
+  it('hydrates SSR markup cleanly with zero React 19 hydration mismatch warnings under reduced motion', () => {
+    const savedWindow = globalThis.window;
+    let ssrHtml = '';
+    const ui = (
+      <div>
+        <FadeInView direction="up" distance={20} duration={400}>
+          <span>fade</span>
+        </FadeInView>
+        <ScrollReveal>
+          <span>scroll</span>
+        </ScrollReveal>
+        <ScrollReveal staggerDelay={60}>
+          <span data-testid="stagger-1">s1</span>
+          <span data-testid="stagger-2">s2</span>
+        </ScrollReveal>
+        <PageTransition>
+          <span>page</span>
+        </PageTransition>
+      </div>
+    );
+
+    try {
+      Reflect.deleteProperty(globalThis, 'window');
+      ssrHtml = renderToString(ui);
+    } finally {
+      globalThis.window = savedWindow;
+    }
+
+    mockMatchMedia(true);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const host = document.createElement('div');
+    host.innerHTML = ssrHtml;
+    document.body.appendChild(host);
+
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    try {
+      act(() => {
+        root = hydrateRoot(host, ui);
+      });
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(host.querySelector<HTMLElement>('[data-zen-motion="fade-in-view"]')?.dataset.zenRevealed).toBe('true');
+      expect(host.querySelector<HTMLElement>('[data-zen-motion="scroll-reveal"]')?.dataset.zenRevealed).toBe('true');
+      expect(host.querySelector<HTMLElement>('[data-zen-motion="page-transition"]')?.dataset.zenRevealed).toBe('true');
+      expect(host.querySelector<HTMLElement>('[data-zen-motion-stagger]')?.dataset.zenRevealed).toBe('true');
+    } finally {
+      act(() => {
+        root?.unmount();
+      });
+      host.remove();
+      errorSpy.mockRestore();
+    }
   });
 });

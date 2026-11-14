@@ -1,29 +1,56 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { useTheme } from 'next-themes';
 import { ZenThemeProvider } from '../zen-theme-provider';
 
-function installMatchMediaStub() {
+let osPrefersDark = false;
+let mediaListeners: Array<(event: MediaQueryListEvent) => void> = [];
+
+function installMatchMediaStub(initialPrefersDark = false) {
+  osPrefersDark = initialPrefersDark;
+  mediaListeners = [];
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     configurable: true,
     value: vi.fn().mockImplementation((query: string) => ({
-      matches: false,
+      get matches() {
+        if (query.includes('dark')) return osPrefersDark;
+        if (query.includes('light')) return !osPrefersDark;
+        return false;
+      },
       media: query,
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
+      addListener: vi.fn((cb: (e: MediaQueryListEvent) => void) => {
+        mediaListeners.push(cb);
+      }),
+      removeListener: vi.fn((cb: (e: MediaQueryListEvent) => void) => {
+        mediaListeners = mediaListeners.filter((fn) => fn !== cb);
+      }),
+      addEventListener: vi.fn((event: string, cb: (e: MediaQueryListEvent) => void) => {
+        if (event === 'change') mediaListeners.push(cb);
+      }),
+      removeEventListener: vi.fn((event: string, cb: (e: MediaQueryListEvent) => void) => {
+        if (event === 'change') mediaListeners = mediaListeners.filter((fn) => fn !== cb);
+      }),
       dispatchEvent: vi.fn(),
     })),
   });
 }
 
-describe('ZenThemeProvider — Rocket Loader opt-out & CSP nonce wiring', () => {
+function ThemeProbe({ onReady }: { onReady: (api: ReturnType<typeof useTheme>) => void }) {
+  const api = useTheme();
+  React.useEffect(() => {
+    onReady(api);
+  });
+  return <div data-testid="probe">{api.theme}:{api.resolvedTheme}</div>;
+}
+
+describe('ZenThemeProvider — Rocket Loader opt-out, CSP nonce & cross-route system theme', () => {
   beforeEach(() => {
-    installMatchMediaStub();
+    installMatchMediaStub(false); // OS prefers LIGHT by default in stub
+    window.localStorage.clear();
     document.documentElement.className = '';
   });
 
@@ -48,7 +75,8 @@ describe('ZenThemeProvider — Rocket Loader opt-out & CSP nonce wiring', () => 
     }
   });
 
-  it('preserves data-cfasync="false" and applies the dark default class on client mount', () => {
+  it('preserves data-cfasync="false" and defaults fresh visitors to dark even when OS prefers light', () => {
+    installMatchMediaStub(false); // OS prefers light, storage is empty
     const { container } = render(
       <ZenThemeProvider defaultTheme="dark" nonce="client-nonce-abc123">
         <div>shell</div>
@@ -58,6 +86,36 @@ describe('ZenThemeProvider — Rocket Loader opt-out & CSP nonce wiring', () => 
     const script = container.querySelector('script');
     expect(script).not.toBeNull();
     expect(script?.getAttribute('data-cfasync')).toBe('false');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.classList.contains('light')).toBe(false);
+  });
+
+  it('persists "system" in sophia-zen-theme and keeps live OS matchMedia sync across route mounts', () => {
+    installMatchMediaStub(false); // OS prefers light
+    let latestApi: ReturnType<typeof useTheme> | undefined;
+
+    render(
+      <ZenThemeProvider defaultTheme="dark" nonce="nonce-sys-1">
+        <ThemeProbe onReady={(api) => { latestApi = api; }} />
+      </ZenThemeProvider>,
+    );
+
+    act(() => {
+      latestApi?.setTheme('system');
+    });
+
+    expect(window.localStorage.getItem('sophia-zen-theme')).toBe('system');
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+
+    // Simulate OS switching to dark while user is on any route (outside /settings)
+    act(() => {
+      osPrefersDark = true;
+      for (const listener of [...mediaListeners]) {
+        listener({ matches: true } as MediaQueryListEvent);
+      }
+    });
+
+    expect(window.localStorage.getItem('sophia-zen-theme')).toBe('system');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 });

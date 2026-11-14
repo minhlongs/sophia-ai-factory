@@ -158,7 +158,7 @@ Use this block when generating or updating screens in Google Stitch (`https://st
 SYSTEM: ZEN DESIGN OS v1.0 — SOPHIA AI FACTORY
 DIRECTION: Expressive AI-Native (Material 3 Tonal Hierarchy + Director's Control Deck)
 MODES: Dual-Theme (Dark Default #090A10 canvas / #11131F surface-container; Light Executive Studio Ivory #F8F9FC canvas / #FFFFFF surface-container)
-ACCENTS: Primary Electric Indigo (#6366F1 dark / #4338CA light), Secondary AI Violet (#A855F7 / #7E22CE), Tertiary Cinema Amber (#F59E0B / #D97706), Success Emerald (#10B981 / #059669), Error Rose (#F43F5E / #BE123C)
+ACCENTS: Primary Electric Indigo (#6366F1 dark / #4338CA light), Secondary AI Violet (#A855F7 dark / #7E22CE light), Tertiary Cinema Amber (#F59E0B dark / #B45309 light), Success Emerald (#10B981 dark / #047857 light), Error & Destructive Rose (#FB7185 error & #F43F5E destructive dark / #BE123C light)
 TYPOGRAPHY: UI/Body = Inter (400-800, Latin + Vietnamese subsets), Telemetry/Code/Numbers = JetBrains Mono (400-600, tabular-nums); Scoped Landing Display (.v3-core only) = Archivo (wdth 104, 700-800)
 GEOMETRY: Cards rounded-2xl (16px) with 1px subtle outline-variant border (#1E2235 dark / #E2E8F0 light); Buttons & Inputs rounded-xl (12px); Status Pills rounded-full
 UX DOCTRINE: Non-tech SME CEO persona. Clarity before decoration. Zero fabricated metrics (explicit Live / Verified Empty / Unavailable states). Progressive disclosure for BYOK keys and D1 SQL lineage. WCAG 2.2 AA contrast.
