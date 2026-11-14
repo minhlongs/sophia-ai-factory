@@ -11,10 +11,20 @@ export type TikTokPrivacyChoice =
   | 'MUTUAL_FOLLOW_FRIENDS'
   | 'SELF_ONLY';
 
+export interface TikTokCreatorInfo {
+  creatorNickname?: string;
+  maxVideoPostDurationSec?: number;
+  privacyLevelOptions?: TikTokPrivacyChoice[];
+  commentDisabled?: boolean;
+  duetDisabled?: boolean;
+  stitchDisabled?: boolean;
+}
+
 export interface PublishComplianceMetadata {
   privacyLevel?: TikTokPrivacyChoice;
   brandOrganicToggle?: boolean;
   brandContentToggle?: boolean;
+  musicUsageConfirmed?: boolean;
   containsSyntheticMedia?: boolean;
 }
 
@@ -24,6 +34,8 @@ export interface PublishApprovalItem {
   channelId: string;
   platform: string;
   mediaRef: string;
+  previewUrl?: string;
+  creatorInfo?: TikTokCreatorInfo;
   createdAt: number;
   expiresAt: number;
   unauditedSelfOnly?: boolean;

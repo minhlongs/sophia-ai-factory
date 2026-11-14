@@ -41,7 +41,7 @@ vi.mock('@/tree/affiliate/kill-switch/kill-switch-store', () => ({
   getAffiliateKillSwitchState: mocks.mockGetKillState,
 }));
 
-import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
+import { createSchemaBoundD1 } from '@/__tests__/integration/d1-schema-boundary';
 import {
   createCampaignApproval,
   markApprovalExecuted,
@@ -58,47 +58,6 @@ import {
   createExecutionPublishWorker,
   type PublishExecutorFn,
 } from '../execution-publish-worker';
-
-const SCHEMA = [
-  `CREATE TABLE agent_campaign_approvals (
-    id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
-    niche TEXT NOT NULL, jurisdiction TEXT NOT NULL, approval_payload_hash TEXT NOT NULL,
-    estimated_render_cost_cents INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'pending_ceo',
-    approved_by TEXT, approved_at INTEGER, invalidated_reason TEXT,
-    payload_json TEXT, dispatch_json TEXT, expires_at INTEGER,
-    revoked_by TEXT, revoked_at INTEGER, executed_at INTEGER, rejection_reason TEXT,
-    created_at INTEGER NOT NULL
-  );`,
-  `CREATE TABLE affiliate_execution_runs (
-    id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL,
-    offer_id TEXT, approval_id TEXT, idempotency_key TEXT NOT NULL,
-    state TEXT NOT NULL DEFAULT 'approval_pending', locale TEXT NOT NULL DEFAULT 'en',
-    market TEXT, artifact_id TEXT, channel_id TEXT,
-    reserved_cost_cents INTEGER NOT NULL DEFAULT 0, actual_cost_cents INTEGER,
-    failure_reason TEXT, provider_job_id TEXT, render_attempts INTEGER NOT NULL DEFAULT 0,
-    created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
-    UNIQUE(tenant_id, idempotency_key)
-  );`,
-  `CREATE TABLE affiliate_media_artifacts (
-    id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, run_id TEXT NOT NULL,
-    storage_key TEXT NOT NULL, media_type TEXT NOT NULL, byte_size INTEGER NOT NULL,
-    duration_sec INTEGER, checksum_sha256 TEXT NOT NULL, is_fixture INTEGER NOT NULL DEFAULT 0,
-    verified_at INTEGER NOT NULL, created_at INTEGER NOT NULL,
-    UNIQUE(tenant_id, run_id, storage_key)
-  );`,
-  `CREATE TABLE publishing_channels (
-    id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, provider TEXT NOT NULL,
-    external_account_id TEXT, access_token TEXT, status TEXT NOT NULL DEFAULT 'active',
-    created_at INTEGER NOT NULL
-  );`,
-  `CREATE TABLE publishing_jobs (
-    id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, video_id TEXT NOT NULL,
-    channel_id TEXT NOT NULL, provider TEXT, status TEXT NOT NULL,
-    title TEXT, caption TEXT, hashtags_json TEXT, product_link TEXT,
-    privacy_status TEXT DEFAULT 'public', scheduled_at INTEGER,
-    retry_count INTEGER DEFAULT 0, created_at INTEGER NOT NULL
-  );`,
-];
 
 const basePayload: CampaignApprovalPayload = {
   scriptBody: 'Honest review of Acme SaaS for agencies',
@@ -120,15 +79,15 @@ describe('executionPublishWorker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.mockGetKillState.mockResolvedValue({ active: false, known: true });
-    db = createFakeD1(SCHEMA) as unknown as D1Database;
+    db = createSchemaBoundD1().d1 as unknown as D1Database;
     mocks.mockGetD1.mockResolvedValue(db);
   });
 
   async function seedRenderedRun(): Promise<{ approvalId: string; runId: string }> {
     await db
       .prepare(
-        `INSERT INTO publishing_channels (id, tenant_id, provider, external_account_id, access_token, status, created_at)
-         VALUES ('ch_yt_1', 'ws_1', 'youtube', 'UC_owner_1', 'enc_token_1', 'active', 1000)`,
+        `INSERT INTO publishing_channels (id, tenant_id, user_id, provider, external_account_id, access_token, status, created_at, updated_at)
+         VALUES ('ch_yt_1', 'ws_1', 'ceo_1', 'youtube', 'UC_owner_1', 'enc_token_1', 'active', 1000, 1000)`,
       )
       .run();
 
@@ -197,11 +156,13 @@ describe('executionPublishWorker', () => {
     expect(executor).toHaveBeenCalledTimes(1);
 
     const jobRow = await db
-      .prepare(`SELECT video_id, channel_id, privacy_status, product_link FROM publishing_jobs WHERE id = ?`)
+      .prepare(`SELECT video_id, channel_id, title, privacy_status, product_link FROM publishing_jobs WHERE id = ?`)
       .bind(`pub_${runId}`)
       .first<Record<string, unknown>>();
     expect(jobRow?.video_id).toBe(`art_${runId}`);
     expect(jobRow?.channel_id).toBe('ch_yt_1');
+    expect(typeof jobRow?.title).toBe('string');
+    expect((jobRow?.title as string).length).toBeGreaterThan(0);
     expect(jobRow?.privacy_status).toBe('unlisted');
     expect(jobRow?.product_link).toBe('https://sophia.ai/r/acme');
 

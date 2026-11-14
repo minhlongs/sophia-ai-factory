@@ -44,6 +44,7 @@ export function SetupWizardPage() {
     status,
     errors,
     latencies,
+    receipts,
     saveError,
     saveFailed,
     isSaving,
@@ -101,6 +102,7 @@ export function SetupWizardPage() {
               status={status}
               errors={errors}
               latencies={latencies}
+              receipts={receipts}
               savedProviders={savedProviders}
               onRevokeProvider={handleRevokeProvider}
               revokingProvider={revokingProvider}

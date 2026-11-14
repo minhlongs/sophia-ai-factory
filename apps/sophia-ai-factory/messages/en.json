@@ -237,6 +237,26 @@
         "placeholder": "key-...",
         "help": "Get your key at fal.ai/dashboard/keys",
         "optionalBadge": "Add later"
+      },
+      "fastTrack": {
+        "badge": "1-Key Fast-Track",
+        "title": "Start with just 1 OpenRouter key to unlock AI campaigns",
+        "description": "Sophia automatically routes structured JSON/QA steps to compact models and creative scripts to frontier models to cut LLM spend by 55–70%. Voice and avatar keys below remain optional.",
+        "optionalSectionTitle": "Optional Add-ons: Native Voice & Avatar Keys (Add anytime)",
+        "showOptional": "Show optional keys (ElevenLabs, D-ID...)",
+        "hideOptional": "Hide optional keys"
+      },
+      "receipt": {
+        "title": "Zero-Execution Key Validation Receipt",
+        "capJsonSchema": "JSON Schema",
+        "capToolCall": "Tool Calling",
+        "capVision": "Vision",
+        "latencyLabel": "Latency",
+        "budgetWithin": "Remaining budget",
+        "budgetNoCap": "No monthly spend cap set",
+        "budgetExhausted": "Monthly budget cap reached",
+        "budgetCooldown": "Cooldown active",
+        "spentThisMonth": "Spent this month"
       }
     },
     "errors": {
@@ -7514,6 +7534,20 @@
         "status": "Status",
         "contact": "Contact",
         "copyright": "© 2026 Sophia AI Factory. All rights reserved."
+      },
+      "paidPilot": {
+        "badge": "Guaranteed Trial • 14-Day Paid Pilot",
+        "title": "14-Day Paid Pilot Campaign — 1,990,000 VND ($79)",
+        "subtitle": "Built for SMBs and agencies validating real ROI: unlocks full BASIC tier entitlements for 14 days with a 100% refund guarantee if fewer than 10 compliant short videos are produced.",
+        "priceVnd": "1,990,000 VND",
+        "priceUsd": "$79 / 14 days",
+        "bullet1": "Minimum 10 compliant short-form videos (9:16) guaranteed",
+        "bullet2": "Instant 14-day BASIC tier activation (no hidden auto-renewal)",
+        "bullet3": "Supports VietQR bank transfer or USDT",
+        "cta": "Start 14-Day Paid Pilot",
+        "ctaLoading": "Creating Pilot order...",
+        "fallbackNotice": "Your 14-day Paid Pilot order is reserved! Complete payment to activate your workspace immediately.",
+        "errorNotice": "Could not start the Paid Pilot checkout. Please sign in and try again."
       }
     },
     "landing": {
@@ -8079,7 +8113,13 @@
       "brandOrganicLabel": "Promote your own brand (Your Brand)",
       "brandContentLabel": "Paid partnership / Branded Content",
       "selfOnlyWarning": "TikTok notice: While the app is unaudited or set to Only me, the post is restricted to private visibility (SELF_ONLY).",
-      "youtubeSyntheticLabel": "YouTube altered or synthetic media disclosure (containsSyntheticMedia)"
+      "youtubeSyntheticLabel": "YouTube altered or synthetic media disclosure (containsSyntheticMedia)",
+      "previewVideoLabel": "Unwatermarked video preview",
+      "creatorNicknameLabel": "TikTok Creator",
+      "creatorMaxDurationLabel": "Max allowed duration",
+      "creatorInteractionsLocked": "Creator interaction locks",
+      "musicConsentLabel": "By posting, you agree to TikTok's Music Usage Confirmation",
+      "musicConsentRequiredHint": "Select a privacy level and confirm TikTok's Music Usage Confirmation to enable Approve & Publish."
     },
     "badges": {
       "complianceVerified": "Compliance check: passed",

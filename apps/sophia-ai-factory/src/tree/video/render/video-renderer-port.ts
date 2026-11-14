@@ -1,29 +1,21 @@
 /**
  * Programmatic Video Renderer Port & Swappable Adapters (HyperFrames Apache-2.0 & Remotion Free).
- * Implements segment-level SHA-256 caching so editing a caption or headline in one
+ * Implements segment-level SHA-256 caching on Cloudflare R2 so editing a caption or headline in one
  * scene only re-renders that specific segment instead of the entire timeline.
  * @module tree/video/render/video-renderer-port
  */
 
 import {
-  SophiaVideoTimelineSchema,
-  computeSegmentCacheKey,
-  getTimelineMetrics,
-  type SophiaVideoTimeline,
-  type VideoTimelineScene,
+  SophiaVideoTimelineSchema, computeSegmentCacheKey, getTimelineMetrics,
+  type SophiaVideoTimeline, type VideoTimelineScene,
 } from '@/seed/types/video-timeline-schema';
 import { logger } from '@/seed/utils/logger-utility';
 
 export type VideoRendererEngine = 'hyperframes' | 'remotion';
 
 export interface RenderedSegmentArtifact {
-  sceneId: string;
-  cacheKey: string;
-  cacheHit: boolean;
-  startFrame: number;
-  durationInFrames: number;
-  segmentUrl: string;
-  renderTimeMs: number;
+  sceneId: string; cacheKey: string; cacheHit: boolean;
+  startFrame: number; durationInFrames: number; segmentUrl: string; renderTimeMs: number;
 }
 
 export interface VideoRenderOutput {
@@ -46,6 +38,15 @@ export interface SegmentCacheStore {
   set(cacheKey: string, segmentUrl: string): Promise<void>;
 }
 
+export interface R2SegmentObjectLike {
+  text(): Promise<string>;
+}
+
+export interface R2LikeSegmentBucket {
+  get(key: string): Promise<R2SegmentObjectLike | null>;
+  put(key: string, value: string, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+}
+
 export interface VideoRendererPort {
   readonly engine: VideoRendererEngine;
   readonly licenseType: 'Apache-2.0' | 'Remotion-Free-Tier';
@@ -65,13 +66,46 @@ export interface RendererAdapterOptions {
 export function createInMemorySegmentCache(): SegmentCacheStore {
   const map = new Map<string, string>();
   return {
-    async get(key: string) {
-      return map.get(key) ?? null;
+    async get(key: string) { return map.get(key) ?? null; },
+    async set(key: string, url: string) { map.set(key, url); },
+  };
+}
+
+export function createR2SegmentCache(bucket: R2LikeSegmentBucket, tenantId: string): SegmentCacheStore {
+  const normalizedTenantId = tenantId.trim();
+  if (!normalizedTenantId) {
+    throw new Error('[VideoRendererPort] tenantId is required for createR2SegmentCache');
+  }
+  const encodedTenant = encodeURIComponent(normalizedTenantId);
+  const buildKey = (cacheKey: string) => `orgs/${encodedTenant}/render-cache/${encodeURIComponent(cacheKey)}.json`;
+
+  return {
+    async get(cacheKey: string): Promise<string | null> {
+      const obj = await bucket.get(buildKey(cacheKey));
+      if (!obj) return null;
+      try {
+        const parsed = JSON.parse(await obj.text()) as { segmentUrl?: unknown; tenantId?: unknown };
+        if (parsed.tenantId !== normalizedTenantId) return null;
+        return typeof parsed.segmentUrl === 'string' && parsed.segmentUrl.length > 0 ? parsed.segmentUrl : null;
+      } catch {
+        return null;
+      }
     },
-    async set(key: string, url: string) {
-      map.set(key, url);
+    async set(cacheKey: string, segmentUrl: string): Promise<void> {
+      const payload = JSON.stringify({
+        segmentUrl,
+        tenantId: normalizedTenantId,
+        cacheKey,
+        cachedAt: new Date().toISOString(),
+      });
+      await bucket.put(buildKey(cacheKey), payload, { httpMetadata: { contentType: 'application/json' } });
     },
   };
+}
+
+function formatArtifactLocation(artifactBaseUrl: string | undefined, r2Key: string): string {
+  const trimmedBase = artifactBaseUrl?.trim().replace(/\/+$/, '');
+  return trimmedBase ? `${trimmedBase}/${r2Key}` : r2Key;
 }
 
 async function executeSegmentedRender(
@@ -81,7 +115,7 @@ async function executeSegmentedRender(
   options?: RendererAdapterOptions,
 ): Promise<VideoRenderOutput> {
   const timeline = SophiaVideoTimelineSchema.parse(rawTimeline);
-  const baseUrl = (options?.artifactBaseUrl ?? 'https://r2.sophia.local/renders').replace(/\/+$/, '');
+  const timelinePrefix = `orgs/${encodeURIComponent(timeline.tenantId)}/timelines/${encodeURIComponent(timeline.timelineId)}`;
   const segments: RenderedSegmentArtifact[] = [];
   let cacheHits = 0;
 
@@ -91,65 +125,43 @@ async function executeSegmentedRender(
     if (cachedUrl) {
       cacheHits += 1;
       segments.push({
-        sceneId: scene.sceneId,
-        cacheKey,
-        cacheHit: true,
-        startFrame: scene.startFrame,
-        durationInFrames: scene.durationInFrames,
-        segmentUrl: cachedUrl,
-        renderTimeMs: 0,
+        sceneId: scene.sceneId, cacheKey, cacheHit: true,
+        startFrame: scene.startFrame, durationInFrames: scene.durationInFrames,
+        segmentUrl: cachedUrl, renderTimeMs: 0,
       });
       continue;
     }
 
+    const defaultSegmentKey = `${timelinePrefix}/${engine}-${encodeURIComponent(scene.sceneId)}-${cacheKey.slice(0, 12)}.mp4`;
     const rendered = options?.renderSceneSegment
       ? await options.renderSceneSegment(scene, cacheKey, engine)
       : {
-          segmentUrl: `${baseUrl}/${encodeURIComponent(timeline.tenantId)}/${encodeURIComponent(timeline.timelineId)}/${engine}-${scene.sceneId}-${cacheKey.slice(0, 12)}.mp4`,
+          segmentUrl: formatArtifactLocation(options?.artifactBaseUrl, defaultSegmentKey),
           renderTimeMs: Math.max(15, Math.round(scene.durationInFrames * 1.5)),
         };
 
-    if (options?.cacheStore) {
-      await options.cacheStore.set(cacheKey, rendered.segmentUrl);
-    }
+    if (options?.cacheStore) await options.cacheStore.set(cacheKey, rendered.segmentUrl);
 
     segments.push({
-      sceneId: scene.sceneId,
-      cacheKey,
-      cacheHit: false,
-      startFrame: scene.startFrame,
-      durationInFrames: scene.durationInFrames,
-      segmentUrl: rendered.segmentUrl,
-      renderTimeMs: rendered.renderTimeMs,
+      sceneId: scene.sceneId, cacheKey, cacheHit: false,
+      startFrame: scene.startFrame, durationInFrames: scene.durationInFrames,
+      segmentUrl: rendered.segmentUrl, renderTimeMs: rendered.renderTimeMs,
     });
   }
 
   const metrics = getTimelineMetrics(timeline);
   const cacheHitRatio = Number((cacheHits / timeline.scenes.length).toFixed(2));
-  const masterHash = segments.map((s) => s.cacheKey.slice(0, 8)).join('-');
-  const outputUrl = `${baseUrl}/${encodeURIComponent(timeline.tenantId)}/${encodeURIComponent(timeline.timelineId)}/${engine}-master-${masterHash}.mp4`;
+  const outputUrl = formatArtifactLocation(options?.artifactBaseUrl, `${timelinePrefix}/${engine}-final.mp4`);
 
   logger.info('[VideoRendererPort] Completed segmented timeline render', {
-    timelineId: timeline.timelineId,
-    engine,
-    sceneCount: timeline.scenes.length,
-    cacheHits,
-    cacheHitRatio,
+    timelineId: timeline.timelineId, engine, sceneCount: timeline.scenes.length, cacheHits, cacheHitRatio,
   });
 
   return {
-    timelineId: timeline.timelineId,
-    engine,
-    licenseType,
-    width: timeline.width,
-    height: timeline.height,
-    fps: timeline.fps,
-    codec: timeline.codec,
-    totalFrames: metrics.totalFrames,
-    durationSec: metrics.durationSec,
-    outputUrl,
-    segments,
-    cacheHitRatio,
+    timelineId: timeline.timelineId, engine, licenseType,
+    width: timeline.width, height: timeline.height, fps: timeline.fps, codec: timeline.codec,
+    totalFrames: metrics.totalFrames, durationSec: metrics.durationSec,
+    outputUrl, segments, cacheHitRatio,
   };
 }
 

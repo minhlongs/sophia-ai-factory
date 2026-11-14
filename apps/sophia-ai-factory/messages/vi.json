@@ -237,6 +237,26 @@
         "placeholder": "key-...",
         "help": "Lấy key tại fal.ai/dashboard/keys",
         "optionalBadge": "Thêm sau"
+      },
+      "fastTrack": {
+        "badge": "Khởi chạy nhanh 1 khóa",
+        "title": "Chỉ cần 1 khóa OpenRouter để kích hoạt toàn bộ kịch bản AI",
+        "description": "Sophia tự động định tuyến phân tầng (mô hình nhỏ cho JSON/QA, mô hình lớn cho kịch bản) để tiết kiệm 55–70% chi phí. Các khóa giọng nói và avatar bên dưới có thể thêm bất kỳ lúc nào.",
+        "optionalSectionTitle": "Tùy chọn nâng cao: Giọng nói Tiếng Việt & Avatar (Thêm sau)",
+        "showOptional": "Mở các khóa tùy chọn (ElevenLabs, D-ID...)",
+        "hideOptional": "Thu gọn các khóa tùy chọn"
+      },
+      "receipt": {
+        "title": "Biên lai Xác thực Khóa (Không thực thi tốn phí)",
+        "capJsonSchema": "JSON Chuẩn",
+        "capToolCall": "Gọi Công cụ",
+        "capVision": "Thị giác",
+        "latencyLabel": "Độ trễ",
+        "budgetWithin": "Ngân sách còn lại",
+        "budgetNoCap": "Chưa đặt trần chi tiêu tháng",
+        "budgetExhausted": "Đã chạm trần ngân sách tháng",
+        "budgetCooldown": "Đang tạm nghỉ bảo vệ khóa",
+        "spentThisMonth": "Đã dùng tháng này"
       }
     },
     "errors": {
@@ -7515,6 +7535,20 @@
         "status": "Trạng thái",
         "contact": "Liên hệ",
         "copyright": "© 2026 Sophia AI Factory. Đã đăng ký bản quyền."
+      },
+      "paidPilot": {
+        "badge": "Gói Trải nghiệm Có Cam kết • 14 Ngày",
+        "title": "Khởi chạy Chiến dịch Thử nghiệm 14 Ngày — 1.990.000đ ($79)",
+        "subtitle": "Dành cho doanh nghiệp SME & đại lý tiếp thị muốn kiểm chứng thực tế: mở toàn bộ quyền gói BASIC trong 14 ngày kèm cam kết hoàn tiền 100% nếu không tạo đủ tối thiểu 10 video ngắn đạt chuẩn.",
+        "priceVnd": "1.990.000đ",
+        "priceUsd": "~$79 / 14 ngày",
+        "bullet1": "Cam kết tối thiểu 10 video ngắn (9:16) sẵn sàng duyệt đăng hợp lệ",
+        "bullet2": "Kích hoạt tức thì quyền BASIC trong 14 ngày (không tự động gia hạn ẩn)",
+        "bullet3": "Hỗ trợ thanh toán VietQR / Chuyển khoản hoặc USDT",
+        "cta": "Đăng ký Gói Pilot 14 Ngày",
+        "ctaLoading": "Đang khởi tạo đơn Pilot...",
+        "fallbackNotice": "Đơn Pilot 14 ngày đã được ghi nhận! Vui lòng hoàn tất thanh toán theo hướng dẫn để kích hoạt ngay.",
+        "errorNotice": "Không thể khởi tạo đơn Pilot lúc này. Vui lòng đăng nhập và thử lại."
       }
     },
     "landing": {
@@ -8080,7 +8114,13 @@
       "brandOrganicLabel": "Quảng bá thương hiệu của bạn (Your Brand)",
       "brandContentLabel": "Nội dung tài trợ bên thứ ba (Branded Content)",
       "selfOnlyWarning": "Lưu ý TikTok: Khi ứng dụng chưa hoàn tất kiểm duyệt hoặc chọn Chỉ mình tôi, video sẽ được đăng ở chế độ Riêng tư (SELF_ONLY).",
-      "youtubeSyntheticLabel": "Khai báo nội dung tạo bởi AI trên YouTube (containsSyntheticMedia)"
+      "youtubeSyntheticLabel": "Khai báo nội dung tạo bởi AI trên YouTube (containsSyntheticMedia)",
+      "previewVideoLabel": "Xem trước bản gốc (không gắn watermark Sophia)",
+      "creatorNicknameLabel": "Tài khoản TikTok",
+      "creatorMaxDurationLabel": "Thời lượng tối đa cho phép",
+      "creatorInteractionsLocked": "Giới hạn tương tác từ kênh",
+      "musicConsentLabel": "Khi đăng bài, bạn đồng ý với Xác nhận Sử dụng Âm nhạc của TikTok (By posting, you agree to TikTok's Music Usage Confirmation)",
+      "musicConsentRequiredHint": "Vui lòng chọn chế độ hiển thị và xác nhận bản quyền âm nhạc TikTok để bật nút Duyệt & đăng."
     },
     "badges": {
       "complianceVerified": "Kiểm tra quy định: đạt",

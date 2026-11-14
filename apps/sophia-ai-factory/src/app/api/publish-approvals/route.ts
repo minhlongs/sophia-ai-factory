@@ -5,13 +5,30 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1 } from '@/seed/db/client';
+import { getD1, type D1Database } from '@/seed/db/client';
 import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 import { listPendingPublishApprovals } from '@/tree/publishing/approval';
 
 export const dynamic = 'force-dynamic';
+
+async function lookupChannelCreatorInfo(
+  d1: D1Database,
+  tenantId: string,
+  channelId: string,
+): Promise<{ creatorNickname: string } | undefined> {
+  try {
+    const channel = await d1
+      .prepare('SELECT id, display_name FROM publishing_channels WHERE tenant_id = ? AND id = ? LIMIT 1')
+      .bind(tenantId, channelId)
+      .first<{ id?: string; display_name?: string | null }>();
+    const displayName = typeof channel?.display_name === 'string' ? channel.display_name.trim() : '';
+    return displayName ? { creatorNickname: displayName } : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export async function GET(request: NextRequest): Promise<Response> {
   try {
@@ -32,22 +49,40 @@ export async function GET(request: NextRequest): Promise<Response> {
     const workspaceIds = await getUserWorkspaceIds(user.id, d1);
     const approvals = await listPendingPublishApprovals(workspaceIds, limit, d1);
 
+    const channelCache = new Map<string, Promise<{ creatorNickname: string } | undefined>>();
+    const getCachedCreatorInfo = (tenantId: string, channelId: string) => {
+      const cacheKey = `${tenantId}::${channelId}`;
+      const cached = channelCache.get(cacheKey);
+      if (cached) return cached;
+      const pending = lookupChannelCreatorInfo(d1, tenantId, channelId);
+      channelCache.set(cacheKey, pending);
+      return pending;
+    };
+
+    const enrichedApprovals = await Promise.all(
+      approvals.map(async (row) => {
+        const creatorInfo = await getCachedCreatorInfo(row.tenantId, row.channelId);
+        return {
+          id: row.idempotencyKey,
+          tenantId: row.tenantId,
+          channelId: row.channelId,
+          platform: row.platform,
+          mediaRef: row.mediaRef,
+          createdAt: row.createdAt,
+          expiresAt: row.expiresAt,
+          ...(creatorInfo ? { creatorInfo } : {}),
+        };
+      }),
+    );
+
     logger.info('[api/publish-approvals] Listed pending publish approvals', {
       userId: user.id,
-      count: approvals.length,
+      count: enrichedApprovals.length,
     });
 
     return NextResponse.json({
-      approvals: approvals.map((row) => ({
-        id: row.idempotencyKey,
-        tenantId: row.tenantId,
-        channelId: row.channelId,
-        platform: row.platform,
-        mediaRef: row.mediaRef,
-        createdAt: row.createdAt,
-        expiresAt: row.expiresAt,
-      })),
-      count: approvals.length,
+      approvals: enrichedApprovals,
+      count: enrichedApprovals.length,
       limit,
       workspaces: workspaceIds,
     });
@@ -55,8 +90,6 @@ export async function GET(request: NextRequest): Promise<Response> {
     logger.error('[api/publish-approvals] GET failed', {
       error: toError(error).message,
     });
-    // The detail is logged, never returned: D1 error text can carry SQL
-    // fragments and table names that a probing caller has no need to see.
     return NextResponse.json({ error: 'Failed to list publish approvals' }, { status: 500 });
   }
 }

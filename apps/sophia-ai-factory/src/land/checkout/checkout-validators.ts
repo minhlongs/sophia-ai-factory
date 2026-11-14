@@ -25,6 +25,9 @@ export function assertPeriodAllowed(tier: string, period: PendingOrderPeriod): v
   if (tier !== 'MASTER' && period === 'lifetime') {
     throw new Error('Lifetime billing is only available for MASTER tier')
   }
+  if (period === 'pilot_14d' && tier !== 'BASIC') {
+    throw new Error('14-day Paid Pilot billing is only available for BASIC tier')
+  }
   // 'yearly' is valid for non-MASTER tiers — falls through to checkout price lookup
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import type { ValidationReceipt } from '@/tree/byok/validation-receipt-types';
 import type { TierType } from './payment-step';
 import {
   KEY_TO_PROVIDER,
@@ -30,6 +31,7 @@ export function useSetupWizard() {
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [latencies, setLatencies] = useState<Record<string, number>>({});
+  const [receipts, setReceipts] = useState<Record<string, ValidationReceipt>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,14 +43,27 @@ export function useSetupWizard() {
     });
   }, []);
 
+  const clearReceiptForKey = useCallback((keyName: string) => {
+    setReceipts(prev => {
+      if (!(keyName in prev)) return prev;
+      const next = { ...prev };
+      delete next[keyName];
+      return next;
+    });
+  }, []);
+
   const updateConfig = useCallback((key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
-  }, []);
+    setStatus(prev => (prev[key] && prev[key] !== 'idle' ? { ...prev, [key]: 'idle' } : prev));
+    setErrors(prev => (prev[key] ? { ...prev, [key]: '' } : prev));
+    clearReceiptForKey(key);
+  }, [clearReceiptForKey]);
 
   const verifyKey = useCallback(async (service: string, keyName: string, keyValue: string) => {
     if (!keyValue.trim()) {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: t('errors.emptyKey') }));
+      clearReceiptForKey(keyName);
       return false;
     }
     setStatus(prev => ({ ...prev, [keyName]: 'validating' }));
@@ -58,17 +73,23 @@ export function useSetupWizard() {
       setLatencies(prev => ({ ...prev, [keyName]: result.latencyMs }));
       if (result.valid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
+        if (result.receipt) {
+          const validReceipt = result.receipt;
+          setReceipts(prev => ({ ...prev, [keyName]: validReceipt }));
+        }
         return true;
       }
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: result.errorMessage || t('errors.verificationFailed') }));
+      clearReceiptForKey(keyName);
       return false;
     } catch {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: t('errors.verificationFailed') }));
+      clearReceiptForKey(keyName);
       return false;
     }
-  }, [t]);
+  }, [t, clearReceiptForKey]);
 
   const handleRevokeProvider = useCallback(async (provider: string, keyName: string) => {
     setRevokingProvider(provider);
@@ -78,11 +99,12 @@ export function useSetupWizard() {
         setSavedProviders(prev => prev.filter(p => p !== provider));
         setConfig(prev => ({ ...prev, [keyName]: '' }));
         setStatus(prev => ({ ...prev, [keyName]: 'idle' }));
+        clearReceiptForKey(keyName);
       }
     } finally {
       setRevokingProvider(null);
     }
-  }, []);
+  }, [clearReceiptForKey]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     setSaveError(null);
@@ -109,7 +131,7 @@ export function useSetupWizard() {
   return {
     accountEmail, isOwner, currentTier, mcuBalance, subscriptionStatus,
     savedProviders, revokingProvider, config, updateConfig, verifyKey,
-    handleRevokeProvider, handleSave, status, errors, latencies,
+    handleRevokeProvider, handleSave, status, errors, latencies, receipts,
     saveError, saveFailed, isSaving,
   };
 }

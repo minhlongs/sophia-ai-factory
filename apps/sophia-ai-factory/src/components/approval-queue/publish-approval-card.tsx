@@ -1,5 +1,5 @@
 /**
- * Single public-publish approval card with channel, platform, media reference,
+ * Single public-publish approval card with channel, platform, unwatermarked video preview,
  * TikTok/YouTube compliance controls, optional reviewer note, and Approve / Reject actions.
  * @module components/approval-queue/publish-approval-card
  */
@@ -8,7 +8,8 @@
 
 import React, { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, X, Globe, Film, Clock, AlertTriangle } from 'lucide-react';
+import { Check, X, Globe, Film, Clock } from 'lucide-react';
+import { TikTokComplianceFields } from './tiktok-compliance-fields';
 import type {
   PublishApprovalItem,
   PublishComplianceMetadata,
@@ -37,12 +38,22 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
   const [privacyLevel, setPrivacyLevel] = useState<TikTokPrivacyChoice | ''>('');
   const [brandOrganicToggle, setBrandOrganicToggle] = useState(false);
   const [brandContentToggle, setBrandContentToggle] = useState(false);
+  const [musicUsageConfirmed, setMusicUsageConfirmed] = useState(false);
   const [containsSyntheticMedia, setContainsSyntheticMedia] = useState(true);
   const [syntheticTouched, setSyntheticTouched] = useState(false);
 
-  const approveDisabled = busy || (isTikTok && privacyLevel === '');
+  const approveDisabled = busy || (isTikTok && (privacyLevel === '' || !musicUsageConfirmed));
+  const previewSrc = item.previewUrl ?? item.mediaRef;
+
   const buildCompliancePayload = (): PublishComplianceMetadata | undefined => {
-    if (isTikTok && privacyLevel !== '') return { privacyLevel, brandOrganicToggle, brandContentToggle };
+    if (isTikTok && privacyLevel !== '' && musicUsageConfirmed) {
+      return {
+        privacyLevel,
+        brandOrganicToggle,
+        brandContentToggle,
+        musicUsageConfirmed: true,
+      };
+    }
     if (isYouTube && syntheticTouched) return { containsSyntheticMedia };
     return undefined;
   };
@@ -77,65 +88,35 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
       </div>
 
       <div className="mb-4 rounded-lg border border-border bg-secondary/30 p-3 text-xs">
-        <div className="mb-1 flex items-center gap-1.5 font-medium text-muted-foreground">
-          <Film className="h-3.5 w-3.5" />
-          {t('publish.mediaLabel')}
+        <div className="mb-1 flex items-center justify-between gap-2 font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Film className="h-3.5 w-3.5" />
+            {t('publish.mediaLabel')}
+          </span>
+          <span className="text-muted-foreground">{t('publish.previewVideoLabel')}</span>
         </div>
         <p className="break-all font-mono text-foreground">{item.mediaRef}</p>
+        <video
+          controls
+          preload="metadata"
+          data-testid={`publish-preview-video-${item.id}`}
+          src={previewSrc}
+          className="mt-2 max-h-64 w-full rounded-md bg-background object-contain"
+        />
       </div>
 
       {isTikTok && (
-        <div
-          data-testid={`tiktok-compliance-controls-${item.id}`}
-          className="mb-4 space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5 text-xs"
-        >
-          <div>
-            <label htmlFor={`tiktok-privacy-${item.id}`} className="mb-1 block font-semibold text-foreground">
-              {t('publish.privacyLevelLabel')}
-            </label>
-            <select
-              id={`tiktok-privacy-${item.id}`}
-              data-testid={`tiktok-privacy-select-${item.id}`}
-              value={privacyLevel}
-              onChange={(e) => setPrivacyLevel(e.target.value as TikTokPrivacyChoice | '')}
-              className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground"
-            >
-              <option value="">{t('publish.privacyLevelPlaceholder')}</option>
-              <option value="PUBLIC_TO_EVERYONE">{t('publish.privacyPublic')}</option>
-              <option value="MUTUAL_FOLLOW_FRIENDS">{t('publish.privacyFriends')}</option>
-              <option value="SELF_ONLY">{t('publish.privacySelfOnly')}</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:gap-4">
-            <label className="inline-flex items-center gap-2 text-muted-foreground">
-              <input
-                type="checkbox"
-                data-testid={`tiktok-brand-organic-${item.id}`}
-                checked={brandOrganicToggle}
-                onChange={(e) => setBrandOrganicToggle(e.target.checked)}
-              />
-              <span>{t('publish.brandOrganicLabel')}</span>
-            </label>
-            <label className="inline-flex items-center gap-2 text-muted-foreground">
-              <input
-                type="checkbox"
-                data-testid={`tiktok-brand-content-${item.id}`}
-                checked={brandContentToggle}
-                onChange={(e) => setBrandContentToggle(e.target.checked)}
-              />
-              <span>{t('publish.brandContentLabel')}</span>
-            </label>
-          </div>
-          {(privacyLevel === 'SELF_ONLY' || item.unauditedSelfOnly) && (
-            <div
-              data-testid={`tiktok-self-only-warning-${item.id}`}
-              className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-300"
-            >
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>{t('publish.selfOnlyWarning')}</span>
-            </div>
-          )}
-        </div>
+        <TikTokComplianceFields
+          item={item}
+          privacyLevel={privacyLevel}
+          onPrivacyLevelChange={setPrivacyLevel}
+          brandOrganicToggle={brandOrganicToggle}
+          onBrandOrganicChange={setBrandOrganicToggle}
+          brandContentToggle={brandContentToggle}
+          onBrandContentChange={setBrandContentToggle}
+          musicUsageConfirmed={musicUsageConfirmed}
+          onMusicUsageConfirmedChange={setMusicUsageConfirmed}
+        />
       )}
 
       {isYouTube && (

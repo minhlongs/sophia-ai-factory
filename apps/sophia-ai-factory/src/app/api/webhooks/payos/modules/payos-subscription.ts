@@ -3,6 +3,7 @@ import { invalidateOrgIdCache } from '@/seed/auth/org-resolver';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { invalidateUserTierCache } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
+import { PAID_PILOT_DURATION_DAYS } from '@/tree/finance/pilot-unit-economics-types';
 import type { Tier } from '@/seed/types';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { DbClient } from './payos-idempotency';
@@ -14,12 +15,17 @@ export interface SubscriptionActivationResult {
 }
 
 export function calculatePayOsPeriodEnd(tier: Tier, orderPeriod?: string): { isLifetime: boolean; periodEnd: string } {
+  if (orderPeriod === 'pilot_14d' && tier !== 'BASIC') {
+    throw new Error('14-day Paid Pilot billing is only valid for BASIC tier');
+  }
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime';
   const periodEnd = isLifetime
     ? new Date('2099-12-31T23:59:59Z').toISOString()
-    : orderPeriod === 'yearly'
-      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    : orderPeriod === 'pilot_14d'
+      ? new Date(Date.now() + PAID_PILOT_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
+      : orderPeriod === 'yearly'
+        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   return { isLifetime, periodEnd };
 }
 

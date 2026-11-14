@@ -1,11 +1,7 @@
 /**
  * Kokoro-82M TTS Adapter (`/v1/audio/speech` OpenAI-compatible HTTP endpoint).
- *
- * Splits narration scripts into sentence chunks, synthesizes each chunk with
- * circuit-breaker protection and failure classification, and routes Vietnamese
- * locales (`vi`, `vi-VN`) to the customer's BYOK ElevenLabs key.
- *
- * Layer: tree (domain reusable logic)
+ * Routes Vietnamese locales (`vi`, `vi-VN`) or pure-edge Workers without an external
+ * Kokoro endpoint cleanly to the customer's BYOK ElevenLabs key.
  * @module tree/video/audio/kokoro-tts-adapter
  */
 
@@ -14,10 +10,8 @@ import { classifyError, classifyHttpStatus, FailureKind } from '@/seed/types/fai
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import {
-  generateNicheCampaignVoiceover,
-  type GenerateNicheVoiceoverInput,
-  type NicheVoiceoverDeps,
-  type VoiceoverFailureCode,
+  generateNicheCampaignVoiceover, type GenerateNicheVoiceoverInput,
+  type NicheVoiceoverDeps, type VoiceoverFailureCode,
 } from '@/tree/video/render/niche-voiceover-generator';
 
 const KOKORO_SERVICE_NAME = 'kokoro-tts';
@@ -32,9 +26,7 @@ export interface KokoroTtsInput {
   baseUrl?: string; apiKey?: string; maxChunkChars?: number;
 }
 
-export interface KokoroChunkAudio {
-  chunkIndex: number; sentence: string; byteLength: number; durationSec: number;
-}
+export interface KokoroChunkAudio { chunkIndex: number; sentence: string; byteLength: number; durationSec: number; }
 
 export interface KokoroTtsResult {
   success: boolean; provider: 'kokoro' | 'elevenlabs' | 'mock'; routedToByok: boolean;
@@ -63,15 +55,10 @@ function splitWordsByCap(piece: string, cap: number): string[] {
   let buf = '';
   for (const word of piece.split(' ').filter(Boolean)) {
     const candidate = buf ? `${buf} ${word}` : word;
-    if (candidate.length <= cap) {
-      buf = candidate;
-      continue;
-    }
+    if (candidate.length <= cap) { buf = candidate; continue; }
     if (buf) { result.push(buf); buf = ''; }
     if (word.length <= cap) buf = word;
-    else {
-      for (let idx = 0; idx < word.length; idx += cap) result.push(word.slice(idx, idx + cap));
-    }
+    else { for (let idx = 0; idx < word.length; idx += cap) result.push(word.slice(idx, idx + cap)); }
   }
   if (buf) result.push(buf);
   return result;
@@ -114,11 +101,15 @@ function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   return merged;
 }
 
-async function routeVietnameseToByok(input: KokoroTtsInput, deps?: KokoroTtsDeps): Promise<KokoroTtsResult> {
+async function routeToByokVoiceover(
+  input: KokoroTtsInput,
+  byokLocale: 'en' | 'vi',
+  deps?: KokoroTtsDeps,
+): Promise<KokoroTtsResult> {
   const fallback = deps?.byokFallback ?? generateNicheCampaignVoiceover;
   const byokInput: GenerateNicheVoiceoverInput = {
     planId: input.planId, userId: input.userId, tenantId: input.tenantId,
-    narrationText: input.text, locale: 'vi', voiceId: input.voiceId,
+    narrationText: input.text, locale: byokLocale, voiceId: input.voiceId,
   };
   const byok = await fallback(byokInput, deps?.byokDeps);
   return {
@@ -170,10 +161,19 @@ async function synthesizeChunks(
 
 export async function synthesizeWithKokoroOrByok(input: KokoroTtsInput, deps?: KokoroTtsDeps): Promise<KokoroTtsResult> {
   const locale = (input.locale ?? 'en').trim();
-  if (isVietnameseLocale(locale)) return routeVietnameseToByok(input, deps);
+  if (isVietnameseLocale(locale)) return routeToByokVoiceover(input, 'vi', deps);
 
-  const baseUrl = (input.baseUrl ?? process.env.KOKORO_TTS_BASE_URL ?? '').trim().replace(/\/+$/, '');
-  if (!baseUrl) return { success: false, provider: 'mock', routedToByok: false, error: 'CREDENTIALS_MISSING: KOKORO_TTS_BASE_URL is not configured', errorCode: 'CREDENTIALS_MISSING' };
+  const configuredBaseUrl = (
+    input.baseUrl ?? process.env.KOKORO_API_URL ?? process.env.KOKORO_TTS_BASE_URL ?? ''
+  ).trim().replace(/\/+$/, '');
+
+  if (!configuredBaseUrl) {
+    if (!deps?.fetchFn) {
+      logger.info('[KokoroTTS] Pure-edge runtime detected; routing to BYOK voiceover', { planId: input.planId });
+      return routeToByokVoiceover(input, 'en', deps);
+    }
+    return { success: false, provider: 'mock', routedToByok: false, error: 'CREDENTIALS_MISSING: KOKORO_API_URL is not configured', errorCode: 'CREDENTIALS_MISSING' };
+  }
 
   const chunks = chunkScriptIntoSentences(input.text, input.maxChunkChars);
   if (chunks.length === 0) return { success: false, provider: 'mock', routedToByok: false, error: 'PROVIDER_FAILED: Narration script is empty after normalization', errorCode: 'PROVIDER_FAILED' };
@@ -185,7 +185,7 @@ export async function synthesizeWithKokoroOrByok(input: KokoroTtsInput, deps?: K
   const speed = typeof input.speed === 'number' && input.speed > 0 ? input.speed : 1.0;
 
   try {
-    return await synthesizeChunks(chunks, { baseUrl, apiKey: input.apiKey, voice, speed, keyRef, fetchFn: deps?.fetchFn ?? fetch });
+    return await synthesizeChunks(chunks, { baseUrl: configuredBaseUrl, apiKey: input.apiKey, voice, speed, keyRef, fetchFn: deps?.fetchFn ?? fetch });
   } catch (err: unknown) {
     const error = toError(err);
     const kind = classifyError(error);
