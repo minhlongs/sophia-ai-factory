@@ -1,6 +1,11 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { applyCorsHeaders } from './cors';
-import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';
+import {
+  intlMiddleware,
+  applySecurityHeaders,
+  mergeIntlResponseHeaders,
+  SUPPORTED_LOCALES,
+} from './middleware-shared-config';
 import { handleAeoMarkdownNegotiation } from './aeo-negotiation';
 
 const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
@@ -78,7 +83,11 @@ export async function handlePublicPipeline(
   }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  const intlRes = intlMiddleware(request);
+  const intlRequest = new NextRequest(request.url, {
+    headers: requestHeaders,
+    method: request.method,
+  });
+  const intlRes = intlMiddleware(intlRequest);
   const location = intlRes.headers.get('location');
 
   if (location) {
@@ -95,12 +104,12 @@ export async function handlePublicPipeline(
 
   if (location) {
     const redirectRes = applyCorsHeaders(NextResponse.redirect(new URL(location, request.url)), origin);
-    intlRes.headers.forEach((v, k) => { if (k.toLowerCase() !== 'location') redirectRes.headers.set(k, v); });
+    mergeIntlResponseHeaders(redirectRes, intlRes, { skipLocation: true });
     applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
     return redirectRes;
   }
 
-  intlRes.headers.forEach((v, k) => response.headers.set(k, v));
+  mergeIntlResponseHeaders(response, intlRes);
   applySecurityHeaders(response, nonce, needsCsrfSeed);
   return response;
 }

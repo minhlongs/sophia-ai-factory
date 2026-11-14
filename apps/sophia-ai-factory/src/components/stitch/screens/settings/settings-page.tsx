@@ -73,7 +73,7 @@ export default function SettingsPage({
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
                   isActive
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/[0.06]',
                 )}
               >
@@ -104,7 +104,7 @@ export default function SettingsPage({
               </div>
               <Link
                 href="/settings/usage"
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-xs font-mono font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-primary-600 dark:hover:bg-primary-500 dark:text-white text-xs font-mono font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"
               >
                 Open Real-Time Metering Portal
               </Link>

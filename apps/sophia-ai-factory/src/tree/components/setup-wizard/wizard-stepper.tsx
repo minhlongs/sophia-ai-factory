@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,6 +16,7 @@ export function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
+  const t = useTranslations('setupWizard.stepper');
   const progressRatio = steps.length > 1 ? (currentStep - 1) / (steps.length - 1) : 0;
 
   return (
@@ -47,7 +49,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                     isCompleted
                       ? 'bg-emerald-600 dark:bg-emerald-500 border-emerald-600 dark:border-emerald-500 text-white shadow-xs'
                       : isCurrent
-                        ? 'bg-primary border-primary text-primary-foreground ring-4 ring-primary/20 font-bold shadow-xs'
+                        ? 'bg-primary border-primary text-primary-foreground dark:bg-primary-600 dark:border-primary-600 dark:text-white ring-4 ring-primary/20 font-bold shadow-xs'
                         : 'bg-card border-border text-muted-foreground'
                   )}
                   aria-current={isCurrent ? 'step' : undefined}
@@ -82,7 +84,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
       {/* Mobile Active Step Indicator (320px–639px) */}
       <div className="sm:hidden text-center mt-3 px-2">
         <span className="font-mono text-[11px] font-semibold text-primary-text uppercase tracking-wider">
-          Step {currentStep} of {steps.length}:
+          {t('mobileStepOf', { current: currentStep, total: steps.length })}
         </span>{' '}
         <span className="text-xs font-bold text-foreground">
           {steps[currentStep - 1] ?? ''}

@@ -1,9 +1,9 @@
 /**
  * Niche Campaign Form Component
  *
- * Captures product parameters, allows $0.00 self-serve affiliate offer registration
- * (`B3`), validates compliance and proposed Gate 1 budget ceilings, and triggers
- * storyboard plan generation and Inngest dispatch.
+ * Captures product parameters, allows $0.00 self-serve affiliate offer registration,
+ * validates compliance and Gate 1 budget ceilings, and triggers storyboard plan
+ * generation and Inngest dispatch.
  * @module components/niche-studio/niche-campaign-form
  */
 
@@ -20,10 +20,16 @@ import {
   type OpcGate1ReadinessReport,
 } from '@/forest/actions/opc-readiness-actions';
 import type { NicheVideoCampaignPlan } from '@/tree/video/blueprints/niche-video-service';
-import { previewNicheVideoPlanAction, dispatchNicheVideoCampaignAction } from '@/forest/actions/niche-video-actions';
+import {
+  previewNicheVideoPlanAction,
+  dispatchNicheVideoCampaignAction,
+} from '@/forest/actions/niche-video-actions';
 import { NicheFormProductInputs, type NicheProductFormValues } from './niche-form-product-inputs';
 import {
-  NICHE_BLUEPRINTS, DEFAULT_SAAS_FORM_VALUES, DEFAULT_CRYPTO_FORM_VALUES, NicheAndBlueprintSelector,
+  NICHE_BLUEPRINTS,
+  DEFAULT_SAAS_FORM_VALUES,
+  DEFAULT_CRYPTO_FORM_VALUES,
+  NicheAndBlueprintSelector,
 } from './niche-campaign-selectors';
 
 interface NicheCampaignFormProps {
@@ -38,12 +44,8 @@ interface NicheCampaignFormProps {
 }
 
 export function resolveActiveLocale(explicitLocale?: 'vi' | 'en'): 'vi' | 'en' {
-  if (explicitLocale === 'en' || explicitLocale === 'vi') {
-    return explicitLocale;
-  }
-  if (typeof window !== 'undefined' && /^\/en(\/|$)/.test(window.location.pathname)) {
-    return 'en';
-  }
+  if (explicitLocale === 'en' || explicitLocale === 'vi') return explicitLocale;
+  if (typeof window !== 'undefined' && /^\/en(\/|$)/.test(window.location.pathname)) return 'en';
   return 'vi';
 }
 
@@ -78,9 +80,7 @@ export function NicheCampaignForm({
   const handleInputChange = <K extends keyof NicheProductFormValues>(
     field: K,
     val: NicheProductFormValues[K],
-  ) => {
-    setFormValues((prev) => ({ ...prev, [field]: val }));
-  };
+  ) => setFormValues((prev) => ({ ...prev, [field]: val }));
 
   const handleNicheSwitch = (newNiche: 'saas_global' | 'crypto_global') => {
     setNiche(newNiche);
@@ -119,39 +119,31 @@ export function NicheCampaignForm({
     setIsLoading(true);
     setErrorMsg(null);
     setStatusMsg(null);
-
     const payload = {
       niche,
       blueprintId,
       ...formValues,
       offerId: adoptedContext?.offerId ?? formValues.offerId,
       ...(adoptedContext?.campaignId ? { campaignId: adoptedContext.campaignId } : {}),
-      targetAudience: niche === 'saas_global' ? 'Software Engineers & Agency Owners' : 'Crypto Traders & Investors',
+      targetAudience:
+        niche === 'saas_global' ? 'Software Engineers & Agency Owners' : 'Crypto Traders & Investors',
       locale: formValues.locale ?? effectiveDefaultLocale,
     };
-
     const previewRes = await previewNicheVideoPlanAction(payload);
     if (!previewRes.success || !previewRes.data) {
       setErrorMsg(previewRes.error || 'Failed to generate campaign plan');
       setIsLoading(false);
       return;
     }
-
     onPlanGenerated(previewRes.data);
-
     if (dispatchHardBlocked) {
       setErrorMsg(overBudgetCap ? t('budgetCapExceededWarning') : t('dispatchBlockedBySafetyGate'));
       setIsLoading(false);
       return;
     }
-
     const dispatchRes = await dispatchNicheVideoCampaignAction(payload);
-    if (dispatchRes.success && dispatchRes.data) {
-      onDispatched(dispatchRes.data.planId);
-    } else if (dispatchRes.error) {
-      setErrorMsg(dispatchRes.error);
-    }
-
+    if (dispatchRes.success && dispatchRes.data) onDispatched(dispatchRes.data.planId);
+    else if (dispatchRes.error) setErrorMsg(dispatchRes.error);
     setIsLoading(false);
   };
 

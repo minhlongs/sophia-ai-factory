@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { WelcomeStep } from './welcome-step';
 import { AccountStep } from './account-step';
 import { ApiKeysStep } from './api-keys-step';
@@ -11,9 +12,21 @@ import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
 import { ByokDoctrineBanner } from '@/tree/components/setup-wizard/byok-doctrine-banner';
 import { useSetupWizard, KEY_TO_PROVIDER } from './use-setup-wizard';
 
-const STEPS = ['Welcome', 'Account', 'AI Keys', 'Billing', 'Blueprint', 'Ready'] as const;
+const TOTAL_STEPS = 6;
 
 export function SetupWizardPage() {
+  const tStepper = useTranslations('setupWizard.stepper');
+  const steps = useMemo(
+    () => [
+      tStepper('welcome'),
+      tStepper('account'),
+      tStepper('aiKeys'),
+      tStepper('billing'),
+      tStepper('blueprint'),
+      tStepper('ready'),
+    ],
+    [tStepper],
+  );
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const {
     accountEmail,
@@ -56,7 +69,7 @@ export function SetupWizardPage() {
       const saved = await handleSave();
       if (!saved) return; // FAIL-CLOSED
     }
-    if (currentStepIndex < STEPS.length - 1) {
+    if (currentStepIndex < TOTAL_STEPS - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     }
   }, [currentStepIndex, config, status, handleSave]);
@@ -68,7 +81,7 @@ export function SetupWizardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground py-8 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-3xl mx-auto space-y-6">
-        <WizardStepper currentStep={currentStepIndex + 1} steps={Array.from(STEPS)} />
+        <WizardStepper currentStep={currentStepIndex + 1} steps={steps} />
         <ByokDoctrineBanner />
         <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-xs">
           {currentStepIndex === 0 && <WelcomeStep onNext={handleNext} />}

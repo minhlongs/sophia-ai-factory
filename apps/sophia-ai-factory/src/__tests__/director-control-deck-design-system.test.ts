@@ -118,6 +118,7 @@ describe("Director's Control Deck Design System Verification", () => {
     const byokBanner = readSrcFile('tree/components/setup-wizard/byok-doctrine-banner.tsx');
 
     expect(wizardStepper).toContain('font-mono');
+    expect(wizardStepper).toContain('dark:bg-primary-600');
     expect(apiKeyInput).toContain('dark:bg-[#11131F]');
     expect(byokBanner).toContain('AES-256-GCM');
   });
@@ -131,10 +132,12 @@ describe("Director's Control Deck Design System Verification", () => {
     const settingsPage = readSrcFile('components/stitch/screens/settings/settings-page.tsx');
 
     expect(dashboardPage).toContain('text-foreground dark:text-white');
+    expect(videoPreview).toBeDefined();
     expect(videoPreviewSections).toContain('camera-rec');
     expect(videoPreviewSections).toContain('film-strip');
     expect(campaignCard).toContain('dark:bg-[#11131F]');
     expect(campaignCardDetails).toContain('font-mono');
     expect(settingsPage).toContain('dark:bg-[#11131F]');
+    expect(settingsPage).toContain('dark:bg-primary-600');
   });
 });

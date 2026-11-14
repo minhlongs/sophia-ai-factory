@@ -264,7 +264,8 @@
       "firstMission": "Kế hoạch",
       "ready": "Sẵn sàng",
       "blueprint": "Kế hoạch",
-      "billing": "Thanh toán"
+      "billing": "Thanh toán",
+      "mobileStepOf": "Bước {current} / {total}:"
     },
     "actions": {
       "back": "Quay lại",
@@ -3675,10 +3676,10 @@
       "securityNoteBody": "Security Note Body"
     },
     "appearance": {
-      "title": "Title",
-      "subtitle": "Subtitle",
+      "title": "Giao diện hiển thị (Appearance)",
+      "subtitle": "Chọn chế độ Sáng, Tối hoặc tự động đồng bộ theo cài đặt hệ điều hành trên mọi trang.",
       "themeLabel": "Chế độ hiển thị giao diện",
-      "themeAriaLabel": "Theme Aria Label",
+      "themeAriaLabel": "Chế độ giao diện",
       "themeLight": "Chế độ Sáng",
       "themeDark": "Chế độ Tối (Obsidian)",
       "themeSystem": "Tự động theo hệ thống",

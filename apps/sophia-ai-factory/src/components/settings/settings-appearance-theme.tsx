@@ -1,20 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
 
 const THEME_MODES = [
-  { id: 'light' as const, labelVi: 'Sáng (Light)', labelEn: 'Light', icon: Sun },
-  { id: 'dark' as const, labelVi: 'Tối (Dark)', labelEn: 'Dark', icon: Moon },
-  { id: 'system' as const, labelVi: 'Theo hệ thống (System)', labelEn: 'System', icon: Monitor },
+  { id: 'light' as const, labelKey: 'themeLight' as const, icon: Sun },
+  { id: 'dark' as const, labelKey: 'themeDark' as const, icon: Moon },
+  { id: 'system' as const, labelKey: 'themeSystem' as const, icon: Monitor },
 ];
 
 export function SettingsAppearanceThemeSection() {
-  const activeLocale = useLocale();
-  const isVi = activeLocale === 'vi';
+  const t = useTranslations('settings.appearance');
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -23,6 +22,11 @@ export function SettingsAppearanceThemeSection() {
   }, []);
 
   const currentMode = mounted ? (theme ?? 'dark') : 'dark';
+  const themeLabels = {
+    light: t('themeLight'),
+    dark: t('themeDark'),
+    system: t('themeSystem'),
+  } as const;
 
   return (
     <section
@@ -32,17 +36,15 @@ export function SettingsAppearanceThemeSection() {
       <div>
         <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
           <Monitor className="w-5 h-5 text-primary" aria-hidden="true" />
-          {isVi ? 'Giao diện hiển thị (Appearance)' : 'Appearance & Theme'}
+          {t('title')}
         </h3>
         <p className="text-xs text-muted-foreground">
-          {isVi
-            ? 'Chọn chế độ Sáng, Tối hoặc tự động đồng bộ theo cài đặt hệ điều hành trên mọi trang.'
-            : 'Choose Light, Dark, or follow your operating system color scheme across all routes.'}
+          {t('subtitle')}
         </p>
       </div>
       <div
         role="radiogroup"
-        aria-label={isVi ? 'Chế độ giao diện' : 'Theme mode'}
+        aria-label={t('themeAriaLabel')}
         className="grid grid-cols-1 sm:grid-cols-3 gap-4"
       >
         {THEME_MODES.map((option) => {
@@ -66,7 +68,7 @@ export function SettingsAppearanceThemeSection() {
               <span className="flex items-center gap-3">
                 <Icon className="w-4 h-4 text-primary" aria-hidden="true" />
                 <span className="text-xs font-bold text-foreground">
-                  {isVi ? option.labelVi : option.labelEn}
+                  {themeLabels[option.id]}
                 </span>
               </span>
               <span

@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { pathnameWithoutLocale } from './helpers';
 import { requireAuth } from './auth';
 import { enforceMfaGate } from './mfa';
-import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';
+import {
+  intlMiddleware,
+  applySecurityHeaders,
+  mergeIntlResponseHeaders,
+  SUPPORTED_LOCALES,
+} from './middleware-shared-config';
 
 const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 
@@ -128,17 +132,21 @@ export async function handleDashboardPipeline(
 
   // Build dashboard response with intl + CSP
   const dashRes = NextResponse.next({ request: { headers: requestHeaders } });
-  const intlRes = intlMiddleware(request);
+  const intlRequest = new NextRequest(request.url, {
+    headers: requestHeaders,
+    method: request.method,
+  });
+  const intlRes = intlMiddleware(intlRequest);
   const intlDashLoc = intlRes.headers.get('location');
 
   if (intlDashLoc) {
     const redirectRes = NextResponse.redirect(new URL(intlDashLoc, request.url));
-    intlRes.headers.forEach((v, k) => { if (k.toLowerCase() !== 'location') redirectRes.headers.set(k, v); });
+    mergeIntlResponseHeaders(redirectRes, intlRes, { skipLocation: true });
     applySecurityHeaders(redirectRes, nonce, needsCsrfSeed);
     return redirectRes;
   }
 
-  intlRes.headers.forEach((v, k) => dashRes.headers.set(k, v));
+  mergeIntlResponseHeaders(dashRes, intlRes);
   applySecurityHeaders(dashRes, nonce, needsCsrfSeed);
   return dashRes;
 }
