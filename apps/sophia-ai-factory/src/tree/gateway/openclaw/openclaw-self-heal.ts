@@ -10,17 +10,23 @@ import {
 } from './types';
 import { pLimit } from './signature-signer';
 import { publishWithRetry } from './circuit-breaker-client';
+import { isProvenanceBlockedError } from '@/tree/publishing/synthetic-media-disclosure';
 
 /**
  * Self-heal helper: retry failed distributions from a previous result.
+ * Deterministic provenance-gate rejections (`PROVENANCE_BLOCKED:`) are terminal
+ * policy blocks rather than transient transport errors and are never retried.
  */
 export async function selfHealDistribution(
   channels: Map<string, GatewayChannel>,
   content: CampaignOutput,
   previousResult: DistributionResult,
 ): Promise<DistributionResult & { healed: number; failed: number; errors: string[] }> {
+  const nonRetriableResults = previousResult.results.filter(
+    (r) => !r.success && Boolean(r.error && isProvenanceBlockedError(r.error)),
+  );
   const failedChannelIds = previousResult.results
-    .filter((r) => !r.success)
+    .filter((r) => !r.success && !(r.error && isProvenanceBlockedError(r.error)))
     .map((r) => r.channelId);
 
   const passedResults = previousResult.results.filter((r) => r.success);
@@ -48,8 +54,8 @@ export async function selfHealDistribution(
     };
   });
 
-  const allResults = [...passedResults, ...retryResults];
-  const errors = retryResults.filter((r) => !r.success).map((r) => r.error ?? 'unknown');
+  const allResults = [...passedResults, ...nonRetriableResults, ...retryResults];
+  const errors = allResults.filter((r) => !r.success).map((r) => r.error ?? 'unknown');
 
   return {
     campaignId: content.campaignId,

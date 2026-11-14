@@ -6,9 +6,11 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PipelineExecutionSummary, PipelineNiche } from '@/forest/video/video-pipeline-types';
 import { toSocialPlatform, type SocialPlatform } from '@/seed/types/social-publisher-types';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import { listUserCredentials } from '@/land/social/platform-credentials-store';
 import { createPublishJob } from '@/land/social/publish-job-store';
 
@@ -19,6 +21,8 @@ export interface PipelineDistributionInput {
   videoUrl?: string;
   niche: PipelineNiche;
   targetPlatforms?: ('youtube_shorts' | 'tiktok' | 'instagram_reels')[];
+  sources?: readonly Record<string, unknown>[];
+  provenance?: ProvenanceInput;
 }
 
 export async function dispatchSocialDistributionForPipeline(
@@ -69,6 +73,12 @@ export async function dispatchSocialDistributionForPipeline(
     });
 
     if (data.autoPublish === true) {
+      const provenance = producePublishProvenance({
+        title,
+        scriptText: description,
+        sources: data.sources,
+        provenance: data.provenance,
+      });
       await inngest.send({
         name: 'social.publish.dispatched',
         data: {
@@ -80,6 +90,7 @@ export async function dispatchSocialDistributionForPipeline(
           title,
           description,
           tags,
+          provenance,
         },
       });
     }

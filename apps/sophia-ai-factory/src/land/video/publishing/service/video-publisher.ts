@@ -7,6 +7,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { createServerClient } from '@/seed/db/client';
 import { getDecryptedCredentials } from '@/tree/publishing/credential-manager';
 import { getAdapter } from '@/tree/publishing/token-refresh-service';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import {
   createVideoPublish,
   updateVideoPublishStatus,
@@ -68,6 +69,13 @@ export async function publishVideo(
       adapter,
     );
 
+    const provenance = producePublishProvenance({
+      title: input.title,
+      description: input.description,
+      sources: input.sources,
+      provenance: input.provenance,
+    });
+
     const result = await adapter.uploadVideo(accessToken, {
       videoUrl: input.videoUrl,
       title: input.title,
@@ -75,6 +83,7 @@ export async function publishVideo(
       tags: input.tags,
       privacy: input.privacy,
       scheduledAt: input.scheduledAt,
+      provenance,
     });
 
     await updateVideoPublishStatus(publish.id, result.status, {

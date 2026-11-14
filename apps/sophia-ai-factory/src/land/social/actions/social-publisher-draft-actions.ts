@@ -10,7 +10,9 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { enforceCommercialFeatureForUser } from '@/seed/config/enforce-commercial-feature-server';
 import { inngest } from '@/seed/inngest/client';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import {
   listUserDraftJobs,
   transitionDraftToPending,
@@ -36,6 +38,10 @@ export async function listDraftPublishJobsAction(
 
 export async function approveDraftPublishJobAction(
   jobId: string,
+  options?: {
+    readonly sources?: readonly Record<string, unknown>[];
+    readonly provenance?: ProvenanceInput;
+  },
 ): Promise<SocialPublisherActionResponse<SocialPublishResult>> {
   try {
     const user = await getCurrentUser();
@@ -47,6 +53,12 @@ export async function approveDraftPublishJobAction(
     if (!jobId) return { success: false, error: 'Job ID required', code: 'VALIDATION_ERROR' };
 
     const job = await transitionDraftToPending(jobId, user.id);
+    const provenance = producePublishProvenance({
+      title: job.title,
+      description: job.description,
+      sources: options?.sources,
+      provenance: options?.provenance,
+    });
     await inngest.send({
       name: 'social.publish.dispatched',
       data: {
@@ -58,6 +70,7 @@ export async function approveDraftPublishJobAction(
         title: job.title,
         description: job.description,
         tags: job.tags ?? [],
+        provenance,
       },
     });
 

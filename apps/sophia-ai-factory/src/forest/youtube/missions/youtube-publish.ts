@@ -7,8 +7,10 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import { YouTubePublisher } from '@/land/video/publishing/providers/youtube-publisher';
 import { logger } from '@/seed/utils/logger-utility';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import type { PublishingChannel } from '@/forest/publishing/publisher-interface';
 import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
 import { resolveYoutubeAccessToken, sanitizeYoutubeError } from './youtube-publish-helper';
@@ -53,11 +55,25 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   if (!tokenResult.ok) return tokenResult.result;
 
   const publisher = new YouTubePublisher(tokenResult.accessToken);
+  const sourcesRaw = Array.isArray(params?.sources)
+    ? (params.sources as Record<string, unknown>[])
+    : undefined;
+  const provenanceParam =
+    params?.provenance && typeof params.provenance === 'object' && !Array.isArray(params.provenance)
+      ? (params.provenance as ProvenanceInput)
+      : undefined;
+  const provenance = producePublishProvenance({
+    title,
+    description,
+    sources: sourcesRaw,
+    provenance: provenanceParam,
+  });
   try {
     const externalPostId = await publisher.upload(videoUrl, {
       caption: description || title,
       hashtags,
       title,
+      provenance,
     });
     return {
       ok: true,

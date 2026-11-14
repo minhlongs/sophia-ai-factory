@@ -7,6 +7,7 @@
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPlatform, SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { encryptTokenVault } from '@/seed/security/oauth-token-vault';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import {
   getCredential,
   upsertCredential,
@@ -35,13 +36,21 @@ export async function executeDispatchSocialPublish(
     return { success: false, error: 'Channel emergency kill switch active', code: 'KILL_SWITCH_ACTIVE' };
   }
 
+  const description = parsed.data.description ?? '';
+  const provenance = producePublishProvenance({
+    title: parsed.data.title,
+    description,
+    sources: parsed.data.sources,
+    provenance: parsed.data.provenance,
+  });
+
   const job = await createPublishJob({
     userId,
     channelId: parsed.data.channelId,
     platform: parsed.data.platform,
     videoUrl: parsed.data.videoUrl,
     title: parsed.data.title,
-    description: parsed.data.description ?? '',
+    description,
     tags: parsed.data.tags,
     scheduledFor: parsed.data.scheduledFor,
   });
@@ -55,8 +64,9 @@ export async function executeDispatchSocialPublish(
       platform: parsed.data.platform,
       videoUrl: parsed.data.videoUrl,
       title: parsed.data.title,
-      description: parsed.data.description ?? '',
+      description,
       tags: parsed.data.tags ?? [],
+      provenance,
     },
   });
 

@@ -6,6 +6,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import { consumeQuota } from '../per-channel-quota';
 import type { ChannelProvider } from '../publisher-interface';
 import type {
@@ -55,6 +56,11 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
   const quotaBlocked: SchedulePublishResult['quotaBlocked'] = [];
   const deferred: SchedulePublishResult['deferred'] = [];
   const hashtagsJson = JSON.stringify(hashtags);
+  const provenance = producePublishProvenance({
+    caption,
+    sources: input.sources,
+    provenance: input.provenance,
+  });
 
   for (let idx = 0; idx < sortedChannels.length; idx++) {
     const channel = sortedChannels[idx];
@@ -98,6 +104,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
       tenantId,
       videoJobId,
       channelId: channel.id,
+      provider,
       caption,
       hashtagsJson,
       productLink,
@@ -110,7 +117,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
 
     await inngest.send({
       name: 'publish.scheduled',
-      data: { jobId, tenantId, userId },
+      data: { jobId, tenantId, userId, provenance },
     });
 
     logger.info('[Scheduler] Job created', {

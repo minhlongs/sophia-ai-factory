@@ -15,6 +15,10 @@ import type {
   PublishResult,
 } from '@/tree/gateway/gateway-types';
 import { type YouTubeOAuthClient, getYouTubeOAuthClient } from '@/tree/types/oauth-client-types';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   YOUTUBE_CHANNEL_ID,
@@ -55,6 +59,20 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
 
   /** Publish video content to YouTube using OAuth2 */
   async publish(content: CampaignOutput): Promise<PublishResult> {
+    try {
+      const disclosure = resolveSyntheticMediaDisclosure({
+        provenance: content.provenance,
+        defaultContainsSyntheticMedia: content.containsSyntheticMedia ?? true,
+      });
+      assertYouTubeProvenanceAllowed(disclosure);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('YouTube publish blocked by provenance gate', error, {
+        campaignId: content.campaignId,
+      });
+      return { channelId: YOUTUBE_CHANNEL_ID, success: false, error: error.message };
+    }
+
     if (!isYouTubeEnvConfigured()) {
       return {
         channelId: YOUTUBE_CHANNEL_ID,
@@ -80,6 +98,10 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
         title: content.title,
         description: content.description,
         tags: content.tags,
+        ...(content.provenance !== undefined ? { provenance: content.provenance } : {}),
+        ...(content.containsSyntheticMedia !== undefined
+          ? { containsSyntheticMedia: content.containsSyntheticMedia }
+          : {}),
       });
 
       this.lastPublished = new Date();

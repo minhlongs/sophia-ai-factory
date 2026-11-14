@@ -6,6 +6,7 @@
  */
 
 import type { ViralPlatform, ViralPublishInput } from '@/seed/types/growth';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 import { tiktokAdapter } from '../tiktok-adapter';
 import { youtubeAdapter } from '../youtube-adapter';
 import { instagramAdapter } from '../instagram-adapter';
@@ -58,6 +59,10 @@ export async function dispatchPlatformUpload(
       };
     }
     case 'youtube_shorts': {
+      const provenance = producePublishProvenance({
+        title: input.videoTitle,
+        description: caption,
+      });
       const res = await youtubeAdapter.uploadVideo(byokKey, {
         videoUrl: input.videoUrl,
         title: `${input.videoTitle} #Shorts`.slice(0, 100),
@@ -65,6 +70,7 @@ export async function dispatchPlatformUpload(
         privacy: 'public',
         tags: ['Shorts', input.niche],
         scheduledAt: input.scheduledAt ? new Date(input.scheduledAt).toISOString() : undefined,
+        provenance,
       });
       const postId = res.platformVideoId;
       return {

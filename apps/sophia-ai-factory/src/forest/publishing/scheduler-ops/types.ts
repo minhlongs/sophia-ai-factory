@@ -5,6 +5,7 @@
 
 import type { ApacMarket } from '@/seed/types/apac-syndication';
 import type { VideoPrivacyStatus } from '@/seed/types/channel-provider';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 
 export interface SchedulePublishInput {
   videoJobId: string;
@@ -20,6 +21,8 @@ export interface SchedulePublishInput {
   optimizeSchedule?: boolean;
   staggerMinutes?: number;
   market?: ApacMarket;
+  sources?: readonly Record<string, unknown>[];
+  provenance?: ProvenanceInput;
 }
 
 export interface DeferredChannel {

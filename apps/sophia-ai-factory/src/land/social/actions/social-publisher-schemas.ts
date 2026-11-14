@@ -5,6 +5,14 @@
 
 import { z } from 'zod';
 
+const provenanceRecordItemSchema = z.record(z.string(), z.unknown());
+
+export const provenanceInputSchema = z.object({
+  sources: z.array(provenanceRecordItemSchema).optional(),
+  claims: z.array(provenanceRecordItemSchema).optional(),
+  containsSyntheticMedia: z.boolean().optional(),
+});
+
 export const dispatchSocialPublishSchema = z.object({
   channelId: z.string().min(1, 'Channel ID is required'),
   platform: z.enum(['YOUTUBE_SHORTS', 'TIKTOK_V2', 'INSTAGRAM_REELS']),
@@ -14,6 +22,8 @@ export const dispatchSocialPublishSchema = z.object({
   tags: z.array(z.string()).optional(),
   totalSizeBytes: z.number().positive().optional(),
   scheduledFor: z.number().positive().optional(),
+  sources: z.array(provenanceRecordItemSchema).optional(),
+  provenance: provenanceInputSchema.optional(),
 });
 
 export const updateChannelCredentialsSchema = z.object({
