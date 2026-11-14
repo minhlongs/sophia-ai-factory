@@ -6,6 +6,7 @@ import { MarketingNav, MarketingFooter } from '@/components/stitch/layouts';
 import { TIERS, type BillingPeriod, type TierId } from './pricing-types';
 import { PricingHero } from './pricing-hero';
 import { PricingCard } from './pricing-card';
+import { PaidPilotBanner } from './paid-pilot-banner';
 import { PricingRoiCalculator } from './pricing-roi-calculator';
 import { PricingFaq } from './pricing-faq';
 
@@ -35,6 +36,9 @@ export function PricingPageView({ beforeFooterSlot }: PricingPageViewProps = {})
 
         {/* Hero Section */}
         <PricingHero billing={billing} onBillingChange={setBilling} t={t} />
+
+        {/* 14-Day Paid Pilot Guarantee Banner */}
+        <PaidPilotBanner />
 
         {/* Pricing Grid */}
         <section id="pricing" className="mb-24" aria-label="Pricing plans">

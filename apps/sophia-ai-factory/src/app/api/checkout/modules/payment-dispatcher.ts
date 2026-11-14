@@ -42,6 +42,13 @@ async function resolveNowPaymentsInvoiceUrl(
 export async function dispatchPaymentMethod(input: MethodDispatcherInput): Promise<NextResponse> {
   const { paymentMethod, tier, userId, period, promoCode, customerEmail } = input;
 
+  if (period === 'pilot_14d' && tier !== 'BASIC') {
+    return NextResponse.json(
+      { error: '14-day Paid Pilot billing is only available for BASIC tier' },
+      { status: 400 },
+    );
+  }
+
   if (paymentMethod === 'nowpayments') {
     const orderId = `sophia_${userId}_${Date.now()}`;
     try {

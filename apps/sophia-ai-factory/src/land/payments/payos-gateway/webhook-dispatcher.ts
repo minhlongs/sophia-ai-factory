@@ -1,6 +1,12 @@
 import type { Tier } from '@/seed/types';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
-import type { PayOsTierConfig } from './types';
+import {
+  PAID_PILOT_14_DAY_PRICE_CENTS,
+  PAID_PILOT_14_DAY_PRICE_VND,
+} from '@/tree/finance/pilot-unit-economics-types';
+import type { PayOsBillingPeriod, PayOsTierConfig } from './types';
+
+export type { PayOsBillingPeriod };
 
 let USD_TO_VND: number | null = null;
 
@@ -22,9 +28,17 @@ const TIER_USD_PRICES: Record<Tier, number> = {
   MASTER: UNIFIED_TIERS.MASTER.price,
 };
 
-export type PayOsBillingPeriod = 'monthly' | 'yearly' | 'lifetime';
-
 export function getPayOsTierConfig(tier: Tier, period: PayOsBillingPeriod = 'monthly'): PayOsTierConfig {
+  if (period === 'pilot_14d') {
+    if (tier !== 'BASIC') {
+      throw new Error(`PayOS 14-day Paid Pilot is only supported for BASIC tier (received ${tier})`);
+    }
+    return {
+      tier: 'BASIC',
+      vndAmount: PAID_PILOT_14_DAY_PRICE_VND,
+      usdAmount: PAID_PILOT_14_DAY_PRICE_CENTS / 100,
+    };
+  }
   const usd = period === 'yearly' ? UNIFIED_TIERS[tier].yearlyPrice : TIER_USD_PRICES[tier];
   if (!Number.isFinite(usd) || usd <= 0) {
     throw new Error(`PayOS does not support ${period} billing for ${tier}`);
