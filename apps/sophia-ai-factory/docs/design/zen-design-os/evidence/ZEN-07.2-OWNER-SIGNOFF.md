@@ -6,7 +6,7 @@
 **Original Handover Commit:** `4d23ddb386f499b7627f2c828a1b80c81c6a3382`
 **Reported Checkpoint (#07.3 Brief):** `b3338a256408ef194cc63cb6fcbe6dcc27ca718c`
 **Browser-Evidence Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
-**Verified Code Commit (Round 4 Remediation):** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
+**Verified Code Commit (Round 5 Remediation):** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
 **Verification Date:** `2026-11-14`
 **Release Review Verdict:** **`READY_FOR_DRAFT_PR`** *(Enum: `READY_FOR_DRAFT_PR` / `PARTIAL` / `BLOCKED` / `REJECTED`)*
 
@@ -21,7 +21,7 @@
 
 | Milestone / Mốc | Full 40-char SHA | Summary |
 |:--|:--|:--|
-| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 178 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
+| **Baseline (`main`)** | `673ec911be317233c7e6cb961bdca9d2097e210f` | Nhánh `main` gốc để đối chiếu toàn bộ 179 file thay đổi và đo hiệu năng/bundle. / Canonical baseline for diff, bundle, and rate-limit delta checks. |
 | **Handover v1.0** | `4d23ddb386f499b7627f2c828a1b80c81c6a3382` | Bản bàn giao Zen Design OS v1.0 ban đầu (36 file so với `main`). / Initial dual-theme token, motion, and 14-doc handover commit. |
 | **Reported Checkpoint** | `b3338a256408ef194cc63cb6fcbe6dcc27ca718c` | Mốc báo cáo trong lệnh #07.3 sau đợt vá 7 lỗi V1–V7 đầu tiên. / Checkpoint cited in #07.3 brief after initial V1–V7 remediation. |
 | **Security & Locale Seal** | `9b6b786565f5da77b3a0f9a312b8d97ba001c78c` | Khóa giới hạn BYOK theo từng route, sửa chuyển tiếp ngôn ngữ `/en/*` và focus dialog. / Per-route BYOK probing caps, `/en/*` locale header forwarding, dialog focus return. |
@@ -30,7 +30,8 @@
 | **Review Round 1 Fix (`59c9a1ca6`)** | `59c9a1ca65c595d44d1c71e1b99a234959fccf11` | Vá vòng review độc lập 1: 12-locale `(app)/layout.tsx`, đồng bộ 29 vai trò DTCG ↔ CSS, `ScrollReveal` stagger reduced-motion. / First isolated review remediation commit. |
 | **Review Round 2 Fix (`42dc54485`)** | `42dc54485006f7aee6c166f5b2506b8586a490ad` | Vá vòng review độc lập 2: bật `enableSystem` trong `ZenThemeProvider`, SSR-safe + `matchMedia` `'change'` cho motion primitives, 12-locale `/setup-wizard` redirect. / Second isolated review remediation commit. |
 | **Review Round 3 Code Fix (`9204f8e37`)** | `9204f8e3738600f4ee5155e9dc00849e9420f90f` | Vá vòng review độc lập 3: gắn `SettingsAppearanceThemeSection` 3 chế độ (`light`/`dark`/`system`) trực tiếp vào `SettingsPage` đang chạy thật, bảo toàn `localStorage['sophia-zen-theme']` trong `AppearanceSection`, sửa hydration + `matchMedia` `'change'` cho `AnimatedCounter`, khóa đủ 12 locale ở `helpers.ts` / `public-pipeline.ts` / `dashboard-pipeline.ts` (kèm rewrite 15 cây route `(app)`-only và security headers cho mọi early 307), và đồng bộ `<html lang dir>` SSR/client ở `RootLayout` + `(app)/layout.tsx`. / Third isolated review code remediation commit. |
-| **Review Round 4 Code Fix (`f6ebffc50821f92d355ab8454a313cf98856e5d3`)** | `f6ebffc50821f92d355ab8454a313cf98856e5d3` | Vá vòng review độc lập 4: khóa xác thực bắt buộc + bucket `RATE_LIMITS.byok` + trần `12`/phút theo IP & User + `probeProviderApiKey` cô lập (không làm nổ circuit breaker dùng chung) cho `POST /api/setup/verify`; bổ sung `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*` trong `x-middleware-override-headers` sau `intlMiddleware`; nâng tương phản dark mode `dark:bg-primary-600` (`6.29:1` AA) cho `SettingsPage` & `WizardStepper`; chuyển `SettingsAppearanceThemeSection` và `SetupWizard` sang khóa tĩnh `next-intl` trên đủ 12 ngôn ngữ; tách `SophiaArtifactCanvasInspector` để mọi file `< 200` dòng (`2,100` file test / `19,706` bài test PASS). / Fourth isolated review code remediation commit. |
+| **Review Round 4 Code Fix (`f6ebffc50`)** | `f6ebffc50821f92d355ab8454a313cf98856e5d3` | Vá vòng review độc lập 4: khóa xác thực bắt buộc + bucket `RATE_LIMITS.byok` + trần `12`/phút theo IP & User + `probeProviderApiKey` cô lập cho `POST /api/setup/verify`; bổ sung `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*` trong `x-middleware-override-headers` sau `intlMiddleware`; nâng tương phản dark mode `dark:bg-primary-600` cho `SettingsPage` & `WizardStepper`; chuyển `SettingsAppearanceThemeSection` và `SetupWizard` sang khóa tĩnh `next-intl` trên đủ 12 ngôn ngữ; tách `SophiaArtifactCanvasInspector` để mọi file `< 200` dòng. / Fourth isolated review code remediation commit. |
+| **Review Round 5 Code Fix (`f9220c3a2315bb1971c452d20da392a9ecb6ad0c`)** | `f9220c3a2315bb1971c452d20da392a9ecb6ad0c` | Vá vòng review độc lập 5: chuẩn hóa tương phản WCAG 2.2 AA (`>= 4.5:1`) cho toàn bộ trạng thái động trên `Niche Studio` (`NicheCampaignForm`, `StoryboardPreviewCard`, `VideoCompliancePreviewPlayer`, `NicheGate1ChannelInlineForm`), `TimelineBrowserPreview`, `SettingsPage`, `InviteAffiliateModal` và các biến thể `seed/components/ui/button.tsx` (`8.76:1` Dark / `7.90:1` Light; `2,100` file test / `19,707` bài test PASS). / Fifth isolated review code remediation commit. |
 
 ---
 
@@ -41,13 +42,13 @@
 
 | ID | Mức độ / Sev | File & Line | Mô tả lỗi & Cách khắc phục (VN / EN) | Trạng thái / Status |
 |:--:|:--:|:--|:--|--:|
-| **V1** | **P1** | `src/components/niche-studio/niche-gate1-readiness-card.tsx:24,36,49` | **VN:** Nền tối bán trong suốt `bg-zinc-900/70` làm chữ mất tương phản ở chế độ Sáng (Light mode). Đã đổi sang `bg-card dark:bg-zinc-900/70` và token chữ ngữ nghĩa.<br>**EN:** Translucent dark surface failed AA contrast on Ivory Light background; replaced with semantic `bg-card dark:bg-zinc-900/70` and foreground tokens. | **CLOSED** (`g4-axe-summary.json` 0 violations) |
-| **V2** | **P1** | `src/components/niche-studio/video-compliance-preview-player.tsx:58` | **VN:** Khung trống dùng `bg-zinc-900/40` bị xám mờ ở Light mode. Đã chuyển sang `bg-card dark:bg-zinc-900/40`, `text-foreground dark:text-zinc-300`.<br>**EN:** Empty-state dark translucency replaced with dual-theme `bg-card` + semantic text tokens. | **CLOSED** (`g4-axe-summary.json` 0 violations) |
-| **V3** | **P1** | `src/components/stitch/ui/button-styles.ts:14` | **VN:** Nút chính ở Dark mode (`#6366F1` + chữ trắng) chỉ đạt 4.47:1 (< 4.5:1 AA). Đã áp dụng `bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white` (**6.29:1** Dark, **8.61:1** Light).<br>**EN:** Raised Dark-mode primary button contrast from 4.47:1 to 6.29:1 (Light: 8.61:1). | **CLOSED** (`director-control-deck-design-system.test.ts`) |
-| **V4** | **P1** | `src/components/niche-studio/sophia-artifact-canvas.tsx:140-149` | **VN:** 5 mã màu `#rrggbb` cứng làm đỏ cổng `npm run check:color-tokens`. Đã thay bằng `var(--primary-600)`, `var(--primary-foreground)` và hằng token.<br>**EN:** Removed 5 hardcoded hex literals; `check:color-tokens` passes at `1045` vs `1080` baseline (`-35` net). | **CLOSED** (`check:color-tokens` exit 0) |
+| **V1** | **P1** | `src/components/niche-studio/niche-gate1-readiness-card.tsx:78-175` | **VN:** Nền tối bán trong suốt `bg-zinc-900/70` làm chữ mất tương phản ở chế độ Sáng (Light mode). Đã đổi sang `bg-card dark:bg-zinc-900/70` và token chữ ngữ nghĩa.<br>**EN:** Translucent dark surface failed AA contrast on Ivory Light background; replaced with semantic `bg-card dark:bg-zinc-900/70` and foreground tokens. | **CLOSED** (`g4-axe-summary.json` 0 violations) |
+| **V2** | **P1** | `src/components/niche-studio/video-compliance-preview-player.tsx:28-38,94-103` | **VN:** Khung trống dùng `bg-zinc-900/40` và băng thông báo Inngest bị mờ ở Light mode. Đã chuyển sang `bg-card dark:bg-zinc-900/40`, `text-foreground dark:text-zinc-300`, `text-emerald-800 dark:text-emerald-300`.<br>**EN:** Empty-state dark translucency and post-dispatch banner replaced with dual-theme `bg-card` + semantic text tokens. | **CLOSED** (`g4-axe-summary.json` 0 violations) |
+| **V3** | **P1** | `src/components/stitch/ui/button-styles.ts:14`<br>`src/seed/components/ui/button.tsx:11-24` | **VN:** Nút chính ở Dark mode (`#6366F1` + chữ trắng) chỉ đạt 4.47:1 (< 4.5:1 AA). Đã áp dụng `bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white` (**8.76:1** Dark `#2E19E6`/`#FFFFFF`, **7.90:1** Light `#4338CA`/`#FFFFFF`).<br>**EN:** Raised Dark-mode primary button contrast from 4.47:1 to 8.76:1 (`--primary-600: #2E19E6`, Light: 7.90:1 `#4338CA`). | **CLOSED** (`director-control-deck-design-system.test.ts`) |
+| **V4** | **P1** | `src/components/niche-studio/sophia-artifact-canvas.tsx:139-146` | **VN:** 5 mã màu `#rrggbb` cứng làm đỏ cổng `npm run check:color-tokens`. Đã thay bằng `var(--primary-600)`, `var(--primary-foreground)` và hằng token.<br>**EN:** Removed 5 hardcoded hex literals; `check:color-tokens` passes at `1045` vs `1080` baseline (`-35` net). | **CLOSED** (`check:color-tokens` exit 0) |
 | **V5** | **P1** | `src/forest/dashboard/dashboard-user-card.tsx:24` | **VN:** Khôi phục `dark:text-violet-300` (~8.5:1 trên nền tối) cho huy hiệu PRO để vừa đạt chuẩn AA vừa khớp test contract.<br>**EN:** Restored `dark:text-violet-300` (~8.5:1 contrast) preserving the PRO badge test contract. | **CLOSED** (`npm test` green) |
 | **V6** | **P0** | `src/middleware/api-handler.ts:71-80`<br>`src/seed/security/sql-rate-limiter-queries.ts:32` | **VN:** Tách `/api/user/byok`, `/api/setup-wizard` và `/api/setup/verify` khỏi nhóm đăng nhập `auth` (10 lần/phút) sang nhóm riêng `byok` (**40 lần/phút**), kết hợp giới hạn chống dò key ở từng route (xem Mục 4).<br>**EN:** Isolated BYOK & Setup Wizard (including `/api/setup/verify`) into a dedicated `byok` D1 bucket (40 req/min) distinct from `auth` (10/min) and `admin` (50/min), backed by route-level probing caps (§4). | **CLOSED** (17/17 BYOK security tests) |
-| **V7** | **P1** | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | **VN:** Khôi phục `aria-label` cho 2 ô nhập URL sản phẩm và bằng chứng xã hội để trình đọc màn hình nhận diện đầy đủ.<br>**EN:** Restored `aria-label` attributes alongside `<label htmlFor>` on product URL and social proof inputs. | **CLOSED** (`niche-studio-readiness-ui.test.tsx`) |
+| **V7** | **P1** | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | **VN:** Khôi phục `aria-label` cho 2 ô nhập điều khoản hoa hồng (`commissionTerms`) và trần chi phí render (`maxRenderCostCents`) để trình đọc màn hình nhận diện đầy đủ.<br>**EN:** Restored `aria-label` attributes alongside `<label htmlFor>` on `commissionTerms` and `maxRenderCostCents` inputs. | **CLOSED** (`niche-studio-readiness-ui.test.tsx`) |
 
 **Các sửa lỗi bổ sung trong vòng đóng nghiệm thu #07.3 / Additional #07.3 Closure Corrections:**
 - **C1 — Chuyển tiếp ngôn ngữ `/en/*` (`src/middleware/public-pipeline.ts`):** Gắn header `x-next-intl-locale` để các trang `/en/*` hiển thị đúng tiếng Anh thay vì rơi về tiếng Việt. / Forwarded stripped locale header so `/en/*` routes render English properly.
@@ -76,7 +77,7 @@
 **Ba ghi nhận trung thực từ dữ liệu đo / Three Measured Caveats Recorded Honestly:**
 1. **`ariaModal: null` ở cả 12 phép đo:** Thư viện Radix UI không gắn thuộc tính `aria-modal="true"`; thay vào đó Radix khóa nền bằng cách đặt `aria-hidden="true"` lên toàn bộ phần tử anh em bên ngoài hộp thoại và đặt `pointer-events: none` lên `<body>`. Cả hai cơ chế thật này đều được đo trực tiếp (`backgroundAriaHidden: true`, `backgroundPointerEvents: "none"`).
 2. **`focusReturnedToTrigger: null` trên `CmdKPalette`:** Bảng lệnh mở bằng phím tắt `Meta+k` nên không có nút bấm khởi phát để trả focus về; trình duyệt trả focus về `body`. Bài test khẳng định `expect(r.focusReturnedToTrigger).toBeNull()` thay vì báo PASS giả.
-3. **Tên `sr-only` của `CmdKPalette` đang dùng tiếng Anh ở cả hai ngôn ngữ:** Chuỗi mặc định `"Quick actions"` tại `src/seed/components/ui/command.tsx:43` chưa nối với khóa tiếng Việt sẵn có tại `messages/vi.json:7328` (`"Thao tác nhanh"`), được ghi nhận ở Mục 9 để tránh sửa lan sang các luồng dùng chung ngoài phạm vi pilot.
+3. **Tên `sr-only` của `CmdKPalette` đang dùng tiếng Anh ở cả hai ngôn ngữ:** Chuỗi mặc định `"Quick actions"` tại `src/seed/components/ui/command.tsx:43` chưa nối với khóa tiếng Việt sẵn có tại `messages/vi.json:7329` (`"Thao tác nhanh"`), được ghi nhận ở Mục 9 để tránh sửa lan sang các luồng dùng chung ngoài phạm vi pilot.
 
 ---
 
@@ -90,7 +91,7 @@
 
 ### 4.1 Tầng 1 — Cổng chặn D1 SQL toàn cục (`src/middleware/api-handler.ts:69-82`)
 
-| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`f6ebffc50821f92d355ab8454a313cf98856e5d3`) | Đánh giá bảo mật / Security Assessment |
+| Nhóm đường dẫn / Path Prefix | Baseline `main` (`673ec911`) | Nhánh hiện tại (`f9220c3a2315bb1971c452d20da392a9ecb6ad0c`) | Đánh giá bảo mật / Security Assessment |
 |:--|--:|--:|:--|
 | `/api/auth/*` | `auth` (`10`/phút) | `auth` (`10`/phút) | **Giữ nguyên** — chống dò mật khẩu đăng nhập; không bị lưu lượng BYOK làm nghẽn. / Unchanged login brute-force cap. |
 | `/api/user/byok*` | `auth` (`10`/phút — gây lỗi 429 P0) | **`byok` (`40`/phút, fail-closed)** | **Tách riêng an toàn** — đủ cho trang Setup Wizard tải trạng thái + lưu key, chặt hơn 2.5 lần so với mức `/api/*` chung (`100`/phút). / Dedicated fail-closed D1 bucket. |
@@ -154,8 +155,8 @@
 - **Báo cáo chi tiết / Detailed Evidence:** [`ZEN-07.2-PERFORMANCE-COMPARISON.md`](./ZEN-07.2-PERFORMANCE-COMPARISON.md) §3–§4
 
 **[VN & EN]** Hệ thống chữ viết đã được khóa thống nhất giữa mã nguồn, bộ token DTCG và tài liệu `DESIGN.md` đúng theo bản pilot v1 đã nghiệm thu:
-1. **Giao diện & Nội dung chính (`--font-sans`):** **`Inter`** (`src/app/globals.css:386`, trọng lượng `400;500;600;700;800`), hỗ trợ đầy đủ dấu tiếng Việt chồng tầng (`ắ`, `ậ`, `ể`, `ỗ`, `ự`), đã kiểm tra hiển thị thực tế ở 375px / 768px / 1440px (`targeted/t02-*`, `targeted/t03-*`).
-2. **Số liệu kỹ thuật & Mã (`--font-mono`):** **`JetBrains Mono`** (`src/app/globals.css:387`, trọng lượng `400;500;600`, `tabular-nums`) dùng cho số liệu tài chính, độ trễ, mã API key che một phần và thông số kỹ thuật.
+1. **Giao diện & Nội dung chính (`--font-sans`):** **`Inter`** (`src/app/globals.css:388`, trọng lượng `400;500;600;700;800`), hỗ trợ đầy đủ dấu tiếng Việt chồng tầng (`ắ`, `ậ`, `ể`, `ỗ`, `ự`), đã kiểm tra hiển thị thực tế ở 375px / 768px / 1440px (`targeted/t02-*`, `targeted/t03-*`).
+2. **Số liệu kỹ thuật & Mã (`--font-mono`):** **`JetBrains Mono`** (`src/app/globals.css:389`, trọng lượng `400;500;600`, `tabular-nums`) dùng cho số liệu tài chính, độ trễ, mã API key che một phần và thông số kỹ thuật.
 3. **Ngoại lệ hiển thị có phạm vi hẹp (`.v3-core`):** **`Archivo`** chỉ được khai báo cục bộ cho `--font-display` bên trong lớp `.v3-core` (`src/styles/v3-core.css:28`), không bao giờ áp dụng làm font giao diện chung.
 4. **Cơ chế tải font thực tế:** Tải qua thẻ `<link rel="stylesheet">` Google Fonts CSS2 kèm `preconnect` tại `src/app/layout.tsx:47-53` (`document.fonts.status === "loaded"`, CLS phòng thí nghiệm `0.0000`–`0.0005`).
 5. **Đồng bộ tài liệu & Loại trừ triệt để:** `DESIGN.md:88-98` và `src/seed/design-tokens/zen-design-tokens.dtcg.json:128-132` đã khớp 100% với mã nguồn. **`Satoshi` và `Instrument Serif` hoàn toàn không được đưa vào bản phát hành này.**
@@ -185,7 +186,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 
 ---
 
-## 8. Gate 5 — Full Regression Status & Complete 178-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
+## 8. Gate 5 — Full Regression Status & Complete 179-File Diff Audit (Trạng Thái Hồi Quy & Kiểm Toán Toàn Bộ Diff)
 
 ### 8.1 Kết quả toàn bộ cổng chất lượng trên cây code hiện tại
 
@@ -196,25 +197,25 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 | `bash scripts/check-layer-boundaries.sh` | **PASS** | `0` vi phạm kiến trúc 4 tầng (`seed → tree → forest → land`). |
 | `npm run i18n:validate` | **PASS** | `5,702` lời gọi `t()`, `0` khóa dịch thiếu và `0` giá trị rỗng giữa `messages/vi.json` và `messages/en.json` (+ đồng bộ đủ 12 ngôn ngữ). |
 | `npm run check:color-tokens` | **PASS** | `1045` mã màu cứng so với mốc `1080` (**giảm ròng `-35`**, `0` mã màu cứng mới). |
-| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,100` file test PASS / `19,706` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
+| `npm test` (Vitest toàn bộ repo) | **PASS** | **`2,100` file test PASS / `19,707` bài test PASS** (`1` file skip, `34` test skip, `10` todo; exit `0`). |
 | `npm run build` (Next.js 16.4.2) | **PASS** | Build production thành công `636` routes; độ lệch bundle từ baseline `main` ở mức ~**+3.86 KB gzip JS (+0.16%)** và **+1.23 KB gzip CSS (+2.46%)** (xem `ZEN-07.2-PERFORMANCE-COMPARISON.md` §1). |
 | OpenNext Cloudflare Worker Build | **PASS** | `.open-next/worker.js` đóng gói **0 lỗi**, dung lượng nén **`9.46 MB` gzipped** (< ngưỡng cứng `10.00 MB`). |
 | Luồng bảo vệ (Protected Flows) | **PASS** | **Setup Wizard** (xác minh trực tiếp trên trình duyệt + 17 test BYOK + redirect đủ 12 ngôn ngữ), **Telegram Bot** (`@Sophia_Bbot` không bị chạm sửa), **NOWPayments IPN** (luồng thanh toán không bị chạm sửa; không có Polar/PayPal). |
 | Quét bí mật & Độ sạch Worktree | **PASS** | `0` API key thật, `0` file `.env` hay khóa riêng tư trong lịch sử diff; `git status --porcelain` sạch hoàn toàn sau commit đóng gói. |
 
-### 8.2 Tổng hợp kiểm toán 178 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
+### 8.2 Tổng hợp kiểm toán 179 file thay đổi so với `main` ([`ZEN-07.2-DIFF-CLASSIFICATION.md`](./ZEN-07.2-DIFF-CLASSIFICATION.md))
 
-*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các bản vá từ 4 vòng review độc lập cho ra chính xác **178 file** = `87` file thêm mới + `91` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `163` file trong `apps/sophia-ai-factory/`. Cả 178/178 file đã được phân loại đầy đủ.)*
+*(Lưu ý đo đạc: Lệnh #07.3 nhắc con số ước tính cũ "104 file", nhưng đo trực tiếp bằng `git diff --name-status 673ec911` trên nhánh sau khi bổ sung ảnh chụp trình duyệt, test bảo mật BYOK, test hộp thoại và các bản vá từ 5 vòng review độc lập cho ra chính xác **179 file** = `87` file thêm mới + `92` file chỉnh sửa, gồm `15` file ở thư mục gốc monorepo và `164` file trong `apps/sophia-ai-factory/`. Cả 179/179 file đã được phân loại đầy đủ.)*
 
 | Nhóm phân loại / Classification Category | File phi nhị phân / Non-PNG | Ảnh PNG / Screenshots | Tổng / Total |
 |:--|--:|--:|--:|
-| **Design implementation** (Token, Dual-Theme UI, Live Settings Theme Selector, Motion, `DESIGN.md`) | 60 | — | **60** |
+| **Design implementation** (Token, Dual-Theme UI, Live Settings Theme Selector, Motion, `DESIGN.md`) | 61 | — | **61** |
 | **Browser evidence** (JSON máy đo, Playwright specs, harness dev-only, PNGs) | 12 | 40 | **52** |
 | **Documentation** (14 tài liệu kiến trúc ở gốc repo + 7 báo cáo `ZEN-07.2-*.md` + `sophia-design-authority.md`) | 22 | — | **22** |
 | **Functional regression correction** (Dialog focus, 12-locale `RootLayout` + `(app)/layout` + `helpers` + `dashboard-pipeline` `(app)`-only rewrites, `mergeIntlResponseHeaders` bảo toàn `x-csp-nonce` & `x-tenant-*`, `/en/*` header, 12-locale `/setup-wizard` redirect, `messages/*.json`) | 25 | — | **25** |
 | **Security correction** (BYOK D1 bucket + route probing caps trên cả `/api/setup/verify` + 17 security tests) | 19 | — | **19** |
 | **Unexpected / out-of-scope change** (Thay đổi ngoài phạm vi / sửa nhầm nghiệp vụ) | **0** | **0** | **0** |
-| **TỔNG CỘNG / GRAND TOTAL** | **138** | **40** | **178** |
+| **TỔNG CỘNG / GRAND TOTAL** | **139** | **40** | **179** |
 
 ---
 
@@ -227,7 +228,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 - **Quy tắc Cloudflare Configuration Rule theo tên miền phụ (`sophia.agencyos.network`):** Hiện Rocket Loader đang tắt trên thực tế; Founder có thể chủ động bật quy tắc khóa `Rocket Loader = Off` riêng cho `sophia.agencyos.network` theo 6 bước ở **Mục 5** bất cứ lúc nào để phòng ngừa rủi ro về sau.
 
 ### 9.3 Năm ghi nhận minh bạch không chặn phát hành (Non-Blocking Follow-Ups for Future Cleanup)
-1. **Nhãn `sr-only` tiếng Việt cho `CmdKPalette` (`src/seed/components/ui/command.tsx:43`):** Đang đọc `"Quick actions"` ở cả VI và EN; có thể nối khóa `messages/vi.json:7328` (`"Thao tác nhanh"`) trong một PR dọn dẹp nhỏ riêng cho thành phần dùng chung.
+1. **Nhãn `sr-only` tiếng Việt cho `CmdKPalette` (`src/seed/components/ui/command.tsx:43`):** Đang đọc `"Quick actions"` ở cả VI và EN; có thể nối khóa `messages/vi.json:7329` (`"Thao tác nhanh"`) trong một PR dọn dẹp nhỏ riêng cho thành phần dùng chung.
 2. **Route kiểm thử `/[locale]/zen-a11y-harness` (`src/app/[locale]/zen-a11y-harness/page.tsx:23`):** Trả về `404` ngay lập tức ở môi trường production nhờ chốt `if (process.env.NODE_ENV === 'production') notFound()`, nhưng vẫn xuất hiện dưới dạng route động (`ƒ`) trong bảng build của Next.js.
 3. **Phạm vi kiểm thử trình đọc màn hình:** Đã xác minh cây trợ năng (accessibility tree), nhãn ARIA và điều hướng bàn phím trên trình duyệt thật, chưa bao gồm bản ghi âm đọc thực tế bằng phần mềm VoiceOver/NVDA.
 4. **Mật khẩu giả lập cục bộ trong bài test E2E (`tests/e2e/zen07-2/zen-07-2-acceptance.spec.ts:75`):** Chỉ dùng cho tài khoản ảo `zen-07-2@sophia.test` trên SQLite local khi chạy Playwright, không liên quan đến bất kỳ hệ thống thật nào.
@@ -240,7 +241,7 @@ Tất cả ảnh nằm tại `apps/sophia-ai-factory/docs/design/zen-design-os/e
 ### 10.1 Đề xuất cấu trúc Draft PR (CHỈ MỞ KHI FOUNDER CHO PHÉP PUSH)
 - **Nhánh nguồn → Nhánh đích / Head → Base:** `design/sophia-zen-design-os-v1` → `main` (chế độ **Draft PR**).
 - **Tiêu đề đề xuất / Proposed Title:** `feat(design): Zen Design OS v1.0 dual-theme pilot, strict nonce CSP & BYOK rate-limit hardening`
-- **Phạm vi đưa vào Draft PR (178 file):**
+- **Phạm vi đưa vào Draft PR (179 file):**
   1. Hệ thống token giao diện kép **Dark (Director's Control Deck)** & **Light (Executive Studio Ivory)** trong `src/app/globals.css`, `zen-design-tokens.dtcg.json`, `ZenThemeProvider` (`data-cfasync="false"` + strict per-request CSP nonce + `enableSystem`), bộ chọn 3 chế độ `light`/`dark`/`system` trực tiếp tại `SettingsPage` (`SettingsAppearanceThemeSection`), và 4 motion primitives tuân thủ `prefers-reduced-motion` (0 lỗi SSR hydration trên React 19).
   2. Áp dụng và sửa lỗi tương phản AA trên **3 màn hình Pilot** (`/setup`, `/dashboard`, `/dashboard/niche-studio`) ở cả Tiếng Việt & Tiếng Anh.
   3. Chuẩn hóa hệ chữ **Inter + JetBrains Mono** (Archivo giới hạn trong `.v3-core`) đồng bộ giữa `layout.tsx`, `globals.css`, DTCG JSON và `DESIGN.md`.

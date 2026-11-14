@@ -2,11 +2,11 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
+**Verified Code & Test HEAD:** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (main):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Worktree:** `/Users/macbook/.gemini/antigravity/scratch/sophia-zen-design-os-v1/apps/sophia-ai-factory`
-**Date:** 2026-11-12 (screenshots captured on `cd068bd39`; unit & regression suites re-verified on `f6ebffc50` on 2026-11-14)
+**Date:** 2026-11-12 (screenshots captured on `cd068bd39`; unit & regression suites re-verified on `f9220c3a2` on 2026-11-14)
 **Mode:** Isolated local verification; PRODUCTION NOT TOUCHED (no merge, no deploy, no live Cloudflare edits).
 
 ---
@@ -128,17 +128,17 @@ No route is promoted to "visually verified" on the strength of unit tests alone.
 
 | # | Severity | File:line | Defect | Fix |
 |:--|:--|:--|:--|:--|
-| V1 | P1 | `src/components/niche-studio/niche-gate1-readiness-card.tsx:24,36,49` | Translucent dark surfaces (`bg-zinc-900/70`) blended into the ivory `#F8F9FC` light background into mid-grey — failed AA for both light and dark text | `bg-card dark:bg-zinc-900/70`, `text-foreground dark:text-white`, `text-muted-foreground`, `text-amber-800 dark:text-amber-300` |
-| V2 | P1 | `src/components/niche-studio/video-compliance-preview-player.tsx:!emptyState` | `bg-zinc-900/40` empty state rendered mid-grey in Light mode | `bg-card dark:bg-zinc-900/40`, `text-foreground dark:text-zinc-300` |
-| V3 | P1 | `src/components/stitch/ui/button-styles.ts:14` | Dark-mode primary button used `#6366F1` with white text → 4.47:1 (below AA) | `bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white` → 6.29:1 dark, 8.61:1 light |
-| V4 | P1 | `src/components/niche-studio/sophia-artifact-canvas.tsx:140-149` | 5 hardcoded `#rrggbb` literals regressed `npm run check:color-tokens` (baseline ratchet guard failed, exit 1) | `'var(--primary-600)'`, `'var(--primary-foreground)'`, `DARK_CANVAS_BG`, `DEFAULT_ACCENT_HEX` — identical rendering, 0 literals |
+| V1 | P1 | `src/components/niche-studio/niche-gate1-readiness-card.tsx:78-175` | Translucent dark surfaces (`bg-zinc-900/70`) blended into the ivory `#F8F9FC` light background into mid-grey — failed AA for both light and dark text | `bg-card dark:bg-zinc-900/70`, `text-foreground dark:text-white`, `text-muted-foreground`, `text-amber-800 dark:text-amber-300` |
+| V2 | P1 | `src/components/niche-studio/video-compliance-preview-player.tsx:28-38,94-103` | `bg-zinc-900/40` empty state and post-dispatch banner rendered mid-grey / pale emerald in Light mode | `bg-card dark:bg-zinc-900/40`, `text-foreground dark:text-zinc-300`, `text-emerald-800 dark:text-emerald-300` |
+| V3 | P1 | `src/components/stitch/ui/button-styles.ts:14`, `src/seed/components/ui/button.tsx:11-24` | Dark-mode primary button used `#6366F1` with white text → 4.47:1 (below AA) | `bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white` → 8.76:1 dark (`#2E19E6` / `#FFFFFF`), 7.90:1 light (`#4338CA` / `#FFFFFF`) |
+| V4 | P1 | `src/components/niche-studio/sophia-artifact-canvas.tsx:139-146` | 5 hardcoded `#rrggbb` literals regressed `npm run check:color-tokens` (baseline ratchet guard failed, exit 1) | `'var(--primary-600)'`, `'var(--primary-foreground)'`, `DARK_CANVAS_BG`, `DEFAULT_ACCENT_HEX` — identical rendering, 0 literals |
 | V5 | P1 | `src/forest/dashboard/dashboard-user-card.tsx:24` | `dark:text-violet-200` broke the PRO badge contract (test expected `violet-300`) and reduced contrast | restored `dark:text-violet-300` (~8.5:1 on `bg-violet-500/20`) |
-| V6 | P0 | `src/middleware/api-handler.ts:72-78` | `/api/user/byok` shared the 10 req/min `auth` bucket with `/api/auth/*` → Setup Wizard BYOK refresh loop hit **429 Too Many Requests** | dedicated `byok` bucket (40 req/min) declared at `src/seed/security/sql-rate-limiter-queries.ts:32`, applied to `/api/user/byok` + `/api/setup-wizard`; `/api/admin` separately restored to its pre-declared 50 req/min bucket; 6-test regression suite added |
-| V7 | P1 | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | `<label htmlFor>` added while `aria-label` was removed → accessible names lost (`niche-studio-readiness-ui.test.tsx:49` red) | restored both `aria-label` attributes |
+| V6 | P0 | `src/middleware/api-handler.ts:71-80` | `/api/user/byok` shared the 10 req/min `auth` bucket with `/api/auth/*` → Setup Wizard BYOK refresh loop hit **429 Too Many Requests** | dedicated `byok` bucket (40 req/min) declared at `src/seed/security/sql-rate-limiter-queries.ts:32`, applied to `/api/user/byok`, `/api/setup-wizard`, and `/api/setup/verify`; `/api/admin` separately restored to its pre-declared 50 req/min bucket; 17-test security & rate-limit regression suite added |
+| V7 | P1 | `src/components/niche-studio/niche-form-product-inputs.tsx:102,118` | `<label htmlFor>` added while `aria-label` was removed on `commissionTerms` and `maxRenderCostCents` → accessible names lost (`niche-studio-readiness-ui.test.tsx:49` red) | restored both `aria-label` attributes |
 
 Every fix was followed by the narrowest test first, then the full sweep:
-`npm test` measured **2100 test files / 19,706 tests passing** (34 skipped,
-10 todo; exit 0) on the closing code tree (`f6ebffc50`), and `npm run build` completed with
+`npm test` measured **2100 test files / 19,707 tests passing** (34 skipped,
+10 todo; exit 0) on the closing code tree (`f9220c3a2`), and `npm run build` completed with
 exit 0 across 636 routes. Per-gate numbers live in
 [`ZEN-07.2-FUNCTIONAL-REGRESSION.md`](./ZEN-07.2-FUNCTIONAL-REGRESSION.md) §2.
 

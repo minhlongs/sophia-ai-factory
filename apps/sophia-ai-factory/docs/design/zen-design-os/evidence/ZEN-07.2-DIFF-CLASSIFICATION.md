@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
+**Verified Code & Test HEAD:** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Reported Checkpoint:** `b3338a256` (handover base: `4d23ddb386f499b7627f2c828a1b80c81c6a3382`)
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
@@ -17,15 +17,15 @@ not match the working tree. Measured:
 | Set | Count |
 |:--|--:|
 | Baseline `673ec911` → pre-existing branch tip `4d23ddb38` | 36 files |
-| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50` + evidence sync) | 166 tracked |
-| **Total under review (baseline → closing commit)** | **178** (87 `A`, 91 `M`) |
+| `4d23ddb38` → closure & review-remediation work (`b3338a256`, `9b6b78656`, `cd068bd39`, `fb0083e04`, `59c9a1ca6`, `42dc54485`, `9204f8e37`, `f6ebffc50`, `f9220c3a2` + evidence sync) | 168 tracked |
+| **Total under review (baseline → closing commit)** | **179** (87 `A`, 92 `M`) |
 | of which PNG screenshots (binary, listed but not diffed line-by-line) | 40 |
-| of which non-PNG files, classified in full below | 138 |
+| of which non-PNG files, classified in full below | 139 |
 
 The two ranges above overlap — a file added in `4d23ddb38` and then edited by
 the closure commits is counted once in each row but only once in the total.
-**The authoritative inventory is the full 178**, and every one of them is
-classified here. No file was skipped. The 138 non-PNG files are enumerated
+**The authoritative inventory is the full 179**, and every one of them is
+classified here. No file was skipped. The 139 non-PNG files are enumerated
 individually; the 40 PNGs are grouped by directory.
 
 ---
@@ -34,12 +34,12 @@ individually; the 40 PNGs are grouped by directory.
 
 | Category | Non-PNG files | PNG files | Total |
 |:--|--:|--:|--:|
-| Design implementation | 60 | — | 60 |
+| Design implementation | 61 | — | 61 |
 | Documentation | 22 | — | 22 |
 | Security correction | 19 | — | 19 |
 | Functional regression correction | 25 | — | 25 |
 | Browser evidence | 12 | 40 | 52 |
-| **Total under review** | **138** | **40** | **178** |
+| **Total under review** | **139** | **40** | **179** |
 | **Unexpected / out-of-scope** | **0** | **0** | **0** |
 
 **The out-of-scope count is zero.** No file in the delta changes business
@@ -48,11 +48,11 @@ calls are named transparently in §3 rather than quietly re-labelled.
 
 ---
 
-## 2. Full classification (178 files)
+## 2. Full classification (179 files)
 
 Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-factory/` except `DESIGN.md` and the 14 `docs/design/zen-design-os/*.md` architecture documents, which live at the monorepo root).
 
-### 2.1 Design implementation — 60 files
+### 2.1 Design implementation — 61 files
 
 | Status | Path |
 |:--:|:--|
@@ -108,6 +108,7 @@ Status: `A` = added, `M` = modified (all paths relative to `apps/sophia-ai-facto
 | M | `src/forest/theme/index.ts` |
 | M | `src/seed/components/ui/animated-counter-with-framer-motion.tsx` |
 | A | `src/seed/components/ui/__tests__/zen-motion-reduced-motion.test.tsx` |
+| M | `src/seed/components/ui/button.tsx` |
 | M | `src/seed/components/ui/fade-in-view.tsx` |
 | M | `src/seed/components/ui/page-transition.tsx` |
 | M | `src/seed/components/ui/scroll-reveal.tsx` |
@@ -284,7 +285,7 @@ None. Section 3 records the borderline files that were checked and cleared.
 
 ---
 
-## 4. Quality gates on the closing tree (`f6ebffc50`)
+## 4. Quality gates on the closing tree (`f9220c3a2`)
 
 | Gate | Result | Detail |
 |:--|:--:|:--|
@@ -294,7 +295,7 @@ None. Section 3 records the borderline files that were checked and cleared.
 | `npm run i18n:validate` | **PASS (0 missing keys)** | 5,702 `t()` calls, 0 missing static keys, 0 empty static values across vi/en + 12-locale parity |
 | `npm run check:color-tokens` | **PASS (exit 0)** | 1045 literals against a 1080 baseline, −35 net, 8 files improved, none regressed |
 | `npm run build` | **PASS (636 routes)** | Next.js 16.4.2, exit 0 |
-| `npm test` | **PASS (2100 files / 19,706 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
+| `npm test` | **PASS (2100 files / 19,707 tests, exit 0)** | 1 file skipped, 34 tests skipped, 10 todo |
 | Secret scan (staged diff) | **PASS** | no key-shaped patterns, no dotenv or private-key file added |
 | Worktree | **clean** | `git status --porcelain` empty after the closing commit |
 

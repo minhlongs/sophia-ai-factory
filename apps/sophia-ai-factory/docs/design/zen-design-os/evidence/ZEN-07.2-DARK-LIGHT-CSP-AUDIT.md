@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
+**Verified Code & Test HEAD:** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g2-audit.json`](./g2-audit.json)
@@ -18,8 +18,8 @@
 | Nonce-strict `script-src` policy | `src/seed/security/content-security-policy-configuration.ts:57-60` | When `nonce` is supplied, `script-src` adds `'nonce-${nonce}'` and **omits** `'unsafe-inline'`. |
 | Server-side nonce reader | `src/seed/security/get-csp-nonce.ts:10-20` | Reads `x-csp-nonce` from Next.js `await headers()` on every dynamic request. |
 | Root layout SSR Dark default, locale `lang`/`dir` & nonce wiring | `src/app/layout.tsx:24-56` | `const nonce = await getCspNonce();` + `x-next-intl-locale` reader → `<html lang={locale} dir={dir} className="dark" suppressHydrationWarning>` → `<ZenThemeProvider defaultTheme="dark" nonce={nonce}>`. |
-| `ZenThemeProvider` (`next-themes` wrapper) & live Settings 3-mode selector | `src/forest/theme/zen-theme-provider.tsx:41-60`, `src/components/settings/settings-appearance-theme.tsx:16-84` | `attribute="class"`, `defaultTheme="dark"` (first-time visitors still land on Dark), `themes={['dark', 'light']}`, `enableSystem` (`true` — persists explicit `'system'` selection across all routes), `disableTransitionOnChange` (`true`), `storageKey="sophia-zen-theme"`, `nonce={nonce}`, `scriptProps={{ 'data-cfasync': 'false' }}`; live `/[locale]/dashboard/settings` Preferences tab mounts `SettingsAppearanceThemeSection` (`light` / `dark` / `system` `role="radiogroup"`). |
-| Dual-theme semantic CSS variables | `src/app/globals.css:14-185` (`:root` Light) & `187-305` (`.dark` Dark) | `:root` defines Executive Studio Ivory (`--background: #F8F9FC`, `--card: #FFFFFF`, `--primary: #4338CA`); `.dark` defines Director's Control Deck (`--background: #090A10`, `--card: #11131F`, `--primary: #6366F1`). |
+| `ZenThemeProvider` (`next-themes` wrapper) & live Settings 3-mode selector | `src/forest/theme/zen-theme-provider.tsx:41-60`, `src/components/settings/settings-appearance-theme.tsx:16-86` | `attribute="class"`, `defaultTheme="dark"` (first-time visitors still land on Dark), `themes={['dark', 'light']}`, `enableSystem` (`true` — persists explicit `'system'` selection across all routes), `disableTransitionOnChange` (`true`), `storageKey="sophia-zen-theme"`, `nonce={nonce}`, `scriptProps={{ 'data-cfasync': 'false' }}`; live `/[locale]/dashboard/settings` Preferences tab mounts `SettingsAppearanceThemeSection` (`light` / `dark` / `system` `role="radiogroup"`). |
+| Dual-theme semantic CSS variables | `src/app/globals.css:14-186` (`:root` Light) & `188-339` (`.dark` Dark) | `:root` defines Executive Studio Ivory (`--background: #F8F9FC`, `--card: #FFFFFF`, `--primary: #4338CA`); `.dark` defines Director's Control Deck (`--background: #090A10`, `--card: #11131F`, `--primary: #6366F1`). |
 
 ---
 
@@ -32,13 +32,13 @@
 | 3 | Selected theme persists across refresh | **PASS** | After `page.reload()` in Light mode: `domContentLoadedClass = "light"`, `domContentLoadedBg = "rgb(248, 249, 252)"`, `storageValue = "light"`. |
 | 4 | Navigation retains the selected theme | **PASS** | Navigating `/vi/dashboard` → `/vi/dashboard/niche-studio` → `/vi/setup` retains `htmlClass = "light"`, `bodyBg = "rgb(248, 249, 252)"`. |
 | 5 | Initial render does not visibly flash the incorrect theme | **PASS** | At `DOMContentLoaded` (before React hydration completes), the synchronous nonce-authorized `next-themes` bootstrap script has already applied `html.className = "light"` and `rgb(248, 249, 252)`. |
-| 6 | No hydration mismatch | **PASS** | `<html suppressHydrationWarning>` (`src/app/layout.tsx:42`) + `ZenThemeProvider`; `hydrationWarnings: []` and `consoleErrors: []` across all 12 route/theme loads (`g1-route-logs.json`). |
-| 7 | No forced Dark class overriding user choice | **PASS** | `src/app/layout.tsx:42` sets initial SSR class `dark`, which `next-themes` (`attribute="class"`) cleanly replaces with `light` when `sophia-zen-theme="light"`. No nested layout forces `.dark` except the intentional `--studio-stage-*` video canvas preview frame (`src/app/globals.css:29-33`). |
-| 8 | Light tokens are actually applied to all relevant elements | **PASS** | After remediating `niche-gate1-readiness-card.tsx` and `video-compliance-preview-player.tsx` (which previously used translucent `bg-zinc-900/70` and `bg-zinc-900/40` without light-mode semantic classes), all 3 pilot screens resolve semantic Light tokens (`bg-card`, `bg-background`, `text-foreground`, `border-border`) with 0 axe contrast violations. |
+| 6 | No hydration mismatch | **PASS** | `<html suppressHydrationWarning>` (`src/app/layout.tsx:45`) + `ZenThemeProvider`; `hydrationWarnings: []` and `consoleErrors: []` across all 12 route/theme loads (`g1-route-logs.json`). |
+| 7 | No forced Dark class overriding user choice | **PASS** | `src/app/layout.tsx:45` sets initial SSR class `dark`, which `next-themes` (`attribute="class"`) cleanly replaces with `light` when `sophia-zen-theme="light"`. No nested layout forces `.dark` except the intentional `--studio-stage-*` video canvas preview frame (`src/app/globals.css:29-33`). |
+| 8 | Light tokens are actually applied to all relevant elements | **PASS** | After remediating `niche-gate1-readiness-card.tsx`, `storyboard-preview-card.tsx`, `niche-campaign-form.tsx`, `niche-gate1-channel-inline-form.tsx`, and `video-compliance-preview-player.tsx` (replacing dark-only translucent surfaces and pale labels with dual-theme semantic classes), all 3 pilot screens resolve semantic Light tokens (`bg-card`, `bg-background`, `text-foreground`, `border-border`) with 0 axe contrast violations. |
 | 9 | Browser form controls render consistently | **PASS** | `next-themes` synchronizes `document.documentElement.style.colorScheme` to `"dark"` or `"light"`, so native `<select>`, `<input type="number">`, `<input type="range">`, and scrollbars render with matching OS/browser chrome in both themes. |
 | 10 | Strict CSP remains effective | **PASS** | CSP was **never** disabled. `script-src 'self' 'unsafe-eval' 'nonce-db6523ac16b494e00d54dba9c987b575'` in dev (and `'self' 'nonce-...'` in production per `src/seed/security/content-security-policy-configuration.ts:21`). Zero `securitypolicyviolation` events (`cspViolations: []`). |
 | 11 | Per-request CSP nonce matches the intended theme initialization script | **PASS** | Request 1 header `x-csp-nonce: db6523ac16b494e00d54dba9c987b575` matches `Content-Security-Policy` `'nonce-db6523ac16b494e00d54dba9c987b575'` and the DOM `<script>` element's `script.nonce` IDL property (`themeScriptNonceProp: "db6523ac16b494e00d54dba9c987b575"`). *(Note: Modern Chromium strips the raw `nonce` HTML attribute from DOM inspection after script execution as a standard anti-exfiltration defense while preserving `el.nonce`.)* |
-| 12 | Cached HTML cannot cause incorrect nonce reuse across requests | **PASS** | `src/app/layout.tsx:38` calls `await getCspNonce()` (`await headers()`), opting root rendering into per-request dynamic rendering with `Cache-Control: no-store`. Consecutive requests produced distinct nonces (`db6523ac16b494e00d54dba9c987b575` vs `572952b68321ec03bea54ce2d9c0a057`, `noncesAreUniqueAcrossRequests: true`). |
+| 12 | Cached HTML cannot cause incorrect nonce reuse across requests | **PASS** | `src/app/layout.tsx:28` calls `await getCspNonce()` (`await headers()`), opting root rendering into per-request dynamic rendering with `Cache-Control: no-store`. Consecutive requests produced distinct nonces (`db6523ac16b494e00d54dba9c987b575` vs `572952b68321ec03bea54ce2d9c0a057`, `noncesAreUniqueAcrossRequests: true`). |
 | 13 | No `unsafe-inline` exception introduced to hide errors | **PASS** | `scriptSrcHasNoUnsafeInline: true` in `g2-audit.json`. `style-src` retains `'unsafe-inline'` solely for Tailwind/React inline style variables (`src/seed/security/content-security-policy-configuration.ts:24-28`). |
 
 ---
@@ -87,14 +87,14 @@ regressing it — which is §3.4.
 
 ### 3.2 The repo-side opt-out that keeps it safe either way
 
-`src/forest/theme/zen-theme-provider.tsx:38` ships a page-level opt-out, so the
+`src/forest/theme/zen-theme-provider.tsx:39` ships a page-level opt-out, so the
 theme bootstrap stays correct even if Rocket Loader is ever switched on:
 
 ```ts
 const ROCKET_LOADER_OPT_OUT = { 'data-cfasync': 'false' } as const;
 ```
 
-passed as `scriptProps` to `next-themes` (`zen-theme-provider.tsx:54`).
+passed as `scriptProps` to `next-themes` (`zen-theme-provider.tsx:55`).
 
 The comment in that file claims the opt-out **cannot** displace the CSP nonce.
 That claim was verified against the installed package rather than taken on

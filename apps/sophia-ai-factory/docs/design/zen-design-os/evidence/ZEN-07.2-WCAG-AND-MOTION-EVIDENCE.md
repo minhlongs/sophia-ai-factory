@@ -2,7 +2,7 @@
 
 **Repository:** `github.com/minhlongs/sophia-ai-factory`
 **Branch:** `design/sophia-zen-design-os-v1`
-**Verified Code & Test HEAD:** `f6ebffc50821f92d355ab8454a313cf98856e5d3`
+**Verified Code & Test HEAD:** `f9220c3a2315bb1971c452d20da392a9ecb6ad0c`
 **Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
 **Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
 **Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
@@ -97,7 +97,7 @@ Accessible name and description are non-empty on every measurement:
 3. **The command palette's accessible name is English in both locales.** The
    name comes from the `sr-only` fallback `{title ?? "Quick actions"}` at
    `src/seed/components/ui/command.tsx:43`, which no caller overrides. The
-   Vietnamese string exists (`messages/vi.json:7328` — "Thao tác nhanh") but is
+   Vietnamese string exists (`messages/vi.json:7329` — "Thao tác nhanh") but is
    not wired to the palette. Recorded as a bilingual gap; **not remediated in
    this pass**, because the palette is a shared `seed` component and the
    acceptance scope forbids modifying unrelated business behaviour.
@@ -159,14 +159,14 @@ Source read directly, not inferred.
 
 | Primitive | File | Reduced-motion behaviour |
 |:--|:--|:--|
-| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-121` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1017-1023` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
-| `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:32-54,78-90,121-126` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` and `[data-zen-motion-stagger] > *` CSS rules; `useEffect` immediately promotes `reduced` + `visible`, sets `transition: "none"` on both single and staggered children, and subscribes to `matchMedia` `'change'` |
-| `PageTransition` | `src/seed/components/ui/page-transition.tsx:20-41,53-60` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` CSS override; `useEffect` returns early before `requestAnimationFrame`, sets `transition: "none"`, and subscribes to `matchMedia` `'change'` |
-| `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:20-78` | Deterministic `useState(false)` on SSR + client hydration (`0` initial text on both server and client — zero React 19 hydration mismatches); `useEffect` checks `matchMedia('(prefers-reduced-motion: reduce)')` on mount to jump straight to `value` without starting `requestAnimationFrame`, and subscribes to `matchMedia` `'change'` to cancel any in-flight `rAF` loop and snap immediately to `value` |
+| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-122` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1017-1023` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
+| `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:32-54,78-90,121-127` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` and `[data-zen-motion-stagger] > *` CSS rules; `useEffect` immediately promotes `reduced` + `visible`, sets `transition: "none"` on both single and staggered children, and subscribes to `matchMedia` `'change'` |
+| `PageTransition` | `src/seed/components/ui/page-transition.tsx:20-41,53-61` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` CSS override; `useEffect` returns early before `requestAnimationFrame`, sets `transition: "none"`, and subscribes to `matchMedia` `'change'` |
+| `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:20-89` | Deterministic `useState(false)` on SSR + client hydration (`0` initial text on both server and client — zero React 19 hydration mismatches); `useEffect` checks `matchMedia('(prefers-reduced-motion: reduce)')` on mount to jump straight to `value` without starting `requestAnimationFrame`, and subscribes to `matchMedia` `'change'` to cancel any in-flight `rAF` loop and snap immediately to `value` |
 
 All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `AnimatedCounter`) keep deterministic initial state across SSR and hydration (`zen-motion-reduced-motion.test.tsx` verifies `renderToString` + `hydrateRoot` emits zero hydration errors when `prefers-reduced-motion: reduce` is active), while CSS `@media (prefers-reduced-motion: reduce)` reveals `[data-zen-motion]` and `[data-zen-motion-stagger] > *` from byte 0 of SSR.
 
-The CSS layer closes the loop at `src/app/globals.css:990-1024`:
+The CSS layer closes the loop at `src/app/globals.css:991-1040`:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -189,8 +189,8 @@ The CSS layer closes the loop at `src/app/globals.css:990-1024`:
 }
 ```
 
-plus dedicated overrides at `globals.css:954` (`guide-signal-flow`) and
-`globals.css:972` (`guide-pulse-orb`) — both set `animation: none` under
+plus dedicated overrides at `globals.css:962-968` (`guide-signal-flow`) and
+`globals.css:980-985` (`guide-pulse-orb`) — both set `animation: none` under
 reduced motion rather than merely shortening duration.
 
 The `run-status-badge.test.tsx:60` comment confirms the motion-safe pulse class
@@ -207,14 +207,14 @@ All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `An
 - Duration/easing values come from Zen tokens: `--motion-duration-deliberate`
   (400ms) and `--motion-ease-emphasized` (`cubic-bezier(0.16, 1, 0.3, 1)`),
   declared at `src/app/globals.css:19-27` and consumed by
-  `page-transition.tsx:58`, `scroll-reveal.tsx:82-83`, `fade-in-view.tsx:118`
+  `page-transition.tsx:58-60`, `scroll-reveal.tsx:72-73`, `fade-in-view.tsx:108`
   via `var(...)` references rather than hardcoded literals.
 - The satisfy/prove command requires that **GSAP, Lenis and React Bits were not
   introduced** during this pass. Verified from the working tree:
   `package.json` dependencies are unchanged relative to the baseline `673ec911`; no
   `gsap`, `lenis` or `react-bits` entry exists in `dependencies` or
   `devDependencies`. `AnimatedCounter` is deliberately rAF-based
-  (`animated-counter-with-framer-motion.tsx:64-78`) and the file already carries
+  (`animated-counter-with-framer-motion.tsx:42-59`) and the file already carries
   the note that it does not depend on framer-motion.
 
 ---
@@ -222,19 +222,19 @@ All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `An
 ## 6. Contrast
 
 Measured pairs behind the design-token values in `src/app/globals.css`
-(`:root` light 14-185, `.dark` 187-305):
+(`:root` light `14-186`, `.dark` `188-339`):
 
 | Pair | Light | Dark | AA 4.5:1 |
 |:--|--:|--:|:--:|
-| Button: `--primary` bg / `--primary-foreground` text | 8.61:1 | 6.29:1 | PASS both |
-| Body: `--foreground` on `--background` | `#0B0F19` on `#F8F9FC` | `#F8FAFC` on `#090A10` | PASS both |
-| Muted: `--muted-foreground` on `--background` | `#475569` on `#F8F9FC` | — | PASS |
+| Primary Button (`bg-primary dark:bg-primary-600` / `#FFFFFF` text) | 7.90:1 (`#4338CA` / `#FFFFFF`) | 8.76:1 (`#2E19E6` / `#FFFFFF`) | PASS both |
+| Body: `--foreground` on `--background` | 18.19:1 (`#0B0F19` / `#F8F9FC`) | 18.89:1 (`#F8FAFC` / `#090A10`) | PASS both |
+| Muted: `--muted-foreground` on `--background` | 7.20:1 (`#475569` / `#F8F9FC`) | 7.71:1 (`#94A3B8` / `#090A10`) | PASS both |
 
-Zinc-translucency defects that would have failed `color-contrast` in Light mode
-(`niche-gate1-readiness-card.tsx:24,36,49` and
-`video-compliance-preview-player.tsx`) were remediated before the axe sweep —
-see §4 of [`ZEN-07.2-VISUAL-EVIDENCE.md`](./ZEN-07.2-VISUAL-EVIDENCE.md) (V1,
-V2). The sweep therefore ran against the corrected tree.
+Zinc-translucency and pale-tint defects that would have failed `color-contrast` in Light or Dark mode
+(`niche-gate1-readiness-card.tsx:78-175`, `storyboard-preview-card.tsx:34-113`,
+`niche-campaign-form.tsx:165-172`, `video-compliance-preview-player.tsx:28-38,94-103`,
+`timeline-browser-preview.tsx:126-129,178`, `seed/components/ui/button.tsx:11-24`) were remediated —
+see §4 of [`ZEN-07.2-VISUAL-EVIDENCE.md`](./ZEN-07.2-VISUAL-EVIDENCE.md) (V1–V3).
 
 ---
 
