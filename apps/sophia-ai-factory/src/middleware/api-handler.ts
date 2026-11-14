@@ -6,7 +6,6 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { isPublicApiRoute } from '@/forest/middleware/auth-guard';
 import { emitUsageEvent } from '@/tree/usage-metering';
 import { logger } from '@/seed/utils/logger-utility';
-import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 import { track } from '@/tree/signals/track';
 import { D1Events } from '@/forest/telemetry/d1-event-types';
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation';
@@ -38,20 +37,27 @@ function authUnavailableResponse(
 
 // Returns a blocking response, or null to continue
 export async function handleApiRoute(request: NextRequest, pathname: string, startTime: number): Promise<NextResponse | null> {
+  // Strip any client-supplied session identity headers before authentication runs
+  request.headers.delete('x-user-id');
+  request.headers.delete('x-user-role');
+  request.headers.delete('x-user-tier');
+
   const isolationResult = await tenantIsolationMiddleware(request);
   if (isolationResult) return isolationResult;
 
   const agyIsolationResult = await agyTenantIsolationMiddleware(request);
   if (agyIsolationResult) return agyIsolationResult;
 
-  // Webhook version pinning — internal secret required during canary
+  // Webhook version pinning — reject explicit non-stable Cloudflare Workers Version Override
+  // probes on external webhook routes so test/canary probes do not mutate live billing/bot state.
   if (
     pathname.startsWith('/api/webhooks/nowpayments') ||
     pathname.startsWith('/api/webhooks/payos') ||
-    pathname.startsWith('/api/webhooks/telegram')
+    pathname.startsWith('/api/webhooks/telegram') ||
+    pathname === '/api/payos/ipn'
   ) {
-    // Enforce only when INTERNAL_API_SECRET is configured; skip during migration window
-    if (process.env.INTERNAL_API_SECRET && !verifyInternalSecret(request)) {
+    const versionKey = request.headers.get('Cloudflare-Workers-Version-Key');
+    if (versionKey && versionKey !== 'stable') {
       return new Response(
         JSON.stringify({ error: 'canary_window', message: 'Webhook pinned to stable version — retry shortly' }),
         { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '30' } }
@@ -70,7 +76,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     rateLimitConfig = RATE_LIMITS.auth;
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
-  } else if (pathname.startsWith('/api/webhooks')) {
+  } else if (pathname.startsWith('/api/webhooks') || pathname === '/api/payos/ipn') {
     rateLimitConfig = RATE_LIMITS.webhook;
   }
 

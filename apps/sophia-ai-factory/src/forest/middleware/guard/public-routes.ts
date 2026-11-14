@@ -44,6 +44,7 @@ export function isPublicApiRoute(pathname: string): boolean {
     '/api/auth/tiktok/callback',
 
     // Explicit webhook routes (authenticated via signature, not session)
+    '/api/webhooks/telegram',
     '/api/webhooks/nowpayments',
     '/api/webhooks/clickbank',
     '/api/webhooks/shopify',

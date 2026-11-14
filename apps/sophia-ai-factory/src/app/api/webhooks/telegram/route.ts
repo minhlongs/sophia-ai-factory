@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from '@/seed/security/signature-primitives';
 import {
   handleCallbackQuery,
   withMiddleware,
@@ -41,13 +42,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  let body: TelegramUpdate;
-  try {
-    body = (await request.json().catch(() => ({}))) as TelegramUpdate;
-  } catch {
-    body = {} as TelegramUpdate;
-  }
-
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   if (!webhookSecret) {
     const { logger } = await import('@/seed/utils/logger-utility');
@@ -55,9 +49,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
   const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
-  if (token !== webhookSecret) {
+  if (!token || !timingSafeEqual(token, webhookSecret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const body = (await request.json().catch(() => ({}))) as TelegramUpdate;
 
   try {
     if (body.callback_query) {
