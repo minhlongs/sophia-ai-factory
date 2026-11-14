@@ -30,6 +30,7 @@ const complianceSchema = z
       .optional(),
     brandOrganicToggle: z.boolean().optional(),
     brandContentToggle: z.boolean().optional(),
+    musicUsageConfirmed: z.boolean().optional(),
     containsSyntheticMedia: z.boolean().optional(),
   })
   .optional();
@@ -40,18 +41,44 @@ const resolveSchema = z.object({
   compliance: complianceSchema,
 });
 
+type CompliancePayload = z.infer<typeof complianceSchema>;
+
+function validateTikTokApprovalCompliance(
+  approved: boolean,
+  platform: string,
+  compliance: CompliancePayload,
+): string | null {
+  if (!approved || platform.toLowerCase() !== 'tiktok' || !compliance) return null;
+  if (!compliance.privacyLevel) {
+    return 'TikTok publish approval requires explicit privacyLevel selection';
+  }
+  if (compliance.musicUsageConfirmed === false) {
+    return 'TikTok publish approval requires Music Usage Confirmation';
+  }
+  return null;
+}
+
+function buildAlreadyResolvedResponse(decision?: string): NextResponse {
+  return NextResponse.json(
+    {
+      error: 'This publish approval was already resolved',
+      ...(decision ? { decision } : {}),
+      resolved: false,
+      alreadyResolved: true,
+    },
+    { status: 409 },
+  );
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const body = await request.json();
-    const parsed = resolveSchema.safeParse(body);
+    const parsed = resolveSchema.safeParse(await request.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid request body', details: parsed.error.issues.map((e) => e.message) },
@@ -60,30 +87,12 @@ export async function PATCH(
     }
 
     const d1 = await getD1();
-    if (!d1) {
-      return NextResponse.json({ error: 'Database not available' }, { status: 503 });
-    }
+    if (!d1) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
 
     const { id } = await params;
-    // Read the row before touching it: it carries the workspace the authority
-    // check runs against, so a reviewer cannot be authorized against a tenant
-    // they invent in the request body.
     const record = await getPublishLedgerRecordByKey(id, d1);
-    if (!record) {
-      return NextResponse.json({ error: 'Publish approval not found' }, { status: 404 });
-    }
-
-    if (record.decision !== 'pending') {
-      return NextResponse.json(
-        {
-          error: 'This publish approval was already resolved',
-          decision: record.decision,
-          resolved: false,
-          alreadyResolved: true,
-        },
-        { status: 409 },
-      );
-    }
+    if (!record) return NextResponse.json({ error: 'Publish approval not found' }, { status: 404 });
+    if (record.decision !== 'pending') return buildAlreadyResolvedResponse(record.decision);
 
     const isReviewer = await verifyWorkspaceRole(record.tenantId, user.id, 'ADMIN', d1);
     if (!isReviewer) {
@@ -93,24 +102,22 @@ export async function PATCH(
       );
     }
 
-    if (
-      parsed.data.approved &&
-      record.platform.toLowerCase() === 'tiktok' &&
-      parsed.data.compliance &&
-      !parsed.data.compliance.privacyLevel
-    ) {
-      return NextResponse.json(
-        { error: 'TikTok publish approval requires explicit privacyLevel selection' },
-        { status: 400 },
-      );
+    const complianceError = validateTikTokApprovalCompliance(
+      parsed.data.approved,
+      record.platform,
+      parsed.data.compliance,
+    );
+    if (complianceError) {
+      return NextResponse.json({ error: complianceError }, { status: 400 });
     }
 
+    const decisionLabel = parsed.data.approved ? 'approved' : 'rejected';
     const outcome = await resolveAndAnnouncePublishApproval({
       tenantId: record.tenantId,
       channelId: record.channelId,
       platform: record.platform,
       mediaRef: record.mediaRef,
-      decision: parsed.data.approved ? 'approved' : 'rejected',
+      decision: decisionLabel,
       reviewerId: user.id,
       comment: parsed.data.comment,
       compliance: parsed.data.compliance,
@@ -118,30 +125,16 @@ export async function PATCH(
     });
 
     if (outcome.error) {
-      logger.error('publishApproval: resolution failed', {
-        idempotencyKey: id,
-        code: outcome.error,
-      });
+      logger.error('publishApproval: resolution failed', { idempotencyKey: id, code: outcome.error });
       return NextResponse.json({ error: outcome.error }, { status: 500 });
     }
+    if (outcome.alreadyResolved) return buildAlreadyResolvedResponse();
 
-    if (outcome.alreadyResolved) {
-      return NextResponse.json({
-        error: 'This publish approval was already resolved',
-        resolved: false,
-        alreadyResolved: true,
-      }, { status: 409 });
-    }
-
-    // "Was this your own work?" needs a person to compare against. A row with no
-    // requester cannot answer it, so the answer is reported as unattributed
-    // rather than as a confident "not yours" that a reviewer would read as a
-    // second opinion.
     const attribution = record.requesterId ? 'attributed' : 'unattributed';
     const isSelfApproval = record.requesterId === user.id;
     logger.info('publishApproval: reviewer resolved a pending publish', {
       idempotencyKey: id,
-      decision: parsed.data.approved ? 'approved' : 'rejected',
+      decision: decisionLabel,
       reviewerId: user.id,
       requesterId: record.requesterId,
       selfApproval: isSelfApproval,
@@ -151,18 +144,14 @@ export async function PATCH(
     return NextResponse.json({
       resolved: true,
       alreadyResolved: false,
-      decision: parsed.data.approved ? 'approved' : 'rejected',
+      decision: decisionLabel,
       selfApproval: isSelfApproval,
       attribution,
       id,
       ...(parsed.data.compliance ? { compliance: parsed.data.compliance } : {}),
     });
   } catch (err) {
-    // Log the cause server-side and return a stable code: the raw D1 message
-    // can expose SQL fragments and schema names to the caller.
-    logger.error('publishApproval: resolution threw', {
-      error: getErrorMessage(err),
-    });
+    logger.error('publishApproval: resolution threw', { error: getErrorMessage(err) });
     return NextResponse.json({ error: 'internal_error' }, { status: 500 });
   }
 }

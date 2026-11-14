@@ -8,6 +8,7 @@
  * @module forest/publishing/__tests__/youtube-upload-synthetic-media
  */
 
+import { NonRetriableError } from 'inngest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -165,5 +166,34 @@ describe('performYouTubeUpload', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mocks.shouldAllowRequest).not.toHaveBeenCalled();
     expect(mocks.recordFailure).not.toHaveBeenCalled();
+  });
+
+  it('throws NonRetriableError on 400 and 403 upload failures and retriable Error on 503', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('bad metadata', { status: 400 }))
+      .mockResolvedValueOnce(initResponse())
+      .mockResolvedValueOnce(videoResponse())
+      .mockResolvedValueOnce(new Response('quotaExceeded', { status: 403 }))
+      .mockResolvedValueOnce(new Response('backend unavailable', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const err400 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Bad req', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err400).toBeInstanceOf(NonRetriableError);
+    expect(err400).toMatchObject({ statusCode: 400, nonRetriable: true, message: 'YouTube upload init failed: 400 bad metadata' });
+
+    const err403 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Quota', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err403).toBeInstanceOf(NonRetriableError);
+    expect(err403).toMatchObject({ statusCode: 403, nonRetriable: true, message: 'YouTube upload failed: 403 quotaExceeded' });
+
+    const err503 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Transient', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err503).toBeInstanceOf(Error);
+    expect(err503).not.toBeInstanceOf(NonRetriableError);
   });
 });
