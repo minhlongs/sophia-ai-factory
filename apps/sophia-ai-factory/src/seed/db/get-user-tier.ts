@@ -22,15 +22,20 @@ export async function getUserTier(userId: string): Promise<Tier> {
     const d1 = await getD1();
     if (!d1) return 'BASIC' as Tier;
 
+    const nowIso = new Date(Date.now()).toISOString();
+
     // Resolve direct and org-scoped subscriptions in one D1 read. Select the
     // newest direct row first even if its tier is null, then use the legacy
     // single-membership fallback instead of reviving older or other-org tiers.
+    // Enforce current_period_end > nowIso when set so expired pilot/monthly rows
+    // never continue granting paid entitlements if a cron sweep lags.
     const subscription = await d1
       .prepare(
         `WITH direct AS (
            SELECT COALESCE(tier, plan) AS raw_tier
            FROM subscriptions
            WHERE user_id = ?1 AND status = 'active'
+             AND (current_period_end IS NULL OR current_period_end > ?2)
            ORDER BY created_at DESC
            LIMIT 1
          )
@@ -40,11 +45,12 @@ export async function getUserTier(userId: string): Promise<Tier> {
             FROM subscriptions s
             WHERE s.org_id = (SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1)
               AND s.status = 'active' AND s.plan IS NOT NULL
+              AND (s.current_period_end IS NULL OR s.current_period_end > ?2)
             ORDER BY s.created_at DESC
             LIMIT 1)
          ) AS raw_tier`,
       )
-      .bind(userId)
+      .bind(userId, nowIso)
       .first<{ raw_tier: string | null }>();
 
     return normalizePlanToTier(subscription?.raw_tier);

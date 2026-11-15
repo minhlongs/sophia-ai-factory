@@ -9,6 +9,17 @@ import type { UploadToProviderArgs, PollStatusArgs } from './types';
 
 const MAX_RETRIES = 5;
 
+function isNonRetriableUploadError(err: unknown): boolean {
+  if (isProvenanceBlockedError(err)) return true;
+  if (!err || typeof err !== 'object') return false;
+  const candidate = err as { nonRetriable?: boolean; name?: string; statusCode?: number };
+  if (candidate.nonRetriable === true || candidate.name === 'NonRetriableError') return true;
+  if (typeof candidate.statusCode === 'number' && candidate.statusCode >= 400 && candidate.statusCode < 500) {
+    return candidate.statusCode !== 429 && candidate.statusCode !== 408;
+  }
+  return false;
+}
+
 export async function uploadToProvider(
   args: UploadToProviderArgs
 ): Promise<{ externalPostId: string; shouldRetry: boolean; error?: string }> {
@@ -27,7 +38,7 @@ export async function uploadToProvider(
     return { externalPostId, shouldRetry: false };
   } catch (uploadErr) {
     const errorMsg = sanitizeError(uploadErr);
-    const nonRetriable = isProvenanceBlockedError(uploadErr);
+    const nonRetriable = isNonRetriableUploadError(uploadErr);
     const nextStatus = nonRetriable || retryCount >= MAX_RETRIES ? 'failed' : 'scheduled';
 
     await db.from('publishing_jobs').update({

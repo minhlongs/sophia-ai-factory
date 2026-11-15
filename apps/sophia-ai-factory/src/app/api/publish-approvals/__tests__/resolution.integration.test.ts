@@ -166,6 +166,30 @@ describe('PATCH /api/publish-approvals/[id] — resolve', () => {
     expect(resolveAndAnnouncePublishApproval).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when TikTok approval omits compliance or musicUsageConfirmed', async () => {
+    vi.mocked(getPublishLedgerRecordByKey).mockResolvedValue(pendingRow({ platform: 'tiktok' }));
+    mockDbFirst.mockResolvedValue({ role: 'admin' });
+
+    const missingCompliance = await PATCH(
+      makePatchReq('key_pending_001', { approved: true }),
+      { params: Promise.resolve({ id: 'key_pending_001' }) },
+    );
+    expect(missingCompliance.status).toBe(400);
+    expect(((await missingCompliance.json()) as { error: string }).error).toBe(
+      'TikTok publish approval requires explicit privacyLevel selection',
+    );
+
+    const omittedConsent = await PATCH(
+      makePatchReq('key_pending_001', { approved: true, compliance: { privacyLevel: 'SELF_ONLY' } }),
+      { params: Promise.resolve({ id: 'key_pending_001' }) },
+    );
+    expect(omittedConsent.status).toBe(400);
+    expect(((await omittedConsent.json()) as { error: string }).error).toBe(
+      'TikTok publish approval requires Music Usage Confirmation',
+    );
+    expect(resolveAndAnnouncePublishApproval).not.toHaveBeenCalled();
+  });
+
   it('marks the decision unattributed when the request recorded no requester', async () => {
     vi.mocked(getPublishLedgerRecordByKey).mockResolvedValue(pendingRow());
     mockDbFirst.mockResolvedValue({ role: 'admin' });

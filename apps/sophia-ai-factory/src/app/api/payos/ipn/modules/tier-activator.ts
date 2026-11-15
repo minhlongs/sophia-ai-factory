@@ -50,6 +50,7 @@ export async function activatePayOsTier({
     d1,
     orgId,
     tier,
+    billingPeriod,
     periodEnd,
     now,
     orderCode,

@@ -87,6 +87,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       customer_email: customerEmail,
       invoice_url: result.checkoutUrl,
       provider_payment_id: result.paymentLinkId,
+      provider_order_code: result.orderCode,
     })
 
     return NextResponse.json({

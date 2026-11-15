@@ -42,6 +42,12 @@ export async function queryActiveCustomerSubscription(
 
   try {
     const db = createServerClient();
+    const nowMs = Date.now();
+    const isExpiredPeriod = (iso: string | null | undefined): boolean => {
+      if (!iso) return false;
+      const ms = Date.parse(iso);
+      return Number.isFinite(ms) && ms <= nowMs;
+    };
 
     // 1. Check user-scoped active subscription first
     const userSub = await db
@@ -55,9 +61,14 @@ export async function queryActiveCustomerSubscription(
       .first<RawSubscriptionRow>();
 
     if (userSub) {
-      resolvedTier = normalizePlanToTier(userSub.tier ?? userSub.plan);
-      subStatus = userSub.status ?? 'active';
       periodEnd = userSub.current_period_end;
+      if (isExpiredPeriod(userSub.current_period_end)) {
+        resolvedTier = 'BASIC';
+        subStatus = 'expired';
+      } else {
+        resolvedTier = normalizePlanToTier(userSub.tier ?? userSub.plan);
+        subStatus = userSub.status ?? 'active';
+      }
     } else {
       // 2. Check org-level active subscription for org members
       const orgSub = await db
@@ -72,9 +83,14 @@ export async function queryActiveCustomerSubscription(
         .first<RawOrgSubRow>();
 
       if (orgSub) {
-        resolvedTier = normalizePlanToTier(orgSub.tier ?? orgSub.plan);
-        subStatus = orgSub.status ?? 'active';
         periodEnd = orgSub.current_period_end;
+        if (isExpiredPeriod(orgSub.current_period_end)) {
+          resolvedTier = 'BASIC';
+          subStatus = 'expired';
+        } else {
+          resolvedTier = normalizePlanToTier(orgSub.tier ?? orgSub.plan);
+          subStatus = orgSub.status ?? 'active';
+        }
       }
     }
   } catch (err) {

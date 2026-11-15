@@ -2,6 +2,7 @@ import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { invalidateOrgIdCache } from '@/seed/auth/org-resolver';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { invalidateUserTierCache } from '@/seed/db/get-user-tier';
+import { wouldDowngradeTier } from '@/land/billing/nowpayments-ipn-utils';
 import { logger } from '@/seed/utils/logger-utility';
 import { PAID_PILOT_DURATION_DAYS } from '@/tree/finance/pilot-unit-economics-types';
 import type { Tier } from '@/seed/types';
@@ -14,7 +15,11 @@ export interface SubscriptionActivationResult {
   isLifetime: boolean;
 }
 
-export function calculatePayOsPeriodEnd(tier: Tier, orderPeriod?: string): { isLifetime: boolean; periodEnd: string } {
+export function calculatePayOsPeriodEnd(
+  tier: Tier,
+  orderPeriod?: string,
+  nowMs: number = Date.now(),
+): { isLifetime: boolean; periodEnd: string } {
   if (orderPeriod === 'pilot_14d' && tier !== 'BASIC') {
     throw new Error('14-day Paid Pilot billing is only valid for BASIC tier');
   }
@@ -22,11 +27,80 @@ export function calculatePayOsPeriodEnd(tier: Tier, orderPeriod?: string): { isL
   const periodEnd = isLifetime
     ? new Date('2099-12-31T23:59:59Z').toISOString()
     : orderPeriod === 'pilot_14d'
-      ? new Date(Date.now() + PAID_PILOT_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
+      ? new Date(nowMs + PAID_PILOT_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
       : orderPeriod === 'yearly'
-        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        ? new Date(nowMs + 365 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(nowMs + 30 * 24 * 60 * 60 * 1000).toISOString();
   return { isLifetime, periodEnd };
+}
+
+export function resolveEffectiveSubscriptionState(params: {
+  purchasedTier: Tier;
+  orderPeriod?: string;
+  nowMs: number;
+  existing?: {
+    plan?: string | null;
+    tier?: string | null;
+    status?: string | null;
+    current_period_end?: string | null;
+  } | null;
+}): { effectiveTier: Tier; effectivePlan: string; periodEnd: string; isLifetime: boolean } {
+  const { purchasedTier, orderPeriod, nowMs, existing } = params;
+  const base = calculatePayOsPeriodEnd(purchasedTier, orderPeriod, nowMs);
+  if (!existing || existing.status !== 'active') {
+    return {
+      effectiveTier: purchasedTier,
+      effectivePlan: purchasedTier.toLowerCase(),
+      periodEnd: base.periodEnd,
+      isLifetime: base.isLifetime,
+    };
+  }
+
+  const existingEndMs = existing.current_period_end ? Date.parse(existing.current_period_end) : NaN;
+  const hasFutureEntitlement = Number.isFinite(existingEndMs) && existingEndMs > nowMs;
+  if (!hasFutureEntitlement) {
+    return {
+      effectiveTier: purchasedTier,
+      effectivePlan: purchasedTier.toLowerCase(),
+      periodEnd: base.periodEnd,
+      isLifetime: base.isLifetime,
+    };
+  }
+
+  const currentPlanOrTier = (existing.tier ?? existing.plan ?? '').trim();
+  if (currentPlanOrTier && wouldDowngradeTier(currentPlanOrTier, purchasedTier)) {
+    const preservedUpper = currentPlanOrTier.toUpperCase() as Tier;
+    const preservedIsLifetime = UNIFIED_TIERS[preservedUpper]?.billingType === 'lifetime';
+    return {
+      effectiveTier: preservedUpper,
+      effectivePlan: currentPlanOrTier.toLowerCase(),
+      periodEnd: existing.current_period_end!,
+      isLifetime: preservedIsLifetime,
+    };
+  }
+
+  if (base.isLifetime) {
+    return {
+      effectiveTier: purchasedTier,
+      effectivePlan: purchasedTier.toLowerCase(),
+      periodEnd: base.periodEnd,
+      isLifetime: true,
+    };
+  }
+
+  const durationDays =
+    orderPeriod === 'pilot_14d'
+      ? PAID_PILOT_DURATION_DAYS
+      : orderPeriod === 'yearly'
+        ? 365
+        : 30;
+  const extendedEndIso = new Date(existingEndMs + durationDays * 24 * 60 * 60 * 1000).toISOString();
+  return {
+    effectiveTier: purchasedTier,
+    effectivePlan: purchasedTier.toLowerCase(),
+    periodEnd: extendedEndIso,
+    isLifetime: false,
+  };
 }
 
 export async function activatePayOsSubscription(params: {
@@ -38,8 +112,8 @@ export async function activatePayOsSubscription(params: {
   lockCreatedAt: string;
 }): Promise<SubscriptionActivationResult> {
   const { db, userId, tier, order, paymentLinkId, lockCreatedAt } = params;
-  const now = new Date().toISOString();
-  const { isLifetime, periodEnd } = calculatePayOsPeriodEnd(tier, order.period);
+  const nowMs = Date.now();
+  const now = new Date(nowMs).toISOString();
   const rawDb = db.unwrap();
   const eventId = `payos_${paymentLinkId}`;
   let orgId = await resolveOrgId(userId, db);
@@ -50,18 +124,37 @@ export async function activatePayOsSubscription(params: {
   }
 
   const subscriptionState = createdOrg
-    ? { id: null, count: 0 }
+    ? { id: null, count: 0, plan: null, tier: null, status: null, current_period_end: null }
     : await rawDb
-        .prepare('SELECT MIN(id) AS id, COUNT(*) AS count FROM subscriptions WHERE org_id = ?1')
+        .prepare(
+          `SELECT MIN(id) AS id, COUNT(*) AS count,
+                  MIN(plan) AS plan, MIN(tier) AS tier,
+                  MIN(status) AS status, MIN(current_period_end) AS current_period_end
+           FROM subscriptions WHERE org_id = ?1`,
+        )
         .bind(orgId)
-        .first<{ id: string | null; count: number }>();
+        .first<{
+          id: string | null;
+          count: number;
+          plan?: string | null;
+          tier?: string | null;
+          status?: string | null;
+          current_period_end?: string | null;
+        }>();
   if (!subscriptionState || subscriptionState.count > 1) {
     throw new Error('PayOS activation requires an unambiguous organization subscription');
   }
 
+  const { effectiveTier, effectivePlan: planLower, periodEnd, isLifetime } =
+    resolveEffectiveSubscriptionState({
+      purchasedTier: tier,
+      orderPeriod: order.period,
+      nowMs,
+      existing: subscriptionState.id ? subscriptionState : null,
+    });
+
   const lockExists =
     'EXISTS (SELECT 1 FROM payment_events WHERE event_id = ? AND created_at = ? AND processed = 2)';
-  const planLower = tier.toLowerCase();
   const statements = [
     rawDb
       // Check mutable order and tenant state inside the batch, before any entitlement write.
@@ -93,19 +186,19 @@ export async function activatePayOsSubscription(params: {
         .bind(orgId, userId, eventId, lockCreatedAt),
       rawDb
         .prepare(`INSERT INTO subscriptions (org_id, user_id, tier, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, ?3, ?4, 'active', ?5, ?6 WHERE EXISTS (SELECT 1 FROM organizations WHERE id = ?1) AND ${lockExists}`)
-        .bind(orgId, userId, tier, planLower, now, periodEnd, eventId, lockCreatedAt),
+        .bind(orgId, userId, effectiveTier, planLower, now, periodEnd, eventId, lockCreatedAt),
     );
   } else if (subscriptionState.id) {
     statements.push(
       rawDb
         .prepare(`UPDATE subscriptions SET tier = ?1, plan = ?2, status = 'active', current_period_end = ?3, updated_at = ?4 WHERE id = ?5 AND org_id = ?6 AND ${lockExists}`)
-        .bind(tier, planLower, periodEnd, now, subscriptionState.id, orgId, eventId, lockCreatedAt),
+        .bind(effectiveTier, planLower, periodEnd, now, subscriptionState.id, orgId, eventId, lockCreatedAt),
     );
   } else {
     statements.push(
       rawDb
         .prepare(`INSERT INTO subscriptions (org_id, user_id, tier, plan, status, current_period_start, current_period_end) SELECT ?1, ?2, ?3, ?4, 'active', ?5, ?6 WHERE ${lockExists}`)
-        .bind(orgId, userId, tier, planLower, now, periodEnd, eventId, lockCreatedAt),
+        .bind(orgId, userId, effectiveTier, planLower, now, periodEnd, eventId, lockCreatedAt),
     );
   }
 

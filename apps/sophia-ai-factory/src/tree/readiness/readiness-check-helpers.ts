@@ -32,11 +32,23 @@ export async function checkSubscriptionActive(
 ): Promise<boolean> {
   if (!d1) return false;
   try {
+    const nowIso = new Date(Date.now()).toISOString();
     const subRow = await d1
-      .prepare('SELECT status, tier, plan FROM subscriptions WHERE user_id = ?1 LIMIT 1')
+      .prepare(
+        `SELECT s.status, s.current_period_end
+         FROM subscriptions s
+         WHERE (s.user_id = ?1 OR s.org_id IN (SELECT org_id FROM org_members WHERE user_id = ?1))
+           AND (s.status = 'active' OR s.status = 'trialing')
+         ORDER BY s.created_at DESC
+         LIMIT 1`,
+      )
       .bind(userId)
-      .first<{ status?: string; tier?: string; plan?: string }>();
-    return subRow?.status === 'active' || subRow?.status === 'trialing';
+      .first<{ status?: string; current_period_end?: string | null }>();
+    if (!subRow) return false;
+    if (subRow.current_period_end && subRow.current_period_end <= nowIso) {
+      return false;
+    }
+    return subRow.status === 'active' || subRow.status === 'trialing';
   } catch {
     return false;
   }

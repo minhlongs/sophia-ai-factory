@@ -64,6 +64,7 @@ export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise
       customer_email: customerEmail,
       invoice_url: payOsResult.checkoutUrl,
       provider_payment_id: payOsResult.paymentLinkId,
+      provider_order_code: payOsResult.orderCode,
     });
 
     return NextResponse.json({
