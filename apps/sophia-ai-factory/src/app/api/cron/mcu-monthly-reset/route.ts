@@ -52,6 +52,7 @@ interface UserTierRow {
   user_id: string | null;
   tier: string | null;
   plan?: string | null;
+  current_period_start?: string | null;
   current_period_end?: string | null;
 }
 
@@ -72,18 +73,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let errorCount = 0;
 
   try {
-    // Fetch all users with active subscriptions and filter out expired periods (e.g. expired 14d Paid Pilots).
+    // Fetch all users with active subscriptions and filter out expired periods or 14-day pilots.
     const nowMs = Date.now();
+    const PILOT_MAX_WINDOW_MS = 15 * 24 * 60 * 60 * 1000;
     const { data: users } = await db
       .from('subscriptions')
-      .select('user_id, tier, plan, current_period_end')
+      .select('user_id, tier, plan, current_period_start, current_period_end')
       .eq('status', 'active') as { data: UserTierRow[] | null; error: unknown };
 
     const activeUsers = (users ?? []).filter((row) => {
       if (!row.user_id) return false;
       if (!row.current_period_end) return true;
       const endMs = Date.parse(row.current_period_end);
-      return !Number.isFinite(endMs) || endMs > nowMs;
+      if (Number.isFinite(endMs) && endMs <= nowMs) return false;
+      if (row.current_period_start && Number.isFinite(endMs)) {
+        const startMs = Date.parse(row.current_period_start);
+        if (Number.isFinite(startMs) && endMs > startMs && endMs - startMs <= PILOT_MAX_WINDOW_MS) {
+          return false;
+        }
+      }
+      return true;
     });
 
     for (const user of activeUsers) {

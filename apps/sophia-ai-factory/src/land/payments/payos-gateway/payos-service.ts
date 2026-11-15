@@ -17,7 +17,8 @@ export { FEATURE_PAYOS, isPayOsEnabled };
  * Requires PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY env vars.
  */
 export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<PayOsCheckoutResult> {
-  if (!isPayOsEnabled() && !FEATURE_PAYOS) {
+  const payosActive = process.env.FEATURE_PAYOS !== undefined ? isPayOsEnabled() : FEATURE_PAYOS;
+  if (!payosActive) {
     throw new PayOsDefinitiveError('PayOS feature flag disabled — set FEATURE_PAYOS=true to enable');
   }
 

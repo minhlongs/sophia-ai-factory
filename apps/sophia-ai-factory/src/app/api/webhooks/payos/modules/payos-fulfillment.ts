@@ -36,12 +36,12 @@ export async function processPayOsPostFulfillment(params: PayOsFulfillmentParams
       };
       if (typeof rawDb?.prepare === 'function') {
         const nowSec = Math.floor(Date.now() / 1000);
-        const paymentRef = `payos_${paymentLinkId}`;
+        const paymentRef = `payos_order_${orderId}`;
         const txStmt = rawDb
           .prepare(
             `INSERT INTO mcu_transactions (user_id, delta, reason, metadata, payment_reference)
              VALUES (?1, ?2, 'PAYOS_SUBSCRIPTION_ACTIVATION', ?3, ?4)
-             ON CONFLICT(payment_reference) DO NOTHING`,
+             ON CONFLICT(payment_reference) WHERE payment_reference IS NOT NULL DO NOTHING`,
           )
           .bind(
             userId,

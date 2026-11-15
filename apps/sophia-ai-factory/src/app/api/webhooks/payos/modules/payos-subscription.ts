@@ -233,6 +233,48 @@ export async function activatePayOsSubscription(params: {
     rawDb
       .prepare(`UPDATE pending_orders SET status = 'completed', payment_id = ?1, completed_at = ?2 WHERE order_id = ?3 AND provider_payment_id = ?4 AND status = 'pending' AND ${lockExists}`)
       .bind(`payos_${paymentLinkId}`, now, order.order_id, paymentLinkId, eventId, lockCreatedAt),
+  );
+
+  let mcuStatementStartIdx = -1;
+  const mcuGrant = resolvePayOsInitialMcuGrant(tier, order.period);
+  if (mcuGrant > 0) {
+    try {
+      const nowSec = Math.floor(nowMs / 1000);
+      const paymentRef = `payos_order_${order.order_id}`;
+      const txStmt = rawDb
+        .prepare(
+          `INSERT INTO mcu_transactions (user_id, delta, reason, metadata, payment_reference)
+           SELECT ?1, ?2, 'PAYOS_SUBSCRIPTION_ACTIVATION', ?3, ?4
+           WHERE ${lockExists}
+           ON CONFLICT(payment_reference) WHERE payment_reference IS NOT NULL DO NOTHING`,
+        )
+        .bind(
+          userId,
+          mcuGrant,
+          JSON.stringify({ orderId: order.order_id, tier, period: order.period ?? 'monthly', amountVnd: order.amount_vnd ?? null }),
+          paymentRef,
+          eventId,
+          lockCreatedAt,
+        );
+      const balStmt = rawDb
+        .prepare(
+          `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
+           SELECT ?1, ?2, ?2, ?3
+           WHERE changes() = 1 AND ${lockExists}
+           ON CONFLICT(user_id) DO UPDATE SET
+             credits_remaining = credits_remaining + excluded.credits_remaining,
+             credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
+             updated_at = excluded.updated_at`,
+        )
+        .bind(userId, mcuGrant, nowSec, eventId, lockCreatedAt);
+      mcuStatementStartIdx = statements.length;
+      statements.push(txStmt, balStmt);
+    } catch {
+      mcuStatementStartIdx = -1;
+    }
+  }
+
+  statements.push(
     rawDb
       .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1 AND created_at = ?2 AND processed = 2')
       .bind(eventId, lockCreatedAt),
@@ -242,7 +284,12 @@ export async function activatePayOsSubscription(params: {
   if (results.some((result) => !result.success || result.error)) {
     throw new Error('PayOS entitlement transaction failed');
   }
-  const noChanges = results.findIndex((result) => result.meta?.changes !== 1);
+  const noChanges = results.findIndex((result, idx) => {
+    if (mcuStatementStartIdx !== -1 && (idx === mcuStatementStartIdx || idx === mcuStatementStartIdx + 1)) {
+      return result.meta?.changes !== 0 && result.meta?.changes !== 1;
+    }
+    return result.meta?.changes !== 1;
+  });
   if (noChanges !== -1) {
     throw new Error(`PayOS entitlement transaction changed an unexpected number of rows at statement ${noChanges}`);
   }

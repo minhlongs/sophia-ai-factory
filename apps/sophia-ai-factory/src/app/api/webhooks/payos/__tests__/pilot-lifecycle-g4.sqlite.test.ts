@@ -351,6 +351,24 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       current_period_end: PLUS_14D_ISO,
     });
 
+    // Verify atomic 500 MCU grant on real SQLite partial unique index (0477)
+    const mcuBal = harness.rows('user_mcu_balance');
+    expect(mcuBal).toEqual([
+      expect.objectContaining({
+        user_id: 'u_pilot',
+        credits_remaining: 500,
+        credits_total_purchased: 500,
+      }),
+    ]);
+    expect(harness.rows('mcu_transactions')).toEqual([
+      expect.objectContaining({
+        user_id: 'u_pilot',
+        delta: 500,
+        reason: 'PAYOS_SUBSCRIPTION_ACTIVATION',
+        payment_reference: 'payos_order_sophia_u_pilot_1',
+      }),
+    ]);
+
     // Inside window (+13d 23h 59m 59s)
     vi.setSystemTime(new Date('2026-11-28T23:59:59.000Z'));
     const activeInfo = await queryActiveCustomerSubscription('u_pilot');
@@ -416,10 +434,14 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     expect(duplicate.status).toBe(200);
     expect(await duplicate.json()).toEqual({ received: true, duplicate: true });
 
-    // Period end remains strictly 2026-11-29 (not stacked to +28d)
+    // Period end remains strictly 2026-11-29 (not stacked to +28d) and MCU stays strictly 500
     const subs = harness.rows('subscriptions');
     expect(subs).toHaveLength(1);
     expect(subs[0]?.current_period_end).toBe(PLUS_14D_ISO);
+    expect(harness.rows('user_mcu_balance')).toEqual([
+      expect.objectContaining({ user_id: 'u_pilot', credits_remaining: 500 }),
+    ]);
+    expect(harness.rows('mcu_transactions')).toHaveLength(1);
   });
 
   it('Scenario 7: Existing active BASIC extends by +14d; existing active PREMIUM is protected from downgrade', async () => {
