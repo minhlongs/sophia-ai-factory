@@ -207,12 +207,66 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
       expect(document.activeElement).toBe(first);
 
+      fireEvent.keyDown(document, { key: 'a' });
+
+      const outsideBtn = document.createElement('button');
+      document.body.appendChild(outsideBtn);
+      outsideBtn.focus();
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
+      expect(document.activeElement).toBe(first);
+
+      outsideBtn.focus();
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(last);
+      outsideBtn.remove();
+
       fireEvent.keyDown(document, { key: 'Escape' });
       expect(onCloseMobile).toHaveBeenCalledTimes(1);
 
+      mediaHandler?.({ matches: false } as MediaQueryListEvent);
+      expect(onCloseMobile).toHaveBeenCalledTimes(1);
       mediaHandler?.({ matches: true } as MediaQueryListEvent);
       expect(onCloseMobile).toHaveBeenCalledTimes(2);
 
+      unmount();
+    } finally {
+      window.matchMedia = prevMatchMedia;
+    }
+  });
+
+  it('supports Vietnamese labels, immediate desktop auto-close, and restores pre-existing aria-hidden attributes', () => {
+    const onCloseMobile = vi.fn();
+    const prevMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation(() => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+
+    try {
+      const { rerender, unmount } = render(
+        <div>
+          <div data-testid="dashboard-topbar" aria-hidden="false" />
+          <main id="main-content" aria-hidden="false" />
+          <DashboardSidebarNav isVi={true} isMobileOpen={true} onCloseMobile={onCloseMobile} />
+        </div>,
+      );
+
+      expect(onCloseMobile).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText('Menu điều hướng di động')).toBeDefined();
+      expect(screen.getByLabelText('Đóng menu điều hướng')).toBeDefined();
+
+      rerender(
+        <div>
+          <div data-testid="dashboard-topbar" aria-hidden="false" />
+          <main id="main-content" aria-hidden="false" />
+          <DashboardSidebarNav isVi={true} isMobileOpen={false} onCloseMobile={onCloseMobile} />
+        </div>,
+      );
+      expect(document.getElementById('main-content')?.getAttribute('aria-hidden')).toBe('false');
+      expect(
+        document.querySelector('[data-testid="dashboard-topbar"]')?.getAttribute('aria-hidden'),
+      ).toBe('false');
       unmount();
     } finally {
       window.matchMedia = prevMatchMedia;
