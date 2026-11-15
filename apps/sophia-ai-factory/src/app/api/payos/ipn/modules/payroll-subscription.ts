@@ -31,7 +31,7 @@ export async function commitPayOsSubscriptionBatch(params: {
   try {
     const { data: existingSub } = await db
       .from('subscriptions')
-      .select('id,plan,tier,status,current_period_end')
+      .select('id,plan,tier,status,current_period_start,current_period_end')
       .eq('org_id', orgId ?? '')
       .single();
     const existingTyped = existingSub as {
@@ -39,6 +39,7 @@ export async function commitPayOsSubscriptionBatch(params: {
       plan?: string | null;
       tier?: string | null;
       status?: string | null;
+      current_period_start?: string | null;
       current_period_end?: string | null;
     } | null;
 
@@ -49,13 +50,13 @@ export async function commitPayOsSubscriptionBatch(params: {
           nowMs,
           existing: existingTyped,
         })
-      : { effectiveTier: tier, effectivePlan: tier.toLowerCase(), periodEnd };
+      : { effectiveTier: tier, effectivePlan: tier.toLowerCase(), periodStart: now, periodEnd };
 
     const stmts = orgId
       ? existingTyped
         ? [
-            d1.prepare('UPDATE subscriptions SET tier=?, plan=?, status=?, current_period_end=?, updated_at=? WHERE org_id=?')
-              .bind(effective.effectiveTier, effective.effectivePlan, 'active', effective.periodEnd, now, orgId),
+            d1.prepare('UPDATE subscriptions SET tier=?, plan=?, status=?, current_period_start=?, current_period_end=?, updated_at=? WHERE org_id=?')
+              .bind(effective.effectiveTier, effective.effectivePlan, 'active', effective.periodStart, effective.periodEnd, now, orgId),
             d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
               .bind(effective.effectivePlan, now, orgId),
             d1.prepare("UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=? AND status='pending'")

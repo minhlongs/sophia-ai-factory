@@ -52,15 +52,18 @@ export function resolveEffectiveSubscriptionState(params: {
     plan?: string | null;
     tier?: string | null;
     status?: string | null;
+    current_period_start?: string | null;
     current_period_end?: string | null;
   } | null;
-}): { effectiveTier: Tier; effectivePlan: string; periodEnd: string; isLifetime: boolean } {
+}): { effectiveTier: Tier; effectivePlan: string; periodStart: string; periodEnd: string; isLifetime: boolean } {
   const { purchasedTier, orderPeriod, nowMs, existing } = params;
+  const nowIso = new Date(nowMs).toISOString();
   const base = calculatePayOsPeriodEnd(purchasedTier, orderPeriod, nowMs);
   if (!existing || existing.status !== 'active') {
     return {
       effectiveTier: purchasedTier,
       effectivePlan: purchasedTier.toLowerCase(),
+      periodStart: nowIso,
       periodEnd: base.periodEnd,
       isLifetime: base.isLifetime,
     };
@@ -80,10 +83,13 @@ export function resolveEffectiveSubscriptionState(params: {
     return {
       effectiveTier: purchasedTier,
       effectivePlan: purchasedTier.toLowerCase(),
+      periodStart: nowIso,
       periodEnd: base.periodEnd,
       isLifetime: base.isLifetime,
     };
   }
+
+  const preservedStart = existing.current_period_start || nowIso;
 
   if (normalizedCurrentTier && wouldDowngradeTier(normalizedCurrentTier, purchasedTier)) {
     const preservedIsLifetime = UNIFIED_TIERS[normalizedCurrentTier]?.billingType === 'lifetime';
@@ -93,6 +99,7 @@ export function resolveEffectiveSubscriptionState(params: {
     return {
       effectiveTier: normalizedCurrentTier,
       effectivePlan: normalizedCurrentTier.toLowerCase(),
+      periodStart: preservedStart,
       periodEnd: preservedEnd,
       isLifetime: preservedIsLifetime,
     };
@@ -102,6 +109,7 @@ export function resolveEffectiveSubscriptionState(params: {
     return {
       effectiveTier: purchasedTier,
       effectivePlan: purchasedTier.toLowerCase(),
+      periodStart: preservedStart,
       periodEnd: base.periodEnd,
       isLifetime: true,
     };
@@ -117,6 +125,7 @@ export function resolveEffectiveSubscriptionState(params: {
   return {
     effectiveTier: purchasedTier,
     effectivePlan: purchasedTier.toLowerCase(),
+    periodStart: preservedStart,
     periodEnd: extendedEndIso,
     isLifetime: false,
   };
@@ -143,12 +152,13 @@ export async function activatePayOsSubscription(params: {
   }
 
   const subscriptionState = createdOrg
-    ? { id: null, count: 0, plan: null, tier: null, status: null, current_period_end: null }
+    ? { id: null, count: 0, plan: null, tier: null, status: null, current_period_start: null, current_period_end: null }
     : await rawDb
         .prepare(
           `SELECT MIN(id) AS id, COUNT(*) AS count,
                   MIN(plan) AS plan, MIN(tier) AS tier,
-                  MIN(status) AS status, MIN(current_period_end) AS current_period_end
+                  MIN(status) AS status, MIN(current_period_start) AS current_period_start,
+                  MIN(current_period_end) AS current_period_end
            FROM subscriptions WHERE org_id = ?1`,
         )
         .bind(orgId)
@@ -158,13 +168,14 @@ export async function activatePayOsSubscription(params: {
           plan?: string | null;
           tier?: string | null;
           status?: string | null;
+          current_period_start?: string | null;
           current_period_end?: string | null;
         }>();
   if (!subscriptionState || subscriptionState.count > 1) {
     throw new Error('PayOS activation requires an unambiguous organization subscription');
   }
 
-  const { effectiveTier, effectivePlan: planLower, periodEnd, isLifetime } =
+  const { effectiveTier, effectivePlan: planLower, periodStart, periodEnd, isLifetime } =
     resolveEffectiveSubscriptionState({
       purchasedTier: tier,
       orderPeriod: order.period,
@@ -210,8 +221,8 @@ export async function activatePayOsSubscription(params: {
   } else if (subscriptionState.id) {
     statements.push(
       rawDb
-        .prepare(`UPDATE subscriptions SET tier = ?1, plan = ?2, status = 'active', current_period_end = ?3, updated_at = ?4 WHERE id = ?5 AND org_id = ?6 AND ${lockExists}`)
-        .bind(effectiveTier, planLower, periodEnd, now, subscriptionState.id, orgId, eventId, lockCreatedAt),
+        .prepare(`UPDATE subscriptions SET tier = ?1, plan = ?2, status = 'active', current_period_start = ?3, current_period_end = ?4, updated_at = ?5 WHERE id = ?6 AND org_id = ?7 AND ${lockExists}`)
+        .bind(effectiveTier, planLower, periodStart, periodEnd, now, subscriptionState.id, orgId, eventId, lockCreatedAt),
     );
   } else {
     statements.push(
