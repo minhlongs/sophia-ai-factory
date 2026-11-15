@@ -111,6 +111,7 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0502_publishing_jobs_title_column.sql
 !apps/sophia-ai-factory/migrations/0503_reconcile_pending_orders_provider_payment_id.sql
 !apps/sophia-ai-factory/migrations/0504_pending_orders_provider_payment_id_index.sql
+!apps/sophia-ai-factory/migrations/0505_publish_ledger_compliance_json.sql
 backups/*.sql
 **/d1-*.sql
 

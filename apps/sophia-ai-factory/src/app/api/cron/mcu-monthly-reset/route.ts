@@ -49,8 +49,10 @@ function getD1Binding(): D1Database | null {
 }
 
 interface UserTierRow {
-  user_id: string;
-  tier: string;
+  user_id: string | null;
+  tier: string | null;
+  plan?: string | null;
+  current_period_end?: string | null;
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -70,19 +72,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let errorCount = 0;
 
   try {
-    // Fetch all users with active subscriptions.
-    // Real schema (migrations 0001+0086): table is `subscriptions`, FK = user_id.
+    // Fetch all users with active subscriptions and filter out expired periods (e.g. expired 14d Paid Pilots).
+    const nowMs = Date.now();
     const { data: users } = await db
       .from('subscriptions')
-      .select('user_id, tier')
+      .select('user_id, tier, plan, current_period_end')
       .eq('status', 'active') as { data: UserTierRow[] | null; error: unknown };
 
-    const activeUsers = users ?? [];
+    const activeUsers = (users ?? []).filter((row) => {
+      if (!row.user_id) return false;
+      if (!row.current_period_end) return true;
+      const endMs = Date.parse(row.current_period_end);
+      return !Number.isFinite(endMs) || endMs > nowMs;
+    });
 
     for (const user of activeUsers) {
       try {
-        const tierKey = TIER_MAP[user.tier];
-        if (!tierKey) continue;
+        const rawTier = user.tier ?? user.plan ?? '';
+        const tierKey = TIER_MAP[rawTier];
+        if (!tierKey || !user.user_id) continue;
 
         const tierConfig = UNIFIED_TIERS[tierKey];
         const monthlyMcu = tierConfig.mcuMonthly;

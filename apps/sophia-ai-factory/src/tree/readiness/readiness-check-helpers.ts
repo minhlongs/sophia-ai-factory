@@ -39,15 +39,13 @@ export async function checkSubscriptionActive(
          FROM subscriptions s
          WHERE (s.user_id = ?1 OR s.org_id IN (SELECT org_id FROM org_members WHERE user_id = ?1))
            AND (s.status = 'active' OR s.status = 'trialing')
+           AND (s.current_period_end IS NULL OR s.current_period_end > ?2)
          ORDER BY s.created_at DESC
          LIMIT 1`,
       )
-      .bind(userId)
+      .bind(userId, nowIso)
       .first<{ status?: string; current_period_end?: string | null }>();
     if (!subRow) return false;
-    if (subRow.current_period_end && subRow.current_period_end <= nowIso) {
-      return false;
-    }
     return subRow.status === 'active' || subRow.status === 'trialing';
   } catch {
     return false;

@@ -60,17 +60,12 @@ export async function queryActiveCustomerSubscription(
       .bind(userId)
       .first<RawSubscriptionRow>();
 
-    if (userSub) {
+    if (userSub && !isExpiredPeriod(userSub.current_period_end)) {
+      resolvedTier = normalizePlanToTier(userSub.tier ?? userSub.plan);
+      subStatus = userSub.status ?? 'active';
       periodEnd = userSub.current_period_end;
-      if (isExpiredPeriod(userSub.current_period_end)) {
-        resolvedTier = 'BASIC';
-        subStatus = 'expired';
-      } else {
-        resolvedTier = normalizePlanToTier(userSub.tier ?? userSub.plan);
-        subStatus = userSub.status ?? 'active';
-      }
     } else {
-      // 2. Check org-level active subscription for org members
+      // 2. Check org-level active subscription for org members (including when userSub expired)
       const orgSub = await db
         .prepare(
           `SELECT s.tier, s.plan, s.status, s.current_period_start, s.current_period_end
@@ -82,15 +77,18 @@ export async function queryActiveCustomerSubscription(
         .bind(userId)
         .first<RawOrgSubRow>();
 
-      if (orgSub) {
+      if (orgSub && !isExpiredPeriod(orgSub.current_period_end)) {
+        resolvedTier = normalizePlanToTier(orgSub.tier ?? orgSub.plan);
+        subStatus = orgSub.status ?? 'active';
         periodEnd = orgSub.current_period_end;
-        if (isExpiredPeriod(orgSub.current_period_end)) {
-          resolvedTier = 'BASIC';
-          subStatus = 'expired';
-        } else {
-          resolvedTier = normalizePlanToTier(orgSub.tier ?? orgSub.plan);
-          subStatus = orgSub.status ?? 'active';
-        }
+      } else if (orgSub) {
+        resolvedTier = 'BASIC';
+        subStatus = 'expired';
+        periodEnd = orgSub.current_period_end;
+      } else if (userSub) {
+        resolvedTier = 'BASIC';
+        subStatus = 'expired';
+        periodEnd = userSub.current_period_end;
       }
     }
   } catch (err) {

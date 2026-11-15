@@ -1,5 +1,6 @@
 import { createServerClient } from '@/seed/db/client';
 import type { PublishingChannel, PublishingJob, ProvenanceInput } from '@/seed/types';
+import type { PublishApprovalCompliance } from '@/tree/publishing/approval';
 import type { Step } from '../publish-types';
 
 export interface UploadToProviderArgs {
@@ -13,6 +14,7 @@ export interface UploadToProviderArgs {
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
   tenantId: string;
   userId: string;
+  compliance?: PublishApprovalCompliance;
   provenance?: ProvenanceInput;
 }
 
@@ -20,5 +22,6 @@ export interface PollStatusArgs {
   step: Step;
   tenantId: string;
   provider: string;
+  channelId?: string;
   externalPostId: string;
 }

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
-import { createPayOsInvoice, FEATURE_PAYOS } from '@/land/payments/payos'
+import { createPayOsInvoice, FEATURE_PAYOS, isPayOsEnabled } from '@/land/payments/payos'
 import { writeOrder } from '@/land/orders/pending-order-repo'
 import { logger } from '@/seed/utils/logger-utility'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
@@ -21,7 +21,8 @@ const payosCheckoutSchema = z.object({
 })
 
 export const POST = withRateLimit(async function POST(request: NextRequest) {
-  if (!FEATURE_PAYOS) {
+  const payosActive = process.env.FEATURE_PAYOS !== undefined ? isPayOsEnabled() : FEATURE_PAYOS
+  if (!payosActive) {
     return NextResponse.json({ error: 'PayOS not currently available' }, { status: 503 })
   }
 

@@ -1,4 +1,4 @@
-import { FEATURE_PAYOS } from '@/seed/config/flags';
+import { FEATURE_PAYOS, isPayOsEnabled } from '@/seed/config/flags';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
 import type {
@@ -9,7 +9,7 @@ import type {
 import { PayOsDefinitiveError } from './types';
 import { getPayOsTierConfig } from './webhook-dispatcher';
 
-export { FEATURE_PAYOS };
+export { FEATURE_PAYOS, isPayOsEnabled };
 
 /**
  * Create a PayOS payment link with VND QR code.
@@ -17,7 +17,7 @@ export { FEATURE_PAYOS };
  * Requires PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY env vars.
  */
 export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<PayOsCheckoutResult> {
-  if (!FEATURE_PAYOS) {
+  if (!isPayOsEnabled() && !FEATURE_PAYOS) {
     throw new PayOsDefinitiveError('PayOS feature flag disabled — set FEATURE_PAYOS=true to enable');
   }
 

@@ -3,6 +3,7 @@ import {
   verifyPayOsWebhook,
   payOsIpnSchema,
   FEATURE_PAYOS,
+  isPayOsEnabled,
 } from '@/land/payments/payos';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -16,9 +17,10 @@ export async function verifyPayOsRequest(
   request: NextRequest,
   checksumKey?: string,
 ): Promise<{ ok: true; data: VerifiedPayOsPayload } | { ok: false; response: NextResponse }> {
-  if (!FEATURE_PAYOS) {
-    logger.warn('[PayOS Webhook] Feature flag disabled — ignoring');
-    return { ok: false, response: NextResponse.json({ received: true, note: 'payos_disabled' }, { status: 200 }) };
+  const payosActive = process.env.FEATURE_PAYOS !== undefined ? isPayOsEnabled() : FEATURE_PAYOS;
+  if (!payosActive) {
+    logger.warn('[PayOS Webhook] Feature flag disabled — returning 503 for safe retry');
+    return { ok: false, response: NextResponse.json({ error: 'PayOS not enabled', note: 'payos_disabled' }, { status: 503 }) };
   }
 
   if (!checksumKey) {

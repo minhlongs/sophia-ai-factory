@@ -8,7 +8,7 @@ export interface ReceiptInput {
   email: string
   userName?: string
   tier: string
-  period: 'monthly' | 'yearly' | 'lifetime'
+  period: 'monthly' | 'yearly' | 'lifetime' | 'pilot_14d'
   amountUsd: number
   paymentId: string
   paymentMethod: 'nowpayments' | 'payos'
@@ -27,6 +27,7 @@ const PERIOD_LABELS: Record<string, { en: string; vi: string }> = {
   monthly: { en: 'Monthly', vi: 'Hàng tháng' },
   yearly: { en: 'Yearly', vi: 'Hàng năm' },
   lifetime: { en: 'Lifetime', vi: 'Trọn đời' },
+  pilot_14d: { en: '14-Day Paid Pilot', vi: 'Gói Thử nghiệm 14 Ngày' },
 }
 
 export interface ReceiptOutput {

@@ -23,7 +23,7 @@ function isNonRetriableUploadError(err: unknown): boolean {
 export async function uploadToProvider(
   args: UploadToProviderArgs
 ): Promise<{ externalPostId: string; shouldRetry: boolean; error?: string }> {
-  const { channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId, provenance } = args;
+  const { channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId, compliance, provenance } = args;
   const pub = buildPublisher(channel, accessToken);
 
   try {
@@ -33,6 +33,16 @@ export async function uploadToProvider(
       ...(job.title ? { title: job.title } : {}),
       ...(job.product_link ? { productLink: job.product_link } : {}),
       ...(job.privacy_status ? { privacyStatus: job.privacy_status } : {}),
+      ...(compliance?.privacyLevel ? { tiktokPrivacyLevel: compliance.privacyLevel } : {}),
+      ...(typeof compliance?.brandOrganicToggle === 'boolean'
+        ? { brandOrganicToggle: compliance.brandOrganicToggle }
+        : {}),
+      ...(typeof compliance?.brandContentToggle === 'boolean'
+        ? { brandContentToggle: compliance.brandContentToggle }
+        : {}),
+      ...(typeof compliance?.containsSyntheticMedia === 'boolean'
+        ? { containsSyntheticMedia: compliance.containsSyntheticMedia }
+        : {}),
       ...(provenance ? { provenance } : {}),
     });
     return { externalPostId, shouldRetry: false };
@@ -58,7 +68,7 @@ export async function uploadToProvider(
 }
 
 export async function pollStatusUntilFinal(args: PollStatusArgs): Promise<'live' | 'failed'> {
-  const { step, tenantId, provider, externalPostId } = args;
+  const { step, tenantId, provider, channelId, externalPostId } = args;
   const MAX_POLL_ATTEMPTS = 12;
   const POLL_INTERVAL = '30s';
 
@@ -69,12 +79,15 @@ export async function pollStatusUntilFinal(args: PollStatusArgs): Promise<'live'
 
     try {
       const db = createServerClient();
-      const { data: chData } = await db
+      let query = db
         .from('publishing_channels')
         .select('provider,access_token,external_account_id')
         .eq('tenant_id', tenantId)
-        .eq('provider', provider)
-        .single();
+        .eq('provider', provider);
+      if (channelId) {
+        query = query.eq('id', channelId);
+      }
+      const { data: chData } = await query.single();
 
       const ch = chData as Pick<PublishingChannel, 'provider' | 'access_token' | 'external_account_id'> | null;
       if (!ch?.access_token) return 'failed';

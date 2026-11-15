@@ -431,11 +431,13 @@ add_verify "0503_reconcile_pending_orders_provider_payment_id" \
   "SELECT name FROM pragma_table_info('pending_orders') WHERE name = 'provider_payment_id'"
 add_verify "0504_pending_orders_provider_payment_id_index" \
   "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pending_orders_provider_payment_id'"
+add_verify "0505_publish_ledger_compliance_json" \
+  "SELECT name FROM pragma_table_info('publish_ledger') WHERE name = 'compliance_json'"
 
 is_critical_migration() {
   local name="$1"
   case "$name" in
-    0214*|0215*|0216*|0473*|0474*|0496*|0497*|0498*|0502*|0503*|0504*|0116*|0126*|0059*)
+    0214*|0215*|0216*|0473*|0474*|0496*|0497*|0498*|0502*|0503*|0504*|0505*|0116*|0126*|0059*)
       return 0
       ;;
     *)

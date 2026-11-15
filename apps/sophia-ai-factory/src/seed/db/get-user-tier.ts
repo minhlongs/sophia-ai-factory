@@ -29,29 +29,55 @@ export async function getUserTier(userId: string): Promise<Tier> {
     // single-membership fallback instead of reviving older or other-org tiers.
     // Enforce current_period_end > nowIso when set so expired pilot/monthly rows
     // never continue granting paid entitlements if a cron sweep lags.
-    const subscription = await d1
-      .prepare(
-        `WITH direct AS (
-           SELECT COALESCE(tier, plan) AS raw_tier
-           FROM subscriptions
-           WHERE user_id = ?1 AND status = 'active'
-             AND (current_period_end IS NULL OR current_period_end > ?2)
-           ORDER BY created_at DESC
-           LIMIT 1
-         )
-         SELECT COALESCE(
-           (SELECT raw_tier FROM direct),
-           (SELECT s.plan
-            FROM subscriptions s
-            WHERE s.org_id = (SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1)
-              AND s.status = 'active' AND s.plan IS NOT NULL
-              AND (s.current_period_end IS NULL OR s.current_period_end > ?2)
-            ORDER BY s.created_at DESC
-            LIMIT 1)
-         ) AS raw_tier`,
-      )
-      .bind(userId, nowIso)
-      .first<{ raw_tier: string | null }>();
+    let subscription: { raw_tier: string | null } | null = null;
+    try {
+      subscription = await d1
+        .prepare(
+          `WITH direct AS (
+             SELECT COALESCE(tier, plan) AS raw_tier
+             FROM subscriptions
+             WHERE user_id = ?1 AND status = 'active'
+               AND (current_period_end IS NULL OR current_period_end > ?2)
+             ORDER BY created_at DESC
+             LIMIT 1
+           )
+           SELECT COALESCE(
+             (SELECT raw_tier FROM direct),
+             (SELECT COALESCE(s.tier, s.plan)
+              FROM subscriptions s
+              WHERE s.org_id = (SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1)
+                AND s.status = 'active' AND COALESCE(s.tier, s.plan) IS NOT NULL
+                AND (s.current_period_end IS NULL OR s.current_period_end > ?2)
+              ORDER BY s.created_at DESC
+              LIMIT 1)
+           ) AS raw_tier`,
+        )
+        .bind(userId, nowIso)
+        .first<{ raw_tier: string | null }>();
+    } catch (sqlErr) {
+      if (!String(sqlErr).includes('current_period_end')) throw sqlErr;
+      subscription = await d1
+        .prepare(
+          `WITH direct AS (
+             SELECT COALESCE(tier, plan) AS raw_tier
+             FROM subscriptions
+             WHERE user_id = ?1 AND status = 'active'
+             ORDER BY created_at DESC
+             LIMIT 1
+           )
+           SELECT COALESCE(
+             (SELECT raw_tier FROM direct),
+             (SELECT COALESCE(s.tier, s.plan)
+              FROM subscriptions s
+              WHERE s.org_id = (SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1)
+                AND s.status = 'active' AND COALESCE(s.tier, s.plan) IS NOT NULL
+              ORDER BY s.created_at DESC
+              LIMIT 1)
+           ) AS raw_tier`,
+        )
+        .bind(userId)
+        .first<{ raw_tier: string | null }>();
+    }
 
     return normalizePlanToTier(subscription?.raw_tier);
   } catch {

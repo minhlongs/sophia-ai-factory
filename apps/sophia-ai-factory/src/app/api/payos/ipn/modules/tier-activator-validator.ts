@@ -23,6 +23,9 @@ type PendingOrderRow = {
   period?: string;
   amount_vnd?: number | null;
   invoice_url: string | null;
+  provider_payment_id?: string | null;
+  provider_order_code?: number | string | null;
+  status?: string;
   subaccount_id?: string;
 };
 
@@ -86,13 +89,26 @@ export async function findAndValidatePayOsOrder(params: {
   }
 
   const orders = pendingOrders as PendingOrderRow[];
-  const matchOrder = orders.find(
-    (o) => o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode)),
-  );
+  const matchOrder =
+    orders.find(
+      (o) =>
+        (o.provider_payment_id && String(o.provider_payment_id) === String(paymentLinkId)) ||
+        (o.provider_order_code != null && String(o.provider_order_code) === String(orderCode)),
+    ) ??
+    orders.find(
+      (o) =>
+        !o.provider_payment_id &&
+        o.provider_order_code == null &&
+        (o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode))),
+    );
   if (!matchOrder) {
     logger.error('[PayOS IPN] No matching pending order found', { paymentLinkId, orderCode });
     await releaseEvent();
     return { ok: false, error: 'Order not found', status: 400 };
+  }
+  if (matchOrder.status && matchOrder.status !== 'pending') {
+    await releaseEvent();
+    return { ok: false, error: 'Order already settled', status: 409 };
   }
 
   const tier = matchOrder.tier as Tier;

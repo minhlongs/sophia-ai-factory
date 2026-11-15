@@ -48,6 +48,7 @@ export async function activatePayOsTier({
   await commitPayOsSubscriptionBatch({
     db,
     d1,
+    userId,
     orgId,
     tier,
     billingPeriod,

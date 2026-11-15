@@ -1,13 +1,23 @@
 import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { invalidateOrgIdCache } from '@/seed/auth/org-resolver';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
-import { invalidateUserTierCache } from '@/seed/db/get-user-tier';
+import { invalidateUserTierCache, normalizePlanToTier } from '@/seed/db/get-user-tier';
 import { wouldDowngradeTier } from '@/land/billing/nowpayments-ipn-utils';
 import { logger } from '@/seed/utils/logger-utility';
 import { PAID_PILOT_DURATION_DAYS } from '@/tree/finance/pilot-unit-economics-types';
 import type { Tier } from '@/seed/types';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { DbClient } from './payos-idempotency';
+
+export const PAID_PILOT_14_DAY_MCU_GRANT = 500;
+
+export function resolvePayOsInitialMcuGrant(tier: Tier, orderPeriod?: string): number {
+  if (orderPeriod === 'pilot_14d') {
+    return PAID_PILOT_14_DAY_MCU_GRANT;
+  }
+  const monthly = UNIFIED_TIERS[tier]?.mcuMonthly ?? 0;
+  return monthly > 0 ? monthly : 0;
+}
 
 export interface SubscriptionActivationResult {
   orgId: string;
@@ -56,8 +66,16 @@ export function resolveEffectiveSubscriptionState(params: {
     };
   }
 
+  const rawCurrent = (existing.tier ?? existing.plan ?? '').trim();
+  const normalizedCurrentTier = rawCurrent ? normalizePlanToTier(rawCurrent) : null;
   const existingEndMs = existing.current_period_end ? Date.parse(existing.current_period_end) : NaN;
-  const hasFutureEntitlement = Number.isFinite(existingEndMs) && existingEndMs > nowMs;
+  const currentIsLifetime =
+    normalizedCurrentTier !== null && UNIFIED_TIERS[normalizedCurrentTier]?.billingType === 'lifetime';
+  const hasFutureEntitlement =
+    existing.current_period_end == null
+      ? currentIsLifetime
+      : Number.isFinite(existingEndMs) && existingEndMs > nowMs;
+
   if (!hasFutureEntitlement) {
     return {
       effectiveTier: purchasedTier,
@@ -67,14 +85,15 @@ export function resolveEffectiveSubscriptionState(params: {
     };
   }
 
-  const currentPlanOrTier = (existing.tier ?? existing.plan ?? '').trim();
-  if (currentPlanOrTier && wouldDowngradeTier(currentPlanOrTier, purchasedTier)) {
-    const preservedUpper = currentPlanOrTier.toUpperCase() as Tier;
-    const preservedIsLifetime = UNIFIED_TIERS[preservedUpper]?.billingType === 'lifetime';
+  if (normalizedCurrentTier && wouldDowngradeTier(normalizedCurrentTier, purchasedTier)) {
+    const preservedIsLifetime = UNIFIED_TIERS[normalizedCurrentTier]?.billingType === 'lifetime';
+    const preservedEnd =
+      existing.current_period_end ??
+      (preservedIsLifetime ? new Date('2099-12-31T23:59:59Z').toISOString() : base.periodEnd);
     return {
-      effectiveTier: preservedUpper,
-      effectivePlan: currentPlanOrTier.toLowerCase(),
-      periodEnd: existing.current_period_end!,
+      effectiveTier: normalizedCurrentTier,
+      effectivePlan: normalizedCurrentTier.toLowerCase(),
+      periodEnd: preservedEnd,
       isLifetime: preservedIsLifetime,
     };
   }

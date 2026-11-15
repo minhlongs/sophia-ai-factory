@@ -67,6 +67,13 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       );
     }
 
+    if (period === 'pilot_14d' && promoCode) {
+      return NextResponse.json(
+        { error: 'Promo codes cannot be combined with the 14-Day Paid Pilot offer' },
+        { status: 400 }
+      );
+    }
+
     const dedupedResponse = await tryReusePendingOrder({
       userId,
       tier,

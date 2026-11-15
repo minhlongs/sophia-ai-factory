@@ -11,7 +11,12 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { awaitPublishApproval, toRequesterId, type PublishApprovalStep } from '@/tree/publishing/approval';
+import {
+  awaitPublishApproval,
+  toRequesterId,
+  type PublishApprovalCompliance,
+  type PublishApprovalStep,
+} from '@/tree/publishing/approval';
 import {
   VideoNotFoundError,
   VideoUnauthorizedError,
@@ -22,7 +27,7 @@ import { resolveVideoUrlOrFail, assertSafeVideoUrl, sanitizeError } from './publ
 
 /** Either the publish is released with its media, or it stops with a terminal result. */
 export type PublishApprovalGateOutcome =
-  | { readonly kind: 'proceed'; readonly videoUrl: string }
+  | { readonly kind: 'proceed'; readonly videoUrl: string; readonly compliance?: PublishApprovalCompliance }
   | { readonly kind: 'stop'; readonly result: ClaimResult };
 
 /**
@@ -101,7 +106,11 @@ export async function runPublishApprovalGate(args: PublishApprovalGateArgs): Pro
   );
 
   if (approval.state.outcome === 'allowed') {
-    return { kind: 'proceed', videoUrl };
+    return {
+      kind: 'proceed',
+      videoUrl,
+      ...(approval.compliance ? { compliance: approval.compliance } : {}),
+    };
   }
 
   const reason = approval.state.outcome === 'blocked'

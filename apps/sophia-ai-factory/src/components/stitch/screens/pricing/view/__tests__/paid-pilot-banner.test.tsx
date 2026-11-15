@@ -121,7 +121,8 @@ describe('PaidPilotBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: TRANSLATIONS['paidPilot.cta'] }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status').textContent).toBe(TRANSLATIONS['paidPilot.fallbackNotice']);
+      expect(screen.getByRole('status').textContent).toContain(TRANSLATIONS['paidPilot.fallbackNotice']);
+      expect(screen.getByTestId('paid-pilot-order-ref').textContent).toContain('sophia_user_1_200');
     });
   });
 

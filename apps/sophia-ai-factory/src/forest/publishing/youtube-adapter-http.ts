@@ -19,10 +19,10 @@ export const YT_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 export const YT_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 function createYouTubeUploadHttpError(status: number, message: string, retryAfterHeader?: string | null): Error {
-  if (status === 429) {
+  if (status === 429 || status === 408) {
     const parsedRetryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : NaN;
     return Object.assign(new Error(message), {
-      statusCode: 429,
+      statusCode: status,
       retriable: true as const,
       ...(Number.isFinite(parsedRetryAfter) && parsedRetryAfter > 0 ? { retryAfterSec: parsedRetryAfter } : {}),
     });
