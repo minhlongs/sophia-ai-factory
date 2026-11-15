@@ -78,7 +78,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
   } else if (
     pathname.startsWith('/api/user/byok') ||
     pathname.startsWith('/api/setup-wizard') ||
-    pathname.startsWith('/api/setup/verify')
+    pathname.startsWith('/api/setup/')
   ) {
     // Dedicated BYOK & Setup Wizard bucket: isolated from /api/auth/* (10/min)
     // and /api/admin/* (50/min) so onboarding refreshes never starve login or

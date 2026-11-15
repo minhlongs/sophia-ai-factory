@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/navigation';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/seed/components/ui/alert';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { TemplatePack, TemplateStep } from './types';
 import { StepIndicator } from './step-indicator';
 import { TemplateHeader } from './template-header';
@@ -53,7 +54,7 @@ export function WhatsAppTemplatesView() {
     try {
       const response = await fetch('/api/setup-wizard/save-whatsapp-credentials', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({ templateId: selectedTemplate.id, variables }),
       });
 

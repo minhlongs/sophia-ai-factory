@@ -79,7 +79,15 @@ import { GET as byokGet, POST as byokPost, DELETE as byokDelete } from '@/app/ap
 import { POST as byokTestPost } from '@/app/api/user/byok/test/route';
 import { POST as validateKeyPost } from '@/app/api/setup-wizard/validate-key/route';
 import { POST as testHeygenPost } from '@/app/api/setup-wizard/test-heygen/route';
+import { POST as testResendPost } from '@/app/api/setup-wizard/test-resend/route';
 import { POST as autoRegisterHeygenPost } from '@/app/api/setup-wizard/heygen/auto-register/route';
+import { POST as setupSavePost } from '@/app/api/setup/save/route';
+import { GET as setupSkipGet } from '@/app/api/setup/skip/route';
+import {
+  requestKeyValidation,
+  requestProviderKeySave,
+  requestProviderRevoke,
+} from '@/tree/components/setup-wizard/steps/use-setup-wizard-actions';
 
 const VALID_OPENROUTER_KEY = 'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890';
 const REPLACEMENT_OPENROUTER_KEY = 'sk-or-v1-zyxwvutsrqponmlkjihgfedcba0987654321';
@@ -391,5 +399,188 @@ describe('BYOK & Setup Wizard adversarial rate-limit security', () => {
       },
     });
     expect(verifyCsrfToken(validCsrfReq)).toBe(true);
+  });
+
+  it('recovers cleanly from HTTP 429 once the 60s sliding rate-limit window expires', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-15T04:00:00Z'));
+      for (let i = 0; i < 12; i++) {
+        const res = await validateKeyPost(
+          new NextRequest('http://localhost/api/setup-wizard/validate-key', {
+            method: 'POST',
+            headers: { 'cf-connecting-ip': '198.51.100.201' },
+            body: JSON.stringify({ provider: 'openrouter', api_key: VALID_OPENROUTER_KEY }),
+          }),
+        );
+        expect(res.status).toBe(200);
+      }
+
+      const throttled = await validateKeyPost(
+        new NextRequest('http://localhost/api/setup-wizard/validate-key', {
+          method: 'POST',
+          headers: { 'cf-connecting-ip': '198.51.100.201' },
+          body: JSON.stringify({ provider: 'openrouter', api_key: VALID_OPENROUTER_KEY }),
+        }),
+      );
+      assertStandard429Headers(throttled, 12);
+
+      // Advance past the 60s sliding window -> requests succeed again
+      vi.advanceTimersByTime(60_500);
+      const recovered = await validateKeyPost(
+        new NextRequest('http://localhost/api/setup-wizard/validate-key', {
+          method: 'POST',
+          headers: { 'cf-connecting-ip': '198.51.100.201' },
+          body: JSON.stringify({ provider: 'openrouter', api_key: VALID_OPENROUTER_KEY }),
+        }),
+      );
+      expect(recovered.status).toBe(200);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('handles upstream provider quota/rate-limit (429/402) as PROVIDER_UNAVAILABLE without marking valid keys INVALID', async () => {
+    mocks.probeProviderApiKey.mockResolvedValueOnce({
+      ok: false,
+      valid: false,
+      provider: 'openrouter',
+      status: 'PROVIDER_UNAVAILABLE',
+      httpStatus: 429,
+      latencyMs: 35,
+      maskedKey: '****...7890',
+      message: 'Provider quota or rate limit reached (429)',
+      message_vi: 'Nhà cung cấp đã đạt giới hạn tần suất hoặc hết hạn mức (429)',
+    });
+
+    // validate-key surfaces 422 with PROVIDER_UNAVAILABLE instead of a misleading 502/INVALID
+    const valRes = await validateKeyPost(
+      new NextRequest('http://localhost/api/setup-wizard/validate-key', {
+        method: 'POST',
+        headers: { 'cf-connecting-ip': '198.51.100.205' },
+        body: JSON.stringify({ provider: 'openrouter', api_key: VALID_OPENROUTER_KEY }),
+      }),
+    );
+    expect(valRes.status).toBe(422);
+    const valBody = (await valRes.json()) as { status: string };
+    expect(valBody.status).toBe('PROVIDER_UNAVAILABLE');
+
+    // POST /api/user/byok with validateLive allows storing a format-valid key when upstream is temporarily 429
+    mocks.probeProviderApiKey.mockResolvedValueOnce({
+      ok: false,
+      valid: false,
+      provider: 'openrouter',
+      status: 'PROVIDER_UNAVAILABLE',
+      httpStatus: 429,
+      latencyMs: 30,
+      maskedKey: '****...7890',
+      message: 'Provider quota or rate limit reached (429)',
+      message_vi: 'Nhà cung cấp đã đạt giới hạn tần suất hoặc hết hạn mức (429)',
+    });
+    const saveRes = await byokPost(
+      new NextRequest('http://localhost/api/user/byok', {
+        method: 'POST',
+        headers: { 'cf-connecting-ip': '198.51.100.205' },
+        body: JSON.stringify({
+          provider: 'openrouter',
+          key: VALID_OPENROUTER_KEY,
+          validateLive: true,
+        }),
+      }),
+    );
+    expect(saveRes.status).toBe(200);
+    expect(mocks.setUserApiKey).toHaveBeenCalledWith('user-alpha', 'openrouter', VALID_OPENROUTER_KEY);
+  });
+
+  it('enforces per-user/per-IP caps on /api/setup/save, /api/setup/skip, and /api/setup-wizard/test-resend', async () => {
+    const token = generateCsrfToken();
+
+    // /api/setup/save rejects missing CSRF with 403 and caps at 20/min
+    const noCsrfSave = await setupSavePost(
+      new NextRequest('http://localhost/api/setup/save', {
+        method: 'POST',
+        body: JSON.stringify({ config: {} }),
+      }),
+    );
+    expect(noCsrfSave.status).toBe(403);
+
+    for (let i = 0; i < 20; i++) {
+      const res = await setupSavePost(
+        new NextRequest('http://localhost/api/setup/save', {
+          method: 'POST',
+          headers: {
+            'cf-connecting-ip': '198.51.100.210',
+            cookie: `${CSRF_COOKIE_NAME}=${token}`,
+            [CSRF_HEADER_NAME]: token,
+          },
+          body: 'not-json',
+        }),
+      );
+      // Reaches JSON body parse after passing auth + CSRF + rate-limit -> 400 Invalid JSON payload
+      expect(res.status).toBe(400);
+    }
+    const cappedSave = await setupSavePost(
+      new NextRequest('http://localhost/api/setup/save', {
+        method: 'POST',
+        headers: {
+          'cf-connecting-ip': '198.51.100.210',
+          cookie: `${CSRF_COOKIE_NAME}=${token}`,
+          [CSRF_HEADER_NAME]: token,
+        },
+        body: 'not-json',
+      }),
+    );
+    assertStandard429Headers(cappedSave, 20);
+
+    // /api/setup/skip caps at 20/min per user
+    for (let i = 0; i < 20; i++) {
+      const skipRes = await setupSkipGet(new NextRequest('http://localhost/api/setup/skip'));
+      expect(skipRes.status).toBe(307);
+    }
+    const cappedSkip = await setupSkipGet(new NextRequest('http://localhost/api/setup/skip'));
+    assertStandard429Headers(cappedSkip, 20);
+
+    // /api/setup-wizard/test-resend caps at 5/min
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ id: 'em_1' }) } as unknown as Response);
+    for (let i = 0; i < 5; i++) {
+      const resendRes = await testResendPost(
+        new NextRequest('http://localhost/api/setup-wizard/test-resend', {
+          method: 'POST',
+          headers: { 'cf-connecting-ip': '198.51.100.211' },
+          body: JSON.stringify({ api_key: 're_test_1234567890' }),
+        }),
+      );
+      expect([200, 422, 400]).toContain(resendRes.status);
+    }
+    const cappedResend = await testResendPost(
+      new NextRequest('http://localhost/api/setup-wizard/test-resend', {
+        method: 'POST',
+        headers: { 'cf-connecting-ip': '198.51.100.211' },
+        body: JSON.stringify({ api_key: 're_test_1234567890' }),
+      }),
+    );
+    assertStandard429Headers(cappedResend, 5);
+  });
+
+  it('forwards x-csrf-token from document.cookie in Setup Wizard client actions', async () => {
+    const csrfVal = 'csrf_live_browser_token_07_3';
+    Object.defineProperty(globalThis, 'document', {
+      value: { cookie: `NEXT_LOCALE=vi; ${CSRF_COOKIE_NAME}=${csrfVal}` },
+      configurable: true,
+    });
+    const seenHeaders: Array<Record<string, string>> = [];
+    globalThis.fetch = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      seenHeaders.push((init?.headers ?? {}) as Record<string, string>);
+      return new Response(JSON.stringify({ ok: true, valid: true, latencyMs: 15 }), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    await requestKeyValidation('openrouter', VALID_OPENROUTER_KEY, 'Failed');
+    await requestProviderKeySave('openrouter', VALID_OPENROUTER_KEY, 'Failed');
+    await requestProviderRevoke('openrouter');
+
+    expect(seenHeaders).toHaveLength(3);
+    for (const hdrs of seenHeaders) {
+      expect(hdrs[CSRF_HEADER_NAME]).toBe(csrfVal);
+    }
   });
 });

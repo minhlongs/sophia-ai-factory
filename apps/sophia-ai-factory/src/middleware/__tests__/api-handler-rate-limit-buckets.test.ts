@@ -102,7 +102,7 @@ describe('handleApiRoute rate-limit buckets', () => {
     expect(bucket).not.toBe(RATE_LIMITS.admin);
   });
 
-  it('routes /api/user/byok/test, /api/setup-wizard/*, and /api/setup/verify to the dedicated byok bucket', async () => {
+  it('routes /api/user/byok/test, /api/setup-wizard/*, and /api/setup/* to the dedicated byok bucket', async () => {
     await handleApiRoute(requestFor('/api/user/byok/test'), '/api/user/byok/test', Date.now());
     await handleApiRoute(
       requestFor('/api/setup-wizard/validate-key'),
@@ -110,10 +110,14 @@ describe('handleApiRoute rate-limit buckets', () => {
       Date.now(),
     );
     await handleApiRoute(requestFor('/api/setup/verify'), '/api/setup/verify', Date.now());
+    await handleApiRoute(requestFor('/api/setup/save'), '/api/setup/save', Date.now());
+    await handleApiRoute(requestFor('/api/setup/skip'), '/api/setup/skip', Date.now());
 
     expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(RATE_LIMITS.byok);
     expect(vi.mocked(checkRateLimit).mock.calls[1]?.[1]).toBe(RATE_LIMITS.byok);
     expect(vi.mocked(checkRateLimit).mock.calls[2]?.[1]).toBe(RATE_LIMITS.byok);
+    expect(vi.mocked(checkRateLimit).mock.calls[3]?.[1]).toBe(RATE_LIMITS.byok);
+    expect(vi.mocked(checkRateLimit).mock.calls[4]?.[1]).toBe(RATE_LIMITS.byok);
   });
 
   it('routes /api/admin/* to the admin bucket', async () => {

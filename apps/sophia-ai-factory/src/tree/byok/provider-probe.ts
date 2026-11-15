@@ -80,6 +80,7 @@ export async function probeProviderApiKey(
     }
 
     const isAuthFail = res.status === 401 || res.status === 403;
+    const isQuotaFail = res.status === 429 || res.status === 402;
     return {
       ok: false,
       valid: false,
@@ -87,8 +88,16 @@ export async function probeProviderApiKey(
       status,
       latencyMs,
       httpStatus: res.status,
-      message: isAuthFail ? 'Invalid API key credentials' : `Provider returned status ${res.status}`,
-      message_vi: isAuthFail ? 'Khóa API không hợp lệ hoặc đã hết hạn' : `Nhà cung cấp trả về mã lỗi ${res.status}`,
+      message: isAuthFail
+        ? 'Invalid API key credentials'
+        : isQuotaFail
+          ? `Provider quota or rate limit reached (${res.status})`
+          : `Provider returned status ${res.status}`,
+      message_vi: isAuthFail
+        ? 'Khóa API không hợp lệ hoặc đã hết hạn'
+        : isQuotaFail
+          ? `Nhà cung cấp đã đạt giới hạn tần suất hoặc hết hạn mức (${res.status})`
+          : `Nhà cung cấp trả về mã lỗi ${res.status}`,
       maskedKey,
     };
   } catch (err) {
