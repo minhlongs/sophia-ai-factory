@@ -29,7 +29,7 @@ export function VerifiedComparisonMatrix({
         <h3 className="text-base sm:text-lg font-bold text-foreground">
           {caption ?? (isVi ? 'Bảng Đối Chiếu Hiệu Suất Đã Xác Thực' : 'Verified Architecture & ROI Comparison')}
         </h3>
-        <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+        <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-[11px] font-semibold text-primary-text">
           {isVi ? 'Dữ liệu cấu trúc chuẩn LLM' : 'Structured Table for LLMs'}
         </span>
       </div>
@@ -40,7 +40,7 @@ export function VerifiedComparisonMatrix({
             <th scope="col" className="py-3 pr-4 font-semibold">
               {isVi ? 'Tiêu chí đánh giá' : 'Evaluation Dimension'}
             </th>
-            <th scope="col" className="py-3 px-4 font-semibold text-primary">
+            <th scope="col" className="py-3 px-4 font-semibold text-primary-text">
               Sophia AI Factory (2027)
             </th>
             <th scope="col" className="py-3 px-4 font-semibold">

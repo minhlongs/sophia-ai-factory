@@ -6,6 +6,7 @@ import { SUPPORTED_LOCALES } from './middleware/middleware-shared-config';
 
 const locales = SUPPORTED_LOCALES;
 const defaultLocale: (typeof locales)[number] = 'vi';
+const mergedCatalogCache = new Map<string, Record<string, unknown>>();
 
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
   const keys: string[] = [];
@@ -33,6 +34,32 @@ function reportMissingKeys(missing: string[], locale: string): void {
   logger.warn(msg);
 }
 
+function deepMergeFallback(
+  fallbackObj: Record<string, unknown>,
+  localeObj: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...fallbackObj };
+  for (const [k, v] of Object.entries(localeObj)) {
+    const baseVal = merged[k];
+    if (
+      typeof v === 'object' &&
+      v !== null &&
+      !Array.isArray(v) &&
+      typeof baseVal === 'object' &&
+      baseVal !== null &&
+      !Array.isArray(baseVal)
+    ) {
+      merged[k] = deepMergeFallback(
+        baseVal as Record<string, unknown>,
+        v as Record<string, unknown>,
+      );
+    } else {
+      merged[k] = v;
+    }
+  }
+  return merged;
+}
+
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;
   // Routes outside the [locale] segment (e.g. /setup-wizard) have no
@@ -42,7 +69,12 @@ export default getRequestConfig(async ({ requestLocale }) => {
     ? requested
     : defaultLocale;
 
-  const messages = (await import(`../messages/${locale}.json`)).default as Record<
+  const cached = mergedCatalogCache.get(locale);
+  if (cached) {
+    return { messages: cached, locale };
+  }
+
+  let messages = (await import(`../messages/${locale}.json`)).default as Record<
     string,
     unknown
   >;
@@ -53,15 +85,23 @@ export default getRequestConfig(async ({ requestLocale }) => {
         string,
         unknown
       >;
+      const enMessages =
+        locale === 'en'
+          ? messages
+          : ((await import('../messages/en.json')).default as Record<string, unknown>);
       const defaultKeys = flattenKeys(defaultMessages);
       const localeKeys = flattenKeys(messages);
       const missing = diffMissingKeys(defaultKeys, localeKeys);
       reportMissingKeys(missing, locale);
+      if (missing.length > 0) {
+        const baseFallback = deepMergeFallback(defaultMessages, enMessages);
+        messages = deepMergeFallback(baseFallback, messages);
+      }
     } catch {
-      // If default messages can't be loaded, skip diff — original fallback
-      // behavior (vi keys serve as implicit fallback via next-intl) remains.
+      // If fallback catalogs cannot be loaded, preserve loaded locale messages.
     }
   }
 
+  mergedCatalogCache.set(locale, messages);
   return { messages, locale };
 });

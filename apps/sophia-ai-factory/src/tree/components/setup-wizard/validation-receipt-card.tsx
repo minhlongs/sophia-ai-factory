@@ -67,7 +67,7 @@ export function ValidationReceiptCard({ receipt, latencyMs }: ValidationReceiptC
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
-          <ShieldCheck className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+          <ShieldCheck className="w-4 h-4 text-primary-text shrink-0" aria-hidden="true" />
           <span>{t('title')}</span>
         </div>
         {receipt.maskedKey && (
@@ -85,7 +85,7 @@ export function ValidationReceiptCard({ receipt, latencyMs }: ValidationReceiptC
                 key={cap}
                 role="listitem"
                 data-capability={cap}
-                className="inline-flex items-center rounded-md border border-border bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                className="inline-flex items-center rounded-md border border-border bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary-text"
               >
                 {t(labelKey)}
               </span>

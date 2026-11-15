@@ -61,7 +61,7 @@ export const STITCH_SECONDARY_DECK_SCREENS: readonly StitchScreenSpec[] = [
     routeHtml: '/style-guide.html',
     pillar: 'studio',
     title: { en: 'Director’s Control Deck — Component Style Guide v4.2', vi: 'Hệ Thống Thiết Kế Director’s Control Deck v4.2' },
-    subtitle: { en: '44 Stitch namedColors, Space Grotesk + Inter + JetBrains Mono scale, and specular elevation tokens.', vi: '44 mã màu Stitch namedColors, thang chữ Space Grotesk + Inter + JetBrains Mono và độ nổi phản quang.' },
+    subtitle: { en: '29 semantic Material 3 tokens, Inter + JetBrains Mono scale, and specular elevation tokens.', vi: '29 mã màu ngữ nghĩa Material 3, thang chữ Inter + JetBrains Mono và độ nổi phản quang.' },
     primaryKpiLabel: { en: 'WCAG 2.1 Contrast Ratio', vi: 'Tỷ Lệ Tương Phản WCAG 2.1' },
     primaryKpiValue: '15.8 : 1 (AAA)',
     statusBadge: { en: 'DEMO · STYLE GUIDE CONCEPT', vi: 'BẢN MẪU · KHÁI NIỆM HƯỚNG DẪN THIẾT KẾ' },

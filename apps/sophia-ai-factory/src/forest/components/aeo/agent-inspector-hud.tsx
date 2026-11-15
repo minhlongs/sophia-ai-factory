@@ -43,7 +43,7 @@ export function AgentInspectorHud({
       {isOpen && (
         <div className="w-[320px] sm:w-[400px] max-h-[400px] overflow-y-auto rounded-xl border border-border bg-card/95 p-4 shadow-2xl backdrop-blur-md space-y-2.5">
           <div className="flex items-center justify-between border-b border-border/80 pb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary-text">
               {isVi ? 'Bản Đọc Cho AI (Markdown Twin)' : 'Dual-Read Markdown Twin'}
             </span>
             <button
@@ -64,14 +64,14 @@ export function AgentInspectorHud({
               href={`${canonicalUrl}.md`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-mono text-primary underline hover:text-accent"
+              className="text-[11px] font-mono text-primary-text underline hover:text-accent"
             >
               {isVi ? 'Mở trực tiếp file .md' : 'Open raw .md'}
             </a>
             <button
               type="button"
               onClick={handleCopy}
-              className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition"
+              className="rounded-lg bg-primary dark:bg-primary-600 px-3 py-1 text-xs font-medium text-primary-foreground dark:text-white hover:bg-primary/90 transition"
             >
               {copied ? (isVi ? '✓ Đã sao chép' : '✓ Copied') : (isVi ? 'Sao chép toàn bộ' : 'Copy Full Context')}
             </button>

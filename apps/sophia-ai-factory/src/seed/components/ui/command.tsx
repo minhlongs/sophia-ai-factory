@@ -34,12 +34,20 @@ type CommandDialogProps = DialogProps & {
   title?: string
   /** Accessible description for the palette dialog. Screen-reader only by default. */
   description?: string
+  /** Accessible label for the close button. */
+  closeLabel?: string
 }
 
-const CommandDialog = ({ children, title, description, ...props }: CommandDialogProps) => {
+const CommandDialog = ({
+  children,
+  title,
+  description,
+  closeLabel,
+  ...props
+}: CommandDialogProps) => {
   return (
     <Dialog {...props}>
-      <DialogContent className="overflow-hidden p-0 shadow-lg">
+      <DialogContent closeLabel={closeLabel} className="overflow-hidden p-0 shadow-lg">
         <DialogTitle className="sr-only">{title ?? "Quick actions"}</DialogTitle>
         <DialogDescription className="sr-only">
           {description ?? "Search the list and run a command."}

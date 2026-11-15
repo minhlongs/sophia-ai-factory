@@ -4402,6 +4402,9 @@
     "sessionNote": "Chỉ lưu trong phiên — không lưu vĩnh viễn"
   },
   "cmdK": {
+    "title": "Thao tác nhanh",
+    "description": "Tìm kiếm và chạy lệnh nhanh trên Sophia AI Factory.",
+    "close": "Đóng",
     "placeholder": "Nhập lệnh hoặc tìm kiếm...",
     "noResults": "Không tìm thấy kết quả.",
     "openMarketplace": "Mở Kho SOP",

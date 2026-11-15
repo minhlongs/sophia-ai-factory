@@ -74,7 +74,7 @@ export default async function DashboardLayout({
       };
 
   return (
-    <DashboardShell user={dashboardUser} isAdmin={isAdmin} isVi={isVi}>
+    <DashboardShell user={dashboardUser} isAdmin={isAdmin} isVi={isVi} enableCmdK>
       {children}
     </DashboardShell>
   );

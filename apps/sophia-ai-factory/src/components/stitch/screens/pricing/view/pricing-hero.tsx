@@ -35,7 +35,7 @@ export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
             className={cn(
               'inline-flex cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-200 select-none',
               billing === period
-                ? 'bg-primary text-white shadow-md shadow-primary/20 dark:shadow-primary-500/25'
+                ? 'bg-primary dark:bg-primary-600 text-white shadow-md shadow-primary/20 dark:shadow-primary-500/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-[#0B0F19] dark:hover:text-white',
             )}
           >
@@ -49,7 +49,7 @@ export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
             />
             <span>{t(`billing.${period}`)}</span>
             {period === 'yearly' && (
-              <span className="text-[11px] font-extrabold font-mono px-2 py-0.5 rounded-full bg-[#D97706]/15 dark:bg-[#F59E0B]/20 text-[#D97706] dark:text-[#F59E0B] border border-[#D97706]/30 dark:border-[#F59E0B]/30">
+              <span className="text-[11px] font-extrabold font-mono px-2 py-0.5 rounded-full bg-amber-500/15 dark:bg-amber-400/20 text-amber-900 dark:text-amber-300 border border-amber-600/30 dark:border-amber-400/30">
                 {t('billing.savePercent')}
               </span>
             )}

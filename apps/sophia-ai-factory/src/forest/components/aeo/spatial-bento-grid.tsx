@@ -66,7 +66,7 @@ export function SpatialBentoCard({
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
             {eyebrow && (
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-primary-text">
                 {eyebrow}
               </p>
             )}
@@ -77,7 +77,7 @@ export function SpatialBentoCard({
             )}
           </div>
           {badge && (
-            <span className="inline-flex items-center rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[11px] font-semibold text-accent">
+            <span className="inline-flex items-center rounded-full border border-amber-700/40 dark:border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900 dark:text-amber-300">
               {badge}
             </span>
           )}

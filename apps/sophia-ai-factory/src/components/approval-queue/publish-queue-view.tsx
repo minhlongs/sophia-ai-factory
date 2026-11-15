@@ -95,7 +95,7 @@ export function PublishLedgerApprovalQueue({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-amber-500/10 p-2">
-            <ShieldCheck className="h-6 w-6 text-amber-500" />
+            <ShieldCheck className="h-6 w-6 text-amber-700 dark:text-amber-400" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">{t('publish.title')}</h2>
@@ -104,17 +104,17 @@ export function PublishLedgerApprovalQueue({
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium text-amber-500">
-              <Clock className="h-4 w-4" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium text-amber-800 dark:text-amber-300">
+              <Clock className="h-4 w-4" aria-hidden="true" />
               {items.length} {t('publish.pendingCount')}
             </span>
           )}
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
             {t('publish.refresh')}
           </button>
         </div>
@@ -123,9 +123,9 @@ export function PublishLedgerApprovalQueue({
       {actionError && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
         >
-          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{actionError}</span>
         </div>
       )}
@@ -133,7 +133,7 @@ export function PublishLedgerApprovalQueue({
       {notice && (
         <div
           role="status"
-          className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300"
+          className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800 dark:text-emerald-300"
         >
           {notice}
         </div>
@@ -144,13 +144,13 @@ export function PublishLedgerApprovalQueue({
           <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-400">
+        <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-4 text-destructive">
           <p className="font-medium">{t('publish.errorLoading')}</p>
           <p className="mt-1 text-sm">{error}</p>
           <button
             type="button"
             onClick={() => void load()}
-            className="mt-3 rounded-lg bg-red-500/20 px-4 py-2 text-sm transition-colors hover:bg-red-500/30"
+            className="mt-3 rounded-lg bg-destructive/15 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/25"
           >
             {t('publish.tryAgain')}
           </button>
