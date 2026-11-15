@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-11-15T11:37:25.754Z",
+  "nonce1": "817b0952ee733481c155f86c1c63c621",
+  "nonce2": "6687ca1c7f7ae141bd3ac68ee0a28490",
+  "nonceUniqueAcrossRequests": true,
+  "cspHeaderSample": "default-src 'self'; img-src 'self' https: data: blob:; script-src 'self' 'unsafe-eval' 'nonce-817b0952ee733481c155f86c1c63c621'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.heygen.com https://api.openai.com https://openrouter.ai https://api.elevenlabs.io https://api.inngest.com https://nowpayments.io https://api.nowpayments.io; frame-src 'self' https://www.youtube.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://nowpayments.io; object-src 'none'; upgrade-insecure-requests; report-uri /api/csp-report",
+  "domCspAudit": {
+    "defaultHtmlClass": "dark",
+    "defaultSurface": "#090a10",
+    "defaultPrimary": "#6366f1",
+    "hasThemeScript": true,
+    "dataCfAsync": "false",
+    "fontSans": "Inter, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, sans-serif"
+  },
+  "lightPersist": {
+    "hasLight": true,
+    "hasDark": false,
+    "surface": "#f8f9fc",
+    "primary": "#4338ca"
+  },
+  "middlewareCsrfWithoutHeaderStatus": 403,
+  "setupWizardValidateKeySentCsrfHeader": true,
+  "setupWizardValidateKeyHttpStatus": 422,
+  "hydrationWarnings": [],
+  "cspViolations": [],
+  "pageErrors": []
+}

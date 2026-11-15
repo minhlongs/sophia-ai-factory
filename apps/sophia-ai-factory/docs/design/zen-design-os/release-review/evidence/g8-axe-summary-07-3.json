@@ -1,0 +1,98 @@
+[
+  {
+    "id": "setup-wizard__vi__dark",
+    "route": "/vi/setup",
+    "locale": "vi",
+    "theme": "dark",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "dashboard__vi__dark",
+    "route": "/vi/dashboard",
+    "locale": "vi",
+    "theme": "dark",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "niche-studio__vi__dark",
+    "route": "/vi/dashboard/niche-studio",
+    "locale": "vi",
+    "theme": "dark",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "setup-wizard__vi__light",
+    "route": "/vi/setup",
+    "locale": "vi",
+    "theme": "light",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "dashboard__vi__light",
+    "route": "/vi/dashboard",
+    "locale": "vi",
+    "theme": "light",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "niche-studio__vi__light",
+    "route": "/vi/dashboard/niche-studio",
+    "locale": "vi",
+    "theme": "light",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "setup-wizard__en__dark",
+    "route": "/en/setup",
+    "locale": "en",
+    "theme": "dark",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "dashboard__en__dark",
+    "route": "/en/dashboard",
+    "locale": "en",
+    "theme": "dark",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "niche-studio__en__dark",
+    "route": "/en/dashboard/niche-studio",
+    "locale": "en",
+    "theme": "dark",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "setup-wizard__en__light",
+    "route": "/en/setup",
+    "locale": "en",
+    "theme": "light",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "dashboard__en__light",
+    "route": "/en/dashboard",
+    "locale": "en",
+    "theme": "light",
+    "violationCount": 0,
+    "violations": []
+  },
+  {
+    "id": "niche-studio__en__light",
+    "route": "/en/dashboard/niche-studio",
+    "locale": "en",
+    "theme": "light",
+    "violationCount": 0,
+    "violations": []
+  }
+]
