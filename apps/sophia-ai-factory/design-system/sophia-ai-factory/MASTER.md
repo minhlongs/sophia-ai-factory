@@ -1,48 +1,44 @@
-# Design System Master File — Saigon Factory (reconciled)
+# Design System Master File — Zen Design OS v1.0 (reconciled to `src/app/globals.css`)
 
 > **AUTHORITY:** `src/app/globals.css` is the single source of truth for color,
-> spacing, and typography tokens. This file is derivative — every value below
-> must cite a token from `globals.css`. If conflict exists, `globals.css` wins.
->
-> **Anti-slop:** Inter is the approved body font. Inter as display/headline font
-> is forbidden. See `.claude/rules/sophia-design-authority.md`.
+> spacing, and typography tokens, paired with `src/seed/design-tokens/zen-design-tokens.dtcg.json`
+> and root `DESIGN.md`. This file is derivative — every value below cites `src/app/globals.css`.
+> If any conflict exists, `src/app/globals.css` wins.
 
 ---
 
 ## Brand / Thương Hiệu
 
-Saigon Factory: 1960s print warmth + modern AI precision. Approachable,
-professional, and memorable.
+Sophia AI Factory — Zen Design OS v1.0 (Direction B: Expressive AI-Native).
 
 ## Theme / Giao Diện
 
-- Light default (`:root`) with warm cream paper background.
-- Dark mode (`.dark`) uses deep indigo surfaces — activated by `.dark` class.
+- Dark default (`.dark` — *Director's Control Deck*) via `ZenThemeProvider` (`defaultTheme="dark"`).
+- First-class Light mode (`:root` — *Executive Studio Ivory*) and High-Contrast override (`@media (prefers-contrast: more)`).
 
 ## Color Palette / Bảng Màu
 
-All values are HSL unless noted. Source: `src/app/globals.css`.
+Source: `src/app/globals.css` & `src/seed/design-tokens/zen-design-tokens.dtcg.json`.
 
-| Role | Token | Hex equivalent |
-|------|-------|---|
-| Primary (both modes) | `var(--primary)` | `#CA7F16` (amber gold, `35 80% 44%`) |
-| Primary container (light) | `var(--primary-container)` | warm amber tint |
-| Accent (light) | `--accent` | `#CC8C33` (lighter amber for hover) |
-| Accent / ring (dark) | `.dark --accent` | `#C3C3EE` (indigo) |
-| Background (light) | `var(--background)` | warm cream paper (`40 30% 97%`) |
-| Background (dark) | `.dark --background` | `#0d0d11` (`240 13% 6%`) |
-| Foreground | `var(--foreground)` | deep indigo ink |
+| Role | Token | Light (`:root`) | Dark (`.dark`) |
+|------|-------|---|---|
+| Primary | `var(--primary)` | `#4338CA` | `#6366F1` (`--primary-text: #818CF8`) |
+| Primary container | `var(--primary-container)` | `#E0E7FF` | `#211966` |
+| Secondary | `var(--secondary)` | `#7E22CE` | `#A855F7` |
+| Accent / Warning | `var(--accent)` | `#B45309` | `#F59E0B` |
+| Background | `var(--background)` | `#F8F9FC` | `#090A10` |
+| Card | `var(--card)` | `#FFFFFF` | `#11131F` |
+| Foreground | `var(--foreground)` | `#0B0F19` | `#F8FAFC` |
 
 ## Typography / Kiểu Chữ
 
 | Role | Font | Weight |
 |------|------|--------|
-| Body / Nội dung | Inter | 400 / 600 |
-| Headline / Tiêu đề | System sans (not Inter) | 700+ |
+| Product UI & Headings (`--font-sans`) | `Inter` | 400–800 |
+| Telemetry & Code (`--font-mono`) | `JetBrains Mono` | 400–600 (`tabular-nums`) |
+| Scoped `.v3-core` Display (`--font-display` in `v3-core.css`) | `Archivo` | 400–800 (`wdth` 100–112) |
 
-Headlines must not use Inter as the display typeface. A system sans or
-decorative weight is acceptable for hero text once it does not collide with
-the body Inter stream.
+`Satoshi` and `Instrument Serif` are explicitly excluded from this release.
 
 ## Spacing & Radius
 

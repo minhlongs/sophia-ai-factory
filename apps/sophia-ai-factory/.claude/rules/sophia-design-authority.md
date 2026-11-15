@@ -8,7 +8,7 @@
 
 2. **This repo's `.claude/rules/`** — project-level design rules override any skill-level guidance when they conflict.
 
-3. **`ak-frontend-design` skill policies** — anti-slop gate, absolute bans (Inter display font, generic purple gradients, glassmorphism, mismatched icon libraries), 19-item QA checklist. Required before any design artifact is merged.
+3. **`ak-frontend-design` skill policies** — anti-slop gate (no generic purple gradients, no gratuitous glassmorphism, no mismatched icon libraries), 19-item QA checklist. Per rule (2) and Founder Decision #07.3, Sophia's canonical typography locks `Inter` for product UI/headings (`--font-sans` / `--font-display`) and `JetBrains Mono` for technical/code readouts (`--font-mono`), with `Archivo` scoped strictly to `.v3-core`.
 
 4. **`ui-ux-pro-max` lookup data** — read-only reference for facts you cannot derive (palette options, font pairings, WCAG thresholds, per-stack rules, chart types, icon sets). Treat every CSV row as a suggestion, not a mandate.
 

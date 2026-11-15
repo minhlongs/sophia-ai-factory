@@ -97,16 +97,18 @@ The `.v3-core` scrollytelling surfaces (landing hero, guide workbench) keep a th
 
 **Explicitly not in this release:** `Satoshi` and `Instrument Serif` are not adopted anywhere — neither in `globals.css`, `DESIGN.md`, nor the DTCG token contract.
 
-### Type Scale
-| Role | Token | Size | Line Height | Weight | Tracking |
+### Recommended Type Scale (Design Convention)
+> *Note: Expressed at runtime through Tailwind v4 utilities (`text-xs` through `text-3xl` / `clamp(...)`) rather than custom `--type-*` CSS variables.*
+
+| Role | Guideline | Size | Line Height | Weight | Tracking |
 |---|---|---|---|---|---|
-| Display Hero | `--type-display-lg` | `clamp(2rem, 3.8vw, 3.25rem)` | `1.12` (1.18 VI) | `800` | `-0.035em` |
-| Page Title | `--type-headline-lg` | `clamp(1.5rem, 2.2vw, 2rem)` | `1.22` | `700` | `-0.025em` |
-| Section Header | `--type-title-lg` | `1.125rem` (18px) | `1.35` | `600` | `-0.015em` |
-| Card Title | `--type-title-md` | `0.9375rem` (15px) | `1.4` | `600` | `-0.01em` |
-| Body Default | `--type-body-md` | `0.875rem` (14px) | `1.55` | `400` | `0em` |
-| Caption / Helper | `--type-body-sm` | `0.75rem` (12px) | `1.5` | `500` | `0.01em` |
-| Telemetry Eyebrow | `--type-label-mono` | `0.6875rem` (11px) | `1.35` | `600` | `0.08em` (uppercase) |
+| Display Hero | Hero Headline | `clamp(2rem, 3.8vw, 3.25rem)` | `1.12` (1.18 VI) | `800` | `-0.035em` |
+| Page Title | H1 / Screen Title | `clamp(1.5rem, 2.2vw, 2rem)` | `1.22` | `700` | `-0.025em` |
+| Section Header | H2 / Module Header | `1.125rem` (18px) | `1.35` | `600` | `-0.015em` |
+| Card Title | H3 / Card Header | `0.9375rem` (15px) | `1.4` | `600` | `-0.01em` |
+| Body Default | Body Copy | `0.875rem` (14px) | `1.55` | `400` | `0em` |
+| Caption / Helper | Secondary Metadata | `0.75rem` (12px) | `1.5` | `500` | `0.01em` |
+| Telemetry Eyebrow | Mono Badge / Label | `0.6875rem` (11px) | `1.35` | `600` | `0.08em` (uppercase) |
 
 ---
 
