@@ -18,14 +18,22 @@ export const YT_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/video
 export const YT_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 export const YT_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
-function createYouTubeUploadHttpError(status: number, message: string): Error {
+function createYouTubeUploadHttpError(status: number, message: string, retryAfterHeader?: string | null): Error {
+  if (status === 429 || status === 408) {
+    const parsedRetryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : NaN;
+    return Object.assign(new Error(message), {
+      statusCode: status,
+      retriable: true as const,
+      ...(Number.isFinite(parsedRetryAfter) && parsedRetryAfter > 0 ? { retryAfterSec: parsedRetryAfter } : {}),
+    });
+  }
   if (status >= 400 && status < 500) {
     return Object.assign(new NonRetriableError(message), {
       statusCode: status,
       nonRetriable: true as const,
     });
   }
-  return new Error(message);
+  return Object.assign(new Error(message), { statusCode: status, retriable: true as const });
 }
 
 export async function performYouTubeUpload(
@@ -78,6 +86,7 @@ export async function performYouTubeUpload(
     throw createYouTubeUploadHttpError(
       initRes.status,
       `YouTube upload init failed: ${initRes.status} ${err}`,
+      initRes.headers.get('Retry-After'),
     );
   }
 
@@ -105,6 +114,7 @@ export async function performYouTubeUpload(
     throw createYouTubeUploadHttpError(
       uploadRes.status,
       `YouTube upload failed: ${uploadRes.status} ${err}`,
+      uploadRes.headers.get('Retry-After'),
     );
   }
 

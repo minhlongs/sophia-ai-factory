@@ -78,7 +78,18 @@ async function uploadToYouTube(
 async function uploadToTikTok(input: UploadExecutionInput, fetchImpl: typeof fetch): Promise<UploadExecutionResult> {
   // Query creator_info first because TikTok answers an unaudited publish with HTTP 200 + SELF_ONLY.
   const capabilities = await fetchTikTokCreatorInfo(input.accessToken, fetchImpl);
-  const plan = resolveTikTokPublishPlan({ capabilities, requested: 'public', onUnavailable: 'downgrade' });
+  const requestedIntent =
+    input.tiktokPrivacyLevel === 'SELF_ONLY'
+      ? 'self_only'
+      : input.tiktokPrivacyLevel === 'MUTUAL_FOLLOW_FRIENDS'
+        ? 'private'
+        : 'public';
+  const plan = resolveTikTokPublishPlan({ capabilities, requested: requestedIntent, onUnavailable: 'downgrade' });
+  const effectivePrivacy =
+    input.tiktokPrivacyLevel === 'MUTUAL_FOLLOW_FRIENDS' &&
+    capabilities.availablePrivacyLevels.includes('MUTUAL_FOLLOW_FRIENDS')
+      ? 'MUTUAL_FOLLOW_FRIENDS'
+      : plan.privacyLevel;
   if (plan.downgraded) logPublishDowngrade({ channelId: input.channelId, jobId: input.jobId, plan });
 
   if (input.durationSeconds !== undefined && !isDurationAllowed(capabilities, input.durationSeconds)) {
@@ -90,10 +101,16 @@ async function uploadToTikTok(input: UploadExecutionInput, fetchImpl: typeof fet
   const req = buildTikTokInitPayload({
     title: input.title,
     totalSizeBytes: input.totalSizeBytes ?? 10 * 1024 * 1024,
-    privacyLevel: plan.privacyLevel,
+    privacyLevel: effectivePrivacy,
     disableComment: plan.disableComment,
     disableDuet: plan.disableDuet,
     disableStitch: plan.disableStitch,
+    ...(typeof input.brandOrganicToggle === 'boolean'
+      ? { brandOrganicToggle: input.brandOrganicToggle }
+      : {}),
+    ...(typeof input.brandContentToggle === 'boolean'
+      ? { brandContentToggle: input.brandContentToggle }
+      : {}),
   });
 
   const payload = await postJson(req.endpoint, req.body, { Authorization: `Bearer ${input.accessToken}` }, fetchImpl);

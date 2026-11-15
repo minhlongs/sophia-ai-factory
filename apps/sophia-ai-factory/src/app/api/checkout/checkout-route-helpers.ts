@@ -8,6 +8,9 @@ import {
   executeFreeOrderHandover,
 } from './modules';
 
+const PAYOS_REUSE_WINDOW_MS = 25 * 60 * 1000;
+const DEFAULT_REUSE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export async function tryReusePendingOrder(params: {
   userId: string;
   tier: Tier;
@@ -15,9 +18,11 @@ export async function tryReusePendingOrder(params: {
   paymentMethod: PaymentMethod;
 }): Promise<NextResponse | null> {
   try {
+    const sinceMs =
+      params.paymentMethod === 'payos' ? PAYOS_REUSE_WINDOW_MS : DEFAULT_REUSE_WINDOW_MS;
     const existing = await findActivePendingOrder({
       ...params,
-      sinceMs: 24 * 60 * 60 * 1000,
+      sinceMs,
     });
     if (existing?.invoice_url) {
       logger.info('[Checkout] Reusing active pending order', {

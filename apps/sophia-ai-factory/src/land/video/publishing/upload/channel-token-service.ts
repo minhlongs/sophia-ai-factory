@@ -25,12 +25,15 @@ export async function fetchChannelForJob(
   job: PublishingJob,
   tenantId: string
 ): Promise<PublishingChannel> {
-  const { data: chData } = await db
+  let query = db
     .from('publishing_channels')
     .select('*')
     .eq('tenant_id', tenantId)
-    .eq('provider', job.provider ?? '')
-    .single();
+    .eq('provider', job.provider ?? '');
+  if (job.channel_id) {
+    query = query.eq('id', job.channel_id);
+  }
+  const { data: chData } = await query.single();
 
   const channel = chData as PublishingChannel | null;
   if (!channel) throw new Error(`[publishExecute] Channel not found: ${job.channel_id}`);

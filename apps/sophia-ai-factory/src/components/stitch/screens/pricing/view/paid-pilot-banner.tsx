@@ -51,12 +51,14 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
   const csrfHeaders = useCsrfToken();
   const [loading, setLoading] = useState(false);
   const [fallbackActive, setFallbackActive] = useState(false);
+  const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [errorActive, setErrorActive] = useState(false);
 
   const handleStartPilot = useCallback(async () => {
     if (loading) return;
     setLoading(true);
     setFallbackActive(false);
+    setReservedOrderId(null);
     setErrorActive(false);
 
     try {
@@ -76,6 +78,7 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
         return;
       }
       if (data.status === 'pending_manual_payment') {
+        setReservedOrderId(typeof data.orderId === 'string' && data.orderId.length > 0 ? data.orderId : null);
         setFallbackActive(true);
         return;
       }
@@ -150,8 +153,13 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
       </div>
 
       {fallbackActive && (
-        <div role="status" className="mt-5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground">
-          {t('paidPilot.fallbackNotice')}
+        <div role="status" className="mt-5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground space-y-1">
+          <p>{t('paidPilot.fallbackNotice')}</p>
+          {reservedOrderId && (
+            <p className="text-xs font-mono text-muted-foreground" data-testid="paid-pilot-order-ref">
+              Ref: {reservedOrderId} • support@mekongmind.com
+            </p>
+          )}
         </div>
       )}
       {errorActive && (

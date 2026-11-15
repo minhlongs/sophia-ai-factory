@@ -20,12 +20,24 @@ export async function dispatchPayOsNotificationsAndTags(
     const userName = (userRow as { name?: string; email?: string } | null)?.name;
 
     if (userEmail) {
+      const exactAmountUsd =
+        typeof order.amount_usd_cents === 'number' && order.amount_usd_cents > 0
+          ? Math.round(order.amount_usd_cents) / 100
+          : order.period === 'pilot_14d'
+            ? 79
+            : Math.round(amount / 25000);
       await sendReceiptEmail({
         email: userEmail,
         userName: userName ?? undefined,
         tier,
-        period: isLifetime ? 'lifetime' : order.period === 'yearly' ? 'yearly' : 'monthly',
-        amountUsd: Math.round(amount / 25000),
+        period: isLifetime
+          ? 'lifetime'
+          : order.period === 'yearly'
+            ? 'yearly'
+            : order.period === 'pilot_14d'
+              ? 'pilot_14d'
+              : 'monthly',
+        amountUsd: exactAmountUsd,
         paymentId: `payos_${paymentLinkId}`,
         paymentMethod: 'payos',
         orderId,

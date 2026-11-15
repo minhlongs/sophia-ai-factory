@@ -15,6 +15,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { evaluatePublishApprovalPolicy, isPublicPublishIntent, nowEpochSeconds } from './decision';
 import { claimPublishApprovalRequest, getPublishLedgerRecord } from './ledger-store';
 import type {
+  PublishApprovalCompliance,
   PublishApprovalDecision,
   PublishApprovalState,
   PublishApprovalStep,
@@ -43,6 +44,7 @@ export interface PublishApprovalGateResult {
   readonly state: PublishApprovalState;
   readonly decision?: PublishApprovalDecision;
   readonly reviewerId?: string;
+  readonly compliance?: PublishApprovalCompliance;
 }
 
 /**
@@ -81,6 +83,7 @@ export async function awaitPublishApproval(
       state,
       decision: existing?.decision,
       reviewerId: existing?.reviewerId,
+      ...(existing?.compliance ? { compliance: existing.compliance } : {}),
     };
   }
 
@@ -88,6 +91,7 @@ export async function awaitPublishApproval(
   const claim = await step.run(`publish-approval-claim-${attempt}`, () =>
     claimPublishApprovalRequest({ ...input, expiresAt }),
   );
+  const correlationFilter = `async.data.idempotencyKey == '${claim.key}'`;
 
   if (!claim.claimed) {
     // Another delivery already enqueued the human decision for this exact
@@ -100,6 +104,7 @@ export async function awaitPublishApproval(
     await step.waitForEvent(`publish-approval-wait-${claim.key}-a${attempt}`, {
       event: PUBLISH_APPROVAL_RESOLVED_EVENT,
       timeout: PUBLISH_APPROVAL_TIMEOUT_MS,
+      if: correlationFilter,
     });
     return settleFromLedger(step, input, attempt, nowSeconds);
   }
@@ -119,6 +124,7 @@ export async function awaitPublishApproval(
   const resolved = await step.waitForEvent(`publish-approval-wait-${claim.key}-a${attempt}`, {
     event: PUBLISH_APPROVAL_RESOLVED_EVENT,
     timeout: PUBLISH_APPROVAL_TIMEOUT_MS,
+    if: correlationFilter,
   });
 
   if (resolved === null) {
@@ -141,7 +147,12 @@ export async function awaitPublishApproval(
   });
 
   if (state.outcome === 'allowed') {
-    return { state, decision: existing?.decision, reviewerId: existing?.reviewerId };
+    return {
+      state,
+      decision: existing?.decision,
+      reviewerId: existing?.reviewerId,
+      ...(existing?.compliance ? { compliance: existing.compliance } : {}),
+    };
   }
   return { state, decision: existing?.decision ?? 'rejected', reviewerId: existing?.reviewerId };
 }
@@ -167,7 +178,12 @@ async function settleFromLedger(
     nowSeconds,
   });
   if (state.outcome === 'allowed') {
-    return { state, decision: record?.decision, reviewerId: record?.reviewerId };
+    return {
+      state,
+      decision: record?.decision,
+      reviewerId: record?.reviewerId,
+      ...(record?.compliance ? { compliance: record.compliance } : {}),
+    };
   }
   return { state, decision: record?.decision ?? 'rejected', reviewerId: record?.reviewerId };
 }
