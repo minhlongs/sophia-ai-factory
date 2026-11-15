@@ -10,7 +10,7 @@
 import React, { useState, useCallback } from 'react';
 import { Check, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
+import { getCsrfHeaders, useCsrfToken } from '@/seed/security/use-csrf-token';
 import { cn } from '@/seed/utils/cn';
 
 interface PaidPilotCheckoutResponse {
@@ -48,6 +48,7 @@ function defaultRedirect(url: string): void {
 
 export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBannerProps) {
   const t = useTranslations('stitch.pricingPage');
+  const csrfHeaders = useCsrfToken();
   const [loading, setLoading] = useState(false);
   const [fallbackActive, setFallbackActive] = useState(false);
   const [errorActive, setErrorActive] = useState(false);
@@ -59,9 +60,10 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
     setErrorActive(false);
 
     try {
+      const freshCsrf = typeof getCsrfHeaders === 'function' ? getCsrfHeaders() : {};
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders, ...freshCsrf },
         body: JSON.stringify({ tier: 'BASIC', period: 'pilot_14d', paymentMethod: 'payos' }),
       });
       const data = (await res.json().catch(() => ({}))) as PaidPilotCheckoutResponse;
@@ -94,7 +96,7 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
     } finally {
       setLoading(false);
     }
-  }, [loading, onRedirect]);
+  }, [csrfHeaders, loading, onRedirect]);
 
   const bullets = [t('paidPilot.bullet1'), t('paidPilot.bullet2'), t('paidPilot.bullet3')];
 

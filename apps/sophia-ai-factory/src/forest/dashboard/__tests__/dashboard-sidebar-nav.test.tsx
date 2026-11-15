@@ -169,4 +169,53 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
     fireEvent.click(closeBtn);
     expect(onCloseMobile).toHaveBeenCalledTimes(2);
   });
+
+  it('contains Tab/Shift+Tab focus inside mobile drawer and closes on Escape or desktop breakpoint', () => {
+    const onCloseMobile = vi.fn();
+    let mediaHandler: ((e: MediaQueryListEvent) => void) | undefined;
+    const prevMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation(() => ({
+      matches: false,
+      addEventListener: (_event: string, cb: (e: MediaQueryListEvent) => void) => {
+        mediaHandler = cb;
+      },
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+
+    try {
+      const { unmount } = render(
+        <div>
+          <div data-testid="dashboard-topbar" />
+          <main id="main-content" />
+          <DashboardSidebarNav isMobileOpen={true} onCloseMobile={onCloseMobile} />
+        </div>,
+      );
+
+      const drawer = screen.getByTestId('mobile-drawer');
+      const focusables = Array.from(
+        drawer.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+      );
+      expect(focusables.length).toBeGreaterThan(2);
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      first.focus();
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(last);
+
+      last.focus();
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
+      expect(document.activeElement).toBe(first);
+
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(onCloseMobile).toHaveBeenCalledTimes(1);
+
+      mediaHandler?.({ matches: true } as MediaQueryListEvent);
+      expect(onCloseMobile).toHaveBeenCalledTimes(2);
+
+      unmount();
+    } finally {
+      window.matchMedia = prevMatchMedia;
+    }
+  });
 });

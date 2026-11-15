@@ -33,6 +33,7 @@ vi.mock('next-intl', () => ({
 
 vi.mock('@/seed/security/use-csrf-token', () => ({
   useCsrfToken: () => ({ 'x-csrf-token': 'csrf-pilot-token' }),
+  getCsrfHeaders: () => ({ 'x-csrf-token': 'csrf-pilot-token' }),
 }));
 
 describe('PaidPilotBanner', () => {

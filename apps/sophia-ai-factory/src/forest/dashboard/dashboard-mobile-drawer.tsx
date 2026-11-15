@@ -46,16 +46,19 @@ export function DashboardMobileDrawer({
     topBarEl?.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "hidden";
 
-    const desktopMedia = window.matchMedia("(min-width: 768px)");
+    const desktopMedia =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(min-width: 768px)")
+        : null;
     const onMediaChange = (e: MediaQueryListEvent) => {
       if (e.matches) {
         onCloseMobile?.();
       }
     };
-    if (desktopMedia.matches) {
+    if (desktopMedia?.matches) {
       onCloseMobile?.();
     }
-    desktopMedia.addEventListener("change", onMediaChange);
+    desktopMedia?.addEventListener("change", onMediaChange);
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -84,7 +87,7 @@ export function DashboardMobileDrawer({
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      desktopMedia.removeEventListener("change", onMediaChange);
+      desktopMedia?.removeEventListener("change", onMediaChange);
       document.body.style.overflow = prevBodyOverflow;
       if (mainEl) {
         if (prevMainHidden === null) mainEl.removeAttribute("aria-hidden");
