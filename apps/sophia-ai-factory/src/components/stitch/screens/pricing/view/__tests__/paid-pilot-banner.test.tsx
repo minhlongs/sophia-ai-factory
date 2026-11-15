@@ -11,14 +11,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PaidPilotBanner } from '../paid-pilot-banner';
 
 const TRANSLATIONS: Record<string, string> = {
-  'paidPilot.badge': 'Guaranteed Trial • 14-Day Paid Pilot',
+  'paidPilot.badge': '14-Day Paid Pilot • Full BASIC Access',
   'paidPilot.title': '14-Day Paid Pilot Campaign — 1,990,000 VND ($79)',
-  'paidPilot.subtitle': 'Unlocks full BASIC tier entitlements for 14 days.',
+  'paidPilot.subtitle':
+    'Unlocks full BASIC tier for 14 days — AI scripts, campaign plans, affiliate assets.',
   'paidPilot.priceVnd': '1,990,000 VND',
   'paidPilot.priceUsd': '$79 / 14 days',
-  'paidPilot.bullet1': 'Minimum 10 compliant short-form videos (9:16) guaranteed',
-  'paidPilot.bullet2': 'Instant 14-day BASIC tier activation (no hidden auto-renewal)',
-  'paidPilot.bullet3': 'Supports VietQR bank transfer or USDT',
+  'paidPilot.bullet1': 'Full BASIC tier for 14 days — AI scripts, campaign plans, affiliate assets',
+  'paidPilot.bullet2': 'Instant activation with no hidden auto-renewal',
+  'paidPilot.bullet3': 'VietQR bank transfer via PayOS',
   'paidPilot.cta': 'Start 14-Day Paid Pilot',
   'paidPilot.ctaLoading': 'Creating Pilot order...',
   'paidPilot.fallbackNotice':
@@ -122,7 +123,8 @@ describe('PaidPilotBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: TRANSLATIONS['paidPilot.cta'] }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status').textContent).toBe(TRANSLATIONS['paidPilot.fallbackNotice']);
+      expect(screen.getByRole('status').textContent).toContain(TRANSLATIONS['paidPilot.fallbackNotice']);
+      expect(screen.getByTestId('paid-pilot-order-ref').textContent).toContain('sophia_user_1_200');
     });
   });
 

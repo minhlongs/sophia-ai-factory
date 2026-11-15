@@ -124,7 +124,7 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
     }
   });
 
-  it('activates BASIC for 14 days end-to-end and normalizes receipt period to monthly', async () => {
+  it('activates BASIC for 14 days end-to-end and sends accurate $79 pilot_14d receipt', async () => {
     const pilotOrder = {
       order_id: 'sophia_user_pilot_2', user_id: 'user_pilot_2', tier: 'BASIC',
       period: 'pilot_14d', amount_vnd: 1_990_000, invoice_url: 'https://pay.payos.vn/web/pilot-link-2',
@@ -148,7 +148,13 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
     expect(result).toEqual({ ok: true });
     expect(d1.batch).toHaveBeenCalledTimes(1);
     expect(mocks.sendReceiptEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'ceo@agency.vn', tier: 'BASIC', period: 'monthly', paymentMethod: 'payos' }),
+      expect.objectContaining({
+        email: 'ceo@agency.vn',
+        tier: 'BASIC',
+        period: 'pilot_14d',
+        amountUsd: 79,
+        paymentMethod: 'payos',
+      }),
     );
   });
 

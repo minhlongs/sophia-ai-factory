@@ -19,7 +19,12 @@ import type {
 interface PublishApprovalCardProps {
   item: PublishApprovalItem;
   busy: boolean;
-  onDecide: (approvalId: string, approved: boolean, compliance?: PublishComplianceMetadata) => void;
+  onDecide: (
+    approvalId: string,
+    approved: boolean,
+    compliance?: PublishComplianceMetadata,
+    comment?: string,
+  ) => void;
 }
 
 function formatUnixSeconds(unixSec: number, locale: string): string {
@@ -40,7 +45,7 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
   const [brandContentToggle, setBrandContentToggle] = useState(false);
   const [musicUsageConfirmed, setMusicUsageConfirmed] = useState(false);
   const [containsSyntheticMedia, setContainsSyntheticMedia] = useState(true);
-  const [syntheticTouched, setSyntheticTouched] = useState(false);
+  const [commentText, setCommentText] = useState('');
 
   const approveDisabled = busy || (isTikTok && (privacyLevel === '' || !musicUsageConfirmed));
   const previewSrc = item.previewUrl ?? item.mediaRef;
@@ -54,7 +59,7 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
         musicUsageConfirmed: true,
       };
     }
-    if (isYouTube && syntheticTouched) return { containsSyntheticMedia };
+    if (isYouTube) return { containsSyntheticMedia };
     return undefined;
   };
 
@@ -131,7 +136,6 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
               checked={containsSyntheticMedia}
               onChange={(e) => {
                 setContainsSyntheticMedia(e.target.checked);
-                setSyntheticTouched(true);
               }}
             />
             <span>{t('publish.youtubeSyntheticLabel')}</span>
@@ -146,6 +150,8 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
         <textarea
           id={`publish-reason-${item.id}`}
           rows={2}
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
           placeholder={t('reasonPlaceholder')}
           className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
@@ -155,7 +161,7 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
         <button
           type="button"
           disabled={approveDisabled}
-          onClick={() => onDecide(item.id, true, buildCompliancePayload())}
+          onClick={() => onDecide(item.id, true, buildCompliancePayload(), commentText.trim() || undefined)}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-800 disabled:opacity-50"
         >
           <Check className="h-4 w-4" aria-hidden="true" />
@@ -164,7 +170,7 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
         <button
           type="button"
           disabled={busy}
-          onClick={() => onDecide(item.id, false)}
+          onClick={() => onDecide(item.id, false, undefined, commentText.trim() || undefined)}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive dark:bg-rose-700 px-4 py-2.5 text-sm font-medium text-destructive-foreground dark:text-white transition-colors hover:bg-destructive/90 dark:hover:bg-rose-600 disabled:opacity-50"
         >
           <X className="h-4 w-4" aria-hidden="true" />

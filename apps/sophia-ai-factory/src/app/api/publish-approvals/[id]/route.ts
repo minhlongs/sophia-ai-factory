@@ -48,11 +48,11 @@ function validateTikTokApprovalCompliance(
   platform: string,
   compliance: CompliancePayload,
 ): string | null {
-  if (!approved || platform.toLowerCase() !== 'tiktok' || !compliance) return null;
-  if (!compliance.privacyLevel) {
+  if (!approved || platform.toLowerCase() !== 'tiktok') return null;
+  if (!compliance || !compliance.privacyLevel) {
     return 'TikTok publish approval requires explicit privacyLevel selection';
   }
-  if (compliance.musicUsageConfirmed === false) {
+  if (compliance.musicUsageConfirmed !== true) {
     return 'TikTok publish approval requires Music Usage Confirmation';
   }
   return null;

@@ -18,6 +18,12 @@ export type PublishStatus = 'scheduled' | 'uploading' | 'processing' | 'live' | 
    * that field ignore it.
    */
   containsSyntheticMedia?: boolean;
+  /** TikTok Content Posting API v2 privacy level chosen by the reviewer. */
+  tiktokPrivacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+  /** TikTok commercial content disclosure — creator's own brand. */
+  brandOrganicToggle?: boolean;
+  /** TikTok commercial content disclosure — third-party paid partnership. */
+  brandContentToggle?: boolean;
   /** Optional claim/source provenance payload evaluated before YouTube publish. */
   provenance?: ProvenanceInput;
 } export interface MetricsJson { views: number; likes: number; comments?: number; shares?: number; reach?: number; [key: string]: number | string | undefined; } export interface Publisher { upload(videoUrl: string, meta: PublishMeta): Promise<string>; pollStatus(externalPostId: string): Promise<PublishStatus>; getMetrics(externalPostId: string): Promise<MetricsJson>; }

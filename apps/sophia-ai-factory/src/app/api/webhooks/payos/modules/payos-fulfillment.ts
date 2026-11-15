@@ -7,6 +7,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import type { Tier } from '@/seed/types';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { DbClient } from './payos-idempotency';
+import { resolvePayOsInitialMcuGrant } from './payos-subscription';
 import { dispatchPayOsNotificationsAndTags } from './payos-fulfillment-notifications';
 export { dispatchPayOsNotificationsAndTags } from './payos-fulfillment-notifications';
 
@@ -26,17 +27,69 @@ export async function processPayOsPostFulfillment(params: PayOsFulfillmentParams
   const { db, userId, tier, order, paymentLinkId, amount, orgId, periodEnd, isLifetime } = params;
   const orderId = order.order_id;
 
-  // 1. Non-blocking affiliate attribution
+  // 0. Provision initial MCU credits idempotently via payment_reference
+  try {
+    const mcuGrant = resolvePayOsInitialMcuGrant(tier, order.period);
+    if (mcuGrant > 0) {
+      const rawDb = db.unwrap() as {
+        prepare?: (sql: string) => { bind: (...args: unknown[]) => { run?: () => Promise<{ meta?: { changes?: number } }> } };
+      };
+      if (typeof rawDb?.prepare === 'function') {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const paymentRef = `payos_order_${orderId}`;
+        const txStmt = rawDb
+          .prepare(
+            `INSERT INTO mcu_transactions (user_id, delta, reason, metadata, payment_reference)
+             VALUES (?1, ?2, 'PAYOS_SUBSCRIPTION_ACTIVATION', ?3, ?4)
+             ON CONFLICT(payment_reference) WHERE payment_reference IS NOT NULL DO NOTHING`,
+          )
+          .bind(
+            userId,
+            mcuGrant,
+            JSON.stringify({ orderId, tier, period: order.period ?? 'monthly', amountVnd: amount }),
+            paymentRef,
+          );
+        const txRes = typeof txStmt.run === 'function' ? await txStmt.run() : { meta: { changes: 0 } };
+        if (txRes?.meta?.changes === 1) {
+          const balStmt = rawDb
+            .prepare(
+              `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
+               VALUES (?1, ?2, ?2, ?3)
+               ON CONFLICT(user_id) DO UPDATE SET
+                 credits_remaining = credits_remaining + excluded.credits_remaining,
+                 credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
+                 updated_at = excluded.updated_at`,
+            )
+            .bind(userId, mcuGrant, nowSec);
+          if (typeof balStmt.run === 'function') {
+            await balStmt.run();
+          }
+        }
+      }
+    }
+  } catch (mcuErr) {
+    logger.warn('[PayOS Webhook] Initial MCU provisioning skipped (non-fatal)', {
+      paymentLinkId,
+      userId,
+      error: String(mcuErr),
+    });
+  }
+
+  // 1. Non-blocking affiliate attribution (denominated strictly in USD cents, NEVER raw VND)
   try {
     const d1 = await getD1Raw();
+    const usdAmountCents =
+      typeof order.amount_usd_cents === 'number' && order.amount_usd_cents > 0
+        ? Math.round(order.amount_usd_cents)
+        : Math.round((amount / 25_000) * 100);
     await safelyRecordAffiliateCommission(
       {
         provider: 'payos',
         paymentId: String(paymentLinkId),
         orderId,
         customerId: userId,
-        grossAmountCents: amount,
-        currency: 'VND',
+        grossAmountCents: usdAmountCents,
+        currency: 'USD',
       },
       d1
     );

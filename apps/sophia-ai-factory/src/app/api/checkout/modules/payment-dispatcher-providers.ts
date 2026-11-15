@@ -6,6 +6,7 @@ import {
 } from '@/tree/finance/pilot-unit-economics-types';
 import { writeOrder } from '@/land/orders/pending-order-repo';
 import { createPayOsInvoice, getPayOsTierConfig } from '@/land/payments/payos';
+import { isPayOsEnabled } from '@/seed/config/flags';
 import type { MethodDispatcherInput } from './payment-dispatcher';
 
 export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise<NextResponse> {
@@ -17,9 +18,16 @@ export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise
     );
   }
 
+  const payosActive = isPayOsEnabled();
   const orderId = `sophia_${userId}_${Date.now()}`;
   try {
-    if (period === 'pilot_14d' && process.env.FEATURE_PAYOS !== 'true') {
+    if (!payosActive) {
+      if (period !== 'pilot_14d') {
+        return NextResponse.json(
+          { error: 'PayOS not currently available' },
+          { status: 503 },
+        );
+      }
       await writeOrder({
         order_id: orderId,
         user_id: userId,
@@ -64,6 +72,7 @@ export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise
       customer_email: customerEmail,
       invoice_url: payOsResult.checkoutUrl,
       provider_payment_id: payOsResult.paymentLinkId,
+      provider_order_code: payOsResult.orderCode,
     });
 
     return NextResponse.json({

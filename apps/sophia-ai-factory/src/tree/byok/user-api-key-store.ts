@@ -58,18 +58,24 @@ export async function setUserApiKey(
   try {
     await d1
       .prepare(
-        `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, key_validated_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, datetime('now'))
+        `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, key_validated_at, cooldown_until, last_receipt_json, updated_at)
+         VALUES (?, ?, ?, ?, ?, NULL, NULL, datetime('now'))
          ON CONFLICT(user_id, provider) DO UPDATE SET
            encrypted_key = excluded.encrypted_key,
            key_version = excluded.key_version,
            key_validated_at = excluded.key_validated_at,
+           cooldown_until = NULL,
+           last_receipt_json = NULL,
            updated_at    = datetime('now')`,
       )
       .bind(userId, provider, encrypted, keyVersion, Date.now())
       .run()
   } catch (err: unknown) {
-    if (String(err).includes('key_validated_at')) {
+    if (
+      String(err).includes('key_validated_at') ||
+      String(err).includes('cooldown_until') ||
+      String(err).includes('last_receipt_json')
+    ) {
       await d1
         .prepare(
           `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, updated_at)

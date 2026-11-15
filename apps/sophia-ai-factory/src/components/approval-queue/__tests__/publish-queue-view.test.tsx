@@ -129,7 +129,9 @@ describe('PublishLedgerApprovalQueue', () => {
     fireEvent.change(reason, { target: { value: '   ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Approve & publish' }));
     await waitFor(() => expect(screen.getByText('Approved. Note: you approved content you created yourself.')).toBeDefined());
-    expect(seen[1]?.init?.body).toBe(JSON.stringify({ approved: true }));
+    expect(seen[1]?.init?.body).toBe(
+      JSON.stringify({ approved: true, compliance: { containsSyntheticMedia: true } }),
+    );
   });
 
   it('tells the reviewer when no requester was recorded, and prefers the self-approval notice', async () => {

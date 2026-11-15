@@ -31,7 +31,8 @@ export async function getUserEnrichment(
   if (!db) return null;
 
   try {
-    // Single batched query: subscriptions + user_profiles + promo_code_redemptions
+    const nowIso = new Date(Date.now()).toISOString();
+    // Single batched query: active unexpired subscriptions + user_profiles + promo_code_redemptions
     const row = await db
       .prepare(
         `SELECT
@@ -48,11 +49,12 @@ export async function getUserEnrichment(
           )                                    AS redeemed_promo_code
         FROM subscriptions s
         LEFT JOIN user_profiles up ON up.user_id = s.user_id
-        WHERE s.user_id = ?
+        WHERE s.user_id = ? AND s.status = 'active'
+          AND (s.current_period_end IS NULL OR s.current_period_end > ?)
         ORDER BY s.created_at DESC
         LIMIT 1`,
       )
-      .bind(userId, userId)
+      .bind(userId, userId, nowIso)
       .first<{
         raw_tier: string | null;
         trial_ends_at: number | null;
@@ -96,9 +98,9 @@ export async function getUserEnrichment(
 
     const orgSub = await db
       .prepare(
-        "SELECT COALESCE(tier, plan) AS raw_tier FROM subscriptions WHERE org_id = ? AND status = 'active' LIMIT 1",
+        "SELECT COALESCE(tier, plan) AS raw_tier FROM subscriptions WHERE org_id = ? AND status = 'active' AND (current_period_end IS NULL OR current_period_end > ?) ORDER BY created_at DESC LIMIT 1",
       )
-      .bind(member.org_id)
+      .bind(member.org_id, nowIso)
       .first<{ raw_tier: string | null }>();
 
     return {

@@ -25,13 +25,7 @@ import type {
 } from '@/tree/byok/validation-receipt-types';
 
 /** The fields a client sees. No key bytes, no row IDs. */
-export interface ReceiptPayload {
-  capabilities: readonly KeyCapability[];
-  budget: {
-    monthlyBudgetUsd: number | null;
-    monthSpentUsd: number;
-    cooldownUntil: number | null;
-  };
+export interface ReceiptPayload extends ValidationReceipt {
   budgetStatus: ValidationReceipt['verdict']['outcome'];
 }
 
@@ -167,12 +161,17 @@ export async function buildReceiptPayload(args: {
   });
   return {
     payload: {
+      provider: receipt.provider,
+      maskedKey: receipt.maskedKey,
+      checkedAtUnix: receipt.checkedAtUnix,
       capabilities: receipt.capabilities,
       budget: {
         monthlyBudgetUsd: receipt.budget.monthlyBudgetUsd,
         monthSpentUsd: receipt.budget.monthSpentUsd,
         cooldownUntil: receipt.budget.cooldownUntil,
       },
+      verdict: receipt.verdict,
+      ...(receipt.policyStatus ? { policyStatus: receipt.policyStatus } : {}),
       budgetStatus: receipt.verdict.outcome,
     },
     receipt,

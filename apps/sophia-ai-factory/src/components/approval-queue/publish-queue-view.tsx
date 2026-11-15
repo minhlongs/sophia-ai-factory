@@ -61,6 +61,7 @@ export function PublishLedgerApprovalQueue({
     approvalId: string,
     approved: boolean,
     compliance?: PublishComplianceMetadata,
+    commentFromCard?: string,
   ) => {
     setActionId(approvalId);
     setActionError(null);
@@ -69,7 +70,7 @@ export function PublishLedgerApprovalQueue({
       const reasonEl = document.getElementById(
         `publish-reason-${approvalId}`,
       ) as HTMLTextAreaElement | null;
-      const comment = reasonEl?.value?.trim() || undefined;
+      const comment = commentFromCard || reasonEl?.value?.trim() || undefined;
       const result = await submitPublishApprovalDecision(approvalId, approved, comment, compliance);
       // Tell the reviewer when there is no second pair of eyes: either they
       // wrote this themselves, or nobody is on record as having asked for it.
@@ -167,7 +168,9 @@ export function PublishLedgerApprovalQueue({
               key={item.id}
               item={item}
               busy={actionId === item.id}
-              onDecide={(id, approved, compliance) => void handleDecision(id, approved, compliance)}
+              onDecide={(id, approved, compliance, comment) =>
+                void handleDecision(id, approved, compliance, comment)
+              }
             />
           ))}
         </div>

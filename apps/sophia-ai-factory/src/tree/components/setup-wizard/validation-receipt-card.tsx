@@ -54,7 +54,9 @@ export function ValidationReceiptCard({ receipt, latencyMs }: ValidationReceiptC
     return null;
   }
 
-  const { text: verdictText, isRefusal } = formatVerdictText(receipt.verdict, t);
+  const effectiveVerdict: BudgetVerdict =
+    receipt.verdict ?? { outcome: 'no_cap_set' };
+  const { text: verdictText, isRefusal } = formatVerdictText(effectiveVerdict, t);
   const spentDisplay =
     receipt.budget.monthlyBudgetUsd !== null
       ? `$${receipt.budget.monthSpentUsd.toFixed(2)} / $${receipt.budget.monthlyBudgetUsd.toFixed(2)}`

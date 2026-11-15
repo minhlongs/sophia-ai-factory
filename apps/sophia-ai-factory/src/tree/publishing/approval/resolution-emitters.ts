@@ -15,15 +15,11 @@ import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { resolvePublishApproval } from './ledger-store';
+import { computePublishIdempotencyKey } from './idempotency-key';
 import { PUBLISH_APPROVAL_RESOLVED_EVENT } from './gate';
-import type { PublishApprovalSubject } from './types';
+import type { PublishApprovalCompliance, PublishApprovalSubject } from './types';
 
-export interface PublishComplianceDecisionMetadata {
-  privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
-  brandOrganicToggle?: boolean;
-  brandContentToggle?: boolean;
-  containsSyntheticMedia?: boolean;
-}
+export type PublishComplianceDecisionMetadata = PublishApprovalCompliance;
 
 export interface PublishApprovalResolutionInput extends PublishApprovalSubject {
   decision: 'approved' | 'rejected';
@@ -59,7 +55,7 @@ export async function resolveAndAnnouncePublishApproval(
     mediaRef: input.mediaRef,
   };
 
-  const write = await resolvePublishApproval({ subject, decision, reviewerId, comment }, db);
+  const write = await resolvePublishApproval({ subject, decision, reviewerId, comment, compliance }, db);
   if (write.ok) {
     logger.info('publishApproval: decision recorded and waiting publish woken', {
       subject: subject.platform,
@@ -77,22 +73,21 @@ export async function resolveAndAnnouncePublishApproval(
       decision,
       reviewerId,
       comment,
-      compliance,
+      compliance: write.value.compliance ?? compliance,
     });
     return { resolved: true, alreadyResolved: false };
   }
 
   const { code } = write.error;
   if (code === 'ALREADY_RESOLVED') {
+    const knownKey = await computePublishIdempotencyKey(subject);
     logger.info('publishApproval: decision superseded by an earlier reviewer', {
       channelId: subject.channelId,
       decision,
       reviewerId,
     });
-    // The key is not known here, but the waiting job re-reads the ledger when it
-    // wakes, so the payload only has to wake it — the record answers the rest.
     await announcePublishApprovalResolved({
-      idempotencyKey: '',
+      idempotencyKey: knownKey,
       tenantId: subject.tenantId,
       channelId: subject.channelId,
       platform: subject.platform,

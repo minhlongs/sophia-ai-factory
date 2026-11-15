@@ -79,7 +79,11 @@ export async function GET(request: NextRequest): Promise<Response> {
   const requestedOrgId = extractRequestedOrgId(request);
   let scopedOrgIds: string[];
   if (requestedOrgId) {
-    const hasAccess = await verifyWorkspaceAccess(requestedOrgId, user.id, d1);
+    let hasAccess = await verifyWorkspaceAccess(requestedOrgId, user.id, d1);
+    if (!hasAccess) {
+      const accessibleOrgs = await getUserWorkspaceIds(user.id, d1);
+      hasAccess = accessibleOrgs.includes(requestedOrgId);
+    }
     if (!hasAccess) {
       logger.warn('[api/realtime/campaign-stream] Cross-tenant access denied', {
         userId: user.id,
