@@ -14,6 +14,7 @@ import {
   selectableImageModelsForTier,
   TIER_ALLOWED_MODELS,
 } from '@/seed/config/tiers/image-model-access';
+import { TIER_RANK } from '@/seed/types';
 
 const TIERS = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
@@ -48,6 +49,24 @@ describe('selectableImageModelsForTier', () => {
       const allowed = allowedImageModelsForTier(tier);
       const selectable = selectableImageModelsForTier(tier);
       expect(new Set(selectable)).toEqual(new Set(allowed));
+    }
+  });
+});
+
+describe('TIER_ALLOWED_MODELS key parity with the canonical tier list', () => {
+  /**
+   * The MuAPI spending path admits a request only for a tier that is an own key
+   * of `TIER_RANK`, then reads that tier's list from `TIER_ALLOWED_MODELS`. If a
+   * key is ever dropped from the second map, the guard still admits the tier and
+   * the lookup returns nothing, so a paying tier loses image generation while the
+   * refusal message blames the customer's plan. `TIER_ALLOWED_MODELS` is declared
+   * `Record<string, string[]>` and so cannot enforce that parity in the type
+   * system; this test is the enforcement.
+   */
+  it('declares an entry for every canonical tier', () => {
+    for (const tier of Object.keys(TIER_RANK)) {
+      expect(Object.hasOwn(TIER_ALLOWED_MODELS, tier), `${tier} has no model list`).toBe(true);
+      expect(TIER_ALLOWED_MODELS[tier].length, `${tier} list is empty`).toBeGreaterThan(0);
     }
   });
 });
