@@ -69,7 +69,7 @@ export async function GET(
   if (job.status === 'pending' || job.status === 'processing') {
     try {
       const apiKey = await resolveUserApiKey(user.id, 'muapi');
-      const pollResult = apiKey ? await getJobStatus(id, apiKey) : { success: false };
+      const pollResult = apiKey ? await getJobStatus(id, { fund: 'byok', apiKey }) : { success: false };
       if (pollResult.success && pollResult.job) {
         const remote = pollResult.job;
         const statusChanged = remote.status !== job.status;

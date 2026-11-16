@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(), getD1: vi.fn(), verifyWorkspaceAccess: vi.fn(),
-  getJobStatus: vi.fn(), recordProvenance: vi.fn(), recordLearning: vi.fn(),
+  getJobStatus: vi.fn(), resolveUserApiKey: vi.fn(), recordProvenance: vi.fn(), recordLearning: vi.fn(),
   emitCreativeEdited: vi.fn(), revalidatePath: vi.fn(), revalidateTag: vi.fn(),
   getContentLineage: vi.fn(), getContentPerformance: vi.fn(), getProject: vi.fn(),
 }));
@@ -16,6 +16,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({ getCurrentUser: mocks.getCur
 vi.mock('@/seed/db/client', () => ({ getD1: mocks.getD1 }));
 vi.mock('@/seed/auth/workspace-access', () => ({ verifyWorkspaceAccess: mocks.verifyWorkspaceAccess }));
 vi.mock('@/tree/clients/muapi-media-client', () => ({ getJobStatus: mocks.getJobStatus }));
+vi.mock('@/tree/byok/resolve-user-api-key', () => ({ resolveUserApiKey: mocks.resolveUserApiKey }));
 vi.mock('@/tree/provenance', () => ({ recordProvenance: mocks.recordProvenance, newProvenanceId: () => 'prov_1' }));
 vi.mock('@/tree/creative-memory', () => ({ recordLearning: mocks.recordLearning }));
 vi.mock('@/tree/performance/loop-emitters-creative', () => ({ emitCreativeEdited: mocks.emitCreativeEdited }));
@@ -38,7 +39,7 @@ const PROJECT_A_ROW = {
 describe('Gate S4 — 9-Vector Cross-Tenant IDOR Convergence Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MUAPI_API_KEY = 'test-key';
+    mocks.resolveUserApiKey.mockResolvedValue('tenant_a_byok_muapi_key');
     mocks.getJobStatus.mockResolvedValue({
       success: true, job: { id: 'job_tenant_a', status: 'completed', resultUrl: 'https://cdn.example/a.mp4' },
     });
@@ -46,7 +47,7 @@ describe('Gate S4 — 9-Vector Cross-Tenant IDOR Convergence Suite', () => {
 
   it('Vector 1: blocks Tenant B from reading Tenant A media_jobs status (403)', async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: 'user_tenant_b' });
-    mocks.getD1.mockResolvedValue({ prepare: () => ({ bind: () => ({ first: async () => ({ user_id: 'user_tenant_a' }) }) }) });
+    mocks.getD1.mockResolvedValue({ prepare: () => ({ bind: (_id: string, userId: string) => ({ first: async () => (userId === 'user_tenant_a' ? { user_id: 'user_tenant_a', status: 'pending' } : null) }) }) });
     const res = await getMediaStatus(new NextRequest('http://localhost/api/media/status?id=job_tenant_a'));
     expect(res.status).toBe(403);
     expect(mocks.getJobStatus).not.toHaveBeenCalled();
@@ -61,7 +62,14 @@ describe('Gate S4 — 9-Vector Cross-Tenant IDOR Convergence Suite', () => {
 
   it('Vector 3: allows Tenant A to read their own media_jobs status (200)', async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: 'user_tenant_a' });
-    mocks.getD1.mockResolvedValue({ prepare: () => ({ bind: () => ({ first: async () => ({ user_id: 'user_tenant_a' }) }) }) });
+    mocks.getD1.mockResolvedValue({
+      prepare: () => ({
+        bind: () => ({
+          first: async () => ({ id: 'job_tenant_a', user_id: 'user_tenant_a', status: 'pending' }),
+          run: async () => ({ success: true }),
+        }),
+      }),
+    });
     const res = await getMediaStatus(new NextRequest('http://localhost/api/media/status?id=job_tenant_a'));
     expect(res.status).toBe(200);
   });
