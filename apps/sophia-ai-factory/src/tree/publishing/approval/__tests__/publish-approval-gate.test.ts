@@ -121,6 +121,21 @@ describe('awaitPublishApproval', () => {
     }));
   });
 
+  it('claims the request without a requester when the caller has no user id', async () => {
+    resolvesWithDuring('approved');
+    const { step } = stepWith(vi.fn().mockResolvedValue(approvedEvent));
+
+    await awaitPublishApproval(gatedSubject, step);
+
+    // The ledger column names a person, so an unnamed caller leaves it empty
+    // rather than filled in with the tenant the publish belongs to.
+    expect(store.claimPublishApprovalRequest).toHaveBeenCalledTimes(1);
+    expect(store.claimPublishApprovalRequest.mock.calls[0][0]).toMatchObject({
+      tenantId: 'org_1',
+    });
+    expect(store.claimPublishApprovalRequest.mock.calls[0][0].requesterId).toBeUndefined();
+  });
+
   it('withholds the publish when the human rejects it', async () => {
     resolvesWithDuring('rejected');
     const { step } = stepWith(vi.fn().mockResolvedValue(rejectedEvent));

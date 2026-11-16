@@ -33,7 +33,7 @@ export function AnswerFirstCitationBlock({
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="inline-flex items-center gap-2">
           <span className="inline-block h-2 w-2 rounded-full bg-accent animate-glow-pulse" />
-          <span className="text-xs font-bold uppercase tracking-wider text-primary">
+          <span className="text-xs font-bold uppercase tracking-wider text-primary-text">
             {isVi ? 'Chuẩn Trích Dẫn AI (AEO / GEO Ground Truth)' : 'AI Citation Ready (AEO / GEO Ground Truth)'}
           </span>
         </div>
@@ -59,12 +59,14 @@ export function AnswerFirstCitationBlock({
             <dt className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {metric.label}
             </dt>
-            <dd className="mt-1 text-lg sm:text-xl font-extrabold text-foreground tabular-kpi">
-              {metric.value}
+            <dd className="mt-1">
+              <span className="block text-lg sm:text-xl font-extrabold text-foreground tabular-kpi">
+                {metric.value}
+              </span>
+              <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                {metric.sourceNote}
+              </span>
             </dd>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {metric.sourceNote}
-            </p>
           </div>
         ))}
       </dl>

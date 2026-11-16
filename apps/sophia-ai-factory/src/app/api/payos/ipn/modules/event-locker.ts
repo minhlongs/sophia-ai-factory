@@ -80,10 +80,21 @@ export async function handleFailedPayment(
     user_id: string;
     tier: string;
     invoice_url: string | null;
+    provider_payment_id?: string | null;
+    provider_order_code?: number | string | null;
   }> | null;
-  const matchOrder = orders?.find(
-    (o) => o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode))
-  );
+  const matchOrder =
+    orders?.find(
+      (o) =>
+        (o.provider_payment_id && String(o.provider_payment_id) === String(paymentLinkId)) ||
+        (o.provider_order_code != null && String(o.provider_order_code) === String(orderCode)),
+    ) ??
+    orders?.find(
+      (o) =>
+        !o.provider_payment_id &&
+        o.provider_order_code == null &&
+        (o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode))),
+    );
 
   if (matchOrder) {
     try {

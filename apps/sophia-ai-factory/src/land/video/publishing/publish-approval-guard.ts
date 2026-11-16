@@ -11,7 +11,12 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { awaitPublishApproval, type PublishApprovalStep } from '@/tree/publishing/approval';
+import {
+  awaitPublishApproval,
+  toRequesterId,
+  type PublishApprovalCompliance,
+  type PublishApprovalStep,
+} from '@/tree/publishing/approval';
 import {
   VideoNotFoundError,
   VideoUnauthorizedError,
@@ -22,7 +27,7 @@ import { resolveVideoUrlOrFail, assertSafeVideoUrl, sanitizeError } from './publ
 
 /** Either the publish is released with its media, or it stops with a terminal result. */
 export type PublishApprovalGateOutcome =
-  | { readonly kind: 'proceed'; readonly videoUrl: string }
+  | { readonly kind: 'proceed'; readonly videoUrl: string; readonly compliance?: PublishApprovalCompliance }
   | { readonly kind: 'stop'; readonly result: ClaimResult };
 
 /**
@@ -67,6 +72,11 @@ export async function runPublishApprovalGate(args: PublishApprovalGateArgs): Pro
 
   let videoUrl: string;
   try {
+    // `userId: tenantId` is deliberate here and unrelated to the ledger's
+    // requester column: the storage lookup matches a video by owner OR by the
+    // workspace that owns the media artifact, and an artifact-backed publish
+    // only resolves through the workspace id. Narrowing this to a real user id
+    // would break that lane.
     videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag });
   } catch (urlErr) {
     if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
@@ -86,14 +96,21 @@ export async function runPublishApprovalGate(args: PublishApprovalGateArgs): Pro
       platform: job.provider ?? '',
       mediaRef: videoUrl,
       requestedPrivacy: job.privacy_status ?? 'public',
-      requesterId: requesterId || tenantId,
+      // A requester is a person, so only a user id names one; a scheduled lane
+      // arrives without one and is recorded as unnamed rather than misfiled
+      // under the workspace it acts for.
+      requesterId: toRequesterId(requesterId),
       approvalDisabled: false,
     },
     toApprovalStepContext(step, eventTools),
   );
 
   if (approval.state.outcome === 'allowed') {
-    return { kind: 'proceed', videoUrl };
+    return {
+      kind: 'proceed',
+      videoUrl,
+      ...(approval.compliance ? { compliance: approval.compliance } : {}),
+    };
   }
 
   const reason = approval.state.outcome === 'blocked'

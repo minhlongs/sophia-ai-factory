@@ -51,4 +51,17 @@ describe('provider-probe', () => {
     expect(result.valid).toBe(false);
     expect(result.status).toBe('UNKNOWN');
   });
+
+  it('classifies HTTP 429/402 quota responses as PROVIDER_UNAVAILABLE and non-auth 400 properly', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 429 });
+    const rateRes = await probeProviderApiKey('openrouter', 'sk-or-v1-quota-1234');
+    expect(rateRes.valid).toBe(false);
+    expect(rateRes.status).toBe('PROVIDER_UNAVAILABLE');
+    expect(rateRes.message).toContain('quota or rate limit reached (429)');
+
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 400 });
+    const badReq = await probeProviderApiKey('openrouter', 'sk-or-v1-badreq-1234');
+    expect(badReq.valid).toBe(false);
+    expect(badReq.message).toContain('Provider returned status 400');
+  });
 });

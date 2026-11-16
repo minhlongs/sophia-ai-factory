@@ -6,6 +6,34 @@ import type { Tier } from '@/seed/types';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { DbClient } from './payos-idempotency';
 
+function checkOrderInvariants(
+  order: PendingOrder,
+  paymentLinkId: number | string,
+  orderCode: number | string,
+  currency?: string | null,
+): { error: string; status: number } | null {
+  if (order.provider_payment_id && String(order.provider_payment_id) !== String(paymentLinkId)) {
+    return { error: 'Payment link mismatch', status: 400 };
+  }
+  if (order.purpose !== undefined && order.purpose !== 'subscription' && order.purpose !== 'contract') {
+    return { error: 'Unsupported order purpose', status: 400 };
+  }
+  if (order.provider_order_code != null && String(order.provider_order_code) !== String(orderCode)) {
+    return { error: 'Order code mismatch', status: 400 };
+  }
+  if (order.period === 'pilot_14d' && order.tier !== 'BASIC') {
+    return { error: 'Invalid pilot tier', status: 400 };
+  }
+  if (order.purpose !== 'contract') return null;
+  if (!order.contract_id || !order.invoice_id || order.provider_order_code == null || order.amount_vnd == null) {
+    return { error: 'Incomplete contract payment record', status: 500 };
+  }
+  if (currency !== 'VND') {
+    return { error: 'Contract payment currency mismatch', status: 400 };
+  }
+  return null;
+}
+
 export async function validatePendingPayOsOrder(params: {
   db: DbClient;
   paymentLinkId: number | string;
@@ -45,47 +73,21 @@ export async function validatePendingPayOsOrder(params: {
       paymentLinkId,
       orderCode,
     });
-    await db
-      .from('payment_events')
-      .delete()
-      .eq('event_id', `payos_${paymentLinkId}`)
-      .eq('created_at', lockCreatedAt)
-      .eq('processed', 0);
+    await releaseLock();
     return { ok: false, response: NextResponse.json({ error: 'Order lookup failed' }, { status: 500 }) };
   }
 
   const order = orderRow as PendingOrder | null;
   if (!order) {
     logger.warn('[PayOS Webhook] No pending order found for paymentLinkId', { paymentLinkId, orderCode });
-    await db
-      .from('payment_events')
-      .delete()
-      .eq('event_id', `payos_${paymentLinkId}`)
-      .eq('created_at', lockCreatedAt)
-      .eq('processed', 0);
+    await releaseLock();
     return { ok: false, response: NextResponse.json({ error: 'Order not found' }, { status: 400 }) };
   }
-  if (order.provider_payment_id && String(order.provider_payment_id) !== String(paymentLinkId)) {
-    await releaseLock();
-    return { ok: false, response: NextResponse.json({ error: 'Payment link mismatch' }, { status: 400 }) };
-  }
 
-  if (order.purpose !== undefined && order.purpose !== 'subscription' && order.purpose !== 'contract') {
+  const invariantFailure = checkOrderInvariants(order, paymentLinkId, orderCode, currency);
+  if (invariantFailure) {
     await releaseLock();
-    return { ok: false, response: NextResponse.json({ error: 'Unsupported order purpose' }, { status: 400 }) };
-  }
-  if (order.provider_order_code != null && String(order.provider_order_code) !== String(orderCode)) {
-    await releaseLock();
-    return { ok: false, response: NextResponse.json({ error: 'Order code mismatch' }, { status: 400 }) };
-  }
-  if (order.purpose === 'contract' &&
-      (!order.contract_id || !order.invoice_id || order.provider_order_code == null || order.amount_vnd == null)) {
-    await releaseLock();
-    return { ok: false, response: NextResponse.json({ error: 'Incomplete contract payment record' }, { status: 500 }) };
-  }
-  if (order.purpose === 'contract' && currency !== 'VND') {
-    await releaseLock();
-    return { ok: false, response: NextResponse.json({ error: 'Contract payment currency mismatch' }, { status: 400 }) };
+    return { ok: false, response: NextResponse.json({ error: invariantFailure.error }, { status: invariantFailure.status }) };
   }
 
   const tier = order.tier as Tier;

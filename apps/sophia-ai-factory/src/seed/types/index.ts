@@ -24,6 +24,7 @@ export * from './infra';
 // Cross-layer types (moved from forest/land to seed for layer compliance)
 export type { AiService, UsageEventInput, UsageEventDB } from './ai-service';
 export type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher } from './channel-provider';
+export type { ProvenanceInput } from './provenance';
 export type { QuotaLimit, QuotaCheckResult, CreditRule, ExportOptions } from './quota-types';
 export type { CachedQuota, QuotaCheckContext, QuotaConfig } from './quota-types';
 export type {

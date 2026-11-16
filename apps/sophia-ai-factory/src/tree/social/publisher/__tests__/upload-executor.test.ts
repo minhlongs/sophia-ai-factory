@@ -70,6 +70,43 @@ describe('upload-executor (labelled fixtures)', () => {
       expect(circuitBreaker.recordSuccess).toHaveBeenCalledWith('social_upload:YOUTUBE_SHORTS');
     });
 
+    /**
+     * Reads the JSON body the executor sent on its init call. The YouTube
+     * disclosure rides on that body, so a caller cannot disable it by not
+     * supplying the field.
+     */
+    function youtubeInitBody(fetchImpl: ReturnType<typeof vi.fn>): { status: { containsSyntheticMedia?: boolean } } {
+      const initCall = (fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>)[0];
+      return JSON.parse(String(initCall[1].body)) as { status: { containsSyntheticMedia?: boolean } };
+    }
+
+    function youtubeFetch() {
+      return vi
+        .fn()
+        .mockResolvedValueOnce(fixtureResponse({}, { location: 'https://fixtures.googleapis.test/session-abc' }))
+        .mockResolvedValueOnce(fixtureResponse({ id: 'provider_video_id_123' }));
+    }
+
+    it('discloses synthetic media even when the caller omits the disclosure', async () => {
+      const fetchImpl = youtubeFetch();
+
+      await executePlatformUpload({ ...baseInput, fetchImpl: fetchImpl as unknown as typeof fetch });
+
+      expect(youtubeInitBody(fetchImpl).status.containsSyntheticMedia).toBe(true);
+    });
+
+    it('forwards an explicit disclosure decision to the provider', async () => {
+      const fetchImpl = youtubeFetch();
+
+      await executePlatformUpload({
+        ...baseInput,
+        containsSyntheticMedia: false,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      });
+
+      expect(youtubeInitBody(fetchImpl).status.containsSyntheticMedia).toBe(false);
+    });
+
     it('throws when the resumable handshake yields no session Location header', async () => {
       const fetchImpl = vi.fn().mockResolvedValue(fixtureResponse({}));
 
@@ -96,6 +133,33 @@ describe('upload-executor (labelled fixtures)', () => {
         .rejects.toThrow('HTTP_401');
       expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
       expect(circuitBreaker.recordFailure).toHaveBeenCalled();
+    });
+
+    it('blocks on an unresolved provenance claim before touching the circuit breaker or network', async () => {
+      const fetchImpl = vi.fn();
+
+      await expect(
+        executePlatformUpload({
+          ...baseInput,
+          provenance: {
+            claims: [
+              {
+                id: 'claim_1',
+                text: 'Unverified return claim',
+                riskLevel: 'high',
+                sourceIds: [],
+                status: 'unsupported',
+              },
+            ],
+          },
+          fetchImpl: fetchImpl as unknown as typeof fetch,
+        }),
+      ).rejects.toThrow(/PROVENANCE_BLOCKED/);
+
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(circuitBreaker.shouldAllowRequest).not.toHaveBeenCalled();
+      expect(circuitBreaker.recordFailure).not.toHaveBeenCalled();
+      expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
     });
   });
 

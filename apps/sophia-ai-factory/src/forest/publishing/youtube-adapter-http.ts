@@ -3,32 +3,54 @@
  * @module forest/publishing/youtube-adapter-http
  */
 
+import { NonRetriableError } from 'inngest';
 import type { PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 import { recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyHttpStatus } from '@/seed/types/failure-kind';
-import { resolveSyntheticMediaDisclosure } from './synthetic-media-disclosure';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+  type SyntheticMediaDisclosure,
+} from './synthetic-media-disclosure';
 
 export const YT_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 export const YT_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 export const YT_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
+function createYouTubeUploadHttpError(status: number, message: string, retryAfterHeader?: string | null): Error {
+  if (status === 429 || status === 408) {
+    const parsedRetryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : NaN;
+    return Object.assign(new Error(message), {
+      statusCode: status,
+      retriable: true as const,
+      ...(Number.isFinite(parsedRetryAfter) && parsedRetryAfter > 0 ? { retryAfterSec: parsedRetryAfter } : {}),
+    });
+  }
+  if (status >= 400 && status < 500) {
+    return Object.assign(new NonRetriableError(message), {
+      statusCode: status,
+      nonRetriable: true as const,
+    });
+  }
+  return Object.assign(new Error(message), { statusCode: status, retriable: true as const });
+}
+
 export async function performYouTubeUpload(
   accessToken: string,
   params: PublishParams,
+  resolvedDisclosure?: SyntheticMediaDisclosure,
 ): Promise<PublishResult> {
   // The disclosure is decided by the provenance review, not by the caller:
   // a missing disclosure costs the channel owner monetization, and an
   // unresolved claim review is a strike risk rather than a warning.
-  const disclosure = resolveSyntheticMediaDisclosure({
-    provenance: params.provenance,
-    defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
-  });
-  if (disclosure.blocked) {
-    throw new Error(
-      `PROVENANCE_BLOCKED: ${disclosure.blockedReason} (${disclosure.blockedReasonVi})`,
-    );
-  }
+  const disclosure =
+    resolvedDisclosure ??
+    resolveSyntheticMediaDisclosure({
+      provenance: params.provenance,
+      defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
+    });
+  assertYouTubeProvenanceAllowed(disclosure);
 
   const metadata = {
     snippet: {
@@ -61,7 +83,11 @@ export async function performYouTubeUpload(
     const err = await initRes.text();
     const initKind = classifyHttpStatus(initRes.status);
     recordFailure('youtube', initKind);
-    throw new Error(`YouTube upload init failed: ${initRes.status} ${err}`);
+    throw createYouTubeUploadHttpError(
+      initRes.status,
+      `YouTube upload init failed: ${initRes.status} ${err}`,
+      initRes.headers.get('Retry-After'),
+    );
   }
 
   const uploadUrl = initRes.headers.get('Location');
@@ -85,7 +111,11 @@ export async function performYouTubeUpload(
     const err = await uploadRes.text();
     const kind = classifyHttpStatus(uploadRes.status);
     recordFailure('youtube', kind);
-    throw new Error(`YouTube upload failed: ${uploadRes.status} ${err}`);
+    throw createYouTubeUploadHttpError(
+      uploadRes.status,
+      `YouTube upload failed: ${uploadRes.status} ${err}`,
+      uploadRes.headers.get('Retry-After'),
+    );
   }
 
   recordSuccess('youtube');

@@ -330,6 +330,26 @@ describe('Research Verification Gates Suite', () => {
     });
     expect(missingRes.status).toBe(400);
 
+    const missingMusicConfirmReq = new NextRequest(
+      'http://localhost/api/publish-approvals/tt_key_1',
+      {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          approved: true,
+          compliance: {
+            privacyLevel: 'SELF_ONLY',
+            brandOrganicToggle: true,
+            brandContentToggle: false,
+          },
+        }),
+      },
+    );
+    const missingMusicRes = await PATCH(missingMusicConfirmReq, {
+      params: Promise.resolve({ id: 'tt_key_1' }),
+    });
+    expect(missingMusicRes.status).toBe(400);
+
     const validTikTokReq = new NextRequest('http://localhost/api/publish-approvals/tt_key_1', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -339,6 +359,7 @@ describe('Research Verification Gates Suite', () => {
           privacyLevel: 'SELF_ONLY',
           brandOrganicToggle: true,
           brandContentToggle: false,
+          musicUsageConfirmed: true,
         },
       }),
     });

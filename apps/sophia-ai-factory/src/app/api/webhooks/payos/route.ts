@@ -18,10 +18,9 @@ import {
 } from './modules';
 import { getContractById, fulfillPayOsContractOrder } from '@/land/contracts/quote-to-cash-workflow';
 
-const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
-
 export async function POST(request: NextRequest) {
-  const verification = await verifyPayOsRequest(request, PAYOS_CHECKSUM_KEY);
+  const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+  const verification = await verifyPayOsRequest(request, checksumKey);
   if (!verification.ok) {
     return verification.response;
   }

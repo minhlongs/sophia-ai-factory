@@ -4,10 +4,32 @@
  * @module land/video/publishing/providers/youtube-upload-helper
  */
 
+import { NonRetriableError } from 'inngest';
 import type { PublishMeta } from './publisher-interface';
-import { resolveSyntheticMediaDisclosure } from '@/tree/publishing/synthetic-media-disclosure';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 
 export const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
+
+function createYouTubeUploadHttpError(status: number, message: string, retryAfterHeader?: string | null): Error {
+  if (status === 429 || status === 408) {
+    const parsedRetryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : NaN;
+    return Object.assign(new Error(message), {
+      statusCode: status,
+      retriable: true as const,
+      ...(Number.isFinite(parsedRetryAfter) && parsedRetryAfter > 0 ? { retryAfterSec: parsedRetryAfter } : {}),
+    });
+  }
+  if (status >= 400 && status < 500) {
+    return Object.assign(new NonRetriableError(message), {
+      statusCode: status,
+      nonRetriable: true as const,
+    });
+  }
+  return Object.assign(new Error(message), { statusCode: status, retriable: true as const });
+}
 
 export function isYouTubeMockMode(): boolean {
   return !process.env.YOUTUBE_CLIENT_ID;
@@ -30,10 +52,12 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
 
   // YouTube withholds monetization when `containsSyntheticMedia` is missing,
   // and Sophia generates every video it publishes, so the disclosure defaults
-  // to on rather than trusting whichever publisher built the metadata.
+  // to on and unresolved provenance claims stop the publish before upload.
   const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: meta.provenance,
     defaultContainsSyntheticMedia: meta.containsSyntheticMedia ?? true,
   });
+  assertYouTubeProvenanceAllowed(disclosure);
 
   return {
     snippet: {
@@ -50,17 +74,20 @@ export function buildYouTubeMetadata(meta: PublishMeta) {
   };
 }
 
+export type YouTubeUploadMetadata = ReturnType<typeof buildYouTubeMetadata>;
+
 export async function performResumableYouTubeUpload(
   accessToken: string,
   videoUrl: string,
   meta: PublishMeta,
+  resolvedMetadata?: YouTubeUploadMetadata,
 ): Promise<string> {
+  const metadata = resolvedMetadata ?? buildYouTubeMetadata(meta);
+
   const videoRes = await fetch(videoUrl);
   if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
   const videoBlob = await videoRes.blob();
   const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
-
-  const metadata = buildYouTubeMetadata(meta);
 
   const initRes = await fetch(
     'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
@@ -78,7 +105,11 @@ export async function performResumableYouTubeUpload(
 
   if (!initRes.ok) {
     const text = await initRes.text();
-    throw new Error(`YouTube upload init failed (${initRes.status}): ${text}`);
+    throw createYouTubeUploadHttpError(
+      initRes.status,
+      `YouTube upload init failed (${initRes.status}): ${text}`,
+      initRes.headers.get('Retry-After'),
+    );
   }
 
   const uploadUri = initRes.headers.get('Location');
@@ -92,7 +123,11 @@ export async function performResumableYouTubeUpload(
 
   if (!uploadRes.ok) {
     const text = await uploadRes.text();
-    throw new Error(`YouTube video upload failed (${uploadRes.status}): ${text}`);
+    throw createYouTubeUploadHttpError(
+      uploadRes.status,
+      `YouTube video upload failed (${uploadRes.status}): ${text}`,
+      uploadRes.headers.get('Retry-After'),
+    );
   }
 
   const result = (await uploadRes.json()) as YouTubeVideoResource;

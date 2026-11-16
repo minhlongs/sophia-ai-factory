@@ -7,20 +7,33 @@ import {
   performYouTubeUpload,
   evaluateYouTubeVideoStatus,
 } from './youtube-adapter-http';
+import {
+  assertYouTubeProvenanceAllowed,
+  isProvenanceBlockedError,
+  resolveSyntheticMediaDisclosure,
+} from './synthetic-media-disclosure';
 
 export const youtubeAdapter: PlatformAdapter = {
   platform: 'youtube',
 
   async uploadVideo(accessToken: string, params: PublishParams): Promise<PublishResult> {
+    const disclosure = resolveSyntheticMediaDisclosure({
+      provenance: params.provenance,
+      defaultContainsSyntheticMedia: params.containsSyntheticMedia ?? true,
+    });
+    assertYouTubeProvenanceAllowed(disclosure);
+
     if (!shouldAllowRequest('youtube')) {
       throw new Error('[YouTube] Circuit breaker open for youtube');
     }
 
     try {
-      return await performYouTubeUpload(accessToken, params);
+      return await performYouTubeUpload(accessToken, params, disclosure);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-      recordFailure('youtube', classifyError(error));
+      if (!isProvenanceBlockedError(error)) {
+        recordFailure('youtube', classifyError(error));
+      }
       throw error;
     }
   },

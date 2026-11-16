@@ -12,6 +12,7 @@ import type {
   VideoSplitTestEvaluationRequestedEvent,
   FleetStaggerPublishRequestedEvent,
 } from './social-engagement-events';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 
 export type {
   NewsjackingFastTrackTriggeredEvent,
@@ -47,6 +48,7 @@ export type SocialPublishDispatchedEvent = {
     title: string;
     description?: string;
     tags?: string[];
+    provenance?: ProvenanceInput;
   };
 };
 

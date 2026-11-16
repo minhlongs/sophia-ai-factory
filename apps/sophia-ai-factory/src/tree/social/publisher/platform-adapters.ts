@@ -10,6 +10,11 @@
  */
 
 import { sliceByteRanges, type ChunkByteRange } from './tiktok-v2-adapter';
+import type { ProvenanceInput } from '@/seed/types/provenance';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 
 export type SocialPlatform = 'YOUTUBE_SHORTS' | 'TIKTOK_V2' | 'INSTAGRAM_REELS';
 export type { ChunkByteRange } from './tiktok-v2-adapter';
@@ -36,12 +41,22 @@ export interface YouTubeInitInput {
   readonly totalSizeBytes: number;
   readonly categoryId?: string;
   readonly containsSyntheticMedia?: boolean;
+  readonly provenance?: ProvenanceInput;
 }
 
 export function buildYouTubeInitRequest(input: YouTubeInitInput) {
   const hasShorts = (input.title + (input.description ?? '')).toLowerCase().includes('#shorts');
   const description = hasShorts ? (input.description ?? '') : `${input.description ?? ''} #Shorts`.trim();
   const tags = Array.from(new Set([...(input.tags ?? []), 'Shorts', 'YouTubeShorts']));
+  // Sophia generates every video it publishes, so the disclosure defaults to on
+  // rather than being whatever a caller happened to pass. Resolving it through
+  // the shared policy keeps this lane from disagreeing with the other YouTube
+  // uploaders about both the flag and the unresolved-claim block.
+  const disclosure = resolveSyntheticMediaDisclosure({
+    provenance: input.provenance,
+    defaultContainsSyntheticMedia: input.containsSyntheticMedia ?? true,
+  });
+  assertYouTubeProvenanceAllowed(disclosure);
   return {
     endpoint: 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
     headers: {
@@ -54,7 +69,7 @@ export function buildYouTubeInitRequest(input: YouTubeInitInput) {
       status: {
         privacyStatus: input.privacyStatus ?? 'public',
         selfDeclaredMadeForKids: false,
-        containsSyntheticMedia: input.containsSyntheticMedia ?? true,
+        containsSyntheticMedia: disclosure.containsSyntheticMedia,
       },
     },
   };

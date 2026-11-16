@@ -1,0 +1,268 @@
+# ZEN-07.2 — WCAG 2.2 AA & Motion Acceptance Evidence (G4)
+
+**Repository:** `github.com/minhlongs/sophia-ai-factory`
+**Branch:** `design/sophia-zen-design-os-v1`
+**Verified Code & Test HEAD:** `7e4d0283a54f995d0c18c3b414cc7220e573ec8b`
+**Browser-Evidence Capture Tree:** `cd068bd39917e560f8857d490e04790fc6b0a7bf`
+**Baseline (`main`):** `673ec911be317233c7e6cb961bdca9d2097e210f`
+**Machine Evidence:** [`g4-axe-summary.json`](./g4-axe-summary.json), [`g4-manual-a11y.json`](./g4-manual-a11y.json)
+
+---
+
+## 1. Automated Audits (12 route × theme combinations)
+
+`axe-core` injected over the real dev server in system Chrome:
+
+| Screen | vi/dark | vi/light | en/dark | en/light |
+|:--|:--:|:--:|:--:|:--:|
+| `/vi/setup-wizard` | **0 violations** | 0 | 0 | 0 |
+| `/vi/dashboard` | 0 | 0 | 0 | 0 |
+| `/vi/dashboard/niche-studio` | 0 | 0 | 0 | 0 |
+
+Rules exercised include `color-contrast`, `image-alt`, `label`, `button-name`,
+`aria-*`, `heading-order`, `duplicate-id`, `form-field-multiple-labels`, and
+`landmark-unique`. References: `g4-axe-summary.json` entries 1–12.
+
+**Explicit statement of limits:** this run used the `axe-core` rule set, not a
+full assistive-technology pass. Zero axe violations is necessary but **not
+sufficient** for WCAG 2.2 AA conformance — §2 documents the manual keyboard,
+screen-reader, focus and reflow inspection that accompanies it.
+
+---
+
+## 2. Manual Keyboard & Focus Inspection (WCAG 2.1.1 / 2.4.3 / 2.4.7 / 2.4.11)
+
+Machine record: `g4-manual-a11y.json` → `keyboardReport`.
+
+| Route | Tab stops | Distinct selectors | Visible focus rings | `outline: none` w/o substitute |
+|:--|--:|--:|--:|--:|
+| `/vi/setup-wizard` | 11 | 2 | 11/11 | 0 |
+| `/vi/dashboard` | 20 | 20 | 20/20 | 0 |
+| `/vi/dashboard/niche-studio` | 20 | 20 | 20/20 | 0 |
+
+- **Tab order** follows DOM order; no positive `tabindex` overrides found in the
+  three pilot screens.
+- **Focus visibility** — `outline-hiddenCount: 0` at every stop. Focus styling is
+  the browser default ring plus Tailwind `focus-visible:ring` on the Zen button.
+- **Dialog focus management** — no modal dialog is mounted in the idle state of
+  the three pilot screens; `g4-manual-a11y.json` → `dialogFocusCheck` records
+  an initial smoke check on `harness-form-dialog` (`initialFocusInsideDialog: true`,
+  `tabContained: true`, `shiftTabContained: true`, `escapeClosed: true`), and
+  dialogs observed in targeted capture `t04-setup-wizard-step-state-vi.png` were
+  keyboard-closable with `Escape` (Radix `Dialog` behaviour). The full 12-measurement
+  modal audit across all three dialog surfaces is recorded separately in **§2.1**.
+
+---
+
+## 2.1 Dialog accessibility — real-browser modal audit
+
+Machine record: [`dialog-a11y-report.json`](./dialog-a11y-report.json)
+(generated `2026-11-12T12:34:32.769Z`, 12 measurements).
+Spec: `tests/e2e/dialog-a11y/dialog-accessibility.spec.ts`.
+
+Playwright drives three dialogs through genuine user interaction on the real
+dev server — a trigger click, a production `<button>`, and `Meta+k` — across
+`vi`/`en` × `dark`/`light`. Nothing is opened by mounting a component in a
+test-only state; the two product surfaces are the shipping
+`ByokRotationView` and the shipping `CmdKPalette`.
+
+| Surface | Opened by | Initial focus | Tab stops | Tab / Shift+Tab contained | Escape closes | Focus returns to | `aria-hidden` outside | Body `pointer-events` |
+|:--|:--|:--|--:|:--:|:--:|:--|:--:|:--:|
+| Harness `Dialog` (all 4 combos) | trigger click | `input#harness-field-first` | 5 | `true` / `true` | `true` | `button[harness-dialog-trigger]` · "Open form dialog" | `true` | `none` |
+| Rotation dialog (all 4 combos) | production button | `input#rotation-reason` | 4 | `true` / `true` | `true` | `button` · "Xoay Khóa Ngay" / "Rotate Now" | `true` | `none` |
+| Command palette (all 4 combos) | `Meta+k` | `input#radix-_r_2_` | 2 | `true` / `true` | `true` | **`null`** — recorded target `body` | `true` | `none` |
+
+Accessible name and description are non-empty on every measurement:
+
+| Surface | `vi` name / description | `en` name / description | Close button |
+|:--|:--|:--|:--|
+| Harness | "Harness dialog title" / "A modal used to verify focus placement, keyboard containment and screen reader semantics." | same (test fixture is English-only by design) | "Cancel" |
+| Rotation | "Xác Nhận Xoay Khóa Master" / "Việc xoay khóa master sẽ tạo phiên bản mới và đưa tiến trình tái mã hóa thông tin xác thực vào hàng đợi nền. Khóa hiện tại vẫn hoạt động trong cửa sổ chuyển tiếp giải mã kép 7 ngày." | "Confirm Master Key Rotation" / "Rotating the master key generates a new version and queues background re-encryption of all stored credentials. The current key remains active during the 7-day dual-decrypt transition window." | "Hủy" / "Cancel" |
+| Command palette | "Quick actions" / "Search the list and run a command." | identical | "Close" |
+
+### 2.1.1 Three results recorded as measured, not as passes
+
+1. **`aria-modal` is `null` in all 12 measurements.** Radix does not emit the
+   attribute; it implements modality by aria-hiding everything outside the
+   dialog and setting `pointer-events: none` on `body`. Both of those effects
+   *were* measured and are `true` and `none` respectively in the table above —
+   so modality is evidenced by its actual mechanism rather than by asserting a
+   property the library never sets. The spec records `ariaModal` as evidence,
+   not as an assertion.
+2. **Command-palette focus return is `null`, and the spec asserts `null`.**
+   A `Meta+k` surface has no trigger element to return focus to, so exact
+   identity is not applicable. The observed target (`body`) is recorded in
+   `focusReturnTarget`, and the assertion is `expect(r.focusReturnedToTrigger).toBeNull()`
+   with the comment "No trigger exists, so this must stay unmeasured rather than
+   be reported as a pass." No null was promoted to a PASS.
+3. **The command palette's accessible name is English in both locales.** The
+   name comes from the `sr-only` fallback `{title ?? "Quick actions"}` at
+   `src/seed/components/ui/command.tsx:43`, which no caller overrides. The
+   Vietnamese string exists (`messages/vi.json:7329` — "Thao tác nhanh") but is
+   not wired to the palette. Recorded as a bilingual gap; **not remediated in
+   this pass**, because the palette is a shared `seed` component and the
+   acceptance scope forbids modifying unrelated business behaviour.
+
+### 2.1.2 The harness route
+
+`src/app/[locale]/zen-a11y-harness/` exists only so Playwright can open a
+representative form dialog with two focusable fields. It is gated by
+`if (process.env.NODE_ENV === 'production') notFound()` in
+`page.tsx:23`, so it returns 404 in any deployed build and is unreachable in
+production at runtime. Note the limit honestly: the route still appears in the
+production route table (`/[locale]/zen-a11y-harness`, dynamic `ƒ`), so the
+protection is the runtime `notFound()`, not build-time exclusion. It imports the shipping `Dialog`, `ByokRotationView` and
+`CmdKPalette` rather than stand-ins.
+
+### 2.1.3 Reproduce
+
+```bash
+# from apps/sophia-ai-factory/, with the dev server running on :3000 (§1 env
+# of ZEN-07.2-VISUAL-EVIDENCE.md)
+npx playwright test tests/e2e/dialog-a11y/dialog-accessibility.spec.ts
+# writes docs/design/zen-design-os/evidence/dialog-a11y-report.json
+```
+
+Measurements persist per test rather than once at the end, so a failing worker
+cannot leave an empty evidence file.
+
+**Still not claimed:** a VoiceOver/NVDA transcript pass. This is a real-browser
+keyboard and accessibility-tree measurement, which is strictly stronger than
+the idle-state check it replaces but is still not an assistive-technology
+transcript.
+
+---
+
+## 3. Zoom & Responsive Reflow (WCAG 2.2 SC 1.4.10 / 1.4.4)
+
+Machine record: `g4-manual-a11y.json` → `reflowCheck`.
+
+At viewport width **320 px** (400% zoom of a 1280 px page):
+
+| Route | `scrollWidth` | `clientWidth` | Horizontal scroll |
+|:--|--:|--:|:--|
+| `/vi/setup-wizard` | 320 | 320 | **none** |
+| `/vi/dashboard` | 320 | 320 | **none** |
+| `/vi/dashboard/niche-studio` | 320 | 320 | **none** |
+
+No two-dimensional scrolling is required at any pilot route. Long Vietnamese
+strings wrap inside cards (verified by eye in
+`targeted/t02-niche-studio-long-vi-text-dark-1440w.png` and
+`targeted/t03-niche-studio-long-vi-text-light-1440w.png`).
+
+---
+
+## 4. Reduced Motion (WCAG 2.2 SC 2.3.3) — all four Zen primitives
+
+Machine record: `g4-manual-a11y.json` → `motionReport`
+(`prefersReduce: true`, `reducedMotion: "reduce"`, `instantAnimations: 0`).
+Source read directly, not inferred.
+
+| Primitive | File | Reduced-motion behaviour |
+|:--|:--|:--|
+| `FadeInView` | `src/seed/components/ui/fade-in-view.tsx:52-74,114-122` | Deterministic `useState(false)` on SSR + client hydration (0 React 19 hydration mismatches) paired with `[data-zen-motion]` CSS override in `globals.css:1020-1026` (`opacity: 1 !important; transform: none !important; transition: none !important;`) from byte 0 of SSR; `useEffect` immediately promotes `reduced` + `isVisible` and subscribes to `matchMedia('(prefers-reduced-motion: reduce)')` `'change'` |
+| `ScrollReveal` | `src/seed/components/ui/scroll-reveal.tsx:32-54,78-90,121-127` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` and `[data-zen-motion-stagger] > *` CSS rules; `useEffect` immediately promotes `reduced` + `visible`, sets `transition: "none"` on both single and staggered children, and subscribes to `matchMedia` `'change'` |
+| `PageTransition` | `src/seed/components/ui/page-transition.tsx:20-41,53-61` | Deterministic `useState(false)` on SSR + hydration paired with `[data-zen-motion]` CSS override; `useEffect` returns early before `requestAnimationFrame`, sets `transition: "none"`, and subscribes to `matchMedia` `'change'` |
+| `AnimatedCounter` | `src/seed/components/ui/animated-counter-with-framer-motion.tsx:20-89` | Deterministic `useState(false)` on SSR + client hydration (`0` initial text on both server and client — zero React 19 hydration mismatches); `useEffect` checks `matchMedia('(prefers-reduced-motion: reduce)')` on mount to jump straight to `value` without starting `requestAnimationFrame`, and subscribes to `matchMedia` `'change'` to cancel any in-flight `rAF` loop and snap immediately to `value` |
+
+All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `AnimatedCounter`) keep deterministic initial state across SSR and hydration (`zen-motion-reduced-motion.test.tsx` verifies `renderToString` + `hydrateRoot` emits zero hydration errors when `prefers-reduced-motion: reduce` is active), while CSS `@media (prefers-reduced-motion: reduce)` reveals `[data-zen-motion]` and `[data-zen-motion-stagger] > *` from byte 0 of SSR.
+
+The CSS layer closes the loop at `src/app/globals.css:991-1043`:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-instant: 0ms;
+    --motion-duration-fast: 0ms;
+    --motion-duration-normal: 0ms;
+    --motion-duration-deliberate: 0ms;
+    --motion-duration-cinematic: 0ms;
+  }
+  html { scroll-behavior: auto; }
+  .animate-pulse, .animate-ping, .animate-spin,
+  .animate-gradient, .animate-conveyor, .animate-fade-in-up,
+  .animate-shimmer, .animate-float, …
+  [data-zen-motion], [data-zen-motion-stagger] > * {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+```
+
+plus dedicated overrides at `globals.css:962-968` (`guide-signal-flow`) and
+`globals.css:980-985` (`guide-pulse-orb`) — both set `animation: none` under
+reduced motion rather than merely shortening duration.
+
+The `run-status-badge.test.tsx:60` comment confirms the motion-safe pulse class
+is conditional on the same media query.
+
+### 4.1 Live OS reduced-motion toggle note
+
+All four Zen primitives (`FadeInView`, `ScrollReveal`, `PageTransition`, and `AnimatedCounter`) subscribe to `window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', ...)` so live OS toggles update mounted state immediately and cancel any active `AnimatedCounter` `requestAnimationFrame` loop mid-animation (`zen-motion-reduced-motion.test.tsx`).
+
+---
+
+## 5. Motion-token governance (no new dependencies)
+
+- Duration/easing values come from Zen tokens: `--motion-duration-deliberate`
+  (400ms) and `--motion-ease-emphasized` (`cubic-bezier(0.16, 1, 0.3, 1)`),
+  declared at `src/app/globals.css:19-27` and consumed by
+  `page-transition.tsx:58-60`, `scroll-reveal.tsx:72-73`, `fade-in-view.tsx:108`
+  via `var(...)` references rather than hardcoded literals.
+- The satisfy/prove command requires that **GSAP, Lenis and React Bits were not
+  introduced** during this pass. Verified from the working tree:
+  `package.json` dependencies are unchanged relative to the baseline `673ec911`; no
+  `gsap`, `lenis` or `react-bits` entry exists in `dependencies` or
+  `devDependencies`. `AnimatedCounter` is deliberately rAF-based
+  (`animated-counter-with-framer-motion.tsx:42-59`) and the file already carries
+  the note that it does not depend on framer-motion.
+
+---
+
+## 6. Contrast
+
+Measured pairs behind the design-token values in `src/app/globals.css`
+(`:root` light `14-186`, `.dark` `188-339`):
+
+| Pair | Light | Dark | AA 4.5:1 |
+|:--|--:|--:|:--:|
+| Primary Button (`bg-primary dark:bg-primary-600` / `#FFFFFF` text) | 7.90:1 (`#4338CA` / `#FFFFFF`) | 8.76:1 (`#2E19E6` / `#FFFFFF`) | PASS both |
+| Body: `--foreground` on `--background` | 18.19:1 (`#0B0F19` / `#F8F9FC`) | 18.89:1 (`#F8FAFC` / `#090A10`) | PASS both |
+| Muted: `--muted-foreground` on `--background` | 7.20:1 (`#475569` / `#F8F9FC`) | 7.71:1 (`#94A3B8` / `#090A10`) | PASS both |
+
+Zinc-translucency and pale-tint defects that would have failed `color-contrast` in Light or Dark mode
+(`niche-gate1-readiness-card.tsx:78-175`, `storyboard-preview-card.tsx:34-113`,
+`niche-campaign-form.tsx:165-172`, `video-compliance-preview-player.tsx:28-38,94-103`,
+`timeline-browser-preview.tsx:126-129,178`, `seed/components/ui/button.tsx:11-24`) were remediated —
+see §4 of [`ZEN-07.2-VISUAL-EVIDENCE.md`](./ZEN-07.2-VISUAL-EVIDENCE.md) (V1–V3).
+
+---
+
+## 7. Screen-reader semantics
+
+Every interactive control inspected carries an accessible name: `aria-label`
+on icon buttons, `<label htmlFor>`/wrapping `<label>` on all inputs (the
+`niche-form-product-inputs.tsx` `aria-label` regression V7 was restored), and
+the artboard counter exposes `data-zen-motion` plus a live value. Headings run
+`h1 → h2 → h3` without level skips on all three routes.
+
+**Not claimed:** a full screen-reader (VoiceOver/NVDA) transcript pass. This is
+a semantic-structure and name-completeness check.
+
+---
+
+## 8. Verdict
+
+**WCAG 2.2 AA — VERIFIED for the three pilot screens plus the three dialog
+surfaces measured in §2.1**, with the scoped limit stated above
+(no assistive-technology VoiceOver/NVDA transcript pass).
+No P0/P1 accessibility defect remains open.
+
+The dialog audit that §2 previously deferred is now complete: initial focus,
+Tab and Shift+Tab containment, Escape-to-close, focus return with a recorded
+target, non-empty accessible name and description, background inertness and
+`pointer-events` blocking were all measured in a real browser across both
+themes and both locales. One bilingual gap was found and recorded rather than
+silently fixed (command-palette accessible name, §2.1.1 item 3).

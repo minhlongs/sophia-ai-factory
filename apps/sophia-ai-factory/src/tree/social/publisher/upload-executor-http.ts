@@ -5,6 +5,7 @@
  */
 
 import type { SocialPlatform } from '@/seed/types/social-publisher-types';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 
 export interface UploadExecutionInput {
   platform: SocialPlatform;
@@ -22,6 +23,20 @@ export interface UploadExecutionInput {
    * refused before the bytes are spent.
    */
   durationSeconds?: number;
+  /**
+   * Caller's decision on whether the upload is synthetic or meaningfully
+   * altered, when the caller actually has one. Omitted means the platform
+   * adapters apply their own disclosure policy; it never means "no".
+   */
+  containsSyntheticMedia?: boolean;
+  /** Reviewer-approved TikTok privacy level from publish_ledger compliance_json. */
+  tiktokPrivacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+  /** Reviewer-approved TikTok own-brand disclosure toggle. */
+  brandOrganicToggle?: boolean;
+  /** Reviewer-approved TikTok paid-partnership disclosure toggle. */
+  brandContentToggle?: boolean;
+  /** Optional claim/source provenance payload checked before YouTube upload. */
+  provenance?: ProvenanceInput;
   /** Injectable for tests; production uses the global fetch. */
   fetchImpl?: typeof fetch;
 }

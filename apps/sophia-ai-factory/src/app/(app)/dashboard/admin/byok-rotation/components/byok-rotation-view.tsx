@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/seed/components/ui/button';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import { toast } from 'sonner';
 import type { ByokRotationClientProps } from './types';
 import { CurrentVersionCard } from './current-version-card';
@@ -28,7 +29,7 @@ export function ByokRotationView({
     try {
       const res = await fetch('/api/admin/keys/rotate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({ reason: reason.trim() || undefined }),
       });
       const json = (await res.json()) as { success?: boolean; message?: string; error?: string };

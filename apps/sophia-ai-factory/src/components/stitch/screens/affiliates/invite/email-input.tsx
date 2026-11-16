@@ -44,7 +44,7 @@ export function EmailInput({
           placeholder={t('partnerNamePlaceholder')}
           value={partnerName}
           onChange={(e) => onPartnerNameChange(e.target.value)}
-          className="w-full h-10 px-3.5 rounded-xl bg-black/20 dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all"
+          className="w-full h-10 px-3.5 rounded-xl bg-muted/50 dark:bg-white/[0.04] border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all"
         />
       </div>
 
@@ -66,7 +66,7 @@ export function EmailInput({
           placeholder={t('partnerEmailPlaceholder')}
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
-          className="w-full h-10 px-3.5 rounded-xl bg-black/20 dark:bg-white/[0.04] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all"
+          className="w-full h-10 px-3.5 rounded-xl bg-muted/50 dark:bg-white/[0.04] border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-sm transition-all"
         />
       </div>
     </>

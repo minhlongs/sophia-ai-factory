@@ -1,3 +1,5 @@
+import type { ValidationReceipt } from '@/tree/byok/validation-receipt-types';
+
 export interface ApiKeysConfig {
   OPENROUTER_API_KEY: string;
   ANTHROPIC_API_KEY: string;
@@ -17,6 +19,7 @@ export interface ApiKeysStepProps {
   status: Record<string, KeyVerificationStatus>;
   errors: Record<string, string>;
   latencies?: Record<string, number>;
+  receipts?: Record<string, ValidationReceipt>;
   savedProviders?: string[];
   onRevokeProvider?: (provider: string, keyName: string) => Promise<void>;
   revokingProvider?: string | null;

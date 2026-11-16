@@ -4,8 +4,16 @@ import { FEATURE_FLAGS, type FlagConfig } from "./flags-catalog";
 export { FEATURE_FLAGS, type FlagConfig };
 
 /**
+ * Dynamic request-time check for PayOS VN payment method feature flag.
+ * Avoids module-load freezing on Cloudflare Workers isolates before env population.
+ */
+export function isPayOsEnabled(): boolean {
+  return process.env.FEATURE_PAYOS === 'true';
+}
+
+/**
  * PayOS VN payment method feature flag.
- * Default false — enable only when PayOS integration is fully implemented.
+ * Kept for backwards compatibility; runtime callers must prefer `isPayOsEnabled()`.
  */
 export const FEATURE_PAYOS = process.env.FEATURE_PAYOS === 'true';
 

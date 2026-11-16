@@ -56,7 +56,7 @@ export function NicheSyndicationPreviewCard({
               onClick={() => setActivePlatform(p)}
               className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-all ${
                 activePlatform === p
-                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  ? 'bg-primary-600 text-white shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -73,7 +73,7 @@ export function NicheSyndicationPreviewCard({
             <button
               type="button"
               onClick={() => handleCopy(payload.caption, 'caption')}
-              className="text-primary hover:underline font-medium"
+              className="text-primary-text hover:underline font-medium"
             >
               {copiedKey === 'caption' ? `✓ ${t('copied')}` : t('copy')}
             </button>
@@ -91,7 +91,7 @@ export function NicheSyndicationPreviewCard({
             <button
               type="button"
               onClick={() => handleCopy(payload.pinnedComment.text, 'pinned')}
-              className="text-primary hover:underline font-medium"
+              className="text-primary-text hover:underline font-medium"
             >
               {copiedKey === 'pinned' ? `✓ ${t('copied')}` : t('copy')}
             </button>

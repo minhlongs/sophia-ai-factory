@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { runSchedulerCron } from '../scheduler';
 import { inngest } from '@/seed/inngest/client';
+import { SYSTEM_REQUESTER_SENTINEL, toRequesterId } from '@/tree/publishing/approval';
 
 const mockMocks = vi.hoisted(() => ({
   mockDb: {
@@ -68,10 +69,19 @@ describe('runSchedulerCron', () => {
         data: {
           jobId: 'job-1',
           tenantId: 'tenant-1',
-          userId: 'tenant-1',
+          userId: SYSTEM_REQUESTER_SENTINEL,
         },
       }),
     );
+
+    const firstArg = vi.mocked(inngest.send).mock.calls[0]?.[0];
+    const emittedUserId =
+      firstArg && !Array.isArray(firstArg) && firstArg.name === 'publish.scheduled'
+        ? firstArg.data.userId
+        : undefined;
+    expect(emittedUserId).toBe(SYSTEM_REQUESTER_SENTINEL);
+    expect(emittedUserId).not.toBe('tenant-1');
+    expect(toRequesterId(emittedUserId)).toBeUndefined();
   });
 
   it('leaves a job eligible for the next cron when event dispatch fails', async () => {

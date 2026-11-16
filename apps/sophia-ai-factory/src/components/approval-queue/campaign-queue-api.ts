@@ -1,5 +1,7 @@
 'use client';
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
+
 export type CampaignApprovalStatus =
   | 'pending_ceo'
   | 'approved'
@@ -58,7 +60,7 @@ export async function submitCampaignApprovalAction(
 ): Promise<{ status: string; continuation?: string; resumed?: boolean }> {
   const res = await fetch(`/api/campaign-approvals/${approvalId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     credentials: 'include',
     body: JSON.stringify({ action, reason }),
   });

@@ -1,0 +1,277 @@
+[
+  {
+    "route": "/vi/setup",
+    "theme": "dark",
+    "status": 200,
+    "totalMs": 4197,
+    "resolvedTheme": "dark",
+    "htmlClass": "dark",
+    "tokens": {
+      "background": "#090a10",
+      "card": "#11131f",
+      "primary": "#6366f1"
+    },
+    "headingFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "bodyFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "ttfb": 118.39999997615814,
+    "fp": 220,
+    "fcp": 220,
+    "domInteractive": 320.89999997615814,
+    "domComplete": 331.0999999642372,
+    "fontsReady": "loaded",
+    "fontFaceCount": 70,
+    "satoshiLoaded": true,
+    "interLoaded": true,
+    "hasThemeFlashGuard": true,
+    "scrollHeight": 1155,
+    "clientHeight": 900,
+    "cls": 0,
+    "shifts": [],
+    "longTaskCount": 0,
+    "longTaskTotalMs": 0,
+    "toggle": {
+      "mode": "contract-driven",
+      "from": "dark",
+      "to": "light",
+      "swapMs": 0,
+      "classAfter": "light"
+    },
+    "screenshot": {
+      "identical": true,
+      "bytesA": 153852,
+      "bytesB": 153852
+    },
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "route": "/vi/setup",
+    "theme": "light",
+    "status": 200,
+    "totalMs": 4000,
+    "resolvedTheme": "light",
+    "htmlClass": "light",
+    "tokens": {
+      "background": "#f8f9fc",
+      "card": "#fff",
+      "primary": "#4338ca"
+    },
+    "headingFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "bodyFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "ttfb": 134.89999997615814,
+    "fp": 216,
+    "fcp": 216,
+    "domInteractive": 285.19999998807907,
+    "domComplete": 285.89999997615814,
+    "fontsReady": "loaded",
+    "fontFaceCount": 70,
+    "satoshiLoaded": true,
+    "interLoaded": true,
+    "hasThemeFlashGuard": true,
+    "scrollHeight": 1155,
+    "clientHeight": 900,
+    "cls": 0,
+    "shifts": [],
+    "longTaskCount": 0,
+    "longTaskTotalMs": 0,
+    "toggle": {
+      "mode": "contract-driven",
+      "from": "light",
+      "to": "dark",
+      "swapMs": 0,
+      "classAfter": "dark"
+    },
+    "screenshot": {
+      "identical": true,
+      "bytesA": 151971,
+      "bytesB": 151971
+    },
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "route": "/vi/dashboard",
+    "theme": "dark",
+    "status": 200,
+    "totalMs": 4230,
+    "resolvedTheme": "dark",
+    "htmlClass": "dark",
+    "tokens": {
+      "background": "#090a10",
+      "card": "#11131f",
+      "primary": "#6366f1"
+    },
+    "headingFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "bodyFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "ttfb": 133,
+    "fp": 180,
+    "fcp": 180,
+    "domInteractive": 259.89999997615814,
+    "domComplete": 260.60000002384186,
+    "fontsReady": "loaded",
+    "fontFaceCount": 70,
+    "satoshiLoaded": true,
+    "interLoaded": true,
+    "hasThemeFlashGuard": true,
+    "scrollHeight": 1702,
+    "clientHeight": 900,
+    "cls": 0.000507682559585048,
+    "shifts": [
+      {
+        "value": 0.000507682559585048,
+        "startTime": 765.5
+      }
+    ],
+    "longTaskCount": 1,
+    "longTaskTotalMs": 54,
+    "toggle": {
+      "mode": "contract-driven",
+      "from": "dark",
+      "to": "light",
+      "swapMs": 0,
+      "classAfter": "light"
+    },
+    "screenshot": {
+      "identical": true,
+      "bytesA": 205598,
+      "bytesB": 205598
+    },
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "route": "/vi/dashboard",
+    "theme": "light",
+    "status": 200,
+    "totalMs": 4228,
+    "resolvedTheme": "light",
+    "htmlClass": "light",
+    "tokens": {
+      "background": "#f8f9fc",
+      "card": "#fff",
+      "primary": "#4338ca"
+    },
+    "headingFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "bodyFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "ttfb": 137.9000000357628,
+    "fp": 244,
+    "fcp": 244,
+    "domInteractive": 321.4000000357628,
+    "domComplete": 332.5,
+    "fontsReady": "loaded",
+    "fontFaceCount": 70,
+    "satoshiLoaded": true,
+    "interLoaded": true,
+    "hasThemeFlashGuard": true,
+    "scrollHeight": 1702,
+    "clientHeight": 900,
+    "cls": 0,
+    "shifts": [],
+    "longTaskCount": 1,
+    "longTaskTotalMs": 97,
+    "toggle": {
+      "mode": "contract-driven",
+      "from": "light",
+      "to": "dark",
+      "swapMs": 0.1,
+      "classAfter": "dark"
+    },
+    "screenshot": {
+      "identical": false,
+      "bytesA": 206029,
+      "bytesB": 206030
+    },
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "route": "/vi/dashboard/niche-studio",
+    "theme": "dark",
+    "status": 200,
+    "totalMs": 4196,
+    "resolvedTheme": "dark",
+    "htmlClass": "dark",
+    "tokens": {
+      "background": "#090a10",
+      "card": "#11131f",
+      "primary": "#6366f1"
+    },
+    "headingFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "bodyFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "ttfb": 89.90000003576279,
+    "fp": 292,
+    "fcp": 292,
+    "domInteractive": 245.69999998807907,
+    "domComplete": 274.60000002384186,
+    "fontsReady": "loaded",
+    "fontFaceCount": 70,
+    "satoshiLoaded": true,
+    "interLoaded": true,
+    "hasThemeFlashGuard": true,
+    "scrollHeight": 2638,
+    "clientHeight": 900,
+    "cls": 0,
+    "shifts": [],
+    "longTaskCount": 0,
+    "longTaskTotalMs": 0,
+    "toggle": {
+      "mode": "contract-driven",
+      "from": "dark",
+      "to": "light",
+      "swapMs": 0.1,
+      "classAfter": "light"
+    },
+    "screenshot": {
+      "identical": true,
+      "bytesA": 205068,
+      "bytesB": 205068
+    },
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "route": "/vi/dashboard/niche-studio",
+    "theme": "light",
+    "status": 200,
+    "totalMs": 4050,
+    "resolvedTheme": "light",
+    "htmlClass": "light",
+    "tokens": {
+      "background": "#f8f9fc",
+      "card": "#fff",
+      "primary": "#4338ca"
+    },
+    "headingFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "bodyFont": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "ttfb": 90.89999997615814,
+    "fp": 188,
+    "fcp": 188,
+    "domInteractive": 202.19999998807907,
+    "domComplete": 205.19999998807907,
+    "fontsReady": "loaded",
+    "fontFaceCount": 70,
+    "satoshiLoaded": true,
+    "interLoaded": true,
+    "hasThemeFlashGuard": true,
+    "scrollHeight": 2638,
+    "clientHeight": 900,
+    "cls": 0,
+    "shifts": [],
+    "longTaskCount": 0,
+    "longTaskTotalMs": 0,
+    "toggle": {
+      "mode": "contract-driven",
+      "from": "light",
+      "to": "dark",
+      "swapMs": 0,
+      "classAfter": "dark"
+    },
+    "screenshot": {
+      "identical": true,
+      "bytesA": 203471,
+      "bytesB": 203471
+    },
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  }
+]

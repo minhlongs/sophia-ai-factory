@@ -37,12 +37,16 @@ export type { TikTokPublishParams, TikTokPublishStatus, TikTokUserInfo };
 
 /** Initiate a video publish — TikTok downloads from videoUrl — returns publish_id */
 export async function publishVideo(params: TikTokPublishParams): Promise<string> {
-  const { accessToken, videoUrl, title } = params;
+  const { accessToken, videoUrl, title, privacyLevel, brandOrganicToggle, brandContentToggle } = params;
 
   const response = await fetch(TIKTOK_PUBLISH_INIT_URL, {
     method: 'POST',
     headers: buildTikTokJsonHeaders(accessToken),
-    body: buildTikTokPublishPayload(title, videoUrl),
+    body: buildTikTokPublishPayload(title, videoUrl, {
+      privacyLevel,
+      brandOrganicToggle,
+      brandContentToggle,
+    }),
   });
 
   const data = (await response.json()) as TikTokApiEnvelope<{ publish_id: string }>;

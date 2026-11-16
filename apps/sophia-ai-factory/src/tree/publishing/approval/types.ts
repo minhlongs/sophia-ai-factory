@@ -26,6 +26,15 @@ export interface PublishApprovalSubject {
 /** Human decision on a publish. */
 export type PublishApprovalDecision = 'approved' | 'rejected' | 'pending' | 'expired';
 
+/** Reviewer compliance choices recorded alongside an approval decision. */
+export interface PublishApprovalCompliance {
+  readonly privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+  readonly brandOrganicToggle?: boolean;
+  readonly brandContentToggle?: boolean;
+  readonly musicUsageConfirmed?: boolean;
+  readonly containsSyntheticMedia?: boolean;
+}
+
 /** What the ledger says about a publish attempt. */
 export interface PublishLedgerRecord {
   readonly idempotencyKey: string;
@@ -37,6 +46,7 @@ export interface PublishLedgerRecord {
   readonly requesterId?: string;
   readonly reviewerId?: string;
   readonly comment?: string;
+  readonly compliance?: PublishApprovalCompliance;
   readonly approvedAt?: number;
   readonly expiresAt?: number;
   readonly createdAt: number;
@@ -53,7 +63,7 @@ export interface PublishApprovalStep {
   run<T>(id: string, fn: () => Promise<T>): Promise<T>;
   waitForEvent(
     id: string,
-    opts: { event: string; timeout: number | string },
+    opts: { event: string; timeout: number | string; if?: string },
   ): Promise<{ data: Record<string, unknown> } | null>;
   sendEvent(
     id: string,

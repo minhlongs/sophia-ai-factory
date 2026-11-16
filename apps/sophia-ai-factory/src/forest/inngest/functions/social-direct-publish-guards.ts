@@ -5,6 +5,10 @@
  */
 
 import { evaluateChannelPacing } from '@/tree/social/publisher/pacing-engine';
+import {
+  assertYouTubeProvenanceAllowed,
+  resolveSyntheticMediaDisclosure,
+} from '@/tree/publishing/synthetic-media-disclosure';
 import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import type {
   SocialPublishDispatchedEventData,
@@ -36,6 +40,16 @@ export function evaluateSafetyGuardsDecision(
   }
   if (cred.killSwitchActive) {
     return { allowed: false, reason: 'KILL_SWITCH_ACTIVE', errorMessage: 'Channel emergency kill switch active' };
+  }
+  if (data.platform === 'YOUTUBE_SHORTS') {
+    try {
+      assertYouTubeProvenanceAllowed(
+        resolveSyntheticMediaDisclosure({ provenance: data.provenance }),
+      );
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      return { allowed: false, reason: 'PROVENANCE_BLOCKED', errorMessage };
+    }
   }
   if (!shouldAllowRequest(data.platform, data.channelId)) {
     return { allowed: false, reason: 'CIRCUIT_BREAKER_OPEN', errorMessage: 'Platform circuit breaker open' };

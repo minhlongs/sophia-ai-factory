@@ -60,7 +60,7 @@ export function MarketingFooterLinkColumns() {
             <span>ElevenLabs & D-ID</span>
           </li>
           <li>
-            <Link href="/setup" className="text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1 font-medium">
+            <Link href="/setup" className="text-primary-text hover:opacity-80 transition-opacity inline-flex items-center gap-1 font-medium">
               <span>Setup Wizard</span>
               <ArrowUpRight className="w-3 h-3" />
             </Link>

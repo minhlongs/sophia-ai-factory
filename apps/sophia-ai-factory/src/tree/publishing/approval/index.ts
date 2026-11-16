@@ -5,6 +5,7 @@
 
 export * from './types';
 export { computePublishIdempotencyKey, canonicalizePublishSubject } from './idempotency-key';
+export { toRequesterId, SYSTEM_REQUESTER_SENTINEL } from './requester-identity';
 export * from './decision';
 export {
   PUBLISH_LEDGER_TABLE,

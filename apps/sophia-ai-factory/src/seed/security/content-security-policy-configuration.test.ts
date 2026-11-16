@@ -1,7 +1,7 @@
 /**
  * Tests for CSP header builder — nonce injection and directive coverage.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { buildCSPHeader, cspConfig } from '@/seed/security/content-security-policy-configuration'
 
 describe('buildCSPHeader', () => {
@@ -105,6 +105,21 @@ describe('buildCSPHeader', () => {
     it('script-src base does NOT contain unsafe-inline (nonce removes it)', () => {
       // The base config no longer includes 'unsafe-inline' — buildCSPHeader adds it when no nonce
       expect(cspConfig.scriptSrc).not.toContain("'unsafe-inline'")
+    })
+
+    it('omits unsafe-eval and unsafe-inline in production mode when nonce is supplied', async () => {
+      vi.resetModules()
+      vi.stubEnv('NODE_ENV', 'production')
+      try {
+        const prodModule = await import('@/seed/security/content-security-policy-configuration')
+        const header = prodModule.buildCSPHeader('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4')
+        const scriptSrc = header.match(/script-src ([^;]+)/)?.[1] ?? ''
+        expect(scriptSrc).toBe("'self' 'nonce-a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4'")
+        expect(scriptSrc).not.toContain("'unsafe-eval'")
+        expect(scriptSrc).not.toContain("'unsafe-inline'")
+      } finally {
+        vi.unstubAllEnvs()
+      }
     })
   })
 })

@@ -36,6 +36,9 @@ export class TikTokPublisher implements Publisher {
         accessToken: this.accessToken,
         videoUrl,
         title,
+        ...(meta.tiktokPrivacyLevel ? { privacyLevel: meta.tiktokPrivacyLevel } : {}),
+        ...(typeof meta.brandOrganicToggle === 'boolean' ? { brandOrganicToggle: meta.brandOrganicToggle } : {}),
+        ...(typeof meta.brandContentToggle === 'boolean' ? { brandContentToggle: meta.brandContentToggle } : {}),
       });
       recordSuccess('tiktok');
       return publishId;

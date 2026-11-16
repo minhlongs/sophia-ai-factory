@@ -22,26 +22,60 @@ interface FadeInViewProps {
 }
 
 /**
- * Lightweight replacement for framer-motion's whileInView pattern.
- * Uses IntersectionObserver + CSS transitions instead of ~35KB JS library.
+ * Lightweight zero-dependency viewport entrance primitive.
+ * Governed by Zen Motion Governance (`--motion-ease-emphasized` + reduced-motion guard).
  */
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 export function FadeInView({
   children,
   className = "",
   delay = 0,
   direction = "up",
   distance = 20,
-  duration = 500,
+  duration = 400,
   once = true,
   rootMargin = "0px",
   as: tag = "div",
 }: FadeInViewProps) {
   const ref = useRef<HTMLElement>(null);
+  // Deterministic initial state (`false`) on both SSR and client hydration pass
+  // prevents React 19 hydration mismatches; `@media (prefers-reduced-motion: reduce)`
+  // in `globals.css` guarantees `[data-zen-motion]` stays `opacity: 1; transform: none`
+  // from byte 0 of SSR, and `useEffect` immediately promotes `reduced` + `isVisible`.
   const [isVisible, setIsVisible] = useState(false);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
+    const syncReduced = () => {
+      const nextReduced = prefersReducedMotion();
+      setReduced(nextReduced);
+      if (nextReduced) {
+        setIsVisible(true);
+      }
+      return nextReduced;
+    };
+
+    const mql =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    mql?.addEventListener?.("change", syncReduced);
+
+    if (syncReduced()) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
+    }
+
     const element = ref.current;
-    if (!element) return;
+    if (!element) {
+      return () => mql?.removeEventListener?.("change", syncReduced);
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -56,7 +90,10 @@ export function FadeInView({
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      mql?.removeEventListener?.("change", syncReduced);
+    };
   }, [once, rootMargin]);
 
   const directions = {
@@ -68,15 +105,20 @@ export function FadeInView({
   };
 
   const Tag = tag as React.ElementType;
+  const easing = "var(--motion-ease-emphasized, cubic-bezier(0.16, 1, 0.3, 1))";
 
   return (
     <Tag
       ref={ref}
       className={className}
+      data-zen-motion="fade-in-view"
+      data-zen-revealed={isVisible ? "true" : "false"}
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "none" : directions[direction],
-        transition: `opacity ${duration}ms cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform ${duration}ms cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+        transition: reduced
+          ? "none"
+          : `opacity ${duration}ms ${easing} ${delay}ms, transform ${duration}ms ${easing} ${delay}ms`,
         willChange: "opacity, transform",
       }}
     >

@@ -32,7 +32,7 @@ export function ActivityRow({ row }: { row: DashboardActivityItem }) {
             className={cn(
               "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border",
               isPayment
-                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20"
                 : "bg-primary/10 text-primary border-primary/20"
             )}
           >

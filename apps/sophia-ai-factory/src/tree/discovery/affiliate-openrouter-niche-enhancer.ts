@@ -7,8 +7,10 @@
  */
 
 import type { AffiliateProgram } from "@/seed/types";
+import { classifyError, classifyHttpStatus } from "@/seed/types/failure-kind";
 import { withTimeout } from "@/tree/byok/with-timeout";
 import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
+import { recordTieredRouteOutcome, selectTieredByokRoute } from "@/tree/byok/tiered-byok-router";
 
 /** OpenRouter response shape for chat completions */
 interface OpenRouterChoice {
@@ -55,6 +57,14 @@ export async function enhanceNicheScoreWithAI(
   );
   if (!apiKey) return null;
 
+  const keyRef = userId ?? "platform-default";
+  const route = selectTieredByokRoute({
+    taskKind: "qa_validation",
+    baselineModel: "openai/gpt-4o-mini",
+    keyRef,
+  });
+  if (!route.resilientAllowed) return null;
+
   try {
     const response = await withTimeout("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -63,7 +73,7 @@ export async function enhanceNicheScoreWithAI(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: route.model,
         messages: [
           {
             role: "system",
@@ -80,12 +90,25 @@ export async function enhanceNicheScoreWithAI(
     });
 
     if (!response.ok) {
+      recordTieredRouteOutcome({
+        keyRef,
+        model: route.model,
+        ok: false,
+        failureKind: classifyHttpStatus(response.status),
+      });
       return null;
     }
+    recordTieredRouteOutcome({ keyRef, model: route.model, ok: true });
 
     const data = (await response.json()) as { choices?: OpenRouterChoice[] };
     return parseScore(data.choices?.[0]?.message?.content);
-  } catch {
+  } catch (err) {
+    recordTieredRouteOutcome({
+      keyRef,
+      model: route.model,
+      ok: false,
+      failureKind: classifyError(err),
+    });
     return null;
   }
 }

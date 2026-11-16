@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NonRetriableError } from 'inngest';
 import { processSocialDirectPublishJob } from '../social-direct-publish-job';
 import type { PlatformCredentialRecord } from '@/seed/types/social-publisher-types';
 import * as vault from '@/seed/security/oauth-token-vault';
@@ -570,5 +571,103 @@ describe('socialDirectPublishJob & Server Actions', () => {
     expect(res.status).toBe('ABORTED_SAFETY');
     expect((res as { reason: string }).reason).toBe('KILL_SWITCH_ACTIVE');
     expect(fixtureFetch).not.toHaveBeenCalled();
+  });
+
+  it('marks job FAILED and throws NonRetriableError without touching network or breaker when provenance blocks YouTube Shorts', async () => {
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
+    let thrown: unknown;
+    try {
+      await processSocialDirectPublishJob({
+        event: {
+          data: {
+            jobId: 'job_prov_blocked',
+            userId: 'user_1',
+            tenantId: 'ws_1',
+            channelId: 'chan_yt_1',
+            platform: 'YOUTUBE_SHORTS' as const,
+            videoUrl: 'https://cdn.example.com/v.mp4',
+            title: 'Blocked Short',
+            description: '#Shorts',
+            provenance: {
+              claims: [
+                {
+                  id: 'claim_1',
+                  text: 'Unverified yield claim',
+                  riskLevel: 'high',
+                  sourceIds: [],
+                  status: 'unsupported',
+                },
+              ],
+            },
+          },
+        },
+        step: mockStep,
+      });
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(NonRetriableError);
+    expect((thrown as Error).message).toMatch(/PROVENANCE_BLOCKED/);
+    expect(fixtureFetch).not.toHaveBeenCalled();
+    expect(circuitBreaker.shouldAllowRequest).not.toHaveBeenCalled();
+    expect(vault.decryptTokenVault).not.toHaveBeenCalled();
+    expect(jobStore.claimPublishJobForUpload).not.toHaveBeenCalled();
+    expect(circuitBreaker.recordFailure).not.toHaveBeenCalled();
+    expect(circuitBreaker.recordSuccess).not.toHaveBeenCalled();
+    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith(
+      'job_prov_blocked',
+      'FAILED',
+      expect.objectContaining({ error: expect.stringContaining('PROVENANCE_BLOCKED') }),
+    );
+  });
+
+  it('treats deterministic provenance invariant errors as NonRetriableError without touching breaker or approval', async () => {
+    vi.stubGlobal('fetch', fixtureFetch as unknown as typeof fetch);
+
+    let thrown: unknown;
+    try {
+      await processSocialDirectPublishJob({
+        event: {
+          data: {
+            jobId: 'job_prov_invalid',
+            userId: 'user_1',
+            tenantId: 'ws_1',
+            channelId: 'chan_yt_1',
+            platform: 'YOUTUBE_SHORTS' as const,
+            videoUrl: 'https://cdn.example.com/v.mp4',
+            title: 'Invalid Provenance Short',
+            description: '#Shorts',
+            provenance: {
+              sources: [],
+              claims: [
+                {
+                  id: 'claim_1',
+                  text: 'Supported claim missing verified source',
+                  riskLevel: 'high',
+                  sourceIds: [],
+                  status: 'supported',
+                },
+              ],
+            },
+          },
+        },
+        step: mockStep,
+      });
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(NonRetriableError);
+    expect((thrown as Error).message).toMatch(/PROVENANCE_BLOCKED.*verified source/);
+    expect(circuitBreaker.shouldAllowRequest).not.toHaveBeenCalled();
+    expect(vault.decryptTokenVault).not.toHaveBeenCalled();
+    expect(jobStore.claimPublishJobForUpload).not.toHaveBeenCalled();
+    expect(jobStore.updatePublishJobStatus).toHaveBeenCalledWith(
+      'job_prov_invalid',
+      'FAILED',
+      expect.objectContaining({ error: expect.stringContaining('PROVENANCE_BLOCKED') }),
+    );
   });
 });

@@ -4,7 +4,8 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import type { PublishingChannel, PublishingJob } from '@/seed/types';
+import type { PublishingChannel, PublishingJob, ProvenanceInput } from '@/seed/types';
+import type { PublishApprovalCompliance } from '@/tree/publishing/approval';
 import type { Step, ClaimResult } from './publish-types';
 import { fetchChannelForJob, ensureFreshToken, uploadToProvider, pollStatusUntilFinal } from './publish-upload';
 import { assertSafeVideoUrl } from './publish-url-utils';
@@ -20,12 +21,14 @@ export interface ProcessStandardProviderArgs {
   now: number;
   /** Resolved and verified before the approval gate, so the media is known. */
   videoUrl: string;
+  compliance?: PublishApprovalCompliance;
+  provenance?: ProvenanceInput;
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
   refreshToken?: (channel: PublishingChannel) => Promise<number>;
 }
 
 export async function processStandardProvider(args: ProcessStandardProviderArgs): Promise<ClaimResult> {
-  const { db, jobId, job, tenantId, userId, step, now, scheduleRetry, videoUrl, refreshToken } = args;
+  const { db, jobId, job, tenantId, userId, step, now, scheduleRetry, videoUrl, compliance, provenance, refreshToken } = args;
 
   const channel = await fetchChannelForJob(db, job, tenantId);
   const accessToken = await ensureFreshToken(db, channel, now, refreshToken);
@@ -34,7 +37,7 @@ export async function processStandardProvider(args: ProcessStandardProviderArgs)
 
   const retryCount = job.retry_count + 1;
   const { externalPostId, shouldRetry, error } = await uploadToProvider({
-    channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId,
+    channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId, compliance, provenance,
   });
 
   if (shouldRetry) {
@@ -47,7 +50,13 @@ export async function processStandardProvider(args: ProcessStandardProviderArgs)
 
   await db.from('publishing_jobs').update({ status: 'processing' }).eq('id', jobId);
 
-  const finalStatus = await pollStatusUntilFinal({ step, tenantId, provider: channel.provider, externalPostId });
+  const finalStatus = await pollStatusUntilFinal({
+    step,
+    tenantId,
+    provider: channel.provider,
+    channelId: job.channel_id,
+    externalPostId,
+  });
 
   await finalizePublishResult({
     step, db, jobId, tenantId, provider: channel.provider, externalPostId, finalStatus,

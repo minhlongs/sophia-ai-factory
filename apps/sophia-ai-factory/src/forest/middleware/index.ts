@@ -7,6 +7,7 @@ export {
   RateLimiter,
   globalRateLimiter,
   getClientIdentifier,
+  getClientIpIdentifier,
   createRateLimitHeaders,
   createRateLimitResponse
 } from './rate-limiter'

@@ -24,7 +24,8 @@ export function PaymentConfirmedCard({ isVi, locale }: { isVi: boolean; locale: 
       </p>
       <div className="mt-4">
         <Link
-          href={`/${locale}/dashboard`}
+          href="/dashboard"
+          locale={locale}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-accent/90"
         >
           {isVi ? 'Vào bảng điều khiển' : 'Go to dashboard'}

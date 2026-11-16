@@ -135,6 +135,23 @@ describe('requiresCsrfCheck', () => {
     expect(requiresCsrfCheck('/api/user/tier', 'post')).toBe(true)
     expect(requiresCsrfCheck('/api/user/tier', 'get')).toBe(false)
   })
+
+  it('returns false for exact /api/payos/ipn webhook while keeping sibling /api/payos routes protected', () => {
+    expect(requiresCsrfCheck('/api/payos/ipn', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/vi/api/payos/ipn', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/api/payos', 'POST')).toBe(true)
+    expect(requiresCsrfCheck('/api/payos/create-link', 'POST')).toBe(true)
+    expect(requiresCsrfCheck('/api/payos/ipn/extra', 'POST')).toBe(true)
+  })
+
+  it('returns false for exact /api/inngest callback while keeping /api/inngest/* subpaths protected', () => {
+    expect(requiresCsrfCheck('/api/inngest', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/api/inngest', 'PUT')).toBe(false)
+    expect(requiresCsrfCheck('/vi/api/inngest', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/api/inngest/extra', 'POST')).toBe(true)
+    expect(requiresCsrfCheck('/api/inngest/extra', 'PUT')).toBe(true)
+    expect(requiresCsrfCheck('/api/inngest-admin', 'POST')).toBe(true)
+  })
 })
 
 // ── setCsrfCookie ─────────────────────────────────────────────────────────────

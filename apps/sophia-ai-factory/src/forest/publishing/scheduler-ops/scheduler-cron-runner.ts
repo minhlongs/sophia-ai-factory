@@ -6,6 +6,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { SYSTEM_REQUESTER_SENTINEL } from '@/tree/publishing/approval';
 import type { SchedulerCronResult } from './types';
 
 export async function runSchedulerCron(options?: {
@@ -50,7 +51,10 @@ export async function runSchedulerCron(options?: {
       data: {
         jobId: job.id,
         tenantId: job.tenant_id,
-        userId: job.tenant_id,
+        // Automated cron sweeps have no signed-in requester; use the system
+        // sentinel so downstream publish_ledger.requester_id stays null rather
+        // than recording the workspace id as a human requester.
+        userId: SYSTEM_REQUESTER_SENTINEL,
       },
     });
 

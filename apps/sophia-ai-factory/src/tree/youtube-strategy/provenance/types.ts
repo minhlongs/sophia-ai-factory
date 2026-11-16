@@ -2,6 +2,11 @@
  * Provenance types and contracts for YouTube content.
  */
 
+// The input contract lives in `seed` so publish metadata (which is also in
+// `seed`) can reference it without an upward import. Re-exported here so the
+// tree reviewer keeps a single provenance surface for its callers.
+export type { ProvenanceInput } from '@/seed/types/provenance';
+
 export type SourceType = 'article' | 'video' | 'dataset' | 'official' | 'asset' | 'other';
 export type SourceStatus = 'pending' | 'verified' | 'rejected';
 export type ClaimRiskLevel = 'standard' | 'high';
@@ -42,10 +47,4 @@ export interface ProvenanceRecord {
     readonly highRiskClaims: number;
     readonly unresolvedClaims: number;
   };
-}
-
-export interface ProvenanceInput {
-  readonly sources?: readonly Record<string, unknown>[];
-  readonly claims?: readonly Record<string, unknown>[];
-  readonly containsSyntheticMedia?: boolean;
 }

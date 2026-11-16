@@ -1,0 +1,86 @@
+[
+  {
+    "id": "setup-wizard_vi_dark",
+    "route": "/vi/setup-wizard",
+    "theme": "dark",
+    "locale": "vi",
+    "violations": []
+  },
+  {
+    "id": "dashboard_vi_dark",
+    "route": "/vi/dashboard",
+    "theme": "dark",
+    "locale": "vi",
+    "violations": []
+  },
+  {
+    "id": "niche-studio_vi_dark",
+    "route": "/vi/dashboard/niche-studio",
+    "theme": "dark",
+    "locale": "vi",
+    "violations": []
+  },
+  {
+    "id": "setup-wizard_vi_light",
+    "route": "/vi/setup-wizard",
+    "theme": "light",
+    "locale": "vi",
+    "violations": []
+  },
+  {
+    "id": "dashboard_vi_light",
+    "route": "/vi/dashboard",
+    "theme": "light",
+    "locale": "vi",
+    "violations": []
+  },
+  {
+    "id": "niche-studio_vi_light",
+    "route": "/vi/dashboard/niche-studio",
+    "theme": "light",
+    "locale": "vi",
+    "violations": []
+  },
+  {
+    "id": "setup-wizard_en_dark",
+    "route": "/en/setup-wizard",
+    "theme": "dark",
+    "locale": "en",
+    "violations": []
+  },
+  {
+    "id": "dashboard_en_dark",
+    "route": "/en/dashboard",
+    "theme": "dark",
+    "locale": "en",
+    "violations": []
+  },
+  {
+    "id": "niche-studio_en_dark",
+    "route": "/en/dashboard/niche-studio",
+    "theme": "dark",
+    "locale": "en",
+    "violations": []
+  },
+  {
+    "id": "setup-wizard_en_light",
+    "route": "/en/setup-wizard",
+    "theme": "light",
+    "locale": "en",
+    "violations": []
+  },
+  {
+    "id": "dashboard_en_light",
+    "route": "/en/dashboard",
+    "theme": "light",
+    "locale": "en",
+    "violations": []
+  },
+  {
+    "id": "niche-studio_en_light",
+    "route": "/en/dashboard/niche-studio",
+    "theme": "light",
+    "locale": "en",
+    "violations": []
+  }
+]

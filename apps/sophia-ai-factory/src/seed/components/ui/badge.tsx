@@ -15,15 +15,15 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
           // Variant styles — Saigon Factory palette
           {
             // Basic tier — warm amber gold
-            "bg-primary/10 text-primary border border-primary/30":
+            "bg-primary/10 text-primary-text border border-primary/30":
               variant === "basic",
 
             // Premium tier — deep indigo
-            "bg-accent/10 text-accent-foreground border border-accent/30":
+            "bg-accent/10 text-amber-800 dark:text-amber-300 border border-accent/30":
               variant === "premium",
 
             // Enterprise tier — amber→indigo gradient (factory gold + ink)
-            "bg-gradient-to-r from-primary/15 via-primary/10 to-accent/15 text-primary-foreground border border-primary/30":
+            "bg-gradient-to-r from-primary/15 via-primary/10 to-accent/15 text-foreground border border-primary/30":
               variant === "enterprise",
 
             // Default — warm paper
@@ -39,7 +39,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
               variant === "outline",
 
             // Destructive — red ochre
-            "bg-destructive/10 text-destructive border border-destructive/20":
+            "bg-destructive/10 text-rose-700 dark:text-rose-300 border border-destructive/20":
               variant === "destructive",
           },
 

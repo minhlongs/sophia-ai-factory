@@ -1,13 +1,57 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  PAID_PILOT_14_DAY_PRICE_CENTS,
+  PAID_PILOT_14_DAY_PRICE_VND,
+} from '@/tree/finance/pilot-unit-economics-types';
 import { writeOrder } from '@/land/orders/pending-order-repo';
 import { createPayOsInvoice, getPayOsTierConfig } from '@/land/payments/payos';
+import { isPayOsEnabled } from '@/seed/config/flags';
 import type { MethodDispatcherInput } from './payment-dispatcher';
 
 export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise<NextResponse> {
   const { tier, userId, period, promoCode, customerEmail } = input;
+  if (period === 'pilot_14d' && tier !== 'BASIC') {
+    return NextResponse.json(
+      { error: '14-day Paid Pilot billing is only available for BASIC tier' },
+      { status: 400 },
+    );
+  }
+
+  const payosActive = isPayOsEnabled();
   const orderId = `sophia_${userId}_${Date.now()}`;
   try {
+    if (!payosActive) {
+      if (period !== 'pilot_14d') {
+        return NextResponse.json(
+          { error: 'PayOS not currently available' },
+          { status: 503 },
+        );
+      }
+      await writeOrder({
+        order_id: orderId,
+        user_id: userId,
+        tier: 'BASIC',
+        period: 'pilot_14d',
+        payment_method: 'offline',
+        amount_usd_cents: PAID_PILOT_14_DAY_PRICE_CENTS,
+        amount_vnd: PAID_PILOT_14_DAY_PRICE_VND,
+        promo_code: promoCode,
+        customer_email: customerEmail,
+      });
+      logger.info('[Checkout/PayOS] Created offline fallback order for 14-day Paid Pilot', {
+        orderId,
+        userId,
+      });
+      return NextResponse.json({
+        status: 'pending_manual_payment',
+        orderId,
+        provider: 'offline_pilot_fallback',
+        amountVnd: PAID_PILOT_14_DAY_PRICE_VND,
+        amountUsd: PAID_PILOT_14_DAY_PRICE_CENTS / 100,
+      });
+    }
+
     const payOsResult = await createPayOsInvoice({
       tier,
       period,
@@ -28,6 +72,7 @@ export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise
       customer_email: customerEmail,
       invoice_url: payOsResult.checkoutUrl,
       provider_payment_id: payOsResult.paymentLinkId,
+      provider_order_code: payOsResult.orderCode,
     });
 
     return NextResponse.json({

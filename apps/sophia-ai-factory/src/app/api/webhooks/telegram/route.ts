@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from '@/seed/security/signature-primitives';
 import {
   handleCallbackQuery,
   withMiddleware,
@@ -41,13 +42,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  let body: TelegramUpdate;
-  try {
-    body = (await request.json().catch(() => ({}))) as TelegramUpdate;
-  } catch {
-    body = {} as TelegramUpdate;
-  }
-
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
   if (!webhookSecret) {
     const { logger } = await import('@/seed/utils/logger-utility');
@@ -55,14 +49,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
   const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
-  if (token !== webhookSecret) {
+  if (!token || !timingSafeEqual(token, webhookSecret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rawBody: unknown = await request.json().catch(() => null);
+  const body = (
+    rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)
+      ? rawBody
+      : {}
+  ) as TelegramUpdate;
+
   try {
-    if (body.callback_query) {
-      const chatId = body.callback_query.message?.chat?.id?.toString();
-      const callbackData = body.callback_query.data;
+    if (body.callback_query && typeof body.callback_query === 'object') {
+      const rawChatId = body.callback_query.message?.chat?.id;
+      const chatId =
+        typeof rawChatId === 'number' || typeof rawChatId === 'string'
+          ? String(rawChatId)
+          : undefined;
+      const callbackData =
+        typeof body.callback_query.data === 'string'
+          ? body.callback_query.data
+          : undefined;
 
       if (chatId && callbackData) {
         if (

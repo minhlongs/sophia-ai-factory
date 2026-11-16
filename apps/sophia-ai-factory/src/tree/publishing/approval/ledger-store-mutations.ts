@@ -11,13 +11,19 @@ import { getD1, type D1Database } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
 import { computePublishIdempotencyKey } from './idempotency-key';
+import { toRequesterId } from './requester-identity';
 import {
   PUBLISH_LEDGER_TABLE,
   ensurePublishLedgerTable,
   mapLedgerRow,
   type LedgerRow,
 } from './ledger-store';
-import type { PublishApprovalDecision, PublishApprovalSubject, PublishLedgerRecord } from './types';
+import type {
+  PublishApprovalCompliance,
+  PublishApprovalDecision,
+  PublishApprovalSubject,
+  PublishLedgerRecord,
+} from './types';
 
 /**
  * Atomically records a `pending` approval request. The insert is the claim: a
@@ -46,7 +52,9 @@ export async function claimPublishApprovalRequest(
       input.channelId,
       input.platform,
       input.mediaRef,
-      input.requesterId ?? null,
+      // Applied at the write so every lane is covered, including one that
+      // forwards its own scheduled-lane identifier in the user slot.
+      toRequesterId(input.requesterId) ?? null,
       now,
       input.expiresAt,
     )
@@ -66,6 +74,7 @@ export async function resolvePublishApproval(
     decision: PublishApprovalDecision;
     reviewerId: string;
     comment?: string;
+    compliance?: PublishApprovalCompliance;
   },
   overrideDb?: D1Database,
 ): Promise<Result<PublishLedgerRecord, { code: string; message: string }>> {
@@ -74,21 +83,49 @@ export async function resolvePublishApproval(
     if (!db) return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     const key = await computePublishIdempotencyKey(input.subject);
     const now = Math.floor(Date.now() / 1000);
-    const res = await db
-      .prepare(
-        `UPDATE ${PUBLISH_LEDGER_TABLE}
-            SET decision = ?1, reviewer_id = ?2, comment = ?3, approved_at = ?4
-          WHERE idempotency_key = ?5 AND tenant_id = ?6 AND decision = 'pending'`,
-      )
-      .bind(
-        input.decision,
-        input.reviewerId,
-        input.comment ?? null,
-        input.decision === 'approved' ? now : null,
-        key,
-        input.subject.tenantId,
-      )
-      .run();
+    const complianceJson =
+      input.compliance && Object.keys(input.compliance).length > 0
+        ? JSON.stringify(input.compliance)
+        : null;
+    let res: unknown;
+    try {
+      res = await db
+        .prepare(
+          `UPDATE ${PUBLISH_LEDGER_TABLE}
+              SET decision = ?1, reviewer_id = ?2, comment = ?3, approved_at = ?4, compliance_json = ?5
+            WHERE idempotency_key = ?6 AND tenant_id = ?7 AND decision = 'pending'`,
+        )
+        .bind(
+          input.decision,
+          input.reviewerId,
+          input.comment ?? null,
+          input.decision === 'approved' ? now : null,
+          complianceJson,
+          key,
+          input.subject.tenantId,
+        )
+        .run();
+    } catch (colErr) {
+      if (String(colErr).includes('compliance_json')) {
+        res = await db
+          .prepare(
+            `UPDATE ${PUBLISH_LEDGER_TABLE}
+                SET decision = ?1, reviewer_id = ?2, comment = ?3, approved_at = ?4
+              WHERE idempotency_key = ?5 AND tenant_id = ?6 AND decision = 'pending'`,
+          )
+          .bind(
+            input.decision,
+            input.reviewerId,
+            input.comment ?? null,
+            input.decision === 'approved' ? now : null,
+            key,
+            input.subject.tenantId,
+          )
+          .run();
+      } else {
+        throw colErr;
+      }
+    }
     const changes = (res as { meta?: { changes?: number } })?.meta?.changes ?? 0;
     if (changes === 0) {
       return failure({

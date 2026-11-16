@@ -54,6 +54,8 @@ export interface TikTokInitInput {
   readonly disableDuet?: boolean;
   readonly disableComment?: boolean;
   readonly disableStitch?: boolean;
+  readonly brandOrganicToggle?: boolean;
+  readonly brandContentToggle?: boolean;
 }
 
 export function buildTikTokInitPayload(input: TikTokInitInput) {
@@ -68,6 +70,12 @@ export function buildTikTokInitPayload(input: TikTokInitInput) {
         disable_duet: input.disableDuet ?? false,
         disable_comment: input.disableComment ?? false,
         disable_stitch: input.disableStitch ?? false,
+        ...(typeof input.brandOrganicToggle === 'boolean'
+          ? { brand_organic_toggle: input.brandOrganicToggle }
+          : {}),
+        ...(typeof input.brandContentToggle === 'boolean'
+          ? { brand_content_toggle: input.brandContentToggle }
+          : {}),
       },
       source_info: {
         source: 'FILE_UPLOAD' as const,

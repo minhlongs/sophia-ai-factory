@@ -142,6 +142,9 @@ jobs:
             fi
           fi
 
+      - name: 'Preflight — D1 Migration Duplicate Prefix Guard'
+        run: bash scripts/check-duplicate-migration-prefixes.sh
+
       # ── Stage 2: Cloudflare Build & D1 Migration ──
       - name: 'Stage 2a: D1 Delta Migration (sophia-raas-db)'
         if: ${{ inputs.skip_migrations != true && inputs.dry_run != true }}

@@ -67,7 +67,7 @@ export function MarketingNav({ className }: MarketingNavProps) {
           <div className="flex flex-col">
             <span className="text-xl font-black tracking-tight text-foreground dark:text-white flex items-center gap-1.5">
               Sophia
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary-text border border-primary/25">
                 AI Factory
               </span>
             </span>
@@ -84,7 +84,7 @@ export function MarketingNav({ className }: MarketingNavProps) {
                 className={cn(
                   'px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-xs font-semibold'
+                    ? 'bg-primary dark:bg-primary-600 text-primary-foreground dark:text-white shadow-xs font-semibold'
                     : 'text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/80 dark:hover:bg-white/[0.06]'
                 )}
               >
