@@ -7,6 +7,11 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import {
+  describeImageTier,
+  isKnownImageTier,
+  TIER_ALLOWED_FAL_MODELS,
+} from '@/seed/config/tiers/image-model-access';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
 import { storeFalImageInR2 } from '@/land/image/fal-image-r2-service';
@@ -25,6 +30,24 @@ export async function executeFalImageGeneration(
   input: GenerateImageJobInput,
 ): Promise<GenerateImageJobResult> {
   const { userId, tier, prompt, model, aspectRatio } = input;
+
+  if (!isKnownImageTier(tier)) {
+    return {
+      success: false,
+      error: `Unknown plan "${describeImageTier(tier)}". Image generation requires a recognised plan.`,
+      code: 'TIER_GATE',
+    };
+  }
+
+  const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? [];
+  if (typeof model !== 'string' || !allowedFalModels.includes(model)) {
+    const modelLabel = typeof model === 'string' ? model.slice(0, 128) : typeof model;
+    return {
+      success: false,
+      error: `Model "${modelLabel}" is not available for your ${tier} plan.`,
+      code: 'TIER_GATE',
+    };
+  }
 
   const db = createServerClient();
   const duplicateJobId = await findRecentDuplicateImageJob(db, {

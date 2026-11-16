@@ -15,8 +15,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { submitMuApiImageJob } from '@/land/image/image-generation-helpers';
-import { bodySchema, isFalModel, TIER_ALLOWED_MODELS } from './config';
+import {
+  bodySchema,
+  describeImageTier,
+  isFalModel,
+  isKnownImageTier,
+  TIER_ALLOWED_MODELS,
+} from './config';
 import { handleFalGeneration } from './fal-handler';
+
+function statusForMuApiFailure(code?: string): number {
+  if (code === 'TIER_GATE') return 403;
+  if (code === 'NO_API_KEY') return 422;
+  if (code === 'MUAPI_ERROR') return 502;
+  return 500;
+}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
@@ -42,14 +55,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { prompt, model, aspectRatio } = parsed.data;
   const tier = await resolveUserTier(user.id);
 
+  if (!isKnownImageTier(tier)) {
+    return NextResponse.json(
+      {
+        message: `Unknown plan "${describeImageTier(tier)}". Image generation requires a recognised plan.`,
+        code: 'TIER_GATE',
+      },
+      { status: 403 },
+    );
+  }
+
   if (isFalModel(model)) {
     return handleFalGeneration(user, tier, prompt, model, aspectRatio);
   }
 
-  const allowedMuapiModels = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
+  const allowedMuapiModels = TIER_ALLOWED_MODELS[tier] ?? [];
   if (!allowedMuapiModels.includes(model)) {
     return NextResponse.json(
-      { message: `Model "${model}" is not available for your ${tier} plan.` },
+      {
+        message: `Model "${model.slice(0, 128)}" is not available for your ${tier} plan.`,
+        code: 'TIER_GATE',
+      },
       { status: 403 },
     );
   }
@@ -63,9 +89,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    const status =
-      result.code === 'NO_API_KEY' ? 422 : result.code === 'MUAPI_ERROR' ? 502 : 500;
-    return NextResponse.json({ message: result.error, code: result.code }, { status });
+    return NextResponse.json(
+      { message: result.error, code: result.code },
+      { status: statusForMuApiFailure(result.code) },
+    );
   }
 
   return NextResponse.json({ jobId: result.jobId }, { status: 201 });

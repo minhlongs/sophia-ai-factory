@@ -104,7 +104,7 @@ describe('allowedImageModelsForTier', () => {
     }
   });
 
-  it('falls back to the most restrictive tier for an unknown tier', () => {
-    expect(allowedImageModelsForTier('SOMETHING_NEW')).toEqual(allowedImageModelsForTier('BASIC'));
+  it('returns an empty list for an unrecognised tier instead of falling back to BASIC', () => {
+    expect(allowedImageModelsForTier('SOMETHING_NEW')).toEqual([]);
   });
 });
