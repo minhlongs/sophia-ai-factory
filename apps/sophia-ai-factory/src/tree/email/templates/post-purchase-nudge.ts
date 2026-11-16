@@ -22,7 +22,7 @@ export interface RenderedEmail {
 export function renderPostPurchaseNudge(data: PostPurchaseNudgeData): RenderedEmail {
   const isVi = data.locale.startsWith('vi');
   const name = data.ownerFullName;
-  const wizardUrl = `${BASE_URL}/${isVi ? 'vi' : 'en'}/dashboard/onboarding`;
+  const wizardUrl = `${BASE_URL}/${isVi ? 'vi' : 'en'}/setup-wizard`;
 
   const subject = isVi
     ? 'Sophia đang chờ API keys của bạn — 3 bước đơn giản'

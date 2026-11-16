@@ -21,7 +21,7 @@ export const PROBE_TARGETS: Record<string, ProbeTarget> = {
     headers: (k) => ({ Authorization: `Key ${k}` }),
   },
   openrouter: {
-    url: 'https://openrouter.ai/api/v1/auth/key',
+    url: 'https://openrouter.ai/api/v1/key',
     method: 'GET',
     headers: (k) => ({ Authorization: `Bearer ${k}` }),
   },
@@ -59,12 +59,35 @@ export const PROBE_TARGETS: Record<string, ProbeTarget> = {
   },
 };
 
+export type ProviderProbeErrorCode =
+  | 'VALIDATION_ERROR'
+  | 'INVALID_CREDENTIAL'
+  | 'FORBIDDEN'
+  | 'RATE_LIMITED'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'NETWORK_ERROR'
+  | 'TIMEOUT'
+  | 'UNAUTHORIZED'
+  | 'CSRF_REJECTED'
+  | 'CONFIGURATION_ERROR'
+  | 'PROVIDER_RESPONSE_ERROR';
+
+export function isMaskedOrPlaceholderCredential(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (!trimmed) return true;
+  return /^\*{3,}|^•{3,}|\*{4}\.\.\.|•{4}\.\.\./.test(trimmed);
+}
+
 export interface ProbeResult {
   ok: boolean;
   valid: boolean;
   provider: string;
   status: ProviderHealthStatus;
+  errorCode: ProviderProbeErrorCode | null;
+  verifiedAt: string | null;
+  durationMs: number;
   latencyMs: number;
+  correlationId: string;
   message: string;
   message_vi: string;
   maskedKey: string;

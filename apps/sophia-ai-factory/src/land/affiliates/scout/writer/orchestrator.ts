@@ -12,17 +12,18 @@ import { DEFAULT_SCORING } from '@/seed/tenant-settings/defaults';
 import type { ScoringSettings } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import { ALL_CLIENTS } from './client-registry';
-import { hasRealAffiliateCredentials, processOffer } from './offer-processor';
+import { processOffer } from './offer-processor';
 import type { ScoutRunResult } from './types';
+import { getCredentials, type AffiliateNetwork } from '@/land/affiliates/credentials';
 
 /**
  * Run the affiliate scout for a single tenant.
  * - Loads per-tenant scoring weights/threshold from tenant-settings (falls back to DEFAULT_SCORING).
- * - Calls all network clients whose credentials are present; falls back to mock.
+ * - Queries D1 for per-tenant BYOK credentials; only queries networks with valid BYOK.
+ * - In non-test environments, zero-mock policy is enforced (never falls back to mock).
  * - Scores each affiliate; skips insert if score < threshold (default 0.7).
  * - Inserts new qualifying affiliates (UNIQUE constraint prevents duplicates).
  * - Emits `affiliate.discovered` webhook for each new insert, unless geo-blocked.
- *   Geo-gate uses per-tenant rules (additionalRules + removedRules from tenant-settings).
  */
 export async function runAffiliateScout(
   env: ScoutEnv,
@@ -43,15 +44,40 @@ export async function runAffiliateScout(
     ...scoringCtx,
   };
 
-  const hasAnyRealCred = hasRealAffiliateCredentials(env);
-  const clientsToUse = hasAnyRealCred ? ALL_CLIENTS : [mockClient];
-  if (!hasAnyRealCred) {
-    logger.warn('[affiliate-scout] No real network credentials — using mock client');
+  const isTestEnv = process.env.NODE_ENV === 'test';
+  const clientTargets: Array<{ client: (typeof ALL_CLIENTS)[number]; creds?: Record<string, string> }> = [];
+
+  for (const client of ALL_CLIENTS) {
+    try {
+      const cred = await getCredentials(db, tenantId, client.network as AffiliateNetwork);
+      if (cred) {
+        clientTargets.push({ client, creds: cred as unknown as Record<string, string> });
+      }
+    } catch {
+      // Ignored: network has no configured credentials for this tenant
+    }
+  }
+
+  if (clientTargets.length === 0) {
+    if (isTestEnv) {
+      logger.info('[affiliate-scout] Test environment with no BYOK: using test mock client');
+      clientTargets.push({ client: mockClient });
+    } else {
+      logger.warn(`[affiliate-scout] Tenant ${tenantId} has zero configured BYOK affiliate credentials — aborting run without mocks`);
+      return {
+        discovered: 0,
+        errors: [{
+          network: 'mock',
+          affiliates: [],
+          error: `NO_CONFIGURED_CREDENTIALS: Tenant ${tenantId} has no configured BYOK affiliate network credentials`,
+        }],
+      };
+    }
   }
 
   const settled = await Promise.allSettled(
-    clientsToUse.map(async (client) => {
-      const raw = await client.fetch(env, tenantId);
+    clientTargets.map(async ({ client, creds }) => {
+      const raw = await client.fetch(env, tenantId, creds);
       return { network: client.network, affiliates: raw };
     }),
   );

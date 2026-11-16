@@ -50,6 +50,8 @@ Keep: `ANTHROPIC_DEFAULT_FABLE_MODEL=claude-fable-5` (already a combo) and the c
 - `claude-sonnet-5-0` and `claude-haiku-4-5` probes: 1.64 s / 1.24 s, HTTP 200.
 - Existing Claude Code sessions still use the old env until restarted; one old in-flight zunef row remained at 15:05:25Z.
 - Forced zunef fallback drill deferred (would intentionally hit the 35 s+ path).
+- 16:20Z: user requested zunef-first, Antigravity only when zunef is slow. Applied zunef-first + 10 s hedge to 19 Claude/RTK combos (backup `backups/combos-zunef-first-pre-20261023T161936Z.json`).
+- Result: zunef is first, but three Ultra Claude 5.5 quotas are exhausted until 19:12Z/25-10, so Antigravity hedging cannot win; a real opus turn still took 110 s on zunef.
 
 ## Acceptance
 - A real Claude Code turn logs `provider=antigravity`, `account=cashback.mentoring@gmail.com`, duration <60 s; no first-attempt zunef.

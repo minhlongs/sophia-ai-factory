@@ -5,6 +5,7 @@ import {
   LandingFeaturesSection,
   type LandingFeaturesSectionProps,
 } from './landing-features-section';
+import { OpcArchitectureBanner } from './opc-architecture-banner';
 
 export { LandingFeaturesSection, type LandingFeaturesSectionProps };
 
@@ -79,6 +80,7 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
               );
             })}
           </div>
+          <OpcArchitectureBanner />
         </div>
       </section>
 

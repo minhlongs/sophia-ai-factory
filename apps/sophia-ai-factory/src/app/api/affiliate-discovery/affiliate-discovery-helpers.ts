@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { runAgenticDiscoveryWave } from '@/land/affiliates/discovery-wave';
 
 export interface AffiliateOffer {
@@ -92,7 +93,13 @@ export async function handleAffiliateDiscoveryPost(req: NextRequest): Promise<Ne
 
   try {
     const user = await getCurrentUser().catch(() => null);
-    const tenantId = user?.id ?? 'sophia-global';
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const serverDb = createServerClient();
+    const orgId = await resolveOrgId(user.id, serverDb).catch(() => null);
+    const tenantId = orgId ?? user.id;
+    const rawD1 = await getD1().catch(() => null);
 
     const result = await runAgenticDiscoveryWave({
       niche: parsed.data.niche,
@@ -100,6 +107,7 @@ export async function handleAffiliateDiscoveryPost(req: NextRequest): Promise<Ne
       limit: parsed.data.limit,
       networks: parsed.data.networks,
       tenantId,
+      ...(rawD1 ? { db: rawD1 } : {}),
     });
 
     if (!result.ok) {

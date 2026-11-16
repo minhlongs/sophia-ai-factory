@@ -40,6 +40,10 @@ Source of truth: `.mekong/company.json`, `src/seed/config/open-core-manifest.ts`
 
 ## Cost Structure
 
+### Deployment
+
+Deployment is canonical **GitHub Actions CI/CD** (`.github/workflows/deploy.yml`) on push to `main`. A deploy is only called **verified** when the live `/api/version` `shortSha` matches the deployed commit **bit-for-bit** — edge reachability alone is not verification. Direct local deployment (`npm run deploy:full`) is blocked without the `EMERGENCY_CF_DIRECT=1` break-glass flag and is reserved for CI outages.
+
 ### Platform COGS
 - **Cloudflare Workers / D1 / R2 / KV:** Near-zero marginal cost per tenant at early scale.
 - **Email via Resend:** Low per transactional message.
@@ -61,6 +65,54 @@ Baseline as of `2026-10-17`: **0 paying customers / $0 MRR** (all figures below 
 - **Support Cost Target:** `< $10–$30/mo/customer` once Setup Wizard onboarding is stable.
 - **Target Gross Margin:** `85%–95%` on subscription revenue (excluding founder time).
 
+> **Unverified hypothesis, not a measured result.** With 0 paying customers there is no revenue to measure. The customer's **total** cost also includes third-party API fees billed separately from Sophia — HeyGen confirms its API is priced separately from its web plan — so subscription price alone understates what a customer actually spends. No margin figure may be reported as actual until transaction fees, refunds, infrastructure cost, and founder support hours are all measured.
+
+---
+
+## Three-Stream Strategy: Cloud · Master · Community
+
+Three streams run in parallel. Each has its own customer, its own message, and its own 30-day target. **The targets below are targets, not forecasts.** Baseline `2026-10-17`: **0 paying customers / $0 MRR**.
+
+| Stream | Primary Customer | Message | Target — 30 Days |
+|---|---|---|---|
+| **Cloud** (Managed Cloud) | Vietnamese agencies and SMBs running recurring content operations without an in-house video team | Video | 1 paying customer who activates the workspace and successfully produces a video |
+| **Master** (Handover, white-label) | Technical agencies that want to self-operate and white-label | Partner-Resell | 1 deal at `$4,999` meeting handover scope and passing acceptance |
+| **Community** (self-hosted) | Builders, technical agencies, and self-hosters | Combined process (Video + Partner-Resell) | 5 people outside the founder team who self-deploy and produce output |
+
+**Revenue boundary:** Master is a **one-time `$4,999` license** and is never counted toward MRR. MRR is Cloud subscription revenue only.
+
+### Experiment Budget
+
+**25 founder hours per week:** 12 sales & demo · 7 technical verification & Master · 4 Community · 2 operations.
+
+**`$1,000` cash ceiling for 30 days:** `$350` API & demo · `$200` infrastructure & tools · `$150` payment verification & fees · `$300` reserve.
+
+> This is a ceiling, not a spend plan. No paid advertising runs before conversion is measured.
+
+### Experiment Plan
+
+- **Week 1:** standardize evidence across the blueprint set; prepare the three bilingual (VI/EN) messages; build a 40-prospect list (20 Cloud, 10 Master, 10 Community).
+- **Week 2:** 12 discovery calls and 6 demos; record each prospect's current process, total cost, the problem to solve, and willingness to pay.
+- **Weeks 3–4:** run qualified pilots; support the Community stream; record results per stream.
+- **Day 90:** check Cloud renewal, Master support cost, and Community → Cloud conversion.
+- **Day 180:** scale only streams with evidence of usage, retention, and positive economic contribution.
+
+Streams are compared on **payment commitment, usability, and support time**. Small samples support **qualitative** conclusions only — never quantitative ones.
+
+### Five Priorities
+
+| # | Owner | Goal |
+|---:|---|---|
+| 1 | CEO / CTO | Standardize the three-stream strategy |
+| 2 | Founder / CSO | Validate Cloud and Master |
+| 3 | CMO | Validate Community |
+| 4 | CTO | Close the technical gap blocking the Partner-Resell Kit |
+| 5 | COO / CFO | Reconcile cash, cost, and acceptance |
+
+### Partner-Resell & Payout Status *(backlog — not built)*
+
+Automatic VND + USDT payout is an **unverified technical goal**. Before it is considered operational it requires tenant isolation across partner, commission, ledger, credential, and withdrawal permission; a commercial gate enforced on the money-sending path; VND through a real payout API (CSV/VietQR is not proof of transfer); USDT through the customer's own NOWPayments account; automation enabled only after the customer configures rules and limits, with `under_review` holding money and `suspended` always blocked; retry that reconciles an unknown-status transaction before re-sending; and Master acceptance requiring explicit handover scope, a valid license, a successful customer deploy, and a completed handover checklist.
+
 ## Dual-Funnel Sales & Conversion Motion
 
 ### Funnel A: Founder-Led Direct Agency Sales
@@ -75,6 +127,8 @@ Baseline as of `2026-10-17`: **0 paying customers / $0 MRR** (all figures below 
 3. Users export a signed HMAC Workspace Portability bundle (`POST /api/open-core/portability`, excluding raw BYOK keys) and import it into Sophia Managed Cloud or unlock self-hosted Enterprise features with a signed `RAAS_LICENSE_KEY`.
 
 ## Validation Milestones
+
+These are **targets, none reached**. Baseline as of `2026-10-17`: **0 paying customers / $0 MRR / $0 collected revenue**, and no measured GitHub star count or portability conversion count.
 
 - 1st paying customer closed and activated end-to-end via NOWPayments or PayOS.
 - 3 referenceable paying agency/SMB customers with positive unit-economics ledger.

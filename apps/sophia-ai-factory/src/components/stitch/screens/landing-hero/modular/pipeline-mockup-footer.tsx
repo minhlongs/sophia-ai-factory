@@ -7,12 +7,11 @@ export function PipelineMockupFooter() {
       <div className="flex items-center gap-2">
         <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
         <span className="font-medium text-[#0B0F19] dark:text-slate-300">
-          SHA-256 CEO Approval • Domain B 0% Fee • BYOK Sovereign
+          You approve every campaign before it runs • Your own API keys • Your earnings stay yours
         </span>
       </div>
-      <div className="flex items-center gap-4 font-mono">
+      <div className="flex items-center gap-4">
         <span>Dual-Niche: <strong className="text-[#0B0F19] dark:text-white">CEX + SaaS</strong></span>
-        <span>Reconciliation: <strong className="text-emerald-600 dark:text-emerald-400">100% Net</strong></span>
       </div>
     </div>
   );

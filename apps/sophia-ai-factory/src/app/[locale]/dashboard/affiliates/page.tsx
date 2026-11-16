@@ -2,34 +2,107 @@
  * Niche Affiliate Analytics Dashboard
  *
  * Visualizes affiliate pipeline throughput, geo-routed bridge page clicks,
- * postback revenue attribution, and UCB1 Multi-Armed Bandit hook rankings.
+ * postback revenue attribution, and UCB1 Multi-Armed Bandit hook rankings
+ * backed by real workspace Domain B ledger data.
  *
  * Layer: app/[locale]/dashboard/affiliates (Presentation)
  */
 
 import React from 'react';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { createServerClient } from '@/seed/db/client';
+import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import {
   AffiliateCockpitView,
   generateExecutiveCockpitSnapshot,
+  mapDomainBToReconciliationSummary,
 } from '@/land/affiliates/dashboard';
 import {
-  DEFAULT_AFFILIATE_METRICS,
-  DEFAULT_SCALING_DECISIONS,
-  DEFAULT_RECONCILIATION,
+  fetchWorkspaceDomainBReconciliation,
+  type DomainBReconciliationSummary,
+} from '@/land/affiliates/reconciliation/workspace-domain-b-reconciliation';
+import {
+  EMPTY_AFFILIATE_METRICS,
+  EMPTY_RECONCILIATION,
   AffiliateHookRankingTable,
+  type AffiliateMetrics,
 } from './affiliates-dashboard-sections';
+
+async function loadWorkspaceAffiliateDashboardData(): Promise<{
+  tenantId: string;
+  domainBSummary?: DomainBReconciliationSummary;
+  metrics: AffiliateMetrics;
+  killSwitchActive: boolean;
+}> {
+  let tenantId = 'unauthenticated';
+  try {
+    const user = await getCurrentUser();
+    if (user?.id) {
+      try {
+        const db = createServerClient();
+        const orgId = await resolveOrgId(user.id, db).catch(() => null);
+        tenantId = orgId ?? user.id;
+
+        const rawD1: D1Database | null =
+          typeof (db as { unwrap?: () => D1Database }).unwrap === 'function'
+            ? (db as { unwrap: () => D1Database }).unwrap()
+            : typeof (db as { prepare?: unknown }).prepare === 'function'
+              ? (db as unknown as D1Database)
+              : null;
+
+        const domainBRes = rawD1
+          ? await fetchWorkspaceDomainBReconciliation(rawD1, tenantId)
+          : null;
+        const domainBSummary = domainBRes?.ok ? domainBRes.value : undefined;
+        const killSwitchActive = await isAffiliateKillSwitchActive(tenantId).catch(() => false);
+
+        const totalCommissionUsd = domainBSummary
+          ? domainBSummary.effectiveCommissionCents / 100
+          : 0;
+
+        return {
+          tenantId,
+          domainBSummary,
+          metrics: {
+            ...EMPTY_AFFILIATE_METRICS,
+            totalCommissionUsd,
+          },
+          killSwitchActive,
+        };
+      } catch {
+        tenantId = user.id;
+      }
+    }
+  } catch {
+    // Unauthenticated or test environment without session context
+  }
+
+  return {
+    tenantId,
+    domainBSummary: undefined,
+    metrics: EMPTY_AFFILIATE_METRICS,
+    killSwitchActive: false,
+  };
+}
 
 export default async function AffiliatesDashboardPage(props: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await props.params;
-  const metrics = DEFAULT_AFFILIATE_METRICS;
+  const { tenantId, domainBSummary, metrics, killSwitchActive } =
+    await loadWorkspaceAffiliateDashboardData();
+
+  const reconciliation = domainBSummary
+    ? mapDomainBToReconciliationSummary(domainBSummary)
+    : { ...EMPTY_RECONCILIATION, tenantId };
 
   const cockpitSnapshot = generateExecutiveCockpitSnapshot({
-    tenantId: 'default',
-    reconciliation: DEFAULT_RECONCILIATION,
-    scalingDecisions: DEFAULT_SCALING_DECISIONS,
-    killSwitchActive: false,
+    tenantId,
+    reconciliation,
+    scalingDecisions: [],
+    killSwitchActive,
+    domainBSummary,
   });
 
   return (

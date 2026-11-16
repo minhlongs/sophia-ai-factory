@@ -19,6 +19,7 @@ import {
   type ValidatorProvider,
 } from '@/tree/byok/key-format-validators'
 import { probeProviderApiKey } from '@/tree/byok/provider-probe'
+import { isMaskedOrPlaceholderCredential } from '@/tree/byok/provider-probe-endpoints'
 
 export const PROVIDERS = [
   'openrouter',
@@ -43,6 +44,14 @@ export const PostSchema = z
     validateLive: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
+    if (isMaskedOrPlaceholderCredential(data.key)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['key'],
+        message: 'Masked placeholder cannot be saved as an API key',
+      })
+      return
+    }
     const validation = validateProviderKey(data.provider as ValidatorProvider, data.key)
     if (!validation.ok) {
       ctx.addIssue({
@@ -68,18 +77,23 @@ export async function upsertVerifiedByokKey(
 
   if (validateLive) {
     const probe = await probeProviderApiKey(provider, finalKey)
-    if (
-      !probe.valid &&
-      (probe.status === 'INVALID' || probe.httpStatus === 401 || probe.httpStatus === 403)
-    ) {
+    if (!probe.valid) {
+      const status =
+        probe.errorCode === 'RATE_LIMITED'
+          ? 429
+          : probe.status === 'INVALID' || probe.httpStatus === 401 || probe.httpStatus === 403
+            ? 422
+            : 502
       return NextResponse.json(
         {
           error: probe.message,
           error_vi: probe.message_vi,
+          errorCode: probe.errorCode,
           provider,
           status: probe.status,
+          correlationId: probe.correlationId,
         },
-        { status: 422 },
+        { status },
       )
     }
   }

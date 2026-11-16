@@ -55,7 +55,8 @@ export async function insertCampaignWithOffer(
       affiliate_link: program.link,
       short_code: candidate,
       network: 'clickbank',
-        commission_rate: parseFloat(program.commission) / 100,
+      category: program.category ?? null,
+      commission_rate: parseFloat(program.commission) / 100,
     });
     if (!insertError) { shortCode = candidate; break; }
     if (attempt === 2) logger.warn('affiliate_offer_insert_failed_all_attempts', { campaignId });

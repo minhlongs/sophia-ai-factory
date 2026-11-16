@@ -10,6 +10,141 @@
   "industry": "Open-Core AI SaaS / AI Video Production / Revenue-as-a-Service (RaaS)",
   "model": "Open-Core Dual-License: Apache-2.0 Community Core + Sophia Commercial / FSL-1.1 Cloud SaaS & Enterprise RaaS",
   "target_arr": "$1M ARR directional goal; not a forecast",
+  "strategy": {
+    "summary": "Three streams run in parallel: Cloud, Master, and Community. Each has its own customer, its own message, and its own 30-day target. The targets below are TARGETS, not forecasts.",
+    "evidence_vocabulary": {
+      "code_exists": "Co ma nguon / Code exists — a module is present in the repository at a cited path. Says nothing about correctness.",
+      "tested": "Da kiem thu / Tested — covered by a passing automated test at a cited path.",
+      "production_verified": "Da xac minh production / Production-verified — confirmed against the live edge or a green CI run on a named commit.",
+      "customer_payment_validated": "Duoc khach hang tra tien kiem chung / Customer-payment-validated — a real customer paid and used it.",
+      "unverified": "Chua xac minh / Unverified — none of the above. Must carry an owner and the exact evidence that would verify it."
+    },
+    "three_streams": [
+      {
+        "id": "cloud",
+        "name_vi": "Cloud (SaaS quan ly)",
+        "name_en": "Managed Cloud",
+        "primary_customer": "Vietnamese agencies and SMBs that need to run recurring content operations without an in-house video team.",
+        "message": "Video",
+        "target_30_day": "One paying customer who activates the workspace and successfully produces a video.",
+        "target_type": "target_not_forecast",
+        "baseline_note": "0 paying customers / $0 MRR recorded as of 2026-10-17."
+      },
+      {
+        "id": "master",
+        "name_vi": "Master (ban giao tu van hanh)",
+        "name_en": "Master Handover",
+        "primary_customer": "Technical agencies that want to self-operate and white-label.",
+        "message": "Partner-Resell",
+        "target_30_day": "One $4,999 deal that meets handover scope and passes acceptance.",
+        "target_type": "target_not_forecast",
+        "baseline_note": "0 Master deals recorded as of 2026-10-17. Master revenue is a one-time license fee and is never counted toward MRR."
+      },
+      {
+        "id": "community",
+        "name_vi": "Cong dong (tu trien khai)",
+        "name_en": "Community (self-hosted)",
+        "primary_customer": "Builders, technical agencies, and self-hosters.",
+        "message": "Combined process (Video + Partner-Resell)",
+        "target_30_day": "Five people outside the founder team who self-deploy and produce output.",
+        "target_type": "target_not_forecast",
+        "baseline_note": "0 verified non-founder self-deploys recorded as of 2026-10-17."
+      }
+    ],
+    "experiment_budget": {
+      "founder_hours_per_week": 25,
+      "hour_split": {
+        "sales_and_demo": 12,
+        "technical_verification_and_master": 7,
+        "community": 4,
+        "operations": 2
+      },
+      "cash_ceiling_30_day_usd": 1000,
+      "cash_split": {
+        "api_and_demo": 350,
+        "infrastructure_and_tools": 200,
+        "payment_verification_and_fees": 150,
+        "reserve": 300
+      },
+      "note_vi": "Day la han muc, khong phai ke hoach tieu. Chua chay quang cao truoc khi do duoc chuyen doi.",
+      "note_en": "This is a ceiling, not a spend plan. No paid advertising runs before conversion is measured."
+    },
+    "experiment_plan": {
+      "week_1": [
+        "Standardize evidence across the blueprint set.",
+        "Prepare the three bilingual (VI/EN) messages: Video, Partner-Resell, combined.",
+        "Build a 40-prospect list: 20 Cloud, 10 Master, 10 Community."
+      ],
+      "week_2": [
+        "Run 12 discovery calls and 6 demos.",
+        "Record each prospect's current process, total cost, the problem to solve, and willingness to pay."
+      ],
+      "weeks_3_4": [
+        "Run qualified pilots and support the Community stream.",
+        "Record results per stream and compare on payment commitment, usability, and support time."
+      ],
+      "comparison_rule_vi": "Mau nho chi cho ket luan dinh tinh, khong ket luan dinh luong.",
+      "comparison_rule_en": "Small samples support qualitative conclusions only, never quantitative conclusions.",
+      "day_90": [
+        "Check Cloud renewal.",
+        "Measure Master support cost.",
+        "Measure Community to Cloud conversion."
+      ],
+      "day_180": [
+        "Scale only the streams with evidence of usage, retention, and positive contribution."
+      ]
+    },
+    "roadmap": {
+      "30_days": "Standardize evidence, run the three messages against the 40-prospect list, complete 12 discovery calls and 6 demos, and run qualified pilots.",
+      "90_days": "Check Cloud renewal, Master support cost, and Community to Cloud conversion against the day-90 checkpoints.",
+      "180_days": "Scale only streams carrying usage, retention, and positive economic contribution evidence."
+    },
+    "priorities": [
+      {
+        "order": 1,
+        "owner": "CEO / CTO",
+        "goal": "Standardize the three-stream strategy across the blueprint set.",
+        "completion_criterion": "The three streams, the five owned priorities, and the 30/90/180 roadmap read identically in every blueprint copy."
+      },
+      {
+        "order": 2,
+        "owner": "Founder / CSO",
+        "goal": "Validate the Cloud and Master streams with real prospects.",
+        "completion_criterion": "A recorded outcome per stream: payment commitment, or a documented reason there was none."
+      },
+      {
+        "order": 3,
+        "owner": "CMO",
+        "goal": "Validate the Community stream.",
+        "completion_criterion": "At least five non-founders self-deploy and produce output, each recorded."
+      },
+      {
+        "order": 4,
+        "owner": "CTO",
+        "goal": "Close the technical gap blocking the Partner-Resell Kit.",
+        "completion_criterion": "Feature gates enforced on the money path, and tenant isolation covering partner, commission, ledger, credential, and withdrawal permission."
+      },
+      {
+        "order": 5,
+        "owner": "COO / CFO",
+        "goal": "Reconcile cash, cost, and acceptance.",
+        "completion_criterion": "A ledger recording collected revenue, payment fees, refunds, infrastructure, and founder hours; no margin conclusion without it."
+      }
+    ],
+    "payout_backlog_conditions": {
+      "status_vi": "Muc tieu ky thuan, chua kiem chung van hanh.",
+      "status_en": "Technical goal, not operationally verified.",
+      "conditions": [
+        "Tenant isolation for partner, commission, ledger, credential, and withdrawal permission.",
+        "A commercial gate enforced on the money-sending path.",
+        "VND must use a real payout API. CSV and VietQR are not proof that money moved.",
+        "USDT must use the customer's own NOWPayments account, retaining payout authentication. No simulated-success branch and no fallback to system-wide credentials.",
+        "Automation enables only after the customer configures rules and limits. under_review holds; the workspace owner may act, and the reason and audit trail are stored. suspended is always blocked.",
+        "Retry must reconcile an unknown-status transaction before re-sending, and confirm paid only on settlement evidence.",
+        "Master is accepted only with explicit handover scope, a valid license, a successful customer deploy, and a completed operations and handover checklist."
+      ]
+    }
+  },
   "icp": "Primary commercial ICP: Vietnamese marketing agencies and SMBs (roughly 3–20 staff) without an in-house video team, led by a founder or marketing manager who needs automated, repeatable short-form video production. Secondary PLG developer/agency persona: technical operators evaluating the Apache-2.0 codebase on GitHub before converting to Managed Cloud or purchasing the $4,999 Master white-label license.",
   "moat": "Dual-engine moat hypothesis: (1) Open-Core trust and developer adoption via Public GitHub Apache-2.0 core, paired with (2) friction-free no-code execution on Cloudflare Workers/Inngest edge, bilingual VN/EN interfaces, customer-owned BYOK envelope encryption (AES-256-GCM), and built-in multi-channel Direct Publishing with anti-detection pacing.",
   "open_core_architecture": {
@@ -40,7 +175,7 @@
       }
     },
     "conversion_funnel": {
-      "portability": "Signed HMAC-SHA256 workspace portability bundle (/api/open-core/portability, src/tree/open-core/workspace-portability-store.ts). Allows self-hosted community users to export their channel configurations, script templates, and SOP workflows (excluding raw BYOK keys) and import them into Sophia Managed Cloud in under 60 seconds.",
+      "portability": "Integrity-checked workspace portability bundle (/api/open-core/portability, src/tree/open-core/workspace-portability-store.ts). Allows self-hosted community users to export their channel configurations, script templates, and SOP workflows (excluding raw BYOK keys) and import them into Sophia Managed Cloud. The checksum detects accidental corruption only: its HMAC key is a published constant, so the bundle is NOT authenticated and NOT encrypted — it is readable JSON containing no secrets. Timing is UNVERIFIED: no measured import duration exists, so no duration is claimed here.",
       "telemetry_beacon": "Optional, privacy-preserving version beacon (/api/version) checking for security advisories and upgrade paths (opt-out available via SOPHIA_DISABLE_VERSION_BEACON=true)."
     },
     "active_bet": {
@@ -76,7 +211,7 @@
           "owner": "founder_ceo"
         }
       ],
-      "verdict_report": "plans/reports/261021-idea-step1-step2-verdict.md"
+      "verdict_report": "Evidence is cited directly to tracked source: apps/sophia-ai-factory/src/tree/affiliates/ledger/payout-disbursement.ts:34,38 (under_review is advisory, only suspended stops money) and apps/sophia-ai-factory/src/tree/affiliates/risk-scorer.ts:192-199 (resolvePartnerStatusAfterRisk never returns to active, so a flagged partner has no automatic recovery path). The former report path plans/reports/261021-idea-step1-step2-verdict.md is absent from the repository and is no longer cited."
     }
   },
   "business_model": {
@@ -103,7 +238,7 @@
     ],
     "pricing_model": "Tiered subscription plus one-time MASTER handover; customer-paid AI provider usage under BYOK. Gross margin on platform subscription remains high because AI compute costs are paid directly by customer to AI vendors.",
     "unit_economics_hypotheses": {
-      "target_gross_margin": "85-95% on subscription revenue (excluding founder support time)",
+      "target_gross_margin": "85-95% on subscription revenue (excluding founder support time) — UNVERIFIED hypothesis, not a measured result",
       "target_cac_payback": "< 3 months for direct sales; < 1 month for GitHub PLG conversions",
       "status": "Unvalidated hypothesis; 0 paying customers baseline as of 2026-10-17"
     }
@@ -129,7 +264,7 @@
   "product": {
     "core_value": "Help non-technical business operators create, automate, and publish AI video campaigns without building an in-house technical or video team.",
     "key_features": [
-      "Open-Core foundation with dual-license separation and signed workspace portability",
+      "Open-Core foundation with dual-license separation and integrity-checked workspace portability",
       "BYOK AES-256-GCM envelope encryption setup wizard for customer-managed API keys",
       "Multi-channel Direct Social Publisher with organic jitter pacing and channel killswitches",
       "Bilingual /ask 4-advisor business intelligence consultation router",
@@ -158,13 +293,18 @@
       "mrr_usd": 0,
       "paying_customers": 0,
       "total_users": "Unvalidated in production ledger",
-      "deployment_status": "Live & verified on Cloudflare Workers edge",
+      "deployment_status": "Live on Cloudflare Workers edge (edge reachable; live /api/version SHA parity not re-verified 2026-10-22)",
       "production_url": "https://sophia.agencyos.network"
+    },
+    "evidence_notes": {
+      "deployment_status": "The edge was reachable when this record was written, but bit-for-bit SHA parity was NOT re-verified on 2026-10-22. Per the deployment contract, 'Live & verified' requires a live /api/version shortSha matching the deployed commit; until that check runs, treat this as 'live, not verified'.",
+      "margin": "No margin figure may be reported as actual until collected revenue, payment fees, refunds, infrastructure cost, and founder hours are all measured.",
+      "customer_total_cost": "The customer's total cost includes both Sophia fees and separate third-party API fees. HeyGen confirms its API is billed separately from the web plan, so Sophia's price alone understates customer cost."
     },
     "targets_next_six_months": [
       "Close and onboard the first paying customer through the real payment, tier activation, BYOK setup, and first-video path.",
       "Achieve 500+ GitHub Stars on the Apache-2.0 Community Core repository as an organic PLG acquisition wedge.",
-      "Convert 5 self-hosted community instances to Sophia Managed Cloud via signed Workspace Portability (/api/open-core/portability).",
+      "Convert 5 self-hosted community instances to Sophia Managed Cloud via integrity-checked Workspace Portability (/api/open-core/portability). Conversion is UNVERIFIED: no measured instance-to-cloud conversion rate exists.",
       "Validate real unit economics: collected revenue, payment fees, platform costs, and founder support minutes."
     ]
   },

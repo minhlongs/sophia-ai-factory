@@ -36,6 +36,15 @@ export const EU_MICA_DISCLAIMERS: RequiredDisclaimerFlags = {
   paidPartnershipTag: true,
 };
 
+export const JP_FSA_DISCLAIMERS: RequiredDisclaimerFlags = {
+  requiresFtcDisclosure: true,
+  requiresCftcDisclaimer: false,
+  requiresMicaNotice: false,
+  requiresPersistentBanner: true,
+  requiresEndCard15s: true,
+  paidPartnershipTag: true,
+};
+
 export const GLOBAL_DEFAULT_DISCLAIMERS: RequiredDisclaimerFlags = {
   requiresFtcDisclosure: true,
   requiresCftcDisclaimer: true,

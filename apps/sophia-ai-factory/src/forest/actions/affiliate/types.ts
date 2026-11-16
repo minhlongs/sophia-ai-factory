@@ -92,6 +92,8 @@ export interface AdoptAffiliateOfferInput {
   offerId: string;
   target: 'creator_studio' | 'distribution_queue';
   campaignName?: string;
+  /** Locale for the returned deep link, so the user stays in their language. */
+  locale?: 'vi' | 'en';
 }
 
 export interface AdoptAffiliateOfferResult {

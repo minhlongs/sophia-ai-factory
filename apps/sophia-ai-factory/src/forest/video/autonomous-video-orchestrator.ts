@@ -30,7 +30,11 @@ export function runAutonomousVideoPipeline(
     productDescription,
     targetDurationSeconds = 15.0,
     affiliateBaseUrl: _affiliateBaseUrl,
+    jurisdiction,
   } = input;
+
+  const resolvedJurisdiction =
+    jurisdiction ?? (niche === 'crypto_global' ? 'US' : 'GLOBAL');
 
   // 1. Resolve Blueprint and Campaign Plan
   const blueprints = listBlueprintsByNiche(niche);
@@ -40,7 +44,7 @@ export function runAutonomousVideoPipeline(
     blueprintId: defaultBlueprint ? defaultBlueprint.id : 'saas_problem_solution_v1',
     productName,
     productUrl,
-    jurisdiction: 'GLOBAL',
+    jurisdiction: resolvedJurisdiction,
   });
 
   if (!planResult.ok) {
@@ -93,7 +97,7 @@ export function runAutonomousVideoPipeline(
     niche,
     hasFinancialClaim: niche === 'crypto_global',
     hasAffiliateLink: true,
-    targetJurisdiction: 'GLOBAL',
+    targetJurisdiction: resolvedJurisdiction,
   });
 
   // 8. Assemble Multi-Platform Syndication Package

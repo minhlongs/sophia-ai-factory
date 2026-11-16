@@ -80,10 +80,25 @@ function mockOffers(): AffiliateOffer[] {
   ]
 }
 
+export interface ClickBankProviderOptions {
+  apiKey?: string
+  allowMockFallback?: boolean
+}
+
 export class ClickBankProvider implements OfferProvider {
   readonly networkSlug = NETWORK_SLUG
+  private readonly customApiKey?: string
+  private readonly allowMockFallback: boolean
 
-  private get apiKey(): string | undefined { return process.env.CLICKBANK_API_KEY }
+  constructor(opts?: ClickBankProviderOptions) {
+    this.customApiKey = opts?.apiKey
+    this.allowMockFallback = opts?.allowMockFallback ?? (process.env.NODE_ENV === 'test')
+  }
+
+  private get apiKey(): string | undefined {
+    if (this.customApiKey !== undefined) return this.customApiKey || undefined
+    return this.allowMockFallback ? process.env.CLICKBANK_API_KEY : undefined
+  }
 
   private headers(): HeadersInit {
     return {
@@ -93,7 +108,10 @@ export class ClickBankProvider implements OfferProvider {
   }
 
   async listOffers(opts?: ListOffersOpts): Promise<AffiliateOffer[]> {
-    if (!this.apiKey) return mockOffers()
+    if (!this.apiKey) {
+      if (this.allowMockFallback) return mockOffers()
+      throw new Error('CLICKBANK_CREDENTIALS_MISSING: ClickBank BYOK API key is not configured for this workspace')
+    }
     try {
       const params = new URLSearchParams({
         startRow: String(((opts?.page ?? 1) - 1) * (opts?.limit ?? 100)),
@@ -101,16 +119,22 @@ export class ClickBankProvider implements OfferProvider {
       })
       if (opts?.niche) params.set('keyword', opts.niche)
       const res = await fetch(`${BASE_URL}/products/list?${params}`, { headers: this.headers() })
-      if (!res.ok) return mockOffers()
+      if (!res.ok) {
+        if (this.allowMockFallback) return mockOffers()
+        throw new Error(`CLICKBANK_UPSTREAM_ERROR: HTTP ${res.status}`)
+      }
       const json = await res.json() as ClickBankListResponse
       return (json.products ?? []).map(mapProduct)
-    } catch {
-      return mockOffers()
+    } catch (err) {
+      if (this.allowMockFallback) return mockOffers()
+      throw err instanceof Error ? err : new Error(String(err))
     }
   }
 
   async getOffer(externalId: string): Promise<AffiliateOffer | null> {
-    if (!this.apiKey) return mockOffers()[0]
+    if (!this.apiKey) {
+      return this.allowMockFallback ? mockOffers()[0] : null
+    }
     try {
       const res = await fetch(`${BASE_URL}/products/${externalId}`, { headers: this.headers() })
       if (!res.ok) return null

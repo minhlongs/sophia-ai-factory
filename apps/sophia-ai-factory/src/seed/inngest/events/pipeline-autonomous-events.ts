@@ -24,6 +24,7 @@ export type AutonomousVideoPipelineRequestedEvent = {
     productDescription: string;
     targetDurationSeconds?: number;
     affiliateBaseUrl: string;
+    jurisdiction?: string;
     targetPlatforms?: ("youtube_shorts" | "tiktok" | "instagram_reels")[];
   };
 };
@@ -31,6 +32,7 @@ export type AutonomousVideoPipelineRequestedEvent = {
 export type NicheVideoCampaignRequestedEvent = {
   data: {
     campaignId?: string;
+    offerId?: string;
     userId: string;
     niche: "saas_global" | "crypto_global";
     blueprintId: string;
@@ -38,6 +40,7 @@ export type NicheVideoCampaignRequestedEvent = {
     productUrl: string;
     targetAudience?: string;
     jurisdiction?: string;
+    draftMode?: boolean;
     affiliateCode?: string;
     subId?: string | null;
     vanityCoupon?: string | null;

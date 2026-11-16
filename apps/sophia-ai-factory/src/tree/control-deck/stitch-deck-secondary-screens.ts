@@ -66,7 +66,7 @@ export const STITCH_SECONDARY_DECK_SCREENS: readonly StitchScreenSpec[] = [
     primaryKpiValue: '15.8 : 1 (AAA)',
     statusBadge: { en: 'DEMO · STYLE GUIDE CONCEPT', vi: 'BẢN MẪU · KHÁI NIỆM HƯỚNG DẪN THIẾT KẾ' },
     highlights: [
-      { en: 'Exported to design-tokens.css and tailwind-theme.css for zero-drift Next.js rendering', vi: 'Đã xuất ra design-tokens.css và tailwind-theme.css đảm bảo đồng nhất trên Next.js' },
+      { en: 'Single source of truth: color tokens declared once in globals.css @theme, primitives in src/seed/components/ui', vi: 'Một nguồn sự thật duy nhất: token màu khai báo một lần trong globals.css @theme, primitive trong src/seed/components/ui' },
     ],
   },
 ];

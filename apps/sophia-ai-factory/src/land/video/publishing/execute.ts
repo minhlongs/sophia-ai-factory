@@ -8,6 +8,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import type { ExecutePublishWorkflowArgs, ClaimResult } from './publish-types';
 import { findJobById, checkAndMarkMaxRetries, atomicClaimJob } from './publish-claim';
 import { handleTelegramFlow } from './publish-telegram-flow';
@@ -44,6 +45,27 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
       delaySec,
     });
     await step.sleep(`wait-for-slot-${jobId}`, `${delaySec}s`);
+  }
+
+  // Re-evaluate workspace & platform-wide emergency kill switch immediately before claim/upload
+  const effectiveTenant = tenantId || job.tenant_id || userId;
+  if (await isAffiliateKillSwitchActive(effectiveTenant)) {
+    logger.warn('[publishExecute] Aborted scheduled publish due to active kill switch', {
+      jobId,
+      tenantId: effectiveTenant,
+    });
+    await db
+      .from('publishing_jobs')
+      .update({ status: 'failed', error_message: 'Aborted by emergency kill switch' })
+      .eq('id', jobId);
+    return {
+      skipped: false,
+      jobId,
+      status: 'failed',
+      externalPostId: '',
+      provider: '',
+      error: 'KILL_SWITCH_ACTIVE',
+    };
   }
 
   const alreadyClaimed = args.alreadyClaimed === true;

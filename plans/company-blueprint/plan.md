@@ -1,10 +1,70 @@
 # Sophia AI Factory Open-Core Company Blueprint
 
 **Prepared:** 2026-10-17  
-**Last synced:** 2026-10-21 (`/idea --deep`, see `plans/reports/261021-idea-step1-step2-verdict.md`)  
+**Last synced:** 2026-10-22 (`/ak-vibe`, three-stream blueprint sync)
 **Planning horizon:** six months from approval (17 October 2026 – 17 April 2027)  
 **Company stage:** Zero → Problem-Solution Fit  
 **Business Architecture:** Open-Core Dual-License (`Apache-2.0` Community Core + `Sophia Commercial / FSL-1.1` Managed Cloud & Enterprise RaaS)  
+
+---
+
+## Evidence vocabulary (how to read every claim below)
+
+**Có mã nguồn / Code exists** — a module is present at a cited path. Says nothing about correctness.
+**Đã kiểm thử / Tested** — covered by a passing automated test at a cited path.
+**Đã xác minh production / Production-verified** — confirmed against the live edge or a green CI run on a named commit.
+**Được khách trả tiền kiểm chứng / Customer-payment-validated** — a real customer paid and used it.
+**Chưa xác minh / Unverified** — none of the above; carries an owner and the evidence that would verify it.
+
+A claim that is only "Code exists" is **not** a verified claim. Where this document previously used a single ✅ for both meanings, the state is now named explicitly.
+
+---
+
+## Three-stream strategy: Cloud · Master · Community
+
+Three streams run in parallel, each with its own customer, message, and target. The targets are **targets, not forecasts**. Baseline: **0 paying customers / $0 MRR as of 2026-10-17**.
+
+| Stream / Luồng | Primary customer / Khách hàng chính | Message / Thông điệp | Target 30 days / Mục tiêu 30 ngày |
+|---|---|---|---|
+| **Cloud** (Managed Cloud) | Vietnamese agencies and SMBs running recurring content operations without an in-house video team | Video | 1 paying customer who activates the workspace and successfully produces a video |
+| **Master** (Handover, white-label) | Technical agencies that want to self-operate and white-label | Partner-Resell | 1 deal at $4,999 meeting handover scope and passing acceptance |
+| **Community** (self-hosted) | Builders, technical agencies, self-hosters | Combined process (Video + Partner-Resell) | 5 people outside the founder team who self-deploy and produce output |
+
+**Revenue boundary:** Master is a **one-time $4,999 license**, never counted toward MRR. MRR is Cloud subscription revenue only.
+
+### Experiment budget / Ngân sách thử nghiệm
+
+**25 founder hours per week:** 12 sales & demo · 7 technical verification & Master · 4 Community · 2 operations.
+
+**$1,000 cash ceiling for 30 days:** $350 API/demo · $200 infrastructure & tools · $150 payment verification & fees · $300 reserve.
+
+> This is a **ceiling, not a spend plan**. No paid advertising runs before conversion is measured.
+
+### Experiment plan / Kế hoạch thử nghiệm
+
+| Window | Actions |
+|---|---|
+| **Week 1** | Standardize evidence across the blueprint set. Prepare the three bilingual (VI/EN) messages. Build a 40-prospect list: 20 Cloud, 10 Master, 10 Community. |
+| **Week 2** | 12 discovery calls and 6 demos. Record each prospect's current process, total cost, the problem to solve, and willingness to pay. |
+| **Weeks 3–4** | Run qualified pilots; support the Community stream. Record results per stream. |
+| **Day 90** | Check Cloud renewal, Master support cost, and Community → Cloud conversion. |
+| **Day 180** | Scale only streams with evidence of usage, retention, and positive contribution. |
+
+**Comparison rule:** small samples support **qualitative** conclusions only — never quantitative ones. Compare streams on payment commitment, usability, and support time.
+
+### Customer total cost / Tổng chi phí khách
+
+The customer's total cost includes **both** Sophia fees **and** separate third-party API fees. HeyGen confirms its API is billed separately from the web plan, so Sophia's price alone understates customer cost. Any margin conclusion requires measuring transaction fees, refunds, infrastructure, and founder time first.
+
+### Five priorities / Năm ưu tiên
+
+| # | Owner | Goal | Completion criterion |
+|---:|---|---|---|
+| 1 | CEO / CTO | Standardize the three-stream strategy | Streams, priorities, and roadmap read identically in every blueprint copy |
+| 2 | Founder / CSO | Validate Cloud and Master | A recorded outcome per stream: payment commitment, or a documented reason there was none |
+| 3 | CMO | Validate Community | At least five non-founders self-deploy and produce output, each recorded |
+| 4 | CTO | Close the technical gap blocking the Partner-Resell Kit | Feature gates enforced on the money path; tenant isolation covering partner, commission, ledger, credential, and withdrawal permission |
+| 5 | COO / CFO | Reconcile cash, cost, and acceptance | A ledger of collected revenue, fees, refunds, infrastructure, and founder hours; no margin conclusion without it |
 
 ---
 
@@ -67,7 +127,7 @@ Each step covers Business, Agentic, and Governance choices. The agentic roles pr
 
 | # | Topic | Business | Agentic | Governance |
 |---:|---|---|---|---|
-| 6 | Open-Core model & unit economics | Dual-engine monetization: free community self-hosting + paid cloud subscriptions + Master handover. Customer BYOK shifts third-party AI compute costs to users, preserving 85–95% gross margin. | CFO agent tracks pilot unit economics: collected revenue, payment fees, platform edge hosting, and founder support minutes. | Reconcile NOWPayments and PayOS webhooks with D1 activation ledgers; never claim projected margins as historical fact. |
+| 6 | Open-Core model & unit economics | Dual-engine monetization: free community self-hosting + paid cloud subscriptions + Master handover. Customer BYOK shifts third-party AI compute costs to users. Margin 85–95% is a Chưa xác minh / Unverified hypothesis, not a measured result. The customer's total cost includes both Sophia fees and separate third-party API fees, so it is not captured by subscription price alone. | CFO agent tracks pilot unit economics: collected revenue, payment fees, platform edge hosting, and founder support minutes. | Reconcile NOWPayments and PayOS webhooks with D1 activation ledgers; never claim projected margins as historical fact. No margin figure is reported until fees, refunds, infrastructure, and founder hours are measured. |
 | 7 | Customer & developer personas | Primary commercial ICP: Vietnamese marketing agencies and SMBs needing recurring video campaigns. Secondary developer persona: open-source builders and agencies evaluating the Apache-2.0 core on GitHub. | Sales agent prepares bilingual customer interview guides and developer onboarding feedback forms. | Obtain consent before recording prospect calls; do not publish user quotes or agency names without written approval. |
 
 ### Phase 3 — Brand, Open-Source Community & Content
@@ -92,7 +152,14 @@ Each step covers Business, Agentic, and Governance choices. The agentic roles pr
 built attribution + payout engine (`src/land/affiliates`, dual-rail VietQR/USDT) is being re-pointed
 as the customer-facing **Partner-Resell Kit**, so the paying customer's channel becomes Sophia's
 channel. This makes Step 15's third traction channel double as a product feature the $399 tier
-sells. See "Active bet" above and `plans/reports/261021-idea-step1-step2-verdict.md`.
+sells. See "Active bet" above. Evidence is cited directly to tracked source:
+`apps/sophia-ai-factory/src/tree/affiliates/ledger/payout-disbursement.ts:34,38` (`under_review`
+is advisory; only `suspended` stops money) and
+`apps/sophia-ai-factory/src/tree/affiliates/risk-scorer.ts:192-199`
+(`resolvePartnerStatusAfterRisk` never returns to `active`, so a flagged partner has no
+automatic recovery path). The former report path
+`plans/reports/261021-idea-step1-step2-verdict.md` is absent from the repository and is no
+longer cited.
 
 ### Phase 5 — Operations, Security & Readiness
 
@@ -109,7 +176,7 @@ sells. See "Active bet" above and `plans/reports/261021-idea-step1-step2-verdict
 
 | # | Topic | Business | Agentic | Governance |
 |---:|---|---|---|---|
-| 22 | Agentic execution & quarterly OKRs | Q4 2026 – Q1 2027 OKRs: (1) Close 3 paid agency pilots via NOWPayments/PayOS, (2) Reach 500+ GitHub stars on Community Core, (3) Achieve 5 Community → Cloud portability migrations. | Department agents track task completion against designated phase milestones. | Review OKR progress weekly; reallocate effort if assumptions fail to produce customer evidence. |
+| 22 | Agentic execution & quarterly OKRs | Q4 2026 – Q1 2027 OKRs: (1) Close 3 paid agency pilots via NOWPayments/PayOS, (2) Reach 500+ GitHub stars on Community Core, (3) Achieve 5 Community → Cloud portability migrations. **Baseline 2026-10-17: 0 of 3 — Chưa xác minh / Unverified, none reached.** These are OKR targets now superseded as the operating plan by the three-stream 30/90/180 roadmap above; where they differ, the three-stream roadmap leads. | Department agents track task completion against designated phase milestones. | Review OKR progress weekly; reallocate effort if assumptions fail to produce customer evidence. Any reported number must state its baseline and measurement date. |
 | 23 | Board & founder governance | Monthly founder operating review: review collected cash, runway, pilot customer status, community growth, and critical bugs. | COO agent compiles monthly review packs with factual charts and progress summaries. | Maintain written records of key strategic decisions, licensing changes, and major architectural shifts. |
 | 24 | ESG, privacy & responsible AI | Strict BYOK data isolation (customer keys stored encrypted in D1 via AES-256-GCM), synthetic content transparency, and Vietnam PDPD compliance. | CTO and compliance agents monitor key management safety and audit trail integrity. | Prohibit deceptive AI impersonation or violation of platform policies (YouTube, TikTok, Meta); provide easy opt-outs for telemetry. |
-| 25 | Crisis, rollback & reputation OS | Operational defense runbook: canonical GitHub Actions deployment with bit-for-bit SHA parity check, Wrangler worker rollback, Direct Social Publisher emergency killswitch, and `SECURITY.md`. | Ops and CTO agents monitor real-time worker errors, circuit breaker trips, and security vulnerability reports. | In case of deployment drift or critical defects, execute immediate rollback and notify affected pilot users transparently. |
+| 25 | Crisis, rollback & reputation OS | Operational defense runbook: canonical GitHub Actions deployment with bit-for-bit SHA parity check, Wrangler worker rollback, Direct Social Publisher emergency killswitch, and `SECURITY.md`. **Doctrine is Đã kiểm thử / Tested as documentation; live SHA parity was Chưa xác minh / Unverified on 2026-10-22** — a deployment may only be called "verified" once `/api/version` shortSha matches the deployed commit. | Ops and CTO agents monitor real-time worker errors, circuit breaker trips, and security vulnerability reports. | In case of deployment drift or critical defects, execute immediate rollback and notify affected pilot users transparently. Report a deploy as verified only on a bit-for-bit SHA match. |

@@ -24,6 +24,7 @@ export type ScalingAction = 'SCALE_AGGRESSIVE' | 'MAINTAIN_STEADY' | 'KILL_PRUNE
 export interface ScalingDecision {
   campaignId: string;
   hookName: string;
+  niche?: 'saas_global' | 'crypto_global' | 'ecommerce_tiktok' | string;
   ctrPercent: number;
   cvrPercent: number;
   epcCents: number;
@@ -36,7 +37,7 @@ export function evaluateCampaignScaling(
   metrics: CampaignPerformanceMetrics,
   minImpressionsThreshold = 100
 ): ScalingDecision {
-  const { campaignId, hookName, impressions, clicks, conversions, totalEarningsCents } = metrics;
+  const { campaignId, hookName, niche, impressions, clicks, conversions, totalEarningsCents } = metrics;
 
   const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
   const cvr = clicks > 0 ? (conversions / clicks) * 100 : 0;
@@ -47,6 +48,7 @@ export function evaluateCampaignScaling(
     return {
       campaignId,
       hookName,
+      niche,
       ctrPercent: Number(ctr.toFixed(2)),
       cvrPercent: Number(cvr.toFixed(2)),
       epcCents: Math.round(epc),
@@ -61,6 +63,7 @@ export function evaluateCampaignScaling(
     return {
       campaignId,
       hookName,
+      niche,
       ctrPercent: Number(ctr.toFixed(2)),
       cvrPercent: Number(cvr.toFixed(2)),
       epcCents: Math.round(epc),
@@ -75,6 +78,7 @@ export function evaluateCampaignScaling(
     return {
       campaignId,
       hookName,
+      niche,
       ctrPercent: Number(ctr.toFixed(2)),
       cvrPercent: Number(cvr.toFixed(2)),
       epcCents: Math.round(epc),
@@ -87,6 +91,7 @@ export function evaluateCampaignScaling(
   return {
     campaignId,
     hookName,
+    niche,
     ctrPercent: Number(ctr.toFixed(2)),
     cvrPercent: Number(cvr.toFixed(2)),
     epcCents: Math.round(epc),

@@ -106,7 +106,7 @@ describe('Phase 9: Customer Onboarding Journey', () => {
       expect(json.valid).toBe(true);
       expect(json.status).toBe('ACTIVE');
 
-      expect(mockFetch).toHaveBeenCalledWith('https://openrouter.ai/api/v1/auth/key', expect.objectContaining({
+      expect(mockFetch).toHaveBeenCalledWith('https://openrouter.ai/api/v1/key', expect.objectContaining({
         headers: { Authorization: 'Bearer sk-or-v1-abcdef1234' },
       }));
     });

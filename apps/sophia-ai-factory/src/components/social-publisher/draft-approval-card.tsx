@@ -48,7 +48,12 @@ export function DraftApprovalCard({ draft, onApprove, onPreview }: DraftApproval
     <div className="p-4 rounded-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <DraftPlatformBadge platform={draft.platform} />
+          <div className="flex items-center gap-1.5">
+            <DraftPlatformBadge platform={draft.platform} />
+            <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              SHA-256 Lock
+            </span>
+          </div>
           <span className="text-[11px] text-slate-400 font-mono">{formattedDate}</span>
         </div>
 

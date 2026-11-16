@@ -30,7 +30,7 @@ export function renderWelcomeMagicLink(data: WelcomeMagicLinkData): { html: stri
     : `Thank you for purchasing the <strong>${data.tier}</strong> plan! Your <strong>${agencyName}</strong> account is ready.`;
   const ctaLabel = isVi ? 'Truy Cập Ngay' : 'Access Your Account';
   const nextLabel = isVi ? 'Bước tiếp theo:' : 'Next steps:';
-  const setupWizardUrl = `${BASE_URL}/dashboard/onboarding`;
+  const setupWizardUrl = `${BASE_URL}/${isVi ? 'vi' : 'en'}/setup-wizard`;
   const setupWizardLinkLabel = isVi
     ? `<a href="${setupWizardUrl}" style="color:#8b5cf6">Bắt đầu ngay</a>`
     : `<a href="${setupWizardUrl}" style="color:#8b5cf6">Start Setup</a>`;

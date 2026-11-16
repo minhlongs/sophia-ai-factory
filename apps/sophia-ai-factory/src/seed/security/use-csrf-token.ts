@@ -20,7 +20,13 @@ function readCookie(name: string): string | undefined {
   const match = document.cookie
     .split('; ')
     .find((row) => row.startsWith(`${name}=`))
-  return match?.split('=')[1]
+  return match?.slice(name.length + 1)
+}
+
+export function getCsrfHeaders(): Record<string, string> {
+  const token = readCookie(CSRF_COOKIE_NAME)
+  if (!token) return {}
+  return { [CSRF_HEADER_NAME]: token }
 }
 
 /**
@@ -30,9 +36,5 @@ function readCookie(name: string): string | undefined {
  * Returns an empty object if the cookie is not present (e.g. SSR context).
  */
 export function useCsrfToken(): Record<string, string> {
-  return useMemo((): Record<string, string> => {
-    const token = readCookie(CSRF_COOKIE_NAME)
-    if (!token) return {}
-    return { [CSRF_HEADER_NAME]: token }
-  }, [])
+  return useMemo((): Record<string, string> => getCsrfHeaders(), [])
 }

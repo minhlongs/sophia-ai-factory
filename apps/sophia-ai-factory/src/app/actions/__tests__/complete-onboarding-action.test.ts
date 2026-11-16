@@ -50,7 +50,7 @@ describe('completeOnboardingAction', () => {
     expect(result.success).toBe(true);
     expect(result.error).toBeUndefined();
     expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard');
-    expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard/onboarding');
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/setup-wizard');
   });
 
   it('returns { success: false, error } when D1 throws', async () => {

@@ -25,7 +25,7 @@ export function renderPostPurchaseWelcome(data: PostPurchaseWelcomeData): Render
   const isVi = data.locale.startsWith('vi');
   const name = data.ownerFullName;
   const tierLabel = data.tier;
-  const wizardUrl = `${BASE_URL}/${isVi ? 'vi' : 'en'}/dashboard/onboarding`;
+  const wizardUrl = `${BASE_URL}/${isVi ? 'vi' : 'en'}/setup-wizard`;
 
   const subject = isVi
     ? `Chào mừng đến với ${tierLabel} — Thiết lập trong 5 phút`

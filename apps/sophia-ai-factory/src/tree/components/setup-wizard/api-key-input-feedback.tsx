@@ -48,14 +48,14 @@ export function ApiKeyStatusMessages({
   return (
     <>
       {status === 'validating' && (
-        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 font-mono">
+        <p role="status" aria-live="polite" className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 font-mono">
           <Loader2 className="w-3.5 h-3.5 text-primary motion-safe:animate-spin" />
           Verifying connection...
         </p>
       )}
 
       {status === 'valid' && (
-        <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 flex items-center gap-1.5 font-mono font-medium">
+        <p role="status" aria-live="polite" className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 flex items-center gap-1.5 font-mono font-medium">
           <CheckCircle className="w-3.5 h-3.5" />
           Connection active {latency !== null ? `(${latency}ms)` : ''}
         </p>
@@ -69,7 +69,7 @@ export function ApiKeyStatusMessages({
       )}
 
       {status === 'invalid' && errorMessage && (
-        <p className="text-xs text-destructive mt-1 flex items-center gap-1.5 font-medium">
+        <p role="alert" aria-live="assertive" className="text-xs text-destructive mt-1 flex items-center gap-1.5 font-medium">
           <XCircle className="w-3.5 h-3.5 shrink-0" />
           {errorMessage} {latency !== null ? `(took ${latency}ms)` : ''}
         </p>

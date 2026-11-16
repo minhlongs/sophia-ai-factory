@@ -56,7 +56,7 @@ export function Table<T>({
     <div
       className={cn(
         variant === 'card'
-          ? 'bg-card dark:bg-[#11131F] rounded-2xl border border-border dark:border-white/[0.08] shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]'
+          ? 'bg-card rounded-2xl border border-border dark:border-white/[0.08] shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]'
           : 'bg-transparent rounded-xl',
         'overflow-hidden',
         className
@@ -73,7 +73,7 @@ export function Table<T>({
                     'px-3 sm:px-6 py-3.5',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right',
-                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-card dark:bg-[#11131F] z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
+                    stickyFirstColumn && idx === 0 && 'sticky left-0 bg-card z-10 shadow-[1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[1px_0_0_rgba(255,255,255,0.08)]'
                   )}
                   style={col.width ? { width: col.width } : undefined}
                 >

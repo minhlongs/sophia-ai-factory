@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { adoptAffiliateOfferAction } from '@/forest/actions/affiliate-actions';
 import type { AffiliateOffer } from '@/seed/types/affiliate';
 import type { DrawerFeedback } from './types';
@@ -21,6 +21,7 @@ export function useAffiliateDrawer({
   onAdoptSuccess,
 }: UseAffiliateDrawerParams) {
   const t = useTranslations('stitch.affiliates.drawer');
+  const locale = useLocale() === 'vi' ? 'vi' : 'en';
   const [subId, setSubId] = useState('');
   const [copied, setCopied] = useState(false);
   const [adoptingTarget, setAdoptingTarget] = useState<'creator_studio' | 'distribution_queue' | null>(null);
@@ -78,6 +79,7 @@ export function useAffiliateDrawer({
         offerId: offer.id,
         target,
         campaignName: offer.programName,
+        locale,
       });
 
       if (res.success && res.campaignId && res.deepLink) {

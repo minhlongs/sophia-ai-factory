@@ -5,11 +5,14 @@
  * @module tree/components/setup-wizard/steps/use-setup-wizard-actions
  */
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
+import type { ProviderProbeErrorCode } from '@/tree/byok/provider-probe-endpoints';
 import { KEY_TO_PROVIDER, type WizardKeyConfig } from './use-setup-wizard-helpers';
 
 export interface ValidateKeyResponse {
   valid: boolean;
   latencyMs: number;
+  errorCode?: ProviderProbeErrorCode | null;
   errorMessage?: string;
 }
 
@@ -21,27 +24,45 @@ export async function requestKeyValidation(
   const start = Date.now();
   const res = await fetch('/api/setup-wizard/validate-key', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider: service, api_key: keyValue }),
   });
-  const data = (await res.json()) as {
+  const data = (await res.json().catch(() => ({}))) as {
     valid?: boolean;
+    error?: string;
+    errorCode?: ProviderProbeErrorCode | null;
     message?: string;
     message_vi?: string;
     latencyMs?: number;
   };
   const latencyMs = data.latencyMs ?? (Date.now() - start);
   if (res.ok && data.valid) {
-    return { valid: true, latencyMs };
+    return { valid: true, latencyMs, errorCode: null };
+  }
+  if (res.status === 403 && data.error === 'csrf_token_invalid') {
+    return {
+      valid: false,
+      latencyMs,
+      errorCode: 'CSRF_REJECTED',
+      errorMessage: 'Phiên bảo mật CSRF đã hết hạn. Vui lòng tải lại trang và thử lại.',
+    };
+  }
+  if (res.status === 401) {
+    return {
+      valid: false,
+      latencyMs,
+      errorCode: 'UNAUTHORIZED',
+      errorMessage: data.message_vi || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+    };
   }
   const errorMessage = data.message_vi || data.message || fallbackError;
-  return { valid: false, latencyMs, errorMessage };
+  return { valid: false, latencyMs, errorCode: data.errorCode ?? null, errorMessage };
 }
 
 export async function requestProviderRevoke(provider: string): Promise<boolean> {
   const res = await fetch('/api/user/byok', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider }),
   });
   return res.ok;
@@ -54,11 +75,11 @@ export async function requestProviderKeySave(
 ): Promise<void> {
   const res = await fetch('/api/user/byok', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider, key }),
   });
   if (!res.ok) {
-    const d = (await res.json()) as { error?: string };
+    const d = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(d.error || fallbackError);
   }
 }

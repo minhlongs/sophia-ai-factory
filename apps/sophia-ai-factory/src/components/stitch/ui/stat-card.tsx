@@ -55,7 +55,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'bg-card dark:bg-[#11131F]',
+        'bg-card',
         'border border-border dark:border-white/[0.08] hover:border-primary/30',
         'rounded-2xl p-6 shadow-sm dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
         'transition-all duration-300 hover:-translate-y-0.5',

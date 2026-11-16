@@ -68,18 +68,42 @@ function mockOffers(): AffiliateOffer[] {
   ]
 }
 
+export interface AwinProviderOptions {
+  apiToken?: string
+  publisherId?: string
+  allowMockFallback?: boolean
+}
+
 export class AwinProvider implements OfferProvider {
   readonly networkSlug = NETWORK_SLUG
+  private readonly customToken?: string
+  private readonly customPublisherId?: string
+  private readonly allowMockFallback: boolean
 
-  private get token(): string | undefined { return process.env.AWIN_API_TOKEN }
-  private get publisherId(): string | undefined { return process.env.AWIN_PUBLISHER_ID }
+  constructor(opts?: AwinProviderOptions) {
+    this.customToken = opts?.apiToken
+    this.customPublisherId = opts?.publisherId
+    this.allowMockFallback = opts?.allowMockFallback ?? (process.env.NODE_ENV === 'test')
+  }
+
+  private get token(): string | undefined {
+    if (this.customToken !== undefined) return this.customToken || undefined
+    return this.allowMockFallback ? process.env.AWIN_API_TOKEN : undefined
+  }
+  private get publisherId(): string | undefined {
+    if (this.customPublisherId !== undefined) return this.customPublisherId || undefined
+    return this.allowMockFallback ? process.env.AWIN_PUBLISHER_ID : undefined
+  }
 
   private headers(): HeadersInit {
     return { Authorization: `Bearer ${this.token}`, Accept: 'application/json' }
   }
 
   async listOffers(opts?: ListOffersOpts): Promise<AffiliateOffer[]> {
-    if (!this.token || !this.publisherId) return mockOffers()
+    if (!this.token || !this.publisherId) {
+      if (this.allowMockFallback) return mockOffers()
+      throw new Error('AWIN_CREDENTIALS_MISSING: Awin BYOK credentials are not configured for this workspace')
+    }
     try {
       const params = new URLSearchParams({
         publisherId: this.publisherId,
@@ -91,16 +115,20 @@ export class AwinProvider implements OfferProvider {
         `${BASE_URL}/publishers/${this.publisherId}/product-feeds?${params}`,
         { headers: this.headers() }
       )
-      if (!res.ok) return mockOffers()
+      if (!res.ok) {
+        if (this.allowMockFallback) return mockOffers()
+        throw new Error(`AWIN_UPSTREAM_ERROR: HTTP ${res.status}`)
+      }
       const json = await res.json() as AwinProductListResponse
       return (json.products ?? []).map(mapProduct)
-    } catch {
-      return mockOffers()
+    } catch (err) {
+      if (this.allowMockFallback) return mockOffers()
+      throw err instanceof Error ? err : new Error(String(err))
     }
   }
 
   async getOffer(externalId: string): Promise<AffiliateOffer | null> {
-    if (!this.token || !this.publisherId) return mockOffers()[0]
+    if (!this.token || !this.publisherId) return this.allowMockFallback ? mockOffers()[0] : null
     try {
       const res = await fetch(
         `${BASE_URL}/publishers/${this.publisherId}/product-feeds/${externalId}`,

@@ -4,6 +4,25 @@ import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { logInvalidSignature, verifyPostbackSignature } from './signature-verifier';
 import { KNOWN_NETWORKS, PostbackSchema } from './types';
+import { processSaasCryptoPostback } from '@/land/affiliates/postbacks/saas-crypto-postback-service';
+import type { SaasCryptoNetwork } from '@/land/affiliates/postbacks/saas-crypto-postback-types';
+import { resolveNetworkSecret } from '@/land/postback/network-secret-resolver';
+
+const DOMAIN_B_NETWORKS = new Set<string>([
+  'partnerstack',
+  'rewardful',
+  'binance',
+  'binance-link',
+  'bybit',
+]);
+
+function normalizeDomainBNetwork(net: string): SaasCryptoNetwork | null {
+  if (net === 'binance-link' || net === 'binance') return 'binance';
+  if (net === 'bybit') return 'bybit';
+  if (net === 'partnerstack') return 'partnerstack';
+  if (net === 'rewardful') return 'rewardful';
+  return null;
+}
 
 export async function handlePostbackRoute(
   request: NextRequest,
@@ -66,6 +85,51 @@ export async function handlePostbackRoute(
     return NextResponse.json({ error: 'Signature verification failed' }, { status: 500 });
   }
 
+  // Look up tenantId for the tracking link
+  const linkRow = await db
+    .prepare('SELECT tenant_id FROM tracking_links WHERE id = ? LIMIT 1')
+    .bind(parsed.data.link_id)
+    .first<{ tenant_id: string }>();
+
+  const tenantId = linkRow?.tenant_id ?? 'default';
+
+  // Domain B check: if network is SaaS/Crypto, route to Domain B immutable ledger
+  const domainBNet = normalizeDomainBNetwork(network);
+  if (domainBNet && DOMAIN_B_NETWORKS.has(network)) {
+    const secret = (await resolveNetworkSecret(db, network, parsed.data.link_id)) ?? '';
+    const sigHeader =
+      request.headers.get('x-signature') ||
+      request.headers.get('pstack-signature') ||
+      request.headers.get('x-rewardful-signature') ||
+      '';
+
+    const outcome = await processSaasCryptoPostback({
+      db,
+      tenantId,
+      network: domainBNet,
+      rawBody,
+      signature: sigHeader,
+      secret,
+    });
+
+    if (!outcome.success) {
+      logger.error('[postback] Domain B ledger recording failed', {
+        network,
+        error: outcome.error,
+        eventId: outcome.eventId,
+      });
+      // Never return 200 on failure; return 500 so upstream provider retries
+      return NextResponse.json({ ok: false, error: outcome.error }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      eventId: outcome.eventId,
+      duplicate: outcome.isIdempotentDuplicate ?? false,
+    }, { status: 200 });
+  }
+
+  // Legacy tracking link conversion recording for other networks
   try {
     await recordConversion(parsed.data.link_id, network, {
       externalConversionId: parsed.data.external_id,
@@ -83,6 +147,7 @@ export async function handlePostbackRoute(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn('[postback] Conversion failed to record', { network, error: message });
-    return NextResponse.json({ ok: false, error: message }, { status: 200 });
+    // Fail closed: return 500 so provider retries
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

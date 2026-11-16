@@ -71,7 +71,7 @@ export async function handlePost(request: NextRequest, ctx: RouteParams): Promis
 
   const response = NextResponse.json({
     success: true,
-    redirectUrl: `/${requestLocale}/dashboard/onboarding`,
+    redirectUrl: `/${requestLocale}/setup-wizard`,
   });
 
   await issueAndAttachSession(handover, request, response);

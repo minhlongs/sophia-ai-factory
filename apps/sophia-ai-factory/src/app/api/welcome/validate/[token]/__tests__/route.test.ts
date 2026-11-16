@@ -133,7 +133,7 @@ describe('POST /api/welcome/validate/[token]', () => {
     const body = await response.json() as { success: boolean; redirectUrl: string };
     expect(body.success).toBe(true);
     // Canonical onboarding URL — locale defaults to 'en' when no body sent
-    expect(body.redirectUrl).toBe('/en/dashboard/onboarding');
+    expect(body.redirectUrl).toBe('/en/setup-wizard');
 
     const setCookie = response.headers.get('set-cookie');
     expect(setCookie).not.toBeNull();

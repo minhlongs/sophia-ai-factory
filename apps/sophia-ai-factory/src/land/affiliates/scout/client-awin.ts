@@ -18,8 +18,8 @@ function map(p: AwinProg): AffiliateRaw {
 export const awinSaasClient: NetworkClient = {
   network: 'awin_saas',
   async fetch(env: ScoutEnv, _t: string, creds?: Record<string, string>): Promise<AffiliateRaw[]> {
-    const tok = creds?.['api_token'] ?? env.AWIN_API_TOKEN;
-    const pid = creds?.['publisher_id'] ?? env.AWIN_PUBLISHER_ID;
+    const tok = creds !== undefined ? creds['api_token'] : env.AWIN_API_TOKEN;
+    const pid = creds !== undefined ? creds['publisher_id'] : env.AWIN_PUBLISHER_ID;
     if (!tok || !pid) { logger.warn('[affiliate-scout] AWIN credentials missing'); return []; }
     try {
       const url = `${API_BASE}/${pid}/programmes?${new URLSearchParams({ relationship: 'joined', countryCode: 'US', pageSize: '50' })}`;

@@ -59,7 +59,7 @@ export function RegisterPageView() {
         name: resolvedName,
         email,
         password,
-        callbackURL: '/dashboard/onboarding',
+        callbackURL: '/setup-wizard',
       });
 
       if (result.error) {

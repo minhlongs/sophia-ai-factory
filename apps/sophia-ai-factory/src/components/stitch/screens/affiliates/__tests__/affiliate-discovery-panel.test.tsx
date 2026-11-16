@@ -98,7 +98,7 @@ vi.mock('@/forest/actions/affiliate-actions', () => ({
     success: true,
     campaignId: 'camp_12345',
     target: 'creator_studio',
-    deepLink: '/creator/studio?offerId=semrush&campaignId=camp_12345',
+    deepLink: '/en/dashboard/niche-studio?offerId=semrush&campaignId=camp_12345',
     message: 'Offer successfully adopted',
   }),
 }));

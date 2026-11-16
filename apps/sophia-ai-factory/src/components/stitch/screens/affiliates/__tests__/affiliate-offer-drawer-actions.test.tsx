@@ -52,7 +52,7 @@ describe('AffiliateOfferDrawer Actions & Dismissal', () => {
       success: true,
       campaignId: 'camp_98765',
       target: 'creator_studio',
-      deepLink: '/creator/studio?offerId=semrush&campaignId=camp_98765',
+      deepLink: '/en/dashboard/niche-studio?offerId=semrush&campaignId=camp_98765',
       message: 'Adopted into Creator Studio',
     });
     const onAdoptSuccess = vi.fn();
@@ -76,11 +76,12 @@ describe('AffiliateOfferDrawer Actions & Dismissal', () => {
         offerId: 'semrush',
         target: 'creator_studio',
         campaignName: 'SEMrush SEO Toolkit',
+        locale: 'en',
       });
       expect(onAdoptSuccess).toHaveBeenCalledWith({
         target: 'creator_studio',
         campaignId: 'camp_98765',
-        deepLink: '/creator/studio?offerId=semrush&campaignId=camp_98765',
+        deepLink: '/en/dashboard/niche-studio?offerId=semrush&campaignId=camp_98765',
       });
       expect(
         screen.getByText('stitch.affiliates.drawer.adoptedCreatorSuccess:{"campaignId":"camp_98765"}')
@@ -93,7 +94,7 @@ describe('AffiliateOfferDrawer Actions & Dismissal', () => {
       success: true,
       campaignId: 'camp_54321',
       target: 'distribution_queue',
-      deepLink: '/creator/studio?tab=queue&campaignId=camp_54321',
+      deepLink: '/en/dashboard/publish/queue?offerId=semrush&campaignId=camp_54321',
       message: 'Queued for distribution',
     });
 
@@ -109,6 +110,7 @@ describe('AffiliateOfferDrawer Actions & Dismissal', () => {
         offerId: 'semrush',
         target: 'distribution_queue',
         campaignName: 'SEMrush SEO Toolkit',
+        locale: 'en',
       });
       expect(
         screen.getByText('stitch.affiliates.drawer.queuedSuccess:{"campaignId":"camp_54321"}')

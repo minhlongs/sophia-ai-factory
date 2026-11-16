@@ -66,7 +66,11 @@ export function resolveProviderHealthStatus(params: {
   if (params.probeSuccess) {
     return 'ACTIVE';
   }
-  if (params.isTimeout || (params.httpStatus && params.httpStatus >= 500)) {
+  if (
+    params.isTimeout ||
+    params.httpStatus === 429 ||
+    (params.httpStatus && params.httpStatus >= 500)
+  ) {
     return 'PROVIDER_UNAVAILABLE';
   }
   if (

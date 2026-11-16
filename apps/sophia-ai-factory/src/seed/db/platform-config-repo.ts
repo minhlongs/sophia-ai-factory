@@ -23,7 +23,9 @@ const CONFIG_KEYS = [
   'honeycomb_dataset',
   'affiliate_kill_switch_active',
 ] as const;
-export type PlatformConfigKey = (typeof CONFIG_KEYS)[number];
+export type PlatformConfigKey =
+  | (typeof CONFIG_KEYS)[number]
+  | `affiliate_kill_switch_active:${string}`;
 
 /**
  * Get a platform config value (decrypted).

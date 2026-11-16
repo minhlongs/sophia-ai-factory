@@ -458,8 +458,8 @@ describe('getAffiliateOffersAction & adoptAffiliateOfferAction (Milestone 3)', (
     expect(result.success).toBe(true);
     expect(result.campaignId).toBeDefined();
     expect(result.target).toBe('creator_studio');
-    expect(result.deepLink).toContain('/creator/studio?offerId=semrush&campaignId=');
-    expect(result.message).toContain('Creator Studio');
+    expect(result.deepLink).toContain('/vi/dashboard/niche-studio?offerId=semrush&campaignId=');
+    expect(result.message).toContain('campaign workspace');
   });
 
   it('successfully adopts offer into distribution_queue and returns queue deep link', async () => {
@@ -471,7 +471,7 @@ describe('getAffiliateOffersAction & adoptAffiliateOfferAction (Milestone 3)', (
     expect(result.success).toBe(true);
     expect(result.campaignId).toBeDefined();
     expect(result.target).toBe('distribution_queue');
-    expect(result.deepLink).toContain('/creator/studio?tab=queue&campaignId=');
+    expect(result.deepLink).toContain('/vi/dashboard/publish/queue?offerId=shopify&campaignId=');
     expect(result.message).toContain('distribution');
   });
 });

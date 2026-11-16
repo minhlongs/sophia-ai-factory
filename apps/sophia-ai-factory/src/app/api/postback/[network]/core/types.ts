@@ -3,10 +3,12 @@ import { z } from 'zod';
 // Known postback-capable networks (allowlist)
 export const KNOWN_NETWORKS = new Set([
   'binance-link',
+  'binance',
   'bybit',
   'bitget',
   'okx',
   'partnerstack',
+  'rewardful',
   'impact',
   'cj',
   'awin',

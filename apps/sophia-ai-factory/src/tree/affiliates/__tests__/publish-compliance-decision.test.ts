@@ -102,7 +102,7 @@ describe('decidePublishCompliance', () => {
     const decision = decidePublishCompliance({
       baseDescription: BASE,
       offer: offer('BingX Crypto Exchange'),
-      jurisdiction: 'SG',
+      jurisdiction: 'US',
       locale: 'vi',
     });
 

@@ -24,7 +24,9 @@ export const impactRadiusClient: NetworkClient = {
   network: 'impact_radius',
 
   async fetch(env: ScoutEnv, _tenantId: string, credentialsOverride?: Record<string, string>): Promise<AffiliateRaw[]> {
-    const apiKey = credentialsOverride?.['client_secret'] ?? env.IMPACT_RADIUS_API_KEY;
+    const apiKey = credentialsOverride !== undefined
+      ? (credentialsOverride['client_secret'] ?? credentialsOverride['api_key'])
+      : env.IMPACT_RADIUS_API_KEY;
 
     if (!apiKey) {
       logger.warn('[affiliate-scout] IMPACT_RADIUS_API_KEY not set — skipping network');

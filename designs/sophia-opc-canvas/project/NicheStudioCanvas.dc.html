@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>02. Niche Studio Side-by-Side Artboards &amp; Tweaks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..112,400..800&family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#6366f1}a:hover{color:#818cf8}
+</style>
+</helmet>
+<div style="max-width: 1280px; margin: 0 auto; box-sizing: border-box; padding: 40px; background: #090a10; color: #f1f5f9; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.09); padding-bottom: 16px">
+    <div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f59e0b; letter-spacing: 0.1em">NICHE STUDIO • BAOYU CANVAS MODE</div>
+      <h2 style="margin: 6px 0 0; font-family: 'Archivo', sans-serif; font-size: 28px">Multi-Format Campaign Artboards ($0.00 Draft Stage)</h2>
+    </div>
+    <span style="padding: 6px 14px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 12px">OKLCH Contrast: 7.4:1 PASS</span>
+  </div>
+  <div style="display: grid; grid-template-columns: 280px 1fr 320px; gap: 24px; align-items: start">
+    <div style="padding: 20px; border-radius: 16px; background: #11131f; border: 1px solid {{accent}}; display: flex; flex-direction: column; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8">ARTBOARD 01 • 9:16 SHORTS</span>
+      <strong style="font-size: 16px; color: #ffffff">Zero-Custody CEX Fee Breakdown</strong>
+      <p style="margin: 0; font-size: 13px; color: #94a3b8">Disclosure: {{disclosureTag}}</p>
+    </div>
+    <div style="padding: 20px; border-radius: 16px; background: #11131f; border: 1px solid rgba(255,255,255,0.09); display: flex; flex-direction: column; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8">ARTBOARD 02 • 16:9 YOUTUBE REVIEW</span>
+      <strong style="font-size: 18px; color: #ffffff">Full SaaS &amp; CEX Comparison Walkthrough</strong>
+      <p style="margin: 0; font-size: 13px; color: #94a3b8">Locked via SHA-256 before ElevenLabs &amp; HeyGen spend.</p>
+    </div>
+    <div style="padding: 20px; border-radius: 16px; background: #11131f; border: 1px solid rgba(255,255,255,0.09); display: flex; flex-direction: column; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f59e0b">TWEAKS &amp; PIN COMMENTS</span>
+      <div style="font-size: 13px; color: #e2e8f0">Accent: {{accent}}</div>
+      <div style="font-size: 13px; color: #e2e8f0">Disclosure: {{disclosureTag}}</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6366f1"},"disclosureTag":{"editor":"text","default":"FTC / MiCA / VN Decree 52 Verified"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#6366f1',
+      disclosureTag: this.props.disclosureTag ?? 'FTC / MiCA / VN Decree 52 Verified'
+    };
+  }
+}
+</script>
+</body>
+</html>

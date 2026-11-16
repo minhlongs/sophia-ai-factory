@@ -22,7 +22,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json(
-      { ok: false, valid: false, message: 'Unauthorized', message_vi: 'Chưa đăng nhập' },
+      {
+        ok: false,
+        valid: false,
+        errorCode: 'UNAUTHORIZED',
+        message: 'Unauthorized',
+        message_vi: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+      },
       { status: 401 },
     );
   }
@@ -32,7 +38,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { ok: false, valid: false, message: 'Invalid JSON', message_vi: 'Dữ liệu JSON không hợp lệ' },
+      {
+        ok: false,
+        valid: false,
+        errorCode: 'VALIDATION_ERROR',
+        message: 'Invalid JSON',
+        message_vi: 'Dữ liệu JSON không hợp lệ',
+      },
       { status: 400 },
     );
   }
@@ -43,6 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       {
         ok: false,
         valid: false,
+        errorCode: 'VALIDATION_ERROR',
         message: parsed.error.issues[0]?.message ?? 'Validation error',
         message_vi: 'Lỗi xác thực thông tin đầu vào',
       },
@@ -59,6 +72,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (result.status === 'UNKNOWN' || result.httpStatus === 400) {
     return NextResponse.json(result, { status: 400 });
+  }
+
+  if (result.httpStatus === 429) {
+    return NextResponse.json(result, { status: 429 });
   }
 
   const isAuthFail = result.httpStatus === 401 || result.httpStatus === 403;

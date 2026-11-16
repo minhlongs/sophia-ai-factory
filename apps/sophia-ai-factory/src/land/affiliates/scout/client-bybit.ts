@@ -2,12 +2,11 @@
  * Bybit Affiliate API client (V5).
  * Endpoint: GET /v5/affiliate/aff-user-list
  * Auth: HMAC-SHA256 signed headers (X-BAPI-*).
- * Returns mock fixture when credentials missing (fail-open).
- * @module lib/affiliates/scout/client-bybit
+ * Zero-mock policy: Returns empty array [] when credentials missing or fetch fails.
+ * @module land/affiliates/scout/client-bybit
  */
 
-import type { NetworkClient, ScoutEnv } from './types';
-import type { Affiliate } from './types';
+import type { NetworkClient, ScoutEnv, Affiliate } from './types';
 import { buildBybitSignedHeaders } from '@/seed/utils/crypto-exchange-hmac-signing';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -15,22 +14,6 @@ const BYBIT_BASE = 'https://api.bybit.com';
 const TIMEOUT_MS = 8_000;
 
 type AffiliateRow = Omit<Affiliate, 'id' | 'tenantId' | 'discoveredAt'>;
-
-const MOCK_FIXTURE: AffiliateRow[] = [
-  {
-    network: 'bybit',
-    externalId: 'bybit-affiliate-mock',
-    productName: 'Bybit Affiliate Program',
-    productUrl: 'https://www.bybit.com/en/affiliate-program/',
-    commissionPct: 30,
-    category: 'crypto_exchange',
-    description: 'Earn up to 30% commission on trading fees.',
-    domain: 'bybit.com',
-    cryptoVolumeUsd: 8_000_000_000,
-    kycRequired: true,
-    epc: 3.0,
-  },
-];
 
 function mapItem(item: Record<string, unknown>): AffiliateRow {
   const commissionRate = parseFloat(String(item.commissionRate ?? '0'));
@@ -49,7 +32,7 @@ function mapItem(item: Record<string, unknown>): AffiliateRow {
     domain: 'bybit.com',
     cryptoVolumeUsd: isNaN(tradeVolume) ? undefined : tradeVolume,
     kycRequired: kycLevel >= 1,
-    epc: commissionRate > 0 ? commissionRate * 10 : undefined,
+    epc: typeof item.epc === 'number' ? item.epc : undefined,
   };
 }
 
@@ -61,12 +44,12 @@ export const bybitClient: NetworkClient = {
     _tenantId: string,
     credentialsOverride?: Record<string, string>,
   ): Promise<AffiliateRow[]> {
-    const apiKey = credentialsOverride?.api_key ?? env.BYBIT_API_KEY;
-    const apiSecret = credentialsOverride?.api_secret ?? env.BYBIT_API_SECRET;
+    const apiKey = credentialsOverride !== undefined ? credentialsOverride.api_key : env.BYBIT_API_KEY;
+    const apiSecret = credentialsOverride !== undefined ? credentialsOverride.api_secret : env.BYBIT_API_SECRET;
 
     if (!apiKey || !apiSecret) {
-      logger.info('[bybit] No credentials -- returning mock fixture');
-      return MOCK_FIXTURE;
+      logger.info('[bybit] No credentials configured -- returning empty list');
+      return [];
     }
 
     try {
@@ -89,7 +72,7 @@ export const bybitClient: NetworkClient = {
         return [];
       }
 
-      const body = await res.json() as {
+      const body = (await res.json()) as {
         retCode: number;
         result?: { list?: Record<string, unknown>[] };
       };
@@ -102,8 +85,8 @@ export const bybitClient: NetworkClient = {
       const items = body.result?.list ?? [];
       return items.map(mapItem);
     } catch (err) {
-      logger.warn('[bybit] Fetch failed -- returning mock fixture', { err: String(err) });
-      return MOCK_FIXTURE;
+      logger.warn('[bybit] Fetch failed', { err: String(err) });
+      return [];
     }
   },
 };

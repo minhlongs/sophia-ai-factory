@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { TierType } from './payment-step';
 import {
@@ -33,6 +33,7 @@ export function useSetupWizard() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const verifySeqRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     bootstrapSetupWizardState({
@@ -42,10 +43,16 @@ export function useSetupWizard() {
   }, []);
 
   const updateConfig = useCallback((key: string, value: string) => {
+    verifySeqRef.current[key] = (verifySeqRef.current[key] ?? 0) + 1;
     setConfig(prev => ({ ...prev, [key]: value }));
+    setStatus(prev => (prev[key] && prev[key] !== 'idle' ? { ...prev, [key]: 'idle' } : prev));
+    setErrors(prev => (prev[key] ? { ...prev, [key]: '' } : prev));
   }, []);
 
   const verifyKey = useCallback(async (service: string, keyName: string, keyValue: string) => {
+    const seq = (verifySeqRef.current[keyName] ?? 0) + 1;
+    verifySeqRef.current[keyName] = seq;
+
     if (!keyValue.trim()) {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: t('errors.emptyKey') }));
@@ -55,6 +62,7 @@ export function useSetupWizard() {
     setErrors(prev => ({ ...prev, [keyName]: '' }));
     try {
       const result = await requestKeyValidation(service, keyValue, t('errors.verificationFailed'));
+      if (verifySeqRef.current[keyName] !== seq) return false;
       setLatencies(prev => ({ ...prev, [keyName]: result.latencyMs }));
       if (result.valid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
@@ -64,6 +72,7 @@ export function useSetupWizard() {
       setErrors(prev => ({ ...prev, [keyName]: result.errorMessage || t('errors.verificationFailed') }));
       return false;
     } catch {
+      if (verifySeqRef.current[keyName] !== seq) return false;
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: t('errors.verificationFailed') }));
       return false;
@@ -71,6 +80,7 @@ export function useSetupWizard() {
   }, [t]);
 
   const handleRevokeProvider = useCallback(async (provider: string, keyName: string) => {
+    verifySeqRef.current[keyName] = (verifySeqRef.current[keyName] ?? 0) + 1;
     setRevokingProvider(provider);
     try {
       const ok = await requestProviderRevoke(provider);
@@ -78,6 +88,8 @@ export function useSetupWizard() {
         setSavedProviders(prev => prev.filter(p => p !== provider));
         setConfig(prev => ({ ...prev, [keyName]: '' }));
         setStatus(prev => ({ ...prev, [keyName]: 'idle' }));
+        setErrors(prev => ({ ...prev, [keyName]: '' }));
+        setLatencies(prev => ({ ...prev, [keyName]: 0 }));
       }
     } finally {
       setRevokingProvider(null);

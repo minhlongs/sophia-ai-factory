@@ -6,17 +6,17 @@
 export const TRANSLATE_SYNTAX_MSG =
   '❌ Cú pháp: `/translate <toLang> <text>` — ví dụ: `/translate vi Hello world`';
 export const TRANSLATE_BYOK_MSG =
-  '🔑 *Cần OpenRouter key*\nVào /dashboard/setup-wizard và nhập key OpenRouter của bạn để dùng /translate.';
+  '🔑 *Cần OpenRouter key*\nVào /setup-wizard và nhập key OpenRouter của bạn để dùng /translate.';
 
 export const CLONE_VOICE_SYNTAX_MSG =
   '❌ Cú pháp: `/clone-voice <Name>|<url1>[,url2,...]` — ví dụ: `/clone-voice Tho|https://r2.example/sample.mp3`';
 export const CLONE_VOICE_BYOK_MSG =
-  '🔑 *Cần ElevenLabs key*\nVào /dashboard/setup-wizard và nhập key ElevenLabs để dùng /clone-voice.';
+  '🔑 *Cần ElevenLabs key*\nVào /setup-wizard và nhập key ElevenLabs để dùng /clone-voice.';
 
 export const SEO_SCRIPT_SYNTAX_MSG =
   '❌ Cú pháp: `/seo-script <topic> [| kw1, kw2]` — ví dụ: `/seo-script affiliate marketing | passive income, byok`';
 export const SEO_SCRIPT_BYOK_MSG =
-  '🔑 *Cần OpenRouter key*\nVào /dashboard/setup-wizard và nhập key OpenRouter để dùng /seo-script.';
+  '🔑 *Cần OpenRouter key*\nVào /setup-wizard và nhập key OpenRouter để dùng /seo-script.';
 
 export const PUBLISH_SYNTAX_MSG =
   '❌ Cú pháp: `/publish <videoId> <channelId> <ISO_DATE> [caption]`\nVí dụ: `/publish v_abc c_yt 2026-06-01T09:00:00Z Launch day`';

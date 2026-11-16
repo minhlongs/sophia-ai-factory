@@ -36,7 +36,7 @@ type TestableProvider = Exclude<ByokProvider, 'heygen' | 'hunter' | 'replicate'>
 
 const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
   openrouter: {
-    url: 'https://openrouter.ai/api/v1/models',
+    url: 'https://openrouter.ai/api/v1/key',
     authHeader: (k) => ({ Authorization: `Bearer ${k}` }),
   },
   anthropic: {
@@ -49,7 +49,9 @@ const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
   },
   'd-id': {
     url: 'https://api.d-id.com/credits',
-    authHeader: (k) => ({ Authorization: `Basic ${k}` }),
+    authHeader: (k) => ({
+      Authorization: `Basic ${k.includes(':') ? Buffer.from(k, 'utf-8').toString('base64') : k.replace(/^Basic\s+/i, '')}`,
+    }),
   },
   muapi: {
     url: 'https://api.muapi.ai/v1/account',

@@ -2,8 +2,9 @@
 /**
  * Niche Conversion Stats Card
  *
- * Visualizes real-time conversion telemetry, recurring MRR commissions,
- * and trading fee rebates captured from affiliate postbacks.
+ * Illustrative benchmark figures for the selected niche. No live attribution
+ * feed is wired to this card in this pass, so every number is labelled as an
+ * example rather than presented as measured telemetry.
  *
  * @module components/niche-studio/niche-conversion-stats-card
  */
@@ -27,29 +28,28 @@ export function NicheConversionStatsCard({ niche, t }: NicheConversionStatsCardP
           </h3>
           <p className="text-xs text-muted-foreground">{t('statsSubtitle')}</p>
         </div>
-        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs rounded-full flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          {t('liveTelemetry')}
+        <span
+          data-testid="niche-stats-state"
+          className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold text-xs rounded-full"
+        >
+          {t('demoBadge')}
         </span>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-3.5 bg-muted/20 border border-border/40 rounded-xl space-y-1">
           <span className="text-xs text-muted-foreground">{t('metricViews')}</span>
-          <p className="text-lg font-bold font-mono text-foreground">14.2K</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">↑ +38% hook watch</span>
+          <p className="text-lg font-bold font-mono text-muted-foreground">14.2K</p>
         </div>
 
         <div className="p-3.5 bg-muted/20 border border-border/40 rounded-xl space-y-1">
           <span className="text-xs text-muted-foreground">{t('metricClicks')}</span>
-          <p className="text-lg font-bold font-mono text-foreground">842</p>
-          <span className="text-[10px] text-primary font-medium">5.9% CTR</span>
+          <p className="text-lg font-bold font-mono text-muted-foreground">842</p>
         </div>
 
         <div className="p-3.5 bg-muted/20 border border-border/40 rounded-xl space-y-1">
           <span className="text-xs text-muted-foreground">{t('metricConversions')}</span>
-          <p className="text-lg font-bold font-mono text-foreground">63</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">7.4% conv</span>
+          <p className="text-lg font-bold font-mono text-muted-foreground">63</p>
         </div>
 
         <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl space-y-1">
@@ -59,11 +59,10 @@ export function NicheConversionStatsCard({ niche, t }: NicheConversionStatsCardP
           <p className="text-lg font-bold font-mono text-primary">
             {isCrypto ? '$1,480.50' : '$2,240/mo'}
           </p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-            {isCrypto ? '20-30% rebate tier' : '30% recurring MRR'}
-          </span>
         </div>
       </div>
+
+      <p className="mt-4 text-xs text-muted-foreground">{t('demoNote')}</p>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
+import { isMaskedOrPlaceholderCredential } from '@/tree/byok/provider-probe-endpoints';
 import type { TierType } from './payment-step';
 import {
   KEY_TO_PROVIDER,
@@ -49,22 +51,25 @@ export function fetchSetupWizardInitialData(callbacks: {
 
 export async function saveWizardProviderKeys(
   config: WizardConfig,
-  onProviderSaved: (provider: string) => void,
-): Promise<void> {
+  onProviderSaved?: (provider: string) => void,
+): Promise<string[]> {
   const entries = (Object.keys(KEY_TO_PROVIDER) as Array<keyof WizardConfig>)
-    .map((k) => ({ provider: KEY_TO_PROVIDER[k], apiKey: config[k].trim() }))
-    .filter((e) => e.apiKey.length > 0);
+    .map((k) => ({ provider: KEY_TO_PROVIDER[k], key: config[k].trim() }))
+    .filter((e) => e.key.length > 0 && !isMaskedOrPlaceholderCredential(e.key));
 
+  const savedProviders: string[] = [];
   for (const entry of entries) {
     const res = await fetch('/api/user/byok', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
       body: JSON.stringify(entry),
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       throw new Error(body.error || `Failed to save ${entry.provider} key`);
     }
-    onProviderSaved(entry.provider);
+    savedProviders.push(entry.provider);
+    onProviderSaved?.(entry.provider);
   }
+  return savedProviders;
 }

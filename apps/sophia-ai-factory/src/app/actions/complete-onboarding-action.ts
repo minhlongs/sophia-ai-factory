@@ -44,7 +44,7 @@ export async function completeOnboardingAction(
     // INSERT ON CONFLICT — many fresh MASTER FREE100 users have no user_profiles row yet
     // (the BYOK setup wizard creates that row only when keys are saved). A
     // plain UPDATE silently no-ops for those users and leaves them stuck in
-    // the /dashboard → /dashboard/onboarding redirect loop. Insert-on-conflict
+    // the /dashboard → /setup-wizard redirect loop. Insert-on-conflict
     // makes the flag durable regardless of prior profile state.
     const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
@@ -58,7 +58,7 @@ export async function completeOnboardingAction(
       .run();
 
     revalidatePath('/dashboard');
-    revalidatePath('/dashboard/onboarding');
+    revalidatePath('/setup-wizard');
 
     return { success: true };
   } catch (err) {

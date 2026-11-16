@@ -91,15 +91,27 @@ export async function adoptAffiliateOfferAction(
       now,
     });
 
-    const deepLink =
-      input.target === 'creator_studio'
-        ? `/creator/studio?offerId=${encodeURIComponent(input.offerId)}&campaignId=${campaignId}`
-        : `/creator/studio?tab=queue&campaignId=${campaignId}`;
+    // Keep the customer in their language and carry the offer/campaign identity
+    // into the campaign workspace, so adoption lands on a real workflow instead
+    // of dropping the customer onto an unrelated template screen.
+    const locale = input.locale === 'en' ? 'en' : 'vi';
+    const isDistributionQueue = input.target === 'distribution_queue';
+    const basePath = isDistributionQueue
+      ? `/${locale}/dashboard/publish/queue`
+      : `/${locale}/dashboard/niche-studio`;
+    const contextParams = new URLSearchParams({
+      offerId: input.offerId,
+      campaignId,
+    });
+    if (offer) {
+      contextParams.set('offerName', offer.programName);
+      contextParams.set('trackingUrl', offer.destinationUrl);
+    }
+    const deepLink = `${basePath}?${contextParams.toString()}`;
 
-    const message =
-      input.target === 'creator_studio'
-        ? `Offer "${programTitle}" adopted into Creator Studio.`
-        : `Offer "${programTitle}" queued for distribution.`;
+    const message = isDistributionQueue
+      ? `Offer "${programTitle}" queued for distribution.`
+      : `Offer "${programTitle}" is ready to prepare in your campaign workspace.`;
 
     logger.info('[affiliate-actions] Affiliate offer adopted', {
       offerId: input.offerId,

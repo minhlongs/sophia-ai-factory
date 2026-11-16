@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { authClient } from '@/seed/auth/better-auth-client';
 import { trackSignupComplete } from '@/land/analytics/conversion-events';
@@ -41,7 +41,7 @@ export function SignupFormView({ t }: SignupFormProps) {
         name,
         email,
         password,
-        callbackURL: '/dashboard/onboarding',
+        callbackURL: '/setup-wizard',
       });
 
       if (authError) {
@@ -56,7 +56,7 @@ export function SignupFormView({ t }: SignupFormProps) {
 
       setSuccess(true);
       trackSignupComplete({ method: 'email' });
-      router.push('/dashboard/onboarding');
+      router.push('/setup-wizard');
       router.refresh();
     } catch {
       setError(t.error_generic);

@@ -8,6 +8,7 @@
 import { inngest } from '@/seed/inngest/client';
 import type { SocialPublishResult } from '@/seed/types/social-publisher-types';
 import { decryptTokenVault } from '@/seed/security/oauth-token-vault';
+import { isAffiliateKillSwitchActive } from '@/tree/affiliate/kill-switch/kill-switch-store';
 import { getCredential, upsertCredential } from '@/land/social/platform-credentials-store';
 import { updatePublishJobStatus } from '@/land/social/publish-job-store';
 import {
@@ -56,6 +57,11 @@ export async function processSocialDirectPublishJob({
 
   // Step 2: Emergency kill-switch and circuit-breaker check
   const safetyCheck = await step.run('check-safety-guards', async () => {
+    const effectiveTenant = data.tenantId ?? data.userId;
+    if (await isAffiliateKillSwitchActive(effectiveTenant)) {
+      await updatePublishJobStatus(data.jobId, 'FAILED', { error: 'Workspace emergency kill switch active' });
+      return { allowed: false, reason: 'KILL_SWITCH_ACTIVE' };
+    }
     const cred = await getCredential(data.userId, data.platform, data.channelId);
     const guard = evaluateSafetyGuardsDecision(data, cred);
     if (!guard.allowed && guard.errorMessage) {

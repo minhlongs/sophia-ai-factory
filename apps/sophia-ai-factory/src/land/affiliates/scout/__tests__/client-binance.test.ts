@@ -8,26 +8,18 @@ import type { ScoutEnv } from '../types';
 const BASE_ENV: ScoutEnv = {};
 
 describe('binanceClient', () => {
-  beforeEach(() => { vi.restoreAllMocks(); });
-
-  it('returns mock fixture when no credentials provided', async () => {
-    const result = await binanceClient.fetch(BASE_ENV, 'tenant-1');
-    expect(result.length).toBeGreaterThan(0);
-    expect(result[0].network).toBe('binance');
-    expect(result[0].externalId).toBeTruthy();
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('returns mock fixture when BYOK credentialsOverride empty', async () => {
+  it('returns empty array when no credentials provided (zero-mock production policy)', async () => {
+    const result = await binanceClient.fetch(BASE_ENV, 'tenant-1');
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array when BYOK credentialsOverride is empty', async () => {
     const result = await binanceClient.fetch(BASE_ENV, 'tenant-1', {});
-    expect(result.length).toBeGreaterThan(0);
-    expect(result[0].network).toBe('binance');
-  });
-
-  it('mock fixture populates cryptoVolumeUsd and kycRequired', async () => {
-    const result = await binanceClient.fetch(BASE_ENV, 'tenant-1');
-    expect(result[0].cryptoVolumeUsd).toBeTypeOf('number');
-    expect(result[0].kycRequired).toBe(true);
-    expect(result[0].domain).toBe('binance.com');
+    expect(result).toEqual([]);
   });
 
   it('returns empty array on 451 region-blocked response', async () => {
@@ -44,13 +36,23 @@ describe('binanceClient', () => {
     expect(result).toEqual([]);
   });
 
-  it('maps API response to affiliate fields correctly', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      status: 200, ok: true,
-      json: async () => ({
-        data: [{ commissionRate: '0.35', volume: '50000000', customLink: 'https://binance.com/ref/TEST' }],
+  it('maps API response to affiliate fields without fabricating EPC', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              commissionRate: '0.35',
+              volume: '50000000',
+              customLink: 'https://binance.com/ref/TEST',
+            },
+          ],
+        }),
       }),
-    }));
+    );
     const env: ScoutEnv = { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' };
     const result = await binanceClient.fetch(env, 'tenant-1');
     expect(result.length).toBe(1);
@@ -58,19 +60,27 @@ describe('binanceClient', () => {
     expect(result[0].cryptoVolumeUsd).toBe(50000000);
     expect(result[0].domain).toBe('binance.com');
     expect(result[0].kycRequired).toBe(true);
+    expect(result[0].epc).toBeUndefined();
   });
 
   it('handles empty data array from API', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      status: 200, ok: true, json: async () => ({ data: [] }),
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: async () => ({ data: [] }),
+      }),
+    );
     const env: ScoutEnv = { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' };
     expect(await binanceClient.fetch(env, 'tenant-1')).toEqual([]);
   });
 
   it('prefers BYOK credentialsOverride over env keys', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
-      status: 200, ok: true, json: async () => ({ data: [] }),
+      status: 200,
+      ok: true,
+      json: async () => ({ data: [] }),
     });
     vi.stubGlobal('fetch', fetchMock);
     await binanceClient.fetch(
@@ -81,11 +91,10 @@ describe('binanceClient', () => {
     expect(fetchMock.mock.calls[0][1]?.headers?.['X-MBX-APIKEY']).toBe('byok-key');
   });
 
-  it('returns mock fixture on fetch network error', async () => {
+  it('returns empty array on fetch network error (zero-mock fallback)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network timeout')));
     const env: ScoutEnv = { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' };
     const result = await binanceClient.fetch(env, 'tenant-1');
-    expect(result.length).toBeGreaterThan(0);
-    expect(result[0].network).toBe('binance');
+    expect(result).toEqual([]);
   });
 });

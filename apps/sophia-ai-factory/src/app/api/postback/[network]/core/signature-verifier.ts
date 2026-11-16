@@ -31,8 +31,7 @@ export async function logInvalidSignature(
 /**
  * Verify the HMAC signature for a network-specific postback.
  * Returns true if verification passes or is disabled.
- * Returns false if signature is present but invalid.
- * Returns true if no signature method is known for this network (pass-through).
+ * Returns false if signature is present but invalid or network is unhandled (fail-closed).
  */
 export async function verifyPostbackSignature(
   db: D1Database,
@@ -52,13 +51,16 @@ export async function verifyPostbackSignature(
 
   const secret = await resolveNetworkSecret(db, network, linkId);
   if (!secret) {
-    logger.warn('[postback] No network secret found — skipping HMAC', { network, linkId });
-    return true;
+    logger.warn('[postback] No network secret found — rejecting', { network, linkId });
+    return false;
   }
 
   switch (network) {
     case 'binance-link':
-    case 'bybit': {
+    case 'binance':
+    case 'bybit':
+    case 'bitget':
+    case 'okx': {
       const sig = request.headers.get('x-signature') ?? '';
       if (!sig) return false;
       return verifyHmacSha256Hex(secret, rawBody, sig);
@@ -67,7 +69,22 @@ export async function verifyPostbackSignature(
     case 'partnerstack': {
       const sig = request.headers.get('pstack-signature') ?? '';
       if (!sig) return false;
-      return verifyHmacSha256Base64(secret, rawBody, sig);
+      return (
+        (await verifyHmacSha256Base64(secret, rawBody, sig)) ||
+        (await verifyHmacSha256Hex(secret, rawBody, sig))
+      );
+    }
+
+    case 'rewardful': {
+      const sig =
+        request.headers.get('x-rewardful-signature') ??
+        request.headers.get('x-signature') ??
+        '';
+      if (!sig) return false;
+      return (
+        (await verifyHmacSha256Base64(secret, rawBody, sig)) ||
+        (await verifyHmacSha256Hex(secret, rawBody, sig))
+      );
     }
 
     case 'awin': {
@@ -80,8 +97,7 @@ export async function verifyPostbackSignature(
     case 'clickbank': {
       const cbreceipt = (parsedBody.cbreceipt as string | undefined) ?? '';
       if (!cbreceipt) return false;
-      const expected = await computeHmacSha256Hex(secret, rawBody);
-      return cbreceipt === expected;
+      return verifyHmacSha256Hex(secret, rawBody, cbreceipt);
     }
 
     case 'tiktok_shop': {
@@ -91,6 +107,7 @@ export async function verifyPostbackSignature(
     }
 
     default:
-      return true;
+      logger.warn('[postback] Unknown network rejected by fail-closed signature policy', { network });
+      return false;
   }
 }

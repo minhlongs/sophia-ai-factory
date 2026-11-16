@@ -1,0 +1,64 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-07T18:15:00Z"
+  },
+  "title": "Sophia OPC v3-core & Full-Stack Studio Canvas",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "01. Landing .v3-core & Live Agent Trace",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "NicheStudioCanvas.dc.html": {
+      "x": 1360,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "02. Niche Studio Side-by-Side Artboards & Tweaks",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "DashboardSources.dc.html": {
+      "x": 2720,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "03. Dashboard Control Deck & D1 Sources Drawer",
+      "expand": "fill",
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "NicheStudioCanvas.dc.html",
+    "DashboardSources.dc.html"
+  ],
+  "notes": {
+    "flow_header": {
+      "x": 0,
+      "y": -260,
+      "text": "Sophia AI Factory — OPC Full-Stack Surfaces",
+      "kind": "title1",
+      "maxW": 4000
+    }
+  },
+  "designSystems": [
+    {
+      "title": "Sophia Director Control Deck",
+      "namespace": "sophiads",
+      "artifact": "designs/sophia-ds",
+      "version": null,
+      "copiedAt": "2026-11-07T18:15:00Z"
+    }
+  ]
+}

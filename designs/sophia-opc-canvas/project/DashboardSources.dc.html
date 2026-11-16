@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>03. Dashboard Control Deck &amp; D1 Sources Drawer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..112,400..800&family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#6366f1}a:hover{color:#818cf8}
+</style>
+</helmet>
+<div style="max-width: 1280px; margin: 0 auto; box-sizing: border-box; padding: 40px; background: #090a10; color: #f1f5f9; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.09); padding-bottom: 16px">
+    <div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f59e0b; letter-spacing: 0.1em">DIRECTOR CONTROL DECK • CLAUDE-DASHBOARD SOURCES PATTERN</div>
+      <h2 style="margin: 6px 0 0; font-family: 'Archivo', sans-serif; font-size: 28px">Verified KPIs &amp; D1 Ledger Sources Traceability</h2>
+    </div>
+    <span style="padding: 6px 14px; border-radius: 999px; background: {{accent}}; color: #ffffff; font-family: 'JetBrains Mono', monospace; font-size: 12px">Sources Drawer: OPEN</span>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+      <div style="padding: 20px; border-radius: 16px; background: #11131f; border: 1px solid rgba(255,255,255,0.09)">
+        <div style="font-size: 12px; color: #94a3b8">Net Affiliate Commission (Domain B)</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; margin-top: 6px">$1,240.00</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #10b981; margin-top: 6px">Source: d1.affiliate_conversions (0% fee)</div>
+      </div>
+      <div style="padding: 20px; border-radius: 16px; background: #11131f; border: 1px solid rgba(255,255,255,0.09)">
+        <div style="font-size: 12px; color: #94a3b8">Approved Campaigns</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; margin-top: 6px">4</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f59e0b; margin-top: 6px">Source: d1.campaigns (SHA-256 locked)</div>
+      </div>
+    </div>
+    <div style="padding: 22px; border-radius: 16px; background: #11131f; border: 1px solid {{accent}}; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f59e0b; letter-spacing: 0.1em">SOURCES TRACEABILITY PANEL</div>
+      <p style="margin: 0; font-size: 13px; color: #e2e8f0">Every KPI card traces directly to its verified Cloudflare D1 table and S2S postback digest.</p>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8">1. Revenue → d1.affiliate_conversions (S2S HMAC-SHA256)</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8">2. Campaigns → d1.campaigns (ceo_approval_digest)</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8">3. Spend Cap → d1.workspace_quotas (BYOK guard)</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6366f1"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#6366f1'
+    };
+  }
+}
+</script>
+</body>
+</html>
