@@ -82,7 +82,6 @@ export async function handleClickBankWebhook(request: Request): Promise<NextResp
       {
         ok: false,
         error: 'secret_not_configured',
-        tenantId,
         guidance: LEGACY_MIGRATION_GUIDANCE,
       },
       { status: 503 },

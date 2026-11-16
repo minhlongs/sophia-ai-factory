@@ -115,6 +115,18 @@ describe('requiresCsrfCheck', () => {
     expect(requiresCsrfCheck('/api/webhooks/telegram', 'POST')).toBe(false)
   })
 
+  it('returns false for canonical /api/postback/ paths (including locale-prefixed)', () => {
+    expect(requiresCsrfCheck('/api/postback/partnerstack', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/api/postback/binance-link', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/vi/api/postback/partnerstack', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/en/api/postback/awin', 'POST')).toBe(false)
+  })
+
+  it('still requires CSRF for non-postback routes sharing a partial prefix', () => {
+    expect(requiresCsrfCheck('/api/postbacks', 'POST')).toBe(true)
+    expect(requiresCsrfCheck('/api/postback', 'POST')).toBe(true)
+  })
+
   it('returns false for /api/cron/ paths', () => {
     expect(requiresCsrfCheck('/api/cron/daily-rollup', 'POST')).toBe(false)
   })

@@ -20,7 +20,7 @@ export const CSRF_HEADER_NAME = 'x-csrf-token'
 
 /** Safe methods that never mutate state */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
-const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/csp-report']
+const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/postback/', '/api/csp-report']
 const CRON_PREFIX = '/api/cron/'
 
 /** Verify that a cron request is authentic. */

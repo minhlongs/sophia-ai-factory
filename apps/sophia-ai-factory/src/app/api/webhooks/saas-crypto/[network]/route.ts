@@ -30,6 +30,12 @@ import {
   LEGACY_MIGRATION_GUIDANCE,
 } from '@/land/postback/legacy-tenant-resolver';
 import { enqueuePostbackDlq } from '@/land/postback/postback-dead-letter';
+import {
+  serializeDlqHeaders,
+  serializeDlqEndpoint,
+  serializeDlqSourceIp,
+  serializeDlqBody,
+} from '@/land/postback/postback-dlq-evidence';
 
 interface RouteParams {
   network: string;
@@ -114,14 +120,17 @@ export async function POST(
     explicitTenantId: explicitTenantId ?? null,
   });
   if (!resolution.ok) {
+    // Nothing is verified on this path: resolution failed before any signature
+    // check, so a tenant hint taken from the payload is attacker-chosen. Store
+    // no attribution rather than a claim nobody has proven.
     await enqueuePostbackDlq({
       network: config.network,
-      endpoint: request.url,
-      sourceIp: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for'),
-      headersJson: JSON.stringify(Object.fromEntries(request.headers.entries())),
-      rawBody,
+      endpoint: serializeDlqEndpoint(request.url),
+      sourceIp: serializeDlqSourceIp(request.headers.get('cf-connecting-ip')),
+      headersJson: await serializeDlqHeaders(request.headers, config.sigHeaders),
+      rawBody: serializeDlqBody(rawBody),
       failureReason: resolution.error,
-      tenantHint: 'tenantId' in resolution ? resolution.tenantId : (explicitTenantId ?? null),
+      tenantHint: null,
     });
 
     const status = resolution.error === 'secret_not_configured' ? 503 : 422;
@@ -129,7 +138,6 @@ export async function POST(
       {
         ok: false,
         error: resolution.error,
-        ...('tenantId' in resolution ? { tenantId: resolution.tenantId } : {}),
         guidance: LEGACY_MIGRATION_GUIDANCE,
       },
       { status },
