@@ -107,7 +107,7 @@ describe('submitMuApiImageJob tier entitlement', () => {
     expect(mockResolveUserApiKey).toHaveBeenCalledWith('user-1', 'muapi');
     expect(mockSubmitMediaJob).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'image', model: 'flux-schnell' }),
-      'customer_byok_muapi_key',
+      { fund: 'byok', apiKey: 'customer_byok_muapi_key' },
     );
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({ provider: 'muapi', cost_classification: 'UNMETERED' }),
