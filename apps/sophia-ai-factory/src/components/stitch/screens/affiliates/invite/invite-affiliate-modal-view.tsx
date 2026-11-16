@@ -35,15 +35,15 @@ export function InviteAffiliateModalView({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         aria-modal="true"
-        className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-[#12141F]/95 backdrop-blur-2xl border border-white/[0.08] shadow-2xl text-foreground dark:text-white"
+        className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card border border-border shadow-2xl text-foreground"
         aria-describedby="invite-modal-desc"
       >
         <DialogHeader className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <Sparkles className="w-5 h-5 text-primary" />
             </div>
-            <DialogTitle className="text-xl font-bold tracking-tight text-foreground dark:text-white">
+            <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
               {t('title')}
             </DialogTitle>
           </div>

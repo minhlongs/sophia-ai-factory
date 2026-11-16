@@ -10,6 +10,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  globalRateLimiter,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +22,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!user) {
     return NextResponse.redirect(new URL('/login?redirect=/dashboard/onboarding', request.url));
   }
+
+  const userRl = globalRateLimiter.checkLimit(`setup:skip:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 20,
+  });
+  if (!userRl.allowed) return createRateLimitResponse(userRl);
 
   let hasLlmKey = false;
   try {

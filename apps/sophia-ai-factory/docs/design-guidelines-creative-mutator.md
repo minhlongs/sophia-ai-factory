@@ -1,13 +1,13 @@
 # Design Guidelines: Creative Auto-Mutator Cockpit
 
-**Design System:** Sophia Obsidian Cyber-Glass
-**Color Tokens (from `globals.css`):**
-- Primary: Amber (`hsl(35, 80%, 44%)` / `#d97706` / `#f59e0b`)
-- Accent / Secondary: Indigo (`#6366f1` / `#4f46e5`)
-- Background: Obsidian Dark (`#090d16` / `#0f172a`)
-- Card Surface: Cyber Glass (`rgba(15, 23, 42, 0.75)` with `backdrop-filter: blur(12px)`)
-- Border: Cyber Border (`rgba(255, 255, 255, 0.08)`)
-- Typography: Inter body, clean geometric display, strictly no display Inter.
+**Design System:** Zen Design OS v1.0 (`src/app/globals.css` & `DESIGN.md`)
+**Color Tokens (from `src/app/globals.css`):**
+- Primary: Electric Indigo (`#6366F1` dark / `#4338CA` light; `--primary-text: #818CF8` dark)
+- Accent / Warning: Cinema Amber (`#F59E0B` dark / `#B45309` light)
+- Background: `--background` (`#090A10` dark default / `#F8F9FC` light)
+- Card Surface: `--card` (`#11131F` dark / `#FFFFFF` light)
+- Border: `--border` (`#1E2235` dark / `#E2E8F0` light)
+- Typography: `Inter` (`--font-sans`) for product UI & headings, `JetBrains Mono` (`--font-mono`) for telemetry/metrics.
 
 ---
 

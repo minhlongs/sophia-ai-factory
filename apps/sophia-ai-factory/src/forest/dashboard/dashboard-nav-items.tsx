@@ -103,7 +103,7 @@ export function DashboardNavItems({
     <div className="space-y-1 px-3 py-2 flex-1 overflow-y-auto">
       {/* Six primary work groups: one action per job the customer came to do. */}
       <nav aria-label={primaryHeading}>
-        <h2 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+        <h2 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           {primaryHeading}
         </h2>
         <ul className="space-y-1">
@@ -124,7 +124,7 @@ export function DashboardNavItems({
       {/* The referral programme is a separate business from affiliate earnings,
           so it gets its own labelled section rather than a nav item among them. */}
       <nav aria-label={labelFor("referralProgramme")} className="pt-3">
-        <h2 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+        <h2 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           {labelFor("referralProgramme")}
         </h2>
         <ul className="space-y-1">
@@ -143,13 +143,13 @@ export function DashboardNavItems({
       {/* Every canonical module stays reachable as a grouped deep link inside
           the collapsible drawer, so no route becomes unreachable. */}
       <details className="pt-3 group" data-testid="sidebar-more-tools">
-        <summary className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+        <summary className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
           {labelFor("moreTools")}
         </summary>
         <div className="space-y-3 mt-1">
           {groupedModules.map(({ group, items }) => (
             <div key={group.id} data-testid={`nav-group-${group.id}`}>
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {groupLabel(group)}
               </p>
               <ul className="space-y-1">

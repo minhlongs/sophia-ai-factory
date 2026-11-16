@@ -1,9 +1,9 @@
 /**
- * Unit tests for Kokoro-82M TTS Adapter & Vietnamese BYOK ElevenLabs router.
+ * Unit tests for Kokoro-82M TTS Adapter & Pure-Edge BYOK ElevenLabs router.
  * @module tree/video/audio/__tests__/kokoro-tts-adapter.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   chunkScriptIntoSentences,
   isVietnameseLocale,
@@ -13,10 +13,22 @@ import { reset, recordFailure } from '@/seed/security/circuit-breaker';
 import { FailureKind } from '@/seed/types/failure-kind';
 
 describe('kokoro-tts-adapter', () => {
+  const prevKokoroApiUrl = process.env.KOKORO_API_URL;
+  const prevKokoroTtsBaseUrl = process.env.KOKORO_TTS_BASE_URL;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.KOKORO_API_URL;
+    delete process.env.KOKORO_TTS_BASE_URL;
     reset('kokoro-tts', 'org_alpha');
     reset('kokoro-tts', 'user_1');
+  });
+
+  afterEach(() => {
+    if (prevKokoroApiUrl === undefined) delete process.env.KOKORO_API_URL;
+    else process.env.KOKORO_API_URL = prevKokoroApiUrl;
+    if (prevKokoroTtsBaseUrl === undefined) delete process.env.KOKORO_TTS_BASE_URL;
+    else process.env.KOKORO_TTS_BASE_URL = prevKokoroTtsBaseUrl;
   });
 
   it('identifies Vietnamese locale tags accurately', () => {
@@ -47,7 +59,7 @@ describe('kokoro-tts-adapter', () => {
   it('routes Vietnamese locale (vi / vi-VN) directly to BYOK ElevenLabs fallback', async () => {
     const byokFallback = vi.fn().mockResolvedValue({
       success: true,
-      audioUrl: 'https://r2.sophia.local/tenants/org_alpha/vo_vi.mp3',
+      audioUrl: 'https://cdn.sophia.agencyos.network/orgs/org_alpha/vo_vi.mp3',
       durationSec: 18.5,
       provider: 'elevenlabs' as const,
     });
@@ -74,6 +86,40 @@ describe('kokoro-tts-adapter', () => {
     expect(result.audioUrl).toContain('vo_vi.mp3');
     expect(byokFallback).toHaveBeenCalledTimes(1);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('falls back cleanly to BYOK voiceover on pure-edge Workers when neither baseUrl/KOKORO_API_URL nor custom fetchFn is configured', async () => {
+    const byokFallback = vi.fn().mockResolvedValue({
+      success: true,
+      audioUrl: 'https://cdn.sophia.agencyos.network/orgs/org_alpha/vo_en_edge.mp3',
+      durationSec: 11.2,
+      provider: 'elevenlabs' as const,
+    });
+
+    const result = await synthesizeWithKokoroOrByok(
+      {
+        planId: 'plan_edge_en_1',
+        userId: 'user_1',
+        tenantId: 'org_alpha',
+        text: 'Pure-edge Cloudflare Worker synthesis falls back to workspace BYOK.',
+        locale: 'en-US',
+      },
+      { byokFallback },
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.routedToByok).toBe(true);
+    expect(result.provider).toBe('elevenlabs');
+    expect(result.audioUrl).toContain('vo_en_edge.mp3');
+    expect(byokFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 'plan_edge_en_1',
+        userId: 'user_1',
+        tenantId: 'org_alpha',
+        locale: 'en',
+      }),
+      undefined,
+    );
   });
 
   it('synthesizes multi-sentence English scripts via /v1/audio/speech and merges audio bytes', async () => {

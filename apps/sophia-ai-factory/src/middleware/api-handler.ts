@@ -6,7 +6,6 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { isPublicApiRoute } from '@/forest/middleware/auth-guard';
 import { emitUsageEvent } from '@/tree/usage-metering';
 import { logger } from '@/seed/utils/logger-utility';
-import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 import { track } from '@/tree/signals/track';
 import { D1Events } from '@/forest/telemetry/d1-event-types';
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation';
@@ -38,20 +37,28 @@ function authUnavailableResponse(
 
 // Returns a blocking response, or null to continue
 export async function handleApiRoute(request: NextRequest, pathname: string, startTime: number): Promise<NextResponse | null> {
+  // Strip any client-supplied session identity headers before authentication runs
+  request.headers.delete('x-user-id');
+  request.headers.delete('x-user-role');
+  request.headers.delete('x-user-tier');
+
   const isolationResult = await tenantIsolationMiddleware(request);
   if (isolationResult) return isolationResult;
 
   const agyIsolationResult = await agyTenantIsolationMiddleware(request);
   if (agyIsolationResult) return agyIsolationResult;
 
-  // Webhook version pinning — internal secret required during canary
+  // Webhook version pinning — reject explicit non-stable Cloudflare Workers Version Override
+  // probes on external webhook routes so test/canary probes do not mutate live billing/bot state.
   if (
     pathname.startsWith('/api/webhooks/nowpayments') ||
     pathname.startsWith('/api/webhooks/payos') ||
-    pathname.startsWith('/api/webhooks/telegram')
+    pathname.startsWith('/api/webhooks/telegram') ||
+    pathname === '/api/payos/ipn' ||
+    pathname === '/api/inngest'
   ) {
-    // Enforce only when INTERNAL_API_SECRET is configured; skip during migration window
-    if (process.env.INTERNAL_API_SECRET && !verifyInternalSecret(request)) {
+    const versionKey = request.headers.get('Cloudflare-Workers-Version-Key');
+    if (versionKey && versionKey !== 'stable') {
       return new Response(
         JSON.stringify({ error: 'canary_window', message: 'Webhook pinned to stable version — retry shortly' }),
         { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '30' } }
@@ -64,13 +71,30 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
   // cost (agent-chat, missions POST, campaigns/create, factory/url-to-revenue) layer additional
   // `withRateLimit` above this baseline to cap per-tenant per-tier abuse.
   const identifier = getClientIdentifier(request);
-  let rateLimitConfig = RATE_LIMITS.api as typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook | typeof RATE_LIMITS.discovery;
+  let rateLimitConfig: (typeof RATE_LIMITS)[keyof typeof RATE_LIMITS] = RATE_LIMITS.api;
 
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
+  if (pathname.startsWith('/api/auth')) {
     rateLimitConfig = RATE_LIMITS.auth;
+  } else if (
+    pathname.startsWith('/api/user/byok') ||
+    pathname.startsWith('/api/setup-wizard') ||
+    pathname.startsWith('/api/setup/')
+  ) {
+    // Dedicated BYOK & Setup Wizard bucket: isolated from /api/auth/* (10/min)
+    // and /api/admin/* (50/min) so onboarding refreshes never starve login or
+    // admin consoles, while capping IP-level provider probing below /api/* (100/min).
+    rateLimitConfig = RATE_LIMITS.byok;
+  } else if (pathname.startsWith('/api/admin')) {
+    rateLimitConfig = RATE_LIMITS.admin;
   } else if (pathname.startsWith('/api/discovery')) {
     rateLimitConfig = RATE_LIMITS.discovery;
-  } else if (pathname.startsWith('/api/webhooks')) {
+  } else if (
+    isPublicApiRoute(pathname) &&
+    (pathname.startsWith('/api/webhooks/') ||
+      pathname.startsWith('/api/postback/') ||
+      pathname === '/api/payos/ipn' ||
+      pathname === '/api/inngest')
+  ) {
     rateLimitConfig = RATE_LIMITS.webhook;
   }
 
@@ -95,7 +119,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     track(D1Events.API_RATE_LIMIT_HIT, identifier, {
       path: pathname,
       identifier,
-      limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : rateLimitConfig === RATE_LIMITS.discovery ? 'discovery' : 'api',
+      limit_type: rateLimitConfig.identifier,
     });
     emitUsageEvent(request, { status: 429, headers: rateLimitResponse.headers }).catch(err => {
       logger.error('[Proxy] Failed to emit 429 usage event', err);

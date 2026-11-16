@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isPublicApiRoute } from './guard/public-routes';
 
 export interface TenantIsolationResult {
   allowed: boolean;
@@ -10,8 +11,7 @@ export interface TenantIsolationResult {
 export const PUBLIC_ROUTES = [
   '/api/health',
   '/api/setup',
-  '/api/webhooks/nowpayments',
-  '/api/webhooks/telegram',
+  '/api/setup-wizard',
   '/api/auth',
   '/api/discovery',
   '/api/sophia-index',
@@ -20,7 +20,14 @@ export const PUBLIC_ROUTES = [
 ];
 
 export function isBypassedTenantRoute(pathname: string): boolean {
-  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) return true;
+  if (isPublicApiRoute(pathname)) return true;
+  if (
+    PUBLIC_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    )
+  ) {
+    return true;
+  }
   if (!pathname.startsWith('/api')) return true;
   if (pathname.startsWith('/_next') || /\.(png|jpg|jpeg|gif|svg|ico)$/.test(pathname)) return true;
   return false;

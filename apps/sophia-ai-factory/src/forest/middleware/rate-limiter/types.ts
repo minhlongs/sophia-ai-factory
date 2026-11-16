@@ -8,6 +8,7 @@ export interface RateLimitResult {
   remaining: number;
   resetAt: number;
   retryAfter?: number;
+  limit?: number;
 }
 
 export interface CacheEntry {

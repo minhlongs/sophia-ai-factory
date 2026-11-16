@@ -8,6 +8,7 @@
  * @module forest/publishing/__tests__/youtube-upload-synthetic-media
  */
 
+import { NonRetriableError } from 'inngest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -165,5 +166,50 @@ describe('performYouTubeUpload', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(mocks.shouldAllowRequest).not.toHaveBeenCalled();
     expect(mocks.recordFailure).not.toHaveBeenCalled();
+  });
+
+  it('throws NonRetriableError on 400/401/403 upload failures and retriable Error on 429 and 503', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('bad metadata', { status: 400 }))
+      .mockResolvedValueOnce(new Response('invalid Credentials', { status: 401 }))
+      .mockResolvedValueOnce(initResponse())
+      .mockResolvedValueOnce(videoResponse())
+      .mockResolvedValueOnce(new Response('quotaExceeded', { status: 403 }))
+      .mockResolvedValueOnce(new Response('rateLimited', { status: 429, headers: { 'Retry-After': '45' } }))
+      .mockResolvedValueOnce(new Response('backend unavailable', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const err400 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Bad req', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err400).toBeInstanceOf(NonRetriableError);
+    expect(err400).toMatchObject({ statusCode: 400, nonRetriable: true, message: 'YouTube upload init failed: 400 bad metadata' });
+
+    const err401 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Expired token', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err401).toBeInstanceOf(NonRetriableError);
+    expect(err401).toMatchObject({ statusCode: 401, nonRetriable: true });
+
+    const err403 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Quota', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err403).toBeInstanceOf(NonRetriableError);
+    expect(err403).toMatchObject({ statusCode: 403, nonRetriable: true, message: 'YouTube upload failed: 403 quotaExceeded' });
+
+    const err429 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Throttled', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err429).toBeInstanceOf(Error);
+    expect(err429).not.toBeInstanceOf(NonRetriableError);
+    expect(err429).toMatchObject({ statusCode: 429, retriable: true, retryAfterSec: 45 });
+
+    const err503 = await performYouTubeUpload('fixture_token', {
+      videoUrl: 'https://cdn.example.test/video.mp4', title: 'Transient', description: 'Desc',
+    }).catch((e: unknown) => e);
+    expect(err503).toBeInstanceOf(Error);
+    expect(err503).not.toBeInstanceOf(NonRetriableError);
+    expect(err503).toMatchObject({ statusCode: 503, retriable: true });
   });
 });

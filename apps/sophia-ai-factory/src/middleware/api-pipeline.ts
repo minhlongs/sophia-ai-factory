@@ -22,6 +22,14 @@ export async function handleApiPipeline(
 ): Promise<NextResponse | null> {
   if (!pathname.startsWith('/api')) return null;
 
+  // Sanitize client-supplied session identity headers before any telemetry or auth check runs
+  request.headers.delete('x-user-id');
+  request.headers.delete('x-user-role');
+  request.headers.delete('x-user-tier');
+  requestHeaders.delete('x-user-id');
+  requestHeaders.delete('x-user-role');
+  requestHeaders.delete('x-user-tier');
+
   // Cron secret validation
   if (pathname.startsWith('/api/cron') && !validateCronRequest(request)) {
     return NextResponse.json(
@@ -43,15 +51,20 @@ export async function handleApiPipeline(
   const blocked = await handleApiRoute(request, pathname, startTime);
   if (blocked) return blocked;
 
-  // Propagate authenticated user session and tier to requestHeaders for downstream routes
+  // Propagate authenticated user session and tier to requestHeaders for downstream routes,
+  // explicitly stripping spoofed inbound headers when unauthenticated or role-less.
   const userId = request.headers.get('x-user-id');
   const userTier = request.headers.get('x-user-tier') || 'BASIC';
   if (userId) {
     requestHeaders.set('x-user-id', userId);
+  } else {
+    requestHeaders.delete('x-user-id');
   }
   const userRole = request.headers.get('x-user-role');
   if (userRole) {
     requestHeaders.set('x-user-role', userRole);
+  } else {
+    requestHeaders.delete('x-user-role');
   }
   requestHeaders.set('x-user-tier', userTier);
 

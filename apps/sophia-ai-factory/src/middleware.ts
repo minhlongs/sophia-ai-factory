@@ -68,7 +68,8 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const tenantContext = await resolveTenantFromHostname(db, host);
   injectTenantRoutingHeaders(requestHeaders, tenantContext);
 
-  const isServerAction = request.headers.has('next-action');
+  const isApiPath = pathname === '/api' || pathname.startsWith('/api/');
+  const isServerAction = !isApiPath && request.headers.has('next-action');
   if (!isServerAction && requiresCsrfCheck(pathname, request.method) && !verifyCsrfToken(request)) {
     return csrfForbiddenResponse();
   }

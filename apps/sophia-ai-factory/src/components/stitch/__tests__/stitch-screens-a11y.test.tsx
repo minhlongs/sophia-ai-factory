@@ -144,22 +144,28 @@ describe('Stitch DashboardLayout Accessibility & Responsive Drawer', () => {
   });
 
   it('opens mobile drawer with dialog semantics and dismisses with Escape key', () => {
-    render(
+    const { container } = render(
       <DashboardLayout title="Dashboard Test">
         <div>Child Content</div>
       </DashboardLayout>
     );
+    // The drawer is off-canvas and aria-hidden while closed, so assistive
+    // technology must not see a dialog until the trigger opens it.
+    expect(screen.queryByRole('dialog')).toBeNull();
+
     const mobileMenuTrigger = screen.getByRole('button', {
       name: /stitch\.navigation\.openMobileNav/i,
     });
-    const drawer = screen.getByRole('dialog');
-    expect(drawer.getAttribute('aria-modal')).toBe('true');
-    expect(drawer.className).toContain('-translate-x-full');
 
     fireEvent.click(mobileMenuTrigger);
+    const drawer = screen.getByRole('dialog');
+    expect(drawer.getAttribute('aria-modal')).toBe('true');
     expect(drawer.className).toContain('translate-x-0');
 
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(drawer.className).toContain('-translate-x-full');
+    const closedDrawer = container.querySelector('aside');
+    expect(closedDrawer?.className).toContain('-translate-x-full');
+    expect(closedDrawer?.getAttribute('aria-hidden')).toBe('true');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

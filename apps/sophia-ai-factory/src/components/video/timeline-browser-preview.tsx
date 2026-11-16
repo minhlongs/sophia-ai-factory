@@ -84,7 +84,7 @@ export function TimelineBrowserPreview({
       <div className="grid gap-5 md:grid-cols-2">
         <div
           data-testid="timeline-dom-stage"
-          style={{ backgroundColor: activeScene?.backgroundHex ?? '#0F172A' }}
+          style={{ backgroundColor: activeScene?.backgroundHex ?? 'var(--studio-stage-bg)' }}
           className="relative flex aspect-[9/16] max-h-[380px] flex-col justify-between overflow-hidden rounded-xl border border-amber-500/30 p-4 text-white shadow-inner"
         >
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-amber-300">
@@ -124,8 +124,8 @@ export function TimelineBrowserPreview({
                   onClick={() => setSelectedSceneIndex(idx)}
                   className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
                     idx === selectedSceneIndex
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      ? 'bg-amber-500 text-zinc-950 font-bold'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <Play className="h-3 w-3" />#{idx + 1}
@@ -175,7 +175,7 @@ export function TimelineBrowserPreview({
             type="button"
             data-testid="trigger-mp4-render-btn"
             onClick={() => onTriggerRender?.(timeline, engine)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
           >
             <Sparkles className="h-4 w-4" />
             <span>Render 1080x1920 MP4 ({engine})</span>

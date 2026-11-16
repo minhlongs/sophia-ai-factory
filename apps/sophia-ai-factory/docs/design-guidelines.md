@@ -1,58 +1,52 @@
 # Design Guidelines — Sophia AI Factory
 
-> Authoritative color and spacing values: `src/app/globals.css`.
-> This document is derivative. When in doubt, trust `globals.css`.
+> **Canonical Authority:** `src/app/globals.css`, `src/seed/design-tokens/zen-design-tokens.dtcg.json`, and root `DESIGN.md` (Zen Design OS v1.0).
+> This document is a derivative summary reconciled to Zen Design OS v1.0. When in doubt, `src/app/globals.css` wins.
 
 ## Design Philosophy
 
-Sophia AI Factory uses a warm amber-on-cream palette (light default) with
-deep indigo accents for dark mode. The system is professional, trustworthy,
-and optimized for AI creators running faceless video and affiliate businesses.
+Sophia AI Factory uses **Zen Design OS v1.0** — a Dark-first (`defaultTheme="dark"` — *Director's Control Deck*) and First-Class Light Mode (*Executive Studio Ivory*) Material 3 Expressive system built for non-technical SME Founders and CEOs.
 
-Interface prioritizes clarity and action over decoration. Consistent spacing,
-semantic colors, and accessible contrast are non-negotiable.
+Interface prioritizes clarity and action over decoration. Consistent spacing, semantic colors, and WCAG 2.2 AA contrast in both Dark and Light modes are non-negotiable.
 
 ---
 
 ## 1. Typography
 
-- **Body**: Inter (variable)
-  - UI elements, headings, body text.
-  - Weights: Regular (400), Medium (500), Semibold (600).
-  - Used as display type in headers is permitted only when the visual hierarchy
-    demands high weight and the rest of the system already renders Inter at body scale.
-
-- **Monospace**: system fallback
-  - API keys, data tables, metrics.
+- **Product UI, Headings & Body (`--font-sans`)**: `'Inter'`, system-ui, -apple-system, BlinkMacSystemFont, `'Segoe UI'`, Roboto, sans-serif (weights 400–800, Latin + Vietnamese `unicode-range` subsets).
+- **Telemetry, Code & Numeric Readouts (`--font-mono`)**: `'JetBrains Mono'`, ui-monospace, SFMono-Regular, Menlo, monospace (`tabular-nums`, weights 400–600).
+- **Scoped Landing Display (`.v3-core` only)**: `'Archivo'` declared in `src/styles/v3-core.css`. `Satoshi`, `Instrument Serif`, and `Geist` are not used.
 
 ```css
-font-family: var(--font-geist-sans); /* body */
-font-family: var(--font-geist-mono); /* data/mono fallback */
+font-family: var(--font-sans); /* Inter — UI & body */
+font-family: var(--font-mono); /* JetBrains Mono — code, keys, telemetry */
 ```
 
 ## 2. Color Palette
 
-Color semantics live in `globals.css` and Tailwind 4 utilities.
+Color semantics live in `src/app/globals.css` and `src/seed/design-tokens/zen-design-tokens.dtcg.json`.
 
-### Light mode (default)
-- **Background**: warm cream paper (`40 30% 97%`)
-- **Foreground**: deep indigo ink (`240 12% 12%`)
-- **Primary**: amber gold (`35 80% 44%` → `#CA7F16`)
-- **Primary foreground**: white
-- **Primary container**: warm amber tint
-- **Secondary**: terracotta (`18 40% 48%` → `#AB6749`)
-- **Muted**: muted cream (`40 20% 94%`)
-- **Accent**: lighter amber for hover (`35 60% 50%` → `#CC8C33`)
+### Dark mode (`.dark` class — runtime default)
+- **Background (`--background` / `--surface`)**: `#090A10`
+- **Card (`--card` / `--surface-container`)**: `#11131F`
+- **Foreground (`--foreground` / `--on-surface`)**: `#F8FAFC`
+- **Muted foreground (`--muted-foreground` / `--on-surface-variant`)**: `#94A3B8`
+- **Primary (`--primary`)**: `#6366F1` (`--primary-text: #818CF8`, `--primary-solid: #4F46E5`)
+- **Secondary (`--secondary`)**: `#A855F7`
+- **Accent / Warning (`--accent` / `--warning`)**: `#F59E0B`
+- **Success (`--success`)**: `#10B981`
+- **Error / Destructive (`--error` / `--destructive`)**: `#FB7185` / `#F43F5E`
 
-### Dark mode (`.dark` class)
-Primary **inherits** the amber token from `:root` — the indigo override was removed, so `--primary` is `35 80% 44%` in both modes.
-- **Background**: `240 13% 6%` (`#0d0d11`)
-- **Foreground**: `255 29% 92%` (`#e8e5f1`)
-- **Primary**: amber `35 80% 44%` (`#CA7F16`) — inherited
-- **Primary container**: `238 20% 38%` (`#4e4f74`)
-- **Secondary**: `245 27% 82%` (`#c7c5dd`)
-- **Muted**: `240 12% 8%` (`#121217`)
-- **Accent / ring**: indigo `240 56% 85%` (`#c3c3ee`)
+### Light mode (`:root` — Executive Studio Ivory)
+- **Background (`--background` / `--surface`)**: `#F8F9FC`
+- **Card (`--card` / `--surface-container`)**: `#FFFFFF`
+- **Foreground (`--foreground` / `--on-surface`)**: `#0B0F19`
+- **Muted foreground (`--muted-foreground` / `--on-surface-variant`)**: `#475569`
+- **Primary (`--primary` / `--primary-text`)**: `#4338CA`
+- **Secondary (`--secondary`)**: `#7E22CE`
+- **Accent / Warning (`--accent` / `--warning`)**: `#B45309`
+- **Success (`--success`)**: `#047857`
+- **Error / Destructive (`--error` / `--destructive`)**: `#BE123C`
 
 ## 3. UI Components
 

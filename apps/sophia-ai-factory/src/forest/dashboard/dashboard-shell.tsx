@@ -12,12 +12,13 @@
  * @module forest/dashboard/dashboard-shell
  */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/seed/utils/cn";
 import { DashboardSidebarNav, type DashboardUserProps } from "./dashboard-sidebar-nav";
 import { DashboardTopBar } from "./dashboard-topbar";
 import { DashboardAgentHudBar } from "../components/dashboard-aeo";
+import { CmdKPalette } from "../components/cmd-k/cmd-k-palette";
 
 export interface DashboardShellProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export interface DashboardShellProps {
   isVi?: boolean;
   currentPath?: string;
   className?: string;
+  enableCmdK?: boolean;
 }
 
 export function DashboardShell({
@@ -35,13 +37,37 @@ export function DashboardShell({
   isVi = false,
   currentPath,
   className,
+  enableCmdK = false,
 }: DashboardShellProps) {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isCmdKOpen, setIsCmdKOpen] = useState(false);
+  const cmdKOpenerRef = useRef<HTMLElement | null>(null);
   const pathnameFromHook = usePathname();
   const activePath = currentPath || pathnameFromHook || "";
 
+  const handleOpenCmdK = () => {
+    cmdKOpenerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setIsCmdKOpen(true);
+  };
+
+  const handleCmdKOpenChange = (nextOpen: boolean) => {
+    if (nextOpen && !cmdKOpenerRef.current) {
+      cmdKOpenerRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+    setIsCmdKOpen(nextOpen);
+    if (!nextOpen) {
+      const opener = cmdKOpenerRef.current;
+      cmdKOpenerRef.current = null;
+      if (opener && opener !== document.body && opener.isConnected) {
+        requestAnimationFrame(() => opener.focus());
+      }
+    }
+  };
+
   return (
-    <div className={cn("min-h-screen bg-[#0B0E14] dark:bg-[#090A10] text-[#F8FAFC] flex", className)}>
+    <div className={cn("min-h-screen bg-background text-foreground flex", className)}>
       {/* Canonical Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebarNav
         currentPath={currentPath}
@@ -57,9 +83,18 @@ export function DashboardShell({
         {/* Obsidian TopBar */}
         <DashboardTopBar
           onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
+          onOpenCmdK={enableCmdK ? handleOpenCmdK : undefined}
           unreadNotificationCount={3}
           user={user}
         />
+
+        {enableCmdK && (
+          <CmdKPalette
+            isAdmin={isAdmin}
+            open={isCmdKOpen}
+            onOpenChange={handleCmdKOpenChange}
+          />
+        )}
 
         {/* Page Content Viewport */}
         <main

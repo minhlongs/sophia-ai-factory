@@ -13,6 +13,9 @@ export interface TikTokPublishParams {
   accessToken: string;
   videoUrl: string;
   title: string;
+  privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+  brandOrganicToggle?: boolean;
+  brandContentToggle?: boolean;
 }
 
 export interface TikTokPublishStatus {
@@ -31,14 +34,28 @@ export interface TikTokApiEnvelope<T> {
   error?: { message: string; code: string };
 }
 
-export function buildTikTokPublishPayload(title: string, videoUrl: string): string {
+export function buildTikTokPublishPayload(
+  title: string,
+  videoUrl: string,
+  options?: {
+    privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+    brandOrganicToggle?: boolean;
+    brandContentToggle?: boolean;
+  },
+): string {
   return JSON.stringify({
     post_info: {
       title,
-      privacy_level: 'SELF_ONLY',
+      privacy_level: options?.privacyLevel ?? 'SELF_ONLY',
       disable_duet: false,
       disable_comment: false,
       disable_stitch: false,
+      ...(typeof options?.brandOrganicToggle === 'boolean'
+        ? { brand_organic_toggle: options.brandOrganicToggle }
+        : {}),
+      ...(typeof options?.brandContentToggle === 'boolean'
+        ? { brand_content_toggle: options.brandContentToggle }
+        : {}),
     },
     source_info: {
       source: 'PULL_FROM_URL',

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { FEATURE_PAYOS } from '@/land/payments/payos';
+import { FEATURE_PAYOS, isPayOsEnabled } from '@/land/payments/payos';
 import { isPayOsTestPing } from '@/land/payments/payos-gateway';
 import { logger } from '@/seed/utils/logger-utility';
 import { createServerClient, getD1 } from '@/seed/db/client';
@@ -16,19 +16,19 @@ import {
   activatePayOsTier,
 } from './modules';
 
-const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
-
 export async function POST(request: NextRequest) {
-  if (!FEATURE_PAYOS) {
+  const payosActive = process.env.FEATURE_PAYOS !== undefined ? isPayOsEnabled() : FEATURE_PAYOS;
+  if (!payosActive) {
     return NextResponse.json({ error: 'PayOS not enabled' }, { status: 503 });
   }
 
-  if (!PAYOS_CHECKSUM_KEY) {
+  const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
+  if (!checksumKey) {
     logger.error('[PayOS IPN] PAYOS_CHECKSUM_KEY not configured');
     return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
   }
 
-  const validation = await validatePayOsRequest(request, PAYOS_CHECKSUM_KEY);
+  const validation = await validatePayOsRequest(request, checksumKey);
   if (!validation.ok) {
     return NextResponse.json({ error: validation.error }, { status: validation.status });
   }

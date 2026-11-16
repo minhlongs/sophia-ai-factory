@@ -20,7 +20,7 @@ interface NicheGate1ChannelInlineFormProps {
 }
 
 const INPUT_CLASS =
-  'w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-amber-500';
+  'w-full bg-background dark:bg-zinc-950 border border-border dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-[11px] text-foreground dark:text-white focus:outline-none focus:border-amber-500';
 
 export function NicheGate1ChannelInlineForm({
   onSuccess,
@@ -67,14 +67,14 @@ export function NicheGate1ChannelInlineForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="p-3 rounded-lg bg-zinc-950/90 border border-amber-500/30 space-y-2.5 text-[11px]"
+      className="p-3 rounded-lg bg-muted/60 dark:bg-zinc-950/90 border border-amber-500/30 space-y-2.5 text-[11px]"
     >
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-amber-300">{t('channelByokFormTitle')}</span>
+        <span className="font-semibold text-amber-800 dark:text-amber-200">{t('channelByokFormTitle')}</span>
         <button
           type="button"
           onClick={onCancel}
-          className="text-zinc-400 hover:text-white text-[10px]"
+          className="text-muted-foreground hover:text-foreground dark:hover:text-white text-[10px]"
         >
           ✕
         </button>
@@ -83,6 +83,7 @@ export function NicheGate1ChannelInlineForm({
         <input
           type="text"
           required
+          aria-label={t('channelByokIdPlaceholder')}
           placeholder={t('channelByokIdPlaceholder')}
           value={externalAccountId}
           onChange={(e) => setExternalAccountId(e.target.value)}
@@ -90,6 +91,7 @@ export function NicheGate1ChannelInlineForm({
         />
         <input
           type="text"
+          aria-label={t('channelByokNamePlaceholder')}
           placeholder={t('channelByokNamePlaceholder')}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
@@ -98,6 +100,7 @@ export function NicheGate1ChannelInlineForm({
         <input
           type="password"
           required
+          aria-label={t('channelByokAccessTokenPlaceholder')}
           placeholder={t('channelByokAccessTokenPlaceholder')}
           value={accessToken}
           onChange={(e) => setAccessToken(e.target.value)}
@@ -105,13 +108,14 @@ export function NicheGate1ChannelInlineForm({
         />
         <input
           type="password"
+          aria-label={t('channelByokRefreshTokenPlaceholder')}
           placeholder={t('channelByokRefreshTokenPlaceholder')}
           value={refreshToken}
           onChange={(e) => setRefreshToken(e.target.value)}
           className={INPUT_CLASS}
         />
       </div>
-      {error && <p className="text-rose-400 text-[10px]">⚠️ {error}</p>}
+      {error && <p className="text-rose-700 dark:text-rose-300 text-[10px]">⚠️ {error}</p>}
       <div className="flex items-center justify-end gap-2">
         <button
           type="submit"

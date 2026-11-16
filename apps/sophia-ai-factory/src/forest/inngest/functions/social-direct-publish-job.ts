@@ -140,7 +140,7 @@ export async function processSocialDirectPublishJob({
   // Step 4: Dispatch upload chunk / container
   const uploadResult = await step.run('dispatch-platform-upload', async () => {
     try {
-      return await executePlatformUploadAdapter(data, vaultToken.accessToken);
+      return await executePlatformUploadAdapter(data, vaultToken.accessToken, approval.compliance);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       await updatePublishJobStatus(data.jobId, 'FAILED', { error: msg });

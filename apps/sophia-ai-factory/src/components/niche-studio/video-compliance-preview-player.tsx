@@ -27,10 +27,10 @@ export function VideoCompliancePreviewPlayer({
 
   if (!plan) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-zinc-900/40 rounded-xl border border-dashed border-zinc-800 text-center min-h-[460px]">
+      <div className="flex flex-col items-center justify-center p-8 bg-card dark:bg-zinc-900/40 rounded-xl border border-dashed border-border dark:border-zinc-800 text-center min-h-[460px]">
         <span className="text-3xl mb-3">📱</span>
-        <h3 className="text-sm font-semibold text-zinc-300">{t('playerEmptyTitle')}</h3>
-        <p className="text-xs text-zinc-500 mt-1 max-w-[260px]">
+        <h3 className="text-sm font-semibold text-foreground dark:text-zinc-300">{t('playerEmptyTitle')}</h3>
+        <p className="text-xs text-muted-foreground mt-1 max-w-[260px]">
           {t('playerEmptyDesc')}
         </p>
       </div>
@@ -91,12 +91,12 @@ export function VideoCompliancePreviewPlayer({
 
       {/* Inngest Dispatch Telemetry */}
       {dispatchedPlanId && (
-        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 space-y-1">
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 space-y-1">
           <div className="flex items-center justify-between font-semibold">
             <span>⚡ {t('dispatchedTitle')}</span>
             <span className="font-mono text-[10px]">Inngest Active</span>
           </div>
-          <p className="text-[11px] text-zinc-400 font-mono truncate">
+          <p className="text-[11px] text-muted-foreground font-mono truncate">
             Plan ID: {dispatchedPlanId}
           </p>
         </div>

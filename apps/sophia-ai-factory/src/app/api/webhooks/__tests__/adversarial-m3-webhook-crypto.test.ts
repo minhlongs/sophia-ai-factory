@@ -570,10 +570,14 @@ describe('Milestone M3 Challenger: Zero-Mock and Hardcoded Signature Bypass Veri
     expect(routeContent).not.toMatch(/if\s*\(.*NODE_ENV\s*===?\s*['"]test['"].*\)\s*return/i)
     expect(routeContent).not.toMatch(/bypassSecret|skipSecret|skipAuth/i)
 
-    // 2. Must enforce secret header comparison against TELEGRAM_WEBHOOK_SECRET
+    // 2. Must enforce constant-time secret header comparison against TELEGRAM_WEBHOOK_SECRET before parsing body
     expect(routeContent).toContain("request.headers.get('X-Telegram-Bot-Api-Secret-Token')")
-    expect(routeContent).toContain("token !== webhookSecret")
-    expect(routeContent).toContain("status: 401")
+    expect(routeContent).toContain('!timingSafeEqual(token, webhookSecret)')
+    expect(routeContent).not.toContain('token !== webhookSecret')
+    expect(routeContent).toContain('status: 401')
+    expect(routeContent.indexOf('timingSafeEqual(token, webhookSecret)')).toBeLessThan(
+      routeContent.indexOf('request.json()'),
+    )
   })
 
   it('EDGE-AUDIT-03: nowpayments-client enforces hardcoded { verify: true } during webhook parsing', () => {

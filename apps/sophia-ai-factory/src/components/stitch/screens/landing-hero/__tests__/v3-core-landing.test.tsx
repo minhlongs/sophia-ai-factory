@@ -62,6 +62,8 @@ describe('.v3-core Sophia Edition CSS & Font Architecture (GH-117)', () => {
   it('imports v3-core.css in globals.css and loads Archivo variable font in RootLayout', () => {
     expect(globalsCss).toContain('@import "../styles/v3-core.css";');
     expect(rootLayout).toContain('Archivo:wdth,wght@100..112,400..800');
+    expect(rootLayout).toContain('Inter:wght@400;500;600;700;800');
+    expect(rootLayout).toContain('JetBrains+Mono:wght@400;500;600');
   });
 });
 

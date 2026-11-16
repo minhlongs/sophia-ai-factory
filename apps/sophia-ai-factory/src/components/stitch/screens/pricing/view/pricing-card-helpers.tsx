@@ -47,7 +47,7 @@ export function getCtaClasses(isPremium: boolean, isEnterprise: boolean) {
   return cn(
     'w-full block text-center rounded-xl py-3.5 text-sm font-bold transition-all active:scale-[0.98]',
     isPremium
-      ? 'bg-primary hover:bg-primary-700 dark:bg-primary dark:hover:bg-primary-500 text-white shadow-lg shadow-primary/20 dark:shadow-primary-500/25'
+      ? 'bg-primary hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 text-white shadow-lg shadow-primary/20 dark:shadow-primary-500/25'
       : isEnterprise
         ? 'bg-primary/10 dark:bg-primary-500/15 border border-primary/25 dark:border-primary-500/30 text-primary dark:text-primary-300 hover:bg-primary/20 dark:hover:bg-primary-500/25 dark:hover:text-white'
         : 'bg-[#F8F9FC] dark:bg-white/[0.06] border border-[#E2E8F0] dark:border-white/[0.1] text-[#0B0F19] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.12] dark:hover:text-white',

@@ -8,6 +8,7 @@ import {
   RateLimiter,
   type RateLimitConfig,
   getClientIdentifier,
+  getClientIpIdentifier,
   createRateLimitHeaders,
   globalRateLimiter
 } from './rate-limiter';
@@ -217,12 +218,25 @@ describe('createRateLimitHeaders', () => {
       allowed: false,
       remaining: 0,
       resetAt: 1234567890000,
-      retryAfter: 30
+      retryAfter: 30,
+      limit: 12,
     };
 
     const headers = createRateLimitHeaders(result);
 
     expect(headers['Retry-After']).toBe('30');
+    expect(headers['X-RateLimit-Limit']).toBe('12');
+  });
+
+  it('should ignore spoofed x-api-key and prefer cf-connecting-ip in getClientIpIdentifier', () => {
+    const request = new Request('http://test.com/api', {
+      headers: {
+        'x-api-key': 'spoofed-key',
+        'cf-connecting-ip': '198.51.100.12',
+        'x-forwarded-for': '10.0.0.1',
+      },
+    });
+    expect(getClientIpIdentifier(request)).toBe('ip:198.51.100.12');
   });
 });
 

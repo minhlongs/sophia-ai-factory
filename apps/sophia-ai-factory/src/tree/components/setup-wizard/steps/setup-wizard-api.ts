@@ -1,5 +1,6 @@
 "use client";
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { TierType } from './payment-step';
 import {
   KEY_TO_PROVIDER,
@@ -58,8 +59,8 @@ export async function saveWizardProviderKeys(
   for (const entry of entries) {
     const res = await fetch('/api/user/byok', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry),
+      headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
+      body: JSON.stringify({ provider: entry.provider, key: entry.apiKey }),
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { error?: string };

@@ -139,7 +139,7 @@ export function DashboardNextStepBanner({
           <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
         </span>
         <div className="space-y-0.5 min-w-0">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-primary">
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-primary-text">
             {t(step.eyebrowKey)}
           </span>
           <h3 className="text-sm font-bold text-foreground dark:text-white tracking-tight">
@@ -150,7 +150,7 @@ export function DashboardNextStepBanner({
       </div>
       <Link
         href={step.href}
-        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 shadow-sm transition-all shrink-0 self-start sm:self-auto"
+        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 shadow-sm transition-all shrink-0 self-start sm:self-auto"
       >
         <span>{t(step.ctaKey)}</span>
         <ArrowRight className="h-4 w-4" aria-hidden="true" />

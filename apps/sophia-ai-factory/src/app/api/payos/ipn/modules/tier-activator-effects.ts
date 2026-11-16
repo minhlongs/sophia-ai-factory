@@ -9,7 +9,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import { recordAudit } from '@/seed/db/audit/audit-log';
 import type { Tier } from '@/seed/types';
 import type { D1Client } from '@/seed/db/client';
-import { commitPayOsSubscriptionBatch } from './payroll-subscription';
 
 export interface PayOsPostActivationParams {
   db: D1Client;
@@ -17,7 +16,7 @@ export interface PayOsPostActivationParams {
   userId: string;
   orgId: string | undefined;
   tier: Tier;
-  billingPeriod: 'lifetime' | 'yearly' | 'monthly';
+  billingPeriod: 'lifetime' | 'yearly' | 'monthly' | 'pilot_14d';
   periodEnd: string;
   orderCode: string | number;
   orderId: string;
@@ -60,7 +59,7 @@ export async function runPayOsPostActivationEffects({
         userName: userName ?? undefined,
         tier,
         period: billingPeriod,
-        amountUsd: Math.round(amount / 25000),
+        amountUsd: billingPeriod === 'pilot_14d' ? 79 : Math.round(amount / 25000),
         paymentId: `payos_${orderCode}`,
         paymentMethod: 'payos',
         orderId,

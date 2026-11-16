@@ -229,4 +229,24 @@ describe('handlePostbackRoute fail-closed contract', () => {
     const data = (await res.json()) as { ok: boolean; error: string };
     expect(data).toMatchObject({ ok: false, error: 'SECRET_NOT_CONFIGURED' });
   });
+
+  it('refuses POSTBACK_SIGNATURE_VERIFICATION_ENABLED=0 bypass when NODE_ENV is production', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'production',
+      POSTBACK_SIGNATURE_VERIFICATION_ENABLED: '0',
+    };
+    const db = createTrackingD1();
+    await seedLink(db, 'linkAAAA', 'tenant-a');
+    vi.mocked(getD1).mockResolvedValue(db as unknown as D1Database);
+    mockCreds({ 'tenant-a': { tiktok_shop: SECRET_A } });
+
+    const body = { link_id: 'linkAAAA', external_id: 'ext-prod-bypass', amount_usd: 99 };
+    const res = await handlePostbackRoute(tiktokRequest(body, 'forged_signature'), {
+      params: Promise.resolve({ network: 'tiktok_shop' }),
+    });
+
+    expect(res.status).toBe(401);
+    expect(await countConversions(db)).toBe(0);
+  });
 });

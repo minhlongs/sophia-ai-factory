@@ -43,10 +43,13 @@ export async function verifyPostbackSignature(
   parsedBody: Record<string, unknown>,
 ): Promise<boolean> {
   const sigVerifyEnabled =
+    process.env.NODE_ENV === 'production' ||
     (process.env.POSTBACK_SIGNATURE_VERIFICATION_ENABLED ?? '1') !== '0';
 
   if (!sigVerifyEnabled) {
-    logger.warn('[postback] Signature verification DISABLED — dev mode', { network });
+    logger.warn('[postback] Signature verification DISABLED — non-production dev mode', {
+      network,
+    });
     return true;
   }
 

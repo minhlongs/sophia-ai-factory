@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-11-15T05:48:56.591Z",
+  "preZenCommit": "d785888a73696065852f0de26f58e53334bcff1e",
+  "preZen": {
+    "sha": "d785888a73696065852f0de26f58e53334bcff1e",
+    "jsN": 217,
+    "jsRaw": 7471743,
+    "jsGz": 2413400,
+    "cssN": 1,
+    "cssRaw": 410848,
+    "cssGz": 51404,
+    "workerHandlerRaw": 42501042,
+    "workerHandlerGz": 9936277
+  },
+  "rc073": {
+    "jsChunksCount": 231,
+    "jsRawBytes": 7683364,
+    "jsGzipBytes": 2483756,
+    "cssChunksCount": 1,
+    "cssRawBytes": 421112,
+    "cssGzipBytes": 51046,
+    "workerHandlerRawBytes": 42683643,
+    "workerHandlerGzipBytes": 9908828
+  },
+  "delta": {
+    "jsChunksCount": 14,
+    "jsRawBytes": 211621,
+    "jsGzipBytes": 70356,
+    "cssRawBytes": 10264,
+    "cssGzipBytes": -358,
+    "workerHandlerRawBytes": 182601,
+    "workerHandlerGzipBytes": -27449
+  }
+}

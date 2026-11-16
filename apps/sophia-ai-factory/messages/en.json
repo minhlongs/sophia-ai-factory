@@ -237,6 +237,26 @@
         "placeholder": "key-...",
         "help": "Get your key at fal.ai/dashboard/keys",
         "optionalBadge": "Add later"
+      },
+      "fastTrack": {
+        "badge": "1-Key Fast-Track",
+        "title": "Start with just 1 OpenRouter key to unlock AI campaigns",
+        "description": "Sophia automatically routes structured JSON/QA steps to compact models and creative scripts to frontier models to cut LLM spend by 55–70%. Voice and avatar keys below remain optional.",
+        "optionalSectionTitle": "Optional Add-ons: Native Voice & Avatar Keys (Add anytime)",
+        "showOptional": "Show optional keys (ElevenLabs, D-ID...)",
+        "hideOptional": "Hide optional keys"
+      },
+      "receipt": {
+        "title": "Zero-Execution Key Validation Receipt",
+        "capJsonSchema": "JSON Schema",
+        "capToolCall": "Tool Calling",
+        "capVision": "Vision",
+        "latencyLabel": "Latency",
+        "budgetWithin": "Remaining budget",
+        "budgetNoCap": "No monthly spend cap set",
+        "budgetExhausted": "Monthly budget cap reached",
+        "budgetCooldown": "Cooldown active",
+        "spentThisMonth": "Spent this month"
       }
     },
     "errors": {
@@ -264,7 +284,8 @@
       "firstMission": "Blueprint",
       "ready": "Ready",
       "blueprint": "Blueprint",
-      "billing": "Billing"
+      "billing": "Billing",
+      "mobileStepOf": "Step {current} of {total}:"
     },
     "actions": {
       "back": "Back",
@@ -3675,14 +3696,14 @@
       "securityNoteBody": "Security Note Body"
     },
     "appearance": {
-      "title": "Title",
-      "subtitle": "Subtitle",
-      "themeLabel": "Theme Label",
-      "themeAriaLabel": "Theme Aria Label",
-      "themeLight": "Theme Light",
-      "themeDark": "Theme Dark",
-      "themeSystem": "Theme System",
-      "themeHelp": "Theme Help"
+      "title": "Appearance & Theme",
+      "subtitle": "Choose Light, Dark, or follow your operating system color scheme across all routes.",
+      "themeLabel": "Interface color mode",
+      "themeAriaLabel": "Theme mode",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "themeHelp": "Customize workspace appearance to match your lighting environment"
     },
     "notifications": {
       "title": "Title",
@@ -3866,6 +3887,7 @@
       "submitting": "Installing...",
       "success": "SOP installed successfully!",
       "error": "Failed to install SOP. Please try again.",
+      "cancel": "Cancel",
       "setupTime": "Ready in {n} min",
       "advancedLabel": "Advanced — Edit Markdown directly",
       "advancedHelp": "For power users. Overrides the config form above. Use {{config.field}} to reference your form values.",
@@ -4380,6 +4402,9 @@
     "sessionNote": "Session only — not saved"
   },
   "cmdK": {
+    "title": "Quick actions",
+    "description": "Search the list and run a command across Sophia AI Factory.",
+    "close": "Close",
     "placeholder": "Type a command or search...",
     "noResults": "No results found.",
     "openMarketplace": "Open SOP Marketplace",
@@ -6367,8 +6392,6 @@
       "user_create_failed": "Could not create account. Email may already exist — try signing in."
     }
   },
-  "All settings reset to defaults.": "All settings reset to defaults.",
-  "Network error. Please try again.": "Network error. Please try again.",
   "error_magic_failed": "Error magic failed",
   "error_connection": "Error connection",
   "magic_link_description": "Magic link description",
@@ -7514,6 +7537,20 @@
         "status": "Status",
         "contact": "Contact",
         "copyright": "© 2026 Sophia AI Factory. All rights reserved."
+      },
+      "paidPilot": {
+        "badge": "14-Day Paid Pilot • Full BASIC Access",
+        "title": "14-Day Paid Pilot Campaign — 1,990,000 VND ($79)",
+        "subtitle": "Built for SMBs and agencies validating real ROI: 14 days of full BASIC-tier access — AI scripts, campaign plans, and affiliate assets. Video rendering is available on Growth and above.",
+        "priceVnd": "1,990,000 VND",
+        "priceUsd": "$79 / 14 days",
+        "bullet1": "Full BASIC tier for 14 days — AI scripts, campaign plans, affiliate assets",
+        "bullet2": "Instant activation with no hidden auto-renewal",
+        "bullet3": "VietQR bank transfer via PayOS",
+        "cta": "Start 14-Day Paid Pilot",
+        "ctaLoading": "Creating Pilot order...",
+        "fallbackNotice": "Your 14-day Paid Pilot order is reserved! Complete payment to activate your workspace immediately.",
+        "errorNotice": "Could not start the Paid Pilot checkout. Please sign in and try again."
       }
     },
     "landing": {
@@ -8079,7 +8116,13 @@
       "brandOrganicLabel": "Promote your own brand (Your Brand)",
       "brandContentLabel": "Paid partnership / Branded Content",
       "selfOnlyWarning": "TikTok notice: While the app is unaudited or set to Only me, the post is restricted to private visibility (SELF_ONLY).",
-      "youtubeSyntheticLabel": "YouTube altered or synthetic media disclosure (containsSyntheticMedia)"
+      "youtubeSyntheticLabel": "YouTube altered or synthetic media disclosure (containsSyntheticMedia)",
+      "previewVideoLabel": "Unwatermarked video preview",
+      "creatorNicknameLabel": "TikTok Creator",
+      "creatorMaxDurationLabel": "Max allowed duration",
+      "creatorInteractionsLocked": "Creator interaction locks",
+      "musicConsentLabel": "By posting, you agree to TikTok's Music Usage Confirmation",
+      "musicConsentRequiredHint": "Select a privacy level and confirm TikTok's Music Usage Confirmation to enable Approve & Publish."
     },
     "badges": {
       "complianceVerified": "Compliance check: passed",

@@ -29,6 +29,12 @@ export interface UploadExecutionInput {
    * adapters apply their own disclosure policy; it never means "no".
    */
   containsSyntheticMedia?: boolean;
+  /** Reviewer-approved TikTok privacy level from publish_ledger compliance_json. */
+  tiktokPrivacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+  /** Reviewer-approved TikTok own-brand disclosure toggle. */
+  brandOrganicToggle?: boolean;
+  /** Reviewer-approved TikTok paid-partnership disclosure toggle. */
+  brandContentToggle?: boolean;
   /** Optional claim/source provenance payload checked before YouTube upload. */
   provenance?: ProvenanceInput;
   /** Injectable for tests; production uses the global fetch. */

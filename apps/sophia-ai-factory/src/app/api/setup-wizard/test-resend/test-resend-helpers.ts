@@ -10,8 +10,12 @@ export const testResendSchema = z.object({
   api_key: z.string().min(1, 'api_key is required'),
 });
 
-export async function sendResendTestEmail(apiKey: string, toEmail: string): Promise<NextResponse> {
-  if (!shouldAllowRequest(RESEND_TEST_WIZARD_SERVICE)) {
+export async function sendResendTestEmail(
+  apiKey: string,
+  toEmail: string,
+  keyRef?: string,
+): Promise<NextResponse> {
+  if (!shouldAllowRequest(RESEND_TEST_WIZARD_SERVICE, keyRef)) {
     return NextResponse.json({
       ok: false,
       valid: false,
@@ -37,7 +41,7 @@ export async function sendResendTestEmail(apiKey: string, toEmail: string): Prom
     });
 
     if (res.ok) {
-      recordSuccess(RESEND_TEST_WIZARD_SERVICE);
+      recordSuccess(RESEND_TEST_WIZARD_SERVICE, keyRef);
       return NextResponse.json({
         ok: true,
         valid: true,
@@ -46,7 +50,9 @@ export async function sendResendTestEmail(apiKey: string, toEmail: string): Prom
       });
     }
     if (res.status === 401 || res.status === 403) {
-      recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyHttpStatus(res.status));
+      // Customer credential validation errors (401/403) must NOT record an AUTH_FAILURE
+      // on the circuit breaker — otherwise a single typo locks the user (or other tenants)
+      // into a 5-minute 503 circuit-open window. Rate-limiting already bounds probing.
       return NextResponse.json({
         ok: false,
         valid: false,
@@ -61,7 +67,9 @@ export async function sendResendTestEmail(apiKey: string, toEmail: string): Prom
       });
       return '';
     });
-    recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyHttpStatus(res.status));
+    if (res.status >= 500 || res.status === 429) {
+      recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyHttpStatus(res.status), keyRef);
+    }
     return NextResponse.json(
       {
         ok: false,
@@ -72,7 +80,7 @@ export async function sendResendTestEmail(apiKey: string, toEmail: string): Prom
       { status: 422 },
     );
   } catch (err) {
-    recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyError(err));
+    recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyError(err), keyRef);
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({
       ok: false,

@@ -18,6 +18,7 @@ import { dispatchPayOsMethod } from './payment-dispatcher-providers';
 describe('dispatchPayOsMethod', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.FEATURE_PAYOS = 'true';
     mocks.createPayOsInvoice.mockResolvedValue({
       checkoutUrl: 'https://pay.payos.vn/web/link-1',
       qrUrl: 'https://pay.payos.vn/qr/link-1',
@@ -61,5 +62,19 @@ describe('dispatchPayOsMethod', () => {
 
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toMatchObject({ error: expect.stringContaining('D1 unavailable') });
+  });
+
+  it('blocks non-pilot PayOS checkout with 503 when FEATURE_PAYOS=false', async () => {
+    process.env.FEATURE_PAYOS = 'false';
+    const response = await dispatchPayOsMethod({
+      paymentMethod: 'payos',
+      tier: 'BASIC',
+      userId: 'user-1',
+      period: 'monthly',
+    });
+
+    expect(response.status).toBe(503);
+    expect(mocks.createPayOsInvoice).not.toHaveBeenCalled();
+    expect(mocks.writeOrder).not.toHaveBeenCalled();
   });
 });

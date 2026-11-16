@@ -1,5 +1,6 @@
 'use client';
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { Approval } from './types';
 
 export async function fetchWorkspaceApprovals(workspaceId: string): Promise<Approval[]> {
@@ -42,7 +43,7 @@ export async function submitApprovalResolution(
 ): Promise<void> {
   const res = await fetch(`/api/approvals/${approvalId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     credentials: 'include',
     body: JSON.stringify({ approved, reason }),
   });

@@ -4,6 +4,7 @@
  * @module land/video/publishing/providers/youtube-upload-helper
  */
 
+import { NonRetriableError } from 'inngest';
 import type { PublishMeta } from './publisher-interface';
 import {
   assertYouTubeProvenanceAllowed,
@@ -11,6 +12,24 @@ import {
 } from '@/tree/publishing/synthetic-media-disclosure';
 
 export const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
+
+function createYouTubeUploadHttpError(status: number, message: string, retryAfterHeader?: string | null): Error {
+  if (status === 429 || status === 408) {
+    const parsedRetryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : NaN;
+    return Object.assign(new Error(message), {
+      statusCode: status,
+      retriable: true as const,
+      ...(Number.isFinite(parsedRetryAfter) && parsedRetryAfter > 0 ? { retryAfterSec: parsedRetryAfter } : {}),
+    });
+  }
+  if (status >= 400 && status < 500) {
+    return Object.assign(new NonRetriableError(message), {
+      statusCode: status,
+      nonRetriable: true as const,
+    });
+  }
+  return Object.assign(new Error(message), { statusCode: status, retriable: true as const });
+}
 
 export function isYouTubeMockMode(): boolean {
   return !process.env.YOUTUBE_CLIENT_ID;
@@ -86,7 +105,11 @@ export async function performResumableYouTubeUpload(
 
   if (!initRes.ok) {
     const text = await initRes.text();
-    throw new Error(`YouTube upload init failed (${initRes.status}): ${text}`);
+    throw createYouTubeUploadHttpError(
+      initRes.status,
+      `YouTube upload init failed (${initRes.status}): ${text}`,
+      initRes.headers.get('Retry-After'),
+    );
   }
 
   const uploadUri = initRes.headers.get('Location');
@@ -100,7 +123,11 @@ export async function performResumableYouTubeUpload(
 
   if (!uploadRes.ok) {
     const text = await uploadRes.text();
-    throw new Error(`YouTube video upload failed (${uploadRes.status}): ${text}`);
+    throw createYouTubeUploadHttpError(
+      uploadRes.status,
+      `YouTube video upload failed (${uploadRes.status}): ${text}`,
+      uploadRes.headers.get('Retry-After'),
+    );
   }
 
   const result = (await uploadRes.json()) as YouTubeVideoResource;

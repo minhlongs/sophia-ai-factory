@@ -170,6 +170,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     step,
     now,
     videoUrl: gate.videoUrl,
+    compliance: gate.compliance,
     provenance: effectiveProvenance,
     scheduleRetry,
     refreshToken,

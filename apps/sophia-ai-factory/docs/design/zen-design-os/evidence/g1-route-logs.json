@@ -1,0 +1,110 @@
+[
+  {
+    "route": "/vi/setup-wizard [dark]",
+    "finalUrl": "http://localhost:3000/vi/setup",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/vi/dashboard [dark]",
+    "finalUrl": "http://localhost:3000/vi/dashboard",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/vi/dashboard/niche-studio [dark]",
+    "finalUrl": "http://localhost:3000/vi/dashboard/niche-studio",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/vi/setup-wizard [light]",
+    "finalUrl": "http://localhost:3000/vi/setup",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/vi/dashboard [light]",
+    "finalUrl": "http://localhost:3000/vi/dashboard",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/vi/dashboard/niche-studio [light]",
+    "finalUrl": "http://localhost:3000/vi/dashboard/niche-studio",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/en/setup-wizard [dark]",
+    "finalUrl": "http://localhost:3000/en/setup",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/en/dashboard [dark]",
+    "finalUrl": "http://localhost:3000/en/dashboard",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/en/dashboard/niche-studio [dark]",
+    "finalUrl": "http://localhost:3000/en/dashboard/niche-studio",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/en/setup-wizard [light]",
+    "finalUrl": "http://localhost:3000/en/setup",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/en/dashboard [light]",
+    "finalUrl": "http://localhost:3000/en/dashboard",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  },
+  {
+    "route": "/en/dashboard/niche-studio [light]",
+    "finalUrl": "http://localhost:3000/en/dashboard/niche-studio",
+    "status": 200,
+    "consoleErrors": [],
+    "hydrationWarnings": [],
+    "pageErrors": [],
+    "failedAssets": []
+  }
+]

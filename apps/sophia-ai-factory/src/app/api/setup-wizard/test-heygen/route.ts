@@ -11,6 +11,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter'
 
 const HEYGEN_TEST_URL = 'https://api.heygen.com/v2/voices?limit=1'
 const PING_TIMEOUT_MS = 8_000
@@ -29,6 +34,18 @@ export async function POST(request: NextRequest) {
       message_vi: 'Chưa xác thực',
     }, { status: 401 })
   }
+
+  const ipRl = globalRateLimiter.checkLimit(
+    `setup:test-heygen:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 10 },
+  )
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl)
+
+  const userRl = globalRateLimiter.checkLimit(`setup:test-heygen:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 10,
+  })
+  if (!userRl.allowed) return createRateLimitResponse(userRl)
 
   let body: unknown
   try {

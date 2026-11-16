@@ -9,6 +9,7 @@ export interface ValidatedIpnRequest {
     amount: number;
     description: string;
     paymentLinkId: string;
+    code?: string;
   };
   signature: string;
   success: boolean;
@@ -57,6 +58,9 @@ export async function validatePayOsRequest(
     }
   }
 
+  const signedCode = (ipnData as { code?: string }).code;
+  const effectiveSuccess = Boolean(success) && (signedCode === undefined || signedCode === '00');
+
   return {
     ok: true,
     data: {
@@ -64,7 +68,7 @@ export async function validatePayOsRequest(
       bodyJson,
       ipnData,
       signature,
-      success,
+      success: effectiveSuccess,
     },
   };
 }

@@ -14,7 +14,12 @@
 import { getD1, type D1Database } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { computePublishIdempotencyKey } from './idempotency-key';
-import type { PublishApprovalDecision, PublishApprovalSubject, PublishLedgerRecord } from './types';
+import type {
+  PublishApprovalCompliance,
+  PublishApprovalDecision,
+  PublishApprovalSubject,
+  PublishLedgerRecord,
+} from './types';
 
 export const PUBLISH_LEDGER_TABLE = 'publish_ledger';
 
@@ -28,12 +33,27 @@ export interface LedgerRow {
   requester_id?: string | null;
   reviewer_id: string | null;
   comment: string | null;
+  compliance_json?: string | null;
   approved_at: number | null;
   expires_at: number | null;
   created_at: number;
 }
 
+function parseComplianceJson(raw: string | null | undefined): PublishApprovalCompliance | undefined {
+  if (!raw || typeof raw !== 'string') return undefined;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+      return parsed as PublishApprovalCompliance;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 export function mapLedgerRow(row: LedgerRow): PublishLedgerRecord {
+  const compliance = parseComplianceJson(row.compliance_json);
   return {
     idempotencyKey: row.idempotency_key,
     tenantId: row.tenant_id,
@@ -44,6 +64,7 @@ export function mapLedgerRow(row: LedgerRow): PublishLedgerRecord {
     requesterId: row.requester_id ?? undefined,
     reviewerId: row.reviewer_id ?? undefined,
     comment: row.comment ?? undefined,
+    ...(compliance ? { compliance } : {}),
     approvedAt: row.approved_at ?? undefined,
     expiresAt: row.expires_at ?? undefined,
     createdAt: Number(row.created_at),
@@ -63,6 +84,7 @@ export async function ensurePublishLedgerTable(overrideDb?: D1Database): Promise
     requester_id TEXT,
     reviewer_id TEXT,
     comment TEXT,
+    compliance_json TEXT,
     approved_at INTEGER,
     expires_at INTEGER,
     created_at INTEGER NOT NULL

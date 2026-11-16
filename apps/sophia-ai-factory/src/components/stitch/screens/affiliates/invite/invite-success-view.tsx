@@ -26,7 +26,7 @@ export function InviteSuccessView({
 
   return (
     <div className="py-6 space-y-5">
-      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-start gap-3">
+      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
         <Check className="w-5 h-5 mt-0.5 shrink-0" />
         <div>
           <p className="font-semibold text-sm">
@@ -37,7 +37,7 @@ export function InviteSuccessView({
               Bilingual email dispatched via Resend.
             </p>
           ) : (
-            <p className="text-xs text-amber-400/90 mt-1">
+            <p className="text-xs text-amber-700 dark:text-amber-400/90 mt-1">
               Direct invite link generated below. You can copy and share it directly.
             </p>
           )}
@@ -49,12 +49,12 @@ export function InviteSuccessView({
           <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t('copyLink')}
           </label>
-          <div className="flex items-center gap-2 p-2 rounded-xl bg-black/30 border border-white/[0.08]">
+          <div className="flex items-center gap-2 p-2 rounded-xl bg-muted/50 dark:bg-white/[0.02] border border-border">
             <input
               type="text"
               readOnly
               value={successResult.inviteLink}
-              className="flex-1 bg-transparent text-xs text-foreground dark:text-white border-none outline-none font-mono select-all px-2"
+              className="flex-1 bg-transparent text-xs text-foreground border-none outline-none font-mono select-all px-2"
             />
             <Button
               type="button"

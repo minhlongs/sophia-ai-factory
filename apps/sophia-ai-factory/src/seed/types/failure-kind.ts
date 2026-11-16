@@ -63,6 +63,7 @@ export enum CircuitState {
 /** Classify an HTTP status code into a FailureKind */
 export function classifyHttpStatus(status: number): FailureKind {
   if (status === 401 || status === 403) return FailureKind.AUTH_FAILURE
+  if (status === 402) return FailureKind.BILLING_FAILURE
   if (status === 429) return FailureKind.RATE_LIMIT
   if (status >= 500) return FailureKind.SERVER_ERROR
   if (status === 408) return FailureKind.TIMEOUT

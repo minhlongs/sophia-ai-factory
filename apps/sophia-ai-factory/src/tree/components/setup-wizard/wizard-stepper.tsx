@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,6 +16,7 @@ export function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
+  const t = useTranslations('setupWizard.stepper');
   const progressRatio = steps.length > 1 ? (currentStep - 1) / (steps.length - 1) : 0;
 
   return (
@@ -45,10 +47,10 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                   className={cn(
                     'w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ease-in-out shrink-0',
                     isCompleted
-                      ? 'bg-emerald-600 dark:bg-emerald-500 border-emerald-600 dark:border-emerald-500 text-white shadow-xs'
+                      ? 'bg-emerald-600 dark:bg-emerald-700 border-emerald-600 dark:border-emerald-600 text-white shadow-xs'
                       : isCurrent
-                        ? 'bg-[#4338CA] dark:bg-[#6366F1] border-[#4338CA] dark:border-[#6366F1] text-white ring-4 ring-[#4338CA]/15 dark:ring-[#6366F1]/20 font-bold shadow-xs'
-                        : 'bg-card dark:bg-[#11131F] border-border dark:border-white/[0.08] text-muted-foreground'
+                        ? 'bg-primary border-primary text-primary-foreground dark:bg-primary-600 dark:border-primary-600 dark:text-white ring-4 ring-primary/20 font-bold shadow-xs'
+                        : 'bg-card border-border text-muted-foreground'
                   )}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
@@ -64,10 +66,10 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                   className={cn(
                     'hidden sm:block text-[10px] md:text-xs font-semibold uppercase tracking-wider mt-2 text-center truncate max-w-[84px] transition-colors duration-300',
                     isCurrent
-                      ? 'text-[#4338CA] dark:text-[#6366F1] font-bold'
+                      ? 'text-primary-text font-bold'
                       : isCompleted
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-muted-foreground/70'
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : 'text-muted-foreground'
                   )}
                   title={step}
                 >
@@ -81,8 +83,8 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
 
       {/* Mobile Active Step Indicator (320px–639px) */}
       <div className="sm:hidden text-center mt-3 px-2">
-        <span className="font-mono text-[11px] font-semibold text-[#4338CA] dark:text-[#6366F1] uppercase tracking-wider">
-          Step {currentStep} of {steps.length}:
+        <span className="font-mono text-[11px] font-semibold text-primary-text uppercase tracking-wider">
+          {t('mobileStepOf', { current: currentStep, total: steps.length })}
         </span>{' '}
         <span className="text-xs font-bold text-foreground">
           {steps[currentStep - 1] ?? ''}

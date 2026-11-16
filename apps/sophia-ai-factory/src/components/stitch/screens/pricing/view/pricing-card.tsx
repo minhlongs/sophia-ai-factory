@@ -50,6 +50,7 @@ export function PricingCard({ tier, billing, selectedTier, onSelectTier, t }: Pr
         type="radio"
         name="tier"
         value={tier.id}
+        aria-label={t(`plans.${tier.id}.name`)}
         checked={selectedTier === tier.id}
         onChange={() => onSelectTier(tier.id)}
         className="sr-only"

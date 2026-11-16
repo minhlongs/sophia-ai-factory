@@ -6,6 +6,7 @@
 
 import type { SocialPlatform, PublishJobStatus, SocialPublishResult } from '@/seed/types/social-publisher-types';
 import type { ProvenanceInput } from '@/seed/types/provenance';
+import type { PublishApprovalCompliance } from '@/tree/publishing/approval';
 import { isSameUTCDay } from '@/tree/social/publisher/pacing-engine';
 import { executePlatformUpload } from '@/tree/social/publisher/upload-executor';
 
@@ -86,6 +87,7 @@ export function isPublishJobAlreadyAttempted(
 export async function executePlatformUploadAdapter(
   data: SocialPublishDispatchedEventData,
   accessToken: string,
+  compliance?: PublishApprovalCompliance,
 ): Promise<{ platformPostId: string; publishedUrl: string }> {
   // No try/catch wrapper: executePlatformUpload already records a classified
   // failure with the breaker before rethrowing. Catching here only to rethrow
@@ -100,6 +102,16 @@ export async function executePlatformUploadAdapter(
     description: data.description,
     tags: data.tags,
     totalSizeBytes: data.totalSizeBytes,
+    ...(typeof compliance?.containsSyntheticMedia === 'boolean'
+      ? { containsSyntheticMedia: compliance.containsSyntheticMedia }
+      : {}),
+    ...(compliance?.privacyLevel ? { tiktokPrivacyLevel: compliance.privacyLevel } : {}),
+    ...(typeof compliance?.brandOrganicToggle === 'boolean'
+      ? { brandOrganicToggle: compliance.brandOrganicToggle }
+      : {}),
+    ...(typeof compliance?.brandContentToggle === 'boolean'
+      ? { brandContentToggle: compliance.brandContentToggle }
+      : {}),
     provenance: data.provenance,
   });
 }

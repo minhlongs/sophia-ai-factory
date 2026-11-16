@@ -23,7 +23,7 @@ export function MarketingFooter() {
                 <Sparkles className="w-4 h-4" />
               </div>
               <span className="text-xl font-black tracking-tight text-foreground dark:text-white">
-                Sophia <span className="text-primary font-semibold">AI Factory</span>
+                Sophia <span className="text-primary-text font-semibold">AI Factory</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
@@ -34,8 +34,8 @@ export function MarketingFooter() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                 Cloudflare Workers v1.19
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono font-semibold">
-                <Shield className="w-3 h-3 text-primary" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-text text-xs font-mono font-semibold">
+                <Shield className="w-3 h-3 text-primary-text" />
                 BYOK Architecture
               </span>
             </div>
