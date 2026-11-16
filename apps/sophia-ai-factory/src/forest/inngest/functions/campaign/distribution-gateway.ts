@@ -4,9 +4,14 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter';
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import { logger } from '@/seed/utils/logger-utility';
 import { resolveAudienceJurisdiction } from '@/tree/affiliates/audience-jurisdiction';
 import { decidePublishCompliance } from '@/tree/affiliates/publish-compliance-decision';
+import {
+  producePublishProvenance,
+  type ScriptContentLike,
+} from '@/tree/youtube-strategy/provenance-producer';
 import type { AffiliateOfferResult } from './types';
 
 export function getD1ForWebhooks(): D1Database | null {
@@ -22,13 +27,13 @@ export function getD1ForWebhooks(): D1Database | null {
   }
 }
 
-export async function createDistributionGateway(): Promise<OpenClawGateway> {
+export async function createDistributionGateway(userId?: string): Promise<OpenClawGateway> {
   const { uploadVideo, refreshAccessToken } = await import('@/land/youtube/youtube-oauth-client');
   const { publishVideo, checkPublishStatus } = await import('@/land/tiktok/tiktok-oauth-client');
   const youtubeOAuthClient: YouTubeOAuthClient = { uploadVideo, refreshAccessToken };
   const tiktokOAuthClient: TikTokOAuthClient = { publishVideo, checkPublishStatus };
   const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 });
-  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient), enabled: true, rateLimitPerHour: 6 });
+  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient, userId), enabled: true, rateLimitPerHour: 6 });
   gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(tiktokOAuthClient), enabled: true, rateLimitPerHour: 10 });
   gateway.registerChannel({ id: 'telegram', name: 'Telegram Notifications', adapter: new TelegramNotificationAdapter(), enabled: true, rateLimitPerHour: 60 });
   return gateway;
@@ -44,6 +49,9 @@ export interface DistributeParams {
   tier: Tier;
   affiliateOffer: AffiliateOfferResult | null;
   locale?: 'en' | 'vi';
+  script?: ScriptContentLike | Record<string, unknown> | null;
+  sources?: readonly Record<string, unknown>[];
+  provenance?: ProvenanceInput;
 }
 
 export interface DistributionComplianceRecord {
@@ -94,6 +102,14 @@ export async function runDistribution(
     };
   }
 
+  const provenance = producePublishProvenance({
+    title,
+    description: decision.description,
+    script: params.script,
+    sources: params.sources,
+    provenance: params.provenance,
+  });
+
   const payload = {
     campaignId,
     videoUrl,
@@ -101,6 +117,7 @@ export async function runDistribution(
     title,
     description: decision.description,
     tags: ['sophia-ai', 'auto-generated', tier.toLowerCase()],
+    provenance,
   };
   const compliance: DistributionComplianceRecord = {
     published: true,
@@ -109,7 +126,7 @@ export async function runDistribution(
     affiliateDisclosureEmitted: decision.affiliateDisclosureEmitted,
     financialDisclaimerEmitted: decision.financialDisclaimerEmitted,
   };
-  const gateway = await createDistributionGateway();
+  const gateway = await createDistributionGateway(userId);
   const result = await gateway.distribute(payload);
   if (!result.allSucceeded) {
     const healed = await gateway.selfHeal(payload, result);

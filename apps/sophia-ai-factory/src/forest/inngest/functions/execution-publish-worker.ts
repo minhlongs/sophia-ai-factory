@@ -27,6 +27,7 @@ import {
 } from '@/land/video/publishing/execute';
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 import type { PublishApprovalStep } from '@/tree/publishing/approval';
+import { producePublishProvenance } from '@/tree/youtube-strategy/provenance-producer';
 
 export type PublishExecutorFn = (args: ExecutePublishWorkflowArgs) => Promise<ClaimResult>;
 
@@ -93,12 +94,24 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
         if (!claimed) {
           return { kind: 'blocked' as const, reason: 'ALREADY_IN_FLIGHT' };
         }
-        return { kind: 'ready' as const, jobId, userId: verified.userId, channelId: verified.channelId };
+        return {
+          kind: 'ready' as const,
+          jobId,
+          userId: verified.userId,
+          channelId: verified.channelId,
+          title: verified.title,
+          caption: verified.caption,
+        };
       });
 
       if (gate.kind === 'missing') return { status: 'FAILED' as const, reason: 'RUN_NOT_FOUND' };
       if (gate.kind === 'converged') return { status: 'PUBLISHED' as const, converged: true };
       if (gate.kind === 'blocked') return { status: 'BLOCKED' as const, reason: gate.reason };
+
+      const provenance = producePublishProvenance({
+        title: gate.title,
+        caption: gate.caption,
+      });
 
       const publishStep: Step = {
         run: <T>(id: string, fn: () => Promise<T>): Promise<T> => step.run(id, fn) as Promise<T>,
@@ -109,6 +122,7 @@ export function createExecutionPublishWorker(runPublish: PublishExecutorFn = exe
         tenantId,
         userId: gate.userId,
         alreadyClaimed: true,
+        provenance,
         step: publishStep,
         // The job this worker creates is 'unlisted', which the approval gate
         // treats as a public intent, so the gate needs to emit and wait.

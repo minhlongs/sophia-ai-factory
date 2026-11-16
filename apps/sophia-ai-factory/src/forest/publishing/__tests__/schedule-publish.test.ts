@@ -78,6 +78,7 @@ describe('schedulePublish', () => {
         jobId: result.jobId,
         tenantId: 'tenant-001',
         userId: 'user-001',
+        provenance: { containsSyntheticMedia: true },
       },
     });
   });

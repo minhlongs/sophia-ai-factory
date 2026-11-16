@@ -98,9 +98,11 @@ describe('scheduler - schedulePublish', () => {
     const calls = mocks.mockDb.insert.mock.calls;
     expect(calls).toHaveLength(2);
     expect(calls[0][0].channel_id).toBe('ch1');
+    expect(calls[0][0].provider).toBe('youtube');
     expect(calls[0][0].scheduled_at).toBe(scheduledAt);
     expect(calls[0][0].privacy_status).toBe('public');
     expect(calls[1][0].channel_id).toBe('ch2');
+    expect(calls[1][0].provider).toBe('tiktok');
     expect(calls[1][0].scheduled_at).toBe(scheduledAt + 300);
     expect(calls[1][0].privacy_status).toBe('public');
   });

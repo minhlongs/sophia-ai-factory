@@ -3,6 +3,8 @@
  * Multi-channel content distribution gateway with self-healing capabilities.
  */
 
+import type { ProvenanceInput } from '@/seed/types/provenance';
+
 /** Content output from a completed campaign, ready for distribution */
 export interface CampaignOutput {
   campaignId: string;
@@ -11,6 +13,8 @@ export interface CampaignOutput {
   title: string;
   description: string;
   tags: string[];
+  provenance?: ProvenanceInput;
+  containsSyntheticMedia?: boolean;
 }
 
 /** Result of publishing content to a single channel */

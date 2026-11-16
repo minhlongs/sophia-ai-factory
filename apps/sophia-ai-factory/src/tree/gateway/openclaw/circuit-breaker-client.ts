@@ -1,5 +1,6 @@
 import type { GatewayChannel, CampaignOutput, PublishResult, RetryPolicy } from '@/tree/gateway/gateway-types';
 import { getErrorMessage } from '@/seed/utils/to-error';
+import { isProvenanceBlockedError } from '@/tree/publishing/synthetic-media-disclosure';
 
 /** Sleep utility for backoff delays */
 export function sleep(ms: number): Promise<void> {
@@ -31,8 +32,18 @@ export async function publishWithRetry(
     try {
       const result = await channel.adapter.publish(content);
       if (result.success) return result;
+      if (result.error && isProvenanceBlockedError(result.error)) {
+        return result;
+      }
       lastError = result.error;
     } catch (err) {
+      if (isProvenanceBlockedError(err)) {
+        return {
+          channelId: channel.id,
+          success: false,
+          error: getErrorMessage(err),
+        };
+      }
       lastError = getErrorMessage(err);
     }
 

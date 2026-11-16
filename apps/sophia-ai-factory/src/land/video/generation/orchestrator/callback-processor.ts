@@ -11,9 +11,14 @@ import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-cl
 import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client';
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import type { Tier } from '@/seed/types';
+import type { ProvenanceInput } from '@/seed/types/provenance';
 import type { AffiliateOfferResult, DisclosureRecord } from './types';
 import { buildPublishDisclosure, evaluateDistributionLegality } from '@/tree/affiliates/distribution-compliance-gate';
 import { resolveAudienceJurisdiction } from '@/tree/affiliates/audience-jurisdiction';
+import {
+  producePublishProvenance,
+  type ScriptContentLike,
+} from '@/tree/youtube-strategy/provenance-producer';
 
 export function getD1ForWebhooks(): D1Database | null {
   try {
@@ -27,11 +32,11 @@ export function getD1ForWebhooks(): D1Database | null {
   }
 }
 
-export function createGateway(): OpenClawGateway {
+export function createGateway(userId?: string): OpenClawGateway {
   const youtubeOAuthClient: YouTubeOAuthClient = { uploadVideo, refreshAccessToken };
   const tiktokOAuthClient: TikTokOAuthClient = { publishVideo, checkPublishStatus };
   const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 });
-  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient), enabled: true, rateLimitPerHour: 6 });
+  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient, userId), enabled: true, rateLimitPerHour: 6 });
   gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(tiktokOAuthClient), enabled: true, rateLimitPerHour: 10 });
   gateway.registerChannel({ id: 'telegram', name: 'Telegram Notifications', adapter: new TelegramNotificationAdapter(), enabled: true, rateLimitPerHour: 60 });
   return gateway;
@@ -87,11 +92,14 @@ export interface DistributeStepParams {
   jurisdiction?: string | null;
   /** Language for the disclosure wording; must match the audience. */
   locale?: 'en' | 'vi';
+  script?: ScriptContentLike | Record<string, unknown> | null;
+  sources?: readonly Record<string, unknown>[];
+  provenance?: ProvenanceInput;
 }
 
 export async function runDistributeStep(params: DistributeStepParams) {
   const { campaignId, videoUrl, thumbnailUrl, title, audience, tier, affiliateOffer } = params;
-  const gateway = createGateway();
+  const gateway = createGateway(params.tenantId);
   const baseDesc = `AI-generated video content for ${audience || 'general audience'}`;
   const rawDescription = affiliateOffer ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}` : baseDesc;
 
@@ -181,6 +189,14 @@ export async function runDistributeStep(params: DistributeStepParams) {
     locale,
   };
 
+  const provenance = producePublishProvenance({
+    title,
+    description,
+    script: params.script,
+    sources: params.sources,
+    provenance: params.provenance,
+  });
+
   const payload = {
     campaignId,
     videoUrl,
@@ -188,6 +204,7 @@ export async function runDistributeStep(params: DistributeStepParams) {
     title,
     description,
     tags: ['sophia-ai', 'auto-generated', tier.toLowerCase()],
+    provenance,
   };
   const result = await gateway.distribute(payload);
   if (!result.allSucceeded) {

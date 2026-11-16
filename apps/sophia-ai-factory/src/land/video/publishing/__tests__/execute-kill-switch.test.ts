@@ -90,7 +90,8 @@ describe('executePublishWorkflow kill-switch gate', () => {
     expect(res).toMatchObject({ skipped: true });
   });
 
-  it('fails fast with PROVENANCE_BLOCKED before claiming or asking human approval on YouTube jobs', async () => {
+  it('fails fast with PROVENANCE_BLOCKED after claiming and before asking human approval on YouTube jobs', async () => {
+    vi.mocked(atomicClaimJob).mockResolvedValue({ claimed: true, status: 'uploading' } as never);
     vi.mocked(findJobById).mockResolvedValue({
       id: 'job_yt_blocked',
       tenant_id: 'ws_1',
@@ -120,7 +121,7 @@ describe('executePublishWorkflow kill-switch gate', () => {
       status: 'failed',
       error: expect.stringMatching(/^PROVENANCE_BLOCKED:/),
     });
-    expect(atomicClaimJob).not.toHaveBeenCalled();
+    expect(atomicClaimJob).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'failed',

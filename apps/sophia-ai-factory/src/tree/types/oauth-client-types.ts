@@ -6,6 +6,8 @@
  * interfaces via dependency injection or the global registry to avoid layer-boundary imports.
  */
 
+import type { ProvenanceInput } from '@/seed/types/provenance';
+
 export interface YouTubeOAuthClient {
   uploadVideo(params: {
     accessToken: string;
@@ -13,6 +15,8 @@ export interface YouTubeOAuthClient {
     title: string;
     description: string;
     tags?: string[];
+    provenance?: ProvenanceInput;
+    containsSyntheticMedia?: boolean;
   }): Promise<string>;
 
   refreshAccessToken(refreshToken: string): Promise<{

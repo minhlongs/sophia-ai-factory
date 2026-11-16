@@ -1,3 +1,5 @@
+import type { ProvenanceInput } from '@/seed/types/provenance';
+
 export const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 export const YOUTUBE_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
@@ -33,4 +35,6 @@ export interface UploadVideoParams {
   title: string;
   description: string;
   tags: string[];
+  provenance?: ProvenanceInput;
+  containsSyntheticMedia?: boolean;
 }
