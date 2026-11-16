@@ -41,7 +41,7 @@ export const STITCH_TIMELINE_TRACKS: ControlDeckDataset['timelineTracks'] = [
     trackId: 'track-sub',
     trackCode: 'SUB',
     label: { en: 'High-Retention Diacritic Captions', vi: 'Phụ Đề Chuẩn Dấu Tiếng Việt Giữ Chân Cao' },
-    modelBadge: 'Space Grotesk + Inter · Word-Sync',
+    modelBadge: 'Inter + JetBrains Mono · Word-Sync',
     startTimecode: '00:00:00:08',
     durationTimecode: '00:00:56:20',
     progressPct: 94,

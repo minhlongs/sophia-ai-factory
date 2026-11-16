@@ -90,7 +90,7 @@ export function TikTokComplianceFields({
           {lockedInteractions.length > 0 && (
             <p className="text-muted-foreground">
               <span className="font-semibold text-foreground">{t('publish.creatorInteractionsLocked')}:</span>{' '}
-              <span className="font-mono text-amber-400">{lockedInteractions.join(', ')}</span>
+              <span className="font-mono text-amber-800 dark:text-amber-300">{lockedInteractions.join(', ')}</span>
             </p>
           )}
         </div>
@@ -149,7 +149,7 @@ export function TikTokComplianceFields({
       </label>
 
       {(privacyLevel === '' || !musicUsageConfirmed) && (
-        <p data-testid={`tiktok-music-consent-hint-${item.id}`} className="text-amber-400">
+        <p data-testid={`tiktok-music-consent-hint-${item.id}`} className="text-amber-800 dark:text-amber-300">
           {t('publish.musicConsentRequiredHint')}
         </p>
       )}
@@ -157,7 +157,7 @@ export function TikTokComplianceFields({
       {(privacyLevel === 'SELF_ONLY' || item.unauditedSelfOnly) && (
         <div
           data-testid={`tiktok-self-only-warning-${item.id}`}
-          className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-300"
+          className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-900 dark:text-amber-200"
         >
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>{t('publish.selfOnlyWarning')}</span>

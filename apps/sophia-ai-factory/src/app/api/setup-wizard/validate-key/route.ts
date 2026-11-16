@@ -91,5 +91,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const isAuthFail = result.httpStatus === 401 || result.httpStatus === 403;
-  return NextResponse.json(responseBody, { status: isAuthFail ? 422 : 502 });
+  const isQuotaOrRateLimit = result.httpStatus === 429 || result.httpStatus === 402;
+  return NextResponse.json(responseBody, {
+    status: isAuthFail || isQuotaOrRateLimit ? 422 : 502,
+  });
 }

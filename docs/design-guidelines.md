@@ -1,39 +1,41 @@
 # Design Guidelines — Sophia AI Factory
 
-> Authoritative Design System & Component Guidelines for Sophia AI Factory.
-> Aligned with `apps/sophia-ai-factory/src/app/globals.css` and `.claude/rules/sophia-design-authority.md`.
+> **SUPERSEDED BY ZEN DESIGN OS v1.0 (`DESIGN.md` & `apps/sophia-ai-factory/src/app/globals.css`).**
+> Canonical color tokens: Dark (`Director's Control Deck`, default `#090A10` / `#11131F` / `--primary: #6366F1` / `--primary-text: #818CF8` / `--accent: #F59E0B`) and Light (`Executive Studio Ivory`, `#F8F9FC` / `#FFFFFF` / `--primary: #4338CA` / `--accent: #B45309`).
+> Canonical typography: `Inter` (`--font-sans` / `--font-display`) for product UI & headings, `JetBrains Mono` (`--font-mono`) for code & telemetry, and `Archivo` scoped strictly to `.v3-core` (`src/styles/v3-core.css`). `Satoshi`, `Instrument Serif`, and `Outfit` are not adopted.
 
 ---
 
-## 1. Visual Theme & Palette (Obsidian Cyber-Glass)
+## 1. Visual Theme & Palette (Zen Design OS v1.0 — Director's Control Deck / Executive Studio Ivory)
 
-Sophia AI Factory utilizes the **Obsidian Cyber-Glass** design system: a balance of high-contrast enterprise precision with sleek cybernetic accents. It supports both high-readability Functional Light Mode and immersive Dark Obsidian Mode.
+Sophia AI Factory utilizes **Zen Design OS v1.0**: Dark-first (`defaultTheme="dark"`) with full WCAG 2.2 AA Light/Dark semantic parity defined in `apps/sophia-ai-factory/src/app/globals.css` and `apps/sophia-ai-factory/src/seed/design-tokens/zen-design-tokens.dtcg.json`.
 
 ### Core Color Tokens (derived from `src/app/globals.css`)
 
-| Token | Light Value | Dark Value | Role & Usage |
+| Token | Light Value (`:root`) | Dark Value (`.dark`) | Role & Usage |
 |---|---|---|---|
-| `--primary` | `hsl(246, 80%, 60%)` (`#4F46E5`) | `hsl(246, 80%, 64%)` (`#6366F1`) | Electric Indigo — Primary actions, active navigation, focus rings |
-| `--accent` | `hsl(38, 92%, 50%)` (`#F59E0B`) | `hsl(38, 92%, 50%)` (`#F59E0B`) | Cyber Amber — Warnings, pacing countdowns, jitter offsets, quotas |
-| `--secondary` | `hsl(260, 70%, 60%)` (`#9333EA`) | `hsl(260, 70%, 65%)` (`#A855F7`) | Vibrant Violet — AI workflows, syndication pipelines |
-| `--background` | `hsl(0, 0%, 100%)` (`#FFFFFF`) | `hsl(240, 18%, 4%)` (`#08090D`) | Canvas background |
-| `--card` | `hsl(0, 0%, 100%)` (`#FFFFFF`) | `hsl(240, 16%, 9%)` (`#12141F`) | Surface containers |
-| `--border` | `hsl(240, 6%, 90%)` (`#E2E8F0`) | `hsl(240, 14%, 16%)` (`#222536`) | Subtle structural borders |
-| `--destructive` | `hsl(350, 89%, 60%)` (`#F43F5E`) | `hsl(350, 89%, 60%)` (`#F43F5E`) | Crimson Rose — Kill switches, copyright flags, auth failures |
-| `--emerald` | `hsl(160, 84%, 39%)` (`#059669`) | `hsl(160, 84%, 45%)` (`#10B981`) | Verified tokens, live channels, successful dispatches |
+| `--primary` | `#4338CA` (`--primary-text: #4338CA`) | `#6366F1` (`--primary-text: #818CF8`) | Electric Indigo — Primary actions, active navigation, focus rings |
+| `--accent` / `--warning` | `#B45309` | `#F59E0B` | Cinema Amber — Warnings, pacing countdowns, quota pacing |
+| `--secondary` | `#7E22CE` | `#A855F7` | AI Violet — AI synthesis, syndication pipelines |
+| `--background` / `--surface` | `#F8F9FC` | `#090A10` | Canvas background |
+| `--card` / `--surface-container` | `#FFFFFF` | `#11131F` | Surface containers |
+| `--border` / `--outline-variant` | `#E2E8F0` | `#1E2235` | Subtle structural borders |
+| `--destructive` / `--error` | `#BE123C` | `#F43F5E` (`--destructive`) / `#FB7185` (`--error`) | Rose — Kill switches, copyright flags, auth failures |
+| `--success` | `#047857` | `#10B981` | Verified tokens, live channels, successful dispatches |
 
 ### Glass & Atmosphere Tokens
-* **Subtle Glass Border**: `border border-slate-200/80 dark:border-slate-800/80`
-* **Card Glow**: `shadow-sm hover:shadow-[0_4px_24px_rgba(79,70,229,0.08)] transition-all duration-200`
+* **Subtle Surface Border**: `border border-border`
+* **Card Elevation**: `bg-card border border-border shadow-sm`
 * **Glow Accents**: Electric Indigo highlights for active processing, Amber pulse for cooldown timers.
 
 ---
 
 ## 2. Typography Hierarchy
 
-Per repo design authority (`sophia-design-authority.md`), **Inter display is prohibited**.
-* **Body & Controls**: `Inter`, `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
-* **Display & Metrics**: `Outfit` or clean geometric sans for high-impact metric counters and cockpit headlines.
+Per `DESIGN.md` and `.claude/rules/sophia-design-authority.md`:
+* **Product UI, Headings & Body (`--font-sans`)**: `Inter`, `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+* **Telemetry, Code & Numeric Readouts (`--font-mono`)**: `JetBrains Mono`, `ui-monospace, SFMono-Regular, Menlo, monospace` (`tabular-nums`)
+* **Scoped Landing Display (`.v3-core` only)**: `Archivo` (`src/styles/v3-core.css`)
 * **Bilingual Diacritic Support**: Full Latin-Extended & Vietnamese character support (ă, â, đ, ê, ô, ơ, ư and all 5 tonal marks).
 
 | Level | Size | Weight | Line Height | Usage |

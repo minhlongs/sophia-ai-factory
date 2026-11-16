@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { Button } from '@/seed/components/ui/button';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import { validateProviderKey } from '@/tree/byok/key-format-validators';
 import { PROVIDERS, type Provider, type TestResult } from './types';
 import { ProviderCard } from './provider-card';
@@ -14,7 +15,7 @@ export async function saveByokProviderKey(
 ): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch('/api/user/byok', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider, key }),
   });
   if (!res.ok) {
@@ -27,7 +28,7 @@ export async function saveByokProviderKey(
 export async function testByokProviderKey(provider: Provider): Promise<TestResult> {
   const res = await fetch('/api/user/byok/test', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider }),
   });
   const data = (await res.json().catch(() => ({ ok: false, error: 'Parse error' }))) as {
@@ -44,7 +45,7 @@ export async function deleteByokProviderKey(
 ): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch('/api/user/byok', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider }),
   });
   if (!res.ok) {

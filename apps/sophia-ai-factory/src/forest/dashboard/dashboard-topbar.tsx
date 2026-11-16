@@ -15,6 +15,7 @@ import { DashboardTopBarActions } from "./dashboard-topbar-actions";
 
 export interface DashboardTopBarProps {
   onOpenMobileDrawer?: () => void;
+  onOpenCmdK?: () => void;
   unreadNotificationCount?: number;
   user?: {
     name: string;
@@ -28,13 +29,14 @@ export interface DashboardTopBarProps {
 
 export function DashboardTopBar({
   onOpenMobileDrawer,
+  onOpenCmdK,
   unreadNotificationCount = 3,
   user = {
     name: "Sophia Founder",
     email: "founder@sophia.ai",
     role: "CEO / Owner",
   },
-  searchPlaceholder = "Search missions, campaigns, runbooks...",
+  searchPlaceholder,
   className,
 }: DashboardTopBarProps) {
   const pathname = usePathname() || "";
@@ -42,6 +44,12 @@ export function DashboardTopBar({
 
   const isVi = pathname.startsWith("/vi");
   const currentLocale = isVi ? "vi" : "en";
+  const resolvedSearchPlaceholder =
+    searchPlaceholder ??
+    (isVi
+      ? "Tìm nhiệm vụ, chiến dịch, sổ tay..."
+      : "Search missions, campaigns, runbooks...");
+  const cmdKLabel = isVi ? "Mở bảng lệnh nhanh (⌘K)" : "Open quick command palette (⌘K)";
 
   const toggleLocale = () => {
     let newPath = pathname;
@@ -78,7 +86,7 @@ export function DashboardTopBar({
           type="button"
           onClick={onOpenMobileDrawer}
           className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 dark:hover:bg-white/[0.06] border border-transparent hover:border-border dark:hover:border-white/[0.08] transition-colors shrink-0"
-          aria-label="Open mobile navigation"
+          aria-label={isVi ? "Mở menu điều hướng di động" : "Open mobile navigation"}
           data-testid="mobile-drawer-trigger"
         >
           <Menu className="w-5 h-5" />
@@ -91,10 +99,22 @@ export function DashboardTopBar({
           />
           <input
             type="search"
-            placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-4 py-1.5 text-xs md:text-sm rounded-lg bg-muted/60 dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-foreground dark:text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+            placeholder={resolvedSearchPlaceholder}
+            aria-label={resolvedSearchPlaceholder}
+            className="w-full pl-9 pr-14 py-1.5 text-xs md:text-sm rounded-lg bg-muted/60 dark:bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
             data-testid="dashboard-search-input"
           />
+          {onOpenCmdK && (
+            <button
+              type="button"
+              onClick={onOpenCmdK}
+              aria-label={cmdKLabel}
+              data-testid="dashboard-cmdk-trigger"
+              className="hidden sm:inline-flex items-center justify-center gap-0.5 absolute right-1.5 top-1/2 -translate-y-1/2 min-h-6 min-w-7 px-2 py-0.5 rounded border border-border bg-card text-[10px] font-mono font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            >
+              ⌘K
+            </button>
+          )}
         </div>
       </div>
 

@@ -70,7 +70,7 @@ export function ApiKeyInputControls({
           type="button"
           onClick={onVerify}
           disabled={status === 'validating' || !value}
-          className="text-[11px] font-semibold bg-primary/10 hover:bg-primary/20 text-[#4338CA] dark:text-[#6366F1] border border-primary/20 px-2.5 py-1 rounded-md disabled:opacity-40 transition-all duration-100 active:scale-95"
+          className="text-[11px] font-semibold bg-primary/10 hover:bg-primary/20 text-primary-text border border-primary/20 px-2.5 py-1 rounded-md disabled:opacity-40 transition-all duration-100 active:scale-95"
         >
           Verify
         </button>

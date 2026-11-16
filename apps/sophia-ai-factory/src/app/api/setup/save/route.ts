@@ -9,6 +9,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyCsrfToken } from '@/seed/security/csrf';
+import { logger } from '@/seed/utils/logger-utility';
+import {
+  globalRateLimiter,
+  getClientIpIdentifier,
+  createRateLimitResponse,
+} from '@/forest/middleware/rate-limiter';
 import {
   setupSaveSchema,
   persistConfiguredApiKeys,
@@ -30,8 +36,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const ipRl = globalRateLimiter.checkLimit(
+    `setup:save:${getClientIpIdentifier(request)}`,
+    { intervalMs: 60_000, maxRequests: 20 },
+  );
+  if (!ipRl.allowed) return createRateLimitResponse(ipRl);
+
+  const userRl = globalRateLimiter.checkLimit(`setup:save:user:${user.id}`, {
+    intervalMs: 60_000,
+    maxRequests: 20,
+  });
+  if (!userRl.allowed) return createRateLimitResponse(userRl);
+
+  let body: unknown;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { success: false, message: 'Invalid JSON payload' },
+      { status: 400 },
+    );
+  }
+
+  try {
     const parsed = setupSaveSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -70,9 +97,11 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
+    logger.error('[setup/save] Failed to save setup configuration', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json(
-      { success: false, message },
+      { success: false, message: 'Internal server error' },
       { status: 500 },
     );
   }

@@ -68,14 +68,15 @@ export function DashboardSourcesDrawer({
             type="button"
             data-testid="dashboard-sources-toggle"
             aria-expanded={isOpen}
+            aria-controls="dashboard-sources-table"
             onClick={() => setIsOpen((prev) => !prev)}
             className="btn btn-ghost !h-8 !px-3 text-xs font-mono"
           >
             <span>{t('sourcesDrawer.toggleBtn')}</span>
             {isOpen ? (
-              <ChevronUp className="w-3.5 h-3.5" />
+              <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
             )}
           </button>
         </div>
@@ -83,6 +84,7 @@ export function DashboardSourcesDrawer({
 
       {isOpen && (
         <div
+          id="dashboard-sources-table"
           data-testid="dashboard-sources-table"
           className="mt-4 pt-4 border-t border-border space-y-3"
         >

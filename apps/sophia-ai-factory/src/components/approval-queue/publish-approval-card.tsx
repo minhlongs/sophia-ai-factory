@@ -71,11 +71,11 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-400">
-              <Globe className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+              <Globe className="h-3.5 w-3.5" aria-hidden="true" />
               {item.platform || t('publish.unknownPlatform')}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
               {t('publish.pendingBadge')}
             </span>
           </div>
@@ -87,12 +87,12 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 text-amber-500" />
+          <Clock className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" aria-hidden="true" />
           <span>{t('publish.expiresAt')}: {formatUnixSeconds(item.expiresAt, locale)}</span>
         </div>
       </div>
 
-      <div className="mb-4 rounded-lg border border-border bg-secondary/30 p-3 text-xs">
+      <div className="mb-4 rounded-lg border border-border bg-muted/50 p-3 text-xs">
         <div className="mb-1 flex items-center justify-between gap-2 font-medium text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Film className="h-3.5 w-3.5" />
@@ -127,7 +127,7 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
       {isYouTube && (
         <div
           data-testid={`youtube-compliance-controls-${item.id}`}
-          className="mb-4 rounded-lg border border-border bg-secondary/20 p-3 text-xs"
+          className="mb-4 rounded-lg border border-border bg-muted/40 p-3 text-xs"
         >
           <label className="inline-flex items-center gap-2 font-medium text-foreground">
             <input
@@ -162,18 +162,18 @@ export function PublishApprovalCard({ item, busy, onDecide }: PublishApprovalCar
           type="button"
           disabled={approveDisabled}
           onClick={() => onDecide(item.id, true, buildCompliancePayload(), commentText.trim() || undefined)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-800 disabled:opacity-50"
         >
-          <Check className="h-4 w-4" />
+          <Check className="h-4 w-4" aria-hidden="true" />
           {t('publish.approvePublish')}
         </button>
         <button
           type="button"
           disabled={busy}
           onClick={() => onDecide(item.id, false, undefined, commentText.trim() || undefined)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive dark:bg-rose-700 px-4 py-2.5 text-sm font-medium text-destructive-foreground dark:text-white transition-colors hover:bg-destructive/90 dark:hover:bg-rose-600 disabled:opacity-50"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" aria-hidden="true" />
           {t('publish.rejectPublish')}
         </button>
       </div>

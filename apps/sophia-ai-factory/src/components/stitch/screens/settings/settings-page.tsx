@@ -84,7 +84,7 @@ export default function SettingsPage({
           })}
         </div>
 
-        <main className="space-y-8">
+        <div className="space-y-8">
           {activeTab === 'account' && <SettingsProfileSection initialName={userName} email={userEmail} />}
           {activeTab === 'security' && <SettingsSecuritySection />}
           {activeTab === 'apiKeys' && <ApiKeysManager />}
@@ -119,7 +119,7 @@ export default function SettingsPage({
               <SettingsLocaleDangerSection />
             </>
           )}
-        </main>
+        </div>
       </div>
     </div>
   );

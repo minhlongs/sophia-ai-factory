@@ -5,6 +5,7 @@
  * @module tree/components/setup-wizard/steps/use-setup-wizard-actions
  */
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { ValidationReceipt } from '@/tree/byok/validation-receipt-types';
 import { KEY_TO_PROVIDER, type WizardKeyConfig } from './use-setup-wizard-helpers';
 
@@ -23,7 +24,7 @@ export async function requestKeyValidation(
   const start = Date.now();
   const res = await fetch('/api/setup-wizard/validate-key', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider: service, api_key: keyValue }),
   });
   const data = (await res.json()) as {
@@ -44,7 +45,7 @@ export async function requestKeyValidation(
 export async function requestProviderRevoke(provider: string): Promise<boolean> {
   const res = await fetch('/api/user/byok', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider }),
   });
   return res.ok;
@@ -57,7 +58,7 @@ export async function requestProviderKeySave(
 ): Promise<void> {
   const res = await fetch('/api/user/byok', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
     body: JSON.stringify({ provider, key }),
   });
   if (!res.ok) {

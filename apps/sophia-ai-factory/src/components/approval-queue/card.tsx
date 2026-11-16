@@ -38,7 +38,7 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex-1 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-text">
                 {approval.actionType}
               </span>
               {expiring && (
@@ -84,20 +84,20 @@ export function ApprovalCard({ approval, busy, actionError, onResolve }: Approva
               type="button"
               disabled={busy}
               onClick={() => onResolve(approval.id, true)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary dark:bg-primary-600 px-3 py-2 text-sm font-medium text-primary-foreground dark:text-white transition hover:bg-primary/90 disabled:opacity-50"
               title={t('actions.approveTitle')}
             >
-              <Check className="h-4 w-4" />
+              <Check className="h-4 w-4" aria-hidden="true" />
               {t('approve')}
             </button>
             <button
               type="button"
               disabled={busy}
               onClick={() => onResolve(approval.id, false)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-50"
               title={t('actions.rejectTitle')}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
               {t('reject')}
             </button>
             <textarea

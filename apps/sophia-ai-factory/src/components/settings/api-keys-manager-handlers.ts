@@ -6,12 +6,15 @@
  * @module components/settings/api-keys-manager-handlers
  */
 
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
+
 export async function handleTestAndSave(providerId: string, inputKey: string): Promise<{ ok: boolean; message?: string }> {
   if (!inputKey.trim()) return { ok: false, message: 'Key cannot be empty' };
   try {
+    const csrfHeaders = getCsrfHeaders();
     const valRes = await fetch('/api/setup-wizard/validate-key', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders },
       body: JSON.stringify({ provider: providerId, api_key: inputKey.trim() }),
     });
     const valData = (await valRes.json()) as { ok?: boolean; message?: string };
@@ -20,7 +23,7 @@ export async function handleTestAndSave(providerId: string, inputKey: string): P
     }
     const saveRes = await fetch('/api/user/byok', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders },
       body: JSON.stringify({ provider: providerId, key: inputKey.trim() }),
     });
     if (saveRes.ok) {
@@ -38,7 +41,7 @@ export async function handleRevoke(providerId: string): Promise<{ ok: boolean; m
   try {
     const res = await fetch('/api/user/byok', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
       body: JSON.stringify({ provider: providerId }),
     });
     if (res.ok) {

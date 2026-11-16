@@ -26,7 +26,7 @@ export function SettingsLocaleDangerSection() {
           <Languages className="w-5 h-5 text-primary" />
           Language & Localization (i18n)
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div role="radiogroup" aria-label="Language & Localization" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {LOCALE_OPTIONS.map((option) => {
             const isSelected = selectedLocale === option.id;
             return (

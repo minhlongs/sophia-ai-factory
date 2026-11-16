@@ -1,6 +1,7 @@
 'use client';
 
 import type { UserProfileFormValues } from '@/land/schemas/settings';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 
 export interface KeyConfig {
   id: keyof UserProfileFormValues['apiKeys'];
@@ -32,17 +33,18 @@ export async function verifyApiKeyRequest(
   const startTime = performance.now();
 
   let res: Response;
+  const csrfHeaders = getCsrfHeaders();
   if (keyId === 'heygen') {
     res = await fetch('/api/setup-wizard/test-heygen', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders },
       body: JSON.stringify({ api_key: keyValue }),
     });
   } else {
     const service = keyId === 'openai' ? 'openrouter' : keyId;
     res = await fetch('/api/setup/verify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders },
       body: JSON.stringify({ service, key: keyValue }),
     });
   }

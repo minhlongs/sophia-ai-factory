@@ -4402,6 +4402,9 @@
     "sessionNote": "Session only — not saved"
   },
   "cmdK": {
+    "title": "Quick actions",
+    "description": "Search the list and run a command across Sophia AI Factory.",
+    "close": "Close",
     "placeholder": "Type a command or search...",
     "noResults": "No results found.",
     "openMarketplace": "Open SOP Marketplace",

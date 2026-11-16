@@ -26,7 +26,7 @@ export function PricingPageView({ beforeFooterSlot }: PricingPageViewProps = {})
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 selection:bg-primary-500/30 selection:text-primary-900 dark:selection:text-primary-200 transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary-500/30 selection:text-primary-900 dark:selection:text-primary-200 transition-colors duration-300">
       <MarketingNav />
 
       {/* Main Content */}

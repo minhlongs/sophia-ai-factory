@@ -34,40 +34,47 @@ interface A11yHarnessProps {
   locale: string;
 }
 
-function HarnessFormDialog() {
+function HarnessFormDialog({ locale }: { locale: string }) {
+  const isVi = locale === 'vi';
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button type="button" data-testid="harness-dialog-trigger">
-          Open form dialog
+          {isVi ? 'Mở hộp thoại biểu mẫu' : 'Open form dialog'}
         </Button>
       </DialogTrigger>
-      <DialogContent data-testid="harness-dialog-content">
+      <DialogContent
+        data-testid="harness-dialog-content"
+        closeLabel={isVi ? 'Đóng' : 'Close'}
+      >
         <DialogHeader>
-          <DialogTitle>Harness dialog title</DialogTitle>
+          <DialogTitle>
+            {isVi ? 'Tiêu đề hộp thoại kiểm thử' : 'Harness dialog title'}
+          </DialogTitle>
           <DialogDescription>
-            A modal used to verify focus placement, keyboard containment and
-            screen reader semantics.
+            {isVi
+              ? 'Hộp thoại dùng để xác minh vị trí tiêu điểm, bẫy bàn phím và ngữ nghĩa trình đọc màn hình.'
+              : 'A modal used to verify focus placement, keyboard containment and screen reader semantics.'}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
           <label htmlFor="harness-field-first" className="text-sm font-medium text-foreground">
-            First field
+            {isVi ? 'Trường thứ nhất' : 'First field'}
           </label>
           <Input id="harness-field-first" data-testid="harness-field-first" />
           <label htmlFor="harness-field-second" className="text-sm font-medium text-foreground">
-            Second field
+            {isVi ? 'Trường thứ hai' : 'Second field'}
           </label>
           <Input id="harness-field-second" data-testid="harness-field-second" />
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="secondary" data-testid="harness-dialog-cancel">
-              Cancel
+              {isVi ? 'Hủy' : 'Cancel'}
             </Button>
           </DialogClose>
           <Button type="button" variant="default" data-testid="harness-dialog-confirm">
-            Confirm
+            {isVi ? 'Xác nhận' : 'Confirm'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -86,7 +93,7 @@ export function A11yHarness({ locale }: A11yHarnessProps) {
             reader verification.
           </p>
           <div className="mt-4">
-            <HarnessFormDialog />
+            <HarnessFormDialog locale={locale} />
           </div>
         </header>
 

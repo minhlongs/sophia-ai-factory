@@ -10,7 +10,7 @@
 import React, { useState, useCallback } from 'react';
 import { Check, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCsrfToken } from '@/seed/security/use-csrf-token';
+import { getCsrfHeaders, useCsrfToken } from '@/seed/security/use-csrf-token';
 import { cn } from '@/seed/utils/cn';
 
 interface PaidPilotCheckoutResponse {
@@ -62,15 +62,22 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
     setErrorActive(false);
 
     try {
+      const freshCsrf = typeof getCsrfHeaders === 'function' ? getCsrfHeaders() : {};
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders, ...freshCsrf },
         body: JSON.stringify({ tier: 'BASIC', period: 'pilot_14d', paymentMethod: 'payos' }),
       });
       const data = (await res.json().catch(() => ({}))) as PaidPilotCheckoutResponse;
 
       if (res.status === 401) {
-        onRedirect(isSafeRelativePath(data.redirectTo) ? data.redirectTo : '/vi/login?next=%2Fvi%2Fpricing');
+        const activeSeg =
+          typeof window !== 'undefined'
+            ? window.location.pathname.split('/')[1] || 'vi'
+            : 'vi';
+        const safeLoc = /^[a-z]{2}$/.test(activeSeg) ? activeSeg : 'vi';
+        const fallbackLogin = `/${safeLoc}/login?next=${encodeURIComponent(`/${safeLoc}/pricing`)}`;
+        onRedirect(isSafeRelativePath(data.redirectTo) ? data.redirectTo : fallbackLogin);
         return;
       }
       if (!res.ok) {
@@ -103,11 +110,11 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-primary-text">
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{t('paidPilot.badge')}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-display">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-sans">
             {t('paidPilot.title')}
           </h2>
           <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
@@ -116,7 +123,7 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
           <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 pt-1">
             {bullets.map((bullet, idx) => (
               <li key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
-                <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
+                <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-text" aria-hidden="true" />
                 <span>{bullet}</span>
               </li>
             ))}
@@ -134,7 +141,7 @@ export function PaidPilotBanner({ onRedirect = defaultRedirect }: PaidPilotBanne
             onClick={handleStartPilot}
             className={cn(
               'inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold transition-all',
-              'bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-primary/20',
+              'bg-primary dark:bg-primary-600 text-primary-foreground dark:text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-primary/20',
             )}
           >
             {loading ? (

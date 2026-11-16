@@ -10,7 +10,7 @@
 
 ```text
 LỚP 1: CANONICAL DTCG CONTRACT (zen-design-tokens.dtcg.json)
-  └── Định nghĩa cấu trúc: color.semantic.{light|dark}.*, motion.*, radius.*, typography.*
+  └── Định nghĩa cấu trúc: color.{tonal|semantic.{light|dark}}.*, typography.fontFamily.*, motion.{duration|easing}.* (kết hợp --radius trong globals.css)
 
 LỚP 2: BRAND THEME MAPPING (globals.css của từng sản phẩm)
   ├── Thương hiệu A (Sophia AI Factory): Indigo (#4338CA / #6366F1) + Amber (#B45309 / #F59E0B)

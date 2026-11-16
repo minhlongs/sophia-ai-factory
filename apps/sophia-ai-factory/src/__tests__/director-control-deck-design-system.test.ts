@@ -106,7 +106,8 @@ describe("Director's Control Deck Design System Verification", () => {
       readSrcFile('components/stitch/screens/landing-hero/modular/pipeline-mockup-header.tsx'),
     ).toContain('ILLUSTRATIVE PREVIEW');
     expect(pipelineMockup).toContain('film-strip');
-    expect(pricingView).toContain('bg-[#F8F9FC] dark:bg-[#090A10]');
+    expect(pricingView).toContain('bg-background text-foreground');
+    expect(pricingView).not.toMatch(/dark:bg-\[#[0-9a-fA-F]{6}\]/);
     expect(pricingCard).toContain('font-mono');
     expect(loginPage).toContain('bg-[#F8F9FC] dark:bg-[#090A10]');
     expect(registerView).toContain('bg-[#F8F9FC] dark:bg-[#090A10]');

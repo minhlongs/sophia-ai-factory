@@ -38,7 +38,7 @@ export function MarketingNavDesktopActions({
 
       <Link
         href="/register"
-        className="group inline-flex items-center gap-2 text-sm font-bold text-primary-foreground px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 border border-primary/25 shadow-sm transition-all active:scale-[0.98]"
+        className="group inline-flex items-center gap-2 text-sm font-bold text-primary-foreground dark:text-white px-5 py-2.5 rounded-xl bg-primary dark:bg-primary-600 hover:bg-primary/90 border border-primary/25 shadow-sm transition-all active:scale-[0.98]"
       >
         <span>{getStartedLabel}</span>
         <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
