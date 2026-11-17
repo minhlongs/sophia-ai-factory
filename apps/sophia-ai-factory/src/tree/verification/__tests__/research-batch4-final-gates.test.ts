@@ -116,11 +116,11 @@ describe('Deliverable 2: Sparse-Data Statistical Growth Guard & 72h 3s-Hook Rete
 });
 
 describe('Deliverable 3: 14-Day Paid Pilot Package, <=90m SLA & /api/open-core/status Diagnostics', () => {
-  it('enforces 14-day Paid Pilot constants (1,990,000 VND / $79 / 10 videos) and <=90m Founder SLA', () => {
+  it('enforces 14-day Paid Pilot constants (1,990,000 VND / $79 / no included videos) and <=90m Founder SLA', () => {
     expect(PAID_PILOT_DURATION_DAYS).toBe(14);
     expect(PAID_PILOT_14_DAY_PRICE_VND).toBe(1990000);
     expect(PAID_PILOT_14_DAY_PRICE_CENTS).toBe(7900);
-    expect(PAID_PILOT_14_DAY_GUARANTEED_VIDEOS).toBe(10);
+    expect(PAID_PILOT_14_DAY_GUARANTEED_VIDEOS).toBe(0);
     expect(FOUNDER_SUPPORT_SLA_MAX_MINUTES_PER_MONTH).toBe(90);
 
     const withinSla = calculatePilotUnitEconomics({

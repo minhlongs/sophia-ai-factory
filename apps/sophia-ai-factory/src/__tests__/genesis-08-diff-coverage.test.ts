@@ -248,9 +248,12 @@ describe('Genesis-08 changed-branch coverage suite', () => {
 
   describe('PayOS batch commit, order matching, and dynamic feature flags', () => {
     it('updates existing org subscription and handles missing orgId / invalid now timestamp', async () => {
-      const batch = vi.fn().mockResolvedValue([]);
+      const batch = vi.fn(async (statements: unknown[]) => statements.map(() => ({ success: true, meta: { changes: 1 } })));
       const d1 = {
-        prepare: vi.fn(() => ({ bind: vi.fn(() => ({})) })),
+        prepare: vi.fn(() => ({ bind: vi.fn(() => ({ first: vi.fn().mockResolvedValue({
+          count: 1, id: 'sub_1', tier: 'BASIC', plan: 'basic', status: 'expired',
+          current_period_start: '2026-01-01T00:00:00.000Z', current_period_end: '2026-01-15T00:00:00.000Z',
+        }) })) })),
         batch,
       } as unknown as D1Database;
       const dbWithExisting = {
@@ -283,11 +286,12 @@ describe('Genesis-08 changed-branch coverage suite', () => {
         now: 'not-a-valid-date',
         orderCode: 12345,
         orderId: 'ord_12345',
+        amount: 4975000,
       });
       expect(batch).toHaveBeenCalledTimes(1);
 
-      // Missing orgId skips batch execution cleanly
-      await commitPayOsSubscriptionBatch({
+      // Missing ownership must fail closed before any batch execution.
+      await expect(commitPayOsSubscriptionBatch({
         db: dbWithExisting,
         d1,
         orgId: undefined,
@@ -297,7 +301,8 @@ describe('Genesis-08 changed-branch coverage suite', () => {
         now: '2026-11-15T00:00:00.000Z',
         orderCode: 12346,
         orderId: 'ord_12346',
-      });
+        amount: 1990000,
+      })).rejects.toThrow('requires a buyer organization');
       expect(batch).toHaveBeenCalledTimes(1);
     });
 

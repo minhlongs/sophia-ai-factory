@@ -27,6 +27,7 @@ vi.mock('@/land/payments/payos', () => ({
           amount: body.amount || 4975000,
           description: body.description || 'Sophia BASIC - 1700000000000',
           paymentLinkId: body.paymentLinkId || 'link_123',
+          code: body.signedCode ?? (body.success === false ? '01' : '00'),
         },
       },
     })),
@@ -160,7 +161,7 @@ vi.mock('@/seed/db/client', () => {
       const d1Root: any = {
         batch: vi.fn(async (stmts: any[]) => {
           if (batchFailMode) throw new Error('batch failed')
-          return stmts.map((s: any) => ({ success: true, ...s }))
+          return stmts.map((s: any) => ({ success: true, meta: { changes: 1 }, ...s }))
         }),
         run: vi.fn(async () => ({ success: true })),
         exec: vi.fn(async () => ({ success: true })),
@@ -196,6 +197,9 @@ vi.mock('@/seed/db/client', () => {
             return { results: [], success: true }
           }),
           first: vi.fn(async () => {
+            if (stmt._sql.includes('COUNT(*)')) {
+              return { count: existingSubId ? 1 : 0, id: existingSubId, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }
+            }
             if (stmt._sql.includes('payos_events') && stmt._sql.includes('processed')) {
               if (selectFailMode) throw new Error('SELECT failed')
               const eventId = stmt._bindArgs?.[0]

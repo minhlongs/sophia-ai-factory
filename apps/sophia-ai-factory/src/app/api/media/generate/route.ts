@@ -23,6 +23,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { getD1 } from '@/seed/db/client'
 import { withD1Retry } from '@/seed/db/d1-retry'
+import { releaseVideoSlot, reserveVideoSlot } from '@/tree/quota/video-quota'
 
 const generateSchema = z.object({
   type: z.enum(['image', 'video', 'audio']),
@@ -126,9 +127,37 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    let videoSlotReserved = false
+    if (type === 'video') {
+      const reservation = await reserveVideoSlot(user.id, tier)
+      if (!reservation.reserved) {
+        return NextResponse.json(
+          {
+            error: 'Video quota exceeded. Please upgrade your plan or wait for quota reset.',
+            code: 'QUOTA_EXCEEDED',
+            used: reservation.used,
+            limit: reservation.limit,
+            resetsAt: reservation.resetAt,
+          },
+          { status: 429 },
+        )
+      }
+      videoSlotReserved = true
+    }
+
     const result = await submitMediaJob(parsed.data, { fund: 'byok', apiKey })
 
     if (!result.success || !result.job) {
+      if (videoSlotReserved) {
+        try {
+          await releaseVideoSlot(user.id)
+        } catch (releaseError) {
+          logger.error('[media/generate] Failed to release video quota after provider rejection', {
+            userId: user.id,
+            error: toError(releaseError).message,
+          })
+        }
+      }
       return NextResponse.json(
         { error: result.error || 'Generation failed' },
         { status: 502 },
@@ -165,8 +194,13 @@ export async function POST(req: NextRequest) {
           model: result.job.model,
         })
         return NextResponse.json(
-          { error: 'Failed to record job', code: 'DB_ERROR' },
-          { status: 500 },
+          {
+            error: 'Provider accepted the job, but persistence is pending. Keep the job ID for reconciliation.',
+            code: 'JOB_ACCEPTED_PERSISTENCE_PENDING',
+            jobId: result.job.id,
+            status: result.job.status,
+          },
+          { status: 202 },
         )
       }
     } catch (dbErr) {
@@ -178,8 +212,13 @@ export async function POST(req: NextRequest) {
         error: toError(dbErr).message,
       })
       return NextResponse.json(
-        { error: 'Failed to record job', code: 'DB_ERROR' },
-        { status: 500 },
+        {
+          error: 'Provider accepted the job, but persistence is pending. Keep the job ID for reconciliation.',
+          code: 'JOB_ACCEPTED_PERSISTENCE_PENDING',
+          jobId: result.job.id,
+          status: result.job.status,
+        },
+        { status: 202 },
       )
     }
 

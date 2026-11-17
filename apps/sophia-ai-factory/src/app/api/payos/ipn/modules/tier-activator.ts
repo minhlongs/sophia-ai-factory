@@ -56,6 +56,7 @@ export async function activatePayOsTier({
     now,
     orderCode,
     orderId,
+    amount,
   });
 
   await runPayOsPostActivationEffects({

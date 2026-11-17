@@ -152,6 +152,9 @@ vi.mock('@/seed/db/client', () => {
           return { results: [{ processed: 0 }], success: true }
         },
         async first() {
+          if (sql.includes('COUNT(*)')) {
+            return { count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }
+          }
           if (sql.includes('SELECT processed')) {
             const row = eventRows.get(stmt._bindArgs[0] as string)
             return row ? { processed: row.processed } : null
@@ -171,10 +174,10 @@ vi.mock('@/seed/db/client', () => {
           subscriptionCommits.push({ tier: stmt._bindArgs[1] as string, orderId: stmt._bindArgs[0] as string })
         }
         if (sql.includes('update pending_orders')) {
-          subscriptionCommits.push({ tier: 'order_completed', orderId: stmt._bindArgs[3] as string })
+          subscriptionCommits.push({ tier: 'order_completed', orderId: stmt._bindArgs[2] as string })
         }
       }
-      return statements.map(() => ({ success: true }))
+      return statements.map(() => ({ success: true, meta: { changes: 1 } }))
     },
   }
 

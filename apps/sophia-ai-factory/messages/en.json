@@ -7507,12 +7507,12 @@
             "answer": "Yes, you can upgrade or downgrade your plan at any time from your account settings. Changes will be reflected in your next billing cycle."
           },
           {
-            "question": "What happens after my free trial?",
-            "answer": "After your 14-day trial ends, you'll be automatically moved to your selected plan unless you cancel beforehand. We'll send you a reminder 3 days before the trial expires."
+            "question": "Does the 14-day paid pilot renew automatically?",
+            "answer": "No. The paid pilot is a one-time purchase for 14 days. Continuing with a paid plan requires a separate purchase; the pilot does not automatically convert to a subscription."
           },
           {
             "question": "Are there any hidden fees?",
-            "answer": "No hidden fees. The price you see includes all features listed in that plan. Custom API usage beyond limits might incur additional costs on a pay-as-you-go basis."
+            "answer": "The pilot includes 500 MCU for Sophia tasks. AI providers charge your own connected account separately; MCU does not include provider credit. Video rendering requires Growth or above and is not included in BASIC. Additional Sophia credits or plans require a separate purchase."
           },
           {
             "question": "Do you offer discounts for non-profits?",
@@ -7544,7 +7544,7 @@
         "subtitle": "Built for SMBs and agencies validating real ROI: 14 days of full BASIC-tier access — AI scripts, campaign plans, and affiliate assets. Video rendering is available on Growth and above.",
         "priceVnd": "1,990,000 VND",
         "priceUsd": "$79 / 14 days",
-        "bullet1": "Full BASIC tier for 14 days — AI scripts, campaign plans, affiliate assets",
+        "bullet1": "14 days of BASIC with 500 MCU — AI scripts, campaign plans, affiliate assets; your AI provider bills separately",
         "bullet2": "Instant activation with no hidden auto-renewal",
         "bullet3": "VietQR bank transfer via PayOS",
         "cta": "Start 14-Day Paid Pilot",

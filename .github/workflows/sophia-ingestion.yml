@@ -11,13 +11,72 @@ on:
         required: false
         default: 'clickbank,shareasale'
 
+permissions:
+  contents: read
+
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
     steps:
       - name: Trigger Ingestion API
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_NETWORKS: ${{ inputs.networks }}
         run: |
-          curl -X POST ${{ secrets.APP_URL }}/api/ingestion/trigger \
-          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-          -H "Content-Type: application/json" \
-          -d '{"networks": ["clickbank", "shareasale"]}'
+          set -euo pipefail
+
+          SECRET_VALUE="${CRON_SECRET:-}"
+          if [ -z "${SECRET_VALUE//[[:space:]]/}" ]; then
+            echo "::error::CRON_SECRET is not configured for production environment." >&2
+            exit 1
+          fi
+
+          PAYLOAD=$(node -e '
+            const eventName = process.env.EVENT_NAME || "";
+            const rawInput = process.env.INPUT_NETWORKS ?? "";
+            const raw = eventName === "schedule" && rawInput === ""
+              ? "clickbank,shareasale"
+              : rawInput;
+
+            if (/[\r\n\0]/.test(raw) || raw.trim() === "") {
+              console.error("::error::Invalid networks input: must be a non-empty comma-separated list.");
+              process.exit(1);
+            }
+
+            const allowed = new Set(["clickbank", "shareasale"]);
+            const parts = raw.split(",").map((part) => part.trim());
+            if (parts.some((part) => part === "" || !allowed.has(part))) {
+              console.error("::error::Invalid networks input: only clickbank and shareasale are supported.");
+              process.exit(1);
+            }
+
+            const unique = Array.from(new Set(parts));
+            process.stdout.write(JSON.stringify({ networks: unique }));
+          ')
+
+          HTTP_STATUS=$(curl -sS \
+            --connect-timeout 15 \
+            --max-time 300 \
+            -o /dev/null \
+            -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            --data-raw "${PAYLOAD}" \
+            "https://sophia.agencyos.network/api/ingestion/trigger") || {
+            echo "::error::Ingestion trigger request failed due to transport or timeout error." >&2
+            exit 1
+          }
+
+          case "$HTTP_STATUS" in
+            2[0-9][0-9])
+              echo "Ingestion trigger succeeded (HTTP ${HTTP_STATUS})."
+              ;;
+            *)
+              echo "::error::Ingestion trigger failed with HTTP ${HTTP_STATUS:-unknown}." >&2
+              exit 1
+              ;;
+          esac

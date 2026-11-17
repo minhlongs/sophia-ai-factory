@@ -45,6 +45,13 @@ import { POST as submitGenerate } from '@/app/api/media/generate/route';
 import { GET as readStatus } from '@/app/api/media/status/route';
 
 const SCHEMA = `
+CREATE TABLE IF NOT EXISTS video_usage_monthly (
+  user_id TEXT NOT NULL,
+  year_month TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, year_month)
+);
 CREATE TABLE IF NOT EXISTS media_jobs (
   id            TEXT    PRIMARY KEY,
   user_id       TEXT    NOT NULL,

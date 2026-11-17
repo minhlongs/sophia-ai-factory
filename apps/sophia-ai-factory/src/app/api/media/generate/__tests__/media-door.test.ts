@@ -8,7 +8,8 @@
  * 2. Image generation stays refused with 403.
  * 3. Video and audio dispatch ONLY with the caller's stored `'muapi'` BYOK key
  *    (`{ fund: 'byok', apiKey }`), never spending `process.env.MUAPI_API_KEY`,
- *    and fail closed with 500 `DB_ERROR` if D1 cannot persist `media_jobs`.
+ *    and return an explicit accepted-but-persistence-pending response if D1 cannot
+ *    persist after MuAPI has accepted the provider job.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -24,11 +25,20 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
   resolveUserTier: vi.fn(),
 }));
 
-const { mockSubmitMediaJob, mockResolveUserApiKey, mockGetD1, mockRun } = vi.hoisted(() => ({
+const {
+  mockSubmitMediaJob,
+  mockResolveUserApiKey,
+  mockGetD1,
+  mockRun,
+  mockReserveVideoSlot,
+  mockReleaseVideoSlot,
+} = vi.hoisted(() => ({
   mockSubmitMediaJob: vi.fn(),
   mockResolveUserApiKey: vi.fn(),
   mockGetD1: vi.fn(),
   mockRun: vi.fn(),
+  mockReserveVideoSlot: vi.fn(),
+  mockReleaseVideoSlot: vi.fn(),
 }));
 
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
@@ -37,6 +47,11 @@ vi.mock('@/tree/byok/resolve-user-api-key', () => ({
 
 vi.mock('@/seed/db/client', () => ({
   getD1: mockGetD1,
+}));
+
+vi.mock('@/tree/quota/video-quota', () => ({
+  reserveVideoSlot: mockReserveVideoSlot,
+  releaseVideoSlot: mockReleaseVideoSlot,
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -196,6 +211,7 @@ describe('POST /api/media/generate enforces customer BYOK and D1 persistence for
       success: true,
       job: { id: 'job-1', status: 'pending', type: 'video', model: 'kling-3.0' },
     });
+    mockReserveVideoSlot.mockResolvedValue({ reserved: true, used: 1, limit: 30, resetAt: '2026-12-01T00:00:00.000Z' });
   });
 
   it('refuses with 422 NO_API_KEY when customer has no stored muapi BYOK key, even when MUAPI_API_KEY is set', async () => {
@@ -238,16 +254,64 @@ describe('POST /api/media/generate enforces customer BYOK and D1 persistence for
     expect(mockSubmitMediaJob).not.toHaveBeenCalled();
   });
 
-  it('fails closed with 500 DB_ERROR when media_jobs insert throws', async () => {
+  it('returns the accepted job ID when media_jobs insert reports failure', async () => {
+    mockRun.mockResolvedValueOnce({ success: false });
+
+    const res = await POST(
+      createRequest({ type: 'video', model: 'kling-3.0', prompt: 'A wave' }),
+    );
+    const body = (await res.json()) as { code: string; jobId: string; status: string };
+
+    expect(res.status).toBe(202);
+    expect(body).toMatchObject({
+      code: 'JOB_ACCEPTED_PERSISTENCE_PENDING',
+      jobId: 'job-1',
+      status: 'pending',
+    });
+    expect(mockReleaseVideoSlot).not.toHaveBeenCalled();
+  });
+
+  it('returns the accepted job ID when media_jobs insert throws', async () => {
     mockRun.mockRejectedValueOnce(new Error('D1 write error'));
 
     const res = await POST(
       createRequest({ type: 'video', model: 'kling-3.0', prompt: 'A wave' }),
     );
-    const body = (await res.json()) as { code: string };
+    const body = (await res.json()) as { code: string; jobId: string; status: string };
 
-    expect(res.status).toBe(500);
-    expect(body.code).toBe('DB_ERROR');
+    expect(res.status).toBe(202);
+    expect(body).toMatchObject({
+      code: 'JOB_ACCEPTED_PERSISTENCE_PENDING',
+      jobId: 'job-1',
+      status: 'pending',
+    });
+    expect(mockReleaseVideoSlot).not.toHaveBeenCalled();
+  });
+
+  it('returns 429 without dispatching when the shared video quota is exhausted', async () => {
+    mockReserveVideoSlot.mockResolvedValueOnce({
+      reserved: false,
+      used: 30,
+      limit: 30,
+      resetAt: '2026-12-01T00:00:00.000Z',
+    });
+
+    const res = await POST(createRequest({ type: 'video', model: 'kling-3.0', prompt: 'A wave' }));
+    const body = (await res.json()) as { code: string; used: number; limit: number };
+
+    expect(res.status).toBe(429);
+    expect(body).toMatchObject({ code: 'QUOTA_EXCEEDED', used: 30, limit: 30 });
+    expect(mockSubmitMediaJob).not.toHaveBeenCalled();
+  });
+
+  it('releases a reserved video slot when MuAPI rejects the job', async () => {
+    mockSubmitMediaJob.mockResolvedValueOnce({ success: false, error: 'upstream rejected' });
+
+    const res = await POST(createRequest({ type: 'video', model: 'kling-3.0', prompt: 'A wave' }));
+
+    expect(res.status).toBe(502);
+    expect(mockReserveVideoSlot).toHaveBeenCalledWith('user-1', 'PREMIUM');
+    expect(mockReleaseVideoSlot).toHaveBeenCalledWith('user-1');
   });
 
   it('dispatches a supported video model with { fund: "byok", apiKey } across all canonical paid tiers', async () => {

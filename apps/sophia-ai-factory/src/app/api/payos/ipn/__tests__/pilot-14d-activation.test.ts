@@ -137,8 +137,11 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
       }),
     } as unknown as D1Client;
     const d1 = {
-      prepare: vi.fn(() => ({ bind: vi.fn(() => ({ run: vi.fn().mockResolvedValue({}) })) })),
-      batch: vi.fn().mockResolvedValue([]),
+      prepare: vi.fn(() => ({ bind: vi.fn(() => ({
+        run: vi.fn().mockResolvedValue({ success: true }),
+        first: vi.fn().mockResolvedValue({ count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }),
+      })) })),
+      batch: vi.fn(async (statements: unknown[]) => statements.map(() => ({ success: true, meta: { changes: 1 } }))),
     } as unknown as D1Database;
 
     const result = await activatePayOsTier({

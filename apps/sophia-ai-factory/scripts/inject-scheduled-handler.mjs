@@ -4,34 +4,25 @@
  * Post-build script: injects a `scheduled(event, env, ctx)` export into
  * .open-next/worker.js so Cloudflare Workers cron triggers have a handler.
  *
- * OpenNext-Cloudflare 1.x does not emit scheduled() natively.
- * This script appends idempotent glue code after the opennext build.
- *
- * Run: node scripts/inject-scheduled-handler.mjs
- * Called automatically by the `deploy` and `deploy:build` npm scripts.
- *
- * Idempotent: running twice produces same output (guards with marker comment).
- * Safe: if a mapped route file does not exist, the mapping is skipped.
- * Error handling: catches per-route, never throws out of scheduled().
+ * Idempotent: running twice produces the same output (guarded with marker).
+ * Fail-fast: build fails if any mapped route is missing; runtime scheduled()
+ * throws on missing CRON_SECRET, HTTP non-2xx responses, or dispatch errors.
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const appRoot = join(__dirname, '..');
 
 const workerPath = join(appRoot, '.open-next', 'worker.js');
-const IDEMPOTENCY_MARKER = '/* __SCHEDULED_HANDLER_INJECTED__ */';
+export const IDEMPOTENCY_MARKER = '/* __SCHEDULED_HANDLER_INJECTED__ */';
 
-// ---------------------------------------------------------------------------
-// Cron pattern → route(s) mapping.
-// Key: exact cron expression string (must match wrangler.jsonc triggers.crons).
-// Value: array of route path strings (relative to /api/).
-// Routes are verified below — missing routes are skipped with a warning.
-// ---------------------------------------------------------------------------
-const CRON_ROUTES = {
+// Cron pattern -> route(s) mapping.
+// Keys use single quotes to preserve compatibility with ci-check-cron-alignment.sh.
+export const CRON_ROUTES = {
   '* * * * *': [
     '/api/cron/workflow-stepper',
   ],
@@ -58,7 +49,6 @@ const CRON_ROUTES = {
     '/api/cron/creative-quality-drift-scan',
   ],
   '5 * * * *': [
-    '/api/cron/usage-export',
     '/api/cron/hourly-rollup',
   ],
   '7 * * * *': [
@@ -76,7 +66,7 @@ const CRON_ROUTES = {
     '/api/cron/promo-trial-expiry',
     '/api/cron/status-rollup',
     '/api/cron/promo-cleanup',
-  '/api/cron/pending-orders-cleanup',
+    '/api/cron/pending-orders-cleanup',
   ],
   '0 0 1 * *': [
     '/api/cron/mcu-monthly-reset',
@@ -118,170 +108,227 @@ const CRON_ROUTES = {
   ],
 };
 
-// ---------------------------------------------------------------------------
-// Verify route files exist in the Next.js source tree before including.
-// Prevents stale mappings from causing runtime errors.
-// ---------------------------------------------------------------------------
-function routeExists(route) {
-  // Strip leading /api/cron/ to get dir name
+export function routeExists(route, rootDir = appRoot) {
+  if (typeof route !== 'string' || !/^\/api\/cron\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/i.test(route)) {
+    return false;
+  }
   const segments = route.replace(/^\/api\/cron\//, '');
-  const routeFile = join(appRoot, 'src', 'app', 'api', 'cron', segments, 'route.ts');
+  const routeFile = join(rootDir, 'src', 'app', 'api', 'cron', segments, 'route.ts');
   return existsSync(routeFile);
 }
 
-function buildVerifiedRouteMap() {
+export function buildVerifiedRouteMap(routeMap = CRON_ROUTES, rootDir = appRoot) {
+  if (!routeMap || typeof routeMap !== 'object') {
+    throw new Error('Cron route map must be a non-empty object.');
+  }
+
+  const entries = Object.entries(routeMap);
+  if (entries.length === 0) {
+    throw new Error('No cron route patterns configured.');
+  }
+
   const verified = {};
-  for (const [pattern, routes] of Object.entries(CRON_ROUTES)) {
-    const live = [];
+  const missingRoutes = [];
+
+  for (const [pattern, routes] of entries) {
+    if (typeof pattern !== 'string' || pattern.trim().length === 0) {
+      throw new Error('Cron pattern key must be a non-empty string.');
+    }
+    if (!Array.isArray(routes) || routes.length === 0) {
+      throw new Error(`Cron pattern "${pattern}" has no configured routes.`);
+    }
+
     for (const route of routes) {
-      if (routeExists(route)) {
-        live.push(route);
-      } else {
-        console.warn(`[inject-scheduled] WARNING: route not found, skipping: ${route}`);
+      if (!routeExists(route, rootDir)) {
+        missingRoutes.push(`${pattern} -> ${String(route)}`);
       }
     }
-    if (live.length > 0) {
-      verified[pattern] = live;
-    } else {
-      console.warn(`[inject-scheduled] WARNING: no live routes for pattern "${pattern}" — skipping`);
-    }
+    verified[pattern] = [...routes];
   }
+
+  if (missingRoutes.length > 0) {
+    throw new Error(`Missing cron route file(s): ${missingRoutes.join(', ')}`);
+  }
+
   return verified;
 }
 
-// ---------------------------------------------------------------------------
-// Build the JS snippet to append to worker.js.
-// Uses the existing `default` export (fetch handler) to dispatch internal
-// requests. ctx.waitUntil() ensures fire-and-forget parallel dispatch.
-// ---------------------------------------------------------------------------
-function buildScheduledSnippet(verifiedMap) {
-  // Serialize the verified map as a JS object literal
+export function assertCronAlignment(routeMap, rootDir = appRoot) {
+  const config = readFileSync(join(rootDir, 'wrangler.toml'), 'utf8');
+  const triggers = config.match(/^\[triggers\]\s*\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m)?.[1];
+  const cronArray = triggers?.match(/^crons\s*=\s*(\[[\s\S]*?\])/m)?.[1];
+  if (!cronArray) throw new Error('Missing triggers.crons in wrangler.toml.');
+  const crons = JSON.parse(cronArray);
+  const configured = new Set(crons);
+  const mapped = new Set(Object.keys(routeMap));
+  const unmapped = [...configured].filter((cron) => !mapped.has(cron));
+  const unscheduled = [...mapped].filter((cron) => !configured.has(cron));
+  if (unmapped.length || unscheduled.length) {
+    throw new Error(`Cron alignment failed: unmapped triggers [${unmapped.join(', ')}]; unscheduled handlers [${unscheduled.join(', ')}]`);
+  }
+}
+
+export function buildScheduledSnippet(verifiedMap) {
   const mapEntries = Object.entries(verifiedMap)
     .map(([pattern, routes]) => {
-      const routeList = routes.map(r => JSON.stringify(r)).join(', ');
+      const routeList = routes.map((r) => JSON.stringify(r)).join(', ');
       return `  ${JSON.stringify(pattern)}: [${routeList}]`;
     })
     .join(',\n');
 
   return `
 ${IDEMPOTENCY_MARKER}
-// Cron route map (post-build inject) — patterns must match wrangler.jsonc triggers.crons.
+// Cron route map (post-build inject) — patterns must match wrangler triggers.crons.
 const __cronRouteMap = {
 ${mapEntries}
 };
 
-// Scheduled handler logic — exposed via default export property attachment below.
 async function __cronScheduledHandler(event, env, ctx) {
-  console.log('[scheduled] FIRE cron=' + event.cron + ' has_secret=' + !!env.CRON_SECRET);
-  const routes = __cronRouteMap[event.cron] ?? [];
+  const cronPattern = typeof event?.cron === 'string' ? event.cron : '';
+  const hasSecret = Boolean(env && typeof env.CRON_SECRET === 'string' && env.CRON_SECRET.trim().length > 0);
+  console.log('[scheduled] FIRE cron=' + cronPattern + ' has_secret=' + hasSecret);
 
+  if (!hasSecret) {
+    throw new Error('[scheduled] CRON_SECRET is missing or empty; refusing to dispatch cron routes.');
+  }
+
+  const routes = __cronRouteMap[cronPattern] ?? [];
   if (routes.length === 0) {
-    console.log('[scheduled] No handler for cron pattern:', event.cron);
+    console.warn('[scheduled] No handler mapped for cron pattern:', cronPattern);
     return;
   }
 
-  if (!env.CRON_SECRET) {
-    console.error('[scheduled] CRON_SECRET is not set — skipping all dispatches. Run scripts/set-cron-secret.sh before deploying.');
-    return;
-  }
+  const host = typeof env.HOSTNAME === 'string' && env.HOSTNAME.trim().length > 0
+    ? env.HOSTNAME.trim()
+    : 'sophia.agencyos.network';
 
-  const host = env.HOSTNAME ?? 'sophia.agencyos.network';
+  const runPromise = (async () => {
+    const results = await Promise.allSettled(
+      routes.map(async (route) => {
+        const url = 'https://' + host + route;
+        const req = new Request(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + env.CRON_SECRET,
+          },
+        });
 
-  const dispatches = routes.map(async (route) => {
-    const url = 'https://' + host + route;
-    const req = new Request(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + env.CRON_SECRET,
-      },
-    });
+        let res;
+        try {
+          const binding = env.WORKER_SELF_REFERENCE;
+          res = binding && typeof binding.fetch === 'function'
+            ? await binding.fetch(req)
+            : await fetch(req);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new Error(route + ' dispatch failed: ' + message, { cause: err });
+        }
 
-    try {
-      const binding = env.WORKER_SELF_REFERENCE;
-      const res = binding && typeof binding.fetch === 'function'
-        ? await binding.fetch(req)
-        : await fetch(req);
-      console.log('[scheduled] ' + route + ' → ' + res.status);
-    } catch (err) {
-      console.error('[scheduled] Error dispatching ' + route + ':', err?.message ?? String(err));
+        if (!res || typeof res.status !== 'number') {
+          throw new Error(route + ' returned an invalid HTTP response');
+        }
+
+        if (res.body && typeof res.body.cancel === 'function') {
+          await res.body.cancel().catch(() => {});
+        }
+
+        const isOk = res.status >= 200 && res.status < 300;
+        if (!isOk) {
+          throw new Error(route + ' failed with HTTP ' + res.status);
+        }
+
+        console.log('[scheduled] ' + route + ' -> ' + res.status);
+        return res.status;
+      })
+    );
+
+    const failures = results
+      .filter((r) => r.status === 'rejected')
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+
+    if (failures.length > 0) {
+      console.error('[scheduled] Cron handler failures:', failures);
+      throw new Error(
+        '[scheduled] ' + failures.length + ' of ' + routes.length +
+        ' cron route(s) failed for "' + cronPattern + '": ' + failures.join('; ')
+      );
     }
-  });
+  })();
 
-  ctx.waitUntil(
-    Promise.allSettled(dispatches).then((results) => {
-      const failures = results.filter((r) => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.error('[scheduled] Cron handler failures:', failures.map((f) => f.reason?.message ?? String(f.reason)));
-        throw new Error(\`\${failures.length} cron handler(s) failed\`);
-      }
-    })
-  );
+  if (ctx && typeof ctx.waitUntil === 'function') {
+    ctx.waitUntil(runPromise.catch(() => {}));
+  }
+
+  await runPromise;
 }
 
-// CRITICAL: CF Workers Modules format requires scheduled() to be a method ON the
-// default export object, not a separate named export. Attach at module-load time.
-// Using ESM-compatible mutation via globalThis.__defaultRef set during build is
-// not feasible here — instead we re-export a wrapped default below.
-// Workaround: also export named scheduled (some toolchains pick this up) and
-// rely on the wrapper at end of file that overrides default export.
 export async function scheduled(event, env, ctx) {
   return __cronScheduledHandler(event, env, ctx);
 }
 `;
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-function main() {
-  if (!existsSync(workerPath)) {
-    console.error(`[inject-scheduled] ERROR: worker.js not found at ${workerPath}`);
-    console.error('[inject-scheduled] Run `npm run deploy:build` (next build + opennext build) first.');
-    process.exit(1);
+export function injectScheduledHandler({
+  workerFilePath = workerPath,
+  routeMap = CRON_ROUTES,
+  rootDir = appRoot,
+} = {}) {
+  if (!existsSync(workerFilePath)) {
+    throw new Error(
+      `worker.js not found at ${workerFilePath}. Run \`npm run deploy:build\` first.`
+    );
   }
 
-  const content = readFileSync(workerPath, 'utf8');
-
+  const verifiedMap = buildVerifiedRouteMap(routeMap, rootDir);
+  assertCronAlignment(verifiedMap, rootDir);
+  const content = readFileSync(workerFilePath, 'utf8');
   if (content.includes(IDEMPOTENCY_MARKER)) {
-    console.log('[inject-scheduled] Already injected — skipping (idempotent).');
-    return;
+    return { injected: false, patternCount: 0, routeCount: 0 };
   }
 
-  const verifiedMap = buildVerifiedRouteMap();
   const patternCount = Object.keys(verifiedMap).length;
   const routeCount = Object.values(verifiedMap).flat().length;
-
-  if (patternCount === 0) {
-    console.error('[inject-scheduled] ERROR: No valid cron route mappings — aborting.');
-    process.exit(1);
-  }
-
   const snippet = buildScheduledSnippet(verifiedMap);
 
-  // CRITICAL: scheduled() must be a method ON default export object, not a named export.
-  // Inject the cron map + handler function, then modify default export to include scheduled property.
   const defaultExportRegex = /(export default \{[\s\S]*?)(\n\};)/m;
-  const match = content.match(defaultExportRegex);
-  if (!match) {
-    console.error('[inject-scheduled] ERROR: could not find `export default { ... };` block in worker.js');
-    process.exit(1);
+  if (!defaultExportRegex.test(content)) {
+    throw new Error('Could not find `export default { ... };` block in worker.js.');
   }
 
-  const modifiedContent = content.replace(
-    defaultExportRegex,
-    (_, before, after) => {
-      // If `before` already ends with `,` (object literal trailing comma), don't add another
-      const needsComma = !/,\s*$/.test(before);
-      const sep = needsComma ? ',\n    ' : '\n    ';
-      const prop = `${sep}async scheduled(event, env, ctx) { return __cronScheduledHandler(event, env, ctx); }`;
-      return `${before}${prop}${after}`;
-    }
-  );
+  const modifiedContent = content.replace(defaultExportRegex, (_, before, after) => {
+    const needsComma = !/,\s*$/.test(before);
+    const sep = needsComma ? ',\n    ' : '\n    ';
+    const prop = `${sep}async scheduled(event, env, ctx) { return __cronScheduledHandler(event, env, ctx); }`;
+    return `${before}${prop}${after}`;
+  });
 
-  writeFileSync(workerPath, modifiedContent + snippet, 'utf8');
-
-  console.log(`[inject-scheduled] Injected scheduled() handler into default export: ${patternCount} patterns, ${routeCount} routes.`);
-  console.log('[inject-scheduled] Done.');
+  writeFileSync(workerFilePath, modifiedContent + snippet, 'utf8');
+  return { injected: true, patternCount, routeCount };
 }
 
-main();
+function main() {
+  try {
+    const result = injectScheduledHandler();
+    if (!result.injected) {
+      console.log('[inject-scheduled] Already injected — skipping (idempotent).');
+      return;
+    }
+    console.log(
+      `[inject-scheduled] Injected scheduled() handler into default export: ${result.patternCount} patterns, ${result.routeCount} routes.`
+    );
+    console.log('[inject-scheduled] Done.');
+  } catch (err) {
+    console.error('[inject-scheduled] ERROR:', err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+}
+
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : '';
+const isMainModule =
+  invokedPath !== '' &&
+  (invokedPath === __filename ||
+    (existsSync(invokedPath) && realpathSync(invokedPath) === realpathSync(__filename)));
+
+if (isMainModule) {
+  main();
+}

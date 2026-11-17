@@ -41,11 +41,18 @@ export const POST = withRateLimit(async function POST(request: Request) {
     // Run ingestion
     const results = await runIngestion(networks)
 
+    // Keep completed writes and sibling results; any error makes the run fail.
+    // Report partial completion explicitly; callers must not assume rollback or retry here.
+    const outcomes = Object.values(results)
+    const hasFailures = outcomes.some(result => result.failed > 0 || result.errors.length > 0)
+    const partial = hasFailures && outcomes.some(result => result.processed > 0)
+
     return NextResponse.json({
-      success: true,
+      success: !hasFailures,
+      partial,
       timestamp: new Date().toISOString(),
       results
-    })
+    }, { status: hasFailures ? 502 : 200 })
   } catch (error) {
     return NextResponse.json(
       { success: false, error: toError(error).message },
