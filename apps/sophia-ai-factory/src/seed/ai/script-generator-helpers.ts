@@ -28,6 +28,8 @@ export type ApiKeyResolver = (
 
 export interface ScriptGenDeps {
   resolveUserApiKey?: ApiKeyResolver;
+  /** Explicit customer funding bypasses platform fallback and demo output. */
+  funding?: { fund: 'byok'; apiKey: string };
   trackUsage?: (data: Record<string, unknown>) => Promise<void>;
   hashLicenseKey?: (key: string) => string;
   startTimer?: () => () => number;

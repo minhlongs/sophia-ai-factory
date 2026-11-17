@@ -8,6 +8,8 @@ import { generateScript, selectModelForTier } from "@/seed/ai/script-generator";
 import { getScriptSteeringForUser } from "@/land/growth-v16/prior-script-bridge";
 import { logger } from "@/seed/utils/logger-utility";
 import type { Tier } from "@/seed/types";
+import { lookupUserApiKey } from "@/tree/byok/user-api-key-store";
+import { ProviderInvalidKeyError, ProviderQuotaExceededError } from "@/seed/services/errors";
 
 const TIER_RANK: Record<Tier, number> = {
   BASIC: 0,
@@ -60,6 +62,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   const model = selectModelForTier(effectiveTier);
 
   try {
+    const key = await lookupUserApiKey(user.id, 'openrouter');
+    if (key.status === 'NOT_CONFIGURED' || (key.status === 'FOUND' && !key.key.trim())) {
+      return NextResponse.json({
+        error: 'Connect your OpenRouter key in Settings before generating a script. / Kết nối khóa OpenRouter trong Cài đặt trước khi tạo kịch bản.',
+        code: 'OPENROUTER_KEY_REQUIRED',
+      }, { status: 422 });
+    }
+    if (key.status !== 'FOUND') {
+      return NextResponse.json({
+        error: 'Your OpenRouter key is unavailable. Reconnect it in Settings or retry later. / Khóa OpenRouter chưa khả dụng. Kết nối lại trong Cài đặt hoặc thử lại sau.',
+        code: 'OPENROUTER_KEY_UNAVAILABLE',
+      }, { status: 503 });
+    }
+
     log.info("Script generation started", { userId: user.id, tier: effectiveTier, topic });
 
     const steering = await getScriptSteeringForUser(user.id, topic, audience).catch(() => undefined);
@@ -70,7 +86,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       tier: effectiveTier,
       userId: user.id,
       steering,
-    });
+    }, { funding: { fund: 'byok', apiKey: key.key } });
 
     if (script.scenes.length < 2) {
       throw new Error("Generator returned insufficient scenes");
@@ -97,6 +113,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     });
   } catch (error) {
+    if (error instanceof ProviderInvalidKeyError) {
+      return NextResponse.json({
+        error: 'OpenRouter rejected your key. Reconnect it in Settings. / OpenRouter từ chối khóa của bạn. Kết nối lại trong Cài đặt.',
+        code: 'OPENROUTER_KEY_INVALID',
+      }, { status: 422 });
+    }
+    if (error instanceof ProviderQuotaExceededError) {
+      return NextResponse.json({
+        error: 'Your OpenRouter credits are exhausted. Add credits with your provider and retry. / Tín dụng OpenRouter đã hết. Nạp thêm tại nhà cung cấp rồi thử lại.',
+        code: 'OPENROUTER_CREDITS_EXHAUSTED',
+      }, { status: 402 });
+    }
     log.error(
       "Script generation failed",
       error instanceof Error ? error : new Error(String(error)),
