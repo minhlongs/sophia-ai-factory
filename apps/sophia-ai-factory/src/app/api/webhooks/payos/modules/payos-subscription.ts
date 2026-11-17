@@ -199,10 +199,14 @@ export async function activatePayOsSubscription(params: {
           OR (?10 = 0 AND EXISTS (SELECT 1 FROM organizations WHERE id = ?11)
             AND EXISTS (SELECT 1 FROM org_members WHERE org_id = ?11 AND user_id = ?5)
             AND (SELECT COUNT(*) FROM subscriptions WHERE org_id = ?11) = ?12
-            AND (?12 = 0 OR EXISTS (SELECT 1 FROM subscriptions WHERE id = ?13 AND org_id = ?11))))`)
+            AND (?12 = 0 OR EXISTS (SELECT 1 FROM subscriptions WHERE id = ?13 AND org_id = ?11
+              AND tier IS ?14 AND plan IS ?15 AND status IS ?16
+              AND current_period_start IS ?17 AND current_period_end IS ?18))))`)
       .bind(eventId, lockCreatedAt, order.order_id, paymentLinkId, userId,
         tier, order.period, order.amount_usd_cents, order.amount_vnd ?? null,
-        createdOrg ? 1 : 0, orgId, subscriptionState.count, subscriptionState.id),
+        createdOrg ? 1 : 0, orgId, subscriptionState.count, subscriptionState.id,
+        subscriptionState.tier ?? null, subscriptionState.plan ?? null, subscriptionState.status ?? null,
+        subscriptionState.current_period_start ?? null, subscriptionState.current_period_end ?? null),
   ];
 
   if (createdOrg) {
@@ -249,40 +253,36 @@ export async function activatePayOsSubscription(params: {
   let mcuStatementStartIdx = -1;
   const mcuGrant = resolvePayOsInitialMcuGrant(tier, order.period);
   if (mcuGrant > 0) {
-    try {
-      const nowSec = Math.floor(nowMs / 1000);
-      const paymentRef = `payos_order_${order.order_id}`;
-      const txStmt = rawDb
-        .prepare(
-          `INSERT INTO mcu_transactions (user_id, delta, reason, metadata, payment_reference)
-           SELECT ?1, ?2, 'PAYOS_SUBSCRIPTION_ACTIVATION', ?3, ?4
-           WHERE ${lockExists}
-           ON CONFLICT(payment_reference) WHERE payment_reference IS NOT NULL DO NOTHING`,
-        )
-        .bind(
-          userId,
-          mcuGrant,
-          JSON.stringify({ orderId: order.order_id, tier, period: order.period ?? 'monthly', amountVnd: order.amount_vnd ?? null }),
-          paymentRef,
-          eventId,
-          lockCreatedAt,
-        );
-      const balStmt = rawDb
-        .prepare(
-          `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
-           SELECT ?1, ?2, ?2, ?3
-           WHERE changes() = 1 AND ${lockExists}
-           ON CONFLICT(user_id) DO UPDATE SET
-             credits_remaining = credits_remaining + excluded.credits_remaining,
-             credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
-             updated_at = excluded.updated_at`,
-        )
-        .bind(userId, mcuGrant, nowSec, eventId, lockCreatedAt);
-      mcuStatementStartIdx = statements.length;
-      statements.push(txStmt, balStmt);
-    } catch {
-      mcuStatementStartIdx = -1;
-    }
+    const nowSec = Math.floor(nowMs / 1000);
+    const paymentRef = `payos_order_${order.order_id}`;
+    const txStmt = rawDb
+      .prepare(
+        `INSERT INTO mcu_transactions (user_id, delta, reason, metadata, payment_reference)
+         SELECT ?1, ?2, 'PAYOS_SUBSCRIPTION_ACTIVATION', ?3, ?4
+         WHERE ${lockExists}
+         ON CONFLICT(payment_reference) WHERE payment_reference IS NOT NULL DO NOTHING`,
+      )
+      .bind(
+        userId,
+        mcuGrant,
+        JSON.stringify({ orderId: order.order_id, tier, period: order.period ?? 'monthly', amountVnd: order.amount_vnd ?? null }),
+        paymentRef,
+        eventId,
+        lockCreatedAt,
+      );
+    const balStmt = rawDb
+      .prepare(
+        `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
+         SELECT ?1, ?2, ?2, ?3
+         WHERE changes() = 1 AND ${lockExists}
+         ON CONFLICT(user_id) DO UPDATE SET
+           credits_remaining = credits_remaining + excluded.credits_remaining,
+           credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
+           updated_at = excluded.updated_at`,
+      )
+      .bind(userId, mcuGrant, nowSec, eventId, lockCreatedAt);
+    mcuStatementStartIdx = statements.length;
+    statements.push(txStmt, balStmt);
   }
 
   statements.push(

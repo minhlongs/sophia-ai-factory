@@ -104,7 +104,13 @@ function createSqliteHarness() {
   }
   sqlite.exec('PRAGMA foreign_keys = ON;');
 
+  const hooks: { beforeBatch?: () => Promise<void> | void; failMcu?: 'prepare' | 'bind' } = {};
   function prepare(sql: string) {
+    const isMcu = sql.includes('INSERT INTO mcu_transactions');
+    if (isMcu && hooks.failMcu === 'prepare') {
+      hooks.failMcu = undefined;
+      throw new Error('forced MCU prepare failure');
+    }
     let highest = 0;
     const normalized = sql.replace(/\?(\d*)/g, (_, index: string) => {
       highest = index ? Math.max(highest, Number(index)) : highest + 1;
@@ -116,6 +122,10 @@ function createSqliteHarness() {
       Object.fromEntries(values.map((v, idx) => [String(idx + 1), v === undefined ? null : v]));
     return {
       bind(...args: SQLInputValue[]) {
+        if (isMcu && hooks.failMcu === 'bind') {
+          hooks.failMcu = undefined;
+          throw new Error('forced MCU bind failure');
+        }
         values = args;
         return this;
       },
@@ -147,6 +157,7 @@ function createSqliteHarness() {
   const rawDb = {
     prepare,
     async batch(statements: ReturnType<typeof prepare>[]) {
+      await hooks.beforeBatch?.();
       if (failNextBatch) {
         failNextBatch = false;
         throw new Error('D1 transient write outage');
@@ -241,6 +252,7 @@ function createSqliteHarness() {
     sqlite,
     rawDb,
     dbClient,
+    hooks,
     setFailNextBatch(val: boolean) {
       failNextBatch = val;
     },
@@ -333,6 +345,63 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
         BASE_ISO,
       );
   }
+
+  it.each(['prepare', 'bind'] as const)('fails closed on the first MCU %s failure and grants exactly once on retry', async (stage) => {
+    seedPilotOrder();
+    const signed = await signPayOsBody(buildIpnPayload());
+    const deliver = () => postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    harness.hooks.failMcu = stage;
+    const failed = await deliver();
+    expect(failed.status).toBe(500);
+    expect(await failed.json()).toEqual({ error: `Activation failed: forced MCU ${stage} failure` });
+    for (const table of ['organizations', 'org_members', 'subscriptions', 'payment_events', 'mcu_transactions', 'user_mcu_balance']) {
+      expect(harness.rows(table)).toEqual([]);
+    }
+    expect(harness.rows('pending_orders')[0]).toMatchObject({ status: 'pending', payment_id: null });
+    expect((await deliver()).status).toBe(200);
+    expect(harness.rows('subscriptions')[0]).toMatchObject({ current_period_end: PLUS_14D_ISO });
+    expect(harness.rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: 500 });
+    expect(harness.rows('mcu_transactions')).toHaveLength(1);
+  });
+
+  it.each(['upgrade', 'renewal'] as const)('rejects a concurrent same-row %s and recomputes entitlement on retry', async (change) => {
+    harness.sqlite.exec(`
+      INSERT INTO organizations(id,name,slug,plan) VALUES ('org_race','Race','race','basic');
+      INSERT INTO org_members(org_id,user_id,role) VALUES ('org_race','u_pilot','owner');
+      INSERT INTO subscriptions(id,org_id,user_id,tier,plan,status,current_period_start,current_period_end)
+      VALUES ('sub_race','org_race','u_pilot','BASIC','basic','active','2026-11-01T00:00:00.000Z','2026-11-25T00:00:00.000Z');
+    `);
+    seedPilotOrder();
+    const signed = await signPayOsBody(buildIpnPayload());
+    const deliver = () => postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    const snapshot = () => Object.fromEntries(['organizations', 'org_members', 'subscriptions', 'pending_orders', 'mcu_transactions', 'user_mcu_balance'].map((table) => [table, harness.rows(table)]));
+    let concurrentState: ReturnType<typeof snapshot> | undefined;
+    harness.hooks.beforeBatch = async () => {
+      harness.hooks.beforeBatch = undefined;
+      if (change === 'upgrade') {
+        harness.sqlite.exec("UPDATE subscriptions SET tier = 'PREMIUM', plan = 'premium', current_period_end = '2026-12-05T00:00:00.000Z' WHERE id = 'sub_race'; UPDATE organizations SET plan = 'premium' WHERE id = 'org_race';");
+      } else {
+        seedPilotOrder({ orderId: 'pilot_second', paymentLinkId: 'plink_second', orderCode: 880012 });
+        const second = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
+          method: 'POST', body: await signPayOsBody(buildIpnPayload({ paymentLinkId: 'plink_second', orderCode: 880012 })),
+        }));
+        expect(second.status).toBe(200);
+      }
+      concurrentState = snapshot();
+    };
+    const conflict = await deliver();
+    expect(conflict.status).toBe(500);
+    expect(await conflict.json()).toMatchObject({ error: expect.stringContaining('unexpected number of rows') });
+    expect(snapshot()).toEqual(concurrentState);
+    expect(harness.rows('payment_events').some((row) => row.event_id === 'payos_plink_pilot_01')).toBe(false);
+    expect((await deliver()).status).toBe(200);
+    expect(harness.rows('subscriptions')[0]).toMatchObject({
+      tier: change === 'upgrade' ? 'PREMIUM' : 'BASIC',
+      current_period_end: change === 'upgrade' ? '2026-12-05T00:00:00.000Z' : '2026-12-23T00:00:00.000Z',
+    });
+    expect(harness.rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: change === 'upgrade' ? 500 : 1000 });
+    expect(harness.rows('mcu_transactions')).toHaveLength(change === 'upgrade' ? 1 : 2);
+  });
 
   it('Scenario 1 & 8: Valid payment grants BASIC for exact +14d window, and expires cleanly at +14d + 1s', async () => {
     seedPilotOrder();
