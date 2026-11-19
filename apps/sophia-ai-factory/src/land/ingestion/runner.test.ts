@@ -112,6 +112,18 @@ describe('runIngestion', () => {
     expect(results['shareasale'].total).toBe(0)
   })
 
+  it('reports every network failure without aborting sibling attempts', async () => {
+    mockFetchProductsCB.mockRejectedValue(new TypeError('ClickBank unavailable'))
+    mockFetchProductsSAS.mockRejectedValue(new TypeError('ShareASale unavailable'))
+
+    const results = await runIngestion()
+
+    expect(results.clickbank.errors).toEqual(['ClickBank unavailable'])
+    expect(results.shareasale.errors).toEqual(['ShareASale unavailable'])
+    expect(mockUpsertProductsCB).not.toHaveBeenCalled()
+    expect(mockUpsertProductsSAS).not.toHaveBeenCalled()
+  })
+
   it('should handle empty network list', async () => {
     const results = await runIngestion([])
 

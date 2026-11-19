@@ -35,6 +35,10 @@ vi.mock("next/server", async (importOriginal) => {
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { generateScript } from "@/seed/ai/script-generator";
+import { lookupUserApiKey } from "@/tree/byok/user-api-key-store";
+import { ProviderInvalidKeyError, ProviderQuotaExceededError } from "@/seed/services/errors";
+
+vi.mock("@/tree/byok/user-api-key-store", () => ({ lookupUserApiKey: vi.fn() }));
 
 interface MockResponse {
   body: Record<string, unknown>;
@@ -78,6 +82,53 @@ function makeRawRequest(rawBody: string): Request {
 describe("POST /api/scripts/generate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(lookupUserApiKey).mockResolvedValue({ status: 'FOUND', key: 'customer-key' });
+  });
+
+  it('requires the authenticated customer key before generating, even with a platform key', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+    vi.mocked(lookupUserApiKey).mockResolvedValue({ status: 'NOT_CONFIGURED' });
+    const res = await POST(makeRequest({ topic: 'fitness', audience: 'beginners' })) as unknown as MockResponse;
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({ code: 'OPENROUTER_KEY_REQUIRED' });
+    expect(generateScript).not.toHaveBeenCalled();
+  });
+
+  it.each(['STORE_UNAVAILABLE', 'DECRYPT_FAILED', 'KEY_VERSION_UNSUPPORTED'] as const)(
+    'fails closed for key lookup status %s', async (status) => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+      vi.mocked(lookupUserApiKey).mockResolvedValue({ status });
+      const res = await POST(makeRequest({ topic: 'fitness', audience: 'beginners' })) as unknown as MockResponse;
+      expect(res.status).toBe(503);
+      expect(res.body).toMatchObject({ code: 'OPENROUTER_KEY_UNAVAILABLE' });
+      expect(generateScript).not.toHaveBeenCalled();
+    },
+  );
+
+  it('passes explicit customer funding with the session owner to the generator', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+    vi.mocked(generateScript).mockResolvedValue(mockScriptOutput);
+    await POST(makeRequest({ topic: 'fitness', audience: 'beginners', userId: 'victim' }));
+    expect(lookupUserApiKey).toHaveBeenCalledWith('user-abc', 'openrouter');
+    expect(generateScript).toHaveBeenCalledWith(expect.objectContaining({ userId: 'user-abc' }), {
+      funding: { fund: 'byok', apiKey: 'customer-key' },
+    });
+  });
+
+  it.each([
+    [new ProviderInvalidKeyError('openrouter', 'sensitive-provider-detail'), 422, 'OPENROUTER_KEY_INVALID'],
+    [new ProviderQuotaExceededError('openrouter', 'sensitive-provider-detail'), 402, 'OPENROUTER_CREDITS_EXHAUSTED'],
+  ] as const)('returns an actionable provider error without exposing upstream details', async (error, status, code) => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
+    vi.mocked(generateScript).mockRejectedValue(error);
+    const res = await POST(makeRequest({ topic: 'fitness', audience: 'beginners' })) as unknown as MockResponse;
+    expect(res.status).toBe(status);
+    expect(res.body).toMatchObject({ code });
+    expect(JSON.stringify(res.body)).not.toContain('sensitive-provider-detail');
   });
 
   it("returns 401 when not authenticated", async () => {

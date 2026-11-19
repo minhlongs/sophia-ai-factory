@@ -4,6 +4,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/org-resolver';
 import { deductCredits } from '@/tree/mcu/credits-repo';
 import { getCommand } from '@/tree/missions/command-registry';
 import { logger } from '@/seed/utils/logger-utility';
@@ -70,6 +71,33 @@ export async function dispatchMission(missionId: string): Promise<void> {
   }
 
   const params = parseMissionParams(missionId, mission.params);
+  let resolvedOrgId: string | null = null;
+  try {
+    resolvedOrgId = await resolveOrgId(mission.user_id);
+  } catch (err) {
+    logger.error('[Dispatcher] Failed to resolve trusted orgId', { missionId, err });
+    await failMission(db, missionId, 'org_resolution_failed');
+    return;
+  }
+
+  const callerOrgIds = [params.orgId, params.org_id]
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+    .map((v) => v.trim());
+  if (callerOrgIds.some((id) => id !== resolvedOrgId)) {
+    logger.warn('[Dispatcher] Rejected spoofed caller orgId', { missionId, userId: mission.user_id });
+    await failMission(db, missionId, 'unauthorized_org');
+    return;
+  }
+
+  const sanitizedParams: Record<string, unknown> = { ...params };
+  if (resolvedOrgId) {
+    sanitizedParams.orgId = resolvedOrgId;
+    sanitizedParams.org_id = resolvedOrgId;
+  } else {
+    delete sanitizedParams.orgId;
+    delete sanitizedParams.org_id;
+  }
+
   const creditsUsed = commandDef.credits;
 
   if (creditsUsed > 0) {
@@ -90,7 +118,8 @@ export async function dispatchMission(missionId: string): Promise<void> {
     db,
     mission,
     handler,
-    parsedParams: params,
+    parsedParams: sanitizedParams,
+    orgId: resolvedOrgId ?? undefined,
   });
 
   await finalizeMissionExecution({

@@ -82,8 +82,8 @@ export function verifyCsrfToken(request: NextRequest): boolean {
   return timingSafeEqual(cookieToken, headerToken)
 }
 
-/** Exact server-to-server webhook/callback paths outside /api/webhooks/* (authenticated via HMAC/signature, not browser cookies). */
-const CSRF_BYPASS_EXACT = new Set(['/api/payos/ipn', '/api/inngest'])
+/** Exact server-to-server webhook/callback paths outside /api/webhooks/* (authenticated via request signature or bearer secret, not browser cookies). */
+const CSRF_BYPASS_EXACT = new Set(['/api/payos/ipn', '/api/inngest', '/api/ingestion/trigger'])
 
 /** Determine whether a request needs CSRF validation. */
 export function requiresCsrfCheck(pathname: string, method: string): boolean {

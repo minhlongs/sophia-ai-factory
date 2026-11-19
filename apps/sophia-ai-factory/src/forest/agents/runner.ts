@@ -8,13 +8,12 @@ import type { Tier } from '@/seed/types';
 import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
 import { getTask, getAgentById, updateTaskResult } from './repository';
 import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import {
   resolveAgentVariantConfig,
   recordAgentRunSuccess,
   recordAgentRunFailure,
 } from './agent-runner-helpers';
-
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 /**
  * Executes an agent task
@@ -37,13 +36,15 @@ export async function runAgent(taskId: string, orgId: string, userTier: string):
     throw err;
   }
 
-  if (!OPENROUTER_API_KEY) {
+  // Fail closed to org BYOK — never spend platform OPENROUTER_API_KEY on customer agent runs.
+  const openRouterKey = await resolveUserApiKey(orgId, 'openrouter');
+  if (!openRouterKey) {
     await updateTaskResult(taskId, orgId, {
       status: 'failed',
       output: '',
-      errorMessage: 'OPENROUTER_API_KEY not configured',
+      errorMessage: 'OpenRouter BYOK API key not configured',
     });
-    throw new Error('OPENROUTER_API_KEY environment variable is required');
+    throw new Error('OpenRouter BYOK API key is required to run agent tasks');
   }
 
   const messages = [
@@ -66,7 +67,7 @@ export async function runAgent(taskId: string, orgId: string, userTier: string):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${openRouterKey}`,
         'HTTP-Referer': process.env.APP_URL || 'https://sophia.agencyos.network',
         'X-Title': 'Sophia AI Factory',
       },

@@ -1,3 +1,4 @@
+import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { D1Database } from '@cloudflare/workers-types';
 import { logger } from '@/seed/utils/logger-utility';
 import type { D1Client } from '@/seed/db/client';
@@ -20,6 +21,8 @@ export interface ActivateTierParams {
   paymentLinkId: string;
   amount: number;
   eventId: string;
+  lockCreatedAt: string;
+  order: PendingOrder;
 }
 
 export async function activatePayOsTier({
@@ -29,6 +32,8 @@ export async function activatePayOsTier({
   paymentLinkId,
   amount,
   eventId,
+  lockCreatedAt,
+  order,
 }: ActivateTierParams): Promise<{ ok: true } | { ok: false; error: string; status: number }> {
   const validation = await findAndValidatePayOsOrder({
     db,
@@ -56,6 +61,8 @@ export async function activatePayOsTier({
     now,
     orderCode,
     orderId,
+    amount,
+    eventId, lockCreatedAt, order,
   });
 
   await runPayOsPostActivationEffects({
@@ -72,7 +79,6 @@ export async function activatePayOsTier({
     subaccountId,
   });
 
-  await db.from('payos_events').update({ processed: 1, amount }).eq('event_id', eventId);
   logger.info('[PayOS IPN] Tier activated', { userId, orgId, tier, orderCode, amount });
   return { ok: true };
 }

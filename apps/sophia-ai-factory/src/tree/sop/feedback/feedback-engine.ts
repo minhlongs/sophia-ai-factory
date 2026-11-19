@@ -56,11 +56,8 @@ async function processSingleFeedbackCycle(cycle: FeedbackCycle, db: D1Database):
   const stepsWithPrompts = parseStepsFromTemplate(template.steps_json);
   if (stepsWithPrompts.length === 0) return;
 
-  const openRouterKey = await resolveUserApiKey(
-    cycle.userId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY,
-  );
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on customer feedback cycles.
+  const openRouterKey = await resolveUserApiKey(cycle.userId, 'openrouter');
   if (!openRouterKey) return;
 
   const optimizations = await requestLlmOptimizations({

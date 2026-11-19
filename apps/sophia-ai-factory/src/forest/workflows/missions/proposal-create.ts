@@ -10,6 +10,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
 
 const PROPOSAL_SYSTEM_PROMPT = `You are an expert business proposal writer.
@@ -22,11 +23,12 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const clientName = (params?.client_name as string) ?? 'Valued Client';
   const title = (params?.title as string) ?? `Business Proposal for ${clientName}`;
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on customer mission proposals.
+  const apiKey = await resolveUserApiKey(userId, 'openrouter');
   if (!apiKey) {
     return {
       ok: false,
-      error: 'OpenRouter API key not configured. Set OPENROUTER_API_KEY in Settings > Integrations.',
+      error: 'OpenRouter BYOK API key not configured. Add your OpenRouter key in Settings > Integrations.',
     };
   }
 

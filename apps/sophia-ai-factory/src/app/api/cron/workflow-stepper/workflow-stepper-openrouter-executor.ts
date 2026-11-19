@@ -20,11 +20,8 @@ export async function callOpenRouterWithByok(
   stepType: string,
 ): Promise<LlmCallResult> {
   const ownerUserId = await resolveOrgOwnerUserId(workflow.org_id)
-  const openrouterKey = await resolveUserApiKey(
-    ownerUserId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY,
-  )
+  // Fail closed to org owner's BYOK key — never spend platform OPENROUTER_API_KEY on customer workflows.
+  const openrouterKey = await resolveUserApiKey(ownerUserId, 'openrouter')
 
   if (!openrouterKey) {
     logger.warn('[workflow-stepper] OPENROUTER_API_KEY not set, falling back to mock', {

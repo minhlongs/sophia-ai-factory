@@ -81,11 +81,8 @@ export async function translateScript(
   // Soft cap so we never spend more than the user expected on a single call.
   const safeText = text.length > MAX_INPUT_CHARS ? text.slice(0, MAX_INPUT_CHARS) : text;
 
-  const keyOrNull = await resolveUserApiKey(
-    input.userId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY ?? undefined,
-  );
+  // Fail closed to customer BYOK — never silently fall back to platform OPENROUTER_API_KEY.
+  const keyOrNull = await resolveUserApiKey(input.userId, 'openrouter');
   if (!keyOrNull) {
     throw new TranslateConfigurationError(
       'BYOK_REQUIRED',
@@ -95,7 +92,7 @@ export async function translateScript(
 
   const model = input.model ?? DEFAULT_MODEL;
   const tone = input.tone ?? 'natural';
-  const source: 'user' | 'platform' = process.env.OPENROUTER_API_KEY === keyOrNull ? 'platform' : 'user';
+  const source: 'user' | 'platform' = 'user';
 
   try {
     const content = await resilientChatCompletion(

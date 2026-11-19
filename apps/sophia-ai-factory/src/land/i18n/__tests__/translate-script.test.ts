@@ -91,9 +91,9 @@ describe('translateScript', () => {
     expect(result.charsIn).toBeLessThanOrEqual(8000);
   });
 
-  it('marks source=platform when env key is used', async () => {
+  it('never passes platform OPENROUTER_API_KEY as fallback and marks source=user', async () => {
     process.env.OPENROUTER_API_KEY = 'env-key';
-    mockResolveUserApiKey.mockResolvedValue('env-key'); // BYOK off case
+    mockResolveUserApiKey.mockResolvedValue('user-or-key');
     stubFetch({ choices: [{ message: { content: 'translated' } }] });
     const result = await translateScript({
       userId: 'u1',
@@ -101,7 +101,8 @@ describe('translateScript', () => {
       fromLang: 'en',
       toLang: 'vi',
     });
-    expect(result.source).toBe('platform');
+    expect(mockResolveUserApiKey).toHaveBeenCalledWith('u1', 'openrouter');
+    expect(result.source).toBe('user');
   });
 
   it('bubbles up non-2xx as Error', async () => {

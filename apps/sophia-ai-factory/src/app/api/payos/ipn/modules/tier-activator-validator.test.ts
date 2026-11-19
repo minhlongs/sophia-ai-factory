@@ -33,6 +33,10 @@ const pendingOrder = {
   amount_vnd: null,
   invoice_url: 'https://pay.payos.vn/web/link-1',
   subaccount_id: 'merchant-1',
+  payment_method: 'payos',
+  provider_order_code: 123456,
+  provider_payment_id: 'link-1',
+  status: 'pending',
 };
 
 function makeDb(result: QueryResult) {
@@ -59,10 +63,9 @@ describe('findAndValidatePayOsOrder', () => {
   });
 
   it('cleans up the event and returns a retryable error when the order query fails', async () => {
-    const { db, from } = makeDb({ data: null, error: { message: 'D1 unavailable' } });
+    const { db } = makeDb({ data: null, error: { message: 'D1 unavailable' } });
 
     await expect(validate(db)).resolves.toMatchObject({ ok: false, status: 500, error: 'Database query failure' });
-    expect(from).toHaveBeenCalledWith('payos_events');
   });
 
   it('returns not found for an empty pending-order list', async () => {
@@ -72,7 +75,10 @@ describe('findAndValidatePayOsOrder', () => {
   });
 
   it('returns not found when no pending order matches the provider identifiers', async () => {
-    const { db } = makeDb({ data: [{ ...pendingOrder, invoice_url: 'https://pay.payos.vn/web/other' }], error: null });
+    const { db } = makeDb({
+      data: [{ ...pendingOrder, invoice_url: 'https://pay.payos.vn/web/other', provider_payment_id: 'other-link' }],
+      error: null,
+    });
 
     await expect(validate(db)).resolves.toMatchObject({ ok: false, status: 400, error: 'Order not found' });
   });

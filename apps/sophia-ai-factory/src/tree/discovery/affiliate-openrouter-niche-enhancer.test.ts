@@ -51,21 +51,18 @@ describe('enhanceNicheScoreWithAI()', () => {
     expect(mockOpenRouter).not.toHaveBeenCalled();
   });
 
-  it('calls OpenRouter and parses score successfully', async () => {
+  it('fails closed (returns null) when user has no BYOK key even if OPENROUTER_API_KEY env is set', async () => {
     process.env.OPENROUTER_API_KEY = 'sk-or-test';
-    mockOpenRouter.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ choices: [{ message: { content: '72' } }] }),
-    } as Response);
+    mockResolveByokKey.mockResolvedValueOnce(null);
 
     const score = await enhanceNicheScoreWithAI(program, 'fintech');
 
-    expect(score).toBe(72);
-    expect(mockOpenRouter).toHaveBeenCalledTimes(1);
+    expect(score).toBeNull();
+    expect(mockResolveByokKey).toHaveBeenCalledWith(null, 'openrouter');
+    expect(mockOpenRouter).not.toHaveBeenCalled();
   });
 
-  it('7C: OpenRouter fetch uses BYOK-resolved key (user key wins over env)', async () => {
+  it('7C: OpenRouter fetch uses BYOK-resolved key without platform env fallback', async () => {
     process.env.OPENROUTER_API_KEY = 'sk-or-env';
     mockResolveByokKey.mockResolvedValueOnce('sk-or-user-byok');
     mockOpenRouter.mockResolvedValueOnce({
@@ -77,11 +74,7 @@ describe('enhanceNicheScoreWithAI()', () => {
     const score = await enhanceNicheScoreWithAI(program, 'fintech', 'user-xyz');
 
     expect(score).toBe(91);
-    expect(mockResolveByokKey).toHaveBeenCalledWith(
-      'user-xyz',
-      'openrouter',
-      'sk-or-env',
-    );
+    expect(mockResolveByokKey).toHaveBeenCalledWith('user-xyz', 'openrouter');
     expect(mockOpenRouter).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({

@@ -60,7 +60,8 @@ export async function runStartVideo(params: StartVideoParams): Promise<string | 
       ProviderInvalidKeyError,
     } = await import('@/land/services/errors');
     try {
-      const jobId = await startVideoGeneration({ script, tier, userId });
+      const { ServiceFactory } = await import('@/land/services/factory');
+      const jobId = await startVideoGeneration({ script, tier, userId }, ServiceFactory.getVideoService);
       void captureServer({
         event: Events.FIRST_VIDEO_STARTED,
         distinctId: userId,

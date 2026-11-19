@@ -8,7 +8,8 @@ import { RealScriptService } from "./real/script-service";
 import { ReplicateVideoService } from "./replicate/replicate-video-service";
 import { MockPaymentService } from "./mock/payment-service";
 import { RealPaymentService } from "./real/payment-service";
-import { MissingCredentialsError } from "./errors";
+import { MissingCredentialsError, ProviderNetworkError } from "./errors";
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 import { logger } from "@/seed/utils/logger-utility";
 import {
   isProd,
@@ -21,11 +22,37 @@ import {
 
 export class ServiceFactory {
   /**
-   * Returns a ScriptService resolved for the given user (BYOK) or env fallback.
-   * @param userId - optional; BYOK resolution attempted for 'openrouter' when provided
+   * Customer scripts require the owner's readable OpenRouter key.
+   * Calls without a user retain the internal environment credential path.
    */
   static async getScriptService(userId?: string): Promise<IScriptService> {
-    const key = await resolveKey('OPENROUTER_API_KEY', 'openrouter', userId)
+    if (userId !== undefined) {
+      const allowCustomerMock =
+        process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true' &&
+        globalThis.process.env.NODE_ENV === 'test'
+      if (allowCustomerMock) return new MockScriptService()
+
+      let lookup
+      try {
+        lookup = await lookupUserApiKey(userId, 'openrouter')
+      } catch {
+        throw new ProviderNetworkError('openrouter', 'Customer credential could not be read')
+      }
+      if (lookup.status === 'FOUND') {
+        const apiKey = lookup.key.trim()
+        if (apiKey) return new RealScriptService({ fund: 'byok', apiKey })
+        throw new MissingCredentialsError('OPENROUTER_API_KEY')
+      }
+      if (lookup.status === 'NOT_CONFIGURED') {
+        throw new MissingCredentialsError('OPENROUTER_API_KEY')
+      }
+      logger.warn('[ServiceFactory] Customer OpenRouter credential could not be read', {
+        status: lookup.status,
+      })
+      throw new ProviderNetworkError('openrouter', 'Customer credential could not be read')
+    }
+
+    const key = await resolveKey('OPENROUTER_API_KEY', 'openrouter')
     return key ? new RealScriptService() : new MockScriptService()
   }
 

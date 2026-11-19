@@ -51,8 +51,9 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     vi.unstubAllEnvs()
   })
 
-  it('calls resolveUserApiKey with real userId + openrouter + env fallback', async () => {
+  it('calls resolveUserApiKey with real userId + openrouter without env fallback', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-fallback')
+    mockResolveUserApiKey.mockResolvedValueOnce('sk-user-byok')
 
     await generateScript({
       topic:    'ai tools',
@@ -64,7 +65,6 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     expect(mockResolveUserApiKey).toHaveBeenCalledWith(
       'user-abc',
       'openrouter',
-      'sk-env-fallback',
     )
   }, 15000)
 
@@ -80,7 +80,6 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     expect(mockResolveUserApiKey).toHaveBeenCalledWith(
       null,
       'openrouter',
-      'sk-env-fallback',
     )
   }, 15000)
 
@@ -99,7 +98,7 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     }))
   }, 15000)
 
-  it('safely uses OPENROUTER_API_KEY directly when no resolver is registered', async () => {
+  it('fails closed to mock script when no resolver is registered even if OPENROUTER_API_KEY is set', async () => {
     registerApiKeyResolver(null)
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-direct-env-key')
 
@@ -110,14 +109,9 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     })
 
     expect(mockResolveUserApiKey).not.toHaveBeenCalled()
-    expect(mockResilientChatCompletion).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        openRouterKey: 'sk-direct-env-key',
-      }),
-    )
+    expect(mockResilientChatCompletion).not.toHaveBeenCalled()
     expect(out).toEqual(expect.objectContaining({
-      title: 'T',
+      title: expect.stringContaining('nextjs'),
     }))
   }, 15000)
 
@@ -138,7 +132,7 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     }))
   }, 15000)
 
-  it('safely falls back to OPENROUTER_API_KEY when registered resolver throws an error', async () => {
+  it('fails closed to mock script when registered resolver throws an error (never spends platform env key)', async () => {
     mockResolveUserApiKey.mockRejectedValueOnce(new Error('Resolver network timeout'))
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-fallback-on-error')
 
@@ -149,20 +143,34 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     })
 
     expect(mockResolveUserApiKey).toHaveBeenCalled()
-    expect(mockResilientChatCompletion).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        openRouterKey: 'sk-env-fallback-on-error',
-      }),
-    )
+    expect(mockResilientChatCompletion).not.toHaveBeenCalled()
     expect(out).toEqual(expect.objectContaining({
-      title: 'T',
+      title: expect.stringContaining('rust'),
     }))
   }, 15000)
 
+  it('uses only explicit customer funding without consulting a fallback resolver', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'platform-key-must-not-spend')
+    await generateScript({ topic: 'fitness', audience: 'beginners', tier: 'BASIC', userId: 'buyer' }, {
+      funding: { fund: 'byok', apiKey: 'customer-openrouter-key' },
+    })
+    expect(mockResolveUserApiKey).not.toHaveBeenCalled()
+    expect(mockResilientChatCompletion).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+      openRouterKey: 'customer-openrouter-key', enableFallback: false,
+    }))
+  })
+
+  it('rejects empty explicit customer funding without mock output or platform fallback', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'platform-key-must-not-spend')
+    await expect(generateScript({ topic: 'fitness', audience: 'beginners', tier: 'BASIC' }, {
+      funding: { fund: 'byok', apiKey: '   ' },
+    })).rejects.toThrow('Customer OpenRouter key is required')
+    expect(mockResolveUserApiKey).not.toHaveBeenCalled()
+    expect(mockResilientChatCompletion).not.toHaveBeenCalled()
+  })
+
   it('injects Bayesian prior steering constraints into prompt when provided', async () => {
-    registerApiKeyResolver(null)
-    vi.stubEnv('OPENROUTER_API_KEY', 'sk-direct-env-key')
+    mockResolveUserApiKey.mockResolvedValueOnce('sk-user-byok-key')
 
     await generateScript({
       topic:    'trading',
@@ -179,7 +187,7 @@ describe('generateScript — Phase 7B BYOK wire & v16 Prior Steering', () => {
     expect(mockResilientChatCompletion).toHaveBeenCalledWith(
       expect.stringContaining('Empirical Performance Constraints (Growth Feedback Prior)'),
       expect.objectContaining({
-        openRouterKey: 'sk-direct-env-key',
+        openRouterKey: 'sk-user-byok-key',
       }),
     )
   }, 15000)

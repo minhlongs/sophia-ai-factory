@@ -28,18 +28,15 @@ export async function generateSeoScript(
   const min = input.lengthHint?.min ?? 180;
   const max = input.lengthHint?.max ?? 260;
 
-  const keyOrNull = await resolveUserApiKey(
-    input.userId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY ?? undefined,
-  );
+  // Fail closed to customer BYOK — never silently fall back to platform OPENROUTER_API_KEY.
+  const keyOrNull = await resolveUserApiKey(input.userId, 'openrouter');
   if (!keyOrNull) {
     throw new SeoScriptConfigurationError(
       'BYOK_REQUIRED',
       'Script generation requires an OpenRouter key. Add yours in the Setup Wizard.',
     );
   }
-  const source: 'user' | 'platform' = process.env.OPENROUTER_API_KEY === keyOrNull ? 'platform' : 'user';
+  const source: 'user' | 'platform' = 'user';
   const model = input.model ?? DEFAULT_MODEL;
 
   try {

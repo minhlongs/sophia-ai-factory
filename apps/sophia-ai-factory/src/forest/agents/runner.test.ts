@@ -43,10 +43,16 @@ vi.mock('@/seed/observability/telemetry/error-tracker', () => ({
   reportError: vi.fn().mockResolvedValue(undefined),
 }));
 
+const mockResolveUserApiKey = vi.fn();
+vi.mock('@/tree/byok/resolve-user-api-key', () => ({
+  resolveUserApiKey: (...args: unknown[]) => mockResolveUserApiKey(...args),
+}));
+
 describe('runAgent', () => {
   beforeEach(() => {
     vi.resetModules();
-    process.env.OPENROUTER_API_KEY = 'test-key';
+    mockResolveUserApiKey.mockReset();
+    mockResolveUserApiKey.mockResolvedValue('test-byok-key');
   });
 
   it('calls OpenRouter and updates task on success (PREMIUM tier)', async () => {
@@ -90,13 +96,13 @@ describe('runAgent', () => {
     );
   }, 30000);
 
-  it('marks task as failed when OPENROUTER_API_KEY missing', async () => {
-    delete process.env.OPENROUTER_API_KEY;
+  it('marks task as failed when org BYOK OpenRouter key is missing', async () => {
+    mockResolveUserApiKey.mockResolvedValueOnce(null);
 
     const { updateTaskResult } = await import('./repository');
     const { runAgent } = await import('./runner');
 
-    await expect(runAgent(TASK_ID, ORG_ID, 'PREMIUM')).rejects.toThrow('OPENROUTER_API_KEY');
+    await expect(runAgent(TASK_ID, ORG_ID, 'PREMIUM')).rejects.toThrow('OpenRouter BYOK API key is required');
     expect(updateTaskResult).toHaveBeenCalledWith(
       TASK_ID,
       ORG_ID,

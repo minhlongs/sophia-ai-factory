@@ -102,6 +102,8 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
       const pilotOrder = {
         order_id: 'sophia_user_pilot_1', user_id: 'user_pilot', tier: 'BASIC',
         period: 'pilot_14d', amount_vnd: null, invoice_url: 'https://pay.payos.vn/web/pilot-link-99',
+        payment_method: 'payos', provider_order_code: 998877, provider_payment_id: 'pilot-link-99',
+        status: 'pending',
       };
       const db = {
         from: vi.fn((table: string) =>
@@ -127,7 +129,7 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
   it('activates BASIC for 14 days end-to-end and sends accurate $79 pilot_14d receipt', async () => {
     const pilotOrder = {
       order_id: 'sophia_user_pilot_2', user_id: 'user_pilot_2', tier: 'BASIC',
-      period: 'pilot_14d', amount_vnd: 1_990_000, invoice_url: 'https://pay.payos.vn/web/pilot-link-2',
+      period: 'pilot_14d', amount_vnd: 1_990_000, invoice_url: 'https://pay.payos.vn/web/pilot-link-2', payment_method: 'payos', provider_order_code: 776655,
     };
     const db = {
       from: vi.fn((table: string) => {
@@ -137,12 +139,15 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
       }),
     } as unknown as D1Client;
     const d1 = {
-      prepare: vi.fn(() => ({ bind: vi.fn(() => ({ run: vi.fn().mockResolvedValue({}) })) })),
-      batch: vi.fn().mockResolvedValue([]),
+      prepare: vi.fn(() => ({ bind: vi.fn(() => ({
+        run: vi.fn().mockResolvedValue({ success: true }),
+        first: vi.fn().mockResolvedValue({ count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }),
+      })) })),
+      batch: vi.fn(async (statements: unknown[]) => statements.map(() => ({ success: true, meta: { changes: 1 } }))),
     } as unknown as D1Database;
 
     const result = await activatePayOsTier({
-      db, d1, orderCode: 776655, paymentLinkId: 'pilot-link-2', amount: 1_990_000, eventId: 'payos_776655',
+      db, d1, orderCode: 776655, paymentLinkId: 'pilot-link-2', amount: 1_990_000, eventId: 'payos_776655', lockCreatedAt: '2026-11-17T00:00:00.000Z', order: pilotOrder as unknown as import('@/land/orders/pending-order-types').PendingOrder,
     });
 
     expect(result).toEqual({ ok: true });

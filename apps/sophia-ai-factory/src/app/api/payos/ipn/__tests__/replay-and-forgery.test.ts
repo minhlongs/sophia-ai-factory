@@ -24,9 +24,9 @@ import {
 } from '@/land/payments/payos-gateway'
 
 /** event_id -> row mirroring the payos_events table. */
-const eventRows = new Map<string, { processed: number; amount: number; status: string }>()
+const eventRows = new Map<string, { processed: number; amount: number; status: string; created_at?: string }>()
 /** order_id -> tier, mirroring pending_orders. */
-const pendingOrderRows = new Map<string, { tier: string; invoice_url: string; user_id: string }>()
+const pendingOrderRows = new Map<string, { tier: string; invoice_url: string; user_id: string; provider_order_code?: number; provider_payment_id?: string | null }>()
 
 const subscriptionCommits: Array<{ tier: string; orderId: string }> = []
 
@@ -122,44 +122,67 @@ vi.mock('@/seed/db/client', () => {
           return stmt
         },
         async all() {
-          const sqlLower = (stmt._sql || '').toLowerCase()
-          const isLockInsert =
-            sqlLower.includes('insert into payos_events') &&
-            // The conflict guard is the whole claim. Without it every delivery
-            // inserts and wins, so the duplicate tests would go green on a
-            // double activation — the mock honours the clause, not a JS guess.
-            sqlLower.includes('on conflict') &&
-            sqlLower.includes('do nothing') &&
-            sqlLower.includes('returning')
-          if (!isLockInsert) {
-            // An insert that lost its guard behaves like plain SQLite REPLACE:
-            // it always succeeds and always claims the row.
-            const eventId = stmt._bindArgs[0] as string
-            eventRows.set(eventId, {
-              processed: 0,
-              amount: stmt._bindArgs[3] as number,
-              status: stmt._bindArgs[2] as string,
-            })
-            return { results: [{ processed: 0 }], success: true }
-          }
-          const eventId = stmt._bindArgs[0] as string
-          if (eventRows.has(eventId)) {
-            // A concurrent delivery already holds the row, so the insert yields
-            // no RETURNING row and this caller learns it lost the race.
-            return { results: [], success: true }
-          }
-          eventRows.set(eventId, { processed: 0, amount: stmt._bindArgs[3] as number, status: stmt._bindArgs[2] as string })
-          return { results: [{ processed: 0 }], success: true }
+          // Legacy RETURNING shape kept for callers that read results directly.
+          return stmt.run()
         },
         async first() {
+          if (sql.includes('COUNT(*)') && sql.includes('FROM subscriptions')) {
+            return { count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }
+          }
           if (sql.includes('SELECT processed')) {
             const row = eventRows.get(stmt._bindArgs[0] as string)
-            return row ? { processed: row.processed } : null
+            return row ? { processed: row.processed, created_at: row.created_at } : null
           }
           return null
         },
         async run() {
-          return { success: true }
+          const sqlLower = (stmt._sql || '').toLowerCase()
+          // The conflict guard is the whole claim. Without it every delivery
+          // would insert and win, so the duplicate tests would go green on a
+          // double activation — the mock honours the clause, not a JS guess.
+          const isLockInsert =
+            sqlLower.includes('insert into payos_events') &&
+            sqlLower.includes('on conflict') &&
+            sqlLower.includes('do nothing')
+          if (isLockInsert) {
+            const eventId = stmt._bindArgs[0] as string
+            const lockCreatedAt = stmt._bindArgs[6] as string
+            if (eventRows.has(eventId)) {
+              // A concurrent delivery already holds the row, so the insert
+              // changes nothing and this caller learns it lost the race.
+              return { success: true, meta: { changes: 0 } }
+            }
+            eventRows.set(eventId, {
+              processed: 0,
+              amount: stmt._bindArgs[3] as number,
+              status: stmt._bindArgs[2] as string,
+              created_at: lockCreatedAt,
+            })
+            return { success: true, meta: { changes: 1 } }
+          }
+          if (sqlLower.includes('update payos_events') && sqlLower.includes('processed=0')) {
+            // Stale-lock reclaim: only the matching created_at lease wins.
+            const eventId = stmt._bindArgs[4] as string
+            const staleLease = stmt._bindArgs[5] as string
+            const row = eventRows.get(eventId)
+            if (row && row.created_at === staleLease && row.processed === 0) {
+              row.created_at = stmt._bindArgs[0] as string
+              row.status = stmt._bindArgs[2] as string
+              row.amount = stmt._bindArgs[3] as number
+              return { success: true, meta: { changes: 1 } }
+            }
+            return { success: true, meta: { changes: 0 } }
+          }
+          if (sqlLower.includes('update payos_events') && sqlLower.includes('processed=1')) {
+            const eventId = stmt._bindArgs[0] as string
+            const row = eventRows.get(eventId)
+            if (row) row.processed = 1
+            return { success: true, meta: { changes: row ? 1 : 0 } }
+          }
+          if (sqlLower.includes('delete from payos_events')) {
+            return { success: true, meta: { changes: eventRows.delete(stmt._bindArgs[0] as string) ? 1 : 0 } }
+          }
+          return { success: true, meta: { changes: 1 } }
         },
       }
       return stmt
@@ -171,10 +194,16 @@ vi.mock('@/seed/db/client', () => {
           subscriptionCommits.push({ tier: stmt._bindArgs[1] as string, orderId: stmt._bindArgs[0] as string })
         }
         if (sql.includes('update pending_orders')) {
-          subscriptionCommits.push({ tier: 'order_completed', orderId: stmt._bindArgs[3] as string })
+          subscriptionCommits.push({ tier: 'order_completed', orderId: stmt._bindArgs[2] as string })
+        }
+        if (sql.includes('update payos_events') && sql.includes('processed=1')) {
+          // Mirror the terminal mark so replays observe the row as processed.
+          const eventId = stmt._bindArgs[0] as string
+          const row = eventRows.get(eventId)
+          if (row) row.processed = 1
         }
       }
-      return statements.map(() => ({ success: true }))
+      return statements.map(() => ({ success: true, meta: { changes: 1 } }))
     },
   }
 
@@ -209,6 +238,7 @@ function makeDelivery(
     paymentLinkId: PAYMENT_LINK,
     code: '00',
     desc: 'success',
+    currency: 'VND',
   }
   if (options.staleAgeSeconds !== undefined) {
     data.timestamp = Math.floor(Date.now() / 1000) - options.staleAgeSeconds
@@ -243,6 +273,8 @@ describe('POST /api/payos/ipn — duplicate delivery', () => {
       tier: 'BASIC',
       invoice_url: PAYMENT_LINK,
       user_id: 'ceo_user',
+      provider_order_code: ORDER_CODE,
+      provider_payment_id: PAYMENT_LINK,
     })
   })
 
@@ -304,6 +336,8 @@ describe('POST /api/payos/ipn — forged and tampered signatures', () => {
       tier: 'BASIC',
       invoice_url: PAYMENT_LINK,
       user_id: 'ceo_user',
+      provider_order_code: ORDER_CODE,
+      provider_payment_id: PAYMENT_LINK,
     })
   })
 

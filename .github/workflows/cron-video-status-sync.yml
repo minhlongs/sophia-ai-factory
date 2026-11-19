@@ -6,14 +6,46 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
     steps:
       - name: Trigger video status sync
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl -fsS \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json" \
-            "https://sophia.agencyos.network/api/cron/video-status-sync" \
-            || echo "::warning::video-status-sync curl failed (non-blocking)"
+          set -euo pipefail
+
+          SECRET_VALUE="${CRON_SECRET:-}"
+          if [ -z "${SECRET_VALUE//[[:space:]]/}" ]; then
+            echo "::error::CRON_SECRET is not configured for production environment." >&2
+            exit 1
+          fi
+
+          HTTP_STATUS=$(curl -sS \
+            --connect-timeout 15 \
+            --max-time 120 \
+            -o /dev/null \
+            -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Accept: application/json" \
+            "https://sophia.agencyos.network/api/cron/video-status-sync") || {
+            echo "::error::video-status-sync request failed due to transport or timeout error." >&2
+            exit 1
+          }
+
+          case "$HTTP_STATUS" in
+            2[0-9][0-9])
+              echo "video-status-sync succeeded (HTTP ${HTTP_STATUS})."
+              ;;
+            *)
+              echo "::error::video-status-sync failed with HTTP ${HTTP_STATUS:-unknown}." >&2
+              exit 1
+              ;;
+          esac

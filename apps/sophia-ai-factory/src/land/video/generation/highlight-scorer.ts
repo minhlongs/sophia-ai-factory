@@ -28,11 +28,8 @@ export async function scoreHighlights(
     return [];
   }
 
-  const apiKey = await resolveUserApiKey(
-    userId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY,
-  );
+  // Fail closed to customer BYOK — never silently fall back to platform OPENROUTER_API_KEY.
+  const apiKey = await resolveUserApiKey(userId, 'openrouter');
 
   if (!apiKey) {
     throw new Error('No OpenRouter API key available. Configure BYOK in Setup Wizard.');

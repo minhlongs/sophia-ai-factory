@@ -10,11 +10,13 @@
  *  6. whitespace-only key in prod       → throws MissingCredentialsError
  *  7. getVoiceService maps key          → uses ELEVENLABS_API_KEY
  *  8. userId + user key via BYOK        → returns real service (key from resolver)
- *  9. userId + no user key, env present → returns real service (env fallback)
- * 10. userId + nothing                  → returns mock in dev
+ *  9. userId + no user key, env present → rejects MissingCredentialsError
+ * 10. userId + nothing                  → rejects MissingCredentialsError in dev
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { GenerateScriptInput } from './types'
+import type { UserApiKeyLookupResult } from '@/tree/byok/user-api-key-store'
 
 describe('ServiceFactory — credential gate', () => {
   function clearServiceKey() {
@@ -33,6 +35,7 @@ describe('ServiceFactory — credential gate', () => {
   })
 
   afterEach(() => {
+    vi.doUnmock('@/tree/byok/user-api-key-store')
     vi.unstubAllEnvs()
     vi.resetModules()
   })
@@ -143,28 +146,23 @@ describe('ServiceFactory — credential gate', () => {
     expect(service).toBeInstanceOf(RealScriptService)
   })
 
-  // Case 9: userId provided, no user key stored, env key present → real service via fallback
-  it('returns real service when userId provided but no BYOK key, env key present', async () => {
+  // Customer calls require their own key even when a platform key exists.
+  it('rejects missing customer BYOK credentials despite an env key', async () => {
     vi.stubEnv('NODE_ENV', 'production')
     process.env.BYOK_ENABLED = '1'
     process.env.OPENROUTER_API_KEY = 'env-fallback-key'
 
-    // NOT_CONFIGURED is the one case where env is the intended payer: the
-    // customer never added a key, so spending platform credit is by design.
     vi.doMock('@/tree/byok/user-api-key-store', () => ({
       lookupUserApiKey: vi.fn().mockResolvedValue({ status: 'NOT_CONFIGURED' }),
       listUserApiKeyProviders: vi.fn().mockResolvedValue([]),
     }))
 
     const { ServiceFactory } = await import('./factory')
-    const { RealScriptService } = await import('./real/script-service')
-
-    const service = await ServiceFactory.getScriptService('user-xyz')
-    expect(service).toBeInstanceOf(RealScriptService)
+    const { MissingCredentialsError } = await import('./errors')
+    await expect(ServiceFactory.getScriptService('user-xyz')).rejects.toThrow(MissingCredentialsError)
   })
 
-  // Case 10: userId provided, no user key, no env key → mock in dev
-  it('returns mock when userId provided but no keys available in dev', async () => {
+  it('rejects missing customer credentials in development', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     process.env.BYOK_ENABLED = '1'
     delete process.env.OPENROUTER_API_KEY
@@ -175,9 +173,120 @@ describe('ServiceFactory — credential gate', () => {
     }))
 
     const { ServiceFactory } = await import('./factory')
-    const { MockScriptService } = await import('./mock/script-service')
+    const { MissingCredentialsError } = await import('./errors')
 
-    const service = await ServiceFactory.getScriptService('user-noop')
-    expect(service).toBeInstanceOf(MockScriptService)
+    await expect(ServiceFactory.getScriptService('user-noop')).rejects.toThrow(MissingCredentialsError)
+  })
+})
+
+
+describe('ServiceFactory — customer script funding', () => {
+  const input: GenerateScriptInput = {
+    topic: 'Customer campaign', audience: 'makers', tier: 'BASIC',
+    userId: 'customer-owner', orgId: 'customer-org',
+    affiliateOffer: { productName: 'Customer offer', shortUrl: 'https://example.com/offer' },
+  }
+  const output = { title: 'Generated', scenes: [{ narration: 'Hello' }] }
+  const generate = vi.fn().mockResolvedValue(output)
+  const lookup = vi.fn<(...args: [string, string]) => Promise<UserApiKeyLookupResult>>()
+
+  beforeEach(() => {
+    vi.resetModules()
+    vi.stubEnv('NODE_ENV', 'test')
+    vi.stubEnv('OPENROUTER_API_KEY', 'platform-decoy')
+    vi.stubEnv('NEXT_PUBLIC_MOCK_AI_SERVICES', 'false')
+    vi.stubEnv('BYOK_ENABLED', '0')
+    generate.mockClear()
+    lookup.mockReset().mockResolvedValue({ status: 'FOUND', key: 'customer-key' })
+    vi.doMock('@/tree/byok/user-api-key-store', () => ({ lookupUserApiKey: lookup }))
+    vi.doMock('@/seed/ai/script-generator', () => ({ generateScript: generate, registerApiKeyResolver: vi.fn() }))
+  })
+
+  afterEach(() => {
+    vi.doUnmock('@/tree/byok/user-api-key-store')
+    vi.doUnmock('@/seed/ai/script-generator')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('threads the customer key and original tenant/affiliate input despite an env decoy and disabled BYOK flag', async () => {
+    const { ServiceFactory } = await import('./factory')
+    const service = await ServiceFactory.getScriptService('customer-owner')
+    await expect(service.generateScript(input)).resolves.toEqual(output)
+    expect(lookup).toHaveBeenCalledExactlyOnceWith('customer-owner', 'openrouter')
+    expect(generate).toHaveBeenCalledExactlyOnceWith(input, {
+      funding: { fund: 'byok', apiKey: 'customer-key' },
+    })
+  })
+
+  it.each<UserApiKeyLookupResult>([
+    { status: 'NOT_CONFIGURED' }, { status: 'FOUND', key: '' }, { status: 'FOUND', key: '   ' },
+  ])('rejects absent or blank customer credentials: %j', async result => {
+    lookup.mockResolvedValue(result)
+    const { ServiceFactory } = await import('./factory')
+    const { MissingCredentialsError } = await import('./errors')
+    await expect(ServiceFactory.getScriptService('customer-owner')).rejects.toThrow(MissingCredentialsError)
+    expect(generate).not.toHaveBeenCalled()
+  })
+
+  it.each(['STORE_UNAVAILABLE', 'DECRYPT_FAILED', 'KEY_VERSION_UNSUPPORTED', 'rejected'] as const)(
+    'sanitizes unreadable customer credentials: %s', async status => {
+      if (status === 'rejected') lookup.mockRejectedValue(new Error('secret-decoy database detail'))
+      else lookup.mockResolvedValue({ status })
+      const { ServiceFactory } = await import('./factory')
+      const { ProviderNetworkError } = await import('./errors')
+      const error = await ServiceFactory.getScriptService('customer-owner').catch(error => error)
+      expect(error).toBeInstanceOf(ProviderNetworkError)
+      expect(error.message).not.toMatch(/secret-decoy|database detail|platform-decoy/)
+      expect(generate).not.toHaveBeenCalled()
+    },
+  )
+
+  it('treats an empty userId as a customer call without env fallback', async () => {
+    lookup.mockResolvedValue({ status: 'NOT_CONFIGURED' })
+    const { ServiceFactory } = await import('./factory')
+    const { MissingCredentialsError } = await import('./errors')
+    await expect(ServiceFactory.getScriptService('')).rejects.toThrow(MissingCredentialsError)
+    expect(lookup).toHaveBeenCalledExactlyOnceWith('', 'openrouter')
+    expect(generate).not.toHaveBeenCalled()
+  })
+
+  it('preserves the no-user generator call with one argument', async () => {
+    const { ServiceFactory } = await import('./factory')
+    const service = await ServiceFactory.getScriptService()
+    await expect(service.generateScript(input)).resolves.toEqual(output)
+    expect(lookup).not.toHaveBeenCalled()
+    expect(generate).toHaveBeenCalledExactlyOnceWith(input)
+  })
+
+  it('allows customer mocks only with the explicit flag in the test runtime', async () => {
+    vi.stubEnv('NEXT_PUBLIC_MOCK_AI_SERVICES', 'true')
+    const { ServiceFactory } = await import('./factory')
+    const { MockScriptService } = await import('./mock/script-service')
+    expect(await ServiceFactory.getScriptService('customer-owner')).toBeInstanceOf(MockScriptService)
+    expect(lookup).not.toHaveBeenCalled()
+    expect(generate).not.toHaveBeenCalled()
+  })
+
+  it.each(['production', 'development'])('ignores the customer mock flag in %s and still threads own funding', async runtime => {
+    vi.stubEnv('NODE_ENV', runtime)
+    vi.stubEnv('NEXT_PUBLIC_MOCK_AI_SERVICES', 'true')
+    const { ServiceFactory } = await import('./factory')
+    const service = await ServiceFactory.getScriptService('customer-owner')
+    await service.generateScript(input)
+    expect(lookup).toHaveBeenCalledExactlyOnceWith('customer-owner', 'openrouter')
+    expect(generate).toHaveBeenCalledExactlyOnceWith(input, {
+      funding: { fund: 'byok', apiKey: 'customer-key' },
+    })
+  })
+
+  it('cannot bypass missing customer credentials with the mock flag in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('NEXT_PUBLIC_MOCK_AI_SERVICES', 'true')
+    lookup.mockResolvedValue({ status: 'NOT_CONFIGURED' })
+    const { ServiceFactory } = await import('./factory')
+    const { MissingCredentialsError } = await import('./errors')
+    await expect(ServiceFactory.getScriptService('customer-owner')).rejects.toThrow(MissingCredentialsError)
+    expect(generate).not.toHaveBeenCalled()
   })
 })

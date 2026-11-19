@@ -1,7 +1,6 @@
 import { getBySlug } from '@/seed/db/repositories/landing-pages-repo';
 import { generateLandingPageContent } from '@/tree/landing/llm-fallback-generator';
 import { NICHE_LABELS, type NicheSlug } from '@/seed/config/niche-list';
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import type { PageContent } from './types';
 
 /**
@@ -35,14 +34,9 @@ export async function resolveNicheContent(
     };
   }
 
-  // Try LLM fallback with admin BYOK key
-  const apiKey = await resolveUserApiKey(
-    null,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY,
-  );
-
-  const generated = await generateLandingPageContent(niche, apiKey ?? undefined);
+  // Serve KV-cached content if present; never invoke platform OPENROUTER_API_KEY
+  // from an unauthenticated public landing-page request on cache miss.
+  const generated = await generateLandingPageContent(niche);
   const label = NICHE_LABELS[niche as NicheSlug];
   const nicheLabel = label
     ? `${label.en} / ${label.vi}`

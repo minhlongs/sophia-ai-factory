@@ -167,11 +167,11 @@ describe('generateSeoScript', () => {
     ).rejects.toThrow(/429/);
   }, 30000);
 
-  it('marks source=platform when env key used', async () => {
+  it('fails closed with BYOK_REQUIRED even when OPENROUTER_API_KEY env is set', async () => {
     process.env.OPENROUTER_API_KEY = 'env-key';
-    mockResolveUserApiKey.mockResolvedValue('env-key');
-    stubFetch('# T\n## A\nbody body body\nTITLE: One');
-    const result = await generateSeoScript({ userId: 'u1', topic: 'topic' });
-    expect(result.source).toBe('platform');
+    mockResolveUserApiKey.mockResolvedValue(null);
+    await expect(
+      generateSeoScript({ userId: 'u1', topic: 'topic' }),
+    ).rejects.toMatchObject({ code: 'BYOK_REQUIRED' });
   });
 });

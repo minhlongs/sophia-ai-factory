@@ -127,6 +127,24 @@ describe('requiresCsrfCheck', () => {
     expect(requiresCsrfCheck('/api/postback', 'POST')).toBe(true)
   })
 
+  it('allows the ingestion workflow POST without a browser CSRF cookie', () => {
+    const request = new NextRequest('https://sophia.agencyos.network/api/ingestion/trigger', {
+      method: 'POST',
+      headers: { authorization: 'Bearer test-cron-secret', 'content-type': 'application/json' },
+      body: JSON.stringify({ networks: ['clickbank', 'shareasale'] }),
+    })
+    expect(verifyCsrfToken(request)).toBe(false)
+    expect(requiresCsrfCheck(request.nextUrl.pathname, request.method)).toBe(false)
+  })
+
+  it('exempts only the exact ingestion trigger path, including locale prefixes', () => {
+    expect(requiresCsrfCheck('/vi/api/ingestion/trigger', 'POST')).toBe(false)
+    expect(requiresCsrfCheck('/en/api/ingestion/trigger', 'POST')).toBe(false)
+    for (const pathname of ['/api/ingestion', '/api/ingestion/status', '/api/ingestion/trigger/extra', '/api/ingestion/trigger-admin']) {
+      expect(requiresCsrfCheck(pathname, 'POST')).toBe(true)
+    }
+  })
+
   it('returns false for /api/cron/ paths', () => {
     expect(requiresCsrfCheck('/api/cron/daily-rollup', 'POST')).toBe(false)
   })

@@ -21,10 +21,10 @@ export async function buildMultiTrackProviders(
   const { userId, tenantId, overrides, videoProviderChoice, imageProviderChoice } = options;
   const effectiveKeyRef = userId || tenantId;
 
-  // 1. Script Provider (OpenRouter / Anthropic)
+  // 1. Script Provider (OpenRouter BYOK — never silently fall back to platform key)
   const openrouterKey =
     overrides?.openrouterApiKey ??
-    (await resolveApiKey(userId, 'openrouter', process.env.OPENROUTER_API_KEY)) ??
+    (await resolveApiKey(userId, 'openrouter')) ??
     '';
   const scriptProvider = new OpenRouterProvider({
     apiKey: openrouterKey,

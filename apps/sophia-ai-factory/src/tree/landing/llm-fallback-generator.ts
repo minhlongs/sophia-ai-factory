@@ -55,11 +55,13 @@ export async function generateLandingPageContent(
   const cached = await getCachedLandingPage(nicheSlug);
   if (cached) return cached;
 
-  const resolvedKey = apiKey ?? process.env.OPENROUTER_API_KEY;
+  // Require explicit caller-supplied API key — never fall back to platform OPENROUTER_API_KEY
+  // on unauthenticated dynamic landing-page requests.
+  const resolvedKey = apiKey;
   if (!resolvedKey) {
     throw new Error(
       `No OpenRouter API key available for landing page generation (niche: ${nicheSlug}). ` +
-        'Provide an apiKey or set OPENROUTER_API_KEY in environment.',
+        'Provide an explicit apiKey from an authenticated/admin caller.',
     );
   }
 

@@ -26,8 +26,14 @@ import {
 
 const TEST_CHECKSUM_KEY = 'gates-verification-secret-key';
 
-const eventRows = new Map<string, { processed: number; amount: number; status: string }>();
-const pendingOrderRows = new Map<string, { tier: string; invoice_url: string; user_id: string }>();
+const eventRows = new Map<string, { processed: number; amount: number; status: string; created_at?: string }>();
+const pendingOrderRows = new Map<string, {
+  tier: string;
+  invoice_url: string;
+  user_id: string;
+  provider_order_code?: number;
+  provider_payment_id?: string | null;
+}>();
 const subscriptionCommits: Array<{ tier: string; orderId: string }> = [];
 
 vi.mock('@/land/payments/payos', () => ({
@@ -158,28 +164,66 @@ vi.mock('@/seed/db/client', () => {
           return { results: [{ processed: 0 }], success: true };
         },
         async first() {
+          if (sql.includes('COUNT(*)') && sql.includes('FROM subscriptions')) {
+            return {
+              count: 0, id: null, tier: null, plan: null, status: null,
+              current_period_start: null, current_period_end: null,
+            };
+          }
           if (sql.includes('SELECT processed')) {
             const row = eventRows.get(stmt._bindArgs[0] as string);
-            return row ? { processed: row.processed } : null;
+            return row ? { processed: row.processed, created_at: row.created_at } : null;
           }
           return null;
         },
         async run() {
-          return { success: true };
+          const sqlLower = (stmt._sql || '').toLowerCase();
+          const isLockInsert =
+            sqlLower.includes('insert into payos_events') &&
+            sqlLower.includes('on conflict') &&
+            sqlLower.includes('do nothing');
+          if (isLockInsert) {
+            const eventId = stmt._bindArgs[0] as string;
+            const lockCreatedAt = stmt._bindArgs[6] as string;
+            if (eventRows.has(eventId)) return { success: true, meta: { changes: 0 } };
+            eventRows.set(eventId, {
+              processed: 0,
+              amount: stmt._bindArgs[3] as number,
+              status: stmt._bindArgs[2] as string,
+              created_at: lockCreatedAt,
+            });
+            return { success: true, meta: { changes: 1 } };
+          }
+          if (sqlLower.includes('update payos_events') && sqlLower.includes('processed=1')) {
+            const eventId = stmt._bindArgs[0] as string;
+            const row = eventRows.get(eventId);
+            if (row) row.processed = 1;
+            return { success: true, meta: { changes: row ? 1 : 0 } };
+          }
+          if (sqlLower.includes('delete from payos_events')) {
+            return { success: true, meta: { changes: eventRows.delete(stmt._bindArgs[0] as string) ? 1 : 0 } };
+          }
+          return { success: true, meta: { changes: 1 } };
         },
       };
       return stmt;
     },
     async batch(statements: Array<{ _sql: string; _bindArgs: unknown[] }>) {
       for (const stmt of statements) {
-        if (stmt._sql.toLowerCase().includes('update pending_orders')) {
+        const sql = stmt._sql.toLowerCase();
+        if (sql.includes('update pending_orders')) {
           subscriptionCommits.push({
             tier: 'order_completed',
             orderId: stmt._bindArgs[3] as string,
           });
         }
+        if (sql.includes('update payos_events') && sql.includes('processed=1')) {
+          const eventId = stmt._bindArgs[0] as string;
+          const row = eventRows.get(eventId);
+          if (row) row.processed = 1;
+        }
       }
-      return statements.map(() => ({ success: true }));
+      return statements.map(() => ({ success: true, meta: { changes: 1 } }));
     },
   };
 
@@ -204,6 +248,8 @@ describe('Research Verification Gates Suite', () => {
       tier: 'BASIC',
       invoice_url: 'link_889900',
       user_id: 'ceo_user_1',
+      provider_order_code: 889900,
+      provider_payment_id: 'link_889900',
     });
   });
 
@@ -229,6 +275,7 @@ describe('Research Verification Gates Suite', () => {
       paymentLinkId: 'test_link_123',
       code: '00',
       desc: 'success',
+      currency: 'VND',
     };
     const signature = signPayOsData(data, TEST_CHECKSUM_KEY);
     const req = new NextRequest('http://localhost/api/payos/ipn', {
@@ -253,6 +300,7 @@ describe('Research Verification Gates Suite', () => {
       paymentLinkId: 'link_889900',
       code: '00',
       desc: 'success',
+      currency: 'VND',
     };
     const badReq = new NextRequest('http://localhost/api/payos/ipn', {
       method: 'POST',

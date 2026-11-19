@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: apps/sophia-ai-factory/package-lock.json
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Gate 1a — TypeScript type check
         run: npx tsc --noEmit

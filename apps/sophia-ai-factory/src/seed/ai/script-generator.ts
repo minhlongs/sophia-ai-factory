@@ -41,7 +41,12 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
 
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
   const resolveKey = deps?.resolveUserApiKey ?? globalApiKeyResolver;
-  const apiKey = await resolveScriptApiKey(resolvedUserId, resolveKey);
+  const apiKey = deps?.funding
+    ? deps.funding.apiKey.trim()
+    : await resolveScriptApiKey(resolvedUserId, resolveKey);
+  if (deps?.funding && !apiKey) {
+    throw new Error('Customer OpenRouter key is required');
+  }
 
   if (!apiKey) {
     const mockResult = generateMockScript(topic, audience);

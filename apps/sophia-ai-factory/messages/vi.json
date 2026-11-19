@@ -7508,12 +7508,12 @@
             "answer": "Có, bạn có thể nâng cấp hoặc hạ cấp gói bất kỳ lúc nào từ phần cài đặt tài khoản. Thay đổi sẽ được áp dụng trong chu kỳ thanh toán tiếp theo."
           },
           {
-            "question": "Điều gì xảy ra sau khi dùng thử miễn phí?",
-            "answer": "Sau khi kết thúc dùng thử 14 ngày, bạn sẽ tự động chuyển sang gói đã chọn trừ khi bạn hủy trước. Chúng tôi sẽ gửi nhắc nhở 3 ngày trước khi dùng thử hết hạn."
+            "question": "Gói pilot trả phí 14 ngày có tự động gia hạn không?",
+            "answer": "Không. Gói pilot được thanh toán một lần cho 14 ngày. Để tiếp tục với gói trả phí, bạn cần mua riêng; pilot không tự động chuyển thành thuê bao."
           },
           {
             "question": "Có phí ẩn không?",
-            "answer": "Không có phí ẩn. Giá bạn thấy bao gồm tất cả tính năng được liệt kê trong gói đó. Việc sử dụng API vượt quá hạn mức có thể phát sinh chi phí bổ sung theo hình thức trả theo nhu cầu."
+            "answer": "Pilot bao gồm 500 MCU cho tác vụ Sophia. Nhà cung cấp AI tính phí riêng trên tài khoản bạn kết nối; MCU không bao gồm số dư của nhà cung cấp. Dựng video yêu cầu gói Growth trở lên và không nằm trong BASIC. Điểm Sophia bổ sung hoặc gói khác cần được mua riêng."
           },
           {
             "question": "Có giảm giá cho tổ chức phi lợi nhuận không?",
@@ -7545,7 +7545,7 @@
         "subtitle": "Dành cho doanh nghiệp SME & đại lý tiếp thị muốn kiểm chứng thực tế: 14 ngày toàn quyền gói BASIC — kịch bản AI, kế hoạch chiến dịch và tài nguyên affiliate. Tính năng dựng video khả dụng từ gói Growth trở lên.",
         "priceVnd": "1.990.000đ",
         "priceUsd": "~$79 / 14 ngày",
-        "bullet1": "Toàn quyền gói BASIC trong 14 ngày — kịch bản AI, kế hoạch chiến dịch, tài nguyên affiliate",
+        "bullet1": "14 ngày BASIC với 500 MCU — kịch bản AI, kế hoạch chiến dịch, tài nguyên affiliate; nhà cung cấp AI tính phí riêng",
         "bullet2": "Kích hoạt tức thì, không tự động gia hạn ẩn",
         "bullet3": "Thanh toán VietQR qua PayOS",
         "cta": "Đăng ký Gói Pilot 14 Ngày",

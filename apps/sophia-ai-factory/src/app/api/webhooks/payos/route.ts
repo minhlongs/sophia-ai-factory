@@ -1,3 +1,4 @@
+import { validatePayOsPaymentIdentity, cancelPayOsPayment } from './modules/payos-payment-identity';
 /**
  * PayOS IPN Webhook Route
  * Verifies the PayOS webhook body signature and activates the matching paid order.
@@ -12,11 +13,11 @@ import type { Tier } from '@/seed/types';
 import {
   verifyPayOsRequest,
   checkAndRecordPaymentIdempotency,
-  validatePendingPayOsOrder,
   activatePayOsSubscription,
   processPayOsPostFulfillment,
 } from './modules';
 import { getContractById, fulfillPayOsContractOrder } from '@/land/contracts/quote-to-cash-workflow';
+import { resolveOrgId } from '@/seed/auth/org-resolver';
 
 export async function POST(request: NextRequest) {
   const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
@@ -35,16 +36,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, ignored: 'test_ping' });
   }
 
-  if (ipn.data.code !== '00') {
-    logger.info('[PayOS Webhook] Non-success payment event', {
-      dataCode: ipn.data.code,
-      dataDesc: ipn.data.desc,
-    });
-    return NextResponse.json({ received: true });
-  }
-
   const db = createServerClient();
   const { orderCode, amount, paymentLinkId } = ipn.data;
+  const identity = await validatePayOsPaymentIdentity({ db, orderCode, paymentLinkId, amount, currency: ipn.data.currency });
+  if (!identity.ok) return NextResponse.json({ error: identity.error }, { status: identity.status });
+  if (identity.order.status !== 'pending') return NextResponse.json({ received: true, duplicate: true });
 
   // Idempotency: INSERT-first with UNIQUE constraint check
   const idempotency = await checkAndRecordPaymentIdempotency({
@@ -57,21 +53,8 @@ export async function POST(request: NextRequest) {
     return idempotency.response ?? NextResponse.json({ received: true });
   }
 
-  // Reserve the order and validate expected amount
-  const validation = await validatePendingPayOsOrder({
-    db,
-    paymentLinkId,
-    orderCode,
-    amount,
-    currency: ipn.data.currency,
-    lockCreatedAt: idempotency.lockCreatedAt,
-  });
-
-  if (!validation.ok) {
-    return validation.response;
-  }
-
-  const { order } = validation;
+  const validation = identity;
+  const { order } = identity;
   const userId = order.user_id;
   if (!userId) {
     logger.error('[PayOS Webhook] Pending order has no user owner', new Error('Missing user_id'), {
@@ -97,6 +80,10 @@ export async function POST(request: NextRequest) {
   const tier = order.tier as Tier;
 
   try {
+    if (ipn.data.code !== '00') {
+      await cancelPayOsPayment({ db, order, eventId: `payos_${paymentLinkId}`, lockCreatedAt: idempotency.lockCreatedAt, table: 'payment_events' });
+      return NextResponse.json({ received: true });
+    }
     if (order.purpose === 'contract') {
       const d1 = db.unwrap();
       const contractId = order.contract_id;
@@ -107,6 +94,18 @@ export async function POST(request: NextRequest) {
       const contract = await getContractById(d1, contractId);
       if (!contract || contract.lastInvoiceId !== invoiceId) {
         throw new Error('Contract invoice is missing or no longer current');
+      }
+      if (contract.paymentRail && contract.paymentRail !== 'PAYOS') {
+        throw new Error('Contract payment rail mismatch');
+      }
+      if (contract.status && contract.status !== 'signed' && contract.status !== 'active') {
+        throw new Error('Contract is not payable in current status');
+      }
+      if (contract.orgId && typeof d1?.prepare === 'function') {
+        const ownerOrgId = await resolveOrgId(userId, d1);
+        if (!ownerOrgId || ownerOrgId !== contract.orgId) {
+          throw new Error('Order owner does not belong to contract organization');
+        }
       }
       await fulfillPayOsContractOrder(d1, {
         contract,

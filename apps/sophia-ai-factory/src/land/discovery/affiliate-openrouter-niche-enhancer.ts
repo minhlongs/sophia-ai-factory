@@ -42,12 +42,8 @@ export async function enhanceNicheScoreWithAI(
 ): Promise<number | null> {
   const prompt = buildPrompt(program, niche);
 
-  // BYOK-aware — prefer user's stored OpenRouter key; fall back to env.
-  const apiKey = await resolveUserApiKey(
-    userId ?? null,
-    "openrouter",
-    process.env.OPENROUTER_API_KEY,
-  );
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on niche scoring.
+  const apiKey = await resolveUserApiKey(userId ?? null, "openrouter");
   if (!apiKey) return null;
 
   try {

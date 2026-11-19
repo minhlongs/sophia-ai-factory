@@ -22,16 +22,17 @@ const order: PendingOrder = {
   payment_method: 'payos', amount_usd_cents: 19900, amount_vnd: 4975000,
   promo_code: null, customer_email: null, invoice_url: null, status: 'pending',
   payment_id: null, created_at: lockCreatedAt, completed_at: null, provider_payment_id: 'link-1',
+  purpose: 'subscription',
 };
 
 function sqliteFixture() {
   const sqlite = new DatabaseSync(':memory:') as DatabaseSync & { close(): void };
   // Execute the canonical schema and rebuild migrations, including 0086 prerequisites.
   for (const migration of [
-    '0001-init.sql', '0002-payment-events.sql', '0070-pending-orders.sql',
+    '0001-init.sql', '0002-payment-events.sql', '0053-mcu-credits.sql', '0070-pending-orders.sql',
     '0086-subscriptions-add-user-tier.sql', '0087-subscriptions-drop-user-id-fk.sql',
     '0088-org-members-drop-user-id-fk.sql', '0187_add_provider_payment_id_to_pending_orders.sql',
-    '0188_add_amount_vnd_to_pending_orders.sql',
+    '0188_add_amount_vnd_to_pending_orders.sql', '0477_payos_contract_fulfillment.sql',
   ]) sqlite.exec(readFileSync(resolve('migrations', migration), 'utf8'));
   sqlite.exec("PRAGMA foreign_keys = ON; INSERT INTO organizations(id,name,slug,plan) VALUES ('unrelated','Other tenant','other','premium');");
   sqlite.prepare('INSERT INTO pending_orders(order_id,user_id,tier,period,payment_method,amount_usd_cents,amount_vnd,provider_payment_id) VALUES (?,?,?,?,?,?,?,?)')
@@ -75,7 +76,7 @@ function sqliteFixture() {
   };
   const db = { unwrap: () => rawDb, prepare } as unknown as DbClient;
   const rows = (table: string) => sqlite.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all();
-  const snapshot = () => Object.fromEntries(['organizations', 'org_members', 'subscriptions', 'pending_orders', 'payment_events'].map((table) => [table, rows(table)]));
+  const snapshot = () => Object.fromEntries(['organizations', 'org_members', 'subscriptions', 'pending_orders', 'payment_events', 'mcu_transactions', 'user_mcu_balance'].map((table) => [table, rows(table)]));
   return { sqlite, db, rawDb, rows, snapshot, hooks };
 }
 
@@ -181,6 +182,23 @@ describe('PayOS activation against canonical SQLite schema', () => {
     expect(fixture.snapshot()).toEqual(afterConcurrentChange);
     expect(fixture.rows('pending_orders')[0]).toMatchObject({ status: 'pending', payment_id: null });
     expect(fixture.rows('payment_events')[0]).toMatchObject({ processed: 0 });
+    expect(mocks.invalidateOrgIdCache).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['tier', 'BASIC'], ['plan', 'basic'], ['status', 'active'],
+    ['current_period_start', '2026-11-01T00:00:00.000Z'],
+    ['current_period_end', '2026-12-01T00:00:00.000Z'],
+  ])('rejects a concurrent change to subscription %s independently', async (field, value) => {
+    fixture.sqlite.exec("INSERT INTO org_members(org_id,user_id,role) VALUES ('unrelated','buyer','owner'); INSERT INTO subscriptions(org_id,plan,status) VALUES ('unrelated','premium','cancelled');");
+    mocks.resolveOrgId.mockResolvedValue('unrelated');
+    let afterConcurrentChange: ReturnType<typeof fixture.snapshot> | undefined;
+    fixture.hooks.beforeBatch = () => {
+      fixture.sqlite.prepare(`UPDATE subscriptions SET ${field} = ? WHERE org_id = 'unrelated'`).run(value);
+      afterConcurrentChange = fixture.snapshot();
+    };
+    await expect(activate()).rejects.toThrow('unexpected number of rows');
+    expect(fixture.snapshot()).toEqual(afterConcurrentChange);
     expect(mocks.invalidateOrgIdCache).not.toHaveBeenCalled();
   });
 

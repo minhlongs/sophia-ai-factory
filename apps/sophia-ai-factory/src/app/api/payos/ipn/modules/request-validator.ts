@@ -10,6 +10,7 @@ export interface ValidatedIpnRequest {
     description: string;
     paymentLinkId: string;
     code?: string;
+    currency?: string | null;
   };
   signature: string;
   success: boolean;
@@ -39,7 +40,7 @@ export async function validatePayOsRequest(
     return { ok: false, error: 'Invalid payload', status: 400 };
   }
 
-  const { data: ipnData, signature, success } = parsed.data;
+  const { data: ipnData, signature } = parsed.data;
   const { orderCode } = ipnData;
 
   const isValid = await verifyPayOsWebhook(rawBody, signature, checksumKey);
@@ -58,8 +59,11 @@ export async function validatePayOsRequest(
     }
   }
 
-  const signedCode = (ipnData as { code?: string }).code;
-  const effectiveSuccess = Boolean(success) && (signedCode === undefined || signedCode === '00');
+  if (ipnData.currency !== 'VND') {
+    return { ok: false, error: 'Invalid currency', status: 400 };
+  }
+  // Only data is signed; envelope success cannot authorize or cancel payment.
+  const effectiveSuccess = ipnData.code === '00';
 
   return {
     ok: true,

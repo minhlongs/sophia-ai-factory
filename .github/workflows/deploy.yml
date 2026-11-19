@@ -146,6 +146,19 @@ jobs:
         run: bash scripts/check-duplicate-migration-prefixes.sh
 
       # ── Stage 2: Cloudflare Build & D1 Migration ──
+      # Build & package before mutating production D1 so compilation or bundle
+      # failures never leave production schema ahead of the running Worker SHA.
+      - name: 'Stage 2b: Next.js Turbopack Compilation'
+        run: npm run build
+
+      - name: 'Stage 2c: OpenNext Packaging & SSR Bloat Stripping'
+        run: |
+          node scripts/fix-instrumentation-standalone.mjs
+          bash scripts/patch-opennext-d3-stubs.sh
+          npx @opennextjs/cloudflare build --skipNextBuild --noMinify
+          node scripts/inject-scheduled-handler.mjs
+          bash scripts/strip-ssr-bloat.sh --post-opennext
+
       - name: 'Stage 2a: D1 Delta Migration (sophia-raas-db)'
         if: ${{ inputs.skip_migrations != true && inputs.dry_run != true }}
         run: |
@@ -172,17 +185,6 @@ jobs:
           fi
           echo "Applying D1 delta migrations since $PREV_SHA..."
           bash scripts/apply-migrations.sh "$PREV_SHA"
-
-      - name: 'Stage 2b: Next.js Turbopack Compilation'
-        run: npm run build
-
-      - name: 'Stage 2c: OpenNext Packaging & SSR Bloat Stripping'
-        run: |
-          node scripts/fix-instrumentation-standalone.mjs
-          bash scripts/patch-opennext-d3-stubs.sh
-          npx @opennextjs/cloudflare build --skipNextBuild --noMinify
-          node scripts/inject-scheduled-handler.mjs
-          bash scripts/strip-ssr-bloat.sh --post-opennext
 
       # ── Stage 3: Edge Deploy & Metadata Injection ──
       - name: 'Stage 3a: Deploy Worker to Cloudflare Edge'

@@ -58,11 +58,8 @@ export async function generateNewsletter(
     throw new NewsletterConfigError('EMPTY_TOPIC', 'Topic is required');
   }
 
-  const keyOrNull = await resolveUserApiKey(
-    input.userId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY ?? undefined,
-  );
+  // Fail closed to customer BYOK — never silently fall back to platform OPENROUTER_API_KEY.
+  const keyOrNull = await resolveUserApiKey(input.userId, 'openrouter');
   if (!keyOrNull) {
     throw new NewsletterConfigError(
       'BYOK_REQUIRED',
@@ -70,7 +67,7 @@ export async function generateNewsletter(
     );
   }
 
-  const source: 'user' | 'platform' = process.env.OPENROUTER_API_KEY === keyOrNull ? 'platform' : 'user';
+  const source: 'user' | 'platform' = 'user';
   const model = input.model ?? DEFAULT_NEWSLETTER_MODEL;
 
   try {

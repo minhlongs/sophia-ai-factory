@@ -50,8 +50,8 @@ describe('enhanceNicheScoreWithAI()', () => {
     expect(score).toBeNull();
   });
 
-  it('calls OpenRouter and parses score successfully', async () => {
-    process.env.OPENROUTER_API_KEY = 'sk-or-test';
+  it('calls OpenRouter and parses score successfully when BYOK key is present', async () => {
+    mockResolveByokKey.mockResolvedValueOnce('sk-or-test');
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -60,13 +60,13 @@ describe('enhanceNicheScoreWithAI()', () => {
       json: async () => ({ choices: [{ message: { content: '72' } }] }),
     } as unknown as Response);
 
-    const score = await enhanceNicheScoreWithAI(program, 'fintech');
+    const score = await enhanceNicheScoreWithAI(program, 'fintech', 'user-1');
 
     expect(score).toBe(72);
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('7C: OpenRouter fetch uses BYOK-resolved key (user key wins over env)', async () => {
+  it('7C: OpenRouter fetch uses BYOK-resolved key without passing platform env fallback', async () => {
     process.env.OPENROUTER_API_KEY = 'sk-or-env';
     mockResolveByokKey.mockResolvedValueOnce('sk-or-user-byok');
     const mockFetch = vi.mocked(globalThis.fetch);
@@ -83,7 +83,6 @@ describe('enhanceNicheScoreWithAI()', () => {
     expect(mockResolveByokKey).toHaveBeenCalledWith(
       'user-xyz',
       'openrouter',
-      'sk-or-env',
     );
     // Verify fetch called with Authorization header using BYOK key
     const fetchCall = mockFetch.mock.calls[0];

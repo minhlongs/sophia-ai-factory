@@ -44,7 +44,7 @@ Return ONLY valid JSON matching this exact structure:
 
   try {
     const rawResponse = await resilientChatCompletion(prompt, {
-      openRouterKey: openRouterApiKey || process.env.OPENROUTER_API_KEY || null,
+      openRouterKey: openRouterApiKey || null,
       model: 'openai/gpt-4o-mini',
     });
 

@@ -17,8 +17,9 @@ export function buildPlaybookLlm(
         import('@/tree/byok/resolve-user-api-key'),
         import('@/seed/inference/openrouter-client'),
       ]);
-      const apiKey = await resolveUserApiKey(userId, 'openrouter', process.env.OPENROUTER_API_KEY);
-      const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
+      // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on playbook synthesis.
+      const apiKey = await resolveUserApiKey(userId, 'openrouter');
+      const anthropicKey = (await resolveUserApiKey(userId, 'anthropic')) ?? undefined;
       if (!apiKey && !anthropicKey) return null;
       return await resilientChatCompletion(prompt, {
         openRouterKey: apiKey,

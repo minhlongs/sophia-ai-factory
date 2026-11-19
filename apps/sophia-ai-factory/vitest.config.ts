@@ -17,6 +17,7 @@ export default defineConfig({
   root: __dirname,
   plugins: [react()],
   test: {
+    name: 'unit',
     environment: 'jsdom',
     globals: true,
     testTimeout: 15000,
@@ -36,6 +37,9 @@ export default defineConfig({
       '.open-next/**',
       '**/.claude/**',
       '**/.agents/**',
+      // Journey tests have a dedicated Node config (vitest.revenue-journey.config.ts)
+      // and must not be loaded under the default jsdom environment with shared setup.
+      'tests/revenue-journey/**',
     ],
     coverage: {
       reporter: ['text', 'json-summary', 'lcov', 'html'],

@@ -7,6 +7,7 @@
 import { getTask, getAgentById, updateTaskResult } from '../repository';
 import { track } from '@/tree/signals/track';
 import { D1Events } from '@/tree/signals/d1-event-types';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { assertTierAllowsAgent, AgentTierBlockedError } from '../enforcement-gate';
 import type { AgentTask } from '../types';
 
@@ -66,9 +67,10 @@ export async function validateTaskAndAgent(
     throw gateErr;
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on customer agent tasks.
+  const apiKey = await resolveUserApiKey(orgId, 'openrouter');
   if (!apiKey) {
-    const errMsg = 'OPENROUTER_API_KEY not configured';
+    const errMsg = 'No OpenRouter BYOK API key configured. Add your key in Setup Wizard.';
     await updateTaskResult(taskId, orgId, {
       output: '',
       tokensUsed: 0,

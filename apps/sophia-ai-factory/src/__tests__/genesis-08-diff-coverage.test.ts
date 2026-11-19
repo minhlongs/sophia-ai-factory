@@ -248,9 +248,12 @@ describe('Genesis-08 changed-branch coverage suite', () => {
 
   describe('PayOS batch commit, order matching, and dynamic feature flags', () => {
     it('updates existing org subscription and handles missing orgId / invalid now timestamp', async () => {
-      const batch = vi.fn().mockResolvedValue([]);
+      const batch = vi.fn(async (statements: unknown[]) => statements.map(() => ({ success: true, meta: { changes: 1 } })));
       const d1 = {
-        prepare: vi.fn(() => ({ bind: vi.fn(() => ({})) })),
+        prepare: vi.fn(() => ({ bind: vi.fn(() => ({ first: vi.fn().mockResolvedValue({
+          count: 1, id: 'sub_1', tier: 'BASIC', plan: 'basic', status: 'expired',
+          current_period_start: '2026-01-01T00:00:00.000Z', current_period_end: '2026-01-15T00:00:00.000Z',
+        }) })) })),
         batch,
       } as unknown as D1Database;
       const dbWithExisting = {
@@ -283,11 +286,14 @@ describe('Genesis-08 changed-branch coverage suite', () => {
         now: 'not-a-valid-date',
         orderCode: 12345,
         orderId: 'ord_12345',
+        amount: 4975000,
+        eventId: 'payos_12345', lockCreatedAt: '2026-11-17T00:00:00.000Z',
+        order: { amount_usd_cents: 19900, amount_vnd: 4975000 } as import('@/land/orders/pending-order-types').PendingOrder,
       });
       expect(batch).toHaveBeenCalledTimes(1);
 
-      // Missing orgId skips batch execution cleanly
-      await commitPayOsSubscriptionBatch({
+      // Missing ownership must fail closed before any batch execution.
+      await expect(commitPayOsSubscriptionBatch({
         db: dbWithExisting,
         d1,
         orgId: undefined,
@@ -297,7 +303,10 @@ describe('Genesis-08 changed-branch coverage suite', () => {
         now: '2026-11-15T00:00:00.000Z',
         orderCode: 12346,
         orderId: 'ord_12346',
-      });
+        amount: 1990000,
+        eventId: 'payos_12346', lockCreatedAt: '2026-11-17T00:00:00.000Z',
+        order: {} as import('@/land/orders/pending-order-types').PendingOrder,
+      })).rejects.toThrow('requires a buyer organization');
       expect(batch).toHaveBeenCalledTimes(1);
     });
 
@@ -315,6 +324,7 @@ describe('Genesis-08 changed-branch coverage suite', () => {
                             order_id: 'ord_settled',
                             user_id: 'u1',
                             tier: 'BASIC',
+                            payment_method: 'payos',
                             status: 'completed',
                             provider_payment_id: 'plink_match',
                             provider_order_code: 777,
@@ -340,19 +350,10 @@ describe('Genesis-08 changed-branch coverage suite', () => {
       });
       expect(settled).toEqual({ ok: false, error: 'Order already settled', status: 409 });
 
-      const failedRes = await handleFailedPayment(
-        settledDb,
-        {} as D1Database,
-        'payos_777',
-        777,
-        'plink_match',
-      );
-      expect(failedRes.ok).toBe(true);
-
       const lockD1 = {
         prepare: vi
           .fn()
-          .mockReturnValueOnce({ bind: () => ({ all: () => Promise.resolve({ results: [] }) }) })
+          .mockReturnValueOnce({ bind: () => ({ run: () => Promise.resolve({ meta: { changes: 0 } }) }) })
           .mockReturnValueOnce({
             bind: () => ({ first: () => Promise.resolve({ processed: 1 }) }),
           }),
@@ -360,6 +361,31 @@ describe('Genesis-08 changed-branch coverage suite', () => {
       await expect(acquireEventLock(lockD1, 'ev_1', 777, false, 0, {})).resolves.toEqual({
         status: 'already_processed',
       });
+
+      // Cancellation claims the pending order and the lock in one lease-qualified
+      // batch; a failed claim must throw rather than silently drop the event.
+      const cancelledOrder = {
+        order_id: 'ord_cancel', user_id: 'u1', tier: 'BASIC', period: 'monthly',
+        payment_method: 'payos', status: 'pending', provider_payment_id: 'link-1',
+        provider_order_code: 777, invoice_url: 'https://pay.payos.vn/web/link-1',
+        amount_vnd: 4_975_000,
+      } as unknown as import('@/land/orders/pending-order-types').PendingOrder;
+      const makeCancelDb = (changes: number[]) => ({
+        unwrap: () => ({
+          prepare: () => ({ bind: () => ({}) }),
+          batch: async () => changes.map((n) => ({ success: true, meta: { changes: n } })),
+        }),
+      }) as unknown as D1Client;
+
+      await expect(handleFailedPayment({
+        db: makeCancelDb([1, 1]), order: cancelledOrder, eventId: 'payos_777',
+        lockCreatedAt: 'lease-1', table: 'payos_events',
+      })).resolves.toBeUndefined();
+
+      await expect(handleFailedPayment({
+        db: makeCancelDb([0, 1]), order: cancelledOrder, eventId: 'payos_777',
+        lockCreatedAt: 'lease-1', table: 'payos_events',
+      })).rejects.toThrow('Payment cancellation claim failed');
     });
 
     it('falls back to invoice_url matching and rejects pilot_14d on non-BASIC tiers', async () => {
@@ -384,9 +410,10 @@ describe('Genesis-08 changed-branch coverage suite', () => {
             user_id: 'u1',
             tier: 'BASIC',
             period: 'pilot_14d',
+            payment_method: 'payos',
             status: 'pending',
             provider_payment_id: null,
-            provider_order_code: null,
+            provider_order_code: 999_888,
             invoice_url: 'https://pay.payos.vn/web/plink_legacy',
             amount_vnd: 1_990_000,
           },
@@ -405,9 +432,10 @@ describe('Genesis-08 changed-branch coverage suite', () => {
             user_id: 'u1',
             tier: 'BASIC',
             period: 'monthly',
+            payment_method: 'payos',
             status: 'pending',
             provider_payment_id: null,
-            provider_order_code: null,
+            provider_order_code: 555_444,
             invoice_url: 'https://pay.payos.vn/web/555444',
             amount_vnd: 4_975_000,
           },
@@ -417,7 +445,9 @@ describe('Genesis-08 changed-branch coverage suite', () => {
         amount: 4_975_000,
         eventId: 'payos_code',
       });
-      expect(legacyByCode.ok).toBe(true);
+      // An order code alone is not identity: with no stored provider_payment_id the
+      // callback link must still correlate with the stored invoice_url.
+      expect(legacyByCode).toEqual({ ok: false, error: 'Order not found', status: 400 });
 
       const pilotOnPremium = await findAndValidatePayOsOrder({
         db: makeOrdersDb([
@@ -426,6 +456,7 @@ describe('Genesis-08 changed-branch coverage suite', () => {
             user_id: 'u1',
             tier: 'PREMIUM',
             period: 'pilot_14d',
+            payment_method: 'payos',
             status: 'pending',
             provider_payment_id: 'plink_bad',
             provider_order_code: 111,

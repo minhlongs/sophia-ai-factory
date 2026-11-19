@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: apps/sophia-ai-factory/package-lock.json
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Gate 2a — npm audit (high + critical only)
         run: npm audit --audit-level=high --omit=dev

@@ -31,11 +31,12 @@ export async function generateContentInsights(
   summary: AnalyticsSummary,
   topVideos: TopVideoMetric[],
 ): Promise<ContentInsight[]> {
-  const apiKey = await resolveUserApiKey(userId, 'openrouter', process.env.OPENROUTER_API_KEY);
-  const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on content insights.
+  const apiKey = await resolveUserApiKey(userId, 'openrouter');
+  const anthropicKey = (await resolveUserApiKey(userId, 'anthropic')) ?? undefined;
 
   if (!apiKey && !anthropicKey) {
-    logger.warn('[content-insights-generator] No API keys configured');
+    logger.warn('[content-insights-generator] No BYOK API keys configured');
     return [];
   }
 
@@ -77,11 +78,12 @@ export async function generateRoiInsights(
   roiProjects: ContentRoiSummary[],
   hasData: boolean,
 ): Promise<ContentInsight[]> {
-  const apiKey = await resolveUserApiKey(userId, 'openrouter', process.env.OPENROUTER_API_KEY);
-  const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on ROI insights.
+  const apiKey = await resolveUserApiKey(userId, 'openrouter');
+  const anthropicKey = (await resolveUserApiKey(userId, 'anthropic')) ?? undefined;
 
   if (!apiKey && !anthropicKey) {
-    logger.warn('[content-insights-generator] No API keys configured for ROI insights');
+    logger.warn('[content-insights-generator] No BYOK API keys configured for ROI insights');
     return [];
   }
 
