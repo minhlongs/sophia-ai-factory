@@ -30,7 +30,7 @@ export function PricingPageView({ beforeFooterSlot }: PricingPageViewProps = {})
       <MarketingNav />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 pt-36 pb-24 relative overflow-hidden">
+      <main id="main-content" className="mx-auto max-w-7xl px-6 pt-36 pb-24 relative overflow-hidden">
         {/* Ambient background glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 dark:bg-primary/15 rounded-full blur-[140px] pointer-events-none -z-10" />
 
@@ -61,9 +61,9 @@ export function PricingPageView({ beforeFooterSlot }: PricingPageViewProps = {})
 
         {/* FAQ Section */}
         <PricingFaq openFaq={openFaq} onToggleFaq={toggleFaq} t={t} />
-      </main>
 
-      {beforeFooterSlot}
+        {beforeFooterSlot}
+      </main>
       <MarketingFooter />
     </div>
   );

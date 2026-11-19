@@ -8,7 +8,9 @@
  */
 
 import React from "react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import { buildPublicPageMetadata } from "@/seed/aeo";
+import { WebPageJsonLd } from "@/forest/components/aeo";
 import {
   EN_BENCHMARKS,
   VI_BENCHMARKS,
@@ -22,11 +24,27 @@ import { ArchitectureNotes } from "./components/architecture-notes";
 export const revalidate = 3600;
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
-  title: "Performance Benchmarks | Sophia AI Factory",
-  description:
-    "Platform performance benchmarks including video generation success rate, uptime, test suite health, and multi-provider comparison.",
-};
+function getBenchmarksMeta(locale: string) {
+  const isVi = locale === "vi";
+  return {
+    title: isVi
+      ? "Benchmark Hiệu Suất | Sophia AI Factory"
+      : "Performance Benchmarks | Sophia AI Factory",
+    description: isVi
+      ? "Các chỉ số benchmark hiệu suất của Sophia AI Factory gồm tỷ lệ tạo video thành công, uptime và so sánh đa nhà cung cấp."
+      : "Platform performance benchmarks including video generation success rate, uptime, test suite health, and multi-provider comparison.",
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const { title, description } = getBenchmarksMeta(locale);
+  return buildPublicPageMetadata({ locale, path: "/benchmarks", title, description });
+}
 
 export default async function BenchmarksPage({
   params,
@@ -35,11 +53,20 @@ export default async function BenchmarksPage({
 }) {
   const { locale } = await params;
   const isVi = locale === "vi";
+  const { title, description } = getBenchmarksMeta(locale);
   const benchmarks = isVi ? VI_BENCHMARKS : EN_BENCHMARKS;
   const providers = isVi ? VI_PROVIDERS : EN_PROVIDERS;
 
   return (
     <main className="min-h-screen bg-background text-foreground py-16 px-4">
+      <WebPageJsonLd
+        id="benchmarks"
+        title={title}
+        description={description}
+        path="/benchmarks"
+        locale={locale}
+        staticRender
+      />
       <div className="max-w-4xl mx-auto">
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold text-white mb-3">

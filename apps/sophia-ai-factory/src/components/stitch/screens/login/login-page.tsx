@@ -6,9 +6,16 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
 
   return (
     <main
+      id="main-content"
       className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 p-6 antialiased relative transition-colors duration-300"
       data-testid="login-page"
     >
+      <a
+        href="#email"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:font-semibold focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-foreground"
+      >
+        {t('title')}
+      </a>
       {/* Ambient background accent */}
       <div
         className="fixed inset-0 pointer-events-none overflow-hidden"

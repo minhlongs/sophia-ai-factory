@@ -7,3 +7,4 @@ export * from './deep-link-prompts';
 export * from './secondary-surfaces-catalog';
 export * from './ground-truth-catalog';
 export * from './ground-truth-niches';
+export * from './public-metadata';

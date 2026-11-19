@@ -35,7 +35,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       'Content-Type': 'text/markdown; charset=utf-8',
       'Vary': 'Accept, Accept-Language',
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-      'X-Robots-Tag': 'all',
+      'X-Robots-Tag': 'noindex, follow',
       'X-AEO-Surface': payload.surface,
       'X-AEO-Locale': payload.locale,
     },

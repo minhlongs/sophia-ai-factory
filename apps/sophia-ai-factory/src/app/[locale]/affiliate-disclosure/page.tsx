@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 import {
   AFFILIATE_DISCLOSURE_REGIONS,
   AFFILIATE_DISCLOSURE_INTRO,
@@ -13,19 +15,20 @@ interface AffiliateDisclosurePageProps {
   params: Promise<{ locale: string }>;
 }
 
+const DISCLOSURE_TITLE = 'Nghĩa Vụ Công Khai Liên Kết / Affiliate Disclosure Rules | Sophia AI Factory';
+const DISCLOSURE_DESC =
+  'Nghĩa vụ công khai hoa hồng cho đối tác theo khu vực (Mỹ, Anh, EU, Việt Nam) và câu mẫu sẵn dùng. Disclosure duties for partners by region (US, UK, EU, Vietnam) with ready-to-use sample sentences.';
+
 export async function generateMetadata({
   params,
 }: AffiliateDisclosurePageProps): Promise<Metadata> {
   const { locale } = await params;
-  return {
-    title: 'Nghĩa Vụ Công Khai Liên Kết / Affiliate Disclosure Rules | Sophia AI Factory',
-    description:
-      'Nghĩa vụ công khai hoa hồng cho đối tác theo khu vực (Mỹ, Anh, EU, Việt Nam) và câu mẫu sẵn dùng. Disclosure duties for partners by region (US, UK, EU, Vietnam) with ready-to-use sample sentences.',
-    alternates: {
-      canonical: `/${locale}/affiliate-disclosure`,
-      languages: { en: '/en/affiliate-disclosure', vi: '/vi/affiliate-disclosure' },
-    },
-  };
+  return buildPublicPageMetadata({
+    locale,
+    path: '/affiliate-disclosure',
+    title: DISCLOSURE_TITLE,
+    description: DISCLOSURE_DESC,
+  });
 }
 
 export default async function AffiliateDisclosurePage({
@@ -36,6 +39,13 @@ export default async function AffiliateDisclosurePage({
 
   return (
     <main className="min-h-screen bg-background py-16 px-4">
+      <WebPageJsonLd
+        id="affiliate-disclosure"
+        title={DISCLOSURE_TITLE}
+        description={DISCLOSURE_DESC}
+        path="/affiliate-disclosure"
+        locale={locale}
+      />
       <article className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold text-foreground mb-4">
           Nghĩa Vụ Công Khai Liên Kết

@@ -6,7 +6,7 @@
  * Layer: forest/components/aeo
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AeoLocale } from '@/seed/aeo';
 import { AgentDeepLinkBar } from './agent-deep-link-bar';
 
@@ -24,6 +24,15 @@ export function AgentInspectorHud({
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const isVi = locale === 'vi';
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
 
   const handleCopy = async () => {
     try {
@@ -49,7 +58,8 @@ export function AgentInspectorHud({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              aria-label={isVi ? 'Đóng bảng xem AI Agent' : 'Close Agent Inspector'}
+              className="text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded px-1"
             >
               ✕
             </button>
@@ -92,7 +102,8 @@ export function AgentInspectorHud({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="text-xs font-mono text-muted-foreground hover:text-foreground transition"
+          aria-expanded={isOpen}
+          className="text-xs font-mono text-muted-foreground hover:text-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
           title={isVi ? 'Xem bản đọc của AI Agent' : 'Inspect Agent View'}
         >
           {isOpen ? 'Close' : 'Inspect'}

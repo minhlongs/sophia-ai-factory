@@ -17,20 +17,44 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+const SITE_URL = 'https://sophia.agencyos.network';
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const isVi = locale === 'vi';
+  const title = isVi
+    ? `Video AI Cho ${NICHE_SLUGS.length} Ngành Nghề | Sophia AI Factory`
+    : `AI Video for ${NICHE_SLUGS.length} Industries | Sophia AI Factory`;
+  const description = isVi
+    ? `Tạo video AI chuyên nghiệp tự động cho ${NICHE_SLUGS.length} ngành nghề. Bất động sản, thương mại điện tử, tiền mã hóa, giáo dục, nhà hàng, và nhiều hơn nữa.`
+    : `Create automated professional AI videos across ${NICHE_SLUGS.length} industries. Real estate, e-commerce, crypto, education, restaurants, and more.`;
+  const url = `${SITE_URL}/${locale}/ai-video`;
 
   return {
-    title: isVi
-      ? `Video AI Cho ${NICHE_SLUGS.length} Ngành Nghề | Sophia AI Factory`
-      : `AI Video for ${NICHE_SLUGS.length} Industries | Sophia AI Factory`,
-    description: isVi
-      ? `Tạo video AI chuyên nghiệp tự động cho ${NICHE_SLUGS.length} ngành nghề. Bất động sản, thương mại điện tử, tiền mã hóa, giáo dục, nhà hàng, và nhiều hơn nữa.`
-      : `Create automated professional AI videos across ${NICHE_SLUGS.length} industries. Real estate, e-commerce, crypto, education, restaurants, and more.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: isVi ? 'vi_VN' : 'en_US',
+      url,
+      siteName: 'Sophia AI Factory',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/twitter-card.png'],
+    },
     alternates: {
-      languages: { en: '/en/ai-video', vi: '/vi/ai-video' },
-      canonical: `/${locale}/ai-video`,
+      languages: {
+        en: `${SITE_URL}/en/ai-video`,
+        vi: `${SITE_URL}/vi/ai-video`,
+        'x-default': `${SITE_URL}/en/ai-video`,
+      },
+      canonical: url,
     },
   };
 }

@@ -33,12 +33,12 @@ export function LandingFeaturesSection({ tLanding, t }: LandingFeaturesSectionPr
     <section className="py-24 border-t border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10] relative">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#D97706] dark:text-[#F59E0B] mb-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#D97706] dark:text-[#F59E0B] mb-3">
             {tLanding('features.badge')}
-          </h2>
-          <h3 className="text-3xl sm:text-4xl font-black text-[#0B0F19] dark:text-white tracking-tight mb-4 font-display">
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#0B0F19] dark:text-white tracking-tight mb-4 font-display">
             {tLanding('features.title')}
-          </h3>
+          </h2>
           <p className="text-slate-600 dark:text-slate-400 text-base">
             {tLanding('features.subtitle')}
           </p>
@@ -61,7 +61,7 @@ export function LandingFeaturesSection({ tLanding, t }: LandingFeaturesSectionPr
                       {feat.badge}
                     </span>
                   </div>
-                  <h4 className="text-xl font-bold text-[#0B0F19] dark:text-white mb-3">{feat.title}</h4>
+                  <h3 className="text-xl font-bold text-[#0B0F19] dark:text-white mb-3">{feat.title}</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{feat.desc}</p>
                 </div>
                 <div className="mt-8 pt-4 border-t border-[#E2E8F0] dark:border-white/[0.06] flex items-center gap-2 text-xs font-semibold text-[#4338CA] dark:text-indigo-400">

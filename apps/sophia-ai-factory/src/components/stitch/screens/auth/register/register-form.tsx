@@ -40,6 +40,7 @@ export function RegisterForm({
         placeholder={t('companyPlaceholder')}
         value={formState.companyName}
         onChange={(val) => setFormState((p) => ({ ...p, companyName: val }))}
+        autoComplete="organization"
         icon={User}
       />
 
@@ -51,6 +52,7 @@ export function RegisterForm({
         value={formState.email}
         onChange={(val) => setFormState((p) => ({ ...p, email: val }))}
         required
+        autoComplete="email"
         icon={Mail}
       />
 
@@ -62,6 +64,7 @@ export function RegisterForm({
         value={formState.password}
         onChange={(val) => setFormState((p) => ({ ...p, password: val }))}
         required
+        autoComplete="new-password"
         icon={Lock}
       />
 
@@ -73,6 +76,7 @@ export function RegisterForm({
         value={formState.confirmPassword}
         onChange={(val) => setFormState((p) => ({ ...p, confirmPassword: val }))}
         required
+        autoComplete="new-password"
         icon={Lock}
       />
 

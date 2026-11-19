@@ -29,7 +29,7 @@ export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {})
     <div className="v3-core min-h-screen bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-200 transition-colors duration-300">
       <MarketingNav />
 
-      <main className="relative pt-32 pb-20 md:pt-44 md:pb-28 overflow-hidden">
+      <main id="main-content" className="relative pt-32 pb-20 md:pt-44 md:pb-28 overflow-hidden">
         <section id="hero" className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
           <HeroHeader t={t} />
           <PipelineMockup />
@@ -44,12 +44,12 @@ export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {})
             </ul>
           </div>
         </section>
+
+        <WorkflowAndFeatures tLanding={tLanding} t={t} />
+        <FaqAndCta t={t} tLanding={tLanding} />
+
+        {beforeFooterSlot}
       </main>
-
-      <WorkflowAndFeatures tLanding={tLanding} t={t} />
-      <FaqAndCta t={t} tLanding={tLanding} />
-
-      {beforeFooterSlot}
       <MarketingFooter />
     </div>
   );

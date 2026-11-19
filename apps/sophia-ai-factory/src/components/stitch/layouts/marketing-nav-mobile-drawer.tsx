@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from '@/navigation';
 import { Menu, X } from 'lucide-react';
 
@@ -27,17 +27,20 @@ export function MarketingNavMobileTrigger({
       <button
         type="button"
         onClick={onSwitchLocale}
-        className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-xs font-mono font-bold uppercase"
+        aria-label={locale === 'en' ? 'Switch language to Vietnamese' : 'Chuyển ngôn ngữ sang tiếng Anh'}
+        className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-xs font-mono font-bold uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {locale === 'en' ? 'VI' : 'EN'}
       </button>
       <button
         type="button"
         onClick={onToggleMenu}
-        className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08]"
+        className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label="Toggle mobile menu"
+        aria-expanded={mobileMenuOpen}
+        aria-controls="marketing-mobile-nav"
       >
-        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {mobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
       </button>
     </div>
   );
@@ -56,8 +59,20 @@ export function MarketingNavMobileDrawer({
   getStartedLabel,
   onClose,
 }: MarketingNavMobileDrawerProps) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="md:hidden bg-card/95 dark:bg-[#090A10]/95 border-b border-border dark:border-white/[0.08] px-6 py-6 space-y-4 backdrop-blur-2xl">
+    <nav
+      id="marketing-mobile-nav"
+      aria-label="Mobile navigation"
+      className="md:hidden bg-card/95 dark:bg-[#090A10]/95 border-b border-border dark:border-white/[0.08] px-6 py-6 space-y-4 backdrop-blur-2xl"
+    >
       <div className="flex flex-col space-y-2">
         {navLinks.map((item) => (
           <Link
@@ -86,6 +101,6 @@ export function MarketingNavMobileDrawer({
           {getStartedLabel}
         </Link>
       </div>
-    </div>
+    </nav>
   );
 }

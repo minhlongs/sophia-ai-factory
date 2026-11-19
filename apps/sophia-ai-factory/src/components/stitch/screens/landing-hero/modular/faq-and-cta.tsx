@@ -42,12 +42,12 @@ export function FaqAndCta({ t, tLanding }: FaqAndCtaProps) {
       <section className="py-24 border-t border-[#E2E8F0] dark:border-white/[0.08] bg-slate-100/60 dark:bg-[#0E1017]">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4338CA] dark:text-indigo-400 mb-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#4338CA] dark:text-indigo-400 mb-3">
               FAQ
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-black text-[#0B0F19] dark:text-white tracking-tight font-display">
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0B0F19] dark:text-white tracking-tight font-display">
               {tLanding('faq.title')}
-            </h3>
+            </h2>
           </div>
 
           <div className="space-y-4">
@@ -63,9 +63,11 @@ export function FaqAndCta({ t, tLanding }: FaqAndCtaProps) {
                     onClick={() => toggleFaq(idx)}
                     className="w-full flex items-center justify-between p-5 text-left text-base font-bold text-[#0B0F19] dark:text-white hover:text-[#4338CA] dark:hover:text-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#11131F]"
                     aria-expanded={isOpen}
+                    aria-controls={`landing-faq-answer-${idx}`}
                   >
                     <span>{item.q}</span>
                     <ChevronDown
+                      aria-hidden="true"
                       className={cn(
                         'w-5 h-5 text-slate-500 dark:text-slate-400 transition-transform duration-200',
                         isOpen && 'rotate-180 text-[#4338CA] dark:text-indigo-400'
@@ -73,7 +75,10 @@ export function FaqAndCta({ t, tLanding }: FaqAndCtaProps) {
                     />
                   </button>
                   {isOpen && (
-                    <div className="px-5 pb-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-[#E2E8F0] dark:border-white/[0.06] pt-4">
+                    <div
+                      id={`landing-faq-answer-${idx}`}
+                      className="px-5 pb-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-[#E2E8F0] dark:border-white/[0.06] pt-4"
+                    >
                       {item.a}
                     </div>
                   )}
