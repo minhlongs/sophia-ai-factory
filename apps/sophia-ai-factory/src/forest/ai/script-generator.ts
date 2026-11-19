@@ -44,13 +44,9 @@ export async function generateScript(input: GenerateScriptInput) {
   const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
   const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
 
-  // Phase 7B: BYOK — prefer user's stored OpenRouter key; fallback to env key.
+  // Fail closed to customer BYOK — never spend platform OPENROUTER_API_KEY on script generation.
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
-  const apiKey = await resolveUserApiKey(
-    resolvedUserId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY,
-  );
+  const apiKey = await resolveUserApiKey(resolvedUserId, 'openrouter');
 
   if (!apiKey) {
     const mockResult = generateMockScript(topic, audience);

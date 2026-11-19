@@ -52,8 +52,9 @@ describe('generateScript — Phase 7B BYOK wire', () => {
     vi.unstubAllEnvs()
   })
 
-  it('calls resolveUserApiKey with real userId + openrouter + env fallback', async () => {
+  it('calls resolveUserApiKey with real userId + openrouter without platform env fallback', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-fallback')
+    mockResolveUserApiKey.mockResolvedValueOnce('sk-user-byok')
 
     await generateScript({
       topic:    'ai tools',
@@ -65,7 +66,6 @@ describe('generateScript — Phase 7B BYOK wire', () => {
     expect(mockResolveUserApiKey).toHaveBeenCalledWith(
       'user-abc',
       'openrouter',
-      'sk-env-fallback',
     )
   }, 15000)
 
@@ -82,7 +82,6 @@ describe('generateScript — Phase 7B BYOK wire', () => {
     expect(mockResolveUserApiKey).toHaveBeenCalledWith(
       null,
       'openrouter',
-      'sk-env-fallback',
     )
   }, 15000)
 

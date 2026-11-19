@@ -19,6 +19,8 @@ vi.mock('@/land/payments/payos', () => ({
           amount: body.amount || 4975000,
           description: body.description || 'Sophia BASIC - 1700000000000',
           paymentLinkId: body.paymentLinkId || 'link_123',
+          code: body.signedCode ?? (body.success === false ? '01' : '00'),
+          currency: 'VND',
         },
       },
     })),
@@ -35,7 +37,7 @@ vi.mock('@/land/payments/payos', () => ({
 
 // Shared mock state — declared OUTSIDE mock factory so test can reference it
 const mockDbEvents = new Map<string, any>()
-const mockPendingOrders = new Map<string, Array<{ order_id: string; tier: string; invoice_url: string | null; period: string; status?: string; payment_method: string }>>()
+const mockPendingOrders = new Map<string, Array<{ order_id: string; tier: string; invoice_url: string | null; period: string; status?: string; payment_method: string; provider_order_code?: number; provider_payment_id?: string | null }>>()
 let orgIdForUser: string | null = 'org_123'
 let existingSubId: string | null = 'sub_123'
 let batchFailMode = false
@@ -195,7 +197,16 @@ vi.mock('@/seed/db/client', () => {
   const d1Root: any = {
     batch: vi.fn(async (stmts: any[]) => {
       if (batchFailMode) throw new Error('batch failed')
-      return stmts.map((s: any) => ({ success: true, ...s }))
+      // Mirror the statements that mutate lock state so assertions see them.
+      for (const s of stmts) {
+        const sqlLower = (s._sql || '').toLowerCase()
+        if (sqlLower.includes('update payos_events') && sqlLower.includes('processed=1')) {
+          const eventId = s._bindArgs?.[0]
+          const row = eventId ? mockDbEvents.get(eventId) : null
+          if (row) row.processed = 1
+        }
+      }
+      return stmts.map(() => ({ success: true, meta: { changes: 1 } }))
     }),
     run: vi.fn(async () => ({ success: true })),
     exec: vi.fn(async () => ({ success: true })),
@@ -208,12 +219,16 @@ vi.mock('@/seed/db/client', () => {
         },
         first() {
           if (stmt._sql?.includes('subscriptions') && stmt._sql?.includes('SELECT')) {
-            return Promise.resolve(existingSubId ? { id: existingSubId } : null)
+            // mirror the canonical COUNT(*)+MIN() aggregate shape production expects
+            return Promise.resolve({
+              count: existingSubId ? 1 : 0, id: existingSubId, tier: null, plan: null, status: null,
+              current_period_start: null, current_period_end: null,
+            })
           }
           if (stmt._sql?.includes('payos_events') && stmt._sql?.includes('SELECT')) {
             const eventId = stmt._bindArgs?.[0]
             const row = eventId ? mockDbEvents.get(eventId) : null
-            return Promise.resolve(row ? { processed: row.processed } : null)
+            return Promise.resolve(row ? { processed: row.processed, created_at: row.created_at ?? '' } : null)
           }
           return Promise.resolve(null)
         },
@@ -236,6 +251,31 @@ vi.mock('@/seed/db/client', () => {
             return Promise.resolve({ results: [row], error: null })
           }
           return Promise.resolve({ results: [], error: null })
+        },
+        run() {
+          const sqlLower = (stmt._sql || '').toLowerCase()
+          if (sqlLower.includes('insert into payos_events') && sqlLower.includes('on conflict')) {
+            const eventId = stmt._bindArgs?.[0]
+            if (!eventId) return Promise.resolve({ success: true, meta: { changes: 0 } })
+            if (mockDbEvents.has(eventId)) return Promise.resolve({ success: true, meta: { changes: 0 } })
+            const row = {
+              event_id: eventId,
+              order_code: stmt._bindArgs?.[1],
+              status: stmt._bindArgs?.[2],
+              amount: stmt._bindArgs?.[3],
+              currency: 'VND',
+              payload: stmt._bindArgs?.[5],
+              processed: 0,
+              created_at: stmt._bindArgs?.[6],
+            }
+            mockDbEvents.set(eventId, row)
+            return Promise.resolve({ success: true, meta: { changes: 1 } })
+          }
+          if (sqlLower.includes('delete from payos_events') || sqlLower.includes('delete') && sqlLower.includes('payos_events')) {
+            const eventIdArg = stmt._bindArgs?.[0]
+            if (eventIdArg) mockDbEvents.delete(eventIdArg)
+          }
+          return Promise.resolve({ success: true, meta: { changes: 1 } })
         },
       }
       return stmt
@@ -273,7 +313,7 @@ describe('PayOS IPN Debug', () => {
 
   it('successfully processes new webhook', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly', status: 'pending', payment_method: 'payos' },
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly', status: 'pending', payment_method: 'payos', provider_order_code: 123456, provider_payment_id: 'link_123' },
     ])
 
     const req = makeRequest({ orderCode: 123456, amount: 4975000, success: true })

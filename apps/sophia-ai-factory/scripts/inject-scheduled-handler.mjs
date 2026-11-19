@@ -85,6 +85,9 @@ export const CRON_ROUTES = {
   '0 3 * * *': [
     '/api/cron/scheduled-campaigns',
   ],
+  '30 3 * * *': [
+    '/api/cron/hash-chain-verification',
+  ],
   '0 4 * * *': [
     '/api/cron/email-drip',
   ],

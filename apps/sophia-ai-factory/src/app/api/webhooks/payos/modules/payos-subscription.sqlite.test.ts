@@ -22,6 +22,7 @@ const order: PendingOrder = {
   payment_method: 'payos', amount_usd_cents: 19900, amount_vnd: 4975000,
   promo_code: null, customer_email: null, invoice_url: null, status: 'pending',
   payment_id: null, created_at: lockCreatedAt, completed_at: null, provider_payment_id: 'link-1',
+  purpose: 'subscription',
 };
 
 function sqliteFixture() {

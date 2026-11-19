@@ -40,18 +40,13 @@ export async function resolveScriptApiKey(
   resolvedUserId: string | null,
   resolveKey: ApiKeyResolver | null | undefined,
 ): Promise<string | null> {
-  let apiKey: string | null = null;
-  if (resolveKey) {
-    try {
-      apiKey = await resolveKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY);
-    } catch {
-      apiKey = null;
-    }
+  if (!resolveKey) return null;
+  try {
+    // Fail closed to customer BYOK — never fall back to platform OPENROUTER_API_KEY.
+    return await resolveKey(resolvedUserId, 'openrouter');
+  } catch {
+    return null;
   }
-  if (!apiKey) {
-    apiKey = process.env.OPENROUTER_API_KEY || null;
-  }
-  return apiKey;
 }
 
 export function validateParsedScriptStructure(parsed: ScriptOutput): ScriptOutput {

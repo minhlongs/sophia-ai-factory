@@ -79,6 +79,7 @@ export async function translateDialogueText(
   fromLocale: ApacLocale,
   toLocale: ApacLocale,
   tempo?: DialogueTempoConstraints,
+  openRouterApiKey?: string,
 ): Promise<string> {
   const trimmedText = text.trim();
   if (!trimmedText) return '';
@@ -88,12 +89,12 @@ export async function translateDialogueText(
   const cfResult = await tryWorkersAiTranslation(trimmedText, fromLocale, toLocale, tempo);
   if (cfResult) return cfResult;
 
-  // 2. Try OpenRouter BYOK/platform key if available
-  if (process.env.OPENROUTER_API_KEY) {
+  // 2. Try explicit caller-supplied OpenRouter BYOK key (never fall back to platform env key)
+  if (openRouterApiKey) {
     try {
       const prompt = buildDubbingTranslationPrompt(trimmedText, fromLocale, toLocale, tempo);
       const response = await resilientChatCompletion(prompt, {
-        openRouterKey: process.env.OPENROUTER_API_KEY,
+        openRouterKey: openRouterApiKey,
         model: 'openai/gpt-4o-mini',
       });
       const cleaned = cleanTranslationOutput(response);

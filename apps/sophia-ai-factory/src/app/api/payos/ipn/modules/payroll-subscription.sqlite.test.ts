@@ -14,13 +14,15 @@ function fixture() {
   sqlite.exec(`CREATE TABLE organizations(id TEXT PRIMARY KEY, plan TEXT, updated_at TEXT);
     CREATE TABLE org_members(org_id TEXT, user_id TEXT);
     CREATE TABLE subscriptions(id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))), org_id TEXT, user_id TEXT, tier TEXT, plan TEXT, status TEXT, current_period_start TEXT, current_period_end TEXT, updated_at TEXT);
-    CREATE TABLE pending_orders(order_id TEXT PRIMARY KEY, user_id TEXT, tier TEXT, period TEXT, payment_method TEXT, amount_vnd INTEGER, status TEXT, payment_id TEXT, completed_at TEXT);
+    CREATE TABLE pending_orders(order_id TEXT PRIMARY KEY, user_id TEXT, tier TEXT, period TEXT, payment_method TEXT, amount_vnd INTEGER, status TEXT, payment_id TEXT, completed_at TEXT, provider_payment_id TEXT, provider_order_code INTEGER, invoice_url TEXT, purpose TEXT, amount_usd_cents INTEGER);
+    CREATE TABLE payos_events(event_id TEXT, created_at TEXT, processed INTEGER);
+    INSERT INTO payos_events VALUES ('payos_123','2026-11-17T00:00:00.000Z',0);
     CREATE TABLE mcu_transactions(user_id TEXT, delta INTEGER, reason TEXT, metadata TEXT, payment_reference TEXT);
     CREATE UNIQUE INDEX payment_ref ON mcu_transactions(payment_reference) WHERE payment_reference IS NOT NULL;
     CREATE TABLE user_mcu_balance(user_id TEXT PRIMARY KEY, credits_remaining INTEGER, credits_total_purchased INTEGER, updated_at INTEGER);
     INSERT INTO organizations VALUES ('org','free',NULL);
     INSERT INTO org_members VALUES ('org','buyer');
-    INSERT INTO pending_orders VALUES ('order','buyer','BASIC','pilot_14d','payos',1990000,'pending',NULL,NULL);`);
+    INSERT INTO pending_orders VALUES ('order','buyer','BASIC','pilot_14d','payos',1990000,'pending',NULL,NULL,'link',123,NULL,'subscription',7900);`);
   const hooks: { beforeBatch?: () => void; failPrepare?: string } = {};
   const prepare = (sql: string) => {
     if (hooks.failPrepare && sql.includes(hooks.failPrepare)) throw new Error('prepare failure');
@@ -53,7 +55,7 @@ function fixture() {
   const db = { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: sqlite.prepare('SELECT * FROM subscriptions').get() ?? null }) }) }) }) } as unknown as D1Client;
   const rows = (table: string) => sqlite.prepare(`SELECT * FROM ${table}`).all();
   const snapshot = () => Object.fromEntries(['organizations','org_members','subscriptions','pending_orders','mcu_transactions','user_mcu_balance'].map(t => [t, rows(t)]));
-  const activate = () => commitPayOsSubscriptionBatch({ db, d1: raw as unknown as D1Database, userId: 'buyer', orgId: 'org', tier: 'BASIC', billingPeriod: 'pilot_14d', now: '2026-11-17T00:00:00.000Z', periodEnd: '2026-12-01T00:00:00.000Z', orderCode: 123, orderId: 'order', amount: 1990000 });
+  const activate = () => commitPayOsSubscriptionBatch({ db, d1: raw as unknown as D1Database, userId: 'buyer', orgId: 'org', tier: 'BASIC', billingPeriod: 'pilot_14d', now: '2026-11-17T00:00:00.000Z', periodEnd: '2026-12-01T00:00:00.000Z', orderCode: 123, orderId: 'order', amount: 1990000, eventId: 'payos_123', lockCreatedAt: '2026-11-17T00:00:00.000Z', order: sqlite.prepare('SELECT * FROM pending_orders').get() as unknown as import('@/land/orders/pending-order-types').PendingOrder });
   return { sqlite, hooks, raw, rows, snapshot, activate };
 }
 describe('legacy PayOS order claim and entitlement invariants', () => {

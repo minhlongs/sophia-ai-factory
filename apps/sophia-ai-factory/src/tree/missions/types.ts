@@ -5,6 +5,8 @@
 export interface MissionContext {
   missionId: string;
   userId: string;
+  /** Server-resolved verified organization ID (never caller-supplied) */
+  orgId?: string;
   command: string;
   params: Record<string, unknown>;
   /** Resume context from a previous checkpoint (if mission was interrupted) */

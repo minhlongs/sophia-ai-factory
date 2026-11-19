@@ -75,7 +75,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             .prepare(
               `INSERT INTO onboarding_alerts (tenant_id, flags, detected_at) VALUES (?, ?, datetime('now'))`,
             )
-            .bind(tenant.id, flags.join(','));
+            .bind(tenant.id, flags.join(','))
+            .run();
 
           results.alertsLogged++;
         }
@@ -84,15 +85,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    await recordCronRun(db, CRON_NAME, results.errors.length === 0 ? 'success' : 'failure');
-    finishCronCheckIn(cronCtx, CRON_NAME);
+    const ok = results.errors.length === 0;
+    await recordCronRun(db, CRON_NAME, ok ? 'success' : 'failure');
+    if (ok) {
+      finishCronCheckIn(cronCtx, CRON_NAME);
+    } else {
+      failCronCheckIn(cronCtx, CRON_NAME, results.errors.join('; '));
+    }
 
     logger.info('[OnboardingCheck] Complete', results);
-    return NextResponse.json({ ok: true, ...results });
+    return NextResponse.json({ ok, ...results }, { status: ok ? 200 : 500 });
   } catch (err) {
-    failCronCheckIn(cronCtx, CRON_NAME, err instanceof Error ? err.message : String(err));
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error('[OnboardingCheck] Unhandled error', { error: message });
+    await recordCronRun(db, CRON_NAME, 'failure').catch(() => {});
+    failCronCheckIn(cronCtx, CRON_NAME, message);
     return NextResponse.json(
-      { error: 'internal_error', detail: err instanceof Error ? err.message : String(err) },
+      { error: 'internal_error' },
       { status: 500 },
     );
   }

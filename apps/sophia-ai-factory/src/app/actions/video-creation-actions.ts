@@ -3,8 +3,13 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { resolveOrgId } from '@/seed/auth/workspace-access';
-import { generateScript } from '@/seed/ai/script-generator';
-import { resolveUserApiKey, type ByokProvider } from '@/tree/byok/resolve-user-api-key';
+import { ServiceFactory } from '@/land/services/factory';
+import {
+  MissingCredentialsError,
+  ProviderInvalidKeyError,
+  ProviderNetworkError,
+  ProviderQuotaExceededError,
+} from '@/seed/services/errors';
 import {
   insertCampaignRecord,
   sendCampaignCreatedEvent,
@@ -14,24 +19,30 @@ export async function generateVideoScriptAction(promptTopic: string): Promise<{
   success: boolean;
   scriptText?: string;
   error?: string;
+  code?: string;
 }> {
   try {
     const user = await getCurrentUser();
-    const tier = user ? await resolveUserTier(user.id) : 'BASIC';
+    if (!user) {
+      return {
+        success: false,
+        error: 'Authentication required',
+        code: 'AUTH_REQUIRED',
+      };
+    }
+
+    const tier = await resolveUserTier(user.id);
+    const orgId = await resolveOrgId(user.id);
     const topic = promptTopic.trim() || 'High-converting AI SaaS automation workflow';
 
-    const generated = await generateScript(
-      {
-        topic,
-        audience: 'Entrepreneurs & Creators',
-        tier,
-        userId: user?.id,
-      },
-      {
-        resolveUserApiKey: (uid, prov, fb) =>
-          resolveUserApiKey(uid, prov as ByokProvider, fb),
-      },
-    );
+    const scriptService = await ServiceFactory.getScriptService(user.id);
+    const generated = await scriptService.generateScript({
+      topic,
+      audience: 'Entrepreneurs & Creators',
+      tier,
+      userId: user.id,
+      orgId: orgId ?? user.id,
+    });
 
     const scriptLines = [
       generated.title,
@@ -43,6 +54,34 @@ export async function generateVideoScriptAction(promptTopic: string): Promise<{
       scriptText: scriptLines.join('\n\n'),
     };
   } catch (err) {
+    if (err instanceof MissingCredentialsError) {
+      return {
+        success: false,
+        error: 'Connect your OpenRouter key in Settings before generating a script.',
+        code: 'BYOK_KEY_REQUIRED',
+      };
+    }
+    if (err instanceof ProviderInvalidKeyError) {
+      return {
+        success: false,
+        error: 'Your OpenRouter API key was rejected. Please update it in Settings.',
+        code: 'BYOK_KEY_INVALID',
+      };
+    }
+    if (err instanceof ProviderQuotaExceededError) {
+      return {
+        success: false,
+        error: 'Your OpenRouter account has insufficient credits or hit a rate limit.',
+        code: 'BYOK_QUOTA_EXCEEDED',
+      };
+    }
+    if (err instanceof ProviderNetworkError) {
+      return {
+        success: false,
+        error: 'Your OpenRouter key is unavailable. Reconnect it in Settings or retry later.',
+        code: 'BYOK_KEY_UNAVAILABLE',
+      };
+    }
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Failed to generate AI script',

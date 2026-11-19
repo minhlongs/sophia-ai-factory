@@ -56,7 +56,7 @@ export async function generateMeetingPrepDossier(
 
   try {
     const raw = await resilientChatCompletion(prompt, {
-      openRouterKey: openRouterApiKey || process.env.OPENROUTER_API_KEY || null,
+      openRouterKey: openRouterApiKey || null,
       model: 'openai/gpt-4o-mini',
     });
 

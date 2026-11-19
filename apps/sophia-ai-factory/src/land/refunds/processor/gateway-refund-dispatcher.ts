@@ -12,9 +12,8 @@ const NOWPAYMENTS_API_BASE = 'https://api.nowpayments.io/v1';
 
 /**
  * Call NOWPayments refund API for crypto payments.
- * If NOWPAYMENTS_API_KEY is not set, logs a warning and skips the API call
- * (the refund is still recorded internally — admin must manually process the
- * blockchain refund via NOWPayments dashboard).
+ * Missing credentials fail closed so the caller cannot record an undispatched refund.
+ * A successful HTTP response is not independent confirmation of blockchain settlement.
  */
 export async function callNowPaymentsRefund(
   paymentId: string,
@@ -22,9 +21,11 @@ export async function callNowPaymentsRefund(
 ): Promise<void> {
   const apiKey = process.env.NOWPAYMENTS_API_KEY;
 
-  if (!apiKey) {
-    logger.warn('[RefundProcessor] NOWPAYMENTS_API_KEY not set — skipping external refund API call');
-    return;
+  if (!apiKey?.trim()) {
+    throw new RefundProcessError(
+      'NOWPAYMENTS_API_ERROR',
+      'NOWPAYMENTS_API_KEY is required to dispatch a refund',
+    );
   }
 
   if (!shouldAllowRequest('nowpayments')) {

@@ -1,3 +1,4 @@
+import type { PendingOrder } from '@/land/orders/pending-order-types';
 /** Atomic order claim and entitlement writes for the legacy PayOS IPN. */
 import type { D1Database } from '@cloudflare/workers-types';
 import { logger } from '@/seed/utils/logger-utility';
@@ -21,8 +22,11 @@ export async function commitPayOsSubscriptionBatch(params: {
   orderCode: string | number;
   orderId: string;
   amount: number;
+  eventId: string;
+  lockCreatedAt: string;
+  order: PendingOrder;
 }): Promise<void> {
-  const { d1, userId, orgId, tier, billingPeriod, now, orderCode, orderId, amount } = params;
+  const { d1, userId, orgId, tier, billingPeriod, now, orderCode, orderId, amount, eventId, lockCreatedAt, order } = params;
   if (!userId || !orgId) throw new Error('PayOS activation requires a buyer organization');
   const nowMs = Number.isFinite(Date.parse(now)) ? Date.parse(now) : Date.now();
   try {
@@ -42,14 +46,19 @@ export async function commitPayOsSubscriptionBatch(params: {
     // Compare the full subscription snapshot so a concurrent renewal/upgrade wins safely.
     const stmts = [d1.prepare(`UPDATE pending_orders SET status='completed', payment_id=?, completed_at=?
       WHERE order_id=? AND status='pending' AND payment_method='payos'
-      AND user_id=? AND tier=? AND period=? AND (amount_vnd IS NULL OR amount_vnd=?)
+      AND user_id=? AND tier=? AND period=? AND amount_vnd IS ?
+       AND provider_payment_id IS ? AND provider_order_code IS ? AND invoice_url IS ?
+       AND purpose IS ? AND amount_usd_cents IS ?
+       AND EXISTS (SELECT 1 FROM payos_events WHERE event_id=? AND created_at=? AND processed=0)
       AND EXISTS (SELECT 1 FROM organizations WHERE id=?)
       AND EXISTS (SELECT 1 FROM org_members WHERE org_id=? AND user_id=?)
       AND (SELECT COUNT(*) FROM subscriptions WHERE org_id=?)=?
       AND (?=0 OR EXISTS (SELECT 1 FROM subscriptions WHERE org_id=? AND id IS ?
         AND tier IS ? AND plan IS ? AND status IS ?
         AND current_period_start IS ? AND current_period_end IS ?))`)
-      .bind(`payos_${orderCode}`, now, orderId, userId, tier, billingPeriod ?? 'monthly', amount,
+      .bind(`payos_${orderCode}`, now, orderId, userId, tier, billingPeriod ?? 'monthly', order.amount_vnd ?? null,
+        order.provider_payment_id ?? null, order.provider_order_code ?? null, order.invoice_url ?? null,
+        order.purpose ?? null, order.amount_usd_cents, eventId, lockCreatedAt,
         orgId, orgId, userId, orgId, existing.count, existing.count, orgId, existing.id,
         existing.tier, existing.plan, existing.status, existing.current_period_start, existing.current_period_end)];
     stmts.push(existing.count
@@ -78,6 +87,9 @@ export async function commitPayOsSubscriptionBatch(params: {
           .bind(userId, mcuGrant, Math.floor(nowMs / 1000)),
       );
     }
+    stmts.push(d1.prepare(`UPDATE payos_events SET processed=1 WHERE event_id=? AND created_at=? AND processed=0
+      AND EXISTS (SELECT 1 FROM pending_orders WHERE order_id=? AND status='completed' AND payment_id=?)`)
+      .bind(eventId, lockCreatedAt, orderId, `payos_${orderCode}`));
     const results = await d1.batch(stmts);
     if (results.length !== stmts.length || results.some((r, index) =>
       !r.success || r.error || (index < 3 ? r.meta?.changes !== 1 : ![0, 1].includes(r.meta?.changes)))) {

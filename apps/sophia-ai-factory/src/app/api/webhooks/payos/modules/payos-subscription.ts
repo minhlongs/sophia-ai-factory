@@ -192,9 +192,10 @@ export async function activatePayOsSubscription(params: {
       .prepare(`UPDATE payment_events SET processed = 2
         WHERE event_id = ?1 AND created_at = ?2 AND processed = 0
         AND EXISTS (SELECT 1 FROM pending_orders
-          WHERE order_id = ?3 AND provider_payment_id = ?4 AND user_id = ?5
+          WHERE order_id = ?3 AND provider_payment_id IS ?4 AND user_id = ?5
           AND status = 'pending' AND payment_method = 'payos'
-          AND tier = ?6 AND period = ?7 AND amount_usd_cents = ?8 AND amount_vnd IS ?9)
+          AND tier = ?6 AND period = ?7 AND amount_usd_cents = ?8 AND amount_vnd IS ?9
+           AND provider_order_code IS ?19 AND invoice_url IS ?20 AND purpose IS ?21)
         AND ((?10 = 1 AND NOT EXISTS (SELECT 1 FROM org_members WHERE user_id = ?5))
           OR (?10 = 0 AND EXISTS (SELECT 1 FROM organizations WHERE id = ?11)
             AND EXISTS (SELECT 1 FROM org_members WHERE org_id = ?11 AND user_id = ?5)
@@ -202,11 +203,12 @@ export async function activatePayOsSubscription(params: {
             AND (?12 = 0 OR EXISTS (SELECT 1 FROM subscriptions WHERE id = ?13 AND org_id = ?11
               AND tier IS ?14 AND plan IS ?15 AND status IS ?16
               AND current_period_start IS ?17 AND current_period_end IS ?18))))`)
-      .bind(eventId, lockCreatedAt, order.order_id, paymentLinkId, userId,
+      .bind(eventId, lockCreatedAt, order.order_id, order.provider_payment_id ?? null, userId,
         tier, order.period, order.amount_usd_cents, order.amount_vnd ?? null,
         createdOrg ? 1 : 0, orgId, subscriptionState.count, subscriptionState.id,
         subscriptionState.tier ?? null, subscriptionState.plan ?? null, subscriptionState.status ?? null,
-        subscriptionState.current_period_start ?? null, subscriptionState.current_period_end ?? null),
+        subscriptionState.current_period_start ?? null, subscriptionState.current_period_end ?? null,
+        order.provider_order_code ?? null, order.invoice_url ?? null, order.purpose ?? null),
   ];
 
   if (createdOrg) {
@@ -246,8 +248,8 @@ export async function activatePayOsSubscription(params: {
 
   statements.push(
     rawDb
-      .prepare(`UPDATE pending_orders SET status = 'completed', payment_id = ?1, completed_at = ?2 WHERE order_id = ?3 AND provider_payment_id = ?4 AND status = 'pending' AND ${lockExists}`)
-      .bind(`payos_${paymentLinkId}`, now, order.order_id, paymentLinkId, eventId, lockCreatedAt),
+      .prepare(`UPDATE pending_orders SET status = 'completed', payment_id = ?1, completed_at = ?2 WHERE order_id = ?3 AND provider_payment_id IS ?4 AND status = 'pending' AND ${lockExists}`)
+      .bind(`payos_${paymentLinkId}`, now, order.order_id, order.provider_payment_id ?? null, eventId, lockCreatedAt),
   );
 
   let mcuStatementStartIdx = -1;

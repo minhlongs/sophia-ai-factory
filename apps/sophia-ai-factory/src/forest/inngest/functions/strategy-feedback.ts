@@ -72,11 +72,12 @@ export const strategyFeedback = inngest.createFunction(
 
     const memoryRows = memories.results ?? [];
 
-    const apiKey = await resolveUserApiKey(workspaceId, 'openrouter', process.env.OPENROUTER_API_KEY);
-    const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
+    // Fail closed to workspace BYOK — never spend platform OPENROUTER_API_KEY on strategy feedback.
+    const apiKey = await resolveUserApiKey(workspaceId, 'openrouter');
+    const anthropicKey = (await resolveUserApiKey(workspaceId, 'anthropic')) ?? undefined;
 
     if (!apiKey && !anthropicKey) {
-      logger.warn('[strategy-feedback] no API keys configured', { workspaceId });
+      logger.warn('[strategy-feedback] no BYOK API keys configured', { workspaceId });
       return { generated: false, reason: 'no_api_key' };
     }
 

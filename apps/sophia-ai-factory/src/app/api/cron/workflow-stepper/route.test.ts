@@ -107,9 +107,9 @@ describe('executeStep — Phase 4G gate', () => {
     vi.clearAllMocks()
     vi.stubGlobal('fetch', vi.fn())
     mockRouteLlm.mockReturnValue(defaultDecision)
-    // Reset pass-through default after clearAllMocks wipes it.
-    mockResolveUserApiKey.mockImplementation((_u, _p, envFallback) =>
-      Promise.resolve(envFallback ?? null),
+    // Default BYOK key for openrouter live-LLM workflow tests; anthropic keeps envFallback mock.
+    mockResolveUserApiKey.mockImplementation((_u, provider, envFallback) =>
+      Promise.resolve(provider === 'openrouter' ? 'sk-byok-user' : (envFallback ?? null)),
     )
   })
 

@@ -7,7 +7,16 @@
  */
 
 import { generateScript } from '@/seed/ai/script-generator';
-import type { MissionContext, MissionHandlerResult } from '@/forest/missions/types';
+import {
+  ProviderInvalidKeyError,
+  ProviderQuotaExceededError,
+} from '@/seed/services/errors';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
+import {
+  missionFailure,
+  type MissionContext,
+  type MissionHandlerResult,
+} from '@/forest/missions/types';
 
 function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -47,13 +56,63 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const audience = asString(params.audience, 'RaaS operators and non-technical founders');
 
   if (task === 'video_script') {
-    const scriptOutput = await generateScript({
-      topic,
-      audience,
-      tier: 'BASIC',
-      userId,
-      orgId: userId,
-    });
+    if (!userId || !userId.trim()) {
+      return missionFailure('User ID is required for AI script generation', 'MISSING_USER');
+    }
+
+    const trustedOrgId = ctx.orgId?.trim();
+    if (!trustedOrgId) {
+      return missionFailure('Verified organization context is required for AI script generation', 'MISSING_ORG_CONTEXT');
+    }
+
+    const callerOrgId =
+      typeof params.orgId === 'string' && params.orgId.trim()
+        ? params.orgId.trim()
+        : typeof params.org_id === 'string' && params.org_id.trim()
+          ? params.org_id.trim()
+          : null;
+    if (callerOrgId && callerOrgId !== trustedOrgId) {
+      return missionFailure('Organization context mismatch', 'UNAUTHORIZED_ORG');
+    }
+
+    let lookup;
+    try {
+      lookup = await lookupUserApiKey(userId, 'openrouter');
+    } catch {
+      return missionFailure('Customer OpenRouter credential could not be read', 'CREDENTIAL_READ_ERROR');
+    }
+
+    if (lookup.status === 'NOT_CONFIGURED' || (lookup.status === 'FOUND' && !lookup.key.trim())) {
+      return missionFailure('Customer OpenRouter API key is required', 'MISSING_CREDENTIALS');
+    }
+    if (lookup.status !== 'FOUND') {
+      return missionFailure('Customer OpenRouter credential could not be read', 'CREDENTIAL_READ_ERROR');
+    }
+
+    let scriptOutput;
+    try {
+      scriptOutput = await generateScript(
+        {
+          topic,
+          audience,
+          tier: 'BASIC',
+          userId,
+          orgId: trustedOrgId,
+        },
+        { funding: { fund: 'byok', apiKey: lookup.key.trim() } },
+      );
+    } catch (err) {
+      if (err instanceof ProviderInvalidKeyError) {
+        return missionFailure(err.message, 'PROVIDER_INVALID_KEY');
+      }
+      if (err instanceof ProviderQuotaExceededError) {
+        return missionFailure(err.message, 'PROVIDER_QUOTA_EXCEEDED');
+      }
+      return missionFailure(
+        err instanceof Error ? err.message : 'AI script generation failed',
+        'GENERATION_FAILED',
+      );
+    }
 
     const script = scriptOutput.scenes.map((scene: { narration: string }) => scene.narration).join('\n\n');
     const caption = makeCaption(topic, tone);

@@ -90,11 +90,9 @@ describe('inject-scheduled-handler build-time validation', () => {
     const patterns = Object.keys(verified);
     const routes = Object.values(verified).flat();
 
-    expect(patterns.length).toBe(22);
-    // Preserve schedules until the intended handlers are safe for the Worker runtime.
-    expect(() => assertCronAlignment(verified, APP_ROOT)).toThrow(
-      'Cron alignment failed: unmapped triggers [0 9 * * *, 30 2 * * *, 30 3 * * *]; unscheduled handlers []'
-    );
+    expect(patterns.length).toBe(23);
+    expect(() => assertCronAlignment(verified, APP_ROOT)).not.toThrow();
+    expect(verified['30 3 * * *']).toContain('/api/cron/hash-chain-verification');
     expect(verified['0 5 * * *']).toContain('/api/cron/d1-backup');
     expect(routes).not.toContain('/api/cron/usage-export');
 

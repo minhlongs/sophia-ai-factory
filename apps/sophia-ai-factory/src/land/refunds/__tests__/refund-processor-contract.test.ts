@@ -232,9 +232,20 @@ beforeEach(() => {
   resetMockState()
   clearOrgIdCache()
   vi.clearAllMocks()
-  // Ensure NOWPAYMENTS_API_KEY is not set so the external API call is skipped
-  // (unless a test explicitly needs it for NOWPAYMENTS_API_ERROR)
-  delete process.env.NOWPAYMENTS_API_KEY
+  // The processor fails closed when NOWPayments credentials are absent, so the
+  // happy-path contract tests supply a synthetic key scoped to this process.
+  // fetch is stubbed so no request ever leaves the machine.
+  vi.stubEnv('NOWPAYMENTS_API_KEY', 'synthetic-refund-test-key')
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    text: vi.fn().mockResolvedValue(''),
+  }))
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -332,6 +343,21 @@ describe('Refund Processor Contract Tests', () => {
       }
     })
 
+    it('missing NOWPayments credentials fail closed without marking refunded', async () => {
+      const input = makeInput({ refundRequestId: 'no_key_001' })
+      refundRequests.set(input.refundRequestId, setupRefundRequest({ id: input.refundRequestId }))
+      setupOrgMembership('user_001', 'org_no_key_001')
+      setupSubscription('org_no_key_001', { plan: 'premium', status: 'active' })
+      vi.stubEnv('NOWPAYMENTS_API_KEY', '')
+
+      const result = await processRefund(input)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.code).toBe('NOWPAYMENTS_API_ERROR')
+      }
+      expect(refundRequests.get(input.refundRequestId)?.status).not.toBe('refunded')
+    })
+
     it('NOWPayments API failure returns Result failure and does not mark refunded', async () => {
       // Set up data so that processRefund will attempt the NOWPayments API call
       const input = makeInput({ refundRequestId: 'api_fail_001' })
@@ -339,33 +365,24 @@ describe('Refund Processor Contract Tests', () => {
       setupOrgMembership('user_001', 'org_api_001')
       setupSubscription('org_api_001', { plan: 'premium', status: 'active' })
 
-      // Set NOWPAYMENTS_API_KEY so the processor attempts the refund API call
-      process.env.NOWPAYMENTS_API_KEY = 'test-key'
-
-      // Mock fetch to return a non-ok response (simulating API failure)
-      const originalFetch = globalThis.fetch
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      // Override the stubbed transport with a non-ok response (simulating API failure)
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
         ok: false,
         status: 500,
         text: vi.fn().mockResolvedValue('NOWPayments API error'),
-      }) as unknown as typeof globalThis.fetch
+      }))
 
-      try {
-        const result = await processRefund(input)
-        expect(result.ok).toBe(false)
-        if (!result.ok) {
-          expect(result.error.code).toBe('NOWPAYMENTS_API_ERROR')
-        }
-
-        // Verify refund was NOT marked as refunded despite the error
-        // The refund request should still have its original status
-        const refundReq = refundRequests.get(input.refundRequestId)
-        expect(refundReq).toBeDefined()
-        expect(refundReq?.status).not.toBe('refunded')
-      } finally {
-        // Restore fetch
-        globalThis.fetch = originalFetch
+      const result = await processRefund(input)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.code).toBe('NOWPAYMENTS_API_ERROR')
       }
+
+      // Verify refund was NOT marked as refunded despite the error
+      // The refund request should still have its original status
+      const refundReq = refundRequests.get(input.refundRequestId)
+      expect(refundReq).toBeDefined()
+      expect(refundReq?.status).not.toBe('refunded')
     })
   })
 })

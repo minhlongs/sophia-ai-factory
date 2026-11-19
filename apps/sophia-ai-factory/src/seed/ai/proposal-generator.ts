@@ -15,10 +15,11 @@ export type { ProposalGenerationParams, GeneratedProposal } from './proposal-typ
 export async function generateProposal(
   params: ProposalGenerationParams,
 ): Promise<GeneratedProposal> {
-  const apiKey = params.apiKey ?? process.env.OPENROUTER_API_KEY;
+  // Require explicit customer BYOK apiKey — never fall back to platform OPENROUTER_API_KEY.
+  const apiKey = params.apiKey;
   if (!apiKey) {
     throw new Error(
-      'OpenRouter API key not configured. Set OPENROUTER_API_KEY in Settings > Integrations.',
+      'OpenRouter BYOK API key not configured. Add your OpenRouter key in Settings > Integrations.',
     );
   }
 

@@ -1,3 +1,5 @@
+import { matchesPayOsIdentity } from '@/app/api/webhooks/payos/modules/payos-payment-identity';
+import type { PendingOrder } from '@/land/orders/pending-order-types';
 import { logger } from '@/seed/utils/logger-utility';
 import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
@@ -69,7 +71,7 @@ export async function findAndValidatePayOsOrder(params: {
   eventId: string;
 }): Promise<{ ok: true; data: ValidatedPayOsOrder } | { ok: false; error: string; status: number }> {
   const { db, orderCode, paymentLinkId, amount, eventId } = params;
-  const releaseEvent = () => db.from('payos_events').delete().eq('event_id', eventId);
+  const releaseEvent = async () => {}; // The route owns lease-qualified cleanup.
 
   const { data: pendingOrders, error: pendingOrdersError } = await db
     .from('pending_orders')
@@ -89,18 +91,7 @@ export async function findAndValidatePayOsOrder(params: {
   }
 
   const orders = pendingOrders as PendingOrderRow[];
-  const matchOrder =
-    orders.find(
-      (o) =>
-        (o.provider_payment_id && String(o.provider_payment_id) === String(paymentLinkId)) ||
-        (o.provider_order_code != null && String(o.provider_order_code) === String(orderCode)),
-    ) ??
-    orders.find(
-      (o) =>
-        !o.provider_payment_id &&
-        o.provider_order_code == null &&
-        (o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode))),
-    );
+  const matchOrder = orders.find(o => matchesPayOsIdentity(o as PendingOrder, orderCode, paymentLinkId));
   if (!matchOrder) {
     logger.error('[PayOS IPN] No matching pending order found', { paymentLinkId, orderCode });
     await releaseEvent();

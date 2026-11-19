@@ -4,6 +4,8 @@
  * Idempotent via payos_events.event_id UNIQUE constraint.
  */
 
+import { validatePayOsPaymentIdentity, cancelPayOsPayment } from '@/app/api/webhooks/payos/modules/payos-payment-identity';
+import { releaseEventLock } from './modules/event-locker';
 import { NextRequest, NextResponse } from 'next/server';
 import { FEATURE_PAYOS, isPayOsEnabled } from '@/land/payments/payos';
 import { isPayOsTestPing } from '@/land/payments/payos-gateway';
@@ -12,7 +14,6 @@ import { createServerClient, getD1 } from '@/seed/db/client';
 import {
   validatePayOsRequest,
   acquireEventLock,
-  handleFailedPayment,
   activatePayOsTier,
 } from './modules';
 
@@ -52,6 +53,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
   }
 
+  const identity = await validatePayOsPaymentIdentity({ db, orderCode, paymentLinkId, amount, currency: ipnData.currency });
+  if (!identity.ok) return NextResponse.json({ error: identity.error }, { status: identity.status });
+  if (identity.order.purpose === 'contract') return NextResponse.json({ error: 'Contract requires canonical endpoint' }, { status: 400 });
+  if (identity.order.status !== 'pending') return NextResponse.json({ received: true, duplicate: true });
+
   const lock = await acquireEventLock(d1, eventId, orderCode, success, amount, bodyJson);
   if (lock.status === 'already_processed') {
     return NextResponse.json({ received: true, note: 'Already processed' });
@@ -63,15 +69,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: lock.message }, { status: lock.statusCode });
   }
 
-  if (!success) {
-    const failRes = await handleFailedPayment(db, d1, eventId, orderCode, paymentLinkId);
-    if (!failRes.ok) {
-      return NextResponse.json({ error: failRes.error }, { status: 500 });
-    }
-    return NextResponse.json({ received: true });
-  }
-
   try {
+    if (!success) {
+      await cancelPayOsPayment({ db, order: identity.order, eventId, lockCreatedAt: lock.lockCreatedAt, table: 'payos_events' });
+      return NextResponse.json({ received: true });
+    }
     const activation = await activatePayOsTier({
       db,
       d1,
@@ -79,9 +81,16 @@ export async function POST(request: NextRequest) {
       paymentLinkId,
       amount,
       eventId,
+      lockCreatedAt: lock.lockCreatedAt,
+      order: identity.order,
     });
 
     if (!activation.ok) {
+      try {
+        await releaseEventLock(d1, eventId, lock.lockCreatedAt);
+      } catch (delErr) {
+        logger.warn('[PayOS IPN] Failed to release lock on rejected activation', { orderCode, error: String(delErr) });
+      }
       return NextResponse.json({ error: activation.error }, { status: activation.status });
     }
     return NextResponse.json({ received: true });
@@ -89,7 +98,7 @@ export async function POST(request: NextRequest) {
     const errorObj = err instanceof Error ? err : new Error(String(err));
     logger.error('[PayOS IPN] Processing failed', errorObj, { orderCode });
     try {
-      await db.from('payos_events').delete().eq('event_id', eventId);
+      await releaseEventLock(d1, eventId, lock.lockCreatedAt);
     } catch (delErr) {
       logger.warn('[PayOS IPN] Failed to release lock on failure', { orderCode, error: String(delErr) });
     }

@@ -10,6 +10,7 @@ export interface ValidatedIpnRequest {
     description: string;
     paymentLinkId: string;
     code?: string;
+    currency?: string | null;
   };
   signature: string;
   success: boolean;
@@ -58,7 +59,7 @@ export async function validatePayOsRequest(
     }
   }
 
-  if (ipnData.currency != null && ipnData.currency !== 'VND') {
+  if (ipnData.currency !== 'VND') {
     return { ok: false, error: 'Invalid currency', status: 400 };
   }
   // Only data is signed; envelope success cannot authorize or cancel payment.

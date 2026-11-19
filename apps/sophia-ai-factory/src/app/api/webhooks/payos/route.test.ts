@@ -10,10 +10,22 @@ const mocks = vi.hoisted(() => ({
   processPayOsPostFulfillment: vi.fn(),
   getContractById: vi.fn(),
   fulfillPayOsContractOrder: vi.fn(),
+  validatePayOsPaymentIdentity: vi.fn(),
+  cancelPayOsPayment: vi.fn(),
 }));
 
 vi.mock('@/seed/db/client', () => ({ createServerClient: () => ({ unwrap: () => ({}) }) }));
-vi.mock('./modules', () => mocks);
+vi.mock('./modules', () => ({
+  verifyPayOsRequest: mocks.verifyPayOsRequest,
+  checkAndRecordPaymentIdempotency: mocks.checkAndRecordPaymentIdempotency,
+  validatePendingPayOsOrder: mocks.validatePendingPayOsOrder,
+  activatePayOsSubscription: mocks.activatePayOsSubscription,
+  processPayOsPostFulfillment: mocks.processPayOsPostFulfillment,
+}));
+vi.mock('./modules/payos-payment-identity', () => ({
+  validatePayOsPaymentIdentity: mocks.validatePayOsPaymentIdentity,
+  cancelPayOsPayment: mocks.cancelPayOsPayment,
+}));
 vi.mock('@/land/contracts/quote-to-cash-workflow', () => ({
   getContractById: mocks.getContractById,
   fulfillPayOsContractOrder: mocks.fulfillPayOsContractOrder,
@@ -50,6 +62,7 @@ const ipn = {
     description: 'Sophia BASIC - user-1_123',
     paymentLinkId: 'link-1',
     code: '00',
+    currency: 'VND',
   },
 };
 
@@ -68,6 +81,9 @@ describe('POST /api/webhooks/payos', () => {
       ok: true,
       data: { rawBody: JSON.stringify(ipn), sanitizedBody: JSON.stringify(ipn), ipn },
     });
+    mocks.validatePayOsPaymentIdentity.mockResolvedValue({
+      ok: true, order, expectedVndAmount: 4975000,
+    });
     mocks.checkAndRecordPaymentIdempotency.mockResolvedValue({
       shouldProcess: true,
       lockCreatedAt: '2026-10-18T00:00:00.000Z',
@@ -79,6 +95,7 @@ describe('POST /api/webhooks/payos', () => {
       isLifetime: false,
     });
     mocks.processPayOsPostFulfillment.mockResolvedValue(undefined);
+    mocks.cancelPayOsPayment.mockResolvedValue(undefined);
     mocks.getContractById.mockResolvedValue(contract);
     mocks.fulfillPayOsContractOrder.mockResolvedValue(undefined);
   });
@@ -87,13 +104,13 @@ describe('POST /api/webhooks/payos', () => {
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
-    expect(mocks.checkAndRecordPaymentIdempotency).toHaveBeenCalledWith(expect.objectContaining({
-      paymentLinkId: 'link-1',
-    }));
-    expect(mocks.validatePendingPayOsOrder).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mocks.validatePayOsPaymentIdentity).toHaveBeenCalledWith(expect.objectContaining({
       paymentLinkId: 'link-1',
       orderCode: 123456,
       amount: 4975000,
+    }));
+    expect(mocks.checkAndRecordPaymentIdempotency).toHaveBeenCalledWith(expect.objectContaining({
+      paymentLinkId: 'link-1',
     }));
     expect(mocks.activatePayOsSubscription).toHaveBeenCalledTimes(1);
     expect(mocks.activatePayOsSubscription).toHaveBeenCalledWith(expect.objectContaining({
@@ -111,7 +128,6 @@ describe('POST /api/webhooks/payos', () => {
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
-    expect(mocks.validatePendingPayOsOrder).not.toHaveBeenCalled();
     expect(mocks.activatePayOsSubscription).not.toHaveBeenCalled();
   });
 
@@ -130,31 +146,37 @@ describe('POST /api/webhooks/payos', () => {
   });
 
   it('does not fulfill a signed non-success transaction even when root flags claim success', async () => {
+    const nonSuccessIpn = { ...ipn, data: { ...ipn.data, code: '01' } };
     mocks.verifyPayOsRequest.mockResolvedValue({
       ok: true,
       data: {
         rawBody: JSON.stringify(ipn),
         sanitizedBody: JSON.stringify(ipn),
-        ipn: { ...ipn, data: { ...ipn.data, code: '01' } },
+        ipn: nonSuccessIpn,
       },
     });
+    mocks.cancelPayOsPayment.mockResolvedValue(undefined);
 
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
-    expect(mocks.checkAndRecordPaymentIdempotency).not.toHaveBeenCalled();
+    // Payment identity and idempotency are still called; activation is not.
+    expect(mocks.validatePayOsPaymentIdentity).toHaveBeenCalled();
     expect(mocks.activatePayOsSubscription).not.toHaveBeenCalled();
+    // cancelPayOsPayment is called for the non-success code path
+    expect(mocks.cancelPayOsPayment).toHaveBeenCalled();
   });
 
   it('does not activate a tier when the order or amount validation fails', async () => {
-    mocks.validatePendingPayOsOrder.mockResolvedValue({
+    mocks.validatePayOsPaymentIdentity.mockResolvedValue({
       ok: false,
-      response: NextResponse.json({ received: true, status: 'amount_mismatch' }),
+      error: 'Payment identity mismatch',
+      status: 400,
     });
 
     const response = await POST(makeRequest());
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     expect(mocks.activatePayOsSubscription).not.toHaveBeenCalled();
     expect(mocks.processPayOsPostFulfillment).not.toHaveBeenCalled();
   });
@@ -164,7 +186,7 @@ describe('POST /api/webhooks/payos', () => {
       ...order, tier: 'ENTERPRISE', purpose: 'contract', contract_id: 'contract-1',
       invoice_id: 'invoice-1', provider_order_code: 123456, amount_vnd: 5_775_000,
     };
-    mocks.validatePendingPayOsOrder.mockResolvedValue({
+    mocks.validatePayOsPaymentIdentity.mockResolvedValue({
       ok: true, order: contractOrder, expectedVndAmount: 5_775_000,
     });
 

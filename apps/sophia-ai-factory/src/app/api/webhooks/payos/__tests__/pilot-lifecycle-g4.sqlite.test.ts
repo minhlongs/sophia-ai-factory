@@ -92,6 +92,7 @@ function createSqliteHarness() {
     '0002-payment-events.sql',
     '0053-mcu-credits.sql',
     '0070-pending-orders.sql',
+    '0072-payos-events.sql',
     '0086-subscriptions-add-user-tier.sql',
     '0087-subscriptions-drop-user-id-fk.sql',
     '0088-org-members-drop-user-id-fk.sql',
@@ -140,10 +141,6 @@ function createSqliteHarness() {
           const info = statement.run(bindings());
           return { success: true, meta: { changes: Number(info.changes) } };
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes('UNIQUE constraint')) {
-            return { success: true, meta: { changes: 0 } };
-          }
           throw err;
         }
       },
@@ -346,6 +343,111 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       );
   }
 
+  async function deliver(endpoint: 'legacy' | 'canonical', payload = buildIpnPayload()) {
+    const body = await signPayOsBody(payload);
+    const route = endpoint === 'legacy' ? (await import('@/app/api/payos/ipn/route')).POST : postWebhook;
+    return route(new NextRequest('https://sophia.agencyos.network/api/payos/ipn', { method: 'POST', body }));
+  }
+
+  function seedMember() {
+    harness.sqlite.exec(`INSERT INTO organizations(id,name,slug,plan) VALUES ('buyer_org','Buyer','buyer','basic');
+      INSERT INTO org_members(org_id,user_id,role) VALUES ('buyer_org','u_pilot','owner');`);
+  }
+
+  it.each(['legacy', 'canonical'] as const)('%s rejects signed identity/amount/currency mismatches before writes', async endpoint => {
+    seedPilotOrder(); seedMember();
+    for (const mutation of [
+      { paymentLinkId: 'another-link' }, { orderCode: 880012 }, { amount: 1 },
+    ]) expect((await deliver(endpoint, buildIpnPayload(mutation))).status).toBe(400);
+    expect((await deliver(endpoint, buildIpnPayload({ orderCode: 880011 }))).status).toBe(200);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+    const currency = buildIpnPayload(); currency.data.currency = 'USD';
+    expect((await deliver(endpoint, currency)).status).toBe(400);
+    harness.sqlite.exec("UPDATE pending_orders SET payment_method='nowpayments'");
+    expect((await deliver(endpoint)).status).toBe(400);
+    harness.sqlite.exec("UPDATE pending_orders SET payment_method='payos', provider_payment_id=NULL, provider_order_code=NULL, invoice_url='https://pay.payos.vn/web/plink_pilot_01'");
+    expect((await deliver(endpoint)).status).toBe(400);
+    expect(harness.rows('mcu_transactions')).toHaveLength(1);
+    expect(harness.rows('pending_orders')[0].status).toBe('completed');
+  });
+
+  it.each(['legacy', 'canonical'] as const)('%s accepts only exact legacy URL with stored order code', async endpoint => {
+    seedPilotOrder(); seedMember();
+    harness.sqlite.exec("UPDATE pending_orders SET provider_payment_id=NULL, invoice_url='https://pay.payos.vn/web/plink_pilot_01?x=1'");
+    expect((await deliver(endpoint)).status).toBe(400);
+    harness.sqlite.exec("UPDATE pending_orders SET invoice_url='https://pay.payos.vn/web/plink_pilot_01'");
+    expect((await deliver(endpoint)).status).toBe(200);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+  });
+
+  it.each(['legacy', 'canonical'] as const)('%s retains replacement lease and grants nothing for displaced worker', async endpoint => {
+    seedPilotOrder(); seedMember();
+    const table = endpoint === 'legacy' ? 'payos_events' : 'payment_events';
+    harness.hooks.beforeBatch = () => {
+      harness.hooks.beforeBatch = undefined;
+      harness.sqlite.exec(`UPDATE ${table} SET created_at='2026-11-15T00:00:01.000Z'`);
+    };
+    expect((await deliver(endpoint)).status).toBe(500);
+    expect(harness.rows(table)[0]).toMatchObject({ processed: 0, created_at: '2026-11-15T00:00:01.000Z' });
+    expect(harness.rows('pending_orders')[0].status).toBe('pending');
+    expect(harness.rows('subscriptions')).toEqual([]); expect(harness.rows('mcu_transactions')).toEqual([]);
+  });
+
+  it.each(['legacy', 'canonical'] as const)('%s cancellation failure rolls back and retries', async endpoint => {
+    seedPilotOrder();
+    harness.sqlite.exec("CREATE TRIGGER fail_cancel BEFORE UPDATE OF status ON pending_orders WHEN NEW.status='failed' BEGIN SELECT RAISE(ABORT,'forced cancellation outage'); END");
+    const payload = buildIpnPayload({ dataCode: '01' });
+    expect((await deliver(endpoint, payload)).status).toBe(500);
+    expect(harness.rows('pending_orders')[0].status).toBe('pending');
+    expect(harness.rows('payos_events')).toEqual([]); expect(harness.rows('payment_events')).toEqual([]);
+    harness.sqlite.exec('DROP TRIGGER fail_cancel');
+    expect((await deliver(endpoint, payload)).status).toBe(200);
+    expect(harness.rows('pending_orders')[0].status).toBe('failed');
+    expect((await deliver(endpoint, payload)).status).toBe(200);
+    expect(harness.rows('mcu_transactions')).toEqual([]);
+  });
+
+  it.each(['legacy', 'canonical'] as const)('%s cancellation rejects a changed financial order snapshot', async endpoint => {
+    seedPilotOrder();
+    harness.hooks.beforeBatch = () => {
+      harness.hooks.beforeBatch = undefined;
+      harness.sqlite.exec("UPDATE pending_orders SET amount_usd_cents=8000, contract_id='replacement-contract', invoice_id='replacement-invoice'");
+    };
+    expect((await deliver(endpoint, buildIpnPayload({ dataCode: '01' }))).status).toBe(500);
+    expect(harness.rows('pending_orders')[0].status).toBe('pending');
+    expect(harness.rows('payos_events')).toEqual([]);
+    expect(harness.rows('payment_events')).toEqual([]);
+    expect(harness.rows('mcu_transactions')).toEqual([]);
+  });
+
+  it('reclaims a crashed legacy lease with one winner among two contenders', async () => {
+    seedPilotOrder(); seedMember();
+    harness.sqlite.exec("INSERT INTO payos_events(event_id,order_code,status,amount,currency,payload,processed,created_at) VALUES ('payos_880011','880011','PAID',1990000,'VND','{}',0,'2026-11-14T23:54:59.999Z')");
+    const { acquireEventLock } = await import('@/app/api/payos/ipn/modules/event-locker');
+    const raw = harness.rawDb as unknown as import('@cloudflare/workers-types').D1Database;
+    const claims = await Promise.all([1,2].map(() => acquireEventLock(raw, 'payos_880011', 880011, true, 1990000, {})));
+    expect(claims.map(r => r.status).sort()).toEqual(['already_processing','won_lock']);
+    harness.sqlite.exec("UPDATE payos_events SET created_at='2026-11-14T23:54:59.999Z'");
+    expect((await deliver('legacy')).status).toBe(200);
+    expect(harness.rows('payos_events')[0].processed).toBe(1);
+    expect(harness.rows('mcu_transactions')).toHaveLength(1);
+  });
+
+  it.each(['legacy', 'canonical'] as const)('%s first and mixed endpoint interleaving grant once', async first => {
+    seedPilotOrder(); seedMember();
+    const second = first === 'legacy' ? 'canonical' : 'legacy';
+    harness.hooks.beforeBatch = async () => {
+      harness.hooks.beforeBatch = undefined;
+      expect((await deliver(second)).status).toBe(200);
+    };
+    expect((await deliver(first)).status).toBe(500);
+    expect((await deliver(first)).status).toBe(200);
+    expect((await deliver(second)).status).toBe(200);
+    expect(harness.rows('mcu_transactions')).toHaveLength(1);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+    expect(harness.rows('subscriptions')[0].current_period_end).toBe(PLUS_14D_ISO);
+  });
+
   it.each(['prepare', 'bind'] as const)('fails closed on the first MCU %s failure and grants exactly once on retry', async (stage) => {
     seedPilotOrder();
     const signed = await signPayOsBody(buildIpnPayload());
@@ -474,7 +576,8 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     const res = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: cancelledBody }));
     expect(res.status).toBe(200);
     expect(harness.rows('subscriptions')).toHaveLength(0);
-    expect(harness.rows('pending_orders')[0]).toMatchObject({ status: 'pending' });
+    expect(harness.rows('pending_orders')[0]).toMatchObject({ status: 'failed' });
+    expect(harness.rows('payment_events')[0]).toMatchObject({ processed: 1 });
   });
 
   it('Scenario 5 & 6: Repeated sequential IPN and concurrent in-flight IPN never double-extend entitlement', async () => {

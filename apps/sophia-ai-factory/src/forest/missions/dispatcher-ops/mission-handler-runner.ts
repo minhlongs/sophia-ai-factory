@@ -16,8 +16,9 @@ export async function executeMissionHandlerWithTimeout(params: {
   mission: MissionRow;
   handler: NonNullable<Awaited<ReturnType<typeof loadHandler>>>;
   parsedParams: Record<string, unknown>;
+  orgId?: string;
 }): Promise<MissionHandlerResult> {
-  const { db, mission, handler, parsedParams } = params;
+  const { db, mission, handler, parsedParams, orgId } = params;
   const missionId = mission.id;
 
   const existingCheckpoint = await loadCp(db, missionId);
@@ -28,6 +29,7 @@ export async function executeMissionHandlerWithTimeout(params: {
       handler({
         missionId: mission.id,
         userId: mission.user_id,
+        orgId,
         command: mission.command,
         params: parsedParams,
         checkpoint: existingCheckpoint

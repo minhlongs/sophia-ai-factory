@@ -31,6 +31,10 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({ from: mockDbFrom }),
 }));
 
+vi.mock('@/seed/auth/org-resolver', () => ({
+  resolveOrgId: vi.fn().mockResolvedValue('org-test-1'),
+}));
+
 vi.mock('@/tree/mcu/credits-repo', () => ({
   deductCredits: mockDeductCredits,
 }));

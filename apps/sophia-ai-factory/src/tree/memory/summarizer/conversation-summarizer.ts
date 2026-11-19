@@ -21,7 +21,8 @@ export class ConversationSummarizer {
     baseUrl = 'https://openrouter.ai/api/v1',
   ) {
     this.maxSummaryTokens = maxSummaryTokens;
-    this.apiKey = apiKey ?? process.env.OPENROUTER_API_KEY;
+    // Require explicit BYOK apiKey — never fall back to platform OPENROUTER_API_KEY.
+    this.apiKey = apiKey;
     this.baseUrl = baseUrl.replace(/\/+$/, '');
 
     logger.info('[ConversationSummarizer] Initialized', undefined, {

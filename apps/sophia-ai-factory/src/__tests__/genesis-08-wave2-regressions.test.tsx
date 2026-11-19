@@ -310,6 +310,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
           paymentLinkId: 'plink_failed_1',
           code: '09',
           desc: 'Cancelled',
+          currency: 'VND',
         },
       },
       secret,

@@ -129,16 +129,15 @@ describe('llm-fallback-generator', () => {
       expect(mockSetCached).toHaveBeenCalledWith(NICHE, expect.any(String), VALID_LLM_RESPONSE);
     });
 
-    it('uses environment variable when apiKey not provided', async () => {
+    it('fails closed when apiKey is not explicitly provided even if OPENROUTER_API_KEY env is set', async () => {
       process.env.OPENROUTER_API_KEY = 'env-or-key';
       mockGetBySlug.mockResolvedValue(null);
       mockGetCached.mockResolvedValue(null);
-      mockResilientChat.mockResolvedValue(JSON.stringify(VALID_LLM_RESPONSE));
 
-      const result = await generateLandingPageContent(NICHE);
-
-      expect(result).toEqual(VALID_LLM_RESPONSE);
-      expect(mockResilientChat).toHaveBeenCalled();
+      await expect(generateLandingPageContent(NICHE)).rejects.toThrow(
+        /No OpenRouter API key available/,
+      );
+      expect(mockResilientChat).not.toHaveBeenCalled();
     });
   });
 
