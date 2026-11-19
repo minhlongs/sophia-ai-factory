@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { D1Client } from '@/seed/db/client';

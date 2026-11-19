@@ -29,7 +29,7 @@ jobs:
           cache-dependency-path: apps/sophia-ai-factory/package-lock.json
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Gate 4a — npm outdated (informational)
         run: |

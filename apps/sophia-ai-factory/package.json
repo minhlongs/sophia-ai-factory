@@ -80,7 +80,7 @@
     "ci:test": "vitest run --config vitest.projects.config.ts --reporter=default --reporter=junit --outputFile=test-results/junit.xml",
     "ci:get-side-effects": "bash scripts/ci-check-get-side-effects.sh",
     "ci:secrets": "secretlint --secretlintignore .secretlintignore 'src/**/*.{ts,tsx,js,mjs,json}' 'scripts/**/*.{ts,js,mjs,sh}' '*.{json,toml,yaml,yml,sh}'",
-    "ci:audit": "npm audit --audit-level=high || true",
+    "ci:audit": "npm audit --audit-level=high --omit=dev",
     "harness": "./scripts/harness.sh",
     "harness:ci": "./scripts/harness.sh ci",
     "harness:deploy": "./scripts/harness.sh deploy",
