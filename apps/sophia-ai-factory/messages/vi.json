@@ -188,12 +188,12 @@
       "aria_label": "Nhắc nhở doctrine BYOK của Sophia",
       "title": "Trước khi bắt đầu — 3 điều bạn nên biết",
       "subtitle": "Sophia là no-code, no-tech. Bạn nắm quyền điều khiển.",
-      "bullet_keys_title": "Bạn sở hữu các key",
-      "bullet_keys_body": "Mọi API key (AI, giọng nói, avatar, thanh toán) là của bạn. Chúng tôi không lưu trữ hay sử dụng phía mình.",
+      "bullet_keys_title": "Bạn sở hữu & tự trả phí khóa BYOK",
+      "bullet_keys_body": "Khóa API của bạn (OpenRouter, ElevenLabs, HeyGen, D-ID, fal.ai) được mã hóa AES-256-GCM trong kho khóa workspace. Nhà cung cấp AI thu phí trực tiếp từ tài khoản của bạn — gói Sophia và 500 MCU gói Pilot không bao gồm phí API bên thứ ba.",
       "bullet_platform_title": "Chúng tôi vận hành nền tảng",
       "bullet_platform_body": "Operator chỉ quản lý code + hạ tầng Cloudflare. Không cần thiết lập bên thứ ba phía operator.",
-      "bullet_refund_title": "Hoàn tiền 30 ngày",
-      "bullet_refund_body": "Dùng Sophia không rủi ro. Nếu không phù hợp, yêu cầu hoàn tiền trong vòng 30 ngày sau khi mua."
+      "bullet_refund_title": "Thời hạn hoàn tiền theo gói",
+      "bullet_refund_body": "Gói đăng ký tiêu chuẩn giữ chính sách 30 ngày hiện có; MASTER giữ 14 ngày. Riêng Pilot: yêu cầu hoàn 100% số tiền Sophia thực nhận trong 7 ngày bất kể mức sử dụng MCU, hoặc trong 14 ngày nếu Sophia xác minh lỗi cung cấp campaign/script Option A. Phí BYOK tính riêng và không được Sophia hoàn. Giữ nguyên quyền luật định và quyền lợi cao hơn/quyền lợi cũ."
     },
     "apiKeys": {
       "title": "Cấu Hình Dịch Vụ AI",
@@ -787,7 +787,7 @@
       "refund_master_example": "Bạn mua MASTER ($4,999) ngày 1/6. Bạn có thể hoàn toàn bộ đến ngày 15/6. Sau đó = không hoàn được.",
       "refund_other_plans": "Các gói khác (BASIC/PREMIUM/ENTERPRISE): Không hoàn tiền cho thời gian đã sử dụng. Khi hủy, bạn vẫn dùng đến hết tháng đã thanh toán.",
       "refund_non_refundable": "Credits đã dùng, video đã tạo, và phí API không được hoàn lại.",
-      "faq_3_a": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày — không cần lý do. BASIC/PREMIUM/ENTERPRISE được hoàn tiền 100% trong 7 ngày cho lần subscribe đầu tiên. Các gói tháng không hoàn tiền cho thời gian đã sử dụng; hủy bất cứ lúc nào và giữ quyền truy cập đến hết kỳ thanh toán.",
+      "faq_3_a": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày — không cần lý do. BASIC/PREMIUM/ENTERPRISE giữ cửa sổ hoàn tiền 30 ngày hiện có. Các gói tháng không hoàn tiền cho thời gian đã sử dụng; hủy bất cứ lúc nào và giữ quyền truy cập đến hết kỳ thanh toán.",
       "faq_3_q": "Chính sách hoàn tiền của bạn là gì?",
       "tier_selection_label": "Chọn gói dịch vụ",
       "billing_cycle_aria_label": "Chu kỳ thanh toán",
@@ -894,7 +894,7 @@
         },
         "refund": {
           "question": "Có chính sách hoàn tiền không?",
-          "answer": "Có! Chúng tôi cam kết hoàn tiền 100% trong 30 ngày. Nếu bạn không hài lòng với nền tảng, liên hệ chúng tôi trong vòng 30 ngày kể từ ngày mua để được hoàn tiền đầy đủ, không hỏi lý do."
+          "answer": "Gói đăng ký tiêu chuẩn giữ chính sách 30 ngày hiện có; MASTER giữ 14 ngày. Riêng Pilot: yêu cầu hoàn 100% số tiền Sophia thực nhận trong 7 ngày bất kể mức sử dụng MCU, hoặc trong 14 ngày nếu Sophia xác minh lỗi cung cấp campaign/script Option A. Phí BYOK tính riêng và không được Sophia hoàn. Giữ nguyên quyền luật định và quyền lợi cao hơn/quyền lợi cũ."
         },
         "vnd_payment": {
           "question": "Tôi có thể thanh toán bằng VND không?",
@@ -3020,7 +3020,7 @@
     "faq_2_q": "Tôi có thể thay đổi gói bất cứ lúc nào không?",
     "faq_2_a": "Có. Bạn có thể nâng cấp bất kỳ lúc nào. Hạ cấp có hiệu lực cuối kỳ thanh toán hiện tại.",
     "faq_3_q": "Có dùng thử miễn phí không?",
-    "faq_3_a": "Chúng tôi hoàn tiền trong 7 ngày cho tất cả các gói tháng. Liên hệ hỗ trợ trong 7 ngày để được hoàn tiền đầy đủ.",
+    "faq_3_a": "Gói đăng ký tiêu chuẩn giữ chính sách 30 ngày hiện có; MASTER giữ 14 ngày. Riêng Pilot: yêu cầu hoàn 100% số tiền Sophia thực nhận trong 7 ngày bất kể mức sử dụng MCU, hoặc trong 14 ngày nếu Sophia xác minh lỗi cung cấp campaign/script Option A. Phí BYOK tính riêng và không được Sophia hoàn. Giữ nguyên quyền luật định và quyền lợi cao hơn/quyền lợi cũ.",
     "faq_4_q": "Chấp nhận hình thức thanh toán nào?",
     "faq_4_a": "Chúng tôi chấp nhận USDT (crypto qua NOWPayments) và thanh toán nội địa Việt Nam qua PayOS.",
     "faq_5_q": "Điều gì xảy ra khi hết MCU?",
@@ -6638,7 +6638,7 @@
     },
     "pricing": {
       "title": "Simple, Transparent Pricing",
-      "subtitle": "Choose the plan that fits your business. All plans include a 30-day money-back guarantee.",
+      "subtitle": "Gói đăng ký tiêu chuẩn giữ chính sách 30 ngày hiện có; MASTER giữ 14 ngày. Riêng Pilot: yêu cầu hoàn 100% số tiền Sophia thực nhận trong 7 ngày bất kể mức sử dụng MCU, hoặc trong 14 ngày nếu Sophia xác minh lỗi cung cấp campaign/script Option A. Phí BYOK tính riêng và không được Sophia hoàn. Giữ nguyên quyền luật định và quyền lợi cao hơn/quyền lợi cũ.",
       "monthly": "Monthly",
       "annual": "Annual",
       "savePercent": "(Save 20%)",
@@ -7427,7 +7427,7 @@
         "used": "Đã dùng {gb} GB",
         "percent": "{pct}%",
         "progressLabel": "Đã dùng {pct}% dung lượng",
-        "upgradeHint": "Nâng cấp lên Pro để có dung lượng render đám mây và lưu trữ nhóm không giới hạn."
+        "upgradeHint": "Nâng cấp lên Growth (PREMIUM) trở lên để mở khóa dựng video đám mây và mở rộng dung lượng lưu trữ nhóm."
       }
     },
     "pricingPage": {
@@ -7445,15 +7445,15 @@
       "plans": {
         "basic": {
           "name": "Starter",
-          "description": "Dành cho doanh nghiệp nhỏ đang thử nghiệm video AI",
+          "description": "Dành cho đội ngũ nhỏ xác thực kịch bản AI, lập chiến dịch & tài sản affiliate (dựng video cloud có từ gói Growth+)",
           "period": {
             "monthly": "/tháng",
             "yearly": "/năm"
           },
           "features": [
-            "10 chiến dịch mỗi tháng",
-            "1 kênh YouTube",
-            "5 mẫu video"
+            "10 chiến dịch/tháng · kịch bản AI & tài sản affiliate",
+            "1 kênh workspace (xuất bản chủ động)",
+            "5 mẫu quy trình · 0 lượt dựng video cloud (từ Growth+)"
           ],
           "cta": "Tạo tài khoản"
         },
@@ -7540,18 +7540,24 @@
         "copyright": "© 2026 Sophia AI Factory. Đã đăng ký bản quyền."
       },
       "paidPilot": {
-        "badge": "Pilot Trả Phí 14 Ngày • Toàn quyền gói BASIC",
-        "title": "Khởi chạy Chiến dịch Thử nghiệm 14 Ngày — 1.990.000đ ($79)",
-        "subtitle": "Dành cho doanh nghiệp SME & đại lý tiếp thị muốn kiểm chứng thực tế: 14 ngày toàn quyền gói BASIC — kịch bản AI, kế hoạch chiến dịch và tài nguyên affiliate. Tính năng dựng video khả dụng từ gói Growth trở lên.",
+        "badge": "Pilot 14 ngày • Option A",
+        "title": "Pilot 14 ngày — 1.990.000 VND",
+        "subtitle": "Riêng Pilot: yêu cầu hoàn 100% số tiền Sophia thực nhận trong 7 ngày bất kể mức sử dụng MCU, hoặc trong 14 ngày nếu Sophia xác minh lỗi cung cấp campaign/script Option A. Phí BYOK tính riêng và không được Sophia hoàn. Giữ nguyên quyền luật định và quyền lợi cao hơn/quyền lợi cũ.",
         "priceVnd": "1.990.000đ",
-        "priceUsd": "~$79 / 14 ngày",
-        "bullet1": "14 ngày BASIC với 500 MCU — kịch bản AI, kế hoạch chiến dịch, tài nguyên affiliate; nhà cung cấp AI tính phí riêng",
-        "bullet2": "Kích hoạt tức thì, không tự động gia hạn ẩn",
-        "bullet3": "Thanh toán VietQR qua PayOS",
+        "priceUsd": "Thanh toán một lần • không tự gia hạn",
+        "bullet1": "500 MCU một lần • 14 ngày lịch (Asia/Saigon) • 0 lượt dựng video Cloud",
+        "bullet2": "Kích hoạt sau xác minh tiền thực nhận, đối soát và phê duyệt; không tự gia hạn",
+        "bullet3": "Phí nhà cung cấp BYOK tính riêng; giữ nguyên quyền lợi cao hơn",
         "cta": "Đăng ký Gói Pilot 14 Ngày",
         "ctaLoading": "Đang khởi tạo đơn Pilot...",
-        "fallbackNotice": "Đơn Pilot 14 ngày đã được ghi nhận! Vui lòng hoàn tất thanh toán theo hướng dẫn để kích hoạt ngay.",
-        "errorNotice": "Không thể khởi tạo đơn Pilot lúc này. Vui lòng đăng nhập và thử lại."
+        "fallbackNotice": "Đã ghi nhận đơn; chưa xác minh thanh toán. Làm theo hướng dẫn chuyển khoản và chờ đối soát, phê duyệt.",
+        "fallbackEntitlements": "Gói BASIC trong 14 ngày · 500 MCU · 0 lượt dựng video Cloud · Phí nhà cung cấp AI (BYOK) tính riêng.",
+        "fallbackMemo": "Nội dung chuyển khoản: {memo}",
+        "fallbackBankPending": "Hướng dẫn chuyển khoản sẽ được xác nhận qua {email}.",
+        "fallbackOrderRef": "Mã đơn: {orderId} • {email}",
+        "errorNotice": "Không thể khởi tạo đơn Pilot lúc này. Vui lòng đăng nhập và thử lại.",
+        "agreementCheckbox": "Tôi đồng ý với điều khoản Pilot 14 ngày (Option A): chuyển khoản ngân hàng thủ công một lần 1.990.000 VND, 14 ngày, 500 MCU một lần, 0 lượt dựng video Cloud, không tự gia hạn, phí BYOK tính riêng và chính sách hoàn tiền đã nêu.",
+        "termsVersionLabel": "Phiên bản điều khoản: {version} · SHA-256: {hash}"
       }
     },
     "landing": {
@@ -7575,8 +7581,8 @@
         "startFree": "Lập chiến dịch đầu tiên",
         "watchDemo": "Xem các tính năng",
         "viewPricing": "Xem Bảng Giá",
-        "readyTitle": "Sẵn Sàng Xây Dựng Đế Chế Video AI?",
-        "readySubtitle": "Khởi tạo tài khoản trong 30 giây. Kết nối chìa khóa BYOK và bắt đầu tạo video không giới hạn ngay hôm nay."
+        "readyTitle": "Bắt đầu với một gói ưu đãi đã xác thực",
+        "readySubtitle": "Tạo workspace, kết nối khóa API BYOK của riêng bạn và chuẩn bị chiến dịch trước khi xuất bản. Mức giá gói và chi phí nhà cung cấp được hiển thị minh bạch trước khi bạn cam kết."
       },
       "trustBar": {
         "label": "Cam kết kiến trúc",

@@ -87,6 +87,13 @@ function makePostRequest(body: unknown): NextRequest {
 }
 
 describe('GET /api/checkout', () => {
+  it.each(['period=pilot_14d', 'skuId=BASIC_PILOT_14D', 'skuCode=BASIC_PILOT_14D'])('rejects explicit pilot %s before provider calls', async query => {
+    vi.clearAllMocks();
+    const response = await GET(new NextRequest(`https://example.test/api/checkout?tier=BASIC&${query}`));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ code: 'PILOT_OFFLINE_REQUIRED', paymentMethod: 'offline_bank_transfer' });
+    expect(mockGetUser).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = APP_URL;

@@ -17,6 +17,7 @@ export async function tryReusePendingOrder(params: {
   period: PendingOrderPeriod;
   paymentMethod: PaymentMethod;
 }): Promise<NextResponse | null> {
+  if (params.period === 'pilot_14d') return null;
   try {
     const sinceMs =
       params.paymentMethod === 'payos' ? PAYOS_REUSE_WINDOW_MS : DEFAULT_REUSE_WINDOW_MS;
@@ -53,6 +54,7 @@ export async function tryHandleFreePromoOrder(params: {
   promoCode?: string;
   customerEmail?: string;
 }): Promise<NextResponse | null> {
+  if (params.period === 'pilot_14d') return NextResponse.json({ error: 'Pilot checkout requires offline payment and agreement acceptance' }, { status: 400 });
   const { userId, tier, period, promoCode, customerEmail } = params;
   const { promoDiscountCents, promoTrialDays, calc, validation } = await processPromoReservation({
     promoCode,

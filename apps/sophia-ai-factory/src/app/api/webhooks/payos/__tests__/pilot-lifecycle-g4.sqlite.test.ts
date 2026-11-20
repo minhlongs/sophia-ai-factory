@@ -1,26 +1,5 @@
 // @vitest-environment node
-/**
- * Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle Suite
- *
- * Exercises `/api/webhooks/payos` + `getUserTier` + `queryActiveCustomerSubscription`
- * against a real in-memory `node:sqlite` schema built from canonical D1 migrations
- * (including `0503_reconcile_pending_orders_provider_payment_id.sql` and `0504`)
- * using a deterministic clock (`vi.setSystemTime`).
- *
- * Scenarios verified:
- *   1. Successful valid payment -> BASIC active for exactly +14 days from activation clock.
- *   2. Invalid payment signature -> 400 fail-closed, 0 DB writes.
- *   3. Pending payment (no IPN yet) -> order stays pending, no paid subscription row.
- *   4. Failed or cancelled payment (code !== '00') -> 200 acknowledged, order/entitlement untouched.
- *   5. Repeated IPN delivery -> idempotent (`duplicate: true`), period_end NOT stacked twice.
- *   6. Concurrent duplicate IPNs -> one wins lock, second receives 409 `processing` without double grant.
- *   7. Existing active subscription:
- *      - 7a: Existing active BASIC (+10d remaining) -> extended by +14d (+24d total).
- *      - 7b: Existing active PREMIUM (+20d remaining) -> anti-downgrade preserves PREMIUM & period_end.
- *   8. Expired pilot (+14d + 1s elapsed) -> `getUserTier` & `queryActiveCustomerSubscription` enforce expiry.
- *   9. Cross-tenant attempts -> buyer B's order cannot mutate org A's subscription.
- *  10. Reconciliation failure & retry -> transient DB failure rolls back & releases lock; retry succeeds cleanly.
- */
+/** Real SQLite regressions for manual-only legacy pilots and nonpilot PayOS settlement. */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -288,7 +267,7 @@ function buildIpnPayload(overrides: Partial<{
 
 describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', () => {
   const BASE_ISO = '2026-11-15T00:00:00.000Z';
-  const PLUS_14D_ISO = '2026-11-29T00:00:00.000Z';
+  const PLUS_14D_ISO = '2026-12-15T00:00:00.000Z';
   let harness: ReturnType<typeof createSqliteHarness>;
   let postWebhook: (req: NextRequest) => Promise<Response>;
 
@@ -320,7 +299,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     vi.useRealTimers();
   });
 
-  function seedPilotOrder(params: {
+  function seedSubscriptionOrder(params: {
     orderId?: string;
     userId?: string;
     paymentLinkId?: string;
@@ -331,7 +310,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       .prepare(
         `INSERT INTO pending_orders
            (order_id, user_id, tier, period, payment_method, amount_usd_cents, amount_vnd, provider_payment_id, provider_order_code, status, created_at)
-         VALUES (?, ?, 'BASIC', 'pilot_14d', 'payos', 7900, ?, ?, ?, 'pending', ?)`,
+         VALUES (?, ?, 'BASIC', 'monthly', 'payos', 7900, ?, ?, ?, 'pending', ?)`,
       )
       .run(
         params.orderId ?? 'sophia_u_pilot_1',
@@ -354,13 +333,39 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       INSERT INTO org_members(org_id,user_id,role) VALUES ('buyer_org','u_pilot','owner');`);
   }
 
+  it.each(['legacy', 'canonical'] as const)('%s keeps signed legacy pilot payments pending for manual review without effects', async endpoint => {
+    seedSubscriptionOrder();
+    harness.sqlite.exec("UPDATE pending_orders SET period='pilot_14d'");
+    const tables = ['pending_orders', 'organizations', 'org_members', 'subscriptions', 'mcu_transactions', 'user_mcu_balance', 'payos_events', 'payment_events'];
+    const snapshot = () => Object.fromEntries(tables.map(table => [table, harness.rows(table)]));
+    const before = snapshot();
+    for (const payload of [buildIpnPayload(), buildIpnPayload(), buildIpnPayload({ dataCode: '01' })]) {
+      const response = await deliver(endpoint, payload);
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({ error: expect.stringContaining('manual review') });
+      expect(snapshot()).toEqual(before);
+    }
+    expect(harness.rows('pending_orders')[0].status).toBe('pending');
+    expect(mocks.sendReceiptEmail).not.toHaveBeenCalled();
+  });
+
+  it.each(['legacy', 'canonical'] as const)('%s does not alter grandfathered active pilot entitlements', async endpoint => {
+    seedSubscriptionOrder(); seedMember();
+    harness.sqlite.exec("UPDATE pending_orders SET period='pilot_14d'; INSERT INTO subscriptions(id,org_id,user_id,tier,plan,status,current_period_start,current_period_end) VALUES('grandfathered','buyer_org','u_pilot','BASIC','basic','active','2026-11-15','2026-11-29'); INSERT INTO user_mcu_balance(user_id,credits_remaining,credits_total_purchased,updated_at) VALUES('u_pilot',500,500,0)");
+    const before = harness.rows('subscriptions');
+    expect((await deliver(endpoint)).status).toBe(409);
+    expect(harness.rows('subscriptions')).toEqual(before);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+    expect(harness.rows('mcu_transactions')).toEqual([]);
+  });
+
   it.each(['legacy', 'canonical'] as const)('%s rejects signed identity/amount/currency mismatches before writes', async endpoint => {
-    seedPilotOrder(); seedMember();
+    seedSubscriptionOrder(); seedMember();
     for (const mutation of [
       { paymentLinkId: 'another-link' }, { orderCode: 880012 }, { amount: 1 },
     ]) expect((await deliver(endpoint, buildIpnPayload(mutation))).status).toBe(400);
     expect((await deliver(endpoint, buildIpnPayload({ orderCode: 880011 }))).status).toBe(200);
-    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(1000);
     const currency = buildIpnPayload(); currency.data.currency = 'USD';
     expect((await deliver(endpoint, currency)).status).toBe(400);
     harness.sqlite.exec("UPDATE pending_orders SET payment_method='nowpayments'");
@@ -372,16 +377,16 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it.each(['legacy', 'canonical'] as const)('%s accepts only exact legacy URL with stored order code', async endpoint => {
-    seedPilotOrder(); seedMember();
+    seedSubscriptionOrder(); seedMember();
     harness.sqlite.exec("UPDATE pending_orders SET provider_payment_id=NULL, invoice_url='https://pay.payos.vn/web/plink_pilot_01?x=1'");
     expect((await deliver(endpoint)).status).toBe(400);
     harness.sqlite.exec("UPDATE pending_orders SET invoice_url='https://pay.payos.vn/web/plink_pilot_01'");
     expect((await deliver(endpoint)).status).toBe(200);
-    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(1000);
   });
 
   it.each(['legacy', 'canonical'] as const)('%s retains replacement lease and grants nothing for displaced worker', async endpoint => {
-    seedPilotOrder(); seedMember();
+    seedSubscriptionOrder(); seedMember();
     const table = endpoint === 'legacy' ? 'payos_events' : 'payment_events';
     harness.hooks.beforeBatch = () => {
       harness.hooks.beforeBatch = undefined;
@@ -394,7 +399,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it.each(['legacy', 'canonical'] as const)('%s cancellation failure rolls back and retries', async endpoint => {
-    seedPilotOrder();
+    seedSubscriptionOrder();
     harness.sqlite.exec("CREATE TRIGGER fail_cancel BEFORE UPDATE OF status ON pending_orders WHEN NEW.status='failed' BEGIN SELECT RAISE(ABORT,'forced cancellation outage'); END");
     const payload = buildIpnPayload({ dataCode: '01' });
     expect((await deliver(endpoint, payload)).status).toBe(500);
@@ -408,7 +413,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it.each(['legacy', 'canonical'] as const)('%s cancellation rejects a changed financial order snapshot', async endpoint => {
-    seedPilotOrder();
+    seedSubscriptionOrder();
     harness.hooks.beforeBatch = () => {
       harness.hooks.beforeBatch = undefined;
       harness.sqlite.exec("UPDATE pending_orders SET amount_usd_cents=8000, contract_id='replacement-contract', invoice_id='replacement-invoice'");
@@ -421,7 +426,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it('reclaims a crashed legacy lease with one winner among two contenders', async () => {
-    seedPilotOrder(); seedMember();
+    seedSubscriptionOrder(); seedMember();
     harness.sqlite.exec("INSERT INTO payos_events(event_id,order_code,status,amount,currency,payload,processed,created_at) VALUES ('payos_880011','880011','PAID',1990000,'VND','{}',0,'2026-11-14T23:54:59.999Z')");
     const { acquireEventLock } = await import('@/app/api/payos/ipn/modules/event-locker');
     const raw = harness.rawDb as unknown as import('@cloudflare/workers-types').D1Database;
@@ -434,7 +439,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it.each(['legacy', 'canonical'] as const)('%s first and mixed endpoint interleaving grant once', async first => {
-    seedPilotOrder(); seedMember();
+    seedSubscriptionOrder(); seedMember();
     const second = first === 'legacy' ? 'canonical' : 'legacy';
     harness.hooks.beforeBatch = async () => {
       harness.hooks.beforeBatch = undefined;
@@ -444,12 +449,12 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     expect((await deliver(first)).status).toBe(200);
     expect((await deliver(second)).status).toBe(200);
     expect(harness.rows('mcu_transactions')).toHaveLength(1);
-    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(500);
+    expect(harness.rows('user_mcu_balance')[0].credits_remaining).toBe(1000);
     expect(harness.rows('subscriptions')[0].current_period_end).toBe(PLUS_14D_ISO);
   });
 
   it.each(['prepare', 'bind'] as const)('fails closed on the first MCU %s failure and grants exactly once on retry', async (stage) => {
-    seedPilotOrder();
+    seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
     const deliver = () => postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
     harness.hooks.failMcu = stage;
@@ -462,7 +467,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     expect(harness.rows('pending_orders')[0]).toMatchObject({ status: 'pending', payment_id: null });
     expect((await deliver()).status).toBe(200);
     expect(harness.rows('subscriptions')[0]).toMatchObject({ current_period_end: PLUS_14D_ISO });
-    expect(harness.rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: 500 });
+    expect(harness.rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: 1000 });
     expect(harness.rows('mcu_transactions')).toHaveLength(1);
   });
 
@@ -473,7 +478,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       INSERT INTO subscriptions(id,org_id,user_id,tier,plan,status,current_period_start,current_period_end)
       VALUES ('sub_race','org_race','u_pilot','BASIC','basic','active','2026-11-01T00:00:00.000Z','2026-11-25T00:00:00.000Z');
     `);
-    seedPilotOrder();
+    seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
     const deliver = () => postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
     const snapshot = () => Object.fromEntries(['organizations', 'org_members', 'subscriptions', 'pending_orders', 'mcu_transactions', 'user_mcu_balance'].map((table) => [table, harness.rows(table)]));
@@ -483,7 +488,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       if (change === 'upgrade') {
         harness.sqlite.exec("UPDATE subscriptions SET tier = 'PREMIUM', plan = 'premium', current_period_end = '2026-12-05T00:00:00.000Z' WHERE id = 'sub_race'; UPDATE organizations SET plan = 'premium' WHERE id = 'org_race';");
       } else {
-        seedPilotOrder({ orderId: 'pilot_second', paymentLinkId: 'plink_second', orderCode: 880012 });
+        seedSubscriptionOrder({ orderId: 'pilot_second', paymentLinkId: 'plink_second', orderCode: 880012 });
         const second = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
           method: 'POST', body: await signPayOsBody(buildIpnPayload({ paymentLinkId: 'plink_second', orderCode: 880012 })),
         }));
@@ -499,14 +504,14 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     expect((await deliver()).status).toBe(200);
     expect(harness.rows('subscriptions')[0]).toMatchObject({
       tier: change === 'upgrade' ? 'PREMIUM' : 'BASIC',
-      current_period_end: change === 'upgrade' ? '2026-12-05T00:00:00.000Z' : '2026-12-23T00:00:00.000Z',
+      current_period_end: change === 'upgrade' ? '2026-12-05T00:00:00.000Z' : '2027-01-24T00:00:00.000Z',
     });
-    expect(harness.rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: change === 'upgrade' ? 500 : 1000 });
+    expect(harness.rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: change === 'upgrade' ? 1000 : 2000 });
     expect(harness.rows('mcu_transactions')).toHaveLength(change === 'upgrade' ? 1 : 2);
   });
 
-  it('Scenario 1 & 8: Valid payment grants BASIC for exact +14d window, and expires cleanly at +14d + 1s', async () => {
-    seedPilotOrder();
+  it('Scenario 1 & 8: Valid payment grants BASIC for exact monthly window, and expires cleanly at +14d + 1s', async () => {
+    seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
     const res = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
     expect(res.status).toBe(200);
@@ -522,31 +527,31 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       current_period_end: PLUS_14D_ISO,
     });
 
-    // Verify atomic 500 MCU grant on real SQLite partial unique index (0477)
+    // Verify atomic 1000 MCU grant on real SQLite partial unique index (0477)
     const mcuBal = harness.rows('user_mcu_balance');
     expect(mcuBal).toEqual([
       expect.objectContaining({
         user_id: 'u_pilot',
-        credits_remaining: 500,
-        credits_total_purchased: 500,
+        credits_remaining: 1000,
+        credits_total_purchased: 1000,
       }),
     ]);
     expect(harness.rows('mcu_transactions')).toEqual([
       expect.objectContaining({
         user_id: 'u_pilot',
-        delta: 500,
+        delta: 1000,
         reason: 'PAYOS_SUBSCRIPTION_ACTIVATION',
         payment_reference: 'payos_order_sophia_u_pilot_1',
       }),
     ]);
 
     // Inside window (+13d 23h 59m 59s)
-    vi.setSystemTime(new Date('2026-11-28T23:59:59.000Z'));
+    vi.setSystemTime(new Date('2026-12-14T23:59:59.000Z'));
     const activeInfo = await queryActiveCustomerSubscription('u_pilot');
     expect(activeInfo).toMatchObject({ resolvedTier: 'BASIC', subStatus: 'active', periodEnd: PLUS_14D_ISO });
 
     // Scenario 8: Past 14-day window (+14d + 1s) — even before cron runs, read-path enforces expiry
-    vi.setSystemTime(new Date('2026-11-29T00:00:01.000Z'));
+    vi.setSystemTime(new Date('2026-12-15T00:00:01.000Z'));
     const expiredInfo = await queryActiveCustomerSubscription('u_pilot');
     expect(expiredInfo).toMatchObject({ resolvedTier: 'BASIC', subStatus: 'expired', periodEnd: PLUS_14D_ISO });
 
@@ -556,7 +561,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it('Scenario 2: Invalid payment signature fails closed (400) with zero DB mutations', async () => {
-    seedPilotOrder();
+    seedSubscriptionOrder();
     const forged = await signPayOsBody(buildIpnPayload(), 'wrong-attacker-key');
     const res = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: forged }));
     expect(res.status).toBe(400);
@@ -566,7 +571,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it('Scenario 3 & 4: Pending order and cancelled/non-00 IPN grant zero entitlement', async () => {
-    seedPilotOrder();
+    seedSubscriptionOrder();
     // Scenario 3: Before any IPN arrives, order is pending and no subscription exists
     expect(harness.rows('subscriptions')).toHaveLength(0);
     expect(harness.rows('pending_orders')[0]).toMatchObject({ status: 'pending' });
@@ -581,7 +586,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   });
 
   it('Scenario 5 & 6: Repeated sequential IPN and concurrent in-flight IPN never double-extend entitlement', async () => {
-    seedPilotOrder();
+    seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
 
     // Scenario 6: Simulate an in-flight concurrent lock already inserted in payment_events (processed = 0)
@@ -606,24 +611,24 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     expect(duplicate.status).toBe(200);
     expect(await duplicate.json()).toEqual({ received: true, duplicate: true });
 
-    // Period end remains strictly 2026-11-29 (not stacked to +28d) and MCU stays strictly 500
+    // Period end remains strictly 2026-11-29 (not stacked to +28d) and MCU stays strictly 1000
     const subs = harness.rows('subscriptions');
     expect(subs).toHaveLength(1);
     expect(subs[0]?.current_period_end).toBe(PLUS_14D_ISO);
     expect(harness.rows('user_mcu_balance')).toEqual([
-      expect.objectContaining({ user_id: 'u_pilot', credits_remaining: 500 }),
+      expect.objectContaining({ user_id: 'u_pilot', credits_remaining: 1000 }),
     ]);
     expect(harness.rows('mcu_transactions')).toHaveLength(1);
   });
 
-  it('Scenario 7: Existing active BASIC extends by +14d; existing active PREMIUM is protected from downgrade', async () => {
+  it('Scenario 7: Existing active BASIC extends by +30d; existing active PREMIUM is protected from downgrade', async () => {
     // 7a: Existing active BASIC ending in +10 days -> extended to +24 days
     harness.sqlite.exec("INSERT INTO organizations (id, name, slug, plan) VALUES ('org_basic', 'Agency B', 'agency-b', 'basic');");
     harness.sqlite.exec("INSERT INTO org_members (org_id, user_id, role) VALUES ('org_basic', 'u_basic', 'owner');");
     harness.sqlite
       .prepare("INSERT INTO subscriptions (id, org_id, user_id, tier, plan, status, current_period_start, current_period_end) VALUES ('sub_b', 'org_basic', 'u_basic', 'BASIC', 'basic', 'active', ?, '2026-11-25T00:00:00.000Z')")
       .run(BASE_ISO);
-    seedPilotOrder({ orderId: 'sophia_u_basic_1', userId: 'u_basic', paymentLinkId: 'plink_b', orderCode: 880022 });
+    seedSubscriptionOrder({ orderId: 'sophia_u_basic_1', userId: 'u_basic', paymentLinkId: 'plink_b', orderCode: 880022 });
 
     const resBasic = await postWebhook(
       new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
@@ -636,7 +641,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     expect(subBasic).toEqual({
       tier: 'BASIC',
       plan: 'basic',
-      current_period_end: '2026-12-09T00:00:00.000Z', // 2026-11-25 + 14 days
+      current_period_end: '2026-12-25T00:00:00.000Z', // 2026-11-25 + 30 days
     });
 
     // 7b: Existing active PREMIUM ending in +20 days -> NOT downgraded to BASIC
@@ -645,7 +650,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     harness.sqlite
       .prepare("INSERT INTO subscriptions (id, org_id, user_id, tier, plan, status, current_period_start, current_period_end) VALUES ('sub_p', 'org_prem', 'u_prem', 'PREMIUM', 'premium', 'active', ?, '2026-12-05T00:00:00.000Z')")
       .run(BASE_ISO);
-    seedPilotOrder({ orderId: 'sophia_u_prem_1', userId: 'u_prem', paymentLinkId: 'plink_p', orderCode: 880033 });
+    seedSubscriptionOrder({ orderId: 'sophia_u_prem_1', userId: 'u_prem', paymentLinkId: 'plink_p', orderCode: 880033 });
 
     const resPrem = await postWebhook(
       new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
@@ -671,10 +676,10 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       .run();
 
     // Seed Attacker Pilot Order
-    seedPilotOrder({ orderId: 'sophia_u_attacker_1', userId: 'u_attacker', paymentLinkId: 'plink_atk', orderCode: 880044 });
+    seedSubscriptionOrder({ orderId: 'sophia_u_attacker_1', userId: 'u_attacker', paymentLinkId: 'plink_atk', orderCode: 880044 });
     const signedAtk = await signPayOsBody(buildIpnPayload({ paymentLinkId: 'plink_atk', orderCode: 880044 }));
 
-    // Scenario 10a: Force D1 batch failure on first delivery -> 500, lock released, order stays pending
+    // Scenario 10a: Force D1 batch failure on first delivery -> 1000, lock released, order stays pending
     harness.setFailNextBatch(true);
     const failedAttempt = await postWebhook(
       new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signedAtk }),

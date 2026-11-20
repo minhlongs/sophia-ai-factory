@@ -29,6 +29,22 @@ describe('extracted-helpers-coverage-boost', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
   describe('payment-dispatcher', () => {
+    it('rejects pilot checkout without affirmative agreement before provider dispatch', async () => {
+      const response = await dispatchPaymentMethod({
+        paymentMethod: 'payos', tier: 'BASIC', userId: 'pilot-user', period: 'pilot_14d',
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: 'PILOT_AGREEMENT_REQUIRED' });
+      const { dispatchPayOsMethod } = await import('@/app/api/checkout/modules/payment-dispatcher-providers');
+      expect(dispatchPayOsMethod).not.toHaveBeenCalled();
+    });
+
+    it('rejects pilot checkout for a non-BASIC tier', async () => {
+      const response = await dispatchPaymentMethod({
+        paymentMethod: 'payos', tier: 'PREMIUM', userId: 'pilot-user', period: 'pilot_14d',
+      });
+      expect(response.status).toBe(400);
+    });
     it('handles nowpayments method with successful checkout generation and fallback', async () => {
       const res = await dispatchPaymentMethod({
         paymentMethod: 'nowpayments',

@@ -8,7 +8,6 @@ import { fireMissionWebhook } from '@/forest/webhooks/missions/fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';
 import { clearMissionCheckpoint } from '@/tree/missions/checkpoint-persistence';
 import type { MissionRow } from './types';
-import { failMission } from './queue-router';
 
 type ServerDbClient = ReturnType<typeof createServerClient>;
 
@@ -38,20 +37,21 @@ export async function finalizeMissionExecution(params: {
   const missionId = mission.id;
   const nowAfter = Math.floor(Date.now() / 1000);
 
-  if (handlerResult.ok) {
-    await db
-      .from('engine_missions')
-      .update({
-        status: 'succeeded',
-        result: JSON.stringify(handlerResult.data ?? {}),
-        credits_used: creditsUsed,
-        updated_at: nowAfter,
-        completed_at: nowAfter,
-      })
-      .eq('id', missionId);
-    await clearMissionCheckpoint(missionId);
-  } else {
-    await failMission(db, missionId, handlerResult.error ?? 'Unknown error');
+  try {
+    const terminal = handlerResult.ok
+      ? await db.prepare(`UPDATE engine_missions SET status='succeeded', result=?, credits_used=?,
+          updated_at=?, completed_at=? WHERE id=? AND user_id=? AND status='running' RETURNING id`)
+        .bind(JSON.stringify(handlerResult.data ?? {}), creditsUsed, nowAfter, nowAfter, missionId, mission.user_id)
+        .first<{ id: string }>()
+      : await db.prepare(`UPDATE engine_missions SET status='failed', error=?, updated_at=?, completed_at=?
+          WHERE id=? AND user_id=? AND status='running' RETURNING id`)
+        .bind(handlerResult.error ?? 'Unknown error', nowAfter, nowAfter, missionId, mission.user_id)
+        .first<{ id: string }>();
+    if (!terminal) return;
+    if (handlerResult.ok) await clearMissionCheckpoint(missionId);
+  } catch (err) {
+    logger.error('[Dispatcher] Failed to finalize mission', { missionId, err });
+    return;
   }
 
   if (mission.webhook_url) {

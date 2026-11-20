@@ -95,7 +95,7 @@ export async function requireAdminWithRecentAuth(
     return adminResult;
   }
 
-  const recentAuth = await requireRecentAuth(request);
+  const recentAuth = await requireRecentAuth(request, adminResult.user.id);
   if (!recentAuth.ok) {
     const status = recentAuth.reason === 'no-challenge' ? 401 : 403;
     return NextResponse.json(

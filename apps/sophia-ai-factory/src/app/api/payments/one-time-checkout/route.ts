@@ -28,6 +28,9 @@ export { oneTimeCheckoutSchema };
 export const POST = withRateLimit(async function POST(request: Request) {
   try {
     const body = await request.json();
+    if (body && typeof body === 'object' && ('skuId' in body && body.skuId === 'BASIC_PILOT_14D' || 'skuCode' in body && body.skuCode === 'BASIC_PILOT_14D' || 'period' in body && body.period === 'pilot_14d')) {
+      return NextResponse.json({ code: 'PILOT_OFFLINE_REQUIRED', paymentMethod: 'offline_bank_transfer', error: 'Pilot requires offline checkout with agreement acceptance at /api/checkout' }, { status: 400 });
+    }
     const parsed = oneTimeCheckoutSchema.safeParse(body);
     if (!parsed.success) {
       return errorResponse('Invalid request', 'VALIDATION_ERROR', 400);

@@ -4,7 +4,8 @@
  * Read-only balance and transaction ledger queries extracted from credits-repo.ts.
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
+import { getManualPilotCreditBalance } from '@/seed/billing/manual-pilot-credit-allocation';
 
 export interface McuBalance {
   credits_remaining: number;
@@ -24,7 +25,7 @@ export interface McuTransactionRow {
  * Get current MCU balance for a user.
  * Returns zeroed balance if no row exists.
  */
-export async function getBalance(userId: string): Promise<McuBalance> {
+export async function getBalance(userId: string, orgId?: string): Promise<McuBalance> {
   const db = createServerClient();
   try {
     const { data } = (await db
@@ -33,13 +34,13 @@ export async function getBalance(userId: string): Promise<McuBalance> {
       .eq('user_id', userId)
       .single()) as { data: McuBalance | null; error: unknown };
 
-    if (!data) {
-      return { credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 };
-    }
+    const d1 = await getD1();
+    const schema = d1 && await d1.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='manual_pilot_credit_grants'").first();
+    const pilot = schema && d1 ? await getManualPilotCreditBalance(d1,userId,orgId) : 0;
     return {
-      credits_remaining: data.credits_remaining,
-      credits_total_purchased: data.credits_total_purchased,
-      credits_total_used: data.credits_total_used,
+      credits_remaining: (data?.credits_remaining ?? 0) + pilot,
+      credits_total_purchased: data?.credits_total_purchased ?? 0,
+      credits_total_used: data?.credits_total_used ?? 0,
     };
   } catch {
     return { credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 };

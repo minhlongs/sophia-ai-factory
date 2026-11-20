@@ -27,6 +27,9 @@ export async function commitPayOsSubscriptionBatch(params: {
   order: PendingOrder;
 }): Promise<void> {
   const { d1, userId, orgId, tier, billingPeriod, now, orderCode, orderId, amount, eventId, lockCreatedAt, order } = params;
+  if (order.period === 'pilot_14d' || billingPeriod === 'pilot_14d') {
+    throw new Error('Pilot payment requires manual review / Thanh toán Pilot cần được kiểm tra thủ công');
+  }
   if (!userId || !orgId) throw new Error('PayOS activation requires a buyer organization');
   const nowMs = Number.isFinite(Date.parse(now)) ? Date.parse(now) : Date.now();
   try {
@@ -45,7 +48,7 @@ export async function commitPayOsSubscriptionBatch(params: {
     // the previous statement's row count, within the same atomic D1 batch.
     // Compare the full subscription snapshot so a concurrent renewal/upgrade wins safely.
     const stmts = [d1.prepare(`UPDATE pending_orders SET status='completed', payment_id=?, completed_at=?
-      WHERE order_id=? AND status='pending' AND payment_method='payos'
+      WHERE order_id=? AND status='pending' AND payment_method='payos' AND period <> 'pilot_14d'
       AND user_id=? AND tier=? AND period=? AND amount_vnd IS ?
        AND provider_payment_id IS ? AND provider_order_code IS ? AND invoice_url IS ?
        AND purpose IS ? AND amount_usd_cents IS ?

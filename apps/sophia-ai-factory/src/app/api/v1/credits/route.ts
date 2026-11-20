@@ -22,8 +22,16 @@ export const GET = withRateLimit(async function GET(request: NextRequest): Promi
     return apiKeyAuthErrorResponse(auth);
   }
 
-  const balance = await getBalance(auth.userId!);
-  const transactions = await listTransactions(auth.userId!, 20);
+  if (!auth.userId) {
+    return apiKeyAuthErrorResponse({
+      valid: false,
+      error: 'Authenticated user principal required',
+      errorType: 'invalid_key',
+    });
+  }
+
+  const balance = await getBalance(auth.userId, auth.orgId);
+  const transactions = await listTransactions(auth.userId, 20);
 
   return NextResponse.json({
     ...balance,

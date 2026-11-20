@@ -11,6 +11,10 @@ import { getUserId } from './checkout-auth';
 export async function handleCheckoutGet(request: NextRequest): Promise<NextResponse> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
   try {
+    if (request.nextUrl.searchParams.get('period') === 'pilot_14d' ||
+        ['skuId', 'skuCode', 'tier'].some(key => request.nextUrl.searchParams.get(key)?.toUpperCase() === 'BASIC_PILOT_14D')) {
+      return NextResponse.json({ code: 'PILOT_OFFLINE_REQUIRED', paymentMethod: 'offline_bank_transfer', error: 'Pilot requires affirmative agreement acceptance via POST /api/checkout' }, { status: 400 });
+    }
     const rawTier = request.nextUrl.searchParams.get('tier')?.toUpperCase();
 
     const tierMap: Record<string, string> = {

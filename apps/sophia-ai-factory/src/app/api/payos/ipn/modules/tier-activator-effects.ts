@@ -1,3 +1,5 @@
+import { getCommittedPayOsPilotReceipt } from '@/land/payments/payos-gateway/payos-pilot-receipt';
+import { OPTION_A_PILOT_CONTRACT } from '@/seed/config/tiers/option-a-pilot-contract';
 /**
  * Post-activation effects for PayOS tier activation.
  * Layer: app/api/payos/ipn/modules
@@ -53,15 +55,17 @@ export async function runPayOsPostActivationEffects({
     const userEmail = (userRow as { name?: string; email?: string } | null)?.email;
     const userName = (userRow as { name?: string; email?: string } | null)?.name;
 
-    if (userEmail) {
+    const pilotReceipt = billingPeriod === 'pilot_14d' ? await getCommittedPayOsPilotReceipt(d1, 'ipn', orderId, userId, `payos_${orderCode}`) : null;
+    if (userEmail && (billingPeriod !== 'pilot_14d' || pilotReceipt)) {
       await sendReceiptEmail({
         email: userEmail,
         userName: userName ?? undefined,
         tier,
         period: billingPeriod,
-        amountUsd: billingPeriod === 'pilot_14d' ? 79 : Math.round(amount / 25000),
+        amountUsd: billingPeriod === 'pilot_14d' ? OPTION_A_PILOT_CONTRACT.priceUsd : Math.round(amount / 25000),
         paymentId: `payos_${orderCode}`,
         paymentMethod: 'payos',
+        ...(pilotReceipt ?? {}),
         orderId,
         locale: 'vi',
       });

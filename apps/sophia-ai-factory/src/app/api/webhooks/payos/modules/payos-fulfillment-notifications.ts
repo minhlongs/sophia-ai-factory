@@ -1,3 +1,5 @@
+import { getCommittedPayOsPilotReceipt } from '@/land/payments/payos-gateway/payos-pilot-receipt';
+import { OPTION_A_PILOT_CONTRACT } from '@/seed/config/tiers/option-a-pilot-contract';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PayOsFulfillmentParams } from './payos-fulfillment';
@@ -19,13 +21,13 @@ export async function dispatchPayOsNotificationsAndTags(
     const userEmail = (userRow as { name?: string; email?: string } | null)?.email;
     const userName = (userRow as { name?: string; email?: string } | null)?.name;
 
-    if (userEmail) {
-      const exactAmountUsd =
-        typeof order.amount_usd_cents === 'number' && order.amount_usd_cents > 0
+    const pilotReceipt = order.period === 'pilot_14d' ? await getCommittedPayOsPilotReceipt(db.unwrap(), 'webhook', orderId, userId, `payos_${paymentLinkId}`) : null;
+    if (userEmail && (order.period !== 'pilot_14d' || pilotReceipt)) {
+      const exactAmountUsd = order.period === 'pilot_14d'
+        ? OPTION_A_PILOT_CONTRACT.priceUsd
+        : typeof order.amount_usd_cents === 'number' && order.amount_usd_cents > 0
           ? Math.round(order.amount_usd_cents) / 100
-          : order.period === 'pilot_14d'
-            ? 79
-            : Math.round(amount / 25000);
+          : Math.round(amount / 25000);
       await sendReceiptEmail({
         email: userEmail,
         userName: userName ?? undefined,
@@ -40,6 +42,7 @@ export async function dispatchPayOsNotificationsAndTags(
         amountUsd: exactAmountUsd,
         paymentId: `payos_${paymentLinkId}`,
         paymentMethod: 'payos',
+        ...(pilotReceipt ?? {}),
         orderId,
         locale: 'vi',
       });

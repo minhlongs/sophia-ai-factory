@@ -86,7 +86,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 const TEST_SECRET = 'test-secret-for-hmac-signing-1234567890abcdef';
 
-function makeBulkRequest(cookieValue?: string): NextRequest {
+function makeBulkRequest(cookieValue?: string, body: Record<string, unknown> = {}): NextRequest {
   const headers: HeadersInit = {};
   if (cookieValue) {
     headers['cookie'] = `admin_challenge_token=${cookieValue}`;
@@ -100,6 +100,7 @@ function makeBulkRequest(cookieValue?: string): NextRequest {
         baseCode: 'FREE100',
         count: 5,
         tier: 'MASTER',
+        ...body,
       }),
     },
   );
@@ -117,7 +118,7 @@ describe('requireRecentAuth helper', () => {
 
   it('returns no-challenge when cookie is absent', async () => {
     const req = makeBulkRequest(); // no cookie
-    const result = await requireRecentAuth(req, 5 * 60 * 1000);
+    const result = await requireRecentAuth(req, 'admin_user_1', 5 * 60 * 1000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('no-challenge');
   });
@@ -125,8 +126,14 @@ describe('requireRecentAuth helper', () => {
   it('returns ok=true for a freshly minted valid token', async () => {
     const token = await mintAdminChallengeToken('admin_user_1', TEST_SECRET);
     const req = makeBulkRequest(token);
-    const result = await requireRecentAuth(req, 5 * 60 * 1000);
+    const result = await requireRecentAuth(req, 'admin_user_1', 5 * 60 * 1000);
     expect(result.ok).toBe(true);
+  });
+
+  it('rejects a valid recent token minted for a different authenticated admin', async () => {
+    const token = await mintAdminChallengeToken('admin_user_1', TEST_SECRET);
+    const result = await requireRecentAuth(makeBulkRequest(token), 'admin_user_2');
+    expect(result).toEqual({ ok: false, reason: 'invalid' });
   });
 
   it('returns expired when token issuedAt is > maxAgeMs ago', async () => {
@@ -137,7 +144,7 @@ describe('requireRecentAuth helper', () => {
     dateSpy.mockRestore();
 
     const req = makeBulkRequest(token);
-    const result = await requireRecentAuth(req, 5 * 60 * 1000);
+    const result = await requireRecentAuth(req, 'admin_user_1', 5 * 60 * 1000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('expired');
   });
@@ -149,14 +156,14 @@ describe('requireRecentAuth helper', () => {
     const replacement = token[dotIdx + 1] === 'X' ? 'Y' : 'X';
     const tampered = token.slice(0, dotIdx + 1) + replacement + token.slice(dotIdx + 2);
     const req = makeBulkRequest(tampered);
-    const result = await requireRecentAuth(req, 5 * 60 * 1000);
+    const result = await requireRecentAuth(req, 'admin_user_1', 5 * 60 * 1000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('invalid');
   });
 
   it('returns invalid when cookie value is malformed (no dot)', async () => {
     const req = makeBulkRequest('notadotformat');
-    const result = await requireRecentAuth(req, 5 * 60 * 1000);
+    const result = await requireRecentAuth(req, 'admin_user_1', 5 * 60 * 1000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('invalid');
   });
@@ -295,5 +302,26 @@ describe('POST /api/admin/promo-codes/bulk-generate — F02 gate', () => {
     expect(res.status).toBe(401);
     const body = await res.json() as { reason: string };
     expect(body.reason).toBe('invalid');
+  });
+
+  it('returns 401 reason=invalid when replaying another admin challenge token even if request body supplies that admin ID', async () => {
+    const { requireAdmin } = await import('@/seed/auth/require-admin');
+    vi.mocked(requireAdmin).mockResolvedValueOnce({
+      user: { id: 'admin_2', email: 'admin2@example.com', role: 'admin' },
+    });
+
+    const { rateLimit } = await import('@/seed/security/rate-limiter');
+    const { bulkGeneratePromoCodes } = await import('@/land/promo/bulk-generator');
+    const tokenForAdmin1 = await mintAdminChallengeToken('admin_1', TEST_SECRET);
+    const { POST } = await import('@/app/api/admin/promo-codes/bulk-generate/route');
+    const req = makeBulkRequest(tokenForAdmin1, { userId: 'admin_1', adminId: 'admin_1' });
+    const res = await POST(req);
+
+    expect(res.status).toBe(401);
+    const body = await res.json() as { error: string; reason: string };
+    expect(body.error).toBe('recent_auth_required');
+    expect(body.reason).toBe('invalid');
+    expect(rateLimit).not.toHaveBeenCalled();
+    expect(bulkGeneratePromoCodes).not.toHaveBeenCalled();
   });
 });

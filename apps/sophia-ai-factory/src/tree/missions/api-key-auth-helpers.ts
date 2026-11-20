@@ -15,6 +15,9 @@ export type ApiKeyAuthErrorType =
 export interface ApiKeyAuthResult {
   valid: boolean;
   userId?: string;
+  orgId?: string;
+  apiKeyId?: string;
+  authKind?: 'session' | 'api_key';
   error?: string;
   /** Discriminates error category for HTTP status mapping at callers. */
   errorType?: ApiKeyAuthErrorType;
@@ -22,6 +25,8 @@ export interface ApiKeyAuthResult {
 
 export interface ApiKeyRow {
   user_id: string;
+  id?: string;
+  org_id?: string;
   is_active: boolean;
   expires_at: string | null;
 }

@@ -32,9 +32,24 @@ export class NodeSqliteD1Database implements D1Database {
   }
 
   async batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
-    const results: D1Result<T>[] = [];
-    for (const s of statements) results.push(await s.run<T>());
-    return results;
+    // Never await inside this transaction: another request must not execute
+    // statements on this connection before the batch commits or rolls back.
+    if (statements.some((statement) =>
+      !(statement instanceof NodeSqliteStatement) || !statement.belongsTo(this.db),
+    )) {
+      throw new Error('Batch requires statements prepared by the local SQLite adapter');
+    }
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const results = statements.map((statement) =>
+        (statement as NodeSqliteStatement).runSync<T>(),
+      );
+      this.db.exec('COMMIT');
+      return results;
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
   }
 
   async exec(query: string): Promise<D1ExecResult> {

@@ -52,8 +52,10 @@ export async function validatePayOsPaymentIdentity(params: {
   const matches = ((data ?? []) as unknown as PendingOrder[]).filter(order => matchesPayOsIdentity(order, orderCode, paymentLinkId));
   if (matches.length !== 1) return { ok: false, error: 'Payment identity mismatch', status: 400 };
   const order = matches[0];
-  if ((order.purpose != null && !['subscription', 'contract'].includes(order.purpose)) ||
-      (order.period === 'pilot_14d' && order.tier !== 'BASIC')) {
+  if (order.period === 'pilot_14d') {
+    return { ok: false, error: 'Pilot payment requires manual review / Thanh toán Pilot cần được kiểm tra thủ công', status: 409 };
+  }
+  if (order.purpose != null && !['subscription', 'contract'].includes(order.purpose)) {
     return { ok: false, error: 'Invalid order purpose or tier', status: 400 };
   }
   if (order.purpose === 'contract' && (!order.contract_id || !order.invoice_id || order.amount_vnd == null)) {

@@ -5,6 +5,8 @@ import { writeOrder } from '@/land/orders/pending-order-repo';
 import type { Tier } from '@/seed/types';
 import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
 import { dispatchPayOsMethod, dispatchOfflineMethod } from './payment-dispatcher-providers';
+import { dispatchManualPilotOfflineCheckout } from './manual-pilot-offline-checkout';
+import type { PilotAgreementInput } from './manual-pilot-agreement-acceptance';
 
 export interface MethodDispatcherInput {
   paymentMethod: PaymentMethod;
@@ -13,6 +15,8 @@ export interface MethodDispatcherInput {
   period: PendingOrderPeriod;
   promoCode?: string;
   customerEmail?: string;
+  agreement?: PilotAgreementInput;
+  orgId?: string;
 }
 
 async function resolveNowPaymentsInvoiceUrl(
@@ -49,12 +53,10 @@ export async function dispatchPaymentMethod(input: MethodDispatcherInput): Promi
         { status: 400 },
       );
     }
-    if (paymentMethod !== 'payos') {
-      return NextResponse.json(
-        { error: '14-day Paid Pilot checkout requires PayOS payment method' },
-        { status: 400 },
-      );
+    if (!input.agreement) {
+      return NextResponse.json({ code: 'PILOT_AGREEMENT_REQUIRED', error: 'Pilot agreement acceptance is required' }, { status: 400 });
     }
+    return dispatchManualPilotOfflineCheckout({ ...input, agreement: input.agreement });
   }
 
   if (paymentMethod === 'nowpayments') {

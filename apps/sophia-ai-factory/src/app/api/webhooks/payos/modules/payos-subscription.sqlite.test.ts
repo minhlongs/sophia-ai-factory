@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getCommittedPayOsPilotReceipt } from '@/land/payments/payos-gateway/payos-pilot-receipt';
 import type { PendingOrder } from '@/land/orders/pending-order-types';
 import type { DbClient } from './payos-idempotency';
 
@@ -105,6 +106,19 @@ describe('PayOS activation against canonical SQLite schema', () => {
     expect(fixture.rows('payment_events')[0]).toMatchObject({ processed: 1 });
   });
 
+  it('rejects legacy pilot fulfillment without status, MCU or entitlement effects', async () => {
+    const pilot = { ...order, period: 'pilot_14d' as const, amount_usd_cents: 7900, amount_vnd: 1990000, provider_order_code: 123 };
+    fixture.sqlite.exec("UPDATE pending_orders SET period='pilot_14d', amount_usd_cents=7900, amount_vnd=1990000, provider_order_code=123");
+    fixture.sqlite.prepare("UPDATE payment_events SET event_type='payos.payment_success', payload=?").run(JSON.stringify({
+      data: { orderCode: 123, code: '00', amount: 1990000, currency: 'VND', paymentLinkId: 'link-1' },
+    }));
+    const proof = () => getCommittedPayOsPilotReceipt(fixture.db.unwrap(), 'webhook', order.order_id, 'buyer', 'payos_link-1');
+    expect(await proof()).toBeNull();
+    const before = fixture.snapshot();
+    await expect(activatePayOsSubscription({ db: fixture.db, userId: 'buyer', tier: 'BASIC', order: pilot, paymentLinkId: 'link-1', lockCreatedAt })).rejects.toThrow('manual review');
+    expect(fixture.snapshot()).toEqual(before);
+    expect(await proof()).toBeNull();
+  });
   it('rejects a stale lock owner without changing any persisted state', async () => {
     fixture.sqlite.prepare('UPDATE payment_events SET created_at = ?').run('replacement-lock');
     const before = fixture.snapshot();

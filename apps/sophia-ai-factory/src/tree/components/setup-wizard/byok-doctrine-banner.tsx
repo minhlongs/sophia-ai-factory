@@ -6,7 +6,7 @@
  * 3-bullet bilingual reminder per Sophia no-tech doctrine v1.28.1:
  *  - Customer owns 100% of API keys (BYOK)
  *  - Operator manages platform code only (no operator third-party setup)
- *  - 30-day refund window backs every purchase
+ *  - Pilot refund is independent of usage; existing plan policies stay unchanged
  *
  * Bilingual via next-intl namespace `setupWizard.doctrine.*`.
  *

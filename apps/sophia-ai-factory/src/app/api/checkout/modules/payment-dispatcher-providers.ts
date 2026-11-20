@@ -1,123 +1,46 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
-import {
-  PAID_PILOT_14_DAY_PRICE_CENTS,
-  PAID_PILOT_14_DAY_PRICE_VND,
-} from '@/tree/finance/pilot-unit-economics-types';
 import { writeOrder } from '@/land/orders/pending-order-repo';
 import { createPayOsInvoice, getPayOsTierConfig } from '@/land/payments/payos';
 import { isPayOsEnabled } from '@/seed/config/flags';
+import { dispatchManualPilotOfflineCheckout } from './manual-pilot-offline-checkout';
+import { validatePilotAgreementInput } from './manual-pilot-agreement-acceptance';
 import type { MethodDispatcherInput } from './payment-dispatcher';
 
 export async function dispatchPayOsMethod(input: MethodDispatcherInput): Promise<NextResponse> {
   const { tier, userId, period, promoCode, customerEmail } = input;
-  if (period === 'pilot_14d' && tier !== 'BASIC') {
-    return NextResponse.json(
-      { error: '14-day Paid Pilot billing is only available for BASIC tier' },
-      { status: 400 },
-    );
+  if (period === 'pilot_14d') {
+    try { if (!input.agreement) throw new Error('Pilot agreement required'); validatePilotAgreementInput(input.agreement); }
+    catch (error) { return NextResponse.json({ code: 'PILOT_AGREEMENT_REQUIRED', error: error instanceof Error ? error.message : 'Pilot agreement required' }, { status: 400 }); }
+    return dispatchManualPilotOfflineCheckout({ ...input, agreement: input.agreement });
   }
-
-  const payosActive = isPayOsEnabled();
   const orderId = `sophia_${userId}_${Date.now()}`;
   try {
-    if (!payosActive) {
-      if (period !== 'pilot_14d') {
-        return NextResponse.json(
-          { error: 'PayOS not currently available' },
-          { status: 503 },
-        );
-      }
-      await writeOrder({
-        order_id: orderId,
-        user_id: userId,
-        tier: 'BASIC',
-        period: 'pilot_14d',
-        payment_method: 'offline',
-        amount_usd_cents: PAID_PILOT_14_DAY_PRICE_CENTS,
-        amount_vnd: PAID_PILOT_14_DAY_PRICE_VND,
-        promo_code: promoCode,
-        customer_email: customerEmail,
-      });
-      logger.info('[Checkout/PayOS] Created offline fallback order for 14-day Paid Pilot', {
-        orderId,
-        userId,
-      });
-      return NextResponse.json({
-        status: 'pending_manual_payment',
-        orderId,
-        provider: 'offline_pilot_fallback',
-        amountVnd: PAID_PILOT_14_DAY_PRICE_VND,
-        amountUsd: PAID_PILOT_14_DAY_PRICE_CENTS / 100,
-      });
-    }
-
-    const payOsResult = await createPayOsInvoice({
-      tier,
-      period,
-      userId,
-      orderId,
-      customerEmail,
-    });
+    if (!isPayOsEnabled()) return NextResponse.json({ error: 'PayOS not currently available' }, { status: 503 });
+    const result = await createPayOsInvoice({ tier, period, userId, orderId, customerEmail });
     const pricing = getPayOsTierConfig(tier, period);
-    await writeOrder({
-      order_id: orderId,
-      user_id: userId,
-      tier,
-      period: period || 'monthly',
-      payment_method: 'payos',
-      amount_usd_cents: Math.round(pricing.usdAmount * 100),
-      amount_vnd: pricing.vndAmount,
-      promo_code: promoCode,
-      customer_email: customerEmail,
-      invoice_url: payOsResult.checkoutUrl,
-      provider_payment_id: payOsResult.paymentLinkId,
-      provider_order_code: payOsResult.orderCode,
-    });
-
-    return NextResponse.json({
-      url: payOsResult.checkoutUrl,
-      orderId,
-      provider: 'payos',
-      orderCode: payOsResult.orderCode,
-    });
-  } catch (payosErr) {
-    const msg = payosErr instanceof Error ? payosErr.message : String(payosErr);
-    logger.error('[Checkout/PayOS] Invoice creation failed', new Error(msg), { userId, tier });
-    return NextResponse.json(
-      { error: `PayOS checkout failed: ${msg}` },
-      { status: 500 }
-    );
+    await writeOrder({ order_id: orderId, user_id: userId, tier, period: period || 'monthly', payment_method: 'payos', amount_usd_cents: Math.round(pricing.usdAmount * 100), amount_vnd: pricing.vndAmount, promo_code: promoCode, customer_email: customerEmail, invoice_url: result.checkoutUrl, provider_payment_id: result.paymentLinkId, provider_order_code: result.orderCode });
+    return NextResponse.json({ url: result.checkoutUrl, orderId, provider: 'payos', orderCode: result.orderCode });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error('[Checkout/PayOS] Invoice creation failed', new Error(message), { userId, tier });
+    return NextResponse.json({ error: `PayOS checkout failed: ${message}` }, { status: 500 });
   }
 }
 
 export async function dispatchOfflineMethod(input: MethodDispatcherInput): Promise<NextResponse> {
+  if (input.period === 'pilot_14d') {
+    try { if (!input.agreement) throw new Error('Pilot agreement required'); validatePilotAgreementInput(input.agreement); }
+    catch (error) { return NextResponse.json({ code: 'PILOT_AGREEMENT_REQUIRED', error: error instanceof Error ? error.message : 'Pilot agreement required' }, { status: 400 }); }
+    return dispatchManualPilotOfflineCheckout({ ...input, agreement: input.agreement });
+  }
   const { paymentMethod, tier, userId, period, promoCode, customerEmail } = input;
   const orderId = `sophia_${userId}_${Date.now()}`;
   try {
-    await writeOrder({
-      order_id: orderId,
-      user_id: userId,
-      tier,
-      period: period || 'monthly',
-      payment_method: paymentMethod,
-      amount_usd_cents: 0,
-      promo_code: promoCode,
-      customer_email: customerEmail,
-      invoice_url: undefined,
-    });
+    await writeOrder({ order_id: orderId, user_id: userId, tier, period: period || 'monthly', payment_method: paymentMethod, amount_usd_cents: 0, promo_code: promoCode, customer_email: customerEmail, invoice_url: undefined });
     logger.info('[Checkout/Offline] Order created for manual payment', { orderId, userId, tier, paymentMethod });
-  } catch (dbErr) {
-    logger.warn('[Checkout/Offline] Failed to write pending_order (non-fatal)', {
-      orderId,
-      error: dbErr instanceof Error ? dbErr.message : String(dbErr),
-    });
+  } catch (error) {
+    logger.warn('[Checkout/Offline] Failed to write pending_order (non-fatal)', { orderId, error: error instanceof Error ? error.message : String(error) });
   }
-
-  return NextResponse.json({
-    status: 'pending_manual_payment',
-    orderId,
-    message:
-      'Your order has been received. Our team will contact you to confirm payment. / Don hang cua ban da duoc nhan. Doi ngu se lien he xac nhan thanh toan.',
-  });
+  return NextResponse.json({ status: 'pending_manual_payment', orderId, message: 'Your order has been received. Our team will contact you to confirm payment. / Don hang cua ban da duoc nhan. Doi ngu se lien he xac nhan thanh toan.' });
 }

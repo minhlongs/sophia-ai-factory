@@ -51,7 +51,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { user: admin } = auth;
 
   // F02: Re-authentication challenge (ASVS V3.5.1)
-  const recent = await requireRecentAuth(request);
+  const recent = await requireRecentAuth(request, admin.id);
   if (!recent.ok) {
     return NextResponse.json(
       { error: 'recent_auth_required', reason: recent.reason },

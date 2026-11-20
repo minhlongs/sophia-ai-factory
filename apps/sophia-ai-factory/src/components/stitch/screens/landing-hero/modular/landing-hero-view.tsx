@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { OPTION_A_PILOT_COPY } from '@/seed/config/tiers/option-a-pilot-contract';
+import { useTranslations, useLocale } from 'next-intl';
 import { MarketingNav, MarketingFooter } from '@/components/stitch/layouts';
 import { HeroHeader } from './hero-header';
 import { PipelineMockup } from './pipeline-mockup';
@@ -23,6 +24,7 @@ export interface LandingHeroViewProps {
 
 export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {}) {
   const t = useTranslations('stitch.landing');
+  const pilotCopy = OPTION_A_PILOT_COPY[useLocale() === 'vi' ? 'vi' : 'en'];
   const tLanding = useTranslations('landing');
 
   return (
@@ -32,6 +34,8 @@ export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {})
       <main className="relative pt-32 pb-20 md:pt-44 md:pb-28 overflow-hidden">
         <section id="hero" className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
           <HeroHeader t={t} />
+      <p className="text-sm text-muted-foreground">{pilotCopy.scope}</p>
+      <p className="text-sm text-muted-foreground">{pilotCopy.refund}</p>
           <PipelineMockup />
 
           {/* .v3-core Bottom Runtime & Stack Ticker */}

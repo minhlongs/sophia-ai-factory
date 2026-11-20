@@ -20,6 +20,10 @@ export class NodeSqliteStatement implements D1PreparedStatement {
     return new NodeSqliteStatement(this.db, this.query, resolved);
   }
 
+  belongsTo(database: DatabaseSync): boolean {
+    return this.db === database;
+  }
+
   private stmt(): ReturnType<DatabaseSync['prepare']> {
     return this.db.prepare(this.query);
   }
@@ -37,6 +41,11 @@ export class NodeSqliteStatement implements D1PreparedStatement {
   }
 
   async run<T = Record<string, unknown>>(): Promise<D1Result<T>> {
+    return this.runSync<T>();
+  }
+
+  /** Synchronous execution keeps a local batch in one event-loop turn. */
+  runSync<T = Record<string, unknown>>(): D1Result<T> {
     try {
       const info = this.stmt().run(...this.bindings);
       const changes = info.changes ?? 0;

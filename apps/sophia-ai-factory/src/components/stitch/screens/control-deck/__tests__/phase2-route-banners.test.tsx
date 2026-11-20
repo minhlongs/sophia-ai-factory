@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DashboardControlDeckBanner } from '@/components/stitch/screens/dashboard/dashboard-control-deck-banner';
+import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 import { PricingRoiCalculator } from '@/components/stitch/screens/pricing/view/pricing-roi-calculator';
 import { MerkleSettlementBanner } from '@/app/components/affiliate/dashboard/merkle-settlement-banner';
 import { StitchStudioDeckStrip } from '@/components/missions/stitch-studio-deck-strip';
@@ -100,10 +101,14 @@ describe('Stitch Phase 2 UI Preview Components', () => {
     const calc = screen.getByTestId('stitch-pricing-roi-calculator');
     expect(calc).toBeDefined();
     expect(calc.getAttribute('aria-labelledby')).toBe('stitch-roi-calculator-heading');
-    expect(screen.getByText('$199/mo')).toBeDefined();
+    const growthPrice = UNIFIED_TIERS.PREMIUM.price;
+    expect(screen.getByText(`$${growthPrice}/mo`)).toBeDefined();
+    expect(calc.textContent).toContain(`gói Growth (PREMIUM) ${growthPrice} USD/tháng`);
     const slider = screen.getByRole('slider');
-    fireEvent.change(slider, { target: { value: '60' } });
-    expect(screen.getByText(/60 video\/tháng/i)).toBeDefined();
+    expect(slider.getAttribute('max')).toBe('30');
+    expect(screen.queryByRole('button', { name: '60 video' })).toBeNull();
+    fireEvent.change(slider, { target: { value: '24' } });
+    expect(screen.getByText(/24 video\/tháng/i)).toBeDefined();
   });
 
   it('renders StitchWave2RouteBanner across all 9 Wave 2 route keys with bilingual copy (Screens 10–18)', () => {
