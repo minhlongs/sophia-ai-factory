@@ -178,3 +178,69 @@ All 3 pull-request-only workflows (`permissions: contents: read`, `pull_request`
 - `CORE_ALGORITHM_VALUE: INSUFFICIENT_EVIDENCE`; `LIVE_MODEL_EVAL: NOT_RUN / NOT_AUTHORIZED`; `PAID_SCRIPT_CONSUMPTION: NOT_ESTABLISHED`.
 - No merge, no production deployment, no remote D1 mutation, no production secret changes, no PayOS activation, and no paid AI calls were performed.
 
+---
+
+## Post-Deploy Runtime Triage (2026-11-21) / Điều tra vận hành sau phát hành
+
+### 1. Current Production Version & Health / Phiên bản và sức khỏe hiện tại
+
+- **Full SHA:** `84d81654849c9d9d3ea2d8862c15b35c9621f292` (Run `44869506376` — `success`).
+- **Deployment ID:** `6773e523-78be-4e2f-9472-cade83340102` | **Active Version:** `1c41a8d5-5d6d-40b3-b8db-afaf7beb2cc7` | **Deploy Timestamp:** `2026-11-21T05:45:06.498099Z`.
+- **Prior Live Source:** `bbf37047800f06fa9b1e95e0eaf142b2d3525cb7` | **Conditional Rollback Version (not executed):** `1d74ca52-a2cd-4cb5-b97b-47d13291e6b2`.
+- **Live Read-Only Verification:** `/api/version` returns `shortSha: "84d81654"`; `/api/health` returns HTTP `200`; 7/7 low-traffic read-only probe rounds (28/28 requests across `/api/health`, `/api/version`, `/login`, `/vi/login`) passed with `0` failures (cold `/api/health` TTFB `3.33s–3.94s`, warm `0.28s–0.34s`).
+- **Preserved Invariants:** `FEATURE_PAYOS=false`, `PAID_COHORT_NOT_AUTHORIZED`, 18 ledger rows (9 migrations) untouched, 10 inherited dirty/untracked paths in the legacy worktree untouched.
+
+### 2. Reconciled Metrics & Sampling Limits / Số liệu đã đối chiếu và giới hạn mẫu
+
+- **602-second post-deploy sample (`05:46:45–05:56:47 UTC`):** `70` Worker invocation records (`event` = 1 Worker invocation, not log lines; `0` missing/`UNKNOWN` outcomes; `0` duplicate records).
+- **Exact Breakdown (non-overlapping):**
+  - `18` scheduled invocations (`outcome: "exception"`): `* * * * *` fired 10 times = `10` invocations; `*/2 * * * *` fired 5 times = `5`; `*/5 * * * *` fired twice = `2`; `*/10 * * * *` fired once = `1`.
+  - `29` internal `WORKER_SELF_REFERENCE` HTTP subrequests (`outcome: "canceled"`): dispatched by `scheduled()` to `/api/cron/*` routes and canceled when `inject-scheduled-handler.mjs` calls `await res.body.cancel().catch(() => {})`.
+  - `18 + 29 = 47` `non_ok` invocations (exact match — `18` exceptions are a subset of `47` non-ok, **not** additive).
+  - `23` `ok` invocations (~21 `/api/health` probes + ~2 healthy HTTP requests).
+- **Sampling & Interpretation Limits:**
+  - `47/70` is **not** a customer-facing error rate; all 47 `non_ok` records are internal cron scheduler dispatches and their self-referenced HTTP subrequests.
+  - Deploy used `--upload-source-maps=false`, `SKIP_SENTRY_BUILD=1`, `SKIP_SYMBOL_UPLOAD=1`, so runtime stack frames are minified (`worker.js:18781:3407`), mapped offline to `scripts/inject-scheduled-handler.mjs:234-241`.
+  - `BASELINE_UNAVAILABLE` for historical pre-deploy Cloudflare tail counts on `bbf37047`; pre/post comparison is established from source diff between `bbf37047` and `84d81654`.
+
+### 3. Sanitized Error-Group Table / Bảng nhóm lỗi đã đối chiếu
+
+| fingerprint | số invocation | số exception object | route template/cron | outcome | HTTP status nếu có | message đã che dữ liệu | stack frame nếu có | ảnh hưởng | evidence reference |
+|---|---:|---:|---|---|---|---|---|---|---|
+| `cron-scheduled-http-401` | 18 (602s sample) | 18 (1 per scheduled invocation) | `scheduled()` → `* * * * *`, `*/2 * * * *`, `*/5 * * * *`, `*/10 * * * *` (`/api/cron/*`, 38 of 40 routes) | `exception` | `401` (from middleware `handleApiRoute`) | `Error: /api/cron/<route> failed with HTTP 401` | `worker.js:18781:3407` (maps to `scripts/inject-scheduled-handler.mjs:234-241`) | 38 of 40 scheduled background jobs blocked before handler execution; customer HTTP routes unaffected | Targeted live `wrangler tail --version-id 1c41a8d5-5d6d-40b3-b8db-afaf7beb2cc7` + `src/forest/middleware/guard/public-routes.ts` |
+| `cron-self-ref-body-cancel` | 29 (602s sample) | 0 | Internal `WORKER_SELF_REFERENCE` HTTP GET `/api/cron/<route>` | `canceled` | `401` (38 blocked routes) / `200` (2 allowlisted routes) | None (no exception; client canceled response body via `res.body.cancel()`) | N/A | Expected Cloudflare `canceled` status when `scheduled()` cancels subrequest body after reading status; not a customer outage | Targeted live `wrangler tail --version-id 1c41a8d5-5d6d-40b3-b8db-afaf7beb2cc7` + `scripts/inject-scheduled-handler.mjs:234` |
+| `health-probe-single-failure` | 1 (602s sample) | 0 (client-side probe) | `GET /api/health` | `UNKNOWN` (monitor script discarded output) | `UNRECOVERABLE / NOT_LOGGED` | `UNRECOVERABLE / NOT_LOGGED` (monitor script ran `curl -fsS --max-time 15` every 30s without capturing exit code, HTTP status, timing, or timestamp) | N/A | Single non-recurring probe failure during post-deploy window; 0 failures across Stage 4b/4c smoke and 7/7 subsequent live probe rounds (28/28 expected endpoint outcomes succeeded; `/api/health` returned HTTP 200, while login routes may redirect as expected) | Monitor script `bdesym7gc` recovery + `src/app/api/health/*` diff (`bbf37047..84d81654`: unchanged) |
+
+### 4. Health Probe Failure Diagnosis / Chẩn đoán lần health thất bại
+
+- **Recovered Monitor Command:** `curl -fsS --max-time 15 https://sophia.agencyos.network/api/health` every 30s (`bdesym7gc`), discarding stdout, stderr, exit code, HTTP status, timing, and failure timestamp.
+- **Classification & Uncertainty:** Exact failure mode (HTTP 5xx vs 401/403/429 vs DNS/TLS/connect vs 15s client timeout) and Worker invocation correlation are **`UNRECOVERABLE / NOT_LOGGED`** due to monitor script observability loss (`OBSERVABILITY_GAP`).
+- **Code & Recurrence Evidence:** `src/app/api/health/route.ts`, `health-probes.ts`, `probe-d1.ts` (3000ms timeout), and `probe-r2.ts` (1500ms timeout) are identical between `bbf37047` and `84d81654`. Stage 4b/4c smoke passed (`05:45:41–05:45:43 UTC`), and 7/7 read-only probe rounds (28/28 requests) met their expected endpoint outcomes with zero failures; `/api/health` returned HTTP `200`, while login routes may return expected redirects.
+
+### 5. Pre/Post Release Relationship & Operational Impact / Quan hệ trước-sau phát hành và ảnh hưởng
+
+- **Root Cause (`bbf37047` vs `84d81654`):**
+  - `src/forest/middleware/guard/public-routes.ts` and `src/middleware/api-pipeline.ts` are **unchanged** between `bbf37047` and `84d81654`. Only 5 `/api/cron/*` routes were pinned in `exactPublic` while `if (pathname.startsWith('/api/cron/')) return false` default-denied the other 38 routes in `CRON_ROUTES` with Better Auth middleware HTTP `401` (even after `validateCronRequest` succeeded).
+  - Thus the 38-route cron `401` lockout was **pre-existing** before `84d81654`.
+  - Release `84d81654` (via `fe391c2a4`) hardened `scripts/inject-scheduled-handler.mjs` to call `res.body.cancel()` and throw `Error(<route> failed with HTTP <status>)` on non-2xx instead of silently logging `→ 401`. This surfaced the pre-existing lockout as explicit Worker `exception` records.
+- **Operational Impact:** Customer-facing HTTP endpoints (`/api/health`, `/api/version`, `/login`, `/vi/login`) are unaffected; 38 of 40 scheduled background jobs (e.g., `workflow-stepper`, `fulfillment-retry`, `email-outbox-flush`, `uptime-check`, `heartbeat`, `billing-anomaly-scan`) fail with middleware HTTP `401` until the hotfix is deployed.
+
+### 6. Evidence-Based Decision / Quyết định theo bằng chứng
+
+- **Release Disposition:** **`DEPLOYED_VERIFIED_WITH_DISCLOSED_RUNTIME_ISSUES`** — **Keep `84d81654` live** (do **not** execute conditional rollback to `1d74ca52-a2cd-4cb5-b97b-47d13291e6b2`).
+  - **Why not rollback:** Rolling back to `bbf37047` / `1d74ca52` would **not** fix the 38 cron `401` failures—it would only silence their error reporting while critical health/version/login endpoints are healthy on `84d81654`.
+- **Minimal Hotfix Prepared (Draft PR only — NOT merged or deployed):**
+  - `apps/sophia-ai-factory/src/forest/middleware/guard/public-routes.ts`: pin all 38 missing scheduled routes from `CRON_ROUTES` (total 43 pinned `/api/cron/*` paths) while preserving default-deny for unlisted `/api/cron/*` paths; every scheduled route retains `validateCronRequest` in middleware and per-route `verifyCronAuth` / `CRON_SECRET` enforcement.
+  - `apps/sophia-ai-factory/src/app/api/cron/smoke-one-time/route.ts`: move `verifyCronAuth(request)` ahead of the existing `SYNTHETIC_ENABLED === 'false'` no-op branch so handler authentication is unconditional; the flag condition itself is unchanged.
+  - `apps/sophia-ai-factory/src/middleware/__tests__/cron-reachability.test.ts`: regression tests verifying 100% `CRON_ROUTES` parity in `isPublicApiRoute`, default-deny for unlisted `/api/cron/*`, middleware pass-through without browser session lookup across all 40 scheduled routes, `403` rejection on missing/invalid `CRON_SECRET`, and `401` rejection on unauthenticated `smoke-one-time` even when disabled.
+- **Independent Review:** Static review confirmed all 40 scheduled routes map to existing `GET` handlers, all 38 newly pinned entries are in `CRON_ROUTES`, and each handler enforces cron secret authentication (including delegated facade implementations). Review also found the disabled `smoke-one-time` no-op returned before checking the secret; the hotfix fixes this, with a regression test. The regression test proves middleware pass-through, not execution of every job; rate limiting is mocked. No production calls were made during review.
+- **Hotfix Verification:**
+  - Focused regression suite (`16` test files, `190` tests): **PASS**.
+  - `eslint` on all 3 changed files: **PASS** (`0` errors).
+  - `npm run type-check`: **PASS** (`0` errors).
+  - Full `npm test`: `20,791 passed | 67 failed` (all `67` failures across `5` files verified identical on untouched `84d81654` baseline: `67 failed | 1 passed`).
+  - Local `next build`: blocked in temporary worktree: Turbopack could not resolve the symlinked `next` package; retrying with Node 22 and webpack reached a pre-existing Edge dynamic-code-evaluation error importing `@better-auth/passkey`. Reviewer's isolated environment also could not resolve its Vitest dependency. Full Worker packaging remains to be checked by hosted PR CI; no build failure was hidden.
+
+### 7. One Concrete Remaining Action / Hành động còn lại
+
+- Merge and deploy the reviewed hotfix only after the Draft PR's hosted quality and packaging checks pass, then perform a short, bounded observation of frequent cron schedules. This smoke observation cannot verify hourly, daily, weekly, or monthly routes; those remain pending natural schedule runs or separately authorized non-mutating validation. The current run will not merge or deploy the hotfix.
