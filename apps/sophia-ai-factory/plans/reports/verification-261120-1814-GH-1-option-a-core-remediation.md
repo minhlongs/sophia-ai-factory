@@ -244,3 +244,52 @@ All 3 pull-request-only workflows (`permissions: contents: read`, `pull_request`
 ### 7. One Concrete Remaining Action / Hành động còn lại
 
 - Merge and deploy the reviewed hotfix only after the Draft PR's hosted quality and packaging checks pass, then perform a short, bounded observation of frequent cron schedules. This smoke observation cannot verify hourly, daily, weekly, or monthly routes; those remain pending natural schedule runs or separately authorized non-mutating validation. The current run will not merge or deploy the hotfix.
+
+### PR #184 narrowed policy / Giới hạn mới của PR #184
+
+The local candidate suppresses disallowed scheduled calls and restores no new business cron. / Bản sửa cục bộ chặn các tác vụ định kỳ chưa được phép và không bật lại tác vụ kinh doanh nào.
+
+| Schedule / Lịch | Route / Đường dẫn | Outcome / Kết quả |
+|---|---|---|
+| `* * * * *` | `/api/cron/workflow-stepper` | SKIP / BỎ QUA |
+| `*/2 * * * *` | `/api/cron/fulfillment-retry` | SKIP / BỎ QUA |
+| `*/2 * * * *` | `/api/cron/email-outbox-flush` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/uptime-check` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/video-status-sync` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/sop-scheduler` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/mission-reaper` | SKIP / BỎ QUA |
+| `*/10 * * * *` | `/api/cron/heartbeat` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/smoke-one-time` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/circuit-breaker-scan` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/distribution-pipeline-scan` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/agent-cost-overrun-scan` | SKIP / BỎ QUA |
+| `0 * * * *` | `/api/cron/creative-quality-drift-scan` | SKIP / BỎ QUA |
+| `5 * * * *` | `/api/cron/hourly-rollup` | SKIP / BỎ QUA |
+| `7 * * * *` | `/api/cron/handover-status-sync` | SKIP / BỎ QUA |
+| `7 * * * *` | `/api/cron/ab-winner-picker` | SKIP / BỎ QUA |
+| `10 * * * *` | `/api/cron/wallet-rebuild` | SKIP / BỎ QUA |
+| `0 */4 * * *` | `/api/cron/affiliate-scout` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/clearance-promote` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/promo-trial-expiry` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/status-rollup` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/promo-cleanup` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/pending-orders-cleanup` | SKIP / BỎ QUA |
+| `0 0 1 * *` | `/api/cron/mcu-monthly-reset` | SKIP / BỎ QUA |
+| `0 0 1 * *` | `/api/cron/slo-burn-rate` | SKIP / BỎ QUA |
+| `0 1 * * *` | `/api/cron/dunning-advance` | SKIP / BỎ QUA |
+| `5 1 * * *` | `/api/cron/daily-rollup` | SKIP / BỎ QUA |
+| `0 2 * * *` | `/api/cron/subscription-reminders` | SKIP / BỎ QUA |
+| `0 2 * * *` | `/api/cron/memory-consolidation` | SKIP / BỎ QUA |
+| `0 3 * * *` | `/api/cron/scheduled-campaigns` | SKIP / BỎ QUA |
+| `30 3 * * *` | `/api/cron/hash-chain-verification` | SKIP / BỎ QUA |
+| `0 4 * * *` | `/api/cron/email-drip` | SKIP / BỎ QUA |
+| `0 5 * * *` | `/api/cron/d1-backup` | SKIP / BỎ QUA |
+| `0 5 * * *` | `/api/cron/error-digest` | SKIP / BỎ QUA |
+| `0 5 * * *` | `/api/cron/quota-check` | SKIP / BỎ QUA |
+| `0 6 * * *` | `/api/cron/fulfillment-reconcile` | SKIP / BỎ QUA |
+| `0 6 * * 1` | `/api/cron/weekly-signals-digest` | SKIP / BỎ QUA |
+| `0 7 * * *` | `/api/cron/llm-cache-purge` | SKIP / BỎ QUA |
+| `0 7 * * *` | `/api/cron/billing-anomaly-scan` | SKIP / BỎ QUA |
+| `*/30 * * * *` | `/api/cron/mission-abandon-scan` | SKIP / BỎ QUA |
+
+The Founder disabled scheduled email drip without deleting data. D1 backup remains scheduler-blocked: the existing handler can emit Better Stack heartbeat/fatal telemetry depending on configuration, outside the approved D1-to-R2 and run-tracking scope. The direct HTTP middleware and existing authentication are unchanged from deployed source. No manually invoked jobs or production changes. / Tắt lịch email, không xoá dữ liệu. Tạm chặn lịch sao lưu vì tác vụ có thể gửi tin giám sát ra ngoài phạm vi được duyệt. Quyền truy cập trực tiếp vẫn như hệ thống hiện tại. Không chạy tác vụ thủ công hay thay đổi hệ thống đang chạy.

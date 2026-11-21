@@ -1,17 +1,6 @@
-/**
- * Middleware reachability regression tests for scheduled /api/cron/* routes.
- *
- * Ensures every route registered in scripts/inject-scheduled-handler.mjs
- * (CRON_ROUTES) is pinned in isPublicApiRoute() so Worker scheduled()
- * dispatches with a valid CRON_SECRET bearer token pass middleware to their
- * per-route verifyCronAuth() check instead of failing with HTTP 401 from
- * Better Auth session guards. Unlisted /api/cron/* subpaths must remain
- * default-deny, and requests without a valid cron secret must still return 403.
- */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { CRON_ROUTES } from '../../../scripts/inject-scheduled-handler.mjs';
+import { CRON_ROUTES, PERMITTED_CRON_ROUTES } from '../../../scripts/inject-scheduled-handler.mjs';
 import { isPublicApiRoute } from '@/forest/middleware/guard/public-routes';
 import { GET as smokeOneTimeGet } from '@/app/api/cron/smoke-one-time/route';
 
@@ -46,6 +35,10 @@ import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { handleApiPipeline } from '../api-pipeline';
 
 const ALL_SCHEDULED_CRON_ROUTES = [...new Set(Object.values(CRON_ROUTES).flat())].sort();
+const LEGACY_HTTP_ROUTES = new Set(['/api/cron/d1-backup', '/api/cron/email-drip']);
+const POLICY_DISABLED_ROUTES = ALL_SCHEDULED_CRON_ROUTES.filter(
+  (route) => !LEGACY_HTTP_ROUTES.has(route),
+);
 
 describe('cron middleware reachability (CRON_ROUTES <-> public-routes)', () => {
   const TEST_CRON_SECRET = 'synthetic-cron-secret-for-reachability-test';
@@ -59,10 +52,26 @@ describe('cron middleware reachability (CRON_ROUTES <-> public-routes)', () => {
     vi.unstubAllEnvs();
   });
 
-  it('pins every route in inject-scheduled-handler CRON_ROUTES in isPublicApiRoute', () => {
-    expect(ALL_SCHEDULED_CRON_ROUTES.length).toBeGreaterThanOrEqual(40);
-    const missing = ALL_SCHEDULED_CRON_ROUTES.filter((route) => !isPublicApiRoute(route));
+  it('exempts only the scheduled routes preserved from production', () => {
+    expect(ALL_SCHEDULED_CRON_ROUTES.length).toBe(40);
+    expect(PERMITTED_CRON_ROUTES).toEqual([]);
+    const missing = [...LEGACY_HTTP_ROUTES].filter((route) => !isPublicApiRoute(route));
     expect(missing).toEqual([]);
+  });
+
+  it('keeps policy-disabled routes out of the middleware session exemption', () => {
+    for (const route of POLICY_DISABLED_ROUTES) {
+      expect(isPublicApiRoute(route)).toBe(false);
+    }
+    expect(LEGACY_HTTP_ROUTES.size).toBe(ALL_SCHEDULED_CRON_ROUTES.length - POLICY_DISABLED_ROUTES.length);
+  });
+
+  it.each(POLICY_DISABLED_ROUTES)('still requires a session for direct requests to %s even with a cron credential', async (pathname) => {
+    const req = new NextRequest(`https://worker.invalid${pathname}`, {
+      headers: { authorization: `Bearer ${TEST_CRON_SECRET}` },
+    });
+    const res = await handleApiPipeline(req, pathname, 'vi', Date.now(), new Headers(req.headers), 'nonce-cron', false);
+    expect(res?.status).toBe(401);
   });
 
   it('keeps unlisted /api/cron/* paths default-deny in isPublicApiRoute', () => {
@@ -71,8 +80,8 @@ describe('cron middleware reachability (CRON_ROUTES <-> public-routes)', () => {
     expect(isPublicApiRoute('/api/cron/')).toBe(false);
   });
 
-  it.each(ALL_SCHEDULED_CRON_ROUTES)('allows %s with valid CRON_SECRET bearer token and no browser session', async (pathname) => {
-    const req = new NextRequest(`https://sophia.agencyos.network${pathname}`, {
+  it.each([...LEGACY_HTTP_ROUTES])('allows %s with valid CRON_SECRET bearer token and no browser session', async (pathname) => {
+    const req = new NextRequest(`https://worker.invalid${pathname}`, {
       method: 'GET',
       headers: {
         authorization: `Bearer ${TEST_CRON_SECRET}`,
@@ -87,7 +96,7 @@ describe('cron middleware reachability (CRON_ROUTES <-> public-routes)', () => {
   });
 
   it('rejects /api/cron/workflow-stepper with 403 when CRON_SECRET bearer token is missing or invalid', async () => {
-    const reqMissing = new NextRequest('https://sophia.agencyos.network/api/cron/workflow-stepper', {
+    const reqMissing = new NextRequest('https://worker.invalid/api/cron/workflow-stepper', {
       method: 'GET',
     });
     const resMissing = await handleApiPipeline(
@@ -101,7 +110,7 @@ describe('cron middleware reachability (CRON_ROUTES <-> public-routes)', () => {
     );
     expect(resMissing?.status).toBe(403);
 
-    const reqWrong = new NextRequest('https://sophia.agencyos.network/api/cron/workflow-stepper', {
+    const reqWrong = new NextRequest('https://worker.invalid/api/cron/workflow-stepper', {
       method: 'GET',
       headers: { authorization: 'Bearer wrong-secret' },
     });
@@ -117,9 +126,19 @@ describe('cron middleware reachability (CRON_ROUTES <-> public-routes)', () => {
     expect(resWrong?.status).toBe(403);
   });
 
+  it('returns the disabled result only after valid cron authentication', async () => {
+    vi.stubEnv('SYNTHETIC_ENABLED', 'false');
+    const req = new NextRequest('https://worker.invalid/api/cron/smoke-one-time', {
+      headers: { authorization: `Bearer ${TEST_CRON_SECRET}` },
+    });
+    const res = await smokeOneTimeGet(req);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, skipped: 'disabled' });
+  });
+
   it('rejects unauthenticated smoke-one-time requests with 401 even when SYNTHETIC_ENABLED is disabled', async () => {
     vi.stubEnv('SYNTHETIC_ENABLED', 'false');
-    const req = new NextRequest('https://sophia.agencyos.network/api/cron/smoke-one-time', {
+    const req = new NextRequest('https://worker.invalid/api/cron/smoke-one-time', {
       method: 'GET',
     });
     const res = await smokeOneTimeGet(req);
