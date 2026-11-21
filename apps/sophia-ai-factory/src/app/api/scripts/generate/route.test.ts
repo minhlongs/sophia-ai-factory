@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "./route";
+import { logger } from "@/seed/utils/logger-utility";
 
 vi.mock("@/seed/auth/better-auth-session", () => ({
   getCurrentUser: vi.fn(),
@@ -370,5 +371,113 @@ describe("POST /api/scripts/generate", () => {
 
     expect(res.status).toBe(502);
     expect(res.body).toMatchObject({ code: "INVALID_SCRIPT_OUTPUT" });
+  });
+
+  it("never logs raw topic or raw error message containing synthetic PII or secrets across start, validation, and runtime error paths", async () => {
+    const syntheticEmail = "jane.doe@example.invalid";
+    const syntheticPhone = "+1-555-0199";
+    const syntheticToken = "custom-synthetic-marker-9999";
+    const sensitiveTopic = `Launch brief for ${syntheticEmail} call ${syntheticPhone} ref ${syntheticToken}`;
+
+    const recordedCalls: unknown[] = [];
+    const mockBoundLogger = {
+      debug: vi.fn((...args: unknown[]) => recordedCalls.push(args)),
+      info: vi.fn((...args: unknown[]) => recordedCalls.push(args)),
+      warn: vi.fn((...args: unknown[]) => recordedCalls.push(args)),
+      error: vi.fn((...args: unknown[]) => recordedCalls.push(args)),
+      withRequestId: vi.fn(),
+      child: vi.fn(),
+      context: "test",
+    };
+    const withRequestIdSpy = vi
+      .spyOn(logger, "withRequestId")
+      .mockReturnValue(mockBoundLogger as unknown as ReturnType<typeof logger.withRequestId>);
+
+    try {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+
+      // 1. Success path
+      vi.mocked(generateScript).mockResolvedValueOnce({
+        title: "Safe Script",
+        scenes: [
+          { scene_number: 1, visual_description: "opener", narration: "Hook here", duration_estimate: 15 },
+          { scene_number: 2, visual_description: "body", narration: "Body here", duration_estimate: 30 },
+          { scene_number: 3, visual_description: "close", narration: "CTA here", duration_estimate: 15 },
+        ],
+        total_duration: 60,
+      });
+      const okRes = await POST(
+        makeRequest({ topic: sensitiveTopic, audience: "founders", durationSec: 60 })
+      ) as unknown as MockResponse;
+      expect(okRes.status).toBe(200);
+      expect(mockBoundLogger.info).toHaveBeenCalledWith(
+        "Script generation started",
+        expect.objectContaining({
+          userId: mockUser.id,
+          tier: "BASIC",
+          topicLength: sensitiveTopic.length,
+        })
+      );
+
+      // 2. Contract validation failure path (InvalidScriptStructureError echoing sensitive text)
+      vi.mocked(generateScript).mockRejectedValueOnce(
+        new InvalidScriptStructureError(`invalid echo ${syntheticEmail} ${syntheticToken}`)
+      );
+      const badOutputRes = await POST(
+        makeRequest({ topic: sensitiveTopic, audience: "founders", durationSec: 60 })
+      ) as unknown as MockResponse;
+      expect(badOutputRes.status).toBe(502);
+      expect(mockBoundLogger.error).toHaveBeenCalledWith(
+        "Script output failed contract validation",
+        expect.objectContaining({
+          userId: mockUser.id,
+          topicLength: sensitiveTopic.length,
+          durationSec: 60,
+          errorName: "InvalidScriptStructureError",
+          errorCode: "INVALID_SCRIPT_OUTPUT",
+        })
+      );
+
+      // 3. Unexpected Error path echoing sensitive text
+      vi.mocked(generateScript).mockRejectedValueOnce(
+        new Error(`provider echoed ${syntheticPhone} ${syntheticToken}`)
+      );
+      const errRes = await POST(
+        makeRequest({ topic: sensitiveTopic, audience: "founders", durationSec: 60 })
+      ) as unknown as MockResponse;
+      expect(errRes.status).toBe(500);
+      expect(mockBoundLogger.error).toHaveBeenCalledWith(
+        "Script generation failed",
+        expect.objectContaining({
+          userId: mockUser.id,
+          topicLength: sensitiveTopic.length,
+          errorName: "Error",
+        })
+      );
+
+      // 4. Non-Error throwable path
+      vi.mocked(generateScript).mockRejectedValueOnce(`raw throw ${syntheticEmail}`);
+      const unknownErrRes = await POST(
+        makeRequest({ topic: sensitiveTopic, audience: "founders", durationSec: 60 })
+      ) as unknown as MockResponse;
+      expect(unknownErrRes.status).toBe(500);
+      expect(mockBoundLogger.error).toHaveBeenCalledWith(
+        "Script generation failed",
+        expect.objectContaining({
+          userId: mockUser.id,
+          topicLength: sensitiveTopic.length,
+          errorName: "UnknownError",
+        })
+      );
+
+      const serializedLogs = JSON.stringify(recordedCalls);
+      expect(serializedLogs).not.toContain(syntheticEmail);
+      expect(serializedLogs).not.toContain(syntheticPhone);
+      expect(serializedLogs).not.toContain(syntheticToken);
+      expect(serializedLogs).not.toContain(sensitiveTopic);
+    } finally {
+      withRequestIdSpy.mockRestore();
+    }
   });
 });

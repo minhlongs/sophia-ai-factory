@@ -81,7 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       }, { status: 503 });
     }
 
-    log.info("Script generation started", { userId: user.id, tier: effectiveTier, topic });
+    log.info("Script generation started", { userId: user.id, tier: effectiveTier, topicLength: topic.length });
 
     const steering = await getScriptSteeringForUser(user.id, topic, audience).catch(() => undefined);
 
@@ -144,21 +144,23 @@ export async function POST(request: Request): Promise<NextResponse> {
       }, { status: 402 });
     }
     if (error instanceof InvalidScriptStructureError) {
-      log.error("Script output failed contract validation", error, {
+      log.error("Script output failed contract validation", {
         userId: user.id,
-        topic,
+        topicLength: topic.length,
         durationSec,
+        errorName: error.name,
+        errorCode: "INVALID_SCRIPT_OUTPUT",
       });
       return NextResponse.json({
         error: 'Generated script failed validation. Please retry. / Kịch bản tạo ra không hợp lệ. Vui lòng thử lại.',
         code: 'INVALID_SCRIPT_OUTPUT',
       }, { status: 502 });
     }
-    log.error(
-      "Script generation failed",
-      error instanceof Error ? error : new Error(String(error)),
-      { userId: user.id, topic }
-    );
+    log.error("Script generation failed", {
+      userId: user.id,
+      topicLength: topic.length,
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
     return NextResponse.json({ error: "Script generation failed" }, { status: 500 });
   }
 }
