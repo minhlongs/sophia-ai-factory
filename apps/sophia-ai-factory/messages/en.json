@@ -9521,5 +9521,151 @@
       "runningHint": "Being created. Keep this page open — the result appears automatically.",
       "statusUnavailable": "Live status is unavailable. Showing the last known state."
     }
+  },
+  "designShowcase": {
+    "theme": {
+      "darkName": "Director’s Control Deck (Dark)",
+      "lightName": "Executive Studio Ivory (Light)"
+    },
+    "nav": {
+      "home": "Home",
+      "sectionsAria": "Design system sections",
+      "switchLocaleAria": "Switch language",
+      "colors": "Colors & WCAG",
+      "typography": "Type & Motion",
+      "studioStage": "Studio Stage",
+      "playground": "Playground",
+      "dtcg": "DTCG Export"
+    },
+    "hero": {
+      "title": "Zen Design OS v1.0",
+      "subtitle": "Dual-theme token authority, live WCAG 2.2 AA contrast verification, real UI primitive playground, and W3C DTCG 2025.10 export for Sophia AI Factory."
+    },
+    "actions": {
+      "copy": "Copy",
+      "copyCssVars": "Copy CSS Vars",
+      "copyDtcgJson": "Copy DTCG JSON",
+      "downloadDtcgJson": "Download DTCG JSON"
+    },
+    "feedback": {
+      "copied": "Copied to clipboard.",
+      "copyUnavailable": "Clipboard access is unavailable in this browser.",
+      "downloaded": "Downloaded zen-design-tokens.dtcg.json."
+    },
+    "colors": {
+      "eyebrow": "Color System & Accessibility",
+      "title": "Dual-Theme Semantic Tokens & WCAG 2.2 AA Audit",
+      "description": "Every swatch and contrast ratio below is computed directly from the canonical DTCG seed contract with zero hardcoded hex literals in UI components.",
+      "inspectModeLabel": "Inspect theme palette",
+      "mode": {
+        "sync": "Sync Theme",
+        "dark": "Dark",
+        "light": "Light"
+      },
+      "semanticTitle": "Semantic Color Roles",
+      "semanticSubtitle": "Click any role to copy its CSS custom property.",
+      "tonalTitle": "M3 Tonal Palettes",
+      "tonalSubtitle": "Core tonal steps backing both Dark and Light semantic mappings.",
+      "tonesLabel": "tones",
+      "wcagTitle": "Live WCAG 2.2 AA Contrast Audit",
+      "wcagSubtitle": "Verified against 4.5:1 text and 3.0:1 UI thresholds via auditZenThemeContrast().",
+      "wcagPassed": "passing",
+      "wcagPassBadge": "PASS",
+      "wcagFailBadge": "FAIL",
+      "table": {
+        "pair": "Token Pair",
+        "sample": "Live Sample",
+        "ratio": "Ratio",
+        "min": "Min AA",
+        "status": "Status"
+      }
+    },
+    "typography": {
+      "eyebrow": "Typography, Motion & Radius",
+      "title": "Type Scale, Motion Curves & Corner Geometry",
+      "description": "Inter powers product interfaces, JetBrains Mono renders telemetry and code, and Archivo is strictly scoped to .v3-core surfaces.",
+      "interDesc": "Primary UI & display sans-serif with full Vietnamese diacritics.",
+      "monoDesc": "Tabular numerals, token paths, and telemetry diagnostics.",
+      "archivoDesc": "Scoped strictly inside .v3-core heritage surfaces.",
+      "specimenHeadline": "Build autonomous AI factories.",
+      "specimenBody": "Crisp hierarchy designed for long-horizon operator clarity across light and dark studio environments.",
+      "v3Specimen": "FACTORY CORE V3",
+      "archivoRule": "Never apply Archivo outside .v3-core containers."
+    },
+    "motion": {
+      "title": "Motion Durations & Easing Curves",
+      "description": "Canonical CSS durations and cubic-bezier timing functions from DTCG motion tokens.",
+      "play": "Replay Motion",
+      "reset": "Reset Track"
+    },
+    "radius": {
+      "title": "Corner Radius Scale",
+      "description": "Derived from --radius (12px) for tactile consistency across buttons, inputs, cards, and panels."
+    },
+    "studioStage": {
+      "eyebrow": "Theme Invariant",
+      "title": "Dedicated Studio Dark Stage",
+      "description": "Video timelines, color-critical previews, and studio canvases remain locked in obsidian dark regardless of Light or Dark page theme.",
+      "previewTitle": "Sophia Studio Render Stage",
+      "previewSubtitle": "Locked via --studio-stage-* CSS variables",
+      "lockedBadge": "Dark Invariant Active",
+      "tokensHeading": "Invariant Variables"
+    },
+    "playground": {
+      "eyebrow": "Live Primitives",
+      "title": "Interactive Component Playground",
+      "description": "Inspect real @/seed/components/ui primitives with live variant, size, and disabled state controls.",
+      "buttonTitle": "Button Primitive",
+      "buttonSubtitle": "Test all semantic button variants, sizes, and disabled state.",
+      "buttonSampleLabel": "Launch Workflow",
+      "badgeCardTitle": "Badge & Card Primitives",
+      "badgeCardSubtitle": "Toggle tier badges, glass surfaces, and hover elevation.",
+      "cardSampleTitle": "Autonomous Render Node",
+      "cardSampleBody": "Real Card + Badge primitives responding to your active theme.",
+      "inputTitle": "Input Primitive",
+      "inputSubtitle": "Verify focus ring, placeholder contrast, and disabled styling.",
+      "inputLabel": "Pipeline Name",
+      "inputPlaceholder": "e.g., zen-studio-4k-render",
+      "charsLabel": "chars",
+      "alertTitle": "Alert Primitive",
+      "alertSubtitle": "Compare default informational and destructive alert states.",
+      "alertDefaultTitle": "Design tokens synchronized",
+      "alertDefaultBody": "All 29 semantic color roles pass WCAG 2.2 AA contrast verification.",
+      "alertDestructiveTitle": "Contrast threshold alert",
+      "alertDestructiveBody": "Custom override detected below minimum 4.5:1 accessibility contrast.",
+      "controls": {
+        "variant": "Variant",
+        "size": "Size",
+        "state": "State",
+        "badgeVariant": "Badge Variant",
+        "disabledOn": "Disabled: ON",
+        "disabledOff": "Disabled: OFF"
+      }
+    },
+    "dtcg": {
+      "eyebrow": "W3C DTCG 2025.10",
+      "title": "Searchable Token Explorer & Exporter",
+      "description": "Search every canonical token, filter by category, copy CSS variables, or download the complete DTCG JSON contract.",
+      "tableTitle": "Canonical DTCG Token Registry",
+      "showingCount": "Showing {shown} of {total} tokens",
+      "searchPlaceholder": "Search tokens, CSS vars, or values...",
+      "filterLabel": "Filter token categories",
+      "emptyState": "No tokens match your search filter.",
+      "categories": {
+        "all": "All",
+        "semantic-dark": "Semantic Dark",
+        "semantic-light": "Semantic Light",
+        "tonal": "Tonal",
+        "typography": "Typography",
+        "motion": "Motion"
+      },
+      "columns": {
+        "token": "Token Path",
+        "type": "Type",
+        "value": "Value",
+        "cssVar": "CSS Variable",
+        "copy": "Copy"
+      }
+    }
   }
 }

@@ -9522,5 +9522,151 @@
       "runningHint": "Đang được tạo. Hãy giữ trang này mở — kết quả sẽ tự hiện ra.",
       "statusUnavailable": "Không lấy được trạng thái trực tiếp. Đang hiển thị trạng thái gần nhất."
     }
+  },
+  "designShowcase": {
+    "theme": {
+      "darkName": "Director’s Control Deck (Tối)",
+      "lightName": "Executive Studio Ivory (Sáng)"
+    },
+    "nav": {
+      "home": "Trang chủ",
+      "sectionsAria": "Các phần hệ thống thiết kế",
+      "switchLocaleAria": "Chuyển ngôn ngữ",
+      "colors": "Màu & WCAG",
+      "typography": "Chữ & Chuyển động",
+      "studioStage": "Sân khấu Studio",
+      "playground": "Thử nghiệm UI",
+      "dtcg": "Xuất DTCG"
+    },
+    "hero": {
+      "title": "Zen Design OS v1.0",
+      "subtitle": "Hệ thống token hai chủ đề, kiểm định tương phản WCAG 2.2 AA trực tiếp, sân chơi component thực tế và xuất chuẩn W3C DTCG 2025.10 cho Sophia AI Factory."
+    },
+    "actions": {
+      "copy": "Sao chép",
+      "copyCssVars": "Sao chép CSS Vars",
+      "copyDtcgJson": "Sao chép DTCG JSON",
+      "downloadDtcgJson": "Tải xuống DTCG JSON"
+    },
+    "feedback": {
+      "copied": "Đã sao chép vào bộ nhớ tạm.",
+      "copyUnavailable": "Trình duyệt hiện không hỗ trợ sao chép tự động.",
+      "downloaded": "Đã tải xuống zen-design-tokens.dtcg.json."
+    },
+    "colors": {
+      "eyebrow": "Hệ thống Màu & Khả năng Tiếp cận",
+      "title": "Semantic Tokens Hai Chủ Đề & Kiểm định WCAG 2.2 AA",
+      "description": "Mọi ô màu và tỷ lệ tương phản bên dưới được tính trực tiếp từ nguồn DTCG chuẩn, không dùng mã màu hex cứng trong component.",
+      "inspectModeLabel": "Chọn bảng màu kiểm tra",
+      "mode": {
+        "sync": "Theo giao diện",
+        "dark": "Tối",
+        "light": "Sáng"
+      },
+      "semanticTitle": "Vai trò Màu Ngữ nghĩa (Semantic)",
+      "semanticSubtitle": "Nhấn vào từng ô để sao chép biến CSS tương ứng.",
+      "tonalTitle": "Thang màu M3 Tonal",
+      "tonalSubtitle": "Các bậc màu nền tảng cho cả hai chủ đề Tối và Sáng.",
+      "tonesLabel": "bậc màu",
+      "wcagTitle": "Kiểm định Tương phản WCAG 2.2 AA Trực tiếp",
+      "wcagSubtitle": "Xác thực ngưỡng 4.5:1 cho văn bản và 3.0:1 cho thành phần UI qua auditZenThemeContrast().",
+      "wcagPassed": "đạt chuẩn",
+      "wcagPassBadge": "ĐẠT",
+      "wcagFailBadge": "CHƯA ĐẠT",
+      "table": {
+        "pair": "Cặp Token",
+        "sample": "Mẫu hiển thị",
+        "ratio": "Tỷ lệ",
+        "min": "Ngưỡng AA",
+        "status": "Trạng thái"
+      }
+    },
+    "typography": {
+      "eyebrow": "Kiểu chữ, Chuyển động & Bo góc",
+      "title": "Hệ thống Kiểu chữ, Đường cong Chuyển động & Bo góc",
+      "description": "Inter phục vụ giao diện sản phẩm, JetBrains Mono hiển thị số liệu kỹ thuật và mã lệnh, còn Archivo chỉ dùng bên trong vùng .v3-core.",
+      "interDesc": "Font không chân chính cho giao diện & tiêu đề, hỗ trợ đầy đủ dấu tiếng Việt.",
+      "monoDesc": "Số liệu dạng bảng, đường dẫn token và thông số kỹ thuật.",
+      "archivoDesc": "Giới hạn nghiêm ngặt trong các bề mặt .v3-core.",
+      "specimenHeadline": "Vận hành nhà máy AI tự động.",
+      "specimenBody": "Phân cấp thị giác rõ nét giúp người vận hành tập trung cao độ trên cả giao diện Sáng và Tối.",
+      "v3Specimen": "FACTORY CORE V3",
+      "archivoRule": "Không sử dụng Archivo bên ngoài container .v3-core."
+    },
+    "motion": {
+      "title": "Thời lượng & Đường cong Chuyển động",
+      "description": "Các biến thời lượng CSS và hàm cubic-bezier chuẩn từ nhóm token motion DTCG.",
+      "play": "Chạy thử chuyển động",
+      "reset": "Đặt lại vị trí"
+    },
+    "radius": {
+      "title": "Thang Bo góc (Radius)",
+      "description": "Tính toán từ --radius (12px) để giữ sự đồng nhất giữa nút bấm, ô nhập liệu, thẻ và bảng điều khiển."
+    },
+    "studioStage": {
+      "eyebrow": "Bất biến Giao diện",
+      "title": "Sân khấu Tối Studio Bất biến",
+      "description": "Timeline dựng video, khung xem trước màu sắc và sân khấu Studio luôn giữ nền tối obsidian dù trang đang ở chế độ Sáng hay Tối.",
+      "previewTitle": "Sân khấu Dựng hình Sophia Studio",
+      "previewSubtitle": "Khóa cố định bằng biến CSS --studio-stage-*",
+      "lockedBadge": "Khóa Nền Tối Bất biến",
+      "tokensHeading": "Biến Bất biến"
+    },
+    "playground": {
+      "eyebrow": "Component Thực tế",
+      "title": "Sân chơi Component Tương tác",
+      "description": "Trải nghiệm trực tiếp các primitive từ @/seed/components/ui với biến thể, kích thước và trạng thái vô hiệu hóa.",
+      "buttonTitle": "Button Primitive",
+      "buttonSubtitle": "Thử nghiệm toàn bộ biến thể, kích thước và trạng thái disabled của nút bấm.",
+      "buttonSampleLabel": "Khởi chạy Quy trình",
+      "badgeCardTitle": "Badge & Card Primitives",
+      "badgeCardSubtitle": "Chuyển đổi huy hiệu gói dịch vụ, hiệu ứng kính mờ và nổi khi di chuột.",
+      "cardSampleTitle": "Nút Dựng hình Tự động",
+      "cardSampleBody": "Component Card và Badge thực tế phản hồi theo chủ đề hiện tại.",
+      "inputTitle": "Input Primitive",
+      "inputSubtitle": "Kiểm tra viền focus, tương phản placeholder và trạng thái vô hiệu hóa.",
+      "inputLabel": "Tên Pipeline",
+      "inputPlaceholder": "vd: zen-studio-4k-render",
+      "charsLabel": "ký tự",
+      "alertTitle": "Alert Primitive",
+      "alertSubtitle": "So sánh trạng thái thông báo mặc định và cảnh báo nghiêm trọng.",
+      "alertDefaultTitle": "Đồng bộ Design Tokens thành công",
+      "alertDefaultBody": "Toàn bộ 29 vai trò màu ngữ nghĩa đều đạt chuẩn tương phản WCAG 2.2 AA.",
+      "alertDestructiveTitle": "Cảnh báo ngưỡng tương phản",
+      "alertDestructiveBody": "Phát hiện màu tùy chỉnh thấp hơn ngưỡng tương phản tối thiểu 4.5:1.",
+      "controls": {
+        "variant": "Biến thể",
+        "size": "Kích thước",
+        "state": "Trạng thái",
+        "badgeVariant": "Biến thể Badge",
+        "disabledOn": "Vô hiệu hóa: BẬT",
+        "disabledOff": "Vô hiệu hóa: TẮT"
+      }
+    },
+    "dtcg": {
+      "eyebrow": "W3C DTCG 2025.10",
+      "title": "Tra cứu & Xuất Token DTCG",
+      "description": "Tìm kiếm mọi token chuẩn, lọc theo nhóm, sao chép biến CSS hoặc tải toàn bộ tệp JSON theo chuẩn DTCG.",
+      "tableTitle": "Danh mục Token DTCG Chuẩn",
+      "showingCount": "Hiển thị {shown} / {total} token",
+      "searchPlaceholder": "Tìm tên token, biến CSS hoặc giá trị...",
+      "filterLabel": "Lọc nhóm token",
+      "emptyState": "Không tìm thấy token phù hợp với từ khóa.",
+      "categories": {
+        "all": "Tất cả",
+        "semantic-dark": "Ngữ nghĩa Tối",
+        "semantic-light": "Ngữ nghĩa Sáng",
+        "tonal": "Thang màu Tonal",
+        "typography": "Kiểu chữ",
+        "motion": "Chuyển động"
+      },
+      "columns": {
+        "token": "Đường dẫn Token",
+        "type": "Kiểu",
+        "value": "Giá trị",
+        "cssVar": "Biến CSS",
+        "copy": "Sao chép"
+      }
+    }
   }
 }
