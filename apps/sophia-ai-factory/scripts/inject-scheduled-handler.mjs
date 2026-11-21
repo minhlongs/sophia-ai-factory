@@ -9,6 +9,7 @@
  * throws on missing CRON_SECRET, HTTP non-2xx responses, or dispatch errors.
  */
 
+import { createRequire } from 'node:module';
 import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -171,7 +172,27 @@ export function assertCronAlignment(routeMap, rootDir = appRoot) {
   }
 }
 
-export function buildScheduledSnippet(verifiedMap) {
+// Keep the scheduler and HTTP policy synchronized.
+const cronPolicy = JSON.parse(readFileSync(join(appRoot, 'src/seed/security/scheduled-cron-policy.json'), 'utf8'));
+export const PERMITTED_CRON_ROUTES = Object.freeze(cronPolicy.permittedRoutes);
+const registeredRoutes = Object.values(CRON_ROUTES).flat().sort();
+if (JSON.stringify(registeredRoutes) !== JSON.stringify(cronPolicy.registeredRoutes) ||
+    PERMITTED_CRON_ROUTES.some((route) => !registeredRoutes.includes(route))) {
+  throw new Error('Scheduled cron policy does not match the registry');
+}
+
+function bundleBackup() {
+  const require = createRequire(import.meta.url);
+  const { buildSync } = require('esbuild');
+  const result = buildSync({
+    entryPoints: [join(appRoot, 'src/forest/dr/scheduled-d1-backup.ts')],
+    bundle: true, write: false, format: 'iife', globalName: '__scheduledBackup',
+    platform: 'browser', target: 'es2022',
+  });
+  return result.outputFiles[0].text;
+}
+
+export function buildScheduledSnippet(verifiedMap, permittedRoutes = PERMITTED_CRON_ROUTES) {
   const mapEntries = Object.entries(verifiedMap)
     .map(([pattern, routes]) => {
       const routeList = routes.map((r) => JSON.stringify(r)).join(', ');
@@ -181,7 +202,9 @@ export function buildScheduledSnippet(verifiedMap) {
 
   return `
 ${IDEMPOTENCY_MARKER}
+${bundleBackup()}
 // Cron route map (post-build inject) — patterns must match wrangler triggers.crons.
+const __permittedCronRoutes = new Set(${JSON.stringify(permittedRoutes)});
 const __cronRouteMap = {
 ${mapEntries}
 };
@@ -195,19 +218,39 @@ async function __cronScheduledHandler(event, env, ctx) {
     throw new Error('[scheduled] CRON_SECRET is missing or empty; refusing to dispatch cron routes.');
   }
 
-  const routes = __cronRouteMap[cronPattern] ?? [];
+  const routes = Object.hasOwn(__cronRouteMap, cronPattern) ? __cronRouteMap[cronPattern] : [];
   if (routes.length === 0) {
-    console.warn('[scheduled] No handler mapped for cron pattern:', cronPattern);
+    console.warn('[scheduled] No handler mapped for cron pattern');
     return;
   }
+  const permittedRoutes = routes.filter((route) => __permittedCronRoutes.has(route));
+  const skippedRoutes = routes.filter((route) => !__permittedCronRoutes.has(route));
 
+  if (skippedRoutes.length > 0) {
+    console.warn('[scheduled] Routes skipped by policy:', skippedRoutes.join(', '));
+  }
+
+  if (permittedRoutes.length === 0) {
+    return {
+      ok: true,
+      skipped: 'SKIPPED_BY_POLICY',
+      routes: skippedRoutes,
+    };
+  }
+
+  const routesToDispatch = permittedRoutes;
   const host = typeof env.HOSTNAME === 'string' && env.HOSTNAME.trim().length > 0
     ? env.HOSTNAME.trim()
-    : 'sophia.agencyos.network';
+    : 'worker.invalid';
 
   const runPromise = (async () => {
     const results = await Promise.allSettled(
-      routes.map(async (route) => {
+      routesToDispatch.map(async (route) => {
+        if (route === '/api/cron/d1-backup') {
+          const result = await __scheduledBackup.runScheduledD1Backup({ DB: env.DB, BACKUPS_BUCKET: env.BACKUPS_BUCKET });
+          if (!result.ok) throw new Error(route + ' failed: ' + result.reason + (result.artifactPresent ? ' artifactPresent=true' : ''));
+          return result;
+        }
         const url = 'https://' + host + route;
         const req = new Request(url, {
           method: 'GET',
@@ -219,9 +262,10 @@ async function __cronScheduledHandler(event, env, ctx) {
         let res;
         try {
           const binding = env.WORKER_SELF_REFERENCE;
-          res = binding && typeof binding.fetch === 'function'
-            ? await binding.fetch(req)
-            : await fetch(req);
+          if (!binding || typeof binding.fetch !== 'function') {
+            throw new Error('WORKER_SELF_REFERENCE is unavailable');
+          }
+          res = await binding.fetch(req);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           throw new Error(route + ' dispatch failed: ' + message, { cause: err });
@@ -252,7 +296,7 @@ async function __cronScheduledHandler(event, env, ctx) {
     if (failures.length > 0) {
       console.error('[scheduled] Cron handler failures:', failures);
       throw new Error(
-        '[scheduled] ' + failures.length + ' of ' + routes.length +
+        '[scheduled] ' + failures.length + ' of ' + routesToDispatch.length +
         ' cron route(s) failed for "' + cronPattern + '": ' + failures.join('; ')
       );
     }
@@ -275,6 +319,7 @@ export function injectScheduledHandler({
   workerFilePath = workerPath,
   routeMap = CRON_ROUTES,
   rootDir = appRoot,
+  permittedRoutes = PERMITTED_CRON_ROUTES,
 } = {}) {
   if (!existsSync(workerFilePath)) {
     throw new Error(
@@ -291,7 +336,7 @@ export function injectScheduledHandler({
 
   const patternCount = Object.keys(verifiedMap).length;
   const routeCount = Object.values(verifiedMap).flat().length;
-  const snippet = buildScheduledSnippet(verifiedMap);
+  const snippet = buildScheduledSnippet(verifiedMap, permittedRoutes);
 
   const defaultExportRegex = /(export default \{[\s\S]*?)(\n\};)/m;
   if (!defaultExportRegex.test(content)) {

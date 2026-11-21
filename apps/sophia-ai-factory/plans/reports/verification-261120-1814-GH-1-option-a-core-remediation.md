@@ -178,3 +178,159 @@ All 3 pull-request-only workflows (`permissions: contents: read`, `pull_request`
 - `CORE_ALGORITHM_VALUE: INSUFFICIENT_EVIDENCE`; `LIVE_MODEL_EVAL: NOT_RUN / NOT_AUTHORIZED`; `PAID_SCRIPT_CONSUMPTION: NOT_ESTABLISHED`.
 - No merge, no production deployment, no remote D1 mutation, no production secret changes, no PayOS activation, and no paid AI calls were performed.
 
+---
+
+## Post-Deploy Runtime Triage (2026-11-21) / Điều tra vận hành sau phát hành
+
+### 1. Current Production Version & Health / Phiên bản và sức khỏe hiện tại
+
+- **Full SHA:** `84d81654849c9d9d3ea2d8862c15b35c9621f292` (Run `44869506376` — `success`).
+- **Deployment ID:** `6773e523-78be-4e2f-9472-cade83340102` | **Active Version:** `1c41a8d5-5d6d-40b3-b8db-afaf7beb2cc7` | **Deploy Timestamp:** `2026-11-21T05:45:06.498099Z`.
+- **Prior Live Source:** `bbf37047800f06fa9b1e95e0eaf142b2d3525cb7` | **Conditional Rollback Version (not executed):** `1d74ca52-a2cd-4cb5-b97b-47d13291e6b2`.
+- **Live Read-Only Verification:** `/api/version` returns `shortSha: "84d81654"`; `/api/health` returns HTTP `200`; 7/7 low-traffic read-only probe rounds (28/28 requests across `/api/health`, `/api/version`, `/login`, `/vi/login`) passed with `0` failures (cold `/api/health` TTFB `3.33s–3.94s`, warm `0.28s–0.34s`).
+- **Preserved Invariants:** `FEATURE_PAYOS=false`, `PAID_COHORT_NOT_AUTHORIZED`, 18 ledger rows (9 migrations) untouched, 10 inherited dirty/untracked paths in the legacy worktree untouched.
+
+### 2. Reconciled Metrics & Sampling Limits / Số liệu đã đối chiếu và giới hạn mẫu
+
+- **602-second post-deploy sample (`05:46:45–05:56:47 UTC`):** `70` Worker invocation records (`event` = 1 Worker invocation, not log lines; `0` missing/`UNKNOWN` outcomes; `0` duplicate records).
+- **Exact Breakdown (non-overlapping):**
+  - `18` scheduled invocations (`outcome: "exception"`): `* * * * *` fired 10 times = `10` invocations; `*/2 * * * *` fired 5 times = `5`; `*/5 * * * *` fired twice = `2`; `*/10 * * * *` fired once = `1`.
+  - `29` internal `WORKER_SELF_REFERENCE` HTTP subrequests (`outcome: "canceled"`): dispatched by `scheduled()` to `/api/cron/*` routes and canceled when `inject-scheduled-handler.mjs` calls `await res.body.cancel().catch(() => {})`.
+  - `18 + 29 = 47` `non_ok` invocations (exact match — `18` exceptions are a subset of `47` non-ok, **not** additive).
+  - `23` `ok` invocations (~21 `/api/health` probes + ~2 healthy HTTP requests).
+- **Sampling & Interpretation Limits:**
+  - `47/70` is **not** a customer-facing error rate; all 47 `non_ok` records are internal cron scheduler dispatches and their self-referenced HTTP subrequests.
+  - Deploy used `--upload-source-maps=false`, `SKIP_SENTRY_BUILD=1`, `SKIP_SYMBOL_UPLOAD=1`, so runtime stack frames are minified (`worker.js:18781:3407`), mapped offline to `scripts/inject-scheduled-handler.mjs:234-241`.
+  - `BASELINE_UNAVAILABLE` for historical pre-deploy Cloudflare tail counts on `bbf37047`; pre/post comparison is established from source diff between `bbf37047` and `84d81654`.
+
+### 3. Sanitized Error-Group Table / Bảng nhóm lỗi đã đối chiếu
+
+| fingerprint | số invocation | số exception object | route template/cron | outcome | HTTP status nếu có | message đã che dữ liệu | stack frame nếu có | ảnh hưởng | evidence reference |
+|---|---:|---:|---|---|---|---|---|---|---|
+| `cron-scheduled-http-401` | 18 (602s sample) | 18 (1 per scheduled invocation) | `scheduled()` → `* * * * *`, `*/2 * * * *`, `*/5 * * * *`, `*/10 * * * *` (`/api/cron/*`, 38 of 40 routes) | `exception` | `401` (from middleware `handleApiRoute`) | `Error: /api/cron/<route> failed with HTTP 401` | `worker.js:18781:3407` (maps to `scripts/inject-scheduled-handler.mjs:234-241`) | 38 of 40 scheduled background jobs blocked before handler execution; customer HTTP routes unaffected | Targeted live `wrangler tail --version-id 1c41a8d5-5d6d-40b3-b8db-afaf7beb2cc7` + `src/forest/middleware/guard/public-routes.ts` |
+| `cron-self-ref-body-cancel` | 29 (602s sample) | 0 | Internal `WORKER_SELF_REFERENCE` HTTP GET `/api/cron/<route>` | `canceled` | `401` (38 blocked routes) / `200` (2 allowlisted routes) | None (no exception; client canceled response body via `res.body.cancel()`) | N/A | Expected Cloudflare `canceled` status when `scheduled()` cancels subrequest body after reading status; not a customer outage | Targeted live `wrangler tail --version-id 1c41a8d5-5d6d-40b3-b8db-afaf7beb2cc7` + `scripts/inject-scheduled-handler.mjs:234` |
+| `health-probe-single-failure` | 1 (602s sample) | 0 (client-side probe) | `GET /api/health` | `UNKNOWN` (monitor script discarded output) | `UNRECOVERABLE / NOT_LOGGED` | `UNRECOVERABLE / NOT_LOGGED` (monitor script ran `curl -fsS --max-time 15` every 30s without capturing exit code, HTTP status, timing, or timestamp) | N/A | Single non-recurring probe failure during post-deploy window; 0 failures across Stage 4b/4c smoke and 7/7 subsequent live probe rounds (28/28 expected endpoint outcomes succeeded; `/api/health` returned HTTP 200, while login routes may redirect as expected) | Monitor script `bdesym7gc` recovery + `src/app/api/health/*` diff (`bbf37047..84d81654`: unchanged) |
+
+### 4. Health Probe Failure Diagnosis / Chẩn đoán lần health thất bại
+
+- **Recovered Monitor Command:** `curl -fsS --max-time 15 https://sophia.agencyos.network/api/health` every 30s (`bdesym7gc`), discarding stdout, stderr, exit code, HTTP status, timing, and failure timestamp.
+- **Classification & Uncertainty:** Exact failure mode (HTTP 5xx vs 401/403/429 vs DNS/TLS/connect vs 15s client timeout) and Worker invocation correlation are **`UNRECOVERABLE / NOT_LOGGED`** due to monitor script observability loss (`OBSERVABILITY_GAP`).
+- **Code & Recurrence Evidence:** `src/app/api/health/route.ts`, `health-probes.ts`, `probe-d1.ts` (3000ms timeout), and `probe-r2.ts` (1500ms timeout) are identical between `bbf37047` and `84d81654`. Stage 4b/4c smoke passed (`05:45:41–05:45:43 UTC`), and 7/7 read-only probe rounds (28/28 requests) met their expected endpoint outcomes with zero failures; `/api/health` returned HTTP `200`, while login routes may return expected redirects.
+
+### 5. Pre/Post Release Relationship & Operational Impact / Quan hệ trước-sau phát hành và ảnh hưởng
+
+- **Root Cause (`bbf37047` vs `84d81654`):**
+  - `src/forest/middleware/guard/public-routes.ts` and `src/middleware/api-pipeline.ts` are **unchanged** between `bbf37047` and `84d81654`. Only 5 `/api/cron/*` routes were pinned in `exactPublic` while `if (pathname.startsWith('/api/cron/')) return false` default-denied the other 38 routes in `CRON_ROUTES` with Better Auth middleware HTTP `401` (even after `validateCronRequest` succeeded).
+  - Thus the 38-route cron `401` lockout was **pre-existing** before `84d81654`.
+  - Release `84d81654` (via `fe391c2a4`) hardened `scripts/inject-scheduled-handler.mjs` to call `res.body.cancel()` and throw `Error(<route> failed with HTTP <status>)` on non-2xx instead of silently logging `→ 401`. This surfaced the pre-existing lockout as explicit Worker `exception` records.
+- **Operational Impact:** Customer-facing HTTP endpoints (`/api/health`, `/api/version`, `/login`, `/vi/login`) are unaffected; 38 of 40 scheduled background jobs (e.g., `workflow-stepper`, `fulfillment-retry`, `email-outbox-flush`, `uptime-check`, `heartbeat`, `billing-anomaly-scan`) fail with middleware HTTP `401` until the hotfix is deployed.
+
+### 6. Evidence-Based Decision / Quyết định theo bằng chứng
+
+- **Release Disposition:** **`DEPLOYED_VERIFIED_WITH_DISCLOSED_RUNTIME_ISSUES`** — **Keep `84d81654` live** (do **not** execute conditional rollback to `1d74ca52-a2cd-4cb5-b97b-47d13291e6b2`).
+  - **Why not rollback:** Rolling back to `bbf37047` / `1d74ca52` would **not** fix the 38 cron `401` failures—it would only silence their error reporting while critical health/version/login endpoints are healthy on `84d81654`.
+- **Minimal Hotfix Prepared (`HISTORICAL / SUPERSEDED` — broad 38-route restoration superseded by backup-only PR #184 policy below):**
+  - `apps/sophia-ai-factory/src/forest/middleware/guard/public-routes.ts`: pin all 38 missing scheduled routes from `CRON_ROUTES` (total 43 pinned `/api/cron/*` paths) while preserving default-deny for unlisted `/api/cron/*` paths; every scheduled route retains `validateCronRequest` in middleware and per-route `verifyCronAuth` / `CRON_SECRET` enforcement.
+  - `apps/sophia-ai-factory/src/app/api/cron/smoke-one-time/route.ts`: move `verifyCronAuth(request)` ahead of the existing `SYNTHETIC_ENABLED === 'false'` no-op branch so handler authentication is unconditional; the flag condition itself is unchanged.
+  - `apps/sophia-ai-factory/src/middleware/__tests__/cron-reachability.test.ts`: regression tests verifying 100% `CRON_ROUTES` parity in `isPublicApiRoute`, default-deny for unlisted `/api/cron/*`, middleware pass-through without browser session lookup across all 40 scheduled routes, `403` rejection on missing/invalid `CRON_SECRET`, and `401` rejection on unauthenticated `smoke-one-time` even when disabled.
+- **Independent Review (`HISTORICAL / SUPERSEDED`):** Static review confirmed all 40 scheduled routes map to existing `GET` handlers, all 38 newly pinned entries are in `CRON_ROUTES`, and each handler enforces cron secret authentication (including delegated facade implementations). Review also found the disabled `smoke-one-time` no-op returned before checking the secret; the hotfix fixes this, with a regression test. The regression test proves middleware pass-through, not execution of every job; rate limiting is mocked. No production calls were made during review.
+- **Hotfix Verification (`HISTORICAL / SUPERSEDED`):**
+  - Focused regression suite (`16` test files, `190` tests): **PASS**.
+  - `eslint` on all 3 changed files: **PASS** (`0` errors).
+  - `npm run type-check`: **PASS** (`0` errors).
+  - Full `npm test`: `20,791 passed | 67 failed` (all `67` failures across `5` files verified identical on untouched `84d81654` baseline: `67 failed | 1 passed`).
+  - Local `next build`: blocked in temporary worktree: Turbopack could not resolve the symlinked `next` package; retrying with Node 22 and webpack reached a pre-existing Edge dynamic-code-evaluation error importing `@better-auth/passkey`. Reviewer's isolated environment also could not resolve its Vitest dependency. Full Worker packaging remains to be checked by hosted PR CI; no build failure was hidden.
+
+### 7. One Concrete Remaining Action (`HISTORICAL / SUPERSEDED`) / Hành động còn lại
+
+- Merge and deploy the reviewed hotfix only after the Draft PR's hosted quality and packaging checks pass, then perform a short, bounded observation of frequent cron schedules. This smoke observation cannot verify hourly, daily, weekly, or monthly routes; those remain pending natural schedule runs or separately authorized non-mutating validation. The current run will not merge or deploy the hotfix.
+
+### PR #184 Final Backup-Safe Policy & Verification / Chính sách sao lưu an toàn & Kiểm chứng PR #184
+
+Supersedes the earlier broad-restoration hotfix (Sections 6–7 above) and the intermediate 40-route skip snapshot (`05789c6`). The final PR #184 candidate permits **exactly 1** scheduled route (`/api/cron/d1-backup`, cadence `0 5 * * *`) and keeps the other **39** scheduled routes blocked (including `/api/cron/email-drip` and `/api/cron/error-digest`). / Thay thế bản khôi phục rộng trước đó và bản chặn toàn bộ 40 route (`05789c6`). Bản cuối PR #184 chỉ cho phép **đúng 1** tác vụ định kỳ (`/api/cron/d1-backup`, lịch `0 5 * * *`) và chặn **39** tác vụ còn lại (bao gồm `/api/cron/email-drip` và `/api/cron/error-digest`).
+
+| Schedule / Lịch | Route / Đường dẫn | Outcome / Kết quả |
+|---|---|---|
+| `* * * * *` | `/api/cron/workflow-stepper` | SKIP / BỎ QUA |
+| `*/2 * * * *` | `/api/cron/fulfillment-retry` | SKIP / BỎ QUA |
+| `*/2 * * * *` | `/api/cron/email-outbox-flush` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/uptime-check` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/video-status-sync` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/sop-scheduler` | SKIP / BỎ QUA |
+| `*/5 * * * *` | `/api/cron/mission-reaper` | SKIP / BỎ QUA |
+| `*/10 * * * *` | `/api/cron/heartbeat` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/smoke-one-time` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/circuit-breaker-scan` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/distribution-pipeline-scan` | SKIP / BỎ QUA |
+| `*/15 * * * *` | `/api/cron/agent-cost-overrun-scan` | SKIP / BỎ QUA |
+| `0 * * * *` | `/api/cron/creative-quality-drift-scan` | SKIP / BỎ QUA |
+| `5 * * * *` | `/api/cron/hourly-rollup` | SKIP / BỎ QUA |
+| `7 * * * *` | `/api/cron/handover-status-sync` | SKIP / BỎ QUA |
+| `7 * * * *` | `/api/cron/ab-winner-picker` | SKIP / BỎ QUA |
+| `10 * * * *` | `/api/cron/wallet-rebuild` | SKIP / BỎ QUA |
+| `0 */4 * * *` | `/api/cron/affiliate-scout` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/clearance-promote` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/promo-trial-expiry` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/status-rollup` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/promo-cleanup` | SKIP / BỎ QUA |
+| `0 0 * * *` | `/api/cron/pending-orders-cleanup` | SKIP / BỎ QUA |
+| `0 0 1 * *` | `/api/cron/mcu-monthly-reset` | SKIP / BỎ QUA |
+| `0 0 1 * *` | `/api/cron/slo-burn-rate` | SKIP / BỎ QUA |
+| `0 1 * * *` | `/api/cron/dunning-advance` | SKIP / BỎ QUA |
+| `5 1 * * *` | `/api/cron/daily-rollup` | SKIP / BỎ QUA |
+| `0 2 * * *` | `/api/cron/subscription-reminders` | SKIP / BỎ QUA |
+| `0 2 * * *` | `/api/cron/memory-consolidation` | SKIP / BỎ QUA |
+| `0 3 * * *` | `/api/cron/scheduled-campaigns` | SKIP / BỎ QUA |
+| `30 3 * * *` | `/api/cron/hash-chain-verification` | SKIP / BỎ QUA |
+| `0 4 * * *` | `/api/cron/email-drip` | SKIP / BỎ QUA |
+| `0 5 * * *` | `/api/cron/d1-backup` | ALLOW (local-only: D1 read + R2 write + `cron_run_log`; external telemetry suppressed) / CHO PHÉP (chỉ nội bộ) |
+| `0 5 * * *` | `/api/cron/error-digest` | SKIP / BỎ QUA |
+| `0 5 * * *` | `/api/cron/quota-check` | SKIP / BỎ QUA |
+| `0 6 * * *` | `/api/cron/fulfillment-reconcile` | SKIP / BỎ QUA |
+| `0 6 * * 1` | `/api/cron/weekly-signals-digest` | SKIP / BỎ QUA |
+| `0 7 * * *` | `/api/cron/llm-cache-purge` | SKIP / BỎ QUA |
+| `0 7 * * *` | `/api/cron/billing-anomaly-scan` | SKIP / BỎ QUA |
+| `*/30 * * * *` | `/api/cron/mission-abandon-scan` | SKIP / BỎ QUA |
+
+#### Backup-Safe Execution Boundary & Runtime Fixes / Ranh giới thực thi sao lưu an toàn & Sửa lỗi runtime
+
+- **HISTORICAL / SUPERSEDED — header-based isolation / Cách cô lập bằng tiêu đề HTTP đã được thay thế:** The earlier candidate used an HTTP marker with the cron credential. A network-denied retest showed that the self-fetch still entered the normal HTTP pipeline. / Bản trước dùng dấu hiệu HTTP cùng thông tin xác thực cron. Kiểm thử lại khi chặn mạng cho thấy lời gọi nội bộ vẫn đi qua luồng HTTP thông thường.
+- **Rate-limit root cause / Nguyên nhân ghi bộ đếm:** `handleApiPipeline` validates the cron credential before `handleApiRoute` calls `checkRateLimit`; the SQL limiter then calls `incrementRateLimit` and the `increment_rate_limit` D1 operation. / Luồng HTTP xác thực cron trước, sau đó bộ giới hạn gọi thao tác cập nhật bộ đếm trên D1.
+- **Honeycomb root cause / Nguyên nhân gửi Honeycomb:** The app's Next.js HTTP path invokes `src/instrumentation.ts` → `src/instrumentation-node.ts` → `initializeOTel` in `src/seed/telemetry/opentelemetry-setup.ts`, which installs the OTLP exporter. With full sampling in the offline fixture, the scheduler with a stub response attempted no exports; forwarding into the real backup HTTP handler and invoking it directly each attempted 10 trace exports. Seven attempts on the scheduled self-fetch occurred during HTTP execution and three after the HTTP response resolved; `waitUntil` ancestry was not established. / Luồng HTTP của ứng dụng khởi tạo bộ gửi OTLP. Trong kiểm thử ngoại tuyến lấy mẫu đầy đủ, lịch với phản hồi giả lập không gửi; qua handler thật hoặc gọi trực tiếp đều có 10 lần thử gửi trace. Bảy lần trong lúc xử lý HTTP, ba lần sau phản hồi; chưa xác định có bắt nguồn từ `waitUntil` hay không.
+- **Middleware session boundary / Ranh giới xác thực:** Existing exact exemptions for backup and email-drip are unchanged. Scheduled denial does not remove legacy direct access. / Giữ nguyên quyền gọi trực tiếp hiện hữu; chặn lịch chạy không thay đổi quyền HTTP.
+- **Cloudflare runtime bugs caught & fixed during real workerd verification:**
+  1. `src/app/api/cron/d1-backup/route.ts` now resolves OpenNext Cloudflare bindings via `globalThis[Symbol.for('__cloudflare-context__')]?.env` (with `__env__` / `__env` / `globalThis` fallback) instead of assuming direct `globalThis.DB` / `globalThis.BACKUPS_BUCKET` properties.
+  2. `src/forest/dr/d1-dump-builder.ts` now skips `_cf_METADATA` and any `_cf_*` Cloudflare D1 internal tables so `buildD1Dump` does not fail with `D1_ERROR: access to _cf_METADATA.key is prohibited: SQLITE_AUTH`.
+
+#### HISTORICAL / SUPERSEDED: Earlier Local Candidate / Ứng viên cục bộ trước đó
+
+- **Focused unit tests (Vitest, Node v22.23.1):** **PASS** — `4` test files, `72` tests passed (`0` failed): `inject-scheduled-handler.test.ts`, `cron-reachability.test.ts`, `src/app/api/cron/d1-backup/route.test.ts`, `src/forest/dr/d1-dump-builder.test.ts`.
+- **Static gates:** `npm run type-check` **PASS** (`0` errors); `npx eslint` on all changed files **PASS** (`0` errors, `3` pre-existing/config warnings); `npm run check:boundaries` **PASS**.
+- **Canonical Worker build (`SKIP_SYMBOL_UPLOAD=1 npm run deploy:build`):** **PASS** (exit 0; injected `23` patterns, `40` routes).
+  - `.open-next/worker.js` SHA-256: `1893206c58a3f27cf3d583af5c4fb8c463cd449adb8ba26529fbbdef2ce893f1`.
+  - `npx wrangler deploy --dry-run --outdir /tmp/pr184-wrangler-out`: **PASS** (exit 0).
+- **Cloudflare workerd / Miniflare v4 packaged Worker integration test (local D1 + local R2 + `WORKER_SELF_REFERENCE`, `outboundService` throwing on any outbound network call, with synthetic `BACKUP_HEARTBEAT_URL`, `SENTRY_DSN`, `BETTER_STACK_SOURCE_TOKEN` configured):** **PASS**
+  - `worker.scheduled({ cron: '0 5 * * *' })` (1st run): `outcome: "ok"`, `/api/cron/d1-backup -> 200`, skipped `/api/cron/error-digest` & `/api/cron/quota-check`, wrote `d1-2026-11-21.sql` (`568` bytes, valid SQL dump of fixture rows) to local R2 `BACKUPS_BUCKET`, recorded `cron_run_log` (`last_status: "success"`, `run_count: 1`).
+  - `worker.scheduled({ cron: '0 5 * * *' })` (2nd run within 12h): `outcome: "ok"`, `/api/cron/d1-backup -> 200`, 12-hour idempotency guard skipped duplicate upload (`last_status: "skipped"`, `run_count: 2`).
+  - Blocked schedules (`*/5 * * * *`, `0 10 * * *`): `outcome: "ok"`, 0 routes dispatched.
+  - Separate HTTP matrix: `GET`/`POST /api/cron/d1-backup` with valid `CRON_SECRET` -> `200`; missing or wrong auth (even with `x-sophia-backup-local-only: 1`) -> `403`; `/api/cron/email-drip`, `/api/cron/error-digest`, `/api/cron/d1-backup/extra`, `/api/cron/d1-backup/` even with valid `CRON_SECRET` -> `401` (session boundary enforced).
+  - Outbound network calls observed across entire run: **`0`** (`outboundCalls: []`).
+- **Hosted CI on base commit `05789c6`:** all 3 workflows **PASS** — Gate 1 Validation (`https://github.com/minhlongs/sophia-ai-factory/actions/runs/44886665211`), Security Scan (`https://github.com/minhlongs/sophia-ai-factory/actions/runs/44886665208`), CI (`https://github.com/minhlongs/sophia-ai-factory/actions/runs/44886665401`). Final patch is local/uncommitted and awaiting independent review before commit and Draft PR push. No production hostnames, remote D1, live providers, or deployments were touched. / Không kiểm thử trên tên miền sản xuất, D1 thật, dịch vụ bên ngoài hay triển khai lên production.
+
+#### Final Execution Evidence — 2026-11-21 / Bằng chứng thực thi cuối
+
+Earlier local runtime results above are HISTORICAL / SUPERSEDED, not final-head evidence. In particular, the header-marker isolation, email-drip 401, and skipped/run_count 2 observations do not describe the final candidate. / Kết quả cũ không đại diện bản cuối, đặc biệt cơ chế đánh dấu tiêu đề HTTP, quyền email-drip và số lần ghi trạng thái bỏ qua.
+
+- **Trusted scheduled-local backup boundary / Ranh giới thực thi nội bộ cho lịch sao lưu:** `scripts/inject-scheduled-handler.mjs` bundles the pure binding-only `src/forest/dr/scheduled-d1-backup.ts` (importing only `./d1-dump-builder`, zero HTTP/Next/logger/telemetry imports) inline via `esbuild` and invokes it directly with `{ DB: env.DB, BACKUPS_BUCKET: env.BACKUPS_BUCKET }` for `/api/cron/d1-backup` after `CRON_SECRET` fail-fast. Scheduled backup no longer enters Next.js HTTP middleware or `instrumentation.ts`, eliminating both the D1 `rate_limits` write and Honeycomb OTLP export attempts without disabling global tracing or altering HTTP middleware/rate limits. The HTTP route (`route.ts` / `d1-backup-runner.ts`) removes `x-sophia-backup-local-only` and delegates to the same backup core while preserving HTTP auth, rate limiting, and telemetry. / Trình chạy lịch nhúng trực tiếp lõi sao lưu thuần dùng binding `DB`/`BACKUPS_BUCKET`, không đi qua middleware HTTP hay `instrumentation.ts`, loại bỏ hoàn toàn ghi bộ đếm `rate_limits` và gửi Honeycomb mà không tắt tracing toàn cục hay đổi giới hạn HTTP.
+- **Policy & HTTP parity / Chính sách & tương đương HTTP:** 23 cron patterns, 40 unique routes, **1 permitted** (`/api/cron/d1-backup`), **39 blocked** before Worker-binding invocation. Direct HTTP retains `GET`/`POST /api/cron/d1-backup` (`200` with valid `CRON_SECRET` and ordinary `rate_limits` write; `403` without/invalid auth), legacy direct `/api/cron/email-drip` access (`403` without auth; passes middleware session guard with valid `CRON_SECRET`), and `401` on all 38 private scheduled routes plus 3 unlisted/variant paths. / Giữ 23 lịch, 40 đường dẫn, cho phép 1 và chặn 39; xác thực HTTP trực tiếp và quyền `email-drip` giữ nguyên.
+- **Backup correctness & concurrency / Tính đúng đắn & đồng thời:** R2 create-only conditional writes (`onlyIf: { etagDoesNotMatch: '*' }`) + artifact validation before reuse; conditional `cron_run_log` failure UPSERT cannot overwrite a concurrent recent success (no new migration); only recent `success` skips without mutating `last_run_at`/`run_count`; failed runs remain retryable; tracking failure after artifact creation returns `backup_tracking_failed` with `artifactPresent: true` (HTTP `500` / scheduled exception) and retry reuses the existing valid artifact. Residual limit: D1 and R2 do not share a single atomic transaction, so competing triggers can both dump D1 before R2 create-only selects one winner (no exactly-once claim). / Ghi R2 có điều kiện và kiểm tra bản sao trước khi tái sử dụng; lỗi ghi trạng thái không ghi đè thành công đồng thời gần đây; không có khóa giao dịch nguyên tử giữa D1 và R2.
+- **Static & focused unit gates (Node v22.23.1):** Focused Vitest suites **76 passed / 0 failed** across 5 files (`inject-scheduled-handler.test.ts`, `scheduled-d1-backup.test.ts`, `d1-dump-builder.test.ts`, `route.test.ts`, `cron-reachability.test.ts`); `tsc --noEmit` **PASS**; scoped ESLint **0 errors, 0 warnings**; `npm run check:boundaries` **PASS**; `check-production-source-guards.mjs` **PASS**; scoped `secretlint` **PASS** (exit 0). / Toàn bộ kiểm thử tập trung 76/76 qua, kiểm tra kiểu, lint 0 lỗi 0 cảnh báo, ranh giới lớp, guard nguồn và quét bí mật đều qua.
+- **Canonical build & artifacts (Node v22.23.1):** `SKIP_SYMBOL_UPLOAD=1 npm run deploy:build` **PASS** (exit 0; 23 patterns, 40 routes); `npx wrangler deploy --dry-run` **PASS** (exit 0).
+  - `.open-next/worker.js` SHA-256: `4fb797010c80e1a603f72380956da33e2235c5dd934836387a36affb7f55745f`
+  - Bundled Worker (`/tmp/pr184-wrangler-final/worker.js`) SHA-256: `5931ef2a87199fd166a5d4c8c9e7cd6486548bf151896946fc035dc03ff998c1`
+- **OS-network-denied packaged Worker verification (`sandbox-exec` + Miniflare/workerd, `OTEL_SAMPLERATE=1`, synthetic telemetry env vars):** **PASS** (`ALL_OFFLINE_PACKAGED_WORKER_CHECKS_PASSED`)
+  - Scheduled isolated matrix: 23 patterns, 40 routes, 1 permitted / 39 blocked, `selfRefCalls: 0`, `rateLimitWrites: 0`, `outboundAttempts: 0` (including Honeycomb).
+  - Deterministic competing-claims concurrency barrier: 2 concurrent `scheduled({ cron: '0 5 * * *' })` runs both passed `SELECT` (`selectHits: 2`), both reached R2 `put` (`putAttempts: 2`), `putCreated: 1`, `putConditionFailed: 1`, 1 final R2 artifact, `rateLimitWrites: 0`, `outboundAttempts: 0`.
+  - Direct HTTP parity: `GET`/`POST /api/cron/d1-backup` `200` (`httpRateLimitCount: 1`), invalid auth `403`, tracking partial failure `500` (`backup_tracking_failed`, `artifactPresent: true`), `email-drip` legacy access preserved, 38 private routes + 3 variants `401`.
+- **Independent read-only code review:** **PASS** (0 blocking findings; 76/76 targeted tests, 0 TypeScript errors, 0 ESLint errors, generated snippet `11,693` bytes with zero `next/server`, `Honeycomb`, `globalThis.fetch`, or spoofable HTTP marker references). / Đánh giá độc lập chỉ đọc: ĐẠT (0 lỗi chặn).
+- **Draft PR delivery & hosted CI:** Ready for commit and Draft PR #184 push (no merge, deploy, rollback, or production execution). / Sẵn sàng commit và đẩy lên Draft PR #184 (không merge, deploy hay chạy production).

@@ -23,12 +23,12 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const authError = verifyCronAuth(req)
+  if (authError) return authError
+
   if (process.env.SYNTHETIC_ENABLED === 'false') {
     return NextResponse.json({ ok: true, skipped: 'disabled' })
   }
-
-  const authError = verifyCronAuth(req)
-  if (authError) return authError
 
   const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database

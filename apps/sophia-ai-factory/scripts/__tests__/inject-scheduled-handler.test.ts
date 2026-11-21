@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+// @vitest-environment node
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   CRON_ROUTES,
   IDEMPOTENCY_MARKER,
+  PERMITTED_CRON_ROUTES,
   assertCronAlignment,
   buildVerifiedRouteMap,
   injectScheduledHandler,
@@ -52,7 +53,8 @@ interface GeneratedWorkerModule {
 async function buildAndImportWorker(
   routeMap: Record<string, string[]>,
   routesOnDisk: string[],
-  trailingComma = true
+  trailingComma = true,
+  permittedRoutes = routesOnDisk,
 ) {
   const rootDir = createFakeAppTree(routesOnDisk);
   fs.writeFileSync(path.join(rootDir, 'wrangler.toml'), '[triggers]\ncrons = ' + JSON.stringify(Object.keys(routeMap)) + '\n');
@@ -66,7 +68,7 @@ async function buildAndImportWorker(
   ].join('\n');
   fs.writeFileSync(workerFilePath, initialWorker, 'utf8');
 
-  const first = injectScheduledHandler({ workerFilePath, routeMap, rootDir });
+  const first = injectScheduledHandler({ workerFilePath, routeMap, rootDir, permittedRoutes });
   const encoded = Buffer.from(fs.readFileSync(workerFilePath, 'utf8'), 'utf8').toString('base64');
   const mod = (await import(
     /* @vite-ignore */ `data:text/javascript;base64,${encoded}`
@@ -109,6 +111,26 @@ describe('inject-scheduled-handler build-time validation', () => {
     }
   });
 
+  it('skips policy-disabled routes without invoking the Worker binding', async () => {
+    const { mod } = await buildAndImportWorker(
+      { '0 5 * * *': ['/api/cron/error-digest'] },
+      ['/api/cron/error-digest'],
+      true,
+      [],
+    );
+    const fetch = vi.fn();
+    const result = await mod.scheduled(
+      { cron: '0 5 * * *' },
+      { CRON_SECRET: 'test-secret', WORKER_SELF_REFERENCE: { fetch } },
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      skipped: 'SKIPPED_BY_POLICY',
+      routes: ['/api/cron/error-digest'],
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it('rejects drift in either direction even when worker was already injected', async () => {
     const { rootDir, workerFilePath } = await buildAndImportWorker(
       { '5 * * * *': ['/api/cron/hourly-rollup'] }, ['/api/cron/hourly-rollup']
@@ -161,19 +183,54 @@ describe('inject-scheduled-handler build-time validation', () => {
     expect(fs.readFileSync(workerFilePath, 'utf8')).toBe(contentAfterFirst);
 
     const emptyRoot = makeTempDir();
-    const isolatedScript = path.join(emptyRoot, 'scripts', 'inject-scheduled-handler.mjs');
-    fs.mkdirSync(path.dirname(isolatedScript), { recursive: true });
-    fs.copyFileSync(path.join(APP_ROOT, 'scripts/inject-scheduled-handler.mjs'), isolatedScript);
-    expect(() =>
-      execFileSync(process.execPath, [isolatedScript], {
-        cwd: emptyRoot,
-        stdio: 'pipe',
-      })
-    ).toThrow(/worker.js not found/);
+    expect(() => injectScheduledHandler({ workerFilePath: path.join(emptyRoot, 'missing.js') }))
+      .toThrow(/worker.js not found/);
   });
 });
 
 describe('generated scheduled() handler runtime behavior', () => {
+  it('runs the bundled backup with only D1/R2 bindings and fails secret checks before touching them', async () => {
+    const { mod, workerFilePath } = await buildAndImportWorker(
+      { '0 5 * * *': ['/api/cron/d1-backup'] }, ['/api/cron/d1-backup'],
+    );
+    const run = vi.fn().mockResolvedValue({ success: true });
+    const first = vi.fn().mockResolvedValue(null);
+    const prepare = vi.fn(() => ({ bind: () => ({ first, run }), all: async () => ({ results: [] }) }));
+    const put = vi.fn(async (_key: string, bytes: Uint8Array) => ({ size: bytes.byteLength }));
+    const env = { CRON_SECRET: 'unit-cron-token', DB: { prepare }, BACKUPS_BUCKET: { head: async () => null, put } };
+    const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('unexpected outbound'));
+    await expect(mod.scheduled({ cron: '0 5 * * *' }, { ...env, CRON_SECRET: ' ' })).rejects.toThrow(/CRON_SECRET/);
+    expect(prepare).not.toHaveBeenCalled();
+    await mod.scheduled({ cron: '0 5 * * *' }, env);
+    expect(put).toHaveBeenCalledWith(expect.stringMatching(/^d1-.*\.sql$/), expect.any(Uint8Array), expect.objectContaining({ onlyIf: { etagDoesNotMatch: '*' } }));
+    expect(run).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+    const generated = fs.readFileSync(workerFilePath, 'utf8');
+    expect(generated).not.toContain('next/server');
+    expect(generated).not.toContain('Honeycomb');
+  });
+
+  it('dispatches only backup and skips the other registered routes', async () => {
+    const registry = Object.values(CRON_ROUTES).flat();
+    const { mod } = await buildAndImportWorker(CRON_ROUTES, registry, true, PERMITTED_CRON_ROUTES);
+    const outbound = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Unexpected outbound fetch'));
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const binding = vi.fn(async () => new Response(null, { status: 204 }));
+    const first = vi.fn().mockResolvedValue({ last_run_at: 1 });
+    const db = { prepare: vi.fn(() => ({ bind: () => ({ first }) })) };
+    const env = { CRON_SECRET: 'unit-cron-token', DB: db, BACKUPS_BUCKET: {}, HOSTNAME: 'worker.invalid', WORKER_SELF_REFERENCE: { fetch: binding } };
+    for (const [cron, routes] of Object.entries(CRON_ROUTES)) {
+      binding.mockClear();
+      const allowed = routes.filter((route) => PERMITTED_CRON_ROUTES.includes(route));
+      const result = await mod.scheduled({ cron }, env);
+      expect(binding).not.toHaveBeenCalled();
+      if (allowed.length === 0) expect(result).toEqual({ ok: true, skipped: 'SKIPPED_BY_POLICY', routes });
+    }
+    expect(registry.filter((route) => !PERMITTED_CRON_ROUTES.includes(route))).toHaveLength(39);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(outbound).not.toHaveBeenCalled();
+  });
+
   it('throws on missing or whitespace CRON_SECRET before dispatching any request', async () => {
     const { mod } = await buildAndImportWorker(
       { '5 * * * *': ['/api/cron/hourly-rollup'] },
@@ -192,7 +249,7 @@ describe('generated scheduled() handler runtime behavior', () => {
     expect(selfFetch).not.toHaveBeenCalled();
   });
 
-  it('dispatches via WORKER_SELF_REFERENCE or global fetch with Bearer auth and resolves on 2xx', async () => {
+  it('dispatches only via WORKER_SELF_REFERENCE with Bearer auth and resolves on 2xx', async () => {
     const { mod } = await buildAndImportWorker(
       { '5 * * * *': ['/api/cron/hourly-rollup'] },
       ['/api/cron/hourly-rollup']
@@ -217,17 +274,17 @@ describe('generated scheduled() handler runtime behavior', () => {
 
     const globalFetchSpy = vi
       .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+      .mockRejectedValue(new Error('Unexpected outbound fetch'));
     await expect(
       mod.default.scheduled({ cron: '5 * * * *' }, { CRON_SECRET: 'unit-cron-token' }, {})
-    ).resolves.toBeUndefined();
-    expect(globalFetchSpy).toHaveBeenCalledTimes(1);
+    ).rejects.toThrow(/WORKER_SELF_REFERENCE is unavailable/);
+    expect(globalFetchSpy).not.toHaveBeenCalled();
 
     // Unmapped cron pattern with valid secret returns cleanly without calling fetch
     await expect(
       mod.default.scheduled({ cron: '0 9 * * *' }, { CRON_SECRET: 'unit-cron-token' }, {})
     ).resolves.toBeUndefined();
-    expect(globalFetchSpy).toHaveBeenCalledTimes(1);
+    expect(globalFetchSpy).not.toHaveBeenCalled();
   });
 
   it('throws on HTTP non-2xx, network/non-network errors, and runs all sibling routes before rejecting', async () => {
