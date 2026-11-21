@@ -9,16 +9,22 @@ import { getAllBilingualUrls } from '@/seed/aeo';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString();
-  const allUrls = getAllBilingualUrls();
+  // Sitemaps are for indexable HTML pages; machine endpoints (.txt/.json)
+  // are advertised via robots.txt and <link rel="alternate">. Exclude /status
+  // (JSON API only) and /operations (auth-gated redirect to /login).
+  const allUrls = getAllBilingualUrls().filter(
+    (url) =>
+      !url.endsWith('.txt') &&
+      !url.endsWith('.json') &&
+      !url.endsWith('/status') &&
+      !url.endsWith('/operations')
+  );
 
   return allUrls.map((url) => {
     let priority = 0.7;
     let changeFrequency: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' = 'monthly';
 
-    if (url.endsWith('.txt') || url.endsWith('.json')) {
-      priority = 0.9;
-      changeFrequency = 'weekly';
-    } else if (url.endsWith('/pricing') || url.endsWith('/features') || url.endsWith('/solutions')) {
+    if (url.endsWith('/pricing') || url.endsWith('/features') || url.endsWith('/solutions')) {
       priority = 0.9;
       changeFrequency = 'weekly';
     } else if (url.endsWith('/vi') || url.endsWith('/en')) {

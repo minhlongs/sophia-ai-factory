@@ -118,9 +118,9 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
                       <Icon className="w-5 h-5" />
                     </div>
                   </div>
-                  <h4 className="text-lg font-bold text-[#0B0F19] dark:text-white mb-2">
+                  <h3 className="text-lg font-bold text-[#0B0F19] dark:text-white mb-2">
                     {item.title}
-                  </h4>
+                  </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     {item.desc}
                   </p>

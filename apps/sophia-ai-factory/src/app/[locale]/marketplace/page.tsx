@@ -9,6 +9,8 @@
 import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 import {
   MarketplaceHeader,
   MarketplaceFilterBar,
@@ -29,26 +31,18 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'blueprintMarketplace' });
-
-  return {
+  return buildPublicPageMetadata({
+    locale,
+    path: '/marketplace',
     title: `${t('title')} | Sophia AI Factory`,
     description: t('subtitle'),
-    openGraph: {
-      title: `${t('title')} | Sophia AI Factory`,
-      description: t('subtitle'),
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${t('title')} | Sophia AI Factory`,
-      description: t('subtitle'),
-    },
-  };
+  });
 }
 
 export default async function MarketplacePage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   const sp = await searchParams;
+  const t = await getTranslations({ locale, namespace: 'blueprintMarketplace' });
   const filters = parseMarketplaceSearchParams(sp);
   const { page, pageSize, niche, platform, minConversionRate, royaltyRate, search, sort } = filters;
 
@@ -57,6 +51,14 @@ export default async function MarketplacePage({ params, searchParams }: PageProp
 
   return (
     <div className="space-y-6">
+      <WebPageJsonLd
+        id="marketplace"
+        title={`${t('title')} | Sophia AI Factory`}
+        description={t('subtitle')}
+        path="/marketplace"
+        locale={locale}
+        schemaType="CollectionPage"
+      />
       {/* Hero Headline */}
       <MarketplaceHeader />
 

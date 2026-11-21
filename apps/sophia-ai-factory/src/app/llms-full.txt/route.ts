@@ -12,6 +12,7 @@ export async function GET(): Promise<NextResponse> {
     status: 200,
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
+      'Vary': 'Accept',
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
       'X-Robots-Tag': 'all',
     },

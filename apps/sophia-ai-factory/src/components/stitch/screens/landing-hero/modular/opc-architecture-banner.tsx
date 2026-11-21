@@ -20,9 +20,9 @@ export function OpcArchitectureBanner() {
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
             OPC 10-STEP PRODUCT CONTRACT • 7-LEVEL EVIDENCE CHAIN
           </span>
-          <h4 className="text-xl font-bold text-[#0B0F19] dark:text-white mt-1">
+          <h3 className="text-xl font-bold text-[#0B0F19] dark:text-white mt-1">
             Dual-Niche Affiliate Governance (Crypto/CEX &amp; Global SaaS)
-          </h4>
+          </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Non-custodial affiliate operations: Niche &amp; Market → Program Connect → Offer Verify → Campaign &amp; Budget → CEO Approval (SHA-256) → Media Render → Compliance Gate → Controlled Publish → Attribution → Net Commission Reconciliation.
           </p>

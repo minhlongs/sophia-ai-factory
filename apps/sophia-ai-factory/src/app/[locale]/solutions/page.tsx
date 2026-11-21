@@ -11,7 +11,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { Link } from '@/navigation';
-import { SITE_URL } from '@/land/seo/solutions-schema-builder';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { SolutionsDirectoryGrid } from './solutions-directory-grid';
 
@@ -21,44 +22,40 @@ interface PageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const resolved = await params;
-  const isVi = resolved.locale === 'vi';
-
-  const title = isVi
-    ? 'Giải Pháp Video AI Cho Hơn 20 Ngành Nghề — Sophia AI Factory'
-    : '20+ Industry Video Automation Solutions — Sophia AI Factory';
-
-  const description = isVi
-    ? 'Khám phá các giải pháp tạo video AI tự động chuyên sâu cho bất động sản, mỹ phẩm, thời trang, F&B, khóa học, tài chính và hơn thế nữa.'
-    : 'Explore tailored AI video automation solutions across real estate, e-commerce, beauty, courses, healthcare, SaaS, and more.';
-
+function getSolutionsMeta(locale: string) {
+  const isVi = locale === 'vi';
   return {
-    title,
-    description,
-    alternates: {
-      canonical: `${SITE_URL}/${resolved.locale}/solutions`,
-      languages: {
-        en: `${SITE_URL}/en/solutions`,
-        vi: `${SITE_URL}/vi/solutions`,
-      },
-    },
-    openGraph: {
-      title,
-      description,
-      url: `${SITE_URL}/${resolved.locale}/solutions`,
-      siteName: 'Sophia AI Factory',
-    },
+    title: isVi
+      ? 'Giải Pháp Video AI Cho Hơn 20 Ngành Nghề — Sophia AI Factory'
+      : '20+ Industry Video Automation Solutions — Sophia AI Factory',
+    description: isVi
+      ? 'Khám phá các giải pháp tạo video AI tự động chuyên sâu cho bất động sản, mỹ phẩm, thời trang, F&B, khóa học, tài chính và hơn thế nữa.'
+      : 'Explore tailored AI video automation solutions across real estate, e-commerce, beauty, courses, healthcare, SaaS, and more.',
   };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { title, description } = getSolutionsMeta(locale);
+  return buildPublicPageMetadata({ locale, path: '/solutions', title, description });
 }
 
 export default async function SolutionsDirectoryPage({ params }: PageProps) {
   const resolved = await params;
   const locale = resolved.locale === 'vi' ? 'vi' : 'en';
   const isVi = locale === 'vi';
+  const { title, description } = getSolutionsMeta(locale);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <WebPageJsonLd
+        id="solutions"
+        title={title}
+        description={description}
+        path="/solutions"
+        locale={locale}
+        schemaType="CollectionPage"
+      />
       {/* Header */}
       <section className="pt-16 pb-14 border-b border-zinc-800/80 relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center relative z-10">

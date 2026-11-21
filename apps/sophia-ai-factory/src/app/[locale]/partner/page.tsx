@@ -7,9 +7,11 @@
  * Layer: land (App Router Page)
  */
 
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getPartnerDashboardAction } from '@/land/partners/partner-actions';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 import { PartnerPortalClient } from './partner-portal-client';
 import { StitchAgencySubaccountStrip } from './stitch-agency-subaccount-strip';
 
@@ -17,10 +19,8 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const resolved = await params;
-  const isVi = resolved.locale === 'vi';
-
+function getPartnerMeta(locale: string) {
+  const isVi = locale === 'vi';
   return {
     title: isVi
       ? 'Cổng Đối Tác & Đại Lý Toàn Cầu — Sophia AI Factory'
@@ -28,20 +28,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: isVi
       ? 'Chương trình đại lý và nhãn trắng độc quyền. Hoa hồng định kỳ lên đến 35%, tên miền riêng và thương hiệu tùy chỉnh.'
       : 'Sovereign white-label agency portal and partner program. Earn up to 35% recurring commissions with custom domains and branding.',
-    alternates: {
-      canonical: `/${resolved.locale}/partner`,
-      languages: {
-        en: '/en/partner',
-        vi: '/vi/partner',
-      },
-    },
   };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { title, description } = getPartnerMeta(locale);
+  return buildPublicPageMetadata({ locale, path: '/partner', title, description });
 }
 
 export default async function PartnerPortalPage({ params }: PageProps) {
   const resolved = await params;
   const locale = resolved.locale === 'vi' ? 'vi' : 'en';
   const isVi = locale === 'vi';
+  const { title, description } = getPartnerMeta(locale);
 
   const user = await getCurrentUser();
   let initialDashboard = null;
@@ -55,6 +55,13 @@ export default async function PartnerPortalPage({ params }: PageProps) {
 
   return (
     <>
+      <WebPageJsonLd
+        id="partner"
+        title={title}
+        description={description}
+        path="/partner"
+        locale={locale}
+      />
       <StitchAgencySubaccountStrip isVi={isVi} />
       <PartnerPortalClient
         initialDashboard={initialDashboard}

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 import {
   AFFILIATE_TERMS_SECTIONS,
   AFFILIATE_TERMS_INTRO,
@@ -13,19 +15,20 @@ interface AffiliateTermsPageProps {
   params: Promise<{ locale: string }>;
 }
 
+const AFFILIATE_TERMS_TITLE = 'Điều Khoản Chương Trình Đối Tác / Affiliate Program Terms | Sophia AI Factory';
+const AFFILIATE_TERMS_DESC =
+  'Quy tắc hoa hồng, thanh toán NET-30 và chống gian lận cho đối tác Sophia AI Factory. Affiliate commission rates, NET-30 payouts and anti-fraud rules for Sophia AI Factory partners.';
+
 export async function generateMetadata({
   params,
 }: AffiliateTermsPageProps): Promise<Metadata> {
   const { locale } = await params;
-  return {
-    title: 'Điều Khoản Chương Trình Đối Tác / Affiliate Program Terms | Sophia AI Factory',
-    description:
-      'Quy tắc hoa hồng, thanh toán NET-30 và chống gian lận cho đối tác Sophia AI Factory. Affiliate commission rates, NET-30 payouts and anti-fraud rules for Sophia AI Factory partners.',
-    alternates: {
-      canonical: `/${locale}/affiliate-terms`,
-      languages: { en: '/en/affiliate-terms', vi: '/vi/affiliate-terms' },
-    },
-  };
+  return buildPublicPageMetadata({
+    locale,
+    path: '/affiliate-terms',
+    title: AFFILIATE_TERMS_TITLE,
+    description: AFFILIATE_TERMS_DESC,
+  });
 }
 
 /** One bilingual commission tier row. */
@@ -91,6 +94,13 @@ export default async function AffiliateTermsPage({
 
   return (
     <main className="min-h-screen bg-background py-16 px-4">
+      <WebPageJsonLd
+        id="affiliate-terms"
+        title={AFFILIATE_TERMS_TITLE}
+        description={AFFILIATE_TERMS_DESC}
+        path="/affiliate-terms"
+        locale={locale}
+      />
       <article className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold text-foreground mb-4">
           Điều Khoản Chương Trình Đối Tác

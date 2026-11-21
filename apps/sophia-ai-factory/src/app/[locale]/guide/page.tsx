@@ -13,16 +13,46 @@ export const dynamic = 'force-static';
 /** Landing view: the first station of the pipeline, with no hash to read. */
 const GUIDE_INITIAL_TARGET: GuideActiveTarget = { mode: 'stage', step: 1 };
 
+const SITE_URL = 'https://sophia.agencyos.network';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  const normalizedLocale = normalizeAeoLocale(locale);
   const t = await getTranslations({ locale, namespace: 'guide' });
+  const title = `${t('gettingStarted.hero_title')} | Sophia AI Factory`;
+  const description = t('gettingStarted.hero_subtitle');
+  const url = `${SITE_URL}/${normalizedLocale}/guide`;
+
   return {
-    title: `${t('gettingStarted.hero_title')} | Sophia AI Factory`,
-    description: t('gettingStarted.hero_subtitle'),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: normalizedLocale === 'vi' ? 'vi_VN' : 'en_US',
+      url,
+      siteName: 'Sophia AI Factory',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/twitter-card.png'],
+    },
+    alternates: {
+      canonical: url,
+      languages: {
+        en: `${SITE_URL}/en/guide`,
+        vi: `${SITE_URL}/vi/guide`,
+        'x-default': `${SITE_URL}/en/guide`,
+      },
+    },
   };
 }
 
@@ -37,7 +67,7 @@ export default async function GuidePage({
   const aeoPayload = buildCorePagePayload('guide', normalizedLocale);
 
   return (
-    <main className="v3-core min-h-screen bg-background text-foreground py-12 sm:py-16 px-4">
+    <main id="main-content" className="v3-core min-h-screen bg-background text-foreground py-12 sm:py-16 px-4">
       <div className="max-w-5xl mx-auto">
         <Link
           href="/dashboard"

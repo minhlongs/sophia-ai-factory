@@ -3,9 +3,11 @@
  * Posts link to existing guide pages; full CMS integration is out of scope.
  */
 
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 import { POSTS } from './blog-posts-data';
 
 // Blog list is fully static — cache aggressively at the edge.
@@ -13,20 +15,53 @@ import { POSTS } from './blog-posts-data';
 export const revalidate = 3600;
 export const dynamic = 'force-static';
 
-export const metadata: Metadata = {
-  title: 'Blog — Sophia AI Factory',
-  description:
-    'News, guides and tips for Sophia AI Video Factory | Tin tức, hướng dẫn và mẹo sử dụng Sophia AI Video Factory',
-  alternates: {
-    types: {
-      'application/rss+xml': 'https://sophia.agencyos.network/blog/feed.xml',
-    },
-  },
-};
+function getBlogMeta(locale: string) {
+  const isVi = locale === 'vi';
+  return {
+    title: isVi ? 'Blog — Sophia AI Factory' : 'Blog — Sophia AI Factory',
+    description: isVi
+      ? 'Tin tức, hướng dẫn và mẹo tạo video AI tự động hiệu quả cùng Sophia AI Factory.'
+      : 'News, guides, and practical tips for automated AI video production with Sophia AI Factory.',
+  };
+}
 
-export default function BlogPage() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const { title, description } = getBlogMeta(locale);
+  const base = buildPublicPageMetadata({ locale, path: '/blog', title, description });
+  return {
+    ...base,
+    alternates: {
+      ...base.alternates,
+      types: {
+        'application/rss+xml': 'https://sophia.agencyos.network/blog/feed.xml',
+      },
+    },
+  };
+}
+
+export default async function BlogPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const { title, description } = getBlogMeta(locale);
   return (
     <div className="max-w-3xl mx-auto py-16 px-4">
+      <WebPageJsonLd
+        id="blog"
+        title={title}
+        description={description}
+        path="/blog"
+        locale={locale}
+        schemaType="CollectionPage"
+        staticRender
+      />
       <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
         Blog
       </h1>

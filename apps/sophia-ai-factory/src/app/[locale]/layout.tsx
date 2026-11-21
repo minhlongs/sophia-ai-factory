@@ -23,11 +23,43 @@ const localeMetadata: Record<string, Metadata> = {
     title: 'Sophia AI Factory — Nền tảng tạo video AI',
     description:
       'Tạo video AI cho kênh YouTube vô danh và xây dựng đế chế affiliate marketing.',
+    openGraph: {
+      title: 'Sophia AI Factory — Nền tảng tạo video AI',
+      description:
+        'Tạo video AI cho kênh YouTube vô danh và xây dựng đế chế affiliate marketing.',
+      type: 'website',
+      locale: 'vi_VN',
+      siteName: 'Sophia AI Factory',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Sophia AI Factory' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Sophia AI Factory — Nền tảng tạo video AI',
+      description:
+        'Tạo video AI cho kênh YouTube vô danh và xây dựng đế chế affiliate marketing.',
+      images: ['/twitter-card.png'],
+    },
   },
   en: {
     title: 'Sophia AI Factory — AI Video Generation Platform',
     description:
       'Generate AI-powered videos for faceless YouTube channels and affiliate marketing empires.',
+    openGraph: {
+      title: 'Sophia AI Factory — AI Video Generation Platform',
+      description:
+        'Generate AI-powered videos for faceless YouTube channels and affiliate marketing empires.',
+      type: 'website',
+      locale: 'en_US',
+      siteName: 'Sophia AI Factory',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Sophia AI Factory' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Sophia AI Factory — AI Video Generation Platform',
+      description:
+        'Generate AI-powered videos for faceless YouTube channels and affiliate marketing empires.',
+      images: ['/twitter-card.png'],
+    },
   },
 };
 

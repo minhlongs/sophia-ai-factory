@@ -28,12 +28,16 @@ export function PricingHero({ billing, onBillingChange, t }: PricingHeroProps) {
       </p>
 
       {/* Billing Toggle */}
-      <div className="inline-flex items-center justify-center p-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] shadow-sm">
+      <div
+        role="radiogroup"
+        aria-label={t('pricingLabel')}
+        className="inline-flex items-center justify-center p-1.5 rounded-full bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] shadow-sm"
+      >
         {(['monthly', 'yearly'] as const).map((period) => (
           <label
             key={period}
             className={cn(
-              'inline-flex cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-200 select-none',
+              'inline-flex cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-200 select-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-offset-[#11131F]',
               billing === period
                 ? 'bg-primary dark:bg-primary-600 text-white shadow-md shadow-primary/20 dark:shadow-primary-500/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-[#0B0F19] dark:hover:text-white',

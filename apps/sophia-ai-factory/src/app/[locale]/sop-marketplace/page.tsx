@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { MarketplaceStitchSection } from '@/forest/components/sop/marketplace-stitch-section';
+import { buildPublicPageMetadata } from '@/seed/aeo';
+import { WebPageJsonLd } from '@/forest/components/aeo';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -29,43 +31,36 @@ export async function generateMetadata({ searchParams, params }: PageProps): Pro
     const labelVi = categoryLabels[category]?.['vi'] ?? category;
     const localizedLabel = locale === 'vi' ? labelVi : label;
 
-    return {
-      title: `${localizedLabel} ${t('title')}`,
-      description: `${t('subtitle')} — ${localizedLabel} category`,
-      openGraph: {
-        title: `${localizedLabel} ${t('title')}`,
-        description: `${t('subtitle')} — ${localizedLabel} category`,
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: `${localizedLabel} ${t('title')}`,
-        description: `${t('subtitle')} — ${localizedLabel} category`,
-      },
-    };
+    return buildPublicPageMetadata({
+      locale,
+      path: '/sop-marketplace',
+      title: `${localizedLabel} ${baseTitle}`,
+      description: `${baseDescription} — ${localizedLabel} category`,
+    });
   }
 
-  return {
+  return buildPublicPageMetadata({
+    locale,
+    path: '/sop-marketplace',
     title: baseTitle,
     description: baseDescription,
-    openGraph: {
-      title: baseTitle,
-      description: baseDescription,
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: baseTitle,
-      description: baseDescription,
-    },
-  };
+  });
 }
 
 export default async function SOPMarketplacePage({ params, searchParams: _searchParams }: PageProps) {
-  const { locale: _locale } = await params;
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'sop.marketplace' });
 
   return (
     <main className="min-h-screen bg-[#0F0F11]">
+      <WebPageJsonLd
+        id="sop-marketplace"
+        title={t('title')}
+        description={t('subtitle')}
+        path="/sop-marketplace"
+        locale={locale}
+        schemaType="CollectionPage"
+      />
       <MarketplaceStitchSection fetchUrl="/api/sop-marketplace?limit=100" />
     </main>
   );

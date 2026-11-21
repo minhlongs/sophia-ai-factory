@@ -77,8 +77,9 @@ export function buildLlmsIndexText(): string {
     `> Autonomous BYOK AI Video & Affiliate Revenue-as-a-Service (RaaS) platform on Cloudflare Workers. Supports ${NICHE_SLUGS.length} industry niches, ${AFFILIATE_NETWORKS_LIST.length} affiliate networks, and USDT settlement via NOWPayments.`,
     '',
     '## Canonical Machine Endpoints',
-    `- Full Ground-Truth Corpus: ${SOPHIA_BASE_URL}/llms-full.txt`,
-    `- Agent Discovery Manifest: ${SOPHIA_BASE_URL}/.well-known/agent.json`,
+    `- [Full Ground-Truth Corpus](${SOPHIA_BASE_URL}/llms-full.txt): Complete tiers, affiliate networks, BYOK providers, and ${NICHE_SLUGS.length} industry niches`,
+    `- [Agent Discovery Manifest](${SOPHIA_BASE_URL}/.well-known/agent.json): Machine-readable Agent Discovery Protocol manifest`,
+    `- [OpenAPI Specification](${SOPHIA_BASE_URL}/api/openapi.json): Public API schema`,
     `- Content Negotiation: Send "Accept: text/markdown" or append ".md" to any public route`,
     '',
     '## Verified Pricing Tiers (Source: TIER_CONFIGS)',
@@ -88,11 +89,11 @@ export function buildLlmsIndexText(): string {
     `- MASTER (${m.priceDisplay}): ${m.limits.youtubeChannels} YouTube channels, ${m.limits.videoTemplates} templates`,
     '',
     '## Core Public Surfaces',
-    `- Home (VI/EN): ${SOPHIA_BASE_URL}/vi | ${SOPHIA_BASE_URL}/en`,
-    `- Pricing: ${SOPHIA_BASE_URL}/vi/pricing | ${SOPHIA_BASE_URL}/en/pricing`,
-    `- Guide Hub: ${SOPHIA_BASE_URL}/vi/guide | ${SOPHIA_BASE_URL}/en/guide`,
-    `- AI Video Niches (${NICHE_SLUGS.length} verticals): ${SOPHIA_BASE_URL}/vi/ai-video | ${SOPHIA_BASE_URL}/en/ai-video`,
-    `- System Status: ${SOPHIA_BASE_URL}/vi/status`,
+    `- [Home (VI)](${SOPHIA_BASE_URL}/vi) | [Home (EN)](${SOPHIA_BASE_URL}/en)`,
+    `- [Pricing (VI)](${SOPHIA_BASE_URL}/vi/pricing) | [Pricing (EN)](${SOPHIA_BASE_URL}/en/pricing)`,
+    `- [Guide Hub (VI)](${SOPHIA_BASE_URL}/vi/guide) | [Guide Hub (EN)](${SOPHIA_BASE_URL}/en/guide)`,
+    `- [AI Video Niches (VI)](${SOPHIA_BASE_URL}/vi/ai-video) | [AI Video Niches (EN)](${SOPHIA_BASE_URL}/en/ai-video) (${NICHE_SLUGS.length} verticals)`,
+    `- [System Status](${SOPHIA_BASE_URL}/vi/status)`,
   ].join('\n');
 }
 

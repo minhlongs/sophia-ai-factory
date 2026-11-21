@@ -59,6 +59,12 @@ export function MarketingNav({ className }: MarketingNavProps) {
         className
       )}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:font-semibold focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-foreground"
+      >
+        {locale === 'vi' ? 'Bỏ qua đến nội dung chính' : 'Skip to main content'}
+      </a>
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
           <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground border border-primary/25 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
@@ -74,15 +80,16 @@ export function MarketingNav({ className }: MarketingNavProps) {
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1 bg-muted/60 dark:bg-[#11131F]/90 border border-border dark:border-white/[0.08] rounded-full px-4 py-1.5 backdrop-blur-md">
+        <nav aria-label={locale === 'vi' ? 'Điều hướng chính' : 'Primary navigation'} className="hidden md:flex items-center gap-1 bg-muted/60 dark:bg-[#11131F]/90 border border-border dark:border-white/[0.08] rounded-full px-4 py-1.5 backdrop-blur-md">
           {navLinks.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
+                  'px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                   isActive
                     ? 'bg-primary dark:bg-primary-600 text-primary-foreground dark:text-white shadow-xs font-semibold'
                     : 'text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/80 dark:hover:bg-white/[0.06]'
