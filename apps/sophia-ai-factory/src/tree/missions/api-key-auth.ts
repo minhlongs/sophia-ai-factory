@@ -9,7 +9,7 @@
  * Ownership check is enforced separately by the route (mission.user_id === userId).
  */
 
-import { createServerClient } from "@/seed/db/client";
+import { createServerClient, getD1 } from "@/seed/db/client";
 import { sha256 } from "@/tree/audit/crypto-utils";
 import { logger } from "@/seed/utils/logger-utility";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
@@ -37,7 +37,7 @@ export async function validateMissionApiKey(
     try {
       const user = await getCurrentUser();
       if (user) {
-        return { valid: true, userId: user.id };
+        return { valid: true, userId: user.id, authKind: 'session' };
       }
     } catch (err) {
       logger.error(
@@ -68,9 +68,18 @@ export async function validateMissionApiKey(
     const keyHash = sha256(rawKey);
     const db = createServerClient();
 
+    const rawDb = await getD1();
+    const columns = rawDb ? await rawDb.prepare('PRAGMA table_info(raas_api_keys)').all<{name:string}>() : null;
+    const names = columns?.results?.map(column => column.name);
+    if (names && !names.includes('user_id')) {
+      return {valid:false,error:'Organization API keys require a sanctioned user principal mapping',errorType:'invalid_key'};
+    }
+    const fields = names
+      ? ['user_id','id','org_id','is_active','expires_at'].filter(field => names.includes(field)).join(', ')
+      : 'user_id, is_active, expires_at';
     const { data } = (await db
       .from("raas_api_keys")
-      .select("user_id, is_active, expires_at")
+      .select(fields)
       .eq("key_hash", keyHash)
       .single()) as { data: ApiKeyRow | null; error: unknown };
 
@@ -107,7 +116,8 @@ export async function validateMissionApiKey(
         errorType: "inactive",
       };
     }
-    return { valid: true, userId: data.user_id };
+    if (!data.user_id) return { valid:false,error:'API key has no user principal',errorType:'invalid_key' };
+    return { valid: true, userId: data.user_id, orgId: data.org_id, apiKeyId:data.id, authKind:'api_key' };
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
     logger.error("[ApiKeyAuth] Validation error", error);

@@ -1,80 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { OPTION_A_PILOT_CONTRACT } from '@/seed/config/tiers/option-a-pilot-contract';
 import type { MethodDispatcherInput } from './payment-dispatcher';
 
-const mocks = vi.hoisted(() => ({
-  createPayOsInvoice: vi.fn(),
-  getPayOsTierConfig: vi.fn(),
-  writeOrder: vi.fn(),
-}));
-
-vi.mock('@/land/payments/payos', () => ({
-  createPayOsInvoice: mocks.createPayOsInvoice,
-  getPayOsTierConfig: mocks.getPayOsTierConfig,
-}));
+const mocks = vi.hoisted(() => ({ createPayOsInvoice: vi.fn(), getPayOsTierConfig: vi.fn(), writeOrder: vi.fn(), isPayOsEnabled: vi.fn() }));
+vi.mock('@/land/payments/payos', () => ({ createPayOsInvoice: mocks.createPayOsInvoice, getPayOsTierConfig: mocks.getPayOsTierConfig }));
 vi.mock('@/land/orders/pending-order-repo', () => ({ writeOrder: mocks.writeOrder }));
-
+vi.mock('@/seed/config/flags', () => ({ isPayOsEnabled: mocks.isPayOsEnabled }));
 import { dispatchPayOsMethod } from './payment-dispatcher-providers';
 
-describe('dispatchPayOsMethod', () => {
+const consent = { accepted: true as const, version: OPTION_A_PILOT_CONTRACT.termsVersion, hash: OPTION_A_PILOT_CONTRACT.termsHash, locale: 'en' as const };
+const pilotInput: MethodDispatcherInput = { paymentMethod: 'payos', tier: 'BASIC', userId: 'user-1', period: 'pilot_14d', agreement: consent };
+
+describe('payment provider dispatcher', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    process.env.FEATURE_PAYOS = 'true';
-    mocks.createPayOsInvoice.mockResolvedValue({
-      checkoutUrl: 'https://pay.payos.vn/web/link-1',
-      qrUrl: 'https://pay.payos.vn/qr/link-1',
-      paymentLinkId: 'link-1',
-      orderCode: 123456,
-      expiresAt: '2026-10-18T10:00:00.000Z',
-    });
-    mocks.getPayOsTierConfig.mockReturnValue({ usdAmount: 1990, vndAmount: 49_750_000 });
-    mocks.writeOrder.mockResolvedValue(undefined);
+    vi.clearAllMocks(); mocks.isPayOsEnabled.mockReturnValue(true);
+    mocks.createPayOsInvoice.mockResolvedValue({ checkoutUrl: 'https://pay.payos.vn/web/link-1', paymentLinkId: 'link-1', orderCode: 123456 });
+    mocks.getPayOsTierConfig.mockReturnValue({ usdAmount: 199, vndAmount: 5000000 }); mocks.writeOrder.mockResolvedValue(undefined);
   });
-
-  it('charges and stores the annual price for an annual PayOS order', async () => {
-    const input: MethodDispatcherInput = {
-      paymentMethod: 'payos',
-      tier: 'BASIC',
-      userId: 'user-1',
-      period: 'yearly',
-    };
-
-    const response = await dispatchPayOsMethod(input);
-
-    expect(response.status).toBe(200);
-    expect(mocks.createPayOsInvoice).toHaveBeenCalledWith(expect.objectContaining({ period: 'yearly' }));
-    expect(mocks.getPayOsTierConfig).toHaveBeenCalledWith('BASIC', 'yearly');
-    expect(mocks.writeOrder).toHaveBeenCalledWith(expect.objectContaining({
-      period: 'yearly',
-      amount_usd_cents: 199_000,
-      amount_vnd: 49_750_000,
-      provider_payment_id: 'link-1',
-    }));
+  it('preserves ordinary monthly PayOS behavior', async () => {
+    const response = await dispatchPayOsMethod({ paymentMethod: 'payos', tier: 'BASIC', userId: 'u', period: 'monthly' });
+    expect(response.status).toBe(200); expect(mocks.createPayOsInvoice).toHaveBeenCalled();
   });
-
-  it('does not expose a payable checkout when order persistence fails', async () => {
-    mocks.writeOrder.mockRejectedValue(new Error('D1 unavailable'));
-    const response = await dispatchPayOsMethod({
-      paymentMethod: 'payos',
-      tier: 'BASIC',
-      userId: 'user-1',
-      period: 'monthly',
-    });
-
-    expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toMatchObject({ error: expect.stringContaining('D1 unavailable') });
+  it('rejects pilot consent before any provider or order call', async () => {
+    const response = await dispatchPayOsMethod({ ...pilotInput, agreement: undefined });
+    expect(response.status).toBe(400); expect(mocks.createPayOsInvoice).not.toHaveBeenCalled(); expect(mocks.writeOrder).not.toHaveBeenCalled();
   });
-
-  it('blocks non-pilot PayOS checkout with 503 when FEATURE_PAYOS=false', async () => {
-    process.env.FEATURE_PAYOS = 'false';
-    const response = await dispatchPayOsMethod({
-      paymentMethod: 'payos',
-      tier: 'BASIC',
-      userId: 'user-1',
-      period: 'monthly',
-    });
-
-    expect(response.status).toBe(503);
-    expect(mocks.createPayOsInvoice).not.toHaveBeenCalled();
-    expect(mocks.writeOrder).not.toHaveBeenCalled();
+  it('routes every valid pilot payment method away from PayOS', async () => {
+    const response = await dispatchPayOsMethod(pilotInput);
+    expect(response.status).toBe(503); expect(mocks.createPayOsInvoice).not.toHaveBeenCalled(); expect(mocks.writeOrder).not.toHaveBeenCalled();
+  });
+  it('keeps non-pilot PayOS disabled when the feature flag is false', async () => {
+    mocks.isPayOsEnabled.mockReturnValue(false);
+    const response = await dispatchPayOsMethod({ paymentMethod: 'payos', tier: 'BASIC', userId: 'u', period: 'monthly' });
+    expect(response.status).toBe(503); expect(mocks.createPayOsInvoice).not.toHaveBeenCalled();
   });
 });

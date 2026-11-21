@@ -21,8 +21,13 @@
  *    `compliance_json` on `publish_ledger` for downstream TikTok/YouTube uploaders.
  */
 
+// @vitest-environment node
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { D1Client } from '@/seed/db/d1-client-rpc';
+import { NodeSqliteD1Database } from '@/seed/db/node-sqlite/database';
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -81,10 +86,12 @@ vi.mock('@/seed/security/cron-auth', () => ({
   verifyCronAuth: mocks.verifyCronAuth,
 }));
 
-vi.mock('@/land/orders/pending-order-repo', () => ({
+vi.mock('@/land/orders/pending-order-repo', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/land/orders/pending-order-repo')>(),
   findActivePendingOrder: mocks.findActivePendingOrder,
-  writeOrder: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock('@/seed/db/node-sqlite/migrations', () => ({ applyMigrations: vi.fn() }));
 
 vi.mock('@/app/api/checkout/modules/checkout-auth', () => ({
   getUserId: mocks.getUserId,
@@ -112,6 +119,7 @@ import { POST as checkoutPost } from '@/app/api/checkout/route';
 import { GET as mcuResetGet } from '@/app/api/cron/mcu-monthly-reset/route';
 import { awaitPublishApproval } from '@/tree/publishing/approval/gate';
 import { mapLedgerRow } from '@/tree/publishing/approval/ledger-store';
+import { OPTION_A_PILOT_CONTRACT } from '@/seed/config/tiers/option-a-pilot-contract';
 
 async function signPayOsPayload(payloadWithoutSig: Record<string, unknown>, secret: string): Promise<string> {
   const canonical = payOsCanonicalize(JSON.stringify(payloadWithoutSig));
@@ -133,16 +141,27 @@ async function signPayOsPayload(payloadWithoutSig: Record<string, unknown>, secr
 describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () => {
   const savedFeaturePayOs = process.env.FEATURE_PAYOS;
   const savedChecksum = process.env.PAYOS_CHECKSUM_KEY;
+  const savedPilotBankName = process.env.PILOT_BANK_NAME;
+  const savedPilotBankAccount = process.env.PILOT_BANK_ACCOUNT_NUMBER;
+  const savedPilotBankHolder = process.env.PILOT_BANK_ACCOUNT_HOLDER;
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    mocks.getD1.mockReset();
+    mocks.createServerClient.mockReset();
     if (savedFeaturePayOs === undefined) delete process.env.FEATURE_PAYOS;
     else process.env.FEATURE_PAYOS = savedFeaturePayOs;
     if (savedChecksum === undefined) delete process.env.PAYOS_CHECKSUM_KEY;
     else process.env.PAYOS_CHECKSUM_KEY = savedChecksum;
+    if (savedPilotBankName === undefined) delete process.env.PILOT_BANK_NAME;
+    else process.env.PILOT_BANK_NAME = savedPilotBankName;
+    if (savedPilotBankAccount === undefined) delete process.env.PILOT_BANK_ACCOUNT_NUMBER;
+    else process.env.PILOT_BANK_ACCOUNT_NUMBER = savedPilotBankAccount;
+    if (savedPilotBankHolder === undefined) delete process.env.PILOT_BANK_ACCOUNT_HOLDER;
+    else process.env.PILOT_BANK_ACCOUNT_HOLDER = savedPilotBankHolder;
   });
 
   it('C-P0-1: buildReceiptPayload.payload renders directly inside ValidationReceiptCard without crashing', async () => {
@@ -179,11 +198,11 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
     expect(payload.provider).toBe('openrouter');
     expect(payload.maskedKey).toBe('sk-or-...9999');
 
-    render(<ValidationReceiptCard receipt={payload} latencyMs={142} />);
-    expect(screen.getByTestId('validation-receipt-openrouter')).toBeDefined();
-    expect(screen.getByText('sk-or-...9999')).toBeDefined();
-    expect(screen.getByText('142ms')).toBeDefined();
-    expect(screen.getByText('$4.50 / $20.00')).toBeDefined();
+    const markup = renderToStaticMarkup(<ValidationReceiptCard receipt={payload} latencyMs={142} />);
+    expect(markup).toContain('data-testid="validation-receipt-openrouter"');
+    expect(markup).toContain('sk-or-...9999');
+    expect(markup).toContain('142ms');
+    expect(markup).toContain('$4.50 / $20.00');
   });
 
   it('A-P0-3: /api/webhooks/payos returns 503 (never 200) when FEATURE_PAYOS=false so PayOS retries are preserved', async () => {
@@ -330,7 +349,23 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
 
   it('A-P2-1 & A-P2-2: /api/checkout blocks promoCode on pilot_14d and queries a 25m dedupe window for PayOS', async () => {
     process.env.FEATURE_PAYOS = 'false';
-
+    process.env.PILOT_BANK_NAME = 'Vietcombank';
+    process.env.PILOT_BANK_ACCOUNT_NUMBER = '0123456789';
+    process.env.PILOT_BANK_ACCOUNT_HOLDER = 'MekongMind LLC';
+    const db = new NodeSqliteD1Database(':memory:');
+    await db.exec('CREATE TABLE mcu_transactions (id TEXT PRIMARY KEY)');
+    for (const migration of [
+      '0070-pending-orders.sql',
+      '0187_add_provider_payment_id_to_pending_orders.sql',
+      '0188_add_amount_vnd_to_pending_orders.sql',
+      '0477_payos_contract_fulfillment.sql',
+      '0506_manual_pilot_settlement_ledger.sql',
+      '0507_manual_pilot_financial_state.sql',
+      '0514_manual_pilot_terms_acceptance.sql',
+    ]) {
+      await db.exec(readFileSync(resolve('migrations', migration), 'utf8'));
+    }
+    await db.exec("CREATE TABLE org_members(user_id TEXT, org_id TEXT); INSERT INTO org_members VALUES ('user_pilot_buyer', 'org_pilot_buyer')");
     const promoAttempt = new NextRequest('https://sophia.agencyos.network/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -344,7 +379,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
     const promoRes = await checkoutPost(promoAttempt);
     expect(promoRes.status).toBe(400);
 
-    const cleanPilot = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+    const missingAgreementPilot = new NextRequest('https://sophia.agencyos.network/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -353,12 +388,64 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
         paymentMethod: 'payos',
       }),
     });
+    const missingAgreementRes = await checkoutPost(missingAgreementPilot);
+    expect(missingAgreementRes.status).toBe(400);
+    await expect(missingAgreementRes.json()).resolves.toMatchObject({
+      code: 'PILOT_AGREEMENT_REQUIRED',
+    });
+
+    mocks.getD1.mockResolvedValueOnce(db);
+    mocks.createServerClient.mockReturnValueOnce(new D1Client(db));
+    const cleanPilot = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tier: 'BASIC',
+        period: 'pilot_14d',
+        paymentMethod: 'payos',
+        agreement: {
+          accepted: true,
+          version: OPTION_A_PILOT_CONTRACT.termsVersion,
+          hash: OPTION_A_PILOT_CONTRACT.termsHash,
+          locale: 'en',
+          channel: 'api_checkout',
+        },
+      }),
+    });
     const cleanRes = await checkoutPost(cleanPilot);
     expect(cleanRes.status).toBe(200);
+    const checkout = await cleanRes.json() as { orderId: string; transferReference: string };
+    expect(await db.prepare('SELECT user_id, payment_method, amount_vnd FROM pending_orders WHERE order_id = ?')
+      .bind(checkout.orderId).first()).toEqual({
+      user_id: 'user_pilot_buyer', payment_method: 'offline', amount_vnd: 1_990_000,
+    });
+    expect(await db.prepare('SELECT org_id, transfer_reference FROM manual_pilot_settlements WHERE order_id = ?')
+      .bind(checkout.orderId).first()).toEqual({
+      org_id: 'org_pilot_buyer', transfer_reference: checkout.transferReference,
+    });
+    expect(await db.prepare('SELECT state FROM manual_pilot_financial_state WHERE order_id = ?')
+      .bind(checkout.orderId).first('state')).toBe('PENDING_ORDER');
+    expect(await db.prepare('SELECT user_id, org_id, agreement_hash FROM manual_pilot_terms_acceptances WHERE order_id = ?')
+      .bind(checkout.orderId).first()).toEqual({
+      user_id: 'user_pilot_buyer', org_id: 'org_pilot_buyer', agreement_hash: OPTION_A_PILOT_CONTRACT.termsHash,
+    });
+    expect(mocks.findActivePendingOrder).not.toHaveBeenCalled();
+
+    const standardPayOs = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tier: 'BASIC',
+        period: 'monthly',
+        paymentMethod: 'payos',
+      }),
+    });
+    const standardPayOsRes = await checkoutPost(standardPayOs);
+    expect(standardPayOsRes.status).toBe(503);
     expect(mocks.findActivePendingOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         paymentMethod: 'payos',
-        period: 'pilot_14d',
+        period: 'monthly',
         sinceMs: 25 * 60 * 1000,
       }),
     );

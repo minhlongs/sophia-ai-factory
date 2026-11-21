@@ -5,7 +5,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { resolveOrgId } from '@/seed/auth/org-resolver';
-import { deductCredits } from '@/tree/mcu/credits-repo';
+import { deductMissionCredits } from '@/tree/mcu/credits-repo';
 import { getCommand } from '@/tree/missions/command-registry';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionRow } from './types';
@@ -47,11 +47,10 @@ export async function dispatchMission(missionId: string): Promise<void> {
   }
 
   try {
-    await db
-      .from('engine_missions')
-      .update({ status: 'running', updated_at: Math.floor(Date.now() / 1000) })
-      .eq('id', missionId)
-      .eq('status', 'pending');
+    const claimed = await db.prepare(`UPDATE engine_missions SET status='running', updated_at=strftime('%s','now')
+      WHERE id=? AND user_id=? AND status='pending' RETURNING id`)
+      .bind(missionId, mission.user_id).first<{ id: string }>();
+    if (!claimed) return;
   } catch (err) {
     logger.error('[Dispatcher] Failed to mark running', { missionId, err });
     return;
@@ -101,15 +100,34 @@ export async function dispatchMission(missionId: string): Promise<void> {
   const creditsUsed = commandDef.credits;
 
   if (creditsUsed > 0) {
-    const deducted = await deductCredits(
+    const deduction = await deductMissionCredits(
       mission.user_id,
       creditsUsed,
       missionId,
       `command:${mission.command}`,
+      resolvedOrgId ?? undefined,
     );
-    if (!deducted) {
+    if (!deduction.ok) {
+      logger.error('[Dispatcher] Mission credit deduction uncertain; deferring to reaper', {
+        missionId,
+        creditsUsed,
+        code: deduction.error.code,
+        message: deduction.error.message,
+      });
+      if (deduction.error.code === 'invalid_input') {
+        await finalizeMissionExecution({
+          db, mission: { ...mission, webhook_url: null }, creditsUsed: 0,
+          handlerResult: { ok: false, error: 'invalid_credit_debit' },
+        });
+      }
+      return;
+    }
+    if (!deduction.value) {
       logger.warn('[Dispatcher] Credit deduction failed', { missionId, creditsUsed });
-      await failMission(db, missionId, 'insufficient_credits');
+      await finalizeMissionExecution({
+        db, mission: { ...mission, webhook_url: null }, creditsUsed: 0,
+        handlerResult: { ok: false, error: 'insufficient_credits' },
+      });
       return;
     }
   }

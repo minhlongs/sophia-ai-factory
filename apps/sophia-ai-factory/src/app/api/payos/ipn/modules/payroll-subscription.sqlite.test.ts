@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getCommittedPayOsPilotReceipt } from '@/land/payments/payos-gateway/payos-pilot-receipt';
 import type { D1Database } from '@cloudflare/workers-types';
 import type { D1Client } from '@/seed/db/client';
 import { commitPayOsSubscriptionBatch } from './payroll-subscription';
@@ -15,14 +16,14 @@ function fixture() {
     CREATE TABLE org_members(org_id TEXT, user_id TEXT);
     CREATE TABLE subscriptions(id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))), org_id TEXT, user_id TEXT, tier TEXT, plan TEXT, status TEXT, current_period_start TEXT, current_period_end TEXT, updated_at TEXT);
     CREATE TABLE pending_orders(order_id TEXT PRIMARY KEY, user_id TEXT, tier TEXT, period TEXT, payment_method TEXT, amount_vnd INTEGER, status TEXT, payment_id TEXT, completed_at TEXT, provider_payment_id TEXT, provider_order_code INTEGER, invoice_url TEXT, purpose TEXT, amount_usd_cents INTEGER);
-    CREATE TABLE payos_events(event_id TEXT, created_at TEXT, processed INTEGER);
-    INSERT INTO payos_events VALUES ('payos_123','2026-11-17T00:00:00.000Z',0);
+    CREATE TABLE payos_events(event_id TEXT, created_at TEXT, processed INTEGER, order_code TEXT, status TEXT, amount INTEGER, currency TEXT);
+    INSERT INTO payos_events VALUES ('payos_123','2026-11-17T00:00:00.000Z',0,'123','PAID',1990000,'VND');
     CREATE TABLE mcu_transactions(user_id TEXT, delta INTEGER, reason TEXT, metadata TEXT, payment_reference TEXT);
     CREATE UNIQUE INDEX payment_ref ON mcu_transactions(payment_reference) WHERE payment_reference IS NOT NULL;
     CREATE TABLE user_mcu_balance(user_id TEXT PRIMARY KEY, credits_remaining INTEGER, credits_total_purchased INTEGER, updated_at INTEGER);
     INSERT INTO organizations VALUES ('org','free',NULL);
     INSERT INTO org_members VALUES ('org','buyer');
-    INSERT INTO pending_orders VALUES ('order','buyer','BASIC','pilot_14d','payos',1990000,'pending',NULL,NULL,'link',123,NULL,'subscription',7900);`);
+    INSERT INTO pending_orders VALUES ('order','buyer','BASIC','monthly','payos',1990000,'pending',NULL,NULL,'link',123,NULL,'subscription',7900);`);
   const hooks: { beforeBatch?: () => void; failPrepare?: string } = {};
   const prepare = (sql: string) => {
     if (hooks.failPrepare && sql.includes(hooks.failPrepare)) throw new Error('prepare failure');
@@ -55,19 +56,26 @@ function fixture() {
   const db = { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: sqlite.prepare('SELECT * FROM subscriptions').get() ?? null }) }) }) }) } as unknown as D1Client;
   const rows = (table: string) => sqlite.prepare(`SELECT * FROM ${table}`).all();
   const snapshot = () => Object.fromEntries(['organizations','org_members','subscriptions','pending_orders','mcu_transactions','user_mcu_balance'].map(t => [t, rows(t)]));
-  const activate = () => commitPayOsSubscriptionBatch({ db, d1: raw as unknown as D1Database, userId: 'buyer', orgId: 'org', tier: 'BASIC', billingPeriod: 'pilot_14d', now: '2026-11-17T00:00:00.000Z', periodEnd: '2026-12-01T00:00:00.000Z', orderCode: 123, orderId: 'order', amount: 1990000, eventId: 'payos_123', lockCreatedAt: '2026-11-17T00:00:00.000Z', order: sqlite.prepare('SELECT * FROM pending_orders').get() as unknown as import('@/land/orders/pending-order-types').PendingOrder });
+  const activate = () => commitPayOsSubscriptionBatch({ db, d1: raw as unknown as D1Database, userId: 'buyer', orgId: 'org', tier: 'BASIC', billingPeriod: (sqlite.prepare('SELECT period FROM pending_orders').get() as { period: 'monthly' | 'pilot_14d' }).period, now: '2026-11-17T00:00:00.000Z', periodEnd: '2026-12-01T00:00:00.000Z', orderCode: 123, orderId: 'order', amount: 1990000, eventId: 'payos_123', lockCreatedAt: '2026-11-17T00:00:00.000Z', order: sqlite.prepare('SELECT * FROM pending_orders').get() as unknown as import('@/land/orders/pending-order-types').PendingOrder });
   return { sqlite, hooks, raw, rows, snapshot, activate };
 }
 describe('legacy PayOS order claim and entitlement invariants', () => {
   let f: ReturnType<typeof fixture>;
   beforeEach(() => { f = fixture(); });
   afterEach(() => f.sqlite.close());
-  it('grants exactly 500 MCU once across simultaneous deliveries', async () => {
+  it('grants monthly MCU once across simultaneous deliveries', async () => {
     const results = await Promise.allSettled([f.activate(), f.activate()]);
     expect(results.map(result => result.status).sort()).toEqual(['fulfilled', 'rejected']);
     expect(f.rows('subscriptions')).toHaveLength(1);
-    expect(f.rows('mcu_transactions')).toEqual([expect.objectContaining({ delta: 500, payment_reference: 'payos_order_order' })]);
-    expect(f.rows('user_mcu_balance')).toEqual([expect.objectContaining({ credits_remaining: 500 })]);
+    expect(f.rows('mcu_transactions')).toEqual([expect.objectContaining({ delta: 1000, payment_reference: 'payos_order_order' })]);
+    expect(f.rows('user_mcu_balance')).toEqual([expect.objectContaining({ credits_remaining: 1000 })]);
+  });
+  it.each(['pending', 'completed'])('rejects legacy pilot %s without changing status, balance or entitlement', async status => {
+    f.sqlite.prepare("UPDATE pending_orders SET period='pilot_14d', status=?").run(status);
+    const before = f.snapshot();
+    await expect(f.activate()).rejects.toThrow('manual review');
+    expect(f.snapshot()).toEqual(before);
+    expect(await getCommittedPayOsPilotReceipt(f.raw as unknown as D1Database, 'ipn', 'order', 'buyer', 'payos_123')).toBeNull();
   });
   it('does not write entitlement after another endpoint has completed the order', async () => {
     f.sqlite.exec("UPDATE pending_orders SET status='completed', payment_id='canonical';");
@@ -104,10 +112,10 @@ describe('legacy PayOS order claim and entitlement invariants', () => {
     await expect(f.activate()).rejects.toThrow('balance failure');
     expect(f.snapshot()).toEqual(before);
   });
-  it('extends an active BASIC renewal by fourteen days', async () => {
+  it('extends an active BASIC renewal by thirty days', async () => {
     f.sqlite.exec("INSERT INTO subscriptions(org_id,user_id,tier,plan,status,current_period_start,current_period_end) VALUES ('org','buyer','BASIC','basic','active','2026-11-01','2027-01-01');");
     await f.activate();
-    expect(f.rows('subscriptions')).toEqual([expect.objectContaining({ tier: 'BASIC', current_period_end: '2027-01-15T00:00:00.000Z' })]);
+    expect(f.rows('subscriptions')).toEqual([expect.objectContaining({ tier: 'BASIC', current_period_end: '2027-01-31T00:00:00.000Z' })]);
   });
   it('rejects a concurrent same-row upgrade rather than overwriting it', async () => {
     f.sqlite.exec("INSERT INTO subscriptions(org_id,user_id,tier,plan,status,current_period_start,current_period_end) VALUES ('org','buyer','BASIC','basic','active','2026-11-01','2027-01-01');");

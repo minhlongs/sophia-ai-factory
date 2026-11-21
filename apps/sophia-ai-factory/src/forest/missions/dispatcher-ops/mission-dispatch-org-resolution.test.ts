@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   dbFrom: vi.fn(),
+  prepare: vi.fn(),
   resolveOrgId: vi.fn(),
-  deductCredits: vi.fn(),
+  deductMissionCredits: vi.fn(),
   getCommand: vi.fn(),
   loadHandler: vi.fn(),
   failMission: vi.fn(),
@@ -12,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  createServerClient: () => ({ from: mocks.dbFrom }),
+  createServerClient: () => ({ from: mocks.dbFrom, prepare: mocks.prepare }),
 }));
 
 vi.mock('@/seed/auth/org-resolver', () => ({
@@ -20,7 +21,7 @@ vi.mock('@/seed/auth/org-resolver', () => ({
 }));
 
 vi.mock('@/tree/mcu/credits-repo', () => ({
-  deductCredits: mocks.deductCredits,
+  deductMissionCredits: mocks.deductMissionCredits,
 }));
 
 vi.mock('@/tree/missions/command-registry', () => ({
@@ -63,12 +64,8 @@ function setupMissionDb(paramsJson: string | null) {
       error: null,
     })),
   };
-  const updateChain = {
-    update: vi.fn(() => updateChain),
-    eq: vi.fn(() => updateChain),
-    then: vi.fn((resolve: (v: unknown) => void) => resolve({ data: null, error: null })),
-  };
-  mocks.dbFrom.mockReturnValueOnce(selectChain).mockReturnValueOnce(updateChain);
+  mocks.dbFrom.mockReturnValueOnce(selectChain);
+  mocks.prepare.mockReturnValue({ bind: () => ({ first: async () => ({ id: 'mission-1' }) }) });
 }
 
 describe('G4: mission dispatcher trusted server-side orgId resolution', () => {
@@ -76,7 +73,7 @@ describe('G4: mission dispatcher trusted server-side orgId resolution', () => {
     vi.clearAllMocks();
     mocks.getCommand.mockReturnValue({ credits: 5 });
     mocks.loadHandler.mockResolvedValue(vi.fn());
-    mocks.deductCredits.mockResolvedValue(true);
+    mocks.deductMissionCredits.mockResolvedValue({ ok: true, value: true });
     mocks.executeMissionHandlerWithTimeout.mockResolvedValue({ ok: true, data: {} });
   });
 
@@ -87,6 +84,9 @@ describe('G4: mission dispatcher trusted server-side orgId resolution', () => {
     await dispatchMission('mission-1');
 
     expect(mocks.resolveOrgId).toHaveBeenCalledWith('user-1');
+    expect(mocks.deductMissionCredits).toHaveBeenCalledWith(
+      'user-1', 5, 'mission-1', 'command:ai:write', 'org-verified-1',
+    );
     expect(mocks.executeMissionHandlerWithTimeout).toHaveBeenCalledWith(
       expect.objectContaining({ orgId: 'org-verified-1' }),
     );
@@ -100,7 +100,7 @@ describe('G4: mission dispatcher trusted server-side orgId resolution', () => {
     await dispatchMission('mission-1');
 
     expect(mocks.failMission).toHaveBeenCalledWith(expect.anything(), 'mission-1', 'unauthorized_org');
-    expect(mocks.deductCredits).not.toHaveBeenCalled();
+    expect(mocks.deductMissionCredits).not.toHaveBeenCalled();
     expect(mocks.executeMissionHandlerWithTimeout).not.toHaveBeenCalled();
   });
 
@@ -111,8 +111,35 @@ describe('G4: mission dispatcher trusted server-side orgId resolution', () => {
     await dispatchMission('mission-1');
 
     expect(mocks.failMission).toHaveBeenCalledWith(expect.anything(), 'mission-1', 'unauthorized_org');
-    expect(mocks.deductCredits).not.toHaveBeenCalled();
+    expect(mocks.deductMissionCredits).not.toHaveBeenCalled();
     expect(mocks.executeMissionHandlerWithTimeout).not.toHaveBeenCalled();
+  });
+
+  it('defers an uncertain debit to the reaper without handler execution or terminalization', async () => {
+    setupMissionDb(null);
+    mocks.resolveOrgId.mockResolvedValue('org-verified-1');
+    mocks.deductMissionCredits.mockResolvedValue({
+      ok: false, error: { code: 'storage_uncertain', message: 'response lost after commit' },
+    });
+
+    await dispatchMission('mission-1');
+
+    expect(mocks.executeMissionHandlerWithTimeout).not.toHaveBeenCalled();
+    expect(mocks.finalizeMissionExecution).not.toHaveBeenCalled();
+    expect(mocks.failMission).not.toHaveBeenCalled();
+  });
+
+  it('terminalizes confirmed insufficient credits without invoking the handler', async () => {
+    setupMissionDb(null);
+    mocks.resolveOrgId.mockResolvedValue('org-verified-1');
+    mocks.deductMissionCredits.mockResolvedValue({ ok: true, value: false });
+
+    await dispatchMission('mission-1');
+
+    expect(mocks.executeMissionHandlerWithTimeout).not.toHaveBeenCalled();
+    expect(mocks.finalizeMissionExecution).toHaveBeenCalledWith(expect.objectContaining({
+      creditsUsed: 0, handlerResult: { ok: false, error: 'insufficient_credits' },
+    }));
   });
 
   it('fails closed when orgId resolution throws', async () => {
@@ -122,7 +149,7 @@ describe('G4: mission dispatcher trusted server-side orgId resolution', () => {
     await dispatchMission('mission-1');
 
     expect(mocks.failMission).toHaveBeenCalledWith(expect.anything(), 'mission-1', 'org_resolution_failed');
-    expect(mocks.deductCredits).not.toHaveBeenCalled();
+    expect(mocks.deductMissionCredits).not.toHaveBeenCalled();
     expect(mocks.executeMissionHandlerWithTimeout).not.toHaveBeenCalled();
   });
 });

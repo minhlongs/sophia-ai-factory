@@ -103,10 +103,8 @@ export async function findAndValidatePayOsOrder(params: {
   }
 
   const tier = matchOrder.tier as Tier;
-  if (matchOrder.period === 'pilot_14d' && tier !== 'BASIC') {
-    logger.error('[PayOS IPN] Invalid tier for 14-day Paid Pilot order', { orderCode, tier });
-    await releaseEvent();
-    return { ok: false, error: '14-day Paid Pilot is only valid for BASIC tier', status: 400 };
+  if (matchOrder.period === 'pilot_14d') {
+    return { ok: false, error: 'Pilot payment requires manual review / Thanh toán Pilot cần được kiểm tra thủ công', status: 409 };
   }
 
   const expectedVndAmount =

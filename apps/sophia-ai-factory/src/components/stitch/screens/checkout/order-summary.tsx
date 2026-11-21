@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { OPTION_A_PILOT_COPY } from '@/seed/config/tiers/option-a-pilot-contract';
 import { ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, Button } from '@/components/stitch';
 import type { Tier } from '@/seed/types';
@@ -27,6 +28,7 @@ export function OrderSummary({
   onStartCheckout,
 }: OrderSummaryProps) {
   const t = useTranslations('stitch.checkout');
+  const pilotCopy = OPTION_A_PILOT_COPY[useLocale() === 'vi' ? 'vi' : 'en'];
 
   return (
     <Card padding="lg" className="sticky top-24">
@@ -36,6 +38,7 @@ export function OrderSummary({
       </CardHeader>
 
       <CardContent className="!p-0 space-y-4">
+
         <div className="rounded-xl bg-muted/40 p-4 space-y-3">
           <div className="flex justify-between items-center text-sm">
             <span className="text-muted-foreground">Selected Tier</span>
@@ -62,12 +65,19 @@ export function OrderSummary({
         <div className="rounded-xl border border-border/80 bg-card p-3.5 space-y-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-2 text-emerald-400 font-medium">
             <ShieldCheck className="w-4 h-4 shrink-0" />
-            <span>Protected by Sophia Smart Contract Escrow</span>
+            <span>Verified Gateway Settlement &amp; BYOK Direct Billing</span>
           </div>
           <p>
-            Automatic activation via NOWPayments TRC20/Polygon IPN or PayOS webhook within seconds of blockchain / bank settlement.
+            Activated after verified PayOS VietQR webhook, NOWPayments USDT IPN, or manual bank reconciliation.
+            AI provider API usage (OpenRouter, ElevenLabs, HeyGen, D-ID, fal.ai) is billed directly by your connected provider accounts.
           </p>
         </div>
+
+        <aside className="text-xs text-muted-foreground border-t border-border pt-3">
+          <p>{pilotCopy === OPTION_A_PILOT_COPY.vi ? 'Gói Pilot riêng (không phải đơn đang chọn):' : 'Separate Pilot offer (not your selected order):'}</p>
+          <p>{pilotCopy.scope}</p>
+          <p>{pilotCopy.refund}</p>
+        </aside>
 
         <Button
           onClick={onStartCheckout}

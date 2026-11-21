@@ -4,7 +4,7 @@ Last updated: 2026-05-13
 
 ## Canonical Rule
 
-Sophia customer billing uses NOWPayments and PayOS only.
+Sophia automated customer billing uses NOWPayments and PayOS. The separate Option A pilot supports a manually verified bank settlement flow; a reservation or bank memo alone never proves payment.
 
 - NOWPayments: crypto/USDT checkout.
 - PayOS: VietQR and Vietnam bank transfer checkout.
@@ -49,3 +49,28 @@ Before marking billing ready:
 ## Owner
 
 Operations owner keeps this document aligned with production configuration. Engineering owns webhook verification and application tier config.
+
+## Option A pilot — additive exception (2026-11-19)
+
+The canonical contract is `src/seed/config/tiers/option-a-pilot-contract.ts`.
+`BASIC_PILOT_14D` / `pilot_14d` costs 1,990,000 VND and grants 500 MCU once,
+14 calendar days in Asia/Saigon, 0 Cloud video renders and no auto-renewal.
+BYOK provider fees are separate. Existing higher and grandfathered benefits remain intact.
+
+A request within 7 days qualifies regardless of MCU usage. A request within 14 days
+qualifies for a Sophia-verified Option A campaign/script delivery failure.
+Refund 100% of the amount Sophia actually received, not a synthetic exchange-rate value.
+Third-party BYOK charges are excluded; statutory rights remain unchanged.
+These are pilot-only rules, not changes to the standard or MASTER policies above.
+
+Activation requires independently verified bank evidence, reconciliation and admin
+approval. A receipt requires ACTIVE_14D and the actual settled currency/amount.
+A refund is not paid until independently evidenced SETTLED status. Revoke only remaining
+pilot-sourced credits/access, never unrelated purchased credits or higher benefits.
+
+### Preserved standard refund entitlement
+
+BASIC/PREMIUM/ENTERPRISE retain the existing 30-day request window; MASTER retains
+14 days. No reliable purchase-policy version/cutoff was established, so no standard
+customer is silently moved to a 7-day window. The 7-day goodwill window applies only
+to `pilot_14d`; a legacy standard request on day 10 remains within its window.

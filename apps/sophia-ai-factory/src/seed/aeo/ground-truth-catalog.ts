@@ -1,3 +1,4 @@
+import { OPTION_A_PILOT_COPY } from '@/seed/config/tiers/option-a-pilot-contract';
 /**
  * Canonical Ground-Truth Catalog for Sophia AI Factory AEO/GEO.
  * Reads directly from TIER_CONFIGS and NICHE_SLUGS so HTML, Markdown, and JSON-LD never drift.
@@ -70,25 +71,29 @@ export function buildAgentDiscoveryManifest(): AgentDiscoveryManifest {
 export function buildCoreMetrics(isVi: boolean) {
   const { BASIC: basic, PREMIUM: premium, ENTERPRISE: enterprise } = TIER_CONFIGS;
   return [
-    { label: isVi ? 'Gói khởi điểm (BASIC)' : 'Entry Tier (BASIC)', value: basic.priceDisplay, sourceNote: `${basic.limits.youtubeChannels} YouTube channels` },
-    { label: isVi ? 'Gói khuyên dùng (PREMIUM)' : 'Recommended (PREMIUM)', value: premium.priceDisplay, sourceNote: `${premium.limits.youtubeChannels} YouTube channels` },
-    { label: isVi ? 'Gói doanh nghiệp (ENTERPRISE)' : 'Enterprise Tier', value: enterprise.priceDisplay, sourceNote: `${enterprise.limits.youtubeChannels} YouTube channels` },
-    { label: isVi ? 'Ngành nghề AI Video' : 'Supported AI Video Niches', value: `${NICHE_SLUGS.length} Niches`, sourceNote: 'Bilingual VI/EN SSG' },
+    {
+      label: isVi ? 'Gói thử nghiệm 14 ngày (Option A)' : '14-Day Paid Pilot (Option A)',
+      value: isVi ? '1.990.000 VND' : '1,990,000 VND',
+      sourceNote: OPTION_A_PILOT_COPY[isVi ? 'vi' : 'en'].scope + ' ' + OPTION_A_PILOT_COPY[isVi ? 'vi' : 'en'].refund,
+    },
+    { label: isVi ? 'Gói khởi điểm (BASIC)' : 'Entry Tier (BASIC)', value: basic.priceDisplay, sourceNote: isVi ? 'Kịch bản AI & chiến dịch · dựng video từ Growth' : 'AI scripts & campaigns · video rendering on Growth+' },
+    { label: isVi ? 'Gói khuyên dùng (PREMIUM / Growth)' : 'Recommended (PREMIUM / Growth)', value: premium.priceDisplay, sourceNote: isVi ? 'Bao gồm dựng video cloud' : 'Includes cloud video rendering' },
+    { label: isVi ? 'Gói doanh nghiệp (ENTERPRISE)' : 'Enterprise Tier', value: enterprise.priceDisplay, sourceNote: `${enterprise.limits.youtubeChannels} workspace channels` },
   ];
 }
 
 export function buildCoreComparisonRows(isVi: boolean) {
   if (isVi) {
     return [
-      { dimension: 'Chi phí vận hành AI', sophiaValue: 'BYOK giá gốc nhà cung cấp (0% markup)', legacyValue: 'Đội giá 300%–500% qua credit trung gian', advantageMetric: '3x–5x ROI' },
-      { dimension: 'Tốc độ xuất bản đa kênh', sophiaValue: 'Tự động YouTube, TikTok, Telegram (@Sophia_Bbot)', legacyValue: 'Tải lên và gắn link thủ công', advantageMetric: '90% Time Saved' },
-      { dimension: 'Thanh toán & Hoa hồng', sophiaValue: `USDT (NOWPayments) + ${AFFILIATE_NETWORKS_LIST.length} mạng lưới Affiliate`, legacyValue: 'Phụ thuộc cổng ngân hàng truyền thống', advantageMetric: 'Global Instant' },
+      { dimension: 'Chi phí vận hành AI', sophiaValue: 'BYOK trả trực tiếp cho nhà cung cấp AI (0% phí trung gian Sophia)', legacyValue: 'Đội giá 300%–500% qua credit trung gian', advantageMetric: 'Minh bạch chi phí' },
+      { dimension: 'Quy trình nội dung & chiến dịch', sophiaValue: 'Lập kế hoạch chiến dịch, tạo kịch bản AI & tài sản affiliate (dựng video từ Growth+)', legacyValue: 'Phối hợp rời rạc nhiều công cụ thủ công', advantageMetric: 'Tập trung 1 workspace' },
+      { dimension: 'Thanh toán & Gói thử nghiệm', sophiaValue: `PayOS VietQR / Chuyển khoản thủ công (1.990.000 VND) + USDT (NOWPayments)`, legacyValue: 'Bắt buộc cam kết dài hạn ngay từ đầu', advantageMetric: 'Thử nghiệm 14 ngày' },
     ];
   }
   return [
-    { dimension: 'AI Token Economics', sophiaValue: 'Direct BYOK provider cost (0% markup)', legacyValue: '300%–500% credit wrapper markup', advantageMetric: '3x–5x ROI' },
-    { dimension: 'Multi-Channel Publishing', sophiaValue: 'Automated YouTube, TikTok, Telegram (@Sophia_Bbot)', legacyValue: 'Manual upload & link insertion', advantageMetric: '90% Time Saved' },
-    { dimension: 'Settlement & Affiliate Rails', sophiaValue: `USDT (NOWPayments) + ${AFFILIATE_NETWORKS_LIST.length} Affiliate Networks`, legacyValue: 'Legacy banking rails only', advantageMetric: 'Global Instant' },
+    { dimension: 'AI Token Economics', sophiaValue: 'Direct BYOK billing from your AI providers (0% Sophia markup)', legacyValue: '300%–500% credit wrapper markup', advantageMetric: 'Transparent Cost' },
+    { dimension: 'Campaign & Script Workflow', sophiaValue: 'AI campaign planning, scripting & affiliate assets (cloud video rendering on Growth+)', legacyValue: 'Disconnected manual tools', advantageMetric: 'Unified Workspace' },
+    { dimension: 'Payment & Pilot Rails', sophiaValue: `PayOS VietQR / Manual Bank Transfer (1,990,000 VND) + USDT (NOWPayments)`, legacyValue: 'Forced long-term commitment upfront', advantageMetric: '14-Day Pilot' },
   ];
 }
 
@@ -115,13 +120,13 @@ export function buildCorePagePayload(
     metrics: buildCoreMetrics(isVi),
     comparisonRows: buildCoreComparisonRows(isVi),
     faqs: [
-      { question: isVi ? 'Sophia AI Factory hoạt động theo mô hình nào?' : 'How does Sophia AI Factory work?', answer: isVi ? 'Khách hàng tự nhập khóa API (OpenRouter, ElevenLabs, D-ID, HeyGen) qua Setup Wizard 1 lần; hệ thống tự động tạo kịch bản, dựng video, gắn link affiliate và đăng đa kênh.' : 'Customers enter their own API keys (OpenRouter, ElevenLabs, D-ID, HeyGen) once via the Setup Wizard; Sophia automates scripting, rendering, affiliate link injection, and publishing.' },
-      { question: isVi ? 'Có những gói cước nào?' : 'What pricing tiers are available?', answer: `BASIC (${basic.priceDisplay}), PREMIUM (${premium.priceDisplay}), ENTERPRISE (${enterprise.priceDisplay}), MASTER (${master.priceDisplay}).` },
+      { question: isVi ? 'Sophia AI Factory hoạt động theo mô hình nào?' : 'How does Sophia AI Factory work?', answer: isVi ? 'Khách hàng kết nối khóa API BYOK (OpenRouter, v.v.) qua Setup Wizard và thanh toán chi phí API trực tiếp cho nhà cung cấp. Gói BASIC (gồm Pilot 14 ngày 1.990.000 VND / 500 MCU) hỗ trợ kịch bản AI, kế hoạch chiến dịch và tài sản affiliate; dựng video cloud có từ gói Growth (PREMIUM) trở lên.' : 'Customers connect their own BYOK API keys (OpenRouter, etc.) via Setup Wizard and pay AI provider usage directly to their providers. BASIC (including the 14-day Paid Pilot at 1,990,000 VND / 500 MCU) covers AI scripts, campaign planning, and affiliate assets; cloud video rendering is available on Growth (PREMIUM) and above.' },
+      { question: isVi ? 'Có những gói cước nào?' : 'What pricing tiers are available?', answer: `BASIC Pilot 14d (1,990,000 VND / $79 · 500 MCU · 0 cloud video renders), BASIC (${basic.priceDisplay}), PREMIUM (${premium.priceDisplay}), ENTERPRISE (${enterprise.priceDisplay}), MASTER (${master.priceDisplay}).` },
     ],
     howToSteps: [
-      { stepNumber: 1, name: isVi ? 'Kết nối khóa BYOK tại Setup Wizard' : 'Connect BYOK Keys in Setup Wizard', text: isVi ? 'Nhập khóa API OpenRouter, ElevenLabs và HeyGen/D-ID một lần duy nhất.' : 'Enter your OpenRouter, ElevenLabs, and HeyGen/D-ID API keys once.' },
-      { stepNumber: 2, name: isVi ? 'Chọn Ngách & Chiến Dịch Affiliate' : 'Select Niche & Affiliate Campaign', text: isVi ? 'Chọn từ 51 ngành nghề hoặc ra lệnh qua Telegram @Sophia_Bbot.' : 'Pick from 51 verticals or trigger `/campaign` via Telegram @Sophia_Bbot.' },
-      { stepNumber: 3, name: isVi ? 'Xuất Bản Đa Kênh & Thu Hoa Hồng USDT' : 'Auto-Publish & Collect USDT Commissions', text: isVi ? 'Hệ thống tự động dựng video, gắn shortlink `/r/code` và đối soát NOWPayments.' : 'Sophia renders videos, injects `/r/code` shortlinks, and settles via NOWPayments.' },
+      { stepNumber: 1, name: isVi ? 'Kết nối khóa BYOK tại Setup Wizard' : 'Connect BYOK Keys in Setup Wizard', text: isVi ? 'Nhập khóa API của bạn (mã hóa AES-256-GCM). Nhà cung cấp AI thu phí trực tiếp theo tài khoản của bạn.' : 'Enter your own API keys (encrypted with AES-256-GCM). Your AI providers bill your connected accounts directly.' },
+      { stepNumber: 2, name: isVi ? 'Chọn Ngách & Lập Chiến Dịch Affiliate' : 'Select Niche & Plan Affiliate Campaign', text: isVi ? 'Chọn từ 51 ngành nghề để tạo kịch bản AI, kế hoạch chiến dịch và shortlink `/r/code`.' : 'Pick from 51 verticals to generate AI scripts, campaign plans, and `/r/code` affiliate assets.' },
+      { stepNumber: 3, name: isVi ? 'Xuất Bản Chủ Động & Nâng Cấp Khi Cần Dựng Video' : 'Publish Manually & Upgrade for Cloud Rendering', text: isVi ? 'Xuất kịch bản và tài sản chiến dịch để đăng lên kênh của bạn; nâng cấp lên Growth (PREMIUM)+ khi cần dựng video cloud.' : 'Export scripts and campaign assets to publish on your channels; upgrade to Growth (PREMIUM)+ when you need cloud video rendering.' },
     ],
     telemetryProof: buildEeatTelemetryProof(),
   };

@@ -46,10 +46,11 @@ export async function mintAdminChallengeToken(
 
 /**
  * Verify admin_challenge_token cookie on a protected mutation.
- * Returns ok=true only when signature is valid AND token is within maxAgeMs.
+ * Requires a valid signature, the authenticated user's identity, and a recent issue time.
  */
 export async function requireRecentAuth(
   request: Request,
+  authenticatedUserId: string,
   maxAgeMs = 5 * 60 * 1000,
 ): Promise<RecentAuthResult> {
   const secret = getAdminSecret();
@@ -78,7 +79,7 @@ export async function requireRecentAuth(
   const sigB64 = cookieHeader.slice(dotIdx + 1);
 
   const parsed = parseAndVerifySignature(payloadB64, sigB64);
-  if (!parsed.validSig || !parsed.payload) {
+  if (!parsed.validSig || !parsed.payload || parsed.payload.userId !== authenticatedUserId) {
     return { ok: false, reason: 'invalid' };
   }
 

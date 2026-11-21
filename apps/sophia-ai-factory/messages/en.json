@@ -188,12 +188,12 @@
       "aria_label": "Sophia BYOK doctrine reminder",
       "title": "Before you start — 3 things you should know",
       "subtitle": "Sophia is no-code, no-tech. You stay in control.",
-      "bullet_keys_title": "You own the keys",
-      "bullet_keys_body": "Every API key (AI, voice, avatar, payment) is yours. We never store or use them on our side.",
+      "bullet_keys_title": "You own & pay for your BYOK keys",
+      "bullet_keys_body": "Your API keys (OpenRouter, ElevenLabs, HeyGen, D-ID, fal.ai) are encrypted with AES-256-GCM in your workspace vault. AI providers bill your connected accounts directly — Sophia plans and 500 MCU pilot credits do not cover third-party API usage.",
       "bullet_platform_title": "We run the platform",
       "bullet_platform_body": "Operator manages only the code + Cloudflare infrastructure. No operator-side third-party setup needed.",
-      "bullet_refund_title": "30-day refund",
-      "bullet_refund_body": "Try Sophia risk-free. If it's not for you, request a refund within 30 days of purchase."
+      "bullet_refund_title": "Refund windows by plan",
+      "bullet_refund_body": "Standard subscriptions retain their legacy 30-day policy; MASTER retains 14 days. Pilot only: request 100% of the amount Sophia actually received within 7 days regardless of MCU usage, or within 14 days for a Sophia-verified Option A campaign/script delivery failure. BYOK provider charges are separate and excluded. Statutory rights and higher/grandfathered benefits are preserved."
     },
     "apiKeys": {
       "title": "AI Service Configuration",
@@ -787,7 +787,7 @@
       "refund_master_example": "If you buy MASTER ($4,999) on June 1, you can get a full refund until June 15. After that, it is non-refundable.",
       "refund_other_plans": "Other plans (BASIC/PREMIUM/ENTERPRISE): used billing time is non-refundable. When you cancel, you keep access until the end of the paid month.",
       "refund_non_refundable": "Used credits, generated videos, and API fees are non-refundable.",
-      "faq_3_a": "MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. BASIC/PREMIUM/ENTERPRISE are eligible for a 100% refund within 7 days for the first subscription. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
+      "faq_3_a": "MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. BASIC/PREMIUM/ENTERPRISE retain their existing 30-day refund window. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
       "faq_3_q": "What is your refund policy?",
       "tier_selection_label": "Select a plan",
       "billing_cycle_aria_label": "Billing cycle",
@@ -894,7 +894,7 @@
         },
         "refund": {
           "question": "Is there a refund policy?",
-          "answer": "Yes! We offer a 30-day money-back guarantee. If you're not satisfied with the platform, contact us within 30 days of purchase for a full refund, no questions asked."
+          "answer": "Standard subscriptions retain their legacy 30-day policy; MASTER retains 14 days. Pilot only: request 100% of the amount Sophia actually received within 7 days regardless of MCU usage, or within 14 days for a Sophia-verified Option A campaign/script delivery failure. BYOK provider charges are separate and excluded. Statutory rights and higher/grandfathered benefits are preserved."
         },
         "vnd_payment": {
           "question": "Can I pay in VND?",
@@ -3020,7 +3020,7 @@
     "faq_2_q": "Can I change my plan anytime?",
     "faq_2_a": "Yes. You can upgrade your plan at any time. Downgrades take effect at the end of your current billing period.",
     "faq_3_q": "Is there a free trial?",
-    "faq_3_a": "We offer a 7-day money-back guarantee on all monthly plans. Contact support within 7 days for a full refund.",
+    "faq_3_a": "Standard subscriptions retain their legacy 30-day policy; MASTER retains 14 days. Pilot only: request 100% of the amount Sophia actually received within 7 days regardless of MCU usage, or within 14 days for a Sophia-verified Option A campaign/script delivery failure. BYOK provider charges are separate and excluded. Statutory rights and higher/grandfathered benefits are preserved.",
     "faq_4_q": "What payment methods do you accept?",
     "faq_4_a": "We accept USDT (crypto via NOWPayments) and Vietnam domestic payments via PayOS.",
     "faq_5_q": "What happens when I run out of MCU?",
@@ -6637,7 +6637,7 @@
     },
     "pricing": {
       "title": "Simple, Transparent Pricing",
-      "subtitle": "Choose the plan that fits your business. All plans include a 30-day money-back guarantee.",
+      "subtitle": "Standard subscriptions retain their legacy 30-day policy; MASTER retains 14 days. Pilot only: request 100% of the amount Sophia actually received within 7 days regardless of MCU usage, or within 14 days for a Sophia-verified Option A campaign/script delivery failure. BYOK provider charges are separate and excluded. Statutory rights and higher/grandfathered benefits are preserved.",
       "monthly": "Monthly",
       "annual": "Annual",
       "savePercent": "(Save 20%)",
@@ -7426,7 +7426,7 @@
         "used": "{gb} GB used",
         "percent": "{pct}%",
         "progressLabel": "{pct}% storage used",
-        "upgradeHint": "Upgrade to Pro for unlimited cloud rendering and team storage."
+        "upgradeHint": "Upgrade to Growth (PREMIUM) or higher to unlock cloud video rendering and expanded workspace storage."
       }
     },
     "pricingPage": {
@@ -7444,15 +7444,15 @@
       "plans": {
         "basic": {
           "name": "Starter",
-          "description": "For small businesses testing AI video",
+          "description": "For small teams validating AI scripts, campaign planning & affiliate workflows (cloud video rendering requires Growth+)",
           "period": {
             "monthly": "/month",
             "yearly": "/year"
           },
           "features": [
-            "10 campaigns per month",
-            "1 YouTube channel",
-            "5 video templates"
+            "10 campaigns per month · AI scripts & affiliate assets",
+            "1 workspace channel (manual export/publish)",
+            "5 workflow templates · 0 cloud video renders (Growth+)"
           ],
           "cta": "Create account"
         },
@@ -7539,18 +7539,24 @@
         "copyright": "© 2026 Sophia AI Factory. All rights reserved."
       },
       "paidPilot": {
-        "badge": "14-Day Paid Pilot • Full BASIC Access",
-        "title": "14-Day Paid Pilot Campaign — 1,990,000 VND ($79)",
-        "subtitle": "Built for SMBs and agencies validating real ROI: 14 days of full BASIC-tier access — AI scripts, campaign plans, and affiliate assets. Video rendering is available on Growth and above.",
+        "badge": "14-Day Paid Pilot • Option A",
+        "title": "14-Day Paid Pilot — 1,990,000 VND",
+        "subtitle": "Pilot only: request 100% of the amount Sophia actually received within 7 days regardless of MCU usage, or within 14 days for a Sophia-verified Option A campaign/script delivery failure. BYOK provider charges are separate and excluded. Statutory rights and higher/grandfathered benefits are preserved.",
         "priceVnd": "1,990,000 VND",
-        "priceUsd": "$79 / 14 days",
-        "bullet1": "14 days of BASIC with 500 MCU — AI scripts, campaign plans, affiliate assets; your AI provider bills separately",
-        "bullet2": "Instant activation with no hidden auto-renewal",
-        "bullet3": "VietQR bank transfer via PayOS",
+        "priceUsd": "One-time payment • no auto-renewal",
+        "bullet1": "500 MCU once • 14 calendar days (Asia/Saigon) • 0 Cloud video renders",
+        "bullet2": "Activation after verified settlement, reconciliation and admin approval; no auto-renewal",
+        "bullet3": "BYOK provider costs billed separately; existing higher benefits preserved",
         "cta": "Start 14-Day Paid Pilot",
         "ctaLoading": "Creating Pilot order...",
-        "fallbackNotice": "Your 14-day Paid Pilot order is reserved! Complete payment to activate your workspace immediately.",
-        "errorNotice": "Could not start the Paid Pilot checkout. Please sign in and try again."
+        "fallbackNotice": "Order reserved; payment is not yet verified. Follow bank instructions and await reconciliation and approval.",
+        "fallbackEntitlements": "BASIC for 14 days · 500 MCU · 0 cloud video renders · BYOK AI provider costs billed separately.",
+        "fallbackMemo": "Memo: {memo}",
+        "fallbackBankPending": "Manual bank transfer instructions will be confirmed via {email}.",
+        "fallbackOrderRef": "Ref: {orderId} • {email}",
+        "errorNotice": "Could not start the Paid Pilot checkout. Please sign in and try again.",
+        "agreementCheckbox": "I agree to the 14-Day Paid Pilot (Option A) terms: 1,990,000 VND one-time manual bank transfer, 14 days, 500 MCU once, 0 Cloud video renders, no auto-renewal, separate BYOK costs, and the stated refund policy.",
+        "termsVersionLabel": "Agreement version: {version} · SHA-256: {hash}"
       }
     },
     "landing": {

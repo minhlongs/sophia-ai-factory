@@ -1,3 +1,4 @@
+import { getD1 } from '@/seed/db/client';
 /**
  * /api/v1/credits/consume — Consume MCU Credits
  *
@@ -23,7 +24,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
   }
 
   try {
-    const body = (await request.json()) as { amount?: number; reason?: string; missionId?: string };
+    const body = (await request.json()) as { amount?: number; reason?: string; missionId?: string; orgId?: string };
     const amount = Number(body?.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json(
@@ -32,10 +33,22 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
       );
     }
 
+    const orgId=body.orgId ?? auth.orgId;
+    if(orgId !== undefined) {
+      if(typeof orgId !== 'string' || !orgId || (auth.orgId && auth.orgId!==orgId))
+        return NextResponse.json({error:'Organization scope mismatch'},{status:403});
+      // Legacy user-only keys may not opt into another organization implicitly.
+      if(auth.authKind==='api_key' && !auth.orgId)
+        return NextResponse.json({error:'API key has no organization binding'},{status:403});
+      const db=await getD1();
+      const member=db && await db.prepare('SELECT 1 FROM org_members WHERE user_id=? AND org_id=?')
+        .bind(auth.userId!,orgId).first();
+      if(!member) return NextResponse.json({error:'Organization membership required'},{status:403});
+    }
     const reason = body.reason || 'sdk_consume';
     const missionId = body.missionId || `consume_${Date.now()}`;
 
-    const success = await deductCredits(auth.userId!, amount, missionId, reason);
+    const success = await deductCredits(auth.userId!, amount, missionId, reason, orgId);
     if (!success) {
       return NextResponse.json(
         { error: 'Insufficient credits', detail: 'Not enough MCU balance' },
@@ -43,7 +56,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
       );
     }
 
-    const currentBalance = await getBalance(auth.userId!);
+    const currentBalance = await getBalance(auth.userId!,orgId);
     return NextResponse.json({
       success: true,
       credits_consumed: amount,

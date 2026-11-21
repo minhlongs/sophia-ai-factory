@@ -11,14 +11,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 const {
   mockDbFrom,
-  mockDeductCredits,
+  mockDeductMissionCredits,
   mockGetCommand,
   mockFireWebhook,
   mockLogger,
   mockHandleAiWrite,
 } = vi.hoisted(() => ({
   mockDbFrom: vi.fn(),
-  mockDeductCredits: vi.fn(),
+  mockDeductMissionCredits: vi.fn(),
   mockGetCommand: vi.fn(),
   mockFireWebhook: vi.fn(),
   mockLogger: vi.fn(),
@@ -28,7 +28,10 @@ const {
 // ── Module mocks ──────────────────────────────────────────────────────────────
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
-  createServerClient: () => ({ from: mockDbFrom }),
+  createServerClient: () => ({
+    from: mockDbFrom,
+    prepare: () => ({ bind: () => ({ first: () => mockDbFrom().single().then(() => ({ id: MISSION_ID })) }) }),
+  }),
 }));
 
 vi.mock('@/seed/auth/org-resolver', () => ({
@@ -36,7 +39,7 @@ vi.mock('@/seed/auth/org-resolver', () => ({
 }));
 
 vi.mock('@/tree/mcu/credits-repo', () => ({
-  deductCredits: mockDeductCredits,
+  deductMissionCredits: mockDeductMissionCredits,
 }));
 
 vi.mock('./command-registry', () => ({
@@ -114,7 +117,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockDbFrom.mockReset();
   mockGetCommand.mockReturnValue({ credits: 0 });
-  mockDeductCredits.mockResolvedValue(true);
+  mockDeductMissionCredits.mockResolvedValue({ ok: true, value: true });
   mockHandleAiWrite.mockResolvedValue({ ok: true, data: { result: 'done' } });
   mockFireWebhook.mockResolvedValue(undefined);
 });

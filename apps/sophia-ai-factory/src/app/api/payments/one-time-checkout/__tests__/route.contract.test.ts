@@ -3,13 +3,21 @@
  * Schema imported from route — skuId enum reflects live ONE_TIME_SKUS catalog.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
-import { oneTimeCheckoutSchema } from '../route';
+import { NextRequest } from 'next/server';
+import { oneTimeCheckoutSchema, POST } from '../route';
 
 type CheckoutInput = z.infer<typeof oneTimeCheckoutSchema>;
 
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({ withRateLimit: (handler: (request: Request) => Promise<Response>) => handler }));
+
 describe('contract: api/payments/one-time-checkout', () => {
+  it.each([{ skuId: 'BASIC_PILOT_14D' }, { skuCode: 'BASIC_PILOT_14D' }, { period: 'pilot_14d' }])('rejects pilot before invoice creation: %j', async body => {
+    const response = await POST(new NextRequest('https://example.test/api/payments/one-time-checkout', { method: 'POST', body: JSON.stringify(body) }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ code: 'PILOT_OFFLINE_REQUIRED', paymentMethod: 'offline_bank_transfer' });
+  });
   describe('oneTimeCheckoutSchema', () => {
     const validMinimal: CheckoutInput = { skuId: 'STARTER_BUNDLE' };
 

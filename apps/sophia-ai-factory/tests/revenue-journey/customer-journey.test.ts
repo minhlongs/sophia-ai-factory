@@ -147,15 +147,29 @@ describe.sequential('real customer boundaries with isolated SQLite and provider 
     evidence.byok = { actualProbeTransport: true, encryptedAtRest: true, csrf: ['missing403', 'wrong403', 'valid200'], receiptPersisted: false };
   });
 
-  it('activates a correlated signed PayOS purchase once with exact pilot duration', async () => {
+  it('rejects automated PayOS pilot_14d webhooks for manual review and activates a correlated signed standard PayOS purchase once', async () => {
     expect(buyerId).toBeTruthy();
     const purchasedBefore = Number(rows('user_mcu_balance')[0].credits_total_purchased);
-    // Provider checkout creation is outside this boundary; explicit pending-order fixture.
-    fixture.sqlite.prepare(`INSERT INTO pending_orders(order_id,user_id,tier,period,payment_method,amount_usd_cents,amount_vnd,provider_payment_id,provider_order_code,status) VALUES (?,?,'BASIC','pilot_14d','payos',7900,1990000,'journey-link',880011,'pending')`).run('journey-order', buyerId);
-    const payload = { code: '00', desc: 'success', success: true, data: { orderCode: 880011, amount: 1990000, description: 'Sophia pilot', accountNumber: 'synthetic', reference: 'synthetic', transactionDateTime: '2026-11-17 00:00:00', currency: 'VND', paymentLinkId: 'journey-link', code: '00', desc: 'success' } };
     const { payOsCanonicalize } = await import('@/land/payments/payos-gateway/checksum-verifier');
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(checksumKey), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-    const signature = Buffer.from(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payOsCanonicalize(JSON.stringify(payload))))).toString('hex');
+    const signPayload = async (body: Record<string, unknown>) =>
+      Buffer.from(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payOsCanonicalize(JSON.stringify(body))))).toString('hex');
+
+    // Negative boundary: PayOS pilot_14d webhooks must fail closed for manual review without granting entitlements.
+    fixture.sqlite.prepare(`INSERT INTO pending_orders(order_id,user_id,tier,period,payment_method,amount_usd_cents,amount_vnd,provider_payment_id,provider_order_code,status) VALUES (?,?,'BASIC','pilot_14d','payos',7900,1990000,'journey-pilot-link',880010,'pending')`).run('journey-pilot-order', buyerId);
+    const pilotPayload = { code: '00', desc: 'success', success: true, data: { orderCode: 880010, amount: 1990000, description: 'Sophia pilot', accountNumber: 'synthetic', reference: 'synthetic', transactionDateTime: '2026-11-17 00:00:00', currency: 'VND', paymentLinkId: 'journey-pilot-link', code: '00', desc: 'success' } };
+    const pilotSignature = await signPayload(pilotPayload);
+    const pilotRes = await dispatch(request('/api/webhooks/payos', 'POST', { ...pilotPayload, signature: pilotSignature }), webhook.POST);
+    expect(pilotRes.status, await pilotRes.clone().text()).toBe(409);
+    await expect(pilotRes.json()).resolves.toMatchObject({ error: expect.stringContaining('manual review') });
+    expect(rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: 50, credits_total_purchased: purchasedBefore });
+    expect(fixture.sqlite.prepare('SELECT status FROM pending_orders WHERE order_id = ?').get('journey-pilot-order')).toEqual({ status: 'pending' });
+
+    // Positive boundary: standard non-pilot BASIC monthly PayOS purchase activates once and replays idempotently.
+    // Provider checkout creation is outside this boundary; explicit pending-order fixture.
+    fixture.sqlite.prepare(`INSERT INTO pending_orders(order_id,user_id,tier,period,payment_method,amount_usd_cents,amount_vnd,provider_payment_id,provider_order_code,status) VALUES (?,?,'BASIC','monthly','payos',19900,4975000,'journey-link',880011,'pending')`).run('journey-order', buyerId);
+    const payload = { code: '00', desc: 'success', success: true, data: { orderCode: 880011, amount: 4975000, description: 'Sophia BASIC monthly', accountNumber: 'synthetic', reference: 'synthetic', transactionDateTime: '2026-11-17 00:00:00', currency: 'VND', paymentLinkId: 'journey-link', code: '00', desc: 'success' } };
+    const signature = await signPayload(payload);
     const invalid = await dispatch(request('/api/webhooks/payos', 'POST', { ...payload, signature: '0'.repeat(64) }), webhook.POST);
     expect(invalid.status).toBe(400);
     const req = request('/api/webhooks/payos', 'POST', { ...payload, signature });
@@ -163,12 +177,12 @@ describe.sequential('real customer boundaries with isolated SQLite and provider 
     const paid = await dispatch(req, webhook.POST);
     expect(paid.status, await paid.clone().text()).toBe(200);
     const subscription = rows('subscriptions')[0];
-    expect(Date.parse(subscription.current_period_end as string) - Date.parse(subscription.current_period_start as string)).toBe(14 * 86400000);
-    expect(rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: 550, credits_total_purchased: purchasedBefore + 500 });
+    expect(Date.parse(subscription.current_period_end as string) - Date.parse(subscription.current_period_start as string)).toBe(30 * 86400000);
+    expect(rows('user_mcu_balance')[0]).toMatchObject({ credits_remaining: 1050, credits_total_purchased: purchasedBefore + 1000 });
     const replay = await dispatch(request('/api/webhooks/payos', 'POST', { ...payload, signature }), webhook.POST);
     expect(await replay.json()).toMatchObject({ duplicate: true });
-    expect(rows('user_mcu_balance')[0].credits_remaining).toBe(550);
-    evidence.payment = { pendingOrder: 'fixture; checkout not composed', signedWebhook: true, replayIdempotent: true, pilotDays: 14, purchaseMcu: 500 };
+    expect(rows('user_mcu_balance')[0].credits_remaining).toBe(1050);
+    evidence.payment = { pendingOrder: 'fixture; checkout not composed', pilotWebhookBlocked409: true, signedWebhook: true, replayIdempotent: true, monthlyDays: 30, purchaseMcu: 1000 };
   });
 
   it('generates through the actual script handler and records missing debit and durability', async () => {

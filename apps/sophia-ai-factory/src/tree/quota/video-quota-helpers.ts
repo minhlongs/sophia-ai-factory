@@ -5,13 +5,9 @@
 
 import { createServerClient } from '@/seed/db/client';
 
-/** Monthly video quota by tier. BASIC gets 0 (blocked upstream by 402 gate). */
-export const VIDEO_QUOTA_BY_TIER: Record<string, number> = {
-  BASIC: 0,
-  PREMIUM: 30,
-  ENTERPRISE: 200,
-  MASTER: 1000,
-};
+import { CLOUD_VIDEO_QUOTA_BY_TIER } from '@/seed/config/tiers/video-quota-tiers';
+
+export const VIDEO_QUOTA_BY_TIER: Record<string, number> = CLOUD_VIDEO_QUOTA_BY_TIER;
 
 export interface VideoQuotaStatus {
   allowed: boolean;

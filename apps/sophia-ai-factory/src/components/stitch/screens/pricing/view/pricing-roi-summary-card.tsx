@@ -38,9 +38,11 @@ export function PricingRoiCalculatorHeader({ isVi }: Readonly<{ isVi: boolean }>
 export function PricingRoiSummaryCard({
   isVi,
   netMonthlySavings,
+  growthMonthlyCost,
 }: Readonly<{
   isVi: boolean;
   netMonthlySavings: number;
+  growthMonthlyCost: number;
 }>) {
   return (
     <div className="flex min-w-0 flex-col justify-between rounded-xl border border-amber-400/40 bg-[#0B0E14] p-5 shadow-[inset_0_1px_0_0_rgba(245,158,11,0.12)]">
@@ -58,8 +60,8 @@ export function PricingRoiSummaryCard({
         </div>
         <p className="mt-3 text-xs leading-relaxed text-[#94A3B8]">
           {isVi
-            ? 'Ước tính minh họa: giả định chi phí editor 150 USD/video và gói Starter 199 USD/tháng.'
-            : 'Illustrative estimate: assumes a $150 editor cost per video and the $199/month Starter plan.'}
+            ? `Ước tính minh họa: giả định chi phí editor 150 USD/video và gói Growth (PREMIUM) ${growthMonthlyCost} USD/tháng. Dựng video cloud chỉ có từ gói Growth trở lên; chi phí API nhà cung cấp BYOK do khách hàng trả trực tiếp.`
+            : `Illustrative estimate: assumes a $150 editor cost per video and the $${growthMonthlyCost}/month Growth (PREMIUM) plan. Cloud video rendering requires Growth or higher; BYOK AI provider API usage is billed directly by your providers.`}
         </p>
       </div>
 

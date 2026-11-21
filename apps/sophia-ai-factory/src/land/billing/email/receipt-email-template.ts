@@ -1,3 +1,5 @@
+import { OPTION_A_PILOT_COPY } from '@/seed/config/tiers/option-a-pilot-contract';
+
 /**
  * Receipt email template — renders bilingual HTML + plain text.
  * Vietnamese law requires VAT 10% notice on digital services.
@@ -10,9 +12,11 @@ export interface ReceiptInput {
   tier: string
   period: 'monthly' | 'yearly' | 'lifetime' | 'pilot_14d'
   amountUsd: number
+  amountVnd?: number
   paymentId: string
-  paymentMethod: 'nowpayments' | 'payos'
+  paymentMethod: 'nowpayments' | 'payos' | 'manual_bank'
   orderId: string
+  activationStatus?: 'ACTIVE_14D'
   locale?: string
 }
 
@@ -41,9 +45,26 @@ export function renderReceipt(input: ReceiptInput): ReceiptOutput {
   const tierName = TIER_NAMES[input.tier]?.[isVi ? 'vi' : 'en'] ?? input.tier
   const periodLabel = PERIOD_LABELS[input.period]?.[isVi ? 'vi' : 'en'] ?? input.period
   const paymentIdShort = input.paymentId.slice(0, 8)
-  const amountFormatted = `$${input.amountUsd.toFixed(2)} USD`
+  const isPilot = input.period === 'pilot_14d'
+  if (isPilot && input.activationStatus !== 'ACTIVE_14D') throw new Error('Pilot receipt requires ACTIVE_14D activation')
+  if (isPilot && (input.paymentMethod === 'manual_bank' || input.paymentMethod === 'payos') &&
+      (!Number.isSafeInteger(input.amountVnd) || (input.amountVnd ?? 0) <= 0)) {
+    throw new Error('Pilot receipt requires actual settled VND amount')
+  }
+  const resolvedVnd = typeof input.amountVnd === 'number' && input.amountVnd > 0 ? input.amountVnd : null
+  const amountFormatted = resolvedVnd
+    ? isPilot ? `${resolvedVnd.toLocaleString(isVi ? 'vi-VN' : 'en-US')} VND`
+      : `${resolvedVnd.toLocaleString(isVi ? 'vi-VN' : 'en-US')} VND ($${input.amountUsd.toFixed(2)} USD)`
+    : `$${input.amountUsd.toFixed(2)} USD`
   const date = new Date().toLocaleDateString(isVi ? 'vi-VN' : 'en-US', { dateStyle: 'long' })
-  const payMethodLabel = input.paymentMethod === 'payos' ? 'PayOS VND' : 'NOWPayments (USDT/Crypto)'
+  const payMethodLabel =
+    input.paymentMethod === 'payos'
+      ? 'PayOS VND'
+      : input.paymentMethod === 'manual_bank'
+        ? (isVi ? 'Chuyển khoản ngân hàng thủ công (VND)' : 'Manual Bank Transfer (VND)')
+        : 'NOWPayments (USDT/Crypto)'
+  const pilotCopy = OPTION_A_PILOT_COPY[isVi ? 'vi' : 'en']
+  const pilotScopeNotice = isPilot ? `<p>${pilotCopy.scope}</p><p>${pilotCopy.refund}</p>` : ''
 
   const subject = isVi
     ? `Hóa đơn — Sophia AI Factory — Gói ${tierName}`
@@ -97,6 +118,7 @@ export function renderReceipt(input: ReceiptInput): ReceiptOutput {
       </tr>
     </table>
 
+    ${pilotScopeNotice}
     ${vatNotice}
 
     <hr style="border:none;border-top:1px solid #333;margin:24px 0;">
@@ -122,6 +144,7 @@ export function renderReceipt(input: ReceiptInput): ReceiptOutput {
     `${isVi ? 'Ngày' : 'Date'}: ${date}`,
     `${isVi ? 'Tổng cộng' : 'Total'}: ${amountFormatted}`,
     '',
+    isPilot ? `${pilotCopy.scope} ${pilotCopy.refund}` : '',
     vatTextNotice,
     '',
     `${isVi ? 'Hỗ trợ' : 'Support'}: support@mekongmind.com`,

@@ -298,15 +298,33 @@ describe('Genesis-08 changed-branch coverage suite', () => {
         d1,
         orgId: undefined,
         tier: 'BASIC',
-        billingPeriod: 'pilot_14d',
+        billingPeriod: 'monthly',
         periodEnd: '2026-12-15T00:00:00.000Z',
         now: '2026-11-15T00:00:00.000Z',
         orderCode: 12346,
         orderId: 'ord_12346',
-        amount: 1990000,
+        amount: 4975000,
         eventId: 'payos_12346', lockCreatedAt: '2026-11-17T00:00:00.000Z',
         order: {} as import('@/land/orders/pending-order-types').PendingOrder,
       })).rejects.toThrow('requires a buyer organization');
+      expect(batch).toHaveBeenCalledTimes(1);
+
+      // Pilot orders must fail closed for manual review even when userId and orgId are present.
+      await expect(commitPayOsSubscriptionBatch({
+        db: dbWithExisting,
+        d1,
+        userId: 'u_pilot',
+        orgId: 'org_1',
+        tier: 'BASIC',
+        billingPeriod: 'pilot_14d',
+        periodEnd: '2026-12-15T00:00:00.000Z',
+        now: '2026-11-15T00:00:00.000Z',
+        orderCode: 12347,
+        orderId: 'ord_12347',
+        amount: 1990000,
+        eventId: 'payos_12347', lockCreatedAt: '2026-11-17T00:00:00.000Z',
+        order: { period: 'pilot_14d' } as import('@/land/orders/pending-order-types').PendingOrder,
+      })).rejects.toThrow('Pilot payment requires manual review');
       expect(batch).toHaveBeenCalledTimes(1);
     });
 
@@ -388,7 +406,7 @@ describe('Genesis-08 changed-branch coverage suite', () => {
       })).rejects.toThrow('Payment cancellation claim failed');
     });
 
-    it('falls back to invoice_url matching and rejects pilot_14d on non-BASIC tiers', async () => {
+    it('falls back to invoice_url matching for standard orders and requires manual review for PayOS pilot_14d orders', async () => {
       function makeOrdersDb(orders: unknown[]) {
         return {
           from: () => ({
@@ -409,18 +427,18 @@ describe('Genesis-08 changed-branch coverage suite', () => {
             order_id: 'ord_legacy_link',
             user_id: 'u1',
             tier: 'BASIC',
-            period: 'pilot_14d',
+            period: 'monthly',
             payment_method: 'payos',
             status: 'pending',
             provider_payment_id: null,
             provider_order_code: 999_888,
             invoice_url: 'https://pay.payos.vn/web/plink_legacy',
-            amount_vnd: 1_990_000,
+            amount_vnd: 4_975_000,
           },
         ]),
         orderCode: 999_888,
         paymentLinkId: 'plink_legacy',
-        amount: 1_990_000,
+        amount: 4_975_000,
         eventId: 'payos_legacy',
       });
       expect(legacyByLink.ok).toBe(true);
@@ -471,8 +489,34 @@ describe('Genesis-08 changed-branch coverage suite', () => {
       });
       expect(pilotOnPremium).toEqual({
         ok: false,
-        error: '14-day Paid Pilot is only valid for BASIC tier',
-        status: 400,
+        error: 'Pilot payment requires manual review / Thanh toán Pilot cần được kiểm tra thủ công',
+        status: 409,
+      });
+
+      const pilotOnBasic = await findAndValidatePayOsOrder({
+        db: makeOrdersDb([
+          {
+            order_id: 'ord_basic_pilot',
+            user_id: 'u1',
+            tier: 'BASIC',
+            period: 'pilot_14d',
+            payment_method: 'payos',
+            status: 'pending',
+            provider_payment_id: 'plink_basic_pilot',
+            provider_order_code: 112,
+            invoice_url: null,
+            amount_vnd: 1_990_000,
+          },
+        ]),
+        orderCode: 112,
+        paymentLinkId: 'plink_basic_pilot',
+        amount: 1_990_000,
+        eventId: 'payos_basic_pilot',
+      });
+      expect(pilotOnBasic).toEqual({
+        ok: false,
+        error: 'Pilot payment requires manual review / Thanh toán Pilot cần được kiểm tra thủ công',
+        status: 409,
       });
     });
 

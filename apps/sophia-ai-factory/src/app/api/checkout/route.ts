@@ -1,4 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { z } from 'zod';
+import { dispatchManualPilotOfflineCheckout } from './modules/manual-pilot-offline-checkout';
 import { NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
 import { checkoutSchema } from '@/land/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
@@ -26,7 +28,15 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const parsed = checkoutSchema.safeParse(body);
+    const candidate: unknown = body;
+    const isPilot = typeof candidate === 'object' && candidate !== null && 'period' in candidate && candidate.period === 'pilot_14d';
+    const hasPilotSku = typeof candidate === 'object' && candidate !== null &&
+      (('skuId' in candidate && candidate.skuId === 'BASIC_PILOT_14D') ||
+       ('skuCode' in candidate && candidate.skuCode === 'BASIC_PILOT_14D'));
+    if (hasPilotSku && !isPilot) {
+      return NextResponse.json({ code: 'PILOT_OFFLINE_REQUIRED', paymentMethod: 'offline_bank_transfer', error: 'Pilot checkout requires period pilot_14d' }, { status: 400 });
+    }
+    const parsed = checkoutSchema.safeParse(isPilot ? { ...candidate, paymentMethod: 'offline' } : candidate);
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid request', details: parsed.error.flatten() },
@@ -72,6 +82,15 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
         { error: 'Promo codes cannot be combined with the 14-Day Paid Pilot offer' },
         { status: 400 }
       );
+    }
+
+    if (period === 'pilot_14d') {
+      const consent = z.object({
+        agreement: z.object({ accepted: z.literal(true), version: z.string(), hash: z.string().regex(/^[0-9a-f]{64}$/), locale: z.enum(['vi', 'en']), channel: z.enum(['web_checkout', 'pricing_banner', 'api_checkout']).optional() }),
+        orgId: z.string().trim().min(1).max(200).optional(),
+      }).safeParse(body);
+      if (!consent.success) return NextResponse.json({ code: 'PILOT_AGREEMENT_REQUIRED', error: 'Affirmative current pilot agreement acceptance is required' }, { status: 400 });
+      return await dispatchManualPilotOfflineCheckout({ userId, tier, period, paymentMethod: 'offline_bank_transfer', customerEmail, agreement: consent.data.agreement, orgId: consent.data.orgId });
     }
 
     const dedupedResponse = await tryReusePendingOrder({

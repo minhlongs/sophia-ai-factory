@@ -1,11 +1,15 @@
+// @vitest-environment node
 /**
  * Unit & integration tests for 14-Day Paid Pilot (`pilot_14d` — 1,990,000 VND / $79).
  * @module app/api/payos/ipn/__tests__/pilot-14d-activation.test
  */
 
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { D1Database } from '@cloudflare/workers-types';
 import type { D1Client } from '@/seed/db/client';
+import { NodeSqliteD1Database } from '@/seed/db/node-sqlite/database';
 import {
   PAID_PILOT_14_DAY_PRICE_CENTS,
   PAID_PILOT_14_DAY_PRICE_VND,
@@ -19,6 +23,12 @@ const mocks = vi.hoisted(() => ({
   writeOrder: vi.fn(),
   createPayOsInvoice: vi.fn(),
 }));
+const state = vi.hoisted(() => ({ db: null as D1Database | null }));
+
+vi.mock('@/seed/db/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/seed/db/client')>();
+  return { ...actual, getD1Safe: async () => state.db };
+});
 
 vi.mock('@/seed/auth/workspace-access', () => ({ resolveOrgId: mocks.resolveOrgId }));
 vi.mock('@/land/billing/email/receipt-email-sender', () => ({ sendReceiptEmail: mocks.sendReceiptEmail }));
@@ -51,7 +61,7 @@ function buildChainableQuery(result: FakeQueryResult) {
     delete: () => query,
     single: async () => result,
     maybeSingle: async () => result,
-    then: (resolve: (v: FakeQueryResult) => unknown, reject?: (r: unknown) => unknown) =>
+    then: (resolve: (value: FakeQueryResult) => unknown, reject?: (reason: unknown) => unknown) =>
       Promise.resolve(result).then(resolve, reject),
   };
   return query;
@@ -63,6 +73,7 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    state.db = null;
     mocks.resolveOrgId.mockResolvedValue('org_pilot_1');
     mocks.sendReceiptEmail.mockResolvedValue(undefined);
     mocks.recordAudit.mockResolvedValue(undefined);
@@ -70,6 +81,7 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
   });
 
   afterEach(() => {
+    state.db = null;
     if (prevUsdToVnd === undefined) delete process.env.USD_TO_VND;
     else process.env.USD_TO_VND = prevUsdToVnd;
     if (prevFeaturePayOs === undefined) delete process.env.FEATURE_PAYOS;
@@ -114,19 +126,13 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
       const validation = await findAndValidatePayOsOrder({
         db, orderCode: 998877, paymentLinkId: 'pilot-link-99', amount: 1_990_000, eventId: 'payos_998877',
       });
-      expect(validation).toEqual({
-        ok: true,
-        data: {
-          orderId: 'sophia_user_pilot_1', userId: 'user_pilot', tier: 'BASIC',
-          billingPeriod: 'pilot_14d', periodEnd: expectedIso, orgId: 'org_pilot_1', subaccountId: undefined,
-        },
-      });
+      expect(validation).toEqual({ ok: false, error: expect.stringContaining('manual review'), status: 409 });
     } finally {
       nowSpy.mockRestore();
     }
   });
 
-  it('activates BASIC for 14 days end-to-end and sends accurate $79 pilot_14d receipt', async () => {
+  it('rejects automatic pilot activation before any batch or receipt effects', async () => {
     const pilotOrder = {
       order_id: 'sophia_user_pilot_2', user_id: 'user_pilot_2', tier: 'BASIC',
       period: 'pilot_14d', amount_vnd: 1_990_000, invoice_url: 'https://pay.payos.vn/web/pilot-link-2', payment_method: 'payos', provider_order_code: 776655,
@@ -138,11 +144,19 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
         return buildChainableQuery({ data: null, error: null });
       }),
     } as unknown as D1Client;
+    const prepareCalls: string[] = [];
     const d1 = {
-      prepare: vi.fn(() => ({ bind: vi.fn(() => ({
-        run: vi.fn().mockResolvedValue({ success: true }),
-        first: vi.fn().mockResolvedValue({ count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }),
-      })) })),
+      prepare: vi.fn((sql: string) => {
+        prepareCalls.push(sql);
+        return { bind: vi.fn(() => ({
+          run: vi.fn().mockResolvedValue({ success: true }),
+          first: vi.fn().mockResolvedValue(
+            sql.includes('SELECT ?1 AS amount_vnd')
+              ? { amount_vnd: PAID_PILOT_14_DAY_PRICE_VND }
+              : { count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null },
+          ),
+        })) };
+      }),
       batch: vi.fn(async (statements: unknown[]) => statements.map(() => ({ success: true, meta: { changes: 1 } }))),
     } as unknown as D1Database;
 
@@ -150,41 +164,37 @@ describe('14-Day Paid Pilot (pilot_14d — 1,990,000 VND / $79)', () => {
       db, d1, orderCode: 776655, paymentLinkId: 'pilot-link-2', amount: 1_990_000, eventId: 'payos_776655', lockCreatedAt: '2026-11-17T00:00:00.000Z', order: pilotOrder as unknown as import('@/land/orders/pending-order-types').PendingOrder,
     });
 
-    expect(result).toEqual({ ok: true });
-    expect(d1.batch).toHaveBeenCalledTimes(1);
-    expect(mocks.sendReceiptEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: 'ceo@agency.vn',
-        tier: 'BASIC',
-        period: 'pilot_14d',
-        amountUsd: 79,
-        paymentMethod: 'payos',
-      }),
-    );
+    expect(result).toEqual({ ok: false, error: expect.stringContaining('manual review'), status: 409 });
+    expect(d1.batch).not.toHaveBeenCalled();
+    expect(mocks.sendReceiptEmail).not.toHaveBeenCalled();
   });
 
-  it('creates an offline_pilot_fallback pending order when FEATURE_PAYOS !== true and uses PayOS when enabled', async () => {
-    process.env.FEATURE_PAYOS = 'false';
-    const fallbackRes = await dispatchPayOsMethod({
-      paymentMethod: 'payos', tier: 'BASIC', userId: 'u_pilot', period: 'pilot_14d', customerEmail: 'ceo@sme.vn',
+  it('does not send a pilot receipt without committed evidence', async () => {
+    const pilotOrder = {
+      order_id: 'sophia_user_pilot_2', user_id: 'user_pilot_2', tier: 'BASIC',
+      period: 'pilot_14d', amount_vnd: 1_990_000, invoice_url: 'https://pay.payos.vn/web/pilot-link-2', payment_method: 'payos', provider_order_code: 776655,
+    };
+    const db = {
+      from: vi.fn((table: string) => table === 'pending_orders'
+        ? buildChainableQuery({ data: [pilotOrder], error: null })
+        : table === 'user' ? buildChainableQuery({ data: { name: 'CEO', email: 'ceo@agency.vn' }, error: null })
+        : buildChainableQuery({ data: null, error: null })),
+    } as unknown as D1Client;
+    const d1 = {
+      prepare: vi.fn((sql: string) => ({ bind: vi.fn(() => ({
+        run: vi.fn().mockResolvedValue({ success: true }),
+        first: vi.fn().mockResolvedValue(sql.includes('SELECT ?1 AS amount_vnd') ? null
+          : { count: 0, id: null, tier: null, plan: null, status: null, current_period_start: null, current_period_end: null }),
+      })) })),
+      batch: vi.fn(async (statements: unknown[]) => statements.map(() => ({ success: true, meta: { changes: 1 } }))),
+    } as unknown as D1Database;
+    const result = await activatePayOsTier({
+      db, d1, orderCode: 776655, paymentLinkId: 'pilot-link-2', amount: 1_990_000, eventId: 'payos_776655',
+      lockCreatedAt: '2026-11-17T00:00:00.000Z', order: pilotOrder as unknown as import('@/land/orders/pending-order-types').PendingOrder,
     });
-    expect(fallbackRes.status).toBe(200);
-    await expect(fallbackRes.json()).resolves.toMatchObject({
-      status: 'pending_manual_payment', provider: 'offline_pilot_fallback', amountVnd: 1_990_000, amountUsd: 79,
-    });
-    expect(mocks.writeOrder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tier: 'BASIC', period: 'pilot_14d', payment_method: 'offline', amount_usd_cents: 7900, amount_vnd: 1_990_000,
-      }),
-    );
-
-    process.env.FEATURE_PAYOS = 'true';
-    mocks.createPayOsInvoice.mockResolvedValueOnce({
-      checkoutUrl: 'https://pay.payos.vn/web/live-pilot', qrUrl: 'https://pay.payos.vn/qr/live-pilot',
-      paymentLinkId: 'live-pilot', orderCode: 554433, expiresAt: '2026-11-15T01:00:00.000Z',
-    });
-    const liveRes = await dispatchPayOsMethod({ paymentMethod: 'payos', tier: 'BASIC', userId: 'u_pilot', period: 'pilot_14d' });
-    expect(liveRes.status).toBe(200);
-    await expect(liveRes.json()).resolves.toMatchObject({ url: 'https://pay.payos.vn/web/live-pilot', provider: 'payos', orderCode: 554433 });
+    expect(result).toEqual({ ok: false, error: expect.stringContaining('manual review'), status: 409 });
+    expect(d1.batch).not.toHaveBeenCalled();
+    expect(mocks.sendReceiptEmail).not.toHaveBeenCalled();
   });
+
 });

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLocale } from 'next-intl';
+import { CLOUD_VIDEO_QUOTA_BY_TIER } from '@/seed/config/tiers/video-quota-tiers';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 import {
   PricingRoiCalculatorHeader,
@@ -10,16 +11,18 @@ import {
 
 export { PricingRoiCalculatorHeader, PricingRoiSummaryCard };
 
-const VIDEO_PRESETS = [12, 30, 60, 90] as const;
+const GROWTH_VIDEO_LIMIT = CLOUD_VIDEO_QUOTA_BY_TIER.PREMIUM;
+const VIDEO_PRESETS = [12, 18, 24, GROWTH_VIDEO_LIMIT].filter((n) => n <= GROWTH_VIDEO_LIMIT);
 
 export function PricingRoiCalculator() {
   const locale = useLocale();
   const isVi = locale === 'vi';
-  const [videosPerMonth, setVideosPerMonth] = useState<number>(30);
+  const [videosPerMonth, setVideosPerMonth] = useState<number>(GROWTH_VIDEO_LIMIT);
 
   const traditionalAgencyCost = videosPerMonth * 150;
-  const starterMonthlyCost = UNIFIED_TIERS.BASIC.price;
-  const netMonthlySavings = Math.max(0, traditionalAgencyCost - starterMonthlyCost);
+  // Video rendering requires Growth (PREMIUM) or higher — never Starter (BASIC).
+  const growthMonthlyCost = UNIFIED_TIERS.PREMIUM.price;
+  const netMonthlySavings = Math.max(0, traditionalAgencyCost - growthMonthlyCost);
   const savingsPct = Math.min(98, Math.round((netMonthlySavings / Math.max(1, traditionalAgencyCost)) * 100));
 
   return (
@@ -30,6 +33,7 @@ export function PricingRoiCalculator() {
       className="mb-24 overflow-x-hidden rounded-2xl border border-amber-400/35 bg-gradient-to-br from-[#121722] via-[#11131F] to-[#0B0E14] p-5 text-[#F8FAFC] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] sm:p-6 md:p-8"
     >
       <PricingRoiCalculatorHeader isVi={isVi} />
+      <p className="mt-2 text-sm text-slate-300">{isVi ? 'Ước tính minh họa cho Growth, không phải cam kết ROI hoặc phạm vi Pilot. Pilot có 0 lượt dựng video Cloud; phí BYOK tính riêng.' : 'Illustrative Growth estimate, not an ROI guarantee or Pilot entitlement. Pilot includes 0 Cloud video renders; BYOK costs are separate.'}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="min-w-0 rounded-xl border border-[#1E2235] bg-[#121722]/90 p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] lg:col-span-2">
@@ -39,8 +43,8 @@ export function PricingRoiCalculator() {
               className="font-sans text-sm font-medium text-[#E3E1EB]"
             >
               {isVi
-                ? 'Số lượng video 9:16 & 16:9 xuất bản mỗi tháng:'
-                : 'Monthly 9:16 & 16:9 Videos Published:'}
+                ? 'Số lượng video 9:16 & 16:9 dựng mỗi tháng:'
+                : 'Monthly 9:16 & 16:9 Video Renders:'}
             </label>
             <span className="font-mono text-xl font-bold text-amber-400">
               {videosPerMonth} {isVi ? 'video/tháng' : 'videos/mo'}
@@ -76,7 +80,7 @@ export function PricingRoiCalculator() {
             id="stitch-video-volume-slider"
             type="range"
             min={10}
-            max={120}
+            max={GROWTH_VIDEO_LIMIT}
             step={1}
             value={videosPerMonth}
             onChange={(e) => setVideosPerMonth(Number(e.target.value))}
@@ -102,13 +106,13 @@ export function PricingRoiCalculator() {
               <strong className="text-[#F8FAFC]">${traditionalAgencyCost.toLocaleString()}</strong>
             </span>
             <span>
-              {isVi ? 'Gói Starter Sophia:' : 'Sophia Starter tier:'}{' '}
-              <strong className="text-emerald-400">${starterMonthlyCost}/mo</strong>
+              {isVi ? 'Gói Growth Sophia (có dựng video):' : 'Sophia Growth tier (video-enabled):'}{' '}
+              <strong className="text-emerald-400">${growthMonthlyCost}/mo</strong>
             </span>
           </div>
         </div>
 
-        <PricingRoiSummaryCard isVi={isVi} netMonthlySavings={netMonthlySavings} />
+        <PricingRoiSummaryCard isVi={isVi} netMonthlySavings={netMonthlySavings} growthMonthlyCost={growthMonthlyCost} />
       </div>
     </section>
   );

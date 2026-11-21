@@ -64,3 +64,6 @@ export function toVideoTierKey(dbTier: string): VideoTierKey {
   if (lower === 'enterprise' || lower === 'master') return 'enterprise';
   return 'free';
 }
+
+/** Monthly cloud render caps enforced by the media generation route. */
+export const CLOUD_VIDEO_QUOTA_BY_TIER = { BASIC: 0, PREMIUM: 30, ENTERPRISE: 200, MASTER: 1000 } as const;

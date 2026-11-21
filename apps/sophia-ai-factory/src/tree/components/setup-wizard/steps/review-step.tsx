@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { OPTION_A_PILOT_COPY } from '@/seed/config/tiers/option-a-pilot-contract';
+import { useTranslations, useLocale } from 'next-intl';
 import { Check, AlertTriangle, Route } from 'lucide-react';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
 import type { ReviewStepProps } from './review/review-types';
@@ -11,6 +12,7 @@ export type { ReviewStepProps } from './review/review-types';
 
 export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading }: ReviewStepProps) {
   const t = useTranslations('setupWizard.review');
+  const pilotCopy = OPTION_A_PILOT_COPY[useLocale() === 'vi' ? 'vi' : 'en'];
 
   const routingStrategyLabels: Record<string, string> = {
     priority: t('routingStrategy.priority.label'),
@@ -48,6 +50,8 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
       <div>
         <h2 className="text-xl font-bold text-foreground tracking-tight">{t('title')}</h2>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+        <p className="text-sm text-muted-foreground">{pilotCopy.scope}</p>
+        <p className="text-sm text-muted-foreground">{pilotCopy.refund}</p>
       </div>
 
       {!hasRequired && (

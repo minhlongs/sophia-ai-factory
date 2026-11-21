@@ -140,6 +140,9 @@ export async function activatePayOsSubscription(params: {
   lockCreatedAt: string;
 }): Promise<SubscriptionActivationResult> {
   const { db, userId, tier, order, paymentLinkId, lockCreatedAt } = params;
+  if (order.period === 'pilot_14d') {
+    throw new Error('Pilot payment requires manual review / Thanh toán Pilot cần được kiểm tra thủ công');
+  }
   const nowMs = Date.now();
   const now = new Date(nowMs).toISOString();
   const rawDb = db.unwrap();
@@ -193,7 +196,7 @@ export async function activatePayOsSubscription(params: {
         WHERE event_id = ?1 AND created_at = ?2 AND processed = 0
         AND EXISTS (SELECT 1 FROM pending_orders
           WHERE order_id = ?3 AND provider_payment_id IS ?4 AND user_id = ?5
-          AND status = 'pending' AND payment_method = 'payos'
+          AND status = 'pending' AND payment_method = 'payos' AND period <> 'pilot_14d'
           AND tier = ?6 AND period = ?7 AND amount_usd_cents = ?8 AND amount_vnd IS ?9
            AND provider_order_code IS ?19 AND invoice_url IS ?20 AND purpose IS ?21)
         AND ((?10 = 1 AND NOT EXISTS (SELECT 1 FROM org_members WHERE user_id = ?5))
