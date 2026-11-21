@@ -134,3 +134,47 @@ Independent read-only review (`code-reviewer` `aef5db0aefa376e71`) of the 4 clos
 - Runbook added: `docs/handover/telegram-ops-alerts.md` (bilingual setup instructions for future dedicated BotFather bot, private/group `chat_id`, safe secret storage, and future approved one-message smoke test).
 - Process-local circuit-breaker cooldown honors Telegram `retry_after` within a single Worker isolate; no cross-isolate durable queue, scheduler, dedup, or exactly-once delivery claim. Timeout after provider acceptance yields uncertain delivery.
 - `TELEGRAM_OPS_LOCAL: PASS`; `TELEGRAM_LIVE: NOT_CONFIGURED / NOT_TESTED`; `SLACK_OPS_FALLBACK: REMOVED / DISABLED`; `HISTORICAL_SLACK_FINDING: UNKNOWN_ORIGIN`.
+
+## Pre-Review Security Triage, Hosted CI & Worker Packaging Closure (2026-11-21) / Đóng triage bảo mật, CI hosted và đóng gói Worker
+
+### Commit-Bound Code Snapshot (`S_code`) / Ảnh chụp mã gắn commit
+
+- **PR:** Draft PR `#180` (`https://github.com/minhlongs/sophia-ai-factory/pull/180`), branch `fix/option-a-core-remediation-1-5`, stacked base `fix/sophia-10-6-option-a-revenue-closure` (`e8f06eac07ffde492f63e449b83fd09e1d3172fd`, parent Draft PR `#179`).
+- **Code Commit (`S_code`):** `a535b376910c53d94c0079726ab5c3dd84435a54` (`fix(security,ci): sanitize script generation logs and trigger PR CI on stacked base`).
+- **Scoped Files in `S_code`:** `apps/sophia-ai-factory/src/app/api/scripts/generate/route.ts`, `apps/sophia-ai-factory/src/app/api/scripts/generate/route.test.ts`, `.github/workflows/quality-gate.yml`, `.github/workflows/security-scan.yml`, `.github/workflows/dependency-audit.yml` (`.github/workflows/deploy.yml` untouched).
+
+### Security Triage & Disposition / Phân loại và xử lý bảo mật
+
+- **Finding:** `Secrets/PII in Logs` in `apps/sophia-ai-factory/src/app/api/scripts/generate/route.ts` — **Disposition: `CONFIRMED` and fixed in `S_code`**.
+- **Root Cause:** `route.ts` logged raw user-supplied `topic` (up to 500 chars) on start and error paths and passed raw `error` objects to `log.error`. In `src/seed/utils/logger/logger-internals.ts`, `entry.error.message` only runs `scrubPII` (not `redactSecrets`) and raw `error` is forwarded directly to `captureToSentry(error, entry.metadata)`.
+- **Fix Applied (`S_code`):** Replaced raw `topic` with `topicLength: topic.length` and replaced raw `error` objects with `errorName` (`error.name` or `"UnknownError"`) across all log calls in `route.ts`.
+- **Regression Test:** Added synthetic-marker test in `route.test.ts` verifying synthetic email, phone, and token markers never appear in emitted logger calls across success (200), `InvalidScriptStructureError` (502), `Error` (500), and non-`Error` throw (500) paths (`29 passed / 0 failed`; `route.ts` coverage `93.61%` stmts / `92.3%` branches / `95.65%` lines).
+- **Out-of-Scope Hardening Tracked:** Defense-in-depth scrubbing in `src/seed/utils/logger/logger-internals.ts` (scrubbing `error.message`/`stack` with `redactSecrets` + `scrubPII` and scrubbing before `captureToSentry`) filed separately as `ai-handle` issue `#183` (`https://github.com/minhlongs/sophia-ai-factory/issues/183`).
+- **Isolated Code Review:** Independent read-only review on `e8f06eac07ffde492f63e449b83fd09e1d3172fd...HEAD` returned **PASS** with 0 blocking findings.
+
+### Hosted CI Verification on `S_code` (`a535b376910c53d94c0079726ab5c3dd84435a54`) / Kiểm chứng CI hosted
+
+All 3 pull-request-only workflows (`permissions: contents: read`, `pull_request` trigger only; `deploy.yml` untouched) ran natively on Draft PR `#180` against stacked base `fix/sophia-10-6-option-a-revenue-closure` and passed:
+
+| Workflow / Check | Conclusion | Evidence / Run URL |
+|---|---|---|
+| `Quality Gate (Gates 1 + 3)` — `Gate 1 — Validation (tsc + eslint + boundaries + vitest)` | **PASS (`SUCCESS`)** | `https://github.com/minhlongs/sophia-ai-factory/actions/runs/44859146447` (Gate 1a–1f PASS; Gate 3a diff coverage `280/298` = `93.96%` lines, `250/292` = `85.62%` branches vs `BASE_SHA=e8f06eac07ffde492f63e449b83fd09e1d3172fd`; Gate 3b source guards PASS; Gate 3c live secret leaks = `0`) |
+| `Security Scan (Gate 2)` — `Gate 2 — Security (npm audit + trufflehog + csp-evaluator)` | **PASS (`SUCCESS`)** | `https://github.com/minhlongs/sophia-ai-factory/actions/runs/44859146454` (production `npm audit --audit-level=high --omit=dev` PASS; TruffleHog `--only-verified` PASS; CSP evaluator PASS) |
+| `Dependency Audit (Gate 4)` — `Gate 4 — Dependency (outdated + license check)` | **PASS (`SUCCESS`)** | `https://github.com/minhlongs/sophia-ai-factory/actions/runs/44859146423` (license gate PASS) |
+
+### Non-Deploying Cloudflare Worker Packaging Verification / Kiểm chứng đóng gói Worker không deploy
+
+- **Command (Node v22, `apps/sophia-ai-factory/`):** `env -u SENTRY_AUTH_TOKEN -u CLOUDFLARE_API_TOKEN SKIP_SYMBOL_UPLOAD=1 SKIP_SENTRY_BUILD=1 npm run deploy:build`
+- **Result:** **PASS** (zero deployment, zero R2/Sentry/Cloudflare remote side effects).
+- **Artifact:** `.open-next/worker.js` — `6,903` bytes, SHA-256 `0aaecc813a45a598e2fd557b492d032d78faad8fe9d029ce18b6bda6bde59940`, contains `/* __SCHEDULED_HANDLER_INJECTED__ */` at line 46 (`23 patterns, 40 routes`).
+- **Workspace Hygiene:** All 10 inherited dirty/untracked paths outside PR `#180` scope remain untouched and unstaged (`git status --short` verified before and after build).
+
+### Preserved Truthful Status Invariants / Bất biến trạng thái trung thực
+
+- `TELEGRAM_LIVE: NOT_CONFIGURED / NOT_TESTED` (`OPS_ALERT_PROVIDER` disabled by default; no live Telegram calls made).
+- `SLACK_OPS_FALLBACK: REMOVED / DISABLED` for migrated internal ops alerts.
+- `SLACK_SETUP_BY_FOUNDER: NEVER_CONFIGURED — OWNER_REPORTED`; `HISTORICAL_SLACK_WEBHOOK_ORIGIN: UNKNOWN`; `HISTORICAL_SLACK_FINDING: UNKNOWN_ORIGIN`; `CREDENTIAL_CONTAINMENT: UNKNOWN`.
+- `FEATURE_PAYOS: "false"` (`apps/sophia-ai-factory/wrangler.toml:227`).
+- `CORE_ALGORITHM_VALUE: INSUFFICIENT_EVIDENCE`; `LIVE_MODEL_EVAL: NOT_RUN / NOT_AUTHORIZED`; `PAID_SCRIPT_CONSUMPTION: NOT_ESTABLISHED`.
+- No merge, no production deployment, no remote D1 mutation, no production secret changes, no PayOS activation, and no paid AI calls were performed.
+
