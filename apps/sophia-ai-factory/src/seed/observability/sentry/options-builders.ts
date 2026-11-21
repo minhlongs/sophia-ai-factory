@@ -4,6 +4,7 @@
  * Layer: seed/observability/sentry
  */
 
+import { scrubTelegramTelemetry } from '../telegram-telemetry-filter';
 import type { BrowserOptions, NodeOptions } from '@sentry/nextjs';
 import {
   getDSN,
@@ -32,7 +33,10 @@ export function buildClientOptions(): BrowserOptions {
     replaysOnErrorSampleRate: isProd ? 1.0 : 0,
     ignoreErrors: IGNORE_ERRORS,
     beforeBreadcrumb: buildBeforeBreadcrumb,
+    beforeSendSpan: scrubTelegramTelemetry,
+    beforeSendTransaction: scrubTelegramTelemetry,
     beforeSend(event) {
+      scrubTelegramTelemetry(event);
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;
       if (should4xxBeDropped(statusCode)) return null;
@@ -50,7 +54,10 @@ export function buildServerOptions(): NodeOptions {
     tracesSampleRate: isProd ? 0.05 : 1.0,
     ignoreErrors: IGNORE_ERRORS,
     beforeBreadcrumb: buildBeforeBreadcrumb,
+    beforeSendSpan: scrubTelegramTelemetry,
+    beforeSendTransaction: scrubTelegramTelemetry,
     beforeSend(event) {
+      scrubTelegramTelemetry(event);
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;
       if (should4xxBeDropped(statusCode)) return null;
@@ -70,7 +77,10 @@ export function buildEdgeOptions(): EdgeOptions {
     tracesSampleRate: isProd ? 0.05 : 1.0,
     ignoreErrors: IGNORE_ERRORS,
     beforeBreadcrumb: buildBeforeBreadcrumb,
+    beforeSendSpan: scrubTelegramTelemetry,
+    beforeSendTransaction: scrubTelegramTelemetry,
     beforeSend(event) {
+      scrubTelegramTelemetry(event);
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;
       if (should4xxBeDropped(statusCode)) return null;

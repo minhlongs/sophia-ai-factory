@@ -1,161 +1,42 @@
-/**
- * Tests for ops-telegram-alert Inngest function.
- *
- * Verifies:
- * - Bilingual message formatting for AUTH_FAILURE and RATE_LIMIT
- * - Safe handling when bot token or chat ID is missing (fail-safe)
- * - Successful Telegram dispatch when configured
- * - Error handling when Telegram client fails
- */
+// @vitest-environment node
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+const mocks = vi.hoisted(() => ({ sendOpsAlert: vi.fn(), createFunction: vi.fn() }));
+vi.mock('@/seed/observability/ops-alert', () => ({ sendOpsAlert: mocks.sendOpsAlert }));
+vi.mock('@/seed/inngest/client', () => ({ inngest: { createFunction: mocks.createFunction } }));
+import { processOpsAlert } from '../ops-telegram-alert';
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  formatOpsAlertMessage,
-  processOpsAlert,
-} from '../ops-telegram-alert';
-
-const sendTelegramMessageMock = vi.fn();
-const loggerWarnMock = vi.fn();
-const loggerInfoMock = vi.fn();
-
-vi.mock('@/tree/telegram/telegram-client', () => ({
-  sendTelegramMessage: (...args: unknown[]) => sendTelegramMessageMock(...args),
-}));
-
-vi.mock('@/seed/utils/logger-utility', () => ({
-  logger: {
-    warn: (...args: unknown[]) => loggerWarnMock(...args),
-    info: (...args: unknown[]) => loggerInfoMock(...args),
-    error: vi.fn(),
-  },
-}));
-
-describe('opsTelegramAlert function', () => {
-  const originalEnv = process.env;
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-    sendTelegramMessageMock.mockReset();
-    loggerWarnMock.mockReset();
-    loggerInfoMock.mockReset();
+describe('mission failure ops-only dispatch', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+  afterEach(() => { vi.unstubAllEnvs(); });
+  it('discards customer details, reason, action and payload destination', async () => {
+    mocks.sendOpsAlert.mockResolvedValue({ sent: true });
+    expect(await processOpsAlert({ provider: 'private-provider', chatId: 'attacker',
+      reason: 'private customer', action: 'https://attacker.invalid', failureKind: 'AUTH_FAILURE' }))
+      .toEqual({ sent: true });
+    expect(mocks.sendOpsAlert).toHaveBeenCalledExactlyOnceWith({ severity: 'high',
+      eventType: 'mission_auth_failure', incidentId: undefined });
   });
-
-  afterEach(() => {
-    process.env = originalEnv;
+  it.each(['RATE_LIMIT', 'UNKNOWN'])('maps %s to fixed event label', async (failureKind) => {
+    await processOpsAlert({ provider: 'private', failureKind });
+    expect(mocks.sendOpsAlert).toHaveBeenCalledWith(expect.objectContaining({
+      eventType: failureKind === 'RATE_LIMIT' ? 'mission_rate_limit' : 'mission_failed',
+    }));
   });
-
-  describe('formatOpsAlertMessage', () => {
-    it('formats bilingual alert for AUTH_FAILURE with default text', () => {
-      const msg = formatOpsAlertMessage({
-        provider: 'fal-ai',
-        failureKind: 'AUTH_FAILURE',
-      });
-
-      expect(msg).toContain('⚠️ Sophia Ops Alert / Cảnh báo vận hành');
-      expect(msg).toContain('Provider / Nhà cung cấp: fal-ai');
-      expect(msg).toContain('API Key Expired or Invalid (AUTH_FAILURE)');
-      expect(msg).toContain('Khóa API không hợp lệ hoặc hết hạn');
-      expect(msg).toContain('Creative Mission execution paused');
-      expect(msg).toContain('Update API key in Setup Wizard: /vi/setup');
-      expect(msg).toContain('/vi/setup');
-    });
-
-    it('formats bilingual alert for RATE_LIMIT with default text', () => {
-      const msg = formatOpsAlertMessage({
-        provider: 'openrouter',
-        failureKind: 'RATE_LIMIT',
-      });
-
-      expect(msg).toContain('Provider / Nhà cung cấp: openrouter');
-      expect(msg).toContain('RATE_LIMIT');
-      expect(msg).toContain('Check provider quota & retry');
-    });
-
-    it('honors custom reason, impact, and action overrides', () => {
-      const msg = formatOpsAlertMessage({
-        provider: 'replicate',
-        failureKind: 'CUSTOM',
-        reason: 'Custom reason',
-        impact: 'Custom impact',
-        action: 'Custom action',
-      });
-
-      expect(msg).toContain('Reason / Lý do: Custom reason');
-      expect(msg).toContain('Impact / Tác động: Custom impact');
-      expect(msg).toContain('Action for CEO / Hướng xử lý: Custom action');
-    });
+  it('returns rate limit honestly without retrying or replaying business/accounting work', async () => {
+    const deferred = { sent: false, reason: 'rate_limited', retryAfterSeconds: 120 };
+    mocks.sendOpsAlert.mockResolvedValue(deferred);
+    expect(await processOpsAlert({ provider: 'private', failureKind: 'RATE_LIMIT' })).toEqual(deferred);
+    expect(mocks.sendOpsAlert).toHaveBeenCalledOnce();
   });
-
-  describe('processOpsAlert', () => {
-    it('returns unconfigured without crashing if TELEGRAM_BOT_TOKEN is unset', async () => {
-      delete process.env.TELEGRAM_BOT_TOKEN;
-      process.env.TELEGRAM_ADMIN_CHAT_ID = '123456789';
-
-      const result = await processOpsAlert({
-        provider: 'fal-ai',
-        failureKind: 'AUTH_FAILURE',
-      });
-
-      expect(result).toEqual({ sent: false, reason: 'unconfigured' });
-      expect(loggerWarnMock).toHaveBeenCalled();
-      expect(sendTelegramMessageMock).not.toHaveBeenCalled();
-    });
-
-    it('returns unconfigured without crashing if chat ID is unset', async () => {
-      process.env.TELEGRAM_BOT_TOKEN = 'mock-bot-token';
-      delete process.env.TELEGRAM_ADMIN_CHAT_ID;
-      delete process.env.TELEGRAM_CHAT_ID;
-      delete process.env.ADMIN_TELEGRAM_CHAT_ID;
-      delete process.env.TELEGRAM_FOUNDER_CHAT_ID;
-
-      const result = await processOpsAlert({
-        provider: 'fal-ai',
-        failureKind: 'AUTH_FAILURE',
-      });
-
-      expect(result).toEqual({ sent: false, reason: 'unconfigured' });
-      expect(loggerWarnMock).toHaveBeenCalled();
-      expect(sendTelegramMessageMock).not.toHaveBeenCalled();
-    });
-
-    it('successfully dispatches Telegram message when credentials exist', async () => {
-      process.env.TELEGRAM_BOT_TOKEN = 'mock-bot-token';
-      process.env.TELEGRAM_ADMIN_CHAT_ID = '987654321';
-      sendTelegramMessageMock.mockResolvedValue({ message_id: 42 });
-
-      const result = await processOpsAlert({
-        provider: 'fal-ai',
-        failureKind: 'AUTH_FAILURE',
-      });
-
-      expect(result).toEqual({
-        sent: true,
-        provider: 'fal-ai',
-        chatId: '987654321',
-      });
-      expect(sendTelegramMessageMock).toHaveBeenCalledWith(
-        '987654321',
-        expect.stringContaining('fal-ai')
-      );
-      expect(loggerInfoMock).toHaveBeenCalled();
-    });
-
-    it('handles delivery failure from sendTelegramMessage gracefully', async () => {
-      process.env.TELEGRAM_BOT_TOKEN = 'mock-bot-token';
-      process.env.TELEGRAM_ADMIN_CHAT_ID = '987654321';
-      sendTelegramMessageMock.mockResolvedValue(null);
-
-      const result = await processOpsAlert({
-        provider: 'openrouter',
-        failureKind: 'RATE_LIMIT',
-      });
-
-      expect(result).toEqual({
-        sent: false,
-        reason: 'delivery_failed',
-        provider: 'openrouter',
-      });
-      expect(loggerWarnMock).toHaveBeenCalled();
-    });
+  it('registers a no-retry notification consumer, preserving actionability filter', async () => {
+    vi.resetModules();
+    await import('../ops-telegram-alert');
+    const [config, trigger, handler] = mocks.createFunction.mock.calls[0];
+    expect(config).toEqual({ id: 'ops-telegram-alert', retries: 0 });
+    expect(trigger).toEqual({ event: 'agent.mission.failed' });
+    mocks.sendOpsAlert.mockResolvedValue({ sent: false, reason: 'disabled' });
+    await expect(handler({ event: { data: { provider: 'fal-ai', failureKind: 'AUTH_FAILURE' } } }))
+      .resolves.toEqual({ sent: false, reason: 'disabled' });
+    expect(mocks.sendOpsAlert).toHaveBeenCalledOnce();
   });
 });

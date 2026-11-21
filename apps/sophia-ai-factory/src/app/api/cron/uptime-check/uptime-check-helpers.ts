@@ -16,8 +16,7 @@ import {
   openIncident,
   closeIncident,
 } from '@/land/status/status-store';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+import { sendOpsAlert } from '@/seed/observability/ops-alert';
 import { evaluateIncidentAction, type CheckStatus } from '@/land/status/incident-state-machine';
 
 export const CRON_NAME = 'uptime-check';
@@ -28,41 +27,12 @@ export const HEALTH_URL = process.env.PROD_URL
   ? `${process.env.PROD_URL}/api/health`
   : 'https://sophia.agencyos.network/api/health';
 
-const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 export const LATENCY_WARN_MS = 5000;
-const SERVICE_NAME = 'telegram-uptime-alert';
 
-/** Send a Telegram message to the admin chat. Best-effort — never throws unless circuit is open. */
-export async function alertAdmin(message: string): Promise<void> {
-  if (!ADMIN_TELEGRAM_CHAT_ID || !TELEGRAM_BOT_TOKEN) {
-    logger.warn('[uptime-check] No admin Telegram config — alert skipped');
-    return;
-  }
-  try {
-    if (!shouldAllowRequest(SERVICE_NAME)) {
-      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
-    }
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: ADMIN_TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML',
-      }),
-    });
-    if (res.ok) {
-      recordSuccess(SERVICE_NAME);
-    } else {
-      const kind = classifyHttpStatus(res.status);
-      recordFailure(SERVICE_NAME, kind);
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err;
-    const kind = classifyError(err);
-    recordFailure(SERVICE_NAME, kind);
-  }
+/** Only an allowlisted incident label is sent; raw health diagnostics stay in-platform. */
+export async function alertAdmin(message: string) {
+  return sendOpsAlert({ severity: 'high',
+    eventType: message.includes('INCIDENT RESOLVED') ? 'uptime_recovered' : 'uptime_incident' });
 }
 
 export async function recordHealthStatusAndEvaluateIncident(

@@ -4,6 +4,7 @@
  * Layer: seed/observability/sentry
  */
 
+import { scrubTelegramTelemetry } from '../telegram-telemetry-filter';
 import type { Breadcrumb } from '@sentry/core';
 import {
   ALLOWED_BREADCRUMB_CATEGORIES,
@@ -15,6 +16,7 @@ import { shouldKeepSseBreadcrumb } from './sse-sampler';
 export function stripPii<T extends { request?: { data?: unknown }; extra?: Record<string, unknown> }>(
   event: T
 ): T {
+  scrubTelegramTelemetry(event);
   if (event.extra) {
     const sanitized = { ...event.extra };
     for (const key of Object.keys(sanitized)) {
@@ -32,6 +34,7 @@ export function stripPii<T extends { request?: { data?: unknown }; extra?: Recor
 export function buildBeforeBreadcrumb(
   breadcrumb: Breadcrumb,
 ): Breadcrumb | null {
+  scrubTelegramTelemetry(breadcrumb);
   const category = breadcrumb.category ?? '';
   if (category && !ALLOWED_BREADCRUMB_CATEGORIES.has(category)) return null;
 

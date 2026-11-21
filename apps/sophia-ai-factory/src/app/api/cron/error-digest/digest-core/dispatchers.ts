@@ -1,3 +1,4 @@
+import { sendOpsAlert } from '@/seed/observability/ops-alert';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
@@ -35,31 +36,9 @@ export async function callOpenRouter(fingerprints: ErrorRow[]): Promise<string> 
   }
 }
 
-export async function sendTelegram(message: string): Promise<void> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.ADMIN_TELEGRAM_CHAT_ID;
-  if (!botToken || !chatId) return;
-
-  const SERVICE = 'telegram-error-digest';
-  if (!shouldAllowRequest(SERVICE)) return;
-
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
-    });
-    if (res.ok) {
-      recordSuccess(SERVICE);
-    } else {
-      const kind = classifyHttpStatus(res.status);
-      recordFailure(SERVICE, kind);
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('Circuit breaker open')) throw err;
-    const kind = classifyError(err);
-    recordFailure(SERVICE, kind);
-  }
+/** The report remains in-platform/email; Telegram receives no report or model output. */
+export async function sendTelegram(_message: string) {
+  return sendOpsAlert({ severity: 'medium', eventType: 'error_digest' });
 }
 
 export async function sendFounderEmail(to: string, subject: string, body: string): Promise<void> {

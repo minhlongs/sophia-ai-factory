@@ -8,7 +8,7 @@ import { getErrorMessage } from '@/seed/utils/to-error';
 import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment';
 import { markPaid } from '@/seed/db/repositories/user-purchases-repo';
 import { cleanupSyntheticArtifacts } from '@/land/monitoring/synthetic-cleanup';
-import { sendSlackAlert } from '@/land/monitoring/slack-alert';
+import { sendOpsAlert } from '@/seed/observability/ops-alert';
 import { SYNTHETIC_USER_ID } from '@/seed/config/synthetic-monitoring';
 
 export const CRON_NAME = 'smoke-one-time';
@@ -59,11 +59,8 @@ export async function runSmokePhaseACheck(db: D1Database, nowSec: number): Promi
           ageMinutes: ageMin,
         });
 
-        await sendSlackAlert('high', `Synthetic fulfillment STALE after ${ageMin}min`, {
-          purchaseId: purchase.id,
-          ageMinutes: ageMin,
-          environment: process.env.NODE_ENV ?? 'unknown',
-        });
+        await sendOpsAlert({ severity: 'high', eventType: 'synthetic_fulfillment_stale',
+          incidentId: purchase.id });
       }
 
       await cleanupSyntheticArtifacts(purchase.id);
