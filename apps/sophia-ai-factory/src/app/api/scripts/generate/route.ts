@@ -4,7 +4,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
-import { generateScript, selectModelForTier } from "@/seed/ai/script-generator";
+import {
+  generateScript,
+  selectModelForTier,
+  validateParsedScriptStructure,
+  InvalidScriptStructureError,
+} from "@/seed/ai/script-generator";
 import { getScriptSteeringForUser } from "@/land/growth-v16/prior-script-bridge";
 import { logger } from "@/seed/utils/logger-utility";
 import type { Tier } from "@/seed/types";
@@ -84,26 +89,39 @@ export async function POST(request: Request): Promise<NextResponse> {
       topic,
       audience,
       tier: effectiveTier,
+      durationSec,
       userId: user.id,
       steering,
-    }, { funding: { fund: 'byok', apiKey: key.key } });
+    }, { funding: { fund: 'byok', apiKey: key.key }, minScenes: 3 });
 
-    if (script.scenes.length < 2) {
-      throw new Error("Generator returned insufficient scenes");
+    const validatedScript = validateParsedScriptStructure(script, {
+      minScenes: 3,
+      targetDurationSec: durationSec,
+    });
+
+    const firstScene = validatedScript.scenes[0];
+    const lastScene = validatedScript.scenes[validatedScript.scenes.length - 1];
+    const bodyText = validatedScript.scenes
+      .slice(1, -1)
+      .map((s) => s.narration)
+      .join(" ")
+      .trim();
+    if (!firstScene || !lastScene || bodyText.length === 0) {
+      throw new InvalidScriptStructureError("scenes must contain non-empty hook, body, and cta");
     }
 
     log.info("Script generation completed", {
       userId: user.id,
-      scenes: script.scenes.length,
-      totalDuration: script.total_duration,
+      scenes: validatedScript.scenes.length,
+      totalDuration: validatedScript.total_duration,
     });
 
     return NextResponse.json({
       requestId,
       content: {
-        hook: script.scenes[0]?.narration ?? "",
-        body: script.scenes.slice(1, -1).map((s: { narration: string }) => s.narration).join(" "),
-        cta: script.scenes[script.scenes.length - 1]?.narration ?? "",
+        hook: firstScene.narration,
+        body: bodyText,
+        cta: lastScene.narration,
       },
       metadata: {
         tier: effectiveTier,
@@ -124,6 +142,17 @@ export async function POST(request: Request): Promise<NextResponse> {
         error: 'Your OpenRouter credits are exhausted. Add credits with your provider and retry. / Tín dụng OpenRouter đã hết. Nạp thêm tại nhà cung cấp rồi thử lại.',
         code: 'OPENROUTER_CREDITS_EXHAUSTED',
       }, { status: 402 });
+    }
+    if (error instanceof InvalidScriptStructureError) {
+      log.error("Script output failed contract validation", error, {
+        userId: user.id,
+        topic,
+        durationSec,
+      });
+      return NextResponse.json({
+        error: 'Generated script failed validation. Please retry. / Kịch bản tạo ra không hợp lệ. Vui lòng thử lại.',
+        code: 'INVALID_SCRIPT_OUTPUT',
+      }, { status: 502 });
     }
     log.error(
       "Script generation failed",

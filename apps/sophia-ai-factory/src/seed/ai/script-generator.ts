@@ -15,7 +15,14 @@ import {
 } from './script-generator-helpers';
 
 export type { ScriptOutput } from './script-prompt-builders';
-export { selectModelForTier, type GenerateScriptInput, type ApiKeyResolver } from './script-generator-helpers';
+export {
+  selectModelForTier,
+  validateParsedScriptStructure,
+  InvalidScriptStructureError,
+  type GenerateScriptInput,
+  type ApiKeyResolver,
+  type ValidateScriptOptions,
+} from './script-generator-helpers';
 
 let globalApiKeyResolver: ApiKeyResolver | null = null;
 
@@ -30,7 +37,18 @@ export function registerApiKeyResolver(resolver: ApiKeyResolver | null): void {
  * @param deps - Injected dependencies to avoid static layer-boundary imports.
  */
 export async function generateScript(input: GenerateScriptInput, deps?: ScriptGenDeps) {
-  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId: _orgId, affiliateOffer, steering } = input;
+  const {
+    topic,
+    audience,
+    tier,
+    durationSec,
+    userId,
+    licenseKey,
+    licenseNonce,
+    orgId: _orgId,
+    affiliateOffer,
+    steering,
+  } = input;
   const stopTimer = deps?.startTimer?.();
 
   const context = deps?.getUsageContext?.();
@@ -70,7 +88,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
   const model = selectModelForTier(tier);
   const messages = [
     { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
-    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer, steering) },
+    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer, steering, durationSec) },
   ];
 
   try {
@@ -86,9 +104,9 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
 
     const responseTime = stopTimer?.() ?? 0;
 
-    let parsed: ScriptOutput;
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(content) as ScriptOutput;
+      parsed = JSON.parse(content);
     } catch {
       if (deps?.trackUsage) {
         await deps.trackUsage({
@@ -107,6 +125,33 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
       throw new Error('Invalid JSON from LLM');
     }
 
+    let validated: ScriptOutput;
+    try {
+      validated = validateParsedScriptStructure(parsed, {
+        minScenes: deps?.minScenes,
+        targetDurationSec: durationSec,
+      });
+    } catch (validationError) {
+      if (deps?.trackUsage) {
+        await deps.trackUsage({
+          userId: finalUserId,
+          licenseKeyHash,
+          licenseNonce: finalLicenseNonce,
+          service: 'openrouter',
+          endpoint: '/chat/completions',
+          action: 'chat_completion',
+          tierAtRequest: tier,
+          errorMessage:
+            validationError instanceof Error
+              ? validationError.message
+              : 'Invalid script structure',
+          responseTimeMs: responseTime,
+          creditsUsed: 0,
+        });
+      }
+      throw validationError;
+    }
+
     if (deps?.trackUsage) {
       await deps.trackUsage({
         userId: finalUserId,
@@ -122,7 +167,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
       });
     }
 
-    return validateParsedScriptStructure(parsed);
+    return validated;
   } catch (error) {
     rethrowMappedProviderError(error);
   }

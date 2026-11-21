@@ -62,7 +62,9 @@ beforeAll(async () => {
     if (url === 'https://openrouter.ai/api/v1/chat/completions' && method === 'POST') {
       expect(new Headers(init?.headers).get('authorization')).toBe(`Bearer ${customerKey}`);
       return Response.json({ choices: [{ message: { content: JSON.stringify({ title: 'Synthetic owned topic', total_duration: 30, scenes: [
-        { narration: 'Synthetic hook', duration: 10 }, { narration: 'Synthetic body', duration: 10 }, { narration: 'Synthetic CTA', duration: 10 },
+        { scene_number: 1, visual_description: 'Synthetic opening visual', narration: 'Synthetic hook', duration_estimate: 10 },
+        { scene_number: 2, visual_description: 'Synthetic demonstration visual', narration: 'Synthetic body', duration_estimate: 10 },
+        { scene_number: 3, visual_description: 'Synthetic closing visual', narration: 'Synthetic CTA', duration_estimate: 10 },
       ] }) } }] });
     }
     blockedFetches.push(`${method} ${url}`);

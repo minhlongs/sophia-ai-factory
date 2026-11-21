@@ -125,13 +125,13 @@ SENTRY_PROJECT = sophia-ai-factory
 6. Click **Allow** (authorization popup)
 7. Copy the **Webhook URL** — looks like:
    ```
-   https://hooks.slack.com/services/T123/B456/abc123def456xyz789
+   <SLACK_OPS_WEBHOOK_URL>
    ```
    This is your **`SLACK_OPS_WEBHOOK_URL`**
 
 **Write this down:**
 ```
-SLACK_OPS_WEBHOOK_URL = https://hooks.slack.com/services/T123/B456/abc123def456xyz789
+SLACK_OPS_WEBHOOK_URL = <paste the URL copied from Slack / dán URL đã sao chép từ Slack>
 ```
 
 ---
@@ -164,8 +164,10 @@ echo "sophia-ai-factory" | npx wrangler secret put SENTRY_PROJECT
 ### 3c. Set Slack Secret
 ```bash
 # 5. SLACK_OPS_WEBHOOK_URL
-echo "https://hooks.slack.com/services/T123/B456/abc123def456xyz789" | npx wrangler secret put SLACK_OPS_WEBHOOK_URL
+npx wrangler secret put SLACK_OPS_WEBHOOK_URL
 ```
+
+Paste the URL when prompted; do not save it in this document. / Dán URL khi được hỏi; không lưu URL trong tài liệu này.
 
 **Expected output:** Each command prints:
 ```

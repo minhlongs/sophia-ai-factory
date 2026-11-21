@@ -34,8 +34,10 @@ export { calculateCredits, hashLicenseKey, startTimer };
  */
 export async function trackUsage(event: UsageEventInput): Promise<IngestionResult> {
   try {
-    const idempotencyKey = event.idempotencyKey || generateIdempotencyKey({
-      requestId: event.requestId,
+    // A key's format cannot prove its tenant provenance. Bind every supplied
+    // key, including internally generated keys, at this ingestion boundary.
+    const idempotencyKey = generateIdempotencyKey({
+      requestId: event.idempotencyKey || event.requestId,
       userId: event.userId,
       licenseNonce: event.licenseNonce,
       service: event.service,
@@ -43,8 +45,8 @@ export async function trackUsage(event: UsageEventInput): Promise<IngestionResul
       timestamp: event.createdAt ?? Date.now(),
     });
 
-    // Check for duplicate (idempotency check)
-    const existingId = await checkIdempotencyKey(idempotencyKey);
+    // Check for duplicate (idempotency check scoped to tenant userId)
+    const existingId = await checkIdempotencyKey(idempotencyKey, event.userId);
     if (existingId) {
       logger.debug('[Usage Metering] Duplicate event detected', {
         idempotencyKey,

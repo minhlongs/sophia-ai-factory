@@ -87,16 +87,26 @@ export async function resolveExternalCustomerId(licenseNonce: string): Promise<s
 /**
  * Check if idempotency key already exists in database
  *
+ * @param idempotencyKey - Idempotency key to check
+ * @param userId - Optional tenant/user ID to scope the lookup
  * @returns Existing record ID if found, null otherwise
  */
-export async function checkIdempotencyKey(idempotencyKey: string): Promise<string | null> {
+export async function checkIdempotencyKey(
+  idempotencyKey: string,
+  userId?: string,
+): Promise<string | null> {
   try {
     const db = createServerClient();
-    const { data, error } = await db
+    let query = db
       .from('usage_events')
       .select('id')
-      .eq('idempotency_key', idempotencyKey)
-      .single();
+      .eq('idempotency_key', idempotencyKey);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query.single();
 
     if (error || !data) {
       return null;

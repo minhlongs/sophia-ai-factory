@@ -3,6 +3,7 @@
 
 import React from 'react';
 import type { Campaign } from './campaigns-page-types';
+import { CampaignScriptReview } from './campaign-script-review';
 
 export function CampaignCardDetails({
   campaign,
@@ -48,6 +49,8 @@ export function CampaignCardDetails({
           </div>
         </div>
       )}
+
+      {campaign.status === 'done' && <CampaignScriptReview campaignId={campaign.id} />}
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto">

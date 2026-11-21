@@ -18,7 +18,9 @@ import {
 } from "@/land/campaigns";
 import { revalidatePath } from "next/cache";
 import { tierGuard } from "@/land/tier-guard";
+import { updateCampaignStatus } from "@/land/video/generation/generate-campaign-db";
 import { toError } from "@/seed/utils/to-error";
+import { logger } from "@/seed/utils/logger-utility";
 import {
   extractCampaignFormData,
   validateCampaignFormData,
@@ -89,7 +91,7 @@ export async function createCampaign(formData: FormData) {
       offerId,
     });
 
-    await tryDispatchCampaignCreatedEvent({
+    const dispatchResult = await tryDispatchCampaignCreatedEvent({
       campaignId,
       userId,
       topic: topic || title!,
@@ -97,6 +99,30 @@ export async function createCampaign(formData: FormData) {
       tier,
       abExperimentId,
     });
+
+    if (!dispatchResult.dispatched) {
+      try {
+        await updateCampaignStatus(campaignId, "failed", 0, {
+          error_message: `Dispatch failed: ${dispatchResult.error}`,
+        });
+      } catch (statusErr) {
+        logger.error(
+          "[createCampaign] Failed to mark campaign failed after dispatch error",
+          {
+            campaignId,
+            error: toError(statusErr).message,
+          },
+        );
+      }
+
+      revalidatePath("/dashboard/campaigns");
+      return {
+        success: false,
+        error: "Failed to queue campaign execution / Không thể đưa chiến dịch vào hàng chờ xử lý",
+        message: "Failed to queue campaign execution / Không thể đưa chiến dịch vào hàng chờ xử lý",
+        campaignId,
+      };
+    }
 
     revalidatePath("/dashboard/campaigns");
     return { success: true, message: "Campaign created", campaignId };

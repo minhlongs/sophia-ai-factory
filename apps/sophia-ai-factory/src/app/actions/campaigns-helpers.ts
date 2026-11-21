@@ -87,6 +87,10 @@ export async function tryCreateCampaignAbExperiment(params: {
   }
 }
 
+export type DispatchCampaignEventResult =
+  | { dispatched: true }
+  | { dispatched: false; error: string };
+
 export async function tryDispatchCampaignCreatedEvent(params: {
   campaignId: string;
   userId: string;
@@ -94,10 +98,17 @@ export async function tryDispatchCampaignCreatedEvent(params: {
   audience: string;
   tier: Tier;
   abExperimentId?: string;
-}): Promise<void> {
+}): Promise<DispatchCampaignEventResult> {
   try {
     await sendCampaignCreatedEvent(params);
-  } catch {
-    // Inngest not configured — campaign still created
+    return { dispatched: true };
+  } catch (err) {
+    const errorMessage = toError(err).message;
+    logger.error("[createCampaign] Failed to dispatch campaign.created event", {
+      campaignId: params.campaignId,
+      userId: params.userId,
+      error: errorMessage,
+    });
+    return { dispatched: false, error: errorMessage };
   }
 }

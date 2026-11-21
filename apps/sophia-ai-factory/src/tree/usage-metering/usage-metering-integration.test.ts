@@ -74,8 +74,8 @@ describe('Usage Metering - Idempotency', () => {
       expect(key1).not.toBe(key2);
     });
 
-    it('generates deterministic key when requestId is provided', () => {
-      // With requestId, the key is stable across calls — used for client-driven dedup
+    it('generates deterministic tenant-scoped key when requestId is provided', () => {
+      // With requestId, the key is stable across calls for the same user — used for client-driven dedup
       const event = {
         requestId: 'fixed-request-id',
         userId: 'user-123',
@@ -88,11 +88,11 @@ describe('Usage Metering - Idempotency', () => {
       const key1 = generateIdempotencyKey(event);
       const key2 = generateIdempotencyKey(event);
 
-      expect(key1).toBe('req_fixed-request-id');
+      expect(key1).toMatch(/^req_[a-f0-9]{64}$/);
       expect(key1).toBe(key2);
     });
 
-    it('uses requestId as prefix when provided', () => {
+    it('uses req_ prefix with tenant-scoped hash when requestId is provided', () => {
       const event = {
         requestId: 'req-unique-123',
         userId: 'user-123',
@@ -104,7 +104,8 @@ describe('Usage Metering - Idempotency', () => {
 
       const key = generateIdempotencyKey(event);
 
-      expect(key).toBe('req_req-unique-123');
+      expect(key).toMatch(/^req_[a-f0-9]{64}$/);
+      expect(isValidIdempotencyKey(key)).toBe(true);
     });
 
     it('generates different keys for different timestamps', () => {

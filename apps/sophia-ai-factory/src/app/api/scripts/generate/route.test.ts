@@ -34,7 +34,7 @@ vi.mock("next/server", async (importOriginal) => {
 
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
-import { generateScript } from "@/seed/ai/script-generator";
+import { generateScript, InvalidScriptStructureError } from "@/seed/ai/script-generator";
 import { lookupUserApiKey } from "@/tree/byok/user-api-key-store";
 import { ProviderInvalidKeyError, ProviderQuotaExceededError } from "@/seed/services/errors";
 
@@ -115,6 +115,7 @@ describe("POST /api/scripts/generate", () => {
     expect(lookupUserApiKey).toHaveBeenCalledWith('user-abc', 'openrouter');
     expect(generateScript).toHaveBeenCalledWith(expect.objectContaining({ userId: 'user-abc' }), {
       funding: { fund: 'byok', apiKey: 'customer-key' },
+      minScenes: 3,
     });
   });
 
@@ -235,5 +236,139 @@ describe("POST /api/scripts/generate", () => {
     expect(res.status).toBe(200);
     expect((res.body.metadata as Record<string, unknown>).tier).toBe("BASIC");
     expect((res.body.metadata as Record<string, unknown>).model).toBe("openai/gpt-4o-mini");
+  });
+
+  it.each([10, 60, 180, 300])(
+    "forwards durationSec=%i to generateScript and succeeds when output duration matches",
+    async (durationSec) => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+      const sceneDuration = Math.max(1, Math.round(durationSec / 3));
+      vi.mocked(generateScript).mockResolvedValue({
+        title: `Script ${durationSec}s`,
+        scenes: [
+          { scene_number: 1, visual_description: "opener", narration: "Hook line", duration_estimate: sceneDuration },
+          { scene_number: 2, visual_description: "body", narration: "Body line", duration_estimate: sceneDuration },
+          { scene_number: 3, visual_description: "close", narration: "CTA line", duration_estimate: sceneDuration },
+        ],
+        total_duration: durationSec,
+      });
+
+      const res = await POST(
+        makeRequest({ topic: "fitness", audience: "beginners", durationSec })
+      ) as unknown as MockResponse;
+
+      expect(res.status).toBe(200);
+      expect(generateScript).toHaveBeenCalledWith(
+        expect.objectContaining({ durationSec }),
+        expect.objectContaining({ funding: { fund: "byok", apiKey: "customer-key" } })
+      );
+      expect((res.body.metadata as Record<string, unknown>).durationSec).toBe(durationSec);
+    }
+  );
+
+  it.each([undefined, "   "])("fails closed with 502 for invalid narration %s", async (narration) => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+    vi.mocked(generateScript).mockResolvedValue({
+      title: "Bad Script",
+      scenes: [
+        { scene_number: 1, visual_description: "opener", narration: narration as string, duration_estimate: 10 },
+        { scene_number: 2, visual_description: "body", narration: "Body here", duration_estimate: 5 },
+        { scene_number: 3, visual_description: "close", narration: "CTA here", duration_estimate: 5 },
+      ],
+      total_duration: 20,
+    });
+
+    const res = await POST(
+      makeRequest({ topic: "fitness", audience: "beginners", durationSec: 30 })
+    ) as unknown as MockResponse;
+
+    expect(res.status).toBe(502);
+    expect(res.body).toMatchObject({ code: "INVALID_SCRIPT_OUTPUT" });
+    expect(res.body.content).toBeUndefined();
+  });
+
+  it.each([
+    { visual: undefined, duration: 10 },
+    { visual: "   ", duration: 10 },
+    { visual: "opener", duration: 0 },
+    { visual: "opener", duration: -1 },
+  ])("fails closed with 502 for malformed scene fields %j", async ({ visual, duration }) => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+    vi.mocked(generateScript).mockResolvedValue({
+      title: "Bad Visual Script",
+      scenes: [
+        { scene_number: 1, visual_description: visual as string, narration: "Hook here", duration_estimate: duration },
+        { scene_number: 2, visual_description: "body", narration: "Body here", duration_estimate: 5 },
+        { scene_number: 3, visual_description: "close", narration: "CTA here", duration_estimate: 5 },
+      ],
+      total_duration: 20,
+    });
+
+    const res = await POST(
+      makeRequest({ topic: "fitness", audience: "beginners", durationSec: 30 })
+    ) as unknown as MockResponse;
+
+    expect(res.status).toBe(502);
+    expect(res.body).toMatchObject({ code: "INVALID_SCRIPT_OUTPUT" });
+  });
+
+  it("fails closed with 502 when output total_duration violates requested durationSec range", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+    vi.mocked(generateScript).mockResolvedValue({
+      title: "Mismatched Duration",
+      scenes: [
+        { scene_number: 1, visual_description: "opener", narration: "Hook here", duration_estimate: 5 },
+        { scene_number: 2, visual_description: "body", narration: "Body here", duration_estimate: 2 },
+        { scene_number: 3, visual_description: "close", narration: "CTA here", duration_estimate: 3 },
+      ],
+      total_duration: 10,
+    });
+
+    const res = await POST(
+      makeRequest({ topic: "fitness", audience: "beginners", durationSec: 180 })
+    ) as unknown as MockResponse;
+
+    expect(res.status).toBe(502);
+    expect(res.body).toMatchObject({ code: "INVALID_SCRIPT_OUTPUT" });
+  });
+
+  it("fails closed with 502 when script has only 2 scenes (empty body)", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+    vi.mocked(generateScript).mockResolvedValue({
+      title: "Two Scene Script",
+      scenes: [
+        { scene_number: 1, visual_description: "opener", narration: "Hook here", duration_estimate: 15 },
+        { scene_number: 2, visual_description: "close", narration: "CTA here", duration_estimate: 15 },
+      ],
+      total_duration: 30,
+    });
+
+    const res = await POST(
+      makeRequest({ topic: "fitness", audience: "beginners", durationSec: 30 })
+    ) as unknown as MockResponse;
+
+    expect(res.status).toBe(502);
+    expect(res.body).toMatchObject({ code: "INVALID_SCRIPT_OUTPUT" });
+    expect(res.body.content).toBeUndefined();
+  });
+
+  it("fails closed with 502 when generateScript throws InvalidScriptStructureError", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
+    vi.mocked(generateScript).mockRejectedValue(
+      new InvalidScriptStructureError("scene[0].narration must be a non-empty string")
+    );
+
+    const res = await POST(
+      makeRequest({ topic: "fitness", audience: "beginners", durationSec: 60 })
+    ) as unknown as MockResponse;
+
+    expect(res.status).toBe(502);
+    expect(res.body).toMatchObject({ code: "INVALID_SCRIPT_OUTPUT" });
   });
 });
