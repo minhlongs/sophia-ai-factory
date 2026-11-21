@@ -1,4 +1,6 @@
 import { inngest } from '@/seed/inngest/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { OPTION_A_PILOT_CONTRACT } from '@/seed/config/tiers/option-a-pilot-contract';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine';
 import { notifyUserByTelegram } from '@/tree/telegram/user-notifier';
@@ -7,7 +9,7 @@ import type { CampaignCreatedEventData } from './types';
 import { runGenerateScript, runGenerateVoiceover } from './step-prompt-runner';
 import { runStartVideo, runPollVideo, runDistribution } from './asset-dispatcher';
 import { runStepSafely } from './step-runner-helper';
-import { runFinalizeCampaign } from './campaign-finalizer';
+import { runFinalizeCampaign, runFinalizeTextOnlyCampaign } from './campaign-finalizer';
 import { handleCampaignFailure } from './campaign-error-handler';
 import {
   checkCampaignIdempotency,
@@ -39,15 +41,51 @@ export const generateCampaign = inngest.createFunction(
 
     try {
       await runStepSafely(step, 'notify-start', async () => {
-        await notifyUser(resume
-          ? `🔄 **Sophia AI**: Resuming campaign for "${topic}" from ${resumeFrom} step...`
-          : `🎬 **Sophia AI**: Starting campaign generation for "${topic}"...`);
+        try {
+          await notifyUser(resume
+            ? `🔄 **Sophia AI**: Resuming campaign for "${topic}" from ${resumeFrom} step...`
+            : `🎬 **Sophia AI**: Starting campaign generation for "${topic}"...`);
+        } catch (error) {
+          logger.warn('[generateCampaign] Start notification failed', {
+            campaignId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }, stepOpts);
 
       const affiliateOffer = await step.run('load-affiliate-offer', async () => loadCampaignAffiliateOffer(campaignId));
       const script = await runStepSafely(step, 'generate-script', async () =>
         runGenerateScript({ campaignId, userId, topic, audience, tier, resume, resumeFrom, affiliateOffer, updateStatus, checkpoint, notifyRefundRequired, notifyProviderError }),
       stepOpts);
+
+      const isTextOnly =
+        eventData.deliveryMode === 'text_only' ||
+        (tier === OPTION_A_PILOT_CONTRACT.tier &&
+          !OPTION_A_PILOT_CONTRACT.videoRenderingIncluded &&
+          !OPTION_A_PILOT_CONTRACT.publicSocialAutoPublishIncluded);
+
+      if (isTextOnly) {
+        await runStepSafely(step, 'finalize-text-only-campaign', async () =>
+          runFinalizeTextOnlyCampaign({
+            campaignId,
+            userId,
+            topic,
+            script,
+            updateStatus,
+            notifyUser,
+            resumeEngine,
+          }),
+        stepOpts);
+
+        return {
+          campaignId,
+          status: 'completed' as const,
+          deliveryMode: 'text_only' as const,
+          script,
+          videoUrl: null,
+          publicPublished: false,
+        };
+      }
 
       await runStepSafely(step, 'generate-voiceover', async () =>
         runGenerateVoiceover({ campaignId, userId, tier, resume, resumeFrom, script, updateStatus, checkpoint, notifyRefundRequired, notifyProviderError, notifyUser }),

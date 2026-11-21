@@ -45,6 +45,7 @@ describe('uptime-check helpers', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    vi.stubEnv('OPS_ALERT_PROVIDER', 'disabled');
     vi.stubEnv('ADMIN_TELEGRAM_CHAT_ID', 'admin-chat');
     vi.stubEnv('TELEGRAM_BOT_TOKEN', 'test-token');
     vi.stubGlobal('fetch', vi.fn());
@@ -60,55 +61,11 @@ describe('uptime-check helpers', () => {
     vi.unstubAllGlobals();
   });
 
-  it('skips Telegram alerting when admin configuration is absent', async () => {
-    vi.stubEnv('ADMIN_TELEGRAM_CHAT_ID', '');
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', '');
+  it('returns an honest disabled result without a legacy bot request', async () => {
+    vi.stubEnv('OPS_ALERT_PROVIDER', 'disabled');
     const { alertAdmin } = await loadHelpers();
-
-    await alertAdmin('incident');
-
-    expect(mocks.logger.warn).toHaveBeenCalledWith('[uptime-check] No admin Telegram config — alert skipped');
+    await expect(alertAdmin('private raw health error')).resolves.toEqual({ sent: false, reason: 'disabled' });
     expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it('records a successful Telegram delivery', async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response('{}', { status: 200 }));
-    const { alertAdmin, CRON_NAME, HEALTH_URL, IDEMPOTENCY_WINDOW_MS, LATENCY_WARN_MS } = await loadHelpers();
-
-    await alertAdmin('incident');
-
-    expect(CRON_NAME).toBe('uptime-check');
-    expect(HEALTH_URL).toContain('/api/health');
-    expect(IDEMPOTENCY_WINDOW_MS).toBe(120_000);
-    expect(LATENCY_WARN_MS).toBe(5_000);
-    expect(fetch).toHaveBeenCalledWith(
-      'https://api.telegram.org/bottest-token/sendMessage',
-      expect.objectContaining({ method: 'POST', body: expect.stringContaining('admin-chat') }),
-    );
-    expect(mocks.recordSuccess).toHaveBeenCalledWith('telegram-uptime-alert');
-  });
-
-  it('records a Telegram HTTP failure without throwing', async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response('rate limited', { status: 429 }));
-    const { alertAdmin } = await loadHelpers();
-
-    await expect(alertAdmin('incident')).resolves.toBeUndefined();
-
-    expect(mocks.classifyHttpStatus).toHaveBeenCalledWith(429);
-    expect(mocks.recordFailure).toHaveBeenCalledWith('telegram-uptime-alert', 'http_429');
-  });
-
-  it('records a transport failure but rethrows when the circuit is open', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('socket closed'));
-    const { alertAdmin } = await loadHelpers();
-
-    await alertAdmin('incident');
-
-    expect(mocks.classifyError).toHaveBeenCalledWith(expect.objectContaining({ message: 'socket closed' }));
-    expect(mocks.recordFailure).toHaveBeenCalledWith('telegram-uptime-alert', 'network_error');
-
-    mocks.shouldAllowRequest.mockReturnValue(false);
-    await expect(alertAdmin('incident')).rejects.toThrow('[circuit-breaker] Circuit open');
   });
 
   it('opens an incident after recording a down health check', async () => {
@@ -121,7 +78,7 @@ describe('uptime-check helpers', () => {
 
     expect(mocks.recordCheck).toHaveBeenCalledWith(db, expect.objectContaining({ status: 'down', latencyMs: 8_250 }));
     expect(mocks.openIncident).toHaveBeenCalledWith(db, 'Service disruption detected', 'minor');
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('closes an active incident on recovery and leaves inactive incidents alone', async () => {

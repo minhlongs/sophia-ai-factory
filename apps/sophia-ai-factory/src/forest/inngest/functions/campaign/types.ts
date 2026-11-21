@@ -1,12 +1,15 @@
 import type { Tier, CampaignStatus } from '@/seed/types';
 import type { PipelineStep } from '@/tree/gateway/pipeline-step-navigator';
 
+export type CampaignDeliveryMode = 'text_only' | 'full_video';
+
 export interface CampaignCreatedEventData {
   campaignId: string;
   userId: string;
   topic: string;
   audience: string;
   tier: Tier;
+  deliveryMode?: CampaignDeliveryMode;
   resume?: boolean;
   resumeFrom?: string;
   abExperimentId?: string;

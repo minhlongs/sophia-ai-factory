@@ -20,9 +20,11 @@ export function generateIdempotencyKey(event: {
   action: string;
   timestamp: number;
 }): string {
-  // Use client request_id if provided (highest priority)
+  // Use client request_id if provided (highest priority), tenant-scoped by userId
+  // so two different tenants supplying the same requestId never collide.
   if (event.requestId) {
-    return `req_${event.requestId}`;
+    const hash = sha256(`${event.userId}:${event.requestId}`);
+    return `req_${hash}`;
   }
 
   // Deterministic hash based on request context.

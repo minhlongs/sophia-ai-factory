@@ -3,7 +3,7 @@ name: Dependency Audit (Gate 4)
 # RED-TEAM #1: pull_request ONLY. Secrets withheld from forks.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/sophia-10-6-option-a-revenue-closure]
 
 permissions:
   contents: read

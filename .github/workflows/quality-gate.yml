@@ -3,7 +3,7 @@ name: Quality Gate (Gates 1 + 3)
 # RED-TEAM #1: pull_request ONLY (never pull_request_target). Secrets withheld from forks.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/sophia-10-6-option-a-revenue-closure]
 
 permissions:
   contents: read

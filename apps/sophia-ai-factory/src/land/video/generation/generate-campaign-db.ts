@@ -14,11 +14,11 @@ export async function updateCampaignStatus(
   data?: Record<string, unknown>
 ): Promise<void> {
   const updatePayload: Record<string, unknown> = { status, progress, updated_at: new Date().toISOString() }
-  if (data?.script_content) updatePayload.script_content = data.script_content
-  if (data?.audio_url) updatePayload.audio_url = data.audio_url
-  if (data?.video_url) updatePayload.video_url = data.video_url
-  if (data?.thumbnail_url) updatePayload.thumbnail_url = data.thumbnail_url
-  if (data?.error_message) updatePayload.error_message = data.error_message
+  if (data?.script_content !== undefined) updatePayload.script_content = data.script_content
+  if (data?.audio_url !== undefined) updatePayload.audio_url = data.audio_url
+  if (data?.video_url !== undefined) updatePayload.video_url = data.video_url
+  if (data?.thumbnail_url !== undefined) updatePayload.thumbnail_url = data.thumbnail_url
+  if (data?.error_message !== undefined) updatePayload.error_message = data.error_message
 
   const db = createServerClient();
   const { error } = await db.from('campaigns').update(updatePayload).eq('id', campaignId)

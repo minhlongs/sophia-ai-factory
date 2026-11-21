@@ -10,66 +10,26 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
-import { sendTelegramMessage } from '@/tree/telegram/telegram-client';
-import { logger } from '@/seed/utils/logger-utility';
+import { sendOpsAlert, type OpsAlertResult } from '@/seed/observability/ops-alert';
 import type { SystemAlertPayload } from '@/seed/types/events';
-import {
-  formatOpsAlertMessage,
-  extractActionableAlertPayload,
-} from './ops-telegram-alert-formatter';
+import { extractActionableAlertPayload } from './ops-telegram-alert-formatter';
 
-export { formatOpsAlertMessage } from './ops-telegram-alert-formatter';
+export type { OpsAlertResult } from '@/seed/observability/ops-alert';
 
-export interface OpsAlertResult {
-  sent: boolean;
-  reason?: string;
-  provider?: string;
-  chatId?: string;
-}
-
-/**
- * Core dispatch logic for operations alerts.
- */
+/** Optional dispatch is isolated from mission delivery/accounting; no event destination overrides. */
 export async function processOpsAlert(payload: SystemAlertPayload): Promise<OpsAlertResult> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId =
-    payload.chatId ||
-    process.env.TELEGRAM_ADMIN_CHAT_ID ||
-    process.env.TELEGRAM_CHAT_ID ||
-    process.env.ADMIN_TELEGRAM_CHAT_ID ||
-    process.env.TELEGRAM_FOUNDER_CHAT_ID;
-
-  if (!botToken || !chatId) {
-    logger.warn('opsTelegramAlert: Telegram bot token or chat ID not configured, skipping alert', {
-      hasToken: Boolean(botToken),
-      hasChatId: Boolean(chatId),
-      provider: payload.provider,
-    });
-    return { sent: false, reason: 'unconfigured' };
-  }
-
-  const message = formatOpsAlertMessage(payload);
-  const result = await sendTelegramMessage(chatId, message);
-
-  if (!result) {
-    logger.warn('opsTelegramAlert: sendTelegramMessage returned null or failed', {
-      chatId,
-      provider: payload.provider,
-    });
-    return { sent: false, reason: 'delivery_failed', provider: payload.provider };
-  }
-
-  logger.info('opsTelegramAlert: successfully dispatched Telegram ops alert', {
-    chatId,
-    provider: payload.provider,
+  return sendOpsAlert({
+    severity: 'high',
+    eventType: payload.failureKind === 'RATE_LIMIT' ? 'mission_rate_limit'
+      : payload.failureKind === 'AUTH_FAILURE' ? 'mission_auth_failure' : 'mission_failed',
+    incidentId: payload.missionId,
   });
-  return { sent: true, provider: payload.provider, chatId };
 }
 
 export const opsTelegramAlert = inngest.createFunction(
   {
     id: 'ops-telegram-alert',
-    retries: 1,
+    retries: 0,
   },
   { event: 'agent.mission.failed' },
   async ({ event }) => {

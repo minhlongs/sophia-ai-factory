@@ -4,6 +4,7 @@
  * This module is idempotent — multiple calls are safe.
  */
 
+import { TELEGRAM_FETCH_IGNORE } from '@/seed/observability/telegram-telemetry-filter';
 import { trace, diag, DiagConsoleLogger, DiagLogLevel, SpanOptions } from '@opentelemetry/api';
 import {
   BasicTracerProvider,
@@ -63,7 +64,7 @@ export async function initializeOTel(): Promise<void> {
 
   trace.setGlobalTracerProvider(tracerProvider);
 
-  const fetchInstrumentation = new FetchInstrumentation({});
+  const fetchInstrumentation = new FetchInstrumentation({ ignoreUrls: [TELEGRAM_FETCH_IGNORE] });
   fetchInstrumentation.setTracerProvider(tracerProvider);
   fetchInstrumentation.enable();
 

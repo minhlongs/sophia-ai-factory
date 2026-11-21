@@ -26,8 +26,12 @@ export async function callOpenRouter(
       await sleep(backoff + Math.random() * 500)
     }
 
+    const controller = new AbortController()
+    // Match the multi-provider inference deadline, including response body consumption.
+    const timeout = setTimeout(() => controller.abort(new Error('OpenRouter request timed out')), 120_000)
     try {
       const res = await fetch(OPENROUTER_URL, {
+        signal: controller.signal,
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -43,8 +47,8 @@ export async function callOpenRouter(
       })
 
       if (res.ok) {
-        recordSuccess('openrouter')
         const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> }
+        recordSuccess('openrouter')
         return data.choices?.[0]?.message?.content ?? ''
       }
 
@@ -88,6 +92,8 @@ export async function callOpenRouter(
         recordFailure('openrouter', classifyError(lastError))
         throw lastError
       }
+    } finally {
+      clearTimeout(timeout)
     }
   }
 
