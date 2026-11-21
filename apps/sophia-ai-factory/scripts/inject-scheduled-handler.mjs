@@ -9,6 +9,7 @@
  * throws on missing CRON_SECRET, HTTP non-2xx responses, or dispatch errors.
  */
 
+import { createRequire } from 'node:module';
 import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -180,6 +181,17 @@ if (JSON.stringify(registeredRoutes) !== JSON.stringify(cronPolicy.registeredRou
   throw new Error('Scheduled cron policy does not match the registry');
 }
 
+function bundleBackup() {
+  const require = createRequire(import.meta.url);
+  const { buildSync } = require('esbuild');
+  const result = buildSync({
+    entryPoints: [join(appRoot, 'src/forest/dr/scheduled-d1-backup.ts')],
+    bundle: true, write: false, format: 'iife', globalName: '__scheduledBackup',
+    platform: 'browser', target: 'es2022',
+  });
+  return result.outputFiles[0].text;
+}
+
 export function buildScheduledSnippet(verifiedMap, permittedRoutes = PERMITTED_CRON_ROUTES) {
   const mapEntries = Object.entries(verifiedMap)
     .map(([pattern, routes]) => {
@@ -190,6 +202,7 @@ export function buildScheduledSnippet(verifiedMap, permittedRoutes = PERMITTED_C
 
   return `
 ${IDEMPOTENCY_MARKER}
+${bundleBackup()}
 // Cron route map (post-build inject) — patterns must match wrangler triggers.crons.
 const __permittedCronRoutes = new Set(${JSON.stringify(permittedRoutes)});
 const __cronRouteMap = {
@@ -233,6 +246,11 @@ async function __cronScheduledHandler(event, env, ctx) {
   const runPromise = (async () => {
     const results = await Promise.allSettled(
       routesToDispatch.map(async (route) => {
+        if (route === '/api/cron/d1-backup') {
+          const result = await __scheduledBackup.runScheduledD1Backup({ DB: env.DB, BACKUPS_BUCKET: env.BACKUPS_BUCKET });
+          if (!result.ok) throw new Error(route + ' failed: ' + result.reason + (result.artifactPresent ? ' artifactPresent=true' : ''));
+          return result;
+        }
         const url = 'https://' + host + route;
         const req = new Request(url, {
           method: 'GET',

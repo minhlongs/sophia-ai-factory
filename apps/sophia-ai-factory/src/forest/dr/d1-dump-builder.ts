@@ -15,7 +15,6 @@ const SQLITE_INTERNAL_TABLES = new Set([
   'sqlite_sequence',
   'sqlite_stat1',
   'sqlite_stat4',
-  '_cf_KV',
   'd1_migrations',
 ]);
 
@@ -71,7 +70,7 @@ export async function buildD1Dump(db: D1Database): Promise<string> {
     .all<{ name: string }>();
 
   const tables = (tablesResult.results ?? []).filter(
-    (t) => !SQLITE_INTERNAL_TABLES.has(t.name),
+    (t) => !SQLITE_INTERNAL_TABLES.has(t.name) && !t.name.startsWith('_cf_'),
   );
 
   for (const { name: tableName } of tables) {

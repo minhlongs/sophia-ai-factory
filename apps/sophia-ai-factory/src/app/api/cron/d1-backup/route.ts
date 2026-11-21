@@ -17,16 +17,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
-import { pushHeartbeat } from '@/seed/observability/telemetry/better-stack-client';
 import {
   startCronCheckIn,
-  finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
 import {
   CRON_NAME,
-  IDEMPOTENCY_WINDOW_MS,
   type D1BackupEnv,
   executeD1BackupUpload,
 } from './d1-backup-runner';
@@ -46,7 +42,13 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   if (authError) return authError;
 
   const cronCtx = startCronCheckIn(CRON_NAME);
-  const env = globalThis as unknown as D1BackupEnv;
+  const globalBindings = globalThis as unknown as {
+    __env__?: D1BackupEnv;
+    __env?: D1BackupEnv;
+    [key: symbol]: { env?: D1BackupEnv } | undefined;
+  } & D1BackupEnv;
+  const env = globalBindings.__env__ ?? globalBindings.__env ??
+    globalBindings[Symbol.for('__cloudflare-context__')]?.env ?? globalBindings;
   const db = env.DB;
   const bucket = env.BACKUPS_BUCKET;
 
@@ -69,23 +71,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     logsToken: process.env.BETTER_STACK_LOGS_TOKEN ?? '',
     ingestingHost: process.env.BETTER_STACK_INGESTING_HOST,
   };
-  const heartbeatUrl = env.BACKUP_HEARTBEAT_URL ?? '';
-
-  const alreadyRan = await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS);
-  if (alreadyRan) {
-    if (heartbeatUrl) {
-      await pushHeartbeat(heartbeatUrl).catch(() => {});
-    }
-    await recordCronRun(db, CRON_NAME, 'skipped');
-    finishCronCheckIn(cronCtx, CRON_NAME);
-    return NextResponse.json({ ok: true, skipped: true, reason: 'recently_run' });
-  }
-
   return executeD1BackupUpload({
-    db,
-    bucket,
-    heartbeatUrl,
-    bsConfig,
-    cronCtx,
+    db, bucket, heartbeatUrl: env.BACKUP_HEARTBEAT_URL ?? '', bsConfig, cronCtx,
   });
 }

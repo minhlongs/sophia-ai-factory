@@ -41,5 +41,5 @@
     "/api/cron/weekly-signals-digest",
     "/api/cron/workflow-stepper"
   ],
-  "permittedRoutes": []
+  "permittedRoutes": ["/api/cron/d1-backup"]
 }

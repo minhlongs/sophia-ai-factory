@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+// @vitest-environment node
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -183,40 +183,51 @@ describe('inject-scheduled-handler build-time validation', () => {
     expect(fs.readFileSync(workerFilePath, 'utf8')).toBe(contentAfterFirst);
 
     const emptyRoot = makeTempDir();
-    const isolatedScript = path.join(emptyRoot, 'scripts', 'inject-scheduled-handler.mjs');
-    fs.mkdirSync(path.dirname(isolatedScript), { recursive: true });
-    fs.copyFileSync(path.join(APP_ROOT, 'scripts/inject-scheduled-handler.mjs'), isolatedScript);
-    const policyPath = 'src/seed/security/scheduled-cron-policy.json';
-    const isolatedPolicy = path.join(emptyRoot, policyPath);
-    fs.mkdirSync(path.dirname(isolatedPolicy), { recursive: true });
-    fs.copyFileSync(path.join(APP_ROOT, policyPath), isolatedPolicy);
-    expect(() =>
-      execFileSync(process.execPath, [isolatedScript], {
-        cwd: emptyRoot,
-        stdio: 'pipe',
-      })
-    ).toThrow(/worker.js not found/);
+    expect(() => injectScheduledHandler({ workerFilePath: path.join(emptyRoot, 'missing.js') }))
+      .toThrow(/worker.js not found/);
   });
 });
 
 describe('generated scheduled() handler runtime behavior', () => {
-  it('skips all routes across the entire registry', async () => {
+  it('runs the bundled backup with only D1/R2 bindings and fails secret checks before touching them', async () => {
+    const { mod, workerFilePath } = await buildAndImportWorker(
+      { '0 5 * * *': ['/api/cron/d1-backup'] }, ['/api/cron/d1-backup'],
+    );
+    const run = vi.fn().mockResolvedValue({ success: true });
+    const first = vi.fn().mockResolvedValue(null);
+    const prepare = vi.fn(() => ({ bind: () => ({ first, run }), all: async () => ({ results: [] }) }));
+    const put = vi.fn(async (_key: string, bytes: Uint8Array) => ({ size: bytes.byteLength }));
+    const env = { CRON_SECRET: 'unit-cron-token', DB: { prepare }, BACKUPS_BUCKET: { head: async () => null, put } };
+    const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('unexpected outbound'));
+    await expect(mod.scheduled({ cron: '0 5 * * *' }, { ...env, CRON_SECRET: ' ' })).rejects.toThrow(/CRON_SECRET/);
+    expect(prepare).not.toHaveBeenCalled();
+    await mod.scheduled({ cron: '0 5 * * *' }, env);
+    expect(put).toHaveBeenCalledWith(expect.stringMatching(/^d1-.*\.sql$/), expect.any(Uint8Array), expect.objectContaining({ onlyIf: { etagDoesNotMatch: '*' } }));
+    expect(run).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+    const generated = fs.readFileSync(workerFilePath, 'utf8');
+    expect(generated).not.toContain('next/server');
+    expect(generated).not.toContain('Honeycomb');
+  });
+
+  it('dispatches only backup and skips the other registered routes', async () => {
     const registry = Object.values(CRON_ROUTES).flat();
     const { mod } = await buildAndImportWorker(CRON_ROUTES, registry, true, PERMITTED_CRON_ROUTES);
     const outbound = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Unexpected outbound fetch'));
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const binding = vi.fn(async (_request: Request) => new Response(null, { status: 204 }));
-    const env = { CRON_SECRET: 'unit-cron-token', HOSTNAME: 'worker.invalid', WORKER_SELF_REFERENCE: { fetch: binding } };
+    const binding = vi.fn(async () => new Response(null, { status: 204 }));
+    const first = vi.fn().mockResolvedValue({ last_run_at: 1 });
+    const db = { prepare: vi.fn(() => ({ bind: () => ({ first }) })) };
+    const env = { CRON_SECRET: 'unit-cron-token', DB: db, BACKUPS_BUCKET: {}, HOSTNAME: 'worker.invalid', WORKER_SELF_REFERENCE: { fetch: binding } };
     for (const [cron, routes] of Object.entries(CRON_ROUTES)) {
       binding.mockClear();
       const allowed = routes.filter((route) => PERMITTED_CRON_ROUTES.includes(route));
       const result = await mod.scheduled({ cron }, env);
-      expect(binding.mock.calls.map(([request]) => request.url)).toEqual(
-        allowed.map((route) => `https://worker.invalid${route}`),
-      );
+      expect(binding).not.toHaveBeenCalled();
       if (allowed.length === 0) expect(result).toEqual({ ok: true, skipped: 'SKIPPED_BY_POLICY', routes });
     }
-    expect(registry.filter((route) => !PERMITTED_CRON_ROUTES.includes(route))).toHaveLength(40);
+    expect(registry.filter((route) => !PERMITTED_CRON_ROUTES.includes(route))).toHaveLength(39);
+    expect(first).toHaveBeenCalledTimes(1);
     expect(outbound).not.toHaveBeenCalled();
   });
 
