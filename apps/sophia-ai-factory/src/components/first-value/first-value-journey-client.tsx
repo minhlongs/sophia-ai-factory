@@ -1,0 +1,321 @@
+'use client';
+
+/**
+ * Interactive client surface for the BASIC First-Value Journey (Track B1.1).
+ *
+ * Calls /api/first-value over HTTP with CSRF headers and stable idempotency keys.
+ *
+ * @module components/first-value/first-value-journey-client
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import type { FirstValueCostPreview } from '@/seed/ai/cost/first-value-cost-preview';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
+import type { HonestValidationReceipt } from '@/tree/byok/honest-validation-receipt';
+import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
+import { FirstValueByokCard } from './first-value-byok-card';
+import { FirstValueReviewPanel } from './first-value-review-panel';
+
+interface StatusResponse {
+  readonly byokConfigured: boolean;
+  readonly configuredProviders: readonly string[];
+  readonly receipt: HonestValidationReceipt | null;
+  readonly recentReviews: readonly DurableFirstValueReview[];
+}
+
+function CostPreviewBox({ costPreview }: { readonly costPreview: FirstValueCostPreview }) {
+  const t = useTranslations('firstValue');
+  return (
+    <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs">
+      {costPreview.status === 'COST_ESTIMATE_AVAILABLE' ? (
+        <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div>
+            <dt className="text-muted-foreground">{t('costEstimated')}</dt>
+            <dd className="font-mono font-semibold text-foreground">
+              ${costPreview.estimatedCostRangeUsd.minUsd.toFixed(6)} – $
+              {costPreview.estimatedCostRangeUsd.maxUsd.toFixed(6)} USD
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{t('costSource')}</dt>
+            <dd className="truncate font-mono text-foreground">{costPreview.priceSource}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{t('costTimestamp')}</dt>
+            <dd className="font-mono text-foreground">{costPreview.priceUpdatedAt}</dd>
+          </div>
+        </dl>
+      ) : (
+        <div>
+          <div className="font-semibold text-amber-600 dark:text-amber-400">
+            {t('costUnavailableTitle')} ({costPreview.status})
+          </div>
+          <p className="mt-1 text-muted-foreground">{t('costUnavailableDesc')}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface CostFormProps {
+  readonly topic: string;
+  readonly audience: string;
+  readonly durationSec: number;
+  readonly model: string;
+  readonly busy: boolean;
+  readonly canPreview: boolean;
+  readonly canCreate: boolean;
+  readonly costPreview: FirstValueCostPreview | null;
+  readonly onTopicChange: (v: string) => void;
+  readonly onAudienceChange: (v: string) => void;
+  readonly onDurationChange: (v: number) => void;
+  readonly onModelChange: (v: string) => void;
+  readonly onPreviewCost: () => void;
+  readonly onCreateReview: () => void;
+}
+
+function CostPreviewSection(props: CostFormProps) {
+  const t = useTranslations('firstValue');
+  return (
+    <section className="rounded-xl border border-border bg-card p-5">
+      <h2 className="mb-4 text-base font-semibold text-foreground">{t('costTitle')}</h2>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {t('topicLabel')}
+          <input
+            value={props.topic}
+            onChange={(e) => props.onTopicChange(e.target.value)}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {t('audienceLabel')}
+          <input
+            value={props.audience}
+            onChange={(e) => props.onAudienceChange(e.target.value)}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {t('durationLabel')}
+          <input
+            type="number"
+            min={10}
+            max={300}
+            value={props.durationSec}
+            onChange={(e) => props.onDurationChange(Number(e.target.value))}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {t('modelLabel')}
+          <input
+            value={props.model}
+            onChange={(e) => props.onModelChange(e.target.value)}
+            className="rounded-lg border border-input bg-background px-3 py-2 font-mono text-sm text-foreground"
+          />
+        </label>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          type="button"
+          disabled={props.busy || !props.canPreview}
+          onClick={props.onPreviewCost}
+          className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+        >
+          {props.busy ? t('loading') : t('previewCostBtn')}
+        </button>
+        <button
+          type="button"
+          disabled={props.busy || !props.canCreate}
+          onClick={props.onCreateReview}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+        >
+          {props.busy ? t('loading') : t('createReviewBtn')}
+        </button>
+      </div>
+      {props.costPreview && <CostPreviewBox costPreview={props.costPreview} />}
+    </section>
+  );
+}
+
+export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
+  const t = useTranslations('firstValue');
+  const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [costPreview, setCostPreview] = useState<FirstValueCostPreview | null>(null);
+  const [activeReview, setActiveReview] = useState<DurableFirstValueReview | null>(null);
+  const [exportPayload, setExportPayload] = useState<string | null>(null);
+  const [topic, setTopic] = useState('How non-technical CEOs launch daily short-form content');
+  const [audience, setAudience] = useState('SMB Founders');
+  const [durationSec, setDurationSec] = useState(30);
+  const [model, setModel] = useState('google/gemini-2-5-flash');
+  const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    if (!orgId) return;
+    const res = await fetch(`/api/first-value?orgId=${encodeURIComponent(orgId)}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as StatusResponse;
+    setStatus(data);
+    setActiveReview((prev) => prev ?? data.recentReviews[0] ?? null);
+  }, [orgId]);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  async function postAction(body: Record<string, unknown>, idempotencyKey?: string) {
+    setBusy(true);
+    setErrorMessage(null);
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getCsrfHeaders(),
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+      };
+      const res = await fetch('/api/first-value', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+      const json = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) {
+        setErrorMessage(String(json.error ?? `HTTP ${res.status}`));
+        return null;
+      }
+      return json;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCostPreview() {
+    const data = await postAction({
+      action: 'cost_preview',
+      orgId,
+      provider: status?.configuredProviders[0] ?? 'openrouter',
+      model: model.trim() ? model.trim() : null,
+      topic,
+      audience,
+      durationSec,
+    });
+    if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
+  }
+
+  async function handleCreateReview() {
+    if (!status?.receipt) return;
+    const key = `fv-create-${crypto.randomUUID()}`;
+    const data = await postAction(
+      {
+        action: 'create_review',
+        orgId,
+        missionId: `mission_${orgId}_b1`,
+        idempotencyKey: key,
+        topic,
+        audience,
+        durationSec,
+        provenance: 'fixture_simulated',
+        receipt: status.receipt,
+      },
+      key,
+    );
+    if (data?.review) {
+      setActiveReview(data.review as DurableFirstValueReview);
+      setExportPayload(null);
+    }
+  }
+
+  async function handleDecision(decision: 'accept_review' | 'reject_review', reason?: string) {
+    if (!activeReview) return;
+    const trimmedReason = reason?.trim();
+    const key = `fv-${decision}-${crypto.randomUUID()}`;
+    const data = await postAction(
+      {
+        action: decision,
+        orgId,
+        artifactId: activeReview.artifactId,
+        expectedVersion: activeReview.version,
+        explicitUserAction: true,
+        ...(trimmedReason ? { reason: trimmedReason } : {}),
+        idempotencyKey: key,
+      },
+      key,
+    );
+    if (data?.review) setActiveReview(data.review as DurableFirstValueReview);
+  }
+
+  async function handleExport(format: 'json' | 'markdown') {
+    if (!activeReview) return;
+    const key = `fv-export-${crypto.randomUUID()}`;
+    const data = await postAction(
+      {
+        action: 'private_export',
+        orgId,
+        artifactId: activeReview.artifactId,
+        format,
+        idempotencyKey: key,
+      },
+      key,
+    );
+    const exported = data?.export as { content?: unknown } | undefined;
+    if (exported?.content !== undefined) {
+      setExportPayload(
+        typeof exported.content === 'string'
+          ? exported.content
+          : JSON.stringify(exported.content, null, 2),
+      );
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+        <div className="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
+          {t('simulatedBadge')}
+        </div>
+        <p className="mt-1 text-sm text-foreground">{t('simulatedNotice')}</p>
+      </div>
+
+      {errorMessage && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          <strong>{t('errorPrefix')}:</strong> {errorMessage}
+        </div>
+      )}
+
+      <FirstValueByokCard
+        byokConfigured={Boolean(status?.byokConfigured)}
+        receipt={status?.receipt ?? null}
+      />
+
+      <CostPreviewSection
+        topic={topic}
+        audience={audience}
+        durationSec={durationSec}
+        model={model}
+        busy={busy}
+        canPreview={Boolean(orgId)}
+        canCreate={Boolean(orgId && status?.receipt)}
+        costPreview={costPreview}
+        onTopicChange={setTopic}
+        onAudienceChange={setAudience}
+        onDurationChange={setDurationSec}
+        onModelChange={setModel}
+        onPreviewCost={() => void handleCostPreview()}
+        onCreateReview={() => void handleCreateReview()}
+      />
+
+      <FirstValueReviewPanel
+        review={activeReview}
+        busy={busy}
+        exportPayload={exportPayload}
+        onAccept={() => handleDecision('accept_review')}
+        onReject={(reason) => handleDecision('reject_review', reason)}
+        onExport={handleExport}
+      />
+    </div>
+  );
+}
