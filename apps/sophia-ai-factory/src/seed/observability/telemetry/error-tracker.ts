@@ -7,7 +7,7 @@
 import { scrubPIIDeep } from './pii-scrubber';
 import { logger } from './logger';
 import { pushFatalLog } from './better-stack-client';
-import { getErrorMessage } from '@/seed/utils/to-error';
+import { getErrorClassName, getErrorMessage } from '@/seed/utils/to-error';
 
 export interface ErrorContext {
   route?: string;
@@ -33,7 +33,7 @@ function normalizeMsg(msg: string): string {
 export async function fingerprintError(
   err: Error
 ): Promise<string> {
-  const raw = normalizeMsg(err.message) + ':' + err.constructor.name;
+  const raw = normalizeMsg(err.message) + ':' + getErrorClassName(err);
   const encoded = new TextEncoder().encode(raw);
   const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -64,7 +64,7 @@ export async function reportError(
 ): Promise<void> {
   const fingerprint = await fingerprintError(err);
   const safeCtx = scrubPIIDeep(ctx) as Record<string, unknown>;
-  const msgClass = err.constructor.name;
+  const msgClass = getErrorClassName(err);
 
   logger.error(`[error-tracker] ${err.message}`, {
     fingerprint,

@@ -48,3 +48,17 @@ export function toError(value: unknown): Error {
 export function getErrorMessage(value: unknown): string {
   return toError(value).message
 }
+
+/**
+ * Resolve a stable, minification-safe error class name for telemetry and
+ * error fingerprinting.
+ *
+ * Prefers an explicit `err.name` (e.g. `QuotaExceededError`, `TypeError`) over
+ * `err.constructor.name` so custom Error subclasses remain stably classified
+ * when Worker bundles run with `keep_names = false`.
+ */
+export function getErrorClassName(err: Error): string {
+  const explicitName = typeof err.name === 'string' ? err.name.trim() : ''
+  if (explicitName && explicitName !== 'Error') return explicitName
+  return err.constructor?.name || explicitName || 'Error'
+}
