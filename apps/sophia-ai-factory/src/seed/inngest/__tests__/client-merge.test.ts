@@ -133,6 +133,8 @@ const EXPECTED_EVENT_KEYS = [
   'execution.publish.requested',
   'publish.approval.requested',
   'publish.approval.resolved',
+  'campaign/publish.gate_requested',
+  'campaign/publish.human_approved',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -167,9 +169,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 106 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(106);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(106);
+    it('expected key list holds exactly 108 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(108);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(108);
     });
 
     it('Events record key set exactly matches the expected keys', () => {

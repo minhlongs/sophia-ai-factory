@@ -53,6 +53,7 @@ import {
   keyRotationCron,
   keyRotationReencrypt,
   multiTrackVideoPipeline,
+  b2PublishGateWorkflowFunction,
 } from "@/forest/inngest/functions/index";
 
 export const CORE_INNGEST_FUNCTIONS = [
@@ -104,4 +105,5 @@ export const CORE_INNGEST_FUNCTIONS = [
   keyRotationCron,
   keyRotationReencrypt,
   multiTrackVideoPipeline,
+  b2PublishGateWorkflowFunction,
 ];
