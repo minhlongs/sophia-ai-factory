@@ -488,6 +488,8 @@ describe('B2 Publish Gate — Durable D1 & HTTP Adversarial Suite (20 cases)', (
     expect(reconciled.status).toBe(200);
     const { record: rec2 } = (await reconciled.json()) as { record: PublishGateRecord };
     expect(rec2.state).toBe('SIMULATED_FAILED');
+    expect(rec2.mockReceipt?.simulatedStatus).toBe('SIMULATED_FAILED');
+    expect(rec2.mockReceipt?.errorCode).toBe('OPERATOR_CONFIRMED_NOT_UPLOADED');
   });
 
   it('35. treats prompt injection inside campaign caption as inert literal text', async () => {

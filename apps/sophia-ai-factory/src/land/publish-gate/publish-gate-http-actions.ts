@@ -65,6 +65,7 @@ export async function handleApprovalDecisionAction(
       actorUserId: ctx.userId,
       expectedState: 'AWAITING_HUMAN_APPROVAL',
       payloadDigestSha256: existing.payloadDigestSha256,
+      expectedApprovalVersion: existing.approvalVersion,
       nowIso: ctx.nowIso,
     });
     return jsonPrivate({ error: 'APPROVAL_EXPIRED', record: expired ?? existing }, 409);
@@ -140,6 +141,7 @@ export async function handleExecuteMockAction(
       actorUserId: ctx.userId,
       expectedState: 'APPROVED',
       payloadDigestSha256: existing.payloadDigestSha256,
+      expectedApprovalVersion: existing.approvalVersion,
       nowIso: ctx.nowIso,
     });
     return jsonPrivate({ error: 'APPROVAL_EXPIRED', record: expired ?? existing }, 409);
@@ -157,6 +159,7 @@ export async function handleExecuteMockAction(
     actorUserId: ctx.userId,
     expectedPayloadDigest: existing.payloadDigestSha256,
     expectedVersion: existing.version,
+    expectedApprovalVersion: existing.approvalVersion,
     nowIso: ctx.nowIso,
   });
 
