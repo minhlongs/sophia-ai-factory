@@ -16,6 +16,7 @@ import {
 
 function createMockMcuPort(overrides: Partial<McuAuthorizationPort> = {}): McuAuthorizationPort {
   return {
+    lookupReservation: vi.fn(async () => null),
     precheckBalance: vi.fn(async ({ requiredMcu }) => ({
       sufficient: true,
       availableMcu: requiredMcu + 10,
@@ -67,6 +68,7 @@ describe('G4 MCU & Provider Authorization Contract', () => {
       paidInferenceExecuted: false,
     });
     expect(runLiveProvider).not.toHaveBeenCalled();
+    expect(mcuPort.lookupReservation).not.toHaveBeenCalled();
     expect(mcuPort.precheckBalance).not.toHaveBeenCalled();
     expect(mcuPort.reserve).not.toHaveBeenCalled();
     expect(mcuPort.settle).not.toHaveBeenCalled();
@@ -218,6 +220,7 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     expect(settleThrowRes.ok).toBe(false);
     if (!settleThrowRes.ok) {
       expect(settleThrowRes.code).toBe('MCU_SETTLEMENT_FAILED');
+      expect(settleThrowRes.mcuCharged).toBeNull();
       expect(settleThrowRes.released).toBe(false);
       expect(settleThrowRes.providerExecuted).toBe(true);
       expect(settleThrowRes.reservationId).toBe('res_001');
@@ -250,6 +253,7 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     expect(unconfirmedRes.ok).toBe(false);
     if (!unconfirmedRes.ok) {
       expect(unconfirmedRes.code).toBe('MCU_SETTLEMENT_FAILED');
+      expect(unconfirmedRes.mcuCharged).toBeNull();
       expect(unconfirmedRes.released).toBe(false);
       expect(unconfirmedRes.providerExecuted).toBe(true);
       expect(unconfirmedRes.reservationId).toBe('res_001');
@@ -266,6 +270,11 @@ describe('G4 MCU & Provider Authorization Contract', () => {
       accountingRef?: string;
     }
     const ledger = new Map<string, LedgerRow>();
+    // Exact-balance tenant ledger: reserving 5 MCU drops org_a available balance to 0
+    const balances = new Map<string, number>([
+      ['org_a', 5],
+      ['org_b', 0],
+    ]);
     let seq = 0;
     const providerSpy = vi.fn(async () => 'paid-output');
     const releaseSpy = vi.fn(async () => ({ released: true, idempotentReplay: false }));
@@ -284,12 +293,30 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     );
 
     const sharedPort: McuAuthorizationPort = {
-      precheckBalance: vi.fn(async ({ requiredMcu }) => ({
-        sufficient: true,
-        availableMcu: 100,
-        requiredMcu,
-        checkedAtIso: '2026-11-22T00:00:00.000Z',
-      })),
+      lookupReservation: vi.fn(async ({ orgId, idempotencyKey }) => {
+        const existing = ledger.get(`${orgId}:${idempotencyKey}`);
+        if (!existing) return null;
+        if (existing.status === 'settled') {
+          return {
+            status: 'settled' as const,
+            reservationId: existing.reservationId,
+            accountingRef: existing.accountingRef ?? 'unknown',
+          };
+        }
+        return {
+          status: existing.status,
+          reservationId: existing.reservationId,
+        };
+      }),
+      precheckBalance: vi.fn(async ({ orgId, requiredMcu }) => {
+        const availableMcu = balances.get(orgId) ?? 0;
+        return {
+          sufficient: availableMcu >= requiredMcu,
+          availableMcu,
+          requiredMcu,
+          checkedAtIso: '2026-11-22T00:00:00.000Z',
+        };
+      }),
       reserve: vi.fn(async ({ orgId, idempotencyKey, amountMcu }) => {
         const key = `${orgId}:${idempotencyKey}`;
         const existing = ledger.get(key);
@@ -308,6 +335,11 @@ describe('G4 MCU & Provider Authorization Contract', () => {
             reservationId: existing.reservationId,
           };
         }
+        const available = balances.get(orgId) ?? 0;
+        if (available < amountMcu) {
+          return { reserved: false as const, reason: 'insufficient_funds' as const };
+        }
+        balances.set(orgId, available - amountMcu);
         seq += 1;
         const reservationId = `res_shared_${seq}`;
         ledger.set(key, { orgId, reservationId, status: 'in_flight' });
@@ -351,19 +383,22 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     expect(second.ok).toBe(false);
     if (!first.ok) {
       expect(first.code).toBe('MCU_SETTLEMENT_FAILED');
+      expect(first.mcuCharged).toBeNull();
       expect(first.reservationId).toBe('res_shared_1');
       expect(first.released).toBe(false);
     }
     if (!second.ok) {
       expect(second.code).toBe('MCU_RECONCILIATION_REQUIRED');
+      expect(second.mcuCharged).toBeNull();
       expect(second.reservationId).toBe('res_shared_1');
       expect(second.released).toBe(false);
     }
+    expect(balances.get('org_a')).toBe(0);
     expect(providerSpy).toHaveBeenCalledTimes(1);
     expect(settleSpy).toHaveBeenCalledTimes(1);
     expect(releaseSpy).not.toHaveBeenCalled();
 
-    // Case 6: Client retries after ledger already committed settlement -> no re-execution, no duplicate settle
+    // Case 6: Client retries when remaining balance is 0 after ledger committed -> still returns MCU_ALREADY_SETTLED
     const retryAfterAckFail = await executeWithMcuAuthorization({
       provenance: 'live_provider',
       orgId: 'org_a',
@@ -380,6 +415,7 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     expect(retryAfterAckFail.ok).toBe(false);
     if (!retryAfterAckFail.ok) {
       expect(retryAfterAckFail.code).toBe('MCU_ALREADY_SETTLED');
+      expect(retryAfterAckFail.mcuCharged).toBeNull();
       expect(retryAfterAckFail.reservationId).toBe('res_shared_1');
       expect(retryAfterAckFail.accountingRef).toBe('acc_res_shared_1');
       expect(retryAfterAckFail.reconciliationStatus).toBe('settled_requires_result_lookup');
@@ -414,5 +450,38 @@ describe('G4 MCU & Provider Authorization Contract', () => {
       expect(orgBRetry.reservationId).not.toBe('res_shared_1');
     }
     expect(providerSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns MCU_RESERVATION_DENIED without throwing when ledger storage errors occur during pre-check or reserve', async () => {
+    const runLiveProvider = vi.fn(async () => 'live');
+    const throwingPort = createMockMcuPort({
+      lookupReservation: vi.fn(async () => {
+        throw new Error('D1_READ_TIMEOUT');
+      }),
+    });
+
+    const res = await executeWithMcuAuthorization({
+      provenance: 'live_provider',
+      orgId: 'org_1',
+      userId: 'user_1',
+      missionId: 'm_10',
+      idempotencyKey: 'idem-storage-err',
+      requiredMcu: 5,
+      liveInferenceEnabled: true,
+      providerAuthorized: true,
+      mcuPort: throwingPort,
+      runFixture: async () => 'fixture',
+      runLiveProvider,
+    });
+    expect(res).toEqual({
+      ok: false,
+      code: 'MCU_RESERVATION_DENIED',
+      error: 'MCU reservation denied: storage_error',
+      mcuCharged: 0,
+      released: false,
+      providerExecuted: false,
+      reconciliationStatus: 'not_applicable',
+    });
+    expect(runLiveProvider).not.toHaveBeenCalled();
   });
 });

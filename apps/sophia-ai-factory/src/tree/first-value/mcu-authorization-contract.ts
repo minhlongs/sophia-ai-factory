@@ -53,11 +53,22 @@ export interface McuReleaseResult {
   readonly idempotentReplay: boolean;
 }
 
+export type McuExistingReservation =
+  | { readonly status: 'settled'; readonly reservationId: string; readonly accountingRef: string }
+  | { readonly status: 'in_flight' | 'settlement_pending'; readonly reservationId: string }
+  | null;
+
 /**
  * Authoritative MCU ledger port for future live-inference execution.
  * Every operation is tenant-scoped (`orgId`, `userId`) and idempotent.
  */
 export interface McuAuthorizationPort {
+  lookupReservation(args: {
+    readonly orgId: string;
+    readonly userId: string;
+    readonly idempotencyKey: string;
+  }): Promise<McuExistingReservation>;
+
   precheckBalance(args: {
     readonly orgId: string;
     readonly userId: string;
@@ -119,7 +130,7 @@ export type AuthorizedExecutionOutcome<T> =
       readonly ok: false;
       readonly code: AuthorizedExecutionErrorCode;
       readonly error: string;
-      readonly mcuCharged: 0;
+      readonly mcuCharged: 0 | null;
       readonly released: boolean;
       readonly providerExecuted?: boolean;
       readonly reservationId?: string;
@@ -149,7 +160,7 @@ function mapReservationDenied<T>(
       ok: false,
       code: 'MCU_ALREADY_SETTLED',
       error: 'Idempotency key already settled; refusing to re-execute paid provider',
-      mcuCharged: 0,
+      mcuCharged: null,
       released: false,
       providerExecuted: true,
       reservationId: reservation.reservationId,
@@ -162,7 +173,7 @@ function mapReservationDenied<T>(
       ok: false,
       code: 'MCU_RECONCILIATION_REQUIRED',
       error: `Reservation ${reservation.reservationId} is ${reservation.reason}; refusing to re-execute paid provider`,
-      mcuCharged: 0,
+      mcuCharged: null,
       released: false,
       providerExecuted: true,
       reservationId: reservation.reservationId,
@@ -178,6 +189,24 @@ function mapReservationDenied<T>(
     providerExecuted: false,
     reconciliationStatus: 'not_applicable',
   };
+}
+
+function mapExistingReservation<T>(
+  existing: Exclude<McuExistingReservation, null>,
+): AuthorizedExecutionOutcome<T> {
+  if (existing.status === 'settled') {
+    return mapReservationDenied({
+      reserved: false,
+      reason: 'already_settled',
+      reservationId: existing.reservationId,
+      accountingRef: existing.accountingRef,
+    });
+  }
+  return mapReservationDenied({
+    reserved: false,
+    reason: existing.status,
+    reservationId: existing.reservationId,
+  });
 }
 
 async function releaseOnProviderFailure<T>(
@@ -231,7 +260,7 @@ async function settleCompletedExecution<T>(
         ok: false,
         code: 'MCU_SETTLEMENT_FAILED',
         error: 'Provider succeeded but MCU settlement did not confirm; reservation retained for reconciliation',
-        mcuCharged: 0,
+        mcuCharged: null,
         released: false,
         providerExecuted: true,
         reservationId: reservation.reservationId,
@@ -251,11 +280,67 @@ async function settleCompletedExecution<T>(
       ok: false,
       code: 'MCU_SETTLEMENT_FAILED',
       error: 'Provider succeeded but MCU settlement failed; reservation retained for reconciliation',
-      mcuCharged: 0,
+      mcuCharged: null,
       released: false,
       providerExecuted: true,
       reservationId: reservation.reservationId,
       reconciliationStatus: 'settlement_uncertain',
+    };
+  }
+}
+
+async function acquireLiveReservation<T>(
+  mcuPort: McuAuthorizationPort,
+  input: ExecuteWithMcuAuthInput<T>,
+): Promise<
+  | { readonly ok: true; readonly reservation: Extract<McuReservationResult, { readonly reserved: true }> }
+  | { readonly ok: false; readonly outcome: AuthorizedExecutionOutcome<T> }
+> {
+  try {
+    const existing = await mcuPort.lookupReservation({
+      orgId: input.orgId,
+      userId: input.userId,
+      idempotencyKey: input.idempotencyKey,
+    });
+    if (existing) {
+      return { ok: false, outcome: mapExistingReservation(existing) };
+    }
+
+    const precheck = await mcuPort.precheckBalance({
+      orgId: input.orgId,
+      userId: input.userId,
+      requiredMcu: input.requiredMcu,
+    });
+    if (!precheck.sufficient) {
+      return {
+        ok: false,
+        outcome: {
+          ok: false,
+          code: 'MCU_INSUFFICIENT',
+          error: `Insufficient MCU balance (${precheck.availableMcu} < ${precheck.requiredMcu})`,
+          mcuCharged: 0,
+          released: false,
+          providerExecuted: false,
+          reconciliationStatus: 'not_applicable',
+        },
+      };
+    }
+
+    const reservation = await mcuPort.reserve({
+      orgId: input.orgId,
+      userId: input.userId,
+      missionId: input.missionId,
+      idempotencyKey: input.idempotencyKey,
+      amountMcu: input.requiredMcu,
+    });
+    if (!reservation.reserved) {
+      return { ok: false, outcome: mapReservationDenied(reservation) };
+    }
+    return { ok: true, reservation };
+  } catch {
+    return {
+      ok: false,
+      outcome: mapReservationDenied({ reserved: false, reason: 'storage_error' }),
     };
   }
 }
@@ -300,38 +385,17 @@ export async function executeWithMcuAuthorization<T>(
     };
   }
 
-  const precheck = await input.mcuPort.precheckBalance({
-    orgId: input.orgId,
-    userId: input.userId,
-    requiredMcu: input.requiredMcu,
-  });
-  if (!precheck.sufficient) {
-    return {
-      ok: false,
-      code: 'MCU_INSUFFICIENT',
-      error: `Insufficient MCU balance (${precheck.availableMcu} < ${precheck.requiredMcu})`,
-      mcuCharged: 0,
-      released: false,
-    };
-  }
-
-  const reservation = await input.mcuPort.reserve({
-    orgId: input.orgId,
-    userId: input.userId,
-    missionId: input.missionId,
-    idempotencyKey: input.idempotencyKey,
-    amountMcu: input.requiredMcu,
-  });
-  if (!reservation.reserved) {
-    return mapReservationDenied(reservation);
+  const acquired = await acquireLiveReservation(input.mcuPort, input);
+  if (!acquired.ok) {
+    return acquired.outcome;
   }
 
   let output: T;
   try {
     output = await input.runLiveProvider();
   } catch {
-    return releaseOnProviderFailure(input.mcuPort, input, reservation.reservationId);
+    return releaseOnProviderFailure(input.mcuPort, input, acquired.reservation.reservationId);
   }
 
-  return settleCompletedExecution(input.mcuPort, input, reservation, output);
+  return settleCompletedExecution(input.mcuPort, input, acquired.reservation, output);
 }
