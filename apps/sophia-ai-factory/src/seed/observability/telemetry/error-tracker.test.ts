@@ -40,6 +40,11 @@ describe('getErrorClassName & error-tracker minification safety', () => {
 
     class UnnamedCustomError extends Error {}
     expect(getErrorClassName(new UnnamedCustomError('fallback'))).toBe('UnnamedCustomError');
+
+    const nameless = new Error('no-name');
+    Object.defineProperty(nameless, 'name', { value: '' });
+    Object.defineProperty(nameless, 'constructor', { value: undefined });
+    expect(getErrorClassName(nameless)).toBe('Error');
   });
 
   it('produces identical fingerprints for a custom Error class regardless of constructor name minification', async () => {
