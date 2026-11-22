@@ -614,6 +614,40 @@ describe('B1.1 Durable First-Value HTTP Journey (multi-isolate D1)', () => {
     expect(expiredRes.status).toBe(403);
     expect((await readJson<ErrorResponseJson>(expiredRes)).code).toBe('INVALID_OR_EXPIRED_RECEIPT');
 
+    // Signed receipt with rejected providerAuthStatus -> 403 INVALID_OR_EXPIRED_RECEIPT
+    const rejectedReceipt = await createHonestValidationReceipt({
+      userId: 'user_a',
+      orgId: 'org_a',
+      provider: 'openrouter',
+      maskedKey: 'stored:encrypted',
+      signingSecret: SIGNING_SECRET,
+      keyFormatAccepted: true,
+      keyStoredSecurely: true,
+      providerAuthStatus: 'rejected',
+      policyStatus: 'found',
+      costBasis: 'estimated',
+      nowUnix: Math.floor(FIXED_NOW_MS / 1000),
+    });
+    const rejectedReceiptRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://app.test/api/first-value', {
+        body: {
+          action: 'create_review',
+          orgId: 'org_a',
+          missionId: 'mission_rej_rcpt',
+          idempotencyKey: 'idem-rejected-receipt-001',
+          topic: 'Rejected receipt',
+          audience: 'CEOs',
+          durationSec: 30,
+          receipt: rejectedReceipt,
+        },
+      }),
+      depsA,
+    );
+    expect(rejectedReceiptRes.status).toBe(403);
+    expect((await readJson<ErrorResponseJson>(rejectedReceiptRes)).code).toBe(
+      'INVALID_OR_EXPIRED_RECEIPT',
+    );
+
     // Malformed / tampered signature receipt -> 403
     const tamperedReceipt = {
       ...receipt,

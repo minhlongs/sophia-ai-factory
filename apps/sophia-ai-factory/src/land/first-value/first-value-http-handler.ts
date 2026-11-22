@@ -222,6 +222,21 @@ async function handleCreateReview(
     );
   }
 
+  if (
+    !payload.receipt.keyFormatAccepted ||
+    !payload.receipt.keyStoredSecurely ||
+    payload.receipt.providerAuthStatus === 'rejected'
+  ) {
+    return jsonPrivate(
+      {
+        code: 'INVALID_OR_EXPIRED_RECEIPT',
+        reason: 'RECEIPT_PRECONDITION_FAILED',
+        error: 'Validation receipt does not satisfy BYOK storage or provider authorization checks',
+      },
+      403,
+    );
+  }
+
   const execution = await executeWithMcuAuthorization({
     provenance: 'fixture_simulated',
     orgId: payload.orgId,

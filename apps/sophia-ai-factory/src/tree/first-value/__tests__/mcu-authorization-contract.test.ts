@@ -189,4 +189,62 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     });
     expect(mcuPort.settle).toHaveBeenCalledTimes(1);
   });
+
+  it('retains reservation without releasing when settlement fails after provider execution succeeds', async () => {
+    const throwingSettlePort = createMockMcuPort({
+      settle: vi.fn(async () => {
+        throw new Error('D1_TRANSIENT_SETTLE_ERROR');
+      }),
+    });
+
+    const settleThrowRes = await executeWithMcuAuthorization({
+      provenance: 'live_provider',
+      orgId: 'org_1',
+      userId: 'user_1',
+      missionId: 'm_7',
+      idempotencyKey: 'idem-settle-throw',
+      requiredMcu: 4,
+      liveInferenceEnabled: true,
+      providerAuthorized: true,
+      mcuPort: throwingSettlePort,
+      runFixture: async () => 'fixture',
+      runLiveProvider: async () => 'live-output',
+    });
+
+    expect(settleThrowRes.ok).toBe(false);
+    if (!settleThrowRes.ok) {
+      expect(settleThrowRes.code).toBe('MCU_SETTLEMENT_FAILED');
+      expect(settleThrowRes.released).toBe(false);
+    }
+    expect(throwingSettlePort.release).not.toHaveBeenCalled();
+
+    const unconfirmedSettlePort = createMockMcuPort({
+      settle: vi.fn(async () => ({
+        settled: false,
+        accountingRef: 'pending',
+        idempotentReplay: false,
+      })),
+    });
+
+    const unconfirmedRes = await executeWithMcuAuthorization({
+      provenance: 'live_provider',
+      orgId: 'org_1',
+      userId: 'user_1',
+      missionId: 'm_8',
+      idempotencyKey: 'idem-settle-false',
+      requiredMcu: 4,
+      liveInferenceEnabled: true,
+      providerAuthorized: true,
+      mcuPort: unconfirmedSettlePort,
+      runFixture: async () => 'fixture',
+      runLiveProvider: async () => 'live-output',
+    });
+
+    expect(unconfirmedRes.ok).toBe(false);
+    if (!unconfirmedRes.ok) {
+      expect(unconfirmedRes.code).toBe('MCU_SETTLEMENT_FAILED');
+      expect(unconfirmedRes.released).toBe(false);
+    }
+    expect(unconfirmedSettlePort.release).not.toHaveBeenCalled();
+  });
 });

@@ -80,7 +80,8 @@ export type AuthorizedExecutionErrorCode =
   | 'PROVIDER_AUTHORIZATION_REQUIRED'
   | 'MCU_INSUFFICIENT'
   | 'MCU_RESERVATION_DENIED'
-  | 'PROVIDER_EXECUTION_FAILED';
+  | 'PROVIDER_EXECUTION_FAILED'
+  | 'MCU_SETTLEMENT_FAILED';
 
 export type AuthorizedExecutionOutcome<T> =
   | {
@@ -183,22 +184,9 @@ export async function executeWithMcuAuthorization<T>(
     };
   }
 
+  let output: T;
   try {
-    const output = await input.runLiveProvider();
-    const settlement = await input.mcuPort.settle({
-      orgId: input.orgId,
-      userId: input.userId,
-      reservationId: reservation.reservationId,
-      idempotencyKey: input.idempotencyKey,
-      actualMcu: reservation.amountMcu,
-    });
-    return {
-      ok: true,
-      output,
-      mcuCharged: reservation.amountMcu,
-      accountingRef: settlement.accountingRef,
-      paidInferenceExecuted: true,
-    };
+    output = await input.runLiveProvider();
   } catch {
     let released = false;
     try {
@@ -221,6 +209,40 @@ export async function executeWithMcuAuthorization<T>(
         : 'Provider execution failed; MCU reservation release pending reconciliation',
       mcuCharged: 0,
       released,
+    };
+  }
+
+  try {
+    const settlement = await input.mcuPort.settle({
+      orgId: input.orgId,
+      userId: input.userId,
+      reservationId: reservation.reservationId,
+      idempotencyKey: input.idempotencyKey,
+      actualMcu: reservation.amountMcu,
+    });
+    if (!settlement.settled) {
+      return {
+        ok: false,
+        code: 'MCU_SETTLEMENT_FAILED',
+        error: 'Provider succeeded but MCU settlement did not confirm; reservation retained for reconciliation',
+        mcuCharged: 0,
+        released: false,
+      };
+    }
+    return {
+      ok: true,
+      output,
+      mcuCharged: reservation.amountMcu,
+      accountingRef: settlement.accountingRef,
+      paidInferenceExecuted: true,
+    };
+  } catch {
+    return {
+      ok: false,
+      code: 'MCU_SETTLEMENT_FAILED',
+      error: 'Provider succeeded but MCU settlement failed; reservation retained for reconciliation',
+      mcuCharged: 0,
+      released: false,
     };
   }
 }
