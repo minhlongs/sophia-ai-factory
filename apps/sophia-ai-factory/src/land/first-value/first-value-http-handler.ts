@@ -191,16 +191,6 @@ async function handleCreateReview(
 
   const nowMs = deps.nowMs ? deps.nowMs() : Date.now();
   const nowUnix = Math.floor(nowMs / 1000);
-  if (payload.receipt.checkedAtUnix > nowUnix + 60) {
-    return jsonPrivate(
-      {
-        code: 'INVALID_OR_EXPIRED_RECEIPT',
-        reason: 'RECEIPT_FUTURE_DATED',
-        error: 'Validation receipt timestamp is in the future',
-      },
-      403,
-    );
-  }
   const receiptCheck = await verifyHonestValidationReceipt(
     payload.receipt as unknown as HonestValidationReceipt,
     {
@@ -217,6 +207,17 @@ async function handleCreateReview(
         code: 'INVALID_OR_EXPIRED_RECEIPT',
         reason: receiptCheck.reason,
         error: 'Validation receipt is invalid, expired, or tampered',
+      },
+      403,
+    );
+  }
+
+  if (payload.receipt.checkedAtUnix > nowUnix + 60) {
+    return jsonPrivate(
+      {
+        code: 'INVALID_OR_EXPIRED_RECEIPT',
+        reason: 'RECEIPT_FUTURE_DATED',
+        error: 'Validation receipt timestamp is in the future',
       },
       403,
     );

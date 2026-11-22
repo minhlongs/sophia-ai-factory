@@ -163,6 +163,9 @@ describe('G4 MCU & Provider Authorization Contract', () => {
       error: 'Provider execution failed; MCU reservation released',
       mcuCharged: 0,
       released: true,
+      providerExecuted: false,
+      reservationId: 'res_001',
+      reconciliationStatus: 'released',
     });
     expect(mcuPort.release).toHaveBeenCalledTimes(1);
     expect(mcuPort.settle).not.toHaveBeenCalled();
@@ -185,12 +188,13 @@ describe('G4 MCU & Provider Authorization Contract', () => {
       output: 'live-script',
       mcuCharged: 3,
       accountingRef: 'mcu_settle_res_001',
+      reservationId: 'res_001',
       paidInferenceExecuted: true,
     });
     expect(mcuPort.settle).toHaveBeenCalledTimes(1);
   });
 
-  it('retains reservation without releasing when settlement fails after provider execution succeeds', async () => {
+  it('retains reservation with durable reference when settlement fails or returns settled:false', async () => {
     const throwingSettlePort = createMockMcuPort({
       settle: vi.fn(async () => {
         throw new Error('D1_TRANSIENT_SETTLE_ERROR');
@@ -215,6 +219,9 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     if (!settleThrowRes.ok) {
       expect(settleThrowRes.code).toBe('MCU_SETTLEMENT_FAILED');
       expect(settleThrowRes.released).toBe(false);
+      expect(settleThrowRes.providerExecuted).toBe(true);
+      expect(settleThrowRes.reservationId).toBe('res_001');
+      expect(settleThrowRes.reconciliationStatus).toBe('settlement_uncertain');
     }
     expect(throwingSettlePort.release).not.toHaveBeenCalled();
 
@@ -244,7 +251,168 @@ describe('G4 MCU & Provider Authorization Contract', () => {
     if (!unconfirmedRes.ok) {
       expect(unconfirmedRes.code).toBe('MCU_SETTLEMENT_FAILED');
       expect(unconfirmedRes.released).toBe(false);
+      expect(unconfirmedRes.providerExecuted).toBe(true);
+      expect(unconfirmedRes.reservationId).toBe('res_001');
+      expect(unconfirmedRes.reconciliationStatus).toBe('settlement_uncertain');
     }
     expect(unconfirmedSettlePort.release).not.toHaveBeenCalled();
+  });
+
+  it('prevents provider re-execution, release, and duplicate settlement on retry after ack failure or concurrent isolates', async () => {
+    interface LedgerRow {
+      orgId: string;
+      reservationId: string;
+      status: 'in_flight' | 'settlement_pending' | 'settled';
+      accountingRef?: string;
+    }
+    const ledger = new Map<string, LedgerRow>();
+    let seq = 0;
+    const providerSpy = vi.fn(async () => 'paid-output');
+    const releaseSpy = vi.fn(async () => ({ released: true, idempotentReplay: false }));
+    const settleSpy = vi.fn(
+      async ({ orgId, reservationId, idempotencyKey }: { orgId: string; reservationId: string; idempotencyKey: string }) => {
+        const key = `${orgId}:${idempotencyKey}`;
+        const row = ledger.get(key);
+        if (!row || row.orgId !== orgId || row.reservationId !== reservationId) {
+          throw new Error('TENANT_OR_RESERVATION_MISMATCH');
+        }
+        // Case 5: ledger commits settlement, then ack throws over the wire
+        row.status = 'settled';
+        row.accountingRef = `acc_${reservationId}`;
+        throw new Error('ACK_TIMEOUT_AFTER_LEDGER_COMMIT');
+      },
+    );
+
+    const sharedPort: McuAuthorizationPort = {
+      precheckBalance: vi.fn(async ({ requiredMcu }) => ({
+        sufficient: true,
+        availableMcu: 100,
+        requiredMcu,
+        checkedAtIso: '2026-11-22T00:00:00.000Z',
+      })),
+      reserve: vi.fn(async ({ orgId, idempotencyKey, amountMcu }) => {
+        const key = `${orgId}:${idempotencyKey}`;
+        const existing = ledger.get(key);
+        if (existing) {
+          if (existing.status === 'settled') {
+            return {
+              reserved: false as const,
+              reason: 'already_settled' as const,
+              reservationId: existing.reservationId,
+              accountingRef: existing.accountingRef ?? 'unknown',
+            };
+          }
+          return {
+            reserved: false as const,
+            reason: existing.status,
+            reservationId: existing.reservationId,
+          };
+        }
+        seq += 1;
+        const reservationId = `res_shared_${seq}`;
+        ledger.set(key, { orgId, reservationId, status: 'in_flight' });
+        return { reserved: true as const, reservationId, amountMcu };
+      }),
+      settle: settleSpy,
+      release: releaseSpy,
+    };
+
+    // Case 5 + 7: Two concurrent isolates submit the same (org_a, idem-ack-lost)
+    const [first, second] = await Promise.all([
+      executeWithMcuAuthorization({
+        provenance: 'live_provider',
+        orgId: 'org_a',
+        userId: 'user_a',
+        missionId: 'm_9',
+        idempotencyKey: 'idem-ack-lost',
+        requiredMcu: 5,
+        liveInferenceEnabled: true,
+        providerAuthorized: true,
+        mcuPort: sharedPort,
+        runFixture: async () => 'fixture',
+        runLiveProvider: providerSpy,
+      }),
+      executeWithMcuAuthorization({
+        provenance: 'live_provider',
+        orgId: 'org_a',
+        userId: 'user_a',
+        missionId: 'm_9',
+        idempotencyKey: 'idem-ack-lost',
+        requiredMcu: 5,
+        liveInferenceEnabled: true,
+        providerAuthorized: true,
+        mcuPort: sharedPort,
+        runFixture: async () => 'fixture',
+        runLiveProvider: providerSpy,
+      }),
+    ]);
+
+    expect(first.ok).toBe(false);
+    expect(second.ok).toBe(false);
+    if (!first.ok) {
+      expect(first.code).toBe('MCU_SETTLEMENT_FAILED');
+      expect(first.reservationId).toBe('res_shared_1');
+      expect(first.released).toBe(false);
+    }
+    if (!second.ok) {
+      expect(second.code).toBe('MCU_RECONCILIATION_REQUIRED');
+      expect(second.reservationId).toBe('res_shared_1');
+      expect(second.released).toBe(false);
+    }
+    expect(providerSpy).toHaveBeenCalledTimes(1);
+    expect(settleSpy).toHaveBeenCalledTimes(1);
+    expect(releaseSpy).not.toHaveBeenCalled();
+
+    // Case 6: Client retries after ledger already committed settlement -> no re-execution, no duplicate settle
+    const retryAfterAckFail = await executeWithMcuAuthorization({
+      provenance: 'live_provider',
+      orgId: 'org_a',
+      userId: 'user_a',
+      missionId: 'm_9',
+      idempotencyKey: 'idem-ack-lost',
+      requiredMcu: 5,
+      liveInferenceEnabled: true,
+      providerAuthorized: true,
+      mcuPort: sharedPort,
+      runFixture: async () => 'fixture',
+      runLiveProvider: providerSpy,
+    });
+    expect(retryAfterAckFail.ok).toBe(false);
+    if (!retryAfterAckFail.ok) {
+      expect(retryAfterAckFail.code).toBe('MCU_ALREADY_SETTLED');
+      expect(retryAfterAckFail.reservationId).toBe('res_shared_1');
+      expect(retryAfterAckFail.accountingRef).toBe('acc_res_shared_1');
+      expect(retryAfterAckFail.reconciliationStatus).toBe('settled_requires_result_lookup');
+    }
+    expect(providerSpy).toHaveBeenCalledTimes(1);
+    expect(settleSpy).toHaveBeenCalledTimes(1);
+    expect(releaseSpy).not.toHaveBeenCalled();
+
+    // Cross-tenant isolation: org_b using same idempotencyKey cannot reconcile org_a's reservation
+    ledger.set('org_b:idem-ack-lost', {
+      orgId: 'org_b',
+      reservationId: 'res_org_b_only',
+      status: 'settlement_pending',
+    });
+    const orgBRetry = await executeWithMcuAuthorization({
+      provenance: 'live_provider',
+      orgId: 'org_b',
+      userId: 'user_b',
+      missionId: 'm_9',
+      idempotencyKey: 'idem-ack-lost',
+      requiredMcu: 5,
+      liveInferenceEnabled: true,
+      providerAuthorized: true,
+      mcuPort: sharedPort,
+      runFixture: async () => 'fixture',
+      runLiveProvider: providerSpy,
+    });
+    expect(orgBRetry.ok).toBe(false);
+    if (!orgBRetry.ok) {
+      expect(orgBRetry.code).toBe('MCU_RECONCILIATION_REQUIRED');
+      expect(orgBRetry.reservationId).toBe('res_org_b_only');
+      expect(orgBRetry.reservationId).not.toBe('res_shared_1');
+    }
+    expect(providerSpy).toHaveBeenCalledTimes(1);
   });
 });

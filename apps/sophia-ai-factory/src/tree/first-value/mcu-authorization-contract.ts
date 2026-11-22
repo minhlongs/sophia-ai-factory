@@ -26,7 +26,21 @@ export interface McuBalancePrecheckResult {
 
 export type McuReservationResult =
   | { readonly reserved: true; readonly reservationId: string; readonly amountMcu: number }
-  | { readonly reserved: false; readonly reason: 'insufficient_funds' | 'tenant_mismatch' | 'storage_error' };
+  | {
+      readonly reserved: false;
+      readonly reason: 'already_settled';
+      readonly reservationId: string;
+      readonly accountingRef: string;
+    }
+  | {
+      readonly reserved: false;
+      readonly reason: 'settlement_pending' | 'in_flight';
+      readonly reservationId: string;
+    }
+  | {
+      readonly reserved: false;
+      readonly reason: 'insufficient_funds' | 'tenant_mismatch' | 'storage_error';
+    };
 
 export interface McuSettlementResult {
   readonly settled: boolean;
@@ -80,8 +94,17 @@ export type AuthorizedExecutionErrorCode =
   | 'PROVIDER_AUTHORIZATION_REQUIRED'
   | 'MCU_INSUFFICIENT'
   | 'MCU_RESERVATION_DENIED'
+  | 'MCU_ALREADY_SETTLED'
+  | 'MCU_RECONCILIATION_REQUIRED'
   | 'PROVIDER_EXECUTION_FAILED'
   | 'MCU_SETTLEMENT_FAILED';
+
+export type McuReconciliationStatus =
+  | 'not_applicable'
+  | 'released'
+  | 'release_pending'
+  | 'settlement_uncertain'
+  | 'settled_requires_result_lookup';
 
 export type AuthorizedExecutionOutcome<T> =
   | {
@@ -89,6 +112,7 @@ export type AuthorizedExecutionOutcome<T> =
       readonly output: T;
       readonly mcuCharged: number;
       readonly accountingRef: string;
+      readonly reservationId?: string;
       readonly paidInferenceExecuted: boolean;
     }
   | {
@@ -97,6 +121,10 @@ export type AuthorizedExecutionOutcome<T> =
       readonly error: string;
       readonly mcuCharged: 0;
       readonly released: boolean;
+      readonly providerExecuted?: boolean;
+      readonly reservationId?: string;
+      readonly accountingRef?: string;
+      readonly reconciliationStatus?: McuReconciliationStatus;
     };
 
 export interface ExecuteWithMcuAuthInput<T> {
@@ -113,10 +141,130 @@ export interface ExecuteWithMcuAuthInput<T> {
   readonly runLiveProvider?: () => Promise<T>;
 }
 
+function mapReservationDenied<T>(
+  reservation: Extract<McuReservationResult, { readonly reserved: false }>,
+): AuthorizedExecutionOutcome<T> {
+  if (reservation.reason === 'already_settled') {
+    return {
+      ok: false,
+      code: 'MCU_ALREADY_SETTLED',
+      error: 'Idempotency key already settled; refusing to re-execute paid provider',
+      mcuCharged: 0,
+      released: false,
+      providerExecuted: true,
+      reservationId: reservation.reservationId,
+      accountingRef: reservation.accountingRef,
+      reconciliationStatus: 'settled_requires_result_lookup',
+    };
+  }
+  if (reservation.reason === 'settlement_pending' || reservation.reason === 'in_flight') {
+    return {
+      ok: false,
+      code: 'MCU_RECONCILIATION_REQUIRED',
+      error: `Reservation ${reservation.reservationId} is ${reservation.reason}; refusing to re-execute paid provider`,
+      mcuCharged: 0,
+      released: false,
+      providerExecuted: true,
+      reservationId: reservation.reservationId,
+      reconciliationStatus: 'settlement_uncertain',
+    };
+  }
+  return {
+    ok: false,
+    code: 'MCU_RESERVATION_DENIED',
+    error: `MCU reservation denied: ${reservation.reason}`,
+    mcuCharged: 0,
+    released: false,
+    providerExecuted: false,
+    reconciliationStatus: 'not_applicable',
+  };
+}
+
+async function releaseOnProviderFailure<T>(
+  mcuPort: McuAuthorizationPort,
+  input: ExecuteWithMcuAuthInput<T>,
+  reservationId: string,
+): Promise<AuthorizedExecutionOutcome<T>> {
+  let released = false;
+  try {
+    const releaseRes = await mcuPort.release({
+      orgId: input.orgId,
+      userId: input.userId,
+      reservationId,
+      idempotencyKey: input.idempotencyKey,
+      reason: 'provider_execution_failed',
+    });
+    released = releaseRes.released;
+  } catch {
+    released = false;
+  }
+  return {
+    ok: false,
+    code: 'PROVIDER_EXECUTION_FAILED',
+    error: released
+      ? 'Provider execution failed; MCU reservation released'
+      : 'Provider execution failed; MCU reservation release pending reconciliation',
+    mcuCharged: 0,
+    released,
+    providerExecuted: false,
+    reservationId,
+    reconciliationStatus: released ? 'released' : 'release_pending',
+  };
+}
+
+async function settleCompletedExecution<T>(
+  mcuPort: McuAuthorizationPort,
+  input: ExecuteWithMcuAuthInput<T>,
+  reservation: Extract<McuReservationResult, { readonly reserved: true }>,
+  output: T,
+): Promise<AuthorizedExecutionOutcome<T>> {
+  try {
+    const settlement = await mcuPort.settle({
+      orgId: input.orgId,
+      userId: input.userId,
+      reservationId: reservation.reservationId,
+      idempotencyKey: input.idempotencyKey,
+      actualMcu: reservation.amountMcu,
+    });
+    if (!settlement.settled) {
+      return {
+        ok: false,
+        code: 'MCU_SETTLEMENT_FAILED',
+        error: 'Provider succeeded but MCU settlement did not confirm; reservation retained for reconciliation',
+        mcuCharged: 0,
+        released: false,
+        providerExecuted: true,
+        reservationId: reservation.reservationId,
+        reconciliationStatus: 'settlement_uncertain',
+      };
+    }
+    return {
+      ok: true,
+      output,
+      mcuCharged: reservation.amountMcu,
+      accountingRef: settlement.accountingRef,
+      reservationId: reservation.reservationId,
+      paidInferenceExecuted: true,
+    };
+  } catch {
+    return {
+      ok: false,
+      code: 'MCU_SETTLEMENT_FAILED',
+      error: 'Provider succeeded but MCU settlement failed; reservation retained for reconciliation',
+      mcuCharged: 0,
+      released: false,
+      providerExecuted: true,
+      reservationId: reservation.reservationId,
+      reconciliationStatus: 'settlement_uncertain',
+    };
+  }
+}
+
 /**
  * Executes either a zero-MCU fixture run or a strictly guarded live-provider run.
  * Guarantees zero provider invocation when authorization or funds are insufficient,
- * and automatic reservation release on execution failure.
+ * automatic reservation release on provider failure, and retained reservation with
+ * durable reconciliation reference when settlement fails or is unconfirmed.
  */
 export async function executeWithMcuAuthorization<T>(
   input: ExecuteWithMcuAuthInput<T>,
@@ -175,74 +323,15 @@ export async function executeWithMcuAuthorization<T>(
     amountMcu: input.requiredMcu,
   });
   if (!reservation.reserved) {
-    return {
-      ok: false,
-      code: 'MCU_RESERVATION_DENIED',
-      error: `MCU reservation denied: ${reservation.reason}`,
-      mcuCharged: 0,
-      released: false,
-    };
+    return mapReservationDenied(reservation);
   }
 
   let output: T;
   try {
     output = await input.runLiveProvider();
   } catch {
-    let released = false;
-    try {
-      const releaseRes = await input.mcuPort.release({
-        orgId: input.orgId,
-        userId: input.userId,
-        reservationId: reservation.reservationId,
-        idempotencyKey: input.idempotencyKey,
-        reason: 'provider_execution_failed',
-      });
-      released = releaseRes.released;
-    } catch {
-      released = false;
-    }
-    return {
-      ok: false,
-      code: 'PROVIDER_EXECUTION_FAILED',
-      error: released
-        ? 'Provider execution failed; MCU reservation released'
-        : 'Provider execution failed; MCU reservation release pending reconciliation',
-      mcuCharged: 0,
-      released,
-    };
+    return releaseOnProviderFailure(input.mcuPort, input, reservation.reservationId);
   }
 
-  try {
-    const settlement = await input.mcuPort.settle({
-      orgId: input.orgId,
-      userId: input.userId,
-      reservationId: reservation.reservationId,
-      idempotencyKey: input.idempotencyKey,
-      actualMcu: reservation.amountMcu,
-    });
-    if (!settlement.settled) {
-      return {
-        ok: false,
-        code: 'MCU_SETTLEMENT_FAILED',
-        error: 'Provider succeeded but MCU settlement did not confirm; reservation retained for reconciliation',
-        mcuCharged: 0,
-        released: false,
-      };
-    }
-    return {
-      ok: true,
-      output,
-      mcuCharged: reservation.amountMcu,
-      accountingRef: settlement.accountingRef,
-      paidInferenceExecuted: true,
-    };
-  } catch {
-    return {
-      ok: false,
-      code: 'MCU_SETTLEMENT_FAILED',
-      error: 'Provider succeeded but MCU settlement failed; reservation retained for reconciliation',
-      mcuCharged: 0,
-      released: false,
-    };
-  }
+  return settleCompletedExecution(input.mcuPort, input, reservation, output);
 }

@@ -3,7 +3,7 @@ name: Security Scan (Gate 2)
 # RED-TEAM #1: pull_request ONLY. Secrets withheld from forks by default.
 on:
   pull_request:
-    branches: [main, fix/sophia-10-6-option-a-revenue-closure]
+    branches: [main, fix/sophia-10-6-option-a-revenue-closure, feat/b1-first-value-funnel]
 
 permissions:
   contents: read
