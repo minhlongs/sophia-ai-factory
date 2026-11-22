@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   getAuth: vi.fn(),
   headers: vi.fn(),
+  loggerError: vi.fn(),
 }));
 
 vi.mock('next/headers', () => ({
@@ -15,7 +16,7 @@ vi.mock('@/seed/auth/better-auth-server', () => ({
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
-    error: vi.fn(),
+    error: mocks.loggerError,
   },
 }));
 
@@ -51,5 +52,50 @@ describe('better-auth-session', () => {
 
     expect(user).toMatchObject({ id: 'user-1', email: 'u@example.com', role: 'admin' });
     expect(getSessionMock).toHaveBeenCalledWith({ headers });
+  });
+
+  it('logs explicit errorName on getCurrentUserFromHeaders failure for minified custom Error and non-Error throws', async () => {
+    class e extends Error {
+      constructor(message: string) {
+        super(message);
+        this.name = 'D1AuthTimeoutError';
+      }
+    }
+
+    mocks.getAuth.mockRejectedValueOnce(new e('timeout'));
+    const headers = new Headers({ cookie: 'better-auth.session_token=abc' });
+    await expect(getCurrentUserFromHeaders(headers)).rejects.toThrow('timeout');
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      '[better-auth-session] getSessionFromHeaders failed',
+      expect.any(Error),
+      expect.objectContaining({ errorName: 'D1AuthTimeoutError' }),
+    );
+
+    mocks.getAuth.mockRejectedValueOnce('string-failure');
+    await expect(getCurrentUserFromHeaders(headers)).rejects.toThrow('string-failure');
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      '[better-auth-session] getSessionFromHeaders failed',
+      expect.any(Error),
+      expect.objectContaining({ errorName: 'string' }),
+    );
+  });
+
+  it('logs errorName safely on getSession failure for both Error and non-Error throws', async () => {
+    mocks.headers.mockResolvedValue(new Headers({ cookie: 'better-auth.session_token=abc' }));
+    mocks.getAuth.mockRejectedValueOnce(new TypeError('bad header'));
+    await expect(getSession()).resolves.toBeNull();
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      '[better-auth-session] getSession failed',
+      expect.any(Error),
+      expect.objectContaining({ errorName: 'TypeError' }),
+    );
+
+    mocks.getAuth.mockRejectedValueOnce('raw-error');
+    await expect(getSession()).resolves.toBeNull();
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      '[better-auth-session] getSession failed',
+      expect.any(Error),
+      expect.objectContaining({ errorName: 'string' }),
+    );
   });
 });

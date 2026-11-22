@@ -30,6 +30,7 @@ vi.mock('@/seed/security/use-csrf-token', () => ({
 import { FirstValueByokCard } from '../first-value-byok-card';
 import { FirstValueReviewPanel } from '../first-value-review-panel';
 import { FirstValueJourneyClient } from '../first-value-journey-client';
+import { FirstValuePostSchema } from '@/land/first-value/first-value-http-schemas';
 
 const SAMPLE_RECEIPT: HonestValidationReceipt = {
   receiptId: 'rcpt_test_1',
@@ -356,5 +357,107 @@ describe('FirstValueJourneyClient', () => {
     await waitFor(() => {
       expect(screen.getByText('rejected')).toBeTruthy();
     });
+  });
+
+  it('disables preview and create actions when topic is empty or whitespace-only and shows inline alert', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        byokConfigured: true,
+        configuredProviders: ['openrouter'],
+        receipt: SAMPLE_RECEIPT,
+        recentReviews: [],
+      }),
+    });
+
+    render(<FirstValueJourneyClient orgId="org_1" />);
+    await waitFor(() => {
+      expect(screen.getByText('rcpt_test_1')).toBeTruthy();
+    });
+
+    const inputs = screen.getAllByRole('textbox');
+    const topicInput = inputs[0];
+    const previewBtn = screen.getByRole('button', { name: 'previewCostBtn' }) as HTMLButtonElement;
+    const createBtn = screen.getByRole('button', { name: 'createReviewBtn' }) as HTMLButtonElement;
+
+    expect(previewBtn.disabled).toBe(false);
+    expect(createBtn.disabled).toBe(false);
+
+    // Clear to whitespace-only
+    fireEvent.change(topicInput, { target: { value: '   ' } });
+
+    expect(previewBtn.disabled).toBe(true);
+    expect(createBtn.disabled).toBe(true);
+    expect(topicInput.getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByRole('alert').textContent).toBe('topicRequired');
+
+    // Clicking disabled buttons must not issue any POST request
+    fireEvent.click(previewBtn);
+    fireEvent.click(createBtn);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Restoring a non-empty topic re-enables both actions
+    fireEvent.change(topicInput, { target: { value: 'Valid topic' } });
+    expect(previewBtn.disabled).toBe(false);
+    expect(createBtn.disabled).toBe(false);
+    expect(topicInput.getAttribute('aria-invalid')).toBe('false');
+
+    // Clearing audience to whitespace-only also disables both actions
+    const audienceInput = inputs[1];
+    fireEvent.change(audienceInput, { target: { value: '   ' } });
+    expect(previewBtn.disabled).toBe(true);
+    expect(createBtn.disabled).toBe(true);
+    expect(audienceInput.getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByRole('alert').textContent).toBe('audienceRequired');
+  });
+});
+
+describe('FirstValuePostSchema — server-side whitespace topic rejection', () => {
+  it('rejects whitespace-only topic and audience on cost_preview, fixture_preview, and create_review', () => {
+    const costRes = FirstValuePostSchema.safeParse({
+      action: 'cost_preview',
+      orgId: 'org_1',
+      topic: '   ',
+      audience: 'Founders',
+    });
+    expect(costRes.success).toBe(false);
+
+    const fixtureRes = FirstValuePostSchema.safeParse({
+      action: 'fixture_preview',
+      orgId: 'org_1',
+      topic: '   \t\n  ',
+      audience: 'Founders',
+    });
+    expect(fixtureRes.success).toBe(false);
+
+    const createRes = FirstValuePostSchema.safeParse({
+      action: 'create_review',
+      orgId: 'org_1',
+      missionId: 'mission_1',
+      topic: '   ',
+      audience: 'Founders',
+      receipt: SAMPLE_RECEIPT,
+    });
+    expect(createRes.success).toBe(false);
+
+    const whitespaceAudienceRes = FirstValuePostSchema.safeParse({
+      action: 'cost_preview',
+      orgId: 'org_1',
+      topic: 'Valid topic',
+      audience: '   ',
+    });
+    expect(whitespaceAudienceRes.success).toBe(false);
+
+    const validRes = FirstValuePostSchema.safeParse({
+      action: 'cost_preview',
+      orgId: 'org_1',
+      topic: '  Valid topic  ',
+      audience: '  Founders  ',
+    });
+    expect(validRes.success).toBe(true);
+    if (validRes.success && validRes.data.action === 'cost_preview') {
+      expect(validRes.data.topic).toBe('Valid topic');
+      expect(validRes.data.audience).toBe('Founders');
+    }
   });
 });

@@ -10,6 +10,7 @@
 import { getAuth } from '@/seed/auth/better-auth-server';
 import type { User } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { getErrorClassName } from '@/seed/utils/to-error';
 import { unstable_rethrow } from 'next/navigation';
 
 /** Thrown when auth lookup fails due to a system/DB error (not "no session"). */
@@ -73,7 +74,7 @@ export async function getSessionFromHeaders(
       '[better-auth-session] getSessionFromHeaders failed',
       err instanceof Error ? err : new Error(String(err)),
       {
-        errorName: err instanceof Error ? err.constructor.name : typeof err,
+        errorName: err instanceof Error ? getErrorClassName(err) : typeof err,
         errorMessage: err instanceof Error ? err.message : String(err),
       },
     );

@@ -10,6 +10,7 @@ import * as React from 'react';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import type { User } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { getErrorClassName } from '@/seed/utils/to-error';
 import { unstable_rethrow } from 'next/navigation';
 import {
   AuthSystemError,
@@ -44,7 +45,7 @@ async function resolveSessionUncached() {
       '[better-auth-session] getSession failed',
       err instanceof Error ? err : new Error(String(err)),
       {
-        errorName: err instanceof Error ? err.constructor.name : typeof err,
+        errorName: err instanceof Error ? getErrorClassName(err) : typeof err,
         errorMessage: err instanceof Error ? err.message : String(err),
       },
     );

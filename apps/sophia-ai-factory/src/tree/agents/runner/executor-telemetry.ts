@@ -7,6 +7,7 @@ import { updateTaskResult, appendLog } from '../repository';
 import { track } from '@/tree/signals/track';
 import { D1Events } from '@/tree/signals/d1-event-types';
 import { reportError } from '@/seed/observability/telemetry/error-tracker';
+import { getErrorClassName } from '@/seed/utils/to-error';
 import { trackUsage } from '@/tree/usage-metering';
 import { calculateCredits } from '@/seed/billing/credits-calculator';
 import type { Tier } from '@/seed/types';
@@ -88,7 +89,7 @@ export async function recordAgentTaskFailure(params: {
 }): Promise<never> {
   const { err, taskId, orgId, agentRole, variant } = params;
   const errMsg = err instanceof Error ? err.message : String(err);
-  const errorClass = err instanceof Error ? err.constructor.name : 'UnknownError';
+  const errorClass = err instanceof Error ? getErrorClassName(err) : 'UnknownError';
 
   if (!errMsg.startsWith('OpenRouter HTTP') && !errMsg.includes('Rate limited')) {
     void track(
