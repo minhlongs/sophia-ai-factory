@@ -224,6 +224,7 @@ export async function claimMockExecutionAtomic(
     readonly actorUserId: string;
     readonly expectedPayloadDigest: string;
     readonly expectedVersion: number;
+    readonly expectedApprovalVersion: number;
     readonly nowIso: string;
   },
 ): Promise<{ readonly record: PublishGateRecord; readonly executionClaimId: string } | null> {
@@ -239,6 +240,7 @@ export async function claimMockExecutionAtomic(
          AND request_id = ?
          AND state = 'APPROVED'
          AND version = ?
+         AND approval_version = ?
          AND payload_digest_sha256 = ?
          AND execution_claim_id IS NULL
          AND approval_expires_at_iso > ?`,
@@ -249,6 +251,7 @@ export async function claimMockExecutionAtomic(
       input.orgId,
       input.requestId,
       input.expectedVersion,
+      input.expectedApprovalVersion,
       input.expectedPayloadDigest,
       input.nowIso,
     )
@@ -340,13 +343,37 @@ export async function reconcileUncertainExecutionAtomic(
     readonly nowIso: string;
   },
 ): Promise<PublishGateRecord | null> {
+  const existing = await getPublishGateById(d1, input.orgId, input.requestId);
+  if (!existing || existing.state !== 'RECONCILIATION_REQUIRED') {
+    return null;
+  }
+
+  const updatedReceiptJson = existing.mockReceipt
+    ? JSON.stringify({
+        ...existing.mockReceipt,
+        simulatedStatus: input.resolution,
+        errorCode: input.resolution === 'SIMULATED_PUBLISHED' ? null : input.reasonCode,
+        message: `Reconciled as ${input.resolution} (${input.reasonCode}).`,
+      })
+    : null;
+
   const res = await d1
     .prepare(
       `UPDATE b2_publish_gate_requests
-       SET state = ?, version = version + 1, updated_at_iso = ?
-       WHERE org_id = ? AND request_id = ? AND state = 'RECONCILIATION_REQUIRED'`,
+       SET state = ?,
+           mock_receipt_json = COALESCE(?, mock_receipt_json),
+           version = version + 1,
+           updated_at_iso = ?
+       WHERE org_id = ? AND request_id = ? AND state = 'RECONCILIATION_REQUIRED' AND version = ?`,
     )
-    .bind(input.resolution, input.nowIso, input.orgId, input.requestId)
+    .bind(
+      input.resolution,
+      updatedReceiptJson,
+      input.nowIso,
+      input.orgId,
+      input.requestId,
+      existing.version,
+    )
     .run();
 
   if ((res.meta?.changes ?? 0) !== 1) {

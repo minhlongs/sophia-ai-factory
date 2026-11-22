@@ -478,4 +478,166 @@ describe('B2 Publish Gate — Inngest Durable Wait Workflow (8 cases)', () => {
     expect(after?.state).toBe('AWAITING_HUMAN_APPROVAL');
     expect(after?.approvalVersion).toBe(2);
   });
+
+  it('46. blocks stale v1 human_approved wake-up after mutate-and-revert to identical digest at v3', async () => {
+    const v1 = await seedAwaiting();
+
+    // Mutate v1 -> v2 (different caption), then revert v2 -> v3 (identical digest to v1)
+    const v2 = await mutatePayloadInvalidateApprovalAtomic(d1, {
+      orgId: v1.orgId,
+      requestId: v1.requestId,
+      actorUserId: 'user_1',
+      expectedVersion: v1.version,
+      expectedState: v1.state,
+      nextPayload: makePayload({ caption: 'Temporary edit v2' }),
+      nowIso: new Date(nowMs + 1000).toISOString(),
+    });
+    const v3 = await mutatePayloadInvalidateApprovalAtomic(d1, {
+      orgId: v1.orgId,
+      requestId: v1.requestId,
+      actorUserId: 'user_1',
+      expectedVersion: v2!.version,
+      expectedState: v2!.state,
+      nextPayload: makePayload(),
+      nowIso: new Date(nowMs + 2000).toISOString(),
+    });
+    expect(v3!.approvalVersion).toBe(3);
+    expect(v3!.payloadDigestSha256).toBe(v1.payloadDigestSha256);
+
+    const evalRes = getMockPublishGateAdapter('tiktok').preflight({ payload: v3!.payload });
+    const pre3 = await recordPreflightOutcomeAtomic(d1, {
+      orgId: v1.orgId,
+      requestId: v1.requestId,
+      actorUserId: 'user_1',
+      expectedVersion: v3!.version,
+      expectedState: v3!.state,
+      passed: evalRes.passed,
+      snapshot: evalRes.snapshot,
+      payloadDigestSha256: v3!.payloadDigestSha256,
+      nowIso: new Date(nowMs + 3000).toISOString(),
+    });
+    const awaiting3 = await submitForHumanApprovalAtomic(d1, {
+      orgId: v1.orgId,
+      requestId: v1.requestId,
+      actorUserId: 'user_1',
+      expectedVersion: pre3!.version,
+      payloadDigestSha256: pre3!.payloadDigestSha256,
+      expiresAtIso: new Date(nowMs + 72 * 60 * 60 * 1000).toISOString(),
+      nowIso: new Date(nowMs + 4000).toISOString(),
+    });
+    await consumeHumanDecisionAtomic(d1, {
+      orgId: awaiting3!.orgId,
+      requestId: awaiting3!.requestId,
+      approverUserId: 'admin_v3',
+      approvalNonce: awaiting3!.approvalNonce!,
+      expectedPayloadDigest: awaiting3!.payloadDigestSha256,
+      expectedApprovalVersion: awaiting3!.approvalVersion,
+      decision: 'approved',
+      nowIso: new Date(nowMs + 5000).toISOString(),
+    });
+
+    const staleStep = makeStep({
+      data: {
+        requestId: v1.requestId,
+        orgId: v1.orgId,
+        approverUserId: 'admin_v1_stale',
+        approvalNonce: v1.approvalNonce!,
+        payloadDigestSha256: v1.payloadDigestSha256,
+        approvalVersion: v1.approvalVersion,
+        decision: 'approved',
+        publicationMode: 'MOCK_ONLY',
+      },
+    });
+
+    const result = await runB2PublishGateWorkflowCore({
+      d1,
+      eventData: {
+        requestId: v1.requestId,
+        orgId: v1.orgId,
+        payloadDigestSha256: v1.payloadDigestSha256,
+        approvalVersion: v1.approvalVersion,
+        publicationMode: 'MOCK_ONLY',
+      },
+      step: staleStep,
+      nowMs: () => nowMs + 6000,
+    });
+
+    expect(result.outcome).toBe('BLOCKED');
+    expect(result.reason).toBe('APPROVAL_VERSION_MISMATCH');
+    expect(staleStep.waitForEvent).toHaveBeenCalledWith(
+      'b2-wait-human-approval',
+      expect.objectContaining({
+        if: expect.stringContaining('async.data.approvalVersion == event.data.approvalVersion'),
+      }),
+    );
+    const stored = await getPublishGateById(d1, v1.orgId, v1.requestId);
+    expect(stored?.state).toBe('APPROVED');
+    expect(stored?.executionClaimId).toBeNull();
+  });
+
+  it('47. blocks wake-up event with rejected decision or mismatched approvalNonce', async () => {
+    const awaiting = await seedAwaiting();
+    await consumeHumanDecisionAtomic(d1, {
+      orgId: awaiting.orgId,
+      requestId: awaiting.requestId,
+      approverUserId: 'admin_1',
+      approvalNonce: awaiting.approvalNonce!,
+      expectedPayloadDigest: awaiting.payloadDigestSha256,
+      expectedApprovalVersion: awaiting.approvalVersion,
+      decision: 'approved',
+      nowIso: new Date(nowMs).toISOString(),
+    });
+
+    const rejectedEventRes = await runB2PublishGateWorkflowCore({
+      d1,
+      eventData: {
+        requestId: awaiting.requestId,
+        orgId: awaiting.orgId,
+        payloadDigestSha256: awaiting.payloadDigestSha256,
+        approvalVersion: awaiting.approvalVersion,
+        publicationMode: 'MOCK_ONLY',
+      },
+      step: makeStep({
+        data: {
+          requestId: awaiting.requestId,
+          orgId: awaiting.orgId,
+          approverUserId: 'admin_1',
+          approvalNonce: awaiting.approvalNonce!,
+          payloadDigestSha256: awaiting.payloadDigestSha256,
+          approvalVersion: awaiting.approvalVersion,
+          decision: 'rejected',
+          publicationMode: 'MOCK_ONLY',
+        },
+      }),
+      nowMs: () => nowMs,
+    });
+    expect(rejectedEventRes.outcome).toBe('BLOCKED');
+    expect(rejectedEventRes.reason).toBe('EVENT_DECISION_NOT_APPROVED');
+
+    const badNonceRes = await runB2PublishGateWorkflowCore({
+      d1,
+      eventData: {
+        requestId: awaiting.requestId,
+        orgId: awaiting.orgId,
+        payloadDigestSha256: awaiting.payloadDigestSha256,
+        approvalVersion: awaiting.approvalVersion,
+        publicationMode: 'MOCK_ONLY',
+      },
+      step: makeStep({
+        data: {
+          requestId: awaiting.requestId,
+          orgId: awaiting.orgId,
+          approverUserId: 'admin_1',
+          approvalNonce: 'forged_or_stale_nonce',
+          payloadDigestSha256: awaiting.payloadDigestSha256,
+          approvalVersion: awaiting.approvalVersion,
+          decision: 'approved',
+          publicationMode: 'MOCK_ONLY',
+        },
+      }),
+      nowMs: () => nowMs,
+    });
+    expect(badNonceRes.outcome).toBe('BLOCKED');
+    expect(badNonceRes.reason).toBe('APPROVAL_NONCE_MISMATCH');
+  });
 });
