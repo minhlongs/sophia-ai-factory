@@ -80,3 +80,5 @@ export { storageTrackerDaily } from '@/forest/quota';
 export { sopExecute } from '@/forest/sops';
 // Autonomous Video Pipeline & Growth Triad
 export * from './growth-triad-registry';
+// Compliance Publish Gate (MOCK_ONLY)
+export * from './b2-publish-gate-workflow';

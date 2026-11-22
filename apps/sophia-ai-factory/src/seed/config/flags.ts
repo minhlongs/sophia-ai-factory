@@ -12,6 +12,14 @@ export function isPayOsEnabled(): boolean {
 }
 
 /**
+ * Dynamic request-time check for Track B2 Compliance Publish Gate (MOCK_ONLY).
+ * Fail-closed default (`false`): avoids module-load freezing on Cloudflare Workers isolates.
+ */
+export function isB2CompliancePublishGateEnabled(): boolean {
+  return process.env.FEATURE_B2_COMPLIANCE_PUBLISH_GATE === 'true';
+}
+
+/**
  * PayOS VN payment method feature flag.
  * Kept for backwards compatibility; runtime callers must prefer `isPayOsEnabled()`.
  */
