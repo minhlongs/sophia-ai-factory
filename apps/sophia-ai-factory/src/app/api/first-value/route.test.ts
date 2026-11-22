@@ -16,10 +16,17 @@ vi.mock('@/seed/auth/workspace-access', () => ({
 
 import { POST } from './route';
 
-function makeRequest(body: unknown): NextRequest {
+const TEST_CSRF_TOKEN = 'test-csrf-token-0123456789abcdef0123456789abcdef';
+
+function makeRequest(body: unknown, includeCsrf = true): NextRequest {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (includeCsrf) {
+    headers.cookie = `csrf-token=${TEST_CSRF_TOKEN}`;
+    headers['x-csrf-token'] = TEST_CSRF_TOKEN;
+  }
   return new NextRequest('http://localhost/api/first-value', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body: typeof body === 'string' ? body : JSON.stringify(body),
   });
 }
@@ -42,6 +49,22 @@ describe('POST /api/first-value', () => {
       }),
     );
     expect(res.status).toBe(401);
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
+  });
+
+  it('returns 403 when CSRF double-submit token is missing', async () => {
+    const res = await POST(
+      makeRequest(
+        {
+          action: 'cost_preview',
+          orgId: 'org-1',
+          topic: 'Launch',
+          audience: 'Founders',
+        },
+        false,
+      ),
+    );
+    expect(res.status).toBe(403);
     expect(res.headers.get('cache-control')).toBe('private, no-store');
   });
 
