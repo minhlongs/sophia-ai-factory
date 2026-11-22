@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -117,5 +119,11 @@ describe('ZenThemeProvider — Rocket Loader opt-out, CSP nonce & cross-route sy
 
     expect(window.localStorage.getItem('sophia-zen-theme')).toBe('system');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('keeps wrangler keep_names disabled so esbuild does not inject module-scoped __name helpers into serialized SSR theme scripts', () => {
+    const wranglerPath = resolve(__dirname, '../../../../wrangler.toml');
+    const wranglerToml = readFileSync(wranglerPath, 'utf8');
+    expect(wranglerToml).toMatch(/^keep_names\s*=\s*false\b/m);
   });
 });

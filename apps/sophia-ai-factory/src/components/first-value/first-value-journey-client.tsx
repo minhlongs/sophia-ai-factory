@@ -64,6 +64,8 @@ interface CostFormProps {
   readonly durationSec: number;
   readonly model: string;
   readonly busy: boolean;
+  readonly topicInvalid: boolean;
+  readonly audienceInvalid: boolean;
   readonly canPreview: boolean;
   readonly canCreate: boolean;
   readonly costPreview: FirstValueCostPreview | null;
@@ -85,17 +87,35 @@ function CostPreviewSection(props: CostFormProps) {
           {t('topicLabel')}
           <input
             value={props.topic}
+            required
+            maxLength={500}
+            aria-invalid={props.topicInvalid}
+            aria-describedby={props.topicInvalid ? 'first-value-topic-error' : undefined}
             onChange={(e) => props.onTopicChange(e.target.value)}
             className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
           />
+          {props.topicInvalid && (
+            <span id="first-value-topic-error" role="alert" className="text-xs text-destructive">
+              {t('topicRequired')}
+            </span>
+          )}
         </label>
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           {t('audienceLabel')}
           <input
             value={props.audience}
+            required
+            maxLength={300}
+            aria-invalid={props.audienceInvalid}
+            aria-describedby={props.audienceInvalid ? 'first-value-audience-error' : undefined}
             onChange={(e) => props.onAudienceChange(e.target.value)}
             className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
           />
+          {props.audienceInvalid && (
+            <span id="first-value-audience-error" role="alert" className="text-xs text-destructive">
+              {t('audienceRequired')}
+            </span>
+          )}
         </label>
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           {t('durationLabel')}
@@ -194,20 +214,21 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
   }
 
   async function handleCostPreview() {
+    if (!topic.trim() || !audience.trim()) return;
     const data = await postAction({
       action: 'cost_preview',
       orgId,
       provider: status?.configuredProviders[0] ?? 'openrouter',
       model: model.trim() ? model.trim() : null,
-      topic,
-      audience,
+      topic: topic.trim(),
+      audience: audience.trim(),
       durationSec,
     });
     if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
   }
 
   async function handleCreateReview() {
-    if (!status?.receipt) return;
+    if (!status?.receipt || !topic.trim() || !audience.trim()) return;
     const key = `fv-create-${crypto.randomUUID()}`;
     const data = await postAction(
       {
@@ -215,8 +236,8 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
         orgId,
         missionId: `mission_${orgId}_b1`,
         idempotencyKey: key,
-        topic,
-        audience,
+        topic: topic.trim(),
+        audience: audience.trim(),
         durationSec,
         provenance: 'fixture_simulated',
         receipt: status.receipt,
@@ -271,6 +292,10 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
     }
   }
 
+  const topicInvalid = topic.trim().length === 0;
+  const audienceInvalid = audience.trim().length === 0;
+  const inputsValid = !topicInvalid && !audienceInvalid;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
@@ -281,7 +306,7 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
       </div>
 
       {errorMessage && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+        <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
           <strong>{t('errorPrefix')}:</strong> {errorMessage}
         </div>
       )}
@@ -297,8 +322,10 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
         durationSec={durationSec}
         model={model}
         busy={busy}
-        canPreview={Boolean(orgId)}
-        canCreate={Boolean(orgId && status?.receipt)}
+        topicInvalid={topicInvalid}
+        audienceInvalid={audienceInvalid}
+        canPreview={Boolean(orgId && inputsValid)}
+        canCreate={Boolean(orgId && status?.receipt && inputsValid)}
         costPreview={costPreview}
         onTopicChange={setTopic}
         onAudienceChange={setAudience}

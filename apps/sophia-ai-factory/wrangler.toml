@@ -5,6 +5,9 @@ main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 minify = true
+# Prevent esbuild from injecting module-scoped __name helpers into serialized
+# SSR inline scripts (e.g., next-themes pre-hydration script via Function.toString).
+keep_names = false
 
 # Health check worker (bypasses OpenNext bundling)
 [[env]]
