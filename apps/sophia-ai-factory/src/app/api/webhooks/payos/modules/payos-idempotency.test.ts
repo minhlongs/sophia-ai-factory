@@ -108,4 +108,33 @@ describe('checkAndRecordPaymentIdempotency', () => {
     expect(result.shouldProcess).toBe(true);
     expect(events.get('payos_link-1')?.payload).toBe('retry');
   });
+
+  it('returns HTTP 503 on transient D1 failure so PayOS retries the webhook', async () => {
+    const failingDb = {
+      prepare() {
+        return {
+          bind() {
+            return {
+              async run() {
+                throw new Error('D1 transient timeout');
+              },
+              async first() {
+                throw new Error('D1 transient timeout');
+              },
+            };
+          },
+        };
+      },
+    } as unknown as DbClient;
+
+    const result = await checkAndRecordPaymentIdempotency({
+      db: failingDb,
+      paymentLinkId: 'link-transient',
+      sanitizedBody: '{}',
+    });
+
+    expect(result.shouldProcess).toBe(false);
+    if (result.shouldProcess) throw new Error('Transient DB failure should not process');
+    expect(result.response?.status).toBe(503);
+  });
 });

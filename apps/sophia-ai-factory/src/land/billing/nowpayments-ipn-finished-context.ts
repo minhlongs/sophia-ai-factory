@@ -55,6 +55,13 @@ export async function setupDatabaseAndContext(
     ? (UNIFIED_TIERS[tier]?.yearlyPrice ?? NOWPAYMENTS_TIERS[tier]?.yearlyPrice)
     : NOWPAYMENTS_TIERS[tier]?.price
   if (expectedPrice !== undefined && ipn.price_amount !== undefined) {
+    const receivedCurrency = ipn.price_currency?.trim().toLowerCase()
+    if (receivedCurrency !== 'usd') {
+      logger.warn('[NOWPayments] Non-USD or missing price currency — rejecting subscription activation', {
+        paymentId: ipn.payment_id, tier, expectedCurrency: 'usd', receivedCurrency: ipn.price_currency ?? null,
+      })
+      return null
+    }
     const deviation = Math.abs(ipn.price_amount - expectedPrice)
     if (deviation > expectedPrice * AMOUNT_MISMATCH_THRESHOLD) {
       logger.warn('[NOWPayments] Amount mismatch — rejecting subscription activation', {

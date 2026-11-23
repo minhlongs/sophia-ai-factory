@@ -1,9 +1,26 @@
 import { verifyInboundWebhook } from '@/land/webhooks/signature';
 
+function sortDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortDeep);
+  }
+  if (value !== null && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    return Object.keys(obj)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = sortDeep(obj[key]);
+        return acc;
+      }, {});
+  }
+  return value;
+}
+
 /**
  * PayOS canonicalization: sort data keys alphabetically, join as key=value&...
  * Receives raw JSON string from request body; parses and re-serializes as canonical string.
- * PayOS IPN spec — signature covers sorted key=value pairs from the `data` object.
+ * PayOS IPN spec — signature covers sorted key=value pairs from the `data` object,
+ * with nested objects and array element objects recursively key-sorted before JSON serialization.
  */
 export function payOsCanonicalize(rawBody: string): string {
   const parsed = JSON.parse(rawBody) as { data?: Record<string, unknown> };
@@ -13,13 +30,13 @@ export function payOsCanonicalize(rawBody: string): string {
     .sort()
     .map((k) => {
       const value = dataObj[k];
-      const normalized =
-        value === null || value === undefined || value === 'null' || value === 'undefined'
-          ? ''
-          : typeof value === 'object'
-            ? JSON.stringify(value)
-            : String(value);
-      return `${k}=${normalized}`;
+      if (value === null || value === undefined || value === 'null' || value === 'undefined') {
+        return `${k}=`;
+      }
+      if (typeof value === 'object') {
+        return `${k}=${JSON.stringify(sortDeep(value))}`;
+      }
+      return `${k}=${String(value)}`;
     })
     .join('&');
 }

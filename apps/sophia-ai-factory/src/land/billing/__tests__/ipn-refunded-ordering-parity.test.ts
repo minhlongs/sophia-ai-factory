@@ -127,6 +127,14 @@ describe('dispatchRefunded ordering parity', () => {
     expect(subscriptionHandler.handleRefunded).toHaveBeenCalledTimes(1)
   })
 
+  it('routes a non-contract refund without invoice_id to the subscription handler', async () => {
+    stubSubscriptionHandler()
+    await dispatchRefunded(payload({ invoice_id: '' }), db({ contractOrder: null, order: null }))
+
+    expect(contractRefund.refundNowPaymentsContractOrder).not.toHaveBeenCalled()
+    expect(subscriptionHandler.handleRefunded).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects a non-contract refund that carries neither invoice nor order', async () => {
     await expect(dispatchRefunded(payload({ invoice_id: '', order_id: '' }), db()))
       .rejects.toThrow(/missing invoice and order correlation/)

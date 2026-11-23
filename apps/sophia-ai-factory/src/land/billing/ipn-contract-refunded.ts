@@ -96,7 +96,11 @@ export async function assertContractRefundIsCorrelatable(
   contractOrderId: string,
 ): Promise<void> {
   if (contractOrderId && !ipn.invoice_id) {
-    throw new Error('NOWPayments contract refund is missing provider invoice ID; retry after reconciliation')
+    const isContractOrder = await findContractOrderByOrderId(db, contractOrderId)
+    if (isContractOrder) {
+      throw new Error('NOWPayments contract refund is missing provider invoice ID; retry after reconciliation')
+    }
+    if (ipn.order_id === contractOrderId) return
   }
   if (!ipn.order_id) return
 

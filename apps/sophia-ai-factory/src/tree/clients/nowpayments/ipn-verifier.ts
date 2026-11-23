@@ -24,7 +24,7 @@ export function sdkEventToInternalPayload(
     payment_status: p.payment_status ?? 'waiting',
     pay_address: (p.pay_address ?? undefined) as string | undefined,
     price_amount: Number(p.price_amount ?? rawPayload.price_amount ?? 0),
-    price_currency: String(p.price_currency ?? rawPayload.price_currency ?? 'USD'),
+    price_currency: String(p.price_currency ?? rawPayload.price_currency ?? ''),
     pay_amount: p.pay_amount != null ? Number(p.pay_amount) : undefined,
     pay_currency: (p.pay_currency ?? undefined) as string | undefined,
     order_id: (p.order_id ?? undefined) as string | undefined,

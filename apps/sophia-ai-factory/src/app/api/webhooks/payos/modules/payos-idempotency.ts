@@ -53,7 +53,7 @@ export async function checkAndRecordPaymentIdempotency(params: {
       logger.warn('[PayOS Webhook] Payment event disappeared during idempotency check', { paymentLinkId });
       return {
         shouldProcess: false,
-        response: NextResponse.json({ error: 'Cannot read payment event' }, { status: 422 }),
+        response: NextResponse.json({ error: 'Cannot read payment event' }, { status: 503 }),
       };
     }
 
@@ -98,7 +98,7 @@ export async function checkAndRecordPaymentIdempotency(params: {
     logger.warn('[PayOS Webhook] Failed to record payment event', { error: message });
     return {
       shouldProcess: false,
-      response: NextResponse.json({ error: 'Cannot record payment event' }, { status: 422 }),
+      response: NextResponse.json({ error: 'Cannot record payment event' }, { status: 503 }),
     };
   }
 }
