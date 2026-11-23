@@ -93,7 +93,7 @@ wrangler r2 bucket create sophia-pilot-opennext-cache
 - Note: `open-next.config.ts` uses `d1NextTagCache`, so `sophia-pilot-tag-cache` is a D1 database (`NEXT_TAG_CACHE_D1`) and `sophia-pilot-opennext-cache` is an R2 bucket (`NEXT_INC_CACHE_R2_BUCKET`).
 
 ### 4. Exact Wrangler Config & Automated Isolation Check
-- Replace `REPLACE_WITH_PILOT_D1_ID`, `REPLACE_WITH_PILOT_TAG_CACHE_D1_ID`, and `REPLACE_WITH_PILOT_HOSTNAME` in `apps/sophia-ai-factory/wrangler.pilot.toml`.
+- Replace `REPLACE_WITH_ISOLATED_PILOT_D1_DATABASE_ID`, `REPLACE_WITH_ISOLATED_PILOT_TAG_CACHE_D1_ID`, and `REPLACE_WITH_PILOT_HOSTNAME` in `apps/sophia-ai-factory/wrangler.pilot.toml`.
 - Verify zero production IDs/hostnames/buckets/crons/queues exist:
 ```bash
 cd apps/sophia-ai-factory
@@ -125,7 +125,7 @@ Apply to `sophia-pilot-tag-cache` (`--remote`, `--config wrangler.pilot.toml`):
 ### 7. Required Secrets (By Name Only — Never Commit Values)
 Set via `wrangler secret put <NAME> --config wrangler.pilot.toml`:
 - `BETTER_AUTH_SECRET` (fresh 32+ byte random secret, distinct from production)
-- `ENCRYPTION_KEY` (fresh 32-byte hex key, distinct from production)
+- `BYOK_MASTER_KEY` (fresh base64 32-byte key, distinct from production)
 - `PILOT_ALLOWED_EMAILS` (exact single invited customer email, lowercase)
 - `PILOT_OPENROUTER_API_KEY` (dedicated pilot-only OpenRouter key, loaded ONLY in Phase 2 after financial GO)
 
@@ -165,14 +165,16 @@ curl -sS -H "Authorization: Bearer $PILOT_OPENROUTER_API_KEY" https://openrouter
 ```bash
 cd apps/sophia-ai-factory
 npm run pilot:check-isolation -- --require-resolved-ids
-npm run deploy:build
+npm run pilot:build
 OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml
 ```
 
 ### 14. No-Cost Smoke Tests (Before Phase 2 Activation)
-- Verify unauthenticated access is blocked by Cloudflare Access.
-- Verify `/api/health` (200) and `/api/version` (`shortSha` matches deployed SHA).
-- Verify non-invited email sign-up returns `403 PILOT_INVITE_REQUIRED`.
+Distinguish all three authorization layers (do not assume identical HTTP status codes):
+- **Layer 1 — Edge Access rejection:** Unauthenticated or non-Access-allowed requests receive a Cloudflare Access challenge / `302` redirect to the Access login page (NOT an application `403`).
+- **Layer 2 — Application allowlist rejection:** An Access-authenticated identity whose email is not in `PILOT_ALLOWED_EMAILS` receives `403 PILOT_INVITE_REQUIRED` (on sign-up/sign-in) or `403 PILOT_ACCESS_REVOKED` (on `/api/first-value`).
+- **Layer 3 — Tenant authorization rejection:** An invited user passing another tenant's `orgId` receives `403` from tenant membership validation.
+- Verify `/api/health` (`200`) and `/api/version` (`shortSha` matches deployed SHA).
 - Verify `/api/checkout`, `/api/webhooks/payos`, `/api/publish`, `/api/v1/generate`, `/api/campaigns`, `/api/inngest` all return `403`.
 - Verify invited user can sign in, accept consent (`2026-11-pilot-v2`), and attempting live generation returns `403 LIVE_INFERENCE_DISABLED` (zero spend).
 

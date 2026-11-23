@@ -57,6 +57,7 @@
     "worker:typecheck": "tsc --noEmit --project tsconfig.worker.json",
     "deploy": "npm run build && node scripts/fix-instrumentation-standalone.mjs && bash scripts/patch-opennext-d3-stubs.sh && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs && OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml",
     "deploy:build": "npm run build && node scripts/fix-instrumentation-standalone.mjs && bash scripts/patch-opennext-d3-stubs.sh && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs",
+    "pilot:build": "npm run build && node scripts/fix-instrumentation-standalone.mjs && bash scripts/patch-opennext-d3-stubs.sh && npx @opennextjs/cloudflare build --skipNextBuild --config wrangler.pilot.toml && node scripts/verify-pilot-wrangler-isolation.mjs --check-build",
     "pilot:check-isolation": "node scripts/verify-pilot-wrangler-isolation.mjs",
     "deploy:full": "./scripts/deploy-with-sha.sh",
     "deploy:migrations": "bash scripts/apply-migrations.sh",

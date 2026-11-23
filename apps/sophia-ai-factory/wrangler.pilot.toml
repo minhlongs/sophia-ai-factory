@@ -9,6 +9,7 @@
 #     PILOT_FINANCING_MODE = "FOUNDER_SPONSORED" (single active mode; BYOK disabled; zero silent fallback)
 #     PILOT_MAX_GENERATIONS = "20"            (hard per-customer generation cap)
 #     PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"  (PROPOSED internal cutoff; paired with PROPOSED $5.00 OpenRouter key cap)
+#     PILOT_ESTIMATED_COST_PER_ATTEMPT_USD = "0.02" (conservative worst-case per-attempt reservation; >5x max billed gpt-4o-mini cost incl. 1 retry)
 #     PILOT_MODEL_ID = "openai/gpt-4o-mini"   (explicit bounded model allowlist)
 #     PILOT_MAX_OUTPUT_TOKENS = "2048"        (explicit output token ceiling)
 #     PILOT_MAX_RETRIES = "1"                 (bounded provider retries)
@@ -44,6 +45,7 @@ PILOT_LIVE_INFERENCE_ENABLED = "false"
 PILOT_FINANCING_MODE = "FOUNDER_SPONSORED"
 PILOT_MAX_GENERATIONS = "20"
 PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"
+PILOT_ESTIMATED_COST_PER_ATTEMPT_USD = "0.02"
 PILOT_MODEL_ID = "openai/gpt-4o-mini"
 PILOT_MAX_OUTPUT_TOKENS = "2048"
 PILOT_MAX_RETRIES = "1"

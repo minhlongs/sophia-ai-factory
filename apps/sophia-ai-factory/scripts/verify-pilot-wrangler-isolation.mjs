@@ -22,6 +22,7 @@ const prodPath = path.join(appDir, 'wrangler.toml');
 const pilotPath = path.join(appDir, 'wrangler.pilot.toml');
 
 const requireResolvedIds = process.argv.includes('--require-resolved-ids');
+const checkBuild = process.argv.includes('--check-build');
 
 function stripComments(toml) {
   return toml
@@ -129,6 +130,7 @@ for (const forbiddenSection of ['[triggers]', '[[queues', '[[durable_objects']) 
 const requiredVars = {
   PILOT_INVITE_ONLY: 'true',
   PILOT_FINANCING_MODE: 'FOUNDER_SPONSORED',
+  PILOT_ESTIMATED_COST_PER_ATTEMPT_USD: '0.02',
   PAYMENTS_ENABLED: 'false',
   B2_PUBLISH_ENABLED: 'false',
   FEATURE_PAYOS: 'false',
@@ -147,6 +149,37 @@ if (requireResolvedIds && pilotActive.includes('REPLACE_WITH_')) {
   errors.push('Unresolved REPLACE_WITH_* placeholder found in wrangler.pilot.toml (--require-resolved-ids)');
 }
 
+// 7. Guard against stale .wrangler/deploy/config.json redirection to production wrangler.toml
+const wranglerRedirectPath = path.join(appDir, '.wrangler', 'deploy', 'config.json');
+if (fs.existsSync(wranglerRedirectPath)) {
+  try {
+    const redirectJson = JSON.parse(fs.readFileSync(wranglerRedirectPath, 'utf8'));
+    const configPath = String(redirectJson?.configPath ?? '');
+    if (!configPath.endsWith('wrangler.pilot.toml')) {
+      errors.push(
+        `.wrangler/deploy/config.json redirects to "${configPath || 'unknown'}" instead of wrangler.pilot.toml`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Failed to parse .wrangler/deploy/config.json: ${String(err)}`);
+  }
+}
+
+// 8. Optional post-build check: verify generated OpenNext worker has no production scheduled() cron handler
+if (checkBuild) {
+  const builtWorkerPath = path.join(appDir, '.open-next', 'worker.js');
+  if (!fs.existsSync(builtWorkerPath)) {
+    errors.push('Missing .open-next/worker.js (--check-build requires a completed pilot OpenNext build)');
+  } else {
+    const workerSource = fs.readFileSync(builtWorkerPath, 'utf8');
+    if (/\basync\s+scheduled\s*\(/.test(workerSource) || /\bscheduled\s*:\s*async\b/.test(workerSource)) {
+      errors.push(
+        'Generated .open-next/worker.js contains a production scheduled() cron handler; use `npm run pilot:build` instead of `npm run deploy:build`',
+      );
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error('Pilot Wrangler isolation check FAILED:');
   for (const err of errors) {
@@ -156,5 +189,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Pilot Wrangler isolation check PASSED (worker=${pilotName}, workers_dev=false, preview_urls=false, requireResolvedIds=${requireResolvedIds})`,
+  `Pilot Wrangler isolation check PASSED (worker=${pilotName}, workers_dev=false, preview_urls=false, requireResolvedIds=${requireResolvedIds}, checkBuild=${checkBuild})`,
 );
