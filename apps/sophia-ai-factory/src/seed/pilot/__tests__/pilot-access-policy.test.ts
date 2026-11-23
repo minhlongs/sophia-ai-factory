@@ -282,7 +282,11 @@ describe('pilot-auth-guard', () => {
     expect(shouldBypassStaticAsset('/logo.png', 'POST', false)).toBe(false);
     expect(shouldBypassStaticAsset('/logo.png', 'GET', true)).toBe(false);
     expect(shouldBypassStaticAsset('/api/v1/videos/vid.123/distribute', 'GET', false)).toBe(false);
+    expect(shouldBypassStaticAsset('//api/item.json', 'GET', false)).toBe(false);
     expect(shouldBypassStaticAsset('/dashboard/item.json', 'GET', false)).toBe(false);
+    expect(shouldBypassStaticAsset('/vi/dashboard/item.json', 'GET', false)).toBe(false);
+    expect(shouldBypassStaticAsset('/en/dashboard/item.json', 'GET', false)).toBe(false);
+    expect(shouldBypassStaticAsset('/%E0%A4%A.png', 'GET', false)).toBe(false);
     expect(shouldBypassStaticAsset('/vi/first-value', 'GET', false)).toBe(false);
   });
 });

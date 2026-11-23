@@ -135,7 +135,7 @@ export const middleware = proxy;
 export const config = {
   matcher: [
     '/api/((?!version$).*)',
-    '/((?!_next|_worker|auth/callback|api/version).*)',
+    '/((?!_next/|auth/callback$|api/version$).*)',
   ],
   // This module contains a Node-only local D1 loader. It is guarded by a
   // Node runtime check and never invoked by the Edge middleware runtime.

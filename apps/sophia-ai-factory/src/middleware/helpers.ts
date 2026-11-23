@@ -26,8 +26,24 @@ export function shouldBypassStaticAsset(
 ): boolean {
   if (hasNextActionHeader) return false;
   if (method !== 'GET' && method !== 'HEAD') return false;
-  if (pathname.startsWith('/api') || pathname.startsWith('/dashboard')) return false;
-  return isInternalOrStatic(pathname);
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    return false;
+  }
+  const normalized = decoded.replace(/\/{2,}/g, '/');
+  const lower = normalized.toLowerCase();
+  const withoutLocale = pathnameWithoutLocale(lower);
+  if (
+    lower === '/api' ||
+    lower.startsWith('/api/') ||
+    withoutLocale === '/dashboard' ||
+    withoutLocale.startsWith('/dashboard/')
+  ) {
+    return false;
+  }
+  return isInternalOrStatic(normalized);
 }
 
 export function pathnameWithoutLocale(pathname: string): string {
