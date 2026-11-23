@@ -2,7 +2,8 @@ import { SUPPORTED_LOCALES } from './middleware-shared-config';
 
 const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 
-export const PUBLIC_FILE_EXTENSIONS = /\.(?!md$)(.*)$/i;
+export const PUBLIC_FILE_EXTENSIONS =
+  /[^/]\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|woff2?|ttf|eot|txt|xml|json|webmanifest)$/i;
 
 export function isInternalOrStatic(pathname: string): boolean {
   const parts = pathname.split('/');
@@ -16,6 +17,17 @@ export function isInternalOrStatic(pathname: string): boolean {
     isLocalizedShortLink ||
     PUBLIC_FILE_EXTENSIONS.test(pathname)
   );
+}
+
+export function shouldBypassStaticAsset(
+  pathname: string,
+  method: string,
+  hasNextActionHeader: boolean,
+): boolean {
+  if (hasNextActionHeader) return false;
+  if (method !== 'GET' && method !== 'HEAD') return false;
+  if (pathname.startsWith('/api') || pathname.startsWith('/dashboard')) return false;
+  return isInternalOrStatic(pathname);
 }
 
 export function pathnameWithoutLocale(pathname: string): string {

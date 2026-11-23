@@ -18,6 +18,7 @@ import {
   enforcePilotServerActionDisabled,
   isGuardedPilotAuthPath,
 } from '../pilot-auth-guard';
+import { shouldBypassStaticAsset } from '@/middleware/helpers';
 
 describe('pilot-access-policy', () => {
   it('defaults to fail-closed disabled flags', () => {
@@ -248,7 +249,7 @@ describe('pilot-auth-guard', () => {
       expect(enforcePilotFeatureDisabled(allowedPath, strictEnv)).toBeNull();
     }
 
-    // Blocks non-pilot Next.js Server Actions and non-GET page mutations while allowing pilot pages
+    // Blocks all Next.js Server Actions and non-GET page mutations (pilot uses /api/* only)
     expect(
       enforcePilotServerActionDisabled('/vi/dashboard/campaigns', true, strictEnv, 'POST')?.status,
     ).toBe(403);
@@ -259,10 +260,14 @@ describe('pilot-auth-guard', () => {
       enforcePilotServerActionDisabled('/vi/settings', true, strictEnv, 'POST')?.status,
     ).toBe(403);
     expect(
-      enforcePilotServerActionDisabled('/vi/first-value', true, strictEnv, 'POST'),
-    ).toBeNull();
+      enforcePilotServerActionDisabled('/vi/first-value', true, strictEnv, 'POST')?.status,
+    ).toBe(403);
     expect(
-      enforcePilotServerActionDisabled('/en/dashboard/first-value', true, strictEnv, 'POST'),
+      enforcePilotServerActionDisabled('/en/dashboard/first-value', true, strictEnv, 'POST')
+        ?.status,
+    ).toBe(403);
+    expect(
+      enforcePilotServerActionDisabled('/en/dashboard/first-value', false, strictEnv, 'GET'),
     ).toBeNull();
     expect(
       enforcePilotServerActionDisabled('/vi/dashboard/campaigns', false, strictEnv, 'GET'),
@@ -270,5 +275,14 @@ describe('pilot-auth-guard', () => {
     expect(
       enforcePilotServerActionDisabled('/api/first-value', false, strictEnv, 'POST'),
     ).toBeNull();
+
+    // Static asset bypass never short-circuits mutating, next-action, /api, or /dashboard paths
+    expect(shouldBypassStaticAsset('/logo.png', 'GET', false)).toBe(true);
+    expect(shouldBypassStaticAsset('/logo.png', 'HEAD', false)).toBe(true);
+    expect(shouldBypassStaticAsset('/logo.png', 'POST', false)).toBe(false);
+    expect(shouldBypassStaticAsset('/logo.png', 'GET', true)).toBe(false);
+    expect(shouldBypassStaticAsset('/api/v1/videos/vid.123/distribute', 'GET', false)).toBe(false);
+    expect(shouldBypassStaticAsset('/dashboard/item.json', 'GET', false)).toBe(false);
+    expect(shouldBypassStaticAsset('/vi/first-value', 'GET', false)).toBe(false);
   });
 });

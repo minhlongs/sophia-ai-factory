@@ -4,7 +4,7 @@ import { generateNonce } from '@/seed/security/nonce-utils';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
 import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
-import { isInternalOrStatic } from './middleware/helpers';
+import { shouldBypassStaticAsset } from './middleware/helpers';
 import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
@@ -50,7 +50,9 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   );
   if (pilotServerActionBlocked) return pilotServerActionBlocked;
 
-  if (isInternalOrStatic(pathname)) return NextResponse.next();
+  if (shouldBypassStaticAsset(pathname, request.method, request.headers.has('next-action'))) {
+    return NextResponse.next();
+  }
 
   const pathLocale = pathname.split('/')[1];
 
@@ -133,7 +135,7 @@ export const middleware = proxy;
 export const config = {
   matcher: [
     '/api/((?!version$).*)',
-    '/((?!_next|_worker|auth/callback|api/version|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|woff2?|ttf|eot|txt|xml|json|webmanifest)$).*)',
+    '/((?!_next|_worker|auth/callback|api/version).*)',
   ],
   // This module contains a Node-only local D1 loader. It is guarded by a
   // Node runtime check and never invoked by the Edge middleware runtime.
