@@ -11,10 +11,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { FirstValueCostPreview } from '@/seed/ai/cost/first-value-cost-preview';
+import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { HonestValidationReceipt } from '@/tree/byok/honest-validation-receipt';
 import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
+import type { PilotStatusSnapshot } from '@/seed/pilot/pilot-access-policy';
 import { FirstValueByokCard } from './first-value-byok-card';
+import {
+  FirstValueFeedbackCard,
+  type PilotFeedbackCategory,
+} from './first-value-feedback-card';
+import { FirstValuePilotBanner } from './first-value-pilot-banner';
 import { FirstValueReviewPanel } from './first-value-review-panel';
 
 interface StatusResponse {
@@ -22,6 +29,7 @@ interface StatusResponse {
   readonly configuredProviders: readonly string[];
   readonly receipt: HonestValidationReceipt | null;
   readonly recentReviews: readonly DurableFirstValueReview[];
+  readonly pilot?: PilotStatusSnapshot;
 }
 
 function CostPreviewBox({ costPreview }: { readonly costPreview: FirstValueCostPreview }) {
@@ -227,27 +235,85 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
     if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
   }
 
+  const pilot = status?.pilot ?? null;
+  const isLivePilot = Boolean(pilot?.liveInferenceEnabled);
+
+  async function handleAcceptPilotTerms() {
+    if (!pilot) return;
+    const data = await postAction({
+      action: 'accept_pilot_terms',
+      orgId,
+      policyVersion: pilot.policyVersion,
+      accepted: true,
+    });
+    if (data?.consent) {
+      await loadStatus();
+    }
+  }
+
   async function handleCreateReview() {
-    if (!status?.receipt || !topic.trim() || !audience.trim()) return;
+    if (!topic.trim() || !audience.trim()) return;
+    if (!isLivePilot && !status?.receipt) return;
+    if (isLivePilot && !pilot?.consentAccepted) return;
     const key = `fv-create-${crypto.randomUUID()}`;
     const data = await postAction(
       {
         action: 'create_review',
         orgId,
-        missionId: `mission_${orgId}_b1`,
+        missionId: isLivePilot ? `mission_${orgId}_pilot` : `mission_${orgId}_b1`,
         idempotencyKey: key,
         topic: topic.trim(),
         audience: audience.trim(),
         durationSec,
-        provenance: 'fixture_simulated',
-        receipt: status.receipt,
+        provenance: isLivePilot ? 'live_provider' : 'fixture_simulated',
+        ...(status?.receipt ? { receipt: status.receipt } : {}),
       },
       key,
     );
     if (data?.review) {
       setActiveReview(data.review as DurableFirstValueReview);
       setExportPayload(null);
+      if (isLivePilot) {
+        await loadStatus();
+      }
     }
+  }
+
+  async function handleEditReview(script: ScriptOutput): Promise<boolean> {
+    if (!activeReview) return false;
+    const key = `fv-edit-${crypto.randomUUID()}`;
+    const data = await postAction(
+      {
+        action: 'edit_review',
+        orgId,
+        artifactId: activeReview.artifactId,
+        expectedVersion: activeReview.version,
+        script,
+        idempotencyKey: key,
+      },
+      key,
+    );
+    if (data?.review) {
+      setActiveReview(data.review as DurableFirstValueReview);
+      return true;
+    }
+    return false;
+  }
+
+  async function handleSubmitFeedback(input: {
+    readonly rating: number;
+    readonly category: PilotFeedbackCategory;
+    readonly comment: string;
+  }): Promise<boolean> {
+    const data = await postAction({
+      action: 'submit_feedback',
+      orgId,
+      artifactId: activeReview?.artifactId ?? null,
+      rating: input.rating,
+      category: input.category,
+      comment: input.comment,
+    });
+    return Boolean(data?.feedback);
   }
 
   async function handleDecision(decision: 'accept_review' | 'reject_review', reason?: string) {
@@ -295,15 +361,32 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
   const topicInvalid = topic.trim().length === 0;
   const audienceInvalid = audience.trim().length === 0;
   const inputsValid = !topicInvalid && !audienceInvalid;
+  const canCreate = isLivePilot
+    ? Boolean(
+        orgId &&
+          inputsValid &&
+          pilot?.consentAccepted &&
+          pilot.fundingMode !== 'none' &&
+          pilot.quota.remainingGenerations > 0,
+      )
+    : Boolean(orgId && status?.receipt && inputsValid);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
-        <div className="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
-          {t('simulatedBadge')}
+      {isLivePilot && pilot ? (
+        <FirstValuePilotBanner
+          pilot={pilot}
+          busy={busy}
+          onAcceptTerms={handleAcceptPilotTerms}
+        />
+      ) : (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+          <div className="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
+            {t('simulatedBadge')}
+          </div>
+          <p className="mt-1 text-sm text-foreground">{t('simulatedNotice')}</p>
         </div>
-        <p className="mt-1 text-sm text-foreground">{t('simulatedNotice')}</p>
-      </div>
+      )}
 
       {errorMessage && (
         <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
@@ -325,7 +408,7 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
         topicInvalid={topicInvalid}
         audienceInvalid={audienceInvalid}
         canPreview={Boolean(orgId && inputsValid)}
-        canCreate={Boolean(orgId && status?.receipt && inputsValid)}
+        canCreate={canCreate}
         costPreview={costPreview}
         onTopicChange={setTopic}
         onAudienceChange={setAudience}
@@ -342,7 +425,16 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
         onAccept={() => handleDecision('accept_review')}
         onReject={(reason) => handleDecision('reject_review', reason)}
         onExport={handleExport}
+        onEdit={handleEditReview}
       />
+
+      {isLivePilot && (
+        <FirstValueFeedbackCard
+          busy={busy}
+          artifactId={activeReview?.artifactId ?? null}
+          onSubmitFeedback={handleSubmitFeedback}
+        />
+      )}
     </div>
   );
 }

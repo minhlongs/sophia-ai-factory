@@ -45,6 +45,19 @@ export const HonestReceiptSchema = z.object({
   }),
 });
 
+const EditableSceneSchema = z.object({
+  scene_number: z.number().int().min(1).max(30),
+  visual_description: z.string().trim().min(1).max(1500),
+  narration: z.string().trim().min(1).max(2000),
+  duration_estimate: z.number().min(1).max(120),
+});
+
+const EditableScriptSchema = z.object({
+  title: z.string().trim().min(1).max(300),
+  total_duration: z.number().min(3).max(600),
+  scenes: z.array(EditableSceneSchema).min(3).max(20),
+});
+
 export const FirstValuePostSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('cost_preview'),
@@ -71,7 +84,29 @@ export const FirstValuePostSchema = z.discriminatedUnion('action', [
     audience: z.string().trim().min(1).max(300),
     durationSec: z.number().int().min(10).max(300).optional().default(30),
     provenance: z.enum(['fixture_simulated', 'live_provider']).optional().default('fixture_simulated'),
-    receipt: HonestReceiptSchema,
+    receipt: HonestReceiptSchema.optional(),
+  }),
+  z.object({
+    action: z.literal('edit_review'),
+    orgId: z.string().min(1).max(128),
+    artifactId: z.string().min(1).max(128),
+    expectedVersion: z.number().int().min(1),
+    script: EditableScriptSchema,
+    idempotencyKey: z.string().min(8).max(128).trim().optional(),
+  }),
+  z.object({
+    action: z.literal('accept_pilot_terms'),
+    orgId: z.string().min(1).max(128),
+    policyVersion: z.string().trim().min(1).max(64),
+    accepted: z.literal(true),
+  }),
+  z.object({
+    action: z.literal('submit_feedback'),
+    orgId: z.string().min(1).max(128),
+    artifactId: z.string().min(1).max(128).optional().nullable(),
+    rating: z.number().int().min(1).max(5),
+    category: z.enum(['usefulness', 'editing_friction', 'bug_report', 'other']),
+    comment: z.string().trim().min(1).max(2000),
   }),
   z.object({
     action: z.literal('get_review'),

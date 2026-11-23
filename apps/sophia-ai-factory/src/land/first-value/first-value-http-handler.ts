@@ -42,6 +42,18 @@ import {
   resolveIdempotencyKey,
   type FirstValuePostPayload,
 } from './first-value-http-schemas';
+import {
+  buildPilotStatusSnapshot,
+  checkPilotAccessGuard,
+  handleAcceptPilotTerms,
+  handleEditReview,
+  handleLiveProviderCreateReview,
+  handleSubmitFeedback,
+  safeRecordPilotEvent,
+  type LiveScriptGeneratorInput,
+} from './first-value-pilot-actions';
+import type { PilotEnvSource } from '@/seed/pilot/pilot-access-policy';
+import type { ScriptOutput } from '@/seed/ai/script-generator';
 
 export interface FirstValueHttpUser {
   readonly id: string;
@@ -56,6 +68,9 @@ export interface FirstValueHttpDeps {
   readonly listByokProviders: (userId: string) => Promise<readonly string[]>;
   readonly signingSecret: string | null;
   readonly nowMs?: () => number;
+  readonly pilotEnv?: PilotEnvSource;
+  readonly lookupOpenRouterByokKey?: (userId: string) => Promise<string | null>;
+  readonly generateLiveScript?: (input: LiveScriptGeneratorInput) => Promise<ScriptOutput>;
 }
 
 function toContractArtifact(rec: DurableFirstValueReview): FirstValueScriptArtifact {
@@ -96,6 +111,11 @@ export async function handleFirstValueGet(
   const user = await deps.getCurrentUser();
   if (!user) {
     return jsonPrivate({ error: 'Unauthorized / Bạn cần đăng nhập' }, 401);
+  }
+
+  const pilotBlocked = checkPilotAccessGuard(user, deps.pilotEnv);
+  if (pilotBlocked) {
+    return pilotBlocked;
   }
 
   const url = new URL(request.url);
@@ -152,6 +172,18 @@ export async function handleFirstValueGet(
     });
   }
 
+  const pilot = await buildPilotStatusSnapshot(d1, {
+    orgId,
+    userId: user.id,
+    configuredProviders: providers,
+    deps: {
+      env: deps.pilotEnv,
+      lookupOpenRouterByokKey: deps.lookupOpenRouterByokKey,
+      generateLiveScript: deps.generateLiveScript,
+      nowMs: deps.nowMs,
+    },
+  });
+
   return jsonPrivate(
     {
       orgId,
@@ -159,6 +191,7 @@ export async function handleFirstValueGet(
       configuredProviders: providers,
       receipt,
       recentReviews,
+      pilot,
       publicPublished: false,
       paidInferenceExecuted: false,
     },
@@ -179,8 +212,17 @@ async function handleCreateReview(
   }
 
   if (payload.provenance === 'live_provider') {
+    return handleLiveProviderCreateReview(d1, user, payload, idem.key, {
+      env: deps.pilotEnv,
+      lookupOpenRouterByokKey: deps.lookupOpenRouterByokKey,
+      generateLiveScript: deps.generateLiveScript,
+      nowMs: deps.nowMs,
+    });
+  }
+
+  if (!payload.receipt) {
     return jsonPrivate(
-      { code: 'LIVE_INFERENCE_DISABLED', error: 'Live provider inference is disabled in B1.1' },
+      { code: 'INVALID_OR_EXPIRED_RECEIPT', error: 'Validation receipt is required' },
       403,
     );
   }
@@ -354,6 +396,15 @@ async function handleTransitionAction(
     );
   }
 
+  await safeRecordPilotEvent(d1, {
+    orgId: payload.orgId,
+    userId: user.id,
+    eventName: 'SCRIPT_REVIEWED',
+    artifactId: res.record.artifactId,
+    metadata: { decision: payload.action === 'accept_review' ? 'accept' : 'reject' },
+    nowIso,
+  });
+
   return jsonPrivate(
     {
       review: res.record,
@@ -370,6 +421,7 @@ async function handlePrivateExport(
   user: FirstValueHttpUser,
   payload: Extract<FirstValuePostPayload, { action: 'private_export' }>,
   idempotencyHeader: string | null,
+  deps: FirstValueHttpDeps,
 ): Promise<NextResponse> {
   const idem = resolveIdempotencyKey(idempotencyHeader, payload.idempotencyKey);
   if (!idem.ok) {
@@ -401,6 +453,16 @@ async function handlePrivateExport(
     payload.format === 'markdown'
       ? renderFirstValueMarkdown(toContractArtifact(review))
       : review.script;
+
+  const nowIso = new Date(deps.nowMs ? deps.nowMs() : Date.now()).toISOString();
+  await safeRecordPilotEvent(d1, {
+    orgId: payload.orgId,
+    userId: user.id,
+    eventName: 'SCRIPT_EXPORTED',
+    artifactId: review.artifactId,
+    metadata: { format: payload.format },
+    nowIso,
+  });
 
   return jsonPrivate(
     {
@@ -477,13 +539,31 @@ async function dispatchDurableAction(
     }
     return jsonPrivate({ review, publicPublished: false, paidInferenceExecuted: false }, 200);
   }
+  if (data.action === 'accept_pilot_terms') {
+    return handleAcceptPilotTerms(d1, user, data, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'edit_review') {
+    return handleEditReview(d1, user, data, idempotencyHeader, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'submit_feedback') {
+    return handleSubmitFeedback(d1, user, data, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+    });
+  }
   if (data.action === 'create_review') {
     return handleCreateReview(d1, user, data, idempotencyHeader, deps);
   }
   if (data.action === 'accept_review' || data.action === 'reject_review') {
     return handleTransitionAction(d1, user, data, idempotencyHeader, deps);
   }
-  return handlePrivateExport(d1, user, data, idempotencyHeader);
+  return handlePrivateExport(d1, user, data, idempotencyHeader, deps);
 }
 
 export async function handleFirstValuePost(
@@ -493,6 +573,11 @@ export async function handleFirstValuePost(
   const user = await deps.getCurrentUser();
   if (!user) {
     return jsonPrivate({ error: 'Unauthorized / Bạn cần đăng nhập' }, 401);
+  }
+
+  const pilotBlocked = checkPilotAccessGuard(user, deps.pilotEnv);
+  if (pilotBlocked) {
+    return pilotBlocked;
   }
 
   if (!deps.verifyCsrf(request)) {

@@ -4,7 +4,7 @@ import { generateNonce } from '@/seed/security/nonce-utils';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
 import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
-import { isInternalOrStatic } from './middleware/helpers';
+import { shouldBypassStaticAsset } from './middleware/helpers';
 import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
@@ -18,6 +18,10 @@ import {
 } from '@/tree/custom-domains/hostname-resolver';
 import { getD1 } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
+import {
+  enforcePilotFeatureDisabled,
+  enforcePilotServerActionDisabled,
+} from '@/seed/pilot/pilot-auth-guard';
 import {
   applyErrorSecurityHeaders,
   handleLocaleRedirects,
@@ -34,7 +38,21 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
 
   // Metrics wiring must never break request handling; failures are swallowed inside.
   await initializeWAEBinding();
-  if (isInternalOrStatic(pathname)) return NextResponse.next();
+
+  const pilotFeatureBlocked = enforcePilotFeatureDisabled(pathname);
+  if (pilotFeatureBlocked) return pilotFeatureBlocked;
+
+  const pilotServerActionBlocked = enforcePilotServerActionDisabled(
+    pathname,
+    request.headers.has('next-action'),
+    process.env,
+    request.method,
+  );
+  if (pilotServerActionBlocked) return pilotServerActionBlocked;
+
+  if (shouldBypassStaticAsset(pathname, request.method, request.headers.has('next-action'))) {
+    return NextResponse.next();
+  }
 
   const pathLocale = pathname.split('/')[1];
 
@@ -115,7 +133,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 export const middleware = proxy;
 
 export const config = {
-  matcher: ['/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)'],
+  matcher: [
+    '/api/((?!version$).*)',
+    '/((?!_next/|auth/callback$|api/version$).*)',
+  ],
   // This module contains a Node-only local D1 loader. It is guarded by a
   // Node runtime check and never invoked by the Edge middleware runtime.
   unstable_allowDynamic: ['/src/seed/db/client/loader.ts'],

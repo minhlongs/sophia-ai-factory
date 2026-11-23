@@ -7,18 +7,28 @@
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import { getD1 } from '@/seed/db/client';
+import {
+  isEmailAllowedForPilot,
+  isPilotInviteOnlyEnabled,
+} from '@/seed/pilot/pilot-access-policy';
 import type { ResolvedUser } from './types';
 
 export async function findOrResolveUser(
   request: Request,
   email: string,
 ): Promise<ResolvedUser> {
+  if (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(email)) {
+    return { userId: null, sessionEmailVerified: false };
+  }
+
   try {
     const auth = await getAuth();
     if (auth) {
       const session = await auth.api.getSession({ headers: request.headers });
-      const sUser = session?.user as { id?: string; emailVerified?: boolean } | undefined;
-      if (sUser?.id) {
+      const sUser = session?.user as
+        | { id?: string; email?: string | null; emailVerified?: boolean }
+        | undefined;
+      if (sUser?.id && (!isPilotInviteOnlyEnabled() || isEmailAllowedForPilot(sUser.email))) {
         return { userId: sUser.id, sessionEmailVerified: sUser.emailVerified === true };
       }
     }

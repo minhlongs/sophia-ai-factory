@@ -18,6 +18,7 @@
 import { NextResponse } from 'next/server';
 import { toNextJsHandler } from 'better-auth/next-js';
 import { getAuth } from '@/seed/auth/better-auth-server';
+import { enforcePilotAuthAllowlist } from '@/seed/pilot/pilot-auth-guard';
 import {
   checkAccountLock,
   incrementFailedLogin,
@@ -63,6 +64,11 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     // Malformed body — let Better Auth respond with its own 400.
     bodyText = '';
+  }
+
+  const pilotBlocked = enforcePilotAuthAllowlist('/api/auth/sign-in/email', bodyText);
+  if (pilotBlocked) {
+    return pilotBlocked;
   }
 
   const forwarded = new Request(request.url, {

@@ -11,6 +11,7 @@ import { getAuth } from '@/seed/auth/better-auth-server';
 import type { User } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorClassName } from '@/seed/utils/to-error';
+import { isEmailAllowedForPilot, isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
 import { unstable_rethrow } from 'next/navigation';
 
 /** Thrown when auth lookup fails due to a system/DB error (not "no session"). */
@@ -47,6 +48,9 @@ export async function getSessionFromHeaders(
     if (!auth) return null;
     const session = await auth.api.getSession({ headers: reqHeaders });
     if (!session || !session.user) return null;
+    if (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(session.user.email)) {
+      return null;
+    }
 
     const user = session.user as Record<string, unknown>;
     const rawSession = (session.session ?? {}) as Record<string, unknown>;

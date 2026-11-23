@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { headers } from 'next/headers';
+import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { SUPPORTED_LOCALES } from '@/middleware/middleware-shared-config';
 import { LocaleHtmlLang } from '@/components/locale-html-lang';
 import { PostHogProvider } from '@/forest/components/posthog-provider';
 import { Ga4Script } from '@/land/analytics/ga4-script';
@@ -87,6 +89,9 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  if (!(SUPPORTED_LOCALES as readonly string[]).includes(locale)) {
+    notFound();
+  }
   const messages = await getMessages({ locale });
 
   const branding = await resolveCurrentTenantBranding();

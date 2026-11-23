@@ -12,11 +12,15 @@
  */
 
 import type { NextRequest, NextResponse } from 'next/server';
+import { generateScript } from '@/seed/ai/script-generator';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { verifyCsrfToken } from '@/seed/security/csrf';
-import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store';
+import {
+  listUserApiKeyProviders,
+  lookupUserApiKey,
+} from '@/tree/byok/user-api-key-store';
 import {
   handleFirstValueGet,
   handleFirstValuePost,
@@ -42,6 +46,43 @@ function buildLiveDeps(): FirstValueHttpDeps {
     verifyCsrf: verifyCsrfToken,
     listByokProviders: listUserApiKeyProviders,
     signingSecret: resolveReceiptSigningSecret(),
+    lookupOpenRouterByokKey: async (userId: string) => {
+      const lookup = await lookupUserApiKey(userId, 'openrouter');
+      if (lookup.status === 'FOUND' && lookup.key.trim().length > 0) {
+        return lookup.key.trim();
+      }
+      return null;
+    },
+    generateLiveScript: async ({
+      topic,
+      audience,
+      durationSec,
+      userId,
+      apiKey,
+      model,
+      maxTokens,
+      maxRetries,
+      timeoutMs,
+      referer,
+    }) =>
+      generateScript(
+        {
+          topic,
+          audience,
+          tier: 'BASIC',
+          durationSec,
+          userId,
+        },
+        {
+          funding: { fund: 'byok', apiKey },
+          minScenes: 3,
+          model,
+          maxTokens,
+          maxRetries,
+          timeoutMs,
+          referer,
+        },
+      ),
   };
 }
 

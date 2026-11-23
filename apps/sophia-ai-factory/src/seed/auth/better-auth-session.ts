@@ -11,6 +11,7 @@ import { getAuth } from '@/seed/auth/better-auth-server';
 import type { User } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorClassName } from '@/seed/utils/to-error';
+import { isEmailAllowedForPilot, isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
 import { unstable_rethrow } from 'next/navigation';
 import {
   AuthSystemError,
@@ -38,6 +39,13 @@ async function resolveSessionUncached() {
     const session = await auth.api.getSession({
       headers: requestHeaders,
     });
+    if (
+      session &&
+      isPilotInviteOnlyEnabled() &&
+      !isEmailAllowedForPilot(session.user?.email)
+    ) {
+      return null;
+    }
     return session;
   } catch (err) {
     unstable_rethrow(err);
@@ -74,6 +82,10 @@ export async function getSession() {
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getSession();
   if (!session) return null;
+
+  if (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(session.user.email)) {
+    return null;
+  }
 
   const user = session.user as Record<string, unknown>;
   return {

@@ -230,6 +230,20 @@ export async function getReviewById(
   return row ? mapRow(row) : null;
 }
 
+export async function findReviewByIdempotencyKey(
+  d1: D1Database,
+  args: { readonly orgId: string; readonly userId: string; readonly idempotencyKey: string },
+): Promise<DurableFirstValueReview | null> {
+  const row = await d1
+    .prepare(
+      `SELECT * FROM first_value_reviews
+       WHERE org_id = ? AND user_id = ? AND idempotency_key = ?`,
+    )
+    .bind(args.orgId, args.userId, args.idempotencyKey)
+    .first<ReviewRow>();
+  return row ? mapRow(row) : null;
+}
+
 export async function listReviewsForOrg(
   d1: D1Database,
   args: { readonly orgId: string; readonly userId: string; readonly limit?: number },
@@ -326,6 +340,67 @@ export async function transitionReviewState(
     if (args.expectedVersion === current.version || args.expectedVersion === current.version - 1) {
       return { outcome: 'already_accepted', record: current };
     }
+    return { outcome: 'stale_version', currentVersion: current.version };
+  }
+
+  return { outcome: 'already_finalized', record: current };
+}
+
+export type EditReviewScriptResult =
+  | { readonly outcome: 'updated'; readonly record: DurableFirstValueReview }
+  | { readonly outcome: 'already_finalized'; readonly record: DurableFirstValueReview }
+  | { readonly outcome: 'stale_version'; readonly currentVersion: number }
+  | { readonly outcome: 'not_found' };
+
+/**
+ * Persists an edited script while the review is still in `pending_review`,
+ * using optimistic version locking and strict `(artifact_id, org_id, user_id)` scoping.
+ */
+export async function updateReviewScript(
+  d1: D1Database,
+  args: {
+    readonly artifactId: string;
+    readonly orgId: string;
+    readonly userId: string;
+    readonly expectedVersion: number;
+    readonly script: ScriptOutput;
+    readonly nowIso: string;
+  },
+): Promise<EditReviewScriptResult> {
+  const updateRes = await d1
+    .prepare(
+      `UPDATE first_value_reviews
+       SET script_json = ?,
+           version = version + 1,
+           updated_at_iso = ?
+       WHERE artifact_id = ? AND org_id = ? AND user_id = ?
+         AND review_state = 'pending_review' AND version = ?`,
+    )
+    .bind(
+      JSON.stringify(args.script),
+      args.nowIso,
+      args.artifactId,
+      args.orgId,
+      args.userId,
+      args.expectedVersion,
+    )
+    .run();
+
+  const current = await getReviewById(d1, {
+    artifactId: args.artifactId,
+    orgId: args.orgId,
+    userId: args.userId,
+  });
+
+  if (!current) {
+    return { outcome: 'not_found' };
+  }
+
+  if (updateRes.meta.changes === 1) {
+    return { outcome: 'updated', record: current };
+  }
+
+  if (current.reviewState === 'pending_review') {
     return { outcome: 'stale_version', currentVersion: current.version };
   }
 

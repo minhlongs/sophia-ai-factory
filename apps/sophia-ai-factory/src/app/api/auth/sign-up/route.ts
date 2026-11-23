@@ -7,11 +7,21 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from '@/seed/auth/better-auth-server';
+import { enforcePilotAuthAllowlist } from '@/seed/pilot/pilot-auth-guard';
 import { toNextJsHandler } from 'better-auth/next-js';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<Response> {
+  const body = await request.arrayBuffer();
+  const blocked = enforcePilotAuthAllowlist(
+    new URL(request.url).pathname,
+    new TextDecoder().decode(body),
+  );
+  if (blocked) {
+    return blocked;
+  }
+
   let auth;
   try {
     auth = await getAuth();
@@ -30,7 +40,6 @@ export async function POST(request: NextRequest): Promise<Response> {
   // original stream directly would break the rewritten request.
   const url = new URL(request.url);
   url.pathname = '/api/auth/sign-up/email';
-  const body = await request.arrayBuffer();
   const headers = new Headers(request.headers);
   headers.set('content-length', String(body.byteLength));
   const rewritten = new NextRequest(url, {

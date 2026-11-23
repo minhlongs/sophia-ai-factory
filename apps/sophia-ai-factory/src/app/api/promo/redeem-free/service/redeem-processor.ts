@@ -10,6 +10,10 @@ import { validatePromoCode } from '@/land/promo/promo-validator';
 import { getD1 } from '@/seed/db/client';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  isEmailAllowedForPilot,
+  isPilotInviteOnlyEnabled,
+} from '@/seed/pilot/pilot-access-policy';
 import { redeemFreeSchema } from './types';
 import { findOrResolveUser } from './user-resolver';
 import { dispatchHandoverNotifications } from './handover-dispatcher';
@@ -32,6 +36,17 @@ export async function processRedeemFreeRequest(request: Request): Promise<NextRe
     }
 
     const { code, email, fullName, agencyType, tier, locale } = parsed.data;
+
+    if (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(email)) {
+      return NextResponse.json(
+        {
+          code: 'PILOT_INVITE_REQUIRED',
+          error:
+            'This private pilot is invite-only. Your email is not on the authorized pilot list. / Chương trình thử nghiệm này chỉ dành cho khách mời. Email của bạn chưa được cấp quyền.',
+        },
+        { status: 403, headers: { 'Cache-Control': 'private, no-store' } }
+      );
+    }
 
     const preCheck = await validatePromoCode(code, { tier });
     if (!preCheck.valid) {

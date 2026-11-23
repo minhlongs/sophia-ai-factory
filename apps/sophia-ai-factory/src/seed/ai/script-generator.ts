@@ -85,7 +85,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
     return mockResult;
   }
 
-  const model = selectModelForTier(tier);
+  const model = deps?.model ?? selectModelForTier(tier);
   const messages = [
     { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
     { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer, steering, durationSec) },
@@ -99,6 +99,10 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
         anthropicKey: undefined,
         enableFallback: false,
         model,
+        maxTokens: deps?.maxTokens,
+        maxRetries: deps?.maxRetries,
+        timeoutMs: deps?.timeoutMs,
+        referer: deps?.referer,
       },
     );
 
