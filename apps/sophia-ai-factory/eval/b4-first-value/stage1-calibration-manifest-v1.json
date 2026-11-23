@@ -1,0 +1,54 @@
+{
+  "protocolVersion": "b4.1-stage1-calibration-v1.0.0",
+  "datasetVersion": "b4-dataset-v1.0.0",
+  "datasetSha256": "80e2f2aec64a0ac21446e92b87fc3ac6632164fa158bfe7ea8ec76221ccaf2ff",
+  "rubricVersion": "b4-rubric-v1.0.0",
+  "rubricSha256": "31dbffd556f12957a3a643bb3fb3efa0d1fb2447e75db50809cfd4bd10fc77fd",
+  "selectionAlgorithm": "sha256_stratified_vertical_language_v1",
+  "randomSeed": "b4-1-stage1-calibration-seed-v1",
+  "selectedBriefIds": [
+    "b4-cfs-06",
+    "b4-cfs-05",
+    "b4-lre-04",
+    "b4-lre-08",
+    "b4-edt-08",
+    "b4-edt-10",
+    "b4-bps-07",
+    "b4-bps-05",
+    "b4-lps-04",
+    "b4-lps-06"
+  ],
+  "languageDistribution": {
+    "en": 5,
+    "vi": 5
+  },
+  "verticalDistribution": {
+    "coffee_and_food_service": 2,
+    "local_retail_and_ecommerce": 2,
+    "education_and_tutoring": 2,
+    "beauty_and_personal_services": 2,
+    "local_professional_services": 2
+  },
+  "languageFallbackVerticals": [],
+  "fullDatasetLanguageImbalance": {
+    "en": 33,
+    "vi": 17
+  },
+  "plannedArms": [
+    "arm_a_sophia_basic",
+    "arm_b_direct_model"
+  ],
+  "plannedTrialsPerBrief": 1,
+  "plannedLogicalTrials": 20,
+  "callGraphPlan": {
+    "minBillableCallsPerTrial": 1,
+    "expectedBillableCallsPerTrial": 1,
+    "maxRetriesPerTrial": 1,
+    "maxBillableCallsPerTrial": 2,
+    "runMaxBillableCallsCeiling": 30,
+    "proposedSpendCeilingMicroUsd": 3000000,
+    "spendingAuthorized": false
+  },
+  "frozenAtIso": "2026-11-23T00:00:00.000Z",
+  "manifestSha256": "ee4b26241207126ca7b3485b42518809e9d180ad4f1e8c41920f33ba63c10f2c"
+}

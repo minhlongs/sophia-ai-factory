@@ -10,13 +10,16 @@
 import { assertBlindPacketIsolation, sanitizeScriptForBlinding } from './blind-scoring';
 import { computeSha256Hex } from './dataset-loader';
 import { assertSafeIntegerMicroUsd } from './telemetry-and-economics';
-import type {
-  BlindAssignmentKeyEntry,
-  BlindPacketItem,
-  ExperimentConfig,
-  MetricMeasurement,
-  RubricDefinition,
-  TrialExecutionRecord,
+import {
+  BENCHMARK_ARMS,
+  type BenchmarkArmId,
+  type BlindAssignmentKeyEntry,
+  type BlindPacketItem,
+  type ExperimentConfig,
+  type MetricMeasurement,
+  type ReviewerScoreRecord,
+  type RubricDefinition,
+  type TrialExecutionRecord,
 } from './types';
 
 export function assertSafeNonNegativeInteger(value: number, label: string): number {
@@ -67,6 +70,36 @@ export function sumObservedAllTrials(
   return { status: 'OBSERVED', value: total };
 }
 
+function validateObservedTelemetryFields(telemetry: TrialExecutionRecord['telemetry']): void {
+  const observedChecks: ReadonlyArray<[MetricMeasurement<number>, string]> = [
+    [telemetry.wallClockLatencyMs, 'wallClockLatencyMs'],
+    [telemetry.promptTokens, 'promptTokens'],
+    [telemetry.completionTokens, 'completionTokens'],
+    [telemetry.estimatedInferenceCostMicroUsd, 'estimatedInferenceCostMicroUsd'],
+    [telemetry.measuredInferenceCostMicroUsd, 'measuredInferenceCostMicroUsd'],
+  ];
+  for (const [metric, label] of observedChecks) {
+    if (metric.status === 'OBSERVED') {
+      assertSafeNonNegativeInteger(metric.value, label);
+    }
+  }
+  assertSafeNonNegativeInteger(telemetry.realPaidInferenceCostMicroUsd, 'realPaidInferenceCostMicroUsd');
+  assertSafeNonNegativeInteger(
+    telemetry.infrastructureCostAllocationMicroUsd,
+    'infrastructureCostAllocationMicroUsd',
+  );
+}
+
+function hasAnyObservedProviderTelemetry(telemetry: TrialExecutionRecord['telemetry']): boolean {
+  return (
+    telemetry.promptTokens.status === 'OBSERVED' ||
+    telemetry.completionTokens.status === 'OBSERVED' ||
+    telemetry.wallClockLatencyMs.status === 'OBSERVED' ||
+    telemetry.estimatedInferenceCostMicroUsd.status === 'OBSERVED' ||
+    telemetry.measuredInferenceCostMicroUsd.status === 'OBSERVED'
+  );
+}
+
 export function validateTrialExecutionModeAndProvenance(
   trial: TrialExecutionRecord,
   config: ExperimentConfig,
@@ -85,14 +118,7 @@ export function validateTrialExecutionModeAndProvenance(
       `Inconsistent execution provenance for trialId "${trial.trialId}": outputSha256 does not match renderedOutput`,
     );
   }
-  if (trial.telemetry.wallClockLatencyMs.status === 'OBSERVED') {
-    assertSafeNonNegativeInteger(trial.telemetry.wallClockLatencyMs.value, 'wallClockLatencyMs');
-  }
-  assertSafeNonNegativeInteger(trial.telemetry.realPaidInferenceCostMicroUsd, 'realPaidInferenceCostMicroUsd');
-  assertSafeNonNegativeInteger(
-    trial.telemetry.infrastructureCostAllocationMicroUsd,
-    'infrastructureCostAllocationMicroUsd',
-  );
+  validateObservedTelemetryFields(trial.telemetry);
 
   if (trial.executionMode === 'fixture_simulated') {
     if (trial.qualityStatus !== 'QUALITY_NOT_MEASURED') {
@@ -105,12 +131,7 @@ export function validateTrialExecutionModeAndProvenance(
         `Inconsistent execution provenance for fixture trial "${trial.trialId}": realPaidInferenceCostMicroUsd must be 0`,
       );
     }
-    if (
-      trial.telemetry.promptTokens.status === 'OBSERVED' ||
-      trial.telemetry.completionTokens.status === 'OBSERVED' ||
-      trial.telemetry.wallClockLatencyMs.status === 'OBSERVED' ||
-      trial.telemetry.measuredInferenceCostMicroUsd.status === 'OBSERVED'
-    ) {
+    if (hasAnyObservedProviderTelemetry(trial.telemetry)) {
       throw new Error(
         `Inconsistent execution provenance for fixture trial "${trial.trialId}": fixture_simulated trials cannot report OBSERVED provider telemetry`,
       );
@@ -204,6 +225,59 @@ export function validateReviewerPacketIntegrity(
     const trial = trialById.get(entry.trialId);
     if (!trial || item.renderedScript !== sanitizeScriptForBlinding(trial.renderedOutput)) {
       throw new Error(`Tampered blind packet: renderedScript mismatch for "${item.blindOutputId}"`);
+    }
+  }
+}
+
+export function assertPairedArmCoverage(trials: readonly TrialExecutionRecord[]): void {
+  const armsByBriefAndTrial = new Map<string, Set<BenchmarkArmId>>();
+  for (const trial of trials) {
+    const pairKey = `${trial.briefId}:t${trial.trialNumber}`;
+    const arms = armsByBriefAndTrial.get(pairKey) ?? new Set<BenchmarkArmId>();
+    if (arms.has(trial.armId)) {
+      throw new Error(
+        `Duplicate arm "${trial.armId}" for briefId "${trial.briefId}" trialNumber ${trial.trialNumber}`,
+      );
+    }
+    arms.add(trial.armId);
+    armsByBriefAndTrial.set(pairKey, arms);
+  }
+  for (const [pairKey, arms] of armsByBriefAndTrial.entries()) {
+    for (const expectedArm of BENCHMARK_ARMS) {
+      if (!arms.has(expectedArm)) {
+        throw new Error(`Missing paired arm "${expectedArm}" for "${pairKey}"`);
+      }
+    }
+  }
+}
+
+export function validateRequiredReviewers(
+  scores: readonly ReviewerScoreRecord[],
+  requiredReviewerIds?: readonly string[],
+  expectedBlindOutputIds?: Iterable<string>,
+): void {
+  if (!requiredReviewerIds || requiredReviewerIds.length === 0) return;
+  const reviewersByBlindId = new Map<string, Set<string>>();
+  for (const score of scores) {
+    if (score.scoringOrigin !== 'human_independent') continue;
+    const set = reviewersByBlindId.get(score.blindOutputId) ?? new Set<string>();
+    set.add(score.reviewerId);
+    reviewersByBlindId.set(score.blindOutputId, set);
+  }
+  const blindIdsToCheck = expectedBlindOutputIds
+    ? Array.from(expectedBlindOutputIds)
+    : Array.from(reviewersByBlindId.keys());
+  if (blindIdsToCheck.length === 0) {
+    throw new Error('Missing required reviewer scores: no human_independent scores provided');
+  }
+  for (const blindOutputId of blindIdsToCheck) {
+    const presentReviewers = reviewersByBlindId.get(blindOutputId) ?? new Set<string>();
+    for (const requiredId of requiredReviewerIds) {
+      if (!presentReviewers.has(requiredId)) {
+        throw new Error(
+          `Missing required reviewer "${requiredId}" for blindOutputId "${blindOutputId}"`,
+        );
+      }
     }
   }
 }
