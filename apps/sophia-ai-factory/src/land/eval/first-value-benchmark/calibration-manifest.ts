@@ -150,6 +150,14 @@ export function buildStage1CalibrationManifest(args: {
   };
 }
 
+export function computeStage1ManifestSha256(
+  manifest: Omit<Stage1CalibrationManifest, 'manifestSha256'> & { readonly manifestSha256?: string },
+): string {
+  const { manifestSha256: _ignored, ...rest } = manifest;
+  void _ignored;
+  return computeSha256Hex(JSON.stringify(rest));
+}
+
 export function verifyStage1CalibrationManifest(
   manifestRaw: string,
   briefs: readonly EvaluationBrief[],
@@ -175,10 +183,9 @@ export function verifyStage1CalibrationManifest(
     throw new Error(`Stage 1 manifest must select exactly 10 briefs, found ${parsed.selectedBriefIds.length}`);
   }
 
-  const { manifestSha256, ...rest } = parsed;
-  const expectedHash = computeSha256Hex(JSON.stringify(rest));
-  if (manifestSha256 !== expectedHash) {
-    throw new Error(`Stage 1 manifestSha256 mismatch: expected ${expectedHash}, got ${manifestSha256}`);
+  const expectedHash = computeStage1ManifestSha256(parsed);
+  if (parsed.manifestSha256 !== expectedHash) {
+    throw new Error(`Stage 1 manifestSha256 mismatch: expected ${expectedHash}, got ${parsed.manifestSha256}`);
   }
 
   const briefById = new Map(briefs.map((b) => [b.briefId, b]));

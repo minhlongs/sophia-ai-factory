@@ -24,6 +24,19 @@ import type { EvaluationBrief } from './types';
 export const STAGE1_DEFAULT_TARGET_DURATION_SEC = 30;
 export const STAGE1_ARM_A_MIN_SCENES = 3;
 export const STAGE1_MIN_FEASIBLE_OUTPUT_TOKENS = 600;
+export const STAGE1_VIETNAMESE_MIN_FEASIBLE_OUTPUT_TOKENS = 750;
+export const STAGE1_REASONING_TOKEN_RESERVE = 600;
+
+export type EvalResponseFormatMode = 'omitted' | 'json_object' | 'text';
+export type OpenAiReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'xhigh';
+
+export const GPT54_MINI_SUPPORTED_REASONING_EFFORTS: readonly OpenAiReasoningEffort[] = [
+  'none',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+] as const;
 
 export interface ExperimentalParameterComparison {
   readonly variantClassification: 'BUDGET_BOUNDED_SOPHIA_BASIC_VARIANT';
@@ -33,10 +46,16 @@ export interface ExperimentalParameterComparison {
   readonly stage1MaxOutputTokensCap: number;
   readonly productionTemperature: number;
   readonly stage1Temperature: number;
+  readonly stage1ReasoningEffort: OpenAiReasoningEffort;
+  readonly stage1MaxTokensParam: 'max_completion_tokens';
+  readonly productionMaxTokensParam: 'max_tokens';
   readonly stage1TimeoutMs: number;
   readonly providerFallbackEnabled: false;
-  readonly armAResponseFormat: 'json_object';
+  readonly productionResponseFormat: 'omitted';
+  readonly armAResponseFormat: 'omitted';
   readonly armBResponseFormat: 'text';
+  readonly semanticParitySummary: string;
+  readonly transportDifferencesSummary: string;
   readonly rationale: string;
 }
 
@@ -48,13 +67,103 @@ export const STAGE1_EXPERIMENTAL_CONFIG: ExperimentalParameterComparison = {
   stage1MaxOutputTokensCap: 1200,
   productionTemperature: 0.3,
   stage1Temperature: 0.3,
+  stage1ReasoningEffort: 'none',
+  stage1MaxTokensParam: 'max_completion_tokens',
+  productionMaxTokensParam: 'max_tokens',
   stage1TimeoutMs: 120_000,
   providerFallbackEnabled: false,
-  armAResponseFormat: 'json_object',
+  productionResponseFormat: 'omitted',
+  armAResponseFormat: 'omitted',
   armBResponseFormat: 'text',
+  semanticParitySummary:
+    'Arm A invokes exact production SCRIPT_SYSTEM_PROMPT, buildScriptUserPrompt, strict JSON.parse, validateParsedScriptStructure(minScenes=3), temperature=0.3, and omits response_format identically to production openrouter-caller.ts.',
+  transportDifferencesSummary:
+    'Stage 1 uses direct OpenAI Chat Completions with max_completion_tokens=1200 (vs OpenRouter max_tokens=4096), reasoning_effort="none" (required for temperature=0.3 on gpt-5.4-mini and zero hidden reasoning token overhead), maxRetriesPerTrial=1 (vs 3), and full usage/model/fingerprint receipt capture.',
   rationale:
-    'Stage 1 bounds retries to 1 (vs production callOpenRouter maxRetries=3) and caps max_tokens to 1200 (vs 4096) to enforce the $3/30-call calibration ceiling; results measure a budget-bounded Sophia BASIC variant.',
+    'Stage 1 omits response_format to match production openrouter-caller.ts, bounds retries to 1 (vs production maxRetries=3), and caps max_completion_tokens to 1200 (vs 4096) under reasoning_effort="none" to enforce the $3/30-call calibration ceiling; results measure a budget-bounded Sophia BASIC variant.',
 };
+
+export interface OpenAiDirectRequestInput {
+  readonly modelId: string;
+  readonly prompt: string;
+  readonly maxOutputTokens: number;
+  readonly temperature: number;
+  readonly reasoningEffort?: string;
+  readonly responseFormat: EvalResponseFormatMode;
+  readonly armId: 'arm_a_sophia_basic' | 'arm_b_direct_model';
+}
+
+export interface OpenAiChatCompletionsPayload {
+  readonly model: string;
+  readonly messages: readonly [{ readonly role: 'user'; readonly content: string }];
+  readonly max_completion_tokens: number;
+  readonly temperature: number;
+  readonly reasoning_effort: OpenAiReasoningEffort;
+  readonly response_format?: { readonly type: 'json_object' };
+}
+
+export interface OpenAiMappedRequestResult {
+  readonly payload: OpenAiChatCompletionsPayload;
+  readonly responseFormatParity:
+    | 'MATCHES_PRODUCTION_OMITTED'
+    | 'EXPERIMENTAL_RESPONSE_FORMAT_OVERRIDE'
+    | 'ARM_B_NEUTRAL_TEXT';
+}
+
+function isSupportedGpt54MiniEffort(value: string): value is OpenAiReasoningEffort {
+  return (GPT54_MINI_SUPPORTED_REASONING_EFFORTS as readonly string[]).includes(value);
+}
+
+/**
+ * Pure request-parameter mapper for OpenAI direct Chat Completions (`gpt-5.4-mini-2026-03-17`).
+ * Enforces official GPT-5.4 parameter compatibility:
+ * - emits `max_completion_tokens` (never deprecated `max_tokens`);
+ * - validates `reasoning_effort` against gpt-5.4-mini supported values;
+ * - rejects non-default `temperature` (!== 1) when `reasoning_effort !== 'none'`;
+ * - omits `response_format` for Arm A by default to match production `openrouter-caller.ts`
+ *   and explicitly flags any experimental override.
+ */
+export function buildOpenAiDirectRequestPayload(input: OpenAiDirectRequestInput): OpenAiMappedRequestResult {
+  const effort = input.reasoningEffort ?? STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort;
+  if (!isSupportedGpt54MiniEffort(effort)) {
+    throw new Error(
+      `UNSUPPORTED_PROVIDER_PARAMETER: reasoning_effort="${effort}" is not supported by gpt-5.4-mini (allowed: ${GPT54_MINI_SUPPORTED_REASONING_EFFORTS.join(', ')})`,
+    );
+  }
+  if (!Number.isFinite(input.temperature) || input.temperature < 0 || input.temperature > 2) {
+    throw new Error(`UNSUPPORTED_PROVIDER_PARAMETER: temperature=${input.temperature} must be within 0..2`);
+  }
+  if (effort !== 'none' && input.temperature !== 1) {
+    throw new Error(
+      `UNSUPPORTED_PROVIDER_PARAMETER: temperature=${input.temperature} is unsupported on gpt-5.4-mini when reasoning_effort="${effort}" (requires reasoning_effort="none")`,
+    );
+  }
+  if (!Number.isSafeInteger(input.maxOutputTokens) || input.maxOutputTokens <= 0 || input.maxOutputTokens > 128_000) {
+    throw new Error(
+      `UNSUPPORTED_PROVIDER_PARAMETER: max_completion_tokens=${input.maxOutputTokens} must be an integer in 1..128000`,
+    );
+  }
+
+  const basePayload: OpenAiChatCompletionsPayload = {
+    model: input.modelId,
+    messages: [{ role: 'user', content: input.prompt }],
+    max_completion_tokens: input.maxOutputTokens,
+    temperature: input.temperature,
+    reasoning_effort: effort,
+    ...(input.responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {}),
+  };
+
+  let responseFormatParity: OpenAiMappedRequestResult['responseFormatParity'];
+  if (input.armId === 'arm_b_direct_model') {
+    responseFormatParity = 'ARM_B_NEUTRAL_TEXT';
+  } else if (input.responseFormat === 'omitted') {
+    responseFormatParity = 'MATCHES_PRODUCTION_OMITTED';
+  } else {
+    responseFormatParity = 'EXPERIMENTAL_RESPONSE_FORMAT_OVERRIDE';
+  }
+
+  return { payload: basePayload, responseFormatParity };
+}
 
 export interface NormalizedProductionScriptInput {
   readonly topic: string;
@@ -184,20 +293,76 @@ export function classifyArmAProductionError(
   }
 }
 
+export interface TokenCapFeasibilityOptions {
+  readonly briefs?: readonly EvaluationBrief[];
+  readonly minScenes?: number;
+  readonly targetDurationSec?: number;
+  readonly reasoningEffort?: OpenAiReasoningEffort;
+  readonly extraSchemaOverheadTokens?: number;
+}
+
+export interface TokenCapFeasibilityAssessment {
+  readonly feasible: boolean;
+  readonly classification: 'FEASIBLE' | 'INFEASIBLE_BUDGET_CAP';
+  readonly failureCategory: null | 'PREFLIGHT_INFEASIBLE';
+  readonly estimatedMinRequiredTokens: number;
+  readonly hasVietnameseBriefs: boolean;
+  readonly redesignRequired: boolean;
+  readonly redesignCode: 'STAGE1_TOKEN_CAP_REDESIGN_REQUIRED' | null;
+  readonly reason: string;
+}
+
+/**
+ * Conservatively estimates the minimum output tokens required for a valid Sophia BASIC
+ * JSON script (title + total_duration + >= minScenes scenes with visual_description,
+ * narration, duration_estimate, JSON syntax overhead, and Vietnamese subword density).
+ * Never assumes 1 character = 1 token; never expands maxOutputTokensCap automatically.
+ */
 export function assessOutputTokenCapFeasibility(
   maxOutputTokensCap: number,
-): { readonly feasible: boolean; readonly classification: 'FEASIBLE' | 'INFEASIBLE_BUDGET_CAP'; readonly reason: string } {
-  if (!Number.isSafeInteger(maxOutputTokensCap) || maxOutputTokensCap < STAGE1_MIN_FEASIBLE_OUTPUT_TOKENS) {
+  options?: TokenCapFeasibilityOptions,
+): TokenCapFeasibilityAssessment {
+  const minScenes = Math.max(STAGE1_ARM_A_MIN_SCENES, options?.minScenes ?? STAGE1_ARM_A_MIN_SCENES);
+  const targetDurationSec = Math.max(15, options?.targetDurationSec ?? STAGE1_DEFAULT_TARGET_DURATION_SEC);
+  const hasVietnameseBriefs = (options?.briefs ?? []).some((b) => b.language === 'vi');
+  const reasoningEffort = options?.reasoningEffort ?? STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort;
+  const extraSchemaOverhead = Math.max(0, options?.extraSchemaOverheadTokens ?? 0);
+
+  // Conservative schema-aware estimate (JSON envelope + per-scene fields + duration scaling + VI UTF-8 subword density)
+  const jsonEnvelopeTokens = 90;
+  const durationScale = Math.max(1, targetDurationSec / STAGE1_DEFAULT_TARGET_DURATION_SEC);
+  const basePerSceneTokens = hasVietnameseBriefs ? 220 : 170;
+  const sceneTokens = Math.ceil(minScenes * basePerSceneTokens * durationScale);
+  const reasoningReserve = reasoningEffort === 'none' ? 0 : STAGE1_REASONING_TOKEN_RESERVE;
+  const baseFloor = hasVietnameseBriefs
+    ? STAGE1_VIETNAMESE_MIN_FEASIBLE_OUTPUT_TOKENS
+    : STAGE1_MIN_FEASIBLE_OUTPUT_TOKENS;
+  const estimatedMinRequiredTokens = Math.max(
+    baseFloor,
+    jsonEnvelopeTokens + sceneTokens + extraSchemaOverhead,
+  ) + reasoningReserve;
+
+  if (!Number.isSafeInteger(maxOutputTokensCap) || maxOutputTokensCap < estimatedMinRequiredTokens) {
     return {
       feasible: false,
       classification: 'INFEASIBLE_BUDGET_CAP',
-      reason: `maxOutputTokensCap=${maxOutputTokensCap} is below minimum ${STAGE1_MIN_FEASIBLE_OUTPUT_TOKENS} tokens required for 3-5 scene Sophia BASIC JSON output`,
+      failureCategory: 'PREFLIGHT_INFEASIBLE',
+      estimatedMinRequiredTokens,
+      hasVietnameseBriefs,
+      redesignRequired: true,
+      redesignCode: 'STAGE1_TOKEN_CAP_REDESIGN_REQUIRED',
+      reason: `maxOutputTokensCap=${maxOutputTokensCap} is below conservative minimum ${estimatedMinRequiredTokens} tokens required for ${minScenes}-scene ${hasVietnameseBriefs ? 'EN+VI ' : ''}Sophia BASIC JSON output (reasoning_effort=${reasoningEffort})`,
     };
   }
   return {
     feasible: true,
     classification: 'FEASIBLE',
-    reason: `maxOutputTokensCap=${maxOutputTokensCap} satisfies minimum ${STAGE1_MIN_FEASIBLE_OUTPUT_TOKENS} token threshold for 3-5 scene JSON output`,
+    failureCategory: null,
+    estimatedMinRequiredTokens,
+    hasVietnameseBriefs,
+    redesignRequired: false,
+    redesignCode: null,
+    reason: `maxOutputTokensCap=${maxOutputTokensCap} satisfies conservative minimum ${estimatedMinRequiredTokens} token threshold for ${minScenes}-scene ${hasVietnameseBriefs ? 'EN+VI ' : ''}Sophia BASIC JSON output (reasoning_effort=${reasoningEffort})`,
   };
 }
 

@@ -100,12 +100,60 @@ export interface CallUsageReconciliation {
   readonly completionTokens: number | null;
   readonly cachedPromptTokens?: number;
   readonly observedChargedMicroUsd?: number | null;
+  readonly trialSucceeded?: boolean;
 }
 
 export interface CallFailureReconciliation {
   readonly acceptedByProvider: boolean;
   readonly httpStatus?: number;
   readonly reason: string;
+}
+
+export interface Stage1CallPolicySummary {
+  readonly targetPairs: number;
+  readonly targetLogicalTrials: number;
+  readonly maxRetriesPerTrial: number;
+  readonly maxCallsPerArm: number;
+  readonly worstCaseCallsPerPair: number;
+  readonly theoreticalMaxCallsForAllPairs: number;
+  readonly hardBillableCallCeiling: number;
+  readonly guaranteedFullPairsUnderWorstCase: number;
+  readonly remainingUnpairedSlotHeadroom: number;
+  readonly policyNote: string;
+}
+
+export function computeStage1CallPolicySummary(args: {
+  readonly targetPairs: number;
+  readonly maxRetriesPerTrial: number;
+  readonly maxBillableCalls: number;
+}): Stage1CallPolicySummary {
+  assertSafeNonNegativeInteger(args.targetPairs, 'targetPairs');
+  assertSafeNonNegativeInteger(args.maxRetriesPerTrial, 'maxRetriesPerTrial');
+  assertSafeNonNegativeInteger(args.maxBillableCalls, 'maxBillableCalls');
+
+  const maxCallsPerArm = 1 + args.maxRetriesPerTrial;
+  const worstCaseCallsPerPair = maxCallsPerArm * 2;
+  const targetLogicalTrials = args.targetPairs * 2;
+  const theoreticalMaxCallsForAllPairs = args.targetPairs * worstCaseCallsPerPair;
+  const guaranteedFullPairsUnderWorstCase =
+    worstCaseCallsPerPair > 0 ? Math.min(args.targetPairs, Math.floor(args.maxBillableCalls / worstCaseCallsPerPair)) : 0;
+  const remainingUnpairedSlotHeadroom =
+    worstCaseCallsPerPair > 0 && guaranteedFullPairsUnderWorstCase < args.targetPairs
+      ? args.maxBillableCalls % worstCaseCallsPerPair
+      : 0;
+
+  return {
+    targetPairs: args.targetPairs,
+    targetLogicalTrials,
+    maxRetriesPerTrial: args.maxRetriesPerTrial,
+    maxCallsPerArm,
+    worstCaseCallsPerPair,
+    theoreticalMaxCallsForAllPairs,
+    hardBillableCallCeiling: args.maxBillableCalls,
+    guaranteedFullPairsUnderWorstCase,
+    remainingUnpairedSlotHeadroom,
+    policyNote: `Hard ceiling of ${args.maxBillableCalls} calls guarantees ${guaranteedFullPairsUnderWorstCase}/${args.targetPairs} full pairs under worst-case ${worstCaseCallsPerPair} calls/pair (theoretical max for all pairs: ${theoreticalMaxCallsForAllPairs}); fewer actual retries permit up to ${args.targetPairs} completed pairs.`,
+  };
 }
 
 export interface CostGovernorSnapshot {
@@ -426,7 +474,6 @@ export class ExperimentCostGovernor {
       this.reservedMicroUsd -= active.reservedMicroUsd;
       this.activeAdmission = null;
       this.completedCalls += 1;
-      this.completedTrialIds.add(active.trialId);
       this.uncertainLiabilityMicroUsd = nextUncertain;
       this.spendEvidenceStatus = 'MISSING_USAGE_METADATA';
       return { observedCostMicroUsd: null, reservationDeltaMicroUsd: null };
@@ -450,7 +497,9 @@ export class ExperimentCostGovernor {
     this.reservedMicroUsd -= active.reservedMicroUsd;
     this.activeAdmission = null;
     this.completedCalls += 1;
-    this.completedTrialIds.add(active.trialId);
+    if (usage.trialSucceeded !== false) {
+      this.completedTrialIds.add(active.trialId);
+    }
     this.actualSpendMicroUsd = nextActualSpend;
     if (this.spendEvidenceStatus === 'NO_SPEND') {
       this.spendEvidenceStatus = 'COMPLETE';
@@ -474,6 +523,25 @@ export class ExperimentCostGovernor {
         'uncertainLiabilityMicroUsd',
       );
       this.spendEvidenceStatus = 'UNCERTAIN_FAILED_CALL';
+    }
+  }
+
+  /**
+   * Rolls back an active reservation ONLY when no provider request was ever sent
+   * (e.g., local request-mapping rejection before network dispatch).
+   */
+  rollbackUnissuedAdmission(admissionId: string, _reason: string): void {
+    const active = this.assertActiveAdmission(admissionId);
+    const attemptSuffix = admissionId.slice(admissionId.lastIndexOf(':attempt-') + ':attempt-'.length);
+    const attemptNumber = Number(attemptSuffix);
+    this.reservedMicroUsd -= active.reservedMicroUsd;
+    this.activeAdmission = null;
+    this.admittedCalls = Math.max(0, this.admittedCalls - 1);
+    if (Number.isSafeInteger(attemptNumber) && attemptNumber > 1) {
+      this.retryCount = Math.max(0, this.retryCount - 1);
+    }
+    if (Number.isSafeInteger(attemptNumber) && attemptNumber >= 1) {
+      this.seenAttemptKeys.delete(`${active.trialId}#${attemptNumber}`);
     }
   }
 

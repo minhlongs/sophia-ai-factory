@@ -255,13 +255,13 @@ describe('B4.1.1 G2 Production Prompt/Parser Parity, G3 Fairness, G5 Paired Stop
     expect(armAReq.systemPrompt).toBe(SCRIPT_SYSTEM_PROMPT);
     expect(armBReq.prompt).toBe(buildDirectModelPrompt(armBReq.brief));
 
-    // Truncated JSON at maxOutputTokensCap classified as BUDGET_CAP_INFEASIBLE (never silently blamed on Sophia)
+    // Truncated JSON at maxOutputTokensCap classified as TOKEN_CAP_EXHAUSTED (never silently blamed on Sophia)
     const truncatedRun = await runBudgetGatedCalibration({
       manifest: stage1.manifest,
       selectedBriefs: stage1.selectedBriefs,
       pricingContract: contract,
       maxOutputTokensCap: 1200,
-      mockTransport: async (req) => ({
+      mockTransport: async () => ({
         ok: true,
         renderedOutput: '{"title":"Truncated","scenes":[{"scene_number":1',
         provider: contract.provider,
@@ -273,9 +273,10 @@ describe('B4.1.1 G2 Production Prompt/Parser Parity, G3 Fairness, G5 Paired Stop
         latencyMs: 300,
       }),
     });
-    expect(truncatedRun.haltedReason).toBe('BUDGET_CAP_INFEASIBLE:MAX_OUTPUT_TOKENS_TRUNCATED');
+    expect(truncatedRun.haltedReason).toBe('TOKEN_CAP_EXHAUSTED:MAX_OUTPUT_TOKENS_TRUNCATED');
     expect(truncatedRun.trials[0].status).toBe('FAILED');
-    expect(truncatedRun.trials[0].failureClass).toBe('BUDGET_CAP_INFEASIBLE');
+    expect(truncatedRun.trials[0].failureClass).toBe('TOKEN_CAP_EXHAUSTED');
+    expect(truncatedRun.trials[0].failureCategory).toBe('TOKEN_CAP_EXHAUSTED');
     // Token spend was still reconciled despite invalid JSON
     expect(truncatedRun.costGovernorSnapshot.actualSpendMicroUsd).toBeGreaterThan(0);
     expect(truncatedRun.costGovernorSnapshot.reservedMicroUsd).toBe(0);
