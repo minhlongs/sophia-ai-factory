@@ -66,6 +66,9 @@ describe('pilot-auth-guard', () => {
     for (const path of [
       '/api/checkout',
       '/api/checkout/status',
+      '//api//checkout/',
+      '/%61pi/checkout',
+      '/%E0%A4%A/checkout',
       '/api/orders',
       '/api/promo/redeem-free',
       '/api/v1/credits/purchase',
@@ -89,8 +92,11 @@ describe('pilot-auth-guard', () => {
       '/api/schedule',
       '/api/v1/distribute/jobs',
       '/api/v1/videos/vid_123/distribute',
+      '/api/v1/videos/vid.123/distribute',
       '/api/oauth/youtube/connect',
       '/api/oauth/tiktok/connect',
+      '/api/oauth/instagram/connect',
+      '/api/oauth/facebook/callback',
     ]) {
       const res = enforcePilotFeatureDisabled(path, pilotEnv);
       expect(res?.status).toBe(403);

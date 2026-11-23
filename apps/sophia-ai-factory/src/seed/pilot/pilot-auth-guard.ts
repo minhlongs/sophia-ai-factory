@@ -57,24 +57,32 @@ const PUBLISH_DISABLED_PREFIXES = [
   '/api/distribution',
   '/api/schedule',
   '/api/v1/distribute',
-  '/api/oauth/youtube',
-  '/api/oauth/tiktok',
+  '/api/oauth',
 ] as const;
 
 const VIDEO_DISTRIBUTE_PATTERN = /^\/api\/v1\/videos\/[^/]+\/distribute(?:\/|$)/i;
 
-function normalizePathname(pathname: string): string {
-  const lower = pathname.toLowerCase();
-  return lower.length > 1 ? lower.replace(/\/+$/, '') : lower;
+function normalizePathname(pathname: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+  const collapsed = decoded.replace(/\/{2,}/g, '/').toLowerCase();
+  return collapsed.length > 1 ? collapsed.replace(/\/+$/, '') : collapsed;
 }
 
-function matchesPrefix(pathname: string, prefixes: readonly string[]): boolean {
-  const normalized = normalizePathname(pathname);
+function matchesPrefix(normalized: string, prefixes: readonly string[]): boolean {
   return prefixes.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`));
 }
 
 export function isGuardedPilotAuthPath(pathname: string): boolean {
-  return matchesPrefix(pathname, GUARDED_AUTH_PATHS);
+  const normalized = normalizePathname(pathname);
+  if (normalized === null) {
+    return true;
+  }
+  return matchesPrefix(normalized, GUARDED_AUTH_PATHS);
 }
 
 /**
@@ -123,7 +131,23 @@ export function enforcePilotFeatureDisabled(
   env: PilotEnvSource = process.env,
 ): NextResponse | null {
   const paymentsDisabled = (env.PAYMENTS_ENABLED ?? '').trim().toLowerCase() === 'false';
-  if (paymentsDisabled && matchesPrefix(pathname, PAYMENT_DISABLED_PREFIXES)) {
+  const publishDisabled = (env.B2_PUBLISH_ENABLED ?? '').trim().toLowerCase() === 'false';
+  if (!paymentsDisabled && !publishDisabled) {
+    return null;
+  }
+
+  const normalized = normalizePathname(pathname);
+  if (normalized === null) {
+    return NextResponse.json(
+      {
+        code: paymentsDisabled ? 'PILOT_PAYMENTS_DISABLED' : 'PILOT_PUBLISHING_DISABLED',
+        error: 'Malformed request path rejected during private pilot.',
+      },
+      { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
+
+  if (paymentsDisabled && matchesPrefix(normalized, PAYMENT_DISABLED_PREFIXES)) {
     return NextResponse.json(
       {
         code: 'PILOT_PAYMENTS_DISABLED',
@@ -134,11 +158,10 @@ export function enforcePilotFeatureDisabled(
     );
   }
 
-  const publishDisabled = (env.B2_PUBLISH_ENABLED ?? '').trim().toLowerCase() === 'false';
   if (
     publishDisabled &&
-    (matchesPrefix(pathname, PUBLISH_DISABLED_PREFIXES) ||
-      VIDEO_DISTRIBUTE_PATTERN.test(normalizePathname(pathname)))
+    (matchesPrefix(normalized, PUBLISH_DISABLED_PREFIXES) ||
+      VIDEO_DISTRIBUTE_PATTERN.test(normalized))
   ) {
     return NextResponse.json(
       {

@@ -35,6 +35,10 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
 
   // Metrics wiring must never break request handling; failures are swallowed inside.
   await initializeWAEBinding();
+
+  const pilotFeatureBlocked = enforcePilotFeatureDisabled(pathname);
+  if (pilotFeatureBlocked) return pilotFeatureBlocked;
+
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
   const pathLocale = pathname.split('/')[1];
@@ -76,9 +80,6 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   }
   const needsCsrfSeed = request.method === 'GET' && !request.cookies.has(CSRF_COOKIE_NAME);
 
-  const pilotFeatureBlocked = enforcePilotFeatureDisabled(pathname);
-  if (pilotFeatureBlocked) return pilotFeatureBlocked;
-
   const apiRes = await handleApiPipeline(request, pathname, pathLocale, startTime, requestHeaders, nonce, needsCsrfSeed);
   if (apiRes) return apiRes;
 
@@ -119,7 +120,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 export const middleware = proxy;
 
 export const config = {
-  matcher: ['/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)'],
+  matcher: [
+    '/api/((?!version$).*)',
+    '/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)',
+  ],
   // This module contains a Node-only local D1 loader. It is guarded by a
   // Node runtime check and never invoked by the Edge middleware runtime.
   unstable_allowDynamic: ['/src/seed/db/client/loader.ts'],
