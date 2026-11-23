@@ -62,6 +62,20 @@ const PUBLISH_DISABLED_PREFIXES = [
 
 const VIDEO_DISTRIBUTE_PATTERN = /^\/api\/v1\/videos\/[^/]+\/distribute(?:\/|$)/i;
 
+/**
+ * Strict API surface allowlist when `PILOT_INVITE_ONLY=true`.
+ * Every other `/api/*` route (including alternate inference, video/TTS, campaign,
+ * admin, and BYOK management routes) is blocked fail-closed with 403.
+ */
+const PILOT_ALLOWED_API_PREFIXES = [
+  '/api/auth',
+  '/api/first-value',
+  '/api/health',
+  '/api/version',
+  '/api/check-access',
+  '/api/csp-report',
+] as const;
+
 function normalizePathname(pathname: string): string | null {
   let decoded: string;
   try {
@@ -69,7 +83,13 @@ function normalizePathname(pathname: string): string | null {
   } catch {
     return null;
   }
+  if (/[\\\0]/.test(decoded)) {
+    return null;
+  }
   const collapsed = decoded.replace(/\/{2,}/g, '/').toLowerCase();
+  if (/(^|\/)\.\.?(\/|$)/.test(collapsed)) {
+    return null;
+  }
   return collapsed.length > 1 ? collapsed.replace(/\/+$/, '') : collapsed;
 }
 
@@ -124,15 +144,16 @@ export function enforcePilotAuthAllowlist(
 
 /**
  * Enforces explicit `PAYMENTS_ENABLED=false` and `B2_PUBLISH_ENABLED=false` runtime
- * kill-switches (used by `wrangler.pilot.toml` for the free First-Value pilot).
+ * kill-switches, plus strict `/api/*` surface lockdown when `PILOT_INVITE_ONLY=true`.
  */
 export function enforcePilotFeatureDisabled(
   pathname: string,
   env: PilotEnvSource = process.env,
 ): NextResponse | null {
+  const inviteOnly = isPilotInviteOnlyEnabled(env);
   const paymentsDisabled = (env.PAYMENTS_ENABLED ?? '').trim().toLowerCase() === 'false';
   const publishDisabled = (env.B2_PUBLISH_ENABLED ?? '').trim().toLowerCase() === 'false';
-  if (!paymentsDisabled && !publishDisabled) {
+  if (!inviteOnly && !paymentsDisabled && !publishDisabled) {
     return null;
   }
 
@@ -140,7 +161,11 @@ export function enforcePilotFeatureDisabled(
   if (normalized === null) {
     return NextResponse.json(
       {
-        code: paymentsDisabled ? 'PILOT_PAYMENTS_DISABLED' : 'PILOT_PUBLISHING_DISABLED',
+        code: paymentsDisabled
+          ? 'PILOT_PAYMENTS_DISABLED'
+          : publishDisabled
+            ? 'PILOT_PUBLISHING_DISABLED'
+            : 'PILOT_FEATURE_DISABLED',
         error: 'Malformed request path rejected during private pilot.',
       },
       { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
@@ -173,5 +198,57 @@ export function enforcePilotFeatureDisabled(
     );
   }
 
+  if (
+    inviteOnly &&
+    (normalized === '/api' || normalized.startsWith('/api/')) &&
+    !matchesPrefix(normalized, PILOT_ALLOWED_API_PREFIXES)
+  ) {
+    return NextResponse.json(
+      {
+        code: 'PILOT_FEATURE_DISABLED',
+        error:
+          'This API route is disabled during the private pilot. / Tính năng API này được tắt trong chương trình thử nghiệm kín.',
+      },
+      { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
+
   return null;
+}
+
+const PILOT_ALLOWED_SERVER_ACTION_PATTERNS: readonly RegExp[] = [
+  /^\/(?:vi|en)\/(?:first-value|dashboard\/first-value|login|signup)(?:\/|$)/,
+  /^\/(?:first-value|login|signup)(?:\/|$)/,
+];
+
+/**
+ * When `PILOT_INVITE_ONLY=true`, blocks Next.js Server Actions (`next-action` header)
+ * invoked on non-pilot pages so allowlisted users cannot reach unrelated `src/land/`
+ * server actions outside the pilot workspace.
+ */
+export function enforcePilotServerActionDisabled(
+  pathname: string,
+  hasNextActionHeader: boolean,
+  env: PilotEnvSource = process.env,
+): NextResponse | null {
+  if (!hasNextActionHeader || !isPilotInviteOnlyEnabled(env)) {
+    return null;
+  }
+
+  const normalized = normalizePathname(pathname);
+  if (
+    normalized !== null &&
+    PILOT_ALLOWED_SERVER_ACTION_PATTERNS.some((pattern) => pattern.test(normalized))
+  ) {
+    return null;
+  }
+
+  return NextResponse.json(
+    {
+      code: 'PILOT_FEATURE_DISABLED',
+      error:
+        'This server action is disabled during the private pilot. / Thao tác này được tắt trong chương trình thử nghiệm kín.',
+    },
+    { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
+  );
 }

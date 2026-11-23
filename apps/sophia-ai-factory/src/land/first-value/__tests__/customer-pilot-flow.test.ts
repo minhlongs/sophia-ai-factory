@@ -16,7 +16,10 @@ import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { NodeSqliteD1Database } from '@/seed/db/node-sqlite-d1';
 import { PILOT_POLICY_VERSION, type PilotEnvSource } from '@/seed/pilot/pilot-access-policy';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, verifyCsrfToken } from '@/seed/security/csrf';
-import { ProviderInvalidKeyError } from '@/seed/services/errors';
+import {
+  ProviderInvalidKeyError,
+  ProviderQuotaExceededError,
+} from '@/seed/services/errors';
 import {
   handleFirstValueGet,
   handleFirstValuePost,
@@ -129,7 +132,9 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
         PILOT_INVITE_ONLY: 'true',
         PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
         PILOT_LIVE_INFERENCE_ENABLED: 'true',
+        PILOT_FINANCING_MODE: 'FOUNDER_SPONSORED',
         PILOT_MAX_GENERATIONS: '2',
+        PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
         PILOT_RATE_LIMIT_COOLDOWN_MS: '5000',
         PILOT_OPENROUTER_API_KEY: 'sk-or-v1-sponsored-pilot-test-key-000001',
       },
@@ -272,7 +277,14 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
     expect(createJson.quota.usedGenerations).toBe(1);
     expect(createJson.quota.remainingGenerations).toBe(1);
     expect(generateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ apiKey: 'sk-or-v1-sponsored-pilot-test-key-000001' }),
+      expect.objectContaining({
+        apiKey: 'sk-or-v1-sponsored-pilot-test-key-000001',
+        model: 'openai/gpt-4o-mini',
+        maxTokens: 2048,
+        maxRetries: 1,
+        timeoutMs: 45000,
+        referer: 'https://pilot.sophia.agencyos.network',
+      }),
     );
 
     // 3. Edit script inline (version 1 -> 2)
@@ -399,18 +411,26 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
     expect(names.has('CUSTOMER_FEEDBACK_SUBMITTED')).toBe(true);
   });
 
-  it('prefers BYOK over Founder-sponsored key, enforces cooldown + quota cap, and releases slot on provider failure', async () => {
+  it('enforces single active financing mode with ZERO BYOK->Founder fallback, cooldown, and quota cap', async () => {
     const generateSpy = vi
       .fn<NonNullable<FirstValueHttpDeps['generateLiveScript']>>()
       .mockRejectedValueOnce(new ProviderInvalidKeyError('openrouter', 'invalid key'))
+      .mockRejectedValueOnce(new ProviderQuotaExceededError('openrouter', 'insufficient credits'))
       .mockResolvedValue(MOCK_REAL_SCRIPT);
 
-    const deps = buildDeps({
-      byokKey: 'sk-or-v1-customer-byok-key-0000001',
-      generateLiveScript: generateSpy,
-    });
+    const byokEnv: PilotEnvSource = {
+      PILOT_INVITE_ONLY: 'true',
+      PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
+      PILOT_LIVE_INFERENCE_ENABLED: 'true',
+      PILOT_FINANCING_MODE: 'CUSTOMER_BYOK',
+      PILOT_MAX_GENERATIONS: '2',
+      PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
+      PILOT_RATE_LIMIT_COOLDOWN_MS: '5000',
+      // Founder key is present in env, but MUST NEVER be used as fallback in CUSTOMER_BYOK mode!
+      PILOT_OPENROUTER_API_KEY: 'sk-or-v1-sponsored-pilot-test-key-000001',
+    };
 
-    // Accept terms first
+    const noByokDeps = buildDeps({ pilotEnv: byokEnv, byokKey: null, generateLiveScript: generateSpy });
     await handleFirstValuePost(
       makeRequest('POST', 'https://pilot.example.test/api/first-value', {
         body: {
@@ -420,10 +440,36 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
           accepted: true,
         },
       }),
-      deps,
+      noByokDeps,
     );
 
-    // Attempt 1: Provider fails -> 422, slot released, GENERATION_FAILED logged
+    // Missing customer BYOK key in CUSTOMER_BYOK mode -> 422 BYOK_KEY_REQUIRED (never falls back to Founder key)
+    const missingByokRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-missing-byok',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder workflow',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      noByokDeps,
+    );
+    expect(missingByokRes.status).toBe(422);
+    expect(((await missingByokRes.json()) as { code: string }).code).toBe('BYOK_KEY_REQUIRED');
+    expect(generateSpy).not.toHaveBeenCalled();
+
+    const deps = buildDeps({
+      pilotEnv: byokEnv,
+      byokKey: 'sk-or-v1-customer-byok-key-0000001',
+      generateLiveScript: generateSpy,
+    });
+
+    // Attempt 1: Invalid BYOK key -> 422, slot refunded, NEVER falls back to Founder key
     const failRes = await handleFirstValuePost(
       makeRequest('POST', 'https://pilot.example.test/api/first-value', {
         idempotencyKey: 'idem-fail-0001',
@@ -440,12 +486,38 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
       deps,
     );
     expect(failRes.status).toBe(422);
-    expect(((await failRes.json()) as { code: string }).code).toBe('PROVIDER_KEY_INVALID');
-    expect(generateSpy).toHaveBeenCalledWith(
+    expect(((await failRes.json()) as { code: string; quotaRefunded: boolean })).toMatchObject({
+      code: 'PROVIDER_KEY_INVALID',
+      quotaRefunded: true,
+    });
+    expect(generateSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({ apiKey: 'sk-or-v1-customer-byok-key-0000001' }),
     );
 
-    // Advance past cooldown and verify quota was released (still 0 used -> succeeds twice)
+    // Attempt 2: Out-of-credit BYOK key -> 502 PROVIDER_QUOTA_EXCEEDED, slot refunded, NEVER falls back
+    clockMs += 6000;
+    const noCreditRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-fail-0002',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder workflow',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      deps,
+    );
+    expect(noCreditRes.status).toBe(502);
+    expect(((await noCreditRes.json()) as { code: string; quotaRefunded: boolean })).toMatchObject({
+      code: 'PROVIDER_QUOTA_EXCEEDED',
+      quotaRefunded: true,
+    });
+
+    // Advance past cooldown and verify quota was refunded (still 0 used -> succeeds twice)
     clockMs += 6000;
     const ok1 = await handleFirstValuePost(
       makeRequest('POST', 'https://pilot.example.test/api/first-value', {
@@ -524,11 +596,178 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
     expect(capped.status).toBe(429);
     expect(((await capped.json()) as { code: string }).code).toBe('PILOT_QUOTA_EXCEEDED');
 
-    // Verify GENERATION_FAILED was also logged
+    // Verify GENERATION_FAILED was logged twice
     const failedEvent = await sqlite
       .prepare("SELECT COUNT(*) as cnt FROM pilot_events WHERE event_name = 'GENERATION_FAILED'")
       .first<{ cnt: number }>();
-    expect(failedEvent?.cnt).toBe(1);
+    expect(failedEvent?.cnt).toBe(2);
+  });
+
+  it('fails closed when cost controls are absent, enforces spend cap, concurrency lock, and conservative timeout accounting', async () => {
+    // 1. Missing cost controls -> 503 PILOT_COST_CONTROLS_UNCONFIGURED
+    const noCostControlsDeps = buildDeps({
+      pilotEnv: {
+        PILOT_INVITE_ONLY: 'true',
+        PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
+        PILOT_LIVE_INFERENCE_ENABLED: 'true',
+        PILOT_FINANCING_MODE: 'FOUNDER_SPONSORED',
+        PILOT_OPENROUTER_API_KEY: 'sk-or-v1-sponsored-pilot-test-key-000001',
+      },
+    });
+    const blockedNoCost = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-nocost-0001',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder workflow',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      noCostControlsDeps,
+    );
+    expect(blockedNoCost.status).toBe(503);
+    expect(((await blockedNoCost.json()) as { code: string }).code).toBe(
+      'PILOT_COST_CONTROLS_UNCONFIGURED',
+    );
+
+    // 2. Disabled financing mode -> 503 PILOT_FINANCING_DISABLED
+    const disabledFinDeps = buildDeps({
+      pilotEnv: {
+        PILOT_INVITE_ONLY: 'true',
+        PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
+        PILOT_LIVE_INFERENCE_ENABLED: 'true',
+        PILOT_FINANCING_MODE: 'DISABLED',
+        PILOT_MAX_GENERATIONS: '20',
+        PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
+      },
+    });
+    const blockedFin = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-nofin-0001',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder workflow',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      disabledFinDeps,
+    );
+    expect(blockedFin.status).toBe(503);
+    expect(((await blockedFin.json()) as { code: string }).code).toBe('PILOT_FINANCING_DISABLED');
+
+    // 3. Concurrency lock + conservative timeout accounting + spend cap
+    let releaseFirstCall: () => void = () => {};
+    const deferredCall = new Promise<ScriptOutput>((_resolve, reject) => {
+      releaseFirstCall = () => reject(new Error('OpenRouter request timed out'));
+    });
+
+    const tightSpendEnv: PilotEnvSource = {
+      PILOT_INVITE_ONLY: 'true',
+      PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
+      PILOT_LIVE_INFERENCE_ENABLED: 'true',
+      PILOT_FINANCING_MODE: 'FOUNDER_SPONSORED',
+      PILOT_MAX_GENERATIONS: '20',
+      PILOT_MAX_ESTIMATED_SPEND_USD: '0.02',
+      PILOT_ESTIMATED_COST_PER_ATTEMPT_USD: '0.02',
+      PILOT_RATE_LIMIT_COOLDOWN_MS: '0',
+      PILOT_OPENROUTER_API_KEY: 'sk-or-v1-sponsored-pilot-test-key-000001',
+    };
+
+    const deps = buildDeps({
+      pilotEnv: tightSpendEnv,
+      byokKey: 'sk-or-v1-customer-byok-ignored-in-founder-mode',
+      generateLiveScript: vi.fn(() => deferredCall),
+    });
+
+    await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: {
+          action: 'accept_pilot_terms',
+          orgId: 'org_pilot_1',
+          policyVersion: PILOT_POLICY_VERSION,
+          accepted: true,
+        },
+      }),
+      deps,
+    );
+
+    // Start request 1 (holds in-flight lock)
+    const req1Promise = handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-inflight-0001',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder workflow',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      deps,
+    );
+
+    // Give microtasks a tick so req1 acquires the D1 lock
+    await new Promise((r) => setTimeout(r, 15));
+
+    // Concurrent request 2 while req1 is in-flight -> rejected before provider call!
+    const req2Res = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-inflight-0002',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder concurrent',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      deps,
+    );
+    expect(req2Res.status).toBe(429);
+    const req2Code = ((await req2Res.json()) as { code: string }).code;
+    expect(['PILOT_GENERATION_IN_PROGRESS', 'PILOT_SPEND_LIMIT_EXCEEDED']).toContain(req2Code);
+
+    // Resolve req1 with timeout -> 502, conservative accounting retains slot & $0.02 spend
+    releaseFirstCall();
+    const req1Res = await req1Promise;
+    expect(req1Res.status).toBe(502);
+    expect(((await req1Res.json()) as { code: string; quotaRefunded: boolean })).toMatchObject({
+      code: 'PROVIDER_GENERATION_FAILED',
+      quotaRefunded: false,
+    });
+
+    // Next attempt is blocked by local spend cap ($0.02 used + $0.02 > $0.02 max) -> 429 PILOT_SPEND_LIMIT_EXCEEDED
+    const spendBlocked = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        idempotencyKey: 'idem-spendcap-0003',
+        body: {
+          action: 'create_review',
+          orgId: 'org_pilot_1',
+          missionId: 'mission_pilot_1',
+          topic: 'Clinic reminder spend cap',
+          audience: 'Clinic owners',
+          durationSec: 30,
+          provenance: 'live_provider',
+        },
+      }),
+      deps,
+    );
+    expect(spendBlocked.status).toBe(429);
+    expect(((await spendBlocked.json()) as { code: string }).code).toBe(
+      'PILOT_SPEND_LIMIT_EXCEEDED',
+    );
   });
 
   it('short-circuits idempotent live_provider replay before quota reservation or provider inference', async () => {

@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS pilot_usage_quotas (
   org_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
   used_generations INTEGER NOT NULL DEFAULT 0,
+  estimated_spend_microusd INTEGER NOT NULL DEFAULT 0,
+  in_flight_until_ms INTEGER NOT NULL DEFAULT 0,
   last_generation_at_iso TEXT,
   last_generation_at_ms INTEGER,
   updated_at_iso TEXT NOT NULL,

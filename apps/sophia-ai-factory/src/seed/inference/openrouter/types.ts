@@ -5,6 +5,10 @@ export interface ResilientOpenRouterOptions {
   anthropicKey?: string
   enableFallback?: boolean
   model?: string
+  maxTokens?: number
+  maxRetries?: number
+  timeoutMs?: number
+  referer?: string
 }
 
 export interface MultiProviderResilientOptions {

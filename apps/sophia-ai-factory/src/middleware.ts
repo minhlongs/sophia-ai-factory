@@ -18,7 +18,10 @@ import {
 } from '@/tree/custom-domains/hostname-resolver';
 import { getD1 } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
-import { enforcePilotFeatureDisabled } from '@/seed/pilot/pilot-auth-guard';
+import {
+  enforcePilotFeatureDisabled,
+  enforcePilotServerActionDisabled,
+} from '@/seed/pilot/pilot-auth-guard';
 import {
   applyErrorSecurityHeaders,
   handleLocaleRedirects,
@@ -38,6 +41,12 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
 
   const pilotFeatureBlocked = enforcePilotFeatureDisabled(pathname);
   if (pilotFeatureBlocked) return pilotFeatureBlocked;
+
+  const pilotServerActionBlocked = enforcePilotServerActionDisabled(
+    pathname,
+    request.headers.has('next-action'),
+  );
+  if (pilotServerActionBlocked) return pilotServerActionBlocked;
 
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 

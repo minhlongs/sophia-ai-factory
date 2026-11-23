@@ -1,6 +1,6 @@
 /**
- * Durable Cloudflare D1 repository for Customer Pilot consent, atomic quota caps,
- * tenant-scoped telemetry events, and customer feedback.
+ * Durable Cloudflare D1 repository for Customer Pilot consent, atomic quota &
+ * spend-cap guards, concurrency locks, tenant-scoped telemetry, and feedback.
  *
  * Every query enforces `(org_id, user_id)` tenant isolation.
  * Never persists raw prompts, API keys, or unredacted provider headers.
@@ -10,6 +10,8 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type { PilotEventName } from '@/seed/pilot/pilot-access-policy';
+
+const MICROUSD_PER_USD = 1_000_000;
 
 export interface PilotConsentRecord {
   readonly orgId: string;
@@ -23,11 +25,15 @@ export interface PilotQuotaStatus {
   readonly maxGenerations: number;
   readonly remainingGenerations: number;
   readonly lastGenerationAtIso: string | null;
+  readonly estimatedSpendUsd?: number;
+  readonly maxEstimatedSpendUsd?: number;
 }
 
 export type ReserveQuotaResult =
-  | { readonly outcome: 'reserved'; readonly quota: PilotQuotaStatus }
+  | { readonly outcome: 'reserved'; readonly quota: PilotQuotaStatus; readonly lockUntilMs: number }
   | { readonly outcome: 'quota_exceeded'; readonly quota: PilotQuotaStatus }
+  | { readonly outcome: 'spend_limit_exceeded'; readonly quota: PilotQuotaStatus }
+  | { readonly outcome: 'in_flight'; readonly retryAfterSec: number; readonly quota: PilotQuotaStatus }
   | { readonly outcome: 'rate_limited'; readonly retryAfterSec: number; readonly quota: PilotQuotaStatus };
 
 export interface PilotFeedbackRecord {
@@ -50,8 +56,30 @@ interface ConsentRow {
 
 interface QuotaRow {
   used_generations: number;
+  estimated_spend_microusd?: number | null;
+  in_flight_until_ms?: number | null;
   last_generation_at_iso: string | null;
   last_generation_at_ms?: number | null;
+}
+
+function toQuotaStatus(
+  row: QuotaRow | null,
+  maxGenerations: number,
+  maxEstimatedSpendMicroUsd?: number,
+): PilotQuotaStatus {
+  const used = row ? Number(row.used_generations) : 0;
+  const spendMicro = row ? Number(row.estimated_spend_microusd ?? 0) : 0;
+  const base: PilotQuotaStatus = {
+    usedGenerations: used,
+    maxGenerations,
+    remainingGenerations: Math.max(0, maxGenerations - used),
+    lastGenerationAtIso: row?.last_generation_at_iso ?? null,
+    estimatedSpendUsd: Number((spendMicro / MICROUSD_PER_USD).toFixed(4)),
+    ...(maxEstimatedSpendMicroUsd && maxEstimatedSpendMicroUsd > 0
+      ? { maxEstimatedSpendUsd: Number((maxEstimatedSpendMicroUsd / MICROUSD_PER_USD).toFixed(4)) }
+      : {}),
+  };
+  return base;
 }
 
 export async function getPilotConsent(
@@ -105,23 +133,22 @@ export async function recordPilotConsent(
 
 export async function getPilotQuotaStatus(
   d1: D1Database,
-  input: { readonly orgId: string; readonly userId: string; readonly maxGenerations: number },
+  input: {
+    readonly orgId: string;
+    readonly userId: string;
+    readonly maxGenerations: number;
+    readonly maxEstimatedSpendMicroUsd?: number;
+  },
 ): Promise<PilotQuotaStatus> {
   const row = await d1
     .prepare(
-      `SELECT used_generations, last_generation_at_iso
+      `SELECT used_generations, estimated_spend_microusd, last_generation_at_iso
        FROM pilot_usage_quotas
        WHERE org_id = ? AND user_id = ?`,
     )
     .bind(input.orgId, input.userId)
     .first<QuotaRow>();
-  const used = row ? Number(row.used_generations) : 0;
-  return {
-    usedGenerations: used,
-    maxGenerations: input.maxGenerations,
-    remainingGenerations: Math.max(0, input.maxGenerations - used),
-    lastGenerationAtIso: row?.last_generation_at_iso ?? null,
-  };
+  return toQuotaStatus(row, input.maxGenerations, input.maxEstimatedSpendMicroUsd);
 }
 
 export async function reservePilotGenerationSlot(
@@ -132,14 +159,24 @@ export async function reservePilotGenerationSlot(
     readonly maxGenerations: number;
     readonly cooldownMs: number;
     readonly nowMs: number;
+    readonly maxEstimatedSpendMicroUsd?: number;
+    readonly estimatedCostPerAttemptMicroUsd?: number;
+    readonly inFlightLockMs?: number;
   },
 ): Promise<ReserveQuotaResult> {
   const nowIso = new Date(input.nowMs).toISOString();
+  const maxSpendMicro = input.maxEstimatedSpendMicroUsd ?? 0;
+  const costMicro = input.estimatedCostPerAttemptMicroUsd ?? 0;
+  const lockMs = input.inFlightLockMs ?? 60_000;
+  const lockUntilMs = input.nowMs + Math.max(0, lockMs);
 
   await d1
     .prepare(
-      `INSERT INTO pilot_usage_quotas (org_id, user_id, used_generations, last_generation_at_iso, last_generation_at_ms, updated_at_iso)
-       VALUES (?, ?, 0, NULL, NULL, ?)
+      `INSERT INTO pilot_usage_quotas (
+         org_id, user_id, used_generations, estimated_spend_microusd, in_flight_until_ms,
+         last_generation_at_iso, last_generation_at_ms, updated_at_iso
+       )
+       VALUES (?, ?, 0, 0, 0, NULL, NULL, ?)
        ON CONFLICT(org_id, user_id) DO NOTHING`,
     )
     .bind(input.orgId, input.userId, nowIso)
@@ -149,11 +186,15 @@ export async function reservePilotGenerationSlot(
     .prepare(
       `UPDATE pilot_usage_quotas
        SET used_generations = used_generations + 1,
+           estimated_spend_microusd = estimated_spend_microusd + ?,
+           in_flight_until_ms = ?,
            last_generation_at_iso = ?,
            last_generation_at_ms = ?,
            updated_at_iso = ?
        WHERE org_id = ? AND user_id = ?
          AND used_generations < ?
+         AND (? <= 0 OR (estimated_spend_microusd + ?) <= ?)
+         AND in_flight_until_ms <= ?
          AND (
            ? <= 0
            OR last_generation_at_ms IS NULL
@@ -161,12 +202,18 @@ export async function reservePilotGenerationSlot(
          )`,
     )
     .bind(
+      costMicro,
+      lockUntilMs,
       nowIso,
       input.nowMs,
       nowIso,
       input.orgId,
       input.userId,
       input.maxGenerations,
+      maxSpendMicro,
+      costMicro,
+      maxSpendMicro,
+      input.nowMs,
       input.cooldownMs,
       input.nowMs,
       input.cooldownMs,
@@ -175,27 +222,33 @@ export async function reservePilotGenerationSlot(
 
   const row = await d1
     .prepare(
-      `SELECT used_generations, last_generation_at_iso, last_generation_at_ms
+      `SELECT used_generations, estimated_spend_microusd, in_flight_until_ms,
+              last_generation_at_iso, last_generation_at_ms
        FROM pilot_usage_quotas
        WHERE org_id = ? AND user_id = ?`,
     )
     .bind(input.orgId, input.userId)
     .first<QuotaRow>();
 
-  const used = row ? Number(row.used_generations) : 0;
-  const updated: PilotQuotaStatus = {
-    usedGenerations: used,
-    maxGenerations: input.maxGenerations,
-    remainingGenerations: Math.max(0, input.maxGenerations - used),
-    lastGenerationAtIso: row?.last_generation_at_iso ?? null,
-  };
+  const updated = toQuotaStatus(row, input.maxGenerations, maxSpendMicro);
 
   if ((updateRes.meta?.changes ?? 0) === 1) {
-    return { outcome: 'reserved', quota: updated };
+    return { outcome: 'reserved', quota: updated, lockUntilMs };
   }
 
-  if (used >= input.maxGenerations) {
+  if (updated.usedGenerations >= input.maxGenerations) {
     return { outcome: 'quota_exceeded', quota: updated };
+  }
+
+  const currentSpendMicro = Number(row?.estimated_spend_microusd ?? 0);
+  if (maxSpendMicro > 0 && currentSpendMicro + costMicro > maxSpendMicro) {
+    return { outcome: 'spend_limit_exceeded', quota: updated };
+  }
+
+  const inFlightUntilMs = Number(row?.in_flight_until_ms ?? 0);
+  if (inFlightUntilMs > input.nowMs) {
+    const retryAfterSec = Math.max(1, Math.ceil((inFlightUntilMs - input.nowMs) / 1000));
+    return { outcome: 'in_flight', retryAfterSec, quota: updated };
   }
 
   const lastMs =
@@ -209,18 +262,89 @@ export async function reservePilotGenerationSlot(
   return { outcome: 'rate_limited', retryAfterSec, quota: updated };
 }
 
-export async function releasePilotGenerationSlot(
+/**
+ * Clears the active concurrency lock while retaining the consumed quota and
+ * estimated spend (used after generation succeeds or fails after provider acceptance).
+ */
+export async function clearPilotInFlightLock(
   d1: D1Database,
-  input: { readonly orgId: string; readonly userId: string; readonly nowIso: string },
+  input: {
+    readonly orgId: string;
+    readonly userId: string;
+    readonly nowIso: string;
+    readonly expectedLockUntilMs?: number;
+  },
 ): Promise<void> {
+  if (typeof input.expectedLockUntilMs === 'number') {
+    await d1
+      .prepare(
+        `UPDATE pilot_usage_quotas
+         SET in_flight_until_ms = CASE WHEN in_flight_until_ms = ? THEN 0 ELSE in_flight_until_ms END,
+             updated_at_iso = ?
+         WHERE org_id = ? AND user_id = ?`,
+      )
+      .bind(input.expectedLockUntilMs, input.nowIso, input.orgId, input.userId)
+      .run();
+    return;
+  }
+
   await d1
     .prepare(
       `UPDATE pilot_usage_quotas
-       SET used_generations = CASE WHEN used_generations > 0 THEN used_generations - 1 ELSE 0 END,
+       SET in_flight_until_ms = 0,
            updated_at_iso = ?
        WHERE org_id = ? AND user_id = ?`,
     )
     .bind(input.nowIso, input.orgId, input.userId)
+    .run();
+}
+
+/**
+ * Releases the concurrency lock and refunds the reserved generation slot and
+ * estimated spend (used ONLY for confirmed pre-charge failures).
+ */
+export async function releasePilotGenerationSlot(
+  d1: D1Database,
+  input: {
+    readonly orgId: string;
+    readonly userId: string;
+    readonly nowIso: string;
+    readonly refundEstimatedSpendMicroUsd?: number;
+    readonly expectedLockUntilMs?: number;
+  },
+): Promise<void> {
+  const refundMicro = Math.max(0, input.refundEstimatedSpendMicroUsd ?? 0);
+  if (typeof input.expectedLockUntilMs === 'number') {
+    await d1
+      .prepare(
+        `UPDATE pilot_usage_quotas
+         SET used_generations = CASE WHEN used_generations > 0 THEN used_generations - 1 ELSE 0 END,
+             estimated_spend_microusd = CASE
+               WHEN estimated_spend_microusd > ? THEN estimated_spend_microusd - ?
+               ELSE 0
+             END,
+             in_flight_until_ms = CASE WHEN in_flight_until_ms = ? THEN 0 ELSE in_flight_until_ms END,
+             updated_at_iso = ?
+         WHERE org_id = ? AND user_id = ?`,
+      )
+      .bind(refundMicro, refundMicro, input.expectedLockUntilMs, input.nowIso, input.orgId, input.userId)
+      .run();
+    return;
+  }
+
+  await d1
+    .prepare(
+      `UPDATE pilot_usage_quotas
+       SET used_generations = CASE WHEN used_generations > 0 THEN used_generations - 1 ELSE 0 END,
+           estimated_spend_microusd = CASE
+             WHEN estimated_spend_microusd > ? THEN estimated_spend_microusd - ?
+             ELSE 0
+           END,
+           in_flight_until_ms = 0,
+           updated_at_iso = ?
+       WHERE org_id = ? AND user_id = ?`,
+    )
+    .bind(refundMicro, refundMicro, input.nowIso, input.orgId, input.userId)
     .run();
 }
 

@@ -1,8 +1,9 @@
 /**
  * Customer Pilot actions for /api/first-value:
- * - Pilot status inspection (invite allowlist, consent, quota, funding mode)
+ * - Pilot status inspection (invite allowlist, consent, quota, spend cap, financing mode)
  * - Consent acceptance (INVITE_ACCEPTED)
- * - Live AI script generation (dual BYOK + Founder-sponsored quota-capped OpenRouter)
+ * - Live AI script generation under single active financing mode (no BYOK->Founder fallback)
+ * - Fail-closed cost controls, atomic spend & concurrency locks, conservative failure accounting
  * - Inline script editing with 3-scene validation and optimistic version locking
  * - Customer feedback capture (CUSTOMER_FEEDBACK_SUBMITTED)
  *
@@ -23,8 +24,10 @@ import {
   isPilotInviteOnlyEnabled,
   isPilotLiveInferenceEnabled,
   PILOT_POLICY_VERSION,
+  resolvePilotCostControls,
+  resolvePilotFinancingMode,
   resolvePilotMaxGenerations,
-  resolvePilotRateLimitCooldownMs,
+  resolvePilotRefererOrigin,
   resolvePilotSponsoredOpenRouterKey,
   type PilotEnvSource,
   type PilotEventName,
@@ -43,6 +46,7 @@ import {
   updateReviewScript,
 } from '@/tree/first-value/first-value-review-repo';
 import {
+  clearPilotInFlightLock,
   getPilotConsent,
   getPilotQuotaStatus,
   hasPilotEvent,
@@ -71,6 +75,11 @@ export interface LiveScriptGeneratorInput {
   readonly durationSec: number;
   readonly userId: string;
   readonly apiKey: string;
+  readonly model?: string;
+  readonly maxTokens?: number;
+  readonly maxRetries?: number;
+  readonly timeoutMs?: number;
+  readonly referer?: string;
 }
 
 export interface PilotRuntimeDeps {
@@ -127,16 +136,27 @@ export async function buildPilotStatusSnapshot(
   },
 ): Promise<PilotStatusSnapshot> {
   const env = args.deps.env ?? process.env;
-  const maxGenerations = resolvePilotMaxGenerations(env);
+  const costControls = resolvePilotCostControls(env);
+  const maxGenerations = costControls.ok
+    ? costControls.config.maxGenerations
+    : resolvePilotMaxGenerations(env);
+  const maxSpendMicroUsd = costControls.ok
+    ? costControls.config.maxEstimatedSpendMicroUsd
+    : undefined;
   const liveInferenceEnabled = isPilotLiveInferenceEnabled(env);
+  const financingMode = resolvePilotFinancingMode(env);
   const hasByokOpenRouter = args.configuredProviders.includes('openrouter');
   const hasSponsoredKey = resolvePilotSponsoredOpenRouterKey(env) !== null;
 
   let fundingMode: PilotFundingMode = 'none';
-  if (hasByokOpenRouter) {
-    fundingMode = 'customer_byok';
-  } else if (liveInferenceEnabled && hasSponsoredKey) {
-    fundingMode = 'founder_sponsored';
+  if (financingMode === 'FOUNDER_SPONSORED') {
+    if (liveInferenceEnabled && hasSponsoredKey && costControls.ok) {
+      fundingMode = 'founder_sponsored';
+    }
+  } else if (financingMode === 'CUSTOMER_BYOK') {
+    if (hasByokOpenRouter) {
+      fundingMode = 'customer_byok';
+    }
   }
 
   let consent: PilotConsentRecord | null = null;
@@ -145,6 +165,10 @@ export async function buildPilotStatusSnapshot(
     maxGenerations,
     remainingGenerations: maxGenerations,
     lastGenerationAtIso: null,
+    estimatedSpendUsd: 0,
+    ...(costControls.ok
+      ? { maxEstimatedSpendUsd: costControls.config.maxEstimatedSpendUsd }
+      : {}),
   };
 
   try {
@@ -153,6 +177,7 @@ export async function buildPilotStatusSnapshot(
       orgId: args.orgId,
       userId: args.userId,
       maxGenerations,
+      maxEstimatedSpendMicroUsd: maxSpendMicroUsd,
     });
   } catch {
     // Graceful fallback when pilot migration has not been applied on legacy envs
@@ -164,6 +189,7 @@ export async function buildPilotStatusSnapshot(
     policyVersion: PILOT_POLICY_VERSION,
     consentAccepted: Boolean(consent && consent.policyVersion === PILOT_POLICY_VERSION),
     consentAcceptedAtIso: consent?.acceptedAtIso ?? null,
+    financingMode,
     fundingMode,
     quota,
   };
@@ -251,6 +277,32 @@ export async function handleLiveProviderCreateReview(
     );
   }
 
+  const costValidation = resolvePilotCostControls(env);
+  if (!costValidation.ok) {
+    return jsonPrivate(
+      {
+        code: 'PILOT_COST_CONTROLS_UNCONFIGURED',
+        error:
+          'Pilot cost controls are not configured. Live generation is blocked fail-closed. / Chưa cấu hình giới hạn chi phí thử nghiệm. Hệ thống đã chặn tạo kịch bản an toàn.',
+        missingOrInvalid: costValidation.missingOrInvalid,
+      },
+      503,
+    );
+  }
+  const costConfig = costValidation.config;
+
+  const financingMode = resolvePilotFinancingMode(env);
+  if (financingMode === 'DISABLED') {
+    return jsonPrivate(
+      {
+        code: 'PILOT_FINANCING_DISABLED',
+        error:
+          'Pilot AI financing mode is disabled. / Chế độ tài trợ AI cho bản thử nghiệm đang tắt.',
+      },
+      503,
+    );
+  }
+
   const nowMs = deps.nowMs ? deps.nowMs() : Date.now();
   const nowIso = new Date(nowMs).toISOString();
 
@@ -266,33 +318,42 @@ export async function handleLiveProviderCreateReview(
     );
   }
 
-  const byokKey = deps.lookupOpenRouterByokKey
-    ? await deps.lookupOpenRouterByokKey(user.id).catch(() => null)
-    : null;
-  const sponsoredKey = resolvePilotSponsoredOpenRouterKey(env);
-
+  // Single active financing mode: NEVER fall back from customer BYOK to Founder-sponsored key.
   let fundingMode: PilotFundingMode = 'none';
   let resolvedApiKey: string | null = null;
-  if (byokKey && byokKey.trim().length >= 10) {
-    fundingMode = 'customer_byok';
-    resolvedApiKey = byokKey.trim();
-  } else if (sponsoredKey) {
-    fundingMode = 'founder_sponsored';
-    resolvedApiKey = sponsoredKey;
+  if (financingMode === 'FOUNDER_SPONSORED') {
+    const sponsoredKey = resolvePilotSponsoredOpenRouterKey(env);
+    if (sponsoredKey) {
+      fundingMode = 'founder_sponsored';
+      resolvedApiKey = sponsoredKey;
+    }
+  } else if (financingMode === 'CUSTOMER_BYOK') {
+    const byokKey = deps.lookupOpenRouterByokKey
+      ? await deps.lookupOpenRouterByokKey(user.id).catch(() => null)
+      : null;
+    if (byokKey && byokKey.trim().length >= 10) {
+      fundingMode = 'customer_byok';
+      resolvedApiKey = byokKey.trim();
+    }
   }
 
   if (!resolvedApiKey || !deps.generateLiveScript) {
+    const code =
+      financingMode === 'CUSTOMER_BYOK'
+        ? 'BYOK_KEY_REQUIRED'
+        : 'PILOT_PROVIDER_NOT_CONFIGURED';
     return jsonPrivate(
       {
-        code: 'PILOT_PROVIDER_NOT_CONFIGURED',
+        code,
         error:
-          'No AI provider key is configured for this pilot. / Chưa cấu hình khóa nhà cung cấp AI cho bản thử nghiệm.',
+          financingMode === 'CUSTOMER_BYOK'
+            ? 'A valid customer OpenRouter API key is required. / Cần khóa API OpenRouter hợp lệ của bạn để tiếp tục.'
+            : 'No AI provider key is configured for this pilot. / Chưa cấu hình khóa nhà cung cấp AI cho bản thử nghiệm.',
       },
-      503,
+      financingMode === 'CUSTOMER_BYOK' ? 422 : 503,
     );
   }
 
-  const maxGenerations = resolvePilotMaxGenerations(env);
   const payloadHash = await computeCreatePayloadHash({
     missionId: payload.missionId,
     topic: payload.topic,
@@ -321,7 +382,8 @@ export async function handleLiveProviderCreateReview(
     const currentQuota = await getPilotQuotaStatus(d1, {
       orgId: payload.orgId,
       userId: user.id,
-      maxGenerations,
+      maxGenerations: costConfig.maxGenerations,
+      maxEstimatedSpendMicroUsd: costConfig.maxEstimatedSpendMicroUsd,
     });
     return jsonPrivate(
       {
@@ -336,13 +398,15 @@ export async function handleLiveProviderCreateReview(
     );
   }
 
-  const cooldownMs = resolvePilotRateLimitCooldownMs(env);
   const reservation = await reservePilotGenerationSlot(d1, {
     orgId: payload.orgId,
     userId: user.id,
-    maxGenerations,
-    cooldownMs,
+    maxGenerations: costConfig.maxGenerations,
+    cooldownMs: costConfig.cooldownMs,
     nowMs,
+    maxEstimatedSpendMicroUsd: costConfig.maxEstimatedSpendMicroUsd,
+    estimatedCostPerAttemptMicroUsd: costConfig.estimatedCostPerAttemptMicroUsd,
+    inFlightLockMs: costConfig.inFlightLockMs,
   });
 
   if (reservation.outcome === 'quota_exceeded') {
@@ -351,6 +415,31 @@ export async function handleLiveProviderCreateReview(
         code: 'PILOT_QUOTA_EXCEEDED',
         error:
           'You have reached the pilot script generation limit. Please contact support if you need more quota. / Bạn đã đạt giới hạn tạo kịch bản của bản thử nghiệm.',
+        quota: reservation.quota,
+      },
+      429,
+    );
+  }
+
+  if (reservation.outcome === 'spend_limit_exceeded') {
+    return jsonPrivate(
+      {
+        code: 'PILOT_SPEND_LIMIT_EXCEEDED',
+        error:
+          'The pilot safety budget cap has been reached. Please contact support to continue. / Đã đạt ngưỡng ngân sách an toàn của bản thử nghiệm. Vui lòng liên hệ hỗ trợ.',
+        quota: reservation.quota,
+      },
+      429,
+    );
+  }
+
+  if (reservation.outcome === 'in_flight') {
+    return jsonPrivate(
+      {
+        code: 'PILOT_GENERATION_IN_PROGRESS',
+        error:
+          'A script generation is already in progress. Please wait for it to finish. / Hệ thống đang tạo một kịch bản khác. Vui lòng đợi hoàn tất.',
+        retryAfterSec: reservation.retryAfterSec,
         quota: reservation.quota,
       },
       429,
@@ -380,7 +469,7 @@ export async function handleLiveProviderCreateReview(
     orgId: payload.orgId,
     userId: user.id,
     eventName: 'GENERATION_REQUESTED',
-    metadata: { fundingMode },
+    metadata: { fundingMode, modelId: costConfig.modelId },
     nowIso,
   });
 
@@ -392,13 +481,39 @@ export async function handleLiveProviderCreateReview(
       durationSec: payload.durationSec,
       userId: user.id,
       apiKey: resolvedApiKey,
+      model: costConfig.modelId,
+      maxTokens: costConfig.maxOutputTokens,
+      maxRetries: costConfig.maxRetries,
+      timeoutMs: costConfig.timeoutMs,
+      referer: resolvePilotRefererOrigin(env),
     });
     validatedScript = validateParsedScriptStructure(rawScript, {
       minScenes: 3,
       targetDurationSec: payload.durationSec,
     });
   } catch (err) {
-    await releasePilotGenerationSlot(d1, { orgId: payload.orgId, userId: user.id, nowIso });
+    const isConfirmedPreChargeRejection =
+      err instanceof ProviderInvalidKeyError || err instanceof ProviderQuotaExceededError;
+
+    if (isConfirmedPreChargeRejection) {
+      await releasePilotGenerationSlot(d1, {
+        orgId: payload.orgId,
+        userId: user.id,
+        nowIso,
+        refundEstimatedSpendMicroUsd: costConfig.estimatedCostPerAttemptMicroUsd,
+        expectedLockUntilMs: reservation.lockUntilMs,
+      }).catch(() => {});
+    } else {
+      // Conservative charged-failure accounting: clear concurrency lock but retain
+      // quota & estimated spend when the provider may have billed the attempt.
+      await clearPilotInFlightLock(d1, {
+        orgId: payload.orgId,
+        userId: user.id,
+        nowIso,
+        expectedLockUntilMs: reservation.lockUntilMs,
+      }).catch(() => {});
+    }
+
     const failureCode =
       err instanceof ProviderInvalidKeyError
         ? 'PROVIDER_KEY_INVALID'
@@ -412,7 +527,11 @@ export async function handleLiveProviderCreateReview(
       orgId: payload.orgId,
       userId: user.id,
       eventName: 'GENERATION_FAILED',
-      metadata: { failureCode, fundingMode },
+      metadata: {
+        failureCode,
+        fundingMode,
+        quotaRefunded: isConfirmedPreChargeRejection,
+      },
       nowIso,
     });
 
@@ -420,8 +539,10 @@ export async function handleLiveProviderCreateReview(
     return jsonPrivate(
       {
         code: failureCode,
-        error:
-          'Script generation failed cleanly and did not count against your quota. Please try again. / Tạo kịch bản thất bại và không trừ hạn mức của bạn. Vui lòng thử lại.',
+        quotaRefunded: isConfirmedPreChargeRejection,
+        error: isConfirmedPreChargeRejection
+          ? 'Provider rejected the request before execution and did not count against your quota. / Nhà cung cấp từ chối yêu cầu trước khi chạy và không trừ hạn mức của bạn.'
+          : 'Script generation failed after submission. To protect pilot budget safety, this attempt remains counted. Please try again. / Tạo kịch bản thất bại sau khi gửi yêu cầu. Để đảm bảo an toàn ngân sách thử nghiệm, lượt này vẫn được tính.',
       },
       status,
     );
@@ -448,9 +569,12 @@ export async function handleLiveProviderCreateReview(
       nowIso,
     });
   } catch {
-    await releasePilotGenerationSlot(d1, { orgId: payload.orgId, userId: user.id, nowIso }).catch(
-      () => {},
-    );
+    await clearPilotInFlightLock(d1, {
+      orgId: payload.orgId,
+      userId: user.id,
+      nowIso,
+      expectedLockUntilMs: reservation.lockUntilMs,
+    }).catch(() => {});
     return jsonPrivate(
       { code: 'STORAGE_WRITE_FAILED', error: 'Failed to persist review artifact' },
       500,
@@ -458,7 +582,12 @@ export async function handleLiveProviderCreateReview(
   }
 
   if (result.outcome === 'idempotency_conflict') {
-    await releasePilotGenerationSlot(d1, { orgId: payload.orgId, userId: user.id, nowIso });
+    await clearPilotInFlightLock(d1, {
+      orgId: payload.orgId,
+      userId: user.id,
+      nowIso,
+      expectedLockUntilMs: reservation.lockUntilMs,
+    }).catch(() => {});
     return jsonPrivate(
       {
         code: 'IDEMPOTENCY_PAYLOAD_CONFLICT',
@@ -469,15 +598,15 @@ export async function handleLiveProviderCreateReview(
     );
   }
 
-  let finalQuota = reservation.quota;
-  if (result.outcome === 'replayed') {
-    await releasePilotGenerationSlot(d1, { orgId: payload.orgId, userId: user.id, nowIso });
-    finalQuota = await getPilotQuotaStatus(d1, {
-      orgId: payload.orgId,
-      userId: user.id,
-      maxGenerations,
-    });
-  }
+  // Provider call has already executed; release only this request's concurrency lock
+  // and retain consumed quota/spend even if a racing duplicate key replayed.
+  await clearPilotInFlightLock(d1, {
+    orgId: payload.orgId,
+    userId: user.id,
+    nowIso,
+    expectedLockUntilMs: reservation.lockUntilMs,
+  }).catch(() => {});
+  const finalQuota = reservation.quota;
 
   await safeRecordPilotEvent(d1, {
     orgId: payload.orgId,
@@ -486,6 +615,7 @@ export async function handleLiveProviderCreateReview(
     artifactId: result.record.artifactId,
     metadata: {
       fundingMode,
+      modelId: costConfig.modelId,
       sceneCount: validatedScript.scenes.length,
     },
     nowIso,

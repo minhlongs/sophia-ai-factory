@@ -53,7 +53,18 @@ function buildLiveDeps(): FirstValueHttpDeps {
       }
       return null;
     },
-    generateLiveScript: async ({ topic, audience, durationSec, userId, apiKey }) =>
+    generateLiveScript: async ({
+      topic,
+      audience,
+      durationSec,
+      userId,
+      apiKey,
+      model,
+      maxTokens,
+      maxRetries,
+      timeoutMs,
+      referer,
+    }) =>
       generateScript(
         {
           topic,
@@ -65,6 +76,11 @@ function buildLiveDeps(): FirstValueHttpDeps {
         {
           funding: { fund: 'byok', apiKey },
           minScenes: 3,
+          model,
+          maxTokens,
+          maxRetries,
+          timeoutMs,
+          referer,
         },
       ),
   };

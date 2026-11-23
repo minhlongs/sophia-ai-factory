@@ -33,6 +33,12 @@ export interface ScriptGenDeps {
   resolveUserApiKey?: ApiKeyResolver;
   /** Explicit customer funding bypasses platform fallback and demo output. */
   funding?: { fund: 'byok'; apiKey: string };
+  /** Explicit bounded provider options (used by private pilot cost containment). */
+  model?: string;
+  maxTokens?: number;
+  maxRetries?: number;
+  timeoutMs?: number;
+  referer?: string;
   trackUsage?: (data: Record<string, unknown>) => Promise<void>;
   hashLicenseKey?: (key: string) => string;
   startTimer?: () => () => number;
@@ -176,18 +182,22 @@ export function rethrowMappedProviderError(error: unknown): never {
     throw error;
   }
   const errorMsg = getErrorMessage(error);
+  const lower = errorMsg.toLowerCase();
   if (
-    errorMsg.includes('quota') ||
-    errorMsg.includes('credits') ||
-    errorMsg.includes('insufficient')
+    lower.includes('quota') ||
+    lower.includes('credits') ||
+    lower.includes('insufficient') ||
+    lower.includes('key limit') ||
+    lower.includes('http 402')
   ) {
     throw new ProviderQuotaExceededError('openrouter', errorMsg);
   }
   if (
-    errorMsg.includes('api key') ||
-    errorMsg.includes('invalid key') ||
-    errorMsg.includes('unauthorized') ||
-    errorMsg.includes('401')
+    lower.includes('api key') ||
+    lower.includes('invalid key') ||
+    lower.includes('unauthorized') ||
+    lower.includes('http 401') ||
+    lower.includes('http 403')
   ) {
     throw new ProviderInvalidKeyError('openrouter', errorMsg);
   }

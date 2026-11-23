@@ -1,25 +1,36 @@
 # Sophia AI Factory — Isolated Private Customer Pilot Worker Configuration
 #
-# SAFETY INVARIANTS (G1 / G6):
+# SAFETY INVARIANTS (G2 / G3 / G4 / G5):
 # - Dedicated non-production Worker service (`sophia-ai-factory-pilot`)
-# - NEVER reuses production D1 (`sophia-raas-db`) or production R2 (`sophia-ai-factory-opennext-cache`)
+# - NEVER reuses production D1 (`sophia-raas-db`, `sophia-tag-cache`) or production R2 (`sophia-ai-factory-opennext-cache`)
 # - Fail-closed by default:
 #     PILOT_INVITE_ONLY = "true"
-#     PILOT_LIVE_INFERENCE_ENABLED = "false"  (enable only after Founder authorizes pilot launch)
+#     PILOT_LIVE_INFERENCE_ENABLED = "false"  (two-phase: deploy OFF first, enable only after Founder GO)
+#     PILOT_FINANCING_MODE = "FOUNDER_SPONSORED" (single active mode; BYOK disabled; zero silent fallback)
 #     PILOT_MAX_GENERATIONS = "20"            (hard per-customer generation cap)
+#     PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"  (PROPOSED internal cutoff; paired with PROPOSED $5.00 OpenRouter key cap)
+#     PILOT_MODEL_ID = "openai/gpt-4o-mini"   (explicit bounded model allowlist)
+#     PILOT_MAX_OUTPUT_TOKENS = "2048"        (explicit output token ceiling)
+#     PILOT_MAX_RETRIES = "1"                 (bounded provider retries)
+#     PILOT_TIMEOUT_MS = "45000"              (bounded provider timeout)
 #     PAYMENTS_ENABLED = "false"              (free pilot; PayOS / NOWPayments disabled)
 #     B2_PUBLISH_ENABLED = "false"            (auto-publishing disabled)
-# - Zero production cron triggers.
-# - Required Worker Secrets (set via `wrangler secret put --config wrangler.pilot.toml`):
+#     BYOK_ENABLED = "0"                      (customer BYOK disabled for CUSTOMER-01)
+# - Zero production cron triggers, zero queues, zero durable objects.
+# - Required Worker Secrets (set via `wrangler secret put <NAME> --config wrangler.pilot.toml`):
 #     BETTER_AUTH_SECRET
 #     BYOK_MASTER_KEY
-#     PILOT_ALLOWED_EMAILS      (exact Founder-supplied customer email, comma-separated)
-#     PILOT_OPENROUTER_API_KEY  (optional; required only for Founder-sponsored mode)
+#     PILOT_ALLOWED_EMAILS      (exact Founder-supplied single customer email)
+#     PILOT_OPENROUTER_API_KEY  (dedicated pilot-only OpenRouter key with verified $5.00 credit limit)
+# - Verify isolation before any deploy:
+#     npm run pilot:check-isolation -- --require-resolved-ids
 
 name = "sophia-ai-factory-pilot"
 main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = false
+preview_urls = false
 minify = true
 keep_names = false
 
@@ -30,10 +41,23 @@ binding = "ASSETS"
 [vars]
 PILOT_INVITE_ONLY = "true"
 PILOT_LIVE_INFERENCE_ENABLED = "false"
+PILOT_FINANCING_MODE = "FOUNDER_SPONSORED"
 PILOT_MAX_GENERATIONS = "20"
+PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"
+PILOT_MODEL_ID = "openai/gpt-4o-mini"
+PILOT_MAX_OUTPUT_TOKENS = "2048"
+PILOT_MAX_RETRIES = "1"
+PILOT_TIMEOUT_MS = "45000"
 PILOT_RATE_LIMIT_COOLDOWN_MS = "5000"
 PAYMENTS_ENABLED = "false"
 B2_PUBLISH_ENABLED = "false"
+BYOK_ENABLED = "0"
+FEATURE_PAYOS = "false"
+NEXT_PUBLIC_DISTRIBUTE_ENABLED = "0"
+IS_CONFIGURED = "true"
+APP_URL = "https://REPLACE_WITH_PILOT_HOSTNAME"
+BETTER_AUTH_URL = "https://REPLACE_WITH_PILOT_HOSTNAME"
+NEXT_PUBLIC_APP_URL = "https://REPLACE_WITH_PILOT_HOSTNAME"
 
 # Non-production isolated D1 & R2 bindings — Founder must create dedicated pilot
 # resources and replace placeholders before authorizing deployment.

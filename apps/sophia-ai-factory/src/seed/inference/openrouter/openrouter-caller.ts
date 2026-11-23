@@ -8,16 +8,26 @@ import type { ResilientOpenRouterOptions } from './types'
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 export const DEFAULT_MODEL = 'openai/gpt-4o-mini'
 
+export interface CallOpenRouterOptions {
+  readonly maxTokens?: number
+  readonly timeoutMs?: number
+  readonly referer?: string
+}
+
 export async function callOpenRouter(
   apiKey: string,
   prompt: string,
   model: string = DEFAULT_MODEL,
   maxRetries: number = 3,
+  options?: CallOpenRouterOptions,
 ): Promise<string> {
   if (!shouldAllowRequest('openrouter')) {
     throw new Error('[OpenRouter] Circuit breaker open for openrouter')
   }
 
+  const maxTokens = options?.maxTokens ?? 4096
+  const timeoutMs = options?.timeoutMs ?? 120_000
+  const referer = options?.referer ?? 'https://sophia.agencyos.network'
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -28,7 +38,7 @@ export async function callOpenRouter(
 
     const controller = new AbortController()
     // Match the multi-provider inference deadline, including response body consumption.
-    const timeout = setTimeout(() => controller.abort(new Error('OpenRouter request timed out')), 120_000)
+    const timeout = setTimeout(() => controller.abort(new Error('OpenRouter request timed out')), timeoutMs)
     try {
       const res = await fetch(OPENROUTER_URL, {
         signal: controller.signal,
@@ -36,12 +46,12 @@ export async function callOpenRouter(
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://sophia.agencyos.network',
+          'HTTP-Referer': referer,
         },
         body: JSON.stringify({
           model,
           messages: [{ role: 'user', content: prompt }],
-          max_tokens: 4096,
+          max_tokens: maxTokens,
           temperature: 0.3,
         }),
       })
@@ -62,7 +72,7 @@ export async function callOpenRouter(
 
       lastError = new Error(`OpenRouter HTTP ${res.status}: ${errorBody.slice(0, 200)}`)
 
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401 || res.status === 402 || res.status === 403) {
         recordFailure('openrouter', classifyHttpStatus(res.status))
         ;(lastError as { retryable?: boolean }).retryable = false
         throw lastError
@@ -102,7 +112,16 @@ export async function callOpenRouter(
 
 export async function resilientChatCompletion(
   prompt: string,
-  { openRouterKey, anthropicKey, enableFallback = true, model }: ResilientOpenRouterOptions,
+  {
+    openRouterKey,
+    anthropicKey,
+    enableFallback = true,
+    model,
+    maxTokens,
+    maxRetries,
+    timeoutMs,
+    referer,
+  }: ResilientOpenRouterOptions,
 ): Promise<string> {
   if (!openRouterKey) {
     if (anthropicKey && enableFallback) {
@@ -113,7 +132,11 @@ export async function resilientChatCompletion(
   }
 
   try {
-    return await callOpenRouter(openRouterKey, prompt, model)
+    return await callOpenRouter(openRouterKey, prompt, model, maxRetries, {
+      maxTokens,
+      timeoutMs,
+      referer,
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     logger.warn('[openrouter-client] OpenRouter failed, trying fallback', { error: message })

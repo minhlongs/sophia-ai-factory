@@ -5,13 +5,17 @@ import {
   isPilotInviteOnlyEnabled,
   isPilotLiveInferenceEnabled,
   parsePilotAllowedEmails,
+  resolvePilotCostControls,
+  resolvePilotFinancingMode,
   resolvePilotMaxGenerations,
   resolvePilotRateLimitCooldownMs,
+  resolvePilotRefererOrigin,
   resolvePilotSponsoredOpenRouterKey,
 } from '../pilot-access-policy';
 import {
   enforcePilotAuthAllowlist,
   enforcePilotFeatureDisabled,
+  enforcePilotServerActionDisabled,
   isGuardedPilotAuthPath,
 } from '../pilot-auth-guard';
 
@@ -44,6 +48,72 @@ describe('pilot-access-policy', () => {
     expect(resolvePilotMaxGenerations({ PILOT_MAX_GENERATIONS: '15' })).toBe(15);
     expect(resolvePilotRateLimitCooldownMs({ PILOT_RATE_LIMIT_COOLDOWN_MS: '0' })).toBe(0);
     expect(resolvePilotRateLimitCooldownMs({ PILOT_RATE_LIMIT_COOLDOWN_MS: '999999' })).toBe(300000);
+  });
+
+  it('resolves single active financing mode and fails closed on unknown values', () => {
+    expect(resolvePilotFinancingMode({ PILOT_INVITE_ONLY: 'true' })).toBe('FOUNDER_SPONSORED');
+    expect(resolvePilotFinancingMode({})).toBe('CUSTOMER_BYOK');
+    expect(resolvePilotFinancingMode({ PILOT_FINANCING_MODE: 'FOUNDER_SPONSORED' })).toBe(
+      'FOUNDER_SPONSORED',
+    );
+    expect(resolvePilotFinancingMode({ PILOT_FINANCING_MODE: 'customer_byok' })).toBe(
+      'CUSTOMER_BYOK',
+    );
+    expect(resolvePilotFinancingMode({ PILOT_FINANCING_MODE: 'DISABLED' })).toBe('DISABLED');
+    expect(resolvePilotFinancingMode({ PILOT_FINANCING_MODE: 'HYBRID_FALLBACK' })).toBe('DISABLED');
+  });
+
+  it('validates pilot cost controls fail-closed and resolves pilot referer origin', () => {
+    const missing = resolvePilotCostControls({});
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) {
+      expect(missing.missingOrInvalid).toContain('PILOT_MAX_GENERATIONS');
+      expect(missing.missingOrInvalid).toContain('PILOT_MAX_ESTIMATED_SPEND_USD');
+    }
+
+    const unsafeOverrides = resolvePilotCostControls({
+      PILOT_MAX_GENERATIONS: '20',
+      PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
+      PILOT_MODEL_ID: 'anthropic/claude-opus-4',
+      PILOT_MAX_OUTPUT_TOKENS: '8192',
+      PILOT_MAX_RETRIES: '5',
+      PILOT_TIMEOUT_MS: '120000',
+      PILOT_ESTIMATED_COST_PER_ATTEMPT_USD: '10',
+    });
+    expect(unsafeOverrides.ok).toBe(false);
+    if (!unsafeOverrides.ok) {
+      expect(unsafeOverrides.missingOrInvalid).toEqual(
+        expect.arrayContaining([
+          'PILOT_MODEL_ID',
+          'PILOT_MAX_OUTPUT_TOKENS',
+          'PILOT_MAX_RETRIES',
+          'PILOT_TIMEOUT_MS',
+          'PILOT_ESTIMATED_COST_PER_ATTEMPT_USD',
+        ]),
+      );
+    }
+
+    const valid = resolvePilotCostControls({
+      PILOT_MAX_GENERATIONS: '20',
+      PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
+      PILOT_MODEL_ID: 'openai/gpt-4o-mini',
+      PILOT_MAX_OUTPUT_TOKENS: '2048',
+      PILOT_MAX_RETRIES: '1',
+      PILOT_TIMEOUT_MS: '45000',
+      PILOT_ESTIMATED_COST_PER_ATTEMPT_USD: '0.02',
+    });
+    expect(valid.ok).toBe(true);
+    if (valid.ok) {
+      expect(valid.config.maxEstimatedSpendMicroUsd).toBe(4_000_000);
+      expect(valid.config.estimatedCostPerAttemptMicroUsd).toBe(20_000);
+      expect(valid.config.modelId).toBe('openai/gpt-4o-mini');
+      expect(valid.config.inFlightLockMs).toBe(110_000);
+    }
+
+    expect(resolvePilotRefererOrigin({})).toBe('https://pilot.sophia.agencyos.network');
+    expect(resolvePilotRefererOrigin({ APP_URL: 'https://beta.example.test/' })).toBe(
+      'https://beta.example.test',
+    );
   });
 });
 
@@ -140,5 +210,51 @@ describe('pilot-auth-guard', () => {
       {},
     );
     expect(res).toBeNull();
+  });
+
+  it('locks down non-pilot API routes when PILOT_INVITE_ONLY=true while keeping pilot routes open', async () => {
+    const strictEnv = {
+      PILOT_INVITE_ONLY: 'true',
+      PAYMENTS_ENABLED: 'false',
+      B2_PUBLISH_ENABLED: 'false',
+    };
+
+    for (const blockedPath of [
+      '/api/v1/generate',
+      '/api/v1/scripts',
+      '/api/v1/videos',
+      '/api/campaigns',
+      '/api/inngest',
+      '/api/tts',
+      '/api/user/api-keys',
+      '/api/admin/users',
+      '/api/health/%2e%2e/payments/checkout',
+      '/api/auth/../v1/credits',
+      '/api/health/%5c..%5ccheckout',
+    ]) {
+      const res = enforcePilotFeatureDisabled(blockedPath, strictEnv);
+      expect(res?.status).toBe(403);
+    }
+
+    for (const allowedPath of [
+      '/api/first-value',
+      '/api/auth/sign-in/email',
+      '/api/health',
+      '/api/version',
+      '/api/check-access',
+      '/api/csp-report',
+      '/vi/dashboard/first-value',
+    ]) {
+      expect(enforcePilotFeatureDisabled(allowedPath, strictEnv)).toBeNull();
+    }
+
+    // Blocks non-pilot Next.js Server Actions while allowing pilot pages
+    expect(enforcePilotServerActionDisabled('/vi/dashboard/campaigns', true, strictEnv)?.status).toBe(
+      403,
+    );
+    expect(enforcePilotServerActionDisabled('/vi/settings', true, strictEnv)?.status).toBe(403);
+    expect(enforcePilotServerActionDisabled('/vi/first-value', true, strictEnv)).toBeNull();
+    expect(enforcePilotServerActionDisabled('/en/dashboard/first-value', true, strictEnv)).toBeNull();
+    expect(enforcePilotServerActionDisabled('/vi/dashboard/campaigns', false, strictEnv)).toBeNull();
   });
 });
