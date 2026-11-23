@@ -216,6 +216,17 @@ describe('handleOneTimeFinished — purchase creation + fulfillment', () => {
     expect(expiresAtArg).toBeGreaterThan(beforeSeconds + twelveMonthsSeconds - 10 * 24 * 60 * 60)
     expect(expiresAtArg).toBeLessThanOrEqual(beforeSeconds + twelveMonthsSeconds + 10 * 24 * 60 * 60)
   })
+
+  it('rejects non-USD price_currency before granting one-time credits', async () => {
+    const payload = buildIpnPayload({ price_currency: 'vnd', price_amount: 49 })
+
+    const result = await handleOneTimeFinished(payload, STARTER_SKU)
+
+    expect(result.ok).toBe(true)
+    expect(userPurchasesRepo.insertPurchase).not.toHaveBeenCalled()
+    expect(userPurchasesRepo.markPaid).not.toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).not.toHaveBeenCalled()
+  })
 })
 
 describe('handleOneTimeRefunded — purchase refund handling', () => {

@@ -60,6 +60,19 @@ describe('payOsCanonicalize', () => {
     const canonical = payOsCanonicalize(rawBody)
     expect(canonical).toBe('a=1&z=3')
   })
+
+  it('sorts object keys inside arrays and nested objects per PayOS canonicalization spec', () => {
+    const rawBody = JSON.stringify({
+      data: {
+        amount: 1000,
+        items: [{ z: 2, a: 1 }],
+        meta: { b: true, a: 'x' },
+        nullable: null,
+      },
+    })
+    const canonical = payOsCanonicalize(rawBody)
+    expect(canonical).toBe('amount=1000&items=[{"a":1,"z":2}]&meta={"a":"x","b":true}&nullable=')
+  })
 })
 
 describe('verifyPayOsWebhook', () => {

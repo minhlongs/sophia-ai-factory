@@ -49,7 +49,17 @@ export async function handleNowPaymentsPost(request: NextRequest): Promise<NextR
   const commerceResponse = await routeCommerceIpn(ipn);
   if (commerceResponse) return commerceResponse;
 
-  const result = await processNowPaymentsIpn(ipn);
+  let result: Awaited<ReturnType<typeof processNowPaymentsIpn>>;
+  try {
+    result = await processNowPaymentsIpn(ipn);
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.error('[NOWPayments Webhook] Transient error processing IPN', error, {
+      payment_id: ipn.payment_id,
+      payment_status: ipn.payment_status,
+    });
+    return NextResponse.json({ error: 'Transient database error' }, { status: 503 });
+  }
 
   if (result.message === 'Already processed') {
     return NextResponse.json({ received: true, deduplicated: true });

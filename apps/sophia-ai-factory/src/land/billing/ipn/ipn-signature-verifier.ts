@@ -28,9 +28,19 @@ export async function verifyPaymentAmountAndUnderpayment(
   userId: string,
 ): Promise<{ ok: boolean }> {
   // Compare paid and expected amounts in pay_currency. price_amount is fiat.
-  // H8 fix: Cross-check IPN price_amount against SKU price
+  // H8 fix: Cross-check IPN price_amount and price_currency against USD SKU price
   const skuPriceUsd = sku.priceUsd ?? ipn.price_amount;
   const ipnPriceUsd = ipn.price_amount;
+  const receivedCurrency = ipn.price_currency?.trim().toLowerCase();
+  if (skuPriceUsd > 0 && receivedCurrency !== 'usd') {
+    logger.error('[IPN/OneTime] Non-USD or missing price currency — rejecting fulfillment', {
+      userId,
+      paymentId: ipn.payment_id,
+      expectedCurrency: 'usd',
+      receivedCurrency: ipn.price_currency ?? null,
+    });
+    return { ok: false };
+  }
   const priceDiff = Math.abs(ipnPriceUsd - skuPriceUsd);
   if (skuPriceUsd > 0 && priceDiff > skuPriceUsd * 0.01) {
     logger.error('[IPN/OneTime] Price mismatch — IPN amount differs from SKU price', {
