@@ -1,0 +1,77 @@
+{
+  "rubricVersion": "b4-rubric-v1.0.0",
+  "title": "B4 First-Value Blind Script Acceptance Rubric",
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "integerOnly": true
+  },
+  "acceptancePolicy": {
+    "description": "A script is accepted only when an independent reviewer judges it publish-ready with minor or zero edits, no compliance violations (compliance_and_publishability >= 4), and no criterion below 3.",
+    "minimumCriterionScore": 3,
+    "minimumComplianceScore": 4,
+    "humanAcceptanceRequiredForClaims": true
+  },
+  "criteria": [
+    {
+      "id": "hook_clarity",
+      "label": "Hook Clarity",
+      "description": "Whether the opening 3 to 5 seconds clearly communicate the core value or tension for the target audience.",
+      "anchors": {
+        "1": "No discernible hook; opens with generic filler or off-topic remarks.",
+        "2": "Weak or vague opening that takes too long to signal relevance to the audience.",
+        "3": "Clear topic introduction within 5 seconds, though phrasing is ordinary or mildly wordy.",
+        "4": "Strong, immediate hook tailored to the audience's specific problem or desire.",
+        "5": "Sharp, concrete, scroll-stopping opening that establishes stakes in the first 3 seconds."
+      }
+    },
+    {
+      "id": "logical_structure",
+      "label": "Logical Structure",
+      "description": "Whether the script flows coherently from hook to value/proof to CTA within the requested duration.",
+      "anchors": {
+        "1": "Disjointed sentences with missing transitions or broken narrative arc.",
+        "2": "Partial structure but abrupt jumps, redundant beats, or poor pacing for the platform.",
+        "3": "Follows a recognizable beginning-middle-end arc with minor pacing rough spots.",
+        "4": "Cohesive progression from hook through product/service benefit to clear close within target duration.",
+        "5": "Tightly paced, zero-fluff narrative where every scene advances comprehension and intent."
+      }
+    },
+    {
+      "id": "cta_relevance",
+      "label": "CTA Relevance",
+      "description": "Whether the closing call to action matches the brief's required CTA and campaign objective naturally.",
+      "anchors": {
+        "1": "Required CTA is missing or contradicts the campaign objective.",
+        "2": "CTA is present but generic, awkward, or disconnected from the preceding script.",
+        "3": "Includes the required CTA accurately, though the transition feels mechanical.",
+        "4": "Required CTA is clearly stated, accurate, and logically motivated by the value shown.",
+        "5": "Seamless, specific, low-friction CTA that faithfully delivers the brief's required action."
+      }
+    },
+    {
+      "id": "brand_and_audience_fit",
+      "label": "Brand and Audience Fit",
+      "description": "Whether tone, vocabulary, language, and cultural nuance fit the specified SMB brand voice and target audience.",
+      "anchors": {
+        "1": "Wrong language, tone, or audience register; feels misaligned with the business.",
+        "2": "Noticeably off-voice (e.g., overly corporate or slang-heavy) or ignores audience context.",
+        "3": "Generally appropriate language and tone with minor generic phrasing.",
+        "4": "Authentic to the brand voice and relatable to the target audience in the requested language.",
+        "5": "Sounds like a seasoned local operator speaking directly to their ideal customer."
+      }
+    },
+    {
+      "id": "compliance_and_publishability",
+      "label": "Compliance and Publishability",
+      "description": "Whether the script respects every content restriction in the brief and avoids unverified medical, financial, or deceptive claims.",
+      "anchors": {
+        "1": "Violates explicit content restrictions or makes deceptive/prohibited claims.",
+        "2": "Borderline unsubstantiated claim or ignores a stated restriction.",
+        "3": "No hard violation, but contains risky exaggeration needing careful review before posting.",
+        "4": "Respects all stated restrictions and platform norms; safe to publish with minor polish.",
+        "5": "Fully compliant, transparent, grounded in brief facts, and ready to publish as written."
+      }
+    }
+  ]
+}
