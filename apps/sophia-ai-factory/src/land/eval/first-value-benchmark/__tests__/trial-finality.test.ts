@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  assertReportEvidenceMatchesFinality,
   buildBenchmarkReport,
   buildBlindEvaluationPackets,
   computeSha256Hex,
@@ -1025,5 +1026,149 @@ describe('Trial Cost Finality & Authoritative Pair Completion Accounting', () =>
         authorizedBy: 'test-founder-ed25519-v1',
       }),
     ).toThrow(/DEFERRED_RECONCILIATION_ACTIVE_ADMISSION/);
+  });
+
+  it('rejects resumeFromSnapshot with zero admittedCalls and blocks resume after a completed run finalizes its nonce', async () => {
+    const { stage1 } = loadAssets();
+    const ledger = new InMemoryAuthorizationNonceLedger();
+    const auth = buildSignedAuth(stage1.manifest, {
+      experimentRunId: 'run-completed-finalize-001',
+      authorizationNonce: 'nonce-completed-finalize-001',
+    });
+
+    const emptyGov = new ExperimentCostGovernor({
+      plannedLogicalTrials: 20,
+      plannedProviderCalls: 20,
+      maxBillableCalls: 30,
+      maxRetriesPerTrial: 1,
+      maxPromptTokensBudget: 4000,
+      maxOutputTokensCap: 1200,
+      authorizedCeilingMicroUsd: 3_000_000,
+      spendingAuthorized: true,
+      providerSpendingCapConfirmed: true,
+      pricingContract: CONTRACT,
+    });
+
+    await expect(
+      runBudgetGatedCalibration({
+        mode: 'live_provider',
+        liveExecutionEnabled: true,
+        manifest: stage1.manifest,
+        selectedBriefs: stage1.selectedBriefs,
+        pricingContract: CONTRACT,
+        authorization: auth,
+        trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+        nonceLedger: ledger,
+        resumeFromSnapshot: emptyGov.exportSnapshot(),
+        liveTransport: createDeterministicMockTransport(CONTRACT),
+        nowIso: () => '2026-11-23T12:00:00.000Z',
+      }),
+    ).rejects.toThrow(/AUTHORIZATION_RESUME_EMPTY_SNAPSHOT/);
+
+    const completedRun = await runBudgetGatedCalibration({
+      mode: 'live_provider',
+      liveExecutionEnabled: true,
+      manifest: stage1.manifest,
+      selectedBriefs: stage1.selectedBriefs,
+      pricingContract: CONTRACT,
+      authorization: auth,
+      trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+      nonceLedger: ledger,
+      liveTransport: createDeterministicMockTransport(CONTRACT),
+      nowIso: () => '2026-11-23T12:00:00.000Z',
+    });
+    expect(completedRun.completedPairsCount).toBe(10);
+
+    await expect(
+      runBudgetGatedCalibration({
+        mode: 'live_provider',
+        liveExecutionEnabled: true,
+        manifest: stage1.manifest,
+        selectedBriefs: stage1.selectedBriefs,
+        pricingContract: CONTRACT,
+        authorization: auth,
+        trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+        nonceLedger: ledger,
+        resumeFromSnapshot: completedRun.costGovernorSnapshot,
+        liveTransport: createDeterministicMockTransport(CONTRACT),
+        nowIso: () => '2026-11-23T12:05:00.000Z',
+      }),
+    ).rejects.toThrow(/AUTHORIZATION_RESUME_ALREADY_FINALIZED/);
+  });
+
+  it('rejects missing provider responseId and modelFingerprint without falling back to local admissionId', async () => {
+    const { stage1 } = loadAssets();
+    const baseTransport = createDeterministicMockTransport(CONTRACT);
+    const missingResponseIdTransport: EvalTransportFn = async (req) => {
+      const res = await baseTransport(req);
+      if (res.ok && req.armId === 'arm_b_direct_model') {
+        return { ...res, responseId: null, modelFingerprint: null };
+      }
+      return res;
+    };
+
+    const result = await runBudgetGatedCalibration({
+      mode: 'live_provider',
+      liveExecutionEnabled: true,
+      manifest: stage1.manifest,
+      selectedBriefs: stage1.selectedBriefs,
+      pricingContract: CONTRACT,
+      authorization: buildSignedAuth(stage1.manifest, { authorizationNonce: 'nonce-no-resp-id' }),
+      trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+      nonceLedger: new InMemoryAuthorizationNonceLedger(),
+      liveTransport: missingResponseIdTransport,
+      nowIso: () => '2026-11-23T12:00:00.000Z',
+    });
+
+    const armB = result.trials.find((t) => t.armId === 'arm_b_direct_model');
+    expect(armB?.status).toBe('FAILED');
+    expect(armB?.providerResponseId).toBeNull();
+    expect(result.completedPairsCount).toBe(0);
+  });
+
+  it('rejects tampered report telemetry and unattributed uncertain liability on resumed pairs', async () => {
+    const { stage1 } = loadAssets();
+    const result = await runBudgetGatedCalibration({
+      mode: 'live_provider',
+      liveExecutionEnabled: true,
+      manifest: stage1.manifest,
+      selectedBriefs: stage1.selectedBriefs,
+      pricingContract: CONTRACT,
+      authorization: buildSignedAuth(stage1.manifest, { authorizationNonce: 'nonce-report-tamper' }),
+      trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+      nonceLedger: new InMemoryAuthorizationNonceLedger(),
+      liveTransport: createDeterministicMockTransport(CONTRACT),
+      nowIso: () => '2026-11-23T12:00:00.000Z',
+    });
+
+    const firstRecord = result.trials[0].trialRecord!;
+    const tamperedRecord = {
+      ...firstRecord,
+      telemetry: {
+        ...firstRecord.telemetry,
+        promptTokens: { status: 'OBSERVED' as const, value: 999_999 },
+      },
+    };
+    expect(() =>
+      assertReportEvidenceMatchesFinality({
+        reportTrials: [tamperedRecord],
+        adapterEvidence: result.trials,
+        governorSnapshot: result.costGovernorSnapshot,
+        receipts: result.receipts,
+      }),
+    ).toThrow(/CONTRADICTORY_COMPLETION_EVIDENCE/);
+
+    const resumedWithUnattributedLiability = countAuthoritativePairCompletions({
+      trials: [],
+      governorSnapshot: {
+        ...result.costGovernorSnapshot,
+        uncertainLiabilityMicroUsd: 50_000,
+        unresolvedLiabilityByTrialMicroUsd: {},
+      },
+      receipts: result.receipts,
+      selectedBriefIds: stage1.selectedBriefs.map((b) => b.briefId),
+      previouslyCompletedTrialIds: result.costGovernorSnapshot.completedTrialIds,
+    });
+    expect(resumedWithUnattributedLiability.completedPairs).toBe(0);
   });
 });

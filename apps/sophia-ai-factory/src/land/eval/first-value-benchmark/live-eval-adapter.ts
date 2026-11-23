@@ -349,7 +349,7 @@ function assertAuthorizationFieldsMatchManifest(
       `LIVE_AUTHORIZATION_REASONING_MISMATCH: authorization reasoningEffort=${payload.reasoningEffort} !== requested ${expectedReasoningEffort}`,
     );
   }
-  if (payload.temperature !== null && payload.temperature !== expectedTemperature) {
+  if (payload.temperature !== expectedTemperature) {
     throw new Error(
       `LIVE_AUTHORIZATION_TEMPERATURE_MISMATCH: authorization temperature=${String(payload.temperature)} !== requested ${expectedTemperature}`,
     );
@@ -494,7 +494,7 @@ export function assertLiveAuthorization(args: {
       `LIVE_AUTHORIZATION_PROJECT_MISMATCH: authorization providerProjectId="${payload.providerProjectId}" !== "${args.expectedProviderProjectId}"`,
     );
   }
-  if (!payload.providerSpendingCapConfirmed) {
+  if (payload.providerSpendingCapConfirmed !== true) {
     throw new Error('LIVE_AUTHORIZATION_NO_PROVIDER_CAP: provider-side spending cap must be confirmed');
   }
   if (!args.liveTransport) {
@@ -756,6 +756,11 @@ export async function runBudgetGatedCalibration(args: {
   const temperature = args.temperature ?? STAGE1_EXPERIMENTAL_CONFIG.stage1Temperature;
   const reasoningEffort = args.reasoningEffort ?? STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort;
 
+  if (args.resumeFromSnapshot && args.resumeFromSnapshot.admittedCalls <= 0) {
+    throw new Error(
+      'AUTHORIZATION_RESUME_EMPTY_SNAPSHOT: cannot resume from a snapshot with zero admittedCalls',
+    );
+  }
   const plan = resolveExecutionPlan({
     mode,
     liveExecutionEnabled,
@@ -863,6 +868,18 @@ export async function runBudgetGatedCalibration(args: {
     receipts,
     resumedIds,
   );
+  if (
+    mode === 'live_provider' &&
+    haltedReason === null &&
+    pairCounts.completedPairsCount === snapshot.selectedBriefs.length &&
+    snapshot.authorization
+  ) {
+    args.nonceLedger?.markRunFinalized?.({
+      authorizationNonce: snapshot.authorization.payload.authorizationNonce,
+      experimentRunId: snapshot.authorization.payload.experimentRunId,
+      finalizedAtIso: nowIso(),
+    });
+  }
 
   return {
     transportMode: mode,
@@ -1203,10 +1220,10 @@ function recordTransportSuccess(
     ? res.responseId
     : res.modelFingerprint?.trim()
       ? res.modelFingerprint
-      : admissionId;
+      : null;
   const providerModelVersion = res.responseModelId?.trim() ? res.responseModelId : null;
   const hasRequiredProvenance =
-    Boolean(providerResponseId.trim()) && Boolean(providerModelVersion?.trim());
+    Boolean(providerResponseId?.trim()) && Boolean(providerModelVersion?.trim());
 
   const reconciled = ctx.governor.reconcileSuccess(admissionId, {
     promptTokens: res.promptTokens,

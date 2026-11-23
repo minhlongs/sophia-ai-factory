@@ -64,6 +64,7 @@ export interface NonceClaimRecord {
   readonly experimentRunId: string;
   readonly manifestSha256: string;
   readonly claimedAtIso: string;
+  readonly finalizedAtIso?: string;
 }
 
 export interface AuthorizationNonceLedger {
@@ -73,6 +74,11 @@ export interface AuthorizationNonceLedger {
     readonly manifestSha256: string;
     readonly claimedAtIso: string;
     readonly isExplicitResume: boolean;
+  }): void;
+  markRunFinalized?(args: {
+    readonly authorizationNonce: string;
+    readonly experimentRunId: string;
+    readonly finalizedAtIso: string;
   }): void;
 }
 
@@ -381,6 +387,11 @@ export class InMemoryAuthorizationNonceLedger implements AuthorizationNonceLedge
           `AUTHORIZATION_RESUME_UNCLAIMED_NONCE: cannot resume unknown nonce "${args.authorizationNonce}"`,
         );
       }
+      if (existing.finalizedAtIso) {
+        throw new Error(
+          `AUTHORIZATION_RESUME_ALREADY_FINALIZED: nonce "${args.authorizationNonce}" was finalized at "${existing.finalizedAtIso}"`,
+        );
+      }
       if (
         existing.experimentRunId !== args.experimentRunId ||
         existing.manifestSha256 !== args.manifestSha256
@@ -401,6 +412,21 @@ export class InMemoryAuthorizationNonceLedger implements AuthorizationNonceLedge
       experimentRunId: args.experimentRunId,
       manifestSha256: args.manifestSha256,
       claimedAtIso: args.claimedAtIso,
+    });
+  }
+
+  markRunFinalized(args: {
+    readonly authorizationNonce: string;
+    readonly experimentRunId: string;
+    readonly finalizedAtIso: string;
+  }): void {
+    const existing = this.claims.get(args.authorizationNonce);
+    if (!existing || existing.experimentRunId !== args.experimentRunId) {
+      return;
+    }
+    this.claims.set(args.authorizationNonce, {
+      ...existing,
+      finalizedAtIso: args.finalizedAtIso,
     });
   }
 }
@@ -441,6 +467,11 @@ export class FileAuthorizationNonceLedger implements AuthorizationNonceLedger {
         );
       }
       const existing = JSON.parse(readFileSync(claimPath, 'utf8')) as NonceClaimRecord;
+      if (existing.finalizedAtIso) {
+        throw new Error(
+          `AUTHORIZATION_RESUME_ALREADY_FINALIZED: nonce "${args.authorizationNonce}" was finalized at "${existing.finalizedAtIso}"`,
+        );
+      }
       if (
         existing.authorizationNonce !== args.authorizationNonce ||
         existing.experimentRunId !== args.experimentRunId ||
@@ -463,6 +494,26 @@ export class FileAuthorizationNonceLedger implements AuthorizationNonceLedger {
       }
       throw err;
     }
+  }
+
+  markRunFinalized(args: {
+    readonly authorizationNonce: string;
+    readonly experimentRunId: string;
+    readonly finalizedAtIso: string;
+  }): void {
+    const claimPath = this.getClaimPath(args.authorizationNonce);
+    if (!existsSync(claimPath)) {
+      return;
+    }
+    const existing = JSON.parse(readFileSync(claimPath, 'utf8')) as NonceClaimRecord;
+    if (existing.experimentRunId !== args.experimentRunId) {
+      return;
+    }
+    writeFileSync(
+      claimPath,
+      JSON.stringify({ ...existing, finalizedAtIso: args.finalizedAtIso }),
+      { encoding: 'utf8' },
+    );
   }
 }
 

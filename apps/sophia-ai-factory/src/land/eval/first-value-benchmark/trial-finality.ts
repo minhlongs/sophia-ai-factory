@@ -241,13 +241,22 @@ export function countAuthoritativePairCompletions(args: {
   }
 
   // Resumed trials from a prior clean governor snapshot (not re-executed in this batch)
-  // are counted only if the governor still lists them completed with zero unresolved liability.
-  if (args.previouslyCompletedTrialIds) {
+  // are counted only if the governor still lists them completed with zero unresolved liability
+  // and no unattributed uncertain liability exists in the snapshot.
+  const unresolvedMap = args.governorSnapshot.unresolvedLiabilityByTrialMicroUsd;
+  const attributedSum = unresolvedMap
+    ? Object.values(unresolvedMap).reduce((sum, value) => sum + (value > 0 ? value : 0), 0)
+    : 0;
+  const hasUnattributedUncertainLiability =
+    args.governorSnapshot.uncertainLiabilityMicroUsd > 0 &&
+    (!unresolvedMap || attributedSum < args.governorSnapshot.uncertainLiabilityMicroUsd);
+
+  if (args.previouslyCompletedTrialIds && !hasUnattributedUncertainLiability) {
     for (const prevId of args.previouslyCompletedTrialIds) {
       if (evidenceTrialIds.has(prevId) || seenCompletedTrialIds.has(prevId)) {
         continue;
       }
-      const unresolved = args.governorSnapshot.unresolvedLiabilityByTrialMicroUsd?.[prevId] ?? 0;
+      const unresolved = unresolvedMap?.[prevId] ?? 0;
       if (unresolved > 0 || !args.governorSnapshot.completedTrialIds.includes(prevId)) {
         continue;
       }
@@ -326,13 +335,29 @@ export function assertReportEvidenceMatchesFinality(args: {
         `CONTRADICTORY_COMPLETION_EVIDENCE: report includes non-finalized trial "${reportTrial.trialId}" (${check.reasons.join(', ')})`,
       );
     }
+    const expectedRecord = evidence.trialRecord;
     if (
+      !expectedRecord ||
       evidence.briefId !== reportTrial.briefId ||
       evidence.armId !== reportTrial.armId ||
-      evidence.outputSha256 !== reportTrial.outputSha256
+      evidence.outputSha256 !== reportTrial.outputSha256 ||
+      expectedRecord.inputSha256 !== reportTrial.inputSha256 ||
+      expectedRecord.executionMode !== reportTrial.executionMode ||
+      expectedRecord.telemetry.modelId !== reportTrial.telemetry.modelId ||
+      expectedRecord.telemetry.modelVersion !== reportTrial.telemetry.modelVersion ||
+      reportTrial.telemetry.promptTokens.status !== 'OBSERVED' ||
+      expectedRecord.telemetry.promptTokens.status !== 'OBSERVED' ||
+      reportTrial.telemetry.promptTokens.value !== expectedRecord.telemetry.promptTokens.value ||
+      reportTrial.telemetry.completionTokens.status !== 'OBSERVED' ||
+      expectedRecord.telemetry.completionTokens.status !== 'OBSERVED' ||
+      reportTrial.telemetry.completionTokens.value !== expectedRecord.telemetry.completionTokens.value ||
+      reportTrial.telemetry.measuredInferenceCostMicroUsd.status !== 'OBSERVED' ||
+      reportTrial.telemetry.measuredInferenceCostMicroUsd.value !== evidence.observedCostMicroUsd ||
+      reportTrial.telemetry.realPaidInferenceCostMicroUsd !==
+        expectedRecord.telemetry.realPaidInferenceCostMicroUsd
     ) {
       throw new Error(
-        `CONTRADICTORY_COMPLETION_EVIDENCE: report trial "${reportTrial.trialId}" identity/output does not match adapter evidence`,
+        `CONTRADICTORY_COMPLETION_EVIDENCE: report trial "${reportTrial.trialId}" identity, output, or telemetry does not match adapter evidence`,
       );
     }
   }

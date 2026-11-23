@@ -578,6 +578,77 @@ describe('Cryptographic Founder Authorization Adversarial Suite (25 Mandatory Ca
       }),
     ).toThrow(/LIVE_AUTHORIZATION_ENVIRONMENT_MISMATCH/);
   });
+
+  it('rejects authorization with null temperature when manifest specifies a numeric temperature', () => {
+    const stage1 = loadStage1();
+    const auth = founder.signAuthorization(
+      buildValidPayload(stage1.manifest, founder.trustAnchor.signerKeyId, {
+        temperature: null,
+      }),
+    );
+    expect(() =>
+      assertLiveAuthorization({
+        ...baseArgs(stage1),
+        authorization: auth,
+      }),
+    ).toThrow(/LIVE_AUTHORIZATION_TEMPERATURE_MISMATCH/);
+  });
+
+  it('rejects resume after a run has been marked finalized in both in-memory and file nonce ledgers', () => {
+    const stage1 = loadStage1();
+    const memLedger = new InMemoryAuthorizationNonceLedger();
+    const auth = founder.signAuthorization(
+      buildValidPayload(stage1.manifest, founder.trustAnchor.signerKeyId, {
+        experimentRunId: 'run-finalized-001',
+        authorizationNonce: 'nonce-finalized-001',
+      }),
+    );
+    assertLiveAuthorization({ ...baseArgs(stage1), authorization: auth, nonceLedger: memLedger });
+    memLedger.markRunFinalized({
+      authorizationNonce: auth.payload.authorizationNonce,
+      experimentRunId: auth.payload.experimentRunId,
+      finalizedAtIso: '2026-11-23T13:00:00.000Z',
+    });
+    expect(() =>
+      assertLiveAuthorization({
+        ...baseArgs(stage1),
+        authorization: auth,
+        nonceLedger: memLedger,
+        isExplicitResume: true,
+      }),
+    ).toThrow(/AUTHORIZATION_RESUME_ALREADY_FINALIZED/);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sophia-nonce-finalized-'));
+    try {
+      const fileLedger = new FileAuthorizationNonceLedger(dir);
+      const fileAuth = founder.signAuthorization(
+        buildValidPayload(stage1.manifest, founder.trustAnchor.signerKeyId, {
+          experimentRunId: 'run-finalized-file-001',
+          authorizationNonce: 'nonce-finalized-file-001',
+        }),
+      );
+      assertLiveAuthorization({
+        ...baseArgs(stage1),
+        authorization: fileAuth,
+        nonceLedger: fileLedger,
+      });
+      fileLedger.markRunFinalized({
+        authorizationNonce: fileAuth.payload.authorizationNonce,
+        experimentRunId: fileAuth.payload.experimentRunId,
+        finalizedAtIso: '2026-11-23T13:00:00.000Z',
+      });
+      expect(() =>
+        assertLiveAuthorization({
+          ...baseArgs(stage1),
+          authorization: fileAuth,
+          nonceLedger: fileLedger,
+          isExplicitResume: true,
+        }),
+      ).toThrow(/AUTHORIZATION_RESUME_ALREADY_FINALIZED/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('External Provider Account Spend-Cap Boundary Preservation', () => {
