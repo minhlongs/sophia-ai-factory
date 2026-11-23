@@ -67,10 +67,13 @@ describe('pilot-auth-guard', () => {
       '/api/checkout',
       '/api/checkout/status',
       '/api/orders',
+      '/api/promo/redeem-free',
+      '/api/v1/credits/purchase',
       '/api/payments/checkout',
       '/api/webhooks/payos',
       '/api/webhooks/nowpayments',
       '/api/webhooks/nowpayments-payout',
+      '/api/webhooks/saas-crypto',
     ]) {
       const res = enforcePilotFeatureDisabled(path, pilotEnv);
       expect(res?.status).toBe(403);
@@ -84,6 +87,10 @@ describe('pilot-auth-guard', () => {
       '/api/publish-gate',
       '/api/distribution',
       '/api/schedule',
+      '/api/v1/distribute/jobs',
+      '/api/v1/videos/vid_123/distribute',
+      '/api/oauth/youtube/connect',
+      '/api/oauth/tiktok/connect',
     ]) {
       const res = enforcePilotFeatureDisabled(path, pilotEnv);
       expect(res?.status).toBe(403);

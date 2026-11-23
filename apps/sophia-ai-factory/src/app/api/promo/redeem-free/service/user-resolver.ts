@@ -17,6 +17,10 @@ export async function findOrResolveUser(
   request: Request,
   email: string,
 ): Promise<ResolvedUser> {
+  if (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(email)) {
+    return { userId: null, sessionEmailVerified: false };
+  }
+
   try {
     const auth = await getAuth();
     if (auth) {

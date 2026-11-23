@@ -33,8 +33,10 @@ const PAYMENT_DISABLED_PREFIXES = [
   '/api/billing',
   '/api/checkout',
   '/api/orders',
+  '/api/promo',
   '/api/refund-requests',
   '/api/user/wallet',
+  '/api/v1/credits',
   '/api/payos',
   '/api/webhooks/payos',
   '/api/webhooks/nowpayments',
@@ -42,6 +44,7 @@ const PAYMENT_DISABLED_PREFIXES = [
   '/api/webhooks/overage-billing',
   '/api/webhooks/grabpay',
   '/api/webhooks/promptpay',
+  '/api/webhooks/saas-crypto',
   '/api/webhooks/sepa',
   '/api/webhooks/stripe-connect',
 ] as const;
@@ -53,10 +56,20 @@ const PUBLISH_DISABLED_PREFIXES = [
   '/api/publish-gate',
   '/api/distribution',
   '/api/schedule',
+  '/api/v1/distribute',
+  '/api/oauth/youtube',
+  '/api/oauth/tiktok',
 ] as const;
 
+const VIDEO_DISTRIBUTE_PATTERN = /^\/api\/v1\/videos\/[^/]+\/distribute(?:\/|$)/i;
+
+function normalizePathname(pathname: string): string {
+  const lower = pathname.toLowerCase();
+  return lower.length > 1 ? lower.replace(/\/+$/, '') : lower;
+}
+
 function matchesPrefix(pathname: string, prefixes: readonly string[]): boolean {
-  const normalized = pathname.toLowerCase();
+  const normalized = normalizePathname(pathname);
   return prefixes.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`));
 }
 
@@ -122,7 +135,11 @@ export function enforcePilotFeatureDisabled(
   }
 
   const publishDisabled = (env.B2_PUBLISH_ENABLED ?? '').trim().toLowerCase() === 'false';
-  if (publishDisabled && matchesPrefix(pathname, PUBLISH_DISABLED_PREFIXES)) {
+  if (
+    publishDisabled &&
+    (matchesPrefix(pathname, PUBLISH_DISABLED_PREFIXES) ||
+      VIDEO_DISTRIBUTE_PATTERN.test(normalizePathname(pathname)))
+  ) {
     return NextResponse.json(
       {
         code: 'PILOT_PUBLISHING_DISABLED',
