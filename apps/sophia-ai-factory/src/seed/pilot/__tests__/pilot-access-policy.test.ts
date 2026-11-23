@@ -248,13 +248,27 @@ describe('pilot-auth-guard', () => {
       expect(enforcePilotFeatureDisabled(allowedPath, strictEnv)).toBeNull();
     }
 
-    // Blocks non-pilot Next.js Server Actions while allowing pilot pages
-    expect(enforcePilotServerActionDisabled('/vi/dashboard/campaigns', true, strictEnv)?.status).toBe(
-      403,
-    );
-    expect(enforcePilotServerActionDisabled('/vi/settings', true, strictEnv)?.status).toBe(403);
-    expect(enforcePilotServerActionDisabled('/vi/first-value', true, strictEnv)).toBeNull();
-    expect(enforcePilotServerActionDisabled('/en/dashboard/first-value', true, strictEnv)).toBeNull();
-    expect(enforcePilotServerActionDisabled('/vi/dashboard/campaigns', false, strictEnv)).toBeNull();
+    // Blocks non-pilot Next.js Server Actions and non-GET page mutations while allowing pilot pages
+    expect(
+      enforcePilotServerActionDisabled('/vi/dashboard/campaigns', true, strictEnv, 'POST')?.status,
+    ).toBe(403);
+    expect(
+      enforcePilotServerActionDisabled('/vi/dashboard/campaigns', false, strictEnv, 'POST')?.status,
+    ).toBe(403);
+    expect(
+      enforcePilotServerActionDisabled('/vi/settings', true, strictEnv, 'POST')?.status,
+    ).toBe(403);
+    expect(
+      enforcePilotServerActionDisabled('/vi/first-value', true, strictEnv, 'POST'),
+    ).toBeNull();
+    expect(
+      enforcePilotServerActionDisabled('/en/dashboard/first-value', true, strictEnv, 'POST'),
+    ).toBeNull();
+    expect(
+      enforcePilotServerActionDisabled('/vi/dashboard/campaigns', false, strictEnv, 'GET'),
+    ).toBeNull();
+    expect(
+      enforcePilotServerActionDisabled('/api/first-value', false, strictEnv, 'POST'),
+    ).toBeNull();
   });
 });

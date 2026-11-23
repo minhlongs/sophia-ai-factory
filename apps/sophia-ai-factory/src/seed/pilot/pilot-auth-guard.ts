@@ -221,21 +221,33 @@ const PILOT_ALLOWED_SERVER_ACTION_PATTERNS: readonly RegExp[] = [
   /^\/(?:first-value|login|signup)(?:\/|$)/,
 ];
 
+const SAFE_READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 /**
- * When `PILOT_INVITE_ONLY=true`, blocks Next.js Server Actions (`next-action` header)
- * invoked on non-pilot pages so allowlisted users cannot reach unrelated `src/land/`
- * server actions outside the pilot workspace.
+ * When `PILOT_INVITE_ONLY=true`, blocks mutating requests (including Next.js Server
+ * Actions with or without `next-action` header) on non-`/api/` page routes outside
+ * the pilot workspace so allowlisted users cannot invoke unrelated `src/land/` actions.
  */
 export function enforcePilotServerActionDisabled(
   pathname: string,
   hasNextActionHeader: boolean,
   env: PilotEnvSource = process.env,
+  method: string = 'POST',
 ): NextResponse | null {
-  if (!hasNextActionHeader || !isPilotInviteOnlyEnabled(env)) {
+  if (!isPilotInviteOnlyEnabled(env)) {
     return null;
   }
 
   const normalized = normalizePathname(pathname);
+  if (normalized === '/api' || normalized?.startsWith('/api/')) {
+    return null;
+  }
+
+  const upperMethod = method.toUpperCase();
+  if (!hasNextActionHeader && SAFE_READ_METHODS.has(upperMethod)) {
+    return null;
+  }
+
   if (
     normalized !== null &&
     PILOT_ALLOWED_SERVER_ACTION_PATTERNS.some((pattern) => pattern.test(normalized))

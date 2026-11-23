@@ -45,6 +45,8 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const pilotServerActionBlocked = enforcePilotServerActionDisabled(
     pathname,
     request.headers.has('next-action'),
+    process.env,
+    request.method,
   );
   if (pilotServerActionBlocked) return pilotServerActionBlocked;
 
@@ -131,7 +133,7 @@ export const middleware = proxy;
 export const config = {
   matcher: [
     '/api/((?!version$).*)',
-    '/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)',
+    '/((?!_next|_worker|auth/callback|api/version|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|woff2?|ttf|eot|txt|xml|json|webmanifest)$).*)',
   ],
   // This module contains a Node-only local D1 loader. It is guarded by a
   // Node runtime check and never invoked by the Edge middleware runtime.
