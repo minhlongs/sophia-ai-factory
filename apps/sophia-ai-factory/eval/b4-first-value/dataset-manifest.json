@@ -1,0 +1,24 @@
+{
+  "datasetVersion": "b4-dataset-v1.0.0",
+  "datasetFile": "dataset-v1.jsonl",
+  "datasetSha256": "80e2f2aec64a0ac21446e92b87fc3ac6632164fa158bfe7ea8ec76221ccaf2ff",
+  "briefCount": 50,
+  "verticalCounts": {
+    "coffee_and_food_service": 10,
+    "local_retail_and_ecommerce": 10,
+    "education_and_tutoring": 10,
+    "beauty_and_personal_services": 10,
+    "local_professional_services": 10
+  },
+  "rubricVersion": "b4-rubric-v1.0.0",
+  "rubricFile": "rubric-v1.json",
+  "rubricSha256": "31dbffd556f12957a3a643bb3fb3efa0d1fb2447e75db50809cfd4bd10fc77fd",
+  "frozenAtIso": "2026-11-23T00:00:00.000Z",
+  "creationProcess": {
+    "source": "Synthetic SMB and creator briefs authored specifically for B4.0 offline benchmark.",
+    "piiPolicy": "Zero customer PII, zero real business identities, zero proprietary client briefs.",
+    "neutralityPolicy": "Neutral deliverable phrasing with no Sophia-specific template instructions so Arm A (Sophia BASIC) and Arm B (Direct Model) receive identical inputs.",
+    "languageCoverage": ["en", "vi"],
+    "platformCoverage": ["tiktok", "instagram_reels", "youtube_shorts", "facebook_reels"]
+  }
+}
