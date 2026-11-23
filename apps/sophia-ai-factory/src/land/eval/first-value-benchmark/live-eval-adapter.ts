@@ -12,16 +12,26 @@ import {
   STAGE1_ARM_A_MIN_SCENES,
   STAGE1_DEFAULT_TARGET_DURATION_SEC,
   STAGE1_EXPERIMENTAL_CONFIG,
+  assessOutputTokenCapFeasibility,
   buildArmAProductionPrompt,
   buildMockProductionScriptJson,
+  buildOpenAiDirectRequestPayload,
   parseAndValidateArmAOutput,
+  type EvalResponseFormatMode,
+  type OpenAiReasoningEffort,
+  type TokenCapFeasibilityAssessment,
 } from './arm-a-production-parity';
 import { buildDirectModelPrompt } from './arm-specs';
-import type { Stage1CalibrationManifest } from './calibration-manifest';
+import {
+  computeStage1ManifestSha256,
+  type Stage1CalibrationManifest,
+} from './calibration-manifest';
 import {
   ExperimentCostGovernor,
-  type CostGovernorSnapshot,
+  computeStage1CallPolicySummary,
   type AdmissionRejectionCode,
+  type CostGovernorSnapshot,
+  type Stage1CallPolicySummary,
 } from './cost-governor';
 import { computeSha256Hex } from './dataset-loader';
 import {
@@ -33,16 +43,43 @@ import { BENCHMARK_ARMS, type BenchmarkArmId, type EvaluationBrief } from './typ
 
 export const LIVE_ADAPTER_ENABLED_BY_DEFAULT = false as const;
 
+export type TrialFailureCategory =
+  | 'PREFLIGHT_INFEASIBLE'
+  | 'TOKEN_CAP_EXHAUSTED'
+  | 'INVALID_MODEL_OUTPUT'
+  | 'PROVIDER_FAILURE'
+  | 'BUDGET_EXHAUSTED';
+
 export interface ExperimentAuthorizationRecord {
   readonly authorizationId: string;
   readonly approvedBy: string;
   readonly approvedAtIso: string;
+  readonly expiresAtIso: string;
   readonly manifestSha256: string;
+  readonly datasetSha256: string;
+  readonly rubricSha256: string;
+  readonly randomSeed: string;
+  readonly selectedBriefIds: readonly string[];
   readonly modelId: string;
   readonly pricingVersion: string;
+  readonly maxOutputTokensCap: number;
+  readonly maxRetriesPerTrial: number;
   readonly authorizedCeilingMicroUsd: number;
   readonly maxBillableCalls: number;
   readonly providerSpendingCapConfirmed: boolean;
+}
+
+export interface ImmutableExecutionSnapshot {
+  readonly manifestSha256: string;
+  readonly manifest: Stage1CalibrationManifest;
+  readonly selectedBriefs: readonly EvaluationBrief[];
+  readonly contract: PinnedModelPricingContract;
+  readonly authorization: ExperimentAuthorizationRecord | null;
+  readonly ceilingMicroUsd: number;
+  readonly maxBillableCalls: number;
+  readonly maxOutputTokensCap: number;
+  readonly maxRetriesPerTrial: number;
+  readonly providerCapConfirmed: boolean;
 }
 
 export interface EvalTransportRequest {
@@ -55,7 +92,8 @@ export interface EvalTransportRequest {
   readonly modelId: string;
   readonly maxOutputTokens: number;
   readonly temperature: number;
-  readonly responseFormat: 'json_object' | 'text';
+  readonly reasoningEffort: OpenAiReasoningEffort;
+  readonly responseFormat: EvalResponseFormatMode;
 }
 
 export interface EvalTransportResponse {
@@ -67,6 +105,8 @@ export interface EvalTransportResponse {
   readonly requestTimestampIso: string;
   readonly promptTokens: number | null;
   readonly completionTokens: number | null;
+  readonly reasoningTokens?: number | null;
+  readonly finishReason?: 'stop' | 'length' | 'content_filter' | 'incomplete' | string | null;
   readonly cachedPromptTokens?: number;
   readonly observedChargedMicroUsd?: number | null;
   readonly latencyMs: number;
@@ -101,10 +141,13 @@ export interface CallUsageReceipt {
   readonly parityReasons: readonly string[];
   readonly promptTokens: number | null;
   readonly completionTokens: number | null;
+  readonly reasoningTokens?: number | null;
+  readonly finishReason?: string | null;
   readonly reservedMicroUsd: number;
   readonly observedCostMicroUsd: number | null;
   readonly outcome: 'SUCCESS' | 'FAILED_RETRYABLE' | 'FAILED_TERMINAL' | 'ADMISSION_REJECTED';
   readonly failureClass?: string;
+  readonly failureCategory?: TrialFailureCategory;
 }
 
 export interface AdapterTrialEvidence {
@@ -116,6 +159,7 @@ export interface AdapterTrialEvidence {
   readonly renderedOutput: string | null;
   readonly status: 'COMPLETED' | 'FAILED' | 'BLOCKED_BY_GOVERNOR';
   readonly failureClass?: string;
+  readonly failureCategory?: TrialFailureCategory;
   readonly rejectionCode?: AdmissionRejectionCode;
   readonly parityStatus: ModelParityAssessment['status'];
 }
@@ -125,6 +169,10 @@ export interface CalibrationRunResult {
   readonly manifestSha256: string;
   readonly nextStageAutoStart: false;
   readonly haltedReason: string | null;
+  readonly preflightFeasibility: TokenCapFeasibilityAssessment;
+  readonly callPolicySummary: Stage1CallPolicySummary;
+  readonly completedPairsCount: number;
+  readonly incompletePairsCount: number;
   readonly trials: readonly AdapterTrialEvidence[];
   readonly receipts: readonly CallUsageReceipt[];
   readonly costGovernorSnapshot: CostGovernorSnapshot;
@@ -151,10 +199,23 @@ export function createDeterministicMockTransport(contract: PinnedModelPricingCon
       requestTimestampIso: '2026-11-23T00:00:00.000Z',
       promptTokens: Math.max(120, Math.ceil(req.prompt.length / 4)),
       completionTokens: Math.max(80, Math.ceil(output.length / 4)),
+      reasoningTokens: 0,
+      finishReason: 'stop',
       cachedPromptTokens: 0,
       latencyMs: 250,
     };
   };
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== 'object') return value;
+  Object.freeze(value);
+  for (const prop of Object.values(value as Record<string, unknown>)) {
+    if (prop !== null && typeof prop === 'object' && !Object.isFrozen(prop)) {
+      deepFreeze(prop);
+    }
+  }
+  return value;
 }
 
 function assertSelectedBriefsMatchManifest(
@@ -181,13 +242,82 @@ function assertPositiveIntegerInRange(value: number, max: number, errorCode: str
   }
 }
 
-function assertLiveAuthorization(args: {
+function assertExactStringListMatch(
+  actual: readonly string[],
+  expected: readonly string[],
+  errorCode: string,
+): void {
+  if (!Array.isArray(actual) || actual.length !== expected.length) {
+    throw new Error(`${errorCode}: selectedBriefIds length mismatch (${actual?.length ?? 0} !== ${expected.length})`);
+  }
+  for (let i = 0; i < expected.length; i++) {
+    if (actual[i] !== expected[i]) {
+      throw new Error(`${errorCode}: selectedBriefIds[${i}] "${actual[i]}" !== "${expected[i]}"`);
+    }
+  }
+}
+
+function assertAuthorizationTimeWindow(
+  approvedAtIso: string,
+  expiresAtIso: string,
+  nowIso: string,
+): void {
+  if (!expiresAtIso?.trim()) {
+    throw new Error('LIVE_AUTHORIZATION_EXPIRY_REQUIRED: expiresAtIso is required for live execution');
+  }
+  const approvedMs = Date.parse(approvedAtIso);
+  const expiresMs = Date.parse(expiresAtIso);
+  const nowMs = Date.parse(nowIso);
+  if (!Number.isFinite(approvedMs) || !Number.isFinite(expiresMs) || !Number.isFinite(nowMs)) {
+    throw new Error('LIVE_AUTHORIZATION_EXPIRY_INVALID: invalid ISO timestamp in approvedAtIso or expiresAtIso');
+  }
+  if (expiresMs <= approvedMs) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_EXPIRY_INVALID: expiresAtIso (${expiresAtIso}) must be after approvedAtIso (${approvedAtIso})`,
+    );
+  }
+  if (expiresMs <= nowMs) {
+    throw new Error(`LIVE_AUTHORIZATION_EXPIRED: authorization expired at ${expiresAtIso} (now=${nowIso})`);
+  }
+}
+
+function assertAuthorizationFieldsMatchManifest(
+  auth: ExperimentAuthorizationRecord,
+  manifest: Stage1CalibrationManifest,
+  maxOutputTokensCap: number,
+): void {
+  if (auth.datasetSha256 !== manifest.datasetSha256) {
+    throw new Error('LIVE_AUTHORIZATION_DATASET_MISMATCH: authorization datasetSha256 does not match manifest');
+  }
+  if (auth.rubricSha256 !== manifest.rubricSha256) {
+    throw new Error('LIVE_AUTHORIZATION_RUBRIC_MISMATCH: authorization rubricSha256 does not match manifest');
+  }
+  if (auth.randomSeed !== manifest.randomSeed) {
+    throw new Error('LIVE_AUTHORIZATION_SEED_MISMATCH: authorization randomSeed does not match manifest');
+  }
+  assertExactStringListMatch(auth.selectedBriefIds, manifest.selectedBriefIds, 'LIVE_AUTHORIZATION_BRIEFS_MISMATCH');
+  if (auth.maxRetriesPerTrial !== manifest.callGraphPlan.maxRetriesPerTrial) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_RETRY_POLICY_MISMATCH: authorization maxRetriesPerTrial=${auth.maxRetriesPerTrial} !== manifest ${manifest.callGraphPlan.maxRetriesPerTrial}`,
+    );
+  }
+  if (!Number.isSafeInteger(auth.maxOutputTokensCap) || auth.maxOutputTokensCap !== maxOutputTokensCap) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_TOKEN_CAP_MISMATCH: authorization maxOutputTokensCap=${auth.maxOutputTokensCap} !== requested ${maxOutputTokensCap}`,
+    );
+  }
+}
+
+export function assertLiveAuthorization(args: {
   readonly liveExecutionEnabled: boolean;
   readonly manifest: Stage1CalibrationManifest;
+  readonly selectedBriefs: readonly EvaluationBrief[];
   readonly contract: PinnedModelPricingContract;
+  readonly maxOutputTokensCap: number;
+  readonly nowIso: string;
   readonly authorization?: ExperimentAuthorizationRecord;
   readonly liveTransport?: EvalTransportFn;
-}): ExperimentAuthorizationRecord {
+}): ImmutableExecutionSnapshot {
   if (!args.liveExecutionEnabled) {
     throw new Error('LIVE_EXECUTION_DISABLED: live mode is disabled by default and requires explicit operator opt-in');
   }
@@ -195,9 +325,24 @@ function assertLiveAuthorization(args: {
     throw new Error('LIVE_AUTHORIZATION_REQUIRED: missing Founder ExperimentAuthorizationRecord');
   }
   const auth = args.authorization;
-  if (!auth.authorizationId.trim() || !auth.approvedBy.trim() || !auth.approvedAtIso.trim()) {
+  if (!auth.authorizationId?.trim() || !auth.approvedBy?.trim() || !auth.approvedAtIso?.trim()) {
     throw new Error('LIVE_AUTHORIZATION_INVALID: authorizationId, approvedBy, and approvedAtIso are required');
   }
+  assertAuthorizationTimeWindow(auth.approvedAtIso, auth.expiresAtIso, args.nowIso);
+  assertSelectedBriefsMatchManifest(args.selectedBriefs, args.manifest);
+
+  // Independently recompute canonical manifest digest from actual manifest content (never trust self-reported digest alone)
+  const recomputedManifestSha256 = computeStage1ManifestSha256(args.manifest);
+  if (recomputedManifestSha256 !== args.manifest.manifestSha256) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_MANIFEST_TAMPERED: recomputed manifest SHA-256 (${recomputedManifestSha256}) !== embedded (${args.manifest.manifestSha256})`,
+    );
+  }
+  if (auth.manifestSha256 !== recomputedManifestSha256) {
+    throw new Error('LIVE_AUTHORIZATION_MANIFEST_MISMATCH: authorization does not match recomputed Stage 1 manifest digest');
+  }
+
+  assertAuthorizationFieldsMatchManifest(auth, args.manifest, args.maxOutputTokensCap);
   assertPositiveIntegerInRange(
     auth.authorizedCeilingMicroUsd,
     args.manifest.callGraphPlan.proposedSpendCeilingMicroUsd,
@@ -210,9 +355,6 @@ function assertLiveAuthorization(args: {
     'LIVE_AUTHORIZATION_CALL_CEILING_INVALID',
     'maxBillableCalls',
   );
-  if (auth.manifestSha256 !== args.manifest.manifestSha256) {
-    throw new Error('LIVE_AUTHORIZATION_MANIFEST_MISMATCH: authorization does not match frozen Stage 1 manifest');
-  }
   if (auth.modelId !== args.contract.modelId || auth.pricingVersion !== args.contract.pricingVersion) {
     throw new Error('LIVE_AUTHORIZATION_MODEL_MISMATCH: authorization model/pricing does not match pinned contract');
   }
@@ -222,7 +364,19 @@ function assertLiveAuthorization(args: {
   if (!args.liveTransport) {
     throw new Error('LIVE_TRANSPORT_NOT_CONFIGURED: no live provider transport injected (real network calls disabled offline)');
   }
-  return auth;
+
+  return deepFreeze({
+    manifestSha256: recomputedManifestSha256,
+    manifest: structuredClone(args.manifest),
+    selectedBriefs: structuredClone([...args.selectedBriefs]),
+    contract: structuredClone(args.contract),
+    authorization: structuredClone(auth),
+    ceilingMicroUsd: auth.authorizedCeilingMicroUsd,
+    maxBillableCalls: auth.maxBillableCalls,
+    maxOutputTokensCap: auth.maxOutputTokensCap,
+    maxRetriesPerTrial: auth.maxRetriesPerTrial,
+    providerCapConfirmed: auth.providerSpendingCapConfirmed,
+  });
 }
 
 function estimatePromptTokens(prompt: string): number {
@@ -233,7 +387,7 @@ interface ResolvedArmPrompt {
   readonly prompt: string;
   readonly systemPrompt?: string;
   readonly userPrompt?: string;
-  readonly responseFormat: 'json_object' | 'text';
+  readonly responseFormat: EvalResponseFormatMode;
 }
 
 function buildPromptForArm(
@@ -254,7 +408,7 @@ function buildPromptForArm(
     prompt: prod.combinedPrompt,
     systemPrompt: prod.systemPrompt,
     userPrompt: prod.userPrompt,
-    responseFormat: 'json_object',
+    responseFormat: STAGE1_EXPERIMENTAL_CONFIG.armAResponseFormat,
   };
 }
 
@@ -262,37 +416,131 @@ function resolveExecutionPlan(args: {
   readonly mode: 'mock_transport' | 'live_provider';
   readonly liveExecutionEnabled: boolean;
   readonly manifest: Stage1CalibrationManifest;
+  readonly selectedBriefs: readonly EvaluationBrief[];
   readonly pricingContract: PinnedModelPricingContract;
+  readonly maxOutputTokensCap: number;
+  readonly nowIso: string;
   readonly authorization?: ExperimentAuthorizationRecord;
   readonly mockTransport?: EvalTransportFn;
   readonly liveTransport?: EvalTransportFn;
 }): {
   readonly transport: EvalTransportFn;
-  readonly ceilingMicroUsd: number;
-  readonly maxBillableCalls: number;
-  readonly providerCapConfirmed: boolean;
+  readonly snapshot: ImmutableExecutionSnapshot;
 } {
   if (args.mode === 'live_provider') {
-    const auth = assertLiveAuthorization({
+    const snapshot = assertLiveAuthorization({
       liveExecutionEnabled: args.liveExecutionEnabled,
       manifest: args.manifest,
+      selectedBriefs: args.selectedBriefs,
       contract: args.pricingContract,
+      maxOutputTokensCap: args.maxOutputTokensCap,
+      nowIso: args.nowIso,
       authorization: args.authorization,
       liveTransport: args.liveTransport,
     });
     return {
       transport: args.liveTransport as EvalTransportFn,
-      ceilingMicroUsd: auth.authorizedCeilingMicroUsd,
-      maxBillableCalls: auth.maxBillableCalls,
-      providerCapConfirmed: auth.providerSpendingCapConfirmed,
+      snapshot,
     };
   }
-  return {
-    transport: args.mockTransport ?? createDeterministicMockTransport(args.pricingContract),
+  const recomputedManifestSha256 = computeStage1ManifestSha256(args.manifest);
+  const snapshot = deepFreeze({
+    manifestSha256: recomputedManifestSha256,
+    manifest: structuredClone(args.manifest),
+    selectedBriefs: structuredClone([...args.selectedBriefs]),
+    contract: structuredClone(args.pricingContract),
+    authorization: null,
     ceilingMicroUsd: args.manifest.callGraphPlan.proposedSpendCeilingMicroUsd,
     maxBillableCalls: args.manifest.callGraphPlan.runMaxBillableCallsCeiling,
+    maxOutputTokensCap: args.maxOutputTokensCap,
+    maxRetriesPerTrial: args.manifest.callGraphPlan.maxRetriesPerTrial,
     providerCapConfirmed: true,
+  });
+  return {
+    transport: args.mockTransport ?? createDeterministicMockTransport(args.pricingContract),
+    snapshot,
   };
+}
+
+function countPairCompletions(
+  selectedBriefs: readonly EvaluationBrief[],
+  trials: readonly AdapterTrialEvidence[],
+  previouslyCompletedTrialIds: readonly string[],
+): { readonly completedPairsCount: number; readonly incompletePairsCount: number } {
+  const completedIds = new Set<string>(previouslyCompletedTrialIds);
+  for (const trial of trials) {
+    if (trial.status === 'COMPLETED') {
+      completedIds.add(trial.trialId);
+    }
+  }
+  let completedPairsCount = 0;
+  for (const brief of selectedBriefs) {
+    const allArmsDone = BENCHMARK_ARMS.every((armId) => completedIds.has(`${brief.briefId}:${armId}:t1`));
+    if (allArmsDone) completedPairsCount += 1;
+  }
+  return {
+    completedPairsCount,
+    incompletePairsCount: selectedBriefs.length - completedPairsCount,
+  };
+}
+
+function resolveCalibrationClock(
+  mode: 'mock_transport' | 'live_provider',
+  nowIso?: () => string,
+): () => string {
+  if (nowIso) return nowIso;
+  return mode === 'live_provider' ? () => new Date().toISOString() : () => '2026-11-23T00:00:00.000Z';
+}
+
+function isBriefPairAlreadyCompleted(
+  briefId: string,
+  previouslyCompletedIds: ReadonlySet<string>,
+): boolean {
+  return BENCHMARK_ARMS.every((armId) => previouslyCompletedIds.has(`${briefId}:${armId}:t1`));
+}
+
+async function runCalibrationBriefLoop(params: {
+  readonly callerManifest: Stage1CalibrationManifest;
+  readonly snapshot: ImmutableExecutionSnapshot;
+  readonly mode: 'mock_transport' | 'live_provider';
+  readonly targetDurationSec: number;
+  readonly temperature: number;
+  readonly reasoningEffort: OpenAiReasoningEffort;
+  readonly governor: ExperimentCostGovernor;
+  readonly transport: EvalTransportFn;
+  readonly receipts: CallUsageReceipt[];
+  readonly trials: AdapterTrialEvidence[];
+  readonly previouslyCompletedIds: ReadonlySet<string>;
+  readonly nowIso: () => string;
+}): Promise<string | null> {
+  let haltedReason: string | null = null;
+  for (const brief of params.snapshot.selectedBriefs) {
+    if (haltedReason) break;
+    // P2-A TOCTOU guard: detect post-validation mutation of the caller's manifest before starting a pair
+    if (computeStage1ManifestSha256(params.callerManifest) !== params.snapshot.manifestSha256) {
+      return 'MANIFEST_MUTATED_AFTER_VALIDATION';
+    }
+    if (isBriefPairAlreadyCompleted(brief.briefId, params.previouslyCompletedIds)) {
+      continue;
+    }
+    haltedReason = await executeBriefPair({
+      brief,
+      mode: params.mode,
+      maxRetries: params.snapshot.maxRetriesPerTrial,
+      maxOutputTokensCap: params.snapshot.maxOutputTokensCap,
+      targetDurationSec: params.targetDurationSec,
+      temperature: params.temperature,
+      reasoningEffort: params.reasoningEffort,
+      contract: params.snapshot.contract,
+      governor: params.governor,
+      transport: params.transport,
+      receipts: params.receipts,
+      trials: params.trials,
+      previouslyCompletedIds: params.previouslyCompletedIds,
+      nowIso: params.nowIso,
+    });
+  }
+  return haltedReason;
 }
 
 export async function runBudgetGatedCalibration(args: {
@@ -304,74 +552,126 @@ export async function runBudgetGatedCalibration(args: {
   readonly authorization?: ExperimentAuthorizationRecord;
   readonly mockTransport?: EvalTransportFn;
   readonly liveTransport?: EvalTransportFn;
+  readonly resumeFromSnapshot?: CostGovernorSnapshot;
   readonly maxPromptTokensBudget?: number;
   readonly maxOutputTokensCap?: number;
   readonly targetDurationSec?: number;
   readonly temperature?: number;
+  readonly reasoningEffort?: OpenAiReasoningEffort;
+  readonly extraSchemaOverheadTokens?: number;
   readonly nowIso?: () => string;
 }): Promise<CalibrationRunResult> {
   assertSelectedBriefsMatchManifest(args.selectedBriefs, args.manifest);
   const mode = args.mode ?? 'mock_transport';
   const liveExecutionEnabled = args.liveExecutionEnabled ?? LIVE_ADAPTER_ENABLED_BY_DEFAULT;
-  const defaultClock = mode === 'live_provider' ? () => new Date().toISOString() : () => '2026-11-23T00:00:00.000Z';
-  const nowIso = args.nowIso ?? defaultClock;
-
-  const plan = resolveExecutionPlan({
-    mode,
-    liveExecutionEnabled,
-    manifest: args.manifest,
-    pricingContract: args.pricingContract,
-    authorization: args.authorization,
-    mockTransport: args.mockTransport,
-    liveTransport: args.liveTransport,
-  });
+  const nowIso = resolveCalibrationClock(mode, args.nowIso);
 
   const maxOutputTokensCap = args.maxOutputTokensCap ?? STAGE1_EXPERIMENTAL_CONFIG.stage1MaxOutputTokensCap;
   const maxPromptTokensBudget = args.maxPromptTokensBudget ?? 4000;
   const targetDurationSec = args.targetDurationSec ?? STAGE1_DEFAULT_TARGET_DURATION_SEC;
   const temperature = args.temperature ?? STAGE1_EXPERIMENTAL_CONFIG.stage1Temperature;
-  const maxRetries = args.manifest.callGraphPlan.maxRetriesPerTrial;
+  const reasoningEffort = args.reasoningEffort ?? STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort;
 
-  const governor = new ExperimentCostGovernor({
-    plannedLogicalTrials: args.selectedBriefs.length * BENCHMARK_ARMS.length,
-    plannedProviderCalls: args.selectedBriefs.length * BENCHMARK_ARMS.length,
-    maxBillableCalls: plan.maxBillableCalls,
-    maxRetriesPerTrial: maxRetries,
-    maxPromptTokensBudget,
-    maxOutputTokensCap,
-    authorizedCeilingMicroUsd: plan.ceilingMicroUsd,
-    spendingAuthorized: true,
-    providerSpendingCapConfirmed: plan.providerCapConfirmed,
+  const plan = resolveExecutionPlan({
+    mode,
+    liveExecutionEnabled,
+    manifest: args.manifest,
+    selectedBriefs: args.selectedBriefs,
     pricingContract: args.pricingContract,
+    maxOutputTokensCap,
+    nowIso: nowIso(),
+    authorization: args.authorization,
+    mockTransport: args.mockTransport,
+    liveTransport: args.liveTransport,
   });
+  const { snapshot } = plan;
 
-  const receipts: CallUsageReceipt[] = [];
-  const trials: AdapterTrialEvidence[] = [];
-  let haltedReason: string | null = null;
-
-  for (const brief of args.selectedBriefs) {
-    if (haltedReason) break;
-    haltedReason = await executeBriefPair({
-      brief,
-      mode,
-      maxRetries,
-      maxOutputTokensCap,
-      targetDurationSec,
+  if (snapshot.contract.provider === 'openai') {
+    buildOpenAiDirectRequestPayload({
+      modelId: snapshot.contract.modelId,
+      prompt: 'preflight',
+      maxOutputTokens: snapshot.maxOutputTokensCap,
       temperature,
-      contract: args.pricingContract,
-      governor,
-      transport: plan.transport,
-      receipts,
-      trials,
-      nowIso,
+      reasoningEffort,
+      responseFormat: STAGE1_EXPERIMENTAL_CONFIG.armAResponseFormat,
+      armId: 'arm_a_sophia_basic',
     });
   }
 
+  const callPolicySummary = computeStage1CallPolicySummary({
+    targetPairs: snapshot.selectedBriefs.length,
+    maxRetriesPerTrial: snapshot.maxRetriesPerTrial,
+    maxBillableCalls: snapshot.maxBillableCalls,
+  });
+
+  const governorConfig = {
+    plannedLogicalTrials: snapshot.selectedBriefs.length * BENCHMARK_ARMS.length,
+    plannedProviderCalls: snapshot.selectedBriefs.length * BENCHMARK_ARMS.length,
+    maxBillableCalls: snapshot.maxBillableCalls,
+    maxRetriesPerTrial: snapshot.maxRetriesPerTrial,
+    maxPromptTokensBudget,
+    maxOutputTokensCap: snapshot.maxOutputTokensCap,
+    authorizedCeilingMicroUsd: snapshot.ceilingMicroUsd,
+    spendingAuthorized: true,
+    providerSpendingCapConfirmed: snapshot.providerCapConfirmed,
+    pricingContract: snapshot.contract,
+  };
+  const governor = args.resumeFromSnapshot
+    ? ExperimentCostGovernor.fromSnapshot(governorConfig, args.resumeFromSnapshot)
+    : new ExperimentCostGovernor(governorConfig);
+
+  const preflightFeasibility = assessOutputTokenCapFeasibility(snapshot.maxOutputTokensCap, {
+    briefs: snapshot.selectedBriefs,
+    minScenes: STAGE1_ARM_A_MIN_SCENES,
+    targetDurationSec,
+    reasoningEffort,
+    extraSchemaOverheadTokens: args.extraSchemaOverheadTokens,
+  });
+  const resumedIds = args.resumeFromSnapshot?.completedTrialIds ?? [];
+  if (!preflightFeasibility.feasible) {
+    const pairCounts = countPairCompletions(snapshot.selectedBriefs, [], resumedIds);
+    return {
+      transportMode: mode,
+      manifestSha256: snapshot.manifestSha256,
+      nextStageAutoStart: false,
+      haltedReason: `PREFLIGHT_INFEASIBLE:${preflightFeasibility.redesignCode ?? 'STAGE1_TOKEN_CAP_REDESIGN_REQUIRED'}`,
+      preflightFeasibility,
+      callPolicySummary,
+      completedPairsCount: pairCounts.completedPairsCount,
+      incompletePairsCount: pairCounts.incompletePairsCount,
+      trials: [],
+      receipts: [],
+      costGovernorSnapshot: governor.exportSnapshot(),
+    };
+  }
+
+  const receipts: CallUsageReceipt[] = [];
+  const trials: AdapterTrialEvidence[] = [];
+  const haltedReason = await runCalibrationBriefLoop({
+    callerManifest: args.manifest,
+    snapshot,
+    mode,
+    targetDurationSec,
+    temperature,
+    reasoningEffort,
+    governor,
+    transport: plan.transport,
+    receipts,
+    trials,
+    previouslyCompletedIds: new Set<string>(resumedIds),
+    nowIso,
+  });
+  const pairCounts = countPairCompletions(snapshot.selectedBriefs, trials, resumedIds);
+
   return {
     transportMode: mode,
-    manifestSha256: args.manifest.manifestSha256,
+    manifestSha256: snapshot.manifestSha256,
     nextStageAutoStart: false,
     haltedReason,
+    preflightFeasibility,
+    callPolicySummary,
+    completedPairsCount: pairCounts.completedPairsCount,
+    incompletePairsCount: pairCounts.incompletePairsCount,
     trials,
     receipts,
     costGovernorSnapshot: governor.exportSnapshot(),
@@ -385,11 +685,13 @@ interface BriefPairExecutionContext {
   readonly maxOutputTokensCap: number;
   readonly targetDurationSec: number;
   readonly temperature: number;
+  readonly reasoningEffort: OpenAiReasoningEffort;
   readonly contract: PinnedModelPricingContract;
   readonly governor: ExperimentCostGovernor;
   readonly transport: EvalTransportFn;
   readonly receipts: CallUsageReceipt[];
   readonly trials: AdapterTrialEvidence[];
+  readonly previouslyCompletedIds: ReadonlySet<string>;
   readonly nowIso: () => string;
 }
 
@@ -414,6 +716,9 @@ async function executeBriefPair(ctx: BriefPairExecutionContext): Promise<string 
 
   for (const armId of BENCHMARK_ARMS) {
     const trialId = `${ctx.brief.briefId}:${armId}:t1`;
+    if (ctx.previouslyCompletedIds.has(trialId)) {
+      continue;
+    }
     const resolvedPrompt = pairPrompts[armId];
     const inputSha256 = computeSha256Hex(
       JSON.stringify({ briefId: ctx.brief.briefId, armId, prompt: resolvedPrompt.prompt }),
@@ -429,6 +734,7 @@ async function executeBriefPair(ctx: BriefPairExecutionContext): Promise<string 
       maxOutputTokensCap: ctx.maxOutputTokensCap,
       targetDurationSec: ctx.targetDurationSec,
       temperature: ctx.temperature,
+      reasoningEffort: ctx.reasoningEffort,
       contract: ctx.contract,
       governor: ctx.governor,
       transport: ctx.transport,
@@ -453,6 +759,7 @@ interface TrialAttemptContext {
   readonly maxOutputTokensCap: number;
   readonly targetDurationSec: number;
   readonly temperature: number;
+  readonly reasoningEffort: OpenAiReasoningEffort;
   readonly contract: PinnedModelPricingContract;
   readonly governor: ExperimentCostGovernor;
   readonly transport: EvalTransportFn;
@@ -465,6 +772,10 @@ function recordAdmissionRejection(
   attempt: number,
   code: AdmissionRejectionCode,
 ): { readonly evidence: AdapterTrialEvidence; readonly haltReason: string } {
+  const failureCategory: TrialFailureCategory =
+    code === 'BUDGET_CEILING_EXCEEDED' || code === 'CALL_CEILING_EXCEEDED'
+      ? 'BUDGET_EXHAUSTED'
+      : 'PROVIDER_FAILURE';
   ctx.receipts.push({
     receiptId: `${ctx.trialId}:attempt-${attempt}:rejected`,
     trialId: ctx.trialId,
@@ -485,6 +796,7 @@ function recordAdmissionRejection(
     observedCostMicroUsd: null,
     outcome: 'ADMISSION_REJECTED',
     failureClass: code,
+    failureCategory,
   });
   return {
     evidence: {
@@ -495,6 +807,8 @@ function recordAdmissionRejection(
       outputSha256: null,
       renderedOutput: null,
       status: 'BLOCKED_BY_GOVERNOR',
+      failureClass: code,
+      failureCategory,
       rejectionCode: code,
       parityStatus: 'MODEL_PARITY_UNVERIFIED',
     },
@@ -512,6 +826,7 @@ function buildObservedReceipt(args: {
   readonly observedCostMicroUsd: number | null;
   readonly outcome: 'SUCCESS' | 'FAILED_TERMINAL';
   readonly failureClass?: string;
+  readonly failureCategory?: TrialFailureCategory;
 }): CallUsageReceipt {
   return {
     receiptId: args.admissionId,
@@ -529,37 +844,80 @@ function buildObservedReceipt(args: {
     parityReasons: args.parity.reasons,
     promptTokens: args.res.promptTokens,
     completionTokens: args.res.completionTokens,
+    reasoningTokens: args.res.reasoningTokens ?? null,
+    finishReason: args.res.finishReason ?? null,
     reservedMicroUsd: args.reservedMicroUsd,
     observedCostMicroUsd: args.observedCostMicroUsd,
     outcome: args.outcome,
     ...(args.failureClass ? { failureClass: args.failureClass } : {}),
+    ...(args.failureCategory ? { failureCategory: args.failureCategory } : {}),
   };
 }
 
-function validateArmAResponseOutput(
+function isProviderLengthTruncation(finishReason: string | null | undefined): boolean {
+  return finishReason === 'length' || finishReason === 'incomplete' || finishReason === 'max_output_tokens';
+}
+
+function validateResponseOutput(
   ctx: TrialAttemptContext,
   res: EvalTransportResponse,
 ):
   | { readonly ok: true; readonly renderedOutput: string }
-  | { readonly ok: false; readonly failureClass: string; readonly haltReason: string | null } {
+  | {
+      readonly ok: false;
+      readonly failureClass: string;
+      readonly failureCategory: TrialFailureCategory;
+      readonly haltReason: string | null;
+    } {
+  const providerTruncated = isProviderLengthTruncation(res.finishReason);
+
   if (ctx.armId !== 'arm_a_sophia_basic') {
+    if (providerTruncated) {
+      return {
+        ok: false,
+        failureClass: 'TOKEN_CAP_EXHAUSTED',
+        failureCategory: 'TOKEN_CAP_EXHAUSTED',
+        haltReason: 'TOKEN_CAP_EXHAUSTED:PROVIDER_LENGTH_FINISH',
+      };
+    }
     return { ok: true, renderedOutput: res.renderedOutput };
   }
+
   const validated = parseAndValidateArmAOutput(res.renderedOutput, {
     minScenes: STAGE1_ARM_A_MIN_SCENES,
     targetDurationSec: ctx.targetDurationSec,
   });
   if (validated.ok) {
+    if (providerTruncated) {
+      return {
+        ok: false,
+        failureClass: 'TOKEN_CAP_EXHAUSTED',
+        failureCategory: 'TOKEN_CAP_EXHAUSTED',
+        haltReason: 'TOKEN_CAP_EXHAUSTED:PROVIDER_LENGTH_FINISH',
+      };
+    }
     return { ok: true, renderedOutput: validated.renderedOutput };
   }
+
   const hitTokenCap =
-    validated.errorCode === 'INVALID_JSON' &&
-    res.completionTokens !== null &&
-    res.completionTokens >= ctx.maxOutputTokensCap;
+    providerTruncated ||
+    (validated.errorCode === 'INVALID_JSON' &&
+      res.completionTokens !== null &&
+      res.completionTokens >= ctx.maxOutputTokensCap);
+
+  if (hitTokenCap) {
+    return {
+      ok: false,
+      failureClass: 'TOKEN_CAP_EXHAUSTED',
+      failureCategory: 'TOKEN_CAP_EXHAUSTED',
+      haltReason: 'TOKEN_CAP_EXHAUSTED:MAX_OUTPUT_TOKENS_TRUNCATED',
+    };
+  }
   return {
     ok: false,
-    failureClass: hitTokenCap ? 'BUDGET_CAP_INFEASIBLE' : validated.errorCode,
-    haltReason: hitTokenCap ? 'BUDGET_CAP_INFEASIBLE:MAX_OUTPUT_TOKENS_TRUNCATED' : null,
+    failureClass: validated.errorCode,
+    failureCategory: 'INVALID_MODEL_OUTPUT',
+    haltReason: null,
   };
 }
 
@@ -577,14 +935,15 @@ function recordTransportSuccess(
     modelFingerprint: res.modelFingerprint,
     requestTimestampIso: res.requestTimestampIso,
   });
+  const outputCheck = validateResponseOutput(ctx, res);
   const reconciled = ctx.governor.reconcileSuccess(admissionId, {
     promptTokens: res.promptTokens,
     completionTokens: res.completionTokens,
     cachedPromptTokens: res.cachedPromptTokens,
     observedChargedMicroUsd: res.observedChargedMicroUsd,
+    trialSucceeded: outputCheck.ok,
   });
   const missingUsageHalt = reconciled.observedCostMicroUsd === null ? 'MISSING_USAGE_METADATA' : null;
-  const outputCheck = validateArmAResponseOutput(ctx, res);
 
   if (!outputCheck.ok) {
     ctx.receipts.push(
@@ -598,6 +957,7 @@ function recordTransportSuccess(
         observedCostMicroUsd: reconciled.observedCostMicroUsd,
         outcome: 'FAILED_TERMINAL',
         failureClass: outputCheck.failureClass,
+        failureCategory: outputCheck.failureCategory,
       }),
     );
     return {
@@ -610,6 +970,7 @@ function recordTransportSuccess(
         renderedOutput: null,
         status: 'FAILED',
         failureClass: outputCheck.failureClass,
+        failureCategory: outputCheck.failureCategory,
         parityStatus: parity.status,
       },
       haltReason: outputCheck.haltReason ?? missingUsageHalt,
@@ -675,6 +1036,7 @@ function recordTransportException(
     observedCostMicroUsd: null,
     outcome: 'FAILED_TERMINAL',
     failureClass: 'TRANSPORT_EXCEPTION',
+    failureCategory: 'PROVIDER_FAILURE',
   });
   return {
     evidence: {
@@ -686,9 +1048,74 @@ function recordTransportException(
       renderedOutput: null,
       status: 'FAILED',
       failureClass: 'TRANSPORT_EXCEPTION',
+      failureCategory: 'PROVIDER_FAILURE',
       parityStatus: 'MODEL_PARITY_UNVERIFIED',
     },
     haltReason: 'UNCERTAIN_FAILURE:TRANSPORT_EXCEPTION',
+  };
+}
+
+function recordTransportFailure(
+  ctx: TrialAttemptContext,
+  attempt: number,
+  admissionId: string,
+  reservedMicroUsd: number,
+  res: EvalTransportFailure,
+): { readonly canRetry: boolean; readonly terminalResult?: { readonly evidence: AdapterTrialEvidence; readonly haltReason: string | null } } {
+  const failureCategory: TrialFailureCategory =
+    res.failureClass === 'SCHEMA_INVALID' ? 'INVALID_MODEL_OUTPUT' : 'PROVIDER_FAILURE';
+  ctx.governor.reconcileFailure(admissionId, {
+    acceptedByProvider: res.acceptedByProvider,
+    httpStatus: res.httpStatus,
+    reason: res.message,
+  });
+  const canRetry = res.retryable && !res.acceptedByProvider && attempt <= ctx.maxRetries;
+  ctx.receipts.push({
+    receiptId: admissionId,
+    trialId: ctx.trialId,
+    briefId: ctx.brief.briefId,
+    armId: ctx.armId,
+    attemptNumber: attempt,
+    transportMode: ctx.mode,
+    provider: ctx.contract.provider,
+    requestedModelId: ctx.contract.modelId,
+    responseModelId: null,
+    modelFingerprint: null,
+    requestTimestampIso: res.requestTimestampIso,
+    parityStatus: 'MODEL_PARITY_UNVERIFIED',
+    parityReasons: [`call_failed:${res.failureClass}`],
+    promptTokens: null,
+    completionTokens: null,
+    reservedMicroUsd,
+    observedCostMicroUsd: null,
+    outcome: canRetry ? 'FAILED_RETRYABLE' : 'FAILED_TERMINAL',
+    failureClass: res.failureClass,
+    failureCategory,
+  });
+  if (canRetry) {
+    return { canRetry: true };
+  }
+  return {
+    canRetry: false,
+    terminalResult: {
+      evidence: {
+        trialId: ctx.trialId,
+        briefId: ctx.brief.briefId,
+        armId: ctx.armId,
+        inputSha256: ctx.inputSha256,
+        outputSha256: null,
+        renderedOutput: null,
+        status: 'FAILED',
+        failureClass: res.failureClass,
+        failureCategory,
+        parityStatus: 'MODEL_PARITY_UNVERIFIED',
+      },
+      haltReason: res.acceptedByProvider
+        ? `UNCERTAIN_FAILURE:${res.failureClass}`
+        : res.failureClass === 'AUTH_ERROR'
+          ? 'AUTH_ERROR'
+          : null,
+    },
   };
 }
 
@@ -723,6 +1150,7 @@ async function executeSingleTrial(
         modelId: ctx.contract.modelId,
         maxOutputTokens: ctx.maxOutputTokensCap,
         temperature: ctx.temperature,
+        reasoningEffort: ctx.reasoningEffort,
         responseFormat: ctx.resolvedPrompt.responseFormat,
       });
     } catch (err) {
@@ -734,48 +1162,9 @@ async function executeSingleTrial(
     }
 
     lastFailureClass = res.failureClass;
-    ctx.governor.reconcileFailure(decision.admissionId, {
-      acceptedByProvider: res.acceptedByProvider,
-      httpStatus: res.httpStatus,
-      reason: res.message,
-    });
-    const canRetry = res.retryable && !res.acceptedByProvider && attempt <= ctx.maxRetries;
-    ctx.receipts.push({
-      receiptId: decision.admissionId,
-      trialId: ctx.trialId,
-      briefId: ctx.brief.briefId,
-      armId: ctx.armId,
-      attemptNumber: attempt,
-      transportMode: ctx.mode,
-      provider: ctx.contract.provider,
-      requestedModelId: ctx.contract.modelId,
-      responseModelId: null,
-      modelFingerprint: null,
-      requestTimestampIso: res.requestTimestampIso,
-      parityStatus: 'MODEL_PARITY_UNVERIFIED',
-      parityReasons: [`call_failed:${res.failureClass}`],
-      promptTokens: null,
-      completionTokens: null,
-      reservedMicroUsd: decision.reservedMicroUsd,
-      observedCostMicroUsd: null,
-      outcome: canRetry ? 'FAILED_RETRYABLE' : 'FAILED_TERMINAL',
-      failureClass: res.failureClass,
-    });
-    if (!canRetry) {
-      return {
-        evidence: {
-          trialId: ctx.trialId,
-          briefId: ctx.brief.briefId,
-          armId: ctx.armId,
-          inputSha256: ctx.inputSha256,
-          outputSha256: null,
-          renderedOutput: null,
-          status: 'FAILED',
-          failureClass: res.failureClass,
-          parityStatus: 'MODEL_PARITY_UNVERIFIED',
-        },
-        haltReason: res.acceptedByProvider ? `UNCERTAIN_FAILURE:${res.failureClass}` : null,
-      };
+    const failureOutcome = recordTransportFailure(ctx, attempt, decision.admissionId, decision.reservedMicroUsd, res);
+    if (!failureOutcome.canRetry && failureOutcome.terminalResult) {
+      return failureOutcome.terminalResult;
     }
   }
 
@@ -789,6 +1178,7 @@ async function executeSingleTrial(
       renderedOutput: null,
       status: 'FAILED',
       failureClass: lastFailureClass,
+      failureCategory: 'PROVIDER_FAILURE',
       parityStatus: 'MODEL_PARITY_UNVERIFIED',
     },
     haltReason: null,
