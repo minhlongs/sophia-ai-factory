@@ -1,0 +1,57 @@
+# Sophia AI Factory — Isolated Private Customer Pilot Worker Configuration
+#
+# SAFETY INVARIANTS (G1 / G6):
+# - Dedicated non-production Worker service (`sophia-ai-factory-pilot`)
+# - NEVER reuses production D1 (`sophia-raas-db`) or production R2 (`sophia-ai-factory-opennext-cache`)
+# - Fail-closed by default:
+#     PILOT_INVITE_ONLY = "true"
+#     PILOT_LIVE_INFERENCE_ENABLED = "false"  (enable only after Founder authorizes pilot launch)
+#     PILOT_MAX_GENERATIONS = "20"            (hard per-customer generation cap)
+#     PAYMENTS_ENABLED = "false"              (free pilot; PayOS / NOWPayments disabled)
+#     B2_PUBLISH_ENABLED = "false"            (auto-publishing disabled)
+# - Zero production cron triggers.
+# - Required Worker Secrets (set via `wrangler secret put --config wrangler.pilot.toml`):
+#     BETTER_AUTH_SECRET
+#     BYOK_MASTER_KEY
+#     PILOT_ALLOWED_EMAILS      (exact Founder-supplied customer email, comma-separated)
+#     PILOT_OPENROUTER_API_KEY  (optional; required only for Founder-sponsored mode)
+
+name = "sophia-ai-factory-pilot"
+main = ".open-next/worker.js"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+minify = true
+keep_names = false
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+PILOT_INVITE_ONLY = "true"
+PILOT_LIVE_INFERENCE_ENABLED = "false"
+PILOT_MAX_GENERATIONS = "20"
+PILOT_RATE_LIMIT_COOLDOWN_MS = "5000"
+PAYMENTS_ENABLED = "false"
+B2_PUBLISH_ENABLED = "false"
+
+# Non-production isolated D1 & R2 bindings — Founder must create dedicated pilot
+# resources and replace placeholders before authorizing deployment.
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-pilot-db"
+database_id = "REPLACE_WITH_ISOLATED_PILOT_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "NEXT_TAG_CACHE_D1"
+database_name = "sophia-pilot-tag-cache"
+database_id = "REPLACE_WITH_ISOLATED_PILOT_TAG_CACHE_D1_ID"
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-pilot-opennext-cache"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "sophia-ai-factory-pilot"

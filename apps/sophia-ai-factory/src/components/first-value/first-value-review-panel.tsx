@@ -6,8 +6,9 @@
  * @module components/first-value/first-value-review-panel
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import type { ScriptOutput } from '@/seed/ai/script-generator';
 import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
 
 export interface FirstValueReviewPanelProps {
@@ -17,6 +18,7 @@ export interface FirstValueReviewPanelProps {
   readonly onAccept: () => Promise<void>;
   readonly onReject: (reason: string) => Promise<void>;
   readonly onExport: (format: 'json' | 'markdown') => Promise<void>;
+  readonly onEdit?: (script: ScriptOutput) => Promise<boolean>;
 }
 
 export function FirstValueReviewPanel({
@@ -26,9 +28,20 @@ export function FirstValueReviewPanel({
   onAccept,
   onReject,
   onExport,
+  onEdit,
 }: FirstValueReviewPanelProps) {
   const t = useTranslations('firstValue');
   const [rejectReason, setRejectReason] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [draftScript, setDraftScript] = useState<ScriptOutput | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const reviewArtifactId = review?.artifactId ?? null;
+  useEffect(() => {
+    setEditing(false);
+    setDraftScript(null);
+    setCopied(false);
+  }, [reviewArtifactId]);
 
   if (!review) {
     return (
@@ -42,14 +55,56 @@ export function FirstValueReviewPanel({
   const isFinalized = review.reviewState !== 'pending_review';
   const isAccepted = review.reviewState === 'accepted';
 
+  function startEditing() {
+    if (!review) return;
+    setDraftScript({
+      title: review.script.title,
+      total_duration: review.script.total_duration,
+      scenes: review.script.scenes.map((scene) => ({ ...scene })),
+    });
+    setEditing(true);
+  }
+
+  async function saveEdits() {
+    if (!draftScript || !onEdit) return;
+    const ok = await onEdit(draftScript);
+    if (ok) {
+      setEditing(false);
+      setDraftScript(null);
+    }
+  }
+
+  async function copyExport() {
+    if (!exportPayload || typeof navigator === 'undefined' || !navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(exportPayload);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable in restricted browser contexts
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-xl border border-border bg-card p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-foreground">{t('reviewTitle')}</h2>
-          <span className="rounded-full bg-amber-500/15 px-3 py-1 font-mono text-xs font-medium text-amber-600 dark:text-amber-400">
-            {review.provenanceLabel}
-          </span>
+          <div className="flex items-center gap-2">
+            {!isFinalized && onEdit && !editing && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={startEditing}
+                className="rounded-lg border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                {t('editScriptBtn')}
+              </button>
+            )}
+            <span className="rounded-full bg-amber-500/15 px-3 py-1 font-mono text-xs font-medium text-amber-600 dark:text-amber-400">
+              {review.provenanceLabel}
+            </span>
+          </div>
         </div>
 
         <dl className="mb-4 grid grid-cols-2 gap-3 rounded-lg bg-muted/40 p-3 text-xs sm:grid-cols-4">
@@ -73,26 +128,104 @@ export function FirstValueReviewPanel({
           </div>
         </dl>
 
-        <h3 className="mb-3 text-sm font-semibold text-foreground">{review.script.title}</h3>
-        <div className="flex flex-col gap-3">
-          {review.script.scenes.map((scene) => (
-            <article
-              key={scene.scene_number}
-              className="rounded-lg border border-border/80 bg-background p-3 text-sm"
-            >
-              <div className="mb-1 font-mono text-xs font-medium text-primary">
-                {t('sceneHeading')} {scene.scene_number} ({scene.duration_estimate}s)
+        {editing && draftScript ? (
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              {t('scriptTitleLabel')}
+              <input
+                type="text"
+                value={draftScript.title}
+                disabled={busy}
+                onChange={(e) => setDraftScript({ ...draftScript, title: e.target.value })}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+            </label>
+            {draftScript.scenes.map((scene, idx) => (
+              <div
+                key={scene.scene_number}
+                className="flex flex-col gap-2 rounded-lg border border-border/80 bg-background p-3"
+              >
+                <div className="font-mono text-xs font-medium text-primary">
+                  {t('sceneHeading')} {scene.scene_number} ({scene.duration_estimate}s)
+                </div>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  {t('visualLabel')}
+                  <textarea
+                    rows={2}
+                    value={scene.visual_description}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const nextScenes = draftScript.scenes.map((item, i) =>
+                        i === idx ? { ...item, visual_description: e.target.value } : item,
+                      );
+                      setDraftScript({ ...draftScript, scenes: nextScenes });
+                    }}
+                    className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  {t('narrationLabel')}
+                  <textarea
+                    rows={2}
+                    value={scene.narration}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const nextScenes = draftScript.scenes.map((item, i) =>
+                        i === idx ? { ...item, narration: e.target.value } : item,
+                      );
+                      setDraftScript({ ...draftScript, scenes: nextScenes });
+                    }}
+                    className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  />
+                </label>
               </div>
-              <p className="text-xs text-muted-foreground">
-                <strong className="text-foreground">{t('visualLabel')}:</strong>{' '}
-                {scene.visual_description}
-              </p>
-              <p className="mt-1 text-sm text-foreground">
-                <strong>{t('narrationLabel')}:</strong> {scene.narration}
-              </p>
-            </article>
-          ))}
-        </div>
+            ))}
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void saveEdits()}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {busy ? t('loading') : t('saveEditsBtn')}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setEditing(false);
+                  setDraftScript(null);
+                }}
+                className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                {t('cancelEditBtn')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{review.script.title}</h3>
+            <div className="flex flex-col gap-3">
+              {review.script.scenes.map((scene) => (
+                <article
+                  key={scene.scene_number}
+                  className="rounded-lg border border-border/80 bg-background p-3 text-sm"
+                >
+                  <div className="mb-1 font-mono text-xs font-medium text-primary">
+                    {t('sceneHeading')} {scene.scene_number} ({scene.duration_estimate}s)
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">{t('visualLabel')}:</strong>{' '}
+                    {scene.visual_description}
+                  </p>
+                  <p className="mt-1 text-sm text-foreground">
+                    <strong>{t('narrationLabel')}:</strong> {scene.narration}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4">
           {isFinalized ? (
@@ -105,12 +238,12 @@ export function FirstValueReviewPanel({
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder={t('rejectReasonPlaceholder')}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
-                disabled={busy}
+                disabled={busy || editing}
               />
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || editing}
                   onClick={() => void onAccept()}
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
                 >
@@ -118,7 +251,7 @@ export function FirstValueReviewPanel({
                 </button>
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || editing}
                   onClick={() => void onReject(rejectReason)}
                   className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50"
                 >
@@ -153,6 +286,16 @@ export function FirstValueReviewPanel({
               >
                 {t('exportMarkdownBtn')}
               </button>
+              {exportPayload && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void copyExport()}
+                  className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+                >
+                  {copied ? t('copiedBtn') : t('copyExportBtn')}
+                </button>
+              )}
             </div>
             {exportPayload && (
               <div className="flex flex-col gap-2">

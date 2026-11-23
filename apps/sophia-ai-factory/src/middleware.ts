@@ -18,6 +18,7 @@ import {
 } from '@/tree/custom-domains/hostname-resolver';
 import { getD1 } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
+import { enforcePilotFeatureDisabled } from '@/seed/pilot/pilot-auth-guard';
 import {
   applyErrorSecurityHeaders,
   handleLocaleRedirects,
@@ -74,6 +75,9 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
     return csrfForbiddenResponse();
   }
   const needsCsrfSeed = request.method === 'GET' && !request.cookies.has(CSRF_COOKIE_NAME);
+
+  const pilotFeatureBlocked = enforcePilotFeatureDisabled(pathname);
+  if (pilotFeatureBlocked) return pilotFeatureBlocked;
 
   const apiRes = await handleApiPipeline(request, pathname, pathLocale, startTime, requestHeaders, nonce, needsCsrfSeed);
   if (apiRes) return apiRes;

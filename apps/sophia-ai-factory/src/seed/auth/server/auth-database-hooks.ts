@@ -7,6 +7,8 @@ import { toError } from '@/seed/utils/to-error';
 import { requireMfaIfEnabled, markSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
 import { bootstrapFounderIfConfigured } from '@/seed/auth/founder-bootstrap';
 import { revokeAllUserSessions } from '@/seed/auth/revoke-user-sessions';
+import { getD1 } from '@/seed/db/client';
+import { isEmailAllowedForPilot, isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
 import { sanitizeAndResolveUserName, provisionNewUser } from './d1-adapter-helpers';
 
 export function validatePasswordStrength(password: string): { success: boolean; message?: string } {
@@ -25,6 +27,24 @@ export const authDatabaseHooks = {
   session: {
     create: {
       before: async (session: { id: string; userId: string }) => {
+        if (isPilotInviteOnlyEnabled()) {
+          let userEmail: string | null = null;
+          try {
+            const db = await getD1();
+            if (db) {
+              const row = await db
+                .prepare('SELECT email FROM "user" WHERE id = ?1 LIMIT 1')
+                .bind(session.userId)
+                .first<{ email?: string | null }>();
+              userEmail = row?.email ?? null;
+            }
+          } catch (err) {
+            logger.error('[databaseHook] Pilot allowlist email lookup failed', toError(err));
+          }
+          if (!isEmailAllowedForPilot(userEmail)) {
+            throw new Error('PILOT_INVITE_REQUIRED');
+          }
+        }
         try {
           const { required } = await requireMfaIfEnabled(session.userId);
           if (required) {
@@ -40,6 +60,9 @@ export const authDatabaseHooks = {
   user: {
     create: {
       before: async (user: { name?: string | null; email: string } & Record<string, unknown>) => {
+        if (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(user.email)) {
+          throw new Error('PILOT_INVITE_REQUIRED');
+        }
         const name = sanitizeAndResolveUserName(user.name, user.email);
         return { data: { ...user, name } };
       },

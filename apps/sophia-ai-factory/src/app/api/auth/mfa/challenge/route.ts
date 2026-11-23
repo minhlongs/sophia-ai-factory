@@ -11,6 +11,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuth } from '@/seed/auth/better-auth-server';
+import {
+  isEmailAllowedForPilot,
+  isPilotInviteOnlyEnabled,
+} from '@/seed/pilot/pilot-access-policy';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { verifyTotp, hashBackupCode } from '@/seed/auth/mfa/totp-service';
 import { clearSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
@@ -34,7 +38,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user?.id || !session?.session?.id) {
+  if (
+    !session?.user?.id ||
+    !session?.session?.id ||
+    (isPilotInviteOnlyEnabled() && !isEmailAllowedForPilot(session.user.email))
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
