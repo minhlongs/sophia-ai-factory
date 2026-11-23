@@ -18,5 +18,7 @@ export * from './zero-network-guard';
 export * from './calibration-manifest';
 export * from './model-contract';
 export * from './cost-governor';
+export * from './founder-authorization';
+export * from './trial-finality';
 export * from './live-eval-adapter';
 export * from './paired-statistics';

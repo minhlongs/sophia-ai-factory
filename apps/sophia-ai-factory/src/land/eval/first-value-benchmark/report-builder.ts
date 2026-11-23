@@ -5,6 +5,7 @@
  * @module land/eval/first-value-benchmark/report-builder
  */
 
+import { type CostGovernorSnapshot } from './cost-governor';
 import { computeSha256Hex } from './dataset-loader';
 import {
   addSafeNonNegativeIntegers,
@@ -28,6 +29,11 @@ import {
   type SensitivityScenarioOutput,
   type WilsonInterval,
 } from './telemetry-and-economics';
+import {
+  assertReportEvidenceMatchesFinality,
+  type FinalityReceipt,
+  type FinalityTrialEvidence,
+} from './trial-finality';
 import {
   BENCHMARK_ARMS,
   type BenchmarkArmId,
@@ -265,6 +271,11 @@ export function buildBenchmarkReport(args: {
   readonly reviewerScores: readonly unknown[];
   readonly reviewerPacket?: readonly BlindPacketItem[];
   readonly requiredReviewerIds?: readonly string[];
+  readonly completionFinalityEvidence?: {
+    readonly adapterEvidence: readonly FinalityTrialEvidence[];
+    readonly governorSnapshot: CostGovernorSnapshot;
+    readonly receipts: readonly FinalityReceipt[];
+  };
   readonly realizedRevenueMicroUsdByArm?: Readonly<Partial<Record<BenchmarkArmId, number | null>>>;
   readonly sensitivityAssumptions?: readonly SensitivityAssumptionInput[];
 }): BenchmarkReport {
@@ -272,6 +283,15 @@ export function buildBenchmarkReport(args: {
     throw new Error(
       `Config rubricVersion "${args.config.rubricVersion}" does not match rubric "${args.rubric.rubricVersion}"`,
     );
+  }
+
+  if (args.completionFinalityEvidence) {
+    assertReportEvidenceMatchesFinality({
+      reportTrials: args.trials,
+      adapterEvidence: args.completionFinalityEvidence.adapterEvidence,
+      governorSnapshot: args.completionFinalityEvidence.governorSnapshot,
+      receipts: args.completionFinalityEvidence.receipts,
+    });
   }
 
   const trialById = indexValidatedTrials(args.trials, args.config);
