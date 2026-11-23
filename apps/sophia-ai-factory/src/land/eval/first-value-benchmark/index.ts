@@ -8,6 +8,7 @@ export * from './types';
 export * from './dataset-loader';
 export * from './rubric';
 export * from './arm-specs';
+export * from './arm-a-production-parity';
 export * from './paired-arms';
 export * from './blind-scoring';
 export * from './telemetry-and-economics';

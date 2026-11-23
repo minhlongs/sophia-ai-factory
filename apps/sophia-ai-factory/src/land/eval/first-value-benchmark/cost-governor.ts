@@ -73,6 +73,28 @@ export interface RejectedCallDecision {
 
 export type CallAdmissionDecision = AdmittedCallLease | RejectedCallDecision;
 
+export interface PairAdmissionCheckRequest {
+  readonly armAPromptTokensEstimate: number;
+  readonly armBPromptTokensEstimate: number;
+  readonly maxOutputTokens: number;
+  readonly modelId: string;
+  readonly pricingVersion: string;
+}
+
+export type PairAdmissionCheckResult =
+  | {
+      readonly admissible: true;
+      readonly requiredCalls: number;
+      readonly worstCasePairMicroUsd: number;
+    }
+  | {
+      readonly admissible: false;
+      readonly code: AdmissionRejectionCode;
+      readonly reason: string;
+      readonly requiredCalls: number;
+      readonly worstCasePairMicroUsd: number;
+    };
+
 export interface CallUsageReconciliation {
   readonly promptTokens: number | null;
   readonly completionTokens: number | null;
@@ -263,6 +285,92 @@ export class ExperimentCostGovernor {
       return reject('OUTPUT_TOKEN_CAP_EXCEEDED', `maxOutputTokens ${req.maxOutputTokens} outside 0..${this.config.maxOutputTokensCap}`);
     }
     return null;
+  }
+
+  canAdmitBriefPair(req: PairAdmissionCheckRequest): PairAdmissionCheckResult {
+    const callsPerArm = 1 + this.config.maxRetriesPerTrial;
+    const requiredCalls = callsPerArm * 2;
+    const preErr = this.validatePreconditions({
+      trialId: '__pair_check__',
+      attemptNumber: 1,
+      modelId: req.modelId,
+      pricingVersion: req.pricingVersion,
+      promptTokensEstimate: req.armAPromptTokensEstimate,
+      maxOutputTokens: req.maxOutputTokens,
+    });
+    if (preErr) {
+      return { admissible: false, code: preErr.code, reason: preErr.reason, requiredCalls, worstCasePairMicroUsd: 0 };
+    }
+    const contract = this.config.pricingContract;
+    if (!contract) {
+      return {
+        admissible: false,
+        code: 'MISSING_MODEL_PRICING',
+        reason: 'Pinned model pricing contract is missing',
+        requiredCalls,
+        worstCasePairMicroUsd: 0,
+      };
+    }
+    for (const estimate of [req.armAPromptTokensEstimate, req.armBPromptTokensEstimate]) {
+      if (!Number.isSafeInteger(estimate) || estimate < 0 || estimate > this.config.maxPromptTokensBudget) {
+        return {
+          admissible: false,
+          code: 'PROMPT_TOKEN_BUDGET_EXCEEDED',
+          reason: `Prompt estimate ${estimate} outside 0..${this.config.maxPromptTokensBudget}`,
+          requiredCalls,
+          worstCasePairMicroUsd: 0,
+        };
+      }
+    }
+    if (
+      !Number.isSafeInteger(req.maxOutputTokens) ||
+      req.maxOutputTokens < 0 ||
+      req.maxOutputTokens > this.config.maxOutputTokensCap
+    ) {
+      return {
+        admissible: false,
+        code: 'OUTPUT_TOKEN_CAP_EXCEEDED',
+        reason: `maxOutputTokens ${req.maxOutputTokens} outside 0..${this.config.maxOutputTokensCap}`,
+        requiredCalls,
+        worstCasePairMicroUsd: 0,
+      };
+    }
+    if (this.admittedCalls + requiredCalls > this.config.maxBillableCalls) {
+      return {
+        admissible: false,
+        code: 'CALL_CEILING_EXCEEDED',
+        reason: `Starting brief pair requires up to ${requiredCalls} calls, exceeding maxBillableCalls=${this.config.maxBillableCalls} (admitted=${this.admittedCalls})`,
+        requiredCalls,
+        worstCasePairMicroUsd: 0,
+      };
+    }
+    const armACallCost = computeConservativeCallCostMicroUsd(contract, req.armAPromptTokensEstimate, req.maxOutputTokens);
+    const armBCallCost = computeConservativeCallCostMicroUsd(contract, req.armBPromptTokensEstimate, req.maxOutputTokens);
+    const pairSingleAttemptCost = addSafeNonNegativeIntegers(armACallCost, armBCallCost, 'pairSingleAttemptCost');
+    let worstCasePairMicroUsd = 0;
+    for (let i = 0; i < callsPerArm; i += 1) {
+      worstCasePairMicroUsd = addSafeNonNegativeIntegers(
+        worstCasePairMicroUsd,
+        pairSingleAttemptCost,
+        'worstCasePairMicroUsd',
+      );
+    }
+    const committed = addSafeNonNegativeIntegers(
+      addSafeNonNegativeIntegers(this.actualSpendMicroUsd, this.reservedMicroUsd, 'committedSpend'),
+      this.uncertainLiabilityMicroUsd,
+      'committedWithUncertain',
+    );
+    const projected = addSafeNonNegativeIntegers(committed, worstCasePairMicroUsd, 'projectedPairSpend');
+    if (projected > this.config.authorizedCeilingMicroUsd) {
+      return {
+        admissible: false,
+        code: 'BUDGET_CEILING_EXCEEDED',
+        reason: `Worst-case brief pair cost (${worstCasePairMicroUsd} microUSD) projects ${projected} > ceiling ${this.config.authorizedCeilingMicroUsd} microUSD`,
+        requiredCalls,
+        worstCasePairMicroUsd,
+      };
+    }
+    return { admissible: true, requiredCalls, worstCasePairMicroUsd };
   }
 
   admitCall(req: CallAdmissionRequest): CallAdmissionDecision {

@@ -8,6 +8,14 @@
  * @module land/eval/first-value-benchmark/live-eval-adapter
  */
 
+import {
+  STAGE1_ARM_A_MIN_SCENES,
+  STAGE1_DEFAULT_TARGET_DURATION_SEC,
+  STAGE1_EXPERIMENTAL_CONFIG,
+  buildArmAProductionPrompt,
+  buildMockProductionScriptJson,
+  parseAndValidateArmAOutput,
+} from './arm-a-production-parity';
 import { buildDirectModelPrompt } from './arm-specs';
 import type { Stage1CalibrationManifest } from './calibration-manifest';
 import {
@@ -42,8 +50,12 @@ export interface EvalTransportRequest {
   readonly armId: BenchmarkArmId;
   readonly brief: EvaluationBrief;
   readonly prompt: string;
+  readonly systemPrompt?: string;
+  readonly userPrompt?: string;
   readonly modelId: string;
   readonly maxOutputTokens: number;
+  readonly temperature: number;
+  readonly responseFormat: 'json_object' | 'text';
 }
 
 export interface EvalTransportResponse {
@@ -122,8 +134,14 @@ export function createDeterministicMockTransport(contract: PinnedModelPricingCon
   return async (req: EvalTransportRequest): Promise<EvalTransportResponse> => {
     const output =
       req.armId === 'arm_a_sophia_basic'
-        ? `Scene 1 (0-5s): Hook for ${req.brief.productOrService} (${req.brief.language})\nScene 2 (5-15s): ${req.brief.campaignObjective}\nScene 3 (15-30s): ${req.brief.requiredCta}`
-        : `Direct calibration mock output for ${req.brief.briefId} (${req.brief.language}): ${req.brief.productOrService}`;
+        ? buildMockProductionScriptJson(req.brief, STAGE1_DEFAULT_TARGET_DURATION_SEC)
+        : [
+            `Title: ${req.brief.productOrService} (${req.brief.intendedPlatform})`,
+            `Target Duration: ${STAGE1_DEFAULT_TARGET_DURATION_SEC}s`,
+            `Scene 1 (8s) | Visual: Opening hook for ${req.brief.targetAudience} | Narration: ${req.brief.campaignObjective}`,
+            `Scene 2 (14s) | Visual: Product showcase (${req.brief.brandVoice}) | Narration: ${req.brief.expectedDeliverable}`,
+            `Scene 3 (8s) | Visual: Closing CTA card | Narration: ${req.brief.requiredCta}`,
+          ].join('\n');
     return {
       ok: true,
       renderedOutput: output,
@@ -211,15 +229,33 @@ function estimatePromptTokens(prompt: string): number {
   return Math.max(1, Math.ceil(Buffer.byteLength(prompt, 'utf8') / 2));
 }
 
-function buildPromptForArm(armId: BenchmarkArmId, brief: EvaluationBrief): string {
+interface ResolvedArmPrompt {
+  readonly prompt: string;
+  readonly systemPrompt?: string;
+  readonly userPrompt?: string;
+  readonly responseFormat: 'json_object' | 'text';
+}
+
+function buildPromptForArm(
+  armId: BenchmarkArmId,
+  brief: EvaluationBrief,
+  targetDurationSec: number,
+): ResolvedArmPrompt {
   if (armId === 'arm_b_direct_model') {
-    return buildDirectModelPrompt(brief);
+    const directPrompt = buildDirectModelPrompt(brief);
+    return {
+      prompt: directPrompt,
+      userPrompt: directPrompt,
+      responseFormat: 'text',
+    };
   }
-  return [
-    `[SOPHIA_BASIC_WORKFLOW] industry=${brief.industry} language=${brief.language} platform=${brief.intendedPlatform}`,
-    `product=${brief.productOrService} | audience=${brief.targetAudience} | voice=${brief.brandVoice}`,
-    `objective=${brief.campaignObjective} | cta=${brief.requiredCta}`,
-  ].join('\n');
+  const prod = buildArmAProductionPrompt(brief, targetDurationSec);
+  return {
+    prompt: prod.combinedPrompt,
+    systemPrompt: prod.systemPrompt,
+    userPrompt: prod.userPrompt,
+    responseFormat: 'json_object',
+  };
 }
 
 function resolveExecutionPlan(args: {
@@ -270,6 +306,8 @@ export async function runBudgetGatedCalibration(args: {
   readonly liveTransport?: EvalTransportFn;
   readonly maxPromptTokensBudget?: number;
   readonly maxOutputTokensCap?: number;
+  readonly targetDurationSec?: number;
+  readonly temperature?: number;
   readonly nowIso?: () => string;
 }): Promise<CalibrationRunResult> {
   assertSelectedBriefsMatchManifest(args.selectedBriefs, args.manifest);
@@ -288,8 +326,10 @@ export async function runBudgetGatedCalibration(args: {
     liveTransport: args.liveTransport,
   });
 
-  const maxOutputTokensCap = args.maxOutputTokensCap ?? 1200;
+  const maxOutputTokensCap = args.maxOutputTokensCap ?? STAGE1_EXPERIMENTAL_CONFIG.stage1MaxOutputTokensCap;
   const maxPromptTokensBudget = args.maxPromptTokensBudget ?? 4000;
+  const targetDurationSec = args.targetDurationSec ?? STAGE1_DEFAULT_TARGET_DURATION_SEC;
+  const temperature = args.temperature ?? STAGE1_EXPERIMENTAL_CONFIG.stage1Temperature;
   const maxRetries = args.manifest.callGraphPlan.maxRetriesPerTrial;
 
   const governor = new ExperimentCostGovernor({
@@ -308,34 +348,23 @@ export async function runBudgetGatedCalibration(args: {
   const receipts: CallUsageReceipt[] = [];
   const trials: AdapterTrialEvidence[] = [];
   let haltedReason: string | null = null;
-  const scheduledPairs = args.selectedBriefs.flatMap((brief) =>
-    BENCHMARK_ARMS.map((armId) => ({ brief, armId })),
-  );
 
-  for (const { brief, armId } of scheduledPairs) {
+  for (const brief of args.selectedBriefs) {
     if (haltedReason) break;
-    const trialId = `${brief.briefId}:${armId}:t1`;
-    const prompt = buildPromptForArm(armId, brief);
-    const inputSha256 = computeSha256Hex(JSON.stringify({ briefId: brief.briefId, armId, prompt }));
-    const outcome = await executeSingleTrial({
-      trialId,
+    haltedReason = await executeBriefPair({
       brief,
-      armId,
-      prompt,
-      inputSha256,
       mode,
       maxRetries,
       maxOutputTokensCap,
+      targetDurationSec,
+      temperature,
       contract: args.pricingContract,
       governor,
       transport: plan.transport,
       receipts,
+      trials,
       nowIso,
     });
-    trials.push(outcome.evidence);
-    if (outcome.haltReason) {
-      haltedReason = outcome.haltReason;
-    }
   }
 
   return {
@@ -349,15 +378,81 @@ export async function runBudgetGatedCalibration(args: {
   };
 }
 
+interface BriefPairExecutionContext {
+  readonly brief: EvaluationBrief;
+  readonly mode: 'mock_transport' | 'live_provider';
+  readonly maxRetries: number;
+  readonly maxOutputTokensCap: number;
+  readonly targetDurationSec: number;
+  readonly temperature: number;
+  readonly contract: PinnedModelPricingContract;
+  readonly governor: ExperimentCostGovernor;
+  readonly transport: EvalTransportFn;
+  readonly receipts: CallUsageReceipt[];
+  readonly trials: AdapterTrialEvidence[];
+  readonly nowIso: () => string;
+}
+
+async function executeBriefPair(ctx: BriefPairExecutionContext): Promise<string | null> {
+  const armAPrompt = buildPromptForArm('arm_a_sophia_basic', ctx.brief, ctx.targetDurationSec);
+  const armBPrompt = buildPromptForArm('arm_b_direct_model', ctx.brief, ctx.targetDurationSec);
+  const pairCheck = ctx.governor.canAdmitBriefPair({
+    armAPromptTokensEstimate: estimatePromptTokens(armAPrompt.prompt),
+    armBPromptTokensEstimate: estimatePromptTokens(armBPrompt.prompt),
+    maxOutputTokens: ctx.maxOutputTokensCap,
+    modelId: ctx.contract.modelId,
+    pricingVersion: ctx.contract.pricingVersion,
+  });
+  if (!pairCheck.admissible) {
+    return `PAIRED_STOP_BEFORE_BRIEF:${ctx.brief.briefId}:${pairCheck.code}`;
+  }
+
+  const pairPrompts: Readonly<Record<BenchmarkArmId, ResolvedArmPrompt>> = {
+    arm_a_sophia_basic: armAPrompt,
+    arm_b_direct_model: armBPrompt,
+  };
+
+  for (const armId of BENCHMARK_ARMS) {
+    const trialId = `${ctx.brief.briefId}:${armId}:t1`;
+    const resolvedPrompt = pairPrompts[armId];
+    const inputSha256 = computeSha256Hex(
+      JSON.stringify({ briefId: ctx.brief.briefId, armId, prompt: resolvedPrompt.prompt }),
+    );
+    const outcome = await executeSingleTrial({
+      trialId,
+      brief: ctx.brief,
+      armId,
+      resolvedPrompt,
+      inputSha256,
+      mode: ctx.mode,
+      maxRetries: ctx.maxRetries,
+      maxOutputTokensCap: ctx.maxOutputTokensCap,
+      targetDurationSec: ctx.targetDurationSec,
+      temperature: ctx.temperature,
+      contract: ctx.contract,
+      governor: ctx.governor,
+      transport: ctx.transport,
+      receipts: ctx.receipts,
+      nowIso: ctx.nowIso,
+    });
+    ctx.trials.push(outcome.evidence);
+    if (outcome.haltReason) return outcome.haltReason;
+  }
+
+  return null;
+}
+
 interface TrialAttemptContext {
   readonly trialId: string;
   readonly brief: EvaluationBrief;
   readonly armId: BenchmarkArmId;
-  readonly prompt: string;
+  readonly resolvedPrompt: ResolvedArmPrompt;
   readonly inputSha256: string;
   readonly mode: 'mock_transport' | 'live_provider';
   readonly maxRetries: number;
   readonly maxOutputTokensCap: number;
+  readonly targetDurationSec: number;
+  readonly temperature: number;
   readonly contract: PinnedModelPricingContract;
   readonly governor: ExperimentCostGovernor;
   readonly transport: EvalTransportFn;
@@ -407,6 +502,67 @@ function recordAdmissionRejection(
   };
 }
 
+function buildObservedReceipt(args: {
+  readonly ctx: TrialAttemptContext;
+  readonly attempt: number;
+  readonly admissionId: string;
+  readonly reservedMicroUsd: number;
+  readonly res: EvalTransportResponse;
+  readonly parity: ModelParityAssessment;
+  readonly observedCostMicroUsd: number | null;
+  readonly outcome: 'SUCCESS' | 'FAILED_TERMINAL';
+  readonly failureClass?: string;
+}): CallUsageReceipt {
+  return {
+    receiptId: args.admissionId,
+    trialId: args.ctx.trialId,
+    briefId: args.ctx.brief.briefId,
+    armId: args.ctx.armId,
+    attemptNumber: args.attempt,
+    transportMode: args.ctx.mode,
+    provider: args.res.provider,
+    requestedModelId: args.ctx.contract.modelId,
+    responseModelId: args.res.responseModelId,
+    modelFingerprint: args.res.modelFingerprint,
+    requestTimestampIso: args.res.requestTimestampIso,
+    parityStatus: args.parity.status,
+    parityReasons: args.parity.reasons,
+    promptTokens: args.res.promptTokens,
+    completionTokens: args.res.completionTokens,
+    reservedMicroUsd: args.reservedMicroUsd,
+    observedCostMicroUsd: args.observedCostMicroUsd,
+    outcome: args.outcome,
+    ...(args.failureClass ? { failureClass: args.failureClass } : {}),
+  };
+}
+
+function validateArmAResponseOutput(
+  ctx: TrialAttemptContext,
+  res: EvalTransportResponse,
+):
+  | { readonly ok: true; readonly renderedOutput: string }
+  | { readonly ok: false; readonly failureClass: string; readonly haltReason: string | null } {
+  if (ctx.armId !== 'arm_a_sophia_basic') {
+    return { ok: true, renderedOutput: res.renderedOutput };
+  }
+  const validated = parseAndValidateArmAOutput(res.renderedOutput, {
+    minScenes: STAGE1_ARM_A_MIN_SCENES,
+    targetDurationSec: ctx.targetDurationSec,
+  });
+  if (validated.ok) {
+    return { ok: true, renderedOutput: validated.renderedOutput };
+  }
+  const hitTokenCap =
+    validated.errorCode === 'INVALID_JSON' &&
+    res.completionTokens !== null &&
+    res.completionTokens >= ctx.maxOutputTokensCap;
+  return {
+    ok: false,
+    failureClass: hitTokenCap ? 'BUDGET_CAP_INFEASIBLE' : validated.errorCode,
+    haltReason: hitTokenCap ? 'BUDGET_CAP_INFEASIBLE:MAX_OUTPUT_TOKENS_TRUNCATED' : null,
+  };
+}
+
 function recordTransportSuccess(
   ctx: TrialAttemptContext,
   attempt: number,
@@ -427,38 +583,63 @@ function recordTransportSuccess(
     cachedPromptTokens: res.cachedPromptTokens,
     observedChargedMicroUsd: res.observedChargedMicroUsd,
   });
-  ctx.receipts.push({
-    receiptId: admissionId,
-    trialId: ctx.trialId,
-    briefId: ctx.brief.briefId,
-    armId: ctx.armId,
-    attemptNumber: attempt,
-    transportMode: ctx.mode,
-    provider: res.provider,
-    requestedModelId: ctx.contract.modelId,
-    responseModelId: res.responseModelId,
-    modelFingerprint: res.modelFingerprint,
-    requestTimestampIso: res.requestTimestampIso,
-    parityStatus: parity.status,
-    parityReasons: parity.reasons,
-    promptTokens: res.promptTokens,
-    completionTokens: res.completionTokens,
-    reservedMicroUsd,
-    observedCostMicroUsd: reconciled.observedCostMicroUsd,
-    outcome: 'SUCCESS',
-  });
+  const missingUsageHalt = reconciled.observedCostMicroUsd === null ? 'MISSING_USAGE_METADATA' : null;
+  const outputCheck = validateArmAResponseOutput(ctx, res);
+
+  if (!outputCheck.ok) {
+    ctx.receipts.push(
+      buildObservedReceipt({
+        ctx,
+        attempt,
+        admissionId,
+        reservedMicroUsd,
+        res,
+        parity,
+        observedCostMicroUsd: reconciled.observedCostMicroUsd,
+        outcome: 'FAILED_TERMINAL',
+        failureClass: outputCheck.failureClass,
+      }),
+    );
+    return {
+      evidence: {
+        trialId: ctx.trialId,
+        briefId: ctx.brief.briefId,
+        armId: ctx.armId,
+        inputSha256: ctx.inputSha256,
+        outputSha256: null,
+        renderedOutput: null,
+        status: 'FAILED',
+        failureClass: outputCheck.failureClass,
+        parityStatus: parity.status,
+      },
+      haltReason: outputCheck.haltReason ?? missingUsageHalt,
+    };
+  }
+
+  ctx.receipts.push(
+    buildObservedReceipt({
+      ctx,
+      attempt,
+      admissionId,
+      reservedMicroUsd,
+      res,
+      parity,
+      observedCostMicroUsd: reconciled.observedCostMicroUsd,
+      outcome: 'SUCCESS',
+    }),
+  );
   return {
     evidence: {
       trialId: ctx.trialId,
       briefId: ctx.brief.briefId,
       armId: ctx.armId,
       inputSha256: ctx.inputSha256,
-      outputSha256: computeSha256Hex(res.renderedOutput),
-      renderedOutput: res.renderedOutput,
+      outputSha256: computeSha256Hex(outputCheck.renderedOutput),
+      renderedOutput: outputCheck.renderedOutput,
       status: 'COMPLETED',
       parityStatus: parity.status,
     },
-    haltReason: reconciled.observedCostMicroUsd === null ? 'MISSING_USAGE_METADATA' : null,
+    haltReason: missingUsageHalt,
   };
 }
 
@@ -522,7 +703,7 @@ async function executeSingleTrial(
       attemptNumber: attempt,
       modelId: ctx.contract.modelId,
       pricingVersion: ctx.contract.pricingVersion,
-      promptTokensEstimate: estimatePromptTokens(ctx.prompt),
+      promptTokensEstimate: estimatePromptTokens(ctx.resolvedPrompt.prompt),
       maxOutputTokens: ctx.maxOutputTokensCap,
     });
 
@@ -536,9 +717,13 @@ async function executeSingleTrial(
         trialId: ctx.trialId,
         armId: ctx.armId,
         brief: ctx.brief,
-        prompt: ctx.prompt,
+        prompt: ctx.resolvedPrompt.prompt,
+        systemPrompt: ctx.resolvedPrompt.systemPrompt,
+        userPrompt: ctx.resolvedPrompt.userPrompt,
         modelId: ctx.contract.modelId,
         maxOutputTokens: ctx.maxOutputTokensCap,
+        temperature: ctx.temperature,
+        responseFormat: ctx.resolvedPrompt.responseFormat,
       });
     } catch (err) {
       return recordTransportException(ctx, attempt, decision.admissionId, decision.reservedMicroUsd, err);
