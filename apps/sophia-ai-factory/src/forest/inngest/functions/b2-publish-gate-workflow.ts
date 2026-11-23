@@ -21,7 +21,54 @@ import {
   finalizeMockExecutionAtomic,
 } from '@/tree/publish-gate/publish-gate-execution-repo';
 import { getPublishGateById } from '@/tree/publish-gate/publish-gate-repo';
-import type { MockExecutionReceipt } from '@/tree/publish-gate/types';
+import type { MockExecutionReceipt, PublishGateRecord } from '@/tree/publish-gate/types';
+
+type ApprovalEventData = {
+  readonly requestId: string;
+  readonly orgId: string;
+  readonly approverUserId: string;
+  readonly approvalNonce: string;
+  readonly payloadDigestSha256: string;
+  readonly approvalVersion: number;
+  readonly decision: 'approved' | 'rejected';
+  readonly publicationMode: 'MOCK_ONLY';
+};
+
+function validateWakeupApprovalEvent(
+  record: PublishGateRecord,
+  eventData: { readonly payloadDigestSha256: string; readonly approvalVersion?: number },
+  approvalData: ApprovalEventData,
+): string | null {
+  if (approvalData.publicationMode !== 'MOCK_ONLY') {
+    return 'PUBLICATION_MODE_MUST_BE_MOCK_ONLY';
+  }
+  if (approvalData.orgId !== record.orgId || approvalData.requestId !== record.requestId) {
+    return 'EVENT_IDENTITY_MISMATCH';
+  }
+  if (approvalData.decision !== 'approved') {
+    return 'EVENT_DECISION_NOT_APPROVED';
+  }
+  if (
+    !timingSafeEqualString(record.payloadDigestSha256, eventData.payloadDigestSha256) ||
+    !timingSafeEqualString(record.payloadDigestSha256, approvalData.payloadDigestSha256)
+  ) {
+    return 'LEDGER_DIGEST_CHANGED_AFTER_REQUEST';
+  }
+  if (
+    approvalData.approvalVersion !== record.approvalVersion ||
+    (typeof eventData.approvalVersion === 'number' &&
+      record.approvalVersion !== eventData.approvalVersion)
+  ) {
+    return 'APPROVAL_VERSION_MISMATCH';
+  }
+  if (
+    !record.approvalNonce ||
+    !timingSafeEqualString(record.approvalNonce, approvalData.approvalNonce)
+  ) {
+    return 'APPROVAL_NONCE_MISMATCH';
+  }
+  return null;
+}
 
 export interface B2WorkflowStepLike {
   waitForEvent: (
@@ -70,7 +117,7 @@ export async function runB2PublishGateWorkflowCore(params: {
   const approvalEvent = await step.waitForEvent('b2-wait-human-approval', {
     event: 'campaign/publish.human_approved',
     timeout: '72h',
-    if: "async.data.requestId == event.data.requestId && async.data.orgId == event.data.orgId && async.data.payloadDigestSha256 == event.data.payloadDigestSha256",
+    if: "async.data.requestId == event.data.requestId && async.data.orgId == event.data.orgId && async.data.payloadDigestSha256 == event.data.payloadDigestSha256 && async.data.approvalVersion == event.data.approvalVersion",
   });
 
   if (!approvalEvent) {
@@ -90,7 +137,7 @@ export async function runB2PublishGateWorkflowCore(params: {
           actorUserId: 'system:inngest-timeout',
           expectedState: 'AWAITING_HUMAN_APPROVAL',
           payloadDigestSha256: eventData.payloadDigestSha256,
-          expectedApprovalVersion: eventData.approvalVersion,
+          expectedApprovalVersion: eventData.approvalVersion ?? current.approvalVersion,
           nowIso: ts,
         });
       }
@@ -110,8 +157,9 @@ export async function runB2PublishGateWorkflowCore(params: {
     if (record.state !== 'APPROVED') {
       return { outcome: 'BLOCKED' as const, reason: `LEDGER_STATE_NOT_APPROVED:${record.state}` };
     }
-    if (!timingSafeEqualString(record.payloadDigestSha256, eventData.payloadDigestSha256)) {
-      return { outcome: 'BLOCKED' as const, reason: 'LEDGER_DIGEST_CHANGED_AFTER_REQUEST' };
+    const validationError = validateWakeupApprovalEvent(record, eventData, approvalEvent.data);
+    if (validationError) {
+      return { outcome: 'BLOCKED' as const, reason: validationError };
     }
     if (record.approvalExpiresAtIso && record.approvalExpiresAtIso <= ts) {
       await expireApprovalAtomic(d1, {
@@ -120,6 +168,7 @@ export async function runB2PublishGateWorkflowCore(params: {
         actorUserId: 'system:inngest-expiry',
         expectedState: 'APPROVED',
         payloadDigestSha256: record.payloadDigestSha256,
+        expectedApprovalVersion: record.approvalVersion,
         nowIso: ts,
       });
       return { outcome: 'APPROVAL_EXPIRED' as const, reason: 'APPROVAL_EXPIRED_BEFORE_CLAIM' };
@@ -128,12 +177,14 @@ export async function runB2PublishGateWorkflowCore(params: {
       return { outcome: 'BLOCKED' as const, reason: 'PREFLIGHT_SNAPSHOT_MISSING' };
     }
 
+    const actorUserId = record.approvedByUserId ?? approvalEvent.data.approverUserId;
     const claimed = await claimMockExecutionAtomic(d1, {
       orgId: record.orgId,
       requestId: record.requestId,
-      actorUserId: approvalEvent.data.approverUserId,
+      actorUserId,
       expectedPayloadDigest: record.payloadDigestSha256,
       expectedVersion: record.version,
+      expectedApprovalVersion: record.approvalVersion,
       nowIso: ts,
     });
     if (!claimed) {
@@ -154,7 +205,7 @@ export async function runB2PublishGateWorkflowCore(params: {
     const finalized = await finalizeMockExecutionAtomic(d1, {
       orgId: claimed.record.orgId,
       requestId: claimed.record.requestId,
-      actorUserId: approvalEvent.data.approverUserId,
+      actorUserId,
       executionClaimId: claimed.executionClaimId,
       receipt,
       nowIso: ts,
