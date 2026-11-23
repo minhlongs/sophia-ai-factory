@@ -72,7 +72,7 @@ function buildBlindOutputId(seed: string, trialId: string, index: number): strin
 /**
  * Strips any internal fixture provenance strings that could hint at which arm produced a script.
  */
-function sanitizeScriptForBlinding(renderedOutput: string): string {
+export function sanitizeScriptForBlinding(renderedOutput: string): string {
   return renderedOutput
     .replace(/\[SIMULATED[^\]]*\]/gi, '[OFFLINE_FIXTURE]')
     .replace(/\[FIXTURE_STUB\]/gi, '[OFFLINE_FIXTURE]')

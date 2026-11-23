@@ -6,9 +6,15 @@
  */
 
 import { computeSha256Hex } from './dataset-loader';
+import {
+  addSafeNonNegativeIntegers,
+  buildValidatedKeyMap,
+  sumObservedAllTrials,
+  validateReviewerPacketIntegrity,
+  validateTrialExecutionModeAndProvenance,
+} from './report-validators';
 import { computeMeanCriterionScore, validateReviewerScore } from './rubric';
 import {
-  assertSafeIntegerMicroUsd,
   buildSensitivityScenarios,
   computeContributionPerAcceptedDeliverable,
   computeCostPerAcceptedDeliverable,
@@ -24,6 +30,7 @@ import {
   BENCHMARK_ARMS,
   type BenchmarkArmId,
   type BlindAssignmentKeyEntry,
+  type BlindPacketItem,
   type ExperimentConfig,
   type MetricMeasurement,
   type ReviewerScoreRecord,
@@ -66,18 +73,55 @@ export interface BenchmarkReport {
   readonly provenanceSha256: string;
 }
 
-function sumObserved(values: readonly MetricMeasurement<number>[]): MetricMeasurement<number> {
-  const observed = values.filter((m): m is { status: 'OBSERVED'; value: number } => m.status === 'OBSERVED');
-  if (observed.length === 0) {
-    return { status: 'NOT_MEASURED', reason: 'no_observed_measurements' };
-  }
-  return { status: 'OBSERVED', value: observed.reduce((acc, item) => acc + item.value, 0) };
-}
-
 function meanObserved(values: readonly number[], reason: string): MetricMeasurement<number> {
   if (values.length === 0) return { status: 'NOT_MEASURED', reason };
   const avg = values.reduce((acc, v) => acc + v, 0) / values.length;
   return { status: 'OBSERVED', value: Math.round(avg * 100) / 100 };
+}
+
+function countUniqueAcceptedDeliverables(humanScores: readonly ReviewerScoreRecord[]): {
+  readonly scoredDeliverables: number;
+  readonly acceptedDeliverables: number;
+} {
+  const decisionsByBlindId = new Map<string, boolean[]>();
+  for (const score of humanScores) {
+    const existing = decisionsByBlindId.get(score.blindOutputId);
+    if (existing) {
+      existing.push(score.accepted);
+    } else {
+      decisionsByBlindId.set(score.blindOutputId, [score.accepted]);
+    }
+  }
+  let acceptedDeliverables = 0;
+  for (const decisions of decisionsByBlindId.values()) {
+    if (decisions.every(Boolean)) {
+      acceptedDeliverables += 1;
+    }
+  }
+  return { scoredDeliverables: decisionsByBlindId.size, acceptedDeliverables };
+}
+
+function computeAllTrialsPercentile(
+  trials: readonly TrialExecutionRecord[],
+  percentile: number,
+): MetricMeasurement<number> {
+  if (trials.length === 0) {
+    return { status: 'NOT_MEASURED', reason: 'no_trials_recorded' };
+  }
+  const observedLatencies = trials
+    .map((t) => t.telemetry.wallClockLatencyMs)
+    .filter((m): m is { status: 'OBSERVED'; value: number } => m.status === 'OBSERVED')
+    .map((m) => m.value);
+  if (observedLatencies.length === 0) {
+    return { status: 'NOT_MEASURED', reason: 'no_observed_samples' };
+  }
+  if (observedLatencies.length < trials.length) {
+    return {
+      status: 'NOT_MEASURED',
+      reason: `partial_observed_measurements:${observedLatencies.length}/${trials.length}`,
+    };
+  }
+  return computePercentile(observedLatencies, percentile);
 }
 
 function aggregateArm(
@@ -88,31 +132,37 @@ function aggregateArm(
 ): ArmAggregateSummary {
   const humanScores = scores.filter((s) => s.scoringOrigin === 'human_independent');
   const automatedScores = scores.filter((s) => s.scoringOrigin === 'automated_model_graded');
-  const acceptedHuman = humanScores.filter((s) => s.accepted).length;
-  const observedLatencies = trials
-    .map((t) => t.telemetry.wallClockLatencyMs)
-    .filter((m): m is { status: 'OBSERVED'; value: number } => m.status === 'OBSERVED')
-    .map((m) => m.value);
+  const { scoredDeliverables, acceptedDeliverables: acceptedHuman } = countUniqueAcceptedDeliverables(humanScores);
 
-  const totalRealPaid = assertSafeIntegerMicroUsd(
-    trials.reduce((acc, t) => acc + t.telemetry.realPaidInferenceCostMicroUsd, 0),
-    'totalRealPaidInferenceCostMicroUsd',
+  let totalRealPaid = 0;
+  let totalInfra = 0;
+  for (const trial of trials) {
+    totalRealPaid = addSafeNonNegativeIntegers(
+      totalRealPaid,
+      trial.telemetry.realPaidInferenceCostMicroUsd,
+      'totalRealPaidInferenceCostMicroUsd',
+    );
+    totalInfra = addSafeNonNegativeIntegers(
+      totalInfra,
+      trial.telemetry.infrastructureCostAllocationMicroUsd,
+      'totalInfrastructureCostMicroUsd',
+    );
+  }
+
+  const totalMeasured = sumObservedAllTrials(
+    trials.map((t) => t.telemetry.measuredInferenceCostMicroUsd),
+    'totalMeasuredInferenceCostMicroUsd',
   );
-  const totalInfra = assertSafeIntegerMicroUsd(
-    trials.reduce((acc, t) => acc + t.telemetry.infrastructureCostAllocationMicroUsd, 0),
-    'totalInfrastructureCostMicroUsd',
-  );
-  const totalMeasured = sumObserved(trials.map((t) => t.telemetry.measuredInferenceCostMicroUsd));
   const hasObservedCost = totalMeasured.status === 'OBSERVED';
   const totalVariable = hasObservedCost
-    ? assertSafeIntegerMicroUsd(totalMeasured.value + totalInfra, 'totalVariableCostMicroUsd')
+    ? addSafeNonNegativeIntegers(totalMeasured.value, totalInfra, 'totalVariableCostMicroUsd')
     : 0;
   const costPerAccepted: CostPerAcceptedResult =
     acceptedHuman === 0
       ? computeCostPerAcceptedDeliverable(totalVariable, 0)
       : hasObservedCost
         ? computeCostPerAcceptedDeliverable(totalVariable, acceptedHuman)
-        : { status: 'NOT_MEASURED', microUsd: null, reason: 'missing_observed_inference_cost' };
+        : { status: 'NOT_MEASURED', microUsd: null, reason: totalMeasured.reason };
   const supportValues = humanScores
     .map((s) => s.founderSupportMinutes)
     .filter((v): v is number => typeof v === 'number');
@@ -126,10 +176,10 @@ function aggregateArm(
     totalTrials: trials.length,
     fixtureSimulatedTrials: trials.filter((t) => t.executionMode === 'fixture_simulated').length,
     liveObservedTrials: trials.filter((t) => t.executionMode === 'live_observed').length,
-    scoredTrialsHuman: humanScores.length,
+    scoredTrialsHuman: scoredDeliverables,
     scoredTrialsAutomated: automatedScores.length,
     acceptedHumanCount: acceptedHuman,
-    acceptanceRateHuman: computeWilsonInterval(acceptedHuman, humanScores.length),
+    acceptanceRateHuman: computeWilsonInterval(acceptedHuman, scoredDeliverables),
     meanHumanCriterionScore: meanObserved(
       humanScores.map((s) => computeMeanCriterionScore(s.criterionScores)),
       'no_human_scores_recorded',
@@ -139,74 +189,57 @@ function aggregateArm(
       'no_human_editing_time_recorded',
     ),
     totalFounderSupportMinutes: totalSupport,
-    latencyP50Ms: computePercentile(observedLatencies, 50),
-    latencyP95Ms: computePercentile(observedLatencies, 95),
-    totalPromptTokens: sumObserved(trials.map((t) => t.telemetry.promptTokens)),
-    totalCompletionTokens: sumObserved(trials.map((t) => t.telemetry.completionTokens)),
-    totalEstimatedInferenceCostMicroUsd: sumObserved(trials.map((t) => t.telemetry.estimatedInferenceCostMicroUsd)),
+    latencyP50Ms: computeAllTrialsPercentile(trials, 50),
+    latencyP95Ms: computeAllTrialsPercentile(trials, 95),
+    totalPromptTokens: sumObservedAllTrials(
+      trials.map((t) => t.telemetry.promptTokens),
+      'totalPromptTokens',
+    ),
+    totalCompletionTokens: sumObservedAllTrials(
+      trials.map((t) => t.telemetry.completionTokens),
+      'totalCompletionTokens',
+    ),
+    totalEstimatedInferenceCostMicroUsd: sumObservedAllTrials(
+      trials.map((t) => t.telemetry.estimatedInferenceCostMicroUsd),
+      'totalEstimatedInferenceCostMicroUsd',
+    ),
     totalMeasuredInferenceCostMicroUsd: totalMeasured,
     totalRealPaidInferenceCostMicroUsd: totalRealPaid,
     totalInfrastructureCostMicroUsd: totalInfra,
     costPerAcceptedDeliverable: costPerAccepted,
     contributionPerAcceptedDeliverable: hasObservedCost
       ? computeContributionPerAcceptedDeliverable(realizedRevenueMicroUsd, totalVariable, acceptedHuman)
-      : { status: 'NOT_ESTABLISHED', contributionPerAcceptedMicroUsd: null, reason: 'missing_observed_inference_cost' },
+      : { status: 'NOT_ESTABLISHED', contributionPerAcceptedMicroUsd: null, reason: totalMeasured.reason },
   };
 }
 
-function buildValidatedKeyMap(
-  armKeyMap: readonly BlindAssignmentKeyEntry[],
-  trialById: ReadonlyMap<string, TrialExecutionRecord>,
-): Map<string, BlindAssignmentKeyEntry> {
-  const keyByBlindId = new Map<string, BlindAssignmentKeyEntry>();
-  const seenTrialIds = new Set<string>();
-  for (const entry of armKeyMap) {
-    if (keyByBlindId.has(entry.blindOutputId)) {
-      throw new Error(`Duplicate blindOutputId "${entry.blindOutputId}" in armKeyMap`);
-    }
-    if (seenTrialIds.has(entry.trialId)) {
-      throw new Error(`Duplicate trialId "${entry.trialId}" in armKeyMap`);
-    }
-    const trial = trialById.get(entry.trialId);
-    if (!trial) {
-      throw new Error(`armKeyMap references unknown trialId "${entry.trialId}"`);
-    }
-    if (trial.armId !== entry.armId) {
-      throw new Error(`armKeyMap arm mismatch for trialId "${entry.trialId}": ${entry.armId} !== ${trial.armId}`);
-    }
-    keyByBlindId.set(entry.blindOutputId, entry);
-    seenTrialIds.add(entry.trialId);
-  }
-  return keyByBlindId;
-}
-
-export function buildBenchmarkReport(args: {
-  readonly config: ExperimentConfig;
-  readonly rubric: RubricDefinition;
-  readonly trials: readonly TrialExecutionRecord[];
-  readonly armKeyMap: readonly BlindAssignmentKeyEntry[];
-  readonly reviewerScores: readonly unknown[];
-  readonly realizedRevenueMicroUsdByArm?: Readonly<Partial<Record<BenchmarkArmId, number | null>>>;
-  readonly sensitivityAssumptions?: readonly SensitivityAssumptionInput[];
-}): BenchmarkReport {
+function indexValidatedTrials(
+  trials: readonly TrialExecutionRecord[],
+  config: ExperimentConfig,
+): Map<string, TrialExecutionRecord> {
   const trialById = new Map<string, TrialExecutionRecord>();
-  for (const trial of args.trials) {
+  for (const trial of trials) {
     if (trialById.has(trial.trialId)) {
       throw new Error(`Duplicate trialId "${trial.trialId}" in report aggregation`);
     }
+    validateTrialExecutionModeAndProvenance(trial, config);
     trialById.set(trial.trialId, trial);
   }
+  return trialById;
+}
 
-  const keyByBlindId = buildValidatedKeyMap(args.armKeyMap, trialById);
-
+function groupValidatedScoresByArm(
+  reviewerScores: readonly unknown[],
+  rubric: RubricDefinition,
+  keyByBlindId: ReadonlyMap<string, BlindAssignmentKeyEntry>,
+): Record<BenchmarkArmId, ReviewerScoreRecord[]> {
   const scoresByArm: Record<BenchmarkArmId, ReviewerScoreRecord[]> = {
     arm_a_sophia_basic: [],
     arm_b_direct_model: [],
   };
   const seenScoreKeys = new Set<string>();
-
-  for (const rawScore of args.reviewerScores) {
-    const score = validateReviewerScore(rawScore, args.rubric);
+  for (const rawScore of reviewerScores) {
+    const score = validateReviewerScore(rawScore, rubric);
     const dedupeKey = `${score.reviewerId}:${score.blindOutputId}`;
     if (seenScoreKeys.has(dedupeKey)) {
       throw new Error(`Duplicate reviewer score detected for "${dedupeKey}"`);
@@ -219,6 +252,31 @@ export function buildBenchmarkReport(args: {
     }
     scoresByArm[keyEntry.armId].push(score);
   }
+  return scoresByArm;
+}
+
+export function buildBenchmarkReport(args: {
+  readonly config: ExperimentConfig;
+  readonly rubric: RubricDefinition;
+  readonly trials: readonly TrialExecutionRecord[];
+  readonly armKeyMap: readonly BlindAssignmentKeyEntry[];
+  readonly reviewerScores: readonly unknown[];
+  readonly reviewerPacket?: readonly BlindPacketItem[];
+  readonly realizedRevenueMicroUsdByArm?: Readonly<Partial<Record<BenchmarkArmId, number | null>>>;
+  readonly sensitivityAssumptions?: readonly SensitivityAssumptionInput[];
+}): BenchmarkReport {
+  if (args.config.rubricVersion !== args.rubric.rubricVersion) {
+    throw new Error(
+      `Config rubricVersion "${args.config.rubricVersion}" does not match rubric "${args.rubric.rubricVersion}"`,
+    );
+  }
+
+  const trialById = indexValidatedTrials(args.trials, args.config);
+  const keyByBlindId = buildValidatedKeyMap(args.armKeyMap, trialById);
+  if (args.reviewerPacket) {
+    validateReviewerPacketIntegrity(args.reviewerPacket, keyByBlindId, trialById, args.rubric);
+  }
+  const scoresByArm = groupValidatedScoresByArm(args.reviewerScores, args.rubric, keyByBlindId);
 
   const armSummaries = {} as Record<BenchmarkArmId, ArmAggregateSummary>;
   for (const armId of BENCHMARK_ARMS) {
@@ -230,13 +288,20 @@ export function buildBenchmarkReport(args: {
   const armA = armSummaries.arm_a_sophia_basic;
   const armB = armSummaries.arm_b_direct_model;
   const bothArmsLiveOnly =
+    args.config.mode === 'live_observed' &&
     armA.liveObservedTrials > 0 &&
     armB.liveObservedTrials > 0 &&
     armA.fixtureSimulatedTrials === 0 &&
     armB.fixtureSimulatedTrials === 0;
   const bothArmsHumanScored = armA.scoredTrialsHuman > 0 && armB.scoredTrialsHuman > 0;
+  const bothArmsTokensObserved =
+    armA.totalPromptTokens.status === 'OBSERVED' &&
+    armA.totalCompletionTokens.status === 'OBSERVED' &&
+    armB.totalPromptTokens.status === 'OBSERVED' &&
+    armB.totalCompletionTokens.status === 'OBSERVED';
   const bothArmsCostObserved =
     bothArmsLiveOnly &&
+    bothArmsTokensObserved &&
     armA.totalMeasuredInferenceCostMicroUsd.status === 'OBSERVED' &&
     armB.totalMeasuredInferenceCostMicroUsd.status === 'OBSERVED';
 
