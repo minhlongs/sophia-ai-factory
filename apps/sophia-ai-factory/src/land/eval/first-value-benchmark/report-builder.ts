@@ -8,8 +8,10 @@
 import { computeSha256Hex } from './dataset-loader';
 import {
   addSafeNonNegativeIntegers,
+  assertPairedArmCoverage,
   buildValidatedKeyMap,
   sumObservedAllTrials,
+  validateRequiredReviewers,
   validateReviewerPacketIntegrity,
   validateTrialExecutionModeAndProvenance,
 } from './report-validators';
@@ -262,6 +264,7 @@ export function buildBenchmarkReport(args: {
   readonly armKeyMap: readonly BlindAssignmentKeyEntry[];
   readonly reviewerScores: readonly unknown[];
   readonly reviewerPacket?: readonly BlindPacketItem[];
+  readonly requiredReviewerIds?: readonly string[];
   readonly realizedRevenueMicroUsdByArm?: Readonly<Partial<Record<BenchmarkArmId, number | null>>>;
   readonly sensitivityAssumptions?: readonly SensitivityAssumptionInput[];
 }): BenchmarkReport {
@@ -272,11 +275,19 @@ export function buildBenchmarkReport(args: {
   }
 
   const trialById = indexValidatedTrials(args.trials, args.config);
+  assertPairedArmCoverage(args.trials);
   const keyByBlindId = buildValidatedKeyMap(args.armKeyMap, trialById);
   if (args.reviewerPacket) {
     validateReviewerPacketIntegrity(args.reviewerPacket, keyByBlindId, trialById, args.rubric);
   }
   const scoresByArm = groupValidatedScoresByArm(args.reviewerScores, args.rubric, keyByBlindId);
+  if (args.requiredReviewerIds && args.requiredReviewerIds.length > 0) {
+    validateRequiredReviewers(
+      [...scoresByArm.arm_a_sophia_basic, ...scoresByArm.arm_b_direct_model],
+      args.requiredReviewerIds,
+      keyByBlindId.keys(),
+    );
+  }
 
   const armSummaries = {} as Record<BenchmarkArmId, ArmAggregateSummary>;
   for (const armId of BENCHMARK_ARMS) {
