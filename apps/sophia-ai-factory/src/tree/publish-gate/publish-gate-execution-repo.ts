@@ -96,25 +96,10 @@ export async function expireApprovalAtomic(
     readonly actorUserId: string;
     readonly expectedState: 'AWAITING_HUMAN_APPROVAL' | 'APPROVED';
     readonly payloadDigestSha256: string;
-    readonly expectedApprovalVersion?: number;
+    readonly expectedApprovalVersion: number;
     readonly nowIso: string;
   },
 ): Promise<PublishGateRecord | null> {
-  const versionClause =
-    typeof input.expectedApprovalVersion === 'number'
-      ? ' AND approval_version = ?'
-      : '';
-  const bindings: unknown[] = [
-    input.nowIso,
-    input.orgId,
-    input.requestId,
-    input.expectedState,
-    input.payloadDigestSha256,
-    input.nowIso,
-  ];
-  if (typeof input.expectedApprovalVersion === 'number') {
-    bindings.push(input.expectedApprovalVersion);
-  }
   const res = await d1
     .prepare(
       `UPDATE b2_publish_gate_requests
@@ -123,9 +108,18 @@ export async function expireApprovalAtomic(
          AND request_id = ?
          AND state = ?
          AND payload_digest_sha256 = ?
-         AND approval_expires_at_iso <= ?${versionClause}`,
+         AND approval_expires_at_iso <= ?
+         AND approval_version = ?`,
     )
-    .bind(...bindings)
+    .bind(
+      input.nowIso,
+      input.orgId,
+      input.requestId,
+      input.expectedState,
+      input.payloadDigestSha256,
+      input.nowIso,
+      input.expectedApprovalVersion,
+    )
     .run();
 
   if ((res.meta?.changes ?? 0) !== 1) {

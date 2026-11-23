@@ -13,6 +13,11 @@ import {
   handlePublishGatePost,
   type PublishGateHttpDeps,
 } from '@/land/publish-gate/publish-gate-http-handler';
+import {
+  expireApprovalAtomic,
+  reconcileUncertainExecutionAtomic,
+} from '@/tree/publish-gate/publish-gate-execution-repo';
+import { getPublishGateById } from '@/tree/publish-gate/publish-gate-repo';
 import type { PublishGateRecord } from '@/tree/publish-gate/types';
 
 const B2_MIGRATION_SQL = fs.readFileSync(
@@ -607,5 +612,85 @@ describe('B2 Publish Gate — Durable D1 & HTTP Adversarial Suite (20 cases)', (
     });
     const d1DownRes = await handlePublishGateGet(makeReq(), d1DownDeps);
     expect(d1DownRes.status).toBe(503);
+  });
+
+  it('38. enforces deterministic reconciliation on replay/concurrency and expectedApprovalVersion on expiry CAS', async () => {
+    const deps = makeDeps();
+    const awaiting = await advanceToAwaitingApproval(deps);
+
+    // Direct expireApprovalAtomic with stale expectedApprovalVersion (v0) does not expire v1
+    const wrongVerExpire = await expireApprovalAtomic(d1, {
+      orgId: awaiting.orgId,
+      requestId: awaiting.requestId,
+      actorUserId: 'system:stale-timer',
+      expectedState: 'AWAITING_HUMAN_APPROVAL',
+      payloadDigestSha256: awaiting.payloadDigestSha256,
+      expectedApprovalVersion: awaiting.approvalVersion - 1,
+      nowIso: new Date(nowMsValue + 73 * 60 * 60 * 1000).toISOString(),
+    });
+    expect(wrongVerExpire).toBeNull();
+    const stillAwaiting = await getPublishGateById(d1, awaiting.orgId, awaiting.requestId);
+    expect(stillAwaiting?.state).toBe('AWAITING_HUMAN_APPROVAL');
+
+    await handlePublishGatePost(
+      makeReq({
+        action: 'approve',
+        requestId: awaiting.requestId,
+        approvalNonce: awaiting.approvalNonce,
+        payloadDigestSha256: awaiting.payloadDigestSha256,
+        approvalVersion: awaiting.approvalVersion,
+      }),
+      deps,
+    );
+    await handlePublishGatePost(
+      makeReq({
+        action: 'execute_mock',
+        requestId: awaiting.requestId,
+        payloadDigestSha256: awaiting.payloadDigestSha256,
+        failureInjection: 'timeout_uncertain',
+      }),
+      deps,
+    );
+
+    // Concurrent reconciliation attempts: exactly one wins deterministically
+    const [r1, r2] = await Promise.all([
+      reconcileUncertainExecutionAtomic(d1, {
+        orgId: awaiting.orgId,
+        requestId: awaiting.requestId,
+        actorUserId: 'admin_1',
+        resolution: 'SIMULATED_PUBLISHED',
+        reasonCode: 'OPERATOR_CONFIRMED_UPLOADED',
+        payloadDigestSha256: awaiting.payloadDigestSha256,
+        nowIso: new Date(nowMsValue + 1000).toISOString(),
+      }),
+      reconcileUncertainExecutionAtomic(d1, {
+        orgId: awaiting.orgId,
+        requestId: awaiting.requestId,
+        actorUserId: 'admin_2',
+        resolution: 'SIMULATED_FAILED',
+        reasonCode: 'OPERATOR_CONFIRMED_NOT_UPLOADED',
+        payloadDigestSha256: awaiting.payloadDigestSha256,
+        nowIso: new Date(nowMsValue + 1000).toISOString(),
+      }),
+    ]);
+    const winners = [r1, r2].filter((r) => r !== null);
+    expect(winners).toHaveLength(1);
+    const winning = winners[0]!;
+    expect(winning.mockReceipt?.simulatedStatus).toBe(winning.state);
+
+    // Replaying HTTP reconcile after terminal reconciliation fails with 409 and does not mutate receipt
+    const replayRes = await handlePublishGatePost(
+      makeReq({
+        action: 'reconcile',
+        requestId: awaiting.requestId,
+        resolution: 'SIMULATED_FAILED',
+        reasonCode: 'DUPLICATE_REPLAY',
+      }),
+      deps,
+    );
+    expect(replayRes.status).toBe(409);
+    const persisted = await getPublishGateById(d1, awaiting.orgId, awaiting.requestId);
+    expect(persisted?.state).toBe(winning.state);
+    expect(persisted?.mockReceipt?.simulatedStatus).toBe(winning.state);
   });
 });
