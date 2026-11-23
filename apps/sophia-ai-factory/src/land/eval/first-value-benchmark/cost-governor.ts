@@ -173,7 +173,18 @@ export interface CostGovernorSnapshot {
   readonly spendEvidenceStatus: SpendEvidenceStatus;
   readonly completedTrialIds: readonly string[];
   readonly seenAttemptKeys: readonly string[];
+  readonly unresolvedLiabilityByTrialMicroUsd?: Readonly<Record<string, number>>;
   readonly activeAdmission: { readonly admissionId: string; readonly trialId: string; readonly reservedMicroUsd: number } | null;
+}
+
+export interface DeferredUsageReconciliationInput {
+  readonly trialId: string;
+  readonly promptTokens: number;
+  readonly completionTokens: number;
+  readonly cachedPromptTokens?: number;
+  readonly observedChargedMicroUsd?: number | null;
+  readonly trialSucceeded: boolean;
+  readonly authorizedBy: string;
 }
 
 function reject(code: AdmissionRejectionCode, reason: string): RejectedCallDecision {
@@ -193,6 +204,7 @@ export class ExperimentCostGovernor {
   private activeAdmission: { admissionId: string; trialId: string; reservedMicroUsd: number } | null = null;
   private readonly completedTrialIds = new Set<string>();
   private readonly seenAttemptKeys = new Set<string>();
+  private readonly unresolvedLiabilityByTrial = new Map<string, number>();
 
   constructor(config: CostGovernorConfig) {
     assertSafeNonNegativeInteger(config.plannedLogicalTrials, 'plannedLogicalTrials');
@@ -269,6 +281,35 @@ export class ExperimentCostGovernor {
     gov.spendEvidenceStatus = snapshot.spendEvidenceStatus;
     for (const id of snapshot.completedTrialIds) gov.completedTrialIds.add(id);
     for (const key of snapshot.seenAttemptKeys) gov.seenAttemptKeys.add(key);
+    let totalTrialUnresolved = 0;
+    if (snapshot.unresolvedLiabilityByTrialMicroUsd) {
+      for (const [trialId, amount] of Object.entries(snapshot.unresolvedLiabilityByTrialMicroUsd)) {
+        const validated = assertSafeNonNegativeInteger(amount, `unresolvedLiabilityByTrialMicroUsd[${trialId}]`);
+        if (validated > 0) {
+          if (gov.completedTrialIds.has(trialId)) {
+            throw new Error(
+              `Snapshot trial "${trialId}" cannot be both completed and have unresolved liability (${validated})`,
+            );
+          }
+          gov.unresolvedLiabilityByTrial.set(trialId, validated);
+          totalTrialUnresolved = addSafeNonNegativeIntegers(
+            totalTrialUnresolved,
+            validated,
+            'totalTrialUnresolved',
+          );
+        }
+      }
+    }
+    if (gov.uncertainLiabilityMicroUsd > 0 && totalTrialUnresolved !== gov.uncertainLiabilityMicroUsd) {
+      throw new Error(
+        `Snapshot unresolvedLiabilityByTrialMicroUsd sum (${totalTrialUnresolved}) !== uncertainLiabilityMicroUsd (${gov.uncertainLiabilityMicroUsd})`,
+      );
+    }
+    if (gov.uncertainLiabilityMicroUsd === 0 && totalTrialUnresolved > 0) {
+      throw new Error(
+        `Snapshot unresolvedLiabilityByTrialMicroUsd sum (${totalTrialUnresolved}) exceeds uncertainLiabilityMicroUsd (0)`,
+      );
+    }
     return gov;
   }
 
@@ -471,6 +512,11 @@ export class ExperimentCostGovernor {
         active.reservedMicroUsd,
         'uncertainLiabilityMicroUsd',
       );
+      const prevTrialUnresolved = this.unresolvedLiabilityByTrial.get(active.trialId) ?? 0;
+      this.unresolvedLiabilityByTrial.set(
+        active.trialId,
+        addSafeNonNegativeIntegers(prevTrialUnresolved, active.reservedMicroUsd, 'unresolvedLiabilityByTrial'),
+      );
       this.reservedMicroUsd -= active.reservedMicroUsd;
       this.activeAdmission = null;
       this.completedCalls += 1;
@@ -497,7 +543,7 @@ export class ExperimentCostGovernor {
     this.reservedMicroUsd -= active.reservedMicroUsd;
     this.activeAdmission = null;
     this.completedCalls += 1;
-    if (usage.trialSucceeded !== false) {
+    if (usage.trialSucceeded !== false && !this.unresolvedLiabilityByTrial.has(active.trialId)) {
       this.completedTrialIds.add(active.trialId);
     }
     this.actualSpendMicroUsd = nextActualSpend;
@@ -522,8 +568,80 @@ export class ExperimentCostGovernor {
         active.reservedMicroUsd,
         'uncertainLiabilityMicroUsd',
       );
+      const prevTrialUnresolved = this.unresolvedLiabilityByTrial.get(active.trialId) ?? 0;
+      this.unresolvedLiabilityByTrial.set(
+        active.trialId,
+        addSafeNonNegativeIntegers(prevTrialUnresolved, active.reservedMicroUsd, 'unresolvedLiabilityByTrial'),
+      );
       this.spendEvidenceStatus = 'UNCERTAIN_FAILED_CALL';
     }
+  }
+
+  /**
+   * Explicitly reconciles deferred provider usage for a trial with unresolved liability.
+   * Transitions held uncertain liability to measured actual spend and marks the trial
+   * completed only when trialSucceeded is true and authorizedBy is non-empty.
+   */
+  reconcileDeferredUsage(input: DeferredUsageReconciliationInput): {
+    readonly observedCostMicroUsd: number;
+    readonly releasedUncertainLiabilityMicroUsd: number;
+  } {
+    if (this.activeAdmission !== null) {
+      throw new Error(
+        `DEFERRED_RECONCILIATION_ACTIVE_ADMISSION: cannot reconcile deferred usage while admission "${this.activeAdmission.admissionId}" is active`,
+      );
+    }
+    if (!input.authorizedBy.trim()) {
+      throw new Error('DEFERRED_RECONCILIATION_UNAUTHORIZED: authorizedBy is required');
+    }
+    const contract = this.config.pricingContract;
+    if (!contract) {
+      throw new Error('DEFERRED_RECONCILIATION_FAILED: pricingContract is missing');
+    }
+    if (this.completedTrialIds.has(input.trialId)) {
+      throw new Error(
+        `DEFERRED_RECONCILIATION_DUPLICATE: trial "${input.trialId}" is already completed`,
+      );
+    }
+    const heldLiability = this.unresolvedLiabilityByTrial.get(input.trialId);
+    if (heldLiability === undefined || heldLiability <= 0) {
+      throw new Error(
+        `DEFERRED_RECONCILIATION_NOT_PENDING: trial "${input.trialId}" has no unresolved liability`,
+      );
+    }
+    if (heldLiability > this.uncertainLiabilityMicroUsd) {
+      throw new Error(
+        `DEFERRED_RECONCILIATION_INVARIANT: heldLiability (${heldLiability}) exceeds uncertainLiabilityMicroUsd (${this.uncertainLiabilityMicroUsd})`,
+      );
+    }
+
+    const computedCost = computeObservedCallCostMicroUsd(contract, {
+      promptTokens: assertSafeNonNegativeInteger(input.promptTokens, 'promptTokens'),
+      completionTokens: assertSafeNonNegativeInteger(input.completionTokens, 'completionTokens'),
+      cachedPromptTokens: input.cachedPromptTokens,
+    });
+    const observedCost =
+      input.observedChargedMicroUsd !== undefined && input.observedChargedMicroUsd !== null
+        ? assertSafeNonNegativeInteger(input.observedChargedMicroUsd, 'observedChargedMicroUsd')
+        : computedCost;
+
+    this.uncertainLiabilityMicroUsd -= heldLiability;
+    this.unresolvedLiabilityByTrial.delete(input.trialId);
+    this.actualSpendMicroUsd = addSafeNonNegativeIntegers(
+      this.actualSpendMicroUsd,
+      observedCost,
+      'actualSpendMicroUsd',
+    );
+    if (input.trialSucceeded) {
+      this.completedTrialIds.add(input.trialId);
+    }
+    if (this.uncertainLiabilityMicroUsd === 0 && this.unresolvedLiabilityByTrial.size === 0) {
+      this.spendEvidenceStatus = 'COMPLETE';
+    }
+    return {
+      observedCostMicroUsd: observedCost,
+      releasedUncertainLiabilityMicroUsd: heldLiability,
+    };
   }
 
   /**
@@ -555,6 +673,10 @@ export class ExperimentCostGovernor {
   exportSnapshot(): CostGovernorSnapshot {
     const committed = this.actualSpendMicroUsd + this.reservedMicroUsd + this.uncertainLiabilityMicroUsd;
     const remaining = Math.max(0, this.config.authorizedCeilingMicroUsd - committed);
+    const unresolvedLiabilityByTrialMicroUsd: Record<string, number> = {};
+    for (const [trialId, amount] of this.unresolvedLiabilityByTrial.entries()) {
+      unresolvedLiabilityByTrialMicroUsd[trialId] = amount;
+    }
     return {
       plannedLogicalTrials: this.config.plannedLogicalTrials,
       plannedProviderCalls: this.config.plannedProviderCalls,
@@ -572,6 +694,7 @@ export class ExperimentCostGovernor {
       spendEvidenceStatus: this.spendEvidenceStatus,
       completedTrialIds: [...this.completedTrialIds],
       seenAttemptKeys: [...this.seenAttemptKeys],
+      unresolvedLiabilityByTrialMicroUsd,
       activeAdmission: this.activeAdmission ? { ...this.activeAdmission } : null,
     };
   }

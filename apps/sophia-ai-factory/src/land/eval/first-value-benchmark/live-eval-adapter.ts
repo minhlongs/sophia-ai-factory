@@ -35,11 +35,43 @@ import {
 } from './cost-governor';
 import { computeSha256Hex } from './dataset-loader';
 import {
+  FOUNDER_AUTH_DOMAIN,
+  FOUNDER_AUTH_SCHEMA_VERSION,
+  FOUNDER_RECONCILIATION_DOMAIN,
+  assertStrictAuthorizationEnvelope,
+  assertStrictDeferredReconciliationEnvelope,
+  verifyDetachedEd25519Signature,
+  type AuthorizationNonceLedger,
+  type DeferredUsageReconciliationPayload,
+  type DeferredUsageReconciliationRecord,
+  type ExperimentAuthorizationPayload,
+  type ExperimentAuthorizationRecord,
+  type FounderTrustAnchor,
+} from './founder-authorization';
+import {
   verifyModelVersionParity,
   type ModelParityAssessment,
   type PinnedModelPricingContract,
 } from './model-contract';
-import { BENCHMARK_ARMS, type BenchmarkArmId, type EvaluationBrief } from './types';
+import {
+  countAuthoritativePairCompletions,
+  evaluateTrialFinality,
+  type AdapterTrialStatus,
+  type CallReceiptOutcome,
+} from './trial-finality';
+import {
+  BENCHMARK_ARMS,
+  type BenchmarkArmId,
+  type EvaluationBrief,
+  type TrialExecutionRecord,
+} from './types';
+
+export {
+  type AuthorizationNonceLedger,
+  type ExperimentAuthorizationPayload,
+  type ExperimentAuthorizationRecord,
+  type FounderTrustAnchor,
+} from './founder-authorization';
 
 export const LIVE_ADAPTER_ENABLED_BY_DEFAULT = false as const;
 
@@ -50,35 +82,22 @@ export type TrialFailureCategory =
   | 'PROVIDER_FAILURE'
   | 'BUDGET_EXHAUSTED';
 
-export interface ExperimentAuthorizationRecord {
-  readonly authorizationId: string;
-  readonly approvedBy: string;
-  readonly approvedAtIso: string;
-  readonly expiresAtIso: string;
-  readonly manifestSha256: string;
-  readonly datasetSha256: string;
-  readonly rubricSha256: string;
-  readonly randomSeed: string;
-  readonly selectedBriefIds: readonly string[];
-  readonly modelId: string;
-  readonly pricingVersion: string;
-  readonly maxOutputTokensCap: number;
-  readonly maxRetriesPerTrial: number;
-  readonly authorizedCeilingMicroUsd: number;
-  readonly maxBillableCalls: number;
-  readonly providerSpendingCapConfirmed: boolean;
-}
-
 export interface ImmutableExecutionSnapshot {
   readonly manifestSha256: string;
   readonly manifest: Stage1CalibrationManifest;
   readonly selectedBriefs: readonly EvaluationBrief[];
   readonly contract: PinnedModelPricingContract;
   readonly authorization: ExperimentAuthorizationRecord | null;
+  readonly authorizationDigestSha256: string | null;
+  readonly experimentRunId: string | null;
   readonly ceilingMicroUsd: number;
   readonly maxBillableCalls: number;
   readonly maxOutputTokensCap: number;
   readonly maxRetriesPerTrial: number;
+  readonly reasoningEffort: OpenAiReasoningEffort;
+  readonly temperature: number;
+  readonly providerProjectId: string | null;
+  readonly permittedEnvironment: string | null;
   readonly providerCapConfirmed: boolean;
 }
 
@@ -100,6 +119,7 @@ export interface EvalTransportResponse {
   readonly ok: true;
   readonly renderedOutput: string;
   readonly provider: string;
+  readonly responseId?: string | null;
   readonly responseModelId: string | null;
   readonly modelFingerprint: string | null;
   readonly requestTimestampIso: string;
@@ -145,7 +165,8 @@ export interface CallUsageReceipt {
   readonly finishReason?: string | null;
   readonly reservedMicroUsd: number;
   readonly observedCostMicroUsd: number | null;
-  readonly outcome: 'SUCCESS' | 'FAILED_RETRYABLE' | 'FAILED_TERMINAL' | 'ADMISSION_REJECTED';
+  readonly liabilityHeldMicroUsd: number;
+  readonly outcome: CallReceiptOutcome;
   readonly failureClass?: string;
   readonly failureCategory?: TrialFailureCategory;
 }
@@ -157,7 +178,12 @@ export interface AdapterTrialEvidence {
   readonly inputSha256: string;
   readonly outputSha256: string | null;
   readonly renderedOutput: string | null;
-  readonly status: 'COMPLETED' | 'FAILED' | 'BLOCKED_BY_GOVERNOR';
+  readonly status: AdapterTrialStatus;
+  readonly outputContractValid: boolean;
+  readonly providerResponseId: string | null;
+  readonly providerModelVersion: string | null;
+  readonly observedCostMicroUsd: number | null;
+  readonly trialRecord: TrialExecutionRecord | null;
   readonly failureClass?: string;
   readonly failureCategory?: TrialFailureCategory;
   readonly rejectionCode?: AdmissionRejectionCode;
@@ -271,6 +297,11 @@ function assertAuthorizationTimeWindow(
   if (!Number.isFinite(approvedMs) || !Number.isFinite(expiresMs) || !Number.isFinite(nowMs)) {
     throw new Error('LIVE_AUTHORIZATION_EXPIRY_INVALID: invalid ISO timestamp in approvedAtIso or expiresAtIso');
   }
+  if (approvedMs > nowMs) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_FUTURE_DATED: approvedAtIso (${approvedAtIso}) is in the future relative to now (${nowIso})`,
+    );
+  }
   if (expiresMs <= approvedMs) {
     throw new Error(
       `LIVE_AUTHORIZATION_EXPIRY_INVALID: expiresAtIso (${expiresAtIso}) must be after approvedAtIso (${approvedAtIso})`,
@@ -282,28 +313,45 @@ function assertAuthorizationTimeWindow(
 }
 
 function assertAuthorizationFieldsMatchManifest(
-  auth: ExperimentAuthorizationRecord,
+  payload: ExperimentAuthorizationPayload,
   manifest: Stage1CalibrationManifest,
   maxOutputTokensCap: number,
+  expectedReasoningEffort: OpenAiReasoningEffort,
+  expectedTemperature: number,
 ): void {
-  if (auth.datasetSha256 !== manifest.datasetSha256) {
-    throw new Error('LIVE_AUTHORIZATION_DATASET_MISMATCH: authorization datasetSha256 does not match manifest');
-  }
-  if (auth.rubricSha256 !== manifest.rubricSha256) {
-    throw new Error('LIVE_AUTHORIZATION_RUBRIC_MISMATCH: authorization rubricSha256 does not match manifest');
-  }
-  if (auth.randomSeed !== manifest.randomSeed) {
-    throw new Error('LIVE_AUTHORIZATION_SEED_MISMATCH: authorization randomSeed does not match manifest');
-  }
-  assertExactStringListMatch(auth.selectedBriefIds, manifest.selectedBriefIds, 'LIVE_AUTHORIZATION_BRIEFS_MISMATCH');
-  if (auth.maxRetriesPerTrial !== manifest.callGraphPlan.maxRetriesPerTrial) {
+  if (payload.manifestVersion !== manifest.protocolVersion) {
     throw new Error(
-      `LIVE_AUTHORIZATION_RETRY_POLICY_MISMATCH: authorization maxRetriesPerTrial=${auth.maxRetriesPerTrial} !== manifest ${manifest.callGraphPlan.maxRetriesPerTrial}`,
+      `LIVE_AUTHORIZATION_MANIFEST_VERSION_MISMATCH: authorization manifestVersion=${payload.manifestVersion} !== manifest ${manifest.protocolVersion}`,
     );
   }
-  if (!Number.isSafeInteger(auth.maxOutputTokensCap) || auth.maxOutputTokensCap !== maxOutputTokensCap) {
+  if (payload.datasetSha256 !== manifest.datasetSha256) {
+    throw new Error('LIVE_AUTHORIZATION_DATASET_MISMATCH: authorization datasetSha256 does not match manifest');
+  }
+  if (payload.rubricSha256 !== manifest.rubricSha256) {
+    throw new Error('LIVE_AUTHORIZATION_RUBRIC_MISMATCH: authorization rubricSha256 does not match manifest');
+  }
+  if (payload.randomSeed !== manifest.randomSeed) {
+    throw new Error('LIVE_AUTHORIZATION_SEED_MISMATCH: authorization randomSeed does not match manifest');
+  }
+  assertExactStringListMatch(payload.selectedBriefIds, manifest.selectedBriefIds, 'LIVE_AUTHORIZATION_BRIEFS_MISMATCH');
+  if (payload.maxRetriesPerTrial !== manifest.callGraphPlan.maxRetriesPerTrial) {
     throw new Error(
-      `LIVE_AUTHORIZATION_TOKEN_CAP_MISMATCH: authorization maxOutputTokensCap=${auth.maxOutputTokensCap} !== requested ${maxOutputTokensCap}`,
+      `LIVE_AUTHORIZATION_RETRY_POLICY_MISMATCH: authorization maxRetriesPerTrial=${payload.maxRetriesPerTrial} !== manifest ${manifest.callGraphPlan.maxRetriesPerTrial}`,
+    );
+  }
+  if (!Number.isSafeInteger(payload.maxOutputTokensCap) || payload.maxOutputTokensCap !== maxOutputTokensCap) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_TOKEN_CAP_MISMATCH: authorization maxOutputTokensCap=${payload.maxOutputTokensCap} !== requested ${maxOutputTokensCap}`,
+    );
+  }
+  if (payload.reasoningEffort !== expectedReasoningEffort) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_REASONING_MISMATCH: authorization reasoningEffort=${payload.reasoningEffort} !== requested ${expectedReasoningEffort}`,
+    );
+  }
+  if (payload.temperature !== expectedTemperature) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_TEMPERATURE_MISMATCH: authorization temperature=${String(payload.temperature)} !== requested ${expectedTemperature}`,
     );
   }
 }
@@ -316,66 +364,174 @@ export function assertLiveAuthorization(args: {
   readonly maxOutputTokensCap: number;
   readonly nowIso: string;
   readonly authorization?: ExperimentAuthorizationRecord;
+  readonly trustAnchor?: FounderTrustAnchor | null;
+  readonly nonceLedger?: AuthorizationNonceLedger;
+  readonly expectedRunId?: string;
+  readonly expectedStage?: string;
+  readonly expectedReasoningEffort?: OpenAiReasoningEffort;
+  readonly expectedTemperature?: number;
+  readonly expectedPermittedEnvironment?: string;
+  readonly expectedProviderProjectId?: string;
+  readonly isExplicitResume?: boolean;
   readonly liveTransport?: EvalTransportFn;
 }): ImmutableExecutionSnapshot {
   if (!args.liveExecutionEnabled) {
     throw new Error('LIVE_EXECUTION_DISABLED: live mode is disabled by default and requires explicit operator opt-in');
   }
   if (!args.authorization) {
-    throw new Error('LIVE_AUTHORIZATION_REQUIRED: missing Founder ExperimentAuthorizationRecord');
+    throw new Error('LIVE_AUTHORIZATION_REQUIRED: missing signed Founder ExperimentAuthorizationRecord');
   }
-  const auth = args.authorization;
-  if (!auth.authorizationId?.trim() || !auth.approvedBy?.trim() || !auth.approvedAtIso?.trim()) {
-    throw new Error('LIVE_AUTHORIZATION_INVALID: authorizationId, approvedBy, and approvedAtIso are required');
-  }
-  assertAuthorizationTimeWindow(auth.approvedAtIso, auth.expiresAtIso, args.nowIso);
-  assertSelectedBriefsMatchManifest(args.selectedBriefs, args.manifest);
 
-  // Independently recompute canonical manifest digest from actual manifest content (never trust self-reported digest alone)
+  // 1. Validate strict canonical authorization schema (rejects unsigned or injected keys like publicKey)
+  assertStrictAuthorizationEnvelope(args.authorization);
+  const auth = args.authorization;
+  const { payload } = auth;
+
+  if (payload.schemaVersion !== FOUNDER_AUTH_SCHEMA_VERSION) {
+    throw new Error(
+      `AUTHORIZATION_SCHEMA_INVALID: unsupported schemaVersion "${String(payload.schemaVersion)}"`,
+    );
+  }
+  if (payload.domain !== FOUNDER_AUTH_DOMAIN) {
+    throw new Error(`AUTHORIZATION_DOMAIN_INVALID: unsupported domain "${String(payload.domain)}"`);
+  }
+
+  // 2–4. Resolve operator-controlled trust anchor, verify Ed25519 detached signature and signer key ID
+  const verifiedSig = verifyDetachedEd25519Signature({
+    domain: FOUNDER_AUTH_DOMAIN,
+    payload,
+    signatureBase64: auth.signatureBase64,
+    trustAnchor: args.trustAnchor,
+    expectedSignerKeyId: payload.founderSignerKeyId,
+  });
+
+  if (
+    !payload.authorizationId?.trim() ||
+    !payload.experimentRunId?.trim() ||
+    !payload.authorizationNonce?.trim() ||
+    !payload.approvedBy?.trim() ||
+    !payload.approvedAtIso?.trim() ||
+    !payload.permittedEnvironment?.trim() ||
+    !payload.providerProjectId?.trim()
+  ) {
+    throw new Error(
+      'LIVE_AUTHORIZATION_INVALID: authorizationId, experimentRunId, authorizationNonce, approvedBy, approvedAtIso, permittedEnvironment, and providerProjectId are required',
+    );
+  }
+
+  // 7. Verify approvedAtIso (not future-dated) and expiresAtIso (not expired)
+  assertAuthorizationTimeWindow(payload.approvedAtIso, payload.expiresAtIso, args.nowIso);
+
+  // 8. Verify stage identity (STAGE1 only)
+  const expectedStage = args.expectedStage ?? 'STAGE1';
+  if (payload.stage !== 'STAGE1' || expectedStage !== 'STAGE1') {
+    throw new Error(
+      `LIVE_AUTHORIZATION_STAGE_MISMATCH: Stage 1 authorization cannot authorize stage "${expectedStage}"`,
+    );
+  }
+
+  // 5–6. Recompute canonical manifest hash and verify all immutable experiment parameters
+  assertSelectedBriefsMatchManifest(args.selectedBriefs, args.manifest);
   const recomputedManifestSha256 = computeStage1ManifestSha256(args.manifest);
   if (recomputedManifestSha256 !== args.manifest.manifestSha256) {
     throw new Error(
       `LIVE_AUTHORIZATION_MANIFEST_TAMPERED: recomputed manifest SHA-256 (${recomputedManifestSha256}) !== embedded (${args.manifest.manifestSha256})`,
     );
   }
-  if (auth.manifestSha256 !== recomputedManifestSha256) {
+  if (payload.manifestSha256 !== recomputedManifestSha256) {
     throw new Error('LIVE_AUTHORIZATION_MANIFEST_MISMATCH: authorization does not match recomputed Stage 1 manifest digest');
   }
 
-  assertAuthorizationFieldsMatchManifest(auth, args.manifest, args.maxOutputTokensCap);
+  const expectedReasoningEffort =
+    args.expectedReasoningEffort ?? STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort;
+  const expectedTemperature =
+    args.expectedTemperature ?? STAGE1_EXPERIMENTAL_CONFIG.stage1Temperature;
+
+  assertAuthorizationFieldsMatchManifest(
+    payload,
+    args.manifest,
+    args.maxOutputTokensCap,
+    expectedReasoningEffort,
+    expectedTemperature,
+  );
+
+  // 9. Verify authorized cost and call ceilings
   assertPositiveIntegerInRange(
-    auth.authorizedCeilingMicroUsd,
+    payload.authorizedCeilingMicroUsd,
     args.manifest.callGraphPlan.proposedSpendCeilingMicroUsd,
     'LIVE_AUTHORIZATION_CEILING_INVALID',
     'authorizedCeilingMicroUsd',
   );
   assertPositiveIntegerInRange(
-    auth.maxBillableCalls,
+    payload.maxBillableCalls,
     args.manifest.callGraphPlan.runMaxBillableCallsCeiling,
     'LIVE_AUTHORIZATION_CALL_CEILING_INVALID',
     'maxBillableCalls',
   );
-  if (auth.modelId !== args.contract.modelId || auth.pricingVersion !== args.contract.pricingVersion) {
+  if (payload.modelId !== args.contract.modelId || payload.pricingVersion !== args.contract.pricingVersion) {
     throw new Error('LIVE_AUTHORIZATION_MODEL_MISMATCH: authorization model/pricing does not match pinned contract');
   }
-  if (!auth.providerSpendingCapConfirmed) {
+
+  // 10. Verify run ID, environment, provider project, and replay protection
+  if (args.expectedRunId && payload.experimentRunId !== args.expectedRunId) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_RUN_ID_MISMATCH: authorization experimentRunId="${payload.experimentRunId}" !== requested "${args.expectedRunId}"`,
+    );
+  }
+  if (
+    args.expectedPermittedEnvironment &&
+    payload.permittedEnvironment !== args.expectedPermittedEnvironment
+  ) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_ENVIRONMENT_MISMATCH: authorization permittedEnvironment="${payload.permittedEnvironment}" !== "${args.expectedPermittedEnvironment}"`,
+    );
+  }
+  if (
+    args.expectedProviderProjectId &&
+    payload.providerProjectId !== args.expectedProviderProjectId
+  ) {
+    throw new Error(
+      `LIVE_AUTHORIZATION_PROJECT_MISMATCH: authorization providerProjectId="${payload.providerProjectId}" !== "${args.expectedProviderProjectId}"`,
+    );
+  }
+  if (payload.providerSpendingCapConfirmed !== true) {
     throw new Error('LIVE_AUTHORIZATION_NO_PROVIDER_CAP: provider-side spending cap must be confirmed');
   }
   if (!args.liveTransport) {
     throw new Error('LIVE_TRANSPORT_NOT_CONFIGURED: no live provider transport injected (real network calls disabled offline)');
   }
 
+  if (!args.nonceLedger) {
+    throw new Error(
+      'LIVE_AUTHORIZATION_NONCE_LEDGER_REQUIRED: live execution requires an explicit AuthorizationNonceLedger for replay protection',
+    );
+  }
+  args.nonceLedger.claimOrVerifyResume({
+    authorizationNonce: payload.authorizationNonce,
+    experimentRunId: payload.experimentRunId,
+    manifestSha256: recomputedManifestSha256,
+    claimedAtIso: args.nowIso,
+    isExplicitResume: Boolean(args.isExplicitResume),
+  });
+
+  // 12. Bind verified authorization to immutable execution snapshot
   return deepFreeze({
     manifestSha256: recomputedManifestSha256,
     manifest: structuredClone(args.manifest),
     selectedBriefs: structuredClone([...args.selectedBriefs]),
     contract: structuredClone(args.contract),
     authorization: structuredClone(auth),
-    ceilingMicroUsd: auth.authorizedCeilingMicroUsd,
-    maxBillableCalls: auth.maxBillableCalls,
-    maxOutputTokensCap: auth.maxOutputTokensCap,
-    maxRetriesPerTrial: auth.maxRetriesPerTrial,
-    providerCapConfirmed: auth.providerSpendingCapConfirmed,
+    authorizationDigestSha256: verifiedSig.canonicalSha256,
+    experimentRunId: payload.experimentRunId,
+    ceilingMicroUsd: payload.authorizedCeilingMicroUsd,
+    maxBillableCalls: payload.maxBillableCalls,
+    maxOutputTokensCap: payload.maxOutputTokensCap,
+    maxRetriesPerTrial: payload.maxRetriesPerTrial,
+    reasoningEffort: expectedReasoningEffort,
+    temperature: expectedTemperature,
+    providerProjectId: payload.providerProjectId,
+    permittedEnvironment: payload.permittedEnvironment,
+    providerCapConfirmed: payload.providerSpendingCapConfirmed,
   });
 }
 
@@ -419,8 +575,17 @@ function resolveExecutionPlan(args: {
   readonly selectedBriefs: readonly EvaluationBrief[];
   readonly pricingContract: PinnedModelPricingContract;
   readonly maxOutputTokensCap: number;
+  readonly reasoningEffort: OpenAiReasoningEffort;
+  readonly temperature: number;
   readonly nowIso: string;
   readonly authorization?: ExperimentAuthorizationRecord;
+  readonly trustAnchor?: FounderTrustAnchor | null;
+  readonly nonceLedger?: AuthorizationNonceLedger;
+  readonly expectedRunId?: string;
+  readonly expectedStage?: string;
+  readonly expectedPermittedEnvironment?: string;
+  readonly expectedProviderProjectId?: string;
+  readonly isExplicitResume?: boolean;
   readonly mockTransport?: EvalTransportFn;
   readonly liveTransport?: EvalTransportFn;
 }): {
@@ -434,8 +599,17 @@ function resolveExecutionPlan(args: {
       selectedBriefs: args.selectedBriefs,
       contract: args.pricingContract,
       maxOutputTokensCap: args.maxOutputTokensCap,
+      expectedReasoningEffort: args.reasoningEffort,
+      expectedTemperature: args.temperature,
       nowIso: args.nowIso,
       authorization: args.authorization,
+      trustAnchor: args.trustAnchor,
+      nonceLedger: args.nonceLedger,
+      expectedRunId: args.expectedRunId,
+      expectedStage: args.expectedStage,
+      expectedPermittedEnvironment: args.expectedPermittedEnvironment,
+      expectedProviderProjectId: args.expectedProviderProjectId,
+      isExplicitResume: args.isExplicitResume,
       liveTransport: args.liveTransport,
     });
     return {
@@ -450,10 +624,16 @@ function resolveExecutionPlan(args: {
     selectedBriefs: structuredClone([...args.selectedBriefs]),
     contract: structuredClone(args.pricingContract),
     authorization: null,
+    authorizationDigestSha256: null,
+    experimentRunId: args.expectedRunId ?? null,
     ceilingMicroUsd: args.manifest.callGraphPlan.proposedSpendCeilingMicroUsd,
     maxBillableCalls: args.manifest.callGraphPlan.runMaxBillableCallsCeiling,
     maxOutputTokensCap: args.maxOutputTokensCap,
     maxRetriesPerTrial: args.manifest.callGraphPlan.maxRetriesPerTrial,
+    reasoningEffort: args.reasoningEffort,
+    temperature: args.temperature,
+    providerProjectId: args.expectedProviderProjectId ?? null,
+    permittedEnvironment: args.expectedPermittedEnvironment ?? null,
     providerCapConfirmed: true,
   });
   return {
@@ -465,22 +645,20 @@ function resolveExecutionPlan(args: {
 function countPairCompletions(
   selectedBriefs: readonly EvaluationBrief[],
   trials: readonly AdapterTrialEvidence[],
+  governorSnapshot: CostGovernorSnapshot,
+  receipts: readonly CallUsageReceipt[],
   previouslyCompletedTrialIds: readonly string[],
 ): { readonly completedPairsCount: number; readonly incompletePairsCount: number } {
-  const completedIds = new Set<string>(previouslyCompletedTrialIds);
-  for (const trial of trials) {
-    if (trial.status === 'COMPLETED') {
-      completedIds.add(trial.trialId);
-    }
-  }
-  let completedPairsCount = 0;
-  for (const brief of selectedBriefs) {
-    const allArmsDone = BENCHMARK_ARMS.every((armId) => completedIds.has(`${brief.briefId}:${armId}:t1`));
-    if (allArmsDone) completedPairsCount += 1;
-  }
+  const summary = countAuthoritativePairCompletions({
+    trials,
+    governorSnapshot,
+    receipts,
+    selectedBriefIds: selectedBriefs.map((b) => b.briefId),
+    previouslyCompletedTrialIds,
+  });
   return {
-    completedPairsCount,
-    incompletePairsCount: selectedBriefs.length - completedPairsCount,
+    completedPairsCount: summary.completedPairs,
+    incompletePairsCount: selectedBriefs.length - summary.completedPairs,
   };
 }
 
@@ -550,6 +728,12 @@ export async function runBudgetGatedCalibration(args: {
   readonly selectedBriefs: readonly EvaluationBrief[];
   readonly pricingContract: PinnedModelPricingContract;
   readonly authorization?: ExperimentAuthorizationRecord;
+  readonly trustAnchor?: FounderTrustAnchor | null;
+  readonly nonceLedger?: AuthorizationNonceLedger;
+  readonly expectedRunId?: string;
+  readonly expectedStage?: string;
+  readonly expectedPermittedEnvironment?: string;
+  readonly expectedProviderProjectId?: string;
   readonly mockTransport?: EvalTransportFn;
   readonly liveTransport?: EvalTransportFn;
   readonly resumeFromSnapshot?: CostGovernorSnapshot;
@@ -572,6 +756,11 @@ export async function runBudgetGatedCalibration(args: {
   const temperature = args.temperature ?? STAGE1_EXPERIMENTAL_CONFIG.stage1Temperature;
   const reasoningEffort = args.reasoningEffort ?? STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort;
 
+  if (args.resumeFromSnapshot && args.resumeFromSnapshot.admittedCalls <= 0) {
+    throw new Error(
+      'AUTHORIZATION_RESUME_EMPTY_SNAPSHOT: cannot resume from a snapshot with zero admittedCalls',
+    );
+  }
   const plan = resolveExecutionPlan({
     mode,
     liveExecutionEnabled,
@@ -579,8 +768,17 @@ export async function runBudgetGatedCalibration(args: {
     selectedBriefs: args.selectedBriefs,
     pricingContract: args.pricingContract,
     maxOutputTokensCap,
+    reasoningEffort,
+    temperature,
     nowIso: nowIso(),
     authorization: args.authorization,
+    trustAnchor: args.trustAnchor,
+    nonceLedger: args.nonceLedger,
+    expectedRunId: args.expectedRunId,
+    expectedStage: args.expectedStage,
+    expectedPermittedEnvironment: args.expectedPermittedEnvironment,
+    expectedProviderProjectId: args.expectedProviderProjectId,
+    isExplicitResume: Boolean(args.resumeFromSnapshot),
     mockTransport: args.mockTransport,
     liveTransport: args.liveTransport,
   });
@@ -629,7 +827,8 @@ export async function runBudgetGatedCalibration(args: {
   });
   const resumedIds = args.resumeFromSnapshot?.completedTrialIds ?? [];
   if (!preflightFeasibility.feasible) {
-    const pairCounts = countPairCompletions(snapshot.selectedBriefs, [], resumedIds);
+    const govSnap = governor.exportSnapshot();
+    const pairCounts = countPairCompletions(snapshot.selectedBriefs, [], govSnap, [], resumedIds);
     return {
       transportMode: mode,
       manifestSha256: snapshot.manifestSha256,
@@ -641,7 +840,7 @@ export async function runBudgetGatedCalibration(args: {
       incompletePairsCount: pairCounts.incompletePairsCount,
       trials: [],
       receipts: [],
-      costGovernorSnapshot: governor.exportSnapshot(),
+      costGovernorSnapshot: govSnap,
     };
   }
 
@@ -661,7 +860,26 @@ export async function runBudgetGatedCalibration(args: {
     previouslyCompletedIds: new Set<string>(resumedIds),
     nowIso,
   });
-  const pairCounts = countPairCompletions(snapshot.selectedBriefs, trials, resumedIds);
+  const finalSnapshot = governor.exportSnapshot();
+  const pairCounts = countPairCompletions(
+    snapshot.selectedBriefs,
+    trials,
+    finalSnapshot,
+    receipts,
+    resumedIds,
+  );
+  if (
+    mode === 'live_provider' &&
+    haltedReason === null &&
+    pairCounts.completedPairsCount === snapshot.selectedBriefs.length &&
+    snapshot.authorization
+  ) {
+    args.nonceLedger?.markRunFinalized?.({
+      authorizationNonce: snapshot.authorization.payload.authorizationNonce,
+      experimentRunId: snapshot.authorization.payload.experimentRunId,
+      finalizedAtIso: nowIso(),
+    });
+  }
 
   return {
     transportMode: mode,
@@ -674,7 +892,7 @@ export async function runBudgetGatedCalibration(args: {
     incompletePairsCount: pairCounts.incompletePairsCount,
     trials,
     receipts,
-    costGovernorSnapshot: governor.exportSnapshot(),
+    costGovernorSnapshot: finalSnapshot,
   };
 }
 
@@ -794,6 +1012,7 @@ function recordAdmissionRejection(
     completionTokens: null,
     reservedMicroUsd: 0,
     observedCostMicroUsd: null,
+    liabilityHeldMicroUsd: 0,
     outcome: 'ADMISSION_REJECTED',
     failureClass: code,
     failureCategory,
@@ -807,6 +1026,11 @@ function recordAdmissionRejection(
       outputSha256: null,
       renderedOutput: null,
       status: 'BLOCKED_BY_GOVERNOR',
+      outputContractValid: false,
+      providerResponseId: null,
+      providerModelVersion: null,
+      observedCostMicroUsd: null,
+      trialRecord: null,
       failureClass: code,
       failureCategory,
       rejectionCode: code,
@@ -824,7 +1048,8 @@ function buildObservedReceipt(args: {
   readonly res: EvalTransportResponse;
   readonly parity: ModelParityAssessment;
   readonly observedCostMicroUsd: number | null;
-  readonly outcome: 'SUCCESS' | 'FAILED_TERMINAL';
+  readonly liabilityHeldMicroUsd: number;
+  readonly outcome: 'SUCCESS' | 'COST_RECONCILIATION_REQUIRED' | 'FAILED_TERMINAL';
   readonly failureClass?: string;
   readonly failureCategory?: TrialFailureCategory;
 }): CallUsageReceipt {
@@ -848,6 +1073,7 @@ function buildObservedReceipt(args: {
     finishReason: args.res.finishReason ?? null,
     reservedMicroUsd: args.reservedMicroUsd,
     observedCostMicroUsd: args.observedCostMicroUsd,
+    liabilityHeldMicroUsd: args.liabilityHeldMicroUsd,
     outcome: args.outcome,
     ...(args.failureClass ? { failureClass: args.failureClass } : {}),
     ...(args.failureCategory ? { failureCategory: args.failureCategory } : {}),
@@ -921,6 +1147,60 @@ function validateResponseOutput(
   };
 }
 
+function buildAdapterTrialExecutionRecord(args: {
+  readonly ctx: TrialAttemptContext;
+  readonly attempt: number;
+  readonly res: EvalTransportResponse;
+  readonly renderedOutput: string;
+  readonly outputSha256: string;
+  readonly observedCostMicroUsd: number | null;
+}): TrialExecutionRecord {
+  const isLive = args.ctx.mode === 'live_provider';
+  const hasUsage =
+    args.observedCostMicroUsd !== null &&
+    args.res.promptTokens !== null &&
+    args.res.completionTokens !== null;
+  const missingReason = 'missing_provider_usage_metadata';
+
+  return {
+    trialId: args.ctx.trialId,
+    briefId: args.ctx.brief.briefId,
+    industry: args.ctx.brief.industry,
+    armId: args.ctx.armId,
+    trialNumber: 1,
+    executionMode: isLive ? 'live_observed' : 'fixture_simulated',
+    qualityStatus: 'QUALITY_NOT_MEASURED',
+    renderedOutput: args.renderedOutput,
+    inputSha256: args.ctx.inputSha256,
+    outputSha256: args.outputSha256,
+    orchestrationNotes: isLive
+      ? `live_provider:${args.res.provider}`
+      : `mock_transport:${args.res.provider}`,
+    telemetry: {
+      modelId: args.ctx.contract.modelId,
+      modelVersion: args.res.responseModelId ?? args.ctx.contract.modelId,
+      promptTokens: hasUsage
+        ? { status: 'OBSERVED', value: args.res.promptTokens as number }
+        : { status: 'NOT_MEASURED', reason: missingReason },
+      completionTokens: hasUsage
+        ? { status: 'OBSERVED', value: args.res.completionTokens as number }
+        : { status: 'NOT_MEASURED', reason: missingReason },
+      retryCount: Math.max(0, args.attempt - 1),
+      wallClockLatencyMs: Number.isSafeInteger(args.res.latencyMs) && args.res.latencyMs >= 0
+        ? { status: 'OBSERVED', value: args.res.latencyMs }
+        : { status: 'NOT_MEASURED', reason: 'invalid_latency_ms' },
+      estimatedInferenceCostMicroUsd: hasUsage
+        ? { status: 'OBSERVED', value: args.observedCostMicroUsd as number }
+        : { status: 'NOT_MEASURED', reason: missingReason },
+      measuredInferenceCostMicroUsd: hasUsage
+        ? { status: 'OBSERVED', value: args.observedCostMicroUsd as number }
+        : { status: 'NOT_MEASURED', reason: missingReason },
+      infrastructureCostAllocationMicroUsd: 0,
+      realPaidInferenceCostMicroUsd: isLive && hasUsage ? (args.observedCostMicroUsd as number) : 0,
+    },
+  };
+}
+
 function recordTransportSuccess(
   ctx: TrialAttemptContext,
   attempt: number,
@@ -936,12 +1216,21 @@ function recordTransportSuccess(
     requestTimestampIso: res.requestTimestampIso,
   });
   const outputCheck = validateResponseOutput(ctx, res);
+  const providerResponseId = res.responseId?.trim()
+    ? res.responseId
+    : res.modelFingerprint?.trim()
+      ? res.modelFingerprint
+      : null;
+  const providerModelVersion = res.responseModelId?.trim() ? res.responseModelId : null;
+  const hasRequiredProvenance =
+    Boolean(providerResponseId?.trim()) && Boolean(providerModelVersion?.trim());
+
   const reconciled = ctx.governor.reconcileSuccess(admissionId, {
     promptTokens: res.promptTokens,
     completionTokens: res.completionTokens,
     cachedPromptTokens: res.cachedPromptTokens,
     observedChargedMicroUsd: res.observedChargedMicroUsd,
-    trialSucceeded: outputCheck.ok,
+    trialSucceeded: outputCheck.ok && hasRequiredProvenance,
   });
   const missingUsageHalt = reconciled.observedCostMicroUsd === null ? 'MISSING_USAGE_METADATA' : null;
 
@@ -955,6 +1244,7 @@ function recordTransportSuccess(
         res,
         parity,
         observedCostMicroUsd: reconciled.observedCostMicroUsd,
+        liabilityHeldMicroUsd: reconciled.observedCostMicroUsd === null ? reservedMicroUsd : 0,
         outcome: 'FAILED_TERMINAL',
         failureClass: outputCheck.failureClass,
         failureCategory: outputCheck.failureCategory,
@@ -969,6 +1259,11 @@ function recordTransportSuccess(
         outputSha256: null,
         renderedOutput: null,
         status: 'FAILED',
+        outputContractValid: false,
+        providerResponseId,
+        providerModelVersion,
+        observedCostMicroUsd: reconciled.observedCostMicroUsd,
+        trialRecord: null,
         failureClass: outputCheck.failureClass,
         failureCategory: outputCheck.failureCategory,
         parityStatus: parity.status,
@@ -977,6 +1272,89 @@ function recordTransportSuccess(
     };
   }
 
+  const outputSha256 = computeSha256Hex(outputCheck.renderedOutput);
+  const trialRecord = buildAdapterTrialExecutionRecord({
+    ctx,
+    attempt,
+    res,
+    renderedOutput: outputCheck.renderedOutput,
+    outputSha256,
+    observedCostMicroUsd: reconciled.observedCostMicroUsd,
+  });
+
+  if (reconciled.observedCostMicroUsd === null) {
+    ctx.receipts.push(
+      buildObservedReceipt({
+        ctx,
+        attempt,
+        admissionId,
+        reservedMicroUsd,
+        res,
+        parity,
+        observedCostMicroUsd: null,
+        liabilityHeldMicroUsd: reservedMicroUsd,
+        outcome: 'COST_RECONCILIATION_REQUIRED',
+      }),
+    );
+    return {
+      evidence: {
+        trialId: ctx.trialId,
+        briefId: ctx.brief.briefId,
+        armId: ctx.armId,
+        inputSha256: ctx.inputSha256,
+        outputSha256,
+        renderedOutput: outputCheck.renderedOutput,
+        status: 'COST_RECONCILIATION_REQUIRED',
+        outputContractValid: true,
+        providerResponseId,
+        providerModelVersion,
+        observedCostMicroUsd: null,
+        trialRecord,
+        parityStatus: parity.status,
+      },
+      haltReason: missingUsageHalt,
+    };
+  }
+
+  if (!hasRequiredProvenance) {
+    ctx.receipts.push(
+      buildObservedReceipt({
+        ctx,
+        attempt,
+        admissionId,
+        reservedMicroUsd,
+        res,
+        parity,
+        observedCostMicroUsd: reconciled.observedCostMicroUsd,
+        liabilityHeldMicroUsd: 0,
+        outcome: 'FAILED_TERMINAL',
+        failureClass: 'MALFORMED_PROVIDER_RESPONSE',
+        failureCategory: 'PROVIDER_FAILURE',
+      }),
+    );
+    return {
+      evidence: {
+        trialId: ctx.trialId,
+        briefId: ctx.brief.briefId,
+        armId: ctx.armId,
+        inputSha256: ctx.inputSha256,
+        outputSha256,
+        renderedOutput: outputCheck.renderedOutput,
+        status: 'FAILED',
+        outputContractValid: true,
+        providerResponseId,
+        providerModelVersion,
+        observedCostMicroUsd: reconciled.observedCostMicroUsd,
+        trialRecord,
+        failureClass: 'MALFORMED_PROVIDER_RESPONSE',
+        failureCategory: 'PROVIDER_FAILURE',
+        parityStatus: parity.status,
+      },
+      haltReason: 'MISSING_PROVIDER_PROVENANCE',
+    };
+  }
+
+  const governorAccepted = ctx.governor.exportSnapshot().completedTrialIds.includes(ctx.trialId);
   ctx.receipts.push(
     buildObservedReceipt({
       ctx,
@@ -986,6 +1364,7 @@ function recordTransportSuccess(
       res,
       parity,
       observedCostMicroUsd: reconciled.observedCostMicroUsd,
+      liabilityHeldMicroUsd: 0,
       outcome: 'SUCCESS',
     }),
   );
@@ -995,12 +1374,17 @@ function recordTransportSuccess(
       briefId: ctx.brief.briefId,
       armId: ctx.armId,
       inputSha256: ctx.inputSha256,
-      outputSha256: computeSha256Hex(outputCheck.renderedOutput),
+      outputSha256,
       renderedOutput: outputCheck.renderedOutput,
-      status: 'COMPLETED',
+      status: governorAccepted ? 'COMPLETED' : 'COST_RECONCILIATION_REQUIRED',
+      outputContractValid: true,
+      providerResponseId,
+      providerModelVersion,
+      observedCostMicroUsd: reconciled.observedCostMicroUsd,
+      trialRecord,
       parityStatus: parity.status,
     },
-    haltReason: missingUsageHalt,
+    haltReason: null,
   };
 }
 
@@ -1034,6 +1418,7 @@ function recordTransportException(
     completionTokens: null,
     reservedMicroUsd,
     observedCostMicroUsd: null,
+    liabilityHeldMicroUsd: reservedMicroUsd,
     outcome: 'FAILED_TERMINAL',
     failureClass: 'TRANSPORT_EXCEPTION',
     failureCategory: 'PROVIDER_FAILURE',
@@ -1047,6 +1432,11 @@ function recordTransportException(
       outputSha256: null,
       renderedOutput: null,
       status: 'FAILED',
+      outputContractValid: false,
+      providerResponseId: null,
+      providerModelVersion: null,
+      observedCostMicroUsd: null,
+      trialRecord: null,
       failureClass: 'TRANSPORT_EXCEPTION',
       failureCategory: 'PROVIDER_FAILURE',
       parityStatus: 'MODEL_PARITY_UNVERIFIED',
@@ -1088,6 +1478,7 @@ function recordTransportFailure(
     completionTokens: null,
     reservedMicroUsd,
     observedCostMicroUsd: null,
+    liabilityHeldMicroUsd: res.acceptedByProvider ? reservedMicroUsd : 0,
     outcome: canRetry ? 'FAILED_RETRYABLE' : 'FAILED_TERMINAL',
     failureClass: res.failureClass,
     failureCategory,
@@ -1106,6 +1497,11 @@ function recordTransportFailure(
         outputSha256: null,
         renderedOutput: null,
         status: 'FAILED',
+        outputContractValid: false,
+        providerResponseId: null,
+        providerModelVersion: null,
+        observedCostMicroUsd: null,
+        trialRecord: null,
         failureClass: res.failureClass,
         failureCategory,
         parityStatus: 'MODEL_PARITY_UNVERIFIED',
@@ -1177,10 +1573,181 @@ async function executeSingleTrial(
       outputSha256: null,
       renderedOutput: null,
       status: 'FAILED',
+      outputContractValid: false,
+      providerResponseId: null,
+      providerModelVersion: null,
+      observedCostMicroUsd: null,
+      trialRecord: null,
       failureClass: lastFailureClass,
       failureCategory: 'PROVIDER_FAILURE',
       parityStatus: 'MODEL_PARITY_UNVERIFIED',
     },
     haltReason: null,
+  };
+}
+
+export type {
+  DeferredUsageReconciliationPayload,
+  DeferredUsageReconciliationRecord,
+};
+
+/**
+ * Explicit authorized state transition that completes a COST_RECONCILIATION_REQUIRED
+ * trial once trusted provider billing/usage evidence is supplied and cryptographically
+ * signed by the operator-controlled Founder trust anchor.
+ */
+export function reconcileDeferredTrialUsage(args: {
+  readonly runResult: CalibrationRunResult;
+  readonly selectedBriefs: readonly EvaluationBrief[];
+  readonly pricingContract: PinnedModelPricingContract;
+  readonly maxOutputTokensCap?: number;
+  readonly maxPromptTokensBudget?: number;
+  readonly reconciliation: DeferredUsageReconciliationRecord;
+  readonly trustAnchor: FounderTrustAnchor | null | undefined;
+}): CalibrationRunResult {
+  assertStrictDeferredReconciliationEnvelope(args.reconciliation);
+  const { payload } = args.reconciliation;
+  if (payload.domain !== FOUNDER_RECONCILIATION_DOMAIN) {
+    throw new Error(
+      `DEFERRED_RECONCILIATION_DOMAIN_INVALID: unexpected domain "${String(payload.domain)}"`,
+    );
+  }
+  if (payload.manifestSha256 !== args.runResult.manifestSha256) {
+    throw new Error(
+      'DEFERRED_RECONCILIATION_MANIFEST_MISMATCH: manifestSha256 does not match runResult',
+    );
+  }
+  verifyDetachedEd25519Signature({
+    domain: FOUNDER_RECONCILIATION_DOMAIN,
+    payload,
+    signatureBase64: args.reconciliation.signatureBase64,
+    trustAnchor: args.trustAnchor,
+    expectedSignerKeyId: payload.founderSignerKeyId,
+  });
+
+  const targetIdx = args.runResult.trials.findIndex((t) => t.trialId === payload.trialId);
+  if (targetIdx === -1) {
+    throw new Error(`DEFERRED_RECONCILIATION_TRIAL_NOT_FOUND: "${payload.trialId}"`);
+  }
+  const existing = args.runResult.trials[targetIdx];
+  if (existing.status !== 'COST_RECONCILIATION_REQUIRED') {
+    throw new Error(
+      `DEFERRED_RECONCILIATION_INVALID_STATE: trial "${payload.trialId}" is in status "${existing.status}", expected COST_RECONCILIATION_REQUIRED`,
+    );
+  }
+  if (!existing.outputContractValid || !existing.trialRecord || existing.outputSha256 !== payload.outputSha256) {
+    throw new Error(
+      `DEFERRED_RECONCILIATION_OUTPUT_MISMATCH: preserved artifact for "${payload.trialId}" does not match signed outputSha256`,
+    );
+  }
+
+  const snap = args.runResult.costGovernorSnapshot;
+  const governor = ExperimentCostGovernor.fromSnapshot(
+    {
+      plannedLogicalTrials: snap.plannedLogicalTrials,
+      plannedProviderCalls: snap.plannedProviderCalls,
+      maxBillableCalls: snap.maxBillableCalls,
+      maxRetriesPerTrial: args.runResult.callPolicySummary.maxRetriesPerTrial,
+      maxPromptTokensBudget: args.maxPromptTokensBudget ?? 4000,
+      maxOutputTokensCap: args.maxOutputTokensCap ?? STAGE1_EXPERIMENTAL_CONFIG.stage1MaxOutputTokensCap,
+      authorizedCeilingMicroUsd: snap.authorizedCeilingMicroUsd,
+      spendingAuthorized: true,
+      providerSpendingCapConfirmed: true,
+      pricingContract: args.pricingContract,
+    },
+    snap,
+  );
+
+  const reconciled = governor.reconcileDeferredUsage({
+    trialId: payload.trialId,
+    promptTokens: payload.promptTokens,
+    completionTokens: payload.completionTokens,
+    cachedPromptTokens: payload.cachedPromptTokens,
+    observedChargedMicroUsd: payload.observedChargedMicroUsd,
+    trialSucceeded: true,
+    authorizedBy: payload.founderSignerKeyId,
+  });
+
+  const isLive = args.runResult.transportMode === 'live_provider';
+  const updatedTrialRecord: TrialExecutionRecord = {
+    ...existing.trialRecord,
+    telemetry: {
+      ...existing.trialRecord.telemetry,
+      promptTokens: { status: 'OBSERVED', value: payload.promptTokens },
+      completionTokens: { status: 'OBSERVED', value: payload.completionTokens },
+      estimatedInferenceCostMicroUsd: { status: 'OBSERVED', value: reconciled.observedCostMicroUsd },
+      measuredInferenceCostMicroUsd: { status: 'OBSERVED', value: reconciled.observedCostMicroUsd },
+      realPaidInferenceCostMicroUsd: isLive ? reconciled.observedCostMicroUsd : 0,
+    },
+  };
+
+  const updatedTrial: AdapterTrialEvidence = {
+    ...existing,
+    status: 'COMPLETED',
+    observedCostMicroUsd: reconciled.observedCostMicroUsd,
+    trialRecord: updatedTrialRecord,
+  };
+
+  const updatedTrials = args.runResult.trials.map((t, idx) => (idx === targetIdx ? updatedTrial : t));
+  const priorReceiptsForTrial = args.runResult.receipts.filter(
+    (r) => r.trialId === existing.trialId,
+  );
+  const latestPriorReceipt = priorReceiptsForTrial[priorReceiptsForTrial.length - 1];
+  const reconciledReceipt: CallUsageReceipt = {
+    receiptId: `${payload.trialId}:deferred-reconciled`,
+    trialId: existing.trialId,
+    briefId: existing.briefId,
+    armId: existing.armId,
+    attemptNumber: latestPriorReceipt?.attemptNumber ?? 1,
+    transportMode: args.runResult.transportMode,
+    provider: args.pricingContract.provider,
+    requestedModelId: args.pricingContract.modelId,
+    responseModelId: existing.providerModelVersion,
+    modelFingerprint: latestPriorReceipt?.modelFingerprint ?? null,
+    requestTimestampIso: payload.reconciledAtIso,
+    parityStatus: existing.parityStatus,
+    parityReasons: ['deferred_usage_reconciled'],
+    promptTokens: payload.promptTokens,
+    completionTokens: payload.completionTokens,
+    reservedMicroUsd: reconciled.releasedUncertainLiabilityMicroUsd,
+    observedCostMicroUsd: reconciled.observedCostMicroUsd,
+    liabilityHeldMicroUsd: 0,
+    outcome: 'SUCCESS',
+  };
+  const updatedReceipts = [...args.runResult.receipts, reconciledReceipt];
+  const updatedSnapshot = governor.exportSnapshot();
+  const finalityCheck = evaluateTrialFinality(updatedTrial, {
+    governorSnapshot: updatedSnapshot,
+    receipts: updatedReceipts,
+  });
+  if (!finalityCheck.completed) {
+    throw new Error(
+      `DEFERRED_RECONCILIATION_FINALITY_FAILED: reconciled trial "${existing.trialId}" failed finality check (${finalityCheck.reasons.join(', ')})`,
+    );
+  }
+  const trialIdsInRun = new Set(updatedTrials.map((t) => t.trialId));
+  const previouslyCompletedTrialIds = updatedSnapshot.completedTrialIds.filter(
+    (id) => !trialIdsInRun.has(id),
+  );
+  const pairCounts = countPairCompletions(
+    args.selectedBriefs,
+    updatedTrials,
+    updatedSnapshot,
+    updatedReceipts,
+    previouslyCompletedTrialIds,
+  );
+
+  return {
+    ...args.runResult,
+    haltedReason:
+      updatedSnapshot.uncertainLiabilityMicroUsd === 0 &&
+      args.runResult.haltedReason === 'MISSING_USAGE_METADATA'
+        ? null
+        : args.runResult.haltedReason,
+    completedPairsCount: pairCounts.completedPairsCount,
+    incompletePairsCount: pairCounts.incompletePairsCount,
+    trials: updatedTrials,
+    receipts: updatedReceipts,
+    costGovernorSnapshot: updatedSnapshot,
   };
 }

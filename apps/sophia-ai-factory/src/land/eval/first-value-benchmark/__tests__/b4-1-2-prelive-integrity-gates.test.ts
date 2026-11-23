@@ -18,7 +18,11 @@ import {
   computeStage1CallPolicySummary,
   computeStage1ManifestSha256,
   createDeterministicMockTransport,
+  createEphemeralTestFounderKeypair,
   ExperimentCostGovernor,
+  FOUNDER_AUTH_DOMAIN,
+  FOUNDER_AUTH_SCHEMA_VERSION,
+  InMemoryAuthorizationNonceLedger,
   installBenchmarkZeroNetworkGuard,
   normalizeBriefForProductionScript,
   parseAndValidateArmAOutput,
@@ -32,6 +36,7 @@ import {
   verifyStage1CalibrationManifest,
   type EvalTransportFn,
   type EvalTransportRequest,
+  type ExperimentAuthorizationPayload,
   type ExperimentAuthorizationRecord,
   type Stage1CalibrationManifest,
   type TrialExecutionRecord,
@@ -54,16 +59,25 @@ function loadStage1Assets() {
   return { dataset, rubric, stage1 };
 }
 
+const TEST_FOUNDER_KEYPAIR = createEphemeralTestFounderKeypair('test-founder-ed25519-b4-1-2');
+
 function buildSyntheticAuth(
   manifest: Stage1CalibrationManifest,
-  overrides?: Partial<ExperimentAuthorizationRecord>,
+  overrides?: Partial<ExperimentAuthorizationPayload>,
 ): ExperimentAuthorizationRecord {
   const contract = PINNED_MODEL_CONTRACTS['gpt-5.4-mini-2026-03-17'];
-  return {
+  const payload: ExperimentAuthorizationPayload = {
+    schemaVersion: FOUNDER_AUTH_SCHEMA_VERSION,
+    domain: FOUNDER_AUTH_DOMAIN,
     authorizationId: 'SYNTHETIC-TEST-AUTH-001',
+    experimentRunId: 'run-synthetic-test-001',
+    authorizationNonce: 'nonce-synthetic-test-001',
+    founderSignerKeyId: TEST_FOUNDER_KEYPAIR.trustAnchor.signerKeyId,
     approvedBy: 'synthetic-test-harness',
     approvedAtIso: '2026-11-23T00:00:00.000Z',
     expiresAtIso: '2026-11-24T00:00:00.000Z',
+    stage: 'STAGE1',
+    manifestVersion: manifest.protocolVersion,
     manifestSha256: computeStage1ManifestSha256(manifest),
     datasetSha256: manifest.datasetSha256,
     rubricSha256: manifest.rubricSha256,
@@ -72,12 +86,17 @@ function buildSyntheticAuth(
     modelId: contract.modelId,
     pricingVersion: contract.pricingVersion,
     maxOutputTokensCap: STAGE1_EXPERIMENTAL_CONFIG.stage1MaxOutputTokensCap,
+    reasoningEffort: STAGE1_EXPERIMENTAL_CONFIG.stage1ReasoningEffort,
+    temperature: STAGE1_EXPERIMENTAL_CONFIG.stage1Temperature,
     maxRetriesPerTrial: manifest.callGraphPlan.maxRetriesPerTrial,
     authorizedCeilingMicroUsd: manifest.callGraphPlan.proposedSpendCeilingMicroUsd,
     maxBillableCalls: manifest.callGraphPlan.runMaxBillableCallsCeiling,
+    permittedEnvironment: 'offline_test_harness',
+    providerProjectId: 'proj_test_stage1_isolated',
     providerSpendingCapConfirmed: true,
     ...overrides,
   };
+  return TEST_FOUNDER_KEYPAIR.signAuthorization(payload);
 }
 
 describe('P2-A: Manifest-Bound Live Authorization & Immutable Execution Snapshot', () => {
@@ -93,6 +112,8 @@ describe('P2-A: Manifest-Bound Live Authorization & Immutable Execution Snapshot
       maxOutputTokensCap: 1200,
       nowIso: '2026-11-23T12:00:00.000Z',
       authorization: auth,
+      trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+      nonceLedger: new InMemoryAuthorizationNonceLedger(),
       liveTransport: createDeterministicMockTransport(contract),
     });
 
@@ -114,6 +135,8 @@ describe('P2-A: Manifest-Bound Live Authorization & Immutable Execution Snapshot
       contract,
       maxOutputTokensCap: 1200,
       nowIso: '2026-11-23T12:00:00.000Z',
+      trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+      nonceLedger: new InMemoryAuthorizationNonceLedger(),
       liveTransport: transport,
     };
 
@@ -275,6 +298,8 @@ describe('P2-A: Manifest-Bound Live Authorization & Immutable Execution Snapshot
       selectedBriefs: stage1.selectedBriefs,
       pricingContract: contract,
       authorization: buildSyntheticAuth(stage1.manifest),
+      trustAnchor: TEST_FOUNDER_KEYPAIR.trustAnchor,
+      nonceLedger: new InMemoryAuthorizationNonceLedger(),
       liveTransport: mutatingTransport,
       nowIso: () => '2026-11-23T12:00:00.000Z',
     });
@@ -449,6 +474,9 @@ describe('P2-B: Arm A API Request Parity & OpenAI gpt-5.4-mini Parameter Compati
     });
     expect(missingUsage.haltedReason).toBe('MISSING_USAGE_METADATA');
     expect(missingUsage.costGovernorSnapshot.spendEvidenceStatus).toBe('MISSING_USAGE_METADATA');
+    expect(missingUsage.trials[0].status).toBe('COST_RECONCILIATION_REQUIRED');
+    expect(missingUsage.receipts[0].outcome).toBe('COST_RECONCILIATION_REQUIRED');
+    expect(missingUsage.completedPairsCount).toBe(0);
 
     // Wrong model response metadata -> MODEL_PARITY_UNVERIFIED
     const wrongModel = await runBudgetGatedCalibration({
