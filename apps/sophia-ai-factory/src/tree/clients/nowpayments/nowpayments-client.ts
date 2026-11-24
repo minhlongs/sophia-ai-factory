@@ -6,6 +6,7 @@
 
 import { NowPaymentsSDK } from '@nowpaymentsio/nowpayments-sdk-nodejs';
 import { getOneTimeSkuById } from '@/seed/config/one-time-skus';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 import { TIER_PRICE_CONFIG } from './currency-service';
 import type { CreateCheckoutInput, CreateOneTimeCheckoutInput } from './types';
 
@@ -63,7 +64,7 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<{
   const priceAmount = input.priceAmountOverride ?? (isYearly ? config.yearlyPrice : config.price);
 
   const orderId = input.orderId || `sophia_${input.userId}_${Date.now()}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = getDefaultPublicOrigin();
 
   let successUrl = `${appUrl}/payment-success?tier=${input.tierId}&order_id=${orderId}`;
   if (input.customerEmail) {
@@ -100,7 +101,7 @@ export async function createOneTimeCheckout(input: CreateOneTimeCheckoutInput): 
   if (!sku) throw new Error(`Unknown SKU: ${input.skuId}`);
 
   const orderId = input.orderId || `sophia_${input.userId}_${Date.now()}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = getDefaultPublicOrigin();
 
   let successUrl = `${appUrl}/payment-success?sku=${input.skuId}&order_id=${orderId}`;
   if (input.customerEmail) {

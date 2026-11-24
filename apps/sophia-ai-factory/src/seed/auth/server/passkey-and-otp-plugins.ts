@@ -46,12 +46,20 @@ export function buildEmailOtpHtml(otp: string, type: string): string {
 </body></html>`;
 }
 
-export function createPasskeyPlugin(baseURL: string) {
-  const rpID = resolveRpId(baseURL);
+export function createPasskeyPlugin(baseURL?: string) {
+  if (baseURL) {
+    const rpID = resolveRpId(baseURL);
+    return passkey({
+      rpID,
+      rpName: 'Sophia AI Factory',
+      origin: baseURL,
+    });
+  }
+  // Omit static rpID/origin so @better-auth/passkey derives them dynamically
+  // from Better Auth's validated per-request baseURL across workers.dev and
+  // future brand domains.
   return passkey({
-    rpID,
     rpName: 'Sophia AI Factory',
-    origin: baseURL,
   });
 }
 

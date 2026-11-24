@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     'News, guides and tips for Sophia AI Video Factory | Tin tức, hướng dẫn và mẹo sử dụng Sophia AI Video Factory',
   alternates: {
     types: {
-      'application/rss+xml': 'https://sophia.agencyos.network/blog/feed.xml',
+      'application/rss+xml': '/blog/feed.xml',
     },
   },
 };

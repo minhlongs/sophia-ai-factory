@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 
-const SITE_URL = 'https://sophia.agencyos.network';
+const SITE_URL = getDefaultPublicOrigin();
 
 export async function buildHomeMetadata(locale: string): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: 'seo.home' });

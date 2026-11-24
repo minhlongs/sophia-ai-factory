@@ -161,10 +161,13 @@ jobs:
 
       - name: 'Stage 2a: D1 Delta Migration (sophia-raas-db)'
         if: ${{ inputs.skip_migrations != true && inputs.dry_run != true }}
+        env:
+          # Decoupled from brand domain: targets Worker technical URL when vars.DEPLOY_VERIFY_URL is configured.
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || 'https://sophia.agencyos.network' }}
         run: |
           set -euo pipefail
           echo "==> Fetching current live SHA to calculate migration delta..."
-          VERSION_URL="https://sophia.agencyos.network/api/version"
+          VERSION_URL="${DEPLOY_VERIFY_URL%/}/api/version"
           if ! VERSION_PAYLOAD=$(curl -fsS --connect-timeout 10 --max-time 15 "$VERSION_URL"); then
             echo "❌ CRITICAL: Failed to fetch live version from $VERSION_URL. Aborting before D1 migrations and Worker deploy." >&2
             exit 1
@@ -224,6 +227,10 @@ jobs:
     needs: stage-2-3-build-and-deploy
     if: ${{ !inputs.dry_run && (github.event_name != 'workflow_dispatch' || inputs.force_verify) }}
     runs-on: ubuntu-latest
+    env:
+      # Decoupled from brand domain: set repo variable DEPLOY_VERIFY_URL to
+      # https://sophia-ai-factory.agencyos-openclaw.workers.dev once production workers.dev is enabled.
+      DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || 'https://sophia.agencyos.network' }}
     defaults:
       run:
         working-directory: apps/sophia-ai-factory
@@ -240,7 +247,8 @@ jobs:
       - name: 'Stage 4a: Bit-for-bit Live Edge SHA Verification'
         run: |
           EXPECTED_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-          echo "==> Verifying Cloudflare edge deployed SHA matches: $EXPECTED_SHA"
+          BASE_URL="${DEPLOY_VERIFY_URL%/}"
+          echo "==> Verifying Cloudflare edge deployed SHA matches: $EXPECTED_SHA at $BASE_URL"
 
           MAX_ATTEMPTS=15
           DELAY=5
@@ -249,7 +257,7 @@ jobs:
           for i in $(seq 1 $MAX_ATTEMPTS); do
             # Use cache-busting timestamp parameter to bypass CDN edge caching
             NONCE=$(date +%s%N 2>/dev/null || date +%s)
-            LIVE_PAYLOAD=$(curl -s --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/api/version?deployVerify=${NONCE}" || echo "{}")
+            LIVE_PAYLOAD=$(curl -s --connect-timeout 10 --max-time 15 "${BASE_URL}/api/version?deployVerify=${NONCE}" || echo "{}")
             LIVE_SHA=$(echo "$LIVE_PAYLOAD" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
 
             if [ "$LIVE_SHA" = "$EXPECTED_SHA" ]; then
@@ -270,8 +278,9 @@ jobs:
 
       - name: 'Stage 4b: Health & Critical Endpoints Probe'
         run: |
+          BASE_URL="${DEPLOY_VERIFY_URL%/}"
           echo "==> Probing /api/health (expected HTTP 200)..."
-          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/api/health")
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "${BASE_URL}/api/health")
           if [ "$HEALTH_STATUS" != "200" ]; then
             echo "❌ /api/health returned HTTP $HEALTH_STATUS (expected 200)"
             exit 1
@@ -279,7 +288,7 @@ jobs:
           echo "✅ /api/health returned HTTP 200"
 
           echo "==> Probing /login (expected HTTP 200 or 307)..."
-          LOGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/login")
+          LOGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "${BASE_URL}/login")
           if [ "$LOGIN_STATUS" != "200" ] && [ "$LOGIN_STATUS" != "302" ] && [ "$LOGIN_STATUS" != "307" ] && [ "$LOGIN_STATUS" != "308" ]; then
             echo "❌ /login returned HTTP $LOGIN_STATUS (expected 200, 302, 307, or 308)"
             exit 1
@@ -287,7 +296,7 @@ jobs:
           echo "✅ /login returned HTTP $LOGIN_STATUS"
 
           echo "==> Probing /vi/login (expected HTTP 200)..."
-          VI_LOGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "https://sophia.agencyos.network/vi/login")
+          VI_LOGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "${BASE_URL}/vi/login")
           if [ "$VI_LOGIN_STATUS" != "200" ]; then
             echo "❌ /vi/login returned HTTP $VI_LOGIN_STATUS (expected 200)"
             exit 1
@@ -297,4 +306,5 @@ jobs:
       - name: 'Stage 4c: Post-Deploy Smoke Runner'
         run: |
           EXPECTED_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-          node scripts/post-deploy-smoke.mjs "https://sophia.agencyos.network" "$EXPECTED_SHA"
+          BASE_URL="${DEPLOY_VERIFY_URL%/}"
+          node scripts/post-deploy-smoke.mjs "$BASE_URL" "$EXPECTED_SHA"

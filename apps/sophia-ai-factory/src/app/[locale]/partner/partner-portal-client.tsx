@@ -27,7 +27,8 @@ export function PartnerPortalClient({
 
   const copyReferralUrl = () => {
     if (!profile) return;
-    navigator.clipboard.writeText(`https://sophia.agencyos.network/?ref=${profile.referral_code}`);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    navigator.clipboard.writeText(`${origin}/?ref=${profile.referral_code}`);
     state.setCopied(true);
     setTimeout(() => state.setCopied(false), 2500);
   };

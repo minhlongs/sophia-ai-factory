@@ -25,9 +25,10 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const shareUrl =
     initialShareUrl ??
-    (code ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}?ref=${code}` : null);
+    (code ? `${runtimeOrigin}/?ref=${code}` : null);
 
   async function generateCode() {
     setLoading(true);

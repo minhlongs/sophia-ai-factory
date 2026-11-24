@@ -8,6 +8,8 @@
  * @module seed/pilot/pilot-access-policy
  */
 
+import { PILOT_TECHNICAL_ORIGIN } from '@/seed/domain';
+
 export const PILOT_POLICY_VERSION = '2026-11-pilot-v2';
 
 export const PILOT_EVENT_NAMES = [
@@ -287,9 +289,9 @@ export function resolvePilotSponsoredOpenRouterKey(env: PilotEnvSource = process
  * is never attributed to the production origin.
  */
 export function resolvePilotRefererOrigin(env: PilotEnvSource = process.env): string {
-  const candidate = (env.APP_URL ?? env.BETTER_AUTH_URL ?? '').trim().replace(/\/+$/, '');
-  if (candidate && candidate.startsWith('https://')) {
+  const candidate = (env.APP_URL ?? env.BETTER_AUTH_URL ?? env.WORKER_TECHNICAL_URL ?? '').trim().replace(/\/+$/, '');
+  if (candidate && candidate.startsWith('https://') && !candidate.includes('REPLACE_WITH_')) {
     return candidate;
   }
-  return 'https://pilot.sophia.agencyos.network';
+  return PILOT_TECHNICAL_ORIGIN;
 }

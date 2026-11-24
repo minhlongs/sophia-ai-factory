@@ -21,6 +21,7 @@ const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 // forwarded so `(app)/layout.tsx` renders in the requested locale without 404ing.
 const APP_ONLY_DASHBOARD_PREFIXES = [
   '/dashboard/admin/byok-rotation',
+  '/dashboard/admin/domains',
   '/dashboard/admin/monitoring',
   '/dashboard/admin/sop-reviews',
   '/dashboard/analytics-roi',
@@ -104,8 +105,11 @@ export async function handleDashboardPipeline(
 
       const userRole = profileRow?.role ?? null;
       const isAdminRole = userRole === 'admin';
+      const isFounderOnlyDomainsRoute =
+        cleanPath === '/dashboard/admin/domains' ||
+        cleanPath.startsWith('/dashboard/admin/domains/');
 
-      if (!isMaster && !isAdminRole) {
+      if (isFounderOnlyDomainsRoute ? !isAdminRole : !isMaster && !isAdminRole) {
         return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));
       }
       } catch (tierErr) {

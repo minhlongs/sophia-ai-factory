@@ -1,21 +1,24 @@
 import { magicLink } from 'better-auth/plugins';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 import { escapeHtml } from '@/seed/security/input-sanitization-utilities';
 import { sendSeedEmail } from '@/seed/email/email-sender';
 
-export function buildWelcomeHtml(nameOrEmail: string): string {
+export function buildWelcomeHtml(nameOrEmail: string, appOrigin?: string): string {
   const raw = nameOrEmail.includes('@') ? nameOrEmail.split('@')[0] : nameOrEmail;
   const name = escapeHtml(raw);
+  const baseOrigin = (appOrigin || getDefaultPublicOrigin()).replace(/\/+$/, '');
+  const displayHost = escapeHtml(baseOrigin.replace(/^https?:\/\//, ''));
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,sans-serif;line-height:1.6;max-width:600px;margin:0 auto;padding:24px;">
   <h2 style="color:#6750A4">Welcome to Sophia AI Factory!</h2>
   <p>Hi ${name},</p>
   <p>Your account is ready. Here's how to get started:</p>
   <ol>
-    <li>Set up your API keys in <a href="https://sophia.agencyos.network/dashboard/onboarding" style="color:#6750A4;">Onboarding</a></li>
+    <li>Set up your API keys in <a href="${baseOrigin}/dashboard/onboarding" style="color:#6750A4;">Onboarding</a></li>
     <li>Create your first AI video campaign</li>
     <li>Connect Telegram bot @Sophia_Bbot for mobile access</li>
   </ol>
-  <p>Need help? Reply to this email, open the live-chat bubble on <a href="https://sophia.agencyos.network" style="color:#6750A4;">sophia.agencyos.network</a>, or message @Sophia_Bbot on Telegram.</p>
+  <p>Need help? Reply to this email, open the live-chat bubble on <a href="${baseOrigin}" style="color:#6750A4;">${displayHost}</a>, or message @Sophia_Bbot on Telegram.</p>
   <p style="color:#444;">Cần hỗ trợ? Trả lời email này, mở ô chat ở góc phải trang web, hoặc nhắn @Sophia_Bbot trên Telegram.</p>
   <p style="font-size:13px;color:#666;">Sophia AI Factory — AI-powered video production platform</p>
 </body></html>`;

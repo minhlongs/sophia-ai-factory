@@ -13,6 +13,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { getD1Raw } from '@/seed/db/client'
+import { getDefaultPublicOrigin } from '@/seed/domain'
 import { logger } from '@/seed/utils/logger-utility'
 import { decodeConsentCookie } from '@/seed/compliance/consent-resolver'
 import { CONSENT_COOKIE_NAME } from '@/seed/compliance/consent-types'
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: t('brand'),
       description: t('subtitle'),
-      url: `https://sophia.agencyos.network/ref/${code}`,
+      url: `${getDefaultPublicOrigin()}/ref/${code}`,
       siteName: 'Sophia AI Factory',
       type: 'website',
     },

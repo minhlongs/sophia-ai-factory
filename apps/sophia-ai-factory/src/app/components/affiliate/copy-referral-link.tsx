@@ -51,14 +51,16 @@ export function CopyReferralLink() {
 
   function copy() {
     if (!code) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
     navigator.clipboard
-      .writeText(`https://sophia.agencyos.network/?ref=${code}`)
+      .writeText(`${origin}/?ref=${code}`)
       .catch(() => {/* fallback: ignore clipboard errors */});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const referralUrl = code ? `sophia.agencyos.network/?ref=${code}` : null;
+  const displayOrigin = typeof window !== 'undefined' ? window.location.host : '';
+  const referralUrl = code ? `${displayOrigin}/?ref=${code}` : null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 space-y-4 max-w-lg mx-auto">

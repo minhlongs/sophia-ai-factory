@@ -43,11 +43,11 @@ describe('CORS middleware utilities', () => {
     expect(res.headers.get('Access-Control-Max-Age')).toBe('86400');
   });
 
-  it('returns 200 when wildcard * is allowed', () => {
+  it('rejects wildcard * in CORS_ALLOWED_ORIGINS (fail-closed)', () => {
     process.env.CORS_ALLOWED_ORIGINS = '*';
     const res = handleCorsPrelight('https://any-domain.com');
-    expect(res.status).toBe(200);
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://any-domain.com');
+    expect(res.status).toBe(204);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
 
   it('applyCorsHeaders attaches headers to existing response for allowed origin', () => {

@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getD1 } from '@/seed/db/client';
+import { getSafeOriginFromRequest } from '@/seed/domain';
 import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { hashEmail } from '@/seed/auth/sign-cookie-value';
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Regen token (72h for auto_signup, 24h otherwise)
   const token = await createMagicLinkToken(handover.id, { source: handover.source });
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const baseUrl = getSafeOriginFromRequest(request);
   const magicLinkUrl = `${baseUrl}/vi/welcome/${token}`;
 
   const emailOk = await deliverHandoverWelcomeEmail({

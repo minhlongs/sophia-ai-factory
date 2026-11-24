@@ -80,6 +80,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.env.PILOT_INVITE_ONLY = 'true';
   process.env.PILOT_ALLOWED_EMAILS = 'pilot@example.test';
+  process.env.ALLOWED_HOSTS = 'pilot.example.test';
 });
 
 afterEach(() => {

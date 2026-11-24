@@ -5,9 +5,12 @@
  */
 
 import { classifySubdomain } from '@/tree/agy/domain-router';
+import { PRODUCTION_TECHNICAL_HOSTNAME, PILOT_TECHNICAL_HOSTNAME } from '@/seed/domain';
 
 /** Platform canonical domains and patterns that must never query D1 */
 export const CANONICAL_DOMAINS = new Set([
+  PRODUCTION_TECHNICAL_HOSTNAME,
+  PILOT_TECHNICAL_HOSTNAME,
   'sophia.agencyos.network',
   'localhost',
   '127.0.0.1',
