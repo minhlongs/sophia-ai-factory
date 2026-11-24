@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createInvoiceUrl, createCheckout, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
 import { logger } from '@/seed/utils/logger-utility';
+import { getSafeOriginFromRequest } from '@/seed/domain';
 import { getUserId } from './checkout-auth';
 
 /**
@@ -9,7 +10,7 @@ import { getUserId } from './checkout-auth';
  * NOTE: GET path does NOT write pending_orders (no userId guaranteed).
  */
 export async function handleCheckoutGet(request: NextRequest): Promise<NextResponse> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = getSafeOriginFromRequest(request);
   try {
     if (request.nextUrl.searchParams.get('period') === 'pilot_14d' ||
         ['skuId', 'skuCode', 'tier'].some(key => request.nextUrl.searchParams.get(key)?.toUpperCase() === 'BASIC_PILOT_14D')) {

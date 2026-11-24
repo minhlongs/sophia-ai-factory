@@ -80,6 +80,7 @@ describe('middleware double-gate reachability for PayOS IPN and Telegram webhook
     vi.unstubAllEnvs();
     vi.stubEnv('INTERNAL_API_SECRET', 'prod-internal-secret-configured');
     vi.stubEnv('REQUIRE_AGENCY_ID', 'true');
+    vi.stubEnv('ALLOWED_HOSTS', 'sophia.agencyos.network');
   });
 
   it.each([

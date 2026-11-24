@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { getSafeOriginFromRequest } from '@/seed/domain';
 import { sendEmail } from '@/tree/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -100,10 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .bind(randomUUID(), identifier, value, expiresAt.toISOString(), now.toISOString(), now.toISOString())
     .run();
 
-  if (!process.env.NEXT_PUBLIC_APP_URL) {
-    logger.warn('[change-email] NEXT_PUBLIC_APP_URL not set; using fallback');
-  }
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || getSafeOriginFromRequest(req);
   const verifyUrl = `${baseUrl}/api/account/change-email/verify?token=${encodeURIComponent(token)}&userId=${encodeURIComponent(user.id)}`;
 
   try {

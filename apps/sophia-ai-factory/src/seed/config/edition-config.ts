@@ -16,6 +16,7 @@ import {
   type SophiaModuleFeatureId,
 } from './open-core-manifest';
 import { getFeatureGateMessages } from './edition-messages';
+import { PRODUCTION_TECHNICAL_HOSTNAME, PILOT_TECHNICAL_HOSTNAME } from '@/seed/domain';
 
 export interface EditionContextInput {
   readonly sophiaEdition?: string;
@@ -40,6 +41,8 @@ export interface FeatureGateEvaluation {
 }
 
 const OFFICIAL_HOSTS: ReadonlySet<string> = new Set([
+  PRODUCTION_TECHNICAL_HOSTNAME,
+  PILOT_TECHNICAL_HOSTNAME,
   'sophia.agencyos.network',
   'staging.sophia.agencyos.network',
 ]);

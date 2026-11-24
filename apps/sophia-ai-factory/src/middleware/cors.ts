@@ -16,12 +16,12 @@ function getAllowedOrigins(): string[] {
   return raw.split(',').map(s => s.trim()).filter(Boolean);
 }
 
-/** Check if origin is in the allowlist. */
+/** Check if origin is in the exact allowlist (never accepts wildcard '*'). */
 function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return false;
   const allowed = getAllowedOrigins();
   if (allowed.length === 0) return false;
-  return allowed.some(a => a === origin || a === '*');
+  return allowed.some((a) => a !== '*' && a === origin);
 }
 
 /**

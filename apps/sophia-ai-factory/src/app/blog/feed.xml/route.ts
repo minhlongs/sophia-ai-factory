@@ -4,10 +4,10 @@
  * Locale-agnostic — imports canonical POSTS from blog-posts-data.ts so RSS and HTML never drift.
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { POSTS } from '@/app/[locale]/blog/blog-posts-data';
+import { getSafeOriginFromRequest } from '@/seed/domain';
 
-const SITE_URL = 'https://sophia.agencyos.network';
 const FEED_TITLE = 'Sophia AI Factory Blog';
 const FEED_DESCRIPTION =
   'News, guides and tips for AI video creation, affiliate revenue, and USDT payments | Tin tức, hướng dẫn và mẹo tạo video AI, thu nhập affiliate, thanh toán USDT';
@@ -21,13 +21,14 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
-export function GET(): NextResponse {
+export function GET(request?: NextRequest): NextResponse {
+  const siteUrl = getSafeOriginFromRequest(request);
   const buildDate = new Date().toUTCString();
 
   const items = POSTS.map((post) => {
     const pubDate = new Date(post.date).toUTCString();
     const normalizedHref = post.href.startsWith('/en/') ? post.href : `/en${post.href}`;
-    const link = `${SITE_URL}${normalizedHref}#${post.slug}`;
+    const link = `${siteUrl}${normalizedHref}#${post.slug}`;
     return `
     <item>
       <title>${escapeXml(post.title)}</title>
@@ -42,11 +43,11 @@ export function GET(): NextResponse {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>${escapeXml(FEED_TITLE)}</title>
-    <link>${SITE_URL}/en/blog</link>
+    <link>${siteUrl}/en/blog</link>
     <description>${escapeXml(FEED_DESCRIPTION)}</description>
     <language>en-vi</language>
     <lastBuildDate>${buildDate}</lastBuildDate>
-    <atom:link href="${SITE_URL}/blog/feed.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="${siteUrl}/blog/feed.xml" rel="self" type="application/rss+xml" />
     ${items}
   </channel>
 </rss>`;

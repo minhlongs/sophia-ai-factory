@@ -28,7 +28,7 @@ export function PartnerDashboardView({
   const [payoutMessage, setPayoutMessage] = useState<PayoutMessage | null>(null);
 
   const baseUrl =
-    typeof window !== 'undefined' ? window.location.origin : 'https://sophia.agencyos.network';
+    typeof window !== 'undefined' ? window.location.origin : '';
   const primaryShareLink = `${baseUrl}/?ref=${partner.partnerCode}${subId.trim() ? `&sub_id=${encodeURIComponent(subId.trim())}` : ''}`;
   const telegramBotLink = `https://t.me/Sophia_Bbot?start=ref_${partner.partnerCode}`;
 

@@ -10,6 +10,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { getD1 } from '@/seed/db/client';
+import { getSafeOriginFromRequest } from '@/seed/domain';
 import { logger } from '@/seed/utils/logger-utility';
 import { sha256Hex, safeCompareHex, isHashedToken } from '@/seed/security/token-hash';
 
@@ -23,15 +24,15 @@ interface UpdateMeta {
   meta?: { changes?: number };
 }
 
-function failureRedirect(reason: string): NextResponse {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+function failureRedirect(reason: string, req?: NextRequest): NextResponse {
+  const baseUrl = getSafeOriginFromRequest(req);
   return NextResponse.redirect(`${baseUrl}/dashboard/account?error=${encodeURIComponent(reason)}`, 302);
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const token = req.nextUrl.searchParams.get('token');
   const userId = req.nextUrl.searchParams.get('userId');
-  if (!token || !userId) return failureRedirect('email-change-invalid');
+  if (!token || !userId) return failureRedirect('email-change-invalid', req);
 
   let db: D1Database;
   try {
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     db = _db;
   } catch (err) {
     logger.warn('[change-email/verify] D1 unavailable', { error: String(err) });
-    return failureRedirect('email-change-unavailable');
+    return failureRedirect('email-change-unavailable', req);
   }
 
   const identifier = `email-change:${userId}`;
@@ -49,15 +50,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .bind(identifier)
     .first<VerificationRow>();
 
-  if (!row) return failureRedirect('email-change-invalid');
+  if (!row) return failureRedirect('email-change-invalid', req);
 
   if (new Date(row.expiresAt).getTime() < Date.now()) {
     await db.prepare(`DELETE FROM verification WHERE id = ?`).bind(row.id).run();
-    return failureRedirect('email-change-expired');
+    return failureRedirect('email-change-expired', req);
   }
 
   const sepIndex = row.value.lastIndexOf(':');
-  if (sepIndex < 0) return failureRedirect('email-change-invalid');
+  if (sepIndex < 0) return failureRedirect('email-change-invalid', req);
   const newEmail = row.value.slice(0, sepIndex);
   const storedToken = row.value.slice(sepIndex + 1);
 
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       logger.info('[change-email/verify] legacy token format accepted', { userId });
     }
   }
-  if (!tokenOk) return failureRedirect('email-change-invalid');
+  if (!tokenOk) return failureRedirect('email-change-invalid', req);
 
   // Conditional UPDATE eliminates TOCTOU race. If another user claimed the
   // email between request and verify, NOT EXISTS fails and meta.changes === 0.
@@ -94,13 +95,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const changes = result.meta?.changes ?? 0;
   if (changes === 0) {
     await db.prepare(`DELETE FROM verification WHERE id = ?`).bind(row.id).run();
-    return failureRedirect('email-change-conflict');
+    return failureRedirect('email-change-conflict', req);
   }
 
   await db.prepare(`DELETE FROM verification WHERE id = ?`).bind(row.id).run();
 
   logger.info('[change-email/verify] email updated', { userId });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const baseUrl = getSafeOriginFromRequest(req);
   return NextResponse.redirect(`${baseUrl}/dashboard/account?ok=email-changed`, 302);
 }

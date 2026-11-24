@@ -4,25 +4,32 @@
  */
 
 import { NextResponse } from 'next/server';
+import { getEffectiveAllowedHosts } from '@/seed/domain';
+
+function resolveAllowedCorsOrigins(): Set<string> {
+  const origins = new Set<string>([
+    'https://sophia-ai-factory.pages.dev',
+  ]);
+  for (const host of getEffectiveAllowedHosts()) {
+    if (host === 'localhost' || host === '127.0.0.1') {
+      if (process.env.NODE_ENV !== 'production') {
+        origins.add(`http://${host}:3000`);
+        origins.add(`http://${host}:3001`);
+      }
+      continue;
+    }
+    origins.add(`https://${host}`);
+  }
+  return origins;
+}
 
 /**
- * Allowed origins for CORS
- * Thêm production domain và development localhost
- */
-const ALLOWED_ORIGINS = [
-  'https://sophia-ai-factory.pages.dev', // Cloudflare Pages
-  'https://sophia.agencyos.network', // Production domain
-  ...(process.env.NODE_ENV === 'development'
-    ? ['http://localhost:3000', 'http://localhost:3001']
-    : []),
-];
-
-/**
- * Check if origin is allowed
+ * Check if origin is allowed (exact match against runtime technical, env,
+ * and active brand-domain hosts — never wildcards).
  */
 export function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return false;
-  return ALLOWED_ORIGINS.includes(origin);
+  return resolveAllowedCorsOrigins().has(origin);
 }
 
 /**

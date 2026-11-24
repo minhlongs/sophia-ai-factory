@@ -15,17 +15,13 @@ import { logger } from '@/seed/utils/logger-utility';
 import { checkRateLimit, getClientIdentifier as getD1ClientId } from '@/seed/security/sql-rate-limiter';
 import { createRateLimitHeaders } from '@/forest/middleware/rate-limiter';
 import { getD1 } from '@/seed/db/client';
+import { getSafeOriginFromRequest } from '@/seed/domain';
 
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({
   email: z.string().email(),
 });
-
-const BASE_URL =
-  process.env.BETTER_AUTH_URL ||
-  process.env.NEXT_PUBLIC_APP_URL ||
-  'https://sophia.agencyos.network';
 
 function buildResetEmailHtml(resetUrl: string): string {
   const safe =
@@ -89,7 +85,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const token = await signResetToken(userRow.id, db);
-    const resetUrl = `${BASE_URL}/reset-password?token=${encodeURIComponent(token)}`;
+    const resetOrigin = getSafeOriginFromRequest(request);
+    const resetUrl = `${resetOrigin}/reset-password?token=${encodeURIComponent(token)}`;
 
     await sendEmail({
       to: email,

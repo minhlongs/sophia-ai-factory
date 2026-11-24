@@ -17,6 +17,7 @@ import {
   closeIncident,
 } from '@/land/status/status-store';
 import { sendOpsAlert } from '@/seed/observability/ops-alert';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 import { evaluateIncidentAction, type CheckStatus } from '@/land/status/incident-state-machine';
 
 export const CRON_NAME = 'uptime-check';
@@ -25,7 +26,7 @@ export const IDEMPOTENCY_WINDOW_MS = 2 * 60 * 1000;
 
 export const HEALTH_URL = process.env.PROD_URL
   ? `${process.env.PROD_URL}/api/health`
-  : 'https://sophia.agencyos.network/api/health';
+  : `${getDefaultPublicOrigin()}/api/health`;
 
 export const LATENCY_WARN_MS = 5000;
 

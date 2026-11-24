@@ -283,7 +283,7 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
         maxTokens: 2048,
         maxRetries: 1,
         timeoutMs: 45000,
-        referer: 'https://pilot.sophia.agencyos.network',
+        referer: 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev',
       }),
     );
 

@@ -77,6 +77,7 @@ function providerPost(
 describe('middleware postback & webhook reachability (real CSRF + public-route gates)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('ALLOWED_HOSTS', 'sophia.agencyos.network');
   });
 
   it.each([

@@ -4,13 +4,14 @@ import { SkipNav } from '@/components/skip-nav';
 import { ZenThemeProvider } from '@/forest/theme/zen-theme-provider';
 import { SUPPORTED_LOCALES } from '@/middleware/middleware-shared-config';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 import { isRtlLocale } from '@/seed/types/edge-mesh';
 import './globals.css';
 
 export const metadata: Metadata = {
-  // Required so relative og:image/twitter:image URLs (e.g. /og-image.png)
-  // resolve against the production domain instead of http://localhost:3000.
-  metadataBase: new URL('https://sophia.agencyos.network'),
+  // Resolve relative og:image/twitter:image URLs against the active public or
+  // Cloudflare technical workers.dev origin instead of a hardcoded brand domain.
+  metadataBase: new URL(getDefaultPublicOrigin()),
   title: 'Sophia AI Factory — AI Video Generation Platform',
   description:
     'Generate AI-powered videos for faceless YouTube channels and affiliate marketing empires.',

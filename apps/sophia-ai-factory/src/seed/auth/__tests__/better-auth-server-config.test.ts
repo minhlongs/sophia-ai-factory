@@ -79,23 +79,17 @@ describe('Better Auth Server Configuration & Hardening', () => {
   });
 
   describe('R1: Canonical Trusted Origins & Base URL Resolution', () => {
-    it('defines CANONICAL_TRUSTED_ORIGINS containing production domain, worker dev subdomain, and localhost', () => {
-      expect(CANONICAL_TRUSTED_ORIGINS).toContain('https://sophia.agencyos.network');
+    it('defines CANONICAL_TRUSTED_ORIGINS containing Cloudflare workers.dev technical origins', () => {
       expect(CANONICAL_TRUSTED_ORIGINS).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
-      expect(CANONICAL_TRUSTED_ORIGINS).toContain('https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev');
-      expect(CANONICAL_TRUSTED_ORIGINS).toContain('http://localhost:3000');
-      expect(CANONICAL_TRUSTED_ORIGINS).toContain('http://localhost:8787');
-      expect(CANONICAL_TRUSTED_ORIGINS).toContain('http://127.0.0.1:3000');
-      expect(CANONICAL_TRUSTED_ORIGINS).toContain('http://127.0.0.1:8787');
+      expect(CANONICAL_TRUSTED_ORIGINS).toContain('https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev');
     });
 
-    it('resolveTrustedOrigins unconditionally includes all canonical origins regardless of environment', () => {
+    it('resolveTrustedOrigins includes technical workers.dev origin and excludes localhost in production', () => {
       vi.stubEnv('NODE_ENV', 'production');
       const origins = resolveTrustedOrigins();
-      expect(origins).toContain('https://sophia.agencyos.network');
       expect(origins).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
-      expect(origins).toContain('http://localhost:3000');
-      expect(origins).toContain('http://127.0.0.1:3000');
+      expect(origins).not.toContain('http://localhost:3000');
+      expect(origins).not.toContain('http://127.0.0.1:3000');
     });
 
     it('resolveTrustedOrigins merges and deduplicates dynamic origins from environment variables', () => {
@@ -110,11 +104,11 @@ describe('Better Auth Server Configuration & Hardening', () => {
       expect(origins.length).toBe(uniqueCount);
     });
 
-    it('resolveBaseURL in production refuses localhost pollution and falls back to canonical production URL', () => {
+    it('resolveBaseURL in production refuses localhost pollution and falls back to technical workers.dev URL', () => {
       vi.stubEnv('NODE_ENV', 'production');
       vi.stubEnv('BETTER_AUTH_URL', 'http://localhost:3000');
       const baseURL = resolveBaseURL();
-      expect(baseURL).toBe('https://sophia.agencyos.network');
+      expect(baseURL).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
     });
 
     it('resolveBaseURL in production accepts valid external URL', () => {
@@ -160,8 +154,9 @@ describe('Better Auth Server Configuration & Hardening', () => {
       expect(varsSectionIndex).toBeGreaterThan(-1);
 
       const varsBlock = content.slice(varsSectionIndex);
-      expect(varsBlock).toMatch(/BETTER_AUTH_URL\s*=\s*"https:\/\/sophia\.agencyos\.network"/);
-      expect(varsBlock).toMatch(/APP_URL\s*=\s*"https:\/\/sophia\.agencyos\.network"/);
+      expect(varsBlock).toMatch(/BETTER_AUTH_URL\s*=\s*"https:\/\/sophia-ai-factory\.agencyos-openclaw\.workers\.dev"/);
+      expect(varsBlock).toMatch(/APP_URL\s*=\s*"https:\/\/sophia-ai-factory\.agencyos-openclaw\.workers\.dev"/);
+      expect(varsBlock).toMatch(/ALLOWED_HOSTS\s*=\s*"[^"]*sophia-ai-factory\.agencyos-openclaw\.workers\.dev[^"]*"/);
     });
   });
 
@@ -251,8 +246,8 @@ describe('Better Auth Server Configuration & Hardening', () => {
 
       expect(betterAuth).toHaveBeenCalledTimes(1);
       const passedOptions = vi.mocked(betterAuth).mock.calls[0][0] as {
-        trustedOrigins: string[];
-        baseURL: string;
+        trustedOrigins: ((request?: Request) => string[] | Promise<string[]>) | string[];
+        baseURL: { allowedHosts: string[]; fallback: string; protocol: string };
         user?: {
           additionalFields?: {
             role?: {
@@ -270,10 +265,14 @@ describe('Better Auth Server Configuration & Hardening', () => {
         };
       };
 
-      expect(passedOptions.trustedOrigins).toContain('https://sophia.agencyos.network');
-      expect(passedOptions.trustedOrigins).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
-      expect(passedOptions.trustedOrigins).toContain('http://localhost:3000');
-      expect(passedOptions.baseURL).toBe('https://sophia.agencyos.network');
+      const resolvedOrigins =
+        typeof passedOptions.trustedOrigins === 'function'
+          ? await passedOptions.trustedOrigins()
+          : passedOptions.trustedOrigins;
+      expect(resolvedOrigins).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
+      expect(passedOptions.baseURL.fallback).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
+      expect(passedOptions.baseURL.allowedHosts).toContain('sophia-ai-factory.agencyos-openclaw.workers.dev');
+      expect(passedOptions.baseURL.protocol).toBe('https');
       expect(passedOptions.user?.additionalFields?.role).toMatchObject({
         defaultValue: 'user',
         input: false,

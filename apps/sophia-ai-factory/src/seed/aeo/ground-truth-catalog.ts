@@ -9,10 +9,11 @@ import { TIER_CONFIGS } from '@/seed/config/tiers/tier-configs';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 import { NICHE_SLUGS } from '@/seed/config/niche-list';
 import type { Tier } from '@/seed/types';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 import { buildEeatTelemetryProof } from './eeat-telemetry-proof';
 import type { AeoLocale, AgentDiscoveryManifest, DualReadPagePayload } from './aeo-types';
 
-export const SOPHIA_BASE_URL = 'https://sophia.agencyos.network';
+export const SOPHIA_BASE_URL = getDefaultPublicOrigin();
 export const VERIFIED_ISO_DATE = '2026-10-26';
 
 export const AFFILIATE_NETWORKS_LIST = [

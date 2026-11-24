@@ -1,4 +1,5 @@
 import { FEATURE_PAYOS, isPayOsEnabled } from '@/seed/config/flags';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
 import type {
@@ -32,7 +33,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
 
   const { tier, userId: _userId, orderId, customerEmail } = input;
   const config = getPayOsTierConfig(tier, input.period);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = getDefaultPublicOrigin();
 
   // PayOS orderCode must be a positive integer — use last 9 digits of timestamp
   const orderCode = input.orderCodeOverride ?? parseInt(Date.now().toString().slice(-9), 10);

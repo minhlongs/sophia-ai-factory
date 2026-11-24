@@ -47,6 +47,7 @@ export function createProposalResult(deal: EnterpriseDeal): EnterpriseProposalRe
 
 export function createSandboxResult(deal: EnterpriseDeal): SandboxProvisionResult | null {
   if (!deal.sandboxSubaccountId) return null;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   return {
     dealId: deal.id,
     subaccountId: deal.sandboxSubaccountId,
@@ -55,7 +56,7 @@ export function createSandboxResult(deal: EnterpriseDeal): SandboxProvisionResul
     allocatedMcu: 1000,
     expiresAt: deal.sandboxExpiresAt || Date.now() + 14 * 86400000,
     sandboxToken: deal.sandboxToken || '',
-    demoMagicUrl: `https://sophia.agencyos.network/sandbox/${deal.sandboxToken || ''}`,
+    demoMagicUrl: `${origin}/sandbox/${deal.sandboxToken || ''}`,
     watermarkEnabled: true,
   };
 }

@@ -138,9 +138,13 @@ preview_id = "f2cf595dec5543dc96f6370bebbc8754"
 # === P3-KV-END ===
 
 [vars]
-# Auth canonical URLs (Workers runtime env parity - R2)
-BETTER_AUTH_URL = "https://sophia.agencyos.network"
-APP_URL = "https://sophia.agencyos.network"
+# Technical Worker identity (Cloudflare-owned, independent of brand domain renewal)
+WORKER_TECHNICAL_URL = "https://sophia-ai-factory.agencyos-openclaw.workers.dev"
+ALLOWED_HOSTS = "sophia-ai-factory.agencyos-openclaw.workers.dev,sophia.agencyos.network"
+
+# Auth canonical URLs (Workers runtime env parity — dynamic per-request host via Better Auth allowedHosts)
+BETTER_AUTH_URL = "https://sophia-ai-factory.agencyos-openclaw.workers.dev"
+APP_URL = "https://sophia-ai-factory.agencyos-openclaw.workers.dev"
 
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
 # Production uses real AI services (BYOK keys from customer)

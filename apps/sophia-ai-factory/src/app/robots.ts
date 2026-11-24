@@ -5,6 +5,7 @@
  */
 
 import type { MetadataRoute } from 'next';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 
 const PROTECTED_DISALLOW = [
   '/dashboard/',
@@ -41,6 +42,7 @@ const PUBLIC_AEO_ENDPOINTS = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
+  const origin = getDefaultPublicOrigin();
   return {
     rules: [
       {
@@ -54,7 +56,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', ...PROTECTED_DISALLOW],
       },
     ],
-    host: 'https://sophia.agencyos.network',
-    sitemap: 'https://sophia.agencyos.network/sitemap.xml',
+    host: origin,
+    sitemap: `${origin}/sitemap.xml`,
   };
 }

@@ -1,58 +1,136 @@
-import { CANONICAL_TRUSTED_ORIGINS } from './types';
+import {
+  getDefaultPublicOrigin,
+  getEffectiveAllowedHosts,
+  getTechnicalRuntimeIdentity,
+  isValidExactHostname,
+  normalizeExactHostname,
+} from '@/seed/domain';
+import { LOCAL_DEV_TRUSTED_ORIGINS } from './types';
+
 export {
   sanitizeAndResolveUserName,
   handleUserCreateBefore,
   provisionNewUser,
 } from './user-provisioning';
 
-export function resolveBaseURL(): string {
-  const globalEnv = (globalThis as unknown as { __env__?: Record<string, unknown> })?.__env__;
-  const cfBetterAuthUrl = typeof globalEnv?.BETTER_AUTH_URL === 'string' ? globalEnv.BETTER_AUTH_URL : undefined;
-  const cfAppUrl = typeof globalEnv?.APP_URL === 'string' ? globalEnv.APP_URL : undefined;
+function getMergedRuntimeEnv(): Record<string, string | undefined> {
+  const globalEnv = (
+    globalThis as unknown as { __env__?: Record<string, unknown> }
+  )?.__env__;
+  const merged: Record<string, string | undefined> = { ...process.env };
+  if (globalEnv) {
+    for (const key of [
+      'BETTER_AUTH_URL',
+      'APP_URL',
+      'NEXT_PUBLIC_APP_URL',
+      'WORKER_TECHNICAL_URL',
+      'ALLOWED_HOSTS',
+      'TRUSTED_ORIGINS',
+      'BETTER_AUTH_TRUSTED_ORIGINS',
+      'CF_WORKER_NAME',
+      'SOPHIA_PILOT_MODE',
+    ]) {
+      const value = globalEnv[key];
+      if (typeof value === 'string' && value.trim()) {
+        merged[key] = value;
+      }
+    }
+  }
+  return merged;
+}
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const envAuthUrl = process.env.BETTER_AUTH_URL || cfBetterAuthUrl || process.env.APP_URL || cfAppUrl;
-  const isLocalEnvUrl = Boolean(envAuthUrl && (envAuthUrl.includes('localhost') || envAuthUrl.includes('127.0.0.1')));
+export function resolveBaseURL(): string {
+  const env = getMergedRuntimeEnv();
+  const isProduction = env.NODE_ENV === 'production';
+  const envAuthUrl = env.BETTER_AUTH_URL || env.APP_URL || env.NEXT_PUBLIC_APP_URL;
+  const isLocalEnvUrl = Boolean(
+    envAuthUrl &&
+      (envAuthUrl.includes('localhost') || envAuthUrl.includes('127.0.0.1')),
+  );
 
   if (isProduction) {
-    if (envAuthUrl && !isLocalEnvUrl) {
+    if (envAuthUrl && !isLocalEnvUrl && !envAuthUrl.includes('REPLACE_WITH_')) {
       return envAuthUrl.replace(/\/+$/, '');
     }
-    return 'https://sophia.agencyos.network';
+    return getDefaultPublicOrigin(env);
   }
 
   return (envAuthUrl || 'http://localhost:3000').replace(/\/+$/, '');
 }
 
-export function resolveTrustedOrigins(customBaseURL?: string): string[] {
-  const base = customBaseURL || resolveBaseURL();
-  const globalEnv = (globalThis as unknown as { __env__?: Record<string, unknown> })?.__env__;
-  const cfBetterAuthUrl = typeof globalEnv?.BETTER_AUTH_URL === 'string' ? globalEnv.BETTER_AUTH_URL : undefined;
-  const cfAppUrl = typeof globalEnv?.APP_URL === 'string' ? globalEnv.APP_URL : undefined;
-  const cfNextPublicAppUrl = typeof globalEnv?.NEXT_PUBLIC_APP_URL === 'string' ? globalEnv.NEXT_PUBLIC_APP_URL : undefined;
-  const cfTrustedOrigins = typeof globalEnv?.TRUSTED_ORIGINS === 'string' ? globalEnv.TRUSTED_ORIGINS : undefined;
+/**
+ * Resolves the exact list of allowed hostnames for Better Auth dynamic baseURL.
+ * Never includes wildcards; combines technical workers.dev, Env ALLOWED_HOSTS,
+ * and active runtime brand domains.
+ */
+export function resolveAllowedAuthHosts(): string[] {
+  const env = getMergedRuntimeEnv();
+  const hosts = getEffectiveAllowedHosts(env);
+  const identity = getTechnicalRuntimeIdentity(env);
+  hosts.add(identity.technicalHostname);
+  return Array.from(hosts);
+}
 
-  const dynamicOriginCandidates = [
+/**
+ * Resolves exact trusted origins for Better Auth CSRF & Origin validation.
+ * Rejects wildcards (`*`) and malformed entries; only emits exact origins.
+ */
+export function resolveTrustedOrigins(customBaseURL?: string): string[] {
+  const env = getMergedRuntimeEnv();
+  const base = customBaseURL || resolveBaseURL();
+  const isProduction = env.NODE_ENV === 'production';
+  const originsSet = new Set<string>();
+
+  // Every exact allowed host is a trusted HTTPS origin
+  for (const host of resolveAllowedAuthHosts()) {
+    if (host === 'localhost' || host === '127.0.0.1') {
+      if (!isProduction) {
+        originsSet.add(`http://${host}:3000`);
+        originsSet.add(`http://${host}:8787`);
+      }
+      continue;
+    }
+    originsSet.add(`https://${host}`);
+  }
+
+  if (!isProduction) {
+    for (const localOrigin of LOCAL_DEV_TRUSTED_ORIGINS) {
+      originsSet.add(localOrigin);
+    }
+  }
+
+  const explicitCandidates = [
     base,
-    process.env.BETTER_AUTH_URL,
-    cfBetterAuthUrl,
-    process.env.APP_URL,
-    cfAppUrl,
-    process.env.NEXT_PUBLIC_APP_URL,
-    cfNextPublicAppUrl,
-    ...(process.env.TRUSTED_ORIGINS ? process.env.TRUSTED_ORIGINS.split(',') : []),
-    ...(cfTrustedOrigins ? cfTrustedOrigins.split(',') : []),
-    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',') : []),
+    env.BETTER_AUTH_URL,
+    env.APP_URL,
+    env.NEXT_PUBLIC_APP_URL,
+    env.WORKER_TECHNICAL_URL,
+    ...(env.TRUSTED_ORIGINS ? env.TRUSTED_ORIGINS.split(',') : []),
+    ...(env.BETTER_AUTH_TRUSTED_ORIGINS
+      ? env.BETTER_AUTH_TRUSTED_ORIGINS.split(',')
+      : []),
   ];
 
-  const originsSet = new Set<string>();
-  for (const canonical of CANONICAL_TRUSTED_ORIGINS) {
-    originsSet.add(canonical);
-  }
-  for (const candidate of dynamicOriginCandidates) {
-    if (typeof candidate === 'string') {
-      const trimmed = candidate.trim().replace(/\/+$/, '');
-      if (trimmed) originsSet.add(trimmed);
+  for (const candidate of explicitCandidates) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim().replace(/\/+$/, '');
+    if (!trimmed || trimmed.includes('*') || trimmed.includes('REPLACE_WITH_')) {
+      continue;
+    }
+    try {
+      const parsed = new URL(trimmed);
+      const isHttps = parsed.protocol === 'https:';
+      const isAllowedDevHttp =
+        !isProduction &&
+        parsed.protocol === 'http:' &&
+        (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+      if (!isHttps && !isAllowedDevHttp) continue;
+      const normalized = normalizeExactHostname(parsed.hostname);
+      if (normalized && isValidExactHostname(normalized)) {
+        originsSet.add(parsed.origin);
+      }
+    } catch {
+      // Ignore malformed origin entries (fail-closed)
     }
   }
 

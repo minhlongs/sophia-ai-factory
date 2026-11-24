@@ -111,7 +111,7 @@ describe('pilot-access-policy', () => {
       expect(valid.config.inFlightLockMs).toBe(110_000);
     }
 
-    expect(resolvePilotRefererOrigin({})).toBe('https://pilot.sophia.agencyos.network');
+    expect(resolvePilotRefererOrigin({})).toBe('https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev');
     expect(resolvePilotRefererOrigin({ APP_URL: 'https://beta.example.test/' })).toBe(
       'https://beta.example.test',
     );

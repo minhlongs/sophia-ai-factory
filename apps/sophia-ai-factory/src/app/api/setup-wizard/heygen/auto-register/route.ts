@@ -12,13 +12,12 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getUserCredential, setUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
+import { getSafeOriginFromRequest } from '@/seed/domain'
 import {
   globalRateLimiter,
   getClientIpIdentifier,
   createRateLimitResponse,
 } from '@/forest/middleware/rate-limiter'
-
-const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
@@ -46,9 +45,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
   }
 
+  const webhookUrl = `${getSafeOriginFromRequest(request)}/api/webhooks/heygen`
+
   const result = await registerHeyGenWebhook(
     apiKey,
-    SOPHIA_HEYGEN_WEBHOOK_URL,
+    webhookUrl,
     `user:${user.id}`,
   )
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json({
     success: result.success,
     endpointId: result.endpointId,
-    webhookUrl: SOPHIA_HEYGEN_WEBHOOK_URL,
+    webhookUrl,
     secretStored: result.success && !!result.signingSecret,
     error: result.error,
   })

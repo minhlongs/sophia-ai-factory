@@ -34,7 +34,8 @@ export function SandboxProvisionModal({
 }: SandboxProvisionModalProps) {
   if (!isOpen) return null;
 
-  const magicUrl = sandbox?.demoMagicUrl || (deal.sandboxToken ? `https://sophia.agencyos.network/sandbox/${deal.sandboxToken}` : null);
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const magicUrl = sandbox?.demoMagicUrl || (deal.sandboxToken ? `${origin}/sandbox/${deal.sandboxToken}` : null);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">

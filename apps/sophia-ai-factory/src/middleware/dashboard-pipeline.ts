@@ -21,6 +21,7 @@ const SUPPORTED_LOCALE_SET: ReadonlySet<string> = new Set(SUPPORTED_LOCALES);
 // forwarded so `(app)/layout.tsx` renders in the requested locale without 404ing.
 const APP_ONLY_DASHBOARD_PREFIXES = [
   '/dashboard/admin/byok-rotation',
+  '/dashboard/admin/domains',
   '/dashboard/admin/monitoring',
   '/dashboard/admin/sop-reviews',
   '/dashboard/analytics-roi',

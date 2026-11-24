@@ -11,12 +11,13 @@ import {
   magicLinkClient,
 } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
+import { getDefaultPublicOrigin } from '@/seed/domain';
 
 export const authClient = createAuthClient({
   baseURL:
     typeof window !== 'undefined'
       ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network',
+      : getDefaultPublicOrigin(),
   plugins: [
     passkeyClient(),
     emailOTPClient(),
