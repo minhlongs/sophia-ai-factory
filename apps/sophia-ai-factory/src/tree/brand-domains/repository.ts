@@ -129,13 +129,18 @@ export async function updateBrandDomainChecks(
     ...partialChecks,
   };
 
-  if (current.status === 'ACTIVE' && !evaluateDomainReadiness(merged).readyToActivate) {
+  const allGatesPassing = evaluateDomainReadiness(merged).readyToActivate;
+  if (current.status === 'ACTIVE' && !allGatesPassing) {
     throw new Error(
       `Cannot uncheck readiness gates on ACTIVE domain ${current.hostname}; suspend or rollback first`,
     );
   }
 
-  await db
+  const updateWhereClause = allGatesPassing
+    ? 'WHERE id = ?1'
+    : `WHERE id = ?1 AND status != 'ACTIVE'`;
+
+  const updateRes = await db
     .prepare(
       `UPDATE brand_domains
        SET ownership_verified = ?2, cf_zone_eligible = ?3, worker_attached = ?4,
@@ -143,7 +148,7 @@ export async function updateBrandDomainChecks(
            tenant_auth_verified = ?8, no_public_bypass_verified = ?9,
            external_callbacks_reviewed = ?10, smoke_verified = ?11,
            updated_at = datetime('now')
-       WHERE id = ?1`,
+       ${updateWhereClause}`,
     )
     .bind(
       id,
@@ -159,6 +164,12 @@ export async function updateBrandDomainChecks(
       merged.smokeVerified ? 1 : 0,
     )
     .run();
+
+  if (!allGatesPassing && (updateRes.meta?.changes ?? 0) !== 1) {
+    throw new Error(
+      `Cannot uncheck readiness gates on ACTIVE domain ${current.hostname}; suspend or rollback first`,
+    );
+  }
 
   await appendAuditEvent(db, id, current.hostname, 'CHECKS_UPDATED', actor, { checks: merged });
 

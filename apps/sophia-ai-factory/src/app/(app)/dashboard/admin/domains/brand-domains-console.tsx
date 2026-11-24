@@ -96,8 +96,11 @@ export function BrandDomainsConsole() {
         body: JSON.stringify({ action: 'update_checks', checks: { [key]: value } }),
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) setError(json.error || t('loadError'));
-      await loadRegistry();
+      if (!res.ok) {
+        setError(json.error || t('loadError'));
+      } else {
+        await loadRegistry();
+      }
     } finally {
       setBusyId(null);
     }
@@ -116,8 +119,11 @@ export function BrandDomainsConsole() {
         body: JSON.stringify({ action }),
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) setError(json.error || t('loadError'));
-      await loadRegistry();
+      if (!res.ok) {
+        setError(json.error || t('loadError'));
+      } else {
+        await loadRegistry();
+      }
     } finally {
       setBusyId(null);
     }

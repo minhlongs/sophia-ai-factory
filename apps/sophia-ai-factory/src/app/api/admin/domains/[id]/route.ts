@@ -142,6 +142,7 @@ export async function PATCH(
     }
     if (
       err.message.includes('Cannot activate') ||
+      err.message.includes('Cannot uncheck') ||
       err.message.includes('must be verified')
     ) {
       return NextResponse.json({ error: err.message }, { status: 409 });
