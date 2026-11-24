@@ -11,6 +11,7 @@ import {
   getStaticAllowedHosts,
   getEffectiveAllowedHosts,
   registerDynamicActiveHosts,
+  invalidateDynamicHostCache,
   resetDynamicHostRegistryForTests,
   onAllowedHostsUpdated,
   resolvePublicRequestOrigin,
@@ -155,5 +156,51 @@ describe('seed/domain — technical identity & fail-closed host security', () =>
     expect(hosts.has(PRODUCTION_TECHNICAL_HOSTNAME)).toBe(true);
     expect(hosts.has('*.bad.com')).toBe(false);
     expect(hosts.has('brand.com/path')).toBe(false);
+  });
+
+  it('rejects Host header port injection, leading-zero ports, and invalid TCP ports in production', () => {
+    const injectedPort = new Request(`https://${PRODUCTION_TECHNICAL_HOSTNAME}/login`, {
+      headers: { host: `${PRODUCTION_TECHNICAL_HOSTNAME}:8443` },
+    });
+    expect(resolvePublicRequestOrigin(injectedPort, PROD_ENV)).toBeNull();
+    expect(enforceAllowedRequestHost(injectedPort, PROD_ENV)?.status).toBe(421);
+
+    const leadingZeroPort = new Request(`https://${PRODUCTION_TECHNICAL_HOSTNAME}/login`, {
+      headers: { host: `${PRODUCTION_TECHNICAL_HOSTNAME}:00443` },
+    });
+    expect(resolvePublicRequestOrigin(leadingZeroPort, PROD_ENV)).toBeNull();
+
+    const outOfRangePort = new Request(`https://${PRODUCTION_TECHNICAL_HOSTNAME}/login`, {
+      headers: { host: `${PRODUCTION_TECHNICAL_HOSTNAME}:99999` },
+    });
+    expect(resolvePublicRequestOrigin(outOfRangePort, PROD_ENV)).toBeNull();
+
+    const stdHttpsPort = new Request(`https://${PRODUCTION_TECHNICAL_HOSTNAME}/login`, {
+      headers: { host: `${PRODUCTION_TECHNICAL_HOSTNAME}:443` },
+    });
+    expect(resolvePublicRequestOrigin(stdHttpsPort, PROD_ENV)?.origin).toBe(
+      PRODUCTION_TECHNICAL_ORIGIN,
+    );
+  });
+
+  it('identifies pilot Worker when PILOT_INVITE_ONLY=true even without SOPHIA_PILOT_MODE', () => {
+    const pilot = getTechnicalRuntimeIdentity({
+      NODE_ENV: 'production',
+      PILOT_INVITE_ONLY: 'true',
+    });
+    expect(pilot.workerName).toBe('sophia-ai-factory-pilot');
+    expect(pilot.technicalHostname).toBe(PILOT_TECHNICAL_HOSTNAME);
+    expect(pilot.environment).toBe('pilot');
+  });
+
+  it('drops dynamic hosts immediately on cache invalidation or TTL expiry', () => {
+    registerDynamicActiveHosts(['ephemeral.brand.io'], 60_000);
+    expect(getEffectiveAllowedHosts(PROD_ENV).has('ephemeral.brand.io')).toBe(true);
+
+    invalidateDynamicHostCache();
+    expect(getEffectiveAllowedHosts(PROD_ENV).has('ephemeral.brand.io')).toBe(false);
+
+    registerDynamicActiveHosts(['expired.brand.io'], -1);
+    expect(getEffectiveAllowedHosts(PROD_ENV).has('expired.brand.io')).toBe(false);
   });
 });

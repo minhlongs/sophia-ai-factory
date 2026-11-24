@@ -10,6 +10,7 @@ import type {
 } from '@/seed/domain';
 import { DomainReadinessPanel } from './domain-readiness-panel';
 import { TechnicalIdentityCard, AuditEventsSection } from './brand-domains-sections';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 
 interface RegistryResponse {
   technicalIdentity: TechnicalRuntimeIdentity;
@@ -60,7 +61,7 @@ export function BrandDomainsConsole() {
     try {
       const res = await fetch('/api/admin/domains', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({
           hostname: hostname.trim(),
           cloudflareZoneId: zoneId.trim() || undefined,
@@ -91,7 +92,7 @@ export function BrandDomainsConsole() {
     try {
       const res = await fetch(`/api/admin/domains/${domainId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({ action: 'update_checks', checks: { [key]: value } }),
       });
       const json = (await res.json()) as { error?: string };
@@ -111,7 +112,7 @@ export function BrandDomainsConsole() {
     try {
       const res = await fetch(`/api/admin/domains/${domainId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({ action }),
       });
       const json = (await res.json()) as { error?: string };

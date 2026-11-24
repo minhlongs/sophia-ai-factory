@@ -57,6 +57,7 @@ export function GET(request?: NextRequest): NextResponse {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
       'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+      Vary: 'Host, X-Forwarded-Host',
     },
   });
 }

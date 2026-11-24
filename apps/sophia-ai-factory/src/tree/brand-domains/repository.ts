@@ -129,6 +129,12 @@ export async function updateBrandDomainChecks(
     ...partialChecks,
   };
 
+  if (current.status === 'ACTIVE' && !evaluateDomainReadiness(merged).readyToActivate) {
+    throw new Error(
+      `Cannot uncheck readiness gates on ACTIVE domain ${current.hostname}; suspend or rollback first`,
+    );
+  }
+
   await db
     .prepare(
       `UPDATE brand_domains
@@ -190,15 +196,30 @@ export async function transitionBrandDomainStatus(
         `Cannot activate ${current.hostname}: missing gates (${evalResult.missingChecks.join(', ')})`,
       );
     }
-    await db
+    const activationResult = await db
       .prepare(
         `UPDATE brand_domains
          SET status = 'ACTIVE', activated_by = ?2, activated_at = datetime('now'),
              suspended_at = NULL, updated_at = datetime('now')
-         WHERE id = ?1`,
+         WHERE id = ?1
+           AND ownership_verified = 1
+           AND cf_zone_eligible = 1
+           AND worker_attached = 1
+           AND tls_verified = 1
+           AND auth_origin_verified = 1
+           AND access_policy_verified = 1
+           AND tenant_auth_verified = 1
+           AND no_public_bypass_verified = 1
+           AND external_callbacks_reviewed = 1
+           AND smoke_verified = 1`,
       )
       .bind(id, actor.actorId)
       .run();
+    if ((activationResult.meta?.changes ?? 0) !== 1) {
+      throw new Error(
+        `Cannot activate ${current.hostname}: readiness gates changed concurrently before activation`,
+      );
+    }
     await appendAuditEvent(db, id, current.hostname, 'ACTIVATED', actor, {
       previousStatus: current.status,
       passedGates: evalResult.passedCount,

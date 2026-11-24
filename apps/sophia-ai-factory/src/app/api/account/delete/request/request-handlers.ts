@@ -5,7 +5,7 @@ import { sendEmail } from '@/tree/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { sha256Hex } from '@/seed/security/token-hash';
-import { getDefaultPublicOrigin } from '@/seed/domain';
+import { getDefaultPublicOrigin, resolveConfiguredBaseUrl } from '@/seed/domain';
 import { buildDeleteConfirmHtml } from './email-template';
 
 export const COOLDOWN_DAYS = 7;
@@ -78,7 +78,10 @@ export async function createRequest(
     .bind(userId, tenantId, requestedAt, scheduledAt, tokenHash, requestedAt)
     .run();
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || getDefaultPublicOrigin();
+  const baseUrl = resolveConfiguredBaseUrl(
+    process.env.NEXT_PUBLIC_APP_URL,
+    getDefaultPublicOrigin(),
+  );
   const confirmUrl = `${baseUrl}/api/account/delete/confirm?token=${encodeURIComponent(token)}&userId=${encodeURIComponent(userId)}`;
 
   if (userEmail) {

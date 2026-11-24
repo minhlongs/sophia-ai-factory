@@ -40,6 +40,8 @@ directory = ".open-next/assets"
 binding = "ASSETS"
 
 [vars]
+CF_WORKER_NAME = "sophia-ai-factory-pilot"
+SOPHIA_PILOT_MODE = "true"
 PILOT_INVITE_ONLY = "true"
 PILOT_LIVE_INFERENCE_ENABLED = "false"
 PILOT_FINANCING_MODE = "FOUNDER_SPONSORED"

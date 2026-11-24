@@ -39,8 +39,36 @@ function isUsableUrl(raw: string | undefined): raw is string {
 
 export function isPilotEnvironment(env: DomainEnvLike = process.env): boolean {
   if (env.SOPHIA_PILOT_MODE === 'true' || env.SOPHIA_PILOT_MODE === '1') return true;
+  if (env.PILOT_INVITE_ONLY === 'true') return true;
   if (env.CF_WORKER_NAME === PILOT_WORKER_NAME) return true;
   return false;
+}
+
+/**
+ * Returns an explicit configured base URL (such as NEXT_PUBLIC_APP_URL) unless it is
+ * empty, a template placeholder, or a production localhost value — in which case it
+ * falls back to the validated runtime origin. Malformed/unsafe schemes are preserved
+ * so downstream URL validators fail closed with an explicit error.
+ */
+export function resolveConfiguredBaseUrl(
+  configuredUrl: string | undefined,
+  fallbackOrigin: string,
+  env: DomainEnvLike = process.env,
+): string {
+  const trimmed = configuredUrl?.trim();
+  if (!trimmed) return fallbackOrigin;
+  if (PLACEHOLDER_MARKERS.some((m) => trimmed.includes(m))) return fallbackOrigin;
+  if (env.NODE_ENV === 'production') {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        return fallbackOrigin;
+      }
+    } catch {
+      // Preserve non-URL values so downstream validators reject them explicitly
+    }
+  }
+  return trimmed;
 }
 
 export function getTechnicalRuntimeIdentity(

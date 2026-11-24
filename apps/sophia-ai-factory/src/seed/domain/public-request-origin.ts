@@ -40,7 +40,8 @@ function parseRawHostHeader(raw: string | null): { hostname: string; port: strin
   const colonIdx = trimmed.indexOf(':');
   if (colonIdx !== -1) {
     port = trimmed.slice(colonIdx + 1);
-    if (!/^\d{1,5}$/.test(port)) return null;
+    const portNum = Number(port);
+    if (!/^[1-9]\d{0,4}$/.test(port) || portNum < 1 || portNum > 65535) return null;
     hostname = trimmed.slice(0, colonIdx);
   }
 
@@ -120,16 +121,25 @@ export function resolvePublicRequestOrigin(
   if (!source) return null;
 
   const isLocal = isLocalDevHost(effective.hostname);
+  const isProd = env.NODE_ENV === 'production';
+
+  // Reject non-standard ports in production to prevent Host header port injection
+  if (isProd && effective.port && effective.port !== '443') {
+    return null;
+  }
+
   const rawProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
   let protocol: 'https:' | 'http:' = 'https:';
-  if (isLocal && env.NODE_ENV !== 'production') {
+  if (isLocal && !isProd) {
     protocol = rawProto === 'https' ? 'https:' : 'http:';
-  } else if (rawProto === 'http' && env.NODE_ENV === 'production') {
+  } else if (rawProto === 'http' && isProd) {
     // Never generate plaintext http origins in production
     protocol = 'https:';
   }
 
   const includePort =
+    !isProd &&
+    isLocal &&
     Boolean(effective.port) &&
     !((protocol === 'https:' && effective.port === '443') ||
       (protocol === 'http:' && effective.port === '80'));

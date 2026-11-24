@@ -210,6 +210,11 @@ describe('G7/G8 — Brand Domain Registry 10-gate enforcement & lifecycle', () =
     const activeHosts = await listActiveHostnamesForWorker(db, 'sophia-ai-factory');
     expect(activeHosts).toEqual(['app.acmevideo.com']);
 
+    // Cannot uncheck a readiness gate while ACTIVE — must suspend/rollback first
+    await expect(
+      updateBrandDomainChecks(db, created.id, { tlsVerified: false }, actor),
+    ).rejects.toThrow(/Cannot uncheck readiness gates on ACTIVE domain/);
+
     // Rollback suspends domain immediately
     const rolledBack = await transitionBrandDomainStatus(
       db,

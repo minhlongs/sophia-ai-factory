@@ -18,6 +18,7 @@ import {
 } from '@/tree/custom-domains/hostname-resolver';
 import {
   enforceAllowedRequestHost,
+  isDynamicHostCacheFresh,
   resolvePublicRequestOrigin,
 } from '@/seed/domain';
 import { syncActiveBrandDomainsFromD1 } from '@/tree/brand-domains';
@@ -45,13 +46,14 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   await initializeWAEBinding();
 
   // Fail-closed Host & X-Forwarded-Host allowlist check.
-  // If not matched by static technical/env allowlist, refresh active brand
-  // domains from D1 (TTL-cached) before rejecting with HTTP 421.
-  if (!resolvePublicRequestOrigin(request)) {
+  // Refresh active brand domains from D1 whenever the TTL cache is stale or
+  // the incoming host is not yet matched, so suspended/rolled-back domains
+  // cannot remain accepted across stale cache windows.
+  if (!isDynamicHostCacheFresh() || !resolvePublicRequestOrigin(request)) {
     await syncActiveBrandDomainsFromD1();
-    const hostBlocked = enforceAllowedRequestHost(request);
-    if (hostBlocked) return hostBlocked;
   }
+  const hostBlocked = enforceAllowedRequestHost(request);
+  if (hostBlocked) return hostBlocked;
 
   const pilotFeatureBlocked = enforcePilotFeatureDisabled(pathname);
   if (pilotFeatureBlocked) return pilotFeatureBlocked;

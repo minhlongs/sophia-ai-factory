@@ -9,6 +9,7 @@
 import { getAuth } from '@/seed/auth/better-auth-server';
 import {
   enforceAllowedRequestHost,
+  isDynamicHostCacheFresh,
   resolvePublicRequestOrigin,
 } from '@/seed/domain';
 import { syncActiveBrandDomainsFromD1 } from '@/tree/brand-domains';
@@ -63,11 +64,11 @@ async function checkRevokedPilotSession(
 
 export async function GET(request: Request) {
   try {
-    if (!resolvePublicRequestOrigin(request)) {
+    if (!isDynamicHostCacheFresh() || !resolvePublicRequestOrigin(request)) {
       await syncActiveBrandDomainsFromD1();
-      const hostBlocked = enforceAllowedRequestHost(request);
-      if (hostBlocked) return hostBlocked;
     }
+    const hostBlocked = enforceAllowedRequestHost(request);
+    if (hostBlocked) return hostBlocked;
     const auth = await getAuth();
     if (!auth) {
       return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503 });
@@ -87,11 +88,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    if (!resolvePublicRequestOrigin(request)) {
+    if (!isDynamicHostCacheFresh() || !resolvePublicRequestOrigin(request)) {
       await syncActiveBrandDomainsFromD1();
-      const hostBlocked = enforceAllowedRequestHost(request);
-      if (hostBlocked) return hostBlocked;
     }
+    const hostBlocked = enforceAllowedRequestHost(request);
+    if (hostBlocked) return hostBlocked;
     let forwardedRequest = request;
     const normalizedPath = normalizeAuthPathname(request.url);
     if (isPilotInviteOnlyEnabled() && isGuardedPilotAuthPath(normalizedPath)) {

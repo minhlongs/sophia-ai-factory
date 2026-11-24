@@ -98,6 +98,40 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     typeof body.workerName === 'string' && body.workerName.trim()
       ? body.workerName.trim()
       : technicalIdentity.workerName;
+  if (!/^[a-z0-9-]{1,63}$/.test(workerName)) {
+    return NextResponse.json({ error: 'Invalid workerName format' }, { status: 400 });
+  }
+
+  const cloudflareZoneId =
+    typeof body.cloudflareZoneId === 'string' && body.cloudflareZoneId.trim()
+      ? body.cloudflareZoneId.trim()
+      : null;
+  if (cloudflareZoneId && !/^[a-f0-9]{32}$/i.test(cloudflareZoneId)) {
+    return NextResponse.json(
+      { error: 'Invalid cloudflareZoneId (expected 32-char hex ID)' },
+      { status: 400 },
+    );
+  }
+
+  const tenantId =
+    typeof body.tenantId === 'string' && body.tenantId.trim()
+      ? body.tenantId.trim()
+      : null;
+  if (tenantId && tenantId.length > 128) {
+    return NextResponse.json({ error: 'Invalid tenantId (max 128 chars)' }, { status: 400 });
+  }
+
+  const ALLOWED_AUTH_POLICIES = new Set(['standard', 'strict', 'invite-only']);
+  const authPolicy =
+    typeof body.authPolicy === 'string' && body.authPolicy.trim()
+      ? body.authPolicy.trim()
+      : 'standard';
+  if (!ALLOWED_AUTH_POLICIES.has(authPolicy)) {
+    return NextResponse.json(
+      { error: 'Invalid authPolicy (allowed: standard, strict, invite-only)' },
+      { status: 400 },
+    );
+  }
 
   try {
     const db = await getD1();
@@ -113,11 +147,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       {
         hostname: body.hostname,
         workerName,
-        cloudflareZoneId:
-          typeof body.cloudflareZoneId === 'string' ? body.cloudflareZoneId : null,
-        tenantId: typeof body.tenantId === 'string' ? body.tenantId : null,
-        authPolicy:
-          typeof body.authPolicy === 'string' ? body.authPolicy : 'standard',
+        cloudflareZoneId,
+        tenantId,
+        authPolicy,
         isCanonical: body.isCanonical === true,
       },
       {

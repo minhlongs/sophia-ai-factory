@@ -167,11 +167,19 @@ export function isDynamicHostCacheFresh(): boolean {
 }
 
 export function getDynamicActiveHosts(): ReadonlySet<string> {
+  if (!isDynamicHostCacheFresh()) {
+    return new Set();
+  }
   return dynamicActiveHosts;
 }
 
 export function invalidateDynamicHostCache(): void {
+  dynamicActiveHosts = new Set();
   dynamicCacheExpiresAt = 0;
+  const effective = [...getEffectiveAllowedHosts()];
+  for (const listener of syncListeners) {
+    listener(effective);
+  }
 }
 
 export function resetDynamicHostRegistryForTests(): void {
@@ -181,7 +189,7 @@ export function resetDynamicHostRegistryForTests(): void {
 
 export function getEffectiveAllowedHosts(env: DomainEnvLike = process.env): Set<string> {
   const combined = getStaticAllowedHosts(env);
-  for (const host of dynamicActiveHosts) {
+  for (const host of getDynamicActiveHosts()) {
     combined.add(host);
   }
   return combined;
