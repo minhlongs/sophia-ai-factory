@@ -20,6 +20,8 @@ import {
   ProviderInvalidKeyError,
   ProviderQuotaExceededError,
 } from '@/seed/services/errors';
+import { recordFailure, reset as resetCircuitBreaker } from '@/seed/security/circuit-breaker';
+import { FailureKind } from '@/seed/types/failure-kind';
 import {
   handleFirstValueGet,
   handleFirstValuePost,
@@ -36,6 +38,10 @@ const MIGRATION_B1 = path.resolve(
 const MIGRATION_PILOT = path.resolve(
   __dirname,
   '../../../../migrations/0517_customer_pilot_first_value.sql',
+);
+const MIGRATION_SUPPORT = path.resolve(
+  __dirname,
+  '../../../../migrations/0519_pilot_support_requests.sql',
 );
 
 const MOCK_REAL_SCRIPT: ScriptOutput = {
@@ -98,10 +104,12 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
     sqlite = new NodeSqliteD1Database(dbPath);
     await sqlite.exec(fs.readFileSync(MIGRATION_B1, 'utf8'));
     await sqlite.exec(fs.readFileSync(MIGRATION_PILOT, 'utf8'));
+    await sqlite.exec(fs.readFileSync(MIGRATION_SUPPORT, 'utf8'));
     clockMs = 1_795_400_000_000;
   });
 
   afterEach(() => {
+    resetCircuitBreaker('openrouter-probe', 'usr_pilot_1');
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
@@ -111,6 +119,9 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
     pilotEnv?: PilotEnvSource;
     byokKey?: string | null;
     generateLiveScript?: FirstValueHttpDeps['generateLiveScript'];
+    probeOpenRouterByokKey?: FirstValueHttpDeps['probeOpenRouterByokKey'];
+    saveOpenRouterByokKey?: FirstValueHttpDeps['saveOpenRouterByokKey'];
+    clearOpenRouterByokKey?: FirstValueHttpDeps['clearOpenRouterByokKey'];
   } = {}): FirstValueHttpDeps {
     const user =
       overrides.user === undefined
@@ -139,6 +150,9 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
         PILOT_OPENROUTER_API_KEY: 'sk-or-v1-sponsored-pilot-test-key-000001',
       },
       lookupOpenRouterByokKey: async () => byokKey,
+      probeOpenRouterByokKey: overrides.probeOpenRouterByokKey,
+      saveOpenRouterByokKey: overrides.saveOpenRouterByokKey,
+      clearOpenRouterByokKey: overrides.clearOpenRouterByokKey,
       generateLiveScript:
         overrides.generateLiveScript ??
         vi.fn(async () => MOCK_REAL_SCRIPT),
@@ -838,5 +852,302 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
       'IDEMPOTENCY_PAYLOAD_CONFLICT',
     );
     expect(generateSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('validates, probes, saves, and clears Customer BYOK OpenRouter keys across all error & circuit-breaker branches', async () => {
+    const byokEnv: PilotEnvSource = {
+      PILOT_INVITE_ONLY: 'true',
+      PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
+      PILOT_LIVE_INFERENCE_ENABLED: 'true',
+      PILOT_FINANCING_MODE: 'CUSTOMER_BYOK',
+      PILOT_MAX_GENERATIONS: '20',
+      PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
+    };
+
+    // 1. Invalid OpenRouter key format -> 400 BYOK_INVALID_FORMAT
+    const noStorageDeps = buildDeps({ pilotEnv: byokEnv });
+    const badFormat = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: 'invalid-prefix-key-123456' },
+      }),
+      noStorageDeps,
+    );
+    expect(badFormat.status).toBe(400);
+    expect(((await badFormat.json()) as { code: string }).code).toBe('BYOK_INVALID_FORMAT');
+
+    // 2. Missing probe/save storage deps -> 503 BYOK_STORAGE_UNAVAILABLE
+    const validKey = 'sk-or-v1-abcdef0123456789abcdef0123456789abcdef';
+    const noDepsSave = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      noStorageDeps,
+    );
+    expect(noDepsSave.status).toBe(503);
+    expect(((await noDepsSave.json()) as { code: string }).code).toBe('BYOK_STORAGE_UNAVAILABLE');
+
+    const noDepsClear = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'clear_byok_key', orgId: 'org_pilot_1' },
+      }),
+      noStorageDeps,
+    );
+    expect(noDepsClear.status).toBe(503);
+
+    // 3. Probe throws network error -> 502 BYOK_PROVIDER_UNREACHABLE
+    const saveSpy = vi.fn(async () => {});
+    const clearSpy = vi.fn(async () => {});
+    const throwProbeDeps = buildDeps({
+      pilotEnv: byokEnv,
+      probeOpenRouterByokKey: vi.fn(async () => {
+        throw new Error('network reset');
+      }),
+      saveOpenRouterByokKey: saveSpy,
+    });
+    const thrownRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      throwProbeDeps,
+    );
+    expect(thrownRes.status).toBe(502);
+    expect(((await thrownRes.json()) as { code: string }).code).toBe('BYOK_PROVIDER_UNREACHABLE');
+
+    // 4. Probe returns 401 auth rejection -> 422 BYOK_KEY_REJECTED
+    const authRejDeps = buildDeps({
+      pilotEnv: byokEnv,
+      probeOpenRouterByokKey: vi.fn(async () => ({
+        ok: false,
+        valid: false,
+        provider: 'openrouter',
+        status: 'INVALID' as const,
+        latencyMs: 30,
+        message: 'Invalid API key',
+        message_vi: 'Khóa không hợp lệ',
+        maskedKey: '****cdef',
+        httpStatus: 401,
+      })),
+      saveOpenRouterByokKey: saveSpy,
+    });
+    const authRejRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      authRejDeps,
+    );
+    expect(authRejRes.status).toBe(422);
+    expect(((await authRejRes.json()) as { code: string }).code).toBe('BYOK_KEY_REJECTED');
+
+    // 5. Probe returns 503 upstream failure -> 502 BYOK_PROVIDER_UNREACHABLE
+    const upstreamFailDeps = buildDeps({
+      pilotEnv: byokEnv,
+      probeOpenRouterByokKey: vi.fn(async () => ({
+        ok: false,
+        valid: false,
+        provider: 'openrouter',
+        status: 'PROVIDER_UNAVAILABLE' as const,
+        latencyMs: 50,
+        message: 'Upstream unavailable',
+        message_vi: 'OpenRouter gián đoạn',
+        maskedKey: '****cdef',
+        httpStatus: 503,
+      })),
+      saveOpenRouterByokKey: saveSpy,
+    });
+    const upstreamFailRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      upstreamFailDeps,
+    );
+    expect(upstreamFailRes.status).toBe(502);
+
+    // 6. Circuit breaker open -> 503 BYOK_PROBE_COOLDOWN
+    recordFailure('openrouter-probe', FailureKind.AUTH_FAILURE, 'usr_pilot_1');
+    const cooldownRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      upstreamFailDeps,
+    );
+    expect(cooldownRes.status).toBe(503);
+    expect(((await cooldownRes.json()) as { code: string }).code).toBe('BYOK_PROBE_COOLDOWN');
+    resetCircuitBreaker('openrouter-probe', 'usr_pilot_1');
+
+    // 7. Storage write error on save & clear -> 500 STORAGE_WRITE_FAILED
+    const okProbe = vi.fn(async () => ({
+      ok: true,
+      valid: true,
+      provider: 'openrouter',
+      status: 'ACTIVE' as const,
+      latencyMs: 25,
+      message: 'Connected',
+      message_vi: 'Đã kết nối',
+      maskedKey: '****cdef',
+      httpStatus: 200,
+    }));
+    const brokenStoreDeps = buildDeps({
+      pilotEnv: byokEnv,
+      probeOpenRouterByokKey: okProbe,
+      saveOpenRouterByokKey: vi.fn(async () => {
+        throw new Error('d1 write error');
+      }),
+      clearOpenRouterByokKey: vi.fn(async () => {
+        throw new Error('d1 delete error');
+      }),
+    });
+    const saveErrRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      brokenStoreDeps,
+    );
+    expect(saveErrRes.status).toBe(500);
+    const clearErrRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'clear_byok_key', orgId: 'org_pilot_1' },
+      }),
+      brokenStoreDeps,
+    );
+    expect(clearErrRes.status).toBe(500);
+
+    // 8. Happy path save + clear -> 200 with never-echoed raw key
+    const happyDeps = buildDeps({
+      pilotEnv: byokEnv,
+      byokKey: validKey,
+      probeOpenRouterByokKey: okProbe,
+      saveOpenRouterByokKey: saveSpy,
+      clearOpenRouterByokKey: clearSpy,
+    });
+    const savedRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: `  ${validKey}  ` },
+      }),
+      happyDeps,
+    );
+    expect(savedRes.status).toBe(200);
+    const savedBodyText = await savedRes.text();
+    expect(savedBodyText).not.toContain(validKey);
+    expect(JSON.parse(savedBodyText)).toMatchObject({
+      byokConfigured: true,
+      byok: { provider: 'openrouter', configured: true, verified: true, maskedKey: '****cdef' },
+    });
+    expect(saveSpy).toHaveBeenCalledWith('usr_pilot_1', validKey);
+
+    const clearedRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'clear_byok_key', orgId: 'org_pilot_1' },
+      }),
+      happyDeps,
+    );
+    expect(clearedRes.status).toBe(200);
+    expect(await clearedRes.json()).toMatchObject({ byokConfigured: false });
+    expect(clearSpy).toHaveBeenCalledWith('usr_pilot_1');
+  });
+
+  it('persists in-app Support & Data Deletion requests with psr_ receipts, 72h SLA, and status snapshot', async () => {
+    const byokEnv: PilotEnvSource = {
+      PILOT_INVITE_ONLY: 'true',
+      PILOT_ALLOWED_EMAILS: 'pilot.customer@example.test',
+      PILOT_LIVE_INFERENCE_ENABLED: 'true',
+      PILOT_FINANCING_MODE: 'CUSTOMER_BYOK',
+      PILOT_MAX_GENERATIONS: '20',
+      PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
+    };
+    const deps = buildDeps({
+      pilotEnv: byokEnv,
+      byokKey: 'sk-or-v1-abcdef0123456789abcdef0123456789abcdef',
+    });
+
+    const supRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: {
+          action: 'submit_support_request',
+          orgId: 'org_pilot_1',
+          requestType: 'support',
+          subject: 'Need help exporting JSON',
+          message: 'Please confirm how to import the exported JSON into Notion.',
+        },
+      }),
+      deps,
+    );
+    expect(supRes.status).toBe(201);
+    const supJson = (await supRes.json()) as {
+      acknowledgment: { requestId: string; requestType: string; slaHours: number };
+    };
+    expect(supJson.acknowledgment.requestId).toMatch(/^psr_/);
+    expect(supJson.acknowledgment.requestType).toBe('support');
+    expect(supJson.acknowledgment.slaHours).toBe(72);
+
+    clockMs += 1000;
+    const delRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: {
+          action: 'submit_support_request',
+          orgId: 'org_pilot_1',
+          requestType: 'data_deletion',
+          subject: 'Delete my beta workspace data',
+          message: 'Please delete my pilot scripts, logs, and stored BYOK key.',
+        },
+      }),
+      deps,
+    );
+    expect(delRes.status).toBe(201);
+    const delJson = (await delRes.json()) as {
+      acknowledgment: { requestId: string; requestType: string };
+    };
+    expect(delJson.acknowledgment.requestType).toBe('data_deletion');
+
+    // Status GET returns modelId, byokKeyConfigured, and both tenant-isolated supportRequests
+    const statusRes = await handleFirstValueGet(
+      makeRequest('GET', 'https://pilot.example.test/api/first-value?orgId=org_pilot_1'),
+      deps,
+    );
+    expect(statusRes.status).toBe(200);
+    const statusJson = (await statusRes.json()) as {
+      pilot: {
+        modelId: string;
+        byokKeyConfigured: boolean;
+        supportRequests: Array<{ id: string; requestType: string }>;
+      };
+    };
+    expect(statusJson.pilot.modelId).toBe('openai/gpt-4o-mini');
+    expect(statusJson.pilot.byokKeyConfigured).toBe(true);
+    expect(statusJson.pilot.supportRequests).toHaveLength(2);
+    expect(statusJson.pilot.supportRequests[0]?.requestType).toBe('data_deletion');
+    expect(statusJson.pilot.supportRequests[1]?.requestType).toBe('support');
+
+    // Open-request queue cap (20 open requests -> 429 SUPPORT_QUEUE_LIMIT_REACHED)
+    for (let i = 2; i < 20; i++) {
+      const r = await handleFirstValuePost(
+        makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+          body: {
+            action: 'submit_support_request',
+            orgId: 'org_pilot_1',
+            requestType: 'support',
+            subject: `Support item ${i}`,
+            message: 'Testing open queue bound enforcement.',
+          },
+        }),
+        deps,
+      );
+      expect(r.status).toBe(201);
+    }
+    const cappedSupport = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: {
+          action: 'submit_support_request',
+          orgId: 'org_pilot_1',
+          requestType: 'support',
+          subject: 'Support item 21',
+          message: 'Should be rejected when 20 open requests exist.',
+        },
+      }),
+      deps,
+    );
+    expect(cappedSupport.status).toBe(429);
+    expect(((await cappedSupport.json()) as { code: string }).code).toBe(
+      'SUPPORT_QUEUE_LIMIT_REACHED',
+    );
   });
 });

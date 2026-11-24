@@ -137,8 +137,24 @@ export function validateParsedScriptStructure(
       );
     }
 
+    const rawSceneTitle = scene.title;
+    let optionalSceneTitle: string | undefined;
+    if (rawSceneTitle !== undefined && rawSceneTitle !== null) {
+      if (typeof rawSceneTitle !== 'string') {
+        throw new InvalidScriptStructureError(`scene[${i}].title must be a string when provided`);
+      }
+      const trimmedSceneTitle = rawSceneTitle.trim();
+      if (trimmedSceneTitle.length > 200) {
+        throw new InvalidScriptStructureError(`scene[${i}].title must not exceed 200 characters`);
+      }
+      if (trimmedSceneTitle.length > 0) {
+        optionalSceneTitle = trimmedSceneTitle;
+      }
+    }
+
     validatedScenes.push({
       scene_number: sceneNumber,
+      ...(optionalSceneTitle ? { title: optionalSceneTitle } : {}),
       visual_description: visualDescription.trim(),
       narration: narration.trim(),
       duration_estimate: durationEstimate,

@@ -122,7 +122,8 @@ export function renderFirstValueMarkdown(artifact: FirstValueScriptArtifact): st
   ];
 
   for (const scene of artifact.script.scenes) {
-    lines.push(`### Scene ${scene.scene_number} (${scene.duration_estimate}s)`);
+    const headingTitle = scene.title ? `: ${scene.title}` : '';
+    lines.push(`### Scene ${scene.scene_number}${headingTitle} (${scene.duration_estimate}s)`);
     lines.push(`- **Visual:** ${scene.visual_description}`);
     lines.push(`- **Narration:** ${scene.narration}`);
     lines.push('');

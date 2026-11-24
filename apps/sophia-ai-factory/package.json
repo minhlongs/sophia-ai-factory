@@ -59,6 +59,8 @@
     "deploy:build": "npm run build && node scripts/fix-instrumentation-standalone.mjs && bash scripts/patch-opennext-d3-stubs.sh && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs",
     "pilot:build": "npm run build && node scripts/fix-instrumentation-standalone.mjs && bash scripts/patch-opennext-d3-stubs.sh && npx @opennextjs/cloudflare build --skipNextBuild --config wrangler.pilot.toml && node scripts/verify-pilot-wrangler-isolation.mjs --check-build",
     "pilot:check-isolation": "node scripts/verify-pilot-wrangler-isolation.mjs",
+    "pilot:invite": "node scripts/pilot-invite-customer.mjs",
+    "pilot:support-queue": "node scripts/pilot-support-queue.mjs",
     "deploy:full": "./scripts/deploy-with-sha.sh",
     "deploy:migrations": "bash scripts/apply-migrations.sh",
     "deploy:verify": "node scripts/sophia-doctor.mjs",

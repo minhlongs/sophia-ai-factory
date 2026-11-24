@@ -79,8 +79,8 @@ describe('FirstValueDashboardPage', () => {
     getCurrentUserMock.mockResolvedValue(null);
     await expect(
       FirstValueDashboardPage({ params: Promise.resolve({ locale: 'vi' }) }),
-    ).rejects.toThrow('REDIRECT:/vi/login');
-    expect(redirectMock).toHaveBeenCalledWith('/vi/login');
+    ).rejects.toThrow('REDIRECT:/vi/login?next=/vi/dashboard/first-value');
+    expect(redirectMock).toHaveBeenCalledWith('/vi/login?next=/vi/dashboard/first-value');
   });
 
   it('resolves existing orgId when D1 is available', async () => {

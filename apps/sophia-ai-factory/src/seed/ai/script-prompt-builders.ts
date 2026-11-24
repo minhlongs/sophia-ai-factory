@@ -12,6 +12,7 @@ export interface ScriptOutput {
   title: string;
   scenes: {
     scene_number: number;
+    title?: string;
     visual_description: string;
     narration: string;
     duration_estimate: number;
@@ -90,6 +91,7 @@ Return ONLY valid JSON in this exact format:
   "scenes": [
     {
       "scene_number": 1,
+      "title": "Short scene name",
       "visual_description": "string",
       "narration": "string",
       "duration_estimate": 5

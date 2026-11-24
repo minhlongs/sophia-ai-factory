@@ -18,9 +18,12 @@ import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { verifyCsrfToken } from '@/seed/security/csrf';
 import {
+  clearUserApiKey,
   listUserApiKeyProviders,
   lookupUserApiKey,
+  setUserApiKey,
 } from '@/tree/byok/user-api-key-store';
+import { probeProviderApiKey } from '@/tree/byok/provider-probe';
 import {
   handleFirstValueGet,
   handleFirstValuePost,
@@ -52,6 +55,14 @@ function buildLiveDeps(): FirstValueHttpDeps {
         return lookup.key.trim();
       }
       return null;
+    },
+    probeOpenRouterByokKey: async (apiKey: string) =>
+      probeProviderApiKey('openrouter', apiKey),
+    saveOpenRouterByokKey: async (userId: string, apiKey: string) => {
+      await setUserApiKey(userId, 'openrouter', apiKey);
+    },
+    clearOpenRouterByokKey: async (userId: string) => {
+      await clearUserApiKey(userId, 'openrouter');
     },
     generateLiveScript: async ({
       topic,

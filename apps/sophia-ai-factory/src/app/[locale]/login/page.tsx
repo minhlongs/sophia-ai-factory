@@ -1,4 +1,5 @@
 import { LoginPage } from '@/components/stitch/screens/login';
+import { isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
 import { redirect } from 'next/navigation';
 
 interface LoginRouteProps {
@@ -19,5 +20,8 @@ export default async function LocaleLoginRoute({ params, searchParams }: LoginRo
     redirect(`/${locale}/register${qs ? `?${qs}` : ''}`);
   }
 
-  return <LoginPage redirectTo={next} />;
+  const effectiveRedirectTo =
+    next ?? (isPilotInviteOnlyEnabled() ? '/dashboard/first-value' : undefined);
+
+  return <LoginPage redirectTo={effectiveRedirectTo} />;
 }

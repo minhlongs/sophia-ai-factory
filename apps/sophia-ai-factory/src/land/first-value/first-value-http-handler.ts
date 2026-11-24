@@ -52,6 +52,12 @@ import {
   safeRecordPilotEvent,
   type LiveScriptGeneratorInput,
 } from './first-value-pilot-actions';
+import {
+  handleClearByokKey,
+  handleSaveByokKey,
+  handleSubmitSupportRequest,
+} from './first-value-pilot-byok-support';
+import type { ProbeResult } from '@/tree/byok/provider-probe';
 import type { PilotEnvSource } from '@/seed/pilot/pilot-access-policy';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 
@@ -70,6 +76,9 @@ export interface FirstValueHttpDeps {
   readonly nowMs?: () => number;
   readonly pilotEnv?: PilotEnvSource;
   readonly lookupOpenRouterByokKey?: (userId: string) => Promise<string | null>;
+  readonly probeOpenRouterByokKey?: (apiKey: string) => Promise<ProbeResult>;
+  readonly saveOpenRouterByokKey?: (userId: string, apiKey: string) => Promise<void>;
+  readonly clearOpenRouterByokKey?: (userId: string) => Promise<void>;
   readonly generateLiveScript?: (input: LiveScriptGeneratorInput) => Promise<ScriptOutput>;
 }
 
@@ -554,6 +563,24 @@ async function dispatchDurableAction(
   if (data.action === 'submit_feedback') {
     return handleSubmitFeedback(d1, user, data, {
       env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'save_byok_key') {
+    return handleSaveByokKey(d1, user, data, {
+      probeOpenRouterByokKey: deps.probeOpenRouterByokKey,
+      saveOpenRouterByokKey: deps.saveOpenRouterByokKey,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'clear_byok_key') {
+    return handleClearByokKey(d1, user, data, {
+      clearOpenRouterByokKey: deps.clearOpenRouterByokKey,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'submit_support_request') {
+    return handleSubmitSupportRequest(d1, user, data, {
       nowMs: deps.nowMs,
     });
   }

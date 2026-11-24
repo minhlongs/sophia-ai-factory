@@ -4,8 +4,10 @@ import React from 'react';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { getMcuMonthlyLimit } from '@/seed/config/tiers/unified-limits';
+import { isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
 import { getBalance } from '@/tree/mcu/credits-repo';
 import { DashboardShell } from '@/forest/dashboard/dashboard-shell';
+import { PilotWorkspaceShell } from '@/components/first-value/pilot-workspace-shell';
 import type { Tier } from '@/seed/types';
 
 export default async function DashboardLayout({
@@ -18,6 +20,14 @@ export default async function DashboardLayout({
   const { locale } = await params;
   const isVi = locale === 'vi';
   const user = await getCurrentUser();
+
+  if (isPilotInviteOnlyEnabled()) {
+    return (
+      <PilotWorkspaceShell email={user?.email ?? ''} isVi={isVi}>
+        {children}
+      </PilotWorkspaceShell>
+    );
+  }
 
   let userTier: Tier = 'PRO' as Tier;
   let isAdmin = false;

@@ -15,6 +15,8 @@ export const PILOT_POLICY_VERSION = '2026-11-pilot-v2';
 export const PILOT_EVENT_NAMES = [
   'INVITE_ACCEPTED',
   'FIRST_LOGIN',
+  'BYOK_KEY_SAVED',
+  'BYOK_KEY_CLEARED',
   'BRIEF_SUBMITTED',
   'GENERATION_REQUESTED',
   'GENERATION_SUCCEEDED',
@@ -23,6 +25,8 @@ export const PILOT_EVENT_NAMES = [
   'SCRIPT_EDITED',
   'SCRIPT_EXPORTED',
   'CUSTOMER_FEEDBACK_SUBMITTED',
+  'SUPPORT_REQUEST_SUBMITTED',
+  'DATA_DELETION_REQUESTED',
 ] as const;
 
 export type PilotEventName = (typeof PILOT_EVENT_NAMES)[number];
@@ -30,6 +34,19 @@ export type PilotEventName = (typeof PILOT_EVENT_NAMES)[number];
 export type PilotFundingMode = 'customer_byok' | 'founder_sponsored' | 'none';
 
 export type PilotFinancingMode = 'FOUNDER_SPONSORED' | 'CUSTOMER_BYOK' | 'DISABLED';
+
+export type PilotSupportRequestType = 'support' | 'data_deletion';
+export type PilotSupportRequestStatus = 'open' | 'acknowledged' | 'completed';
+
+export interface PilotSupportRequestSummary {
+  readonly id: string;
+  readonly requestType: PilotSupportRequestType;
+  readonly subject: string;
+  readonly status: PilotSupportRequestStatus;
+  readonly createdAtIso: string;
+  readonly updatedAtIso: string;
+  readonly resolvedAtIso: string | null;
+}
 
 export interface PilotQuotaSnapshot {
   readonly usedGenerations: number;
@@ -48,6 +65,9 @@ export interface PilotStatusSnapshot {
   readonly consentAcceptedAtIso: string | null;
   readonly financingMode?: PilotFinancingMode;
   readonly fundingMode: PilotFundingMode;
+  readonly modelId?: string;
+  readonly byokKeyConfigured?: boolean;
+  readonly supportRequests?: readonly PilotSupportRequestSummary[];
   readonly quota: PilotQuotaSnapshot;
 }
 
