@@ -4,8 +4,8 @@
  * Invite-only Beta & Privacy Notice + Pilot Terms Consent banner.
  *
  * Rendered when `pilot.liveInferenceEnabled` is active on the pilot environment.
- * Shows funding mode (Customer BYOK vs Founder-Sponsored Free Pilot) and
- * remaining generation quota without exposing any provider keys.
+ * Shows funding mode (Customer BYOK vs Founder-Sponsored Free Pilot), remaining
+ * generation quota, and a direct anchor link to in-app Support & Data Deletion.
  *
  * @module components/first-value/first-value-pilot-banner
  */
@@ -29,7 +29,7 @@ export function FirstValuePilotBanner({
   const [checked, setChecked] = useState(false);
 
   const fundingLabel =
-    pilot.fundingMode === 'customer_byok'
+    pilot.financingMode === 'CUSTOMER_BYOK' || pilot.fundingMode === 'customer_byok'
       ? t('pilotFundingByok')
       : pilot.fundingMode === 'founder_sponsored'
         ? t('pilotFundingSponsored')
@@ -47,9 +47,17 @@ export function FirstValuePilotBanner({
       </div>
 
       <p className="mt-2 text-sm text-foreground">{t('pilotBetaNotice')}</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        <strong>{t('pilotFundingLabel')}:</strong> {fundingLabel}
-      </p>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>
+          <strong>{t('pilotFundingLabel')}:</strong> {fundingLabel}
+        </span>
+        <a
+          href="#support-deletion"
+          className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+        >
+          {t('supportJumpLink')}
+        </a>
+      </div>
 
       {!pilot.consentAccepted ? (
         <div className="mt-4 rounded-lg border border-border bg-card p-4">

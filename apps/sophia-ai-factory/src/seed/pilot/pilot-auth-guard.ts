@@ -218,6 +218,58 @@ export function enforcePilotFeatureDisabled(
 
 const SAFE_READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+const PILOT_ALLOWED_BARE_PAGES = new Set([
+  '/login',
+  '/register',
+  '/signup',
+  '/reset-password',
+  '/privacy',
+  '/terms',
+  '/dashboard/first-value',
+]);
+
+/**
+ * When `PILOT_INVITE_ONLY=true`, confines UI page navigation strictly to the
+ * Private Beta First-Value journey, authentication screens, and legal/privacy
+ * pages. All other marketing, billing, video/TTS, publishing, setup, or admin
+ * pages redirect to `/{locale}/dashboard/first-value`.
+ */
+export function enforcePilotPageScopeRedirect(
+  request: { readonly url: string; readonly method?: string; readonly nextUrl?: { readonly pathname: string } },
+  env: PilotEnvSource = process.env,
+): NextResponse | null {
+  if (!isPilotInviteOnlyEnabled(env)) {
+    return null;
+  }
+
+  const method = (request.method ?? 'GET').toUpperCase();
+  if (method === 'OPTIONS') {
+    return null;
+  }
+
+  const pathname = request.nextUrl?.pathname ?? new URL(request.url).pathname;
+  if (
+    pathname === '/api' ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/auth/callback')
+  ) {
+    return null;
+  }
+
+  const seg1 = pathname.split('/')[1];
+  const hasSupportedLocale = seg1 === 'vi' || seg1 === 'en';
+  const locale = hasSupportedLocale ? seg1 : 'vi';
+  const rawBarePath = hasSupportedLocale ? pathname.slice(1 + locale.length) || '/' : pathname;
+  const bare = normalizePathname(rawBarePath);
+
+  if (bare !== null && PILOT_ALLOWED_BARE_PAGES.has(bare)) {
+    return null;
+  }
+
+  return NextResponse.redirect(new URL(`/${locale}/dashboard/first-value`, request.url), 307);
+}
+
 /**
  * When `PILOT_INVITE_ONLY=true`, blocks all Next.js Server Actions (`next-action`
  * header) and all non-safe-method page mutations on non-`/api/` routes. The pilot

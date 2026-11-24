@@ -2,27 +2,28 @@
 #
 # SAFETY INVARIANTS (G2 / G3 / G4 / G5):
 # - Dedicated non-production Worker service (`sophia-ai-factory-pilot`)
+# - Protected by Cloudflare Access App `11a89148-d86e-4d3e-a1d4-e12edbeb6f75`
+#   bound directly to `worker_id` on `sophia-ai-factory-pilot.agencyos-openclaw.workers.dev`
 # - NEVER reuses production D1 (`sophia-raas-db`, `sophia-tag-cache`) or production R2 (`sophia-ai-factory-opennext-cache`)
-# - Fail-closed by default:
+# - Active Private Beta configuration (Customer BYOK mode authorized by Founder):
 #     PILOT_INVITE_ONLY = "true"
-#     PILOT_LIVE_INFERENCE_ENABLED = "false"  (two-phase: deploy OFF first, enable only after Founder GO)
-#     PILOT_FINANCING_MODE = "FOUNDER_SPONSORED" (single active mode; BYOK disabled; zero silent fallback)
+#     PILOT_LIVE_INFERENCE_ENABLED = "true"
+#     PILOT_FINANCING_MODE = "CUSTOMER_BYOK"  (customer enters own OpenRouter key in-app; zero platform spend; zero silent fallback)
+#     BYOK_ENABLED = "1"
 #     PILOT_MAX_GENERATIONS = "20"            (hard per-customer generation cap)
-#     PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"  (PROPOSED internal cutoff; paired with PROPOSED $5.00 OpenRouter key cap)
-#     PILOT_ESTIMATED_COST_PER_ATTEMPT_USD = "0.02" (conservative worst-case per-attempt reservation; >5x max billed gpt-4o-mini cost incl. 1 retry)
+#     PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"  (local spend cutoff ceiling)
+#     PILOT_ESTIMATED_COST_PER_ATTEMPT_USD = "0.02"
 #     PILOT_MODEL_ID = "openai/gpt-4o-mini"   (explicit bounded model allowlist)
 #     PILOT_MAX_OUTPUT_TOKENS = "2048"        (explicit output token ceiling)
 #     PILOT_MAX_RETRIES = "1"                 (bounded provider retries)
 #     PILOT_TIMEOUT_MS = "45000"              (bounded provider timeout)
 #     PAYMENTS_ENABLED = "false"              (free pilot; PayOS / NOWPayments disabled)
 #     B2_PUBLISH_ENABLED = "false"            (auto-publishing disabled)
-#     BYOK_ENABLED = "0"                      (customer BYOK disabled for CUSTOMER-01)
 # - Zero production cron triggers, zero queues, zero durable objects.
 # - Required Worker Secrets (set via `wrangler secret put <NAME> --config wrangler.pilot.toml`):
 #     BETTER_AUTH_SECRET
 #     BYOK_MASTER_KEY
-#     PILOT_ALLOWED_EMAILS      (exact Founder-supplied single customer email)
-#     PILOT_OPENROUTER_API_KEY  (dedicated pilot-only OpenRouter key with verified $5.00 credit limit)
+#     PILOT_ALLOWED_EMAILS      (exact Founder-supplied single customer email via `scripts/pilot-invite-customer.mjs`)
 # - Verify isolation before any deploy:
 #     npm run pilot:check-isolation -- --require-resolved-ids
 
@@ -30,7 +31,7 @@ name = "sophia-ai-factory-pilot"
 main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-workers_dev = false
+workers_dev = true
 preview_urls = false
 minify = true
 keep_names = false
@@ -43,8 +44,8 @@ binding = "ASSETS"
 CF_WORKER_NAME = "sophia-ai-factory-pilot"
 SOPHIA_PILOT_MODE = "true"
 PILOT_INVITE_ONLY = "true"
-PILOT_LIVE_INFERENCE_ENABLED = "false"
-PILOT_FINANCING_MODE = "FOUNDER_SPONSORED"
+PILOT_LIVE_INFERENCE_ENABLED = "true"
+PILOT_FINANCING_MODE = "CUSTOMER_BYOK"
 PILOT_MAX_GENERATIONS = "20"
 PILOT_MAX_ESTIMATED_SPEND_USD = "4.00"
 PILOT_ESTIMATED_COST_PER_ATTEMPT_USD = "0.02"
@@ -55,28 +56,27 @@ PILOT_TIMEOUT_MS = "45000"
 PILOT_RATE_LIMIT_COOLDOWN_MS = "5000"
 PAYMENTS_ENABLED = "false"
 B2_PUBLISH_ENABLED = "false"
-BYOK_ENABLED = "0"
+BYOK_ENABLED = "1"
 FEATURE_PAYOS = "false"
 NEXT_PUBLIC_DISTRIBUTE_ENABLED = "0"
 IS_CONFIGURED = "true"
 WORKER_TECHNICAL_URL = "https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev"
 ALLOWED_HOSTS = "sophia-ai-factory-pilot.agencyos-openclaw.workers.dev"
-APP_URL = "https://REPLACE_WITH_PILOT_HOSTNAME"
-BETTER_AUTH_URL = "https://REPLACE_WITH_PILOT_HOSTNAME"
-NEXT_PUBLIC_APP_URL = "https://REPLACE_WITH_PILOT_HOSTNAME"
+APP_URL = "https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev"
+BETTER_AUTH_URL = "https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev"
+NEXT_PUBLIC_APP_URL = "https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev"
 
-# Non-production isolated D1 & R2 bindings — Founder must create dedicated pilot
-# resources and replace placeholders before authorizing deployment.
+# Isolated non-production Pilot D1 & R2 bindings (verified Cloudflare state)
 [[d1_databases]]
 binding = "DB"
 database_name = "sophia-pilot-db"
-database_id = "REPLACE_WITH_ISOLATED_PILOT_D1_DATABASE_ID"
+database_id = "d50fc9d9-dc3b-4fcd-bd3a-9efbf7524ed6"
 migrations_dir = "migrations"
 
 [[d1_databases]]
 binding = "NEXT_TAG_CACHE_D1"
 database_name = "sophia-pilot-tag-cache"
-database_id = "REPLACE_WITH_ISOLATED_PILOT_TAG_CACHE_D1_ID"
+database_id = "cf2812c4-1156-4b7c-b7f3-b5611a6e40c1"
 
 [[r2_buckets]]
 binding = "NEXT_INC_CACHE_R2_BUCKET"

@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * Script review, explicit Accept/Reject controls, and Private Export panel (Track B1.1).
+ * Script review, per-scene title/content draft editing, explicit Accept/Reject controls,
+ * and Private Export panel (Markdown, JSON, Copy, Download).
  *
  * @module components/first-value/first-value-review-panel
  */
@@ -34,12 +35,15 @@ export function FirstValueReviewPanel({
   const [rejectReason, setRejectReason] = useState('');
   const [editing, setEditing] = useState(false);
   const [draftScript, setDraftScript] = useState<ScriptOutput | null>(null);
+  const [draftSaved, setDraftSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [lastExportFormat, setLastExportFormat] = useState<'json' | 'markdown'>('markdown');
 
   const reviewArtifactId = review?.artifactId ?? null;
   useEffect(() => {
     setEditing(false);
     setDraftScript(null);
+    setDraftSaved(false);
     setCopied(false);
   }, [reviewArtifactId]);
 
@@ -57,6 +61,7 @@ export function FirstValueReviewPanel({
 
   function startEditing() {
     if (!review) return;
+    setDraftSaved(false);
     setDraftScript({
       title: review.script.title,
       total_duration: review.script.total_duration,
@@ -67,11 +72,26 @@ export function FirstValueReviewPanel({
 
   async function saveEdits() {
     if (!draftScript || !onEdit) return;
-    const ok = await onEdit(draftScript);
+    const normalized: ScriptOutput = {
+      title: draftScript.title,
+      total_duration: draftScript.total_duration,
+      scenes: draftScript.scenes.map((scene) => {
+        const trimmedSceneTitle = scene.title?.trim();
+        const { title: _omittedTitle, ...rest } = scene;
+        return trimmedSceneTitle ? { ...rest, title: trimmedSceneTitle } : rest;
+      }),
+    };
+    const ok = await onEdit(normalized);
     if (ok) {
       setEditing(false);
       setDraftScript(null);
+      setDraftSaved(true);
     }
+  }
+
+  async function triggerExport(format: 'json' | 'markdown') {
+    setLastExportFormat(format);
+    await onExport(format);
   }
 
   async function copyExport() {
@@ -83,6 +103,21 @@ export function FirstValueReviewPanel({
     } catch {
       // Clipboard unavailable in restricted browser contexts
     }
+  }
+
+  function downloadExport() {
+    if (!exportPayload || !review || typeof document === 'undefined') return;
+    const ext = lastExportFormat === 'json' ? 'json' : 'md';
+    const mime = lastExportFormat === 'json' ? 'application/json' : 'text/markdown';
+    const blob = new Blob([exportPayload], { type: `${mime};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `sophia-script-${review.artifactId}.${ext}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -128,6 +163,12 @@ export function FirstValueReviewPanel({
           </div>
         </dl>
 
+        {draftSaved && !editing && (
+          <p className="mb-3 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            {t('draftSavedNotice')}
+          </p>
+        )}
+
         {editing && draftScript ? (
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -148,6 +189,23 @@ export function FirstValueReviewPanel({
                 <div className="font-mono text-xs font-medium text-primary">
                   {t('sceneHeading')} {scene.scene_number} ({scene.duration_estimate}s)
                 </div>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  {t('sceneTitleLabel')}
+                  <input
+                    type="text"
+                    maxLength={200}
+                    value={scene.title ?? ''}
+                    placeholder={`${t('sceneHeading')} ${scene.scene_number}`}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const nextScenes = draftScript.scenes.map((item, i) =>
+                        i === idx ? { ...item, title: e.target.value } : item,
+                      );
+                      setDraftScript({ ...draftScript, scenes: nextScenes });
+                    }}
+                    className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm text-foreground"
+                  />
+                </label>
                 <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                   {t('visualLabel')}
                   <textarea
@@ -212,7 +270,8 @@ export function FirstValueReviewPanel({
                   className="rounded-lg border border-border/80 bg-background p-3 text-sm"
                 >
                   <div className="mb-1 font-mono text-xs font-medium text-primary">
-                    {t('sceneHeading')} {scene.scene_number} ({scene.duration_estimate}s)
+                    {t('sceneHeading')} {scene.scene_number}
+                    {scene.title ? `: ${scene.title}` : ''} ({scene.duration_estimate}s)
                   </div>
                   <p className="text-xs text-muted-foreground">
                     <strong className="text-foreground">{t('visualLabel')}:</strong>{' '}
@@ -273,7 +332,7 @@ export function FirstValueReviewPanel({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void onExport('json')}
+                onClick={() => void triggerExport('json')}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
                 {t('exportJsonBtn')}
@@ -281,20 +340,30 @@ export function FirstValueReviewPanel({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void onExport('markdown')}
+                onClick={() => void triggerExport('markdown')}
                 className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
               >
                 {t('exportMarkdownBtn')}
               </button>
               {exportPayload && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void copyExport()}
-                  className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
-                >
-                  {copied ? t('copiedBtn') : t('copyExportBtn')}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void copyExport()}
+                    className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+                  >
+                    {copied ? t('copiedBtn') : t('copyExportBtn')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={downloadExport}
+                    className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+                  >
+                    {t('downloadExportBtn')}
+                  </button>
+                </>
               )}
             </div>
             {exportPayload && (

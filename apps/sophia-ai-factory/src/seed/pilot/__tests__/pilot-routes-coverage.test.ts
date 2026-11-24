@@ -7,6 +7,9 @@ const mockToNextJsHandler = vi.fn();
 const mockGetD1 = vi.fn();
 const mockGetCurrentUserFromHeaders = vi.fn();
 const mockLookupUserApiKey = vi.fn();
+const mockSetUserApiKey = vi.fn();
+const mockClearUserApiKey = vi.fn();
+const mockProbeProviderKey = vi.fn();
 const mockGenerateScript = vi.fn();
 const mockHandleFirstValueGet = vi.fn();
 const mockHandleFirstValuePost = vi.fn();
@@ -42,6 +45,12 @@ vi.mock('@/seed/security/csrf', () => ({
 vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: vi.fn(),
   lookupUserApiKey: (...args: unknown[]) => mockLookupUserApiKey(...args),
+  setUserApiKey: (...args: unknown[]) => mockSetUserApiKey(...args),
+  clearUserApiKey: (...args: unknown[]) => mockClearUserApiKey(...args),
+}));
+
+vi.mock('@/tree/byok/provider-probe', () => ({
+  probeProviderApiKey: (...args: unknown[]) => mockProbeProviderKey(...args),
 }));
 
 vi.mock('@/seed/ai/script-generator', () => ({
@@ -317,6 +326,17 @@ describe('/api/first-value live dependency wiring', () => {
 
     mockLookupUserApiKey.mockResolvedValueOnce({ status: 'NOT_FOUND' });
     expect(await captured.deps?.lookupOpenRouterByokKey?.('u_1')).toBeNull();
+
+    mockProbeProviderKey.mockResolvedValueOnce({ ok: true, valid: true, maskedKey: 'sk-or-...1234' });
+    const probeRes = await captured.deps?.probeOpenRouterByokKey?.('sk-or-v1-test1234567890');
+    expect(probeRes).toMatchObject({ ok: true, valid: true });
+    expect(mockProbeProviderKey).toHaveBeenCalledWith('openrouter', 'sk-or-v1-test1234567890');
+
+    await captured.deps?.saveOpenRouterByokKey?.('u_1', 'sk-or-v1-test1234567890');
+    expect(mockSetUserApiKey).toHaveBeenCalledWith('u_1', 'openrouter', 'sk-or-v1-test1234567890');
+
+    await captured.deps?.clearOpenRouterByokKey?.('u_1');
+    expect(mockClearUserApiKey).toHaveBeenCalledWith('u_1', 'openrouter');
 
     mockGenerateScript.mockResolvedValueOnce({ title: 'T', scenes: [], total_duration: 30 });
     await captured.deps?.generateLiveScript?.({

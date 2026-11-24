@@ -58,6 +58,7 @@ import {
   type PilotConsentRecord,
   type PilotQuotaStatus,
 } from '@/tree/first-value/pilot-state-repo';
+import { listPilotSupportRequestsForUser } from '@/tree/first-value/pilot-support-repo';
 import {
   jsonPrivate,
   resolveIdempotencyKey,
@@ -183,6 +184,17 @@ export async function buildPilotStatusSnapshot(
     // Graceful fallback when pilot migration has not been applied on legacy envs
   }
 
+  let supportRequests: PilotStatusSnapshot['supportRequests'] = [];
+  try {
+    supportRequests = await listPilotSupportRequestsForUser(d1, {
+      orgId: args.orgId,
+      userId: args.userId,
+      limit: 5,
+    });
+  } catch {
+    // Graceful fallback when support queue migration is absent on legacy envs
+  }
+
   return {
     inviteOnly: isPilotInviteOnlyEnabled(env),
     liveInferenceEnabled,
@@ -191,7 +203,10 @@ export async function buildPilotStatusSnapshot(
     consentAcceptedAtIso: consent?.acceptedAtIso ?? null,
     financingMode,
     fundingMode,
+    modelId: costControls.ok ? costControls.config.modelId : 'openai/gpt-4o-mini',
+    byokKeyConfigured: hasByokOpenRouter,
     quota,
+    supportRequests,
   };
 }
 

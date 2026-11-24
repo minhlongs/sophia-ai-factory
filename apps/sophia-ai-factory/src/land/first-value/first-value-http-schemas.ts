@@ -47,6 +47,7 @@ export const HonestReceiptSchema = z.object({
 
 const EditableSceneSchema = z.object({
   scene_number: z.number().int().min(1).max(30),
+  title: z.string().trim().min(1).max(200).optional(),
   visual_description: z.string().trim().min(1).max(1500),
   narration: z.string().trim().min(1).max(2000),
   duration_estimate: z.number().min(1).max(120),
@@ -107,6 +108,24 @@ export const FirstValuePostSchema = z.discriminatedUnion('action', [
     rating: z.number().int().min(1).max(5),
     category: z.enum(['usefulness', 'editing_friction', 'bug_report', 'other']),
     comment: z.string().trim().min(1).max(2000),
+  }),
+  z.object({
+    action: z.literal('save_byok_key'),
+    orgId: z.string().min(1).max(128),
+    provider: z.literal('openrouter').optional().default('openrouter'),
+    apiKey: z.string().trim().min(12).max(256),
+  }),
+  z.object({
+    action: z.literal('clear_byok_key'),
+    orgId: z.string().min(1).max(128),
+    provider: z.literal('openrouter').optional().default('openrouter'),
+  }),
+  z.object({
+    action: z.literal('submit_support_request'),
+    orgId: z.string().min(1).max(128),
+    requestType: z.enum(['support', 'data_deletion']),
+    subject: z.string().trim().min(3).max(200),
+    message: z.string().trim().min(5).max(2000),
   }),
   z.object({
     action: z.literal('get_review'),

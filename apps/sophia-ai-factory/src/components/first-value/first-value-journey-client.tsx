@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Interactive client surface for the BASIC First-Value Journey (Track B1.1).
+ * Interactive client surface for the BASIC First-Value Journey & Private Beta.
  *
  * Calls /api/first-value over HTTP with CSRF headers and stable idempotency keys.
  *
@@ -23,6 +23,11 @@ import {
 } from './first-value-feedback-card';
 import { FirstValuePilotBanner } from './first-value-pilot-banner';
 import { FirstValueReviewPanel } from './first-value-review-panel';
+import {
+  FirstValueSupportCard,
+  type SupportRequestKind,
+  type SupportSubmissionReceipt,
+} from './first-value-support-card';
 
 interface StatusResponse {
   readonly byokConfigured: boolean;
@@ -71,6 +76,7 @@ interface CostFormProps {
   readonly audience: string;
   readonly durationSec: number;
   readonly model: string;
+  readonly modelLocked: boolean;
   readonly busy: boolean;
   readonly topicInvalid: boolean;
   readonly audienceInvalid: boolean;
@@ -89,7 +95,9 @@ function CostPreviewSection(props: CostFormProps) {
   const t = useTranslations('firstValue');
   return (
     <section className="rounded-xl border border-border bg-card p-5">
-      <h2 className="mb-4 text-base font-semibold text-foreground">{t('costTitle')}</h2>
+      <h2 className="mb-4 text-base font-semibold text-foreground">
+        {props.modelLocked ? t('pilotBriefTitle') : t('costTitle')}
+      </h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           {t('topicLabel')}
@@ -137,11 +145,14 @@ function CostPreviewSection(props: CostFormProps) {
           />
         </label>
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          {t('modelLabel')}
+          {props.modelLocked ? t('pilotModelLockedLabel') : t('modelLabel')}
           <input
             value={props.model}
-            onChange={(e) => props.onModelChange(e.target.value)}
-            className="rounded-lg border border-input bg-background px-3 py-2 font-mono text-sm text-foreground"
+            readOnly={props.modelLocked}
+            onChange={(e) => {
+              if (!props.modelLocked) props.onModelChange(e.target.value);
+            }}
+            className="rounded-lg border border-input bg-background px-3 py-2 font-mono text-sm text-foreground read-only:opacity-80"
           />
         </label>
       </div>
@@ -160,7 +171,11 @@ function CostPreviewSection(props: CostFormProps) {
           onClick={props.onCreateReview}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
-          {props.busy ? t('loading') : t('createReviewBtn')}
+          {props.busy
+            ? t('loading')
+            : props.modelLocked
+              ? t('pilotGenerateBtn')
+              : t('createReviewBtn')}
         </button>
       </div>
       {props.costPreview && <CostPreviewBox costPreview={props.costPreview} />}
@@ -189,6 +204,9 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
     if (!res.ok) return;
     const data = (await res.json()) as StatusResponse;
     setStatus(data);
+    if (data.pilot?.liveInferenceEnabled && data.pilot.modelId) {
+      setModel(data.pilot.modelId);
+    }
     setActiveReview((prev) => prev ?? data.recentReviews[0] ?? null);
   }, [orgId]);
 
@@ -221,6 +239,61 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
     }
   }
 
+  const pilot = status?.pilot ?? null;
+  const isLivePilot = Boolean(pilot?.liveInferenceEnabled);
+  const isCustomerByokPilot = Boolean(
+    isLivePilot &&
+      (pilot?.financingMode === 'CUSTOMER_BYOK' || pilot?.fundingMode === 'customer_byok'),
+  );
+  const effectiveByokConfigured = isCustomerByokPilot
+    ? Boolean(pilot?.byokKeyConfigured ?? status?.byokConfigured)
+    : Boolean(status?.byokConfigured);
+
+  async function handleSavePilotKey(apiKey: string): Promise<boolean> {
+    const data = await postAction({
+      action: 'save_byok_key',
+      orgId,
+      apiKey,
+    });
+    if (data?.byokConfigured) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleClearPilotKey(): Promise<boolean> {
+    const data = await postAction({
+      action: 'clear_byok_key',
+      orgId,
+    });
+    if (data && data.byokConfigured === false) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleSubmitSupportRequest(input: {
+    readonly requestType: SupportRequestKind;
+    readonly subject: string;
+    readonly details: string;
+  }): Promise<SupportSubmissionReceipt | null> {
+    const data = await postAction({
+      action: 'submit_support_request',
+      orgId,
+      requestType: input.requestType,
+      subject: input.subject,
+      message: input.details,
+    });
+    const ack = data?.acknowledgment as SupportSubmissionReceipt | undefined;
+    if (ack?.requestId) {
+      await loadStatus();
+      return ack;
+    }
+    return null;
+  }
+
   async function handleCostPreview() {
     if (!topic.trim() || !audience.trim()) return;
     const data = await postAction({
@@ -234,9 +307,6 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
     });
     if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
   }
-
-  const pilot = status?.pilot ?? null;
-  const isLivePilot = Boolean(pilot?.liveInferenceEnabled);
 
   async function handleAcceptPilotTerms() {
     if (!pilot) return;
@@ -361,12 +431,15 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
   const topicInvalid = topic.trim().length === 0;
   const audienceInvalid = audience.trim().length === 0;
   const inputsValid = !topicInvalid && !audienceInvalid;
+  const pilotFundingReady = isCustomerByokPilot
+    ? effectiveByokConfigured
+    : pilot?.fundingMode === 'founder_sponsored';
   const canCreate = isLivePilot
     ? Boolean(
         orgId &&
           inputsValid &&
           pilot?.consentAccepted &&
-          pilot.fundingMode !== 'none' &&
+          pilotFundingReady &&
           pilot.quota.remainingGenerations > 0,
       )
     : Boolean(orgId && status?.receipt && inputsValid);
@@ -395,8 +468,12 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
       )}
 
       <FirstValueByokCard
-        byokConfigured={Boolean(status?.byokConfigured)}
+        byokConfigured={effectiveByokConfigured}
         receipt={status?.receipt ?? null}
+        isCustomerByokPilot={isCustomerByokPilot}
+        busy={busy}
+        onSavePilotKey={handleSavePilotKey}
+        onClearPilotKey={handleClearPilotKey}
       />
 
       <CostPreviewSection
@@ -404,6 +481,7 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
         audience={audience}
         durationSec={durationSec}
         model={model}
+        modelLocked={isLivePilot}
         busy={busy}
         topicInvalid={topicInvalid}
         audienceInvalid={audienceInvalid}
@@ -429,11 +507,18 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
       />
 
       {isLivePilot && (
-        <FirstValueFeedbackCard
-          busy={busy}
-          artifactId={activeReview?.artifactId ?? null}
-          onSubmitFeedback={handleSubmitFeedback}
-        />
+        <>
+          <FirstValueFeedbackCard
+            busy={busy}
+            artifactId={activeReview?.artifactId ?? null}
+            onSubmitFeedback={handleSubmitFeedback}
+          />
+          <FirstValueSupportCard
+            busy={busy}
+            requests={pilot?.supportRequests ?? []}
+            onSubmitRequest={handleSubmitSupportRequest}
+          />
+        </>
       )}
     </div>
   );

@@ -122,6 +122,7 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0513_manual_pilot_bank_email_evidence.sql
 !apps/sophia-ai-factory/migrations/0514_manual_pilot_terms_acceptance.sql
 !apps/sophia-ai-factory/migrations/0516_b2_compliance_publish_gate.sql
+!apps/sophia-ai-factory/migrations/0519_pilot_support_requests.sql
 backups/*.sql
 **/d1-*.sql
 

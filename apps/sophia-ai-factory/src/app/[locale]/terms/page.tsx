@@ -4,17 +4,78 @@
  */
 
 import { getLocale } from 'next-intl/server';
+import { Link } from '@/navigation';
 import {
   OPTION_A_PILOT_CONTRACT,
   OPTION_A_PILOT_COPY,
   formatOptionAPriceVnd,
 } from '@/seed/config/tiers/option-a-pilot-contract';
+import { isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
 
 export const dynamic = 'force-dynamic';
+
+function PilotPrivateBetaTerms({ isVi }: { readonly isVi: boolean }) {
+  return (
+    <main className="min-h-screen bg-background px-4 py-12 text-foreground">
+      <article className="mx-auto max-w-3xl space-y-6">
+        <header className="space-y-3 border-b border-border pb-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="rounded-full bg-primary/15 px-3 py-1 font-mono text-xs font-semibold text-primary">
+              2026-11-pilot-v2 · Private Beta
+            </span>
+            <Link
+              href="/dashboard/first-value"
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+            >
+              {isVi ? 'Quay lại Sophia' : 'Back to Sophia'}
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isVi
+              ? 'Điều Khoản Sử Dụng — Chương Trình Private Beta 7 Ngày ($0)'
+              : 'Terms of Use — 7-Day Free Private Beta ($0)'}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {isVi
+              ? 'Áp dụng cho khách mời duy nhất được cấp quyền truy cập môi trường thử nghiệm biệt lập Sophia AI Factory.'
+              : 'Applies to invited participants on the isolated Sophia AI Factory Private Beta environment.'}
+          </p>
+        </header>
+
+        <ul className="list-disc space-y-2 pl-6 text-sm text-muted-foreground">
+          <li>
+            {isVi
+              ? 'Phạm vi: Thử nghiệm kín 7 ngày, phí nền tảng $0, tối đa 20 lượt tạo kịch bản AI thực tế (openai/gpt-4o-mini), chỉnh sửa phân cảnh, lưu nháp và xuất Markdown/JSON.'
+              : 'Scope: 7-day invite-only beta, $0 platform fee, up to 20 live AI script generations (openai/gpt-4o-mini), scene editing, draft saving, and Markdown/JSON export.'}
+          </li>
+          <li>
+            {isVi
+              ? 'Mô hình khóa AI (Customer BYOK): Bạn tự nhập khóa API OpenRouter của riêng mình ngay trong ứng dụng; khóa được mã hóa AES-256-GCM và bạn có thể xóa bất cứ lúc nào. Cước gọi OpenRouter (nếu có) tính trực tiếp trên tài khoản OpenRouter của bạn.'
+              : 'Customer BYOK AI Key: You supply your own OpenRouter API key in-app; it is stored encrypted with AES-256-GCM and removable anytime. OpenRouter token usage is billed only to your own OpenRouter account.'}
+          </li>
+          <li>
+            {isVi
+              ? 'Giới hạn an toàn: Không thu phí trên Sophia, không tự động đăng bài công khai, không bao gồm tạo video/TTS ngoài luồng kịch bản First Value.'
+              : 'Safety boundaries: No Sophia billing, no public auto-publishing, and no video/TTS rendering outside the First-Value script workflow.'}
+          </li>
+          <li>
+            {isVi
+              ? 'Hỗ trợ & Xóa dữ liệu: Gửi trực tiếp tại mục "Hỗ trợ & Xóa dữ liệu" trong ứng dụng (/dashboard/first-value#support-deletion) để nhận mã biên nhận psr_... và được xử lý trong tối đa 72 giờ.'
+              : 'Support & Data Deletion: Submit requests directly in the in-app "Support & Data Deletion" card (/dashboard/first-value#support-deletion) to receive a psr_... receipt ID with 72-hour fulfillment.'}
+          </li>
+        </ul>
+      </article>
+    </main>
+  );
+}
 
 export default async function TermsPage() {
   const locale = (await getLocale()) === 'en' ? 'en' : 'vi';
   const isVi = locale === 'vi';
+
+  if (isPilotInviteOnlyEnabled()) {
+    return <PilotPrivateBetaTerms isVi={isVi} />;
+  }
   const priceVnd = formatOptionAPriceVnd(locale);
   const {
     durationDays,

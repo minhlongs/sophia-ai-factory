@@ -26,6 +26,7 @@ import { getD1 } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
 import {
   enforcePilotFeatureDisabled,
+  enforcePilotPageScopeRedirect,
   enforcePilotServerActionDisabled,
 } from '@/seed/pilot/pilot-auth-guard';
 import {
@@ -77,6 +78,9 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
 
   const signupRedirectRes = handleSignupTabRedirect(request, pathname, pathLocale);
   if (signupRedirectRes) return signupRedirectRes;
+
+  const pilotPageRedirectRes = enforcePilotPageScopeRedirect(request);
+  if (pilotPageRedirectRes) return pilotPageRedirectRes;
 
   if (request.method === 'OPTIONS') return handleCorsPrelight(origin);
 
