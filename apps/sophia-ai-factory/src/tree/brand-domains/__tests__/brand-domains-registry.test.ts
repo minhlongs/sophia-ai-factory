@@ -144,6 +144,9 @@ function createMockD1(): D1Database {
             const row = domains.get(String(bound[0]));
             if (row) {
               row.status = 'SUSPENDED';
+              row.worker_attached = 0;
+              row.tls_verified = 0;
+              row.smoke_verified = 0;
               row.suspended_at = now;
               row.updated_at = now;
             }
@@ -196,6 +199,21 @@ describe('G7/G8 — Brand Domain Registry 10-gate enforcement & lifecycle', () =
     );
     expect(created.status).toBe('PENDING');
 
+    // Attempt activation directly from PENDING -> must throw (must be VERIFIED first)
+    await expect(
+      transitionBrandDomainStatus(db, created.id, 'activate', actor),
+    ).rejects.toThrow(/must be VERIFIED first/);
+
+    // Complete ownership + zone checks and verify -> VERIFIED
+    await updateBrandDomainChecks(
+      db,
+      created.id,
+      { ownershipVerified: true, cfZoneEligible: true },
+      actor,
+    );
+    const verified = await transitionBrandDomainStatus(db, created.id, 'verify', actor);
+    expect(verified.status).toBe('VERIFIED');
+
     // Attempt activation before 10/10 gates -> must throw
     await expect(
       transitionBrandDomainStatus(db, created.id, 'activate', actor),
@@ -207,6 +225,11 @@ describe('G7/G8 — Brand Domain Registry 10-gate enforcement & lifecycle', () =
     expect(active.status).toBe('ACTIVE');
     expect(active.activatedBy).toBe('founder-1');
 
+    // Cannot downgrade ACTIVE domain back to VERIFIED
+    await expect(
+      transitionBrandDomainStatus(db, created.id, 'verify', actor),
+    ).rejects.toThrow(/must be PENDING or SUSPENDED/);
+
     const activeHosts = await listActiveHostnamesForWorker(db, 'sophia-ai-factory');
     expect(activeHosts).toEqual(['app.acmevideo.com']);
 
@@ -215,7 +238,7 @@ describe('G7/G8 — Brand Domain Registry 10-gate enforcement & lifecycle', () =
       updateBrandDomainChecks(db, created.id, { tlsVerified: false }, actor),
     ).rejects.toThrow(/Cannot uncheck readiness gates on ACTIVE domain/);
 
-    // Rollback suspends domain immediately
+    // Rollback suspends domain immediately and resets volatile runtime gates
     const rolledBack = await transitionBrandDomainStatus(
       db,
       created.id,
@@ -224,9 +247,12 @@ describe('G7/G8 — Brand Domain Registry 10-gate enforcement & lifecycle', () =
       'Emergency cutback',
     );
     expect(rolledBack.status).toBe('SUSPENDED');
+    expect(rolledBack.checks.workerAttached).toBe(false);
+    expect(rolledBack.checks.tlsVerified).toBe(false);
+    expect(rolledBack.checks.smokeVerified).toBe(false);
     expect(await listActiveHostnamesForWorker(db, 'sophia-ai-factory')).toEqual([]);
 
     const auditEvents = await listBrandDomainAuditEvents(db, 50);
-    expect(auditEvents.length).toBeGreaterThanOrEqual(4);
+    expect(auditEvents.length).toBeGreaterThanOrEqual(5);
   });
 });

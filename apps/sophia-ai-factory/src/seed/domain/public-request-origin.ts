@@ -100,13 +100,12 @@ export function resolvePublicRequestOrigin(
   }
 
   if (parsedHost && parsedHostHeader && parsedHost.hostname !== parsedHostHeader.hostname) {
-    // Both headers present with different hosts: both must be allowlisted
-    // (e.g. Cloudflare routing from custom domain to worker), otherwise reject spoofing.
-    const hostSource = classifyAllowedHost(parsedHostHeader.hostname, env);
-    if (!hostSource) return null;
+    // Fail closed on Host vs X-Forwarded-Host mismatch to prevent CDN cache
+    // poisoning and cross-tenant header spoofing even across allowlisted hosts.
+    return null;
   }
 
-  let effective = parsedHost ?? parsedHostHeader;
+  let effective = parsedHostHeader ?? parsedHost;
   if (!effective) {
     try {
       const url = new URL(request.url);

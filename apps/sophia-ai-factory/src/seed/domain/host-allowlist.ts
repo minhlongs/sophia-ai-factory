@@ -71,7 +71,8 @@ export function isValidExactHostname(hostname: string): boolean {
 function extractHostFromUrl(rawUrl: string | undefined): string | null {
   if (!rawUrl) return null;
   const trimmed = rawUrl.trim();
-  if (!trimmed || PLACEHOLDER_MARKERS.some((m) => trimmed.includes(m))) {
+  const lowered = trimmed.toLowerCase();
+  if (!trimmed || PLACEHOLDER_MARKERS.some((m) => lowered.includes(m.toLowerCase()))) {
     return null;
   }
   try {

@@ -105,8 +105,11 @@ export async function handleDashboardPipeline(
 
       const userRole = profileRow?.role ?? null;
       const isAdminRole = userRole === 'admin';
+      const isFounderOnlyDomainsRoute =
+        cleanPath === '/dashboard/admin/domains' ||
+        cleanPath.startsWith('/dashboard/admin/domains/');
 
-      if (!isMaster && !isAdminRole) {
+      if (isFounderOnlyDomainsRoute ? !isAdminRole : !isMaster && !isAdminRole) {
         return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));
       }
       } catch (tierErr) {

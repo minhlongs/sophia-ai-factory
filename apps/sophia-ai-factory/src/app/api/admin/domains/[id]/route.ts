@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/seed/auth/admin';
+import { requireAdminWithRecentAuth } from '@/seed/auth/admin';
 import { getD1 } from '@/seed/db/client';
 import {
   invalidateDynamicHostCache,
@@ -62,7 +62,7 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await context.params;
@@ -125,10 +125,8 @@ export async function PATCH(
         actor,
         reason,
       );
-      if (action === 'activate' || action === 'suspend' || action === 'rollback') {
-        invalidateDynamicHostCache();
-        await syncActiveBrandDomainsFromD1({ db, force: true });
-      }
+      invalidateDynamicHostCache();
+      await syncActiveBrandDomainsFromD1({ db, force: true });
     }
 
     return NextResponse.json(
@@ -142,8 +140,10 @@ export async function PATCH(
     }
     if (
       err.message.includes('Cannot activate') ||
+      err.message.includes('Cannot verify') ||
       err.message.includes('Cannot uncheck') ||
-      err.message.includes('must be verified')
+      err.message.includes('must be verified') ||
+      err.message.includes('must be VERIFIED')
     ) {
       return NextResponse.json({ error: err.message }, { status: 409 });
     }

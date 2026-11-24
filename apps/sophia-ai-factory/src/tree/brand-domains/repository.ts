@@ -189,18 +189,40 @@ export async function transitionBrandDomainStatus(
   if (!current) throw new Error('Brand domain not found');
 
   if (action === 'verify') {
+    if (current.status !== 'PENDING' && current.status !== 'SUSPENDED') {
+      throw new Error(
+        `Cannot verify ${current.hostname}: domain must be PENDING or SUSPENDED (current status: ${current.status})`,
+      );
+    }
     if (!current.checks.ownershipVerified || !current.checks.cfZoneEligible) {
       throw new Error('Ownership and Cloudflare zone eligibility must be verified first');
     }
-    await db
-      .prepare(`UPDATE brand_domains SET status = 'VERIFIED', updated_at = datetime('now') WHERE id = ?1`)
+    const verifyResult = await db
+      .prepare(
+        `UPDATE brand_domains
+         SET status = 'VERIFIED', updated_at = datetime('now')
+         WHERE id = ?1
+           AND status IN ('PENDING', 'SUSPENDED')
+           AND ownership_verified = 1
+           AND cf_zone_eligible = 1`,
+      )
       .bind(id)
       .run();
+    if ((verifyResult.meta?.changes ?? 0) !== 1) {
+      throw new Error(
+        `Cannot verify ${current.hostname}: status or verification gates changed concurrently`,
+      );
+    }
     await appendAuditEvent(db, id, current.hostname, 'VERIFIED', actor, {
       previousStatus: current.status,
       reason: reason ?? null,
     });
   } else if (action === 'activate') {
+    if (current.status !== 'VERIFIED') {
+      throw new Error(
+        `Cannot activate ${current.hostname}: domain must be VERIFIED first (current status: ${current.status})`,
+      );
+    }
     const evalResult = evaluateDomainReadiness(current.checks);
     if (!evalResult.readyToActivate) {
       throw new Error(
@@ -213,6 +235,7 @@ export async function transitionBrandDomainStatus(
          SET status = 'ACTIVE', activated_by = ?2, activated_at = datetime('now'),
              suspended_at = NULL, updated_at = datetime('now')
          WHERE id = ?1
+           AND status = 'VERIFIED'
            AND ownership_verified = 1
            AND cf_zone_eligible = 1
            AND worker_attached = 1
@@ -228,7 +251,7 @@ export async function transitionBrandDomainStatus(
       .run();
     if ((activationResult.meta?.changes ?? 0) !== 1) {
       throw new Error(
-        `Cannot activate ${current.hostname}: readiness gates changed concurrently before activation`,
+        `Cannot activate ${current.hostname}: status or readiness gates changed concurrently before activation`,
       );
     }
     await appendAuditEvent(db, id, current.hostname, 'ACTIVATED', actor, {
@@ -240,7 +263,12 @@ export async function transitionBrandDomainStatus(
     await db
       .prepare(
         `UPDATE brand_domains
-         SET status = 'SUSPENDED', suspended_at = datetime('now'), updated_at = datetime('now')
+         SET status = 'SUSPENDED',
+             worker_attached = 0,
+             tls_verified = 0,
+             smoke_verified = 0,
+             suspended_at = datetime('now'),
+             updated_at = datetime('now')
          WHERE id = ?1`,
       )
       .bind(id)

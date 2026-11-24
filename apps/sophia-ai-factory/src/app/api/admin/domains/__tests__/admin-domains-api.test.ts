@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { BrandDomainIdentity } from '@/seed/domain';
 
 const requireAdminMock = vi.hoisted(() => vi.fn());
+const requireAdminWithRecentAuthMock = vi.hoisted(() => vi.fn());
 const getD1Mock = vi.hoisted(() => vi.fn());
 const listBrandDomainsMock = vi.hoisted(() => vi.fn());
 const listAuditMock = vi.hoisted(() => vi.fn());
@@ -11,7 +12,10 @@ const updateChecksMock = vi.hoisted(() => vi.fn());
 const transitionStatusMock = vi.hoisted(() => vi.fn());
 const syncActiveMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/seed/auth/admin', () => ({ requireAdmin: requireAdminMock }));
+vi.mock('@/seed/auth/admin', () => ({
+  requireAdmin: requireAdminMock,
+  requireAdminWithRecentAuth: requireAdminWithRecentAuthMock,
+}));
 vi.mock('@/seed/db/client', () => ({ getD1: getD1Mock }));
 vi.mock('@/tree/brand-domains', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/tree/brand-domains')>();
@@ -64,6 +68,7 @@ describe('API /api/admin/domains & /api/admin/domains/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireAdminMock.mockResolvedValue(ADMIN_AUTH);
+    requireAdminWithRecentAuthMock.mockResolvedValue({ ...ADMIN_AUTH, recentAuth: true });
     getD1Mock.mockResolvedValue(FAKE_DB);
     listBrandDomainsMock.mockResolvedValue([SAMPLE_DOMAIN]);
     listAuditMock.mockResolvedValue([]);
@@ -141,6 +146,14 @@ describe('API /api/admin/domains & /api/admin/domains/[id]', () => {
     expect((await callPatch('dom-1', { action: 'update_checks', checks: { tlsVerified: true } })).status).toBe(200);
     expect((await callPatch('dom-1', { action: 'activate' })).status).toBe(200);
     expect(syncActiveMock).toHaveBeenCalledWith({ db: FAKE_DB, force: true });
+
+    requireAdminWithRecentAuthMock.mockResolvedValueOnce(
+      NextResponse.json({ error: 'Re-authentication required' }, { status: 401 }),
+    );
+    expect((await callPatch('dom-1', { action: 'activate' })).status).toBe(401);
+
+    transitionStatusMock.mockRejectedValueOnce(new Error('Cannot verify app.newbrand.io: domain must be PENDING or SUSPENDED'));
+    expect((await callPatch('dom-1', { action: 'verify' })).status).toBe(409);
 
     transitionStatusMock.mockRejectedValueOnce(new Error('Brand domain not found'));
     expect((await callPatch('missing', { action: 'verify' })).status).toBe(404);

@@ -113,6 +113,30 @@ describe('seed/domain — technical identity & fail-closed host security', () =>
       },
     });
     expect(enforceAllowedRequestHost(smuggled, PROD_ENV)?.status).toBe(421);
+
+    // Mismatch between two different allowlisted hosts MUST also fail closed
+    // to prevent CDN cache poisoning and cross-tenant header forgery.
+    registerDynamicActiveHosts(['studio.brand-a.io']);
+    const crossAllowlistedMismatch = new Request(
+      `https://${PRODUCTION_TECHNICAL_HOSTNAME}/blog/feed.xml`,
+      {
+        headers: {
+          host: PRODUCTION_TECHNICAL_HOSTNAME,
+          'x-forwarded-host': 'studio.brand-a.io',
+        },
+      },
+    );
+    expect(resolvePublicRequestOrigin(crossAllowlistedMismatch, PROD_ENV)).toBeNull();
+    expect(enforceAllowedRequestHost(crossAllowlistedMismatch, PROD_ENV)?.status).toBe(421);
+
+    // Matching Host and X-Forwarded-Host on an allowlisted host succeeds
+    const matchingHeaders = new Request('https://studio.brand-a.io/blog/feed.xml', {
+      headers: {
+        host: 'studio.brand-a.io',
+        'x-forwarded-host': 'studio.brand-a.io',
+      },
+    });
+    expect(resolvePublicRequestOrigin(matchingHeaders, PROD_ENV)?.hostname).toBe('studio.brand-a.io');
   });
 
   it('prevents open redirect / origin spoofing in getSafeOriginFromRequest', () => {

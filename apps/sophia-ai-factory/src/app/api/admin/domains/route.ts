@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/seed/auth/admin';
+import { requireAdmin, requireAdminWithRecentAuth } from '@/seed/auth/admin';
 import { getD1 } from '@/seed/db/client';
 import {
   getStaticAllowedHosts,
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   let body: RegisterRequestBody;
