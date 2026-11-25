@@ -396,7 +396,7 @@ export function FirstValueJourneyClient({
       rating: input.rating,
       category: input.category,
       comment: input.comment,
-      ...(input.screenshotDataUrl ? { screenshotDataUrl: input.screenshotDataUrl } : {}),
+      screenshotDataUrl: input.screenshotDataUrl ?? null,
     });
     return Boolean(data?.feedback);
   }

@@ -213,6 +213,10 @@ describe('FirstValueFeedbackCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'feedbackScreenshotRemoveBtn' }));
     expect(screen.queryByText('bug.png')).toBeNull();
 
+    // Clearing file input with empty FileList resets selection cleanly
+    fireEvent.change(fileInput, { target: { files: [] } });
+    expect(screen.queryByText('bug.png')).toBeNull();
+
     fireEvent.change(textarea, { target: { value: 'Follow-up note' } });
     expect(screen.queryByText('feedbackSubmittedSuccess')).toBeNull();
   });
