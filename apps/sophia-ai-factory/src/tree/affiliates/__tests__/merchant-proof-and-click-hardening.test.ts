@@ -41,11 +41,12 @@ describe('Phase 1 Clearinghouse Hardening — Bot Filter, Crypto/SaaS Sub-IDs & 
         { linkId: 'l1', networkHint: 'partnerstack', ipHash: 'ip_b' },
         { linkId: 'l1', networkHint: 'partnerstack', ipHash: 'ip_bot', isBot: true },
         { linkId: 'l2', networkHint: 'binance', ipHash: 'ip_c' },
+        { linkId: 'l3', networkHint: '', ipHash: '' },
       ],
       '2026-11-25T16:30:00Z',
     );
 
-    expect(snapshot.totalRawClicks).toBe(4);
+    expect(snapshot.totalRawClicks).toBe(5);
     expect(snapshot.totalUniqueVerifiedClicks).toBe(3);
     expect(snapshot.totalBotsFiltered).toBe(1);
     expect(snapshot.stage2TriggerReady).toBe(false);
