@@ -44,6 +44,7 @@ export interface PilotFeedbackRecord {
   readonly rating: number;
   readonly category: string;
   readonly comment: string;
+  readonly screenshotDataUrl: string | null;
   readonly createdAtIso: string;
 }
 
@@ -402,26 +403,51 @@ export async function recordPilotFeedback(
     readonly rating: number;
     readonly category: string;
     readonly comment: string;
+    readonly screenshotDataUrl?: string | null;
     readonly nowIso: string;
   },
 ): Promise<PilotFeedbackRecord> {
   const id = `pf_${crypto.randomUUID()}`;
-  await d1
-    .prepare(
-      `INSERT INTO pilot_feedback (id, org_id, user_id, artifact_id, rating, category, comment, created_at_iso)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      id,
-      input.orgId,
-      input.userId,
-      input.artifactId ?? null,
-      input.rating,
-      input.category,
-      input.comment,
-      input.nowIso,
-    )
-    .run();
+  const screenshot = input.screenshotDataUrl ?? null;
+  try {
+    await d1
+      .prepare(
+        `INSERT INTO pilot_feedback (id, org_id, user_id, artifact_id, rating, category, comment, screenshot_data_url, created_at_iso)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        input.orgId,
+        input.userId,
+        input.artifactId ?? null,
+        input.rating,
+        input.category,
+        input.comment,
+        screenshot,
+        input.nowIso,
+      )
+      .run();
+  } catch (err) {
+    if (!String(err).includes('screenshot_data_url')) {
+      throw err;
+    }
+    await d1
+      .prepare(
+        `INSERT INTO pilot_feedback (id, org_id, user_id, artifact_id, rating, category, comment, created_at_iso)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        input.orgId,
+        input.userId,
+        input.artifactId ?? null,
+        input.rating,
+        input.category,
+        input.comment,
+        input.nowIso,
+      )
+      .run();
+  }
 
   return {
     id,
@@ -431,6 +457,7 @@ export async function recordPilotFeedback(
     rating: input.rating,
     category: input.category,
     comment: input.comment,
+    screenshotDataUrl: screenshot,
     createdAtIso: input.nowIso,
   };
 }
