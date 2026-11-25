@@ -135,9 +135,13 @@ export function buildAffiliateCampaignUserPrompt(
   durationSec: number,
   locale: 'vi' | 'en' = 'vi',
 ): string {
-  const safeDuration = Math.max(15, Math.min(180, Math.round(durationSec || 30)));
+  const safeDuration = Math.max(15, Math.min(480, Math.round(durationSec || 30)));
+  const isLongForm = safeDuration >= 180;
   const minDur = Math.ceil(Math.max(10, safeDuration * 0.5));
   const maxDur = Math.floor(safeDuration * 1.5);
+  const sceneConstraint = isLongForm
+    ? '6 to 10 structured YouTube Review/Comparison chapters (Hook, Problem, Product Walkthrough, Pros & Cons, Pricing/Comparison, Verdict & CTA)'
+    : '3 to 5 scenes';
   const langInstruction =
     locale === 'vi'
       ? 'Write all campaign text in natural, persuasive business Vietnamese (keep URLs exact).'
@@ -182,7 +186,7 @@ Generate a complete Affiliate Campaign Pack as JSON with this exact shape:
 }
 
 Constraints:
-- shortFormScript must have 3 to 5 scenes and total_duration between ${minDur} and ${maxDur} seconds.
+- shortFormScript must have ${sceneConstraint} and total_duration between ${minDur} and ${maxDur} seconds.
 - Include ${offer.referralUrl} verbatim in callToAction and socialPost, and include NO third-party links.`;
 }
 
@@ -308,7 +312,7 @@ export function buildSimulatedAffiliateCampaignPack(
   durationSec: number,
   locale: 'vi' | 'en' = 'vi',
 ): AffiliateCampaignPack {
-  const safeDuration = Math.max(15, Math.min(180, Math.round(durationSec || 30)));
+  const safeDuration = Math.max(15, Math.min(480, Math.round(durationSec || 30)));
   const s1 = Math.max(5, Math.round(safeDuration * 0.25));
   const s2 = Math.max(5, Math.round(safeDuration * 0.45));
   const s3 = Math.max(5, safeDuration - s1 - s2);

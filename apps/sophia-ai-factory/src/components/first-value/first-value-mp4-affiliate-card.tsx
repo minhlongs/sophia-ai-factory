@@ -15,7 +15,10 @@ import type {
   PilotAffiliateLinkSummary,
   PilotMp4ExportSummary,
 } from '@/seed/pilot/pilot-access-policy';
-import { renderAndDownloadPilotMp4 } from './pilot-browser-mp4-renderer';
+import {
+  renderAndDownloadPilotMp4,
+  type PilotMp4AspectRatio,
+} from './pilot-browser-mp4-renderer';
 import { PilotVoiceAndCapCutPack } from './pilot-voice-and-capcut-pack';
 
 export interface FirstValueMp4AffiliateCardProps {
@@ -75,8 +78,15 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   const [pollingExportId, setPollingExportId] = useState<string | null>(null);
   const [pollFeedbackById, setPollFeedbackById] = useState<Record<string, string>>({});
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<PilotMp4AspectRatio>(() =>
+    (props.review?.durationSec ?? 0) >= 180 ? '16:9' : '9:16',
+  );
   const [productImageUrls, setProductImageUrls] = useState<readonly string[]>([]);
   const productImageUrlsRef = useRef<readonly string[]>([]);
+
+  useEffect(() => {
+    setAspectRatio((props.review?.durationSec ?? 0) >= 180 ? '16:9' : '9:16');
+  }, [props.review?.artifactId, props.review?.durationSec]);
 
   useEffect(() => {
     productImageUrlsRef.current = productImageUrls;
@@ -148,6 +158,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         shortUrl: resolvedLink.shortUrl,
         disclosureTag: resolvedLink.disclosureTag,
         productImageUrls,
+        aspectRatio,
       });
       await props.onRecordBrowserMp4({
         artifactId: props.review.artifactId,
@@ -331,7 +342,18 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         {!canRenderMp4 ? (
           <p className="text-xs text-amber-600 dark:text-amber-400">{t('pilotMp4Prerequisite')}</p>
         ) : (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              aria-label={t('pilotAspectRatioLabel')}
+              data-testid="pilot-mp4-aspect-select"
+              value={aspectRatio}
+              disabled={!consentOk || props.busy || renderingMp4}
+              onChange={(e) => setAspectRatio(e.target.value as PilotMp4AspectRatio)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-xs text-foreground"
+            >
+              <option value="9:16">{t('pilotAspect9x16')}</option>
+              <option value="16:9">{t('pilotAspect16x9')}</option>
+            </select>
             <button
               type="button"
               data-testid="pilot-export-browser-mp4-btn"

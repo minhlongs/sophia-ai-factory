@@ -9,6 +9,8 @@ import {
 import { AffiliatePilotStepper } from '../affiliate-studio/affiliate-pilot-stepper';
 import { PilotVoiceAndCapCutPack } from '../pilot-voice-and-capcut-pack';
 import { renderAndDownloadPilotMp4 } from '../pilot-browser-mp4-renderer';
+import { buildAffiliateCampaignUserPrompt } from '@/seed/ai/affiliate-campaign-prompt';
+import { GenerateAffiliateCampaignActionSchema } from '@/land/first-value/pilot-affiliate-studio-schemas';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -192,6 +194,41 @@ describe('Pilot CapCut Pack helpers & UI', () => {
       productImageUrls: ['blob:existing-1'],
     });
     expect(mp4.byteSize).toBeGreaterThan(0);
+
+    const landscapeMp4 = await renderAndDownloadPilotMp4({
+      artifactId: 'cmp_yt_16x9',
+      script: SAMPLE_SCRIPT,
+      ctaText: 'Bấm link',
+      shortUrl: 'https://pilot.test/api/r/xyz',
+      disclosureTag: '#QuảngCáo',
+      aspectRatio: '16:9',
+    });
+    expect(landscapeMp4.width).toBe(576);
+    expect(landscapeMp4.height).toBe(320);
+
+    const longPrompt = buildAffiliateCampaignUserPrompt(
+      {
+        vertical: 'saas',
+        productName: 'Notion AI',
+        officialWebsiteUrl: 'https://notion.so',
+        referralUrl: 'https://notion.so/?ref=pilot',
+        commissionTerms: '20% recurring',
+        targetAudience: 'Creators',
+        targetMarket: 'US',
+        productInfoSource: 'Official site',
+      },
+      300,
+      'en',
+    );
+    expect(longPrompt).toContain('6 to 10 structured YouTube Review/Comparison chapters');
+    expect(
+      GenerateAffiliateCampaignActionSchema.parse({
+        action: 'generate_affiliate_campaign',
+        orgId: 'org_1',
+        offerId: 'offer_1',
+        durationSec: 480,
+      }).durationSec,
+    ).toBe(480);
 
     vi.unstubAllGlobals();
   });
