@@ -163,7 +163,7 @@ jobs:
         if: ${{ inputs.skip_migrations != true && inputs.dry_run != true }}
         env:
           # Decoupled from brand domain: targets Worker technical URL when vars.DEPLOY_VERIFY_URL is configured.
-          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || 'https://sophia.agencyos.network' }}
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' }}
         run: |
           set -euo pipefail
           echo "==> Fetching current live SHA to calculate migration delta..."
@@ -230,7 +230,7 @@ jobs:
     env:
       # Decoupled from brand domain: set repo variable DEPLOY_VERIFY_URL to
       # https://sophia-ai-factory.agencyos-openclaw.workers.dev once production workers.dev is enabled.
-      DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || 'https://sophia.agencyos.network' }}
+      DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' }}
     defaults:
       run:
         working-directory: apps/sophia-ai-factory

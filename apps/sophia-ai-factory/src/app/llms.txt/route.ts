@@ -1,18 +1,24 @@
 /**
- * Dynamic /llms.txt route handler synchronized with TIER_CONFIGS and NICHE_SLUGS.
+ * Public `/llms.txt` index for AI Search & Agentic Commerce crawlers.
+ *
+ * @module app/llms.txt/route
  */
 
 import { NextResponse } from 'next/server';
-import { buildLlmsIndexText } from '@/tree/aeo';
+import { buildLlmsTxtIndex } from '@/tree/aeo/campaign-citation-builder';
+
+const DEFAULT_CF_BASE_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 export async function GET(): Promise<NextResponse> {
-  const body = buildLlmsIndexText();
-  return new NextResponse(body, {
+  const baseUrl =
+    process.env.APP_URL || process.env.WORKER_TECHNICAL_URL || DEFAULT_CF_BASE_URL;
+  const content = buildLlmsTxtIndex(baseUrl, []);
+
+  return new NextResponse(content, {
     status: 200,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-      'X-Robots-Tag': 'all',
+      'Cache-Control': 'public, max-age=300',
     },
   });
 }

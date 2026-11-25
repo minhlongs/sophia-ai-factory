@@ -18,9 +18,19 @@ import {
 import { TelegramFSM } from '@/tree/telegram/telegram-fsm-state-manager';
 import { sendTelegramMessage } from '@/tree/telegram/telegram-client';
 import { handleNicheVideoTelegramCommand } from '@/tree/telegram/niche-video-telegram-handler';
+import {
+  handleConciergeAsk,
+  handleConciergeStart,
+} from '@/tree/telegram/handlers/concierge-handler';
 
 export async function dispatchTelegramCommand(chatId: string, text: string): Promise<void> {
-  if (text === '/start' || text.startsWith('/start ')) {
+  if (text.startsWith('/start concierge_')) {
+    const slug = text.slice('/start concierge_'.length).trim();
+    await handleConciergeStart(chatId, slug);
+  } else if (text === '/ask' || text.startsWith('/ask ')) {
+    const query = text.replace('/ask', '').trim();
+    await handleConciergeAsk(chatId, query);
+  } else if (text === '/start' || text.startsWith('/start ')) {
     await handleStart(chatId);
   } else if (text === '/help') {
     await handleHelp(chatId);
