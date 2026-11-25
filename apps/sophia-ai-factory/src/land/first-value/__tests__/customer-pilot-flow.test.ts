@@ -1028,6 +1028,26 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
       brokenStoreDeps,
     );
     expect(saveErrRes.status).toBe(500);
+    expect(((await saveErrRes.json()) as { code: string }).code).toBe('STORAGE_WRITE_FAILED');
+
+    const badMasterKeyErr = new Error('BYOK_MASTER_KEY_INVALID: expected 32 bytes');
+    badMasterKeyErr.name = 'ByokInvalidMasterKeyError';
+    const masterKeyErrRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      buildDeps({
+        pilotEnv: byokEnv,
+        probeOpenRouterByokKey: okProbe,
+        saveOpenRouterByokKey: vi.fn(async () => {
+          throw badMasterKeyErr;
+        }),
+      }),
+    );
+    expect(masterKeyErrRes.status).toBe(500);
+    expect(((await masterKeyErrRes.json()) as { code: string }).code).toBe(
+      'BYOK_MASTER_KEY_CONFIG_ERROR',
+    );
     const clearErrRes = await handleFirstValuePost(
       makeRequest('POST', 'https://pilot.example.test/api/first-value', {
         body: { action: 'clear_byok_key', orgId: 'org_pilot_1' },

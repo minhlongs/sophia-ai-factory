@@ -126,10 +126,15 @@ export async function handleSaveByokKey(
 
   try {
     await deps.saveOpenRouterByokKey(user.id, trimmedKey);
-  } catch {
+  } catch (err) {
+    const errName = err instanceof Error ? err.name : 'UnknownError';
+    const reasonCode =
+      errName === 'ByokMissingMasterKeyError' || errName === 'ByokInvalidMasterKeyError'
+        ? 'BYOK_MASTER_KEY_CONFIG_ERROR'
+        : 'STORAGE_WRITE_FAILED';
     return jsonPrivate(
       {
-        code: 'STORAGE_WRITE_FAILED',
+        code: reasonCode,
         error:
           'Failed to encrypt and store your OpenRouter API key. / Không thể mã hóa và lưu khóa API OpenRouter của bạn.',
       },
