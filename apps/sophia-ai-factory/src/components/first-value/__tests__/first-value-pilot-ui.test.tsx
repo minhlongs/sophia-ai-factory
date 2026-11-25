@@ -449,6 +449,54 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
     });
   });
 
+  it('renders submitted feedback history with received, in_progress, resolved statuses and operator reply', () => {
+    render(
+      <FirstValueFeedbackCard
+        busy={false}
+        artifactId={null}
+        feedbackItems={[
+          {
+            id: 'pf_res_1',
+            rating: 5,
+            category: 'bug_report',
+            comment: 'US market script was in Vietnamese',
+            status: 'resolved',
+            operatorReply: 'Fixed: US market now defaults to English.',
+            createdAtIso: '2026-11-25T10:15:00.000Z',
+            resolvedAtIso: '2026-11-25T11:00:00.000Z',
+          },
+          {
+            id: 'pf_prog_1',
+            rating: 3,
+            category: 'usefulness',
+            comment: 'Need screenshot upload',
+            status: 'in_progress',
+            operatorReply: null,
+            createdAtIso: '2026-11-25T10:26:00.000Z',
+            resolvedAtIso: null,
+          },
+          {
+            id: 'pf_rec_1',
+            rating: 4,
+            category: 'other',
+            comment: 'Nice workflow',
+            status: 'received',
+            operatorReply: null,
+            createdAtIso: '2026-11-25T10:30:00.000Z',
+            resolvedAtIso: null,
+          },
+        ]}
+        onSubmitFeedback={vi.fn(async () => true)}
+      />,
+    );
+
+    expect(screen.getByText('feedbackHistoryTitle')).toBeTruthy();
+    expect(screen.getByText('feedbackStatusResolved')).toBeTruthy();
+    expect(screen.getByText('feedbackStatusInProgress')).toBeTruthy();
+    expect(screen.getByText('feedbackStatusReceived')).toBeTruthy();
+    expect(screen.getByText('Fixed: US market now defaults to English.')).toBeTruthy();
+  });
+
   it('renders distraction-free PilotWorkspaceShell in VI & EN and triggers signOut', async () => {
     const { rerender } = render(
       <PilotWorkspaceShell email="customer@example.test" isVi>

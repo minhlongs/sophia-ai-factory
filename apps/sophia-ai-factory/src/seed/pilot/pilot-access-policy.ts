@@ -123,6 +123,19 @@ export interface PilotQuotaSnapshot {
   readonly maxEstimatedSpendUsd?: number;
 }
 
+export type PilotFeedbackStatus = 'received' | 'in_progress' | 'resolved';
+
+export interface PilotFeedbackSummary {
+  readonly id: string;
+  readonly rating: number;
+  readonly category: string;
+  readonly comment: string;
+  readonly status: PilotFeedbackStatus;
+  readonly operatorReply: string | null;
+  readonly createdAtIso: string;
+  readonly resolvedAtIso: string | null;
+}
+
 export interface PilotStatusSnapshot {
   readonly inviteOnly: boolean;
   readonly liveInferenceEnabled: boolean;
@@ -135,6 +148,7 @@ export interface PilotStatusSnapshot {
   readonly byokKeyConfigured?: boolean;
   readonly heygenByokConfigured?: boolean;
   readonly supportRequests?: readonly PilotSupportRequestSummary[];
+  readonly feedbackItems?: readonly PilotFeedbackSummary[];
   readonly affiliateLinks?: readonly PilotAffiliateLinkSummary[];
   readonly mp4Exports?: readonly PilotMp4ExportSummary[];
   readonly manualPublishes?: readonly PilotManualPublishSummary[];
