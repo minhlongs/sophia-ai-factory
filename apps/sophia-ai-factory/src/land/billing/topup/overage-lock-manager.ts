@@ -40,11 +40,24 @@ export async function acquireTopupEventLock(
     return { acquired: false, response: { success: true, message: 'Already processed' } };
   }
 
-  const { isStale } = await resolveStaleLock(db, eventId, existing.created_at, payment_id, now);
+  const { isStale, reclaimed } = await resolveStaleLock(db, eventId, existing.created_at, payment_id, now);
   if (isStale) {
+    if (reclaimed) {
+      const retryInsert = await db
+        .prepare(
+          `INSERT INTO payment_events (event_id, event_type, payload, processed, created_at)
+           VALUES (?1, ?2, ?3, 0, ?4)
+           ON CONFLICT(event_id) DO NOTHING`,
+        )
+        .bind(eventId, `topup.${payment_status}`, JSON.stringify(ipn), now)
+        .run();
+      if (retryInsert.meta?.changes) {
+        return { acquired: true };
+      }
+    }
     return {
       acquired: false,
-      response: { success: true, message: 'Stale lock cleared (marked processed)' },
+      response: { success: false, message: 'Stale lock recovery in progress' },
     };
   }
 

@@ -97,23 +97,26 @@ export async function getUnbilledOverageEventIds(userId: string): Promise<string
   }
 }
 
-/** Handles stale locks (>5 minutes) best-effort recovery. */
+/** Handles stale locks (>5 minutes) by releasing unprocessed locks for retry. */
 export async function resolveStaleLock(
   db: ReturnType<typeof createServerClient>,
   eventId: string,
   createdAt: string,
   paymentId: string,
   now: string,
-): Promise<{ isStale: boolean }> {
+): Promise<{ isStale: boolean; reclaimed?: boolean }> {
   const lockAgeMs = Date.now() - new Date(createdAt ?? now).getTime();
   if (lockAgeMs > 5 * 60 * 1000) {
-    logger.error('[OverageTopup] Stale lock cleared', { eventId, payment_id: paymentId });
+    logger.error('[OverageTopup] Stale lock detected — releasing for retry', { eventId, payment_id: paymentId });
     try {
-      await db.prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1').bind(eventId).run();
+      const deleted = await db
+        .prepare('DELETE FROM payment_events WHERE event_id = ?1 AND processed = 0 AND created_at = ?2')
+        .bind(eventId, createdAt)
+        .run<{ changes: number }>();
+      return { isStale: true, reclaimed: deleted.meta?.changes === 1 };
     } catch {
-      // Non-fatal — stale lock cleared best-effort
+      return { isStale: true, reclaimed: false };
     }
-    return { isStale: true };
   }
   return { isStale: false };
 }

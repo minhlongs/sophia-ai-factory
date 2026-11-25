@@ -29,6 +29,76 @@ export interface FinishedActivationContext {
   orgId: string | undefined
 }
 
+async function safeLoadOrder(orderId: string | undefined) {
+  if (!orderId) return null
+  try {
+    return await getOrderById(orderId)
+  } catch {
+    return null
+  }
+}
+
+function resolveValidatedTier(
+  ipn: NowPaymentsIpnPayload,
+  userId: string,
+  pendingOrder: Awaited<ReturnType<typeof getOrderById>>,
+): Tier | null {
+  if (pendingOrder?.user_id && pendingOrder.user_id !== userId) {
+    logger.warn('[NOWPayments] Resolved userId mismatch against authoritative pending_orders.user_id', {
+      paymentId: ipn.payment_id,
+      orderId: ipn.order_id,
+      resolvedUserId: userId,
+      orderUserId: pendingOrder.user_id,
+    })
+    return null
+  }
+  const tierConfig = ipn.invoice_id ? getTierByInvoiceId(ipn.invoice_id) : null
+  if (tierConfig) {
+    if (pendingOrder?.tier && pendingOrder.tier !== tierConfig.tier) {
+      logger.warn('[NOWPayments] Static invoice tier mismatch against pending_orders', {
+        paymentId: ipn.payment_id,
+        orderId: ipn.order_id,
+        invoiceTier: tierConfig.tier,
+        orderTier: pendingOrder.tier,
+      })
+      return null
+    }
+    return tierConfig.tier
+  }
+  return pendingOrder?.tier ? (pendingOrder.tier as Tier) : null
+}
+
+function verifyUsdPriceMatch(
+  ipn: NowPaymentsIpnPayload,
+  tier: Tier,
+  billingPeriod: 'monthly' | 'yearly' | 'lifetime',
+  pendingOrder: Awaited<ReturnType<typeof getOrderById>>,
+): boolean {
+  const authoritativeOrderUsd =
+    pendingOrder?.amount_usd_cents && pendingOrder.amount_usd_cents > 0
+      ? pendingOrder.amount_usd_cents / 100
+      : undefined
+  const expectedPrice = authoritativeOrderUsd ?? (billingPeriod === 'yearly'
+    ? (UNIFIED_TIERS[tier]?.yearlyPrice ?? NOWPAYMENTS_TIERS[tier]?.yearlyPrice)
+    : NOWPAYMENTS_TIERS[tier]?.price)
+  if (expectedPrice === undefined || ipn.price_amount === undefined) return true
+  const receivedCurrency = ipn.price_currency?.trim().toLowerCase()
+  if (receivedCurrency !== 'usd') {
+    logger.warn('[NOWPayments] Non-USD or missing price currency — rejecting subscription activation', {
+      paymentId: ipn.payment_id, tier, expectedCurrency: 'usd', receivedCurrency: ipn.price_currency ?? null,
+    })
+    return false
+  }
+  const deviation = Math.abs(ipn.price_amount - expectedPrice)
+  if (deviation > expectedPrice * AMOUNT_MISMATCH_THRESHOLD) {
+    logger.warn('[NOWPayments] Amount mismatch — rejecting subscription activation', {
+      paymentId: ipn.payment_id, tier, expectedPrice, receivedAmount: ipn.price_amount, deviation,
+    })
+    return false
+  }
+  return true
+}
+
 export async function setupDatabaseAndContext(
   ipn: NowPaymentsIpnPayload,
   userId: string
@@ -38,37 +108,14 @@ export async function setupDatabaseAndContext(
   if (!_d1) throw new Error('D1 database binding not available')
   const d1 = _d1!
 
-  const tierConfig = ipn.invoice_id ? getTierByInvoiceId(ipn.invoice_id) : null
-  let tier: Tier
-  if (tierConfig) {
-    tier = tierConfig.tier
-  } else {
-    // Fallback: SDK-created checkouts — resolve tier from pending_orders
-    const pendingOrder = ipn.order_id ? await getOrderById(ipn.order_id).catch(() => null) : null
-    if (!pendingOrder?.tier) return null
-    tier = pendingOrder.tier as Tier
-  }
+  const pendingOrder = await safeLoadOrder(ipn.order_id)
+  const tier = resolveValidatedTier(ipn, userId, pendingOrder)
+  if (!tier) return null
+
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
   const billingPeriod = await resolveBillingPeriod(ipn, isLifetime)
-
-  const expectedPrice = billingPeriod === 'yearly'
-    ? (UNIFIED_TIERS[tier]?.yearlyPrice ?? NOWPAYMENTS_TIERS[tier]?.yearlyPrice)
-    : NOWPAYMENTS_TIERS[tier]?.price
-  if (expectedPrice !== undefined && ipn.price_amount !== undefined) {
-    const receivedCurrency = ipn.price_currency?.trim().toLowerCase()
-    if (receivedCurrency !== 'usd') {
-      logger.warn('[NOWPayments] Non-USD or missing price currency — rejecting subscription activation', {
-        paymentId: ipn.payment_id, tier, expectedCurrency: 'usd', receivedCurrency: ipn.price_currency ?? null,
-      })
-      return null
-    }
-    const deviation = Math.abs(ipn.price_amount - expectedPrice)
-    if (deviation > expectedPrice * AMOUNT_MISMATCH_THRESHOLD) {
-      logger.warn('[NOWPayments] Amount mismatch — rejecting subscription activation', {
-        paymentId: ipn.payment_id, tier, expectedPrice, receivedAmount: ipn.price_amount, deviation,
-      })
-      return null
-    }
+  if (!verifyUsdPriceMatch(ipn, tier, billingPeriod, pendingOrder)) {
+    return null
   }
 
   const periodEnd = calculatePeriodEnd(billingPeriod)

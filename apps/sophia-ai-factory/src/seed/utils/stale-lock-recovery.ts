@@ -58,10 +58,11 @@ export async function detectStaleLock(
 }
 
 /**
- * Mark a stale lock as processed (winner-takes-all recovery).
+ * Release a stale unprocessed lock (`processed = 0`) so a subsequent provider
+ * retry can re-acquire the lock and converge ledger + entitlement state.
  *
- * Returns `success(true)` if the row was updated,
- * `success(false)` if no matching row,
+ * Returns `success(true)` if the stale unprocessed row was deleted,
+ * `success(false)` if no matching unprocessed row existed,
  * `failure(Error)` on unexpected errors.
  */
 export async function markForRecovery(
@@ -70,7 +71,7 @@ export async function markForRecovery(
 ): Promise<Result<boolean, Error>> {
   try {
     const result = await db
-      .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
+      .prepare('DELETE FROM payment_events WHERE event_id = ?1 AND processed = 0')
       .bind(eventId)
       .run<{ changes: number }>()
 
@@ -82,7 +83,7 @@ export async function markForRecovery(
 }
 
 /**
- * Clear a stale lock by marking it as processed.
+ * Clear a stale unprocessed lock so retries can safely re-run fulfillment.
  * Alias for markForRecovery; preserved for call-site readability.
  */
 export async function clearStaleLock(

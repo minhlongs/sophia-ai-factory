@@ -106,19 +106,50 @@ export async function upsertUserTier(
   email = '',
 ): Promise<void> {
   const nowSec = Math.floor(Date.now() / 1000);
+  const tierUpper = tier.toUpperCase();
+  const planLower = tier.toLowerCase();
   try {
-    const orgId = await ensureCustomerOrg(db, userId, email || userId);
-    await db
-      .prepare(
-        `INSERT OR REPLACE INTO subscriptions (id, org_id, user_id, plan, status, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, 'active', ?5, ?5)`,
-      )
-      .bind(genId(), orgId, userId, tier.toUpperCase(), nowSec)
-      .run();
+    const existingMember = await db
+      .prepare('SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1')
+      .bind(userId)
+      .first<{ org_id: string }>();
+    const orgId = existingMember?.org_id ?? (await ensureCustomerOrg(db, userId, email || userId));
+    const existingSub = await db
+      .prepare('SELECT id, plan, tier, status, current_period_end FROM subscriptions WHERE org_id = ?1 LIMIT 1')
+      .bind(orgId)
+      .first<{
+        id: string;
+        plan?: string | null;
+        tier?: string | null;
+        status?: string | null;
+        current_period_end?: string | null;
+      }>();
+    if (existingSub?.id) {
+      await db
+        .prepare(
+          `UPDATE subscriptions
+           SET user_id = COALESCE(user_id, ?1),
+               tier = COALESCE(?2, tier),
+               plan = ?3,
+               status = 'active',
+               updated_at = ?4
+           WHERE id = ?5 AND org_id = ?6`,
+        )
+        .bind(userId, tierUpper, planLower, nowSec, existingSub.id, orgId)
+        .run();
+    } else {
+      await db
+        .prepare(
+          `INSERT OR REPLACE INTO subscriptions (id, org_id, user_id, tier, plan, status, created_at, updated_at)
+           VALUES (?1, ?2, ?3, ?4, ?5, 'active', ?6, ?6)`,
+        )
+        .bind(genId(), orgId, userId, tierUpper, planLower, nowSec)
+        .run();
+    }
     // F-02: Also sync organizations.plan so resolveUserTier() reads the correct plan
     await db
       .prepare(`UPDATE organizations SET plan = ?1, updated_at = ?2 WHERE id = ?3`)
-      .bind(tier.toUpperCase(), nowSec, orgId)
+      .bind(tierUpper, nowSec, orgId)
       .run();
   } catch (err) {
     logger.error('[HandoverSetup] Subscription upsert failed', err instanceof Error ? err : undefined);
