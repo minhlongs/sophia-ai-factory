@@ -75,7 +75,7 @@ export const GenerateAffiliateCampaignActionSchema = z.object({
   action: z.literal('generate_affiliate_campaign'),
   orgId: z.string().min(1).max(128),
   offerId: z.string().min(3).max(128),
-  durationSec: z.number().int().min(15).max(180).optional().default(30),
+  durationSec: z.number().int().min(15).max(480).optional().default(30),
   locale: z.enum(['vi', 'en']).optional().default('vi'),
   provenance: z.enum(['fixture_simulated', 'live_provider']).optional().default('live_provider'),
   idempotencyKey: z.string().min(8).max(128).trim().optional(),

@@ -176,7 +176,7 @@ export function buildSlidesFromAcceptedScript(args: {
     body: scene.narration,
     footerCta: args.ctaText,
     referralShortUrl: args.shortUrl,
-    durationSec: Math.max(2, Math.min(30, Math.round(scene.duration_estimate || 6))),
+    durationSec: Math.max(2, Math.min(90, Math.round(scene.duration_estimate || 6))),
     accentIndex: index,
   }));
 
@@ -193,6 +193,8 @@ export function buildSlidesFromAcceptedScript(args: {
   return sceneSlides;
 }
 
+export type PilotMp4AspectRatio = '9:16' | '16:9';
+
 export async function renderAndDownloadPilotMp4(args: {
   readonly artifactId: string;
   readonly script: ScriptOutput;
@@ -200,13 +202,15 @@ export async function renderAndDownloadPilotMp4(args: {
   readonly shortUrl: string;
   readonly disclosureTag: string;
   readonly productImageUrls?: readonly string[];
+  readonly aspectRatio?: PilotMp4AspectRatio;
 }): Promise<EncodedPilotMp4Artifact> {
   const slides = buildSlidesFromAcceptedScript(args);
   const productImages = await loadProductImages(args.productImageUrls);
+  const isLandscape = args.aspectRatio === '16:9';
   const encoded = await encodePilotSlidesToMp4({
     slides,
-    width: 320,
-    height: 576,
+    width: isLandscape ? 576 : 320,
+    height: isLandscape ? 320 : 576,
     renderRgbaFrame: (slide, w, h) => drawSlideOnCanvas(slide, w, h, productImages),
   });
 

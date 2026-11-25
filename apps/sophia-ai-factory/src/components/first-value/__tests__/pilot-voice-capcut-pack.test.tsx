@@ -5,10 +5,14 @@ import {
   buildCapCutPublishCopy,
   buildNarrationTextFromScript,
   buildSrtFromScript,
+  extractThreeShortClipsFromLongScript,
 } from '../pilot-capcut-pack-helpers';
 import { AffiliatePilotStepper } from '../affiliate-studio/affiliate-pilot-stepper';
+import { AffiliateCampaignGeneratorCard } from '../affiliate-studio/affiliate-campaign-generator-card';
 import { PilotVoiceAndCapCutPack } from '../pilot-voice-and-capcut-pack';
 import { renderAndDownloadPilotMp4 } from '../pilot-browser-mp4-renderer';
+import { buildAffiliateCampaignUserPrompt } from '@/seed/ai/affiliate-campaign-prompt';
+import { GenerateAffiliateCampaignActionSchema } from '@/land/first-value/pilot-affiliate-studio-schemas';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -192,6 +196,125 @@ describe('Pilot CapCut Pack helpers & UI', () => {
       productImageUrls: ['blob:existing-1'],
     });
     expect(mp4.byteSize).toBeGreaterThan(0);
+
+    const landscapeMp4 = await renderAndDownloadPilotMp4({
+      artifactId: 'cmp_yt_16x9',
+      script: SAMPLE_SCRIPT,
+      ctaText: 'Bấm link',
+      shortUrl: 'https://pilot.test/api/r/xyz',
+      disclosureTag: '#QuảngCáo',
+      aspectRatio: '16:9',
+    });
+    expect(landscapeMp4.width).toBe(576);
+    expect(landscapeMp4.height).toBe(320);
+
+    const longPrompt = buildAffiliateCampaignUserPrompt(
+      {
+        vertical: 'saas',
+        productName: 'Notion AI',
+        officialWebsiteUrl: 'https://notion.so',
+        referralUrl: 'https://notion.so/?ref=pilot',
+        commissionTerms: '20% recurring',
+        targetAudience: 'Creators',
+        targetMarket: 'US',
+        productInfoSource: 'Official site',
+      },
+      300,
+      'en',
+    );
+    expect(longPrompt).toContain('6 to 10 structured YouTube Review/Comparison chapters');
+    const shortPrompt = buildAffiliateCampaignUserPrompt(
+      {
+        vertical: 'saas',
+        productName: 'Notion AI',
+        officialWebsiteUrl: 'https://notion.so',
+        referralUrl: 'https://notion.so/?ref=pilot',
+        commissionTerms: '20% recurring',
+        targetAudience: 'Creators',
+        targetMarket: 'VN',
+        productInfoSource: 'Official site',
+      },
+      30,
+      'vi',
+    );
+    expect(shortPrompt).toContain('3 to 5 scenes');
+    expect(
+      GenerateAffiliateCampaignActionSchema.parse({
+        action: 'generate_affiliate_campaign',
+        orgId: 'org_1',
+        offerId: 'offer_1',
+        durationSec: 480,
+      }).durationSec,
+    ).toBe(480);
+
+    const longScript: ScriptOutput = {
+      title: 'YouTube Review 5 Phút',
+      total_duration: 300,
+      scenes: [
+        { scene_number: 1, title: 'Hook', narration: 'Mở đầu', visual_description: 'v1', duration_estimate: 10 },
+        { scene_number: 2, title: 'Problem', narration: 'Vấn đề', visual_description: 'v2', duration_estimate: 12 },
+        { scene_number: 3, title: 'Proof', narration: 'Bằng chứng', visual_description: 'v3', duration_estimate: 15 },
+        { scene_number: 4, title: 'Demo', narration: 'Demo', visual_description: 'v4', duration_estimate: 15 },
+        { scene_number: 5, title: 'Verdict', narration: 'Kết luận', visual_description: 'v5', duration_estimate: 12 },
+        { scene_number: 6, title: 'CTA', narration: 'Bấm link', visual_description: 'v6', duration_estimate: 8 },
+      ],
+    };
+    const clips = extractThreeShortClipsFromLongScript(longScript);
+    expect(clips).toHaveLength(3);
+    expect(clips[0].script.scenes).toHaveLength(2);
+
+    render(
+      <PilotVoiceAndCapCutPack
+        artifactId="cmp_long_1"
+        script={longScript}
+        ctaText="Bấm link"
+        shortUrl="https://pilot.test/api/r/xyz"
+        disclosureTag="#QuảngCáo"
+        busy={false}
+        productImageUrls={[]}
+        onProductImagesChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('pilot-repurpose-3-shorts')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('pilot-repurpose-srt-1'));
+    fireEvent.click(screen.getByTestId('pilot-repurpose-mp4-1'));
+    await waitFor(() => {
+      expect(mockCreateObjectURL).toHaveBeenCalled();
+    });
+
+    const onGenerate = vi.fn().mockResolvedValue(undefined);
+    render(
+      <AffiliateCampaignGeneratorCard
+        selectedOffer={{
+          id: 'off_1',
+          orgId: 'org_1',
+          userId: 'u_1',
+          vertical: 'saas',
+          productName: 'Notion AI',
+          officialWebsiteUrl: 'https://notion.so',
+          referralUrl: 'https://notion.so/?ref=pilot',
+          commissionTerms: '20% recurring',
+          targetAudience: 'Creators',
+          targetMarket: 'US',
+          productInfoSource: 'Official site',
+          status: 'active',
+          createdAtIso: '2026-11-25T00:00:00Z',
+          updatedAtIso: '2026-11-25T00:00:00Z',
+        }}
+        campaigns={[]}
+        activeCampaignId={null}
+        modelId="openai/gpt-4o-mini"
+        canGenerate
+        busy={false}
+        onSelectCampaign={vi.fn()}
+        onGenerate={onGenerate}
+      />,
+    );
+    fireEvent.change(screen.getByTestId('pilot-video-format-select'), {
+      target: { value: '300' },
+    });
+    fireEvent.click(screen.getByText('affGenerateCampaignBtn'));
+    expect(onGenerate).toHaveBeenCalledWith(300, 'en');
 
     vi.unstubAllGlobals();
   });

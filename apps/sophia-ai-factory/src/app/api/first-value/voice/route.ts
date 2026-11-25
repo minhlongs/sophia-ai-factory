@@ -21,7 +21,7 @@ const ALLOWED_PILOT_VOICES = [
 ] as const;
 
 const PilotVoiceRequestSchema = z.object({
-  text: z.string().trim().min(5).max(3000),
+  text: z.string().trim().min(5).max(8000),
   locale: z.enum(['vi', 'en']).default('vi'),
   gender: z.enum(['female', 'male']).default('female'),
   voice: z.enum(ALLOWED_PILOT_VOICES).optional(),
