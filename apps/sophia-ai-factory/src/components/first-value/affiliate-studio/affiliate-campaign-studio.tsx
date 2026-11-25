@@ -23,6 +23,7 @@ import type {
 import type { AffiliateCampaignPack } from '@/seed/ai/affiliate-campaign-prompt';
 import type {
   PilotAffiliateLinkSummary,
+  PilotMp4ExportSummary,
   PilotStatusSnapshot,
 } from '@/seed/pilot/pilot-access-policy';
 import type { HonestValidationReceipt } from '@/tree/byok/honest-validation-receipt';
@@ -385,15 +386,17 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
     return false;
   }
 
-  async function handlePollHeyGenMp4(exportId: string): Promise<void> {
+  async function handlePollHeyGenMp4(exportId: string): Promise<PilotMp4ExportSummary | null> {
     const res = await props.postAction({
       action: 'poll_heygen_mp4',
       orgId: props.orgId,
       exportId,
     });
-    if (res?.mp4Export) {
+    const polled = (res?.mp4Export as PilotMp4ExportSummary | undefined) ?? null;
+    if (polled) {
       await props.onReloadStatus();
     }
+    return polled;
   }
 
   async function handleRecordManualPublish(input: {

@@ -556,4 +556,90 @@ describe('Pilot Commercial UI Cards & Browser MP4 Renderer', () => {
       ).toBe(true),
     );
   });
+
+  it('shows live poll feedback and renders real HeyGen failure reasons on MP4 receipts', async () => {
+    const baseExport = {
+      id: 'pme_proc_1',
+      artifactId: 'art_ui_1',
+      renderMode: 'heygen_byok_mp4' as const,
+      heygenJobId: 'hg_job_1',
+      status: 'processing' as const,
+      sha256Hex: null,
+      byteSize: null,
+      durationSec: null,
+      width: null,
+      height: null,
+      codec: 'h264',
+      containerBrand: 'isom',
+      ctaText: 'Start free',
+      shortCode: 'sc_ui_1',
+      referralUrl: 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/sc_ui_1',
+      providerVideoUrl: null,
+      errorCode: null,
+      createdAtIso: '2026-11-25T10:00:00Z',
+      updatedAtIso: '2026-11-25T10:00:00Z',
+    };
+    const sampleLink = {
+      id: 'pal_ui_1',
+      artifactId: 'art_ui_1',
+      shortCode: 'sc_ui_1',
+      shortUrl: 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/sc_ui_1',
+      subId: 'sub_ui_1',
+      destinationUrl: 'https://partner.example.com/ref?id=1',
+      ctaText: 'Start free',
+      networkHint: 'generic',
+      disclosureTag: '#QuảngCáo',
+      verifiedClicks: 0,
+      createdAtIso: '2026-11-25T10:00:00Z',
+    };
+    const onPoll = vi
+      .fn()
+      .mockResolvedValueOnce({ ...baseExport, status: 'processing' as const })
+      .mockResolvedValueOnce({ ...baseExport, status: 'completed' as const })
+      .mockResolvedValueOnce({ ...baseExport, status: 'failed' as const });
+
+    render(
+      <FirstValueMp4AffiliateCard
+        review={makeAcceptedReview()}
+        busy={false}
+        heygenConfigured
+        affiliateLinks={[sampleLink]}
+        mp4Exports={[
+          baseExport,
+          {
+            ...baseExport,
+            id: 'pme_fail_1',
+            status: 'failed',
+            errorCode: 'HEYGEN_RENDER_FAILED: Insufficient credits',
+          },
+        ]}
+        onCreateShortlink={vi.fn(async () => sampleLink)}
+        onRecordBrowserMp4={vi.fn(async () => true)}
+        onSaveHeyGenKey={vi.fn(async () => true)}
+        onClearHeyGenKey={vi.fn(async () => true)}
+        onSubmitHeyGenMp4={vi.fn(async () => true)}
+        onPollHeyGenMp4={onPoll}
+      />,
+    );
+
+    expect(screen.getByRole('alert').textContent).toContain(
+      'HEYGEN_RENDER_FAILED: Insufficient credits',
+    );
+
+    const pollBtn = screen.getByText('pilotPollHeyGenBtn');
+    fireEvent.click(pollBtn);
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toContain('pilotPollHeyGenStillProcessing'),
+    );
+
+    fireEvent.click(pollBtn);
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toContain('pilotPollHeyGenCompleted'),
+    );
+
+    fireEvent.click(pollBtn);
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toContain('pilotPollHeyGenFailed'),
+    );
+  });
 });
