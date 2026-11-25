@@ -16,6 +16,7 @@ import type {
   PilotMp4ExportSummary,
 } from '@/seed/pilot/pilot-access-policy';
 import { renderAndDownloadPilotMp4 } from './pilot-browser-mp4-renderer';
+import { PilotVoiceAndCapCutPack } from './pilot-voice-and-capcut-pack';
 
 export interface FirstValueMp4AffiliateCardProps {
   readonly review: DurableFirstValueReview | null;
@@ -72,6 +73,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   const [heygenKeyInput, setHeygenKeyInput] = useState('');
   const [renderingMp4, setRenderingMp4] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [productImageUrls, setProductImageUrls] = useState<readonly string[]>([]);
 
   useEffect(() => {
     if (props.defaultDestinationUrl) {
@@ -129,6 +131,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         ctaText: resolvedLink.ctaText,
         shortUrl: resolvedLink.shortUrl,
         disclosureTag: resolvedLink.disclosureTag,
+        productImageUrls,
       });
       await props.onRecordBrowserMp4({
         artifactId: props.review.artifactId,
@@ -312,6 +315,21 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
                 {t('pilotSubmitHeyGenMp4Btn')}
               </button>
             )}
+          </div>
+        )}
+
+        {props.review && isAccepted && (
+          <div className="mt-4">
+            <PilotVoiceAndCapCutPack
+              artifactId={props.review.artifactId}
+              script={props.review.script}
+              ctaText={activeLink?.ctaText ?? ctaText}
+              shortUrl={activeLink?.shortUrl ?? destinationUrl}
+              disclosureTag={activeLink?.disclosureTag ?? disclosureTag}
+              busy={props.busy || renderingMp4}
+              productImageUrls={productImageUrls}
+              onProductImagesChange={setProductImageUrls}
+            />
           </div>
         )}
 

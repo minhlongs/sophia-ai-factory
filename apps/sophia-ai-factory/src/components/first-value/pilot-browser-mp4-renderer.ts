@@ -44,10 +44,49 @@ function wrapCanvasText(
   return lines;
 }
 
+async function loadProductImages(urls?: readonly string[]): Promise<HTMLImageElement[]> {
+  if (!urls || urls.length === 0 || typeof Image === 'undefined') return [];
+  const loaded = await Promise.all(
+    urls.slice(0, 5).map(
+      (url) =>
+        new Promise<HTMLImageElement | null>((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = url;
+        }),
+    ),
+  );
+  return loaded.filter((img): img is HTMLImageElement => img !== null);
+}
+
+function drawCoverImage(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  width: number,
+  height: number,
+  zoomFactor: number,
+): void {
+  const imgRatio = (img.naturalWidth || width) / (img.naturalHeight || height);
+  const canvasRatio = width / height;
+  let drawW = width * zoomFactor;
+  let drawH = height * zoomFactor;
+  if (imgRatio > canvasRatio) {
+    drawW = drawH * imgRatio;
+  } else {
+    drawH = drawW / imgRatio;
+  }
+  const offsetX = (width - drawW) / 2;
+  const offsetY = (height - drawH) / 2;
+  ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+}
+
 function drawSlideOnCanvas(
   slide: PilotMp4SlideSpec,
   width: number,
   height: number,
+  productImages: readonly HTMLImageElement[] = [],
 ): Uint8Array {
   if (typeof document === 'undefined') {
     return renderDeterministicRgbaSlide(slide, width, height);
@@ -62,6 +101,15 @@ function drawSlideOnCanvas(
 
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(0, 0, width, height);
+
+  if (productImages.length > 0) {
+    const img = productImages[slide.accentIndex % productImages.length];
+    if (img) {
+      drawCoverImage(ctx, img, width, height, 1.04 + (slide.accentIndex % 3) * 0.03);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
+      ctx.fillRect(0, 0, width, height);
+    }
+  }
 
   ctx.fillStyle = '#4338ca';
   ctx.fillRect(16, 20, width - 32, 34);
@@ -134,13 +182,15 @@ export async function renderAndDownloadPilotMp4(args: {
   readonly ctaText: string;
   readonly shortUrl: string;
   readonly disclosureTag: string;
+  readonly productImageUrls?: readonly string[];
 }): Promise<EncodedPilotMp4Artifact> {
   const slides = buildSlidesFromAcceptedScript(args);
+  const productImages = await loadProductImages(args.productImageUrls);
   const encoded = await encodePilotSlidesToMp4({
     slides,
     width: 320,
     height: 576,
-    renderRgbaFrame: drawSlideOnCanvas,
+    renderRgbaFrame: (slide, w, h) => drawSlideOnCanvas(slide, w, h, productImages),
   });
 
   if (typeof document !== 'undefined' && typeof URL.createObjectURL === 'function') {

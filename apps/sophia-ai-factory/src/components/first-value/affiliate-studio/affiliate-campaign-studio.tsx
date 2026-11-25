@@ -45,6 +45,7 @@ import { AffiliateCampaignGeneratorCard } from './affiliate-campaign-generator-c
 import { AffiliateContentWorkspaceCard } from './affiliate-content-workspace-card';
 import { AffiliateOffersCard, type NewAffiliateOfferInput } from './affiliate-offers-card';
 import { AffiliateOverviewCard } from './affiliate-overview-card';
+import { AffiliatePilotStepper } from './affiliate-pilot-stepper';
 import {
   AffiliateRevenueDashboardCard,
   type RecordPerformanceFormInput,
@@ -438,6 +439,16 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
           <strong>{props.errorPrefix}:</strong> {props.errorMessage}
         </div>
       )}
+
+      <AffiliatePilotStepper
+        hasOffer={offers.length > 0}
+        hasApprovedCampaign={campaigns.some((c) => c.reviewState === 'approved')}
+        hasMp4OrLink={
+          (props.pilot?.mp4Exports?.length ?? 0) > 0 ||
+          (props.pilot?.affiliateLinks?.length ?? 0) > 0
+        }
+        hasManualPublish={(props.pilot?.manualPublishes?.length ?? 0) > 0}
+      />
 
       <AffiliateOverviewCard
         byokConfigured={props.byokConfigured}
