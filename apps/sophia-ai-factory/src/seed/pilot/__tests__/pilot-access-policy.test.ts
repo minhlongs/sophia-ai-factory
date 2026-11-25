@@ -545,7 +545,7 @@ describe('pilot operator CLIs (invite & support queue)', () => {
         '0515_first_value_reviews.sql',
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
-        '0520_pilot_commercial_validation.sql',
+        '0521_pilot_commercial_validation.sql',
       ]) {
         const sqlText = fs.readFileSync(
           path.resolve(__dirname, '../../../../migrations', mig),

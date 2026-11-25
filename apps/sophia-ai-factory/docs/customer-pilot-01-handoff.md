@@ -114,7 +114,8 @@ Apply to `sophia-pilot-db` (`--remote --config wrangler.pilot.toml` — NEVER `s
 13. `migrations/0515_first_value_reviews.sql`
 14. `migrations/0517_customer_pilot_first_value.sql`
 15. `migrations/0519_pilot_support_requests.sql`
-16. `migrations/0520_pilot_commercial_validation.sql`
+16. `migrations/0520_pilot_affiliate_revenue_studio.sql`
+17. `migrations/0521_pilot_commercial_validation.sql`
 
 Apply to `sophia-pilot-tag-cache` (`--remote --config wrangler.pilot.toml`):
 1. `migrations/0108-opennext-tag-cache.sql`

@@ -68,7 +68,7 @@ describe('Customer Pilot Commercial Validation E2E (CUSTOMER_BYOK, MP4, Shortlin
         '0515_first_value_reviews.sql',
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
-        '0520_pilot_commercial_validation.sql',
+        '0521_pilot_commercial_validation.sql',
       ]) {
         const sql = fs.readFileSync(
           path.resolve(__dirname, '../../../../migrations', mig),
@@ -596,7 +596,7 @@ describe('Customer Pilot Commercial Validation E2E (CUSTOMER_BYOK, MP4, Shortlin
         '0515_first_value_reviews.sql',
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
-        '0520_pilot_commercial_validation.sql',
+        '0521_pilot_commercial_validation.sql',
       ]) {
         await sqlite.exec(
           fs.readFileSync(path.resolve(__dirname, '../../../../migrations', mig), 'utf8'),
