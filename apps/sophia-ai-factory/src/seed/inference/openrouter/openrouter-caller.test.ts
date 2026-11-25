@@ -86,4 +86,41 @@ describe('OpenRouter request deadline', () => {
     expect(recordFailure).toHaveBeenCalledExactlyOnceWith('openrouter', FailureKind.AUTH_FAILURE)
     expect(vi.getTimerCount()).toBe(0)
   })
+
+  it('isolates customer BYOK circuitKeyRef and skips breaker poison on 401/402/403', async () => {
+    const transport401 = vi.fn().mockResolvedValue(new Response('Invalid key', { status: 401 }))
+    vi.stubGlobal('fetch', transport401)
+    await expect(
+      resilientChatCompletion('prompt', {
+        openRouterKey: 'sk-or-v1-customer',
+        enableFallback: false,
+        circuitKeyRef: 'byok:user_42',
+      }),
+    ).rejects.toThrow('OpenRouter HTTP 401')
+    expect(shouldAllowRequest).toHaveBeenCalledWith('openrouter', 'byok:user_42')
+    expect(recordFailure).not.toHaveBeenCalled()
+
+    const transport429 = vi.fn().mockResolvedValue(new Response('Rate limit', { status: 429 }))
+    vi.stubGlobal('fetch', transport429)
+    await expect(
+      callOpenRouter('sk-or-v1-customer', 'prompt', undefined, 0, { circuitKeyRef: 'byok:user_42' }),
+    ).rejects.toThrow('OpenRouter HTTP 429')
+    expect(recordFailure).toHaveBeenCalledWith('openrouter', FailureKind.RATE_LIMIT, 'byok:user_42')
+
+    const transportOk = vi.fn().mockResolvedValue(
+      Response.json({ choices: [{ message: { content: '{"title":"ok"}' } }] }),
+    )
+    vi.stubGlobal('fetch', transportOk)
+    await expect(
+      callOpenRouter('sk-or-v1-customer', 'prompt', undefined, 0, { circuitKeyRef: 'byok:user_42' }),
+    ).resolves.toBe('{"title":"ok"}')
+    expect(recordSuccess).toHaveBeenCalledWith('openrouter', 'byok:user_42')
+
+    const transportNetErr = vi.fn().mockRejectedValue(new Error('network socket hang up'))
+    vi.stubGlobal('fetch', transportNetErr)
+    await expect(
+      callOpenRouter('sk-or-v1-customer', 'prompt', undefined, 0, { circuitKeyRef: 'byok:user_42' }),
+    ).rejects.toThrow('network socket hang up')
+    expect(recordFailure).toHaveBeenCalledWith('openrouter', FailureKind.NETWORK, 'byok:user_42')
+  })
 })

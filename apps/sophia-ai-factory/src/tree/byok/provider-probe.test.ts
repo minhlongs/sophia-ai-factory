@@ -63,5 +63,33 @@ describe('provider-probe', () => {
     const badReq = await probeProviderApiKey('openrouter', 'sk-or-v1-badreq-1234');
     expect(badReq.valid).toBe(false);
     expect(badReq.message).toContain('Provider returned status 400');
+
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 402 });
+    const noCredits = await probeProviderApiKey('openrouter', 'sk-or-v1-nocredits-1234');
+    expect(noCredits.valid).toBe(false);
+    expect(noCredits.httpStatus).toBe(402);
+    expect(noCredits.message).toContain('insufficient credits');
+  });
+
+  it('rejects OpenRouter keys whose /api/v1/auth/key metadata reports remaining credit <= 0', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { limit: 5, limit_remaining: 0 } }),
+    });
+    const exhausted = await probeProviderApiKey('openrouter', 'sk-or-v1-exhausted-9999');
+    expect(exhausted.ok).toBe(false);
+    expect(exhausted.valid).toBe(false);
+    expect(exhausted.httpStatus).toBe(402);
+    expect(exhausted.message_vi).toContain('hết hạn mức tín dụng');
+
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { limit: null, limit_remaining: null } }),
+    });
+    const uncapped = await probeProviderApiKey('openrouter', 'sk-or-v1-uncapped-8888');
+    expect(uncapped.ok).toBe(true);
+    expect(uncapped.valid).toBe(true);
   });
 });

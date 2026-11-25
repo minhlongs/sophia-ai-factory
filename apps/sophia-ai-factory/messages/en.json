@@ -6585,14 +6585,15 @@
         "switchToVietnamese": "Switch To Vietnamese",
         "switchToEnglish": "Switch To English",
         "magicLink": "Magic Link",
-        "passkeySignIn": "Passkey Sign In",
-        "emailOtpSend": "Email Otp Send",
-        "emailOtpSentNotice": "Email Otp Sent Notice",
-        "emailOtpPlaceholder": "Email Otp Placeholder",
-        "emailOtpLabel": "Email Otp Label",
-        "emailOtpVerify": "Email Otp Verify",
-        "emailRequired": "Email Required",
-        "invalidOtp": "Invalid Otp"
+        "passkeySignIn": "Passkey (FaceID / TouchID)",
+        "emailOtpSend": "6-Digit Email Code",
+        "emailOtpSentNotice": "A 6-digit verification code has been sent to your email.",
+        "emailOtpPlaceholder": "Enter 6-digit code from email",
+        "emailOtpLabel": "6-Digit Verification Code",
+        "emailOtpVerify": "Verify Code",
+        "emailRequired": "Please enter your email address",
+        "invalidOtp": "Invalid verification code",
+        "inviteRequired": "This private pilot is invite-only. Your email is not on the authorized pilot list."
       },
       "register": {
         "title": "Create Your Account",
@@ -6617,6 +6618,7 @@
         "successTitle": "Account Created Successfully!",
         "successMessage": "Welcome to Sophia AI Factory. Complete the guided setup wizard to connect your AI providers and launch your first video.",
         "startSetup": "Start Setup Wizard",
+        "continueWorkspace": "Open Sophia Workspace",
         "goToLogin": "Sign In to Account",
         "and": "And",
         "or": "Or",
@@ -6632,6 +6634,9 @@
         "errorPasswordLowercase": "Password must include at least one lowercase letter",
         "errorPasswordNumber": "Password must include at least one number",
         "errorPasswordComplexity": "Password must be at least 8 characters with uppercase, lowercase, and a number",
+        "errorEmailRequired": "Please enter a valid email address",
+        "errorTermsRequired": "Please agree to the Terms of Service and Privacy Policy",
+        "errorInviteRequired": "This private pilot is invite-only. Your email is not on the authorized pilot list.",
         "ssoComingSoon": "Coming soon — please use email to sign in"
       }
     },

@@ -183,7 +183,13 @@ function CostPreviewSection(props: CostFormProps) {
   );
 }
 
-export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
+export function FirstValueJourneyClient({
+  orgId,
+  initialPilotMode = false,
+}: {
+  readonly orgId: string;
+  readonly initialPilotMode?: boolean;
+}) {
   const t = useTranslations('firstValue');
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [costPreview, setCostPreview] = useState<FirstValueCostPreview | null>(null);
@@ -192,7 +198,9 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
   const [topic, setTopic] = useState('How non-technical CEOs launch daily short-form content');
   const [audience, setAudience] = useState('SMB Founders');
   const [durationSec, setDurationSec] = useState(30);
-  const [model, setModel] = useState('google/gemini-2-5-flash');
+  const [model, setModel] = useState(
+    initialPilotMode ? 'openai/gpt-4o-mini' : 'google/gemini-2-5-flash',
+  );
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -240,11 +248,13 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
   }
 
   const pilot = status?.pilot ?? null;
-  const isLivePilot = Boolean(pilot?.liveInferenceEnabled);
-  const isCustomerByokPilot = Boolean(
-    isLivePilot &&
-      (pilot?.financingMode === 'CUSTOMER_BYOK' || pilot?.fundingMode === 'customer_byok'),
-  );
+  const isLivePilot = pilot ? Boolean(pilot.liveInferenceEnabled) : initialPilotMode;
+  const isCustomerByokPilot = pilot
+    ? Boolean(
+        isLivePilot &&
+          (pilot.financingMode === 'CUSTOMER_BYOK' || pilot.fundingMode === 'customer_byok'),
+      )
+    : initialPilotMode;
   const effectiveByokConfigured = isCustomerByokPilot
     ? Boolean(pilot?.byokKeyConfigured ?? status?.byokConfigured)
     : Boolean(status?.byokConfigured);
@@ -452,14 +462,14 @@ export function FirstValueJourneyClient({ orgId }: { readonly orgId: string }) {
           busy={busy}
           onAcceptTerms={handleAcceptPilotTerms}
         />
-      ) : (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+      ) : !isLivePilot ? (
+        <div className="rounded-xl border border-amber-500/40 bg-muted/40 p-4">
           <div className="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">
             {t('simulatedBadge')}
           </div>
           <p className="mt-1 text-sm text-foreground">{t('simulatedNotice')}</p>
         </div>
-      )}
+      ) : null}
 
       {errorMessage && (
         <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">

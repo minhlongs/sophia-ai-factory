@@ -1,7 +1,13 @@
 import { getTranslations } from 'next-intl/server';
 import { LoginForm } from './login-form';
 
-export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
+export async function LoginPage({
+  redirectTo,
+  emailOtpEnabled,
+}: {
+  redirectTo?: string;
+  emailOtpEnabled?: boolean;
+}) {
   const t = await getTranslations('stitch.auth.login');
 
   return (
@@ -46,7 +52,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
             </p>
           </div>
 
-          <LoginForm redirectTo={redirectTo} />
+          <LoginForm redirectTo={redirectTo} emailOtpEnabled={emailOtpEnabled} />
 
           {/* Footer */}
           <p className="mt-8 text-center text-xs text-slate-500 dark:text-zinc-400">

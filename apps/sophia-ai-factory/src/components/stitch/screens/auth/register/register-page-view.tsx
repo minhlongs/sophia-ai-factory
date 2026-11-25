@@ -15,17 +15,29 @@ import { RegisterHeader } from './register-header';
 import { RegisterForm } from './register-form';
 import { SocialAuthButtons } from './social-auth-buttons';
 import { EmailOtpPanel } from '@/components/stitch/screens/login/form/email-otp-panel';
+import { resolveRedirectTarget } from '@/components/stitch/screens/login/form/use-auth-2027-state';
 import { mapRegisterAuthError, validateRegisterForm } from './register-validation';
 import { useRegister2027State } from './use-register-2027-state';
 
 export { validateRegisterForm, mapRegisterAuthError };
 
-export function RegisterPageView() {
+export interface RegisterPageViewProps {
+  readonly redirectTo?: string;
+  readonly emailOtpEnabled?: boolean;
+}
+
+export function RegisterPageView({
+  redirectTo,
+  emailOtpEnabled = true,
+}: RegisterPageViewProps = {}) {
   const t = useTranslations('stitch.auth.register');
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const state = useRegister2027State();
+  const state = useRegister2027State(redirectTo);
+  const signInHref = redirectTo
+    ? `/login?next=${encodeURIComponent(resolveRedirectTarget(redirectTo))}`
+    : '/login';
 
   const switchLocale = () => {
     router.replace(pathname, { locale: locale === 'en' ? 'vi' : 'en' });
@@ -53,11 +65,11 @@ export function RegisterPageView() {
 
       <div className="w-full max-w-[460px] relative z-10">
         {state.step === 'success' ? (
-          <RegisterSuccessView />
+          <RegisterSuccessView redirectTo={redirectTo} />
         ) : (
           <div className="rounded-2xl border border-[#E2E8F0] dark:border-white/[0.08] bg-white dark:bg-[#11131F] p-8 md:p-10 shadow-xl dark:shadow-2xl transition-all duration-500">
             <RegisterHeader error={state.error} />
-            {state.otpSent && (
+            {emailOtpEnabled && state.otpSent && (
               <EmailOtpPanel
                 otpCode={state.otpCode}
                 setOtpCode={state.setOtpCode}
@@ -81,12 +93,12 @@ export function RegisterPageView() {
             <SocialAuthButtons
               onPasskey={state.handlePasskey}
               passkeyLoading={state.passkeyLoading}
-              onSendOtp={state.handleSendOtp}
+              onSendOtp={emailOtpEnabled ? state.handleSendOtp : undefined}
               otpSending={state.otpSending}
             />
             <p className="text-center mt-6 text-xs text-slate-600 dark:text-slate-400">
               {t('hasAccount')}{' '}
-              <Link href="/login" className="text-primary dark:text-primary-400 font-semibold hover:opacity-80 dark:hover:text-primary-300 transition-colors">
+              <Link href={signInHref} className="text-primary dark:text-primary-400 font-semibold hover:opacity-80 dark:hover:text-primary-300 transition-colors">
                 {t('signIn')}
               </Link>
             </p>

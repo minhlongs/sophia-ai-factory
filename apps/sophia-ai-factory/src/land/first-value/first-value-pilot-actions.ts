@@ -551,13 +551,17 @@ export async function handleLiveProviderCreateReview(
     });
 
     const status = failureCode === 'PROVIDER_KEY_INVALID' ? 422 : 502;
+    const errorMessage =
+      failureCode === 'PROVIDER_KEY_INVALID'
+        ? 'Your OpenRouter API key is invalid or has been revoked (this attempt did not use your pilot quota). Please click "Replace Key" in Step 1 to enter a valid key. / Khóa API OpenRouter của bạn không hợp lệ hoặc đã bị thu hồi (không trừ lượt tạo thử nghiệm). Vui lòng bấm "Đổi khóa khác" ở mục số 1 để cập nhật khóa mới.'
+        : failureCode === 'PROVIDER_QUOTA_EXCEEDED'
+          ? 'Your OpenRouter account or API key has run out of credits or reached its spending limit (this attempt did not use your pilot quota). Please top up or adjust your key limit on openrouter.ai and try again. / Tài khoản hoặc khóa OpenRouter của bạn đã hết tín dụng (credit) hoặc chạm giới hạn chi tiêu (không trừ lượt tạo thử nghiệm). Vui lòng nạp thêm hoặc tăng giới hạn khóa tại openrouter.ai rồi thử lại.'
+          : 'Script generation failed after submission. To protect pilot budget safety, this attempt remains counted. Please try again. / Tạo kịch bản thất bại sau khi gửi yêu cầu. Để đảm bảo an toàn ngân sách thử nghiệm, lượt này vẫn được tính.';
     return jsonPrivate(
       {
         code: failureCode,
         quotaRefunded: isConfirmedPreChargeRejection,
-        error: isConfirmedPreChargeRejection
-          ? 'Provider rejected the request before execution and did not count against your quota. / Nhà cung cấp từ chối yêu cầu trước khi chạy và không trừ hạn mức của bạn.'
-          : 'Script generation failed after submission. To protect pilot budget safety, this attempt remains counted. Please try again. / Tạo kịch bản thất bại sau khi gửi yêu cầu. Để đảm bảo an toàn ngân sách thử nghiệm, lượt này vẫn được tính.',
+        error: errorMessage,
       },
       status,
     );

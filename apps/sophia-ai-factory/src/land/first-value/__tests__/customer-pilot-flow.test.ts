@@ -938,6 +938,31 @@ describe('CUSTOMER-01 First Real Customer Pilot Journey (Isolated SQLite D1, Moc
     expect(authRejRes.status).toBe(422);
     expect(((await authRejRes.json()) as { code: string }).code).toBe('BYOK_KEY_REJECTED');
 
+    // 4b. Probe returns 402 credit exhaustion -> 422 BYOK_KEY_QUOTA_EXCEEDED without opening probe breaker
+    const quotaRejDeps = buildDeps({
+      pilotEnv: byokEnv,
+      probeOpenRouterByokKey: vi.fn(async () => ({
+        ok: false,
+        valid: false,
+        provider: 'openrouter',
+        status: 'PROVIDER_UNAVAILABLE' as const,
+        latencyMs: 30,
+        message: 'Your OpenRouter API key has $0 remaining credit limit.',
+        message_vi: 'Khóa API OpenRouter này đã hết hạn mức tín dụng (còn $0).',
+        maskedKey: '****cdef',
+        httpStatus: 402,
+      })),
+      saveOpenRouterByokKey: saveSpy,
+    });
+    const quotaRejRes = await handleFirstValuePost(
+      makeRequest('POST', 'https://pilot.example.test/api/first-value', {
+        body: { action: 'save_byok_key', orgId: 'org_pilot_1', apiKey: validKey },
+      }),
+      quotaRejDeps,
+    );
+    expect(quotaRejRes.status).toBe(422);
+    expect(((await quotaRejRes.json()) as { code: string }).code).toBe('BYOK_KEY_QUOTA_EXCEEDED');
+
     // 5. Probe returns 503 upstream failure -> 502 BYOK_PROVIDER_UNREACHABLE
     const upstreamFailDeps = buildDeps({
       pilotEnv: byokEnv,

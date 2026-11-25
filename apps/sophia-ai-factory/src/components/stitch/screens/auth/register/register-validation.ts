@@ -13,7 +13,12 @@ export function validateRegisterForm(
   formState: RegisterFormState,
   t: TranslateFn,
 ): string | null {
-  const { password, confirmPassword } = formState;
+  const { email, password, confirmPassword, agreeTerms } = formState;
+  const trimmedEmail = email.trim();
+
+  if (!trimmedEmail || !trimmedEmail.includes('@')) {
+    return t('errorEmailRequired') || 'Please enter a valid email address';
+  }
 
   if (password !== confirmPassword) {
     return t('errorPasswordMismatch') || 'Passwords do not match';
@@ -33,6 +38,13 @@ export function validateRegisterForm(
     return t('errorPasswordNumber') || 'Password must include at least one number';
   }
 
+  if (!agreeTerms) {
+    return (
+      t('errorTermsRequired') ||
+      'Please agree to the Terms of Service and Privacy Policy'
+    );
+  }
+
   return null;
 }
 
@@ -43,6 +55,18 @@ export function mapRegisterAuthError(
   const code = authError.code?.toLowerCase() ?? '';
   const msg = authError.message?.toLowerCase() ?? '';
   const status = authError.status ?? 0;
+
+  if (
+    code === 'pilot_invite_required' ||
+    code === 'pilot_access_revoked' ||
+    msg.includes('invite-only') ||
+    msg.includes('chỉ dành cho khách mời')
+  ) {
+    return (
+      t('errorInviteRequired') ||
+      'This private pilot is invite-only. Your email is not on the authorized pilot list.'
+    );
+  }
 
   if (
     code === 'user_already_exists' ||

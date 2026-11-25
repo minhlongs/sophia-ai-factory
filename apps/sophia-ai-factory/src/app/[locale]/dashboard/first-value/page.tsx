@@ -78,7 +78,7 @@ export default async function FirstValueDashboardPage({ params }: PageProps) {
         </p>
       </div>
 
-      <FirstValueJourneyClient orgId={orgId} />
+      <FirstValueJourneyClient orgId={orgId} initialPilotMode={isPilot} />
     </main>
   );
 }

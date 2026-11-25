@@ -101,15 +101,17 @@ Apply to `sophia-pilot-db` (`--remote --config wrangler.pilot.toml` — NEVER `s
 2. `migrations/0003-better-auth.sql`
 3. `migrations/0004-user-profiles.sql`
 4. `migrations/0011-user-api-keys.sql`
-5. `migrations/0076-rename-api-keys-to-user-api-keys.sql`
-6. `migrations/0088-org-members-drop-user-id-fk.sql`
-7. `migrations/0114-user-failed-logins.sql`
-8. `key_versions` table & `user_api_keys` BYOK metadata columns (`key_version`, `key_validated_at`, `capability_mask`, `monthly_budget_usd`, `cooldown_until`, `last_receipt_json` from `migrations/0184_key_versions.sql` & `migrations/0499_byok_key_policy_and_publish_ledger.sql`)
-9. `migrations/0483_better_auth_two_factor_user_column.sql`
-10. `migrations/0484_better_auth_passkey_and_two_factor_tables.sql`
-11. `migrations/0515_first_value_reviews.sql`
-12. `migrations/0517_customer_pilot_first_value.sql`
-13. `migrations/0519_pilot_support_requests.sql`
+5. `migrations/0013-rate-limits.sql`
+6. `migrations/0076-rename-api-keys-to-user-api-keys.sql`
+7. `migrations/0088-org-members-drop-user-id-fk.sql`
+8. `migrations/0114-user-failed-logins.sql`
+9. `key_versions` table & `user_api_keys` BYOK metadata columns (`key_version`, `key_validated_at`, `capability_mask`, `monthly_budget_usd`, `cooldown_until`, `last_receipt_json` from `migrations/0184_key_versions.sql` & `migrations/0499_byok_key_policy_and_publish_ledger.sql`)
+10. `migrations/0483_better_auth_two_factor_user_column.sql`
+11. `migrations/0484_better_auth_passkey_and_two_factor_tables.sql`
+12. `migrations/0485_better_auth_account_token_columns.sql`
+13. `migrations/0515_first_value_reviews.sql`
+14. `migrations/0517_customer_pilot_first_value.sql`
+15. `migrations/0519_pilot_support_requests.sql`
 
 Apply to `sophia-pilot-tag-cache` (`--remote --config wrangler.pilot.toml`):
 1. `migrations/0108-opennext-tag-cache.sql`

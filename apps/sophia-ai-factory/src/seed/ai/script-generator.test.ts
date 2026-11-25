@@ -442,4 +442,44 @@ describe('caller-specific output contracts', () => {
       funding: { fund: 'byok', apiKey: 'customer-key' },
     })).resolves.toMatchObject({ scenes: expect.arrayContaining([expect.objectContaining({ scene_number: 1 })]) })
   })
+
+  it('parses markdown-fenced JSON and prose-wrapped JSON returned by OpenRouter models', async () => {
+    mockResilientChatCompletion.mockResolvedValueOnce(
+      `\`\`\`json\n${VALID_LLM_SCRIPT_JSON}\n\`\`\``,
+    )
+    const fencedResult = await generateScript(
+      { topic: 'topic', audience: 'audience', tier: 'BASIC', userId: 'usr_byok_fence' },
+      { funding: { fund: 'byok', apiKey: 'sk-or-v1-customer' } },
+    )
+    expect(fencedResult.scenes.length).toBeGreaterThanOrEqual(3)
+    expect(mockResilientChatCompletion).toHaveBeenLastCalledWith(
+      expect.any(String),
+      expect.objectContaining({ circuitKeyRef: 'byok:usr_byok_fence' }),
+    )
+
+    mockResilientChatCompletion.mockResolvedValueOnce(
+      `Note {draft}:\n\`\`\`\nplan outline\n\`\`\`\n\`\`\`json\n${VALID_LLM_SCRIPT_JSON}\n\`\`\`\nDone {ok}.`,
+    )
+    const multiFence = await generateScript(
+      { topic: 'topic', audience: 'audience', tier: 'BASIC' },
+      { funding: { fund: 'byok', apiKey: 'sk-or-v1-customer' } },
+    )
+    expect(multiFence.title).toBeTruthy()
+
+    mockResilientChatCompletion.mockResolvedValueOnce('   ')
+    await expect(
+      generateScript(
+        { topic: 'topic', audience: 'audience', tier: 'BASIC' },
+        { funding: { fund: 'byok', apiKey: 'sk-or-v1-customer' } },
+      ),
+    ).rejects.toThrow('Invalid JSON from LLM')
+
+    mockResilientChatCompletion.mockResolvedValueOnce('not json { broken : } trailing')
+    await expect(
+      generateScript(
+        { topic: 'topic', audience: 'audience', tier: 'BASIC' },
+        { funding: { fund: 'byok', apiKey: 'sk-or-v1-customer' } },
+      ),
+    ).rejects.toThrow('Invalid JSON from LLM')
+  })
 })

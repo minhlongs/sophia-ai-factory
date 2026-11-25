@@ -3,10 +3,14 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/seed/auth/better-auth-client';
+import {
+  isPilotInviteBlockedError,
+  resolveRedirectTarget,
+} from '@/components/stitch/screens/login/form/use-auth-2027-state';
 import type { RegisterFormState, RegisterStep } from './types';
 import { mapRegisterAuthError, validateRegisterForm } from './register-validation';
 
-export function useRegister2027State() {
+export function useRegister2027State(redirectTo?: string) {
   const t = useTranslations('stitch.auth.register');
   const tLogin = useTranslations('stitch.auth.login');
   const [step, setStep] = useState<RegisterStep>('form');
@@ -34,14 +38,22 @@ export function useRegister2027State() {
     setLoading(true);
     try {
       const name = formState.companyName.trim() || formState.email.split('@')[0].trim() || 'user';
+      const callbackPath = redirectTo
+        ? resolveRedirectTarget(redirectTo)
+        : '/dashboard/onboarding';
       const result = await authClient.signUp.email({
         name,
         email: formState.email.trim(),
         password: formState.password,
-        callbackURL: '/dashboard/onboarding',
+        callbackURL: callbackPath,
       });
       if (result.error) {
-        setError(mapRegisterAuthError(result.error as { code?: string; message?: string }, t));
+        setError(
+          mapRegisterAuthError(
+            result.error as { code?: string; message?: string; status?: number },
+            t,
+          ),
+        );
       } else {
         setStep('success');
       }
@@ -59,8 +71,15 @@ export function useRegister2027State() {
     setError(null);
     try {
       const res = await authClient.emailOtp.sendVerificationOtp({ email: cleanEmail, type: 'sign-in' });
-      if (res.error) setError(res.error.message || t('errorGeneric'));
-      else setOtpSent(true);
+      if (res.error) {
+        setError(
+          isPilotInviteBlockedError(res.error)
+            ? t('errorInviteRequired')
+            : res.error.message || t('errorGeneric'),
+        );
+      } else {
+        setOtpSent(true);
+      }
     } catch {
       setError(t('errorGeneric'));
     } finally {
@@ -76,8 +95,13 @@ export function useRegister2027State() {
     setError(null);
     try {
       const res = await authClient.signIn.emailOtp({ email: cleanEmail, otp: otpCode });
-      if (res.error) setError(tLogin('invalidOtp'));
-      else setStep('success');
+      if (res.error) {
+        setError(
+          isPilotInviteBlockedError(res.error) ? t('errorInviteRequired') : tLogin('invalidOtp'),
+        );
+      } else {
+        setStep('success');
+      }
     } catch {
       setError(t('errorGeneric'));
     } finally {
@@ -90,8 +114,15 @@ export function useRegister2027State() {
     setError(null);
     try {
       const res = await authClient.signIn.passkey();
-      if (res?.error) setError(res.error.message || t('errorGeneric'));
-      else setStep('success');
+      if (res?.error) {
+        setError(
+          isPilotInviteBlockedError(res.error)
+            ? t('errorInviteRequired')
+            : res.error.message || t('errorGeneric'),
+        );
+      } else {
+        setStep('success');
+      }
     } catch {
       setError(t('errorGeneric'));
     } finally {

@@ -12,6 +12,10 @@ const mockSignInPasskey = vi.fn();
 const mockSendOtp = vi.fn();
 const mockSignInOtp = vi.fn();
 
+vi.mock('next-intl/server', () => ({
+  getTranslations: async () => (key: string) => key,
+}));
+
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
     const map: Record<string, string> = {
@@ -163,5 +167,29 @@ describe('LoginFormView Auth 2027 flows', () => {
       expect(resolveRedirectTarget(undefined)).toBe('/dashboard');
       expect(resolveRedirectTarget('')).toBe('/dashboard');
     });
+  });
+
+  it('surfaces pilot invite-only rejection on login and hides Email OTP button when emailOtpEnabled=false', async () => {
+    mockSignInEmail.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'PILOT_INVITE_REQUIRED', message: 'This private pilot is invite-only', status: 403 },
+    });
+    render(<LoginFormView redirectTo="/vi/dashboard/first-value" emailOtpEnabled={false} />);
+    expect(screen.queryByRole('button', { name: 'Mã OTP 6 số' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Đăng ký' }).getAttribute('href')).toBe(
+      '/register?next=%2Fdashboard%2Ffirst-value',
+    );
+
+    fireEvent.change(screen.getByLabelText('Địa chỉ Email'), { target: { value: 'outsider@test.com' } });
+    fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'Password123!' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập vào Sophia' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('inviteRequired');
+
+    const { LoginPage } = await import('../../login-page');
+    const pageEl = await LoginPage({ redirectTo: '/dashboard/first-value', emailOtpEnabled: false });
+    render(pageEl);
+    expect(screen.getByTestId('login-page')).toBeDefined();
   });
 });
